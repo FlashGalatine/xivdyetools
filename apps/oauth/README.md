@@ -47,7 +47,7 @@ All auth routes are mounted under `/auth`.
 
 Access tokens are **HS256 JWTs** with a one-hour default lifetime (`JWT_EXPIRY = 3600`), issued with `iss` set to `WORKER_URL` — `https://auth.xivdyetools.app` in production.
 
-Revocation is a KV-backed `jti` blacklist (`TOKEN_BLACKLIST`) with a TTL matching the token's own expiry, so entries clean themselves up once the token would have expired anyway. Revocation checks **fail open**: if KV is unavailable the check returns `false` rather than throwing, keeping auth functional during an outage at the cost of briefly honouring a revoked token.
+Revocation is a KV-backed `jti` blacklist (`TOKEN_BLACKLIST`) whose entries live for the token's remaining lifetime **plus the refresh grace window** (`REFRESH_GRACE_SECONDS` from `@xivdyetools/auth`, 15 min — the same constant `/auth/refresh` uses to accept a recently expired token), so a revoked token can neither be used nor refreshed, and entries still clean themselves up afterwards (FINDING-001, 2026-08-21 audit). `presets-api` binds the same namespace and rejects revoked tokens too (FINDING-002), so `/auth/revoke` really does end a session. Revocation checks **fail open**: if KV is unavailable the check returns `false` rather than throwing, keeping auth functional during an outage at the cost of briefly honouring a revoked token.
 
 ## Development
 

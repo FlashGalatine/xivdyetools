@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-08-21
+
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-001). Minor bump: behaviour change on `/auth/refresh`, no contract break.
+
+### Security
+
+- **`/auth/refresh` grace window reduced from 24 h to the shared `REFRESH_GRACE_SECONDS` (15 min) from `@xivdyetools/auth` 1.4.0**, and `/auth/revoke` / rotation-revoke blacklist entries now outlive `exp` by that same window. Before this, a blacklist entry expired exactly at `exp` while the refresh endpoint still accepted the token for another 24 h — so a token the user had revoked at logout (or a leaked one) became refreshable the moment it expired and could be re-minted for up to the 30-day session cap with no way for the victim to stop it. Regression tests: revoke → expire → refresh must 401; refresh → expire → refresh-again must 401.
+
 ## [2.6.0] - 2026-08-16
 
 Monorepo 2.0 release train (branch `monorepo-2.0-prep`). Nothing below has shipped until the branch merges. Minor bump: a new allowed origin plus a CORS behaviour fix; no contract break.

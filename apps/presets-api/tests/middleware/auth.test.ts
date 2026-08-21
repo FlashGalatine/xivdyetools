@@ -12,6 +12,8 @@ import {
 } from '../../src/middleware/auth';
 import type { Env, AuthContext } from '../../src/types';
 import { createMockEnv, createTestJWT, createExpiredJWT } from '../test-utils';
+import { createMockKV } from '@xivdyetools/test-utils';
+import { base64UrlEncode, base64UrlEncodeBytes } from '@xivdyetools/auth';
 
 type Variables = {
     auth: AuthContext;
@@ -1052,6 +1054,95 @@ describe('AuthMiddleware', () => {
             const body = await res.json() as AuthContext;
 
             expect(body.isAuthenticated).toBe(false);
+        });
+    });
+
+    // ============================================
+    // Revocation + issuer enforcement (FINDING-002 / FINDING-015)
+    // ============================================
+
+    describe('JWT revocation and issuer checks', () => {
+        /** Mint an HS256 JWT with arbitrary claims (jti, iss, …) for these tests. */
+        async function mintJWT(secret: string, claims: Record<string, unknown>): Promise<string> {
+            const now = Math.floor(Date.now() / 1000);
+            const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+            const payload = base64UrlEncode(
+                JSON.stringify({ sub: 'user-uuid', iat: now, exp: now + 3600, ...claims })
+            );
+            const key = await crypto.subtle.importKey(
+                'raw',
+                new TextEncoder().encode(secret),
+                { name: 'HMAC', hash: 'SHA-256' },
+                false,
+                ['sign']
+            );
+            const sig = await crypto.subtle.sign(
+                'HMAC',
+                key,
+                new TextEncoder().encode(`${header}.${payload}`)
+            );
+            return `${header}.${payload}.${base64UrlEncodeBytes(new Uint8Array(sig))}`;
+        }
+
+        it('treats a JWT whose jti is on the TOKEN_BLACKLIST as unauthenticated', async () => {
+            const kv = createMockKV();
+            await kv.put('revoked:jti-revoked', '1', { expirationTtl: 3600 });
+            const revokedEnv = createMockEnv({ TOKEN_BLACKLIST: kv as unknown as KVNamespace });
+
+            const token = await mintJWT(revokedEnv.JWT_SECRET!, {
+                jti: 'jti-revoked',
+                discord_id: '555',
+            });
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${token}` } },
+                revokedEnv
+            );
+            const body = (await res.json()) as AuthContext;
+
+            expect(body.isAuthenticated).toBe(false);
+        });
+
+        it('still authenticates a JWT whose jti is NOT on the TOKEN_BLACKLIST', async () => {
+            const kv = createMockKV();
+            const kvEnv = createMockEnv({ TOKEN_BLACKLIST: kv as unknown as KVNamespace });
+
+            const token = await mintJWT(kvEnv.JWT_SECRET!, { jti: 'jti-live', discord_id: '555' });
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${token}` } },
+                kvEnv
+            );
+            const body = (await res.json()) as AuthContext;
+
+            expect(body.isAuthenticated).toBe(true);
+            expect(body.userDiscordId).toBe('555');
+        });
+
+        it('rejects a JWT from a different issuer when JWT_ISSUER is configured', async () => {
+            const issuerEnv = createMockEnv({ JWT_ISSUER: 'https://auth.xivdyetools.app' });
+
+            const foreign = await mintJWT(issuerEnv.JWT_SECRET!, {
+                iss: 'https://auth-preview.example',
+                discord_id: '555',
+            });
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${foreign}` } },
+                issuerEnv
+            );
+            expect(((await res.json()) as AuthContext).isAuthenticated).toBe(false);
+
+            const own = await mintJWT(issuerEnv.JWT_SECRET!, {
+                iss: 'https://auth.xivdyetools.app',
+                discord_id: '555',
+            });
+            const okRes = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${own}` } },
+                issuerEnv
+            );
+            expect(((await okRes.json()) as AuthContext).isAuthenticated).toBe(true);
         });
     });
 });

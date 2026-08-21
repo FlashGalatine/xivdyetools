@@ -72,6 +72,16 @@ export interface Env {
 
   // Web OAuth (shared with xivdyetools-oauth-worker)
   JWT_SECRET?: string;
+  /**
+   * FINDING-015: expected `iss` claim (the oauth worker's WORKER_URL). When
+   * set, tokens from any other issuer are rejected. Plain var, not a secret.
+   */
+  JWT_ISSUER?: string;
+  /**
+   * FINDING-002: the oauth worker's jti blacklist (same KV namespace). When
+   * bound, revoked tokens are rejected by authMiddleware; absent in tests/dev.
+   */
+  TOKEN_BLACKLIST?: KVNamespace;
 
   // Discord bot webhook for notifications
   DISCORD_BOT_WEBHOOK_URL?: string;

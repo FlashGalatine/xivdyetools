@@ -8,6 +8,8 @@
  * - Algorithm validation (rejects non-HS256 tokens)
  * - Expiration checking
  * - Timing-safe signature comparison
+ * - Claim type validation + optional nbf / iss / aud enforcement
+ *   (FINDING-015, 2026-08-21 security audit)
  *
  * @module jwt
  */
@@ -28,6 +30,8 @@ export interface JWTPayload {
   iat: number;
   /** Expiration timestamp (seconds) */
   exp: number;
+  /** Not-before timestamp (seconds) — enforced when present */
+  nbf?: number;
   /**
    * Token type discriminator.
    * BUG-057 (2026-07-18 audit): optional — current issuers do not emit it.
@@ -40,6 +44,8 @@ export interface JWTPayload {
   jti?: string;
   /** Issuer (worker URL) */
   iss?: string;
+  /** Audience — enforced only when the verifier passes `audience` */
+  aud?: string | string[];
   /** Original-issuance anchor carried across refreshes (absolute session age) */
   orig_iat?: number;
   /** Discord username */
@@ -60,6 +66,22 @@ export interface VerifyJWTOptions {
    * access token) once typed tokens exist.
    */
   expectedType?: 'access' | 'refresh';
+  /**
+   * FINDING-015: When set, the token's `iss` claim must equal this value (or
+   * one of these values). A token without `iss` is rejected.
+   */
+  issuer?: string | string[];
+  /**
+   * FINDING-015: When set, the token's `aud` claim (string or array) must
+   * contain this value. A token without `aud` is rejected.
+   */
+  audience?: string;
+  /**
+   * Allowed clock skew (seconds) applied to `exp` and `nbf`. Default 0 —
+   * the issuers and verifiers in this ecosystem all run on Cloudflare's
+   * synchronised clocks.
+   */
+  clockToleranceSeconds?: number;
 }
 
 /**
@@ -146,7 +168,42 @@ async function verifyJWTSignature(token: string, secret: string): Promise<JWTPay
 
   // Decode payload
   const payloadJson = base64UrlDecode(payloadB64);
-  return JSON.parse(payloadJson) as JWTPayload;
+  const payload: unknown = JSON.parse(payloadJson);
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+    return null;
+  }
+  return payload as JWTPayload;
+}
+
+/** A finite, non-negative number — what every NumericDate claim must be. */
+function isNumericDate(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+/**
+ * FINDING-015: structural validation of the claims every verifier relies on.
+ * A token is only as trustworthy as its claim types — `exp: "9999999999"`
+ * compares as a string against a number and `sub: {}` is truthy — so both
+ * verifiers reject anything that is not a finite numeric `exp`, a non-empty
+ * string `sub`, and (when present) numeric `iat`/`nbf`.
+ */
+function hasWellTypedClaims(payload: JWTPayload): boolean {
+  if (!isNumericDate(payload.exp)) return false;
+  if (typeof payload.sub !== 'string' || payload.sub.length === 0) return false;
+  if (payload.iat !== undefined && !isNumericDate(payload.iat)) return false;
+  if (payload.nbf !== undefined && !isNumericDate(payload.nbf)) return false;
+  return true;
+}
+
+function issuerMatches(iss: unknown, expected: string | string[]): boolean {
+  if (typeof iss !== 'string') return false;
+  return Array.isArray(expected) ? expected.includes(iss) : iss === expected;
+}
+
+function audienceMatches(aud: unknown, expected: string): boolean {
+  if (typeof aud === 'string') return aud === expected;
+  if (Array.isArray(aud)) return aud.some((a) => a === expected);
+  return false;
 }
 
 /**
@@ -156,7 +213,9 @@ async function verifyJWTSignature(token: string, secret: string): Promise<JWTPay
  * 1. Validates token structure (3 parts)
  * 2. Validates algorithm is HS256 (prevents confusion attacks)
  * 3. Verifies HMAC-SHA256 signature
- * 4. Checks expiration time
+ * 4. Validates claim types (`exp` numeric, `sub` non-empty string, …)
+ * 5. Checks expiration (`exp`) and not-before (`nbf`) against the clock
+ * 6. Enforces `type`, `iss`, `aud` when the caller asks for them
  *
  * @param token - The JWT string
  * @param secret - The HMAC secret used to sign the token
@@ -164,7 +223,7 @@ async function verifyJWTSignature(token: string, secret: string): Promise<JWTPay
  *
  * @example
  * ```typescript
- * const payload = await verifyJWT(token, env.JWT_SECRET);
+ * const payload = await verifyJWT(token, env.JWT_SECRET, { issuer: env.JWT_ISSUER });
  * if (!payload) {
  *   return new Response('Unauthorized', { status: 401 });
  * }
@@ -179,19 +238,30 @@ export async function verifyJWT(
     const payload = await verifyJWTSignature(token, secret);
     if (!payload) return null;
 
-    // FINDING-003: Require exp claim — tokens without expiration are rejected
-    const now = Math.floor(Date.now() / 1000);
-    if (!payload.exp || payload.exp < now) {
+    // FINDING-003 / BUG-010 / FINDING-015: exp + sub must be present AND well typed
+    if (!hasWellTypedClaims(payload)) {
       return null;
     }
 
-    // BUG-010: Require sub claim — tokens without subject identity are rejected
-    if (!payload.sub) {
+    const skew = options?.clockToleranceSeconds ?? 0;
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp + skew < now) {
+      return null;
+    }
+    if (payload.nbf !== undefined && payload.nbf - skew > now) {
       return null;
     }
 
     // BUG-057: Enforce token-type discriminator when the caller expects one
     if (options?.expectedType && payload.type !== options.expectedType) {
+      return null;
+    }
+
+    // FINDING-015: issuer / audience pinning
+    if (options?.issuer !== undefined && !issuerMatches(payload.iss, options.issuer)) {
+      return null;
+    }
+    if (options?.audience !== undefined && !audienceMatches(payload.aud, options.audience)) {
       return null;
     }
 
@@ -235,7 +305,9 @@ export async function verifyJWTSignatureOnly(
     // BUG-051: Require exp claim — matches verifyJWT so a mis-minted eternal
     // token can't slip through the refresh path (its absence made the grace
     // arithmetic NaN-pass downstream)
-    if (!payload.sub || !payload.exp) {
+    // FINDING-015: and both must be well typed (a string exp would make the
+    // downstream grace arithmetic silently compare strings)
+    if (!hasWellTypedClaims(payload)) {
       return null;
     }
 

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-08-21
+
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-001 / FINDING-015). Minor bump: additive API, one behavioural change in `revokeToken` TTLs.
+
+### Security
+
+- **`revokeToken()` now keeps blacklist entries alive for `exp + REFRESH_GRACE_SECONDS`** (new exported constant, 15 min) instead of ending exactly at `exp`. The oauth worker's `/auth/refresh` honours tokens for a grace window past `exp`; with the old TTL a revoked token became refreshable the moment it expired (FINDING-001). Both sides now share the same constant. New `RevokeTokenOptions.graceSeconds` for callers that override the window.
+- **`verifyJWT` / `verifyJWTSignatureOnly` validate claim types** (FINDING-015): `exp` must be a finite numeric date, `sub` a non-empty string, `iat`/`nbf` numeric when present; a signed `exp: "9999999999"` or `sub: {}` is rejected instead of comparing as strings/objects. `verifyJWT` also enforces `nbf` (with optional `clockToleranceSeconds`), and accepts new `issuer` (string or list) and `audience` options that pin `iss`/`aud`.
+
+### Added
+
+- `REFRESH_GRACE_SECONDS`, `RevokeTokenOptions`, `VerifyJWTOptions.issuer` / `.audience` / `.clockToleranceSeconds`, `JWTPayload.nbf` / `.aud`.
+
 ## [1.3.0] - 2026-08-16
 
 Monorepo 2.0 Tier 1 package consolidation. Written 2026-07-30 and unpublished until this release (npm has 1.2.0).

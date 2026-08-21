@@ -31,3 +31,6 @@ Also add `iss` (and optionally `aud`) verification in presets-api so tokens from
 
 ## References
 - Evidence: `../evidence/review-oauth.md` (OAUTH-2), `../evidence/review-presets-api.md` (PAPI-10)
+
+## Status
+**FIXED 2026-08-21** — `fix(auth,oauth,presets-api): close the revocation/refresh gap (FINDING-001/002/015)`: `@xivdyetools/auth` 1.4.0 (blacklist TTL = exp + shared `REFRESH_GRACE_SECONDS`, claim typing, `issuer`/`audience`/`nbf`), oauth 2.7.0 (refresh grace 24 h → 15 min via the shared constant), presets-api 2.1.0 (`TOKEN_BLACKLIST` KV bound + `JWT_ISSUER` pinned; revoked tokens rejected).

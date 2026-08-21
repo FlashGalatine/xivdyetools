@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-08-21
+
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-002 / FINDING-015). Minor bump: two new bindings, stricter JWT acceptance, no contract break for valid tokens.
+
+### Security
+
+- **Revoked JWTs are now rejected by `authMiddleware`.** The oauth worker's `TOKEN_BLACKLIST` KV namespace is bound into this worker (`wrangler.toml`, dev + production) and a token whose `jti` is blacklisted (logout via `/auth/revoke`, refresh rotation) is treated as unauthenticated. Previously revocation only affected the oauth worker's own `/auth/me` + `/auth/refresh`, so a logged-out token kept full API access until `exp`. Fail-open on KV errors, consistent with the oauth README.
+- **Issuer pinning.** New `JWT_ISSUER` var (`https://auth.xivdyetools.app` in production, `http://localhost:8788` in dev) is passed to `verifyJWT({ issuer })`; tokens minted by any other issuer that shares `JWT_SECRET` (e.g. the dormant oauth preview env) are refused. Claim typing from `@xivdyetools/auth` 1.4.0 applies as well (`exp` must be numeric, `sub` a string).
+
+### Deploy notes
+
+- `TOKEN_BLACKLIST` binds an existing namespace (`0d6f3be3…` prod / `891bbbe8…` dev) — no `wrangler kv namespace create` needed. `JWT_ISSUER` is a plain var, already in `wrangler.toml`.
+
 ## [2.0.0] - 2026-08-16
 
 Monorepo 2.0 / Web-App 5.0 release train (branch `monorepo-2.0-prep`, 2026-07-30 → 2026-08-16). Nothing below has shipped until the branch merges. **Major bump**: the wire contract for `dyes` changes from legacy itemIDs to stainIDs, the dye-count rule moves from 2–5 to 3–6, and the `community` category is deleted, so any pre-5.0 client is rejected loudly on submit/edit (see ⚠️ BREAKING).

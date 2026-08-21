@@ -30,7 +30,13 @@ export {
 } from './jwt.js';
 
 // Revocation utilities (KV-backed jti blacklist)
-export { isTokenRevoked, revokeToken, type RevocationStore } from './revocation.js';
+export {
+  isTokenRevoked,
+  revokeToken,
+  REFRESH_GRACE_SECONDS,
+  type RevocationStore,
+  type RevokeTokenOptions,
+} from './revocation.js';
 
 // HMAC utilities
 export {

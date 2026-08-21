@@ -15,6 +15,7 @@ import {
   signPayload,
 } from '../services/jwt-service.js';
 import { findUserById } from '../services/user-service.js';
+import { REFRESH_GRACE_SECONDS } from '@xivdyetools/auth';
 
 export const tokenRouter = new Hono<{ Bindings: Env }>();
 
@@ -27,7 +28,14 @@ const MAX_SESSION_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
 /**
  * POST /auth/refresh
- * Refresh an existing JWT (must not be expired by more than 24 hours)
+ * Refresh an existing JWT (must not be expired by more than REFRESH_GRACE_SECONDS)
+ *
+ * FINDING-001 (2026-08-21 security audit): the grace window is the SHARED
+ * `REFRESH_GRACE_SECONDS` from @xivdyetools/auth — the same constant
+ * `revokeToken()` uses to size blacklist TTLs. The old local 24 h window
+ * outlived every blacklist entry (TTL ended at `exp`), so a revoked or
+ * leaked token became refreshable the moment it expired and could be
+ * re-minted for up to 30 days. Do not reintroduce a local grace constant.
  *
  * Body:
  * - token: Current JWT (can be recently expired)
@@ -82,9 +90,10 @@ tokenRouter.post('/refresh', async (c) => {
         );
       }
 
-      // Signature is valid - check grace period
+      // Signature is valid - check grace period (shared with revokeToken's TTL,
+      // see FINDING-001 note above)
       const now = Math.floor(Date.now() / 1000);
-      const gracePeriod = 24 * 60 * 60; // 24 hours
+      const gracePeriod = REFRESH_GRACE_SECONDS;
 
       if (decoded.exp + gracePeriod < now) {
         return c.json<RefreshResponse>(

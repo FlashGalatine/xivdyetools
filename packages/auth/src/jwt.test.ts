@@ -354,4 +354,82 @@ describe('jwt.ts', () => {
       expect(await verifyJWTSignatureOnly(token, secret)).not.toBeNull();
     });
   });
+
+  describe('claim hardening (FINDING-015)', () => {
+    const now = () => Math.floor(Date.now() / 1000);
+
+    it('verifyJWT rejects a signed token whose exp is a string', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: String(now() + 3600) } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret)).toBeNull();
+    });
+
+    it('verifyJWT rejects a signed token whose exp is an object', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: {} } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret)).toBeNull();
+    });
+
+    it('verifyJWT rejects a signed token whose sub is not a string', async () => {
+      const token = await createTestJWT(
+        { sub: 123, iat: now(), exp: now() + 3600 } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret)).toBeNull();
+    });
+
+    it('verifyJWTSignatureOnly rejects a signed token whose exp is a string', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: String(now() + 3600) } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWTSignatureOnly(token, secret)).toBeNull();
+    });
+
+    it('verifyJWT rejects a token whose nbf is in the future', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: now() + 3600, nbf: now() + 600 } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret)).toBeNull();
+    });
+
+    it('verifyJWT accepts a token whose nbf is in the past', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: now() + 3600, nbf: now() - 5 } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret)).not.toBeNull();
+    });
+
+    it('verifyJWT enforces the issuer option when provided', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: now() + 3600, iss: 'https://auth.example' },
+        secret,
+      );
+      expect(await verifyJWT(token, secret, { issuer: 'https://auth.example' })).not.toBeNull();
+      expect(await verifyJWT(token, secret, { issuer: 'https://evil.example' })).toBeNull();
+      expect(
+        await verifyJWT(token, secret, { issuer: ['https://other.example', 'https://auth.example'] }),
+      ).not.toBeNull();
+    });
+
+    it('verifyJWT rejects a token with no iss when an issuer is required', async () => {
+      const token = await createTestJWT({ sub: '123', iat: now(), exp: now() + 3600 }, secret);
+      expect(await verifyJWT(token, secret, { issuer: 'https://auth.example' })).toBeNull();
+    });
+
+    it('verifyJWT enforces the audience option when provided', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: now() + 3600, aud: 'presets-api' } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret, { audience: 'presets-api' })).not.toBeNull();
+      expect(await verifyJWT(token, secret, { audience: 'other' })).toBeNull();
+    });
+  });
 });

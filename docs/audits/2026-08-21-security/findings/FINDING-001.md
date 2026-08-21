@@ -47,3 +47,6 @@ A stolen token that the user believes they revoked keeps working (via refresh �
 - OWASP Session Management Cheat Sheet — "Session Expiration", "Renewal"
 - RFC 6749 §10.4 (refresh token rotation guidance)
 - Evidence: `../evidence/review-oauth.md` (OAUTH-1, OAUTH-3)
+
+## Status
+**FIXED 2026-08-21** — `fix(auth,oauth,presets-api): close the revocation/refresh gap (FINDING-001/002/015)`: `@xivdyetools/auth` 1.4.0 (blacklist TTL = exp + shared `REFRESH_GRACE_SECONDS`, claim typing, `issuer`/`audience`/`nbf`), oauth 2.7.0 (refresh grace 24 h → 15 min via the shared constant), presets-api 2.1.0 (`TOKEN_BLACKLIST` KV bound + `JWT_ISSUER` pinned; revoked tokens rejected).

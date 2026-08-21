@@ -145,10 +145,10 @@ JWT_SECRET=development-jwt-secret-min-32-chars
 
 ```toml
 [env.production]
-vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app" }
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app" }
 ```
 
-Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`, notifications), `IMAGE_WORKER` (service → `xivdyetools-image-worker`, `POST /thumbnail`), `THUMBNAILS` (R2 bucket `xivdyetools-presets-preview-thumbnails`, served at `shots.xivdyetools.app`). Top-level block = `xivdyetools-presets-api-dev`; production under `[env.production]`.
+Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`, notifications), `IMAGE_WORKER` (service → `xivdyetools-image-worker`, `POST /thumbnail`), `THUMBNAILS` (R2 bucket `xivdyetools-presets-preview-thumbnails`, served at `shots.xivdyetools.app`), `TOKEN_BLACKLIST` (KV — the oauth worker's jti blacklist, shared so revoked tokens are rejected here too; FINDING-002). `JWT_ISSUER` pins the accepted `iss` claim (FINDING-015). Top-level block = `xivdyetools-presets-api-dev`; production under `[env.production]`.
 
 ### Secrets
 

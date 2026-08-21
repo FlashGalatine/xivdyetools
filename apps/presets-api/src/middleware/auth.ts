@@ -7,7 +7,11 @@
 
 import type { Context, Next } from 'hono';
 import type { Env, AuthContext } from '../types.js';
-import { verifyJWT as sharedVerifyJWT, verifyBotSignature } from '@xivdyetools/auth';
+import {
+  verifyJWT as sharedVerifyJWT,
+  verifyBotSignature,
+  isTokenRevoked,
+} from '@xivdyetools/auth';
 
 type Variables = {
   auth: AuthContext;
@@ -67,15 +71,34 @@ export function resolveJWTUserId(payload: Pick<ExtendedJWTPayload, 'sub' | 'disc
 /**
  * Verify JWT and return extended payload
  * REFACTOR-003: Uses @xivdyetools/auth for core verification
+ *
+ * FINDING-002 / FINDING-015 (2026-08-21 security audit):
+ * - When the oauth worker's `TOKEN_BLACKLIST` KV is bound, a token whose
+ *   `jti` has been revoked (logout, rotation) is rejected here too — before
+ *   this, revocation only affected `/auth/me` + `/auth/refresh` on the oauth
+ *   worker and a logged-out token kept full API access until `exp`.
+ *   `isTokenRevoked` is fail-open on KV errors (documented in the oauth
+ *   README); the binding being absent (dev/tests) skips the check.
+ * - When `JWT_ISSUER` is configured, `iss` must match it, so tokens minted by
+ *   any other issuer sharing the secret (e.g. a preview env) are refused.
  */
-async function verifyJWT(token: string, secret: string): Promise<ExtendedJWTPayload | null> {
+async function verifyJWT(token: string, env: Env): Promise<ExtendedJWTPayload | null> {
+  if (!env.JWT_SECRET) return null;
+
   // Use shared JWT verification which handles:
   // - Algorithm validation (HS256 only)
   // - Signature verification
-  // - Expiration checking
-  const payload = await sharedVerifyJWT(token, secret);
+  // - Claim typing, expiration, optional issuer pinning
+  const payload = await sharedVerifyJWT(token, env.JWT_SECRET, {
+    issuer: env.JWT_ISSUER || undefined,
+  });
 
   if (!payload) return null;
+
+  if (payload.jti && env.TOKEN_BLACKLIST) {
+    const revoked = await isTokenRevoked(payload.jti, env.TOKEN_BLACKLIST);
+    if (revoked) return null;
+  }
 
   // The shared JWTPayload type only declares the base claims; the oauth
   // worker's extra claims (discord_id, auth_provider) ride along and are
@@ -208,7 +231,7 @@ export async function authMiddleware(
     }
     // Method 2: Web authentication (JWT)
     else if (c.env.JWT_SECRET) {
-      const jwtPayload = await verifyJWT(token, c.env.JWT_SECRET);
+      const jwtPayload = await verifyJWT(token, c.env);
 
       if (jwtPayload) {
         // Use display name if available, fallback to username

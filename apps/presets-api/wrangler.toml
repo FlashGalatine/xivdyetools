@@ -36,10 +36,18 @@ bucket_name = "xivdyetools-presets-preview-thumbnails"
 binding = "IMAGE_WORKER"
 service = "xivdyetools-image-worker"
 
+# FINDING-002: the oauth worker's jti blacklist (same namespace as oauth's
+# TOKEN_BLACKLIST) so revoked tokens are rejected here too. Dev → oauth dev ns.
+[[kv_namespaces]]
+binding = "TOKEN_BLACKLIST"
+id = "891bbbe834ba4055a06b672b589094be"
+
 [vars]
 ENVIRONMENT = "development"
 API_VERSION = "v1"
 CORS_ORIGIN = "http://localhost:5173"
+# FINDING-015: pin the JWT issuer (oauth WORKER_URL) — dev oauth runs on :8788
+JWT_ISSUER = "http://localhost:8788"
 
 [env.production]
 name = "xivdyetools-presets-api"
@@ -47,7 +55,7 @@ routes = [
   { pattern = "api.xivdyetools.app", custom_domain = true },
   { pattern = "api.xivdyetools.projectgalatine.com", custom_domain = true }
 ]
-vars ={ ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app" }
+vars ={ ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app" }
 
 [[env.production.d1_databases]]
 binding = "DB"
@@ -70,3 +78,8 @@ service = "xivdyetools-image-worker"
 # MODERATOR_IDS, PERSPECTIVE_API_KEY, MODERATION_WEBHOOK_URL,
 # OWNER_DISCORD_ID, DISCORD_BOT_TOKEN,
 # DISCORD_BOT_WEBHOOK_URL, INTERNAL_WEBHOOK_SECRET
+
+# FINDING-002: production oauth TOKEN_BLACKLIST namespace (see apps/oauth/wrangler.toml)
+[[env.production.kv_namespaces]]
+binding = "TOKEN_BLACKLIST"
+id = "0d6f3be3b4704e91a83e6387b9769e45"

@@ -2,11 +2,11 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: August 18, 2026*
+*Last Updated: August 21, 2026*
 
 > **Versions below are read from each project's `package.json` on the working branch.** The 5.0
 > wave — `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0, `worker-kit` v1.0.0,
-> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.2.0, `presets-api` v2.0.0 and the
+> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.2.0, `presets-api` v2.1.0 and the
 > rest — is complete on `monorepo-2.0-prep` with every `CHANGELOG.md` written, but **not yet merged
 > to `main` or published to npm**. Merging to `main` is the release; the root `CHANGELOG.md` 2.0.0
 > entry carries the deploy sequence. See [Release Process](developer-guides/release-process.md).
@@ -23,8 +23,8 @@
 | **Discord Bot** | v5.0.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
 | **Image Worker** | v1.0.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.4.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v2.6.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.0.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
+| **OAuth Worker** | v2.7.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **Presets API** | v2.1.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
 | **Public REST API** | v0.7.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.2.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.2.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
@@ -37,7 +37,7 @@
 |---------|---------|--------------|----------|--------|
 | **Core** (incl. `/blending` + schema-v2 data) | v4.0.0 | `@xivdyetools/core` | npm | Active — publish pending |
 | **Types** | v2.0.0 | `@xivdyetools/types` | npm | Active — publish pending |
-| **Auth** (incl. `/encoding`) | v1.3.0 | `@xivdyetools/auth` | npm | Active |
+| **Auth** (incl. `/encoding`) | v1.4.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v1.3.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.0.0 | `@xivdyetools/worker-kit` | npm | Active (first publish pending) |
 | **SVG** | v2.0.0 | `@xivdyetools/svg` | npm | Active — publish pending |
@@ -155,6 +155,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.7.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-001) — `/auth/refresh` grace window 24 h → shared `REFRESH_GRACE_SECONDS` (15 min); revocation blacklist entries now outlive `exp` by that window, so a revoked/leaked token can no longer be re-minted after it expires** |
 | **v2.6.0** | **Aug 2026** | **Beta origin (`https://beta.xivdyetools.app`) on the redirect + CORS allowlist (unified — beta login hang fixed); migrated to `@xivdyetools/worker-kit` and `@xivdyetools/auth/encoding`** |
 | **v2.5.0** | **Jul 2026** | **2026-07-18 audit (Sprint 2) — refresh rotation with `jti`-based revocation + `orig_iat` absolute session anchor (refresh chains can no longer extend a session indefinitely), state-signing hardening, single JWT verifier via `@xivdyetools/auth` 1.2.0** |
 | v2.4.1 | May 2026 | FINDING-003/006 documentation — `verifyJWT()` revocation caveat (use `verifyJWTWithRevocationCheck()`), dev-env D1 placeholder note in `wrangler.toml` |
@@ -175,6 +176,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-002/015) — oauth `TOKEN_BLACKLIST` KV bound: revoked JWTs rejected by `authMiddleware`; `JWT_ISSUER` var pins `iss`; claim typing via `@xivdyetools/auth` 1.4.0** |
 | **v2.0.0** | **Aug 2026** | **BREAKING — preset dyes are stainIDs (3–6 per preset; legacy itemIDs rejected loudly), `community` category dropped (migration 0007) and `appearance` / `zones` / `raids-trials` added with 1 primary + ≤2 secondary categories (0010), `example_link` (0008), moderated preview images via image-worker `POST /thumbnail` + R2 (0009), `rejection_reason`, beta CORS origin, `worker-kit`; dev/prod `wrangler.toml` split** |
 | **v1.6.0** | **Jul 2026** | **2026-07-18 audit (Sprint 1) — CRITICAL: moderation self-approval gap closed (submitters could approve their own presets); state-machine transitions validated server-side with D1 `batch()` transactions and `changes()`-gated updates; migration 0006 unique preset-signature index applied to production** |
 | **v1.5.0** | **Apr 2026** | **SEC-003 `jsonDepthLimit` middleware (maxDepth 10, 100 KB body, prototype pollution rejection); SEC-004 Hono `bodyLimit` (100 KB) on `/api/*`; migrated to `rateLimitMiddleware()` from `@xivdyetools/worker-middleware` (standardized `X-RateLimit-*` + `Retry-After`); CORS `maxAge` 24h → 1h; BUG-002 structured logger in `preset-service.ts`** |
@@ -299,6 +301,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.4.0** | **Aug 2026** | **2026-08-21 security audit — `revokeToken` TTL = exp + `REFRESH_GRACE_SECONDS` (FINDING-001); `verifyJWT` claim typing, `nbf`, `issuer`/`audience` options (FINDING-015)** |
 | **v1.3.0** | **Jul 2026** | **Monorepo 2.0 Tier 1 — absorbed `@xivdyetools/crypto` v1.1.2: Base64URL and hex utilities now live at `@xivdyetools/auth/encoding`. API identical; only the import specifier changes** |
 | **v1.2.0** | **Jul 2026** | **2026-07-18 audit (Sprints 2 & 6) — `jti`-based revocation + `orig_iat` absolute session anchoring primitives (consumed by oauth's refresh rotation); BUG-059 `verifyDiscordRequest` body-size check measures UTF-8 bytes, not UTF-16 code units** |
 | **v1.1.2** | **Mar 2026** | **BUG-005 LRU cache true ordering fix, BUG-010 require `sub` claim in JWT verification (security hardening)** |
