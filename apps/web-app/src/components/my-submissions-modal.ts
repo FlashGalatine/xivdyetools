@@ -49,8 +49,8 @@ function tint(hex: string, alpha: number): string {
 function statValue(value: string, label: string, color: string): string {
   return `
     <div style="flex: 1; min-width: 0; text-align: center; padding: 10px 6px; border: 1px solid var(--theme-border); border-radius: 10px;">
-      <div style="font-family: 'Fragment Mono', monospace; font-size: 20px; color: ${color};">${value}</div>
-      <div style="font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-top: 2px;">${label}</div>
+      <div style="font-family: var(--font-mono); font-size: 20px; color: ${color};">${value}</div>
+      <div style="font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-top: 2px;">${label}</div>
     </div>`;
 }
 
@@ -145,8 +145,8 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
           <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
             ${bandFor(preset)}
             <span style="flex: 1; min-width: 0; font-size: 13.5px; font-weight: 650; color: var(--theme-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${preset.name}</span>
-            <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: var(--theme-text-muted); flex: 0 0 auto;">${votesText}</span>
-            <span style="font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: ${tint(tone, 0.16)}; color: ${tone}; flex: 0 0 auto;">${statusLabel}</span>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--theme-text-muted); flex: 0 0 auto;">${votesText}</span>
+            <span style="font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: ${tint(tone, 0.16)}; color: ${tone}; flex: 0 0 auto;">${statusLabel}</span>
           </div>
           ${
             note

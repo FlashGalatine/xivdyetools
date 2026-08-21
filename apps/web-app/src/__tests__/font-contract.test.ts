@@ -127,6 +127,55 @@ describe('font contract', () => {
         expect(parsed, `${family} is retired but still declared`).not.toContain(family);
       }
     });
+
+    it('names no family directly outside globals.css (FONT-WEB-002)', () => {
+      // my-submissions-modal.ts used to inline `font-family: 'Fragment Mono',
+      // monospace` in a style attribute, bypassing the --font-mono contract:
+      // no CJK fallback and no :lang() override, so a ja/zh/ko preset name in
+      // that row fell to the browser's default monospace.
+      const src = read('src/components/my-submissions-modal.ts');
+      expect(src).not.toContain("font-family: 'Fragment Mono'");
+      expect(src).toContain('font-family: var(--font-mono)');
+    });
+  });
+
+  describe('per-locale CJK glyph-form overrides (FONT-WEB-001)', () => {
+    // `--font-cjk` puts Noto Sans JP first, which is correct for ja but draws
+    // Han characters with Japanese glyph forms for zh/ko readers who also have
+    // Noto Sans JP installed. These :lang() overrides retarget the variable
+    // per locale; LanguageService.setLocale keeps document.documentElement.lang
+    // in sync so the selectors match.
+    it('puts Noto Sans SC ahead of Noto Sans JP for :root:lang(zh)', () => {
+      const block = GLOBALS_CSS.match(/:root:lang\(zh\)\s*\{[^}]*\}/)?.[0];
+      expect(block, 'no :root:lang(zh) override found').toBeDefined();
+      expect(block).toContain('--font-cjk:');
+      const scIndex = block!.indexOf("'Noto Sans SC'");
+      const jpIndex = block!.indexOf("'Noto Sans JP'");
+      expect(scIndex).toBeGreaterThan(-1);
+      expect(jpIndex).toBeGreaterThan(-1);
+      expect(scIndex).toBeLessThan(jpIndex);
+    });
+
+    it('puts Noto Sans KR ahead of Noto Sans JP for :root:lang(ko)', () => {
+      const block = GLOBALS_CSS.match(/:root:lang\(ko\)\s*\{[^}]*\}/)?.[0];
+      expect(block, 'no :root:lang(ko) override found').toBeDefined();
+      expect(block).toContain('--font-cjk:');
+      const krIndex = block!.indexOf("'Noto Sans KR'");
+      const jpIndex = block!.indexOf("'Noto Sans JP'");
+      expect(krIndex).toBeGreaterThan(-1);
+      expect(jpIndex).toBeGreaterThan(-1);
+      expect(krIndex).toBeLessThan(jpIndex);
+    });
+
+    it('leaves the ja default order with Noto Sans JP first', () => {
+      const block = GLOBALS_CSS.match(/:root\s*\{[^}]*--font-cjk:[^}]*\}/)?.[0];
+      expect(block, 'no base :root --font-cjk declaration found').toBeDefined();
+      const jpIndex = block!.indexOf("'Noto Sans JP'");
+      const scIndex = block!.indexOf("'Noto Sans SC'");
+      expect(jpIndex).toBeGreaterThan(-1);
+      expect(scIndex).toBeGreaterThan(-1);
+      expect(jpIndex).toBeLessThan(scIndex);
+    });
   });
 
   describe('fonts are self-hosted', () => {
