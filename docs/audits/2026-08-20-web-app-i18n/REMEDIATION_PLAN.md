@@ -16,7 +16,7 @@
 
 ---
 
-## Sprint 0 — Prerequisites: delete, scaffold, one-liners ✅ COMPLETED 2026-08-21 (commits `37668a97..27db39d2`, Tasks 1–3)
+## Sprint 0 — Prerequisites: delete, scaffold, one-liners ✅ COMPLETED 2026-08-21 (commits `cae7c68c..27db39d2`, Tasks 1–3)
 
 Nothing here is a hotfix; nothing ships out-of-band. The sprint removes ≈25 rows of work by deleting the four dead components, gives Sprints 1–4 the helpers they call, and lands the seven locale-file edits (pure content, no key changes, so the gates cannot move).
 
@@ -35,7 +35,7 @@ Nothing here is a hotfix; nothing ships out-of-band. The sprint removes ≈25 ro
 
 ---
 
-## Sprint 1 — Community Presets surface + the palette-drawer bug (P1) ✅ COMPLETED 2026-08-21 (commits `62e82bf7..2f64b44f`, Tasks 4–7)
+## Sprint 1 — Community Presets surface + the palette-drawer bug (P1) ✅ COMPLETED 2026-08-21 (commits `27db39d2..2f64b44f`, Tasks 4–7)
 
 The two things a ja/de/fr user hits first on 5.0: the palette drawer (every tool) and the presets flow (edit form, validation toasts, vote errors, collection import). `preset-edit-form.ts` is rewritten against the already-localized `preset-submission-form.ts` as the template; services stop returning English and return codes.
 
@@ -55,7 +55,7 @@ The two things a ja/de/fr user hits first on 5.0: the palette drawer (every tool
 
 ---
 
-## Sprint 2 — Cross-tool P1 shapes and per-tool High rows ✅ COMPLETED 2026-08-21 (commits `2380e1dc..971a2ae0`, Tasks 8–12)
+## Sprint 2 — Cross-tool P1 shapes and per-tool High rows ✅ COMPLETED 2026-08-21 (commits `2f64b44f..971a2ae0`, Tasks 8–12)
 
 The three scaffolds from Sprint 0 are wired into the nine tools, route titles go through keys, and the five components that never subscribe start re-rendering on locale change.
 
@@ -80,7 +80,7 @@ The three scaffolds from Sprint 0 are wired into the nine tools, route titles go
 
 ---
 
-## Sprint 3 — One vocabulary: core owns harmony / vision / category labels (P2) ✅ COMPLETED 2026-08-21 (commit `8b1ca836`, Task 13)
+## Sprint 3 — One vocabulary: core owns harmony / vision / category labels (P2) ✅ COMPLETED 2026-08-21 (commits `971a2ae0..8b1ca836`, Task 13)
 
 | ID | Source | Sev/Pri | Item |
 |----|--------|---------|------|
@@ -93,7 +93,7 @@ The three scaffolds from Sprint 0 are wired into the nine tools, route titles go
 
 ---
 
-## Sprint 4 — Medium: aria/title/placeholder, English names in search/sort/aria, locale formatting ✅ COMPLETED 2026-08-21 (commits `d6fefd1c..f42a22af`, Tasks 14–15)
+## Sprint 4 — Medium: aria/title/placeholder, English names in search/sort/aria, locale formatting ✅ COMPLETED 2026-08-21 (commits `8b1ca836..f42a22af`, Tasks 14–15)
 
 | ID | Source | Sev/Pri | Item |
 |----|--------|---------|------|
@@ -110,7 +110,7 @@ The three scaffolds from Sprint 0 are wired into the nine tools, route titles go
 
 ---
 
-## Sprint 5 — Low polish + guardrails ✅ COMPLETED 2026-08-21 (commits `ca0ee36d..71c72651`, Tasks 16–18)
+## Sprint 5 — Low polish + guardrails ✅ COMPLETED 2026-08-21 (commits `f42a22af..71c72651`, Tasks 16–18)
 
 | ID | Source | Sev/Pri | Item |
 |----|--------|---------|------|
@@ -131,7 +131,7 @@ The three scaffolds from Sprint 0 are wired into the nine tools, route titles go
 
 ---
 
-## Sprint 6 — Fonts (terminal, always last) ✅ COMPLETED 2026-08-21 (commit `13b84fdb`, Task 19)
+## Sprint 6 — Fonts (terminal, always last) ✅ COMPLETED 2026-08-21 (commits `71c72651..13b84fdb`, Task 19)
 
 | ID | Source | Sev/Pri | Item |
 |----|--------|---------|------|
@@ -180,11 +180,13 @@ None — single-source plan; no fix-vs-delete collisions. (HC-SYS-012 deletions 
 
 ## Execution notes (added 2026-08-21, Task 20 close-out)
 
-All seven sprints above shipped as 19 tasks (Task 20 is this close-out) on branch **`i18n-remediation-2026-08-20`**, worktree `C:\dev\XIVProjects\.worktrees\xivdyetools-i18n`, cut from `monorepo-2.0-prep` @ `1cbb303e`. Full commit range: `37668a97..13b84fdb` (22 commits including the audit-doc commit `cae7c68c` itself). Per-task detail lives in `.superpowers/sdd/EXECUTION_TASKS/progress.md` and the individual `task-N-report.md` files; this section pulls forward only what a future reader of this plan needs without opening the ledger.
+All seven sprints above shipped as 19 tasks (Task 20 is this close-out) on branch **`i18n-remediation-2026-08-20`**, worktree `C:\dev\XIVProjects\.worktrees\xivdyetools-i18n`, cut from `monorepo-2.0-prep` @ `1cbb303e`. Full commit range: `37668a97..13b84fdb` (22 commits including the audit-doc commit `cae7c68c` itself); the close-out itself (this task) is `13b84fdb..HEAD`. Per-task detail lives in `.superpowers/sdd/EXECUTION_TASKS/progress.md` and the individual `task-N-report.md` files; this section pulls forward only what a future reader of this plan needs without opening the ledger.
 
 ### Rulings made during execution
 
 - **Worktree/branch choice**: work landed on a new branch in a dedicated worktree rather than directly on `monorepo-2.0-prep`, because `.worktrees/` is not gitignored in this repo and another session was concurrently editing the main checkout. The branch fast-forwards cleanly onto `monorepo-2.0-prep`.
+- **`EXECUTION_TASKS.md` committed into the audit folder as the SDD plan**: the task-brief format needs "Task N" headings, so the 7 sprints in this plan were expanded into 20 numbered tasks in a sibling doc rather than dispatched straight from the sprint tables above — cost if wrong: one extra doc in the audit folder.
+- **Task 3 edits `docs/reference/ffxiv-terminology.md`**, outside `apps/web-app`: the terminology doc-drift fix (ja Shades = シェード, the missing `invertedTetradic` row) is part of the TERM findings this plan schedules, so it travelled with Task 3 instead of being carved out — cost: none.
 - **10 harmony keys, not 9** (Sprint 3 / TERM-003, Task 13): all ten `config.*` harmony option keys — including `config.invertedTetradic`, which the plan's item list omitted — were converted to `LanguageService.getHarmonyType()` and deleted from all six locales together, not nine. Splitting them would have orphaned the tenth key against the `i18n:unused` gate; the deletion had to be atomic.
 - **TERM-004 took the locale-edit route**, not a core `getVisionTypeShort()` addition: the ja/ko/zh head nouns for the vision-toggle short labels were aligned to core's vocabulary by editing the locale values directly, avoiding a `@xivdyetools/core` publish from inside a web-app-only branch. The duplicate short-label vocabulary in web-app `config.*` keys remains (accepted cost).
 - **Identifier rulings**: `HC-V4-008` and `HC-SWA-004`/`HC-BUD-010` tags (`RGB DIST`, `DISTINGUISH %`, `R{row}·C{col}`, `ID {n}`, tier tags) stay English identifiers, consistent with how the ΔE method tags are already treated — not translated. The mixer's `MODEL_SHORT` **`Spectral`** row header (Task 17) stays an identifier for the same reason (the tooltip beside it does carry the localized `mixer.modelSpectral` string).
