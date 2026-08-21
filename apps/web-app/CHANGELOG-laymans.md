@@ -81,7 +81,8 @@
 ### Swatch Matcher: drop in your character
 
 - **Drop a `.chara` file from Anamnesis, Ktisis, or Brio** and every colour on your character — skin, hair, eyes, lips, and more — is matched to the closest dye at once.
-- **The file is read entirely on your device. Nothing is uploaded.**
+- **The file is read entirely on your device.** The only thing that leaves it is the equipment's model numbers — twelve small integers used to look up item names — never the file itself, your character's name, or the screenshot.
+- **Dyes on this glamour now names the pieces.** Instead of "Body" and "Legs", each dyed row shows the actual item — its icon, its name in your language, and the dyes it wears — with a small "+N" badge when several visually identical items share the same model (Augmented, Replica, +1 …). A Pieces/Dyes switch flips the list to one row per dye, showing which pieces carry it. Names arrive a moment after the dyes; if the lookup service is down you still get every dye, just labelled by slot.
 - Save the whole set as a character record, send the matches on to other tools, or start a preset submission from the dyes on that glamour.
 - The palette rail and Dark/Light toggle sit right on the grid, and sharing a cell now identifies exactly which cell you meant.
 - **Heads-up:** the eye, hair, and skin grids carry a notice that these preset palettes are being retired in the Evercold expansion (January 2027) in favour of a free colour picker.

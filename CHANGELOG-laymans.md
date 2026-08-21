@@ -52,7 +52,7 @@ Rules:
 - Web app: Accessibility — a lens view shows how your palette reads under four kinds of colour vision, with the worst pair called out.
 - Web app: Comparison — a duel view with a plain verdict on how far apart two dyes really are, and what differs.
 - Web app: Budget — prices follow the real Patch 7.5 market groups (one price per Spectrum tier), so coffer-only dyes are no longer shown as costing about 1 gil.
-- Web app: Swatch — drop a `.chara` character file from Anamnesis or Ktisis and every colour on your character is matched to a dye, entirely on your device; a notice explains that the eye, hair and skin preset palettes are going away with the Evercold expansion.
+- Web app: Swatch — drop a `.chara` character file from Anamnesis or Ktisis and every colour on your character is matched to a dye, entirely on your device, and the "Dyes on this glamour" list now names the actual pieces (icon, item name in your language, a +N badge for look-alike items, and a Pieces/Dyes switch) — only the gear's model numbers leave your device, never the file; a notice explains that the eye, hair and skin preset palettes are going away with the Evercold expansion.
 - Web app: your saved palettes, dye swaps and character records now live in one place and carry over automatically — nothing to redo.
 
 ### 🖼️ Community presets
