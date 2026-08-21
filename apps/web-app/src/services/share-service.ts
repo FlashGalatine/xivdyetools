@@ -212,6 +212,15 @@ export class ShareService {
     // Add tool-specific params
     this.addParamsToUrl(url, paramsRecord);
 
+    // The sharer's locale rides the link so og-worker can localize the unfurl —
+    // it resolves locale from `?lang=` and from nothing else (crawlers send no
+    // useful Accept-Language). English stays unparameterised: og-worker keeps
+    // EN cache keys bare, and the SPA's own routing ignores the param.
+    const locale = LanguageService.getCurrentLocale();
+    if (locale !== 'en') {
+      url.searchParams.set('lang', locale);
+    }
+
     // Add version for future compatibility
     url.searchParams.set('v', String(SHARE_URL_VERSION));
 

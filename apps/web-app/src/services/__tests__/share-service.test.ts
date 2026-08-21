@@ -27,9 +27,13 @@ vi.mock('../toast-service', () => ({
   },
 }));
 
+// The share URL carries the sharer's locale (og-worker localizes the unfurl
+// from `?lang=` and from nothing else — OG-I18N-001); tests flip it here.
+const langState = { locale: 'en' };
 vi.mock('../language-service', () => ({
   LanguageService: {
     t: (key: string) => key,
+    getCurrentLocale: () => langState.locale,
   },
 }));
 
@@ -243,6 +247,27 @@ describe('ShareService', () => {
   // ==========================================================================
 
   describe('generateUrl', () => {
+    it('carries the sharer\'s locale as ?lang= when it is not English (OG-I18N-001)', () => {
+      langState.locale = 'ja';
+      try {
+        const { url } = ShareService.generateUrl({
+          tool: 'harmony',
+          params: { dye: 1, harmony: 'triadic' },
+        });
+        expect(new URL(url).searchParams.get('lang')).toBe('ja');
+      } finally {
+        langState.locale = 'en';
+      }
+    });
+
+    it('keeps English share URLs free of ?lang= (stable og cache keys)', () => {
+      const { url } = ShareService.generateUrl({
+        tool: 'harmony',
+        params: { dye: 1, harmony: 'triadic' },
+      });
+      expect(new URL(url).searchParams.get('lang')).toBeNull();
+    });
+
     it('emits hexStart/hexEnd for bare-colour gradient endpoints', () => {
       const { url } = ShareService.generateUrl({
         tool: 'gradient',
