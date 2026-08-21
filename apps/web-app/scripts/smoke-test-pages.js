@@ -80,9 +80,13 @@ export function parseArgs(argv) {
   return { deploymentUrl, domain, expectRobots };
 }
 
-// Phase 1: the deployment alias is live the moment `wrangler pages deploy`
-// returns, so this budget only absorbs edge warm-up.
-const REACH_ATTEMPTS = 6;
+// Phase 1: the deployment alias is *usually* live the moment `wrangler pages
+// deploy` returns, but not always — on 2026-08-21 a beta deploy (8add1630)
+// answered 404 for more than 25 s after the upload succeeded and then served
+// fine, failing the old 6-attempt (~25 s) budget on a deploy that worked. Two
+// minutes absorbs that propagation lag without hiding a genuinely dead
+// deployment for long.
+const REACH_ATTEMPTS = 24;
 // Phase 2: the custom domain has to pick up the new production deployment.
 // Normally seconds; budgeted generously so ordinary alias lag never fails a
 // deploy that actually worked.

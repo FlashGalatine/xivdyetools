@@ -117,8 +117,10 @@ node scripts/smoke-test-pages.js \
 
 Three phases:
 
-1. The deployment alias returns 2xx (~25 s budget). This is the build just
-   uploaded, live the moment `wrangler pages deploy` returns.
+1. The deployment alias returns 2xx (~2 min budget — 24 × 5 s). This is the build
+   just uploaded; it is *usually* live the moment `wrangler pages deploy` returns,
+   but a 2026-08-21 beta deploy answered 404 for 25 s+ before serving, so the
+   budget absorbs Pages propagation lag rather than just edge warm-up.
 2. The custom domain is polled until its `index.html` sha256 matches the alias's
    (~175 s budget). A Pages custom domain keeps serving the *previous* deployment
    until propagation finishes, so this is what makes phase 3 describe the right
