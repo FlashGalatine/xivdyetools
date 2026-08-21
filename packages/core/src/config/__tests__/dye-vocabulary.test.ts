@@ -10,6 +10,8 @@
 import { describe, it, expect } from 'vitest';
 import rawDyes from '../../data/dyes.json';
 import rawFacewear from '../../data/facewear_colors.json';
+import enLocale from '../../data/locales/en.json';
+import { CONSOLIDATED_DYES } from '../consolidated-ids.js';
 import {
   DYE_CATEGORIES,
   DYE_ACQUISITIONS,
@@ -132,6 +134,30 @@ describe('facewear_colors.json data invariants', () => {
     for (const f of facewear) {
       const hash = -(1000 + [...f.name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0));
       expect(LEGACY_FACEWEAR_ITEM_IDS[hash], `${f.name} (${hash})`).toBe(f.id);
+    }
+  });
+});
+
+/**
+ * 2026-08-20 i18n audit, F-07: every currency string the runtime derives for
+ * a Dye (ACQUISITION_META) or a consolidated market item (CONSOLIDATED_DYES)
+ * must be a key of the locale `currencies` table, or
+ * `TranslationProvider.getCurrency()` misses and every locale prints the raw
+ * English string. "Skybuilders' Scrips" (apostrophe) vs the locale key
+ * "Skybuilders Scrips" did exactly that for the 9 Firmament dyes.
+ */
+describe('currency strings resolve through the locale currencies table', () => {
+  const currencyKeys = new Set(Object.keys(enLocale.currencies));
+
+  it('ACQUISITION_META currencies are locale currency keys', () => {
+    for (const [acq, meta] of Object.entries(ACQUISITION_META)) {
+      expect(currencyKeys.has(meta.currency), `${acq} → ${meta.currency}`).toBe(true);
+    }
+  });
+
+  it('CONSOLIDATED_DYES currencies are locale currency keys', () => {
+    for (const [type, entry] of Object.entries(CONSOLIDATED_DYES)) {
+      expect(currencyKeys.has(entry.currency), `${type} → ${entry.currency}`).toBe(true);
     }
   });
 });

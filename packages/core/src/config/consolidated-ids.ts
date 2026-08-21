@@ -69,7 +69,7 @@ export const CONSOLIDATED_DYES: Record<ConsolidationType, ConsolidatedDye> = {
     },
     acquisition: 'The Firmament',
     price: 100,
-    currency: "Skybuilders' Scrips",
+    currency: 'Skybuilders Scrips',
   },
   C: {
     itemID: CONSOLIDATED_IDS.C,

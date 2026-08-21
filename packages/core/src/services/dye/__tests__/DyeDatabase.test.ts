@@ -681,7 +681,7 @@ describe('DyeDatabase', () => {
       expect(dye?.isIshgardian).toBe(true); // ≡ consolidationType 'B'
       expect(dye?.isCosmic).toBe(false); // Firmament pollution fixed
       expect(dye?.cost).toBe(100);
-      expect(dye?.currency).toBe("Skybuilders' Scrips");
+      expect(dye?.currency).toBe('Skybuilders Scrips');
     });
 
     it('falls back to stainID as the runtime id when legacyItemID is null', () => {

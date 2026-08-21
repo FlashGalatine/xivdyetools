@@ -55,7 +55,7 @@ export interface AcquisitionMeta {
  */
 export const ACQUISITION_META: Record<DyeAcquisition, AcquisitionMeta> = {
   'Dye Vendor': { price: 216, currency: 'Gil' },
-  'The Firmament': { price: 100, currency: "Skybuilders' Scrips" },
+  'The Firmament': { price: 100, currency: 'Skybuilders Scrips' },
   'Cosmic Exploration': { price: 600, currency: 'Cosmocredits' },
   'Venture Coffers': { price: 1, currency: 'Venture Coffer' },
 };
