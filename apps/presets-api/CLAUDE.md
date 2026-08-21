@@ -46,6 +46,8 @@ wrangler secret put DISCORD_BOT_TOKEN
 wrangler secret put DISCORD_BOT_WEBHOOK_URL
 wrangler secret put MODERATION_WEBHOOK_URL
 wrangler secret put INTERNAL_WEBHOOK_SECRET
+wrangler secret put CACHE_PURGE_ZONE_ID           # Optional (FINDING-018): zone serving shots.xivdyetools.app
+wrangler secret put CACHE_PURGE_API_TOKEN         # Optional (FINDING-018): token with Zone → Cache Purge
 ```
 
 ### Pre-commit Checklist
@@ -98,7 +100,7 @@ src/
 ├── types.ts                            # Env interface + re-exports from @xivdyetools/types
 ├── middleware/
 │   ├── auth.ts                         # Dual auth: BOT_API_SECRET (HMAC-signed) or JWT
-│   ├── ban-check.ts                    # requireNotBannedCheck (queries banned_users)
+│   ├── ban-check.ts                    # requireNotBanned (router-level on every mutating method; fails closed outside development)
 │   ├── body-validation.ts              # bodySizeLimit (100KB), jsonDepthLimit
 │   └── rate-limit.ts                   # IP rate limit (100/min) using shared rate-limiter package
 ├── handlers/
@@ -147,6 +149,7 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 | `OWNER_DISCORD_ID` | Owner override for elevated debug routes |
 | `DISCORD_BOT_TOKEN` / `DISCORD_BOT_WEBHOOK_URL` | Optional direct bot notification path |
 | `INTERNAL_WEBHOOK_SECRET` | Shared with discord-worker for `/webhooks/preset-submission` |
+| `CACHE_PURGE_ZONE_ID` / `CACHE_PURGE_API_TOKEN` | FINDING-018: zone serving `shots.xivdyetools.app` + a token with *Zone → Cache Purge*; when both are set, every preview-image takedown purges the image URL from the edge cache. Absent → purge skipped, the object's one-day `s-maxage` is the only bound |
 
 ## Database
 
@@ -245,10 +248,10 @@ An author-uploaded picture for the preset card, stored as WebP in R2. **`preview
 POST /presets/:id/preview-image  (raw bytes)
    └─► IMAGE_WORKER.fetch('https://image-worker/thumbnail')   crop + WebP encode
          └─► THUMBNAILS.put(`${presetId}/${crypto.randomUUID()}.webp`)
-               cacheControl: 'public, max-age=31536000, immutable'
+               cacheControl: 'public, max-age=31536000, immutable, s-maxage=86400'
 ```
 
-The UUID in the key is what makes `immutable` safe: every key is single-use, so a URL can never come to mean a different image. Replacing a preview writes a new key and deletes the old one; `deletePreviewImage` treats a missing key as success.
+The UUID in the key is what makes the browser-side `immutable` safe: every key is single-use, so a URL can never come to mean a different image. The **edge** TTL (`s-maxage`) is one day (FINDING-018) — takedown is not complete while the edge still serves the URL. Replacing a preview writes a new key and deletes the old one; `deletePreviewImage` deletes the object **and then** purges `https://shots.xivdyetools.app/<key>` through the Cloudflare single-file cache-purge API when `CACHE_PURGE_ZONE_ID` + `CACHE_PURGE_API_TOKEN` are set (`purgePreviewImageCache`, best-effort, never throws, skipped when unset); a missing key is success. Delete first, purge second — purging before a failed delete would only let the edge re-cache the object.
 
 `preview_image_status` (`'none' | 'pending' | 'approved'`) gates display, and moderators move it via `PATCH /moderation/:presetId/preview-image`. Note that the `CommunityPreset` shape deliberately **hides** `preview_image_key`, so any handler that needs the raw key must do its own row-level read rather than reusing the public getter.
 
@@ -299,7 +302,7 @@ The acting user ID comes from the `discord_id` claim (Discord snowflake — the 
 
 ### Ban Checking
 
-Mutating routes (POST presets, PATCH presets, POST votes) call `requireNotBannedCheck()` which queries `banned_users` for an active ban (`unbanned_at IS NULL`). Fails open if the table is missing (e.g., fresh local DB) so dev still works.
+`requireNotBanned` is registered **once per router** for every mutating method — `presetsRouter.on(['POST', 'PATCH', 'DELETE'], '*', requireNotBanned)` and `votesRouter.on(['POST', 'DELETE'], '*', requireNotBanned)` — so every write (submit, edit, delete, refresh-author, votes, preview images) queries `banned_users` for an active ban (`unbanned_at IS NULL`) and a new route cannot forget it (FINDING-017). Unauthenticated requests pass through (nothing to check) and get the handler's 401. A **failed lookup fails closed** (`503 SERVICE_UNAVAILABLE`) everywhere except `ENVIRONMENT = development`, where it fails open with a loud warning so a fresh local DB without the table still works — run `npm run db:migrate:local` to create it. The inline `requireNotBannedCheck()` guard is still exported for ad-hoc use but no handler calls it.
 
 ### Body & JSON Hardening
 

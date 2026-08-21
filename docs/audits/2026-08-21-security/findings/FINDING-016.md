@@ -16,3 +16,7 @@ Return only `{ id, status }` (or a 409 without a body) for duplicates of non-app
 
 ## References
 - Evidence: `../evidence/review-presets-api.md` (PAPI-2, PAPI-5, PAPI-11)
+
+## Status
+**FIXED 2026-08-21** (presets-api 2.1.0)
+- presets-api 2.1.0: `POST`/`DELETE /votes/:id` → 404 unless the preset is approved; one `canSeePreset()` (approved ‖ moderator ‖ owner) drives GET / DELETE / PATCH / preview-image routes (404, not 403, when hidden); duplicate-submission responses no longer leak pending rows (bare 409 for non-owners, `previous_values` stripped); PATCH 409 carries the duplicate summary only when visible.

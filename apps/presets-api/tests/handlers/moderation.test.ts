@@ -766,6 +766,66 @@ describe('ModerationHandler', () => {
             expect(statusAtDeleteTime).toBe('none');
         });
 
+        // FINDING-018 / PAPI-4: deleting the R2 object is not a takedown while the
+        // edge cache still serves the URL — reject must also purge it.
+        it('purges the image URL from the edge cache on reject when purge credentials are configured (FINDING-018)', async () => {
+            const row = createMockPresetRow({
+                id: 'preset-123',
+                status: 'approved',
+                preview_image_key: 'preset-123/a.webp',
+                preview_image_status: 'pending',
+            });
+            mockDb._setupMock((query) => {
+                if (query.startsWith('UPDATE presets SET preview_image_key = NULL')) {
+                    row.preview_image_key = null;
+                    row.preview_image_status = 'none';
+                    return { success: true };
+                }
+                return row;
+            });
+            const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
+            await bucket.put('preset-123/a.webp', new ArrayBuffer(4));
+
+            const fetchMock = vi.fn(
+                async () => new Response(JSON.stringify({ success: true }), { status: 200 })
+            );
+            vi.stubGlobal('fetch', fetchMock);
+            try {
+                const purgeEnv: Env = {
+                    ...env,
+                    CACHE_PURGE_ZONE_ID: 'zone-123',
+                    CACHE_PURGE_API_TOKEN: 'purge-token',
+                };
+
+                const res = await app.request(
+                    '/api/v1/moderation/preset-123/preview-image',
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: 'Bearer test-bot-secret',
+                            'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
+                        },
+                        body: JSON.stringify({ action: 'reject' }),
+                    },
+                    purgeEnv
+                );
+
+                expect(res.status).toBe(200);
+                expect(bucket._store.has('preset-123/a.webp')).toBe(false);
+                expect(fetchMock).toHaveBeenCalledTimes(1);
+                const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+                expect(url).toBe('https://api.cloudflare.com/client/v4/zones/zone-123/purge_cache');
+                expect(init.method).toBe('POST');
+                expect((init.headers as Record<string, string>).Authorization).toBe('Bearer purge-token');
+                expect(JSON.parse(init.body as string)).toEqual({
+                    files: ['https://shots.xivdyetools.app/preset-123/a.webp'],
+                });
+            } finally {
+                vi.unstubAllGlobals();
+            }
+        });
+
         it('refuses a non-moderator, including the preset\'s own author', async () => {
             const row = createMockPresetRow({
                 id: 'preset-123',

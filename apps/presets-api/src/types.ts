@@ -92,6 +92,16 @@ export interface Env {
   // Discord bot webhook for notifications
   DISCORD_BOT_WEBHOOK_URL?: string;
   INTERNAL_WEBHOOK_SECRET?: string;
+
+  /**
+   * FINDING-018: Cloudflare zone that serves `shots.xivdyetools.app` and an API
+   * token with `Zone.Cache Purge`, used to evict a preview image's URL from the
+   * edge cache when it is rejected / deleted / replaced. Both optional: when
+   * either is absent the purge is skipped and the one-day `s-maxage` on the
+   * object is the only bound on how long a removed image stays reachable.
+   */
+  CACHE_PURGE_ZONE_ID?: string;
+  CACHE_PURGE_API_TOKEN?: string;
 }
 
 // ============================================

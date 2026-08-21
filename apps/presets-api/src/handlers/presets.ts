@@ -4,9 +4,18 @@
  */
 
 import { Hono } from 'hono';
-import type { Env, AuthContext, PresetFilters, PresetSubmission, PresetEditRequest, PresetPreviousValues } from '../types.js';
+import type { Context } from 'hono';
+import type {
+  Env,
+  AuthContext,
+  CommunityPreset,
+  PresetFilters,
+  PresetSubmission,
+  PresetEditRequest,
+  PresetPreviousValues,
+} from '../types.js';
 import { requireAuth, requireUserContext } from '../middleware/auth.js';
-import { requireNotBannedCheck } from '../middleware/ban-check.js';
+import { requireNotBanned } from '../middleware/ban-check.js';
 import {
   ErrorCode,
   invalidJsonResponse,
@@ -81,6 +90,96 @@ function stripAuditData<T extends { previous_values?: unknown }>(preset: T): Omi
   const publicPreset = { ...preset };
   delete publicPreset.previous_values;
   return publicPreset;
+}
+
+// FINDING-017 (PAPI-9): the ban check covers EVERY mutating route on this
+// router — DELETE /:id, PATCH /refresh-author and DELETE /:id/preview-image
+// previously had none. Registered once, here, ahead of the routes, so a new
+// route cannot forget it. Unauthenticated requests pass straight through
+// (nothing to check) and get their 401 from the handler exactly as before.
+presetsRouter.on(['POST', 'PATCH', 'DELETE'], '*', requireNotBanned);
+
+/**
+ * THE visibility rule (BUG-014, FINDING-016 / PAPI-11), in one place.
+ *
+ * A non-approved preset (pending / rejected / flagged / hidden) exists only
+ * for its owner and for moderators. Everyone else gets the same 404 as a
+ * nonexistent id — from GET, and from every mutating route as well: a 403
+ * from DELETE / PATCH / preview-image used to confirm that a hidden UUID
+ * exists while GET denied it. An approved preset is public, so the ordinary
+ * 403 ("not yours") reveals nothing there.
+ */
+function canSeePreset(
+  auth: AuthContext,
+  preset: { status: string; author_discord_id: string | null }
+): boolean {
+  return (
+    preset.status === 'approved' ||
+    auth.isModerator ||
+    (auth.userDiscordId !== undefined && preset.author_discord_id === auth.userDiscordId)
+  );
+}
+
+/**
+ * Answer a dye-signature collision on submit (FINDING-016 / PAPI-2 + PAPI-5).
+ *
+ * Before: the ENTIRE matching row — flagged text, `previous_values`,
+ * `author_discord_id` — came back whatever its status, and a vote was
+ * recorded on it, bypassing both the BUG-014 visibility gate and the
+ * approved-only vote rule.
+ *
+ *  - approved duplicate → vote for it (the long-standing "your submission
+ *    becomes a vote") and return it, audit snapshot stripped for
+ *    non-privileged callers exactly as GET /:id does;
+ *  - pending duplicate, caller is its owner or a moderator → return it (they
+ *    could GET it), but no vote: votes are for approved presets only;
+ *  - pending duplicate, anyone else → a bare 409 that names nothing. That the
+ *    combination is taken is unavoidable (the partial UNIQUE index would
+ *    reject the INSERT anyway); which preset holds it is not revealed.
+ */
+async function respondToDuplicate(
+  c: Context<{ Bindings: Env; Variables: Variables }>,
+  auth: AuthContext,
+  duplicate: CommunityPreset
+): Promise<Response> {
+  const isPrivileged =
+    auth.isModerator ||
+    (auth.userDiscordId !== undefined && duplicate.author_discord_id === auth.userDiscordId);
+
+  if (duplicate.status === 'approved') {
+    const voteResult = await addVote(c.env.DB, duplicate.id, auth.userDiscordId!);
+    return c.json({
+      success: true,
+      duplicate: isPrivileged ? duplicate : stripAuditData(duplicate),
+      vote_added: voteResult.success && !voteResult.already_voted,
+    });
+  }
+
+  if (isPrivileged) {
+    return c.json({ success: true, duplicate, vote_added: false });
+  }
+
+  return c.json(
+    {
+      success: false,
+      error: ErrorCode.DUPLICATE_RESOURCE,
+      message: 'This dye combination already exists',
+    },
+    409
+  );
+}
+
+/**
+ * The `{ id, name, author_name }` summary an edit's 409 may carry — only for a
+ * colliding preset the caller could GET (FINDING-016). For a pending preset
+ * belonging to someone else the 409 is sent bare.
+ */
+function duplicateSummaryFor(
+  auth: AuthContext,
+  duplicate: CommunityPreset | null
+): { id: string; name: string; author_name: string | null } | undefined {
+  if (!duplicate || !canSeePreset(auth, duplicate)) return undefined;
+  return { id: duplicate.id, name: duplicate.name, author_name: duplicate.author_name };
 }
 
 // ============================================
@@ -250,6 +349,11 @@ presetsRouter.delete('/:id', async (c) => {
     return notFoundResponse(c, 'Preset');
   }
 
+  // FINDING-016: a preset the caller could not GET does not exist for them
+  if (!canSeePreset(auth, preset)) {
+    return notFoundResponse(c, 'Preset');
+  }
+
   // Only owner or moderator can delete
   if (preset.author_discord_id !== auth.userDiscordId && !auth.isModerator) {
     return forbiddenResponse(c, "Cannot delete another user's preset");
@@ -298,9 +402,7 @@ presetsRouter.patch('/:id', async (c) => {
   const userError = requireUserContext(c);
   if (userError) return userError;
 
-  // Check if user is banned
-  const banError = await requireNotBannedCheck(c);
-  if (banError) return banError;
+  // (ban check: router-level requireNotBanned, see top of file)
 
   const auth = c.get('auth');
   const id = c.req.param('id');
@@ -308,6 +410,11 @@ presetsRouter.patch('/:id', async (c) => {
   // Get preset to check ownership
   const preset = await getPresetById(c.env.DB, id);
   if (!preset) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  // FINDING-016: a preset the caller could not GET does not exist for them
+  if (!canSeePreset(auth, preset)) {
     return notFoundResponse(c, 'Preset');
   }
 
@@ -347,16 +454,14 @@ presetsRouter.patch('/:id', async (c) => {
   if (body.dyes) {
     const duplicate = await findDuplicatePresetExcluding(c.env.DB, body.dyes, id);
     if (duplicate) {
+      // FINDING-016: describe the colliding preset only if the caller could GET it
+      const summary = duplicateSummaryFor(auth, duplicate);
       return c.json(
         {
           success: false,
           error: ErrorCode.DUPLICATE_RESOURCE,
           message: 'This dye combination already exists',
-          duplicate: {
-            id: duplicate.id,
-            name: duplicate.name,
-            author_name: duplicate.author_name,
-          },
+          ...(summary && { duplicate: summary }),
         },
         409
       );
@@ -452,18 +557,14 @@ presetsRouter.patch('/:id', async (c) => {
       const duplicate = body.dyes
         ? await findDuplicatePresetExcluding(c.env.DB, body.dyes, id)
         : null;
+      // FINDING-016: same visibility rule as the pre-check above
+      const summary = duplicateSummaryFor(auth, duplicate);
       return c.json(
         {
           success: false,
           error: ErrorCode.DUPLICATE_RESOURCE,
           message: 'This dye combination already exists',
-          ...(duplicate && {
-            duplicate: {
-              id: duplicate.id,
-              name: duplicate.name,
-              author_name: duplicate.author_name,
-            },
-          }),
+          ...(summary && { duplicate: summary }),
         },
         409
       );
@@ -532,13 +633,13 @@ presetsRouter.get('/:id', async (c) => {
   // the same 404 as a nonexistent ID so hidden content can't be probed. The
   // previous_values audit snapshot is likewise privileged-only.
   const auth = c.get('auth');
-  const isPrivileged =
-    auth.isModerator ||
-    (auth.userDiscordId !== undefined && preset.author_discord_id === auth.userDiscordId);
-  if (preset.status !== 'approved' && !isPrivileged) {
+  if (!canSeePreset(auth, preset)) {
     return notFoundResponse(c, 'Preset');
   }
 
+  const isPrivileged =
+    auth.isModerator ||
+    (auth.userDiscordId !== undefined && preset.author_discord_id === auth.userDiscordId);
   return c.json(isPrivileged ? preset : stripAuditData(preset));
 });
 
@@ -555,9 +656,7 @@ presetsRouter.post('/', async (c) => {
   const userError = requireUserContext(c);
   if (userError) return userError;
 
-  // Check if user is banned
-  const banError = await requireNotBannedCheck(c);
-  if (banError) return banError;
+  // (ban check: router-level requireNotBanned, see top of file)
 
   const auth = c.get('auth');
 
@@ -590,17 +689,10 @@ presetsRouter.post('/', async (c) => {
     return validationErrorResponse(c, validationError);
   }
 
-  // Check for duplicate dye combinations
+  // Check for duplicate dye combinations (FINDING-016: see respondToDuplicate)
   const duplicate = await findDuplicatePreset(c.env.DB, body.dyes);
   if (duplicate) {
-    // Add vote to existing preset
-    const voteResult = await addVote(c.env.DB, duplicate.id, auth.userDiscordId!);
-
-    return c.json({
-      success: true,
-      duplicate,
-      vote_added: voteResult.success && !voteResult.already_voted,
-    });
+    return respondToDuplicate(c, auth, duplicate);
   }
 
   // Moderate content
@@ -634,12 +726,8 @@ presetsRouter.post('/', async (c) => {
       // Try to find and vote on the existing preset
       const existingPreset = await findDuplicatePreset(c.env.DB, body.dyes);
       if (existingPreset) {
-        const voteResult = await addVote(c.env.DB, existingPreset.id, auth.userDiscordId!);
-        return c.json({
-          success: true,
-          duplicate: existingPreset,
-          vote_added: voteResult.success && !voteResult.already_voted,
-        });
+        // FINDING-016: same rules as the pre-check branch
+        return respondToDuplicate(c, auth, existingPreset);
       }
     }
     // Re-throw if it's not a duplicate constraint error
@@ -729,8 +817,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   const userError = requireUserContext(c);
   if (userError) return userError;
 
-  const banError = await requireNotBannedCheck(c);
-  if (banError) return banError;
+  // (ban check: router-level requireNotBanned, see top of file)
 
   const auth = c.get('auth');
   const presetId = c.req.param('id');
@@ -742,6 +829,11 @@ presetsRouter.post('/:id/preview-image', async (c) => {
       { success: false, error: ErrorCode.NOT_FOUND, message: 'Preset not found' },
       404
     );
+  }
+
+  // FINDING-016: a preset the caller could not GET does not exist for them
+  if (!canSeePreset(auth, preset)) {
+    return notFoundResponse(c, 'Preset');
   }
 
   if (preset.author_discord_id !== auth.userDiscordId) {
@@ -899,6 +991,11 @@ presetsRouter.delete('/:id/preview-image', async (c) => {
   // Row-level read: CommunityPreset hides preview_image_key by design.
   const preset = await getPresetImageState(c.env.DB, presetId);
   if (!preset) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  // FINDING-016: a preset the caller could not GET does not exist for them
+  if (!canSeePreset(auth, preset)) {
     return notFoundResponse(c, 'Preset');
   }
 

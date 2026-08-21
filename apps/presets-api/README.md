@@ -127,6 +127,15 @@ wrangler secret put MODERATOR_IDS        # CSV of Discord IDs with moderator rig
 
 `JWT_SECRET` is shared with [`apps/oauth`](../../apps/oauth/) — rotating it in one place without the other logs every user out. See [`docs/operations/SECRET_ROTATION.md`](../../docs/operations/SECRET_ROTATION.md).
 
+### Optional Secrets
+
+```bash
+wrangler secret put CACHE_PURGE_ZONE_ID    # Zone that serves shots.xivdyetools.app
+wrangler secret put CACHE_PURGE_API_TOKEN  # API token with Zone → Cache Purge on that zone
+```
+
+When both are set, every preview-image takedown (moderator reject, author delete, preset delete, replace) also purges the image URL from the Cloudflare edge cache (FINDING-018). Without them the purge is skipped and the object's one-day `s-maxage` is the only bound on how long a removed image stays reachable.
+
 ## Dependencies
 
 | Package | Purpose |

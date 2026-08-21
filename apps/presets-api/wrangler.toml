@@ -83,7 +83,10 @@ service = "xivdyetools-image-worker"
 # Secrets: BOT_API_SECRET, BOT_SIGNING_SECRET, JWT_SECRET,
 # MODERATOR_IDS, PERSPECTIVE_API_KEY, MODERATION_WEBHOOK_URL,
 # OWNER_DISCORD_ID, DISCORD_BOT_TOKEN,
-# DISCORD_BOT_WEBHOOK_URL, INTERNAL_WEBHOOK_SECRET
+# DISCORD_BOT_WEBHOOK_URL, INTERNAL_WEBHOOK_SECRET,
+# CACHE_PURGE_ZONE_ID + CACHE_PURGE_API_TOKEN (optional, FINDING-018:
+#   zone serving shots.xivdyetools.app + token with Zone → Cache Purge;
+#   unset → preview-image takedowns skip the edge purge)
 
 # FINDING-002: production oauth TOKEN_BLACKLIST namespace (see apps/oauth/wrangler.toml)
 [[env.production.kv_namespaces]]

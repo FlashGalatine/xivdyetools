@@ -6,7 +6,7 @@
 import { Hono } from 'hono';
 import type { Env, AuthContext, VoteResponse } from '../types.js';
 import { requireAuth, requireUserContext } from '../middleware/auth.js';
-import { requireNotBannedCheck } from '../middleware/ban-check.js';
+import { requireNotBanned } from '../middleware/ban-check.js';
 import { notFoundResponse } from '../utils/api-response.js';
 
 type Variables = {
@@ -14,6 +14,21 @@ type Variables = {
 };
 
 export const votesRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+// FINDING-017 (PAPI-9): the ban check covers every mutating route on this
+// router — DELETE (remove vote) previously had none. Registered once, here,
+// so a future route cannot forget it. Unauthenticated requests pass through
+// (nothing to check) and get their 401 from the handler as before.
+votesRouter.on(['POST', 'DELETE'], '*', requireNotBanned);
+
+/**
+ * FINDING-016 (PAPI-5 / PAPI-11): votes are for APPROVED presets only. The
+ * gate query carries the status predicate, so a pending / rejected / flagged /
+ * hidden preset is indistinguishable from a nonexistent one (404) — the same
+ * answer GET /presets/:id gives the unprivileged, and no vote lands on a row
+ * that is not public.
+ */
+const APPROVED_PRESET_GATE = "SELECT id FROM presets WHERE id = ? AND status = 'approved'";
 
 /**
  * Add a vote to a preset
@@ -147,17 +162,13 @@ votesRouter.post('/:presetId', async (c) => {
   const userError = requireUserContext(c);
   if (userError) return userError;
 
-  // Check if user is banned
-  const banError = await requireNotBannedCheck(c);
-  if (banError) return banError;
+  // (ban check: router-level requireNotBanned, see top of file)
 
   const auth = c.get('auth');
   const presetId = c.req.param('presetId');
 
-  // Check preset exists
-  const preset = await c.env.DB.prepare('SELECT id FROM presets WHERE id = ?')
-    .bind(presetId)
-    .first();
+  // Check preset exists AND is approved (FINDING-016)
+  const preset = await c.env.DB.prepare(APPROVED_PRESET_GATE).bind(presetId).first();
 
   if (!preset) {
     return notFoundResponse(c, 'Preset');
@@ -192,10 +203,9 @@ votesRouter.delete('/:presetId', async (c) => {
   const auth = c.get('auth');
   const presetId = c.req.param('presetId');
 
-  // Check preset exists
-  const preset = await c.env.DB.prepare('SELECT id FROM presets WHERE id = ?')
-    .bind(presetId)
-    .first();
+  // Check preset exists AND is approved (FINDING-016) — same gate as POST, so
+  // the vote routes never confirm the existence of a non-public preset
+  const preset = await c.env.DB.prepare(APPROVED_PRESET_GATE).bind(presetId).first();
 
   if (!preset) {
     return notFoundResponse(c, 'Preset');

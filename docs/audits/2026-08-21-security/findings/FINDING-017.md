@@ -16,3 +16,7 @@ Fail closed for mutations when the ban lookup errors (503), apply `requireNotBan
 
 ## References
 - Evidence: `../evidence/review-presets-api.md` (PAPI-9), `../evidence/review-moderation-worker.md` (MOD-14)
+
+## Status
+**FIXED 2026-08-21** (presets-api 2.1.0)
+- presets-api 2.1.0: ban lookup fails CLOSED (503 `SERVICE_UNAVAILABLE`) everywhere except `ENVIRONMENT=development`; `requireNotBanned` registered once per router for every mutating method (newly covered: DELETE preset, PATCH refresh-author, DELETE preview-image, DELETE vote); throwing-lookup tests replace the vacuous ones. Deferred: cross-identity (`xivauth_id`) bans need oauth/moderation changes.

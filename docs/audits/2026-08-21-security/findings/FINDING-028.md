@@ -18,4 +18,5 @@ Strip/replace XML-illegal code points in `escapeXml` (and always escape attribut
 - XML 1.0 §2.2 Char production; Evidence: `../evidence/review-packages.md` (PKG-7, PKG-8)
 
 ## Status
-**FIXED 2026-08-21** — `@xivdyetools/svg` 2.0.1: `escapeXml` strips XML-illegal C0 controls, U+FFFE/U+FFFF and lone surrogates; `fill` attributes in contrast-card / gradient / dye-info-card / swatch-card escaped.
+**FIXED 2026-08-21** — `@xivdyetools/svg` 2.0.1 `escapeXml` + `fill` escaping; presets-api 2.1.0 validation (below).
+- presets-api 2.1.0: control / invisible / bidi characters rejected in name, description and tags (see the FINDING-019 bullet).

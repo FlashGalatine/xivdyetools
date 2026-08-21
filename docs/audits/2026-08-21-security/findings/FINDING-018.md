@@ -15,3 +15,7 @@ Use a shorter `s-maxage` (e.g. 1 day) with `stale-while-revalidate`, or call the
 
 ## References
 - Evidence: `../evidence/review-presets-api.md` (PAPI-4)
+
+## Status
+**FIXED 2026-08-21** (presets-api 2.1.0; purge is opt-in via two secrets)
+- presets-api 2.1.0: preview images served with `public, max-age=31536000, immutable, s-maxage=86400` (edge TTL 1 day); `purgePreviewImageCache()` single-file Cloudflare purge when the optional `CACHE_PURGE_ZONE_ID` / `CACHE_PURGE_API_TOKEN` secrets are set (5 s timeout, never throws); `deletePreviewImage` = R2 delete then purge on reject / author delete / preset delete / replace. Deploy note: set the two optional secrets on production (post-merge checklist).

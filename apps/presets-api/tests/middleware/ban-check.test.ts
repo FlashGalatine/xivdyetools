@@ -14,11 +14,37 @@ import {
 } from '../../src/middleware/ban-check';
 import { authMiddleware } from '../../src/middleware/auth';
 import type { Env, AuthContext } from '../../src/types';
-import { createMockEnv, createMockD1Database } from '../test-utils';
+import { createMockEnv, createMockD1Database, createTestJWT } from '../test-utils';
 
 type Variables = {
     auth: AuthContext;
 };
+
+const JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!';
+
+/**
+ * FINDING-017: a D1 whose ban lookup throws (D1 incident, missing table) while
+ * every other query is still served by the base mock. The shared mock D1
+ * special-cases `SELECT 1 FROM banned_users` and never consults _setupMock for
+ * it, so the failure has to be injected at the prepare() layer.
+ */
+function withFailingBanLookup(base: ReturnType<typeof createMockD1Database>): D1Database {
+    return {
+        ...base,
+        prepare: (query: string) => {
+            if (query.includes('banned_users')) {
+                return {
+                    bind: () => ({
+                        first: async () => {
+                            throw new Error('D1_ERROR: no such table: banned_users');
+                        },
+                    }),
+                };
+            }
+            return base.prepare(query);
+        },
+    } as unknown as D1Database;
+}
 
 describe('BanCheckMiddleware', () => {
     let app: Hono<{ Bindings: Env; Variables: Variables }>;
@@ -137,10 +163,38 @@ describe('BanCheckMiddleware', () => {
             expect(mockDb._bindings.some((b) => b.includes(testUserId))).toBe(true);
         });
 
-        it('should handle database errors gracefully and continue', async () => {
-            // Note: With the simplified mock, database errors for ban checks are not easily testable
-            // The ban status is determined by _setBanStatus, not by the database
-            // This test verifies the default behavior (not banned) works correctly
+        // FINDING-017 (2026-08-21 security audit): a failed ban lookup used to
+        // `console.error` and call next() — a D1 incident silently admitted
+        // banned users. Now the request fails CLOSED (503) everywhere except
+        // local development, where a fresh D1 may not have the table yet.
+        it('fails CLOSED with 503 when the ban lookup throws in production (FINDING-017)', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            const prodEnv = createMockEnv({
+                DB: withFailingBanLookup(mockDb),
+                ENVIRONMENT: 'production',
+            });
+            const jwt = await createTestJWT(JWT_SECRET, { sub: '123456789', username: 'someone' });
+
+            const res = await app.request(
+                '/test/action',
+                { headers: { Authorization: `Bearer ${jwt}` } },
+                prodEnv
+            );
+
+            expect(res.status).toBe(503);
+            const body = await res.json() as { success: boolean; error: string; message: string };
+            expect(body.success).toBe(false);
+            expect(body.error).toBe('SERVICE_UNAVAILABLE');
+            expect(body.message).not.toContain('banned'); // the caller is not told they are banned
+        });
+
+        it('fails CLOSED in any environment that is not development (e.g. "test")', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            const testEnv = createMockEnv({
+                DB: withFailingBanLookup(mockDb),
+                ENVIRONMENT: 'test',
+            });
+
             const res = await app.request(
                 '/test/action',
                 {
@@ -149,8 +203,39 @@ describe('BanCheckMiddleware', () => {
                         'X-User-Discord-ID': '123456789',
                     },
                 },
-                env
+                testEnv
             );
+
+            expect(res.status).toBe(503);
+        });
+
+        it('fails open only in development, and warns about it', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const devEnv = createMockEnv({ DB: withFailingBanLookup(mockDb) }); // ENVIRONMENT: development
+
+            const res = await app.request(
+                '/test/action',
+                {
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                },
+                devEnv
+            );
+
+            expect(res.status).toBe(200);
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('development'));
+        });
+
+        it('still lets unauthenticated requests through when the lookup is broken (nothing to check)', async () => {
+            const prodEnv = createMockEnv({
+                DB: withFailingBanLookup(mockDb),
+                ENVIRONMENT: 'production',
+            });
+
+            const res = await app.request('/test/action', {}, prodEnv);
 
             expect(res.status).toBe(200);
         });
@@ -234,8 +319,31 @@ describe('BanCheckMiddleware', () => {
             expect(body.error).toBe('USER_BANNED');
         });
 
-        it('should handle database errors gracefully and return null', async () => {
-            // Default behavior when no ban status is set
+        it('returns a 503 Response when the ban lookup throws in production (FINDING-017)', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            const prodEnv = createMockEnv({
+                DB: withFailingBanLookup(mockDb),
+                ENVIRONMENT: 'production',
+            });
+            const jwt = await createTestJWT(JWT_SECRET, { sub: '123456789', username: 'someone' });
+
+            const res = await app.request(
+                '/test/guarded',
+                { headers: { Authorization: `Bearer ${jwt}` } },
+                prodEnv
+            );
+
+            expect(res.status).toBe(503);
+            const body = await res.json() as { success: boolean; error: string };
+            expect(body.success).toBe(false);
+            expect(body.error).toBe('SERVICE_UNAVAILABLE');
+        });
+
+        it('returns null (fails open) only in development when the lookup throws', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const devEnv = createMockEnv({ DB: withFailingBanLookup(mockDb) });
+
             const res = await app.request(
                 '/test/guarded',
                 {
@@ -244,10 +352,11 @@ describe('BanCheckMiddleware', () => {
                         'X-User-Discord-ID': '123456789',
                     },
                 },
-                env
+                devEnv
             );
 
             expect(res.status).toBe(200);
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('development'));
         });
     });
 
@@ -278,13 +387,8 @@ describe('BanCheckMiddleware', () => {
             expect(isBanned).toBe(false);
         });
 
-        it('should return false on database error', async () => {
-            // Default behavior - treated as not banned
-
-            const isBanned = await checkBanStatus(
-                mockDb as unknown as D1Database,
-                '123456789'
-            );
+        it('should return false on database error (informational helper, never blocks)', async () => {
+            const isBanned = await checkBanStatus(withFailingBanLookup(mockDb), '123456789');
 
             expect(isBanned).toBe(false);
         });
