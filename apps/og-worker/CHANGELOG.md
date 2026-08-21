@@ -5,6 +5,63 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-08-21
+
+The 2026-08-20 i18n audit (`docs/audits/2026-08-20-og-worker-i18n/I18N_AUDIT.md`, 14 findings)
+executed in three commits plus a web-app companion. Headline: under `?lang=` the **picture** was
+localized but the **words around it** were not — and no link the web-app produced ever carried
+`?lang=`, so the localized path was unreachable from real shares.
+
+### Added
+
+- **`OG_EMBED` ×6 (`services/og-embed.ts`)** — every `og:title` / `og:description` sentence, the
+  root and catch-all embeds, the swatch gender pair and the one body string, authored in all six
+  locales and filled by `embed()`. Until now these were English templates with localized nouns
+  spliced in (`Snow White - 分裂補色 Harmony | XIV Dye Tools`, `Explore geteiltes komplement color
+  harmonies…`). The 2.0.0 note "every social preview now respects the sharer's locale" described the
+  four nouns, not the sentences. Lives in its own file because `scripts/subset-cjk-fonts.py` parses
+  every locale block of `og-strings.ts`, and browser text must not bloat the card subsets.
+- **`OG_ROLE` ×6 (`og-strings.ts`)** — the band role words (BASE, START/END, BUYABLE, TARGET,
+  CLOSEST PAIR, AS DESIGNED, NOT FOUND, CURATED, BEST, VENDOR, COFFER, BOARD, NO STAIN ID) were
+  English literals on every card in every locale. They now follow the bot's card vocabulary
+  (`bot-logic` `card.base` = BASIS / ベース, `card.target` = ZIEL / 目標色, `card.designed` =
+  WIE ENTWORFEN / 本来の色) so the unfurl and the bot embed of one result agree. Codes stay codes:
+  A/B/C, `ALGO_TAG`, `LENS_SHORT`, STD SPECTRUM / WIDE #1, `216 G`. `notFoundBand()` takes the
+  locale. CJK subsets re-cut (JP 372 KB, SC 558 KB, KR 185 KB); `font-coverage.test.ts` covers the
+  new table.
+- **`OGData.locale`** → `<html lang="…">`, a new `og:locale` meta (`ja_JP`, `de_DE`, …), and the
+  body link text. Was `lang="en"` for every locale.
+- **Tests:** a ja gate in `og-data-generator.test.ts` renders every tool's share and asserts no
+  English word survives in the title or description; `roles-i18n.test.ts` asserts the role words
+  per card per locale; `OG_EMBED` / `OG_ROLE` completeness and placeholder parity ×6; root and
+  catch-all honour `?lang=`.
+
+### Fixed
+
+- **Dye names in the embed localize like they do on the card** — `getDyeInfo()` went through
+  `dye.name` (EN) while every adapter used `getLocalizedDyeName()`.
+- **Tool names in the embed title come from `OG_DECK`, not core `tools.*`** — core has no
+  `extractor` / `presets` / `budget` (`getToolName()` fell through to a formatted key: `Presets |
+  XIV Dye Tools` in all six locales) and its six older names differ from the 5.0 page titles the
+  deck quotes in 20 of 36 cells (de `Verlaufs-Generator` vs the card's and page's
+  `Verlauf-Ersteller`). One unfurl, one vocabulary.
+- **No `.toLowerCase()` on localized nouns** — German lost its capitals (`geteiltes komplement`,
+  `deuteranopie`); EN keeps its mid-sentence case via the templates.
+- **Swatch race / gender resolve** through core `clans` / `races` and the new gender pair instead
+  of echoing URL slugs (`female miqote 髪の色`).
+- **`'Color Vision'` fallback** (accessibility without `?vision=`) is a ×6 string.
+- **Budget deck ja/zh** — `{name}` is in the `budgetBest` template, so no ASCII space follows the
+  fullwidth colon (`最良： ピュア…` → `最良：ピュア…`); `deckLine()` fills any `{placeholder}`.
+- **`DEFAULT_DECK.label`** (`/HARMONY` … ×9) was dead — `index.ts` builds the chip from the
+  localized `TOOL_TAG`. Removed.
+
+### Companion (web-app)
+
+- `ShareService.generateUrl` now appends `lang=<current locale>` for non-English locales
+  (`apps/web-app`, same branch). og-worker resolves locale from `?lang=` and from nothing else —
+  crawlers send no useful `Accept-Language` — so this is the change that makes everything above
+  reachable from a real share. English stays unparameterised (EN cache keys stay bare).
+
 ## [2.1.0] - 2026-08-18
 
 The 2026-08-18 dead-code audit (`docs/audits/2026-08-18-og-worker-dead-code/`,

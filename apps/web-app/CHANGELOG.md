@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Share URLs carry the sharer's locale.** `ShareService.generateUrl` appends `lang=<current locale>` for non-English locales, so the og-worker unfurl (embed copy and preview card, both localized ×6 as of og-worker 2.2.0) renders in the language the link was shared from. og-worker resolves locale from `?lang=` and from nothing else — crawlers send no useful `Accept-Language` — so until now every share link unfurled in English for every user. English stays unparameterised (stable og cache keys); the SPA's own routing ignores the param. (2026-08-20 og-worker i18n audit, OG-I18N-001.)
+
 ## [5.0.0] - 2026-08-16
 
 The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to its confirmed design spec on a new console-look shell, the theme catalogue collapses to Light/Dark, every stored and shared dye reference moves to the game's own **stainID**, and the six matching methods become one calibrated vocabulary shared with the Discord bot and the public API. Ships alongside `@xivdyetools/core@4.0.0`, `@xivdyetools/types@2.0.0`, `@xivdyetools/svg@2.0.0` (a new direct dependency — the icon home) and the absorbed Universalis proxy in `api-worker`. Locale files grew from 1,041 to 1,489 keys per language, parity-validated across all six.

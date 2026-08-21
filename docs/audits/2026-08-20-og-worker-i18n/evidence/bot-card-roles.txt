@@ -1,0 +1,15 @@
+bot-logic localizes the band/role vocabulary that og-worker hardcodes in English (packages/bot-logic/src/i18n/locales/*.json `card.*`):
+
+card.base           en='BASE'  de='BASIS'  fr='BASE'  ja='ベース'  ko='기준'  zh='基色'
+card.target         en='TARGET'  de='ZIEL'  fr='CIBLE'  ja='目標色'  ko='목표색'  zh='目标色'
+card.lTarget        en='TARGET'  de='ZIEL'  fr='CIBLE'  ja='目標'  ko='목표'  zh='目标'
+card.designed       en='AS DESIGNED'  de='WIE ENTWORFEN'  fr='COULEUR RÉELLE'  ja='本来の色'  ko='원래 색'  zh='原始颜色'
+card.perceived      en='AS PERCEIVED'  de='WIE GESEHEN'  fr='PERÇUE'  ja='見え方'  ko='보이는 색'  zh='感知颜色'
+card.vendorCheaper  en='VENDOR CHEAPER'  de='HÄNDLER GÜNSTIGER'  fr='MARCHAND MOINS CHER'  ja='店売りが安い'  ko='상점이 더 저렴'  zh='商店更便宜'
+card.lVendor        en='vendor'  de='Händler'  fr='marchand'  ja='店売り'  ko='상점'  zh='商店'
+card.lCandidate     en='CANDIDATE'  de='KANDIDAT'  fr='CANDIDAT'  ja='候補'  ko='후보'  zh='候选'
+card.found          en='NEAREST DYE'  de='NÄCHSTER FARBSTOFF'  fr='TROUVÉ'  ja='最も近い色'  ko='가장 가까운'  zh='最接近'
+card.nearest        en='NEAREST DYES'  de='NÄCHSTE FARBSTOFFE'  fr='TEINTURES PROCHES'  ja='最も近いカララント'  ko='가장 가까운 염료'  zh='最接近的染剂'
+card.matched        en='MATCHED DYE'  de='PASSENDER FARBSTOFF'  fr='TEINTURE TROUVÉE'  ja='該当カララント'  ko='일치 염료'  zh='匹配染剂'
+
+og-worker English literals with no ×6 counterpart: BASE (harmony.ts:117), START/END (gradient.ts:75), BUYABLE (mixer.ts:93), TARGET + NO STAIN ID (swatch.ts:62-64), CLOSEST PAIR / CLOSEST Δ (comparison.ts:68,85), AS DESIGNED (accessibility.ts:80), TARGET · / COFFER / BOARD / STD SPECTRUM / WIDE #1 / WIDE #2 / VENDOR 216 G / BEST · (budget.ts:36-44,88,131-132), CURATED (presets.ts:65; index.ts:276), NOT FOUND (band-shared.ts:52).

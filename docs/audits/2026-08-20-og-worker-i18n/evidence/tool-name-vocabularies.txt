@@ -1,0 +1,40 @@
+Tool-name vocabularies in one unfurl: og:title uses core `tools.*`; the card deck uses OG_DECK.name; the landing page uses web-app `tools.*.title`.
+
+en harmony        core.tools='Harmony Explorer'                 OG_DECK.name='Color Harmony'                  web-app.title='Color Harmony Explorer'  <-- og:title != card deck
+en gradient       core.tools='Gradient Builder'                 OG_DECK.name='Gradient Builder'               web-app.title='Gradient Builder'
+en mixer          core.tools='Dye Mixer'                        OG_DECK.name='Dye Mixer'                      web-app.title='Dye Mixer'
+en swatch         core.tools='Swatch Matcher'                   OG_DECK.name='Swatch Matcher'                 web-app.title='(none)'
+en comparison     core.tools='Dye Comparison'                   OG_DECK.name='Dye Comparison'                 web-app.title='Dye Comparison'
+en accessibility  core.tools='Accessibility Checker'            OG_DECK.name='Accessibility Checker'          web-app.title='Accessibility Checker'
+de harmony        core.tools='Harmonie-Explorer'                OG_DECK.name='Farbharmonie'                   web-app.title='Farbharmonie-Explorer'  <-- og:title != card deck
+de gradient       core.tools='Verlaufs-Generator'               OG_DECK.name='Verlauf-Ersteller'              web-app.title='Verlauf-Ersteller'  <-- og:title != card deck
+de mixer          core.tools='Farbstoff-Mixer'                  OG_DECK.name='Farbstoffmixer'                 web-app.title='Farbstoffmixer'  <-- og:title != card deck
+de swatch         core.tools='Farbabgleich'                     OG_DECK.name='Charakter-Matcher'              web-app.title='(none)'  <-- og:title != card deck
+de comparison     core.tools='Farbstoff-Vergleich'              OG_DECK.name='Farbstoffvergleich'             web-app.title='Farbstoffvergleich'  <-- og:title != card deck
+de accessibility  core.tools='Barrierefreiheits-Check'          OG_DECK.name='Barrierefreiheitsprüfung'       web-app.title='Barrierefreiheitsprüfung'  <-- og:title != card deck
+fr harmony        core.tools="Explorateur d'harmonies"          OG_DECK.name='Harmonies de couleurs'          web-app.title="Explorateur d'Harmonies de Couleurs"  <-- og:title != card deck
+fr gradient       core.tools='Créateur de dégradés'             OG_DECK.name='Constructeur de dégradé'        web-app.title='Constructeur de Dégradé'  <-- og:title != card deck
+fr mixer          core.tools='Mélangeur de teintures'           OG_DECK.name='Mélangeur de teintures'         web-app.title='Mélangeur de Teintures'
+fr swatch         core.tools='Comparateur de nuances'           OG_DECK.name='Nuancier'                       web-app.title='(none)'  <-- og:title != card deck
+fr comparison     core.tools='Comparaison de teintures'         OG_DECK.name='Comparaison de teintures'       web-app.title='Comparaison de Teintures'
+fr accessibility  core.tools="Vérificateur d'accessibilité"     OG_DECK.name='Vérification d’accessibilité'   web-app.title="Vérification d'Accessibilité"  <-- og:title != card deck
+ja harmony        core.tools='ハーモニーエクスプローラー'                    OG_DECK.name='カラーハーモニー'                       web-app.title='カラーハーモニーエクスプローラー'  <-- og:title != card deck
+ja gradient       core.tools='グラデーションビルダー'                      OG_DECK.name='グラデーションビルダー'                    web-app.title='グラデーションビルダー'
+ja mixer          core.tools='カララントミキサー'                        OG_DECK.name='カララントミキサー'                      web-app.title='カララントミキサー'
+ja swatch         core.tools='スウォッチマッチャー'                       OG_DECK.name='キャラクターマッチャー'                    web-app.title='(none)'  <-- og:title != card deck
+ja comparison     core.tools='カララント比較'                          OG_DECK.name='カララント比較'                        web-app.title='カララント比較'
+ja accessibility  core.tools='アクセシビリティチェッカー'                    OG_DECK.name='アクセシビリティチェッカー'                  web-app.title='アクセシビリティチェッカー'
+ko harmony        core.tools='하모니 익스플로러'                        OG_DECK.name='색상 조화'                          web-app.title='색상 조화 탐색기'  <-- og:title != card deck
+ko gradient       core.tools='그라데이션 빌더'                         OG_DECK.name='그라데이션 빌더'                       web-app.title='그라데이션 빌더'
+ko mixer          core.tools='염료 믹서'                            OG_DECK.name='염료 믹서'                          web-app.title='염료 믹서'
+ko swatch         core.tools='스와치 매처'                           OG_DECK.name='캐릭터 매처'                         web-app.title='(none)'  <-- og:title != card deck
+ko comparison     core.tools='염료 비교'                            OG_DECK.name='염료 비교'                          web-app.title='염료 비교'
+ko accessibility  core.tools='접근성 검사기'                          OG_DECK.name='접근성 검사기'                        web-app.title='접근성 검사기'
+zh harmony        core.tools='配色探索器'                            OG_DECK.name='色彩和谐'                           web-app.title='色彩和谐探索器'  <-- og:title != card deck
+zh gradient       core.tools='渐变生成器'                            OG_DECK.name='渐变生成器'                          web-app.title='渐变生成器'
+zh mixer          core.tools='染剂调色器'                            OG_DECK.name='染剂混合器'                          web-app.title='染剂混合器'  <-- og:title != card deck
+zh swatch         core.tools='色板匹配器'                            OG_DECK.name='角色配色器'                          web-app.title='(none)'  <-- og:title != card deck
+zh comparison     core.tools='染剂对比'                             OG_DECK.name='染剂比较'                           web-app.title='染剂比较'  <-- og:title != card deck
+zh accessibility  core.tools='色彩辅助检测'                           OG_DECK.name='无障碍检查器'                         web-app.title='无障碍检查器'  <-- og:title != card deck
+
+20/36 cells differ between core.tools (og:title) and OG_DECK.name (card deck). harmony is the one DELIBERATE shortening (drops "Explorer"); the rest are core.tools vs the 5.0 web-app titles that OG_DECK quotes.

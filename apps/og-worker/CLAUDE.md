@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **Crawler interception** — when Discord, Twitter, Facebook, Slack, etc. fetch a tool URL like `xivdyetools.app/harmony/?dye=102&harmony=tetradic` (`102` is Jet Black's **stainID** — 5.0 share URLs and OG paths key on stainIDs, never item IDs), the worker detects the bot by `User-Agent` and returns HTML stuffed with locale-aware `og:*` meta tags. Real users get passed through to the SPA.
 2. **OG image rendering** — direct PNG endpoints under `/og/*` produce the 5.0 **15E band cards**: drawn on a 400 design grid and rastered ×3 through `resvg-wasm` (Discord frame 400×350 → 1200×1050; X frame 400×210 → 1200×630 via `?frame=x`, which `twitter:image` carries). Six fonts are bundled as `*.ttf` data imports: Space Grotesk, Onest, Fragment Mono, plus the CJK subsets NotoSansJP/SC/KR (regenerate via `scripts/subset-cjk-fonts.py` whenever dyes or card strings change).
 
-All nine tools are supported: harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, budget — each a thin adapter onto the shared `services/svg/band.ts` frame (plus the 2a default cards in `default-card.ts` and the ×6 deck strings in `services/og-strings.ts`). Localization is handled via a stateless `TranslationProvider` with all 6 locales eagerly preloaded — concurrent requests with different `?lang=` cannot trample state (see REFACTOR-001).
+All nine tools are supported: harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, budget — each a thin adapter onto the shared `services/svg/band.ts` frame (plus the 2a default cards in `default-card.ts` and the ×6 card strings in `services/og-strings.ts`; the crawler's ×6 embed sentences are `services/og-embed.ts`). Localization is handled via a stateless `TranslationProvider` with all 6 locales eagerly preloaded — concurrent requests with different `?lang=` cannot trample state (see REFACTOR-001). Core supplies game nouns only; every sentence and label the worker says in its own voice is authored ×6 in those two files, and tool names come from `OG_DECK`, never core `tools.*` (2026-08-20 i18n audit).
 
 ## Commands
 
@@ -30,7 +30,7 @@ pnpm lint                   # knip && knip --production (dead-code gate; runs in
 pnpm type-check && pnpm lint && pnpm test
 ```
 
-`tsconfig.json` inherits the base `noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns`, so unused imports fail `type-check`. `lint` is knip in both modes (`knip.jsonc` explains why the `--production` project glob needs its `!`). Three guards in the test suite exist because each caught a real 2026-08-18 audit finding: `og-data-generator.test.ts` route ↔ emitter parity (every tool's crawler HTML points at `/og/<tool>/…`), `index.test.ts` "every image route honours `?frame=x`", and `services/font-coverage.test.ts` (the bundled fonts' `cmap`s cover every runtime string — a dye rename that needs a new glyph goes red instead of rendering tofu).
+`tsconfig.json` inherits the base `noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns`, so unused imports fail `type-check`. `lint` is knip in both modes (`knip.jsonc` explains why the `--production` project glob needs its `!`). Three guards in the test suite exist because each caught a real 2026-08-18 audit finding: `og-data-generator.test.ts` route ↔ emitter parity (every tool's crawler HTML points at `/og/<tool>/…`), `index.test.ts` "every image route honours `?frame=x`", and `services/font-coverage.test.ts` (the bundled fonts' `cmap`s cover every runtime string — a dye rename that needs a new glyph goes red instead of rendering tofu). Two more from the 2026-08-20 i18n audit: `og-data-generator.test.ts` "ja: no English word survives" renders every tool's share under `?lang=ja` and fails on any four-letter Latin run outside the brand / `FFXIV` / hex codes (the mixed-language embed that audit found), and `services/svg/roles-i18n.test.ts` pins the band role words per card per locale.
 
 ## Architecture
 
@@ -61,11 +61,12 @@ src/
 └── services/
     ├── fonts.ts                # getFontBuffers() — the six TTFs as Uint8Arrays
     ├── renderer.ts             # initRenderer() + renderSvgToPng() + renderOGImage()
-    ├── og-strings.ts           # ALL card copy ×6: OG_DECK, TOOL_TAG, OG_DECK_LINE
-    ├── translator.ts           # Stateless 6-locale provider + dye/harmony/lens names
+    ├── og-strings.ts           # ALL card copy ×6: OG_DECK, TOOL_TAG, OG_DECK_LINE, OG_ROLE (subset-covered)
+    ├── og-embed.ts             # The crawler copy ×6: OG_EMBED + embed() — og:title/description, browser text (NOT subset)
+    ├── translator.ts           # Stateless 6-locale provider + dye/harmony/lens/clan-or-race names
     └── svg/
         ├── band.ts             # ★ The 15E frame + the SHARED chrome (cardHeader/cardFooter/ogMark)
-        ├── band-shared.ts      # ALGO_TAG, fmtDelta, bandGlyph, notFoundBand
+        ├── band-shared.ts      # ALGO_TAG, fmtDelta, bandGlyph, notFoundBand (takes the locale)
         ├── default-card.ts     # The 2a default cards (stripes + glyph tile)
         ├── tokens.ts           # GROUND, font STACKS, MARK_STRIPES, COMPACT_GLYPH — one source
         ├── dye-helpers.ts      # Shared DyeService, stainID map, deltaForAlgorithm
@@ -200,7 +201,7 @@ Cloudflare Workers disallow dynamic `WebAssembly.instantiate()`, so `services/re
 
 `services/fonts.ts` does static `import` of all six TTFs (three brand fonts + Noto Sans JP/SC/KR subsets) and caches `Uint8Array` views in module scope. `getFontBuffers()` is passed to `Resvg`'s `font.fontBuffers`; `defaultFontFamily: 'Onest'`. The JP subset exists because folding Japanese into the SC subset renders JA text in Chinese letterforms, so JA stacks put `Noto Sans JP` first.
 
-**Any new or changed card string means re-running `scripts/subset-cjk-fonts.py`** — a subset that has never seen a glyph renders tofu. The script reads *both* `packages/core/src/data/locales/` (dye, tool, harmony and lens names) *and* `src/services/og-strings.ts` (this worker's own deck strings, tool tags and deck lines); it fails loudly if the ×6 tables in that file stop parsing rather than silently under-covering them. Source fonts download into the gitignored `scripts/.font-sources/` on first run. `services/font-coverage.test.ts` **verifies** what the script generates: it parses the six TTFs' `cmap`s and fails `pnpm test` if any runtime string (core locales via `LocaleLoader`, the `og-strings.ts` tables, the Δ/·/→ glyphs the adapters emit) is not drawable, or if a `ja` CJK glyph is missing from the JP subset; surplus glyphs only warn. Compare subsets by cmap, never by md5 — fonttools rewrites `head.modified` on every run.
+**Any new or changed card string means re-running `scripts/subset-cjk-fonts.py`** — a subset that has never seen a glyph renders tofu. The script reads *both* `packages/core/src/data/locales/` (dye, tool, harmony and lens names) *and* `src/services/og-strings.ts` (this worker's own deck strings, tool tags, deck lines and role words — every `  xx: {` locale block in that file); it fails loudly if the ×6 tables in that file stop parsing rather than silently under-covering them. `services/og-embed.ts` is deliberately a separate file so the crawler's browser-rendered sentences do not get cut into the card subsets; a new ×6 table that *is* drawn on a card belongs in `og-strings.ts` and in `stringsFor()` in `font-coverage.test.ts`. Source fonts download into the gitignored `scripts/.font-sources/` on first run. `services/font-coverage.test.ts` **verifies** what the script generates: it parses the six TTFs' `cmap`s and fails `pnpm test` if any runtime string (core locales via `LocaleLoader`, the `og-strings.ts` tables, the Δ/·/→ glyphs the adapters emit) is not drawable, or if a `ja` CJK glyph is missing from the JP subset; surplus glyphs only warn. Compare subsets by cmap, never by md5 — fonttools rewrites `head.modified` on every run.
 
 ### Crawler Detection
 

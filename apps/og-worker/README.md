@@ -1,6 +1,6 @@
 # xivdyetools-og-worker
 
-> Dynamic OpenGraph image generation for XIV Dye Tools — renders a social preview card for any shared tool link, localized via `?lang=`.
+> Dynamic OpenGraph previews for XIV Dye Tools — the embed copy and the preview card for any shared tool link, localized via `?lang=` (the web-app puts the sharer's locale on every non-English share URL).
 
 Deployed at [og.xivdyetools.app](https://og.xivdyetools.app), and mounted on `xivdyetools.app/<tool>/*` so a shared deep link gets a real preview instead of a generic site card.
 
@@ -39,7 +39,7 @@ Mounted on the app's own domain so crawlers resolve real previews:
 | `GET /og/default.png` | Site-wide fallback card |
 | `GET /health` | Health probe |
 
-All image endpoints accept **`?lang=en\|ja\|de\|fr\|ko\|zh`** to localize dye names and labels on the card, and **`?frame=x`** for the 1200×630 X/Twitter frame (the default Discord frame is 1200×1050). Dye path segments are stainIDs.
+All crawler and image endpoints accept **`?lang=en\|ja\|de\|fr\|ko\|zh`** — the crawler HTML localizes its `og:title` / `og:description` / `og:locale` and the image localizes dye names, role labels, tags and deck — and image endpoints take **`?frame=x`** for the 1200×630 X/Twitter frame (the default Discord frame is 1200×1050). Dye path segments are stainIDs.
 
 ## Development
 
@@ -77,6 +77,8 @@ Production takes both the `og.xivdyetools.app` custom domain and the nine `xivdy
 Six languages: `en`, `ja`, `de`, `fr`, `ko`, `zh`.
 
 This Worker uses the **stateless** localization trio from `@xivdyetools/core` — `LocaleLoader`, `LocaleRegistry`, and `TranslationProvider` — rather than the singleton `LocalizationService.setLocale()` pattern. Concurrent requests for different languages arrive in the same isolate, and a mutable singleton locale races between them at I/O yield points.
+
+Core supplies the game nouns (dye, harmony, lens, sheet, clan and race names). Everything the worker says in its own voice is authored ×6 here: `services/og-strings.ts` (`OG_DECK` deck strings, `TOOL_TAG` header tags, `OG_DECK_LINE`, `OG_ROLE` band role words — all card text, so all subset-covered) and `services/og-embed.ts` (`OG_EMBED` — the crawler's `og:title` / `og:description` sentences; browser text, kept out of the subset script's reach). Tool names in the embed come from `OG_DECK` (the 5.0 web-app titles), never from core `tools.*`.
 
 ## Dependencies
 
