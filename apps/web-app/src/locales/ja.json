@@ -770,7 +770,8 @@
     "importSkippedInvalid": "無効なコレクションをスキップしました：{name}",
     "importCreateFailed": "コレクションの作成に失敗しました：{name}",
     "importedSuffix": "{name}（インポート{n}）",
-    "unnamed": "名称未設定"
+    "unnamed": "名称未設定",
+    "full": "満杯"
   },
   "tutorial": {
     "step": "ステップ",
@@ -993,7 +994,6 @@
     "tabSaved": "保存済み",
     "tabMine": "自分の",
     "searchAll": "パレット・カララント・タグ検索",
-    "resultsWord": "件",
     "shotSlot": "ミラプリ画像 · リンクのみ保存",
     "paletteLabel": "パレット",
     "paletteCost": "パレット合計",
@@ -1061,7 +1061,6 @@
     "reviewNote": "審査待ちです。多くは1日以内に公開されます。",
     "actView": "表示",
     "actResubmit": "再投稿",
-    "votesLabel": "投票",
     "statPublished": "公開",
     "statTotalVotes": "総投票数",
     "statAwaitingReview": "審査待ち",
@@ -1091,6 +1090,13 @@
     "clickDyesToAdd": "下のカララントをクリックして追加してください...",
     "clickToRemove": "クリックで削除",
     "anotherPreset": "別のプリセット",
+    "loadingOne": "プリセットを読み込み中...",
+    "votesCount": "{n}票",
+    "votesCountOne": "{n}票",
+    "dyeCountShort": "{n}個のカララント",
+    "dyeCountShortOne": "{n}個のカララント",
+    "resultsCount": "{n}件",
+    "resultsCountOne": "{n}件",
     "validation": {
       "nameMin": "名前は{n}文字以上で入力してください",
       "descMin": "説明は{n}文字以上で入力してください",

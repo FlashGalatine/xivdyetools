@@ -217,7 +217,7 @@ function createCollectionMenuItem(
     rightSide.appendChild(checkmark);
   } else if (isFull) {
     const fullText = document.createElement('span');
-    fullText.textContent = 'Full';
+    fullText.textContent = LanguageService.t('collections.full');
     rightSide.appendChild(fullText);
   } else {
     const count = document.createElement('span');

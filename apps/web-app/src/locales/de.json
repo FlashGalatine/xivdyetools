@@ -955,7 +955,6 @@
     "tabSaved": "Gespeichert",
     "tabMine": "Meine",
     "searchAll": "Paletten, Farbstoffe, Tags",
-    "resultsWord": "Paletten",
     "shotSlot": "GLAMOUR-BILD · VERLINKT",
     "paletteLabel": "PALETTE",
     "paletteCost": "PALETTENPREIS",
@@ -1023,7 +1022,6 @@
     "reviewNote": "In der Moderationsschlange. Die meisten Einreichungen sind binnen eines Tages durch.",
     "actView": "Ansehen",
     "actResubmit": "Erneut senden",
-    "votesLabel": "STIMMEN",
     "statPublished": "VERÖFFENTLICHT",
     "statTotalVotes": "STIMMEN GESAMT",
     "statAwaitingReview": "IN PRÜFUNG",
@@ -1053,6 +1051,13 @@
     "clickDyesToAdd": "Unten Farbstoffe anklicken, um sie hinzuzufügen...",
     "clickToRemove": "Zum Entfernen klicken",
     "anotherPreset": "einer anderen Voreinstellung",
+    "loadingOne": "Voreinstellung wird geladen...",
+    "votesCount": "{n} Stimmen",
+    "votesCountOne": "{n} Stimme",
+    "dyeCountShort": "{n} Farbstoffe",
+    "dyeCountShortOne": "{n} Farbstoff",
+    "resultsCount": "{n} Paletten",
+    "resultsCountOne": "{n} Palette",
     "validation": {
       "nameMin": "Der Name muss mindestens {n} Zeichen lang sein",
       "descMin": "Die Beschreibung muss mindestens {n} Zeichen lang sein",
@@ -1101,7 +1106,8 @@
     "importSkippedInvalid": "Ungültige Sammlung übersprungen: {name}",
     "importCreateFailed": "Sammlung konnte nicht erstellt werden: {name}",
     "importedSuffix": "{name} (importiert {n})",
-    "unnamed": "unbenannt"
+    "unnamed": "unbenannt",
+    "full": "Voll"
   },
   "emptyStates": {
     "noSearchResults": {

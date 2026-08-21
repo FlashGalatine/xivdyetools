@@ -103,6 +103,15 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
           : kind === 'rejected'
             ? preset.rejection_reason || t('preset.reviewNote')
             : t('preset.reviewNote');
+      // Only a live row has a published vote tally; the others show an em
+      // dash in the count slot so the label still reads as a votes column.
+      const votesText =
+        kind === 'live'
+          ? LanguageService.tInterpolate(
+              preset.vote_count === 1 ? 'preset.votesCountOne' : 'preset.votesCount',
+              { n: preset.vote_count }
+            )
+          : LanguageService.tInterpolate('preset.votesCount', { n: '—' });
       const actions =
         kind === 'live'
           ? [
@@ -136,9 +145,7 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
           <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
             ${bandFor(preset)}
             <span style="flex: 1; min-width: 0; font-size: 13.5px; font-weight: 650; color: var(--theme-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${preset.name}</span>
-            <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: var(--theme-text-muted); flex: 0 0 auto;">${
-              kind === 'live' ? preset.vote_count : '—'
-            } ${t('preset.votesLabel')}</span>
+            <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: var(--theme-text-muted); flex: 0 0 auto;">${votesText}</span>
             <span style="font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: ${tint(tone, 0.16)}; color: ${tone}; flex: 0 0 auto;">${statusLabel}</span>
           </div>
           ${

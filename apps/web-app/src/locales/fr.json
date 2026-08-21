@@ -955,7 +955,6 @@
     "tabSaved": "Enregistrés",
     "tabMine": "Les miens",
     "searchAll": "Chercher palettes, teintures, tags",
-    "resultsWord": "palettes",
     "shotSlot": "APERÇU GLAMOUR · LIEN, PAS DE COPIE",
     "paletteLabel": "PALETTE",
     "paletteCost": "COÛT DE LA PALETTE",
@@ -1023,7 +1022,6 @@
     "reviewNote": "En file de modération. La plupart des contributions passent en une journée.",
     "actView": "Voir",
     "actResubmit": "Renvoyer",
-    "votesLabel": "VOIX",
     "statPublished": "PUBLIÉES",
     "statTotalVotes": "VOIX AU TOTAL",
     "statAwaitingReview": "EN ATTENTE",
@@ -1053,6 +1051,13 @@
     "clickDyesToAdd": "Cliquez sur les teintures ci-dessous pour les ajouter...",
     "clickToRemove": "Cliquez pour retirer",
     "anotherPreset": "un autre préréglage",
+    "loadingOne": "Chargement du préréglage...",
+    "votesCount": "{n} voix",
+    "votesCountOne": "{n} voix",
+    "dyeCountShort": "{n} teintures",
+    "dyeCountShortOne": "{n} teinture",
+    "resultsCount": "{n} palettes",
+    "resultsCountOne": "{n} palette",
     "validation": {
       "nameMin": "Le nom doit contenir au moins {n} caractères",
       "descMin": "La description doit contenir au moins {n} caractères",
@@ -1101,7 +1106,8 @@
     "importSkippedInvalid": "Collection invalide ignorée : {name}",
     "importCreateFailed": "Échec de la création de la collection : {name}",
     "importedSuffix": "{name} (importé {n})",
-    "unnamed": "sans nom"
+    "unnamed": "sans nom",
+    "full": "Pleine"
   },
   "emptyStates": {
     "noSearchResults": {

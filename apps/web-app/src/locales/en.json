@@ -770,7 +770,8 @@
     "importSkippedInvalid": "Skipped invalid collection: {name}",
     "importCreateFailed": "Failed to create collection: {name}",
     "importedSuffix": "{name} (imported {n})",
-    "unnamed": "unnamed"
+    "unnamed": "unnamed",
+    "full": "Full"
   },
   "tutorial": {
     "step": "Step",
@@ -993,7 +994,6 @@
     "tabSaved": "Saved",
     "tabMine": "Mine",
     "searchAll": "Search presets, dyes, tags",
-    "resultsWord": "presets",
     "shotSlot": "GLAMOUR SHOT · LINKED, NOT UPLOADED",
     "paletteLabel": "PALETTE",
     "paletteCost": "PALETTE COST",
@@ -1061,7 +1061,6 @@
     "reviewNote": "Queued for moderation. Most submissions clear within a day.",
     "actView": "View",
     "actResubmit": "Resubmit",
-    "votesLabel": "VOTES",
     "statPublished": "PUBLISHED",
     "statTotalVotes": "TOTAL VOTES",
     "statAwaitingReview": "AWAITING REVIEW",
@@ -1091,6 +1090,13 @@
     "clickDyesToAdd": "Click dyes below to add them...",
     "clickToRemove": "Click to remove",
     "anotherPreset": "another preset",
+    "loadingOne": "Loading preset...",
+    "votesCount": "{n} votes",
+    "votesCountOne": "{n} vote",
+    "dyeCountShort": "{n} dyes",
+    "dyeCountShortOne": "{n} dye",
+    "resultsCount": "{n} presets",
+    "resultsCountOne": "{n} preset",
     "validation": {
       "nameMin": "Name must be at least {n} characters",
       "descMin": "Description must be at least {n} characters",

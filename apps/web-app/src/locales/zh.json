@@ -980,7 +980,6 @@
     "tabSaved": "已保存",
     "tabMine": "我的",
     "searchAll": "搜索配色、染剂、标签",
-    "resultsWord": "个配色",
     "shotSlot": "幻化截图 · 仅保存链接",
     "paletteLabel": "配色",
     "paletteCost": "配色成本",
@@ -1048,7 +1047,6 @@
     "reviewNote": "正在排队等待审核。大多数投稿一天内通过。",
     "actView": "查看",
     "actResubmit": "重新提交",
-    "votesLabel": "票数",
     "statPublished": "已发布",
     "statTotalVotes": "总票数",
     "statAwaitingReview": "待审核",
@@ -1078,6 +1076,13 @@
     "clickDyesToAdd": "点击下方染剂进行添加...",
     "clickToRemove": "点击移除",
     "anotherPreset": "另一个预设",
+    "loadingOne": "正在加载预设...",
+    "votesCount": "{n} 票",
+    "votesCountOne": "{n} 票",
+    "dyeCountShort": "{n} 种染剂",
+    "dyeCountShortOne": "{n} 种染剂",
+    "resultsCount": "{n} 个配色",
+    "resultsCountOne": "{n} 个配色",
     "validation": {
       "nameMin": "名称至少需要 {n} 个字符",
       "descMin": "描述至少需要 {n} 个字符",
@@ -1126,7 +1131,8 @@
     "importSkippedInvalid": "已跳过无效的集合：{name}",
     "importCreateFailed": "创建集合失败：{name}",
     "importedSuffix": "{name}（导入 {n}）",
-    "unnamed": "未命名"
+    "unnamed": "未命名",
+    "full": "已满"
   },
   "emptyStates": {
     "noSearchResults": {

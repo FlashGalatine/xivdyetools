@@ -932,16 +932,21 @@ export class CollectionService {
   /**
    * Name for an imported copy when the original name is already taken.
    *
+   * The caller loops `while (getCollectionByName(name))`, so this MUST return a
+   * different string for every `suffix`. Two ways it could fail to:
    * `LanguageService.t()` echoes the key back when the locale bundles have not
-   * been loaded (unit tests, or a load failure). Every suffix would then
-   * produce the identical string and the caller's uniqueness loop would spin
-   * forever, so fall back to a plain counter whenever the lookup did not
-   * resolve.
+   * been loaded (unit tests, or a load failure), and a translation that dropped
+   * its `{n}` placeholder interpolates to the same text for every suffix.
+   * Either one spins that loop forever, so both are checked on the *template*
+   * rather than on the rendered result — a rendered-result test ("does the
+   * suffix appear?") passes by accident whenever the base name happens to
+   * contain the digit, which is exactly when the loop is already running.
    */
   private static importedCopyName(baseName: string, suffix: number): string {
     const key = 'collections.importedSuffix';
-    const localized = LanguageService.tInterpolate(key, { name: baseName, n: suffix });
-    return localized === key ? `${baseName} (${suffix})` : localized;
+    const template = LanguageService.t(key);
+    if (template === key || !template.includes('{n}')) return `${baseName} (${suffix})`;
+    return LanguageService.tInterpolate(key, { name: baseName, n: suffix });
   }
 
   /**

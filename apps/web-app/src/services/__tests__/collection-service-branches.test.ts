@@ -191,6 +191,45 @@ describe('CollectionService Branch Coverage', () => {
       expect(CollectionService.getCollectionByName(importedName('Test', 2))).not.toBeUndefined();
     });
 
+    it('falls back to a plain counter when the translation dropped its {n}', () => {
+      // A locale whose `importedSuffix` lost `{n}` renders the same name for
+      // every suffix, which used to spin `while (getCollectionByName(name))`
+      // forever. The counter fallback has to kick in on the template, not on
+      // whether the digit happens to show up in the rendered string.
+      CollectionService.createCollection('Test');
+      const spy = vi
+        .spyOn(LanguageService, 't')
+        .mockImplementation((key: string) =>
+          key === 'collections.importedSuffix' ? '{name} (imported)' : key
+        );
+
+      try {
+        const result = CollectionService.importData(
+          JSON.stringify({
+            version: '1.0.0',
+            exportedAt: new Date().toISOString(),
+            type: 'xivdyetools-collection',
+            data: {
+              collections: [
+                {
+                  id: 'import-noplaceholder',
+                  name: 'Test',
+                  dyes: [],
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                },
+              ],
+            },
+          })
+        );
+
+        expect(result.collectionsImported).toBe(1);
+        expect(CollectionService.getCollectionByName('Test (1)')).not.toBeUndefined();
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
     it('should handle collection creation failure during import', () => {
       // Fill up to max collections
       const maxCollections = CollectionService.getMaxCollections();

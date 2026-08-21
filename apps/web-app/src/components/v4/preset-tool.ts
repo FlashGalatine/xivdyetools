@@ -939,7 +939,12 @@ export class PresetTool extends BaseLitComponent {
               </button>`
             : nothing
         }
-        <span class="results-count">${pool.length} ${LanguageService.t('preset.resultsWord')}</span>
+        <span class="results-count"
+          >${LanguageService.tInterpolate(
+            pool.length === 1 ? 'preset.resultsCountOne' : 'preset.resultsCount',
+            { n: pool.length }
+          )}</span
+        >
       </div>
       <div class="cat-row">
         ${CATEGORY_ORDER.map(
