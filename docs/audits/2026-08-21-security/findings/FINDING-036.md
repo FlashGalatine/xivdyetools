@@ -20,3 +20,6 @@ Bump `vitepress` to a release on Vite ≥ 6.4.3 (or add a `vite` override for th
 
 ## References
 - `../evidence/pnpm-audit.json`, `../evidence/pnpm-audit-summary.md`
+
+## Status
+**FIXED 2026-08-21** — scoped pnpm overrides in `pnpm-workspace.yaml` (`vitepress>vite: '>=6.4.3 <7'`, `tsup>esbuild: '>=0.28.1'`): the lockfile now resolves vite 6.4.3 for the docs build (vite 5.4.21 and esbuild 0.21.5 gone) and esbuild 0.28.1 for stoat-worker's tsup/vitest (0.27.3 gone); `pnpm audit --json` → **0 advisories**; verified `build:docs` (VitePress 1.6.4 on Vite 6.4.3, 5.8 s) and stoat-worker `build` + 172 tests. Drop the vitepress override when VitePress ships on Vite ≥ 6.4.3 natively.

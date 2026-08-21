@@ -159,7 +159,7 @@ FINDING-034); cross-identity (`xivauth_id`) bans need oauth + moderation changes
 | Audit | How | When |
 |---|---|---|
 | **Security — close-out of the 2026-08-21 audit** | walk `findings/FINDING-001..036.md` "Status" lines against production; record residuals (nonce not cached for single-use — FINDING-014; vite 5 dev-only advisories — FINDING-036; GitHub-side settings above); add a "Remediation status" table to `SECURITY_AUDIT_REPORT.md` | week 1 |
-| Dependency advisories | nightly `pnpm audit --prod` job (already scheduled); manual `pnpm audit` for dev deps; revisit FINDING-036 (vitepress → Vite ≥ 6.4.3 or VitePress 2) | week 1, then monthly |
+| Dependency advisories | nightly `pnpm audit --prod` job (already scheduled); manual `pnpm audit` for dev deps (0 advisories at 2026-08-21 thanks to the FINDING-036 overrides — drop `vitepress>vite` from `pnpm-workspace.yaml` once VitePress ships on Vite ≥ 6.4.3) | week 1, then monthly |
 | Secret scanning, full history | `gitleaks git . --config .gitleaks.toml` locally (CI scans only each push's commits); GitHub secret-scanning dashboard | week 1, then quarterly |
 | Dead code | `pnpm lint:dead` root sweep (triage, not a gate) + the per-package knip gates; a focused pass once §3 removals land | after §3 |
 | i18n parity | the parity / order / no-hardcoded-strings / font-coverage gates already in `lint`/`test`; spot-check each locale on production | week 1 |
@@ -174,8 +174,8 @@ FINDING-034); cross-identity (`xivauth_id`) bans need oauth + moderation changes
 - Bot → API v2 signature binds a nonce but the server does not cache nonces for strict
   single-use (60 s window, body/method/path bound) — acceptable inside Cloudflare; revisit if the
   API ever takes bot traffic from outside.
-- `pnpm audit`: 5 dev-only advisories (vite 5.4.21 via vitepress 1.6.4, esbuild 0.27 via tsup) —
-  not reachable at runtime; tracked in FINDING-036.
+- `pnpm audit` is clean (0 advisories) only because of two scoped overrides (FINDING-036); a
+  vitepress / tsup upgrade that changes its own vite / esbuild range may need them revisited.
 - Beta surfaces share production presets-api / oauth data by design (`xiv-beta-web-app`).
 - stoat-worker stays parked; its abuse controls now exist but it has no deploy workflow.
 - discord-worker `PRIVACY_POLICY.md` states Analytics Engine retention as "3 months" — confirm

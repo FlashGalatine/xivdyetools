@@ -54,7 +54,7 @@ Every finding has a `## Status` section in its file with the per-unit detail; th
 | 033 | LOW | discord-worker | Fixed | d07ab763 |
 | 034 | LOW | moderation-worker | Fixed (`moderation_log` rows for bans deferred — presets-api-owned table) | 8e75b4ab |
 | 035 | LOW | stoat-worker | Fixed — 0.2.2 | aad6f2b3 |
-| 036 | LOW | deps | See the FINDING-036 status (dev-only advisories) | — |
+| 036 | LOW | deps | Fixed — scoped overrides (vitepress>vite 6.4.3, tsup>esbuild 0.28.1), `pnpm audit` 0 advisories | deps commit |
 
 Programme-level: `SECURITY.md` added at the repo root (disclosure via GitHub private vulnerability reporting — enable it in the repo settings, checklist §2); `CODEOWNERS` not added (single maintainer).
 

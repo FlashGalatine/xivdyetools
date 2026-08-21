@@ -14,6 +14,17 @@ overrides:
   # Reaches us only transitively, via stoat-worker > revolt.js > solid-js, and
   # seroval-plugins peers on `^1.0` so the floor satisfies it unchanged.
   seroval: '>=1.5.3'
+  # FINDING-036 (2026-08-21 security audit) — dev-only advisories, none
+  # reachable at runtime, closed by scoped overrides rather than waiting on
+  # upstream majors:
+  # - vitepress 1.6.x pins vite ^5.4 (EOL; GHSA-fx2h-pf6j-xcff HIGH +
+  #   GHSA-4w7w-66w2-5vf9 / GHSA-v6wh-96g9-6wx3 MOD + esbuild 0.21 MOD via
+  #   @vitejs/plugin-vue). The docs build runs on Vite 6.4.x (same plugin-vue,
+  #   which peers on ^5 || ^6). Drop this when vitepress ships on Vite >= 6.4.3.
+  'vitepress>vite': '>=6.4.3 <7'
+  # - tsup 8.5 pins esbuild ^0.27 (GHSA-g7r4-m6w7-qqqr LOW); stoat-worker's
+  #   build + vitest run on 0.28.x like every other workspace.
+  'tsup>esbuild': '>=0.28.1'
 
 # Explicit build-script policy (pnpm 11 `allowBuilds` map — replaces the
 # pnpm 10 onlyBuiltDependencies/ignoredBuiltDependencies pair): no dependency
