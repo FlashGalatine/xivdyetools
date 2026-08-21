@@ -23,7 +23,9 @@
     "elsewhere": "AILLEURS",
     "apiSummary": "Données publiques des teintures, deux points d'accès",
     "legalLabel": "ATTRIBUTION",
-    "spectralCredit": "Mélange de peinture réaliste (théorie de Kubelka–Munk) par"
+    "spectralCredit": "Mélange de peinture réaliste (théorie de Kubelka–Munk) par",
+    "dataApiLabel": "API de données",
+    "apiDocsLabel": "Docs de l'API Worker"
   },
   "footer": {
     "createdBy": "Créé par Flash Galatine (Midgardsormr) pour la communauté FFXIV",
@@ -396,7 +398,12 @@
     "visionDescDeuteranopia": "Rouge-vert. La forme la plus courante, environ un homme sur douze.",
     "visionDescProtanopia": "Rouge-vert, avec des rouges assombris en plus d'être décalés.",
     "visionDescTritanopia": "Bleu-jaune. Rare, touche surtout les sarcelles et les jaunes.",
-    "visionDescAchromatopsia": "Aucune couleur — seule la luminosité sépare deux teintures."
+    "visionDescAchromatopsia": "Aucune couleur — seule la luminosité sépare deux teintures.",
+    "prevalenceNormal": "~92 %",
+    "prevalenceDeuteranopia": "~6 % des hommes",
+    "prevalenceProtanopia": "~2 % des hommes",
+    "prevalenceTritanopia": "~0,01 %",
+    "prevalenceAchromatopsia": "~0,003 %"
   },
   "comparison": {
     "selectedDyes": "Teintures sélectionnées",
@@ -465,7 +472,8 @@
     "mDistinguishLabel": "Distinguabilité",
     "mDistinguishShort": "Distinguabilité %",
     "mDistinguishDesc": "La même distance RGB divisée par la diagonale 441,67 du cube et affichée en pourcentage — le nombre que la Vérification d'accessibilité donne pour une paire.",
-    "mDistinguishCaveat": "Hérite de toutes les faiblesses de la distance RGB et ajoute un signe % qui suggère une fausse précision. Utile seulement pour s'aligner sur la Vérification d'accessibilité — jamais comme note WCAG."
+    "mDistinguishCaveat": "Hérite de toutes les faiblesses de la distance RGB et ajoute un signe % qui suggère une fausse précision. Utile seulement pour s'aligner sur la Vérification d'accessibilité — jamais comme note WCAG.",
+    "mRatioShort": "RAPPORT"
   },
   "mixer": {
     "dyeSelection": "Sélection de Teintures",
@@ -500,7 +508,8 @@
     "modelOklab": "Perceptuel",
     "modelLab": "LAB",
     "modelHsl": "Teinte",
-    "modelRgb": "Lumière"
+    "modelRgb": "Lumière",
+    "exportMeta": "Mélange : {model} @ {pct} %"
   },
   "gradient": {
     "selectColor": "Sélectionner une Couleur",
@@ -533,7 +542,8 @@
     "maxDrift": "ΔE max",
     "maxDriftDesc": "Le pire palier du dégradé — une moyenne masque un écart isolé.",
     "bandIdeal": "IDÉAL",
-    "bandAchievable": "RÉALISABLE"
+    "bandAchievable": "RÉALISABLE",
+    "exportMeta": "Interpolation : {space} · {n} paliers"
   },
   "dyeSelector": {
     "searchPlaceholder": "Rechercher des teintures par nom...",
@@ -740,8 +750,6 @@
     "banner": "Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées."
   },
   "tutorial": {
-    "step": "Étape",
-    "of": "sur",
     "skip": "Passer",
     "previous": "Précédent",
     "next": "Suivant",
@@ -834,7 +842,8 @@
         "title": "Paramètres d'affichage",
         "description": "Configurez les options d'affichage pour la vue vérificateur d'accessibilité."
       }
-    }
+    },
+    "stepOf": "Étape {i} sur {n}"
   },
   "preset": {
     "mySubmissions": "Mes soumissions",
@@ -1192,7 +1201,10 @@
     "copied": "Copié !",
     "invalidDye": "Ce lien pointe vers une teinture que cette version ne reconnaît pas.",
     "legacyLink": "Ce lien provient d'une ancienne version et utilise un ID de teinture obsolète — demandez un nouveau lien.",
-    "invalidHex": "Ce lien contient une valeur de couleur invalide."
+    "invalidHex": "Ce lien contient une valeur de couleur invalide.",
+    "linkCopied": "Lien copié dans le presse-papiers !",
+    "copyManually": "Veuillez copier l'URL manuellement",
+    "generateFailed": "Échec de la création du lien de partage"
   },
   "advanced": {
     "eyebrow": "RÉGLAGES",
@@ -1201,7 +1213,9 @@
     "backupTitle": "Sauvegarde",
     "backupSummary": "exporter / importer les réglages en JSON",
     "behaviorTitle": "Comportement",
-    "behaviorSummary": "mode performance · statistiques"
+    "behaviorSummary": "mode performance · statistiques",
+    "dataBadge": "APPAREIL",
+    "behaviorBadge": "ENREGISTRÉ"
   },
   "swatch": {
     "charaHint": "Analysé sur cet appareil. Rien n'est envoyé — le fichier contient un nom de personnage et parfois une capture.",

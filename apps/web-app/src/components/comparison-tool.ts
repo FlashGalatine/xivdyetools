@@ -1938,7 +1938,7 @@ export class ComparisonTool extends BaseComponent {
     // the lower MATCH tiers at all: RATIO_BANDS.comparison is [1,1,1])
     const ratio = ColorService.getContrastRatio(a.hex, b.hex);
     const rounded = Math.round(ratio * 100) / 100;
-    addRow('RATIO', `${rounded.toFixed(2)}:1`, null, true);
+    addRow(LanguageService.t('comparison.mRatioShort'), `${rounded.toFixed(2)}:1`, null, true);
 
     wrap.appendChild(list);
     return wrap;

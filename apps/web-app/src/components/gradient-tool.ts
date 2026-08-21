@@ -1346,7 +1346,12 @@ export class GradientTool extends BaseComponent {
     openExportSheet({
       tool: 'gradient',
       title: LanguageService.t('gradient.gradientResults'),
-      meta: [`Interpolation: ${this.colorSpace} · ${this.currentSteps.length} steps`],
+      meta: [
+        LanguageService.tInterpolate('gradient.exportMeta', {
+          space: this.colorSpace,
+          n: this.currentSteps.length,
+        }),
+      ],
       entries: this.currentSteps.map((step, index) => ({
         key: `step-${index + 1}`,
         source: step.theoreticalColor,

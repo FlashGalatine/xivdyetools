@@ -346,9 +346,19 @@ export class AboutModal {
       a.appendChild(h);
       return a;
     };
-    links.appendChild(apiLink('Data API', 'data.xivdyetools.app', 'https://data.xivdyetools.app'));
     links.appendChild(
-      apiLink('API Worker docs', 'developers.xivdyetools.app', 'https://developers.xivdyetools.app')
+      apiLink(
+        LanguageService.t('about.dataApiLabel'),
+        'data.xivdyetools.app',
+        'https://data.xivdyetools.app'
+      )
+    );
+    links.appendChild(
+      apiLink(
+        LanguageService.t('about.apiDocsLabel'),
+        'developers.xivdyetools.app',
+        'https://developers.xivdyetools.app'
+      )
     );
     body.appendChild(links);
 

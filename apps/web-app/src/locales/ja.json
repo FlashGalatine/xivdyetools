@@ -23,7 +23,9 @@
     "elsewhere": "その他のリンク",
     "apiSummary": "公開染色データ、2つのエンドポイント",
     "legalLabel": "権利表記",
-    "spectralCredit": "リアルな絵の具混色（クベルカ・ムンク理論）:"
+    "spectralCredit": "リアルな絵の具混色（クベルカ・ムンク理論）:",
+    "dataApiLabel": "データAPI",
+    "apiDocsLabel": "API Worker ドキュメント"
   },
   "footer": {
     "createdBy": "Flash Galatine (Midgardsormr) がFFXIVコミュニティのために作成",
@@ -396,7 +398,12 @@
     "visionDescDeuteranopia": "赤緑型。最も多く、男性の約12人に1人。",
     "visionDescProtanopia": "赤緑型。赤がさらに暗く見える。",
     "visionDescTritanopia": "青黄型。まれ。青緑と黄色に影響。",
-    "visionDescAchromatopsia": "色が無く、明度だけが手がかり。"
+    "visionDescAchromatopsia": "色が無く、明度だけが手がかり。",
+    "prevalenceNormal": "約92%",
+    "prevalenceDeuteranopia": "男性の約6%",
+    "prevalenceProtanopia": "男性の約2%",
+    "prevalenceTritanopia": "約0.01%",
+    "prevalenceAchromatopsia": "約0.003%"
   },
   "comparison": {
     "selectedDyes": "選択された染料",
@@ -465,7 +472,8 @@
     "mDistinguishLabel": "判別度",
     "mDistinguishShort": "判別度 %",
     "mDistinguishDesc": "同じRGB距離を色立体の対角線441.67で割った百分率。アクセシビリティチェッカーがペアに対して表示する値です。",
-    "mDistinguishCaveat": "RGB距離の弱点をすべて引き継ぎ、%表記が実際以上の精度を思わせます。アクセシビリティチェッカーとの突き合わせ用で、WCAG評価ではありません。"
+    "mDistinguishCaveat": "RGB距離の弱点をすべて引き継ぎ、%表記が実際以上の精度を思わせます。アクセシビリティチェッカーとの突き合わせ用で、WCAG評価ではありません。",
+    "mRatioShort": "比率"
   },
   "mixer": {
     "dyeSelection": "カララント選択",
@@ -500,7 +508,8 @@
     "modelOklab": "知覚的",
     "modelLab": "LAB",
     "modelHsl": "色相",
-    "modelRgb": "光"
+    "modelRgb": "光",
+    "exportMeta": "ブレンド：{model} @ {pct}%"
   },
   "gradient": {
     "selectColor": "色を選択",
@@ -533,7 +542,8 @@
     "maxDrift": "最大 ΔE",
     "maxDriftDesc": "ランプ内で最も悪いステップ。平均値は単発の飛びを隠します。",
     "bandIdeal": "理想",
-    "bandAchievable": "実現可能"
+    "bandAchievable": "実現可能",
+    "exportMeta": "補間：{space} · {n} ステップ"
   },
   "dyeSelector": {
     "searchPlaceholder": "カララント名で検索...",
@@ -779,8 +789,6 @@
     "full": "満杯"
   },
   "tutorial": {
-    "step": "ステップ",
-    "of": "/",
     "skip": "スキップ",
     "previous": "前へ",
     "next": "次へ",
@@ -873,7 +881,8 @@
         "title": "表示設定",
         "description": "アクセシビリティチェッカービューの表示オプションを設定します。"
       }
-    }
+    },
+    "stepOf": "ステップ {i}/{n}"
   },
   "preset": {
     "mySubmissions": "マイ投稿",
@@ -1192,7 +1201,10 @@
     "copied": "コピーしました！",
     "invalidDye": "このリンクは、このバージョンでは認識できないカララントを指しています。",
     "legacyLink": "このリンクは旧バージョンで作成され、古いカララントIDを使用しています。新しいリンクを取得してください。",
-    "invalidHex": "このリンクには無効なカラー値が含まれています。"
+    "invalidHex": "このリンクには無効なカラー値が含まれています。",
+    "linkCopied": "リンクをクリップボードにコピーしました！",
+    "copyManually": "URLを手動でコピーしてください",
+    "generateFailed": "共有リンクの生成に失敗しました"
   },
   "advanced": {
     "eyebrow": "設定",
@@ -1201,7 +1213,9 @@
     "backupTitle": "バックアップ",
     "backupSummary": "設定をJSONで書き出し / 読み込み",
     "behaviorTitle": "動作",
-    "behaviorSummary": "パフォーマンスモード · 分析"
+    "behaviorSummary": "パフォーマンスモード · 分析",
+    "dataBadge": "端末",
+    "behaviorBadge": "保存済み"
   },
   "swatch": {
     "charaHint": "この端末で解析します。送信はしません。ファイルには名前や画像が含まれることがあります。",

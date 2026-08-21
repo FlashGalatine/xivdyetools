@@ -23,7 +23,9 @@
     "elsewhere": "其他平台",
     "apiSummary": "公开染剂数据，两个接口",
     "legalLabel": "版权声明",
-    "spectralCredit": "逼真的颜料混合（Kubelka–Munk 理论）来自"
+    "spectralCredit": "逼真的颜料混合（Kubelka–Munk 理论）来自",
+    "dataApiLabel": "数据API",
+    "apiDocsLabel": "API Worker 文档"
   },
   "footer": {
     "createdBy": "由 Flash Galatine (Midgardsormr) 为 FFXIV 社区创建",
@@ -423,7 +425,12 @@
     "visionDescDeuteranopia": "红绿色盲。最常见，约每十二名男性中有一人。",
     "visionDescProtanopia": "红绿色盲，红色除偏移外还会变暗。",
     "visionDescTritanopia": "蓝黄色盲。罕见，对青绿和黄色影响最大。",
-    "visionDescAchromatopsia": "完全无色——只有亮度能区分两种染剂。"
+    "visionDescAchromatopsia": "完全无色——只有亮度能区分两种染剂。",
+    "prevalenceNormal": "约92%",
+    "prevalenceDeuteranopia": "约6%男性",
+    "prevalenceProtanopia": "约2%男性",
+    "prevalenceTritanopia": "约0.01%",
+    "prevalenceAchromatopsia": "约0.003%"
   },
   "comparison": {
     "selectedDyes": "已选染剂",
@@ -492,7 +499,8 @@
     "mDistinguishLabel": "可区分度",
     "mDistinguishShort": "可区分度 %",
     "mDistinguishDesc": "同一 RGB 距离除以色立方体对角线 441.67 后以百分比显示——即无障碍检查器为一对颜色报告的数值。",
-    "mDistinguishCaveat": "继承 RGB 距离的全部弱点，百分号还暗示了并不存在的精度。仅用于与无障碍检查器对齐——绝非 WCAG 评级。"
+    "mDistinguishCaveat": "继承 RGB 距离的全部弱点，百分号还暗示了并不存在的精度。仅用于与无障碍检查器对齐——绝非 WCAG 评级。",
+    "mRatioShort": "比值"
   },
   "mixer": {
     "dyeSelection": "染剂选择",
@@ -527,7 +535,8 @@
     "modelOklab": "感知",
     "modelLab": "LAB",
     "modelHsl": "色相",
-    "modelRgb": "光"
+    "modelRgb": "光",
+    "exportMeta": "混合：{model} @ {pct}%"
   },
   "gradient": {
     "selectColor": "选择颜色",
@@ -560,7 +569,8 @@
     "maxDrift": "最大 ΔE",
     "maxDriftDesc": "渐变中最差的一级——平均值会掩盖单点跳变。",
     "bandIdeal": "理想",
-    "bandAchievable": "可实现"
+    "bandAchievable": "可实现",
+    "exportMeta": "插值：{space} · {n} 步骤"
   },
   "dyeSelector": {
     "searchPlaceholder": "按名称搜索染剂...",
@@ -767,8 +777,6 @@
     "banner": "您处于离线状态。部分功能可能受限。"
   },
   "tutorial": {
-    "step": "步骤",
-    "of": "/",
     "skip": "跳过",
     "previous": "上一步",
     "next": "下一步",
@@ -861,7 +869,8 @@
         "title": "显示设置",
         "description": "配置无障碍检查器视图的显示选项。"
       }
-    }
+    },
+    "stepOf": "第 {i} 步，共 {n} 步"
   },
   "preset": {
     "mySubmissions": "我的提交",
@@ -1192,7 +1201,10 @@
     "copied": "已复制！",
     "invalidDye": "此链接指向的染剂在当前版本中无法识别。",
     "legacyLink": "此链接由旧版本生成，使用了过时的染剂ID——请重新获取链接。",
-    "invalidHex": "此链接包含无效的颜色值。"
+    "invalidHex": "此链接包含无效的颜色值。",
+    "linkCopied": "链接已复制到剪贴板！",
+    "copyManually": "请手动复制该链接",
+    "generateFailed": "生成分享链接失败"
   },
   "advanced": {
     "eyebrow": "设置",
@@ -1201,7 +1213,9 @@
     "backupTitle": "备份",
     "backupSummary": "以 JSON 导出 / 导入设置",
     "behaviorTitle": "行为",
-    "behaviorSummary": "性能模式 · 分析"
+    "behaviorSummary": "性能模式 · 分析",
+    "dataBadge": "设备",
+    "behaviorBadge": "已保存"
   },
   "swatch": {
     "charaHint": "在本机解析。不会上传任何内容 — 文件包含角色名，有时还有截图。",

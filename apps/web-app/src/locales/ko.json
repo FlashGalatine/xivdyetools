@@ -23,7 +23,9 @@
     "elsewhere": "다른 곳에서",
     "apiSummary": "공개 염료 데이터, 엔드포인트 2개",
     "legalLabel": "저작권 표기",
-    "spectralCredit": "사실적인 물감 혼합(쿠벨카-뭉크 이론):"
+    "spectralCredit": "사실적인 물감 혼합(쿠벨카-뭉크 이론):",
+    "dataApiLabel": "데이터 API",
+    "apiDocsLabel": "API Worker 문서"
   },
   "footer": {
     "createdBy": "Flash Galatine (Midgardsormr)이 FFXIV 커뮤니티를 위해 제작",
@@ -396,7 +398,12 @@
     "visionDescDeuteranopia": "적록색각. 가장 흔한 형태로 남성 약 12명 중 1명.",
     "visionDescProtanopia": "적록색각. 빨간색이 이동할 뿐 아니라 어둡게 보입니다.",
     "visionDescTritanopia": "청황색각. 드물며 청록과 노랑에 가장 큰 영향.",
-    "visionDescAchromatopsia": "색이 없으며 밝기만이 두 염료를 구별합니다."
+    "visionDescAchromatopsia": "색이 없으며 밝기만이 두 염료를 구별합니다.",
+    "prevalenceNormal": "약 92%",
+    "prevalenceDeuteranopia": "남성의 약 6%",
+    "prevalenceProtanopia": "남성의 약 2%",
+    "prevalenceTritanopia": "약 0.01%",
+    "prevalenceAchromatopsia": "약 0.003%"
   },
   "comparison": {
     "selectedDyes": "선택된 염료",
@@ -465,7 +472,8 @@
     "mDistinguishLabel": "구별도",
     "mDistinguishShort": "구별도 %",
     "mDistinguishDesc": "같은 RGB 거리를 색 입체 대각선 441.67로 나눠 백분율로 표시한 값 — 접근성 검사기가 쌍에 대해 보여주는 수치입니다.",
-    "mDistinguishCaveat": "RGB 거리의 모든 약점을 공유하며 % 기호가 있지 않은 정밀도를 암시합니다. 접근성 검사기와 맞춰 볼 때만 유용하며 WCAG 등급이 아닙니다."
+    "mDistinguishCaveat": "RGB 거리의 모든 약점을 공유하며 % 기호가 있지 않은 정밀도를 암시합니다. 접근성 검사기와 맞춰 볼 때만 유용하며 WCAG 등급이 아닙니다.",
+    "mRatioShort": "비율"
   },
   "mixer": {
     "dyeSelection": "염료 선택",
@@ -500,7 +508,8 @@
     "modelOklab": "지각적",
     "modelLab": "LAB",
     "modelHsl": "색상",
-    "modelRgb": "빛"
+    "modelRgb": "빛",
+    "exportMeta": "블렌드: {model} @ {pct}%"
   },
   "gradient": {
     "selectColor": "색상 선택",
@@ -533,7 +542,8 @@
     "maxDrift": "최대 ΔE",
     "maxDriftDesc": "램프에서 가장 나쁜 단계 — 평균은 한 번의 튐을 감춥니다.",
     "bandIdeal": "이상",
-    "bandAchievable": "실현 가능"
+    "bandAchievable": "실현 가능",
+    "exportMeta": "보간: {space} · {n} 스텝"
   },
   "dyeSelector": {
     "searchPlaceholder": "염료 이름으로 검색...",
@@ -740,8 +750,6 @@
     "banner": "오프라인 상태입니다. 일부 기능이 제한될 수 있습니다."
   },
   "tutorial": {
-    "step": "단계",
-    "of": "중",
     "skip": "건너뛰기",
     "previous": "이전",
     "next": "다음",
@@ -834,7 +842,8 @@
         "title": "표시 설정",
         "description": "접근성 검사기 보기의 표시 옵션을 구성합니다."
       }
-    }
+    },
+    "stepOf": "{n}단계 중 {i}단계"
   },
   "preset": {
     "mySubmissions": "내 제출물",
@@ -1192,7 +1201,10 @@
     "copied": "복사됨!",
     "invalidDye": "이 링크는 이 버전에서 인식할 수 없는 염색약을 가리킵니다.",
     "legacyLink": "이 링크는 이전 버전에서 생성되어 오래된 염색약 ID를 사용합니다. 새 링크를 요청하세요.",
-    "invalidHex": "이 링크에 잘못된 색상 값이 포함되어 있습니다."
+    "invalidHex": "이 링크에 잘못된 색상 값이 포함되어 있습니다.",
+    "linkCopied": "링크를 클립보드에 복사했습니다!",
+    "copyManually": "URL을 직접 복사해 주세요",
+    "generateFailed": "공유 링크 생성 실패"
   },
   "advanced": {
     "eyebrow": "설정",
@@ -1201,7 +1213,9 @@
     "backupTitle": "백업",
     "backupSummary": "설정을 JSON으로 내보내기 / 가져오기",
     "behaviorTitle": "동작",
-    "behaviorSummary": "성능 모드 · 분석"
+    "behaviorSummary": "성능 모드 · 분석",
+    "dataBadge": "기기",
+    "behaviorBadge": "저장됨"
   },
   "swatch": {
     "charaHint": "이 기기에서 해석합니다. 아무것도 전송하지 않습니다 — 파일에는 캐릭터 이름과 때로는 스크린샷이 들어 있습니다.",

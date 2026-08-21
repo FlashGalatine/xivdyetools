@@ -113,32 +113,27 @@ const VISION_TYPES = [
   {
     id: 'normal',
     localeKey: 'normal',
-    prevalence: '~92%',
-    description: 'Standard Color Perception',
+    prevalenceKey: 'accessibility.prevalenceNormal',
   },
   {
     id: 'deuteranopia',
     localeKey: 'deuteranopia',
-    prevalence: '~6% males',
-    description: 'Red-Green Colorblindness',
+    prevalenceKey: 'accessibility.prevalenceDeuteranopia',
   },
   {
     id: 'protanopia',
     localeKey: 'protanopia',
-    prevalence: '~2% males',
-    description: 'Red-Green Colorblindness',
+    prevalenceKey: 'accessibility.prevalenceProtanopia',
   },
   {
     id: 'tritanopia',
     localeKey: 'tritanopia',
-    prevalence: '~0.01%',
-    description: 'Blue-Yellow Colorblindness',
+    prevalenceKey: 'accessibility.prevalenceTritanopia',
   },
   {
     id: 'achromatopsia',
     localeKey: 'achromatopsia',
-    prevalence: '~0.003%',
-    description: 'Total Colorblindness',
+    prevalenceKey: 'accessibility.prevalenceAchromatopsia',
   },
 ] as const;
 
@@ -703,7 +698,7 @@ export class AccessibilityTool extends BaseComponent {
       });
       const typePrevalence = this.createElement('p', {
         className: 'text-xs',
-        textContent: type.prevalence,
+        textContent: LanguageService.t(type.prevalenceKey),
         attributes: { style: 'color: var(--theme-text-muted);' },
       });
       textContainer.appendChild(typeName);
@@ -1361,7 +1356,7 @@ export class AccessibilityTool extends BaseComponent {
       });
       subRow.appendChild(
         this.createElement('span', {
-          textContent: vision.prevalence,
+          textContent: LanguageService.t(vision.prevalenceKey),
           attributes: {
             style: `font-family: 'Fragment Mono', monospace; font-size: 10px; white-space: nowrap; ${active ? 'color: var(--theme-text-header); opacity: 0.8;' : 'color: var(--theme-text-muted);'}`,
           },
@@ -1798,7 +1793,7 @@ export class AccessibilityTool extends BaseComponent {
       });
       const typePrevalence = this.createElement('p', {
         className: 'text-xs',
-        textContent: type.prevalence,
+        textContent: LanguageService.t(type.prevalenceKey),
         attributes: { style: 'color: var(--theme-text-muted);' },
       });
       textContainer.appendChild(typeName);

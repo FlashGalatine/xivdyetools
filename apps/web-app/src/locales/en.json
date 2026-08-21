@@ -23,7 +23,9 @@
     "elsewhere": "ELSEWHERE",
     "apiSummary": "Public dye data, two endpoints",
     "legalLabel": "ATTRIBUTION",
-    "spectralCredit": "Realistic paint mixing (Kubelka–Munk theory) by"
+    "spectralCredit": "Realistic paint mixing (Kubelka–Munk theory) by",
+    "dataApiLabel": "Data API",
+    "apiDocsLabel": "API Worker docs"
   },
   "footer": {
     "createdBy": "Created by Flash Galatine (Midgardsormr) for the FFXIV community",
@@ -396,7 +398,12 @@
     "visionDescDeuteranopia": "Red-green. The most common form, and about one man in twelve.",
     "visionDescProtanopia": "Red-green, with reds darkened as well as shifted.",
     "visionDescTritanopia": "Blue-yellow. Rare, and it hits teals and yellows hardest.",
-    "visionDescAchromatopsia": "No colour at all — only lightness separates two dyes."
+    "visionDescAchromatopsia": "No colour at all — only lightness separates two dyes.",
+    "prevalenceNormal": "~92%",
+    "prevalenceDeuteranopia": "~6% males",
+    "prevalenceProtanopia": "~2% males",
+    "prevalenceTritanopia": "~0.01%",
+    "prevalenceAchromatopsia": "~0.003%"
   },
   "comparison": {
     "selectedDyes": "Selected Dyes",
@@ -465,7 +472,8 @@
     "mDistinguishLabel": "Distinguishability",
     "mDistinguishShort": "Distinguishability %",
     "mDistinguishDesc": "The same RGB distance divided by the 441.67 diagonal of the colour cube and shown as a percentage — the number the Accessibility Checker reports for a pair.",
-    "mDistinguishCaveat": "Shares every weakness of RGB distance and adds a percent sign that invites false precision. Useful only for lining this tool up against the Accessibility Checker — never as a WCAG rating."
+    "mDistinguishCaveat": "Shares every weakness of RGB distance and adds a percent sign that invites false precision. Useful only for lining this tool up against the Accessibility Checker — never as a WCAG rating.",
+    "mRatioShort": "RATIO"
   },
   "mixer": {
     "dyeSelection": "Dye Selection",
@@ -500,7 +508,8 @@
     "modelOklab": "Perceptual",
     "modelLab": "LAB",
     "modelHsl": "Hue",
-    "modelRgb": "Light"
+    "modelRgb": "Light",
+    "exportMeta": "Blend: {model} @ {pct}%"
   },
   "gradient": {
     "selectColor": "Select Color",
@@ -533,7 +542,8 @@
     "maxDrift": "max ΔE",
     "maxDriftDesc": "The worst step in the ramp — an average hides a single lurch.",
     "bandIdeal": "IDEAL",
-    "bandAchievable": "ACHIEVABLE"
+    "bandAchievable": "ACHIEVABLE",
+    "exportMeta": "Interpolation: {space} · {n} steps"
   },
   "dyeSelector": {
     "searchPlaceholder": "Search dyes by name...",
@@ -779,8 +789,6 @@
     "full": "Full"
   },
   "tutorial": {
-    "step": "Step",
-    "of": "of",
     "skip": "Skip",
     "previous": "Previous",
     "next": "Next",
@@ -873,7 +881,8 @@
         "title": "Display Settings",
         "description": "Configure display options for the accessibility checker view."
       }
-    }
+    },
+    "stepOf": "Step {i} of {n}"
   },
   "preset": {
     "mySubmissions": "My Submissions",
@@ -1192,7 +1201,10 @@
     "copied": "Copied!",
     "invalidDye": "This link points at a dye this version doesn't recognise.",
     "legacyLink": "This link was made with an older version and uses an outdated dye ID — ask for a fresh link.",
-    "invalidHex": "This link carries an invalid colour value."
+    "invalidHex": "This link carries an invalid colour value.",
+    "linkCopied": "Link copied to clipboard!",
+    "copyManually": "Please copy the URL manually",
+    "generateFailed": "Failed to generate share link"
   },
   "advanced": {
     "eyebrow": "SETTINGS",
@@ -1201,7 +1213,9 @@
     "backupTitle": "Backup",
     "backupSummary": "export / import settings as JSON",
     "behaviorTitle": "Behaviour",
-    "behaviorSummary": "performance mode · analytics"
+    "behaviorSummary": "performance mode · analytics",
+    "dataBadge": "DEVICE",
+    "behaviorBadge": "SAVED"
   },
   "swatch": {
     "charaHint": "Parsed on this device. Nothing is uploaded — the file holds a character name and sometimes a screenshot.",

@@ -23,7 +23,9 @@
     "elsewhere": "ANDERSWO",
     "apiSummary": "Öffentliche Farbstoffdaten, zwei Endpunkte",
     "legalLabel": "RECHTLICHES",
-    "spectralCredit": "Realistische Farbmischung (Kubelka–Munk-Theorie) von"
+    "spectralCredit": "Realistische Farbmischung (Kubelka–Munk-Theorie) von",
+    "dataApiLabel": "Daten-API",
+    "apiDocsLabel": "API-Worker-Doku"
   },
   "footer": {
     "createdBy": "Erstellt von Flash Galatine (Midgardsormr) für die FFXIV-Community",
@@ -396,7 +398,12 @@
     "visionDescDeuteranopia": "Rot-Grün. Häufigste Form, etwa jeder zwölfte Mann.",
     "visionDescProtanopia": "Rot-Grün, Rottöne wirken zusätzlich dunkler.",
     "visionDescTritanopia": "Blau-Gelb. Selten, trifft Türkis und Gelb am stärksten.",
-    "visionDescAchromatopsia": "Keine Farbe — nur Helligkeit trennt zwei Farbstoffe."
+    "visionDescAchromatopsia": "Keine Farbe — nur Helligkeit trennt zwei Farbstoffe.",
+    "prevalenceNormal": "~92 %",
+    "prevalenceDeuteranopia": "~6 % der Männer",
+    "prevalenceProtanopia": "~2 % der Männer",
+    "prevalenceTritanopia": "~0,01 %",
+    "prevalenceAchromatopsia": "~0,003 %"
   },
   "comparison": {
     "selectedDyes": "Ausgewählte Farbstoffe",
@@ -465,7 +472,8 @@
     "mDistinguishLabel": "Unterscheidbarkeit",
     "mDistinguishShort": "Unterscheidbarkeit %",
     "mDistinguishDesc": "Derselbe RGB-Abstand, geteilt durch die Würfeldiagonale 441,67 und als Prozent dargestellt — die Zahl, die die Barrierefreiheitsprüfung für ein Paar meldet.",
-    "mDistinguishCaveat": "Erbt alle Schwächen des RGB-Abstands und suggeriert mit dem Prozentzeichen eine Genauigkeit, die es nicht gibt. Nur zum Abgleich mit der Barrierefreiheitsprüfung — nie als WCAG-Bewertung."
+    "mDistinguishCaveat": "Erbt alle Schwächen des RGB-Abstands und suggeriert mit dem Prozentzeichen eine Genauigkeit, die es nicht gibt. Nur zum Abgleich mit der Barrierefreiheitsprüfung — nie als WCAG-Bewertung.",
+    "mRatioShort": "VERHÄLTNIS"
   },
   "mixer": {
     "dyeSelection": "Farbstoffauswahl",
@@ -500,7 +508,8 @@
     "modelOklab": "Perzeptuell",
     "modelLab": "LAB",
     "modelHsl": "Farbton",
-    "modelRgb": "Licht"
+    "modelRgb": "Licht",
+    "exportMeta": "Mischung: {model} @ {pct} %"
   },
   "gradient": {
     "selectColor": "Farbe auswählen",
@@ -533,7 +542,8 @@
     "maxDrift": "max. ΔE",
     "maxDriftDesc": "Der schlechteste Schritt der Rampe — ein Mittelwert verbirgt einen einzelnen Ausreißer.",
     "bandIdeal": "IDEAL",
-    "bandAchievable": "ERREICHBAR"
+    "bandAchievable": "ERREICHBAR",
+    "exportMeta": "Interpolation: {space} · {n} Stufen"
   },
   "dyeSelector": {
     "searchPlaceholder": "Farbstoffe nach Name suchen...",
@@ -740,8 +750,6 @@
     "banner": "Sie sind offline. Einige Funktionen sind möglicherweise eingeschränkt."
   },
   "tutorial": {
-    "step": "Schritt",
-    "of": "von",
     "skip": "Überspringen",
     "previous": "Zurück",
     "next": "Weiter",
@@ -834,7 +842,8 @@
         "title": "Anzeigeeinstellungen",
         "description": "Konfigurieren Sie die Anzeigeoptionen für die Barrierefreiheitsprüfung."
       }
-    }
+    },
+    "stepOf": "Schritt {i} von {n}"
   },
   "preset": {
     "mySubmissions": "Meine Einreichungen",
@@ -1192,7 +1201,10 @@
     "copied": "Kopiert!",
     "invalidDye": "Dieser Link verweist auf eine Farbe, die diese Version nicht kennt.",
     "legacyLink": "Dieser Link stammt aus einer älteren Version und nutzt eine veraltete Farb-ID — bitte um einen neuen Link.",
-    "invalidHex": "Dieser Link enthält einen ungültigen Farbwert."
+    "invalidHex": "Dieser Link enthält einen ungültigen Farbwert.",
+    "linkCopied": "Link in die Zwischenablage kopiert!",
+    "copyManually": "Bitte kopiere die URL manuell",
+    "generateFailed": "Share-Link konnte nicht erstellt werden"
   },
   "advanced": {
     "eyebrow": "EINSTELLUNGEN",
@@ -1201,7 +1213,9 @@
     "backupTitle": "Sicherung",
     "backupSummary": "Einstellungen als JSON exportieren / importieren",
     "behaviorTitle": "Verhalten",
-    "behaviorSummary": "Performance-Modus · Analytik"
+    "behaviorSummary": "Performance-Modus · Analytik",
+    "dataBadge": "GERÄT",
+    "behaviorBadge": "GESPEICHERT"
   },
   "swatch": {
     "charaHint": "Wird auf diesem Gerät gelesen. Nichts wird übertragen — die Datei enthält einen Charakternamen und manchmal ein Bild.",

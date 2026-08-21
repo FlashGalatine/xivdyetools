@@ -1881,10 +1881,19 @@ export class MixerTool extends BaseComponent {
       });
     }
 
+    const modelLabel = LanguageService.t(
+      `mixer.model${this.mixingMode.charAt(0).toUpperCase()}${this.mixingMode.slice(1)}`
+    );
+
     openExportSheet({
       tool: 'mixer',
       title: LanguageService.t('mixer.matchingDyes'),
-      meta: [`Blend: ${this.mixingMode} @ ${Math.round(this.mixRatio * 100)}%`],
+      meta: [
+        LanguageService.tInterpolate('mixer.exportMeta', {
+          model: modelLabel,
+          pct: Math.round(this.mixRatio * 100),
+        }),
+      ],
       entries,
     });
   }

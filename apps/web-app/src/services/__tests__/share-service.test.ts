@@ -13,15 +13,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockDyes } from '../../__tests__/mocks/services';
 
-const { mockGetByStainId, mockToastError } = vi.hoisted(() => ({
+const { mockGetByStainId, mockToastError, mockToastSuccess } = vi.hoisted(() => ({
   mockGetByStainId: vi.fn(),
   mockToastError: vi.fn(),
+  mockToastSuccess: vi.fn(),
 }));
 
 vi.mock('../toast-service', () => ({
   ToastService: {
     error: mockToastError,
-    success: vi.fn(),
+    success: mockToastSuccess,
     warning: vi.fn(),
     info: vi.fn(),
   },
@@ -317,6 +318,43 @@ describe('ShareService', () => {
     it('rejects an unknown stainID loudly', () => {
       expect(ShareService.resolveSharedDye(200)).toBeNull();
       expect(mockToastError).toHaveBeenCalledWith('share.invalidDye');
+    });
+  });
+
+  // ==========================================================================
+  // copyToClipboard — the toasts are keyed, never English literals
+  // ==========================================================================
+
+  describe('copyToClipboard toasts', () => {
+    const setClipboard = (impl: (() => Promise<void>) | null): void => {
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: impl ? { writeText: vi.fn(impl) } : undefined,
+      });
+    };
+
+    it('reports success through share.linkCopied', async () => {
+      setClipboard(() => Promise.resolve());
+
+      await expect(
+        ShareService.copyToClipboard('https://xivdyetools.app/harmony/?dye=2&v=1')
+      ).resolves.toBe(true);
+      expect(mockToastSuccess).toHaveBeenCalledWith('share.linkCopied');
+    });
+
+    it('reports a total failure through errors.copyLinkFailed + share.copyManually', async () => {
+      setClipboard(() => Promise.reject(new Error('denied')));
+      // Kill the textarea fallback too, so both paths fail. jsdom has no
+      // execCommand at all, so this has to be defined rather than spied on.
+      Object.defineProperty(document, 'execCommand', {
+        configurable: true,
+        value: vi.fn(() => false),
+      });
+
+      await expect(
+        ShareService.copyToClipboard('https://xivdyetools.app/harmony/?dye=2&v=1')
+      ).resolves.toBe(false);
+      expect(mockToastError).toHaveBeenCalledWith('errors.copyLinkFailed', 'share.copyManually');
     });
   });
 });

@@ -338,7 +338,10 @@ export class TutorialSpotlight extends BaseComponent {
       color: var(--theme-text-muted);
       margin-bottom: 8px;
     `;
-    stepIndicator.textContent = `${LanguageService.t('tutorial.step')} ${stepIndex + 1} ${LanguageService.t('tutorial.of')} ${totalSteps}`;
+    stepIndicator.textContent = LanguageService.tInterpolate('tutorial.stepOf', {
+      i: stepIndex + 1,
+      n: totalSteps,
+    });
     this.tooltip.appendChild(stepIndicator);
 
     // Title

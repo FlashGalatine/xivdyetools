@@ -516,6 +516,21 @@ describe('AccessibilityTool', () => {
       // Tool should render simulation-related content
       expect(rightPanel).not.toBeNull();
     });
+
+    it('prints each lens prevalence through its locale key, not a literal', () => {
+      tool = new AccessibilityTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+
+      // LanguageService.t is mocked to echo the key, so a keyed prevalence
+      // shows up verbatim and a hardcoded '~6% males' would not.
+      const text = leftPanel.textContent ?? '';
+      expect(text).toContain('accessibility.prevalenceNormal');
+      expect(text).toContain('accessibility.prevalenceDeuteranopia');
+      expect(text).toContain('accessibility.prevalenceProtanopia');
+      expect(text).toContain('accessibility.prevalenceTritanopia');
+      expect(text).toContain('accessibility.prevalenceAchromatopsia');
+      expect(text).not.toContain('~6% males');
+    });
   });
 
   // ============================================================================
