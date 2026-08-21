@@ -263,7 +263,10 @@ export class AboutModal {
       a.style.color = 'var(--theme-primary)';
       a.style.fontFamily = "'Fragment Mono', monospace";
       a.textContent = host;
-      const [before, after = ''] = text.split('{link}');
+      // A value without the placeholder (or a missing key echoing back) still
+      // needs the trailing separator the old concatenation supplied.
+      const hasPlaceholder = text.includes('{link}');
+      const [before, after = ''] = hasPlaceholder ? text.split('{link}') : [text + ' '];
       if (before) p.appendChild(document.createTextNode(before));
       p.appendChild(a);
       if (after) p.appendChild(document.createTextNode(after));

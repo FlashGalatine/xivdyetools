@@ -135,7 +135,34 @@ describe('createMethodHelp (7C methods mode)', () => {
     const el = createMethodHelp({ method: 'ciede2000', dark: true, onMethodChange: vi.fn() });
     expect(el.textContent).toContain('comparison.kind2');
     const link = el.querySelector('a');
-    expect(link?.href).toContain('wikipedia.org/wiki/Color_difference');
+    expect(link?.href).toContain('en.wikipedia.org/wiki/Color_difference');
+  });
+
+  it('links the localized colour-difference article for de/fr/ja', async () => {
+    const { LanguageService } = await import('@services/language-service');
+    const { createMethodHelp } = await import('../metric-help');
+    for (const [locale, host] of [
+      ['de', 'de.wikipedia.org'],
+      ['fr', 'fr.wikipedia.org'],
+      ['ja', 'ja.wikipedia.org'],
+    ] as const) {
+      vi.mocked(LanguageService.getCurrentLocale).mockReturnValueOnce(locale);
+      const el = createMethodHelp({ method: 'ciede2000', dark: true, onMethodChange: vi.fn() });
+      expect(el.querySelector('a')?.href).toContain(host);
+    }
+  });
+
+  it('renders the absent state (no link, never the EN URL) for ko and zh', async () => {
+    // Same rule core's learn-links table states: a missing article degrades to
+    // no link, never the English one.
+    const { LanguageService } = await import('@services/language-service');
+    const { createMethodHelp } = await import('../metric-help');
+    for (const locale of ['ko', 'zh'] as const) {
+      vi.mocked(LanguageService.getCurrentLocale).mockReturnValueOnce(locale);
+      const el = createMethodHelp({ method: 'ciede2000', dark: true, onMethodChange: vi.fn() });
+      expect(el.querySelector('a')).toBeNull();
+      expect(el.textContent).not.toContain('comparison.methodsLearnMore');
+    }
   });
 
   it('switches methods through the chip row without re-firing the active one', async () => {

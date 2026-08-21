@@ -1159,13 +1159,12 @@ export class MixerTool extends BaseComponent {
 
     const MONO = "'Fragment Mono', monospace";
     const MODELS: MixingMode[] = ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'];
-    // Row headers use the technical abbreviation, which is identical in every
-    // locale — except Spectral, a word rather than an initialism, which takes
-    // the model's translated name. Resolved per render, so a locale switch
-    // re-labels the rows.
+    // Row headers name the blending method: identifiers by decision
+    // (2026-08-20 i18n audit), identical in every locale. The tooltip carries
+    // the translated model name (`mixer.model*`).
     const MODEL_SHORT: Record<string, string> = {
       ryb: 'RYB',
-      spectral: LanguageService.t('mixer.modelSpectral'),
+      spectral: 'Spectral',
       oklab: 'OKLAB',
       lab: 'LAB',
       hsl: 'HSL',

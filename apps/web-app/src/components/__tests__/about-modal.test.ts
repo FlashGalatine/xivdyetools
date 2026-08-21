@@ -172,6 +172,20 @@ describe('AboutModal', () => {
       expect(line?.childNodes[2]?.textContent).toBe(' after');
     });
 
+    it('keeps the separator space when the copy carries no placeholder', async () => {
+      // Degraded path (a value that predates the placeholder, or a missing key
+      // echoing itself back) must not run the host into the sentence.
+      mockTranslations['footer.universalisCredit'] = 'Market Board data provided by';
+      const { AboutModal } = await import('../about-modal');
+      new AboutModal().show();
+
+      const content = mockShow.mock.calls[0][0].content as HTMLElement;
+      const anchor = content.querySelector('a[href="https://universalis.app/"]');
+      expect(anchor?.parentElement?.textContent).toBe(
+        'Market Board data provided by universalis.app'
+      );
+    });
+
     it('renders the anchor last when the placeholder ends the sentence', async () => {
       mockTranslations['about.spectralCredit'] = 'Realistic paint mixing by {link}';
       const { AboutModal } = await import('../about-modal');
