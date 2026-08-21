@@ -16,8 +16,6 @@ import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
 import { MarketBoard } from '@components/market-board';
-import { HarmonyResultPanel } from '@components/harmony-result-panel';
-import { ColorWheelDisplay } from '@components/color-wheel-display';
 import {
   ColorService,
   dyeService,
@@ -158,8 +156,6 @@ export class HarmonyTool extends BaseComponent {
   private dyeSelector: DyeSelector | null = null;
   private marketBoard: MarketBoard | null = null;
   private marketPanel: CollapsiblePanel | null = null;
-  private colorWheel: ColorWheelDisplay | null = null;
-  private resultPanels: HarmonyResultPanel[] = [];
 
   // Child components (mobile drawer) - separate instances for mobile config
   private drawerDyeSelector: DyeSelector | null = null;
@@ -270,15 +266,7 @@ export class HarmonyTool extends BaseComponent {
     this.marketPanel?.destroy();
     this.marketPanel = null;
 
-    this.colorWheel?.destroy();
-    this.colorWheel = null;
-
     this.shareButton = null;
-
-    for (const panel of this.resultPanels) {
-      panel.destroy();
-    }
-    this.resultPanels = [];
 
     // Mobile drawer components
     this.drawerDyeSelector?.destroy();
@@ -1386,11 +1374,7 @@ export class HarmonyTool extends BaseComponent {
 
     this.showEmptyState(false);
 
-    // Clear existing result panels
-    for (const panel of this.resultPanels) {
-      panel.destroy();
-    }
-    this.resultPanels = [];
+    // Clear existing result cards
     this.v4ResultCards = []; // Clear v4 card references
     clearContainer(this.harmonyGridContainer);
 
@@ -1701,15 +1685,6 @@ export class HarmonyTool extends BaseComponent {
   }
 
   /**
-   * Update price data on result panels
-   */
-  private updateHarmonyDisplayPrices(): void {
-    for (const panel of this.resultPanels) {
-      panel.setPriceData(this.priceData);
-    }
-  }
-
-  /**
    * Fetch prices for all displayed dyes (base + harmony dyes)
    * Called when prices are enabled, server changes, or categories change
    * Delegates to MarketBoardService which handles race condition protection
@@ -1794,7 +1769,6 @@ export class HarmonyTool extends BaseComponent {
 
       // Always update UI after fetch completes (even if empty/stale)
       // This ensures cards reflect current state when server changes
-      this.updateHarmonyDisplayPrices();
       this.updateV4ResultCardPrices();
       logger.info(`[HarmonyTool] Fetched prices for ${prices.size} dyes`);
     } catch (error) {

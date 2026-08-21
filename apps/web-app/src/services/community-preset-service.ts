@@ -6,21 +6,16 @@
 
 import { logger } from '@shared/logger';
 import { authService } from './auth-service';
-import type {
-  PresetStatus,
-  CommunityPreset,
-  PresetFilters,
-  PresetListResponse,
-} from '@xivdyetools/types';
+import type { CommunityPreset, PresetFilters, PresetListResponse } from '@xivdyetools/types';
 
 // ============================================
 // Types
 // ============================================
 
-// PresetStatus, CommunityPreset, PresetFilters and PresetListResponse are the
+// CommunityPreset, PresetFilters and PresetListResponse are the
 // shared `@xivdyetools/types` contracts, re-exported here so existing
 // `@services/community-preset-service` imports keep working unchanged.
-export type { PresetStatus, CommunityPreset, PresetFilters, PresetListResponse };
+export type { CommunityPreset, PresetFilters, PresetListResponse };
 
 export interface CategoryWithCount {
   id: string;

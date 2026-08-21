@@ -7,7 +7,7 @@
 import { logger } from '@shared/logger';
 import { authService } from './auth-service';
 import type { PresetCategory, PresetSubmission, PresetEditRequest } from '@xivdyetools/types';
-import type { CommunityPreset, PresetStatus } from './community-preset-service';
+import type { CommunityPreset } from './community-preset-service';
 
 // ============================================
 // Types
@@ -325,45 +325,6 @@ class PresetSubmissionServiceImpl {
     } catch (err) {
       logger.error('Error fetching user submissions:', err);
       return { presets: [], total: 0 };
-    }
-  }
-
-  /**
-   * Get submission status label and styling
-   * Uses Tailwind classes for consistent theming across light/dark modes
-   */
-  getStatusInfo(status: PresetStatus): { label: string; colorClass: string; icon: string } {
-    switch (status) {
-      case 'approved':
-        return {
-          label: 'Approved',
-          colorClass: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-          icon: '✓',
-        };
-      case 'pending':
-        return {
-          label: 'Pending Review',
-          colorClass: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-          icon: '⏳',
-        };
-      case 'rejected':
-        return {
-          label: 'Rejected',
-          colorClass: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-          icon: '✗',
-        };
-      case 'flagged':
-        return {
-          label: 'Flagged',
-          colorClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-          icon: '⚠',
-        };
-      default:
-        return {
-          label: 'Unknown',
-          colorClass: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
-          icon: '?',
-        };
     }
   }
 

@@ -15,7 +15,6 @@ import { CollapsiblePanel } from '@components/collapsible-panel';
 import { ImageUploadDisplay } from '@components/image-upload-display';
 import { ColorPickerDisplay } from '@components/color-picker-display';
 import { ImageZoomController } from '@components/image-zoom-controller';
-import { RecentColorsPanel } from '@components/recent-colors-panel';
 import { MarketBoard } from '@components/market-board';
 import { openExportSheet } from '@components/export-sheet';
 import {
@@ -182,7 +181,6 @@ export class ExtractorTool extends BaseComponent {
   private imageUpload: ImageUploadDisplay | null = null;
   private colorPicker: ColorPickerDisplay | null = null;
   private imageZoom: ImageZoomController | null = null;
-  private recentColors: RecentColorsPanel | null = null;
   private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
   private marketBoard: MarketBoard | null = null;
   private marketPanel: CollapsiblePanel | null = null;
@@ -515,7 +513,6 @@ export class ExtractorTool extends BaseComponent {
     this.imageUpload?.destroy();
     this.colorPicker?.destroy();
     this.imageZoom?.destroy();
-    this.recentColors?.destroy();
     this.marketBoard?.destroy();
     this.marketPanel?.destroy();
 
@@ -2136,11 +2133,6 @@ export class ExtractorTool extends BaseComponent {
 
     // Persist selected color to storage
     StorageService.setItem(STORAGE_KEYS.selectedColor, hex);
-
-    // Add to recent colors
-    if (this.recentColors) {
-      this.recentColors.addRecentColor(hex);
-    }
 
     // Find closest dyes using configured matching algorithm
     let closestDye = dyeService.findClosestDye(hex, { matchingMethod: this.matchingMethod });
