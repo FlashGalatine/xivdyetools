@@ -62,15 +62,16 @@ const NEAREST_POOL = 4;
 
 /**
  * The MKT row value. Consolidated dyes name the market item players actually
- * search for — the Spectrum item name stays verbatim EN, like a command
- * choice value — plus its item ID. Unconsolidated tradeable dyes print their
- * own item ID.
+ * search for — in the user's locale, since the market board lists the
+ * localized item name (F-10, 2026-08-20 audit: this was pinned to `names.en`;
+ * `CONSOLIDATED_DYES[].names` has carried all six languages since 7.5) —
+ * plus its item ID. Unconsolidated tradeable dyes print their own item ID.
  */
-function marketValue(dye: Dye): string {
+function marketValue(dye: Dye, locale: LocaleCode): string {
   const type = dye.consolidationType;
   if (type) {
     const consolidated = CONSOLIDATED_DYES[type];
-    return `${consolidated.names.en} · ${consolidated.itemID}`;
+    return `${consolidated.names[locale] ?? consolidated.names.en} · ${consolidated.itemID}`;
   }
   return dye.itemID > 0 ? String(dye.itemID) : '—';
 }
@@ -118,7 +119,7 @@ export async function executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult
       localizedCategory,
       stainID: dye.stainID,
       srcValue,
-      mktValue: marketValue(dye),
+      mktValue: marketValue(dye, locale),
       nearest,
       labels: {
         stain: t.t('card.stain'),

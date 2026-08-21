@@ -23,7 +23,7 @@ import {
   type BudgetLedgerGroup,
 } from '@xivdyetools/svg';
 import { getLocalizedAcquisition } from '@xivdyetools/bot-logic';
-import { BAND_METHOD_DP, classifyBandTier, type MatchingMethod } from '@xivdyetools/core';
+import { BAND_METHOD_DP, CONSOLIDATED_DYES, classifyBandTier, type MatchingMethod } from '@xivdyetools/core';
 import { createUserTranslatorWithPrefs, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import { setPreference } from '../../services/preferences.js';
@@ -257,7 +257,13 @@ async function processFindCommand(
     // Format the ledger for the frame
     const dp = BAND_METHOD_DP[method];
     const groups: BudgetLedgerGroup[] = result.groups.map((g) => ({
-      tier: g.acquisition ? getLocalizedAcquisition(g.acquisition, locale) : g.label,
+      // Consolidated groups are headed by the market item name in the user's
+      // locale (F-10); acquisition groups by the localized acquisition.
+      tier: g.acquisition
+        ? getLocalizedAcquisition(g.acquisition, locale)
+        : g.type
+          ? (CONSOLIDATED_DYES[g.type].names[locale] ?? CONSOLIDATED_DYES[g.type].names.en)
+          : g.label,
       price: g.price !== null ? priceStr(g.price) : null,
       flag: g.vendorCheaper ? t.t('card.vendorCheaper') : null,
       rows: g.rows.map((r) => ({

@@ -14,6 +14,8 @@ Usage:
 The script reads all locale JSON files from:
   - packages/core/src/data/locales/     (dye names, categories, labels, etc.)
   - packages/bot-logic/src/i18n/locales/ (bot UI strings, card vocabulary, etc.)
+and the one localized table that lives in TypeScript:
+  - packages/core/src/config/consolidated-ids.ts  (market-item names, F-10)
 
 And produces:
   - src/fonts/NotoSansSC-Subset.ttf  CJK for ALL languages — SC is the terminal
@@ -56,6 +58,7 @@ APPS_DIR = os.path.dirname(WORKER_ROOT)                        # apps
 MONOREPO_ROOT = os.path.dirname(APPS_DIR)                      # repo root
 
 CORE_LOCALES_DIR = os.path.join(MONOREPO_ROOT, "packages", "core", "src", "data", "locales")
+CONSOLIDATED_IDS_TS = os.path.join(MONOREPO_ROOT, "packages", "core", "src", "config", "consolidated-ids.ts")
 # bot-i18n was absorbed into bot-logic (Monorepo 2.0 Tier 1)
 BOT_LOCALES_DIR = os.path.join(MONOREPO_ROOT, "packages", "bot-logic", "src", "i18n", "locales")
 FONTS_DIR = os.path.join(WORKER_ROOT, "src", "fonts")
@@ -134,6 +137,22 @@ def collect_characters(languages):
         with open(path, "r", encoding="utf-8") as f:
             add_strings(json.load(f))
         print(f"  Bot  {lang}.json: loaded")
+
+    # Consolidated market-item names (CONSOLIDATED_DYES[].names.<lang>) — the one
+    # localized table in TypeScript; rendered on /dye info and the /budget ledger
+    # since F-10 (2026-08-20). The font-coverage test reads the same table.
+    if not os.path.exists(CONSOLIDATED_IDS_TS):
+        raise FileNotFoundError(f"consolidated-ids.ts not found: {CONSOLIDATED_IDS_TS}")
+    import re
+    with open(CONSOLIDATED_IDS_TS, "r", encoding="utf-8") as f:
+        ts = f.read()
+    wanted = set(languages)
+    n = 0
+    for lang, value in re.findall(r"^\s*(en|ja|de|fr|ko|zh): '([^']*)'", ts, flags=re.M):
+        if lang in wanted:
+            add_strings(value)
+            n += 1
+    print(f"  consolidated-ids.ts: {n} names loaded")
 
     return codepoints
 
