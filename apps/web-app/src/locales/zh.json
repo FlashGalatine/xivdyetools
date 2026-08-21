@@ -379,7 +379,9 @@
     "pasteClipboard": "从剪贴板粘贴",
     "tapToSample": "点按取色",
     "addPick": "添加取色",
-    "autoExtract": "自动提取"
+    "autoExtract": "自动提取",
+    "sampledColor": "取得的颜色",
+    "copyColorInfo": "复制颜色信息"
   },
   "accessibility": {
     "inspectDyes": "检查染剂",
@@ -1290,6 +1292,16 @@
     "characterSavedMany": "已将 {n} 个角色颜色保存到本设备。",
     "selSentence": "{subject} 位于 {place}。{dye} 相差 {delta}。",
     "selSentenceCell": "{place}。{dye} 相差 {delta}。",
-    "selSentenceOffGrid": "{subject} 是任意颜色。{dye} 相差 {delta}。"
+    "selSentenceOffGrid": "{subject} 是任意颜色。{dye} 相差 {delta}。",
+    "closestSwatchesHead": "最接近的色板",
+    "rowColumn": "第{row}行，第{col}列",
+    "exploreDye": "查看染剂",
+    "parseFailed": "无法读取此角色文件：{reason}",
+    "slotError": {
+      "midRangeIndex": "该颜色位于深色与浅色范围之间未使用的 96–127 区间",
+      "indexOutOfRange": "该颜色索引超出了所属色表的范围",
+      "noTribe": "该栏位需要文件中的部族与性别信息才能解析",
+      "unknown": "无法读取此栏位"
+    }
   }
 }

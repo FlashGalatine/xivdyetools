@@ -32,6 +32,7 @@ import {
   type ResolvedCharaSlot,
   type ResolvedGearDye,
   type CharaGearSlotId,
+  type CharaSlotErrorCode,
 } from '@xivdyetools/core';
 import {
   ColorService,
@@ -53,6 +54,7 @@ import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
 import { STORAGE_PREFIX } from '@shared/constants';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import type { Dye, SubRace, Gender } from '@xivdyetools/types';
 
 const MONO = "'Fragment Mono', monospace";
@@ -73,6 +75,17 @@ const PALETTE_CAP = 6;
 
 /** The twelve dyeable slots — the footnote's "N slots are empty" denominator. */
 const GEAR_SLOT_COUNT = 12;
+
+/**
+ * Core slot-failure code → locale key. Spelled out (not `` `swatch.slotError.${code}` ``)
+ * so every key is a literal the orphan scanner can see, and so an unmapped
+ * code degrades to `swatch.slotError.unknown` instead of printing a raw path.
+ */
+const SLOT_ERROR_KEY: Record<CharaSlotErrorCode, string> = {
+  midRangeIndex: 'swatch.slotError.midRangeIndex',
+  indexOutOfRange: 'swatch.slotError.indexOutOfRange',
+  noTribe: 'swatch.slotError.noTribe',
+};
 
 /**
  * DYES ON THIS GLAMOUR lens (Turn 11, confirmed): Pieces (11a, default) puts
@@ -213,9 +226,13 @@ export class CharaImport {
       );
     } catch (error) {
       logger.error('[CharaImport] Parse failed:', error);
-      // Loud failure naming the field and value — core's messages do that.
-      // TODO(i18n): parse failures surface core's EN message verbatim.
-      ToastService.error(error instanceof Error ? error.message : String(error));
+      // Loud failure naming the field and value — core's messages do that,
+      // and they ride in as {reason} inside the localized sentence.
+      ToastService.error(
+        LanguageService.tInterpolate('swatch.parseFailed', {
+          reason: error instanceof Error ? error.message : String(error),
+        })
+      );
       return;
     }
     // Dyes never wait: the round-trip is started first so the block renders
@@ -291,6 +308,22 @@ export class CharaImport {
 
   private t(key: string): string {
     return LanguageService.t(`swatch.${key}`);
+  }
+
+  /**
+   * Localized text for a core slot-failure code.
+   *
+   * Core's `error.message` is an EN engineering sentence naming the field and
+   * the index ("LipsToneFurPattern index 100 falls in the 96-127 gap…") — good
+   * for a log, not for a card. The `code` is the stable part, so the keys are
+   * spelled out literally here (one `Record` entry each) rather than built
+   * with a template: `scripts/analyze-unused-keys.js` only sees literals and a
+   * literal prefix, and a spelled-out map also survives a code being added
+   * upstream — anything unrecognised falls back to `slotError.unknown`.
+   */
+  private slotErrorText(code: CharaSlotErrorCode | undefined): string {
+    const key = code ? SLOT_ERROR_KEY[code] : undefined;
+    return LanguageService.t(key ?? 'swatch.slotError.unknown');
   }
 
   private ramp(): readonly string[] {
@@ -426,7 +459,7 @@ export class CharaImport {
       if (slot.verdict === 'error' && slot.error) {
         out.push({
           tag: LanguageService.t('swatch.warnErrorTag'),
-          text: `${label} · ${slot.error.message}`,
+          text: `${label} · ${this.slotErrorText(slot.error.code)}`,
           severe: true,
         });
       } else if (slot.verdict === 'offGrid' || slot.verdict === 'floatOnly') {
@@ -604,8 +637,11 @@ export class CharaImport {
     );
 
     const genderSym = resolved.gender === 'Female' ? '♀' : resolved.gender === 'Male' ? '♂' : '';
+    const tribeLabel = resolved.tribe
+      ? LanguageService.getClan(SUBRACE_TO_CLAN_KEY[resolved.tribe])
+      : '—';
     const meta = [
-      `${resolved.tribe ?? '—'} ${genderSym}`.trim(),
+      `${tribeLabel} ${genderSym}`.trim(),
       `${live.length}/${resolved.slots.length}`,
       this.fileName ?? '',
     ]
@@ -798,7 +834,7 @@ export class CharaImport {
         this.el(
           'span',
           `font-size: 10px; line-height: 1.4; color: ${isError ? (ThemeService.isDarkMode() ? '#f4645a' : '#B91C1C') : 'var(--theme-text-muted)'};`,
-          isError ? (slot.error?.message ?? '') : this.absentReason(slot)
+          isError ? this.slotErrorText(slot.error?.code) : this.absentReason(slot)
         )
       );
       return card;

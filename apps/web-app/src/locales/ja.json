@@ -352,7 +352,9 @@
     "pasteClipboard": "クリップボードから",
     "tapToSample": "タップで採取",
     "addPick": "採取を追加",
-    "autoExtract": "自動抽出"
+    "autoExtract": "自動抽出",
+    "sampledColor": "採取した色",
+    "copyColorInfo": "色情報をコピー"
   },
   "accessibility": {
     "inspectDyes": "カララントを検査",
@@ -1290,6 +1292,16 @@
     "characterSavedMany": "キャラクターの色を{n}件この端末に保存しました。",
     "selSentence": "{subject}は{place}。{dye}との差は{delta}です。",
     "selSentenceCell": "{place}。{dye}との差は{delta}です。",
-    "selSentenceOffGrid": "{subject}は任意の色です。{dye}との差は{delta}です。"
+    "selSentenceOffGrid": "{subject}は任意の色です。{dye}との差は{delta}です。",
+    "closestSwatchesHead": "最も近いスウォッチ",
+    "rowColumn": "{row}行、{col}列",
+    "exploreDye": "カララントを見る",
+    "parseFailed": "このキャラクターファイルを読み込めませんでした：{reason}",
+    "slotError": {
+      "midRangeIndex": "この色はダークとライトの範囲の間にある未使用の96〜127に含まれます",
+      "indexOutOfRange": "この色のインデックスはシートの範囲外です",
+      "noTribe": "このスロットの解決にはファイルの部族と性別が必要です",
+      "unknown": "このスロットを読み取れませんでした"
+    }
   }
 }

@@ -352,7 +352,9 @@
     "pasteClipboard": "Paste from clipboard",
     "tapToSample": "Tap to sample",
     "addPick": "Add a pick",
-    "autoExtract": "Auto-extract"
+    "autoExtract": "Auto-extract",
+    "sampledColor": "Sampled Color",
+    "copyColorInfo": "Copy Color Info"
   },
   "accessibility": {
     "inspectDyes": "Inspect Dyes",
@@ -1290,6 +1292,16 @@
     "characterSavedMany": "Saved {n} character colours to this device.",
     "selSentence": "{subject} is {place}. {dye} sits {delta} away.",
     "selSentenceCell": "{place}. {dye} sits {delta} away.",
-    "selSentenceOffGrid": "{subject} is an arbitrary colour. {dye} sits {delta} away."
+    "selSentenceOffGrid": "{subject} is an arbitrary colour. {dye} sits {delta} away.",
+    "closestSwatchesHead": "Closest Swatches",
+    "rowColumn": "Row {row}, Column {col}",
+    "exploreDye": "Explore Dye",
+    "parseFailed": "Couldn't read this character file: {reason}",
+    "slotError": {
+      "midRangeIndex": "This colour sits in the unused 96–127 gap between the dark and light ranges",
+      "indexOutOfRange": "This colour index is outside the range of its sheet",
+      "noTribe": "This slot needs the file's clan and gender to resolve",
+      "unknown": "Could not read this slot"
+    }
   }
 }

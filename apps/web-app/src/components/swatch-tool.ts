@@ -43,6 +43,7 @@ import {
 import { ICON_PALETTE, ICON_MARKET } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type {
   SwatchConfig,
@@ -97,29 +98,6 @@ const STORAGE_KEYS = {
   maxResults: 'v3_character_max_results',
   incomingDye: 'v4_swatch_target_dye',
 } as const;
-
-/**
- * Mapping from SubRace type values to ClanKey for localization lookup
- * SubRace uses PascalCase, ClanKey uses camelCase
- */
-const SUBRACE_TO_CLAN_KEY: Record<SubRace, string> = {
-  Midlander: 'midlander',
-  Highlander: 'highlander',
-  Wildwood: 'wildwood',
-  Duskwight: 'duskwight',
-  Plainsfolk: 'plainsfolk',
-  Dunesfolk: 'dunesfolk',
-  SeekerOfTheSun: 'seekerOfTheSun',
-  KeeperOfTheMoon: 'keeperOfTheMoon',
-  SeaWolf: 'seaWolf',
-  Hellsguard: 'hellsguard',
-  Raen: 'raen',
-  Xaela: 'xaela',
-  Helions: 'helions',
-  TheLost: 'theLost',
-  Rava: 'rava',
-  Veena: 'veena',
-};
 
 /**
  * Localization key for each race — a presentation concern local to this
@@ -893,7 +871,10 @@ export class SwatchTool extends BaseComponent {
       });
 
       const posLabel = this.createElement('span', {
-        textContent: `Row ${gridRow}, Column ${gridCol}`,
+        textContent: LanguageService.tInterpolate('swatch.rowColumn', {
+          row: gridRow,
+          col: gridCol,
+        }),
         attributes: {
           style: `
             font-size: 13px;
@@ -1394,7 +1375,7 @@ export class SwatchTool extends BaseComponent {
     });
     const reverseTitle = this.createElement('span', {
       className: 'section-title',
-      textContent: 'Closest Swatches',
+      textContent: LanguageService.t('swatch.closestSwatchesHead'),
     });
     reverseHeader.appendChild(reverseTitle);
     this.reverseSection.appendChild(reverseHeader);
@@ -2330,7 +2311,7 @@ export class SwatchTool extends BaseComponent {
       card.setAttribute('show-actions', 'true');
       // Make primary button open context menu (same as the ... button)
       card.setAttribute('primary-opens-menu', 'true');
-      card.setAttribute('primary-action-label', 'Explore Dye');
+      card.setAttribute('primary-action-label', LanguageService.t('swatch.exploreDye'));
 
       // Get price data for this dye
       const priceDataForDye = this.priceData.get(match.dye.itemID);

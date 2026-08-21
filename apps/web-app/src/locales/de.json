@@ -352,7 +352,9 @@
     "pasteClipboard": "Aus Zwischenablage",
     "tapToSample": "Tippen zum Messen",
     "addPick": "Auswahl hinzufügen",
-    "autoExtract": "Auto-Extraktion"
+    "autoExtract": "Auto-Extraktion",
+    "sampledColor": "Gemessene Farbe",
+    "copyColorInfo": "Farbinfos kopieren"
   },
   "accessibility": {
     "inspectDyes": "Farbstoffe prüfen",
@@ -1290,6 +1292,16 @@
     "characterSavedMany": "{n} Charakterfarben auf diesem Gerät gespeichert.",
     "selSentence": "{subject} ist {place}. {dye} liegt {delta} entfernt.",
     "selSentenceCell": "{place}. {dye} liegt {delta} entfernt.",
-    "selSentenceOffGrid": "{subject} ist eine freie Farbe. {dye} liegt {delta} entfernt."
+    "selSentenceOffGrid": "{subject} ist eine freie Farbe. {dye} liegt {delta} entfernt.",
+    "closestSwatchesHead": "Nächste Farbfelder",
+    "rowColumn": "Zeile {row}, Spalte {col}",
+    "exploreDye": "Farbstoff erkunden",
+    "parseFailed": "Diese Charakterdatei konnte nicht gelesen werden: {reason}",
+    "slotError": {
+      "midRangeIndex": "Diese Farbe liegt in der ungenutzten Lücke 96–127 zwischen dunklem und hellem Bereich",
+      "indexOutOfRange": "Dieser Farbindex liegt außerhalb des Bereichs seiner Tabelle",
+      "noTribe": "Dieser Slot benötigt Volksgruppe und Geschlecht aus der Datei",
+      "unknown": "Dieser Slot konnte nicht gelesen werden"
+    }
   }
 }

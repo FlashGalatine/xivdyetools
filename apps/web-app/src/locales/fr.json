@@ -352,7 +352,9 @@
     "pasteClipboard": "Coller depuis le presse-papiers",
     "tapToSample": "Touchez pour prélever",
     "addPick": "Ajouter un prélèvement",
-    "autoExtract": "Extraction auto"
+    "autoExtract": "Extraction auto",
+    "sampledColor": "Couleur prélevée",
+    "copyColorInfo": "Copier les infos couleur"
   },
   "accessibility": {
     "inspectDyes": "Inspecter les Teintures",
@@ -1290,6 +1292,16 @@
     "characterSavedMany": "{n} couleurs de personnage enregistrées sur cet appareil.",
     "selSentence": "{subject} est {place}. {dye} se situe à {delta}.",
     "selSentenceCell": "{place}. {dye} se situe à {delta}.",
-    "selSentenceOffGrid": "{subject} est une couleur libre. {dye} se situe à {delta}."
+    "selSentenceOffGrid": "{subject} est une couleur libre. {dye} se situe à {delta}.",
+    "closestSwatchesHead": "Nuances les plus proches",
+    "rowColumn": "Ligne {row}, colonne {col}",
+    "exploreDye": "Explorer la teinture",
+    "parseFailed": "Impossible de lire ce fichier de personnage : {reason}",
+    "slotError": {
+      "midRangeIndex": "Cette couleur se situe dans l'intervalle inutilisé 96–127 entre les plages foncée et claire",
+      "indexOutOfRange": "Cet indice de couleur est en dehors de la plage de sa grille",
+      "noTribe": "Cet emplacement nécessite l'ethnie et le genre du fichier",
+      "unknown": "Impossible de lire cet emplacement"
+    }
   }
 }

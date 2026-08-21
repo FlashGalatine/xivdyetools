@@ -305,7 +305,7 @@ export class ExtractorTool extends BaseComponent {
     });
 
     this.onPanelEvent(leftPanel, 'error', (event: CustomEvent) => {
-      const message = event.detail?.message || 'Failed to load image';
+      const message = event.detail?.message || LanguageService.t('errors.imageLoadFailed');
       logger.error('[MatcherTool] Image upload error:', event.detail);
       ToastService.error(message);
     });
@@ -1834,7 +1834,7 @@ export class ExtractorTool extends BaseComponent {
       },
     });
     const title = this.createElement('span', {
-      textContent: 'Sampled Color',
+      textContent: LanguageService.t('matcher.sampledColor'),
       attributes: {
         style: 'font-size: 14px; font-weight: 600; color: var(--theme-text, #e0e0e0);',
       },
@@ -1900,7 +1900,7 @@ export class ExtractorTool extends BaseComponent {
 
     // Copy button
     const copyBtn = this.createElement('button', {
-      textContent: 'Copy Color Info',
+      textContent: LanguageService.t('matcher.copyColorInfo'),
       attributes: {
         style: `
           width: 100%;
@@ -1932,7 +1932,7 @@ export class ExtractorTool extends BaseComponent {
         `LAB: ${Math.round(lab.L)}, ${Math.round(lab.a)}, ${Math.round(lab.b)}`,
       ].join('\n');
       void navigator.clipboard.writeText(text).then(() => {
-        ToastService.success('Color info copied to clipboard');
+        ToastService.success(LanguageService.t('success.copiedToClipboard'));
       });
     });
     card.appendChild(copyBtn);

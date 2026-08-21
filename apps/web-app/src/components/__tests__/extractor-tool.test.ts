@@ -1130,7 +1130,7 @@ describe('ExtractorTool', () => {
 
         sample('#FF0000');
 
-        expect(rightPanel.textContent).toContain('Sampled Color');
+        expect(rightPanel.textContent).toContain('matcher.sampledColor');
       });
 
       it('records the sample in the roll and persists it', async () => {

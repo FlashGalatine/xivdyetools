@@ -352,7 +352,9 @@
     "pasteClipboard": "클립보드에서 붙여넣기",
     "tapToSample": "탭하여 추출",
     "addPick": "추출 추가",
-    "autoExtract": "자동 추출"
+    "autoExtract": "자동 추출",
+    "sampledColor": "추출한 색상",
+    "copyColorInfo": "색상 정보 복사"
   },
   "accessibility": {
     "inspectDyes": "염료 검사",
@@ -1290,6 +1292,16 @@
     "characterSavedMany": "캐릭터 색상 {n}개를 이 기기에 저장했습니다.",
     "selSentence": "{subject}은(는) {place}. {dye}와(과)의 차이는 {delta}입니다.",
     "selSentenceCell": "{place}. {dye}와(과)의 차이는 {delta}입니다.",
-    "selSentenceOffGrid": "{subject}은(는) 임의의 색입니다. {dye}와(과)의 차이는 {delta}입니다."
+    "selSentenceOffGrid": "{subject}은(는) 임의의 색입니다. {dye}와(과)의 차이는 {delta}입니다.",
+    "closestSwatchesHead": "가장 가까운 견본",
+    "rowColumn": "{row}행, {col}열",
+    "exploreDye": "염료 살펴보기",
+    "parseFailed": "이 캐릭터 파일을 읽을 수 없습니다: {reason}",
+    "slotError": {
+      "midRangeIndex": "이 색은 다크와 라이트 범위 사이의 사용되지 않는 96–127 구간에 있습니다",
+      "indexOutOfRange": "이 색 인덱스는 해당 시트의 범위를 벗어났습니다",
+      "noTribe": "이 부위를 해석하려면 파일의 부족과 성별이 필요합니다",
+      "unknown": "이 부위를 읽을 수 없습니다"
+    }
   }
 }
