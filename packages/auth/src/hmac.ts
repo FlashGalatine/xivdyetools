@@ -275,3 +275,107 @@ export async function verifyBotSignature(
   const message = `${timestamp}:${userDiscordId ?? ''}:${userName ?? ''}`;
   return hmacVerifyHex(message, signature, secret);
 }
+
+// ============================================================================
+// Bot request signature v2 (FINDING-014, 2026-08-21 security audit)
+// ============================================================================
+
+/** Default freshness window for v2 signatures (60 s — v1 allowed 5 min). */
+export const BOT_SIGNATURE_V2_MAX_AGE_MS = 60 * 1000;
+
+/** Header carrying the v2 signature (v1 stays on `X-Request-Signature`). */
+export const BOT_SIGNATURE_V2_HEADER = 'X-Request-Signature-V2';
+/** Header carrying the optional per-request nonce. */
+export const BOT_SIGNATURE_NONCE_HEADER = 'X-Request-Nonce';
+
+/**
+ * Everything a v2 signature binds. `body` is the raw request body (string or
+ * bytes; absent/empty for GET/DELETE); identity fields are optional for
+ * system-level bot calls.
+ */
+export interface BotSignatureV2Request {
+  method: string;
+  /** URL path only (no origin, no query) */
+  path: string;
+  body?: string | Uint8Array | ArrayBuffer | null;
+  /** Unix seconds as a string (the value sent in X-Request-Timestamp) */
+  timestamp: string | undefined;
+  /** Optional random nonce (sent in X-Request-Nonce); bound when present */
+  nonce?: string;
+  userDiscordId?: string;
+  userName?: string;
+}
+
+async function sha256Hex(data: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return bytesToHex(new Uint8Array(digest));
+}
+
+function bodyBytes(body: BotSignatureV2Request['body']): Uint8Array {
+  if (body === undefined || body === null) return new Uint8Array(0);
+  if (typeof body === 'string') return new TextEncoder().encode(body);
+  if (body instanceof Uint8Array) return body;
+  return new Uint8Array(body);
+}
+
+/**
+ * Canonical string for v2: every field on its own line, length-prefixed, so
+ * no choice of delimiter inside a field can collide with another field
+ * (`(123,"a:b")` and `("123:a","b")` were the same v1 message).
+ */
+async function canonicalV2(req: BotSignatureV2Request): Promise<string> {
+  const fields = [
+    'v2',
+    req.method.toUpperCase(),
+    req.path,
+    await sha256Hex(bodyBytes(req.body)),
+    req.timestamp ?? '',
+    req.nonce ?? '',
+    req.userDiscordId ?? '',
+    req.userName ?? '',
+  ];
+  return fields.map((f) => `${f.length}:${f}`).join('\n');
+}
+
+/**
+ * Sign a bot → API request (v2). Returns a hex HMAC-SHA256.
+ *
+ * @example
+ * ```typescript
+ * const timestamp = String(Math.floor(Date.now() / 1000));
+ * const nonce = crypto.randomUUID();
+ * const sig = await createBotSignatureV2({ method, path, body, timestamp, nonce, userDiscordId, userName }, secret);
+ * headers['X-Request-Signature-V2'] = sig; headers['X-Request-Nonce'] = nonce;
+ * ```
+ */
+export async function createBotSignatureV2(
+  req: BotSignatureV2Request,
+  secret: string
+): Promise<string> {
+  return hmacSignHex(await canonicalV2(req), secret);
+}
+
+/**
+ * Verify a v2 bot signature: freshness (default 60 s, 60 s future skew) and
+ * the full request binding. Nonce replay protection is left to the caller
+ * (store `nonce` for the window if you need strict single-use).
+ */
+export async function verifyBotSignatureV2(
+  signature: string | undefined | null,
+  req: BotSignatureV2Request,
+  secret: string,
+  options: BotSignatureOptions = {}
+): Promise<boolean> {
+  const { maxAgeMs = BOT_SIGNATURE_V2_MAX_AGE_MS, clockSkewMs = 60 * 1000 } = options;
+  if (!signature || !req.timestamp) return false;
+
+  const timestampNum = parseInt(req.timestamp, 10);
+  if (!Number.isFinite(timestampNum)) return false;
+
+  const now = Date.now();
+  const signatureTime = timestampNum * 1000;
+  if (now - signatureTime > maxAgeMs) return false;
+  if (signatureTime > now + clockSkewMs) return false;
+
+  return hmacVerifyHex(await canonicalV2(req), signature, secret);
+}

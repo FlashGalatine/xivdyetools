@@ -15,3 +15,6 @@ Sign a canonical string with unambiguous encoding: `method\npath\nsha256(body)\n
 
 ## References
 - Evidence: `../evidence/review-packages.md` (PKG-1), `../evidence/review-presets-api.md` (PAPI-7)
+
+## Status
+**FIXED 2026-08-21** — `fix(packages,bots,presets-api): bot signature v2, interaction freshness, logger/svg/core hardening, Discord sanitiser (FINDING-014/021/026/027/028)`: `@xivdyetools/auth` 1.4.0 `createBotSignatureV2`/`verifyBotSignatureV2` (length-prefixed canonical string over method/path/body-hash/timestamp/nonce/identity, 60 s window); presets-api verifies v2 whenever present (no downgrade to v1), v1 kept for rollover; discord-worker + moderation-worker send `X-Request-Signature-V2` + `X-Request-Nonce`. Residual: nonce is bound but not cached for strict single-use (documented); v1 acceptance to be removed after both bots deploy.

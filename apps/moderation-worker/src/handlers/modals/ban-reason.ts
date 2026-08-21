@@ -24,7 +24,6 @@ import { extractTextInputValue, getModalUserId, getModalUsername } from '../../t
 /**
  * Handle the ban reason modal submission
  */
-// eslint-disable-next-line @typescript-eslint/require-await
 export async function handleBanReasonModal(
   interaction: ModalInteraction,
   env: Env,

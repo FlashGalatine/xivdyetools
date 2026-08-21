@@ -35,7 +35,7 @@ import {
   markFooter,
   type CardTheme,
 } from './frame.js';
-import { num } from './base.js';
+import { num, escapeXml } from './base.js';
 import { toolGlyph } from './icons/tool-icons.js';
 
 // ============================================================================
@@ -168,8 +168,8 @@ function render13A(o: ContrastCardOptions, theme: CardTheme): string {
   // The butted pair + both names
   const pairTop = 14 + 21 + 13;
   parts.push(
-    `<path d="M ${PAD + 10} ${pairTop} H ${PAD + 44} V ${pairTop + 62} H ${PAD + 10} Q ${PAD} ${pairTop + 62} ${PAD} ${pairTop + 52} V ${pairTop + 10} Q ${PAD} ${pairTop} ${PAD + 10} ${pairTop} Z" fill="${worst.hexA}"/>` +
-      `<path d="M ${PAD + 44} ${pairTop} H ${PAD + 78} Q ${PAD + 88} ${pairTop} ${PAD + 88} ${pairTop + 10} V ${pairTop + 52} Q ${PAD + 88} ${pairTop + 62} ${PAD + 78} ${pairTop + 62} H ${PAD + 44} Z" fill="${worst.hexB}"/>` +
+    `<path d="M ${PAD + 10} ${pairTop} H ${PAD + 44} V ${pairTop + 62} H ${PAD + 10} Q ${PAD} ${pairTop + 62} ${PAD} ${pairTop + 52} V ${pairTop + 10} Q ${PAD} ${pairTop} ${PAD + 10} ${pairTop} Z" fill="${escapeXml(worst.hexA)}"/>` +
+      `<path d="M ${PAD + 44} ${pairTop} H ${PAD + 78} Q ${PAD + 88} ${pairTop} ${PAD + 88} ${pairTop + 10} V ${pairTop + 52} Q ${PAD + 88} ${pairTop + 62} ${PAD + 78} ${pairTop + 62} H ${PAD + 44} Z" fill="${escapeXml(worst.hexB)}"/>` +
       `<rect x="${PAD + 0.5}" y="${pairTop + 0.5}" width="87" height="61" rx="9.5" fill="none" stroke="${theme.swatchRing}" stroke-width="1"/>`
   );
   const nameX = PAD + 88 + 12;

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — 2026-08-21 security audit (FINDING-019)
+
+- `escapeDiscordMarkdown()`, `sanitizeEmbedText(text, maxLength?)` and `ALLOWED_MENTIONS_NONE` (`src/discord-markdown.ts`): one sanitiser for every user-sourced string that lands in a bot-authored Discord message/embed — strips control / zero-width / bidi characters, collapses whitespace, defuses `@everyone` / `@here` / `<@…>` mentions, escapes inline markdown and masked links, caps length with an ellipsis. Both bots adopt it in their 2026-08-21 releases instead of re-implementing it.
+
 ### Added — 2026-08-20 i18n audit remediation
 
 - `Translator.tc(key, count, vars?)` — count-aware lookup of `<key>_one` / `<key>_other` (falls back to the bare key). All six locale files carry both forms for `card.swatchFootKey`, `gradient.steps`, `card.gradVerdict`, `card.gradKeyCut`, `dye.search.foundCount` (replaces `foundCountPlural`) and `errors.rateLimited` (F-09).

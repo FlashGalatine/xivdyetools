@@ -14,9 +14,12 @@ Security audit remediation (docs/audits/2026-08-21-security, FINDING-001 / FINDI
 - **`revokeToken()` now keeps blacklist entries alive for `exp + REFRESH_GRACE_SECONDS`** (new exported constant, 15 min) instead of ending exactly at `exp`. The oauth worker's `/auth/refresh` honours tokens for a grace window past `exp`; with the old TTL a revoked token became refreshable the moment it expired (FINDING-001). Both sides now share the same constant. New `RevokeTokenOptions.graceSeconds` for callers that override the window.
 - **`verifyJWT` / `verifyJWTSignatureOnly` validate claim types** (FINDING-015): `exp` must be a finite numeric date, `sub` a non-empty string, `iat`/`nbf` numeric when present; a signed `exp: "9999999999"` or `sub: {}` is rejected instead of comparing as strings/objects. `verifyJWT` also enforces `nbf` (with optional `clockToleranceSeconds`), and accepts new `issuer` (string or list) and `audience` options that pin `iss`/`aud`.
 
+- **Bot request signature v2** (FINDING-014): `createBotSignatureV2` / `verifyBotSignatureV2` bind `method`, URL `path`, SHA-256 of the body, timestamp, an optional nonce and the identity headers with a length-prefixed canonical string (v1 signed only `timestamp:userId:userName` with an ambiguous `:` delimiter — `(123,"a:b")` ≡ `("123:a","b")`) and a 60 s window (`BOT_SIGNATURE_V2_MAX_AGE_MS`). Header names `BOT_SIGNATURE_V2_HEADER` (`X-Request-Signature-V2`) / `BOT_SIGNATURE_NONCE_HEADER` (`X-Request-Nonce`). `verifyBotSignature` (v1) is unchanged for rollover.
+- **`verifyDiscordRequest` enforces timestamp freshness** (FINDING-021): `X-Signature-Timestamp` older than `DEFAULT_DISCORD_MAX_TIMESTAMP_AGE_SECONDS` (300) or more than 60 s in the future is rejected before the body is read; `DiscordVerifyOptions.maxTimestampAgeSeconds` / `.maxFutureSkewSeconds` override.
+
 ### Added
 
-- `REFRESH_GRACE_SECONDS`, `RevokeTokenOptions`, `VerifyJWTOptions.issuer` / `.audience` / `.clockToleranceSeconds`, `JWTPayload.nbf` / `.aud`.
+- `REFRESH_GRACE_SECONDS`, `RevokeTokenOptions`, `VerifyJWTOptions.issuer` / `.audience` / `.clockToleranceSeconds`, `JWTPayload.nbf` / `.aud`, `createBotSignatureV2`, `verifyBotSignatureV2`, `BotSignatureV2Request`, `BOT_SIGNATURE_V2_MAX_AGE_MS`, `BOT_SIGNATURE_V2_HEADER`, `BOT_SIGNATURE_NONCE_HEADER`, `DEFAULT_DISCORD_MAX_TIMESTAMP_AGE_SECONDS`.
 
 ## [1.3.0] - 2026-08-16
 

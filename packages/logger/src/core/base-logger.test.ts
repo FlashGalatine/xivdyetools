@@ -68,17 +68,20 @@ describe('BaseLogger', () => {
       expect(config.format).toBe('json');
       expect(config.timestamps).toBe(true);
       expect(config.sanitizeErrors).toBe(true);
-      expect(config.redactFields).toEqual([
-        'password',
-        'token',
-        'secret',
-        'authorization',
-        'cookie',
-        'api_key',
-        'apiKey',
-        'access_token',
-        'refresh_token',
-      ]);
+      // FINDING-026 extended the default list; the original nine must still be there
+      expect(config.redactFields).toEqual(
+        expect.arrayContaining([
+          'password',
+          'token',
+          'secret',
+          'authorization',
+          'cookie',
+          'api_key',
+          'apiKey',
+          'access_token',
+          'refresh_token',
+        ]),
+      );
     });
 
     it('should merge provided config with defaults', () => {
@@ -299,9 +302,10 @@ describe('BaseLogger', () => {
 
     it('should handle objects', () => {
       const result = logger.testFormatError({ custom: 'error' });
+      // FINDING-026: serialised (and sanitised) instead of "[object Object]"
       expect(result).toEqual({
         name: 'Unknown',
-        message: '[object Object]',
+        message: '{"custom":"error"}',
       });
     });
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security — 2026-08-21 security audit (FINDING-027)
+
+- `.chara` parser (`mapNamed`) and `TranslationProvider.getLabel` use own-property lookups (`Object.hasOwn`): a file naming `"Tribe": "constructor"` / `"__proto__"` / `"toString"` used to pass validation with a `Function` / `Object.prototype` as the "mapped" value; it is now rejected as an unrecognised value like any other junk.
+
 ### Fixed — 2026-08-20 i18n audit remediation
 
 - `ACQUISITION_META['The Firmament'].currency` and `CONSOLIDATED_DYES.B.currency` spelled the currency with an apostrophe (`Skybuilders' Scrips`) while the locale `currencies` key is `Skybuilders Scrips`, so `getCurrency()` missed and the 9 Firmament dyes printed English in every locale. Aligned on the locale-key spelling; `dye-vocabulary.test.ts` now asserts every derived currency is a locale key (F-07).

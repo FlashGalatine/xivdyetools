@@ -13,7 +13,7 @@
 
 import type { Dye } from '@xivdyetools/types';
 import { classifyBandTier, ColorService } from '@xivdyetools/core';
-import { num } from './base.js';
+import { num, escapeXml } from './base.js';
 import { panelGlyph } from './icons/tool-icons.js';
 import {
   CARD_WIDTH,
@@ -116,7 +116,7 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
 
   // --- Header band: the dye's own colour, 78 px, square top corners under the shell radius
   parts.push(
-    `<path d="M 0 16 Q 0 0 16 0 H ${CARD_WIDTH - 16} Q ${CARD_WIDTH} 0 ${CARD_WIDTH} 16 V 78 H 0 Z" fill="${dye.hex}"/>`
+    `<path d="M 0 16 Q 0 0 16 0 H ${CARD_WIDTH - 16} Q ${CARD_WIDTH} 0 ${CARD_WIDTH} 16 V 78 H 0 Z" fill="${escapeXml(dye.hex)}"/>`
   );
   const chip = commandChip(14, 11, commandLabel, theme, { glyph: commandGlyph, onDye: true });
   parts.push(chip.svg);

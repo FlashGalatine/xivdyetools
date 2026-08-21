@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security — 2026-08-21 security audit (`docs/audits/2026-08-21-security/`, FINDING-003)
 
 - Rate limiter logs a one-time warning per isolate when it falls back from Upstash to KV (`services/rate-limiter.ts`). The KV backend cannot throttle a fast client (KV 1 write/s/key, swallowed put failures, eventually-consistent reads), so it is a dev fallback only — production must configure `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`, and the warning makes a missing configuration visible in the logs instead of silently running unthrottled.
+- Bot → presets-api requests also carry `X-Request-Signature-V2` + `X-Request-Nonce` (FINDING-014): the v2 signature binds method, path, the exact JSON body bytes sent, timestamp, nonce and identity (60 s window) via `@xivdyetools/auth` 1.4.0; the v1 header stays during rollover. The body is serialised once and the same bytes are signed and sent.
+- Interaction timestamps are now enforced fresh (FINDING-021): `verifyDiscordRequest` (`@xivdyetools/auth` 1.4.0) rejects `X-Signature-Timestamp` older than 5 minutes or > 60 s in the future before reading the body — a captured interaction can no longer be replayed later.
 
 ### Fixed — 2026-08-20 i18n audit remediation (`docs/audits/2026-08-20-discord-worker-i18n/`)
 

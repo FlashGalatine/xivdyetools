@@ -63,9 +63,13 @@ export abstract class BaseLogger implements ExtendedLogger {
     context?: LogContext,
     error?: unknown,
   ): LogEntry {
+    // FINDING-026 (2026-08-21 audit): the free-text message goes through the
+    // same redaction as error messages — callers interpolate upstream errors
+    // and request data into it just as readily
+    const safeMessage = this.config.sanitizeErrors ? this.sanitizeErrorMessage(message) : message;
     const entry: LogEntry = {
       level,
-      message: this.config.prefix ? `[${this.config.prefix}] ${message}` : message,
+      message: this.config.prefix ? `[${this.config.prefix}] ${safeMessage}` : safeMessage,
       timestamp: new Date().toISOString(),
     };
 
@@ -118,10 +122,12 @@ export abstract class BaseLogger implements ExtendedLogger {
       return formatted;
     }
 
-    // Handle non-Error objects
+    // Handle non-Error objects — FINDING-026: sanitised like Error messages
+    // (a thrown string or object frequently carries the upstream payload)
+    const raw = typeof error === 'string' ? error : safeStringify(error);
     return {
       name: 'Unknown',
-      message: String(error),
+      message: this.config.sanitizeErrors ? this.sanitizeErrorMessage(raw) : raw,
     };
   }
 
@@ -213,6 +219,14 @@ export abstract class BaseLogger implements ExtendedLogger {
     for (const key of Object.keys(redacted)) {
       const n = normalize(key);
       if (redactSet.has(n) || SENSITIVE_SUFFIX.test(n)) {
+        redacted[key] = '[REDACTED]';
+        continue;
+      }
+      // FINDING-026 (2026-08-21 audit): secret-SHAPED values under innocuous
+      // keys (a Bearer header pasted into `note`, a JWT in `detail`, a Discord
+      // bot token in `raw`) — the key-name list cannot anticipate those.
+      const value = redacted[key];
+      if (typeof value === 'string' && looksLikeSecretValue(value)) {
         redacted[key] = '[REDACTED]';
       }
     }
@@ -382,5 +396,53 @@ class DelegatingLogger implements ExtendedLogger {
 
   private mergeContext(context?: LogContext): LogContext {
     return context ? { ...this.childContext, ...context } : this.childContext;
+  }
+}
+
+// ===========================================================================
+// FINDING-026 (2026-08-21 security audit) helpers
+// ===========================================================================
+
+/**
+ * Value shapes that are secrets regardless of the key they hang off:
+ * `Bearer …`, a three-part JWT, a Discord bot token (base64 id . 6 chars .
+ * 27+ chars), and long hex/base64url blobs that look like API keys.
+ */
+const SECRET_VALUE_PATTERNS: RegExp[] = [
+  /^\s*Bearer\s+\S+/i,
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/,
+  /\b[MN][A-Za-z\d]{23,}\.[\w-]{6}\.[\w-]{27,}\b/,
+  /^[A-Fa-f0-9]{64,}$/,
+];
+
+/** @internal */
+export function looksLikeSecretValue(value: string): boolean {
+  return SECRET_VALUE_PATTERNS.some((re) => re.test(value));
+}
+
+/**
+ * JSON.stringify that never throws: cycles become `"[Circular]"`, BigInt
+ * becomes its decimal string, and anything else that refuses to serialise is
+ * replaced rather than failing the log call (and with it, the request).
+ */
+export function safeStringify(value: unknown): string {
+  const seen = new WeakSet<object>();
+  try {
+    const json = JSON.stringify(value, (_key, v: unknown) => {
+      if (typeof v === 'bigint') return v.toString();
+      if (typeof v === 'object' && v !== null) {
+        if (seen.has(v)) return '[Circular]';
+        seen.add(v);
+      }
+      return v;
+    });
+    // JSON.stringify(undefined) / functions / symbols yield undefined
+    return json ?? String(value);
+  } catch (error) {
+    return JSON.stringify({
+      level: 'error',
+      message: 'log entry could not be serialised',
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }

@@ -259,7 +259,10 @@ function mapNamed<T>(
       'error',
     );
   }
-  const mapped = table[value];
+  // FINDING-027 (2026-08-21 audit): own-property lookup only — `table[value]`
+  // on a plain object literal let "constructor" / "__proto__" / "toString"
+  // pass validation with a Function or Object.prototype as the mapped value
+  const mapped = Object.hasOwn(table, value) ? table[value] : undefined;
   if (mapped === undefined) {
     throw new AppError(
       ErrorCode.INVALID_INPUT,

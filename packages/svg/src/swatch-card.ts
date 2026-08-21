@@ -31,6 +31,7 @@ import {
   type CardTheme,
   type MeasuredRowWidths,
 } from './frame.js';
+import { escapeXml } from './base.js';
 import { toolGlyph } from './icons/tool-icons.js';
 
 // ============================================================================
@@ -108,7 +109,7 @@ export function generateSwatchCard(options: SwatchCardOptions): string {
   parts.push(`<g clip-path="url(#swstrip)">`);
   stripes.forEach((hex, i) => {
     parts.push(
-      `<rect x="${(PAD + i * stripeW).toFixed(2)}" y="13" width="${(stripeW + 0.5).toFixed(2)}" height="30" fill="${hex}"/>`
+      `<rect x="${(PAD + i * stripeW).toFixed(2)}" y="13" width="${(stripeW + 0.5).toFixed(2)}" height="30" fill="${escapeXml(hex)}"/>`
     );
   });
   parts.push(`</g>`);

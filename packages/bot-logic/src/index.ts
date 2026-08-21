@@ -128,3 +128,11 @@ export {
   isModeratorId,
   /** @public */ isValidDiscordSnowflake,
 } from './moderators.js';
+
+// FINDING-019 (2026-08-21 security audit): one sanitiser for every user-sourced
+// string that lands in a bot-authored Discord message/embed (both bots)
+export {
+  /** @public */ escapeDiscordMarkdown,
+  /** @public */ sanitizeEmbedText,
+  /** @public */ ALLOWED_MENTIONS_NONE,
+} from './discord-markdown.js';

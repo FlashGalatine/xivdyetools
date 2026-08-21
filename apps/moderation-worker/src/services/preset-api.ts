@@ -10,7 +10,12 @@
  */
 
 import { parseModeratorIds } from '@xivdyetools/bot-logic';
-import { hmacSignHex } from '@xivdyetools/auth';
+import {
+  hmacSignHex,
+  createBotSignatureV2,
+  BOT_SIGNATURE_V2_HEADER,
+  BOT_SIGNATURE_NONCE_HEADER,
+} from '@xivdyetools/auth';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { isValidSnowflake } from '@xivdyetools/types';
@@ -127,6 +132,9 @@ async function request<T>(
     headers['X-User-Discord-Name'] = options.userName;
   }
 
+  // Serialise once: the same bytes are signed (v2) and sent
+  const bodyText = options.body ? JSON.stringify(options.body) : undefined;
+
   if (env.BOT_SIGNING_SECRET) {
     const timestamp = Math.floor(Date.now() / 1000); // Unix seconds
     const signature = await generateRequestSignature(
@@ -136,7 +144,24 @@ async function request<T>(
       env.BOT_SIGNING_SECRET,
     );
     headers['X-Request-Timestamp'] = String(timestamp);
-    headers['X-Request-Signature'] = signature;
+    headers['X-Request-Signature'] = signature; // v1 — kept during rollover
+
+    // FINDING-014 (2026-08-21 audit): v2 binds method + path + body hash +
+    // nonce + identity (60 s window); presets-api verifies it whenever present
+    const nonce = crypto.randomUUID();
+    headers[BOT_SIGNATURE_NONCE_HEADER] = nonce;
+    headers[BOT_SIGNATURE_V2_HEADER] = await createBotSignatureV2(
+      {
+        method,
+        path: new URL(`https://internal${path}`).pathname,
+        body: bodyText,
+        timestamp: String(timestamp),
+        nonce,
+        userDiscordId: options.userDiscordId,
+        userName: options.userName,
+      },
+      env.BOT_SIGNING_SECRET,
+    );
 
     // CRITICAL: The receiving API MUST validate this timestamp is within 5 minutes
     // to prevent replay attacks. See docs/HMAC_SIGNATURE_SPEC.md
@@ -158,7 +183,7 @@ async function request<T>(
         new Request(`https://internal${path}`, {
           method,
           headers,
-          body: options.body ? JSON.stringify(options.body) : undefined,
+          body: bodyText,
         }),
       );
     } else {
@@ -166,7 +191,7 @@ async function request<T>(
       response = await fetch(url, {
         method,
         headers,
-        body: options.body ? JSON.stringify(options.body) : undefined,
+        body: bodyText,
       });
     }
 

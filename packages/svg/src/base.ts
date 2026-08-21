@@ -7,10 +7,28 @@
  */
 
 /**
- * XML-escapes a string for safe SVG inclusion
+ * Characters XML 1.0 does not allow anywhere in a document: C0 controls other
+ * than TAB/LF/CR, DEL-adjacent C1 controls, U+FFFE/U+FFFF, and lone surrogates
+ * (a lone surrogate cannot even be UTF-8 encoded). resvg rejects the whole
+ * SVG when one slips in, so a preset name carrying U+0001 used to kill its
+ * card (FINDING-028, 2026-08-21 security audit).
+ */
+// Built from escapes: raw control characters in a regex literal trip
+// no-irregular-whitespace and do not survive every transform.
+const XML_ILLEGAL = new RegExp(
+  '[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]' +
+    '|[\uD800-\uDBFF](?![\uDC00-\uDFFF])' +
+    '|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]',
+  'g',
+);
+
+/**
+ * XML-escapes a string for safe SVG inclusion (text content AND attribute
+ * values), dropping characters that are illegal in XML altogether.
  */
 export function escapeXml(str: string): string {
   return str
+    .replace(XML_ILLEGAL, '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

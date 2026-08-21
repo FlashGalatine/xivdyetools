@@ -25,6 +25,7 @@ import {
   type CardTheme,
   type MeasuredRowWidths,
 } from './frame.js';
+import { escapeXml } from './base.js';
 import { toolGlyph } from './icons/tool-icons.js';
 
 // ============================================================================
@@ -119,10 +120,10 @@ export function generateGradientCard(options: GradientCardOptions): string {
   strip.forEach((c, i) => {
     const x = PAD + i * (cellW + gap);
     parts.push(
-      `<path d="M ${x + 3} ${stripY} H ${x + cellW - 3} Q ${x + cellW} ${stripY} ${x + cellW} ${stripY + 3} V ${stripY + 7} H ${x} V ${stripY + 3} Q ${x} ${stripY} ${x + 3} ${stripY} Z" fill="${c.idealHex}"/>`,
+      `<path d="M ${x + 3} ${stripY} H ${x + cellW - 3} Q ${x + cellW} ${stripY} ${x + cellW} ${stripY + 3} V ${stripY + 7} H ${x} V ${stripY + 3} Q ${x} ${stripY} ${x + 3} ${stripY} Z" fill="${escapeXml(c.idealHex)}"/>`,
     );
     parts.push(
-      `<path d="M ${x} ${stripY + 7} H ${x + cellW} V ${stripY + 26} Q ${x + cellW} ${stripY + 30} ${x + cellW - 4} ${stripY + 30} H ${x + 4} Q ${x} ${stripY + 30} ${x} ${stripY + 26} Z" fill="${c.dyeHex}"/>`,
+      `<path d="M ${x} ${stripY + 7} H ${x + cellW} V ${stripY + 26} Q ${x + cellW} ${stripY + 30} ${x + cellW - 4} ${stripY + 30} H ${x + 4} Q ${x} ${stripY + 30} ${x} ${stripY + 26} Z" fill="${escapeXml(c.dyeHex)}"/>`,
     );
   });
 

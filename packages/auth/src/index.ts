@@ -46,7 +46,14 @@ export {
   hmacVerify,
   hmacVerifyHex,
   verifyBotSignature,
+  // FINDING-014 (2026-08-21 audit): request-bound bot signature v2
+  createBotSignatureV2,
+  verifyBotSignatureV2,
+  BOT_SIGNATURE_V2_MAX_AGE_MS,
+  BOT_SIGNATURE_V2_HEADER,
+  BOT_SIGNATURE_NONCE_HEADER,
   type BotSignatureOptions,
+  type BotSignatureV2Request,
 } from './hmac.js';
 
 // Timing-safe utilities
@@ -57,6 +64,7 @@ export {
   verifyDiscordRequest,
   unauthorizedResponse,
   badRequestResponse,
+  DEFAULT_DISCORD_MAX_TIMESTAMP_AGE_SECONDS,
   type DiscordVerificationResult,
   type DiscordVerifyOptions,
 } from './discord.js';

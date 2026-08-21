@@ -15,3 +15,6 @@ Reject interactions whose timestamp is older than ~5 minutes (Discord itself ret
 
 ## References
 - Evidence: `../evidence/review-packages.md` (PKG-12), `../evidence/review-discord-worker.md` (DW-5)
+
+## Status
+**FIXED 2026-08-21** — `@xivdyetools/auth` 1.4.0 `verifyDiscordRequest` rejects `X-Signature-Timestamp` older than 300 s or > 60 s in the future before reading the body (`DEFAULT_DISCORD_MAX_TIMESTAMP_AGE_SECONDS`, options to override); discord-worker and moderation-worker inherit it with no code change.

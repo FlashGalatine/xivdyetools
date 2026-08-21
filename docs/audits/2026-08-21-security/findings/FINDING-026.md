@@ -16,3 +16,6 @@ Use a `WeakSet`-based replacer that drops cycles and stringifies BigInt; wrap th
 
 ## References
 - Evidence: `../evidence/review-packages.md` (PKG-3..5)
+
+## Status
+**FIXED 2026-08-21** — `@xivdyetools/logger` (Unreleased): `safeStringify` in `JsonAdapter.write` (cycles/BigInt never throw), `message` and non-Error throws sanitised, redact list extended (privateKey/setCookie/webhookUrl/authHeader/sessionId/…), value-shape redaction (`Bearer …`, JWTs, Discord tokens, long hex), browser `errorTracker` stack sanitised.

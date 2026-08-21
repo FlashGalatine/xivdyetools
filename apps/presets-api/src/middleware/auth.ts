@@ -10,6 +10,9 @@ import type { Env, AuthContext } from '../types.js';
 import {
   verifyJWT as sharedVerifyJWT,
   verifyBotSignature,
+  verifyBotSignatureV2,
+  BOT_SIGNATURE_V2_HEADER,
+  BOT_SIGNATURE_NONCE_HEADER,
   isTokenRevoked,
 } from '@xivdyetools/auth';
 
@@ -198,16 +201,42 @@ export async function authMiddleware(
         }
       } else {
         const signature = c.req.header('X-Request-Signature');
+        const signatureV2 = c.req.header(BOT_SIGNATURE_V2_HEADER);
         const timestamp = c.req.header('X-Request-Timestamp');
 
-        // REFACTOR-003: Uses @xivdyetools/auth for bot signature verification
-        const isValidSignature = await verifyBotSignature(
-          signature,
-          timestamp,
-          userDiscordId,
-          userName,
-          c.env.BOT_SIGNING_SECRET
-        );
+        let isValidSignature: boolean;
+        if (signatureV2 !== undefined) {
+          // FINDING-014 (2026-08-21 audit): v2 binds method + path + body hash +
+          // timestamp + nonce + identity with a 60 s window. When the header is
+          // present it MUST verify — never fall back to v1, or a captured v1
+          // tuple could be replayed against any route by dropping the v2 header.
+          // Body read via Hono's cache so downstream c.req.json() still works.
+          const body = ['GET', 'HEAD'].includes(c.req.method) ? undefined : await c.req.arrayBuffer();
+          isValidSignature = await verifyBotSignatureV2(
+            signatureV2,
+            {
+              method: c.req.method,
+              path: new URL(c.req.url).pathname,
+              body,
+              timestamp,
+              nonce: c.req.header(BOT_SIGNATURE_NONCE_HEADER),
+              userDiscordId,
+              userName,
+            },
+            c.env.BOT_SIGNING_SECRET
+          );
+        } else {
+          // v1 (timestamp:userId:userName) — kept for rollover; both bots send v2
+          // as of 2026-08-21 and v1 is slated for removal once they are deployed.
+          // REFACTOR-003: Uses @xivdyetools/auth for bot signature verification
+          isValidSignature = await verifyBotSignature(
+            signature,
+            timestamp,
+            userDiscordId,
+            userName,
+            c.env.BOT_SIGNING_SECRET
+          );
+        }
 
         if (!isValidSignature) {
           // Log failed signature attempts (but don't reveal details)

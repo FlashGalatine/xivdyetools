@@ -20,6 +20,8 @@ Security audit remediation (docs/audits/2026-08-21-security, FINDING-002 / FINDI
 
 - **Append-only daily quotas** (FINDING-008 / PAPI-1). The daily submission cap counted surviving rows in `presets`, so deleting your own presets refilled it; flagged edits and preview-image uploads had no per-user cap at all although each fans out a moderation embed, a Perspective call and dead-letter rows. New `submission_events` table (migration `0011_submission_events.sql`, never deleted by user action) records every submission / flagged edit / preview upload; `checkSubmissionRateLimit` now counts max(live rows, events), and new per-user daily caps apply to edits that trip moderation (`DAILY_FLAGGED_EDIT_LIMIT` = 10 → 429 before anything is persisted) and preview uploads (`DAILY_PREVIEW_UPLOAD_LIMIT` = 20 → 429 before the body is read). Same 429 envelope as the submission cap (`error: RATE_LIMITED`, `remaining`, `reset_at`).
 
+- **Bot signature v2 verified when present** (FINDING-014): `authMiddleware` checks `X-Request-Signature-V2` (method + path + body hash + timestamp + `X-Request-Nonce` + identity, 60 s window via `@xivdyetools/auth` 1.4.0's `verifyBotSignatureV2`) and never falls back to v1 when the header is present; v1-only requests keep working until both bots are deployed with v2, after which v1 acceptance will be removed.
+
 ### Deploy notes
 
 - **Apply migration `0011_submission_events.sql` before deploying** (`wrangler d1 execute xivdyetools-presets --remote --file=migrations/0011_submission_events.sql`); without the table every quota check 500s.

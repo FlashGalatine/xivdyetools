@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security — 2026-08-21 security audit (FINDING-026)
+
+- **`write()` can no longer throw out of a log call.** `JsonAdapter` serialises with the new exported `safeStringify()` (cycles → `"[Circular]"`, BigInt → decimal string, anything else that refuses to serialise is replaced); a circular context used to raise `TypeError: Converting circular structure to JSON` and fail the request that logged it.
+- **The free-text `message` argument is sanitised** like error messages (`token=…`, `Bearer …`, `password=…` patterns), and non-`Error` throws passed to `error()` are serialised + sanitised instead of `String(error)`.
+- **Redaction gaps closed:** `CORE_REDACT_FIELDS` gains `private_key`/`privateKey`, `set_cookie`/`setCookie`, `webhook_url`/`webhookUrl`, `auth_header`/`authHeader`, `session_id`/`sessionId`, `client_secret`, `signing_secret`, `webhook_secret`; and a value-shape pass redacts secret-shaped STRINGS under any key (`Bearer …`, three-part JWTs, Discord bot tokens, ≥64-hex blobs) — `looksLikeSecretValue()` exported for reuse.
+- The browser preset's `errorTracker` path sanitises the re-attached `error.stack` (its first line repeats the raw message).
+
 ## [2.0.0] - 2026-08-18
 
 2026-08-18 dead-code audit (DEAD-021) — removes three dead/deprecated exports. Major bump: `perf` and `getRequestId(request)` were public surface on the `./browser` and `./worker` subpaths.

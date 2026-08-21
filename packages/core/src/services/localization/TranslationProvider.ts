@@ -55,15 +55,16 @@ export class TranslationProvider {
   getLabel(key: TranslationKey, locale: LocaleCode): string {
     const localeData = this.registry.getLocale(locale);
 
-    // Try requested locale
-    if (localeData?.labels[key]) {
+    // Try requested locale (FINDING-027: own-property lookups — a key such as
+    // "constructor" must not resolve through the prototype chain)
+    if (localeData && Object.hasOwn(localeData.labels, key) && localeData.labels[key]) {
       return localeData.labels[key];
     }
 
     // Fallback to English
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.labels[key]) {
+      if (englishData && Object.hasOwn(englishData.labels, key) && englishData.labels[key]) {
         return englishData.labels[key];
       }
     }

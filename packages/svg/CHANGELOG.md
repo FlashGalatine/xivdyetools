@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security — 2026-08-21 security audit (FINDING-028)
+
+- `escapeXml` now also strips characters that XML 1.0 forbids outright — C0 controls other than TAB/LF/CR, U+FFFE/U+FFFF and lone surrogates — so a preset name carrying U+0001 (presets-api validates length only) no longer makes resvg reject the whole card. Hex values interpolated into `fill="…"` in `contrast-card`, `gradient`, `dye-info-card` and `swatch-card` go through `escapeXml` like every other attribute (defence in depth; they were the only unescaped attribute sites).
+
 ### Changed — 2026-08-20 i18n audit remediation
 
 - `FONTS.cjk / headerCjk / primaryCjk / monoCjk` (base.ts) now list `Noto Sans JP` ahead of SC, matching `frame.ts` — `preset-swatch` was the one card drawing ja text in Chinese letterforms (F-17).

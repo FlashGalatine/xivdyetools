@@ -113,7 +113,9 @@ export function createBrowserLogger(options: BrowserLoggerOptions = {}): Extende
       if (error instanceof Error) {
         const safeError = new Error(logger.sanitizeMessage(error.message));
         safeError.name = error.name;
-        safeError.stack = error.stack; // stack is desirable for trackers; kept deliberately
+        // FINDING-026: the first stack line repeats the raw message — run the
+        // stack through the same sanitiser (frames are untouched by it)
+        safeError.stack = error.stack ? logger.sanitizeMessage(error.stack) : undefined;
         errorTracker.captureException(safeError, safeContext);
       } else if (error) {
         errorTracker.captureMessage(
