@@ -5,11 +5,14 @@
 *Last Updated: August 21, 2026*
 
 > **Versions below are read from each project's `package.json` on the working branch.** The 5.0
-> wave — `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0, `worker-kit` v1.1.0,
+> wave — `core` v4.0.1, `types` v2.0.0, `svg` v2.0.1, `bot-logic` v2.1.0, `worker-kit` v1.1.0,
 > `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.3.0, `presets-api` v2.1.0 and the
-> rest — is complete on `monorepo-2.0-prep` with every `CHANGELOG.md` written, but **not yet merged
-> to `main` or published to npm**. Merging to `main` is the release; the root `CHANGELOG.md` 2.0.0
-> entry carries the deploy sequence. See [Release Process](developer-guides/release-process.md).
+> rest (the patch/minor bumps on top of the 5.0 versions are the 2026-08-21 security-audit
+> remediation) — is complete on `monorepo-2.0-prep` with every `CHANGELOG.md` written, but **not
+> yet merged to `main` or published to npm**. Merging to `main` is the release; the root
+> `CHANGELOG.md` 2.0.0 entry carries the deploy sequence and
+> [`operations/POST_MERGE_CHECKLIST.md`](operations/POST_MERGE_CHECKLIST.md) the ordered
+> post-merge list. See [Release Process](developer-guides/release-process.md).
 
 ---
 
@@ -35,13 +38,13 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v4.0.0 | `@xivdyetools/core` | npm | Active — publish pending |
+| **Core** (incl. `/blending` + schema-v2 data) | v4.0.1 | `@xivdyetools/core` | npm | Active — publish pending |
 | **Types** | v2.0.0 | `@xivdyetools/types` | npm | Active — publish pending |
 | **Auth** (incl. `/encoding`) | v1.4.0 | `@xivdyetools/auth` | npm | Active |
-| **Logger** | v1.3.0 | `@xivdyetools/logger` | npm | Active |
+| **Logger** | v2.1.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.1.0 | `@xivdyetools/worker-kit` | npm | Active (first publish pending) |
-| **SVG** | v2.0.0 | `@xivdyetools/svg` | npm | Active — publish pending |
-| **Bot Logic** (incl. `/i18n`) | v2.0.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending |
+| **SVG** | v2.0.1 | `@xivdyetools/svg` | npm | Active — publish pending |
+| **Bot Logic** (incl. `/i18n`) | v2.1.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending |
 | **Test Utils** | v1.2.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -65,6 +68,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v4.0.1** | **Aug 2026** | **2026-08-21 security audit (FINDING-027) — `.chara` `mapNamed` and `TranslationProvider.getLabel` use `Object.hasOwn` (prototype keys such as `constructor` / `__proto__` no longer resolve)** |
 | **v4.0.0** | **Aug 2026** | **5.0 wave — one matching vocabulary (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`; `hyab` + `oklch-weighted` retired, `normalizeMatchingMethod`), per-method band tiers (`classifyBandTier`), LCh rotation, Machado CVD matrices, `.chara` character-file parser + slot resolver, `dye-vocabulary.ts` (ex-maintainer), `presets.json` 2.0.0 (stainID, 15 curated rows), `SubRace 'Helions'`, `MANUAL_TOPICS`; 2.8.0 / 3.0.0 were never published** |
 | **v3.0.0** | **Jul 2026** | **BREAKING — dye data schema v2. `colors_xiv.json` (136 × 16 fields) → `dyes.json` (125 × 7 fields, stainID-keyed); `rgb`/`hsv`/`lab`, `cost`/`currency`, and the five `is*` flags derived at `initialize()` so the runtime `Dye` shape is unchanged. The 11 Facewear colours left the dye table for `facewearColors` (`LEGACY_FACEWEAR_ITEM_IDS` retains the old synthetic IDs). `isMetallic` = the Stain sheet's 16-dye gloss set (was 14 by name prefix); `isCosmic ≡ consolidationType 'C'` (11, was 20 — Firmament dyes were mislabelled). Adds inverted-tetradic harmony and CMYK conversions** |
 | **v2.8.0** | **Jul 2026** | **Monorepo 2.0 Tier 1 — absorbed `@xivdyetools/color-blending` as the `/blending` subpath export; `build-locales.ts` made idempotent so rebuilds no longer dirty all six locale JSONs** |
@@ -233,6 +237,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-026) — `safeStringify` (cycles / BigInt never throw in `write()`), `message` + non-Error throws sanitised, redact list extended, value-shape redaction (Bearer / JWT / Discord-token / long hex), browser `errorTracker` stack sanitised** |
 | **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprint 6) — BUG-024 case-insensitive redaction with sensitive-suffix heuristic + WeakSet cycle guard (depth cap removed), BUG-025 JSON-shaped error-message sanitization, BUG-026 `errorTracker` path redacts before forwarding, OPT-020 child loggers time with their own context** |
 | v1.2.2 | Mar 2026 | Dependency updates |
 | v1.2.1 | Feb 2026 | Dead code cleanup wave 11: removed `getRequestId` from barrel, 10 symbols marked `@internal` |
@@ -341,6 +346,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.0.1** | **Aug 2026** | **2026-08-21 security audit (FINDING-028) — `escapeXml` strips XML-illegal controls / U+FFFE / U+FFFF / lone surrogates; `fill` attributes escaped in contrast-card, gradient, dye-info-card, swatch-card** |
 | **v2.0.0** | **Aug 2026** | **5.0 card frame system (`frame.ts`: 400 px canvas, 350 px ceiling, `CARD_DARK` / `CARD_LIGHT`), nine new generators (`generateContrastCard`, `generateA11yCard`, `generateBudgetLedger`, `generateNearestSheet`, `generateSwatchCard`, …), icon home (`icons/tool-icons.ts`), Fragment Mono + JP/SC/KR font stacks, `frame-budget` guard; five 4.x `build*Svg` modules deleted** |
 | v1.2.1 | Jul 2026 | Release-infrastructure validation — publish via npm trusted publishing (OIDC), confirming `workspace:*` rewriting under npm 11; contents identical to 1.2.0 |
 | **v1.2.0** | **Jul 2026** | **2026-07-18 audit (Sprint 6) — BUG-056 emoji removed from SVG text (bundled fonts have no emoji glyphs), BUG-060 code-point-safe truncation (no bisected surrogate pairs), BUG-063 single-step gradient NaN guard, REFACTOR-019 `escapeXml` on every string attribute** |
@@ -354,6 +360,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-019) — `escapeDiscordMarkdown`, `sanitizeEmbedText`, `ALLOWED_MENTIONS_NONE` shared by both bots (and stoat)** |
 | **v2.0.0** | **Aug 2026** | **5.0 wave — one-line embeds, `executeContrast` / `executeSwatch`, gradient row capping, mixer ratio sweep, lens-based accessibility, `card.*` strings ×6 locales; `executeMatch` removed (1.4.0 / 1.5.0 never published)** |
 | v1.5.0 | Aug 2026 | `inverted-tetradic` harmony type on `/harmony` (via core's `findInvertedTetradicDyes`), localized in all six bot locales — requires re-running slash-command registration |
 | **v1.4.0** | **Jul 2026** | **Monorepo 2.0 Tier 1 — absorbed `@xivdyetools/bot-i18n` v1.2.1: the `Translator` engine, `LocaleCode` types, and the six bot-UI locale files now live at `@xivdyetools/bot-logic/i18n`. API identical; only the import specifier changes** |

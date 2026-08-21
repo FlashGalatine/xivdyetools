@@ -18,6 +18,7 @@ This wiki-style documentation serves developers, end users, and maintainers with
 | **Add new dyes after a patch** | [Adding Dyes](maintainer/adding-dyes.md) |
 | Deploy a worker safely | [Deployment](developer-guides/deployment.md) |
 | Moderate community presets | [Moderation Guide](operations/MODERATION.md) |
+| Ship the 5.0 merge and clean up afterwards | [Post-merge Checklist](operations/POST_MERGE_CHECKLIST.md) |
 | Check version numbers | [Version Matrix](versions.md) |
 | Read feature specifications | [Specifications](specifications/index.md) |
 | Review historical decisions | [History Archive](historical/index.md) |
@@ -125,7 +126,7 @@ Facewear colours are **not dyes**; they live separately in `facewear_colors.json
 | Section | Description |
 |---------|-------------|
 | [Maintainer Guide](maintainer/index.md) | Dye-addition workflow, known issues, tech debt |
-| [Operations](operations/DEPLOY_ENVIRONMENTS.md) | Deploy environments, secret rotation, moderation |
+| [Operations](operations/DEPLOY_ENVIRONMENTS.md) | Deploy environments, secret rotation, moderation, [post-merge checklist](operations/POST_MERGE_CHECKLIST.md) |
 | [History](historical/index.md) | Development timeline organized by topic |
 
 ---
