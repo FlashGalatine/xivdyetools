@@ -165,7 +165,8 @@
     "protanopia": "红色盲",
     "deuteranopia": "绿色盲",
     "tritanopia": "蓝色盲",
-    "achromatopsia": "全色盲"
+    "achromatopsia": "全色盲",
+    "allLenses": "所有色觉"
   },
   "about": {
     "title": "XIV Dye Tools 机器人",
@@ -616,6 +617,59 @@
       "documentation": "文档",
       "supportServer": "支持服务器",
       "footer": "版本 {version} • 使用 /manual 查看命令帮助"
+    }
+  },
+  "commands": {
+    "harmony": {
+      "description": "根据一种颜色生成和谐的染剂搭配"
+    },
+    "mixer": {
+      "description": "使用多种混色算法混合两种染剂"
+    },
+    "gradient": {
+      "description": "生成两种颜色之间的渐变及中间染剂"
+    },
+    "extractor": {
+      "description": "从输入中提取颜色并查找匹配的 FFXIV 染剂"
+    },
+    "swatch": {
+      "description": "将角色文件的颜色匹配到最接近的染剂"
+    },
+    "dye": {
+      "description": "搜索和浏览 FFXIV 染剂"
+    },
+    "comparison": {
+      "description": "并排比较 2-4 种染剂并进行颜色分析"
+    },
+    "contrast": {
+      "description": "染剂配对的 WCAG 非文本对比度（下限 3:1）"
+    },
+    "accessibility": {
+      "description": "一种或一对染剂在各种色觉下的表现"
+    },
+    "a11y": {
+      "description": "一种或一对染剂在各种色觉下的表现"
+    },
+    "budget": {
+      "description": "利用市场板价格寻找经济实惠的替代染剂"
+    },
+    "preset": {
+      "description": "浏览、提交社区配色预设并投票"
+    },
+    "preferences": {
+      "description": "管理您的个人机器人偏好设置"
+    },
+    "manual": {
+      "description": "显示所有命令的帮助和使用指南"
+    },
+    "changelog": {
+      "description": "查看新内容 — 整套工具的发布说明"
+    },
+    "about": {
+      "description": "显示 XIV Dye Tools 机器人的信息"
+    },
+    "stats": {
+      "description": "显示机器人使用统计和信息"
     }
   }
 }

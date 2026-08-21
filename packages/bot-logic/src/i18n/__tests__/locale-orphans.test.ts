@@ -32,6 +32,9 @@
  *        - `manual5.topics.${topic}.name` / `.body` for each value in
  *          discord-worker's `TOPIC_KEYS`
  *          (`apps/discord-worker/src/handlers/commands/manual.ts`).
+ *        - `commands.${name}.description` for each command name in
+ *          discord-worker's `COMMAND_REGISTRY` (commands/registry.ts) —
+ *          Discord `description_localizations` (F-03, 2026-08-20 audit).
  *        - `preferences.filters.labels.${option}` for each `option` in
  *          discord-worker's `FILTER_OPTION_KEYS` (preferences.ts), and
  *          `preferences.methods.${method}` / `preferences.blendingModes.${mode}`
@@ -75,6 +78,7 @@ const LOCALE_CODES = ['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const;
 const DISCORD_WORKER_SRC = join(REPO_ROOT, 'apps', 'discord-worker', 'src');
 const PREFERENCES_TS = join(DISCORD_WORKER_SRC, 'handlers', 'commands', 'preferences.ts');
 const MANUAL_TS = join(DISCORD_WORKER_SRC, 'handlers', 'commands', 'manual.ts');
+const REGISTRY_TS = join(DISCORD_WORKER_SRC, 'commands', 'registry.ts');
 
 /** The four consumer trees the DEAD-011 finding scanned. */
 const CONSUMER_DIRS = [
@@ -184,6 +188,21 @@ function readFilterOptions(): string[] {
   return [...block[1].matchAll(/option: '([^']+)'/g)].map((m) => m[1]);
 }
 
+/** discord-worker's `COMMAND_REGISTRY` command names, read from source. */
+function readRegistryCommandNames(): string[] {
+  const source = readFileSync(REGISTRY_TS, 'utf-8');
+  const block = /export const COMMAND_REGISTRY: readonly CommandRegistryEntry\[\] = \[([\s\S]*?)\];/.exec(
+    source,
+  );
+  if (!block || !block[1]) {
+    throw new Error(
+      'locale-orphans gate: could not find COMMAND_REGISTRY in commands/registry.ts — ' +
+        'the source shape changed. Update the regex in locale-orphans.test.ts to match.',
+    );
+  }
+  return [...block[1].matchAll(/name: '([^']+)'/g)].map((m) => m[1]);
+}
+
 /** discord-worker's `TOPIC_KEYS` values, read from source. */
 function readManualTopicKeys(): string[] {
   const source = readFileSync(MANUAL_TS, 'utf-8');
@@ -209,6 +228,9 @@ function buildEnumeratedKeys(): Set<string> {
   }
   for (const option of readFilterOptions()) {
     keys.add(`preferences.filters.labels.${option}`);
+  }
+  for (const name of readRegistryCommandNames()) {
+    keys.add(`commands.${name}.description`);
   }
   for (const method of Object.keys(MATCHING_METHOD_TAGS)) {
     keys.add(`preferences.methods.${method}`);

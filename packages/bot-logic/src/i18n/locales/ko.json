@@ -165,7 +165,8 @@
     "protanopia": "적색맹",
     "deuteranopia": "녹색맹",
     "tritanopia": "청색맹",
-    "achromatopsia": "전색맹"
+    "achromatopsia": "전색맹",
+    "allLenses": "모든 색각"
   },
   "about": {
     "title": "XIV Dye Tools Bot",
@@ -616,6 +617,59 @@
       "documentation": "문서",
       "supportServer": "지원 서버",
       "footer": "버전 {version} • 명령어 도움말은 /manual"
+    }
+  },
+  "commands": {
+    "harmony": {
+      "description": "기준 색상에서 조화로운 염료 조합 생성"
+    },
+    "mixer": {
+      "description": "여러 색상 혼합 알고리즘으로 염료 두 개를 혼합"
+    },
+    "gradient": {
+      "description": "두 색상 사이의 그라데이션과 중간 염료 생성"
+    },
+    "extractor": {
+      "description": "입력에서 색상을 추출하고 일치하는 FFXIV 염료 찾기"
+    },
+    "swatch": {
+      "description": "캐릭터 파일의 색상을 가장 가까운 염료와 매칭"
+    },
+    "dye": {
+      "description": "FFXIV 염료 검색 및 탐색"
+    },
+    "comparison": {
+      "description": "염료 2~4개를 나란히 놓고 색상 분석"
+    },
+    "contrast": {
+      "description": "염료 쌍의 WCAG 비텍스트 대비 (기준 3:1)"
+    },
+    "accessibility": {
+      "description": "염료 하나 또는 한 쌍이 각 색각에서 어떻게 보이는지"
+    },
+    "a11y": {
+      "description": "염료 하나 또는 한 쌍이 각 색각에서 어떻게 보이는지"
+    },
+    "budget": {
+      "description": "장터 가격으로 저렴한 대체 염료 찾기"
+    },
+    "preset": {
+      "description": "커뮤니티 색상 프리셋 둘러보기, 제출, 투표"
+    },
+    "preferences": {
+      "description": "개인 봇 설정 관리"
+    },
+    "manual": {
+      "description": "모든 명령어의 도움말과 사용 가이드 표시"
+    },
+    "changelog": {
+      "description": "새로운 소식 — 전체 도구 모음의 릴리스 노트"
+    },
+    "about": {
+      "description": "XIV Dye Tools 봇 정보 표시"
+    },
+    "stats": {
+      "description": "봇 사용 통계와 정보 표시"
     }
   }
 }

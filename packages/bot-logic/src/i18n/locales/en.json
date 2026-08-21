@@ -165,7 +165,8 @@
     "protanopia": "Protanopia",
     "deuteranopia": "Deuteranopia",
     "tritanopia": "Tritanopia",
-    "achromatopsia": "Achromatopsia"
+    "achromatopsia": "Achromatopsia",
+    "allLenses": "All lenses"
   },
   "about": {
     "title": "XIV Dye Tools Bot",
@@ -616,6 +617,59 @@
       "documentation": "Documentation",
       "supportServer": "Support Server",
       "footer": "Version {version} • Use /manual for command help"
+    }
+  },
+  "commands": {
+    "harmony": {
+      "description": "Generate harmonious dye combinations from a color"
+    },
+    "mixer": {
+      "description": "Blend two dyes using various color mixing algorithms"
+    },
+    "gradient": {
+      "description": "Generate a color gradient between two colors with intermediate dyes"
+    },
+    "extractor": {
+      "description": "Extract colors from inputs and find matching FFXIV dyes"
+    },
+    "swatch": {
+      "description": "Match a character file's colours to the nearest dyes"
+    },
+    "dye": {
+      "description": "Search and explore FFXIV dyes"
+    },
+    "comparison": {
+      "description": "Compare 2-4 dyes side-by-side with color analysis"
+    },
+    "contrast": {
+      "description": "WCAG non-text contrast between dye pairs (floor 3:1)"
+    },
+    "accessibility": {
+      "description": "How a dye or a pair of dyes survives each kind of color vision"
+    },
+    "a11y": {
+      "description": "How a dye or a pair of dyes survives each kind of color vision"
+    },
+    "budget": {
+      "description": "Find affordable dye alternatives using market board prices"
+    },
+    "preset": {
+      "description": "Browse, submit, and vote on community color presets"
+    },
+    "preferences": {
+      "description": "Manage your personal bot preferences"
+    },
+    "manual": {
+      "description": "Show help and usage guide for all commands"
+    },
+    "changelog": {
+      "description": "See what's new — release notes for the whole toolset"
+    },
+    "about": {
+      "description": "Show information about the XIV Dye Tools bot"
+    },
+    "stats": {
+      "description": "Display bot usage statistics and information"
     }
   }
 }

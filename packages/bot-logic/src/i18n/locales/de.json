@@ -165,7 +165,8 @@
     "protanopia": "Protanopie",
     "deuteranopia": "Deuteranopie",
     "tritanopia": "Tritanopie",
-    "achromatopsia": "Achromatopsie"
+    "achromatopsia": "Achromatopsie",
+    "allLenses": "Alle Sehweisen"
   },
   "about": {
     "title": "XIV Dye Tools Bot",
@@ -616,6 +617,59 @@
       "documentation": "Dokumentation",
       "supportServer": "Support-Server",
       "footer": "Version {version} • Befehlshilfe mit /manual"
+    }
+  },
+  "commands": {
+    "harmony": {
+      "description": "Harmonische Farbstoff-Kombinationen aus einer Farbe erzeugen"
+    },
+    "mixer": {
+      "description": "Zwei Farbstoffe mit verschiedenen Mischalgorithmen mischen"
+    },
+    "gradient": {
+      "description": "Farbverlauf zwischen zwei Farben mit Zwischen-Farbstoffen erzeugen"
+    },
+    "extractor": {
+      "description": "Farben aus Eingaben extrahieren und passende FFXIV-Farbstoffe finden"
+    },
+    "swatch": {
+      "description": "Die Farben einer Charakterdatei den nächsten Farbstoffen zuordnen"
+    },
+    "dye": {
+      "description": "FFXIV-Farbstoffe suchen und erkunden"
+    },
+    "comparison": {
+      "description": "2–4 Farbstoffe nebeneinander mit Farbanalyse vergleichen"
+    },
+    "contrast": {
+      "description": "WCAG-Nicht-Text-Kontrast zwischen Farbstoffpaaren (Untergrenze 3:1)"
+    },
+    "accessibility": {
+      "description": "Wie ein Farbstoff oder ein Paar unter jeder Art von Farbsehen besteht"
+    },
+    "a11y": {
+      "description": "Wie ein Farbstoff oder ein Paar unter jeder Art von Farbsehen besteht"
+    },
+    "budget": {
+      "description": "Günstige Farbstoff-Alternativen anhand der Marktbrett-Preise finden"
+    },
+    "preset": {
+      "description": "Community-Farbvorlagen durchsuchen, einreichen und bewerten"
+    },
+    "preferences": {
+      "description": "Deine persönlichen Bot-Einstellungen verwalten"
+    },
+    "manual": {
+      "description": "Hilfe und Anleitung für alle Befehle anzeigen"
+    },
+    "changelog": {
+      "description": "Was ist neu — Versionshinweise für das gesamte Toolset"
+    },
+    "about": {
+      "description": "Informationen über den XIV Dye Tools Bot anzeigen"
+    },
+    "stats": {
+      "description": "Nutzungsstatistiken und Informationen des Bots anzeigen"
     }
   }
 }

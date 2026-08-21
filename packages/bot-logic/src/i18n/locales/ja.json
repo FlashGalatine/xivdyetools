@@ -165,7 +165,8 @@
     "protanopia": "1型色覚",
     "deuteranopia": "2型色覚",
     "tritanopia": "3型色覚",
-    "achromatopsia": "1色覚（全色盲）"
+    "achromatopsia": "1色覚（全色盲）",
+    "allLenses": "すべての色覚"
   },
   "about": {
     "title": "XIV Dye Tools Bot",
@@ -616,6 +617,59 @@
       "documentation": "ドキュメント",
       "supportServer": "サポートサーバー",
       "footer": "バージョン {version} • コマンドのヘルプは /manual"
+    }
+  },
+  "commands": {
+    "harmony": {
+      "description": "基準色から調和するカララントの組み合わせを生成"
+    },
+    "mixer": {
+      "description": "2つのカララントを各種アルゴリズムでブレンド"
+    },
+    "gradient": {
+      "description": "2色間のグラデーションと中間のカララントを生成"
+    },
+    "extractor": {
+      "description": "入力から色を抽出して一致するカララントを検索"
+    },
+    "swatch": {
+      "description": "キャラクターファイルの色を最も近いカララントに照合"
+    },
+    "dye": {
+      "description": "FFXIV のカララントを検索・閲覧"
+    },
+    "comparison": {
+      "description": "2〜4色のカララントを並べて色分析"
+    },
+    "contrast": {
+      "description": "カララントペアの WCAG 非テキストコントラスト（下限 3:1）"
+    },
+    "accessibility": {
+      "description": "各色覚でカララント（1色または2色）がどう見えるか"
+    },
+    "a11y": {
+      "description": "各色覚でカララント（1色または2色）がどう見えるか"
+    },
+    "budget": {
+      "description": "マーケットボード価格から手頃な代替カララントを検索"
+    },
+    "preset": {
+      "description": "コミュニティのカラープリセットを閲覧・投稿・投票"
+    },
+    "preferences": {
+      "description": "ボットの個人設定を管理"
+    },
+    "manual": {
+      "description": "全コマンドのヘルプと使い方を表示"
+    },
+    "changelog": {
+      "description": "最新情報 — ツール全体のリリースノート"
+    },
+    "about": {
+      "description": "XIV Dye Tools ボットの情報を表示"
+    },
+    "stats": {
+      "description": "ボットの利用統計と情報を表示"
     }
   }
 }

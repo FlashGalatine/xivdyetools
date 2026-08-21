@@ -22,6 +22,8 @@ import 'dotenv/config';
 
 import { commands } from '../src/commands/schemas.js';
 import { COMMAND_REGISTRY } from '../src/commands/registry.js';
+import { localizeCommands, countLocalizations, LOCALE_CODES } from '../src/commands/localize.js';
+import { initializeLocale } from '@xivdyetools/bot-logic';
 
 // Roster parity: the registry is the roster of record — refuse to publish a
 // schema set that drifts from it (the /about pill index builds from it too).
@@ -65,8 +67,15 @@ async function registerCommands() {
     ? `https://discord.com/api/v10/applications/${clientId}/guilds/${guildId}/commands`
     : `https://discord.com/api/v10/applications/${clientId}/commands`;
 
+  // F-03 (2026-08-20 i18n audit): attach description_localizations /
+  // name_localizations from the bot-logic locale files before publishing.
+  await Promise.all(LOCALE_CODES.map((locale) => initializeLocale(locale)));
+  const payload = localizeCommands(commands);
+  const localized = countLocalizations(payload);
+
   console.log(`\nRegistering ${commands.length} commands...`);
   console.log(`Target: ${guildId ? `Guild ${guildId}` : 'Global'}`);
+  console.log(`Localized fields: ${localized.descriptions} descriptions, ${localized.choiceNames} choice names`);
   console.log('');
 
   try {
@@ -76,7 +85,7 @@ async function registerCommands() {
         'Authorization': `Bot ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(commands),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {

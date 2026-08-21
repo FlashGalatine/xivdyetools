@@ -165,7 +165,8 @@
     "protanopia": "Protanopie",
     "deuteranopia": "Deutéranopie",
     "tritanopia": "Tritanopie",
-    "achromatopsia": "Achromatopsie"
+    "achromatopsia": "Achromatopsie",
+    "allLenses": "Toutes les visions"
   },
   "about": {
     "title": "XIV Dye Tools Bot",
@@ -616,6 +617,59 @@
       "documentation": "Documentation",
       "supportServer": "Serveur d'assistance",
       "footer": "Version {version} • Aide des commandes : /manual"
+    }
+  },
+  "commands": {
+    "harmony": {
+      "description": "Générer des combinaisons de teintures harmonieuses à partir d'une couleur"
+    },
+    "mixer": {
+      "description": "Mélanger deux teintures avec différents algorithmes"
+    },
+    "gradient": {
+      "description": "Générer un dégradé entre deux couleurs avec les teintures intermédiaires"
+    },
+    "extractor": {
+      "description": "Extraire des couleurs et trouver les teintures FFXIV correspondantes"
+    },
+    "swatch": {
+      "description": "Associer les couleurs d'un fichier de personnage aux teintures les plus proches"
+    },
+    "dye": {
+      "description": "Rechercher et explorer les teintures FFXIV"
+    },
+    "comparison": {
+      "description": "Comparer 2 à 4 teintures côte à côte avec analyse des couleurs"
+    },
+    "contrast": {
+      "description": "Contraste non textuel WCAG entre paires de teintures (seuil 3:1)"
+    },
+    "accessibility": {
+      "description": "Comment une teinture ou une paire résiste à chaque type de vision des couleurs"
+    },
+    "a11y": {
+      "description": "Comment une teinture ou une paire résiste à chaque type de vision des couleurs"
+    },
+    "budget": {
+      "description": "Trouver des teintures alternatives abordables via le tableau des ventes"
+    },
+    "preset": {
+      "description": "Parcourir, soumettre et voter pour des préréglages communautaires"
+    },
+    "preferences": {
+      "description": "Gérer vos préférences personnelles du bot"
+    },
+    "manual": {
+      "description": "Afficher l'aide et le guide d'utilisation de toutes les commandes"
+    },
+    "changelog": {
+      "description": "Nouveautés — notes de version de toute la suite d'outils"
+    },
+    "about": {
+      "description": "Afficher les informations sur le bot XIV Dye Tools"
+    },
+    "stats": {
+      "description": "Afficher les statistiques d'utilisation et les informations du bot"
     }
   }
 }
