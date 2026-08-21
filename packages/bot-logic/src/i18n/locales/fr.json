@@ -265,7 +265,8 @@
       "listTitleCount": "Vos préréglages favoris ({n}/{max})",
       "empty": "Vous n'avez encore aucun préréglage favori. Utilisez `/preset favorite add` pour en ajouter un.",
       "allRemoved": "Tous vos préréglages favoris semblent avoir été supprimés. Utilisez `/preset favorite remove` pour nettoyer les entrées."
-    }
+    },
+    "noValidDyes": "Aucune teinture valide dans ce préréglage"
   },
   "budget": {
     "findTitle": "Alternatives économiques pour {dyeName}",

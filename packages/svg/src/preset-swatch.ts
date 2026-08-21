@@ -116,6 +116,16 @@ export interface PresetSwatchOptions {
   voteCount?: number;
   /** Canvas width in pixels (default: 600) */
   width?: number;
+  /**
+   * Localized meta line — the caller renders "by {author}" / "Official" in
+   * the user's language (2026-08-20 i18n audit, F-11). Default: English from
+   * `authorName`.
+   */
+  authorLine?: string;
+  /** Localized empty-state line. Default: 'No valid dyes in this preset'. */
+  emptyLabel?: string;
+  /** Localized dye-name resolver. Default: the English `dye.name`. */
+  dyeName?: (dye: Dye) => string;
 }
 
 // ============================================================================
@@ -154,13 +164,23 @@ const MIN_SWATCH_WIDTH = 80;
  * ```
  */
 export function generatePresetSwatch(options: PresetSwatchOptions): string {
-  const { name, description, dyes, authorName, voteCount, width = DEFAULT_WIDTH } = options;
+  const {
+    name,
+    description,
+    dyes,
+    authorName,
+    voteCount,
+    width = DEFAULT_WIDTH,
+    authorLine,
+    emptyLabel = 'No valid dyes in this preset',
+    dyeName = (d: Dye): string => d.name,
+  } = options;
 
   // Filter out null dyes (invalid dye IDs)
   const validDyes = dyes.filter((d): d is Dye => d !== null);
 
   if (validDyes.length === 0) {
-    return generateEmptySwatch(width, name);
+    return generateEmptySwatch(width, name, emptyLabel);
   }
 
   // Calculate dimensions
@@ -201,11 +221,7 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
 
   // Author and votes metadata line
   const metaParts: string[] = [];
-  if (authorName) {
-    metaParts.push(`by ${authorName}`);
-  } else {
-    metaParts.push('Official');
-  }
+  metaParts.push(authorLine ?? (authorName ? `by ${authorName}` : 'Official'));
   if (voteCount !== undefined) {
     metaParts.push(`${voteCount}★`);
   }
@@ -226,7 +242,7 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
 
   validDyes.forEach((dye, index) => {
     const x = startX + index * (swatchWidth + SWATCH_GAP);
-    elements.push(generateDyeSwatch(dye, x, swatchY, swatchWidth));
+    elements.push(generateDyeSwatch(dye, x, swatchY, swatchWidth, dyeName(dye)));
   });
 
   return createSvgDocument(width, height, elements.join('\n'));
@@ -235,7 +251,7 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
 /**
  * Generate a single dye swatch with label
  */
-function generateDyeSwatch(dye: Dye, x: number, y: number, width: number): string {
+function generateDyeSwatch(dye: Dye, x: number, y: number, width: number, label: string): string {
   const elements: string[] = [];
 
   // Color swatch rectangle
@@ -250,7 +266,7 @@ function generateDyeSwatch(dye: Dye, x: number, y: number, width: number): strin
 
   // Dye name — measured against the swatch, not divided by a Latin character
   const labelY = y + SWATCH_HEIGHT + 18;
-  const truncatedName = fitToWidth(dye.name, width, 11);
+  const truncatedName = fitToWidth(label, width, 11);
 
   elements.push(
     text(x + width / 2, labelY, truncatedName, {
@@ -278,7 +294,7 @@ function generateDyeSwatch(dye: Dye, x: number, y: number, width: number): strin
 /**
  * Generate an empty swatch for presets with no valid dyes
  */
-function generateEmptySwatch(width: number, name: string): string {
+function generateEmptySwatch(width: number, name: string, emptyLabel: string): string {
   const height = 120;
   const elements: string[] = [];
 
@@ -295,10 +311,10 @@ function generateEmptySwatch(width: number, name: string): string {
   );
 
   elements.push(
-    text(width / 2, 75, 'No valid dyes in this preset', {
+    text(width / 2, 75, emptyLabel, {
       fill: THEME.textMuted,
       fontSize: 14,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       textAnchor: 'middle',
     }),
   );

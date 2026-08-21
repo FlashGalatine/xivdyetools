@@ -920,6 +920,12 @@ async function sendPresetEmbed(
     dyes,
     authorName: preset.author_name,
     voteCount: preset.vote_count,
+    // F-11: the swatch card renders in the user's locale
+    authorLine: preset.author_name
+      ? t.t('preset.byAuthor', { author: preset.author_name })
+      : t.t('preset.official'),
+    emptyLabel: t.t('preset.noValidDyes'),
+    dyeName: (d) => getLocalizedDyeName(d.itemID, d.name, locale),
   });
 
   // Render to PNG

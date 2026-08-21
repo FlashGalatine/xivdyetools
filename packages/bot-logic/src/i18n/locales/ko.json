@@ -265,7 +265,8 @@
       "listTitleCount": "즐겨찾기 프리셋 ({n}/{max})",
       "empty": "아직 즐겨찾기한 프리셋이 없습니다. `/preset favorite add`로 추가하세요.",
       "allRemoved": "즐겨찾기한 프리셋이 모두 삭제된 것 같습니다. `/preset favorite remove`로 항목을 정리하세요."
-    }
+    },
+    "noValidDyes": "이 프리셋에 유효한 염료가 없습니다"
   },
   "budget": {
     "findTitle": "{dyeName}의 저렴한 대안",

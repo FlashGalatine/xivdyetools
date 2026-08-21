@@ -265,7 +265,8 @@
       "listTitleCount": "您的收藏预设（{n}/{max}）",
       "empty": "您还没有收藏任何预设。使用 `/preset favorite add` 添加一个。",
       "allRemoved": "您收藏的预设似乎已全部被删除。使用 `/preset favorite remove` 清理条目。"
-    }
+    },
+    "noValidDyes": "此预设中没有有效的染剂"
   },
   "budget": {
     "findTitle": "{dyeName}的实惠替代品",

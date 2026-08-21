@@ -265,7 +265,8 @@
       "listTitleCount": "お気に入りプリセット（{n}/{max}）",
       "empty": "まだお気に入りのプリセットがありません。`/preset favorite add` で追加できます。",
       "allRemoved": "お気に入りのプリセットはすべて削除されたようです。`/preset favorite remove` で項目を整理してください。"
-    }
+    },
+    "noValidDyes": "このプリセットに有効なカララントはありません"
   },
   "budget": {
     "findTitle": "{dyeName}の代替カラー",

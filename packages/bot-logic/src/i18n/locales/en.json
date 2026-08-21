@@ -265,7 +265,8 @@
       "listTitleCount": "Your favorite presets ({n}/{max})",
       "empty": "You haven't favorited any presets yet. Use `/preset favorite add` to add one.",
       "allRemoved": "All of your favorited presets appear to have been removed. Use `/preset favorite remove` to clean up entries."
-    }
+    },
+    "noValidDyes": "No valid dyes in this preset"
   },
   "budget": {
     "findTitle": "Budget Alternatives for {dyeName}",

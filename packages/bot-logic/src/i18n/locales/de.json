@@ -265,7 +265,8 @@
       "listTitleCount": "Deine favorisierten Vorlagen ({n}/{max})",
       "empty": "Du hast noch keine Vorlagen favorisiert. Füge mit `/preset favorite add` eine hinzu.",
       "allRemoved": "Alle deine favorisierten Vorlagen scheinen entfernt worden zu sein. Räume die Einträge mit `/preset favorite remove` auf."
-    }
+    },
+    "noValidDyes": "Keine gültigen Farbstoffe in dieser Vorlage"
   },
   "budget": {
     "findTitle": "Budget-Alternativen für {dyeName}",
