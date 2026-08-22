@@ -7,6 +7,7 @@
  */
 
 import type { PresetCategory } from '@xivdyetools/types';
+import { QUICK_PICKS } from '../services/budget/quick-picks.js';
 
 /**
  * Discord command option types
@@ -523,7 +524,7 @@ export const commands = [
     ],
   },
 
-  // /changelog - Product-level release notes (5.0, ephemeral)
+  // /changelog - the bot's own release notes, bundled CHANGELOG-laymans.md (5.0, ephemeral)
   {
     name: 'changelog',
     description: "See what's new in the Discord bot — release notes, newest first",
@@ -1235,13 +1236,15 @@ export const commands = [
             description: 'Popular expensive dye to find alternatives for',
             type: OptionType.STRING,
             required: true,
-            choices: [
-              { name: '⚪ Pure White', value: 'pure_white' },
-              { name: '⚫ Jet Black', value: 'jet_black' },
-              { name: '🪙 Metallic Silver', value: 'metallic_silver' },
-              { name: '🥇 Metallic Gold', value: 'metallic_gold' },
-              { name: '🌸 Pastel Pink', value: 'pastel_pink' },
-            ],
+            // Generated from the table the handler resolves against
+            // (getQuickPickById) — 4.1.1 replaced the metallic/pastel picks
+            // with the 22 Cosmic dyes but this list was never updated, so
+            // three of the five old choices could not be resolved.
+            // schemas.test.ts asserts parity; Discord caps choices at 25.
+            choices: QUICK_PICKS.map((pick) => ({
+              name: `${pick.emoji} ${pick.name}`,
+              value: pick.id,
+            })),
           },
           {
             name: 'world',

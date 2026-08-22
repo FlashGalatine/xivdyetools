@@ -16,11 +16,15 @@ test run:
   - Short, self-contained bullet
 
 Rules:
-- Newest entry first. The newest entry's version must equal the version in
-  package.json — the test enforces it, so a bump and its notes travel
-  together. Notes for work that has not shipped yet go straight into the
-  upcoming version's block (bump package.json alongside); there is no
-  `Unreleased` block here — the parser would ignore it.
+- Newest entry first, versions strictly descending. The newest entry may LAG
+  package.json (a security-only or dependency patch has nothing to say here)
+  but must never be AHEAD of it — the test enforces both, and that every
+  `## ` header is on the grammar. Notes for work that has not shipped yet go
+  straight into the upcoming version's block (bump package.json alongside);
+  there is no `Unreleased` block here — an off-grammar header is dropped at
+  the top and silently MERGED into the entry above it anywhere else.
+- The newest entry must render inside /changelog's 4000-character embed
+  budget (the test renders it); split or trim rather than let it be cut.
 - Only user-visible bot changes. Dependency bumps, lint passes, internal
   refactors and security-only patches are folded out
   (docs/developer-guides/release-process.md).
@@ -41,8 +45,9 @@ Rules:
 
 ### ⚠️ Commands that went away
 
-- The old `/match`, `/match_image`, `/favorites`, `/collection` and `/language` commands are gone. Colour matching lives in `/extractor`, and `/preferences` covers your language and theme.
+- The deprecated `/language` command is gone — `/preferences set language` replaces it. (`/match`, `/match_image`, `/favorites` and `/collection` had already been retired in 4.0; colour matching lives in `/extractor`.)
 - `/swatch` no longer takes a colour or a grid position — it takes a `.chara` character file now (see below).
+- `/budget find` no longer takes a result count — the new ledger always shows the whole picture — and `/extractor image` drops its `vibrancy_boost` switch, which never did anything.
 - Share links now key on the game's own dye numbers, so links made with the 4.x bot no longer open; re-share anything you posted earlier.
 
 ### 📏 One matching vocabulary
@@ -64,14 +69,13 @@ Rules:
 
 ### 🖼️ Community presets
 
-- Presets can carry a preview picture (reviewed by the moderators before it shows), a link to the glamour it comes from, one main category and up to two extra ones.
 - Three new categories — Appearance, Zones, and Raids & Trials; the old catch-all "Community" category is retired.
-- Presets now hold 3 to 6 dyes.
+- Known issue: `/preset submit` and `/preset edit` still speak the old preset format (2–5 dyes, old item numbers) and can be rejected by the updated preset service — fixed in 5.1. Until then, submit and edit presets in the web app; browsing, voting and favourites work as before.
 
 ### 🤫 Quieter replies
 
 - `/preferences` replies are private to you — `show`, `set` and `reset` used to post your settings to the channel.
-- The first time you use the bot after the update it introduces 5.0 once, privately.
+- New users (no saved preferences yet) get a one-time private introduction to 5.0 the first time they use the bot.
 
 ### 🌏 Your language, everywhere
 
@@ -99,7 +103,7 @@ Rules:
 ### 🧩 The options the web app had
 
 - `/harmony`: choose how many companion dyes (1–3), the matching method, strict matching and no-duplicates.
-- `/extractor color` and `/extractor image`: matching method and no-duplicates options; image extraction gains a vibrancy boost.
+- `/extractor color` and `/extractor image`: matching method and no-duplicates options.
 - `/gradient`: up to 12 steps, four more colour-space modes and a sixth matching method.
 - `/mixer`: pick the matching method.
 - `/accessibility`: compare up to six dyes, with five vision modes.
@@ -112,7 +116,7 @@ Rules:
 
 ### 🧹 Patch 7.5 follow-through
 
-- The `/preferences set allied_society` option is gone — after Patch 7.5's dye consolidation the Allied Society vendors no longer carry dyes, so there was nothing left to filter.
+- The `/preferences filters set allied_society` toggle is gone — after Patch 7.5's dye consolidation the Allied Society vendors no longer carry dyes, so there was nothing left to filter.
 - Korean and Chinese dye names render fully on cards again — the bundled fonts were re-cut to cover every name.
 
 ## [4.3.0] - 2026-04-03
@@ -145,7 +149,6 @@ Rules:
 
 - `/budget` without a home world set now explains what to do instead of showing a broken picture.
 - Replies no longer hang when Discord is slow — calls time out and the bot tells you.
-- Collection renames are cleaned of invisible and control characters, the same as new collections.
 - Dye names in your language no longer occasionally come back in someone else's language under heavy use.
 
 ## [4.0.0] - 2026-02-05
@@ -160,7 +163,7 @@ Rules:
 - `/stats`: a public summary plus admin views.
 - `/dye info` and `/dye random` draw cards; `/comparison` adds LAB values; `/harmony` gains a `color_space` option.
 - Japanese, Chinese and Korean text renders properly on every card.
-- `/language`, `/favorites` and `/collection` are marked deprecated and point at their replacements.
+- `/language` is marked deprecated and points at `/preferences set language`; `/match`, `/match_image`, `/favorites` and `/collection` are no longer offered.
 - The bot posts a summary in the announcement channel when a new version ships.
 
 Releases before 4.0 (1.0 – 2.3, December 2025 – January 2026) predate these notes; the technical history is in CHANGELOG.md.

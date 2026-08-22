@@ -670,7 +670,7 @@
       "description": "显示所有命令的帮助和使用指南"
     },
     "changelog": {
-      "description": "查看 Discord 机器人的新内容 — 发布说明"
+      "description": "查看 Discord 机器人的新内容 — 发布说明（最新在前）"
     },
     "about": {
       "description": "显示 XIV Dye Tools 机器人的信息"

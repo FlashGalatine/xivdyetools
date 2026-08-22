@@ -9,13 +9,14 @@
 
 import { sendMessage } from '../utils/discord-api.js';
 import { BRAND_ACCENT } from '../utils/brand.js';
+import { cutOnLineBoundary } from '../utils/text.js';
 import type { ChangelogEntry } from './changelog-parser.js';
 
 /**
- * Discord's embed description ceiling is 4096; we stop well short so the
- * "…and more" line always has room.
+ * Discord's embed description ceiling is 4096; we stop short of it, and the
+ * summary line (GitHub link included) is budgeted inside this figure.
  */
-const DESCRIPTION_BUDGET = 3900;
+const DESCRIPTION_BUDGET = 4000;
 
 /**
  * Formats a changelog entry as a Discord embed object.
@@ -53,13 +54,12 @@ export function formatAnnouncementEmbed(
   // to /changelog: that command shows the bot's OWN notes (its bundled
   // apps/discord-worker/CHANGELOG-laymans.md), which would not contain the
   // web-app and link-preview bullets cut here.
-  let body = description;
-  if (description.length > DESCRIPTION_BUDGET) {
-    const cut = description.slice(0, DESCRIPTION_BUDGET);
-    const lastBreak = cut.lastIndexOf('\n');
-    const fullNotesUrl = `${repoUrl}/blob/main/CHANGELOG-laymans.md`;
-    body = `${(lastBreak > 0 ? cut.slice(0, lastBreak) : cut).trimEnd()}\n\n*Summary shown — [full release notes](${fullNotesUrl})*`;
-  }
+  const fullNotesUrl = `${repoUrl}/blob/main/CHANGELOG-laymans.md`;
+  const body = cutOnLineBoundary(
+    description,
+    DESCRIPTION_BUDGET,
+    `\n\n*Summary shown — [full release notes](${fullNotesUrl})*`
+  );
 
   return {
     title: `🆕 XIV Dye Tools v${entry.version}`,

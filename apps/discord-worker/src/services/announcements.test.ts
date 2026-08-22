@@ -54,4 +54,17 @@ describe('formatAnnouncementEmbed', () => {
     expect(embed.description).toContain(FULL_NOTES_URL);
     expect(embed.description).not.toContain('/changelog');
   });
+
+  it('stays under Discord’s 4096-character ceiling however long the repository URL is', () => {
+    // The summary line carries the repo URL; it must be budgeted INSIDE the
+    // cut, not appended after it — otherwise a long owner/repo name pushes
+    // the description over 4096 and Discord rejects the announcement.
+    const longRepo = `https://github.com/${'o'.repeat(39)}/${'r'.repeat(100)}`;
+    const items = Array.from({ length: 400 }, (_, i) => `Web app: short change ${i}`);
+
+    const embed = formatAnnouncementEmbed(entry(items), longRepo);
+
+    expect(embed.description.length).toBeLessThanOrEqual(4096);
+    expect(embed.description).toContain(`${longRepo}/blob/main/CHANGELOG-laymans.md`);
+  });
 });

@@ -42,8 +42,6 @@ export default defineConfig({
         'src/handlers/commands/mixer-v4.ts',
         'src/handlers/commands/gradient.ts',
         'src/handlers/commands/preferences.ts',
-        'src/services/announcements.ts',
-        'src/services/changelog-parser.ts',
         'src/utils/github-verify.ts',
         'src/handlers/commands/index.ts',
       ],

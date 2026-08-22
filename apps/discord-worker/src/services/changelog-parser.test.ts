@@ -7,6 +7,7 @@ import { parseAll, parseLatestVersion } from './changelog-parser.js';
 // importing them here exercises the same path /changelog ships with.
 import botChangelog from '../../CHANGELOG-laymans.md';
 import botPackage from '../../package.json';
+import { renderEntry, DESCRIPTION_BUDGET } from '../handlers/commands/changelog.js';
 
 const SAMPLE = `# What's New
 
@@ -65,6 +66,22 @@ describe('root CHANGELOG-laymans.md', () => {
   });
 });
 
+describe('line endings', () => {
+  it('parses a CRLF file the same as an LF one', () => {
+    // The bundled file is whatever bytes the deploying checkout holds; a
+    // CRLF rewrite must not turn every /changelog reply into "unavailable".
+    expect(parseAll(SAMPLE.replace(/\n/g, '\r\n'))).toEqual(parseAll(SAMPLE));
+  });
+});
+
+/** Numeric semver tuple for ordering assertions. */
+const semver = (v: string): number[] => v.split('.').map(Number);
+const semverCompare = (a: string, b: string): number => {
+  const [x, y] = [semver(a), semver(b)];
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i];
+  return 0;
+};
+
 describe("the bot's own CHANGELOG-laymans.md (bundled into /changelog)", () => {
   it('is bundled as text and every entry satisfies the contract', () => {
     expect(typeof botChangelog).toBe('string');
@@ -77,15 +94,38 @@ describe("the bot's own CHANGELOG-laymans.md (bundled into /changelog)", () => {
     }
   });
 
-  it('is ordered newest first', () => {
-    const dates = parseAll(botChangelog).map((entry) => entry.date);
-    expect(dates).toEqual([...dates].sort().reverse());
+  it('has no `## ` header off the grammar (such a header is silently dropped, or merged into the entry above it)', () => {
+    const headers = botChangelog.split(/\r?\n/).filter((line) => line.startsWith('## '));
+    for (const header of headers) {
+      expect(header).toMatch(/^## \[\d+\.\d+\.\d+\] - \d{4}-\d{2}-\d{2}$/);
+    }
+    expect(headers.length).toBe(parseAll(botChangelog).length);
   });
 
-  it('leads with the version this Worker ships as', () => {
-    // release-process.md: the version bump and the layman's entry travel
-    // together — a bump without notes would make /changelog lie about what
-    // the deployed Worker is.
-    expect(parseAll(botChangelog)[0].version).toBe(botPackage.version);
+  it('is ordered newest first, by version and by date', () => {
+    const entries = parseAll(botChangelog);
+    for (let i = 1; i < entries.length; i++) {
+      const [newer, older] = [entries[i - 1], entries[i]];
+      expect(semverCompare(newer.version, older.version), `${newer.version} above ${older.version}`).toBeGreaterThan(0);
+      expect(newer.date >= older.date, `${newer.version} (${newer.date}) above ${older.version} (${older.date})`).toBe(true);
+    }
+  });
+
+  it('never claims a release newer than the version this Worker ships as', () => {
+    // release-process.md: the layman's file may LAG a release that has
+    // nothing player-visible to say (security-only / dependency patches are
+    // folded out), but it must never run AHEAD of package.json — that would
+    // make /changelog describe a bot that is not deployed.
+    expect(
+      semverCompare(parseAll(botChangelog)[0].version, botPackage.version),
+      `newest entry ${parseAll(botChangelog)[0].version} vs package.json ${botPackage.version}`
+    ).toBeLessThanOrEqual(0);
+  });
+
+  it('renders its newest entry inside the /changelog embed budget, uncut', () => {
+    const newest = parseAll(botChangelog)[0];
+    const rendered = renderEntry(newest);
+    expect(rendered.endsWith('…'), 'newest entry is cut — trim it or split it').toBe(false);
+    expect(rendered.length).toBeLessThanOrEqual(DESCRIPTION_BUDGET);
   });
 });

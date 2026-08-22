@@ -17,10 +17,12 @@
  * @module handlers/commands/changelog
  */
 
+import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import { createUserTranslator } from '../../services/bot-i18n.js';
 import { ephemeralResponse } from '../../utils/response.js';
 import { BRAND_ACCENT } from '../../utils/brand.js';
+import { cutOnLineBoundary } from '../../utils/text.js';
 import { parseAll, type ChangelogEntry } from '../../services/changelog-parser.js';
 import changelogMarkdown from '../../../CHANGELOG-laymans.md';
 
@@ -29,24 +31,27 @@ const COLLAPSED_COUNT = 5;
 
 /**
  * Discord's embed-description ceiling is 4096; stop short of it, and on a
- * line boundary, so a long release never ends mid-bullet (the same rule the
- * release announcement follows in services/announcements.ts).
+ * line boundary, so a long release never ends mid-bullet. The contract test
+ * next to the parser asserts the newest entry fits uncut.
  */
-const DESCRIPTION_BUDGET = 4000;
-const CUT_MARKER = '…';
+export const DESCRIPTION_BUDGET = 4000;
 
-function renderEntry(entry: ChangelogEntry): string {
+/** Where the whole file lives, for the cut marker. */
+const BOT_NOTES_URL =
+  'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/discord-worker/CHANGELOG-laymans.md';
+
+/**
+ * Render one entry as the embed description: bold section titles, bulleted
+ * items, cut on a line boundary with a pointer to the full file if it would
+ * not fit. Exported for the contract test on the bundled file.
+ */
+export function renderEntry(entry: ChangelogEntry): string {
   const lines: string[] = [];
   for (const section of entry.sections) {
     lines.push(`**${section.title}**`);
     for (const item of section.items) lines.push(`• ${item}`);
   }
-  const text = lines.join('\n');
-  if (text.length <= DESCRIPTION_BUDGET) return text;
-
-  const cut = text.slice(0, DESCRIPTION_BUDGET - CUT_MARKER.length - 1);
-  const lastBreak = cut.lastIndexOf('\n');
-  return `${(lastBreak > 0 ? cut.slice(0, lastBreak) : cut).trimEnd()}\n${CUT_MARKER}`;
+  return cutOnLineBoundary(lines.join('\n'), DESCRIPTION_BUDGET, `\n… ${BOT_NOTES_URL}`);
 }
 
 /**
@@ -61,7 +66,8 @@ export async function handleChangelogCommand(
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
 
   const options = interaction.data?.options || [];
-  const versionWanted = options.find((opt) => opt.name === 'version')?.value as string | undefined;
+  const rawVersion = options.find((opt) => opt.name === 'version')?.value;
+  const versionWanted = typeof rawVersion === 'string' ? rawVersion.trim() : undefined;
 
   // Parsed per call: the file is a few KB and the parse is one line scan,
   // which keeps the module free of load-time work in the Worker isolate.
@@ -73,11 +79,12 @@ export async function handleChangelogCommand(
     return ephemeralResponse(t.t('changelog.empty'));
   }
 
-  const expanded = versionWanted
-    ? entries.find((e) => e.version === versionWanted.trim())
-    : entries[0];
+  const expanded = versionWanted ? entries.find((e) => e.version === versionWanted) : entries[0];
   if (!expanded) {
-    return ephemeralResponse(t.t('changelog.notFound', { version: versionWanted ?? '' }));
+    // User text echoed back: sanitised and capped like every other echo.
+    return ephemeralResponse(
+      t.t('changelog.notFound', { version: sanitizeEmbedText(versionWanted ?? '', 64) })
+    );
   }
 
   const fields: Array<{ name: string; value: string; inline: boolean }> = [];

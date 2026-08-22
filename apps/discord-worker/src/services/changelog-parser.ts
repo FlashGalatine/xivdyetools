@@ -37,7 +37,9 @@ export interface ChangelogEntry {
  * the webhook announcement takes `[0]`.
  */
 export function parseAll(markdown: string): ChangelogEntry[] {
-  const lines = markdown.split('\n');
+  // CRLF-tolerant: the bundled bot file is whatever bytes the deploying
+  // checkout holds, and a '\r' left on every line would match nothing below.
+  const lines = markdown.split(/\r?\n/);
   const entries: ChangelogEntry[] = [];
 
   let current: ChangelogEntry | null = null;

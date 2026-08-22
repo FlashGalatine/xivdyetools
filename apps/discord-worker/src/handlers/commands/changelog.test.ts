@@ -157,6 +157,18 @@ describe('handleChangelogCommand', () => {
     expect(JSON.stringify(body)).toContain('changelog.notFound:9.9.9');
   });
 
+  it('echoes a pasted-in version sanitised and capped, so the reply stays inside Discord limits', async () => {
+    // Discord accepts STRING options of up to 6000 characters; the reply's
+    // `content` must stay under 2000 or Discord rejects the interaction.
+    const pasted = `9.9.9 ${'@everyone *bold* '.repeat(300)}`;
+    const body = await run(interaction(pasted));
+
+    const content = body.data.content ?? '';
+    expect(content.length).toBeLessThan(2000);
+    expect(content).toContain('changelog.notFound:');
+    expect(content).not.toContain('@everyone');
+  });
+
   describe('user identity', () => {
     it('reads the id from user in a DM', async () => {
       const dm = {
@@ -203,8 +215,12 @@ describe('handleChangelogCommand', () => {
 
       expect(description.length).toBeLessThanOrEqual(4000);
       const lines = description.split('\n');
-      // The cut announces itself…
-      expect(lines.pop()).toBe('…');
+      // The cut announces itself and points at the full notes on GitHub…
+      const marker = lines.pop()!;
+      expect(marker.startsWith('…')).toBe(true);
+      expect(marker).toContain(
+        'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/discord-worker/CHANGELOG-laymans.md'
+      );
       // …and the last kept line is a whole bullet, never a torn one.
       expect(items.some((s) => lines[lines.length - 1] === `• ${s}`)).toBe(true);
     });

@@ -117,9 +117,11 @@ GitHub.
 
 If a parser stops matching its file's format, the surface renders **empty** rather than
 failing — the web app's modal shows nothing, and the bot's parse failures are silent by design.
-`apps/discord-worker/src/services/changelog-parser.test.ts` guards the bot file (grammar,
-newest-first, and the newest entry's version must equal `apps/discord-worker/package.json` —
-so the bump and the notes travel together); verify the web modal after changing that format.
+`apps/discord-worker/src/services/changelog-parser.test.ts` guards the bot file (every `##`
+header on the grammar, versions strictly descending, the newest entry **never ahead of**
+`apps/discord-worker/package.json` — it may lag a patch that has nothing player-visible to say —
+and the newest entry rendering inside the 4000-character embed budget); verify the web modal
+after changing that format.
 
 ---
 
