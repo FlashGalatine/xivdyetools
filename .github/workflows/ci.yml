@@ -1,10 +1,19 @@
 name: CI
 
 on:
+  # Pushes: the protected lines only -- main, plus the long-lived integration
+  # branches that feed it (`*-prep`, e.g. monorepo-2.0-prep for the 5.0
+  # wave). Feature branches are covered by their pull request instead; a push
+  # trigger for every branch would run the same commits twice, and the
+  # push-side `...[HEAD^]` filter only diffs the last commit anyway.
   push:
-    branches: [main, master]
+    branches: [main, master, '*-prep']
+  # Pull requests: every PR, whatever its base. Until 2026-08-22 this was
+  # `branches: [main, master]`, so PRs into monorepo-2.0-prep had no CI at
+  # all and `gh pr merge` would merge red (PR #130 was merged on local runs).
+  # On a PR event HEAD is the merge ref and HEAD^ the base tip, so the
+  # `...[HEAD^]` filters below scope the run to what the PR changed.
   pull_request:
-    branches: [main, master]
   # Advisories are published continuously, but this workflow only ran when
   # somebody pushed -- so one landing during a quiet stretch went unseen until
   # the next PR. The nightly run closes that gap. Only the `audit` job takes
