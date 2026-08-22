@@ -49,7 +49,7 @@ Cards are generated as SVG strings by `@xivdyetools/svg` and rasterized to PNG i
 |---------|-------------|
 | `/preferences` | Race/clan, world, language, matching method, and theme |
 | `/manual` | Help topics with learn-more links |
-| `/changelog` | Release notes (ephemeral) |
+| `/changelog` | The bot's release notes, newest first (ephemeral) |
 | `/about` | Bot info, command roster, and Square Enix attribution |
 | `/stats` | Usage statistics (gated to authorized users) |
 
@@ -141,7 +141,7 @@ The Worker bundle is close enough to Cloudflare's compressed limit to be worth w
 | `GET /health` | None | Health probe |
 | `POST /` | Ed25519 | Discord interactions |
 | `POST /webhooks/preset-submission` | Bearer (`INTERNAL_WEBHOOK_SECRET`) | Preset submissions forwarded from the web app |
-| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events updating `CHANGELOG-laymans.md`, announced to the release channel |
+| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events updating the root (product-level) `CHANGELOG-laymans.md`, announced to the release channel |
 
 Both webhook endpoints cap payloads at 10 KB before parsing. Discord interaction bodies are capped at 100 KB, with `Content-Length` validated before the body is read.
 

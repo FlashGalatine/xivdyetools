@@ -507,7 +507,7 @@ Show the help guide, or one of six localized topics from core's `MANUAL_TOPICS`.
 
 ### /changelog
 
-Ephemeral release notes rendered from the root `CHANGELOG-laymans.md` (newest release expanded, five collapsed one-liners; fetched from the repo raw URL, 10-minute KV cache). New in 5.0.
+Ephemeral release notes for the bot, rendered from `apps/discord-worker/CHANGELOG-laymans.md` — bundled into the Worker as text at deploy time (wrangler `*.md` Text rule), so no fetch and no cache; newest release expanded, five collapsed one-liners, long entries cut on a line boundary with a link to the full file. The product-level root `CHANGELOG-laymans.md` feeds the release-announcement webhook instead. New in 5.0.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|

@@ -109,7 +109,7 @@ src/
 │   ├── bot-i18n.ts                # Bot UI translator (createTranslator/createUserTranslator)
 │   ├── emoji.ts                   # Application emoji helpers
 │   ├── fonts.ts                   # Bundled TTF buffers for resvg (brand + Noto Sans JP/SC/KR subsets)
-│   ├── changelog-parser.ts        # Parse CHANGELOG-laymans.md for /webhooks/github
+│   ├── changelog-parser.ts        # Parse CHANGELOG-laymans.md files (root → /webhooks/github; this app's → /changelog)
 │   ├── announcements.ts           # Send formatted release embeds
 │   ├── svg/                       # Card renderers + resvg PNG conversion
 │   ├── image-client.ts            # IMAGE_WORKER service-binding client (photon moved to xivdyetools-image-worker)
@@ -129,6 +129,7 @@ src/
     ├── github.ts                  # GitHubPushPayload
     ├── budget.ts                  # Budget calculator types
     ├── image.ts                   # Image processing types
+    ├── markdown.d.ts              # `*.md` imports are strings (wrangler Text rule / vitest plugin)
     └── preferences.ts             # CLANS_BY_RACE, preference shapes
 ```
 
@@ -142,7 +143,7 @@ src/
 | `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes) |
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Photon-backed pixel extraction for `/extractor` (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
 
-Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
+Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
 
 ### Required Secrets
 
@@ -246,7 +247,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 | `/preferences` | Race/clan/world/language/matching/theme preferences |
 | `/preset` | Browse/submit/vote/edit community presets |
 | `/budget` | 13G ledger — tier-group pricing via Universalis |
-| `/changelog` | Release notes from CHANGELOG-laymans.md (ephemeral) |
+| `/changelog` | The bot's own release notes — `apps/discord-worker/CHANGELOG-laymans.md`, bundled as text at deploy time (ephemeral) |
 | `/manual` | Help topics (📸 ♿ 🔲 📐 🪙 👤) with learn-more links |
 | `/stats` | Usage stats incl. the 5.0 adoption panel (gated) |
 
@@ -284,7 +285,7 @@ Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/
 | `GET /health` | None | Health probe |
 | `POST /` | Ed25519 | Discord interactions |
 | `POST /webhooks/preset-submission` | Bearer (`INTERNAL_WEBHOOK_SECRET`) | Forwarded preset submissions from web app |
-| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events that update `CHANGELOG-laymans.md` |
+| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events that update the root (product-level) `CHANGELOG-laymans.md` |
 
 ## Testing
 

@@ -575,7 +575,7 @@
     "body": "Der Bot wurde neu gestaltet: neue Karten, ein einheitliches Matching-Vokabular (Standard ΔE2000), /contrast und /a11y sowie /swatch für Charakterdateien. /manual zeigt die Tour, /changelog die Änderungen, /preferences die Einstellungen. Dieser Hinweis erscheint nur einmal."
   },
   "changelog": {
-    "title": "Was ist neu",
+    "title": "Was ist neu im Bot",
     "earlier": "Frühere Versionen",
     "notFound": "Kein Eintrag für Version {version}.",
     "empty": "Das Änderungsprotokoll ist derzeit nicht verfügbar."
@@ -670,7 +670,7 @@
       "description": "Hilfe und Anleitung für alle Befehle anzeigen"
     },
     "changelog": {
-      "description": "Was ist neu — Versionshinweise für das gesamte Toolset"
+      "description": "Was ist neu im Discord-Bot — Versionshinweise, neueste zuerst"
     },
     "about": {
       "description": "Informationen über den XIV Dye Tools Bot anzeigen"

@@ -4,9 +4,11 @@ Product-level release notes for players, covering every surface (web app,
 Discord bot, link previews). Newest release first.
 
 <!--
-FORMAT CONTRACT — the Discord announcement webhook and /changelog command
-parse this file with a strict grammar; entries that break it are silently
-skipped:
+FORMAT CONTRACT — the Discord release-announcement webhook parses this file
+with a strict grammar; entries that break it are silently skipped. (The
+bot's /changelog command shows its OWN notes, apps/discord-worker/
+CHANGELOG-laymans.md, in the same grammar — keep the bot bullets here too;
+this file is the product-wide summary.)
 
   ## [x.y.z] - YYYY-MM-DD
   ### Section Title            (emoji in section titles is welcome)
@@ -66,7 +68,7 @@ Rules:
 
 - Discord bot: `/contrast` measures WCAG contrast between up to four dyes — the letter grades are gone, the ratios speak for themselves.
 - Discord bot: `/a11y` is a shorter way to type `/accessibility`, and both now simulate four colour-vision lenses.
-- Discord bot: `/changelog` shows these release notes without leaving Discord, and `/manual` grew topics for colour vision, contrast, matching methods, dye prices and character files.
+- Discord bot: `/changelog` shows the bot's own release notes without leaving Discord, and `/manual` grew topics for colour vision, contrast, matching methods, dye prices and character files.
 - Discord bot: `/swatch` now takes a `.chara` character file, and `/budget` prices by the real market groups — one price per Spectrum tier, never an invented per-dye number.
 
 ### 🔗 Link previews

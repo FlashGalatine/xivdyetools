@@ -1,8 +1,10 @@
 /**
  * Changelog Parser
  *
- * Parses the root CHANGELOG-laymans.md (product-level, both surfaces) for
- * Discord announcement formatting and the /changelog command.
+ * Parses CHANGELOG-laymans.md files: the root one (product-level, every
+ * surface) for the release-announcement webhook, and the bot's own
+ * apps/discord-worker/CHANGELOG-laymans.md (bundled as text at build time)
+ * for the /changelog command.
  *
  * Strict format contract (parse failures are silent by design — keep to it):
  * ```
@@ -10,9 +12,10 @@
  * ### Section Title            (emoji in section titles is welcome)
  * - Item description           (short, self-contained bullets)
  * ```
- * Newest entry first. Entries say which surface changed (web app / Discord
- * bot). The file lives at the repository root — the GitHub webhook's raw
- * fetch and its path trigger both assume exactly that.
+ * Newest entry first. The root file's entries say which surface changed
+ * (web app / Discord bot / link previews) and it lives at the repository
+ * root — the GitHub webhook's raw fetch and its path trigger both assume
+ * exactly that. The bot file is bot-only, so its bullets carry no prefix.
  *
  * @module services/changelog-parser
  */
@@ -34,7 +37,9 @@ export interface ChangelogEntry {
  * the webhook announcement takes `[0]`.
  */
 export function parseAll(markdown: string): ChangelogEntry[] {
-  const lines = markdown.split('\n');
+  // CRLF-tolerant: the bundled bot file is whatever bytes the deploying
+  // checkout holds, and a '\r' left on every line would match nothing below.
+  const lines = markdown.split(/\r?\n/);
   const entries: ChangelogEntry[] = [];
 
   let current: ChangelogEntry | null = null;

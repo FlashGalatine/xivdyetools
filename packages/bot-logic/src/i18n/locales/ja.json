@@ -575,7 +575,7 @@
     "body": "ボットがリニューアルされました：新しいカード、共通のマッチング方式（既定はΔE2000）、/contrast と /a11y、キャラクターファイル対応の /swatch。/manual で使い方、/changelog で変更点、/preferences で設定を確認できます。この通知は一度だけ表示されます。"
   },
   "changelog": {
-    "title": "更新情報",
+    "title": "ボットの更新情報",
     "earlier": "以前のリリース",
     "notFound": "バージョン{version}の項目はありません。",
     "empty": "変更履歴は現在利用できません。"
@@ -670,7 +670,7 @@
       "description": "全コマンドのヘルプと使い方を表示"
     },
     "changelog": {
-      "description": "最新情報 — ツール全体のリリースノート"
+      "description": "Discord ボットの最新情報 — リリースノート（新しい順）"
     },
     "about": {
       "description": "XIV Dye Tools ボットの情報を表示"

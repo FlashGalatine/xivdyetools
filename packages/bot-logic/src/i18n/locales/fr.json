@@ -575,7 +575,7 @@
     "body": "Le bot a été repensé : nouvelles cartes, vocabulaire de correspondance unifié (ΔE2000 par défaut), /contrast et /a11y, et /swatch pour les fichiers de personnage. Voir /manual pour la visite, /changelog pour les nouveautés, /preferences pour les réglages. Cet avis ne s'affiche qu'une fois."
   },
   "changelog": {
-    "title": "Nouveautés",
+    "title": "Nouveautés du bot",
     "earlier": "Versions précédentes",
     "notFound": "Aucune entrée pour la version {version}.",
     "empty": "Le journal des modifications est indisponible pour le moment."
@@ -670,7 +670,7 @@
       "description": "Afficher l'aide et le guide d'utilisation de toutes les commandes"
     },
     "changelog": {
-      "description": "Nouveautés — notes de version de toute la suite d'outils"
+      "description": "Nouveautés du bot Discord — notes de version, les plus récentes d'abord"
     },
     "about": {
       "description": "Afficher les informations sur le bot XIV Dye Tools"

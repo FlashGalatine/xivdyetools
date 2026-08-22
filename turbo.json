@@ -38,13 +38,24 @@
       // test) and their tests, so it must invalidate the cache like src/** does.
       // Narrowed to *.js (matching what vitest's include actually discovers) so
       // non-JS assets under scripts/ (e.g. icon PNGs) do not bust the cache.
-      "inputs": ["src/**", "tests/**", "scripts/**/*.js", "vitest.config.*"],
+      // CHANGELOG-laymans.md is bundled into discord-worker and checked by its
+      // contract test; vitest.*.ts covers the md-as-text plugin and the
+      // integration config. Without them an edit to the notes replays a
+      // cached PASS.
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "scripts/**/*.js",
+        "vitest.config.*",
+        "vitest.*.ts",
+        "CHANGELOG-laymans.md"
+      ],
       "outputs": ["coverage/**"]
     },
     "test:coverage": {
       "dependsOn": ["^build"],
       "cache": false,
-      "inputs": ["src/**", "tests/**", "vitest.config.*"],
+      "inputs": ["src/**", "tests/**", "vitest.config.*", "vitest.*.ts", "CHANGELOG-laymans.md"],
       "outputs": ["coverage/**"]
     },
     "clean": {

@@ -575,7 +575,7 @@
     "body": "This bot was redesigned: new cards, a suite-wide matching vocabulary (ΔE2000 default), /contrast and /a11y, and a character-file /swatch. See /manual for the tour, /changelog for what changed, and /preferences to make it yours. This notice shows once."
   },
   "changelog": {
-    "title": "What's new",
+    "title": "What's new in the bot",
     "earlier": "Earlier releases",
     "notFound": "No entry for version {version}.",
     "empty": "The changelog is unavailable right now."
@@ -670,7 +670,7 @@
       "description": "Show help and usage guide for all commands"
     },
     "changelog": {
-      "description": "See what's new — release notes for the whole toolset"
+      "description": "See what's new in the Discord bot — release notes, newest first"
     },
     "about": {
       "description": "Show information about the XIV Dye Tools bot"

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.0] - 2026-08-21
 
+### Changed — 2026-08-22 (`/changelog` is bot-scoped)
+
+- Locale strings `changelog.title` and `commands.changelog.description` (all six locales) now say the notes are the Discord bot's own — discord-worker's `/changelog` renders `apps/discord-worker/CHANGELOG-laymans.md` instead of the product-level root file. The zh description stays inside the SC font subset (`font-coverage.test.ts`).
+
 ### Added — 2026-08-21 security audit (FINDING-019)
 
 - `escapeDiscordMarkdown()`, `sanitizeEmbedText(text, maxLength?)` and `ALLOWED_MENTIONS_NONE` (`src/discord-markdown.ts`): one sanitiser for every user-sourced string that lands in a bot-authored Discord message/embed — strips control / zero-width / bidi characters, collapses whitespace, defuses `@everyone` / `@here` / `<@…>` mentions, escapes inline markdown and masked links, caps length with an ellipsis. Both bots adopt it in their 2026-08-21 releases instead of re-implementing it.
