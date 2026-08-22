@@ -16,10 +16,11 @@ test run:
   - Short, self-contained bullet
 
 Rules:
-- Newest entry first. The newest dated entry's version must equal the version
-  in package.json — the test enforces it, so a bump and its notes travel
-  together. An `## [Unreleased]` block at the very top is ignored until it
-  gets a version and a date.
+- Newest entry first. The newest entry's version must equal the version in
+  package.json — the test enforces it, so a bump and its notes travel
+  together. Notes for work that has not shipped yet go straight into the
+  upcoming version's block (bump package.json alongside); there is no
+  `Unreleased` block here — the parser would ignore it.
 - Only user-visible bot changes. Dependency bumps, lint passes, internal
   refactors and security-only patches are folded out
   (docs/developer-guides/release-process.md).
@@ -29,19 +30,6 @@ Rules:
   editing it is a deploy: `apps/discord-worker/**` is on the deploy workflow's
   path filter.
 -->
-
-## [Unreleased]
-
-### 🌏 Your language, everywhere
-
-- Slash-command descriptions and many option choices now show in your Discord language in the command picker (Japanese, German, French, Korean, Chinese).
-- Type a dye name in your own language: autocomplete and typed names match English or your language, and suggestions are labelled in your language.
-- Seven `/budget` messages that showed raw key names (no world set, a missing preset, and the like) now read as proper sentences.
-- Korean and Chinese text on cards was re-checked against every string the bot can draw — no missing characters.
-
-### 🔒 Privacy
-
-- The privacy policy now spells out exactly which usage statistics the bot records, and the bot no longer records which server a command was used in — only whether it was a server or a DM.
 
 ## [5.0.0] - 2026-08-16
 
@@ -84,6 +72,17 @@ Rules:
 
 - `/preferences` replies are private to you — `show`, `set` and `reset` used to post your settings to the channel.
 - The first time you use the bot after the update it introduces 5.0 once, privately.
+
+### 🌏 Your language, everywhere
+
+- Slash-command descriptions and many option choices show in your Discord language in the command picker (Japanese, German, French, Korean, Chinese).
+- Type a dye name in your own language: autocomplete and typed names match English or your language, and suggestions are labelled in your language.
+- Seven `/budget` messages that showed raw key names (no world set, a missing preset, and the like) now read as proper sentences.
+- Korean and Chinese text on cards was re-checked against every string the bot can draw — no missing characters.
+
+### 🔒 Privacy
+
+- The privacy policy spells out exactly which usage statistics the bot records, and the bot no longer records which server a command was used in — only whether it was a server or a DM.
 
 ## [4.7.0] - 2026-07-19
 
