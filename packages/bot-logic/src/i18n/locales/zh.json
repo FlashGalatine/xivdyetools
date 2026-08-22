@@ -575,7 +575,7 @@
     "body": "机器人已全面改版：全新卡片、统一的匹配方式（默认ΔE2000）、/contrast 和 /a11y，以及支持角色文件的 /swatch。请通过 /manual 了解用法，/changelog 查看更新，/preferences 进行设置。此通知仅显示一次。"
   },
   "changelog": {
-    "title": "更新内容",
+    "title": "机器人更新内容",
     "earlier": "早期版本",
     "notFound": "没有版本{version}的记录。",
     "empty": "更新日志暂时不可用。"
@@ -670,7 +670,7 @@
       "description": "显示所有命令的帮助和使用指南"
     },
     "changelog": {
-      "description": "查看新内容 — 整套工具的发布说明"
+      "description": "查看 Discord 机器人的新内容 — 发布说明"
     },
     "about": {
       "description": "显示 XIV Dye Tools 机器人的信息"

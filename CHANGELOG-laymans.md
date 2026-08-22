@@ -4,9 +4,11 @@ Product-level release notes for players, covering every surface (web app,
 Discord bot, link previews). Newest release first.
 
 <!--
-FORMAT CONTRACT — the Discord announcement webhook and /changelog command
-parse this file with a strict grammar; entries that break it are silently
-skipped:
+FORMAT CONTRACT — the Discord release-announcement webhook parses this file
+with a strict grammar; entries that break it are silently skipped. (The
+bot's /changelog command shows its OWN notes, apps/discord-worker/
+CHANGELOG-laymans.md, in the same grammar — keep the bot bullets here too;
+this file is the product-wide summary.)
 
   ## [x.y.z] - YYYY-MM-DD
   ### Section Title            (emoji in section titles is welcome)

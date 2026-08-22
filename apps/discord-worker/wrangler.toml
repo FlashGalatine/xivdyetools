@@ -55,6 +55,14 @@ type = "Data"
 globs = ["**/*.ttf"]
 fallthrough = true
 
+# /changelog bundles apps/discord-worker/CHANGELOG-laymans.md as a string at
+# deploy time (src/types/markdown.d.ts types the import; vitest mirrors the
+# rule with vitest.markdown-plugin.ts). Editing that file is therefore a deploy.
+[[rules]]
+type = "Text"
+globs = ["**/*.md"]
+fallthrough = true
+
 # ============================================================================
 # PRODUCTION — the live bot. Deployed only via `wrangler deploy --env production`.
 # ============================================================================

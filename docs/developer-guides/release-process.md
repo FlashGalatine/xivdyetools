@@ -95,18 +95,31 @@ the pnpm 11 migration.)
 Applications are versioned in `package.json` and released by merging to `main`, which fires the
 path-filtered deploy workflow. See [Deployment](deployment.md).
 
-Still do the version bump and changelog entry — they feed the web app's "What's New" modal
-(`CHANGELOG-laymans.md`) and the `/changelog` Discord command.
+Still do the version bump and changelog entry — they feed the web app's "What's New" modal,
+the `/changelog` Discord command and the release announcement (three layman's files, below).
 
-### Layman's changelog
+### Layman's changelogs
 
-`apps/web-app/CHANGELOG-laymans.md` is a separate, plain-language file rendered to end users. It
-uses `## Web-App Version X.Y.Z — Date` headers and `###` sections; `vite-plugin-changelog-parser.ts`
-parses that exact shape. Dependency bumps, lint passes, and security-only patches are
-deliberately folded out — only user-visible changes belong there.
+Three plain-language files are rendered to end users. Dependency bumps, lint passes, internal
+refactors and security-only patches are deliberately folded out of all of them — only
+user-visible changes belong there.
 
-If the parser stops matching the file's format, the "What's New" popup renders **empty** rather
-than failing, so verify the modal after changing the format.
+| File | Rendered by | Grammar |
+|------|-------------|---------|
+| `apps/web-app/CHANGELOG-laymans.md` | the web app's "What's New" modal (`vite-plugin-changelog-parser.ts`) | `## Web-App Version X.Y.Z — Date` + `###` sections |
+| `apps/discord-worker/CHANGELOG-laymans.md` | the bot's `/changelog` — **bundled into the Worker at deploy time** (wrangler Text rule), so an edit is a deploy | `## [x.y.z] - YYYY-MM-DD` + `###` sections + `-` bullets (`changelog-parser.ts`) |
+| `CHANGELOG-laymans.md` (repo root) | the release-announcement webhook (`/webhooks/github`, product-level: web app + bot + link previews) | same grammar as the bot file |
+
+Each surface's in-product "what's new" reads **its own** file with **its own** version numbers —
+the bot's `version:` option looks up bot releases, not web-app ones. The root file is the one
+product-wide summary; when the announcement has to cut a long release it links to that file on
+GitHub.
+
+If a parser stops matching its file's format, the surface renders **empty** rather than
+failing — the web app's modal shows nothing, and the bot's parse failures are silent by design.
+`apps/discord-worker/src/services/changelog-parser.test.ts` guards the bot file (grammar,
+newest-first, and the newest entry's version must equal `apps/discord-worker/package.json` —
+so the bump and the notes travel together); verify the web modal after changing that format.
 
 ---
 

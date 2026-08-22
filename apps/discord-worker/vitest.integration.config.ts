@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config';
+import { markdownAsText } from './vitest.markdown-plugin.js';
 
 export default defineConfig({
+  // Same `.md`-as-text resolution as vitest.config.ts (see that file).
+  plugins: [markdownAsText()],
   test: {
     globals: true,
     environment: 'node',

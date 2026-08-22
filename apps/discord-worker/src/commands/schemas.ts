@@ -526,7 +526,7 @@ export const commands = [
   // /changelog - Product-level release notes (5.0, ephemeral)
   {
     name: 'changelog',
-    description: "See what's new — release notes for the whole toolset",
+    description: "See what's new in the Discord bot — release notes, newest first",
     options: [
       {
         name: 'version',

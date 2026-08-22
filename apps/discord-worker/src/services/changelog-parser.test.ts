@@ -3,6 +3,10 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseAll, parseLatestVersion } from './changelog-parser.js';
+// The bot's own notes, bundled as text (wrangler Text rule / vitest plugin) —
+// importing them here exercises the same path /changelog ships with.
+import botChangelog from '../../CHANGELOG-laymans.md';
+import botPackage from '../../package.json';
 
 const SAMPLE = `# What's New
 
@@ -58,5 +62,30 @@ describe('root CHANGELOG-laymans.md', () => {
     expect(entries[0].version).toMatch(/^\d+\.\d+\.\d+$/);
     expect(entries[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(entries[0].sections.length).toBeGreaterThan(0);
+  });
+});
+
+describe("the bot's own CHANGELOG-laymans.md (bundled into /changelog)", () => {
+  it('is bundled as text and every entry satisfies the contract', () => {
+    expect(typeof botChangelog).toBe('string');
+    const entries = parseAll(botChangelog);
+    expect(entries.length).toBeGreaterThan(0);
+    for (const entry of entries) {
+      expect(entry.version, `version header ${entry.version}`).toMatch(/^\d+\.\d+\.\d+$/);
+      expect(entry.date, `date of ${entry.version}`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(entry.sections.length, `${entry.version} has no bullets`).toBeGreaterThan(0);
+    }
+  });
+
+  it('is ordered newest first', () => {
+    const dates = parseAll(botChangelog).map((entry) => entry.date);
+    expect(dates).toEqual([...dates].sort().reverse());
+  });
+
+  it('leads with the version this Worker ships as', () => {
+    // release-process.md: the version bump and the layman's entry travel
+    // together — a bump without notes would make /changelog lie about what
+    // the deployed Worker is.
+    expect(parseAll(botChangelog)[0].version).toBe(botPackage.version);
   });
 });

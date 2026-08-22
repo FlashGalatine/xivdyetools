@@ -47,14 +47,18 @@ export function formatAnnouncementEmbed(
   const description = descriptionParts.join('\n').trim();
 
   // A large release used to lose its tail silently, mid-bullet, behind a
-  // bare "...". With /changelog shipped the announcement can afford to be a
-  // summary that links out — but it has to SAY it is one, and it has to cut
-  // on a line boundary rather than through a word.
+  // bare "...". The announcement can afford to be a summary that links out —
+  // but it has to SAY it is one, and it has to cut on a line boundary rather
+  // than through a word. It links to the product-level notes on GitHub, not
+  // to /changelog: that command shows the bot's OWN notes (its bundled
+  // apps/discord-worker/CHANGELOG-laymans.md), which would not contain the
+  // web-app and link-preview bullets cut here.
   let body = description;
   if (description.length > DESCRIPTION_BUDGET) {
     const cut = description.slice(0, DESCRIPTION_BUDGET);
     const lastBreak = cut.lastIndexOf('\n');
-    body = `${(lastBreak > 0 ? cut.slice(0, lastBreak) : cut).trimEnd()}\n\n*Summary shown — run \`/changelog\` for the full notes.*`;
+    const fullNotesUrl = `${repoUrl}/blob/main/CHANGELOG-laymans.md`;
+    body = `${(lastBreak > 0 ? cut.slice(0, lastBreak) : cut).trimEnd()}\n\n*Summary shown — [full release notes](${fullNotesUrl})*`;
   }
 
   return {

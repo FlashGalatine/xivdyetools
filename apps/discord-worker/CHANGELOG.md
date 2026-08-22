@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — `/changelog` shows the bot's own notes (2026-08-22)
+
+- **`/changelog` is bot-scoped and bundled.** It renders the new `apps/discord-worker/CHANGELOG-laymans.md` (same `## [x.y.z] - YYYY-MM-DD` grammar, the bot's own semver) instead of fetching the root product-level file from GitHub. The markdown is imported as a string — wrangler `[[rules]] type = "Text"` for `*.md`, typed by `src/types/markdown.d.ts`, mirrored for both vitest configs by `vitest.markdown-plugin.ts` — so there is no network fetch, no 10-minute KV cache and no "unavailable" path while `main` lacks the file, and the beta bot shows the beta's notes. Reason: the root file's version numbers were really the web app's (its `[4.12.0]` shipped while the bot was 4.7.0) and ~90 % of its bullets were web-app changes, so `version:` lookups for bot releases could never match and the embed spent its 4000 characters on the other surface. A long entry now cuts on a line boundary with a trailing `…` instead of `slice(0, 4000)`. `changelog-parser.test.ts` gained a contract test on the bundled file (grammar, newest-first, top entry = `package.json` version — a bump without notes fails CI); `changelog.title` / `commands.changelog.description` say "bot" in all six locales.
+- **Release announcement** (`services/announcements.ts`): when a long release is cut, the summary line links the root `CHANGELOG-laymans.md` on GitHub instead of saying "run `/changelog`" — the announcement stays product-level, and `/changelog` no longer contains the web-app bullets it would have been pointing at. New `announcements.test.ts`.
+
 ### Security — 2026-08-21 security audit (`docs/audits/2026-08-21-security/`, FINDING-003)
 
 - Rate limiter logs a one-time warning per isolate when it falls back from Upstash to KV (`services/rate-limiter.ts`). The KV backend cannot throttle a fast client (KV 1 write/s/key, swallowed put failures, eventually-consistent reads), so it is a dev fallback only — production must configure `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`, and the warning makes a missing configuration visible in the logs instead of silently running unthrottled.

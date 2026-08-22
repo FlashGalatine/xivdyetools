@@ -1,6 +1,10 @@
 import { defineConfig, configDefaults } from 'vitest/config';
+import { markdownAsText } from './vitest.markdown-plugin.js';
 
 export default defineConfig({
+  // `.md` imports resolve to their text, as wrangler's Text rule does in the
+  // deployed Worker (/changelog bundles CHANGELOG-laymans.md that way).
+  plugins: [markdownAsText()],
   test: {
     globals: true,
     environment: 'node',
