@@ -102,6 +102,19 @@ that never went red is not a guard. See [Testing](testing.md) for the fuller str
 
 ---
 
+## Continuous integration
+
+`.github/workflows/ci.yml` (lint, type-check, test, build, production-dependency audit) runs on
+**every pull request, whatever its base branch**, and on pushes to `main` and the long-lived
+integration branches (`*-prep`, e.g. `monorepo-2.0-prep` for the 5.0 wave). Feature branches get
+CI through their PR, not through pushes. `main` and `monorepo-2.0-prep` are protected with the
+same two required checks ("Lint, Type-check, Test, Build", "Security audit (production
+dependencies)"), so a red PR cannot be merged into either without an explicit admin bypass.
+The `deploy-*-beta.yml` workflows are **not** CI: they build and test only the app they deploy,
+fire on every non-main push touching it, and deploy to the beta worker as a side effect.
+
+---
+
 ## Secret scanning
 
 CI runs [gitleaks](https://github.com/gitleaks/gitleaks) on every push and pull request
