@@ -26,10 +26,10 @@
   "license": "MIT",
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260727.1",
-    "@types/node": "^26.1.2",
-    "@vitest/coverage-v8": "^4.1.10",
-    "vitest": "^4.1.10",
-    "wrangler": "^4.114.0"
+    "@types/node": "^26.2.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.125.0"
   },
   "dependencies": {
     "@xivdyetools/rate-limiter": "workspace:*",

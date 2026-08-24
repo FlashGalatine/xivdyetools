@@ -23,22 +23,22 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/cors": "^2.8.17",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@types/express": "^5.0.0",
     "@types/express-rate-limit": "^6.0.2",
-    "@vitest/coverage-v8": "^4.1.10",
-    "vitest": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.11",
+    "vitest": "^4.1.11",
     "@vitejs/plugin-vue": "^6.0.8",
     "autoprefixer": "^10.5.4",
-    "concurrently": "^10.0.4",
+    "concurrently": "^10.0.5",
     "cors": "^2.8.5",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.6.1",
-    "postcss": "^8.5.23",
+    "express-rate-limit": "^8.6.2",
+    "postcss": "^8.5.26",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.23.1",
-    "vite": "^8.1.5",
-    "vue-tsc": "^3.3.8"
+    "tsx": "^4.23.12",
+    "vite": "^8.2.2",
+    "vue-tsc": "^3.3.11"
   },
   "engines": {
     "node": ">=18.0.0"
