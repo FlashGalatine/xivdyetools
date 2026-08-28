@@ -845,6 +845,23 @@ describe('SwatchTool', () => {
       expect(swatches()).toHaveLength(24);
     });
 
+    it('mirrors the CMYK display option onto the result cards', async () => {
+      tool = mount();
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 3 }]);
+      tool.setConfig({ displayOptions: { showCmyk: true } as never });
+      await flush();
+
+      swatches()[0].click();
+      await flush();
+
+      const card = container.querySelector('v4-result-card') as HTMLElement & {
+        showCmyk?: boolean;
+      };
+      expect(card).toBeTruthy();
+      expect(card.showCmyk).toBe(true);
+    });
+
     it('clearDyes resets both the forward and the reverse side', async () => {
       tool = mount();
       await flush();

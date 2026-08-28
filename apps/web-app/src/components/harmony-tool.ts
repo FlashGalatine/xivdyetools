@@ -34,6 +34,7 @@ import {
 import type { ScoredDyeMatch, HarmonyConfig } from '@services/index';
 import { ConfigController } from '@services/config-controller';
 import { ThemeService } from '@services/theme-service';
+import { applyDisplayOptions } from '@services/display-options-helper';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
@@ -326,15 +327,16 @@ export class HarmonyTool extends BaseComponent {
     // Subscribe to harmony config changes
     this.subs.add(
       configController.subscribe('harmony', (config) => {
+        // Shared helper carries the complete key list — a hand-rolled
+        // comparison here silently missed showCmyk and the 5.0 rows.
         const newDisplayOptions = config.displayOptions ?? { ...DEFAULT_DISPLAY_OPTIONS };
-        const needsRerender =
-          this.displayOptions.showHex !== newDisplayOptions.showHex ||
-          this.displayOptions.showRgb !== newDisplayOptions.showRgb ||
-          this.displayOptions.showHsv !== newDisplayOptions.showHsv ||
-          this.displayOptions.showLab !== newDisplayOptions.showLab ||
-          this.displayOptions.showPrice !== newDisplayOptions.showPrice ||
-          this.displayOptions.showDeltaE !== newDisplayOptions.showDeltaE ||
-          this.displayOptions.showAcquisition !== newDisplayOptions.showAcquisition;
+        const displayResult = applyDisplayOptions({
+          current: this.displayOptions,
+          incoming: newDisplayOptions,
+          toolName: 'HarmonyTool',
+          logChanges: false,
+        });
+        const needsRerender = displayResult.hasChanges;
 
         // Perceptual matching, matching method, dedup, or dye filter changes require regenerating harmonies
         const newDyeFilters = config.dyeFilters ?? { ...DEFAULT_DYE_FILTERS };
@@ -355,7 +357,7 @@ export class HarmonyTool extends BaseComponent {
           StorageService.setItem(STORAGE_KEYS.companionCount, config.companionDyesCount);
         }
 
-        this.displayOptions = newDisplayOptions;
+        this.displayOptions = displayResult.options;
         this.usePerceptualMatching = config.strictMatching;
         if (config.matchingMethod !== undefined) {
           this.matchingMethod = config.matchingMethod;

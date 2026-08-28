@@ -40,6 +40,7 @@ import {
 } from '@services/index';
 import type { MixedColorResult } from '@services/index';
 import { ConfigController } from '@services/config-controller';
+import { applyDisplayOptions } from '@services/display-options-helper';
 import { CollectionService } from '@services/collection-service';
 import { ThemeService } from '@services/theme-service';
 import { blendTwoColors } from '@services/mixer-blending-engine';
@@ -907,20 +908,18 @@ export class MixerTool extends BaseComponent {
       logger.info(`[MixerTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
     }
 
-    // Handle display options changes
+    // Handle display options changes — the shared helper carries the complete
+    // key list (a hand-rolled comparison here silently missed showCmyk and
+    // the 5.0 rows, so those toggles never re-rendered the cards).
     if (config.displayOptions) {
-      const newOpts = config.displayOptions;
-      const oldOpts = this.displayOptions;
-      if (
-        newOpts.showHex !== oldOpts.showHex ||
-        newOpts.showRgb !== oldOpts.showRgb ||
-        newOpts.showHsv !== oldOpts.showHsv ||
-        newOpts.showLab !== oldOpts.showLab ||
-        newOpts.showPrice !== oldOpts.showPrice ||
-        newOpts.showDeltaE !== oldOpts.showDeltaE ||
-        newOpts.showAcquisition !== oldOpts.showAcquisition
-      ) {
-        this.displayOptions = newOpts;
+      const result = applyDisplayOptions({
+        current: this.displayOptions,
+        incoming: config.displayOptions,
+        toolName: 'MixerTool',
+        logChanges: false,
+      });
+      if (result.hasChanges) {
+        this.displayOptions = result.options;
         needsRerender = true;
         logger.info('[MixerTool] setConfig: displayOptions updated');
       }

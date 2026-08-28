@@ -2351,6 +2351,7 @@ export class SwatchTool extends BaseComponent {
       (card as unknown as { showRgb: boolean }).showRgb = this.displayOptions.showRgb;
       (card as unknown as { showHsv: boolean }).showHsv = this.displayOptions.showHsv;
       (card as unknown as { showLab: boolean }).showLab = this.displayOptions.showLab;
+      (card as unknown as { showCmyk: boolean }).showCmyk = this.displayOptions.showCmyk;
       (card as unknown as { showDeltaE: boolean }).showDeltaE = this.displayOptions.showDeltaE;
       (card as unknown as { showHue: boolean }).showHue = this.displayOptions.showHue ?? true;
       (card as unknown as { showStain: boolean }).showStain = this.displayOptions.showStain ?? true;

@@ -9,6 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MixerTool } from '../mixer-tool';
+import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
@@ -912,6 +913,25 @@ describe('MixerTool', () => {
       expect(() => tool!.setConfig({ displayOptions: opts })).not.toThrow();
       // Second identical call hits the field-by-field equality guard
       expect(() => tool!.setConfig({ displayOptions: opts })).not.toThrow();
+    });
+
+    it('re-renders result cards when only the CMYK toggle changes', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+
+      expect(container.querySelectorAll('v4-result-card').length).toBeGreaterThan(0);
+
+      tool.setConfig({
+        displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showCmyk: true },
+      } as never);
+      await flush();
+
+      const card = container.querySelector('v4-result-card') as HTMLElement & {
+        showCmyk?: boolean;
+      };
+      expect(card.showCmyk).toBe(true);
     });
 
     it('accepts an empty config', () => {

@@ -9,6 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { HarmonyTool } from '../harmony-tool';
+import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
@@ -669,6 +670,29 @@ describe('HarmonyTool', () => {
       tool = mount();
 
       expect(() => tool!.selectDye(value as never)).not.toThrow();
+    });
+  });
+
+  describe('display options from the sidebar', () => {
+    it('re-renders result cards when only the CMYK toggle changes', async () => {
+      // The tool subscribes to the REAL ConfigController (that module is not
+      // mocked here) — drive the sidebar broadcast through it.
+      const { ConfigController } = await import('@services/config-controller');
+      tool = mount();
+      tool.selectDye(dye(1));
+      await flush();
+
+      expect(container.querySelectorAll('v4-result-card').length).toBeGreaterThan(0);
+
+      ConfigController.getInstance().setConfig('harmony', {
+        displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showCmyk: true },
+      });
+      await flush();
+
+      const card = container.querySelector('v4-result-card') as HTMLElement & {
+        showCmyk?: boolean;
+      };
+      expect(card.showCmyk).toBe(true);
     });
   });
 
