@@ -13,10 +13,10 @@ XIV Dye Tools is a free web application for exploring FFXIV dye colors. It helps
 ### Do I need to log in?
 
 No, you can use all tools without logging in. However, logging in with Discord lets you:
-- Sync favorites across devices
-- Submit community presets
+- Submit, edit and delete your community presets
 - Vote on presets
-- Access your data from the Discord bot
+
+Favorites and collections are stored in your browser and do not need a login.
 
 ### Is it free?
 
@@ -57,7 +57,7 @@ Yes! Use the image upload feature in Palette Extractor. Note that screenshot col
 1. Log in with Discord
 2. Go to Community Presets
 3. Click "Submit Preset"
-4. Add 2-6 dyes
+4. Add 3-6 dyes and pick a category
 5. Name and describe it
 6. Submit
 
@@ -66,7 +66,7 @@ Yes! Use the image upload feature in Palette Extractor. Note that screenshot col
 Presets may be rejected for:
 - Inappropriate name/description
 - Duplicate of existing preset
-- Fewer than 2 dyes
+- Fewer than 3 dyes
 - Rate limit exceeded (10/day max)
 
 ### How do I report a preset?
@@ -79,16 +79,16 @@ Click the report button on any preset to flag it for moderator review.
 
 ### Where is my data stored?
 
-- **Logged in**: Synced to our servers, available everywhere
-- **Not logged in**: Browser localStorage only
+In your browser (localStorage), whether or not you are logged in. Clearing site data clears them, so
+export what you want to keep.
 
 ### How many favorites can I have?
 
-Maximum 20 favorites and 50 collections with 20 dyes each.
+Maximum 40 favorites and 50 collections with 20 dyes each.
 
 ### Can I export my collections?
 
-Not currently, but this is a planned feature.
+Yes — collections can be exported to and imported from a JSON file.
 
 ---
 
@@ -120,7 +120,7 @@ Try:
 
 ### Is there a Discord bot?
 
-Yes! Use `/help` in any server with the bot to see commands.
+Yes! Use `/about` or `/manual` in any server with the bot to see commands.
 
 ### How do I add the bot to my server?
 
@@ -128,7 +128,9 @@ Visit the web app and click "Add to Discord" in the footer.
 
 ### Do favorites sync between web and Discord?
 
-Yes, when logged in with the same Discord account.
+No. Web favorites and collections live in your browser, and the bot's own `/favorites` /
+`/collection` commands were removed in 5.0 — every bot result carries a share link that opens in the
+web app instead.
 
 ---
 
@@ -137,7 +139,6 @@ Yes, when logged in with the same Discord account.
 ### What data do you collect?
 
 - Discord ID (if logged in)
-- Favorites and collections
 - Preset submissions and votes
 - Anonymous usage analytics
 

@@ -589,21 +589,14 @@ export class TutorialService {
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'flex flex-wrap justify-center gap-3';
 
-    // Skip button - skips just this tour
-    const skipBtn = document.createElement('button');
-    skipBtn.className = 'px-4 py-2 text-sm rounded-lg transition-colors';
-    skipBtn.style.backgroundColor = 'var(--theme-card-background)';
-    skipBtn.style.color = 'var(--theme-text-muted)';
-    skipBtn.textContent = LanguageService.t('tutorial.prompt.skip');
-    skipBtn.addEventListener('click', () => {
-      ModalService.dismissTop();
-      this.markCompleted(tool); // Don't ask again for this tool
-    });
+    // Three buttons is one too many for a sheet footer, so "Never" is
+    // demoted to a quiet outline (confirmed Modal Directions gallery 08)
 
-    // Disable all button - disables all tour prompts
+    // Disable-all button — quiet outline, first in the row
     const disableAllBtn = document.createElement('button');
-    disableAllBtn.className = 'px-4 py-2 text-sm rounded-lg transition-colors';
-    disableAllBtn.style.backgroundColor = 'var(--theme-card-background)';
+    disableAllBtn.className = 'px-3 py-2 text-sm rounded-lg transition-colors';
+    disableAllBtn.style.backgroundColor = 'transparent';
+    disableAllBtn.style.border = '1px solid var(--theme-border)';
     disableAllBtn.style.color = 'var(--theme-text-muted)';
     disableAllBtn.textContent = LanguageService.t('tutorial.prompt.disableAll');
     disableAllBtn.addEventListener('click', () => {
@@ -611,9 +604,21 @@ export class TutorialService {
       this.disableAllPrompts(); // Don't ask again for any tool
     });
 
-    // Start tour button
+    // Skip button ("Not now") — secondary
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'px-4 py-2 text-sm rounded-lg transition-colors';
+    skipBtn.style.backgroundColor = 'var(--theme-card-background)';
+    skipBtn.style.border = '1px solid var(--theme-border)';
+    skipBtn.style.color = 'var(--theme-text)';
+    skipBtn.textContent = LanguageService.t('tutorial.prompt.skip');
+    skipBtn.addEventListener('click', () => {
+      ModalService.dismissTop();
+      this.markCompleted(tool); // Don't ask again for this tool
+    });
+
+    // Start tour button — primary, widest
     const startBtn = document.createElement('button');
-    startBtn.className = 'px-4 py-2 text-sm font-medium rounded-lg transition-colors';
+    startBtn.className = 'px-5 py-2 text-sm font-medium rounded-lg transition-colors';
     startBtn.style.backgroundColor = 'var(--theme-primary)';
     startBtn.style.color = 'var(--theme-text-header)';
     startBtn.textContent = LanguageService.t('tutorial.prompt.start');
@@ -622,16 +627,17 @@ export class TutorialService {
       setTimeout(() => this.start(tool), 300);
     });
 
-    buttonContainer.appendChild(skipBtn);
     buttonContainer.appendChild(disableAllBtn);
+    buttonContainer.appendChild(skipBtn);
     buttonContainer.appendChild(startBtn);
     content.appendChild(buttonContainer);
 
+    // The 📚 emoji is out of the title — the 16A header renders the title
+    // in display type where a hardcoded emoji sits next to nothing else
     ModalService.show({
       type: 'custom',
-      title: `📚 ${LanguageService.t('tutorial.prompt.title')}`,
+      title: LanguageService.t('tutorial.prompt.title'),
       content,
-      size: 'sm',
       closable: true,
     });
   }

@@ -6,20 +6,57 @@
 
 import { logger } from '@shared/logger';
 import { authService } from './auth-service';
-import type { PresetCategory } from '@xivdyetools/types';
-import type { CommunityPreset, PresetStatus } from './community-preset-service';
+import type { PresetCategory, PresetSubmission, PresetEditRequest } from '@xivdyetools/types';
+import type { CommunityPreset } from './community-preset-service';
 
 // ============================================
 // Types
 // ============================================
 
-export interface PresetSubmission {
-  name: string;
-  description: string;
-  category_id: PresetCategory;
-  dyes: number[];
-  tags: string[];
-}
+// PresetSubmission and PresetEditRequest are the shared `@xivdyetools/types`
+// contracts, re-exported here so existing `@services/preset-submission-service`
+// imports keep working unchanged.
+export type { PresetSubmission, PresetEditRequest };
+
+/**
+ * Why the results carry codes and not sentences.
+ *
+ * Every string this service used to return was English written here and
+ * toasted verbatim by the forms, so a French user got an English error. The
+ * service is the wrong layer to hold UI copy — it has no locale — so it now
+ * names the *reason* and the caller looks up the text
+ * (`@shared/preset-i18n`). `error` survives for the one string that is
+ * legitimately not ours: the presets-API's own wire message, which the toast
+ * shows as `details` beneath the translated headline.
+ */
+export type PresetValidationCode =
+  | 'nameMin'
+  | 'nameMax'
+  | 'descMin'
+  | 'descMax'
+  | 'category'
+  | 'dyesMin'
+  | 'dyesMax'
+  | 'dyesInvalid'
+  | 'dyesRange'
+  | 'tagsArray'
+  | 'tagsMax'
+  | 'tagLength';
+
+/**
+ * Transport/auth failure reasons shared by `submitPreset` and `editPreset`.
+ * `validation` means "see `validationErrors`" — the per-field list, not one
+ * joined sentence, so each error can be shown in the user's language.
+ */
+export type PresetErrorCode =
+  | 'notLoggedInSubmit'
+  | 'notLoggedInEdit'
+  | 'validation'
+  | 'submitFailed'
+  | 'editFailed'
+  | 'timeout'
+  | 'network'
+  | 'duplicate';
 
 export interface SubmissionResult {
   success: boolean;
@@ -27,24 +64,22 @@ export interface SubmissionResult {
   duplicate?: CommunityPreset;
   vote_added?: boolean;
   moderation_status?: 'approved' | 'pending';
+  errorCode?: PresetErrorCode;
+  validationErrors?: ValidationError[];
+  /** The presets-API's own message, when it sent one. Never app-authored copy. */
   error?: string;
 }
 
 export interface ValidationError {
   field: string;
-  message: string;
+  code: PresetValidationCode;
+  /** The bound the value broke, for the `{n}`/`{count}` in the message. */
+  limit?: number;
 }
 
 export interface MySubmissionsResponse {
   presets: CommunityPreset[];
   total: number;
-}
-
-export interface PresetEditRequest {
-  name?: string;
-  description?: string;
-  dyes?: number[];
-  tags?: string[];
 }
 
 export interface EditResult {
@@ -56,6 +91,9 @@ export interface EditResult {
     name: string;
     author_name: string | null;
   };
+  errorCode?: PresetErrorCode;
+  validationErrors?: ValidationError[];
+  /** The presets-API's own message, when it sent one. Never app-authored copy. */
   error?: string;
 }
 
@@ -77,13 +115,32 @@ const VALID_CATEGORIES: PresetCategory[] = [
   'seasons',
   'events',
   'aesthetics',
-  'community',
+  'appearance',
+  'zones',
+  'raids-trials',
 ];
 
 /**
  * Request timeout in milliseconds
  */
 const REQUEST_TIMEOUT = 15000;
+
+/**
+ * Field limits, named so the `limit` a `ValidationError` carries and the bound
+ * it was checked against can never drift apart (the message used to repeat the
+ * number in prose, and the two were free to disagree).
+ */
+const MIN_NAME_LENGTH = 2;
+const MAX_NAME_LENGTH = 50;
+const MIN_DESC_LENGTH = 10;
+const MAX_DESC_LENGTH = 200;
+const MIN_DYES = 3;
+const MAX_DYES = 6;
+const MAX_TAGS = 10;
+const MAX_TAG_LENGTH = 30;
+/** stainIDs run 1-254; anything at or above this is a 4.x market itemID. */
+const MAX_STAIN_ID = 254;
+const LEGACY_ITEM_ID_FLOOR = 5000;
 
 // ============================================
 // Validation
@@ -97,43 +154,111 @@ export function validateSubmission(submission: PresetSubmission): ValidationErro
   const errors: ValidationError[] = [];
 
   // Name validation (2-50 characters)
-  if (!submission.name || submission.name.trim().length < 2) {
-    errors.push({ field: 'name', message: 'Name must be at least 2 characters' });
-  } else if (submission.name.length > 50) {
-    errors.push({ field: 'name', message: 'Name must be 50 characters or less' });
+  if (!submission.name || submission.name.trim().length < MIN_NAME_LENGTH) {
+    errors.push({ field: 'name', code: 'nameMin', limit: MIN_NAME_LENGTH });
+  } else if (submission.name.length > MAX_NAME_LENGTH) {
+    errors.push({ field: 'name', code: 'nameMax', limit: MAX_NAME_LENGTH });
   }
 
   // Description validation (10-200 characters)
-  if (!submission.description || submission.description.trim().length < 10) {
-    errors.push({ field: 'description', message: 'Description must be at least 10 characters' });
-  } else if (submission.description.length > 200) {
-    errors.push({ field: 'description', message: 'Description must be 200 characters or less' });
+  if (!submission.description || submission.description.trim().length < MIN_DESC_LENGTH) {
+    errors.push({ field: 'description', code: 'descMin', limit: MIN_DESC_LENGTH });
+  } else if (submission.description.length > MAX_DESC_LENGTH) {
+    errors.push({ field: 'description', code: 'descMax', limit: MAX_DESC_LENGTH });
   }
 
   // Category validation
   if (!submission.category_id || !VALID_CATEGORIES.includes(submission.category_id)) {
-    errors.push({ field: 'category_id', message: 'Please select a valid category' });
+    errors.push({ field: 'category_id', code: 'category' });
   }
 
-  // Dyes validation (2-5 dyes)
-  if (!Array.isArray(submission.dyes) || submission.dyes.length < 2) {
-    errors.push({ field: 'dyes', message: 'Must include at least 2 dyes' });
-  } else if (submission.dyes.length > 5) {
-    errors.push({ field: 'dyes', message: 'Maximum 5 dyes allowed' });
-  } else if (!submission.dyes.every((id) => typeof id === 'number' && id > 0)) {
-    errors.push({ field: 'dyes', message: 'Invalid dye selection' });
+  // Dyes validation (5.0: 3-6 stainIDs)
+  if (!Array.isArray(submission.dyes) || submission.dyes.length < MIN_DYES) {
+    errors.push({ field: 'dyes', code: 'dyesMin', limit: MIN_DYES });
+  } else if (submission.dyes.length > MAX_DYES) {
+    errors.push({ field: 'dyes', code: 'dyesMax', limit: MAX_DYES });
+  } else if (
+    !submission.dyes.every((id) => typeof id === 'number' && Number.isInteger(id) && id > 0)
+  ) {
+    errors.push({ field: 'dyes', code: 'dyesInvalid' });
+  } else if (submission.dyes.some((id) => id >= LEGACY_ITEM_ID_FLOOR)) {
+    // 5.0 range guard: dyes are stainIDs (1-254); a legacy itemID means a
+    // half-migrated caller — fail loudly, never submit the wrong era
+    errors.push({ field: 'dyes', code: 'dyesRange' });
+  } else if (submission.dyes.some((id) => id > MAX_STAIN_ID)) {
+    errors.push({ field: 'dyes', code: 'dyesRange' });
   }
 
   // Tags validation (0-10 tags, max 30 chars each)
   if (!Array.isArray(submission.tags)) {
-    errors.push({ field: 'tags', message: 'Tags must be an array' });
-  } else if (submission.tags.length > 10) {
-    errors.push({ field: 'tags', message: 'Maximum 10 tags allowed' });
-  } else if (submission.tags.some((tag) => typeof tag !== 'string' || tag.length > 30)) {
-    errors.push({ field: 'tags', message: 'Each tag must be 30 characters or less' });
+    errors.push({ field: 'tags', code: 'tagsArray' });
+  } else if (submission.tags.length > MAX_TAGS) {
+    errors.push({ field: 'tags', code: 'tagsMax', limit: MAX_TAGS });
+  } else if (
+    submission.tags.some((tag) => typeof tag !== 'string' || tag.length > MAX_TAG_LENGTH)
+  ) {
+    errors.push({ field: 'tags', code: 'tagLength', limit: MAX_TAG_LENGTH });
   }
 
   return errors;
+}
+
+/** Mirror of the server limit — fail locally rather than spend the upload. */
+export const MAX_PREVIEW_IMAGE_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Upload a preview image for a preset the signed-in user authored.
+ *
+ * Sent as raw bytes, not multipart: the route takes one file and nothing else,
+ * so a multipart envelope would be parsing work for no information. Can only
+ * be called once the preset exists — the route is scoped to a preset id.
+ */
+export async function uploadPreviewImage(presetId: string, file: File): Promise<void> {
+  if (file.size > MAX_PREVIEW_IMAGE_BYTES) {
+    throw new Error('Image must be at most 5 MB');
+  }
+
+  const response = await fetch(
+    `${PRESETS_API_URL}/api/v1/presets/${encodeURIComponent(presetId)}/preview-image`,
+    {
+      method: 'POST',
+      headers: {
+        // Declare the type only when the file actually has one. Claiming
+        // application/octet-stream for a typeless file would trip the API's
+        // media-type gate on bytes it would otherwise have accepted; sending
+        // nothing lets the server's magic-byte sniff make the call.
+        ...(file.type ? { 'Content-Type': file.type } : {}),
+        ...authService.getAuthHeaders(),
+      },
+      body: file,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Preview image upload failed');
+  }
+}
+
+/**
+ * Remove the preview image from a preset the signed-in user authored.
+ *
+ * Idempotent server-side: removing an image that is not there is a success,
+ * because the end state the caller asked for already holds.
+ */
+export async function removePreviewImage(presetId: string): Promise<void> {
+  const response = await fetch(
+    `${PRESETS_API_URL}/api/v1/presets/${encodeURIComponent(presetId)}/preview-image`,
+    {
+      method: 'DELETE',
+      headers: {
+        ...authService.getAuthHeaders(),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Preview image removal failed');
+  }
 }
 
 // ============================================
@@ -149,16 +274,19 @@ class PresetSubmissionServiceImpl {
     if (!authService.isAuthenticated()) {
       return {
         success: false,
-        error: 'You must be logged in to submit presets',
+        errorCode: 'notLoggedInSubmit',
       };
     }
 
-    // Client-side validation
+    // Client-side validation. The list is returned whole rather than joined
+    // into one sentence: ". "-joining translated fragments builds English
+    // grammar out of pieces that do not survive translation.
     const validationErrors = validateSubmission(submission);
     if (validationErrors.length > 0) {
       return {
         success: false,
-        error: validationErrors.map((e) => e.message).join('. '),
+        errorCode: 'validation',
+        validationErrors,
       };
     }
 
@@ -178,8 +306,10 @@ class PresetSubmissionServiceImpl {
           name: submission.name.trim(),
           description: submission.description.trim(),
           category_id: submission.category_id,
+          secondary_categories: submission.secondary_categories ?? [],
           dyes: submission.dyes,
           tags: submission.tags.map((t) => t.trim()).filter(Boolean),
+          example_link: submission.example_link ?? null,
         }),
         signal: controller.signal,
       });
@@ -192,7 +322,8 @@ class PresetSubmissionServiceImpl {
         logger.error('Preset submission failed:', result);
         return {
           success: false,
-          error: result.message || 'Submission failed',
+          errorCode: 'submitFailed',
+          error: result.message,
         };
       }
 
@@ -217,14 +348,14 @@ class PresetSubmissionServiceImpl {
         logger.error('Preset submission timed out');
         return {
           success: false,
-          error: 'Request timed out. Please try again.',
+          errorCode: 'timeout',
         };
       }
 
       logger.error('Preset submission error:', err);
       return {
         success: false,
-        error: 'Failed to submit preset. Please try again.',
+        errorCode: 'network',
       };
     }
   }
@@ -268,45 +399,6 @@ class PresetSubmissionServiceImpl {
     } catch (err) {
       logger.error('Error fetching user submissions:', err);
       return { presets: [], total: 0 };
-    }
-  }
-
-  /**
-   * Get submission status label and styling
-   * Uses Tailwind classes for consistent theming across light/dark modes
-   */
-  getStatusInfo(status: PresetStatus): { label: string; colorClass: string; icon: string } {
-    switch (status) {
-      case 'approved':
-        return {
-          label: 'Approved',
-          colorClass: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-          icon: '✓',
-        };
-      case 'pending':
-        return {
-          label: 'Pending Review',
-          colorClass: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-          icon: '⏳',
-        };
-      case 'rejected':
-        return {
-          label: 'Rejected',
-          colorClass: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-          icon: '✗',
-        };
-      case 'flagged':
-        return {
-          label: 'Flagged',
-          colorClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-          icon: '⚠',
-        };
-      default:
-        return {
-          label: 'Unknown',
-          colorClass: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
-          icon: '?',
-        };
     }
   }
 
@@ -365,13 +457,16 @@ class PresetSubmissionServiceImpl {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/${presetId}`, {
-        method: 'DELETE',
-        headers: {
-          ...authService.getAuthHeaders(),
-        },
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        `${PRESETS_API_URL}/api/v1/presets/${encodeURIComponent(presetId)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            ...authService.getAuthHeaders(),
+          },
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeout);
 
@@ -397,7 +492,7 @@ class PresetSubmissionServiceImpl {
     if (!authService.isAuthenticated()) {
       return {
         success: false,
-        error: 'You must be logged in to edit presets',
+        errorCode: 'notLoggedInEdit',
       };
     }
 
@@ -405,51 +500,52 @@ class PresetSubmissionServiceImpl {
     const errors: ValidationError[] = [];
 
     if (updates.name !== undefined) {
-      if (updates.name.trim().length < 2) {
-        errors.push({ field: 'name', message: 'Name must be at least 2 characters' });
-      } else if (updates.name.length > 50) {
-        errors.push({ field: 'name', message: 'Name must be 50 characters or less' });
+      if (updates.name.trim().length < MIN_NAME_LENGTH) {
+        errors.push({ field: 'name', code: 'nameMin', limit: MIN_NAME_LENGTH });
+      } else if (updates.name.length > MAX_NAME_LENGTH) {
+        errors.push({ field: 'name', code: 'nameMax', limit: MAX_NAME_LENGTH });
       }
     }
 
     if (updates.description !== undefined) {
-      if (updates.description.trim().length < 10) {
-        errors.push({
-          field: 'description',
-          message: 'Description must be at least 10 characters',
-        });
-      } else if (updates.description.length > 200) {
-        errors.push({
-          field: 'description',
-          message: 'Description must be 200 characters or less',
-        });
+      if (updates.description.trim().length < MIN_DESC_LENGTH) {
+        errors.push({ field: 'description', code: 'descMin', limit: MIN_DESC_LENGTH });
+      } else if (updates.description.length > MAX_DESC_LENGTH) {
+        errors.push({ field: 'description', code: 'descMax', limit: MAX_DESC_LENGTH });
       }
     }
 
     if (updates.dyes !== undefined) {
-      if (!Array.isArray(updates.dyes) || updates.dyes.length < 2) {
-        errors.push({ field: 'dyes', message: 'Must include at least 2 dyes' });
-      } else if (updates.dyes.length > 5) {
-        errors.push({ field: 'dyes', message: 'Maximum 5 dyes allowed' });
+      if (!Array.isArray(updates.dyes) || updates.dyes.length < MIN_DYES) {
+        errors.push({ field: 'dyes', code: 'dyesMin', limit: MIN_DYES });
+      } else if (updates.dyes.length > MAX_DYES) {
+        errors.push({ field: 'dyes', code: 'dyesMax', limit: MAX_DYES });
+      } else if (updates.dyes.some((id) => id >= LEGACY_ITEM_ID_FLOOR)) {
+        errors.push({ field: 'dyes', code: 'dyesRange' });
+      } else if (updates.dyes.some((id) => id < 1 || id > MAX_STAIN_ID)) {
+        errors.push({ field: 'dyes', code: 'dyesRange' });
       } else if (!updates.dyes.every((id) => typeof id === 'number' && id > 0)) {
-        errors.push({ field: 'dyes', message: 'Invalid dye selection' });
+        errors.push({ field: 'dyes', code: 'dyesInvalid' });
       }
     }
 
     if (updates.tags !== undefined) {
       if (!Array.isArray(updates.tags)) {
-        errors.push({ field: 'tags', message: 'Tags must be an array' });
-      } else if (updates.tags.length > 10) {
-        errors.push({ field: 'tags', message: 'Maximum 10 tags allowed' });
-      } else if (updates.tags.some((tag) => typeof tag !== 'string' || tag.length > 30)) {
-        errors.push({ field: 'tags', message: 'Each tag must be 30 characters or less' });
+        errors.push({ field: 'tags', code: 'tagsArray' });
+      } else if (updates.tags.length > MAX_TAGS) {
+        errors.push({ field: 'tags', code: 'tagsMax', limit: MAX_TAGS });
+      } else if (
+        updates.tags.some((tag) => typeof tag !== 'string' || tag.length > MAX_TAG_LENGTH)
+      ) {
+        errors.push({ field: 'tags', code: 'tagLength', limit: MAX_TAG_LENGTH });
       }
     }
 
     if (errors.length > 0) {
       return {
         success: false,
-        error: errors.map((e) => e.message).join('. '),
+        errorCode: 'validation',
+        validationErrors: errors,
       };
     }
 
@@ -465,27 +561,38 @@ class PresetSubmissionServiceImpl {
       if (updates.description !== undefined) body.description = updates.description.trim();
       if (updates.dyes !== undefined) body.dyes = updates.dyes;
       if (updates.tags !== undefined) body.tags = updates.tags.map((t) => t.trim()).filter(Boolean);
+      if (updates.category_id !== undefined) body.category_id = updates.category_id;
+      if (updates.secondary_categories !== undefined) {
+        body.secondary_categories = updates.secondary_categories;
+      }
+      // example_link was already accepted by the API but never sent — the edit
+      // form set it and it was silently dropped on every save.
+      if (updates.example_link !== undefined) body.example_link = updates.example_link;
 
-      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/${presetId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authService.getAuthHeaders(),
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        `${PRESETS_API_URL}/api/v1/presets/${encodeURIComponent(presetId)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...authService.getAuthHeaders(),
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeout);
 
       const result = await response.json();
 
       if (response.status === 409 && result.duplicate) {
-        // Duplicate dye combination exists
+        // Duplicate dye combination exists. The name goes in `duplicate`, not
+        // into a prebuilt sentence — the caller owns the wording.
         return {
           success: false,
+          errorCode: 'duplicate',
           duplicate: result.duplicate,
-          error: `This dye combination already exists as "${result.duplicate.name}"`,
         };
       }
 
@@ -493,7 +600,8 @@ class PresetSubmissionServiceImpl {
         logger.error('Preset edit failed:', result);
         return {
           success: false,
-          error: result.message || 'Edit failed',
+          errorCode: 'editFailed',
+          error: result.message,
         };
       }
 
@@ -509,14 +617,14 @@ class PresetSubmissionServiceImpl {
         logger.error('Preset edit timed out');
         return {
           success: false,
-          error: 'Request timed out. Please try again.',
+          errorCode: 'timeout',
         };
       }
 
       logger.error('Preset edit error:', err);
       return {
         success: false,
-        error: 'Failed to edit preset. Please try again.',
+        errorCode: 'network',
       };
     }
   }
@@ -527,4 +635,3 @@ class PresetSubmissionServiceImpl {
 // ============================================
 
 export const presetSubmissionService = new PresetSubmissionServiceImpl();
-export { PresetSubmissionServiceImpl as PresetSubmissionService };

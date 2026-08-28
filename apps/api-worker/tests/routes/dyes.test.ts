@@ -41,6 +41,18 @@ describe('GET /v1/dyes', () => {
     expect(body.pagination.hasPrev).toBe(true);
   });
 
+  // FINDING-025 / API-13: 125 dyes at perPage=1 is 125 pages; 1000 is generous
+  it('rejects page above 1000', async () => {
+    const { res, body } = await getJson('/v1/dyes?page=1001');
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('VALIDATION_ERROR');
+    expect(body.details.parameter).toBe('page');
+
+    const atCap = await getJson('/v1/dyes?page=1000');
+    expect(atCap.res.status).toBe(200);
+    expect(atCap.body.data).toEqual([]);
+  });
+
   it('filters by category', async () => {
     const { body } = await getJson('/v1/dyes?category=Red');
 
@@ -299,6 +311,18 @@ describe('GET /v1/dyes/search', () => {
     expect(body.success).toBe(true);
     expect(body.data.length).toBeGreaterThan(0);
     expect(body.data[0].name.toLowerCase()).toContain('snow');
+  });
+
+  // FINDING-025 / API-13: no dye name is anywhere near 100 characters
+  it('rejects a query longer than 100 characters and accepts one of exactly 100', async () => {
+    const tooLong = await getJson(`/v1/dyes/search?q=${'a'.repeat(101)}`);
+    expect(tooLong.res.status).toBe(400);
+    expect(tooLong.body.error).toBe('VALIDATION_ERROR');
+    expect(tooLong.body.details.parameter).toBe('q');
+
+    const atCap = await getJson(`/v1/dyes/search?q=${'a'.repeat(100)}`);
+    expect(atCap.res.status).toBe(200);
+    expect(atCap.body.data).toEqual([]);
   });
 
   it('returns 400 when q is missing', async () => {

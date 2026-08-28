@@ -46,7 +46,7 @@ Whether you're using the web app or Discord bot, these guides will help you make
 |-------|-------|
 | **Getting Started** | [Guide](discord-bot/getting-started.md) |
 | **Command Reference** | [All Commands](discord-bot/command-reference.md) |
-| **Favorites & Collections** | [Guide](discord-bot/favorites-collections.md) |
+| **Favorite Presets & Preferences** | [Guide](discord-bot/favorites-collections.md) |
 | **FAQ** | [FAQ](discord-bot/faq.md) |
 
 ---

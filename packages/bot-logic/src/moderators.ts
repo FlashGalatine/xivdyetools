@@ -9,14 +9,19 @@
  * any mix of whitespace and commas, with non-snowflake tokens dropped.
  */
 
-/** Discord snowflake: 17–20 digit numeric string */
-const SNOWFLAKE_RE = /^\d{17,20}$/;
+import { isValidSnowflake } from '@xivdyetools/types';
 
 /**
- * Check whether a string is a plausible Discord snowflake ID
+ * Check whether a string is a plausible Discord snowflake ID.
+ *
+ * DEAD-025 fix-up (2026-08-18 dead-code audit): thin wrapper over
+ * `@xivdyetools/types`' `isValidSnowflake` — this module's own
+ * `/^\d{17,20}$/` regex was byte-identical to the shared one, so the two
+ * copies are now one. The exported name stays `isValidDiscordSnowflake`
+ * (bot-logic's public barrel and both bot workers import it by this name).
  */
 export function isValidDiscordSnowflake(id: string): boolean {
-  return SNOWFLAKE_RE.test(id);
+  return isValidSnowflake(id);
 }
 
 /**
@@ -29,7 +34,7 @@ export function parseModeratorIds(value: string | undefined): Set<string> {
     value
       .split(/[\s,]+/)
       .map((id) => id.trim())
-      .filter((id) => isValidDiscordSnowflake(id))
+      .filter((id) => isValidDiscordSnowflake(id)),
   );
 }
 

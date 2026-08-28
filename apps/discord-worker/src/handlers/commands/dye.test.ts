@@ -12,15 +12,6 @@ vi.mock('../../services/svg/renderer.js', () => ({
   initRenderer: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock SVG generators
-vi.mock('../../services/svg/dye-info-card.js', () => ({
-  generateDyeInfoCard: vi.fn().mockReturnValue('<svg></svg>'),
-}));
-
-vi.mock('../../services/svg/random-dyes-grid.js', () => ({
-  generateRandomDyesGrid: vi.fn().mockReturnValue('<svg></svg>'),
-}));
-
 // Mock Discord API (for deferred response follow-ups)
 vi.mock('../../utils/discord-api.js', () => ({
   editOriginalResponse: vi.fn().mockResolvedValue(undefined),
@@ -33,30 +24,82 @@ vi.mock('@xivdyetools/core', () => {
     searchByName(query: string) {
       if (query.toLowerCase().includes('snow')) {
         return [
-          { id: 1, name: 'Snow White', hex: '#FFFFFF', rgb: { r: 255, g: 255, b: 255 }, hsv: { h: 0, s: 0, v: 100 }, category: 'Standard', itemID: 5694 },
+          {
+            id: 1,
+            name: 'Snow White',
+            hex: '#FFFFFF',
+            rgb: { r: 255, g: 255, b: 255 },
+            hsv: { h: 0, s: 0, v: 100 },
+            category: 'Standard',
+            itemID: 5694,
+          },
         ];
       }
       if (query.toLowerCase().includes('notfound')) {
         return [];
       }
       return [
-        { id: 2, name: 'Ash Grey', hex: '#CCCCCC', rgb: { r: 204, g: 204, b: 204 }, hsv: { h: 0, s: 0, v: 80 }, category: 'Standard', itemID: 5695 },
+        {
+          id: 2,
+          name: 'Ash Grey',
+          hex: '#CCCCCC',
+          rgb: { r: 204, g: 204, b: 204 },
+          hsv: { h: 0, s: 0, v: 80 },
+          category: 'Standard',
+          itemID: 5695,
+        },
       ];
     }
     getAllDyes() {
       return [
-        { id: 1, name: 'Snow White', hex: '#FFFFFF', category: 'Standard', rgb: { r: 255, g: 255, b: 255 }, hsv: { h: 0, s: 0, v: 100 }, itemID: 5694 },
-        { id: 2, name: 'Ash Grey', hex: '#CCCCCC', category: 'Standard', rgb: { r: 204, g: 204, b: 204 }, hsv: { h: 0, s: 0, v: 80 }, itemID: 5695 },
-        { id: 3, name: 'Red', hex: '#FF0000', category: 'Facewear', rgb: { r: 255, g: 0, b: 0 }, hsv: { h: 0, s: 100, v: 100 }, itemID: 1234 },
-        { id: 4, name: 'Metallic Red', hex: '#DD0000', category: 'Metallic', rgb: { r: 221, g: 0, b: 0 }, hsv: { h: 0, s: 100, v: 87 }, itemID: 5696 },
+        {
+          id: 1,
+          name: 'Snow White',
+          hex: '#FFFFFF',
+          category: 'Standard',
+          rgb: { r: 255, g: 255, b: 255 },
+          hsv: { h: 0, s: 0, v: 100 },
+          itemID: 5694,
+        },
+        {
+          id: 2,
+          name: 'Ash Grey',
+          hex: '#CCCCCC',
+          category: 'Standard',
+          rgb: { r: 204, g: 204, b: 204 },
+          hsv: { h: 0, s: 0, v: 80 },
+          itemID: 5695,
+        },
+        {
+          id: 3,
+          name: 'Red',
+          hex: '#FF0000',
+          category: 'Facewear',
+          rgb: { r: 255, g: 0, b: 0 },
+          hsv: { h: 0, s: 100, v: 100 },
+          itemID: 1234,
+        },
+        {
+          id: 4,
+          name: 'Metallic Red',
+          hex: '#DD0000',
+          category: 'Metallic',
+          rgb: { r: 221, g: 0, b: 0 },
+          hsv: { h: 0, s: 100, v: 87 },
+          itemID: 5696,
+        },
       ];
     }
   }
 
   class MockLocalizationService {
     async setLocale(_locale: string): Promise<void> {}
-    getDyeName(_itemID: number): string | undefined { return undefined; }
-    getCategory(category: string): string { return category; }
+    getDyeName(_itemID: number): string | undefined {
+      return undefined;
+    }
+    getCategory(category: string): string {
+      return category;
+    }
   }
 
   return {
@@ -89,8 +132,8 @@ vi.mock('../../services/bot-i18n.js', () => {
       'errors.noDyesAvailable': 'No dyes available',
       'dye.search.noResults': `No results for: ${vars?.query}`,
       'dye.search.tryDifferent': 'Try a different search term',
-      'dye.search.foundCount': `Found ${vars?.count} dye`,
-      'dye.search.foundCountPlural': `Found ${vars?.count} dyes`,
+      'dye.search.foundCount_one': `Found ${vars?.count} dye`,
+      'dye.search.foundCount_other': `Found ${vars?.count} dyes`,
       'dye.search.resultsTitle': `Search Results: ${vars?.query}`,
       'dye.search.moreResults': `+${vars?.count} more results`,
       'dye.search.useInfoHint': 'Use /dye info to see details',
@@ -104,7 +147,6 @@ vi.mock('../../services/bot-i18n.js', () => {
       'dye.random.title': 'Random Dyes',
       'dye.random.description': `Here are ${vars?.count} random dyes`,
       'dye.random.titleUnique': 'Random Dyes (Unique Categories)',
-      'dye.random.descriptionUnique': `Here are ${vars?.count} random dyes from different categories`,
       'dye.random.runAgainHint': 'Run again for new dyes',
       'common.hexColor': 'Hex Color',
       'common.category': 'Category',
@@ -118,10 +160,13 @@ vi.mock('../../services/bot-i18n.js', () => {
   };
   const mockTranslator = {
     t: translatorFn,
+    tc: (key: string, count: number, vars?: Record<string, any>) =>
+      translatorFn(`${key}_${count === 1 ? 'one' : 'other'}`, { count, ...vars }),
     getLocale: () => 'en',
   };
   return {
     createUserTranslator: vi.fn().mockResolvedValue(mockTranslator),
+    createUserTranslatorWithPrefs: vi.fn().mockResolvedValue({ t: mockTranslator, prefs: {} }),
     createTranslator: vi.fn().mockReturnValue(mockTranslator),
   };
 });
@@ -547,6 +592,166 @@ describe('dye.ts', () => {
       // Facewear exclusion is handled internally by excludeFacewear()
       expect(data.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
       expect(mockCtx.waitUntil).toHaveBeenCalled();
+    });
+  });
+
+  /**
+   * The router's own arms, plus the option-parsing defaults each subcommand
+   * falls back to. A subcommand name that reaches `default:` is a schema/code
+   * drift — the registered command list and this switch have to agree, and
+   * the user should see a named error rather than silence.
+   */
+  describe('subcommand routing', () => {
+    const invoke = (
+      subcommand?: { name: string; options?: Array<{ name: string; value?: unknown }> },
+      user: Record<string, unknown> | undefined = { id: 'user-123' },
+    ) =>
+      handleDyeCommand(
+        {
+          type: 2,
+          data: {
+            name: 'dye',
+            options: subcommand ? [{ ...subcommand, type: 1 }] : [],
+          },
+          user,
+          id: 'int-1',
+          application_id: 'app-1',
+          token: 'token-1',
+        } as unknown as DiscordInteraction,
+        mockEnv,
+        mockCtx,
+      );
+
+    const bodyOf = async (r: Response) => (await r.json()) as InteractionResponseBody;
+
+    it('reports a missing subcommand rather than rendering nothing', async () => {
+      const data = await bodyOf(await invoke(undefined));
+
+      expect(JSON.stringify(data)).toContain('Missing subcommand');
+      expect(data.data?.flags).toBe(64);
+    });
+
+    it('names an unknown subcommand in the error', async () => {
+      const data = await bodyOf(await invoke({ name: 'teleport' }));
+
+      expect(JSON.stringify(data)).toContain('Unknown subcommand: teleport');
+      expect(data.data?.flags).toBe(64);
+    });
+
+    it('reports a missing query on search', async () => {
+      const data = await bodyOf(await invoke({ name: 'search', options: [] }));
+
+      expect(JSON.stringify(data)).toContain('Missing query');
+    });
+
+    it('reports a missing name on info', async () => {
+      const data = await bodyOf(await invoke({ name: 'info', options: [] }));
+
+      expect(JSON.stringify(data)).toContain('Missing name');
+    });
+
+    it('reports an unfound dye by name on info', async () => {
+      const data = await bodyOf(
+        await invoke({ name: 'info', options: [{ name: 'name', value: 'notfound' }] }),
+      );
+
+      expect(JSON.stringify(data)).toContain('Dye not found: notfound');
+    });
+
+    it('reports no results for a search that matches nothing', async () => {
+      const data = await bodyOf(
+        await invoke({ name: 'search', options: [{ name: 'query', value: 'notfound' }] }),
+      );
+
+      expect(JSON.stringify(data)).toContain('No results for: notfound');
+    });
+
+    it('lists the category index when list is called with no category', async () => {
+      const data = await bodyOf(await invoke({ name: 'list', options: [] }));
+
+      expect(JSON.stringify(data)).toContain('Dye Categories');
+    });
+
+    it('reports an empty category rather than an empty embed', async () => {
+      const data = await bodyOf(
+        await invoke({ name: 'list', options: [{ name: 'category', value: 'Nonexistent' }] }),
+      );
+
+      expect(JSON.stringify(data)).toContain('No dyes in category: Nonexistent');
+    });
+
+    it('lists the dyes in a real category', async () => {
+      const data = await bodyOf(
+        await invoke({ name: 'list', options: [{ name: 'category', value: 'Standard' }] }),
+      );
+
+      expect(JSON.stringify(data)).toContain('Category: Standard');
+    });
+
+    it('works for a DM interaction with no member object', async () => {
+      const response = await invoke({ name: 'list', options: [] }, { id: 'dm-user' });
+
+      expect((await bodyOf(response)).type).toBe(4);
+    });
+
+    it("falls back to 'unknown' when the interaction carries no user", async () => {
+      const response = await invoke({ name: 'list', options: [] }, undefined);
+
+      expect((await bodyOf(response)).type).toBe(4);
+    });
+  });
+
+  // FINDING-019 (2026-08-21 security audit): /dye search echoes the query into
+  // a PUBLIC embed title — it must go through the shared embed sanitiser.
+  describe('search query sanitisation (FINDING-019)', () => {
+    const invokeSearch = (query: string) =>
+      handleDyeCommand(
+        {
+          type: 2,
+          data: {
+            name: 'dye',
+            options: [{ name: 'search', type: 1, options: [{ name: 'query', value: query }] }],
+          },
+          user: { id: 'user-123' },
+          id: 'int-1',
+          application_id: 'app-1',
+          token: 'token-1',
+        },
+        mockEnv,
+        mockCtx,
+      );
+
+    it('escapes markdown and masked links in the results title', async () => {
+      const data = (await (
+        await invokeSearch('snow **[x](https://phish.example)**')
+      ).json()) as InteractionResponseBody;
+
+      const title = data.data!.embeds![0].title!;
+      expect(title).not.toContain('[x](https://phish.example)');
+      expect(title).toContain('\\[x\\]\\(https://phish.example\\)');
+      expect(title).not.toContain('**');
+    });
+
+    it('defuses mass mentions and strips zero-width characters in the no-results title', async () => {
+      const data = (await (
+        await invokeSearch('notfound @everyone zero​width')
+      ).json()) as InteractionResponseBody;
+
+      const title = data.data!.embeds![0].title!;
+      expect(title).toContain('No results for:');
+      expect(title).not.toContain('@everyone');
+      expect(title).not.toContain('​');
+      expect(title).toContain('zerowidth');
+    });
+
+    it('caps an over-long query instead of forwarding it whole', async () => {
+      const data = (await (
+        await invokeSearch(`notfound ${'a'.repeat(400)}`)
+      ).json()) as InteractionResponseBody;
+
+      const title = data.data!.embeds![0].title!;
+      expect(title.length).toBeLessThan(200);
+      expect(title.endsWith('…')).toBe(true);
     });
   });
 });

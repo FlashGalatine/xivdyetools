@@ -14,8 +14,6 @@ import type {
   VisionType,
   ToolKey,
   SheetKey,
-  JobKey,
-  GrandCompanyKey,
   RaceKey,
   ClanKey,
   LocalePreference,
@@ -426,22 +424,6 @@ export class LocalizationService {
   }
 
   /**
-   * Get all metallic dye IDs (for exclusion filtering)
-   *
-   * @returns Array of metallic dye item IDs
-   */
-  getMetallicDyeIds(locale?: LocaleCode): number[] {
-    return this.translator.getMetallicDyeIds(locale ?? this.currentLocale);
-  }
-
-  /**
-   * Static method: Get metallic dye IDs using default instance
-   */
-  static getMetallicDyeIds(locale?: LocaleCode): number[] {
-    return this.getDefault().getMetallicDyeIds(locale);
-  }
-
-  /**
    * Get localized harmony type name
    *
    * @param key - Harmony type key
@@ -524,40 +506,6 @@ export class LocalizationService {
    */
   static getSheetName(key: SheetKey, locale?: LocaleCode): string {
     return this.getDefault().getSheetName(key, locale);
-  }
-
-  /**
-   * Get localized job name
-   *
-   * @param key - Job key
-   * @returns Localized job name
-   */
-  getJobName(key: JobKey, locale?: LocaleCode): string {
-    return this.translator.getJobName(key, locale ?? this.currentLocale);
-  }
-
-  /**
-   * Static method: Get localized job name using default instance
-   */
-  static getJobName(key: JobKey, locale?: LocaleCode): string {
-    return this.getDefault().getJobName(key, locale);
-  }
-
-  /**
-   * Get localized Grand Company name
-   *
-   * @param key - Grand Company key
-   * @returns Localized Grand Company name
-   */
-  getGrandCompanyName(key: GrandCompanyKey, locale?: LocaleCode): string {
-    return this.translator.getGrandCompanyName(key, locale ?? this.currentLocale);
-  }
-
-  /**
-   * Static method: Get localized Grand Company name using default instance
-   */
-  static getGrandCompanyName(key: GrandCompanyKey, locale?: LocaleCode): string {
-    return this.getDefault().getGrandCompanyName(key, locale);
   }
 
   /**

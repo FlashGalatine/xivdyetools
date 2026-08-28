@@ -9,7 +9,8 @@
 
 import type { ToolId } from '@services/router-service';
 import type { MatchingMethod } from '@xivdyetools/core';
-import type { DyeTypeFilters } from '@xivdyetools/types';
+import type { DyeTypeFilters, PresetSortOption } from '@xivdyetools/types';
+import { COMPANION_DYES_DEFAULT } from '@shared/constants';
 
 // Re-export MatchingMethod for convenience
 export type { MatchingMethod } from '@xivdyetools/core';
@@ -49,19 +50,12 @@ export interface HarmonyConfig {
   matchingMethod: MatchingMethod;
   /** Prevent the same dye from appearing in multiple harmony slots */
   preventDuplicates: boolean;
+  /** Companion alternates offered per slot as swatch dots (1-5) */
+  companionDyesCount: number;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
   /** Dye filter configuration */
   dyeFilters: DyeFiltersConfig;
-  // Legacy fields (deprecated, for migration)
-  /** @deprecated Use displayOptions.showHex */
-  showHex?: boolean;
-  /** @deprecated Use displayOptions.showRgb */
-  showRgb?: boolean;
-  /** @deprecated Use displayOptions.showHsv */
-  showHsv?: boolean;
-  /** @deprecated Use displayOptions.showLab */
-  showLab?: boolean;
 }
 
 /**
@@ -100,12 +94,6 @@ export interface AccessibilityConfig {
   tritanopia: boolean;
   /** Show achromatopsia (complete colorblindness) simulation */
   achromatopsia: boolean;
-  /** Show labels on vision cards */
-  showLabels: boolean;
-  /** Show hex values on vision cards */
-  showHexValues: boolean;
-  /** Enable high contrast mode */
-  highContrastMode: boolean;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
 }
@@ -115,6 +103,8 @@ export interface AccessibilityConfig {
  * Uses shared displayOptions for all color format and metadata visibility settings.
  */
 export interface ComparisonConfig {
+  /** The ΔE2000 SAME cut ("match line", 1-15) the duel verdict follows */
+  matchThreshold: number;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
 }
@@ -139,6 +129,8 @@ export interface GradientConfig {
   interpolation: InterpolationMode;
   /** Color matching algorithm for finding closest dyes */
   matchingMethod: MatchingMethod;
+  /** Stop consecutive ramp steps resolving to the same dye */
+  preventDuplicates: boolean;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
   /** Dye filter configuration */
@@ -176,25 +168,38 @@ export interface MixerConfig {
  * Preset category types (matches backend categories)
  */
 export type PresetCategoryFilter =
-  'all' | 'jobs' | 'grand-companies' | 'seasons' | 'events' | 'aesthetics' | 'community';
+  | 'all'
+  | 'jobs'
+  | 'grand-companies'
+  | 'seasons'
+  | 'events'
+  | 'aesthetics'
+  | 'appearance'
+  | 'zones'
+  | 'raids-trials';
 
-/**
- * Preset sort options
- */
-export type PresetSortOption = 'popular' | 'recent' | 'name';
+// PresetSortOption is the shared `@xivdyetools/types` contract, re-exported
+// here so existing `@shared/tool-config-types` imports keep working.
+export type { PresetSortOption };
 
 /**
  * Community Presets configuration
  */
 export interface PresetsConfig {
-  /** Show only user's own presets */
-  showMyPresetsOnly: boolean;
-  /** Show only favorited presets */
-  showFavorites: boolean;
-  /** Sort order */
+  /** Sort order (page control; mirrored here for persistence) */
   sortBy: PresetSortOption;
-  /** Category filter */
+  /** Category filter (page rail; mirrored here for persistence) */
   category: PresetCategoryFilter;
+  /** Feed: show example-link areas on cards (off = every card a palette strip) */
+  feedShots: boolean;
+  /** Feed: mix curated palettes into the Community tab (off = own tab only) */
+  feedBlend: boolean;
+  /** Feed: hide palettes containing market-only (coffer) dyes */
+  feedHideUnbuyable: boolean;
+  /** Saved shelf: pin saved presets to the top of every tab */
+  savedFirst: boolean;
+  /** Saved shelf: keep author-deleted saved presets, marked */
+  keepDeleted: boolean;
   /** Display options for dye cards in preset details */
   displayOptions: DisplayOptionsConfig;
 }
@@ -203,11 +208,7 @@ export interface PresetsConfig {
  * Budget Suggestions configuration
  */
 export interface BudgetConfig {
-  /** Maximum price limit in gil (0-200000) */
-  maxPrice: number;
-  /** Maximum results to show (1-20) */
-  maxResults: number;
-  /** Maximum Delta-E color distance (0-100) */
+  /** Match line: how far a substitute may drift (ΔE2000, 2-20) */
   maxDeltaE: number;
   /** Color matching algorithm for finding closest dyes */
   matchingMethod: MatchingMethod;
@@ -228,11 +229,13 @@ export interface SwatchConfig {
    * 'facePaintColorsDark', 'facePaintColorsLight'
    */
   colorSheet: string;
+  /** 10A: a .chara file set tribe+gender — the selectors become a readout */
+  fileProvided: boolean;
   /**
    * Selected subrace (SubRace type).
    * Values: 'Midlander', 'Highlander', 'Wildwood', 'Duskwight',
    * 'Plainsfolk', 'Dunesfolk', 'SeekerOfTheSun', 'KeeperOfTheMoon',
-   * 'SeaWolf', 'Hellsguard', 'Raen', 'Xaela', 'Helion', 'TheLost',
+   * 'SeaWolf', 'Hellsguard', 'Raen', 'Xaela', 'Helions', 'TheLost',
    * 'Rava', 'Veena'
    */
   race: string;
@@ -277,9 +280,12 @@ export interface AdvancedConfig {
  * Controls which dye types and acquisition sources are filtered out.
  *
  * All fields from DyeTypeFilters are required since the web-app UI
- * always tracks the full set of filter toggles.
+ * always tracks the full set of filter toggles. `excludeCoffers` is the
+ * web-side overlay for the twenty market-only Venture Coffer dyes —
+ * core's excludeCraftDyes bundles them with Firmament and can't express
+ * coffer-only (see shared/dye-filter-utils).
  */
-export type DyeFiltersConfig = Required<DyeTypeFilters>;
+export type DyeFiltersConfig = Required<DyeTypeFilters> & { excludeCoffers: boolean };
 
 /**
  * Default dye filter configuration (all filters disabled)
@@ -293,6 +299,7 @@ export const DEFAULT_DYE_FILTERS: DyeFiltersConfig = {
   excludeExpensive: false,
   excludeVendorDyes: false,
   excludeCraftDyes: false,
+  excludeCoffers: false,
 };
 
 // ============================================================================
@@ -313,14 +320,28 @@ export interface DisplayOptionsConfig {
   showHsv: boolean;
   /** Show LAB values */
   showLab: boolean;
+  /** Show CMYK values */
+  showCmyk: boolean;
 
   // Result metadata visibility
   /** Show market prices */
   showPrice: boolean;
-  /** Show Delta-E color distance */
+  /**
+   * @deprecated The ΔE2000 verdict is structural on the 5.0 Result Card and
+   * always renders; this flag no longer controls anything on the card.
+   */
   showDeltaE: boolean;
   /** Show acquisition source information */
   showAcquisition: boolean;
+
+  // 5.0 Ticket optional fields (persistent, default all-on).
+  // Optional so configs persisted before 5.0 stay valid — read with `?? true`.
+  /** Show the HUE OFF readout beside the verdict */
+  showHue?: boolean;
+  /** Show the STAIN readout beside the verdict */
+  showStain?: boolean;
+  /** Show the consolidated dye spectrum row */
+  showSpectrum?: boolean;
 }
 
 /**
@@ -331,9 +352,13 @@ export const DEFAULT_DISPLAY_OPTIONS: DisplayOptionsConfig = {
   showRgb: true,
   showHsv: true,
   showLab: true,
+  showCmyk: false,
   showPrice: true,
   showDeltaE: true,
   showAcquisition: true,
+  showHue: true,
+  showStain: true,
+  showSpectrum: true,
 };
 
 // ============================================================================
@@ -375,7 +400,7 @@ export type ConfigKey = ToolId | 'global' | 'market' | 'advanced';
 /**
  * Default configuration values for all tools
  */
-export const DEFAULT_CONFIGS: ToolConfigMap = {
+const DEFAULT_CONFIGS: ToolConfigMap = {
   global: {
     theme: '',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
@@ -392,8 +417,9 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
   harmony: {
     harmonyType: 'complementary',
     strictMatching: true,
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     preventDuplicates: true,
+    companionDyesCount: COMPANION_DYES_DEFAULT,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
@@ -402,7 +428,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     maxColors: 4,
     dragThreshold: 5,
     sampleAreaSize: 1,
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
@@ -413,9 +439,6 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     protanopia: true,
     tritanopia: true,
     achromatopsia: true,
-    showLabels: true,
-    showHexValues: false,
-    highContrastMode: false,
     displayOptions: {
       ...DEFAULT_DISPLAY_OPTIONS,
       showPrice: false, // Accessibility tool doesn't show prices by default
@@ -424,43 +447,47 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     },
   },
   comparison: {
+    matchThreshold: 5,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   },
   gradient: {
-    stepCount: 4,
+    stepCount: 8,
     interpolation: 'hsv',
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
+    preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
   mixer: {
     maxResults: 4,
     mixingMode: 'ryb',
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
   presets: {
-    showMyPresetsOnly: false,
-    showFavorites: false,
     sortBy: 'popular',
     category: 'all',
+    feedShots: true,
+    feedBlend: false,
+    feedHideUnbuyable: false,
+    savedFirst: true,
+    keepDeleted: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   },
   budget: {
-    maxPrice: 100000,
-    maxResults: 8,
-    maxDeltaE: 50,
-    matchingMethod: 'oklab',
+    maxDeltaE: 8,
+    matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
   swatch: {
     colorSheet: 'hairColors',
+    fileProvided: false,
     race: 'SeekerOfTheSun',
     gender: 'Female',
     maxResults: 3,
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
@@ -469,13 +496,6 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
 // ============================================================================
 // Type Guards
 // ============================================================================
-
-/**
- * Check if a config key is a valid tool ID
- */
-export function isToolId(key: ConfigKey): key is ToolId {
-  return key !== 'global' && key !== 'market' && key !== 'advanced';
-}
 
 /**
  * Get the default config for a tool

@@ -9,6 +9,7 @@
 
 import type { Theme, ThemeName, ThemePalette } from '@shared/types';
 import { ErrorCode, AppError } from '@xivdyetools/types';
+import { GLYPH_ACCENT_LIGHT } from '@xivdyetools/svg';
 import { THEME_NAMES, DEFAULT_THEME, STORAGE_KEYS } from '@shared/constants';
 import { appStorage } from './storage-service';
 import { logger } from '@shared/logger';
@@ -68,295 +69,70 @@ function createThemePalette(config: ThemePaletteConfig): ThemePalette {
 // Theme Definitions
 // ============================================================================
 
+/**
+ * The two 5.0 themes on the confirmed 16A token sets (Modal Directions):
+ * dark is #0B0B0C/#17171A with the #EA4133 accent, light is #F2F2F4/#FFFFFF
+ * with the deeper #CE2222 accent (the suite red needs more pigment on white).
+ */
 const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
-  // Standard themes - burgundy/coral palette
   'standard-light': createThemePalette({
-    primary: '#8B1A1A',
-    background: '#D3D3D3',
-    text: '#1A1A1A',
+    primary: GLYPH_ACCENT_LIGHT,
+    background: '#F2F2F4',
+    text: '#17181B',
     isDark: false,
     overrides: {
-      border: '#6B1515',
-      backgroundSecondary: '#E0E0E0',
-      cardBackground: '#F5F5F5',
-      cardHover: '#FFFFFF',
-      textMuted: '#4A4A4A',
+      textHeader: '#FFFFFF',
+      border: '#E4E4E7',
+      backgroundSecondary: '#EBEBEE',
+      cardBackground: '#FFFFFF',
+      cardHover: '#E6E6EA',
+      textMuted: '#63636A',
       // V4 properties
-      bgGlass: 'rgba(245, 245, 245, 0.9)',
+      bgGlass: 'rgba(255, 255, 255, 0.9)',
       textHeaderMuted: 'rgba(255, 255, 255, 0.7)',
-      accentHover: '#6B1515',
-      accentRgb: '139, 26, 26',
-      shadowSoft: '0 4px 6px rgba(0, 0, 0, 0.1)',
-      shadowGlow: '0 0 10px rgba(139, 26, 26, 0.2)',
-      gradientStart: '#E8E8E8',
-      gradientEnd: '#D3D3D3',
-      cardGradientEnd: '#E0E0E0',
+      accentHover: '#B01C1C',
+      accentRgb: '206, 34, 34',
+      shadowSoft: '0 4px 6px rgba(0, 0, 0, 0.08)',
+      shadowGlow: '0 0 10px rgba(206, 34, 34, 0.15)',
+      gradientStart: '#F7F7F9',
+      gradientEnd: '#F2F2F4',
+      cardGradientEnd: '#FAFAFB',
     },
   }),
   'standard-dark': createThemePalette({
-    primary: '#E85A5A',
-    background: '#2D2D2D',
-    text: '#F5F5F5',
-    isDark: true,
-    overrides: {
-      textHeader: '#1A1A1A',
-      border: '#F08080',
-      backgroundSecondary: '#333333',
-      cardBackground: '#1F1F1F',
-      cardHover: '#3A3A3A',
-      textMuted: '#B0B0B0',
-      // V4 properties
-      bgGlass: 'rgba(31, 31, 31, 0.85)',
-      textHeaderMuted: 'rgba(26, 26, 26, 0.7)',
-      accentHover: '#FF7070',
-      accentRgb: '232, 90, 90',
-      shadowSoft: '0 4px 6px rgba(0, 0, 0, 0.3)',
-      shadowGlow: '0 0 10px rgba(232, 90, 90, 0.25)',
-      gradientStart: '#333333',
-      gradientEnd: '#2D2D2D',
-      cardGradientEnd: '#1A1A1A',
-    },
-  }),
-
-  // Premium Dark - Metallic gold accent on deep black (V4 default theme)
-  'premium-dark': createThemePalette({
-    primary: '#D4AF37', // Metallic gold
-    background: '#121212', // Deep black
-    text: '#E0E0E0',
-    isDark: true,
-    overrides: {
-      textHeader: '#1A1A1A', // Dark text for contrast on gold header
-      border: 'rgba(255, 255, 255, 0.15)',
-      backgroundSecondary: '#1A1A1A',
-      cardBackground: '#1E1E1E',
-      cardHover: '#2A2A2A',
-      textMuted: '#A0A0A0',
-      // V4 properties
-      bgGlass: 'rgba(30, 30, 30, 0.85)',
-      textHeaderMuted: 'rgba(26, 26, 26, 0.7)', // Dark muted text for gold header
-      accentHover: '#F0C040',
-      accentRgb: '212, 175, 55',
-      shadowSoft: '0 4px 6px rgba(0, 0, 0, 0.4)',
-      shadowGlow: '0 0 10px rgba(212, 175, 55, 0.25)',
-      gradientStart: '#252525',
-      gradientEnd: '#121212',
-      cardGradientEnd: '#151515',
-    },
-  }),
-
-  // FFXIV-themed palettes
-  'hydaelyn-light': createThemePalette({
-    primary: '#4056A4',
-    background: '#B2C4CE',
-    text: '#312D57',
-    isDark: false,
-    overrides: {
-      textHeader: '#F9F8F4',
-      cardBackground: '#F9F8F4',
-      cardHover: '#FDFDFC',
-      textMuted: '#0C4A6E',
-      // V4 properties
-      bgGlass: 'rgba(249, 248, 244, 0.9)',
-      textHeaderMuted: 'rgba(249, 248, 244, 0.7)',
-      accentHover: '#5066B4',
-      accentRgb: '64, 86, 164',
-      shadowSoft: '0 4px 6px rgba(49, 45, 87, 0.1)',
-      shadowGlow: '0 0 10px rgba(64, 86, 164, 0.2)',
-      gradientStart: '#C2D4DE',
-      gradientEnd: '#B2C4CE',
-      cardGradientEnd: '#EAE9E5',
-    },
-  }),
-  'og-classic-dark': createThemePalette({
-    primary: '#1E40AF',
-    background: '#181820',
-    text: '#F9F8F4',
-    isDark: true,
-    overrides: {
-      border: '#E4DFD0',
-      backgroundSecondary: '#4056A4',
-      cardBackground: '#000B9D',
-      cardHover: '#5052D9',
-      textMuted: '#E4DFD0',
-      // V4 properties
-      bgGlass: 'rgba(0, 11, 157, 0.85)',
-      textHeaderMuted: 'rgba(249, 248, 244, 0.7)',
-      accentHover: '#2E50BF',
-      accentRgb: '30, 64, 175',
-      shadowSoft: '0 4px 6px rgba(0, 0, 0, 0.4)',
-      shadowGlow: '0 0 15px rgba(30, 64, 175, 0.35)',
-      gradientStart: '#282830',
-      gradientEnd: '#181820',
-      cardGradientEnd: '#000888',
-    },
-  }),
-
-  // Specialty themes
-  'parchment-light': createThemePalette({
-    primary: '#D97706',
-    background: '#FEF3C7',
-    text: '#78350F',
-    isDark: false,
-    overrides: {
-      textHeader: '#78350F',
-      border: '#FCD34D',
-      backgroundSecondary: '#FEF9E7',
-      cardHover: '#FEF9E7',
-      textMuted: '#92400E',
-      // V4 properties
-      bgGlass: 'rgba(254, 249, 231, 0.92)',
-      textHeaderMuted: 'rgba(120, 53, 15, 0.7)',
-      accentHover: '#E98716',
-      accentRgb: '217, 119, 6',
-      shadowSoft: '0 4px 6px rgba(120, 53, 15, 0.1)',
-      shadowGlow: '0 0 10px rgba(217, 119, 6, 0.2)',
-      gradientStart: '#FEF9E7',
-      gradientEnd: '#FEF3C7',
-      cardGradientEnd: '#FDF5D7',
-    },
-  }),
-  'cotton-candy': createThemePalette({
-    primary: '#FFB6D9',
-    background: '#FFF5F9',
-    text: '#8B1A4A',
-    isDark: false,
-    overrides: {
-      textHeader: '#8B1A4A',
-      border: '#FFC0E0',
-      backgroundSecondary: '#FFF9FC',
-      cardBackground: '#FFFFFF',
-      cardHover: '#FFF5F9',
-      textMuted: '#A0526D',
-      // V4 properties
-      bgGlass: 'rgba(255, 255, 255, 0.9)',
-      textHeaderMuted: 'rgba(139, 26, 74, 0.7)',
-      accentHover: '#FFC6E3',
-      accentRgb: '255, 182, 217',
-      shadowSoft: '0 4px 6px rgba(139, 26, 74, 0.08)',
-      shadowGlow: '0 0 10px rgba(255, 182, 217, 0.3)',
-      gradientStart: '#FFFAFC',
-      gradientEnd: '#FFF5F9',
-      cardGradientEnd: '#FFF8FB',
-    },
-  }),
-  'sugar-riot': createThemePalette({
-    primary: '#FF1493',
-    background: '#0A0A0A',
-    text: '#FFFFFF',
+    primary: '#EA4133',
+    background: '#0B0B0C',
+    text: '#ECECEE',
     isDark: true,
     overrides: {
       textHeader: '#0A0A0A',
-      border: '#FF00FF',
-      backgroundSecondary: '#1A0A1A',
-      cardBackground: '#1A0A1A',
-      cardHover: '#2A1A2A',
-      textMuted: '#FFB6FF',
+      border: 'rgba(255, 255, 255, 0.12)',
+      backgroundSecondary: '#141416',
+      cardBackground: '#17171A',
+      cardHover: '#232327',
+      textMuted: '#9C9CA2',
       // V4 properties
-      bgGlass: 'rgba(26, 10, 26, 0.88)',
+      bgGlass: 'rgba(23, 23, 26, 0.85)',
       textHeaderMuted: 'rgba(10, 10, 10, 0.7)',
-      accentHover: '#FF44A8',
-      accentRgb: '255, 20, 147',
+      accentHover: '#FF6257',
+      accentRgb: '234, 65, 51',
       shadowSoft: '0 4px 6px rgba(0, 0, 0, 0.4)',
-      shadowGlow: '0 0 15px rgba(255, 20, 147, 0.4)',
-      gradientStart: '#1A1A1A',
-      gradientEnd: '#0A0A0A',
-      cardGradientEnd: '#150515',
-    },
-  }),
-
-  // Grayscale themes
-  'grayscale-light': createThemePalette({
-    primary: '#404040',
-    background: '#FFFFFF',
-    text: '#000000',
-    isDark: false,
-    overrides: {
-      backgroundSecondary: '#F3F4F6',
-      cardHover: '#F3F4F6',
-      textMuted: '#6B7280',
-      // V4 properties
-      bgGlass: 'rgba(255, 255, 255, 0.92)',
-      textHeaderMuted: 'rgba(255, 255, 255, 0.7)',
-      accentHover: '#505050',
-      accentRgb: '64, 64, 64',
-      shadowSoft: '0 4px 6px rgba(0, 0, 0, 0.08)',
-      shadowGlow: '0 0 10px rgba(64, 64, 64, 0.15)',
-      gradientStart: '#FAFAFA',
-      gradientEnd: '#FFFFFF',
-      cardGradientEnd: '#F8F8F8',
-    },
-  }),
-  'grayscale-dark': createThemePalette({
-    primary: '#6B7280',
-    background: '#111827',
-    text: '#F3F4F6',
-    isDark: true,
-    overrides: {
-      border: '#9CA3AF',
-      backgroundSecondary: '#1F2937',
-      cardHover: '#1F2937',
-      textMuted: '#9CA3AF',
-      // V4 properties
-      bgGlass: 'rgba(31, 41, 55, 0.88)',
-      textHeaderMuted: 'rgba(243, 244, 246, 0.7)',
-      accentHover: '#7B8290',
-      accentRgb: '107, 114, 128',
-      shadowSoft: '0 4px 6px rgba(0, 0, 0, 0.3)',
-      shadowGlow: '0 0 10px rgba(107, 114, 128, 0.2)',
-      gradientStart: '#1F2937',
-      gradientEnd: '#111827',
-      cardGradientEnd: '#0F172A',
-    },
-  }),
-
-  // WCAG AAA High Contrast themes
-  'high-contrast-light': createThemePalette({
-    primary: '#0000CC',
-    background: '#FFFFFF',
-    text: '#000000',
-    isDark: false,
-    overrides: {
-      border: '#000000',
-      backgroundSecondary: '#F0F0F0',
-      cardHover: '#E0E0E0',
-      textMuted: '#333333',
-      // V4 properties - disable glassmorphism for accessibility
-      bgGlass: 'rgba(255, 255, 255, 1)', // Solid, no transparency
-      textHeaderMuted: '#333333',
-      accentHover: '#0000EE',
-      accentRgb: '0, 0, 204',
-      shadowSoft: '0 2px 4px rgba(0, 0, 0, 0.2)',
-      shadowGlow: 'none',
-      gradientStart: '#FFFFFF',
-      gradientEnd: '#FFFFFF',
-      cardGradientEnd: '#F5F5F5',
-      disableBlur: true,
-    },
-  }),
-  'high-contrast-dark': createThemePalette({
-    primary: '#FFFF00',
-    background: '#000000',
-    text: '#FFFFFF',
-    isDark: true,
-    overrides: {
-      textHeader: '#000000',
-      backgroundSecondary: '#1A1A1A',
-      cardHover: '#333333',
-      textMuted: '#CCCCCC',
-      // V4 properties - disable glassmorphism for accessibility
-      bgGlass: 'rgba(0, 0, 0, 1)', // Solid, no transparency
-      textHeaderMuted: '#999999',
-      accentHover: '#FFFF44',
-      accentRgb: '255, 255, 0',
-      shadowSoft: '0 2px 4px rgba(255, 255, 255, 0.1)',
-      shadowGlow: 'none',
-      gradientStart: '#000000',
-      gradientEnd: '#000000',
-      cardGradientEnd: '#0A0A0A',
-      disableBlur: true,
+      shadowGlow: '0 0 10px rgba(234, 65, 51, 0.25)',
+      gradientStart: '#141416',
+      gradientEnd: '#0B0B0C',
+      cardGradientEnd: '#131316',
     },
   }),
 };
+
+/**
+ * Map a pre-5.0 stored theme name onto Light or Dark by its family.
+ * Every retired light theme lands on standard-light, everything else dark.
+ */
+function migrateLegacyThemeName(name: string): ThemeName {
+  const wasLight = name.endsWith('-light') || name === 'cotton-candy' || name === 'parchment-light';
+  return wasLight ? 'standard-light' : 'standard-dark';
+}
 
 // ============================================================================
 // Theme Service Class
@@ -382,9 +158,15 @@ export class ThemeService {
       return;
     }
 
-    const saved = appStorage.getItem<ThemeName>(STORAGE_KEYS.THEME);
+    const saved = appStorage.getItem<string>(STORAGE_KEYS.THEME);
     if (saved && this.isValidThemeName(saved)) {
       this.currentTheme = saved;
+    } else if (saved) {
+      // Pre-5.0 stored theme (premium-dark, hydaelyn-light, ...) — migrate
+      // to its Light/Dark family member and persist the migrated value
+      this.currentTheme = migrateLegacyThemeName(saved);
+      appStorage.setItem(STORAGE_KEYS.THEME, this.currentTheme);
+      logger.info(`Migrated legacy theme "${saved}" → ${this.currentTheme}`);
     } else {
       this.currentTheme = DEFAULT_THEME;
     }
@@ -409,8 +191,7 @@ export class ThemeService {
       throw new AppError(ErrorCode.INVALID_THEME, `Invalid theme name: ${name}`, 'error');
     }
 
-    // Determine if theme is dark: ends with -dark OR is sugar-riot (dark theme without suffix)
-    const isDark = name.endsWith('-dark') || name === 'sugar-riot';
+    const isDark = name.endsWith('-dark');
     return {
       name,
       palette: THEME_PALETTES[name],
@@ -491,6 +272,10 @@ export class ThemeService {
 
     // ===== V3 Core Variables =====
     style.setProperty('--theme-primary', palette.primary);
+    // Glyph accent chips follow the theme (#EA4133 dark / #CE2222 light);
+    // the SVG package bakes the dark literal for raster targets, the web
+    // shims swap it for this property (shared/glyph-accent.ts).
+    style.setProperty('--glyph-accent', palette.primary);
     style.setProperty('--theme-background', palette.background);
     style.setProperty('--theme-text', palette.text);
     style.setProperty('--theme-text-header', palette.textHeader);
@@ -585,7 +370,7 @@ export class ThemeService {
    * Check if current theme is dark
    */
   static isDarkMode(): boolean {
-    return this.currentTheme.endsWith('-dark') || this.currentTheme === 'sugar-riot';
+    return this.currentTheme.endsWith('-dark');
   }
 
   /**

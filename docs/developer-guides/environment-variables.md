@@ -23,16 +23,19 @@ Environment variables are configured differently based on the project type:
 
 ```bash
 # .env.local (create this file, not committed)
-VITE_OAUTH_URL=http://localhost:8788
-VITE_PRESETS_API_URL=http://localhost:8787
-VITE_ANALYTICS_ID=optional-analytics-id
+VITE_OAUTH_WORKER_URL=http://localhost:8788        # oauth worker (default: https://auth.xivdyetools.app)
+VITE_PRESETS_API_URL=http://localhost:8787         # presets-api (default: https://api.xivdyetools.app)
+VITE_UNIVERSALIS_PROXY_URL=http://localhost:8790   # optional; production uses https://data.xivdyetools.app/universalis
 ```
 
-### Production Values
+`VITE_APP_ENV=beta` at build time produces the beta build (`beta.xivdyetools.app` branding, `noindex`); `scripts/check-beta-build.js` asserts it.
+
+### Production Values (compiled-in defaults)
 
 ```bash
-VITE_OAUTH_URL=https://oauth.xivdyetools.com
-VITE_PRESETS_API_URL=https://presets.xivdyetools.com
+VITE_OAUTH_WORKER_URL=https://auth.xivdyetools.app
+VITE_PRESETS_API_URL=https://api.xivdyetools.app
+# Universalis: https://data.xivdyetools.app/universalis (api-worker's absorbed proxy routes)
 ```
 
 ---
@@ -56,8 +59,13 @@ ENVIRONMENT = "production"    # "development" | "production"
 | `INTERNAL_WEBHOOK_SECRET` | No | Webhook authentication |
 | `STATS_AUTHORIZED_USERS` | No | Comma-separated user IDs |
 | `MODERATOR_IDS` | No | Comma-separated moderator user IDs |
-| `MODERATION_CHANNEL_ID` | No | Channel for pending presets |
+| `MODERATION_CHANNEL_ID` | No | Channel for pending presets / preview images |
 | `SUBMISSION_LOG_CHANNEL_ID` | No | Channel for all submissions |
+| `MODERATION_BOT_TOKEN` | No | Moderation bot token — Discord routes button clicks to the posting application |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | No | Preferred rate-limit backend (KV fallback) |
+| `ANNOUNCEMENT_CHANNEL_ID` | No | Release-announcement channel — a **var**, declared under `[env.production.vars]` (vars are not inherited) |
+
+Bindings: `KV`, `DB` (D1 `xivdyetools-presets`), `ANALYTICS`, and service bindings `PRESETS_API` → `xivdyetools-presets-api`, `UNIVERSALIS_PROXY` → `xivdyetools-api-worker`, `IMAGE_WORKER` → `xivdyetools-image-worker`. The top-level `wrangler.toml` block is the beta bot (`xivdyetools-discord-worker-dev`); production lives under `[env.production]`.
 
 ### Setting Secrets
 
@@ -92,10 +100,12 @@ BOT_API_SECRET=local-secret
 [vars]
 ENVIRONMENT = "production"        # "development" | "production"
 DISCORD_CLIENT_ID = "your-client-id"
-FRONTEND_URL = "https://app.xivdyetools.com"
-WORKER_URL = "https://oauth.xivdyetools.com"
+FRONTEND_URL = "https://xivdyetools.app"
+WORKER_URL = "https://auth.xivdyetools.app"
 JWT_EXPIRY = "3600"               # Seconds (default: 1 hour)
 ```
+
+The redirect / CORS allowlist also carries `https://beta.xivdyetools.app` (2.6.0). Note `oauth`'s top-level block **is** production (bare `wrangler deploy` = production); `[env.development]` / `[env.preview]` are the non-production envs.
 
 ### Secrets
 
@@ -134,11 +144,11 @@ JWT_SECRET=development-jwt-secret-min-32-chars
 ### wrangler.toml Variables
 
 ```toml
-[vars]
-ENVIRONMENT = "production"        # "development" | "production"
-API_VERSION = "v1"
-CORS_ORIGIN = "https://app.xivdyetools.com"
+[env.production]
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app" }
 ```
+
+Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`, notifications), `IMAGE_WORKER` (service → `xivdyetools-image-worker`, `POST /thumbnail`), `THUMBNAILS` (R2 bucket `xivdyetools-presets-preview-thumbnails`, served at `shots.xivdyetools.app`), `TOKEN_BLACKLIST` (KV — the oauth worker's jti blacklist, shared so revoked tokens are rejected here too; FINDING-002). `JWT_ISSUER` pins the accepted `iss` claim (FINDING-015). `CACHE_PURGE_ZONE_ID` (production var, `ec1fb94c…` — the `xivdyetools.app` zone id behind `shots.xivdyetools.app`) is the purge target for FINDING-018; it is config, not a secret, and pairs with the `CACHE_PURGE_API_TOKEN` secret below. Top-level block = `xivdyetools-presets-api-dev`; production under `[env.production]`.
 
 ### Secrets
 
@@ -147,7 +157,10 @@ CORS_ORIGIN = "https://app.xivdyetools.com"
 | `BOT_API_SECRET` | ✅ Yes | Shared with Discord worker |
 | `JWT_SECRET` | ✅ Yes | Shared with OAuth worker |
 | `MODERATOR_IDS` | No | Comma-separated user IDs |
+| `BOT_SIGNING_SECRET` | No | HMAC signing key for bot request verification |
 | `PERSPECTIVE_API_KEY` | No | Google Perspective API for ML moderation |
+| `CACHE_PURGE_API_TOKEN` | No | API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone — enables single-file edge purge of deleted/replaced preview images (FINDING-018); pairs with the `CACHE_PURGE_ZONE_ID` **var** (see above). Without it the 1-day `s-maxage` is the bound. Set on production 2026-08-21 |
+| `MODERATION_WEBHOOK_URL` / `DISCORD_BOT_WEBHOOK_URL` / `INTERNAL_WEBHOOK_SECRET` | No | Notification webhooks |
 
 ### Setting Secrets
 
@@ -158,6 +171,7 @@ wrangler secret put BOT_API_SECRET
 wrangler secret put JWT_SECRET
 wrangler secret put MODERATOR_IDS
 wrangler secret put PERSPECTIVE_API_KEY  # Optional
+wrangler secret put CACHE_PURGE_API_TOKEN --env production  # Optional — preview-image edge purge (FINDING-018); CACHE_PURGE_ZONE_ID is a wrangler.toml var, not a secret
 ```
 
 ### Local Development (.dev.vars)
@@ -170,7 +184,13 @@ MODERATOR_IDS=123456789,987654321
 
 ---
 
-## xivdyetools-universalis-proxy
+## Universalis proxy vars (now part of xivdyetools-api-worker)
+
+> The standalone `xivdyetools-universalis-proxy` worker was **merged into `api-worker` on
+> 2026-07-31**; its behaviour lives on behind the `/universalis` and `/api/v2` compatibility
+> routes. The variables and KV bindings below now belong to `apps/api-worker/wrangler.toml`.
+> Where the commands below say `cd xivdyetools-universalis-proxy`, use
+> `apps/api-worker` instead.
 
 ### wrangler.toml Variables
 
@@ -182,6 +202,21 @@ STATIC_TTL = "86400"              # Static cache TTL in seconds (default: 24h)
 MAX_ITEMS = "100"                 # Max items per request
 MAX_RESPONSE_SIZE = "5242880"     # Max response size in bytes (5MB)
 ```
+
+### `/v1/chara/*` variables (api-worker, 0.7.0)
+
+The `.chara` equipment-resolution routes (web-app Swatch Matcher 11a/11c) talk to XIVAPI v2 server-side — no secrets, plain vars in both `wrangler.toml` envs:
+
+```toml
+XIVAPI_BASE = "https://v2.xivapi.com"   # upstream origin
+XIVAPI_VERSION = "latest"               # game-version key: `latest` or a key from /api/version.
+                                        # ALSO the row-cache namespace. After a patch, search
+                                        # returns 503 on the new key until ingested — keep the
+                                        # old key until a probe answers 200, then roll forward.
+# XIVAPI_SCHEMA = "exdschema@2:rev:<sha>"  # optional schema pin (field renames land unannounced)
+```
+
+No new bindings: the per-key row cache is the Cache API (store `chara-resolve`), not KV. Korean/Chinese item names are build-time JSON (`apps/api-worker/scripts/build-item-names.mjs`), not a runtime fetch.
 
 ### KV Bindings
 
@@ -200,7 +235,7 @@ id = "your-static-cache-namespace-id"
 ### Creating KV Namespaces
 
 ```bash
-cd xivdyetools-universalis-proxy
+cd apps/api-worker
 
 # Create namespaces
 wrangler kv:namespace create "PRICE_CACHE"
@@ -222,6 +257,20 @@ wrangler kv:namespace create "STATIC_CACHE" --preview
 Update `wrangler.toml` with the preview IDs for local testing.
 
 ---
+
+## Rate-limit bindings (FINDING-003, 2026-08-21 audit)
+
+Per-client abuse limiting uses the native **Workers Rate Limiting binding** (`[[ratelimits]]`, GA 2025-09) via `CloudflareRateLimiter` from `@xivdyetools/worker-kit/rate-limiter`. Bindings need no resource creation — they deploy with the worker. Each binding carries ONE fixed `{ limit, period }`, so workers with several limits bind one tier per distinct limit. `namespace_id` must be unique per account; the allocation is:
+
+| Worker | Binding | limit / period | namespace_id (prod / dev) | Fallback when absent |
+|--------|---------|----------------|---------------------------|----------------------|
+| api-worker | `API_RATE_LIMITER` | 65 / 60 s (60 + 5 burst per IP on `/v1/*`) | 1001 / 1002 | KV `RATE_LIMIT` |
+| presets-api | `RL_PUBLIC` | 100 / 60 s per IP on `/api/*` | 1011 / 1012 | per-isolate memory |
+| oauth | `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` | 10 / 20 / 30 per 60 s per IP+path (`OAUTH_LIMITS`) | 1021-1023 (top-level = prod), 1024-1026 (development) — the preview tier (1027-1029) went with the deleted `[env.preview]` block (FINDING-029) | KV `TOKEN_BLACKLIST` (`rl:` prefix), then memory |
+| moderation-worker | `RL_COMMAND` / `RL_AUTOCOMPLETE` | 25 / 70 per 60 s per Discord user | 1031-1032 / 1033-1034 | KV `KV` |
+| discord-worker | — (Upstash Redis is the primary backend) | per-command tiers | — | KV — logs a one-time warning; configure `UPSTASH_REDIS_REST_URL/TOKEN` in production |
+
+Why: KV allows one write per second per key and the read-modify-write counter swallows the resulting 429s, so a single fast client never reaches a 60 s threshold (FINDING-003). KV/memory remain only as fallbacks for environments without the binding.
 
 ## Shared Secrets
 
@@ -253,9 +302,9 @@ CORS_ORIGIN=http://localhost:5173
 
 ```bash
 ENVIRONMENT=production
-FRONTEND_URL=https://app.xivdyetools.com
-WORKER_URL=https://oauth.xivdyetools.com
-CORS_ORIGIN=https://app.xivdyetools.com
+FRONTEND_URL=https://xivdyetools.app
+WORKER_URL=https://auth.xivdyetools.app
+CORS_ORIGIN=https://xivdyetools.app
 ```
 
 ---

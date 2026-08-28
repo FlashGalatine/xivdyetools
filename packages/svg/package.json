@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/svg",
-  "version": "1.2.1",
+  "version": "2.0.1",
   "description": "Platform-agnostic SVG card generators for the XIV Dye Tools ecosystem (pure functions: data in → SVG string out)",
   "author": "XIV Dye Tools",
   "license": "MIT",
@@ -22,14 +22,14 @@
     "build": "tsc -p tsconfig.build.json",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist coverage",
-    "lint": "eslint src",
+    "lint": "eslint src && pnpm run lint:dead",
+    "lint:dead": "knip --directory ../.. --workspace packages/svg --no-config-hints --no-tag-hints",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
-    "@xivdyetools/color-blending": "workspace:*",
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/types": "workspace:*"
   },

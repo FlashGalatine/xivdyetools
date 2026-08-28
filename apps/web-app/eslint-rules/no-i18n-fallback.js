@@ -15,13 +15,14 @@
  * Run `npm run validate:i18n` to find missing keys.
  */
 
+import { noHardcodedUiStrings } from './no-hardcoded-ui-strings.js';
+
 /** @type {import('eslint').Rule.RuleModule} */
 export const noI18nFallback = {
   meta: {
     type: 'suggestion',
     docs: {
-      description:
-        'Disallow fallback patterns with LanguageService.t() calls',
+      description: 'Disallow fallback patterns with LanguageService.t() calls',
       recommended: true,
     },
     messages: {
@@ -116,15 +117,18 @@ export const noI18nFallback = {
 /**
  * ESLint Plugin: xivdyetools-i18n
  *
- * Local plugin for XIV Dye Tools i18n linting rules.
+ * Local plugin for XIV Dye Tools i18n linting rules. This file is the plugin's
+ * entry point for historical reasons (it held the only rule); sibling rules
+ * live in their own modules and are registered here.
  */
-export const plugin = {
+const plugin = {
   meta: {
     name: 'eslint-plugin-xivdyetools-i18n',
-    version: '1.0.0',
+    version: '1.1.0',
   },
   rules: {
     'no-i18n-fallback': noI18nFallback,
+    'no-hardcoded-ui-strings': noHardcodedUiStrings,
   },
 };
 

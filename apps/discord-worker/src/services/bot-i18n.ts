@@ -1,26 +1,23 @@
 /**
  * Bot UI Translation Service — Discord Worker thin wrapper
  *
- * Re-exports the platform-agnostic @xivdyetools/bot-i18n package and adds
- * the Discord-specific createUserTranslator (which resolves locale from KV).
+ * Re-exports the platform-agnostic bot i18n engine (@xivdyetools/bot-logic/i18n,
+ * formerly @xivdyetools/bot-i18n) and adds the Discord-specific
+ * createUserTranslator (which resolves locale from KV).
  *
  * @module services/bot-i18n
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { resolveUserLocale } from './i18n.js';
+import { resolveUserLocale, initializeLocale } from './i18n.js';
 import { isValidLocale } from './i18n.js';
 import { getUserPreferences } from './preferences.js';
 import type { UserPreferences } from '../types/preferences.js';
 
 // Re-export from the shared package
-export {
-  Translator,
-  createTranslator,
-} from '@xivdyetools/bot-i18n';
-export type { LocaleCode } from '@xivdyetools/bot-i18n';
+export { Translator, createTranslator } from '@xivdyetools/bot-logic/i18n';
 
-import { Translator } from '@xivdyetools/bot-i18n';
+import { Translator } from '@xivdyetools/bot-logic/i18n';
 
 /**
  * Create a translator for a user, resolving their locale from KV preferences.
@@ -34,9 +31,14 @@ export async function createUserTranslator(
   kv: KVNamespace,
   userId: string,
   discordLocale?: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Translator> {
   const locale = await resolveUserLocale(kv, userId, discordLocale);
+  // F-02 (2026-08-20 i18n audit): warm the per-locale dye-name cache here so
+  // `resolveColorInput(..., { locale })` / `searchDyesByName` can match
+  // localized names on the very first request of an isolate. Cached after
+  // the first call per locale; the bot-logic command executors also call it.
+  await initializeLocale(locale);
   return new Translator(locale, logger);
 }
 
@@ -54,12 +56,14 @@ export async function createUserTranslatorWithPrefs(
   kv: KVNamespace,
   userId: string,
   discordLocale?: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<{ t: Translator; prefs: UserPreferences }> {
   const prefs = await getUserPreferences(kv, userId, logger);
   if (prefs.language && isValidLocale(prefs.language)) {
+    await initializeLocale(prefs.language);
     return { t: new Translator(prefs.language, logger), prefs };
   }
   const locale = await resolveUserLocale(kv, userId, discordLocale);
+  await initializeLocale(locale);
   return { t: new Translator(locale, logger), prefs };
 }

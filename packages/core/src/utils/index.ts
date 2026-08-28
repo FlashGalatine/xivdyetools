@@ -124,162 +124,6 @@ export class LRUCache<K, V> {
   }
 }
 
-/**
- * Async-safe LRU cache with built-in request deduplication
- *
- * Unlike the synchronous LRUCache, this class is designed for async operations
- * where multiple concurrent requests for the same key should share a single
- * computation rather than triggering duplicate work.
- *
- * @example
- * ```typescript
- * const cache = new AsyncLRUCache<string, ApiResponse>(100);
- *
- * // Multiple concurrent calls with same key share one fetch
- * const [result1, result2] = await Promise.all([
- *   cache.getOrCompute('user:123', () => fetchUser('123')),
- *   cache.getOrCompute('user:123', () => fetchUser('123')), // Reuses first call
- * ]);
- * // fetchUser was only called once!
- * ```
- *
- * Implementation notes:
- * - Uses separate Map for pending promises (request deduplication)
- * - Promise is stored SYNCHRONOUSLY before any await (critical for race safety)
- * - Handles errors gracefully - removes from pending but doesn't cache failures
- * - LRU eviction when cache is full
- *
- * Per OPT-001: This addresses the concurrency limitation of the synchronous
- * LRUCache for async contexts.
- */
-export class AsyncLRUCache<K, V> {
-  private cache: Map<K, V>;
-  private pending: Map<K, Promise<V>>;
-  private maxSize: number;
-
-  constructor(maxSize: number = 1000) {
-    this.cache = new Map();
-    this.pending = new Map();
-    this.maxSize = maxSize;
-  }
-
-  /**
-   * Move an entry to the end of the Map (most recently used position).
-   *
-   * BUG-006: Extracted for clarity. These synchronous Map operations within
-   * a single microtask are atomic in JavaScript's event loop — no interleaving
-   * can occur between delete and set.
-   */
-  private moveToEnd(key: K, value: V): void {
-    this.cache.delete(key);
-    this.cache.set(key, value);
-  }
-
-  /**
-   * Get a value from cache, or compute it if not present
-   *
-   * This method handles request deduplication: if a computation for the same
-   * key is already in progress, subsequent calls will wait for that computation
-   * rather than starting a new one.
-   *
-   * @param key - The cache key
-   * @param compute - Async function to compute the value if not cached
-   * @returns Promise resolving to the cached or computed value
-   *
-   * @example
-   * ```typescript
-   * const value = await cache.getOrCompute(
-   *   'expensive-key',
-   *   async () => await expensiveAsyncOperation()
-   * );
-   * ```
-   */
-  async getOrCompute(key: K, compute: () => Promise<V>): Promise<V> {
-    // Check cache first (fast path)
-    if (this.cache.has(key)) {
-      const value = this.cache.get(key)!;
-      this.moveToEnd(key, value);
-      return value;
-    }
-
-    // Check if computation is already in progress (deduplication)
-    const pendingPromise = this.pending.get(key);
-    if (pendingPromise) {
-      return pendingPromise;
-    }
-
-    // CRITICAL: Store promise SYNCHRONOUSLY before any await
-    // This ensures concurrent calls see the pending promise
-    const promise = compute()
-      .then((value) => {
-        this.pending.delete(key);
-        this.set(key, value);
-        return value;
-      })
-      .catch((error) => {
-        this.pending.delete(key);
-        throw error;
-      });
-
-    this.pending.set(key, promise);
-    return promise;
-  }
-
-  /**
-   * Get a value from the cache (sync check only)
-   *
-   * @param key - The key to look up
-   * @returns The cached value or undefined if not found
-   */
-  get(key: K): V | undefined {
-    if (!this.cache.has(key)) return undefined;
-    const value = this.cache.get(key)!;
-    this.moveToEnd(key, value);
-    return value;
-  }
-
-  /**
-   * Set a value in the cache
-   *
-   * @param key - The key to store
-   * @param value - The value to cache
-   */
-  set(key: K, value: V): void {
-    if (this.cache.has(key)) {
-      this.cache.delete(key);
-    } else if (this.cache.size >= this.maxSize) {
-      // Remove least recently used (first item)
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey !== undefined) {
-        this.cache.delete(firstKey);
-      }
-    }
-    this.cache.set(key, value);
-  }
-
-  /**
-   * Clear all entries from the cache and pending operations
-   */
-  clear(): void {
-    this.cache.clear();
-    this.pending.clear();
-  }
-
-  /**
-   * Get the current number of cached entries
-   */
-  get size(): number {
-    return this.cache.size;
-  }
-
-  /**
-   * Get the current number of pending operations
-   */
-  get pendingSize(): number {
-    return this.pending.size;
-  }
-}
-
 // ============================================================================
 // Math Utilities
 // ============================================================================
@@ -314,35 +158,6 @@ export function clamp(value: number, min: number, max: number): number {
 
 /**
  * @internal
- * Linear interpolation between two values
- *
- * @param a - Start value
- * @param b - End value
- * @param t - Interpolation factor (0 = a, 1 = b, 0.5 = midpoint)
- * @returns Interpolated value
- *
- * @example
- * ```typescript
- * lerp(0, 100, 0.5)   // Returns 50
- * lerp(0, 100, 0)     // Returns 0
- * lerp(0, 100, 1)     // Returns 100
- * lerp(10, 20, 0.25)  // Returns 12.5
- * ```
- *
- * Edge cases:
- * - t can be outside [0, 1] for extrapolation
- * - NaN values return NaN
- * - Handles Infinity correctly
- */
-export function lerp(a: number, b: number, t: number): number {
-  if (isNaN(a) || isNaN(b) || isNaN(t)) {
-    return NaN;
-  }
-  return a + (b - a) * t;
-}
-
-/**
- * @internal
  * Round a number to a specific decimal place
  *
  * @param value - The number to round
@@ -371,168 +186,6 @@ export function round(value: number, decimals: number = 0): number {
   }
   const factor = Math.pow(10, decimals);
   return Math.round(value * factor) / factor;
-}
-
-/**
- * @internal
- * Calculate Euclidean distance between two points in 2D space
- *
- * @param x1 - X coordinate of first point
- * @param y1 - Y coordinate of first point
- * @param x2 - X coordinate of second point
- * @param y2 - Y coordinate of second point
- * @returns Distance between the two points (always >= 0)
- *
- * @example
- * ```typescript
- * distance(0, 0, 3, 4)  // Returns 5 (Pythagorean theorem)
- * distance(0, 0, 0, 0)  // Returns 0 (same point)
- * distance(1, 1, 4, 5)  // Returns 5
- * ```
- *
- * Edge cases:
- * - NaN values return NaN
- * - Infinity values may return Infinity
- * - Always returns non-negative value
- */
-export function distance(x1: number, y1: number, x2: number, y2: number): number {
-  if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
-    return NaN;
-  }
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-// ============================================================================
-// Array Utilities
-// ============================================================================
-
-/**
- * @internal
- * Get unique values from an array
- *
- * @param array - Input array (may contain duplicates)
- * @returns New array with only unique values (preserves first occurrence order)
- *
- * @example
- * ```typescript
- * unique([1, 2, 2, 3, 1])         // Returns [1, 2, 3]
- * unique(['a', 'b', 'a'])         // Returns ['a', 'b']
- * unique([])                      // Returns []
- * ```
- *
- * Edge cases:
- * - Empty array returns empty array
- * - Uses Set equality (NaN === NaN, +0 === -0)
- * - Preserves object/array references
- */
-export function unique<T>(array: T[]): T[] {
-  return Array.from(new Set(array));
-}
-
-/**
- * @internal
- * Group array items by a key function
- *
- * @param array - Input array to group
- * @param keyFn - Function that extracts grouping key from each item
- * @returns Object with keys as groups and values as arrays of items
- *
- * @example
- * ```typescript
- * const items = [
- *   { type: 'fruit', name: 'apple' },
- *   { type: 'fruit', name: 'banana' },
- *   { type: 'vegetable', name: 'carrot' }
- * ];
- * groupBy(items, item => item.type)
- * // Returns { fruit: [...], vegetable: [...] }
- * ```
- *
- * Edge cases:
- * - Empty array returns empty object
- * - Handles undefined/null keys as string keys
- */
-export function groupBy<T, K extends string | number>(
-  array: T[],
-  keyFn: (item: T) => K
-): Record<K, T[]> {
-  return array.reduce(
-    (acc, item) => {
-      const key = keyFn(item);
-      if (!acc[key]) {
-        acc[key] = [];
-      }
-      acc[key].push(item);
-      return acc;
-    },
-    {} as Record<K, T[]>
-  );
-}
-
-/**
- * @internal
- * Sort array by property value
- *
- * @param array - Input array to sort
- * @param property - Property key to sort by
- * @param order - Sort order ('asc' or 'desc', default: 'asc')
- * @returns New sorted array (does not mutate original)
- *
- * @example
- * ```typescript
- * const items = [{ age: 30 }, { age: 20 }, { age: 25 }];
- * sortByProperty(items, 'age')           // Sorted by age ascending
- * sortByProperty(items, 'age', 'desc')   // Sorted by age descending
- * ```
- *
- * Edge cases:
- * - Returns shallow copy of array
- * - Handles undefined properties (sorted to end regardless of `order`)
- * - Stable sort (preserves relative order of equal elements)
- */
-export function sortByProperty<T>(
-  array: T[],
-  property: keyof T,
-  order: 'asc' | 'desc' = 'asc'
-): T[] {
-  return [...array].sort((a, b) => {
-    const aVal = a[property];
-    const bVal = b[property];
-    // BUG-048 (2026-07-18 audit): implement the documented "undefined sorted
-    // to end" — comparisons against undefined used to yield 0 ("equal"),
-    // leaving undefined-valued items interleaved in place. null gets the same
-    // treatment (comparisons against it are equally meaningless).
-    const aMissing = aVal === undefined || aVal === null;
-    const bMissing = bVal === undefined || bVal === null;
-    if (aMissing) return bMissing ? 0 : 1;
-    if (bMissing) return -1;
-    const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-    return order === 'asc' ? comparison : -comparison;
-  });
-}
-
-/**
- * @internal
- * Filter array items, removing null and undefined values
- *
- * @param array - Input array with possibly null/undefined items
- * @returns New array with null and undefined values removed
- *
- * @example
- * ```typescript
- * filterNulls([1, null, 2, undefined, 3])  // Returns [1, 2, 3]
- * filterNulls([null, undefined])           // Returns []
- * filterNulls([0, false, ''])              // Returns [0, false, ''] (keeps falsy values)
- * ```
- *
- * Edge cases:
- * - Keeps falsy values (0, false, empty string)
- * - Type guard ensures return type doesn't include null|undefined
- */
-export function filterNulls<T>(array: (T | null | undefined)[]): T[] {
-  return array.filter((item): item is T => item !== null && item !== undefined);
 }
 
 // ============================================================================
@@ -647,112 +300,6 @@ export function isValidHSV(h: number, s: number, v: number): boolean {
 }
 
 // ============================================================================
-// Type Guards
-// ============================================================================
-
-/**
- * @internal
- * Type guard: Check if a value is a string
- *
- * @param value - Value to check
- * @returns true if value is a string, false otherwise
- *
- * @example
- * ```typescript
- * isString('hello')        // Returns true
- * isString('')             // Returns true (empty string)
- * isString(123)            // Returns false
- * isString(new String('')) // Returns false (String object, not primitive)
- * ```
- */
-export function isString(value: unknown): value is string {
-  return typeof value === 'string';
-}
-
-/**
- * @internal
- * Type guard: Check if a value is a finite number (excludes NaN and Infinity)
- *
- * @param value - Value to check
- * @returns true if value is a number and finite (not NaN, not Infinity), false otherwise
- *
- * @example
- * ```typescript
- * isNumber(42)              // Returns true
- * isNumber(0)               // Returns true
- * isNumber(-3.14)           // Returns true
- * isNumber(NaN)             // Returns false
- * isNumber(Infinity)        // Returns false
- * isNumber('123')           // Returns false (string)
- * isNumber(new Number(5))   // Returns false (Number object)
- * ```
- *
- * Note: This excludes NaN and Infinity for safer numeric operations
- */
-export function isNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value);
-}
-
-/**
- * @internal
- * Type guard: Check if a value is an array
- *
- * @param value - Value to check
- * @returns true if value is an array, false otherwise
- *
- * @example
- * ```typescript
- * isArray([1, 2, 3])       // Returns true
- * isArray([])              // Returns true
- * isArray('not array')     // Returns false
- * isArray({ length: 0 })   // Returns false (array-like object)
- * ```
- */
-export function isArray<T = unknown>(value: unknown): value is T[] {
-  return Array.isArray(value);
-}
-
-/**
- * Type guard: Check if a value is a plain object (not array, not null)
- *
- * @param value - Value to check
- * @returns true if value is a plain object, false otherwise
- *
- * @example
- * ```typescript
- * isObject({ a: 1 })       // Returns true
- * isObject({})             // Returns true
- * isObject([])             // Returns false (array)
- * isObject(null)           // Returns false
- * isObject(new Date())     // Returns true (object instance)
- * ```
- */
-export function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/**
- * Type guard: Check if a value is null or undefined
- *
- * @param value - Value to check
- * @returns true if value is null or undefined, false otherwise
- *
- * @example
- * ```typescript
- * isNullish(null)          // Returns true
- * isNullish(undefined)     // Returns true
- * isNullish(0)             // Returns false
- * isNullish('')            // Returns false
- * isNullish(false)         // Returns false
- * ```
- *
- * Note: More precise than falsy check - only null/undefined, not 0/false/''
- */
-export function isNullish(value: unknown): value is null | undefined {
-  return value === null || value === undefined;
-}
-
-// ============================================================================
 // Async Utilities
 // ============================================================================
 
@@ -861,7 +408,7 @@ export async function retry<T>(
   // OPT-014 (2026-07-18 audit): optional predicate so callers can skip
   // retrying deterministic failures (e.g. HTTP 4xx). Default preserves the
   // historical retry-everything behavior.
-  shouldRetry: (error: unknown) => boolean = () => true
+  shouldRetry: (error: unknown) => boolean = () => true,
 ): Promise<T> {
   const attempts = Math.max(1, Math.floor(maxAttempts)); // Ensure at least 1 attempt
   let lastError: Error | null = null;
@@ -889,6 +436,52 @@ export async function retry<T>(
   }
 
   throw lastError ?? new Error('All retry attempts failed');
+}
+
+// ============================================================================
+// Text Utilities
+// ============================================================================
+
+/**
+ * Three-character axis code for a localized dye name (the bot's 14C triangle
+ * and 13C·1 contrast plot).
+ *
+ * The order of operations is the whole point, and it is why this lives in
+ * core rather than being re-derived per generator:
+ *
+ * 1. **Uppercase before slicing.** `'ß'.toUpperCase()` is `'SS'` — two
+ *    characters — so slicing first and uppercasing after silently yields a
+ *    four-character code for German names.
+ * 2. **Strip punctuation.** `Ul'dahbrauner` must abbreviate to `ULD`, not
+ *    `UL'` — an apostrophe carries no identifying signal in a 3-char code.
+ * 3. **CJK keeps its first three characters** and is not uppercased: those
+ *    scripts have no case, and each glyph already carries a full word's
+ *    worth of meaning.
+ *
+ * A code is deliberately **not** globally unique — the nine Metallics all
+ * abbreviate to `MET`, the Dark run to `DAR`, and every German
+ * `Schnee-`/`Schiefer-` name collides on `SCH`. That is accepted because a
+ * code never appears alone: the swatch pair sits on the same row, so colour
+ * disambiguates the letters and the letters disambiguate the colour.
+ *
+ * @param name - The dye name, already localized
+ * @param locale - Locale code; `ja`/`zh`/`ko` take the CJK path
+ * @returns A code of at most three characters
+ *
+ * @example
+ * ```typescript
+ * abbreviateDyeName("Ul'dahbrauner", 'de')   // 'ULD'
+ * abbreviateDyeName('Rußschwarzer', 'de')    // 'RUS'  (ß → SS, then sliced)
+ * abbreviateDyeName('Metallic Gold', 'en')   // 'MET'
+ * abbreviateDyeName('ダラガブレッド', 'ja')      // 'ダラガ'
+ * ```
+ */
+export function abbreviateDyeName(name: string, locale: string): string {
+  if (locale === 'ja' || locale === 'zh' || locale === 'ko') return name.slice(0, 3);
+  return name
+    .toUpperCase()
+    .replace(/[^\p{L}\p{N}]/gu, '')
+    .slice(0, 3);
 }
 
 // ============================================================================

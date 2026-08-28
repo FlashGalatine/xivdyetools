@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ConsoleAdapter } from './console-adapter.js';
+import type { LogEntry } from '../types.js';
 
 describe('ConsoleAdapter', () => {
   let consoleSpy: {
@@ -262,6 +263,86 @@ describe('ConsoleAdapter', () => {
       const parsed = JSON.parse(consoleSpy.info.mock.calls[0][0]);
       expect(parsed.context.service).toBe('parent');
       expect(parsed.context.requestId).toBe('req-123');
+    });
+  });
+
+  describe('error payloads on every level', () => {
+    /**
+     * `write` is protected and only `error()` carries an error through the
+     * public Logger API, so the debug/info/warn error arms of the level
+     * switch are unreachable from outside. Exposing `write` is the only way
+     * to assert the adapter's actual write contract.
+     */
+    class ExposedConsoleAdapter extends ConsoleAdapter {
+      public emit(entry: LogEntry): void {
+        this.write(entry);
+      }
+    }
+
+    const entry = (level: LogEntry['level'], error?: Error): LogEntry =>
+      ({
+        level,
+        message: `${level} line`,
+        timestamp: '2024-01-15T12:00:00.000Z',
+        ...(error !== undefined ? { error } : {}),
+      }) as LogEntry;
+
+    it('passes an error through as a second console argument on every level', () => {
+      const logger = new ExposedConsoleAdapter({ level: 'debug', format: 'pretty' });
+      const boom = new Error('boom');
+
+      logger.emit(entry('debug', boom));
+      logger.emit(entry('info', boom));
+      logger.emit(entry('warn', boom));
+      logger.emit(entry('error', boom));
+
+      expect(consoleSpy.debug.mock.calls[0]).toHaveLength(2);
+      expect(consoleSpy.info.mock.calls[0]).toHaveLength(2);
+      expect(consoleSpy.warn.mock.calls[0]).toHaveLength(2);
+      expect(consoleSpy.error.mock.calls[0]).toHaveLength(2);
+      expect(consoleSpy.debug.mock.calls[0][1]).toBe(boom);
+    });
+
+    it('omits the second argument on every level when there is no error', () => {
+      const logger = new ExposedConsoleAdapter({ level: 'debug', format: 'pretty' });
+
+      logger.emit(entry('debug'));
+      logger.emit(entry('info'));
+      logger.emit(entry('warn'));
+      logger.emit(entry('error'));
+
+      expect(consoleSpy.debug.mock.calls[0]).toHaveLength(1);
+      expect(consoleSpy.info.mock.calls[0]).toHaveLength(1);
+      expect(consoleSpy.warn.mock.calls[0]).toHaveLength(1);
+      expect(consoleSpy.error.mock.calls[0]).toHaveLength(1);
+    });
+
+    it('logs a single argument when there is no error', () => {
+      const logger = new ConsoleAdapter({ level: 'debug', format: 'pretty' });
+
+      logger.debug('dbg');
+      logger.info('inf');
+      logger.warn('wrn');
+      logger.error('err');
+
+      expect(consoleSpy.debug.mock.calls[0].length).toBe(1);
+      expect(consoleSpy.info.mock.calls[0].length).toBe(1);
+      expect(consoleSpy.warn.mock.calls[0].length).toBe(1);
+      expect(consoleSpy.error.mock.calls[0].length).toBe(1);
+    });
+
+    it('routes each level to its own console method', () => {
+      const logger = new ConsoleAdapter({ level: 'debug', format: 'pretty' });
+
+      logger.debug('d');
+      logger.info('i');
+      logger.warn('w');
+      logger.error('e');
+
+      expect(consoleSpy.debug).toHaveBeenCalledTimes(1);
+      expect(consoleSpy.info).toHaveBeenCalledTimes(1);
+      expect(consoleSpy.warn).toHaveBeenCalledTimes(1);
+      expect(consoleSpy.error).toHaveBeenCalledTimes(1);
     });
   });
 });

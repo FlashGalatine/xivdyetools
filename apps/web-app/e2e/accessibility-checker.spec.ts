@@ -1,26 +1,11 @@
-import { test, expect, Page } from '@playwright/test';
-
-async function seedStartupStorage(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    localStorage.setItem('xivdyetools_welcome_seen', 'true');
-    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
-    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
-  });
-}
-
-async function dismissBlockingOverlays(page: Page): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    const backdropCount = await page.locator('.modal-backdrop').count();
-    if (backdropCount === 0) break;
-
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
-  }
-
-  await page.evaluate(() => {
-    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
-  });
-}
+import { test, expect, Page } from './fixtures/coverage';
+import {
+  waitForAppReady,
+  gotoTool,
+  seedStartupStorage,
+  dismissBlockingOverlays,
+  closePaletteDrawer,
+} from './fixtures/navigation';
 
 /**
  * E2E Tests for Accessibility Checker Tool (Vision)
@@ -48,13 +33,12 @@ async function navigateToAccessibilityTool(page: Page): Promise<void> {
     { timeout: 15000 }
   );
 
-  await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
+  await waitForAppReady(page);
   await dismissBlockingOverlays(page);
   await page.waitForTimeout(300);
 
   // Navigate by stable v4 tool id
-  const visionButton = page.locator('[data-tool="accessibility"]:visible').first();
-  await visionButton.click();
+  await gotoTool(page, 'accessibility');
   await dismissBlockingOverlays(page);
   await page.waitForTimeout(800);
 }
@@ -80,12 +64,11 @@ test.describe('Accessibility Checker Tool', () => {
       await expect(deuteranopiaSwitch).toBeVisible();
     });
 
-    test('should display simulation display options', async ({ page }) => {
-      // Check for display options section
-      const displaySection = page.getByText('Simulation Display').first();
-      await expect(displaySection).toBeVisible();
-    });
-  });
+
+    // NOTE: the "Simulation Display" options (show labels / hex values /
+    // high contrast) were removed in c0806b3 — the toggles persisted and
+    // re-rendered but no 6A renderer ever read them. Their tests went with
+    // the feature rather than being kept alive against deleted UI.
 
   test.describe('Vision Type Toggles', () => {
     test('should have all four colorblindness type switches', async ({ page }) => {
@@ -177,66 +160,6 @@ test.describe('Accessibility Checker Tool', () => {
     });
   });
 
-  test.describe('Display Options', () => {
-    test('should have show labels switch', async ({ page }) => {
-      const showLabelsSwitch = page.getByRole('switch', { name: /show labels/i });
-      await expect(showLabelsSwitch).toBeVisible();
-    });
-
-    test('should have show hex values switch', async ({ page }) => {
-      const showHexSwitch = page.getByRole('switch', { name: /show hex values/i });
-      await expect(showHexSwitch).toBeVisible();
-    });
-
-    test('should have high contrast mode switch', async ({ page }) => {
-      const highContrastSwitch = page.getByRole('switch', { name: /high contrast mode/i });
-      await expect(highContrastSwitch).toBeVisible();
-    });
-
-    test('should toggle show labels switch', async ({ page }) => {
-      const showLabelsSwitch = page.getByRole('switch', { name: /show labels/i });
-
-      // Get initial state
-      const wasChecked = await showLabelsSwitch.isChecked();
-
-      // Toggle the switch
-      await showLabelsSwitch.click();
-      await page.waitForTimeout(300);
-
-      // Verify it changed state
-      const isNowChecked = await showLabelsSwitch.isChecked();
-      expect(isNowChecked).toBe(!wasChecked);
-    });
-
-    test('should toggle high contrast mode switch', async ({ page }) => {
-      const highContrastSwitch = page.getByRole('switch', { name: /high contrast mode/i });
-
-      // Get initial state (should be unchecked by default)
-      const wasChecked = await highContrastSwitch.isChecked();
-
-      // Toggle the switch
-      await highContrastSwitch.click();
-      await page.waitForTimeout(300);
-
-      // Verify it changed state
-      const isNowChecked = await highContrastSwitch.isChecked();
-      expect(isNowChecked).toBe(!wasChecked);
-    });
-
-    test('should persist display options in localStorage', async ({ page }) => {
-      const showHexSwitch = page.getByRole('switch', { name: /show hex values/i });
-
-      // Toggle the switch
-      await showHexSwitch.click();
-      await page.waitForTimeout(500);
-
-      // Check localStorage was updated (key is v3_accessibility_display_options)
-      const storedDisplayOptions = await page.evaluate(() => {
-        return localStorage.getItem('v3_accessibility_display_options');
-      });
-
-      expect(storedDisplayOptions).not.toBeNull();
-    });
   });
 });
 
@@ -296,33 +219,31 @@ test.describe('Accessibility Checker - Mobile Drawer', () => {
     await navigateToAccessibilityTool(page);
   });
 
-  test('should show mobile sidebar toggle button', async ({ page }) => {
-    // Look for the mobile sidebar toggle FAB
-    const mobileToggle = page.locator('.v4-mobile-sidebar-toggle');
-    await expect(mobileToggle).toBeVisible();
+  // 5.0: the mobile sidebar FAB is gone — settings live behind the header's
+  // Advanced Settings gear, which embeds the config panel on mobile.
+  test('should show the advanced settings gear', async ({ page }) => {
+    const gear = page.getByRole('button', { name: /advanced settings/i }).first();
+    await expect(gear).toBeVisible();
   });
 
-  test('should open mobile sidebar when toggle is clicked', async ({ page }) => {
-    // Click the mobile sidebar toggle
-    const mobileToggle = page.locator('.v4-mobile-sidebar-toggle');
-    await mobileToggle.click();
-    await page.waitForTimeout(500);
+  test('should open settings when the gear is clicked', async ({ page }) => {
+    const gear = page.getByRole('button', { name: /advanced settings/i }).first();
+    await gear.click();
+    await page.waitForTimeout(600);
 
-    // After opening sidebar, vision type controls should become visible
+    // The vision-type controls become reachable once the panel is open
     const visionTypesHeading = page.getByText('Vision Types').first();
     await expect(visionTypesHeading).toBeVisible();
   });
 
   test('should interact with drawer vision type switches on mobile', async ({ page }) => {
-    // First close the palette drawer if it's open (it can intercept clicks)
-    const paletteCloseBtn = page.getByRole('button', { name: /close palette/i });
-    if ((await paletteCloseBtn.count()) > 0) {
-      await paletteCloseBtn.click();
-      await page.waitForTimeout(300);
-    }
+    // The palette drawer covers the settings gear on mobile; the shared
+    // helper taps the overlay's outside corner rather than its centre, which
+    // the drawer itself sits over.
+    await closePaletteDrawer(page);
 
-    // Open the mobile sidebar
-    const mobileToggle = page.locator('.v4-mobile-sidebar-toggle');
+    // Open settings through the gear
+    const mobileToggle = page.getByRole('button', { name: /advanced settings/i }).first();
     await mobileToggle.click();
 
     // Wait for sidebar to open and content to load
@@ -350,53 +271,14 @@ test.describe('Accessibility Checker - Mobile Drawer', () => {
     }
   });
 
-  test('should interact with drawer display option switches on mobile', async ({ page }) => {
-    // First close the palette drawer if it's open (it can intercept clicks)
-    const paletteCloseBtn = page.getByRole('button', { name: /close palette/i });
-    if ((await paletteCloseBtn.count()) > 0) {
-      await paletteCloseBtn.click();
-      await page.waitForTimeout(300);
-    }
-
-    // Open the mobile sidebar
-    const mobileToggle = page.locator('.v4-mobile-sidebar-toggle');
-    await mobileToggle.click();
-
-    // Wait for sidebar to open and content to load
-    await page.waitForTimeout(1000);
-
-    // Find a display option switch
-    const showLabelsSwitch = page.getByRole('switch', { name: /show labels/i }).first();
-
-    // Check if the switch is visible
-    const switchCount = await showLabelsSwitch.count();
-    if (switchCount > 0) {
-      const wasChecked = await showLabelsSwitch.isChecked();
-
-      // Toggle the switch using force to handle any overlay issues
-      await showLabelsSwitch.click({ force: true });
-      await page.waitForTimeout(500);
-
-      // Verify it changed state
-      const isNowChecked = await showLabelsSwitch.isChecked();
-      expect(isNowChecked).toBe(!wasChecked);
-    } else {
-      // If switches aren't found, verify sidebar content is visible
-      const displayText = page.getByText('Simulation Display');
-      await expect(displayText.first()).toBeVisible({ timeout: 5000 });
-    }
-  });
-
   test('should sync drawer switches with desktop when resizing viewport', async ({ page }) => {
-    // First close the palette drawer if it's open (it can intercept clicks)
-    const paletteCloseBtn = page.getByRole('button', { name: /close palette/i });
-    if ((await paletteCloseBtn.count()) > 0) {
-      await paletteCloseBtn.click();
-      await page.waitForTimeout(300);
-    }
+    // The palette drawer covers the settings gear on mobile; the shared
+    // helper taps the overlay's outside corner rather than its centre, which
+    // the drawer itself sits over.
+    await closePaletteDrawer(page);
 
-    // Open mobile sidebar
-    const mobileToggle = page.locator('.v4-mobile-sidebar-toggle');
+    // Open settings through the gear
+    const mobileToggle = page.getByRole('button', { name: /advanced settings/i }).first();
     await mobileToggle.click();
 
     // Wait for sidebar to open

@@ -4,18 +4,27 @@
  * Handles conversions between hex, RGB, and HSV color formats
  */
 
-import type { RGB, HSV, HexColor, LAB, OKLAB, OKLCH, LCH, HSL } from '@xivdyetools/types';
+import type { RGB, HSV, HexColor, LAB, OKLAB, OKLCH, LCH, HSL, CMYK } from '@xivdyetools/types';
 import { createHexColor, ErrorCode, AppError } from '@xivdyetools/types';
 
 /**
  * DeltaE formula for color difference calculations
  * - cie76: Simple Euclidean distance in LAB space (fast)
- * - cie2000: CIEDE2000 formula (perceptually accurate, industry standard)
- * - oklab: OKLAB Euclidean distance (modern, simpler than cie2000, CSS standard)
- * - hyab: HyAB hybrid distance (best for large color differences/palette matching)
+ * - ciede2000: CIEDE2000 formula (perceptually accurate, industry standard)
+ * - cie2000: legacy alias for `'ciede2000'` — see {@link normalizeDeltaEFormula}
+ * - oklab: OKLAB Euclidean distance (modern, simpler than CIEDE2000, CSS standard)
+ *
+ * `'ciede2000'` is the canonical spelling: it is the one `MatchingMethod` uses,
+ * so a `MatchingMethod` can be handed straight to {@link ColorConverter.getDeltaE}
+ * with no translation switch in between (DEAD-037, 2026-08-18 audit).
  */
-export type DeltaEFormula = 'cie76' | 'cie2000' | 'oklab' | 'hyab';
-import { RGB_MIN, RGB_MAX, HUE_MAX } from '../../constants/index.js';
+export type DeltaEFormula = 'cie76' | 'cie2000' | 'ciede2000' | 'oklab';
+
+/**
+ * The canonical `DeltaEFormula` spellings, after alias folding.
+ */
+export type CanonicalDeltaEFormula = Exclude<DeltaEFormula, 'cie2000'>;
+import { RGB_MIN, RGB_MAX, HUE_MAX, COLOR_DISTANCE_MAX } from '../../constants/index.js';
 import {
   clamp,
   round,
@@ -24,6 +33,19 @@ import {
   isValidHSV,
   LRUCache,
 } from '../../utils/index.js';
+
+/**
+ * Fold the legacy `'cie2000'` spelling onto the canonical `'ciede2000'`.
+ *
+ * Both name the same CIEDE2000 math and always have; only the spelling ever
+ * differed (`DeltaEFormula` said `'cie2000'`, `MatchingMethod` said
+ * `'ciede2000'`). This is the single point where that is reconciled — call it
+ * at any entry point that accepts a caller-supplied `DeltaEFormula`, never
+ * re-derive the mapping with another switch.
+ */
+export function normalizeDeltaEFormula(formula: DeltaEFormula): CanonicalDeltaEFormula {
+  return formula === 'cie2000' ? 'ciede2000' : formula;
+}
 
 /**
  * Configuration for ColorConverter caches
@@ -158,7 +180,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_HEX_COLOR,
         `Invalid hex color: ${hex}. Use format #RRGGBB or #RGB`,
-        'error'
+        'error',
       );
     }
 
@@ -201,7 +223,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
-        'error'
+        'error',
       );
     }
 
@@ -242,7 +264,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}`,
-        'error'
+        'error',
       );
     }
 
@@ -319,7 +341,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid HSV values: h=${h}, s=${s}, v=${v}`,
-        'error'
+        'error',
       );
     }
 
@@ -349,9 +371,7 @@ export class ColorConverter {
     const x = c * (1 - Math.abs((hNorm % 2) - 1));
     const m = vNorm - c;
 
-    let rNorm: number,
-      gNorm: number,
-      bNorm: number;
+    let rNorm: number, gNorm: number, bNorm: number;
 
     if (hNorm >= 0 && hNorm < 1) {
       [rNorm, gNorm, bNorm] = [c, x, 0];
@@ -470,6 +490,58 @@ export class ColorConverter {
     return this.getDefault().getColorDistance(hex1, hex2);
   }
 
+  /**
+   * Calculate "redmean" weighted RGB distance between two colors.
+   *
+   * A low-cost approximation of perceptual distance that weights the RGB
+   * channels by the mean red level (https://en.wikipedia.org/wiki/Color_difference#sRGB):
+   *   r̄ = (R1 + R2) / 2
+   *   ΔC = √((2 + r̄/256)·ΔR² + 4·ΔG² + (2 + (255 − r̄)/256)·ΔB²)
+   *
+   * Range: 0 for identical colors, ~765 for white vs black.
+   */
+  getRedmeanDistance(hex1: string, hex2: string): number {
+    const rgb1 = this.hexToRgb(hex1);
+    const rgb2 = this.hexToRgb(hex2);
+
+    const rMean = (rgb1.r + rgb2.r) / 2;
+    const dr = rgb1.r - rgb2.r;
+    const dg = rgb1.g - rgb2.g;
+    const db = rgb1.b - rgb2.b;
+
+    return Math.sqrt(
+      (2 + rMean / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rMean) / 256) * db * db,
+    );
+  }
+
+  /**
+   * Static method: Calculate redmean distance using default instance
+   */
+  static getRedmeanDistance(hex1: string, hex2: string): number {
+    return this.getDefault().getRedmeanDistance(hex1, hex2);
+  }
+
+  /**
+   * Distinguishability percentage between two colors.
+   *
+   * This is RGB Euclidean distance rescaled to 0-100:
+   * `round(distance / 441.67 × 100)`. It is NOT a separate metric — ranks are
+   * always identical to RGB distance, and integer rounding creates ties, so any
+   * ordering driven by this value needs a sort fallback (and ties should be
+   * badged as ties, never presented as a single answer). Kept for continuity
+   * with the Accessibility readout. Not a WCAG standard.
+   */
+  getDistinguishabilityPercent(hex1: string, hex2: string): number {
+    return Math.round((this.getColorDistance(hex1, hex2) / COLOR_DISTANCE_MAX) * 100);
+  }
+
+  /**
+   * Static method: Distinguishability percentage using default instance
+   */
+  static getDistinguishabilityPercent(hex1: string, hex2: string): number {
+    return this.getDefault().getDistinguishabilityPercent(hex1, hex2);
+  }
+
   // ============================================================================
   // LAB Color Space Conversion
   // ============================================================================
@@ -508,7 +580,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
-        'error'
+        'error',
       );
     }
 
@@ -762,7 +834,7 @@ export class ColorConverter {
       Math.pow(dLp / (kL * Sl), 2) +
         Math.pow(dCp / (kC * Sc), 2) +
         Math.pow(dHp / (kH * Sh), 2) +
-        Rt * (dCp / (kC * Sc)) * (dHp / (kH * Sh))
+        Rt * (dCp / (kC * Sc)) * (dHp / (kH * Sh)),
     );
 
     return dE;
@@ -792,9 +864,9 @@ export class ColorConverter {
    *
    * Available formulas:
    * - cie76: LAB Euclidean (fast, fair accuracy)
-   * - cie2000: CIEDE2000 (industry standard, accurate)
-   * - oklab: OKLAB Euclidean (modern, simpler than cie2000, CSS standard)
-   * - hyab: HyAB hybrid (best for large color differences/palette matching)
+   * - ciede2000: CIEDE2000 (industry standard, accurate); `'cie2000'` is a
+   *   legacy alias for it and produces an identical value
+   * - oklab: OKLAB Euclidean (modern, simpler than CIEDE2000, CSS standard)
    *
    * @param hex1 First hex color
    * @param hex2 Second hex color
@@ -802,16 +874,14 @@ export class ColorConverter {
    * @returns DeltaE value (scale varies by formula)
    */
   getDeltaE(hex1: string, hex2: string, formula: DeltaEFormula = 'cie76'): number {
-    switch (formula) {
-      case 'cie2000': {
+    switch (normalizeDeltaEFormula(formula)) {
+      case 'ciede2000': {
         const lab1 = this.hexToLab(hex1);
         const lab2 = this.hexToLab(hex2);
         return this.getDeltaE2000(lab1, lab2);
       }
       case 'oklab':
         return this.getDeltaE_Oklab(hex1, hex2);
-      case 'hyab':
-        return this.getDeltaE_HyAB(hex1, hex2);
       case 'cie76':
       default: {
         const lab1 = this.hexToLab(hex1);
@@ -867,50 +937,6 @@ export class ColorConverter {
   }
 
   /**
-   * Calculate color difference using HyAB (Hybrid) algorithm.
-   *
-   * HyAB uses taxicab distance for lightness and Euclidean for chroma.
-   * Research shows it outperforms both Euclidean AND CIEDE2000 for large
-   * color differences (>10 units), making it ideal for palette matching.
-   *
-   * Formula: ΔE_HyAB = |L₂ - L₁| + √[(a₂-a₁)² + (b₂-b₁)²]
-   *
-   * Reference: Abasi, Tehran & Fairchild (2019) -
-   * "Distance metrics for very large color differences"
-   *
-   * @param hex1 First color in hex format
-   * @param hex2 Second color in hex format
-   * @param kL Lightness weight (default 1.0). Higher = prioritize lightness matching.
-   *           Use kL > 1 for visibility-critical matching (armor, UI).
-   *           Use kL < 1 to tolerate brightness differences (find vibrant alternatives).
-   * @returns Distance value (0 = identical, scale ~0-1.5 for typical colors)
-   *
-   * @example getDeltaE_HyAB("#FF0000", "#800000") -> ~0.32
-   * @example getDeltaE_HyAB("#FF0000", "#800000", 2.0) -> higher (emphasize brightness)
-   */
-  getDeltaE_HyAB(hex1: string, hex2: string, kL: number = 1.0): number {
-    const lab1 = this.hexToOklab(hex1);
-    const lab2 = this.hexToOklab(hex2);
-
-    // Taxicab distance for lightness (weighted)
-    const dL = Math.abs(lab2.L - lab1.L) * kL;
-
-    // Euclidean distance for chroma plane
-    const da = lab2.a - lab1.a;
-    const db = lab2.b - lab1.b;
-    const dChroma = Math.sqrt(da * da + db * db);
-
-    return dL + dChroma;
-  }
-
-  /**
-   * Static method: Calculate HyAB distance using default instance
-   */
-  static getDeltaE_HyAB(hex1: string, hex2: string, kL: number = 1.0): number {
-    return this.getDefault().getDeltaE_HyAB(hex1, hex2, kL);
-  }
-
-  /**
    * Calculate color difference using OKLCH with customizable L/C/H weights.
    *
    * Allows users to prioritize different color attributes:
@@ -928,7 +954,7 @@ export class ColorConverter {
   getDeltaE_OklchWeighted(
     hex1: string,
     hex2: string,
-    weights: { kL?: number; kC?: number; kH?: number } = {}
+    weights: { kL?: number; kC?: number; kH?: number } = {},
   ): number {
     const { kL = 1.0, kC = 1.0, kH = 1.0 } = weights;
 
@@ -960,7 +986,7 @@ export class ColorConverter {
   static getDeltaE_OklchWeighted(
     hex1: string,
     hex2: string,
-    weights: { kL?: number; kC?: number; kH?: number } = {}
+    weights: { kL?: number; kC?: number; kH?: number } = {},
   ): number {
     return this.getDefault().getDeltaE_OklchWeighted(hex1, hex2, weights);
   }
@@ -985,7 +1011,7 @@ export class ColorConverter {
    * @internal
    */
   private linearToSrgb(c: number): number {
-    const clamped = Math.max(0, Math.min(1, c));
+    const clamped = clamp(c, 0, 1);
     const srgb =
       clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
     return Math.round(srgb * 255);
@@ -1009,7 +1035,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
-        'error'
+        'error',
       );
     }
 
@@ -1354,7 +1380,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
-        'error'
+        'error',
       );
     }
 
@@ -1487,5 +1513,119 @@ export class ColorConverter {
    */
   static hslToHex(h: number, s: number, l: number): HexColor {
     return this.getDefault().hslToHex(h, s, l);
+  }
+
+  /**
+   * Convert RGB to CMYK (Cyan, Magenta, Yellow, Key/Black)
+   *
+   * Naive device-independent conversion (no ICC profile) — suitable for
+   * display/reference values shown alongside HEX/RGB/HSV, not for print
+   * production.
+   *
+   * @param r Red component (0-255)
+   * @param g Green component (0-255)
+   * @param b Blue component (0-255)
+   * @returns CMYK color with c/m/y/k as 0-100 percentages
+   *
+   * @example rgbToCmyk(255, 0, 0) -> { c: 0, m: 100, y: 100, k: 0 }
+   */
+  rgbToCmyk(r: number, g: number, b: number): CMYK {
+    if (!isValidRGB(r, g, b)) {
+      throw new AppError(
+        ErrorCode.INVALID_RGB_VALUE,
+        `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
+        'error',
+      );
+    }
+
+    const rNorm = r / 255;
+    const gNorm = g / 255;
+    const bNorm = b / 255;
+
+    const k = 1 - Math.max(rNorm, gNorm, bNorm);
+
+    // Pure black: avoid division by zero
+    if (k === 1) {
+      return { c: 0, m: 0, y: 0, k: 100 };
+    }
+
+    const c = (1 - rNorm - k) / (1 - k);
+    const m = (1 - gNorm - k) / (1 - k);
+    const y = (1 - bNorm - k) / (1 - k);
+
+    return {
+      c: round(c * 100, 2),
+      m: round(m * 100, 2),
+      y: round(y * 100, 2),
+      k: round(k * 100, 2),
+    };
+  }
+
+  /**
+   * Static method: Convert RGB to CMYK using default instance
+   */
+  static rgbToCmyk(r: number, g: number, b: number): CMYK {
+    return this.getDefault().rgbToCmyk(r, g, b);
+  }
+
+  /**
+   * Convert CMYK to RGB
+   *
+   * @param c Cyan (0-100 percent)
+   * @param m Magenta (0-100 percent)
+   * @param y Yellow (0-100 percent)
+   * @param k Key/Black (0-100 percent)
+   * @returns RGB color with values 0-255
+   *
+   * @example cmykToRgb(0, 100, 100, 0) -> { r: 255, g: 0, b: 0 }
+   */
+  cmykToRgb(c: number, m: number, y: number, k: number): RGB {
+    const cNorm = clamp(c, 0, 100) / 100;
+    const mNorm = clamp(m, 0, 100) / 100;
+    const yNorm = clamp(y, 0, 100) / 100;
+    const kNorm = clamp(k, 0, 100) / 100;
+
+    return {
+      r: clamp(Math.round(255 * (1 - cNorm) * (1 - kNorm)), RGB_MIN, RGB_MAX),
+      g: clamp(Math.round(255 * (1 - mNorm) * (1 - kNorm)), RGB_MIN, RGB_MAX),
+      b: clamp(Math.round(255 * (1 - yNorm) * (1 - kNorm)), RGB_MIN, RGB_MAX),
+    };
+  }
+
+  /**
+   * Static method: Convert CMYK to RGB using default instance
+   */
+  static cmykToRgb(c: number, m: number, y: number, k: number): RGB {
+    return this.getDefault().cmykToRgb(c, m, y, k);
+  }
+
+  /**
+   * Convert hex color to CMYK
+   */
+  hexToCmyk(hex: string): CMYK {
+    const rgb = this.hexToRgb(hex);
+    return this.rgbToCmyk(rgb.r, rgb.g, rgb.b);
+  }
+
+  /**
+   * Static method: Convert hex to CMYK using default instance
+   */
+  static hexToCmyk(hex: string): CMYK {
+    return this.getDefault().hexToCmyk(hex);
+  }
+
+  /**
+   * Convert CMYK to hex color
+   */
+  cmykToHex(c: number, m: number, y: number, k: number): HexColor {
+    const rgb = this.cmykToRgb(c, m, y, k);
+    return this.rgbToHex(rgb.r, rgb.g, rgb.b);
+  }
+
+  /**
+   * Static method: Convert CMYK to hex using default instance
+   */
+  static cmykToHex(c: number, m: number, y: number, k: number): HexColor {
+    return this.getDefault().cmykToHex(c, m, y, k);
   }
 }

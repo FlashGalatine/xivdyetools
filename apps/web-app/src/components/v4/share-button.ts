@@ -243,12 +243,34 @@ export class ShareButton extends BaseLitComponent {
     `,
   ];
 
+  private languageUnsubscribe: (() => void) | null = null;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    // The button label is localized — follow a language switch.
+    this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
+  }
+
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.languageUnsubscribe?.();
+    this.languageUnsubscribe = null;
     // Clean up timeout on unmount
     if (this.copiedTimeout) {
       clearTimeout(this.copiedTimeout);
     }
+  }
+
+  /**
+   * Trigger a share programmatically (the Shift+S global shortcut).
+   *
+   * A public method rather than letting callers `.click()` the element: the
+   * @click binding lives on the inner <button> inside this component's shadow
+   * root, so a click dispatched on the HOST never reaches it and silently does
+   * nothing. Respects `disabled` exactly as the pointer path does.
+   */
+  share(): void {
+    void this.handleShare();
   }
 
   /**
@@ -308,12 +330,12 @@ export class ShareButton extends BaseLitComponent {
    */
   private getLabel(): string {
     if (this.isCopied) {
-      return LanguageService.t('share.copied') || 'Copied!';
+      return LanguageService.t('share.copied');
     }
     if (this.label) {
       return this.label;
     }
-    return LanguageService.t('share.button') || 'Share';
+    return LanguageService.t('share.button');
   }
 
   protected override render(): TemplateResult {

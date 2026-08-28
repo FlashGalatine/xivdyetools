@@ -34,10 +34,8 @@ updates:
     open-pull-requests-limit: 5
     reviewers:
       - FlashGalatine
-    ignore:
-      # pnpm/action-setup v6 bootstraps pnpm v11 release candidates, which
-      # cannot parse v10-format lockfiles. Re-enable once pnpm v11 stable
-      # ships and this repo's packageManager field is bumped accordingly.
-      - dependency-name: pnpm/action-setup
-        update-types:
-          - version-update:semver-major
+    # FINDING-009 (2026-08-21 security audit): every `uses:` is now pinned to a
+    # full commit SHA with the version as a trailing comment; Dependabot bumps
+    # the SHA and keeps the comment in sync. The former pnpm/action-setup
+    # major-version ignore is gone — pnpm 11 is stable and `packageManager`
+    # is pnpm@11.17.0, so the v6 bootstrap concern no longer applies.

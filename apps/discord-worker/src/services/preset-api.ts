@@ -11,6 +11,12 @@
  */
 
 import { isModeratorId } from '@xivdyetools/bot-logic';
+import {
+  hmacSignHex,
+  createBotSignatureV2,
+  BOT_SIGNATURE_V2_HEADER,
+  BOT_SIGNATURE_NONCE_HEADER,
+} from '@xivdyetools/auth';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
@@ -21,10 +27,7 @@ import {
   type PresetEditRequest,
   type PresetEditResponse,
   type VoteResponse,
-  type ModerationStats,
-  type ModerationLogEntry,
   type PresetFilters,
-  type CategoryMeta,
   PresetAPIError,
 } from '../types/preset.js';
 
@@ -38,6 +41,13 @@ import {
  * SECURITY: This cryptographically binds the user headers to the request,
  * preventing header spoofing attacks even if BOT_API_SECRET is leaked.
  *
+ * Delegates to `@xivdyetools/auth`'s `hmacSignHex` (follow-up 3, superseding
+ * DEAD-019's "kept as-is" from the 2026-08-18 dead-code audit). That audit
+ * held off because `hmacSignHex` throws for secrets under 32 bytes
+ * (FINDING-009) and `BOT_SIGNING_SECRET` had no length floor; env-validation
+ * now enforces ≥32 bytes wherever the secret is set, so the throw path is
+ * unreachable in a valid deployment.
+ *
  * @param timestamp - Unix timestamp (seconds)
  * @param userDiscordId - User's Discord ID
  * @param userName - User's Discord name
@@ -48,25 +58,10 @@ async function generateRequestSignature(
   timestamp: number,
   userDiscordId: string | undefined,
   userName: string | undefined,
-  signingSecret: string
+  signingSecret: string,
 ): Promise<string> {
   const message = `${timestamp}:${userDiscordId || ''}:${userName || ''}`;
-
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(signingSecret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
-
-  // Convert to hex string
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  return hmacSignHex(message, signingSecret);
 }
 
 // ============================================================================
@@ -79,6 +74,12 @@ async function generateRequestSignature(
  * Uses Service Binding (env.PRESETS_API) when available for direct Worker-to-Worker
  * communication. Falls back to external URL (env.PRESETS_API_URL) if binding is not
  * configured (useful for local development).
+ *
+ * FINDING-020 (2026-08-21 security audit): callers percent-encode every
+ * user-influenced path segment (`encodeURIComponent`) before building `path`,
+ * so `..`, `/`, `?` and `#` in a preset id cannot steer the request onto a
+ * different presets-api route. The same encoded path is what the v2
+ * signature binds.
  *
  * @param env - Environment bindings
  * @param method - HTTP method
@@ -97,7 +98,7 @@ async function request<T>(
     userName?: string;
     requestId?: string; // For distributed tracing across service bindings
     logger?: ExtendedLogger;
-  } = {}
+  } = {},
 ): Promise<T> {
   // Require either service binding or URL-based configuration
   if (!env.PRESETS_API && (!env.PRESETS_API_URL || !env.BOT_API_SECRET)) {
@@ -126,6 +127,9 @@ async function request<T>(
     headers['X-User-Discord-Name'] = options.userName;
   }
 
+  // Serialise once: the same bytes are signed (v2) and sent
+  const bodyText = options.body ? JSON.stringify(options.body) : undefined;
+
   // SECURITY: Add HMAC signature for bot authentication
   // This must be done for BOTH service binding and URL-based requests,
   // as the Presets API requires signature verification in production
@@ -135,10 +139,27 @@ async function request<T>(
       timestamp,
       options.userDiscordId,
       options.userName,
-      env.BOT_SIGNING_SECRET
+      env.BOT_SIGNING_SECRET,
     );
     headers['X-Request-Timestamp'] = String(timestamp);
-    headers['X-Request-Signature'] = signature;
+    headers['X-Request-Signature'] = signature; // v1 — kept during rollover
+
+    // FINDING-014 (2026-08-21 audit): v2 binds method + path + body hash +
+    // nonce + identity (60 s window); presets-api verifies it whenever present
+    const nonce = crypto.randomUUID();
+    headers[BOT_SIGNATURE_NONCE_HEADER] = nonce;
+    headers[BOT_SIGNATURE_V2_HEADER] = await createBotSignatureV2(
+      {
+        method,
+        path: new URL(`https://internal${path}`).pathname,
+        body: bodyText,
+        timestamp: String(timestamp),
+        nonce,
+        userDiscordId: options.userDiscordId,
+        userName: options.userName,
+      },
+      env.BOT_SIGNING_SECRET,
+    );
   }
 
   try {
@@ -151,8 +172,8 @@ async function request<T>(
         new Request(`https://internal${path}`, {
           method,
           headers,
-          body: options.body ? JSON.stringify(options.body) : undefined,
-        })
+          body: bodyText,
+        }),
       );
     } else {
       // Fall back to external URL (for local dev or if service binding not configured)
@@ -160,7 +181,7 @@ async function request<T>(
       response = await fetch(url, {
         method,
         headers,
-        body: options.body ? JSON.stringify(options.body) : undefined,
+        body: bodyText,
       });
     }
 
@@ -170,7 +191,7 @@ async function request<T>(
       throw new PresetAPIError(
         response.status,
         data.message || data.error || `API request failed with status ${response.status}`,
-        data
+        data,
       );
     }
 
@@ -221,7 +242,7 @@ export function isModerator(env: Env, userId: string): boolean {
  */
 export async function getPresets(
   env: Env,
-  filters: PresetFilters = {}
+  filters: PresetFilters = {},
 ): Promise<PresetListResponse> {
   const params = new URLSearchParams();
 
@@ -237,25 +258,13 @@ export async function getPresets(
 }
 
 /**
- * Get featured presets (top voted)
- */
-export async function getFeaturedPresets(env: Env): Promise<CommunityPreset[]> {
-  const response = await request<{ presets: CommunityPreset[] }>(
-    env,
-    'GET',
-    '/api/v1/presets/featured'
-  );
-  return response.presets;
-}
-
-/**
  * Get a single preset by ID
  *
  * @returns Preset or null if not found
  */
 export async function getPreset(env: Env, id: string): Promise<CommunityPreset | null> {
   try {
-    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${id}`);
+    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${encodeURIComponent(id)}`);
   } catch (error) {
     if (error instanceof PresetAPIError && error.statusCode === 404) {
       return null;
@@ -269,10 +278,7 @@ export async function getPreset(env: Env, id: string): Promise<CommunityPreset |
  *
  * @returns First matching preset or null if not found
  */
-export async function getPresetByName(
-  env: Env,
-  name: string
-): Promise<CommunityPreset | null> {
+export async function getPresetByName(env: Env, name: string): Promise<CommunityPreset | null> {
   // BUG-034 (2026-07-18 audit): fetch a full page — limit 1 returned only the
   // search-RANKED top hit, making an exact-named preset unreachable whenever
   // a partial match ranked higher
@@ -283,9 +289,7 @@ export async function getPresetByName(
   });
 
   // Find exact match first, then partial match
-  const exactMatch = response.presets.find(
-    (p) => p.name.toLowerCase() === name.toLowerCase()
-  );
+  const exactMatch = response.presets.find((p) => p.name.toLowerCase() === name.toLowerCase());
   return exactMatch || response.presets[0] || null;
 }
 
@@ -294,7 +298,7 @@ export async function getPresetByName(
  */
 export async function getRandomPreset(
   env: Env,
-  category?: string
+  category?: string,
 ): Promise<CommunityPreset | null> {
   const filters: PresetFilters = {
     status: 'approved',
@@ -323,7 +327,7 @@ export async function submitPreset(
   env: Env,
   submission: PresetSubmission,
   userDiscordId: string,
-  userName: string
+  userName: string,
 ): Promise<PresetSubmitResponse> {
   return request<PresetSubmitResponse>(env, 'POST', '/api/v1/presets', {
     body: submission,
@@ -333,41 +337,17 @@ export async function submitPreset(
 }
 
 /**
- * Delete a preset (owner or moderator only)
- */
-export async function deletePreset(
-  env: Env,
-  presetId: string,
-  userDiscordId: string
-): Promise<boolean> {
-  try {
-    await request<{ success: boolean }>(env, 'DELETE', `/api/v1/presets/${presetId}`, {
-      userDiscordId,
-    });
-    return true;
-  } catch (error) {
-    if (error instanceof PresetAPIError && error.statusCode === 403) {
-      return false;
-    }
-    throw error;
-  }
-}
-
-/**
  * Get all presets owned by a user
  *
  * Returns presets in all statuses (pending, approved, rejected)
  * Sorted by creation date (newest first)
  */
-export async function getMyPresets(
-  env: Env,
-  userDiscordId: string
-): Promise<CommunityPreset[]> {
+export async function getMyPresets(env: Env, userDiscordId: string): Promise<CommunityPreset[]> {
   const response = await request<{ presets: CommunityPreset[]; total: number }>(
     env,
     'GET',
     '/api/v1/presets/mine',
-    { userDiscordId }
+    { userDiscordId },
   );
   return response.presets;
 }
@@ -386,9 +366,9 @@ export async function editPreset(
   presetId: string,
   updates: PresetEditRequest,
   userDiscordId: string,
-  userName: string
+  userName: string,
 ): Promise<PresetEditResponse> {
-  return request<PresetEditResponse>(env, 'PATCH', `/api/v1/presets/${presetId}`, {
+  return request<PresetEditResponse>(env, 'PATCH', `/api/v1/presets/${encodeURIComponent(presetId)}`, {
     body: updates,
     userDiscordId,
     userName,
@@ -405,9 +385,9 @@ export async function editPreset(
 export async function voteForPreset(
   env: Env,
   presetId: string,
-  userDiscordId: string
+  userDiscordId: string,
 ): Promise<VoteResponse> {
-  return request<VoteResponse>(env, 'POST', `/api/v1/votes/${presetId}`, {
+  return request<VoteResponse>(env, 'POST', `/api/v1/votes/${encodeURIComponent(presetId)}`, {
     userDiscordId,
   });
 }
@@ -418,9 +398,9 @@ export async function voteForPreset(
 export async function removeVote(
   env: Env,
   presetId: string,
-  userDiscordId: string
+  userDiscordId: string,
 ): Promise<VoteResponse> {
-  return request<VoteResponse>(env, 'DELETE', `/api/v1/votes/${presetId}`, {
+  return request<VoteResponse>(env, 'DELETE', `/api/v1/votes/${encodeURIComponent(presetId)}`, {
     userDiscordId,
   });
 }
@@ -432,14 +412,14 @@ export async function hasVoted(
   env: Env,
   presetId: string,
   userDiscordId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<boolean> {
   try {
     const response = await request<{ has_voted: boolean }>(
       env,
       'GET',
-      `/api/v1/votes/${presetId}/check`,
-      { userDiscordId, logger }
+      `/api/v1/votes/${encodeURIComponent(presetId)}/check`,
+      { userDiscordId, logger },
     );
     return response.has_voted;
   } catch (error) {
@@ -451,167 +431,42 @@ export async function hasVoted(
   }
 }
 
-// ============================================================================
-// Category Functions
-// ============================================================================
-
 /**
- * Get all preset categories with counts
+ * Result of a preview-image moderation action.
+ * Mirrors presets-api's PATCH /api/v1/moderation/:presetId/preview-image contract.
  */
-export async function getCategories(env: Env): Promise<CategoryMeta[]> {
-  const response = await request<{ categories: CategoryMeta[] }>(
-    env,
-    'GET',
-    '/api/v1/categories'
-  );
-  return response.categories;
-}
-
-// ============================================================================
-// Moderation Functions
-// ============================================================================
-
-/**
- * Get presets pending moderation
- */
-export async function getPendingPresets(
-  env: Env,
-  moderatorId: string
-): Promise<CommunityPreset[]> {
-  const response = await request<{ presets: CommunityPreset[] }>(
-    env,
-    'GET',
-    '/api/v1/moderation/pending',
-    { userDiscordId: moderatorId }
-  );
-  return response.presets;
+export interface PreviewImageModerationResult {
+  success: boolean;
+  preview_image_status: 'approved' | 'none';
 }
 
 /**
- * Approve a preset
- */
-export async function approvePreset(
-  env: Env,
-  presetId: string,
-  moderatorId: string,
-  reason?: string
-): Promise<CommunityPreset> {
-  const response = await request<{ preset: CommunityPreset }>(
-    env,
-    'PATCH',
-    `/api/v1/moderation/${presetId}/status`,
-    {
-      body: { status: 'approved', reason },
-      userDiscordId: moderatorId,
-    }
-  );
-  return response.preset;
-}
-
-/**
- * Reject a preset
- */
-export async function rejectPreset(
-  env: Env,
-  presetId: string,
-  moderatorId: string,
-  reason: string
-): Promise<CommunityPreset> {
-  const response = await request<{ preset: CommunityPreset }>(
-    env,
-    'PATCH',
-    `/api/v1/moderation/${presetId}/status`,
-    {
-      body: { status: 'rejected', reason },
-      userDiscordId: moderatorId,
-    }
-  );
-  return response.preset;
-}
-
-/**
- * Flag a preset for review
- */
-export async function flagPreset(
-  env: Env,
-  presetId: string,
-  moderatorId: string,
-  reason: string
-): Promise<CommunityPreset> {
-  const response = await request<{ preset: CommunityPreset }>(
-    env,
-    'PATCH',
-    `/api/v1/moderation/${presetId}/status`,
-    {
-      body: { status: 'flagged', reason },
-      userDiscordId: moderatorId,
-    }
-  );
-  return response.preset;
-}
-
-/**
- * Get moderation statistics
- */
-export async function getModerationStats(
-  env: Env,
-  moderatorId: string
-): Promise<ModerationStats> {
-  const response = await request<{ stats: ModerationStats }>(
-    env,
-    'GET',
-    '/api/v1/moderation/stats',
-    { userDiscordId: moderatorId }
-  );
-  return response.stats;
-}
-
-/**
- * Get moderation history for a preset
- */
-export async function getModerationHistory(
-  env: Env,
-  presetId: string,
-  moderatorId: string
-): Promise<ModerationLogEntry[]> {
-  const response = await request<{ history: ModerationLogEntry[] }>(
-    env,
-    'GET',
-    `/api/v1/moderation/${presetId}/history`,
-    { userDiscordId: moderatorId }
-  );
-  return response.history;
-}
-
-/**
- * Revert a preset to its previous values (moderators only)
+ * Approve or reject a preset's pending preview image (moderators only).
  *
- * Used when an edit was flagged by content moderation and the moderator
- * decides to restore the original content instead of approving the edit.
+ * Rejecting deletes the image and resets its status to 'none' — it does NOT
+ * touch the preset's own status (a bad picture is not a bad palette).
  *
- * @param env - Environment bindings
- * @param presetId - Preset to revert
- * @param reason - Reason for reverting (10-200 chars, required for audit trail)
- * @param moderatorId - Discord ID of the moderator performing the action
- * @returns Reverted preset
- * @throws PresetAPIError if preset has no previous values or moderator lacks permission
+ * SECURITY: `moderatorId`/`moderatorName` must be the CLICKING user's Discord
+ * identity, not the bot's — presets-api authorises the moderator from the
+ * bot-auth headers these populate.
  */
-export async function revertPreset(
+export async function setPreviewImageStatus(
   env: Env,
   presetId: string,
-  reason: string,
-  moderatorId: string
-): Promise<CommunityPreset> {
-  const response = await request<{ success: boolean; preset: CommunityPreset }>(
+  action: 'approve' | 'reject',
+  moderatorId: string,
+  moderatorName?: string,
+): Promise<PreviewImageModerationResult> {
+  return request<PreviewImageModerationResult>(
     env,
     'PATCH',
-    `/api/v1/moderation/${presetId}/revert`,
+    `/api/v1/moderation/${encodeURIComponent(presetId)}/preview-image`,
     {
-      body: { reason },
+      body: { action },
       userDiscordId: moderatorId,
-    }
+      userName: moderatorName,
+    },
   );
-  return response.preset;
 }
 
 // ============================================================================
@@ -633,7 +488,7 @@ export async function searchPresetsForAutocomplete(
     status?: 'approved' | 'pending';
     limit?: number;
     logger?: ExtendedLogger;
-  } = {}
+  } = {},
 ): Promise<Array<{ name: string; value: string }>> {
   try {
     const filters: PresetFilters = {
@@ -659,7 +514,10 @@ export async function searchPresetsForAutocomplete(
     }));
   } catch (error) {
     if (options.logger) {
-      options.logger.error('Preset autocomplete search failed', error instanceof Error ? error : undefined);
+      options.logger.error(
+        'Preset autocomplete search failed',
+        error instanceof Error ? error : undefined,
+      );
     }
     return [];
   }

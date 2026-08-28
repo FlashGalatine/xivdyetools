@@ -8,10 +8,15 @@
  */
 
 import { sendMessage } from '../utils/discord-api.js';
+import { BRAND_ACCENT } from '../utils/brand.js';
+import { cutOnLineBoundary } from '../utils/text.js';
 import type { ChangelogEntry } from './changelog-parser.js';
 
-/** Discord blurple color */
-const BLURPLE = 0x5865f2;
+/**
+ * Discord's embed description ceiling is 4096; we stop short of it, and the
+ * summary line (GitHub link included) is budgeted inside this figure.
+ */
+const DESCRIPTION_BUDGET = 4000;
 
 /**
  * Formats a changelog entry as a Discord embed object.
@@ -42,16 +47,24 @@ export function formatAnnouncementEmbed(
 
   const description = descriptionParts.join('\n').trim();
 
-  // Truncate if over Discord's 4096 char embed description limit
-  const truncated =
-    description.length > 4000
-      ? description.slice(0, 3997) + '...'
-      : description;
+  // A large release used to lose its tail silently, mid-bullet, behind a
+  // bare "...". The announcement can afford to be a summary that links out —
+  // but it has to SAY it is one, and it has to cut on a line boundary rather
+  // than through a word. It links to the product-level notes on GitHub, not
+  // to /changelog: that command shows the bot's OWN notes (its bundled
+  // apps/discord-worker/CHANGELOG-laymans.md), which would not contain the
+  // web-app and link-preview bullets cut here.
+  const fullNotesUrl = `${repoUrl}/blob/main/CHANGELOG-laymans.md`;
+  const body = cutOnLineBoundary(
+    description,
+    DESCRIPTION_BUDGET,
+    `\n\n*Summary shown — [full release notes](${fullNotesUrl})*`
+  );
 
   return {
     title: `🆕 XIV Dye Tools v${entry.version}`,
-    description: truncated,
-    color: BLURPLE,
+    description: body,
+    color: BRAND_ACCENT,
     footer: {
       text: `Released ${entry.date} • Full changelog: ${repoUrl}`,
     },

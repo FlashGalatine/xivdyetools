@@ -10,7 +10,10 @@
 
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
-import { ephemeralResponse, decodeBase64Url, encodeBase64Url } from '../../utils/response.js';
+import { ephemeralResponse, updateMessageResponse } from '../../utils/response.js';
+
+/** Discord snowflake — the only shape a ban target id may take (FINDING-007 / MOD-5). */
+const SNOWFLAKE_RE = /^\d{17,20}$/;
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import * as presetApi from '../../services/preset-api.js';
 
@@ -67,36 +70,28 @@ export async function handleBanConfirmButton(
     return ephemeralResponse('You do not have permission to ban users.');
   }
 
-  // Parse custom_id: ban_confirm_{discordId}_{base64username}
+  // Parse custom_id: ban_confirm_{discordId}
+  // FINDING-007 (2026-08-21 audit): the id is all we carry. Older buttons
+  // (ban_confirm_{discordId}_{base64username}) are still accepted — the
+  // username suffix is simply ignored; the reason modal resolves the name
+  // from D1 at submit time, so nothing user-controlled can push a custom_id
+  // past Discord's 100-char cap.
   const idPart = customId.replace('ban_confirm_', '');
-  const underscoreIndex = idPart.indexOf('_');
-
-  if (underscoreIndex === -1) {
-    return ephemeralResponse('Invalid button data.');
-  }
-
-  const targetUserId = idPart.substring(0, underscoreIndex);
-  const encodedUsername = idPart.substring(underscoreIndex + 1);
-
-  let targetUsername: string;
-  try {
-    targetUsername = decodeBase64Url(encodedUsername);
-  } catch (error) {
-    logger?.error(
-      'Failed to decode username from button custom_id',
-      error instanceof Error ? error : undefined
-    );
-    return ephemeralResponse('Invalid button data.');
-  }
+  const separator = idPart.indexOf('_');
+  const targetUserId = separator === -1 ? idPart : idPart.substring(0, separator);
 
   if (!targetUserId) {
     return ephemeralResponse('Invalid target user.');
+  }
+  if (!SNOWFLAKE_RE.test(targetUserId)) {
+    logger?.warn('Ban confirm button with a malformed target id', { customId });
+    return ephemeralResponse('Invalid button data.');
   }
 
   return Response.json({
     type: InteractionResponseType.MODAL,
     data: {
-      custom_id: `ban_reason_modal_${targetUserId}_${encodeBase64Url(targetUsername)}`,
+      custom_id: `ban_reason_modal_${targetUserId}`,
       title: 'Ban Reason',
       components: [
         {
@@ -121,26 +116,37 @@ export async function handleBanConfirmButton(
 
 /**
  * Handle the ban cancel button click
+ *
+ * MOD-12 (FINDING-034, 2026-08-21 audit): moderator-gated like every other
+ * button — the confirmation is ephemeral to the moderator who opened it, so
+ * this changes nothing for them and keeps the authorization model uniform.
  */
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function handleBanCancelButton(
-  _interaction: ButtonInteraction,
-  _env: Env,
+  interaction: ButtonInteraction,
+  env: Env,
   _ctx: ExecutionContext,
   _logger?: ExtendedLogger
 ): Promise<Response> {
-  return Response.json({
-    type: InteractionResponseType.UPDATE_MESSAGE,
-    data: {
-      embeds: [
-        {
-          title: '\u274C Ban Cancelled',
-          description: 'The ban action was cancelled.',
-          color: 0x5865f2,
-        },
-      ],
-      components: [],
-    },
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+
+  if (!userId) {
+    return ephemeralResponse('Invalid button interaction.');
+  }
+
+  if (!presetApi.isModerator(env, userId)) {
+    return ephemeralResponse('You do not have permission to ban users.');
+  }
+
+  return updateMessageResponse({
+    embeds: [
+      {
+        title: '\u274C Ban Cancelled',
+        description: 'The ban action was cancelled.',
+        color: 0x5865f2,
+      },
+    ],
+    components: [],
   });
 }
 

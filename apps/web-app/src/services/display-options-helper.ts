@@ -14,6 +14,7 @@
 
 import { logger } from '@shared/logger';
 import type { DisplayOptionsConfig } from '@shared/tool-config-types';
+import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 
 // ============================================================================
 // Types
@@ -61,18 +62,12 @@ export interface ApplyDisplayOptionsResult {
 // ============================================================================
 
 /**
- * Default display options configuration
- * Used when initializing tools
+ * Default display options — re-exported, never redefined. This module used to
+ * carry its own copy with the three 5.0 keys absent and four booleans
+ * inverted; anything importing defaults via `@services/index` got that one.
+ * One object, one source of truth: `@shared/tool-config-types`.
  */
-export const DEFAULT_DISPLAY_OPTIONS: DisplayOptionsConfig = {
-  showHex: true,
-  showRgb: false,
-  showHsv: false,
-  showLab: false,
-  showPrice: true,
-  showDeltaE: true,
-  showAcquisition: false,
-};
+export { DEFAULT_DISPLAY_OPTIONS };
 
 // ============================================================================
 // Helper Functions
@@ -112,9 +107,15 @@ export function applyDisplayOptions(config: ApplyDisplayOptionsConfig): ApplyDis
     'showRgb',
     'showHsv',
     'showLab',
+    'showCmyk',
     'showPrice',
     'showDeltaE',
     'showAcquisition',
+    // 5.0 rows: omitted here, every tool routing config through this helper
+    // silently dropped the three toggles the sidebar was broadcasting.
+    'showHue',
+    'showStain',
+    'showSpectrum',
   ];
 
   for (const key of keys) {
@@ -137,71 +138,5 @@ export function applyDisplayOptions(config: ApplyDisplayOptionsConfig): ApplyDis
     options: updated,
     hasChanges: changedKeys.length > 0,
     changedKeys,
-  };
-}
-
-/**
- * Check if display options have any differences.
- * Useful for determining if re-render is needed.
- *
- * @param current - Current display options
- * @param incoming - Incoming options to compare
- * @returns true if any options differ
- */
-export function hasDisplayOptionsChanges(
-  current: DisplayOptionsConfig,
-  incoming: Partial<DisplayOptionsConfig>
-): boolean {
-  const keys: (keyof DisplayOptionsConfig)[] = [
-    'showHex',
-    'showRgb',
-    'showHsv',
-    'showLab',
-    'showPrice',
-    'showDeltaE',
-    'showAcquisition',
-  ];
-
-  return keys.some((key) => incoming[key] !== undefined && incoming[key] !== current[key]);
-}
-
-/**
- * Create a subset of display options for card components.
- * Extracts only the relevant options for v4-result-card.
- *
- * @param options - Full display options
- * @param showPrices - Whether prices are enabled (from MarketBoardService)
- * @returns Options subset for card components
- */
-export function getCardDisplayOptions(
-  options: DisplayOptionsConfig,
-  showPrices: boolean
-): Partial<DisplayOptionsConfig> {
-  return {
-    showHex: options.showHex,
-    showRgb: options.showRgb,
-    showHsv: options.showHsv,
-    showLab: options.showLab,
-    showPrice: options.showPrice && showPrices, // Combine with market setting
-    showDeltaE: options.showDeltaE,
-    showAcquisition: options.showAcquisition,
-  };
-}
-
-/**
- * Merge partial display options with defaults.
- * Useful for initialization.
- *
- * @param partial - Partial options from storage or config
- * @returns Complete options with defaults applied
- */
-export function mergeWithDefaults(
-  partial: Partial<DisplayOptionsConfig> | null | undefined
-): DisplayOptionsConfig {
-  if (!partial) return { ...DEFAULT_DISPLAY_OPTIONS };
-
-  return {
-    ...DEFAULT_DISPLAY_OPTIONS,
-    ...partial,
   };
 }

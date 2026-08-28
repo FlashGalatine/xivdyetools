@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The XIV Dye Tools bot for [Stoat / Revolt](https://revolt.chat). Despite living under `apps/` alongside the Cloudflare Workers, **this is a Node.js process, not a CF Worker.** It runs `revolt.js` as a long-lived WebSocket client, listens for `messageCreate` events, and dispatches prefix commands (`!xivdye <cmd>` or the shortcut `!xd <cmd>`).
 
-The bot reuses as much logic from `discord-worker` as it can by depending on the platform-agnostic shared packages — `@xivdyetools/core`, `@xivdyetools/bot-logic`, `@xivdyetools/bot-i18n`, `@xivdyetools/svg`, `@xivdyetools/color-blending`. Only the I/O surface (Stoat embed shape, prefix parsing, reactions-as-buttons, masquerade) is platform-specific.
+The bot reuses as much logic from `discord-worker` as it can by depending on the platform-agnostic shared packages — `@xivdyetools/core` (incl. `/blending`), `@xivdyetools/bot-logic` (incl. its `/i18n` engine), `@xivdyetools/svg`. Only the I/O surface (Stoat embed shape, prefix parsing, reactions-as-buttons, masquerade) is platform-specific.
 
 The project is in early development; only `ping`, `help`, `about`, and `dye info` are implemented end-to-end. Most other commands documented in `README.md` are tagged "planned".
 
@@ -39,6 +39,12 @@ npm run lint && npm run test -- --run && npm run type-check
    revolt.js Client  ──  client.on('messageCreate')
                          │
                          ▼
+   createMessageHandler()           ◄─ src/message-handler.ts
+   ├─ ignores own + any other bot's messages
+   ├─ per-user CommandThrottle (5 / 10 s, silent drop)  ◄─ src/services/command-throttle.ts
+   └─ fixed-text error reply if a handler throws
+                         │
+                         ▼
    parseCommand(content)            ◄─ src/commands/parser.ts
    ├─ matches '!xivdye' or '!xd' prefix?
    ├─ resolves SHORT_ALIASES (info → dye.info)
@@ -61,6 +67,7 @@ npm run lint && npm run test -- --run && npm run type-check
 ```
 src/
 ├── index.ts                     # Bootstrap: load config, create Client, register handlers, login
+├── message-handler.ts           # messageCreate gate: bot-ignore, per-user throttle, route, error reply (FINDING-035)
 ├── config.ts                    # loadConfig() from env, ULID validation, isAuthorized()
 ├── router.ts                    # CommandContext, COMMAND_ROUTES dispatch table
 ├── commands/
@@ -71,6 +78,7 @@ src/
 │   └── info.ts                  # !xd info <dye> via bot-logic.executeDyeInfo
 ├── services/
 │   ├── dye-resolver.ts          # Multi-strategy resolution (name → ID → hex), disambiguation
+│   ├── command-throttle.ts      # CommandThrottle: in-memory sliding window per user (default 5 / 10 s)
 │   ├── message-context.ts       # MessageContextStore (LRU+TTL, max 500, 1h) for reaction handlers
 │   ├── response-formatter.ts    # StoatEmbed shape, error/disambig/no-match formatters,
 │   │                            # DYE_INFO_REACTIONS, masquerade helpers
@@ -87,7 +95,7 @@ The bot reads everything from `process.env` at startup via `config.ts`. Use a lo
 |----------|----------|-------------|
 | `BOT_TOKEN` | Yes | Stoat / Revolt bot token. Without it, `loadConfig()` throws and the process exits. |
 | `STATS_AUTHORIZED_USERS` | No | Comma-separated Stoat ULIDs allowed to run admin/stats commands. ULIDs are validated at startup against Crockford Base32; an invalid ID throws. |
-| `UPSTASH_REDIS_REST_URL` | No | Planned: Upstash Redis URL for rate limiting via `@xivdyetools/rate-limiter` Upstash backend. |
+| `UPSTASH_REDIS_REST_URL` | No | Planned: Upstash Redis URL for rate limiting via `@xivdyetools/worker-kit/rate-limiter` Upstash backend. |
 | `UPSTASH_REDIS_REST_TOKEN` | No | Planned: Upstash Redis token. |
 
 There is no `wrangler.toml` and no Cloudflare secrets — this runs on a regular Node host (Fly.io is the planned target).
@@ -104,7 +112,7 @@ This is the most important section. `stoat-worker` and `discord-worker` look sup
 | **Image rendering** | `@resvg/resvg-wasm` (WASM in worker) | Planned: `@resvg/resvg-js` (Node native) |
 | **Image processing** | `@cf-wasm/photon` | Planned: `sharp` |
 | **Storage** | KV (rate-limit, prefs, analytics), D1 via service binding | Planned: SQLite (better-sqlite3) for prefs/analytics |
-| **Rate limit backend** | KV-backed `@xivdyetools/rate-limiter` | Planned: Upstash Redis backend |
+| **Rate limit backend** | KV-backed `@xivdyetools/worker-kit/rate-limiter` | In-memory per-user `CommandThrottle` (5 / 10 s, `services/command-throttle.ts`, since 0.2.2 — FINDING-035); Upstash backend still only planned |
 | **Signature verification** | Ed25519 on every request | None — WebSocket session is implicitly authenticated by `BOT_TOKEN` |
 | **Embed shape** | Discord rich embeds w/ fields, footer, author | Stoat `SendableEmbed`: title/description/icon_url/colour/media (no fields) |
 | **Interactive buttons** | Discord MessageComponent buttons + modals | Stoat reactions with `restrict_reactions: true`; `MessageContextStore` maps message IDs to dye context |
@@ -121,7 +129,7 @@ This is the most important section. `stoat-worker` and `discord-worker` look sup
 
 #### Reactions as buttons
 
-Stoat doesn't have Discord's MessageComponent system. Instead, the bot includes `interactions.reactions` + `restrict_reactions: true` on responses, then listens for reaction events to trigger follow-ups. `MessageContextStore` (LRU, max 500 entries, 1h TTL) keeps the dye/command context alive for those reaction handlers.
+Stoat doesn't have Discord's MessageComponent system; the *design* is to send `interactions.reactions` + `restrict_reactions: true` on responses and listen for reaction events to trigger follow-ups. **Not wired yet (BUG-038, 0.2.0):** no `messageReactionAdd` listener is registered, so `dye info` currently sends *no* reactions — `DYE_INFO_REACTIONS` in `response-formatter.ts` is kept for when the listener ships. `MessageContextStore` (LRU, max 500 entries, 1h TTL, keyed by the bot *reply's* message ID) already keeps the dye/command context alive for those future handlers.
 
 ```typescript
 // From response-formatter.ts
@@ -148,7 +156,7 @@ await withLoadingIndicator(message, async () => {
 
 #### Best-effort error reply
 
-The top-level `messageCreate` handler wraps `routeCommand()` in try/catch. If a handler throws, the bot tries to send a generic "An unexpected error occurred" reply; if even that fails, the error is just logged.
+`createMessageHandler()` (`src/message-handler.ts`, unit-tested) wraps `routeCommand()` in try/catch. If a handler throws, the bot tries to send a generic "An unexpected error occurred" reply (never the error text); if even that fails, the error is just logged. The same gate ignores the bot's own messages and messages from any other bot (`message.author?.bot` — no bot-to-bot loops) and drops commands silently once a user exceeds the `CommandThrottle` window. Echoed user text (`No dye found matching …`, unknown-command replies) goes through `sanitizeEcho()` in `response-formatter.ts` (Revolt mention defuse + the shared `sanitizeEmbedText`), and the three command tables are consulted with `Object.hasOwn` (2026-08-21 security audit, FINDING-019/027/035).
 
 ## Build & Runtime Notes
 
@@ -164,13 +172,13 @@ The top-level `messageCreate` handler wraps `routeCommand()` in try/catch. If a 
 |---------|---------|
 | `revolt.js` | Stoat WebSocket client (login, events, sendMessage, react, masquerade) |
 | `@xivdyetools/bot-logic` | Platform-agnostic command execution (`executeDyeInfo`, etc.) |
-| `@xivdyetools/bot-i18n` | Six-language localized error/help/status strings |
+| `@xivdyetools/bot-logic/i18n` | Six-language localized error/help/status strings (absorbed from bot-i18n) |
 | `@xivdyetools/core` | Dye database, color algorithms, `DyeDatabase` |
 | `@xivdyetools/svg` | SVG dye-card generators (used by future image-rendering commands) |
-| `@xivdyetools/color-blending` | Color blending algorithms for the planned mixer command |
+| `@xivdyetools/core/blending` | Color blending algorithms for the planned mixer command (subpath of core since `@xivdyetools/color-blending` was retired) |
 | `@xivdyetools/types` | `Dye`, `LocaleCode`, branded color types |
 | `@xivdyetools/logger` | Structured logging |
-| `@xivdyetools/rate-limiter` | Sliding-window limiter (Upstash backend planned) |
+| `@xivdyetools/worker-kit/rate-limiter` | Sliding-window limiter (Upstash backend planned) |
 | `@xivdyetools/test-utils` | Test factories (devDependency) |
 | `tsup` / `tsx` | Build / dev runtime (devDependencies) |
 | `vitest` / `@vitest/coverage-v8` | Tests |
@@ -196,7 +204,7 @@ The top-level `messageCreate` handler wraps `routeCommand()` in try/catch. If a 
 ## Related Projects
 
 **Shared packages (logic ≅ discord-worker):**
-- `@xivdyetools/bot-logic`, `@xivdyetools/bot-i18n`, `@xivdyetools/svg`, `@xivdyetools/color-blending`, `@xivdyetools/core`, `@xivdyetools/types`
+- `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/svg`, `@xivdyetools/core` (incl. `/blending`), `@xivdyetools/types`
 
 **Sibling app:**
 - `xivdyetools-discord-worker` — same business logic, different platform glue. When changing `bot-logic` or `svg`, verify both bots still build and tests pass.

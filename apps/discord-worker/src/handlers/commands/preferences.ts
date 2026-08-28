@@ -15,7 +15,7 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { messageResponse, errorEmbed } from '../../utils/response.js';
+import { ephemeralResponse, errorEmbed } from '../../utils/response.js';
 import {
   getUserPreferences,
   setPreference,
@@ -33,13 +33,14 @@ import type { DyeTypeFilters } from '@xivdyetools/types';
 import { hasActiveFilters } from '@xivdyetools/core';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
+import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-/** Embed color for preferences display (Discord blurple) */
-const PREFS_COLOR = 0x5865f2;
+/** Preferences is the product speaking about itself — the accent. */
+const PREFS_COLOR = BRAND_ACCENT;
 
 /** Preference display order */
 const PREFERENCE_ORDER: PreferenceKey[] = [
@@ -57,6 +58,7 @@ const PREFERENCE_ORDER: PreferenceKey[] = [
   'showLab',
   'showDeltaE',
   'showAcquisition',
+  'theme',
 ];
 
 /** Emojis for preference categories */
@@ -75,6 +77,7 @@ const PREFERENCE_EMOJIS: Record<PreferenceKey, string> = {
   showLab: '🧪',
   showDeltaE: '📐',
   showAcquisition: '🛒',
+  theme: '🌙',
 };
 
 /**
@@ -95,17 +98,25 @@ function resolveOptionKey(name: string): PreferenceKey {
   return OPTION_NAME_TO_KEY[name] ?? (name as PreferenceKey);
 }
 
-/** Maps Discord option names to DyeTypeFilters keys and display labels */
-const FILTER_OPTION_KEYS: Array<{ option: string; key: keyof DyeTypeFilters; label: string }> = [
-  { option: 'metallic', key: 'excludeMetallic', label: 'Metallic' },
-  { option: 'pastel', key: 'excludePastel', label: 'Pastel' },
-  { option: 'dark', key: 'excludeDark', label: 'Dark' },
-  { option: 'cosmic', key: 'excludeCosmic', label: 'Cosmic' },
-  { option: 'ishgardian', key: 'excludeIshgardian', label: 'Ishgardian' },
-  { option: 'expensive', key: 'excludeExpensive', label: 'Expensive (Pure White / Jet Black)' },
-  { option: 'vendor', key: 'excludeVendorDyes', label: 'Vendor' },
-  { option: 'craft', key: 'excludeCraftDyes', label: 'Crafted' },
+/**
+ * Maps Discord option names to DyeTypeFilters keys. The display label is
+ * `t.t(\`preferences.filters.labels.${option}\`)` (F-05, 2026-08-20 audit).
+ */
+const FILTER_OPTION_KEYS: Array<{ option: string; key: keyof DyeTypeFilters }> = [
+  { option: 'metallic', key: 'excludeMetallic' },
+  { option: 'pastel', key: 'excludePastel' },
+  { option: 'dark', key: 'excludeDark' },
+  { option: 'cosmic', key: 'excludeCosmic' },
+  { option: 'ishgardian', key: 'excludeIshgardian' },
+  { option: 'expensive', key: 'excludeExpensive' },
+  { option: 'vendor', key: 'excludeVendorDyes' },
+  { option: 'craft', key: 'excludeCraftDyes' },
 ];
+
+/** Localized display label of a dye-type filter option. */
+function filterLabel(t: Translator, option: string): string {
+  return t.t(`preferences.filters.labels.${option}`);
+}
 
 // ============================================================================
 // Main Handler
@@ -130,9 +141,8 @@ export async function handlePreferencesCommand(
   const subcommandOption = options[0];
 
   if (!subcommandOption) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
-      flags: 64,
     });
   }
 
@@ -152,9 +162,8 @@ export async function handlePreferencesCommand(
       // Subcommand group — filters set/show/reset
       const filterSubcommand = subcommandOption.options?.[0];
       if (!filterSubcommand) {
-        return messageResponse({
+        return ephemeralResponse({
           embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
-          flags: 64,
         });
       }
       switch (filterSubcommand.name) {
@@ -165,17 +174,15 @@ export async function handlePreferencesCommand(
         case 'reset':
           return handleFiltersResetSubcommand(env, userId, t, logger);
         default:
-          return messageResponse({
+          return ephemeralResponse({
             embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
-            flags: 64,
           });
       }
     }
 
     default:
-      return messageResponse({
+      return ephemeralResponse({
         embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
-        flags: 64,
       });
   }
 }
@@ -226,7 +233,7 @@ async function handleShowSubcommand(
   if (dyeFilters && hasActiveFilters(dyeFilters)) {
     const activeFilters = FILTER_OPTION_KEYS
       .filter(({ key }) => dyeFilters[key])
-      .map(({ label }) => label);
+      .map(({ option }) => filterLabel(t, option));
     fields.push({
       name: `🚫 ${t.t('preferences.keys.filters')}`,
       value: activeFilters.join(', '),
@@ -240,12 +247,15 @@ async function handleShowSubcommand(
     });
   }
 
-  // Add last updated timestamp if available
+  // Last-updated: the embed `timestamp` is rendered by the Discord client in
+  // the viewer's own locale and timezone, so no server-side date formatting
+  // (F-05/F-08 — the old `toLocaleString()` ignored the user's locale).
   const footer = prefs.updatedAt
-    ? { text: `Last updated: ${new Date(prefs.updatedAt).toLocaleString()}` }
+    ? { text: t.t('preferences.show.lastUpdated') }
     : { text: t.t('preferences.show.hint') };
+  const timestamp = prefs.updatedAt ? new Date(prefs.updatedAt).toISOString() : undefined;
 
-  return messageResponse({
+  return ephemeralResponse({
     embeds: [
       {
         title: `⚙️ ${t.t('preferences.title')}`,
@@ -253,6 +263,7 @@ async function handleShowSubcommand(
         color: PREFS_COLOR,
         fields,
         footer,
+        ...(timestamp ? { timestamp } : {}),
       },
     ],
   });
@@ -278,11 +289,10 @@ async function handleSetSubcommand(
 ): Promise<Response> {
   // Check if any options were provided
   if (options.length === 0) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         errorEmbed(t.t('common.error'), t.t('preferences.set.noOptions')),
       ],
-      flags: 64,
     });
   }
 
@@ -312,11 +322,10 @@ async function handleSetSubcommand(
 
   // Check if any updates were attempted
   if (updates.length === 0) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         errorEmbed(t.t('common.error'), t.t('preferences.set.noValidOptions')),
       ],
-      flags: 64,
     });
   }
 
@@ -334,11 +343,10 @@ async function handleSetSubcommand(
       return `${emoji} **${label}**: ${reason}`;
     });
 
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         errorEmbed(t.t('common.error'), errorLines.join('\n\n')),
       ],
-      flags: 64,
     });
   }
 
@@ -353,11 +361,13 @@ async function handleSetSubcommand(
   // Build response embed
   const fields: Array<{ name: string; value: string; inline: boolean }> = [];
 
-  // Add affected commands field
+  // Add affected commands field (command tokens verbatim, phrases via t())
   if (affectedCommandsSet.size > 0) {
     fields.push({
       name: `📋 ${t.t('preferences.set.affects')}`,
-      value: Array.from(affectedCommandsSet).join(', '),
+      value: Array.from(affectedCommandsSet)
+        .map((v) => (v.startsWith('/') ? v : t.t(v)))
+        .join(', '),
       inline: false,
     });
   }
@@ -380,7 +390,7 @@ async function handleSetSubcommand(
     ? `✅ ${t.t('preferences.set.success')}`
     : `✅ ${t.t('preferences.set.successCount', { count: successes.length })}`;
 
-  return messageResponse({
+  return ephemeralResponse({
     embeds: [
       {
         title,
@@ -424,14 +434,13 @@ async function handleResetSubcommand(
 
   // Validate key if provided
   if (key && !PREFERENCE_ORDER.includes(key)) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         errorEmbed(
           t.t('common.error'),
           t.t('preferences.errors.invalidKey', { key })
         ),
       ],
-      flags: 64,
     });
   }
 
@@ -439,9 +448,8 @@ async function handleResetSubcommand(
   const success = await resetPreference(env.KV, userId, key, logger);
 
   if (!success) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('preferences.reset.failed'))],
-      flags: 64,
     });
   }
 
@@ -450,22 +458,22 @@ async function handleResetSubcommand(
     const emoji = PREFERENCE_EMOJIS[key];
     const label = t.t(`preferences.keys.${key}`);
 
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         {
           title: `🔄 ${t.t('preferences.reset.success')}`,
           description: t.t('preferences.reset.single', { key: `${emoji} ${label}` }),
-          color: 0xfee75c, // Yellow
+          color: STATE.warning,
         },
       ],
     });
   } else {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         {
           title: `🔄 ${t.t('preferences.reset.allTitle')}`,
           description: t.t('preferences.reset.allDescription'),
-          color: 0xfee75c, // Yellow
+          color: STATE.warning,
           footer: {
             text: t.t('preferences.reset.showHint'),
           },
@@ -521,6 +529,10 @@ function formatPreferenceValue(key: PreferenceKey, value: unknown, t: Translator
       return value === true || value === 'on' || value === 'true'
         ? t.t('preferences.values.yes')
         : t.t('preferences.values.no');
+    case 'theme':
+      return value === 'light'
+        ? `☀️ ${t.t('preferences.values.themeLight')}`
+        : `🌙 ${t.t('preferences.values.themeDark')}`;
 
     default:
       return String(value);
@@ -558,12 +570,16 @@ function getValidationErrorMessage(t: Translator, _key: PreferenceKey, reason?: 
       return t.t('preferences.validation.invalidLanguage');
 
     case 'invalidBlendingMode': {
-      const options = BLENDING_MODES.map((m) => `• \`${m.value}\` - ${m.description}`).join('\n');
+      const options = BLENDING_MODES.map(
+        (m) => `• \`${m.value}\` - ${t.t(`preferences.blendingModes.${m.value}`)}`,
+      ).join('\n');
       return t.t('preferences.validation.invalidBlendingMode', { options });
     }
 
     case 'invalidMatchingMethod': {
-      const options = MATCHING_METHODS.map((m) => `• \`${m.value}\` - ${m.description}`).join('\n');
+      const options = MATCHING_METHODS.map(
+        (m) => `• \`${m.value}\` - ${t.t(`preferences.methods.${m.value}`)}`,
+      ).join('\n');
       return t.t('preferences.validation.invalidMatchingMethod', { options });
     }
 
@@ -580,6 +596,9 @@ function getValidationErrorMessage(t: Translator, _key: PreferenceKey, reason?: 
 
     case 'invalidWorld':
       return t.t('preferences.validation.invalidWorld');
+
+    case 'invalidTheme':
+      return t.t('preferences.validation.invalidTheme');
 
     case 'invalidMarket':
     case 'invalidBoolean':
@@ -608,9 +627,8 @@ async function handleFiltersSetSubcommand(
   logger?: ExtendedLogger
 ): Promise<Response> {
   if (options.length === 0) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('preferences.filters.noOptions'))],
-      flags: 64,
     });
   }
 
@@ -625,13 +643,12 @@ async function handleFiltersSetSubcommand(
 
     filters[mapping.key] = opt.value;
     const status = opt.value ? '🚫' : '✅';
-    changes.push(`${status} **${mapping.label}**: ${opt.value ? t.t('preferences.filters.excluded') : t.t('preferences.filters.included')}`);
+    changes.push(`${status} **${filterLabel(t, mapping.option)}**: ${opt.value ? t.t('preferences.filters.excluded') : t.t('preferences.filters.included')}`);
   }
 
   if (changes.length === 0) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('preferences.filters.noOptions'))],
-      flags: 64,
     });
   }
 
@@ -641,12 +658,12 @@ async function handleFiltersSetSubcommand(
   const key = `prefs:v1:${userId}`;
   await env.KV.put(key, JSON.stringify(prefs));
 
-  return messageResponse({
+  return ephemeralResponse({
     embeds: [
       {
         title: `✅ ${t.t('preferences.filters.updated')}`,
         description: changes.join('\n'),
-        color: 0x57f287,
+        color: STATE.success,
         footer: { text: t.t('preferences.filters.affectsHint') },
       },
     ],
@@ -667,14 +684,14 @@ async function handleFiltersShowSubcommand(
   const prefs = await getUserPreferences(env.KV, userId, logger);
   const filters = prefs.dyeFilters ?? {};
 
-  const lines = FILTER_OPTION_KEYS.map(({ key, label }) => {
+  const lines = FILTER_OPTION_KEYS.map(({ key, option }) => {
     const isExcluded = filters[key] === true;
     const emoji = isExcluded ? '🚫' : '✅';
     const status = isExcluded ? t.t('preferences.filters.excluded') : t.t('preferences.filters.included');
-    return `${emoji} **${label}**: ${status}`;
+    return `${emoji} **${filterLabel(t, option)}**: ${status}`;
   });
 
-  return messageResponse({
+  return ephemeralResponse({
     embeds: [
       {
         title: `🔍 ${t.t('preferences.filters.title')}`,
@@ -709,12 +726,12 @@ async function handleFiltersResetSubcommand(
     await env.KV.delete(key);
   }
 
-  return messageResponse({
+  return ephemeralResponse({
     embeds: [
       {
         title: `🔄 ${t.t('preferences.filters.resetSuccess')}`,
         description: t.t('preferences.filters.resetDescription'),
-        color: 0xfee75c,
+        color: STATE.warning,
       },
     ],
   });

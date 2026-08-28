@@ -35,7 +35,7 @@ Autocomplete requires:
 
 ### Commands are slow. Why?
 
-Image generation takes 1-3 seconds. Complex commands (like `/match_image`) may take longer.
+Image generation takes 1-3 seconds. Complex commands (like `/extractor image`) may take longer.
 
 ---
 
@@ -51,7 +51,7 @@ Try:
 ### Names don't match in-game
 
 The bot uses the official localized names from FFXIV. If there's a mismatch:
-- Check your `/language` setting
+- Check your language setting (`/preferences show`, change it with `/preferences set language:`)
 - Report the issue on GitHub
 
 ---
@@ -67,26 +67,23 @@ Several factors affect this:
 
 ### Can I use screenshots from FFXIV?
 
-Yes! Use `/match_image` and upload your screenshot. Note that in-game lighting/effects affect the extracted colors.
+Yes! Use `/extractor image` and upload your screenshot. Note that in-game lighting/effects affect the extracted colors.
 
 ---
 
 ## Favorites & Collections
 
-### Where is my data stored?
+### Where did `/favorites` and `/collection` go?
 
-Your favorites and collections are stored securely on our servers, linked to your Discord ID.
+They were removed in 5.0. Saved dyes and palettes live in the web app (stored in your browser); the
+bot's share links open the same result there. In Discord you can still favourite community
+*presets* with `/preset favorite add|remove|list`.
 
 ### Do favorites sync with the web app?
 
-Yes! Log in to the web app with Discord, and your data syncs automatically.
-
-### I lost my favorites!
-
-Favorites are never deleted by us. Check:
-- You're using the same Discord account
-- The bot is online and responding
-- Try `/favorites list` again
+No — the bot never synced dye favourites with the web app, and the v4 bot-side lists were retired
+with 5.0. Your preferences (`/preferences`) and preset favourites are stored per Discord account and
+follow you across servers.
 
 ---
 
@@ -94,7 +91,11 @@ Favorites are never deleted by us. Check:
 
 ### How do I submit a preset?
 
-Use `/preset submit` with your dye names. Requires 2-6 dyes.
+Use `/preset submit` with a name, description, category and your dye names, or the web app's
+Community Presets tool. Presets need 3-6 dyes and one of the categories jobs, grand-companies,
+seasons, events, aesthetics, appearance, zones or raids-trials. (Known 5.0.0 issue: bot-side
+`/preset submit` / `/preset edit` are still being brought in line with the 3-6-dye rule and may be
+rejected — use the web app in the meantime.)
 
 ### Why was my preset rejected?
 
@@ -114,8 +115,8 @@ Contact a moderator or submit a request via GitHub issues.
 ### I'm getting rate limit errors
 
 The bot has per-user limits:
-- Image commands: 5/minute
-- Standard commands: 15/minute
+- Most commands: 15/minute (`/dye`: 20/minute; `/accessibility` and `/budget`: 10/minute)
+- `/about`, `/manual`, `/stats`, `/changelog`: unlimited
 - Preset submissions: 10/day
 
 Wait a moment and try again.
@@ -164,7 +165,7 @@ Moderation is by invite only for trusted community members.
 ### What data do you collect?
 
 - Your Discord ID
-- Favorites and collections
+- Your preferences and favourite presets
 - Preset submissions and votes
 - Anonymous usage statistics
 
@@ -185,4 +186,4 @@ Yes, contact us via GitHub issues to request deletion.
 
 - [Command Reference](command-reference.md) - All commands
 - [Getting Started](getting-started.md) - First steps
-- [Favorites & Collections](favorites-collections.md) - Saving dyes
+- [Favorite Presets & Preferences](favorites-collections.md) - `/preset favorite`, `/preferences`, and what happened to `/favorites` and `/collection`

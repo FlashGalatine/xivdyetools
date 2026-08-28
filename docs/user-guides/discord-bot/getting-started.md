@@ -2,6 +2,14 @@
 
 **Using XIV Dye Tools in your Discord server**
 
+> **Coming from the v4 bot?** The v4
+> commands `/match`, `/match_image`, `/favorites`, `/collection` and `/language` no longer exist:
+> dye matching is `/extractor color` / `/extractor image`, language is `/preferences set language:`,
+> and saved dyes/palettes live in the web app (only community *presets* can be favourited, via
+> `/preset favorite`). `/contrast`, `/a11y` and `/changelog` are new; `/swatch` now reads a `.chara`
+> file. Every result is a redrawn image card with a one-line embed and a share link into the web
+> app. `/about` shows the live command roster.
+
 ---
 
 ## Adding the Bot
@@ -15,17 +23,16 @@
 
 ## Your First Command
 
-Try the `/match` command:
+Try the `/extractor color` command:
 
 ```
-/match color:#FF6B6B
+/extractor color color:#FF6B6B
 ```
 
 The bot will respond with:
-- The **closest FFXIV dye** to that color
-- A **visual comparison** image
-- The **color difference** (deltaE)
-- **Market price** information
+- The **closest FFXIV dyes** to that color, ranked by ΔE2000
+- A **colour sheet** image showing each match and its distance
+- A **share link** that opens the same result in the web app
 
 ---
 
@@ -35,19 +42,21 @@ The bot will respond with:
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `/match` | Find closest dye to a color | `/match color:#FF6B6B` |
-| `/match_image` | Extract colors from image | `/match_image` + attach image |
+| `/extractor color` | Find closest dyes to a color | `/extractor color color:#FF6B6B` |
+| `/extractor image` | Extract colors from an image | `/extractor image image:<attach>` |
 | `/harmony` | Generate color harmonies | `/harmony color:#FF6B6B type:triadic` |
-| `/mixer` | Create gradient between colors | `/mixer start:#FF0000 end:#0000FF` |
+| `/gradient` | Gradient between two colours | `/gradient start_color:#FF0000 end_color:#0000FF` |
+| `/mixer` | Blend two dyes | `/mixer dye1:Dalamud Red dye2:Metallic Gold` |
+| `/swatch` | Match a `.chara` character file's colours | `/swatch file:<attach .chara>` |
 
-> **Web App v4 Terminology Note**
+> **Web app equivalents**
 >
-> The Discord bot uses the original command names for backwards compatibility. Here's how they map to the v4 web app:
->
-> | Discord Command | Web App v4 Tool |
-> |-----------------|-----------------|
-> | `/match`, `/match_image` | Palette Extractor |
-> | `/mixer` | Gradient Builder |
+> | Discord Command | Web App Tool |
+> |-----------------|--------------|
+> | `/extractor color`, `/extractor image` | Palette Extractor |
+> | `/gradient` | Gradient Builder |
+> | `/mixer` | Dye Mixer |
+> | `/swatch` | Swatch Matcher |
 > | `/preset` commands | Community Presets |
 
 ### Dye Database
@@ -56,46 +65,42 @@ The bot will respond with:
 |---------|-------------|---------|
 | `/dye search` | Search dyes by name | `/dye search query:red` |
 | `/dye info` | Get dye details | `/dye info name:Dalamud Red` |
-| `/dye list` | List dyes by category | `/dye list category:red` |
-| `/dye random` | Get random dye | `/dye random` |
+| `/dye list` | List dyes by category | `/dye list category:Reds` |
+| `/dye random` | Five random dyes | `/dye random` |
 
 ### Analysis
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `/comparison` | Compare multiple dyes | `/comparison dye1:Dalamud Red dye2:Blood Red` |
-| `/accessibility` | Colorblindness simulation | `/accessibility color:#FF6B6B` |
-
-### User Data
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| `/favorites` | Manage your favorites | `/favorites list` |
-| `/favorites add` | Add a favorite | `/favorites add dye:Dalamud Red` |
-| `/collection` | Manage collections | `/collection list` |
+| `/comparison` | Compare 2-4 dyes | `/comparison dye1:Dalamud Red dye2:Blood Red` |
+| `/contrast` | WCAG contrast between 2-4 dyes | `/contrast dye1:Snow White dye2:Soot Black` |
+| `/accessibility` (`/a11y`) | Color-vision simulation | `/accessibility dye:#FF6B6B` |
+| `/budget` | Cheaper look-alike dyes | `/budget find target_dye:Jet Black` |
 
 ### Community Presets
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `/preset list` | Browse presets | `/preset list category:glamour` |
-| `/preset show` | View preset details | `/preset show id:abc123` |
-| `/preset submit` | Submit new preset | `/preset submit` (opens form) |
-| `/preset vote` | Vote on preset | `/preset vote id:abc123 vote:up` |
+| `/preset list` | Browse presets | `/preset list category:jobs` |
+| `/preset show` | View preset details | `/preset show name:My Outfit` |
+| `/preset submit` | Submit new preset | `/preset submit preset_name:… category:… dye1:… dye2:… dye3:…` |
+| `/preset vote` | Toggle your vote | `/preset vote preset:My Outfit` |
+| `/preset favorite` | Favourite presets | `/preset favorite list` |
 
 ### Utility
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `/language` | Set your language | `/language lang:ja` |
+| `/preferences` | Language, matching method, card theme, world… | `/preferences set language:ja` |
 | `/manual` | Show help | `/manual topic:match_image` |
+| `/changelog` | What's new | `/changelog` |
 | `/about` | Bot information | `/about` |
 
 ---
 
 ## Understanding the Results
 
-When you use `/match`, you'll see:
+When you use `/extractor color`, you'll see a colour-sheet card listing the nearest dyes and their distance. The v4 text layout looked roughly like this:
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -119,6 +124,8 @@ When you use `/match`, you'll see:
 
 ### Delta E Scale
 
+Distances are ΔE2000 by default (`matching:ciede2000`); other methods use their own calibrated bands.
+
 | Value | Meaning |
 |-------|---------|
 | 0-1 | Imperceptible |
@@ -129,81 +136,29 @@ When you use `/match`, you'll see:
 
 ---
 
-## Saving Favorites
+## Saving Favorites (removed in 5.0)
 
-### Add a Favorite
-
-```
-/favorites add dye:Dalamud Red
-```
-
-### List Your Favorites
+`/favorites` and `/collection` were removed in 5.0. Saved dyes and palettes now live in the web app
+(every share link from the bot opens there). What you *can* keep in Discord is a list of favourite
+community presets:
 
 ```
-/favorites list
+/preset favorite add preset_name:Tank Glamour
+/preset favorite list
+/preset favorite remove preset_name:Tank Glamour
 ```
-
-### Remove a Favorite
-
-```
-/favorites remove dye:Dalamud Red
-```
-
-### Clear All Favorites
-
-```
-/favorites clear
-```
-
-**Limits:**
-- Maximum 20 favorites
-- Synced with your Discord account (works across servers)
-
----
-
-## Creating Collections
-
-Collections let you group related dyes:
-
-### Create a Collection
-
-```
-/collection create name:Tank Glamour
-```
-
-### Add Dyes to Collection
-
-```
-/collection add collection:Tank Glamour dye:Dalamud Red
-```
-
-### View Collection
-
-```
-/collection show name:Tank Glamour
-```
-
-### Delete Collection
-
-```
-/collection delete name:Tank Glamour
-```
-
-**Limits:**
-- Maximum 50 collections
-- Maximum 20 dyes per collection
 
 ---
 
 ## Extracting Colors from Images
 
-Upload an image with your message:
+Attach an image to the command:
 
 ```
-/match_image
+/extractor image image:<attach a file>
 ```
 
-Then attach your image. The bot will:
+The bot will:
 1. Extract dominant colors using K-means++
 2. Match each color to the closest FFXIV dye
 3. Show a visual palette with dye recommendations
@@ -215,7 +170,7 @@ Then attach your image. The bot will:
 The bot supports 6 languages:
 
 ```
-/language lang:ja
+/preferences set language:ja
 ```
 
 Options:
@@ -243,12 +198,12 @@ Options:
 ```
 
 Available topics:
-- `match` - Color matching
-- `match_image` - Image extraction
-- `harmony` - Color harmonies
-- `favorites` - Favorites system
-- `collections` - Collections system
-- `presets` - Community presets
+- `match_image` - Image matching tips
+- `color_vision` - Colour vision
+- `contrast` - Contrast
+- `matching_methods` - Matching methods
+- `spectrum_prices` - Spectrum & prices
+- `character_file` - Character (`.chara`) file
 
 ---
 
@@ -262,9 +217,9 @@ Available topics:
 
 ### Rate Limits
 
-To prevent abuse, commands have rate limits:
-- Image processing: 5 per minute
-- Standard commands: 15 per minute
+To prevent abuse, commands have per-user rate limits:
+- Most commands: 15 per minute (`/dye`: 20; `/accessibility` and `/budget`: 10)
+- `/about`, `/manual`, `/stats`, `/changelog` are not limited
 
 ### Server Admins
 
@@ -277,7 +232,7 @@ To prevent abuse, commands have rate limits:
 ## Next Steps
 
 - [Command Reference](command-reference.md) - All commands in detail
-- [Favorites & Collections](favorites-collections.md) - Organize your dyes
+- [Favorite Presets & Preferences](favorites-collections.md) - `/preset favorite`, `/preferences`, and what happened to `/favorites` and `/collection`
 - [FAQ](faq.md) - Common questions
 
 ---

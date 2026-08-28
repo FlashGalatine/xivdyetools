@@ -6,7 +6,7 @@
  * @module presets
  */
 
-export { createBrowserLogger, browserLogger, perf } from './browser.js';
+export { createBrowserLogger, browserLogger } from './browser.js';
 export type { BrowserLoggerOptions } from './browser.js';
 
 export { createWorkerLogger, createRequestLogger } from './worker.js';

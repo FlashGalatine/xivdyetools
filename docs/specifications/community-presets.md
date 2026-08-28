@@ -1,6 +1,3 @@
-> **⚠️ DEPRECATED:** This document has been superseded by the Documentation Bible.
-> See: [specifications/community-presets.md](specifications/community-presets.md)
-
 # Community Preset Palettes System - Specification
 
 > Feature Status: ✅ Implemented (December 2025)

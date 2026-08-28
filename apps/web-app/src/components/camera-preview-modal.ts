@@ -51,7 +51,9 @@ export async function showCameraPreviewModal(onCapture: OnCaptureCallback): Prom
     cameras.forEach((camera, index) => {
       const option = document.createElement('option');
       option.value = camera.deviceId;
-      option.textContent = camera.label || `Camera ${index + 1}`;
+      option.textContent =
+        camera.label ||
+        LanguageService.tInterpolate('camera.deviceFallback', { n: String(index + 1) });
       selector.appendChild(option);
     });
 
@@ -267,8 +269,9 @@ export async function showCameraPreviewModal(onCapture: OnCaptureCallback): Prom
       loadingOverlay.style.display = 'flex';
       loadingOverlay.innerHTML = '';
       const spinner = document.createElement('div');
-      spinner.className =
-        'w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin';
+      spinner.className = 'w-8 h-8 border-4 border-t-transparent rounded-full animate-spin';
+      spinner.style.borderColor = 'var(--theme-primary)';
+      spinner.style.borderTopColor = 'transparent';
       loadingOverlay.appendChild(spinner);
 
       captureBtn.disabled = true;
@@ -287,12 +290,19 @@ export async function showCameraPreviewModal(onCapture: OnCaptureCallback): Prom
     selector.addEventListener('change', selectorChangeHandler);
   }
 
-  // Show modal
+  // Show modal. Camera is exempt from the sheet's size ladder — it opens at
+  // 88% whatever `md` would have said (a 4:3 feed in a 60% sheet is a
+  // postage stamp). Dismissal is explicit: this modal holds a live
+  // MediaStream, so it is the one place an accidental backdrop tap has a
+  // real cost.
   ModalService.show({
     type: 'custom',
     title: LanguageService.t('camera.title'),
     content,
-    size: 'lg',
+    sheetHeight: 'full',
+    closable: true,
+    closeOnEscape: true,
+    closeOnBackdrop: false,
     onClose: () => {
       // Cleanup on modal close
       cleanup();

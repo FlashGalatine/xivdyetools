@@ -8,7 +8,7 @@ import type { RGB } from '@xivdyetools/types';
 
 // Mock DyeService for testing extractAndMatchPalette
 const createMockDyeService = () => ({
-  findClosestDye: vi.fn((_hex: string) => ({
+  findClosestDye: vi.fn((_hex: string, _opts?: { matchingMethod?: string }) => ({
     id: 1,
     itemID: 30116,
     name: 'Dalamud Red',
@@ -165,6 +165,30 @@ describe('PaletteService', () => {
       });
     });
 
+    it('forwards matchingMethod to DyeService.findClosestDye (default: none → DyeService default)', () => {
+      const mockDyeService = createMockDyeService();
+      const pixels: RGB[] = [
+        ...Array(50).fill({ r: 255, g: 0, b: 0 }),
+        ...Array(30).fill({ r: 0, g: 0, b: 255 }),
+      ];
+
+      service.extractAndMatchPalette(pixels, mockDyeService as any, { colorCount: 2 });
+      // No method requested → the search's own default applies (nothing forced)
+      for (const call of mockDyeService.findClosestDye.mock.calls) {
+        expect(call[1]?.matchingMethod).toBeUndefined();
+      }
+
+      mockDyeService.findClosestDye.mockClear();
+      service.extractAndMatchPalette(pixels, mockDyeService as any, {
+        colorCount: 2,
+        matchingMethod: 'redmean',
+      });
+      expect(mockDyeService.findClosestDye).toHaveBeenCalledTimes(2);
+      for (const call of mockDyeService.findClosestDye.mock.calls) {
+        expect(call[1]).toEqual({ matchingMethod: 'redmean' });
+      }
+    });
+
     it('should preserve dominance order from extraction', () => {
       const mockDyeService = createMockDyeService();
       const pixels: RGB[] = [
@@ -178,40 +202,6 @@ describe('PaletteService', () => {
 
       // First match should have higher dominance
       expect(result[0].dominance).toBeGreaterThanOrEqual(result[1].dominance);
-    });
-  });
-
-  describe('pixelDataToRGB', () => {
-    it('should convert flat RGBA array to RGB objects', () => {
-      // RGBA data: 2 pixels
-      const data = new Uint8ClampedArray([
-        255,
-        0,
-        0,
-        255, // Red, fully opaque
-        0,
-        255,
-        0,
-        128, // Green, semi-transparent
-      ]);
-
-      const result = PaletteService.pixelDataToRGB(data);
-
-      expect(result).toHaveLength(2);
-      expect(result[0]).toEqual({ r: 255, g: 0, b: 0 });
-      expect(result[1]).toEqual({ r: 0, g: 255, b: 0 });
-    });
-
-    it('should handle empty array', () => {
-      const data = new Uint8ClampedArray([]);
-      const result = PaletteService.pixelDataToRGB(data);
-      expect(result).toEqual([]);
-    });
-
-    it('should work with regular number array', () => {
-      const data = [100, 150, 200, 255];
-      const result = PaletteService.pixelDataToRGB(data);
-      expect(result).toEqual([{ r: 100, g: 150, b: 200 }]);
     });
   });
 

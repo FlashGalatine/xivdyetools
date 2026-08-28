@@ -7,11 +7,13 @@ import { Hono } from 'hono';
 import { presetsRouter, resetCategoryCache } from '../../src/handlers/presets';
 import { authMiddleware } from '../../src/middleware/auth';
 import type { Env, AuthContext, CommunityPreset } from '../../src/types';
+import type { MockR2Bucket } from '@xivdyetools/test-utils';
 import {
     createMockEnv,
     createMockD1Database,
     createMockPresetRow,
     createMockSubmission,
+    authHeaders,
 } from '../test-utils';
 
 type Variables = {
@@ -71,6 +73,20 @@ describe('PresetsHandler', () => {
             await app.request('/api/v1/presets?category=jobs', {}, env);
 
             expect(mockDb._bindings.some((b) => b.includes('jobs'))).toBe(true);
+        });
+
+        it('matches a secondary category, not just the primary', async () => {
+            mockDb._setupMock(() => []);
+
+            await app.request('/api/v1/presets?category=zones', {}, env);
+
+            const sql = mockDb._queries.join(' ');
+            expect(sql).toContain('json_each');
+            // Bound twice: once for the primary comparison, once inside json_each
+            const zonesBinds = mockDb._bindings
+                .flat()
+                .filter((b) => b === 'zones');
+            expect(zonesBinds).toHaveLength(2);
         });
 
         it('should filter by search', async () => {
@@ -306,6 +322,29 @@ describe('PresetsHandler', () => {
             expect(res.status).toBe(401);
         });
 
+        // FINDING-017 / PAPI-9: refresh-author had no ban check
+        it('refuses a banned user with 403 USER_BANNED (FINDING-017)', async () => {
+            mockDb._setBanStatus(true);
+
+            const res = await app.request(
+                '/api/v1/presets/refresh-author',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                        'X-User-Discord-Name': 'Renamed',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(403);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('USER_BANNED');
+            expect(mockDb._queries.some((q) => q.includes('SET author_name'))).toBe(false);
+        });
+
         it('should update author name for user presets', async () => {
             mockDb._setupMock(() => ({ success: true, meta: { changes: 5 } }));
 
@@ -504,8 +543,8 @@ describe('PresetsHandler', () => {
                     return { count: 0 };
                 }
                 // Category validation
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 // Duplicate check
                 if (query.includes('dye_signature')) {
@@ -576,8 +615,8 @@ describe('PresetsHandler', () => {
                 if (query.includes('COUNT') && query.includes('author_discord_id')) {
                     return { count: 0 };
                 }
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 if (query.includes('dye_signature')) {
                     return null;
@@ -637,8 +676,8 @@ describe('PresetsHandler', () => {
                 if (query.includes('COUNT') && query.includes('author_discord_id')) {
                     return { count: 0 };
                 }
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 if (query.includes('dye_signature')) {
                     return null;
@@ -706,8 +745,8 @@ describe('PresetsHandler', () => {
                 if (query.includes('COUNT') && query.includes('author_discord_id')) {
                     return { count: 0 };
                 }
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 if (query.includes('dye_signature')) {
                     return null;
@@ -762,9 +801,9 @@ describe('PresetsHandler', () => {
                 if (query.includes('COUNT') && query.includes('author_discord_id')) {
                     return { count: 0 };
                 }
-                if (query.includes('categories')) {
+                if (query.includes('FROM categories')) {
                     categoryQueryCount++;
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 if (query.includes('dye_signature')) {
                     return null;
@@ -923,11 +962,11 @@ describe('PresetsHandler', () => {
             expect(body.message).toContain('Description must be 10-200 characters');
         });
 
-        it('should validate dyes count (min 2)', async () => {
+        it('should validate dyes count (min 3)', async () => {
             // Return valid categories so category validation passes, allowing dye validation to run
             mockDb._setupMock((query) => {
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -951,14 +990,14 @@ describe('PresetsHandler', () => {
 
             expect(res.status).toBe(400);
             const body = await res.json() as { message: string };
-            expect(body.message).toContain('Must include 2-5 dyes');
+            expect(body.message).toContain('Must include 3-6 dyes');
         });
 
-        it('should validate dyes count (max 5)', async () => {
+        it('should validate dyes count (max 6)', async () => {
             // Return valid categories so category validation passes, allowing dye validation to run
             mockDb._setupMock((query) => {
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -974,7 +1013,7 @@ describe('PresetsHandler', () => {
                     },
                     body: JSON.stringify({
                         ...createMockSubmission(),
-                        dyes: [1, 2, 3, 4, 5, 6],
+                        dyes: [1, 2, 3, 4, 5, 6, 7],
                     }),
                 },
                 env
@@ -1034,8 +1073,8 @@ describe('PresetsHandler', () => {
         it('should validate maximum tags (10)', async () => {
             // Return valid categories so category validation passes, allowing tag validation to run
             mockDb._setupMock((query) => {
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -1084,23 +1123,20 @@ describe('PresetsHandler', () => {
             expect(body.error).toBe('RATE_LIMITED');
         });
 
-        it('should handle duplicate dye combination', async () => {
-            const existingPreset = createMockPresetRow({
-                id: 'existing-123',
-                name: 'Existing Preset',
-                author_name: 'Other User',
-            });
-
-            mockDb._setupMock((query) => {
-                // Return valid categories for category validation
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+        // FINDING-016 / PAPI-2 (2026-08-21 security audit): a dye-signature
+        // collision used to return the ENTIRE matching row (previous_values,
+        // author_discord_id, flagged text…) whatever its status, and vote on it
+        // — bypassing the BUG-014 visibility gate and the approved-only vote rule.
+        const duplicateMock =
+            (existing: ReturnType<typeof createMockPresetRow>) => (query: string) => {
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 if (query.includes('COUNT') && query.includes('author_discord_id')) {
                     return { count: 0 }; // Under rate limit
                 }
                 if (query.includes('dye_signature')) {
-                    return existingPreset; // Duplicate found
+                    return existing; // Duplicate found
                 }
                 if (query.includes('votes')) {
                     return null; // No existing vote
@@ -1109,26 +1145,546 @@ describe('PresetsHandler', () => {
                     return { vote_count: 1 };
                 }
                 return { success: true };
-            });
+            };
 
-            const res = await app.request(
+        const submitAs = (userId: string) =>
+            app.request(
                 '/api/v1/presets',
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': '123',
+                        'X-User-Discord-ID': userId,
                     },
                     body: JSON.stringify(createMockSubmission()),
                 },
                 env
             );
 
+        it('votes on an APPROVED duplicate and returns it without the audit snapshot', async () => {
+            const existingPreset = createMockPresetRow({
+                id: 'existing-123',
+                name: 'Existing Preset',
+                author_discord_id: 'other-user',
+                author_name: 'Other User',
+                status: 'approved',
+                previous_values: JSON.stringify({
+                    name: 'Old name',
+                    description: 'Old description text',
+                    tags: [],
+                    dyes: [1, 2, 3],
+                }),
+            });
+            mockDb._setupMock(duplicateMock(existingPreset));
+
+            const res = await submitAs('123');
+
             expect(res.status).toBe(200);
-            const body = await res.json() as { duplicate: { id: string } };
-            expect(body.duplicate).toBeDefined();
+            const body = await res.json() as {
+                success: boolean;
+                duplicate: { id: string; name: string; previous_values?: unknown };
+                vote_added: boolean;
+            };
+            expect(body.success).toBe(true);
             expect(body.duplicate.id).toBe('existing-123');
+            expect(body.duplicate.name).toBe('Existing Preset');
+            expect('previous_values' in body.duplicate).toBe(false);
+            expect(body.vote_added).toBe(true);
+            expect(mockDb._queries.some((q) => q.includes('INSERT INTO votes'))).toBe(true);
+        });
+
+        it('neither reveals nor votes on a PENDING duplicate to someone who could not GET it (409)', async () => {
+            const pendingPreset = createMockPresetRow({
+                id: 'hidden-456',
+                name: 'Flagged Gem',
+                description: 'text held for moderator review',
+                author_discord_id: 'other-user',
+                author_name: 'Other User',
+                status: 'pending',
+                previous_values: JSON.stringify({
+                    name: 'Old name',
+                    description: 'Old description text',
+                    tags: [],
+                    dyes: [1, 2, 3],
+                }),
+            });
+            mockDb._setupMock(duplicateMock(pendingPreset));
+
+            const res = await submitAs('123');
+
+            expect(res.status).toBe(409);
+            const body = await res.json() as { success: boolean; error: string; duplicate?: unknown };
+            expect(body.success).toBe(false);
+            expect(body.error).toBe('DUPLICATE_RESOURCE');
+            expect(body.duplicate).toBeUndefined();
+            const text = JSON.stringify(body);
+            expect(text).not.toContain('hidden-456');
+            expect(text).not.toContain('Flagged Gem');
+            expect(text).not.toContain('other-user');
+            expect(text).not.toContain('moderator review');
+            expect(mockDb._queries.some((q) => q.includes('INSERT INTO votes'))).toBe(false);
+        });
+
+        it('lets the OWNER see their own pending duplicate, but adds no vote', async () => {
+            const ownPending = createMockPresetRow({
+                id: 'mine-789',
+                author_discord_id: '123',
+                status: 'pending',
+            });
+            mockDb._setupMock(duplicateMock(ownPending));
+
+            const res = await submitAs('123');
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { duplicate: { id: string }; vote_added: boolean };
+            expect(body.duplicate.id).toBe('mine-789');
+            expect(body.vote_added).toBe(false);
+            expect(mockDb._queries.some((q) => q.includes('INSERT INTO votes'))).toBe(false);
+        });
+
+        it('lets a MODERATOR see a pending duplicate, but adds no vote', async () => {
+            const pendingPreset = createMockPresetRow({
+                id: 'hidden-456',
+                author_discord_id: 'other-user',
+                status: 'pending',
+            });
+            mockDb._setupMock(duplicateMock(pendingPreset));
+
+            const res = await submitAs('123456789'); // In MODERATOR_IDS
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { duplicate: { id: string }; vote_added: boolean };
+            expect(body.duplicate.id).toBe('hidden-456');
+            expect(body.vote_added).toBe(false);
+            expect(mockDb._queries.some((q) => q.includes('INSERT INTO votes'))).toBe(false);
+        });
+
+        it('refuses a banned user with 403 USER_BANNED before doing anything', async () => {
+            mockDb._setBanStatus(true);
+            mockDb._setupMock(duplicateMock(createMockPresetRow({ status: 'approved' })));
+
+            const res = await submitAs('123');
+
+            expect(res.status).toBe(403);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('USER_BANNED');
+            expect(mockDb._queries.some((q) => q.includes('INSERT INTO'))).toBe(false);
+        });
+    });
+
+    // ============================================
+    // POST /api/v1/presets/:id/preview-image
+    // ============================================
+
+    describe('POST /api/v1/presets/:id/preview-image', () => {
+        const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+
+        // The route hands its moderator notification to executionCtx.waitUntil —
+        // the same retry/dead-letter path a new submission uses — so every
+        // request through it needs a context to hand that promise to.
+        const waitUntilPromises: Promise<unknown>[] = [];
+        const ctx = {
+            waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+            passThroughOnException: () => {},
+        } as unknown as ExecutionContext;
+
+        beforeEach(() => {
+            waitUntilPromises.length = 0;
+        });
+
+        it('should require authentication', async () => {
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                { method: 'POST', body: png },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(401);
+        });
+
+        it('should reject a user who is not the author', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: 'the-author',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': 'not-the-author',
+                    },
+                    body: png,
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(403);
+        });
+
+        // FINDING-016 / PAPI-11: a 403 here told a non-author that a hidden or
+        // pending UUID exists while GET said 404. Same answer as GET now.
+        it('returns 404 (not 403) to a non-author when the preset is not approved (FINDING-016)', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: 'the-author',
+                status: 'pending',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': 'not-the-author',
+                    },
+                    body: png,
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(404);
+        });
+
+        it('refuses a banned author with 403 USER_BANNED before touching the image', async () => {
+            mockDb._setBanStatus(true);
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(403);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('USER_BANNED');
+            expect(mockDb._queries.some((q) => q.includes('UPDATE presets'))).toBe(false);
+        });
+
+        it('should return 404 for a nonexistent preset', async () => {
+            mockDb._setupMock(() => null);
+
+            const res = await app.request(
+                '/api/v1/presets/nonexistent/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(404);
+        });
+
+        it('should reject an empty body', async () => {
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: new Uint8Array(0),
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should reject a file over 5 MB before touching image-worker', async () => {
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+            const fetchSpy = vi.fn();
+            env.IMAGE_WORKER = { fetch: fetchSpy } as unknown as Fetcher;
+
+            // Real PNG magic bytes followed by padding, so the sniff check
+            // passes and ONLY the size check can reject this payload.
+            const big = new Uint8Array(5 * 1024 * 1024 + 1);
+            big.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: big,
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(400);
+            expect(fetchSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reject bytes that are not a recognizable image, whatever the size limit allows', async () => {
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0, 0, 0, 0, 0]),
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should return 400 when image-worker cannot process the image', async () => {
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+            env.IMAGE_WORKER = {
+                fetch: async () => new Response(JSON.stringify({ error: 'bad image' }), { status: 400 }),
+            } as unknown as Fetcher;
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should store the image, mark it pending, and delete a previous image', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                preview_image_key: 'preset-123/old.webp',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
+            await bucket.put('preset-123/old.webp', new ArrayBuffer(4));
+            expect(bucket._store.has('preset-123/old.webp')).toBe(true);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { success: boolean; status: string };
+            expect(body.success).toBe(true);
+            expect(body.status).toBe('pending');
+
+            // Old key gone, exactly one new key under the preset's prefix.
+            expect(bucket._store.has('preset-123/old.webp')).toBe(false);
+            const newKeys = [...bucket._store.keys()].filter((k) => k.startsWith('preset-123/'));
+            expect(newKeys).toHaveLength(1);
+            expect(newKeys[0]).toMatch(/^preset-123\/.+\.webp$/);
+
+            const stored = bucket._store.get(newKeys[0])!;
+            expect(stored.httpMetadata?.contentType).toBe('image/webp');
+            // FINDING-018: browser long + immutable (single-use key), edge one day
+            // so a takedown is bounded even when the purge is not configured
+            expect(stored.httpMetadata?.cacheControl).toBe(
+                'public, max-age=31536000, immutable, s-maxage=86400'
+            );
+
+            expect(
+                mockDb._queries.some((q) => q.includes("preview_image_status = 'pending'"))
+            ).toBe(true);
+        });
+
+        // FINDING 2 (2026-08-10 review): the handler does the DB UPDATE
+        // before deleting the old R2 object, and must capture the OLD key
+        // before the UPDATE overwrites it — otherwise a re-upload could
+        // delete the object it just wrote instead of the stale one. This
+        // test performs two real uploads through the route (not a
+        // pre-seeded bucket) so the row's preview_image_key genuinely
+        // changes between requests, the way it would in production.
+        it('leaves exactly one object under the prefix after a re-upload, and it is the new key', async () => {
+            const row = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                preview_image_key: null,
+            });
+            mockDb._setupMock((query, bindings) => {
+                if (query.startsWith('UPDATE presets SET preview_image_key')) {
+                    row.preview_image_key = bindings[0] as string;
+                    return { success: true };
+                }
+                return row;
+            });
+
+            const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
+            const upload = () =>
+                app.request(
+                    '/api/v1/presets/preset-123/preview-image',
+                    {
+                        method: 'POST',
+                        headers: {
+                            Authorization: 'Bearer test-bot-secret',
+                            'X-User-Discord-ID': '123',
+                        },
+                        body: png,
+                    },
+                    env,
+                    ctx
+                );
+
+            const first = await upload();
+            expect(first.status).toBe(200);
+            const firstKeys = [...bucket._store.keys()].filter((k) => k.startsWith('preset-123/'));
+            expect(firstKeys).toHaveLength(1);
+            const firstKey = firstKeys[0];
+
+            const second = await upload();
+            expect(second.status).toBe(200);
+
+            const finalKeys = [...bucket._store.keys()].filter((k) => k.startsWith('preset-123/'));
+            expect(finalKeys).toHaveLength(1);
+            expect(finalKeys[0]).not.toBe(firstKey);
+            expect(bucket._store.has(firstKey)).toBe(false);
+        });
+
+        it('notifies the Discord worker with the new key after the DB update succeeds', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                name: 'My Preset',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const mockDiscordWorker = { fetch: vi.fn().mockResolvedValue(new Response('OK', { status: 200 })) };
+            const envWithDiscord = createMockEnv({
+                DB: mockDb as unknown as D1Database,
+                DISCORD_WORKER: mockDiscordWorker as unknown as Env['DISCORD_WORKER'],
+                INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
+            });
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                envWithDiscord,
+                ctx
+            );
+
+            expect(res.status).toBe(200);
+            await Promise.allSettled(waitUntilPromises);
+            expect(mockDiscordWorker.fetch).toHaveBeenCalledTimes(1);
+            const [reqArg] = mockDiscordWorker.fetch.mock.calls[0] as [Request];
+            expect(reqArg.headers.get('Authorization')).toBe('Bearer test-webhook-secret');
+            const body = JSON.parse(await reqArg.text()) as {
+                type: string;
+                preset: { id: string; name: string };
+                preview_image_key: string;
+            };
+            expect(body.type).toBe('preview_image');
+            expect(body.preset.id).toBe('preset-123');
+            expect(body.preset.name).toBe('My Preset');
+            expect(body.preview_image_key).toMatch(/^preset-123\/.+\.webp$/);
+        });
+
+        // FINDING 4 (2026-08-10 final review): this notification used to be a
+        // hand-rolled fetch, so a failure vanished — no retry, no dead-letter
+        // row, no moderator ever told an image was waiting. It now goes
+        // through notifyDiscordBot like a submission does. A 400 from the bot
+        // is the non-retryable case, which reaches the dead-letter write
+        // without spending the backoff sleeps.
+        it('records a dead-letter row when the Discord notification is rejected', async () => {
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+
+            const mockDiscordWorker = {
+                fetch: vi.fn().mockResolvedValue(new Response('nope', { status: 400 })),
+            };
+            const envWithDiscord = createMockEnv({
+                DB: mockDb as unknown as D1Database,
+                DISCORD_WORKER: mockDiscordWorker as unknown as Env['DISCORD_WORKER'],
+                INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
+            });
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                envWithDiscord,
+                ctx
+            );
+
+            // The author's upload succeeded regardless — the image is stored
+            // and pending; the notification is someone else's problem.
+            expect(res.status).toBe(200);
+            const body = await res.json() as { success: boolean; status: string };
+            expect(body.success).toBe(true);
+            expect(body.status).toBe('pending');
+
+            await Promise.allSettled(waitUntilPromises);
+            expect(
+                mockDb._queries.some((q) => q.includes('INSERT INTO failed_notifications'))
+            ).toBe(true);
         });
     });
 
@@ -1193,6 +1749,56 @@ describe('PresetsHandler', () => {
             expect(res.status).toBe(200);
         });
 
+        // FINDING-016 / PAPI-11: the 403 was an existence oracle for non-approved
+        // UUIDs (GET says 404). A public, approved preset still gets the 403.
+        it('returns 404 (not 403) to a non-owner when the preset is not approved (FINDING-016)', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: 'other-user',
+                status: 'pending',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': 'not-owner-not-mod',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(404);
+            expect(mockDb._queries.some((q) => q.includes('DELETE FROM presets'))).toBe(false);
+        });
+
+        // FINDING-017 / PAPI-9: DELETE had no ban check at all
+        it('refuses a banned owner with 403 USER_BANNED (FINDING-017)', async () => {
+            mockDb._setBanStatus(true);
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(403);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('USER_BANNED');
+            expect(mockDb._queries.some((q) => q.includes('DELETE FROM presets'))).toBe(false);
+        });
+
         it('should reject non-owner non-moderator deletion', async () => {
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
@@ -1231,6 +1837,34 @@ describe('PresetsHandler', () => {
             );
 
             expect(res.status).toBe(404);
+        });
+
+        it('removes the stored preview image when the preset is deleted', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-with-image',
+                author_discord_id: '123',
+                preview_image_key: 'preset-with-image/a.webp',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
+            await bucket.put('preset-with-image/a.webp', new ArrayBuffer(4));
+            expect(bucket._store.has('preset-with-image/a.webp')).toBe(true);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-with-image',
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            expect(bucket._store.has('preset-with-image/a.webp')).toBe(false);
         });
 
         // ============================================
@@ -1382,6 +2016,57 @@ describe('PresetsHandler', () => {
             expect(res.status).toBe(403);
         });
 
+        // FINDING-016 / PAPI-11: same 404-not-403 rule as GET for non-approved rows
+        it('returns 404 (not 403) to a non-owner when the preset is not approved (FINDING-016)', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: 'other-user',
+                status: 'pending',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: JSON.stringify({ name: 'New Name that is long enough' }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(404);
+        });
+
+        it('refuses a banned owner with 403 USER_BANNED', async () => {
+            mockDb._setBanStatus(true);
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: JSON.stringify({ name: 'New Name that is long enough' }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(403);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('USER_BANNED');
+            expect(mockDb._queries.some((q) => q.includes('UPDATE presets'))).toBe(false);
+        });
+
         it('should update preset with valid data', async () => {
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
@@ -1522,6 +2207,82 @@ describe('PresetsHandler', () => {
             expect(body.message).toContain('No updates provided');
         });
 
+        // FINDING-016 / PAPI-2: the 409 body must not describe a colliding preset
+        // the caller could not GET (a pending one belonging to someone else).
+        it('omits the duplicate summary from the 409 when the colliding preset is pending and not the caller\'s', async () => {
+            const target = createMockPresetRow({ id: 'preset-123', author_discord_id: '123', status: 'approved' });
+            const pendingDup = createMockPresetRow({
+                id: 'dup-456',
+                name: 'Hidden Gem',
+                author_discord_id: 'other-user',
+                author_name: 'Other User',
+                status: 'pending',
+            });
+            mockDb._setupMock((query) => {
+                if (query.includes('FROM categories')) return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                if (query.includes('dye_signature = ?')) return pendingDup;
+                if (query.includes('FROM presets WHERE id = ?')) return target;
+                return { success: true };
+            });
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: JSON.stringify({ dyes: [4, 5, 6] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(409);
+            const body = await res.json() as { success: boolean; error: string; duplicate?: unknown };
+            expect(body.success).toBe(false);
+            expect(body.error).toBe('DUPLICATE_RESOURCE');
+            expect(body.duplicate).toBeUndefined();
+            expect(JSON.stringify(body)).not.toContain('Hidden Gem');
+            expect(JSON.stringify(body)).not.toContain('dup-456');
+        });
+
+        it('keeps the {id, name, author_name} duplicate summary in the 409 when the colliding preset is approved', async () => {
+            const target = createMockPresetRow({ id: 'preset-123', author_discord_id: '123', status: 'approved' });
+            const approvedDup = createMockPresetRow({
+                id: 'dup-456',
+                name: 'Public Gem',
+                author_discord_id: 'other-user',
+                author_name: 'Other User',
+                status: 'approved',
+            });
+            mockDb._setupMock((query) => {
+                if (query.includes('FROM categories')) return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                if (query.includes('dye_signature = ?')) return approvedDup;
+                if (query.includes('FROM presets WHERE id = ?')) return target;
+                return { success: true };
+            });
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: JSON.stringify({ dyes: [4, 5, 6] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(409);
+            const body = await res.json() as { duplicate?: { id: string; name: string; author_name: string | null } };
+            expect(body.duplicate).toEqual({ id: 'dup-456', name: 'Public Gem', author_name: 'Other User' });
+        });
+
         it('should check for duplicate dyes when dyes are changed', async () => {
             const ownPreset = createMockPresetRow({
                 id: 'preset-123',
@@ -1634,7 +2395,7 @@ describe('PresetsHandler', () => {
 
             expect(res.status).toBe(400);
             const body = await res.json() as { message: string };
-            expect(body.message).toContain('Must include 2-5 dyes');
+            expect(body.message).toContain('Must include 3-6 dyes');
         });
 
         it('should validate edit request dyes count', async () => {
@@ -1660,7 +2421,7 @@ describe('PresetsHandler', () => {
 
             expect(res.status).toBe(400);
             const body = await res.json() as { message: string };
-            expect(body.message).toContain('Must include 2-5 dyes');
+            expect(body.message).toContain('Must include 3-6 dyes');
         });
 
         it('should validate edit request dyes are valid numbers', async () => {
@@ -1816,6 +2577,123 @@ describe('PresetsHandler', () => {
 
             expect(res.status).toBe(404);
         });
+
+        // Task 7 (2026-08-11): clients can now SET category_id / secondary_categories
+        // on edit, and changing the primary category is unlocked. Auth headers mirror
+        // the neighbouring PATCH tests above (bot secret + X-User-Discord-ID) rather
+        // than the authHeaders() helper, since author_discord_id must equal the
+        // X-User-Discord-ID header for the ownership check to pass.
+        it('accepts a category change with secondary categories', async () => {
+            const row = createMockPresetRow({ author_discord_id: '123456789', status: 'approved' });
+            mockDb._setupMock((sql: string) => {
+                if (sql.includes('FROM categories')) {
+                    return [{ id: 'jobs' }, { id: 'zones' }, { id: 'events' }, { id: 'aesthetics' }];
+                }
+                return [{ ...row, category_id: 'jobs', secondary_categories: '["zones"]' }];
+            });
+
+            const res = await app.request(
+                `/api/v1/presets/${row.id}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: JSON.stringify({ category_id: 'jobs', secondary_categories: ['zones'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+        });
+
+        it('rejects a secondary category that repeats the primary', async () => {
+            const row = createMockPresetRow({ author_discord_id: '123456789', status: 'approved' });
+            mockDb._setupMock((sql: string) => {
+                if (sql.includes('FROM categories')) return [{ id: 'jobs' }, { id: 'zones' }];
+                return [row];
+            });
+
+            const res = await app.request(
+                `/api/v1/presets/${row.id}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: JSON.stringify({ category_id: 'jobs', secondary_categories: ['jobs'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+        });
+
+        it('a category-only edit is not "No updates provided"', async () => {
+            const row = createMockPresetRow({ author_discord_id: '123456789', status: 'approved' });
+            mockDb._setupMock((sql: string) => {
+                if (sql.includes('FROM categories')) return [{ id: 'jobs' }, { id: 'zones' }];
+                return [row];
+            });
+
+            const res = await app.request(
+                `/api/v1/presets/${row.id}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: JSON.stringify({ secondary_categories: [] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+        });
+
+        // Review finding (2026-08-11): the three tests above never exercise the
+        // `?? currentCategoryId` fallback in validateEditRequest — tests 1/2 both
+        // set category_id explicitly, and the empty-array test never enters the
+        // collision loop at all. This test omits category_id entirely, so
+        // effectivePrimary can only come from the preset's current (unchanged)
+        // row value — 'aesthetics', the default from createMockPresetRow, set
+        // explicitly here for clarity. The mocked category list includes
+        // 'aesthetics' so the entry passes the validity check and is rejected
+        // specifically by the primary-collision rule, not "Invalid secondary
+        // category".
+        it('rejects a secondary category that repeats the unchanged primary when category_id is omitted', async () => {
+            const row = createMockPresetRow({
+                author_discord_id: '123456789',
+                status: 'approved',
+                category_id: 'aesthetics',
+            });
+            mockDb._setupMock((sql: string) => {
+                if (sql.includes('FROM categories')) return [{ id: 'aesthetics' }, { id: 'zones' }];
+                return [row];
+            });
+
+            const res = await app.request(
+                `/api/v1/presets/${row.id}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: JSON.stringify({ secondary_categories: ['aesthetics'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+        });
     });
 
     // ============================================
@@ -1826,8 +2704,8 @@ describe('PresetsHandler', () => {
         it('should validate dye IDs are positive numbers', async () => {
             // Return valid categories so category validation passes, allowing dye validation to run
             mockDb._setupMock((query) => {
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -1880,8 +2758,8 @@ describe('PresetsHandler', () => {
         it('should validate tag types in submission', async () => {
             // Return valid categories so category validation passes, allowing tag validation to run
             mockDb._setupMock((query) => {
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -1959,8 +2837,8 @@ describe('PresetsHandler', () => {
         it('should validate negative dye IDs', async () => {
             // Return valid categories so category validation passes, allowing dye validation to run
             mockDb._setupMock((query) => {
-                if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -2278,6 +3156,147 @@ describe('PresetsHandler', () => {
             );
 
             expect(res.status).toBe(400);
+        });
+    });
+
+    // ============================================
+    // DELETE /api/v1/presets/:id/preview-image
+    // ============================================
+
+    describe('DELETE /api/v1/presets/:id/preview-image', () => {
+        // Task 8 (2026-08-11): authHeaders(token, userId?, userName?) takes the
+        // bot token first. A lone positional arg only sets Authorization and
+        // leaves X-User-Discord-ID unset, so authMiddleware never authenticates
+        // (BOT_API_SECRET mismatch, then a failed JWT parse) and every case here
+        // would 401 before reaching the route. Passing the mock bot secret
+        // explicitly matches this file's convention elsewhere (Authorization:
+        // 'Bearer test-bot-secret' + X-User-Discord-ID).
+        it('clears the key and status for the author', async () => {
+            mockDb._setupMock(() => [
+                { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', name: 'Test' },
+            ]);
+
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual({ success: true, preview_image_status: 'none' });
+            expect(mockDb._queries.join(' ')).toContain('preview_image_key = NULL');
+        });
+
+        // FINDING-016 / PAPI-11: a non-author on a non-approved preset gets the
+        // same 404 as GET; the 403 is reserved for public (approved) rows.
+        it('returns 404 (not 403) to a non-author when the preset is not approved (FINDING-016)', async () => {
+            mockDb._setupMock(() => [
+                { author_discord_id: '999999999', preview_image_key: 'p1/a.webp', name: 'Test', status: 'pending' },
+            ]);
+
+            // 555000111 is neither the author nor in MODERATOR_IDS (123456789 is a moderator,
+            // and a moderator CAN see a pending preset — they get the 403 below instead)
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '555000111') } },
+                env
+            );
+
+            expect(res.status).toBe(404);
+            expect(mockDb._queries.join(' ')).not.toContain('preview_image_key = NULL');
+        });
+
+        it('still 403s a moderator who is not the author on a pending preset — they can see it', async () => {
+            mockDb._setupMock(() => [
+                { author_discord_id: '999999999', preview_image_key: 'p1/a.webp', name: 'Test', status: 'pending' },
+            ]);
+
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } }, // moderator
+                env
+            );
+
+            expect(res.status).toBe(403);
+        });
+
+        // FINDING-017 / PAPI-9: DELETE preview-image had no ban check
+        it('refuses a banned author with 403 USER_BANNED (FINDING-017)', async () => {
+            mockDb._setBanStatus(true);
+            mockDb._setupMock(() => [
+                { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', name: 'Test', status: 'approved' },
+            ]);
+
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(403);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('USER_BANNED');
+            expect(mockDb._queries.join(' ')).not.toContain('preview_image_key = NULL');
+        });
+
+        it('refuses a non-author', async () => {
+            mockDb._setupMock(() => [
+                // approved: the preset is public, so a 403 does not reveal anything GET would not
+                { author_discord_id: '999999999', preview_image_key: 'p1/a.webp', name: 'Test', status: 'approved' },
+            ]);
+
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(403);
+        });
+
+        it('404s an unknown preset', async () => {
+            mockDb._setupMock(() => []);
+
+            const res = await app.request(
+                '/api/v1/presets/nope/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(404);
+        });
+
+        it('is idempotent when there is no image', async () => {
+            mockDb._setupMock(() => [
+                { author_discord_id: '123456789', preview_image_key: null, name: 'Test' },
+            ]);
+
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(200);
+        });
+
+        it('still succeeds when the R2 delete throws', async () => {
+            // The DB already reflects the removal; an R2 hiccup must not 500 a
+            // request whose state is already correct.
+            mockDb._setupMock(() => [
+                { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', name: 'Test' },
+            ]);
+            (env.THUMBNAILS as unknown as MockR2Bucket).delete = () => {
+                throw new Error('R2 down');
+            };
+
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(200);
         });
     });
 });

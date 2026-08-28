@@ -1,0 +1,8 @@
+ RUN  v4.1.10 C:/dev/XIVProjects/xivdyetools/apps/og-worker
+
+
+ Test Files  16 passed (16)
+      Tests  294 passed (294)
+   Start at  21:35:08
+   Duration  1.96s (transform 9.91s, setup 0ms, import 16.77s, tests 682ms, environment 3ms)
+

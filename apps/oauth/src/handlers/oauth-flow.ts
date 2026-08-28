@@ -14,7 +14,14 @@ import type { Context } from 'hono';
 import type { Env } from '../types.js';
 import { STATE_EXPIRY_SECONDS, getAllowedRedirectOrigins } from '../constants/oauth.js';
 import { signState, verifyState } from '../utils/state-signing.js';
-import { validateCodeChallenge, validateRedirectUri } from '../utils/oauth-validation.js';
+import {
+  validateCodeChallenge,
+  validateRedirectUri,
+  validateReturnPath,
+  validateStateParam,
+  MAX_RETURN_PATH_LENGTH,
+  MAX_STATE_LENGTH,
+} from '../utils/oauth-validation.js';
 
 /**
  * Per-provider configuration for the shared authorize/callback pipeline
@@ -96,7 +103,10 @@ export function buildAuthorizeHandler(config: OAuthFlowConfig) {
       );
     }
 
-    // BUG-018: single shared allowlist (env-filtered) for every flow step
+    // BUG-018: single shared allowlist (env-filtered) for every flow step.
+    // FINDING-012 / OAUTH-4: validateRedirectUri also pins the path to the SPA
+    // callback route — origin-only matching let any path on a trusted origin
+    // receive the ?code= bounce.
     const allowedOrigins = getAllowedRedirectOrigins(c.env);
     const finalRedirectUri = redirect_uri || `${c.env.FRONTEND_URL}/auth/callback`;
 
@@ -112,13 +122,38 @@ export function buildAuthorizeHandler(config: OAuthFlowConfig) {
       );
     }
 
+    // FINDING-012 / OAUTH-4: bound the client-chosen values that are embedded
+    // in the signed state and echoed back to the SPA at the callback
+    const finalReturnPath = return_path || '/';
+    if (!validateReturnPath(finalReturnPath)) {
+      return c.json(
+        {
+          error: 'Invalid return_path',
+          message: `return_path must be a relative path of at most ${MAX_RETURN_PATH_LENGTH} characters`,
+        },
+        400
+      );
+    }
+
+    if (state && !validateStateParam(state)) {
+      return c.json(
+        {
+          error: 'Invalid state',
+          message: `state must be at most ${MAX_STATE_LENGTH} printable ASCII characters`,
+        },
+        400
+      );
+    }
+
     // Generate state with only safe data (NO code_verifier!)
     const now = Math.floor(Date.now() / 1000);
     const stateData = {
       csrf: state || crypto.randomUUID(),
-      code_challenge, // Stored for logging/debugging only
+      // FINDING-012 / OAUTH-5: the POST callback binds the code_verifier to this
+      // challenge when the SPA returns the signed state (utils/pkce-binding.ts)
+      code_challenge,
       redirect_uri: finalRedirectUri,
-      return_path: return_path || '/',
+      return_path: finalReturnPath,
       provider: config.provider,
       iat: now,
       exp: now + STATE_EXPIRY_SECONDS, // 10 minute expiration
@@ -178,19 +213,25 @@ export function buildGetCallbackHandler(config: OAuthFlowConfig) {
     // OAUTH-CRITICAL-002 / BUG-018: validate the redirect target against the
     // same shared allowlist used at authorize time — prevents open redirects
     // while keeping every allowlisted origin (incl. the transition domain)
-    // consistent across both flow steps.
+    // consistent across both flow steps. FINDING-012: exact callback path too.
     let redirectUrl: URL;
     try {
       redirectUrl = new URL(stateData.redirect_uri);
       validateRedirectUri(stateData.redirect_uri, getAllowedRedirectOrigins(c.env));
     } catch {
-      console.error('Blocked redirect to untrusted origin:', stateData.redirect_uri);
-      return frontendErrorRedirect(c, config, 'Untrusted redirect origin');
+      console.error('Blocked redirect to untrusted target:', stateData.redirect_uri);
+      return frontendErrorRedirect(c, config, 'Untrusted redirect target');
     }
 
     // Redirect back to frontend with the auth code
     redirectUrl.searchParams.set('code', code);
     redirectUrl.searchParams.set('csrf', stateData.csrf);
+    // FINDING-012 / OAUTH-5: hand the signed state back so the SPA can return
+    // it to the POST callback, where the code_verifier is bound to the
+    // code_challenge signed at authorize time (utils/pkce-binding.ts). It
+    // carries nothing secret — csrf (already in this URL), the public
+    // challenge, the redirect target and timestamps.
+    redirectUrl.searchParams.set('state', state);
     if (config.markProviderOnRedirect) {
       redirectUrl.searchParams.set('provider', config.provider);
     }

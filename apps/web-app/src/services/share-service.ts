@@ -8,6 +8,9 @@
  */
 
 import { ToastService } from './toast-service';
+import { LanguageService } from './language-service';
+import { dyeService } from './dye-service-wrapper';
+import type { Dye } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import type { ToolId } from './router-service';
 import type { MatchingMethod } from '@xivdyetools/core';
@@ -20,6 +23,7 @@ type HarmonyType =
   | 'triadic'
   | 'split-complementary'
   | 'tetradic'
+  | 'inverted-tetradic'
   | 'square'
   | 'monochromatic'
   | 'compound'
@@ -33,52 +37,76 @@ type HarmonyType =
  * Current share URL schema version
  * Increment when making breaking changes to URL structure
  */
-export const SHARE_URL_VERSION = 1;
+const SHARE_URL_VERSION = 1;
 
 /**
  * Base URL for the application (production)
  */
-export const BASE_URL = 'https://xivdyetools.app';
+const BASE_URL = 'https://xivdyetools.app';
 
 /**
  * Tool-specific share parameters
  */
+/*
+ * 5.0 share-URL grammar (atomic across web + og-worker):
+ * - Every `dye`-class param keys on **stainID** (1-254). Legacy itemIDs
+ *   (>= 5729) are disjoint and rejected loudly on read — never silently
+ *   resolved to a fallback dye.
+ * - Bare colours travel as `hex`-class params (per slot, RRGGBB without #),
+ *   mutually exclusive with the slot's dye param. Validated on read.
+ */
 export interface HarmonyShareParams {
-  dye: number; // itemID
+  dye?: number; // stainID
+  hex?: string; // bare colour slot (RRGGBB) — exclusive with `dye`
   harmony: HarmonyType;
   algo?: MatchingMethod;
   perceptual?: boolean;
 }
 
 export interface GradientShareParams {
-  start: number; // itemID
-  end: number; // itemID
+  start?: number; // stainID
+  end?: number; // stainID
+  hexStart?: string; // bare colour slot — exclusive with `start`
+  hexEnd?: string; // bare colour slot — exclusive with `end`
   steps?: number;
   interpolation?: InterpolationMode;
   algo?: MatchingMethod;
 }
 
 export interface MixerShareParams {
-  dyeA: number; // itemID
-  dyeB: number; // itemID
-  dyeC?: number; // itemID (optional third dye)
+  dyeA?: number; // stainID
+  dyeB?: number; // stainID
+  dyeC?: number; // stainID (optional third dye)
+  hexA?: string; // bare colour slots — each exclusive with its dye param
+  hexB?: string;
+  hexC?: string;
   ratio?: number; // 0-100 (percentage of dyeA)
   mode?: MixingMode;
   algo?: MatchingMethod;
 }
 
 export interface SwatchShareParams {
-  color: string; // Hex without #
+  /** Colour sheet (`eyes`, `hair`, `skin`, …) — with `i`, addresses a character swatch cell */
+  slot?: string;
+  /** Cell index within the sheet (the R·C address derives from it) */
+  i?: number;
+  /** Bare colour (RRGGBB without #) — the reverse-match form */
+  hex?: string;
+  /** Legacy read alias for `hex` (pre-5.0 links) */
+  color?: string;
+  /** Race/gender for the race-specific sheets */
+  race?: string;
+  gender?: string;
   algo?: MatchingMethod;
   limit?: number;
 }
 
 export interface ComparisonShareParams {
-  dyes: number[]; // Array of itemIDs (max 4)
+  dyes: number[]; // Array of stainIDs (max 4)
 }
 
 export interface AccessibilityShareParams {
-  dyes: number[]; // Array of itemIDs
+  dyes: number[]; // Array of stainIDs
   vision?: string; // Vision type
 }
 
@@ -88,7 +116,8 @@ export interface ExtractorShareParams {
 }
 
 export interface BudgetShareParams {
-  dye: number; // Target dye itemID
+  dye?: number; // Target dye stainID
+  hex?: string; // bare colour target — exclusive with `dye`
   maxPrice?: number;
   maxDelta?: number;
 }
@@ -151,7 +180,7 @@ export interface ShareAnalyticsEvent {
  * // Generate a share URL
  * const result = ShareService.generateUrl({
  *   tool: 'harmony',
- *   params: { dye: 48227, harmony: 'Complementary', algo: 'oklab' }
+ *   params: { dye: 102, harmony: 'complementary', algo: 'ciede2000' } // 102 = Jet Black (stainID)
  * });
  *
  * // Copy to clipboard
@@ -181,7 +210,16 @@ export class ShareService {
     const paramsRecord = params as unknown as Record<string, unknown>;
 
     // Add tool-specific params
-    this.addParamsToUrl(url, tool, paramsRecord);
+    this.addParamsToUrl(url, paramsRecord);
+
+    // The sharer's locale rides the link so og-worker can localize the unfurl —
+    // it resolves locale from `?lang=` and from nothing else (crawlers send no
+    // useful Accept-Language). English stays unparameterised: og-worker keeps
+    // EN cache keys bare, and the SPA's own routing ignores the param.
+    const locale = LanguageService.getCurrentLocale();
+    if (locale !== 'en') {
+      url.searchParams.set('lang', locale);
+    }
 
     // Add version for future compatibility
     url.searchParams.set('v', String(SHARE_URL_VERSION));
@@ -203,7 +241,7 @@ export class ShareService {
   /**
    * Add tool-specific parameters to a URL
    */
-  private static addParamsToUrl(url: URL, tool: ToolId, params: Record<string, unknown>): void {
+  private static addParamsToUrl(url: URL, params: Record<string, unknown>): void {
     Object.entries(params).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
 
@@ -277,6 +315,74 @@ export class ShareService {
       default:
         return 'Free dye tools for FFXIV players.';
     }
+  }
+
+  // ==========================================================================
+  // 5.0 shared-value resolution (stainID grammar, loud failures)
+  // ==========================================================================
+
+  /**
+   * Resolve a shared `dye`-class param (stainID) to a Dye.
+   *
+   * Loud-failure contract: a legacy itemID (>= 5729, disjoint from the stain
+   * range) or an unknown value produces a visible toast and `null` — never a
+   * fallback dye.
+   */
+  static resolveSharedDye(raw: unknown): Dye | null {
+    const id = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw, 10) : NaN;
+    if (!Number.isFinite(id)) {
+      ToastService.error(LanguageService.t('share.invalidDye'));
+      return null;
+    }
+    if (id >= 5729) {
+      // The pre-5.0 grammar carried FFXIV item IDs — tell the user instead of
+      // guessing (the ranges are disjoint, so this is always detectable).
+      ToastService.error(LanguageService.t('share.legacyLink'));
+      logger.warn(`[ShareService] Legacy itemID in share URL rejected: ${id}`);
+      return null;
+    }
+    const dye = dyeService.getByStainId(id);
+    if (!dye) {
+      ToastService.error(LanguageService.t('share.invalidDye'));
+      logger.warn(`[ShareService] Unknown stainID in share URL: ${id}`);
+      return null;
+    }
+    return dye;
+  }
+
+  /**
+   * Validate a shared `hex`-class param. Accepts RRGGBB or RGB (with or
+   * without #) and returns a normalized `#rrggbb`, or null with a toast.
+   */
+  static parseSharedHex(raw: unknown): string | null {
+    const normalized = this.normalizeHex(raw);
+    if (!normalized) {
+      ToastService.error(LanguageService.t('share.invalidHex'));
+      return null;
+    }
+    return normalized;
+  }
+
+  /**
+   * Pure form of {@link parseSharedHex}: `#rrggbb` for a well-formed value,
+   * null otherwise, no toast. An all-digit hex such as `112233` arrives from
+   * `parseUrl()` as a number (its canonical decimal form is identical to the
+   * hex string), so numbers are stringified rather than rejected.
+   */
+  private static normalizeHex(raw: unknown): string | null {
+    const text =
+      typeof raw === 'string'
+        ? raw
+        : typeof raw === 'number' && Number.isInteger(raw) && raw >= 0
+          ? String(raw)
+          : null;
+    if (text === null) return null;
+    const cleaned = text.trim().replace(/^#/, '').toLowerCase();
+    if (/^[0-9a-f]{6}$/.test(cleaned)) return `#${cleaned}`;
+    if (/^[0-9a-f]{3}$/.test(cleaned)) {
+      return `#${cleaned[0]}${cleaned[0]}${cleaned[1]}${cleaned[1]}${cleaned[2]}${cleaned[2]}`;
+    }
+    return null;
   }
 
   // ==========================================================================
@@ -369,7 +475,7 @@ export class ShareService {
     try {
       await navigator.clipboard.writeText(url);
 
-      ToastService.success('Link copied to clipboard!');
+      ToastService.success(LanguageService.t('share.linkCopied'));
 
       this.trackAnalytics({
         event: 'share_copied',
@@ -386,9 +492,12 @@ export class ShareService {
       const success = this.fallbackCopyToClipboard(url);
 
       if (success) {
-        ToastService.success('Link copied to clipboard!');
+        ToastService.success(LanguageService.t('share.linkCopied'));
       } else {
-        ToastService.error('Failed to copy link', 'Please copy the URL manually');
+        ToastService.error(
+          LanguageService.t('errors.copyLinkFailed'),
+          LanguageService.t('share.copyManually')
+        );
       }
 
       return success;
@@ -446,7 +555,7 @@ export class ShareService {
         timestamp: Date.now(),
       });
 
-      ToastService.error('Failed to generate share link');
+      ToastService.error(LanguageService.t('share.generateFailed'));
       return null;
     }
   }
@@ -501,40 +610,44 @@ export class ShareService {
   static validateShareParams(shareData: ShareParams): string[] {
     const errors: string[] = [];
     const { tool, params } = shareData;
+    const record = params as Record<string, unknown>;
 
     switch (tool) {
       case 'harmony':
-        if (!('dye' in params) || !params.dye) {
-          errors.push('Missing required parameter: dye');
-        }
+        this.validateColourSlot(record, 'dye', 'hex', errors);
         if (!('harmony' in params) || !params.harmony) {
           errors.push('Missing required parameter: harmony');
         }
         break;
 
       case 'gradient':
-        if (!('start' in params) || !params.start) {
-          errors.push('Missing required parameter: start');
-        }
-        if (!('end' in params) || !params.end) {
-          errors.push('Missing required parameter: end');
-        }
+        this.validateColourSlot(record, 'start', 'hexStart', errors);
+        this.validateColourSlot(record, 'end', 'hexEnd', errors);
         break;
 
       case 'mixer':
-        if (!('dyeA' in params) || !params.dyeA) {
-          errors.push('Missing required parameter: dyeA');
-        }
-        if (!('dyeB' in params) || !params.dyeB) {
-          errors.push('Missing required parameter: dyeB');
-        }
+        this.validateColourSlot(record, 'dyeA', 'hexA', errors);
+        this.validateColourSlot(record, 'dyeB', 'hexB', errors);
         break;
 
-      case 'swatch':
-        if (!('color' in params) || !params.color) {
-          errors.push('Missing required parameter: color');
+      case 'swatch': {
+        // 5.0 grammar: a character swatch is addressed by its cell (`slot` +
+        // `i`); a bare colour rides on `hex` (`color` kept as a legacy read
+        // alias). Either form satisfies the link.
+        const hasCell =
+          typeof record.slot === 'string' &&
+          record.slot.length > 0 &&
+          Number.isInteger(Number(record.i)) &&
+          Number(record.i) >= 0;
+        const hexRaw = record.hex ?? record.color;
+        const hasHex = hexRaw !== undefined && hexRaw !== null && hexRaw !== '';
+        if (!hasCell && !hasHex) {
+          errors.push('Missing required parameter: slot + i (or hex)');
+        } else if (hasHex && this.parseSharedHex(hexRaw) === null) {
+          errors.push(`Invalid hex colour: ${String(hexRaw)}`);
         }
         break;
+      }
 
       case 'comparison':
         if (!('dyes' in params) || !params.dyes?.length) {
@@ -546,6 +659,38 @@ export class ShareService {
     }
 
     return errors;
+  }
+
+  /**
+   * One colour slot of the 5.0 grammar: satisfied by EITHER its stainID
+   * param (a positive number) OR its `hex*` param (well-formed), never both
+   * and never neither. Shared by harmony (`dye`/`hex`), gradient
+   * (`start`/`hexStart`, `end`/`hexEnd`) and mixer (`dyeA`/`hexA`, `dyeB`/`hexB`).
+   */
+  private static validateColourSlot(
+    params: Record<string, unknown>,
+    dyeKey: string,
+    hexKey: string,
+    errors: string[]
+  ): void {
+    const dye = params[dyeKey];
+    const hex = params[hexKey];
+    const hasDye = dye !== undefined && dye !== null && dye !== 0 && dye !== '';
+    const hasHex = hex !== undefined && hex !== null && hex !== '';
+
+    if (hasDye && hasHex) {
+      errors.push(`Conflicting parameters: ${dyeKey} and ${hexKey} are mutually exclusive`);
+      return;
+    }
+    if (hasHex) {
+      if (!this.normalizeHex(hex)) {
+        errors.push(`Invalid parameter: ${hexKey} must be RRGGBB`);
+      }
+      return;
+    }
+    if (!hasDye) {
+      errors.push(`Missing required parameter: ${dyeKey}`);
+    }
   }
 
   // ==========================================================================
@@ -615,7 +760,6 @@ export class ShareService {
 
     const initiated = events.filter((e) => e.event === 'share_initiated').length;
     const copied = events.filter((e) => e.event === 'share_copied').length;
-    const _failed = events.filter((e) => e.event === 'share_failed').length;
 
     // Count by tool (from initiated events)
     const sharesByTool: Record<string, number> = {};

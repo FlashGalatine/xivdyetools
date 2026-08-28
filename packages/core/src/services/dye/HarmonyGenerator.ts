@@ -6,7 +6,11 @@
 
 import type { Dye } from '@xivdyetools/types';
 import { ColorManipulator } from '../color/ColorManipulator.js';
-import { ColorConverter, type DeltaEFormula } from '../color/ColorConverter.js';
+import {
+  ColorConverter,
+  normalizeDeltaEFormula,
+  type DeltaEFormula,
+} from '../color/ColorConverter.js';
 import type { DyeDatabase } from './DyeDatabase.js';
 import type { DyeSearch } from './DyeSearch.js';
 
@@ -61,7 +65,7 @@ export interface HarmonyOptions {
    * Maximum DeltaE distance for matching
    * Only used when algorithm is 'deltaE'
    * Higher values return more matches but less precise
-   * @default 40 (for cie76), 25 (for cie2000)
+   * @default 40 (for cie76), 25 (for ciede2000 / its 'cie2000' alias)
    */
   deltaETolerance?: number;
 }
@@ -73,7 +77,7 @@ export interface HarmonyOptions {
 export class HarmonyGenerator {
   constructor(
     private database: DyeDatabase,
-    private search: DyeSearch
+    private search: DyeSearch,
   ) {}
 
   /**
@@ -125,7 +129,7 @@ export class HarmonyGenerator {
    */
   private findClosestNonFacewearDye(hex: string, excludeIds: number[] = []): Dye | null {
     // DyeSearch.findClosestDye already excludes Facewear dyes (CORE-BUG-005)
-    return this.search.findClosestDye(hex, excludeIds);
+    return this.search.findClosestDye(hex, { excludeIds });
   }
 
   /**
@@ -187,6 +191,23 @@ export class HarmonyGenerator {
   }
 
   /**
+   * Find inverted tetradic color scheme (two complementary pairs, mirrored)
+   *
+   * The mirror rectangle of tetradic: the second pair sits at −60° (300°)
+   * instead of +60°, biasing the palette to the opposite side of the wheel.
+   *
+   * @param hex Base hex color
+   * @param options Matching algorithm options
+   *
+   * @remarks
+   * May return fewer than 3 dyes if suitable matches are not found.
+   */
+  findInvertedTetradicDyes(hex: string, options?: HarmonyOptions): Dye[] {
+    // Two complementary pairs: base↔base+180 and base+120↔base+300 (−60)
+    return this.findHarmonyDyesByOffsets(hex, [120, 180, 300], {}, options);
+  }
+
+  /**
    * Find monochromatic dyes (same hue, varying saturation/brightness)
    * Excludes Facewear dyes (generic names like "Red", "Blue")
    *
@@ -205,8 +226,8 @@ export class HarmonyGenerator {
     // DeltaE-based monochromatic search
     if (options?.algorithm === 'deltaE') {
       const baseLab = ColorConverter.hexToLab(baseDye.hex);
-      const formula = options.deltaEFormula ?? 'cie76';
-      const tolerance = options.deltaETolerance ?? (formula === 'cie2000' ? 25 : 40);
+      const formula = normalizeDeltaEFormula(options.deltaEFormula ?? 'cie76');
+      const tolerance = options.deltaETolerance ?? (formula === 'ciede2000' ? 25 : 40);
 
       const results: Array<{ dye: Dye; deltaE: number; satValDiff: number }> = [];
 
@@ -216,7 +237,7 @@ export class HarmonyGenerator {
         // Use pre-computed LAB (always available for DyeInternal)
         const dyeLab = dye.lab;
         const deltaE =
-          formula === 'cie2000'
+          formula === 'ciede2000'
             ? ColorConverter.getDeltaE2000(baseLab, dyeLab)
             : ColorConverter.getDeltaE76(baseLab, dyeLab);
 
@@ -263,20 +284,6 @@ export class HarmonyGenerator {
   }
 
   /**
-   * Find compound harmony (analogous + complementary)
-   *
-   * @param hex Base hex color
-   * @param options Matching algorithm options
-   *
-   * @remarks
-   * May return fewer than 3 dyes if suitable matches are not found.
-   */
-  findCompoundDyes(hex: string, options?: HarmonyOptions): Dye[] {
-    // ±30° from base + complement
-    return this.findHarmonyDyesByOffsets(hex, [30, -30, 180], { tolerance: 35 }, options);
-  }
-
-  /**
    * Find split-complementary harmony (±30° from the complementary hue)
    *
    * @param hex Base hex color
@@ -287,22 +294,6 @@ export class HarmonyGenerator {
    */
   findSplitComplementaryDyes(hex: string, options?: HarmonyOptions): Dye[] {
     return this.findHarmonyDyesByOffsets(hex, [150, 210], {}, options);
-  }
-
-  /**
-   * Find shades (similar tones, ±15°)
-   *
-   * @param hex Base hex color
-   * @param options Matching algorithm options
-   *
-   * @remarks
-   * May return 0, 1, or 2 dyes depending on available matches.
-   */
-  findShadesDyes(hex: string, options?: HarmonyOptions): Dye[] {
-    this.database.ensureLoaded();
-
-    // Use tighter tolerance (5°) for shades to ensure results are close to target hue
-    return this.findHarmonyDyesByOffsets(hex, [15, -15], { tolerance: 5 }, options);
   }
 
   /**
@@ -328,7 +319,7 @@ export class HarmonyGenerator {
     hex: string,
     offsets: number[],
     internalOptions: { tolerance?: number } = {},
-    harmonyOptions?: HarmonyOptions
+    harmonyOptions?: HarmonyOptions,
   ): Dye[] {
     this.database.ensureLoaded();
 
@@ -422,10 +413,10 @@ export class HarmonyGenerator {
   private findClosestByDeltaE(
     targetHex: string,
     excludeIds: Set<number>,
-    options: HarmonyOptions
+    options: HarmonyOptions,
   ): Dye | null {
-    const formula = options.deltaEFormula ?? 'cie76';
-    const tolerance = options.deltaETolerance ?? (formula === 'cie2000' ? 25 : 40);
+    const formula = normalizeDeltaEFormula(options.deltaEFormula ?? 'cie76');
+    const tolerance = options.deltaETolerance ?? (formula === 'ciede2000' ? 25 : 40);
 
     const targetLab = ColorConverter.hexToLab(targetHex);
 
@@ -441,7 +432,7 @@ export class HarmonyGenerator {
       // Use pre-computed LAB (always available for DyeInternal)
       const dyeLab = dye.lab;
       const deltaE =
-        formula === 'cie2000'
+        formula === 'ciede2000'
           ? ColorConverter.getDeltaE2000(targetLab, dyeLab)
           : ColorConverter.getDeltaE76(targetLab, dyeLab);
 
@@ -462,7 +453,7 @@ export class HarmonyGenerator {
   private findClosestDyeByHue(
     targetHue: number,
     usedIds: Set<number>,
-    tolerance: number
+    tolerance: number,
   ): Dye | null {
     let withinTolerance: { dye: Dye; diff: number } | null = null;
     let bestOverall: { dye: Dye; diff: number } | null = null;
@@ -480,7 +471,7 @@ export class HarmonyGenerator {
 
         const diff = Math.min(
           Math.abs(dye.hsv.h - targetHue),
-          360 - Math.abs(dye.hsv.h - targetHue)
+          360 - Math.abs(dye.hsv.h - targetHue),
         );
 
         if (!bestOverall || diff < bestOverall.diff) {

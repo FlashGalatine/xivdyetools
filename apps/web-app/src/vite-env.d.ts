@@ -6,8 +6,12 @@
 interface ImportMetaEnv {
   /** OAuth worker URL for authentication */
   readonly VITE_OAUTH_WORKER_URL?: string;
+  /** presets-api origin (community presets, votes, submissions); default api.xivdyetools.app */
+  readonly VITE_PRESETS_API_URL?: string;
   /** Universalis proxy URL (to avoid CORS issues) */
   readonly VITE_UNIVERSALIS_PROXY_URL?: string;
+  /** api-worker origin for /v1/chara/* (local dev: a tunnel or the -dev worker; default localhost:8790 / data.xivdyetools.app) */
+  readonly VITE_API_WORKER_URL?: string;
   /** True if running in production mode */
   readonly PROD: boolean;
   /** True if running in development mode */

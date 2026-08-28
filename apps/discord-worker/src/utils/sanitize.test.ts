@@ -11,12 +11,8 @@ import { describe, it, expect } from 'vitest';
 import {
   sanitizePresetName,
   sanitizePresetDescription,
-  sanitizeCollectionName,
-  sanitizeCollectionDescription,
   MAX_PRESET_NAME_LENGTH,
   MAX_PRESET_DESCRIPTION_LENGTH,
-  MAX_COLLECTION_NAME_LENGTH,
-  MAX_COLLECTION_DESCRIPTION_LENGTH,
 } from './sanitize.js';
 
 // ============================================================================
@@ -140,24 +136,6 @@ describe('sanitizePresetDescription — truncation', () => {
   });
 });
 
-describe('sanitizeCollectionName — truncation', () => {
-  it('truncates names longer than MAX_COLLECTION_NAME_LENGTH', () => {
-    const longName = 'c'.repeat(MAX_COLLECTION_NAME_LENGTH + 5);
-    const result = sanitizeCollectionName(longName);
-    expect(result.length).toBeLessThanOrEqual(MAX_COLLECTION_NAME_LENGTH);
-    expect(result.endsWith('…')).toBe(true);
-  });
-});
-
-describe('sanitizeCollectionDescription — truncation', () => {
-  it('truncates descriptions longer than MAX_COLLECTION_DESCRIPTION_LENGTH', () => {
-    const longDesc = 'd'.repeat(MAX_COLLECTION_DESCRIPTION_LENGTH + 5);
-    const result = sanitizeCollectionDescription(longDesc);
-    expect(result.length).toBeLessThanOrEqual(MAX_COLLECTION_DESCRIPTION_LENGTH);
-    expect(result.endsWith('…')).toBe(true);
-  });
-});
-
 // ============================================================================
 // Non-string input defence
 // ============================================================================
@@ -183,12 +161,55 @@ describe('normal input preservation', () => {
     expect(sanitizePresetName('真紅の染料')).toBe('真紅の染料');
   });
 
-  it('passes through punctuation and symbols', () => {
-    expect(sanitizePresetName("FF14 Dye Set #1 (Metallic)")).toBe("FF14 Dye Set #1 (Metallic)");
+  it('keeps punctuation visible but escapes the Discord-markdown characters', () => {
+    // FINDING-019: `#` opens a heading and `(`/`)` close a masked link, so
+    // they render literally (backslash-escaped) instead of as markup.
+    expect(sanitizePresetName('FF14 Dye Set #1 (Metallic)')).toBe(
+      'FF14 Dye Set \\#1 \\(Metallic\\)',
+    );
   });
 
   it('passes through accented Latin characters', () => {
     expect(sanitizePresetName('Teinture écarlate')).toBe('Teinture écarlate');
+  });
+});
+
+// ============================================================================
+// FINDING-019 (2026-08-21 security audit): markdown + mention neutralisation
+// The helpers now delegate to @xivdyetools/bot-logic's sanitizeEmbedText, so
+// stored preset text can no longer carry masked links, bold/spoiler markup
+// or mass mentions into a bot-authored embed.
+// ============================================================================
+
+describe('markdown and mention neutralisation (FINDING-019)', () => {
+  it('defuses a masked link so it renders as literal text', () => {
+    const out = sanitizePresetDescription('Claim codes [here](https://phish.example)');
+    expect(out).toBe('Claim codes \\[here\\]\\(https://phish.example\\)');
+  });
+
+  it('escapes inline markup (bold, spoiler, code, strike, quote)', () => {
+    expect(sanitizePresetName('**bold** ||spoiler|| `code` ~~gone~~ > quote')).toBe(
+      '\\*\\*bold\\*\\* \\|\\|spoiler\\|\\| \\`code\\` \\~\\~gone\\~\\~ \\> quote',
+    );
+  });
+
+  it('defuses @everyone / @here and <@id> mentions', () => {
+    const out = sanitizePresetName('hey @everyone and @here and <@123> and <@&456>');
+    expect(out).not.toContain('@everyone');
+    expect(out).not.toContain('@here');
+    expect(out).not.toContain('<@123>');
+    expect(out).not.toContain('<@&456>');
+    expect(out).toContain('@123');
+  });
+
+  it('strips bidi / zero-width controls the old local regex missed', () => {
+    expect(sanitizePresetName('a‮b‎c⁣d')).toBe('abcd');
+  });
+
+  it('still caps length with an ellipsis after escaping', () => {
+    const out = sanitizePresetName('*'.repeat(MAX_PRESET_NAME_LENGTH + 10));
+    expect([...out].length).toBeLessThanOrEqual(MAX_PRESET_NAME_LENGTH);
+    expect(out.endsWith('…')).toBe(true);
   });
 });
 

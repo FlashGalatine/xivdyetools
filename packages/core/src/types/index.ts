@@ -12,50 +12,84 @@
 // ============================================================================
 
 /**
- * Available color matching algorithms for finding closest dyes.
+ * The 5.0 matching vocabulary — one list suite-wide (web, Discord bot,
+ * og-worker, public API). Stored choice values; identifiers never localise.
  *
- * - rgb: RGB Euclidean distance (fastest, least accurate)
- * - cie76: CIE76 LAB Euclidean (fast, fair accuracy)
- * - ciede2000: CIEDE2000 (industry standard, accurate)
- * - oklab: OKLAB Euclidean (modern, simpler than ciede2000, CSS standard)
- * - hyab: HyAB hybrid (best for large color differences/palette matching)
- * - oklch-weighted: OKLCH with custom L/C/H weights (advanced)
+ * - ciede2000: ΔE2000 — industry-standard perceptual formula (**the default
+ *   everywhere**)
+ * - oklab: ΔEOK — OKLAB Euclidean (prints raw, dp 3)
+ * - cie76: ΔE76 — CIELAB Euclidean
+ * - redmean: REDMEAN — weighted RGB approximation
+ * - rgb: RGB DIST — Euclidean RGB distance
+ * - distinguish: DISTINGUISH % — RGB DIST rescaled to 0-100. Kept
+ *   deliberately for continuity with the Accessibility readout; identical
+ *   ranks to RGB DIST by construction. Display rounding creates ties —
+ *   orderings driven by the displayed value badge TIE, never imply a single
+ *   answer.
+ *
+ * RATIO (WCAG contrast) is the seventh *display* entry only where the tool
+ *   measures it (Accessibility Checker, Dye Comparison) — it is not a
+ *   distance and never ranks dye matches, so it is not a MatchingMethod.
+ *
+ * The v4 methods `hyab` and `oklch-weighted` are retired; stored values
+ * migrate through {@link normalizeMatchingMethod}.
  */
-export type MatchingMethod = 'rgb' | 'cie76' | 'ciede2000' | 'oklab' | 'hyab' | 'oklch-weighted';
+export type MatchingMethod = 'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish';
+
+/** Suite display order: ΔE2000 · ΔEOK · ΔE76 · REDMEAN · RGB DIST · DISTINGUISH % */
+export const MATCHING_METHODS: readonly MatchingMethod[] = [
+  'ciede2000',
+  'oklab',
+  'cie76',
+  'redmean',
+  'rgb',
+  'distinguish',
+];
+
+/** ΔE2000 is the default everywhere — one answer to "what does CLOSE mean". */
+export const DEFAULT_MATCHING_METHOD: MatchingMethod = 'ciede2000';
 
 /**
- * Configuration for OKLCH weighted matching.
- * Allows users to prioritize different color attributes.
+ * Method display tags (the short-key vocabulary; `ratio` included for the
+ * two tools that print it). Tags are identifiers — never localise them.
  */
-export interface OklchWeights {
-  /** Lightness weight (default 1.0). Higher = prioritize brightness matching */
-  kL: number;
-  /** Chroma weight (default 1.0). Higher = prioritize saturation matching */
-  kC: number;
-  /** Hue weight (default 1.0). Higher = prioritize hue matching */
-  kH: number;
+export const MATCHING_METHOD_TAGS: Record<MatchingMethod | 'ratio', string> = {
+  ciede2000: 'ΔE2000',
+  oklab: 'ΔEOK',
+  cie76: 'ΔE76',
+  redmean: 'REDMEAN',
+  rgb: 'RGB DIST',
+  distinguish: 'DISTINGUISH %',
+  ratio: 'RATIO',
+};
+
+/**
+ * Retired v4 stored values → their 5.0 replacement. Both retired methods
+ * fold into the suite default (there is no perceptual successor that keeps
+ * their exact behaviour, and a silently different non-default would be
+ * worse than the default).
+ */
+export const LEGACY_MATCHING_METHOD_MAP: Record<string, MatchingMethod> = {
+  hyab: 'ciede2000',
+  'oklch-weighted': 'ciede2000',
+  // Pre-5.0 deep links used 'euclidean' informally for RGB distance
+  euclidean: 'rgb',
+};
+
+/** Type guard for the 5.0 vocabulary. */
+export function isMatchingMethod(value: unknown): value is MatchingMethod {
+  return typeof value === 'string' && (MATCHING_METHODS as readonly string[]).includes(value);
 }
 
 /**
- * Color matching configuration options.
+ * Normalize any stored/parsed method value (KV preference, localStorage,
+ * URL `algo` param, API body) into the 5.0 vocabulary: current values pass
+ * through, retired values map, anything else falls back to the default.
  */
-export interface MatchingConfig {
-  /** The matching algorithm to use */
-  method: MatchingMethod;
-  /** Custom weights for oklch-weighted method (ignored for other methods) */
-  weights?: OklchWeights;
+export function normalizeMatchingMethod(value: unknown): MatchingMethod {
+  if (isMatchingMethod(value)) return value;
+  if (typeof value === 'string' && value in LEGACY_MATCHING_METHOD_MAP) {
+    return LEGACY_MATCHING_METHOD_MAP[value];
+  }
+  return DEFAULT_MATCHING_METHOD;
 }
-
-/**
- * Default OKLCH weights for common matching presets.
- */
-export const MATCHING_PRESETS = {
-  /** Equal weight to all attributes (default) */
-  balanced: { kL: 1.0, kC: 1.0, kH: 1.0 },
-  /** Prioritize matching the hue (color), tolerate brightness differences */
-  matchHue: { kL: 0.5, kC: 0.8, kH: 2.0 },
-  /** Prioritize matching brightness (for armor visibility) */
-  matchBrightness: { kL: 2.0, kC: 1.0, kH: 0.5 },
-  /** Prioritize matching saturation (find vibrant alternatives) */
-  matchSaturation: { kL: 0.5, kC: 2.0, kH: 0.8 },
-} as const;

@@ -16,9 +16,14 @@ import { moderationRouter } from './handlers/moderation.js';
 // Import middleware
 import { authMiddleware } from './middleware/auth.js';
 import { publicRateLimitMiddleware } from './middleware/rate-limit.js';
-import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
-import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
-import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
+import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
+import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
+import {
+  bodySizeLimit,
+  jsonDepthLimit,
+  isPreviewImageUpload,
+  PREVIEW_IMAGE_CONTENT_TYPES,
+} from './middleware/body-validation.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { ErrorCode } from './utils/api-response.js';
 
@@ -108,22 +113,32 @@ app.use(
         return origin;
       }
 
-      // SECURITY: Only allow specific localhost ports in development
-      // This prevents malicious apps on other localhost ports from making requests
-      const allowedDevOrigins = [
-        'http://localhost:5173',   // Vite dev server
-        'http://127.0.0.1:5173',   // Vite dev server (IP)
-        'http://localhost:8787',   // Wrangler local dev
-        'http://127.0.0.1:8787',   // Wrangler local dev (IP)
-      ];
-      if (allowedDevOrigins.includes(origin)) {
-        return origin;
+      // SECURITY: Only allow specific localhost ports in development.
+      // FINDING-002 (2026-08-09 audit): this block previously had no environment
+      // guard, so production reflected these four loopback origins alongside
+      // `credentials: true`. Mirrors OAUTH-SEC-001 in apps/oauth/src/index.ts —
+      // the same fix, applied to the sibling it was never mirrored to.
+      if (env.ENVIRONMENT === 'development') {
+        const allowedDevOrigins = [
+          'http://localhost:5173',   // Vite dev server
+          'http://127.0.0.1:5173',   // Vite dev server (IP)
+          'http://localhost:8787',   // Wrangler local dev
+          'http://127.0.0.1:8787',   // Wrangler local dev (IP)
+        ];
+        if (allowedDevOrigins.includes(origin)) {
+          return origin;
+        }
       }
 
       return null;
     },
     allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization', 'X-User-Discord-ID', 'X-User-Discord-Name'],
+    // FINDING-005: X-User-Discord-ID / X-User-Discord-Name are server-to-server
+    // bot identity headers, honoured only behind a valid HMAC signature (see
+    // middleware/auth.ts). Browsers never legitimately send them — both bot
+    // callers reach this Worker over Service Bindings and never preflight — so
+    // advertising them here only left a trap for a future refactor.
+    allowHeaders: ['Content-Type', 'Authorization'],
     exposeHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'],
     // ARCH-002: 1-hour maxAge (was 24h) so CORS policy changes propagate within an hour
     maxAge: 3600,
@@ -136,6 +151,8 @@ app.use(
 app.use('/api/*', publicRateLimitMiddleware);
 
 // SEC-004: Reject oversized request bodies (100KB limit)
+// Exempts the preview-image upload, which carries up to 5 MB of image bytes
+// and enforces its own limit — see isPreviewImageUpload in body-validation.ts.
 app.use('/api/*', bodySizeLimit);
 
 // SEC-003: Validate JSON depth and structure on mutation requests
@@ -155,6 +172,23 @@ app.use('/api/*', async (c, next) => {
     // previously skipped both this gate and the JSON depth limit downstream.
     // Empty-body mutations (e.g. PATCH /refresh-author) remain exempt.
     const hasBody = c.req.raw.body !== null;
+
+    // Binary upload route: accept the image media types instead of JSON.
+    // An absent Content-Type is allowed through — a Blob with no type sends no
+    // header at all — because the route's magic-byte sniff, not the declared
+    // type, is what actually decides whether these bytes are an image.
+    if (isPreviewImageUpload(method, c.req.path)) {
+      if (hasBody && contentType && !PREVIEW_IMAGE_CONTENT_TYPES.some((t) => contentType.includes(t))) {
+        return c.json(
+          {
+            error: 'Unsupported Media Type',
+            message: `Content-Type must be one of: ${PREVIEW_IMAGE_CONTENT_TYPES.join(', ')}`,
+          },
+          415
+        );
+      }
+      return next();
+    }
 
     if (hasBody && (!contentType || !contentType.includes('application/json'))) {
       return c.json(

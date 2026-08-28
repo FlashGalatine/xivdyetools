@@ -5,6 +5,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleAboutCommand } from './about.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+import { SOCIAL_LINKS } from '@xivdyetools/core';
+import { createMockKV } from '@xivdyetools/test-utils/cloudflare';
 
 // Mock dependencies
 vi.mock('../../services/bot-i18n.js', () => ({
@@ -21,41 +23,14 @@ vi.mock('../../services/bot-i18n.js', () => ({
         'about.categories.colorTools': 'Color Tools',
         'about.categories.dyeDatabase': 'Dye Database',
         'about.categories.analysis': 'Analysis',
-        'about.categories.userData': 'Your Data',
         'about.categories.community': 'Community',
         'about.categories.utility': 'Utility',
-        // Command descriptions
-        'about.cmd.harmony': 'Generate color harmonies',
-        'about.cmd.match': 'Find closest FFXIV dye',
-        'about.cmd.matchImage': 'Extract colors from an image',
-        'about.cmd.mixer': 'Create color gradients between two colors',
-        'about.cmd.dyeSearch': 'Search dyes by name',
-        'about.cmd.dyeInfo': 'Get detailed dye information',
-        'about.cmd.dyeList': 'List dyes by category',
-        'about.cmd.dyeRandom': 'Get random dye suggestions',
-        'about.cmd.comparison': 'Compare 2-4 dyes side by side',
-        'about.cmd.accessibility': 'Colorblindness simulation & contrast',
-        'about.cmd.favorites': 'Manage your favorite dyes',
-        'about.cmd.collection': 'Create custom dye collections',
-        'about.cmd.preset': 'Browse, submit & vote on community presets',
-        'about.cmd.language': 'Set your preferred language',
-        'about.cmd.manual': 'Show help guide',
-        'about.cmd.about': 'Bot information (this command)',
-        'about.cmd.stats': 'Usage statistics (authorized only)',
       };
       return translations[key] || key;
     },
     getLocale: () => 'en',
   }),
 }));
-
-// Create mock KV namespace
-function createMockKV() {
-  return {
-    get: vi.fn(async () => null),
-    put: vi.fn(async () => {}),
-  } as unknown as KVNamespace;
-}
 
 describe('about.ts', () => {
   let mockEnv: Env;
@@ -133,13 +108,12 @@ describe('about.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       const embed = data.data!.embeds![0];
-      const commandListField = embed.fields![0];
+      const commandListField = embed.fields!.find((f) => f.value.includes('/harmony'))!;
 
       // Check all category sections are present
       expect(commandListField.value).toContain('Color Tools');
       expect(commandListField.value).toContain('Dye Database');
       expect(commandListField.value).toContain('Analysis');
-      expect(commandListField.value).toContain('Your Data');
       expect(commandListField.value).toContain('Community');
       expect(commandListField.value).toContain('Utility');
     });
@@ -157,36 +131,42 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const commandListField = data.data!.embeds![0].fields![0];
+      const commandListField = data.data!.embeds![0].fields!.find((f) =>
+        f.value.includes('/harmony'),
+      )!;
 
-      // Color Tools
-      expect(commandListField.value).toContain('/harmony');
-      expect(commandListField.value).toContain('/match');
-      expect(commandListField.value).toContain('/match_image');
-      expect(commandListField.value).toContain('/mixer');
+      // 5.0 roster parity: every registered command appears, nothing else
+      const { COMMAND_REGISTRY } = await import('../../commands/registry.js');
+      for (const entry of COMMAND_REGISTRY) {
+        expect(commandListField.value, entry.name).toContain(`/${entry.name}`);
+      }
 
-      // Dye Database
-      expect(commandListField.value).toContain('/dye search');
-      expect(commandListField.value).toContain('/dye info');
-      expect(commandListField.value).toContain('/dye list');
-      expect(commandListField.value).toContain('/dye random');
+      // The v4 set is deleted from the roster (it lives in the Removed field)
+      for (const dead of ['/match_image', '/favorites', '/collection', '/language']) {
+        expect(commandListField.value).not.toContain(dead);
+      }
+    });
 
-      // Analysis
-      expect(commandListField.value).toContain('/comparison');
-      expect(commandListField.value).toContain('/accessibility');
+    it('carries the Removed-in-v5 field for one release', async () => {
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: { name: 'about' },
+        member: { user: { id: 'user-123' } },
+        id: 'int-1',
+        application_id: 'app-1',
+        token: 'token-1',
+      };
 
-      // User Data
-      expect(commandListField.value).toContain('/favorites');
-      expect(commandListField.value).toContain('/collection');
+      const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
+      const data = (await response.json()) as InteractionResponseBody;
 
-      // Community
-      expect(commandListField.value).toContain('/preset');
-
-      // Utility
-      expect(commandListField.value).toContain('/language');
-      expect(commandListField.value).toContain('/manual');
-      expect(commandListField.value).toContain('/about');
-      expect(commandListField.value).toContain('/stats');
+      const removedField = data.data!.embeds![0].fields!.find((f) =>
+        f.name.includes('about.removedTitle'),
+      );
+      expect(removedField).toBeDefined();
+      for (const dead of ['/match', '/match_image', '/favorites', '/collection', '/language']) {
+        expect(removedField!.value).toContain(dead);
+      }
     });
 
     it('should include total command count in description', async () => {
@@ -203,7 +183,7 @@ describe('about.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       const embed = data.data!.embeds![0];
-      // Should show total command count (18 commands based on COMMAND_CATEGORIES)
+      // Total comes from the registry now
       expect(embed.description).toContain('total');
     });
 
@@ -220,15 +200,21 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const linksField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Links')
+      const linksField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Links'),
       );
       expect(linksField).toBeDefined();
+      // The way in — a Discord reader has no other route to the app
       expect(linksField!.value).toContain('Web App');
-      expect(linksField!.value).toContain('GitHub');
       expect(linksField!.value).toContain('Invite Bot');
-      expect(linksField!.value).toContain('Patreon');
       expect(linksField!.value).toContain('xivdyetools.app');
+
+      // ...then every place we are. Sourced from core so this list and the
+      // web app's About modal cannot drift apart.
+      for (const { label, url } of SOCIAL_LINKS) {
+        expect(linksField!.value, label).toContain(`[${label}](${url})`);
+      }
+      expect(linksField!.value.length).toBeLessThanOrEqual(1024); // Discord's field cap
     });
 
     it('should include footer with powered by info', async () => {
@@ -268,7 +254,7 @@ describe('about.ts', () => {
       expect(() => new Date(data.data!.embeds![0].timestamp!)).not.toThrow();
     });
 
-    it('should use blurple embed color', async () => {
+    it('uses the product accent, never the platform’s brand', async () => {
       const interaction: DiscordInteraction = {
         type: 2,
         data: { name: 'about' },
@@ -281,8 +267,8 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      // Discord blurple is 0x5865F2
-      expect(data.data!.embeds![0].color).toBe(0x5865f2);
+      // The accent bar is the only branding an embed has — #EA4133
+      expect(data.data!.embeds![0].color).toBe(0xea4133);
     });
 
     it('should handle DM interactions with user field', async () => {
@@ -335,33 +321,7 @@ describe('about.ts', () => {
 
       // Verify createUserTranslator was called with the correct locale
       const { createUserTranslator } = await import('../../services/bot-i18n.js');
-      expect(createUserTranslator).toHaveBeenCalledWith(
-        mockKV,
-        'user-123',
-        'ja'
-      );
-    });
-
-    it('should include command descriptions', async () => {
-      const interaction: DiscordInteraction = {
-        type: 2,
-        data: { name: 'about' },
-        member: { user: { id: 'user-123' } },
-        id: 'int-1',
-        application_id: 'app-1',
-        token: 'token-1',
-      };
-
-      const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = (await response.json()) as InteractionResponseBody;
-
-      const commandListField = data.data!.embeds![0].fields![0];
-
-      // Check for command descriptions
-      expect(commandListField.value).toContain('Generate color harmonies');
-      expect(commandListField.value).toContain('Find closest FFXIV dye');
-      expect(commandListField.value).toContain('Extract colors from an image');
-      expect(commandListField.value).toContain('Search dyes by name');
+      expect(createUserTranslator).toHaveBeenCalledWith(mockKV, 'user-123', 'ja');
     });
 
     it('should include category emojis', async () => {
@@ -377,13 +337,14 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const commandListField = data.data!.embeds![0].fields![0];
+      const commandListField = data.data!.embeds![0].fields!.find((f) =>
+        f.value.includes('/harmony'),
+      )!;
 
       // Check for category emojis
       expect(commandListField.value).toMatch(/🎨.*Color Tools/);
       expect(commandListField.value).toMatch(/📚.*Dye Database/);
       expect(commandListField.value).toMatch(/🔍.*Analysis/);
-      expect(commandListField.value).toMatch(/💾.*Your Data/);
       expect(commandListField.value).toMatch(/🌐.*Community/);
       expect(commandListField.value).toMatch(/⚙️.*Utility/);
     });

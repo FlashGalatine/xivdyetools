@@ -165,7 +165,8 @@ const tetradic = dyeService.findTetradicDyes('#FF6B6B');
 
 ```typescript
 // Get all dyes
-const allDyes = dyeService.getAllDyes();  // 136 entries: 125 standard dyes + 11 Facewear color entries
+const allDyes = dyeService.getAllDyes();  // 125 standard dyes — Facewear colours are NOT included
+// The 11 Facewear colours live in the separate `facewearColors` export.
 
 // Get categories
 const categories = dyeService.getCategories();
@@ -197,8 +198,8 @@ const prices = await api.getPriceData(19952, 'Gilgamesh');
 //   maxPrice: 2000
 // }
 
-// Bulk price lookup
-const bulk = await api.getPricesForItems([19952, 19953, 19954], 'Gilgamesh');
+// Bulk price lookup for a data center
+const bulk = await api.getPricesForDataCenter([19952, 19953, 19954], 'Aether');
 ```
 
 ### Custom Cache Backend

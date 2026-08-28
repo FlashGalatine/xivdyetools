@@ -1,6 +1,7 @@
 {
   "name": "@xivdyetools/test-utils",
-  "version": "1.1.8",
+  "version": "1.2.0",
+  "private": true,
   "description": "Shared testing utilities for the xivdyetools ecosystem",
   "author": "XIV Dye Tools",
   "license": "MIT",
@@ -23,14 +24,6 @@
     "./factories": {
       "types": "./dist/factories/index.d.ts",
       "import": "./dist/factories/index.js"
-    },
-    "./dom": {
-      "types": "./dist/dom/index.d.ts",
-      "import": "./dist/dom/index.js"
-    },
-    "./assertions": {
-      "types": "./dist/assertions/index.d.ts",
-      "import": "./dist/assertions/index.js"
     },
     "./constants": {
       "types": "./dist/constants/index.d.ts",
@@ -61,12 +54,11 @@
     }
   },
   "dependencies": {
-    "@xivdyetools/crypto": "workspace:*",
+    "@xivdyetools/auth": "workspace:*",
     "@xivdyetools/types": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260727.1",
-    "@testing-library/dom": "^10.0.0",
     "@vitest/coverage-v8": "^4.1.10",
     "vitest": "^4.1.10"
   },

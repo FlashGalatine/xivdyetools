@@ -8,29 +8,23 @@
 
 | Project | Type | Platform | Key Technologies | Primary Purpose |
 |---------|------|----------|------------------|-----------------|
-| [@xivdyetools/core](core/overview.md) | npm library | Node.js / Browser | TypeScript, k-d tree, K-means++ | Color algorithms; 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs) |
+| [@xivdyetools/core](core/overview.md) | npm library | Node.js / Browser | TypeScript, k-d tree, K-means++ | Color algorithms; the 125-dye database (schema v2) and the 11 Facewear colors |
 | [xivdyetools-web-app](web-app/overview.md) | Web app | Cloudflare Pages | Lit, Vite, Tailwind CSS | 9 interactive color tools |
-| [xivdyetools-discord-worker](discord-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions, resvg-wasm | 20 slash commands |
+| [xivdyetools-discord-worker](discord-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions, resvg-wasm | 17 registered slash commands |
+| xivdyetools-image-worker | Image decode | Cloudflare Workers | `@cf-wasm/photon` | Raw RGBA pixel extraction for `discord-worker` (service binding only) |
 | [xivdyetools-moderation-worker](moderation-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions | Preset moderation commands |
-| [xivdyetools-oauth](oauth/overview.md) | OAuth provider | Cloudflare Workers | Hono, PKCE, JWT | Discord authentication |
-| [xivdyetools-api-worker](api-worker/overview.md) | Public API | Cloudflare Workers | Hono, KV | Public dye database & color matching at `data.xivdyetools.app` |
-| xivdyetools-api-docs | Docs site | Cloudflare Pages | VitePress | Developer-facing API reference at `developers.xivdyetools.app` |
+| [xivdyetools-oauth](oauth/overview.md) | OAuth provider | Cloudflare Workers | Hono, PKCE, JWT, D1 | Discord authentication |
+| [xivdyetools-api-worker](api-worker/overview.md) | Public API | Cloudflare Workers | Hono, KV, VitePress | Public dye database & color matching at `data.xivdyetools.app`, the Universalis proxy, and the developer docs |
 | [xivdyetools-presets-api](presets-api/overview.md) | REST API | Cloudflare Workers | Hono, D1 SQLite | Community presets |
-| [xivdyetools-universalis-proxy](universalis-proxy/overview.md) | CORS Proxy | Cloudflare Workers | Hono, KV | Market data caching |
-| [xivdyetools-og-worker](og-worker/overview.md) | OpenGraph | Cloudflare Workers | Hono, resvg-wasm | Localized social media previews |
-| xivdyetools-stoat-worker | Node.js bot | Node.js | revolt.js | Revolt (Stoat) bot |
-| xivdyetools-maintainer | Dev tool | Local | Vue 3, Vite | Dye database editor |
-| [@xivdyetools/types](types/overview.md) | npm library | Universal | TypeScript | Shared type definitions |
-| [@xivdyetools/auth](auth/overview.md) | npm library | Universal | TypeScript | JWT, HMAC, Ed25519 verification |
-| [@xivdyetools/crypto](crypto/overview.md) | npm library | Universal | TypeScript | Base64URL encoding |
+| [xivdyetools-og-worker](og-worker/overview.md) | OpenGraph | Cloudflare Workers | Hono, resvg-wasm | Localized social media preview cards |
+| xivdyetools-stoat-worker | Node.js bot | Node.js | revolt.js | Revolt (Stoat) bot — parked |
+| [@xivdyetools/types](types/overview.md) | npm library | Universal | TypeScript | Shared type definitions and branded types |
+| @xivdyetools/auth | npm library | Universal | TypeScript | JWT, HMAC, Ed25519 verification; Base64URL/hex via `/encoding` |
 | [@xivdyetools/logger](logger/overview.md) | npm library | Universal | TypeScript | Multi-environment logging |
-| [@xivdyetools/rate-limiter](rate-limiter/overview.md) | npm library | Universal | TypeScript | Sliding window rate limiting |
-| [@xivdyetools/worker-middleware](worker-middleware/overview.md) | npm library | Cloudflare Workers | TypeScript, Hono | Shared request-ID, logger, and rate-limit middleware |
-| [@xivdyetools/svg](svg/overview.md) | npm library | Universal | TypeScript | SVG template rendering |
-| [@xivdyetools/bot-logic](bot-logic/overview.md) | npm library | Universal | TypeScript | Shared Discord bot business logic |
-| [@xivdyetools/bot-i18n](bot-i18n/overview.md) | npm library | Universal | TypeScript | Bot localization strings |
-| [@xivdyetools/color-blending](color-blending/overview.md) | npm library | Universal | TypeScript | RGB color blending algorithms |
-| [@xivdyetools/test-utils](test-utils/overview.md) | npm library | Test | TypeScript, Vitest | Testing utilities and mocks |
+| @xivdyetools/worker-kit | npm library | Cloudflare Workers | TypeScript, Hono | Shared request-ID / logger / rate-limit middleware; rate-limit backends via `/rate-limiter` |
+| @xivdyetools/svg | npm library | Universal | TypeScript | SVG template rendering |
+| @xivdyetools/bot-logic | npm library | Universal | TypeScript | Shared bot business logic; bot i18n via `/i18n` |
+| [@xivdyetools/test-utils](test-utils/overview.md) | workspace-private | Test | TypeScript, Vitest | Testing utilities and mocks |
 
 ---
 
@@ -43,53 +37,51 @@
 │  │ xivdyetools-web-app  │  │xivdyetools-discord-worker│  │xivdyetools-moderation-worker│  │
 │  │ ──────────────────── │  │─────────────────────────│  │─────────────────────────────│  │
 │  │ Vite + Lit web app   │  │ Discord bot (public)    │  │ Discord bot (moderators)    │  │
-│  │ 9 interactive tools  │  │ 20 slash commands       │  │ Preset moderation           │  │
-│  │ 12 themes, PWA       │  │ SVG/PNG rendering       │  │ User ban management         │  │
+│  │ 9 interactive tools  │  │ 17 slash commands       │  │ Preset moderation           │  │
+│  │ Light + Dark, PWA    │  │ SVG/PNG rendering       │  │ User ban management         │  │
 │  └──────────────────────┘  └─────────────────────────┘  └─────────────────────────────┘  │
 │  ┌──────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────────┐  │
-│  │ xivdyetools-oauth    │  │ xivdyetools-presets-api │  │xivdyetools-universalis-proxy│  │
+│  │ xivdyetools-oauth    │  │ xivdyetools-presets-api │  │ xivdyetools-api-worker      │  │
 │  │ ──────────────────── │  │─────────────────────────│  │─────────────────────────────│  │
-│  │ Discord OAuth        │  │ Community presets       │  │ Universalis CORS proxy      │  │
-│  │ PKCE + JWT           │  │ D1 + moderation         │  │ Dual-layer caching          │  │
+│  │ Discord OAuth        │  │ Community presets       │  │ Public REST API +           │  │
+│  │ PKCE + JWT, D1       │  │ D1 + moderation         │  │ /universalis + docs site    │  │
 │  └──────────────────────┘  └─────────────────────────┘  └─────────────────────────────┘  │
-│  ┌──────────────────────┐  ┌─────────────────────────┐                                    │
-│  │ xivdyetools-og-worker│  │xivdyetools-stoat-worker │                                    │
-│  │ ──────────────────── │  │─────────────────────────│                                    │
-│  │ OG image generation  │  │ Private Stoat bot       │                                    │
-│  │ Social media previews│  │ Node.js + discord.js    │                                    │
-│  └──────────────────────┘  └─────────────────────────┘                                    │
+│  ┌──────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────────┐  │
+│  │ xivdyetools-og-worker│  │xivdyetools-image-worker │  │ xivdyetools-stoat-worker    │  │
+│  │ ──────────────────── │  │─────────────────────────│  │─────────────────────────────│  │
+│  │ OG card generation   │  │ Photon pixel extraction │  │ Revolt bot (parked)         │  │
+│  │ Discord + X frames   │  │ service binding only    │  │ Node.js + revolt.js         │  │
+│  └──────────────────────┘  └─────────────────────────┘  └─────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
                                       │
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
 │                         Core + Feature Libraries                                         │
-│  ┌─────────────────────┐ ┌──────────────────┐ ┌───────────────────┐ ┌─────────────────┐ │
-│  │  @xivdyetools/core  │ │ @xivdyetools/svg │ │@xivdyetools/      │ │@xivdyetools/    │ │
-│  │  ─────────────────  │ │ ──────────────── │ │  bot-logic         │ │  bot-i18n       │ │
-│  │ Dye DB (125 + 11)   │ │ SVG templates    │ │───────────────────│ │─────────────────│ │
-│  │  Color algorithms   │ │ PNG rendering    │ │ Bot business logic│ │ Bot localization │ │
-│  │  6-language i18n    │ │                  │ │                   │ │                 │ │
-│  └─────────────────────┘ └──────────────────┘ └───────────────────┘ └─────────────────┘ │
-│  ┌──────────────────────────┐                                                            │
-│  │@xivdyetools/color-blending│                                                            │
-│  │──────────────────────────│                                                            │
-│  │ RGB color blending       │                                                            │
-│  └──────────────────────────┘                                                            │
+│  ┌─────────────────────────┐ ┌──────────────────┐ ┌────────────────────────────────────┐ │
+│  │  @xivdyetools/core      │ │ @xivdyetools/svg │ │ @xivdyetools/bot-logic             │ │
+│  │  ─────────────────────  │ │ ──────────────── │ │ ────────────────────────────────── │ │
+│  │ 125-dye DB (schema v2)  │ │ SVG templates    │ │ Bot business logic                 │ │
+│  │ + 11 Facewear colours   │ │ (data → string)  │ │ + /i18n translation engine         │ │
+│  │ Colour algorithms       │ │                  │ │                                    │ │
+│  │ 6-language i18n         │ │                  │ │                                    │ │
+│  │ /blending subpath       │ │                  │ │                                    │ │
+│  └─────────────────────────┘ └──────────────────┘ └────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
                                       │
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
 │                           Shared Foundation                                               │
-│  ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────────┐ │
-│  │ @xivdyetools/    │ │ @xivdyetools/    │ │ @xivdyetools/    │ │ @xivdyetools/        │ │
-│  │   types           │ │   logger         │ │   auth           │ │   test-utils          │ │
-│  │ ──────────────── │ │ ──────────────── │ │ ──────────────── │ │ ──────────────────── │ │
+│  ┌──────────────────┐ ┌──────────────────┐ ┌───────────────────┐ ┌──────────────────────┐ │
+│  │ @xivdyetools/    │ │ @xivdyetools/    │ │ @xivdyetools/     │ │ @xivdyetools/        │ │
+│  │   types          │ │   logger         │ │   auth            │ │   test-utils         │ │
+│  │ ──────────────── │ │ ──────────────── │ │ ───────────────── │ │ ──────────────────── │ │
 │  │ Type definitions │ │ Multi-env logging│ │ JWT, HMAC, Ed25519│ │ Mocks & factories    │ │
-│  └──────────────────┘ └──────────────────┘ └──────────────────┘ └──────────────────────┘ │
-│  ┌──────────────────┐ ┌──────────────────────┐                                            │
-│  │ @xivdyetools/    │ │ @xivdyetools/        │                                            │
-│  │   crypto          │ │   rate-limiter        │                                            │
-│  │ ──────────────── │ │ ──────────────────── │                                            │
-│  │ Base64URL encode │ │ Sliding window limits│                                            │
-│  └──────────────────┘ └──────────────────────┘                                            │
+│  │                  │ │ secret redaction │ │ + /encoding       │ │ (workspace-private)  │ │
+│  └──────────────────┘ └──────────────────┘ └───────────────────┘ └──────────────────────┘ │
+│  ┌──────────────────────────────────┐                                                     │
+│  │ @xivdyetools/worker-kit          │                                                     │
+│  │ ──────────────────────────────── │   Hono middleware (request ID, logger, rate limit)  │
+│  │ + /rate-limiter (Memory/KV/      │   consumed by every Cloudflare Worker               │
+│  │   Upstash sliding-window)        │                                                     │
+│  └──────────────────────────────────┘                                                     │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -115,14 +107,14 @@ If you want to integrate XIV Dye Tools into your own project:
 | [Web App Overview](web-app/overview.md) | Architecture, toolset, features |
 | [Web App Tools](web-app/tools.md) | Detailed guide to all 9 tools |
 | [Web App Components](web-app/components.md) | Lit component architecture |
-| [Web App Theming](web-app/theming.md) | 12 themes, CSS variables |
+| [Web App Theming](web-app/theming.md) | Light + Dark themes, CSS variables |
 
 ### For Understanding the Discord Bots
 
 | Document | Description |
 |----------|-------------|
 | [Discord Worker Overview](discord-worker/overview.md) | HTTP Interactions architecture |
-| [Discord Commands](discord-worker/commands.md) | All 20 commands documented |
+| [Discord Commands](discord-worker/commands.md) | The registered command roster |
 | [Discord Interactions](discord-worker/interactions.md) | Button, modal, autocomplete handlers |
 | [Discord Rendering](discord-worker/rendering.md) | SVG generation, PNG output |
 | [Moderation Worker Overview](moderation-worker/overview.md) | Moderator-only bot architecture |
@@ -144,13 +136,16 @@ If you want to integrate XIV Dye Tools into your own project:
 | [Presets Moderation](presets-api/moderation.md) | Content filtering pipeline |
 | [Presets Database](presets-api/database.md) | D1 schema documentation |
 
-### For Understanding the Universalis Proxy
+### For Understanding Market Data
+
+The standalone `universalis-proxy` was merged into `api-worker` on 2026-07-31. Its behaviour —
+dual-layer caching, request coalescing, stale-while-revalidate — now lives behind the
+`/universalis` and `/api/v2` compatibility routes.
 
 | Document | Description |
 |----------|-------------|
-| [Proxy Overview](universalis-proxy/overview.md) | Architecture and features |
-| [Caching Strategy](universalis-proxy/caching.md) | Dual-layer caching deep dive |
-| [Deployment Guide](universalis-proxy/deployment.md) | KV setup and deployment |
+| [API Worker Overview](api-worker/overview.md) | Architecture, including the absorbed proxy routes |
+| [API Worker Endpoints](api-worker/endpoints.md) | Full public endpoint reference |
 
 ---
 
@@ -158,38 +153,33 @@ If you want to integrate XIV Dye Tools into your own project:
 
 ### Applications
 
-| Project | Version | Last Updated |
-|---------|---------|--------------|
-| @xivdyetools/core | v2.7.0 | July 2026 |
-| xivdyetools-web-app | v4.12.0 | July 2026 |
-| xivdyetools-discord-worker | v4.7.0 | July 2026 |
-| xivdyetools-moderation-worker | v1.3.0 | July 2026 |
-| xivdyetools-oauth | v2.5.0 | July 2026 |
-| xivdyetools-presets-api | v1.6.0 | July 2026 |
-| xivdyetools-universalis-proxy | v1.5.0 | July 2026 |
-| xivdyetools-og-worker | v1.4.0 | July 2026 |
-| xivdyetools-api-worker | v0.5.0 | July 2026 |
-| xivdyetools-api-docs | v0.1.0 | April 2026 |
-| xivdyetools-stoat-worker | v0.2.0 | July 2026 |
-| xivdyetools-maintainer | v1.0.3 | July 2026 |
+| Project | Version |
+|---------|---------|
+| xivdyetools-web-app | v5.0.0 |
+| xivdyetools-discord-worker | v5.0.0 |
+| xivdyetools-image-worker | v1.0.0 |
+| xivdyetools-moderation-worker | v1.4.0 |
+| xivdyetools-oauth | v2.6.0 |
+| xivdyetools-presets-api | v2.0.0 |
+| xivdyetools-api-worker | v0.6.0 |
+| xivdyetools-og-worker | v2.0.0 |
+| xivdyetools-stoat-worker | v0.2.1 |
 
 ### Shared Libraries
 
-| Package | Version | Last Updated |
-|---------|---------|--------------|
-| @xivdyetools/types | v1.15.0 | July 2026 |
-| @xivdyetools/crypto | v1.1.2 | July 2026 |
-| @xivdyetools/logger | v1.3.0 | July 2026 |
-| @xivdyetools/auth | v1.2.0 | July 2026 |
-| @xivdyetools/rate-limiter | v1.5.0 | July 2026 |
-| @xivdyetools/worker-middleware | v1.2.0 | July 2026 |
-| @xivdyetools/svg | v1.2.1 | July 2026 |
-| @xivdyetools/bot-logic | v1.3.0 | July 2026 |
-| @xivdyetools/bot-i18n | v1.2.1 | June 2026 |
-| @xivdyetools/color-blending | v1.1.0 | July 2026 |
-| @xivdyetools/test-utils | v1.1.8 | July 2026 |
+| Package | Version |
+|---------|---------|
+| @xivdyetools/core | v4.0.0 |
+| @xivdyetools/types | v2.0.0 |
+| @xivdyetools/auth | v1.3.0 |
+| @xivdyetools/logger | v1.3.0 |
+| @xivdyetools/worker-kit | v1.0.0 |
+| @xivdyetools/svg | v2.0.0 |
+| @xivdyetools/bot-logic | v2.0.0 |
+| @xivdyetools/test-utils | v1.2.0 |
 
-See [Version Matrix](../versions.md) for detailed version history.
+Versions are read from each project's `package.json`. See [Version Matrix](../versions.md) for
+detailed version history, the deprecated-project table, and the release gate for the 5.0 wave.
 
 ---
 

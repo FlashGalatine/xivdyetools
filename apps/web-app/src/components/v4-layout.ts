@@ -6,14 +6,12 @@
  *
  * This module mirrors v3-layout.ts but uses the V4 component architecture:
  * - V4LayoutShell (header + tool banner + sidebar + content)
- * - ConfigController for centralized config state
  * - Tools rendered inside the shell's content slot
  *
  * @module components/v4-layout
  */
 
 import { RouterService, type ToolId } from '@services/router-service';
-import { ConfigController } from '@services/config-controller';
 import { LanguageService, StorageService, ModalService } from '@services/index';
 import { TutorialService, type TutorialTool } from '@services/tutorial-service';
 import { logger } from '@shared/logger';
@@ -27,7 +25,12 @@ import { showThemeModal } from './v4/theme-modal';
 import { showLanguageModal } from './v4/language-modal';
 import { showAboutModal } from './about-modal';
 import { showChangelogModal } from './changelog-modal';
+import { showAdvancedOptionsPanel } from './advanced-options-panel';
 import { WelcomeModal } from './welcome-modal';
+// Rules that must reach tool content inside the shell's shadow root. The same
+// file is @imported by styles/tailwind.css for the light-DOM (modal) mounts of
+// the same components — one source, two scopes (2026-08-16 audit, DEAD-020).
+import toolContentCss from '@/styles/tool-content.css?inline';
 
 // Import V4 layout shell (registers custom element)
 import '@components/v4/v4-layout-shell';
@@ -35,7 +38,6 @@ import '@components/v4/v4-layout-shell';
 // Track active tool instance for cleanup
 let activeTool: BaseComponent | null = null;
 let layoutElement: V4LayoutShell | null = null;
-let _configController: ConfigController | null = null;
 
 // BUG-040 (2026-07-18 audit): monotonically increasing navigation sequence —
 // a loadToolContent invocation that discovers it was superseded after an
@@ -45,8 +47,6 @@ let navigationSeq = 0;
 
 // BUG-078: pending first-visit tutorial prompt timer (cleared on navigation)
 let tutorialPromptTimer: ReturnType<typeof setTimeout> | null = null;
-let languageUnsubscribe: (() => void) | null = null;
-let configUnsubscribe: (() => void) | null = null;
 let modalContainer: ModalContainer | null = null;
 let toastContainer: ToastContainer | null = null;
 
@@ -149,7 +149,6 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   RouterService.initialize();
 
   // Get config controller instance
-  _configController = ConfigController.getInstance();
 
   const initialTool = RouterService.getCurrentToolId();
   logger.info(`[V4 Layout] Initializing with tool: ${initialTool}`);
@@ -239,7 +238,7 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   // Listen for "What's New" (changelog) button click from header
   layoutElement.addEventListener('changelog-click', (() => {
     logger.debug('[V4 Layout] Changelog button clicked');
-    showChangelogModal();
+    void showChangelogModal();
   }) as EventListener);
 
   // Listen for theme button click from header
@@ -252,6 +251,14 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   layoutElement.addEventListener('about-click', (() => {
     logger.debug('[V4 Layout] About button clicked');
     showAboutModal();
+  }) as EventListener);
+
+  // Listen for the advanced-options gear click from header. The panel
+  // dispatches its data events (settings-reset, clear-all-dyes, ...) on
+  // layoutElement so the listeners below keep working unchanged.
+  layoutElement.addEventListener('advanced-click', (() => {
+    logger.debug('[V4 Layout] Advanced options button clicked');
+    showAdvancedOptionsPanel(layoutElement ?? undefined);
   }) as EventListener);
 
   // Listen for language button click from header
@@ -292,13 +299,129 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   });
 
   // Subscribe to language changes for re-rendering
-  languageUnsubscribe = LanguageService.subscribe(() => {
+  // Held for the app's lifetime — the shell is never torn down (destroyV4Layout
+  // was removed as dead code, 2026-08-16), so no unsubscribe handle is kept.
+  LanguageService.subscribe(() => {
     logger.info('[V4 Layout] Language changed, tool may need refresh');
+    // Route titles are locale keys, so the tab title is stale until re-read.
+    RouterService.refreshDocumentTitle();
   });
 
   // Wait for V4LayoutShell to complete its initial Lit render
   // This ensures the shadow DOM is available before we query for content container
   await layoutElement.updateComplete;
+
+  // Shared rules for every tool's card grid and empty state. Injected once
+  // into the shell's shadow root — tool containers only carry the class.
+  //
+  // This injection is load-bearing, not a convenience: tools render INSIDE
+  // V4LayoutShell's shadow DOM, so nothing in styles/globals.css or
+  // styles/v4-layout.css reaches them. A rule that must apply to tool content
+  // belongs in styles/tool-content.css (loaded here AND page-side) or in an
+  // inline style; putting it only in a page stylesheet is a silent no-op
+  // (that is how the Harmony empty state ended up drawing its 62px glyph at
+  // 437px — the sizing rule never applied).
+  if (
+    layoutElement.shadowRoot &&
+    !layoutElement.shadowRoot.querySelector('#v5-results-grid-style')
+  ) {
+    const gridStyle = document.createElement('style');
+    gridStyle.id = 'v5-results-grid-style';
+    gridStyle.textContent = `
+      ${toolContentCss}
+
+      /* Results grid — Q4 decision: three cards per row on desktop, two on
+         mobile. Flex rather than fixed grid tracks so a partial final row
+         centres with the rest; with grid tracks the leftovers hugged the
+         left edge while the block itself looked centred. The max-width is
+         the 3-up row (3 x 320 + 2 x 12), so wide viewports never reach 4-up. */
+      .v5-results-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: flex-start;
+        gap: 12px;
+        width: 100%;
+        max-width: 984px;
+        margin-inline: auto;
+      }
+      .v5-results-grid > * {
+        flex: 0 1 320px;
+        max-width: 320px;
+        min-width: 0;
+      }
+      @media (max-width: 768px) {
+        .v5-results-grid {
+          gap: 8px;
+          max-width: none;
+        }
+        .v5-results-grid > * {
+          flex: 1 1 calc(50% - 4px);
+          max-width: calc(50% - 4px);
+        }
+      }
+
+      /* Empty state — one treatment everywhere: the tool glyph dimmed inside
+         a shaded, dashed box with the instruction below it. Modelled on the
+         Accessibility Checker / Dye Comparison states, which were the two
+         that already looked right because they styled themselves inline. */
+      .v5-empty-state,
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        box-sizing: border-box;
+        padding: 60px 40px;
+        margin-inline: auto;
+        width: 100%;
+        max-width: 520px;
+        border-radius: 12px;
+        border: 1px dashed var(--theme-border, rgba(255, 255, 255, 0.15));
+        background: var(--theme-empty-state-background, rgba(0, 0, 0, 0.2));
+        color: var(--theme-text-muted);
+      }
+      .v5-empty-state-icon,
+      .empty-state-icon {
+        width: 150px;
+        height: 150px;
+        max-width: 60%;
+        margin: 0 0 20px;
+        opacity: 0.4;
+        color: var(--theme-text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .v5-empty-state-icon svg,
+      .empty-state-icon svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .v5-empty-state-title,
+      .empty-state-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--theme-text);
+        margin: 0 0 8px;
+      }
+      .v5-empty-state-text,
+      .empty-state-description {
+        font-size: 1rem;
+        line-height: 1.5;
+        color: var(--theme-text-muted);
+        max-width: 400px;
+        margin: 0;
+      }
+      .empty-state-action {
+        margin-top: 20px;
+      }
+    `;
+    layoutElement.shadowRoot.appendChild(gridStyle);
+  }
 
   // Load initial tool
   await loadToolContent(initialTool);
@@ -322,6 +445,16 @@ function getContentContainer(): HTMLElement | null {
   // The content scroll container
   const contentScroll = shadowRoot.querySelector('.v4-layout-content-scroll');
   return contentScroll as HTMLElement | null;
+}
+
+/**
+ * Localized display name for a tool, for user-facing copy that names it.
+ * Falls back to the raw id if the route table has no entry (unreachable for a
+ * real `ToolId`, but `loadToolContent` must not throw on one).
+ */
+function toolDisplayName(toolId: ToolId): string {
+  const route = RouterService.getRouteForTool(toolId);
+  return route ? LanguageService.t(route.titleKey) : toolId;
 }
 
 /**
@@ -361,7 +494,10 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     <div class="flex items-center justify-center h-64">
       <div class="text-center">
         <div class="inline-block w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mb-3" style="border-color: var(--theme-primary); border-top-color: transparent;"></div>
-        <p style="color: var(--theme-text-muted);">Loading ${toolId}...</p>
+        <p style="color: var(--theme-text-muted);">${LanguageService.tInterpolate(
+          'common.loadingTool',
+          { tool: toolDisplayName(toolId) }
+        )}</p>
       </div>
     </div>
   `;
@@ -511,8 +647,8 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
         <svg style="width: 150px; height: 150px; opacity: 0.25; margin-bottom: 1.5rem; color: var(--theme-text);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
-        <p style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--theme-text);">Failed to load tool</p>
-        <p style="font-size: 1rem; opacity: 0.7; color: var(--theme-text);">Please try again or refresh the page</p>
+        <p style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--theme-text);">${LanguageService.t('errors.toolLoadFailed')}</p>
+        <p style="font-size: 1rem; opacity: 0.7; color: var(--theme-text);">${LanguageService.t('errors.tryAgainOrRefresh')}</p>
       </div>
     `;
   }
@@ -527,55 +663,8 @@ function renderPlaceholder(container: HTMLElement, toolId: string): void {
       <svg style="width: 150px; height: 150px; opacity: 0.25; margin-bottom: 1.5rem; color: var(--theme-text);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
       </svg>
-      <p style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--theme-text);">${toolId} Tool</p>
-      <p style="font-size: 1rem; opacity: 0.7; color: var(--theme-text);">Coming soon</p>
+      <p style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--theme-text);">${LanguageService.tInterpolate('common.comingSoonTool', { tool: toolId })}</p>
+      <p style="font-size: 1rem; opacity: 0.7; color: var(--theme-text);">${LanguageService.t('common.comingSoon')}</p>
     </div>
   `;
-}
-
-/**
- * Cleanup the v4 layout
- */
-export function destroyV4Layout(): void {
-  // Clean up subscriptions
-  if (languageUnsubscribe) {
-    languageUnsubscribe();
-    languageUnsubscribe = null;
-  }
-
-  if (configUnsubscribe) {
-    configUnsubscribe();
-    configUnsubscribe = null;
-  }
-
-  // Clean up tool
-  if (activeTool) {
-    activeTool.destroy();
-    activeTool = null;
-  }
-
-  // Clean up modal container
-  if (modalContainer) {
-    modalContainer.destroy();
-    modalContainer = null;
-  }
-
-  // Clean up toast container
-  if (toastContainer) {
-    toastContainer.destroy();
-    toastContainer = null;
-  }
-
-  // Clean up layout element
-  if (layoutElement) {
-    layoutElement.remove();
-    layoutElement = null;
-  }
-
-  // Clean up router
-  RouterService.destroy();
-
-  _configController = null;
-
-  logger.info('[V4 Layout] Destroyed');
 }

@@ -24,15 +24,15 @@
  * @module shared/ui-icons
  */
 
+import { chromeGlyph, panelGlyph } from '@xivdyetools/svg';
+import { themedAccent } from './glyph-accent';
+
 /**
- * Theme Switcher icon - Paint palette
+ * Theme switcher icons — the confirmed 3D sun/moon pair (32 grid).
+ * The header shows the glyph of the ACTIVE theme.
  */
-export const ICON_THEME = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M 12 2 C 6.5 2 2 6.5 2 12 C 2 14.5 3 16.5 4.5 18 C 5 18.5 6 18.5 6.5 18 C 7 17.5 7 16.5 6.5 15.5 C 6 14.5 6 13 6 12 C 6 8.7 8.7 6 12 6 C 15.3 6 18 8.7 18 12 C 18 15.3 15.3 18 12 18 L 10 18 C 9 18 8 19 8 20 C 8 21 9 22 10 22 L 12 22 C 17.5 22 22 17.5 22 12 C 22 6.5 17.5 2 12 2 Z" fill="none"/>
-  <circle cx="8.5" cy="10.5" r="1.5" fill="currentColor" stroke="none" opacity="0.6"/>
-  <circle cx="12" cy="8" r="1.5" fill="currentColor" stroke="none" opacity="0.8"/>
-  <circle cx="15.5" cy="10.5" r="1.5" fill="currentColor" stroke="none" opacity="0.4"/>
-</svg>`;
+export const ICON_THEME_SUN = themedAccent(chromeGlyph('sun', { fluid: true }));
+export const ICON_THEME_MOON = themedAccent(chromeGlyph('moon', { fluid: true }));
 
 /**
  * Camera icon - Take photo
@@ -105,16 +105,6 @@ export const ICON_DICE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 </svg>`;
 
 /**
- * Coins icon - Budget/Gil (FFXIV-style stacked coins)
- */
-export const ICON_COINS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <ellipse cx="12" cy="7" rx="7" ry="3" />
-  <path d="M5 7v4c0 1.66 3.13 3 7 3s7-1.34 7-3V7" />
-  <path d="M5 11v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4" />
-  <path d="M5 15v2c0 1.66 3.13 3 7 3s7-1.34 7-3v-2" />
-</svg>`;
-
-/**
  * Broom icon - Clear/sweep action
  */
 export const ICON_BROOM = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -133,27 +123,11 @@ export const ICON_CLOSE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
 </svg>`;
 
 /**
- * Filter icon - Funnel shape
- */
-export const ICON_FILTER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path d="M3 4h18l-7 8v6l-4 2V12L3 4z"/>
-</svg>`;
-
-/**
  * Market icon - Store/shop front
  */
 export const ICON_MARKET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
   <polyline points="9 22 9 12 15 12 15 22"/>
-</svg>`;
-
-/**
- * Export icon - Arrow out of box
- */
-export const ICON_EXPORT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-  <polyline points="17 8 12 3 7 8"/>
-  <line x1="12" y1="3" x2="12" y2="15"/>
 </svg>`;
 
 /**
@@ -166,12 +140,9 @@ export const ICON_BEAKER = `<svg viewBox="0 0 24 24" fill="none" stroke="current
 </svg>`;
 
 /**
- * Settings icon - Cog/gear
+ * Settings icon — the confirmed 32-grid gear (keeps the ICON_SETTINGS name).
  */
-export const ICON_SETTINGS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <circle cx="12" cy="12" r="3"/>
-  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
-</svg>`;
+export const ICON_SETTINGS = themedAccent(panelGlyph('gear', { fluid: true }));
 
 /**
  * Palette icon - Artist color palette
@@ -182,13 +153,6 @@ export const ICON_PALETTE = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
   <circle cx="8.5" cy="7.5" r="1.5"/>
   <circle cx="6.5" cy="12.5" r="1.5"/>
   <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 011.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/>
-</svg>`;
-
-/**
- * Sort icon - Vertical bars
- */
-export const ICON_SORT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path d="M3 6h18M3 12h12M3 18h6"/>
 </svg>`;
 
 /**
@@ -215,27 +179,6 @@ export const ICON_SLIDERS = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
 </svg>`;
 
 /**
- * Target icon - Concentric circles (for budget/target selection)
- */
-export const ICON_TARGET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-</svg>`;
-
-/**
- * Sparkles icon - Magic/highlights
- */
-export const ICON_SPARKLES = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/>
-</svg>`;
-
-/**
- * Distance icon - Color distance measurement
- */
-export const ICON_DISTANCE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
-</svg>`;
-
-/**
  * Music icon - Music note (for harmony types)
  */
 export const ICON_MUSIC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -252,45 +195,19 @@ export const ICON_STAIRS = `<svg viewBox="0 0 24 24" fill="none" stroke="current
 </svg>`;
 
 /**
- * Star icon - Filled star (for ratings/favorites)
+ * Star pair (5.0): one geometry on the 32 grid, two states — outline for
+ * not-voted/not-saved, filled (accent slot) for voted/saved. State comes from
+ * the fill, never from fading. Geometry home: `@xivdyetools/svg`.
  */
-export const ICON_STAR = `<svg viewBox="0 0 20 20" fill="currentColor">
-  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-</svg>`;
+export const ICON_STAR = panelGlyph('star', { fluid: true });
+export const ICON_STAR_FILLED = themedAccent(panelGlyph('star-fill', { fluid: true }));
 
 /**
- * Search icon - Magnifying glass
+ * Back arrow icon - Left-pointing chevron (moved from category-icons.ts —
+ * a navigation affordance, not a category)
  */
-export const ICON_SEARCH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-</svg>`;
-
-/**
- * Grid icon - Grid layout view
- */
-export const ICON_GRID = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-</svg>`;
-
-/**
- * User icon - Person silhouette
- */
-export const ICON_USER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-</svg>`;
-
-/**
- * Edit icon - Pencil
- */
-export const ICON_EDIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-</svg>`;
-
-/**
- * Trash icon - Delete/remove
- */
-export const ICON_TRASH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+export const ICON_ARROW_BACK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M15 18l-6-6 6-6" />
 </svg>`;
 
 /**
@@ -303,30 +220,18 @@ export const ICON_IMAGE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
 /**
  * About icon - Triangle warning sign with question mark (for about modals)
  */
-export const ICON_ABOUT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 2L2 20h20L12 2Z" fill="none"/>
-  <path d="M12 9c-1 0-1.5 0.5-1.5 1.5s0.5 1 1 1.5c0.5 0.5 0.5 1 0.5 1.5" fill="none"/>
-  <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/>
-</svg>`;
+export const ICON_ABOUT = themedAccent(chromeGlyph('about', { fluid: true }));
 
 /**
  * Context menu icon - Vertical three dots (kebab menu)
  * Used for ResultCard action menus and dropdown triggers
  */
-export const ICON_CONTEXT_MENU = `<svg viewBox="0 0 24 24" fill="currentColor">
-  <circle cx="12" cy="5" r="2"/>
-  <circle cx="12" cy="12" r="2"/>
-  <circle cx="12" cy="19" r="2"/>
-</svg>`;
+export const ICON_CONTEXT_MENU = panelGlyph('kebab', { fluid: true });
 
 /**
  * Globe icon - Language/internationalization selector
  */
-export const ICON_GLOBE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="10" fill="none"/>
-  <line x1="2" y1="12" x2="22" y2="12"/>
-  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" fill="none"/>
-</svg>`;
+export const ICON_GLOBE = chromeGlyph('globe', { fluid: true });
 
 /**
  * Link icon - Chain link for copy/share URLs
@@ -338,32 +243,12 @@ export const ICON_LINK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 </svg>`;
 
 /**
- * Document icon - For submissions/write actions
- * Replaces: 📝 emoji
- */
-export const ICON_DOCUMENT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M14 3v4a1 1 0 001 1h4"/>
-  <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/>
-  <path d="M9 9h1M9 13h6M9 17h6"/>
-</svg>`;
-
-/**
  * Scroll / parchment icon - For the "What's New" release-notes button
  * Curled top and bottom rollers evoke an unfurled scroll
  */
 export const ICON_SCROLL = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
   <path d="M19 17V5a2 2 0 00-2-2H4"/>
   <path d="M8 21h12a2 2 0 002-2v-1a1 1 0 00-1-1H11a1 1 0 00-1 1v1a2 2 0 11-4 0V5a2 2 0 10-4 0v2a1 1 0 001 1h3"/>
-</svg>`;
-
-/**
- * Locked icon - Padlock for auth required states
- * Replaces: 🔐 emoji
- */
-export const ICON_LOCKED = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="5" y="11" width="14" height="10" rx="2"/>
-  <path d="M8 11V7a4 4 0 018 0v4"/>
-  <circle cx="12" cy="16" r="1" fill="currentColor"/>
 </svg>`;
 
 /**
@@ -389,34 +274,6 @@ export const ICON_NETWORK = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
 </svg>`;
 
 /**
- * Book icon - Tutorial/guide documentation
- * Replaces: 📚 emoji
- */
-export const ICON_BOOK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-  <path d="M8 7h8M8 11h8M8 15h5"/>
-</svg>`;
-
-/**
- * Success icon - Checkmark for success states
- * Replaces: ✅ emoji
- */
-export const ICON_SUCCESS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="9"/>
-  <path d="M8 12l3 3 5-6"/>
-</svg>`;
-
-/**
- * Error icon - X for error states
- * Replaces: ❌ emoji
- */
-export const ICON_ERROR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="9"/>
-  <path d="M15 9l-6 6M9 9l6 6"/>
-</svg>`;
-
-/**
  * Refresh icon - Circular arrow for reset/reload actions
  * Replaces: 🔄 emoji
  */
@@ -425,24 +282,6 @@ export const ICON_REFRESH = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
   <path d="M21 3v5h-5"/>
   <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16"/>
   <path d="M3 21v-5h5"/>
-</svg>`;
-
-/**
- * Import/Download icon - Arrow pointing down into tray
- * Replaces: 📥 emoji
- */
-export const ICON_IMPORT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-  <polyline points="7 10 12 15 17 10"/>
-  <line x1="12" y1="15" x2="12" y2="3"/>
-</svg>`;
-
-/**
- * Folder icon - For saved palettes/collections
- * Replaces: 🗂️ emoji
- */
-export const ICON_FOLDER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
 </svg>`;
 
 /**

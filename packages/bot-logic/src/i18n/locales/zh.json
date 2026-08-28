@@ -1,0 +1,682 @@
+{
+  "meta": {
+    "locale": "zh",
+    "name": "Chinese"
+  },
+  "common": {
+    "dyes": "染剂",
+    "category": "分类",
+    "hexColor": "十六进制颜色",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "物品ID",
+    "footer": "XIV Dye Tools",
+    "error": "错误",
+    "unknownError": "出现问题。请重试。"
+  },
+  "errors": {
+    "dyeNotFound": "找不到名为「{name}」的染剂。",
+    "invalidColor": "无法将「{input}」解析为颜色。\n\n请提供有效的十六进制代码（例如：`#FF0000`）或染剂名称（例如：`达拉加布红`）。",
+    "missingInput": "请提供颜色（十六进制代码或染剂名称）。",
+    "missingQuery": "请提供搜索词。",
+    "missingName": "请提供染剂名称。",
+    "missingSubcommand": "请指定子命令。",
+    "unknownSubcommand": "未知子命令：{name}",
+    "noMatchFound": "在数据库中找不到匹配的染剂。",
+    "noDyesAvailable": "数据库中没有可用的染剂。",
+    "generationFailed": "生成可视化时发生错误。请稍后重试。",
+    "rateLimited_one": "命令使用过于频繁！请等待 **{seconds} 秒**后再试。",
+    "rateLimited_other": "命令使用过于频繁！请等待 **{seconds} 秒**后再试。",
+    "unknownUser": "无法识别用户。请重试。",
+    "notImplemented": "`/{command}` 命令尚未实现。",
+    "commandFailed": "处理您的命令时发生错误。",
+    "unsupportedComponent": "尚不支持此组件类型。",
+    "unknownModal": "未知的模态框提交。",
+    "unknownButton": "无法识别此按钮。"
+  },
+  "quality": {
+    "perfect": "完美",
+    "excellent": "优秀",
+    "good": "良好",
+    "fair": "一般",
+    "approximate": "近似"
+  },
+  "manual": {
+    "title": "XIV Dye Tools 使用手册",
+    "welcome": "欢迎使用 **XIV Dye Tools**！这个机器人可以帮助您探索和匹配FFXIV染剂颜色。",
+    "commandsIntro": "下面是按类别整理的所有可用命令。",
+    "autocompleteNote": "所有命令都支持染剂名称**自动补全**！",
+    "colorMatching": "颜色匹配",
+    "dyeInformation": "染剂信息",
+    "botInformation": "机器人信息",
+    "tipsResources": "技巧与资源",
+    "extractor": {
+      "name": "`/extractor color <颜色> [数量]` | `/extractor image <图像>`",
+      "description": "提取颜色并匹配FFXIV染剂。\n• `color`：将十六进制代码或染剂名称匹配到最接近的染剂\n• `image`：从上传的图像中提取主要颜色"
+    },
+    "harmony": {
+      "name": "`/harmony <颜色> [类型]`",
+      "description": "生成和谐的染剂组合。\n• 类型：互补色、类似色、三色、分裂互补、四色、正方形、单色\n• 创建可视化色轮"
+    },
+    "mixer": {
+      "name": "`/mixer <染剂1> <染剂2> [模式]`",
+      "description": "使用色彩科学混合两种染剂。\n• 6种混合模式：RGB、LAB、OKLAB、RYB、HSL、光谱\n• 查找与混合结果最接近的FFXIV染剂"
+    },
+    "gradient": {
+      "name": "`/gradient <起始> <结束> [步骤]`",
+      "description": "在两种颜色之间创建渐变。\n• 显示每个渐变步骤的匹配染剂\n• 可配置步骤数（2-10）"
+    },
+    "swatch": {
+      "name": "`/swatch color <类型> <索引>` | `/swatch grid <类型> <行> <列>`",
+      "description": "将FFXIV角色颜色与染剂匹配。\n• 支持肤色、发色、眼色、高光、唇色、纹身、面部彩绘\n• 肤色和发色有种族/部族特定面板"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <键> <值>` | `/preferences reset`",
+      "description": "管理机器人偏好设置。\n• 设置混合模式、匹配方法、结果数量的默认值\n• 配置角色部族/性别和市场服务器"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <搜索词>`",
+      "description": "按名称搜索染剂。\n• 模糊匹配可找到部分匹配\n• 显示十六进制代码和分类"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <名称>`",
+      "description": "获取特定染剂的详细信息。\n• 显示Hex、RGB、HSV值\n• 显示分类和物品ID"
+    },
+    "dyeList": {
+      "name": "`/dye list [分类]`",
+      "description": "列出所有染剂或按分类筛选。\n• 分类：红色、棕色、黄色、绿色、蓝色、紫色、中性色、特殊"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "显示5个随机选择的染剂。\n• 可选择每个分类限制1个染剂"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "显示机器人信息、版本和链接。"
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "显示此帮助指南。"
+    },
+    "tips": {
+      "autocomplete": "**自动补全：** 开始输入染剂名称，建议将自动显示！",
+      "hexColors": "**十六进制颜色：** 使用标准网页格式如 `#FF0000`（红色）或 `#5865F2`（蓝紫色）",
+      "dyeNames": "**染剂名称：** 输入部分名称 - 「达拉」可以找到「达拉加布红」",
+      "facewearExcluded": "**排除面部装备：** 通用面部装备染剂（如「红色」、「蓝色」）将从结果中排除",
+      "links": "**链接：**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "找不到与「{query}」匹配的染剂。",
+      "tryDifferent": "请尝试其他搜索词",
+      "resultsTitle": "「{query}」的搜索结果",
+      "foundCount_one": "找到 {count} 种染剂：",
+      "foundCount_other": "找到 {count} 种染剂：",
+      "moreResults": "...还有 {count} 个结果",
+      "useInfoHint": "使用 /dye info <名称> 查看详细信息"
+    },
+    "info": {
+      "detailedInfo": "这种{category}染剂的详细信息。"
+    },
+    "list": {
+      "noDyesInCategory": "在「{category}」分类中找不到染剂。",
+      "categoryTitle": "{category}染剂",
+      "dyesInCategory": "此分类中有 {count} 种染剂：",
+      "categoriesTitle": "染剂分类",
+      "categorySummary": "{count} 个分类中共有 {total} 种染剂：",
+      "useListHint": "使用 /dye list <分类> 查看某个分类的染剂"
+    },
+    "random": {
+      "title": "随机染剂",
+      "titleUnique": "随机染剂（每个分类1个）",
+      "description": "这里是 {count} 种随机选择的染剂：",
+      "runAgainHint": "再次运行可获取不同的染剂！"
+    }
+  },
+  "extractor": {
+    "topMatches": "前 {count} 个染剂匹配"
+  },
+  "gradient": {
+    "title": "颜色渐变",
+    "startColor": "起始",
+    "endColor": "结束",
+    "steps_one": "{count} 步",
+    "steps_other": "{count} 步",
+    "colorSpace": "色彩空间",
+    "matching": "匹配"
+  },
+  "harmony": {
+    "title": "{type}和谐",
+    "baseColor": "基础色",
+    "complementary": "互补色",
+    "analogous": "类似色",
+    "triadic": "三色",
+    "splitComplementary": "分裂互补",
+    "tetradic": "四色",
+    "square": "正方形",
+    "monochromatic": "单色",
+    "invertedTetradic": "逆四色"
+  },
+  "mixer": {
+    "blendResult": "混合结果",
+    "bothRequired": "染剂1和染剂2都是必需的。"
+  },
+  "accessibility": {
+    "normalVision": "正常视力",
+    "protanopia": "红色盲",
+    "deuteranopia": "绿色盲",
+    "tritanopia": "蓝色盲",
+    "achromatopsia": "全色盲",
+    "allLenses": "所有色觉"
+  },
+  "about": {
+    "title": "XIV Dye Tools 机器人",
+    "version": "版本",
+    "description": "用于探索和匹配FFXIV染剂颜色的Discord机器人。",
+    "commands": "命令",
+    "totalCount": "共{count}个",
+    "links": "链接",
+    "dyes": "染剂",
+    "builtOn": "技术支持",
+    "attribution": "权利声明",
+    "poweredBy": "由 Cloudflare Workers 提供支持",
+    "categories": {
+      "colorTools": "颜色工具",
+      "dyeDatabase": "染剂数据库",
+      "analysis": "分析",
+      "community": "社区",
+      "utility": "实用工具"
+    },
+    "removedTitle": "v5中已移除",
+    "removedBody": "这些命令已被移除——请使用 /extractor、/preferences 或网页应用中的收藏。"
+  },
+  "preset": {
+    "title": "社区预设",
+    "apiDisabled": "此机器人未配置社区预设功能。",
+    "notFound": "找不到匹配的预设。",
+    "noneInCategory": "此类别中没有预设。",
+    "useShowTip": "使用 `/preset show <名称>` 查看详情",
+    "randomTitle": "随机预设",
+    "notEnoughDyes": "预设需要至少2种染剂。",
+    "invalidDye": "找不到指定的染剂之一。",
+    "duplicateExists": "已存在类似预设",
+    "duplicateVoted": "您的投票已添加到现有预设。",
+    "submitted": "预设已提交！",
+    "submittedApproved": "您的预设已获批准并上线！",
+    "submittedPending": "您的预设正在等待审核。",
+    "voteRemoved": "已取消投票",
+    "voteAdded": "已投票",
+    "currentVotes": "当前投票数：{count}",
+    "colors": "颜色",
+    "tags": "标签",
+    "author": "作者",
+    "votes": "投票",
+    "api": {
+      "badRequest": "无效的请求。请检查您的输入并重试。",
+      "permissionDenied": "权限不足。",
+      "notFound": "未找到。",
+      "conflict": "此项已存在或与其他资源冲突。",
+      "rateLimited": "请求过多。请稍等片刻后重试。",
+      "serverError": "发生服务器错误。请稍后重试。",
+      "unknown": "发生错误。请重试。"
+    },
+    "invalidStructure": "无效的命令结构",
+    "none": "未找到预设。",
+    "showing": "显示 {total} 个预设中的 {shown} 个",
+    "loadFailed": "无法加载预设。",
+    "loadOneFailed": "无法加载该预设。",
+    "loadRandomFailed": "无法加载随机预设。",
+    "duplicateIntro": "已存在使用相同染剂的预设：",
+    "byAuthor": "作者：{author}",
+    "official": "官方",
+    "unknownAuthor": "未知",
+    "name": "名称",
+    "colorCount": "{n} 种颜色",
+    "submitFailed": "无法提交预设。",
+    "editFailed": "无法编辑预设。",
+    "voteFailed": "无法处理投票。",
+    "edit": {
+      "noFields": "请至少提供一个要更新的字段。",
+      "notOwner": "您只能编辑自己的预设。",
+      "invalidDye": "无效的染剂：{name}",
+      "dyeCount": "预设必须包含 2-5 种染剂。",
+      "duplicateTitle": "重复的染剂组合",
+      "duplicateIntro": "此染剂组合已存在于另一个预设中：",
+      "duplicateHint": "请使用不同的染剂组合。",
+      "updatedPending": "预设已更新 - 等待审核",
+      "updated": "预设已更新",
+      "pendingDescription": "由于内容审核，您的更改已提交审核。",
+      "appliedDescription": "您的更改已生效。",
+      "pendingFooter": "管理员将很快审核您的更改。"
+    },
+    "favorite": {
+      "nameRequired": "preset_name 为必填项",
+      "alreadyExists": "**{name}** 已在您的收藏中。",
+      "limitReached": "您已达到 {max} 个收藏预设的上限。",
+      "addFailed": "无法添加收藏 — 请重试。",
+      "removeFailed": "无法移除收藏 — 请重试。",
+      "addedTitle": "已添加收藏",
+      "added": "**{name}** 已加入您的收藏预设。",
+      "notFound": "**{name}** 不在您的收藏中。",
+      "removedTitle": "已移除收藏",
+      "removed": "**{name}** 已从您的收藏中移除。",
+      "listTitle": "您的收藏预设",
+      "listTitleCount": "您的收藏预设（{n}/{max}）",
+      "empty": "您还没有收藏任何预设。使用 `/preset favorite add` 添加一个。",
+      "allRemoved": "您收藏的预设似乎已全部被删除。使用 `/preset favorite remove` 清理条目。"
+    },
+    "noValidDyes": "此预设中没有有效的染剂"
+  },
+  "budget": {
+    "findTitle": "{dyeName}的实惠替代品",
+    "noAlternatives": "未找到符合条件的更实惠替代品。",
+    "worldSet": "您的默认服务器已设置为**{world}**。",
+    "noWorldSet": {
+      "title": "尚未设置服务器",
+      "description": "请使用 `/budget set_world <world>` 设置服务器，或指定 `world` 选项。"
+    },
+    "errors": {
+      "notConfigured": "此服务器不支持实惠染料功能。市场板集成未配置。",
+      "worldNotFound": "找不到服务器或数据中心「{world}」。\n\n请检查拼写，或尝试使用数据中心名称，如「陆行鸟」或「莫古力」。",
+      "missingWorld": "请指定服务器。",
+      "saveFailed": "无法保存服务器设置。请重试。",
+      "missingDye": "请指定目标染料。",
+      "dyeNotFound": "找不到染料「{name}」。",
+      "missingPreset": "请选择一个快速选择预设。",
+      "presetNotFound": "找不到快速选择预设「{id}」。",
+      "apiError": "无法获取市场板数据。请稍后再试。",
+      "rateLimited": "请求过多。请稍等片刻后再查询价格。"
+    },
+    "dataCenterLabel": "{name}（{region} 数据中心）"
+  },
+  "preferences": {
+    "title": "您的偏好设置",
+    "show": {
+      "description": "这些设置会影响命令的运行方式。\n您提供的参数将始终覆盖这些默认值。",
+      "default": "默认",
+      "notSet": "未设置",
+      "hint": "使用 /preferences set 自定义设置",
+      "lastUpdated": "最后更新"
+    },
+    "set": {
+      "success": "偏好设置已更新",
+      "successCount": "已更新{count}项设置",
+      "affects": "影响的命令",
+      "failedToUpdate": "更新失败",
+      "noOptions": "请至少提供一项设置。\n\n示例: `/preferences set language:zh blending:oklab`",
+      "noValidOptions": "未提供有效的设置。",
+      "overrideNote": "命令参数会覆盖这些设置"
+    },
+    "reset": {
+      "success": "偏好设置已重置",
+      "single": "**{key}** 已重置为默认值。",
+      "allTitle": "所有设置已重置",
+      "allDescription": "所有设置已恢复为系统默认值。",
+      "failed": "重置设置失败，请重试。",
+      "showHint": "使用 /preferences show 查看当前设置"
+    },
+    "keys": {
+      "language": "语言",
+      "blending": "混合模式",
+      "matching": "匹配方法",
+      "count": "结果数量",
+      "clan": "角色部族",
+      "gender": "角色性别",
+      "world": "市场服务器",
+      "market": "显示市场价格",
+      "showHex": "显示十六进制代码",
+      "showRgb": "显示 RGB 值",
+      "showHsv": "显示 HSV 值",
+      "showLab": "显示 LAB 值",
+      "showDeltaE": "显示色差 Delta-E",
+      "showAcquisition": "显示获取来源",
+      "filters": "染剂过滤",
+      "theme": "卡片主题"
+    },
+    "errors": {
+      "invalidKey": "未知偏好设置键：{key}",
+      "invalidValue": "{key} 的值无效。有效选项：{options}",
+      "noSubcommand": "未指定子命令"
+    },
+    "values": {
+      "results": "{count}个结果",
+      "male": "男性 ♂️",
+      "female": "女性 ♀️",
+      "yes": "是",
+      "no": "否",
+      "themeDark": "深色",
+      "themeLight": "浅色"
+    },
+    "validation": {
+      "invalidLanguage": "无效的语言。有效选项: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "无效的混合模式。有效选项:\n{options}",
+      "invalidMatchingMethod": "无效的匹配方法。有效选项:\n{options}",
+      "invalidCount": "无效的数量。必须是1到10之间的数字。",
+      "invalidClan": "无效的部族。有效部族:\n{options}",
+      "invalidGender": "无效的性别。有效选项: `male`, `female`",
+      "invalidWorld": "无效的服务器。请输入有效的FFXIV服务器或数据中心名称。",
+      "invalidMarket": "无效的值。请使用 `on`/`off` 或 `true`/`false`。",
+      "error": "保存设置时发生错误，请重试。",
+      "invalidTheme": "无效的主题。请选择 `dark` 或 `light`。"
+    },
+    "filters": {
+      "noOptions": "请至少提供一个过滤选项。",
+      "excluded": "已排除",
+      "included": "已包含",
+      "updated": "过滤器已更新",
+      "affectsHint": "影响命令: /match, /harmony, /gradient, /mixer",
+      "title": "染剂过滤",
+      "setHint": "使用 /preferences filters set 进行自定义",
+      "resetSuccess": "过滤器已重置",
+      "resetDescription": "所有染剂过滤器已重置为默认值（包含所有染剂类型）。",
+      "labels": {
+        "metallic": "金属",
+        "pastel": "粉彩",
+        "dark": "暗色",
+        "cosmic": "宇宙",
+        "ishgardian": "伊修加德",
+        "expensive": "高价（纯白 / 墨黑）",
+        "vendor": "商店",
+        "craft": "制作"
+      }
+    },
+    "affects": {
+      "allCommands": "所有命令",
+      "marketData": "结果卡片上的市场数据",
+      "everyCard": "所有生成的卡片",
+      "resultCards": "所有带结果卡片的命令"
+    },
+    "methods": {
+      "ciede2000": "行业标准感知色差公式（默认）",
+      "oklab": "OKLAB 感知距离",
+      "cie76": "CIELAB 欧氏距离",
+      "redmean": "加权 RGB 近似",
+      "rgb": "RGB 欧氏距离",
+      "distinguish": "RGB DIST 重新缩放至 0-100"
+    },
+    "blendingModes": {
+      "rgb": "加色通道平均（默认）",
+      "lab": "感知均匀的 CIELAB 混合",
+      "oklab": "现代感知模型（修复 LAB 蓝→紫问题）",
+      "ryb": "传统美术色环",
+      "hsl": "色相-饱和度-亮度插值",
+      "spectral": "Kubelka-Munk 物理模拟"
+    }
+  },
+  "webhook": {
+    "newPresetPending": "新预设待审核",
+    "newPresetPublished": "新预设已发布",
+    "previewImagePending": "预览图片待审核",
+    "fields": {
+      "category": "类别",
+      "author": "作者",
+      "source": "来源",
+      "dyes": "染剂",
+      "tags": "标签"
+    },
+    "autoApproved": "自动批准",
+    "buttons": {
+      "approve": "批准",
+      "reject": "拒绝",
+      "revert": "还原"
+    },
+    "editPending": "预设编辑待审核",
+    "sources": {
+      "web": "网页应用",
+      "discord": "Discord"
+    }
+  },
+  "previewImage": {
+    "invalidButton": "无效的按钮交互。",
+    "notPermitted": "您没有权限审核预览图片。",
+    "actionFailed": "更新预览图片失败，请重试。",
+    "approvedFooter": "预览图片已由 {moderator} 批准",
+    "rejectedFooter": "预览图片已由 {moderator} 拒绝（预设本身未受影响）"
+  },
+  "matchImage": {
+    "missingImage": "请附加一张图片进行分析。",
+    "invalidAttachment": "找不到附加的图片。",
+    "noColors": "图片似乎完全透明或太小无法分析。",
+    "extractionFailed": "无法从图片中提取颜色。",
+    "processingFailed": "处理图片时发生错误。",
+    "onlyDiscord": "只能分析直接上传到 Discord 的图片。",
+    "imageTooLarge": "图片太大。请使用较小的图片。",
+    "unsupportedFormat": "不支持的图片格式。请使用 PNG、JPEG、GIF 或 WebP。",
+    "timeout": "图片下载超时。请重试。"
+  },
+  "matchImageHelp": {
+    "title": "如何使用 /match_image",
+    "description": "`/match_image` 命令会分析您上传的图片，找出主导颜色并匹配最接近的FFXIV染剂。以下是一些获得最佳结果的技巧！",
+    "howItWorks": "工作原理",
+    "howItWorksContent": "**1. 图像分析**\n- 您的图片会通过K-means聚类处理\n- 提取最主要的颜色\n- 与136种FFXIV染剂进行匹配\n\n**2. 染剂匹配**\n- 使用RGB色彩空间中的欧几里得距离\n- 返回最接近的匹配染剂",
+    "tipsForBestResults": "获得最佳结果的技巧",
+    "tipsContent": "**裁剪您的图片**\n- 专注于您想要匹配的特定区域\n- 移除UI元素和背景\n\n**选择良好的光线**\n- 在光线充足的区域截图\n- 避免暗影或过度高光\n\n**避免暗色背景**\n- 黑色背景可能会影响结果\n- 尽可能使用中性的浅色背景",
+    "commonIssues": "常见问题",
+    "commonIssuesContent": "**「我得到了暗色，但我的装备是亮色的！」**\n→ 您的背景可能是暗色的。请将图片裁剪到只包含装备。\n\n**「匹配结果似乎不对」**\n→ 有多种颜色？算法会选择最常见的颜色。\n\n**「我能匹配特定部分吗？」**\n→ 可以！在上传前裁剪到该精确区域。",
+    "proTips": "专业技巧",
+    "proTipsContent": "• 使用图像编辑软件在上传前裁剪\n• 金属/闪亮装备的结果可能会有所不同\n• 如果您知道十六进制代码，请使用 `/match`\n• 使用 `colors` 选项提取多种颜色（1-5）\n• 使用1920x1080或更高分辨率截图以获得最佳质量",
+    "footer": "XIV Dye Tools - 为FFXIV时装爱好者倾心打造",
+    "exampleUseCases": "使用案例示例",
+    "goodExamples": "好的示例",
+    "goodExamplesContent": "• 裁剪后只包含单件胸甲的截图\n• 中性背景下染色盔甲的特写\n• 在明亮日光区域拍摄的截图\n• 聚焦于您想要匹配的颜色的图片",
+    "poorExamples": "不好的示例",
+    "poorExamplesContent": "• 包含大量UI的全屏截图\n• 在黑暗副本或洞穴中的角色\n• 多件不同染色的装备\n• 被背景颜色主导的图片",
+    "whenToUse": "何时使用 /match_image vs /match",
+    "whenToUseContent": "**使用 `/match_image` 当：**\n• 您有一张截图并想找到对应的染剂\n• 您不确定确切的颜色代码\n• 您想从灵感照片中匹配颜色\n\n**使用 `/match` 当：**\n• 您已经知道十六进制颜色代码\n• 您需要更精确的结果\n• 您正在使用色卡工作",
+    "technicalDetails": "技术细节",
+    "supportedFormats": "支持的格式",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "fileLimits": "文件限制",
+    "fileLimitsContent": "• 最大大小：8MB\n• 处理时间：约1-3秒",
+    "matchQualityRatings": "匹配质量等级",
+    "matchQualityRatingsContent": "**完美** (距离 0)\n**优秀** (距离 <10)\n**良好** (距离 <25)\n**一般** (距离 <50)\n**近似** (距离 ≥50)\n\n*距离越低 = 匹配越好*",
+    "poweredBy": "由 Photon WASM 图像处理驱动"
+  },
+  "card": {
+    "stain": "染色号",
+    "src": "来源",
+    "mkt": "市场",
+    "base": "基色",
+    "nearest": "最接近的染剂",
+    "nearestMore": "另有{n}项",
+    "ideal": "理想色相",
+    "found": "最接近",
+    "name": "染剂",
+    "cat": "分类",
+    "bandKey": "区间：≤6 / ≤12 / ≤20",
+    "derivedNote": "由 ΔE2000 推导",
+    "tier0": "完全",
+    "tier1": "接近",
+    "tier2": "宽松",
+    "tier3": "无法达到",
+    "share": "占比",
+    "matched": "匹配染剂",
+    "rank": "排名",
+    "target": "目标色",
+    "rampTitle": "从图像提取配色",
+    "matchTitle": "最接近的染剂",
+    "colours": "{n} 种颜色",
+    "rampKey": "色带宽度＝画面占比",
+    "matchKey": "按 ΔE2000 取最近",
+    "manualLead": "颜色与预期不符？请试",
+    "manualTail": "",
+    "gradKey": "色带＝每一阶／行＝不同染剂",
+    "gradKeyCut_one": "色带＝全部{n}阶／行＝差距最大的{k}项",
+    "gradKeyCut_other": "色带＝全部{n}阶／行＝差距最大的{k}项",
+    "gradVerdict_one": "{n}阶仅对应{k}种染剂。两者之间游戏内没有可用色。",
+    "gradVerdict_other": "{n}阶仅对应{k}种染剂。两者之间游戏内没有可用色。",
+    "gradOmitted": "另有 {n} 项，列于消息中",
+    "ratioKey": "描边＝混合／填充＝最接近的染剂",
+    "designed": "原始颜色",
+    "perceived": "感知颜色",
+    "separationCol": "区分度",
+    "lensCol": "视觉类型",
+    "shiftCol": "偏移量",
+    "sepBandKey": "区间：≥30 / ≥15 / ≥8 —— 越大越安全",
+    "soloKey": "条形＝相对偏移 · 不作判定",
+    "worstNote": "最难区分：{lens}",
+    "a11yVerdict": "在{lens}下最难区分，两色仅相差 {de}。",
+    "worstPair": "最弱的一对",
+    "pairCol": "配对",
+    "ratioCol": "对比度",
+    "ratioShort": "比率",
+    "restCol": "其余",
+    "ratioBand0": "低于 3:1",
+    "ratioBand1": "≥ 3:1",
+    "ratioBand2": "≥ 4.5:1",
+    "ratioBand3": "≥ 7:1",
+    "floorKey": "非文本下限为 3:1 — WCAG 1.4.11",
+    "plotKey": "绿＝相距远 · 基准线 3 / 4.5 / 7",
+    "contrastTitle": "对比度 — {n} 种染剂",
+    "cmpTitle": "比较 — {n} 种染剂",
+    "cmpTag0": "相同",
+    "cmpTag1": "接近",
+    "cmpTag2": "相近",
+    "cmpTag3": "较远",
+    "cmpKey": "绿＝接近 · 区间 5 / 10 / 20",
+    "cmpRatioKey": "对比度衡量明度，不是色差",
+    "triKey": "上三角 · 每对仅一次",
+    "lTarget": "目标",
+    "lBoardOnly": "仅市场",
+    "lVendor": "商店",
+    "lNoPrice": "无价格",
+    "lCandidate": "候选",
+    "vendorCheaper": "商店更便宜",
+    "budgetKey": "GIL/ΔE =（目标 − 行）÷ ΔE2000",
+    "budgetKeyMethod": "ΔE列为{tag} · 比率固定为ΔE2000",
+    "budgetBest": "最划算：**{name}** — ΔE {de} · {price}",
+    "budgetNoTarget": "{world}上无目标价格 — 行未排序，比率留空",
+    "budgetFloor": "已是最便宜的一档 — 没有低于{price}的选择。",
+    "swatchSlot": "部位",
+    "swatchNearest": "最近的染剂",
+    "slotSkin": "皮肤",
+    "slotHair": "头发",
+    "slotHl": "挑染",
+    "slotEyes": "眼睛",
+    "slotLip": "嘴唇",
+    "slotPaint": "彩绘",
+    "slotTattoo": "纹身",
+    "slotLimbal": "角膜环",
+    "offGridShort": "网格外",
+    "swatchFootKey_one": "按ΔE2000最近 · 共{n}个部位中{s}个",
+    "swatchFootKey_other": "按ΔE2000最近 · 共{n}个部位中{s}个",
+    "swatchOffGrid": "{slot}在网格外 — 索引 {index}，实际 {float}",
+    "swatchLip": "嘴唇 α {alpha} — 原色 {raw}，合成 {blend}",
+    "swatchGear": "装备染剂：{list}",
+    "swatchDropped": "已省略（最接近的匹配）：{slot} · ΔE {de}",
+    "swatchParseError": "无法读取文件 — {message}",
+    "swatchNoSlots": "此文件中没有有效的颜色部位。",
+    "swatchSlotMissing": "{slot}在此文件中不是有效部位。",
+    "perDe": "GIL/ΔE"
+  },
+  "firstRun": {
+    "title": "XIV Dye Tools 5.0",
+    "body": "机器人已全面改版：全新卡片、统一的匹配方式（默认ΔE2000）、/contrast 和 /a11y，以及支持角色文件的 /swatch。请通过 /manual 了解用法，/changelog 查看更新，/preferences 进行设置。此通知仅显示一次。"
+  },
+  "changelog": {
+    "title": "机器人更新内容",
+    "earlier": "早期版本",
+    "notFound": "没有版本{version}的记录。",
+    "empty": "更新日志暂时不可用。"
+  },
+  "manual5": {
+    "learnLead": "了解更多：{link}",
+    "topics": {
+      "colorVision": {
+        "name": "色觉",
+        "body": "无障碍工具使用 Brettel 方法模拟四种色觉——红色盲（PROT）、绿色盲（DEUT）、蓝色盲（TRIT）和全色盲（ACHR），并测量两种染剂在每种色觉下的剩余差距。差距越大越安全：ΔE2000 下的分档为 30 / 15 / 8。"
+      },
+      "contrast": {
+        "name": "对比度",
+        "body": "/contrast 测量染剂之间的 WCAG 亮度对比（1:1–21:1）。非文本下限为 3:1（WCAG 2.1 标准 1.4.11）；卡片标出 3 / 4.5 / 7，并按比值命名分档——没有字母等级。比值只衡量明度，不衡量色差。"
+      },
+      "matchingMethods": {
+        "name": "匹配方式",
+        "body": "六种方式，一套词汇：ΔE2000（默认）、ΔEOK、ΔE76、REDMEAN、RGB DIST 和 DISTINGUISH %。只有 ΔE2000 的分档跟随你的匹配线；其他方式的分档固定，档位不跨方式比较，且出现档位的地方必定标注方式。"
+      },
+      "spectrumPrices": {
+        "name": "染剂合并与价格",
+        "body": "自7.5版本起，125种染剂中的105种共享三个市场物品：通用染剂（商店216金币——唯一不变的价格）、追加染剂1（天穹街振兴票）和追加染剂2（宇宙币）。合并后的染剂没有独立挂单，因此 /budget 只显示组价格。"
+      },
+      "characterFile": {
+        "name": "角色文件",
+        "body": "/swatch 读取来自 Anamnesis 或 Ktisis 的 .chara 导出文件：颜色部位（皮肤、头发、眼睛、嘴唇、彩绘）和穿戴装备的染色。文件仅为生成回复读取一次，不会保存。超出游戏调色板的颜色按实际值匹配，并标记为「网格外」。"
+      }
+    }
+  },
+  "copy": {
+    "invalidFormat": "无效的 {format} 格式。",
+    "rgbValues": "RGB 值：",
+    "hsvValues": "HSV 值："
+  },
+  "stats": {
+    "accessDeniedTitle": "拒绝访问",
+    "accessDenied": "您没有权限查看此统计面板。",
+    "fetchFailed": "无法获取统计信息。请稍后重试。",
+    "summary": {
+      "features": "功能",
+      "featureList": "• 颜色匹配与提取\n• 染剂混合（6 种算法）\n• 角色颜色匹配\n• 色彩和谐生成\n• 无障碍分析",
+      "stats": "统计",
+      "commandsUsed": "命令使用次数",
+      "successRate": "成功率",
+      "webApp": "网页应用",
+      "documentation": "文档",
+      "supportServer": "支持服务器",
+      "footer": "版本 {version} • 使用 /manual 查看命令帮助"
+    }
+  },
+  "commands": {
+    "harmony": {
+      "description": "根据一种颜色生成和谐的染剂搭配"
+    },
+    "mixer": {
+      "description": "使用多种混色算法混合两种染剂"
+    },
+    "gradient": {
+      "description": "生成两种颜色之间的渐变及中间染剂"
+    },
+    "extractor": {
+      "description": "从输入中提取颜色并查找匹配的 FFXIV 染剂"
+    },
+    "swatch": {
+      "description": "将角色文件的颜色匹配到最接近的染剂"
+    },
+    "dye": {
+      "description": "搜索和浏览 FFXIV 染剂"
+    },
+    "comparison": {
+      "description": "并排比较 2-4 种染剂并进行颜色分析"
+    },
+    "contrast": {
+      "description": "染剂配对的 WCAG 非文本对比度（下限 3:1）"
+    },
+    "accessibility": {
+      "description": "一种或一对染剂在各种色觉下的表现"
+    },
+    "a11y": {
+      "description": "一种或一对染剂在各种色觉下的表现"
+    },
+    "budget": {
+      "description": "利用市场板价格寻找经济实惠的替代染剂"
+    },
+    "preset": {
+      "description": "浏览、提交社区配色预设并投票"
+    },
+    "preferences": {
+      "description": "管理您的个人机器人偏好设置"
+    },
+    "manual": {
+      "description": "显示所有命令的帮助和使用指南"
+    },
+    "changelog": {
+      "description": "查看 Discord 机器人的新内容 — 发布说明（最新在前）"
+    },
+    "about": {
+      "description": "显示 XIV Dye Tools 机器人的信息"
+    },
+    "stats": {
+      "description": "显示机器人使用统计和信息"
+    }
+  }
+}

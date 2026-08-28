@@ -17,6 +17,10 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 export interface CommandEvent {
   commandName: string;
   userId: string;
+  /**
+   * Guild the command ran in — used ONLY to derive the 'guild' | 'dm'
+   * context blob (FINDING-022); the id itself is never written anywhere.
+   */
   guildId?: string;
   success: boolean;
   errorType?: string;
@@ -52,8 +56,11 @@ export function trackCommand(
       // String dimensions
       blobs: [
         event.commandName,           // blob1: command name
-        event.userId,                // blob2: user ID (for unique user counting)
-        event.guildId || 'dm',       // blob3: guild ID or 'dm' for DMs
+        event.userId,                // blob2: user ID (pseudonymous; unique-user counting)
+        // blob3: FINDING-022 (2026-08-21 audit) — the CONTEXT, never the guild
+        // id. The privacy policy promises guild ids are not stored; a
+        // guild-vs-DM split is all the telemetry ever used.
+        event.guildId ? 'guild' : 'dm',
         event.success ? '1' : '0',   // blob4: success flag
         event.errorType || '',       // blob5: error type if failed
       ],

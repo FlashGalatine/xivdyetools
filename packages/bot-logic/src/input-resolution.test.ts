@@ -5,7 +5,16 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { isValidHex, normalizeHex, resolveColorInput, resolveDyeInput, dyeService } from './input-resolution.js';
+import {
+  isValidHex,
+  normalizeHex,
+  resolveColorInput,
+  resolveDyeInput,
+  searchDyesByName,
+  findDyeByName,
+  dyeService,
+} from './input-resolution.js';
+import { initializeLocale } from './localization.js';
 
 // ============================================================================
 // isValidHex
@@ -263,6 +272,42 @@ describe('resolveColorInput', () => {
 // ============================================================================
 // resolveDyeInput
 // ============================================================================
+
+// ============================================================================
+// Localized name matching (2026-08-20 i18n audit, F-02)
+// ============================================================================
+
+describe('localized dye-name matching', () => {
+  it('searchDyesByName finds a dye by its Japanese name once the locale is loaded', async () => {
+    await initializeLocale('ja');
+    const hits = searchDyesByName('スノウ', 'ja');
+    expect(hits.map((d) => d.name)).toContain('Snow White');
+  });
+
+  it('searchDyesByName still finds English names under a non-English locale, English first', async () => {
+    await initializeLocale('de');
+    const hits = searchDyesByName('snow', 'de');
+    expect(hits[0]?.name).toBe('Snow White');
+  });
+
+  it('searchDyesByName is English-only when no locale is given', () => {
+    expect(searchDyesByName('スノウ')).toEqual([]);
+  });
+
+  it('findDyeByName matches the exact localized name and the exact English name', async () => {
+    await initializeLocale('ja');
+    expect(findDyeByName('スノウホワイト', 'ja')?.name).toBe('Snow White');
+    expect(findDyeByName('snow white', 'ja')?.name).toBe('Snow White');
+    expect(findDyeByName('スノウ', 'ja')).toBeNull(); // partial is not exact
+  });
+
+  it('resolveDyeInput and resolveColorInput accept localized names', async () => {
+    await initializeLocale('ja');
+    expect(resolveDyeInput('スノウホワイト', 'ja')?.name).toBe('Snow White');
+    expect(resolveColorInput('スノウホワイト', { locale: 'ja' })?.name).toBe('Snow White');
+    expect(resolveDyeInput('スノウホワイト')).toBeNull();
+  });
+});
 
 describe('resolveDyeInput', () => {
   it('resolves a dye by name', () => {

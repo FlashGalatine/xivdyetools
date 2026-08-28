@@ -69,7 +69,7 @@ export type {
 // ============================================================================
 // Core Exports
 // ============================================================================
-export { BaseLogger, createSimpleLogger } from './core/index.js';
+export { BaseLogger } from './core/index.js';
 
 // ============================================================================
 // Adapter Exports
@@ -83,7 +83,6 @@ export {
   // Browser
   createBrowserLogger,
   browserLogger,
-  perf,
   // Worker
   createWorkerLogger,
   createRequestLogger,

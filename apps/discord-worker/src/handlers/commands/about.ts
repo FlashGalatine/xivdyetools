@@ -1,86 +1,88 @@
 /**
  * /about Command Handler
  *
- * Displays bot information including:
- * - Dynamic version from package.json
- * - Full list of available commands
- * - Links to resources
+ * The bot's counterpart to the About modal. Carries:
+ * - the version, and the dye count the whole product is about
+ * - the command roster, built from the registry so it cannot drift
+ * - what v5 removed, and where each one went
+ * - **the Square Enix attribution** — the one piece of this surface that
+ *   does not degrade gracefully by being absent, and the only place in the
+ *   bot that can carry it
  */
 
 import type { Env, DiscordInteraction } from '../../types/env.js';
+import { dyeDatabase, PRODUCT_LINKS, SOCIAL_LINKS } from '@xivdyetools/core';
+import { BRAND_ACCENT } from '../../utils/brand.js';
 import { createUserTranslator, Translator } from '../../services/bot-i18n.js';
+import { COMMAND_REGISTRY, type CommandCategory } from '../../commands/registry.js';
 import packageJson from '../../../package.json' with { type: 'json' };
 
-// Discord embed color constants
-const COLORS = {
-  blurple: 0x5865f2,
-} as const;
+/**
+ * Verbatim in every locale, for the same reason the Spectrum item name is:
+ * a trademark notice is a fixed string, and a loose translation of one is
+ * worse than the original. Only its field label localises.
+ */
+const ATTRIBUTION = [
+  'FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.',
+  'FINAL FANTASY XIV © SQUARE ENIX CO., LTD.',
+  'XIV Dye Tools is an unofficial fan project, not affiliated with or endorsed by Square Enix.',
+].join('\n');
 
-// All available commands organized by category
-const COMMAND_CATEGORIES = {
-  colorTools: {
-    emoji: '🎨',
-    commands: [
-      { name: '/harmony', descKey: 'about.cmd.harmony' },
-      { name: '/match', descKey: 'about.cmd.match' },
-      { name: '/match_image', descKey: 'about.cmd.matchImage' },
-      { name: '/mixer', descKey: 'about.cmd.mixer' },
-    ],
-  },
-  dyeDatabase: {
-    emoji: '📚',
-    commands: [
-      { name: '/dye search', descKey: 'about.cmd.dyeSearch' },
-      { name: '/dye info', descKey: 'about.cmd.dyeInfo' },
-      { name: '/dye list', descKey: 'about.cmd.dyeList' },
-      { name: '/dye random', descKey: 'about.cmd.dyeRandom' },
-    ],
-  },
-  analysis: {
-    emoji: '🔍',
-    commands: [
-      { name: '/comparison', descKey: 'about.cmd.comparison' },
-      { name: '/accessibility', descKey: 'about.cmd.accessibility' },
-    ],
-  },
-  userData: {
-    emoji: '💾',
-    commands: [
-      { name: '/favorites', descKey: 'about.cmd.favorites' },
-      { name: '/collection', descKey: 'about.cmd.collection' },
-    ],
-  },
-  community: {
-    emoji: '🌐',
-    commands: [
-      { name: '/preset', descKey: 'about.cmd.preset' },
-    ],
-  },
-  utility: {
-    emoji: '⚙️',
-    commands: [
-      { name: '/language', descKey: 'about.cmd.language' },
-      { name: '/manual', descKey: 'about.cmd.manual' },
-      { name: '/about', descKey: 'about.cmd.about' },
-      { name: '/stats', descKey: 'about.cmd.stats' },
-    ],
-  },
-} as const;
+/** Proper nouns — the two outside things the product genuinely rests on. */
+const BUILT_ON = 'Market prices from Universalis · Paint mixing by spectral.js';
+
+/** `[Label](url)` — the shape a Discord embed field takes. */
+const md = ({ label, url }: { label: string; url: string }): string => `[${label}](${url})`;
 
 /**
- * Build the command list as a formatted string
+ * The way in, then the seven places we are. Product links first because a
+ * Discord reader has no other route to the app; the socials come from core
+ * so this list and the web app's About modal cannot drift apart.
+ */
+const ELSEWHERE = [PRODUCT_LINKS.webApp, PRODUCT_LINKS.inviteBot, ...SOCIAL_LINKS]
+  .map(md)
+  .join(' • ');
+
+// 5.0: the roster comes from the command registry — /about can no longer
+// drift from what actually registers (about.test.ts asserts parity).
+// Per-command descriptions are cut (the confirmed sixth cut); the pill
+// index redesign lands with the graphics port.
+const CATEGORY_META: Record<CommandCategory, { emoji: string; labelKey: string }> = {
+  'color-tools': { emoji: '🎨', labelKey: 'about.categories.colorTools' },
+  'dye-database': { emoji: '📚', labelKey: 'about.categories.dyeDatabase' },
+  analysis: { emoji: '🔍', labelKey: 'about.categories.analysis' },
+  community: { emoji: '🌐', labelKey: 'about.categories.community' },
+  utility: { emoji: '⚙️', labelKey: 'about.categories.utility' },
+};
+
+const CATEGORY_ORDER: CommandCategory[] = [
+  'color-tools',
+  'dye-database',
+  'analysis',
+  'community',
+  'utility',
+];
+
+/** Commands deleted in v5 — carried in the Removed-in-v5 field for one release. */
+const REMOVED_IN_V5 = ['/match', '/match_image', '/favorites', '/collection', '/language'];
+
+/**
+ * Build the command list from the registry, grouped by category.
  */
 function buildCommandList(t: Translator): string {
   const sections: string[] = [];
-
-  for (const [categoryKey, category] of Object.entries(COMMAND_CATEGORIES)) {
-    const categoryCommands = category.commands
-      .map(cmd => `\`${cmd.name}\` - ${t.t(cmd.descKey)}`)
-      .join('\n');
-    sections.push(`${category.emoji} **${t.t(`about.categories.${categoryKey}`)}**\n${categoryCommands}`);
+  for (const category of CATEGORY_ORDER) {
+    const commands = COMMAND_REGISTRY.filter((c) => c.category === category);
+    if (commands.length === 0) continue;
+    const meta = CATEGORY_META[category];
+    const names = commands.map((c) => `\`/${c.name}\``).join(' · ');
+    sections.push(`${meta.emoji} **${t.t(meta.labelKey)}**\n${names}`);
   }
-
   return sections.join('\n\n');
+}
+
+function getTotalCommandCount(): number {
+  return COMMAND_REGISTRY.length;
 }
 
 /**
@@ -110,21 +112,35 @@ export async function handleAboutCommand(
             '',
             `**${t.t('about.commands')}** (${t.t('about.totalCount', { count: getTotalCommandCount() })})`,
           ].join('\n'),
-          color: COLORS.blurple,
+          color: BRAND_ACCENT,
           fields: [
+            { name: t.t('about.version'), value: `\`${version}\``, inline: true },
+            { name: t.t('about.dyes'), value: `\`${dyeDatabase.length}\``, inline: true },
             {
               name: '\u200B', // Zero-width space for spacing
               value: commandList,
               inline: false,
             },
             {
+              name: `🗑️ ${t.t('about.removedTitle')}`,
+              value: `${REMOVED_IN_V5.map((c) => `\`${c}\``).join(' · ')} — ${t.t('about.removedBody')}`,
+              inline: false,
+            },
+            {
               name: `🔗 ${t.t('about.links')}`,
-              value: [
-                '[Web App](https://xivdyetools.app/)',
-                '[GitHub](https://github.com/FlashGalatine/xivdyetools-discord-worker)',
-                '[Invite Bot](https://discord.com/oauth2/authorize?client_id=1447108133020369048)',
-                '[Patreon](https://www.patreon.com/ProjectGalatine)',
-              ].join(' • '),
+              value: ELSEWHERE,
+              inline: false,
+            },
+            {
+              name: t.t('about.builtOn'),
+              value: BUILT_ON,
+              inline: false,
+            },
+            // Last, and never conditional — this is the one piece of this
+            // surface that does not degrade gracefully by being absent.
+            {
+              name: `⚖️ ${t.t('about.attribution')}`,
+              value: ATTRIBUTION,
               inline: false,
             },
           ],
@@ -138,12 +154,3 @@ export async function handleAboutCommand(
   });
 }
 
-/**
- * Get total number of commands
- */
-function getTotalCommandCount(): number {
-  return Object.values(COMMAND_CATEGORIES).reduce(
-    (total, category) => total + category.commands.length,
-    0
-  );
-}

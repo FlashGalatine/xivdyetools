@@ -15,71 +15,83 @@ This wiki-style documentation serves developers, end users, and maintainers with
 | Use the Discord bot | [Discord Bot Guide](user-guides/discord-bot/getting-started.md) |
 | Set up development environment | [Local Setup](developer-guides/local-setup.md) |
 | Integrate the core library | [Core Library Overview](projects/core/overview.md) |
-| **Add new dyes after a patch** | [Dye Maintainer Tool](maintainer/dye-maintainer-tool.md) |
+| **Add new dyes after a patch** | [Adding Dyes](maintainer/adding-dyes.md) |
+| Deploy a worker safely | [Deployment](developer-guides/deployment.md) |
 | Moderate community presets | [Moderation Guide](operations/MODERATION.md) |
+| Ship the 5.0 merge and clean up afterwards | [Post-merge Checklist](operations/POST_MERGE_CHECKLIST.md) |
 | Check version numbers | [Version Matrix](versions.md) |
 | Read feature specifications | [Specifications](specifications/index.md) |
-| Review historical decisions | [History Archive](history/index.md) |
+| Review historical decisions | [History Archive](historical/index.md) |
 
 ---
 
 ## Ecosystem at a Glance
 
+The monorepo holds **17 active projects — 8 packages and 9 applications**. Packages are layered
+by dependency depth; nothing at a given level imports from a level below it.
+
 ```
-              ┌────────────────────────────────────────────────────┐
-              │                 Shared Foundation                  │
-              │  @xivdyetools/types (v1.15.0)                     │
-              │  @xivdyetools/logger (v1.3.0)                     │
-              │  @xivdyetools/auth (v1.2.0)                       │
-              │  @xivdyetools/crypto (v1.1.2)                     │
-              │  @xivdyetools/rate-limiter (v1.5.0)               │
-              │  @xivdyetools/worker-middleware (v1.2.0)          │
-              │  @xivdyetools/test-utils (v1.1.8)                 │
-              └───────────────────────┬────────────────────────────┘
-                                      │
-              ┌───────────────────────▼────────────────────────────┐
-              │              @xivdyetools/core (v2.7.0)           │
-              │  125 standard dyes plus 11 Facewear color entries │
-              │  (synthetic negative IDs), color algorithms,      │
-              │  Universalis API, 6 languages, k-d tree matching  │
-              ├───────────────────────────────────────────────────-┤
-              │  @xivdyetools/color-blending (v1.1.0)             │
-              │  @xivdyetools/svg (v1.2.1)                        │
-              │  @xivdyetools/bot-logic (v1.3.0)                  │
-              │  @xivdyetools/bot-i18n (v1.2.1)                   │
-              └──┬──────────────┬─────────────────┬───────────────┘
-                 │              │                 │
-   ┌─────────────▼──┐   ┌──────▼──────┐   ┌──────▼──────────┐
-   │   Web App      │   │  Discord    │   │  Stoat Bot      │
-   │   (v4.12.0)    │   │  Worker     │   │  (v0.2.0)       │
-   │   9 tools,     │   │  (v4.7.0)   │   │  Revolt.js      │
-   │   12 themes    │   │  20 cmds    │   └─────────────────┘
-   └───────┬────────┘   └──────┬──────┘
-           │                   │
-   ┌───────▼────────┐         │   ┌────────────────────┐
-   │  OAuth Worker  │         │   │  Presets API       │
-   │   (v2.5.0)     │◄────────┴───│   (v1.6.0)         │
-   │  PKCE + JWT    │             │  D1 + Moderation   │
-   └────────────────┘             └──────┬─────────────┘
-           │                             │
-   ┌───────▼──────────────┐   ┌──────────▼───────────┐
-   │  Universalis Proxy   │   │  Moderation Worker   │
-   │   (v1.5.0)           │   │   (v1.3.0)           │
-   │  CORS + Dual Caching │   └──────────────────────┘
+   Level 0 ─ no internal dependencies
+   ┌──────────────────────┬──────────────────────┬───────────────────────────────┐
+   │ @xivdyetools/types   │ @xivdyetools/logger  │ @xivdyetools/auth             │
+   │ v2.0.0               │ v1.3.0               │ v1.3.0  (incl. /encoding)     │
+   └──────────┬───────────┴──────────┬───────────┴───────────────┬───────────────┘
+              │                      │                           │
+   Level 1    ▼                      ▼                           ▼
+   ┌────────────────────────────┬─────────────────────────┬───────────────────────┐
+   │ @xivdyetools/core  v4.0.0  │ @xivdyetools/worker-kit │ @xivdyetools/test-utils│
+   │ 125 dyes (schema v2),      │ v1.0.0                  │ v1.2.0                 │
+   │ colour algorithms, k-d     │ Hono middleware +       │ D1/KV/R2 mocks,        │
+   │ tree, Universalis, 6 langs │ /rate-limiter backends  │ factories (private)    │
+   │ incl. /blending            │                         │                        │
+   └──────────┬─────────────────┴─────────────────────────┴───────────────────────┘
+              │
+   Level 2    ▼
+   ┌────────────────────────────┐
+   │ @xivdyetools/svg   v2.0.0  │   SVG card generators (data → SVG string)
+   └──────────┬─────────────────┘
+              │
+   Level 3    ▼
+   ┌────────────────────────────┐
+   │ @xivdyetools/bot-logic     │   Platform-agnostic bot command logic
+   │ v2.0.0  (incl. /i18n)      │   + the bot UI translation engine
+   └──────────┬─────────────────┘
+              │
+              ▼
+   Applications
+   ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
+   │  web-app  v5.0.0    │  │ discord-worker      │  │ stoat-worker v0.2.1 │
+   │  9 tools, Light +   │  │ v5.0.0              │  │ Revolt.js (parked)  │
+   │  Dark, Vite + Lit   │  │ 17 slash commands   │  └─────────────────────┘
+   └──────────┬──────────┘  └──────────┬──────────┘
+              │                        │
+              │            ┌───────────┴───────────┐
+              │            ▼                       ▼
+              │   ┌──────────────────┐   ┌──────────────────────┐
+              │   │ image-worker     │   │ presets-api  v2.0.0  │
+              │   │ v1.0.0           │◄──│ D1 + moderation      │
+              │   │ service-binding  │   └──────────┬───────────┘
+              │   │ only, no public  │              │
+              │   │ surface          │              ▼
+              │   └──────────────────┘   ┌──────────────────────┐
+              │                          │ moderation-worker    │
+              ▼                          │ v1.4.0               │
+   ┌──────────────────────┐              └──────────────────────┘
+   │ oauth-worker v2.6.0  │
+   │ PKCE + JWT           │
    └──────────────────────┘
 
-   ┌──────────────────────┐   ┌──────────────────────┐
-   │  OpenGraph Worker    │   │  Public REST API     │
-   │   (v1.4.0)           │   │  (api-worker v0.5.0) │
-   │  Social media cards  │   │  data.xivdyetools…   │
-   └──────────────────────┘   └──────────┬───────────┘
-                                         │
-                              ┌──────────▼───────────┐
-                              │  API Docs (VitePress)│
-                              │  (api-docs v0.1.0)   │
-                              │  developers.xivdye…  │
-                              └──────────────────────┘
+   ┌──────────────────────┐   ┌───────────────────────────────────────────┐
+   │ og-worker    v2.0.0  │   │ api-worker   v0.6.0                       │
+   │ Localized OG cards   │   │ data.xivdyetools.app — public REST API,   │
+   │ (15E band frame)     │   │ /universalis market proxy, and the        │
+   └──────────────────────┘   │ VitePress developer docs                  │
+                              └───────────────────────────────────────────┘
 ```
+
+The dye database is **125 standard dyes** (`dyes.json`, schema v2 — stainID-keyed). The 11
+Facewear colours are **not dyes**; they live separately in `facewear_colors.json`. See
+[Dye Database Composition](#dye-database-composition) below.
 
 ---
 
@@ -99,22 +111,23 @@ This wiki-style documentation serves developers, end users, and maintainers with
 |---------|-------------|
 | [Web App Guides](user-guides/web-app/getting-started.md) | Step-by-step guides for all 9 web tools |
 | [Discord Bot Guides](user-guides/discord-bot/getting-started.md) | Command reference and usage examples |
+| [Public API](user-guides/public-api.md) | Using `data.xivdyetools.app` from your own project |
 
 ### For Developers
 
 | Section | Description |
 |---------|-------------|
-| [Developer Guides](developer-guides/index.md) | Setup, testing, deployment, contributing |
-| [Discord Bot v4](discord-bot/index.md) | V4 parity update, command reference, migration notes |
-| [Reference](reference/index.md) | Quick reference materials, glossary |
+| [Developer Guides](developer-guides/index.md) | Setup, testing, deployment, releasing, contributing |
+| [Reference](reference/glossary.md) | Glossary and FFXIV terminology |
 | [Specifications](specifications/index.md) | Feature specifications and roadmap |
 
 ### For Maintainers
 
 | Section | Description |
 |---------|-------------|
-| [Maintainer Guide](maintainer/index.md) | Architecture decisions, known issues, tech debt |
-| [History](history/index.md) | Development timeline organized by topic |
+| [Maintainer Guide](maintainer/index.md) | Dye-addition workflow, known issues, tech debt |
+| [Operations](operations/DEPLOY_ENVIRONMENTS.md) | Deploy environments, secret rotation, moderation, [post-merge checklist](operations/POST_MERGE_CHECKLIST.md) |
+| [History](historical/index.md) | Development timeline organized by topic |
 
 ---
 
@@ -124,90 +137,128 @@ This wiki-style documentation serves developers, end users, and maintainers with
 
 | Project | Type | Version | Purpose |
 |---------|------|---------|---------|
-| [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | v4.12.0 | Interactive web toolkit with 9 color tools |
-| [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | v4.7.0 | Discord bot with 20 slash commands |
-| [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | v1.3.0 | Community preset moderation bot |
-| [xivdyetools-oauth](projects/oauth/overview.md) | CF Worker | v2.5.0 | Discord OAuth + JWT issuance |
-| [xivdyetools-presets-api](projects/presets-api/overview.md) | CF Worker + D1 | v1.6.0 | Community presets with moderation |
-| [xivdyetools-universalis-proxy](projects/universalis-proxy/overview.md) | CF Worker | v1.5.0 | CORS proxy for Universalis API with dual-layer caching |
-| [xivdyetools-og-worker](projects/og-worker/overview.md) | CF Worker | v1.4.0 | Dynamic OpenGraph metadata for social media previews |
-| [xivdyetools-api-worker](projects/api-worker/overview.md) | CF Worker + KV | v0.5.0 | Public REST API at `data.xivdyetools.app` (9 endpoints) |
-| xivdyetools-api-docs | VitePress (CF Pages) | v0.1.0 | Developer-facing API reference at `developers.xivdyetools.app` |
-| xivdyetools-stoat-worker | Node.js | v0.2.0 | Revolt (Stoat) bot with shared bot-logic |
+| [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | v5.0.0 | Interactive web toolkit with 9 colour tools |
+| [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | v5.0.0 | Discord bot, 17 registered slash commands |
+| xivdyetools-image-worker | CF Worker | v1.0.0 | Photon host — `POST /extract` (pixels) + `POST /thumbnail` (WebP); reachable only via service bindings (discord-worker, presets-api) |
+| [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | v1.4.0 | Community preset moderation bot |
+| [xivdyetools-oauth](projects/oauth/overview.md) | CF Worker + D1 | v2.6.0 | Discord OAuth + JWT issuance |
+| [xivdyetools-presets-api](projects/presets-api/overview.md) | CF Worker + D1 | v2.0.0 | Community presets with moderation |
+| [xivdyetools-api-worker](projects/api-worker/overview.md) | CF Worker + KV | v0.6.0 | Public REST API, Universalis proxy, and developer docs |
+| [xivdyetools-og-worker](projects/og-worker/overview.md) | CF Worker | v2.0.0 | Localized OpenGraph cards for social previews |
+| xivdyetools-stoat-worker | Node.js | v0.2.1 | Revolt (Stoat) bot — **parked**, no active investment |
 
 ### Shared Libraries
 
 | Project | Type | Version | Purpose |
 |---------|------|---------|---------|
-| [@xivdyetools/core](projects/core/overview.md) | npm library | v2.7.0 | Core color algorithms, 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs), Universalis API |
-| [@xivdyetools/types](projects/types/overview.md) | npm library | v1.15.0 | Shared TypeScript types with Facewear support |
-| [@xivdyetools/auth](projects/auth/overview.md) | npm library | v1.2.0 | JWT verification, HMAC signing, Discord Ed25519 |
-| [@xivdyetools/crypto](projects/crypto/overview.md) | npm library | v1.1.2 | Base64URL encoding and hex utilities |
-| [@xivdyetools/logger](projects/logger/overview.md) | npm library | v1.3.0 | Unified logging across environments |
-| [@xivdyetools/rate-limiter](projects/rate-limiter/overview.md) | npm library | v1.5.0 | Sliding window rate limiting (Memory, KV, Upstash) |
-| [@xivdyetools/worker-middleware](projects/worker-middleware/overview.md) | npm library | v1.2.0 | Shared Hono middleware (request ID, logger, rate limit) |
-| [@xivdyetools/svg](projects/svg/overview.md) | npm library | v1.2.1 | Platform-agnostic SVG card generators |
-| [@xivdyetools/bot-logic](projects/bot-logic/overview.md) | npm library | v1.3.0 | Platform-agnostic bot command logic |
-| [@xivdyetools/bot-i18n](projects/bot-i18n/overview.md) | npm library | v1.2.1 | Bot internationalization |
-| [@xivdyetools/color-blending](projects/color-blending/overview.md) | npm library | v1.1.0 | Color blending modes (RGB, LAB, OKLAB, Spectral) |
-| [@xivdyetools/test-utils](projects/test-utils/overview.md) | npm library | v1.1.8 | Shared testing utilities |
+| [@xivdyetools/core](projects/core/overview.md) | npm | v4.0.0 | Colour algorithms, 125-dye database (schema v2), Universalis, blending (`/blending`) |
+| [@xivdyetools/types](projects/types/overview.md) | npm | v2.0.0 | Branded types (HexColor, DyeId, StainId) and shared interfaces |
+| [@xivdyetools/logger](projects/logger/overview.md) | npm | v1.3.0 | Multi-runtime logging with secret redaction |
+| @xivdyetools/auth | npm | v1.3.0 | JWT verification, HMAC signing, Discord Ed25519, Base64URL/hex (`/encoding`) |
+| @xivdyetools/worker-kit | npm | v1.0.0 | Hono middleware + sliding-window rate limiting (`/rate-limiter`) |
+| @xivdyetools/svg | npm | v2.0.0 | Platform-agnostic SVG card generators |
+| @xivdyetools/bot-logic | npm | v2.0.0 | Bot command logic + bot UI translation engine (`/i18n`) |
+| [@xivdyetools/test-utils](projects/test-utils/overview.md) | workspace-private | v1.2.0 | Cloudflare Workers mocks and test factories |
 
-### Developer Tools
+---
 
-| Project | Type | Version | Purpose |
-|---------|------|---------|---------|
-| [xivdyetools-maintainer](maintainer/dye-maintainer-tool.md) | Vue 3 + Express | v1.0.3 | GUI for adding new dyes to the core library |
+## Dye Database Composition
+
+**125 standard dyes**, stored in `packages/core/src/data/dyes.json` as **schema v2** — seven
+fields per entry (`stainID`, `name`, `hex`, `category`, `acquisition`, `consolidationType`,
+`legacyItemID`). `stainID` (the game's Stain sheet row ID) is the canonical identifier.
+
+Everything else is **derived at `DyeDatabase.initialize()`** — `rgb`/`hsv`/`lab` from `hex`,
+`cost`/`currency` from `ACQUISITION_META`, and the five `is*` flags. The runtime `Dye` object
+still has its full 16-field shape, so consumers of dye objects were unaffected by the migration.
+
+The **11 Facewear colours are not dyes.** They live in `facewear_colors.json` and the
+`facewearColors` export as `FacewearColor` (string slug `id`, `name`, `hex`). The pre-v2
+synthetic negative itemIDs survive only as the frozen `LEGACY_FACEWEAR_ITEM_IDS` compatibility
+map, read via `getFacewearColorByLegacyItemID()`.
+
+**Patch 7.5 dye consolidation is active.** 105 of the 125 dyes share three real consolidated
+itemIDs (Type-A = 52254, Type-B = 52255, Type-C = 52256). `getMarketItemID()` and
+`CONSOLIDATED_DYES` handle the legacy → consolidated mapping. The Allied Society / Beast Tribe
+filter category was retired by this consolidation.
 
 ---
 
 ## Recent Updates
 
-*Last updated: July 28, 2026*
+*Last updated: August 16, 2026*
+
+### August 2026 Highlights
+
+- **XIV Dye Tools 5.0 wave** (`monorepo-2.0-prep`, root `CHANGELOG.md` 2.0.0) — coordinated
+  major releases across `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0,
+  `worker-kit` v1.0.0 (new), `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.0.0,
+  `presets-api` v2.0.0 (stainID presets, 3–6 dyes, `community` category retired, preview
+  images), plus `oauth` 2.6.0 / `api-worker` 0.6.0 / `moderation-worker` 1.4.0. Not yet merged
+  to `main` or published — merging is the release; see [versions.md](versions.md).
+- **One matching vocabulary** — `ciede2000` (default) / `oklab` / `cie76` / `redmean` / `rgb` /
+  `distinguish` across core, web-app, bot, og-worker and api-worker; `hyab` and `oklch-weighted`
+  retired (normalised on read). Share URLs and og-worker paths key on stainID.
+- **Themes reduced to Light + Dark** — the 12-theme system is retired. `ThemeName` is now
+  `'standard-light' | 'standard-dark'`, with legacy stored names migrated on load
+  ([theming](projects/web-app/theming.md)).
+- **Discord command roster reworked** — v4 `/match`, `/match_image`, `/favorites`, `/collection`,
+  `/language` deleted; `/contrast` split out of `/accessibility` for WCAG 1.4.11 pairs,
+  `/changelog` and `/a11y` added, `/swatch` reads a `.chara` file, and a `COMMAND_REGISTRY` now
+  holds the roster of record so the dispatch switch, the registration schema, and `/about` can no
+  longer disagree ([commands](projects/discord-worker/commands.md)).
+- **og-worker v2.0.0 card rewrite** — one 15E band frame for all nine tools, Discord (1200×1050)
+  and X (1200×630 via `?frame=x`) variants, default cards, and a JP font subset. Also fixed the
+  missing `/og/` prefix, which meant no generated card had ever been fetched.
+- **image-worker split out of discord-worker** — `@cf-wasm/photon` moved behind a service
+  binding, bringing `discord-worker` back under Cloudflare's 3 MiB gzip limit
+  ([IMAGE_WORKER_SPLIT](operations/IMAGE_WORKER_SPLIT.md)).
+- **Deploy-environment hazard fixed** — a bare `wrangler deploy` targeted **production** on
+  `discord-worker`, `moderation-worker`, and `presets-api`. All three now default to `-dev`
+  workers; production requires an explicit `--env production`
+  ([DEPLOY_ENVIRONMENTS](operations/DEPLOY_ENVIRONMENTS.md)).
+- **`*.xivdyetools.projectgalatine.com` domains deprecated** in favour of `xivdyetools.app`
+  ([DOMAIN_DEPRECATION](operations/DOMAIN_DEPRECATION.md)).
 
 ### July 2026 Highlights
 
-- **2026-07-18 audit remediation shipped across the whole monorepo** (8 sprints, monorepo changelog rollup 1.18.0) — every package and app released: core v2.7.0 (exact perceptual dye search), presets-api v1.6.0 (CRITICAL moderation self-approval closed), discord-worker v4.7.0 (moderation buttons finally routable), logger v1.3.0 (redaction hardening), rate-limiter v1.5.0 (honest KV window semantics), and coordinated releases of every other workspace project — see [versions.md](versions.md)
-- **npm publishing migrated to trusted publishing (OIDC)** — the `NPM_TOKEN` secret is gone; the publish workflow authenticates via its GitHub Actions identity (`crypto` v1.1.2 and `svg` v1.2.1 were the validation releases). Prompted by npm's deprecation of 2FA-bypass tokens (publish restriction lands ~Jan 2027)
-- **`build:locales` made idempotent** (unreleased, on `main`) — rebuilding from unchanged sources no longer dirties the six locale JSONs; `meta.generated` now marks when locale data last changed
+- **Monorepo 2.0 Tier 1 consolidation (12 → 8 packages)** — `crypto` → `auth/encoding`,
+  `bot-i18n` → `bot-logic/i18n`, `color-blending` → `core/blending`, and
+  `rate-limiter` + `worker-middleware` → the new `worker-kit`. See `DEPRECATIONS.md` for
+  migration paths.
+- **Dye data schema v2** (core v3.0.0) — `colors_xiv.json` (136 × 16 fields) became `dyes.json`
+  (125 × 7 fields, stainID-keyed) with Facewear colours split into their own collection. Also
+  fixed `isMetallic` (now the Stain sheet's 16-dye gloss set) and `isCosmic` (11, no longer
+  polluted by the 9 Firmament dyes).
+- **universalis-proxy and api-docs absorbed into api-worker** — the proxy became
+  `/universalis` + `/api/v2` compatibility routes; the VitePress site now ships as Workers
+  Static Assets.
+- **`xivdyetools-maintainer` retired** — dye additions are a documented workflow
+  ([adding-dyes](maintainer/adding-dyes.md)) with the invariants moved into CI.
+- **2026-07-18 audit remediation shipped monorepo-wide** (8 sprints) — presets-api v1.6.0 closed
+  a CRITICAL moderation self-approval gap, discord-worker v4.7.0 made moderation buttons
+  routable, core v2.7.0 fixed perceptual dye search, logger v1.3.0 hardened redaction.
+- **npm publishing migrated to trusted publishing (OIDC)** — the `NPM_TOKEN` secret is gone; the
+  publish workflow authenticates via its GitHub Actions identity.
 
-### April 2026 Highlights
+### Earlier
 
-- **Patch 7.5 dye consolidation activated end-to-end** (core v2.5.0, web-app v4.9.0) — `CONSOLIDATED_IDS` populated with real itemIDs (A=52254, B=52255, C=52256); Market Board fans 3 consolidated prices to 105 dyes; ~105 → 3 market call collapse in effect
-- **Allied Society dye filter retired** (core v2.6.0, types v1.14.0, web-app v4.10.0, discord-worker v4.5.0, api-worker v0.4.0) — `ALLIED_SOCIETY_ACQUISITIONS`, `excludeAlliedSocietyDyes`, `?alliedSociety=` query param all removed since Patch 7.5 consolidated those vendor categories out of the dye database
-- **SEC-001 XSS hardening** (web-app v4.10.0) — `auth-button.ts` `innerHTML` interpolation of OAuth response strings replaced with `createElement` + `textContent`
-- **`@xivdyetools/worker-middleware` extracted** (v1.0.0 → v1.1.2) — request-ID, logger, and rate-limit middleware consolidated from 5 workers into one shared package; ~185 lines of duplicated code eliminated
-- **api-worker v0.4.0** at `data.xivdyetools.app` — Phase 1 with 9 public endpoints (filtering, sorting, pagination, color matching); KV-backed sliding-window rate limiting; OPT-001 `localeMiddleware`
-- **api-docs v0.1.0 site** at `developers.xivdyetools.app` — VitePress with inline "Try It" panels firing live requests + one-click "Copy as cURL"
-- **og-worker v1.2.0 localization** (`?lang=` query param) — OG embed metadata localized in all 6 languages
+- **April 2026** — Patch 7.5 dye consolidation activated end-to-end; Allied Society filter
+  retired; api-worker and its docs site launched.
+- **March 2026** — core v2.0.0 removed ~35 deprecated type re-exports (import from
+  `@xivdyetools/types` instead).
+- **January 2026** — Web App v4.0.0 and Discord Bot v4.0.0: tool renaming, Lit.js web
+  components, 9 tools.
 
-### March 2026 Highlights
-
-- **@xivdyetools/core v2.0.0** — **BREAKING**: Removed ~35 deprecated type re-exports. Import `Dye`, `RGB`, etc. from `@xivdyetools/types` instead of core
-- **Web App v4.3.0** — Pixel sampling (Shift+Click), canvas panning (Ctrl/Cmd+Drag), configurable 1×1 to 16×16 sample area
-- **Patch 7.5 framework landed** (core v2.1.0) — `consolidated-ids.ts`, `getMarketItemID()`, `isConsolidationActive()` ready for activation
-
-### February 2026 Highlights
-
-- **Web App v4.2.0** — Prevent Duplicate Results toggle for Harmony and Extractor, Paste from Clipboard
-- **Security Audit** — 14 findings resolved: CSRF fail-open, Upstash race condition, JWT expiration enforcement, hex validation, IP spoofing defaults
-- **New Packages** — @xivdyetools/svg, bot-logic, bot-i18n, color-blending extracted as shared libraries
-
-### January 2026 Highlights
-
-- **Web App v4.0.0** — Tool renaming, Glassmorphism UI, 12 themes, Lit.js web components, 9 tools
-- **Discord Bot v4.0.0** — Command renaming (`/extractor`, `/gradient`), new `/mixer` and `/swatch` commands
-
-### December 2025 Highlights
-
-- Budget Suggestions tool, Universalis Proxy, Facewear dye support, security hardening
-
-See [Version Matrix](versions.md) for detailed version history and [Feature Roadmap](specifications/feature-roadmap.md) for planned features.
+See [Version Matrix](versions.md) for detailed version history and
+[Feature Roadmap](specifications/feature-roadmap.md) for planned features.
 
 ---
 
 ## Contributing
 
-See the [Contributing Guide](developer-guides/contributing.md) for information on how to contribute to XIV Dye Tools.
+See the [Contributing Guide](developer-guides/contributing.md) for branch conventions, commit
+format, and the pull-request checklist.
 
 ---
 

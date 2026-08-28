@@ -1,38 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- One <url> per SPA route in src/services/router-service.ts ROUTES (+ the root).
+     src/__tests__/public-metadata.test.ts asserts the two stay in sync. The tool
+     paths are also what og-worker answers for crawlers (per-tool OpenGraph). -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://xivdyetools.app/</loc>
-    <lastmod>2025-01-14</lastmod>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://xivdyetools.app/dye-mixer_stable.html</loc>
-    <lastmod>2025-01-14</lastmod>
+    <loc>https://xivdyetools.app/harmony</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://xivdyetools.app/colorexplorer_stable.html</loc>
-    <lastmod>2025-01-14</lastmod>
+    <loc>https://xivdyetools.app/extractor</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://xivdyetools.app/colormatcher_stable.html</loc>
-    <lastmod>2025-01-14</lastmod>
+    <loc>https://xivdyetools.app/accessibility</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://xivdyetools.app/dyecomparison_stable.html</loc>
-    <lastmod>2025-01-14</lastmod>
+    <loc>https://xivdyetools.app/comparison</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://xivdyetools.app/coloraccessibility_stable.html</loc>
-    <lastmod>2025-01-14</lastmod>
+    <loc>https://xivdyetools.app/gradient</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://xivdyetools.app/presets</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://xivdyetools.app/budget</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://xivdyetools.app/swatch</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://xivdyetools.app/mixer</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

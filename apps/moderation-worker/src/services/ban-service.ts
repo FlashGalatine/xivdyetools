@@ -25,6 +25,29 @@ import type {
 // ============================================================================
 
 /**
+ * MOD-4 (FINDING-034, 2026-08-21 audit): approval must refuse a preset whose
+ * author currently holds an active ban — presets-api's `requireNotBanned`
+ * guards submission / edit / vote only, and a ban hides just the `approved`
+ * presets, so the author's pending / flagged entries stay approvable
+ * otherwise. One indexed lookup on the shared D1.
+ */
+export async function isPresetAuthorBanned(db: D1Database, presetId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `
+      SELECT 1
+      FROM presets p
+      JOIN banned_users b ON b.discord_id = p.author_discord_id AND b.unbanned_at IS NULL
+      WHERE p.id = ?
+      LIMIT 1
+      `
+    )
+    .bind(presetId)
+    .first();
+  return row !== null;
+}
+
+/**
  * Check if a user is currently banned by their Discord ID
  */
 export async function isUserBannedByDiscordId(
@@ -221,6 +244,34 @@ export async function getUserForBanConfirmation(
   };
 }
 
+/**
+ * FINDING-007 (2026-08-21 audit): the display name a preset author is known
+ * by, resolved at click/submit time so it no longer has to ride along inside
+ * Discord `custom_id`s (100-char cap — long CJK/emoji names overflowed it and
+ * made the user un-bannable). Most recent preset wins when names differ.
+ *
+ * @returns the author name, or null when the user has no presets
+ */
+export async function getPresetAuthorName(
+  db: D1Database,
+  discordId: string
+): Promise<string | null> {
+  const row = await db
+    .prepare(
+      `
+      SELECT author_name
+      FROM presets
+      WHERE author_discord_id = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+      `
+    )
+    .bind(discordId)
+    .first<{ author_name: string | null }>();
+
+  return row?.author_name ?? null;
+}
+
 // ============================================================================
 // Ban Operations
 // ============================================================================
@@ -248,21 +299,24 @@ export async function banUser(
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    await db
-      .prepare(
-        `
+    // MOD-4 (FINDING-034, 2026-08-21 audit): ban row + hide in ONE batch
+    // (D1 batches are transactional) — a failed hide can no longer leave a
+    // banned_users row next to still-visible presets.
+    const [, hideResult] = await db.batch([
+      db
+        .prepare(
+          `
         INSERT INTO banned_users (id, discord_id, username, moderator_discord_id, reason, banned_at)
         VALUES (?, ?, ?, ?, ?, ?)
         `
-      )
-      .bind(id, discordId, username, moderatorDiscordId, reason, now)
-      .run();
-
-    const presetsHidden = await hideUserPresets(db, discordId);
+        )
+        .bind(id, discordId, username, moderatorDiscordId, reason, now),
+      hideUserPresetsStatement(db, discordId),
+    ]);
 
     return {
       success: true,
-      presetsHidden,
+      presetsHidden: hideResult?.meta?.changes || 0,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -275,10 +329,23 @@ export async function banUser(
       };
     }
 
+    // idx_banned_users_discord_active (one active ban per user): two
+    // moderators confirming at once — the second insert loses, cleanly.
+    if (/UNIQUE constraint failed/i.test(errorMessage)) {
+      return {
+        success: false,
+        presetsHidden: 0,
+        error: 'User is already banned.',
+      };
+    }
+
+    // MOD-8: `error` is channel-facing — never the raw D1 message (table,
+    // column and constraint names); the original stays in `cause` for logs.
     return {
       success: false,
       presetsHidden: 0,
-      error: errorMessage,
+      error: 'Failed to ban user.',
+      cause: error,
     };
   }
 }
@@ -303,18 +370,21 @@ export async function unbanUser(
 
     const now = new Date().toISOString();
 
-    const updateResult = await db
-      .prepare(
-        `
+    // MOD-4: close the ban row and restore the presets in ONE batch
+    const [updateResult, restoreResult] = await db.batch([
+      db
+        .prepare(
+          `
         UPDATE banned_users
         SET unbanned_at = ?, unban_moderator_discord_id = ?
         WHERE discord_id = ? AND unbanned_at IS NULL
         `
-      )
-      .bind(now, moderatorDiscordId, discordId)
-      .run();
+        )
+        .bind(now, moderatorDiscordId, discordId),
+      restoreUserPresetsStatement(db, discordId),
+    ]);
 
-    if ((updateResult.meta.changes || 0) === 0) {
+    if ((updateResult?.meta?.changes || 0) === 0) {
       return {
         success: false,
         presetsRestored: 0,
@@ -322,17 +392,17 @@ export async function unbanUser(
       };
     }
 
-    const presetsRestored = await restoreUserPresets(db, discordId);
-
     return {
       success: true,
-      presetsRestored,
+      presetsRestored: restoreResult?.meta?.changes || 0,
     };
   } catch (error) {
+    // MOD-8: channel-safe message; raw D1 error kept in `cause` for logging
     return {
       success: false,
       presetsRestored: 0,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Failed to unban user.',
+      cause: error,
     };
   }
 }
@@ -341,11 +411,9 @@ export async function unbanUser(
 // Preset Visibility
 // ============================================================================
 
-/**
- * Hide all presets by a banned user
- */
-export async function hideUserPresets(db: D1Database, discordId: string): Promise<number> {
-  const result = await db
+/** Statement form so `banUser` can batch it with the ban insert (MOD-4). */
+function hideUserPresetsStatement(db: D1Database, discordId: string): D1PreparedStatement {
+  return db
     .prepare(
       `
       UPDATE presets
@@ -353,17 +421,12 @@ export async function hideUserPresets(db: D1Database, discordId: string): Promis
       WHERE author_discord_id = ? AND status = 'approved'
       `
     )
-    .bind(discordId)
-    .run();
-
-  return result.meta.changes || 0;
+    .bind(discordId);
 }
 
-/**
- * Restore presets for an unbanned user
- */
-export async function restoreUserPresets(db: D1Database, discordId: string): Promise<number> {
-  const result = await db
+/** Statement form so `unbanUser` can batch it with the ban-row update (MOD-4). */
+function restoreUserPresetsStatement(db: D1Database, discordId: string): D1PreparedStatement {
+  return db
     .prepare(
       `
       UPDATE presets
@@ -371,9 +434,22 @@ export async function restoreUserPresets(db: D1Database, discordId: string): Pro
       WHERE author_discord_id = ? AND status = 'hidden'
       `
     )
-    .bind(discordId)
-    .run();
+    .bind(discordId);
+}
 
+/**
+ * Hide all presets by a banned user
+ */
+export async function hideUserPresets(db: D1Database, discordId: string): Promise<number> {
+  const result = await hideUserPresetsStatement(db, discordId).run();
+  return result.meta.changes || 0;
+}
+
+/**
+ * Restore presets for an unbanned user
+ */
+export async function restoreUserPresets(db: D1Database, discordId: string): Promise<number> {
+  const result = await restoreUserPresetsStatement(db, discordId).run();
   return result.meta.changes || 0;
 }
 

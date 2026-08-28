@@ -11,48 +11,39 @@
 import { describe, it, expect } from 'vitest';
 import { DyeService } from '../DyeService.js';
 import { ColorConverter } from '../color/ColorConverter.js';
-import dyeDatabase from '../../data/colors_xiv.json';
-import type { MatchingMethod, OklchWeights } from '../../types/index.js';
+import dyeDatabase from '../../data/dyes.json';
+import type { MatchingMethod } from '../../types/index.js';
+import { COLOR_DISTANCE_MAX } from '../../constants/index.js';
 import type { Dye } from '@xivdyetools/types';
 
-const METHODS: MatchingMethod[] = ['rgb', 'cie76', 'ciede2000', 'oklab', 'hyab', 'oklch-weighted'];
+const METHODS: MatchingMethod[] = ['rgb', 'cie76', 'ciede2000', 'oklab', 'redmean', 'distinguish'];
 
-// The matchHue preset deliberately tolerates large lightness (≈RGB) gaps —
-// the hardest case for an RGB-space pre-filter
-const HUE_WEIGHTS: OklchWeights = { kL: 0.5, kC: 1.0, kH: 1.5 };
-
-function bruteForceDistance(
-  hex1: string,
-  hex2: string,
-  method: MatchingMethod,
-  weights?: OklchWeights
-): number {
+function bruteForceDistance(hex1: string, hex2: string, method: MatchingMethod): number {
   switch (method) {
     case 'rgb':
       return ColorConverter.getColorDistance(hex1, hex2);
+    case 'redmean':
+      return ColorConverter.getRedmeanDistance(hex1, hex2);
+    case 'distinguish':
+      return (ColorConverter.getColorDistance(hex1, hex2) / COLOR_DISTANCE_MAX) * 100;
     case 'cie76':
       return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
     case 'ciede2000':
       return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
     case 'oklab':
       return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-    case 'hyab':
-      return ColorConverter.getDeltaE_HyAB(hex1, hex2);
-    case 'oklch-weighted':
-      return ColorConverter.getDeltaE_OklchWeighted(hex1, hex2, weights);
   }
 }
 
 function bruteForceClosest(
   dyes: Dye[],
   hex: string,
-  method: MatchingMethod,
-  weights?: OklchWeights
+  method: MatchingMethod
 ): { dye: Dye; distance: number } | null {
   let best: { dye: Dye; distance: number } | null = null;
   for (const dye of dyes) {
     if (dye.category === 'Facewear') continue;
-    const distance = bruteForceDistance(hex, dye.hex, method, weights);
+    const distance = bruteForceDistance(hex, dye.hex, method);
     if (!best || distance < best.distance) {
       best = { dye, distance };
     }
@@ -78,19 +69,16 @@ describe('DyeSearch k-d tree / brute-force parity (REFACTOR-003)', () => {
 
   for (const method of METHODS) {
     it(`returns the brute-force winner for every sampled color (${method})`, () => {
-      const weights = method === 'oklch-weighted' ? HUE_WEIGHTS : undefined;
-
       for (const hex of sampleHexes) {
-        const expected = bruteForceClosest(allDyes, hex, method, weights);
+        const expected = bruteForceClosest(allDyes, hex, method);
         const actual = dyeService.findClosestDye(hex, {
           matchingMethod: method,
-          weights,
         });
 
         expect(actual, `no result for ${hex} (${method})`).not.toBeNull();
         // Compare by distance, not identity — ties between equidistant dyes
         // are acceptable either way
-        const actualDistance = bruteForceDistance(hex, actual!.hex, method, weights);
+        const actualDistance = bruteForceDistance(hex, actual!.hex, method);
         expect(
           actualDistance,
           `${hex} (${method}): got ${actual!.name} @ ${actualDistance}, brute force found ${expected!.dye.name} @ ${expected!.distance}`

@@ -1,0 +1,84 @@
+DyeService: 32 public methods in packages/core/src/services/DyeService.ts
+  getDyesByIds                           extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  7  <-- no external src use
+  getDyesByStainIds                      extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  8  <-- no external src use
+  isLoadedStatus                         extSrc=  0 extTest=  2 coreSrc(non-test,incl self)=  1 coreTest=  6  <-- no external src use
+  getLastLoadedTime                      extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  3  <-- no external src use
+  getDyeCount                            extSrc=  0 extTest=  2 coreSrc(non-test,incl self)=  1 coreTest= 11  <-- no external src use
+  getDyesSortedByBrightness              extSrc=  0 extTest=  3 coreSrc(non-test,incl self)=  1 coreTest=  8  <-- no external src use
+  getDyesSortedBySaturation              extSrc=  0 extTest=  1 coreSrc(non-test,incl self)=  1 coreTest=  6  <-- no external src use
+  getDyesSortedByHue                     extSrc=  0 extTest=  1 coreSrc(non-test,incl self)=  1 coreTest=  7  <-- no external src use
+  findCompoundDyes                       extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  7  <-- no external src use
+  findShadesDyes                         extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  6  <-- no external src use
+  getLocalizedDyeById                    extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  4  <-- no external src use
+  getLocalizedDyeByStainId               extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  4  <-- no external src use (INTERNAL 0 too)
+  getAllLocalizedDyes                    extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  2  <-- no external src use
+  getNonMetallicDyes                     extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  2  <-- no external src use
+DyeDatabase: 17 public methods in packages/core/src/services/dye/DyeDatabase.ts
+  ensureLoaded                           extSrc=  0 extTest=  0 coreSrc(non-test,incl self)= 21 coreTest=  3  <-- no external src use
+  getDyesByIds                           extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  7  <-- no external src use
+  getDyesByStainIds                      extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  8  <-- no external src use
+  isLoadedStatus                         extSrc=  0 extTest=  2 coreSrc(non-test,incl self)=  1 coreTest=  6  <-- no external src use
+  getLastLoadedTime                      extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  3  <-- no external src use
+  getDyeCount                            extSrc=  0 extTest=  2 coreSrc(non-test,incl self)=  1 coreTest= 11  <-- no external src use
+  getKdTree                              extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  2 coreTest=  2  <-- no external src use
+  getLogger                              extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  0  <-- no external src use
+  getHueBucket                           extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  2 coreTest=  7  <-- no external src use
+  getHueBucketsToSearch                  extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  2  <-- no external src use
+  getDyesByHueBucket                     extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  2  <-- no external src use
+  getDyesInternal                        extSrc=  0 extTest=  0 coreSrc(non-test,incl self)= 12 coreTest=  2  <-- no external src use
+DyeSearch: 8 public methods in packages/core/src/services/dye/DyeSearch.ts
+  getDyesSortedByBrightness              extSrc=  0 extTest=  3 coreSrc(non-test,incl self)=  1 coreTest=  8  <-- no external src use
+  getDyesSortedBySaturation              extSrc=  0 extTest=  1 coreSrc(non-test,incl self)=  1 coreTest=  6  <-- no external src use
+  getDyesSortedByHue                     extSrc=  0 extTest=  1 coreSrc(non-test,incl self)=  1 coreTest=  7  <-- no external src use
+HarmonyGenerator: 10 public methods in packages/core/src/services/dye/HarmonyGenerator.ts
+  findCompoundDyes                       extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  7  <-- no external src use
+  findShadesDyes                         extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  6  <-- no external src use
+PaletteService: 4 public methods in packages/core/src/services/PaletteService.ts
+  pixelDataToRGB                         extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  3  <-- no external src use (INTERNAL 0 too)
+PresetService: 16 public methods in packages/core/src/services/PresetService.ts
+  getPresetCountByCategory               extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  3  <-- no external src use (INTERNAL 0 too)
+  getPresetsByTag                        extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  7  <-- no external src use (INTERNAL 0 too)
+  getPresetWithDyes                      extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  2 coreTest=  5  <-- no external src use
+  resolvePresets                         extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  4  <-- no external src use (INTERNAL 0 too)
+  getVersion                             extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  3  <-- no external src use (INTERNAL 0 too)
+  getLastUpdated                         extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  2  <-- no external src use (INTERNAL 0 too)
+  getPresetCount                         extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  6  <-- no external src use (INTERNAL 0 too)
+CharacterColorService: 20 public methods in packages/core/src/services/CharacterColorService.ts
+  getRaceSpecificColors                  extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  2  <-- no external src use
+  preloadRaceData                        extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  1  <-- no external src use (INTERNAL 0 too)
+  getSharedColorByIndex                  extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  2  <-- no external src use (INTERNAL 0 too)
+  getRaceSpecificColorByIndex            extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  2  <-- no external src use (INTERNAL 0 too)
+  getAvailableSubraces                   extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  2  <-- no external src use (INTERNAL 0 too)
+  getVersion                             extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  3  <-- no external src use (INTERNAL 0 too)
+  getGridColumns                         extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  1  <-- no external src use (INTERNAL 0 too)
+APIService: 18 public methods in packages/core/src/services/APIService.ts
+  waitIfNeeded                           extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  2 coreTest=  7  <-- no external src use
+  recordRequest                          extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  2 coreTest=  1  <-- no external src use
+  getCacheStats                          extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  4 coreTest= 48  <-- no external src use
+  resetMetrics                           extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  0  <-- no external src use
+  getPricesForItems                      extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest= 23  <-- no external src use (INTERNAL 0 too)
+  getPriceTrend                          extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  0 coreTest=  6  <-- no external src use (INTERNAL 0 too)
+SpectralMixer: 4 public methods in packages/core/src/services/color/SpectralMixer.ts
+  mixColors                              extSrc=  0 extTest=  1 coreSrc(non-test,incl self)=  5 coreTest= 27  <-- no external src use
+  mixMultiple                            extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  2 coreTest=  9  <-- no external src use
+RybColorMixer: 5 public methods in packages/core/src/services/color/RybColorMixer.ts
+  mixColors                              extSrc=  0 extTest=  1 coreSrc(non-test,incl self)=  5 coreTest= 27  <-- no external src use
+  rybToRgb                               extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  4 coreTest= 10  <-- no external src use
+  rgbToRyb                               extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  5 coreTest= 13  <-- no external src use
+  hexToRyb                               extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  3  <-- no external src use
+  rybToHex                               extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  3  <-- no external src use
+ColorManipulator: 6 public methods in packages/core/src/services/color/ColorManipulator.ts
+  adjustBrightness                       extSrc=  0 extTest=  2 coreSrc(non-test,incl self)=  1 coreTest= 15  <-- no external src use
+  adjustSaturation                       extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest= 15  <-- no external src use
+  invert                                 extSrc=  0 extTest=  2 coreSrc(non-test,incl self)=  2 coreTest= 12  <-- no external src use
+  desaturate                             extSrc=  0 extTest=  1 coreSrc(non-test,incl self)=  1 coreTest=  8  <-- no external src use
+ColorAccessibility: 6 public methods in packages/core/src/services/color/ColorAccessibility.ts
+  getPerceivedLuminance                  extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  4 coreTest= 13  <-- no external src use
+  meetsWCAGAA                            extSrc=  0 extTest=  2 coreSrc(non-test,incl self)=  1 coreTest= 15  <-- no external src use
+  meetsWCAGAAA                           extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  1 coreTest=  9  <-- no external src use
+  getOptimalTextColor                    extSrc=  0 extTest=  2 coreSrc(non-test,incl self)=  1 coreTest= 11  <-- no external src use
+ColorblindnessSimulator: 6 public methods in packages/core/src/services/color/ColorblindnessSimulator.ts
+  getCacheStats                          extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  4 coreTest= 48  <-- no external src use
+  simulateColorblindness                 extSrc=  0 extTest=  5 coreSrc(non-test,incl self)=  2 coreTest= 69  <-- no external src use
+  simulateColorblindnessMachado          extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  3 coreTest=  5  <-- no external src use
+  simulateColorblindnessMachadoHex       extSrc=  0 extTest=  0 coreSrc(non-test,incl self)=  2 coreTest=  3  <-- no external src use

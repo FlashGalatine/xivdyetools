@@ -4,7 +4,9 @@
  * @module types
  */
 
+import type { LocaleCode } from '@xivdyetools/types';
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
+import type { VisionType } from '@xivdyetools/types';
 
 // ============================================================================
 // Environment Bindings
@@ -17,9 +19,6 @@ export interface Env {
 
   // Analytics Engine binding
   ANALYTICS?: AnalyticsEngineDataset;
-
-  // KV namespace for caching (optional, for future use)
-  OG_CACHE?: KVNamespace;
 }
 
 // ============================================================================
@@ -32,7 +31,10 @@ export type ToolId =
   | 'mixer'
   | 'swatch'
   | 'comparison'
-  | 'accessibility';
+  | 'accessibility'
+  | 'extractor'
+  | 'presets'
+  | 'budget';
 
 export type HarmonyType =
   | 'complementary'
@@ -40,19 +42,19 @@ export type HarmonyType =
   | 'triadic'
   | 'split-complementary'
   | 'tetradic'
+  | 'inverted-tetradic'
   | 'square'
   | 'monochromatic'
   | 'compound'
   | 'shades';
 
-export type MatchingAlgorithm = 'oklab' | 'ciede2000' | 'euclidean';
+// 5.0: the shared matching vocabulary. Legacy URL values like 'euclidean' are
+// accepted by the routes' VALID_ALGORITHMS and normalised where the distance is
+// computed (dye-helpers.deltaForAlgorithm → normalizeMatchingMethod).
+export type MatchingAlgorithm = import('@xivdyetools/core').MatchingMethod;
 
-export type VisionType =
-  | 'normal'
-  | 'protanopia'
-  | 'deuteranopia'
-  | 'tritanopia'
-  | 'achromatopsia';
+// The five lenses are core's vocabulary — one type, no casts at the seams.
+export type { VisionType };
 
 // ============================================================================
 // OpenGraph Data
@@ -65,6 +67,8 @@ export interface OGData {
   imageUrl: string;
   siteName: string;
   themeColor?: string;
+  /** The locale the copy was authored in — `<html lang>` / `og:locale`. Defaults to `en`. */
+  locale?: LocaleCode;
 }
 
 // ============================================================================
@@ -72,23 +76,22 @@ export interface OGData {
 // ============================================================================
 
 export interface HarmonyParams {
-  dye: number; // itemID
+  dye: number; // stainID
   harmony: HarmonyType;
   algo?: MatchingAlgorithm;
-  perceptual?: boolean;
 }
 
 export interface GradientParams {
-  start: number; // itemID
-  end: number; // itemID
+  start: number; // stainID
+  end: number; // stainID
   steps: number;
   algo?: MatchingAlgorithm;
 }
 
 export interface MixerParams {
-  dyeA: number; // itemID
-  dyeB: number; // itemID
-  dyeC?: number; // itemID (optional third dye)
+  dyeA: number; // stainID
+  dyeB: number; // stainID
+  dyeC?: number; // stainID (optional third dye)
   ratio: number; // 0-100
   algo?: MatchingAlgorithm;
 }
@@ -118,26 +121,32 @@ export interface SwatchParams {
   race?: string;
   /** Gender for race-specific sheets */
   gender?: CharacterGender;
-  /** Index within the color sheet (for calculating row/col) */
-  index?: number;
 }
 
 export interface ComparisonParams {
-  dyes: number[]; // array of itemIDs (1-4)
+  dyes: number[]; // array of stainIDs (1-4)
 }
 
 export interface AccessibilityParams {
-  dyes: number[]; // array of itemIDs
+  dyes: number[]; // array of stainIDs
   vision?: VisionType;
 }
 
-export type ShareParams =
-  | ({ tool: 'harmony' } & HarmonyParams)
-  | ({ tool: 'gradient' } & GradientParams)
-  | ({ tool: 'mixer' } & MixerParams)
-  | ({ tool: 'swatch' } & SwatchParams)
-  | ({ tool: 'comparison' } & ComparisonParams)
-  | ({ tool: 'accessibility' } & AccessibilityParams);
+/** 5.0 extractor share: `?colors=RRGGBB,RRGGBB…` (no shares — see ExtractorOGOptions) */
+export interface ExtractorParams {
+  colors: string[]; // RRGGBB, no #, upper-cased, max 5
+  algo?: MatchingAlgorithm;
+}
+
+/** 5.0 presets share: the PATH `/presets/:id` (curated slug or `community-<uuid>`) */
+export interface PresetsParams {
+  id: string | null;
+}
+
+/** 5.0 budget share: `?dye=<stainID>` (a `?hex=` bare target has no card) */
+export interface BudgetParams {
+  dye: number | null; // stainID
+}
 
 // ============================================================================
 // Crawler Detection
@@ -168,6 +177,5 @@ export interface AnalyticsEvent {
   event: 'og_request' | 'og_image_request';
   tool: ToolId;
   crawler: CrawlerType;
-  cacheHit?: boolean;
   timestamp: number;
 }

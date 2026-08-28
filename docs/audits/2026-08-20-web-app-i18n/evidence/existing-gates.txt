@@ -1,0 +1,36 @@
+
+🌐 i18n Translation Key Validator
+
+======================================================================
+📚 Loaded 1075 translation keys from en.json
+
+📁 Scanning 117 source files...
+
+======================================================================
+
+✅ All 1016 translation key references are valid!
+
+📊 Summary:
+   • Total keys in en.json: 1075
+   • Keys referenced in code: 749
+   • Total references checked: 1016
+
+======================================================================
+
+🌍 Cross-Locale Structural Comparison
+
+✅ All locale files have matching key structure!
+
+📊 Locale Summary:
+   • en: 1075 keys (reference)
+   • ja: 1075 keys ✓
+   • de: 1075 keys ✓
+   • fr: 1075 keys ✓
+   • ko: 1075 keys ✓
+   • zh: 1075 keys ✓
+
+
+🌍 i18n orphan check — 1073 keys in en.json (meta.* excluded)
+   used: 1073   orphaned: 0
+
+✅ No orphaned keys.

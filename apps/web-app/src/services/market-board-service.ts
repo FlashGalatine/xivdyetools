@@ -16,6 +16,7 @@
 
 import { APIService, WorldService } from '@services/index';
 import { ConfigController } from '@services/config-controller';
+import { formatGil } from '@shared/format';
 import { logger } from '@shared/logger';
 import { getMarketItemID, isConsolidationActive } from '@xivdyetools/core';
 import type { Dye, PriceData } from '@xivdyetools/types';
@@ -35,37 +36,6 @@ export type MarketBoardEventType =
   | 'fetch-started'
   | 'fetch-completed'
   | 'fetch-error';
-
-/**
- * Event detail for prices-updated event
- */
-export interface PricesUpdatedEvent {
-  prices: Map<number, PriceData>;
-  fetchedCount: number;
-}
-
-/**
- * Event detail for server-changed event
- */
-export interface ServerChangedEvent {
-  server: string;
-  previousServer: string;
-}
-
-/**
- * Event detail for settings-changed event
- */
-export interface SettingsChangedEvent {
-  showPrices: boolean;
-}
-
-/**
- * Event detail for fetch-error event
- */
-export interface FetchErrorEvent {
-  error: Error;
-  dyeCount: number;
-}
 
 // ============================================================================
 // MarketBoardService Class
@@ -472,8 +442,12 @@ export function getMarketBoardService(): MarketBoardService {
 }
 
 /**
- * Format price for display (delegates to APIService)
+ * Format a gil price for display.
+ *
+ * Routed through `formatGil` rather than core's `APIService.formatPrice`,
+ * which hardcodes the English unit ("1,000 gil") and the browser's grouping
+ * locale. `formatGil` takes both from the app language.
  */
 export function formatPrice(price: number): string {
-  return APIService.formatPrice(price);
+  return formatGil(price);
 }

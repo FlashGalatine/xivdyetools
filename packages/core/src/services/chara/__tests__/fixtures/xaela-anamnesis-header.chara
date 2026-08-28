@@ -1,0 +1,125 @@
+{
+  "FileExtension": ".chara",
+  "TypeName": "Anamnesis Character File",
+  "SaveMode": "All",
+  "ModelType": 0,
+  "ObjectKind": "Player",
+  "Race": "AuRa",
+  "Gender": "Feminine",
+  "Age": "Normal",
+  "Height": 51,
+  "Tribe": "Xaela",
+  "Head": 1,
+  "Hair": 162,
+  "EnableHighlights": false,
+  "Skintone": 69,
+  "REyeColor": 137,
+  "HairTone": 7,
+  "Highlights": 84,
+  "FacialFeatures": "First, Second, Third, Fourth, Fifth",
+  "LimbalEyes": 7,
+  "Eyebrows": 3,
+  "LEyeColor": 137,
+  "Eyes": 2,
+  "Nose": 0,
+  "Jaw": 1,
+  "Mouth": 129,
+  "LipsToneFurPattern": 7,
+  "EarMuscleTailSize": 63,
+  "TailEarsType": 1,
+  "Bust": 66,
+  "FacePaint": 3,
+  "FacePaintColor": 7,
+  "MainHand": {
+    "Color": "0, 0, 0",
+    "Scale": "0, 0, 0",
+    "ModelSet": 801,
+    "ModelBase": 30,
+    "ModelVariant": 2,
+    "DyeId": 6,
+    "DyeId2": 0
+  },
+  "OffHand": {
+    "Color": "0, 0, 0",
+    "Scale": "0, 0, 0",
+    "ModelSet": 0,
+    "ModelBase": 0,
+    "ModelVariant": 0,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "HeadGear": {
+    "ModelBase": 910,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Body": {
+    "ModelBase": 6244,
+    "ModelVariant": 1,
+    "DyeId": 102,
+    "DyeId2": 113
+  },
+  "Hands": {
+    "ModelBase": 6135,
+    "ModelVariant": 1,
+    "DyeId": 6,
+    "DyeId2": 0
+  },
+  "Legs": {
+    "ModelBase": 410,
+    "ModelVariant": 1,
+    "DyeId": 102,
+    "DyeId2": 0
+  },
+  "Feet": {
+    "ModelBase": 6195,
+    "ModelVariant": 1,
+    "DyeId": 6,
+    "DyeId2": 113
+  },
+  "Ears": {
+    "ModelBase": 112,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Neck": {
+    "ModelBase": 53,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Wrists": {
+    "ModelBase": 183,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "LeftRing": {
+    "ModelBase": 53,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "RightRing": {
+    "ModelBase": 53,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Glasses": {
+    "GlassesId": 0
+  },
+  "SkinColor": "0.28027683, 0.21777777, 0.18271434",
+  "LeftEyeColor": "0.30142257, 0.28027683, 0.5263361",
+  "RightEyeColor": "0.30142257, 0.28027683, 0.5263361",
+  "LimbalRingColor": "0, 0, 0",
+  "HairColor": "0.0049826996, 0.0049826996, 0.0049826996",
+  "HairHighlight": "0.0049826996, 0.0049826996, 0.0049826996",
+  "MouthColor": "0, 0, 0, 0.7058824",
+  "BustScale": "1.0256001, 1.064, 1.05888",
+  "Transparency": 1,
+  "MuscleTone": 1,
+  "HeightMultiplier": 0.9708
+}

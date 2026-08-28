@@ -18,9 +18,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Monorepo Quick Reference
 
-**23 Active Projects** (12 packages + 11 applications, including the api-docs site) — see [versions.md](versions.md) for current versions.
+**17 Active Projects** (8 packages + 9 applications) — see [versions.md](versions.md) for current versions.
 
-The dye database is **125 standard dyes plus 11 Facewear color entries** (synthetic negative IDs assigned at runtime by `DyeDatabase.initialize()` — `Dye.itemID` is always `number`).
+The dye database is **125 standard dyes** (`dyes.json`, schema v2: 7 fields, stainID-keyed; derived fields computed at `initialize()`). The 11 Facewear colors live separately in `facewearColors` (they are not dyes).
 
 ### Applications
 
@@ -28,15 +28,13 @@ The dye database is **125 standard dyes plus 11 Facewear color entries** (synthe
 |---------|------|------------|
 | `xivdyetools-web-app` | Vite + Lit | [Overview](projects/web-app/overview.md) |
 | `xivdyetools-discord-worker` | CF Worker | [Overview](projects/discord-worker/overview.md) |
+| `xivdyetools-image-worker` | CF Worker | — |
 | `xivdyetools-moderation-worker` | CF Worker | [Overview](projects/moderation-worker/overview.md) |
 | `xivdyetools-oauth` | CF Worker | [Overview](projects/oauth/overview.md) |
 | `xivdyetools-api-worker` | CF Worker + KV | [Overview](projects/api-worker/overview.md) |
-| `xivdyetools-api-docs` | VitePress (CF Pages) | — |
 | `xivdyetools-presets-api` | CF Worker + D1 | [Overview](projects/presets-api/overview.md) |
-| `xivdyetools-universalis-proxy` | CF Worker | [Overview](projects/universalis-proxy/overview.md) |
 | `xivdyetools-og-worker` | CF Worker | [Overview](projects/og-worker/overview.md) |
 | `xivdyetools-stoat-worker` | Node.js | — |
-| `xivdyetools-maintainer` | Vue 3 + Vite | — |
 
 ### Shared Packages
 
@@ -44,15 +42,11 @@ The dye database is **125 standard dyes plus 11 Facewear color entries** (synthe
 |---------|------------|
 | `@xivdyetools/core` | [Overview](projects/core/overview.md) |
 | `@xivdyetools/types` | [Overview](projects/types/overview.md) |
-| `@xivdyetools/crypto` | — |
 | `@xivdyetools/logger` | [Overview](projects/logger/overview.md) |
 | `@xivdyetools/auth` | — |
-| `@xivdyetools/rate-limiter` | — |
-| `@xivdyetools/worker-middleware` | — |
+| `@xivdyetools/worker-kit` | — |
 | `@xivdyetools/svg` | — |
 | `@xivdyetools/bot-logic` | — |
-| `@xivdyetools/bot-i18n` | — |
-| `@xivdyetools/color-blending` | — |
 | `@xivdyetools/test-utils` | [Overview](projects/test-utils/overview.md) |
 
 Changes to packages require publishing to npm before consumers can use them (or use `workspace:*` protocol for monorepo-local resolution).
@@ -100,7 +94,11 @@ pnpm --filter xivdyetools-presets-api run dev       # localhost:8787
 ### Worker Deployment
 
 ```bash
-pnpm --filter xivdyetools-discord-worker run deploy              # Staging
+pnpm --filter xivdyetools-discord-worker run deploy              # BETA bot (…-dev, *.workers.dev)
+# NOTE: a bare `deploy` targets the routeless DEV/BETA worker on discord-worker, moderation-worker,
+# presets-api, api-worker and og-worker; production needs an explicit `--env production`.
+# `oauth` is the INVERSE — it has no [env.production], so its bare deploy IS production.
+# See docs/operations/DEPLOY_ENVIRONMENTS.md.
 pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
 pnpm --filter xivdyetools-discord-worker run register-commands   # Register slash commands
 ```

@@ -1,0 +1,42 @@
+{
+  // Dead-code gate for the web-app — `pnpm run lint:dead` (also part of `lint`).
+  // Introduced by the 2026-08-16 dead-code audit, which found ~1,000 lines of
+  // unreferenced TypeScript, a 385-line class with no callers, and 75 barrel
+  // re-exports nobody imported — all invisible to tsc/eslint. knip sees the
+  // import graph. Two blind spots to keep in mind (both bit us):
+  //   - a `Map<string, Foo>` type-position import keeps `foo.ts` "used" even if
+  //     Foo is never constructed (DEAD-030) — knip cannot tell value from type use;
+  //   - test files are entries here, so a symbol only tests import looks live;
+  //     run `knip --production` occasionally to see the test-only tier.
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  // (main.ts, vite/vitest/playwright/postcss/tailwind configs are entries via
+  // knip's own plugins — listing them again only earns a "redundant" hint.)
+  "entry": [
+    "src/index.html",
+    "src/**/*.test.ts",
+    "src/__tests__/**/*.ts",
+    "e2e/**/*.ts",
+    "scripts/*.{js,mjs}",
+    "functions/_middleware.ts",
+    "vite-plugin-*.ts",
+    "eslint.config.js",
+    "eslint-rules/**/*.js"
+  ],
+  "project": ["src/**/*.{ts,js,css}", "scripts/**", "functions/**", "e2e/**", "eslint-rules/**", "*.ts", "*.js"],
+  // A symbol used inside its own file is not dead just because nothing else
+  // imports it — exported types especially. Drop-the-`export` is churn, not cleanup.
+  "ignoreExportsUsedInFile": true,
+  // Sibling .d.ts files for the plain-JS scripts: TypeScript resolves them
+  // implicitly for the `.js` imports in the tests; no textual reference exists.
+  "ignore": ["scripts/check-bundle-size.d.ts", "scripts/analyze-unused-keys.d.ts"],
+  // wrangler: no script or workflow names it, but cloudflare/wrangler-action@v4
+  // (packageManager: pnpm, no wranglerVersion) installs the version this
+  // package.json declares — the devDep is what pins the deploy tool.
+  // @eslint/js, typescript-eslint: hoisted from the workspace root package.json.
+  "ignoreDependencies": ["wrangler", "@eslint/js", "typescript-eslint"],
+  // Root-provided binaries.
+  "ignoreBinaries": ["tsc", "eslint", "prettier", "knip"],
+  "vite": { "config": ["vite.config.ts"] },
+  "vitest": { "config": ["vitest.config.ts"] },
+  "playwright": { "config": ["playwright.config.ts"] }
+}

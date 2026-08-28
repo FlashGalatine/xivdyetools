@@ -14,6 +14,7 @@
  */
 
 import { StorageService } from './storage-service';
+import { normalizeMatchingMethod } from '@xivdyetools/core';
 import { logger } from '@shared/logger';
 import {
   type ToolConfigMap,
@@ -70,14 +71,40 @@ void _assertAllConfigKeysListed;
  */
 type ConfigListener<T> = (config: T) => void;
 
+// ============================================================================
+// Import validation (WEB-6)
+// ============================================================================
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Does `candidate` have the runtime shape of the default value `reference`? */
+function hasShapeOf(reference: unknown, candidate: unknown): boolean {
+  if (Array.isArray(reference)) return Array.isArray(candidate);
+  if (isPlainObject(reference)) return isPlainObject(candidate);
+  if (reference === null || reference === undefined) return true; // nothing to compare against
+  return typeof candidate === typeof reference;
+}
+
 /**
- * Event detail for config change notifications
+ * Narrow an imported per-tool object to the fields its default config
+ * declares, each with the default's runtime shape. `null` when the entry is
+ * not a plain object at all (the tool is then left untouched).
  */
-export interface ConfigChangeEvent<K extends ConfigKey = ConfigKey> {
-  tool: K;
-  key: keyof ToolConfigMap[K];
-  value: ToolConfigMap[K][keyof ToolConfigMap[K]];
-  fullConfig: ToolConfigMap[K];
+function sanitizeConfigPartial<K extends ConfigKey>(
+  key: K,
+  value: unknown
+): Partial<ToolConfigMap[K]> | null {
+  if (!isPlainObject(value)) return null;
+  const defaults = getDefaultConfig(key) as unknown as Record<string, unknown>;
+  const partial: Record<string, unknown> = {};
+  for (const [field, candidate] of Object.entries(value)) {
+    if (!Object.hasOwn(defaults, field)) continue;
+    if (!hasShapeOf(defaults[field], candidate)) continue;
+    partial[field] = candidate;
+  }
+  return partial as Partial<ToolConfigMap[K]>;
 }
 
 // ============================================================================
@@ -276,8 +303,13 @@ export class ConfigController {
    */
   importConfigs(configs: Partial<ToolConfigMap>): void {
     for (const key of CONFIG_KEYS) {
-      if (key in configs && configs[key]) {
-        this.setConfig(key, configs[key] as Partial<ToolConfigMap[typeof key]>);
+      if (!(key in configs)) continue;
+      // WEB-6: the per-tool object used to be spread raw into state and
+      // storage, so unknown / ill-typed fields from a hand-edited settings
+      // file survived. Keep only declared fields with the default's shape.
+      const partial = sanitizeConfigPartial(key, configs[key]);
+      if (partial) {
+        this.setConfig(key, partial);
       }
     }
 
@@ -310,6 +342,15 @@ export class ConfigController {
         ...defaults,
         ...stored,
       } as ToolConfigMap[K];
+
+      // 5.0: one matching vocabulary. A persisted 4.x method ('hyab',
+      // 'oklch-weighted', …) has to migrate here — normalizing on the share
+      // path only meant a stored legacy value survived every config load and
+      // each tool had to re-normalize defensively.
+      const withMethod = mergedConfig as { matchingMethod?: string };
+      if (typeof withMethod.matchingMethod === 'string') {
+        withMethod.matchingMethod = normalizeMatchingMethod(withMethod.matchingMethod);
+      }
 
       this.configs.set(key, mergedConfig);
       logger.debug(`[ConfigController] Loaded ${key} config from storage`);

@@ -6,7 +6,7 @@
 -- Preset categories with metadata
 -- ============================================
 CREATE TABLE IF NOT EXISTS categories (
-  id TEXT PRIMARY KEY,                    -- e.g., 'jobs', 'community'
+  id TEXT PRIMARY KEY,                    -- e.g., 'jobs', 'events'
   name TEXT NOT NULL,                     -- Display name
   description TEXT NOT NULL,
   icon TEXT,                              -- Emoji
@@ -21,7 +21,9 @@ INSERT OR IGNORE INTO categories (id, name, description, icon, is_curated, displ
   ('seasons', 'Seasons', 'Seasonal color palettes', '🌸', 1, 3),
   ('events', 'FFXIV Events', 'Colors for in-game seasonal events', '🎉', 1, 4),
   ('aesthetics', 'Aesthetics', 'General aesthetic themes', '✨', 1, 5),
-  ('community', 'Community', 'Community-submitted palettes', '👥', 0, 6);
+  ('appearance', 'Appearance', 'Palettes built around a character''s own colours', '👤', 1, 6),
+  ('zones', 'Zones', 'Palettes drawn from the places of Eorzea', '🏔️', 1, 7),
+  ('raids-trials', 'Raids & Trials', 'Palettes from raid and trial encounters', '🗡️', 1, 8);
 
 -- ============================================
 -- PRESETS TABLE
@@ -45,6 +47,12 @@ CREATE TABLE IF NOT EXISTS presets (
   dye_signature TEXT,
   -- Store pre-edit values for moderation revert capability
   previous_values TEXT,
+  -- 8A: allowlisted example-link page URL (stored, never a copy of the image)
+  example_link TEXT,
+  preview_image_key TEXT,
+  preview_image_status TEXT NOT NULL DEFAULT 'none',
+  -- Up to two additional categories; category_id remains the primary
+  secondary_categories TEXT NOT NULL DEFAULT '[]',
 
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );
@@ -171,3 +179,20 @@ CREATE TABLE IF NOT EXISTS failed_notifications (
 CREATE INDEX IF NOT EXISTS idx_failed_notifications_unresolved
   ON failed_notifications(resolved_at)
   WHERE resolved_at IS NULL;
+
+-- ============================================
+-- SUBMISSION EVENTS TABLE (Migration 0011 / FINDING-008)
+-- Append-only per-user log of quota-bearing mutations (submission,
+-- flagged_edit, preview_upload). User actions never delete rows here, so the
+-- daily caps cannot be reset by deleting one's own presets.
+-- ============================================
+CREATE TABLE IF NOT EXISTS submission_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_discord_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('submission', 'flagged_edit', 'preview_upload')),
+  preset_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_submission_events_user_kind_created
+  ON submission_events(user_discord_id, kind, created_at);

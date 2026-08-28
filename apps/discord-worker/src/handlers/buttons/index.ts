@@ -8,10 +8,13 @@
 import type { Env } from '../../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { ephemeralResponse } from '../../utils/response.js';
+import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
+import { discordLocaleToLocaleCode } from '../../services/i18n.js';
 import { handleCopyHex, handleCopyRgb, handleCopyHsv } from './copy.js';
+import { handlePreviewImageButton, isPreviewImageButton } from './preview-image.js';
 
 // Re-export button creation helpers
-export { createCopyButtons, createHexButton } from './copy.js';
+export { createCopyButtons } from './copy.js';
 
 interface ButtonInteraction {
   id: string;
@@ -32,28 +35,29 @@ interface ButtonInteraction {
   member?: {
     user: {
       id: string;
-      username: string;
+      username?: string;
     };
   };
   user?: {
     id: string;
-    username: string;
+    username?: string;
   };
   data?: {
     custom_id?: string;
     component_type?: number;
   };
+  /** Discord client locale of the clicking user (e.g. 'ja', 'en-US') */
+  locale?: string;
 }
 
 /**
  * Route button interactions to appropriate handlers
  */
-// eslint-disable-next-line @typescript-eslint/require-await
 export async function handleButtonInteraction(
   interaction: ButtonInteraction,
-  _env: Env,
-  _ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  env: Env,
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
 
@@ -61,22 +65,35 @@ export async function handleButtonInteraction(
     logger.info('Handling button', { customId });
   }
 
-  // Copy buttons
+  // Copy buttons (F-05: replies in the clicking user's locale)
   if (customId.startsWith('copy_hex_')) {
     return handleCopyHex(interaction);
   }
 
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+  const translator = async () =>
+    userId
+      ? createUserTranslator(env.KV, userId, interaction.locale, logger)
+      : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+
   if (customId.startsWith('copy_rgb_')) {
-    return handleCopyRgb(interaction);
+    return handleCopyRgb(interaction, await translator());
   }
 
   if (customId.startsWith('copy_hsv_')) {
-    return handleCopyHsv(interaction);
+    return handleCopyHsv(interaction, await translator());
+  }
+
+  // Preview-image moderation buttons (approve/reject) — handled here, not
+  // moderation-worker, because Discord routes clicks to the app whose bot
+  // posted the message (discord-worker's own token; see index.ts).
+  if (isPreviewImageButton(customId)) {
+    return handlePreviewImageButton(interaction, env, ctx, logger);
   }
 
   // Unknown button
   if (logger) {
     logger.warn(`Unknown button custom_id: ${customId}`);
   }
-  return ephemeralResponse('This button is not recognized.');
+  return ephemeralResponse((await translator()).t('errors.unknownButton'));
 }

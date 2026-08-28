@@ -21,6 +21,7 @@ import { safeParseJSON } from './utils/safe-json.js';
 import {
   checkRateLimit,
   incrementRateLimit,
+  moderationRateLimitBindings,
   RATE_LIMIT_CONFIGS,
 } from './middleware/rate-limit.js';
 import { handlePresetCommand } from './handlers/commands/index.js';
@@ -37,9 +38,10 @@ import * as banService from './services/ban-service.js';
 import * as presetApi from './services/preset-api.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { createUserTranslator } from './services/bot-i18n.js';
-import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-middleware';
+import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
+import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
+import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
 import { sanitizeUrl } from './utils/url-sanitizer.js';
 
 // Define context variables type
@@ -165,7 +167,7 @@ app.post('/', async (c) => {
 
   // Handle Autocomplete
   if (interactionType === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
-    return handleAutocomplete(interaction, env, logger);
+    return handleAutocomplete(interaction, env, c.executionCtx as ExecutionContext, logger);
   }
 
   // Handle Message Components (buttons, select menus)
@@ -200,30 +202,9 @@ async function handleCommand(
     return ephemeralResponse('Unable to identify user. Please try again.');
   }
 
-  // Check rate limit for commands
-  const rateLimitCheck = await checkRateLimit(
-    env.KV,
-    userId,
-    'command',
-    RATE_LIMIT_CONFIGS.command
-  );
-
-  if (!rateLimitCheck.allowed) {
-    logger.warn('Rate limit exceeded', {
-      userId,
-      commandName,
-      type: 'command',
-      retryAfter: rateLimitCheck.retryAfter,
-    });
-    return rateLimitedResponse(rateLimitCheck.resetTime);
-  }
-
-  // Increment rate limit counter
-  ctx.waitUntil(
-    incrementRateLimit(env.KV, userId, 'command').catch((err) => {
-      logger.error('Failed to increment command rate limit', err instanceof Error ? err : undefined);
-    })
-  );
+  // Check rate limit for commands (FINDING-003: native bindings when bound, KV fallback)
+  const limited = await enforceCommandRateLimit(env, ctx, userId, logger, { commandName });
+  if (limited) return limited;
 
   logger.info('Handling command', { command: commandName, userId });
 
@@ -237,9 +218,10 @@ async function handleCommand(
         return await handlePresetCommand(interaction, env, ctx, t, logger);
 
       default:
-        // Command not supported by this moderation bot
+        // Command not supported by this moderation bot (FINDING-019: the name
+        // is client-supplied text echoed into `content`)
         return ephemeralResponse(
-          `The \`/${commandName}\` command is not supported by this moderation bot.`
+          `The \`/${sanitizeEmbedText(commandName ?? 'unknown', 32)}\` command is not supported by this moderation bot.`
         );
     }
   } catch (error) {
@@ -249,23 +231,91 @@ async function handleCommand(
 }
 
 /**
- * Handle autocomplete interactions
+ * Per-user `command` rate limit (FINDING-003: native bindings when bound, KV
+ * fallback). MOD-12 (FINDING-034, 2026-08-21 audit): button clicks and modal
+ * submits now share it with slash commands — they were the only interaction
+ * types with no throttle at all.
+ *
+ * @returns the rate-limited reply to send, or null when the request may proceed
  */
-async function handleAutocomplete(
+async function enforceCommandRateLimit(
+  env: Env,
+  ctx: ExecutionContext,
+  userId: string,
+  logger: ExtendedLogger,
+  context: Record<string, unknown>
+): Promise<Response | null> {
+  const rateLimitCheck = await checkRateLimit(
+    env.KV,
+    userId,
+    'command',
+    RATE_LIMIT_CONFIGS.command,
+    moderationRateLimitBindings(env)
+  );
+
+  if (!rateLimitCheck.allowed) {
+    logger.warn('Rate limit exceeded', {
+      userId,
+      ...context,
+      type: 'command',
+      retryAfter: rateLimitCheck.retryAfter,
+    });
+    return rateLimitedResponse(rateLimitCheck.resetTime);
+  }
+
+  // Increment rate limit counter (kept alive past the response)
+  ctx.waitUntil(
+    incrementRateLimit(env.KV, userId, 'command', 3, moderationRateLimitBindings(env)).catch((err) => {
+      logger.error('Failed to increment command rate limit', err instanceof Error ? err : undefined);
+    })
+  );
+
+  return null;
+}
+
+/**
+ * Discord caps autocomplete choice names at 100 characters and rejects the
+ * whole response otherwise — one long author name must not blank the list.
+ */
+function clampChoiceName(name: string): string {
+  const chars = [...name];
+  return chars.length <= 100 ? name : `${chars.slice(0, 99).join('')}\u2026`;
+}
+
+/**
+ * Handle autocomplete interactions
+ *
+ * Exported for tests (the interactions route is Ed25519-signed).
+ */
+export async function handleAutocomplete(
   interaction: DiscordInteraction,
   env: Env,
+  ctx: ExecutionContext,
   logger: ExtendedLogger
 ): Promise<Response> {
   const commandName = interaction.data?.name;
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   const options = interaction.data?.options || [];
 
-  if (!userId) {
-    logger.error('Unable to identify user from autocomplete interaction', { commandName });
-    return Response.json({
+  const noChoices = (): Response =>
+    Response.json({
       type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
       data: { choices: [] },
     });
+
+  if (!userId) {
+    logger.error('Unable to identify user from autocomplete interaction', { commandName });
+    return noChoices();
+  }
+
+  // FINDING-006 (2026-08-21 security audit): every command, button and modal
+  // enforces the MODERATOR_IDS allowlist — autocomplete must too. The
+  // ban_user / unban_user branches query production D1 directly and would
+  // otherwise hand the banned-user list and author name → Discord-ID pairs to
+  // anyone who can see the command. Non-moderators get an empty list, silently.
+  if (!presetApi.isModerator(env, userId)) {
+    logger.warn('Autocomplete from non-moderator ignored', { userId, commandName });
+    return noChoices();
   }
 
   // Check rate limit for autocomplete (higher limit due to typing)
@@ -273,7 +323,8 @@ async function handleAutocomplete(
     env.KV,
     userId,
     'autocomplete',
-    RATE_LIMIT_CONFIGS.autocomplete
+    RATE_LIMIT_CONFIGS.autocomplete,
+    moderationRateLimitBindings(env)
   );
 
   if (!rateLimitCheck.allowed) {
@@ -289,10 +340,19 @@ async function handleAutocomplete(
     });
   }
 
-  // Increment rate limit counter (non-blocking)
-  incrementRateLimit(env.KV, userId, 'autocomplete').catch((err) => {
-    logger.error('Failed to increment autocomplete rate limit', err instanceof Error ? err : undefined);
-  });
+  // Increment rate limit counter (non-blocking, but kept alive past the
+  // response — MOD-3: a fire-and-forget promise could be cancelled with the
+  // isolate, silently dropping the increment)
+  ctx.waitUntil(
+    incrementRateLimit(env.KV, userId, 'autocomplete', 3, moderationRateLimitBindings(env)).catch(
+      (err) => {
+        logger.error(
+          'Failed to increment autocomplete rate limit',
+          err instanceof Error ? err : undefined
+        );
+      }
+    )
+  );
 
   // Find the focused option (the one the user is currently typing in)
   let focusedOption: { name: string; value?: string | number | boolean; focused?: boolean } | undefined;
@@ -322,7 +382,12 @@ async function handleAutocomplete(
     // Preset name autocomplete for moderate subcommand
     if (focusedName === 'preset_id') {
       if (subcommandName === 'moderate') {
-        choices = await presetApi.searchPresetsForAutocomplete(env, query, { status: 'pending' });
+        // MOD-13 (FINDING-034): presets-api 403s `status=pending` without a
+        // moderator identity — this list was always empty before
+        choices = await presetApi.searchPresetsForAutocomplete(env, query, {
+          status: 'pending',
+          userDiscordId: userId,
+        });
       }
     }
     // User autocomplete for ban_user/unban_user subcommands
@@ -354,7 +419,9 @@ async function getBanUserAutocompleteChoices(
 
     return users.map((user) => ({
       // Format: "Username (discord:123456789) - 5 presets"
-      name: `${user.username} (discord:${user.discordId}) - ${user.presetCount} presets`,
+      name: clampChoiceName(
+        `${user.username} (discord:${user.discordId}) - ${user.presetCount} presets`
+      ),
       value: user.discordId,
     }));
   } catch (error) {
@@ -374,15 +441,15 @@ async function getUnbanUserAutocompleteChoices(
   try {
     const users = await banService.searchBannedUsers(env.DB, query);
 
-    return users.map((user) => {
-      const idSuffix = user.discordId
-        ? `discord:${user.discordId}`
-        : `xivauth:${user.xivAuthId}`;
-      return {
-        name: `${user.username} (${idSuffix})`,
-        value: user.discordId || user.xivAuthId || '',
-      };
-    });
+    // MOD-14 (FINDING-034, 2026-08-21 audit): unbanUser / getActiveBan key on
+    // discord_id, so an xivauth-only ban cannot be lifted from this bot — do
+    // not offer a value the command would then reject.
+    return users
+      .filter((user): user is typeof user & { discordId: string } => Boolean(user.discordId))
+      .map((user) => ({
+        name: clampChoiceName(`${user.username} (discord:${user.discordId})`),
+        value: user.discordId,
+      }));
   } catch (error) {
     logger.error('Failed to get unban user autocomplete', error instanceof Error ? error : undefined);
     return [];
@@ -391,8 +458,10 @@ async function getUnbanUserAutocompleteChoices(
 
 /**
  * Handle button/select menu interactions
+ *
+ * Exported for tests (the interactions route is Ed25519-signed).
  */
-async function handleComponent(
+export async function handleComponent(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
@@ -400,8 +469,18 @@ async function handleComponent(
 ): Promise<Response> {
   const customId = interaction.data?.custom_id;
   const componentType = interaction.data?.component_type;
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
   logger.info('Handling component', { customId, componentType });
+
+  if (!userId) {
+    logger.error('Unable to identify user from component interaction', { customId });
+    return ephemeralResponse('Unable to identify user. Please try again.');
+  }
+
+  // MOD-12 (FINDING-034): same per-user limiter as slash commands
+  const limited = await enforceCommandRateLimit(env, ctx, userId, logger, { customId });
+  if (limited) return limited;
 
   // Buttons have component_type 2
   if (componentType === 2) {
@@ -414,15 +493,27 @@ async function handleComponent(
 
 /**
  * Handle modal submissions
+ *
+ * Exported for tests (the interactions route is Ed25519-signed).
  */
-async function handleModal(
+export async function handleModal(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
   logger: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
   logger.info('Handling modal', { customId });
+
+  if (!userId) {
+    logger.error('Unable to identify user from modal interaction', { customId });
+    return ephemeralResponse('Unable to identify user. Please try again.');
+  }
+
+  // MOD-12 (FINDING-034): same per-user limiter as slash commands
+  const limited = await enforceCommandRateLimit(env, ctx, userId, logger, { customId });
+  if (limited) return limited;
 
   // Route preset rejection modal
   if (isPresetRejectionModal(customId)) {

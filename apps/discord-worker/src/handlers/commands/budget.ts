@@ -1,26 +1,35 @@
 /**
- * /budget Command Handler
+ * /budget Command Handler — the 13G Ledger (5.0).
  *
- * Helps users find affordable alternatives to expensive dyes.
- * Integrates with Universalis API for market board prices.
+ * Tier groups carry the single price; rows underneath are priceless. The
+ * gil/ΔE ratio is PINNED to ΔE2000 whatever the `matching` option says; a
+ * missing price blanks its column rather than inventing a number, and a
+ * target nothing undercuts gets a sentence instead of an empty frame.
  *
  * Subcommands:
- * - /budget find <target_dye> - Find cheaper alternatives
- * - /budget set_world <world> - Set preferred world/datacenter
- * - /budget quick <preset> - Quick picks for popular expensive dyes
+ * - /budget find <target_dye> — the ledger
+ * - /budget set_world <world> — save preferred world/datacenter
+ * - /budget quick <preset> — the ledger for a popular expensive dye
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, ephemeralResponse } from '../../utils/response.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { generateBudgetComparison, type BudgetSvgLabels } from '@xivdyetools/svg';
-import { createUserTranslatorWithPrefs, type Translator } from '../../services/bot-i18n.js';
-import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
-import { setPreference } from '../../services/preferences.js';
-import type { UserPreferences } from '../../types/preferences.js';
 import {
-  findCheaperAlternatives,
+  generateBudgetLedger,
+  grp,
+  num,
+  type BudgetLedgerGroup,
+} from '@xivdyetools/svg';
+import { getLocalizedAcquisition, sanitizeEmbedText } from '@xivdyetools/bot-logic';
+import { BAND_METHOD_DP, CONSOLIDATED_DYES, classifyBandTier, type MatchingMethod } from '@xivdyetools/core';
+import { createUserTranslatorWithPrefs, type Translator } from '../../services/bot-i18n.js';
+import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
+import { setPreference } from '../../services/preferences.js';
+import { MATCHING_METHODS, isValidMatchingMethod, type UserPreferences } from '../../types/preferences.js';
+import {
+  findBudgetLedger,
   getDyeById,
   getDyeByName,
   getDyeAutocomplete,
@@ -29,17 +38,37 @@ import {
   getWorldAutocomplete,
   getQuickPickById,
 } from '../../services/budget/index.js';
-import type { BudgetSearchOptions, BudgetSortOption } from '../../types/budget.js';
-import { UniversalisError, formatGil } from '../../types/budget.js';
+import type { LedgerSearchOptions } from '../../types/budget.js';
+import { UniversalisError } from '../../types/budget.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 
 // ============================================================================
-// Constants
+// Method display (identifiers — never localise)
 // ============================================================================
 
-/** Default width for generated images */
-const IMAGE_WIDTH = 800;
+/** ΔE column header per method (short tags — the 34/42 px column). */
+const DE_LABEL: Record<MatchingMethod, string> = {
+  ciede2000: 'ΔE',
+  oklab: 'ΔEOK',
+  cie76: 'ΔE76',
+  redmean: 'RM',
+  rgb: 'RGB',
+  distinguish: 'D%',
+};
+
+/** 3-digit methods widen the ΔE column 34 → 42 px. */
+const WIDE_DE = new Set<MatchingMethod>(['redmean', 'rgb', 'distinguish']);
+
+function methodTag(method: MatchingMethod): string {
+  return MATCHING_METHODS.find((m) => m.value === method)?.name ?? method;
+}
+
+/** gil-per-ΔE display: 13.6k over 1000, grouped integer below. */
+function fmtPerDe(v: number, lang: string): string {
+  if (v >= 1000) return `${num(v / 1000, lang, 1)}k`;
+  return grp(Math.round(v), lang);
+}
 
 // ============================================================================
 // Main Handler
@@ -58,7 +87,6 @@ export async function handleBudgetCommand(
   // OPT-026 (2026-07-18 audit): one KV read yields both translator and prefs
   const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale, logger);
 
-  // Get subcommand
   const options = interaction.data?.options || [];
   const subcommand = options[0];
 
@@ -68,17 +96,45 @@ export async function handleBudgetCommand(
 
   switch (subcommand.name) {
     case 'find':
-      return handleFindSubcommand(interaction, env, ctx, subcommand.options || [], t, userId, prefs, logger);
+      return handleFindSubcommand(interaction, env, ctx, subcommand.options || [], t, prefs, logger);
 
     case 'set_world':
       return handleSetWorldSubcommand(env, subcommand.options || [], t, userId, logger);
 
     case 'quick':
-      return handleQuickSubcommand(interaction, env, ctx, subcommand.options || [], t, userId, prefs, logger);
+      return handleQuickSubcommand(interaction, env, ctx, subcommand.options || [], t, prefs, logger);
 
     default:
       return ephemeralResponse(t.t('common.error'));
   }
+}
+
+// ============================================================================
+// World resolution
+// ============================================================================
+
+/**
+ * Resolve the world a ledger should be priced on.
+ *
+ * FINDING-033 (2026-08-21 security audit): a `world:` override used to be
+ * forwarded verbatim (`worldOverride ?? prefs.world`) — only `set_world`
+ * validated. Now every override goes through `validateWorld()` (cached for
+ * an hour) and the CANONICAL name is what reaches the Universalis proxy and
+ * the price-cache key.
+ *
+ * @returns the world to use; `undefined` when nothing is set (no override,
+ *          no preference); `null` when the override names an unknown world
+ */
+async function resolveWorld(
+  env: Env,
+  worldOverride: string | undefined,
+  prefs: UserPreferences,
+  logger?: ExtendedLogger
+): Promise<string | null | undefined> {
+  if (worldOverride) {
+    return validateWorld(env, worldOverride, logger);
+  }
+  return prefs.world || undefined;
 }
 
 // ============================================================================
@@ -88,14 +144,12 @@ export async function handleBudgetCommand(
 /**
  * Handles /budget find <target_dye>
  */
-// eslint-disable-next-line @typescript-eslint/require-await -- handler interface requires async
 async function handleFindSubcommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
   options: Array<{ name: string; value?: string | number | boolean }>,
   t: Translator,
-  _userId: string,
   prefs: UserPreferences,
   logger?: ExtendedLogger
 ): Promise<Response> {
@@ -106,15 +160,18 @@ async function handleFindSubcommand(
 
   // Extract options
   const targetDyeInput = options.find((opt) => opt.name === 'target_dye')?.value as string | undefined;
-  const maxPrice = options.find((opt) => opt.name === 'max_price')?.value as number | undefined;
-  const maxDistance = options.find((opt) => opt.name === 'max_distance')?.value as number | undefined;
-  const sortBy = (options.find((opt) => opt.name === 'sort_by')?.value as BudgetSortOption) || 'value_score';
   const worldOverride = options.find((opt) => opt.name === 'world')?.value as string | undefined;
-  const maxResultsRaw = options.find((opt) => opt.name === 'max_results')?.value as number | undefined;
-  // Web app caps at 20; default of 5 preserves prior bot behavior.
-  const maxResults = typeof maxResultsRaw === 'number'
-    ? Math.max(1, Math.min(20, Math.floor(maxResultsRaw)))
-    : 5;
+  const matchingRaw = options.find((opt) => opt.name === 'matching')?.value as string | undefined;
+  const matchLineRaw = options.find((opt) => opt.name === 'max_distance')?.value as number | undefined;
+  const excludeCoffers = options.find((opt) => opt.name === 'exclude_coffers')?.value === true;
+  const excludeWideSpectrum =
+    options.find((opt) => opt.name === 'exclude_wide_spectrum')?.value === true;
+
+  // Method: explicit option > user preference > suite default
+  const method: MatchingMethod =
+    matchingRaw && isValidMatchingMethod(matchingRaw)
+      ? matchingRaw
+      : (prefs.matching ?? 'ciede2000');
 
   // Validate target dye
   if (!targetDyeInput) {
@@ -127,151 +184,192 @@ async function handleFindSubcommand(
   const isNumericInput = /^\s*\d+\s*$/.test(targetDyeInput);
   const targetDye = isNumericInput
     ? getDyeById(parseInt(targetDyeInput, 10))
-    : getDyeByName(targetDyeInput);
+    : getDyeByName(targetDyeInput, t.getLocale());
 
-  // BUG-032 (2026-07-18 audit): reject Facewear entries (synthetic negative
-  // itemIDs) — they aren't market-tradeable, and seeding their ID into the
-  // Universalis fetch would fail the whole price batch. target_dye is
-  // free-text, so this can arrive despite the filtered autocomplete.
   if (!targetDye || targetDye.itemID <= 0) {
-    return ephemeralResponse(t.t('budget.errors.dyeNotFound', { name: targetDyeInput }));
+    // FINDING-019: typed option value echoed back — sanitise it
+    return ephemeralResponse(
+      t.t('budget.errors.dyeNotFound', { name: sanitizeEmbedText(targetDyeInput, 100) })
+    );
   }
 
-  // Get world preference from unified preferences system
-  let world = worldOverride;
-  if (!world) {
-    // OPT-026: prefs already read once in handleBudgetCommand
-    world = prefs.world;
+  // World: explicit option > stored preference. FINDING-033 (2026-08-21
+  // audit): the override is validated like `set_world` — only a known world
+  // or data centre (canonical name) reaches the Universalis proxy and the
+  // shared price-cache key.
+  const world = await resolveWorld(env, worldOverride, prefs, logger);
+  if (world === null) {
+    return ephemeralResponse(
+      t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldOverride ?? '', 64) })
+    );
   }
-
   if (!world) {
     return ephemeralResponse(
       `**${t.t('budget.noWorldSet.title')}**\n\n${t.t('budget.noWorldSet.description')}`
     );
   }
 
-  // Defer response (price fetching takes time)
   const deferResponse = deferredResponse();
-
-  // Process in background
   ctx.waitUntil(
     processFindCommand(
       interaction,
       env,
       targetDye.itemID,
       world,
-      { maxPrice, maxDistance, sortBy, limit: maxResults },
+      { method, matchLine: matchLineRaw, excludeCoffers, excludeWideSpectrum },
       t,
+      prefs.theme,
       logger
     )
   );
-
   return deferResponse;
 }
 
+// ============================================================================
+// Ledger rendering
+// ============================================================================
+
 /**
- * Background processing for find command
+ * Background processing: build the ledger, draw 13G, send the one-line embed.
  */
 async function processFindCommand(
   interaction: DiscordInteraction,
   env: Env,
   targetDyeId: number,
   world: string,
-  searchOptions: BudgetSearchOptions,
+  searchOptions: LedgerSearchOptions,
   t: Translator,
+  theme?: 'dark' | 'light',
   logger?: ExtendedLogger
 ): Promise<void> {
   try {
-    // Find alternatives
-    if (logger) logger.info('Budget: fetching alternatives', { targetDyeId, world });
-    const result = await findCheaperAlternatives(env, targetDyeId, world, searchOptions, logger);
-    if (logger) logger.info('Budget: found alternatives', { count: result.alternatives.length, hasTargetPrice: !!result.targetPrice });
+    if (logger) logger.info('Budget: building ledger', { targetDyeId, world });
+    const result = await findBudgetLedger(env, targetDyeId, world, searchOptions, logger);
 
-    // Initialize core library localization for dye names
     const locale = t.getLocale();
     await initializeLocale(locale);
 
-    // Build localized dye name and category maps
-    const dyeNames: Record<number, string> = {};
-    const categoryNames: Record<string, string> = {};
-    dyeNames[result.targetDye.itemID] = getLocalizedDyeName(result.targetDye.itemID, result.targetDye.name, locale);
-    categoryNames[result.targetDye.category] = getLocalizedCategory(result.targetDye.category, locale);
-    for (const alt of result.alternatives) {
-      dyeNames[alt.dye.itemID] = getLocalizedDyeName(alt.dye.itemID, alt.dye.name, locale);
-    }
-
-    // Build translated SVG labels
-    const sortBy = searchOptions.sortBy || 'value_score';
-    const svgLabels: BudgetSvgLabels = {
-      headerLabel: t.t('budget.headerLabel'),
-      targetPriceLabel: t.t('budget.targetPrice'),
-      noListings: t.t('budget.noListings'),
-      noAlternatives: t.t('budget.noAlternativesShort'),
-      sortedBy: t.t('budget.sortedBy', { method: t.t(`budget.sortMethods.${sortBy}`) }),
-      onWorld: t.t('budget.onWorld', { world: result.world }),
-      gilAmountTemplate: t.t('budget.gilAmount'),
-      saveAmountTemplate: t.t('budget.saveAmount'),
-      listingCountTemplate: t.t('budget.listingCount'),
-      distanceQuality: {
-        perfect: t.t('budget.distanceQuality.perfect'),
-        excellent: t.t('budget.distanceQuality.excellent'),
-        good: t.t('budget.distanceQuality.good'),
-        fair: t.t('budget.distanceQuality.fair'),
-        approximate: t.t('budget.distanceQuality.approximate'),
-      },
-      dyeNames,
-      categoryNames,
-    };
-
-    // Generate SVG
-    const svg = generateBudgetComparison({
-      targetDye: result.targetDye,
-      targetPrice: result.targetPrice,
-      alternatives: result.alternatives,
-      world: result.world,
-      sortBy,
-      labels: svgLabels,
-      width: IMAGE_WIDTH,
-    });
-    if (logger) logger.info('Budget: SVG generated', { svgLength: svg.length });
-
-    // Render to PNG
-    const pngBuffer = await renderSvgToPng(svg, { scale: 2 }, logger);
-    if (logger) logger.info('Budget: PNG rendered', { pngSize: pngBuffer.length });
-
-    // Build description
-    let description = '';
-
-    if (result.targetPrice) {
-      description += `**${t.t('budget.targetPrice')}:** ${formatGil(result.targetPrice.currentMinPrice)} Gil\n`;
-    } else {
-      description += `**${t.t('budget.targetPrice')}:** ${t.t('budget.noListings')}\n`;
-    }
-
-    description += `${t.t('budget.worldUsed', { world: result.world })}\n`;
-    description += `${t.t('budget.sortedBy', { method: t.t(`budget.sortMethods.${sortBy}`) })}\n\n`;
-
-    if (result.alternatives.length > 0) {
-      description += `${t.t('budget.foundAlternatives', { count: result.alternatives.length })}`;
-    } else {
-      description += t.t('budget.noAlternatives');
-    }
-
-    // Get dye emoji and localized name for target
-    const localizedTargetName = dyeNames[result.targetDye.itemID] ?? result.targetDye.name;
-    const emoji = getDyeEmoji(result.targetDye.itemID);
+    const method = result.method;
+    const localizedTargetName = getLocalizedDyeName(
+      result.targetDye.itemID,
+      result.targetDye.name,
+      locale
+    );
+    const emoji = getDyeEmoji(result.targetDye.stainID ?? 0, env.DISCORD_CLIENT_ID);
     const emojiPrefix = emoji ? `${emoji} ` : '';
+    const title = `${emojiPrefix}${t.t('budget.findTitle', { dyeName: localizedTargetName })}`;
+    const embedColor = parseInt(result.targetDye.hex.replace('#', ''), 16);
+    const shareUrl =
+      result.targetDye.stainID != null
+        ? `https://xivdyetools.app/budget?dye=${result.targetDye.stainID}`
+        : 'https://xivdyetools.app/budget';
 
-    // Send response
-    if (logger) logger.info('Budget: sending Discord response');
+    const priceStr = (v: number): string => `${grp(v, locale)} GIL`;
+
+    // The honest sentences that replace a frame
+    if (result.alreadyFloor) {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [
+          {
+            title,
+            description: `${t.t('card.budgetFloor', { price: priceStr(result.targetPrice ?? 0) })}\n${shareUrl}`,
+            color: embedColor,
+          },
+        ],
+      });
+      return;
+    }
+    if (result.groups.length === 0) {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [
+          {
+            title,
+            description: `${t.t('budget.noAlternatives')}\n${shareUrl}`,
+            color: embedColor,
+          },
+        ],
+      });
+      return;
+    }
+
+    // Format the ledger for the frame
+    const dp = BAND_METHOD_DP[method];
+    const groups: BudgetLedgerGroup[] = result.groups.map((g) => ({
+      // Consolidated groups are headed by the market item name in the user's
+      // locale (F-10); acquisition groups by the localized acquisition.
+      tier: g.acquisition
+        ? getLocalizedAcquisition(g.acquisition, locale)
+        : g.type
+          ? (CONSOLIDATED_DYES[g.type].names[locale] ?? CONSOLIDATED_DYES[g.type].names.en)
+          : g.label,
+      price: g.price !== null ? priceStr(g.price) : null,
+      flag: g.vendorCheaper ? t.t('card.vendorCheaper') : null,
+      rows: g.rows.map((r) => ({
+        hex: r.dye.hex,
+        name: getLocalizedDyeName(r.dye.itemID, r.dye.name, locale),
+        de: num(r.de, locale, dp),
+        tier: classifyBandTier(r.de, method, 'match'),
+        tie: r.tie,
+        perDe: r.perDe !== null ? fmtPerDe(r.perDe, locale) : null,
+      })),
+    }));
+
+    const keyLines = [t.t('card.budgetKey')];
+    if (method !== 'ciede2000') {
+      keyLines.push(t.t('card.budgetKeyMethod', { tag: methodTag(method) }));
+    }
+
+    const svg = generateBudgetLedger({
+      target: {
+        hex: result.targetDye.hex,
+        name: localizedTargetName,
+        price: result.targetPrice !== null ? priceStr(result.targetPrice) : null,
+        subLabel:
+          result.targetPriceSource === 'vendor'
+            ? t.t('card.lVendor')
+            : result.targetPriceSource === 'board'
+              ? t.t('card.lBoardOnly')
+              : t.t('card.lNoPrice'),
+      },
+      groups,
+      labels: {
+        lTarget: t.t('card.lTarget'),
+        lCandidate: t.t('card.lCandidate'),
+        deLabel: DE_LABEL[method],
+        perDeLabel: t.t('card.perDe'),
+        keyLines,
+      },
+      lang: locale,
+      theme,
+      wideDe: WIDE_DE.has(method),
+    });
+
+    const pngBuffer = await renderSvgToPng(svg, { scale: 2 }, logger);
+
+    // One line: the picture is self-contained; the verdict earns the embed
+    let description =
+      result.targetPrice !== null
+        ? t.t('card.budgetBest', {
+            name: groups[0].rows[0].name,
+            de: num(result.groups[0].rows[0].de2000, locale, 1),
+            price: groups[0].price ?? '—',
+          })
+        : t.t('card.budgetNoTarget', { world: result.world });
+    if (result.omitted.length > 0) {
+      const names = result.omitted
+        .map((o) => getLocalizedDyeName(o.itemID, o.name, locale))
+        .join(' · ');
+      description += `\n${t.t('card.nearestMore', { n: result.omitted.length })} — ${names}`;
+    }
+    description += `\n${shareUrl}`;
+
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
-          title: `${emojiPrefix}${t.t('budget.findTitle', { dyeName: localizedTargetName })}`,
+          title,
           description,
-          color: parseInt(result.targetDye.hex.replace('#', ''), 16),
+          color: embedColor,
           image: { url: 'attachment://budget.png' },
-          footer: { text: t.t('common.footer') },
         },
       ],
       file: {
@@ -283,21 +381,16 @@ async function processFindCommand(
     if (logger) logger.info('Budget: response sent successfully');
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
     if (logger) {
       logger.error('Budget find error', error instanceof Error ? error : undefined);
-      logger.error(`Budget error details: ${errorMsg}`, errorStack ? { stack: errorStack } : undefined);
+      logger.error(`Budget error details: ${errorMsg}`);
     }
 
-    // Handle specific errors
     let errorMessage = t.t('errors.generationFailed');
-
     if (error instanceof UniversalisError) {
-      if (error.isRateLimited) {
-        errorMessage = t.t('budget.errors.rateLimited');
-      } else {
-        errorMessage = t.t('budget.errors.apiError');
-      }
+      errorMessage = error.isRateLimited
+        ? t.t('budget.errors.rateLimited')
+        : t.t('budget.errors.apiError');
     }
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -330,7 +423,9 @@ async function handleSetWorldSubcommand(
   const validatedWorld = await validateWorld(env, worldInput, logger);
 
   if (!validatedWorld) {
-    return ephemeralResponse(t.t('budget.errors.worldNotFound', { name: worldInput }));
+    return ephemeralResponse(
+      t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldInput, 64) })
+    );
   }
 
   // Save preference via unified preferences system
@@ -350,14 +445,12 @@ async function handleSetWorldSubcommand(
 /**
  * Handles /budget quick <preset>
  */
-// eslint-disable-next-line @typescript-eslint/require-await -- handler interface requires async
 async function handleQuickSubcommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
   options: Array<{ name: string; value?: string | number | boolean }>,
   t: Translator,
-  _userId: string,
   prefs: UserPreferences,
   logger?: ExtendedLogger
 ): Promise<Response> {
@@ -371,36 +464,35 @@ async function handleQuickSubcommand(
   // Get preset
   const preset = getQuickPickById(presetId);
   if (!preset) {
-    return ephemeralResponse(t.t('budget.errors.presetNotFound'));
+    return ephemeralResponse(
+      t.t('budget.errors.presetNotFound', { id: sanitizeEmbedText(presetId, 64) })
+    );
   }
 
-  // Get world preference from unified preferences system
-  let world = worldOverride;
-  if (!world) {
-    // OPT-026: prefs already read once in handleBudgetCommand
-    world = prefs.world;
+  // FINDING-033: same world validation as find / set_world
+  const world = await resolveWorld(env, worldOverride, prefs, logger);
+  if (world === null) {
+    return ephemeralResponse(
+      t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldOverride ?? '', 64) })
+    );
   }
-
   if (!world) {
     return ephemeralResponse(t.t('budget.noWorldSet.description'));
   }
 
-  // Defer response
   const deferResponse = deferredResponse();
-
-  // Process in background
   ctx.waitUntil(
     processFindCommand(
       interaction,
       env,
       preset.targetDyeId,
       world,
-      { sortBy: 'value_score', limit: 5 },
+      { method: prefs.matching ?? 'ciede2000' },
       t,
+      prefs.theme,
       logger
     )
   );
-
   return deferResponse;
 }
 
@@ -414,6 +506,7 @@ async function handleQuickSubcommand(
 export async function handleBudgetAutocomplete(
   interaction: DiscordInteraction,
   env: Env,
+  locale: LocaleCode,
   logger?: ExtendedLogger
 ): Promise<Response> {
   const options = interaction.data?.options || [];
@@ -437,11 +530,11 @@ export async function handleBudgetAutocomplete(
 
   switch (focusedOption.name) {
     case 'target_dye':
-      choices = getDyeAutocomplete(query, 25);
+      choices = getDyeAutocomplete(query, 25, locale);
       break;
 
     case 'world':
-      choices = await getWorldAutocomplete(env, query, logger);
+      choices = await getWorldAutocomplete(env, query, logger, locale);
       break;
 
     default:

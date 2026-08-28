@@ -32,18 +32,6 @@ interface CsvRow {
   'Chinese Name': string;
 }
 
-interface Dye {
-  itemID: number;
-  name: string;
-  category: string;
-  hex: string;
-  rgb: { r: number; g: number; b: number };
-  hsv: { h: number; s: number; v: number };
-  acquisition: string;
-  price: number | null;
-  currency: string | null;
-}
-
 type LocaleCode = 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
 
 const LOCALE_NAMES: Record<LocaleCode, string> = {
@@ -75,10 +63,6 @@ async function main() {
     trim: true,
   });
 
-  // Read colors_xiv.json for metallic dye IDs and categories
-  const colorsPath = path.join(workingDir, 'src', 'data', 'colors_xiv.json');
-  const colorsData: Dye[] = JSON.parse(fs.readFileSync(colorsPath, 'utf-8'));
-
   // Build each locale
   const locales: LocaleCode[] = ['en', 'ja', 'de', 'fr', 'ko', 'zh'];
   const outputDir = path.join(workingDir, 'src', 'data', 'locales');
@@ -91,7 +75,7 @@ async function main() {
   for (const locale of locales) {
     console.log(`Building ${LOCALE_NAMES[locale]} (${locale})...`);
 
-    const localeData = buildLocaleData(locale, yamlData, csvRows, colorsData);
+    const localeData = buildLocaleData(locale, yamlData, csvRows);
     const outputPath = path.join(outputDir, `${locale}.json`);
     const existing = readExistingLocale(outputPath);
 
@@ -112,7 +96,7 @@ async function main() {
   console.log(
     updatedCount === 0
       ? '✅ Locale files already up to date (nothing written).'
-      : `✅ Locale files built successfully! (${updatedCount} of ${locales.length} updated)`
+      : `✅ Locale files built successfully! (${updatedCount} of ${locales.length} updated)`,
   );
 }
 
@@ -168,7 +152,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
   return aKeys.every(
     (key) =>
       Object.prototype.hasOwnProperty.call(b, key) &&
-      deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])
+      deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]),
   );
 }
 
@@ -176,12 +160,10 @@ function buildLocaleData(
   locale: LocaleCode,
   yamlData: Record<string, YamlLabels>,
   csvRows: CsvRow[],
-  colorsData: Dye[]
 ) {
   const labels = buildLabels(locale, yamlData[locale]);
   const dyeNames = buildDyeNames(locale, csvRows);
   const categories = buildCategories(locale);
-  const metallicDyeIds = identifyMetallicDyes(colorsData);
 
   return {
     locale,
@@ -198,14 +180,11 @@ function buildLocaleData(
     categories,
     acquisitions: buildAcquisitions(locale),
     currencies: buildCurrencies(locale),
-    metallicDyeIds,
     harmonyTypes: buildHarmonyTypes(locale),
     visionTypes: buildVisionTypes(locale),
     visions: buildVisionsShort(locale),
     tools: buildTools(locale),
     sheets: buildSheets(locale),
-    jobNames: buildJobNames(locale),
-    grandCompanyNames: buildGrandCompanyNames(locale),
     races: buildRaces(locale),
     clans: buildClans(locale),
   };
@@ -213,7 +192,7 @@ function buildLocaleData(
 
 function buildLabels(
   locale: LocaleCode,
-  yamlLabels: YamlLabels | undefined
+  yamlLabels: YamlLabels | undefined,
 ): Record<string, string> {
   // Fallback labels for locales not in YAML (ko, zh)
   const fallbackLabels: Record<LocaleCode, Record<string, string>> = {
@@ -508,22 +487,6 @@ function buildCurrencies(locale: LocaleCode): Record<string, string> {
   return translations[locale];
 }
 
-function identifyMetallicDyes(colorsData: Dye[]): number[] {
-  // Metallic dyes that don't have "Metallic" prefix but are metallic
-  // Gunmetal Black (30122) and Pearl White (30123) are metallic Special dyes
-  const additionalMetallicIds = [30122, 30123];
-
-  // Identify all metallic dyes based on name prefix "Metallic"
-  const metallicDyes = colorsData.filter((dye) => dye.name.startsWith('Metallic'));
-
-  const metallicIds = metallicDyes.map((dye) => dye.itemID).filter((id) => id !== null);
-
-  // Combine with additional metallic dyes
-  const allMetallicIds = [...new Set([...metallicIds, ...additionalMetallicIds])];
-
-  return allMetallicIds.sort((a, b) => a - b);
-}
-
 function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
   // Hardcoded harmony type translations
   const translations: Record<LocaleCode, Record<string, string>> = {
@@ -533,6 +496,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: 'Triadic',
       splitComplementary: 'Split-Complementary',
       tetradic: 'Tetradic',
+      invertedTetradic: 'Inverted Tetradic',
       square: 'Square',
       monochromatic: 'Monochromatic',
       compound: 'Compound',
@@ -544,6 +508,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: '三色配色',
       splitComplementary: '分裂補色',
       tetradic: '四色配色',
+      invertedTetradic: '逆四色配色',
       square: '正方形配色',
       monochromatic: '単色',
       compound: '複合',
@@ -555,6 +520,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: 'Triadisch',
       splitComplementary: 'Geteiltes Komplement',
       tetradic: 'Tetradisch',
+      invertedTetradic: 'Invertiert-Tetradisch',
       square: 'Quadrat',
       monochromatic: 'Monochromatisch',
       compound: 'Zusammengesetzt',
@@ -566,6 +532,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: 'Triadique',
       splitComplementary: 'Complémentaire divisé',
       tetradic: 'Tétradique',
+      invertedTetradic: 'Tétradique inversé',
       square: 'Carré',
       monochromatic: 'Monochromatique',
       compound: 'Composé',
@@ -577,6 +544,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: '삼원색',
       splitComplementary: '분리보색',
       tetradic: '사색',
+      invertedTetradic: '반전 사색',
       square: '정사각형',
       monochromatic: '단색',
       compound: '복합',
@@ -588,6 +556,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: '三角配色',
       splitComplementary: '分裂互补',
       tetradic: '四色配色',
+      invertedTetradic: '逆四色配色',
       square: '正方形配色',
       monochromatic: '单色',
       compound: '复合',
@@ -833,196 +802,6 @@ function buildSheets(locale: LocaleCode): Record<string, string> {
   return translations[locale];
 }
 
-function buildJobNames(locale: LocaleCode): Record<string, string> {
-  // Hardcoded FFXIV job name translations
-  const translations: Record<LocaleCode, Record<string, string>> = {
-    en: {
-      paladin: 'Paladin',
-      warrior: 'Warrior',
-      darkKnight: 'Dark Knight',
-      gunbreaker: 'Gunbreaker',
-      whiteMage: 'White Mage',
-      scholar: 'Scholar',
-      astrologian: 'Astrologian',
-      sage: 'Sage',
-      monk: 'Monk',
-      dragoon: 'Dragoon',
-      ninja: 'Ninja',
-      samurai: 'Samurai',
-      reaper: 'Reaper',
-      viper: 'Viper',
-      bard: 'Bard',
-      machinist: 'Machinist',
-      dancer: 'Dancer',
-      blackMage: 'Black Mage',
-      summoner: 'Summoner',
-      redMage: 'Red Mage',
-      pictomancer: 'Pictomancer',
-      blueMage: 'Blue Mage',
-    },
-    ja: {
-      paladin: 'ナイト',
-      warrior: '戦士',
-      darkKnight: '暗黒騎士',
-      gunbreaker: 'ガンブレイカー',
-      whiteMage: '白魔道士',
-      scholar: '学者',
-      astrologian: '占星術師',
-      sage: '賢者',
-      monk: 'モンク',
-      dragoon: '竜騎士',
-      ninja: '忍者',
-      samurai: '侍',
-      reaper: 'リーパー',
-      viper: 'ヴァイパー',
-      bard: '吟遊詩人',
-      machinist: '機工士',
-      dancer: '踊り子',
-      blackMage: '黒魔道士',
-      summoner: '召喚士',
-      redMage: '赤魔道士',
-      pictomancer: 'ピクトマンサー',
-      blueMage: '青魔道士',
-    },
-    de: {
-      paladin: 'Paladin',
-      warrior: 'Krieger',
-      darkKnight: 'Dunkelritter',
-      gunbreaker: 'Revolverklinge',
-      whiteMage: 'Weißmagier',
-      scholar: 'Gelehrter',
-      astrologian: 'Astrologe',
-      sage: 'Weiser',
-      monk: 'Mönch',
-      dragoon: 'Dragoon',
-      ninja: 'Ninja',
-      samurai: 'Samurai',
-      reaper: 'Schnitter',
-      viper: 'Viper',
-      bard: 'Barde',
-      machinist: 'Maschinist',
-      dancer: 'Tänzer',
-      blackMage: 'Schwarzmagier',
-      summoner: 'Beschwörer',
-      redMage: 'Rotmagier',
-      pictomancer: 'Piktomant',
-      blueMage: 'Blaumagier',
-    },
-    fr: {
-      paladin: 'Paladin',
-      warrior: 'Guerrier',
-      darkKnight: 'Chevalier noir',
-      gunbreaker: 'Pistosabreur',
-      whiteMage: 'Mage blanc',
-      scholar: 'Érudit',
-      astrologian: 'Astromancien',
-      sage: 'Sage',
-      monk: 'Moine',
-      dragoon: 'Chevalier dragon',
-      ninja: 'Ninja',
-      samurai: 'Samouraï',
-      reaper: 'Faucheur',
-      viper: 'Rôdeur vipère',
-      bard: 'Barde',
-      machinist: 'Machiniste',
-      dancer: 'Danseur',
-      blackMage: 'Mage noir',
-      summoner: 'Invocateur',
-      redMage: 'Mage rouge',
-      pictomancer: 'Pictomancien',
-      blueMage: 'Mage bleu',
-    },
-    ko: {
-      paladin: '나이트',
-      warrior: '전사',
-      darkKnight: '암흑기사',
-      gunbreaker: '건브레이커',
-      whiteMage: '백마도사',
-      scholar: '학자',
-      astrologian: '점성술사',
-      sage: '현자',
-      monk: '몽크',
-      dragoon: '용기사',
-      ninja: '닌자',
-      samurai: '사무라이',
-      reaper: '리퍼',
-      viper: '바이퍼',
-      bard: '음유시인',
-      machinist: '기공사',
-      dancer: '무도가',
-      blackMage: '흑마도사',
-      summoner: '소환사',
-      redMage: '적마도사',
-      pictomancer: '픽토맨서',
-      blueMage: '청마도사',
-    },
-    zh: {
-      paladin: '骑士',
-      warrior: '战士',
-      darkKnight: '暗黑骑士',
-      gunbreaker: '绝枪战士',
-      whiteMage: '白魔法师',
-      scholar: '学者',
-      astrologian: '占星术士',
-      sage: '贤者',
-      monk: '武僧',
-      dragoon: '龙骑士',
-      ninja: '忍者',
-      samurai: '武士',
-      reaper: '钐镰客',
-      viper: '蝰蛇剑士',
-      bard: '吟游诗人',
-      machinist: '机工士',
-      dancer: '舞者',
-      blackMage: '黑魔法师',
-      summoner: '召唤师',
-      redMage: '赤魔法师',
-      pictomancer: '绘灵法师',
-      blueMage: '青魔法师',
-    },
-  };
-
-  return translations[locale];
-}
-
-function buildGrandCompanyNames(locale: LocaleCode): Record<string, string> {
-  // Hardcoded FFXIV Grand Company name translations
-  const translations: Record<LocaleCode, Record<string, string>> = {
-    en: {
-      maelstrom: 'The Maelstrom',
-      twinAdder: 'The Order of the Twin Adder',
-      immortalFlames: 'The Immortal Flames',
-    },
-    ja: {
-      maelstrom: '黒渦団',
-      twinAdder: '双蛇党',
-      immortalFlames: '不滅隊',
-    },
-    de: {
-      maelstrom: 'Der Mahlstrom',
-      twinAdder: 'Die Bruderschaft der Morgenviper',
-      immortalFlames: 'Die Legion der Unsterblichen',
-    },
-    fr: {
-      maelstrom: 'Le Maelstrom',
-      twinAdder: "L'ordre des Deux Vipères",
-      immortalFlames: 'Les Immortels',
-    },
-    ko: {
-      maelstrom: '흑와단',
-      twinAdder: '쌍사당',
-      immortalFlames: '불멸대',
-    },
-    zh: {
-      maelstrom: '黑涡团',
-      twinAdder: '双蛇党',
-      immortalFlames: '恒辉队',
-    },
-  };
-
-  return translations[locale];
-}
-
 function buildRaces(locale: LocaleCode): Record<string, string> {
   // Hardcoded FFXIV playable race name translations
   const translations: Record<LocaleCode, Record<string, string>> = {
@@ -1107,7 +886,7 @@ function buildClans(locale: LocaleCode): Record<string, string> {
       hellsguard: 'Hellsguard',
       raen: 'Raen',
       xaela: 'Xaela',
-      helion: 'Helion',
+      helions: 'Helions',
       theLost: 'The Lost',
       rava: 'Rava',
       veena: 'Veena',
@@ -1125,7 +904,7 @@ function buildClans(locale: LocaleCode): Record<string, string> {
       hellsguard: 'ローエンガルデ',
       raen: 'アウラ・レン',
       xaela: 'アウラ・ゼラ',
-      helion: 'ヘリオン',
+      helions: 'ヘリオン',
       theLost: 'ロスト',
       rava: 'ラヴァ・ヴィエラ',
       veena: 'ヴィナ・ヴィエラ',
@@ -1143,7 +922,7 @@ function buildClans(locale: LocaleCode): Record<string, string> {
       hellsguard: 'Lohengarde',
       raen: 'Auri-Raen',
       xaela: 'Auri-Xaela',
-      helion: 'Helion',
+      helions: 'Helions',
       theLost: 'Losgesagter',
       rava: 'Rava-Viera',
       veena: 'Veena-Viera',
@@ -1161,7 +940,7 @@ function buildClans(locale: LocaleCode): Record<string, string> {
       hellsguard: 'Clan du Feu',
       raen: 'Raen',
       xaela: 'Xaela',
-      helion: 'Hélion',
+      helions: 'Hélion',
       theLost: 'Égaré',
       rava: 'Rava',
       veena: 'Veena',
@@ -1179,7 +958,7 @@ function buildClans(locale: LocaleCode): Record<string, string> {
       hellsguard: '불꽃 파수꾼',
       raen: '렌',
       xaela: '젤라',
-      helion: '헬리온',
+      helions: '헬리온',
       theLost: '로스트',
       rava: '라바',
       veena: '비나',
@@ -1197,7 +976,7 @@ function buildClans(locale: LocaleCode): Record<string, string> {
       hellsguard: '红焰之民',
       raen: '晨曦之民',
       xaela: '暮晖之民',
-      helion: '日光之民',
+      helions: '日光之民',
       theLost: '迷失之民',
       rava: '拉瓦族',
       veena: '维纳族',

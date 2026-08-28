@@ -1,26 +1,5 @@
-import { test, expect } from '@playwright/test';
-
-async function seedStartupStorage(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  await page.addInitScript(() => {
-    localStorage.setItem('xivdyetools_welcome_seen', 'true');
-    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
-    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
-  });
-}
-
-async function dismissBlockingOverlays(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    const backdropCount = await page.locator('.modal-backdrop').count();
-    if (backdropCount === 0) break;
-
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
-  }
-
-  await page.evaluate(() => {
-    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
-  });
-}
+import { test, expect } from './fixtures/coverage';
+import { waitForAppReady, gotoTool, seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
 
 /**
  * E2E Tests for Extractor Tool (Color Matcher / Palette Extractor)
@@ -61,13 +40,12 @@ async function navigateToExtractorTool(page: import('@playwright/test').Page) {
   );
 
   // Wait for tool buttons to be available
-  await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
+  await waitForAppReady(page);
   await dismissBlockingOverlays(page);
   await page.waitForTimeout(300);
 
   // Navigate to the extractor/matcher tool
-  const matcherButton = page.locator('[data-tool="extractor"]:visible').first();
-  await matcherButton.click();
+  await gotoTool(page, 'extractor');
   await dismissBlockingOverlays(page);
   await page.waitForTimeout(800);
 }
@@ -223,8 +201,7 @@ test.describe('Extractor Tool - User Journeys', () => {
       await page.waitForTimeout(1000);
 
       // Navigate back to the tool
-      const matcherButton = page.locator('[data-tool="extractor"]:visible').first();
-      await matcherButton.click();
+  await gotoTool(page, 'extractor');
       await page.waitForTimeout(1000);
 
       // Expand options again
@@ -268,8 +245,7 @@ test.describe('Extractor Tool - User Journeys', () => {
         await page.waitForTimeout(1000);
 
         // Navigate back
-        const matcherButton = page.locator('[data-tool="extractor"]:visible').first();
-        await matcherButton.click();
+  await gotoTool(page, 'extractor');
         await page.waitForTimeout(1000);
 
         // Re-expand options
@@ -314,8 +290,7 @@ test.describe('Extractor Tool - User Journeys', () => {
       await page.waitForTimeout(1000);
 
       // Navigate back to the tool
-      const matcherButton = page.locator('[data-tool="extractor"]:visible').first();
-      await matcherButton.click();
+  await gotoTool(page, 'extractor');
       await page.waitForTimeout(2000);
 
       // Verify image was restored (canvas should still be attached with content)
@@ -358,8 +333,7 @@ test.describe('Extractor Tool - User Journeys', () => {
         await page.waitForTimeout(1000);
 
         // Navigate back
-        const matcherButton = page.locator('[data-tool="extractor"]:visible').first();
-        await matcherButton.click();
+  await gotoTool(page, 'extractor');
         await page.waitForTimeout(1000);
 
         // Section state should be persisted (via localStorage)

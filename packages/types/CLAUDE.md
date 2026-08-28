@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Package Overview
 
-`@xivdyetools/types` is the foundational type-only package for the entire xivdyetools ecosystem. It consolidates branded types (`HexColor`, `DyeId`, `Hue`, `Saturation`, `DiscordSnowflake`), domain interfaces (dyes, presets, character colors, auth payloads, API responses), and the shared `AppError`/`ErrorCode` runtime classes.
+`@xivdyetools/types` is the foundational type-only package for the entire xivdyetools ecosystem. It consolidates branded types (`HexColor`, `DyeId`, `Hue`, `Saturation`), domain interfaces (dyes, presets, character colors, auth payloads, API responses), and the shared `AppError`/`ErrorCode` runtime classes.
 
 Splitting these out keeps every other package and app aligned on a single source of truth for cross-package data shapes and lets every consumer share branded-type guarantees without runtime cost. The package has zero internal dependencies and ships with `sideEffects: false` so unused subpaths are tree-shaken.
 
@@ -35,14 +35,14 @@ The package is organized into per-domain subpath exports. Each subpath has its o
 
 ```
 src/
-├── color/         # RGB/HSV/LAB/OKLAB/OKLCH/LCH/HSL + branded HexColor/DyeId/Hue/Saturation
-├── dye/           # Dye, LocalizedDye, DyeWithDistance, DyeTypeFilters
-├── character/     # CharacterColor, CharacterColorMatch, SubRace, RACE_SUBRACES, COLOR_GRID_DIMENSIONS
+├── color/         # RGB/HSV/LAB/OKLAB/OKLCH/LCH/HSL/CMYK + branded HexColor/DyeId/Hue/Saturation + MATCH_QUALITY_TIERS
+├── dye/           # Dye, LocalizedDye, DyeWithDistance, DyeTypeFilters, FacewearColor
+├── character/     # CharacterColor, CharacterColorMatch, SubRace, RACE_SUBRACES
 ├── preset/        # Community preset shapes + every API request/response variant
 ├── auth/          # JWT payload, Discord/XIVAuth user shapes, isValidSnowflake validator
 ├── api/           # CachedData, ModerationResult/Stats, PriceData, RateLimitResult
 ├── error/         # ErrorCode enum + AppError runtime class (only runtime export)
-└── localization/  # LocaleCode, TranslationKey, JobKey, GrandCompanyKey, etc.
+└── localization/  # LocaleCode, TranslationKey, RaceKey, ClanKey, etc.
 ```
 
 ## Public API
@@ -58,7 +58,7 @@ type Hue = number & { readonly __brand: 'Hue' };
 type Saturation = number & { readonly __brand: 'Saturation' };
 
 function createHexColor(hex: string): HexColor;          // throws on invalid format
-function createDyeId(id: number): DyeId | null;          // 1-200 or <= -1000 (synthetic)
+function createDyeId(id: number): DyeId | null;          // a stainID, 1-254 (the loader window) — NOT itemIDs like 5729, NOT the retired synthetic negatives; no production caller today
 function createHue(hue: number): Hue;                     // wraps to 0-360
 function createSaturation(saturation: number): Saturation; // clamps to 0-100
 ```
@@ -66,14 +66,16 @@ function createSaturation(saturation: number): Saturation; // clamps to 0-100
 ### Color spaces and vision
 
 ```typescript
-type RGB; type HSV; type LAB; type OKLAB; type OKLCH; type LCH; type HSL;
+type RGB; type HSV; type LAB; type OKLAB; type OKLCH; type LCH; type HSL; type CMYK;
 type VisionType; type ColorblindMatrices;
+const MATCH_QUALITY_TIERS; function classifyMatchDistance(); type MatchQualityKey;
 ```
 
 ### Dye types
 
 ```typescript
 type Dye; type LocalizedDye; type DyeWithDistance; type DyeTypeFilters;
+type FacewearColor;   // { id: string slug; name; hex } — NOT a Dye (schema v2)
 ```
 
 ### Character types
@@ -81,19 +83,19 @@ type Dye; type LocalizedDye; type DyeWithDistance; type DyeTypeFilters;
 ```typescript
 type CharacterColor; type CharacterColorMatch;
 type SharedColorCategory; type RaceSpecificColorCategory;
-type SubRace; type Gender;
-const RACE_SUBRACES; const SUBRACE_TO_RACE; const COLOR_GRID_DIMENSIONS;
+type SubRace; type Gender; type Race;   // SubRace 'Helion' → 'Helions' in 2.0.0 (map the old stored value on read)
+const RACE_SUBRACES; const SUBRACE_TO_RACE;
 ```
 
 ### Preset types
 
-23 types covering `CommunityPreset`, `PresetSubmission`, `PresetFilters`, plus full request/response shapes for the presets API (`PresetListResponse`, `PresetSubmitResponse`, `PresetEditResponse`, `VoteResponse`, `ModerationResponse`, `CategoryListResponse`).
+23 types covering `CommunityPreset`, `PresetSubmission`, `PresetFilters`, plus full request/response shapes for the presets API (`PresetListResponse`, `PresetSubmitResponse`, `PresetEditResponse`, `VoteResponse`).
 
 ### Auth types
 
 ```typescript
 type AuthProvider; type AuthSource; type AuthContext; type PrimaryCharacter;
-type JWTPayload; type OAuthState;
+type JWTPayload;
 type DiscordTokenResponse; type DiscordUser;
 type XIVAuthTokenResponse; type XIVAuthUser; type XIVAuthCharacter;
 type XIVAuthCharacterRegistration; type XIVAuthSocialIdentity;
@@ -114,7 +116,7 @@ type ModerationStats; type PriceData; type RateLimitResult;
 ```typescript
 type LocaleCode;       // 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh'
 type TranslationKey; type HarmonyTypeKey; type ToolKey; type SheetKey;
-type JobKey; type GrandCompanyKey; type RaceKey; type ClanKey;
+type RaceKey; type ClanKey;
 type LocaleData; type LocalePreference;
 ```
 
@@ -143,9 +145,11 @@ The brand is structural-only — it has no runtime cost, and the `as` cast insid
 
 Add a brand when a primitive type is being passed across a boundary where mixing it up with a similarly-typed primitive would be a bug — for example: a Discord Snowflake vs. a generic string ID, or a `DyeId` vs. an arbitrary number. Add a `create*` helper that performs validation and returns either the branded value or `null`/throws.
 
-### Synthetic Facewear IDs
+### `DyeId` is a stainID (5.0)
 
-`createDyeId` accepts both regular IDs (1-200) and synthetic Facewear IDs (`<= -1000`). The 11 Facewear dyes lack real `itemID` values in `colors_xiv.json`, so `DyeDatabase.initialize()` (in `@xivdyetools/core`) assigns `-(1000 + nameHash)`. Anything filtering for market-board operations must use `dye.itemID > 0`, never a null check — `Dye.itemID` is always a number.
+`createDyeId` validates the **stainID window (1–254)** — the game's own dye number and the canonical key of the schema-v2 dye table (125 dyes today, room for future ones). It rejects legacy market itemIDs (5729…, 52254…) and the pre-v2 synthetic negative Facewear ids (`-(1000 + nameHash)`), which `DyeDatabase.initialize()` assigned before 2026-07-31 and which survive only in `@xivdyetools/core`'s frozen `LEGACY_FACEWEAR_ITEM_IDS` map for reading old serialized data — not as a `DyeId`.
+
+Nothing mints a new negative ID today. Facewear colors are their own type (`FacewearColor`, a string-slug `id`) and are not `Dye`s. `Dye.itemID` is always a number, so market-board filtering uses `dye.itemID > 0` — never a null check.
 
 ### Subpath exports
 

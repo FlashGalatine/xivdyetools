@@ -10,7 +10,13 @@
 
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
-import { errorEmbed, sanitizeErrorMessage } from '../../utils/response.js';
+import {
+  errorEmbed,
+  ephemeralResponse,
+  isValidUuid,
+  sanitizeErrorMessage,
+} from '../../utils/response.js';
+import { sanitizeName, sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { safeEditMessage, safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
@@ -39,35 +45,24 @@ export async function handlePresetRejectionModal(
   const userName = getModalUsername(interaction);
 
   if (!presetId || !userId) {
-    return Response.json({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        embeds: [errorEmbed('Error', 'Invalid modal submission.')],
-        flags: 64,
-      },
-    });
+    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid modal submission.')] });
+  }
+
+  // MOD-5 / FINDING-020 (2026-08-21 audit): same UUID gate as the button and
+  // slash paths — the id goes into a presets-api path segment
+  if (!isValidUuid(presetId)) {
+    logger?.warn('Rejection modal with a malformed preset id', { customId });
+    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid preset ID format.')] });
   }
 
   if (!presetApi.isModerator(env, userId)) {
-    return Response.json({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        embeds: [errorEmbed('Error', 'You do not have permission to reject presets.')],
-        flags: 64,
-      },
-    });
+    return ephemeralResponse({ embeds: [errorEmbed('Error', 'You do not have permission to reject presets.')] });
   }
 
   const reason = extractTextInputValue(interaction.data?.components, 'rejection_reason');
 
   if (!reason || reason.length < 10) {
-    return Response.json({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        embeds: [errorEmbed('Error', 'Please provide a valid rejection reason (at least 10 characters).')],
-        flags: 64,
-      },
-    });
+    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Please provide a valid rejection reason (at least 10 characters).')] });
   }
 
   ctx.waitUntil(processRejection(interaction, env, presetId, userId, userName, reason, logger));
@@ -88,6 +83,11 @@ async function processRejection(
 ): Promise<void> {
   try {
     const preset = await presetApi.rejectPreset(env, presetId, userId, reason);
+    // FINDING-019: moderator name (Discord-controlled), reason (typed) and
+    // preset name (author-controlled) are all rendered — sanitise each
+    const safeModerator = sanitizeUserName(userName);
+    const safeReason = sanitizeReason(reason);
+    const safeName = sanitizeName(preset.name);
 
     if (interaction.channel_id && interaction.message?.id) {
       const originalEmbed = interaction.message.embeds?.[0] || {};
@@ -100,8 +100,8 @@ async function processRejection(
             color: STATUS_DISPLAY.rejected.color,
             fields: [
               ...(originalEmbed.fields || []),
-              { name: 'Action', value: `Rejected by ${userName}`, inline: true },
-              { name: 'Reason', value: reason, inline: false },
+              { name: 'Action', value: `Rejected by ${safeModerator}`, inline: true },
+              { name: 'Reason', value: safeReason, inline: false },
             ],
             footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
             timestamp: originalEmbed.timestamp,
@@ -115,10 +115,10 @@ async function processRejection(
       await safeSendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
         embeds: [
           {
-            title: `\u274C ${preset.name} - Rejected`,
-            description: `Preset rejected by ${userName}`,
+            title: `\u274C ${safeName} - Rejected`,
+            description: `Preset rejected by ${safeModerator}`,
             color: STATUS_DISPLAY.rejected.color,
-            fields: [{ name: 'Reason', value: reason }],
+            fields: [{ name: 'Reason', value: safeReason }],
             footer: { text: `ID: ${preset.id}` },
           },
         ],
@@ -171,35 +171,23 @@ export async function handlePresetRevertModal(
   const userName = getModalUsername(interaction);
 
   if (!presetId || !userId) {
-    return Response.json({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        embeds: [errorEmbed('Error', 'Invalid modal submission.')],
-        flags: 64,
-      },
-    });
+    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid modal submission.')] });
+  }
+
+  // MOD-5 / FINDING-020: UUID gate, same as the button and slash paths
+  if (!isValidUuid(presetId)) {
+    logger?.warn('Revert modal with a malformed preset id', { customId });
+    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid preset ID format.')] });
   }
 
   if (!presetApi.isModerator(env, userId)) {
-    return Response.json({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        embeds: [errorEmbed('Error', 'You do not have permission to revert presets.')],
-        flags: 64,
-      },
-    });
+    return ephemeralResponse({ embeds: [errorEmbed('Error', 'You do not have permission to revert presets.')] });
   }
 
   const reason = extractTextInputValue(interaction.data?.components, 'revert_reason');
 
   if (!reason || reason.length < 10) {
-    return Response.json({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        embeds: [errorEmbed('Error', 'Please provide a valid revert reason (at least 10 characters).')],
-        flags: 64,
-      },
-    });
+    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Please provide a valid revert reason (at least 10 characters).')] });
   }
 
   ctx.waitUntil(processRevert(interaction, env, presetId, userId, userName, reason, logger));
@@ -220,6 +208,10 @@ async function processRevert(
 ): Promise<void> {
   try {
     const preset = await presetApi.revertPreset(env, presetId, reason, userId);
+    // FINDING-019
+    const safeModerator = sanitizeUserName(userName);
+    const safeReason = sanitizeReason(reason);
+    const safeName = sanitizeName(preset.name);
 
     if (interaction.channel_id && interaction.message?.id) {
       await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
@@ -229,9 +221,9 @@ async function processRevert(
             description: `The preset has been restored to its previous state.`,
             color: 0x5865f2,
             fields: [
-              { name: 'Preset', value: preset.name, inline: true },
-              { name: 'Action', value: `Reverted by ${userName}`, inline: true },
-              { name: 'Reason', value: reason, inline: false },
+              { name: 'Preset', value: safeName, inline: true },
+              { name: 'Action', value: `Reverted by ${safeModerator}`, inline: true },
+              { name: 'Reason', value: safeReason, inline: false },
             ],
             footer: { text: `ID: ${preset.id}` },
             timestamp: new Date().toISOString(),
@@ -245,10 +237,10 @@ async function processRevert(
       await safeSendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
         embeds: [
           {
-            title: `\u21A9\uFE0F ${preset.name} - Edit Reverted`,
-            description: `Preset edit reverted by ${userName}`,
+            title: `\u21A9\uFE0F ${safeName} - Edit Reverted`,
+            description: `Preset edit reverted by ${safeModerator}`,
             color: 0x5865f2,
-            fields: [{ name: 'Reason', value: reason }],
+            fields: [{ name: 'Reason', value: safeReason }],
             footer: { text: `ID: ${preset.id}` },
           },
         ],

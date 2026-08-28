@@ -109,15 +109,22 @@ describe('EmptyState', () => {
   // ============================================================================
 
   describe('Icon Rendering', () => {
-    it('should render emoji icon as text', () => {
-      emptyState = new EmptyState(container, {
-        icon: '🎨',
-        title: 'No palette',
-      });
-      emptyState.init();
-
-      const icon = query(container, '.empty-state-icon');
-      expect(getText(icon)).toBe('🎨');
+    // 5.0: EmptyStateOptions.icon accepts static SVG constants only — the
+    // emoji fallback died with the empty-state-icons dissolution. Every
+    // preset must hand out a real glyph from the shared icon system.
+    it('should hand out SVG glyphs from every preset', () => {
+      const presets = [
+        EMPTY_STATE_PRESETS.noSearchResults('q'),
+        EMPTY_STATE_PRESETS.allFilteredOut(),
+        EMPTY_STATE_PRESETS.noPriceData(),
+        EMPTY_STATE_PRESETS.noHarmonyResults(),
+        EMPTY_STATE_PRESETS.noImage(),
+        EMPTY_STATE_PRESETS.error('boom'),
+        EMPTY_STATE_PRESETS.loading(),
+      ];
+      for (const preset of presets) {
+        expect(preset.icon).toContain('<svg');
+      }
     });
 
     it('should render SVG icon as innerHTML', () => {
@@ -271,14 +278,14 @@ describe('EmptyState', () => {
 
     it('should update icon', () => {
       emptyState = new EmptyState(container, {
-        icon: '🔍',
+        icon: '<svg data-glyph="a"></svg>',
         title: 'Title',
       });
       emptyState.init();
 
-      emptyState.setOptions({ icon: '🎨' });
+      emptyState.setOptions({ icon: '<svg data-glyph="b"></svg>' });
 
-      expect(getText(query(container, '.empty-state-icon'))).toBe('🎨');
+      expect(query(container, '.empty-state-icon svg')?.getAttribute('data-glyph')).toBe('b');
     });
   });
 
@@ -406,14 +413,38 @@ describe('EmptyState', () => {
       expect(html).toContain('viewBox="0 0 24 24"');
     });
 
-    it('should escape non-SVG icons', () => {
+    it('should reject non-SVG icons outright', () => {
       const html = getEmptyStateHTML({
         icon: '<script>alert("xss")</script>',
         title: 'Title',
       });
 
       expect(html).not.toContain('<script>');
-      expect(html).toContain('&lt;script&gt;');
+      expect(html).not.toContain('alert');
+    });
+
+    // FINDING-011 / WEB-2: the dye-search query is interpolated into the
+    // title; a query must never become markup.
+    it('escapes markup in the title and description', () => {
+      const title = 'No dyes match "<img src=x onerror=alert(1)>"';
+      const description = '<b>Try</b> another <a href="https://evil.example">search</a>';
+      const html = getEmptyStateHTML({
+        icon: '<svg viewBox="0 0 24 24"></svg>',
+        title,
+        description,
+      });
+
+      expect(html).not.toContain('<img');
+      expect(html).not.toContain('<b>');
+      expect(html).not.toContain('<a ');
+
+      const host = document.createElement('div');
+      host.innerHTML = html;
+      expect(host.querySelector('img, b, a')).toBeNull();
+      expect(host.querySelector('.empty-state-title')!.textContent).toBe(title);
+      expect(host.querySelector('.empty-state-description')!.textContent).toBe(description);
+      // The icon slot is unaffected — it is still the trusted SVG constant
+      expect(host.querySelector('.empty-state-icon svg')).not.toBeNull();
     });
   });
 

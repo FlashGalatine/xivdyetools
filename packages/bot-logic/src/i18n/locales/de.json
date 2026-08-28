@@ -1,0 +1,682 @@
+{
+  "meta": {
+    "locale": "de",
+    "name": "German"
+  },
+  "common": {
+    "dyes": "Farbstoffe",
+    "category": "Kategorie",
+    "hexColor": "Hex-Farbe",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "Gegenstands-ID",
+    "footer": "XIV Dye Tools",
+    "error": "Fehler",
+    "unknownError": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+  },
+  "errors": {
+    "dyeNotFound": "Farbstoff mit dem Namen \"{name}\" wurde nicht gefunden.",
+    "invalidColor": "\"{input}\" konnte nicht als Farbe interpretiert werden.\n\nBitte gib einen gültigen Hex-Code (z.B. `#FF0000`) oder Farbstoffnamen (z.B. `Dalamud-Rot`) ein.",
+    "missingInput": "Bitte gib eine Farbe (Hex-Code oder Farbstoffname) ein.",
+    "missingQuery": "Bitte gib einen Suchbegriff ein.",
+    "missingName": "Bitte gib einen Farbstoffnamen ein.",
+    "missingSubcommand": "Bitte gib einen Unterbefehl an.",
+    "unknownSubcommand": "Unbekannter Unterbefehl: {name}",
+    "noMatchFound": "Keine passenden Farbstoffe in der Datenbank gefunden.",
+    "noDyesAvailable": "Keine Farbstoffe in der Datenbank verfügbar.",
+    "generationFailed": "Beim Erstellen der Visualisierung ist ein Fehler aufgetreten. Bitte versuche es später erneut.",
+    "rateLimited_one": "Du verwendest diesen Befehl zu schnell! Bitte warte **{seconds} Sekunde**, bevor du es erneut versuchst.",
+    "rateLimited_other": "Du verwendest diesen Befehl zu schnell! Bitte warte **{seconds} Sekunden**, bevor du es erneut versuchst.",
+    "unknownUser": "Benutzer konnte nicht identifiziert werden. Bitte versuche es erneut.",
+    "notImplemented": "Der Befehl `/{command}` ist noch nicht implementiert.",
+    "commandFailed": "Bei der Verarbeitung deines Befehls ist ein Fehler aufgetreten.",
+    "unsupportedComponent": "Dieser Komponententyp wird noch nicht unterstützt.",
+    "unknownModal": "Unbekannte Modal-Übermittlung.",
+    "unknownButton": "Dieser Button wird nicht erkannt."
+  },
+  "quality": {
+    "perfect": "Perfekt",
+    "excellent": "Ausgezeichnet",
+    "good": "Gut",
+    "fair": "Akzeptabel",
+    "approximate": "Ungefähr"
+  },
+  "manual": {
+    "title": "XIV Dye Tools Handbuch",
+    "welcome": "Willkommen bei **XIV Dye Tools**! Dieser Bot hilft dir beim Erkunden und Abgleichen von FFXIV-Farbstoffen.",
+    "commandsIntro": "Unten findest du alle verfügbaren Befehle nach Kategorien geordnet.",
+    "autocompleteNote": "Alle Befehle unterstützen **Autovervollständigung** für Farbstoffnamen!",
+    "colorMatching": "Farbabgleich",
+    "dyeInformation": "Farbstoff-Informationen",
+    "botInformation": "Bot-Informationen",
+    "tipsResources": "Tipps & Ressourcen",
+    "extractor": {
+      "name": "`/extractor color <Farbe> [Anzahl]` | `/extractor image <Bild>`",
+      "description": "Extrahiere Farben und finde passende FFXIV-Farbstoffe.\n• `color`: Hex-Code oder Farbstoffname zu nächsten Farbstoffen zuordnen\n• `image`: Dominante Farben aus hochgeladenem Bild extrahieren"
+    },
+    "harmony": {
+      "name": "`/harmony <Farbe> [Typ]`",
+      "description": "Generiere harmonische Farbstoffkombinationen.\n• Typen: Komplementär, Analog, Triadisch, Geteilt-Komplementär, Tetradisch, Quadratisch, Monochromatisch\n• Erstellt ein visuelles Farbrad"
+    },
+    "mixer": {
+      "name": "`/mixer <Farbstoff1> <Farbstoff2> [Modus]`",
+      "description": "Mische zwei Farbstoffe mit Farbwissenschaft.\n• 6 Mischmodi: RGB, LAB, OKLAB, RYB, HSL, Spektral\n• Findet den nächsten FFXIV-Farbstoff zum Mischergebnis"
+    },
+    "gradient": {
+      "name": "`/gradient <Start> <Ende> [Schritte]`",
+      "description": "Erstelle einen Farbverlauf zwischen zwei Farben.\n• Zeigt passende Farbstoffe für jeden Verlaufsschritt\n• Konfigurierbare Schrittanzahl (2-10)"
+    },
+    "swatch": {
+      "name": "`/swatch color <Typ> <Index>` | `/swatch grid <Typ> <Zeile> <Spalte>`",
+      "description": "FFXIV-Charakterfarben zu Farbstoffen zuordnen.\n• Unterstützt Haut, Haare, Augen, Highlights, Lippen, Tattoos, Gesichtsbemalung\n• Rassen-/Stammspezifische Paletten für Haut und Haare"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <Key> <Wert>` | `/preferences reset`",
+      "description": "Verwalte deine Bot-Einstellungen.\n• Setze Standards für Mischmodus, Matching-Methode, Ergebnisanzahl\n• Konfiguriere Charakter-Stamm/Geschlecht und Markt-Welt"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <Suche>`",
+      "description": "Suche Farbstoffe nach Namen.\n• Fuzzy-Suche findet Teilübereinstimmungen\n• Zeigt Hex-Codes und Kategorien"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <Name>`",
+      "description": "Erhalte detaillierte Informationen zu einem bestimmten Farbstoff.\n• Zeigt Hex-, RGB-, HSV-Werte\n• Zeigt Kategorie und Gegenstands-ID"
+    },
+    "dyeList": {
+      "name": "`/dye list [Kategorie]`",
+      "description": "Liste alle Farbstoffe oder filtere nach Kategorie.\n• Kategorien: Rot, Braun, Gelb, Grün, Blau, Violett, Neutral, Spezial"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "Zeige 5 zufällig ausgewählte Farbstoffe.\n• Option zur Begrenzung auf 1 Farbstoff pro Kategorie"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "Zeige Bot-Informationen, Version und Links."
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "Zeige dieses Hilfe-Handbuch."
+    },
+    "tips": {
+      "autocomplete": "**Autovervollständigung:** Beginne einen Farbstoffnamen einzugeben und Vorschläge erscheinen!",
+      "hexColors": "**Hex-Farben:** Verwende das Standard-Webformat wie `#FF0000` (Rot) oder `#5865F2` (Blurple)",
+      "dyeNames": "**Farbstoffnamen:** Gib Teilnamen ein - 'Dala' findet 'Dalamud-Rot'",
+      "facewearExcluded": "**Gesichtszubehör ausgeschlossen:** Generische Gesichtszubehör-Farbstoffe (wie 'Rot', 'Blau') sind von den Ergebnissen ausgeschlossen",
+      "links": "**Links:**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "Keine Farbstoffe gefunden, die \"{query}\" entsprechen.",
+      "tryDifferent": "Versuche einen anderen Suchbegriff",
+      "resultsTitle": "Suchergebnisse für \"{query}\"",
+      "foundCount_one": "{count} Farbstoff gefunden:",
+      "foundCount_other": "{count} Farbstoffe gefunden:",
+      "moreResults": "...und {count} weitere Ergebnisse",
+      "useInfoHint": "Verwende /dye info <Name> für detaillierte Informationen"
+    },
+    "info": {
+      "detailedInfo": "Detaillierte Informationen zu diesem {category}-Farbstoff."
+    },
+    "list": {
+      "noDyesInCategory": "Keine Farbstoffe in der Kategorie \"{category}\" gefunden.",
+      "categoryTitle": "{category}-Farbstoffe",
+      "dyesInCategory": "{count} Farbstoffe in dieser Kategorie:",
+      "categoriesTitle": "Farbstoff-Kategorien",
+      "categorySummary": "Es gibt {total} Farbstoffe in {count} Kategorien:",
+      "useListHint": "Verwende /dye list <Kategorie> um Farbstoffe in einer Kategorie zu sehen"
+    },
+    "random": {
+      "title": "Zufällige Farbstoffe",
+      "titleUnique": "Zufällige Farbstoffe (1 pro Kategorie)",
+      "description": "Hier sind {count} zufällig ausgewählte Farbstoffe:",
+      "runAgainHint": "Führe erneut aus für andere Farbstoffe!"
+    }
+  },
+  "extractor": {
+    "topMatches": "Top {count} Farbstoff-Übereinstimmungen"
+  },
+  "gradient": {
+    "title": "Farbverlauf",
+    "startColor": "Start",
+    "endColor": "Ende",
+    "steps_one": "{count} Schritt",
+    "steps_other": "{count} Schritte",
+    "colorSpace": "Farbraum",
+    "matching": "Zuordnung"
+  },
+  "harmony": {
+    "title": "{type}-Harmonie",
+    "baseColor": "Basisfarbe",
+    "complementary": "Komplementär",
+    "analogous": "Analog",
+    "triadic": "Triadisch",
+    "splitComplementary": "Geteilt-Komplementär",
+    "tetradic": "Tetradisch",
+    "square": "Quadratisch",
+    "monochromatic": "Monochromatisch",
+    "invertedTetradic": "Invertiert-Tetradisch"
+  },
+  "mixer": {
+    "blendResult": "Mischergebnis",
+    "bothRequired": "Beide Farbstoffe (dye1 und dye2) sind erforderlich."
+  },
+  "accessibility": {
+    "normalVision": "Normale Sicht",
+    "protanopia": "Protanopie",
+    "deuteranopia": "Deuteranopie",
+    "tritanopia": "Tritanopie",
+    "achromatopsia": "Achromatopsie",
+    "allLenses": "Alle Sehweisen"
+  },
+  "about": {
+    "title": "XIV Dye Tools Bot",
+    "version": "Version",
+    "description": "Ein Discord-Bot zum Erkunden und Abgleichen von FFXIV-Farbstofffarben.",
+    "commands": "Befehle",
+    "totalCount": "{count} insgesamt",
+    "links": "Links",
+    "dyes": "Farbstoffe",
+    "builtOn": "Basiert auf",
+    "attribution": "Rechtliches",
+    "poweredBy": "Powered by Cloudflare Workers",
+    "categories": {
+      "colorTools": "Farbwerkzeuge",
+      "dyeDatabase": "Farbstoff-Datenbank",
+      "analysis": "Analyse",
+      "community": "Community",
+      "utility": "Dienstprogramme"
+    },
+    "removedTitle": "In v5 entfernt",
+    "removedBody": "diese Befehle wurden entfernt — nutze /extractor, /preferences und die Sammlungen in der Web-App."
+  },
+  "preset": {
+    "title": "Community-Vorlagen",
+    "apiDisabled": "Community-Vorlagen sind für diesen Bot nicht konfiguriert.",
+    "notFound": "Keine passende Vorlage gefunden.",
+    "noneInCategory": "Keine Vorlagen in dieser Kategorie gefunden.",
+    "useShowTip": "Verwende `/preset show <Name>` für Details",
+    "randomTitle": "Zufällige Vorlage",
+    "notEnoughDyes": "Bitte gib mindestens 2 Farbstoffe für deine Vorlage an.",
+    "invalidDye": "Einer der angegebenen Farbstoffe wurde nicht gefunden.",
+    "duplicateExists": "Ähnliche Vorlage existiert",
+    "duplicateVoted": "Deine Stimme wurde der bestehenden Vorlage hinzugefügt.",
+    "submitted": "Vorlage eingereicht!",
+    "submittedApproved": "Deine Vorlage wurde genehmigt und ist jetzt live!",
+    "submittedPending": "Deine Vorlage wartet auf Moderation.",
+    "voteRemoved": "Stimme entfernt",
+    "voteAdded": "Stimme hinzugefügt",
+    "currentVotes": "Aktuelle Stimmen: {count}",
+    "colors": "Farben",
+    "tags": "Tags",
+    "author": "Autor",
+    "votes": "Stimmen",
+    "api": {
+      "badRequest": "Ungültige Anfrage. Bitte überprüfe deine Eingabe und versuche es erneut.",
+      "permissionDenied": "Zugriff verweigert.",
+      "notFound": "Nicht gefunden.",
+      "conflict": "Dies existiert bereits oder steht im Konflikt mit einer anderen Ressource.",
+      "rateLimited": "Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut.",
+      "serverError": "Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.",
+      "unknown": "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
+    },
+    "invalidStructure": "Ungültige Befehlsstruktur",
+    "none": "Keine Vorlagen gefunden.",
+    "showing": "{shown} von {total} Vorlagen",
+    "loadFailed": "Vorlagen konnten nicht geladen werden.",
+    "loadOneFailed": "Vorlage konnte nicht geladen werden.",
+    "loadRandomFailed": "Zufällige Vorlage konnte nicht geladen werden.",
+    "duplicateIntro": "Eine Vorlage mit denselben Farbstoffen existiert bereits:",
+    "byAuthor": "von {author}",
+    "official": "Offiziell",
+    "unknownAuthor": "Unbekannt",
+    "name": "Name",
+    "colorCount": "{n} Farben",
+    "submitFailed": "Vorlage konnte nicht eingereicht werden.",
+    "editFailed": "Vorlage konnte nicht bearbeitet werden.",
+    "voteFailed": "Stimme konnte nicht verarbeitet werden.",
+    "edit": {
+      "noFields": "Bitte gib mindestens ein Feld zum Aktualisieren an.",
+      "notOwner": "Du kannst nur deine eigenen Vorlagen bearbeiten.",
+      "invalidDye": "Ungültiger Farbstoff: {name}",
+      "dyeCount": "Eine Vorlage muss 2–5 Farbstoffe enthalten.",
+      "duplicateTitle": "Doppelte Farbstoffkombination",
+      "duplicateIntro": "Diese Farbstoffkombination existiert bereits in einer anderen Vorlage:",
+      "duplicateHint": "Bitte verwende eine andere Farbstoffkombination.",
+      "updatedPending": "Vorlage aktualisiert – Prüfung ausstehend",
+      "updated": "Vorlage aktualisiert",
+      "pendingDescription": "Deine Änderungen wurden zur Prüfung eingereicht (Inhaltsmoderation).",
+      "appliedDescription": "Deine Änderungen wurden übernommen.",
+      "pendingFooter": "Ein Moderator wird deine Änderungen in Kürze prüfen."
+    },
+    "favorite": {
+      "nameRequired": "preset_name ist erforderlich",
+      "alreadyExists": "**{name}** ist bereits in deinen Favoriten.",
+      "limitReached": "Du hast das Limit von {max} favorisierten Vorlagen erreicht.",
+      "addFailed": "Favorit konnte nicht hinzugefügt werden – bitte versuche es erneut.",
+      "removeFailed": "Favorit konnte nicht entfernt werden – bitte versuche es erneut.",
+      "addedTitle": "Favorit hinzugefügt",
+      "added": "**{name}** ist jetzt in deinen favorisierten Vorlagen.",
+      "notFound": "**{name}** ist nicht in deinen Favoriten.",
+      "removedTitle": "Favorit entfernt",
+      "removed": "**{name}** wurde aus deinen Favoriten entfernt.",
+      "listTitle": "Deine favorisierten Vorlagen",
+      "listTitleCount": "Deine favorisierten Vorlagen ({n}/{max})",
+      "empty": "Du hast noch keine Vorlagen favorisiert. Füge mit `/preset favorite add` eine hinzu.",
+      "allRemoved": "Alle deine favorisierten Vorlagen scheinen entfernt worden zu sein. Räume die Einträge mit `/preset favorite remove` auf."
+    },
+    "noValidDyes": "Keine gültigen Farbstoffe in dieser Vorlage"
+  },
+  "budget": {
+    "findTitle": "Budget-Alternativen für {dyeName}",
+    "noAlternatives": "Keine günstigeren Alternativen innerhalb deiner Kriterien gefunden.",
+    "worldSet": "Deine Standardwelt wurde auf **{world}** gesetzt.",
+    "noWorldSet": {
+      "title": "Keine Welt festgelegt",
+      "description": "Lege deine Welt mit `/budget set_world <world>` fest oder gib die Option `world` an."
+    },
+    "errors": {
+      "notConfigured": "Die Budget-Funktion ist auf diesem Server nicht verfügbar. Marktbrett-Integration ist nicht konfiguriert.",
+      "worldNotFound": "Welt oder Datenzentrum \"{world}\" konnte nicht gefunden werden.\n\nBitte überprüfe die Schreibweise oder versuche einen Datenzentrumsnamen wie \"Light\" oder \"Chaos\".",
+      "missingWorld": "Bitte gib eine Welt an.",
+      "saveFailed": "Deine Welt-Einstellung konnte nicht gespeichert werden. Bitte versuche es erneut.",
+      "missingDye": "Bitte gib eine Zielfarbe an.",
+      "dyeNotFound": "Farbe \"{name}\" konnte nicht gefunden werden.",
+      "missingPreset": "Bitte wähle eine Schnellauswahl-Vorlage.",
+      "presetNotFound": "Schnellauswahl-Vorlage \"{id}\" konnte nicht gefunden werden.",
+      "apiError": "Marktbrett-Daten konnten nicht abgerufen werden. Bitte versuche es später erneut.",
+      "rateLimited": "Zu viele Anfragen. Bitte warte einen Moment, bevor du erneut Preise abrufst."
+    },
+    "dataCenterLabel": "{name} ({region}-Datenzentrum)"
+  },
+  "preferences": {
+    "title": "Deine Einstellungen",
+    "show": {
+      "description": "Diese Einstellungen beeinflussen die Funktionsweise der Befehle.\nParameter, die du angibst, überschreiben immer diese Standardwerte.",
+      "default": "Standard",
+      "notSet": "Nicht gesetzt",
+      "hint": "Verwende /preferences set zum Anpassen",
+      "lastUpdated": "Zuletzt aktualisiert"
+    },
+    "set": {
+      "success": "Einstellung aktualisiert",
+      "successCount": "{count} Einstellungen aktualisiert",
+      "affects": "Betrifft",
+      "failedToUpdate": "Aktualisierung fehlgeschlagen",
+      "noOptions": "Bitte gib mindestens eine Einstellung an.\n\nBeispiel: `/preferences set language:de blending:oklab`",
+      "noValidOptions": "Keine gültigen Einstellungen angegeben.",
+      "overrideNote": "Befehlsparameter überschreiben diese Einstellungen"
+    },
+    "reset": {
+      "success": "Einstellung zurückgesetzt",
+      "single": "**{key}** wurde auf den Standardwert zurückgesetzt.",
+      "allTitle": "Alle Einstellungen zurückgesetzt",
+      "allDescription": "Alle Einstellungen wurden auf Standardwerte zurückgesetzt.",
+      "failed": "Einstellung(en) konnten nicht zurückgesetzt werden. Bitte versuche es erneut.",
+      "showHint": "/preferences show zeigt aktuelle Einstellungen"
+    },
+    "keys": {
+      "language": "Sprache",
+      "blending": "Mischmodus",
+      "matching": "Matching-Methode",
+      "count": "Ergebnisanzahl",
+      "clan": "Charakter-Stamm",
+      "gender": "Charakter-Geschlecht",
+      "world": "Markt-Welt",
+      "market": "Marktpreise anzeigen",
+      "showHex": "Hex-Codes anzeigen",
+      "showRgb": "RGB-Werte anzeigen",
+      "showHsv": "HSV-Werte anzeigen",
+      "showLab": "LAB-Werte anzeigen",
+      "showDeltaE": "Delta-E anzeigen",
+      "showAcquisition": "Bezugsquelle anzeigen",
+      "filters": "Farbstoff-Filter",
+      "theme": "Karten-Design"
+    },
+    "errors": {
+      "invalidKey": "Unbekannter Einstellungsschlüssel: {key}",
+      "invalidValue": "Ungültiger Wert für {key}. Gültige Optionen: {options}",
+      "noSubcommand": "Kein Unterbefehl angegeben"
+    },
+    "values": {
+      "results": "{count} Ergebnisse",
+      "male": "Männlich ♂️",
+      "female": "Weiblich ♀️",
+      "yes": "Ja",
+      "no": "Nein",
+      "themeDark": "dunkel",
+      "themeLight": "hell"
+    },
+    "validation": {
+      "invalidLanguage": "Ungültige Sprache. Gültige Optionen: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "Ungültiger Mischmodus. Gültige Optionen:\n{options}",
+      "invalidMatchingMethod": "Ungültige Matching-Methode. Gültige Optionen:\n{options}",
+      "invalidCount": "Ungültige Anzahl. Muss eine Zahl zwischen 1 und 10 sein.",
+      "invalidClan": "Ungültiger Stamm. Gültige Stämme:\n{options}",
+      "invalidGender": "Ungültiges Geschlecht. Gültige Optionen: `male`, `female`",
+      "invalidWorld": "Ungültige Welt. Bitte gib einen gültigen FFXIV Welt- oder Datenzentrum-Namen ein.",
+      "invalidMarket": "Ungültiger Wert. Verwende `on`/`off` oder `true`/`false`.",
+      "error": "Beim Speichern der Einstellung ist ein Fehler aufgetreten. Bitte versuche es erneut.",
+      "invalidTheme": "Ungültiges Design. Wähle `dark` oder `light`."
+    },
+    "filters": {
+      "noOptions": "Bitte gib mindestens eine Filteroption an.",
+      "excluded": "Ausgeschlossen",
+      "included": "Eingeschlossen",
+      "updated": "Filter aktualisiert",
+      "affectsHint": "Betrifft: /match, /harmony, /gradient, /mixer",
+      "title": "Farbstoff-Filter",
+      "setHint": "Verwende /preferences filters set zum Anpassen",
+      "resetSuccess": "Filter zurückgesetzt",
+      "resetDescription": "Alle Farbstoff-Filter wurden auf Standardwerte zurückgesetzt (alle Farbstofftypen eingeschlossen).",
+      "labels": {
+        "metallic": "Metallic",
+        "pastel": "Pastell",
+        "dark": "Dunkel",
+        "cosmic": "Kosmo",
+        "ishgardian": "Ishgard",
+        "expensive": "Teuer (Reinweiß / Tiefschwarz)",
+        "vendor": "Händler",
+        "craft": "Hergestellt"
+      }
+    },
+    "affects": {
+      "allCommands": "alle Befehle",
+      "marketData": "Marktdaten auf Ergebniskarten",
+      "everyCard": "jede erzeugte Karte",
+      "resultCards": "alle Befehle mit Ergebniskarten"
+    },
+    "methods": {
+      "ciede2000": "Branchenübliche Wahrnehmungsformel (Standard)",
+      "oklab": "OKLAB-Wahrnehmungsabstand",
+      "cie76": "Euklidischer CIELAB-Abstand",
+      "redmean": "Gewichtete RGB-Näherung",
+      "rgb": "Euklidischer RGB-Abstand",
+      "distinguish": "RGB DIST auf 0–100 skaliert"
+    },
+    "blendingModes": {
+      "rgb": "Additive Kanalmittelung (Standard)",
+      "lab": "Wahrnehmungsgleichmäßiges CIELAB-Mischen",
+      "oklab": "Moderne Wahrnehmung (behebt LAB Blau→Violett)",
+      "ryb": "Traditioneller Künstler-Farbkreis",
+      "hsl": "Farbton-Sättigung-Helligkeit-Interpolation",
+      "spectral": "Kubelka-Munk-Physiksimulation"
+    }
+  },
+  "webhook": {
+    "newPresetPending": "Neue Vorlage wartet auf Überprüfung",
+    "newPresetPublished": "Neue Vorlage veröffentlicht",
+    "previewImagePending": "Vorschaubild wartet auf Überprüfung",
+    "fields": {
+      "category": "Kategorie",
+      "author": "Autor",
+      "source": "Quelle",
+      "dyes": "Farbstoffe",
+      "tags": "Tags"
+    },
+    "autoApproved": "Automatisch genehmigt",
+    "buttons": {
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "revert": "Zurücksetzen"
+    },
+    "editPending": "Vorlagen-Änderung wartet auf Überprüfung",
+    "sources": {
+      "web": "Web-App",
+      "discord": "Discord"
+    }
+  },
+  "previewImage": {
+    "invalidButton": "Ungültige Schaltflächeninteraktion.",
+    "notPermitted": "Du hast keine Berechtigung, Vorschaubilder zu moderieren.",
+    "actionFailed": "Das Vorschaubild konnte nicht aktualisiert werden. Bitte versuche es erneut.",
+    "approvedFooter": "Vorschaubild genehmigt von {moderator}",
+    "rejectedFooter": "Vorschaubild abgelehnt von {moderator} – Vorlage unverändert"
+  },
+  "matchImage": {
+    "missingImage": "Bitte hänge ein Bild zur Analyse an.",
+    "invalidAttachment": "Angehängtes Bild konnte nicht gefunden werden.",
+    "noColors": "Das Bild scheint vollständig transparent oder zu klein für die Analyse zu sein.",
+    "extractionFailed": "Farben konnten nicht aus dem Bild extrahiert werden.",
+    "processingFailed": "Bei der Verarbeitung des Bildes ist ein Fehler aufgetreten.",
+    "onlyDiscord": "Nur direkt auf Discord hochgeladene Bilder können analysiert werden.",
+    "imageTooLarge": "Bild ist zu groß. Bitte verwende ein kleineres Bild.",
+    "unsupportedFormat": "Nicht unterstütztes Bildformat. Bitte verwende PNG, JPEG, GIF oder WebP.",
+    "timeout": "Bild-Download hat zu lange gedauert. Bitte versuche es erneut."
+  },
+  "matchImageHelp": {
+    "title": "So verwendest du /match_image",
+    "description": "Der `/match_image`-Befehl analysiert dein hochgeladenes Bild, um die dominante Farbe zu finden und sie dem nächsten FFXIV-Farbstoff zuzuordnen. Hier sind einige Tipps für beste Ergebnisse!",
+    "howItWorks": "So funktioniert es",
+    "howItWorksContent": "**1. Bildanalyse**\n- Dein Bild wird mit K-Means-Clustering verarbeitet\n- Die dominante(n) Farbe(n) werden extrahiert\n- Farben werden mit 136 FFXIV-Farbstoffen abgeglichen\n\n**2. Farbstoff-Zuordnung**\n- Verwendet euklidische Distanz im RGB-Farbraum\n- Gibt den/die nächsten passenden Farbstoff(e) zurück",
+    "tipsForBestResults": "Tipps für beste Ergebnisse",
+    "tipsContent": "**Bilder zuschneiden**\n- Fokussiere auf den spezifischen Bereich, den du abgleichen möchtest\n- Entferne UI-Elemente und Hintergründe\n\n**Gute Beleuchtung wählen**\n- Mache Screenshots in gut beleuchteten Bereichen\n- Vermeide dunkle Schatten oder extreme Highlights\n\n**Dunkle Hintergründe vermeiden**\n- Schwarze Hintergründe können Ergebnisse verfälschen\n- Verwende wenn möglich neutrale, hellere Hintergründe",
+    "commonIssues": "Häufige Probleme",
+    "commonIssuesContent": "**‚Ich habe eine dunkle Farbe bekommen, aber meine Ausrüstung ist hell!'**\n→ Dein Hintergrund ist wahrscheinlich dunkel. Schneide das Bild nur auf deine Ausrüstung zu.\n\n**‚Die Zuordnung scheint nicht zu stimmen'**\n→ Mehrere Farben? Der Algorithmus wählt die HÄUFIGSTE Farbe.\n\n**‚Kann ich einen bestimmten Teil abgleichen?'**\n→ Ja! Schneide vor dem Hochladen auf genau diesen Bereich zu.",
+    "proTips": "Profi-Tipps",
+    "proTipsContent": "• Verwende Bildbearbeitungssoftware zum Zuschneiden vor dem Hochladen\n• Bei metallischer/glänzender Ausrüstung können Ergebnisse variieren\n• Wenn du den Hex-Code kennst, verwende stattdessen `/match`\n• Extrahiere mehrere Farben mit der `colors`-Option (1-5)\n• Screenshots in 1920x1080 oder höher für beste Qualität",
+    "footer": "XIV Dye Tools - Mit Liebe für FFXIV Glamour-Enthusiasten gemacht",
+    "exampleUseCases": "Beispiel-Anwendungsfälle",
+    "goodExamples": "Gute Beispiele",
+    "goodExamplesContent": "• Zugeschnittener Screenshot eines einzelnen Bruststücks\n• Nahaufnahme von gefärbter Rüstung mit neutralem Hintergrund\n• Screenshot bei hellem Tageslicht\n• Bild fokussiert auf die Farbe, die du abgleichen möchtest",
+    "poorExamples": "Schlechte Beispiele",
+    "poorExamplesContent": "• Vollbild-Screenshot mit viel UI\n• Charakter in einem dunklen Dungeon oder einer Höhle\n• Mehrere Rüstungsteile mit verschiedenen Farbstoffen\n• Bild dominiert von Hintergrundfarben",
+    "whenToUse": "Wann /match_image vs /match verwenden",
+    "whenToUseContent": "**Verwende `/match_image` wenn:**\n• Du einen Screenshot hast und den Farbstoff finden möchtest\n• Du den genauen Farbcode nicht kennst\n• Du eine Farbe aus Inspirationsfotos abgleichen möchtest\n\n**Verwende `/match` wenn:**\n• Du den Hex-Farbcode bereits kennst\n• Du präzisere/exaktere Ergebnisse brauchst\n• Du mit Farbfeldern arbeitest",
+    "technicalDetails": "Technische Details",
+    "supportedFormats": "Unterstützte Formate",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "fileLimits": "Dateilimits",
+    "fileLimitsContent": "• Maximale Größe: 8MB\n• Verarbeitungszeit: ~1-3 Sekunden",
+    "matchQualityRatings": "Qualitätsbewertungen",
+    "matchQualityRatingsContent": "**Perfekt** (0 Distanz)\n**Ausgezeichnet** (<10 Distanz)\n**Gut** (<25 Distanz)\n**Akzeptabel** (<50 Distanz)\n**Ungefähr** (≥50 Distanz)\n\n*Niedrigere Distanz = bessere Übereinstimmung*",
+    "poweredBy": "Powered by Photon WASM Bildverarbeitung"
+  },
+  "card": {
+    "stain": "FARBNR.",
+    "src": "QUELLE",
+    "mkt": "MARKT",
+    "base": "BASIS",
+    "nearest": "NÄCHSTE FARBSTOFFE",
+    "nearestMore": "+{n} weitere",
+    "ideal": "IDEALFARBTON",
+    "found": "NÄCHSTER FARBSTOFF",
+    "name": "FARBSTOFF",
+    "cat": "KATEGORIE",
+    "bandKey": "Bänder: ≤6 / ≤12 / ≤20",
+    "derivedNote": "ΔE2000-Ableitung",
+    "tier0": "EXAKT",
+    "tier1": "NAH",
+    "tier2": "LOSE",
+    "tier3": "UNERREICHBAR",
+    "share": "ANTEIL",
+    "matched": "PASSENDER FARBSTOFF",
+    "rank": "RANG",
+    "target": "ZIEL",
+    "rampTitle": "Palette aus Bild",
+    "matchTitle": "Nächste Farbstoffe",
+    "colours": "{n} Farben",
+    "rampKey": "Bandbreite = Bildanteil",
+    "matchKey": "nächste per ΔE2000",
+    "manualLead": "Farben nicht wie erwartet? Siehe",
+    "manualTail": "",
+    "gradKey": "Streifen = jeder Schritt · Zeilen = die Farbstoffe",
+    "gradKeyCut_one": "Streifen = alle {n} Schritte · Zeilen = der {k} größte Abstand",
+    "gradKeyCut_other": "Streifen = alle {n} Schritte · Zeilen = die {k} größten Abstände",
+    "gradVerdict_one": "{n} Schritte ergeben {k} Farbstoff. Dazwischen gibt es im Spiel nichts.",
+    "gradVerdict_other": "{n} Schritte ergeben {k} Farbstoffe. Dazwischen gibt es im Spiel nichts.",
+    "gradOmitted": "+{n} weitere, in der Nachricht gelistet",
+    "ratioKey": "Umriss = Mischung · Fläche = nächster Farbstoff",
+    "designed": "WIE ENTWORFEN",
+    "perceived": "WIE GESEHEN",
+    "separationCol": "ABSTAND",
+    "lensCol": "SEHFILTER",
+    "shiftCol": "VERSCHIEBUNG",
+    "sepBandKey": "Bänder: ≥30 / ≥15 / ≥8 — größer ist sicherer",
+    "soloKey": "Balken = relative Verschiebung · kein Urteil",
+    "worstNote": "am schwächsten: {lens}",
+    "a11yVerdict": "Am schwächsten unter {lens} — dort liegt das Paar {de} auseinander.",
+    "worstPair": "SCHWÄCHSTES PAAR",
+    "pairCol": "PAAR",
+    "ratioCol": "VERHÄLTNIS",
+    "ratioShort": "VERH.",
+    "restCol": "REST",
+    "ratioBand0": "UNTER 3:1",
+    "ratioBand1": "≥ 3:1",
+    "ratioBand2": "≥ 4.5:1",
+    "ratioBand3": "≥ 7:1",
+    "floorKey": "Untergrenze für Nicht-Text ist 3:1 — WCAG 1.4.11",
+    "plotKey": "grün = weit auseinander · Linien bei 3 / 4.5 / 7",
+    "contrastTitle": "Kontrast — {n} Farbstoffe",
+    "cmpTitle": "Vergleich — {n} Farbstoffe",
+    "cmpTag0": "GLEICH",
+    "cmpTag1": "NAH",
+    "cmpTag2": "ÄHNLICH",
+    "cmpTag3": "FERN",
+    "cmpKey": "grün = nah · Bänder 5 / 10 / 20",
+    "cmpRatioKey": "Verhältnis misst Helligkeit, nicht Abstand",
+    "triKey": "obere Hälfte · jedes Paar einmal",
+    "lTarget": "ZIEL",
+    "lBoardOnly": "nur Markt",
+    "lVendor": "Händler",
+    "lNoPrice": "kein Preis",
+    "lCandidate": "KANDIDAT",
+    "vendorCheaper": "HÄNDLER GÜNSTIGER",
+    "budgetKey": "GIL/ΔE = (ZIEL − ZEILE) ÷ ΔE2000",
+    "budgetKeyMethod": "ΔE-Spalte: {tag} · Verhältnis bleibt ΔE2000",
+    "budgetBest": "Bester Wert: **{name}** — {de} ΔE für {price}",
+    "budgetNoTarget": "Kein Zielpreis auf {world} — Zeilen unsortiert, Verhältnis leer",
+    "budgetFloor": "Bereits die günstigste Stufe — nichts unterbietet {price}.",
+    "swatchSlot": "SLOT",
+    "swatchNearest": "NÄCHSTE FARBE",
+    "slotSkin": "HAUT",
+    "slotHair": "HAAR",
+    "slotHl": "STRÄHN",
+    "slotEyes": "AUGEN",
+    "slotLip": "LIPPE",
+    "slotPaint": "BEMAL",
+    "slotTattoo": "TÄTOW.",
+    "slotLimbal": "LIMBAL",
+    "offGridShort": "ABSEITS",
+    "swatchFootKey_one": "nächste per ΔE2000 · {s} von {n} Slot",
+    "swatchFootKey_other": "nächste per ΔE2000 · {s} von {n} Slots",
+    "swatchOffGrid": "{slot} abseits des Rasters — Index {index}, live {float}",
+    "swatchLip": "Lippe α {alpha} — roh {raw}, gemischt {blend}",
+    "swatchGear": "Ausrüstungsfarben: {list}",
+    "swatchDropped": "Entfernt (sicherster Treffer): {slot} · ΔE {de}",
+    "swatchParseError": "Datei nicht lesbar — {message}",
+    "swatchNoSlots": "Keine aktiven Farb-Slots in dieser Datei.",
+    "swatchSlotMissing": "{slot} ist in dieser Datei kein aktiver Slot.",
+    "perDe": "GIL/ΔE"
+  },
+  "firstRun": {
+    "title": "XIV Dye Tools 5.0",
+    "body": "Der Bot wurde neu gestaltet: neue Karten, ein einheitliches Matching-Vokabular (Standard ΔE2000), /contrast und /a11y sowie /swatch für Charakterdateien. /manual zeigt die Tour, /changelog die Änderungen, /preferences die Einstellungen. Dieser Hinweis erscheint nur einmal."
+  },
+  "changelog": {
+    "title": "Was ist neu im Bot",
+    "earlier": "Frühere Versionen",
+    "notFound": "Kein Eintrag für Version {version}.",
+    "empty": "Das Änderungsprotokoll ist derzeit nicht verfügbar."
+  },
+  "manual5": {
+    "learnLead": "Mehr erfahren: {link}",
+    "topics": {
+      "colorVision": {
+        "name": "Farbsehen",
+        "body": "Die Barrierefreiheits-Tools simulieren vier Sehweisen — Protanopie (PROT), Deuteranopie (DEUT), Tritanopie (TRIT) und Achromatopsie (ACHR) — nach der Brettel-Methode und messen, wie weit zwei Farben unter jeder Sehweise auseinander bleiben. Größerer Abstand ist sicherer: die Bänder liegen bei 30 / 15 / 8 unter ΔE2000."
+      },
+      "contrast": {
+        "name": "Kontrast",
+        "body": "/contrast misst WCAG-Leuchtdichteverhältnisse zwischen Farben (1:1–21:1). Die Untergrenze für Nicht-Text ist 3:1 (WCAG 2.1, Kriterium 1.4.11); die Karten markieren 3 / 4,5 / 7 und benennen Bänder nach ihrem Verhältnis — keine Buchstabennoten. Das Verhältnis misst nur Helligkeit, nicht Farbunterschied."
+      },
+      "matchingMethods": {
+        "name": "Matching-Methoden",
+        "body": "Sechs Methoden, ein Vokabular: ΔE2000 (Standard), ΔEOK, ΔE76, REDMEAN, RGB DIST und DISTINGUISH %. Nur die Bänder von ΔE2000 folgen deiner Match-Linie; alle anderen sind fest, Stufen werden nie zwischen Methoden verglichen, und die Methode steht überall dort, wo eine Stufe erscheint."
+      },
+      "spectrumPrices": {
+        "name": "Spectrum & Preise",
+        "body": "Seit Patch 7.5 teilen sich 105 der 125 Farben drei Marktartikel: Einfacher Farbstoff (216 Gil beim Händler — der eine Preis, der sich nie bewegt), Zusatzfarbstoff 1 (Himmelsstadt-Scrips) und Zusatzfarbstoff 2 (Kosmo-Credits). Eine konsolidierte Farbe hat kein eigenes Angebot, daher bepreist /budget die Gruppe, nie die Farbe."
+      },
+      "characterFile": {
+        "name": "Charakterdatei",
+        "body": "/swatch liest einen .chara-Export aus Anamnesis oder Ktisis: Farb-Slots (Haut, Haar, Augen, Lippe, Bemalung) und getragene Ausrüstungsfarben. Die Datei wird einmal für die Antwort gelesen und nicht gespeichert. Farben abseits des Rasters werden nach ihrem Live-Wert gematcht und als ABSEITS markiert."
+      }
+    }
+  },
+  "copy": {
+    "invalidFormat": "Ungültiges {format}-Format.",
+    "rgbValues": "RGB-Werte:",
+    "hsvValues": "HSV-Werte:"
+  },
+  "stats": {
+    "accessDeniedTitle": "Zugriff verweigert",
+    "accessDenied": "Du hast keine Berechtigung, dieses Statistik-Panel anzuzeigen.",
+    "fetchFailed": "Statistiken konnten nicht abgerufen werden. Bitte versuche es später erneut.",
+    "summary": {
+      "features": "Funktionen",
+      "featureList": "• Farbabgleich & -extraktion\n• Farbstoffmischung (6 Algorithmen)\n• Charakterfarben-Abgleich\n• Farbharmonien\n• Barrierefreiheits-Analyse",
+      "stats": "Statistiken",
+      "commandsUsed": "Ausgeführte Befehle",
+      "successRate": "Erfolgsquote",
+      "webApp": "Web-App",
+      "documentation": "Dokumentation",
+      "supportServer": "Support-Server",
+      "footer": "Version {version} • Befehlshilfe mit /manual"
+    }
+  },
+  "commands": {
+    "harmony": {
+      "description": "Harmonische Farbstoff-Kombinationen aus einer Farbe erzeugen"
+    },
+    "mixer": {
+      "description": "Zwei Farbstoffe mit verschiedenen Mischalgorithmen mischen"
+    },
+    "gradient": {
+      "description": "Farbverlauf zwischen zwei Farben mit Zwischen-Farbstoffen erzeugen"
+    },
+    "extractor": {
+      "description": "Farben aus Eingaben extrahieren und passende FFXIV-Farbstoffe finden"
+    },
+    "swatch": {
+      "description": "Die Farben einer Charakterdatei den nächsten Farbstoffen zuordnen"
+    },
+    "dye": {
+      "description": "FFXIV-Farbstoffe suchen und erkunden"
+    },
+    "comparison": {
+      "description": "2–4 Farbstoffe nebeneinander mit Farbanalyse vergleichen"
+    },
+    "contrast": {
+      "description": "WCAG-Nicht-Text-Kontrast zwischen Farbstoffpaaren (Untergrenze 3:1)"
+    },
+    "accessibility": {
+      "description": "Wie ein Farbstoff oder ein Paar unter jeder Art von Farbsehen besteht"
+    },
+    "a11y": {
+      "description": "Wie ein Farbstoff oder ein Paar unter jeder Art von Farbsehen besteht"
+    },
+    "budget": {
+      "description": "Günstige Farbstoff-Alternativen anhand der Marktbrett-Preise finden"
+    },
+    "preset": {
+      "description": "Community-Farbvorlagen durchsuchen, einreichen und bewerten"
+    },
+    "preferences": {
+      "description": "Deine persönlichen Bot-Einstellungen verwalten"
+    },
+    "manual": {
+      "description": "Hilfe und Anleitung für alle Befehle anzeigen"
+    },
+    "changelog": {
+      "description": "Was ist neu im Discord-Bot — Versionshinweise, neueste zuerst"
+    },
+    "about": {
+      "description": "Informationen über den XIV Dye Tools Bot anzeigen"
+    },
+    "stats": {
+      "description": "Nutzungsstatistiken und Informationen des Bots anzeigen"
+    }
+  }
+}

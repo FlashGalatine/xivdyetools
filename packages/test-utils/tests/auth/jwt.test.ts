@@ -2,11 +2,7 @@
  * Tests for JWT creation helpers
  */
 import { describe, it, expect } from 'vitest';
-import {
-  createTestJWT,
-  createExpiredJWT,
-  createJWTWithExpiration,
-} from '../../src/auth/jwt.js';
+import { createTestJWT, createExpiredJWT } from '../../src/auth/jwt.js';
 
 describe('createTestJWT', () => {
   it('creates a valid JWT structure', async () => {
@@ -51,7 +47,7 @@ describe('createTestJWT', () => {
 
   it('includes standard claims', async () => {
     const beforeTime = Math.floor(Date.now() / 1000);
-    
+
     const jwt = await createTestJWT('secret', {
       sub: 'user-123',
       username: 'TestUser',
@@ -81,10 +77,14 @@ describe('createTestJWT', () => {
   });
 
   it('uses custom expiry when provided', async () => {
-    const jwt = await createTestJWT('secret', {
-      sub: 'user-123',
-      username: 'TestUser',
-    }, 7200);
+    const jwt = await createTestJWT(
+      'secret',
+      {
+        sub: 'user-123',
+        username: 'TestUser',
+      },
+      7200,
+    );
 
     const [, payloadB64] = jwt.split('.');
     const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
@@ -93,10 +93,15 @@ describe('createTestJWT', () => {
   });
 
   it('uses custom issuer when provided', async () => {
-    const jwt = await createTestJWT('secret', {
-      sub: 'user-123',
-      username: 'TestUser',
-    }, 3600, 'custom-issuer');
+    const jwt = await createTestJWT(
+      'secret',
+      {
+        sub: 'user-123',
+        username: 'TestUser',
+      },
+      3600,
+      'custom-issuer',
+    );
 
     const [, payloadB64] = jwt.split('.');
     const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
@@ -152,37 +157,5 @@ describe('createExpiredJWT', () => {
 
     expect(payload.sub).toBe('custom-user');
     expect(payload.username).toBe('CustomUser');
-  });
-});
-
-describe('createJWTWithExpiration', () => {
-  it('creates token with specific expiration timestamp', async () => {
-    const futureTimestamp = Math.floor(Date.now() / 1000) + 86400; // 1 day from now
-
-    const jwt = await createJWTWithExpiration('secret', {
-      sub: 'user-123',
-      username: 'TestUser',
-    }, futureTimestamp);
-
-    const [, payloadB64] = jwt.split('.');
-    const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
-
-    // Due to timing, exp might be slightly different
-    expect(Math.abs(payload.exp - futureTimestamp)).toBeLessThan(2);
-  });
-
-  it('can create already expired token', async () => {
-    const pastTimestamp = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
-
-    const jwt = await createJWTWithExpiration('secret', {
-      sub: 'user-123',
-      username: 'TestUser',
-    }, pastTimestamp);
-
-    const [, payloadB64] = jwt.split('.');
-    const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
-
-    const now = Math.floor(Date.now() / 1000);
-    expect(payload.exp).toBeLessThan(now);
   });
 });

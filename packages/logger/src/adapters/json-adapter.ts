@@ -7,7 +7,7 @@
  * @module adapters/json-adapter
  */
 
-import { BaseLogger } from '../core/base-logger.js';
+import { BaseLogger, safeStringify } from '../core/base-logger.js';
 import type { LogEntry, LoggerConfig } from '../types.js';
 
 /**
@@ -40,6 +40,8 @@ export class JsonAdapter extends BaseLogger {
   protected write(entry: LogEntry): void {
     // All JSON output goes to console.log for consistent handling
     // by log aggregation systems (Cloudflare, etc.)
-    console.log(JSON.stringify(entry));
+    // FINDING-026: safeStringify — a circular or BigInt context must never
+    // throw out of a log call (it used to fail the request that logged)
+    console.log(safeStringify(entry));
   }
 }

@@ -11,7 +11,6 @@
  */
 
 import { ColorService, dyeService } from '@services/index';
-import { ColorConverter } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
 import type { MixingMode, MatchingMethod } from '@shared/tool-config-types';
 import type { DyeFiltersConfig } from '@shared/tool-config-types';
@@ -125,22 +124,8 @@ export function calculateColorDistance(
   hex2: string,
   matchingMethod: MatchingMethod
 ): number {
-  switch (matchingMethod) {
-    case 'rgb':
-      return ColorService.getColorDistance(hex1, hex2);
-    case 'cie76':
-      return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
-    case 'ciede2000':
-      return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
-    case 'oklab':
-      return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-    case 'hyab':
-      return ColorConverter.getDeltaE_HyAB(hex1, hex2);
-    case 'oklch-weighted':
-      return ColorConverter.getDeltaE_OklchWeighted(hex1, hex2);
-    default:
-      return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-  }
+  // 5.0: one dispatch suite-wide (dE2000 default lives in core)
+  return ColorService.getDistanceForMethod(hex1, hex2, matchingMethod);
 }
 
 // ============================================================================

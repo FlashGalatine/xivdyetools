@@ -10,11 +10,12 @@ import { authorizeRouter } from './handlers/authorize.js';
 import { callbackRouter } from './handlers/callback.js';
 import { tokenRouter } from './handlers/refresh.js';
 import { xivauthRouter } from './handlers/xivauth.js';
-import { checkRateLimit, getClientIp } from './services/rate-limit.js';
+import { checkRateLimit, getClientIp, oauthRateLimitTiers } from './services/rate-limit.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
-import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
-import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
+import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
+import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
 import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
+import { getAllowedRedirectOrigins } from './constants/oauth.js';
 
 // Define context variables type
 type Variables = MiddlewareVariables;
@@ -40,13 +41,21 @@ app.use('*', loggerMiddleware({
 
 // Environment validation middleware
 // Validates required env vars once per isolate and caches result
+//
+// FINDING-029 (2026-08-21 security audit): the gate keyed on
+// ENVIRONMENT === 'production', so a non-development, non-production deploy
+// (the since-deleted `[env.preview]`) failed OPEN. Everything that is not
+// local `development` is production as far as fail-closed behaviour goes —
+// and validateEnv additionally rejects any ENVIRONMENT value other than the
+// two wrangler.toml defines.
 app.use('*', async (c, next) => {
   const result = validateEnv(c.env);
   if (!result.valid) {
+    const isDevelopment = c.env.ENVIRONMENT === 'development';
     if (!envErrorsLogged) {
       envErrorsLogged = true;
       logValidationErrors(result.errors);
-      if (c.env.ENVIRONMENT !== 'production') {
+      if (isDevelopment) {
         // In development, log warnings but continue
         const logger = getLogger(c);
         if (logger) {
@@ -54,9 +63,9 @@ app.use('*', async (c, next) => {
         }
       }
     }
-    // In production, fail fast on misconfiguration — on every request, not
-    // just the first one in the isolate (BUG-017)
-    if (c.env.ENVIRONMENT === 'production') {
+    // Outside development, fail fast on misconfiguration — on every request,
+    // not just the first one in the isolate (BUG-017)
+    if (!isDevelopment) {
       return c.json({ error: 'Service misconfigured' }, 500);
     }
   }
@@ -79,8 +88,17 @@ app.use(
 
       const env = c.env as Env;
 
-      // Allow the configured frontend URL
-      if (origin === env.FRONTEND_URL) {
+      // BUG-018 finished the job for redirect URIs but left CORS behind, so a
+      // site could be allowed to START a login and then be blocked from every
+      // XHR that completes one. beta.xivdyetools.app hit exactly that: the
+      // authorize redirect succeeded, the callback returned, and the token
+      // exchange was blocked with no Access-Control-Allow-Origin — so the app
+      // sat there still showing its two login buttons.
+      //
+      // Same allowlist as the redirect check, so a host can never be trusted
+      // for one half of the flow and not the other. getAllowedRedirectOrigins
+      // already includes FRONTEND_URL and strips localhost outside development.
+      if (getAllowedRedirectOrigins(env).includes(origin)) {
         return origin;
       }
 
@@ -119,8 +137,9 @@ app.use('*', async (c, next) => {
   c.header('X-Content-Type-Options', 'nosniff');
   // Prevent clickjacking by denying iframe embedding
   c.header('X-Frame-Options', 'DENY');
-  // Enforce HTTPS for 1 year (only in production)
-  if (c.env.ENVIRONMENT === 'production') {
+  // Enforce HTTPS for 1 year everywhere except local development (FINDING-029:
+  // was production-only, so any other non-development env went without HSTS)
+  if (c.env.ENVIRONMENT !== 'development') {
     c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
 });
@@ -140,7 +159,11 @@ app.use('/auth/*', async (c, next) => {
   const clientIp = getClientIp(c.req.raw);
   const path = new URL(c.req.url).pathname;
 
-  const result = await checkRateLimit(clientIp, path, c.env.TOKEN_BLACKLIST);
+  // FINDING-003: native rate-limit bindings first, KV (TOKEN_BLACKLIST) as fallback
+  const result = await checkRateLimit(clientIp, path, {
+    cloudflare: oauthRateLimitTiers(c.env),
+    kv: c.env.TOKEN_BLACKLIST,
+  });
 
   // Set rate limit headers on all responses
   c.header('X-RateLimit-Limit', result.limit.toString());

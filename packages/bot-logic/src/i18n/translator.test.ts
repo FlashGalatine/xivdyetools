@@ -1,0 +1,147 @@
+/**
+ * Tests for the bot-i18n Translator package.
+ *
+ * Adapted from apps/discord-worker/src/services/bot-i18n.test.ts.
+ * Note: createUserTranslator (KV-dependent) is not part of this package —
+ * it lives in each bot's platform-specific glue layer.
+ */
+
+import { describe, it, expect, vi } from 'vitest';
+import { Translator, createTranslator } from './index.js';
+
+describe('Translator', () => {
+  describe('tc (count-aware translate, F-09)', () => {
+    it('picks the _one form for exactly 1 and _other otherwise (en)', () => {
+      const t = createTranslator('en');
+      expect(t.tc('gradient.steps', 1)).toBe('1 Step');
+      expect(t.tc('gradient.steps', 4)).toBe('4 Steps');
+      expect(t.tc('gradient.steps', 0)).toBe('0 Steps');
+    });
+
+    it('single-form locales carry identical _one/_other strings', () => {
+      const t = createTranslator('ja');
+      expect(t.tc('gradient.steps', 1)).toBe('1ステップ');
+      expect(t.tc('gradient.steps', 4)).toBe('4ステップ');
+    });
+
+    it('merges count with extra variables and falls back to the bare key', () => {
+      const t = createTranslator('en');
+      expect(t.tc('card.gradVerdict', 1, { n: 4, k: 1 })).toContain('4 steps resolve to 1 dye.');
+      expect(t.tc('common.error', 2)).toBe('Error');
+    });
+  });
+
+  describe('constructor', () => {
+    it('creates a translator with the specified locale', () => {
+      const translator = new Translator('ja');
+      expect(translator.getLocale()).toBe('ja');
+    });
+
+    it('falls back to English data for an invalid locale', () => {
+      // Locale is stored as-is, but data falls back to en
+      const translator = new Translator('invalid' as 'en');
+      expect(translator.getLocale()).toBe('invalid');
+    });
+  });
+
+  describe('t (translate)', () => {
+    it('translates a key with English locale', () => {
+      const translator = createTranslator('en');
+      expect(translator.t('meta.locale')).toBe('en');
+    });
+
+    it('translates a deeply nested key', () => {
+      const translator = createTranslator('en');
+      expect(translator.t('meta.name')).toBe('English');
+    });
+
+    it('returns the key for missing translations', () => {
+      const translator = createTranslator('en');
+      expect(translator.t('nonexistent.key.path')).toBe('nonexistent.key.path');
+    });
+
+    it('logs warning for missing translations when logger is provided', () => {
+      const mockLogger = { warn: vi.fn() };
+      const translator = new Translator('en', mockLogger);
+
+      translator.t('nonexistent.key.path');
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'Missing translation: nonexistent.key.path for locale en',
+      );
+    });
+
+    it('interpolates variables in a real translation key', () => {
+      const translator = createTranslator('en');
+      const result = translator.t('errors.dyeNotFound', { name: 'Snow White' });
+      expect(result).toBe('Could not find a dye named "Snow White".');
+    });
+
+    it('interpolates multiple variables', () => {
+      const translator = createTranslator('en');
+      const result = translator.t('dye.list.categorySummary', { total: 100, count: 5 });
+      expect(result).toBe('There are 100 dyes across 5 categories:');
+    });
+
+    it('keeps placeholder when variable is missing', () => {
+      const translator = createTranslator('en');
+      const result = translator.t('dye.list.categorySummary', { total: 100 });
+      expect(result).toContain('100');
+      expect(result).toContain('{count}');
+    });
+
+    it('handles numeric variables', () => {
+      const translator = createTranslator('en');
+      const result = translator.tc('dye.search.foundCount', 1);
+      expect(result).toBe('Found 1 dye:');
+    });
+
+    it('falls back to English for missing translations in other locales', () => {
+      const translator = createTranslator('ja');
+      // meta.locale exists in Japanese and returns the ja locale code
+      expect(translator.t('meta.locale')).toBe('ja');
+    });
+
+    it('returns the key when not found in any locale', () => {
+      const translator = createTranslator('de');
+      expect(translator.t('totally.nonexistent.key.xyz123')).toBe('totally.nonexistent.key.xyz123');
+    });
+
+    it('interpolates variables with non-English locale', () => {
+      const translator = createTranslator('fr');
+      const result = translator.t('errors.dyeNotFound', { name: 'Blanc Neige' });
+      expect(result).toBe('Impossible de trouver une teinture nommée "Blanc Neige".');
+    });
+
+    it('returns key when path traverses through a non-object value', () => {
+      const translator = createTranslator('en');
+      // meta.locale is 'en' (a string), so .nested can't be traversed
+      expect(translator.t('meta.locale.nested')).toBe('meta.locale.nested');
+    });
+
+    it('returns key for deeply nested non-existent path', () => {
+      const translator = createTranslator('en');
+      expect(translator.t('nonexistent.deep.path.value')).toBe('nonexistent.deep.path.value');
+    });
+  });
+
+  describe('getLocale', () => {
+    it('returns the current locale code', () => {
+      expect(createTranslator('de').getLocale()).toBe('de');
+    });
+  });
+});
+
+describe('createTranslator', () => {
+  it('returns a Translator instance', () => {
+    expect(createTranslator('en')).toBeInstanceOf(Translator);
+  });
+
+  it('creates translators for all supported locales', () => {
+    const localeCodes = ['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const;
+    for (const locale of localeCodes) {
+      const translator = createTranslator(locale);
+      expect(translator.getLocale()).toBe(locale);
+    }
+  });
+});

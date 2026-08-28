@@ -42,6 +42,98 @@ async function createTestSignedState(data: Partial<StateData>): Promise<string> 
     return signState(stateData, env.JWT_SECRET);
 }
 
+/**
+ * What the SPA returns to the POST callback: a signed XIVAuth-flow state whose
+ * code_challenge is the real S256 of VALID_CODE_VERIFIER (state is REQUIRED).
+ */
+async function boundState(): Promise<string> {
+    return createTestSignedState({ code_challenge: await s256(VALID_CODE_VERIFIER) });
+}
+
+/**
+ * Real S256 challenge for a verifier — VALID_CODE_CHALLENGE is format-valid
+ * only, not the hash of VALID_CODE_VERIFIER.
+ */
+async function s256(verifier: string): Promise<string> {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+    return btoa(String.fromCharCode(...new Uint8Array(digest)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+/**
+ * Decode a JWT payload without verification (test inspection only)
+ */
+function decodeJwtPayload(token: string): Record<string, unknown> {
+    const [, payload] = token.split('.');
+    let base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4 !== 0) base64 += '=';
+    return JSON.parse(atob(base64));
+}
+
+interface XIVAuthFixture {
+    userId?: string;
+    socialIdentities?: Array<{ provider: string; external_id: string }>;
+    characters?: Array<{ lodestone_id: number; name: string; home_world: string; verified: boolean }>;
+    tokenStatus?: number;
+    tokenErrorBody?: string;
+    userStatus?: number;
+    userErrorBody?: string;
+}
+
+/**
+ * Mock the three XIVAuth endpoints; returns the fetch mock.
+ */
+function mockXIVAuth(fixture: XIVAuthFixture = {}): ReturnType<typeof vi.fn> {
+    const mock = vi.fn().mockImplementation((url: string) => {
+        if (url.includes('xivauth.net/oauth/token')) {
+            if (fixture.tokenStatus && fixture.tokenStatus >= 400) {
+                return Promise.resolve(new Response(fixture.tokenErrorBody ?? '{"error":"invalid_grant"}', {
+                    status: fixture.tokenStatus,
+                }));
+            }
+            return Promise.resolve(new Response(JSON.stringify({
+                access_token: 'xivauth_token',
+                token_type: 'Bearer',
+                expires_in: 604800,
+                refresh_token: 'refresh',
+                scope: 'user user:social character refresh',
+            }), { status: 200 }));
+        }
+        if (url.includes('xivauth.net/api/v1/user')) {
+            if (fixture.userStatus && fixture.userStatus >= 400) {
+                return Promise.resolve(new Response(fixture.userErrorBody ?? 'Unauthorized', {
+                    status: fixture.userStatus,
+                }));
+            }
+            return Promise.resolve(new Response(JSON.stringify({
+                id: fixture.userId ?? 'xivauth-fixture-user',
+                mfa_enabled: false,
+                verified_characters: (fixture.characters ?? []).some((c) => c.verified),
+                social_identities: fixture.socialIdentities ?? [],
+            }), { status: 200 }));
+        }
+        if (url.includes('xivauth.net/api/v1/characters')) {
+            return Promise.resolve(new Response(JSON.stringify(fixture.characters ?? []), { status: 200 }));
+        }
+        return originalFetch(url);
+    });
+    globalThis.fetch = mock;
+    return mock;
+}
+
+function postXIVAuthCallback(body: Record<string, unknown>, customEnv?: Env): Promise<Response> {
+    const init: RequestInit = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    };
+    return customEnv
+        ? fetchWithEnv(customEnv, 'http://localhost/auth/xivauth/callback', init)
+        : SELF.fetch('http://localhost/auth/xivauth/callback', init);
+}
+
 describe('XIVAuth Handler', () => {
     beforeEach(() => {
         vi.useFakeTimers();
@@ -455,6 +547,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'invalid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -488,6 +581,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -515,7 +609,8 @@ describe('XIVAuth Handler', () => {
                         mfa_enabled: false,
                         verified_characters: 1,
                         social_identities: [
-                            { provider: 'discord', external_id: '123456789' },
+                            // FINDING-013: must be a real snowflake or the link is ignored
+                            { provider: 'discord', external_id: '123456789012345678' },
                         ],
                     }), { status: 200 }));
                 }
@@ -538,6 +633,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -589,6 +685,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -634,6 +731,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -676,6 +774,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -732,6 +831,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -755,6 +855,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -810,6 +911,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -831,6 +933,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -855,6 +958,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -864,6 +968,246 @@ describe('XIVAuth Handler', () => {
             expect(response.status).toBe(500);
             expect(json.success).toBe(false);
             expect(json.error).toBe('Authentication failed');
+        });
+    });
+
+    /**
+     * FINDING-012 / OAUTH-5: PKCE binding on the XIVAuth exchange — same
+     * contract as the Discord POST callback (see callback.test.ts).
+     */
+    describe('POST /auth/xivauth/callback — PKCE binding to the signed state', () => {
+        it('should echo the signed state in the GET bounce for the SPA to return', async () => {
+            const state = await createTestSignedState({ csrf: 'echo-me', code_challenge: VALID_CODE_CHALLENGE });
+
+            const response = await SELF.fetch(
+                `http://localhost/auth/xivauth/callback?${new URLSearchParams({ code: 'code', state })}`,
+                { redirect: 'manual' }
+            );
+
+            expect(response.status).toBe(302);
+            const location = new URL(response.headers.get('location')!);
+            expect(location.searchParams.get('state')).toBe(state);
+            expect(location.searchParams.get('provider')).toBe('xivauth');
+        });
+
+        it('should reject a code_verifier that does not match the signed code_challenge before calling XIVAuth', async () => {
+            const fetchMock = mockXIVAuth();
+            const state = await createTestSignedState({ code_challenge: VALID_CODE_CHALLENGE });
+
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.success).toBe(false);
+            expect(json.error).toBe('PKCE verification failed');
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        it('should exchange the code when S256(code_verifier) matches the signed state', async () => {
+            mockXIVAuth({ userId: 'xivauth-pkce-bound-user' });
+            const state = await createTestSignedState({ code_challenge: await s256(VALID_CODE_VERIFIER) });
+
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.success).toBe(true);
+            expect(json.token).toBeTruthy();
+        });
+
+        it('should reject a missing, null or empty state with 400 Missing state', async () => {
+            for (const body of [
+                { code_verifier: VALID_CODE_VERIFIER, code: 'valid_code' },
+                { code_verifier: VALID_CODE_VERIFIER, code: 'valid_code', state: null },
+                { code_verifier: VALID_CODE_VERIFIER, code: 'valid_code', state: '' },
+            ]) {
+                const fetchMock = mockXIVAuth();
+
+                const response = await postXIVAuthCallback(body);
+                const json = (await response.json()) as Record<string, any>;
+
+                expect(response.status, JSON.stringify(body)).toBe(400);
+                expect(json.success).toBe(false);
+                expect(json.error).toBe('Missing state');
+                expect(fetchMock).not.toHaveBeenCalled();
+            }
+        });
+
+        it('should reject a Discord-flow state presented to the XIVAuth exchange', async () => {
+            const fetchMock = mockXIVAuth();
+            const state = await createTestSignedState({
+                provider: 'discord',
+                code_challenge: await s256(VALID_CODE_VERIFIER),
+            });
+
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid state');
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+    });
+
+    /**
+     * FINDING-013 / OAUTH-8: an unverified XIVAuth character registration must
+     * not become the display identity (presets-api shows global_name || username
+     * as the preset author — character-name impersonation otherwise).
+     */
+    describe('POST /auth/xivauth/callback — display name only from verified characters', () => {
+        it('should not use an unverified character as username/global_name', async () => {
+            mockXIVAuth({
+                userId: 'xivauth-unverified-only-user',
+                characters: [
+                    { lodestone_id: 33333333, name: 'Famous Streamer', home_world: 'Balmung', verified: false },
+                ],
+            });
+
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.user.username).toContain('XIVAuth User');
+            expect(json.user.username).not.toContain('Famous Streamer');
+            expect(json.user.global_name).toBeNull();
+            // The registration is still carried, flagged as unverified, so consumers can decide
+            expect(json.user.primary_character).toMatchObject({ name: 'Famous Streamer', verified: false });
+
+            const payload = decodeJwtPayload(json.token);
+            expect(payload.username).toContain('XIVAuth User');
+            expect(payload.global_name).toBeNull();
+        });
+
+        it('should use the verified character even when an unverified one is listed first', async () => {
+            mockXIVAuth({
+                userId: 'xivauth-mixed-chars-user',
+                characters: [
+                    { lodestone_id: 11111111, name: 'Unverified Character', home_world: 'Balmung', verified: false },
+                    { lodestone_id: 22222222, name: 'Verified Character', home_world: 'Excalibur', verified: true },
+                ],
+            });
+
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.user.username).toBe('Verified Character');
+            expect(json.user.global_name).toBe('Verified Character');
+            expect(decodeJwtPayload(json.token).username).toBe('Verified Character');
+        });
+    });
+
+    /**
+     * FINDING-013 / OAUTH-9: the Discord link asserted by XIVAuth drives the
+     * presets identity — validate its shape before trusting it.
+     */
+    describe('POST /auth/xivauth/callback — linked Discord identity validation', () => {
+        it('should ignore a linked Discord identity whose external_id is not a snowflake', async () => {
+            mockXIVAuth({
+                userId: 'xivauth-bad-snowflake-user',
+                socialIdentities: [{ provider: 'discord', external_id: 'not-a-snowflake' }],
+            });
+
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(decodeJwtPayload(json.token).discord_id).toBeUndefined();
+        });
+
+        it('should carry a well-formed linked Discord snowflake into the token', async () => {
+            mockXIVAuth({
+                userId: 'xivauth-good-snowflake-user',
+                socialIdentities: [{ provider: 'discord', external_id: '987654321098765432' }],
+            });
+
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(decodeJwtPayload(json.token).discord_id).toBe('987654321098765432');
+        });
+    });
+
+    /**
+     * FINDING-013 / OAUTH-7: production logs carried the XIVAuth id, linked
+     * Discord id, username, character name, response key lists and raw
+     * upstream error bodies. Identifiers stay out of logs; upstream bodies are
+     * development-only.
+     */
+    describe('POST /auth/xivauth/callback — production logging hygiene', () => {
+        let lines: string[];
+
+        beforeEach(() => {
+            lines = [];
+            const capture = (...args: unknown[]): void => {
+                lines.push(args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' '));
+            };
+            for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const) {
+                vi.spyOn(console, method).mockImplementation(capture);
+            }
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should not log the upstream token-exchange error body in production', async () => {
+            mockXIVAuth({ tokenStatus: 400, tokenErrorBody: '{"error":"UPSTREAM-TOKEN-BODY-MARKER"}' });
+
+            const response = await postXIVAuthCallback(
+                { code: 'bad', code_verifier: VALID_CODE_VERIFIER, state: await boundState() },
+                createProductionEnv()
+            );
+
+            expect(response.status).toBe(401);
+            const all = lines.join('\n');
+            expect(all).not.toContain('UPSTREAM-TOKEN-BODY-MARKER');
+            // The failure itself is still recorded
+            expect(all).toMatch(/token exchange failed/i);
+        });
+
+        it('should not log the upstream user-info error body in production', async () => {
+            mockXIVAuth({ userStatus: 403, userErrorBody: 'UPSTREAM-USER-BODY-MARKER' });
+
+            const response = await postXIVAuthCallback(
+                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() },
+                createProductionEnv()
+            );
+
+            expect(response.status).toBe(401);
+            expect(lines.join('\n')).not.toContain('UPSTREAM-USER-BODY-MARKER');
+        });
+
+        it('should keep the XIVAuth id, linked Discord id, username and character name out of production logs', async () => {
+            mockXIVAuth({
+                userId: 'XIVAUTH-ID-MARKER-0001',
+                socialIdentities: [{ provider: 'discord', external_id: '111122223333444455' }],
+                characters: [
+                    { lodestone_id: 44444444, name: 'CHARACTER-NAME-MARKER', home_world: 'Excalibur', verified: true },
+                ],
+            });
+
+            const response = await postXIVAuthCallback(
+                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() },
+                createProductionEnv()
+            );
+
+            expect(response.status).toBe(200);
+            const all = lines.join('\n');
+            expect(all).not.toContain('XIVAUTH-ID-MARKER-0001');
+            expect(all).not.toContain('111122223333444455');
+            expect(all).not.toContain('CHARACTER-NAME-MARKER');
+            expect(all).not.toContain('raw_keys');
+        });
+
+        it('should log the upstream error body only in development', async () => {
+            mockXIVAuth({ tokenStatus: 400, tokenErrorBody: '{"error":"DEV-ONLY-BODY-MARKER"}' });
+
+            const response = await postXIVAuthCallback({ code: 'bad', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
+
+            expect(response.status).toBe(401);
+            expect(lines.join('\n')).toContain('DEV-ONLY-BODY-MARKER');
         });
     });
 });

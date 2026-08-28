@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-08-21
+
+### Security — 2026-08-21 security audit (FINDING-026)
+
+- **`write()` can no longer throw out of a log call.** `JsonAdapter` serialises with the new exported `safeStringify()` (cycles → `"[Circular]"`, BigInt → decimal string, anything else that refuses to serialise is replaced); a circular context used to raise `TypeError: Converting circular structure to JSON` and fail the request that logged it.
+- **The free-text `message` argument is sanitised** like error messages (`token=…`, `Bearer …`, `password=…` patterns), and non-`Error` throws passed to `error()` are serialised + sanitised instead of `String(error)`.
+- **Redaction gaps closed:** `CORE_REDACT_FIELDS` gains `private_key`/`privateKey`, `set_cookie`/`setCookie`, `webhook_url`/`webhookUrl`, `auth_header`/`authHeader`, `session_id`/`sessionId`, `client_secret`, `signing_secret`, `webhook_secret`; and a value-shape pass redacts secret-shaped STRINGS under any key (`Bearer …`, three-part JWTs, Discord bot tokens, ≥64-hex blobs) — `looksLikeSecretValue()` exported for reuse.
+- The browser preset's `errorTracker` path sanitises the re-attached `error.stack` (its first line repeats the raw message).
+
+## [2.0.0] - 2026-08-18
+
+2026-08-18 dead-code audit (DEAD-021) — removes three dead/deprecated exports. Major bump: `perf` and `getRequestId(request)` were public surface on the `./browser` and `./worker` subpaths.
+
+### Removed (2026-08-18 dead-code audit)
+
+- **BREAKING**: `perf` (`start`/`end`/`measure`/`measureSync`/`getMetrics`/`getAllMetrics`/`logMetrics`/`clearMetrics`) removed from `presets/browser.ts` and the `./browser` subpath / main barrel. Zero production callers — web-app's `shared/logger.ts` re-exported it but only its own test consumed the re-export. If timing utilities are still needed, use `BaseLogger#time()`/`#timeAsync()` or a dedicated perf tool.
+- **BREAKING**: `getRequestId(request: Request)` removed from `presets/worker.ts` and the `./worker` subpath. Already `@deprecated`/`@internal` since 1.2.2 (DEAD-070); the claim that `createRequestLogger` called it internally was false (see the DEAD-070 correction above) — it had zero callers. Every worker already uses worker-kit's `getRequestId(c: Context)` instead.
+- `createSimpleLogger` removed from `core/base-logger.ts` and the main barrel. `@internal` since 1.2.2 (DEAD-068) with zero external consumers; use `createLibraryLogger` or `createBrowserLogger`.
+
+### Fixed
+
+- Corrected the false DEAD-070 CHANGELOG claim (see 1.2.2 entry) that `getRequestId` remained in use internally.
+- `presets/library.ts` doc examples now import from `@xivdyetools/core` instead of the pre-scope `xivdyetools-core` package name.
+
 ## [1.3.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprint 6) — redaction hardening.
@@ -28,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **DEAD-070**: Deprecated `getRequestId(request: Request)` — superseded by app-local `getRequestId(c: Context)` implementations. Removed from main barrel and `./worker` subpath re-exports; function remains in `worker.ts` for internal use by `createRequestLogger`. Marked `@deprecated` and `@internal`
+- **DEAD-070**: Deprecated `getRequestId(request: Request)` — superseded by app-local `getRequestId(c: Context)` implementations. Removed from main barrel and `./worker` subpath re-exports; function remained in `worker.ts`, marked `@deprecated` and `@internal`. Correction (2026-08-18 dead-code audit): the comment claiming it stayed "for internal use by `createRequestLogger`" was false — `createRequestLogger` never called it; it had zero callers
 - **DEAD-066**: Marked `BaseLogger`, `ConsoleAdapter`, `JsonAdapter`, `NoopAdapter` as `@internal` — implementation details; consumers should use factory functions and pre-configured instances
 - **DEAD-067**: Marked `LogEntry` as `@internal` — internal to the write pipeline
 - **DEAD-068**: Marked `createSimpleLogger` as `@internal` — no external consumers; prefer `createLibraryLogger` or `createBrowserLogger`

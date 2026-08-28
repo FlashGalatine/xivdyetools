@@ -187,7 +187,7 @@ describe('PublicRateLimitMiddleware', () => {
         errorApp.get('/test', (c) => c.json({ success: true }));
 
         // Mock the MemoryRateLimiter to return backendError
-        const rateLimiterModule = await import('@xivdyetools/rate-limiter');
+        const rateLimiterModule = await import('@xivdyetools/worker-kit/rate-limiter');
         vi.spyOn(rateLimiterModule.MemoryRateLimiter.prototype, 'check')
           .mockResolvedValueOnce({
             allowed: true,

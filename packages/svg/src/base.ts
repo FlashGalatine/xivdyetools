@@ -7,44 +7,28 @@
  */
 
 /**
- * Per-card display flags controlling which color formats and metadata appear
- * on result cards. Mirrors the web app's `DisplayOptionsConfig`. Renderers
- * that read this object should treat omitted flags as `true` (preserve
- * current emit-everything behavior for backward compat).
+ * Characters XML 1.0 does not allow anywhere in a document: C0 controls other
+ * than TAB/LF/CR, DEL-adjacent C1 controls, U+FFFE/U+FFFF, and lone surrogates
+ * (a lone surrogate cannot even be UTF-8 encoded). resvg rejects the whole
+ * SVG when one slips in, so a preset name carrying U+0001 used to kill its
+ * card (FINDING-028, 2026-08-21 security audit).
  */
-export interface DisplayOptions {
-  /** Show HEX color codes */
-  showHex?: boolean;
-  /** Show RGB values */
-  showRgb?: boolean;
-  /** Show HSV values */
-  showHsv?: boolean;
-  /** Show LAB values */
-  showLab?: boolean;
-  /** Show market-board prices */
-  showPrice?: boolean;
-  /** Show Delta-E color distance */
-  showDeltaE?: boolean;
-  /** Show acquisition source information */
-  showAcquisition?: boolean;
-}
-
-/** Default display options (everything visible) — matches the web app's DEFAULT_DISPLAY_OPTIONS. */
-export const DEFAULT_DISPLAY_OPTIONS: Required<DisplayOptions> = {
-  showHex: true,
-  showRgb: true,
-  showHsv: true,
-  showLab: true,
-  showPrice: true,
-  showDeltaE: true,
-  showAcquisition: true,
-};
+// Built from escapes: raw control characters in a regex literal trip
+// no-irregular-whitespace and do not survive every transform.
+const XML_ILLEGAL = new RegExp(
+  '[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]' +
+    '|[\uD800-\uDBFF](?![\uDC00-\uDFFF])' +
+    '|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]',
+  'g',
+);
 
 /**
- * XML-escapes a string for safe SVG inclusion
+ * XML-escapes a string for safe SVG inclusion (text content AND attribute
+ * values), dropping characters that are illegal in XML altogether.
  */
 export function escapeXml(str: string): string {
   return str
+    .replace(XML_ILLEGAL, '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -62,13 +46,6 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
     g: parseInt(cleanHex.slice(2, 4), 16),
     b: parseInt(cleanHex.slice(4, 6), 16),
   };
-}
-
-/**
- * Converts RGB to hex color string
- */
-export function rgbToHex(r: number, g: number, b: number): string {
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
 /**
@@ -95,11 +72,7 @@ export function getContrastTextColor(bgHex: string): string {
 /**
  * Creates an SVG document wrapper
  */
-export function createSvgDocument(
-  width: number,
-  height: number,
-  content: string
-): string {
+export function createSvgDocument(width: number, height: number, content: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
 ${content}
 </svg>`;
@@ -120,7 +93,7 @@ export function rect(
     stroke?: string;
     strokeWidth?: number;
     opacity?: number;
-  } = {}
+  } = {},
 ): string {
   const attrs = [
     `x="${x}"`,
@@ -151,14 +124,9 @@ export function circle(
     stroke?: string;
     strokeWidth?: number;
     opacity?: number;
-  } = {}
+  } = {},
 ): string {
-  const attrs = [
-    `cx="${cx}"`,
-    `cy="${cy}"`,
-    `r="${r}"`,
-    `fill="${escapeXml(fill)}"`,
-  ];
+  const attrs = [`cx="${cx}"`, `cy="${cy}"`, `r="${r}"`, `fill="${escapeXml(fill)}"`];
 
   if (options.stroke) attrs.push(`stroke="${escapeXml(options.stroke)}"`);
   if (options.strokeWidth) attrs.push(`stroke-width="${options.strokeWidth}"`);
@@ -180,7 +148,7 @@ export function line(
   options: {
     opacity?: number;
     dashArray?: string;
-  } = {}
+  } = {},
 ): string {
   const attrs = [
     `x1="${x1}"`,
@@ -211,12 +179,9 @@ export function text(
     fontWeight?: number | string;
     textAnchor?: 'start' | 'middle' | 'end';
     dominantBaseline?: 'auto' | 'middle' | 'hanging';
-  } = {}
+  } = {},
 ): string {
-  const attrs = [
-    `x="${x}"`,
-    `y="${y}"`,
-  ];
+  const attrs = [`x="${x}"`, `y="${y}"`];
 
   if (options.fill) attrs.push(`fill="${escapeXml(options.fill)}"`);
   if (options.fontSize) attrs.push(`font-size="${options.fontSize}"`);
@@ -226,29 +191,6 @@ export function text(
   if (options.dominantBaseline) attrs.push(`dominant-baseline="${options.dominantBaseline}"`);
 
   return `<text ${attrs.join(' ')}>${escapeXml(content)}</text>`;
-}
-
-/**
- * Creates an arc path for pie/donut charts
- */
-export function arcPath(
-  cx: number,
-  cy: number,
-  radius: number,
-  startAngle: number,
-  endAngle: number
-): string {
-  const startRad = (startAngle - 90) * (Math.PI / 180);
-  const endRad = (endAngle - 90) * (Math.PI / 180);
-
-  const x1 = cx + radius * Math.cos(startRad);
-  const y1 = cy + radius * Math.sin(startRad);
-  const x2 = cx + radius * Math.cos(endRad);
-  const y2 = cy + radius * Math.sin(endRad);
-
-  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-
-  return `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
 }
 
 /**
@@ -262,16 +204,32 @@ export function group(content: string, transform?: string): string {
 }
 
 /**
- * Theme colors for consistent styling
+ * The one suite accent (5.0). Blurple is retired everywhere — colour is
+ * reserved for state, and the accent is this red on dark grounds
+ * (`#CE2222` is its light-ground counterpart, see the icon system).
+ */
+export const ACCENT = '#EA4133';
+
+/**
+ * Theme colours for the pre-frame generators.
+ *
+ * Replaced wholesale in 5.0: the old palette was built on `#1a1a2e`, a navy
+ * that appears nowhere else we make, and `#5865f2`, Discord's brand rather
+ * than ours. These are the same surfaces `CARD_DARK` carries in `frame.ts` —
+ * the two must not drift, because a card and a pre-frame generator can land
+ * in the same channel a second apart.
+ *
+ * `frame.ts`'s `CardTheme` is the home for anything new; this object exists
+ * for the generators that have not been re-cut onto the frame system yet.
  */
 export const THEME = {
-  background: '#1a1a2e',
-  backgroundLight: '#2d2d3d',
-  text: '#ffffff',
-  textMuted: '#909090',
-  textDim: '#666666',
-  accent: '#5865f2', // Discord Blurple
-  border: '#404050',
+  background: '#17171A',
+  backgroundLight: '#141416',
+  text: '#ECECEE',
+  textMuted: '#9C9CA2',
+  textDim: '#86868C',
+  accent: ACCENT,
+  border: 'rgba(255,255,255,0.07)',
   success: '#57f287',
   warning: '#fee75c',
   error: '#ed4245',
@@ -283,36 +241,62 @@ export const THEME = {
  *
  * - header: Space Grotesk (variable 300-700) - titles, headers
  * - primary: Onest (variable 100-900) - body text, labels
- * - mono: Habibi (regular only) - hex codes, monospace-like text
- * - cjk: Noto Sans SC + Noto Sans KR - Japanese, Korean, Chinese text
+ * - mono: Fragment Mono - hex codes, numeric columns, mono labels
+ *   (the previous 'Habibi' was a proportional serif — numbers never aligned)
+ * - cjk: Noto Sans JP + SC + KR - Japanese (JP letterforms first), Chinese, Korean text
+ *   (JP added 2026-08-20 — F-17: preset-swatch was the one card rendering ja in SC letterforms)
  * - primaryCjk: Onest with CJK/KR fallback - for localized text that may contain CJK
+ * - monoCjk: Fragment Mono has no CJK — mono labels containing CJK fall back
+ *   to the body sans (letter-spacing 0.04em at the call site; no case in CJK)
  */
 export const FONTS = {
   header: 'Space Grotesk',
   primary: 'Onest',
-  mono: 'Habibi',
-  cjk: 'Noto Sans SC, Noto Sans KR',
+  mono: 'Fragment Mono',
+  cjk: 'Noto Sans JP, Noto Sans SC, Noto Sans KR',
   /** Use this for headings that may contain CJK characters (e.g., dye names) */
-  headerCjk: 'Space Grotesk, Noto Sans SC, Noto Sans KR',
+  headerCjk: 'Space Grotesk, Noto Sans JP, Noto Sans SC, Noto Sans KR',
   /** Use this for body text that may contain CJK characters (e.g., dye names) */
-  primaryCjk: 'Onest, Noto Sans SC, Noto Sans KR',
+  primaryCjk: 'Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR',
+  /** Mono labels that may contain CJK (Fragment Mono has no CJK glyphs) */
+  monoCjk: 'Fragment Mono, Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR',
 } as const;
 
 /**
- * Truncates text to a maximum length, appending a Unicode ellipsis (U+2026) if truncated.
- * Standardized across all SVG generators (REFACTOR-005).
- *
- * @param text - The text to truncate
- * @param maxLength - Maximum character length (including the ellipsis)
- * @returns The original text if within limits, or truncated text with '…'
+ * Per-language number formatting: decimal separator and thousands grouping.
+ * Every measured value in a card goes through {@link num} or {@link grp};
+ * verdict sentences receive a formatter, never format inline. Identifiers
+ * (criterion numbers, item IDs, stain IDs) are NOT quantities — never
+ * localise them. One key per unit or it drifts.
  */
-export function truncateText(text: string, maxLength: number): string {
-  // BUG-060: slice by code points, not UTF-16 units — a unit slice can bisect
-  // a surrogate pair (emoji in preset names) and render � in the PNG.
-  // Also aligns length semantics with estimateTextWidth's code-point loop.
-  const chars = [...text];
-  if (chars.length <= maxLength) return text;
-  return chars.slice(0, maxLength - 1).join('') + '…';
+export const NUMFMT: Record<string, { dec: string; thou: string }> = {
+  en: { dec: '.', thou: ',' },
+  ja: { dec: '.', thou: ',' },
+  de: { dec: ',', thou: '.' },
+  fr: { dec: ',', thou: ' ' }, // narrow no-break space
+  ko: { dec: '.', thou: ',' },
+  zh: { dec: '.', thou: ',' },
+};
+
+/**
+ * Format a measured value at a fixed precision with the language's decimal
+ * separator. Precision travels with the formatter — callers never
+ * `toFixed()` beside it (the 2-dp-verdict-on-1-dp-rows incident).
+ */
+export function num(value: number, lang: string, dp: number): string {
+  const fmt = NUMFMT[lang] ?? NUMFMT['en'];
+  return value.toFixed(dp).replace('.', fmt.dec);
+}
+
+/**
+ * Format an integer with the language's thousands grouping (prices, counts).
+ */
+export function grp(value: number, lang: string): string {
+  const fmt = NUMFMT[lang] ?? NUMFMT['en'];
+  const rounded = Math.round(value);
+  const sign = rounded < 0 ? '-' : '';
+  const digits = Math.abs(rounded).toString();
+  return sign + digits.replace(/\B(?=(\d{3})+(?!\d))/g, fmt.thou);
 }
 
 /**
@@ -336,49 +320,8 @@ export function estimateTextWidth(text: string, charWidth: number): number {
       (code >= 0xac00 && code <= 0xd7af) || // Hangul syllables
       (code >= 0xf900 && code <= 0xfaff) || // CJK Compatibility Ideographs
       (code >= 0xff00 && code <= 0xff60) || // Fullwidth forms (excl. halfwidth kana)
-      (code >= 0xffe0 && code <= 0xffe6);   // Fullwidth signs
+      (code >= 0xffe0 && code <= 0xffe6); // Fullwidth signs
     width += isWide ? charWidth * 2 : charWidth;
   }
   return width;
-}
-
-/**
- * Converts RGB values (0-255) to HSV.
- * Returns hue in degrees (0-360), saturation and value as percentages (0-100).
- *
- * Shared across SVG generators that need HSV display (comparison-grid, dye-info-card).
- */
-export function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: number } {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const d = max - min;
-
-  let h = 0;
-  const s = max === 0 ? 0 : d / max;
-  const v = max;
-
-  if (max !== min) {
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
-    }
-    h /= 6;
-  }
-
-  return {
-    h: Math.round(h * 360),
-    s: Math.round(s * 100),
-    v: Math.round(v * 100),
-  };
 }

@@ -1,6 +1,12 @@
 # Presets API Overview
 
-**xivdyetools-presets-api** - Community preset management API
+**xivdyetools-presets-api** v2.0.0 - Community preset management API
+
+> **2.0.0 (5.0 wave):** preset dyes are stainIDs (3–6 per preset), the `community` category is
+> retired and `appearance` / `zones` / `raids-trials` added, presets carry a primary + up to two
+> secondary categories, an `example_link`, and a moderated preview image (R2 `THUMBNAILS` bucket,
+> thumbnails via the `IMAGE_WORKER` service binding). The illustrative schema below is out of date —
+> see [database.md](database.md) for the real columns.
 
 ---
 
@@ -104,29 +110,34 @@ src/
 ## Database Schema (D1)
 
 ```sql
--- Main presets table
+-- Main presets table (abridged — see database.md and schema.sql)
 CREATE TABLE presets (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT,
-  dye_signature TEXT NOT NULL,  -- Sorted dye IDs for duplicate detection
-  colors TEXT NOT NULL,         -- JSON array of dye objects
-  category_id INTEGER NOT NULL,
-  author_discord_id TEXT NOT NULL,
-  author_discord_name TEXT NOT NULL,
-  upvotes INTEGER DEFAULT 0,
-  downvotes INTEGER DEFAULT 0,
-  status TEXT DEFAULT 'pending',
+  id TEXT PRIMARY KEY,                       -- UUID v4
+  name TEXT NOT NULL,                        -- 2-50 chars
+  description TEXT NOT NULL,                 -- 10-200 chars
+  category_id TEXT NOT NULL,                 -- primary category slug
+  secondary_categories TEXT NOT NULL DEFAULT '[]', -- up to two more slugs
+  dyes TEXT NOT NULL,                        -- JSON array of 3-6 stainIDs
+  dye_signature TEXT,                        -- sorted dyes JSON, partial UNIQUE
+  tags TEXT NOT NULL,
+  example_link TEXT,
+  preview_image_key TEXT,
+  preview_image_status TEXT NOT NULL DEFAULT 'none',
+  author_discord_id TEXT, author_name TEXT,
+  vote_count INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'pending',             -- pending | approved | rejected | flagged | hidden
   is_curated INTEGER DEFAULT 0,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  previous_values TEXT,
+  created_at TEXT, updated_at TEXT,
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
--- Categories
+-- Categories (slug-keyed)
 CREATE TABLE categories (
-  id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
-  slug TEXT UNIQUE NOT NULL
+  id TEXT PRIMARY KEY,        -- 'jobs', 'grand-companies', 'seasons', 'events',
+  name TEXT NOT NULL,         -- 'aesthetics', 'appearance', 'zones', 'raids-trials'
+  description TEXT NOT NULL,
+  icon TEXT, is_curated INTEGER DEFAULT 0, display_order INTEGER DEFAULT 0
 );
 
 -- Votes (one per user per preset)
@@ -230,13 +241,13 @@ JWT is verified using shared `JWT_SECRET` with OAuth worker.
 
 ## Environment Variables
 
-**wrangler.toml:**
+**wrangler.toml** (top-level block is `xivdyetools-presets-api-dev`; production under `[env.production]` — a bare `wrangler deploy` no longer touches production):
 ```toml
-[vars]
-ENVIRONMENT = "production"
-API_VERSION = "v1"
-CORS_ORIGIN = "https://app.xivdyetools.com"
+[env.production]
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app" }
 ```
+
+Bindings: `DB` (D1 `xivdyetools-presets`), `DISCORD_WORKER` (service), `IMAGE_WORKER` (service → `xivdyetools-image-worker`, `POST /thumbnail`), `THUMBNAILS` (R2).
 
 **Secrets:**
 ```bash

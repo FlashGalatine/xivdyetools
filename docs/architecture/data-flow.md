@@ -59,7 +59,7 @@ sequenceDiagram
   "sub": "user-uuid",
   "iat": 1702684800,
   "exp": 1702688400,
-  "iss": "https://oauth.xivdyetools.com",
+  "iss": "https://auth.xivdyetools.app",
   "username": "User#1234",
   "global_name": "Display Name",
   "avatar": "avatar_hash",
@@ -187,7 +187,7 @@ sequenceDiagram
 
 | Operation | Time Complexity | Typical Time |
 |-----------|-----------------|--------------|
-| Build tree (startup) | O(n log n) | ~2ms for 136 entries (125 standard dyes + 11 Facewear color entries) |
+| Build tree (startup) | O(n log n) | ~2ms for 125 dyes (Facewear colours are excluded — not tradeable) |
 | Nearest neighbor query | O(log n) | <0.1ms |
 | k-nearest neighbors | O(k log n) | <0.5ms for k=5 |
 
@@ -311,7 +311,7 @@ sequenceDiagram
     participant Core as @xivdyetools/core
 
     Note over User,Discord: 1. User runs command
-    User->>Discord: /match #FF6B6B
+    User->>Discord: /extractor color color:#FF6B6B
 
     Note over Discord,Worker: 2. HTTP Interaction
     Discord->>Worker: POST / (signed payload)

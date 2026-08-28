@@ -46,6 +46,21 @@ export class ColorManipulator {
   }
 
   /**
+   * Rotate hue of a color in CIE LCh space (perceptual hue rotation).
+   *
+   * Unlike {@link rotateHue} (HSV), rotating in LCh preserves perceived
+   * lightness and chroma, so the "ideal" hue offsets used by harmony math
+   * (e.g. a tetradic +90°) stay perceptually meaningful. Out-of-gamut results
+   * are clamped by the LCh→RGB conversion.
+   *
+   * @param degrees Amount to rotate hue (can be negative or positive)
+   */
+  static rotateHueLch(hex: string, degrees: number): HexColor {
+    const { L, C, h } = ColorConverter.hexToLch(hex);
+    return ColorConverter.lchToHex(L, C, (((h + degrees) % 360) + 360) % 360);
+  }
+
+  /**
    * Invert a color (create complementary color)
    */
   static invert(hex: string): HexColor {

@@ -7,7 +7,14 @@
 
 import type { Context, Next } from 'hono';
 import type { Env, AuthContext } from '../types.js';
-import { verifyJWT as sharedVerifyJWT, verifyBotSignature } from '@xivdyetools/auth';
+import {
+  verifyJWT as sharedVerifyJWT,
+  verifyBotSignature,
+  verifyBotSignatureV2,
+  BOT_SIGNATURE_V2_HEADER,
+  BOT_SIGNATURE_NONCE_HEADER,
+  isTokenRevoked,
+} from '@xivdyetools/auth';
 
 type Variables = {
   auth: AuthContext;
@@ -19,10 +26,15 @@ type Variables = {
 
 /**
  * Extended JWT payload for this application
- * Includes Discord-specific fields beyond the base JWTPayload
+ * Includes the identity/display fields the oauth worker mints beyond the base JWTPayload
  */
 interface ExtendedJWTPayload {
-  sub: string; // Discord user ID
+  /**
+   * Subject — the oauth worker's INTERNAL user UUID (`users.id`), NOT the
+   * Discord snowflake. Only used as the identity fallback for accounts that
+   * have no Discord ID (XIVAuth-only logins). See resolveJWTUserId().
+   */
+  sub: string;
   iat: number;
   exp: number;
   iss?: string;
@@ -30,21 +42,70 @@ interface ExtendedJWTPayload {
   username?: string;
   global_name?: string | null;
   avatar?: string | null;
+  /** Discord snowflake (present for Discord logins and Discord-linked XIVAuth accounts) */
+  discord_id?: string;
+  auth_provider?: 'discord' | 'xivauth';
+}
+
+/**
+ * Resolve the acting user's identity from a verified JWT.
+ *
+ * `author_discord_id`, `votes.user_discord_id`, `moderation_log.moderator_discord_id`,
+ * `banned_users.discord_id` and `MODERATOR_IDS` are all keyed by the Discord
+ * snowflake — that is the identity the bot path (discord-worker /
+ * moderation-worker via `X-User-Discord-ID`) supplies. The oauth worker puts
+ * its internal user UUID in `sub` and the snowflake in `discord_id`, so a
+ * web session must resolve to the SAME snowflake or the same person becomes
+ * two different authors (one per client), can't edit bot-submitted presets
+ * from the web (and vice versa), never appears banned, and is never a
+ * moderator via the web.
+ *
+ * Falls back to `sub` only when the token carries no usable `discord_id`
+ * (XIVAuth-only accounts, which have no snowflake to share with the bot).
+ */
+export function resolveJWTUserId(payload: Pick<ExtendedJWTPayload, 'sub' | 'discord_id'>): string {
+  const discordId = payload.discord_id;
+  if (typeof discordId === 'string' && discordId.length > 0) {
+    return discordId;
+  }
+  return payload.sub;
 }
 
 /**
  * Verify JWT and return extended payload
  * REFACTOR-003: Uses @xivdyetools/auth for core verification
+ *
+ * FINDING-002 / FINDING-015 (2026-08-21 security audit):
+ * - When the oauth worker's `TOKEN_BLACKLIST` KV is bound, a token whose
+ *   `jti` has been revoked (logout, rotation) is rejected here too — before
+ *   this, revocation only affected `/auth/me` + `/auth/refresh` on the oauth
+ *   worker and a logged-out token kept full API access until `exp`.
+ *   `isTokenRevoked` is fail-open on KV errors (documented in the oauth
+ *   README); the binding being absent (dev/tests) skips the check.
+ * - When `JWT_ISSUER` is configured, `iss` must match it, so tokens minted by
+ *   any other issuer sharing the secret (e.g. a preview env) are refused.
  */
-async function verifyJWT(token: string, secret: string): Promise<ExtendedJWTPayload | null> {
+async function verifyJWT(token: string, env: Env): Promise<ExtendedJWTPayload | null> {
+  if (!env.JWT_SECRET) return null;
+
   // Use shared JWT verification which handles:
   // - Algorithm validation (HS256 only)
   // - Signature verification
-  // - Expiration checking
-  const payload = await sharedVerifyJWT(token, secret);
+  // - Claim typing, expiration, optional issuer pinning
+  const payload = await sharedVerifyJWT(token, env.JWT_SECRET, {
+    issuer: env.JWT_ISSUER || undefined,
+  });
 
   if (!payload) return null;
 
+  if (payload.jti && env.TOKEN_BLACKLIST) {
+    const revoked = await isTokenRevoked(payload.jti, env.TOKEN_BLACKLIST);
+    if (revoked) return null;
+  }
+
+  // The shared JWTPayload type only declares the base claims; the oauth
+  // worker's extra claims (discord_id, auth_provider) ride along and are
+  // exposed through ExtendedJWTPayload's optional fields.
   return payload;
 }
 
@@ -140,16 +201,42 @@ export async function authMiddleware(
         }
       } else {
         const signature = c.req.header('X-Request-Signature');
+        const signatureV2 = c.req.header(BOT_SIGNATURE_V2_HEADER);
         const timestamp = c.req.header('X-Request-Timestamp');
 
-        // REFACTOR-003: Uses @xivdyetools/auth for bot signature verification
-        const isValidSignature = await verifyBotSignature(
-          signature,
-          timestamp,
-          userDiscordId,
-          userName,
-          c.env.BOT_SIGNING_SECRET
-        );
+        let isValidSignature: boolean;
+        if (signatureV2 !== undefined) {
+          // FINDING-014 (2026-08-21 audit): v2 binds method + path + body hash +
+          // timestamp + nonce + identity with a 60 s window. When the header is
+          // present it MUST verify — never fall back to v1, or a captured v1
+          // tuple could be replayed against any route by dropping the v2 header.
+          // Body read via Hono's cache so downstream c.req.json() still works.
+          const body = ['GET', 'HEAD'].includes(c.req.method) ? undefined : await c.req.arrayBuffer();
+          isValidSignature = await verifyBotSignatureV2(
+            signatureV2,
+            {
+              method: c.req.method,
+              path: new URL(c.req.url).pathname,
+              body,
+              timestamp,
+              nonce: c.req.header(BOT_SIGNATURE_NONCE_HEADER),
+              userDiscordId,
+              userName,
+            },
+            c.env.BOT_SIGNING_SECRET
+          );
+        } else {
+          // v1 (timestamp:userId:userName) — kept for rollover; both bots send v2
+          // as of 2026-08-21 and v1 is slated for removal once they are deployed.
+          // REFACTOR-003: Uses @xivdyetools/auth for bot signature verification
+          isValidSignature = await verifyBotSignature(
+            signature,
+            timestamp,
+            userDiscordId,
+            userName,
+            c.env.BOT_SIGNING_SECRET
+          );
+        }
 
         if (!isValidSignature) {
           // Log failed signature attempts (but don't reveal details)
@@ -173,16 +260,19 @@ export async function authMiddleware(
     }
     // Method 2: Web authentication (JWT)
     else if (c.env.JWT_SECRET) {
-      const jwtPayload = await verifyJWT(token, c.env.JWT_SECRET);
+      const jwtPayload = await verifyJWT(token, c.env);
 
       if (jwtPayload) {
         // Use display name if available, fallback to username
         const displayName = jwtPayload.global_name || jwtPayload.username;
+        // Discord snowflake when the token has one, internal UUID otherwise —
+        // must match what the bot path puts in X-User-Discord-ID
+        const userId = resolveJWTUserId(jwtPayload);
 
         auth = {
           isAuthenticated: true,
-          isModerator: checkModerator(jwtPayload.sub, c.env.MODERATOR_IDS),
-          userDiscordId: jwtPayload.sub,
+          isModerator: checkModerator(userId, c.env.MODERATOR_IDS),
+          userDiscordId: userId,
           userName: displayName,
           authSource: 'web',
         };

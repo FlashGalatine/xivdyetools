@@ -1,0 +1,52 @@
+Unused files (2)
+scripts/check-bundle-size.d.ts: scripts/check-bundle-size.d.ts
+service-worker.js: service-worker.js
+Unused dependencies (1)
+package.json: spectral.js
+Unused devDependencies (1)
+package.json: wrangler
+Unlisted dependencies (1)
+eslint.config.js: @eslint/js, typescript-eslint
+Unused exports (20)
+src/components/about-modal.ts: closeAboutModal
+src/components/add-to-collection-menu.ts: closeAddToCollectionMenu, isAddToCollectionMenuOpen
+src/components/advanced-options-panel.ts: closeAdvancedOptionsPanel
+src/components/v4-layout.ts: destroyV4Layout
+src/components/v4/language-modal.ts: LanguageModal, closeLanguageModal
+src/components/v4/result-card.ts: generateMarketErrorCode
+src/components/v4/theme-modal.ts: ThemeModal, closeThemeModal
+src/services/auth-service.ts: AuthService
+src/services/harmony-generator.ts: generateHarmonyPanelData
+src/services/hybrid-preset-service.ts: HybridPresetService
+src/services/index.ts: appStorage, NamespacedStorage, SecureStorage, ROUTES, apiService, TooltipService, AnnouncerService, CameraService, IndexedDBService, indexedDBService, STORES, KeyboardService, DyeSelectionContext, CommunityPresetService, HybridPresetService, hybridPresetService, AuthService, consumeReturnTool, PresetSubmissionService, getConfigController, ShareService, getMarketBoardService, formatPrice, blendTwoColors, calculateMixerColorDistance, HARMONY_TYPE_IDS, calculateHarmonyColorDistance, generateHarmonyPanelData, formatPriceWithSuffix, getDyePriceDisplay, getPriceInfo, preparePriceCardData, preparePriceCardDataFromMap, getItemIdsForPriceFetch, hasCachedPrices, DEFAULT_DISPLAY_OPTIONS, hasDisplayOptionsChanges, getCardDisplayOptions, mergeWithDefaults, ErrorHandler
+src/services/preset-submission-service.ts: PresetSubmissionService
+src/services/share-service.ts: SHARE_URL_VERSION, BASE_URL
+src/shared/beta-branding.ts: PRODUCTION_ORIGIN
+src/shared/example-link.ts: EXAMPLE_LINK_HOSTS
+src/shared/logger.ts: createBrowserLogger
+src/shared/state-icons.ts: ICON_STATE_WAIT
+src/shared/tool-config-types.ts: DEFAULT_CONFIGS, isToolId
+src/shared/tool-icons.ts: ICON_TOOL_EXTRACTOR
+src/shared/ui-icons.ts: ICON_COINS, ICON_FILTER, ICON_EXPORT, ICON_SORT, ICON_TARGET, ICON_SPARKLES, ICON_DISTANCE, ICON_SEARCH, ICON_USER, ICON_EDIT, ICON_TRASH, ICON_DOCUMENT, ICON_LOCKED, ICON_BOOK, ICON_SUCCESS, ICON_ERROR, ICON_IMPORT, ICON_FOLDER
+Unused exported types (16)
+src/components/base-component.ts: ComponentLifecycle
+src/services/auth-service.ts: AuthProvider, PrimaryCharacter, AuthUser, AuthState, AuthStateListener
+src/services/collection-service.ts: Tombstone, CollectionExport
+src/services/config-controller.ts: ConfigChangeEvent
+src/services/display-options-helper.ts: DisplayOptionsChangeCallback
+src/services/hybrid-preset-service.ts: UnifiedCategory, PresetSortOption, GetPresetsOptions
+src/services/index.ts: ToolId, Toast, ToastType, Modal, CaptureResult, TutorialTool, TutorialStep, Tutorial, DyeId, Collection, FavoritesData, CollectionsData, CommunityPreset, PresetStatus, PresetFilters, UnifiedPreset, PresetSortOption, AuthUser, AuthState, PresetSubmission, SubmissionResult, PresetEditRequest, EditResult, ShareParams, SwatchShareParams, HarmonyTypeInfo, MarketPanelRefs, MarketPanelConfig, Dye, VisionType, PriceData, ThemeName
+src/services/market-board-service.ts: PricesUpdatedEvent, ServerChangedEvent, SettingsChangedEvent, FetchErrorEvent
+src/services/modal-service.ts: ModalType
+src/services/preset-submission-service.ts: MySubmissionsResponse
+src/services/pricing-mixin.ts: PricingState
+src/services/share-service.ts: HarmonyShareParams, GradientShareParams, MixerShareParams, SwatchShareParams, ComparisonShareParams, AccessibilityShareParams, ExtractorShareParams, BudgetShareParams
+src/shared/browser-api-types.ts: EyeDropper, EyeDropperConstructor
+src/shared/i18n-types.ts: WebAppTranslations
+src/shared/tool-config-types.ts: SampleAreaSize, GlobalConfig, PresetSortOption
+src/shared/types.ts: AppState, HarmonyState, MatcherState, ComparisonState
+Duplicate exports (4)
+eslint-rules/no-i18n-fallback.js: plugin, default
+src/shared/tool-icons.ts: ICON_TOOL_MIXER, ICON_TOOL_DYE_MIXER
+src/shared/tool-icons.ts: ICON_TOOL_EXTRACTOR, ICON_TOOL_MATCHER
+src/shared/ui-icons.ts: ICON_THEME_SUN, ICON_THEME

@@ -1,19 +1,36 @@
 /**
  * Playwright Coverage Fixtures
  *
- * This module provides test fixtures for collecting V8 code coverage
- * during E2E tests. Coverage is collected per-test and merged into
- * a final report.
+ * Collects V8 code coverage per test and merges it into one report.
+ *
+ * **Every spec should import `test` and `expect` from here rather than from
+ * `@playwright/test`.** The fixture is inert unless the project is
+ * `chromium-coverage` (see `coverageEnabled` below), so it costs a normal
+ * `--project=chromium` run nothing. Importing it selectively is what made
+ * `npm run test:e2e:coverage` measure exactly one spec out of twelve, and
+ * what motivated a duplicated `*-coverage.spec.ts` to exist at all.
+ *
+ * Playwright's own types are re-exported so this is a drop-in swap for the
+ * `@playwright/test` import.
  *
  * Usage:
- * 1. Import { test } from this file instead of @playwright/test
- * 2. Run tests with: npx playwright test --project=chromium-coverage
- * 3. Coverage report will be in e2e-coverage/
+ * 1. `import { test, expect } from './fixtures/coverage';`
+ * 2. Run with: `npm run test:e2e:coverage`
+ * 3. Report lands in `e2e-coverage/`
  *
- * Note: Coverage collection only works with Chromium (uses CDP)
+ * Coverage collection only works with Chromium (uses CDP).
+ *
+ * NOTE: the merged output is raw V8, and the summary below reports FUNCTION
+ * coverage only. It is not Istanbul-shaped, so it cannot be merged with the
+ * Vitest unit-coverage report as-is — converting would need `v8-to-istanbul`
+ * plus source maps, and is best run against `vite build --sourcemap` +
+ * `vite preview` rather than the dev server, so offsets map to `src/*.ts`
+ * instead of Vite-transformed modules.
  */
 
 import { test as base, expect } from '@playwright/test';
+
+export type { Page, Locator, BrowserContext, TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';

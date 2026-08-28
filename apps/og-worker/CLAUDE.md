@@ -6,36 +6,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `xivdyetools-og-worker` is a Cloudflare Worker that generates **dynamic OpenGraph previews** for shared XIV Dye Tools links. It serves two distinct surfaces:
 
-1. **Crawler interception** — when Discord, Twitter, Facebook, Slack, etc. fetch a tool URL like `xivdyetools.app/harmony/?dye=5771&harmony=tetradic`, the worker detects the bot by `User-Agent` and returns HTML stuffed with locale-aware `og:*` meta tags. Real users get passed through to the SPA.
-2. **OG image rendering** — direct PNG endpoints under `/og/*` produce 1200×630 social cards by composing tool-specific SVGs and rasterizing through `resvg-wasm`. Five fonts are bundled as `*.ttf` data imports at build time: Space Grotesk, Onest, Habibi, plus the CJK subsets `NotoSansSC-Subset.ttf` (~290 KiB) and `NotoSansKR-Subset.ttf` (~176 KiB) for ja/zh/ko dye names (regenerate via `scripts/subset-cjk-fonts.py` whenever dyes or locale strings change).
+1. **Crawler interception** — when Discord, Twitter, Facebook, Slack, etc. fetch a tool URL like `xivdyetools.app/harmony/?dye=102&harmony=tetradic` (`102` is Jet Black's **stainID** — 5.0 share URLs and OG paths key on stainIDs, never item IDs), the worker detects the bot by `User-Agent` and returns HTML stuffed with locale-aware `og:*` meta tags. Real users get passed through to the SPA.
+2. **OG image rendering** — direct PNG endpoints under `/og/*` produce the 5.0 **15E band cards**: drawn on a 400 design grid and rastered ×3 through `resvg-wasm` (Discord frame 400×350 → 1200×1050; X frame 400×210 → 1200×630 via `?frame=x`, which `twitter:image` carries). Six fonts are bundled as `*.ttf` data imports: Space Grotesk, Onest, Fragment Mono, plus the CJK subsets NotoSansJP/SC/KR (regenerate via `scripts/subset-cjk-fonts.py` whenever dyes or card strings change).
 
-Six tools are supported: harmony, gradient, mixer, swatch, comparison, accessibility. Each has its own SVG generator under `src/services/svg/`. Localization is handled via a stateless `TranslationProvider` with all 6 locales eagerly preloaded — concurrent requests with different `?lang=` cannot trample state (see REFACTOR-001).
+All nine tools are supported: harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, budget — each a thin adapter onto the shared `services/svg/band.ts` frame (plus the 2a default cards in `default-card.ts` and the ×6 card strings in `services/og-strings.ts`; the crawler's ×6 embed sentences are `services/og-embed.ts`). Localization is handled via a stateless `TranslationProvider` with all 6 locales eagerly preloaded — concurrent requests with different `?lang=` cannot trample state (see REFACTOR-001). Core supplies game nouns only; every sentence and label the worker says in its own voice is authored ×6 in those two files, and tool names come from `OG_DECK`, never core `tools.*` (2026-08-20 i18n audit).
 
 ## Commands
 
 ```bash
 pnpm dev                    # wrangler dev
-pnpm deploy                 # Deploy to staging (default env)
+pnpm deploy                 # Deploy the BETA worker — live on beta.xivdyetools.app (see below)
 pnpm deploy:production      # Deploy to env.production
 pnpm test                   # vitest run
 pnpm test:watch             # vitest in watch mode
 pnpm test:coverage          # vitest run --coverage
 pnpm type-check             # tsc --noEmit
+pnpm lint                   # knip && knip --production (dead-code gate; runs in CI via turbo lint)
 ```
 
 ### Pre-commit Checklist
 
 ```bash
-pnpm type-check && pnpm test
+pnpm type-check && pnpm lint && pnpm test
 ```
 
-(There is no `lint` script in this worker's `package.json`.)
+`tsconfig.json` inherits the base `noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns`, so unused imports fail `type-check`. `lint` is knip in both modes (`knip.jsonc` explains why the `--production` project glob needs its `!`). Three guards in the test suite exist because each caught a real 2026-08-18 audit finding: `og-data-generator.test.ts` route ↔ emitter parity (every tool's crawler HTML points at `/og/<tool>/…`), `index.test.ts` "every image route honours `?frame=x`", and `services/font-coverage.test.ts` (the bundled fonts' `cmap`s cover every runtime string — a dye rename that needs a new glyph goes red instead of rendering tofu). Two more from the 2026-08-20 i18n audit: `og-data-generator.test.ts` "ja: no English word survives" renders every tool's share under `?lang=ja` and fails on any four-letter Latin run outside the brand / `FFXIV` / hex codes (the mixed-language embed that audit found), and `services/svg/roles-i18n.test.ts` pins the band role words per card per locale.
 
 ## Architecture
 
 ```
 Crawler request                          Image request
-(/harmony/?dye=5771...)                  (/og/harmony/5771/tetradic.png)
+(/harmony/?dye=102...)                   (/og/harmony/102/tetradic.png)
   │                                        │
   ├─► requestIdMiddleware                  ├─► requestIdMiddleware
   ├─► loggerMiddleware                     ├─► loggerMiddleware
@@ -52,46 +53,87 @@ src/
 ├── types.ts                    # Env, ToolId, HarmonyType, VisionType, OGData, AnalyticsEvent
 ├── crawler-detector.ts         # User-Agent regex table (Discord, Twitter, FB, LinkedIn, Slack, Telegram, WhatsApp, Applebot…)
 ├── og-data-generator.ts        # Builds locale-aware {title, description, imageUrl} + final HTML
-├── fonts/
-│   ├── Onest-VariableFont_wght.ttf    # Body / labels (variable 100–900)
-│   ├── SpaceGrotesk-VariableFont_wght.ttf  # Headers (variable 300–700)
-│   └── Habibi-Regular.ttf              # Hex codes (static regular)
+├── fonts/                      # 6 TTFs, all bundled as Data imports
+│   ├── Onest-VariableFont_wght.ttf         # Body / names (variable 100–900)
+│   ├── SpaceGrotesk-VariableFont_wght.ttf  # The wordmark (variable 300–700)
+│   ├── FragmentMono-Regular.ttf            # Every value: hex, Δ, price, path
+│   └── NotoSans{JP,SC,KR}-Subset.ttf       # CJK, regenerated by the subset script
 └── services/
-    ├── fonts.ts                # getFontBuffers() + FONT_FAMILIES export
+    ├── fonts.ts                # getFontBuffers() — the six TTFs as Uint8Arrays
     ├── renderer.ts             # initRenderer() + renderSvgToPng() + renderOGImage()
+    ├── og-strings.ts           # ALL card copy ×6: OG_DECK, TOOL_TAG, OG_DECK_LINE, OG_ROLE (subset-covered)
+    ├── og-embed.ts             # The crawler copy ×6: OG_EMBED + embed() — og:title/description, browser text (NOT subset)
+    ├── translator.ts           # Stateless 6-locale provider + dye/harmony/lens/clan-or-race names
     └── svg/
-        ├── base.ts             # Primitives (rect, text, circle, gradients, escapeXml) + THEME, FONTS, OG_DIMENSIONS
-        ├── og-card.ts          # Common 1200×630 layout (header bar + content slot + footer)
-        ├── dye-helpers.ts      # Shared dye-rendering helpers
+        ├── band.ts             # ★ The 15E frame + the SHARED chrome (cardHeader/cardFooter/ogMark)
+        ├── band-shared.ts      # ALGO_TAG, fmtDelta, bandGlyph, notFoundBand (takes the locale)
+        ├── default-card.ts     # The 2a default cards (stripes + glyph tile)
+        ├── tokens.ts           # GROUND, font STACKS, MARK_STRIPES, COMPACT_GLYPH — one source
+        ├── dye-helpers.ts      # Shared DyeService, stainID map, deltaForAlgorithm
         ├── harmony.ts          # generateHarmonyOG()
         ├── gradient.ts         # generateGradientOG()
         ├── mixer.ts            # generateMixerOG() (2- or 3-dye overload)
-        ├── swatch.ts           # generateSwatchOG()        — async, may consult color sheets
+        ├── swatch.ts           # generateSwatchOG()
         ├── comparison.ts       # generateComparisonOG()
         ├── accessibility.ts    # generateAccessibilityOG() — applies vision simulation
+        ├── extractor.ts        # generateExtractorOG()
+        ├── presets.ts          # generatePresetsOG()
+        ├── budget.ts           # generateBudgetOG()
         └── index.ts            # Barrel re-exports
 ```
+
+### The card frame (15E)
+
+Every data card is four zones on the 400 grid, and **both frames use the same
+chrome** — `cardHeader` / `cardFooter` in `band.ts` are the single source, shared
+with the 2a default cards, so a band card and a default card emit identical
+header markup at the same frame:
+
+```
+30px header   mark(17) + XIV DYE TOOLS  |  tool glyph(13) + localized tool tag
+band field    role top · name + tag bottom; the one structural variant is a
+              horizontal source strip at a band's top (×0.66 on X)
+deck          DISCORD ONLY, one line — drops on X per the degrade rule
+26px footer   path only (never the query string)  |  method tag, or on X the
+              card's load-bearing verdict
+```
+
+The X degrade is **one rule, not nine layouts**: the deck drops, its headline
+moves to footer-right, source strips scale ×0.66, and in-band content is
+otherwise unchanged. Only Extractor's names yield (its narrowest band is under
+the 11px floor). Band names **wrap and hyphenate rather than truncate** —
+`wrapName` in `band.ts` does the soft-hyphen pass resvg has no `hyphens: auto`
+for.
 
 ### Routes
 
 **Crawler-intercept routes** (return HTML with OG meta tags to bots, pass-through to origin for humans):
 
 - `GET /` — site root (redirects humans to `APP_BASE_URL`)
-- `GET /:tool` and `GET /:tool/` for `tool ∈ { harmony, gradient, mixer, swatch, comparison, accessibility }`
+- `GET /:tool` and `GET /:tool/` for all nine tools in `SUPPORTED_TOOLS`
+- `GET /presets/:presetId` — the one tool whose share form is a **path** (`/presets/gc-maelstrom`); curated slugs get their card, `community-<uuid>` / unknown ids degrade to the presets default card
 
-**OG image routes** (return `image/png`):
+`generateOGDataForTool` has a case for every tool. Harmony / gradient / mixer / swatch forward a non-default `?algo=` onto the emitted image URL (normalised; the suite default and unknown values stay off it for stable cache keys), so the card computes the Δ the page showed. A share URL that resolves to nothing emits `/og/<tool>/default.png` — never the root card. `og-data-generator.test.ts` has a route ↔ emitter parity test over all nine.
+
+**OG image routes** (return `image/png`). Every route takes `?lang=` (the picture
+localizes only when asked) and `?frame=x` (the 400×210 X frame; `twitter:image`
+carries it):
 
 | Pattern | Notes |
 |---|---|
-| `GET /og/harmony/:dyeId/:harmonyType[.png]` | `?algo=oklab\|ciede2000\|euclidean` |
-| `GET /og/gradient/:startId/:endId/:steps[.png]` | `steps` clamped to 2–20 (`OG_MAX_GRADIENT_STEPS`) |
+| `GET /og/harmony/:dyeId/:harmonyType[.png]` | `?algo=` — the 6 live `MatchingMethod`s plus 3 legacy spellings (`euclidean`/`hyab`/`oklch-weighted`, normalised on use) in `VALID_ALGORITHMS`; default `ciede2000` (`DEFAULT_MATCHING_METHOD`, the suite default) |
+| `GET /og/gradient/:startId/:endId/:steps[.png]` | `steps` 2–20 (`OG_MAX_GRADIENT_STEPS`), then capped to `BAND_CAP` |
 | `GET /og/mixer/:dyeAId/:dyeBId/:ratio[.png]` | 2-dye mix; ratio 1–99 |
 | `GET /og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio[.png]` | 3-dye mix; ratio 1–99 |
-| `GET /og/swatch/:color/:limit[.png]` | `?sheet=`, `?race=`, `?gender=`, `?algo=`; `limit` 1–20 |
-| `GET /og/comparison/:dyes[.png]` | `:dyes` is comma-separated itemIDs, max 16 |
+| `GET /og/swatch/:color/:limit[.png]` | `?algo=`; `limit` 1–20, capped to 4. (Sheet context — `?sheet=`/`?race=`/`?gender=` — shapes the crawler *description* only and is deliberately kept off the image URL: one cache key per card) |
+| `GET /og/comparison/:dyes[.png]` | `:dyes` is comma-separated stainIDs, max 16, sliced to 4 |
 | `GET /og/accessibility/:dyes/:visionType[.png]` | vision: normal, protanopia, deuteranopia, tritanopia, achromatopsia |
-| `GET /og/default.png` | Generic fallback card; cached 7 days |
-| `GET *` | Fallthrough — minimal OG for crawlers, `fetch(req)` to origin for humans |
+| `GET /og/extractor/:colors[.png]` | `RRGGBB` or `RRGGBB-share` entries, comma-separated, max 5. Bare entries (the web-app share grammar carries no shares) draw **equal, ranked** bands — proportion is only claimed where it was measured |
+| `GET /og/presets/:presetId[.png]` | slug `^[a-z0-9-]{1,64}$` |
+| `GET /og/budget/:dyeId[.png]` | stainID |
+| `GET /og/:tool/default.png` | Per-tool 2a fallback card |
+| `GET /og/default.png` | Root fallback card; cached 7 days |
+| `GET *` | Fallthrough — crawlers get a minimal **404** (`no-store`) page; humans are passed through only on the `APP_BASE_URL` host (any other host → 302 to the app) — FINDING-024 |
 
 All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
 
@@ -99,12 +141,40 @@ All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` 
 
 | Binding | Type | Purpose |
 |---|---|---|
-| `ANALYTICS` | Analytics Engine Dataset (`xivdyetools_og_analytics`) | `writeDataPoint` for `og_request` / `og_image_request` events. Failures swallowed. |
-| `OG_CACHE` | KV (optional, declared in `types.ts` only) | Reserved for future caching — **not currently bound** in `wrangler.toml`. |
+| `ANALYTICS` | Analytics Engine Dataset (`xivdyetools_og_analytics`) | `writeDataPoint` for `og_request` (crawler hits only since FINDING-024 — human page views no longer produce a datapoint) / `og_image_request` events. Failures swallowed. |
 | `APP_BASE_URL` | Var | `https://xivdyetools.app` — used for redirects and canonical URLs |
-| `OG_IMAGE_BASE_URL` | Var | `https://og.xivdyetools.app` — base for `og:image` URLs |
+| `OG_IMAGE_BASE_URL` | Var | `https://og.xivdyetools.app/og` — base for `og:image` URLs (the `/og` suffix is load-bearing; without it every emitted card URL 404s) |
 
-Routes (production): `xivdyetools.app/{harmony,gradient,mixer,swatch,comparison,accessibility}/*`. Compatibility date `2024-12-01`. **No `nodejs_compat`** (per ARCH-001). The `[[rules]]` block declares `**/*.ttf` as Data imports so wrangler bundles fonts as `ArrayBuffer`s.
+### Two routed environments
+
+⚠️ **A bare `pnpm deploy` publishes to real, public hostnames.** The top-level env is the *beta*
+worker, not a routeless sandbox — see `docs/operations/DEPLOY_ENVIRONMENTS.md`.
+
+| Env | Worker | Routes | `APP_BASE_URL` | `OG_IMAGE_BASE_URL` |
+|---|---|---|---|---|
+| top-level (`pnpm deploy`) | `xivdyetools-og-worker-dev` | `beta.xivdyetools.app/<tool>/*` ×9 + `og-beta.xivdyetools.app` | `https://beta.xivdyetools.app` | `https://og-beta.xivdyetools.app/og` |
+| `production` (`pnpm deploy:production`) | `xivdyetools-og-worker` | `xivdyetools.app/<tool>/*` ×9 + `og.xivdyetools.app` | `https://xivdyetools.app` | `https://og.xivdyetools.app/og` |
+
+Beta gets its own Analytics Engine dataset (`xivdyetools_og_analytics_beta`) so its traffic
+cannot skew production metrics. Both envs declare `routes` and `workers_dev` **explicitly**,
+which is what keeps beta's routes out of production regardless of wrangler's inheritance rules.
+
+**`OG_IMAGE_BASE_URL`'s hostname must never equal `APP_BASE_URL`'s.** `isOgImageHost()` uses that
+comparison to recognise its own image host and responds by redirecting humans to `APP_BASE_URL`
+rather than passing them through to the SPA — so collapsing the two would bounce every real
+visitor off every tool page. This is why beta has a separate `og-beta.` domain instead of
+serving cards from `beta.xivdyetools.app/og`. `tests/wrangler-env.test.ts` guards both invariants.
+
+Compatibility date `2024-12-01`. **No `nodejs_compat`** (per ARCH-001). The `[[rules]]` block declares `**/*.ttf` as Data imports so wrangler bundles fonts as `ArrayBuffer`s.
+
+The site root `/` is deliberately **not** routed in either env — `xivdyetools.app/` and
+`beta.xivdyetools.app/` serve web-app's static card from `/og/default.png` (`default-x.png` for
+X). The worker has a `GET /` handler, but only `og.`/`og-beta.` reach it.
+
+Those static files sit at `/og/` and **not** `/assets/og/` because Cloudflare Pages merges
+overlapping `_headers` patterns rather than letting the more specific one replace the broader,
+so anything under `/assets/` inherits that section's `immutable` — fatal for a filename that
+must stay stable across artwork revisions.
 
 ### Required Secrets / Optional Secrets
 
@@ -114,7 +184,14 @@ None. Worker is public-facing and stateless.
 
 ### Image Dimensions
 
-`OG_DIMENSIONS = { width: 1200, height: 630 }` (Twitter/Discord standard) is exported from `services/svg/base.ts`. Every SVG generator targets these dimensions; the `og-card.ts` shell wraps tool content with a header bar (tool name + branding) and footer bar (URL + algorithm).
+1200×630 is a **resolution requirement, not a canvas** — every surface that unfurls a link displays it between 260 and 500 CSS px, so a label set at 1200 arrives at a third of its size. Cards are therefore drawn on a **400-wide design grid and rastered ×3**:
+
+| Frame | Design grid | Raster | Selected by |
+|---|---|---|---|
+| Discord / Slack / iMessage | 400×350 | 1200×1050 | default |
+| X / Twitter | 400×210 | 1200×630 | `?frame=x`, carried by `twitter:image` |
+
+`og:image:width/height` state the **raster** size, and the two frames take separate cache keys. The 11px type floor holds everywhere; corners are square because the platform rounds the frame itself.
 
 ### resvg-wasm Initialization
 
@@ -122,11 +199,13 @@ Cloudflare Workers disallow dynamic `WebAssembly.instantiate()`, so `services/re
 
 ### Font Bundling
 
-`services/fonts.ts` does static `import` of all five TTFs (three brand fonts + Noto Sans SC/KR subsets) and caches `Uint8Array` views in module scope. `getFontBuffers()` is passed to `Resvg`'s `font.fontBuffers`; `defaultFontFamily: 'Onest'`. Fonts are referenced in SVG via the `font-family` strings exposed in `FONTS` (re-exported from `@xivdyetools/svg` since REFACTOR-009) and `FONT_FAMILIES` (in `fonts.ts`). CJK rendering for `?lang=ja|ko|zh` works via the bundled subsets — if new dye names introduce unseen glyphs, re-run `scripts/subset-cjk-fonts.py`.
+`services/fonts.ts` does static `import` of all six TTFs (three brand fonts + Noto Sans JP/SC/KR subsets) and caches `Uint8Array` views in module scope. `getFontBuffers()` is passed to `Resvg`'s `font.fontBuffers`; `defaultFontFamily: 'Onest'`. The JP subset exists because folding Japanese into the SC subset renders JA text in Chinese letterforms, so JA stacks put `Noto Sans JP` first.
+
+**Any new or changed card string means re-running `scripts/subset-cjk-fonts.py`** — a subset that has never seen a glyph renders tofu. The script reads *both* `packages/core/src/data/locales/` (dye, tool, harmony and lens names) *and* `src/services/og-strings.ts` (this worker's own deck strings, tool tags, deck lines and role words — every `  xx: {` locale block in that file); it fails loudly if the ×6 tables in that file stop parsing rather than silently under-covering them. `services/og-embed.ts` is deliberately a separate file so the crawler's browser-rendered sentences do not get cut into the card subsets; a new ×6 table that *is* drawn on a card belongs in `og-strings.ts` and in `stringsFor()` in `font-coverage.test.ts`. Source fonts download into the gitignored `scripts/.font-sources/` on first run. `services/font-coverage.test.ts` **verifies** what the script generates: it parses the six TTFs' `cmap`s and fails `pnpm test` if any runtime string (core locales via `LocaleLoader`, the `og-strings.ts` tables, the Δ/·/→ glyphs the adapters emit) is not drawable, or if a `ja` CJK glyph is missing from the JP subset; surplus glyphs only warn. Compare subsets by cmap, never by md5 — fonttools rewrites `head.modified` on every run.
 
 ### Crawler Detection
 
-`crawler-detector.ts` runs a small ordered regex table against `User-Agent`. Notably, `Googlebot` is **commented out** — Google requests are intentionally passed through to the SPA so the SPA's own SEO content takes precedence. Apple's `Applebot` (iMessage previews) IS treated as a crawler.
+`crawler-detector.ts` runs a small ordered regex table against `User-Agent`. Notably, `Googlebot` is **deliberately absent** — Google requests are intentionally passed through to the SPA so the SPA's own SEO content takes precedence (`crawler-detector.test.ts` pins this). Apple's `Applebot` (iMessage previews) IS treated as a crawler.
 
 ### Stateless Localization (REFACTOR-001)
 
@@ -138,7 +217,7 @@ Image route parameters are bounded to prevent resource exhaustion: `OG_MAX_GRADI
 
 ### Analytics
 
-`trackAnalytics()` writes to Analytics Engine with `event`/`tool`/`crawler` blobs and `timestamp`/`cacheHit` doubles, indexed by `tool`. Errors are caught and logged but never break the request (analytics is best-effort).
+`trackAnalytics()` writes to Analytics Engine with `event`/`tool`/`crawler` blobs and a `timestamp` double, indexed by `tool` (the former `cacheHit` double was a constant 0 — a worker only ever sees cache misses — and was dropped in 2.1.0). Errors are caught and logged but never break the request (analytics is best-effort).
 
 ## Dependencies
 
@@ -148,12 +227,13 @@ Image route parameters are bounded to prevent resource exhaustion: `OG_MAX_GRADI
 | `@resvg/resvg-wasm` | SVG → PNG rasterizer (WASM, statically imported) |
 | `@cloudflare/workers-types` | Type defs for Analytics Engine, KV, etc. |
 | `@xivdyetools/core` | `DyeService`, `dyeDatabase`, `LocaleLoader`/`LocaleRegistry`/`TranslationProvider`, `extractLocaleCode` |
-| `@xivdyetools/types` | `Dye`, `LocaleCode`, `HarmonyTypeKey`, `SheetKey`, `ToolKey`, `VisionType` |
-| `@xivdyetools/worker-middleware` | `requestIdMiddleware`, `loggerMiddleware`, `getLogger` |
+| `@xivdyetools/types` | `Dye`, `LocaleCode`, `HarmonyTypeKey`, `SheetKey`, `ToolKey`, `VisionType`, `PresetData` |
+| `@xivdyetools/svg` | `toolGlyph` (the tool glyphs), `GLYPH_ACCENT_LIGHT`, `escapeXml`, `estimateTextWidth` (CJK-aware fit) |
+| `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware`, `getLogger` |
 
 ## Related Projects
 
-**Dependencies (internal):** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/worker-middleware`.
+**Dependencies (internal):** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/svg`, `@xivdyetools/worker-kit`.
 
 **Service Bindings:** None. `og-worker` does not call other workers and is not called by other workers.
 
@@ -161,9 +241,18 @@ Image route parameters are bounded to prevent resource exhaustion: `OG_MAX_GRADI
 
 ## Deployment Checklist
 
-1. `pnpm type-check && pnpm test` — must be green.
+1. `pnpm type-check && pnpm lint && pnpm test` — must be green.
 2. If a new tool was added: register the route in `wrangler.toml` AND in the `SUPPORTED_TOOLS` array in `index.ts` AND add a `services/svg/<tool>.ts` generator.
-3. If fonts changed: re-run `scripts/subset-cjk-fonts.py` if dye/locale strings changed (CJK subsets must cover every rendered glyph or resvg falls back to tofu).
+3. If dye/locale/card strings changed: re-run `scripts/subset-cjk-fonts.py` (`font-coverage.test.ts` goes red on a missing glyph and warns on surplus ones).
+   After any **card-design revision**, also run `pnpm lint` (knip, both modes) — this worker's dead code has always been rewrite sediment, so "the cards changed" is the sweep trigger, not the calendar.
 4. Bump `version` in `package.json` if behavior changed.
-5. `pnpm deploy` to staging; spot-check a Discord embed via `https://og.xivdyetools.app/og/harmony/5771/tetradic.png`.
+5. `pnpm deploy` publishes **beta** (live on `beta.xivdyetools.app`). Spot-check a card at
+   `https://og-beta.xivdyetools.app/og/harmony/1/tetradic.png`.
+   **Use a stainID, not an item ID.** `1` is Snow White. An unrecognised dye does not error —
+   it degrades to the default card, so an item-ID-era value like `5771` renders a perfectly
+   valid-looking card that tests nothing. Check the URL you got back names the dye.
 6. `pnpm deploy:production`. Validate a real shared link in Discord — the embed should render the new SVG within ~5s of cache expiry.
+7. Both deploys run in CI on push (`deploy-og-worker-beta.yml` off non-main branches,
+   `deploy-og-worker.yml` off main). Beta's workflow follows the emitted `og:image` URL end to
+   end and fails if it 404s or degrades to a default card — the check that was missing when
+   v1's missing `/og/` prefix meant no card had ever been fetched.

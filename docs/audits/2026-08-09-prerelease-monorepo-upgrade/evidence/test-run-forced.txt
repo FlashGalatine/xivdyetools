@@ -1,0 +1,27 @@
+# Full uncached test run — pnpm turbo run test --force
+# 2026-08-09 · branch monorepo-2.0-prep @ 58dbe2f · Turborepo cache bypassed
+# Condensed from 705 KB of raw output; per-assertion scrollback and ANSI escapes stripped.
+
+RESULT: 24/24 tasks successful, 0 cached. All suites green.
+TOTAL:  8262 tests across 320 test files in 16 workspaces.
+
+workspace                           files   tests
+-------------------------------------------------
+xivdyetools-web-app                    76    2092
+@xivdyetools/core                      41    1850
+xivdyetools-discord-worker             41     793
+@xivdyetools/test-utils                27     592
+xivdyetools-presets-api                17     520
+xivdyetools-og-worker                  15     289
+@xivdyetools/bot-logic                 15     267
+xivdyetools-moderation-worker          15     508
+xivdyetools-api-worker                 12     206
+xivdyetools-oauth-worker               11     242
+@xivdyetools/svg                       11     180
+xivdyetools-stoat-worker               11     140
+@xivdyetools/worker-kit                 9     146
+@xivdyetools/logger                     8     209
+@xivdyetools/auth                       7     121
+@xivdyetools/types                      4     107
+-------------------------------------------------
+TOTAL                                 320    8262

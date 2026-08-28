@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-stoat-worker",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "private": true,
   "description": "XIV Dye Tools Stoat (Revolt) Bot — WebSocket-based Node.js bot",
   "type": "module",
@@ -23,22 +23,16 @@
     "dye"
   ],
   "author": "Flash Galatine",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "@xivdyetools/bot-i18n": "workspace:*",
     "@xivdyetools/bot-logic": "workspace:*",
-    "@xivdyetools/color-blending": "workspace:*",
-    "@xivdyetools/core": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
-    "@xivdyetools/rate-limiter": "workspace:*",
-    "@xivdyetools/svg": "workspace:*",
     "@xivdyetools/types": "workspace:*",
     "revolt.js": "^7.1.1"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "^4.1.10",
-    "@xivdyetools/test-utils": "workspace:*",
     "tsup": "^8.5.1",
     "tsx": "^4.23.1",
     "vitest": "^4.1.10"

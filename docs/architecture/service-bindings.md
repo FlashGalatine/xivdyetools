@@ -15,6 +15,11 @@ Cloudflare Service Bindings enable zero-latency, zero-cost communication between
 └─────────────────────────┘                         └─────────────────────────┘
 ```
 
+`discord-worker` also holds a second outbound binding, to `xivdyetools-image-worker`
+(photon-backed pixel extraction for `/extractor`; see
+`docs/operations/IMAGE_WORKER_SPLIT.md`). Unlike `presets-api`, `image-worker` has no
+public surface at all — it is reachable *only* via this binding.
+
 ---
 
 ## Binding Configuration
@@ -27,6 +32,10 @@ Cloudflare Service Bindings enable zero-latency, zero-cost communication between
 binding = "PRESETS_API"
 service = "xivdyetools-presets-api"
 environment = "production"
+
+[[services]]
+binding = "IMAGE_WORKER"
+service = "xivdyetools-image-worker"
 
 [[kv_namespaces]]
 binding = "KV"
@@ -42,6 +51,7 @@ dataset = "xivdyetools_analytics"
 interface Env {
   // Service Bindings
   PRESETS_API?: Fetcher;          // Worker-to-worker call
+  IMAGE_WORKER?: Fetcher;         // Photon-backed pixel extraction for /extractor
 
   // KV Namespaces
   KV: KVNamespace;                // Rate limits, user prefs, stats
@@ -103,6 +113,10 @@ interface Env {
 xivdyetools-discord-worker
 ├── PRESETS_API ────────────► xivdyetools-presets-api
 │   └── Used for: Preset CRUD, voting, listing
+│
+├── IMAGE_WORKER ────────────► xivdyetools-image-worker
+│   └── Used for: Photon-backed pixel extraction for /extractor (the only caller —
+│       image-worker has no public surface, see docs/operations/IMAGE_WORKER_SPLIT.md)
 │
 ├── KV (Namespace Binding)
 │   └── Used for: Rate limiting, favorites, collections, stats

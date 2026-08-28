@@ -2,7 +2,7 @@
   "locale": "de",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-29T04:47:06.366Z",
+    "generated": "2026-08-18T19:07:42.757Z",
     "dyeCount": 125
   },
   "labels": {
@@ -174,30 +174,13 @@
     "Purple Pigment": "Violette Farbpigmente",
     "Planet-specific Credit": "Kredit"
   },
-  "metallicDyeIds": [
-    13116,
-    13117,
-    13717,
-    13718,
-    13719,
-    13720,
-    13721,
-    13722,
-    13723,
-    30122,
-    30123,
-    30124,
-    48169,
-    48170,
-    48171,
-    48172
-  ],
   "harmonyTypes": {
     "complementary": "Komplementär",
     "analogous": "Analog",
     "triadic": "Triadisch",
     "splitComplementary": "Geteiltes Komplement",
     "tetradic": "Tetradisch",
+    "invertedTetradic": "Invertiert-Tetradisch",
     "square": "Quadrat",
     "monochromatic": "Monochromatisch",
     "compound": "Zusammengesetzt",
@@ -236,35 +219,6 @@
     "hairColors": "Haarfarben",
     "skinColors": "Hautfarben"
   },
-  "jobNames": {
-    "paladin": "Paladin",
-    "warrior": "Krieger",
-    "darkKnight": "Dunkelritter",
-    "gunbreaker": "Revolverklinge",
-    "whiteMage": "Weißmagier",
-    "scholar": "Gelehrter",
-    "astrologian": "Astrologe",
-    "sage": "Weiser",
-    "monk": "Mönch",
-    "dragoon": "Dragoon",
-    "ninja": "Ninja",
-    "samurai": "Samurai",
-    "reaper": "Schnitter",
-    "viper": "Viper",
-    "bard": "Barde",
-    "machinist": "Maschinist",
-    "dancer": "Tänzer",
-    "blackMage": "Schwarzmagier",
-    "summoner": "Beschwörer",
-    "redMage": "Rotmagier",
-    "pictomancer": "Piktomant",
-    "blueMage": "Blaumagier"
-  },
-  "grandCompanyNames": {
-    "maelstrom": "Der Mahlstrom",
-    "twinAdder": "Die Bruderschaft der Morgenviper",
-    "immortalFlames": "Die Legion der Unsterblichen"
-  },
   "races": {
     "hyur": "Hyuran",
     "elezen": "Elezen",
@@ -288,7 +242,7 @@
     "hellsguard": "Lohengarde",
     "raen": "Auri-Raen",
     "xaela": "Auri-Xaela",
-    "helion": "Helion",
+    "helions": "Helions",
     "theLost": "Losgesagter",
     "rava": "Rava-Viera",
     "veena": "Veena-Viera"

@@ -23,6 +23,7 @@ import {
     createMockPresetRow,
     createMockSubmission,
 } from '../test-utils';
+import type { PresetRow } from '../../src/types';
 
 describe('PresetService', () => {
     beforeEach(() => {
@@ -689,4 +690,84 @@ describe('PresetService', () => {
             expect(db._bindings[0]).toContain('[10,20]');
         });
     });
+});
+
+const baseRow: PresetRow = {
+    id: 'p1',
+    name: 'Test',
+    description: 'd',
+    category_id: 'aesthetics',
+    dyes: '[1,2,3]',
+    tags: '[]',
+    author_discord_id: '123',
+    author_name: 'Author',
+    vote_count: 0,
+    status: 'approved',
+    is_curated: 0,
+    created_at: '2026-08-10T00:00:00.000Z',
+    updated_at: '2026-08-10T00:00:00.000Z',
+    dye_signature: '[1,2,3]',
+    previous_values: null,
+    example_link: null,
+    preview_image_key: 'p1/abc.webp',
+    preview_image_status: 'none',
+    secondary_categories: '[]',
+};
+
+describe('rowToPreset preview image gate', () => {
+    it('omits the URL when status is none', () => {
+        expect(rowToPreset({ ...baseRow, preview_image_status: 'none' }).preview_image_url).toBeNull();
+    });
+
+    it('omits the URL when status is pending — an unreviewed image must never be served', () => {
+        expect(rowToPreset({ ...baseRow, preview_image_status: 'pending' }).preview_image_url).toBeNull();
+    });
+
+    it('serves the URL only when approved', () => {
+        const preset = rowToPreset({ ...baseRow, preview_image_status: 'approved' });
+        expect(preset.preview_image_url).toBe('https://shots.xivdyetools.app/p1/abc.webp');
+    });
+
+    it('omits the URL when approved but no key was ever stored', () => {
+        const preset = rowToPreset({
+            ...baseRow,
+            preview_image_key: null,
+            preview_image_status: 'approved',
+        });
+        expect(preset.preview_image_url).toBeNull();
+    });
+});
+
+describe('secondary categories and preview_image_status', () => {
+  it('rowToPreset parses the JSON list', () => {
+    const preset = rowToPreset(
+      createMockPresetRow({ secondary_categories: '["zones","events"]' })
+    );
+    expect(preset.secondary_categories).toEqual(['zones', 'events']);
+  });
+
+  it('rowToPreset degrades corrupt secondary_categories to [] instead of throwing', () => {
+    // Supplementary metadata, unlike `dyes` — a bad value must not hide the preset.
+    const preset = rowToPreset(createMockPresetRow({ secondary_categories: '{not json' }));
+    expect(preset.secondary_categories).toEqual([]);
+  });
+
+  it('rowToPreset degrades a non-array JSON value to []', () => {
+    const preset = rowToPreset(createMockPresetRow({ secondary_categories: '"zones"' }));
+    expect(preset.secondary_categories).toEqual([]);
+  });
+
+  it('rowToPreset surfaces preview_image_status but still gates the URL', () => {
+    const pending = rowToPreset(
+      createMockPresetRow({ preview_image_status: 'pending', preview_image_key: 'p/a.webp' })
+    );
+    expect(pending.preview_image_status).toBe('pending');
+    expect(pending.preview_image_url).toBeNull();
+
+    const approved = rowToPreset(
+      createMockPresetRow({ preview_image_status: 'approved', preview_image_key: 'p/a.webp' })
+    );
+    expect(approved.preview_image_status).toBe('approved');
+    expect(approved.preview_image_url).toBe('https://shots.xivdyetools.app/p/a.webp');
+  });
 });

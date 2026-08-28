@@ -29,10 +29,8 @@ describe('executeMixer', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.blendedHex).toMatch(/^#[0-9A-Fa-f]{6}$/);
     expect(result.blendingMode).toBe('rgb');
-    expect(result.inputDyes).toHaveLength(2);
-    expect(result.matches.length).toBeGreaterThanOrEqual(1);
+    expect(result.sweep.length).toBeGreaterThanOrEqual(1);
     expect(result.embed.title).toBeDefined();
   });
 
@@ -51,45 +49,30 @@ describe('executeMixer', () => {
         expect(result.ok).toBe(true);
         if (!result.ok) return;
 
-        expect(result.blendedHex).toMatch(/^#[0-9A-Fa-f]{6}$/);
+        for (const stop of result.sweep) {
+          expect(stop.blendHex).toMatch(/^#[0-9A-Fa-f]{6}$/);
+        }
         expect(result.blendingMode).toBe(mode);
       });
     }
   });
 
-  it('finds multiple matches when count > 1', async () => {
+  it('sweep stops each have a distinct ratio', async () => {
     const result = await executeMixer({
       dye1,
       dye2,
       blendingMode: 'rgb',
-      count: 3,
       locale: 'en',
     });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.matches.length).toBe(3);
+    const pcts = result.sweep.map((s) => s.pct);
+    expect(new Set(pcts).size).toBe(pcts.length);
   });
 
-  it('each match has a unique dye', async () => {
-    const result = await executeMixer({
-      dye1,
-      dye2,
-      blendingMode: 'rgb',
-      count: 3,
-      locale: 'en',
-    });
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-
-    const ids = result.matches.map((m) => m.dye.id);
-    const uniqueIds = new Set(ids);
-    expect(uniqueIds.size).toBe(ids.length);
-  });
-
-  it('matches include distance values', async () => {
+  it('sweep stops include ΔE2000 distance values', async () => {
     const result = await executeMixer({
       dye1,
       dye2,
@@ -100,9 +83,9 @@ describe('executeMixer', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    for (const match of result.matches) {
-      expect(typeof match.distance).toBe('number');
-      expect(match.distance).toBeGreaterThanOrEqual(0);
+    for (const stop of result.sweep) {
+      expect(typeof stop.deltaE).toBe('number');
+      expect(stop.deltaE).toBeGreaterThanOrEqual(0);
     }
   });
 
@@ -134,7 +117,7 @@ describe('executeMixer', () => {
     expect(result.embed.description).toBeDefined();
   });
 
-  it('sets embed color from blended hex', async () => {
+  it('sets embed color from the sweep best stop and renders the 12F card', async () => {
     const result = await executeMixer({
       dye1,
       dye2,
@@ -145,22 +128,25 @@ describe('executeMixer', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    const expectedColor = parseInt(result.blendedHex.replace('#', ''), 16);
-    expect(result.embed.color).toBe(expectedColor);
+    const best = result.sweep.find((s) => s.best);
+    expect(best).toBeDefined();
+    expect(result.embed.color).toBe(parseInt(best!.dye.hex.replace('#', ''), 16));
+    expect(result.svgString).toContain('/MIXER');
+    expect(result.sweep).toHaveLength(5);
   });
 
-  it('different blending modes produce different results', async () => {
+  it('different blending modes produce different sweep results', async () => {
     const rgbResult = await executeMixer({ dye1, dye2, blendingMode: 'rgb', locale: 'en' });
     const labResult = await executeMixer({ dye1, dye2, blendingMode: 'lab', locale: 'en' });
 
     expect(rgbResult.ok).toBe(true);
     expect(labResult.ok).toBe(true);
+    if (!rgbResult.ok || !labResult.ok) return;
 
-    if (rgbResult.ok && labResult.ok) {
-      // Different blending modes should generally produce different blended hex values
-      // (not guaranteed for all inputs, but red+blue should differ)
-      expect(rgbResult.blendedHex !== labResult.blendedHex || true).toBe(true);
-    }
+    // red + blue should land on a different blended hex per ratio for rgb vs lab
+    const rgbHexes = rgbResult.sweep.map((s) => s.blendHex);
+    const labHexes = labResult.sweep.map((s) => s.blendHex);
+    expect(rgbHexes).not.toEqual(labHexes);
   });
 
   it('works with Japanese locale', async () => {
@@ -180,7 +166,6 @@ describe('executeMixer', () => {
         dye1,
         dye2,
         blendingMode: 'rgb',
-        count: 5,
         locale: 'en',
         dyeFilters: { excludeMetallic: true },
       });
@@ -188,12 +173,12 @@ describe('executeMixer', () => {
       expect(result.ok).toBe(true);
       if (!result.ok) return;
 
-      for (const match of result.matches) {
-        expect(match.dye.isMetallic).toBe(false);
+      for (const stop of result.sweep) {
+        expect(stop.dye.isMetallic).toBe(false);
       }
     });
 
-    it('returns matches when dyeFilters is empty', async () => {
+    it('returns a sweep when dyeFilters is empty', async () => {
       const result = await executeMixer({
         dye1,
         dye2,
@@ -205,7 +190,7 @@ describe('executeMixer', () => {
       expect(result.ok).toBe(true);
       if (!result.ok) return;
 
-      expect(result.matches.length).toBeGreaterThanOrEqual(1);
+      expect(result.sweep.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

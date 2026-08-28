@@ -195,16 +195,6 @@ describe('DyeService', () => {
       expect(dye).toBeNull();
     });
 
-    it('should get multiple dyes by IDs', () => {
-      const dyes = dyeService.getDyesByIds([5729, 5730, 5731]);
-      expect(dyes).toHaveLength(3);
-    });
-
-    it('should filter out non-existent IDs', () => {
-      const dyes = dyeService.getDyesByIds([5729, 99999, 5730]);
-      expect(dyes).toHaveLength(2);
-    });
-
     it('should get dye by stainID', () => {
       const dye = dyeService.getByStainId(1);
       expect(dye).toBeDefined();
@@ -217,28 +207,10 @@ describe('DyeService', () => {
       expect(dye).toBeNull();
     });
 
-    it('should get multiple dyes by stainIDs', () => {
-      const dyes = dyeService.getDyesByStainIds([1, 2, 3]);
-      expect(dyes).toHaveLength(3);
-      expect(dyes[0].name).toBe('Snow White');
-      expect(dyes[1].name).toBe('Ash Grey');
-      expect(dyes[2].name).toBe('Goobbue Grey');
-    });
-
-    it('should filter out non-existent stainIDs', () => {
-      const dyes = dyeService.getDyesByStainIds([1, 999, 2]);
-      expect(dyes).toHaveLength(2);
-    });
-
     it('should check loaded status', () => {
       expect(dyeService.isLoadedStatus()).toBe(true);
       const emptyService = new DyeService();
       expect(emptyService.isLoadedStatus()).toBe(false);
-    });
-
-    it('should get last loaded time', () => {
-      const time = dyeService.getLastLoadedTime();
-      expect(time).toBeGreaterThan(0);
     });
 
     it('should get dye count', () => {
@@ -295,56 +267,24 @@ describe('DyeService', () => {
     });
 
     it('should find closest dye with exclude list (default)', () => {
-      const closestDye = dyeService.findClosestDye('#EBEBEB', []);
+      const closestDye = dyeService.findClosestDye('#EBEBEB');
       expect(closestDye).toBeDefined();
     });
 
     it('should find closest dye excluding specific IDs', () => {
-      const closestDye = dyeService.findClosestDye('#EBEBEB', [5729]);
+      const closestDye = dyeService.findClosestDye('#EBEBEB', { excludeIds: [5729] });
       expect(closestDye).toBeDefined();
       expect(closestDye).toBeDefined();
     });
 
     it('should find dyes within distance', () => {
-      const dyes = dyeService.findDyesWithinDistance('#ECECEC', 50);
+      const dyes = dyeService.findDyesWithinDistance('#ECECEC', { maxDistance: 50 });
       expect(dyes.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should find dyes within distance with limit', () => {
-      const dyes = dyeService.findDyesWithinDistance('#808080', 100, 2);
+      const dyes = dyeService.findDyesWithinDistance('#808080', { maxDistance: 100, limit: 2 });
       expect(dyes.length).toBeLessThanOrEqual(2);
-    });
-
-    describe('sorting', () => {
-      it('should sort by brightness ascending (default)', () => {
-        const sorted = dyeService.getDyesSortedByBrightness();
-        expect(sorted).toHaveLength(6);
-      });
-
-      it('should sort by brightness descending', () => {
-        const sorted = dyeService.getDyesSortedByBrightness(false);
-        expect(sorted).toHaveLength(6);
-      });
-
-      it('should sort by saturation ascending (default)', () => {
-        const sorted = dyeService.getDyesSortedBySaturation();
-        expect(sorted).toHaveLength(6);
-      });
-
-      it('should sort by saturation descending', () => {
-        const sorted = dyeService.getDyesSortedBySaturation(false);
-        expect(sorted).toHaveLength(6);
-      });
-
-      it('should sort by hue ascending (default)', () => {
-        const sorted = dyeService.getDyesSortedByHue();
-        expect(sorted).toHaveLength(6);
-      });
-
-      it('should sort by hue descending', () => {
-        const sorted = dyeService.getDyesSortedByHue(false);
-        expect(sorted).toHaveLength(6);
-      });
     });
   });
 
@@ -386,6 +326,12 @@ describe('DyeService', () => {
       expect(tetradic.length).toBeLessThanOrEqual(3);
     });
 
+    it('should find inverted tetradic dyes', () => {
+      const inverted = dyeService.findInvertedTetradicDyes('#FF0000');
+      expect(Array.isArray(inverted)).toBe(true);
+      expect(inverted.length).toBeLessThanOrEqual(3);
+    });
+
     it('should find monochromatic dyes with default limit', () => {
       const mono = dyeService.findMonochromaticDyes('#FF0000');
       expect(mono.length).toBeLessThanOrEqual(6);
@@ -396,20 +342,10 @@ describe('DyeService', () => {
       expect(mono.length).toBeLessThanOrEqual(3);
     });
 
-    it('should find compound dyes', () => {
-      const compound = dyeService.findCompoundDyes('#FF0000');
-      expect(Array.isArray(compound)).toBe(true);
-    });
-
     it('should find split-complementary dyes', () => {
       const splitComp = dyeService.findSplitComplementaryDyes('#FF0000');
       expect(Array.isArray(splitComp)).toBe(true);
       expect(splitComp.length).toBeLessThanOrEqual(2);
-    });
-
-    it('should find shade dyes', () => {
-      const shades = dyeService.findShadesDyes('#FF0000');
-      expect(shades).toBeDefined();
     });
   });
 
@@ -442,110 +378,6 @@ describe('DyeService', () => {
         // English still works
         const englishResults = dyeService.searchByLocalizedName('snow');
         expect(englishResults).toHaveLength(1);
-      });
-    });
-
-    describe('getLocalizedDyeById', () => {
-      it('should return dye without localized name when no locale loaded', () => {
-        const dye = dyeService.getLocalizedDyeById(5729);
-        expect(dye).toBeDefined();
-        expect(dye?.name).toBe('Snow White');
-        expect(dye?.localizedName).toBeUndefined();
-      });
-
-      it('should return null for non-existent ID', () => {
-        const dye = dyeService.getLocalizedDyeById(99999);
-        expect(dye).toBeNull();
-      });
-
-      it('should include localized name when locale loaded', () => {
-        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
-        vi.spyOn(LocalizationService, 'getDyeName').mockReturnValue('スノウホワイト');
-
-        const dye = dyeService.getLocalizedDyeById(5729);
-        expect(dye).toBeDefined();
-        expect(dye?.localizedName).toBe('スノウホワイト');
-      });
-
-      it('should handle null localized name', () => {
-        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
-        vi.spyOn(LocalizationService, 'getDyeName').mockReturnValue(null);
-
-        const dye = dyeService.getLocalizedDyeById(5729);
-        expect(dye).toBeDefined();
-        expect(dye?.localizedName).toBeUndefined();
-      });
-    });
-
-    describe('getLocalizedDyeByStainId', () => {
-      it('should return dye without localized name when no locale loaded', () => {
-        const dye = dyeService.getLocalizedDyeByStainId(1);
-        expect(dye).toBeDefined();
-        expect(dye?.name).toBe('Snow White');
-        expect(dye?.localizedName).toBeUndefined();
-      });
-
-      it('should return null for non-existent stainID', () => {
-        const dye = dyeService.getLocalizedDyeByStainId(999);
-        expect(dye).toBeNull();
-      });
-
-      it('should include localized name when locale loaded', () => {
-        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
-        vi.spyOn(LocalizationService, 'getDyeName').mockReturnValue('スノウホワイト');
-
-        const dye = dyeService.getLocalizedDyeByStainId(1);
-        expect(dye).toBeDefined();
-        expect(dye?.localizedName).toBe('スノウホワイト');
-      });
-
-      it('should handle null localized name', () => {
-        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
-        vi.spyOn(LocalizationService, 'getDyeName').mockReturnValue(null);
-
-        const dye = dyeService.getLocalizedDyeByStainId(1);
-        expect(dye).toBeDefined();
-        expect(dye?.localizedName).toBeUndefined();
-      });
-    });
-
-    describe('getAllLocalizedDyes', () => {
-      it('should return dyes without localized names when no locale loaded', () => {
-        const dyes = dyeService.getAllLocalizedDyes();
-        expect(dyes).toHaveLength(6);
-        dyes.forEach((dye) => {
-          expect(dye.localizedName).toBeUndefined();
-        });
-      });
-
-      it('should include localized names when locale loaded', () => {
-        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
-        vi.spyOn(LocalizationService, 'getDyeName').mockImplementation((itemID: number) => {
-          if (itemID === 5729) return 'スノウホワイト';
-          return null;
-        });
-
-        const dyes = dyeService.getAllLocalizedDyes();
-        const snowWhite = dyes.find((d) => d.itemID === 5729);
-        expect(snowWhite?.localizedName).toBe('スノウホワイト');
-      });
-    });
-
-    describe('getNonMetallicDyes', () => {
-      // BUG-045 (2026-07-18 audit): exclusion now comes from the dye data's
-      // own isMetallic flag, not locale-derived ID lists
-      it('should exclude dyes flagged isMetallic', () => {
-        const nonMetallic = dyeService.getNonMetallicDyes();
-        expect(nonMetallic).toHaveLength(5);
-        expect(nonMetallic.find((d) => d.itemID === 5734)).toBeUndefined();
-      });
-
-      it('should exclude metallic dyes even when no locale was ever loaded (BUG-045)', () => {
-        LocalizationService.resetInstance();
-
-        const nonMetallic = dyeService.getNonMetallicDyes();
-        expect(nonMetallic).toHaveLength(5);
-        expect(nonMetallic.every((d) => !d.isMetallic)).toBe(true);
       });
     });
   });

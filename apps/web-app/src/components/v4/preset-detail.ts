@@ -16,24 +16,54 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import {
-  dyeService,
+  resolvePresetDye,
   authService,
   communityPresetService,
   ToastService,
   LanguageService,
 } from '@services/index';
+import { presetName, presetDescription, presetCategoryLabel } from '@shared/preset-i18n';
+import { formatGil, formatList, formatNumber } from '@shared/format';
 import { MarketBoardService } from '@services/market-board-service';
 import type { PriceData } from '@xivdyetools/types';
 import { ConfigController } from '@services/config-controller';
-import type { DisplayOptionsConfig, MarketConfig } from '@shared/tool-config-types';
-import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
-import { getCategoryIcon, ICON_ARROW_BACK } from '@shared/category-icons';
+import type { MarketConfig } from '@shared/tool-config-types';
+import { getCategoryIcon } from '@shared/category-icons';
+import { ICON_ARROW_BACK } from '@shared/ui-icons';
 import { ICON_CRYSTAL, ICON_LINK } from '@shared/ui-icons';
+import type { VoteErrorCode } from '@services/community-preset-service';
 import type { UnifiedPreset } from '@services/hybrid-preset-service';
 import type { Dye } from '@xivdyetools/types';
 
 // Import v4-result-card to ensure registration
 import './result-card';
+
+/**
+ * Vote failure code -> locale key.
+ *
+ * `community-preset-service` has no locale, so it names the reason and the
+ * text lives here. Total `Record`, so a new `VoteErrorCode` without a key is a
+ * compile error rather than a raw dot-path in a toast.
+ */
+const VOTE_ERROR_KEYS: Record<VoteErrorCode, string> = {
+  notLoggedIn: 'preset.loginToVote',
+  alreadyVoted: 'preset.alreadyVoted',
+  voteFailed: 'errors.voteFailed',
+  removeVoteFailed: 'errors.removeVoteFailed',
+  network: 'errors.networkError',
+};
+
+/** Localized "{n} votes" for a badge, singular at exactly one. */
+function votesText(n: number): string {
+  return LanguageService.tInterpolate(n === 1 ? 'preset.votesCountOne' : 'preset.votesCount', {
+    n,
+  });
+}
+
+/** Localized text for a vote failure; `fallbackKey` covers a code-less result. */
+function voteErrorMessage(code: VoteErrorCode | undefined, fallbackKey: string): string {
+  return LanguageService.t(code ? VOTE_ERROR_KEYS[code] : fallbackKey);
+}
 
 /**
  * V4 Preset Detail - Full preset view with dye cards
@@ -89,12 +119,6 @@ export class PresetDetail extends BaseLitComponent {
    */
   @state()
   private currentVoteCount: number = 0;
-
-  /**
-   * Display options from config
-   */
-  @state()
-  private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
 
   /**
    * Market config from config
@@ -403,12 +427,169 @@ export class PresetDetail extends BaseLitComponent {
         }
       }
     `,
+    css`
+      /* 8A: example link block — stored link, never a copy of the image */
+      .example-link {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        max-width: 640px;
+        padding: 12px 14px;
+        margin-bottom: 20px;
+        border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.12));
+        border-radius: 10px;
+        text-decoration: none;
+      }
+
+      .example-link:hover {
+        border-color: var(--theme-primary, #ea4133);
+      }
+
+      .example-link-label {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 8.5px;
+        letter-spacing: 1px;
+        color: var(--theme-text-muted, #888888);
+      }
+
+      .example-link-url {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 12.5px;
+        color: var(--theme-primary, #ea4133);
+        overflow-wrap: anywhere;
+      }
+
+      /* 8A: palette as a readable list, not Result Cards */
+      .dye-list {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
+        border-radius: 10px;
+        overflow: hidden;
+        max-width: 640px;
+      }
+
+      .dye-row {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr) 84px minmax(0, 1fr) 90px;
+        gap: 10px;
+        align-items: center;
+        padding: 9px 14px;
+        border-top: 1px solid var(--theme-border, rgba(255, 255, 255, 0.08));
+        font-size: 13px;
+      }
+
+      .dye-row:first-child {
+        border-top: none;
+      }
+
+      .dye-swatch {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.2));
+      }
+
+      .dye-name {
+        color: var(--theme-text, #e0e0e0);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .dye-hex {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 11.5px;
+        color: var(--theme-text-muted, #888888);
+      }
+
+      .dye-source {
+        font-size: 11.5px;
+        color: var(--theme-text-muted, #888888);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .dye-price {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 12px;
+        text-align: right;
+        color: var(--theme-text, #e0e0e0);
+      }
+
+      .dye-price--na {
+        color: var(--theme-text-muted, #888888);
+      }
+
+      .cost-label {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 8.5px;
+        letter-spacing: 1px;
+        color: var(--theme-text-muted, #888888);
+        margin: 14px 0 4px;
+      }
+
+      .cost-note {
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: var(--theme-text, #e0e0e0);
+        max-width: 640px;
+        margin: 0;
+      }
+
+      /* 8A: handoff row so the page does not dead-end */
+      .handoff-label {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 8.5px;
+        letter-spacing: 1px;
+        color: var(--theme-text-muted, #888888);
+        margin: 22px 0 8px;
+      }
+
+      .handoff-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 10px;
+        max-width: 820px;
+      }
+
+      .handoff-btn {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        align-items: flex-start;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.12));
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .handoff-btn:hover {
+        border-color: var(--theme-primary, #ea4133);
+      }
+
+      .handoff-name {
+        font-size: 12.5px;
+        font-weight: 650;
+        color: var(--theme-text, #e0e0e0);
+      }
+
+      .handoff-note {
+        font-size: 11px;
+        color: var(--theme-text-muted, #888888);
+      }
+    `,
   ];
 
   override async connectedCallback(): Promise<void> {
     super.connectedCallback();
     this.marketBoardService = MarketBoardService.getInstance();
     this.loadConfigAndSubscribe();
+    // Curated name/description and this page's chrome both follow the locale
+    this.configUnsubscribers.push(LanguageService.subscribe(() => this.requestUpdate()));
     await this.checkVoteStatus();
     // Fetch prices for preset dyes if prices are enabled
     await this.fetchPricesIfNeeded();
@@ -428,15 +609,7 @@ export class PresetDetail extends BaseLitComponent {
     this.configController = ConfigController.getInstance();
 
     // Load initial config values
-    const globalConfig = this.configController.getConfig('global');
-    this.displayOptions = globalConfig.displayOptions || { ...DEFAULT_DISPLAY_OPTIONS };
     this.marketConfig = this.configController.getConfig('market');
-
-    // Subscribe to global display options changes
-    const unsubGlobal = this.configController.subscribe('global', (config) => {
-      this.displayOptions = config.displayOptions || { ...DEFAULT_DISPLAY_OPTIONS };
-    });
-    this.configUnsubscribers.push(unsubGlobal);
 
     // Subscribe to market config changes
     const unsubMarket = this.configController.subscribe('market', (config) => {
@@ -596,7 +769,7 @@ export class PresetDetail extends BaseLitComponent {
           this.emit<{ preset: UnifiedPreset }>('vote-update', { preset: updatedPreset });
           ToastService.info(LanguageService.t('preset.voteRemoved'));
         } else {
-          ToastService.error(result.error || LanguageService.t('errors.removeVoteFailed'));
+          ToastService.error(voteErrorMessage(result.errorCode, 'errors.removeVoteFailed'));
         }
       } else {
         // Add vote
@@ -612,7 +785,7 @@ export class PresetDetail extends BaseLitComponent {
           this.hasVoted = true;
           ToastService.info(LanguageService.t('preset.alreadyVoted'));
         } else {
-          ToastService.error(result.error || LanguageService.t('errors.voteFailed'));
+          ToastService.error(voteErrorMessage(result.errorCode, 'errors.voteFailed'));
         }
       }
     } catch (error) {
@@ -627,7 +800,69 @@ export class PresetDetail extends BaseLitComponent {
    * Resolve a dye ID to a Dye object
    */
   private resolveDye(dyeId: number): Dye | null {
-    return dyeService.getDyeById(dyeId);
+    return resolvePresetDye(dyeId) ?? null;
+  }
+
+  private resolvedDyes(): Dye[] {
+    if (!this.preset) return [];
+    return this.preset.dyes.map((id) => this.resolveDye(id)).filter((d): d is Dye => d !== null);
+  }
+
+  private dyeNameOf(dye: Dye): string {
+    return LanguageService.getDyeName(dye.itemID) || dye.name;
+  }
+
+  /**
+   * PALETTE COST note in the 9C pricing vocabulary: gil-vendor dyes sum;
+   * scrip/credit/coffer dyes are named with their source, never converted.
+   */
+  private costNote(dyes: Dye[]): string {
+    const gilDyes = dyes.filter((d) => /gil/i.test(d.currency || '') && d.cost > 0);
+    const gil = gilDyes.reduce((sum, d) => sum + d.cost, 0);
+    if (gilDyes.length === dyes.length && dyes.length > 0) {
+      return LanguageService.tInterpolate('preset.costNoteAll', {
+        total: dyes.length,
+        gil: formatNumber(gil),
+      });
+    }
+    const notSold = dyes.filter((d) => !(/gil/i.test(d.currency || '') && d.cost > 0));
+    const sources = Array.from(
+      new Set(notSold.map((d) => LanguageService.getAcquisition(d.acquisition)))
+    );
+    return LanguageService.tInterpolate('preset.costNotePartial', {
+      bought: gilDyes.length,
+      total: dyes.length,
+      names: formatList(notSold.map((d) => this.dyeNameOf(d))),
+      sources: formatList(sources),
+    });
+  }
+
+  /** TAKE THIS PALETTE INTO — targets built on the 5.0 share grammar (stainIDs). */
+  private handoffTargets(dyes: Dye[]): Array<{ label: string; note: string; url: string }> {
+    const ids = dyes.map((d) => d.stainID).filter((id): id is number => typeof id === 'number');
+    if (ids.length === 0) return [];
+    return [
+      {
+        label: LanguageService.t('tools.harmony.title'),
+        note: LanguageService.t('preset.handoffHarmony'),
+        url: `/harmony/?dye=${ids[0]}&harmony=complementary`,
+      },
+      {
+        label: LanguageService.t('tools.comparison.title'),
+        note: LanguageService.t('preset.handoffComparison'),
+        url: `/comparison/?dyes=${ids.slice(0, 4).join(',')}`,
+      },
+      {
+        label: LanguageService.t('tools.gradient.title'),
+        note: LanguageService.t('preset.handoffGradient'),
+        url: ids.length >= 2 ? `/gradient/?start=${ids[0]}&end=${ids[1]}` : `/gradient/`,
+      },
+      {
+        label: LanguageService.t('tools.accessibility.title'),
+        note: LanguageService.t('preset.handoffAccessibility'),
+        url: `/accessibility/?dyes=${ids.slice(0, 4).join(',')}`,
+      },
+    ];
   }
 
   protected override render(): TemplateResult {
@@ -636,7 +871,7 @@ export class PresetDetail extends BaseLitComponent {
         <div class="preset-detail">
           <div class="loading">
             <div class="spinner"></div>
-            <span>Loading preset...</span>
+            <span>${LanguageService.t('preset.loadingOne')}</span>
           </div>
         </div>
       `;
@@ -650,73 +885,85 @@ export class PresetDetail extends BaseLitComponent {
         <!-- Back button -->
         <button class="back-button" @click=${this.handleBack}>
           ${unsafeHTML(ICON_ARROW_BACK)}
-          <span>Back to list</span>
+          <span>${LanguageService.t('tools.presets.backToList')}</span>
         </button>
 
         <!-- Badges -->
         <div class="badges">
           <span class="badge badge-category">
-            ${unsafeHTML(getCategoryIcon(this.preset.category))} ${this.preset.category}
+            ${unsafeHTML(getCategoryIcon(this.preset.category))}
+            ${presetCategoryLabel(this.preset.category)}
           </span>
+          ${this.preset.secondaryCategories.map(
+            (cat) => html`
+              <span class="badge badge-category">
+                ${unsafeHTML(getCategoryIcon(cat))} ${presetCategoryLabel(cat)}
+              </span>
+            `
+          )}
           ${
             this.preset.isCurated
-              ? html`<span class="badge badge-curated">Official</span>`
-              : html`<span class="badge badge-community">Community</span>`
+              ? html`<span class="badge badge-curated"
+                  >${LanguageService.t('preset.tabOfficial')}</span
+                >`
+              : nothing
           }
           ${
             this.currentVoteCount > 0
-              ? html`<span class="badge badge-votes">★ ${this.currentVoteCount} votes</span>`
+              ? html`<span class="badge badge-votes">★ ${votesText(this.currentVoteCount)}</span>`
               : nothing
           }
         </div>
 
         <!-- Title & description -->
-        <h2 class="preset-title">${this.preset.name}</h2>
-        <p class="preset-description">${this.preset.description}</p>
+        <h2 class="preset-title">${presetName(this.preset)}</h2>
+        <p class="preset-description">${presetDescription(this.preset)}</p>
         ${
           this.preset.author
-            ? html`<p class="preset-author">Created by ${this.preset.author}</p>`
+            ? html`<p class="preset-author">
+                ${LanguageService.tInterpolate('preset.authorBy', { author: this.preset.author })}
+              </p>`
             : nothing
         }
 
-        <!-- Dyes grid using v4-result-card -->
+        <!-- 8A: example link — the glamour gets the top of the page -->
+        ${
+          this.preset.exampleLink
+            ? html`
+                <a
+                  class="example-link"
+                  href=${this.preset.exampleLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span class="example-link-label">${LanguageService.t('preset.shotSlot')}</span>
+                  <span class="example-link-url">${this.preset.exampleLink}</span>
+                </a>
+              `
+            : nothing
+        }
+
+        <!-- 8A: the palette is a readable list, not a set of Result Cards -->
         <div class="dyes-section">
-          <h3 class="section-title">Colors in Palette</h3>
-          <div class="dyes-grid">
-            ${this.preset.dyes.map((dyeId) => {
-              const dye = this.resolveDye(dyeId);
-              if (!dye) return nothing;
-              // Get price data for this dye
-              const priceInfo = this.priceData.get(dye.itemID);
-              // Resolve world name from price data, or fall back to selected server
-              const marketServer =
-                this.marketBoardService?.getWorldNameForPrice(priceInfo) ??
-                this.marketConfig.selectedServer;
+          <h3 class="section-title">${LanguageService.t('preset.paletteLabel')}</h3>
+          <div class="dye-list">
+            ${this.resolvedDyes().map((dye) => {
+              const gilVendor = /gil/i.test(dye.currency || '') && dye.cost > 0;
               return html`
-                <v4-result-card
-                  .data=${{
-                    dye,
-                    originalColor: dye.hex,
-                    matchedColor: dye.hex,
-                    marketServer: marketServer,
-                    price:
-                      this.marketConfig.showPrices && priceInfo
-                        ? priceInfo.currentAverage
-                        : undefined,
-                    vendorCost: dye.cost,
-                  }}
-                  ?show-actions=${false}
-                  ?show-hex=${this.displayOptions.showHex}
-                  ?show-rgb=${this.displayOptions.showRgb}
-                  ?show-hsv=${this.displayOptions.showHsv}
-                  ?show-lab=${this.displayOptions.showLab}
-                  ?show-delta-e=${this.displayOptions.showDeltaE}
-                  ?show-price=${this.displayOptions.showPrice && this.marketConfig.showPrices}
-                  ?show-acquisition=${this.displayOptions.showAcquisition}
-                ></v4-result-card>
+                <div class="dye-row">
+                  <span class="dye-swatch" style="background: ${dye.hex}"></span>
+                  <span class="dye-name">${this.dyeNameOf(dye)}</span>
+                  <span class="dye-hex">${dye.hex.toUpperCase()}</span>
+                  <span class="dye-source">${LanguageService.getAcquisition(dye.acquisition)}</span>
+                  <span class="dye-price ${gilVendor ? '' : 'dye-price--na'}"
+                    >${gilVendor ? formatGil(dye.cost) : LanguageService.t('preset.notSold')}</span
+                  >
+                </div>
               `;
             })}
           </div>
+          <div class="cost-label">${LanguageService.t('preset.paletteCost')}</div>
+          <p class="cost-note">${this.costNote(this.resolvedDyes())}</p>
         </div>
 
         <!-- Tags -->
@@ -724,7 +971,7 @@ export class PresetDetail extends BaseLitComponent {
           this.preset.tags && this.preset.tags.length > 0
             ? html`
                 <div class="tags-section">
-                  <h4 class="section-title">Tags</h4>
+                  <h4 class="section-title">${LanguageService.t('preset.tags')}</h4>
                   <div class="tags-list">
                     ${this.preset.tags.map((tag) => html`<span class="tag">${tag}</span>`)}
                   </div>
@@ -733,10 +980,24 @@ export class PresetDetail extends BaseLitComponent {
             : nothing
         }
 
+        <!-- 8A: handoff row so the page does not dead-end -->
+        <div class="handoff-label">${LanguageService.t('preset.takeInto')}</div>
+        <div class="handoff-row">
+          ${this.handoffTargets(this.resolvedDyes()).map(
+            (h) => html`
+              <button class="handoff-btn" @click=${() => window.location.assign(h.url)}>
+                <span class="handoff-name">${h.label}</span>
+                <span class="handoff-note">${h.note}</span>
+              </button>
+            `
+          )}
+        </div>
+
         <!-- Actions -->
         <div class="actions">
           <button class="action-btn share-btn" @click=${this.handleShare}>
-            <span class="icon">${unsafeHTML(ICON_LINK)}</span> Copy Link
+            <span class="icon">${unsafeHTML(ICON_LINK)}</span>
+            ${LanguageService.t('preset.copyLink')}
           </button>
           ${
             isVoteable
@@ -748,8 +1009,9 @@ export class PresetDetail extends BaseLitComponent {
                   >
                     ${
                       this.hasVoted
-                        ? html`✓ Voted (${this.currentVoteCount})`
-                        : html`${unsafeHTML(ICON_CRYSTAL)} Vote (${this.currentVoteCount})`
+                        ? html`✓ ${LanguageService.t('preset.voted')} · ${this.currentVoteCount}`
+                        : html`${unsafeHTML(ICON_CRYSTAL)} ${LanguageService.t('preset.vote')} ·
+                          ${this.currentVoteCount}`
                     }
                   </button>
                 `
@@ -758,9 +1020,11 @@ export class PresetDetail extends BaseLitComponent {
           ${
             this.isOwnPreset && this.preset.isFromAPI && this.preset.apiPresetId
               ? html`
-                  <button class="action-btn edit-btn" @click=${this.handleEdit}>✏️ Edit</button>
+                  <button class="action-btn edit-btn" @click=${this.handleEdit}>
+                    ✏️ ${LanguageService.t('preset.edit')}
+                  </button>
                   <button class="action-btn delete-btn" @click=${this.handleDelete}>
-                    🗑️ Delete
+                    🗑️ ${LanguageService.t('preset.delete')}
                   </button>
                 `
               : nothing
@@ -770,9 +1034,7 @@ export class PresetDetail extends BaseLitComponent {
         <!-- Login CTA for non-authenticated users viewing voteable presets -->
         ${
           isVoteable && !isAuthenticated
-            ? html`
-                <div class="login-cta">Login with Discord or XIVAuth to vote for this preset</div>
-              `
+            ? html` <div class="login-cta">${LanguageService.t('preset.loginToVote')}</div> `
             : nothing
         }
       </div>

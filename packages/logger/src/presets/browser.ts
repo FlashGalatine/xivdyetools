@@ -81,12 +81,7 @@ function defaultIsDev(): boolean {
  * ```
  */
 export function createBrowserLogger(options: BrowserLoggerOptions = {}): ExtendedLogger {
-  const {
-    devOnly = true,
-    isDev = defaultIsDev,
-    errorTracker,
-    prefix = 'xivdyetools',
-  } = options;
+  const { devOnly = true, isDev = defaultIsDev, errorTracker, prefix = 'xivdyetools' } = options;
 
   const isDevMode = isDev();
 
@@ -118,14 +113,16 @@ export function createBrowserLogger(options: BrowserLoggerOptions = {}): Extende
       if (error instanceof Error) {
         const safeError = new Error(logger.sanitizeMessage(error.message));
         safeError.name = error.name;
-        safeError.stack = error.stack; // stack is desirable for trackers; kept deliberately
+        // FINDING-026: the first stack line repeats the raw message — run the
+        // stack through the same sanitiser (frames are untouched by it)
+        safeError.stack = error.stack ? logger.sanitizeMessage(error.stack) : undefined;
         errorTracker.captureException(safeError, safeContext);
       } else if (error) {
         errorTracker.captureMessage(
           logger.sanitizeMessage(
-            `${message}: ${typeof error === 'string' ? error : JSON.stringify(error)}`
+            `${message}: ${typeof error === 'string' ? error : JSON.stringify(error)}`,
           ),
-          'error'
+          'error',
         );
       } else {
         errorTracker.captureMessage(logger.sanitizeMessage(message), 'error');
@@ -142,157 +139,6 @@ export function createBrowserLogger(options: BrowserLoggerOptions = {}): Extende
 
   return logger;
 }
-
-// ============================================================================
-// Performance Monitoring (from xivdyetools-web-app)
-// ============================================================================
-
-interface MetricsData {
-  count: number;
-  totalTime: number;
-  minTime: number;
-  maxTime: number;
-  avgTime: number;
-}
-
-const metricsStore = new Map<string, MetricsData>();
-const activeTimers = new Map<string, number>();
-
-/**
- * Performance monitoring utilities
- *
- * Provides timing and metrics collection for browser performance monitoring.
- *
- * @example
- * ```typescript
- * // Time a synchronous operation
- * perf.start('render');
- * renderComponent();
- * perf.end('render');
- *
- * // Time an async operation
- * const data = await perf.measure('fetchDyes', () => fetchDyes());
- *
- * // Get metrics
- * console.log(perf.getMetrics('render'));
- * // { count: 5, totalTime: 125.4, minTime: 20.1, maxTime: 30.2, avgTime: 25.08 }
- * ```
- */
-export const perf = {
-  /**
-   * Start a performance timer
-   *
-   * LOGGER-BUG-001 FIX: Warn if timer is already active to prevent
-   * race condition data loss in concurrent operations.
-   *
-   * @returns true if timer was started, false if already active
-   */
-  start(label: string): boolean {
-    if (activeTimers.has(label)) {
-      console.warn(
-        `Timer "${label}" is already active. Call end() before starting again, ` +
-          `or use a unique label for concurrent operations.`
-      );
-      return false;
-    }
-    activeTimers.set(label, performance.now());
-    return true;
-  },
-
-  /**
-   * End a performance timer and record metrics
-   * @returns Duration in milliseconds
-   */
-  end(label: string): number {
-    const startTime = activeTimers.get(label);
-    if (startTime === undefined) {
-      console.warn(`No timer started for label: ${label}`);
-      return 0;
-    }
-
-    const duration = performance.now() - startTime;
-    activeTimers.delete(label);
-
-    // Update metrics
-    const existing = metricsStore.get(label);
-    if (existing) {
-      existing.count++;
-      existing.totalTime += duration;
-      existing.minTime = Math.min(existing.minTime, duration);
-      existing.maxTime = Math.max(existing.maxTime, duration);
-      existing.avgTime = existing.totalTime / existing.count;
-    } else {
-      metricsStore.set(label, {
-        count: 1,
-        totalTime: duration,
-        minTime: duration,
-        maxTime: duration,
-        avgTime: duration,
-      });
-    }
-
-    return duration;
-  },
-
-  /**
-   * Measure an async operation
-   */
-  async measure<T>(label: string, fn: () => Promise<T>): Promise<T> {
-    this.start(label);
-    try {
-      return await fn();
-    } finally {
-      this.end(label);
-    }
-  },
-
-  /**
-   * Measure a synchronous operation
-   */
-  measureSync<T>(label: string, fn: () => T): T {
-    this.start(label);
-    try {
-      return fn();
-    } finally {
-      this.end(label);
-    }
-  },
-
-  /**
-   * Get metrics for a specific label
-   */
-  getMetrics(label: string): MetricsData | null {
-    return metricsStore.get(label) || null;
-  },
-
-  /**
-   * Get all collected metrics
-   */
-  getAllMetrics(): Record<string, MetricsData> {
-    return Object.fromEntries(metricsStore);
-  },
-
-  /**
-   * Log all metrics to console
-   */
-  logMetrics(): void {
-    console.group('Performance Metrics');
-    for (const [label, metrics] of metricsStore) {
-      console.log(
-        `${label}: count=${metrics.count}, avg=${metrics.avgTime.toFixed(2)}ms, min=${metrics.minTime.toFixed(2)}ms, max=${metrics.maxTime.toFixed(2)}ms`
-      );
-    }
-    console.groupEnd();
-  },
-
-  /**
-   * Clear all metrics
-   */
-  clearMetrics(): void {
-    metricsStore.clear();
-    activeTimers.clear();
-  },
-};
 
 /**
  * Pre-configured browser logger instance

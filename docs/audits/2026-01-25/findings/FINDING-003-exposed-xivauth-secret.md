@@ -17,7 +17,7 @@ An XIVAuth OAuth client secret is stored in plaintext in the `.env` file. This s
 
 ## Evidence
 ```
-xivdyetools-discord-worker/.env:15:XIVAUTH_CLIENT_SECRET=H8WXCdiSdvxnspEcxk59VEhIaB43nrxpOCszndWgNnM
+xivdyetools-discord-worker/.env:15:XIVAUTH_CLIENT_SECRET=H8WX****REDACTED****
 ```
 
 ## Impact

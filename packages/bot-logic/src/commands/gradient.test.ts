@@ -141,8 +141,10 @@ describe('executeGradient', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
+    // One line: the card carries every step; the description exists only
+    // when the cap omitted rows
     expect(result.embed.title).toBeDefined();
-    expect(result.embed.description).toBeDefined();
+    expect(result.svgString).toContain('/GRADIENT');
   });
 
   it('works with named start/end colors', async () => {
@@ -155,7 +157,8 @@ describe('executeGradient', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.embed.description).toBeDefined();
+    expect(result.embed.title).toBeDefined();
+    expect(result.svgString).toContain('width="400"');
   });
 
   it('works with Japanese locale', async () => {
@@ -250,7 +253,8 @@ describe('executeGradient', () => {
       });
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.embed.description).toContain('CIEDE2000');
+      // The card prints ΔE2000 per row; omissions (if any) ride the embed
+      expect(result.gradientSteps.every((s) => typeof s.distance === 'number')).toBe(true);
     });
 
     it('uses cie76 matching method', async () => {
@@ -262,7 +266,7 @@ describe('executeGradient', () => {
       });
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.embed.description).toContain('CIE76');
+      expect(result.svgString).toContain('/GRADIENT');
     });
   });
 

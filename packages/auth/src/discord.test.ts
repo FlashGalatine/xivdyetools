@@ -31,7 +31,7 @@ describe('discord.ts', () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Signature-Ed25519': 'valid-signature',
-          'X-Signature-Timestamp': '1234567890',
+          'X-Signature-Timestamp': String(Math.floor(Date.now() / 1000)),
           'Content-Length': '50',
         },
         body: JSON.stringify({ type: 1 }),
@@ -52,7 +52,7 @@ describe('discord.ts', () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Signature-Ed25519': 'invalid-signature',
-          'X-Signature-Timestamp': '1234567890',
+          'X-Signature-Timestamp': String(Math.floor(Date.now() / 1000)),
         },
         body: JSON.stringify({ type: 1 }),
       });
@@ -68,7 +68,7 @@ describe('discord.ts', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Signature-Timestamp': '1234567890',
+          'X-Signature-Timestamp': String(Math.floor(Date.now() / 1000)),
         },
         body: JSON.stringify({ type: 1 }),
       });
@@ -101,7 +101,7 @@ describe('discord.ts', () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Signature-Ed25519': 'some-signature',
-          'X-Signature-Timestamp': '1234567890',
+          'X-Signature-Timestamp': String(Math.floor(Date.now() / 1000)),
           'Content-Length': '200000', // 200KB, exceeds 100KB limit
         },
         body: JSON.stringify({ type: 1 }),
@@ -122,7 +122,7 @@ describe('discord.ts', () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Signature-Ed25519': 'some-signature',
-          'X-Signature-Timestamp': '1234567890',
+          'X-Signature-Timestamp': String(Math.floor(Date.now() / 1000)),
           // No Content-Length header to bypass first check
         },
         body: largeBody,
@@ -140,7 +140,7 @@ describe('discord.ts', () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Signature-Ed25519': 'some-signature',
-          'X-Signature-Timestamp': '1234567890',
+          'X-Signature-Timestamp': String(Math.floor(Date.now() / 1000)),
           'Content-Length': '500', // 500 bytes
         },
         body: JSON.stringify({ type: 1 }),
@@ -162,7 +162,7 @@ describe('discord.ts', () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Signature-Ed25519': 'some-signature',
-          'X-Signature-Timestamp': '1234567890',
+          'X-Signature-Timestamp': String(Math.floor(Date.now() / 1000)),
         },
         body: JSON.stringify({ type: 1 }),
       });
@@ -181,7 +181,7 @@ describe('discord.ts', () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Signature-Ed25519': 'some-signature',
-          'X-Signature-Timestamp': '1234567890',
+          'X-Signature-Timestamp': String(Math.floor(Date.now() / 1000)),
         },
         body: JSON.stringify({ type: 1 }),
       });
@@ -201,7 +201,7 @@ describe('discord.ts', () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Signature-Ed25519': 'invalid-signature',
-          'X-Signature-Timestamp': '1234567890',
+          'X-Signature-Timestamp': String(Math.floor(Date.now() / 1000)),
         },
         body: bodyContent,
       });

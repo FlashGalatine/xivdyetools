@@ -128,13 +128,4 @@ export abstract class BaseLitComponent extends LitElement {
       logger.error(`[${this.tagName}] ${message}`, error);
     }
   }
-
-  /**
-   * Clear error state and attempt recovery
-   */
-  protected clearError(): void {
-    this.hasError = false;
-    this.errorMessage = '';
-    this.requestUpdate();
-  }
 }

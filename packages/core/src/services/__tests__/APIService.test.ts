@@ -10,11 +10,7 @@ import {
   DefaultRateLimiter,
   DefaultFetchClient,
 } from '../APIService.js';
-import type {
-  FetchClient,
-  RateLimiter,
-  ICacheBackend,
-} from '../APIService.js';
+import type { FetchClient, RateLimiter, ICacheBackend } from '../APIService.js';
 import type { PriceData, CachedData } from '@xivdyetools/types';
 import { API_CACHE_VERSION, API_CACHE_TTL } from '../../constants/index.js';
 
@@ -34,7 +30,7 @@ class MockFetchClient implements FetchClient {
 
   setResponse(
     url: string,
-    response: { status: number; body: unknown; headers?: Record<string, string> }
+    response: { status: number; body: unknown; headers?: Record<string, string> },
   ) {
     this.responses.set(url, response);
   }
@@ -309,7 +305,11 @@ describe('APIService', () => {
     mockFetch = new MockFetchClient();
     noOpRateLimiter = new NoOpRateLimiter();
     memoryCache = new MemoryCacheBackend();
-    apiService = new APIService(memoryCache, mockFetch, noOpRateLimiter);
+    apiService = new APIService({
+      cacheBackend: memoryCache,
+      fetchClient: mockFetch,
+      rateLimiter: noOpRateLimiter,
+    });
   });
 
   afterEach(() => {
@@ -329,22 +329,26 @@ describe('APIService', () => {
     });
 
     it('should create with custom cache', () => {
-      const service = new APIService(memoryCache);
+      const service = new APIService({ cacheBackend: memoryCache });
       expect(service).toBeDefined();
     });
 
     it('should create with custom fetch client', () => {
-      const service = new APIService(undefined, mockFetch);
+      const service = new APIService({ fetchClient: mockFetch });
       expect(service).toBeDefined();
     });
 
     it('should create with custom rate limiter', () => {
-      const service = new APIService(undefined, undefined, noOpRateLimiter);
+      const service = new APIService({ rateLimiter: noOpRateLimiter });
       expect(service).toBeDefined();
     });
 
     it('should create with all custom implementations', () => {
-      const service = new APIService(memoryCache, mockFetch, noOpRateLimiter);
+      const service = new APIService({
+        cacheBackend: memoryCache,
+        fetchClient: mockFetch,
+        rateLimiter: noOpRateLimiter,
+      });
       expect(service).toBeDefined();
     });
   });
@@ -371,25 +375,10 @@ describe('APIService', () => {
       });
 
       await apiService.getPriceData(itemID);
-      let stats = await apiService.getCacheStats();
-      expect(stats.size).toBe(1);
+      expect((await memoryCache.keys()).length).toBe(1);
 
       await apiService.clearCache();
-      stats = await apiService.getCacheStats();
-      expect(stats.size).toBe(0);
-    });
-
-    it('should return cache stats', async () => {
-      const stats = await apiService.getCacheStats();
-      expect(stats).toHaveProperty('size');
-      expect(stats).toHaveProperty('keys');
-      expect(stats).toHaveProperty('metrics');
-      expect(Array.isArray(stats.keys)).toBe(true);
-      expect(stats.metrics).toHaveProperty('hits');
-      expect(stats.metrics).toHaveProperty('misses');
-      expect(stats.metrics).toHaveProperty('evictions');
-      expect(stats.metrics).toHaveProperty('errors');
-      expect(stats.metrics).toHaveProperty('lastReset');
+      expect((await memoryCache.keys()).length).toBe(0);
     });
 
     it('should invalidate cache on version mismatch', async () => {
@@ -500,171 +489,38 @@ describe('APIService', () => {
   });
 
   // ==========================================================================
-  // Cache Metrics Tests (OPT-002)
+  // Cache Backend Error Handling (ERROR-001)
   // ==========================================================================
 
-  describe('cache metrics (OPT-002)', () => {
-    it('should count cache hits', async () => {
-      const itemID = 5729;
-      const mockResponse = {
-        results: [
-          { itemId: itemID, nq: { minListing: { dc: { price: 1000 } } } },
-        ],
-      };
-      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
-        status: 200,
-        body: mockResponse,
-      });
-
-      // First call = miss (fetches from API), second call = hit (from cache)
-      await apiService.getPriceData(itemID);
-      await apiService.getPriceData(itemID);
-
-      const stats = await apiService.getCacheStats();
-      expect(stats.metrics.hits).toBe(1);
-      expect(stats.metrics.misses).toBe(1);
-    });
-
-    it('should count cache misses', async () => {
-      const itemID = 5729;
-      const mockResponse = {
-        results: [
-          { itemId: itemID, nq: { minListing: { dc: { price: 1000 } } } },
-        ],
-      };
-      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
-        status: 200,
-        body: mockResponse,
-      });
-
-      // First call with empty cache = miss
-      await apiService.getPriceData(itemID);
-
-      const stats = await apiService.getCacheStats();
-      expect(stats.metrics.misses).toBe(1);
-    });
-
-    it('should count evictions on version mismatch', async () => {
-      const itemID = 5729;
-      const cachedData: CachedData<PriceData> = {
-        data: {
-          itemID,
-          currentAverage: 100,
-          currentMinPrice: 90,
-          currentMaxPrice: 110,
-          lastUpdate: Date.now(),
-        },
-        timestamp: Date.now(),
-        ttl: API_CACHE_TTL,
-        version: '0.0.0', // Old version
-      };
-      memoryCache.set(`${itemID}:global`, cachedData);
-
-      const mockResponse = {
-        results: [
-          { itemId: itemID, nq: { minListing: { dc: { price: 2000 } } } },
-        ],
-      };
-      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
-        status: 200,
-        body: mockResponse,
-      });
-
-      await apiService.getPriceData(itemID);
-
-      const stats = await apiService.getCacheStats();
-      expect(stats.metrics.evictions).toBe(1);
-    });
-
-    it('should count evictions on expired cache', async () => {
-      const itemID = 5729;
-      const cachedData: CachedData<PriceData> = {
-        data: {
-          itemID,
-          currentAverage: 100,
-          currentMinPrice: 90,
-          currentMaxPrice: 110,
-          lastUpdate: Date.now(),
-        },
-        timestamp: Date.now() - API_CACHE_TTL - 1000, // Expired
-        ttl: API_CACHE_TTL,
-        version: API_CACHE_VERSION,
-      };
-      memoryCache.set(`${itemID}:global`, cachedData);
-
-      const mockResponse = {
-        results: [
-          { itemId: itemID, nq: { minListing: { dc: { price: 2000 } } } },
-        ],
-      };
-      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
-        status: 200,
-        body: mockResponse,
-      });
-
-      await apiService.getPriceData(itemID);
-
-      const stats = await apiService.getCacheStats();
-      expect(stats.metrics.evictions).toBe(1);
-    });
-
-    it('should count errors on cache backend failure', async () => {
+  describe('cache backend error handling (ERROR-001)', () => {
+    it('falls through to the API when the cache backend throws on get()', async () => {
       const itemID = 5729;
       const failingCache: ICacheBackend = {
-        get: () => { throw new Error('Backend failure'); },
+        get: () => {
+          throw new Error('Backend failure');
+        },
         set: async () => {},
         delete: async () => {},
         clear: async () => {},
         keys: async () => [],
       };
 
-      const errorService = new APIService(failingCache, mockFetch, noOpRateLimiter);
+      const errorService = new APIService({
+        cacheBackend: failingCache,
+        fetchClient: mockFetch,
+        rateLimiter: noOpRateLimiter,
+      });
 
       const mockResponse = {
-        results: [
-          { itemId: itemID, nq: { minListing: { dc: { price: 1000 } } } },
-        ],
+        results: [{ itemId: itemID, nq: { minListing: { dc: { price: 1000 } } } }],
       };
       mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
         status: 200,
         body: mockResponse,
       });
 
-      await errorService.getPriceData(itemID);
-
-      const stats = await errorService.getCacheStats();
-      expect(stats.metrics.errors).toBe(1);
-    });
-
-    it('should reset metrics on clearCache', async () => {
-      const itemID = 5729;
-      const mockResponse = {
-        results: [
-          { itemId: itemID, nq: { minListing: { dc: { price: 1000 } } } },
-        ],
-      };
-      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
-        status: 200,
-        body: mockResponse,
-      });
-
-      await apiService.getPriceData(itemID);
-      let stats = await apiService.getCacheStats();
-      expect(stats.metrics.misses).toBeGreaterThan(0);
-
-      await apiService.clearCache();
-      stats = await apiService.getCacheStats();
-      expect(stats.metrics.hits).toBe(0);
-      expect(stats.metrics.misses).toBe(0);
-      expect(stats.metrics.evictions).toBe(0);
-      expect(stats.metrics.errors).toBe(0);
-    });
-
-    it('should return a copy of metrics (not a reference)', async () => {
-      const stats1 = await apiService.getCacheStats();
-      const stats2 = await apiService.getCacheStats();
-      expect(stats1.metrics).not.toBe(stats2.metrics);
-      expect(stats1.metrics).toEqual(stats2.metrics);
+      const result = await errorService.getPriceData(itemID);
+      expect(result?.currentAverage).toBe(1000);
     });
   });
 
@@ -808,7 +664,11 @@ describe('APIService', () => {
         },
       };
 
-      const service = new APIService(memoryCache, delayedFetch, noOpRateLimiter);
+      const service = new APIService({
+        cacheBackend: memoryCache,
+        fetchClient: delayedFetch,
+        rateLimiter: noOpRateLimiter,
+      });
 
       // Start two concurrent requests
       const promise1 = service.getPriceData(itemID);
@@ -1078,7 +938,7 @@ describe('APIService', () => {
       const itemIDs = [5729, 5730, 5731];
 
       // Mock the batched API request (comma-separated item IDs)
-      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/5729,5730,5731`, {
+      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/Aether/5729,5730,5731`, {
         status: 200,
         body: {
           results: [
@@ -1090,7 +950,7 @@ describe('APIService', () => {
         },
       });
 
-      const results = await apiService.getPricesForItems(itemIDs);
+      const results = await apiService.getPricesForDataCenter(itemIDs, 'Aether');
       expect(results.size).toBe(3);
       expect(results.get(5729)?.currentAverage).toBe(572900);
       expect(results.get(5730)?.currentAverage).toBe(573000);
@@ -1101,7 +961,7 @@ describe('APIService', () => {
       const itemIDs = [5729, 5730];
 
       // Mock batched request - 5730 has no price data (empty minListing)
-      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/5729,5730`, {
+      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/Aether/5729,5730`, {
         status: 200,
         body: {
           results: [
@@ -1113,7 +973,7 @@ describe('APIService', () => {
       });
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const results = await apiService.getPricesForItems(itemIDs);
+      const results = await apiService.getPricesForDataCenter(itemIDs, 'Aether');
       warnSpy.mockRestore();
 
       expect(results.size).toBe(1);
@@ -1139,35 +999,6 @@ describe('APIService', () => {
 
       const results = await apiService.getPricesForDataCenter(itemIDs, dataCenterID);
       expect(results.size).toBe(2);
-    });
-
-    it('should return cached results when all items are cached (getPricesForItems)', async () => {
-      const itemIDs = [5729, 5730];
-
-      // First, populate the cache by fetching
-      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/5729,5730`, {
-        status: 200,
-        body: {
-          results: [
-            { itemId: 5729, nq: { minListing: { dc: { price: 10000 } } } },
-            { itemId: 5730, nq: { minListing: { dc: { price: 20000 } } } },
-          ],
-          failedItems: [],
-        },
-      });
-
-      // First call to populate cache
-      await apiService.getPricesForItems(itemIDs);
-      const initialCallCount = mockFetch.callHistory.length;
-
-      // Second call should use cache (no additional fetch)
-      const results = await apiService.getPricesForItems(itemIDs);
-
-      expect(results.size).toBe(2);
-      expect(results.get(5729)?.currentAverage).toBe(10000);
-      expect(results.get(5730)?.currentAverage).toBe(20000);
-      // No additional fetch calls should be made
-      expect(mockFetch.callHistory.length).toBe(initialCallCount);
     });
 
     it('should return cached results when all items are cached (getPricesForDataCenter)', async () => {
@@ -1235,8 +1066,8 @@ describe('APIService', () => {
       const chunk1 = itemIDs.slice(0, 100);
       const chunk2 = itemIDs.slice(100);
 
-      const url1 = `https://universalis.app/api/v2/aggregated/universal/${chunk1.join(',')}`;
-      const url2 = `https://universalis.app/api/v2/aggregated/universal/${chunk2.join(',')}`;
+      const url1 = `https://universalis.app/api/v2/aggregated/Aether/${chunk1.join(',')}`;
+      const url2 = `https://universalis.app/api/v2/aggregated/Aether/${chunk2.join(',')}`;
 
       mockFetch.setResponse(url1, {
         status: 200,
@@ -1259,7 +1090,7 @@ describe('APIService', () => {
         },
       });
 
-      const results = await apiService.getPricesForItems(itemIDs);
+      const results = await apiService.getPricesForDataCenter(itemIDs, 'Aether');
 
       expect(results.size).toBe(110);
       expect(results.get(5001)?.currentAverage).toBe(50010);
@@ -1342,43 +1173,6 @@ describe('APIService', () => {
     });
   });
 
-  describe('getPriceTrend', () => {
-    it('should return stable for small change', () => {
-      const result = APIService.getPriceTrend(100, 100);
-      expect(result.trend).toBe('stable');
-      expect(result.change).toBe(0);
-    });
-
-    it('should return up for significant increase', () => {
-      const result = APIService.getPriceTrend(120, 100);
-      expect(result.trend).toBe('up');
-      expect(result.change).toBe(20);
-      expect(result.changePercent).toBe(20);
-    });
-
-    it('should return down for significant decrease', () => {
-      const result = APIService.getPriceTrend(80, 100);
-      expect(result.trend).toBe('down');
-      expect(result.change).toBe(-20);
-      expect(result.changePercent).toBe(-20);
-    });
-
-    it('should return stable for 5% threshold', () => {
-      const result = APIService.getPriceTrend(105, 100);
-      expect(result.trend).toBe('stable');
-    });
-
-    it('should handle zero previous price', () => {
-      const result = APIService.getPriceTrend(100, 0);
-      expect(result.changePercent).toBe(0);
-    });
-
-    it('should round change percent to 2 decimals', () => {
-      const result = APIService.getPriceTrend(133, 100);
-      expect(result.changePercent).toBe(33);
-    });
-  });
-
   // ==========================================================================
   // Cache Key Building Tests
   // ==========================================================================
@@ -1394,9 +1188,9 @@ describe('APIService', () => {
       });
 
       await apiService.getPriceData(itemID);
-      const stats = await apiService.getCacheStats();
+      const keys = await memoryCache.keys();
       // Cache key format: itemID:global
-      expect(stats.keys).toContain(`${itemID}:global`);
+      expect(keys).toContain(`${itemID}:global`);
     });
 
     it('should create DC key for data center', async () => {
@@ -1410,9 +1204,9 @@ describe('APIService', () => {
       });
 
       await apiService.getPriceData(itemID, undefined, dataCenterID);
-      const stats = await apiService.getCacheStats();
+      const keys = await memoryCache.keys();
       // Cache key format: itemID:dc:dataCenterID
-      expect(stats.keys).toContain(`${itemID}:dc:${dataCenterID}`);
+      expect(keys).toContain(`${itemID}:dc:${dataCenterID}`);
     });
 
     it('should create worldID key when only worldID provided (line 571)', async () => {
@@ -1428,9 +1222,9 @@ describe('APIService', () => {
       });
 
       await apiService.getPriceData(itemID, worldID, undefined);
-      const stats = await apiService.getCacheStats();
+      const keys = await memoryCache.keys();
       // Cache key format: itemID:world:worldID
-      expect(stats.keys).toContain(`${itemID}:world:${worldID}`);
+      expect(keys).toContain(`${itemID}:world:${worldID}`);
     });
   });
 
@@ -1458,7 +1252,11 @@ describe('APIService', () => {
         },
       };
 
-      const service = new APIService(memoryCache, oversizedFetch, noOpRateLimiter);
+      const service = new APIService({
+        cacheBackend: memoryCache,
+        fetchClient: oversizedFetch,
+        rateLimiter: noOpRateLimiter,
+      });
 
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const result = await service.getPriceData(itemID);
@@ -1488,7 +1286,11 @@ describe('APIService', () => {
         },
       };
 
-      const service = new APIService(memoryCache, largeTextFetch, noOpRateLimiter);
+      const service = new APIService({
+        cacheBackend: memoryCache,
+        fetchClient: largeTextFetch,
+        rateLimiter: noOpRateLimiter,
+      });
 
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const result = await service.getPriceData(itemID);
@@ -1515,7 +1317,11 @@ describe('APIService', () => {
         },
       };
 
-      const service = new APIService(memoryCache, invalidJsonFetch, noOpRateLimiter);
+      const service = new APIService({
+        cacheBackend: memoryCache,
+        fetchClient: invalidJsonFetch,
+        rateLimiter: noOpRateLimiter,
+      });
 
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const result = await service.getPriceData(itemID);
@@ -1597,7 +1403,11 @@ describe('APIService', () => {
         },
       };
 
-      const service = new APIService(memoryCache, throwingFetch, noOpRateLimiter);
+      const service = new APIService({
+        cacheBackend: memoryCache,
+        fetchClient: throwingFetch,
+        rateLimiter: noOpRateLimiter,
+      });
 
       const result = await service.isAPIAvailable();
       expect(result).toBe(false);
@@ -1611,7 +1421,11 @@ describe('APIService', () => {
         },
       };
 
-      const service = new APIService(memoryCache, throwingFetch, noOpRateLimiter);
+      const service = new APIService({
+        cacheBackend: memoryCache,
+        fetchClient: throwingFetch,
+        rateLimiter: noOpRateLimiter,
+      });
 
       const status = await service.getAPIStatus();
       expect(status.available).toBe(false);
@@ -1623,7 +1437,11 @@ describe('APIService', () => {
     it('should return -1 latency when getAPIStatus catch block is triggered (line 644)', async () => {
       // To trigger the catch block in getAPIStatus, we need isAPIAvailable to throw
       // This is an edge case that's hard to trigger in practice
-      const service = new APIService(memoryCache, mockFetch, noOpRateLimiter);
+      const service = new APIService({
+        cacheBackend: memoryCache,
+        fetchClient: mockFetch,
+        rateLimiter: noOpRateLimiter,
+      });
 
       // Mock isAPIAvailable to throw an error
       vi.spyOn(service, 'isAPIAvailable').mockRejectedValue(new Error('Unexpected error'));
@@ -1662,7 +1480,11 @@ describe('APIService', () => {
         },
       };
 
-      const service = new APIService(memoryCache, failingFetch, noOpRateLimiter);
+      const service = new APIService({
+        cacheBackend: memoryCache,
+        fetchClient: failingFetch,
+        rateLimiter: noOpRateLimiter,
+      });
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const result = await service.getPriceData(itemID);

@@ -1,0 +1,221 @@
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.807Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"9837751e-138c-4695-8416-d6913f8e73c3","method":"GET","path":"/og/swatch/ff5500/21"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/swatch/:color/:limit[2m > [22m[2mreturns 400 for limit above maximum (> 20)
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.807Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"9837751e-138c-4695-8416-d6913f8e73c3","method":"GET","path":"/og/swatch/ff5500/21","status":400,"durationMs":0.16}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/swatch/:color/:limit[2m > [22m[2mreturns 400 for NaN limit
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.808Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"999f64cd-5f23-4429-80ed-0980ab73beb2","method":"GET","path":"/og/swatch/ff5500/abc"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/swatch/:color/:limit[2m > [22m[2mreturns 400 for NaN limit
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.808Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"999f64cd-5f23-4429-80ed-0980ab73beb2","method":"GET","path":"/og/swatch/ff5500/abc","status":400,"durationMs":0.17}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/swatch/:color/:limit[2m > [22m[2mreturns image for valid parameters
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.808Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"12a1bfd3-053c-41ba-9d74-0962e82fd71e","method":"GET","path":"/og/swatch/ff5500/5"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/swatch/:color/:limit[2m > [22m[2mreturns image for valid parameters
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.809Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"12a1bfd3-053c-41ba-9d74-0962e82fd71e","method":"GET","path":"/og/swatch/ff5500/5","status":200,"durationMs":1.48}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/swatch/:color/:limit[2m > [22m[2maccepts boundary limit=1
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.810Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"1f15a8a4-138a-4021-aba5-b4891bb2487c","method":"GET","path":"/og/swatch/ff5500/1"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/swatch/:color/:limit[2m > [22m[2maccepts boundary limit=1
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.811Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"1f15a8a4-138a-4021-aba5-b4891bb2487c","method":"GET","path":"/og/swatch/ff5500/1","status":200,"durationMs":0.93}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/swatch/:color/:limit[2m > [22m[2maccepts boundary limit=20
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.811Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"76d05103-8120-43e4-84b9-6b3a092644fb","method":"GET","path":"/og/swatch/ff5500/20"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/swatch/:color/:limit[2m > [22m[2maccepts boundary limit=20
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.812Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"76d05103-8120-43e4-84b9-6b3a092644fb","method":"GET","path":"/og/swatch/ff5500/20","status":200,"durationMs":1.07}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mreturns 400 for zero valid dye IDs
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.812Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"0ec6fd2a-ebbd-4cbd-b0ea-6f93de0818bc","method":"GET","path":"/og/comparison/abc"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mreturns 400 for zero valid dye IDs
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.813Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"0ec6fd2a-ebbd-4cbd-b0ea-6f93de0818bc","method":"GET","path":"/og/comparison/abc","status":400,"durationMs":0.25}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mreturns 400 for too many dye IDs (> 16)
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.813Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"e79cb35e-c1d0-40b7-a08f-52c6e27498c5","method":"GET","path":"/og/comparison/42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mreturns 400 for too many dye IDs (> 16)
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.813Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"e79cb35e-c1d0-40b7-a08f-52c6e27498c5","method":"GET","path":"/og/comparison/42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58","status":400,"durationMs":0.15}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mfilters out NaN IDs from comma-separated list
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.813Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"d70c4bef-3dce-440d-955c-41c818059985","method":"GET","path":"/og/comparison/abc,43"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mfilters out NaN IDs from comma-separated list
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.814Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"d70c4bef-3dce-440d-955c-41c818059985","method":"GET","path":"/og/comparison/abc,43","status":200,"durationMs":0.43}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mreturns 400 when all IDs are NaN
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.814Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"e8b0e1a9-64e7-49b0-8b6b-cacb08f8341c","method":"GET","path":"/og/comparison/abc,def,ghi"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mreturns 400 when all IDs are NaN
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.814Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"e8b0e1a9-64e7-49b0-8b6b-cacb08f8341c","method":"GET","path":"/og/comparison/abc,def,ghi","status":400,"durationMs":0.14}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mreturns image for single valid dye
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.814Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"4feb158a-7c8b-4252-bd28-f89d39d8ffa9","method":"GET","path":"/og/comparison/43"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mreturns image for single valid dye
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.815Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"4feb158a-7c8b-4252-bd28-f89d39d8ffa9","method":"GET","path":"/og/comparison/43","status":200,"durationMs":0.18}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mreturns image for multiple valid dyes
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.815Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"39f1845f-5f16-4884-9b1d-70090c5dbb7b","method":"GET","path":"/og/comparison/43,44,45"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2mreturns image for multiple valid dyes
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.815Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"39f1845f-5f16-4884-9b1d-70090c5dbb7b","method":"GET","path":"/og/comparison/43,44,45","status":200,"durationMs":0.35}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2maccepts boundary value of 16 dyes
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.816Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"2a67c154-1719-4e01-a044-5c301f33e245","method":"GET","path":"/og/comparison/42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/comparison/:dyes[2m > [22m[2maccepts boundary value of 16 dyes
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.816Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"2a67c154-1719-4e01-a044-5c301f33e245","method":"GET","path":"/og/comparison/42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57","status":200,"durationMs":0.37}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/accessibility/:dyes/:visionType[2m > [22m[2mreturns 400 for zero valid dye IDs
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.816Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"c1b1b37f-19ee-4324-aac2-ccb8d88ade02","method":"GET","path":"/og/accessibility/abc/protanopia"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/accessibility/:dyes/:visionType[2m > [22m[2mreturns 400 for zero valid dye IDs
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.817Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"c1b1b37f-19ee-4324-aac2-ccb8d88ade02","method":"GET","path":"/og/accessibility/abc/protanopia","status":400,"durationMs":0.28}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/accessibility/:dyes/:visionType[2m > [22m[2mreturns 400 for too many dye IDs
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.817Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"161ed4df-5edd-494e-ad64-b9110edd2ed7","method":"GET","path":"/og/accessibility/42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58/protanopia"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/accessibility/:dyes/:visionType[2m > [22m[2mreturns 400 for too many dye IDs
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.817Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"161ed4df-5edd-494e-ad64-b9110edd2ed7","method":"GET","path":"/og/accessibility/42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58/protanopia","status":400,"durationMs":0.23}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/accessibility/:dyes/:visionType[2m > [22m[2mreturns image for valid parameters
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.818Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"666772cf-d345-4c27-9221-2aec7483d2f3","method":"GET","path":"/og/accessibility/43,44/protanopia"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/accessibility/:dyes/:visionType[2m > [22m[2mreturns image for valid parameters
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.818Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"666772cf-d345-4c27-9221-2aec7483d2f3","method":"GET","path":"/og/accessibility/43,44/protanopia","status":200,"durationMs":0.71}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/accessibility/:dyes/:visionType[2m > [22m[2mstrips .png extension from visionType
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.819Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"975807f0-21de-4160-8b31-95c68cb627ca","method":"GET","path":"/og/accessibility/43/deuteranopia.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/accessibility/:dyes/:visionType[2m > [22m[2mstrips .png extension from visionType
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.819Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"975807f0-21de-4160-8b31-95c68cb627ca","method":"GET","path":"/og/accessibility/43/deuteranopia.png","status":200,"durationMs":0.42}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/default.png[2m > [22m[2mreturns image response
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.819Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"2423908b-2ca8-4ae9-b79d-43561c4c2538","method":"GET","path":"/og/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mGET /og/default.png[2m > [22m[2mreturns image response
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.820Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"2423908b-2ca8-4ae9-b79d-43561c4c2538","method":"GET","path":"/og/default.png","status":200,"durationMs":0.59}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mCatch-all route[2m > [22m[2mreturns OG HTML for crawlers on unknown paths
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.820Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"ba22a0da-f8bc-4dbd-aa2b-a8386b230984","method":"GET","path":"/unknown/path","userAgent":"Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mCatch-all route[2m > [22m[2mreturns OG HTML for crawlers on unknown paths
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.821Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"ba22a0da-f8bc-4dbd-aa2b-a8386b230984","method":"GET","path":"/unknown/path","status":200,"durationMs":0.21}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.821Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"c2327666-86b4-4a76-a119-410ed06c0471","method":"GET","path":"/og/harmony/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.821Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"c2327666-86b4-4a76-a119-410ed06c0471","method":"GET","path":"/og/harmony/default.png","status":200,"durationMs":0.3}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.821Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"45ee2e50-204b-4666-8d44-70d379048616","method":"GET","path":"/og/gradient/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.822Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"45ee2e50-204b-4666-8d44-70d379048616","method":"GET","path":"/og/gradient/default.png","status":200,"durationMs":0.19}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.822Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"c0da6543-6cf2-4cc5-ba96-f2c92ae45281","method":"GET","path":"/og/mixer/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.822Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"c0da6543-6cf2-4cc5-ba96-f2c92ae45281","method":"GET","path":"/og/mixer/default.png","status":200,"durationMs":0.18}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.822Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"fd49f1fd-a0ee-4409-83f3-63cd35b8c765","method":"GET","path":"/og/swatch/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.822Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"fd49f1fd-a0ee-4409-83f3-63cd35b8c765","method":"GET","path":"/og/swatch/default.png","status":200,"durationMs":0.19}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.823Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"d15aeb39-ceed-4019-82b1-f1ac79f7628c","method":"GET","path":"/og/comparison/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.823Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"d15aeb39-ceed-4019-82b1-f1ac79f7628c","method":"GET","path":"/og/comparison/default.png","status":200,"durationMs":0.23}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.823Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"8f9c06af-2af2-4e58-8fed-5d4c988a9b27","method":"GET","path":"/og/accessibility/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.823Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"8f9c06af-2af2-4e58-8fed-5d4c988a9b27","method":"GET","path":"/og/accessibility/default.png","status":200,"durationMs":0.19}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.823Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"0ae0a564-8534-432a-b0bf-6554fa720a17","method":"GET","path":"/og/extractor/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.825Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"0ae0a564-8534-432a-b0bf-6554fa720a17","method":"GET","path":"/og/extractor/default.png","status":200,"durationMs":1.99}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.826Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"33de2921-c460-47f4-8957-8ca6cce0af93","method":"GET","path":"/og/presets/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.826Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"33de2921-c460-47f4-8957-8ca6cce0af93","method":"GET","path":"/og/presets/default.png","status":200,"durationMs":0.38}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.826Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"f85d8b30-7cbd-447a-8b5b-88910e392b2c","method":"GET","path":"/og/budget/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mserves /og/{tool}/default.png for every supported tool
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.826Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"f85d8b30-7cbd-447a-8b5b-88910e392b2c","method":"GET","path":"/og/budget/default.png","status":200,"durationMs":0.2}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2m404s an unknown tool default
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.827Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"4d5acee2-ddb0-4d93-a829-79955c623792","method":"GET","path":"/og/nonsense/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2m404s an unknown tool default
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.827Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"4d5acee2-ddb0-4d93-a829-79955c623792","method":"GET","path":"/og/nonsense/default.png","status":404,"durationMs":0.13}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mdoes not let comparison parse default.png as a dye list
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.827Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"aa333c75-5574-4a5c-a289-fcdbb52e5ebf","method":"GET","path":"/og/comparison/default.png"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mper-tool default OG images[2m > [22m[2mdoes not let comparison parse default.png as a dye list
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.827Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"aa333c75-5574-4a5c-a289-fcdbb52e5ebf","method":"GET","path":"/og/comparison/default.png","status":200,"durationMs":0.25}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mextractor/presets/budget crawler routes[2m > [22m[2mserves crawler HTML with og:image meta for the new tools
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.828Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"1bac89aa-a8b6-47bd-bdfa-c27fd9d1c92b","method":"GET","path":"/extractor/","userAgent":"Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)"}}
+xivdyetools-og-worker:test: {"level":"info","message":"Serving OG metadata","timestamp":"2026-08-09T17:28:27.828Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"1bac89aa-a8b6-47bd-bdfa-c27fd9d1c92b","tool":"extractor","locale":"en","crawler":"Discord","url":"http://localhost/extractor/","title":"XIV Dye Tools"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mextractor/presets/budget crawler routes[2m > [22m[2mserves crawler HTML with og:image meta for the new tools
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.828Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"1bac89aa-a8b6-47bd-bdfa-c27fd9d1c92b","method":"GET","path":"/extractor/","status":200,"durationMs":0.25}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mextractor/presets/budget crawler routes[2m > [22m[2mserves crawler HTML with og:image meta for the new tools
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.828Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"f2ba443f-ca4b-4463-b718-b325100e9f11","method":"GET","path":"/presets/","userAgent":"Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)"}}
+xivdyetools-og-worker:test: {"level":"info","message":"Serving OG metadata","timestamp":"2026-08-09T17:28:27.828Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"f2ba443f-ca4b-4463-b718-b325100e9f11","tool":"presets","locale":"en","crawler":"Discord","url":"http://localhost/presets/","title":"XIV Dye Tools"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mextractor/presets/budget crawler routes[2m > [22m[2mserves crawler HTML with og:image meta for the new tools
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.828Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"f2ba443f-ca4b-4463-b718-b325100e9f11","method":"GET","path":"/presets/","status":200,"durationMs":0.18}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mextractor/presets/budget crawler routes[2m > [22m[2mserves crawler HTML with og:image meta for the new tools
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.829Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"22af9bff-a1ab-4be7-b274-e35c0cb7c2c5","method":"GET","path":"/budget/","userAgent":"Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)"}}
+xivdyetools-og-worker:test: {"level":"info","message":"Serving OG metadata","timestamp":"2026-08-09T17:28:27.829Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"22af9bff-a1ab-4be7-b274-e35c0cb7c2c5","tool":"budget","locale":"en","crawler":"Discord","url":"http://localhost/budget/","title":"XIV Dye Tools"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2mextractor/presets/budget crawler routes[2m > [22m[2mserves crawler HTML with og:image meta for the new tools
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.829Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"22af9bff-a1ab-4be7-b274-e35c0cb7c2c5","method":"GET","path":"/budget/","status":200,"durationMs":0.17}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2m?lang= travels with emitted og:image URLs[2m > [22m[2mappends lang for non-English crawler requests
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.829Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"50f4e237-19ff-497b-b55f-67b586f4a130","method":"GET","path":"/harmony/","userAgent":"Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)"}}
+xivdyetools-og-worker:test: {"level":"info","message":"Serving OG metadata","timestamp":"2026-08-09T17:28:27.829Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"50f4e237-19ff-497b-b55f-67b586f4a130","tool":"harmony","locale":"ja","crawler":"Discord","url":"http://localhost/harmony/?dye=43&harmony=tetradic&lang=ja","title":"Mud Green - 四色配色 Harmony | XIV Dye Tools"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2m?lang= travels with emitted og:image URLs[2m > [22m[2mappends lang for non-English crawler requests
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.830Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"50f4e237-19ff-497b-b55f-67b586f4a130","method":"GET","path":"/harmony/","status":200,"durationMs":0.4}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2m?lang= travels with emitted og:image URLs[2m > [22m[2mkeeps English URLs unparameterised (stable cache keys)
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request started","timestamp":"2026-08-09T17:28:27.830Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"b7bf5b36-5afe-4453-a291-722e59e19f58","method":"GET","path":"/harmony/","userAgent":"Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)"}}
+xivdyetools-og-worker:test: {"level":"info","message":"Serving OG metadata","timestamp":"2026-08-09T17:28:27.830Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"b7bf5b36-5afe-4453-a291-722e59e19f58","tool":"harmony","locale":"en","crawler":"Discord","url":"http://localhost/harmony/?dye=43&harmony=tetradic","title":"Mud Green - Tetradic Harmony | XIV Dye Tools"}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [90mstdout[2m | src/index.test.ts[2m > [22m[2m?lang= travels with emitted og:image URLs[2m > [22m[2mkeeps English URLs unparameterised (stable cache keys)
+xivdyetools-og-worker:test: [22m[39m{"level":"info","message":"Request completed","timestamp":"2026-08-09T17:28:27.830Z","context":{"service":"xivdyetools-og-worker","environment":"production","requestId":"b7bf5b36-5afe-4453-a291-722e59e19f58","method":"GET","path":"/harmony/","status":200,"durationMs":0.2}}
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test:  [32m✓[39m src/index.test.ts [2m([22m[2m56 tests[22m[2m)[22m[32m 95[2mms[22m[39m
+xivdyetools-og-worker:test: 
+xivdyetools-og-worker:test: [2m Test Files [22m [1m[32m15 passed[39m[22m[90m (15)[39m
+xivdyetools-og-worker:test: [2m      Tests [22m [1m[32m289 passed[39m[22m[90m (289)[39m
+xivdyetools-og-worker:test: [2m   Start at [22m 13:28:25
+xivdyetools-og-worker:test: [2m   Duration [22m 1.87s[2m (transform 8.89s, setup 0ms, import 16.58s, tests 632ms, environment 2ms)[22m
+xivdyetools-og-worker:test: 
+
+ Tasks:    24 successful, 24 total
+Cached:    23 cached, 24 total
+  Time:    3.17s 
+
+EXIT=0

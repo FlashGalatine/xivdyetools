@@ -1,8 +1,8 @@
 /**
- * Tests for BaseLogger and createSimpleLogger
+ * Tests for BaseLogger
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { BaseLogger, createSimpleLogger } from './base-logger.js';
+import { BaseLogger } from './base-logger.js';
 import type { LogEntry, LoggerConfig, LogContext } from '../types.js';
 
 // Concrete implementation for testing abstract BaseLogger
@@ -22,7 +22,7 @@ class TestLogger extends BaseLogger {
     level: 'debug' | 'info' | 'warn' | 'error',
     message: string,
     context?: LogContext,
-    error?: unknown
+    error?: unknown,
   ): LogEntry {
     return this.createEntry(level, message, context, error);
   }
@@ -68,17 +68,20 @@ describe('BaseLogger', () => {
       expect(config.format).toBe('json');
       expect(config.timestamps).toBe(true);
       expect(config.sanitizeErrors).toBe(true);
-      expect(config.redactFields).toEqual([
-        'password',
-        'token',
-        'secret',
-        'authorization',
-        'cookie',
-        'api_key',
-        'apiKey',
-        'access_token',
-        'refresh_token',
-      ]);
+      // FINDING-026 extended the default list; the original nine must still be there
+      expect(config.redactFields).toEqual(
+        expect.arrayContaining([
+          'password',
+          'token',
+          'secret',
+          'authorization',
+          'cookie',
+          'api_key',
+          'apiKey',
+          'access_token',
+          'refresh_token',
+        ]),
+      );
     });
 
     it('should merge provided config with defaults', () => {
@@ -299,9 +302,10 @@ describe('BaseLogger', () => {
 
     it('should handle objects', () => {
       const result = logger.testFormatError({ custom: 'error' });
+      // FINDING-026: serialised (and sanitised) instead of "[object Object]"
       expect(result).toEqual({
         name: 'Unknown',
-        message: '[object Object]',
+        message: '{"custom":"error"}',
       });
     });
 
@@ -417,7 +421,9 @@ describe('BaseLogger', () => {
         // BUG-024: the old MAX_REDACT_DEPTH=3 cap let secrets nested 4+
         // levels deep through verbatim; recursion is now cycle-guarded, not
         // depth-capped.
-        const l4 = (result.l1 as Record<string, unknown> as { l2: { l3: { l4: { token: string } } } }).l2.l3.l4;
+        const l4 = (
+          result.l1 as Record<string, unknown> as { l2: { l3: { l4: { token: string } } } }
+        ).l2.l3.l4;
         expect(l4.token).toBe('[REDACTED]');
       });
 
@@ -588,9 +594,7 @@ describe('BaseLogger', () => {
       it('should return duration and log', () => {
         const debugLogger = new TestLogger({ level: 'debug' });
 
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(100);
+        vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValueOnce(100);
 
         const end = debugLogger.time('operation');
         const duration = end();
@@ -625,9 +629,7 @@ describe('BaseLogger', () => {
       it('should time async operation and return result', async () => {
         const debugLogger = new TestLogger({ level: 'debug' });
 
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(50);
+        vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValueOnce(50);
 
         const result = await debugLogger.timeAsync('async-op', async () => {
           return 'async-result';
@@ -641,14 +643,12 @@ describe('BaseLogger', () => {
       it('should time even when async function throws', async () => {
         const debugLogger = new TestLogger({ level: 'debug' });
 
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(25);
+        vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValueOnce(25);
 
         await expect(
           debugLogger.timeAsync('failing-op', async () => {
             throw new Error('Async failure');
-          })
+          }),
         ).rejects.toThrow('Async failure');
 
         // Should still have logged the timing
@@ -659,40 +659,111 @@ describe('BaseLogger', () => {
   });
 });
 
-describe('createSimpleLogger', () => {
-  it('should create a simple logger with write function', () => {
-    const entries: LogEntry[] = [];
-    const logger = createSimpleLogger((entry) => entries.push(entry));
+describe('DelegatingLogger timing (OPT-020)', () => {
+  // child().time() is implemented locally rather than delegated, precisely so
+  // the emitted entry carries the child's context. That is the behaviour
+  // worth pinning — a delegated implementation would lose requestId.
+  it('emits the timing line through the child, carrying child context', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const child = logger.child({ requestId: 'req-42' });
 
-    logger.info('Test message');
-    expect(entries).toHaveLength(1);
-    expect(entries[0].message).toBe('Test message');
+    const end = child.time('render');
+    const duration = end();
+
+    expect(duration).toBeGreaterThanOrEqual(0);
+    const timing = logger.entries.find((e) => e.message.startsWith('render:'));
+    expect(timing).toBeDefined();
+    expect(timing?.level).toBe('debug');
+    expect(timing?.context?.requestId).toBe('req-42');
+    expect(timing?.context?.label).toBe('render');
+    expect(timing?.context?.duration).toBe(duration);
   });
 
-  it('should accept configuration', () => {
-    const entries: LogEntry[] = [];
-    const logger = createSimpleLogger((entry) => entries.push(entry), {
-      level: 'debug',
-      prefix: 'Simple',
-    });
+  it('formats the duration to two decimals in the message', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const child = logger.child({ requestId: 'req-1' });
 
-    logger.debug('Debug message');
-    expect(entries).toHaveLength(1);
-    expect(entries[0].message).toBe('[Simple] Debug message');
+    child.time('work')();
+
+    const timing = logger.entries.find((e) => e.message.startsWith('work:'));
+    expect(timing?.message).toMatch(/^work: \d+\.\d{2}ms$/);
   });
 
-  it('should respect log level', () => {
-    const entries: LogEntry[] = [];
-    const logger = createSimpleLogger((entry) => entries.push(entry), {
-      level: 'error',
-    });
+  it('times an async fn and still ends the timer when it rejects', async () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const child = logger.child({ requestId: 'req-7' });
 
-    logger.debug('Debug');
-    logger.info('Info');
-    logger.warn('Warn');
-    logger.error('Error');
+    await expect(child.timeAsync('ok', async () => 'value')).resolves.toBe('value');
+    await expect(
+      child.timeAsync('bad', async () => {
+        throw new Error('nope');
+      }),
+    ).rejects.toThrow('nope');
 
-    expect(entries).toHaveLength(1);
-    expect(entries[0].level).toBe('error');
+    // Both timers reported despite one throwing (the `finally` arm)
+    expect(logger.entries.filter((e) => e.message.startsWith('ok:'))).toHaveLength(1);
+    expect(logger.entries.filter((e) => e.message.startsWith('bad:'))).toHaveLength(1);
+  });
+
+  it('merges nested child context down the chain', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const grandchild = logger.child({ requestId: 'req-9' }).child({ operation: 'match' });
+
+    grandchild.time('deep')();
+
+    const timing = logger.entries.find((e) => e.message.startsWith('deep:'));
+    expect(timing?.context?.requestId).toBe('req-9');
+    expect(timing?.context?.operation).toBe('match');
+  });
+
+  it('lets a child add context after construction', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const child = logger.child({ requestId: 'req-3' });
+    child.setContext({ userId: 'u-1' });
+
+    child.info('hello');
+
+    expect(logger.entries[0].context?.requestId).toBe('req-3');
+    expect(logger.entries[0].context?.userId).toBe('u-1');
+  });
+
+  it('forwards an error through the child', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const child = logger.child({ requestId: 'req-4' });
+
+    child.error('exploded', new Error('boom'));
+
+    expect(logger.entries[0].level).toBe('error');
+    expect(logger.entries[0].context?.requestId).toBe('req-4');
+  });
+});
+
+describe('redaction cycle safety', () => {
+  it('does not recurse forever on a self-referencing context', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const cyclic: LogContext = { name: 'root' };
+    cyclic.self = cyclic;
+
+    expect(() => logger.info('cycle', cyclic)).not.toThrow();
+    expect(logger.entries[0].context?.name).toBe('root');
+  });
+
+  it('does not recurse forever on a cycle reached through an array', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const inner: LogContext = { token: 'shhh' };
+    const cyclic: LogContext = { items: [inner] };
+    inner.back = cyclic;
+
+    expect(() => logger.info('array cycle', cyclic)).not.toThrow();
+  });
+
+  it('still redacts the same object seen twice at different keys', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const shared: LogContext = { password: 'hunter2' };
+
+    logger.info('shared', { a: shared, b: shared });
+
+    const ctx = logger.entries[0].context as { a: LogContext };
+    expect(ctx.a.password).toBe('[REDACTED]');
   });
 });

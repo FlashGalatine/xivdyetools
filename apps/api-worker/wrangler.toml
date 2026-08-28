@@ -8,6 +8,16 @@ main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
 
+# FINDING-025 / API-5 (2026-08-21 security audit): this env has no routes, and
+# without routes wrangler defaults workers_dev (and, on wrangler >= 4.44,
+# preview URLs) ON — so a single `pnpm deploy` used to publish a second,
+# publicly reachable copy of the Universalis/XIVAPI relay on
+# xivdyetools-api-worker-dev.<account>.workers.dev with ENVIRONMENT=development.
+# Both are off explicitly (tests/wrangler-config.test.ts guards this); use
+# `pnpm dev` for ad-hoc testing, or flip these deliberately for a session.
+workers_dev = false
+preview_urls = false
+
 [dev]
 port = 8790
 local_protocol = "http"
@@ -19,14 +29,61 @@ id = "8f2028935b544902bf468a9055d765ef"
 [vars]
 ENVIRONMENT = "development"
 API_VERSION = "v1"
+UNIVERSALIS_API_BASE = "https://universalis.app/api/v2"
+# RATE_LIMIT_REQUESTS / RATE_LIMIT_WINDOW_SECONDS govern ONLY the Universalis
+# proxy's per-IP memory limiter (/universalis/aggregated, /api/v2/aggregated),
+# and only on cache misses. The /v1/* limiter is the API_RATE_LIMITER binding
+# below (65 / 60 s, hard-coded in src/middleware/rate-limit.ts) — API-11.
+RATE_LIMIT_REQUESTS = "60"
+RATE_LIMIT_WINDOW_SECONDS = "60"
+# /v1/chara/* (equipment-model resolution for the web app's .chara import).
+# XIVAPI_VERSION pins the game-version key AND namespaces the row cache; after
+# a patch, search returns 503 on the new key until ingested — roll forward by
+# hand once `GET /api/search?...&version=<new>` answers 200.
+XIVAPI_BASE = "https://v2.xivapi.com"
+XIVAPI_VERSION = "latest"
+
+# FINDING-003: native Workers Rate Limiting binding for /v1/* (65 = 60 + 5 burst per 60 s).
+# namespace_id must be unique per account — see docs/developer-guides/environment-variables.md.
+[[ratelimits]]
+name = "API_RATE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 65, period = 60 }
 
 [env.production]
 name = "xivdyetools-api-worker"
+# proxy.* domains absorbed from the retired universalis-proxy worker (Tier 2).
+# CUTOVER: the old xivdyetools-universalis-proxy worker must release these
+# custom domains (delete the worker or its domains in the CF dashboard) BEFORE
+# the first production deploy of this config — see DEPRECATIONS.md.
 routes = [
-  { pattern = "data.xivdyetools.app", custom_domain = true }
+  { pattern = "data.xivdyetools.app", custom_domain = true },
+  { pattern = "proxy.xivdyetools.app", custom_domain = true },
+  { pattern = "proxy.xivdyetools.projectgalatine.com", custom_domain = true },
+  { pattern = "developers.xivdyetools.app", custom_domain = true }
 ]
-vars = { ENVIRONMENT = "production", API_VERSION = "v1" }
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", UNIVERSALIS_API_BASE = "https://universalis.app/api/v2", RATE_LIMIT_REQUESTS = "30", RATE_LIMIT_WINDOW_SECONDS = "60", XIVAPI_BASE = "https://v2.xivapi.com", XIVAPI_VERSION = "latest" }
+
+# API docs site (absorbed apps/api-docs, Tier 2). Production-only so plain
+# `wrangler dev` needs no docs build; run `pnpm build:docs` before deploying.
+# run_worker_first: the worker's host check routes developers.* to assets and
+# keeps docs pages from shadowing API paths on data.* (asset matching is
+# path-based, not host-based).
+# CUTOVER: the developers.xivdyetools.app custom domain must be released by
+# the old xivdyetools-api-docs Pages project before the first deploy of this
+# config — see DEPRECATIONS.md.
+[env.production.assets]
+directory = "./docs/.vitepress/dist"
+binding = "ASSETS"
+run_worker_first = true
+not_found_handling = "404-page"
 
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT"
 id = "a57d958973884b578889e827311f9ee2"
+
+# FINDING-003: production /v1/* rate-limit binding (see top-level block)
+[[env.production.ratelimits]]
+name = "API_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 65, period = 60 }

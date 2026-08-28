@@ -12,12 +12,13 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import type { Translator } from '@xivdyetools/bot-logic/i18n';
 import {
   UpstashRateLimiter,
   KVRateLimiter,
   getDiscordCommandLimit,
   type RateLimiter,
-} from '@xivdyetools/rate-limiter';
+} from '@xivdyetools/worker-kit/rate-limiter';
 
 /**
  * Rate limit check result
@@ -55,6 +56,8 @@ export interface RateLimiterConfig {
  */
 let limiterInstance: RateLimiter | null = null;
 let configuredBackend: 'upstash' | 'kv' | null = null;
+/** FINDING-003: the KV-fallback warning is emitted once per isolate */
+let kvFallbackWarned = false;
 
 /**
  * Get or create the rate limiter instance
@@ -87,7 +90,40 @@ function getLimiter(config: RateLimiterConfig): RateLimiter {
     return limiterInstance;
   }
 
-  throw new Error('No rate limiter backend configured. Provide either Upstash credentials or KV namespace.');
+  throw new Error(
+    'No rate limiter backend configured. Provide either Upstash credentials or KV namespace.',
+  );
+}
+
+/**
+ * Command aliases: Discord has no alias mechanism, so `/a11y` is a second
+ * registration of `/accessibility`. Both must draw from ONE rate-limit
+ * bucket, or the alias silently doubles a user's allowance.
+ */
+const COMMAND_ALIASES: Readonly<Record<string, string>> = {
+  a11y: 'accessibility',
+};
+
+/**
+ * Commands whose subcommands are tiered separately in
+ * `DISCORD_COMMAND_LIMITS` (`command:subcommand` keys). Anything else drops
+ * the subcommand so all its subcommands share the command bucket.
+ */
+const SUBCOMMAND_SCOPED = new Set<string>(['extractor']);
+
+/**
+ * Resolve the (command, subcommand) pair a rate-limit check should be keyed on:
+ * aliases canonicalised, subcommand kept only where a scoped tier exists.
+ */
+export function resolveRateLimitScope(
+  commandName: string,
+  subcommand?: string,
+): { command: string; subcommand: string | undefined } {
+  const command = COMMAND_ALIASES[commandName] ?? commandName;
+  return {
+    command,
+    subcommand: SUBCOMMAND_SCOPED.has(command) ? subcommand : undefined,
+  };
 }
 
 /**
@@ -98,8 +134,9 @@ function getLimiter(config: RateLimiterConfig): RateLimiter {
  *
  * @param config - Rate limiter backend configuration
  * @param userId - Discord user ID
- * @param commandName - Optional command name for command-specific limits
+ * @param commandName - Optional (canonical) command name for command-specific limits
  * @param logger - Optional logger for structured logging
+ * @param subcommand - Optional subcommand; only honoured where a `command:subcommand` tier exists
  * @returns Rate limit check result
  *
  * @example
@@ -122,13 +159,30 @@ export async function checkRateLimit(
   config: RateLimiterConfig,
   userId: string,
   commandName?: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
+  subcommand?: string,
 ): Promise<RateLimitResult> {
   const limiter = getLimiter(config);
-  const limitConfig = getDiscordCommandLimit(commandName ?? 'default');
+  const limitConfig = getDiscordCommandLimit(commandName ?? 'default', subcommand);
 
-  // Build compound key for user:command rate limiting
-  const key = commandName ? `${userId}:${commandName}` : `${userId}:global`;
+  // FINDING-003 (2026-08-21 audit): KV cannot throttle a fast client
+  // (1 write/s/key, swallowed put failures, eventually-consistent reads) —
+  // it is a dev fallback only. Say so once per isolate so a production
+  // deployment missing UPSTASH_REDIS_REST_URL/TOKEN is visible in the logs.
+  if (configuredBackend === 'kv' && !kvFallbackWarned) {
+    kvFallbackWarned = true;
+    // optional call: some callers/tests pass a partial logger without warn()
+    logger?.warn?.(
+      'Rate limiter using KV fallback — KV cannot throttle fast clients; configure Upstash (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN) in production',
+      { backend: 'kv' },
+    );
+  }
+
+  // Build compound key for user:command rate limiting. A subcommand that has
+  // its own tier (e.g. extractor:image) gets its own bucket so it cannot
+  // borrow allowance from the cheaper sibling.
+  const scope = subcommand && commandName ? `${commandName}:${subcommand}` : commandName;
+  const key = scope ? `${userId}:${scope}` : `${userId}:global`;
 
   try {
     const result = await limiter.check(key, limitConfig);
@@ -161,19 +215,13 @@ export async function checkRateLimit(
 }
 
 /**
- * Format a rate limit error message for the user
+ * Format a rate limit error message for the user in their locale
+ * (2026-08-20 i18n audit, F-04 — this was the most-seen untranslated string
+ * in the bot, and it hand-rolled an English plural).
  */
-export function formatRateLimitMessage(result: RateLimitResult): string {
+export function formatRateLimitMessage(result: RateLimitResult, t: Translator): string {
   const seconds = result.retryAfter ?? Math.ceil((result.resetAt - Date.now()) / 1000);
-  return `You're using this command too quickly! Please wait **${seconds} second${seconds !== 1 ? 's' : ''}** before trying again.`;
-}
-
-/**
- * Get the currently configured backend type
- * @returns 'upstash', 'kv', or null if not initialized
- */
-export function getConfiguredBackend(): 'upstash' | 'kv' | null {
-  return configuredBackend;
+  return t.tc('errors.rateLimited', seconds, { seconds });
 }
 
 /**
@@ -182,4 +230,5 @@ export function getConfiguredBackend(): 'upstash' | 'kv' | null {
 export function resetRateLimiterInstance(): void {
   limiterInstance = null;
   configuredBackend = null;
+  kvFallbackWarned = false;
 }

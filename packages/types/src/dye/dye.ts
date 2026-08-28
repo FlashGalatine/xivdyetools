@@ -28,22 +28,32 @@ export interface Dye {
   itemID: number;
 
   /**
-   * Game's internal stain table ID (1-125).
+   * Game's internal stain table ID — the **canonical dye key** since schema v2
+   * (2026-07-31). Currently 1–125; `@xivdyetools/core` accepts the byte range
+   * 1–254 so future dyes need no schema change.
    *
-   * This is the ID used in the game's Stain Excel table and by plugins
-   * like Glamourer and Mare Synchronos. Unlike itemID, stainID may shift
-   * when new dyes are added to the game.
+   * This is the row ID of the game's Stain Excel sheet and the ID used by
+   * plugins like Glamourer and Mare Synchronos. It is what `dyes.json` stores,
+   * what share URLs / og-worker paths / community presets key on, and what
+   * `DyeDatabase.getDyeByStainId()` resolves.
    *
-   * **Note:** Facewear dyes do not have stainIDs (null).
-   *
-   * **Recommendation:** Use `itemID` for stable references. Use `stainID`
-   * only when interfacing with plugins or datamined content.
+   * **Note:** Every dye produced by `DyeDatabase.initialize()` has a numeric
+   * `stainID`. The `null` arm survives only for legacy fixture shapes that
+   * carry `id`/`itemID` without a `stainID` (the loader warns and falls back).
+   * Facewear glasses colours are **not** dyes any more — see `FacewearColor`
+   * (`dye/facewear.ts`) — so there is no longer a class of dye without one.
    *
    * @since 2.1.0
    */
   stainID: number | null;
 
-  /** Unique dye ID (1-200) */
+  /**
+   * Numeric dye ID — always equal to `itemID` after `DyeDatabase.initialize()`
+   * normalisation (schema v2 derives `itemID` from the stored `legacyItemID`,
+   * falling back to `stainID`), so this is an FFXIV item ID such as 5729 or
+   * 13115, not a small sequential index. Kept for the pre-v2 `Dye.id` contract;
+   * prefer `stainID` for new references.
+   */
   id: number;
 
   /** English dye name */
@@ -74,7 +84,7 @@ export interface Dye {
    * `"Venture Coffer"`, `"Red Pigment"` (and other pigments),
    * `"Planet-specific Credit"`.
    *
-   * `null` for Facewear dyes (not purchasable).
+   * `null` when the dye is not vendor-purchasable (cost 0).
    */
   currency: string | null;
 
@@ -104,7 +114,8 @@ export interface Dye {
    * - `'A'`: ARR dyes (itemIDs 5729-5813) — 85 dyes consolidated into one item
    * - `'B'`: Ishgardian Restoration dyes (itemIDs 30116-30124) — 9 dyes consolidated
    * - `'C'`: Cosmic Exploration dyes (itemIDs 48163-48172, 48227) — 11 dyes consolidated
-   * - `null`: Special dyes and Facewear — remain individual items
+   * - `null`: Special dyes — remain individual items (Facewear colours are no
+   *   longer dyes; see `FacewearColor`)
    *
    * @since TBD (Patch 7.5)
    */

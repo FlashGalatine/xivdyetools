@@ -23,7 +23,7 @@ export async function handleAboutCommand(ctx: CommandContext): Promise<void> {
           '`!xd random`  ← Discover new dyes\n' +
           '`!xd help`  ← Full command list\n\n' +
           'React with ❓ on any bot message for help with that command.\n\n' +
-          '[Web App](https://xivdyetools.com) • [Docs](https://docs.xivdyetools.com)',
+          '[Web App](https://xivdyetools.app) • [Docs](https://developers.xivdyetools.app)',
         colour: '#5865F2',
       },
     ],

@@ -15,6 +15,8 @@
 import {
   ColorService,
   PaletteService,
+  MATCHING_METHOD_TAGS,
+  type MatchingMethod,
   type PaletteMatch,
 } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
@@ -25,13 +27,13 @@ import {
   errorEmbed,
   hexToDiscordColor,
 } from '../../utils/response.js';
-import { resolveColorInput as resolveColor, dyeService } from '../../utils/color.js';
+import { resolveColorInput as resolveColor, dyeService } from '@xivdyetools/bot-logic';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
-import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
 import {
   createTranslator,
   createUserTranslator,
+  createUserTranslatorWithPrefs,
   type Translator,
 } from '../../services/bot-i18n.js';
 import {
@@ -40,10 +42,14 @@ import {
   getLocalizedDyeName,
   type LocaleCode,
 } from '../../services/i18n.js';
-import { generatePaletteGrid, type PaletteEntry, type PaletteGridLabels } from '@xivdyetools/svg';
+import { generatePaletteGrid, generateNearestSheet, num } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { validateAndFetchImage, processImageForExtraction } from '../../services/image/index.js';
-import { getMatchQuality as getImageMatchQuality } from '../../types/image.js';
+import { extractImagePixels } from '../../services/image-client.js';
+import {
+  getUserPreferences,
+  resolveMatchingMethod,
+  resolveCount,
+} from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // ============================================================================
@@ -78,72 +84,19 @@ const MAX_MATCH_COUNT = 10;
 /**
  * Resolves color input to a hex value
  */
-function resolveColorInput(input: string): { hex: string; fromDye?: Dye } | null {
-  const resolved = resolveColor(input, { excludeFacewear: true });
+function resolveColorInput(input: string, locale: LocaleCode): { hex: string; fromDye?: Dye } | null {
+  const resolved = resolveColor(input, { excludeFacewear: true, locale });
   if (!resolved) return null;
   return { hex: resolved.hex, fromDye: resolved.dye };
 }
 
 /**
- * Calculates Euclidean distance between two hex colors
+ * The authored x6 key strings name dE2000 literally ("nearest by dE2000").
+ * When the ranking ran under another method the tag is swapped in place -
+ * all six strings carry the literal token, so this stays localized.
  */
-function getColorDistance(hex1: string, hex2: string): number {
-  const rgb1 = ColorService.hexToRgb(hex1);
-  const rgb2 = ColorService.hexToRgb(hex2);
-
-  return Math.sqrt(
-    Math.pow(rgb1.r - rgb2.r, 2) +
-    Math.pow(rgb1.g - rgb2.g, 2) +
-    Math.pow(rgb1.b - rgb2.b, 2)
-  );
-}
-
-/**
- * Gets match quality emoji and label based on color distance
- */
-function getMatchQuality(distance: number, t: Translator): { emoji: string; label: string } {
-  if (distance === 0) return { emoji: '🎯', label: t.t('quality.perfect') };
-  if (distance < 10) return { emoji: '✨', label: t.t('quality.excellent') };
-  if (distance < 25) return { emoji: '👍', label: t.t('quality.good') };
-  if (distance < 50) return { emoji: '⚠️', label: t.t('quality.fair') };
-  return { emoji: '🔍', label: t.t('quality.approximate') };
-}
-
-/**
- * Formats RGB values for display
- */
-function formatRgb(hex: string): string {
-  const rgb = ColorService.hexToRgb(hex);
-  return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-}
-
-/**
- * Formats HSV values for display
- */
-function formatHsv(hex: string): string {
-  const rgb = ColorService.hexToRgb(hex);
-  const hsv = ColorService.rgbToHsv(rgb.r, rgb.g, rgb.b);
-  return `${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%`;
-}
-
-/**
- * Finds closest dye excluding Facewear category
- */
-function findClosestDyeExcludingFacewear(
-  targetHex: string,
-  excludeIds: number[] = [],
-  maxAttempts = 20
-): Dye | null {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const candidate = dyeService.findClosestDye(targetHex, excludeIds);
-    if (!candidate) break;
-
-    if (candidate.category !== 'Facewear') {
-      return candidate;
-    }
-    excludeIds.push(candidate.id);
-  }
-  return null;
+function methodKeyLabel(label: string, method: MatchingMethod): string {
+  return method === 'ciede2000' ? label : label.replace('ΔE2000', MATCHING_METHOD_TAGS[method]);
 }
 
 /**
@@ -153,7 +106,10 @@ function findClosestDyeExcludingFacewear(
  * images), later slots are reassigned to the next-best unique alternative using
  * a ranked distance search.
  */
-function deduplicatePaletteResults(matches: PaletteMatch[]): PaletteMatch[] {
+function deduplicatePaletteResults(
+  matches: PaletteMatch[],
+  matchingMethod: MatchingMethod,
+): PaletteMatch[] {
   if (matches.length <= 1) return matches;
 
   const usedDyeIds = new Set<number>();
@@ -166,14 +122,19 @@ function deduplicatePaletteResults(matches: PaletteMatch[]): PaletteMatch[] {
     } else {
       // Duplicate — find the next-best unique dye for this extracted color
       const hex = ColorService.rgbToHex(match.extracted.r, match.extracted.g, match.extracted.b);
+      // DEAD-035 (2026-08-18 audit): pass the user's matchingMethod explicitly —
+      // findDyesWithinDistance now defaults to 'ciede2000' (RESOLVED 2026-08-18,
+      // see FOLLOWUPS_PLAN.md), so the explicit argument here is no longer load-
+      // bearing for correctness, only for clarity/future-proofing.
       const candidates = dyeService.findDyesWithinDistance(hex, {
         maxDistance: 200,
         limit: 20,
+        matchingMethod,
       });
 
       const alternative = candidates.find((dye) => !usedDyeIds.has(dye.itemID));
       if (alternative) {
-        const distance = ColorService.getColorDistance(hex, alternative.hex);
+        const distance = ColorService.getDistanceForMethod(hex, alternative.hex, matchingMethod);
         usedDyeIds.add(alternative.itemID);
         dedupedMatches.push({
           extracted: match.extracted,
@@ -205,15 +166,16 @@ export async function handleExtractorCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   // Get subcommand from options
   const options = interaction.data?.options || [];
   const subcommandOption = options[0];
 
   if (!subcommandOption) {
+    const t = createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
     return messageResponse({
-      embeds: [errorEmbed('Error', 'No subcommand provided')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingSubcommand'))],
       flags: 64,
     });
   }
@@ -227,11 +189,15 @@ export async function handleExtractorCommand(
     case 'image':
       return handleImageSubcommand(interaction, env, ctx, subcommandOption.options || [], logger);
 
-    default:
+    default: {
+      const t = createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
       return messageResponse({
-        embeds: [errorEmbed('Error', `Unknown subcommand: ${subcommand}`)],
+        embeds: [
+          errorEmbed(t.t('common.error'), t.t('errors.unknownSubcommand', { name: subcommand })),
+        ],
         flags: 64,
       });
+    }
   }
 }
 
@@ -247,11 +213,12 @@ export async function handleExtractorCommand(
 async function handleColorSubcommand(
   interaction: DiscordInteraction,
   env: Env,
-  _ctx: ExecutionContext,
-  options: Array<{ name: string; value?: string | number | boolean }>
+  ctx: ExecutionContext,
+  options: Array<{ name: string; value?: string | number | boolean }>,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+  const theme = prefs.theme;
 
   // Initialize localization for dye names
   const locale = t.getLocale();
@@ -260,12 +227,17 @@ async function handleColorSubcommand(
   // Extract options
   const colorOption = options.find((opt) => opt.name === 'color');
   const countOption = options.find((opt) => opt.name === 'count');
-  // TODO: matching and market options for v4 enhancements
+  // Matching method: explicit option > stored preference > suite default (dE2000)
+  const matchingMethod = resolveMatchingMethod(
+    options.find((opt) => opt.name === 'matching')?.value as string | undefined,
+    prefs,
+  );
 
   const colorInput = colorOption?.value as string | undefined;
+  // Result count: explicit option > stored preference > suite default (1)
   const matchCount = Math.min(
-    Math.max((countOption?.value as number) || 1, MIN_MATCH_COUNT),
-    MAX_MATCH_COUNT
+    Math.max(resolveCount(countOption?.value as number | undefined, prefs), MIN_MATCH_COUNT),
+    MAX_MATCH_COUNT,
   );
 
   // Validate required input
@@ -277,161 +249,142 @@ async function handleColorSubcommand(
   }
 
   // Resolve the color input
-  const resolved = resolveColorInput(colorInput);
+  const resolved = resolveColorInput(colorInput, t.getLocale());
   if (!resolved) {
     return messageResponse({
-      embeds: [
-        errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput })),
-      ],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput }))],
       flags: 64,
     });
   }
 
   const targetHex = resolved.hex;
 
-  // Find closest dye(s)
-  const matches: Array<{ dye: Dye; distance: number }> = [];
-  const excludeIds: number[] = [];
-
-  for (let i = 0; i < matchCount; i++) {
-    const closestDye = findClosestDyeExcludingFacewear(targetHex, [...excludeIds]);
-
-    if (closestDye) {
-      const distance = getColorDistance(targetHex, closestDye.hex);
-      matches.push({ dye: closestDye, distance });
-      excludeIds.push(closestDye.id);
-    }
-  }
+  // 14J·2: ranking is the chosen method (ΔE2000 by default) over the whole
+  // non-Facewear pool — the shipped raw-RGB order could differ, so this
+  // changes the answer, not just the picture.
+  const matches = dyeService
+    .getAllDyes()
+    .filter((d) => d.category !== 'Facewear')
+    .map((dye) => ({
+      dye,
+      distance: ColorService.getDistanceForMethod(targetHex, dye.hex, matchingMethod),
+    }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, matchCount);
 
   if (matches.length === 0) {
     return messageResponse({
-      embeds: [
-        errorEmbed(t.t('common.error'), t.t('errors.noMatchFound')),
-      ],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.noMatchFound'))],
       flags: 64,
     });
   }
 
-  // Build response based on single or multiple matches
-  if (matchCount === 1) {
-    return buildSingleMatchResponse(targetHex, matches[0], t, resolved.fromDye);
-  } else {
-    return buildMultiMatchResponse(targetHex, matches, t, resolved.fromDye);
-  }
-}
-
-/**
- * Builds response for a single match
- */
-function buildSingleMatchResponse(
-  targetHex: string,
-  match: { dye: Dye; distance: number },
-  t: Translator,
-  fromDye?: Dye
-): Response {
-  const { dye, distance } = match;
-  const quality = getMatchQuality(distance, t);
-  const emoji = getDyeEmoji(dye.id);
-  const emojiPrefix = emoji ? `${emoji} ` : '';
-
-  // Build input color description
-  let inputDesc = `**Hex:** \`${targetHex.toUpperCase()}\`\n`;
-  inputDesc += `**${t.t('common.rgb')}:** \`${formatRgb(targetHex)}\`\n`;
-  inputDesc += `**${t.t('common.hsv')}:** \`${formatHsv(targetHex)}\``;
-
-  if (fromDye) {
-    const fromEmoji = getDyeEmoji(fromDye.id);
-    const fromEmojiPrefix = fromEmoji ? `${fromEmoji} ` : '';
-    const fromDyeName = getLocalizedDyeName(fromDye.itemID, fromDye.name, t.getLocale());
-    inputDesc = `${fromEmojiPrefix}**${fromDyeName}**\n${inputDesc}`;
-  }
-
-  // Build match description with localized dye name
-  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
-  let matchDesc = `${emojiPrefix}**${localizedDyeName}**\n`;
-  matchDesc += `**Hex:** \`${dye.hex.toUpperCase()}\`\n`;
-  matchDesc += `**${t.t('common.rgb')}:** \`${formatRgb(dye.hex)}\`\n`;
-  matchDesc += `**${t.t('common.hsv')}:** \`${formatHsv(dye.hex)}\`\n`;
-  matchDesc += `**${t.t('common.category')}:** ${dye.category}`;
-
-  // Create copy buttons for the matched dye
-  const rgb = ColorService.hexToRgb(dye.hex);
-  const hsv = ColorService.rgbToHsv(rgb.r, rgb.g, rgb.b);
-  const copyButtons = createCopyButtons(
-    dye.hex,
-    rgb,
-    { h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v) }
+  // Defer — the card renders to PNG in the background
+  ctx.waitUntil(
+    renderColorSheet(
+      interaction,
+      env,
+      targetHex,
+      matches,
+      t,
+      matchingMethod,
+      theme,
+      resolved.fromDye,
+    ),
   );
-
-  return messageResponse({
-    embeds: [
-      {
-        title: `${quality.emoji} ${t.t('extractor.title', { name: localizedDyeName })}`,
-        color: hexToDiscordColor(dye.hex),
-        fields: [
-          {
-            name: `🎨 ${t.t('common.inputColor')}`,
-            value: inputDesc,
-            inline: true,
-          },
-          {
-            name: `🧪 ${t.t('common.closestDye')}`,
-            value: matchDesc,
-            inline: true,
-          },
-          {
-            name: `📊 ${t.t('common.matchQuality')}`,
-            value: `**${t.t('common.distance')}:** ${distance.toFixed(2)}\n**${t.t('common.quality')}:** ${quality.label}`,
-            inline: true,
-          },
-        ],
-        footer: {
-          text: `${t.t('common.footer')} • ${t.t('extractor.useInfoHint')}`,
-        },
-      },
-    ],
-    components: [copyButtons],
-  });
+  return deferredResponse();
 }
 
 /**
- * Builds response for multiple matches
+ * Background rendering for /extractor color (14J·2).
+ * The card holds five rows; when more were asked for, the tail — the
+ * FURTHEST matches — is listed in the message (the opposite of a
+ * popularity-sorted list's tail).
  */
-function buildMultiMatchResponse(
+async function renderColorSheet(
+  interaction: DiscordInteraction,
+  env: Env,
   targetHex: string,
   matches: Array<{ dye: Dye; distance: number }>,
   t: Translator,
-  fromDye?: Dye
-): Response {
-  // Build input description with localized name
-  const fromDyeName = fromDye ? getLocalizedDyeName(fromDye.itemID, fromDye.name, t.getLocale()) : null;
-  const inputText = fromDyeName
-    ? `**${fromDyeName}** (\`${targetHex.toUpperCase()}\`)`
-    : `\`${targetHex.toUpperCase()}\``;
+  matchingMethod: MatchingMethod,
+  theme?: 'dark' | 'light',
+  fromDye?: Dye,
+): Promise<void> {
+  const locale = t.getLocale();
+  try {
+    const targetText = fromDye
+      ? getLocalizedDyeName(fromDye.itemID, fromDye.name, locale)
+      : targetHex.toUpperCase();
 
-  // Build matches list with localized names
-  const matchLines = matches.map((match, i) => {
-    const { dye, distance } = match;
-    const quality = getMatchQuality(distance, t);
-    const emoji = getDyeEmoji(dye.id);
-    const emojiPrefix = emoji ? `${emoji} ` : '';
-    const localizedName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
-
-    return `**${i + 1}.** ${emojiPrefix}**${localizedName}** • \`${dye.hex.toUpperCase()}\` • ${quality.emoji} ${quality.label} (Δ ${distance.toFixed(1)})`;
-  }).join('\n');
-
-  return messageResponse({
-    embeds: [
-      {
-        title: `🎨 ${t.t('extractor.topMatches', { count: matches.length })}`,
-        description: `${t.t('extractor.findingMatches', { input: inputText })}\n\n${matchLines}`,
-        color: hexToDiscordColor(matches[0].dye.hex),
-        footer: {
-          text: `${t.t('common.footer')} • ${t.t('extractor.useInfoNameHint')}`,
-        },
+    const svg = generateNearestSheet({
+      targetHex,
+      targetText,
+      rows: matches.slice(0, 5).map((m, i) => ({
+        rank: i + 1,
+        hex: m.dye.hex,
+        name: getLocalizedDyeName(m.dye.itemID, m.dye.name, locale),
+        deltaE: m.distance,
+      })),
+      labels: {
+        target: t.t('card.target'),
+        rank: t.t('card.rank'),
+        nearest: t.t('card.found'),
+        matchKey: methodKeyLabel(t.t('card.matchKey'), matchingMethod),
       },
-    ],
-  });
+      lang: locale,
+      theme,
+      method: matchingMethod,
+    });
+    const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
+
+    // One-line embed; the tail (matches 6+) rides the message text
+    const tail = matches.slice(5);
+    const tailLines = tail
+      .map((m, i) => {
+        const name = getLocalizedDyeName(m.dye.itemID, m.dye.name, locale);
+        return `**${i + 6}.** ${name} (\`${m.dye.hex.toUpperCase()}\`) · ${num(m.distance, locale, 1)}`;
+      })
+      .join('\n');
+
+    // Copy buttons stay for the single-match case
+    const components =
+      matches.length === 1
+        ? (() => {
+            const dye = matches[0].dye;
+            const rgb = ColorService.hexToRgb(dye.hex);
+            const hsv = ColorService.rgbToHsv(rgb.r, rgb.g, rgb.b);
+            return [
+              createCopyButtons(dye.hex, rgb, {
+                h: Math.round(hsv.h),
+                s: Math.round(hsv.s),
+                v: Math.round(hsv.v),
+              }),
+            ];
+          })()
+        : undefined;
+
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [
+        {
+          title: t.t('card.matchTitle'),
+          description: tailLines || undefined,
+          color: hexToDiscordColor(matches[0].dye.hex),
+          image: { url: 'attachment://extractor-color.png' },
+        },
+      ],
+      components,
+      file: {
+        name: 'extractor-color.png',
+        data: pngBuffer,
+        contentType: 'image/png',
+      },
+    });
+  } catch {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.noMatchFound'))],
+    });
+  }
 }
 
 // ============================================================================
@@ -448,7 +401,7 @@ async function handleImageSubcommand(
   env: Env,
   ctx: ExecutionContext,
   options: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   const attachments = interaction.data?.resolved?.attachments || {};
@@ -500,8 +453,22 @@ async function handleImageSubcommand(
   const deferResponse = deferredResponse();
 
   // Process in background
+  const prefs = userId ? await getUserPreferences(env.KV, userId) : {};
+  // Matching method: explicit option > stored preference > suite default (dE2000)
+  const matchingMethod = resolveMatchingMethod(
+    options.find((opt) => opt.name === 'matching')?.value as string | undefined,
+    prefs,
+  );
+  // prevent_duplicates defaults to true (schema); only an explicit false disables it
+  const preventDuplicates =
+    options.find((opt) => opt.name === 'prevent_duplicates')?.value !== false;
   ctx.waitUntil(
-    processImageExtraction(interaction, env, attachment.url, colorCount, locale, logger)
+    processImageExtraction(interaction, env, attachment.url, colorCount, locale, {
+      matchingMethod,
+      preventDuplicates,
+      theme: prefs.theme,
+      logger,
+    }),
   );
 
   return deferResponse;
@@ -516,31 +483,32 @@ async function processImageExtraction(
   imageUrl: string,
   colorCount: number,
   locale: LocaleCode,
-  logger?: ExtendedLogger
+  opts: {
+    matchingMethod: MatchingMethod;
+    preventDuplicates: boolean;
+    theme?: 'dark' | 'light';
+    logger?: ExtendedLogger;
+  },
 ): Promise<void> {
+  const { matchingMethod, preventDuplicates, theme, logger } = opts;
   const t = createTranslator(locale);
 
   // Initialize localization for dye names
   await initializeLocale(locale);
 
   try {
-    // Step 1: Validate and fetch image
-    const { buffer } = await validateAndFetchImage(imageUrl);
-
-    // Step 2: Process image to extract pixels
-    const processed = await processImageForExtraction(buffer);
+    // Steps 1-2: validate, fetch and decode remotely (image-worker owns photon)
+    const processed = await extractImagePixels(env, imageUrl);
 
     // Step 3: Convert pixels to RGB array (filtering transparent pixels)
     const rgbPixels = PaletteService.pixelDataToRGBFiltered(
       processed.pixels as unknown as Uint8ClampedArray,
-      128 // Alpha threshold
+      128, // Alpha threshold
     );
 
     if (rgbPixels.length === 0) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('matchImage.noColors')),
-        ],
+        embeds: [errorEmbed(t.t('common.error'), t.t('matchImage.noColors'))],
       });
       return;
     }
@@ -550,74 +518,65 @@ async function processImageExtraction(
       colorCount,
       maxIterations: 25,
       maxSamples: 10000,
+      matchingMethod,
     });
 
-    // Step 4b: Deduplicate — ensure each slot shows a unique dye
-    const matches = deduplicatePaletteResults(rawMatches);
+    // Step 4b: Deduplicate — ensure each slot shows a unique dye (default on;
+    // `prevent_duplicates:false` keeps every slot's true nearest dye)
+    const matches = preventDuplicates
+      ? deduplicatePaletteResults(rawMatches, matchingMethod)
+      : rawMatches;
 
     if (matches.length === 0) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('matchImage.extractionFailed')),
-        ],
+        embeds: [errorEmbed(t.t('common.error'), t.t('matchImage.extractionFailed'))],
       });
       return;
     }
 
-    // Step 5: Convert to PaletteEntry format with localized names
-    const entries: PaletteEntry[] = matches.map((match: PaletteMatch) => ({
-      extracted: match.extracted,
-      matchedDye: {
-        ...match.matchedDye,
-        name: getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name, locale),
-      },
-      distance: match.distance,
-      dominance: match.dominance,
+    // Step 5: 14K — the band carries ALL colours at their real share; the
+    // list is a top five by share. Per-row distance in the chosen method
+    // (ΔE2000 by default), extracted → matched.
+    const sortedByShare = [...matches].sort((a, b) => b.dominance - a.dominance);
+    const entryHex = (m: PaletteMatch) =>
+      ColorService.rgbToHex(m.extracted.r, m.extracted.g, m.extracted.b);
+    const band = sortedByShare.map((m) => ({ hex: entryHex(m), share: m.dominance }));
+    const rows = sortedByShare.slice(0, 5).map((m) => ({
+      share: m.dominance,
+      extractedHex: entryHex(m),
+      matchedHex: m.matchedDye.hex,
+      matchedName: getLocalizedDyeName(m.matchedDye.itemID, m.matchedDye.name, locale),
+      deltaE: ColorService.getDistanceForMethod(entryHex(m), m.matchedDye.hex, matchingMethod),
     }));
 
-    // Step 6: Build localized labels for SVG
-    const paletteLabels: PaletteGridLabels = {
-      extracted: t.t('paletteGrid.extracted'),
-      matchedDye: t.t('paletteGrid.matchedDye'),
-      ofImage: t.t('paletteGrid.ofImage'),
-      noColors: t.t('paletteGrid.noColors'),
-      quality: {
-        perfect: t.t('paletteGrid.quality.perfect'),
-        excellent: t.t('paletteGrid.quality.excellent'),
-        good: t.t('paletteGrid.quality.good'),
-        fair: t.t('paletteGrid.quality.fair'),
-        approximate: t.t('paletteGrid.quality.approximate'),
-      },
-    };
-
-    // Step 7: Generate SVG
+    // Step 6: Generate the card + render to PNG
     const svg = generatePaletteGrid({
-      entries,
-      title: colorCount === 1
-        ? t.t('matchImage.colorMatch')
-        : t.t('matchImage.colorPalette', { count: colorCount }),
-      labels: paletteLabels,
+      title: t.t('card.rampTitle'),
+      band,
+      rows,
+      labels: {
+        share: t.t('card.share'),
+        matched: t.t('card.matched'),
+        rampKey: t.t('card.rampKey'),
+      },
+      lang: locale,
+      method: matchingMethod,
+      theme,
     });
-
-    // Step 8: Render to PNG
     const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
 
-    // Step 9: Build description
-    const description = buildImageMatchDescription(matches, t);
-
-    // Step 10: Send response
+    // Step 7: One-line embed — count as description, manual pointer where a
+    // context-dependent actionable line belongs (never the PNG); the accent
+    // bar takes the dominant extracted colour.
+    const dominantHex = band[0]?.hex ?? matches[0].matchedDye.hex;
+    const manualLine = `${t.t('card.manualLead')} \`/manual topic:📸\`${t.t('card.manualTail')}`;
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
-          title: colorCount === 1
-            ? t.t('matchImage.closestMatch')
-            : t.t('matchImage.topMatches', { count: matches.length }),
-          description,
-          color: parseInt(matches[0].matchedDye.hex.replace('#', ''), 16),
-          image: { url: 'attachment://image.png' },
-          footer: {
-            text: `${t.t('common.footer')} • ${t.t('matchImage.extractionMethod')}`,
-          },
+          title: t.t('card.rampTitle'),
+          description: `${t.t('card.colours', { n: matches.length })}\n${manualLine}`,
+          color: parseInt(dominantHex.replace('#', ''), 16),
+          image: { url: 'attachment://extractor-image.png' },
         },
       ],
       file: {
@@ -649,25 +608,4 @@ async function processImageExtraction(
       embeds: [errorEmbed(t.t('common.error'), errorMessage)],
     });
   }
-}
-
-/**
- * Build description text for image matches
- */
-function buildImageMatchDescription(matches: PaletteMatch[], t: Translator): string {
-  const lines = matches.map((match, i) => {
-    const emoji = getDyeEmoji(match.matchedDye.id);
-    const emojiPrefix = emoji ? `${emoji} ` : '';
-    const quality = getImageMatchQuality(match.distance);
-    const qualityLabel = t.t(`quality.${quality.shortLabel.toLowerCase()}`);
-    const qualityBadge = `[${qualityLabel.toUpperCase()}]`;
-    const localizedName = getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name, t.getLocale());
-
-    return (
-      `**${i + 1}.** ${emojiPrefix}**${localizedName}** ` +
-      `(\`${match.matchedDye.hex.toUpperCase()}\`) ${qualityBadge} - ${match.dominance}%`
-    );
-  });
-
-  return lines.join('\n');
 }

@@ -34,8 +34,9 @@ Each `commands/<name>.ts` exports an `execute<Name>` function plus its `<Name>In
 A small set of shared utilities lives at the top level of `src/`:
 - `input-resolution.ts` — turns hex codes, dye names, or CSS color names into a single `ResolvedColor` shape. Owns a process-singleton `DyeService` (loaded from `dyeDatabase` JSON).
 - `localization.ts` — wraps `LocalizationService` with a per-locale instance cache to avoid singleton race conditions in concurrent CF Worker requests.
-- `color-math.ts` — distance / match-quality helpers shared across commands.
 - `css-colors.ts` — 148 standard CSS color name → hex lookup.
+
+`color-math.ts` (`getColorDistance`, `getMatchQualityInfo`) was removed 2026-08-18 (DEAD-012 dead-code audit) — it was a dead delegate to core's `ColorService.getColorDistance` / `classifyMatchDistance`; no command imported it. `handlers/commands/gradient.ts` in `apps/discord-worker` now calls `classifyMatchDistance` from `@xivdyetools/types` directly instead of re-implementing a quality ladder with different thresholds.
 
 ### Key Directories
 
@@ -44,16 +45,18 @@ src/
 ├── index.ts                       # Public re-exports
 ├── input-resolution.ts            # Hex / dye-name / CSS-color resolution + dyeService singleton
 ├── localization.ts                # initializeLocale, getLocalizedDyeName, getLocalizedCategory
-├── color-math.ts                  # getColorDistance, getMatchQualityInfo
 ├── css-colors.ts                  # CSS named-color → hex (BlueViolet, coral, ...)
+├── moderators.ts                  # parseModeratorIds / isModeratorId / isValidDiscordSnowflake (shared MODERATOR_IDS grammar)
+├── i18n/                          # Bot UI Translator + six locale JSONs — subpath @xivdyetools/bot-logic/i18n
 └── commands/
     ├── types.ts                   # EmbedData, EmbedField (platform-neutral)
-    ├── harmony.ts                 # /harmony — triadic / complementary / analogous / split / tetradic / square / mono
-    ├── dye-info.ts                # /dye-info AND /random (shared module)
+    ├── harmony.ts                 # /harmony — triadic / complementary / analogous / split / tetradic / inverted-tetradic / square / mono
+    ├── dye-info.ts                # /dye info AND /dye random (shared module)
     ├── mixer.ts                   # /mixer — 6-mode color blending + closest-dye match
     ├── gradient.ts                # /gradient — N-step gradient + dye matches per stop
-    ├── match.ts                   # /match — find closest N dyes for a color
-    ├── comparison.ts              # /compare — side-by-side dye grid
+    ├── comparison.ts              # /comparison — side-by-side dye grid
+    ├── contrast.ts                # /contrast — WCAG 1.4.11 ratios between dye pairs
+    ├── swatch.ts                  # /swatch — character-colour reference matching
     └── accessibility.ts           # /accessibility — colorblind sim + WCAG matrix
 ```
 
@@ -77,7 +80,7 @@ type ResolveColorOptions = { excludeFacewear?; findClosestForHex? };
 async function initializeLocale(locale: LocaleCode): Promise<void>;
 function getLocalizedDyeName(itemID: number, fallbackName: string, locale?: LocaleCode): string;
 function getLocalizedCategory(category: string, locale?: LocaleCode): string;
-type LocaleCode;  // re-exported from @xivdyetools/bot-i18n: 'en'|'ja'|'de'|'fr'|'ko'|'zh'
+type LocaleCode;  // re-exported from ./i18n (formerly @xivdyetools/bot-i18n): 'en'|'ja'|'de'|'fr'|'ko'|'zh'
 ```
 
 ### Shared types & helpers
@@ -85,9 +88,6 @@ type LocaleCode;  // re-exported from @xivdyetools/bot-i18n: 'en'|'ja'|'de'|'fr'
 ```ts
 type EmbedData = { title; description?; fields?: EmbedField[]; color: number; footer? };
 type EmbedField = { name; value; inline? };
-function getColorDistance(hex1, hex2): number;
-function getMatchQualityInfo(distance): MatchQualityInfo;
-type MatchQualityInfo;
 ```
 
 ### Commands
@@ -99,25 +99,24 @@ executeHarmony(input: HarmonyInput): Promise<HarmonyResult>
   type HarmonyInput = { baseHex; baseName?; baseId?; baseItemID?; harmonyType; locale; harmonyOptions?; dyeFilters? };
   type HarmonyResult = { ok: true; svgString; baseHex; baseName; harmonyDyes: Dye[]; embed }
                      | { ok: false; error: 'NO_MATCHES'|'GENERATION_FAILED'; errorMessage };
-  type HarmonyType = 'triadic'|'complementary'|'analogous'|'split-complementary'|'tetradic'|'square'|'monochromatic';
+  type HarmonyType = 'triadic'|'complementary'|'analogous'|'split-complementary'|'tetradic'|'inverted-tetradic'|'square'|'monochromatic';
   const HARMONY_TYPES: readonly HarmonyType[];
   function getHarmonyTypeChoices(): {name; value}[];
-  type HarmonyColorSpace;  // re-exported from @xivdyetools/core
 
 executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult>
 executeRandom(input: RandomInput): Promise<RandomResult>      // exported from same module
 
 executeMixer(input: MixerInput): Promise<MixerResult>
-  type BlendingMode;     // re-exported from @xivdyetools/color-blending
-  type MixerMatch;
+  // MixerResult = { ok: true; svgString; blendingMode; sweep: MixerSweepStop[]; embed } | { ok: false; ... }
 
 executeGradient(input: GradientInput): Promise<GradientResult>
-  type GradientStepResult, InterpolationMode, MatchingMethod;
-
-executeMatch(input: MatchInput): Promise<MatchResult>
-  type MatchEntry;
+  type GradientStepResult, InterpolationMode;
 
 executeComparison(input: ComparisonInput): Promise<ComparisonResult>
+
+executeContrast(input: ContrastInput): Promise<ContrastResult>
+
+executeSwatch(input: SwatchInput): Promise<SwatchResult>
 
 executeAccessibility(input: AccessibilityInput): Promise<AccessibilityResult>
   const VISION_TYPES;
@@ -139,7 +138,7 @@ Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → 
 `input-resolution.ts` constructs one `DyeService(dyeDatabase)` at module load. Re-importing won't rebuild the database. If a command needs a custom dye filter view, **filter the result** rather than constructing a second `DyeService`.
 
 ### Input resolution order
-`resolveColorInput` tries inputs in this order: hex (`#FF0000` / `FF0000` / `#F00`) → dye name (case-insensitive partial match, Facewear excluded by default) → CSS named color (`BlueViolet`). Pass `findClosestForHex: true` when the command needs a dye attached to an arbitrary hex code.
+`resolveColorInput` tries inputs in this order: hex (`#FF0000` / `FF0000` / `#F00`) → dye name (case-insensitive partial match) → CSS named color (`BlueViolet`). `excludeFacewear` (default `true`) filters `category === 'Facewear'` and is effectively a no-op since schema v2 — Facewear colours are no longer in the dye database at all. Pass `findClosestForHex: true` when the command needs a dye attached to an arbitrary hex code.
 
 ## Consumers
 
@@ -150,9 +149,25 @@ Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → 
 
 - `@xivdyetools/types` — `Dye`, `DyeTypeFilters`, `LocaleCode`, etc.
 - `@xivdyetools/core` — `DyeService`, `dyeDatabase`, `LocalizationService`, harmony types, `filterDyes`.
-- `@xivdyetools/color-blending` — `blendColors`, `BlendingMode`.
+- `@xivdyetools/core/blending` — `blendColors`, `BlendingMode` (subpath of core since the retired `@xivdyetools/color-blending` was absorbed).
 - `@xivdyetools/svg` — every `generate*` SVG used by command results.
-- `@xivdyetools/bot-i18n` — `Translator`, `createTranslator`, `LocaleCode`.
+- Built-in `src/i18n/` — `Translator`, `createTranslator`, `LocaleCode` + six bot-UI locale JSONs, exported as `@xivdyetools/bot-logic/i18n` (absorbed from the retired `@xivdyetools/bot-i18n`).
+
+## Dead-code gate (knip)
+
+`pnpm run lint` = `eslint src && pnpm run lint:dead`, and `lint:dead` is
+`knip --directory ../.. --workspace packages/bot-logic` against the **root**
+`knip.jsonc`. `--workspace` filters reporting only — knip still traverses
+`apps/discord-worker`, so an `execute*` the bot calls counts as used.
+
+`includeEntryExports` is on, so `src/index.ts` and `src/i18n/index.ts` (the
+`/i18n` subpath) are in scope. Barrel symbols nothing imports must carry
+`/** @public */` on the specifier (`"tags": ["-public"]` excludes them) — that is
+the `*Input`/`*Result` contract types plus `HARMONY_TYPES`,
+`getHarmonyTypeChoices`, `VISION_TYPES`, `isValidDiscordSnowflake`,
+`isValidHex`/`normalizeHex`, `getLocalizedCurrency`, `LocaleData`,
+`TranslatorLogger`. A new command export with no handler wiring and no tag fails
+`lint`.
 
 ## Publishing
 

@@ -1,25 +1,30 @@
-name = "xivdyetools-discord-worker"
+# DEPLOY_ENVIRONMENTS (docs/operations/DEPLOY_ENVIRONMENTS.md): the default
+# (top-level) env is the BETA bot — its own Worker name, its own Discord
+# application, its own KV namespace, and NO routes — so a plain
+# `wrangler deploy` can never overwrite the production bot on
+# bot.xivdyetools.app. Production config lives exclusively under
+# [env.production] and ships via `wrangler deploy --env production`.
+#
+# `routes` and `workers_dev` are INHERITABLE keys: a named environment takes
+# the top-level value unless it overrides it. Both are therefore declared
+# explicitly in both environments — leaving `routes` up here would attach the
+# production custom domains to the beta Worker.
+name = "xivdyetools-discord-worker-dev"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
+workers_dev = true
 
-routes = [
-  { pattern = "bot.xivdyetools.app", custom_domain = true },
-  { pattern = "bot.xivdyetools.projectgalatine.com", custom_domain = true }
-]
-
+# Beta bot: isolated KV so testing never touches real users' preferences,
+# favorites, rate-limit counters or analytics. The service bindings are
+# shared with production on purpose, so /preset renders real data.
 [[kv_namespaces]]
 binding = "KV"
-id = "1fcb7e037ccd4172a47fccd97cf8e753"
+id = "7d76d17fbb16403c8bf40e16f5b58ba6"
 
 [[analytics_engine_datasets]]
 binding = "ANALYTICS"
-dataset = "xivdyetools_bot_analytics"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "xivdyetools-presets"
-database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
+dataset = "xivdyetools_bot_analytics_beta"
 
 [[services]]
 binding = "PRESETS_API"
@@ -27,36 +32,58 @@ service = "xivdyetools-presets-api"
 
 [[services]]
 binding = "UNIVERSALIS_PROXY"
-service = "xivdyetools-universalis-proxy"
+service = "xivdyetools-api-worker"
+
+[[services]]
+binding = "IMAGE_WORKER"
+service = "xivdyetools-image-worker"
 
 [vars]
-DISCORD_CLIENT_ID = "1447108133020369048"
+# The BETA Discord application — separate from production because an
+# application has exactly one Interactions Endpoint URL.
+DISCORD_CLIENT_ID = "1536085517270261771"
 PRESETS_API_URL = "https://api.xivdyetools.app"
 ANNOUNCEMENT_CHANNEL_ID = "1441800851747508314"
 
 # Secrets: DISCORD_TOKEN, DISCORD_PUBLIC_KEY, BOT_API_SECRET,
 # BOT_SIGNING_SECRET, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+# Beta needs only DISCORD_TOKEN + DISCORD_PUBLIC_KEY; the rate limiter falls
+# back to KV when Upstash is absent.
 
 [[rules]]
 type = "Data"
 globs = ["**/*.ttf"]
 fallthrough = true
 
+# /changelog bundles apps/discord-worker/CHANGELOG-laymans.md as a string at
+# deploy time (src/types/markdown.d.ts types the import; vitest mirrors the
+# rule with vitest.markdown-plugin.ts). Editing that file is therefore a deploy.
+[[rules]]
+type = "Text"
+globs = ["**/*.md"]
+fallthrough = true
+
+# ============================================================================
+# PRODUCTION — the live bot. Deployed only via `wrangler deploy --env production`.
+# ============================================================================
 [env.production]
 name = "xivdyetools-discord-worker"
+workers_dev = false
+routes = [
+  { pattern = "bot.xivdyetools.app", custom_domain = true },
+  { pattern = "bot.xivdyetools.projectgalatine.com", custom_domain = true }
+]
 
 [env.production.vars]
 DISCORD_CLIENT_ID = "1447108133020369048"
 PRESETS_API_URL = "https://api.xivdyetools.app"
+# vars are NOT inheritable — this must be repeated here or the GitHub
+# release-announcement webhook loses its target channel.
+ANNOUNCEMENT_CHANNEL_ID = "1441800851747508314"
 
 [[env.production.kv_namespaces]]
 binding = "KV"
 id = "1fcb7e037ccd4172a47fccd97cf8e753"
-
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "xivdyetools-presets"
-database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 
 [[env.production.services]]
 binding = "PRESETS_API"
@@ -64,7 +91,11 @@ service = "xivdyetools-presets-api"
 
 [[env.production.services]]
 binding = "UNIVERSALIS_PROXY"
-service = "xivdyetools-universalis-proxy"
+service = "xivdyetools-api-worker"
+
+[[env.production.services]]
+binding = "IMAGE_WORKER"
+service = "xivdyetools-image-worker"
 
 [[env.production.analytics_engine_datasets]]
 binding = "ANALYTICS"

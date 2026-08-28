@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { VENDOR_ACQUISITIONS, CRAFT_ACQUISITIONS } from '../DyeFilter.js';
-import colorsData from '../../../data/colors_xiv.json' with { type: 'json' };
+import colorsData from '../../../data/dyes.json' with { type: 'json' };
 
 // Detects acquisition-string drift between DyeFilter constants and colors_xiv.json
 // (e.g., the 'Crafting' → 'The Firmament' rename in 2026-04). If a future rename

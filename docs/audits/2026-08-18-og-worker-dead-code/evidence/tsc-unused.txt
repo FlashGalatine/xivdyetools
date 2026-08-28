@@ -1,0 +1,4 @@
+src/index.test.ts(8,36): error TS6133: 'beforeEach' is declared but its value is never read.
+src/index.ts(17,35): error TS6133: 'normalizeMatchingMethod' is declared but its value is never read.
+src/og-data-generator.test.ts(7,32): error TS6133: 'beforeEach' is declared but its value is never read.
+src/services/svg/dye-helpers.ts(12,3): error TS6133: 'ColorConverter' is declared but its value is never read.

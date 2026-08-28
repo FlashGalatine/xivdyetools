@@ -1,66 +1,58 @@
 /**
  * Tests for SVG to PNG renderer service
- * 
+ *
  * Note: The actual renderer depends on WASM which is hard to mock.
  * These tests verify the module structure and export correctness.
  */
 import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('@resvg/resvg-wasm', () => ({
-    initWasm: vi.fn().mockResolvedValue(undefined),
-    Resvg: class MockResvg {
-        render() {
-            return {
-                asPng: () => new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
-            };
-        }
-    },
+  initWasm: vi.fn().mockResolvedValue(undefined),
+  Resvg: class MockResvg {
+    render() {
+      return {
+        asPng: () => new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      };
+    }
+  },
 }));
 
 vi.mock('@resvg/resvg-wasm/index_bg.wasm', () => ({
-    default: new Uint8Array([0x00, 0x61, 0x73, 0x6D]),
+  default: new Uint8Array([0x00, 0x61, 0x73, 0x6d]),
 }));
 
 vi.mock('../fonts', () => ({
-    getFontBuffers: vi.fn(() => [new Uint8Array([1, 2, 3])]),
+  getFontBuffers: vi.fn(() => [new Uint8Array([1, 2, 3])]),
 }));
 
 describe('SVG renderer', () => {
-    describe('initRenderer', () => {
-        it('exports initRenderer function', async () => {
-            const { initRenderer } = await import('./renderer.js');
-            expect(initRenderer).toBeDefined();
-            expect(typeof initRenderer).toBe('function');
-        });
-
-        // BUG-013 (2026-07-18 audit): a failed init must not poison the isolate —
-        // the cached promise is reset so the next call retries
-        it('retries init after a failed first attempt', async () => {
-            const { initWasm } = await import('@resvg/resvg-wasm');
-            const { initRenderer } = await import('./renderer.js');
-
-            vi.mocked(initWasm).mockRejectedValueOnce(new Error('transient wasm failure'));
-
-            await expect(initRenderer()).rejects.toThrow('Failed to initialize SVG renderer');
-            // Second call must retry (and succeed with the default resolved mock),
-            // not re-await the first call's cached rejection
-            await expect(initRenderer()).resolves.toBeUndefined();
-        });
+  describe('initRenderer', () => {
+    it('exports initRenderer function', async () => {
+      const { initRenderer } = await import('./renderer.js');
+      expect(initRenderer).toBeDefined();
+      expect(typeof initRenderer).toBe('function');
     });
 
-    describe('renderSvgToPng', () => {
-        it('exports renderSvgToPng function', async () => {
-            const { renderSvgToPng } = await import('./renderer.js');
-            expect(renderSvgToPng).toBeDefined();
-            expect(typeof renderSvgToPng).toBe('function');
-        });
-    });
+    // BUG-013 (2026-07-18 audit): a failed init must not poison the isolate —
+    // the cached promise is reset so the next call retries
+    it('retries init after a failed first attempt', async () => {
+      const { initWasm } = await import('@resvg/resvg-wasm');
+      const { initRenderer } = await import('./renderer.js');
 
-    describe('renderSvgToDataUrl', () => {
-        it('exports renderSvgToDataUrl function', async () => {
-            const { renderSvgToDataUrl } = await import('./renderer.js');
-            expect(renderSvgToDataUrl).toBeDefined();
-            expect(typeof renderSvgToDataUrl).toBe('function');
-        });
+      vi.mocked(initWasm).mockRejectedValueOnce(new Error('transient wasm failure'));
+
+      await expect(initRenderer()).rejects.toThrow('Failed to initialize SVG renderer');
+      // Second call must retry (and succeed with the default resolved mock),
+      // not re-await the first call's cached rejection
+      await expect(initRenderer()).resolves.toBeUndefined();
     });
+  });
+
+  describe('renderSvgToPng', () => {
+    it('exports renderSvgToPng function', async () => {
+      const { renderSvgToPng } = await import('./renderer.js');
+      expect(renderSvgToPng).toBeDefined();
+      expect(typeof renderSvgToPng).toBe('function');
+    });
+  });
 });

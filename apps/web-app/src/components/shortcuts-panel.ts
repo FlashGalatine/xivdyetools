@@ -31,7 +31,7 @@ function getShortcuts(): ShortcutGroup[] {
       title: LanguageService.t('shortcuts.navigation'),
       shortcuts: [
         {
-          keys: '1-5',
+          keys: '1-9',
           description: LanguageService.t('shortcuts.switchTool'),
         },
         {
@@ -51,26 +51,15 @@ function getShortcuts(): ShortcutGroup[] {
           keys: 'Shift + L',
           description: LanguageService.t('shortcuts.cycleLanguage'),
         },
+        {
+          keys: 'Shift + S',
+          description: LanguageService.t('shortcuts.shareTool'),
+        },
         { keys: '?', description: LanguageService.t('shortcuts.showHelp') },
       ],
     },
-    {
-      title: LanguageService.t('shortcuts.dyeSelection'),
-      shortcuts: [
-        {
-          keys: 'Tab',
-          description: LanguageService.t('shortcuts.focusSelector'),
-        },
-        {
-          keys: '↑↓←→',
-          description: LanguageService.t('shortcuts.navigateDyes'),
-        },
-        {
-          keys: 'Enter',
-          description: LanguageService.t('shortcuts.selectDye'),
-        },
-      ],
-    },
+    // No "Dye Selection" group: the 5.0 palette drawer's swatches have no
+    // keyboard (Tab / arrow / Enter) handling, so there is nothing to list.
   ];
 }
 
@@ -134,13 +123,9 @@ function createPanelContent(): HTMLElement {
   platformHint.className = 'text-xs mt-4 pt-4 border-t';
   platformHint.style.cssText = 'color: var(--theme-text-muted); border-color: var(--theme-border);';
 
-  // Detect platform for modifier key hint
-  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  const _modifierKey = isMac ? '⌘ Cmd' : 'Ctrl';
   platformHint.innerHTML = `
     <span class="opacity-70">
-      ${LanguageService.t('shortcuts.platformHint')}:
-      ${LanguageService.t('shortcuts.useModifier')}
+      ${LanguageService.t('shortcuts.platformHintFull')}
     </span>
   `;
   container.appendChild(platformHint);

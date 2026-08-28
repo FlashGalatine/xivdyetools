@@ -47,6 +47,12 @@ export interface CommunityPreset {
   /** Category this preset belongs to */
   category_id: PresetCategory;
 
+  /**
+   * Up to two additional categories. `category_id` remains the primary; these
+   * never contain it, and the gallery matches a preset on either slot.
+   */
+  secondary_categories: PresetCategory[];
+
   /** Array of dye item IDs (2-5 dyes) */
   dyes: number[];
 
@@ -82,6 +88,36 @@ export interface CommunityPreset {
 
   /** Previous values for revert capability (if edited) */
   previous_values?: PresetPreviousValues | null;
+
+  /**
+   * Example link (8A): page URL on an allowlisted host — glamour destinations
+   * such as Eorzea Collection, Mirapri or the Lodestone, and social posts on
+   * X, Bluesky, Reddit, Instagram, pixiv or Misskey. Raw image hosts are
+   * deliberately excluded; see EXAMPLE_LINK_HOSTS in presets-api's
+   * validation-service for the authoritative list. Stored, never copied; null
+   * when the author gave none.
+   */
+  example_link?: string | null;
+
+  /**
+   * Public URL of the author-uploaded preview image. Present ONLY when the
+   * image has been approved by a moderator — the serialiser omits it for every
+   * other status, which is the moderation gate.
+   */
+  preview_image_url?: string | null;
+
+  /**
+   * Moderation state of the uploaded picture. Safe to serialize everywhere —
+   * it is a status label, not a URL, and it is what lets the edit form say
+   * "under review". The URL itself stays gated on 'approved'.
+   */
+  preview_image_status: 'none' | 'pending' | 'approved';
+
+  /**
+   * Rejection reason from the latest moderation action (8S My Submissions).
+   * Populated only on the author's own-submissions listing; null elsewhere.
+   */
+  rejection_reason?: string | null;
 }
 
 /**
@@ -97,11 +133,22 @@ export interface PresetSubmission {
   /** Category */
   category_id: PresetCategory;
 
+  /** Optional: up to two additional categories, never containing category_id */
+  secondary_categories?: PresetCategory[];
+
   /** Array of dye item IDs (2-5 dyes) */
   dyes: number[];
 
   /** Tags (0-10 tags, max 30 chars each) */
   tags: string[];
+
+  /**
+   * Example link (8A): a page URL on an allowlisted host — glamour
+   * destinations (Eorzea Collection, Mirapri, the Lodestone) and social posts
+   * (X, Bluesky, Reddit, Instagram, pixiv, Misskey), never a raw image host.
+   * The link is stored, never a copy of the image.
+   */
+  example_link?: string | null;
 }
 
 

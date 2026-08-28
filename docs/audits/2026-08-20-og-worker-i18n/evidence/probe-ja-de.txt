@@ -1,0 +1,162 @@
+
+##### CRAWLER ja
+harmony?dye=1&harmony=split-complementary
+   T: Snow White - 分裂補色 Harmony | XIV Dye Tools
+   D: Explore 分裂補色 color harmonies for Snow White (#e4dfd0) in FFXIV. Find matching dyes for your glamour!
+harmony?dye=9999&harmony=triadic
+   T: 三色配色 Harmony | XIV Dye Tools
+   D: Explore 三色配色 color harmonies for FFXIV dyes.
+gradient?start=1&end=102&steps=5
+   T: Snow White to Jet Black Gradient | XIV Dye Tools
+   D: 5-step gradient from Snow White (#e4dfd0) to Jet Black (#1e1e1e). Find the perfect dye progression for your FFXIV glamour!
+gradient?start=0
+   T: グラデーションビルダー | XIV Dye Tools
+   D: Create smooth color gradients between FFXIV dyes.
+mixer?dyeA=1&dyeB=102&ratio=30
+   T: 30% Snow White + 70% Jet Black | XIV Dye Tools
+   D: Mix 30% Snow White with 70% Jet Black to find matching FFXIV dyes for your perfect blend!
+mixer?dyeA=1&dyeB=102&dyeC=5&ratio=30
+   T: Snow White + Jet Black + Charcoal Grey | XIV Dye Tools
+   D: Mix Snow White, Jet Black, and Charcoal Grey to find matching FFXIV dyes for your perfect blend!
+swatch?hex=AABBCC&limit=3
+   T: Match #AABBCC | XIV Dye Tools
+   D: Find the top 3 FFXIV dyes that match #AABBCC. Perfect for matching character colors or custom palettes!
+swatch?hex=AABBCC&sheet=hairColors&race=miqote&gender=female
+   T: Match #AABBCC | XIV Dye Tools
+   D: Find FFXIV dyes matching this female miqote 髪の色 (#AABBCC).
+swatch?
+   T: スウォッチマッチャー | XIV Dye Tools
+   D: Find the FFXIV dyes nearest any color — from a character file or a hex.
+comparison?dyes=1,2,3
+   T: Compare: Snow White, Ash Grey, Goobbue Grey | XIV Dye Tools
+   D: Side-by-side comparison of 3 FFXIV dyes: Snow White, Ash Grey, Goobbue Grey. See how they look together!
+comparison?
+   T: カララント比較 | XIV Dye Tools
+   D: Compare up to 4 FFXIV dyes side by side.
+accessibility?dyes=1,2&vision=deuteranopia
+   T: 2型色覚: Snow White, Ash Grey | XIV Dye Tools
+   D: See how Snow White, Ash Grey appear with 2型色覚. Design inclusive glamours!
+accessibility?dyes=1,2
+   T: Color Vision: Snow White, Ash Grey | XIV Dye Tools
+   D: See how Snow White, Ash Grey appear with color vision. Design inclusive glamours!
+extractor?colors=AABBCC,112233
+   T: 2-color palette | XIV Dye Tools
+   D: Colors extracted from an image (#AABBCC, #112233), each matched to the nearest FFXIV dye.
+extractor?
+   T: Extractor | XIV Dye Tools
+   D: Pull the palette from any image and match every color to a buyable FFXIV dye.
+presets? /gc-maelstrom
+   T: Maelstrom — Presets | XIV Dye Tools
+   D: Curated FFXIV dye palette: Dalamud Red, Jet Black, Snow White. Limsa Lominsa's naval standard — storm red and jet black over sea-spray white.
+presets? /community-abc
+   T: Presets | XIV Dye Tools
+   D: Curated and community FFXIV dye palettes — browse, vote, submit your own.
+budget?dye=1
+   T: Budget alternatives for Snow White | XIV Dye Tools
+   D: Cheaper FFXIV dyes near Snow White (#e4dfd0), ranked by color distance and priced from the market board.
+budget?
+   T: Budget | XIV Dye Tools
+   D: The cheapest FFXIV dye near the one you want, priced from the market board.
+
+##### CARDS ja
+harmony: ["BASE","#1","#E4DFD0","スノウホワイト","+120°","Δ0.092","#B2C4CE","アイスブルー","+240°","Δ0.076","#F9F8F4","ピュアホワイ","ト","XIV DYE TOOLS","ハーモニー","スノウホワイト · 三色配色","xivdyetools.app/harmony","ΔEOK"]
+harmonyNF: ["NOT FOUND","#9999","XIV DYE TOOLS","ハーモニー","#9999","xivdyetools.app/harmony"]
+gradient: ["START","#1","#E4DFD0","スノウホ","ワイト","2","Δ0.008","#ACA8A2","アッシュ","グレイ","3","Δ0.056","#898784","グゥーブ","ーグレイ","4","Δ0.005","#484742","チャコー","ルグレイ","END","#102","#1E1E1E","ジェット","ブラック","XIV DYE TOOLS","グラデーション","スノウホワイト → ジェットブラック","xivdyetools.app/gradient","ΔEOK"]
+mixer2: ["A ·…","#1","#E4D…","スノウ","ホワイ","ト","B · 70%","#102","#1E1E1E","ジェットブラック","BUYABLE","Δ0.037","#484742","チャコールグレイ","XIV DYE TOOLS","ミックス","チャコールグレイ","xivdyetools.app/mixer","ΔEOK"]
+mixer3: ["A","#1","#E4DF…","スノウ","ホワイ","ト","B","#102","#1E1E…","ジェッ","トブラ","ック","C","#5","#4847…","チャコ","ールグ","レイ","BUYABLE","Δ0.026","#484742","チャコールグレイ","XIV DYE TOOLS","ミックス","チャコールグレイ","xivdyetools.app/mixer","ΔEOK"]
+swatch: ["TARGET","NO STAIN ID","#AABBCC","1","Δ0.027","#B2C4CE","アイスブ","ルー","2","Δ0.061","#83B0D2","スカイブ","ルー","3","Δ0.100","#8E9BAC","コープス","ブルー","XIV DYE TOOLS","カラー照合","#AABBCC に最も近い3色","xivdyetools.app/swatch","ΔEOK"]
+comparison: ["CLOSEST PAIR","#2","#ACA8A2","アッシュグレイ","CLOSEST PAIR","#3","#898784","グゥーブーグレイ","#1","#E4DFD0","スノウホワイ","ト","XIV DYE TOOLS","比較","アッシュグレイ ↔ グゥーブーグレイ · Δ10.8","xivdyetools.app/comparison","ΔE2000"]
+comparisonX: ["CLOSEST PAIR","#2","#ACA8A2","アッシュグレイ","CLOSEST PAIR","#3","#898784","グゥーブーグレイ","#1","#E4DFD0","スノウホワイ","ト","XIV DYE TOOLS","比較","xivdyetools.app/comparison","CLOSEST Δ10.8"]
+a11y: ["AS DESIGNED","Δ2.9","#E4DFD0","スノウホワイト","AS DESIGNED","Δ2.4","#ACA8A2","アッシュグレイ","XIV DYE TOOLS","色覚","2型色覚 · 2色の染料","xivdyetools.app/accessibility","ΔE2000"]
+a11yX: ["AS DESIGNED","Δ2.9","#E4DFD0","スノウホワイト","AS DESIGNED","Δ2.4","#ACA8A2","アッシュグレイ","XIV DYE TOOLS","色覚","xivdyetools.app/accessibility","DEUT"]
+extractor: ["1","Δ4.1","#B2C4CE","アイスブルー","2","Δ1.7","#121F2D","ダークブルー","XIV DYE TOOLS","抽出","画像から2色","xivdyetools.app/extractor","ΔE2000"]
+presets: ["#10","#781A1A","ダラガブレッド","#102","#1E1E1E","ジェットブラック","#1","#E4DFD0","スノウホワイト","XIV DYE TOOLS","プリセット","Maelstrom","xivdyetools.app/presets","CURATED"]
+presetsX: ["#10","#781A1A","ダラガブレッド","#102","#1E1E1E","ジェットブラック","#1","#E4DFD0","スノウホワイト","XIV DYE TOOLS","プリセット","xivdyetools.app/presets","Maelstrom · CURATED"]
+presetsNF: ["NOT FOUND","nope","XIV DYE TOOLS","プリセット","nope","xivdyetools.app/presets"]
+budget: ["TARGET · STD SP…","#1","#E4DFD0","スノウホワイ","ト","COFFER","Δ7.2","#F9F8…","ピュア","ホワイ","ト","WIDE…","Δ10.7","#BFB4…","パール","ホワイ","ト","216 G","Δ11.7","#EBD3…","ボーン","ホワイ","ト","WIDE…","Δ13.7","#FBF0…","バニラ","イエロ","ー","XIV DYE TOOLS","予算","ポイント当たり最良： ピュアホワイト","xivdyetools.app/budget","VENDOR 216 G"]
+budgetX: ["TARGET · STD SP…","#1","#E4DFD0","スノウホワイ","ト","COFFER","Δ7.2","#F9F8…","ピュア","ホワイ","ト","WIDE…","Δ10.7","#BFB4…","パール","ホワイ","ト","216 G","Δ11.7","#EBD3…","ボーン","ホワイ","ト","WIDE…","Δ13.7","#FBF0…","バニラ","イエロ","ー","XIV DYE TOOLS","予算","xivdyetools.app/budget","BEST · ピュアホワイト"]
+defaultHarmony: ["XIV DYE TOOLS","/ハーモニー","カラーハーモニー","好きなカララントを軸にパレットを構築。6種類のハーモニー、実在の染料のみ。","xivdyetools.app/harmony","ΔE2000"]
+defaultHarmonyX: ["カラーハーモニー","xivdyetools.app/harmony","/ハーモニー"]
+defaultRoot: ["XIV DYE TOOLS","XIV Dye Tools","FFXIV染料のためのカラーツール——ハーモニー、マッチング、価格、アクセシビリティ。","xivdyetools.app"]
+
+##### CRAWLER de
+harmony?dye=1&harmony=split-complementary
+   T: Snow White - Geteiltes Komplement Harmony | XIV Dye Tools
+   D: Explore geteiltes komplement color harmonies for Snow White (#e4dfd0) in FFXIV. Find matching dyes for your glamour!
+harmony?dye=9999&harmony=triadic
+   T: Triadisch Harmony | XIV Dye Tools
+   D: Explore triadisch color harmonies for FFXIV dyes.
+gradient?start=1&end=102&steps=5
+   T: Snow White to Jet Black Gradient | XIV Dye Tools
+   D: 5-step gradient from Snow White (#e4dfd0) to Jet Black (#1e1e1e). Find the perfect dye progression for your FFXIV glamour!
+gradient?start=0
+   T: Verlaufs-Generator | XIV Dye Tools
+   D: Create smooth color gradients between FFXIV dyes.
+mixer?dyeA=1&dyeB=102&ratio=30
+   T: 30% Snow White + 70% Jet Black | XIV Dye Tools
+   D: Mix 30% Snow White with 70% Jet Black to find matching FFXIV dyes for your perfect blend!
+mixer?dyeA=1&dyeB=102&dyeC=5&ratio=30
+   T: Snow White + Jet Black + Charcoal Grey | XIV Dye Tools
+   D: Mix Snow White, Jet Black, and Charcoal Grey to find matching FFXIV dyes for your perfect blend!
+swatch?hex=AABBCC&limit=3
+   T: Match #AABBCC | XIV Dye Tools
+   D: Find the top 3 FFXIV dyes that match #AABBCC. Perfect for matching character colors or custom palettes!
+swatch?hex=AABBCC&sheet=hairColors&race=miqote&gender=female
+   T: Match #AABBCC | XIV Dye Tools
+   D: Find FFXIV dyes matching this female miqote haarfarben (#AABBCC).
+swatch?
+   T: Farbabgleich | XIV Dye Tools
+   D: Find the FFXIV dyes nearest any color — from a character file or a hex.
+comparison?dyes=1,2,3
+   T: Compare: Snow White, Ash Grey, Goobbue Grey | XIV Dye Tools
+   D: Side-by-side comparison of 3 FFXIV dyes: Snow White, Ash Grey, Goobbue Grey. See how they look together!
+comparison?
+   T: Farbstoff-Vergleich | XIV Dye Tools
+   D: Compare up to 4 FFXIV dyes side by side.
+accessibility?dyes=1,2&vision=deuteranopia
+   T: Deuteranopie: Snow White, Ash Grey | XIV Dye Tools
+   D: See how Snow White, Ash Grey appear with deuteranopie. Design inclusive glamours!
+accessibility?dyes=1,2
+   T: Color Vision: Snow White, Ash Grey | XIV Dye Tools
+   D: See how Snow White, Ash Grey appear with color vision. Design inclusive glamours!
+extractor?colors=AABBCC,112233
+   T: 2-color palette | XIV Dye Tools
+   D: Colors extracted from an image (#AABBCC, #112233), each matched to the nearest FFXIV dye.
+extractor?
+   T: Extractor | XIV Dye Tools
+   D: Pull the palette from any image and match every color to a buyable FFXIV dye.
+presets? /gc-maelstrom
+   T: Maelstrom — Presets | XIV Dye Tools
+   D: Curated FFXIV dye palette: Dalamud Red, Jet Black, Snow White. Limsa Lominsa's naval standard — storm red and jet black over sea-spray white.
+presets? /community-abc
+   T: Presets | XIV Dye Tools
+   D: Curated and community FFXIV dye palettes — browse, vote, submit your own.
+budget?dye=1
+   T: Budget alternatives for Snow White | XIV Dye Tools
+   D: Cheaper FFXIV dyes near Snow White (#e4dfd0), ranked by color distance and priced from the market board.
+budget?
+   T: Budget | XIV Dye Tools
+   D: The cheapest FFXIV dye near the one you want, priced from the market board.
+
+##### CARDS de
+harmony: ["BASE","#1","#E4DFD0","Schneeweißer","+120°","Δ0.092","#B2C4CE","Eisblauer","+240°","Δ0.076","#F9F8F4","Wolkenweißer","XIV DYE TOOLS","HARMONIE","Schneeweißer · Triadisch","xivdyetools.app/harmony","ΔEOK"]
+harmonyNF: ["NOT FOUND","#9999","XIV DYE TOOLS","HARMONIE","#9999","xivdyetools.app/harmony"]
+gradient: ["START","#1","#E4DFD0","Schneewe-","ißer","2","Δ0.008","#ACA8A2","Aschgrau-","er","3","Δ0.056","#898784","Goobbueg-","rauer","4","Δ0.005","#484742","Anthrazi-","ter","END","#102","#1E1E1E","Rabensch-","warzer","XIV DYE TOOLS","VERLAUF","Schneeweißer → Rabenschwarzer","xivdyetools.app/gradient","ΔEOK"]
+mixer2: ["A ·…","#1","#E4D…","Schne-","eweiß-","er","B · 70%","#102","#1E1E1E","Rabenschwarzer","BUYABLE","Δ0.037","#484742","Anthraziter","XIV DYE TOOLS","MISCHER","Anthraziter","xivdyetools.app/mixer","ΔEOK"]
+mixer3: ["A","#1","#E4DF…","Schnee-","weißer","B","#102","#1E1E…","Rabens-","chwarz-","er","C","#5","#4847…","Anthra-","ziter","BUYABLE","Δ0.026","#484742","Anthraziter","XIV DYE TOOLS","MISCHER","Anthraziter","xivdyetools.app/mixer","ΔEOK"]
+swatch: ["TARGET","NO STAIN ID","#AABBCC","1","Δ0.027","#B2C4CE","Eisblauer","2","Δ0.061","#83B0D2","Himmelbl-","auer","3","Δ0.100","#8E9BAC","Leichenb-","lauer","XIV DYE TOOLS","FARBPROBE","Die 3 nächsten zu #AABBCC","xivdyetools.app/swatch","ΔEOK"]
+comparison: ["CLOSEST PAIR","#2","#ACA8A2","Aschgrauer","CLOSEST PAIR","#3","#898784","Goobbuegrauer","#1","#E4DFD0","Schneeweißer","XIV DYE TOOLS","VERGLEICH","Aschgrauer ↔ Goobbuegrauer · Δ10.8","xivdyetools.app/comparison","ΔE2000"]
+comparisonX: ["CLOSEST PAIR","#2","#ACA8A2","Aschgrauer","CLOSEST PAIR","#3","#898784","Goobbuegrauer","#1","#E4DFD0","Schneeweißer","XIV DYE TOOLS","VERGLEICH","xivdyetools.app/comparison","CLOSEST Δ10.8"]
+a11y: ["AS DESIGNED","Δ2.9","#E4DFD0","Schneeweißer","AS DESIGNED","Δ2.4","#ACA8A2","Aschgrauer","XIV DYE TOOLS","SEHKRAFT","Deuteranopie · 2 Farbstoffe","xivdyetools.app/accessibility","ΔE2000"]
+a11yX: ["AS DESIGNED","Δ2.9","#E4DFD0","Schneeweißer","AS DESIGNED","Δ2.4","#ACA8A2","Aschgrauer","XIV DYE TOOLS","SEHKRAFT","xivdyetools.app/accessibility","DEUT"]
+extractor: ["1","Δ4.1","#B2C4CE","Eisblauer","2","Δ1.7","#121F2D","Dunkelblauer","XIV DYE TOOLS","EXTRAKT","2 Farben aus einem Bild","xivdyetools.app/extractor","ΔE2000"]
+presets: ["#10","#781A1A","Dalamudroter","#102","#1E1E1E","Rabenschwarzer","#1","#E4DFD0","Schneeweißer","XIV DYE TOOLS","VORLAGE","Maelstrom","xivdyetools.app/presets","CURATED"]
+presetsX: ["#10","#781A1A","Dalamudroter","#102","#1E1E1E","Rabenschwarzer","#1","#E4DFD0","Schneeweißer","XIV DYE TOOLS","VORLAGE","xivdyetools.app/presets","Maelstrom · CURATED"]
+presetsNF: ["NOT FOUND","nope","XIV DYE TOOLS","VORLAGE","nope","xivdyetools.app/presets"]
+budget: ["TARGET · STD SP…","#1","#E4DFD0","Schneeweißer","COFFER","Δ7.2","#F9F8…","Wolken-","weißer","WIDE…","Δ10.7","#BFB4…","Perlmu-","tt-","216 G","Δ11.7","#EBD3…","Knoche-","nweißer","WIDE…","Δ13.7","#FBF0…","Vanill-","egelber","XIV DYE TOOLS","BUDGET","Bestes pro Punkt: Wolkenweißer","xivdyetools.app/budget","VENDOR 216 G"]
+budgetX: ["TARGET · STD SP…","#1","#E4DFD0","Schneeweißer","COFFER","Δ7.2","#F9F8…","Wolken-","weißer","WIDE…","Δ10.7","#BFB4…","Perlmu-","tt-","216 G","Δ11.7","#EBD3…","Knoche-","nweißer","WIDE…","Δ13.7","#FBF0…","Vanill-","egelber","XIV DYE TOOLS","BUDGET","xivdyetools.app/budget","BEST · Wolkenweißer"]
+defaultHarmony: ["XIV DYE TOOLS","/HARMONIE","Farbharmonie","Baue eine Palette um einen beliebigen Farbstoff — sechs Harmonietypen, nur echte Farbstoffe.","xivdyetools.app/harmony","ΔE2000"]
+defaultHarmonyX: ["Farbharmonie","xivdyetools.app/harmony","/HARMONIE"]
+defaultRoot: ["XIV DYE TOOLS","XIV Dye Tools","Farbwerkzeuge für FFXIV-Farbstoffe — Harmonie, Abgleich, Preise, Barrierefreiheit.","xivdyetools.app"]
+
+##### HTML ja lang attr: <html lang="en">

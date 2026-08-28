@@ -1,12 +1,14 @@
 {
   "name": "xivdyetools-oauth-worker",
-  "version": "2.5.0",
+  "version": "2.7.0",
   "private": true,
+  "description": "Discord OAuth2 + JWT issuance for XIV Dye Tools",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "deploy:production": "wrangler deploy --env production",
+    "deploy:production": "wrangler deploy",
     "type-check": "tsc --noEmit",
     "lint": "eslint src/",
     "test": "vitest run",
@@ -15,21 +17,17 @@
   },
   "dependencies": {
     "@xivdyetools/auth": "workspace:*",
-    "@xivdyetools/crypto": "workspace:*",
-    "@xivdyetools/logger": "workspace:*",
-    "@xivdyetools/rate-limiter": "workspace:*",
     "@xivdyetools/types": "workspace:*",
-    "@xivdyetools/worker-middleware": "workspace:*",
-    "hono": "^4.12.32"
+    "@xivdyetools/worker-kit": "workspace:*",
+    "hono": "^4.12.34"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260727.1",
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "^4.1.10",
     "@xivdyetools/test-utils": "workspace:*",
-    "miniflare": "^4.20260722.0",
     "vitest": "^4.1.10",
-    "wrangler": "^4.114.0"
+    "wrangler": "^4.120.0"
   },
   "engines": {
     "node": ">=18.0.0"

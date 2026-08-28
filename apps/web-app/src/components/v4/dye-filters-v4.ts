@@ -73,6 +73,9 @@ export class DyeFiltersV4 extends BaseLitComponent {
   @property({ type: Boolean, attribute: 'exclude-expensive' })
   excludeExpensive: boolean = DEFAULT_DYE_FILTERS.excludeExpensive;
 
+  @property({ type: Boolean, attribute: 'exclude-coffers' })
+  excludeCoffers: boolean = DEFAULT_DYE_FILTERS.excludeCoffers;
+
   // ========== Acquisition-based Filter Properties ==========
 
   @property({ type: Boolean, attribute: 'exclude-vendor-dyes' })
@@ -88,6 +91,24 @@ export class DyeFiltersV4 extends BaseLitComponent {
 
   @state()
   private acquisitionCollapsed: boolean = true;
+
+  private languageUnsubscribe: (() => void) | null = null;
+
+  /**
+   * Every filter label is localized, but the parent re-renders this panel with
+   * identical boolean props on a language switch, so Lit skips the update.
+   * Subscribing is what makes the labels follow the language.
+   */
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.languageUnsubscribe?.();
+    this.languageUnsubscribe = null;
+  }
 
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
@@ -193,6 +214,7 @@ export class DyeFiltersV4 extends BaseLitComponent {
       excludeCosmic: this.excludeCosmic,
       excludeIshgardian: this.excludeIshgardian,
       excludeExpensive: this.excludeExpensive,
+      excludeCoffers: this.excludeCoffers,
       excludeVendorDyes: this.excludeVendorDyes,
       excludeCraftDyes: this.excludeCraftDyes,
     };
@@ -308,6 +330,14 @@ export class DyeFiltersV4 extends BaseLitComponent {
               .checked=${this.excludeExpensive}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
                 this.handleFilterChange('excludeExpensive', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="option-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('filters.excludeCoffers')}
+              .checked=${this.excludeCoffers}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleFilterChange('excludeCoffers', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
         </div>

@@ -21,6 +21,20 @@ export const CORE_REDACT_FIELDS = [
   'apiKey',
   'access_token',
   'refresh_token',
+  // FINDING-026 (2026-08-21 security audit): key names the redactor missed
+  'private_key',
+  'privateKey',
+  'set_cookie',
+  'setCookie',
+  'webhook_url',
+  'webhookUrl',
+  'auth_header',
+  'authHeader',
+  'session_id',
+  'sessionId',
+  'client_secret',
+  'signing_secret',
+  'webhook_secret',
 ] as const;
 
 /**

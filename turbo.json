@@ -3,6 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["VITE_APP_ENV"],
       "outputs": ["dist/**"],
       "inputs": [
         "src/**",
@@ -19,18 +20,42 @@
     "lint": {
       "dependsOn": ["^build"],
       "cache": true,
-      "inputs": ["src/**", "eslint.config.*"]
+      // The root knip.jsonc drives the dead-code gate in
+      // packages/{core,svg,bot-logic} (see its header), so editing it must
+      // bust every workspace's lint cache. NOTE the gate reads the *whole*
+      // monorepo graph: a dependent workspace dropping an import can turn a
+      // package export dead without touching that package, and turbo will
+      // still serve a cached green. Run `pnpm lint:dead` for a full sweep —
+      // but note that root sweep currently exits non-zero (~200 issues in
+      // the ungated apps plus logger's alias duplicate) and is manual
+      // triage only; this per-package `lint` task is the actual gate.
+      "inputs": ["src/**", "eslint.config.*", "knip.jsonc", "$TURBO_ROOT$/knip.jsonc"]
     },
     "test": {
       "dependsOn": ["^build"],
       "cache": true,
-      "inputs": ["src/**", "tests/**", "vitest.config.*"],
+      // scripts/**/*.js holds the CI-gate scripts (e.g. web-app's deploy smoke
+      // test) and their tests, so it must invalidate the cache like src/** does.
+      // Narrowed to *.js (matching what vitest's include actually discovers) so
+      // non-JS assets under scripts/ (e.g. icon PNGs) do not bust the cache.
+      // CHANGELOG-laymans.md is bundled into discord-worker and checked by its
+      // contract test; vitest.*.ts covers the md-as-text plugin and the
+      // integration config. Without them an edit to the notes replays a
+      // cached PASS.
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "scripts/**/*.js",
+        "vitest.config.*",
+        "vitest.*.ts",
+        "CHANGELOG-laymans.md"
+      ],
       "outputs": ["coverage/**"]
     },
     "test:coverage": {
       "dependsOn": ["^build"],
       "cache": false,
-      "inputs": ["src/**", "tests/**", "vitest.config.*"],
+      "inputs": ["src/**", "tests/**", "vitest.config.*", "vitest.*.ts", "CHANGELOG-laymans.md"],
       "outputs": ["coverage/**"]
     },
     "clean": {

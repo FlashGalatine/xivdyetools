@@ -12,7 +12,7 @@
 Colors that are adjacent on the color wheel (within ~30° of hue). Create harmonious, low-contrast palettes.
 
 ### Brettel Algorithm
-Color vision simulation algorithm (Brettel, Viénot, Mollon 1997) that accurately simulates how colors appear to people with protanopia, deuteranopia, and tritanopia.
+Color vision simulation algorithm (Brettel, Viénot, Mollon 1997) that accurately simulates how colors appear to people with protanopia, deuteranopia, and tritanopia. The shipped simulation path (`ColorService.simulateColorblindness`) in the web app and the Discord bot; core also carries the Machado (2009) severity-1.0 matrices (`simulateColorblindnessMachado`), used to calibrate the 5.0 separation bands.
 
 ### CIE LAB
 Perceptually uniform color space designed to approximate human vision. Used for calculating deltaE color differences.
@@ -30,6 +30,11 @@ Measure of perceptual color difference. Lower values = more similar.
 | 2-10 | Noticeable at a glance |
 | 10-50 | Colors are similar |
 | 50+ | Colors are different |
+
+The bands above are for CIEDE2000; other methods use their own calibrated bands (`classifyBandTier` in `@xivdyetools/core`).
+
+### Matching method
+The distance function used to rank dyes against a target colour. One vocabulary across core, web app, bot, og-worker and api-worker since 5.0: `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`. The former `hyab` and `oklch-weighted` methods were retired; stored values normalise on read via `normalizeMatchingMethod()`.
 
 ### HSV / HSB
 Hue-Saturation-Value (or Brightness) color model. More intuitive than RGB for color selection:
@@ -71,7 +76,10 @@ Web Content Accessibility Guidelines contrast ratio requirements:
 ## FFXIV Terms
 
 ### Dye
-In-game consumable item that changes equipment color. XIV Dye Tools covers 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs assigned at runtime — see [Facewear Dye](#facewear-dye)) for a total of 136 entries.
+In-game consumable item that changes equipment color. XIV Dye Tools covers **125 standard dyes**, stored in `dyes.json` and keyed by `stainID`. The 11 Facewear colors are **not** dyes — see [Facewear Color](#facewear-color).
+
+### Facewear Color
+One of 11 colors usable on Facewear items. **Not dyes** — they are not tradeable, have no market data, and are excluded from the k-d tree. Since schema v2 they live in `facewear_colors.json` and the `facewearColors` export as `FacewearColor` (a string slug `id`, `name`, and `hex`), separate from the dye table. Before schema v2 they lived in the dye table under synthetic negative itemIDs; that mechanism survives only as the frozen `LEGACY_FACEWEAR_ITEM_IDS` map, read via `getFacewearColorByLegacyItemID()` for persisted IDs.
 
 ### General-Purpose Dye
 Dyes that can be purchased from NPC vendors for gil. Cheaper and more accessible.
@@ -84,6 +92,9 @@ In-game auction house where players buy/sell items, including dyes.
 
 ### Special Dye
 Rare dyes obtained from crafting, dungeons, or events. Often more expensive.
+
+### stainID
+The row ID of the game's own `Stain` sheet, and the **canonical identifier** for a dye since schema v2. Preferred over `itemID` because future dyes may ship without an individual itemID, resolving instead to a consolidated "Spectrum" item via `consolidationType`. `itemID` is now a market-board resolution concern rather than an identity.
 
 ### Universalis API
 Community-maintained API providing real-time FFXIV marketboard prices across all data centers.
@@ -102,10 +113,10 @@ Web app tool (v4) for blending two dyes together to create custom color combinat
 UI design trend featuring frosted glass effects, transparency, and blur. Used in the web app v4.0.0 UI redesign.
 
 ### Gradient Builder
-Web app tool (v4) for creating smooth color gradients between two dyes. Formerly called "Dye Mixer" in v3. Discord bot still uses `/mixer` command.
+Web app tool (v4) for creating smooth color gradients between two dyes. Formerly called "Dye Mixer" in v3. The Discord bot equivalent is `/gradient` (`/mixer` is the bot's blending command).
 
 ### Palette Extractor
-Web app tool (v4) for finding the closest FFXIV dye to any color and extracting color palettes from images. Formerly called "Color Matcher" in v3. Discord bot still uses `/match` command.
+Web app tool (v4) for finding the closest FFXIV dye to any color and extracting color palettes from images. Formerly called "Color Matcher" in v3. The Discord bot equivalent is `/extractor color` / `/extractor image` (`/match` and `/match_image` were removed in bot 5.0).
 
 ### Swatch Matcher
 Web app tool (v4) for matching specific colors sampled from FFXIV character customization (hair, eyes, skin) to FFXIV dyes. Formerly called "Character Color Matcher" in v3.

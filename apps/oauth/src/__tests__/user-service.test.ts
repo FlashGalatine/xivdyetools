@@ -3,7 +3,7 @@
  * Tests for user database operations: findOrCreate, find by ID, store/get characters
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
     findOrCreateUser,
     findUserById,
@@ -278,6 +278,131 @@ describe('User Service', () => {
             // Should preserve xivauth_id
             expect(discordLogin.id).toBe(xivauthUser.id);
             expect(discordLogin.xivauth_id).toBe('original-xivauth-id');
+        });
+
+        /**
+         * FINDING-013 / OAUTH-9 (2026-08-21 security audit): the account merge
+         * used to be driven solely by the Discord link XIVAuth asserts — it
+         * deleted the other local row, kept a stale xivauth_id on re-link, and
+         * handed the Discord-first account's presets identity (and moderator
+         * status) to the XIVAuth login. No silent merge: linking two existing
+         * local accounts needs an explicit, signed-in confirmation step, which
+         * does not exist yet — so it is simply not performed.
+         */
+        describe('account linking (no silent merge)', () => {
+            const makeLogger = () => ({ info: vi.fn(), warn: vi.fn() });
+
+            it('does not merge or delete when another local account already owns the linked Discord ID', async () => {
+                const discordFirst = await findOrCreateUser(db, {
+                    discord_id: '111122223333444455',
+                    username: 'discord-first',
+                    auth_provider: 'discord',
+                });
+                const xivauthOnly = await findOrCreateUser(db, {
+                    xivauth_id: 'xivauth-no-discord-yet',
+                    username: 'xivauth-only',
+                    auth_provider: 'xivauth',
+                });
+                expect(xivauthOnly.id).not.toBe(discordFirst.id);
+
+                const logger = makeLogger();
+                // XIVAuth now asserts the same Discord account is linked to this XIVAuth user
+                const result = await findOrCreateUser(
+                    db,
+                    {
+                        xivauth_id: 'xivauth-no-discord-yet',
+                        discord_id: '111122223333444455',
+                        username: 'Character Name',
+                        auth_provider: 'xivauth',
+                    },
+                    logger
+                );
+
+                // Still the XIVAuth user's own row, without the other account's Discord identity
+                expect(result.id).toBe(xivauthOnly.id);
+                expect(result.discord_id).toBeNull();
+                // The Discord-first account survives untouched
+                expect(db._users.get(discordFirst.id)).toBeDefined();
+                expect(db._users.get(discordFirst.id)!.discord_id).toBe('111122223333444455');
+                // Audit event, without raw identifiers
+                expect(logger.warn).toHaveBeenCalledTimes(1);
+                const [message, context] = logger.warn.mock.calls[0];
+                expect(String(message)).toMatch(/not (linked|merged)/i);
+                expect(JSON.stringify([message, context])).not.toContain('111122223333444455');
+                expect(JSON.stringify([message, context])).not.toContain('xivauth-no-discord-yet');
+            });
+
+            it('links the asserted Discord ID when no other local account owns it', async () => {
+                const xivauthOnly = await findOrCreateUser(db, {
+                    xivauth_id: 'xivauth-links-discord',
+                    username: 'xivauth-only',
+                    auth_provider: 'xivauth',
+                });
+
+                const logger = makeLogger();
+                const result = await findOrCreateUser(
+                    db,
+                    {
+                        xivauth_id: 'xivauth-links-discord',
+                        discord_id: '555566667777888899',
+                        username: 'Character Name',
+                        auth_provider: 'xivauth',
+                    },
+                    logger
+                );
+
+                expect(result.id).toBe(xivauthOnly.id);
+                expect(result.discord_id).toBe('555566667777888899');
+                expect(logger.warn).not.toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledTimes(1);
+                expect(JSON.stringify(logger.info.mock.calls[0])).not.toContain('555566667777888899');
+            });
+
+            it('replaces a stale xivauth_id when a different XIVAuth account is linked to the same Discord ID', async () => {
+                const row = await findOrCreateUser(db, {
+                    xivauth_id: 'xivauth-old-account',
+                    discord_id: '999988887777666655',
+                    username: 'original',
+                    auth_provider: 'xivauth',
+                });
+
+                const logger = makeLogger();
+                const result = await findOrCreateUser(
+                    db,
+                    {
+                        xivauth_id: 'xivauth-new-account',
+                        discord_id: '999988887777666655',
+                        username: 'relinked',
+                        auth_provider: 'xivauth',
+                    },
+                    logger
+                );
+
+                expect(result.id).toBe(row.id);
+                expect(result.xivauth_id).toBe('xivauth-new-account');
+                expect(result.discord_id).toBe('999988887777666655');
+                expect(logger.info).toHaveBeenCalledTimes(1);
+                expect(JSON.stringify(logger.info.mock.calls[0])).not.toContain('xivauth-new-account');
+            });
+
+            it('does not overwrite an existing Discord link from an XIVAuth assertion', async () => {
+                const row = await findOrCreateUser(db, {
+                    xivauth_id: 'xivauth-keeps-discord',
+                    discord_id: '121212121212121212',
+                    username: 'original',
+                    auth_provider: 'xivauth',
+                });
+
+                const result = await findOrCreateUser(db, {
+                    xivauth_id: 'xivauth-keeps-discord',
+                    discord_id: '343434343434343434', // XIVAuth now claims a different Discord account
+                    username: 'relinked',
+                    auth_provider: 'xivauth',
+                });
+
+                expect(result.id).toBe(row.id);
+                expect(result.discord_id).toBe('121212121212121212');
+            });
         });
     });
 

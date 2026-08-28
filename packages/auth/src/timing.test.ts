@@ -2,7 +2,7 @@
  * Tests for Timing-Safe Comparison Utilities
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { timingSafeEqual, timingSafeEqualBytes } from './timing.js';
+import { timingSafeEqual } from './timing.js';
 
 describe('timing.ts', () => {
   describe('timingSafeEqual', () => {
@@ -79,36 +79,6 @@ describe('timing.ts', () => {
         const result = await timingSafeEqual('short', 'longer');
         expect(result).toBe(false);
       });
-    });
-  });
-
-  describe('timingSafeEqualBytes', () => {
-    it('should return true for equal byte arrays', async () => {
-      const a = new Uint8Array([1, 2, 3, 4, 5]);
-      const b = new Uint8Array([1, 2, 3, 4, 5]);
-      const result = await timingSafeEqualBytes(a, b);
-      expect(result).toBe(true);
-    });
-
-    it('should return false for different byte arrays', async () => {
-      const a = new Uint8Array([1, 2, 3, 4, 5]);
-      const b = new Uint8Array([1, 2, 3, 4, 6]);
-      const result = await timingSafeEqualBytes(a, b);
-      expect(result).toBe(false);
-    });
-
-    it('should return false for arrays of different lengths', async () => {
-      const a = new Uint8Array([1, 2, 3]);
-      const b = new Uint8Array([1, 2, 3, 4, 5]);
-      const result = await timingSafeEqualBytes(a, b);
-      expect(result).toBe(false);
-    });
-
-    it('should return true for empty arrays', async () => {
-      const a = new Uint8Array([]);
-      const b = new Uint8Array([]);
-      const result = await timingSafeEqualBytes(a, b);
-      expect(result).toBe(true);
     });
   });
 });

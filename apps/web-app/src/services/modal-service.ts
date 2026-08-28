@@ -37,8 +37,49 @@ export interface ModalConfig {
   closeOnEscape?: boolean;
   onClose?: () => void;
   onConfirm?: () => void;
+  /**
+   * Called when the footer cancel/secondary button is pressed (before dismiss).
+   * Lets the secondary action do real work (e.g. Welcome's "Take the tour")
+   * instead of only dismissing.
+   */
+  onCancel?: () => void;
   confirmText?: string;
   cancelText?: string;
+  // -------------------------------------------------------------------------
+  // 5.0 (16A) shell options
+  // -------------------------------------------------------------------------
+  /**
+   * Shell variant (16A): `sheet` = the default dialog (bottom sheet on
+   * mobile with grab handle + drag-to-close, centered 560px on desktop);
+   * `panel` = 480px right slide-over for settings-like surfaces; `card` =
+   * centered card; `alert` = compact centered alert (destructive confirms).
+   */
+  variant?: 'sheet' | 'panel' | 'card' | 'alert';
+  /** Mono eyebrow line above the title */
+  eyebrow?: string;
+  /** Subtitle under the title */
+  subtitle?: string;
+  /**
+   * Sheet height class (mobile): `content` hugs the content, `tall` ≈ 60%,
+   * `full` = the 88% camera/full-bleed height. The old 60vh cap is dead.
+   */
+  sheetHeight?: 'content' | 'tall' | 'full';
+  /**
+   * Destructive convention (suite-wide): primary = solid accent,
+   * destructive = OUTLINED accent, Cancel is the wide thumb target.
+   */
+  destructive?: boolean;
+  /**
+   * Reduced backdrop scrim — for modals that live-preview changes behind
+   * the dialog (the theme picker repaints the whole app on tap; dimming
+   * it was hiding the feature).
+   */
+  lightScrim?: boolean;
+  /**
+   * Panel variant only: desktop slide-over width in px (default 480).
+   * The Advanced Options surface is drawn at 392.
+   */
+  panelWidth?: number;
 }
 
 /**

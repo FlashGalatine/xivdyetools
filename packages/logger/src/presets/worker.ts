@@ -60,7 +60,7 @@ export interface WorkerLoggerOptions {
  */
 export function createWorkerLogger(
   options: WorkerLoggerOptions,
-  requestId?: string
+  requestId?: string,
 ): ExtendedLogger {
   const { service, environment, version, level } = options;
 
@@ -115,7 +115,7 @@ export function createRequestLogger(
     API_VERSION?: string;
     SERVICE_NAME?: string;
   },
-  requestId: string
+  requestId: string,
 ): ExtendedLogger {
   return createWorkerLogger(
     {
@@ -123,30 +123,6 @@ export function createRequestLogger(
       environment: env.ENVIRONMENT,
       version: env.API_VERSION,
     },
-    requestId
-  );
-}
-
-/**
- * Generate or extract request ID from headers
- *
- * @internal Superseded by app-local implementations that accept Hono `Context`.
- * All worker apps define their own `getRequestId(c: Context)` in middleware.
- * Kept for internal use by `createRequestLogger`.
- *
- * @deprecated Use app-local `getRequestId(c: Context)` instead.
- * Will be removed in the next major version.
- *
- * @example
- * ```typescript
- * const requestId = getRequestId(request);
- * const logger = createWorkerLogger({ service: 'api', environment: 'production' }, requestId);
- * ```
- */
-export function getRequestId(request: Request): string {
-  return (
-    request.headers.get('x-request-id') ||
-    request.headers.get('cf-ray') ||
-    crypto.randomUUID()
+    requestId,
   );
 }

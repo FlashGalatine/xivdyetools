@@ -9,52 +9,57 @@
 
 import type { ThemeName } from './types';
 import type { LocaleCode, LocaleDisplay } from './i18n-types';
+import { BASE_APP_NAME, BETA_TITLE_PREFIX } from './beta-branding';
+import { SUPPORTED_LOCALES as CORE_SUPPORTED_LOCALES } from '@xivdyetools/core';
 
 // ============================================================================
 // Application Metadata
 // ============================================================================
 
-export const APP_NAME = 'XIV Dye Tools';
+/**
+ * Build environment, injected by Vite's `define`. `'beta'` for builds published
+ * to beta.xivdyetools.app; absent everywhere else — including under Vitest,
+ * which has no `define` block — hence the `typeof` guard.
+ */
+declare const __APP_ENV__: string;
+export const APP_ENV = typeof __APP_ENV__ !== 'undefined' ? __APP_ENV__ : 'production';
+
+/**
+ * Product name for a given build environment. Anything that is not explicitly
+ * `'beta'` is treated as production: an unrecognised value must not invent a
+ * new marker.
+ */
+export function resolveAppName(env: string): string {
+  return env === 'beta' ? `${BETA_TITLE_PREFIX}${BASE_APP_NAME}` : BASE_APP_NAME;
+}
+
+export const APP_NAME = resolveAppName(APP_ENV);
 // Version injected from package.json by Vite at build time
 declare const __APP_VERSION__: string;
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
+// Build date (yyyy.mm.dd) stamped by Vite at build time — About's BUILD cell
+declare const __BUILD_DATE__: string;
+export const BUILD_DATE = typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DATE__ : '';
 // ============================================================================
 // Theme Configuration
 // ============================================================================
 
-export const THEME_NAMES: readonly ThemeName[] = [
-  'standard-light',
-  'standard-dark',
-  'premium-dark',
-  'hydaelyn-light',
-  'og-classic-dark',
-  'parchment-light',
-  'cotton-candy',
-  'sugar-riot',
-  'grayscale-light',
-  'grayscale-dark',
-  'high-contrast-light',
-  'high-contrast-dark',
-] as const;
+/** 5.0 fixed decision: Light and Dark only */
+export const THEME_NAMES: readonly ThemeName[] = ['standard-light', 'standard-dark'] as const;
 
-export const DEFAULT_THEME: ThemeName = 'premium-dark';
+export const DEFAULT_THEME: ThemeName = 'standard-dark';
 
 // ============================================================================
 // Localization Configuration
 // ============================================================================
 
 /**
- * Supported locale codes
- * Matches the locales available in xivdyetools-core v1.2.0
+ * Supported locale codes — derived from @xivdyetools/core's own
+ * `SUPPORTED_LOCALES` (DEAD-037 Wave 4a) so the two cannot drift; a parity
+ * test in `__tests__/constants.test.ts` also asserts `LOCALE_DISPLAY_INFO`'s
+ * codes match this list 1:1.
  */
-export const SUPPORTED_LOCALES: readonly LocaleCode[] = [
-  'en',
-  'ja',
-  'de',
-  'fr',
-  'ko',
-  'zh',
-] as const;
+export const SUPPORTED_LOCALES: readonly LocaleCode[] = CORE_SUPPORTED_LOCALES;
 
 export const DEFAULT_LOCALE: LocaleCode = 'en';
 
@@ -90,6 +95,7 @@ export const STORAGE_KEYS = {
   HARMONY_COMPANION_DYES: `${STORAGE_PREFIX}_harmony_companion_dyes`,
   // Phase 2: Discoverability
   WELCOME_SEEN: `${STORAGE_PREFIX}_welcome_seen`,
+  PALETTE_HINT_SEEN: `${STORAGE_PREFIX}_palette_hint_seen`,
   LAST_VERSION_VIEWED: `${STORAGE_PREFIX}_last_version_viewed`,
   // Phase 2.2: Collections & Favorites
   FAVORITES: `${STORAGE_PREFIX}_favorites`,
@@ -102,15 +108,23 @@ export const STORAGE_KEYS = {
 // UI Configuration
 // ============================================================================
 
-export const CARD_CLASSES_COMPACT =
-  'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4';
-
 /**
  * Companion dyes configuration for Expanded Suggestions mode
  */
 export const COMPANION_DYES_MIN = 1;
-export const COMPANION_DYES_MAX = 3;
+/** 1–5 per the drawn 1A Advanced panel (companion alternates ride the cards). */
+export const COMPANION_DYES_MAX = 5;
 export const COMPANION_DYES_DEFAULT = 1;
+
+/**
+ * Largest user-supplied file any input accepts (images dropped / pasted /
+ * picked for the Palette Extractor, `.chara` files for the Swatch Matcher).
+ * One cap so the drop/paste path cannot drift from the upload-display path
+ * again (2026-08-21 security audit, WEB-13): decoding a multi-GB image or
+ * parsing a multi-GB JSON hangs the tab. `errors.imageTooLarge` /
+ * `errors.fileTooLarge` quote the same 20 MB.
+ */
+export const MAX_USER_FILE_BYTES = 20 * 1024 * 1024;
 
 // ============================================================================
 // Error Messages
@@ -128,21 +142,4 @@ export const ERROR_MESSAGES = {
   IMAGE_LOAD_FAILED: 'Failed to load image. Please ensure it is a valid image file.',
   THEME_INVALID: 'Invalid theme selected. Using default theme.',
   UNKNOWN_ERROR: 'An unexpected error occurred. Please try again.',
-} as const;
-
-// ============================================================================
-// Feature Flags
-// ============================================================================
-
-/**
- * Feature flags for A/B testing and gradual rollout
- */
-export const FEATURE_FLAGS = {
-  ENABLE_PRICES: true,
-  ENABLE_PRICE_HISTORY: false,
-  ENABLE_SAVED_PALETTES: true,
-  ENABLE_EXPORT_FORMATS: true,
-  ENABLE_DARK_MODE: true,
-  ENABLE_KEYBOARD_SHORTCUTS: true,
-  DEBUG_MODE: false,
 } as const;

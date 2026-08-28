@@ -34,8 +34,13 @@ describe('resolveIdType', () => {
     expect(resolveIdType(0)).toEqual({ type: 'invalid', id: 0 });
   });
 
-  it('resolves 126-5728 as invalid (gap between stainID and itemID)', () => {
-    expect(resolveIdType(126)).toEqual({ type: 'invalid', id: 126 });
+  it('resolves 255-5728 as invalid (gap between the stainID byte range and itemID)', () => {
+    // Schema v2 widened the stain window to the full Stain-sheet byte range
+    // (1-254) so future dyes resolve without an API change; 126-254 now
+    // resolves as stain (lookup miss → 404 until such dyes exist).
+    expect(resolveIdType(126)).toEqual({ type: 'stain', stainId: 126 });
+    expect(resolveIdType(254)).toEqual({ type: 'stain', stainId: 254 });
+    expect(resolveIdType(255)).toEqual({ type: 'invalid', id: 255 });
     expect(resolveIdType(5728)).toEqual({ type: 'invalid', id: 5728 });
     expect(resolveIdType(1000)).toEqual({ type: 'invalid', id: 1000 });
   });
@@ -181,14 +186,20 @@ describe('parseLocale', () => {
 });
 
 describe('parseMatchingMethod', () => {
-  it('defaults to oklab', () => {
-    expect(parseMatchingMethod(undefined)).toBe('oklab');
+  it('defaults to the suite default (ciede2000)', () => {
+    expect(parseMatchingMethod(undefined)).toBe('ciede2000');
   });
 
   it('accepts valid methods', () => {
     expect(parseMatchingMethod('rgb')).toBe('rgb');
     expect(parseMatchingMethod('ciede2000')).toBe('ciede2000');
-    expect(parseMatchingMethod('oklch-weighted')).toBe('oklch-weighted');
+    expect(parseMatchingMethod('redmean')).toBe('redmean');
+    expect(parseMatchingMethod('distinguish')).toBe('distinguish');
+  });
+
+  it('normalises retired v4 methods instead of erroring', () => {
+    expect(parseMatchingMethod('hyab')).toBe('ciede2000');
+    expect(parseMatchingMethod('oklch-weighted')).toBe('ciede2000');
   });
 
   it('throws for invalid methods', () => {

@@ -4,6 +4,8 @@
  */
 
 import { Hono } from 'hono';
+import { getLogger } from '@xivdyetools/worker-kit';
+import { isValidSnowflake } from '@xivdyetools/types';
 import type {
   Env,
   XIVAuthTokenResponse,
@@ -19,6 +21,7 @@ import {
   XIVAUTH_REQUIRED_SCOPES,
 } from '../constants/oauth.js';
 import { validateCodeVerifier, validateScopes } from '../utils/oauth-validation.js';
+import { verifyPkceStateBinding } from '../utils/pkce-binding.js';
 import {
   buildAuthorizeHandler,
   buildGetCallbackHandler,
@@ -62,9 +65,20 @@ xivauthRouter.get('/xivauth/callback', buildGetCallbackHandler(XIVAUTH_FLOW_CONF
  * Body:
  * - code: Authorization code from XIVAuth
  * - code_verifier: PKCE verifier to prove ownership
+ * - state: the signed state echoed by the GET callback — REQUIRED; the
+ *   verifier is bound to the signed code_challenge (FINDING-012)
+ *
+ * FINDING-013 / OAUTH-7 (2026-08-21 security audit): everything this handler
+ * logs goes through the request-scoped structured logger and carries no
+ * identifiers — no XIVAuth id, linked Discord id, username, character name or
+ * response key lists; upstream error bodies are development-only. The
+ * request ID on every entry is the correlation handle.
  */
 xivauthRouter.post('/xivauth/callback', async (c) => {
-  let body: { code: string; code_verifier: string };
+  const logger = getLogger(c);
+  const isDevelopment = c.env.ENVIRONMENT === 'development';
+
+  let body: { code: string; code_verifier: string; state?: unknown };
 
   try {
     body = await c.req.json();
@@ -78,7 +92,7 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     );
   }
 
-  const { code, code_verifier } = body;
+  const { code, code_verifier, state } = body;
 
   if (!code || !code_verifier) {
     return c.json<AuthResponse>(
@@ -98,6 +112,32 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
       {
         success: false,
         error: 'Invalid code_verifier format',
+      },
+      400
+    );
+  }
+
+  // FINDING-012 / OAUTH-5: the SPA returns the signed state from the GET
+  // bounce; bind the verifier to the challenge this worker signed at authorize
+  // time BEFORE calling XIVAuth (same contract as callback.ts). REQUIRED —
+  // without it there is nothing to bind to and the exchange does not reach
+  // the provider.
+  if (state === undefined || state === null || state === '') {
+    return c.json<AuthResponse>(
+      {
+        success: false,
+        error: 'Missing state',
+      },
+      400
+    );
+  }
+
+  const binding = await verifyPkceStateBinding(state, code_verifier, 'xivauth', c.env.JWT_SECRET);
+  if (!binding.ok) {
+    return c.json<AuthResponse>(
+      {
+        success: false,
+        error: binding.reason === 'pkce_mismatch' ? 'PKCE verification failed' : 'Invalid state',
       },
       400
     );
@@ -131,12 +171,16 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     });
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text().catch(() => '');
-      console.error('XIVAuth token exchange failed:', {
-        status: tokenResponse.status,
-        statusText: tokenResponse.statusText,
-        error: errorData,
-      });
+      // OAUTH-7: status only; the upstream body is development-only (as the
+      // Discord path already did)
+      logger?.error('XIVAuth token exchange failed', undefined, { status: tokenResponse.status });
+      if (isDevelopment) {
+        const errorBody = await tokenResponse.text().catch(() => '');
+        logger?.debug('XIVAuth token exchange error body', {
+          status: tokenResponse.status,
+          body: errorBody,
+        });
+      }
 
       return c.json<AuthResponse>(
         {
@@ -149,13 +193,12 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
 
     const tokens: XIVAuthTokenResponse = await tokenResponse.json();
 
-    // Log token response for debugging (redact sensitive data in production)
-    console.log('XIVAuth token exchange successful:', {
-      token_type: tokens.token_type,
-      expires_in: tokens.expires_in,
+    logger?.debug('XIVAuth token exchange successful', {
+      tokenType: tokens.token_type,
+      expiresIn: tokens.expires_in,
       scope: tokens.scope,
-      has_access_token: !!tokens.access_token,
-      has_refresh_token: !!tokens.refresh_token,
+      hasAccessToken: !!tokens.access_token,
+      hasRefreshToken: !!tokens.refresh_token,
     });
 
     // SECURITY: Validate that we received the required scopes
@@ -163,10 +206,10 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     try {
       validateScopes(tokens.scope, XIVAUTH_REQUIRED_SCOPES);
     } catch (err) {
-      console.error('XIVAuth token missing required scopes:', {
+      logger?.error('XIVAuth token missing required scopes', undefined, {
         received: tokens.scope,
         required: XIVAUTH_REQUIRED_SCOPES,
-        error: err instanceof Error ? err.message : 'Unknown error',
+        reason: err instanceof Error ? err.message : 'Unknown error',
       });
       return c.json<AuthResponse>(
         {
@@ -188,13 +231,14 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     });
 
     if (!userResponse.ok) {
-      const userErrorData = await userResponse.text().catch(() => '');
-      console.error('XIVAuth user info fetch failed:', {
-        status: userResponse.status,
-        statusText: userResponse.statusText,
-        error: userErrorData,
-        url: XIVAUTH_USER_URL,
-      });
+      logger?.error('XIVAuth user info fetch failed', undefined, { status: userResponse.status });
+      if (isDevelopment) {
+        const errorBody = await userResponse.text().catch(() => '');
+        logger?.debug('XIVAuth user info error body', {
+          status: userResponse.status,
+          body: errorBody,
+        });
+      }
 
       return c.json<AuthResponse>(
         {
@@ -210,9 +254,7 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     // SECURITY: Validate that required user fields are present
     // This mirrors Discord callback validation (Low severity issue #9)
     if (!xivauthUser.id) {
-      console.error('XIVAuth user response missing required fields:', {
-        hasId: !!xivauthUser.id,
-      });
+      logger?.error('XIVAuth user response missing required fields');
       return c.json<AuthResponse>(
         {
           success: false,
@@ -222,14 +264,10 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
       );
     }
 
-    // Log user info structure for debugging
-    console.log('XIVAuth user info received:', {
-      id: xivauthUser.id,
-      has_social_identities: !!xivauthUser.social_identities?.length,
-      social_identities_count: xivauthUser.social_identities?.length || 0,
-      mfa_enabled: xivauthUser.mfa_enabled,
-      verified_characters: xivauthUser.verified_characters,
-      raw_keys: Object.keys(xivauthUser),
+    logger?.debug('XIVAuth user info received', {
+      socialIdentitiesCount: xivauthUser.social_identities?.length ?? 0,
+      mfaEnabled: !!xivauthUser.mfa_enabled,
+      hasVerifiedCharacters: !!xivauthUser.verified_characters,
     });
 
     // Fetch characters separately (user endpoint doesn't include them)
@@ -245,49 +283,64 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
 
       if (charactersResponse.ok) {
         characters = await charactersResponse.json();
-        console.log('XIVAuth characters fetched:', {
+        logger?.debug('XIVAuth characters fetched', {
           count: characters.length,
-          verified_count: characters.filter((c) => c.verified).length,
+          verifiedCount: characters.filter((ch) => ch.verified).length,
         });
       } else {
-        console.warn('Failed to fetch XIVAuth characters:', {
-          status: charactersResponse.status,
-          statusText: charactersResponse.statusText,
-        });
+        logger?.warn('Failed to fetch XIVAuth characters', { status: charactersResponse.status });
       }
     } catch (charErr) {
-      console.warn('Error fetching XIVAuth characters:', charErr);
+      logger?.warn('Error fetching XIVAuth characters', {
+        error: charErr instanceof Error ? charErr.name : 'unknown',
+      });
       // Continue without characters - not a fatal error
     }
 
-    // Extract linked Discord ID from social_identities array (from user:social scope)
+    // Extract linked Discord ID from social_identities array (from user:social scope).
+    // FINDING-013 / OAUTH-9: this value becomes the presets-api identity — only a
+    // well-formed snowflake is trusted.
     const discordIdentity = xivauthUser.social_identities?.find(
       (identity) => identity.provider === 'discord'
     );
-    const linkedDiscordId = discordIdentity?.external_id || null;
+    let linkedDiscordId: string | null = null;
+    if (discordIdentity) {
+      if (isValidSnowflake(discordIdentity.external_id)) {
+        linkedDiscordId = discordIdentity.external_id;
+      } else {
+        logger?.warn('Ignoring linked Discord identity with a malformed external_id');
+      }
+    }
 
-    // Get primary character (prefer verified, fall back to first)
-    const primaryCharacter =
-      characters.find((ch) => ch.verified) || characters[0] || null;
+    // FINDING-013 / OAUTH-8: only a VERIFIED character may become the display
+    // identity (username / global_name — the preset author name downstream).
+    // An unverified registration is still carried as primary_character, flagged
+    // verified:false, so consumers can decide; otherwise the opaque label is
+    // used (XIVAuth does not expose an account name).
+    const verifiedCharacter = characters.find((ch) => ch.verified) ?? null;
+    const primaryCharacter = verifiedCharacter ?? characters[0] ?? null;
+    const displayName = verifiedCharacter?.name ?? null;
+    const username = displayName ?? `XIVAuth User ${xivauthUser.id.slice(0, 8)}`;
 
-    // Determine username: use primary character name, or XIVAuth ID as fallback
-    const username = primaryCharacter?.name || `XIVAuth User ${xivauthUser.id.slice(0, 8)}`;
-
-    console.log('Creating/updating user:', {
-      xivauth_id: xivauthUser.id,
-      discord_id: linkedDiscordId,
-      username,
-      primary_character: primaryCharacter?.name,
+    logger?.debug('Resolving XIVAuth user', {
+      hasLinkedDiscord: linkedDiscordId !== null,
+      characterCount: characters.length,
+      hasVerifiedCharacter: verifiedCharacter !== null,
     });
 
-    // Find or create user in database, handling potential merge
-    const user = await findOrCreateUser(c.env.DB, {
-      xivauth_id: xivauthUser.id,
-      discord_id: linkedDiscordId,
-      username,
-      avatar_url: null, // XIVAuth user endpoint doesn't provide avatar_url
-      auth_provider: 'xivauth',
-    });
+    // Find or create user in database. Account-link events (including a
+    // refused merge) are audit-logged by the service — without identifiers.
+    const user = await findOrCreateUser(
+      c.env.DB,
+      {
+        xivauth_id: xivauthUser.id,
+        discord_id: linkedDiscordId,
+        username,
+        avatar_url: null, // XIVAuth user endpoint doesn't provide avatar_url
+        auth_provider: 'xivauth',
+      },
+      logger
+    );
 
     // Store characters if present (for future features)
     if (characters.length > 0) {
@@ -301,16 +354,19 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
       await storeCharacters(c.env.DB, user.id, characterData);
     }
 
+    const primaryCharacterClaim = primaryCharacter
+      ? {
+          name: primaryCharacter.name,
+          server: primaryCharacter.home_world, // XIVAuth uses home_world
+          verified: primaryCharacter.verified,
+        }
+      : undefined;
+
     // Create JWT with user info
     const { token, expires_at } = await createJWTForUser(user, c.env, {
       auth_provider: 'xivauth',
-      primary_character: primaryCharacter
-        ? {
-            name: primaryCharacter.name,
-            server: primaryCharacter.home_world, // XIVAuth uses home_world
-            verified: primaryCharacter.verified,
-          }
-        : undefined,
+      global_name: displayName,
+      primary_character: primaryCharacterClaim,
     });
 
     return c.json<AuthResponse>({
@@ -319,27 +375,17 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
       user: {
         id: user.id,
         username: user.username,
-        global_name: primaryCharacter?.name || null, // Use character name as global_name
+        global_name: displayName, // verified character name only
         avatar: null,
         avatar_url: null, // XIVAuth doesn't provide avatar URL
         auth_provider: 'xivauth',
-        primary_character: primaryCharacter
-          ? {
-              name: primaryCharacter.name,
-              server: primaryCharacter.home_world,
-              verified: primaryCharacter.verified,
-            }
-          : undefined,
+        primary_character: primaryCharacterClaim,
       },
       expires_at,
     });
   } catch (err) {
-    if (c.env.ENVIRONMENT === 'development') {
-      console.error('XIVAuth callback error:', err);
-    } else {
-      const error = err as Error;
-      console.error('XIVAuth callback error:', { name: error.name, message: error.message });
-    }
+    // The structured logger sanitises error objects (no stack in production)
+    logger?.error('XIVAuth callback error', err);
 
     return c.json<AuthResponse>(
       {

@@ -165,19 +165,8 @@ describe('DyeDatabase', () => {
       expect(dye?.id).toBe(9999);
     });
 
-    it('should record last loaded time', () => {
-      const before = Date.now();
-      database.initialize(mockDyes);
-      const after = Date.now();
-
-      const lastLoaded = database.getLastLoadedTime();
-      expect(lastLoaded).toBeGreaterThanOrEqual(before);
-      expect(lastLoaded).toBeLessThanOrEqual(after);
-    });
-
     it('should not be loaded before initialization', () => {
       expect(database.isLoadedStatus()).toBe(false);
-      expect(database.getLastLoadedTime()).toBe(0);
     });
   });
 
@@ -277,75 +266,6 @@ describe('DyeDatabase', () => {
     it('should throw if not loaded', () => {
       const emptyDB = new DyeDatabase();
       expect(() => emptyDB.getByStainId(1)).toThrow(AppError);
-    });
-  });
-
-  describe('getDyesByStainIds', () => {
-    beforeEach(() => {
-      database.initialize(mockDyes);
-    });
-
-    it('should retrieve multiple dyes by stainIDs', () => {
-      const dyes = database.getDyesByStainIds([1, 12, 112]);
-      expect(dyes).toHaveLength(3);
-      expect(dyes[0].name).toBe('Snow White');
-      expect(dyes[1].name).toBe('Wine Red');
-      expect(dyes[2].name).toBe('Metallic Silver');
-    });
-
-    it('should skip non-existent stainIDs', () => {
-      const dyes = database.getDyesByStainIds([1, 999, 12]);
-      expect(dyes).toHaveLength(2);
-    });
-
-    it('should return empty array for all non-existent stainIDs', () => {
-      const dyes = database.getDyesByStainIds([999, 888]);
-      expect(dyes).toHaveLength(0);
-    });
-
-    it('should handle empty stainID array', () => {
-      const dyes = database.getDyesByStainIds([]);
-      expect(dyes).toHaveLength(0);
-    });
-
-    it('should not find Facewear dyes (null stainID)', () => {
-      // Forest Green in mockDyes has stainID: null
-      const dyes = database.getDyesByStainIds([0]);
-      expect(dyes).toHaveLength(0);
-    });
-
-    it('should throw if not loaded', () => {
-      const emptyDB = new DyeDatabase();
-      expect(() => emptyDB.getDyesByStainIds([1])).toThrow(AppError);
-    });
-  });
-
-  describe('getDyesByIds', () => {
-    beforeEach(() => {
-      database.initialize(mockDyes);
-    });
-
-    it('should retrieve multiple dyes by IDs', () => {
-      const dyes = database.getDyesByIds([5729, 5740, 13116]);
-      expect(dyes).toHaveLength(3);
-      expect(dyes[0].name).toBe('Snow White');
-      expect(dyes[1].name).toBe('Wine Red');
-      expect(dyes[2].name).toBe('Metallic Silver');
-    });
-
-    it('should skip non-existent IDs', () => {
-      const dyes = database.getDyesByIds([5729, 99999, 5740]);
-      expect(dyes).toHaveLength(2);
-    });
-
-    it('should return empty array for all non-existent IDs', () => {
-      const dyes = database.getDyesByIds([99999, 88888]);
-      expect(dyes).toHaveLength(0);
-    });
-
-    it('should handle empty ID array', () => {
-      const dyes = database.getDyesByIds([]);
-      expect(dyes).toHaveLength(0);
     });
   });
 
@@ -703,106 +623,99 @@ describe('DyeDatabase', () => {
       expect(dye).toBeNull();
     });
 
-    it('should reject dye with RGB values out of range (> 255)', () => {
-      const invalidDye = {
+    it('derives rgb/hsv from hex, overriding any stored copies (schema v2)', () => {
+      const driftedDye = {
         itemID: 9991,
-        name: 'Bad RGB High',
-        hex: '#FF0000',
-        rgb: { r: 300, g: 0, b: 0 }, // r > 255
-        hsv: { h: 0, s: 100, v: 100 },
+        name: 'Drifted Copy',
+        hex: '#ff0000',
+        rgb: { r: 1, g: 2, b: 3 }, // stale stored copy — must be ignored
+        hsv: { h: 180, s: 1, v: 1 },
         category: 'Reds',
         acquisition: 'Test',
         cost: 0,
       };
 
-      database.initialize([...mockDyes, invalidDye]);
+      database.initialize([...mockDyes, driftedDye]);
       const dye = database.getDyeById(9991);
-      expect(dye).toBeNull();
+      expect(dye?.rgb).toEqual({ r: 255, g: 0, b: 0 });
+      expect(dye?.hsv).toEqual({ h: 0, s: 100, v: 100 });
     });
 
-    it('should reject dye with RGB values out of range (< 0)', () => {
-      const invalidDye = {
-        itemID: 9990,
-        name: 'Bad RGB Low',
-        hex: '#FF0000',
-        rgb: { r: -10, g: 0, b: 0 }, // r < 0
-        hsv: { h: 0, s: 100, v: 100 },
-        category: 'Reds',
-        acquisition: 'Test',
-        cost: 0,
+    it('accepts the 7-field schema-v2 file shape and derives the rest', () => {
+      const v2Dye = {
+        stainID: 1,
+        name: 'Snow White',
+        hex: '#e4dfd0',
+        category: 'Neutral',
+        acquisition: 'Dye Vendor',
+        consolidationType: 'A',
+        legacyItemID: 5729,
       };
 
-      database.initialize([...mockDyes, invalidDye]);
-      const dye = database.getDyeById(9990);
-      expect(dye).toBeNull();
+      database.initialize([v2Dye]);
+      const dye = database.getDyeById(5729);
+      expect(dye).not.toBeNull();
+      expect(dye?.itemID).toBe(5729);
+      expect(dye?.stainID).toBe(1);
+      expect(dye?.rgb).toEqual({ r: 228, g: 223, b: 208 });
+      expect(dye?.cost).toBe(216);
+      expect(dye?.currency).toBe('Gil');
+      expect(dye?.isMetallic).toBe(false);
+      expect(dye?.isCosmic).toBe(false);
     });
 
-    it('should reject dye with non-number RGB values', () => {
-      const invalidDye = {
-        itemID: 9989,
-        name: 'String RGB',
-        hex: '#FF0000',
-        rgb: { r: '255', g: 0, b: 0 }, // string instead of number
-        hsv: { h: 0, s: 100, v: 100 },
-        category: 'Reds',
-        acquisition: 'Test',
-        cost: 0,
+    it('derives gloss-based metallic and consolidation-based cosmic/ishgardian flags', () => {
+      const gunmetal = {
+        stainID: 92, // Stain-sheet gloss row NOT named "Metallic ..."
+        name: 'Gunmetal Black',
+        hex: '#181820',
+        category: 'Special',
+        acquisition: 'The Firmament',
+        consolidationType: 'B',
+        legacyItemID: 30122,
       };
 
-      database.initialize([...mockDyes, invalidDye]);
-      const dye = database.getDyeById(9989);
-      expect(dye).toBeNull();
+      database.initialize([gunmetal]);
+      const dye = database.getDyeById(30122);
+      expect(dye?.isMetallic).toBe(true); // gloss set, not name prefix
+      expect(dye?.isIshgardian).toBe(true); // ≡ consolidationType 'B'
+      expect(dye?.isCosmic).toBe(false); // Firmament pollution fixed
+      expect(dye?.cost).toBe(100);
+      expect(dye?.currency).toBe('Skybuilders Scrips');
     });
 
-    it('should reject dye with HSV hue out of range (> 360)', () => {
-      const invalidDye = {
+    it('falls back to stainID as the runtime id when legacyItemID is null', () => {
+      const futureDye = {
+        stainID: 126,
+        name: 'Hypothetical Future Dye',
+        hex: '#123456',
+        category: 'Blues',
+        acquisition: 'Cosmic Exploration',
+        consolidationType: 'C',
+        legacyItemID: null,
+      };
+
+      database.initialize([futureDye]);
+      const dye = database.getByStainId(126);
+      expect(dye).not.toBeNull();
+      expect(dye?.id).toBe(126);
+      expect(dye?.itemID).toBe(126); // itemID stays a number — runtime contract
+      expect(dye?.isCosmic).toBe(true);
+    });
+
+    it('rejects a dye with missing hex (hex is required in schema v2)', () => {
+      const noHex = {
         itemID: 9988,
-        name: 'Bad HSV H',
-        hex: '#FF0000',
+        name: 'No Hex',
         rgb: { r: 255, g: 0, b: 0 },
-        hsv: { h: 400, s: 100, v: 100 }, // h > 360
+        hsv: { h: 0, s: 100, v: 100 },
         category: 'Reds',
         acquisition: 'Test',
         cost: 0,
       };
 
-      database.initialize([...mockDyes, invalidDye]);
-      const dye = database.getDyeById(9988);
-      expect(dye).toBeNull();
-    });
-
-    it('should reject dye with HSV saturation out of range (> 100)', () => {
-      const invalidDye = {
-        itemID: 9987,
-        name: 'Bad HSV S',
-        hex: '#FF0000',
-        rgb: { r: 255, g: 0, b: 0 },
-        hsv: { h: 0, s: 150, v: 100 }, // s > 100
-        category: 'Reds',
-        acquisition: 'Test',
-        cost: 0,
-      };
-
-      database.initialize([...mockDyes, invalidDye]);
-      const dye = database.getDyeById(9987);
-      expect(dye).toBeNull();
-    });
-
-    it('should reject dye with HSV value out of range (< 0)', () => {
-      const invalidDye = {
-        itemID: 9986,
-        name: 'Bad HSV V',
-        hex: '#FF0000',
-        rgb: { r: 255, g: 0, b: 0 },
-        hsv: { h: 0, s: 100, v: -10 }, // v < 0
-        category: 'Reds',
-        acquisition: 'Test',
-        cost: 0,
-      };
-
-      database.initialize([...mockDyes, invalidDye]);
-      const dye = database.getDyeById(9986);
-      expect(dye).toBeNull();
+      database.initialize([...mockDyes, noHex]);
+      expect(database.getDyeById(9988)).toBeNull();
     });
 
     it('should reject dye with non-string category', () => {
@@ -839,54 +752,20 @@ describe('DyeDatabase', () => {
     });
   });
 
-  describe('Facewear dyes with null itemID', () => {
-    it('should generate synthetic ID for Facewear dyes with null itemID', () => {
+  describe('legacy Facewear input (pre-v2 shape)', () => {
+    it('rejects Facewear-style entries with null itemID and no stainID (moved to facewearColors)', () => {
+      // Pre-v2, these got synthetic negative IDs; in schema v2 facewear
+      // colors live in facewear_colors.json / facewearColors, not the dye DB.
       const facewearDye = {
         itemID: null,
         name: 'Facewear Test Color',
-        hex: '#FF00FF',
-        rgb: { r: 255, g: 0, b: 255 },
-        hsv: { h: 300, s: 100, v: 100 },
+        hex: '#ff00ff',
         category: 'Facewear',
-        acquisition: 'Special',
-        cost: 0,
+        acquisition: 'Facewear Collection',
       };
 
-      database.initialize([facewearDye]);
-
-      expect(database.getDyeCount()).toBe(1);
-      const allDyes = database.getAllDyes();
-      expect(allDyes[0].name).toBe('Facewear Test Color');
-      expect(allDyes[0].id).toBeLessThan(0); // Synthetic IDs are negative
-    });
-
-    it('should generate different synthetic IDs for different Facewear names', () => {
-      const facewear1 = {
-        itemID: null,
-        name: 'Facewear Alpha',
-        hex: '#FF0000',
-        rgb: { r: 255, g: 0, b: 0 },
-        hsv: { h: 0, s: 100, v: 100 },
-        category: 'Facewear',
-        acquisition: 'Special',
-        cost: 0,
-      };
-
-      const facewear2 = {
-        itemID: null,
-        name: 'Facewear Beta',
-        hex: '#00FF00',
-        rgb: { r: 0, g: 255, b: 0 },
-        hsv: { h: 120, s: 100, v: 100 },
-        category: 'Facewear',
-        acquisition: 'Special',
-        cost: 0,
-      };
-
-      database.initialize([facewear1, facewear2]);
-
-      const allDyes = database.getAllDyes();
-      expect(allDyes[0].id).not.toBe(allDyes[1].id);
+      database.initialize([...mockDyes, facewearDye]);
+      expect(database.getDyeCount()).toBe(5);
     });
   });
 
@@ -1078,54 +957,24 @@ describe('DyeDatabase', () => {
       expect(dye).toBeDefined();
     });
 
-    it('should fail to initialize dyes with null RGB value (required for k-d tree)', () => {
+    it('recovers dyes with null stored RGB/HSV by deriving from hex (schema v2)', () => {
+      // Pre-v2 these were rejected/fatal; hex is now the color source of
+      // truth, so null stored copies are simply replaced by derivation.
       const dyeWithNullRgb = {
         itemID: 8002,
         name: 'Null RGB',
-        hex: '#FF0000',
+        hex: '#ff0000',
         rgb: null,
-        hsv: { h: 0, s: 100, v: 100 },
-        category: 'Reds',
-        acquisition: 'Test',
-        cost: 0,
-      };
-
-      // Dye with null RGB will fail during k-d tree building
-      // This verifies the error is handled gracefully
-      expect(() => database.initialize([dyeWithNullRgb])).toThrow(AppError);
-    });
-
-    it('should filter out dyes with null HSV value (required for hue bucketing)', () => {
-      const dyeWithNullHsv = {
-        itemID: 8003,
-        name: 'Null HSV',
-        hex: '#FF0000',
-        rgb: { r: 255, g: 0, b: 0 },
         hsv: null,
         category: 'Reds',
         acquisition: 'Test',
         cost: 0,
       };
 
-      const validDye = {
-        itemID: 8004,
-        name: 'Valid Dye',
-        hex: '#00FF00',
-        rgb: { r: 0, g: 255, b: 0 },
-        hsv: { h: 120, s: 100, v: 100 },
-        category: 'Greens',
-        acquisition: 'Test',
-        cost: 0,
-      };
-
-      // Dyes with null HSV are silently filtered out during validation
-      // The database should initialize successfully with only valid dyes
-      database.initialize([dyeWithNullHsv, validDye]);
-
-      // The null HSV dye should be filtered out
-      expect(database.getDyeById(8003)).toBeNull();
-      // The valid dye should be present
-      expect(database.getDyeById(8004)).not.toBeNull();
+      database.initialize([dyeWithNullRgb]);
+      const dye = database.getDyeById(8002);
+      expect(dye?.rgb).toEqual({ r: 255, g: 0, b: 0 });
+      expect(dye?.hsv).toEqual({ h: 0, s: 100, v: 100 });
       expect(database.getDyeCount()).toBe(1);
     });
 

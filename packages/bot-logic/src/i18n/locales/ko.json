@@ -1,0 +1,682 @@
+{
+  "meta": {
+    "locale": "ko",
+    "name": "Korean"
+  },
+  "common": {
+    "dyes": "염료",
+    "category": "카테고리",
+    "hexColor": "16진수 색상",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "아이템 ID",
+    "footer": "XIV Dye Tools",
+    "error": "오류",
+    "unknownError": "문제가 발생했습니다. 다시 시도해 주세요."
+  },
+  "errors": {
+    "dyeNotFound": "\"{name}\"(이)라는 이름의 염료를 찾을 수 없습니다.",
+    "invalidColor": "\"{input}\"을(를) 색상으로 변환할 수 없습니다.\n\n유효한 16진수 코드(예: `#FF0000`) 또는 염료 이름(예: `달라가브 레드`)을 입력해 주세요.",
+    "missingInput": "색상(16진수 코드 또는 염료 이름)을 입력해 주세요.",
+    "missingQuery": "검색어를 입력해 주세요.",
+    "missingName": "염료 이름을 입력해 주세요.",
+    "missingSubcommand": "하위 명령어를 지정해 주세요.",
+    "unknownSubcommand": "알 수 없는 하위 명령어: {name}",
+    "noMatchFound": "데이터베이스에서 일치하는 염료를 찾을 수 없습니다.",
+    "noDyesAvailable": "데이터베이스에 염료가 없습니다.",
+    "generationFailed": "시각화를 생성하는 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+    "rateLimited_one": "명령어를 너무 빠르게 사용하고 있습니다! **{seconds}초** 후에 다시 시도해 주세요.",
+    "rateLimited_other": "명령어를 너무 빠르게 사용하고 있습니다! **{seconds}초** 후에 다시 시도해 주세요.",
+    "unknownUser": "사용자를 확인할 수 없습니다. 다시 시도해 주세요.",
+    "notImplemented": "`/{command}` 명령어는 아직 구현되지 않았습니다.",
+    "commandFailed": "명령어를 처리하는 중 오류가 발생했습니다.",
+    "unsupportedComponent": "이 구성 요소 유형은 아직 지원되지 않습니다.",
+    "unknownModal": "알 수 없는 모달 제출입니다.",
+    "unknownButton": "인식할 수 없는 버튼입니다."
+  },
+  "quality": {
+    "perfect": "완벽",
+    "excellent": "우수",
+    "good": "양호",
+    "fair": "적당",
+    "approximate": "근사"
+  },
+  "manual": {
+    "title": "XIV Dye Tools 매뉴얼",
+    "welcome": "**XIV Dye Tools**에 오신 것을 환영합니다! 이 봇은 FFXIV 염료 색상 탐색 및 매칭을 도와드립니다.",
+    "commandsIntro": "아래에서 카테고리별로 정리된 모든 명령어를 확인하실 수 있습니다.",
+    "autocompleteNote": "모든 명령어에서 염료 이름 **자동완성**을 지원합니다!",
+    "colorMatching": "색상 매칭",
+    "dyeInformation": "염료 정보",
+    "botInformation": "봇 정보",
+    "tipsResources": "팁 및 리소스",
+    "extractor": {
+      "name": "`/extractor color <색상> [개수]` | `/extractor image <이미지>`",
+      "description": "색상을 추출하고 FFXIV 염료에 매칭합니다.\n• `color`: 16진수 코드 또는 염료 이름을 가장 가까운 염료에 매칭\n• `image`: 업로드된 이미지에서 주요 색상 추출"
+    },
+    "harmony": {
+      "name": "`/harmony <색상> [유형]`",
+      "description": "조화로운 염료 조합을 생성합니다.\n• 유형: 보색, 유사색, 삼원색, 분할보색, 사각배색, 정방형, 단색\n• 시각적 색상환 생성"
+    },
+    "mixer": {
+      "name": "`/mixer <염료1> <염료2> [모드]`",
+      "description": "색 과학을 사용하여 두 염료를 블렌드합니다.\n• 6가지 블렌딩 모드: RGB, LAB, OKLAB, RYB, HSL, 스펙트럼\n• 블렌드 결과에 가장 가까운 FFXIV 염료 검색"
+    },
+    "gradient": {
+      "name": "`/gradient <시작> <끝> [단계]`",
+      "description": "두 색상 사이의 그라데이션을 생성합니다.\n• 각 그라데이션 단계에 맞는 염료 표시\n• 단계 수 설정 가능 (2-10)"
+    },
+    "swatch": {
+      "name": "`/swatch color <유형> <인덱스>` | `/swatch grid <유형> <행> <열>`",
+      "description": "FFXIV 캐릭터 색상을 염료에 매칭합니다.\n• 피부, 머리, 눈, 하이라이트, 입술, 문신, 페이스페인트 지원\n• 피부와 머리에 종족/부족별 팔레트"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <키> <값>` | `/preferences reset`",
+      "description": "봇 설정을 관리합니다.\n• 블렌딩 모드, 매칭 방법, 결과 수의 기본값 설정\n• 캐릭터 부족/성별 및 마켓 월드 설정"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <검색어>`",
+      "description": "이름으로 염료를 검색합니다.\n• 퍼지 검색으로 부분 일치 찾기\n• 16진수 코드와 카테고리 표시"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <이름>`",
+      "description": "특정 염료에 대한 상세 정보를 확인합니다.\n• Hex, RGB, HSV 값 표시\n• 카테고리 및 아이템 ID 표시"
+    },
+    "dyeList": {
+      "name": "`/dye list [카테고리]`",
+      "description": "모든 염료 목록을 보거나 카테고리별로 필터링합니다.\n• 카테고리: 빨강, 갈색, 노랑, 초록, 파랑, 보라, 무채색, 특수"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "무작위로 선택된 5개의 염료를 표시합니다.\n• 카테고리당 1개로 제한하는 옵션"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "봇 정보, 버전 및 링크를 표시합니다."
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "이 도움말 가이드를 표시합니다."
+    },
+    "tips": {
+      "autocomplete": "**자동완성:** 염료 이름을 입력하기 시작하면 제안이 나타납니다!",
+      "hexColors": "**16진수 색상:** `#FF0000`(빨강)이나 `#5865F2`(블러플) 같은 표준 웹 형식을 사용하세요",
+      "dyeNames": "**염료 이름:** 부분 이름을 입력하세요 - \"달라\"로 \"달라가브 레드\"를 찾을 수 있습니다",
+      "facewearExcluded": "**얼굴장식 제외:** 일반 얼굴장식 염료(\"빨강\", \"파랑\" 등)는 결과에서 제외됩니다",
+      "links": "**링크:**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "\"{query}\"에 일치하는 염료를 찾을 수 없습니다.",
+      "tryDifferent": "다른 검색어를 시도해 보세요",
+      "resultsTitle": "\"{query}\" 검색 결과",
+      "foundCount_one": "{count}개의 염료를 찾았습니다:",
+      "foundCount_other": "{count}개의 염료를 찾았습니다:",
+      "moreResults": "...외 {count}개의 결과",
+      "useInfoHint": "/dye info <이름>으로 상세 정보를 확인하세요"
+    },
+    "info": {
+      "detailedInfo": "이 {category} 염료의 상세 정보입니다."
+    },
+    "list": {
+      "noDyesInCategory": "\"{category}\" 카테고리에서 염료를 찾을 수 없습니다.",
+      "categoryTitle": "{category} 염료",
+      "dyesInCategory": "이 카테고리에 {count}개의 염료가 있습니다:",
+      "categoriesTitle": "염료 카테고리",
+      "categorySummary": "{count}개 카테고리에 총 {total}개의 염료가 있습니다:",
+      "useListHint": "/dye list <카테고리>로 카테고리별 염료를 확인하세요"
+    },
+    "random": {
+      "title": "무작위 염료",
+      "titleUnique": "무작위 염료 (카테고리당 1개)",
+      "description": "무작위로 선택된 {count}개의 염료입니다:",
+      "runAgainHint": "다시 실행하면 다른 염료를 볼 수 있습니다!"
+    }
+  },
+  "extractor": {
+    "topMatches": "상위 {count}개 염료 매치"
+  },
+  "gradient": {
+    "title": "색상 그라데이션",
+    "startColor": "시작",
+    "endColor": "끝",
+    "steps_one": "{count}단계",
+    "steps_other": "{count}단계",
+    "colorSpace": "색 공간",
+    "matching": "매칭"
+  },
+  "harmony": {
+    "title": "{type} 하모니",
+    "baseColor": "기본 색상",
+    "complementary": "보색",
+    "analogous": "유사색",
+    "triadic": "삼원색",
+    "splitComplementary": "분할보색",
+    "tetradic": "사각배색",
+    "square": "정방형",
+    "monochromatic": "단색",
+    "invertedTetradic": "반전 사각배색"
+  },
+  "mixer": {
+    "blendResult": "블렌드 결과",
+    "bothRequired": "염료1과 염료2 모두 필요합니다."
+  },
+  "accessibility": {
+    "normalVision": "정상 시력",
+    "protanopia": "적색맹",
+    "deuteranopia": "녹색맹",
+    "tritanopia": "청색맹",
+    "achromatopsia": "전색맹",
+    "allLenses": "모든 색각"
+  },
+  "about": {
+    "title": "XIV Dye Tools Bot",
+    "version": "버전",
+    "description": "FFXIV 염료 색상 탐색 및 매칭을 위한 Discord 봇입니다.",
+    "commands": "명령어",
+    "totalCount": "총 {count}개",
+    "links": "링크",
+    "dyes": "염료",
+    "builtOn": "사용 기술",
+    "attribution": "권리 표기",
+    "poweredBy": "Cloudflare Workers 기반",
+    "categories": {
+      "colorTools": "색상 도구",
+      "dyeDatabase": "염료 데이터베이스",
+      "analysis": "분석",
+      "community": "커뮤니티",
+      "utility": "유틸리티"
+    },
+    "removedTitle": "v5에서 제거됨",
+    "removedBody": "해당 명령어는 제거되었습니다. /extractor, /preferences 또는 웹 앱의 컬렉션을 이용하세요."
+  },
+  "preset": {
+    "title": "커뮤니티 프리셋",
+    "apiDisabled": "이 봇에서 커뮤니티 프리셋이 설정되지 않았습니다.",
+    "notFound": "일치하는 프리셋을 찾을 수 없습니다.",
+    "noneInCategory": "이 카테고리에 프리셋이 없습니다.",
+    "useShowTip": "`/preset show <이름>`으로 상세 정보 보기",
+    "randomTitle": "랜덤 프리셋",
+    "notEnoughDyes": "프리셋에 최소 2개의 염료가 필요합니다.",
+    "invalidDye": "지정된 염료 중 하나를 찾을 수 없습니다.",
+    "duplicateExists": "유사한 프리셋이 존재합니다",
+    "duplicateVoted": "기존 프리셋에 투표가 추가되었습니다.",
+    "submitted": "프리셋이 제출되었습니다!",
+    "submittedApproved": "프리셋이 승인되어 지금 공개되었습니다!",
+    "submittedPending": "프리셋이 관리자 승인을 기다리고 있습니다.",
+    "voteRemoved": "투표 취소됨",
+    "voteAdded": "투표함",
+    "currentVotes": "현재 투표 수: {count}",
+    "colors": "색상",
+    "tags": "태그",
+    "author": "작성자",
+    "votes": "투표",
+    "api": {
+      "badRequest": "잘못된 요청입니다. 입력 내용을 확인하고 다시 시도해 주세요.",
+      "permissionDenied": "권한이 없습니다.",
+      "notFound": "찾을 수 없습니다.",
+      "conflict": "이미 존재하거나 다른 리소스와 충돌합니다.",
+      "rateLimited": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+      "serverError": "서버 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+      "unknown": "오류가 발생했습니다. 다시 시도해 주세요."
+    },
+    "invalidStructure": "잘못된 명령어 구조입니다",
+    "none": "프리셋을 찾을 수 없습니다.",
+    "showing": "전체 {total}개 중 {shown}개 표시",
+    "loadFailed": "프리셋을 불러오지 못했습니다.",
+    "loadOneFailed": "프리셋을 불러오지 못했습니다.",
+    "loadRandomFailed": "무작위 프리셋을 불러오지 못했습니다.",
+    "duplicateIntro": "같은 염료로 구성된 프리셋이 이미 있습니다:",
+    "byAuthor": "작성자: {author}",
+    "official": "공식",
+    "unknownAuthor": "알 수 없음",
+    "name": "이름",
+    "colorCount": "{n}색",
+    "submitFailed": "프리셋을 제출하지 못했습니다.",
+    "editFailed": "프리셋을 수정하지 못했습니다.",
+    "voteFailed": "투표를 처리하지 못했습니다.",
+    "edit": {
+      "noFields": "수정할 항목을 하나 이상 입력해 주세요.",
+      "notOwner": "자신의 프리셋만 수정할 수 있습니다.",
+      "invalidDye": "잘못된 염료: {name}",
+      "dyeCount": "프리셋은 염료 2~5개로 구성해야 합니다.",
+      "duplicateTitle": "중복된 염료 조합",
+      "duplicateIntro": "이 염료 조합은 다른 프리셋에 이미 있습니다:",
+      "duplicateHint": "다른 염료 조합을 사용해 주세요.",
+      "updatedPending": "프리셋 수정됨 - 검토 대기 중",
+      "updated": "프리셋 수정됨",
+      "pendingDescription": "콘텐츠 검토를 위해 변경 사항이 검토 대기열에 제출되었습니다.",
+      "appliedDescription": "변경 사항이 적용되었습니다.",
+      "pendingFooter": "곧 관리자가 변경 사항을 검토합니다."
+    },
+    "favorite": {
+      "nameRequired": "preset_name은 필수입니다",
+      "alreadyExists": "**{name}**은(는) 이미 즐겨찾기에 있습니다.",
+      "limitReached": "즐겨찾기 프리셋 한도({max}개)에 도달했습니다.",
+      "addFailed": "즐겨찾기에 추가하지 못했습니다. 다시 시도해 주세요.",
+      "removeFailed": "즐겨찾기에서 제거하지 못했습니다. 다시 시도해 주세요.",
+      "addedTitle": "즐겨찾기 추가됨",
+      "added": "**{name}**을(를) 즐겨찾기 프리셋에 추가했습니다.",
+      "notFound": "**{name}**은(는) 즐겨찾기에 없습니다.",
+      "removedTitle": "즐겨찾기 제거됨",
+      "removed": "**{name}**을(를) 즐겨찾기에서 제거했습니다.",
+      "listTitle": "즐겨찾기 프리셋",
+      "listTitleCount": "즐겨찾기 프리셋 ({n}/{max})",
+      "empty": "아직 즐겨찾기한 프리셋이 없습니다. `/preset favorite add`로 추가하세요.",
+      "allRemoved": "즐겨찾기한 프리셋이 모두 삭제된 것 같습니다. `/preset favorite remove`로 항목을 정리하세요."
+    },
+    "noValidDyes": "이 프리셋에 유효한 염료가 없습니다"
+  },
+  "budget": {
+    "findTitle": "{dyeName}의 저렴한 대안",
+    "noAlternatives": "조건에 맞는 저렴한 대안을 찾을 수 없습니다.",
+    "worldSet": "기본 월드가 **{world}**(으)로 설정되었습니다.",
+    "noWorldSet": {
+      "title": "월드가 설정되지 않았습니다",
+      "description": "`/budget set_world <world>`로 월드를 설정하거나 `world` 옵션을 지정해 주세요."
+    },
+    "errors": {
+      "notConfigured": "이 서버에서는 저렴한 염료 기능을 사용할 수 없습니다. 장터 연동이 설정되어 있지 않습니다.",
+      "worldNotFound": "월드 또는 데이터센터 \"{world}\"를 찾을 수 없습니다.\n\n철자를 확인하거나 \"모그리\" 또는 \"초코보\" 같은 데이터센터 이름을 시도해 보세요.",
+      "missingWorld": "월드를 지정해 주세요.",
+      "saveFailed": "월드 설정을 저장할 수 없습니다. 다시 시도해 주세요.",
+      "missingDye": "대상 염료를 지정해 주세요.",
+      "dyeNotFound": "염료 \"{name}\"를 찾을 수 없습니다.",
+      "missingPreset": "빠른 선택 프리셋을 선택해 주세요.",
+      "presetNotFound": "빠른 선택 프리셋 \"{id}\"를 찾을 수 없습니다.",
+      "apiError": "장터 데이터를 가져올 수 없습니다. 나중에 다시 시도해 주세요.",
+      "rateLimited": "요청이 너무 많습니다. 잠시 후에 가격을 다시 확인해 주세요."
+    },
+    "dataCenterLabel": "{name} ({region} 데이터 센터)"
+  },
+  "preferences": {
+    "title": "설정",
+    "show": {
+      "description": "이 설정은 명령어의 동작에 영향을 줍니다.\n제공하는 매개변수는 항상 이 기본값을 덮어씁니다.",
+      "default": "기본값",
+      "notSet": "미설정",
+      "hint": "/preferences set으로 설정을 변경하세요",
+      "lastUpdated": "마지막 업데이트"
+    },
+    "set": {
+      "success": "설정 업데이트됨",
+      "successCount": "{count}개 설정이 업데이트되었습니다",
+      "affects": "영향을 받는 명령어",
+      "failedToUpdate": "업데이트 실패",
+      "noOptions": "최소 하나의 설정을 지정해 주세요.\n\n예시: `/preferences set language:ko blending:oklab`",
+      "noValidOptions": "유효한 설정이 제공되지 않았습니다.",
+      "overrideNote": "명령어 매개변수가 이 설정을 덮어씁니다"
+    },
+    "reset": {
+      "success": "설정 초기화됨",
+      "single": "**{key}**이(가) 기본값으로 초기화되었습니다.",
+      "allTitle": "모든 설정 초기화",
+      "allDescription": "모든 설정이 기본값으로 초기화되었습니다.",
+      "failed": "설정 초기화에 실패했습니다. 다시 시도해 주세요.",
+      "showHint": "/preferences show로 현재 설정을 확인하세요"
+    },
+    "keys": {
+      "language": "언어",
+      "blending": "블렌딩 모드",
+      "matching": "매칭 방법",
+      "count": "결과 수",
+      "clan": "캐릭터 부족",
+      "gender": "캐릭터 성별",
+      "world": "마켓 월드",
+      "market": "마켓 가격 표시",
+      "showHex": "16진수 코드 표시",
+      "showRgb": "RGB 값 표시",
+      "showHsv": "HSV 값 표시",
+      "showLab": "LAB 값 표시",
+      "showDeltaE": "Delta-E 표시",
+      "showAcquisition": "획득 출처 표시",
+      "filters": "염료 필터",
+      "theme": "카드 테마"
+    },
+    "values": {
+      "results": "{count}개 결과",
+      "male": "남성 ♂️",
+      "female": "여성 ♀️",
+      "yes": "예",
+      "no": "아니오",
+      "themeDark": "다크",
+      "themeLight": "라이트"
+    },
+    "validation": {
+      "invalidLanguage": "잘못된 언어입니다. 유효한 옵션: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "잘못된 블렌딩 모드입니다. 유효한 옵션:\n{options}",
+      "invalidMatchingMethod": "잘못된 매칭 방법입니다. 유효한 옵션:\n{options}",
+      "invalidCount": "잘못된 개수입니다. 1에서 10 사이의 숫자여야 합니다.",
+      "invalidClan": "잘못된 부족입니다. 유효한 부족:\n{options}",
+      "invalidGender": "잘못된 성별입니다. 유효한 옵션: `male`, `female`",
+      "invalidWorld": "잘못된 월드입니다. 유효한 FFXIV 월드 또는 데이터 센터 이름을 입력해 주세요.",
+      "invalidMarket": "잘못된 값입니다. `on`/`off` 또는 `true`/`false`를 사용하세요.",
+      "error": "설정 저장 중 오류가 발생했습니다. 다시 시도해 주세요.",
+      "invalidTheme": "잘못된 테마입니다. `dark` 또는 `light`를 선택하세요."
+    },
+    "errors": {
+      "invalidKey": "알 수 없는 설정 키: {key}",
+      "invalidValue": "{key}의 값이 유효하지 않습니다. 유효한 옵션: {options}",
+      "noSubcommand": "하위 명령어가 지정되지 않았습니다"
+    },
+    "filters": {
+      "noOptions": "최소 하나의 필터 옵션을 지정해 주세요.",
+      "excluded": "제외",
+      "included": "포함",
+      "updated": "필터 업데이트 완료",
+      "affectsHint": "적용 대상: /match, /harmony, /gradient, /mixer",
+      "title": "염료 필터",
+      "setHint": "/preferences filters set으로 사용자 지정",
+      "resetSuccess": "필터 초기화 완료",
+      "resetDescription": "모든 염료 필터가 기본값으로 초기화되었습니다 (모든 염료 유형 포함).",
+      "labels": {
+        "metallic": "메탈릭",
+        "pastel": "파스텔",
+        "dark": "다크",
+        "cosmic": "코스모",
+        "ishgardian": "이슈가르드",
+        "expensive": "고가 (순백색 / 칠흑색)",
+        "vendor": "상인",
+        "craft": "제작"
+      }
+    },
+    "affects": {
+      "allCommands": "모든 명령어",
+      "marketData": "결과 카드의 장터 데이터",
+      "everyCard": "생성되는 모든 카드",
+      "resultCards": "결과 카드가 있는 모든 명령어"
+    },
+    "methods": {
+      "ciede2000": "업계 표준 지각 색차 공식 (기본)",
+      "oklab": "OKLAB 지각 거리",
+      "cie76": "CIELAB 유클리드 거리",
+      "redmean": "가중 RGB 근사",
+      "rgb": "RGB 유클리드 거리",
+      "distinguish": "RGB DIST를 0-100으로 재조정"
+    },
+    "blendingModes": {
+      "rgb": "가산 채널 평균 (기본)",
+      "lab": "지각적으로 균일한 CIELAB 혼합",
+      "oklab": "현대적 지각 모델 (LAB의 파랑→보라 문제 수정)",
+      "ryb": "전통적인 화가의 색상환",
+      "hsl": "색상-채도-명도 보간",
+      "spectral": "Kubelka-Munk 물리 시뮬레이션"
+    }
+  },
+  "webhook": {
+    "newPresetPending": "새 프리셋 검토 대기 중",
+    "newPresetPublished": "새 프리셋 게시됨",
+    "previewImagePending": "미리보기 이미지 검토 대기 중",
+    "fields": {
+      "category": "카테고리",
+      "author": "작성자",
+      "source": "출처",
+      "dyes": "염료",
+      "tags": "태그"
+    },
+    "autoApproved": "자동 승인됨",
+    "buttons": {
+      "approve": "승인",
+      "reject": "거부",
+      "revert": "되돌리기"
+    },
+    "editPending": "프리셋 편집 검토 대기 중",
+    "sources": {
+      "web": "웹 앱",
+      "discord": "Discord"
+    }
+  },
+  "previewImage": {
+    "invalidButton": "잘못된 버튼 상호작용입니다.",
+    "notPermitted": "미리보기 이미지를 검토할 권한이 없습니다.",
+    "actionFailed": "미리보기 이미지 업데이트에 실패했습니다. 다시 시도해 주세요.",
+    "approvedFooter": "{moderator} 님이 미리보기 이미지를 승인했습니다",
+    "rejectedFooter": "{moderator} 님이 미리보기 이미지를 거부했습니다 (프리셋은 변경되지 않음)"
+  },
+  "matchImage": {
+    "missingImage": "분석할 이미지를 첨부해 주세요.",
+    "invalidAttachment": "첨부된 이미지를 찾을 수 없습니다.",
+    "noColors": "이미지가 완전히 투명하거나 분석하기에 너무 작은 것 같습니다.",
+    "extractionFailed": "이미지에서 색상을 추출할 수 없습니다.",
+    "processingFailed": "이미지 처리 중 오류가 발생했습니다.",
+    "onlyDiscord": "Discord에 직접 업로드된 이미지만 분석할 수 있습니다.",
+    "imageTooLarge": "이미지가 너무 큽니다. 더 작은 이미지를 사용해 주세요.",
+    "unsupportedFormat": "지원되지 않는 이미지 형식입니다. PNG, JPEG, GIF 또는 WebP를 사용해 주세요.",
+    "timeout": "이미지 다운로드 시간이 초과되었습니다. 다시 시도해 주세요."
+  },
+  "matchImageHelp": {
+    "title": "/match_image 사용 방법",
+    "description": "`/match_image` 명령어는 업로드된 이미지를 분석하여 지배적인 색상을 찾고 가장 가까운 FFXIV 염료와 매칭합니다. 최상의 결과를 위한 팁을 알려드립니다!",
+    "howItWorks": "작동 방식",
+    "howItWorksContent": "**1. 이미지 분석**\n- 이미지가 K-means 클러스터링으로 처리됩니다\n- 지배적인 색상이 추출됩니다\n- 136종의 FFXIV 염료와 비교됩니다\n\n**2. 염료 매칭**\n- RGB 색공간에서 유클리드 거리 사용\n- 가장 가까운 염료를 반환합니다",
+    "tipsForBestResults": "최상의 결과를 위한 팁",
+    "tipsContent": "**이미지 자르기**\n- 매칭하고 싶은 특정 영역에 집중\n- UI 요소와 배경 제거\n\n**좋은 조명 선택**\n- 밝은 곳에서 스크린샷 촬영\n- 어두운 그림자나 극단적인 하이라이트 피하기\n\n**어두운 배경 피하기**\n- 검은 배경은 결과를 왜곡할 수 있습니다\n- 가능하면 중립적이고 밝은 배경 사용",
+    "commonIssues": "일반적인 문제",
+    "commonIssuesContent": "**\"어두운 색상이 나왔는데 장비는 밝아요!\"**\n→ 배경이 어두울 가능성이 높습니다. 장비만 포함하도록 이미지를 잘라주세요.\n\n**\"매칭이 이상해 보여요\"**\n→ 여러 색상이 있나요? 알고리즘은 가장 흔한 색상을 선택합니다.\n\n**\"특정 부분만 매칭할 수 있나요?\"**\n→ 네! 업로드 전에 해당 영역만 잘라주세요.",
+    "proTips": "프로 팁",
+    "proTipsContent": "• 업로드 전 이미지 편집 소프트웨어로 자르기\n• 금속성/반짝이는 장비는 결과가 다를 수 있습니다\n• 16진수 코드를 알고 있다면 `/match` 사용\n• `colors` 옵션으로 여러 색상 추출 (1-5)\n• 최상의 품질을 위해 1920x1080 이상으로 스크린샷",
+    "footer": "XIV Dye Tools - FFXIV 패션 애호가를 위해 사랑을 담아 제작",
+    "exampleUseCases": "사용 예시",
+    "goodExamples": "좋은 예시",
+    "goodExamplesContent": "• 단일 가슴 장비만 자른 스크린샷\n• 중립 배경에서 염색된 갑옷 클로즈업\n• 밝은 낮 지역에서 촬영한 스크린샷\n• 매칭하고 싶은 색상에 집중한 이미지",
+    "poorExamples": "나쁜 예시",
+    "poorExamplesContent": "• UI가 많은 전체 화면 스크린샷\n• 어두운 던전이나 동굴 속 캐릭터\n• 다른 염료가 적용된 여러 장비\n• 배경색이 지배하는 이미지",
+    "whenToUse": "/match_image vs /match 사용 시점",
+    "whenToUseContent": "**`/match_image` 사용 시:**\n• 스크린샷이 있고 염료를 찾고 싶을 때\n• 정확한 색상 코드를 모를 때\n• 영감 사진에서 색상을 매칭하고 싶을 때\n\n**`/match` 사용 시:**\n• 이미 16진수 색상 코드를 알고 있을 때\n• 더 정확한 결과가 필요할 때\n• 색상 견본으로 작업할 때",
+    "technicalDetails": "기술 세부사항",
+    "supportedFormats": "지원 형식",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "fileLimits": "파일 제한",
+    "fileLimitsContent": "• 최대 크기: 8MB\n• 처리 시간: ~1-3초",
+    "matchQualityRatings": "매칭 품질 등급",
+    "matchQualityRatingsContent": "**완벽** (거리 0)\n**우수** (거리 <10)\n**좋음** (거리 <25)\n**적당** (거리 <50)\n**근사** (거리 ≥50)\n\n*거리가 낮을수록 = 더 좋은 매칭*",
+    "poweredBy": "Photon WASM 이미지 처리 기반"
+  },
+  "card": {
+    "stain": "염색번호",
+    "src": "출처",
+    "mkt": "시장",
+    "base": "기준",
+    "nearest": "가장 가까운 염료",
+    "nearestMore": "외 {n}개",
+    "ideal": "이상 색상",
+    "found": "가장 가까운",
+    "name": "염료",
+    "cat": "분류",
+    "bandKey": "구간: ≤6 / ≤12 / ≤20",
+    "derivedNote": "ΔE2000 파생",
+    "tier0": "완전",
+    "tier1": "근접",
+    "tier2": "느슨",
+    "tier3": "도달 불가",
+    "share": "비중",
+    "matched": "일치 염료",
+    "rank": "순위",
+    "target": "목표색",
+    "rampTitle": "이미지에서 추출한 팔레트",
+    "matchTitle": "가장 가까운 염료",
+    "colours": "{n}가지 색",
+    "rampKey": "밴드 너비 = 이미지 비중",
+    "matchKey": "ΔE2000 최근접",
+    "manualLead": "예상과 다른 색이 나왔다면",
+    "manualTail": " 참고",
+    "gradKey": "띠＝모든 단계／행＝서로 다른 염료",
+    "gradKeyCut_one": "띠＝전체 {n}단계／행＝차이가 큰 {k}개",
+    "gradKeyCut_other": "띠＝전체 {n}단계／행＝차이가 큰 {k}개",
+    "gradVerdict_one": "{n}단계가 염료 {k}개로 수렴합니다. 그 사이에 해당하는 염료는 없습니다.",
+    "gradVerdict_other": "{n}단계가 염료 {k}개로 수렴합니다. 그 사이에 해당하는 염료는 없습니다.",
+    "gradOmitted": "외 {n}개, 메시지에 표시",
+    "ratioKey": "외곽선＝혼합／채움＝가장 가까운 염료",
+    "designed": "원래 색",
+    "perceived": "보이는 색",
+    "separationCol": "구분도",
+    "lensCol": "시각 유형",
+    "shiftCol": "변화량",
+    "sepBandKey": "구간: ≥30 / ≥15 / ≥8 — 클수록 안전",
+    "soloKey": "막대 = 상대적 변화량 · 판정 없음",
+    "worstNote": "가장 약함: {lens}",
+    "a11yVerdict": "{lens}에서 가장 약하며, 그 차이는 {de}입니다.",
+    "worstPair": "가장 약한 쌍",
+    "pairCol": "쌍",
+    "ratioCol": "명암비",
+    "ratioShort": "비율",
+    "restCol": "기타",
+    "ratioBand0": "3:1 미만",
+    "ratioBand1": "≥ 3:1",
+    "ratioBand2": "≥ 4.5:1",
+    "ratioBand3": "≥ 7:1",
+    "floorKey": "비텍스트 하한은 3:1 — WCAG 1.4.11",
+    "plotKey": "초록 = 멀리 떨어짐 · 기준선 3 / 4.5 / 7",
+    "contrastTitle": "명암비 — 염료 {n}종",
+    "cmpTitle": "비교 — 염료 {n}종",
+    "cmpTag0": "동일",
+    "cmpTag1": "근접",
+    "cmpTag2": "유사",
+    "cmpTag3": "멀다",
+    "cmpKey": "초록 = 가까움 · 구간 5 / 10 / 20",
+    "cmpRatioKey": "명암비는 밝기를 재며 색차가 아닙니다",
+    "triKey": "상삼각 · 각 쌍 한 번",
+    "lTarget": "목표",
+    "lBoardOnly": "시장만",
+    "lVendor": "상점",
+    "lNoPrice": "가격 없음",
+    "lCandidate": "후보",
+    "vendorCheaper": "상점이 더 저렴",
+    "budgetKey": "GIL/ΔE = (목표 − 행) ÷ ΔE2000",
+    "budgetKeyMethod": "ΔE 열: {tag} · 비율은 ΔE2000 고정",
+    "budgetBest": "최고 가성비: **{name}** — ΔE {de} · {price}",
+    "budgetNoTarget": "{world}에 목표 가격 없음 — 순위·비율 공란",
+    "budgetFloor": "이미 가장 저렴한 단계 — {price}보다 싼 것은 없습니다.",
+    "swatchSlot": "부위",
+    "swatchNearest": "가까운 염료",
+    "slotSkin": "피부",
+    "slotHair": "머리",
+    "slotHl": "브릿지",
+    "slotEyes": "눈",
+    "slotLip": "입술",
+    "slotPaint": "페인트",
+    "slotTattoo": "문신",
+    "slotLimbal": "림벌",
+    "offGridShort": "그리드 외",
+    "swatchFootKey_one": "ΔE2000 기준 최근접 · 전체 {n}개 중 {s}개 부위",
+    "swatchFootKey_other": "ΔE2000 기준 최근접 · 전체 {n}개 중 {s}개 부위",
+    "swatchOffGrid": "{slot} 그리드 외 — 인덱스 {index}, 실제 {float}",
+    "swatchLip": "입술 α {alpha} — 원본 {raw}, 합성 {blend}",
+    "swatchGear": "장비 염료: {list}",
+    "swatchDropped": "제외(가장 근접한 일치): {slot} · ΔE {de}",
+    "swatchParseError": "파일을 읽을 수 없습니다 — {message}",
+    "swatchNoSlots": "이 파일에 활성 색상 부위가 없습니다.",
+    "swatchSlotMissing": "{slot}은(는) 이 파일에서 활성 부위가 아닙니다.",
+    "perDe": "GIL/ΔE"
+  },
+  "firstRun": {
+    "title": "XIV Dye Tools 5.0",
+    "body": "봇이 새로워졌습니다: 새 카드, 통일된 매칭 방식(기본 ΔE2000), /contrast와 /a11y, 캐릭터 파일 /swatch. /manual에서 안내를, /changelog에서 변경 사항을, /preferences에서 설정을 확인하세요. 이 알림은 한 번만 표시됩니다."
+  },
+  "changelog": {
+    "title": "봇의 새로운 소식",
+    "earlier": "이전 릴리스",
+    "notFound": "{version} 버전 항목이 없습니다.",
+    "empty": "변경 기록을 지금 사용할 수 없습니다."
+  },
+  "manual5": {
+    "learnLead": "자세히 보기: {link}",
+    "topics": {
+      "colorVision": {
+        "name": "색각",
+        "body": "접근성 도구는 Brettel 방식으로 네 가지 색각 — 적색맹(PROT), 록색맹(DEUT), 청색맹(TRIT), 전색맹(ACHR) — 을 시뮬레이션하고, 각 색각에서 두 염료가 얼마나 떨어져 보이는지 측정합니다. 간격이 클수록 안전하며, ΔE2000 기준 밴드는 30 / 15 / 8입니다."
+      },
+      "contrast": {
+        "name": "대비",
+        "body": "/contrast는 염료 간 WCAG 휘도비(1:1–21:1)를 측정합니다. 비텍스트 하한은 3:1(WCAG 2.1 기준 1.4.11)이며, 카드는 3 / 4.5 / 7을 표시하고 밴드를 비율로 부릅니다 — 등급 문자는 없습니다. 비율은 밝기만 측정하며 색 차이는 아닙니다."
+      },
+      "matchingMethods": {
+        "name": "매칭 방식",
+        "body": "여섯 가지 방식, 하나의 어휘: ΔE2000(기본), ΔEOK, ΔE76, REDMEAN, RGB DIST, DISTINGUISH %. 매치 라인을 따르는 것은 ΔE2000의 밴드뿐이며, 다른 방식의 밴드는 고정입니다. 티어는 방식 간에 비교하지 않으며, 티어가 표시되는 곳에는 항상 방식이 함께 표기됩니다."
+      },
+      "spectrumPrices": {
+        "name": "스펙트럼과 가격",
+        "body": "패치 7.5부터 125개 염료 중 105개가 세 가지 마켓 아이템을 공유합니다: 염료: 기본 색상(상점 216길 — 유일하게 변하지 않는 가격), 추가 색상 1(창천가 진흥권), 추가 색상 2(코스모크레딧). 통합된 염료는 개별 매물이 없으므로 /budget은 그룹 가격만 표시합니다."
+      },
+      "characterFile": {
+        "name": "캐릭터 파일",
+        "body": "/swatch는 Anamnesis / Ktisis의 .chara 내보내기를 읽습니다: 색상 부위(피부·머리·눈·입술·페인트)와 착용 장비 염색. 파일은 응답 생성을 위해 한 번만 읽히며 저장되지 않습니다. 게임 팔레트를 벗어나게 편집된 색상은 실제 값으로 매칭되고 '그리드 외'로 표시됩니다."
+      }
+    }
+  },
+  "copy": {
+    "invalidFormat": "잘못된 {format} 형식입니다.",
+    "rgbValues": "RGB 값:",
+    "hsvValues": "HSV 값:"
+  },
+  "stats": {
+    "accessDeniedTitle": "접근 거부",
+    "accessDenied": "이 통계 패널을 볼 권한이 없습니다.",
+    "fetchFailed": "통계를 가져오지 못했습니다. 나중에 다시 시도해 주세요.",
+    "summary": {
+      "features": "기능",
+      "featureList": "• 색상 매칭 및 추출\n• 염료 혼합 (알고리즘 6종)\n• 캐릭터 색상 매칭\n• 색상 조화 생성\n• 접근성 분석",
+      "stats": "통계",
+      "commandsUsed": "명령어 사용 횟수",
+      "successRate": "성공률",
+      "webApp": "웹 앱",
+      "documentation": "문서",
+      "supportServer": "지원 서버",
+      "footer": "버전 {version} • 명령어 도움말은 /manual"
+    }
+  },
+  "commands": {
+    "harmony": {
+      "description": "기준 색상에서 조화로운 염료 조합 생성"
+    },
+    "mixer": {
+      "description": "여러 색상 혼합 알고리즘으로 염료 두 개를 혼합"
+    },
+    "gradient": {
+      "description": "두 색상 사이의 그라데이션과 중간 염료 생성"
+    },
+    "extractor": {
+      "description": "입력에서 색상을 추출하고 일치하는 FFXIV 염료 찾기"
+    },
+    "swatch": {
+      "description": "캐릭터 파일의 색상을 가장 가까운 염료와 매칭"
+    },
+    "dye": {
+      "description": "FFXIV 염료 검색 및 탐색"
+    },
+    "comparison": {
+      "description": "염료 2~4개를 나란히 놓고 색상 분석"
+    },
+    "contrast": {
+      "description": "염료 쌍의 WCAG 비텍스트 대비 (기준 3:1)"
+    },
+    "accessibility": {
+      "description": "염료 하나 또는 한 쌍이 각 색각에서 어떻게 보이는지"
+    },
+    "a11y": {
+      "description": "염료 하나 또는 한 쌍이 각 색각에서 어떻게 보이는지"
+    },
+    "budget": {
+      "description": "장터 가격으로 저렴한 대체 염료 찾기"
+    },
+    "preset": {
+      "description": "커뮤니티 색상 프리셋 둘러보기, 제출, 투표"
+    },
+    "preferences": {
+      "description": "개인 봇 설정 관리"
+    },
+    "manual": {
+      "description": "모든 명령어의 도움말과 사용 가이드 표시"
+    },
+    "changelog": {
+      "description": "Discord 봇의 새로운 소식 — 릴리스 노트 (최신순)"
+    },
+    "about": {
+      "description": "XIV Dye Tools 봇 정보 표시"
+    },
+    "stats": {
+      "description": "봇 사용 통계와 정보 표시"
+    }
+  }
+}

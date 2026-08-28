@@ -29,6 +29,10 @@ import {
   listFailedNotifications,
   resolveFailedNotification,
 } from '../services/notification-service.js';
+import {
+  deletePreviewImage,
+  getPresetImageState,
+} from '../services/preview-image-service.js';
 
 type Variables = {
   auth: AuthContext;
@@ -183,6 +187,74 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
     preset: rowToPreset(revertedRow, c.get('logger')),
     message: 'Preset reverted to previous values',
   });
+});
+
+/**
+ * PATCH /:presetId/preview-image — approve or reject an uploaded image.
+ *
+ * Rejection clears the image only. The preset keeps its own status: a bad
+ * picture is not a bad palette.
+ */
+moderationRouter.patch('/:presetId/preview-image', async (c) => {
+  const modError = requireModerator(c);
+  if (modError) return modError;
+
+  const presetId = c.req.param('presetId');
+
+  let body: { action?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return invalidJsonResponse(c);
+  }
+
+  if (body.action !== 'approve' && body.action !== 'reject') {
+    return validationErrorResponse(c, "action must be 'approve' or 'reject'");
+  }
+
+  // Row-level read: CommunityPreset hides preview_image_key by design.
+  const preset = await getPresetImageState(c.env.DB, presetId);
+  if (!preset) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  const now = new Date().toISOString();
+
+  if (body.action === 'approve') {
+    await c.env.DB.prepare(
+      `UPDATE presets SET preview_image_status = 'approved', updated_at = ? WHERE id = ?`
+    )
+      .bind(now, presetId)
+      .run();
+    return c.json({ success: true, preview_image_status: 'approved' });
+  }
+
+  // Capture the key before the UPDATE clears it — deletePreviewImage below
+  // needs the pre-update value.
+  const previousKey = preset.preview_image_key;
+
+  // DB UPDATE before the R2 delete, deliberately (Task 4 ruling, same logic
+  // applies here): if the UPDATE throws, leaving the delete undone just
+  // orphans the object in R2 — invisible and cheap to clean up later. Delete
+  // first would risk the opposite: a row still pointing at a key that no
+  // longer exists, so the card serves a broken image. Never trade a broken
+  // live image for a tidy bucket.
+  await c.env.DB.prepare(
+    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ? WHERE id = ?`
+  )
+    .bind(now, presetId)
+    .run();
+
+  // The DB already reflects the rejection, so the moderator's action has
+  // succeeded. An R2 hiccup here must not 500 a request whose state is already
+  // correct — the orphaned object is the accepted failure mode by design.
+  try {
+    await deletePreviewImage(c.env, previousKey);
+  } catch (err) {
+    console.error(`[preview-image] R2 delete failed after rejection: id=${presetId}`, err);
+  }
+
+  return c.json({ success: true, preview_image_status: 'none' });
 });
 
 /**

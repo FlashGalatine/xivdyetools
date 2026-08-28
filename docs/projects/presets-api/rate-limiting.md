@@ -1,4 +1,4 @@
-# Rate Limiting - Presets API v1.4.15
+# Rate Limiting - Presets API v2.0.0
 
 The Presets API enforces a two-tier rate limiting strategy: a global IP-based limit on all endpoints and a per-user submission limit on preset creation.
 
@@ -9,7 +9,7 @@ The Presets API enforces a two-tier rate limiting strategy: a global IP-based li
 | Property   | Value                                                        |
 |------------|--------------------------------------------------------------|
 | Limit      | 100 requests per minute per IP                               |
-| Algorithm  | Sliding window via `@xivdyetools/rate-limiter` (Memory backend) |
+| Algorithm  | Sliding window via `@xivdyetools/worker-kit/rate-limiter` (Memory backend) |
 | Scope      | All endpoints                                                |
 | Middleware | `src/middleware/rate-limit.ts`                               |
 

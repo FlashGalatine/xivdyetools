@@ -8,24 +8,28 @@
  */
 
 import { BaseComponent } from './base-component';
-import { clearContainer } from '@shared/utils';
+import { clearContainer, escapeHtml } from '@shared/utils';
 import { LanguageService } from '@services/index';
 import {
-  ICON_SEARCH,
-  ICON_PALETTE,
-  ICON_COINS,
-  ICON_HARMONY,
-  ICON_IMAGE,
-  ICON_WARNING,
-  ICON_LOADING,
-} from '@shared/empty-state-icons';
+  ICON_STATE_SEARCH,
+  ICON_STATE_FUNNEL,
+  ICON_STATE_COINS,
+  ICON_STATE_ALERT,
+  ICON_STATE_WAIT_ANIMATED,
+  ICON_DETAIL_HARMONY,
+  ICON_DETAIL_EXTRACTOR,
+} from '@shared/state-icons';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface EmptyStateOptions {
-  /** Icon to display (SVG string, emoji, or text) */
+  /**
+   * Icon to display — a static SVG string from `@shared/state-icons` /
+   * `@shared/ui-icons` (compile-time constants only; emoji/text are no longer
+   * accepted — one icon system, confirmed 2026-08-07).
+   */
   icon: string;
   /** Main title text */
   title: string;
@@ -47,7 +51,7 @@ export interface EmptyStateOptions {
 
 export const EMPTY_STATE_PRESETS = {
   noSearchResults: (query: string, onClear?: () => void): EmptyStateOptions => ({
-    icon: ICON_SEARCH,
+    icon: ICON_STATE_SEARCH,
     title: LanguageService.t('emptyStates.noSearchResults.title').replace('{query}', query),
     description: LanguageService.t('emptyStates.noSearchResults.description'),
     actionLabel: LanguageService.t('emptyStates.noSearchResults.action'),
@@ -55,7 +59,8 @@ export const EMPTY_STATE_PRESETS = {
   }),
 
   allFilteredOut: (onReset?: () => void): EmptyStateOptions => ({
-    icon: ICON_PALETTE,
+    // The state is caused by filters, so the icon is the filter
+    icon: ICON_STATE_FUNNEL,
     title: LanguageService.t('emptyStates.filteredOut.title'),
     description: LanguageService.t('emptyStates.filteredOut.description'),
     actionLabel: LanguageService.t('emptyStates.filteredOut.action'),
@@ -63,7 +68,7 @@ export const EMPTY_STATE_PRESETS = {
   }),
 
   noPriceData: (onTryAnother?: () => void): EmptyStateOptions => ({
-    icon: ICON_COINS,
+    icon: ICON_STATE_COINS,
     title: LanguageService.t('marketBoard.priceUnavailable'),
     description: LanguageService.t('emptyStates.noPrice.description'),
     actionLabel: LanguageService.t('emptyStates.noPrice.action'),
@@ -71,7 +76,8 @@ export const EMPTY_STATE_PRESETS = {
   }),
 
   noHarmonyResults: (onSelectDye?: () => void): EmptyStateOptions => ({
-    icon: ICON_HARMONY,
+    // The tool's own detail glyph — the wheel, not music notes
+    icon: ICON_DETAIL_HARMONY,
     title: LanguageService.t('emptyStates.noHarmony.title'),
     description: LanguageService.t('emptyStates.noHarmony.description'),
     actionLabel: LanguageService.t('emptyStates.noHarmony.action'),
@@ -79,7 +85,7 @@ export const EMPTY_STATE_PRESETS = {
   }),
 
   noImage: (onUpload?: () => void): EmptyStateOptions => ({
-    icon: ICON_IMAGE,
+    icon: ICON_DETAIL_EXTRACTOR,
     title: LanguageService.t('emptyStates.noImage.title'),
     description: LanguageService.t('emptyStates.noImage.description'),
     actionLabel: LanguageService.t('emptyStates.noImage.action'),
@@ -87,7 +93,7 @@ export const EMPTY_STATE_PRESETS = {
   }),
 
   error: (message: string, onRetry?: () => void): EmptyStateOptions => ({
-    icon: ICON_WARNING,
+    icon: ICON_STATE_ALERT,
     title: LanguageService.t('errors.somethingWentWrong'),
     description: message,
     actionLabel: LanguageService.t('errors.tryAgain'),
@@ -95,7 +101,8 @@ export const EMPTY_STATE_PRESETS = {
   }),
 
   loading: (): EmptyStateOptions => ({
-    icon: ICON_LOADING,
+    // 2a: the hourglass runs on the web; reduced motion pauses to the static glyph
+    icon: ICON_STATE_WAIT_ANIMATED,
     title: LanguageService.t('emptyStates.loading.title'),
     description: LanguageService.t('emptyStates.loading.description'),
   }),
@@ -124,19 +131,14 @@ export class EmptyState extends BaseComponent {
       className: 'empty-state',
     });
 
-    // Icon - supports both SVG strings and emoji/text
+    // Icon — static SVG constants only (SEC pattern: code-controlled strings)
     const icon = this.createElement('div', {
       className: 'empty-state-icon',
       attributes: {
         'aria-hidden': 'true',
       },
     });
-    // Check if the icon is an SVG string
-    if (this.options.icon.includes('<svg')) {
-      icon.innerHTML = this.options.icon;
-    } else {
-      icon.textContent = this.options.icon;
-    }
+    icon.innerHTML = this.options.icon;
     wrapper.appendChild(icon);
 
     // Title
@@ -225,20 +227,21 @@ export function createEmptyState(container: HTMLElement, preset: EmptyStateOptio
 }
 
 /**
- * Create empty state HTML string for use in innerHTML
- * Handles both SVG icons and emoji/text icons
+ * Create empty state HTML string for use in innerHTML.
+ * `options.icon` must be a static SVG constant — anything else renders as an
+ * empty icon slot (defense-in-depth: this string goes into innerHTML).
+ * `title` / `description` are rendered as text: the dye-grid title carries
+ * the user's search query (FINDING-011 / WEB-2), so both are HTML-escaped.
  */
 export function getEmptyStateHTML(options: EmptyStateOptions): string {
-  // SVG icons are inserted directly, emojis are escaped
-  const iconContent = options.icon.includes('<svg')
-    ? options.icon
-    : options.icon.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
+  const iconContent = options.icon.trimStart().startsWith('<svg') ? options.icon : '';
+  const title = escapeHtml(options.title);
+  const description = options.description ? escapeHtml(options.description) : '';
   return `
     <div class="empty-state">
       <div class="empty-state-icon" aria-hidden="true">${iconContent}</div>
-      <h3 class="empty-state-title">${options.title}</h3>
-      ${options.description ? `<p class="empty-state-description">${options.description}</p>` : ''}
+      <h3 class="empty-state-title">${title}</h3>
+      ${description ? `<p class="empty-state-description">${description}</p>` : ''}
     </div>
   `.trim();
 }

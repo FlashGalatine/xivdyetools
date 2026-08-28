@@ -191,6 +191,58 @@ describe('AuthService', () => {
       await authService.initialize(); // Should be a no-op
       expect(authService.isAuthenticated()).toBe(false);
     });
+
+    // The oauth worker mints `sub` = its internal user UUID and carries the
+    // Discord snowflake as `discord_id`. Community presets are owned by the
+    // snowflake (shared with the Discord bot), so `user.id` — the value
+    // preset-edit-form compares against `author_discord_id` — must be the
+    // snowflake whenever the token has one.
+    it('should expose discord_id (not the internal sub UUID) as user.id when present', async () => {
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
+      const mockToken = createMockJWT({
+        sub: '3f1c9d2e-8a4b-4c1d-9e0f-123456789abc',
+        discord_id: '555666777888999000',
+        username: 'testuser',
+        global_name: 'Test User',
+        avatar: null,
+        auth_provider: 'discord',
+        exp: futureTime,
+        iat: Math.floor(Date.now() / 1000),
+        iss: 'xivdyetools',
+      });
+
+      mockLocalStorage['xivdyetools_auth_token'] = mockToken;
+      mockLocalStorage['xivdyetools_auth_expires'] = String(futureTime);
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(authService.getUser()?.id).toBe('555666777888999000');
+    });
+
+    it('should fall back to sub as user.id for XIVAuth-only tokens without discord_id', async () => {
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
+      const mockToken = createMockJWT({
+        sub: '3f1c9d2e-8a4b-4c1d-9e0f-123456789abc',
+        xivauth_id: 'xiv-42',
+        username: 'xivuser',
+        global_name: null,
+        avatar: null,
+        auth_provider: 'xivauth',
+        exp: futureTime,
+        iat: Math.floor(Date.now() / 1000),
+        iss: 'xivdyetools',
+      });
+
+      mockLocalStorage['xivdyetools_auth_token'] = mockToken;
+      mockLocalStorage['xivdyetools_auth_expires'] = String(futureTime);
+      mockLocalStorage['xivdyetools_auth_provider'] = 'xivauth';
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(authService.getUser()?.id).toBe('3f1c9d2e-8a4b-4c1d-9e0f-123456789abc');
+    });
   });
 
   describe('subscribe', () => {
@@ -256,6 +308,15 @@ describe('AuthService', () => {
       expect(authService.getUser()).toBeNull();
       expect(mockLocalStorage['xivdyetools_auth_token']).toBeUndefined();
       expect(mockLocalStorage['xivdyetools_auth_expires']).toBeUndefined();
+    });
+
+    it('clears the OAuth provider marker on logout (FINDING-032)', async () => {
+      mockSessionStorage['xivdyetools_oauth_provider'] = 'xivauth';
+
+      const { authService } = await import('../auth-service');
+      await authService.logout();
+
+      expect(mockSessionStorage['xivdyetools_oauth_provider']).toBeUndefined();
     });
 
     it('should notify listeners on logout', async () => {
@@ -396,23 +457,6 @@ describe('AuthService', () => {
     });
   });
 
-  describe('consumeReturnTool', () => {
-    it('should return and remove stored tool from sessionStorage', async () => {
-      mockSessionStorage['xivdyetools_oauth_return_tool'] = 'presets';
-
-      const { consumeReturnTool } = await import('../auth-service');
-
-      const tool = consumeReturnTool();
-      expect(tool).toBe('presets');
-      expect(mockSessionStorage['xivdyetools_oauth_return_tool']).toBeUndefined();
-    });
-
-    it('should return null if no tool stored', async () => {
-      const { consumeReturnTool } = await import('../auth-service');
-      expect(consumeReturnTool()).toBeNull();
-    });
-  });
-
   describe('avatar URL generation', () => {
     it('should generate correct avatar URL for static avatar', async () => {
       const futureTime = Math.floor(Date.now() / 1000) + 3600;
@@ -540,6 +584,23 @@ describe('AuthService', () => {
       await authService.login();
 
       expect(mockSessionStorage['xivdyetools_oauth_return_path']).toBe('/current-page');
+    });
+
+    // FINDING-032 / WEB-3: each Discord flow starts clean — a provider marker
+    // left behind by an earlier XIVAuth attempt (or a crafted link) must not
+    // route this flow's code exchange to the XIVAuth callback.
+    it('clears a stale OAuth provider marker when starting a Discord login', async () => {
+      mockSessionStorage['xivdyetools_oauth_provider'] = 'xivauth';
+
+      const { authService } = await import('../auth-service');
+      (global.crypto.subtle.digest as ReturnType<typeof vi.fn>).mockResolvedValue(
+        new Uint8Array(32).buffer
+      );
+
+      await authService.login();
+
+      expect(mockSessionStorage['xivdyetools_oauth_provider']).toBeUndefined();
+      expect(window.location.href).toContain('auth/discord');
     });
 
     it('should handle login errors', async () => {
@@ -821,6 +882,142 @@ describe('AuthService', () => {
         expect.stringContaining('/auth/xivauth/callback'),
         expect.anything()
       );
+    });
+
+    // FINDING-032 / WEB-3: `?provider=` is the oauth worker's XIVAuth callback
+    // marker. It used to be persisted from ANY page load, so a crafted share
+    // link (`/presets?provider=xivauth`) could misroute the victim's next
+    // Discord code exchange to the XIVAuth endpoint.
+    it('ignores a ?provider= parameter when no auth code is present', async () => {
+      (window.location as { search: string }).search = '?provider=xivauth';
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(mockSessionStorage['xivdyetools_oauth_provider']).toBeUndefined();
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('ignores an unknown ?provider= value on the callback and exchanges via the Discord endpoint', async () => {
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
+      const mockToken = createMockJWT({
+        sub: '123',
+        username: 'testuser',
+        global_name: null,
+        avatar: null,
+        exp: futureTime,
+      });
+
+      mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
+      mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
+
+      (window.location as { search: string }).search =
+        '?code=auth-code&provider=evil-provider&csrf=test-state';
+
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            token: mockToken,
+            expires_at: futureTime,
+          }),
+      });
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/auth/callback'),
+        expect.anything()
+      );
+      expect(global.fetch).not.toHaveBeenCalledWith(
+        expect.stringContaining('/auth/xivauth/callback'),
+        expect.anything()
+      );
+      expect(mockSessionStorage['xivdyetools_oauth_provider']).toBeUndefined();
+    });
+
+    // FINDING-012 / OAUTH-5: the oauth worker's GET bounce now echoes its
+    // signed `state` envelope; the POST exchange forwards it so the worker can
+    // bind the PKCE verifier to state.code_challenge. Older bounces carry no
+    // `state` and must keep working with the unchanged body shape.
+    describe('signed state forwarding (FINDING-012)', () => {
+      const exchangeBody = (): Record<string, unknown> => {
+        const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+        return JSON.parse((call[1] as RequestInit).body as string) as Record<string, unknown>;
+      };
+
+      const arrangeSuccessfulExchange = (authProvider: 'discord' | 'xivauth') => {
+        const futureTime = Math.floor(Date.now() / 1000) + 3600;
+        const mockToken = createMockJWT({
+          sub: '123',
+          auth_provider: authProvider,
+          username: 'testuser',
+          global_name: null,
+          avatar: null,
+          exp: futureTime,
+        });
+        mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
+        mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
+        (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ success: true, token: mockToken, expires_at: futureTime }),
+        });
+      };
+
+      it('forwards the signed state from the Discord bounce in the POST body', async () => {
+        arrangeSuccessfulExchange('discord');
+        (window.location as { search: string }).search =
+          '?code=auth-code&csrf=test-state&state=signed.envelope.sig';
+
+        const { authService } = await import('../auth-service');
+        await authService.initialize();
+
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('/auth/callback'),
+          expect.objectContaining({ method: 'POST' })
+        );
+        expect(exchangeBody()).toEqual({
+          code: 'auth-code',
+          code_verifier: 'test-verifier',
+          redirect_uri: 'http://localhost:3000/auth/callback',
+          state: 'signed.envelope.sig',
+        });
+        expect(authService.isAuthenticated()).toBe(true);
+      });
+
+      it('forwards the signed state from the XIVAuth bounce in the POST body', async () => {
+        arrangeSuccessfulExchange('xivauth');
+        (window.location as { search: string }).search =
+          '?code=auth-code&provider=xivauth&csrf=test-state&state=signed.xivauth.sig';
+
+        const { authService } = await import('../auth-service');
+        await authService.initialize();
+
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('/auth/xivauth/callback'),
+          expect.objectContaining({ method: 'POST' })
+        );
+        expect(exchangeBody().state).toBe('signed.xivauth.sig');
+        expect(exchangeBody().code_verifier).toBe('test-verifier');
+      });
+
+      it('still exchanges an older bounce that carries no state, with the unchanged body', async () => {
+        arrangeSuccessfulExchange('discord');
+        (window.location as { search: string }).search = '?code=auth-code&csrf=test-state';
+
+        const { authService } = await import('../auth-service');
+        await authService.initialize();
+
+        expect(exchangeBody()).toEqual({
+          code: 'auth-code',
+          code_verifier: 'test-verifier',
+          redirect_uri: 'http://localhost:3000/auth/callback',
+        });
+        expect('state' in exchangeBody()).toBe(false);
+        expect(authService.isAuthenticated()).toBe(true);
+      });
     });
 
     it('should use return path from URL or session storage', async () => {

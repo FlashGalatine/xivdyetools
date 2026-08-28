@@ -19,7 +19,7 @@ import * as path from 'path';
 // Path to the presets.json in xivdyetools-core
 const PRESETS_PATH = path.resolve(
   __dirname,
-  '../../xivdyetools-core/src/data/presets.json'
+  '../../../packages/core/src/data/presets.json'
 );
 
 interface PresetPalette {

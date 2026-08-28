@@ -7,8 +7,6 @@ import type {
   TranslationKey,
   HarmonyTypeKey,
   VisionType,
-  JobKey,
-  GrandCompanyKey,
   RaceKey,
   ClanKey,
 } from '@xivdyetools/types';
@@ -50,13 +48,13 @@ describe('TranslationProvider', () => {
       Crafting: 'Crafting',
       'Ixali Vendor': 'Ixali Vendor',
     },
-    metallicDyeIds: [13116, 13117],
     harmonyTypes: {
       complementary: 'Complementary',
       analogous: 'Analogous',
       triadic: 'Triadic',
       splitComplementary: 'Split-Complementary',
       tetradic: 'Tetradic',
+      invertedTetradic: 'Inverted Tetradic',
       square: 'Square',
       monochromatic: 'Monochromatic',
       compound: 'Compound',
@@ -68,35 +66,6 @@ describe('TranslationProvider', () => {
       protanopia: 'Protanopia (Red-Green Colorblindness)',
       tritanopia: 'Tritanopia (Blue-Yellow Colorblindness)',
       achromatopsia: 'Achromatopsia (Total Colorblindness)',
-    },
-    jobNames: {
-      paladin: 'Paladin',
-      warrior: 'Warrior',
-      darkKnight: 'Dark Knight',
-      gunbreaker: 'Gunbreaker',
-      whiteMage: 'White Mage',
-      scholar: 'Scholar',
-      astrologian: 'Astrologian',
-      sage: 'Sage',
-      monk: 'Monk',
-      dragoon: 'Dragoon',
-      ninja: 'Ninja',
-      samurai: 'Samurai',
-      reaper: 'Reaper',
-      viper: 'Viper',
-      bard: 'Bard',
-      machinist: 'Machinist',
-      dancer: 'Dancer',
-      blackMage: 'Black Mage',
-      summoner: 'Summoner',
-      redMage: 'Red Mage',
-      pictomancer: 'Pictomancer',
-      blueMage: 'Blue Mage',
-    },
-    grandCompanyNames: {
-      maelstrom: 'The Maelstrom',
-      twinAdder: 'Order of the Twin Adder',
-      immortalFlames: 'The Immortal Flames',
     },
     races: {
       hyur: 'Hyur',
@@ -123,7 +92,7 @@ describe('TranslationProvider', () => {
       xaela: 'Xaela',
       rava: 'Rava',
       veena: 'Veena',
-      helion: 'Helion',
+      helions: 'Helions',
       theLost: 'The Lost',
     },
   };
@@ -165,21 +134,6 @@ describe('TranslationProvider', () => {
       ...mockEnglishData.visionTypes,
       normal: '正常な視覚',
       deuteranopia: '2型色覚（赤緑色盲）',
-    },
-    jobNames: {
-      ...mockEnglishData.jobNames,
-      paladin: 'ナイト',
-      warrior: '戦士',
-      darkKnight: '暗黒騎士',
-      whiteMage: '白魔道士',
-      blackMage: '黒魔道士',
-      redMage: '赤魔道士',
-    },
-    grandCompanyNames: {
-      ...mockEnglishData.grandCompanyNames,
-      maelstrom: '黒渦団',
-      twinAdder: '双蛇党',
-      immortalFlames: '不滅隊',
     },
     races: {
       ...mockEnglishData.races,
@@ -376,47 +330,6 @@ describe('TranslationProvider', () => {
     });
   });
 
-  describe('getMetallicDyeIds', () => {
-    it('should return metallic dye IDs from requested locale', () => {
-      registry.registerLocale(mockEnglishData);
-
-      const ids = provider.getMetallicDyeIds('en');
-      expect(ids).toEqual([13116, 13117]);
-    });
-
-    it('should return same IDs regardless of locale', () => {
-      registry.registerLocale(mockEnglishData);
-      registry.registerLocale(mockJapaneseData);
-
-      const enIds = provider.getMetallicDyeIds('en');
-      const jaIds = provider.getMetallicDyeIds('ja');
-
-      expect(enIds).toEqual(jaIds);
-    });
-
-    it('should fallback to English when requested locale not available', () => {
-      registry.registerLocale(mockEnglishData);
-
-      const ids = provider.getMetallicDyeIds('de');
-      expect(ids).toEqual([13116, 13117]);
-    });
-
-    it('should return empty array when no locale available', () => {
-      const ids = provider.getMetallicDyeIds('en');
-      expect(ids).toEqual([]);
-    });
-
-    it('should return array of numbers', () => {
-      registry.registerLocale(mockEnglishData);
-
-      const ids = provider.getMetallicDyeIds('en');
-      expect(Array.isArray(ids)).toBe(true);
-      ids.forEach((id) => {
-        expect(typeof id).toBe('number');
-      });
-    });
-  });
-
   describe('getHarmonyType', () => {
     it('should return harmony type from requested locale', () => {
       registry.registerLocale(mockEnglishData);
@@ -449,12 +362,12 @@ describe('TranslationProvider', () => {
       registry.registerLocale(mockEnglishData);
 
       expect(provider.getHarmonyType('complementary' as HarmonyTypeKey, 'en')).toBe(
-        'Complementary'
+        'Complementary',
       );
       expect(provider.getHarmonyType('analogous' as HarmonyTypeKey, 'en')).toBe('Analogous');
       expect(provider.getHarmonyType('triadic' as HarmonyTypeKey, 'en')).toBe('Triadic');
       expect(provider.getHarmonyType('monochromatic' as HarmonyTypeKey, 'en')).toBe(
-        'Monochromatic'
+        'Monochromatic',
       );
     });
   });
@@ -494,143 +407,6 @@ describe('TranslationProvider', () => {
       expect(provider.getVisionType('deuteranopia' as VisionType, 'en')).toContain('Deuteranopia');
       expect(provider.getVisionType('protanopia' as VisionType, 'en')).toContain('Protanopia');
       expect(provider.getVisionType('tritanopia' as VisionType, 'en')).toContain('Tritanopia');
-    });
-  });
-
-  describe('getJobName', () => {
-    it('should return job name from requested locale', () => {
-      registry.registerLocale(mockEnglishData);
-
-      const job = provider.getJobName('paladin' as JobKey, 'en');
-      expect(job).toBe('Paladin');
-    });
-
-    it('should return Japanese job name when requested', () => {
-      registry.registerLocale(mockJapaneseData);
-
-      const job = provider.getJobName('paladin' as JobKey, 'ja');
-      expect(job).toBe('ナイト');
-    });
-
-    it('should fallback to English when requested locale not available', () => {
-      registry.registerLocale(mockEnglishData);
-
-      const job = provider.getJobName('darkKnight' as JobKey, 'de');
-      expect(job).toBe('Dark Knight');
-    });
-
-    it('should format key when not found in any locale', () => {
-      // Using 'fr' (valid LocaleCode) with no registry to test fallback to formatting
-      const job = provider.getJobName('darkKnight' as JobKey, 'fr');
-      expect(job).toBe('Dark Knight');
-    });
-
-    it('should handle all tank jobs', () => {
-      registry.registerLocale(mockEnglishData);
-
-      expect(provider.getJobName('paladin' as JobKey, 'en')).toBe('Paladin');
-      expect(provider.getJobName('warrior' as JobKey, 'en')).toBe('Warrior');
-      expect(provider.getJobName('darkKnight' as JobKey, 'en')).toBe('Dark Knight');
-      expect(provider.getJobName('gunbreaker' as JobKey, 'en')).toBe('Gunbreaker');
-    });
-
-    it('should handle all healer jobs', () => {
-      registry.registerLocale(mockEnglishData);
-
-      expect(provider.getJobName('whiteMage' as JobKey, 'en')).toBe('White Mage');
-      expect(provider.getJobName('scholar' as JobKey, 'en')).toBe('Scholar');
-      expect(provider.getJobName('astrologian' as JobKey, 'en')).toBe('Astrologian');
-      expect(provider.getJobName('sage' as JobKey, 'en')).toBe('Sage');
-    });
-
-    it('should handle all melee DPS jobs', () => {
-      registry.registerLocale(mockEnglishData);
-
-      expect(provider.getJobName('monk' as JobKey, 'en')).toBe('Monk');
-      expect(provider.getJobName('dragoon' as JobKey, 'en')).toBe('Dragoon');
-      expect(provider.getJobName('ninja' as JobKey, 'en')).toBe('Ninja');
-      expect(provider.getJobName('samurai' as JobKey, 'en')).toBe('Samurai');
-      expect(provider.getJobName('reaper' as JobKey, 'en')).toBe('Reaper');
-      expect(provider.getJobName('viper' as JobKey, 'en')).toBe('Viper');
-    });
-
-    it('should handle all ranged DPS jobs', () => {
-      registry.registerLocale(mockEnglishData);
-
-      expect(provider.getJobName('bard' as JobKey, 'en')).toBe('Bard');
-      expect(provider.getJobName('machinist' as JobKey, 'en')).toBe('Machinist');
-      expect(provider.getJobName('dancer' as JobKey, 'en')).toBe('Dancer');
-    });
-
-    it('should handle all caster DPS jobs', () => {
-      registry.registerLocale(mockEnglishData);
-
-      expect(provider.getJobName('blackMage' as JobKey, 'en')).toBe('Black Mage');
-      expect(provider.getJobName('summoner' as JobKey, 'en')).toBe('Summoner');
-      expect(provider.getJobName('redMage' as JobKey, 'en')).toBe('Red Mage');
-      expect(provider.getJobName('pictomancer' as JobKey, 'en')).toBe('Pictomancer');
-      expect(provider.getJobName('blueMage' as JobKey, 'en')).toBe('Blue Mage');
-    });
-
-    it('should handle Japanese caster job names', () => {
-      registry.registerLocale(mockJapaneseData);
-
-      expect(provider.getJobName('blackMage' as JobKey, 'ja')).toBe('黒魔道士');
-      expect(provider.getJobName('whiteMage' as JobKey, 'ja')).toBe('白魔道士');
-      expect(provider.getJobName('redMage' as JobKey, 'ja')).toBe('赤魔道士');
-    });
-  });
-
-  describe('getGrandCompanyName', () => {
-    it('should return Grand Company name from requested locale', () => {
-      registry.registerLocale(mockEnglishData);
-
-      const gc = provider.getGrandCompanyName('maelstrom' as GrandCompanyKey, 'en');
-      expect(gc).toBe('The Maelstrom');
-    });
-
-    it('should return Japanese Grand Company name when requested', () => {
-      registry.registerLocale(mockJapaneseData);
-
-      const gc = provider.getGrandCompanyName('maelstrom' as GrandCompanyKey, 'ja');
-      expect(gc).toBe('黒渦団');
-    });
-
-    it('should fallback to English when requested locale not available', () => {
-      registry.registerLocale(mockEnglishData);
-
-      const gc = provider.getGrandCompanyName('twinAdder' as GrandCompanyKey, 'de');
-      expect(gc).toBe('Order of the Twin Adder');
-    });
-
-    it('should format key when not found in any locale', () => {
-      // Using 'fr' (valid LocaleCode) with no registry to test fallback to formatting
-      const gc = provider.getGrandCompanyName('immortalFlames' as GrandCompanyKey, 'fr');
-      expect(gc).toBe('Immortal Flames');
-    });
-
-    it('should handle all Grand Companies', () => {
-      registry.registerLocale(mockEnglishData);
-
-      expect(provider.getGrandCompanyName('maelstrom' as GrandCompanyKey, 'en')).toBe(
-        'The Maelstrom'
-      );
-      expect(provider.getGrandCompanyName('twinAdder' as GrandCompanyKey, 'en')).toBe(
-        'Order of the Twin Adder'
-      );
-      expect(provider.getGrandCompanyName('immortalFlames' as GrandCompanyKey, 'en')).toBe(
-        'The Immortal Flames'
-      );
-    });
-
-    it('should handle all Japanese Grand Company names', () => {
-      registry.registerLocale(mockJapaneseData);
-
-      expect(provider.getGrandCompanyName('maelstrom' as GrandCompanyKey, 'ja')).toBe('黒渦団');
-      expect(provider.getGrandCompanyName('twinAdder' as GrandCompanyKey, 'ja')).toBe('双蛇党');
-      expect(provider.getGrandCompanyName('immortalFlames' as GrandCompanyKey, 'ja')).toBe(
-        '不滅隊'
-      );
     });
   });
 

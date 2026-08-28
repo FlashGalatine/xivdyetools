@@ -26,8 +26,6 @@ export type {
   PresetSubmitResponse,
   PresetEditResponse,
   VoteResponse,
-  ModerationResponse,
-  CategoryListResponse,
 } from '@xivdyetools/types';
 
 /**
@@ -52,6 +50,16 @@ export interface Env {
 
   // Service bindings
   DISCORD_WORKER?: Fetcher;
+  IMAGE_WORKER: Fetcher;
+
+  // R2 buckets
+  THUMBNAILS: R2Bucket;
+
+  /**
+   * FINDING-003: native Workers Rate Limiting binding (`[[ratelimits]]`,
+   * limit 100 / 60 s) for the public per-IP limiter; memory fallback when absent.
+   */
+  RL_PUBLIC?: RateLimit;
 
   // Environment variables
   ENVIRONMENT: string;
@@ -70,10 +78,30 @@ export interface Env {
 
   // Web OAuth (shared with xivdyetools-oauth-worker)
   JWT_SECRET?: string;
+  /**
+   * FINDING-015: expected `iss` claim (the oauth worker's WORKER_URL). When
+   * set, tokens from any other issuer are rejected. Plain var, not a secret.
+   */
+  JWT_ISSUER?: string;
+  /**
+   * FINDING-002: the oauth worker's jti blacklist (same KV namespace). When
+   * bound, revoked tokens are rejected by authMiddleware; absent in tests/dev.
+   */
+  TOKEN_BLACKLIST?: KVNamespace;
 
   // Discord bot webhook for notifications
   DISCORD_BOT_WEBHOOK_URL?: string;
   INTERNAL_WEBHOOK_SECRET?: string;
+
+  /**
+   * FINDING-018: Cloudflare zone that serves `shots.xivdyetools.app` and an API
+   * token with `Zone.Cache Purge`, used to evict a preview image's URL from the
+   * edge cache when it is rejected / deleted / replaced. Both optional: when
+   * either is absent the purge is skipped and the one-day `s-maxage` on the
+   * object is the only bound on how long a removed image stays reachable.
+   */
+  CACHE_PURGE_ZONE_ID?: string;
+  CACHE_PURGE_API_TOKEN?: string;
 }
 
 // ============================================
@@ -96,6 +124,11 @@ export interface PresetRow {
   updated_at: string;
   dye_signature: string | null;
   previous_values: string | null; // JSON string of PresetPreviousValues
+  example_link: string | null; // 8A: allowlisted page URL, stored not copied
+  preview_image_key: string | null; // R2 key, {presetId}/{uuid}.webp
+  preview_image_status: string; // 'none' | 'pending' | 'approved'
+  secondary_categories: string; // JSON array of PresetCategory; never null
+  rejection_reason?: string | null; // joined from moderation_log on /mine only
 }
 
 export interface CategoryRow {

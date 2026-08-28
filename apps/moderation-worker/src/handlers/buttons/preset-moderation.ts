@@ -15,7 +15,13 @@ import { ephemeralResponse, isValidUuid, sanitizeErrorMessage } from '../../util
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { safeEditMessage, safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
+import * as banService from '../../services/ban-service.js';
 import { STATUS_DISPLAY } from '../../types/preset.js';
+import { sanitizeName, sanitizeUserName } from '../../utils/embed-text.js';
+
+/** MOD-4: shown when the approve button targets a banned author's preset. */
+const AUTHOR_BANNED_MESSAGE =
+  'the author is currently banned from Preset Palettes — reject the preset or lift the ban first.';
 
 // ============================================================================
 // Types
@@ -99,8 +105,37 @@ async function processApproval(
   userName: string,
   logger?: ExtendedLogger
 ): Promise<void> {
+  // FINDING-019: the moderator's Discord name is user-controlled text
+  const safeModerator = sanitizeUserName(userName);
+
   try {
+    // MOD-4 (FINDING-034, 2026-08-21 audit): a ban hides only the author's
+    // approved presets, so their pending / flagged entries would otherwise
+    // still be approvable from the moderation embed
+    if (await banService.isPresetAuthorBanned(env.DB, presetId)) {
+      if (interaction.channel_id && interaction.message?.id) {
+        const originalEmbed = interaction.message.embeds?.[0] || {};
+        await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+          embeds: [
+            {
+              title: originalEmbed.title,
+              description: originalEmbed.description,
+              color: originalEmbed.color,
+              fields: [
+                ...(originalEmbed.fields || []),
+                { name: 'Error', value: `Not approved: ${AUTHOR_BANNED_MESSAGE}`, inline: false },
+              ],
+              footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
+              timestamp: originalEmbed.timestamp,
+            },
+          ],
+        });
+      }
+      return;
+    }
+
     const preset = await presetApi.approvePreset(env, presetId, userId);
+    const safeName = sanitizeName(preset.name); // FINDING-019 (author-controlled)
 
     if (interaction.channel_id && interaction.message?.id) {
       const originalEmbed = interaction.message.embeds?.[0] || {};
@@ -113,7 +148,7 @@ async function processApproval(
             color: STATUS_DISPLAY.approved.color,
             fields: [
               ...(originalEmbed.fields || []),
-              { name: 'Action', value: `Approved by ${userName}`, inline: false },
+              { name: 'Action', value: `Approved by ${safeModerator}`, inline: false },
             ],
             footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
             timestamp: originalEmbed.timestamp,
@@ -127,8 +162,8 @@ async function processApproval(
       await safeSendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
         embeds: [
           {
-            title: `\u2705 ${preset.name} - Approved`,
-            description: `Preset approved by ${userName}`,
+            title: `\u2705 ${safeName} - Approved`,
+            description: `Preset approved by ${safeModerator}`,
             color: STATUS_DISPLAY.approved.color,
             footer: { text: `ID: ${preset.id}` },
           },

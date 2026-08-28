@@ -10,10 +10,16 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import type { Env } from './types/env.js';
+import type { Env, DiscordInteraction } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
-import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse, timingSafeEqual } from './utils/verify.js';
+import {
+  verifyDiscordRequest,
+  unauthorizedResponse,
+  badRequestResponse,
+  timingSafeEqual,
+} from '@xivdyetools/auth';
 import { pongResponse, ephemeralResponse } from './utils/response.js';
+import { BRAND_ACCENT } from './utils/brand.js';
 import {
   handleAboutCommand,
   handleHarmonyCommand,
@@ -24,35 +30,42 @@ import {
   handlePreferencesCommand,
   handleMixerV4Command,
   handleSwatchCommand,
-  // Legacy commands (kept for backward compatibility during migration)
-  handleMatchCommand,
-  handleMatchImageCommand,
   handleAccessibilityCommand,
+  handleContrastCommand,
   handleManualCommand,
   handleComparisonCommand,
-  handleLanguageCommand,
-  handleFavoritesCommand,
-  handleCollectionCommand,
   handlePresetCommand,
   handleStatsCommand,
   handleBudgetCommand,
   handleBudgetAutocomplete,
+  handleChangelogCommand,
 } from './handlers/commands/index.js';
-import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
+import {
+  checkRateLimit,
+  formatRateLimitMessage,
+  resolveRateLimitScope,
+} from './services/rate-limiter.js';
 import { trackCommandWithKV } from './services/analytics.js';
-import { getCollections } from './services/user-storage.js';
-import { getPresetFavoriteEntries, savePresetFavoriteEntries } from './services/preset-favorites.js';
+import {
+  getPresetFavoriteEntries,
+  savePresetFavoriteEntries,
+} from './services/preset-favorites.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
-import { dyeService } from './utils/color.js';
+import { dyeService, searchDyesByName, type LocaleCode } from '@xivdyetools/bot-logic';
 import * as presetApi from './services/preset-api.js';
-import { sendMessage } from './utils/discord-api.js';
+import { sendMessage, sendFollowUp } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
-import { getLocalizedDyeName } from './services/i18n.js';
-import { createTranslator } from './services/bot-i18n.js';
+import {
+  getLocalizedDyeName,
+  discordLocaleToLocaleCode,
+  resolveUserLocale,
+  initializeLocale,
+} from './services/i18n.js';
+import { createTranslator, createUserTranslator, type Translator } from './services/bot-i18n.js';
 import { sendModerationNotification } from './handlers/commands/preset-notifications.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
-import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-middleware';
-import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
+import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
+import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
 import { sanitizePresetName, sanitizePresetDescription } from './utils/sanitize.js';
 import { CLANS_BY_RACE } from './types/preferences.js';
 import { getWorldAutocomplete } from './services/budget/index.js';
@@ -80,16 +93,28 @@ let envErrorsLogged = false;
 
 // FINDING-004: Restrict CORS to known web app origins instead of wildcard.
 // Discord interactions and webhooks are server-to-server; only /health is browser-hit.
-app.use('*', cors({
-  origin: ['https://xivdyetools.app', 'https://www.xivdyetools.app'],
-}));
+//
+// allowMethods is pinned rather than left to hono's default: 4.13.0 added QUERY
+// to that default, so preflights began advertising a verb this Worker has no
+// route for. The live surface is GET /health plus three POSTs (/, /webhooks/*).
+// Matches the explicit pinning in api-worker, oauth and presets-api.
+app.use(
+  '*',
+  cors({
+    origin: ['https://xivdyetools.app', 'https://www.xivdyetools.app'],
+    allowMethods: ['GET', 'POST', 'OPTIONS'],
+  }),
+);
 
 // REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
 app.use('*', requestIdMiddleware());
-app.use('*', loggerMiddleware({
-  serviceName: 'xivdyetools-discord-worker',
-  readEnvironmentFromEnv: false,
-}));
+app.use(
+  '*',
+  loggerMiddleware({
+    serviceName: 'xivdyetools-discord-worker',
+    readEnvironmentFromEnv: false,
+  }),
+);
 
 // Environment validation middleware
 // Validates required env vars once per isolate and caches result
@@ -106,7 +131,9 @@ app.use('*', async (c, next) => {
     // BUG-017 (2026-07-18 audit): checked on every request, not just the first
     // one in the isolate, so a misconfigured worker can't serve one 500 and
     // then silently process later traffic.
-    if (result.errors.some(e => e.includes('DISCORD_TOKEN') || e.includes('DISCORD_PUBLIC_KEY'))) {
+    if (
+      result.errors.some((e) => e.includes('DISCORD_TOKEN') || e.includes('DISCORD_PUBLIC_KEY'))
+    ) {
       return c.json({ error: 'Service misconfigured' }, 500);
     }
   }
@@ -181,12 +208,84 @@ app.post('/webhooks/preset-submission', async (c) => {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
-  if (payload.type !== 'submission' || !payload.preset) {
+  if (payload.type !== 'submission' && payload.type !== 'preview_image') {
+    return c.json({ error: 'Invalid payload' }, 400);
+  }
+  if (!payload.preset) {
     return c.json({ error: 'Invalid payload' }, 400);
   }
 
+  if (payload.type === 'preview_image') {
+    // The moderation channel, not the submission log: a pending image is work
+    // for a moderator, and the submission log is where *published* presets are
+    // announced. Posting an unapproved image there would both misfile the task
+    // and show the picture to the wrong audience.
+    // No moderation channel configured: nothing to post to, so this is a
+    // silent no-op rather than an error.
+    if (!env.MODERATION_CHANNEL_ID) {
+      return c.json({ success: true });
+    }
+    const adminT = createTranslator('en');
+    const safeName = sanitizePresetName(payload.preset.name);
+    // Posted with discord-worker's own token (not MODERATION_BOT_TOKEN): the
+    // approve/reject buttons below are handled by THIS app (Task 9), and
+    // Discord routes component clicks to whichever application's bot posted
+    // the message.
+    const imageRes = await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
+      embeds: [
+        {
+          title: `🖼️ ${adminT.t('webhook.previewImagePending')}`,
+          description: `**${safeName}**`,
+          color: STATUS_DISPLAY.pending.color,
+          // Built here rather than read from the API: for a pending image the
+          // API withholds preview_image_url by design, and this embed is
+          // exactly where an unapproved image is meant to be seen.
+          ...(payload.preview_image_key
+            ? { image: { url: `https://shots.xivdyetools.app/${payload.preview_image_key}` } }
+            : {}),
+          footer: { text: `ID: ${payload.preset.id}` },
+        },
+      ],
+      components: [
+        {
+          type: 1, // Action Row
+          components: [
+            {
+              type: 2, // Button
+              style: 3, // Success (green)
+              label: adminT.t('webhook.buttons.approve'),
+              custom_id: `previewimg_approve_${payload.preset.id}`,
+              emoji: { name: '✅' },
+            },
+            {
+              type: 2, // Button
+              style: 4, // Danger (red)
+              label: adminT.t('webhook.buttons.reject'),
+              custom_id: `previewimg_reject_${payload.preset.id}`,
+              emoji: { name: '❌' },
+            },
+          ],
+        },
+      ],
+    });
+    if (!imageRes.ok) {
+      logger.error('Preview-image notification rejected by Discord', undefined, {
+        status: imageRes.status,
+      });
+      // Same contract as the submission branch (BUG-074): surface the failure
+      // so presets-api's retry/dead-letter machinery takes over instead of
+      // silently losing a moderation-queue entry.
+      return c.json({ error: 'Failed to deliver preview-image notification' }, 502);
+    }
+    return c.json({ success: true });
+  }
+
   const { preset } = payload;
-  logger.info('Received preset webhook', { presetName: preset.name, presetId: preset.id, source: preset.source });
+  logger.info('Received preset webhook', {
+    presetName: preset.name,
+    presetId: preset.id,
+    source: preset.source,
+  });
 
   // Pending presets go to the moderation channel via the shared sanitized
   // builder (REFACTOR-025/BUG-009/BUG-072); Discord outcome checked (BUG-074)
@@ -198,12 +297,32 @@ app.post('/webhooks/preset-submission', async (c) => {
         kind: 'new',
         preset,
         extraFields: [
-          { name: adminT.t('webhook.fields.source'), value: preset.source === 'web' ? adminT.t('webhook.sources.web') : adminT.t('webhook.sources.discord'), inline: true },
-          { name: adminT.t('webhook.fields.dyes'), value: formatDyesForEmbed(preset.dyes), inline: false },
-          ...(preset.tags.length > 0 ? [{ name: adminT.t('webhook.fields.tags'), value: preset.tags.join(', '), inline: false }] : []),
+          {
+            name: adminT.t('webhook.fields.source'),
+            value:
+              preset.source === 'web'
+                ? adminT.t('webhook.sources.web')
+                : adminT.t('webhook.sources.discord'),
+            inline: true,
+          },
+          {
+            name: adminT.t('webhook.fields.dyes'),
+            value: formatDyesForEmbed(preset.dyes),
+            inline: false,
+          },
+          ...(preset.tags.length > 0
+            ? [
+                {
+                  name: adminT.t('webhook.fields.tags'),
+                  // FINDING-019: tags are user content too
+                  value: preset.tags.map((tag) => sanitizePresetName(tag)).join(', '),
+                  inline: false,
+                },
+              ]
+            : []),
         ],
       },
-      logger
+      logger,
     );
     if (!sent) {
       // BUG-074: surface the failure so presets-api's retry/dead-letter
@@ -215,8 +334,12 @@ app.post('/webhooks/preset-submission', async (c) => {
   // Auto-approved presets go directly to submission log channel
   if (preset.status === 'approved' && env.SUBMISSION_LOG_CHANNEL_ID) {
     // SECURITY: Sanitize user-provided content before display
+    // FINDING-019 (2026-08-21 audit): author name and tags included — they
+    // were the two user-sourced strings this embed still carried raw
     const safeName = sanitizePresetName(preset.name);
     const safeDescription = sanitizePresetDescription(preset.description);
+    const safeAuthor = sanitizePresetName(preset.author_name || 'Unknown');
+    const safeTags = preset.tags.map((tag) => sanitizePresetName(tag));
     // Use English translator for admin notifications (no user context)
     const adminT = createTranslator('en');
     const logRes = await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
@@ -227,10 +350,33 @@ app.post('/webhooks/preset-submission', async (c) => {
           color: STATUS_DISPLAY.approved.color,
           fields: [
             { name: adminT.t('webhook.fields.category'), value: preset.category_id, inline: true },
-            { name: adminT.t('webhook.fields.author'), value: preset.author_name || 'Unknown', inline: true },
-            { name: adminT.t('webhook.fields.source'), value: preset.source === 'web' ? adminT.t('webhook.sources.web') : adminT.t('webhook.sources.discord'), inline: true },
-            { name: adminT.t('webhook.fields.dyes'), value: formatDyesForEmbed(preset.dyes), inline: false },
-            ...(preset.tags.length > 0 ? [{ name: adminT.t('webhook.fields.tags'), value: preset.tags.join(', '), inline: false }] : []),
+            {
+              name: adminT.t('webhook.fields.author'),
+              value: safeAuthor,
+              inline: true,
+            },
+            {
+              name: adminT.t('webhook.fields.source'),
+              value:
+                preset.source === 'web'
+                  ? adminT.t('webhook.sources.web')
+                  : adminT.t('webhook.sources.discord'),
+              inline: true,
+            },
+            {
+              name: adminT.t('webhook.fields.dyes'),
+              value: formatDyesForEmbed(preset.dyes),
+              inline: false,
+            },
+            ...(safeTags.length > 0
+              ? [
+                  {
+                    name: adminT.t('webhook.fields.tags'),
+                    value: safeTags.join(', '),
+                    inline: false,
+                  },
+                ]
+              : []),
           ],
           footer: { text: `ID: ${preset.id} • ${adminT.t('webhook.autoApproved')}` },
           timestamp: preset.created_at,
@@ -284,7 +430,9 @@ app.post('/webhooks/github', async (c) => {
 
   // Defense-in-depth: verify actual body size (Content-Length can be missing or spoofed)
   if (rawBody.length > 10240) {
-    logger.warn('GitHub webhook body exceeds limit despite Content-Length', { size: rawBody.length });
+    logger.warn('GitHub webhook body exceeds limit despite Content-Length', {
+      size: rawBody.length,
+    });
     return c.json({ error: 'Payload too large' }, 413);
   }
 
@@ -314,7 +462,7 @@ app.post('/webhooks/github', async (c) => {
   const changelogModified = payload.commits.some(
     (commit) =>
       commit.added.includes('CHANGELOG-laymans.md') ||
-      commit.modified.includes('CHANGELOG-laymans.md')
+      commit.modified.includes('CHANGELOG-laymans.md'),
   );
 
   if (!changelogModified) {
@@ -352,7 +500,7 @@ app.post('/webhooks/github', async (c) => {
     env.DISCORD_TOKEN,
     env.ANNOUNCEMENT_CHANNEL_ID,
     latestEntry,
-    payload.repository.html_url
+    payload.repository.html_url,
   );
 
   logger.info('Changelog announcement sent', { version: latestEntry.version });
@@ -372,10 +520,7 @@ app.post('/', async (c) => {
   const env = c.env;
 
   // Verify the request signature
-  const { isValid, body, error } = await verifyDiscordRequest(
-    c.req.raw,
-    env.DISCORD_PUBLIC_KEY
-  );
+  const { isValid, body, error } = await verifyDiscordRequest(c.req.raw, env.DISCORD_PUBLIC_KEY);
 
   const logger = c.get('logger');
 
@@ -429,13 +574,49 @@ app.post('/', async (c) => {
 });
 
 /**
+ * 5.0 first-run notice: one ephemeral follow-up naming what changed, gated
+ * by a permanent KV flag. Existing users (stored preferences) are flagged
+ * silently — the redesign notice is for people meeting the bot fresh.
+ */
+async function maybeSendFirstRunNotice(
+  env: Env,
+  interaction: DiscordInteraction,
+  userId: string,
+  logger: ExtendedLogger,
+): Promise<void> {
+  const flagKey = `firstrun:v5:${userId}`;
+  const seen = await env.KV.get(flagKey);
+  if (seen) return;
+  // Flag before sending — a failed send must never become a repeat notice
+  await env.KV.put(flagKey, '1');
+
+  const prefs = await env.KV.get(`prefs:v1:${userId}`);
+  if (prefs) return; // existing user — suppressed by decision
+
+  const t = createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+  const response = await sendFollowUp(env.DISCORD_CLIENT_ID, interaction.token, {
+    embeds: [
+      {
+        title: t.t('firstRun.title'),
+        description: t.t('firstRun.body'),
+        color: BRAND_ACCENT,
+      },
+    ],
+    ephemeral: true,
+  });
+  if (!response.ok) {
+    logger.warn('First-run follow-up rejected', { status: response.status });
+  }
+}
+
+/**
  * Handle slash commands
  */
 async function handleCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Response> {
   const commandName = interaction.data?.name;
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
@@ -443,13 +624,20 @@ async function handleCommand(
   // DISCORD-HIGH-003: Guard against missing userId to prevent rate limit bypass
   if (!userId) {
     logger.error('Unable to identify user from interaction', { commandName });
-    return ephemeralResponse('Unable to identify user. Please try again.');
+    return ephemeralResponse(
+      (await routerTranslator(env, interaction, logger)).t('errors.unknownUser'),
+    );
   }
 
   logger.info('Handling command', { command: commandName, userId });
 
-  // Check rate limit (skip for utility commands)
-  if (commandName && !['about', 'manual', 'stats'].includes(commandName)) {
+  // Check rate limit (skip for utility commands). Aliases (/a11y) share the
+  // canonical command's bucket; /extractor tiers its image subcommand
+  // separately (Photon path, 5/min) from the plain color lookup.
+  // FINDING-033 (2026-08-21 audit): /stats is NOT exempt — its public summary
+  // runs paginated KV list() scans, so it takes the default per-user tier.
+  if (commandName && !['about', 'manual', 'changelog'].includes(commandName)) {
+    const scope = resolveRateLimitScope(commandName, interaction.data?.options?.[0]?.name);
     const rateLimitResult = await checkRateLimit(
       {
         upstashUrl: env.UPSTASH_REDIS_REST_URL,
@@ -457,13 +645,25 @@ async function handleCommand(
         kv: env.KV, // fallback if Upstash not configured
       },
       userId,
-      commandName
+      scope.command,
+      undefined,
+      scope.subcommand,
     );
     if (!rateLimitResult.allowed) {
       logger.info('User rate limited', { userId, command: commandName });
-      return ephemeralResponse(formatRateLimitMessage(rateLimitResult));
+      const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
+      return ephemeralResponse(formatRateLimitMessage(rateLimitResult, t));
     }
   }
+
+  // 5.0 first-run: a one-time ephemeral follow-up naming what changed.
+  // KV-flagged; suppressed (but still flagged) when the user already has
+  // stored preferences — an existing user is not "first-run".
+  ctx.waitUntil(
+    maybeSendFirstRunNotice(env, interaction, userId, logger).catch((error) => {
+      logger.warn('First-run notice failed', { error: String(error) });
+    }),
+  );
 
   // DISCORD-CRITICAL-001: Track analytics AFTER command execution with actual success status
   let success = true;
@@ -506,37 +706,30 @@ async function handleCommand(
         response = await handleSwatchCommand(interaction, env, ctx, logger);
         break;
 
-      // Legacy commands (kept for backward compatibility during migration)
-      case 'match':
-        response = await handleMatchCommand(interaction, env, ctx);
-        break;
-
-      case 'match_image':
-        response = await handleMatchImageCommand(interaction, env, ctx, logger);
-        break;
-
+      // v5: /match, /match_image, /favorites, /collection and /language are
+      // deleted outright (register decision); /about carries a Removed-in-v5
+      // field for one release and /preferences owns language.
+      // /a11y is a second registration sharing this handler — Discord has no
+      // alias mechanism; the chip prints the command the user actually typed
       case 'accessibility':
+      case 'a11y':
         response = await handleAccessibilityCommand(interaction, env, ctx, logger);
+        break;
+
+      case 'contrast':
+        response = await handleContrastCommand(interaction, env, ctx, logger);
         break;
 
       case 'manual':
         response = await handleManualCommand(interaction, env, ctx);
         break;
 
+      case 'changelog':
+        response = await handleChangelogCommand(interaction, env, ctx);
+        break;
+
       case 'comparison':
         response = await handleComparisonCommand(interaction, env, ctx, logger);
-        break;
-
-      case 'language':
-        response = await handleLanguageCommand(interaction, env, ctx);
-        break;
-
-      case 'favorites':
-        response = await handleFavoritesCommand(interaction, env, ctx);
-        break;
-
-      case 'collection':
-        response = await handleCollectionCommand(interaction, env, ctx);
         break;
 
       case 'preset':
@@ -554,26 +747,41 @@ async function handleCommand(
       default:
         // Command not yet implemented
         response = ephemeralResponse(
-          `The \`/${commandName}\` command is not yet implemented in the Workers version.`
+          (await routerTranslator(env, interaction, logger)).t('errors.notImplemented', {
+            command: commandName ?? '',
+          }),
         );
         break;
     }
   } catch (error) {
     success = false;
-    logger.error('Command execution failed', error instanceof Error ? error : undefined, { command: commandName });
-    response = ephemeralResponse('An error occurred while processing your command.');
+    logger.error('Command execution failed', error instanceof Error ? error : undefined, {
+      command: commandName,
+    });
+    response = ephemeralResponse(
+      (await routerTranslator(env, interaction, logger)).t('errors.commandFailed'),
+    );
   } finally {
-    // Track command usage with actual success status (fire-and-forget)
-    if (userId && commandName) {
+    // Track command usage with actual success status (fire-and-forget).
+    // 5.0 telemetry: /extractor records its subcommand (extractor_image /
+    // extractor_color) so the /stats adoption panel can tell them apart.
+    let trackedName = commandName;
+    if (commandName === 'extractor') {
+      const sub = interaction.data?.options?.[0]?.name;
+      if (sub) trackedName = `extractor_${sub}`;
+    }
+    if (userId && trackedName) {
       ctx.waitUntil(
         trackCommandWithKV(env, {
-          commandName,
+          commandName: trackedName,
           userId,
           guildId: interaction.guild_id,
           success,
         }).catch((error) => {
-          logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, { error: String(error) });
-        })
+          logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, {
+            error: String(error),
+          });
+        }),
       );
     }
   }
@@ -587,7 +795,7 @@ async function handleCommand(
 async function handleAutocomplete(
   interaction: DiscordInteraction,
   env: Env,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Response> {
   const commandName = interaction.data?.name;
   const options = interaction.data?.options || [];
@@ -604,7 +812,7 @@ async function handleAutocomplete(
         kv: env.KV,
       },
       acUserId,
-      'autocomplete'
+      'autocomplete',
     );
     if (!acLimit.allowed) {
       return Response.json({
@@ -615,7 +823,8 @@ async function handleAutocomplete(
   }
 
   // Find the focused option (the one the user is currently typing in)
-  let focusedOption: { name: string; value?: string | number | boolean; focused?: boolean } | undefined;
+  let focusedOption:
+    { name: string; value?: string | number | boolean; focused?: boolean } | undefined;
   let subcommandName: string | undefined;
   let subcommandGroupName: string | undefined;
 
@@ -661,21 +870,13 @@ async function handleAutocomplete(
   const query = (focusedOption?.value as string) || '';
   let choices: Array<{ name: string; value: string }> = [];
 
-  // Handle collection command autocomplete
-  if (commandName === 'collection') {
-    const focusedName = focusedOption?.name;
+  // F-02 (2026-08-20 i18n audit): dye suggestions match and display the
+  // user's locale (stored preference → Discord client locale → en).
+  const locale = await resolveUserLocale(env.KV, acUserId ?? '', interaction.locale);
+  await initializeLocale(locale);
 
-    // Collection name autocomplete (for add, remove, show, delete, rename subcommands)
-    if (focusedName === 'name') {
-      choices = await getCollectionAutocompleteChoices(interaction, env, query, logger);
-    }
-    // Dye autocomplete (for add/remove subcommands)
-    else if (focusedName === 'dye') {
-      choices = getDyeAutocompleteChoices(query);
-    }
-  }
   // Handle preset command autocomplete
-  else if (commandName === 'preset') {
+  if (commandName === 'preset') {
     const focusedName = focusedOption?.name;
 
     // Preset name autocomplete (for show, vote, moderate, edit, favorite subcommands)
@@ -706,12 +907,12 @@ async function handleAutocomplete(
     }
     // Dye autocomplete (for submit and edit subcommands)
     else if (focusedName?.startsWith('dye')) {
-      choices = getDyeAutocompleteChoices(query);
+      choices = getDyeAutocompleteChoices(query, locale);
     }
   }
   // Handle budget command autocomplete (returns its own Response)
   else if (commandName === 'budget') {
-    return handleBudgetAutocomplete(interaction, env, logger);
+    return handleBudgetAutocomplete(interaction, env, locale, logger);
   }
   // Handle preferences command autocomplete
   else if (commandName === 'preferences') {
@@ -722,12 +923,12 @@ async function handleAutocomplete(
       choices = getClanAutocompleteChoices(query);
     } else if (focusedName === 'world') {
       // World/datacenter autocomplete - reuse budget world autocomplete
-      choices = await getWorldAutocomplete(env, query, logger);
+      choices = await getWorldAutocomplete(env, query, logger, locale);
     }
   }
   // Default: Dye autocomplete for other commands
   else {
-    choices = getDyeAutocompleteChoices(query);
+    choices = getDyeAutocompleteChoices(query, locale);
   }
 
   return Response.json({
@@ -737,77 +938,28 @@ async function handleAutocomplete(
 }
 
 /**
- * Get collection autocomplete choices for the given query
+ * Get dye autocomplete choices for the given query.
  *
- * DISCORD-CRITICAL-002: Note on race conditions
- * This function reads collections without a locking mechanism. If a user modifies
- * their collection while autocomplete is running, they may see slightly stale dye counts.
- * This is acceptable for autocomplete UX - the user can refresh to see updated counts.
- * A full fix would require adding version/etag to collection metadata for optimistic
- * concurrency, which is beyond the scope of a quick fix.
+ * F-02 (2026-08-20 i18n audit): matches English OR the locale's dye name and
+ * labels each choice with the localized name. The `value` stays the English
+ * name so every downstream resolver (`resolveColorInput`, `searchDyesByName`)
+ * keeps working unchanged.
  */
-async function getCollectionAutocompleteChoices(
-  interaction: DiscordInteraction,
-  env: Env,
+function getDyeAutocompleteChoices(
   query: string,
-  logger: ExtendedLogger
-): Promise<Array<{ name: string; value: string }>> {
-  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+  locale: LocaleCode = 'en',
+): Array<{ name: string; value: string }> {
+  // Empty query: show the first dyes in database order (excluding Facewear)
+  const matchingDyes = query.length >= 1 ? searchDyesByName(query, locale) : dyeService.getAllDyes();
 
-  if (!userId) {
-    return [];
-  }
-
-  try {
-    const collections = await getCollections(env.KV, userId);
-
-    if (collections.length === 0) {
-      return [];
-    }
-
-    // Filter collections by query (case-insensitive)
-    const lowerQuery = query.toLowerCase();
-    const filtered = query.length > 0
-      ? collections.filter((c) => c.name.toLowerCase().includes(lowerQuery))
-      : collections;
-
-    // Return up to 25 choices (Discord's maximum)
-    return filtered.slice(0, 25).map((c) => ({
-      name: `${c.name} (${c.dyes.length} dyes)`,
-      value: c.name,
+  // Filter out Facewear dyes and limit to 25 (Discord's maximum)
+  return matchingDyes
+    .filter((dye) => dye.category !== 'Facewear')
+    .slice(0, 25)
+    .map((dye) => ({
+      name: `${getLocalizedDyeName(dye.itemID, dye.name, locale)} (${dye.hex.toUpperCase()})`,
+      value: dye.name,
     }));
-  } catch (error) {
-    logger.error('Failed to get collection autocomplete choices', error instanceof Error ? error : undefined);
-    return [];
-  }
-}
-
-/**
- * Get dye autocomplete choices for the given query
- */
-function getDyeAutocompleteChoices(query: string): Array<{ name: string; value: string }> {
-  if (query.length >= 1) {
-    const matchingDyes = dyeService.searchByName(query);
-
-    // Filter out Facewear dyes and limit to 25 (Discord's maximum)
-    return matchingDyes
-      .filter((dye) => dye.category !== 'Facewear')
-      .slice(0, 25)
-      .map((dye) => ({
-        name: `${dye.name} (${dye.hex.toUpperCase()})`,
-        value: dye.name,
-      }));
-  } else {
-    // Show popular/common dyes when no query (excluding Facewear)
-    const allDyes = dyeService.getAllDyes();
-    return allDyes
-      .filter((dye) => dye.category !== 'Facewear')
-      .slice(0, 25)
-      .map((dye) => ({
-        name: `${dye.name} (${dye.hex.toUpperCase()})`,
-        value: dye.name,
-      }));
-  }
 }
 
 /**
@@ -847,7 +999,7 @@ async function getMyPresetsAutocompleteChoices(
   env: Env,
   userId: string,
   query: string,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Array<{ name: string; value: string }>> {
   try {
     const presets = await presetApi.getMyPresets(env, userId);
@@ -858,20 +1010,20 @@ async function getMyPresetsAutocompleteChoices(
 
     // Filter by query (case-insensitive)
     const lowerQuery = query.toLowerCase();
-    const filtered = query.length > 0
-      ? presets.filter((p) => p.name.toLowerCase().includes(lowerQuery))
-      : presets;
+    const filtered =
+      query.length > 0 ? presets.filter((p) => p.name.toLowerCase().includes(lowerQuery)) : presets;
 
     // Return up to 25 choices (Discord's maximum)
     return filtered.slice(0, 25).map((preset) => ({
       // Format: "Name (status)" to help user identify pending edits
-      name: preset.status === 'approved'
-        ? preset.name
-        : `${preset.name} (${preset.status})`,
+      name: preset.status === 'approved' ? preset.name : `${preset.name} (${preset.status})`,
       value: preset.id,
     }));
   } catch (error) {
-    logger.error('Failed to get user presets for autocomplete', error instanceof Error ? error : undefined);
+    logger.error(
+      'Failed to get user presets for autocomplete',
+      error instanceof Error ? error : undefined,
+    );
     return [];
   }
 }
@@ -884,7 +1036,7 @@ async function getFavoritedPresetsAutocompleteChoices(
   env: Env,
   userId: string,
   query: string,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Array<{ name: string; value: string }>> {
   try {
     const entries = await getPresetFavoriteEntries(env.KV, userId, logger);
@@ -897,7 +1049,7 @@ async function getFavoritedPresetsAutocompleteChoices(
     const missing = entries.filter((e) => !e.name);
     if (missing.length > 0) {
       const resolved = await Promise.all(
-        missing.map((e) => presetApi.getPreset(env, e.id).catch(() => null))
+        missing.map((e) => presetApi.getPreset(env, e.id).catch(() => null)),
       );
       for (let i = 0; i < missing.length; i++) {
         missing[i].name = resolved[i]?.name ?? missing[i].id;
@@ -906,13 +1058,15 @@ async function getFavoritedPresetsAutocompleteChoices(
     }
 
     const lowerQuery = query.toLowerCase();
-    const filtered = query.length > 0
-      ? entries.filter((e) => e.name.toLowerCase().includes(lowerQuery))
-      : entries;
+    const filtered =
+      query.length > 0 ? entries.filter((e) => e.name.toLowerCase().includes(lowerQuery)) : entries;
 
     return filtered.slice(0, 25).map((e) => ({ name: e.name, value: e.id }));
   } catch (error) {
-    logger.error('Failed to get favorited presets autocomplete', error instanceof Error ? error : undefined);
+    logger.error(
+      'Failed to get favorited presets autocomplete',
+      error instanceof Error ? error : undefined,
+    );
     return [];
   }
 }
@@ -924,7 +1078,7 @@ async function handleComponent(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Response> {
   const customId = interaction.data?.custom_id;
   const componentType = interaction.data?.component_type;
@@ -937,93 +1091,41 @@ async function handleComponent(
   }
 
   // Select menus and other components
-  return ephemeralResponse('This component type is not yet supported.');
+  return ephemeralResponse(
+    (await routerTranslator(env, interaction, logger)).t('errors.unsupportedComponent'),
+  );
+}
+
+/**
+ * Translator for router-level replies (2026-08-20 i18n audit, F-05): the
+ * user's stored preference when a user id is present, else the Discord
+ * client locale, else English. Only built on the rare paths that need it.
+ */
+async function routerTranslator(
+  env: Env,
+  interaction: DiscordInteraction,
+  logger: ExtendedLogger,
+): Promise<Translator> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+  if (userId) return createUserTranslator(env.KV, userId, interaction.locale, logger);
+  return createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
 }
 
 /**
  * Handle modal submissions
  */
-// eslint-disable-next-line @typescript-eslint/require-await -- handler interface requires async
 async function handleModal(
   interaction: DiscordInteraction,
-  _env: Env,
+  env: Env,
   _ctx: ExecutionContext,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   logger.info('Handling modal', { customId });
 
   // No modals are currently supported in the main worker
   // Moderation modals are handled by xivdyetools-moderation-worker
-  return ephemeralResponse('Unknown modal submission.');
-}
-
-/**
- * Discord Interaction type (simplified)
- * Full types would come from a Discord types package
- */
-interface DiscordInteraction {
-  id: string;
-  type: InteractionType;
-  application_id: string;
-  token: string;
-  locale?: string; // User's locale (e.g., "en-US", "ja")
-  guild_id?: string;
-  channel_id?: string;
-  member?: {
-    user: {
-      id: string;
-      username: string;
-      discriminator: string;
-      avatar?: string;
-    };
-  };
-  user?: {
-    id: string;
-    username: string;
-    discriminator: string;
-    avatar?: string;
-  };
-  data?: {
-    id: string;
-    name: string;
-    type?: number;
-    options?: Array<{
-      name: string;
-      type: number;
-      value?: string | number | boolean;
-      focused?: boolean;
-      options?: Array<{
-        name: string;
-        type: number;
-        value?: string | number | boolean;
-        focused?: boolean;
-      }>;
-    }>;
-    resolved?: {
-      attachments?: Record<string, {
-        id: string;
-        filename: string;
-        size: number;
-        url: string;
-        proxy_url: string;
-        content_type?: string;
-        width?: number;
-        height?: number;
-      }>;
-    };
-    custom_id?: string;
-    component_type?: number;
-    values?: string[];
-    components?: Array<{
-      type: number;
-      components: Array<{
-        type: number;
-        custom_id: string;
-        value: string;
-      }>;
-    }>;
-  };
+  return ephemeralResponse((await routerTranslator(env, interaction, logger)).t('errors.unknownModal'));
 }
 
 // Export the Hono app as the default export for Cloudflare Workers
@@ -1041,14 +1143,7 @@ app.onError((err, c) => {
   } else {
     console.error('Unhandled error', err);
   }
-  const isDev = (c.env as { ENVIRONMENT?: string }).ENVIRONMENT === 'development';
-  return c.json(
-    {
-      error: 'Internal Server Error',
-      ...(isDev ? { message: err.message } : {}),
-    },
-    500
-  );
+  return c.json({ error: 'Internal Server Error' }, 500);
 });
 
 export default app;

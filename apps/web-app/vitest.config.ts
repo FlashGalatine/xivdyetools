@@ -11,79 +11,63 @@ export default defineConfig({
       reporter: ['text', 'json', 'html', 'lcov', 'json-summary'],
       reportsDirectory: './coverage',
       clean: true,
+      // Anything listed here is invisible to the gate, so the list is kept
+      // deliberately short and every entry states why it cannot be measured.
+      // (It previously carried 11 paths that no longer exist and 25 files
+      // that had since grown tests — both kinds silently shrank the
+      // denominator, which reads as coverage the suite never had.)
       exclude: [
         'node_modules/',
         'dist/',
         'src/__tests__/**',
         'src/locales/**/*.json',
+        // Barrel + type-only modules: no executable statements to cover
         'src/services/index.ts',
-        'src/services/community-preset-service.ts',
-        'src/services/hybrid-preset-service.ts',
-        'src/services/preset-submission-service.ts',
-        'src/services/pricing-mixin.ts',
-        'src/components/add-to-collection-menu.ts',
-        'src/components/collection-manager-modal.ts',
-        'src/components/preset-edit-form.ts',
-        'src/components/my-submissions-panel.ts',
-        'src/components/dye-comparison-chart.ts',
-        'src/components/welcome-modal.ts',
         'src/shared/browser-api-types.ts',
         'src/shared/types.ts',
-        'src/components/accessibility-tool.ts',
-        'src/components/budget-tool.ts',
-        'src/components/comparison-tool.ts',
-        'src/components/extractor-tool.ts',
-        'src/components/gradient-tool.ts',
-        'src/components/harmony-tool.ts',
-        'src/components/mixer-tool.ts',
-        'src/components/swatch-tool.ts',
-        'src/components/v4/config-sidebar.ts',
-        'src/components/v4/preset-tool.ts',
-        'src/components/v4/v4-layout-shell.ts',
-        'src/components/v4/v4-color-wheel.ts',
+        // Large Lit shells still awaiting tests — tracked, not forgotten
         'src/components/v4/dye-palette-drawer.ts',
-        'src/components/image-zoom-controller.ts',
-        'src/components/palette-exporter.ts',
-        'src/components/preset-submission-form.ts',
-        'src/components/auth-button.ts',
-        'src/components/featured-presets-section.ts',
-        'src/components/shortcuts-panel.ts',
-        'src/components/recent-colors-panel.ts',
-        'src/components/mobile-bottom-nav.ts',
-        'src/components/dye-preview-overlay.ts',
-        'src/components/v4/result-card.ts',
-        'src/components/v4/display-options-v4.ts',
-        'src/components/v4/theme-modal.ts',
-        'src/components/v4/language-modal.ts',
-        'src/components/v4/preset-card.ts',
+        'src/components/v4/preset-tool.ts',
         'src/components/v4/preset-detail.ts',
-        'src/components/v4/tool-banner.ts',
-        'src/components/v4/v4-app-header.ts',
-        'src/components/v4/base-lit-component.ts',
-        'src/components/v4/glass-panel.ts',
-        'src/components/v4/range-slider-v4.ts',
-        'src/components/v4/toggle-switch-v4.ts',
-        'src/components/v4/share-button.ts',
-        'src/components/app-layout.ts',
-        'src/components/v4-layout.ts',
-        'src/components/dye-action-dropdown.ts',
-        'src/components/saved-palettes-modal.ts',
-        'src/components/image-upload-display.ts',
-        'src/components/camera-preview-modal.ts',
-        'src/components/dye-selector.ts',
-        'src/components/market-board.ts',
-        'src/components/changelog-modal.ts',
-        'src/components/toast-container.ts',
-        'src/components/dye-grid.ts',
+        'src/components/v4/v4-layout-shell.ts',
+        'src/components/v4/display-options-v4.ts',
+        'src/components/preset-edit-form.ts',
+        'src/components/collection-manager-modal.ts',
+        'src/components/add-to-collection-menu.ts',
+        'src/components/welcome-modal.ts',
+        'src/components/recent-colors-panel.ts',
         'src/services/share-service.ts',
-        'src/services/tool-panel-builders.ts',
+        'src/services/community-preset-service.ts',
+        'src/services/hybrid-preset-service.ts',
       ],
-      lines: 80,
-      functions: 80,
-      branches: 75,
-      statements: 80,
+      // Vitest 2 moved these under `coverage.thresholds`. Left at the top
+      // level (the 0.x/1.x shape) they were silently ignored, so this suite
+      // had no coverage gate at all — which is how the numbers below came as
+      // a surprise.
+      //
+      // RATCHET, not a target. These are set just under what the suite
+      // actually achieves so the figure cannot regress; the goal remains
+      // 80/80/80/75. The whole gap is the nine tool components
+      // (accessibility, budget, comparison, extractor, gradient, harmony,
+      // mixer, swatch + chara-import), which together hold the bulk of the
+      // uncovered statements. Raise these numbers as those tests deepen; do
+      // not lower them.
+      thresholds: {
+        statements: 71,
+        branches: 55,
+        functions: 65,
+        lines: 72,
+      },
     },
-    include: ['src/**/*.{test,spec}.ts'],
+    // scripts/ holds the CI gates (check-bundle-size, check-beta-build,
+    // smoke-test-pages) and the i18n guardrails; eslint-rules/ holds the custom
+    // lint rules. All are plain .js ESM, not .ts, so they need their own
+    // patterns rather than an extension widened on the src glob.
+    include: [
+      'src/**/*.{test,spec}.ts',
+      'scripts/**/*.{test,spec}.js',
+      'eslint-rules/**/*.{test,spec}.js',
+    ],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
     server: {
       deps: {

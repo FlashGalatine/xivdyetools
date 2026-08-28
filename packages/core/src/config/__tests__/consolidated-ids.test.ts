@@ -129,8 +129,8 @@ describe('consolidated-ids', () => {
       expect(CONSOLIDATED_DYES.B).toMatchObject({
         itemID: 52255,
         acquisition: 'The Firmament',
-        price: 1000,
-        currency: "Sky Builders' Scrips",
+        price: 100,
+        currency: 'Skybuilders Scrips',
       });
       expect(CONSOLIDATED_DYES.C).toMatchObject({
         itemID: 52256,

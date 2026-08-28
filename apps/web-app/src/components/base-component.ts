@@ -358,10 +358,14 @@ export abstract class BaseComponent implements ComponentLifecycle {
     });
     errorWrapper.appendChild(title);
 
-    // Error details
+    // Error details — the raw Error message is developer English, so it goes
+    // to the log and the panel shows the translated line instead.
+    if (this.errorState.error?.message) {
+      logger.error('[BaseComponent] Error boundary:', this.errorState.error.message);
+    }
     const details = this.createElement('p', {
       className: 'component-error-details',
-      textContent: this.errorState.error?.message || LanguageService.t('errors.unexpectedError'),
+      textContent: LanguageService.t('errors.unexpectedError'),
     });
     errorWrapper.appendChild(details);
 
@@ -548,31 +552,10 @@ export abstract class BaseComponent implements ComponentLifecycle {
   }
 
   /**
-   * Add class to element
-   */
-  protected addClass(element: HTMLElement, className: string): void {
-    element.classList.add(className);
-  }
-
-  /**
-   * Remove class from element
-   */
-  protected removeClass(element: HTMLElement, className: string): void {
-    element.classList.remove(className);
-  }
-
-  /**
    * Toggle class on element
    */
   protected toggleClass(element: HTMLElement, className: string, force?: boolean): void {
     element.classList.toggle(className, force);
-  }
-
-  /**
-   * Check if element has class
-   */
-  protected hasClass(element: HTMLElement, className: string): boolean {
-    return element.classList.contains(className);
   }
 
   // ============================================================================
@@ -587,7 +570,6 @@ export abstract class BaseComponent implements ComponentLifecycle {
     event: K,
     handler: EventHandler<HTMLElementEventMap[K]>
   ): void {
-    // console.log('BaseComponent.on called', { target, event, type: typeof handler });
     if (!handler || typeof handler !== 'function') {
       console.error('BaseComponent.on: handler is invalid', { target, event, handler });
       return;
@@ -617,30 +599,6 @@ export abstract class BaseComponent implements ComponentLifecycle {
     // WEB-PERF-003: Use counter instead of Math.random() to prevent key collision
     const key = `${eventName}_${++this.listenerCounter}`;
     this.listeners.set(key, { target, event: eventName, handler: boundHandler });
-  }
-
-  /**
-   * Remove specific event listener
-   */
-  protected off<K extends keyof HTMLElementEventMap>(
-    target: HTMLElement | Document | Window,
-    event: K,
-    handler: EventListener
-  ): void {
-    const eventName = event as string;
-    target.removeEventListener(eventName, handler);
-
-    // Remove from stored listeners
-    for (const [key, listener] of this.listeners.entries()) {
-      if (
-        listener.target === target &&
-        listener.event === eventName &&
-        listener.handler === handler
-      ) {
-        this.listeners.delete(key);
-        break;
-      }
-    }
   }
 
   /**
@@ -697,13 +655,6 @@ export abstract class BaseComponent implements ComponentLifecycle {
    */
   protected getState(): Record<string, unknown> {
     return {};
-  }
-
-  /**
-   * Set component state (for subclasses to override)
-   */
-  protected setState(_newState: Record<string, unknown>): void {
-    // Subclasses should override this to implement state management
   }
 
   // ============================================================================

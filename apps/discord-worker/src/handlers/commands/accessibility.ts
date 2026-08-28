@@ -10,24 +10,28 @@
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
-import { resolveColorInput } from '../../utils/color.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { getDyeEmoji } from '../../services/emoji.js';
 import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
-import { discordLocaleToLocaleCode, initializeLocale, type LocaleCode } from '../../services/i18n.js';
 import {
+  discordLocaleToLocaleCode,
+  initializeLocale,
+  type LocaleCode,
+} from '../../services/i18n.js';
+import {
+  resolveColorInput,
   executeAccessibility,
   type VisionType,
   type AccessibilityDye,
 } from '@xivdyetools/bot-logic';
+import { getUserPreferences } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleAccessibilityCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
@@ -39,11 +43,12 @@ export async function handleAccessibilityCommand(
     }
   }
   const visionOption = options.find((opt) => opt.name === 'vision');
-  const visionFilter = visionOption?.value as VisionType | undefined;
+  const visionFilter = visionOption?.value as VisionType | 'all' | undefined;
 
   const t = userId
     ? await createUserTranslator(env.KV, userId, interaction.locale)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+  const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
 
   if (dyeInputs.length === 0) {
     return Response.json({
@@ -55,12 +60,18 @@ export async function handleAccessibilityCommand(
   // Resolve all dye inputs → AccessibilityDye[]
   const resolvedDyes: AccessibilityDye[] = [];
   for (const input of dyeInputs) {
-    const resolved = resolveColorInput(input.value, { excludeFacewear: true, findClosestForHex: true });
+    const resolved = resolveColorInput(input.value, {
+      excludeFacewear: true,
+      findClosestForHex: true,
+      locale: t.getLocale(),
+    });
     if (!resolved) {
       return Response.json({
         type: 4,
         data: {
-          embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: input.value }))],
+          embeds: [
+            errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: input.value })),
+          ],
           flags: 64,
         },
       });
@@ -74,9 +85,21 @@ export async function handleAccessibilityCommand(
   }
 
   const locale = t.getLocale();
+  // The chip prints the command the user actually typed (/a11y is a second
+  // registration sharing this handler)
+  const commandLabel = interaction.data?.name === 'a11y' ? '/A11Y' : '/ACCESSIBILITY';
   const deferResponse = deferredResponse();
   ctx.waitUntil(
-    processAccessibilityCommand(interaction, env, resolvedDyes, visionFilter, locale, logger)
+    processAccessibilityCommand(
+      interaction,
+      env,
+      resolvedDyes,
+      visionFilter,
+      locale,
+      commandLabel,
+      theme,
+      logger,
+    ),
   );
   return deferResponse;
 }
@@ -85,15 +108,25 @@ async function processAccessibilityCommand(
   interaction: DiscordInteraction,
   env: Env,
   dyes: AccessibilityDye[],
-  visionFilter: VisionType | undefined,
+  visionFilter: VisionType | 'all' | undefined,
   locale: LocaleCode,
-  logger?: ExtendedLogger
+  commandLabel: string,
+  theme?: 'dark' | 'light',
+  logger?: ExtendedLogger,
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
 
-  const visionTypes = visionFilter ? [visionFilter] : undefined;
-  const result = await executeAccessibility({ dyes, visionTypes, locale });
+  // The vision: option routes the frame — named lens → 13D, all/absent → 13E,
+  // a single dye → 13H
+  const result = await executeAccessibility({
+    dyes,
+    vision: visionFilter,
+    locale,
+    commandLabel,
+    theme,
+    logger,
+  });
 
   if (!result.ok) {
     if (logger) logger.error('Accessibility command failed');
@@ -105,38 +138,21 @@ async function processAccessibilityCommand(
 
   try {
     const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
-    const filename = result.mode === 'simulation' ? 'accessibility.png' : 'contrast-matrix.png';
-
-    // Build Discord embed description with emojis (for single-dye mode, add emoji prefix)
-    let description = result.embed.description ?? '';
-    if (result.mode === 'simulation' && dyes[0]?.dye) {
-      const emoji = getDyeEmoji(dyes[0].dye.id);
-      if (emoji) description = description.replace(/^\*\*/, `${emoji} **`);
-    } else if (result.mode === 'contrast') {
-      // Add emojis to the dye list lines in contrast mode
-      const lines = description.split('\n');
-      description = lines.map((line: string) => {
-        const dyeMatch = dyes.find((d) => d.dye && line.includes(d.name));
-        if (dyeMatch?.dye) {
-          const emoji = getDyeEmoji(dyeMatch.dye.id);
-          return emoji ? line.replace(dyeMatch.name, `${emoji} ${dyeMatch.name}`) : line;
-        }
-        return line;
-      }).join('\n');
-    }
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [{
-        title: result.embed.title,
-        description,
-        color: result.embed.color,
-        image: { url: 'attachment://image.png' },
-        footer: { text: result.embed.footer ?? t.t('common.footer') },
-      }],
-      file: { name: filename, data: pngBuffer, contentType: 'image/png' },
+      embeds: [
+        {
+          title: result.embed.title,
+          description: result.embed.description,
+          color: result.embed.color,
+          image: { url: 'attachment://accessibility.png' },
+        },
+      ],
+      file: { name: 'accessibility.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {
-    if (logger) logger.error('Accessibility render error', error instanceof Error ? error : undefined);
+    if (logger)
+      logger.error('Accessibility render error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });

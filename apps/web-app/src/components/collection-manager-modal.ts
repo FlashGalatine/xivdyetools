@@ -10,8 +10,9 @@ import {
   ToastService,
   dyeService,
 } from '@services/index';
-import type { Collection } from '@services/collection-service';
-import { ICON_FOLDER } from '@shared/empty-state-icons';
+import type { Collection, ImportError } from '@services/collection-service';
+import { ICON_STATE_FOLDER as ICON_FOLDER } from '@shared/state-icons';
+import { formatDate } from '@shared/format';
 import type { Dye } from '@xivdyetools/types';
 
 /**
@@ -30,9 +31,12 @@ export function showCollectionManagerModal(): void {
 
   const countText = document.createElement('span');
   countText.className = 'text-sm text-gray-600 dark:text-gray-400';
-  countText.textContent = LanguageService.tInterpolate('collections.collectionsCount', {
-    count: String(collections.length),
-  });
+  countText.textContent = LanguageService.tInterpolate(
+    collections.length === 1
+      ? 'collections.collectionsCountOne'
+      : 'collections.collectionsCountMany',
+    { count: String(collections.length) }
+  );
   header.appendChild(countText);
 
   const actionsDiv = document.createElement('div');
@@ -191,7 +195,7 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
 
     const displayedDyes = collection.dyes.slice(0, 8);
     for (const dyeId of displayedDyes) {
-      const dye = dyeService.getDyeById(dyeId);
+      const dye = dyeService.getByStainId(dyeId);
       if (dye) {
         const swatch = document.createElement('div');
         swatch.className =
@@ -217,9 +221,10 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
   metaRow.className = 'flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400';
 
   const dyeCount = document.createElement('span');
-  dyeCount.textContent = LanguageService.tInterpolate('collections.dyeCount', {
-    count: String(collection.dyes.length),
-  });
+  dyeCount.textContent = LanguageService.tInterpolate(
+    collection.dyes.length === 1 ? 'collections.dyeCountOne' : 'collections.dyeCountMany',
+    { count: String(collection.dyes.length) }
+  );
   metaRow.appendChild(dyeCount);
 
   const separator = document.createElement('span');
@@ -227,7 +232,7 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
   metaRow.appendChild(separator);
 
   const date = document.createElement('span');
-  date.textContent = new Date(collection.updatedAt).toLocaleDateString();
+  date.textContent = formatDate(collection.updatedAt);
   metaRow.appendChild(date);
 
   item.appendChild(metaRow);
@@ -378,16 +383,17 @@ function showEditCollectionDialog(collection: Collection, onUpdated: () => void)
 
     const dyesLabel = document.createElement('label');
     dyesLabel.className = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
-    dyesLabel.textContent = LanguageService.tInterpolate('collections.dyeCount', {
-      count: String(collection.dyes.length),
-    });
+    dyesLabel.textContent = LanguageService.tInterpolate(
+      collection.dyes.length === 1 ? 'collections.dyeCountOne' : 'collections.dyeCountMany',
+      { count: String(collection.dyes.length) }
+    );
     dyesGroup.appendChild(dyesLabel);
 
     const dyesGrid = document.createElement('div');
     dyesGrid.className = 'flex flex-wrap gap-2';
 
     for (const dyeId of collection.dyes) {
-      const dye = dyeService.getDyeById(dyeId);
+      const dye = dyeService.getByStainId(dyeId);
       if (dye) {
         const dyeTag = createDyeTag(dye, () => {
           CollectionService.removeDyeFromCollection(collection.id, dyeId);
@@ -523,6 +529,30 @@ function downloadSingleCollection(collection: Collection): void {
 }
 
 /**
+ * Import failure -> toast text.
+ *
+ * `CollectionService` names the reason (it has no locale); the three
+ * malformed-file reasons all read as "invalid file format" to a user, so they
+ * share one key. The two per-collection reasons carry the name.
+ */
+function importErrorMessage(error: ImportError): string {
+  switch (error.code) {
+    case 'skippedInvalid':
+      return LanguageService.tInterpolate('collections.importSkippedInvalid', {
+        name: error.name || LanguageService.t('collections.unnamed'),
+      });
+    case 'createFailed':
+      return LanguageService.tInterpolate('collections.importCreateFailed', {
+        name: error.name || LanguageService.t('collections.unnamed'),
+      });
+    case 'invalidFormat':
+    case 'missingData':
+    case 'parseFailed':
+      return LanguageService.t('collections.invalidFormat');
+  }
+}
+
+/**
  * Trigger file import
  */
 function triggerImport(container: HTMLElement): void {
@@ -550,11 +580,10 @@ function triggerImport(container: HTMLElement): void {
         ModalService.dismissTop();
         showCollectionManagerModal();
       } else {
-        const errorMsg =
-          result.errors.length > 0
-            ? result.errors[0]
-            : LanguageService.t('collections.importFailed');
-        ToastService.error(errorMsg);
+        const first = result.errors[0];
+        ToastService.error(
+          first ? importErrorMessage(first) : LanguageService.t('collections.importFailed')
+        );
       }
     } catch {
       ToastService.error(LanguageService.t('collections.invalidFormat'));

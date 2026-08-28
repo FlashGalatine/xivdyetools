@@ -2,8 +2,9 @@ import { BaseComponent } from './base-component';
 import { LanguageService, CollectionService, ToastService } from '@services/index';
 import { Dye } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
+import { localizedDyeName } from '@shared/dye-name';
 import { getEmptyStateHTML } from './empty-state';
-import { ICON_SEARCH, ICON_PALETTE } from '@shared/empty-state-icons';
+import { ICON_STATE_SEARCH, ICON_STATE_FUNNEL } from '@shared/state-icons';
 import { showAddToCollectionMenu } from './add-to-collection-menu';
 
 export interface DyeGridOptions {
@@ -76,15 +77,14 @@ export class DyeGrid extends BaseComponent {
       const emptyHtml =
         this.emptyState.type === 'search'
           ? getEmptyStateHTML({
-              icon: ICON_SEARCH,
-              title:
-                LanguageService.tInterpolate('dyeSelector.noResults', {
-                  query: this.emptyState.query || '',
-                }) || `No dyes match "${this.emptyState.query}"`,
+              icon: ICON_STATE_SEARCH,
+              title: LanguageService.tInterpolate('dyeSelector.noResults', {
+                query: this.emptyState.query || '',
+              }),
               description: LanguageService.t('dyeSelector.noResultsHint'),
             })
           : getEmptyStateHTML({
-              icon: ICON_PALETTE,
+              icon: ICON_STATE_FUNNEL,
               title: LanguageService.t('dyeSelector.noDyesInCategory'),
               description: LanguageService.t('dyeSelector.tryCategoryHint'),
             });
@@ -99,10 +99,12 @@ export class DyeGrid extends BaseComponent {
       );
       wrapper.classList.add('flex', 'flex-col', 'items-center', 'justify-center', 'p-8');
     } else {
-      this.dyes.forEach((dye, i) => {
-        const _isFocused = i === this.focusedIndex || (this.focusedIndex === -1 && i === 0);
+      this.dyes.forEach((dye) => {
+        // NOTE: no initial roving tabindex is applied here, so every dye button is a
+        // Tab stop until setFocusedIndex() first runs. Intentional a11y follow-up
+        // (2026-08-16 dead-code audit, DEAD-015) — not addressed by this cleanup.
         const isSelected = this.selectedDyes.some((d) => d.id === dye.id);
-        const isFavorite = this.favorites.has(dye.id);
+        const isFavorite = this.favorites.has(dye.stainID ?? 0);
 
         const btn = this.createElement('button', {
           className: `dye-select-btn group relative flex flex-col items-center p-3 rounded-xl transition-all duration-200 ${
@@ -112,7 +114,7 @@ export class DyeGrid extends BaseComponent {
           }`,
           attributes: {
             'data-dye-id': String(dye.id),
-            'aria-label': dye.name,
+            'aria-label': localizedDyeName(dye),
             'aria-selected': isSelected ? 'true' : 'false',
             type: 'button',
           },
@@ -141,7 +143,7 @@ export class DyeGrid extends BaseComponent {
             className:
               'collection-btn p-1.5 rounded-full transition-all duration-200 text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-700',
             attributes: {
-              'data-collection-dye-id': String(dye.id),
+              'data-collection-dye-id': String(dye.stainID ?? 0),
               'aria-label': LanguageService.t('collections.addToCollection'),
               type: 'button',
             },
@@ -158,7 +160,7 @@ export class DyeGrid extends BaseComponent {
                 : 'text-gray-400 hover:text-yellow-500 opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`,
             attributes: {
-              'data-favorite-dye-id': String(dye.id),
+              'data-favorite-dye-id': String(dye.stainID ?? 0),
               'aria-label': isFavorite
                 ? LanguageService.t('collections.removeFromFavorites')
                 : LanguageService.t('collections.addToFavorites'),
@@ -256,7 +258,7 @@ export class DyeGrid extends BaseComponent {
    * Handle favorite toggle for a dye
    */
   private handleFavoriteToggle(dyeId: number): void {
-    const dye = this.dyes.find((d) => d.id === dyeId);
+    const dye = this.dyes.find((d) => d.stainID === dyeId);
     if (!dye) return;
 
     const dyeName = LanguageService.getDyeName(dye.itemID) || dye.name;
@@ -273,8 +275,7 @@ export class DyeGrid extends BaseComponent {
         // Likely at max favorites
         const max = CollectionService.getMaxFavorites();
         ToastService.warning(
-          LanguageService.tInterpolate('collections.favoritesFull', { max: String(max) }) ||
-            `Maximum ${max} favorites allowed`
+          LanguageService.tInterpolate('collections.favoritesFull', { max: String(max) })
         );
       }
     }
@@ -287,7 +288,7 @@ export class DyeGrid extends BaseComponent {
    * Handle collection button click for a dye
    */
   private handleCollectionClick(dyeId: number, anchorElement: HTMLElement): void {
-    const dye = this.dyes.find((d) => d.id === dyeId);
+    const dye = this.dyes.find((d) => d.stainID === dyeId);
     if (!dye) return;
 
     showAddToCollectionMenu({

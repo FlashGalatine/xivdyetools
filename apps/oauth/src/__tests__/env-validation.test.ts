@@ -104,7 +104,7 @@ describe('Environment Validation', () => {
             const result = validateEnv(env);
 
             expect(result.valid).toBe(false);
-            expect(result.errors.some(e => e.includes('must use HTTPS in production'))).toBe(true);
+            expect(result.errors.some(e => e.includes('FRONTEND_URL') && e.includes('must use HTTPS'))).toBe(true);
         });
 
         it('should fail when WORKER_URL uses HTTP in production', () => {
@@ -117,6 +117,44 @@ describe('Environment Validation', () => {
 
             expect(result.valid).toBe(false);
             expect(result.errors.some(e => e.includes('WORKER_URL') && e.includes('HTTPS'))).toBe(true);
+        });
+
+        // FINDING-029 (2026-08-21 security audit): every fail-closed gate keyed on
+        // ENVIRONMENT === 'production', so any other non-development value (the
+        // since-deleted `preview` env) was a production-grade issuer that failed
+        // open. The gates now key on !== 'development', and ENVIRONMENT itself is
+        // restricted to the two values wrangler.toml defines.
+        it('should require HTTPS for every non-development environment, not only production', () => {
+            const env = createValidEnv();
+            env.ENVIRONMENT = 'preview';
+            env.FRONTEND_URL = 'http://insecure.example.com';
+            env.WORKER_URL = 'http://insecure-worker.example.com';
+
+            const result = validateEnv(env);
+
+            expect(result.valid).toBe(false);
+            expect(result.errors.some(e => e.includes('FRONTEND_URL') && e.includes('HTTPS'))).toBe(true);
+            expect(result.errors.some(e => e.includes('WORKER_URL') && e.includes('HTTPS'))).toBe(true);
+        });
+
+        it('should reject an ENVIRONMENT value other than development or production', () => {
+            for (const value of ['preview', 'staging', 'Production', 'prod']) {
+                const env = createValidEnv();
+                env.ENVIRONMENT = value;
+                env.FRONTEND_URL = 'https://secure.example.com';
+                env.WORKER_URL = 'https://secure-worker.example.com';
+
+                const result = validateEnv(env);
+
+                expect(result.valid, value).toBe(false);
+                expect(result.errors.some(e => e.startsWith('ENVIRONMENT must be')), value).toBe(true);
+            }
+        });
+
+        it('should still allow HTTP URLs in development', () => {
+            const env = createValidEnv(); // development + http://localhost URLs
+
+            expect(validateEnv(env).valid).toBe(true);
         });
 
         it('should fail when DB is not provided', () => {

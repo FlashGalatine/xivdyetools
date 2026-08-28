@@ -12,6 +12,8 @@ import {
 } from '../../src/middleware/auth';
 import type { Env, AuthContext } from '../../src/types';
 import { createMockEnv, createTestJWT, createExpiredJWT } from '../test-utils';
+import { createMockKV } from '@xivdyetools/test-utils';
+import { base64UrlEncode, base64UrlEncodeBytes } from '@xivdyetools/auth';
 
 type Variables = {
     auth: AuthContext;
@@ -213,15 +215,15 @@ describe('AuthMiddleware', () => {
 
     // ============================================
     // JWT (Web) Authentication
-    // Note: JWT signature verification requires Cloudflare Workers WebCrypto
-    // which may not work identically in Node test environment.
-    // Bot authentication is the primary auth method and is fully tested above.
+    // Node >= 18 exposes the same WebCrypto (`crypto.subtle`) the Worker
+    // runtime uses, so HS256 signature verification runs for real here.
     // ============================================
 
     describe('JWT Authentication', () => {
-        // Skip tests that require JWT signature verification in Cloudflare Workers env
-        it.skip('should authenticate with valid JWT (requires Cloudflare Workers crypto)', async () => {
-            const jwt = await createTestJWT('test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!', {
+        const JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!';
+
+        it('should authenticate with valid JWT', async () => {
+            const jwt = await createTestJWT(JWT_SECRET, {
                 sub: 'jwt-user-123',
                 username: 'JWTUser',
                 global_name: 'JWT Display Name',
@@ -245,8 +247,8 @@ describe('AuthMiddleware', () => {
             expect(body.userName).toBe('JWT Display Name'); // global_name preferred
         });
 
-        it.skip('should use username if global_name is null (requires Cloudflare Workers crypto)', async () => {
-            const jwt = await createTestJWT('test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!', {
+        it('should use username if global_name is null', async () => {
+            const jwt = await createTestJWT(JWT_SECRET, {
                 sub: 'jwt-user-123',
                 username: 'JWTUser',
                 global_name: null,
@@ -356,8 +358,8 @@ describe('AuthMiddleware', () => {
             expect(body.isAuthenticated).toBe(false);
         });
 
-        it.skip('should mark JWT user as moderator if in MODERATOR_IDS (requires Cloudflare Workers crypto)', async () => {
-            const jwt = await createTestJWT('test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!', {
+        it('should mark JWT user as moderator if in MODERATOR_IDS', async () => {
+            const jwt = await createTestJWT(JWT_SECRET, {
                 sub: '123456789', // In MODERATOR_IDS
                 username: 'ModUser',
             });
@@ -374,6 +376,143 @@ describe('AuthMiddleware', () => {
             const body = await res.json() as AuthContext;
 
             expect(body.isModerator).toBe(true);
+        });
+
+        // ------------------------------------------------------------
+        // Identity claim selection.
+        // The oauth worker mints `sub` = its internal user UUID and carries the
+        // Discord snowflake in a separate `discord_id` claim (XIVAuth-only
+        // users have no `discord_id`). The bot path (discord-worker /
+        // moderation-worker) identifies users by snowflake via
+        // X-User-Discord-ID, so the JWT path must resolve to the SAME key or
+        // one person becomes two authors (`/mine`, edit/delete ownership,
+        // bans, MODERATOR_IDS all diverge).
+        // ------------------------------------------------------------
+
+        it('should use the discord_id claim as the user identity when present (not sub)', async () => {
+            // Non-literal so TS excess-property checks don't reject the extra claim
+            const claims = {
+                sub: '3f1c9d2e-8a4b-4c1d-9e0f-123456789abc', // internal oauth UUID
+                discord_id: '555666777888999000',
+                username: 'WebUser',
+            };
+            const jwt = await createTestJWT(JWT_SECRET, claims);
+
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${jwt}` } },
+                env
+            );
+            const body = await res.json() as AuthContext;
+
+            expect(body.isAuthenticated).toBe(true);
+            expect(body.authSource).toBe('web');
+            expect(body.userDiscordId).toBe('555666777888999000');
+        });
+
+        it('should fall back to sub when the JWT has no discord_id (XIVAuth-only user)', async () => {
+            const claims = {
+                sub: '3f1c9d2e-8a4b-4c1d-9e0f-123456789abc',
+                username: 'XIVAuthOnly',
+                auth_provider: 'xivauth',
+                xivauth_id: 'xiv-42',
+            };
+            const jwt = await createTestJWT(JWT_SECRET, claims);
+
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${jwt}` } },
+                env
+            );
+            const body = await res.json() as AuthContext;
+
+            expect(body.isAuthenticated).toBe(true);
+            expect(body.userDiscordId).toBe('3f1c9d2e-8a4b-4c1d-9e0f-123456789abc');
+        });
+
+        it('should ignore an empty discord_id claim and fall back to sub', async () => {
+            const claims = {
+                sub: 'user-uuid-1',
+                discord_id: '',
+                username: 'EmptyClaim',
+            };
+            const jwt = await createTestJWT(JWT_SECRET, claims);
+
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${jwt}` } },
+                env
+            );
+            const body = await res.json() as AuthContext;
+
+            expect(body.userDiscordId).toBe('user-uuid-1');
+        });
+
+        it('should ignore a non-string discord_id claim and fall back to sub', async () => {
+            const claims = {
+                sub: 'user-uuid-2',
+                discord_id: 555666777888999000, // numeric snowflake would lose precision anyway
+                username: 'BadClaim',
+            };
+            const jwt = await createTestJWT(JWT_SECRET, claims);
+
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${jwt}` } },
+                env
+            );
+            const body = await res.json() as AuthContext;
+
+            expect(body.userDiscordId).toBe('user-uuid-2');
+        });
+
+        it('should evaluate MODERATOR_IDS against the discord_id claim, not sub', async () => {
+            const claims = {
+                sub: 'not-a-moderator-uuid',
+                discord_id: '123456789', // In MODERATOR_IDS
+                username: 'WebMod',
+            };
+            const jwt = await createTestJWT(JWT_SECRET, claims);
+
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${jwt}` } },
+                env
+            );
+            const body = await res.json() as AuthContext;
+
+            expect(body.isModerator).toBe(true);
+            expect(body.userDiscordId).toBe('123456789');
+        });
+
+        it('should give web (JWT) and bot (header) requests the same identity for the same Discord user', async () => {
+            const claims = {
+                sub: 'oauth-row-uuid',
+                discord_id: '999888777666555444',
+                username: 'SamePerson',
+            };
+            const jwt = await createTestJWT(JWT_SECRET, claims);
+
+            const webRes = await app.request(
+                '/test/user-context',
+                { headers: { Authorization: `Bearer ${jwt}` } },
+                env
+            );
+            const botRes = await app.request(
+                '/test/user-context',
+                {
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '999888777666555444',
+                    },
+                },
+                env
+            );
+
+            const web = await webRes.json() as { userDiscordId: string };
+            const bot = await botRes.json() as { userDiscordId: string };
+            expect(web.userDiscordId).toBe('999888777666555444');
+            expect(web.userDiscordId).toBe(bot.userDiscordId);
         });
     });
 
@@ -915,6 +1054,95 @@ describe('AuthMiddleware', () => {
             const body = await res.json() as AuthContext;
 
             expect(body.isAuthenticated).toBe(false);
+        });
+    });
+
+    // ============================================
+    // Revocation + issuer enforcement (FINDING-002 / FINDING-015)
+    // ============================================
+
+    describe('JWT revocation and issuer checks', () => {
+        /** Mint an HS256 JWT with arbitrary claims (jti, iss, …) for these tests. */
+        async function mintJWT(secret: string, claims: Record<string, unknown>): Promise<string> {
+            const now = Math.floor(Date.now() / 1000);
+            const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+            const payload = base64UrlEncode(
+                JSON.stringify({ sub: 'user-uuid', iat: now, exp: now + 3600, ...claims })
+            );
+            const key = await crypto.subtle.importKey(
+                'raw',
+                new TextEncoder().encode(secret),
+                { name: 'HMAC', hash: 'SHA-256' },
+                false,
+                ['sign']
+            );
+            const sig = await crypto.subtle.sign(
+                'HMAC',
+                key,
+                new TextEncoder().encode(`${header}.${payload}`)
+            );
+            return `${header}.${payload}.${base64UrlEncodeBytes(new Uint8Array(sig))}`;
+        }
+
+        it('treats a JWT whose jti is on the TOKEN_BLACKLIST as unauthenticated', async () => {
+            const kv = createMockKV();
+            await kv.put('revoked:jti-revoked', '1', { expirationTtl: 3600 });
+            const revokedEnv = createMockEnv({ TOKEN_BLACKLIST: kv as unknown as KVNamespace });
+
+            const token = await mintJWT(revokedEnv.JWT_SECRET!, {
+                jti: 'jti-revoked',
+                discord_id: '555',
+            });
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${token}` } },
+                revokedEnv
+            );
+            const body = (await res.json()) as AuthContext;
+
+            expect(body.isAuthenticated).toBe(false);
+        });
+
+        it('still authenticates a JWT whose jti is NOT on the TOKEN_BLACKLIST', async () => {
+            const kv = createMockKV();
+            const kvEnv = createMockEnv({ TOKEN_BLACKLIST: kv as unknown as KVNamespace });
+
+            const token = await mintJWT(kvEnv.JWT_SECRET!, { jti: 'jti-live', discord_id: '555' });
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${token}` } },
+                kvEnv
+            );
+            const body = (await res.json()) as AuthContext;
+
+            expect(body.isAuthenticated).toBe(true);
+            expect(body.userDiscordId).toBe('555');
+        });
+
+        it('rejects a JWT from a different issuer when JWT_ISSUER is configured', async () => {
+            const issuerEnv = createMockEnv({ JWT_ISSUER: 'https://auth.xivdyetools.app' });
+
+            const foreign = await mintJWT(issuerEnv.JWT_SECRET!, {
+                iss: 'https://auth-preview.example',
+                discord_id: '555',
+            });
+            const res = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${foreign}` } },
+                issuerEnv
+            );
+            expect(((await res.json()) as AuthContext).isAuthenticated).toBe(false);
+
+            const own = await mintJWT(issuerEnv.JWT_SECRET!, {
+                iss: 'https://auth.xivdyetools.app',
+                discord_id: '555',
+            });
+            const okRes = await app.request(
+                '/test/auth',
+                { headers: { Authorization: `Bearer ${own}` } },
+                issuerEnv
+            );
+            expect(((await okRes.json()) as AuthContext).isAuthenticated).toBe(true);
         });
     });
 });

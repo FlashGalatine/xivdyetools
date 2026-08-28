@@ -21,7 +21,7 @@ npm install @xivdyetools/auth
 ### JWT Verification
 
 ```typescript
-import { verifyJWT, decodeJWT, isJWTExpired } from '@xivdyetools/auth';
+import { verifyJWT, decodeJWT } from '@xivdyetools/auth';
 
 // Verify JWT with signature and expiration checking
 const payload = await verifyJWT(token, process.env.JWT_SECRET);
@@ -31,12 +31,24 @@ if (!payload) {
 
 // Decode without verification (debugging only)
 const decoded = decodeJWT(token);
+```
 
-// Check if JWT is expired
-if (isJWTExpired(payload)) {
-  // Token has expired
+### Token Revocation
+
+```typescript
+import { isTokenRevoked, revokeToken } from '@xivdyetools/auth';
+
+// Revoke a token by its `jti` claim. The store is any KV-like
+// { get, put } — TTL is derived from the token's own expiry.
+await revokeToken(payload.jti, payload.exp, env.KV);
+
+// Check before honouring a token
+if (await isTokenRevoked(payload.jti, env.KV)) {
+  return new Response('Unauthorized', { status: 401 });
 }
 ```
+
+Both **fail open**: if the store is unavailable or absent, they return `false` rather than throwing, keeping auth functional during a KV outage. Callers needing strict revocation must handle store unavailability themselves.
 
 ### HMAC Signing
 
@@ -77,12 +89,12 @@ import { verifyDiscordRequest } from '@xivdyetools/auth';
 // Verify Discord interaction signature
 const result = await verifyDiscordRequest(request, env.DISCORD_PUBLIC_KEY);
 
-if (!result.valid) {
+if (!result.isValid) {
   return new Response('Unauthorized', { status: 401 });
 }
 
-// result.body contains the parsed interaction
-const interaction = result.body;
+// result.body is the raw request body string (already read — do not re-read the stream)
+const interaction = JSON.parse(result.body);
 ```
 
 ## Subpath Exports
@@ -101,6 +113,9 @@ import { timingSafeEqual } from '@xivdyetools/auth/timing';
 
 // Discord utilities only
 import { verifyDiscordRequest } from '@xivdyetools/auth/discord';
+
+// Base64URL / hex encoding primitives only (no Discord module pulled in)
+import { base64UrlEncode, base64UrlDecode, bytesToHex, hexToBytes } from '@xivdyetools/auth/encoding';
 ```
 
 ## API Reference
@@ -112,8 +127,6 @@ import { verifyDiscordRequest } from '@xivdyetools/auth/discord';
 | `verifyJWT(token, secret)` | Verify JWT signature, algorithm (HS256 only), and expiration |
 | `verifyJWTSignatureOnly(token, secret, maxAgeMs?)` | Verify signature only (for refresh token grace periods) |
 | `decodeJWT(token)` | Decode JWT without verification (debugging only) |
-| `isJWTExpired(payload)` | Check if JWT payload is expired |
-| `getJWTTimeToExpiry(payload)` | Get milliseconds until JWT expires |
 
 ### HMAC (`@xivdyetools/auth/hmac`)
 
@@ -131,15 +144,31 @@ import { verifyDiscordRequest } from '@xivdyetools/auth/discord';
 | Function | Description |
 |----------|-------------|
 | `timingSafeEqual(a, b)` | Constant-time string comparison |
-| `timingSafeEqualBytes(a, b)` | Constant-time Uint8Array comparison |
 
 ### Discord (`@xivdyetools/auth/discord`)
 
 | Function | Description |
 |----------|-------------|
 | `verifyDiscordRequest(request, publicKey, opts?)` | Verify Discord Ed25519 signature |
-| `unauthorizedResponse()` | Return 401 response |
-| `badRequestResponse(message?)` | Return 400 response |
+| `unauthorizedResponse(message?)` | Return 401 JSON response |
+| `badRequestResponse(message)` | Return 400 JSON response |
+
+### Revocation
+
+| Function | Description |
+|----------|-------------|
+| `revokeToken(jti, expiresAt, store)` | Add a token's `jti` to the KV-backed blacklist until `expiresAt` (unix seconds; TTL floor 60 s); resolves `true` when recorded |
+| `isTokenRevoked(jti, store)` | Check the blacklist before honouring a token (`store` may be `undefined` → `false`) |
+
+### Encoding (`@xivdyetools/auth/encoding`)
+
+| Function | Description |
+|----------|-------------|
+| `base64UrlEncode(input)` / `base64UrlDecode(input)` | Base64URL string codec |
+| `base64UrlEncodeBytes(bytes)` / `base64UrlDecodeBytes(str)` | Base64URL byte codec |
+| `bytesToHex(bytes)` / `hexToBytes(hex)` | Hex codec |
+
+Absorbed from the retired `@xivdyetools/crypto` — see [`DEPRECATIONS.md`](../../DEPRECATIONS.md).
 
 ## Security Features
 
@@ -150,16 +179,26 @@ import { verifyDiscordRequest } from '@xivdyetools/auth/discord';
 
 ## Dependencies
 
-- `@xivdyetools/crypto` - Base64URL and hex encoding utilities
-- `discord-interactions` - Discord Ed25519 signature verification
+**No internal dependencies.** Base64URL and hex encoding are built in under `@xivdyetools/auth/encoding` (absorbed from the retired `@xivdyetools/crypto`), so this package sits at Level 0 of the dependency graph.
+
+| Package | Purpose |
+|---------|---------|
+| `discord-interactions` | Discord Ed25519 signature verification |
+| `@cloudflare/workers-types` | Optional peer — `KVNamespace` / `Request` types in Worker contexts |
+
+## Consumers
+
+[`discord-worker`](../../apps/discord-worker/), [`presets-api`](../../apps/presets-api/), [`moderation-worker`](../../apps/moderation-worker/), and [`@xivdyetools/test-utils`](../test-utils/).
+
+The [`oauth`](../../apps/oauth/) worker **issues** tokens itself but still consumes `verifyJWTSignatureOnly`, `decodeJWT`, `hmacSign`/`hmacVerify` (2026-08-18 dead-code audit adoption — replaced a hand-rolled HMAC pair), the revocation helpers, and `@xivdyetools/auth/encoding` from here. This package deliberately does not issue JWTs; keeping it verify-only holds the surface exposed to every consuming worker small and audit-friendly.
 
 ## Connect With Me
 
 **Flash Galatine** | Midgardsormr (Aether)
 
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
-📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
@@ -168,4 +207,11 @@ import { verifyDiscordRequest } from '@xivdyetools/auth/discord';
 
 ## License
 
-MIT © 2025-2026 Flash Galatine
+MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
+
+## Legal Notice
+
+**FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+**FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
+
+XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.**

@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-08-21
+
+Security-audit remediation only (2026-08-21 security audit, `docs/audits/2026-08-21-security/`). The bot stays parked — these close the gaps the audit wanted fixed *before* any revival.
+
+### Security
+
+- **FINDING-035 / STOAT-2, STOAT-6 — abuse control**: the `messageCreate` gate moved out of `index.ts` into the unit-tested `src/message-handler.ts` (`createMessageHandler`); it now ignores messages from *any* bot (`message.author?.bot`, not only our own ID — no bot-to-bot loops) and applies a per-user sliding-window throttle (`src/services/command-throttle.ts`, `CommandThrottle`, default 5 commands / 10 s, in-memory, stale users pruned). Throttled commands are dropped silently so the throttle cannot itself be used to amplify; the error reply stays fixed text.
+- **FINDING-027 / STOAT-3 — prototype-key lookups**: `SHORT_ALIASES` (parser), `COMMAND_ROUTES` (router) and `COMMAND_HELP` (help) are now consulted with `Object.hasOwn`, so `!xd constructor` / `!xd __proto__` / `!xd help constructor` are plain unknown commands instead of resolving to `Object.prototype` members.
+- **FINDING-019 / STOAT-4 — echoed user text**: `No dye found matching "…"`, `Found N dyes matching "…"` and the unknown-command reply go through the new `sanitizeEcho()` (`response-formatter.ts`): Revolt `<@ULID>` mentions defused, then the shared `sanitizeEmbedText` from `@xivdyetools/bot-logic` (control / zero-width stripping, `@everyone`, markdown escaping) with a 64-char cap (32 for the unknown-command token).
+- **FINDING-023 / STOAT-1 — dangling links**: `!xd about` links to `https://xivdyetools.app` and `https://developers.xivdyetools.app` instead of the unregistered `xivdyetools.com` / `docs.xivdyetools.com`.
+
+### Tests
+
+- New: `message-handler.test.ts`, `services/command-throttle.test.ts`, `services/echo-sanitisation.test.ts`, `commands/prototype-keys.test.ts`, `commands/about.test.ts`; `test-utils/revolt-mocks.ts` gained the `author.bot` marker.
+
+## [0.2.1] - 2026-08-16
+
+Monorepo 2.0 follow-through only — the bot is parked (no active investment, no deploy workflow) and gained no features; patch bump for the dependency retargets.
+
+### Changed
+
+- **Tier 1 package consolidation (2026-07-31)**: dependencies retargeted to the surviving packages — `@xivdyetools/bot-i18n` → `@xivdyetools/bot-logic/i18n` (`LocaleCode` imports in `src/commands/info.ts` and `src/services/dye-resolver.ts`), `@xivdyetools/rate-limiter` → `@xivdyetools/worker-kit` (`/rate-limiter` subpath; still only *planned* for the Upstash backend), and `@xivdyetools/color-blending` → `@xivdyetools/core/blending` (planned mixer command). No runtime behaviour change; the retired packages are documented in `xivdyetools/DEPRECATIONS.md`.
+- Compiles cleanly against `@xivdyetools/bot-logic@2.0.0` / `@xivdyetools/core@4.0.0` / `@xivdyetools/svg@2.0.0` — the only bot-logic surface this app touches (`executeDyeInfo`, `resolveDyeInput*`, `dyeService`) survived the 5.0 API rewrite unchanged.
+- `package.json` `license` corrected from `ISC` to `MIT` (matches the repo `LICENSE` and every other workspace package).
+- Coverage gate: `vitest.config.ts` branches threshold raised 75 → 80 (statements/functions/lines stay at 85) as part of the monorepo-wide 90% packages / 80% apps coverage pass.
+- Docs: `README.md`/`CLAUDE.md` re-audited — parked/"no deploy workflow" status called out, only `ping`/`help`/`about`/`dye info` listed as implemented (everything else tagged *planned*), shared-package table updated for the consolidated names, Blog link replaced with X/Twitter, MIT + Square Enix legal notice added.
+
+### Removed (2026-08-18 dead-code audit)
+
+- **Unused dependency declarations** dropped from `package.json` — `@xivdyetools/svg`, `@xivdyetools/core`, and `@xivdyetools/worker-kit` (zero imports; the bot's only live bot-logic surface — `executeDyeInfo`, `resolveDyeInput*`, `dyeService` — doesn't reach any of the three directly), plus the devDependency `@xivdyetools/test-utils` (zero imports from any test file).
+
 ## [0.2.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprint 5).

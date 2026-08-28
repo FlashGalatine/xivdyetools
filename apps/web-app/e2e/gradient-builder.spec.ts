@@ -1,26 +1,5 @@
-import { test, expect } from '@playwright/test';
-
-async function seedStartupStorage(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  await page.addInitScript(() => {
-    localStorage.setItem('xivdyetools_welcome_seen', 'true');
-    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
-    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
-  });
-}
-
-async function dismissBlockingOverlays(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    const backdropCount = await page.locator('.modal-backdrop').count();
-    if (backdropCount === 0) break;
-
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
-  }
-
-  await page.evaluate(() => {
-    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
-  });
-}
+import { test, expect } from './fixtures/coverage';
+import { seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
 
 async function waitForGradientReady(page: Parameters<typeof test>[0]['page']): Promise<void> {
   await page.waitForLoadState('networkidle');

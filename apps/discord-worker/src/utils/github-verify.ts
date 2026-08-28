@@ -14,6 +14,19 @@
 /**
  * Verifies a GitHub webhook signature against the raw request body.
  *
+ * DEAD-019 (2026-08-18 dead-code audit): evaluated for adoption of
+ * `@xivdyetools/auth`'s `hmacVerifyHex` and kept as-is. `hmacVerifyHex`
+ * delegates to `createHmacKey`, which throws for secrets under 32 bytes
+ * (FINDING-009); GitHub does not enforce a minimum webhook secret length,
+ * and this file's own tests use a 17-character `'my-webhook-secret'`
+ * (asserted to verify `true`). `hmacVerifyHex` catches that throw and
+ * returns `false`, so adopting it would silently fail-closed — rejecting
+ * every legitimate webhook — for any deployed secret under 32 characters.
+ *
+ * Decision (follow-up 3, 2026-08-18): this stays hand-rolled and off
+ * `@xivdyetools/auth` intentionally — GitHub imposes no minimum webhook
+ * secret length, while `@xivdyetools/auth`'s HMAC helpers require ≥32 bytes.
+ *
  * @param secret - The webhook secret configured in GitHub
  * @param payload - The raw request body as a string
  * @param signature - The `X-Hub-Signature-256` header value (format: `sha256=<hex>`)
@@ -22,7 +35,7 @@
 export async function verifyGitHubSignature(
   secret: string,
   payload: string,
-  signature: string
+  signature: string,
 ): Promise<boolean> {
   if (!signature.startsWith('sha256=')) {
     return false;
@@ -36,15 +49,11 @@ export async function verifyGitHubSignature(
     new TextEncoder().encode(secret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   // Compute the HMAC of the payload
-  const signatureBuffer = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    new TextEncoder().encode(payload)
-  );
+  const signatureBuffer = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
 
   // Convert to hex string
   const computedHex = Array.from(new Uint8Array(signatureBuffer))

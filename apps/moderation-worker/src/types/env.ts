@@ -55,6 +55,14 @@ export interface Env {
   /** KV Namespace for user preferences */
   KV: KVNamespace;
 
+  /**
+   * FINDING-003 (2026-08-21 audit): native Workers Rate Limiting bindings
+   * (`[[ratelimits]]`) — command 25 / 60 s, autocomplete 70 / 60 s. Preferred
+   * over KV for per-user limiting; absent in dev/tests → KV fallback.
+   */
+  RL_COMMAND?: RateLimit;
+  RL_AUTOCOMPLETE?: RateLimit;
+
   /** D1 Database for user data and presets */
   DB: D1Database;
 

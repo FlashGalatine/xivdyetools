@@ -65,7 +65,9 @@ export function validateEnv(env: Env): EnvValidationResult {
   // SEC-005: Detect placeholder values that indicate wrangler.toml was not properly configured.
   // Placeholder values satisfy non-empty checks but will cause authentication failures at runtime.
   if (env.DISCORD_CLIENT_ID?.startsWith('YOUR_')) {
-    errors.push('DISCORD_CLIENT_ID contains a placeholder value — update wrangler.toml [env.production.vars]');
+    errors.push(
+      'DISCORD_CLIENT_ID contains a placeholder value — update wrangler.toml [env.production.vars]',
+    );
   }
 
   // Validate PRESETS_API_URL is a valid URL
@@ -91,6 +93,17 @@ export function validateEnv(env: Env): EnvValidationResult {
       if (!isValidSnowflake(id.trim())) {
         errors.push(`Invalid Discord ID in MODERATOR_IDS: ${id}`);
       }
+    }
+  }
+
+  // Follow-up 3: BOT_SIGNING_SECRET is optional (HMAC signing is skipped when
+  // absent — see services/preset-api.ts's validateSecurityConfig, which only
+  // warns), but when present it is passed to @xivdyetools/auth's
+  // hmacSignHex, whose createHmacKey throws for secrets under 32 bytes
+  // (FINDING-009). Mirrors oauth's JWT_SECRET check.
+  if (env.BOT_SIGNING_SECRET && typeof env.BOT_SIGNING_SECRET === 'string') {
+    if (env.BOT_SIGNING_SECRET.length < 32) {
+      errors.push('BOT_SIGNING_SECRET must be at least 32 characters for security');
     }
   }
 

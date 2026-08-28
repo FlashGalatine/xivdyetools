@@ -35,16 +35,18 @@ pnpm --filter @xivdyetools/auth exec vitest run src/jwt.test.ts
 
 ## Architecture
 
-Four single-responsibility modules under `src/`, plus a barrel `index.ts`. Each module has its own subpath export (`/jwt`, `/hmac`, `/timing`, `/discord`) so consumers can import a focused slice.
+Five single-responsibility modules under `src/` plus an `encoding/` directory, all behind a barrel `index.ts`. Every one has its own subpath export (`/jwt`, `/hmac`, `/timing`, `/discord`, `/revocation`, `/encoding`) so consumers can import a focused slice — `/encoding` in particular exists so a caller that only needs Base64URL/hex helpers doesn't pull in `discord-interactions`.
 
 ### Key Directories
 
 ```
 src/
-├── jwt.ts       # verifyJWT, verifyJWTSignatureOnly, decodeJWT, isJWTExpired, getJWTTimeToExpiry
-├── hmac.ts      # createHmacKey, hmacSign(Hex), hmacVerify(Hex), verifyBotSignature, getOrCreateHmacKey (internal LRU)
-├── timing.ts    # timingSafeEqual, timingSafeEqualBytes
-└── discord.ts   # verifyDiscordRequest, unauthorizedResponse, badRequestResponse
+├── jwt.ts        # verifyJWT, verifyJWTSignatureOnly, decodeJWT
+├── hmac.ts       # createHmacKey, hmacSign(Hex), hmacVerify(Hex), verifyBotSignature, getOrCreateHmacKey (internal LRU)
+├── timing.ts     # timingSafeEqual
+├── discord.ts    # verifyDiscordRequest, unauthorizedResponse, badRequestResponse
+├── revocation.ts # isTokenRevoked, revokeToken (KV-backed jti blacklist)
+└── encoding/     # base64.ts + hex.ts — Base64URL/hex primitives (absorbed from @xivdyetools/crypto)
 ```
 
 ## Public API
@@ -64,8 +66,6 @@ interface JWTPayload {
 function verifyJWT(token: string, secret: string): Promise<JWTPayload | null>;
 function verifyJWTSignatureOnly(token: string, secret: string, maxAgeMs?: number): Promise<JWTPayload | null>;
 function decodeJWT(token: string): JWTPayload | null;  // no signature check
-function isJWTExpired(token: string): boolean;
-function getJWTTimeToExpiry(token: string): number;    // seconds, 0 if expired/invalid
 ```
 
 ### HMAC (`@xivdyetools/auth/hmac`)
@@ -95,7 +95,6 @@ function verifyBotSignature(
 
 ```typescript
 function timingSafeEqual(a: string, b: string): Promise<boolean>;
-function timingSafeEqualBytes(a: Uint8Array, b: Uint8Array): Promise<boolean>;
 ```
 
 ### Discord (`@xivdyetools/auth/discord`)
@@ -108,6 +107,30 @@ function verifyDiscordRequest(request: Request, publicKey: string, options?: Dis
 function unauthorizedResponse(message?: string): Response;  // 401 JSON
 function badRequestResponse(message: string): Response;     // 400 JSON
 ```
+
+### Revocation (`@xivdyetools/auth/revocation`)
+
+```typescript
+interface RevocationStore { /* the KV surface actually used — get/put */ }
+
+function isTokenRevoked(jti: string, store: RevocationStore | undefined): Promise<boolean>;
+function revokeToken(jti: string, expiresAt: number, store: RevocationStore | undefined): Promise<boolean>; // expiresAt = unix seconds; TTL = max(expiresAt - now, 60)
+```
+
+A `jti` blacklist rather than a whitelist: only revoked tokens are stored, with a TTL matching the token's remaining lifetime, so the keyspace stays bounded without a sweep job. The store is passed in as an interface rather than a `KVNamespace` so tests need no Workers types.
+
+### Encoding (`@xivdyetools/auth/encoding`)
+
+```typescript
+function base64UrlEncode(str: string): string;
+function base64UrlEncodeBytes(bytes: Uint8Array): string;
+function base64UrlDecode(str: string): string;
+function base64UrlDecodeBytes(str: string): Uint8Array;
+function hexToBytes(hex: string): Uint8Array;
+function bytesToHex(bytes: Uint8Array): string;
+```
+
+Absorbed from the retired `@xivdyetools/crypto`. Import from this subpath, not the barrel — the root re-export drags in `discord-interactions`.
 
 ## Key Patterns
 
@@ -161,13 +184,15 @@ The result includes `body` so the caller doesn't have to re-read the request str
 
 Grepped from `package.json` files in the monorepo:
 
-- Apps: `xivdyetools-discord-worker`, `xivdyetools-presets-api`, `xivdyetools-moderation-worker`
+- Apps: `xivdyetools-discord-worker`, `xivdyetools-presets-api`, `xivdyetools-moderation-worker`, `xivdyetools-oauth-worker`
 
-The `oauth` worker uses these primitives indirectly — it generates tokens locally rather than using `verifyJWT`, but it does sign JWTs with the same `hmacSign` patterns.
+The `oauth` worker issues tokens itself (it does not call `verifyJWT` for issuance) but consumes `verifyJWTSignatureOnly`, `decodeJWT`, `isTokenRevoked`, `revokeToken`, `hmacSign`/`hmacVerify` (2026-08-18 dead-code audit — DEAD-019 adoption replaced a hand-rolled base64url HMAC pair) and the `/encoding` primitives from this package (`apps/oauth/src/services/jwt-service.ts`).
+
+`discord-worker`'s `services/preset-api.ts`/`utils/github-verify.ts` and `moderation-worker`'s `services/preset-api.ts` keep their own hand-rolled HMAC (2026-08-18 audit, DEAD-019: not adopted) — `createHmacKey`'s `>= 32` byte minimum (FINDING-009) would silently fail-closed for `BOT_SIGNING_SECRET`/`GITHUB_WEBHOOK_SECRET`, which have no length floor anywhere in this repo (existing tests use 17-20 character secrets).
 
 ## Internal Dependencies
 
-- `@xivdyetools/crypto` — `base64UrlEncode/Decode/Bytes`, `bytesToHex`, `hexToBytes`
+- None — the encoding primitives (`base64UrlEncode/Decode/Bytes`, `bytesToHex`, `hexToBytes`) live in `src/encoding/`, absorbed from the retired `@xivdyetools/crypto` (v1.3.0). Import via `@xivdyetools/auth/encoding` to avoid pulling the Discord verification module.
 - External: `discord-interactions` (Ed25519 verification)
 - Optional peer: `@cloudflare/workers-types` (only for the `KVNamespace`/`Request` types when used in worker contexts)
 

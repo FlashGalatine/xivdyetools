@@ -10,12 +10,12 @@
  */
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
-import { isDyeExcluded, type MatchingMethod } from '@xivdyetools/core';
-import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
-import { blendColors, type BlendingMode } from '@xivdyetools/color-blending';
+import { ColorService, isDyeExcluded, type MatchingMethod } from '@xivdyetools/core';
+import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
+import { blendColors, type BlendingMode } from '@xivdyetools/core/blending';
+import { generateMixerCard, type MixerCardRow } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
-import { getColorDistance, getMatchQualityInfo } from '../color-math.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -23,30 +23,46 @@ import type { EmbedData } from './types.js';
 // ============================================================================
 
 export interface MixerInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   dye1: ResolvedColor;
   dye2: ResolvedColor;
   blendingMode: BlendingMode;
-  /** Number of closest dyes to return (default: 1) */
-  count?: number;
-  /** Algorithm used to find closest dye for the blended result (default: 'oklab'). */
+  /** Matching method for the blended result's nearest dye (default: `DEFAULT_MATCHING_METHOD`, ΔE2000). */
   matchingMethod?: MatchingMethod;
   locale: LocaleCode;
   /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */
   dyeFilters?: DyeTypeFilters;
+  /** Card theme (stored user preference; defaults dark) */
+  theme?: 'dark' | 'light';
 }
 
-export interface MixerMatch {
+/** One sweep stop: the ratio, its blend, and the nearest buyable dye. */
+export interface MixerSweepStop {
+  /** Share of dye 2 in the blend, 0–100 */
+  pct: number;
+  blendHex: string;
   dye: Dye;
-  distance: number;
+  /** ΔE2000 blend → dye */
+  deltaE: number;
+  /** The sweep's best landing */
+  best: boolean;
 }
+
+/** 12F: the five ratios the sweep runs — the midpoint is just one of them. */
+export const MIXER_SWEEP_RATIOS = [25, 40, 50, 65, 80] as const;
 
 export type MixerResult =
   | {
       ok: true;
-      blendedHex: string;
+      /** The 12F ratio-sweep card — the command's first image */
+      svgString: string;
       blendingMode: BlendingMode;
-      inputDyes: [ResolvedColor, ResolvedColor];
-      matches: MixerMatch[];
+      /** The five-ratio sweep behind the card */
+      sweep: MixerSweepStop[];
       embed: EmbedData;
     }
   | { ok: false; error: 'NO_MATCHES' | 'GENERATION_FAILED'; errorMessage: string };
@@ -60,20 +76,16 @@ function findClosestDyeExcludingFacewear(
   excludeIds: number[] = [],
   maxAttempts = 20,
   dyeFilters?: DyeTypeFilters,
-  matchingMethod?: MatchingMethod
+  matchingMethod?: MatchingMethod,
 ): Dye | null {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const candidate = dyeService.findClosestDye(targetHex, { excludeIds, matchingMethod });
     if (!candidate) break;
-    if (candidate.category !== 'Facewear' && (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))) return candidate;
+    if (candidate.category !== 'Facewear' && (!dyeFilters || !isDyeExcluded(dyeFilters, candidate)))
+      return candidate;
     excludeIds.push(candidate.id);
   }
   return null;
-}
-
-function getMatchQualityLabel(distance: number, t: ReturnType<typeof createTranslator>): string {
-  const qi = getMatchQualityInfo(distance);
-  return `${qi.emoji} ${t.t(`quality.${qi.key}`)}`;
 }
 
 // ============================================================================
@@ -90,90 +102,73 @@ function getMatchQualityLabel(distance: number, t: ReturnType<typeof createTrans
  */
 export async function executeMixer(input: MixerInput): Promise<MixerResult> {
   const { dye1, dye2, blendingMode, locale, dyeFilters, matchingMethod } = input;
-  const count = Math.max(1, input.count ?? 1);
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 
   try {
-    const blendResult = blendColors(dye1.hex, dye2.hex, blendingMode, 0.5);
+    // 12F: the sweep replaces the hardcoded midpoint — five ratios, each
+    // blended and matched, because "which ratio lands on a buyable dye" is
+    // the question a mixer is for.
+    const sweep: MixerSweepStop[] = MIXER_SWEEP_RATIOS.map((pct) => {
+      const blend = blendColors(dye1.hex, dye2.hex, blendingMode, pct / 100);
+      const dye = findClosestDyeExcludingFacewear(blend.hex, [], 20, dyeFilters, matchingMethod);
+      const deltaE = dye ? ColorService.getDistanceForMethod(blend.hex, dye.hex, 'ciede2000') : 999;
+      return { pct, blendHex: blend.hex, dye: dye as Dye, deltaE, best: false };
+    }).filter((s) => s.dye != null);
 
-    const matches: MixerMatch[] = [];
-    const excludeIds: number[] = [];
-
-    for (let i = 0; i < count; i++) {
-      const closestDye = findClosestDyeExcludingFacewear(
-        blendResult.hex,
-        [...excludeIds],
-        20,
-        dyeFilters,
-        matchingMethod
-      );
-      if (closestDye) {
-        const distance = getColorDistance(blendResult.hex, closestDye.hex);
-        matches.push({ dye: closestDye, distance });
-        excludeIds.push(closestDye.id);
-      }
+    if (sweep.length === 0) {
+      return { ok: false, error: 'NO_MATCHES', errorMessage: t.t('errors.noMatchFound') };
     }
+    const bestStop = sweep.reduce((a, b) => (b.deltaE < a.deltaE ? b : a));
+    bestStop.best = true;
 
-    if (matches.length === 0) {
-      return { ok: false, error: 'NO_MATCHES', errorMessage: 'No matching dyes found.' };
-    }
+    // Localized input names for the card header
+    const dye1Name =
+      (dye1.itemID && dye1.name
+        ? getLocalizedDyeName(dye1.itemID, dye1.name, locale)
+        : dye1.name) ?? dye1.hex.toUpperCase();
+    const dye2Name =
+      (dye2.itemID && dye2.name
+        ? getLocalizedDyeName(dye2.itemID, dye2.name, locale)
+        : dye2.name) ?? dye2.hex.toUpperCase();
 
-    // Format input dye display names (localized)
-    const dye1Name = dye1.itemID && dye1.name
-      ? getLocalizedDyeName(dye1.itemID, dye1.name, locale)
-      : dye1.name;
-    const dye2Name = dye2.itemID && dye2.name
-      ? getLocalizedDyeName(dye2.itemID, dye2.name, locale)
-      : dye2.name;
+    const rows: MixerCardRow[] = sweep.map((s) => ({
+      pct: s.pct,
+      blendHex: s.blendHex,
+      dyeHex: s.dye.hex,
+      name: getLocalizedDyeName(s.dye.itemID, s.dye.name, locale),
+      deltaE: s.deltaE,
+      best: s.best,
+    }));
 
-    const dye1Display = dye1Name
-      ? `**${dye1Name}** (\`${dye1.hex.toUpperCase()}\`)`
-      : `\`${dye1.hex.toUpperCase()}\``;
-    const dye2Display = dye2Name
-      ? `**${dye2Name}** (\`${dye2.hex.toUpperCase()}\`)`
-      : `\`${dye2.hex.toUpperCase()}\``;
+    const svgString = generateMixerCard({
+      modeLabel: blendingMode,
+      dyeA: { hex: dye1.hex, name: dye1Name },
+      dyeB: { hex: dye2.hex, name: dye2Name },
+      rows,
+      ratioKey: t.t('card.ratioKey'),
+      lang: locale,
+      theme: input.theme,
+    });
 
-    const modeDisplay = t.t(`mixer.modes.${blendingMode}`) || blendingMode;
-
-    const matchLines = matches.map((match, i) => {
-      const localizedName = getLocalizedDyeName(match.dye.itemID, match.dye.name, locale);
-      const quality = getMatchQualityLabel(match.distance, t);
-      return `**${i + 1}.** **${localizedName}** • \`${match.dye.hex.toUpperCase()}\` • ${quality} (Δ ${match.distance.toFixed(1)})`;
-    }).join('\n');
-
-    const topMatchName = getLocalizedDyeName(matches[0].dye.itemID, matches[0].dye.name, locale);
-
+    // One line: the card carries the sweep; the embed leads with the best stop
+    const bestName = getLocalizedDyeName(bestStop.dye.itemID, bestStop.dye.name, locale);
     const embed: EmbedData = {
       title: `🎨 ${t.t('mixer.blendResult')}`,
-      description: [
-        `**${t.t('mixer.inputDyes')}:**`,
-        `• ${dye1Display}`,
-        `• ${dye2Display}`,
-        '',
-        `**${t.t('mixer.blendingMode')}:** ${modeDisplay}`,
-        `**${t.t('mixer.blendedColor')}:** \`${blendResult.hex.toUpperCase()}\``,
-        '',
-        matches.length > 1
-          ? `**${t.t('mixer.topMatches', { count: matches.length })}:**`
-          : `**${t.t('mixer.closestMatch')}:**`,
-        matchLines,
-      ].join('\n'),
-      color: parseInt(blendResult.hex.replace('#', ''), 16),
-      footer: t.t('mixer.footer', { dyeName: topMatchName }),
+      description: `**${bestStop.pct}%** · ${bestName}`,
+      color: parseInt(bestStop.dye.hex.replace('#', ''), 16),
     };
 
     return {
       ok: true,
-      blendedHex: blendResult.hex,
+      svgString,
       blendingMode,
-      inputDyes: [dye1, dye2],
-      matches,
+      sweep,
       embed,
     };
   } catch {
-    return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to blend colors.' };
+    return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }
 

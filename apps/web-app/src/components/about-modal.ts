@@ -1,15 +1,25 @@
 /**
- * XIV Dye Tools - About Modal Component
+ * XIV Dye Tools 5.0 - About Modal Component (the five cuts)
  *
- * Modal displaying app information, credits, social links, and attribution
- * Triggered by info button in header
+ * The confirmed Modal Directions About frame:
+ * - The build-stack line is gone (a player looking up who made a dye tool is
+ *   not shopping for a build chain)
+ * - Version becomes data: three mono cells — version, build, dye count (the
+ *   one number in here anybody checks, and the one that moved in 7.5)
+ * - Seven labelled chips become seven 44px icon links in one row
+ * - The dev API folds into a single disclosure row, closed by default
+ * - The disclaimer gets a box: bordered block with a mono label instead of
+ *   the smallest type in the modal
+ * - Logo drops 120px → 84px — it is a modal, not a splash screen
  *
  * @module components/about-modal
  */
 
 import { ModalService } from '@services/modal-service';
 import { LanguageService } from '@services/language-service';
-import { APP_NAME, APP_VERSION } from '@shared/constants';
+import { dyeService } from '@services/dye-service-wrapper';
+import { APP_NAME, APP_VERSION, BUILD_DATE } from '@shared/constants';
+import { SOCIAL_LINKS as CORE_SOCIAL_LINKS } from '@xivdyetools/core';
 import {
   ICON_GITHUB,
   ICON_TWITTER,
@@ -19,11 +29,10 @@ import {
   ICON_PATREON,
   ICON_KOFI,
 } from '@shared/social-icons';
-import { ICON_CRYSTAL, ICON_NETWORK } from '@shared/ui-icons';
 import { LOGO_SPARKLES } from '@shared/app-logo';
 
 // ============================================================================
-// Social Media Links
+// Social Media Links (icon-only, 44px targets)
 // ============================================================================
 
 interface SocialLink {
@@ -32,15 +41,27 @@ interface SocialLink {
   icon: string;
 }
 
-const SOCIAL_LINKS: SocialLink[] = [
-  { label: 'GitHub', url: 'https://github.com/FlashGalatine', icon: ICON_GITHUB },
-  { label: 'X/Twitter', url: 'https://x.com/AsheJunius', icon: ICON_TWITTER },
-  { label: 'Twitch', url: 'https://www.twitch.tv/flashgalatine', icon: ICON_TWITCH },
-  { label: 'BlueSky', url: 'https://bsky.app/profile/projectgalatine.com', icon: ICON_BLUESKY },
-  { label: 'Discord', url: 'https://discord.gg/5VUSKTZCe5', icon: ICON_DISCORD },
-  { label: 'Patreon', url: 'https://patreon.com/ProjectGalatine', icon: ICON_PATREON },
-  { label: 'Ko-Fi', url: 'https://ko-fi.com/flashgalatine', icon: ICON_KOFI },
-];
+/**
+ * Icons are presentation and stay here; the URLs come from core, because the
+ * bot's `/about` prints the same seven and a duplicated list is one that
+ * drifts. Keyed by label so a reordering in core carries through and a
+ * renamed entry fails loudly rather than silently losing its icon.
+ */
+const SOCIAL_ICONS: Record<string, string> = {
+  GitHub: ICON_GITHUB,
+  'X/Twitter': ICON_TWITTER,
+  Twitch: ICON_TWITCH,
+  Bluesky: ICON_BLUESKY,
+  Discord: ICON_DISCORD,
+  Patreon: ICON_PATREON,
+  'Ko-fi': ICON_KOFI,
+};
+
+const SOCIAL_LINKS: SocialLink[] = CORE_SOCIAL_LINKS.map(({ label, url }) => ({
+  label,
+  url,
+  icon: SOCIAL_ICONS[label] ?? '',
+}));
 
 // ============================================================================
 // About Modal Class
@@ -63,11 +84,13 @@ export class AboutModal {
     this.modalId = ModalService.show({
       type: 'custom',
       title: LanguageService.t('about.title'),
+      eyebrow: APP_NAME.toUpperCase(),
+      subtitle: LanguageService.t('about.subtitle'),
       content,
-      size: 'md',
       closable: true,
       closeOnBackdrop: true,
       closeOnEscape: true,
+      confirmText: LanguageService.t('common.close'),
       onClose: () => {
         this.modalId = null;
       },
@@ -91,75 +114,112 @@ export class AboutModal {
     const container = document.createElement('div');
     container.className = 'about-modal-content';
 
-    // App info section with logo
-    const appInfo = document.createElement('div');
-    appInfo.className = 'text-center mb-6';
-
-    // Large logo at the top
+    // Logo (84px — it is a modal, not a splash screen)
     const logoContainer = document.createElement('div');
-    logoContainer.className = 'flex justify-center mb-4';
+    logoContainer.className = 'flex justify-center mb-3';
     const logoWrapper = document.createElement('div');
-    logoWrapper.style.width = '120px';
-    logoWrapper.style.height = '120px';
+    logoWrapper.style.width = '84px';
+    logoWrapper.style.height = '84px';
     logoWrapper.innerHTML = LOGO_SPARKLES;
     logoContainer.appendChild(logoWrapper);
-    appInfo.appendChild(logoContainer);
+    container.appendChild(logoContainer);
 
-    const appTitle = document.createElement('h2');
-    appTitle.className = 'text-xl font-bold mb-1';
+    const appTitle = document.createElement('h3');
+    appTitle.className = 'text-lg font-bold text-center mb-4';
     appTitle.style.color = 'var(--theme-text)';
     appTitle.textContent = APP_NAME;
-    appInfo.appendChild(appTitle);
+    container.appendChild(appTitle);
 
-    const version = document.createElement('p');
-    version.className = 'text-sm number';
-    version.style.color = 'var(--theme-text-muted)';
-    version.textContent = `v${APP_VERSION}`;
-    appInfo.appendChild(version);
+    // Version becomes data: three mono cells
+    container.appendChild(this.createStatsRow());
 
-    const buildInfo = document.createElement('p');
-    buildInfo.className = 'text-xs mt-1';
-    buildInfo.style.color = 'var(--theme-text-muted)';
-    buildInfo.textContent = 'Built with TypeScript, Vite, and Tailwind CSS';
-    appInfo.appendChild(buildInfo);
-
-    container.appendChild(appInfo);
-
-    // Creator section
-    const creatorSection = document.createElement('div');
-    creatorSection.className = 'text-center mb-6 pb-6 border-b';
-    creatorSection.style.borderColor = 'var(--theme-border)';
-
+    // Creator line
     const creatorText = document.createElement('p');
-    creatorText.className = 'text-sm';
+    creatorText.className = 'text-sm text-center mb-5';
     creatorText.style.color = 'var(--theme-text)';
-    creatorText.innerHTML = `${LanguageService.t('footer.createdBy')} <span class="inline-block w-4 h-4 ml-0.5" aria-hidden="true" style="vertical-align: middle;">${ICON_CRYSTAL}</span>`;
-    creatorSection.appendChild(creatorText);
+    creatorText.textContent = LanguageService.t('footer.createdBy');
+    container.appendChild(creatorText);
 
-    container.appendChild(creatorSection);
+    // Socials: one row of 44px icon links
+    container.appendChild(this.createSocialRow());
 
-    // Social links section
-    const socialSection = document.createElement('div');
-    socialSection.className = 'mb-6';
+    // Credits
+    container.appendChild(this.createCredits());
 
-    const socialTitle = document.createElement('h3');
-    socialTitle.className = 'text-sm font-semibold mb-3 text-center';
-    socialTitle.style.color = 'var(--theme-text)';
-    socialTitle.textContent = LanguageService.t('about.connect');
-    socialSection.appendChild(socialTitle);
+    // Developer API disclosure (closed by default)
+    container.appendChild(this.createApiDisclosure());
 
-    const socialGrid = document.createElement('div');
-    socialGrid.className = 'flex flex-wrap justify-center gap-3';
+    // Attribution block (bordered, mono label — no longer the smallest type)
+    container.appendChild(this.createAttribution());
+
+    return container;
+  }
+
+  /**
+   * Three mono cells: version, build, dye count.
+   */
+  private createStatsRow(): HTMLElement {
+    const dyeCount = dyeService.getAllDyes().length;
+    const stats: Array<{ value: string; label: string; accent?: boolean }> = [
+      { value: `v${APP_VERSION}`, label: LanguageService.t('about.statVersion') },
+      ...(BUILD_DATE ? [{ value: BUILD_DATE, label: LanguageService.t('about.statBuild') }] : []),
+      { value: String(dyeCount), label: LanguageService.t('about.statDyes'), accent: true },
+    ];
+
+    const row = document.createElement('div');
+    row.className = 'flex justify-center gap-2 mb-5';
+
+    stats.forEach((stat) => {
+      const cell = document.createElement('div');
+      cell.className = 'flex flex-col items-center gap-1 px-4 py-2.5 rounded-lg';
+      cell.style.backgroundColor = 'var(--theme-card-background)';
+
+      const value = document.createElement('span');
+      value.className = 'text-sm font-bold';
+      value.style.fontFamily = "'Fragment Mono', monospace";
+      value.style.color = stat.accent ? 'var(--theme-primary)' : 'var(--theme-text)';
+      value.textContent = stat.value;
+      cell.appendChild(value);
+
+      const label = document.createElement('span');
+      label.className = 'm16-label';
+      label.textContent = stat.label;
+      cell.appendChild(label);
+
+      row.appendChild(cell);
+    });
+
+    return row;
+  }
+
+  /**
+   * Seven 44px icon links in one row — the labels were saying "Ko-Fi" next
+   * to a Ko-fi logo; the name lives in aria-label/title now.
+   */
+  private createSocialRow(): HTMLElement {
+    const section = document.createElement('div');
+    section.className = 'mb-5';
+
+    const label = document.createElement('div');
+    label.className = 'm16-label text-center mb-2';
+    label.textContent = LanguageService.t('about.elsewhere');
+    section.appendChild(label);
+
+    const rowEl = document.createElement('div');
+    rowEl.className = 'flex justify-center gap-1.5 flex-wrap';
 
     SOCIAL_LINKS.forEach((social) => {
       const link = document.createElement('a');
-      link.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors';
+      link.className = 'flex items-center justify-center rounded-lg transition-colors';
+      link.style.width = '44px';
+      link.style.height = '44px';
       link.style.backgroundColor = 'var(--theme-card-background)';
       link.style.color = 'var(--theme-text)';
       link.href = social.url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.title = social.label;
+      link.setAttribute('aria-label', social.label);
 
       link.addEventListener('mouseenter', () => {
         link.style.backgroundColor = 'var(--theme-card-hover)';
@@ -169,151 +229,186 @@ export class AboutModal {
       });
 
       const iconSpan = document.createElement('span');
-      iconSpan.className = 'inline-block w-4 h-4';
+      iconSpan.className = 'inline-block w-5 h-5';
       iconSpan.setAttribute('aria-hidden', 'true');
       iconSpan.innerHTML = social.icon;
       link.appendChild(iconSpan);
 
-      const labelSpan = document.createElement('span');
-      labelSpan.textContent = social.label;
-      link.appendChild(labelSpan);
-
-      socialGrid.appendChild(link);
+      rowEl.appendChild(link);
     });
 
-    socialSection.appendChild(socialGrid);
-    container.appendChild(socialSection);
+    section.appendChild(rowEl);
+    return section;
+  }
 
-    // Credits section (Universalis + Spectral.js)
+  /**
+   * Credits: Universalis + spectral.js, each with its host as the link.
+   */
+  private createCredits(): HTMLElement {
     const creditsSection = document.createElement('div');
-    creditsSection.className = 'text-center mb-6 space-y-2';
+    creditsSection.className = 'text-center mb-5 space-y-1.5';
 
-    const universalisText = document.createElement('p');
-    universalisText.className = 'text-xs';
-    universalisText.style.color = 'var(--theme-text-muted)';
-    universalisText.innerHTML = `${LanguageService.t('footer.universalisCredit')} <a href="https://universalis.app/" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">Universalis</a>`;
-    creditsSection.appendChild(universalisText);
+    // The credit line carries a `{link}` placeholder rather than assuming the
+    // host name trails the sentence: ja/ko/zh put the attribution after a
+    // colon, and a future locale may want it mid-sentence.
+    const credit = (text: string, host: string, url: string): HTMLElement => {
+      const p = document.createElement('p');
+      p.className = 'text-xs';
+      p.style.color = 'var(--theme-text-muted)';
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.className = 'hover:underline';
+      a.style.color = 'var(--theme-primary)';
+      a.style.fontFamily = "'Fragment Mono', monospace";
+      a.textContent = host;
+      // A value without the placeholder (or a missing key echoing back) still
+      // needs the trailing separator the old concatenation supplied.
+      const hasPlaceholder = text.includes('{link}');
+      const [before, after = ''] = hasPlaceholder ? text.split('{link}') : [text + ' '];
+      if (before) p.appendChild(document.createTextNode(before));
+      p.appendChild(a);
+      if (after) p.appendChild(document.createTextNode(after));
+      return p;
+    };
 
-    const spectralText = document.createElement('p');
-    spectralText.className = 'text-xs';
-    spectralText.style.color = 'var(--theme-text-muted)';
-    spectralText.innerHTML = `Realistic paint mixing powered by <a href="https://github.com/rvanwijnen/spectral.js" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">spectral.js</a> (Kubelka-Munk theory)`;
-    creditsSection.appendChild(spectralText);
+    creditsSection.appendChild(
+      credit(
+        LanguageService.t('footer.universalisCredit'),
+        'universalis.app',
+        'https://universalis.app/'
+      )
+    );
+    creditsSection.appendChild(
+      credit(
+        LanguageService.t('about.spectralCredit'),
+        'spectral.js',
+        'https://github.com/rvanwijnen/spectral.js'
+      )
+    );
 
-    container.appendChild(creditsSection);
+    return creditsSection;
+  }
 
-    // Developer API section
-    const apiSection = document.createElement('div');
-    apiSection.className = 'text-center mb-6 pb-6 border-b';
-    apiSection.style.borderColor = 'var(--theme-border)';
+  /**
+   * The dev API folds away: one disclosure row, closed by default, for an
+   * audience of maybe five people.
+   */
+  private createApiDisclosure(): HTMLElement {
+    const section = document.createElement('div');
+    section.className = 'mb-5 rounded-lg border';
+    section.style.borderColor = 'var(--theme-border)';
 
-    const apiTitle = document.createElement('h3');
-    apiTitle.className = 'text-sm font-semibold mb-2 text-center';
-    apiTitle.style.color = 'var(--theme-text)';
-    apiTitle.textContent = LanguageService.t('about.developerApi');
-    apiSection.appendChild(apiTitle);
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'w-full flex items-center justify-between gap-2 px-3 text-left';
+    toggle.style.minHeight = '46px';
+    toggle.style.color = 'var(--theme-text)';
+    toggle.setAttribute('aria-expanded', 'false');
 
-    const apiDesc = document.createElement('p');
-    apiDesc.className = 'text-xs mb-3';
-    apiDesc.style.color = 'var(--theme-text-muted)';
-    apiDesc.textContent = LanguageService.t('about.developerApiDesc');
-    apiSection.appendChild(apiDesc);
+    const toggleText = document.createElement('span');
+    toggleText.className = 'flex flex-col';
+    const apiLabel = document.createElement('span');
+    apiLabel.className = 'm16-label';
+    apiLabel.textContent = LanguageService.t('about.developerApi');
+    toggleText.appendChild(apiLabel);
+    const apiSummary = document.createElement('span');
+    apiSummary.className = 'text-xs';
+    apiSummary.style.color = 'var(--theme-text-muted)';
+    apiSummary.textContent = LanguageService.t('about.apiSummary');
+    toggleText.appendChild(apiSummary);
+    toggle.appendChild(toggleText);
 
-    const apiLink = document.createElement('a');
-    apiLink.className =
-      'inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm transition-colors';
-    apiLink.style.backgroundColor = 'var(--theme-card-background)';
-    apiLink.style.color = 'var(--theme-text)';
-    apiLink.href = 'https://data.xivdyetools.app';
-    apiLink.target = '_blank';
-    apiLink.rel = 'noopener noreferrer';
+    const caret = document.createElement('span');
+    caret.setAttribute('aria-hidden', 'true');
+    caret.style.color = 'var(--theme-text-muted)';
+    caret.textContent = '▸';
+    toggle.appendChild(caret);
 
-    apiLink.addEventListener('mouseenter', () => {
-      apiLink.style.backgroundColor = 'var(--theme-card-hover)';
+    const body = document.createElement('div');
+    body.className = 'hidden px-3 pb-3';
+
+    const desc = document.createElement('p');
+    desc.className = 'text-xs mb-2';
+    desc.style.color = 'var(--theme-text-muted)';
+    desc.textContent = LanguageService.t('about.developerApiDesc');
+    body.appendChild(desc);
+
+    const links = document.createElement('div');
+    links.className = 'flex flex-col gap-1';
+    const apiLink = (label: string, host: string, url: string): HTMLElement => {
+      const a = document.createElement('a');
+      a.className = 'flex items-baseline gap-2 text-xs hover:underline';
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.color = 'var(--theme-text)';
+      const l = document.createElement('span');
+      l.textContent = label;
+      a.appendChild(l);
+      const h = document.createElement('span');
+      h.style.fontFamily = "'Fragment Mono', monospace";
+      h.style.color = 'var(--theme-primary)';
+      h.textContent = host;
+      a.appendChild(h);
+      return a;
+    };
+    links.appendChild(
+      apiLink(
+        LanguageService.t('about.dataApiLabel'),
+        'data.xivdyetools.app',
+        'https://data.xivdyetools.app'
+      )
+    );
+    links.appendChild(
+      apiLink(
+        LanguageService.t('about.apiDocsLabel'),
+        'developers.xivdyetools.app',
+        'https://developers.xivdyetools.app'
+      )
+    );
+    body.appendChild(links);
+
+    toggle.addEventListener('click', () => {
+      const isOpen = !body.classList.contains('hidden');
+      body.classList.toggle('hidden', isOpen);
+      caret.textContent = isOpen ? '▸' : '▾';
+      toggle.setAttribute('aria-expanded', String(!isOpen));
     });
-    apiLink.addEventListener('mouseleave', () => {
-      apiLink.style.backgroundColor = 'var(--theme-card-background)';
-    });
 
-    const apiIcon = document.createElement('span');
-    apiIcon.className = 'inline-block w-4 h-4';
-    apiIcon.setAttribute('aria-hidden', 'true');
-    apiIcon.innerHTML = ICON_NETWORK;
-    apiLink.appendChild(apiIcon);
+    section.appendChild(toggle);
+    section.appendChild(body);
+    return section;
+  }
 
-    const apiLinkText = document.createElement('span');
-    apiLinkText.textContent = 'data.xivdyetools.app';
-    apiLink.appendChild(apiLinkText);
+  /**
+   * The disclaimer gets a box — bordered block with a mono label, at the
+   * same size as the credits instead of the smallest type in the modal.
+   */
+  private createAttribution(): HTMLElement {
+    const block = document.createElement('div');
+    block.className = 'rounded-lg border px-3 py-3';
+    block.style.borderColor = 'var(--theme-border)';
 
-    apiSection.appendChild(apiLink);
+    const label = document.createElement('div');
+    label.className = 'm16-label mb-1.5';
+    label.textContent = LanguageService.t('about.legalLabel');
+    block.appendChild(label);
 
-    const apiDocsLink = document.createElement('a');
-    apiDocsLink.className =
-      'mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors';
-    apiDocsLink.style.backgroundColor = 'var(--theme-card-background)';
-    apiDocsLink.style.color = 'var(--theme-text)';
-    apiDocsLink.href =
-      'https://github.com/FlashGalatine/xivdyetools/blob/main/docs/projects/api-worker/overview.md';
-    apiDocsLink.target = '_blank';
-    apiDocsLink.rel = 'noopener noreferrer';
+    const disclaimer = document.createElement('p');
+    disclaimer.className = 'text-xs mb-1';
+    disclaimer.style.color = 'var(--theme-text-muted)';
+    disclaimer.textContent = LanguageService.t('footer.disclaimer');
+    block.appendChild(disclaimer);
 
-    apiDocsLink.addEventListener('mouseenter', () => {
-      apiDocsLink.style.backgroundColor = 'var(--theme-card-hover)';
-    });
-    apiDocsLink.addEventListener('mouseleave', () => {
-      apiDocsLink.style.backgroundColor = 'var(--theme-card-background)';
-    });
+    const notAffiliated = document.createElement('p');
+    notAffiliated.className = 'text-xs';
+    notAffiliated.style.color = 'var(--theme-text-muted)';
+    notAffiliated.textContent = LanguageService.t('footer.notAffiliated');
+    block.appendChild(notAffiliated);
 
-    const apiDocsIcon = document.createElement('span');
-    apiDocsIcon.className = 'inline-block w-4 h-4';
-    apiDocsIcon.setAttribute('aria-hidden', 'true');
-    apiDocsIcon.innerHTML = ICON_GITHUB;
-    apiDocsLink.appendChild(apiDocsIcon);
-
-    const apiDocsLinkText = document.createElement('span');
-    apiDocsLinkText.textContent = 'API Worker Docs';
-    apiDocsLink.appendChild(apiDocsLinkText);
-
-    apiSection.appendChild(apiDocsLink);
-    container.appendChild(apiSection);
-
-    // Square Enix disclaimer section
-    const disclaimerSection = document.createElement('div');
-    disclaimerSection.className = 'text-center mb-6 pt-4 border-t';
-    disclaimerSection.style.borderColor = 'var(--theme-border)';
-
-    const disclaimerText = document.createElement('p');
-    disclaimerText.className = 'text-xs';
-    disclaimerText.style.color = 'var(--theme-text-muted)';
-    disclaimerText.innerHTML = `${LanguageService.t('footer.disclaimer')}<br>${LanguageService.t('footer.notAffiliated')}`;
-    disclaimerSection.appendChild(disclaimerText);
-
-    container.appendChild(disclaimerSection);
-
-    // Close button
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'flex justify-center';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className =
-      'px-6 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1';
-    closeBtn.style.backgroundColor = 'var(--theme-primary)';
-    closeBtn.style.color = 'var(--theme-text-header)';
-    closeBtn.addEventListener('mouseenter', () => {
-      closeBtn.style.filter = 'brightness(1.1)';
-    });
-    closeBtn.addEventListener('mouseleave', () => {
-      closeBtn.style.filter = '';
-    });
-    closeBtn.textContent = LanguageService.t('common.close');
-    closeBtn.addEventListener('click', () => {
-      this.close();
-    });
-
-    buttonContainer.appendChild(closeBtn);
-    container.appendChild(buttonContainer);
-
-    return container;
+    return block;
   }
 }
 
@@ -329,14 +424,4 @@ export function showAboutModal(): void {
     aboutModalInstance = new AboutModal();
   }
   aboutModalInstance.show();
-}
-
-/**
- * Close the about modal if open
- */
-export function closeAboutModal(): void {
-  if (aboutModalInstance) {
-    aboutModalInstance.close();
-    aboutModalInstance = null;
-  }
 }

@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-08-21
+
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-001 / FINDING-015). Minor bump: additive API, one behavioural change in `revokeToken` TTLs.
+
+### Security
+
+- **`revokeToken()` now keeps blacklist entries alive for `exp + REFRESH_GRACE_SECONDS`** (new exported constant, 15 min) instead of ending exactly at `exp`. The oauth worker's `/auth/refresh` honours tokens for a grace window past `exp`; with the old TTL a revoked token became refreshable the moment it expired (FINDING-001). Both sides now share the same constant. New `RevokeTokenOptions.graceSeconds` for callers that override the window.
+- **`verifyJWT` / `verifyJWTSignatureOnly` validate claim types** (FINDING-015): `exp` must be a finite numeric date, `sub` a non-empty string, `iat`/`nbf` numeric when present; a signed `exp: "9999999999"` or `sub: {}` is rejected instead of comparing as strings/objects. `verifyJWT` also enforces `nbf` (with optional `clockToleranceSeconds`), and accepts new `issuer` (string or list) and `audience` options that pin `iss`/`aud`.
+
+- **Bot request signature v2** (FINDING-014): `createBotSignatureV2` / `verifyBotSignatureV2` bind `method`, URL `path`, SHA-256 of the body, timestamp, an optional nonce and the identity headers with a length-prefixed canonical string (v1 signed only `timestamp:userId:userName` with an ambiguous `:` delimiter — `(123,"a:b")` ≡ `("123:a","b")`) and a 60 s window (`BOT_SIGNATURE_V2_MAX_AGE_MS`). Header names `BOT_SIGNATURE_V2_HEADER` (`X-Request-Signature-V2`) / `BOT_SIGNATURE_NONCE_HEADER` (`X-Request-Nonce`). `verifyBotSignature` (v1) is unchanged for rollover.
+- **`verifyDiscordRequest` enforces timestamp freshness** (FINDING-021): `X-Signature-Timestamp` older than `DEFAULT_DISCORD_MAX_TIMESTAMP_AGE_SECONDS` (300) or more than 60 s in the future is rejected before the body is read; `DiscordVerifyOptions.maxTimestampAgeSeconds` / `.maxFutureSkewSeconds` override.
+
+### Added
+
+- `REFRESH_GRACE_SECONDS`, `RevokeTokenOptions`, `VerifyJWTOptions.issuer` / `.audience` / `.clockToleranceSeconds`, `JWTPayload.nbf` / `.aud`, `createBotSignatureV2`, `verifyBotSignatureV2`, `BotSignatureV2Request`, `BOT_SIGNATURE_V2_MAX_AGE_MS`, `BOT_SIGNATURE_V2_HEADER`, `BOT_SIGNATURE_NONCE_HEADER`, `DEFAULT_DISCORD_MAX_TIMESTAMP_AGE_SECONDS`.
+
+## [1.3.0] - 2026-08-16
+
+Monorepo 2.0 Tier 1 package consolidation. Written 2026-07-30 and unpublished until this release (npm has 1.2.0).
+
+### Added
+
+- Absorbed `@xivdyetools/crypto` v1.1.2: Base64URL (RFC 4648) and hex encoding primitives (`base64UrlEncode`, `base64UrlEncodeBytes`, `base64UrlDecode`, `base64UrlDecodeBytes`, `hexToBytes`, `bytesToHex`) now live in `src/encoding/` and ship at the new `@xivdyetools/auth/encoding` subpath export (also re-exported from the package root). The standalone `@xivdyetools/crypto` package is retired and will receive no further releases — the API is identical, only the import specifier changes (`'@xivdyetools/crypto'` → `'@xivdyetools/auth/encoding'`; see `DEPRECATIONS.md`).
+- `"sideEffects": false` so bundlers can tree-shake unused modules — consumers importing only `/encoding` no longer pull in `discord-interactions`.
+
+### Changed
+
+- `@xivdyetools/crypto` dropped from `dependencies`; `jwt.ts` / `hmac.ts` import the encoding primitives relatively. The package now has **no internal dependencies** (Level 0 of the monorepo graph) — `discord-interactions` is the only runtime dependency, `@cloudflare/workers-types` remains an optional peer.
+- Docs: README and `CLAUDE.md` synced to the branch state: `/encoding` and `/revocation` subpaths documented, API-reference signatures corrected (`isJWTExpired(token)` / `getJWTTimeToExpiry(token)` take the raw token string, `unauthorizedResponse(message?)` / `badRequestResponse(message)` return JSON), consumers listed, license/legal notice added, stale blog link removed.
+- **Follow-up 3**: `hmacSignHex` is now consumed by both bot workers — `discord-worker`'s `services/preset-api.ts` and `moderation-worker`'s `services/preset-api.ts` replaced their hand-rolled `crypto.subtle` signing with it, each worker's `BOT_SIGNING_SECRET` now enforced at ≥32 bytes by that worker's own env-validation. This supersedes the "kept as-is" note recorded below under DEAD-019 — both sites are now adopted, not kept; `discord-worker`'s `utils/github-verify.ts` remains the one intentional holdout (GitHub imposes no minimum webhook-secret length).
+
+### Removed (2026-08-18 dead-code audit)
+
+- **DEAD-020**: `isJWTExpired(token)` and `getJWTTimeToExpiry(token)` removed from `jwt.ts` and the root barrel — documented in the README but had zero callers outside their own tests; `oauth`'s `jwt-service.ts` deleted its own copy of `isJWTExpired` back in the 2026-07-18 audit and never called this package's version.
+- **DEAD-020**: `timingSafeEqualBytes(a, b)` removed from `timing.ts` and the root barrel — zero callers; every consumer uses the string-based `timingSafeEqual`, and all HMAC/JWT signature checks already route through the inherently timing-safe `crypto.subtle.verify()` instead. `timingSafeEqual` and the root `/encoding` re-exports are unaffected (KEEP).
+- **DEAD-019 (adopt)**: `apps/oauth/src/services/jwt-service.ts`'s hand-rolled `getSigningKey`/`signJwtData`/`verifyJwtData` now delegate to this package's `hmacSign`/`hmacVerify` — verified byte-for-byte identical for `JWT_SECRET` (already enforced >= 32 bytes by oauth's own env validation, satisfying `createHmacKey`'s minimum-key-length check). `discord-worker`'s `services/preset-api.ts`/`utils/github-verify.ts` and `moderation-worker`'s `services/preset-api.ts` were evaluated for the same swap and **kept as-is**: their secrets (`BOT_SIGNING_SECRET`, `GITHUB_WEBHOOK_SECRET`) have no minimum-length requirement anywhere in this repo (existing tests use 17-20 character secrets), so `createHmacKey`'s `>= 32` byte floor would silently fail-closed in real deployments with a shorter secret. `hmacSign`/`hmacSignHex`/`hmacVerify`/`hmacVerifyHex` remain exported and are no longer zero-caller. **(superseded 2026-08-18 — see Changed above: both `preset-api.ts` sites now use `hmacSignHex`.)**
+
 ## [1.2.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprints 2 & 6).

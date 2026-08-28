@@ -4,17 +4,19 @@ Shared testing utilities for the xivdyetools ecosystem. Provides mocks for Cloud
 
 ## Installation
 
-```bash
-npm install -D @xivdyetools/test-utils
+**Workspace-private since 1.2.0 (Monorepo 2.0 Tier 1) — not published to npm.** Consume it from inside the monorepo as a `workspace:*` devDependency:
+
+```json
+"devDependencies": { "@xivdyetools/test-utils": "workspace:*" }
 ```
+
+(Versions up to 1.1.8 remain on npm as history only.)
 
 ## Features
 
 - **Cloudflare Workers Mocks**: D1Database, KVNamespace, R2Bucket, AnalyticsEngineDataset, Fetcher (Service Bindings)
-- **Auth Helpers**: JWT creation/verification, HMAC signatures, auth context factories
-- **Domain Factories**: Preset, Category, Vote, User mock data factories
-- **DOM Utilities**: localStorage mock, Canvas mock, ResizeObserver mock
-- **Assertions**: Response assertion helpers for API testing
+- **Auth Helpers**: JWT creation, HMAC bot signatures, bearer-token headers
+- **Domain Factories**: Preset row, Category row, Dye mock data factories
 
 ## Usage
 
@@ -44,7 +46,7 @@ db._reset();
 ### Auth Helpers
 
 ```typescript
-import { createTestJWT, createBotSignature, createAuthContext } from '@xivdyetools/test-utils/auth';
+import { createTestJWT, createBotSignature, authHeaders } from '@xivdyetools/test-utils/auth';
 
 // Create a valid JWT for testing
 const jwt = await createTestJWT('your-secret', {
@@ -61,54 +63,23 @@ const signature = await createBotSignature(
   'signing-secret'
 );
 
-// Create auth context for middleware testing
-const ctx = createAuthContext({ isModerator: true });
+// Build a bearer-token Authorization header
+const headers = authHeaders(jwt, 'user-discord-id', 'username');
 ```
 
 ### Domain Factories
 
 ```typescript
 import {
-  createMockPreset,
   createMockPresetRow,
   createMockSubmission,
-  createMockUser,
-  resetCounters,
+  createMockDye,
 } from '@xivdyetools/test-utils/factories';
 
 // Create mock domain objects
-const preset = createMockPreset({ name: 'Custom Name' });
 const row = createMockPresetRow({ status: 'pending' });
 const submission = createMockSubmission();
-
-// Reset auto-increment counters between tests
-beforeEach(() => resetCounters());
-```
-
-### DOM Utilities
-
-```typescript
-import { MockLocalStorage, setupCanvasMocks, setupResizeObserverMock } from '@xivdyetools/test-utils/dom';
-
-// Mock localStorage
-const storage = new MockLocalStorage();
-global.localStorage = storage;
-
-// Setup canvas mocks for chart testing
-setupCanvasMocks();
-
-// Setup ResizeObserver mock
-setupResizeObserverMock();
-```
-
-### Assertions
-
-```typescript
-import { assertJsonResponse } from '@xivdyetools/test-utils/assertions';
-
-const response = await app.request('/api/v1/presets');
-const body = await assertJsonResponse<{ presets: Preset[] }>(response, 200);
-expect(body.presets).toHaveLength(1);
+const dye = createMockDye({ name: 'Custom Dye' });
 ```
 
 ### Constants
@@ -131,9 +102,9 @@ const params = new URLSearchParams({
 | `@xivdyetools/test-utils/cloudflare` | Cloudflare Workers mocks |
 | `@xivdyetools/test-utils/auth` | Authentication helpers |
 | `@xivdyetools/test-utils/factories` | Domain object factories |
-| `@xivdyetools/test-utils/dom` | DOM/browser utilities |
-| `@xivdyetools/test-utils/assertions` | Response assertions |
 | `@xivdyetools/test-utils/constants` | Test constants (PKCE, etc.) |
+
+Note: `/dom` and `/assertions` were removed 2026-08-18 (dead-code audit, DEAD-026) — zero consumers anywhere in the workspace. If the web-app ever adopts this package for DOM polyfills, pull them back from git history.
 
 ## TypeScript
 
@@ -144,8 +115,8 @@ This package includes full TypeScript support. Cloudflare Workers types are incl
 **Flash Galatine** | Midgardsormr (Aether)
 
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
-📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
@@ -154,4 +125,11 @@ This package includes full TypeScript support. Cloudflare Workers types are incl
 
 ## License
 
-MIT © 2025-2026 Flash Galatine
+MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
+
+## Legal Notice
+
+**FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+**FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
+
+XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.**

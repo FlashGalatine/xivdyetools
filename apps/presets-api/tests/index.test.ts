@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import app from '../src/index';
 import type { Env } from '../src/types';
-import { createMockEnv } from './test-utils';
+import { createMockEnv, createMockD1Database, createMockPresetRow } from './test-utils';
 
 describe('Index/App', () => {
     let env: Env;
@@ -141,6 +141,32 @@ describe('Index/App', () => {
             expect(res.headers.get('Access-Control-Allow-Methods')).toContain('POST');
         });
 
+        // FINDING-005 (2026-08-09 pre-release audit): X-User-Discord-ID and
+        // X-User-Discord-Name are server-to-server bot identity headers, only
+        // ever honoured behind a valid HMAC signature. No browser client sends
+        // them, so advertising them in the preflight is pure attack surface.
+        it('should not advertise the bot identity headers in preflight', async () => {
+            const res = await app.request(
+                '/api/v1/presets',
+                {
+                    method: 'OPTIONS',
+                    headers: {
+                        Origin: 'http://localhost:3000',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type, Authorization',
+                    },
+                },
+                env
+            );
+
+            const allowHeaders = (res.headers.get('Access-Control-Allow-Headers') ?? '').toLowerCase();
+
+            expect(allowHeaders).toContain('content-type');
+            expect(allowHeaders).toContain('authorization');
+            expect(allowHeaders).not.toContain('x-user-discord-id');
+            expect(allowHeaders).not.toContain('x-user-discord-name');
+        });
+
         it('should expose rate limit headers', async () => {
             const res = await app.request(
                 '/api/v1/presets',
@@ -154,6 +180,60 @@ describe('Index/App', () => {
 
             expect(res.headers.get('Access-Control-Expose-Headers')).toContain('X-RateLimit-Remaining');
             expect(res.headers.get('Access-Control-Expose-Headers')).toContain('X-RateLimit-Reset');
+        });
+
+        // FINDING-002 (2026-08-09 pre-release audit): the loopback allowlist had
+        // no environment guard, so production reflected Access-Control-Allow-Origin
+        // for four localhost origins alongside credentials: true. Mirrors the
+        // OAUTH-SEC-001 fix already present in apps/oauth/src/index.ts.
+        describe('localhost origins are development-only (FINDING-002)', () => {
+            // A production env that PASSES validateEnv — otherwise the env-validation
+            // middleware 500s before cors() ever runs and every assertion below would
+            // pass vacuously.
+            const createProductionEnv = (): Env =>
+                createMockEnv({
+                    ENVIRONMENT: 'production',
+                    CORS_ORIGIN: 'https://xivdyetools.app',
+                    BOT_SIGNING_SECRET: 'test-signing-secret',
+                    MODERATOR_IDS: '123456789012345678',
+                });
+
+            it('positive control: the configured production origin is still reflected', async () => {
+                const res = await app.request(
+                    '/',
+                    { headers: { Origin: 'https://xivdyetools.app' } },
+                    createProductionEnv()
+                );
+
+                expect(res.status).toBe(200);
+                expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://xivdyetools.app');
+            });
+
+            it.each([
+                'http://localhost:5173',
+                'http://127.0.0.1:5173',
+                'http://localhost:8787',
+                'http://127.0.0.1:8787',
+            ])('should not reflect %s in production', async (origin) => {
+                const res = await app.request('/', { headers: { Origin: origin } }, createProductionEnv());
+
+                expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
+            });
+
+            it.each([
+                'http://localhost:5173',
+                'http://127.0.0.1:5173',
+                'http://localhost:8787',
+                'http://127.0.0.1:8787',
+            ])('should still reflect %s in development', async (origin) => {
+                const res = await app.request(
+                    '/',
+                    { headers: { Origin: origin } },
+                    createMockEnv({ ENVIRONMENT: 'development' })
+                );
+
+                expect(res.headers.get('Access-Control-Allow-Origin')).toBe(origin);
+            });
         });
     });
 
@@ -446,6 +526,136 @@ describe('Index/App', () => {
 
             // Should pass Content-Type check for empty body
             expect(res.status).not.toBe(415);
+        });
+    });
+
+    // ============================================
+    // Preview image upload — FULL middleware chain
+    // ============================================
+
+    // CRITICAL 1 & 2 (2026-08-10 final review): the handler tests mount
+    // presetsRouter on a bare Hono app with only authMiddleware, so they never
+    // saw the two global guards that made this route unreachable in production:
+    // a 100 KB bodyLimit on all of /api/* (our images are up to 5 MB) and a
+    // Content-Type gate that 415s anything that isn't application/json (the
+    // client sends image/png). Neither was a handler bug, which is exactly why
+    // no handler test could catch it. These tests drive the REAL app export.
+    describe('Preview image upload through the real app', () => {
+        // 200 KB of PNG: comfortably over the 100 KB global limit, well under
+        // the route's own 5 MB one, so only the middleware chain can reject it.
+        const bigPng = (() => {
+            const bytes = new Uint8Array(200 * 1024);
+            bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+            return bytes;
+        })();
+
+        const ctx = {
+            waitUntil: () => {},
+            passThroughOnException: () => {},
+        } as unknown as ExecutionContext;
+
+        // A real row the caller authors, so the request reaches the route's own
+        // checks instead of stopping at 404/403 — otherwise "not 413" would
+        // pass for the wrong reason.
+        beforeEach(() => {
+            const mockDb = createMockD1Database();
+            mockDb._setupMock(() =>
+                createMockPresetRow({ id: 'preset-123', author_discord_id: '123' })
+            );
+            env = createMockEnv({ DB: mockDb as unknown as D1Database });
+        });
+
+        const upload = (contentType?: string, body: Uint8Array = bigPng) =>
+            app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        ...(contentType ? { 'Content-Type': contentType } : {}),
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body,
+                },
+                env,
+                ctx
+            );
+
+        it.each(['image/png', 'image/jpeg', 'image/webp'])(
+            'accepts a 200 KB %s body: neither 413 nor 415',
+            async (contentType) => {
+                const res = await upload(contentType);
+
+                expect(res.status).not.toBe(413);
+                expect(res.status).not.toBe(415);
+                expect(res.status).toBe(200);
+            }
+        );
+
+        it('accepts a 200 KB body with no Content-Type at all', async () => {
+            const res = await upload(undefined);
+
+            expect(res.status).not.toBe(413);
+            expect(res.status).not.toBe(415);
+            expect(res.status).toBe(200);
+        });
+
+        it('still rejects a non-image Content-Type on the upload route', async () => {
+            const res = await upload('text/plain');
+
+            expect(res.status).toBe(415);
+        });
+
+        // The exemption is scoped to this one path — every other endpoint keeps
+        // the 100 KB cap and the JSON-only rule.
+        it('keeps the 100 KB limit on other /api routes', async () => {
+            const res = await app.request(
+                '/api/v1/presets',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: JSON.stringify({ name: 'x'.repeat(200 * 1024) }),
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(413);
+        });
+
+        it('keeps the 100 KB limit on the preview-image route for other methods', async () => {
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: JSON.stringify({ pad: 'x'.repeat(200 * 1024) }),
+                },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(413);
+        });
+
+        // The route's own 5 MB check is the real limit, and it is reachable:
+        // a 400 (not a 413) proves the handler, not the global bodyLimit,
+        // rejected this one.
+        it('rejects over 5 MB at the route, not at the global body limit', async () => {
+            const tooBig = new Uint8Array(5 * 1024 * 1024 + 1);
+            tooBig.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+
+            const res = await upload('image/png', tooBig);
+
+            expect(res.status).toBe(400);
         });
     });
 

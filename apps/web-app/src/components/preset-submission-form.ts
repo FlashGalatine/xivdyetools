@@ -15,9 +15,18 @@ import {
   presetSubmissionService,
   validateSubmission,
 } from '@services/index';
-import { getCategoryIcon } from '@shared/category-icons';
-import type { Dye, PresetCategory } from '@xivdyetools/types';
-import type { PresetSubmission, SubmissionResult } from '@services/preset-submission-service';
+import type { Dye } from '@xivdyetools/types';
+import {
+  MAX_PREVIEW_IMAGE_BYTES,
+  uploadPreviewImage,
+  type PresetSubmission,
+  type SubmissionResult,
+} from '@services/preset-submission-service';
+import { presetErrorMessage, presetValidationMessage } from '@shared/preset-i18n';
+import { exampleLinkError } from '@shared/example-link';
+import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
+import { logger } from '@shared/logger';
+import { createCategorySelector, type CategorySelection } from './preset-category-selector';
 
 // ============================================
 // Types
@@ -26,9 +35,16 @@ import type { PresetSubmission, SubmissionResult } from '@services/preset-submis
 interface FormState {
   name: string;
   description: string;
-  category: PresetCategory;
+  /** Primary + up to two secondary; the shared selector owns the ranking */
+  categories: CategorySelection;
   selectedDyes: Dye[];
   tags: string;
+  /** 8A example link (allowlisted host; validated on blur) */
+  exampleLink: string;
+  /** Optional card image; uploaded only after the preset is created (needs its id) */
+  previewImage: File | null;
+  /** Re-render the HOW IT WILL LOOK preview band (8S) */
+  refreshPreview?: () => void;
 }
 
 type OnSubmitCallback = (result: SubmissionResult) => void;
@@ -37,31 +53,32 @@ type OnSubmitCallback = (result: SubmissionResult) => void;
 // Configuration
 // ============================================
 
-const CATEGORIES: { id: PresetCategory; label: string }[] = [
-  { id: 'jobs', label: 'Jobs' },
-  { id: 'grand-companies', label: 'Grand Companies' },
-  { id: 'seasons', label: 'Seasons' },
-  { id: 'events', label: 'Events' },
-  { id: 'aesthetics', label: 'Aesthetics' },
-  { id: 'community', label: 'Community' },
-];
-
 const MIN_NAME_LENGTH = 2;
 const MAX_NAME_LENGTH = 50;
 const MIN_DESC_LENGTH = 10;
 const MAX_DESC_LENGTH = 200;
-const MIN_DYES = 2;
-const MAX_DYES = 5;
-const MAX_TAGS = 10;
+// 8S: a preset has to be buyable and substantial — 3–6 real dyes
+// (matches the Phase-1 presets-api validation change).
+const MIN_DYES = 3;
+const MAX_DYES = 6;
 
 // ============================================
 // Show Modal Function
 // ============================================
 
+/** Optional prefill (10A make-a-palette hands the glamour's dyes in). */
+export interface SubmissionFormInitial {
+  name?: string;
+  dyes?: Dye[];
+}
+
 /**
  * Show the preset submission form modal
  */
-export function showPresetSubmissionForm(onSubmit?: OnSubmitCallback): void {
+export function showPresetSubmissionForm(
+  onSubmit?: OnSubmitCallback,
+  initial?: SubmissionFormInitial
+): void {
   // Check authentication first
   if (!authService.isAuthenticated()) {
     ToastService.error(LanguageService.t('preset.loginToSubmit'));
@@ -70,22 +87,26 @@ export function showPresetSubmissionForm(onSubmit?: OnSubmitCallback): void {
 
   // Initialize form state
   const state: FormState = {
-    name: '',
+    name: initial?.name ?? '',
     description: '',
-    category: 'community',
-    selectedDyes: [],
+    categories: { primary: 'events', secondary: [] },
+    selectedDyes: initial?.dyes ? initial.dyes.slice(0, MAX_DYES) : [],
     tags: '',
+    exampleLink: '',
+    previewImage: null,
   };
 
   // Create form content
   const content = createFormContent(state, onSubmit);
 
-  // Show modal using ModalService
+  // 8S: one content column at 560 so the dye slots and preview band
+  // are not squeezed.
   ModalService.show({
     type: 'custom',
-    title: 'Submit a Preset',
+    title: LanguageService.t('preset.submitTitle'),
+    subtitle: LanguageService.t('preset.submitSub'),
     content,
-    size: 'lg',
+    panelWidth: 560,
     closable: true,
   });
 }
@@ -94,9 +115,119 @@ export function showPresetSubmissionForm(onSubmit?: OnSubmitCallback): void {
 // Form Content Creation
 // ============================================
 
+/** "{n}/{max} (min {min})" — the description character counter. */
+function descCounterText(length: number): string {
+  return LanguageService.tInterpolate('preset.counterWithMin', {
+    n: length,
+    max: MAX_DESC_LENGTH,
+    min: MIN_DESC_LENGTH,
+  });
+}
+
+/** "{n}/{max} (min {min})" — the selected-dye counter. */
+function dyeCounterText(count: number): string {
+  return LanguageService.tInterpolate('preset.counterWithMin', {
+    n: count,
+    max: MAX_DYES,
+    min: MIN_DYES,
+  });
+}
+
+/** 8S label row: localized label + REQUIRED/OPTIONAL chip. */
+function fieldLabelRow(labelText: string, reqText: string, required: boolean): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'flex items-center justify-between mb-1';
+  const label = document.createElement('span');
+  label.className = 'text-sm font-medium';
+  label.style.color = 'var(--theme-text)';
+  label.textContent = labelText;
+  const chip = document.createElement('span');
+  chip.style.cssText = `font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: ${
+    required
+      ? 'color-mix(in srgb, var(--theme-primary) 14%, transparent)'
+      : 'var(--theme-background-secondary)'
+  }; color: ${required ? 'var(--theme-primary)' : 'var(--theme-text-muted)'};`;
+  chip.textContent = reqText;
+  row.appendChild(label);
+  row.appendChild(chip);
+  return row;
+}
+
+/** 8S field hint under an input. */
+function fieldHint(text: string): HTMLElement {
+  const hint = document.createElement('div');
+  hint.className = 'text-xs mt-1';
+  hint.style.color = 'var(--theme-text-muted)';
+  hint.textContent = text;
+  return hint;
+}
+
+/** HOW IT WILL LOOK — live preview band built from the current draft. */
+function createPreviewBand(state: FormState): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'mb-4';
+
+  const labelRow = document.createElement('div');
+  labelRow.className = 'flex items-center justify-between mb-2';
+  const label = document.createElement('span');
+  label.style.cssText =
+    "font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted);";
+  label.textContent = LanguageService.t('preset.previewLabel');
+  const draft = document.createElement('span');
+  draft.style.cssText =
+    "font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: var(--theme-background-secondary); color: var(--theme-text-muted);";
+  draft.textContent = LanguageService.t('preset.draftBadge');
+  labelRow.appendChild(label);
+  labelRow.appendChild(draft);
+
+  const card = document.createElement('div');
+  card.style.cssText =
+    'border: 1px solid var(--theme-border); border-radius: 10px; overflow: hidden;';
+
+  const band = document.createElement('div');
+  band.style.cssText = 'display: flex; height: 44px;';
+  const nameLine = document.createElement('div');
+  nameLine.style.cssText =
+    'padding: 8px 12px; font-size: 13px; font-weight: 650; color: var(--theme-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+
+  const refresh = (): void => {
+    band.replaceChildren(
+      ...(state.selectedDyes.length
+        ? state.selectedDyes.map((d) => {
+            const seg = document.createElement('div');
+            seg.style.cssText = `flex: 1; background: ${d.hex};`;
+            return seg;
+          })
+        : [
+            (() => {
+              const seg = document.createElement('div');
+              seg.style.cssText = 'flex: 1; background: var(--theme-background-secondary);';
+              return seg;
+            })(),
+          ])
+    );
+    nameLine.textContent = state.name || '—';
+  };
+  state.refreshPreview = refresh;
+  refresh();
+
+  card.appendChild(band);
+  card.appendChild(nameLine);
+  wrapper.appendChild(labelRow);
+  wrapper.appendChild(card);
+  return wrapper;
+}
+
 function createFormContent(state: FormState, onSubmit?: OnSubmitCallback): HTMLElement {
   const form = document.createElement('div');
   form.className = 'preset-submission-form space-y-4';
+
+  // 8S: live preview leads the form
+  form.appendChild(createPreviewBand(state));
+
+  // Any edit refreshes the preview (covers inputs, category and dye slots)
+  form.addEventListener('input', () => state.refreshPreview?.());
+  form.addEventListener('click', () => setTimeout(() => state.refreshPreview?.(), 0));
 
   // Name input
   form.appendChild(createNameInput(state));
@@ -105,13 +236,25 @@ function createFormContent(state: FormState, onSubmit?: OnSubmitCallback): HTMLE
   form.appendChild(createDescriptionInput(state));
 
   // Category selector
-  form.appendChild(createCategorySelector(state));
+  form.appendChild(createCategorySelector(state.categories, () => state.refreshPreview?.()));
 
-  // Dye selector
+  // Dye selector — slot picker only: a preset has to be buyable
   form.appendChild(createDyeSelector(state));
+  form.appendChild(fieldHint(LanguageService.t('preset.dyesHint')));
 
   // Tags input
   form.appendChild(createTagsInput(state));
+
+  // Example link (8A) — validated on blur, not per keystroke
+  form.appendChild(createExampleLinkInput(state));
+
+  // Preview image — optional; only uploadable once the preset has an id
+  form.appendChild(createPreviewImageInput(state));
+
+  // Moderation rules line
+  const rules = fieldHint(LanguageService.t('preset.rulesNote'));
+  rules.style.cssText += 'line-height: 1.55; margin-top: 8px;';
+  form.appendChild(rules);
 
   // Submit button
   form.appendChild(createSubmitButton(state, onSubmit));
@@ -127,11 +270,11 @@ function createNameInput(state: FormState): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
 
-  const label = document.createElement('label');
-  label.className = 'block text-sm font-medium mb-1';
-  label.style.color = 'var(--theme-text)';
-  label.textContent = 'Preset Name';
-  label.htmlFor = 'preset-name';
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldName'),
+    LanguageService.t('preset.reqRequired'),
+    true
+  );
 
   const input = document.createElement('input');
   input.type = 'text';
@@ -140,7 +283,7 @@ function createNameInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
   input.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  input.placeholder = 'e.g., Dark Knight Abyssal';
+  input.placeholder = LanguageService.t('preset.fieldNamePlaceholder');
   input.maxLength = MAX_NAME_LENGTH;
   input.value = state.name;
 
@@ -164,6 +307,7 @@ function createNameInput(state: FormState): HTMLElement {
   wrapper.appendChild(label);
   wrapper.appendChild(input);
   wrapper.appendChild(counter);
+  wrapper.appendChild(fieldHint(LanguageService.t('preset.fieldNameHint')));
 
   return wrapper;
 }
@@ -172,11 +316,11 @@ function createDescriptionInput(state: FormState): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
 
-  const label = document.createElement('label');
-  label.className = 'block text-sm font-medium mb-1';
-  label.style.color = 'var(--theme-text)';
-  label.textContent = 'Description';
-  label.htmlFor = 'preset-description';
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldDesc'),
+    LanguageService.t('preset.reqRequired'),
+    true
+  );
 
   const textarea = document.createElement('textarea');
   textarea.id = 'preset-description';
@@ -184,7 +328,7 @@ function createDescriptionInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none';
   textarea.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  textarea.placeholder = 'Describe your color palette and when to use it...';
+  textarea.placeholder = LanguageService.t('preset.fieldDescPlaceholder');
   textarea.rows = 3;
   textarea.maxLength = MAX_DESC_LENGTH;
   textarea.value = state.description;
@@ -192,11 +336,11 @@ function createDescriptionInput(state: FormState): HTMLElement {
   const counter = document.createElement('div');
   counter.className = 'text-xs mt-1 text-right';
   counter.style.color = 'var(--theme-text-secondary)';
-  counter.textContent = `${state.description.length}/${MAX_DESC_LENGTH} (min ${MIN_DESC_LENGTH})`;
+  counter.textContent = descCounterText(state.description.length);
 
   textarea.addEventListener('input', () => {
     state.description = textarea.value;
-    counter.textContent = `${state.description.length}/${MAX_DESC_LENGTH} (min ${MIN_DESC_LENGTH})`;
+    counter.textContent = descCounterText(state.description.length);
 
     if (state.description.length < MIN_DESC_LENGTH) {
       counter.style.color = '#ef4444';
@@ -208,72 +352,7 @@ function createDescriptionInput(state: FormState): HTMLElement {
   wrapper.appendChild(label);
   wrapper.appendChild(textarea);
   wrapper.appendChild(counter);
-
-  return wrapper;
-}
-
-function createCategorySelector(state: FormState): HTMLElement {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'form-field';
-
-  const label = document.createElement('label');
-  label.className = 'block text-sm font-medium mb-1';
-  label.style.color = 'var(--theme-text)';
-  label.textContent = 'Category';
-
-  const grid = document.createElement('div');
-  grid.className = 'grid grid-cols-3 gap-2';
-
-  for (const cat of CATEGORIES) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className =
-      'px-3 py-2 rounded-lg border text-sm transition-all flex items-center justify-center gap-1';
-
-    const isSelected = state.category === cat.id;
-    if (isSelected) {
-      btn.style.cssText =
-        'background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);';
-    } else {
-      btn.style.cssText =
-        'background-color: var(--theme-card-background); color: var(--theme-text); border-color: var(--theme-border);';
-    }
-
-    btn.innerHTML = `<span class="w-4 h-4 inline-block">${getCategoryIcon(cat.id)}</span><span>${cat.label}</span>`;
-
-    btn.addEventListener('click', () => {
-      state.category = cat.id;
-      // Update all buttons
-      const buttons = grid.querySelectorAll('button');
-      buttons.forEach((b, i) => {
-        const selected = CATEGORIES[i].id === state.category;
-        if (selected) {
-          b.style.cssText =
-            'background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);';
-        } else {
-          b.style.cssText =
-            'background-color: var(--theme-card-background); color: var(--theme-text); border-color: var(--theme-border);';
-        }
-      });
-    });
-
-    btn.addEventListener('mouseenter', () => {
-      if (state.category !== cat.id) {
-        btn.style.backgroundColor = 'var(--theme-card-hover)';
-      }
-    });
-
-    btn.addEventListener('mouseleave', () => {
-      if (state.category !== cat.id) {
-        btn.style.backgroundColor = 'var(--theme-card-background)';
-      }
-    });
-
-    grid.appendChild(btn);
-  }
-
-  wrapper.appendChild(label);
-  wrapper.appendChild(grid);
+  wrapper.appendChild(fieldHint(LanguageService.t('preset.fieldDescHint')));
 
   return wrapper;
 }
@@ -288,13 +367,13 @@ function createDyeSelector(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'text-sm font-medium';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Select Dyes';
+  label.textContent = `${LanguageService.t('preset.dyes')} — ${LanguageService.t('preset.dyesReq')}`;
 
   const counter = document.createElement('span');
   counter.className = 'text-xs';
   counter.id = 'dye-counter';
   counter.style.color = 'var(--theme-text-secondary)';
-  counter.textContent = `${state.selectedDyes.length}/${MAX_DYES} (min ${MIN_DYES})`;
+  counter.textContent = dyeCounterText(state.selectedDyes.length);
 
   labelRow.appendChild(label);
   labelRow.appendChild(counter);
@@ -313,7 +392,7 @@ function createDyeSelector(state: FormState): HTMLElement {
       const placeholder = document.createElement('span');
       placeholder.className = 'text-sm opacity-50';
       placeholder.style.color = 'var(--theme-text)';
-      placeholder.textContent = 'Click dyes below to add them...';
+      placeholder.textContent = LanguageService.t('preset.clickDyesToAdd');
       selectedDisplay.appendChild(placeholder);
     } else {
       state.selectedDyes.forEach((dye, index) => {
@@ -327,7 +406,7 @@ function createDyeSelector(state: FormState): HTMLElement {
         swatch.style.backgroundColor = dye.hex;
 
         const name = document.createElement('span');
-        name.textContent = dye.name;
+        name.textContent = localizedDyeName(dye);
 
         const remove = document.createElement('span');
         remove.className = 'ml-1 hover:text-red-500';
@@ -343,7 +422,7 @@ function createDyeSelector(state: FormState): HTMLElement {
           updateCounter();
         });
 
-        chip.title = 'Click to remove';
+        chip.title = LanguageService.t('preset.clickToRemove');
 
         selectedDisplay.appendChild(chip);
       });
@@ -353,7 +432,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   const updateCounter = () => {
     const counterEl = document.getElementById('dye-counter');
     if (counterEl) {
-      counterEl.textContent = `${state.selectedDyes.length}/${MAX_DYES} (min ${MIN_DYES})`;
+      counterEl.textContent = dyeCounterText(state.selectedDyes.length);
       if (state.selectedDyes.length < MIN_DYES) {
         counterEl.style.color = '#ef4444';
       } else if (state.selectedDyes.length > MAX_DYES) {
@@ -370,7 +449,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   searchInput.className = 'w-full px-3 py-2 rounded-lg border mb-2 focus:outline-none focus:ring-2';
   searchInput.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  searchInput.placeholder = 'Search dyes by name...';
+  searchInput.placeholder = LanguageService.t('dyeSelector.searchPlaceholder');
 
   // Dye grid
   const dyeGrid = document.createElement('div');
@@ -394,7 +473,7 @@ function createDyeSelector(state: FormState): HTMLElement {
       const isSelected = state.selectedDyes.some((d) => d.id === dye.id);
       btn.style.cssText = `background-color: ${dye.hex}; border-color: ${isSelected ? 'white' : 'transparent'}; ${isSelected ? 'box-shadow: 0 0 0 2px var(--theme-primary);' : ''}`;
 
-      btn.title = dye.name;
+      btn.title = localizedDyeName(dye);
 
       btn.addEventListener('click', () => {
         const existingIndex = state.selectedDyes.findIndex((d) => d.id === dye.id);
@@ -423,7 +502,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   searchInput.addEventListener('input', () => {
     const query = searchInput.value.toLowerCase();
     if (query) {
-      filteredDyes = allDyes.filter((d) => d.name.toLowerCase().includes(query));
+      filteredDyes = allDyes.filter((d) => dyeNameMatches(d, query));
     } else {
       filteredDyes = allDyes;
     }
@@ -446,11 +525,11 @@ function createTagsInput(state: FormState): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
 
-  const label = document.createElement('label');
-  label.className = 'block text-sm font-medium mb-1';
-  label.style.color = 'var(--theme-text)';
-  label.textContent = 'Tags (optional)';
-  label.htmlFor = 'preset-tags';
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldTags'),
+    LanguageService.t('preset.reqOptional'),
+    false
+  );
 
   const input = document.createElement('input');
   input.type = 'text';
@@ -459,16 +538,93 @@ function createTagsInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
   input.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  input.placeholder = 'dark, gothic, elegant (comma-separated)';
+  input.placeholder = LanguageService.t('preset.fieldTagsPlaceholder');
   input.value = state.tags;
 
-  const hint = document.createElement('div');
-  hint.className = 'text-xs mt-1';
-  hint.style.color = 'var(--theme-text-secondary)';
-  hint.textContent = `Up to ${MAX_TAGS} tags, each max 30 characters`;
+  const hint = fieldHint(LanguageService.t('preset.fieldTagsHint'));
 
   input.addEventListener('input', () => {
     state.tags = input.value;
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  wrapper.appendChild(hint);
+
+  return wrapper;
+}
+
+function createExampleLinkInput(state: FormState): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'form-field';
+
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldLink'),
+    LanguageService.t('preset.reqNewOptional'),
+    false
+  );
+
+  const input = document.createElement('input');
+  input.type = 'url';
+  input.id = 'preset-example-link';
+  input.className =
+    'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
+  input.style.cssText =
+    'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
+  input.placeholder = 'eorzeacollection.com/glamour/44120';
+  input.value = state.exampleLink;
+
+  const hint = fieldHint(LanguageService.t('preset.fieldLinkHint'));
+
+  input.addEventListener('input', () => {
+    state.exampleLink = input.value;
+  });
+  // Validate on blur, not per keystroke — a half-typed URL is not an error yet.
+  input.addEventListener('blur', () => {
+    const error = exampleLinkError(state.exampleLink);
+    input.style.borderColor = error ? '#ef4444' : 'var(--theme-border)';
+    hint.style.color = error ? '#ef4444' : 'var(--theme-text-muted)';
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  wrapper.appendChild(hint);
+
+  return wrapper;
+}
+
+const PREVIEW_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
+
+function createPreviewImageInput(state: FormState): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'form-field';
+
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldPreviewImage'),
+    LanguageService.t('preset.reqOptional'),
+    false
+  );
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.id = 'preset-preview-image';
+  input.accept = PREVIEW_IMAGE_ACCEPT;
+  input.className = 'w-full text-sm';
+  input.style.color = 'var(--theme-text)';
+
+  const hint = fieldHint(LanguageService.t('preset.fieldPreviewImageHint'));
+
+  input.addEventListener('change', () => {
+    const file = input.files?.[0] ?? null;
+    // Fail fast on size here — mirrors the server limit so the user finds
+    // out before waiting on an upload the server would reject anyway.
+    if (file && file.size > MAX_PREVIEW_IMAGE_BYTES) {
+      ToastService.error(LanguageService.t('preset.previewImageTooLarge'));
+      input.value = '';
+      state.previewImage = null;
+      return;
+    }
+    state.previewImage = file;
   });
 
   wrapper.appendChild(label);
@@ -488,7 +644,7 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
   cancelBtn.className = 'px-4 py-2 rounded-lg border transition-colors';
   cancelBtn.style.cssText =
     'background-color: var(--theme-card-background); color: var(--theme-text); border-color: var(--theme-border);';
-  cancelBtn.textContent = 'Cancel';
+  cancelBtn.textContent = LanguageService.t('common.cancel');
 
   cancelBtn.addEventListener('click', () => {
     ModalService.dismissTop();
@@ -507,7 +663,7 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
   submitBtn.id = 'submit-preset-btn';
   submitBtn.className = 'px-4 py-2 rounded-lg font-medium text-white transition-colors';
   submitBtn.style.cssText = 'background-color: var(--theme-primary);';
-  submitBtn.textContent = 'Submit Preset';
+  submitBtn.textContent = LanguageService.t('preset.submitPreset');
 
   submitBtn.addEventListener('mouseenter', () => {
     submitBtn.style.opacity = '0.9';
@@ -522,40 +678,52 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
     const submission: PresetSubmission = {
       name: state.name.trim(),
       description: state.description.trim(),
-      category_id: state.category,
-      dyes: state.selectedDyes.map((d) => d.id),
+      category_id: state.categories.primary,
+      secondary_categories: state.categories.secondary,
+      dyes: state.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null),
       tags: state.tags
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean),
+      example_link: state.exampleLink.trim() || null,
     };
 
     // Validate
     const errors = validateSubmission(submission);
     if (errors.length > 0) {
-      ToastService.error(errors.map((e) => e.message).join('. '));
+      // One toast per error: joining them with ". " builds an English sentence
+      // out of translated fragments, which does not survive translation.
+      // The service names the broken rule; the text is looked up here.
+      for (const error of errors) {
+        ToastService.error(presetValidationMessage(error));
+      }
+      return;
+    }
+    const linkError = exampleLinkError(state.exampleLink);
+    if (linkError) {
+      ToastService.error(linkError);
       return;
     }
 
     // Disable button and show loading
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting...';
+    submitBtn.textContent = LanguageService.t('preset.submitting');
 
     try {
       const result = await presetSubmissionService.submitPreset(submission);
 
       if (result.success) {
         if (result.duplicate) {
-          const duplicateName = result.duplicate.name || 'existing preset';
+          const duplicateName = result.duplicate.name || LanguageService.t('preset.anotherPreset');
           const message = result.vote_added
             ? LanguageService.tInterpolate('preset.duplicateWithVote', { name: duplicateName })
             : LanguageService.tInterpolate('preset.duplicateFound', { name: duplicateName });
           ToastService.info(message);
 
           // Navigate to the duplicate preset after dismissing modal
-          console.info('[PresetSubmissionForm] calling ModalService.dismissTop() for duplicate');
+          logger.info('[PresetSubmissionForm] calling ModalService.dismissTop() for duplicate');
           ModalService.dismissTop();
-          console.info('[PresetSubmissionForm] dismissTop() returned for duplicate');
+          logger.info('[PresetSubmissionForm] dismissTop() returned for duplicate');
 
           // Store the duplicate preset ID for navigation
           if (result.duplicate.id) {
@@ -574,18 +742,40 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
           ToastService.success(LanguageService.t('preset.submittedSuccess'));
         }
 
-        console.info('[PresetSubmissionForm] calling ModalService.dismissTop()');
+        // The preset now exists, so the image (which is scoped to a preset
+        // id) can go up. A failed upload must not read as a failed submission:
+        // the preset was created either way, so warn and continue rather than
+        // throwing.
+        if (state.previewImage && result.preset?.id) {
+          try {
+            await uploadPreviewImage(result.preset.id, state.previewImage);
+          } catch {
+            ToastService.warning(LanguageService.t('preset.previewImageFailed'));
+          }
+        }
+
+        logger.info('[PresetSubmissionForm] calling ModalService.dismissTop()');
         ModalService.dismissTop();
-        console.info('[PresetSubmissionForm] dismissTop() returned');
+        logger.info('[PresetSubmissionForm] dismissTop() returned');
         onSubmit?.(result);
+      } else if (result.validationErrors?.length) {
+        // The service revalidates; one toast per rule, same as above.
+        for (const error of result.validationErrors) {
+          ToastService.error(presetValidationMessage(error));
+        }
       } else {
-        ToastService.error(result.error || LanguageService.t('errors.submitPresetFailed'));
+        // `result.error` is the presets-API's own message when it sent one —
+        // shown as toast details under the translated headline, not instead of it.
+        ToastService.error(
+          presetErrorMessage(result.errorCode, 'errors.submitPresetFailed'),
+          result.error
+        );
       }
     } catch {
       ToastService.error(LanguageService.t('errors.submitPresetFailed'));
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit Preset';
+      submitBtn.textContent = LanguageService.t('preset.submitPreset');
     }
   });
 

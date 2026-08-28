@@ -6,7 +6,6 @@
  * @module preset/response
  */
 
-import type { CategoryMeta } from './core.js';
 import type { CommunityPreset } from './community.js';
 
 /**
@@ -77,9 +76,7 @@ export interface PresetSubmitErrorResponse {
  * - Error: submission failed
  */
 export type PresetSubmitResponse =
-  | PresetSubmitCreatedResponse
-  | PresetSubmitDuplicateResponse
-  | PresetSubmitErrorResponse;
+  PresetSubmitCreatedResponse | PresetSubmitDuplicateResponse | PresetSubmitErrorResponse;
 
 /**
  * Duplicate preset info for edit conflict
@@ -135,9 +132,7 @@ export interface PresetEditErrorResponse {
  * Uses discriminated union for type-safe handling.
  */
 export type PresetEditResponse =
-  | PresetEditSuccessResponse
-  | PresetEditDuplicateResponse
-  | PresetEditErrorResponse;
+  PresetEditSuccessResponse | PresetEditDuplicateResponse | PresetEditErrorResponse;
 
 /**
  * Successful vote response
@@ -170,40 +165,3 @@ export interface VoteErrorResponse {
  * Uses discriminated union for type-safe handling.
  */
 export type VoteResponse = VoteSuccessResponse | VoteErrorResponse;
-
-/**
- * Successful moderation response
- */
-export interface ModerationSuccessResponse {
-  /** Operation succeeded */
-  success: true;
-
-  /** The updated preset */
-  preset: CommunityPreset;
-}
-
-/**
- * Failed moderation response
- */
-export interface ModerationErrorResponse {
-  /** Operation failed */
-  success: false;
-
-  /** Error message describing the failure */
-  error: string;
-}
-
-/**
- * Response from moderation actions
- *
- * Uses discriminated union for type-safe handling.
- */
-export type ModerationResponse = ModerationSuccessResponse | ModerationErrorResponse;
-
-/**
- * Response when listing categories
- */
-export interface CategoryListResponse {
-  /** Array of category metadata */
-  categories: CategoryMeta[];
-}

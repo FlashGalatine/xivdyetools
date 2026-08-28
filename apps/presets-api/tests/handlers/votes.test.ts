@@ -207,6 +207,28 @@ describe('VotesHandler', () => {
             expect(res.status).toBe(404);
         });
 
+        it('refuses a banned user with 403 USER_BANNED', async () => {
+            mockDb._setBanStatus(true);
+            mockDb._setupMock(() => ({ id: 'preset-123' }));
+
+            const res = await app.request(
+                '/api/v1/votes/preset-123',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(403);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('USER_BANNED');
+            expect(mockDb._queries.some((q) => q.includes('INSERT INTO votes'))).toBe(false);
+        });
+
         it('should add vote successfully', async () => {
             mockDb._setupMock((query) => {
                 // Check preset exists
@@ -241,6 +263,66 @@ describe('VotesHandler', () => {
 
             expect(body.success).toBe(true);
             expect(body.new_vote_count).toBe(1);
+        });
+
+        // FINDING-016 / PAPI-5 (2026-08-21 security audit): the existence check
+        // had no status predicate, so pending / rejected / flagged / hidden
+        // presets accumulated votes from anyone who kept the URL.
+        it('only lets approved presets be voted on — the gate query filters on status (FINDING-016)', async () => {
+            mockDb._setupMock((query) => {
+                if (query.includes('FROM presets') && query.includes("status = 'approved'")) {
+                    return { id: 'preset-123' };
+                }
+                if (query.includes('INSERT INTO votes')) {
+                    return { success: true, meta: { changes: 1 } };
+                }
+                if (query.includes('UPDATE presets')) {
+                    return [{ vote_count: 1 }];
+                }
+                return null;
+            });
+
+            const res = await app.request(
+                '/api/v1/votes/preset-123',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const gate = mockDb._queries.find((q) => q.includes('FROM presets') && q.includes('WHERE id = ?'));
+            expect(gate).toBeDefined();
+            expect(gate).toContain("status = 'approved'");
+        });
+
+        it('returns 404 (not 200/409) for a preset that is not approved, and records no vote', async () => {
+            // The status-gated lookup finds nothing for a pending/rejected/hidden row
+            mockDb._setupMock((query) => {
+                if (query.includes('FROM presets')) return null;
+                return { success: true };
+            });
+
+            const res = await app.request(
+                '/api/v1/votes/pending-preset',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(404);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('NOT_FOUND');
+            expect(mockDb._queries.some((q) => q.includes('INSERT INTO votes'))).toBe(false);
         });
 
         it('should return 409 conflict if already voted', async () => {
@@ -331,6 +413,52 @@ describe('VotesHandler', () => {
             );
 
             expect(res.status).toBe(404);
+        });
+
+        it('gates vote removal on an approved preset too — a hidden preset is a 404 (FINDING-016)', async () => {
+            mockDb._setupMock((query) => {
+                if (query.includes('FROM presets')) return null; // status-gated lookup finds nothing
+                return { success: true };
+            });
+
+            const res = await app.request(
+                '/api/v1/votes/hidden-preset',
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(404);
+            const gate = mockDb._queries.find((q) => q.includes('FROM presets') && q.includes('WHERE id = ?'));
+            expect(gate).toContain("status = 'approved'");
+            expect(mockDb._queries.some((q) => q.includes('DELETE FROM votes'))).toBe(false);
+        });
+
+        it('refuses a banned user with 403 USER_BANNED (FINDING-017 — DELETE vote had no ban check)', async () => {
+            mockDb._setBanStatus(true);
+            mockDb._setupMock(() => ({ id: 'preset-123' }));
+
+            const res = await app.request(
+                '/api/v1/votes/preset-123',
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(403);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('USER_BANNED');
+            expect(mockDb._queries.some((q) => q.includes('DELETE FROM votes'))).toBe(false);
         });
 
         it('should remove vote successfully', async () => {

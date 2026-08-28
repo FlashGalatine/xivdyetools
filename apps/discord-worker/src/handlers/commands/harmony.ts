@@ -9,21 +9,20 @@ import type { HarmonyColorSpace, MatchingMethod } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { DyeTypeFilters } from '@xivdyetools/types';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
-import { resolveColorInput } from '../../utils/color.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
-import { executeHarmony, getHarmonyTypeChoices, type HarmonyType } from '@xivdyetools/bot-logic';
-import { getUserPreferences } from '../../services/preferences.js';
+import { resolveColorInput, executeHarmony, type HarmonyType } from '@xivdyetools/bot-logic';
+import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleHarmonyCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
@@ -52,12 +51,14 @@ export async function handleHarmonyCommand(
     });
   }
 
-  const resolved = resolveColorInput(colorInput, { excludeFacewear: false });
+  const resolved = resolveColorInput(colorInput, { excludeFacewear: false, locale: t.getLocale() });
   if (!resolved) {
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput }))],
+        embeds: [
+          errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput })),
+        ],
         flags: 64,
       },
     });
@@ -68,16 +69,30 @@ export async function handleHarmonyCommand(
   const deferResponse = deferredResponse();
   const prefs = await getUserPreferences(env.KV, userId, logger);
 
-  // Resolve matching method: explicit option > pref > undefined (let executeHarmony default).
-  const effectiveMatching: MatchingMethod | undefined = matchingMethod ?? prefs.matching;
+  // Resolve matching method: explicit option > stored preference > suite default
+  // (dE2000). Never leave it undefined - bot-logic's own default must not be
+  // the thing that decides which bands a first-time user's card is graded on.
+  const effectiveMatching: MatchingMethod = resolveMatchingMethod(matchingMethod, prefs);
 
   ctx.waitUntil(
     processHarmonyCommand(
-      interaction, env,
-      resolved.hex, resolved.name, resolved.id, resolved.itemID ?? undefined,
-      harmonyType, locale, logger, harmonyOptions, prefs.dyeFilters,
-      companionCount, effectiveMatching, strictMatching, preventDuplicates
-    )
+      interaction,
+      env,
+      resolved.hex,
+      resolved.name,
+      resolved.id,
+      resolved.itemID ?? undefined,
+      harmonyType,
+      locale,
+      logger,
+      harmonyOptions,
+      prefs.dyeFilters,
+      companionCount,
+      effectiveMatching,
+      strictMatching,
+      preventDuplicates,
+      prefs.theme,
+    ),
   );
   return deferResponse;
 }
@@ -97,19 +112,27 @@ async function processHarmonyCommand(
   companionCount?: number,
   matchingMethod?: MatchingMethod,
   strictMatching?: boolean,
-  preventDuplicates?: boolean
+  preventDuplicates?: boolean,
+  theme?: 'dark' | 'light',
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
 
   const result = await executeHarmony({
-    baseHex, baseName, baseId, baseItemID, harmonyType, locale,
+    baseHex,
+    baseName,
+    baseId,
+    baseItemID,
+    harmonyType,
+    locale,
     harmonyOptions,
     dyeFilters,
     companionCount,
     matchingMethod,
     strictMatching,
     preventDuplicates,
+    theme,
+    logger,
   });
 
   if (!result.ok) {
@@ -132,25 +155,27 @@ async function processHarmonyCommand(
     // Build description with Discord emojis
     const dyeList = result.harmonyDyes
       .map((dye, i) => {
-        const emoji = getDyeEmoji(dye.id);
+        const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
         const emojiPrefix = emoji ? `${emoji} ` : '';
         const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
         return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
       })
       .join('\n');
 
-    const baseEmoji = baseId ? getDyeEmoji(baseId) : undefined;
+    const baseEmoji = baseId ? getDyeEmoji(baseId, env.DISCORD_CLIENT_ID) : undefined;
     const baseEmojiPrefix = baseEmoji ? `${baseEmoji} ` : '';
     const baseColorText = `${t.t('harmony.baseColor')}: ${baseEmojiPrefix}**${result.baseName}** (\`${baseHex.toUpperCase()}\`)`;
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [{
-        title: result.embed.title,
-        description: `${baseColorText}\n\n${dyeList}`,
-        color: result.embed.color,
-        image: { url: 'attachment://image.png' },
-        footer: { text: result.embed.footer ?? t.t('common.footer') },
-      }],
+      embeds: [
+        {
+          title: result.embed.title,
+          description: `${baseColorText}\n\n${dyeList}`,
+          color: result.embed.color,
+          image: { url: 'attachment://image.png' },
+          footer: { text: result.embed.footer ?? t.t('common.footer') },
+        },
+      ],
       file: { name: `harmony-${harmonyType}.png`, data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {
@@ -160,5 +185,3 @@ async function processHarmonyCommand(
     });
   }
 }
-
-export { getHarmonyTypeChoices };

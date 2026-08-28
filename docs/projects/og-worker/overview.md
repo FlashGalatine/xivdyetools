@@ -1,18 +1,20 @@
 # OpenGraph Worker Overview
 
-**xivdyetools-og-worker** v1.0.6 - Dynamic OpenGraph metadata for social media previews
+**xivdyetools-og-worker** v2.1.0 - Dynamic OpenGraph metadata for social media previews
 
 ---
 
 ## What is the OG Worker?
 
-A Cloudflare Worker that generates dynamic OpenGraph metadata and preview images when XIV Dye Tools links are shared on social media platforms. When you share a link like `https://xivdyetools.com/harmony/1` on Discord, Twitter, or Facebook, this worker intercepts the request and returns rich preview content.
+A Cloudflare Worker that generates dynamic OpenGraph metadata and preview images when XIV Dye Tools links are shared on social media platforms. When you share a link like `https://xivdyetools.app/harmony?dye=1` on Discord, Twitter, or Facebook, this worker intercepts the request and returns rich preview content.
 
 ### Recent Changes
 
-- **v1.0.6** — Dependency updates
-- **v1.0.4** — Added NaN validation for dye ID parameters; added `escapeHtml` for theme color output (XSS prevention)
-- **v1.0.3** — Added parameter bounds validation (step count, hex length)
+- **v2.2.0** — The 2026-08-20 i18n audit: the crawler's `og:title` / `og:description` are authored ×6 (`OG_EMBED`, `services/og-embed.ts`) instead of English templates with localized nouns spliced in; band role words (BASE / TARGET / AS DESIGNED …) localize via `OG_ROLE`; dye names in the embed localize like the card; tool names come from `OG_DECK`, never core `tools.*`; `<html lang>` + `og:locale` follow the locale; CJK subsets re-cut. Companion: the web-app now puts `?lang=` on every non-English share URL — before that, no real share ever reached the localized path
+- **v2.1.0** — 2026-08-18 dead-code audit executed (28 findings, `docs/audits/2026-08-18-og-worker-dead-code/`): the extractor / presets / budget crawler HTML now emits their 15E cards (it emitted the root default — the cards were unreachable), `/presets/:id` crawler route, comparison honours `?frame=x`, `?algo=` rides the harmony / gradient / mixer image URLs, extractor accepts bare `RRGGBB` (equal ranked bands), ~500 lines of 15E-rewrite sediment removed (`base.ts`, the colour-sheet lookup), `services/svg/tokens.ts`, CJK subsets −45 KB, base tsconfig flags restored
+- **v2.0.0** — The 5.0 card rewrite: one 15E band frame for all nine tools (Discord 1200×1050, X 1200×630 via `?frame=x`), per-tool default cards (`/og/:tool/default.png`, `/og/default.png`), `?lang=` reaches the picture, share URLs and `/og/<tool>/:dyeId…` paths key on **stainID** (legacy itemIDs miss into the default card), `?algo=` speaks the 5.0 matching vocabulary, `Helion` → `Helions`, a routed **beta** env (`beta.xivdyetools.app/<tool>/*` + `og-beta.xivdyetools.app`), and the missing `/og/` prefix on every emitted `og:image` URL fixed (no generated card had ever been fetched)
+- **v1.4.0** — 2026-07-18 audit: `?algo=` / 3-dye `ratio` actually honoured, explicit browser/edge TTLs, `@xivdyetools/svg` re-exports replace the local fork
+- **v1.2.0** — `?lang=` localized metadata, `@xivdyetools/worker-middleware` (now `worker-kit`)
 
 ### Why a Separate Worker?
 
@@ -34,9 +36,13 @@ npm install
 # Start local dev server
 npm run dev
 
-# Deploy to production
+# Deploy — bare `deploy` publishes the routed BETA worker (xivdyetools-og-worker-dev, beta.xivdyetools.app/<tool>/*)
+npm run deploy
+# Production (xivdyetools-og-worker, xivdyetools.app/<tool>/* + og.xivdyetools.app)
 npm run deploy:production
 ```
+
+See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../operations/DEPLOY_ENVIRONMENTS.md).
 
 ---
 
@@ -46,13 +52,15 @@ The worker detects and serves optimized content for:
 
 | Platform | User Agent Pattern | Image Size |
 |----------|-------------------|------------|
-| Discord | Discordbot | 1200x630 |
-| Twitter/X | Twitterbot | 1200x628 |
-| Facebook | facebookexternalhit | 1200x630 |
-| LinkedIn | LinkedInBot | 1200x627 |
-| Slack | Slackbot | 1200x630 |
-| Telegram | TelegramBot | 1200x630 |
-| iMessage | AppleWebKit | 1200x630 |
+| Discord | Discordbot | 1200x1050 (`og:image`, default frame) |
+| Twitter/X | Twitterbot | 1200x630 (`twitter:image` carries `?frame=x`) |
+| Facebook | facebookexternalhit | 1200x1050 |
+| LinkedIn | LinkedInBot | 1200x1050 |
+| Slack | Slackbot | 1200x1050 |
+| Telegram | TelegramBot | 1200x1050 |
+| iMessage | AppleWebKit | 1200x1050 |
+
+Both frames are the same 400-wide design grid rastered ×3 (Discord 400×350, X 400×210) and take separate cache keys.
 
 ---
 
@@ -88,16 +96,19 @@ Crawler detected? → Yes → Generate OG HTML with dynamic image URL
 
 These routes intercept normal web app URLs when accessed by crawlers:
 
-| Route | Description |
+`SUPPORTED_TOOLS` = `harmony`, `gradient`, `mixer`, `swatch`, `comparison`, `accessibility`, `extractor`, `presets`, `budget` — one `GET /<tool>` handler each, reading the web app's share-URL query grammar. Every dye parameter is a **stainID (1–254)**; legacy itemIDs (≥ 5729) render the tool's default card instead of a wrong dye.
+
+| Route (crawler intercept) | Share-URL parameters read |
 |-------|-------------|
-| `/harmony/:dyeId` | Color harmony preview for a dye |
-| `/harmony/:dyeId/:type` | Specific harmony type (complementary, triadic, etc.) |
-| `/gradient/:startId/:endId` | Gradient between two dyes |
-| `/gradient/:startId/:endId/:steps` | Gradient with custom step count |
-| `/mixer/:dye1Id/:dye2Id` | Dye mixing result |
-| `/swatch/:hexColor` | Color swatch with matching dyes |
-| `/comparison/:dye1Id/:dye2Id` | Side-by-side dye comparison |
-| `/accessibility/:dyeId` | Accessibility analysis preview |
+| `/harmony` | `?dye=<stainID>&harmony=<type>&algo=…&perceptual=1` |
+| `/gradient` | `?start=<stainID>&end=<stainID>&steps=…&algo=…` |
+| `/mixer` | `?dyeA=<stainID>&dyeB=<stainID>[&dyeC=…]&ratio=…&algo=…` |
+| `/swatch` | `?hex=RRGGBB` (`?color=` accepted as a read alias) `&limit=…&algo=…&sheet=…&race=…&gender=…` |
+| `/comparison` | `?dyes=<stainID>,<stainID>[,…]` |
+| `/accessibility` | `?dyes=<stainID>[,…]&vision=…` |
+| `/extractor` | `?colors=RRGGBB[,RRGGBB…]&algo=…` (max 5; the share URL carries no shares, so the card draws equal ranked bands) |
+| `/presets`, `/presets/:id` | the preset id is the **path** (`/presets/gc-maelstrom`); curated slugs get their card, `community-<uuid>` / unknown ids degrade to the presets default card |
+| `/budget` | `?dye=<stainID>`; a bare-colour `?hex=` target has no card and degrades to the budget default |
 
 ### Image Routes
 
@@ -105,25 +116,33 @@ These return the actual preview images:
 
 | Route | Description |
 |-------|-------------|
-| `/og/harmony/:dyeId.png` | Harmony preview image |
-| `/og/harmony/:dyeId/:type.png` | Specific harmony type image |
-| `/og/gradient/:startId/:endId/:steps.png` | Gradient preview image |
-| `/og/mixer/:dye1Id/:dye2Id.png` | Mixer preview image |
-| `/og/swatch/:hexColor.png` | Swatch preview image |
-| `/og/comparison/:dye1Id/:dye2Id.png` | Comparison preview image |
-| `/og/accessibility/:dyeId.png` | Accessibility preview image |
+| `/og/default.png` | Root default card |
+| `/og/:tool/default.png` | Per-tool default card (registered before the parameterised routes) |
+| `/og/harmony/:dyeId/:harmonyType[.png]` | Harmony card |
+| `/og/gradient/:startId/:endId/:steps[.png]` | Gradient card |
+| `/og/mixer/:dyeAId/:dyeBId/:ratio[.png]`, `/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio[.png]` | Mixer card (2 or 3 dyes) |
+| `/og/swatch/:color/:limit[.png]` | Swatch card |
+| `/og/comparison/:dyes[.png]` | Comparison card (comma-joined stainIDs) |
+| `/og/accessibility/:dyes/:visionType[.png]` | Accessibility card |
+| `/og/extractor/:colors[.png]` | Extractor card (`RRGGBB` or `RRGGBB-share` entries, max 5; bare entries draw equal ranked bands) |
+| `/og/presets/:presetId[.png]` | Preset card (slug `^[a-z0-9-]{1,64}$`) |
+| `/og/budget/:dyeId[.png]` | Budget card |
+
+Image responses are cached `max-age=86400, s-maxage=604800` (24 h browser / 7 d edge); crawler HTML `max-age=3600, s-maxage=86400`.
 
 ### Query Parameters
 
 | Parameter | Description |
 |-----------|-------------|
-| `algo` | Color matching algorithm override: `oklab`, `ciede2000`, `rgb` |
+| `algo` | Matching method: `ciede2000`, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` (legacy `euclidean` / `hyab` / `oklch-weighted` accepted and normalised). Direct image routes fall back to `oklab` when the parameter is absent |
+| `lang` | `en` (default, unparameterised) / `ja` / `de` / `fr` / `ko` / `zh` — localizes the metadata **and** the picture |
+| `frame` | `x` for the 1200×630 X/Twitter frame; otherwise the 1200×1050 Discord frame |
 
 ---
 
 ## Generated Metadata
 
-Example OG HTML response for `/harmony/1`:
+Example OG HTML response for `/harmony?dye=1` (illustrative — hosts are `xivdyetools.app` / `og.xivdyetools.app/og`, and the real markup also carries `og:image:width/height`, `?lang=` and the `?frame=x` `twitter:image`):
 
 ```html
 <!DOCTYPE html>
@@ -131,14 +150,14 @@ Example OG HTML response for `/harmony/1`:
 <head>
   <meta property="og:title" content="Snow White Harmony - XIV Dye Tools" />
   <meta property="og:description" content="Explore complementary, triadic, and analogous color harmonies for Snow White" />
-  <meta property="og:image" content="https://xivdyetools.com/og/harmony/1.png" />
-  <meta property="og:url" content="https://xivdyetools.com/harmony/1" />
+  <meta property="og:image" content="https://og.xivdyetools.app/og/harmony/1/complementary.png" />
+  <meta property="og:url" content="https://xivdyetools.app/harmony?dye=1" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:image" content="https://xivdyetools.com/og/harmony/1.png" />
+  <meta name="twitter:image" content="https://og.xivdyetools.app/og/harmony/1/complementary.png" />
 </head>
 <body>
-  <script>window.location.href = "https://xivdyetools.com/harmony/1";</script>
+  <script>window.location.href = "https://xivdyetools.app/harmony?dye=1";</script>
 </body>
 </html>
 ```
@@ -192,7 +211,7 @@ Shows start and end dyes with stepped gradient between:
 | Runtime | Cloudflare Workers |
 | Framework | Hono |
 | SVG Rendering | resvg-wasm |
-| Fonts | Embedded (Onest, Space Grotesk, Habibi) |
+| Fonts | Embedded — Onest, Space Grotesk, Fragment Mono (values), Noto Sans JP/SC/KR subsets (six TTFs) |
 | Dye Data | Embedded from @xivdyetools/core |
 
 ---

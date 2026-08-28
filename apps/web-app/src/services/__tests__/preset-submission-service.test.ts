@@ -2,8 +2,23 @@
  * Tests for preset-submission-service pure functions
  * These functions can be tested without mocking API calls
  */
-import { describe, it, expect } from 'vitest';
-import { validateSubmission } from '../preset-submission-service';
+import { describe, it, expect, vi } from 'vitest';
+
+// The authenticated routes (delete / edit) gate on authService before they
+// build a request; the token itself is irrelevant to what is asserted here.
+vi.mock('../auth-service', () => ({
+  authService: {
+    isAuthenticated: vi.fn(() => true),
+    getAuthHeaders: vi.fn(() => ({ Authorization: 'Bearer test-token' })),
+  },
+}));
+
+import {
+  validateSubmission,
+  uploadPreviewImage,
+  removePreviewImage,
+  presetSubmissionService,
+} from '../preset-submission-service';
 
 describe('PresetSubmissionService - validateSubmission', () => {
   // ============================================
@@ -28,8 +43,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const submission = {
         name: 'AB',
         description: 'Exactly ten',
-        category_id: 'community' as const,
-        dyes: [1, 2],
+        category_id: 'events' as const,
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -61,14 +76,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: '',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'name',
-        message: 'Name must be at least 2 characters',
+        code: 'nameMin',
+        limit: 2,
       });
     });
 
@@ -77,14 +93,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: '   ',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'name',
-        message: 'Name must be at least 2 characters',
+        code: 'nameMin',
+        limit: 2,
       });
     });
 
@@ -93,14 +110,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'A',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'name',
-        message: 'Name must be at least 2 characters',
+        code: 'nameMin',
+        limit: 2,
       });
     });
 
@@ -109,14 +127,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'A'.repeat(51),
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'name',
-        message: 'Name must be 50 characters or less',
+        code: 'nameMax',
+        limit: 50,
       });
     });
   });
@@ -131,14 +150,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: '',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'description',
-        message: 'Description must be at least 10 characters',
+        code: 'descMin',
+        limit: 10,
       });
     });
 
@@ -147,14 +167,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: '         ',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'description',
-        message: 'Description must be at least 10 characters',
+        code: 'descMin',
+        limit: 10,
       });
     });
 
@@ -163,14 +184,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Too short',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'description',
-        message: 'Description must be at least 10 characters',
+        code: 'descMin',
+        limit: 10,
       });
     });
 
@@ -179,14 +201,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'A'.repeat(201),
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'description',
-        message: 'Description must be 200 characters or less',
+        code: 'descMax',
+        limit: 200,
       });
     });
   });
@@ -201,14 +224,14 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: '' as never,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'category_id',
-        message: 'Please select a valid category',
+        code: 'category',
       });
     });
 
@@ -217,14 +240,14 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'invalid-category' as never,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'category_id',
-        message: 'Please select a valid category',
+        code: 'category',
       });
     });
 
@@ -235,7 +258,6 @@ describe('PresetSubmissionService - validateSubmission', () => {
         'seasons',
         'events',
         'aesthetics',
-        'community',
       ] as const;
 
       for (const category of validCategories) {
@@ -243,7 +265,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
           name: 'Valid Name',
           description: 'Valid description here',
           category_id: category,
-          dyes: [1, 2],
+          dyes: [1, 2, 3],
           tags: [],
         };
 
@@ -271,7 +293,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Must include at least 2 dyes',
+        code: 'dyesMin',
+        limit: 3,
       });
     });
 
@@ -287,23 +310,25 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Must include at least 2 dyes',
+        code: 'dyesMin',
+        limit: 3,
       });
     });
 
-    it('should reject more than 5 dyes', () => {
+    it('should reject more than 6 dyes', () => {
       const submission = {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2, 3, 4, 5, 6],
+        dyes: [1, 2, 3, 4, 5, 6, 7],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Maximum 5 dyes allowed',
+        code: 'dyesMax',
+        limit: 6,
       });
     });
 
@@ -319,7 +344,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Must include at least 2 dyes',
+        code: 'dyesMin',
+        limit: 3,
       });
     });
 
@@ -328,14 +354,14 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 0],
+        dyes: [1, 2, 0],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Invalid dye selection',
+        code: 'dyesInvalid',
       });
     });
 
@@ -344,14 +370,14 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 'two'] as never,
+        dyes: [1, 2, 'two'] as never,
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Invalid dye selection',
+        code: 'dyesInvalid',
       });
     });
   });
@@ -366,7 +392,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -380,14 +406,14 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: 'not an array' as never,
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'tags',
-        message: 'Tags must be an array',
+        code: 'tagsArray',
       });
     });
 
@@ -396,14 +422,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: Array(11).fill('tag'),
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'tags',
-        message: 'Maximum 10 tags allowed',
+        code: 'tagsMax',
+        limit: 10,
       });
     });
 
@@ -412,14 +439,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: ['valid', 'A'.repeat(31)],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'tags',
-        message: 'Each tag must be 30 characters or less',
+        code: 'tagLength',
+        limit: 30,
       });
     });
 
@@ -428,14 +456,15 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: ['valid', 123] as never,
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'tags',
-        message: 'Each tag must be 30 characters or less',
+        code: 'tagLength',
+        limit: 30,
       });
     });
   });
@@ -463,5 +492,76 @@ describe('PresetSubmissionService - validateSubmission', () => {
       expect(errors.map((e) => e.field)).toContain('dyes');
       expect(errors.map((e) => e.field)).toContain('tags');
     });
+  });
+});
+
+// ============================================
+// uploadPreviewImage
+// ============================================
+
+describe('PresetSubmissionService - uploadPreviewImage', () => {
+  it('POSTs the raw file bytes to the preview-image route', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    const file = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], 'shot.png', {
+      type: 'image/png',
+    });
+
+    await uploadPreviewImage('preset-1', file);
+
+    const [url, init] = fetchSpy.mock.calls[0];
+    expect(String(url)).toContain('/api/v1/presets/preset-1/preview-image');
+    expect((init as RequestInit).method).toBe('POST');
+
+    fetchSpy.mockRestore();
+  });
+
+  it('rejects a file over 5 MB before any request is made', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const big = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'big.png', { type: 'image/png' });
+
+    await expect(uploadPreviewImage('preset-1', big)).rejects.toThrow();
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
+  });
+});
+
+// ============================================
+// Path encoding (2026-08-21 security audit, FINDING-020 / WEB-11)
+// ============================================
+
+describe('PresetSubmissionService - path encoding', () => {
+  const okJson = () =>
+    new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  it('percent-encodes the preset id in the preview-image routes', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => okJson());
+    const file = new File([new Uint8Array([0x89, 0x50])], 'shot.png', { type: 'image/png' });
+
+    await uploadPreviewImage('a/b c', file);
+    await removePreviewImage('a/b c');
+
+    const paths = fetchSpy.mock.calls.map((call) => new URL(String(call[0])).pathname);
+    expect(paths).toEqual([
+      '/api/v1/presets/a%2Fb%20c/preview-image',
+      '/api/v1/presets/a%2Fb%20c/preview-image',
+    ]);
+    fetchSpy.mockRestore();
+  });
+
+  it('percent-encodes the preset id in the delete and edit routes', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => okJson());
+
+    await presetSubmissionService.deletePreset('a/b');
+    await presetSubmissionService.editPreset('a/b', { tags: ['glam'] });
+
+    const paths = fetchSpy.mock.calls.map((call) => new URL(String(call[0])).pathname);
+    expect(paths).toEqual(['/api/v1/presets/a%2Fb', '/api/v1/presets/a%2Fb']);
+    fetchSpy.mockRestore();
   });
 });

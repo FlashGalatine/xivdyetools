@@ -1,7 +1,7 @@
 /**
  * @xivdyetools/types - Discord Snowflake Validation
  *
- * Discord Snowflake branded type and validation utility.
+ * Discord Snowflake validation utility.
  * Consolidates the inline `/^\d{17,19}$/` regex previously duplicated
  * across env-validation files in presets-api, discord-worker, and moderation-worker.
  *
@@ -19,21 +19,6 @@
  *
  * @module auth/discord-snowflake
  */
-
-/**
- * Discord Snowflake ID (branded type for type safety)
- *
- * Prevents accidental use of arbitrary strings as Discord IDs.
- * Use `isValidSnowflake()` to validate and `createSnowflake()` to create validated instances.
- *
- * REFACTOR-004: Removed @internal — ready for adoption by consumers.
- *
- * @example
- * ```typescript
- * const userId: DiscordSnowflake = createSnowflake('123456789012345678');
- * ```
- */
-export type DiscordSnowflake = string & { readonly __brand: 'DiscordSnowflake' };
 
 /**
  * Regex pattern for Discord snowflake validation.
@@ -63,27 +48,4 @@ const SNOWFLAKE_PATTERN = /^\d{17,20}$/;
  */
 export function isValidSnowflake(id: string): boolean {
   return SNOWFLAKE_PATTERN.test(id);
-}
-
-/**
- * Create a validated Discord Snowflake branded type.
- *
- * REFACTOR-004: Removed @internal — ready for adoption by consumers.
- *
- * @param id - The snowflake string to validate
- * @returns The validated DiscordSnowflake
- * @throws {Error} If the string is not a valid snowflake format
- *
- * @example
- * ```typescript
- * const userId = createSnowflake('123456789012345678');
- * ```
- */
-export function createSnowflake(id: string): DiscordSnowflake {
-  if (!isValidSnowflake(id)) {
-    throw new Error(
-      `Invalid Discord snowflake format: "${id}". Expected a 17-20 digit numeric string.`
-    );
-  }
-  return id as DiscordSnowflake;
 }

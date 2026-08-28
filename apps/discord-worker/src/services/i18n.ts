@@ -29,30 +29,8 @@ export {
   getLocalizedCategory,
 } from '@xivdyetools/bot-logic';
 
-export type { LocaleCode } from '@xivdyetools/bot-i18n';
-import type { LocaleCode } from '@xivdyetools/bot-i18n';
-
-/**
- * Locale display information
- */
-export interface LocaleInfo {
-  code: LocaleCode;
-  name: string;
-  nativeName: string;
-  flag: string;
-}
-
-/**
- * All supported locales with display info
- */
-export const SUPPORTED_LOCALES: LocaleInfo[] = [
-  { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' },
-  { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪' },
-  { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
-  { code: 'ko', name: 'Korean', nativeName: '한국어', flag: '🇰🇷' },
-  { code: 'zh', name: 'Chinese', nativeName: '中文', flag: '🇨🇳' },
-];
+export type { LocaleCode } from '@xivdyetools/bot-logic/i18n';
+import type { LocaleCode } from '@xivdyetools/bot-logic/i18n';
 
 /** KV key prefix for user language preferences */
 const KEY_PREFIX = 'i18n:user:';
@@ -65,13 +43,6 @@ export function isValidLocale(code: string): code is LocaleCode {
 }
 
 /**
- * Get locale info by code
- */
-export function getLocaleInfo(code: LocaleCode): LocaleInfo | undefined {
-  return SUPPORTED_LOCALES.find((l) => l.code === code);
-}
-
-/**
  * Maps Discord locale codes to our supported locales
  *
  * @see https://discord.com/developers/docs/reference#locales
@@ -80,10 +51,10 @@ export function discordLocaleToLocaleCode(discordLocale: string): LocaleCode | n
   const mapping: Record<string, LocaleCode> = {
     'en-US': 'en',
     'en-GB': 'en',
-    'ja': 'ja',
-    'de': 'de',
-    'fr': 'fr',
-    'ko': 'ko',
+    ja: 'ja',
+    de: 'de',
+    fr: 'fr',
+    ko: 'ko',
     'zh-CN': 'zh',
     'zh-TW': 'zh',
   };
@@ -96,7 +67,7 @@ export function discordLocaleToLocaleCode(discordLocale: string): LocaleCode | n
  */
 async function getUserLanguagePreference(
   kv: KVNamespace,
-  userId: string
+  userId: string,
 ): Promise<LocaleCode | null> {
   try {
     const value = await kv.get(`${KEY_PREFIX}${userId}`);
@@ -126,7 +97,7 @@ async function getUserLanguagePreference(
 export async function resolveUserLocale(
   kv: KVNamespace,
   userId: string,
-  discordLocale?: string
+  discordLocale?: string,
 ): Promise<LocaleCode> {
   // 1. Check unified preferences first (V4 system)
   // Direct KV read to avoid circular dependency with preferences.ts
@@ -159,13 +130,4 @@ export async function resolveUserLocale(
 
   // 4. Default to English
   return 'en';
-}
-
-/**
- * Format locale for display
- */
-export function formatLocaleDisplay(locale: LocaleCode): string {
-  const info = getLocaleInfo(locale);
-  if (!info) return locale;
-  return `${info.flag} ${info.name} (${info.nativeName})`;
 }

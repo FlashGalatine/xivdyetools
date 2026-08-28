@@ -12,6 +12,7 @@ import { DyeService, LanguageService, CollectionService } from '@services/index'
 import type { Dye } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { compareDyeNames, dyeNameMatches } from '@shared/dye-name';
 import { ICON_CRYSTAL } from '@shared/ui-icons';
 import { DyeSearchBox, SortOption } from './dye-search-box';
 import { DyeGrid } from './dye-grid';
@@ -78,7 +79,7 @@ export class DyeSelector extends BaseComponent {
   private updateFavoriteDyes(favoriteIds: number[]): void {
     const dyeService = DyeService.getInstance();
     this.favoriteDyes = favoriteIds
-      .map((id) => dyeService.getDyeById(id))
+      .map((id) => dyeService.getByStainId(id))
       .filter((dye): dye is Dye => dye !== undefined);
     this.updateFavoritesPanel();
   }
@@ -390,8 +391,8 @@ export class DyeSelector extends BaseComponent {
     }
 
     if (this.searchQuery.trim()) {
-      const query = this.searchQuery.trim().toLowerCase();
-      dyes = dyes.filter((d) => d.name.toLowerCase().includes(query));
+      const query = this.searchQuery.trim();
+      dyes = dyes.filter((d) => dyeNameMatches(d, query));
     }
 
     dyes.sort((a, b) => this.compareDyes(a, b, this.sortOption));
@@ -402,7 +403,7 @@ export class DyeSelector extends BaseComponent {
   private compareDyes(a: Dye, b: Dye, sortOption: SortOption): number {
     switch (sortOption) {
       case 'alphabetical':
-        return a.name.localeCompare(b.name);
+        return compareDyeNames(a, b);
       case 'brightness-asc':
         return a.hsv.v - b.hsv.v;
       case 'brightness-desc':
@@ -422,10 +423,10 @@ export class DyeSelector extends BaseComponent {
       case 'category': {
         const categoryDiff = a.category.localeCompare(b.category);
         if (categoryDiff !== 0) return categoryDiff;
-        return a.name.localeCompare(b.name);
+        return compareDyeNames(a, b);
       }
       default:
-        return a.name.localeCompare(b.name);
+        return compareDyeNames(a, b);
     }
   }
 
@@ -497,7 +498,9 @@ export class DyeSelector extends BaseComponent {
     // Title with count
     const title = this.createElement('span', {
       id: 'favorites-title',
-      textContent: `${LanguageService.t('collections.favorites')} (${this.favoriteDyes.length})`,
+      textContent: LanguageService.tInterpolate('collections.favoritesWithCount', {
+        count: this.favoriteDyes.length,
+      }),
       className: 'font-medium text-gray-900 dark:text-white',
     });
     headerLeft.appendChild(title);
@@ -624,7 +627,9 @@ export class DyeSelector extends BaseComponent {
     // Update title count
     const title = panel.querySelector('#favorites-title');
     if (title) {
-      title.textContent = `${LanguageService.t('collections.favorites')} (${this.favoriteDyes.length})`;
+      title.textContent = LanguageService.tInterpolate('collections.favoritesWithCount', {
+        count: this.favoriteDyes.length,
+      });
     }
 
     // Update content
@@ -703,20 +708,5 @@ export class DyeSelector extends BaseComponent {
       currentCategory: this.currentCategory,
       sortOption: this.sortOption,
     };
-  }
-
-  protected setState(newState: Record<string, unknown>): void {
-    if (Array.isArray(newState.selectedDyes)) {
-      this.selectedDyes = newState.selectedDyes;
-    }
-    if (typeof newState.searchQuery === 'string') {
-      this.searchQuery = newState.searchQuery;
-    }
-    if (newState.currentCategory === null || typeof newState.currentCategory === 'string') {
-      this.currentCategory = newState.currentCategory;
-    }
-    if (typeof newState.sortOption === 'string') {
-      this.sortOption = newState.sortOption as SortOption;
-    }
   }
 }

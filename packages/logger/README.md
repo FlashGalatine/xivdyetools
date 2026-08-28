@@ -14,13 +14,13 @@ npm install @xivdyetools/logger
 - **Structured logging** - JSON output for log aggregation
 - **Request correlation** - Track requests across distributed services
 - **Secret redaction** - Automatically redact sensitive fields
-- **Performance timing** - Built-in performance measurement utilities
+- **Performance timing** - `time()`/`timeAsync()` on every logger for correlatable timing entries
 - **Error tracking integration** - Ready for Sentry/similar services
-- **Backward compatible** - Drop-in replacement for xivdyetools-core Logger
+- **Backward compatible** - Drop-in replacement for the legacy `xivdyetools-core` Logger
 
 ## Quick Start
 
-### Browser (xivdyetools-web-app)
+### Browser (`apps/web-app`)
 
 ```typescript
 import { createBrowserLogger } from '@xivdyetools/logger/browser';
@@ -59,7 +59,7 @@ export default {
 };
 ```
 
-### Library (xivdyetools-core)
+### Library (`@xivdyetools/core` and other shared packages)
 
 ```typescript
 import { NoOpLogger, ConsoleLogger } from '@xivdyetools/logger/library';
@@ -88,7 +88,7 @@ const debugService = new DyeService(ConsoleLogger);
 Optimized for web applications with dev-mode filtering and error tracking integration.
 
 ```typescript
-import { createBrowserLogger, perf } from '@xivdyetools/logger/browser';
+import { createBrowserLogger } from '@xivdyetools/logger/browser';
 
 // Basic usage (logs only in development)
 const logger = createBrowserLogger();
@@ -106,19 +106,10 @@ const logger = createBrowserLogger({
   },
 });
 
-// Performance monitoring
-perf.start('render');
+// Performance monitoring (see "Performance Timing" below)
+const endTimer = logger.time('render');
 renderComponent();
-const duration = perf.end('render'); // Logs: "render: 45.23ms"
-
-// Async timing
-const data = await perf.measure('fetchDyes', () => fetchDyes());
-
-// View metrics
-console.log(perf.getMetrics('render'));
-// { count: 5, totalTime: 125.4, minTime: 20.1, maxTime: 30.2, avgTime: 25.08 }
-
-perf.logMetrics(); // Log all metrics to console
+endTimer(); // Logs: "render: 45.23ms"
 ```
 
 ### Worker Preset
@@ -294,13 +285,13 @@ class MyService {
 
 ```typescript
 // Before
-import { logger, perf } from '../shared/logger';
+import { logger } from '../shared/logger';
 
 // After
-import { browserLogger as logger, perf } from '@xivdyetools/logger/browser';
+import { browserLogger as logger } from '@xivdyetools/logger/browser';
 
 // Or create custom instance
-import { createBrowserLogger, perf } from '@xivdyetools/logger/browser';
+import { createBrowserLogger } from '@xivdyetools/logger/browser';
 const logger = createBrowserLogger({ prefix: 'xivdyetools' });
 ```
 
@@ -355,27 +346,18 @@ const logger = new MyCustomAdapter({ level: 'info' });
 
 ### Performance Timing
 
-```typescript
-import { perf } from '@xivdyetools/logger/browser';
+Every logger implements `time()`/`timeAsync()` from `ExtendedLogger` — no separate `perf` utility is needed.
 
+```typescript
 // Manual timing
-perf.start('database-query');
+const endTimer = logger.time('database-query');
 await db.query(...);
-const duration = perf.end('database-query');
+const duration = endTimer(); // logs "database-query: N.NNms" at debug level, returns ms
 
 // Async wrapper
-const result = await perf.measure('api-call', async () => {
+const result = await logger.timeAsync('api-call', async () => {
   return fetch('/api/data').then(r => r.json());
 });
-
-// Sync wrapper
-const processed = perf.measureSync('data-processing', () => {
-  return data.map(transform);
-});
-
-// Aggregate metrics
-perf.logMetrics();
-perf.clearMetrics();
 ```
 
 ## Connect With Me
@@ -383,8 +365,8 @@ perf.clearMetrics();
 **Flash Galatine** | Midgardsormr (Aether)
 
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
-📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
@@ -393,4 +375,11 @@ perf.clearMetrics();
 
 ## License
 
-MIT © 2025-2026 Flash Galatine
+MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
+
+## Legal Notice
+
+**FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+**FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
+
+XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.**

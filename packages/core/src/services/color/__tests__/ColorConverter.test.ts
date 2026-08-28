@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { ColorConverter } from '../ColorConverter.js';
+import { ColorConverter, normalizeDeltaEFormula } from '../ColorConverter.js';
 import { AppError } from '@xivdyetools/types';
 
 describe('ColorConverter', () => {
@@ -972,6 +972,52 @@ describe('ColorConverter', () => {
         const deltaE = ColorConverter.getDeltaE('#FF0000', '#FE0000');
         expect(deltaE).toBeLessThan(5);
       });
+
+      // DEAD-037 (2026-08-18 audit): 'ciede2000' is the canonical spelling —
+      // the one MatchingMethod uses — and 'cie2000' is a legacy alias folded
+      // onto it by normalizeDeltaEFormula() at this entry point. The two must
+      // be indistinguishable, or a caller passing a MatchingMethod straight
+      // through would silently get a different metric.
+      describe("'cie2000' is an exact alias of 'ciede2000'", () => {
+        const pairs: Array<[string, string]> = [
+          ['#FF0000', '#00FF00'],
+          ['#000000', '#FFFFFF'],
+          ['#e4dfd0', '#aca8a2'],
+          ['#000b9d', '#010101'],
+          ['#644216', '#8B4513'],
+          ['#FF0000', '#FE0000'],
+        ];
+
+        it.each(pairs)('%s vs %s (static)', (hex1, hex2) => {
+          expect(ColorConverter.getDeltaE(hex1, hex2, 'cie2000')).toBe(
+            ColorConverter.getDeltaE(hex1, hex2, 'ciede2000'),
+          );
+        });
+
+        it.each(pairs)('%s vs %s (instance)', (hex1, hex2) => {
+          expect(converter.getDeltaE(hex1, hex2, 'cie2000')).toBe(
+            converter.getDeltaE(hex1, hex2, 'ciede2000'),
+          );
+        });
+
+        it('normalizeDeltaEFormula folds the alias and passes the rest through', () => {
+          expect(normalizeDeltaEFormula('cie2000')).toBe('ciede2000');
+          expect(normalizeDeltaEFormula('ciede2000')).toBe('ciede2000');
+          expect(normalizeDeltaEFormula('cie76')).toBe('cie76');
+          expect(normalizeDeltaEFormula('oklab')).toBe('oklab');
+        });
+
+        it("'ciede2000' really is the CIEDE2000 math, not a silent cie76 fallback", () => {
+          const lab1 = ColorConverter.hexToLab('#FF0000');
+          const lab2 = ColorConverter.hexToLab('#00FF00');
+          expect(ColorConverter.getDeltaE('#FF0000', '#00FF00', 'ciede2000')).toBe(
+            ColorConverter.getDeltaE2000(lab1, lab2),
+          );
+          expect(ColorConverter.getDeltaE('#FF0000', '#00FF00', 'ciede2000')).not.toBe(
+            ColorConverter.getDeltaE('#FF0000', '#00FF00', 'cie76'),
+          );
+        });
+      });
     });
   });
 
@@ -1389,5 +1435,100 @@ describe('ColorConverter', () => {
         expect(back).toBe(color);
       }
     });
+  });
+});
+
+describe('CMYK conversions (schema v2 follow-up: derived formats from hex)', () => {
+  it('converts primary and achromatic colors to CMYK', () => {
+    expect(ColorConverter.rgbToCmyk(255, 0, 0)).toEqual({ c: 0, m: 100, y: 100, k: 0 });
+    expect(ColorConverter.rgbToCmyk(0, 255, 0)).toEqual({ c: 100, m: 0, y: 100, k: 0 });
+    expect(ColorConverter.rgbToCmyk(0, 0, 255)).toEqual({ c: 100, m: 100, y: 0, k: 0 });
+    expect(ColorConverter.rgbToCmyk(255, 255, 255)).toEqual({ c: 0, m: 0, y: 0, k: 0 });
+    expect(ColorConverter.rgbToCmyk(0, 0, 0)).toEqual({ c: 0, m: 0, y: 0, k: 100 });
+  });
+
+  it('converts a real dye color (Snow White #e4dfd0)', () => {
+    const cmyk = ColorConverter.hexToCmyk('#e4dfd0');
+    expect(cmyk.c).toBe(0);
+    expect(cmyk.m).toBeCloseTo(2.19, 1);
+    expect(cmyk.y).toBeCloseTo(8.77, 1);
+    expect(cmyk.k).toBeCloseTo(10.59, 1);
+  });
+
+  it('round-trips RGB → CMYK → RGB exactly', () => {
+    const samples: Array<[number, number, number]> = [
+      [255, 0, 0],
+      [228, 223, 208], // Snow White
+      [24, 24, 32], // Gunmetal Black
+      [127, 64, 200],
+      [0, 0, 0],
+      [255, 255, 255],
+    ];
+    for (const [r, g, b] of samples) {
+      const cmyk = ColorConverter.rgbToCmyk(r, g, b);
+      expect(ColorConverter.cmykToRgb(cmyk.c, cmyk.m, cmyk.y, cmyk.k)).toEqual({ r, g, b });
+    }
+  });
+
+  it('round-trips hex → CMYK → hex', () => {
+    for (const hex of ['#e4dfd0', '#1e1e1e', '#f61296', '#000000', '#ffffff']) {
+      const cmyk = ColorConverter.hexToCmyk(hex);
+      expect(ColorConverter.cmykToHex(cmyk.c, cmyk.m, cmyk.y, cmyk.k).toLowerCase()).toBe(hex);
+    }
+  });
+
+  it('clamps out-of-range CMYK inputs and rejects invalid RGB', () => {
+    expect(ColorConverter.cmykToRgb(-10, 150, 50, 0)).toEqual(
+      ColorConverter.cmykToRgb(0, 100, 50, 0),
+    );
+    expect(() => ColorConverter.rgbToCmyk(300, 0, 0)).toThrow();
+  });
+});
+
+describe('redmean distance and distinguishability', () => {
+  it('returns 0 for identical colors', () => {
+    expect(ColorConverter.getRedmeanDistance('#FF0000', '#FF0000')).toBe(0);
+    expect(ColorConverter.getDistinguishabilityPercent('#3f6d9a', '#3f6d9a')).toBe(0);
+  });
+
+  it('is symmetric', () => {
+    const a = '#e4dfd0';
+    const b = '#1e1e1e';
+    expect(ColorConverter.getRedmeanDistance(a, b)).toBeCloseTo(
+      ColorConverter.getRedmeanDistance(b, a),
+      10,
+    );
+  });
+
+  it('white vs black redmean distance is ~764.83', () => {
+    // r̄ = 127.5 → ΔC = 255·√(2.498 + 4 + 2.498)
+    expect(ColorConverter.getRedmeanDistance('#FFFFFF', '#000000')).toBeCloseTo(764.834, 2);
+  });
+
+  it('weights red channel by mean red level', () => {
+    // Same ΔR, but higher mean red → larger red weight
+    const low = ColorConverter.getRedmeanDistance('#000000', '#400000');
+    const high = ColorConverter.getRedmeanDistance('#BF0000', '#FF0000');
+    expect(high).toBeGreaterThan(low);
+  });
+
+  it('distinguishability is RGB distance rescaled to 0-100 with identical ranks', () => {
+    expect(ColorConverter.getDistinguishabilityPercent('#FFFFFF', '#000000')).toBe(100);
+    // red vs green: √2·255 / 441.67 ≈ 81.65% → rounds to 82
+    expect(ColorConverter.getDistinguishabilityPercent('#FF0000', '#00FF00')).toBe(82);
+    // rank preservation on a sample triple
+    const d1 = ColorConverter.getColorDistance('#FF0000', '#FF2000');
+    const d2 = ColorConverter.getColorDistance('#FF0000', '#FFA000');
+    expect(d2).toBeGreaterThan(d1);
+    expect(
+      ColorConverter.getDistinguishabilityPercent('#FF0000', '#FFA000'),
+    ).toBeGreaterThanOrEqual(ColorConverter.getDistinguishabilityPercent('#FF0000', '#FF2000'));
+  });
+
+  it('integer rounding creates ties for near-equal distances', () => {
+    // Two different but tiny distances both round to the same percent
+    const p1 = ColorConverter.getDistinguishabilityPercent('#808080', '#818181');
+    const p2 = ColorConverter.getDistinguishabilityPercent('#808080', '#828080');
+    expect(p1).toBe(p2);
   });
 });

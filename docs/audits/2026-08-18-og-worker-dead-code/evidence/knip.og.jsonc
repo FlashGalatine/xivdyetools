@@ -1,0 +1,24 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "workspaces": {
+    ".": { "entry": [], "project": [] },
+    "apps/og-worker": {
+      "entry": ["src/index.ts!", "src/**/*.test.ts", "tests/**/*.ts", "vitest.config.ts"],
+      "project": ["src/**/*.ts", "tests/**/*.ts", "*.ts"]
+    },
+    "packages/*": {
+      "entry": ["src/index.ts!", "src/**/index.ts!", "src/**/*.test.ts", "scripts/**/*.{ts,js,mjs}!", "test/**/*.ts", "vitest*.config.ts", "*.config.ts", "bench/**/*.ts"],
+      "project": ["src/**/*.ts", "scripts/**", "test/**", "bench/**", "*.ts"]
+    }
+  },
+  "paths": {
+    "@xivdyetools/types": ["packages/types/src/index.ts"],
+    "@xivdyetools/core": ["packages/core/src/index.ts"],
+    "@xivdyetools/core/blending": ["packages/core/src/blending/index.ts"],
+    "@xivdyetools/logger": ["packages/logger/src/index.ts"],
+    "@xivdyetools/svg": ["packages/svg/src/index.ts"],
+    "@xivdyetools/worker-kit": ["packages/worker-kit/src/index.ts"],
+    "@xivdyetools/worker-kit/rate-limiter": ["packages/worker-kit/src/rate-limiter/index.ts"]
+  }
+}

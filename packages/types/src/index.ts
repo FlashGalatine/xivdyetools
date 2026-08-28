@@ -16,7 +16,7 @@
 // ============================================================================
 // Color Types
 // ============================================================================
-export type { RGB, HSV, LAB, OKLAB, OKLCH, LCH, HSL } from './color/index.js';
+export type { RGB, HSV, LAB, OKLAB, OKLCH, LCH, HSL, CMYK } from './color/index.js';
 export type { HexColor, DyeId, Hue, Saturation } from './color/index.js';
 export { createHexColor, createDyeId, createHue, createSaturation } from './color/index.js';
 export type { VisionType, ColorblindMatrices } from './color/index.js';
@@ -26,7 +26,7 @@ export { MATCH_QUALITY_TIERS, classifyMatchDistance } from './color/index.js';
 // ============================================================================
 // Dye Types
 // ============================================================================
-export type { Dye, LocalizedDye, DyeWithDistance } from './dye/index.js';
+export type { Dye, LocalizedDye, DyeWithDistance, FacewearColor } from './dye/index.js';
 export type { DyeTypeFilters } from './dye/index.js';
 
 // ============================================================================
@@ -39,12 +39,9 @@ export type {
   RaceSpecificColorCategory,
   SubRace,
   Gender,
+  Race,
 } from './character/index.js';
-export {
-  RACE_SUBRACES,
-  SUBRACE_TO_RACE,
-  COLOR_GRID_DIMENSIONS,
-} from './character/index.js';
+export { RACE_SUBRACES, SUBRACE_TO_RACE } from './character/index.js';
 
 // ============================================================================
 // Preset Types
@@ -52,7 +49,6 @@ export {
 export type {
   PresetCategory,
   PresetStatus,
-  PresetSortOption,
   CategoryMeta,
   PresetPalette,
   PresetData,
@@ -61,6 +57,7 @@ export type {
   PresetSubmission,
   PresetFilters,
   PresetEditRequest,
+  PresetSortOption,
   PresetListResponse,
   PresetSubmitCreatedResponse,
   PresetSubmitDuplicateResponse,
@@ -74,10 +71,6 @@ export type {
   VoteSuccessResponse,
   VoteErrorResponse,
   VoteResponse,
-  ModerationSuccessResponse,
-  ModerationErrorResponse,
-  ModerationResponse,
-  CategoryListResponse,
 } from './preset/index.js';
 
 // ============================================================================
@@ -89,7 +82,6 @@ export type {
   AuthContext,
   PrimaryCharacter,
   JWTPayload,
-  OAuthState,
   DiscordTokenResponse,
   DiscordUser,
   XIVAuthTokenResponse,
@@ -125,8 +117,6 @@ export type {
   HarmonyTypeKey,
   ToolKey,
   SheetKey,
-  JobKey,
-  GrandCompanyKey,
   RaceKey,
   ClanKey,
   LocaleData,

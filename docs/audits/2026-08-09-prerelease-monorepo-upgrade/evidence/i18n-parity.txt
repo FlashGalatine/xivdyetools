@@ -1,0 +1,270 @@
+==============================================================================
+I18N AUDIT — key parity, duplicates, untranslated, interpolation
+==============================================================================
+
+==============================================================================
+TREE: bot-logic  (packages/bot-logic/src/i18n/locales)
+==============================================================================
+  source (en) leaf keys: 615
+  OK de: keys=  615 missing=  0 extra=  0 untranslated= 13 interp-mismatch=  0
+        UNTRANS about.poweredBy = 'Powered by Cloudflare Workers'
+        UNTRANS about.title = 'XIV Dye Tools Bot'
+        UNTRANS budget.gilAmount = '{amount} Gil'
+        UNTRANS common.footer = 'XIV Dye Tools'
+        UNTRANS comparison.wcagAA = 'WCAG AA'
+        UNTRANS comparison.wcagAAA = 'WCAG AAA'
+        UNTRANS firstRun.title = 'XIV Dye Tools 5.0'
+        UNTRANS manual.dyeRandom.name = '`/dye random [unique_categories]`'
+        UNTRANS matchImageHelp.supportedFormatsContent = '• PNG\n• JPG/JPEG\n• GIF\n• WebP'
+        UNTRANS stats.health.analyticsStatus = 'Analytics Engine'
+        UNTRANS stats.health.cacheStatus = 'Cache API'
+        UNTRANS stats.health.universalis = 'Universalis API'
+        ... +1 more untranslated-looking
+  OK fr: keys=  615 missing=  0 extra=  0 untranslated= 12 interp-mismatch=  0
+        UNTRANS about.title = 'XIV Dye Tools Bot'
+        UNTRANS budget.gilAmount = '{amount} Gil'
+        UNTRANS common.footer = 'XIV Dye Tools'
+        UNTRANS comparison.wcagAA = 'WCAG AA'
+        UNTRANS comparison.wcagAAA = 'WCAG AAA'
+        UNTRANS firstRun.title = 'XIV Dye Tools 5.0'
+        UNTRANS manual.dyeRandom.name = '`/dye random [unique_categories]`'
+        UNTRANS matchImageHelp.supportedFormatsContent = '• PNG\n• JPG/JPEG\n• GIF\n• WebP'
+        UNTRANS stats.health.analyticsStatus = 'Analytics Engine'
+        UNTRANS stats.health.cacheStatus = 'Cache API'
+        UNTRANS stats.health.universalis = 'Universalis API'
+        UNTRANS stats.summary.title = 'XIV Dye Tools Bot'
+  OK ja: keys=  615 missing=  0 extra=  0 untranslated= 12 interp-mismatch=  0
+        UNTRANS about.title = 'XIV Dye Tools Bot'
+        UNTRANS budget.gilAmount = '{amount} Gil'
+        UNTRANS common.footer = 'XIV Dye Tools'
+        UNTRANS comparison.wcagAA = 'WCAG AA'
+        UNTRANS comparison.wcagAAA = 'WCAG AAA'
+        UNTRANS firstRun.title = 'XIV Dye Tools 5.0'
+        UNTRANS manual.dyeRandom.name = '`/dye random [unique_categories]`'
+        UNTRANS matchImageHelp.supportedFormatsContent = '• PNG\n• JPG/JPEG\n• GIF\n• WebP'
+        UNTRANS stats.health.analyticsStatus = 'Analytics Engine'
+        UNTRANS stats.health.cacheStatus = 'Cache API'
+        UNTRANS stats.health.universalis = 'Universalis API'
+        UNTRANS stats.summary.title = 'XIV Dye Tools Bot'
+  OK ko: keys=  615 missing=  0 extra=  0 untranslated= 12 interp-mismatch=  0
+        UNTRANS about.title = 'XIV Dye Tools Bot'
+        UNTRANS budget.gilAmount = '{amount} Gil'
+        UNTRANS common.footer = 'XIV Dye Tools'
+        UNTRANS comparison.wcagAA = 'WCAG AA'
+        UNTRANS comparison.wcagAAA = 'WCAG AAA'
+        UNTRANS firstRun.title = 'XIV Dye Tools 5.0'
+        UNTRANS manual.dyeRandom.name = '`/dye random [unique_categories]`'
+        UNTRANS matchImageHelp.supportedFormatsContent = '• PNG\n• JPG/JPEG\n• GIF\n• WebP'
+        UNTRANS stats.health.analyticsStatus = 'Analytics Engine'
+        UNTRANS stats.health.cacheStatus = 'Cache API'
+        UNTRANS stats.health.universalis = 'Universalis API'
+        UNTRANS stats.summary.title = 'XIV Dye Tools Bot'
+  OK zh: keys=  615 missing=  0 extra=  0 untranslated= 10 interp-mismatch=  0
+        UNTRANS budget.gilAmount = '{amount} Gil'
+        UNTRANS common.footer = 'XIV Dye Tools'
+        UNTRANS comparison.wcagAA = 'WCAG AA'
+        UNTRANS comparison.wcagAAA = 'WCAG AAA'
+        UNTRANS firstRun.title = 'XIV Dye Tools 5.0'
+        UNTRANS manual.dyeRandom.name = '`/dye random [unique_categories]`'
+        UNTRANS matchImageHelp.supportedFormatsContent = '• PNG\n• JPG/JPEG\n• GIF\n• WebP'
+        UNTRANS stats.health.analyticsStatus = 'Analytics Engine'
+        UNTRANS stats.health.cacheStatus = 'Cache API'
+        UNTRANS stats.health.universalis = 'Universalis API'
+
+==============================================================================
+TREE: core  (packages/core/src/data/locales)
+==============================================================================
+  source (en) leaf keys: 263
+  OK de: keys=  263 missing=  0 extra=  0 untranslated=  0 interp-mismatch=  0
+  OK fr: keys=  263 missing=  0 extra=  0 untranslated=  0 interp-mismatch=  0
+  OK ja: keys=  263 missing=  0 extra=  0 untranslated=  0 interp-mismatch=  0
+  OK ko: keys=  263 missing=  0 extra=  0 untranslated=  0 interp-mismatch=  0
+  OK zh: keys=  263 missing=  0 extra=  0 untranslated=  0 interp-mismatch=  0
+
+==============================================================================
+TREE: web-app  (apps/web-app/src/locales)
+==============================================================================
+  source (en) leaf keys: 1509
+  !! de: keys= 1485 missing= 24 extra=  0 untranslated=  9 interp-mismatch=  0
+        MISSING preset.event-allsaints.tags[2] = 'spooky'
+        MISSING preset.event-allsaints.tags[3] = 'pumpkin'
+        MISSING preset.event-hatching.tags[2] = 'spring'
+        MISSING preset.event-hatching.tags[3] = 'eggs'
+        MISSING preset.event-heavensturn.tags[2] = 'celebration'
+        MISSING preset.event-littleladies.tags[2] = 'blossom'
+        MISSING preset.event-littleladies.tags[3] = 'pink'
+        MISSING preset.event-moonfire.tags[3] = 'festival'
+        MISSING preset.event-rising.tags[2] = 'celebration'
+        MISSING preset.event-starlight.tags[2] = 'holiday'
+        MISSING preset.event-starlight.tags[3] = 'winter'
+        MISSING preset.event-valentione.tags[2] = 'love'
+        MISSING preset.event-valentione.tags[3] = 'romance'
+        MISSING preset.gc-adders.tags[3] = 'nature'
+        MISSING preset.gc-flames.tags[3] = 'fire'
+        MISSING preset.gc-maelstrom.tags[3] = 'storm'
+        MISSING preset.season-autumn.tags[2] = 'leaves'
+        MISSING preset.season-autumn.tags[3] = 'harvest'
+        MISSING preset.season-spring.tags[2] = 'fresh'
+        MISSING preset.season-spring.tags[3] = 'bloom'
+        MISSING preset.season-summer.tags[2] = 'sun'
+        MISSING preset.season-summer.tags[3] = 'warm'
+        MISSING preset.season-winter.tags[2] = 'frost'
+        MISSING preset.season-winter.tags[3] = 'cold'
+        UNTRANS accessibility.wcagAA = 'WCAG AA'
+        UNTRANS accessibility.wcagAAA = 'WCAG AAA'
+        UNTRANS budget.colPerDe = 'GIL / ΔE'
+        UNTRANS budget.maxDistance = 'Max Delta-E'
+        UNTRANS comparison.mCie76Short = 'ΔE76 · CIE 1976'
+        UNTRANS comparison.mOklabShort = 'ΔEOK · OKLab'
+        UNTRANS mixer.colorSpaceRgb = 'RGB (Linear)'
+        UNTRANS preset.gc-maelstrom.tags[1] = 'limsa lominsa'
+        UNTRANS swatch.palTattoo = 'Tattoo / Limbal'
+  !! fr: keys= 1485 missing= 24 extra=  0 untranslated= 10 interp-mismatch=  0
+        MISSING preset.event-allsaints.tags[2] = 'spooky'
+        MISSING preset.event-allsaints.tags[3] = 'pumpkin'
+        MISSING preset.event-hatching.tags[2] = 'spring'
+        MISSING preset.event-hatching.tags[3] = 'eggs'
+        MISSING preset.event-heavensturn.tags[2] = 'celebration'
+        MISSING preset.event-littleladies.tags[2] = 'blossom'
+        MISSING preset.event-littleladies.tags[3] = 'pink'
+        MISSING preset.event-moonfire.tags[3] = 'festival'
+        MISSING preset.event-rising.tags[2] = 'celebration'
+        MISSING preset.event-starlight.tags[2] = 'holiday'
+        MISSING preset.event-starlight.tags[3] = 'winter'
+        MISSING preset.event-valentione.tags[2] = 'love'
+        MISSING preset.event-valentione.tags[3] = 'romance'
+        MISSING preset.gc-adders.tags[3] = 'nature'
+        MISSING preset.gc-flames.tags[3] = 'fire'
+        MISSING preset.gc-maelstrom.tags[3] = 'storm'
+        MISSING preset.season-autumn.tags[2] = 'leaves'
+        MISSING preset.season-autumn.tags[3] = 'harvest'
+        MISSING preset.season-spring.tags[2] = 'fresh'
+        MISSING preset.season-spring.tags[3] = 'bloom'
+        MISSING preset.season-summer.tags[2] = 'sun'
+        MISSING preset.season-summer.tags[3] = 'warm'
+        MISSING preset.season-winter.tags[2] = 'frost'
+        MISSING preset.season-winter.tags[3] = 'cold'
+        UNTRANS accessibility.wcagAA = 'WCAG AA'
+        UNTRANS accessibility.wcagAAA = 'WCAG AAA'
+        UNTRANS budget.colPerDe = 'GIL / ΔE'
+        UNTRANS comparison.chart.saturationAxis = 'Saturation (%)'
+        UNTRANS comparison.mCie76Short = 'ΔE76 · CIE 1976'
+        UNTRANS comparison.mOklabShort = 'ΔEOK · OKLab'
+        UNTRANS config.via = 'via {provider}'
+        UNTRANS preset.gc-maelstrom.tags[1] = 'limsa lominsa'
+        UNTRANS preset.voteCount = '{count} vote'
+        UNTRANS preset.votesCount = '{count} votes'
+  !! ja: keys= 1485 missing= 24 extra=  0 untranslated=  6 interp-mismatch=  0
+        MISSING preset.event-allsaints.tags[2] = 'spooky'
+        MISSING preset.event-allsaints.tags[3] = 'pumpkin'
+        MISSING preset.event-hatching.tags[2] = 'spring'
+        MISSING preset.event-hatching.tags[3] = 'eggs'
+        MISSING preset.event-heavensturn.tags[2] = 'celebration'
+        MISSING preset.event-littleladies.tags[2] = 'blossom'
+        MISSING preset.event-littleladies.tags[3] = 'pink'
+        MISSING preset.event-moonfire.tags[3] = 'festival'
+        MISSING preset.event-rising.tags[2] = 'celebration'
+        MISSING preset.event-starlight.tags[2] = 'holiday'
+        MISSING preset.event-starlight.tags[3] = 'winter'
+        MISSING preset.event-valentione.tags[2] = 'love'
+        MISSING preset.event-valentione.tags[3] = 'romance'
+        MISSING preset.gc-adders.tags[3] = 'nature'
+        MISSING preset.gc-flames.tags[3] = 'fire'
+        MISSING preset.gc-maelstrom.tags[3] = 'storm'
+        MISSING preset.season-autumn.tags[2] = 'leaves'
+        MISSING preset.season-autumn.tags[3] = 'harvest'
+        MISSING preset.season-spring.tags[2] = 'fresh'
+        MISSING preset.season-spring.tags[3] = 'bloom'
+        MISSING preset.season-summer.tags[2] = 'sun'
+        MISSING preset.season-summer.tags[3] = 'warm'
+        MISSING preset.season-winter.tags[2] = 'frost'
+        MISSING preset.season-winter.tags[3] = 'cold'
+        UNTRANS accessibility.wcagAA = 'WCAG AA'
+        UNTRANS accessibility.wcagAAA = 'WCAG AAA'
+        UNTRANS budget.colPerDe = 'GIL / ΔE'
+        UNTRANS comparison.mCie76Short = 'ΔE76 · CIE 1976'
+        UNTRANS comparison.mOklabShort = 'ΔEOK · OKLab'
+        UNTRANS footer.disclaimer = 'FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. All Rights Reserve'
+  !! ko: keys= 1484 missing= 25 extra=  0 untranslated=  6 interp-mismatch=  0
+        MISSING preset.event-allsaints.tags[2] = 'spooky'
+        MISSING preset.event-allsaints.tags[3] = 'pumpkin'
+        MISSING preset.event-hatching.tags[2] = 'spring'
+        MISSING preset.event-hatching.tags[3] = 'eggs'
+        MISSING preset.event-heavensturn.tags[2] = 'celebration'
+        MISSING preset.event-littleladies.tags[2] = 'blossom'
+        MISSING preset.event-littleladies.tags[3] = 'pink'
+        MISSING preset.event-moonfire.tags[2] = 'beach'
+        MISSING preset.event-moonfire.tags[3] = 'festival'
+        MISSING preset.event-rising.tags[2] = 'celebration'
+        MISSING preset.event-starlight.tags[2] = 'holiday'
+        MISSING preset.event-starlight.tags[3] = 'winter'
+        MISSING preset.event-valentione.tags[2] = 'love'
+        MISSING preset.event-valentione.tags[3] = 'romance'
+        MISSING preset.gc-adders.tags[3] = 'nature'
+        MISSING preset.gc-flames.tags[3] = 'fire'
+        MISSING preset.gc-maelstrom.tags[3] = 'storm'
+        MISSING preset.season-autumn.tags[2] = 'leaves'
+        MISSING preset.season-autumn.tags[3] = 'harvest'
+        MISSING preset.season-spring.tags[2] = 'fresh'
+        MISSING preset.season-spring.tags[3] = 'bloom'
+        MISSING preset.season-summer.tags[2] = 'sun'
+        MISSING preset.season-summer.tags[3] = 'warm'
+        MISSING preset.season-winter.tags[2] = 'frost'
+        MISSING preset.season-winter.tags[3] = 'cold'
+        UNTRANS accessibility.wcagAA = 'WCAG AA'
+        UNTRANS accessibility.wcagAAA = 'WCAG AAA'
+        UNTRANS budget.colPerDe = 'GIL / ΔE'
+        UNTRANS comparison.mCie76Short = 'ΔE76 · CIE 1976'
+        UNTRANS comparison.mOklabShort = 'ΔEOK · OKLab'
+        UNTRANS footer.disclaimer = 'FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. All Rights Reserve'
+  !! zh: keys= 1484 missing= 25 extra=  0 untranslated=  5 interp-mismatch=  0
+        MISSING preset.event-allsaints.tags[2] = 'spooky'
+        MISSING preset.event-allsaints.tags[3] = 'pumpkin'
+        MISSING preset.event-hatching.tags[2] = 'spring'
+        MISSING preset.event-hatching.tags[3] = 'eggs'
+        MISSING preset.event-heavensturn.tags[2] = 'celebration'
+        MISSING preset.event-littleladies.tags[2] = 'blossom'
+        MISSING preset.event-littleladies.tags[3] = 'pink'
+        MISSING preset.event-moonfire.tags[2] = 'beach'
+        MISSING preset.event-moonfire.tags[3] = 'festival'
+        MISSING preset.event-rising.tags[2] = 'celebration'
+        MISSING preset.event-starlight.tags[2] = 'holiday'
+        MISSING preset.event-starlight.tags[3] = 'winter'
+        MISSING preset.event-valentione.tags[2] = 'love'
+        MISSING preset.event-valentione.tags[3] = 'romance'
+        MISSING preset.gc-adders.tags[3] = 'nature'
+        MISSING preset.gc-flames.tags[3] = 'fire'
+        MISSING preset.gc-maelstrom.tags[3] = 'storm'
+        MISSING preset.season-autumn.tags[2] = 'leaves'
+        MISSING preset.season-autumn.tags[3] = 'harvest'
+        MISSING preset.season-spring.tags[2] = 'fresh'
+        MISSING preset.season-spring.tags[3] = 'bloom'
+        MISSING preset.season-summer.tags[2] = 'sun'
+        MISSING preset.season-summer.tags[3] = 'warm'
+        MISSING preset.season-winter.tags[2] = 'frost'
+        MISSING preset.season-winter.tags[3] = 'cold'
+        UNTRANS accessibility.wcagAA = 'WCAG AA'
+        UNTRANS accessibility.wcagAAA = 'WCAG AAA'
+        UNTRANS budget.colPerDe = 'GIL / ΔE'
+        UNTRANS comparison.mCie76Short = 'ΔE76 · CIE 1976'
+        UNTRANS comparison.mOklabShort = 'ΔEOK · OKLab'
+
+==============================================================================
+SUMMARY TABLE
+==============================================================================
+tree        loc     keys  missing  extra  untrans  interp
+bot-logic   de       615        0      0       13       0
+bot-logic   fr       615        0      0       12       0
+bot-logic   ja       615        0      0       12       0
+bot-logic   ko       615        0      0       12       0
+bot-logic   zh       615        0      0       10       0
+core        de       263        0      0        0       0
+core        fr       263        0      0        0       0
+core        ja       263        0      0        0       0
+core        ko       263        0      0        0       0
+core        zh       263        0      0        0       0
+web-app     de      1485       24      0        9       0
+web-app     fr      1485       24      0       10       0
+web-app     ja      1485       24      0        6       0
+web-app     ko      1484       25      0        6       0
+web-app     zh      1484       25      0        5       0

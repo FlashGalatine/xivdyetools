@@ -10,13 +10,21 @@
  */
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
-import { ColorService, type MatchingMethod, isDyeExcluded } from '@xivdyetools/core';
-import { blendColors } from '@xivdyetools/color-blending';
-import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
-import { generateGradientBar, type GradientStep } from '@xivdyetools/svg';
+import {
+  ColorService,
+  type MatchingMethod,
+  isDyeExcluded,
+  DEFAULT_MATCHING_METHOD,
+} from '@xivdyetools/core';
+import { blendColors } from '@xivdyetools/core/blending';
+import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
+import {
+  generateGradientCard,
+  type GradientRowEntry,
+  type GradientStripCell,
+} from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
-import { getColorDistance, getMatchQualityInfo } from '../color-math.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -24,17 +32,14 @@ import type { EmbedData } from './types.js';
 // ============================================================================
 
 export type InterpolationMode =
-  | 'rgb'
-  | 'hsv'
-  | 'lab'
-  | 'oklch'
-  | 'lch'
-  | 'oklab'
-  | 'ryb'
-  | 'hsl'
-  | 'spectral';
+  'rgb' | 'hsv' | 'lab' | 'oklch' | 'lch' | 'oklab' | 'ryb' | 'hsl' | 'spectral';
 
 export interface GradientInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   startColor: ResolvedColor;
   endColor: ResolvedColor;
   /** Number of steps including start and end (default: 6) */
@@ -44,10 +49,18 @@ export interface GradientInput {
   locale: LocaleCode;
   /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */
   dyeFilters?: DyeTypeFilters;
+  /** Card theme (stored user preference; defaults dark) */
+  theme?: 'dark' | 'light';
 }
 
-export interface GradientStepResult extends GradientStep {
+export interface GradientStepResult {
+  /** The ideal interpolated colour for this step */
+  hex: string;
+  /** Localized nearest-dye name */
+  dyeName?: string;
+  dyeId?: number;
   dye?: Dye;
+  /** ΔE2000 ideal → dye (the number the old boundary threw away) */
   distance: number;
 }
 
@@ -58,6 +71,8 @@ export type GradientResult =
       gradientSteps: GradientStepResult[];
       startColor: ResolvedColor;
       endColor: ResolvedColor;
+      /** Rows omitted by the cap's stage 3 — named in the embed */
+      omittedRows: number;
       embed: EmbedData;
     }
   | { ok: false; error: 'GENERATION_FAILED'; errorMessage: string };
@@ -66,9 +81,53 @@ export type GradientResult =
 // Helpers
 // ============================================================================
 
-function getMatchQualityLabel(distance: number, t: ReturnType<typeof createTranslator>): string {
-  const qi = getMatchQualityInfo(distance);
-  return t.t(`quality.${qi.key}`);
+/**
+ * The cap as three stages (12H·2/·3, one function for both frames):
+ * 1. Merge adjacent steps resolving to one dye — one row, step range, the
+ *    WORST ΔE of the covered steps.
+ * 2. Drop rows whose worst step is ΔE 0.0 — testing the VALUE, never the
+ *    position (a bare-hex endpoint has a real ΔE and becomes the most
+ *    informative row on the card).
+ * 3. Keep the widest gaps, rendered in step order; the omitted count goes
+ *    to the embed.
+ */
+export function capGradientRows(steps: GradientStepResult[]): {
+  rows: Array<{ startStep: number; endStep: number; step: GradientStepResult; deltaE: number }>;
+  merged: number;
+  omitted: number;
+} {
+  // Stage 1: merge
+  const merged: Array<{
+    startStep: number;
+    endStep: number;
+    step: GradientStepResult;
+    deltaE: number;
+  }> = [];
+  steps.forEach((step, i) => {
+    const prev = merged[merged.length - 1];
+    if (prev && step.dyeId !== undefined && prev.step.dyeId === step.dyeId) {
+      prev.endStep = i + 1;
+      if (step.distance > prev.deltaE) {
+        prev.deltaE = step.distance;
+        prev.step = step;
+      }
+      return;
+    }
+    merged.push({ startStep: i + 1, endStep: i + 1, step, deltaE: step.distance });
+  });
+
+  if (merged.length <= 5) return { rows: merged, merged: merged.length, omitted: 0 };
+
+  // Stage 2: drop zero-ΔE rows (by value, never position)
+  let rows = merged.filter((r) => r.deltaE >= 0.05);
+  if (rows.length <= 5)
+    return { rows, merged: merged.length, omitted: merged.length - rows.length };
+
+  // Stage 3: keep the five widest gaps, back in step order
+  const keep = new Set([...rows].sort((a, b) => b.deltaE - a.deltaE).slice(0, 5));
+  const omitted = merged.length - keep.size;
+  rows = rows.filter((r) => keep.has(r));
+  return { rows, merged: merged.length, omitted };
 }
 
 /**
@@ -78,7 +137,7 @@ function generateGradientColorsMultiSpace(
   startColor: string,
   endColor: string,
   stepCount: number,
-  mode: InterpolationMode
+  mode: InterpolationMode,
 ): string[] {
   const colors: string[] = [];
 
@@ -188,10 +247,10 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
     locale,
     stepCount = 6,
     colorSpace = 'hsv',
-    matchingMethod = 'oklab',
+    matchingMethod = DEFAULT_MATCHING_METHOD,
     dyeFilters,
   } = input;
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 
@@ -200,10 +259,11 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       startColor.hex,
       endColor.hex,
       stepCount,
-      colorSpace
+      colorSpace,
     );
 
-    // Find closest non-Facewear dye for each gradient step
+    // Find the closest non-Facewear dye per step; ΔE2000 is the number the
+    // old boundary threw away.
     const gradientSteps: GradientStepResult[] = [];
 
     for (const hex of gradientHexColors) {
@@ -213,14 +273,19 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       for (let attempt = 0; attempt < 10; attempt++) {
         const candidate = dyeService.findClosestDye(hex, { excludeIds, matchingMethod });
         if (!candidate) break;
-        if (candidate.category !== 'Facewear' && (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))) {
+        if (
+          candidate.category !== 'Facewear' &&
+          (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))
+        ) {
           closestDye = candidate;
           break;
         }
         excludeIds.push(candidate.id);
       }
 
-      const distance = closestDye ? getColorDistance(hex, closestDye.hex) : 999;
+      const distance = closestDye
+        ? ColorService.getDistanceForMethod(hex, closestDye.hex, 'ciede2000')
+        : 999;
       const localizedDyeName = closestDye
         ? getLocalizedDyeName(closestDye.itemID, closestDye.name, locale)
         : undefined;
@@ -234,64 +299,59 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       });
     }
 
-    const svgString = generateGradientBar({
-      steps: gradientSteps,
-      width: 800,
-      height: 200,
-      startLabel: t.t('gradient.start') || 'START',
-      endLabel: t.t('gradient.end') || 'END',
+    // 12H·2/·3: the strip carries every step (ideal cap over the dye block);
+    // the rows are the distinct dyes after the cap's stages.
+    const strip: GradientStripCell[] = gradientSteps.map((s) => ({
+      idealHex: s.hex,
+      dyeHex: s.dye?.hex ?? s.hex,
+    }));
+    const { rows: capped, omitted } = capGradientRows(gradientSteps);
+    const rows: GradientRowEntry[] = capped.map((r) => ({
+      stepText: r.startStep === r.endStep ? String(r.startStep) : `${r.startStep}–${r.endStep}`,
+      idealHex: r.step.hex,
+      dyeHex: r.step.dye?.hex ?? r.step.hex,
+      name: r.step.dyeName ?? t.t('errors.noMatchFound'),
+      deltaE: r.step.distance,
+    }));
+
+    // 12H·4 stage 0: four or more steps resolving to two rows or fewer —
+    // measured on rows after the merge, never on endpoint separation.
+    const distinctAfterMerge = capGradientRows(gradientSteps).merged;
+    const verdict =
+      stepCount >= 4 && distinctAfterMerge <= 2
+        ? t.tc('card.gradVerdict', distinctAfterMerge, { n: stepCount, k: distinctAfterMerge })
+        : null;
+
+    const legend =
+      omitted > 0 ? t.tc('card.gradKeyCut', rows.length, { n: stepCount, k: rows.length }) : t.t('card.gradKey');
+
+    const svgString = generateGradientCard({
+      headerText: `${colorSpace.toUpperCase()} · ${stepCount}`,
+      strip,
+      rows,
+      verdict,
+      legend,
+      lang: locale,
+      theme: input.theme,
     });
 
-    // Build description
-    const dyeLines = gradientSteps.map((step, i) => {
-      const quality = getMatchQualityLabel(step.distance, t);
-      const dyeText = step.dyeName
-        ? `**${step.dyeName}**`
-        : `_${t.t('errors.noMatchFound')}_`;
-
-      let label = '';
-      if (i === 0) label = ` (${t.t('gradient.startColor')})`;
-      else if (i === gradientSteps.length - 1) label = ` (${t.t('gradient.endColor')})`;
-
-      return `**${i + 1}.** ${dyeText} • \`${step.hex.toUpperCase()}\` • ${quality}${label}`;
-    }).join('\n');
-
-    const localizedStartName = startColor.itemID && startColor.name
-      ? getLocalizedDyeName(startColor.itemID, startColor.name, locale)
-      : startColor.name;
-    const localizedEndName = endColor.itemID && endColor.name
-      ? getLocalizedDyeName(endColor.itemID, endColor.name, locale)
-      : endColor.name;
-
-    const startText = localizedStartName
-      ? `**${localizedStartName}** (\`${startColor.hex.toUpperCase()}\`)`
-      : `\`${startColor.hex.toUpperCase()}\``;
-    const endText = localizedEndName
-      ? `**${localizedEndName}** (\`${endColor.hex.toUpperCase()}\`)`
-      : `\`${endColor.hex.toUpperCase()}\``;
-
-    const colorSpaceLabel = colorSpace.toUpperCase();
-    const matchingLabel = matchingMethod === 'ciede2000' ? 'CIEDE2000' :
-      matchingMethod === 'cie76' ? 'CIE76' : matchingMethod.toUpperCase();
-
+    // One line: the card carries every step; the embed names the omissions
     const embed: EmbedData = {
-      title: `${t.t('gradient.title')} • ${t.t('gradient.steps', { count: stepCount })}`,
-      description: [
-        `**${t.t('gradient.startColor')}:** ${startText}`,
-        `**${t.t('gradient.endColor')}:** ${endText}`,
-        `**${t.t('gradient.colorSpace') || 'Color Space'}:** ${colorSpaceLabel} • **${t.t('gradient.matching') || 'Matching'}:** ${matchingLabel}`,
-        '',
-        `**${t.t('extractor.topMatches', { count: stepCount })}:**`,
-        dyeLines,
-      ].join('\n'),
+      title: `${t.t('gradient.title')} • ${t.tc('gradient.steps', stepCount)}`,
+      description: omitted > 0 ? t.t('card.gradOmitted', { n: omitted }) : undefined,
       color: parseInt(startColor.hex.replace('#', ''), 16),
-      footer: `${t.t('common.footer')} • ${t.t('extractor.useInfoNameHint')}`,
     };
 
-    return { ok: true, svgString, gradientSteps, startColor, endColor, embed };
+    return {
+      ok: true,
+      svgString,
+      gradientSteps,
+      startColor,
+      endColor,
+      omittedRows: omitted,
+      embed,
+    };
   } catch {
-    return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to generate gradient.' };
+    return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }
-
-export type { MatchingMethod };

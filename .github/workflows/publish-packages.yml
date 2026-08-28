@@ -10,29 +10,31 @@ on:
         options:
           - all-modified
           - '@xivdyetools/types'
-          - '@xivdyetools/crypto'
           - '@xivdyetools/logger'
-          - '@xivdyetools/bot-i18n'
-          - '@xivdyetools/rate-limiter'
           - '@xivdyetools/auth'
           - '@xivdyetools/core'
-          - '@xivdyetools/test-utils'
-          - '@xivdyetools/color-blending'
           - '@xivdyetools/svg'
           - '@xivdyetools/bot-logic'
-          - '@xivdyetools/worker-middleware'
+          - '@xivdyetools/worker-kit'
+
+# FINDING-009 (2026-08-21 security audit): least-privilege GITHUB_TOKEN —
+# the default repo token is never needed beyond checkout here. Jobs that need
+# more (npm OIDC publish) declare it at job level.
+permissions:
+  contents: read
 
 jobs:
   detect:
     name: Detect packages to publish
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     outputs:
       packages: ${{ steps.detect.outputs.packages }}
       count: ${{ steps.detect.outputs.count }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
@@ -53,15 +55,10 @@ jobs:
           # Tier-ordered list — dependencies are always published before dependents
           TIER_ORDER=(
             "@xivdyetools/types"
-            "@xivdyetools/crypto"
             "@xivdyetools/logger"
-            "@xivdyetools/bot-i18n"
-            "@xivdyetools/rate-limiter"
             "@xivdyetools/auth"
             "@xivdyetools/core"
-            "@xivdyetools/worker-middleware"
-            "@xivdyetools/test-utils"
-            "@xivdyetools/color-blending"
+            "@xivdyetools/worker-kit"
             "@xivdyetools/svg"
             "@xivdyetools/bot-logic"
           )
@@ -98,13 +95,17 @@ jobs:
     needs: detect
     if: needs.detect.outputs.count != '0'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # FINDING-009: bind production deploys/publishes to the `production` GitHub
+    # environment so branch restrictions / required reviewers can gate them.
+    environment: production
     permissions:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
 
       # `registry-url` is deliberately omitted here. It makes setup-node write an
       # .npmrc containing `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`,
@@ -114,7 +115,7 @@ jobs:
       # placeholder through as a credential and failed with a misleading 404
       # (pnpm/pnpm#11513); npm expands it itself, so the symptom varies by which
       # client performs the publish.
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: pnpm

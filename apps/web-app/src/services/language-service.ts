@@ -117,6 +117,10 @@ export class LanguageService {
 
       this.currentLocale = locale;
 
+      // Keep the document language honest — screen readers announce in the
+      // right voice and `:lang()` CSS (CJK mono-label fallback) can match
+      document.documentElement.lang = locale;
+
       // Save preference
       StorageService.setItem(STORAGE_KEYS.LOCALE, locale);
 

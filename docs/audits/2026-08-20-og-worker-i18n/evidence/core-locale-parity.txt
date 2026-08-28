@@ -1,0 +1,10 @@
+core locale parity (the data og-worker consumes via LocaleLoader): sections ['locale', 'meta', 'labels', 'dyeNames', 'categories', 'acquisitions', 'currencies', 'harmonyTypes', 'visionTypes', 'visions', 'tools', 'sheets', 'races', 'clans']
+en leaf keys: 222
+de: keys=222 missing=0 extra=0 identical-to-en(non-dye)=10 ['labels.metallic', 'categories.Neutral', 'currencies.Gil', 'races.elezen', 'races.lalafell', 'races.miqote', 'races.roegadyn', 'races.hrothgar', 'races.viera', 'clans.helions'] dup-keys-in-file=0 (the five repeated names are visions.* vs visionTypes.* — distinct sections, not duplicates)
+fr: keys=222 missing=0 extra=0 identical-to-en(non-dye)=9 ['currencies.Gil', 'races.lalafell', 'races.miqote', 'races.roegadyn', 'races.hrothgar', 'clans.raen', 'clans.xaela', 'clans.rava', 'clans.veena'] dup-keys-in-file=0 (the five repeated names are visions.* vs visionTypes.* — distinct sections, not duplicates)
+ja: keys=222 missing=0 extra=0 identical-to-en(non-dye)=0 [] dup-keys-in-file=0 (the five repeated names are visions.* vs visionTypes.* — distinct sections, not duplicates)
+ko: keys=222 missing=0 extra=0 identical-to-en(non-dye)=0 [] dup-keys-in-file=0 (the five repeated names are visions.* vs visionTypes.* — distinct sections, not duplicates)
+zh: keys=222 missing=0 extra=0 identical-to-en(non-dye)=0 [] dup-keys-in-file=0 (the five repeated names are visions.* vs visionTypes.* — distinct sections, not duplicates)
+
+og-worker own tables (og-strings.ts): OG_DECK 10 keys x6, TOOL_TAG 9 x6, OG_DECK_LINE 4 x6 — completeness pinned by og-strings.test.ts (all green).
+core `tools.*` has only 6 entries (no extractor/presets/budget) and ToolKey is the same 6 — see finding OG-I18N-004.

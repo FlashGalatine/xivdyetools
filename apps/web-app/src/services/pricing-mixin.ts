@@ -1,13 +1,4 @@
-import type { MarketBoard } from '../components/market-board';
-import type { PriceData } from '@xivdyetools/types';
-
-export interface PricingState {
-  showPrices: boolean;
-  priceData: Map<number, PriceData>;
-  marketBoard: MarketBoard | null;
-  drawerMarketBoard?: MarketBoard | null;
-  onPricesLoaded?: () => void;
-}
+import { logger } from '@shared/logger';
 
 /**
  * Options for setting up Market Board event listeners
@@ -61,7 +52,7 @@ export function setupMarketBoardListeners(
   fetchPrices: () => void | Promise<void>,
   options: MarketBoardListenerOptions = {}
 ): void {
-  console.info(
+  logger.info(
     '📡 [setupMarketBoardListeners] Setting up listeners on container:',
     container.tagName,
     container.className
@@ -69,7 +60,7 @@ export function setupMarketBoardListeners(
 
   // Price toggle - showPricesChanged event
   container.addEventListener('showPricesChanged', (() => {
-    console.info('📡 [setupMarketBoardListeners] showPricesChanged event received');
+    logger.info('📡 [setupMarketBoardListeners] showPricesChanged event received');
     if (options.onPricesToggled) {
       options.onPricesToggled();
     } else if (shouldFetchPrices()) {
@@ -79,7 +70,7 @@ export function setupMarketBoardListeners(
 
   // Server changed
   container.addEventListener('server-changed', (() => {
-    console.info('📡 [setupMarketBoardListeners] server-changed event received');
+    logger.info('📡 [setupMarketBoardListeners] server-changed event received');
     if (options.onServerChanged) {
       options.onServerChanged();
     } else if (shouldFetchPrices()) {

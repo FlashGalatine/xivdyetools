@@ -1,9 +1,19 @@
 /**
- * Test script to verify font rendering works with resvg-wasm.
+ * Verifies the font bundle the SVG → PNG pipeline depends on.
  *
  * Run with: npx tsx scripts/test-font-rendering.ts
  *
- * This checks that all required fonts are present and reports on CJK support.
+ * The stack is not interchangeable and the ORDER matters:
+ * - Fragment Mono carries every hex code, ΔE and gil figure. It replaced
+ *   Habibi in 5.0, which was a single-weight *display* face rather than a
+ *   monospace — which is why no column of numbers in a v4 card lined up.
+ * - Noto Sans JP must be present and must precede SC in the fallback chain.
+ *   Without it Japanese falls through to the SC subset and a Japanese player
+ *   gets Chinese letterforms for every shared kanji.
+ * - Noto Sans SC has zero Hangul glyphs, so KR must come after it.
+ *
+ * All three CJK faces are *subsets*, built from the locale files' codepoints
+ * by scripts/subset-cjk-fonts.py — a full face would not fit the Worker.
  */
 
 import { existsSync, statSync } from 'fs';
@@ -13,63 +23,54 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-async function main() {
-  console.log('Testing font rendering...\n');
+/** In fallback-chain order. Every one of these is required. */
+const REQUIRED_FONTS = [
+  { file: 'SpaceGrotesk-VariableFont_wght.ttf', role: 'display — card titles, the big number' },
+  { file: 'Onest-VariableFont_wght.ttf', role: 'body — dye names' },
+  { file: 'FragmentMono-Regular.ttf', role: 'mono — every measured value' },
+  { file: 'NotoSansJP-Subset.ttf', role: 'CJK ja — MUST precede SC in the chain' },
+  { file: 'NotoSansSC-Subset.ttf', role: 'CJK zh' },
+  { file: 'NotoSansKR-Subset.ttf', role: 'CJK ko — MUST follow SC (SC has no Hangul)' },
+];
 
+/** Retired in 5.0 — a leftover here means a stale bundle. */
+const RETIRED_FONTS = ['Habibi-Regular.ttf'];
+
+function main(): void {
   const fontsDir = join(__dirname, '..', 'src', 'fonts');
+  console.log(`Checking font bundle in ${fontsDir}\n`);
 
-  // Required fonts
-  const requiredFonts = [
-    'SpaceGrotesk-VariableFont_wght.ttf',
-    'Onest-VariableFont_wght.ttf',
-    'Habibi-Regular.ttf',
-  ];
-
-  // Optional CJK font
-  const cjkFont = 'NotoSansSC-Regular.ttf';
-
-  console.log('Checking required font files...');
-
-  let allPresent = true;
-  for (const font of requiredFonts) {
-    const fontPath = join(fontsDir, font);
-    if (existsSync(fontPath)) {
-      const stats = statSync(fontPath);
-      console.log(`  ✓ ${font} (${(stats.size / 1024).toFixed(1)} KB)`);
+  let missing = 0;
+  for (const { file, role } of REQUIRED_FONTS) {
+    const path = join(fontsDir, file);
+    if (existsSync(path)) {
+      const kb = (statSync(path).size / 1024).toFixed(1);
+      console.log(`  ✓ ${file.padEnd(34)} ${kb.padStart(8)} KB   ${role}`);
     } else {
-      console.log(`  ✗ ${font} NOT FOUND`);
-      allPresent = false;
+      console.log(`  ✗ ${file.padEnd(34)} MISSING            ${role}`);
+      missing++;
     }
   }
 
-  if (!allPresent) {
-    console.error('\n❌ Missing required fonts. Please ensure all fonts are in src/fonts/');
+  let stale = 0;
+  for (const file of RETIRED_FONTS) {
+    if (existsSync(join(fontsDir, file))) {
+      console.log(`\n  ⚠ ${file} is still bundled — retired in 5.0, safe to delete.`);
+      stale++;
+    }
+  }
+
+  if (missing > 0) {
+    console.error(`\n❌ ${missing} required font(s) missing. PNG text will render as tofu.`);
     process.exit(1);
   }
 
-  console.log('\n✓ All required fonts present!');
-
-  // Check CJK font
-  console.log('\nChecking CJK font support...');
-  const cjkPath = join(fontsDir, cjkFont);
-  if (existsSync(cjkPath)) {
-    const stats = statSync(cjkPath);
-    console.log(`  ✓ ${cjkFont} (${(stats.size / 1024 / 1024).toFixed(1)} MB)`);
-    console.log('\n✓ CJK font is installed! Japanese, Korean, and Chinese dye names will render correctly.');
-  } else {
-    console.log(`  ⚠ ${cjkFont} NOT FOUND`);
-    console.log('\n⚠ CJK font not installed. Japanese, Korean, and Chinese dye names may appear as boxes.');
-    console.log('\nTo enable CJK support:');
-    console.log('  1. Download Noto Sans SC from: https://fonts.google.com/noto/specimen/Noto+Sans+SC');
-    console.log('  2. Extract NotoSansSC-Regular.ttf from the downloaded ZIP');
-    console.log('  3. Copy it to: src/fonts/NotoSansSC-Regular.ttf');
-    console.log('  4. Uncomment the CJK import in src/services/fonts.ts');
-    console.log('  5. Rebuild with: npm run deploy');
-  }
-
-  console.log('\n---');
-  console.log('To fully test rendering, deploy to Cloudflare and test via Discord commands.');
-  console.log('Or use: wrangler dev --local and interact with the bot.');
+  console.log('\n✓ Font bundle complete.');
+  if (stale > 0) console.log('⚠ Retired fonts are still shipping weight to the Worker.');
+  console.log(
+    '\nA dye name introducing a glyph outside the current subsets renders as .notdef —\n' +
+      'regenerate with: python scripts/subset-cjk-fonts.py'
+  );
 }
 
-main().catch(console.error);
+main();

@@ -9,12 +9,27 @@
  */
 export const ALLOWED_REDIRECT_ORIGINS = [
   'https://xivdyetools.app',
+  // Beta web app — a separate Cloudflare Pages project (xivdyetools-beta)
+  // serving non-main branches. It uses this production OAuth worker on
+  // purpose, so testers log in with their real accounts.
+  // See docs/superpowers/specs/2026-08-09-beta-web-app-deployment-design.md
+  'https://beta.xivdyetools.app',
   'https://xivdyetools.projectgalatine.com', // Transition period - remove after migration complete
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:3000',
 ];
+
+/**
+ * FINDING-012 / OAUTH-4 (2026-08-21 security audit): the only path on an
+ * allowlisted origin that may receive the `?code=` bounce. Every frontend
+ * (xivdyetools.app, beta, the transition domain, the localhost dev servers)
+ * mounts its callback route here. Origin-only matching let an attacker-chosen
+ * path on a trusted origin receive the authorization code; RFC 8252 §8.4 /
+ * OAuth 2.1 want an exact redirect-URI match.
+ */
+export const REDIRECT_CALLBACK_PATH = '/auth/callback';
 
 /**
  * BUG-018 (2026-07-18 audit): the single redirect-URI allowlist used by every

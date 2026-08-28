@@ -7,7 +7,12 @@
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { isTokenRevoked, revokeToken, type RevocationStore } from './revocation.js';
+import {
+  isTokenRevoked,
+  revokeToken,
+  REFRESH_GRACE_SECONDS,
+  type RevocationStore,
+} from './revocation.js';
 
 function memoryStore(): RevocationStore & { data: Map<string, string>; ttls: Map<string, number> } {
   const data = new Map<string, string>();
@@ -71,14 +76,37 @@ describe('revokeToken', () => {
     expect(store.data.has('revoked:jti-1')).toBe(true);
   });
 
-  it('sets TTL to remaining token lifetime', async () => {
+  it('sets TTL to remaining token lifetime PLUS the refresh grace window (FINDING-001)', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-19T00:00:00Z'));
     const now = Math.floor(Date.now() / 1000);
 
     const store = memoryStore();
     await revokeToken('jti-1', now + 900, store);
-    expect(store.ttls.get('revoked:jti-1')).toBe(900);
+    // The entry must outlive exp by the same grace window /auth/refresh
+    // honours, otherwise a revoked token becomes refreshable the moment it
+    // expires.
+    expect(store.ttls.get('revoked:jti-1')).toBe(900 + REFRESH_GRACE_SECONDS);
+  });
+
+  it('keeps an already-expired token blacklisted for the remainder of the grace window', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-19T00:00:00Z'));
+    const now = Math.floor(Date.now() / 1000);
+
+    const store = memoryStore();
+    await revokeToken('jti-1', now - 100, store); // expired 100 s ago
+    expect(store.ttls.get('revoked:jti-1')).toBe(REFRESH_GRACE_SECONDS - 100);
+  });
+
+  it('honours a caller-supplied grace window', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-19T00:00:00Z'));
+    const now = Math.floor(Date.now() / 1000);
+
+    const store = memoryStore();
+    await revokeToken('jti-1', now + 900, store, { graceSeconds: 30 });
+    expect(store.ttls.get('revoked:jti-1')).toBe(930);
   });
 
   it('clamps TTL to a minimum of 60 seconds for already-expired tokens', async () => {

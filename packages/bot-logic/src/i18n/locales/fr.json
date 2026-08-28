@@ -1,0 +1,682 @@
+{
+  "meta": {
+    "locale": "fr",
+    "name": "French"
+  },
+  "common": {
+    "dyes": "Teintures",
+    "category": "Catégorie",
+    "hexColor": "Couleur Hex",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "ID d'objet",
+    "footer": "XIV Dye Tools",
+    "error": "Erreur",
+    "unknownError": "Une erreur s'est produite. Veuillez réessayer."
+  },
+  "errors": {
+    "dyeNotFound": "Impossible de trouver une teinture nommée \"{name}\".",
+    "invalidColor": "Impossible de convertir \"{input}\" en couleur.\n\nVeuillez fournir un code hexadécimal valide (ex: `#FF0000`) ou un nom de teinture (ex: `Rouge Dalamud`).",
+    "missingInput": "Veuillez fournir une couleur (code hexadécimal ou nom de teinture).",
+    "missingQuery": "Veuillez fournir un terme de recherche.",
+    "missingName": "Veuillez fournir un nom de teinture.",
+    "missingSubcommand": "Veuillez spécifier une sous-commande.",
+    "unknownSubcommand": "Sous-commande inconnue : {name}",
+    "noMatchFound": "Aucune teinture correspondante trouvée dans la base de données.",
+    "noDyesAvailable": "Aucune teinture disponible dans la base de données.",
+    "generationFailed": "Une erreur s'est produite lors de la génération de la visualisation. Veuillez réessayer plus tard.",
+    "rateLimited_one": "Vous utilisez cette commande trop rapidement ! Veuillez patienter **{seconds} seconde** avant de réessayer.",
+    "rateLimited_other": "Vous utilisez cette commande trop rapidement ! Veuillez patienter **{seconds} secondes** avant de réessayer.",
+    "unknownUser": "Impossible d'identifier l'utilisateur. Veuillez réessayer.",
+    "notImplemented": "La commande `/{command}` n'est pas encore implémentée.",
+    "commandFailed": "Une erreur s'est produite lors du traitement de votre commande.",
+    "unsupportedComponent": "Ce type de composant n'est pas encore pris en charge.",
+    "unknownModal": "Soumission de formulaire inconnue.",
+    "unknownButton": "Ce bouton n'est pas reconnu."
+  },
+  "quality": {
+    "perfect": "Parfait",
+    "excellent": "Excellent",
+    "good": "Bon",
+    "fair": "Correct",
+    "approximate": "Approximatif"
+  },
+  "manual": {
+    "title": "Manuel XIV Dye Tools",
+    "welcome": "Bienvenue sur **XIV Dye Tools** ! Ce bot vous aide à explorer et associer les couleurs de teinture FFXIV.",
+    "commandsIntro": "Vous trouverez ci-dessous toutes les commandes disponibles organisées par catégorie.",
+    "autocompleteNote": "Toutes les commandes prennent en charge l'**autocomplétion** pour les noms de teinture !",
+    "colorMatching": "Correspondance des couleurs",
+    "dyeInformation": "Informations sur les teintures",
+    "botInformation": "Informations du bot",
+    "tipsResources": "Conseils et ressources",
+    "extractor": {
+      "name": "`/extractor color <couleur> [nombre]` | `/extractor image <image>`",
+      "description": "Extraire et faire correspondre les couleurs aux teintures FFXIV.\n• `color` : Faire correspondre un code hex ou un nom de teinture aux teintures les plus proches\n• `image` : Extraire les couleurs dominantes d'une image téléchargée"
+    },
+    "harmony": {
+      "name": "`/harmony <couleur> [type]`",
+      "description": "Générez des combinaisons de teintures harmonieuses.\n• Types : Complémentaire, Analogue, Triadique, Complémentaire divisé, Tétradique, Carré, Monochromatique\n• Crée une roue chromatique visuelle"
+    },
+    "mixer": {
+      "name": "`/mixer <teinture1> <teinture2> [mode]`",
+      "description": "Mélangez deux teintures en utilisant la science des couleurs.\n• 6 modes de mélange : RGB, LAB, OKLAB, RYB, HSL, Spectral\n• Trouve la teinture FFXIV la plus proche du résultat mélangé"
+    },
+    "gradient": {
+      "name": "`/gradient <début> <fin> [étapes]`",
+      "description": "Créez un dégradé de couleurs entre deux couleurs.\n• Affiche les teintures correspondantes pour chaque étape\n• Nombre d'étapes configurable (2-10)"
+    },
+    "swatch": {
+      "name": "`/swatch color <type> <index>` | `/swatch grid <type> <ligne> <colonne>`",
+      "description": "Faire correspondre les couleurs de personnage FFXIV aux teintures.\n• Prend en charge peau, cheveux, yeux, reflets, lèvres, tatouages, peinture faciale\n• Palettes spécifiques à la race/clan pour la peau et les cheveux"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <clé> <valeur>` | `/preferences reset`",
+      "description": "Gérez vos préférences du bot.\n• Définissez les valeurs par défaut pour le mode de mélange, la méthode de correspondance, le nombre de résultats\n• Configurez le clan/genre du personnage et le monde du marché"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <recherche>`",
+      "description": "Recherchez des teintures par nom.\n• La recherche floue trouve des correspondances partielles\n• Affiche les codes hexadécimaux et les catégories"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <nom>`",
+      "description": "Obtenez des informations détaillées sur une teinture spécifique.\n• Affiche les valeurs Hex, RGB, HSV\n• Affiche la catégorie et l'ID d'objet"
+    },
+    "dyeList": {
+      "name": "`/dye list [catégorie]`",
+      "description": "Listez toutes les teintures ou filtrez par catégorie.\n• Catégories : Rouges, Bruns, Jaunes, Verts, Bleus, Violets, Neutres, Spéciales"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "Affichez 5 teintures sélectionnées au hasard.\n• Option pour limiter à 1 teinture par catégorie"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "Afficher les informations du bot, la version et les liens."
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "Afficher ce guide d'aide."
+    },
+    "tips": {
+      "autocomplete": "**Autocomplétion :** Commencez à taper un nom de teinture et des suggestions apparaîtront !",
+      "hexColors": "**Couleurs Hex :** Utilisez le format web standard comme `#FF0000` (rouge) ou `#5865F2` (blurple)",
+      "dyeNames": "**Noms de teinture :** Tapez des noms partiels - \"dala\" trouvera \"Rouge Dalamud\"",
+      "facewearExcluded": "**Accessoires de visage exclus :** Les teintures génériques d'accessoires de visage (comme \"Rouge\", \"Bleu\") sont exclues des résultats",
+      "links": "**Liens :**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "Aucune teinture correspondant à \"{query}\" trouvée.",
+      "tryDifferent": "Essayez un autre terme de recherche",
+      "resultsTitle": "Résultats de recherche pour \"{query}\"",
+      "foundCount_one": "{count} teinture trouvée :",
+      "foundCount_other": "{count} teintures trouvées :",
+      "moreResults": "...et {count} autres résultats",
+      "useInfoHint": "Utilisez /dye info <nom> pour des informations détaillées"
+    },
+    "info": {
+      "detailedInfo": "Informations détaillées pour cette teinture {category}."
+    },
+    "list": {
+      "noDyesInCategory": "Aucune teinture trouvée dans la catégorie \"{category}\".",
+      "categoryTitle": "Teintures {category}",
+      "dyesInCategory": "{count} teintures dans cette catégorie :",
+      "categoriesTitle": "Catégories de teintures",
+      "categorySummary": "Il y a {total} teintures dans {count} catégories :",
+      "useListHint": "Utilisez /dye list <catégorie> pour voir les teintures d'une catégorie"
+    },
+    "random": {
+      "title": "Teintures aléatoires",
+      "titleUnique": "Teintures aléatoires (1 par catégorie)",
+      "description": "Voici {count} teintures sélectionnées au hasard :",
+      "runAgainHint": "Exécutez à nouveau pour des teintures différentes !"
+    }
+  },
+  "extractor": {
+    "topMatches": "Top {count} correspondances de teinture"
+  },
+  "gradient": {
+    "title": "Dégradé de couleurs",
+    "startColor": "Début",
+    "endColor": "Fin",
+    "steps_one": "{count} étape",
+    "steps_other": "{count} étapes",
+    "colorSpace": "Espace colorimétrique",
+    "matching": "Correspondance"
+  },
+  "harmony": {
+    "title": "Harmonie {type}",
+    "baseColor": "Couleur de base",
+    "complementary": "Complémentaire",
+    "analogous": "Analogue",
+    "triadic": "Triadique",
+    "splitComplementary": "Complémentaire divisé",
+    "tetradic": "Tétradique",
+    "square": "Carré",
+    "monochromatic": "Monochromatique",
+    "invertedTetradic": "Tétradique inversé"
+  },
+  "mixer": {
+    "blendResult": "Résultat du mélange",
+    "bothRequired": "Les deux teintures (dye1 et dye2) sont requises."
+  },
+  "accessibility": {
+    "normalVision": "Vision normale",
+    "protanopia": "Protanopie",
+    "deuteranopia": "Deutéranopie",
+    "tritanopia": "Tritanopie",
+    "achromatopsia": "Achromatopsie",
+    "allLenses": "Toutes les visions"
+  },
+  "about": {
+    "title": "XIV Dye Tools Bot",
+    "version": "Version",
+    "description": "Un bot Discord pour l'exploration et la correspondance des couleurs de teinture FFXIV.",
+    "commands": "Commandes",
+    "totalCount": "{count} au total",
+    "links": "Liens",
+    "dyes": "Teintures",
+    "builtOn": "Repose sur",
+    "attribution": "Mentions légales",
+    "poweredBy": "Propulsé par Cloudflare Workers",
+    "categories": {
+      "colorTools": "Outils de couleur",
+      "dyeDatabase": "Base de teintures",
+      "analysis": "Analyse",
+      "community": "Communauté",
+      "utility": "Utilitaires"
+    },
+    "removedTitle": "Supprimés en v5",
+    "removedBody": "ces commandes ont été supprimées — utilisez /extractor, /preferences et les collections de l'application web."
+  },
+  "preset": {
+    "title": "Préréglages communautaires",
+    "apiDisabled": "Les préréglages communautaires ne sont pas configurés sur ce bot.",
+    "notFound": "Aucun préréglage correspondant trouvé.",
+    "noneInCategory": "Aucun préréglage trouvé dans cette catégorie.",
+    "useShowTip": "Utilisez `/preset show <nom>` pour voir les détails",
+    "randomTitle": "Préréglage aléatoire",
+    "notEnoughDyes": "Veuillez fournir au moins 2 teintures pour votre préréglage.",
+    "invalidDye": "Une des teintures spécifiées n'a pas été trouvée.",
+    "duplicateExists": "Préréglage similaire existant",
+    "duplicateVoted": "Votre vote a été ajouté au préréglage existant.",
+    "submitted": "Préréglage soumis !",
+    "submittedApproved": "Votre préréglage a été approuvé et est maintenant en ligne !",
+    "submittedPending": "Votre préréglage est en attente de modération.",
+    "voteRemoved": "Vote retiré",
+    "voteAdded": "Vote ajouté",
+    "currentVotes": "Votes actuels : {count}",
+    "colors": "Couleurs",
+    "tags": "Tags",
+    "author": "Auteur",
+    "votes": "Votes",
+    "api": {
+      "badRequest": "Requête invalide. Veuillez vérifier votre saisie et réessayer.",
+      "permissionDenied": "Permission refusée.",
+      "notFound": "Introuvable.",
+      "conflict": "Cet élément existe déjà ou entre en conflit avec une autre ressource.",
+      "rateLimited": "Trop de requêtes. Veuillez patienter un instant et réessayer.",
+      "serverError": "Une erreur serveur s'est produite. Veuillez réessayer plus tard.",
+      "unknown": "Une erreur s'est produite. Veuillez réessayer."
+    },
+    "invalidStructure": "Structure de commande invalide",
+    "none": "Aucun préréglage trouvé.",
+    "showing": "{shown} préréglages sur {total}",
+    "loadFailed": "Impossible de charger les préréglages.",
+    "loadOneFailed": "Impossible de charger le préréglage.",
+    "loadRandomFailed": "Impossible de charger un préréglage aléatoire.",
+    "duplicateIntro": "Un préréglage avec les mêmes teintures existe déjà :",
+    "byAuthor": "par {author}",
+    "official": "Officiel",
+    "unknownAuthor": "Inconnu",
+    "name": "Nom",
+    "colorCount": "{n} couleurs",
+    "submitFailed": "Impossible de soumettre le préréglage.",
+    "editFailed": "Impossible de modifier le préréglage.",
+    "voteFailed": "Impossible de traiter le vote.",
+    "edit": {
+      "noFields": "Veuillez indiquer au moins un champ à modifier.",
+      "notOwner": "Vous ne pouvez modifier que vos propres préréglages.",
+      "invalidDye": "Teinture invalide : {name}",
+      "dyeCount": "Un préréglage doit contenir de 2 à 5 teintures.",
+      "duplicateTitle": "Combinaison de teintures en double",
+      "duplicateIntro": "Cette combinaison de teintures existe déjà dans un autre préréglage :",
+      "duplicateHint": "Veuillez utiliser une autre combinaison de teintures.",
+      "updatedPending": "Préréglage mis à jour - en attente de validation",
+      "updated": "Préréglage mis à jour",
+      "pendingDescription": "Vos modifications ont été soumises à validation (modération du contenu).",
+      "appliedDescription": "Vos modifications ont été appliquées.",
+      "pendingFooter": "Un modérateur examinera vos modifications sous peu."
+    },
+    "favorite": {
+      "nameRequired": "preset_name est requis",
+      "alreadyExists": "**{name}** est déjà dans vos favoris.",
+      "limitReached": "Vous avez atteint la limite de {max} préréglages favoris.",
+      "addFailed": "Impossible d'ajouter le favori — veuillez réessayer.",
+      "removeFailed": "Impossible de retirer le favori — veuillez réessayer.",
+      "addedTitle": "Favori ajouté",
+      "added": "**{name}** fait maintenant partie de vos préréglages favoris.",
+      "notFound": "**{name}** n'est pas dans vos favoris.",
+      "removedTitle": "Favori retiré",
+      "removed": "**{name}** a été retiré de vos favoris.",
+      "listTitle": "Vos préréglages favoris",
+      "listTitleCount": "Vos préréglages favoris ({n}/{max})",
+      "empty": "Vous n'avez encore aucun préréglage favori. Utilisez `/preset favorite add` pour en ajouter un.",
+      "allRemoved": "Tous vos préréglages favoris semblent avoir été supprimés. Utilisez `/preset favorite remove` pour nettoyer les entrées."
+    },
+    "noValidDyes": "Aucune teinture valide dans ce préréglage"
+  },
+  "budget": {
+    "findTitle": "Alternatives économiques pour {dyeName}",
+    "noAlternatives": "Aucune alternative moins chère trouvée selon vos critères.",
+    "worldSet": "Votre monde par défaut a été défini sur **{world}**.",
+    "noWorldSet": {
+      "title": "Aucun monde défini",
+      "description": "Définissez votre monde avec `/budget set_world <world>` ou indiquez l'option `world`."
+    },
+    "errors": {
+      "notConfigured": "La fonction budget n'est pas disponible sur ce serveur. L'intégration du tableau des ventes n'est pas configurée.",
+      "worldNotFound": "Impossible de trouver le monde ou le centre de données \"{world}\".\n\nVeuillez vérifier l'orthographe ou essayer un nom de centre de données comme \"Chaos\" ou \"Light\".",
+      "missingWorld": "Veuillez spécifier un monde.",
+      "saveFailed": "Impossible d'enregistrer votre monde. Veuillez réessayer.",
+      "missingDye": "Veuillez spécifier une teinture cible.",
+      "dyeNotFound": "Impossible de trouver la teinture \"{name}\".",
+      "missingPreset": "Veuillez choisir un préréglage rapide.",
+      "presetNotFound": "Impossible de trouver le préréglage rapide \"{id}\".",
+      "apiError": "Impossible de récupérer les données du tableau des ventes. Veuillez réessayer plus tard.",
+      "rateLimited": "Trop de requêtes. Veuillez patienter avant de vérifier à nouveau les prix."
+    },
+    "dataCenterLabel": "{name} (centre de données {region})"
+  },
+  "preferences": {
+    "title": "Vos préférences",
+    "show": {
+      "description": "Ces paramètres affectent le fonctionnement des commandes.\nLes paramètres que vous fournissez remplacent toujours ces valeurs par défaut.",
+      "default": "Par défaut",
+      "notSet": "Non défini",
+      "hint": "Utilisez /preferences set pour personnaliser",
+      "lastUpdated": "Dernière mise à jour"
+    },
+    "set": {
+      "success": "Préférence mise à jour",
+      "successCount": "{count} préférences mises à jour",
+      "affects": "Affecte",
+      "failedToUpdate": "Échec de la mise à jour",
+      "noOptions": "Veuillez fournir au moins une préférence à définir.\n\nExemple : `/preferences set language:fr blending:oklab`",
+      "noValidOptions": "Aucune préférence valide fournie.",
+      "overrideNote": "Les paramètres de commande remplacent ces réglages"
+    },
+    "reset": {
+      "success": "Préférence réinitialisée",
+      "single": "**{key}** a été réinitialisé à sa valeur par défaut.",
+      "allTitle": "Toutes les préférences réinitialisées",
+      "allDescription": "Toutes vos préférences ont été réinitialisées aux valeurs par défaut.",
+      "failed": "Impossible de réinitialiser la/les préférence(s). Veuillez réessayer.",
+      "showHint": "/preferences show pour voir les valeurs actuelles"
+    },
+    "keys": {
+      "language": "Langue",
+      "blending": "Mode de mélange",
+      "matching": "Méthode de correspondance",
+      "count": "Nombre de résultats",
+      "clan": "Clan du personnage",
+      "gender": "Genre du personnage",
+      "world": "Monde du marché",
+      "market": "Afficher les prix du marché",
+      "showHex": "Afficher les codes hex",
+      "showRgb": "Afficher les valeurs RGB",
+      "showHsv": "Afficher les valeurs HSV",
+      "showLab": "Afficher les valeurs LAB",
+      "showDeltaE": "Afficher Delta-E",
+      "showAcquisition": "Afficher la source d'acquisition",
+      "filters": "Filtres de teinture",
+      "theme": "Thème des cartes"
+    },
+    "values": {
+      "results": "{count} résultats",
+      "male": "Masculin ♂️",
+      "female": "Féminin ♀️",
+      "yes": "Oui",
+      "no": "Non",
+      "themeDark": "sombre",
+      "themeLight": "clair"
+    },
+    "validation": {
+      "invalidLanguage": "Langue invalide. Options valides : `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "Mode de mélange invalide. Options valides :\n{options}",
+      "invalidMatchingMethod": "Méthode de correspondance invalide. Options valides :\n{options}",
+      "invalidCount": "Nombre invalide. Doit être un nombre entre 1 et 10.",
+      "invalidClan": "Clan invalide. Clans valides :\n{options}",
+      "invalidGender": "Genre invalide. Options valides : `male`, `female`",
+      "invalidWorld": "Monde invalide. Veuillez entrer un nom de monde ou de centre de données FFXIV valide.",
+      "invalidMarket": "Valeur invalide. Utilisez `on`/`off` ou `true`/`false`.",
+      "error": "Une erreur est survenue lors de l'enregistrement de la préférence. Veuillez réessayer.",
+      "invalidTheme": "Thème invalide. Choisissez `dark` ou `light`."
+    },
+    "errors": {
+      "invalidKey": "Clé de préférence inconnue : {key}",
+      "invalidValue": "Valeur invalide pour {key}. Options valides : {options}",
+      "noSubcommand": "Aucune sous-commande fournie"
+    },
+    "filters": {
+      "noOptions": "Veuillez fournir au moins une option de filtre.",
+      "excluded": "Exclu",
+      "included": "Inclus",
+      "updated": "Filtres mis à jour",
+      "affectsHint": "Affecte : /match, /harmony, /gradient, /mixer",
+      "title": "Filtres de teinture",
+      "setHint": "Utilisez /preferences filters set pour personnaliser",
+      "resetSuccess": "Filtres réinitialisés",
+      "resetDescription": "Tous les filtres de teinture ont été réinitialisés aux valeurs par défaut (tous les types de teinture inclus).",
+      "labels": {
+        "metallic": "Métallique",
+        "pastel": "Pastel",
+        "dark": "Sombre",
+        "cosmic": "Cosmique",
+        "ishgardian": "Ishgardais",
+        "expensive": "Coûteuses (blanc pur / noir de jais)",
+        "vendor": "Vendeur",
+        "craft": "Artisanat"
+      }
+    },
+    "affects": {
+      "allCommands": "toutes les commandes",
+      "marketData": "données du marché sur les cartes de résultat",
+      "everyCard": "chaque carte générée",
+      "resultCards": "toutes les commandes avec cartes de résultat"
+    },
+    "methods": {
+      "ciede2000": "Formule perceptuelle de référence (par défaut)",
+      "oklab": "distance perceptuelle OKLAB",
+      "cie76": "distance euclidienne CIELAB",
+      "redmean": "approximation RVB pondérée",
+      "rgb": "distance euclidienne RVB",
+      "distinguish": "RGB DIST ramené sur 0-100"
+    },
+    "blendingModes": {
+      "rgb": "moyenne additive des canaux (par défaut)",
+      "lab": "mélange CIELAB perceptuellement uniforme",
+      "oklab": "perceptuel moderne (corrige le bleu→violet de LAB)",
+      "ryb": "cercle chromatique traditionnel des artistes",
+      "hsl": "interpolation teinte-saturation-luminosité",
+      "spectral": "simulation physique Kubelka-Munk"
+    }
+  },
+  "webhook": {
+    "newPresetPending": "Nouveau modèle en attente de validation",
+    "newPresetPublished": "Nouveau modèle publié",
+    "previewImagePending": "Image d'aperçu en attente de validation",
+    "fields": {
+      "category": "Catégorie",
+      "author": "Auteur",
+      "source": "Source",
+      "dyes": "Teintures",
+      "tags": "Tags"
+    },
+    "autoApproved": "Approuvé automatiquement",
+    "buttons": {
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "revert": "Annuler"
+    },
+    "editPending": "Modification de modèle en attente de validation",
+    "sources": {
+      "web": "Application Web",
+      "discord": "Discord"
+    }
+  },
+  "previewImage": {
+    "invalidButton": "Interaction de bouton invalide.",
+    "notPermitted": "Vous n'avez pas la permission de modérer les images d'aperçu.",
+    "actionFailed": "Échec de la mise à jour de l'image d'aperçu. Veuillez réessayer.",
+    "approvedFooter": "Image d'aperçu approuvée par {moderator}",
+    "rejectedFooter": "Image d'aperçu rejetée par {moderator} — modèle inchangé"
+  },
+  "matchImage": {
+    "missingImage": "Veuillez joindre une image à analyser.",
+    "invalidAttachment": "Impossible de trouver l'image jointe.",
+    "noColors": "L'image semble être entièrement transparente ou trop petite pour être analysée.",
+    "extractionFailed": "Impossible d'extraire les couleurs de l'image.",
+    "processingFailed": "Une erreur s'est produite lors du traitement de l'image.",
+    "onlyDiscord": "Seules les images téléchargées directement sur Discord peuvent être analysées.",
+    "imageTooLarge": "L'image est trop grande. Veuillez utiliser une image plus petite.",
+    "unsupportedFormat": "Format d'image non pris en charge. Veuillez utiliser PNG, JPEG, GIF ou WebP.",
+    "timeout": "Le téléchargement de l'image a expiré. Veuillez réessayer."
+  },
+  "matchImageHelp": {
+    "title": "Comment utiliser /match_image",
+    "description": "La commande `/match_image` analyse votre image téléchargée pour trouver la couleur dominante et la faire correspondre à la teinture FFXIV la plus proche. Voici quelques conseils pour obtenir les meilleurs résultats !",
+    "howItWorks": "Comment ça marche",
+    "howItWorksContent": "**1. Analyse d'image**\n- Votre image est traitée avec le clustering K-means\n- La/les couleur(s) dominante(s) sont extraites\n- Les couleurs sont comparées à 136 teintures FFXIV\n\n**2. Correspondance de teinture**\n- Utilise la distance euclidienne dans l'espace colorimétrique RGB\n- Retourne la/les teinture(s) correspondante(s) la/les plus proche(s)",
+    "tipsForBestResults": "Conseils pour de meilleurs résultats",
+    "tipsContent": "**Recadrez vos images**\n- Concentrez-vous sur la zone spécifique que vous souhaitez faire correspondre\n- Supprimez les éléments d'interface et les arrière-plans\n\n**Choisissez un bon éclairage**\n- Prenez des captures d'écran dans des zones bien éclairées\n- Évitez les ombres sombres ou les reflets extrêmes\n\n**Évitez les arrière-plans sombres**\n- Les arrière-plans noirs peuvent fausser les résultats\n- Utilisez des arrière-plans neutres et clairs si possible",
+    "commonIssues": "Problèmes courants",
+    "commonIssuesContent": "**« J'ai obtenu une couleur sombre mais mon équipement est clair ! »**\n→ Votre arrière-plan est probablement sombre. Recadrez l'image sur votre équipement uniquement.\n\n**« La correspondance semble incorrecte »**\n→ Plusieurs couleurs ? L'algorithme choisit la couleur la PLUS courante.\n\n**« Puis-je faire correspondre une partie spécifique ? »**\n→ Oui ! Recadrez sur cette zone exacte avant de télécharger.",
+    "proTips": "Conseils pro",
+    "proTipsContent": "• Utilisez un logiciel de retouche d'image pour recadrer avant de télécharger\n• Pour les équipements métalliques/brillants, les résultats peuvent varier\n• Si vous connaissez le code hexadécimal, utilisez `/match` à la place\n• Extrayez plusieurs couleurs avec l'option `colors` (1-5)\n• Captures d'écran en 1920x1080 ou plus pour une meilleure qualité",
+    "footer": "XIV Dye Tools - Fait avec amour pour les passionnés de glamour FFXIV",
+    "exampleUseCases": "Exemples d'utilisation",
+    "goodExamples": "Bons exemples",
+    "goodExamplesContent": "• Capture d'écran recadrée d'une seule pièce de poitrine\n• Gros plan d'une armure teinte avec un arrière-plan neutre\n• Capture d'écran prise en plein jour\n• Image centrée sur la couleur que vous voulez faire correspondre",
+    "poorExamples": "Mauvais exemples",
+    "poorExamplesContent": "• Capture d'écran plein écran avec beaucoup d'interface\n• Personnage dans un donjon ou une grotte sombre\n• Plusieurs pièces d'armure avec différentes teintures\n• Image dominée par les couleurs d'arrière-plan",
+    "whenToUse": "Quand utiliser /match_image vs /match",
+    "whenToUseContent": "**Utilisez `/match_image` quand :**\n• Vous avez une capture d'écran et voulez trouver la teinture\n• Vous ne connaissez pas le code couleur exact\n• Vous voulez faire correspondre une couleur à partir de photos d'inspiration\n\n**Utilisez `/match` quand :**\n• Vous connaissez déjà le code hexadécimal\n• Vous avez besoin de résultats plus précis/exacts\n• Vous travaillez avec des nuanciers",
+    "technicalDetails": "Détails techniques",
+    "supportedFormats": "Formats pris en charge",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "fileLimits": "Limites de fichier",
+    "fileLimitsContent": "• Taille maximale : 8 Mo\n• Temps de traitement : ~1-3 secondes",
+    "matchQualityRatings": "Évaluations de qualité",
+    "matchQualityRatingsContent": "**Parfait** (distance 0)\n**Excellent** (distance <10)\n**Bon** (distance <25)\n**Correct** (distance <50)\n**Approximatif** (distance ≥50)\n\n*Distance plus faible = meilleure correspondance*",
+    "poweredBy": "Propulsé par le traitement d'image Photon WASM"
+  },
+  "card": {
+    "stain": "N° TEINTE",
+    "src": "SOURCE",
+    "mkt": "MARCHÉ",
+    "base": "BASE",
+    "nearest": "TEINTURES PROCHES",
+    "nearestMore": "+{n} autres",
+    "ideal": "IDÉAL",
+    "found": "TROUVÉ",
+    "name": "TEINTURE",
+    "cat": "CATÉGORIE",
+    "bandKey": "bandes : ≤6 / ≤12 / ≤20",
+    "derivedNote": "dérivé de ΔE2000",
+    "tier0": "EXACT",
+    "tier1": "PROCHE",
+    "tier2": "LARGE",
+    "tier3": "INATTEIGNABLE",
+    "share": "PART",
+    "matched": "TEINTURE TROUVÉE",
+    "rank": "RANG",
+    "target": "CIBLE",
+    "rampTitle": "Palette depuis l’image",
+    "matchTitle": "Teintures les plus proches",
+    "colours": "{n} couleurs",
+    "rampKey": "largeur = part de l’image",
+    "matchKey": "plus proches par ΔE2000",
+    "manualLead": "Couleurs inattendues ? Essayez",
+    "manualTail": "",
+    "gradKey": "bande = chaque palier · lignes = les teintures distinctes",
+    "gradKeyCut_one": "bande = les {n} paliers · lignes = le {k} plus grand écart",
+    "gradKeyCut_other": "bande = les {n} paliers · lignes = les {k} écarts les plus grands",
+    "gradVerdict_one": "{n} paliers pour {k} teinture. Rien dans le jeu ne se place entre elles.",
+    "gradVerdict_other": "{n} paliers pour {k} teintures. Rien dans le jeu ne se place entre elles.",
+    "gradOmitted": "+{n} de plus, listées dans le message",
+    "ratioKey": "contour = mélange · plein = teinture proche",
+    "designed": "COULEUR RÉELLE",
+    "perceived": "PERÇUE",
+    "separationCol": "ÉCART",
+    "lensCol": "VISION",
+    "shiftCol": "DÉCALAGE",
+    "sepBandKey": "bandes : ≥30 / ≥15 / ≥8 — plus grand = plus sûr",
+    "soloKey": "barre = décalage relatif · sans verdict",
+    "worstNote": "le plus faible : {lens}",
+    "a11yVerdict": "Le plus faible sous {lens} — la paire n'y est séparée que de {de}.",
+    "worstPair": "PAIRE LA PLUS FAIBLE",
+    "pairCol": "PAIRE",
+    "ratioCol": "RATIO",
+    "ratioShort": "RATIO",
+    "restCol": "RESTE",
+    "ratioBand0": "SOUS 3:1",
+    "ratioBand1": "≥ 3:1",
+    "ratioBand2": "≥ 4.5:1",
+    "ratioBand3": "≥ 7:1",
+    "floorKey": "le plancher non-texte est 3:1 — WCAG 1.4.11",
+    "plotKey": "vert = éloignés · lignes à 3 / 4.5 / 7",
+    "contrastTitle": "Contraste — {n} teintures",
+    "cmpTitle": "Comparaison — {n} teintures",
+    "cmpTag0": "IDENTIQUE",
+    "cmpTag1": "PROCHE",
+    "cmpTag2": "VOISIN",
+    "cmpTag3": "LOIN",
+    "cmpKey": "vert = proche · bandes 5 / 10 / 20",
+    "cmpRatioKey": "le ratio mesure la clarté, pas la distance",
+    "triKey": "triangle supérieur · chaque paire une fois",
+    "lTarget": "CIBLE",
+    "lBoardOnly": "marché seul",
+    "lVendor": "marchand",
+    "lNoPrice": "sans prix",
+    "lCandidate": "CANDIDAT",
+    "vendorCheaper": "MARCHAND MOINS CHER",
+    "budgetKey": "GIL/ΔE = (CIBLE − LIGNE) ÷ ΔE2000",
+    "budgetKeyMethod": "colonne ΔE : {tag} · ratio fixé sur ΔE2000",
+    "budgetBest": "Meilleur rapport : **{name}** — {de} ΔE à {price}",
+    "budgetNoTarget": "Pas de prix cible sur {world} — lignes non classées, ratio vide",
+    "budgetFloor": "Déjà le palier le moins cher — rien sous {price}.",
+    "swatchSlot": "EMPL.",
+    "swatchNearest": "TEINTURE PROCHE",
+    "slotSkin": "PEAU",
+    "slotHair": "CHEV.",
+    "slotHl": "MÈCHE",
+    "slotEyes": "YEUX",
+    "slotLip": "LÈVRE",
+    "slotPaint": "PEINT.",
+    "slotTattoo": "TATOU.",
+    "slotLimbal": "LIMBAL",
+    "offGridShort": "HORS G.",
+    "swatchFootKey_one": "plus proches par ΔE2000 · {s} empl. sur {n}",
+    "swatchFootKey_other": "plus proches par ΔE2000 · {s} empl. sur {n}",
+    "swatchOffGrid": "{slot} hors grille — index {index}, direct {float}",
+    "swatchLip": "Lèvre α {alpha} — brut {raw}, fondu {blend}",
+    "swatchGear": "Teintures d'équipement : {list}",
+    "swatchDropped": "Retiré (le plus sûr) : {slot} · ΔE {de}",
+    "swatchParseError": "Fichier illisible — {message}",
+    "swatchNoSlots": "Aucun emplacement de couleur actif dans ce fichier.",
+    "swatchSlotMissing": "{slot} n’est pas un emplacement actif dans ce fichier.",
+    "perDe": "GIL/ΔE"
+  },
+  "firstRun": {
+    "title": "XIV Dye Tools 5.0",
+    "body": "Le bot a été repensé : nouvelles cartes, vocabulaire de correspondance unifié (ΔE2000 par défaut), /contrast et /a11y, et /swatch pour les fichiers de personnage. Voir /manual pour la visite, /changelog pour les nouveautés, /preferences pour les réglages. Cet avis ne s'affiche qu'une fois."
+  },
+  "changelog": {
+    "title": "Nouveautés du bot",
+    "earlier": "Versions précédentes",
+    "notFound": "Aucune entrée pour la version {version}.",
+    "empty": "Le journal des modifications est indisponible pour le moment."
+  },
+  "manual5": {
+    "learnLead": "En savoir plus : {link}",
+    "topics": {
+      "colorVision": {
+        "name": "Vision des couleurs",
+        "body": "Les outils d'accessibilité simulent quatre visions — protanopie (PROT), deutéranopie (DEUT), tritanopie (TRIT) et achromatopsie (ACHR) — selon la méthode Brettel, puis mesurent l'écart restant entre deux teintures sous chaque vision. Plus l'écart est grand, mieux c'est : les bandes sont à 30 / 15 / 8 en ΔE2000."
+      },
+      "contrast": {
+        "name": "Contraste",
+        "body": "/contrast mesure les rapports de luminance WCAG entre teintures (1:1–21:1). Le seuil non textuel est 3:1 (WCAG 2.1, critère 1.4.11) ; les cartes marquent 3 / 4,5 / 7 et nomment les bandes par leur rapport — pas de notes en lettres. Le rapport mesure la clarté seule, pas la différence de couleur."
+      },
+      "matchingMethods": {
+        "name": "Méthodes de correspondance",
+        "body": "Six méthodes, un vocabulaire : ΔE2000 (par défaut), ΔEOK, ΔE76, REDMEAN, RGB DIST et DISTINGUISH %. Seules les bandes de ΔE2000 suivent votre ligne de correspondance ; celles des autres méthodes sont fixes, les paliers ne se comparent jamais entre méthodes, et la méthode s'affiche partout où un palier apparaît."
+      },
+      "spectrumPrices": {
+        "name": "Spectrum et prix",
+        "body": "Depuis le patch 7.5, 105 des 125 teintures partagent trois objets du marché : Teinture standard (216 gils chez le marchand — le seul prix qui ne bouge jamais), Teinture additionnelle n°1 (scrips des Artisans célestes) et n°2 (cosmocrédits). Une teinture consolidée n'a pas d'annonce propre : /budget affiche le prix du groupe, jamais celui de la teinture."
+      },
+      "characterFile": {
+        "name": "Fichier de personnage",
+        "body": "/swatch lit un export .chara d'Anamnesis ou de Ktisis : les emplacements de couleur (peau, cheveux, yeux, lèvres, peinture) et les teintures d'équipement portées. Le fichier est lu une fois pour construire la réponse et n'est pas conservé. Les couleurs hors grille sont associées par leur valeur réelle et marquées HORS GRILLE."
+      }
+    }
+  },
+  "copy": {
+    "invalidFormat": "Format {format} invalide.",
+    "rgbValues": "Valeurs RVB :",
+    "hsvValues": "Valeurs TSV :"
+  },
+  "stats": {
+    "accessDeniedTitle": "Accès refusé",
+    "accessDenied": "Vous n'avez pas la permission de consulter ce panneau de statistiques.",
+    "fetchFailed": "Impossible de récupérer les statistiques. Veuillez réessayer plus tard.",
+    "summary": {
+      "features": "Fonctionnalités",
+      "featureList": "• Correspondance et extraction de couleurs\n• Mélange de teintures (6 algorithmes)\n• Correspondance des couleurs de personnage\n• Harmonies de couleurs\n• Analyse d'accessibilité",
+      "stats": "Statistiques",
+      "commandsUsed": "Commandes utilisées",
+      "successRate": "Taux de réussite",
+      "webApp": "Application web",
+      "documentation": "Documentation",
+      "supportServer": "Serveur d'assistance",
+      "footer": "Version {version} • Aide des commandes : /manual"
+    }
+  },
+  "commands": {
+    "harmony": {
+      "description": "Générer des combinaisons de teintures harmonieuses à partir d'une couleur"
+    },
+    "mixer": {
+      "description": "Mélanger deux teintures avec différents algorithmes"
+    },
+    "gradient": {
+      "description": "Générer un dégradé entre deux couleurs avec les teintures intermédiaires"
+    },
+    "extractor": {
+      "description": "Extraire des couleurs et trouver les teintures FFXIV correspondantes"
+    },
+    "swatch": {
+      "description": "Associer les couleurs d'un fichier de personnage aux teintures les plus proches"
+    },
+    "dye": {
+      "description": "Rechercher et explorer les teintures FFXIV"
+    },
+    "comparison": {
+      "description": "Comparer 2 à 4 teintures côte à côte avec analyse des couleurs"
+    },
+    "contrast": {
+      "description": "Contraste non textuel WCAG entre paires de teintures (seuil 3:1)"
+    },
+    "accessibility": {
+      "description": "Comment une teinture ou une paire résiste à chaque type de vision des couleurs"
+    },
+    "a11y": {
+      "description": "Comment une teinture ou une paire résiste à chaque type de vision des couleurs"
+    },
+    "budget": {
+      "description": "Trouver des teintures alternatives abordables via le tableau des ventes"
+    },
+    "preset": {
+      "description": "Parcourir, soumettre et voter pour des préréglages communautaires"
+    },
+    "preferences": {
+      "description": "Gérer vos préférences personnelles du bot"
+    },
+    "manual": {
+      "description": "Afficher l'aide et le guide d'utilisation de toutes les commandes"
+    },
+    "changelog": {
+      "description": "Nouveautés du bot Discord — notes de version, les plus récentes d'abord"
+    },
+    "about": {
+      "description": "Afficher les informations sur le bot XIV Dye Tools"
+    },
+    "stats": {
+      "description": "Afficher les statistiques d'utilisation et les informations du bot"
+    }
+  }
+}

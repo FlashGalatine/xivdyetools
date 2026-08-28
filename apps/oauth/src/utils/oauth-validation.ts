@@ -6,6 +6,20 @@
  * (Discord authorize, XIVAuth authorize, callbacks, etc.)
  */
 
+import { REDIRECT_CALLBACK_PATH } from '../constants/oauth.js';
+
+/**
+ * FINDING-012 / OAUTH-4 (2026-08-21 security audit): server-side caps on the
+ * two client-chosen values that are embedded in the signed state and echoed
+ * back to the SPA. The web app sends a short tool path and a 64-hex-char CSRF
+ * value, so these bounds are generous for every legitimate flow.
+ */
+export const MAX_RETURN_PATH_LENGTH = 256;
+export const MAX_STATE_LENGTH = 256;
+
+/** Visible ASCII only — no whitespace, no control characters, no non-ASCII. */
+const VISIBLE_ASCII = /^[\x21-\x7E]+$/;
+
 /**
  * Validate code_challenge format per RFC 7636
  * For S256 method, challenge is BASE64URL(SHA256(verifier)) = 43 characters
@@ -39,7 +53,12 @@ export function validateCodeVerifier(verifier: string): boolean {
 
 /**
  * Validate redirect URI against allowlist
- * Ensures redirect URI origin is in the list of permitted origins
+ * Ensures redirect URI origin is in the list of permitted origins AND that the
+ * path is exactly the SPA callback route (no query string, no fragment).
+ *
+ * FINDING-012 / OAUTH-4: origin-only matching let any path on an allowlisted
+ * origin receive the `?code=` bounce. RFC 8252 §8.4 / OAuth 2.1 want an exact
+ * match, so the path is pinned to REDIRECT_CALLBACK_PATH.
  *
  * @param uri - Redirect URI to validate
  * @param allowedOrigins - Array of permitted origin URLs
@@ -64,6 +83,49 @@ export function validateRedirectUri(uri: string, allowedOrigins: string[]): void
   if (!isAllowed) {
     throw new Error('Redirect URI not in allowlist');
   }
+
+  if (
+    parsedUri.pathname !== REDIRECT_CALLBACK_PATH ||
+    parsedUri.search !== '' ||
+    parsedUri.hash !== ''
+  ) {
+    throw new Error('Redirect URI path not allowed');
+  }
+}
+
+/**
+ * Validate the `return_path` the SPA asks to be sent back to after login.
+ *
+ * FINDING-012 / OAUTH-4: must be a relative path rooted at a single `/`
+ * (never `//host`, never a scheme), visible ASCII only (no whitespace or
+ * control characters, and no backslash — the WHATWG parser turns `\` into `/`),
+ * and at most MAX_RETURN_PATH_LENGTH characters. The web app additionally
+ * sanitises it client-side; this is the server-side bound.
+ *
+ * @param path - Candidate return path
+ * @returns true if acceptable
+ */
+export function validateReturnPath(path: string): boolean {
+  if (path.length === 0 || path.length > MAX_RETURN_PATH_LENGTH) {
+    return false;
+  }
+  if (path[0] !== '/' || path[1] === '/') {
+    return false;
+  }
+  return VISIBLE_ASCII.test(path) && !path.includes('\\');
+}
+
+/**
+ * Validate the client-supplied `state` (the SPA's CSRF value) before it is
+ * embedded in the signed state and echoed back in the callback bounce.
+ *
+ * FINDING-012 / OAUTH-4: at most MAX_STATE_LENGTH visible-ASCII characters.
+ *
+ * @param state - Candidate state value
+ * @returns true if acceptable
+ */
+export function validateStateParam(state: string): boolean {
+  return state.length <= MAX_STATE_LENGTH && VISIBLE_ASCII.test(state);
 }
 
 /**

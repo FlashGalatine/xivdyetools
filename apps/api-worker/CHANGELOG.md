@@ -5,6 +5,96 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-08-21
+
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-003 + FINDING-025 with the API-n items of `evidence/review-api-worker.md`). Minor bump: new binding, no intended API contract change — only malformed inputs that used to be accepted leniently are now rejected (API-4, API-13 below).
+
+### Security
+
+- **`/v1/*` per-IP rate limiting now uses the native Workers Rate Limiting binding `API_RATE_LIMITER`** (`[[ratelimits]]`, `simple = { limit = 65, period = 60 }` = the 60 + 5 burst it always advertised) via `CloudflareRateLimiter` from `@xivdyetools/worker-kit` 1.1.0. The KV-backed limiter could not throttle a fast client — KV allows 1 write/s/key and the increment swallowed the resulting 429s, so a single client sending >1 req/s never reached the threshold, and any KV error failed open. KV `RATE_LIMIT` is kept only as the fallback when the binding is absent. `createApiRateLimitMiddleware()` / `selectApiRateLimiter()` are exported for tests; the 429 body is unchanged. (FINDING-003)
+- **FINDING-025 / API-2 — `POST /v1/chara/resolve` enforces its 8 KB cap on the stream** (new `src/lib/bounded-body.ts`): the body used to be buffered whole (`Request.text()`) before the size check, so a chunked / HTTP/2 POST with no `Content-Length` could push ~100 MB into the isolate. The reader is now cancelled the moment 8 KB (bytes, not UTF-16 units) is exceeded; `413 INVALID_BODY` as before.
+- **API-3 — truncated XIVAPI search pages are not cached**: when the single 500-row search comes back with a `next` cursor or a full page, the request is still answered from the rows that arrived, but its misses are no longer stored as "no item row" for ~8 days (`XivapiClient.searchItems` now returns `truncated`; a warn log notes it).
+- **API-4 — `GET /v1/chara/icon/:iconId` accepts the canonical decimal id only** (`/^[1-9]\d{0,5}$/`, otherwise `400 VALIDATION_ERROR`) and keys the edge cache on the canonical path. `041716`, `41716abc`, `41716%20` used to resolve to the same icon under distinct cache keys, each a fresh upstream fetch.
+- **API-12 — the icon proxy serves `image/png` or nothing**: the upstream `Content-Type` is never reflected; the body is read with a 1 MB byte budget (`Content-Length` is advisory), must start with the PNG signature (else `503 UPSTREAM_UNAVAILABLE`, not cached), and the response carries `Content-Disposition: inline` + `Content-Security-Policy: sandbox`.
+- **API-5 / INF-12 — no stack traces in any HTTP response** (the `stack` field is gone from the 500 envelope in every environment; `development` still returns `err.message`), and the routeless dev worker is off workers.dev: top-level `workers_dev = false` + `preview_urls = false` in `wrangler.toml` (guarded by `tests/wrangler-config.test.ts`). A bare `pnpm deploy` no longer publishes a second, public copy of the Universalis/XIVAPI relay with `ENVIRONMENT=development`; use `pnpm dev` for ad-hoc testing.
+- **API-8 — Universalis proxy error bodies are constant**: `message` no longer carries the upstream `statusText` or a raw `Error.message` (`Upstream API error: <status>` + `The upstream API returned an error`; `Failed to fetch from upstream API` + `The upstream request failed; retry later`); both are logged with the request ID instead.
+- **API-9 — upstream fetches cannot hang or wander**: `redirect: 'error'` on both the Universalis and the XIVAPI clients, and a 10 s `AbortSignal.timeout` on the Universalis fetch (XIVAPI already had one).
+- **API-10 — `developers.xivdyetools.app` responses carry the API's security headers** (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, HSTS in production) — the docs host returned `ASSETS.fetch()` before the middleware chain, so it had none.
+- **API-13 — input-bound nits**: `/v1/dyes/search?q=` ≤ 100 characters, `/v1/dyes?page=` ≤ 1000, `maxDistance` must be finite (`Infinity` / `1e400` → `400`), and every 4xx/5xx (the envelope, the proxy's bare `{error}`, the 429s) is `Cache-Control: no-store` — a 404 is heuristically cacheable by RFC 9111.
+
+### Changed
+
+- **API-7 — the Universalis proxy's per-IP limiter is charged on cache misses only** (`cachedFetch` gained an `onMiss` hook): a cached answer is free, so a service-binding caller sharing one `unknown` bucket (discord-worker `/budget`) cannot throttle itself on repeats, and invalid requests no longer consume the budget. The budget and the 429 body are unchanged.
+- **API-11 — dead / misleading config removed**: `ALLOWED_ORIGINS` (typed and mocked, never read — the proxy is origin-agnostic by design, api-worker's global `cors({ origin: '*' })` is the policy) is gone from `universalis/types.ts` / `test-setup.ts`; `X-API-Key` is no longer advertised in CORS `allowHeaders` (no API-key feature exists); `wrangler.toml` now says that `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` govern only the proxy's limiter (the `/v1` limit is the binding).
+- Docs: `reference/chara.md` (canonical icon id, pinned PNG, streamed 8 KB cap) and `reference/universalis.md` (constant error messages, misses-only budget) updated to match.
+
+### Deploy notes
+
+- `[[ratelimits]]` bindings need no resource creation — they deploy with the worker (`namespace_id` 1001 prod / 1002 dev; see `docs/developer-guides/environment-variables.md`).
+- The top-level (dev) worker stops answering on `*.workers.dev` at its next deploy (API-5) — intentional; production is unaffected (custom domains only).
+
+## [0.7.0] - 2026-08-20
+
+### Added
+
+- **`POST /v1/chara/resolve`** — equipment-model resolution for the web app's `.chara` import (Swatch Matcher 11a/11c "Dyes on this glamour", pulled forward from 5.1 into 5.0). Body: `{ gear: [{ slot, set?, base, variant }], glasses? }` — the twelve packed model lanes and nothing else from the file. Answer per requested slot: the lowest-row_id Item on that (slot, `ModelMain`) key, `names` in en/ja/de/fr (from XIVAPI v2, U+00AD stripped) plus ko/zh when the build-time tables know the item, `iconId`, `familySize` and up to 8 `alternates` (same-mesh families — Augmented / Replica / +1 / role variants; prefixes are never stripped), `viaMainHand` on OffHand when the off-hand key is the main weapon's own `ModelSub` (quiver / focus / fist pair) or the main key itself. `null` = no Item row (NPC / prop model) — not an error. Optional `glasses` resolves the Glasses sheet row (facewear). Rules per `docs/research/chara-equipment-resolution` (273/273 gear keys, 41/41 weapons on the corpus).
+  - One upstream XIVAPI search per request at most (nested required groups, slot column as the mandatory second key); every (slot, key) is edge-cached ~7 d + 1 d SWR under a cache name of its own (`chara-resolve`), namespaced by the game-version pin — twenty users importing the same glamour is one upstream call. Empty answers are cached too. `X-Cache: HIT` = no upstream call. The POST envelope is `no-store`.
+  - `503 UPSTREAM_UNAVAILABLE` (`details.upstreamStatus`) when XIVAPI is down, times out (10 s), or is re-indexing search after a patch — the client falls back to slot-only rows; dyes never depend on this call.
+  - Validation is loud about the field: `400 VALIDATION_ERROR` for a bad slot / lane outside 0–65535 / duplicate slot / empty piece / bad `glasses` / >12 entries; `400 INVALID_BODY` for non-JSON; `413` over 8 KB.
+- **`GET /v1/chara/icon/:iconId`** — the item icon PNG (`_hr1`, 80 px) proxied from XIVAPI's `/api/asset`, edge-cached under `caches.default` with `Cache-Control: public, max-age=2592000, immutable`; `404 NOT_FOUND` / `503 UPSTREAM_UNAVAILABLE` pass-through; 1 MB ceiling.
+- **`scripts/build-item-names.mjs`** + `src/chara/data/item-names.{ko,zh}.json` — build-time Korean/Chinese equipment-name tables (28 986 ko / 28 992 zh of 28 993 equippable rows, ~200 KB gz each) from Teamcraft's `ko-items.json` / `zh-items.json`, filtered to equippable rows via `Item.csv` (`EquipSlotCategory ≠ 0`, local ffxiv-datamining clone or GitHub raw). Run by hand after a patch and commit; the worker never fetches GitHub at request time. `item-names.meta.json` records the build.
+- New env vars (both envs): `XIVAPI_BASE` (`https://v2.xivapi.com`), `XIVAPI_VERSION` (`latest` — pin to a `/api/version` key to freeze; also the cache namespace), optional `XIVAPI_SCHEMA` (`exdschema@2:rev:<sha>`). New `ErrorCode`s `INVALID_BODY`, `UPSTREAM_UNAVAILABLE`.
+- Docs: `docs/reference/chara.md` + sidebar/index entries.
+
+### Changed
+
+- CORS `allowMethods` gains `POST` (only `/v1/chara/resolve` accepts it; still anonymous, still `origin: *`).
+- `CacheService` takes an optional third `cacheName` constructor argument (default `'universalis-proxy'`, unchanged for the proxy) so the chara row cache lives in its own Cache API store.
+
+## [0.6.0] - 2026-08-16
+
+Monorepo 2.0 / 5.0 release train (branch `monorepo-2.0-prep`, 2026-07-30 → 2026-08-16). Nothing below has shipped until the branch merges. Two whole apps absorbed, three new production domains, schema v2 serving and the 5.0 matching vocabulary — a minor bump on the 0.x line (a later 1.0.0 can mark the moment the public API is declared stable). The ⚠️ BREAKING block lists the response-changing items for a `/v1` client.
+
+### ⚠️ BREAKING (public `/v1` API)
+
+- **Schema v2 (core 3.0 → 4.0): Facewear colors are no longer dyes.** `GET /v1/dyes` returns **125** entries (was 136 — the 11 Facewear rows are gone; `limit` on `/v1/match/within-distance` is capped at 125 accordingly). Negative "synthetic" Facewear IDs on `GET /v1/dyes/:id` now return an explanatory `404` (`NOT_FOUND`) whose message names the Facewear color and whose `details` carry the new string slug `facewearId` and `hex` — resolved through the frozen `LEGACY_FACEWEAR_ITEM_IDS` map, so old links degrade with a pointer rather than a bare 404. The `stainID` window in `resolveIdType()` widens from `1–125` to the full Stain-sheet byte range **`1–254`** so future dyes resolve without an API change; the "unassigned range" hint is now `255–5728`.
+- **5.0 matching vocabulary on `?method=`** (`VALID_MATCHING_METHODS`): `ciede2000` (new **default**, was `oklab`), `oklab`, `cie76`, `redmean` (new), `rgb`, `distinguish` (new). The retired v4 values `hyab` and `oklch-weighted` are still accepted at the boundary but **normalised to `ciede2000`** via core's `LEGACY_MATCHING_METHOD_MAP` (`euclidean` → `rgb`) instead of erroring, so existing clients keep working — but a request that omits `method`, or sends a retired one, now gets ΔE2000 numbers where it previously got OKLab / HyAB / weighted-OKLCh ones. The `kL` / `kC` / `kH` weight parameters on `/v1/match/closest` and `/v1/match/within-distance` are no longer read (silently ignored). Distances come from the single shared dispatch `ColorService.getDistanceForMethod()` in core.
+
+### Deploy window (operator steps — manual, see `DEPRECATIONS.md`)
+
+Production `wrangler.toml` now claims **four** custom domains: `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app`. Deploy fails or steals nothing until the old owners release them, so **before** the first `deploy --env production` from this branch:
+
+1. Remove `proxy.xivdyetools.app` and `proxy.xivdyetools.projectgalatine.com` from the old `xivdyetools-universalis-proxy` worker (or delete the worker).
+2. Remove `developers.xivdyetools.app` from the old `xivdyetools-api-docs` Pages project.
+3. Deploy api-worker (`pnpm --filter xivdyetools-api-worker run build:docs` first if deploying by hand — CI does it; the production env serves `docs/.vitepress/dist` as static assets).
+4. Smoke-test `https://proxy.xivdyetools.app/api/v2/data-centers`, `https://data.xivdyetools.app/universalis/data-centers`, `https://developers.xivdyetools.app/`, `https://data.xivdyetools.app/health`.
+5. Then deploy web-app (its production fallback already points at `data.xivdyetools.app/universalis`) and discord-worker (`UNIVERSALIS_PROXY` service binding retargeted to `xivdyetools-api-worker`; verify `/budget`). Expect a one-time cold Universalis cache (cache keys embed the request origin).
+6. Delete the old proxy worker and the old Pages project after the cutover window.
+
+Note: the deployed production worker predates this branch, so `data.xivdyetools.app/universalis/*` currently 404s and the beta web app's market-board calls fail until this ships — deploying api-worker is the only fix (do not repoint clients at the legacy proxy: it reflects `Access-Control-Allow-Origin: https://xivdyetools.app` to every caller).
+
+### Added
+
+- **Universalis market-board proxy absorbed from `apps/universalis-proxy`** (Monorepo 2.0 Tier 2; `src/universalis/`, code moved verbatim with its Cache-API caching, stale-while-revalidate, request coalescing and per-isolate memory rate limiter). Mounted twice in `src/index.ts`: **`/universalis/*`** (canonical, on `data.xivdyetools.app`) and **`/api/v2/*`** (compatibility mount preserving the exact path shape used by already-deployed web-app bundles via the `proxy.xivdyetools.app` domain and by discord-worker's `UNIVERSALIS_PROXY` service binding). Routes: `GET <mount>/aggregated/:datacenter/:itemIds` (per-IP rate-limited via `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` — 30/60 s in production, 60/60 s in dev — validated against the datacenter/world lists, cached 300 s + 120 s SWR, coalesced), `GET <mount>/data-centers`, `GET <mount>/worlds`. Responses are deliberately **not** wrapped in the `{success,data,meta}` envelope and the router is mounted outside `/v1/*` (no KV rate limiter, no locale middleware). CORS is the worker's global `cors({ origin: '*' })` — strictly more permissive than the proxy's allowlist, and the reason it can serve the beta host. New vars `UNIVERSALIS_API_BASE`, `RATE_LIMIT_REQUESTS`, `RATE_LIMIT_WINDOW_SECONDS` in both environments.
+- **API docs absorbed from `apps/api-docs`** (Tier 2): the VitePress site lives in `apps/api-worker/docs/` (`docs:dev` / `build:docs` / `docs:preview` scripts; `vitepress` + `vue` devDependencies) and ships as **Workers Static Assets** in the production env only (`[env.production.assets]`: `directory = "./docs/.vitepress/dist"`, `binding = "ASSETS"`, `run_worker_first = true`, `not_found_handling = "404-page"`). A host check at the top of the middleware chain routes requests whose hostname is `developers.xivdyetools.app` to `ASSETS` before any API middleware (no rate limiting / locale / API headers), and — because asset matching is path-based, not host-based — keeps docs pages from shadowing API paths on `data.*`. The docs now deploy atomically with the API they document; `docs/reference/dyes.md` and `guide/index.md` are updated for schema v2 (125 dyes, `1–254` stainIDs, negative-ID 404).
+- **`.github/workflows/deploy-api-worker.yml`** — api-worker was live on `data.xivdyetools.app` with **no deploy workflow**. The new one triggers on `apps/api-worker/**` and `packages/{core,types,logger,worker-kit}/**` (or `workflow_dispatch`), builds deps, type-checks, tests, builds the docs, deploys with `--env production`, and smoke-tests both `/health` and the docs site. `deploy-universalis-proxy.yml` and `deploy-api-docs.yml` are deleted.
+
+### Changed
+
+- **Error strings tell the truth** — `/v1/dyes/stain/:stainId` validation `expected` now reads `positive integer (1-254)` (was `1-125`, contradicting the accepted window); the 429 body no longer promises "Register for an API key to get 300 requests per minute" (no API keys exist) — it now says `Rate limit exceeded. 60 requests per minute allowed. Retry after the indicated number of seconds.` (docs `guide/errors.md` + `guide/rate-limits.md` updated to match)
+- Migrated from `@xivdyetools/worker-middleware` + `@xivdyetools/rate-limiter` to `@xivdyetools/worker-kit` (`/rate-limiter` subpath) — Tier 1 package consolidation, no behaviour change.
+- Consumes `@xivdyetools/core` schema v2 (stainID-keyed `dyes.json`, `facewearColors` split out, `getFacewearColorByLegacyItemID`) and the 5.0 `DEFAULT_MATCHING_METHOD` / `LEGACY_MATCHING_METHOD_MAP` exports; `calculateDistance()` in `src/lib/services.ts` no longer takes weights.
+- Dependencies: `hono` floor raised to `^4.12.34` (2026-08-09 security advisories); `wrangler` `^4.114.0 → ^4.120.0` (miniflare 5 / undici 7.29); `license: MIT` declared. Accepted and recorded (FINDING-004): `vitepress@1.6.4` pins `vite ^5.4` / `esbuild 0.21` with no patched release — revisit when VitePress 2 ships stable.
+- Docs: `README.md` and `CLAUDE.md` synced (absorbed apps, schema v2, worker-kit, dev-vs-production deploy).
+
+### Removed (2026-08-18 dead-code audit)
+
+- **Unused direct `@xivdyetools/logger` dependency declaration** dropped from `package.json` — the worker's logging goes through `@xivdyetools/worker-kit`'s logger middleware, which already depends on `@xivdyetools/logger` itself; nothing in this app imports it directly.
+
+### Tests
+
+- Coverage thresholds raised to 90 % lines/functions/statements (branches 80 %); `src/**/*.test.ts` (the moved universalis suites: `router`, `cache-service`, `cached-fetch`, `request-coalescer`, `config/cache`) now included; `src/**/test-setup.ts` excluded from coverage (counting the scaffolding as product code understated function coverage by ~8 points); new `tests/lib/validation.branches.test.ts`; match/validation tests updated for the 5.0 vocabulary and the schema v2 ID window.
+
 ## [0.5.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprint 4).

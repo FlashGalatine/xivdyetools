@@ -3,6 +3,7 @@
  * These handlers intercept network requests and return mock responses
  */
 import { http, HttpResponse } from 'msw';
+import type { PresetCategory } from '@xivdyetools/types';
 
 // API base URL - must match the URL in community-preset-service.ts
 const API_URL = 'https://api.xivdyetools.app';
@@ -17,6 +18,7 @@ export const mockPresets = [
     name: 'Warrior of Light',
     description: 'A heroic color palette inspired by the Warriors of Light',
     category_id: 'jobs',
+    secondary_categories: [],
     dyes: [1, 5, 10],
     tags: ['warrior', 'light', 'heroic'],
     author_discord_id: '123456789',
@@ -26,12 +28,14 @@ export const mockPresets = [
     is_curated: false,
     created_at: '2024-01-15T10:00:00Z',
     updated_at: '2024-01-15T10:00:00Z',
+    preview_image_status: 'none',
   },
   {
     id: 'preset-2',
     name: 'Dark Knight',
     description: 'Dark and brooding colors for the Dark Knight job',
     category_id: 'jobs',
+    secondary_categories: [],
     dyes: [15, 20, 25],
     tags: ['dark', 'knight', 'tank'],
     author_discord_id: '987654321',
@@ -41,10 +45,27 @@ export const mockPresets = [
     is_curated: true,
     created_at: '2024-01-10T08:00:00Z',
     updated_at: '2024-01-12T14:30:00Z',
+    preview_image_status: 'none',
   },
 ];
 
-export const mockCategories = [
+/**
+ * The five live `PresetCategory` members. `id` is typed rather than left as a
+ * string so that dropping a member from the union is a compile error here, the
+ * way it now is in `presetCategoryLabel`'s map.
+ *
+ * This fixture used to seed a sixth, `community`, which 5.0 retired (BUG-001).
+ * A fixture carrying a category production no longer has lets tests assert
+ * behaviour for it and pass.
+ */
+export const mockCategories: {
+  id: PresetCategory;
+  name: string;
+  description: string;
+  icon: string | null;
+  is_curated: boolean;
+  preset_count: number;
+}[] = [
   {
     id: 'jobs',
     name: 'Jobs',
@@ -62,9 +83,25 @@ export const mockCategories = [
     preset_count: 12,
   },
   {
-    id: 'community',
-    name: 'Community',
-    description: 'User-submitted color palettes',
+    id: 'seasons',
+    name: 'Seasons',
+    description: 'Palettes drawn from the seasons',
+    icon: null,
+    is_curated: true,
+    preset_count: 8,
+  },
+  {
+    id: 'events',
+    name: 'Events',
+    description: 'Palettes for seasonal FFXIV events',
+    icon: null,
+    is_curated: true,
+    preset_count: 6,
+  },
+  {
+    id: 'aesthetics',
+    name: 'Aesthetics',
+    description: 'User-submitted palettes grouped by look',
     icon: null,
     is_curated: false,
     preset_count: 100,
@@ -166,6 +203,7 @@ export const handlers = [
       name: body.name,
       description: body.description,
       category_id: body.category_id,
+      secondary_categories: [],
       dyes: body.dyes,
       tags: body.tags,
       author_discord_id: '123456789',
@@ -175,6 +213,7 @@ export const handlers = [
       is_curated: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      preview_image_status: 'none' as const,
     };
 
     return HttpResponse.json({
@@ -307,23 +346,3 @@ export const handlers = [
     });
   }),
 ];
-
-// ============================================
-// Error Handlers (for testing error scenarios)
-// ============================================
-
-export const errorHandlers = {
-  networkError: http.get(`${API_URL}/health`, () => {
-    return HttpResponse.error();
-  }),
-
-  serverError: http.get(`${API_URL}/api/v1/presets`, () => {
-    return HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
-  }),
-
-  timeout: http.get(`${API_URL}/api/v1/presets`, async () => {
-    // Simulate a long delay (longer than the service timeout)
-    await new Promise((resolve) => setTimeout(resolve, 15000));
-    return HttpResponse.json({ presets: [] });
-  }),
-};

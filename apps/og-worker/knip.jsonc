@@ -1,0 +1,28 @@
+{
+  // Dead-code gate for og-worker — `pnpm lint` runs `knip` AND `knip --production`.
+  // Introduced by the 2026-08-18 dead-code audit, which found ~500 lines the
+  // 15E rewrite left behind (a 260-line colour-sheet lookup with no caller, a
+  // pre-5.0 primitives shim, dead options and types) — all invisible to tsc.
+  //
+  // Two modes, on purpose:
+  //   - default: test files are entries, so a symbol only a test imports looks
+  //     alive (this is how the 260 lines survived);
+  //   - --production: only the production entry (src/index.ts — knip's
+  //     wrangler plugin reads `main` from wrangler.toml, so it is not listed
+  //     here) and the `!`-marked project files count, so test-only symbols
+  //     surface. NOTE the `!` on the PROJECT glob — without it production
+  //     mode believes only the entry file
+  //     itself is production code and reports every dependency the entry
+  //     does not import directly (@resvg/resvg-wasm, @xivdyetools/svg) as
+  //     unused. Two audits recorded production mode as "unusable" for that
+  //     reason; it was a config gap.
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["src/**/*.test.ts", "tests/**/*.ts"],
+  "project": ["src/**/*.ts!", "tests/**/*.ts", "*.ts"],
+  // A symbol used inside its own file is not dead just because nothing else
+  // imports it — exported types especially.
+  "ignoreExportsUsedInFile": true,
+  // Root-provided binary.
+  "ignoreBinaries": ["tsc", "knip"],
+  "vitest": { "config": ["vitest.config.ts"] }
+}

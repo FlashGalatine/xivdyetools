@@ -15,8 +15,8 @@ const BASE_HEX = '#D69C6D'; // A warm brown (Rust Red-ish)
 // ============================================================================
 
 describe('HARMONY_TYPES', () => {
-  it('contains all 7 harmony types', () => {
-    expect(HARMONY_TYPES).toHaveLength(7);
+  it('contains all 8 harmony types', () => {
+    expect(HARMONY_TYPES).toHaveLength(8);
   });
 
   it('includes triadic', () => {
@@ -28,7 +28,7 @@ describe('HARMONY_TYPES', () => {
   });
 
   it('includes all expected types', () => {
-    const expected = ['triadic', 'complementary', 'analogous', 'split-complementary', 'tetradic', 'square', 'monochromatic'];
+    const expected = ['triadic', 'complementary', 'analogous', 'split-complementary', 'tetradic', 'inverted-tetradic', 'square', 'monochromatic'];
     for (const type of expected) {
       expect(HARMONY_TYPES).toContain(type);
     }
@@ -151,11 +151,12 @@ describe('executeHarmony', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
+    // One line: the card names every slot; the embed carries the share URL
     expect(result.embed.description).toBeDefined();
-    expect(result.embed.description).toContain('**1.**');
+    expect(result.embed.description).toContain('xivdyetools.app/harmony');
   });
 
-  it('returns embed with footer', async () => {
+  it('renders the 11A slot rows into the SVG', async () => {
     const result = await executeHarmony({
       baseHex: BASE_HEX,
       harmonyType: 'analogous',
@@ -165,7 +166,77 @@ describe('executeHarmony', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.embed.footer).toBeDefined();
+    // Frame vocabulary: 400 wide, the mark, the base label
+    expect(result.svgString).toContain('width="400"');
+    expect(result.svgString).toContain('xivdyetools.app');
+    expect(result.svgString).toContain('BASE');
+    // Turn 13: the ceiling is a wall, not a guideline
+    const height = Number(/height="(\d+)"/.exec(result.svgString)?.[1]);
+    expect(height).toBeLessThanOrEqual(350);
+  });
+
+  it('leads each slot with the angle the maths asked for', async () => {
+    // Square asks for 90° / 180° / 270°; -30 (analogous) reads as 330°, an
+    // angle on the wheel rather than a signed rotation
+    const square = await executeHarmony({
+      baseHex: BASE_HEX,
+      harmonyType: 'square',
+      locale: 'en',
+    });
+    expect(square.ok).toBe(true);
+    if (!square.ok) return;
+    expect(square.svgString).toContain('180°');
+
+    const analogous = await executeHarmony({
+      baseHex: BASE_HEX,
+      harmonyType: 'analogous',
+      locale: 'en',
+    });
+    expect(analogous.ok).toBe(true);
+    if (!analogous.ok) return;
+    expect(analogous.svgString).toContain('330°');
+    expect(analogous.svgString).not.toContain('-30°');
+  });
+
+  it('prints the matching method whenever a tier is off-default', async () => {
+    // A tier is a property of the METHOD, not of the pair — two players with
+    // different stored preferences get different dyes, and without the tag
+    // one of the two PNGs looks wrong.
+    const off = await executeHarmony({
+      baseHex: BASE_HEX,
+      harmonyType: 'triadic',
+      locale: 'en',
+      matchingMethod: 'redmean',
+    });
+    expect(off.ok).toBe(true);
+    if (!off.ok) return;
+    expect(off.svgString).toContain('REDMEAN');
+
+    const dflt = await executeHarmony({
+      baseHex: BASE_HEX,
+      harmonyType: 'triadic',
+      locale: 'en',
+      matchingMethod: 'ciede2000',
+    });
+    expect(dflt.ok).toBe(true);
+    if (!dflt.ok) return;
+    // The default needs no tag — the bare ΔE header is the ΔE2000 case
+    expect(dflt.svgString).not.toContain('REDMEAN');
+  });
+
+  it('names the weakest slot in the verdict, with a glyph rather than a label', async () => {
+    const result = await executeHarmony({
+      baseHex: BASE_HEX,
+      harmonyType: 'square',
+      locale: 'de',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    // "weakest slot" as a label overran the row in German — the ↓ is the label
+    expect(result.svgString).toContain('↓');
+    const height = Number(/height="(\d+)"/.exec(result.svgString)?.[1]);
+    expect(height).toBeLessThanOrEqual(350);
   });
 
   it('works with Japanese locale', async () => {

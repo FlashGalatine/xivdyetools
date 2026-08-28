@@ -6,37 +6,16 @@
 
 import { logger } from '@shared/logger';
 import { authService } from './auth-service';
-import type { PresetCategory } from '@xivdyetools/types';
+import type { CommunityPreset, PresetFilters, PresetListResponse } from '@xivdyetools/types';
 
 // ============================================
 // Types
 // ============================================
 
-export type PresetStatus = 'pending' | 'approved' | 'rejected' | 'flagged';
-
-export interface CommunityPreset {
-  id: string;
-  name: string;
-  description: string;
-  category_id: PresetCategory;
-  dyes: number[];
-  tags: string[];
-  author_discord_id: string | null;
-  author_name: string | null;
-  vote_count: number;
-  status: PresetStatus;
-  is_curated: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PresetListResponse {
-  presets: CommunityPreset[];
-  total: number;
-  page: number;
-  limit: number;
-  has_more: boolean;
-}
+// CommunityPreset, PresetFilters and PresetListResponse are the
+// shared `@xivdyetools/types` contracts, re-exported here so existing
+// `@services/community-preset-service` imports keep working unchanged.
+export type { CommunityPreset, PresetFilters, PresetListResponse };
 
 export interface CategoryWithCount {
   id: string;
@@ -47,20 +26,40 @@ export interface CategoryWithCount {
   preset_count: number;
 }
 
-export interface PresetFilters {
-  category?: PresetCategory;
-  search?: string;
-  status?: PresetStatus;
-  sort?: 'popular' | 'recent' | 'name';
-  page?: number;
-  limit?: number;
-  is_curated?: boolean;
-}
+/**
+ * Why a vote failure is a code and not a sentence: this service has no locale,
+ * so every English string it used to return was toasted verbatim by
+ * `preset-detail` regardless of the user's language. It names the reason; the
+ * component looks the text up (`VOTE_ERROR_KEYS` there).
+ */
+export type VoteErrorCode =
+  'notLoggedIn' | 'alreadyVoted' | 'voteFailed' | 'removeVoteFailed' | 'network';
 
+/**
+ * Kept local rather than adopted from `@xivdyetools/types`' `VoteResponse`.
+ *
+ * The real wire response on a 409 (already voted) is
+ * `{ success: true, already_voted: true, new_vote_count }` — see
+ * `apps/presets-api/src/handlers/votes.ts` `addVote()`, which matches the
+ * shared `VoteSuccessResponse` exactly (`already_voted` only exists on the
+ * success variant). `voteForPreset()`/`removeVote()` below deliberately
+ * report that case as `success: false` instead, so their callers
+ * (`preset-detail.ts`, `preset-tool.ts`) can route it through their
+ * already-voted branch (an info toast, no vote-count update) rather than
+ * the success branch (success toast + vote-count update) without those
+ * components having to branch on `already_voted` themselves. The shared
+ * discriminated union has no variant for "success:false with
+ * already_voted/new_vote_count", so adopting it here would mean either
+ * restructuring those two components' toast logic (out of scope for a
+ * type-only refactor) or passing through a `success: true` response that
+ * changes which toast fires. Flat and un-discriminated on purpose.
+ */
 export interface VoteResponse {
   success: boolean;
   new_vote_count: number;
   already_voted?: boolean;
+  errorCode?: VoteErrorCode;
+  /** The presets-API's own message, when it sent one. Never app-authored copy. */
   error?: string;
 }
 
@@ -147,11 +146,13 @@ export class CommunityPresetService {
   private available = false;
 
   private constructor() {
-    // Try to get API URL from environment or use default
-    this.apiUrl =
-      (typeof window !== 'undefined' &&
-        (window as unknown as { PRESET_API_URL?: string }).PRESET_API_URL) ||
-      DEFAULT_API_URL;
+    // Build-time override only (same as auth-service / preset-submission-
+    // service). SECURITY (FINDING-032 / WEB-4): this used to fall back to a
+    // `window.PRESET_API_URL` global that nothing set — a markup injection
+    // could have defined it by DOM clobbering (`<a id="PRESET_API_URL"
+    // href="https://evil…">`) and pointed the bearer-token vote requests at
+    // an attacker host. Runtime globals never choose an API origin.
+    this.apiUrl = import.meta.env.VITE_PRESETS_API_URL || DEFAULT_API_URL;
     this.cache = new SimpleCache(CACHE_TTL);
   }
 
@@ -316,7 +317,10 @@ export class CommunityPresetService {
    */
   async getPreset(id: string): Promise<CommunityPreset | null> {
     try {
-      return await this.request<CommunityPreset>(`/api/v1/presets/${id}`, `preset:${id}`);
+      return await this.request<CommunityPreset>(
+        `/api/v1/presets/${encodeURIComponent(id)}`,
+        `preset:${id}`
+      );
     } catch (error) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
@@ -367,18 +371,21 @@ export class CommunityPresetService {
       return {
         success: false,
         new_vote_count: 0,
-        error: 'You must be logged in to vote',
+        errorCode: 'notLoggedIn',
       };
     }
 
     try {
-      const response = await this.fetchWithTimeout(`${this.apiUrl}/api/v1/votes/${presetId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authService.getAuthHeaders(),
-        },
-      });
+      const response = await this.fetchWithTimeout(
+        `${this.apiUrl}/api/v1/votes/${encodeURIComponent(presetId)}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...authService.getAuthHeaders(),
+          },
+        }
+      );
 
       const data = (await response.json()) as VoteResponse;
 
@@ -388,7 +395,7 @@ export class CommunityPresetService {
           success: false,
           new_vote_count: data.new_vote_count || 0,
           already_voted: true,
-          error: 'You have already voted for this preset',
+          errorCode: 'alreadyVoted',
         };
       }
 
@@ -396,7 +403,8 @@ export class CommunityPresetService {
         return {
           success: false,
           new_vote_count: 0,
-          error: (data as { message?: string }).message || 'Failed to vote',
+          errorCode: 'voteFailed',
+          error: (data as { message?: string }).message,
         };
       }
 
@@ -411,7 +419,7 @@ export class CommunityPresetService {
       return {
         success: false,
         new_vote_count: 0,
-        error: 'Network error - please try again',
+        errorCode: 'network',
       };
     }
   }
@@ -425,24 +433,28 @@ export class CommunityPresetService {
       return {
         success: false,
         new_vote_count: 0,
-        error: 'You must be logged in to remove your vote',
+        errorCode: 'notLoggedIn',
       };
     }
 
     try {
-      const response = await this.fetchWithTimeout(`${this.apiUrl}/api/v1/votes/${presetId}`, {
-        method: 'DELETE',
-        headers: {
-          ...authService.getAuthHeaders(),
-        },
-      });
+      const response = await this.fetchWithTimeout(
+        `${this.apiUrl}/api/v1/votes/${encodeURIComponent(presetId)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            ...authService.getAuthHeaders(),
+          },
+        }
+      );
 
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as { message?: string };
         return {
           success: false,
           new_vote_count: 0,
-          error: data.message || 'Failed to remove vote',
+          errorCode: 'removeVoteFailed',
+          error: data.message,
         };
       }
 
@@ -459,7 +471,7 @@ export class CommunityPresetService {
       return {
         success: false,
         new_vote_count: 0,
-        error: 'Network error - please try again',
+        errorCode: 'network',
       };
     }
   }
@@ -482,7 +494,7 @@ export class CommunityPresetService {
 
     try {
       const response = await this.fetchWithTimeout(
-        `${this.apiUrl}/api/v1/votes/${presetId}/check`,
+        `${this.apiUrl}/api/v1/votes/${encodeURIComponent(presetId)}/check`,
         {
           method: 'GET',
           headers: {

@@ -9,6 +9,7 @@
 import { bodyLimit } from 'hono/body-limit';
 import type { MiddlewareHandler } from 'hono';
 import type { Env } from '../types.js';
+import { MAX_PREVIEW_IMAGE_BYTES } from '../services/preview-image-service.js';
 
 /** Maximum request body size in bytes (100KB) */
 const MAX_BODY_SIZE = 100 * 1024;
@@ -17,11 +18,30 @@ const MAX_BODY_SIZE = 100 * 1024;
 const MAX_JSON_DEPTH = 10;
 
 /**
- * SEC-004: Body size limit middleware.
- * Rejects requests with bodies larger than MAX_BODY_SIZE.
- * Uses Hono's built-in bodyLimit which checks the actual stream, not just Content-Length.
+ * The preview-image upload is the only route on this Worker that carries a
+ * binary body, and the only one that may exceed MAX_BODY_SIZE — an author's
+ * screenshot runs to megabytes. Both guards in this module exist to protect
+ * JSON endpoints, and both would reject a legitimate upload before the route
+ * ever ran, which is precisely what happened: the feature was unreachable in
+ * production while its own tests passed, because they mounted the router
+ * without this middleware.
+ *
+ * The exemption is deliberately scoped to this one method+path so no other
+ * endpoint inherits the right to a large or non-JSON body. The route enforces
+ * the real limits itself: 5 MB (MAX_PREVIEW_IMAGE_BYTES) plus a magic-byte
+ * sniff that ignores the declared Content-Type entirely.
  */
-export const bodySizeLimit = bodyLimit({
+const PREVIEW_IMAGE_PATH = /^\/api\/v1\/presets\/[^/]+\/preview-image\/?$/;
+
+/** Image media types the upload route accepts (mirrors sniffImageType). */
+export const PREVIEW_IMAGE_CONTENT_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+
+/** True for the one request shape that is allowed a large, non-JSON body. */
+export function isPreviewImageUpload(method: string, path: string): boolean {
+  return method === 'POST' && PREVIEW_IMAGE_PATH.test(path);
+}
+
+const enforceBodySizeLimit = bodyLimit({
   maxSize: MAX_BODY_SIZE,
   onError: (c) => {
     return c.json(
@@ -36,6 +56,42 @@ export const bodySizeLimit = bodyLimit({
 });
 
 /**
+ * FINDING-004 / PAPI-3 (2026-08-21 security audit): the upload route used to
+ * be exempt and then buffer the whole body with `arrayBuffer()` before
+ * comparing against MAX_PREVIEW_IMAGE_BYTES — the 5 MB rule only applied
+ * after up to ~100 MB had been held in memory. Hono's bodyLimit checks
+ * Content-Length first and then the actual stream, so the cap binds while
+ * bytes arrive. Same status + message as the route's own check, which stays
+ * as a backstop, so the client contract is unchanged.
+ */
+const enforcePreviewImageLimit = bodyLimit({
+  maxSize: MAX_PREVIEW_IMAGE_BYTES,
+  onError: (c) => {
+    return c.json(
+      {
+        success: false,
+        error: 'VALIDATION_ERROR',
+        message: 'Image must be at most 5 MB',
+      },
+      400
+    );
+  },
+});
+
+/**
+ * SEC-004: Body size limit middleware.
+ * Rejects requests with bodies larger than MAX_BODY_SIZE.
+ * Uses Hono's built-in bodyLimit which checks the actual stream, not just Content-Length.
+ * The preview-image upload gets its own (5 MB) limit — see isPreviewImageUpload.
+ */
+export const bodySizeLimit: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
+  if (isPreviewImageUpload(c.req.method, c.req.path)) {
+    return enforcePreviewImageLimit(c, next);
+  }
+  return enforceBodySizeLimit(c, next);
+};
+
+/**
  * SEC-003: JSON depth validation middleware.
  * For mutation requests (POST/PATCH/PUT) with JSON content, validates that
  * the parsed JSON does not exceed the maximum nesting depth and does not
@@ -44,6 +100,11 @@ export const bodySizeLimit = bodyLimit({
 export const jsonDepthLimit: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   const method = c.req.method;
   if (!['POST', 'PATCH', 'PUT'].includes(method)) {
+    return next();
+  }
+
+  // Binary upload route: nothing here can apply to raw image bytes.
+  if (isPreviewImageUpload(method, c.req.path)) {
     return next();
   }
 

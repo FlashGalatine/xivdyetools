@@ -1,0 +1,27 @@
+====================================================================================
+SCOPED FONT SUBSET COVERAGE  (requirement set == what each worker renders)
+====================================================================================
+
+### discord-worker  (sources: core locales + bot-logic locales)
+  NotoSansSC-Subset.ttf      zh CJK     need=  821 covered=  774  MISSING 47
+      且余你便划判剩及另号唯嘴填声头套宜宽带店弱录志戏戴挂描早暂期档母汇留略穿衡读跟跨边远阶际非；＝
+  NotoSansJP-Subset.ttf      ja CJK     need=  556 covered=  508  MISSING 48
+      信傍判到刺号同呼唯回基塗導履市帯幅店弱当彙従想来枠欄歴測満略番省瞳線緩記該読載輝違遠量降際非項＝
+  NotoSansKR-Subset.ttf      ko Hangul  need=  489 covered=  456  MISSING 33
+      곽께내느닙답따떨띠량룹릅릴멀며므밴번벌뿐섯싼워응읽졌짐차착참측활휘
+
+### og-worker  (sources: core locales + og card strings)
+    og strings file: apps/og-worker/src/services/og-strings.ts
+  NotoSansSC-Subset.ttf      zh CJK     need=  368 covered=  368  OK
+  NotoSansJP-Subset.ttf      ja CJK     need=  183 covered=  173  MISSING 10
+      匹取变提样渐觉设较预
+  NotoSansKR-Subset.ttf      ko Hangul  need=  272 covered=  272  OK
+
+====================================================================================
+worker          font                        script        need  cover  MISS
+discord-worker  NotoSansSC-Subset.ttf       zh CJK         821    774    47
+discord-worker  NotoSansJP-Subset.ttf       ja CJK         556    508    48
+discord-worker  NotoSansKR-Subset.ttf       ko Hangul      489    456    33
+og-worker       NotoSansSC-Subset.ttf       zh CJK         368    368     0
+og-worker       NotoSansJP-Subset.ttf       ja CJK         183    173    10
+og-worker       NotoSansKR-Subset.ttf       ko Hangul      272    272     0

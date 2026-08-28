@@ -1,26 +1,5 @@
-import { test, expect } from '@playwright/test';
-
-async function seedStartupStorage(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  await page.addInitScript(() => {
-    localStorage.setItem('xivdyetools_welcome_seen', 'true');
-    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
-    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
-  });
-}
-
-async function dismissBlockingOverlays(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    const backdropCount = await page.locator('.modal-backdrop').count();
-    if (backdropCount === 0) break;
-
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
-  }
-
-  await page.evaluate(() => {
-    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
-  });
-}
+import { test, expect } from './fixtures/coverage';
+import { gotoTool, switchToolViaMenu, seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
 
 /**
  * E2E Tests for Budget Tool
@@ -129,69 +108,25 @@ test.describe('Budget Tool', () => {
     });
   });
 
-  test.describe('Budget Slider', () => {
-    test('should have budget limit slider', async ({ page }) => {
-      // Look for a range input for budget - budget slider has max=200000
-      const budgetSlider = page.locator('input[type="range"][max="200000"]').first();
-      await expect(budgetSlider).toBeAttached();
+
+  // 5.0: the gil "budget limit" slider is gone. 9C prices what a colour is
+  // worth against a Match line (ΔE 2-20), so that is the slider to cover.
+  test.describe('Match line slider', () => {
+    test('should have a match line slider', async ({ page }) => {
+      const slider = page.locator('input[type="range"][max="20"]').first();
+      await expect(slider).toBeAttached();
     });
 
-    test('should update budget value when slider changes', async ({ page }) => {
-      // Budget slider has max=200000, step=1000 to differentiate from other sliders
-      const budgetSlider = page.locator('input[type="range"][max="200000"]').first();
-
-      if ((await budgetSlider.count()) > 0) {
-        // On mobile, slider may not be visible - skip interaction if not visible
-        const isVisible = await budgetSlider.isVisible();
-        if (!isVisible) {
-          // On mobile viewport, slider is hidden in drawer - test passes if slider exists
-          expect(true).toBe(true);
-          return;
-        }
-
-        // Get initial value
-        const initialValue = await budgetSlider.inputValue();
-
-        // Change slider value
-        await budgetSlider.fill('50000');
-        await budgetSlider.dispatchEvent('input');
-        await page.waitForTimeout(200);
-
-        // Verify value changed
-        const newValue = await budgetSlider.inputValue();
-        expect(newValue).toBe('50000');
-      }
-    });
-
-    test('should persist budget limit in localStorage', async ({ page }) => {
-      // Budget slider has max=200000, step=1000
-      const budgetSlider = page.locator('input[type="range"][max="200000"]').first();
-
-      if ((await budgetSlider.count()) > 0) {
-        // On mobile, slider may not be visible - skip interaction if not visible
-        const isVisible = await budgetSlider.isVisible();
-        if (!isVisible) {
-          // On mobile viewport, slider is hidden in drawer - test passes if slider exists
-          expect(true).toBe(true);
-          return;
-        }
-
-        await budgetSlider.fill('75000');
-        await budgetSlider.dispatchEvent('input');
+    test('should persist the match line', async ({ page }) => {
+      const slider = page.locator('input[type="range"][max="20"]').first();
+      if ((await slider.count()) > 0 && (await slider.isVisible())) {
+        await slider.fill('12');
+        await slider.dispatchEvent('input');
         await page.waitForTimeout(300);
-
-        // Check localStorage
-        const savedValue = await page.evaluate(() => {
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.includes('budget_limit')) {
-              return localStorage.getItem(key);
-            }
-          }
-          return null;
-        });
-
-        expect(savedValue).toBeTruthy();
+        const saved = await page.evaluate(() =>
+          localStorage.getItem('v5_budget_match_line')
+        );
+        expect(saved).toBeTruthy();
       }
     });
   });
@@ -421,15 +356,9 @@ test.describe('Budget Tool - Cross-Tool Navigation', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(500);
 
-    // Click on budget tool button
-    const budgetToolBtn = page.locator('[data-tool="budget"]');
-
-    if ((await budgetToolBtn.count()) > 0) {
-      await budgetToolBtn.click();
-      await page.waitForTimeout(500);
-
-      expect(page.url()).toContain('/budget');
-    }
+    // Switch to budget through the title-menu switcher
+    await switchToolViaMenu(page, 'budget');
+    expect(page.url()).toContain('/budget');
   });
 
   test('should preserve dye selection when navigating between tools', async ({ page }) => {
@@ -440,16 +369,10 @@ test.describe('Budget Tool - Cross-Tool Navigation', () => {
       await quickPickBtn.click();
       await page.waitForTimeout(500);
 
-      // Navigate to another tool
-      const harmonyBtn = page.locator('[data-tool="harmony"]');
-      if ((await harmonyBtn.count()) > 0) {
-        await harmonyBtn.click();
-        await page.waitForTimeout(500);
-
-        // Navigate back to budget
-        const budgetBtn = page.locator('[data-tool="budget"]');
-        await budgetBtn.click();
-        await page.waitForTimeout(500);
+      // Navigate away and back
+      {
+        await gotoTool(page, 'harmony');
+        await gotoTool(page, 'budget');
 
         // Check that dye was persisted
         const savedDye = await page.evaluate(() => {

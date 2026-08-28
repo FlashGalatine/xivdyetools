@@ -1,0 +1,152 @@
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+The WOFF2 decoder requires the Brotli Python extension, available at: https://github.com/google/brotli
+==============================================================================
+NON-LATIN SCRIPT INVENTORY (all locale trees pooled per locale)
+==============================================================================
+
+en.json — 115 distinct codepoints
+    Math/Symbols            13
+    Latin-1 Supp             5
+    Greek                    2
+    Other U+FE0F             1
+    Other U+1F1F8            1
+    Other U+1F1FA            1
+
+de.json — 125 distinct codepoints
+    Math/Symbols            15
+    Latin-1 Supp            13
+    Greek                    2
+    Other U+FE0F             1
+    Other U+1F1E9            1
+    Other U+1F1EA            1
+
+fr.json — 137 distinct codepoints
+    Latin-1 Supp            26
+    Math/Symbols            12
+    Latin Ext-A              2
+    Greek                    2
+    Other U+FE0F             1
+    Other U+1F1EB            1
+    Other U+1F1F7            1
+
+ja.json — 912 distinct codepoints
+    CJK Unified            651
+    Katakana                77
+    Hiragana                63
+    Math/Symbols             9
+    Fullwidth                9
+    CJK Punct                7
+    Latin-1 Supp             5
+    Greek                    2
+    Other U+1F1EF            1
+    Other U+1F1F5            1
+    Other U+FE0F             1
+
+ko.json — 771 distinct codepoints
+    Hangul Syllables       654
+    Math/Symbols            13
+    Latin-1 Supp             5
+    Greek                    2
+    Fullwidth                2
+    CJK Punct                1
+    Other U+1F1F0            1
+    Other U+1F1F7            1
+    Other U+FE0F             1
+
+zh.json — 1225 distinct codepoints
+    CJK Unified           1103
+    Math/Symbols            13
+    Fullwidth                9
+    Latin-1 Supp             5
+    CJK Punct                4
+    Greek                    2
+    Other U+1F1E8            1
+    Other U+1F1F3            1
+    Other U+FE0F             1
+
+Pooled locale requirement: CJK-ish=1537  Hangul=654
+  zh CJK=1116  ja CJK=807  ko CJK=3  ko Hangul=654
+
+==============================================================================
+FONT FILES + COVERAGE
+==============================================================================
+apps\discord-worker\fonts-src\NotoSansKR-Variable.ttf           10170.5 KiB  glyphs= 23174
+      -> covers 654/654 of ko Hangul  ✅ complete
+apps\discord-worker\fonts-src\NotoSansSC-Regular.ttf            10311.8 KiB  glyphs= 30890
+      -> covers 1116/1116 of its locale's CJK  ✅ complete
+apps\discord-worker\src\fonts\FragmentMono-Regular.ttf            122.4 KiB  glyphs=   487
+apps\discord-worker\src\fonts\NotoSansJP-Subset.ttf               545.9 KiB  glyphs=   614
+      -> covers 511/807 of its locale's CJK  MISSING 296: 〤ぐげじぜづねぱひぼょろゲ乗予二互任体何余供便係信側傍儀先具円再冒冬凍切初判到刺
+apps\discord-worker\src\fonts\NotoSansKR-Subset.ttf               225.4 KiB  glyphs=   553
+      -> covers 458/654 of ko Hangul  MISSING 196: 걀걸겠겼곽군규글긋김깊꺼께꽉끄끌낌낙난날낫내낸낼냅냈넌넣넷녀년념놓누눌눠느늬님닙
+      -> ko ALSO needs 3 CJK cps; missing 3 here: 〜／＝
+apps\discord-worker\src\fonts\NotoSansSC-Subset.ttf               805.8 KiB  glyphs=  1183
+      -> covers 791/1116 of its locale's CJK  MISSING 325: 万且世丢严丰么乌也书买二五亚产什仍仪们份伊估伴体余你依侣侧便做储催儿允兑八关典冬
+apps\discord-worker\src\fonts\Onest-VariableFont_wght.ttf         120.5 KiB  glyphs=   470
+apps\discord-worker\src\fonts\SpaceGrotesk-VariableFont_wght.ttf    131.0 KiB  glyphs=   735
+apps\og-worker\src\fonts\FragmentMono-Regular.ttf                 122.4 KiB  glyphs=   487
+apps\og-worker\src\fonts\NotoSansJP-Subset.ttf                    382.4 KiB  glyphs=   341
+      -> covers 245/807 of its locale's CJK  MISSING 562: 々「」〤うおがぎくぐけげこごさじずせぜそだちづとどねはばぱひびぶへほぼまむやょよ
+apps\og-worker\src\fonts\NotoSansKR-Subset.ttf                    186.8 KiB  glyphs=   404
+      -> covers 307/654 of ko Hangul  MISSING 347: 갑값같걀걸것게겠겨견결겼경곡곳곽관국군규균극글급긋김깊꺼께꽉끄끌끝낌낙난날남납낫
+      -> ko ALSO needs 3 CJK cps; missing 3 here: 〜／＝
+apps\og-worker\src\fonts\NotoSansSC-Subset.ttf                    576.6 KiB  glyphs=   709
+      -> covers 448/1116 of its locale's CJK  MISSING 668: 「」万下专且世业丢严个丰主么义乌乎也书了二于亚些产享什今仍他代令仪们份伊会传估伴
+apps\og-worker\src\fonts\Onest-VariableFont_wght.ttf              120.5 KiB  glyphs=   470
+apps\og-worker\src\fonts\SpaceGrotesk-VariableFont_wght.ttf       131.0 KiB  glyphs=   735
+apps\web-app\fonts\cinzel-decorative-v19-latin_latin-ext-700.woff2     20.2 KiB  <error No module named brotli>
+apps\web-app\fonts\cinzel-decorative-v19-latin_latin-ext-900.woff2     18.8 KiB  <error No module named brotli>
+apps\web-app\fonts\cinzel-decorative-v19-latin_latin-ext-regular.woff2     18.7 KiB  <error No module named brotli>
+apps\web-app\fonts\cinzel-v26-latin_latin-ext-500.woff2            17.6 KiB  <error No module named brotli>
+apps\web-app\fonts\cinzel-v26-latin_latin-ext-600.woff2            17.8 KiB  <error No module named brotli>
+apps\web-app\fonts\cinzel-v26-latin_latin-ext-700.woff2            17.9 KiB  <error No module named brotli>
+apps\web-app\fonts\cinzel-v26-latin_latin-ext-800.woff2            17.9 KiB  <error No module named brotli>
+apps\web-app\fonts\cinzel-v26-latin_latin-ext-900.woff2            17.1 KiB  <error No module named brotli>
+apps\web-app\fonts\cinzel-v26-latin_latin-ext-regular.woff2        16.8 KiB  <error No module named brotli>
+apps\web-app\fonts\habibi-v22-latin_latin-ext-regular.woff2        14.2 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-giga-v27-latin_latin-ext-100.woff2       22.0 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-giga-v27-latin_latin-ext-200.woff2       22.4 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-giga-v27-latin_latin-ext-300.woff2       22.6 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-giga-v27-latin_latin-ext-500.woff2       22.7 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-giga-v27-latin_latin-ext-600.woff2       22.7 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-giga-v27-latin_latin-ext-700.woff2       22.7 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-giga-v27-latin_latin-ext-800.woff2       22.7 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-giga-v27-latin_latin-ext-900.woff2       22.4 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-giga-v27-latin_latin-ext-regular.woff2     21.9 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-v26-latin_latin-ext-100.woff2            21.0 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-v26-latin_latin-ext-200.woff2            21.2 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-v26-latin_latin-ext-300.woff2            21.7 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-v26-latin_latin-ext-500.woff2            22.1 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-v26-latin_latin-ext-600.woff2            22.1 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-v26-latin_latin-ext-700.woff2            22.0 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-v26-latin_latin-ext-800.woff2            22.1 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-v26-latin_latin-ext-900.woff2            21.3 KiB  <error No module named brotli>
+apps\web-app\fonts\lexend-v26-latin_latin-ext-regular.woff2        21.3 KiB  <error No module named brotli>
+apps\web-app\public\fonts\habibi-v22-latin_latin-ext-regular.woff2     14.2 KiB  <error No module named brotli>

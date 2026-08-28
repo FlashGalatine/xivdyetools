@@ -23,6 +23,7 @@ import { ToastService } from '@services/toast-service';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { regionLabel } from '@shared/region-name';
 
 /**
  * Market Board component - displays FFXIV market prices for dyes
@@ -247,7 +248,7 @@ export class MarketBoard extends BaseComponent {
     for (const dc of sortedDataCenters) {
       // Create optgroup for this data center
       const optgroup = document.createElement('optgroup');
-      optgroup.label = `${dc.name} (${dc.region})`;
+      optgroup.label = `${dc.name} (${regionLabel(dc.region)})`;
 
       // Add the data center itself as an option
       const dcOption = document.createElement('option');
@@ -289,7 +290,7 @@ export class MarketBoard extends BaseComponent {
         // Update service (which updates ConfigController and persists)
         this.service.setServer(serverSelect.value);
         // Emit for backward compatibility with existing tool listeners
-        console.info('📣 [MarketBoard] Emitting server-changed, server=', serverSelect.value);
+        logger.info('📣 [MarketBoard] Emitting server-changed, server=', serverSelect.value);
         this.emit('server-changed', { server: serverSelect.value });
       });
     }
@@ -308,7 +309,7 @@ export class MarketBoard extends BaseComponent {
         }
 
         // Emit for backward compatibility with existing tool listeners
-        console.info('📣 [MarketBoard] Emitting showPricesChanged, checked=', toggleInput.checked);
+        logger.info('📣 [MarketBoard] Emitting showPricesChanged, checked=', toggleInput.checked);
         this.emit('showPricesChanged', { showPrices: toggleInput.checked });
       });
     }
@@ -444,7 +445,7 @@ export class MarketBoard extends BaseComponent {
         serverSelect.value = server;
       }
       // Re-emit as DOM event for tool listeners
-      console.info('📣 [MarketBoard] Relaying server-changed from service, server=', server);
+      logger.info('📣 [MarketBoard] Relaying server-changed from service, server=', server);
       this.emit('server-changed', { server });
     };
     this.service.addEventListener('server-changed', this.boundServerChangedHandler);
@@ -468,7 +469,7 @@ export class MarketBoard extends BaseComponent {
         priceSettings.classList.toggle('hidden', !showPrices);
       }
       // Re-emit as DOM event for tool listeners
-      console.info(
+      logger.info(
         '📣 [MarketBoard] Relaying showPricesChanged from service, showPrices=',
         showPrices
       );
@@ -512,19 +513,6 @@ export class MarketBoard extends BaseComponent {
       selectedServer: this.service.getSelectedServer(),
       showPrices: this.service.getShowPrices(),
     };
-  }
-
-  /**
-   * Set component state
-   * Updates the service which persists and notifies subscribers
-   */
-  protected setState(newState: Record<string, unknown>): void {
-    if (typeof newState.selectedServer === 'string') {
-      this.service.setServer(newState.selectedServer);
-    }
-    if (typeof newState.showPrices === 'boolean') {
-      this.service.setShowPrices(newState.showPrices);
-    }
   }
 
   /**

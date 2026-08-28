@@ -130,7 +130,7 @@ export class KDTree {
     target: Point3D,
     depth: number,
     best: { point: Point3D; distance: number } | null,
-    excludeData?: (data: unknown) => boolean
+    excludeData?: (data: unknown) => boolean,
   ): { point: Point3D; distance: number } | null {
     if (!node) {
       return best;
@@ -183,7 +183,7 @@ export class KDTree {
   pointsWithinDistance(
     target: Point3D,
     maxDistance: number,
-    excludeData?: (data: unknown) => boolean
+    excludeData?: (data: unknown) => boolean,
   ): Array<{ point: Point3D; distance: number }> {
     if (!this.root) {
       return [];
@@ -206,7 +206,7 @@ export class KDTree {
     depth: number,
     maxDistance: number,
     results: Array<{ point: Point3D; distance: number }>,
-    excludeData?: (data: unknown) => boolean
+    excludeData?: (data: unknown) => boolean,
   ): void {
     if (!node) {
       return;
@@ -242,13 +242,6 @@ export class KDTree {
         this.searchWithinDistance(farChild, target, depth + 1, maxDistance, results, excludeData);
       }
     }
-  }
-
-  /**
-   * Get tree size
-   */
-  getSize(): number {
-    return this.size;
   }
 
   /**

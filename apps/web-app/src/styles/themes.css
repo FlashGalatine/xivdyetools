@@ -14,8 +14,10 @@
  */
 
 :root {
-  /* Default theme variables (updated dynamically by ThemeService) */
-  --theme-primary: #4f46e5;
+  /* Default theme variables (updated dynamically by ThemeService).
+     These are what paints before the service runs, so the accent has to be the
+     5.0 light red -- the surrounding defaults are a light ground. */
+  --theme-primary: #ce2222;
   --theme-background: #ffffff;
   --theme-text: #1f2937;
   --theme-border: #e5e7eb;
@@ -25,24 +27,27 @@
   --theme-text-muted: #6b7280;
 
   /* ===== V4 LAYOUT DIMENSIONS ===== */
-  --v4-header-height: 48px;
-  --v4-tool-bar-height: 64px;
-  --v4-sidebar-width: 320px;
+  /* 5.0 console bar: 54px, no persistent tool rail */
+  --v4-header-height: 54px;
+  --v4-tool-bar-height: 0px;
+  /* Simple-Settings column (drawn 228-252px per tool; one width suite-wide) */
+  --v4-sidebar-width: 252px;
   --v4-content-padding: 24px;
   --v4-result-card-width: 280px;
+
+  /* Glyph accent chip (updated by ThemeService: #EA4133 dark / #CE2222 light) */
+  --glyph-accent: #ea4133;
 
   /* ===== V4 GLASSMORPHISM (defaults - updated by ThemeService) ===== */
   --v4-glass-bg: rgba(30, 30, 30, 0.7);
   --v4-glass-blur: blur(12px);
   --v4-glass-border: rgba(255, 255, 255, 0.1);
-  --v4-glass-opacity: 0.8;
 
   /* ===== V4 ACCENT & SHADOWS (defaults - updated by ThemeService) ===== */
   --v4-accent-rgb: 79, 70, 229;
   /* Default indigo RGB triplet */
   --v4-shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.1);
   --v4-shadow-glow: 0 0 20px rgba(var(--v4-accent-rgb), 0.3);
-  --v4-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
 
   /* ===== V4 GRADIENTS (defaults - updated by ThemeService) ===== */
   --v4-gradient-start: #252525;
@@ -56,70 +61,13 @@
 }
 
 /* =====================================================
-   STANDARD THEME (Light/Dark)
+   THEMES (5.0: Light and Dark only — fixed decision)
    ===================================================== */
 html.theme-standard-light {
   color-scheme: light;
 }
 
 html.theme-standard-dark {
-  color-scheme: dark;
-}
-
-/* =====================================================
-   HYDAELYN THEME (Light/Dark)
-   ===================================================== */
-html.theme-hydaelyn-light {
-  color-scheme: light;
-}
-
-/* =====================================================
-   OG CLASSIC THEME (Dark)
-   ===================================================== */
-html.theme-og-classic-dark {
-  color-scheme: dark;
-}
-
-/* =====================================================
-   PARCHMENT THEME (Light)
-   ===================================================== */
-html.theme-parchment-light {
-  color-scheme: light;
-}
-
-/* =====================================================
-   COTTON CANDY THEME (Light)
-   ===================================================== */
-html.theme-cotton-candy {
-  color-scheme: light;
-}
-
-/* =====================================================
-   SUGAR RIOT THEME (Dark)
-   ===================================================== */
-html.theme-sugar-riot {
-  color-scheme: dark;
-}
-
-/* =====================================================
-   GRAYSCALE THEME (Light/Dark)
-   ===================================================== */
-html.theme-grayscale-light {
-  color-scheme: light;
-}
-
-html.theme-grayscale-dark {
-  color-scheme: dark;
-}
-
-/* =====================================================
-   HIGH CONTRAST THEME (Light/Dark) - WCAG AAA
-   ===================================================== */
-html.theme-high-contrast-light {
-  color-scheme: light;
-}
-
-html.theme-high-contrast-dark {
   color-scheme: dark;
 }
 
@@ -137,26 +85,6 @@ body {
   background-color: var(--theme-background) !important;
   color: var(--theme-text) !important;
   border-color: var(--theme-border) !important;
-}
-
-.app-shell {
-  background-color: var(--theme-background) !important;
-  color: var(--theme-text) !important;
-}
-
-.app-header {
-  background-color: var(--theme-primary) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-/* Header text colors are now dynamically set via inline styles based on theme primary color */
-/* Removed hardcoded white text to allow dynamic contrast-based colors */
-
-.app-footer {
-  background-color: var(--theme-card-background) !important;
-  color: var(--theme-text) !important;
-  border-top: 1px solid var(--theme-border) !important;
 }
 
 /* Apply to text elements */
@@ -179,8 +107,10 @@ a:hover {
 /* =====================================================
    AGGRESSIVE BACKGROUND OVERRIDES FOR TAILWIND
    Using !important to override Tailwind utility specificity
-   Note: darkMode is disabled in Tailwind config, so dark: variants don't exist
-   All colors are managed through CSS custom properties
+   Note: Tailwind v4 still emits `dark:` variants under its default
+   `@media (prefers-color-scheme: dark)` -- OS preference, not the app theme.
+   The plain-class overrides below (which also list the `.dark\:*` names) are
+   what makes both looks follow the app's theme variables regardless.
    ===================================================== */
 
 /* White backgrounds → card background */
@@ -304,34 +234,6 @@ a:hover {
   border-color: var(--theme-border) !important;
 }
 
-/* Harmony card headers - theme aware styling with proper text contrast */
-.harmony-header {
-  background-color: var(--theme-primary) !important;
-  border-color: var(--theme-border) !important;
-}
-
-.harmony-title,
-.harmony-description,
-.harmony-deviance-info {
-  color: var(--theme-text-header) !important;
-}
-
-/* Harmony SVG icons - inline SVG with currentColor for theme adaptation */
-.harmony-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  color: var(--theme-text-header);
-}
-
-.harmony-icon svg {
-  width: 100%;
-  height: 100%;
-  /* currentColor in SVG inherits from parent's color property */
-}
-
 /* Form elements */
 input,
 textarea,
@@ -365,33 +267,6 @@ select:focus {
 .rounded {
   background-color: inherit;
 }
-
-/* =====================================================
-   HIGH CONTRAST THEME SPECIFIC OVERRIDES
-   Enhanced borders and visual boundaries for accessibility
-   ===================================================== */
-html.theme-high-contrast-light,
-html.theme-high-contrast-dark {
-  /* Force visible focus indicators */
-  --focus-ring-width: 3px;
-  --focus-ring-offset: 2px;
-}
-
-html.theme-high-contrast-light *:focus-visible,
-html.theme-high-contrast-dark *:focus-visible {
-  outline: 3px solid var(--theme-primary) !important;
-  outline-offset: 2px !important;
-}
-
-/* Enhanced borders for high contrast themes */
-html.theme-high-contrast-light .border,
-html.theme-high-contrast-light .border-gray-200,
-html.theme-high-contrast-dark .border,
-html.theme-high-contrast-dark .border-gray-200 {
-  border-width: 2px !important;
-}
-
-/* Harmony icons in high contrast use currentColor - no filter overrides needed */
 
 /* =====================================================
    WINDOWS HIGH CONTRAST MODE SUPPORT
@@ -440,11 +315,7 @@ html.theme-high-contrast-dark .border-gray-200 {
   }
 
   /* Preserve color swatches - critical for a dye tool */
-  .dye-swatch,
-  .color-swatch,
-  [data-color-swatch],
-  .palette-color,
-  .gradient-stop {
+  .dye-swatch {
     forced-color-adjust: none !important;
   }
 
@@ -533,11 +404,6 @@ html.theme-high-contrast-dark .border-gray-200 {
 .btn-theme-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-/* Featured section gradient - uses theme primary with slight variation */
-.featured-section-gradient {
-  background: linear-gradient(135deg, var(--theme-primary) 0%, color-mix(in srgb, var(--theme-primary), #000 20%) 100%);
 }
 
 /* Danger/Delete button - uses red with theme awareness */

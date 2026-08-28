@@ -274,9 +274,9 @@ describe('TutorialService', () => {
 
       TutorialService.promptStart('harmony');
 
-      // Find and click the disable all button (Skip, Disable All, Start - index 1)
+      // Find and click the disable all button (Never, Not now, Start - index 0)
       const buttons = (capturedContent as HTMLElement | null)?.querySelectorAll('button');
-      const disableAllButton = buttons?.[1]; // Second button is disable all
+      const disableAllButton = buttons?.[0]; // First button is the quiet "Never"
 
       if (disableAllButton) {
         disableAllButton.click();
@@ -543,7 +543,8 @@ describe('TutorialService', () => {
       expect(ModalService.show).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'custom',
-          size: 'sm',
+          // 16A: the emoji is out of the title
+          title: 'tutorial.prompt.title',
         })
       );
     });
@@ -571,9 +572,9 @@ describe('TutorialService', () => {
 
       TutorialService.promptStart('harmony');
 
-      // Find and click the skip button
+      // Find and click the skip button (Never, Not now, Start - index 1)
       const buttons = (capturedContent as HTMLElement | null)?.querySelectorAll('button');
-      const skipButton = buttons?.[0]; // First button is skip
+      const skipButton = buttons?.[1]; // Second button is "Not now"
 
       if (skipButton) {
         skipButton.click();

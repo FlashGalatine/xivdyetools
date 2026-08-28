@@ -1,6 +1,6 @@
 # XIV Dye Tools Discord Bot - Privacy Policy
 
-**Last Updated**: December 7, 2025
+**Last Updated**: August 21, 2026
 
 ## 1. Introduction
 
@@ -14,10 +14,10 @@ We are committed to protecting your privacy and being transparent about our data
 
 | Data Type | Purpose | Retention |
 |-----------|---------|-----------|
-| Discord User ID | Identify users for favorites, collections, voting, rate limiting | Until data deletion requested |
+| Discord User ID | Identify users for favorites, collections, voting, rate limiting; counted (never listed) in usage statistics — see *Usage Analytics* below | Until data deletion requested (usage-statistics records: see *Usage Analytics*) |
 | Discord Username | Attribute community preset submissions | Until data deletion requested |
 | User Locale | Provide localized bot responses | Until preference cleared |
-| Guild ID / Channel ID | Process commands in context | Not stored (ephemeral) |
+| Guild ID / Channel ID | Process commands in context | Not stored. Usage statistics record only *whether* a command ran in a server or in a DM (the values `guild` / `dm`) — never the server's or channel's ID |
 
 ### Information You Provide
 
@@ -32,6 +32,18 @@ We are committed to protecting your privacy and being transparent about our data
 
 - Per-user, per-command counters stored in Cloudflare KV
 - **Retention**: 70 seconds (automatic TTL expiration)
+
+### Usage Analytics
+
+To keep the Bot healthy and to power the `/stats` dashboard we record, for each command you run:
+
+| Data | Where | Retention |
+|------|-------|-----------|
+| Command name, whether it succeeded, whether it ran in a server or a DM (`guild` / `dm` — never the server's ID), and your Discord User ID (used only to count unique users) | Cloudflare Workers Analytics Engine | Cloudflare's Analytics Engine retention window (3 months at the time of writing) |
+| Aggregate counters — total commands, per-command counts, successes/failures (no user data) | Cloudflare KV | 30 days (automatic TTL) |
+| One key per user per day (`usertrack:{date}:{userId}`, value `1`) so daily active users can be counted | Cloudflare KV | 30 days (automatic TTL) |
+
+These records never include message content, command option values, server names or channel IDs. Analytics Engine data cannot be edited or deleted per user once written; it expires on Cloudflare's schedule.
 
 ## 3. Data We Do NOT Collect
 
@@ -64,6 +76,7 @@ When you use `/match_image`, your uploaded image is:
 | Community presets | User ID, Username, Preset content |
 | Voting system | User ID, Preset ID |
 | Prevent abuse | User ID, Rate limit counters |
+| Usage statistics (`/stats`) | Command name, success flag, server-or-DM flag, User ID (counted, never listed) |
 
 ## 5. Data Storage
 
@@ -71,8 +84,9 @@ When you use `/match_image`, your uploaded image is:
 
 | Service | Data Stored | Location |
 |---------|-------------|----------|
-| Cloudflare KV | Favorites, Collections, Preferences, Rate limits | Global edge network |
+| Cloudflare KV | Favorites, Collections, Preferences, Rate limits, usage counters and daily-activity keys (30-day TTL) | Global edge network |
 | Cloudflare D1 | Community presets, Votes, Moderation history | Cloudflare's database infrastructure |
+| Cloudflare Workers Analytics Engine | Command usage telemetry (see *Usage Analytics*) | Cloudflare's analytics infrastructure |
 
 All data is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Policy](https://www.cloudflare.com/privacypolicy/) for more information.
 
@@ -126,6 +140,9 @@ We will process deletion requests within 30 days.
 | Data Type | Retention Period |
 |-----------|-----------------|
 | Rate limit counters | 70 seconds |
+| Usage counters (Cloudflare KV) | 30 days |
+| Daily per-user activity keys (Cloudflare KV) | 30 days |
+| Command usage telemetry (Analytics Engine) | Cloudflare's Analytics Engine retention window (3 months at the time of writing) |
 | User preferences | Until deleted by user |
 | Favorites | Until deleted by user |
 | Collections | Until deleted by user |

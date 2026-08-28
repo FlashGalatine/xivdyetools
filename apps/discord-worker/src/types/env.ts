@@ -3,7 +3,7 @@
  *
  * Secrets are set via: wrangler secret put <NAME>
  * Variables are set in wrangler.toml [vars]
- * Bindings (KV, R2, D1) are configured in wrangler.toml
+ * Bindings (KV, service bindings) are configured in wrangler.toml
  */
 export interface Env {
   // =========================================================================
@@ -79,20 +79,14 @@ export interface Env {
   /** KV Namespace for analytics, user preferences, favorites, and collections */
   KV: KVNamespace;
 
-  /** R2 Bucket for generated images */
-  IMAGES?: R2Bucket;
-
-  /** R2 Bucket for static assets (fonts) */
-  ASSETS?: R2Bucket;
-
-  /** D1 Database for user data and presets */
-  DB: D1Database;
-
   /** Service Binding to Presets API Worker (for Worker-to-Worker communication) */
   PRESETS_API?: Fetcher;
 
   /** Service Binding to Universalis Proxy Worker (for market board prices) */
   UNIVERSALIS_PROXY?: Fetcher;
+
+  /** Service binding → xivdyetools-image-worker (photon pixel extraction). */
+  IMAGE_WORKER?: Fetcher;
 
   /** Fallback URL for Universalis Proxy (for local development) */
   UNIVERSALIS_PROXY_URL?: string;
@@ -142,10 +136,12 @@ export interface DiscordInteraction {
     name?: string;
     type?: number;
     custom_id?: string; // For button/modal interactions
+    component_type?: number; // For message component interactions
     options?: Array<{
       name: string;
       type?: number;
       value?: string | number | boolean;
+      focused?: boolean;
       options?: Array<{
         name: string;
         type?: number;
@@ -210,12 +206,8 @@ export enum InteractionResponseType {
   DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE = 5,
   /** For components, ACK an interaction and edit the original message later */
   DEFERRED_UPDATE_MESSAGE = 6,
-  /** For components, edit the message the component was attached to */
-  UPDATE_MESSAGE = 7,
   /** Respond to an autocomplete interaction with suggested choices */
   APPLICATION_COMMAND_AUTOCOMPLETE_RESULT = 8,
-  /** Respond to an interaction with a popup modal */
-  MODAL = 9,
 }
 
 /**

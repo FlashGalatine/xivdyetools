@@ -6,9 +6,31 @@
  *
  */
 
+import { ALLOWED_MENTIONS_NONE } from '@xivdyetools/bot-logic';
 import type { DiscordEmbed, DiscordActionRow } from './response.js';
 
 const DISCORD_API_BASE = 'https://discord.com/api/v10';
+
+/**
+ * Discord `allowed_mentions` object.
+ * @see https://discord.com/developers/docs/resources/message#allowed-mentions-object
+ */
+export interface AllowedMentions {
+  parse: string[];
+  users?: string[];
+  roles?: string[];
+  replied_user?: boolean;
+}
+
+/**
+ * FINDING-019 (2026-08-21 security audit): every payload this module sends
+ * carries `allowed_mentions` so a user-sourced string that reaches message
+ * `content` can never ping @everyone / @here / roles / users. Callers that
+ * genuinely need a ping pass an explicit `allowedMentions` override.
+ */
+function allowedMentionsFor(override?: AllowedMentions): AllowedMentions {
+  return override ?? { ...ALLOWED_MENTIONS_NONE, parse: [...ALLOWED_MENTIONS_NONE.parse] };
+}
 
 /**
  * Timeout for Discord webhook API requests without file uploads (ms).
@@ -34,6 +56,8 @@ export interface FollowUpOptions {
   };
   /** Make the message ephemeral (only visible to user) */
   ephemeral?: boolean;
+  /** Override the default no-ping `allowed_mentions` (FINDING-019) */
+  allowedMentions?: AllowedMentions;
 }
 
 /**
@@ -47,7 +71,7 @@ export interface FollowUpOptions {
 export async function sendFollowUp(
   applicationId: string,
   interactionToken: string,
-  options: FollowUpOptions
+  options: FollowUpOptions,
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}`;
 
@@ -57,7 +81,7 @@ export async function sendFollowUp(
   }
 
   // Otherwise, send JSON
-  const body: Record<string, unknown> = {};
+  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
@@ -76,14 +100,13 @@ export async function sendFollowUp(
 /**
  * Sends a follow-up message with a file attachment using multipart form data.
  */
-async function sendFollowUpWithFile(
-  url: string,
-  options: FollowUpOptions
-): Promise<Response> {
+async function sendFollowUpWithFile(url: string, options: FollowUpOptions): Promise<Response> {
   const formData = new FormData();
 
   // Build the payload_json part
-  const payload: Record<string, unknown> = {};
+  const payload: Record<string, unknown> = {
+    allowed_mentions: allowedMentionsFor(options.allowedMentions),
+  };
 
   if (options.content) payload.content = options.content;
   if (options.ephemeral) payload.flags = 64;
@@ -137,7 +160,7 @@ async function sendFollowUpWithFile(
 export async function editOriginalResponse(
   applicationId: string,
   interactionToken: string,
-  options: FollowUpOptions
+  options: FollowUpOptions,
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
 
@@ -147,7 +170,7 @@ export async function editOriginalResponse(
   }
 
   // Otherwise, send JSON
-  const body: Record<string, unknown> = {};
+  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
@@ -165,14 +188,13 @@ export async function editOriginalResponse(
 /**
  * Edits the original response with a file attachment.
  */
-async function editResponseWithFile(
-  url: string,
-  options: FollowUpOptions
-): Promise<Response> {
+async function editResponseWithFile(url: string, options: FollowUpOptions): Promise<Response> {
   const formData = new FormData();
 
   // Build the payload_json part
-  const payload: Record<string, unknown> = {};
+  const payload: Record<string, unknown> = {
+    allowed_mentions: allowedMentionsFor(options.allowedMentions),
+  };
 
   if (options.content) payload.content = options.content;
 
@@ -238,7 +260,7 @@ export async function safeEditOriginalResponse(
   applicationId: string,
   interactionToken: string,
   options: FollowUpOptions,
-  logger?: SafeCallLogger
+  logger?: SafeCallLogger,
 ): Promise<boolean> {
   try {
     const res = await editOriginalResponse(applicationId, interactionToken, options);
@@ -263,58 +285,14 @@ export async function safeEditOriginalResponse(
 }
 
 /**
- * BUG-035: throw-safe, outcome-checked wrapper around sendFollowUp
- */
-export async function safeSendFollowUp(
-  applicationId: string,
-  interactionToken: string,
-  options: FollowUpOptions,
-  logger?: SafeCallLogger
-): Promise<boolean> {
-  try {
-    const res = await sendFollowUp(applicationId, interactionToken, options);
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      if (logger) {
-        logger.error('Discord follow-up send failed', undefined, { status: res.status, body });
-      } else {
-        console.error('Discord follow-up send failed', res.status, body);
-      }
-      return false;
-    }
-    return true;
-  } catch (e) {
-    if (logger) {
-      logger.error('Discord follow-up send threw', e instanceof Error ? e : undefined);
-    } else {
-      console.error('Discord follow-up send threw', e);
-    }
-    return false;
-  }
-}
-
-/**
- * Deletes the original interaction response.
- */
-export async function deleteOriginalResponse(
-  applicationId: string,
-  interactionToken: string
-): Promise<Response> {
-  const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
-
-  return fetch(url, {
-    method: 'DELETE',
-    signal: AbortSignal.timeout(DISCORD_WEBHOOK_TIMEOUT),
-  });
-}
-
-/**
  * Options for sending a message to a channel
  */
 export interface SendMessageOptions {
   content?: string;
   embeds?: DiscordEmbed[];
   components?: DiscordActionRow[];
+  /** Override the default no-ping `allowed_mentions` (FINDING-019) */
+  allowedMentions?: AllowedMentions;
 }
 
 /**
@@ -328,11 +306,11 @@ export interface SendMessageOptions {
 export async function sendMessage(
   botToken: string,
   channelId: string,
-  options: SendMessageOptions
+  options: SendMessageOptions,
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/channels/${channelId}/messages`;
 
-  const body: Record<string, unknown> = {};
+  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
@@ -362,11 +340,11 @@ export async function editMessage(
   botToken: string,
   channelId: string,
   messageId: string,
-  options: SendMessageOptions
+  options: SendMessageOptions,
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/channels/${channelId}/messages/${messageId}`;
 
-  const body: Record<string, unknown> = {};
+  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
@@ -382,4 +360,3 @@ export async function editMessage(
     signal: AbortSignal.timeout(5000),
   });
 }
-

@@ -51,10 +51,10 @@ describe('Types', () => {
                 'seasons',
                 'events',
                 'aesthetics',
-                'community',
             ];
 
-            expect(categories).toHaveLength(6);
+            // 5.0: 'community' is dropped — community-ness is a source, not a category
+            expect(categories).toHaveLength(5);
         });
     });
 
@@ -81,6 +81,7 @@ describe('Types', () => {
                 name: 'Test Preset',
                 description: 'Test Description',
                 category_id: 'aesthetics',
+                secondary_categories: [],
                 dyes: [1, 2, 3],
                 tags: ['tag1', 'tag2'],
                 author_discord_id: '123',
@@ -90,6 +91,7 @@ describe('Types', () => {
                 is_curated: false,
                 created_at: '2025-06-15T12:00:00Z',
                 updated_at: '2025-06-15T12:00:00Z',
+                preview_image_status: 'none',
             };
 
             expect(preset.id).toBeDefined();
@@ -104,6 +106,7 @@ describe('Types', () => {
                 name: 'Test Preset',
                 description: 'Test Description',
                 category_id: 'aesthetics',
+                secondary_categories: [],
                 dyes: [1, 2, 3],
                 tags: [],
                 author_discord_id: null,
@@ -120,6 +123,7 @@ describe('Types', () => {
                     tags: [],
                     dyes: [1, 2],
                 },
+                preview_image_status: 'none',
             };
 
             expect(preset.author_discord_id).toBeNull();
@@ -286,6 +290,10 @@ describe('Types', () => {
                 updated_at: '2025-06-15T12:00:00Z',
                 dye_signature: '[1,2,3]',
                 previous_values: null,
+                example_link: null,
+                preview_image_key: null,
+                preview_image_status: 'none',
+                secondary_categories: '[]',
             };
 
             expect(typeof row.dyes).toBe('string');

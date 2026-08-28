@@ -12,13 +12,13 @@
  */
 
 import { html, css, CSSResultGroup, TemplateResult } from 'lit';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { customElement, property, state } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
-import { authService, LanguageService, CollectionService } from '@services/index';
-import { StorageService } from '@services/storage-service';
-import { TutorialService } from '@services/tutorial-service';
+import { authService, LanguageService } from '@services/index';
+import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
+import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
+import { regionLabel } from '@shared/region-name';
 import type { ToolId } from '@services/router-service';
 import type {
   HarmonyConfig,
@@ -32,28 +32,12 @@ import type {
   BudgetConfig,
   SwatchConfig,
   MarketConfig,
-  AdvancedConfig,
   ConfigKey,
   DisplayOptionsConfig,
   DyeFiltersConfig,
-  PresetCategoryFilter,
   MatchingMethod,
 } from '@shared/tool-config-types';
-import {
-  DEFAULT_DISPLAY_OPTIONS,
-  DEFAULT_DYE_FILTERS,
-  DEFAULT_CONFIGS,
-} from '@shared/tool-config-types';
-import { STORAGE_KEYS } from '@shared/constants';
-import {
-  ICON_REFRESH,
-  ICON_PALETTE,
-  ICON_STAR,
-  ICON_FOLDER,
-  ICON_BOOK,
-  ICON_EXPORT,
-  ICON_IMPORT,
-} from '@shared/ui-icons';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import { showPresetSubmissionForm } from '@components/preset-submission-form';
 import type { DataCenter, World } from '@shared/types';
 import { logger } from '@shared/logger';
@@ -65,49 +49,63 @@ import './display-options-v4';
 import './dye-filters-v4';
 import type { DisplayOptionsChangeDetail } from './display-options-v4';
 import type { DyeFiltersChangeDetail } from './dye-filters-v4';
-import type { SubRace } from '@xivdyetools/types';
+import { RACE_SUBRACES } from '@xivdyetools/types';
+import type { SubRace, Race } from '@xivdyetools/types';
 
 /**
- * Mapping from SubRace type values to ClanKey for localization lookup
- * SubRace uses PascalCase, ClanKey uses camelCase
+ * First character of a display name, for the avatar chip shown when the auth
+ * provider gave us no avatar URL.
+ *
+ * This replaces a `parseInt(user.id) % 5` guess at Discord's default-avatar
+ * index. That guess could never work: `AuthUser.id` is *our* user ID, minted by
+ * `crypto.randomUUID()` in the oauth worker -- not a Discord snowflake. When the
+ * UUID began with a hex letter (6 of 16 possible first characters) `parseInt`
+ * returned `NaN` and the app requested `embed/avatars/NaN.png`, a 404. It was
+ * also wrong in principle for XIVAuth users, who have no Discord identity at all.
+ *
+ * Iterating the string yields code points rather than UTF-16 units, so an emoji
+ * or astral-plane name does not render half a surrogate pair. Upper-casing is
+ * app-locale aware: bare `toLocaleUpperCase()` follows the BROWSER locale, so a
+ * Turkish-locale browser would render a dotted `İ` for an English UI.
  */
-const SUBRACE_TO_CLAN_KEY: Record<SubRace, string> = {
-  Midlander: 'midlander',
-  Highlander: 'highlander',
-  Wildwood: 'wildwood',
-  Duskwight: 'duskwight',
-  Plainsfolk: 'plainsfolk',
-  Dunesfolk: 'dunesfolk',
-  SeekerOfTheSun: 'seekerOfTheSun',
-  KeeperOfTheMoon: 'keeperOfTheMoon',
-  SeaWolf: 'seaWolf',
-  Hellsguard: 'hellsguard',
-  Raen: 'raen',
-  Xaela: 'xaela',
-  Helion: 'helion',
-  TheLost: 'theLost',
-  Rava: 'rava',
-  Veena: 'veena',
+export function avatarInitial(name: string): string {
+  const first = [...name.trim()][0];
+  return first ? first.toLocaleUpperCase(LanguageService.getCurrentLocale()) : '?';
+}
+
+/**
+ * Localization key for each race — a presentation concern local to this
+ * component (differs from the canonical `Race` key by casing).
+ */
+const RACE_KEY_BY_RACE: Record<Race, string> = {
+  Hyur: 'hyur',
+  Elezen: 'elezen',
+  Lalafell: 'lalafell',
+  "Miqo'te": 'miqote',
+  Roegadyn: 'roegadyn',
+  AuRa: 'auRa',
+  Hrothgar: 'hrothgar',
+  Viera: 'viera',
 };
 
 /**
- * Race groups with their subraces and race key for localization
+ * Race groups with their subraces and race key for localization.
+ *
+ * The race/subrace *set* and order are sourced from the shared
+ * `RACE_SUBRACES` table in `@xivdyetools/types` (DEAD-024 adoption);
+ * `RACE_KEY_BY_RACE` above is this component's own presentation layer.
  */
-const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = [
-  { raceKey: 'hyur', subraces: ['Midlander', 'Highlander'] },
-  { raceKey: 'elezen', subraces: ['Wildwood', 'Duskwight'] },
-  { raceKey: 'lalafell', subraces: ['Plainsfolk', 'Dunesfolk'] },
-  { raceKey: 'miqote', subraces: ['SeekerOfTheSun', 'KeeperOfTheMoon'] },
-  { raceKey: 'roegadyn', subraces: ['SeaWolf', 'Hellsguard'] },
-  { raceKey: 'auRa', subraces: ['Raen', 'Xaela'] },
-  { raceKey: 'hrothgar', subraces: ['Helion', 'TheLost'] },
-  { raceKey: 'viera', subraces: ['Rava', 'Veena'] },
-];
+export const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = (
+  Object.entries(RACE_SUBRACES) as Array<[Race, readonly [SubRace, SubRace]]>
+).map(([race, subraces]) => ({
+  raceKey: RACE_KEY_BY_RACE[race],
+  subraces: [...subraces],
+}));
 
 /**
  * V4 Config Sidebar - Tool configuration panel
  *
- * @fires sidebar-collapse - When collapse button is clicked (mobile)
+ * @fires sidebar-collapse - When the header × is clicked (desktop Simple-Settings column; the shell collapses the column and the console-bar gear restores it)
  * @fires config-change - When any config value changes
  *   - detail.tool: The tool ID or 'global'
  *   - detail.key: The config property key
@@ -137,6 +135,13 @@ export class ConfigSidebar extends BaseLitComponent {
   @property({ type: Boolean, reflect: true })
   collapsed = false;
 
+  /**
+   * Embedded mode: hosted inside the Advanced Options slide-over rather than
+   * as a standalone column — drops its own header/chrome (Q7 decision).
+   */
+  @property({ type: Boolean, reflect: true })
+  embedded = false;
+
   // =========================================================================
   // Tool Configuration State
   // =========================================================================
@@ -144,8 +149,9 @@ export class ConfigSidebar extends BaseLitComponent {
   @state() private harmonyConfig: HarmonyConfig = {
     harmonyType: 'tetradic',
     strictMatching: false,
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     preventDuplicates: true,
+    companionDyesCount: COMPANION_DYES_DEFAULT,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
@@ -154,7 +160,7 @@ export class ConfigSidebar extends BaseLitComponent {
     maxColors: 8,
     dragThreshold: 5,
     sampleAreaSize: 1,
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
@@ -165,9 +171,6 @@ export class ConfigSidebar extends BaseLitComponent {
     protanopia: true,
     tritanopia: true,
     achromatopsia: true,
-    showLabels: true,
-    showHexValues: false,
-    highContrastMode: false,
     displayOptions: {
       ...DEFAULT_DISPLAY_OPTIONS,
       showPrice: false,
@@ -176,43 +179,47 @@ export class ConfigSidebar extends BaseLitComponent {
     },
   };
   @state() private comparisonConfig: ComparisonConfig = {
+    matchThreshold: 5,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   };
   @state() private gradientConfig: GradientConfig = {
     stepCount: 8,
     interpolation: 'hsv',
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
+    preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
   @state() private mixerConfig: MixerConfig = {
     maxResults: 3,
     mixingMode: 'ryb',
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
   @state() private presetsConfig: PresetsConfig = {
-    showMyPresetsOnly: false,
-    showFavorites: false,
     sortBy: 'popular',
     category: 'all',
+    feedShots: true,
+    feedBlend: false,
+    feedHideUnbuyable: false,
+    savedFirst: true,
+    keepDeleted: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   };
   @state() private budgetConfig: BudgetConfig = {
-    maxPrice: 200000,
-    maxResults: 8,
-    maxDeltaE: 75,
-    matchingMethod: 'oklab',
+    maxDeltaE: 8,
+    matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
   @state() private swatchConfig: SwatchConfig = {
     colorSheet: 'eyeColors',
+    fileProvided: false,
     race: 'Midlander',
     gender: 'Male',
     maxResults: 3,
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
@@ -234,13 +241,11 @@ export class ConfigSidebar extends BaseLitComponent {
 
   // Collapsible section state
   @state() private marketBoardCollapsed: boolean = false;
-  @state() private advancedSettingsCollapsed: boolean = true; // Collapsed by default
-
-  // Advanced settings config
-  @state() private advancedConfig: AdvancedConfig = { ...DEFAULT_CONFIGS.advanced };
 
   private configController: ConfigController | null = null;
   private languageUnsubscribe: (() => void) | null = null;
+  private swatchConfigUnsubscribe: (() => void) | null = null;
+  private harmonyConfigUnsubscribe: (() => void) | null = null;
   private authUnsubscribe: (() => void) | null = null;
 
   static override styles: CSSResultGroup = [
@@ -255,6 +260,30 @@ export class ConfigSidebar extends BaseLitComponent {
 
       :host([collapsed]) {
         display: none;
+      }
+
+      /* Embedded inside the Advanced Options slide-over (Q7: the config
+         surface lives behind the header gear, not in a persistent column) */
+      :host([embedded]) {
+        width: 100%;
+        height: auto;
+      }
+
+      :host([embedded]) .v4-config-sidebar {
+        background: transparent;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        border-right: none;
+        height: auto;
+      }
+
+      :host([embedded]) .v4-sidebar-header {
+        display: none;
+      }
+
+      :host([embedded]) .v4-sidebar-content {
+        padding: 0;
+        overflow-y: visible;
       }
 
       .v4-config-sidebar {
@@ -350,6 +379,14 @@ export class ConfigSidebar extends BaseLitComponent {
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-bottom: 12px;
+      }
+
+      /* 8A: one-line explanation under a toggle */
+      .config-hint {
+        font-size: 11px;
+        line-height: 1.45;
+        color: var(--theme-text-muted, #a0a0a0);
+        margin: 2px 0 10px;
       }
 
       /* Config Row (for toggle switches) */
@@ -542,6 +579,21 @@ export class ConfigSidebar extends BaseLitComponent {
         object-fit: cover;
       }
 
+      /* Shown when the provider gave us no avatar. Local, so it cannot 404 and
+         costs no third-party request. */
+      .user-avatar--initial {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        background: color-mix(in srgb, var(--theme-primary, #ea4133) 18%, transparent);
+        color: var(--theme-primary, #ea4133);
+        font-weight: 600;
+        font-size: 15px;
+        line-height: 1;
+        user-select: none;
+      }
+
       .user-info {
         flex: 1;
         min-width: 0;
@@ -601,90 +653,6 @@ export class ConfigSidebar extends BaseLitComponent {
         border-color: var(--theme-text-muted, #888888);
       }
 
-      /* Advanced Settings Section */
-      .advanced-settings {
-        margin-top: var(--v4-display-options-group-gap, 20px);
-        border-top: 1px solid var(--v4-glass-border, rgba(255, 255, 255, 0.1));
-        padding-top: 16px;
-      }
-
-      .advanced-btn {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-        padding: 10px 16px;
-        margin-bottom: 8px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--v4-border-subtle, rgba(255, 255, 255, 0.15));
-        border-radius: 6px;
-        color: var(--theme-text, #e0e0e0);
-        font-size: 13px;
-        cursor: pointer;
-        text-align: left;
-        transition:
-          background 0.15s,
-          border-color 0.15s;
-      }
-
-      .advanced-btn-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-        opacity: 0.8;
-      }
-
-      .advanced-btn-icon svg {
-        width: 100%;
-        height: 100%;
-      }
-
-      .advanced-btn:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.25);
-      }
-
-      .advanced-btn:active {
-        transform: scale(0.98);
-      }
-
-      .advanced-btn-row {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 12px;
-      }
-
-      .advanced-btn-half {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        flex: 1;
-        padding: 8px 12px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--v4-border-subtle, rgba(255, 255, 255, 0.15));
-        border-radius: 6px;
-        color: var(--theme-text, #e0e0e0);
-        font-size: 12px;
-        cursor: pointer;
-        transition:
-          background 0.15s,
-          border-color 0.15s;
-      }
-
-      .advanced-btn-half .advanced-btn-icon {
-        width: 16px;
-        height: 16px;
-      }
-
-      .advanced-btn-half:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.25);
-      }
-
       /* Reduced motion */
       @media (prefers-reduced-motion: reduce) {
         :host {
@@ -692,9 +660,7 @@ export class ConfigSidebar extends BaseLitComponent {
         }
         .auth-btn,
         .submit-btn,
-        .logout-btn,
-        .advanced-btn,
-        .advanced-btn-half {
+        .logout-btn {
           transition: none;
         }
       }
@@ -705,6 +671,19 @@ export class ConfigSidebar extends BaseLitComponent {
     super.connectedCallback();
     this.loadConfigsFromController();
     void this.loadServerData();
+    // 10A: the swatch tool pushes config changes of its own (a .chara file
+    // sets tribe/gender and the fileProvided readout lock) — the sidebar
+    // must follow, not just lead.
+    this.swatchConfigUnsubscribe =
+      this.configController?.subscribe('swatch', (config) => {
+        this.swatchConfig = config;
+      }) ?? null;
+    // 1A: the harmony type rail sets the type from the workspace — the
+    // sidebar dropdown has to follow it, same one-way gotcha as swatch.
+    this.harmonyConfigUnsubscribe =
+      this.configController?.subscribe('harmony', (config) => {
+        this.harmonyConfig = config;
+      }) ?? null;
     // Subscribe to language changes to update translated text
     this.languageUnsubscribe = LanguageService.subscribe(() => {
       this.requestUpdate();
@@ -722,6 +701,10 @@ export class ConfigSidebar extends BaseLitComponent {
     this.languageUnsubscribe = null;
     this.authUnsubscribe?.();
     this.authUnsubscribe = null;
+    this.swatchConfigUnsubscribe?.();
+    this.swatchConfigUnsubscribe = null;
+    this.harmonyConfigUnsubscribe?.();
+    this.harmonyConfigUnsubscribe = null;
   }
 
   /**
@@ -777,7 +760,6 @@ export class ConfigSidebar extends BaseLitComponent {
     this.budgetConfig = this.configController.getConfig('budget');
     this.swatchConfig = this.configController.getConfig('swatch');
     this.marketConfig = this.configController.getConfig('market');
-    this.advancedConfig = this.configController.getConfig('advanced');
   }
 
   /**
@@ -841,135 +823,6 @@ export class ConfigSidebar extends BaseLitComponent {
    */
   private toggleMarketBoard(): void {
     this.marketBoardCollapsed = !this.marketBoardCollapsed;
-  }
-
-  /**
-   * Toggle Advanced Settings section collapsed state
-   */
-  private toggleAdvancedSettings(): void {
-    this.advancedSettingsCollapsed = !this.advancedSettingsCollapsed;
-  }
-
-  // =========================================================================
-  // Advanced Settings Handlers
-  // =========================================================================
-
-  /**
-   * Reset all tool configs to defaults
-   */
-  private handleResetSettings(): void {
-    if (!confirm(LanguageService.t('config.resetSettingsConfirm'))) return;
-    ConfigController.getInstance().resetAllConfigs();
-    this.loadConfigsFromController();
-    this.emit('settings-reset');
-    logger.info('[ConfigSidebar] All settings reset to defaults');
-  }
-
-  /**
-   * Emit event to clear dyes across all tools
-   */
-  private handleClearDyes(): void {
-    if (!confirm(LanguageService.t('config.clearDyesConfirm'))) return;
-    this.emit('clear-all-dyes');
-    logger.info('[ConfigSidebar] Clear dyes event emitted');
-  }
-
-  /**
-   * Clear favorite dyes via CollectionService
-   */
-  private handleClearFavorites(): void {
-    if (!confirm(LanguageService.t('config.clearFavoritesConfirm'))) return;
-    CollectionService.clearFavorites();
-    this.emit('favorites-cleared');
-    logger.info('[ConfigSidebar] Favorites cleared');
-  }
-
-  /**
-   * Clear saved palettes from localStorage
-   */
-  private handleClearPalettes(): void {
-    if (!confirm(LanguageService.t('config.clearPalettesConfirm'))) return;
-    StorageService.removeItem(STORAGE_KEYS.SAVED_PALETTES);
-    this.emit('palettes-cleared');
-    logger.info('[ConfigSidebar] Saved palettes cleared');
-  }
-
-  /**
-   * Reset tutorial state to show onboarding hints again
-   */
-  private handleResetTutorial(): void {
-    TutorialService.resetAllCompletions();
-    this.emit('tutorial-reset');
-    logger.info('[ConfigSidebar] Tutorial reset');
-  }
-
-  /**
-   * Export all settings as JSON file download
-   */
-  private handleExportSettings(): void {
-    const configs = ConfigController.getInstance().exportAllConfigs();
-    const exportData = {
-      version: '1.0.0',
-      exportedAt: new Date().toISOString(),
-      type: 'xivdyetools-settings',
-      configs,
-    };
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `xivdyetools-settings-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    logger.info('[ConfigSidebar] Settings exported');
-  }
-
-  /**
-   * Trigger hidden file input for import
-   */
-  private triggerImportSettings(): void {
-    this.renderRoot.querySelector<HTMLInputElement>('.import-file-input')?.click();
-  }
-
-  /**
-   * Handle file selection for import
-   */
-  private async handleImportFile(e: Event): Promise<void> {
-    const input = e.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-
-      // Validate export format
-      if (data.type !== 'xivdyetools-settings' || !data.configs) {
-        throw new Error('Invalid settings file format');
-      }
-
-      ConfigController.getInstance().importConfigs(data.configs);
-      this.loadConfigsFromController();
-      this.emit('settings-imported');
-      logger.info('[ConfigSidebar] Settings imported successfully');
-    } catch (error) {
-      logger.error('[ConfigSidebar] Import failed:', error);
-      alert(LanguageService.t('config.importError'));
-    }
-
-    // Reset file input so the same file can be selected again
-    input.value = '';
-  }
-
-  /**
-   * Handle toggle changes for advanced config
-   */
-  private handleAdvancedConfigChange(key: keyof AdvancedConfig, value: boolean): void {
-    this.advancedConfig = { ...this.advancedConfig, [key]: value };
-    if (this.configController) {
-      this.configController.setConfig('advanced', { [key]: value });
-    }
-    this.emit('config-change', { tool: 'advanced', key, value });
   }
 
   /**
@@ -1069,17 +922,24 @@ export class ConfigSidebar extends BaseLitComponent {
               this.handleConfigChange('harmony', 'harmonyType', value);
             }}
           >
-            <option value="complementary">${LanguageService.t('config.complementary')}</option>
-            <option value="analogous">${LanguageService.t('config.analogous')}</option>
-            <option value="triadic">${LanguageService.t('config.triadic')}</option>
-            <option value="split-complementary">
-              ${LanguageService.t('config.splitComplementary')}
+            <option value="complementary">
+              ${LanguageService.getHarmonyType('complementary')}
             </option>
-            <option value="tetradic">${LanguageService.t('config.tetradic')}</option>
-            <option value="square">${LanguageService.t('config.square')}</option>
-            <option value="monochromatic">${LanguageService.t('config.monochromatic')}</option>
-            <option value="compound">${LanguageService.t('config.compound')}</option>
-            <option value="shades">${LanguageService.t('config.shades')}</option>
+            <option value="analogous">${LanguageService.getHarmonyType('analogous')}</option>
+            <option value="triadic">${LanguageService.getHarmonyType('triadic')}</option>
+            <option value="split-complementary">
+              ${LanguageService.getHarmonyType('splitComplementary')}
+            </option>
+            <option value="tetradic">${LanguageService.getHarmonyType('tetradic')}</option>
+            <option value="inverted-tetradic">
+              ${LanguageService.getHarmonyType('invertedTetradic')}
+            </option>
+            <option value="square">${LanguageService.getHarmonyType('square')}</option>
+            <option value="monochromatic">
+              ${LanguageService.getHarmonyType('monochromatic')}
+            </option>
+            <option value="compound">${LanguageService.getHarmonyType('compound')}</option>
+            <option value="shades">${LanguageService.getHarmonyType('shades')}</option>
           </select>
         </div>
 
@@ -1120,14 +980,33 @@ export class ConfigSidebar extends BaseLitComponent {
           <div class="config-description">${LanguageService.t('config.preventDuplicatesDesc')}</div>
         </div>
 
+        <div class="config-group">
+          <div class="config-label">${LanguageService.t('harmony.companionDyes')}</div>
+          <div class="slider-wrapper">
+            <v4-range-slider
+              label=${LanguageService.t('harmony.companionDyes')}
+              .value=${this.harmonyConfig.companionDyesCount ?? COMPANION_DYES_DEFAULT}
+              .min=${COMPANION_DYES_MIN}
+              .max=${COMPANION_DYES_MAX}
+              @slider-change=${(e: CustomEvent<{ value: number }>) =>
+                this.handleConfigChange('harmony', 'companionDyesCount', e.detail.value)}
+            ></v4-range-slider>
+          </div>
+          <div class="config-description">${LanguageService.t('harmony.companionDyesDesc')}</div>
+        </div>
+
         <v4-display-options
           .showHex=${this.globalDisplayOptions.showHex}
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('harmony', e)}
@@ -1140,6 +1019,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -1233,9 +1113,13 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('extractor', e)}
@@ -1248,6 +1132,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -1299,42 +1184,18 @@ export class ConfigSidebar extends BaseLitComponent {
           </div>
         </div>
 
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.simulationDisplay')}</div>
-          <div class="config-row">
-            <v4-toggle-switch
-              label=${LanguageService.t('config.showLabels')}
-              .checked=${this.accessibilityConfig.showLabels}
-              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleConfigChange('accessibility', 'showLabels', e.detail.checked)}
-            ></v4-toggle-switch>
-          </div>
-          <div class="config-row">
-            <v4-toggle-switch
-              label=${LanguageService.t('config.showHexValues')}
-              .checked=${this.accessibilityConfig.showHexValues}
-              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleConfigChange('accessibility', 'showHexValues', e.detail.checked)}
-            ></v4-toggle-switch>
-          </div>
-          <div class="config-row">
-            <v4-toggle-switch
-              label=${LanguageService.t('config.highContrastMode')}
-              .checked=${this.accessibilityConfig.highContrastMode}
-              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleConfigChange('accessibility', 'highContrastMode', e.detail.checked)}
-            ></v4-toggle-switch>
-          </div>
-        </div>
-
         <v4-display-options
           .showHex=${this.globalDisplayOptions.showHex}
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('accessibility', e)}
@@ -1349,14 +1210,31 @@ export class ConfigSidebar extends BaseLitComponent {
   private renderComparisonConfig(): TemplateResult {
     return html`
       <div class="config-section" ?hidden=${this.activeTool !== 'comparison'}>
+        <div class="config-group">
+          <div class="config-label">${LanguageService.t('comparison.matchLine')}</div>
+          <div class="slider-wrapper">
+            <v4-range-slider
+              label=${LanguageService.t('comparison.matchLine')}
+              .value=${this.comparisonConfig.matchThreshold ?? 5}
+              .min=${1}
+              .max=${15}
+              @slider-change=${(e: CustomEvent<{ value: number }>) =>
+                this.handleConfigChange('comparison', 'matchThreshold', e.detail.value)}
+            ></v4-range-slider>
+          </div>
+        </div>
         <v4-display-options
           .showHex=${this.globalDisplayOptions.showHex}
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('comparison', e)}
@@ -1383,6 +1261,15 @@ export class ConfigSidebar extends BaseLitComponent {
                 this.handleConfigChange('gradient', 'stepCount', e.detail.value)}
             ></v4-range-slider>
           </div>
+          <div class="config-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('config.preventDuplicates')}
+              .checked=${this.gradientConfig.preventDuplicates ?? true}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleConfigChange('gradient', 'preventDuplicates', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="config-description">${LanguageService.t('config.preventDuplicatesDesc')}</div>
         </div>
 
         <div class="config-group">
@@ -1411,9 +1298,13 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('gradient', e)}
@@ -1426,6 +1317,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -1482,9 +1374,13 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('mixer', e)}
@@ -1497,6 +1393,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -1511,18 +1408,18 @@ export class ConfigSidebar extends BaseLitComponent {
    */
   private getMatchingMethodDescription(method: MatchingMethod): string {
     switch (method) {
-      case 'oklab':
-        return LanguageService.t('config.matchingOklabDesc');
-      case 'hyab':
-        return LanguageService.t('config.matchingHyabDesc');
       case 'ciede2000':
         return LanguageService.t('config.matchingCiede2000Desc');
+      case 'oklab':
+        return LanguageService.t('config.matchingOklabDesc');
       case 'cie76':
         return LanguageService.t('config.matchingCie76Desc');
+      case 'redmean':
+        return LanguageService.t('config.matchingRedmeanDesc');
       case 'rgb':
         return LanguageService.t('config.matchingRgbDesc');
-      case 'oklch-weighted':
-        return LanguageService.t('config.matchingOklchWeightedDesc');
+      case 'distinguish':
+        return LanguageService.t('config.matchingDistinguishDesc');
       default:
         return '';
     }
@@ -1530,6 +1427,9 @@ export class ConfigSidebar extends BaseLitComponent {
 
   /**
    * Render matching method dropdown for a tool
+   *
+   * The leading ΔE2000 / ΔEOK / ΔE76 / REDMEAN / RGB DIST / DISTINGUISH % tags are
+   * identifiers by decision (2026-08-20 i18n audit) — never localised.
    */
   private renderMatchingMethodSection(
     toolKey: 'harmony' | 'extractor' | 'gradient' | 'mixer' | 'budget' | 'swatch',
@@ -1546,13 +1446,16 @@ export class ConfigSidebar extends BaseLitComponent {
             this.handleConfigChange(toolKey, 'matchingMethod', value);
           }}
         >
-          <option value="oklab">OKLAB - ${LanguageService.t('config.matchingOklab')}</option>
-          <option value="hyab">HyAB - ${LanguageService.t('config.matchingHyab')}</option>
           <option value="ciede2000">
-            CIEDE2000 - ${LanguageService.t('config.matchingCiede2000')}
+            ΔE2000 - ${LanguageService.t('config.matchingCiede2000')}
           </option>
-          <option value="cie76">CIE76 - ${LanguageService.t('config.matchingCie76')}</option>
-          <option value="rgb">RGB - ${LanguageService.t('config.matchingRgb')}</option>
+          <option value="oklab">ΔEOK - ${LanguageService.t('config.matchingOklab')}</option>
+          <option value="cie76">ΔE76 - ${LanguageService.t('config.matchingCie76')}</option>
+          <option value="redmean">REDMEAN - ${LanguageService.t('config.matchingRedmean')}</option>
+          <option value="rgb">RGB DIST - ${LanguageService.t('config.matchingRgb')}</option>
+          <option value="distinguish">
+            DISTINGUISH % - ${LanguageService.t('config.matchingDistinguish')}
+          </option>
         </select>
         <div class="config-description">${this.getMatchingMethodDescription(currentMethod)}</div>
       </div>
@@ -1607,59 +1510,61 @@ export class ConfigSidebar extends BaseLitComponent {
       <div class="config-section" ?hidden=${this.activeTool !== 'presets'}>
         ${this.renderPresetsAuthSection()}
 
+        <!-- 8A: category + sort moved onto the page (rail + cycling sort);
+             the sidebar carries the Feed and Saved-shelf options instead -->
         <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.category')}</div>
-          <select
-            class="config-select"
-            .value=${this.presetsConfig.category}
-            @change=${(e: Event) => {
-              const value = (e.target as HTMLSelectElement).value as PresetCategoryFilter;
-              this.handleConfigChange('presets', 'category', value);
-            }}
-          >
-            <option value="all">${LanguageService.t('config.allCategories')}</option>
-            <option value="jobs">${LanguageService.t('config.jobs')}</option>
-            <option value="grand-companies">${LanguageService.t('config.grandCompanies')}</option>
-            <option value="seasons">${LanguageService.t('config.seasons')}</option>
-            <option value="events">${LanguageService.t('config.events')}</option>
-            <option value="aesthetics">${LanguageService.t('config.aesthetics')}</option>
-            <option value="community">${LanguageService.t('config.community')}</option>
-          </select>
-        </div>
-
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.sortBy')}</div>
-          <select
-            class="config-select"
-            .value=${this.presetsConfig.sortBy}
-            @change=${(e: Event) => {
-              const value = (e.target as HTMLSelectElement).value;
-              this.handleConfigChange('presets', 'sortBy', value);
-            }}
-          >
-            <option value="popular">${LanguageService.t('config.mostPopular')}</option>
-            <option value="recent">${LanguageService.t('config.mostRecent')}</option>
-            <option value="name">${LanguageService.t('config.alphabetical')}</option>
-          </select>
-        </div>
-
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.filters')}</div>
+          <div class="config-label">${LanguageService.t('preset.tabCommunity')}</div>
           <div class="config-row">
             <v4-toggle-switch
-              label=${LanguageService.t('config.showMyPresetsOnly')}
-              .checked=${this.presetsConfig.showMyPresetsOnly}
+              label=${LanguageService.t('preset.cfgShowShots')}
+              .checked=${this.presetsConfig.feedShots}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleConfigChange('presets', 'showMyPresetsOnly', e.detail.checked)}
+                this.handleConfigChange('presets', 'feedShots', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
+          <div class="config-hint">${LanguageService.t('preset.cfgShowShotsDesc')}</div>
           <div class="config-row">
             <v4-toggle-switch
-              label=${LanguageService.t('config.showFavorites')}
-              .checked=${this.presetsConfig.showFavorites}
+              label=${LanguageService.t('preset.cfgBlend')}
+              .checked=${this.presetsConfig.feedBlend}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleConfigChange('presets', 'showFavorites', e.detail.checked)}
+                this.handleConfigChange('presets', 'feedBlend', e.detail.checked)}
             ></v4-toggle-switch>
+          </div>
+          <div class="config-hint">${LanguageService.t('preset.cfgBlendDesc')}</div>
+          <div class="config-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('preset.cfgHideUnbuyable')}
+              .checked=${this.presetsConfig.feedHideUnbuyable}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleConfigChange('presets', 'feedHideUnbuyable', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="config-hint">${LanguageService.t('preset.cfgHideUnbuyableDesc')}</div>
+        </div>
+
+        <div class="config-group">
+          <div class="config-label">${LanguageService.t('preset.tabSaved')}</div>
+          <div class="config-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('preset.cfgSavedFirst')}
+              .checked=${this.presetsConfig.savedFirst}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleConfigChange('presets', 'savedFirst', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="config-hint">${LanguageService.t('preset.cfgSavedFirstDesc')}</div>
+          <div class="config-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('preset.cfgKeepDeleted')}
+              .checked=${this.presetsConfig.keepDeleted}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleConfigChange('presets', 'keepDeleted', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="config-hint">${LanguageService.t('preset.cfgKeepDeletedDesc')}</div>
+          <div class="config-hint" style="margin-top: 6px; opacity: 0.85;">
+            ${LanguageService.t('preset.cfgStoredLocallyHint')}
           </div>
         </div>
 
@@ -1668,9 +1573,13 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('harmony', e)}
@@ -1688,17 +1597,21 @@ export class ConfigSidebar extends BaseLitComponent {
 
     if (isAuthenticated && user) {
       // Logged in - show user card and submit button
-      const avatarUrl =
-        user.avatar_url ||
-        `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id || '0') % 5}.png`;
-      const displayName = user.global_name || user.username || 'User';
+      const displayName =
+        user.global_name || user.username || LanguageService.t('config.userFallback');
       const providerLabel = user.auth_provider === 'xivauth' ? 'XIVAuth' : 'Discord';
 
       return html`
         <div class="auth-section">
           <div class="config-label">${LanguageService.t('config.account')}</div>
           <div class="user-card">
-            <img class="user-avatar" src="${avatarUrl}" alt="${displayName}" />
+            ${
+              user.avatar_url
+                ? html`<img class="user-avatar" src="${user.avatar_url}" alt="${displayName}" />`
+                : html`<div class="user-avatar user-avatar--initial" aria-hidden="true">
+                    ${avatarInitial(displayName)}
+                  </div>`
+            }
             <div class="user-info">
               <div class="user-name">${displayName}</div>
               <div class="user-provider">
@@ -1779,39 +1692,14 @@ export class ConfigSidebar extends BaseLitComponent {
     return html`
       <div class="config-section" ?hidden=${this.activeTool !== 'budget'}>
         <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.budgetLimit')}</div>
+          <div class="config-label">${LanguageService.t('budget.matchLine')}</div>
           <div class="slider-wrapper">
             <v4-range-slider
-              label=${LanguageService.t('config.maxPrice')}
-              .value=${this.budgetConfig.maxPrice}
-              .min=${0}
-              .max=${200000}
-              .step=${5000}
-              .valueFormatter=${(v: number) => `${v.toLocaleString()} gil`}
-              @slider-change=${(e: CustomEvent<{ value: number }>) =>
-                this.handleConfigChange('budget', 'maxPrice', e.detail.value)}
-            ></v4-range-slider>
-          </div>
-          <div class="slider-wrapper">
-            <v4-range-slider
-              label=${LanguageService.t('config.maxResults')}
-              .value=${this.budgetConfig.maxResults}
-              .min=${1}
-              .max=${20}
-              @slider-change=${(e: CustomEvent<{ value: number }>) =>
-                this.handleConfigChange('budget', 'maxResults', e.detail.value)}
-            ></v4-range-slider>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.colorDistance')}</div>
-          <div class="slider-wrapper">
-            <v4-range-slider
-              label=${LanguageService.t('config.maxDeltaE')}
+              label=${LanguageService.t('budget.matchLine')}
               .value=${this.budgetConfig.maxDeltaE}
-              .min=${0}
-              .max=${100}
+              .min=${2}
+              .max=${20}
+              .disabled=${this.budgetConfig.matchingMethod !== 'ciede2000'}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
                 this.handleConfigChange('budget', 'maxDeltaE', e.detail.value)}
             ></v4-range-slider>
@@ -1825,9 +1713,13 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('budget', e)}
@@ -1840,6 +1732,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -1866,36 +1759,13 @@ export class ConfigSidebar extends BaseLitComponent {
 
     return html`
       <div class="config-section" ?hidden=${this.activeTool !== 'swatch'}>
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.colorSheet')}</div>
-          <select
-            class="config-select"
-            .value=${this.swatchConfig.colorSheet}
-            @change=${(e: Event) => {
-              const value = (e.target as HTMLSelectElement).value;
-              this.handleConfigChange('swatch', 'colorSheet', value);
-            }}
-          >
-            <option value="eyeColors">${LanguageService.t('config.eyeColors')}</option>
-            <option value="hairColors">${LanguageService.t('config.hairColors')}</option>
-            <option value="skinColors">${LanguageService.t('config.skinColors')}</option>
-            <option value="highlightColors">${LanguageService.t('config.highlightColors')}</option>
-            <option value="lipColorsDark">${LanguageService.t('config.lipColorsDark')}</option>
-            <option value="lipColorsLight">${LanguageService.t('config.lipColorsLight')}</option>
-            <option value="tattooColors">${LanguageService.t('config.tattooColors')}</option>
-            <option value="facePaintColorsDark">
-              ${LanguageService.t('config.facePaintDark')}
-            </option>
-            <option value="facePaintColorsLight">
-              ${LanguageService.t('config.facePaintLight')}
-            </option>
-          </select>
-        </div>
-
+        <!-- 10A: the nine-entry colorSheet dropdown is cut — the palette rail
+             on the grid panel owns category + range now. -->
         <div class="config-group" ?hidden=${!showCharacterSection}>
-          <div class="config-label">${LanguageService.t('config.character')}</div>
+          <div class="config-label">${LanguageService.t('swatch.whoHead')}</div>
           <select
             class="config-select"
+            ?disabled=${this.swatchConfig.fileProvided}
             .value=${this.swatchConfig.race}
             @change=${(e: Event) => {
               const value = (e.target as HTMLSelectElement).value;
@@ -1918,6 +1788,7 @@ export class ConfigSidebar extends BaseLitComponent {
           </select>
           <select
             class="config-select"
+            ?disabled=${this.swatchConfig.fileProvided}
             .value=${this.swatchConfig.gender}
             @change=${(e: Event) => {
               const value = (e.target as HTMLSelectElement).value;
@@ -1931,6 +1802,7 @@ export class ConfigSidebar extends BaseLitComponent {
               ${LanguageService.t('tools.character.female')}
             </option>
           </select>
+          <div class="config-hint">${LanguageService.t('swatch.whoHint')}</div>
         </div>
 
         <div class="config-group">
@@ -1956,9 +1828,13 @@ export class ConfigSidebar extends BaseLitComponent {
             .showRgb=${this.globalDisplayOptions.showRgb}
             .showHsv=${this.globalDisplayOptions.showHsv}
             .showLab=${this.globalDisplayOptions.showLab}
+            .showCmyk=${this.globalDisplayOptions.showCmyk}
             .showPrice=${this.globalDisplayOptions.showPrice}
             .showDeltaE=${this.globalDisplayOptions.showDeltaE}
             .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+            .showHue=${this.globalDisplayOptions.showHue ?? true}
+            .showStain=${this.globalDisplayOptions.showStain ?? true}
+            .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
             .visibleGroups=${['colorFormats', 'resultMetadata']}
             @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
               this.handleDisplayOptionsChange('swatch', e)}
@@ -1972,6 +1848,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -2055,7 +1932,7 @@ export class ConfigSidebar extends BaseLitComponent {
                     </option>`
                   : sortedDataCenters.map(
                       (dc) => html`
-                        <optgroup label="${dc.name} (${dc.region})">
+                        <optgroup label="${dc.name} (${regionLabel(dc.region)})">
                           <option
                             value="${dc.name}"
                             ?selected=${this.marketConfig.selectedServer === dc.name}
@@ -2091,101 +1968,6 @@ export class ConfigSidebar extends BaseLitComponent {
     `;
   }
 
-  /**
-   * Render Advanced Settings section (collapsed by default)
-   */
-  private renderAdvancedSettings(): TemplateResult {
-    return html`
-      <div class="config-section advanced-settings">
-        <div class="config-group">
-          <!-- Collapsible Header -->
-          <div
-            class="config-label-header"
-            @click=${this.toggleAdvancedSettings}
-            role="button"
-            aria-expanded=${!this.advancedSettingsCollapsed}
-            tabindex="0"
-            @keydown=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                this.toggleAdvancedSettings();
-              }
-            }}
-          >
-            <div class="config-label">${LanguageService.t('config.advancedSettings')}</div>
-            <span class="collapse-icon ${this.advancedSettingsCollapsed ? 'collapsed' : ''}">
-              ${this.advancedSettingsCollapsed ? '▼' : '▲'}
-            </span>
-          </div>
-
-          <div class="config-group-content ${this.advancedSettingsCollapsed ? 'collapsed' : ''}">
-            <!-- Data Management Buttons -->
-            <button class="advanced-btn" @click=${this.handleResetSettings}>
-              <span class="advanced-btn-icon">${unsafeHTML(ICON_REFRESH)}</span>
-              ${LanguageService.t('config.resetSettings')}
-            </button>
-            <button class="advanced-btn" @click=${this.handleClearDyes}>
-              <span class="advanced-btn-icon">${unsafeHTML(ICON_PALETTE)}</span>
-              ${LanguageService.t('config.clearDyes')}
-            </button>
-            <button class="advanced-btn" @click=${this.handleClearFavorites}>
-              <span class="advanced-btn-icon">${unsafeHTML(ICON_STAR)}</span>
-              ${LanguageService.t('config.clearFavorites')}
-            </button>
-            <button class="advanced-btn" @click=${this.handleClearPalettes}>
-              <span class="advanced-btn-icon">${unsafeHTML(ICON_FOLDER)}</span>
-              ${LanguageService.t('config.clearPalettes')}
-            </button>
-            <button class="advanced-btn" @click=${this.handleResetTutorial}>
-              <span class="advanced-btn-icon">${unsafeHTML(ICON_BOOK)}</span>
-              ${LanguageService.t('config.resetTutorial')}
-            </button>
-
-            <!-- Export/Import Row -->
-            <div class="advanced-btn-row">
-              <button class="advanced-btn-half" @click=${this.handleExportSettings}>
-                <span class="advanced-btn-icon">${unsafeHTML(ICON_EXPORT)}</span>
-                ${LanguageService.t('config.exportSettings')}
-              </button>
-              <button class="advanced-btn-half" @click=${this.triggerImportSettings}>
-                <span class="advanced-btn-icon">${unsafeHTML(ICON_IMPORT)}</span>
-                ${LanguageService.t('config.importSettings')}
-              </button>
-              <input
-                type="file"
-                class="import-file-input"
-                accept=".json"
-                hidden
-                @change=${this.handleImportFile}
-              />
-            </div>
-
-            <!-- Toggle Switches -->
-            <div class="config-row">
-              <v4-toggle-switch
-                label=${LanguageService.t('config.performanceMode')}
-                .checked=${this.advancedConfig.performanceMode}
-                @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                  this.handleAdvancedConfigChange('performanceMode', e.detail.checked)}
-              ></v4-toggle-switch>
-            </div>
-            <div class="config-description">${LanguageService.t('config.performanceModeDesc')}</div>
-
-            <div class="config-row">
-              <v4-toggle-switch
-                label=${LanguageService.t('config.enableAnalytics')}
-                .checked=${this.advancedConfig.analyticsEnabled}
-                @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                  this.handleAdvancedConfigChange('analyticsEnabled', e.detail.checked)}
-              ></v4-toggle-switch>
-            </div>
-            <div class="config-description">${LanguageService.t('config.analyticsDesc')}</div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
   protected override render(): TemplateResult {
     return html`
       <aside
@@ -2213,7 +1995,6 @@ export class ConfigSidebar extends BaseLitComponent {
           ${this.renderAccessibilityConfig()} ${this.renderComparisonConfig()}
           ${this.renderGradientConfig()} ${this.renderMixerConfig()} ${this.renderPresetsConfig()}
           ${this.renderBudgetConfig()} ${this.renderSwatchConfig()} ${this.renderMarketConfig()}
-          ${this.renderAdvancedSettings()}
         </div>
       </aside>
     `;

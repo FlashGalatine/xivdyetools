@@ -1,12 +1,20 @@
-name = "xivdyetools-moderation-worker"
+# DEPLOY_ENVIRONMENTS (docs/operations/DEPLOY_ENVIRONMENTS.md): the default
+# (top-level) env is a separate dev worker with its own name and NO routes, so
+# a plain `wrangler deploy` can never overwrite the production moderation bot.
+# Production config lives exclusively under [env.production] and ships via
+# `wrangler deploy --env production`.
+#
+# `routes` and `workers_dev` are INHERITABLE keys: a named environment takes
+# the top-level value unless it overrides it. `routes` therefore MOVED into
+# [env.production] — leaving it here would attach the production custom
+# domains to the dev worker.
+name = "xivdyetools-moderation-worker-dev"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
-
-routes = [
-  { pattern = "moderation-bot.xivdyetools.app", custom_domain = true },
-  { pattern = "moderation-bot.xivdyetools.projectgalatine.com", custom_domain = true }
-]
+# No reachable dev URL is needed: nothing binds to the dev worker, and the
+# moderation bot's interactions endpoint points at the production domain.
+workers_dev = false
 
 [[kv_namespaces]]
 binding = "KV"
@@ -21,6 +29,17 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 binding = "PRESETS_API"
 service = "xivdyetools-presets-api"
 
+# FINDING-003: native Workers Rate Limiting bindings (per Discord user): command 20+5, autocomplete 60+10 per 60 s.
+[[ratelimits]]
+name = "RL_COMMAND"
+namespace_id = "1033"
+simple = { limit = 25, period = 60 }
+
+[[ratelimits]]
+name = "RL_AUTOCOMPLETE"
+namespace_id = "1034"
+simple = { limit = 70, period = 60 }
+
 [vars]
 DISCORD_CLIENT_ID = "1453806659708129374"
 PRESETS_API_URL = "https://api.xivdyetools.app"
@@ -31,6 +50,10 @@ PRESETS_API_URL = "https://api.xivdyetools.app"
 
 [env.production]
 name = "xivdyetools-moderation-worker"
+routes = [
+  { pattern = "moderation-bot.xivdyetools.app", custom_domain = true },
+  { pattern = "moderation-bot.xivdyetools.projectgalatine.com", custom_domain = true }
+]
 
 [env.production.vars]
 DISCORD_CLIENT_ID = "1453806659708129374"
@@ -48,3 +71,14 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 [[env.production.services]]
 binding = "PRESETS_API"
 service = "xivdyetools-presets-api"
+
+# FINDING-003: production per-user rate-limit bindings
+[[env.production.ratelimits]]
+name = "RL_COMMAND"
+namespace_id = "1031"
+simple = { limit = 25, period = 60 }
+
+[[env.production.ratelimits]]
+name = "RL_AUTOCOMPLETE"
+namespace_id = "1032"
+simple = { limit = 70, period = 60 }

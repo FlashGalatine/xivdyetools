@@ -6,6 +6,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
+import { DEFAULT_MATCHING_METHOD, LEGACY_MATCHING_METHOD_MAP } from '@xivdyetools/core';
 import type { MatchingMethod } from '@xivdyetools/core';
 import {
   EXPENSIVE_DYE_IDS,
@@ -22,8 +23,11 @@ import { dyeService } from './services.js';
 export const VALID_LOCALES = ['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const;
 export type ValidLocale = (typeof VALID_LOCALES)[number];
 
+// The 5.0 vocabulary (one list suite-wide). Retired v4 values (hyab,
+// oklch-weighted) stay accepted at the boundary for compatibility and are
+// normalised to their replacement.
 export const VALID_MATCHING_METHODS: MatchingMethod[] = [
-  'rgb', 'cie76', 'ciede2000', 'oklab', 'hyab', 'oklch-weighted',
+  'ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish',
 ];
 
 export const VALID_SORT_FIELDS = ['name', 'brightness', 'saturation', 'hue', 'cost'] as const;
@@ -46,10 +50,15 @@ export type IdResolution =
 /**
  * Auto-detect dye identifier type by numeric range.
  * Ranges are fully disjoint — no overlap between facewear, stainID, and itemID.
+ *
+ * Schema v2 (2026-07-31): the stain window covers the full Stain-sheet byte
+ * range (1-254, was 1-125) so future dyes resolve without an API change; the
+ * negative range is retained only to emit a helpful 404 for legacy Facewear
+ * synthetic IDs, which are no longer served as dyes.
  */
 export function resolveIdType(id: number): IdResolution {
   if (id < 0) return { type: 'facewear', id };
-  if (id >= 1 && id <= 125) return { type: 'stain', stainId: id };
+  if (id >= 1 && id <= 254) return { type: 'stain', stainId: id };
   if (id >= 5729) return { type: 'item', itemId: id };
   return { type: 'invalid', id };
 }
@@ -61,7 +70,9 @@ export function resolveIdType(id: number): IdResolution {
 export function lookupDyeByResolvedId(resolution: IdResolution): Dye | null {
   switch (resolution.type) {
     case 'facewear':
-      return dyeService.getDyeById(resolution.id);
+      // Schema v2: facewear colors left the dye database (facewearColors in
+      // core); the /:id route emits an explanatory 404 for these IDs.
+      return null;
     case 'item':
       return dyeService.getDyeById(resolution.itemId);
     case 'stain':
@@ -174,11 +185,13 @@ export function parseFloatParam(
   }
 
   const num = parseFloat(value);
-  if (isNaN(num)) {
-    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" must be a number.`, 400, {
+  // FINDING-025 / API-13: parseFloat('Infinity') / '1e400' are not NaN but
+  // are no more a usable distance than 'abc' is
+  if (!Number.isFinite(num)) {
+    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" must be a finite number.`, 400, {
       parameter: name,
       received: value,
-      expected: 'number',
+      expected: 'finite number',
     });
   }
 
@@ -297,9 +310,14 @@ export function parseLocale(value: string | undefined): ValidLocale {
   return value as ValidLocale;
 }
 
-/** Parse the matching method param, defaulting to 'oklab'. */
+/** Parse the matching method param, defaulting to the suite default (dE2000).
+ *  Retired v4 values normalise to their replacement instead of erroring —
+ *  existing API clients keep working. */
 export function parseMatchingMethod(value: string | undefined): MatchingMethod {
-  if (!value || value === '') return 'oklab';
+  if (!value || value === '') return DEFAULT_MATCHING_METHOD;
+  if (value in LEGACY_MATCHING_METHOD_MAP) {
+    return LEGACY_MATCHING_METHOD_MAP[value];
+  }
   if (!VALID_MATCHING_METHODS.includes(value as MatchingMethod)) {
     throw new ApiError(ErrorCode.INVALID_MATCHING_METHOD, `Invalid matching method "${value}". Must be one of: ${VALID_MATCHING_METHODS.join(', ')}`, 400, {
       parameter: 'method',

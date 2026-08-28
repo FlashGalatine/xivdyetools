@@ -1,220 +1,161 @@
 /**
- * Random Dyes Grid SVG Generator (V4)
+ * /dye random — the confirmed 11B Sheet table (Turn 11).
  *
- * Generates a visual infographic grid for the /dye random command.
- * Shows 5 randomly selected dyes in an attractive card layout.
+ * A real table with a header row, so the stain column reads as a column.
+ * Rows are 52 px; five rows plus a header is exactly what 350 px buys, and
+ * the frame grows with the count under that — a three-dye run is a shorter
+ * image (the 350 ceiling is a wall, not a size). No instruction text is ever
+ * baked into the PNG.
  *
- * Layout:
- * +--------------------------------------------------+
- * |  🎲 Random Dyes                                  |
- * +--------------------------------------------------+
- * |  [Swatch 1]  [Swatch 2]  [Swatch 3]             |
- * |  Name        Name        Name                    |
- * |  Category    Category    Category                |
- * +--------------------------------------------------+
- * |  [Swatch 4]  [Swatch 5]                         |
- * |  Name        Name                                |
- * |  Category    Category                            |
- * +--------------------------------------------------+
- *
- * @module services/svg/random-dyes-grid
+ * @module random-dyes-grid
  */
 
-import type { Dye } from '@xivdyetools/types';
 import {
-  createSvgDocument,
-  rect,
-  text,
-  truncateText,
-  THEME,
-  FONTS,
-  getContrastTextColor,
-} from './base.js';
+  CARD_WIDTH,
+  CARD_TYPE,
+  ROW_CAP,
+  cardShell,
+  cardTheme,
+  cardText,
+  commandChip,
+  hairline,
+  fitText,
+  markFooter,
+  swatch,
+  type CardTheme,
+} from './frame.js';
+import { panelGlyph } from './icons/tool-icons.js';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export interface RandomDyeInfo {
-  /** The dye */
-  dye: Dye;
-  /** Localized dye name */
+export interface RandomDyeRow {
+  hex: string;
   localizedName: string;
-  /** Localized category name */
   localizedCategory: string;
+  /** Stain ID — the handle share URLs key on (null only for Facewear) */
+  stainID: number | null;
+}
+
+export interface RandomGridLabels {
+  /** DYE / FARBSTOFF / カララント … */
+  name: string;
+  /** CATEGORY / KATEGORIE / カテゴリ … */
+  cat: string;
+  /** STAIN / FARBNR. / 番号 … */
+  stain: string;
 }
 
 export interface RandomDyesGridOptions {
-  /** Array of dyes to display (typically 5) */
-  dyes: RandomDyeInfo[];
-  /** Title for the grid */
-  title?: string;
-  /** Grid width in pixels (default: 600) */
-  width?: number;
-  /** Whether dyes are from unique categories */
-  uniqueCategories?: boolean;
+  dyes: RandomDyeRow[];
+  /** Localized card title (carries the unique-categories variant) */
+  title: string;
+  labels: RandomGridLabels;
+  theme?: 'dark' | 'light';
+  /** The command label in the pill (default "/DYE RANDOM") */
+  commandLabel?: string;
+  /** Rendered 13 px glyph for the pill (the bare chip; null = text-only) */
+  commandGlyph?: string | null;
 }
 
 // ============================================================================
-// Constants
+// Generator
 // ============================================================================
 
-const DEFAULT_WIDTH = 600;
-const PADDING = 20;
-const TITLE_HEIGHT = 50;
-const CARD_WIDTH = 170;
-const CARD_HEIGHT = 140;
-const CARD_GAP = 20;
-
-// ============================================================================
-// SVG Generation
-// ============================================================================
+const PAD = 16;
+const ROW_H = 52;
+const CAT_W = 68;
+const STAIN_W = 62;
 
 /**
- * Generate a visual grid of random dyes
+ * Generate the /dye random table (11B). Height grows with the count and
+ * caps at five rows (R1) — callers clamp the count.
  */
 export function generateRandomDyesGrid(options: RandomDyesGridOptions): string {
-  const {
-    dyes,
-    // BUG-056: emoji-free default — the bundled resvg fonts have no emoji
-    // glyphs, so '🎲' rendered as a tofu box; callers pass localized titles.
-    title = 'Random Dyes',
-    width = DEFAULT_WIDTH,
-    uniqueCategories = false,
-  } = options;
+  const { title, labels, commandLabel = '/DYE RANDOM' } = options;
+  const rows = options.dyes.slice(0, ROW_CAP);
+  const theme: CardTheme = cardTheme(options.theme);
+  // /dye is not one of the nine tools — the bare chip, with the accent slot
+  const commandGlyph =
+    options.commandGlyph !== undefined
+      ? options.commandGlyph
+      : panelGlyph('dye', { size: 13, ink: theme.pillInk, accent: theme.glyphAccent });
+  const parts: string[] = [];
 
-  // Calculate layout
-  const cardsPerRow = 3;
-  const rows = Math.ceil(dyes.length / cardsPerRow);
-  const gridHeight = rows * (CARD_HEIGHT + CARD_GAP) - CARD_GAP;
-  const height = TITLE_HEIGHT + gridHeight + PADDING * 2;
+  // --- Title + pill
+  const chipLabelW = 120;
+  parts.push(
+    cardText(PAD, 13 + 18, fitText(title, CARD_WIDTH - PAD * 2 - chipLabelW, 18, 'display'), {
+      fill: theme.name,
+      size: 18,
+      font: 'display',
+      weight: 600,
+    })
+  );
+  // right-align the pill (measure once, then translate into place)
+  const chip = commandChip(0, 13, commandLabel, theme, { glyph: commandGlyph });
+  parts.push(`<g transform="translate(${CARD_WIDTH - PAD - chip.width},0)">${chip.svg}</g>`);
 
-  const elements: string[] = [];
-
-  // Background
-  elements.push(rect(0, 0, width, height, THEME.background, { rx: 16, ry: 16 }));
-
-  // Title
-  elements.push(
-    text(width / 2, PADDING + 24, title, {
-      fill: THEME.text,
-      fontSize: 22,
-      fontFamily: FONTS.headerCjk,
-      fontWeight: 600,
-      textAnchor: 'middle',
+  // --- Header row
+  const headY = 13 + 26 + 9 + 12;
+  const nameX = PAD + 46 + 10;
+  const catX = CARD_WIDTH - PAD - STAIN_W - 10 - CAT_W;
+  parts.push(
+    cardText(nameX, headY, labels.name, { fill: theme.label, size: CARD_TYPE.label, font: 'mono', letterSpacing: 1 })
+  );
+  parts.push(
+    cardText(catX, headY, labels.cat, { fill: theme.label, size: CARD_TYPE.label, font: 'mono', letterSpacing: 1 })
+  );
+  parts.push(
+    cardText(CARD_WIDTH - PAD, headY, labels.stain, {
+      fill: theme.label,
+      size: CARD_TYPE.label,
+      font: 'mono',
+      letterSpacing: 1,
+      anchor: 'end',
     })
   );
 
-  // Subtitle based on mode
-  const subtitle = uniqueCategories
-    ? 'One from each category'
-    : `${dyes.length} randomly selected dyes`;
-  elements.push(
-    text(width / 2, PADDING + 42, subtitle, {
-      fill: THEME.textMuted,
-      fontSize: 12,
-      fontFamily: FONTS.primary,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Calculate starting position for cards (centered)
-  const startY = TITLE_HEIGHT + PADDING;
-
-  // Draw dye cards
-  dyes.forEach((dyeInfo, index) => {
-    const row = Math.floor(index / cardsPerRow);
-    const col = index % cardsPerRow;
-
-    // Center the last row if it has fewer cards
-    const cardsInThisRow = Math.min(cardsPerRow, dyes.length - row * cardsPerRow);
-    const rowWidth = cardsInThisRow * (CARD_WIDTH + CARD_GAP) - CARD_GAP;
-    const rowStartX = (width - rowWidth) / 2;
-
-    const cardX = rowStartX + col * (CARD_WIDTH + CARD_GAP);
-    const cardY = startY + row * (CARD_HEIGHT + CARD_GAP);
-
-    elements.push(generateDyeCard(dyeInfo, cardX, cardY));
+  // --- Rows
+  const rowsTop = headY + 5;
+  rows.forEach((r, i) => {
+    const top = rowsTop + i * ROW_H;
+    parts.push(hairline(0, CARD_WIDTH, top, theme));
+    const cy = top + ROW_H / 2;
+    parts.push(swatch(PAD, cy - 19, 46, 38, r.hex, theme, 9));
+    const nameW = catX - nameX - 10;
+    parts.push(
+      cardText(nameX, cy - 3, fitText(r.localizedName, nameW, 14.5, 'body'), {
+        fill: theme.name,
+        size: 14.5,
+        font: 'body',
+        weight: 600,
+      })
+    );
+    parts.push(
+      cardText(nameX, cy + 13, r.hex.toUpperCase(), { fill: theme.label, size: 11.5, font: 'mono' })
+    );
+    parts.push(
+      cardText(catX, cy + 4, fitText(r.localizedCategory, CAT_W, 11.5, 'mono'), {
+        fill: theme.subValue,
+        size: 11.5,
+        font: 'mono',
+      })
+    );
+    parts.push(
+      cardText(CARD_WIDTH - PAD, cy + 4, r.stainID != null ? String(r.stainID) : '—', {
+        fill: theme.value,
+        size: CARD_TYPE.value,
+        font: 'mono',
+        anchor: 'end',
+      })
+    );
   });
 
-  // Footer
-  elements.push(
-    text(width / 2, height - 8, 'XIV Dye Tools • Run again for new results', {
-      fill: THEME.textDim,
-      fontSize: 10,
-      fontFamily: FONTS.primary,
-      textAnchor: 'middle',
-    })
-  );
+  // --- Height + mark
+  const height = Math.min(350, rowsTop + rows.length * ROW_H + 33);
+  parts.push(markFooter(CARD_WIDTH - PAD, height - 10, theme));
 
-  return createSvgDocument(width, height, elements.join('\n'));
-}
-
-/**
- * Generate a single dye card
- */
-function generateDyeCard(dyeInfo: RandomDyeInfo, x: number, y: number): string {
-  const { dye, localizedName, localizedCategory } = dyeInfo;
-  const elements: string[] = [];
-
-  const swatchHeight = 80;
-
-  // Card background
-  elements.push(
-    rect(x, y, CARD_WIDTH, CARD_HEIGHT, THEME.backgroundLight, {
-      rx: 12,
-      ry: 12,
-    })
-  );
-
-  // Color swatch (top portion)
-  elements.push(
-    rect(x, y, CARD_WIDTH, swatchHeight, dye.hex, {
-      rx: 12,
-      ry: 12,
-    })
-  );
-  // Flatten bottom corners of swatch
-  elements.push(rect(x, y + swatchHeight - 12, CARD_WIDTH, 12, dye.hex));
-
-  // Hex value on swatch
-  const textColor = getContrastTextColor(dye.hex);
-  elements.push(
-    text(x + CARD_WIDTH / 2, y + swatchHeight / 2 + 4, dye.hex.toUpperCase(), {
-      fill: textColor,
-      fontSize: 14,
-      fontFamily: FONTS.mono,
-      fontWeight: 600,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Info section
-  const infoY = y + swatchHeight + 12;
-
-  // Dye name (truncate if too long)
-  const maxNameLength = 18;
-  const displayName = truncateText(localizedName, maxNameLength);
-
-  elements.push(
-    text(x + CARD_WIDTH / 2, infoY, displayName, {
-      fill: THEME.text,
-      fontSize: 13,
-      fontFamily: FONTS.primaryCjk,
-      fontWeight: 600,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Category
-  elements.push(
-    text(x + CARD_WIDTH / 2, infoY + 18, localizedCategory, {
-      fill: THEME.textMuted,
-      fontSize: 11,
-      fontFamily: FONTS.primaryCjk,
-      textAnchor: 'middle',
-    })
-  );
-
-  return elements.join('\n');
+  return cardShell(height, theme, parts.join(''));
 }

@@ -10,6 +10,11 @@ import type { Logger } from '@xivdyetools/logger/library';
 import { NoOpLogger } from '@xivdyetools/logger/library';
 import { KDTree, type Point3D } from '../../utils/kd-tree.js';
 import { ColorConverter } from '../color/ColorConverter.js';
+import {
+  ACQUISITION_META,
+  METALLIC_STAIN_IDS,
+  type DyeAcquisition,
+} from '../../config/dye-vocabulary.js';
 
 /**
  * Internal dye type with pre-computed fields for search optimization
@@ -52,7 +57,6 @@ export class DyeDatabase {
   // Per P-7: k-d tree for fast nearest neighbor search in RGB space
   private kdTree: KDTree | null = null;
   private isLoaded: boolean = false;
-  private lastLoaded: number = 0;
   private readonly logger: Logger;
 
   // Per P-2: Hue bucket size (10 degrees per bucket for 36 buckets total)
@@ -110,12 +114,14 @@ export class DyeDatabase {
   }
 
   private isValidDye(dye: Record<string, unknown>): boolean {
-    // Required: id or itemID (can be null for Facewear dyes, which will get generated id)
-    const hasValidId = typeof dye.id === 'number' || typeof dye.itemID === 'number';
-    const hasFacewearNullId = dye.itemID === null && dye.category === 'Facewear';
+    // Schema v2: stainID is the canonical identifier (Stain-sheet row, byte
+    // range). Legacy fixture shapes may instead carry id/itemID — accepted
+    // for backward compatibility with runtime-shaped test data.
+    const hasStainId = typeof dye.stainID === 'number' && dye.stainID >= 1 && dye.stainID <= 254;
+    const hasLegacyId = typeof dye.id === 'number' || typeof dye.itemID === 'number';
 
-    if (!hasValidId && !hasFacewearNullId) {
-      this.logger.warn('Dye missing required id or itemID field');
+    if (!hasStainId && !hasLegacyId) {
+      this.logger.warn('Dye missing required stainID (or legacy id/itemID) field');
       return false;
     }
 
@@ -126,58 +132,12 @@ export class DyeDatabase {
       return false;
     }
 
-    // Validate hex format if present
-    if (dye.hex !== undefined && dye.hex !== null) {
-      if (typeof dye.hex !== 'string' || !/^#[A-Fa-f0-9]{6}$/.test(dye.hex)) {
-        const idForLog = this.dyeIdForLog(dye);
-        const hexForLog = typeof dye.hex === 'string' ? dye.hex : JSON.stringify(dye.hex);
-        this.logger.warn(`Dye ${idForLog} has invalid hex format: ${hexForLog}`);
-        return false;
-      }
-    }
-
-    // Validate RGB if present
-    if (dye.rgb !== undefined && dye.rgb !== null) {
-      const rgb = dye.rgb as Record<string, unknown>;
-      if (
-        typeof rgb.r !== 'number' ||
-        rgb.r < 0 ||
-        rgb.r > 255 ||
-        typeof rgb.g !== 'number' ||
-        rgb.g < 0 ||
-        rgb.g > 255 ||
-        typeof rgb.b !== 'number' ||
-        rgb.b < 0 ||
-        rgb.b > 255
-      ) {
-        const idForLog = this.dyeIdForLog(dye);
-        this.logger.warn(`Dye ${idForLog} has invalid RGB values`);
-        return false;
-      }
-    }
-
-    // CORE-BUG-004 FIX: HSV is required per Dye interface (used for hue bucket indexing)
-    // Must validate HSV is present and has valid values
-    if (dye.hsv === undefined || dye.hsv === null) {
+    // Schema v2: hex is REQUIRED — it is the single color source of truth
+    // from which rgb/hsv/lab are derived during normalization.
+    if (typeof dye.hex !== 'string' || !/^#[A-Fa-f0-9]{6}$/.test(dye.hex)) {
       const idForLog = this.dyeIdForLog(dye);
-      this.logger.warn(`Dye ${idForLog} missing required HSV values`);
-      return false;
-    }
-
-    const hsv = dye.hsv as Record<string, unknown>;
-    if (
-      typeof hsv.h !== 'number' ||
-      hsv.h < 0 ||
-      hsv.h > 360 ||
-      typeof hsv.s !== 'number' ||
-      hsv.s < 0 ||
-      hsv.s > 100 ||
-      typeof hsv.v !== 'number' ||
-      hsv.v < 0 ||
-      hsv.v > 100
-    ) {
-      const idForLog = this.dyeIdForLog(dye);
-      this.logger.warn(`Dye ${idForLog} has invalid HSV values`);
+      const hexForLog = typeof dye.hex === 'string' ? dye.hex : JSON.stringify(dye.hex);
+      this.logger.warn(`Dye ${idForLog} has missing or invalid hex: ${hexForLog}`);
       return false;
     }
 
@@ -185,6 +145,19 @@ export class DyeDatabase {
     if (dye.category !== undefined && dye.category !== null && typeof dye.category !== 'string') {
       const idForLog = this.dyeIdForLog(dye);
       this.logger.warn(`Dye ${idForLog} has invalid category type`);
+      return false;
+    }
+
+    // Validate consolidationType domain if present
+    if (
+      dye.consolidationType !== undefined &&
+      dye.consolidationType !== null &&
+      dye.consolidationType !== 'A' &&
+      dye.consolidationType !== 'B' &&
+      dye.consolidationType !== 'C'
+    ) {
+      const idForLog = this.dyeIdForLog(dye);
+      this.logger.warn(`Dye ${idForLog} has invalid consolidationType`);
       return false;
     }
 
@@ -216,53 +189,97 @@ export class DyeDatabase {
         throw new Error('Invalid dye database format: empty or not an array');
       }
 
-      // Normalize dyes: map itemID to id, price to cost, with prototype pollution protection
+      // Normalize dyes (schema v2): derive rgb/hsv/cost/currency/flags from
+      // the 7-field file shape, with prototype pollution protection. Legacy
+      // runtime-shaped input (full 16-field Dye objects, used by test
+      // fixtures) passes through with its explicit values respected.
       // Per Issue #14: Filter out invalid dyes during loading
       this.dyes = loadedDyes
         .map((dye: unknown) => {
           // Per Security: Create a safe clone to prevent prototype pollution
           const normalizedDye = this.safeClone(dye as Record<string, unknown>);
 
-          // If the dye has itemID but no id, use itemID as the id
+          // Schema v2: legacyItemID carries the market-era item ID. The
+          // runtime `itemID`/`id` contract (number, equal) is preserved for
+          // downstream compatibility; a future dye with legacyItemID null
+          // falls back to its stainID.
+          if (normalizedDye.itemID === undefined && normalizedDye.legacyItemID !== undefined) {
+            normalizedDye.itemID = normalizedDye.legacyItemID;
+          }
+          if (
+            (normalizedDye.itemID === null || normalizedDye.itemID === undefined) &&
+            typeof normalizedDye.stainID === 'number'
+          ) {
+            normalizedDye.itemID = normalizedDye.stainID;
+          }
           if (normalizedDye.itemID && !normalizedDye.id) {
             normalizedDye.id = normalizedDye.itemID;
           }
 
-          // Generate synthetic ID for Facewear dyes with null itemID
-          // Uses negative numbers to avoid collision with real itemIDs
-          if (normalizedDye.itemID === null && normalizedDye.category === 'Facewear') {
-            // Use hash of name as synthetic ID (negative to distinguish from real IDs)
-            const nameHash = String(normalizedDye.name)
-              .split('')
-              .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            normalizedDye.id = -(1000 + nameHash);
-            normalizedDye.itemID = normalizedDye.id;
+          // Schema v2: rgb/hsv are DERIVED from hex — the stored copies were
+          // a drift hazard (the Brass hsv bug; research/monorepo-2.0/01 §2).
+          // 2-dp hue precision matters: 4 dyes sit within 0.2° of a 10° hue
+          // bucket edge.
+          if (
+            typeof normalizedDye.hex === 'string' &&
+            /^#[A-Fa-f0-9]{6}$/.test(normalizedDye.hex)
+          ) {
+            const rgb = ColorConverter.hexToRgb(normalizedDye.hex);
+            normalizedDye.rgb = rgb;
+            normalizedDye.hsv = ColorConverter.rgbToHsv(rgb.r, rgb.g, rgb.b);
           }
 
-          // Per Bug Fix: Map 'price' field to 'cost' for Dye interface compatibility
-          // JSON data uses 'price' but Dye interface expects 'cost'
+          // Schema v2: cost/currency derive from the acquisition table when
+          // the entry doesn't carry them (legacy `price` still honored).
+          const meta =
+            typeof normalizedDye.acquisition === 'string'
+              ? ACQUISITION_META[normalizedDye.acquisition as DyeAcquisition]
+              : undefined;
           if (normalizedDye.price !== undefined && normalizedDye.cost === undefined) {
             normalizedDye.cost = normalizedDye.price ?? 0;
           }
-          // Ensure cost is always a number (handle null values in JSON)
           if (normalizedDye.cost === null || normalizedDye.cost === undefined) {
-            normalizedDye.cost = 0;
+            normalizedDye.cost = meta?.price ?? 0;
+          }
+          if (normalizedDye.currency === undefined) {
+            normalizedDye.currency = meta?.currency ?? null;
           }
 
-          // Default consolidationType and isIshgardian for backward compatibility
           if (normalizedDye.consolidationType === undefined) {
             normalizedDye.consolidationType = null;
           }
-          if (normalizedDye.isIshgardian === undefined) {
-            normalizedDye.isIshgardian = false;
+
+          // Schema v2 derived flags (explicit fixture values win):
+          // - metallic = the Stain sheet's gloss set (16 — decided 2026-07-30;
+          //   NOT the name prefix, which misses Gunmetal Black + Pearl White)
+          // - cosmic ≡ consolidationType 'C', ishgardian ≡ 'B' (fixes the old
+          //   isCosmic pollution where all 9 Firmament dyes were included)
+          if (normalizedDye.isMetallic === undefined) {
+            normalizedDye.isMetallic =
+              typeof normalizedDye.stainID === 'number' &&
+              METALLIC_STAIN_IDS.has(normalizedDye.stainID);
           }
-          if (normalizedDye.currency === undefined) {
-            normalizedDye.currency = null;
+          if (normalizedDye.isPastel === undefined) {
+            normalizedDye.isPastel = String(normalizedDye.name).startsWith('Pastel');
+          }
+          if (normalizedDye.isDark === undefined) {
+            normalizedDye.isDark = String(normalizedDye.name).startsWith('Dark');
+          }
+          if (normalizedDye.isCosmic === undefined) {
+            normalizedDye.isCosmic = normalizedDye.consolidationType === 'C';
+          }
+          if (normalizedDye.isIshgardian === undefined) {
+            normalizedDye.isIshgardian = normalizedDye.consolidationType === 'B';
+          }
+          if (normalizedDye.stainID === undefined) {
+            normalizedDye.stainID = null;
           }
 
           // Per MEM-001: Pre-compute lowercase name and category for search optimization
           normalizedDye.nameLower = String(normalizedDye.name).toLowerCase();
-          normalizedDye.categoryLower = (typeof normalizedDye.category === 'string' ? normalizedDye.category : '').toLowerCase();
+          normalizedDye.categoryLower = (
+            typeof normalizedDye.category === 'string' ? normalizedDye.category : ''
+          ).toLowerCase();
 
           return normalizedDye;
         })
@@ -307,7 +324,7 @@ export class DyeDatabase {
         // map overwrite would make one dye unreachable by ID. Fail loudly.
         if (this.dyesByIdMap.has(dye.id)) {
           this.logger.error(
-            `Duplicate dye ID detected during initialization: ${dye.id} (${dye.name}) collides with ${this.dyesByIdMap.get(dye.id)?.name}`
+            `Duplicate dye ID detected during initialization: ${dye.id} (${dye.name}) collides with ${this.dyesByIdMap.get(dye.id)?.name}`,
           );
         }
         // Map by id (which equals itemID after normalization)
@@ -348,7 +365,6 @@ export class DyeDatabase {
       this.kdTree = new KDTree(kdTreePoints);
 
       this.isLoaded = true;
-      this.lastLoaded = Date.now();
 
       this.logger.info(`Dye database loaded: ${this.dyes.length} dyes`);
     } catch (error) {
@@ -356,7 +372,7 @@ export class DyeDatabase {
       throw new AppError(
         ErrorCode.DATABASE_LOAD_FAILED,
         `Failed to load dye database: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'critical'
+        'critical',
       );
     }
   }
@@ -413,46 +429,10 @@ export class DyeDatabase {
   }
 
   /**
-   * Get multiple dyes by IDs
-   */
-  getDyesByIds(ids: number[]): Dye[] {
-    this.ensureLoaded();
-    // DyeInternal extends Dye, so this is type-safe as Dye[]
-    return ids
-      .map((id) => this.dyesByIdMap.get(id))
-      .filter((dye): dye is DyeInternal => dye !== undefined);
-  }
-
-  /**
-   * Get multiple dyes by stainIDs
-   *
-   * Batch equivalent of `getByStainId()`. Returns only the dyes that match;
-   * unknown stainIDs are silently skipped (consistent with `getDyesByIds()`).
-   *
-   * @param stainIds - Array of stain table IDs
-   * @returns Array of matching dyes (order matches input, gaps removed)
-   *
-   * @since 2.2.0
-   */
-  getDyesByStainIds(stainIds: number[]): Dye[] {
-    this.ensureLoaded();
-    return stainIds
-      .map((id) => this.dyesByStainIdMap.get(id))
-      .filter((dye): dye is DyeInternal => dye !== undefined);
-  }
-
-  /**
    * Check if database is loaded
    */
   isLoadedStatus(): boolean {
     return this.isLoaded;
-  }
-
-  /**
-   * Get timestamp of last load
-   */
-  getLastLoadedTime(): number {
-    return this.lastLoaded;
   }
 
   /**

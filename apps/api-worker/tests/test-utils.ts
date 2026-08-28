@@ -11,6 +11,9 @@ export function createMockEnv(overrides: Partial<Env> = {}): Env {
     RATE_LIMIT: createMockKV() as unknown as KVNamespace,
     ENVIRONMENT: 'development',
     API_VERSION: 'v1',
+    UNIVERSALIS_API_BASE: 'https://universalis.app/api/v2',
+    RATE_LIMIT_REQUESTS: '60',
+    RATE_LIMIT_WINDOW_SECONDS: '60',
     ...overrides,
   };
 }

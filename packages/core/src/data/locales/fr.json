@@ -2,7 +2,7 @@
   "locale": "fr",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-29T04:47:06.368Z",
+    "generated": "2026-08-18T19:07:42.758Z",
     "dyeCount": 125
   },
   "labels": {
@@ -174,30 +174,13 @@
     "Purple Pigment": "Pigment violet",
     "Planet-specific Credit": "Crédit"
   },
-  "metallicDyeIds": [
-    13116,
-    13117,
-    13717,
-    13718,
-    13719,
-    13720,
-    13721,
-    13722,
-    13723,
-    30122,
-    30123,
-    30124,
-    48169,
-    48170,
-    48171,
-    48172
-  ],
   "harmonyTypes": {
     "complementary": "Complémentaire",
     "analogous": "Analogue",
     "triadic": "Triadique",
     "splitComplementary": "Complémentaire divisé",
     "tetradic": "Tétradique",
+    "invertedTetradic": "Tétradique inversé",
     "square": "Carré",
     "monochromatic": "Monochromatique",
     "compound": "Composé",
@@ -236,35 +219,6 @@
     "hairColors": "Couleurs des cheveux",
     "skinColors": "Couleurs de peau"
   },
-  "jobNames": {
-    "paladin": "Paladin",
-    "warrior": "Guerrier",
-    "darkKnight": "Chevalier noir",
-    "gunbreaker": "Pistosabreur",
-    "whiteMage": "Mage blanc",
-    "scholar": "Érudit",
-    "astrologian": "Astromancien",
-    "sage": "Sage",
-    "monk": "Moine",
-    "dragoon": "Chevalier dragon",
-    "ninja": "Ninja",
-    "samurai": "Samouraï",
-    "reaper": "Faucheur",
-    "viper": "Rôdeur vipère",
-    "bard": "Barde",
-    "machinist": "Machiniste",
-    "dancer": "Danseur",
-    "blackMage": "Mage noir",
-    "summoner": "Invocateur",
-    "redMage": "Mage rouge",
-    "pictomancer": "Pictomancien",
-    "blueMage": "Mage bleu"
-  },
-  "grandCompanyNames": {
-    "maelstrom": "Le Maelstrom",
-    "twinAdder": "L'ordre des Deux Vipères",
-    "immortalFlames": "Les Immortels"
-  },
   "races": {
     "hyur": "Hyuran",
     "elezen": "Élézéen",
@@ -288,7 +242,7 @@
     "hellsguard": "Clan du Feu",
     "raen": "Raen",
     "xaela": "Xaela",
-    "helion": "Hélion",
+    "helions": "Hélion",
     "theLost": "Égaré",
     "rava": "Rava",
     "veena": "Veena"

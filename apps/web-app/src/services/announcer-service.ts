@@ -41,11 +41,8 @@ interface QueuedAnnouncement {
  * // Basic usage
  * AnnouncerService.announce('5 dyes found');
  *
- * // Selection announcement
- * AnnouncerService.announceSelection('Snow White');
- *
- * // Error announcement (uses assertive priority)
- * AnnouncerService.announceError('Failed to load prices');
+ * // Assertive announcement (interrupts current speech)
+ * AnnouncerService.announce('Snow White selected', 'assertive');
  */
 export class AnnouncerService {
   private static politeRegion: HTMLElement | null = null;
@@ -170,104 +167,6 @@ export class AnnouncerService {
     requestAnimationFrame(() => {
       region.textContent = message;
     });
-  }
-
-  // ============================================================================
-  // Convenience Methods
-  // ============================================================================
-
-  /**
-   * Announce search/filter results
-   * @param count - Number of results found
-   * @param context - What was searched (e.g., 'matching dyes', 'harmony suggestions')
-   */
-  static announceResults(count: number, context: string): void {
-    const message = count === 0 ? `No ${context} found` : `Found ${count} ${context}`;
-    this.announce(message);
-  }
-
-  /**
-   * Announce item selection
-   * @param item - Name of the selected item
-   */
-  static announceSelection(item: string): void {
-    this.announce(`${item} selected`, 'assertive');
-  }
-
-  /**
-   * Announce item deselection
-   * @param item - Name of the deselected item
-   */
-  static announceDeselection(item: string): void {
-    this.announce(`${item} deselected`);
-  }
-
-  /**
-   * Announce an error
-   * Uses assertive priority to interrupt
-   * @param message - Error message to announce
-   */
-  static announceError(message: string): void {
-    this.announce(`Error: ${message}`, 'assertive');
-  }
-
-  /**
-   * Announce a success action
-   * @param message - Success message to announce
-   */
-  static announceSuccess(message: string): void {
-    this.announce(message);
-  }
-
-  /**
-   * Announce loading state
-   * @param context - What is loading (e.g., 'market prices', 'dye data')
-   */
-  static announceLoading(context: string): void {
-    this.announce(`Loading ${context}...`);
-  }
-
-  /**
-   * Announce loading complete
-   * @param context - What finished loading
-   */
-  static announceLoaded(context: string): void {
-    this.announce(`${context} loaded`);
-  }
-
-  /**
-   * Announce a filter change
-   * @param filterName - Name of the filter
-   * @param value - New filter value or state
-   * @param resultCount - Optional count of filtered results
-   */
-  static announceFilterChange(
-    filterName: string,
-    value: string | boolean,
-    resultCount?: number
-  ): void {
-    const valueText = typeof value === 'boolean' ? (value ? 'enabled' : 'disabled') : value;
-    let message = `${filterName} filter ${valueText}`;
-    if (resultCount !== undefined) {
-      message += `. ${resultCount} items visible`;
-    }
-    this.announce(message);
-  }
-
-  /**
-   * Announce navigation to a new tool/page
-   * @param toolName - Name of the tool navigated to
-   */
-  static announceNavigation(toolName: string): void {
-    this.announce(`Navigated to ${toolName}`, 'assertive');
-  }
-
-  /**
-   * Announce clipboard copy
-   * @param what - What was copied (e.g., 'Hex color', 'Palette')
-   */
-  static announceCopy(what: string): void {
-    this.announce(`${what} copied to clipboard`);
   }
 
   // ============================================================================

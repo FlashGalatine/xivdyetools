@@ -42,20 +42,8 @@ vi.mock('@shared/logger', () => {
     table: vi.fn(),
   };
 
-  const mockPerf = {
-    start: vi.fn(),
-    end: vi.fn(() => 0),
-    measure: vi.fn(async (_label, fn) => await fn()),
-    measureSync: vi.fn((_label, fn) => fn()),
-    getMetrics: vi.fn(() => null),
-    getAllMetrics: vi.fn(() => ({})),
-    logMetrics: vi.fn(),
-    clearMetrics: vi.fn(),
-  };
-
   return {
     logger: mockLogger,
-    perf: mockPerf,
     __setTestEnvironment: vi.fn(),
   };
 });

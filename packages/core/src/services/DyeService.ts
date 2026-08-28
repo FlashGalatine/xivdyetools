@@ -25,7 +25,7 @@
  * ```
  */
 
-import type { Dye, LocalizedDye, LocaleCode } from '@xivdyetools/types';
+import type { Dye, LocaleCode } from '@xivdyetools/types';
 import type { Logger } from '@xivdyetools/logger/library';
 import { NoOpLogger } from '@xivdyetools/logger/library';
 import { DyeDatabase } from './dye/DyeDatabase.js';
@@ -105,13 +105,6 @@ export class DyeService {
   }
 
   /**
-   * Get multiple dyes by IDs
-   */
-  getDyesByIds(ids: number[]): Dye[] {
-    return this.database.getDyesByIds(ids);
-  }
-
-  /**
    * Get dye by stainID (game's internal stain table ID)
    *
    * Use this method when interfacing with plugins like Glamourer or Mare Synchronos
@@ -128,31 +121,10 @@ export class DyeService {
   }
 
   /**
-   * Get multiple dyes by stainIDs
-   *
-   * Batch equivalent of `getByStainId()`. Unknown stainIDs are silently skipped.
-   *
-   * @param stainIds - Array of stain table IDs
-   * @returns Array of matching dyes
-   *
-   * @since 2.2.0
-   */
-  getDyesByStainIds(stainIds: number[]): Dye[] {
-    return this.database.getDyesByStainIds(stainIds);
-  }
-
-  /**
    * Check if database is loaded
    */
   isLoadedStatus(): boolean {
     return this.database.isLoadedStatus();
-  }
-
-  /**
-   * Get timestamp of last load
-   */
-  getLastLoadedTime(): number {
-    return this.database.getLastLoadedTime();
   }
 
   /**
@@ -196,7 +168,7 @@ export class DyeService {
       excludeIds?: number[];
       minPrice?: number;
       maxPrice?: number;
-    } = {}
+    } = {},
   ): Dye[] {
     return this.search.filterDyes(filter);
   }
@@ -208,11 +180,11 @@ export class DyeService {
    * Supports configurable matching algorithms via options object.
    *
    * @param hex - Target color in hex format
-   * @param excludeIdsOrOptions - Either an array of IDs to exclude (legacy) or options object
+   * @param options - Options object (excludeIds, matchingMethod)
    * @returns Closest matching dye, or null if none found
    */
-  findClosestDye(hex: string, excludeIdsOrOptions: number[] | FindClosestOptions = []): Dye | null {
-    return this.search.findClosestDye(hex, excludeIdsOrOptions);
+  findClosestDye(hex: string, options: FindClosestOptions = {}): Dye | null {
+    return this.search.findClosestDye(hex, options);
   }
 
   /**
@@ -222,37 +194,11 @@ export class DyeService {
    * Supports configurable matching algorithms via options object.
    *
    * @param hex - Target color in hex format
-   * @param maxDistanceOrOptions - Either maxDistance number (legacy) or options object
-   * @param limit - Maximum results (legacy parameter, use options.limit instead)
+   * @param options - Options object (maxDistance, limit, matchingMethod)
    * @returns Array of dyes within the distance threshold
    */
-  findDyesWithinDistance(
-    hex: string,
-    maxDistanceOrOptions: number | FindWithinDistanceOptions,
-    limit?: number
-  ): Dye[] {
-    return this.search.findDyesWithinDistance(hex, maxDistanceOrOptions, limit);
-  }
-
-  /**
-   * Get dyes sorted by brightness
-   */
-  getDyesSortedByBrightness(ascending: boolean = true): Dye[] {
-    return this.search.getDyesSortedByBrightness(ascending);
-  }
-
-  /**
-   * Get dyes sorted by saturation
-   */
-  getDyesSortedBySaturation(ascending: boolean = true): Dye[] {
-    return this.search.getDyesSortedBySaturation(ascending);
-  }
-
-  /**
-   * Get dyes sorted by hue
-   */
-  getDyesSortedByHue(ascending: boolean = true): Dye[] {
-    return this.search.getDyesSortedByHue(ascending);
+  findDyesWithinDistance(hex: string, options: FindWithinDistanceOptions): Dye[] {
+    return this.search.findDyesWithinDistance(hex, options);
   }
 
   // ============================================================================
@@ -307,6 +253,15 @@ export class DyeService {
   }
 
   /**
+   * Find inverted tetradic color scheme (two complementary pairs, mirrored from tetradic)
+   * @param hex Base hex color
+   * @param options Matching algorithm options (optional)
+   */
+  findInvertedTetradicDyes(hex: string, options?: HarmonyOptions): Dye[] {
+    return this.harmony.findInvertedTetradicDyes(hex, options);
+  }
+
+  /**
    * Find monochromatic dyes (same hue, varying saturation/brightness)
    * @param hex Base hex color
    * @param limit Maximum number of dyes to return (default: 6)
@@ -317,30 +272,12 @@ export class DyeService {
   }
 
   /**
-   * Find compound harmony (analogous + complementary)
-   * @param hex Base hex color
-   * @param options Matching algorithm options (optional)
-   */
-  findCompoundDyes(hex: string, options?: HarmonyOptions): Dye[] {
-    return this.harmony.findCompoundDyes(hex, options);
-  }
-
-  /**
    * Find split-complementary harmony (±30° from the complementary hue)
    * @param hex Base hex color
    * @param options Matching algorithm options (optional)
    */
   findSplitComplementaryDyes(hex: string, options?: HarmonyOptions): Dye[] {
     return this.harmony.findSplitComplementaryDyes(hex, options);
-  }
-
-  /**
-   * Find shades (similar tones, ±15°)
-   * @param hex Base hex color
-   * @param options Matching algorithm options (optional)
-   */
-  findShadesDyes(hex: string, options?: HarmonyOptions): Dye[] {
-    return this.harmony.findShadesDyes(hex, options);
   }
 
   // ============================================================================
@@ -386,104 +323,5 @@ export class DyeService {
 
       return false;
     });
-  }
-
-  /**
-   * Get dye by ID with localized name
-   * Returns Dye with localizedName property if locale loaded
-   *
-   * @param id - Dye ID
-   * @returns Localized dye or null if not found
-   *
-   * @example
-   * ```typescript
-   * const dye = dyeService.getLocalizedDyeById(5729);
-   * const displayName = dye.localizedName || dye.name;
-   * // "スノウホワイト" (ja) or "Snow White" (en)
-   * ```
-   */
-  getLocalizedDyeById(id: number, locale?: LocaleCode): LocalizedDye | null {
-    const dye = this.getDyeById(id);
-    if (!dye) return null;
-
-    if (!LocalizationService.isLocaleLoaded(locale)) {
-      return dye;
-    }
-
-    return {
-      ...dye,
-      localizedName: LocalizationService.getDyeName(dye.itemID, locale) || undefined,
-    };
-  }
-
-  /**
-   * Get dye by stainID with localized name
-   * Returns Dye with localizedName property if locale loaded
-   *
-   * @param stainId - Stain table ID
-   * @returns Localized dye or null if not found
-   *
-   * @since 2.2.0
-   */
-  getLocalizedDyeByStainId(stainId: number, locale?: LocaleCode): LocalizedDye | null {
-    const dye = this.getByStainId(stainId);
-    if (!dye) return null;
-
-    if (!LocalizationService.isLocaleLoaded(locale)) {
-      return dye;
-    }
-
-    return {
-      ...dye,
-      localizedName: LocalizationService.getDyeName(dye.itemID, locale) || undefined,
-    };
-  }
-
-  /**
-   * Get all dyes with localized names
-   * Returns array of dyes with localizedName property if locale loaded
-   *
-   * @returns Array of localized dyes
-   *
-   * @example
-   * ```typescript
-   * await LocalizationService.setLocale('ja');
-   * const dyes = dyeService.getAllLocalizedDyes();
-   * dyes.forEach(dye => {
-   *     console.log(dye.localizedName || dye.name);
-   * });
-   * ```
-   */
-  getAllLocalizedDyes(locale?: LocaleCode): LocalizedDye[] {
-    const dyes = this.getAllDyes();
-
-    if (!LocalizationService.isLocaleLoaded(locale)) {
-      return dyes;
-    }
-
-    return dyes.map((dye) => ({
-      ...dye,
-      localizedName: LocalizationService.getDyeName(dye.itemID, locale) || undefined,
-    }));
-  }
-
-  /**
-   * Get all non-metallic dyes (locale-aware)
-   * Excludes dyes based on metallic dye IDs from current locale
-   *
-   * @returns Array of non-metallic dyes
-   *
-   * @example
-   * ```typescript
-   * // Works in any locale - correctly excludes metallic dyes
-   * const nonMetallic = dyeService.getNonMetallicDyes();
-   * // Excludes: Metallic Silver, Metallic Brass, etc.
-   * ```
-   */
-  getNonMetallicDyes(): Dye[] {
-    // BUG-045 (2026-07-18 audit): source the exclusion from the dye data's own
-    // isMetallic flag — the previous locale-derived ID list silently returned
-    // ALL dyes (metallics included) when no locale had ever been loaded
-    return this.getAllDyes().filter((dye) => !dye.isMetallic);
   }
 }

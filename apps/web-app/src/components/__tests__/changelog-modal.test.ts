@@ -134,7 +134,7 @@ describe('ChangelogModal', () => {
       const { ChangelogModal } = await import('../changelog-modal');
       const modal = new ChangelogModal();
 
-      modal.show();
+      await modal.show();
 
       expect(mockShowChangelog).toHaveBeenCalledTimes(1);
     });
@@ -143,10 +143,31 @@ describe('ChangelogModal', () => {
       const { ChangelogModal } = await import('../changelog-modal');
       const modal = new ChangelogModal();
 
-      modal.show();
-      modal.show();
+      await modal.show();
+      await modal.show();
 
       expect(mockShowChangelog).toHaveBeenCalledTimes(1);
+    });
+
+    it('should open once when show() is called twice before the data resolves', async () => {
+      const { ChangelogModal } = await import('../changelog-modal');
+      const modal = new ChangelogModal();
+
+      await Promise.all([modal.show(), modal.show()]);
+
+      expect(mockShowChangelog).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not open when close() runs while the data is still loading', async () => {
+      const { ChangelogModal } = await import('../changelog-modal');
+      const modal = new ChangelogModal();
+
+      const opening = modal.show();
+      modal.close();
+      await opening;
+
+      expect(mockShowChangelog).not.toHaveBeenCalled();
+      expect(mockDismiss).not.toHaveBeenCalled();
     });
   });
 
@@ -159,7 +180,7 @@ describe('ChangelogModal', () => {
       const { ChangelogModal } = await import('../changelog-modal');
       const modal = new ChangelogModal();
 
-      modal.show();
+      await modal.show();
       modal.close();
 
       expect(mockDismiss).toHaveBeenCalledWith('modal-id-456');
@@ -185,7 +206,7 @@ describe('ChangelogModal', () => {
       closeChangelogModal(); // ensure a clean singleton before asserting
       vi.clearAllMocks();
 
-      showChangelogModal();
+      await showChangelogModal();
 
       expect(mockShowChangelog).toHaveBeenCalledTimes(1);
       const config = mockShowChangelog.mock.calls[0][0] as { content: HTMLElement };
@@ -201,8 +222,8 @@ describe('ChangelogModal', () => {
       closeChangelogModal();
       vi.clearAllMocks();
 
-      showChangelogModal();
-      showChangelogModal();
+      await showChangelogModal();
+      await showChangelogModal();
 
       // Second call is a no-op while the modal is already open
       expect(mockShowChangelog).toHaveBeenCalledTimes(1);

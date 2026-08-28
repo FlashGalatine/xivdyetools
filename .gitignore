@@ -5,9 +5,12 @@ node_modules/
 dist/
 *.tsbuildinfo
 
-# Wrangler
+# Wrangler — wrangler also reads per-environment `.dev.vars.<env>` files
+# (FINDING-030, 2026-08-21 security audit); only a committed example is allowed.
 .wrangler/
 .dev.vars
+.dev.vars.*
+!.dev.vars.example
 
 # Coverage
 coverage/
@@ -36,3 +39,15 @@ vitest.config.ts.timestamp*
 # Playwright
 test-results/
 playwright-report/
+# V8 coverage from the chromium-coverage project. NOT matched by `coverage/`
+# above — different directory name. The per-test shards under .tmp/ are ~5.7 MB
+# each and nothing deletes them, so a full `test:e2e` run leaves tens of MB here.
+e2e-coverage/
+
+# VitePress build cache (api-worker docs)
+.vitepress/cache/
+
+# Python bytecode — the locale/font tooling (subset-cjk-fonts.py,
+# fetch_dye_names.py, og-worker's subsetter) drops these next to the scripts
+__pycache__/
+*.pyc

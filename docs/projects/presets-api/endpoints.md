@@ -1,6 +1,14 @@
-# Presets API — Endpoint Reference (v1.4.15)
+# Presets API — Endpoint Reference (v2.0.0)
 
 Full API reference for the Presets API Cloudflare Worker.
+
+> **2.0.0 (5.0 wave):** preset `dyes` are **stainIDs (1–254), 3–6 per preset** — legacy itemIDs
+> (≥ 5729) are rejected with "looks like a legacy item ID"; the `community` category is gone
+> (migration 0007) and `appearance` / `zones` / `raids-trials` were added; a preset carries one
+> primary `category_id` plus up to two `secondary_categories` (0010), an optional `example_link`
+> (0008), and a moderated preview image (`preview_image_key` / `preview_image_status`, 0009 — R2
+> via image-worker `POST /thumbnail`, served from `shots.xivdyetools.app`); rejections carry a
+> `rejection_reason`. Route list below is transcribed from `src/handlers/*.ts`.
 
 ---
 
@@ -44,14 +52,17 @@ List approved presets with pagination.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `page` | number | `1` | Page number |
-| `limit` | number | `20` | Results per page (max 100) |
+| `page` | number | `1` | Page number (clamped to ≥ 1) |
+| `limit` | number | `20` | Results per page (clamped to 1–50) |
 | `category` | string | — | Filter by category |
 | `sort` | string | — | Sort order: `popular`, `recent`, or `name` |
 | `search` | string | — | Free-text search |
-| `tags` | string | — | Filter by tags |
+| `status` | string | `approved` | Moderators only for anything other than `approved`; unknown values → 400 |
+| `is_curated` | `true` \| `false` | — | Restrict to curated (or community) presets |
 
-Actively filters out presets with `status='hidden'`.
+There is no `tags` filter — tags are stored on the preset and returned in the response, but the
+list endpoint does not filter by them. Non-moderators only ever see `approved` presets and the
+audit fields are stripped from their responses.
 
 **Response:**
 
@@ -90,9 +101,11 @@ Submit a new preset.
 |-------|------|-------------|
 | `name` | string | 2-50 characters |
 | `description` | string | 10-200 characters |
-| `dyes` | number[] | 2-5 positive integers |
+| `dyes` | number[] | 3-6 stainIDs (1-254); legacy itemIDs rejected |
 | `tags` | string[] | Max 10 tags, each max 30 characters |
-| `category_id` | number | Must reference a valid category |
+| `category_id` | string | One of `jobs`, `grand-companies`, `seasons`, `events`, `aesthetics`, `appearance`, `zones`, `raids-trials` |
+| `secondary_categories` | string[] | Optional, max 2, must not repeat `category_id` |
+| `example_link` | string | Optional URL to a page about the glamour (validated + normalised) |
 
 **Moderation:** Runs content moderation on submission (local profanity filter + Perspective API).
 
@@ -113,6 +126,21 @@ Edit an owned preset. Validates that the authenticated user owns the preset.
 ### `DELETE /api/v1/presets/:id`
 
 Delete an owned preset. Validates that the authenticated user owns the preset.
+
+### `GET /api/v1/presets/rate-limit`
+
+Remaining submissions for the authenticated user today.
+
+### `PATCH /api/v1/presets/refresh-author`
+
+Refresh the stored author display name from the caller's current identity.
+
+### `POST /api/v1/presets/:id/preview-image` / `DELETE /api/v1/presets/:id/preview-image`
+
+Upload (or remove) a preview image for an owned preset. The upload is thumbnailed by
+`xivdyetools-image-worker` (`POST /thumbnail`, WebP) into the `THUMBNAILS` R2 bucket and enters
+`preview_image_status = 'pending'` until a moderator approves it (a "picture pending review" embed
+with ✅/❌ buttons is posted to the moderation channel via the `DISCORD_WORKER` service binding).
 
 ---
 
@@ -150,45 +178,47 @@ All endpoints in this section require a JWT Bearer token with moderator privileg
 
 Get presets that are pending moderator review.
 
-### `PATCH /api/v1/moderation/:id`
+### `PATCH /api/v1/moderation/:presetId/status`
 
-Update a preset's moderation status.
+Update a preset's moderation status. Transitions are validated server-side (state machine; a
+submitter can never approve their own preset) and applied as one D1 `batch()`.
 
 **Request Body:**
 
 | Field | Type | Constraints |
 |-------|------|-------------|
-| `status` | string | One of: `approve`, `reject`, `flag`, `hide` |
-| `reason` | string | 10-200 characters |
+| `status` | string | Target status: `approved`, `rejected`, `flagged`, `pending` |
+| `reason` | string | 10-200 characters (surfaced to the owner as `rejection_reason` on `GET /presets/mine`, joined from `moderation_log`) |
 
 Creates an entry in the `moderation_log` table.
 
-### `GET /api/v1/moderation/:id/history`
+### `PATCH /api/v1/moderation/:presetId/preview-image`
+
+Approve or reject a pending preview image (`{ action: 'approve' | 'reject' }`). Reject clears only
+the image, never the preset's status. Called by discord-worker's `previewimg_*` buttons as the
+clicking moderator.
+
+### `GET /api/v1/moderation/:presetId/history`
 
 Get the full moderation history for a preset.
 
-### `PATCH /api/v1/moderation/:id/revert`
+### `PATCH /api/v1/moderation/:presetId/revert`
 
 Revert a flagged edit by restoring the preset's `previous_values`.
 
-### `POST /api/v1/moderation/ban`
+### `GET /api/v1/moderation/stats`
 
-Ban a user from the Presets API.
+Moderation queue statistics.
 
-**Request Body:**
+### `GET /api/v1/moderation/failed-notifications` / `PATCH /api/v1/moderation/failed-notifications/:id/resolve`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `discord_id` | string | The Discord user ID to ban |
-| `reason` | string | Reason for the ban |
+Dead-letter queue for Discord notifications that could not be delivered (migration 0005).
 
-### `DELETE /api/v1/moderation/ban/:discordId`
+### Bans
 
-Unban a user by Discord ID.
-
-### `GET /api/v1/moderation/bans`
-
-List all currently banned users.
+There are no ban routes on this API. User bans live in the shared D1 `banned_users` table
+(migration 0003) and are written by `xivdyetools-moderation-worker` (`/preset ban_user` /
+`unban_user`); this API only *checks* the table (`requireNotBannedCheck`) on writes.
 
 ---
 
@@ -198,15 +228,23 @@ The API supports two authentication methods:
 
 ### 1. JWT Bearer
 
-Used by the web app. Pass a JWT in the `Authorization` header:
+Used by the web app. Pass a JWT (issued by `apps/oauth`) in the `Authorization` header:
 
 ```
 Authorization: Bearer <jwt>
 ```
 
+The acting user's identity is taken from the **`discord_id`** claim (the Discord snowflake), with
+the `sub` claim (the oauth worker's internal user UUID) used only as a fallback for XIVAuth-only
+accounts that have no Discord ID. This keeps web and bot requests in the same identity space —
+`author_discord_id`, votes, bans, moderation-log actors and `MODERATOR_IDS` are all keyed by the
+snowflake. `global_name || username` becomes the display name.
+
 ### 2. Bot API Key + HMAC Signature
 
-Used by the Discord bot. Requires the bot API secret plus HMAC signature headers:
+Used by the Discord bot and the moderation worker (via Service Binding). Requires the bot API
+secret plus HMAC signature headers (`BOT_SIGNING_SECRET` is mandatory outside
+`ENVIRONMENT=development|test` — without it bot auth is rejected):
 
 ```
 Authorization: Bearer <BOT_API_SECRET>
@@ -216,10 +254,13 @@ Authorization: Bearer <BOT_API_SECRET>
 
 | Header | Description |
 |--------|-------------|
-| `X-Timestamp` | Request timestamp for replay protection |
-| `X-Discord-Id` | Discord user ID of the acting user |
-| `X-User-Name` | Discord username of the acting user |
-| `X-Signature` | HMAC signature over the request payload |
+| `X-Request-Timestamp` | Unix timestamp (seconds) for replay protection — max age 5 minutes, 1 minute future skew |
+| `X-Request-Signature` | Hex HMAC-SHA256 over `${timestamp}:${discordId}:${userName}` with `BOT_SIGNING_SECRET` |
+| `X-User-Discord-ID` | Discord user ID (snowflake) of the acting user |
+| `X-User-Discord-Name` | Discord username of the acting user (optional; part of the signed message) |
+
+Verification is `verifyBotSignature()` from `@xivdyetools/auth`; the header names live in
+`apps/presets-api/src/middleware/auth.ts`.
 
 ---
 

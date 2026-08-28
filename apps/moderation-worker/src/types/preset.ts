@@ -14,7 +14,6 @@
 export type {
   PresetStatus,
   PresetCategory,
-  PresetSortOption,
   CategoryMeta,
   CommunityPreset,
   PresetPreviousValues,
@@ -33,7 +32,7 @@ export type {
 // PROJECT-SPECIFIC TYPES
 // ============================================================================
 
-import type { PresetStatus, PresetCategory } from '@xivdyetools/types';
+import type { PresetStatus, CommunityPreset } from '@xivdyetools/types';
 
 /**
  * Custom error class for preset API errors
@@ -57,18 +56,6 @@ export class PresetAPIError extends Error {
 // ============================================================================
 
 /**
- * Category display metadata for embeds
- */
-export const CATEGORY_DISPLAY: Record<PresetCategory, { icon: string; name: string }> = {
-  jobs: { icon: '\u2694\uFE0F', name: 'FFXIV Jobs' },
-  'grand-companies': { icon: '\uD83C\uDFDB\uFE0F', name: 'Grand Companies' },
-  seasons: { icon: '\uD83C\uDF42', name: 'Seasons' },
-  events: { icon: '\uD83C\uDF89', name: 'FFXIV Events' },
-  aesthetics: { icon: '\uD83C\uDFA8', name: 'Aesthetics' },
-  community: { icon: '\uD83C\uDF10', name: 'Community' },
-};
-
-/**
  * Status display metadata for embeds
  */
 export const STATUS_DISPLAY: Record<PresetStatus, { icon: string; color: number }> = {
@@ -78,3 +65,25 @@ export const STATUS_DISPLAY: Record<PresetStatus, { icon: string; color: number 
   flagged: { icon: '\uD83D\uDFE0', color: 0xf5a623 },
   hidden: { icon: '\uD83D\uDEAB', color: 0x747f8d },
 };
+
+// ============================================================================
+// Moderation Queue
+// ============================================================================
+
+/**
+ * A moderation-queue entry: the preset plus the pending-image URL, when any.
+ *
+ * Mirrors presets-api's `ModerationQueueEntry`
+ * (apps/presets-api/src/services/preset-service.ts) \u2014 duplicated here rather
+ * than imported because that type is local to presets-api's own service
+ * module, not part of the shared @xivdyetools/types package.
+ *
+ * `pending_preview_image_url` is optional here (the source type has it as
+ * always-present `string | null`) purely so existing `getPendingPresets`
+ * test fixtures written before this field existed stay valid without being
+ * touched \u2014 the real API always includes it. Handler code must treat a
+ * missing value the same as null.
+ */
+export interface ModerationQueueEntry extends CommunityPreset {
+  pending_preview_image_url?: string | null;
+}

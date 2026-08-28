@@ -25,7 +25,13 @@
 
 import type { Context, Next } from 'hono';
 import type { Env } from '../types/env.js';
-import { KVRateLimiter } from '@xivdyetools/rate-limiter';
+import {
+  KVRateLimiter,
+  CloudflareRateLimiter,
+  getModerationLimit,
+  type ExtendedRateLimiter,
+  type RateLimitBinding,
+} from '@xivdyetools/worker-kit/rate-limiter';
 
 /**
  * Rate limit configuration
@@ -65,32 +71,83 @@ export type RateLimitType = 'command' | 'autocomplete';
 
 /**
  * Rate limit configurations for different interaction types
+ *
+ * Sourced from the shared `MODERATION_LIMITS` preset (via `getModerationLimit`)
+ * in `@xivdyetools/worker-kit/rate-limiter` — this middleware's config shape
+ * (`requestsPerMinute`) predates and differs from the shared package's
+ * (`maxRequests` + `windowMs`), so the numbers are adapted here rather than
+ * duplicated.
  */
 export const RATE_LIMIT_CONFIGS: Record<RateLimitType, RateLimitConfig> = {
-  command: {
-    requestsPerMinute: 20,
-    burstAllowance: 5,
-  },
-  autocomplete: {
-    requestsPerMinute: 60,
-    burstAllowance: 10,
-  },
+  command: toLegacyConfig(getModerationLimit('command')),
+  autocomplete: toLegacyConfig(getModerationLimit('autocomplete')),
 };
 
 /**
- * Singleton KV rate limiter instance
+ * Adapt the shared `{ maxRequests, windowMs, burstAllowance }` preset shape
+ * to this middleware's pre-existing `{ requestsPerMinute, burstAllowance }`
+ * shape. The shared presets are always expressed per-minute (`windowMs:
+ * 60_000`), so `windowMs` is dropped rather than carried through.
  */
-let limiterInstance: KVRateLimiter | null = null;
+function toLegacyConfig(config: { maxRequests: number; burstAllowance?: number }): RateLimitConfig {
+  return {
+    requestsPerMinute: config.maxRequests,
+    burstAllowance: config.burstAllowance,
+  };
+}
 
 /**
- * Get or create the KV rate limiter instance
+ * Native Workers Rate Limiting bindings (FINDING-003, 2026-08-21 audit) —
+ * one per interaction type because each `[[ratelimits]]` binding carries a
+ * single fixed limit: `RL_COMMAND` = 20 + 5 burst, `RL_AUTOCOMPLETE` = 60 + 10.
+ * When supplied they replace KV, which cannot throttle a fast client
+ * (1 write/s/key, swallowed put failures, eventually-consistent reads).
  */
-function getLimiter(kv: KVNamespace): KVRateLimiter {
+export interface ModerationRateLimitBindings {
+  command?: RateLimitBinding;
+  autocomplete?: RateLimitBinding;
+}
+
+/** Pull the bindings off the worker env (any may be absent in dev). */
+export function moderationRateLimitBindings(
+  env: Pick<Env, 'RL_COMMAND' | 'RL_AUTOCOMPLETE'>,
+): ModerationRateLimitBindings {
+  return { command: env.RL_COMMAND, autocomplete: env.RL_AUTOCOMPLETE };
+}
+
+/**
+ * Singleton limiter instance (KV or native binding)
+ */
+let limiterInstance: ExtendedRateLimiter | null = null;
+
+function effectiveLimit(type: RateLimitType): number {
+  const cfg = RATE_LIMIT_CONFIGS[type];
+  return cfg.requestsPerMinute + (cfg.burstAllowance ?? 0);
+}
+
+/**
+ * Get or create the rate limiter instance: native bindings when any are
+ * supplied, KV otherwise. The native limiter's `checkOnly` consumes a slot and
+ * its `increment` is a no-op, so the two-phase call pattern below counts each
+ * interaction exactly once on either backend.
+ */
+function getLimiter(kv: KVNamespace, bindings?: ModerationRateLimitBindings): ExtendedRateLimiter {
   if (!limiterInstance) {
-    limiterInstance = new KVRateLimiter({
-      kv,
-      keyPrefix: 'ratelimit:',
-    });
+    const tiers = [];
+    if (bindings?.command) {
+      tiers.push({ limit: effectiveLimit('command'), periodSeconds: 60 as const, binding: bindings.command });
+    }
+    if (bindings?.autocomplete) {
+      tiers.push({
+        limit: effectiveLimit('autocomplete'),
+        periodSeconds: 60 as const,
+        binding: bindings.autocomplete,
+      });
+    }
+    limiterInstance =
+      tiers.length > 0
+        ? new CloudflareRateLimiter({ tiers, keyPrefix: 'ratelimit:' })
+        : new KVRateLimiter({ kv, keyPrefix: 'ratelimit:' });
   }
   return limiterInstance;
 }
@@ -113,9 +170,10 @@ export async function checkRateLimit(
   kv: KVNamespace,
   userId: string,
   type: RateLimitType,
-  config: RateLimitConfig
+  config: RateLimitConfig,
+  bindings?: ModerationRateLimitBindings,
 ): Promise<RateLimitResult> {
-  const limiter = getLimiter(kv);
+  const limiter = getLimiter(kv, bindings);
   const key = `${type}:${userId}`;
 
   // Convert legacy config to shared package format
@@ -150,9 +208,10 @@ export async function incrementRateLimit(
   kv: KVNamespace,
   userId: string,
   type: RateLimitType,
-  _maxRetries: number = 3
+  _maxRetries: number = 3,
+  bindings?: ModerationRateLimitBindings,
 ): Promise<void> {
-  const limiter = getLimiter(kv);
+  const limiter = getLimiter(kv, bindings);
   const key = `${type}:${userId}`;
   const config = RATE_LIMIT_CONFIGS[type];
 
@@ -179,7 +238,7 @@ export async function incrementRateLimit(
 export async function getRateLimitInfo(
   kv: KVNamespace,
   userId: string,
-  type: RateLimitType
+  type: RateLimitType,
 ): Promise<{ current: number; limit: number; resetTime: number }> {
   const config = RATE_LIMIT_CONFIGS[type];
   const limiter = getLimiter(kv);
@@ -218,7 +277,10 @@ export async function getRateLimitInfo(
  * @param c - Hono context
  * @param next - Next middleware
  */
-export async function rateLimitMiddleware(_c: Context<{ Bindings: Env }>, next: Next): Promise<void> {
+export async function rateLimitMiddleware(
+  _c: Context<{ Bindings: Env }>,
+  next: Next,
+): Promise<void> {
   // Pass through - rate limiting is enforced at interaction handler level
   // This middleware just provides the infrastructure
   await next();

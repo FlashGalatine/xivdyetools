@@ -23,16 +23,12 @@ export interface EnvValidationResult {
  * - DISCORD_CLIENT_ID: Discord application ID
  * - PRESETS_API_URL: URL for the Presets API worker
  * - KV: KV namespace binding for rate limiting and preferences
- * - DB: D1 database binding
  */
 export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
 
   // Check required string environment variables (secrets)
-  const requiredSecrets: Array<keyof Env> = [
-    'DISCORD_TOKEN',
-    'DISCORD_PUBLIC_KEY',
-  ];
+  const requiredSecrets: Array<keyof Env> = ['DISCORD_TOKEN', 'DISCORD_PUBLIC_KEY'];
 
   for (const key of requiredSecrets) {
     const value = env[key];
@@ -42,10 +38,7 @@ export function validateEnv(env: Env): EnvValidationResult {
   }
 
   // Check required string environment variables (config)
-  const requiredConfig: Array<keyof Env> = [
-    'DISCORD_CLIENT_ID',
-    'PRESETS_API_URL',
-  ];
+  const requiredConfig: Array<keyof Env> = ['DISCORD_CLIENT_ID', 'PRESETS_API_URL'];
 
   for (const key of requiredConfig) {
     const value = env[key];
@@ -67,14 +60,19 @@ export function validateEnv(env: Env): EnvValidationResult {
     }
   }
 
+  // Follow-up 3: BOT_SIGNING_SECRET is optional (HMAC signing is skipped when
+  // absent — see services/preset-api.ts), but when present it is passed to
+  // @xivdyetools/auth's hmacSignHex, whose createHmacKey throws for secrets
+  // under 32 bytes (FINDING-009). Mirrors oauth's JWT_SECRET check.
+  if (env.BOT_SIGNING_SECRET && typeof env.BOT_SIGNING_SECRET === 'string') {
+    if (env.BOT_SIGNING_SECRET.length < 32) {
+      errors.push('BOT_SIGNING_SECRET must be at least 32 characters for security');
+    }
+  }
+
   // Check KV namespace binding
   if (!env.KV) {
     errors.push('Missing required KV namespace binding: KV');
-  }
-
-  // Check D1 database binding
-  if (!env.DB) {
-    errors.push('Missing required D1 database binding: DB');
   }
 
   // Validate optional MODERATOR_IDS format if present
@@ -111,10 +109,7 @@ export function validateEnv(env: Env): EnvValidationResult {
  * @param errors - Array of validation error messages
  * @param logger - Optional logger for structured logging
  */
-export function logValidationErrors(
-  errors: string[],
-  logger?: ExtendedLogger
-): void {
+export function logValidationErrors(errors: string[], logger?: ExtendedLogger): void {
   if (logger) {
     logger.error('Environment validation failed', undefined, { errors });
   } else {

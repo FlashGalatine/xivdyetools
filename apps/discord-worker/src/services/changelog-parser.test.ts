@@ -1,200 +1,131 @@
-/**
- * Unit tests for the changelog parser.
- *
- * parseLatestVersion reads CHANGELOG-laymans.md format and returns a structured
- * object. Since this is pure string-processing logic there are no external deps.
- */
-
 import { describe, it, expect } from 'vitest';
-import { parseLatestVersion, type ChangelogEntry } from './changelog-parser.js';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parseAll, parseLatestVersion } from './changelog-parser.js';
+// The bot's own notes, bundled as text (wrangler Text rule / vitest plugin) —
+// importing them here exercises the same path /changelog ships with.
+import botChangelog from '../../CHANGELOG-laymans.md';
+import botPackage from '../../package.json';
+import { renderEntry, DESCRIPTION_BUDGET } from '../handlers/commands/changelog.js';
 
-// ============================================================================
-// Fixtures
-// ============================================================================
+const SAMPLE = `# What's New
 
-const SINGLE_VERSION = `
-## [2.5.0] - 2026-04-28
+## [2.0.0] - 2026-08-01
+### 🎨 New Cards
+- Discord bot: every command draws a card now
+- Web app: matching methods renamed
 
-### New Features
-- Added Patch 7.5 dye consolidation support
-- Type-A/B/C dyes now share consolidated item IDs
+### Fixes
+- Link previews: images load again
 
-### Bug Fixes
-- Fixed budget command with facewear dyes
-- Corrected Korean dye names in locale files
+## [1.9.0] - 2026-07-01
+### Older
+- Something older
 `;
 
-const MULTI_VERSION = `
-## [2.5.1] - 2026-05-01
+describe('parseAll', () => {
+  it('parses every entry, newest first', () => {
+    const entries = parseAll(SAMPLE);
+    expect(entries).toHaveLength(2);
+    expect(entries[0].version).toBe('2.0.0');
+    expect(entries[0].date).toBe('2026-08-01');
+    expect(entries[0].sections).toHaveLength(2);
+    expect(entries[0].sections[0].title).toBe('🎨 New Cards');
+    expect(entries[0].sections[0].items).toHaveLength(2);
+    expect(entries[1].version).toBe('1.9.0');
+    expect(entries[1].sections[0].items).toEqual(['Something older']);
+  });
 
-### Improvements
-- Better error messages
-
-## [2.5.0] - 2026-04-28
-
-### New Features
-- Patch 7.5 consolidation
-`;
-
-const MINIMAL_VERSION = `
-## [1.0.0] - 2024-01-01
-
-### Changes
-- Initial release
-`;
-
-const NO_SECTIONS = `
-## [1.0.0] - 2024-01-01
-`;
-
-const EMPTY_STRING = '';
-
-const MALFORMED_HEADER = `
-# Bad Header
-Some content
-`;
-
-// ============================================================================
-// parseLatestVersion
-// ============================================================================
+  it('returns an empty array for contract-breaking content', () => {
+    expect(parseAll('## Web-App Version 4.12.0 — July 19, 2026\n- not contract')).toEqual([]);
+  });
+});
 
 describe('parseLatestVersion', () => {
-  describe('valid single-version changelog', () => {
-    it('parses version and date', () => {
-      const entry = parseLatestVersion(SINGLE_VERSION);
-
-      expect(entry).not.toBeNull();
-      expect(entry!.version).toBe('2.5.0');
-      expect(entry!.date).toBe('2026-04-28');
-    });
-
-    it('parses sections with correct titles', () => {
-      const entry = parseLatestVersion(SINGLE_VERSION)!;
-
-      expect(entry.sections).toHaveLength(2);
-      expect(entry.sections[0].title).toBe('New Features');
-      expect(entry.sections[1].title).toBe('Bug Fixes');
-    });
-
-    it('parses bullet items under each section', () => {
-      const entry = parseLatestVersion(SINGLE_VERSION)!;
-      const newFeatures = entry.sections[0];
-
-      expect(newFeatures.items).toHaveLength(2);
-      expect(newFeatures.items[0]).toBe('Added Patch 7.5 dye consolidation support');
-      expect(newFeatures.items[1]).toBe('Type-A/B/C dyes now share consolidated item IDs');
-    });
-
-    it('parses bug fix items', () => {
-      const entry = parseLatestVersion(SINGLE_VERSION)!;
-      const bugFixes = entry.sections[1];
-
-      expect(bugFixes.items).toHaveLength(2);
-      expect(bugFixes.items[0]).toBe('Fixed budget command with facewear dyes');
-    });
+  it('is parseAll()[0]', () => {
+    const latest = parseLatestVersion(SAMPLE);
+    expect(latest?.version).toBe('2.0.0');
+    expect(latest?.sections[1].items).toEqual(['Link previews: images load again']);
   });
 
-  describe('multi-version changelog', () => {
-    it('returns only the first (latest) version', () => {
-      const entry = parseLatestVersion(MULTI_VERSION)!;
+  it('returns null when nothing parses', () => {
+    expect(parseLatestVersion('no headers here')).toBeNull();
+  });
+});
 
-      expect(entry.version).toBe('2.5.1');
-      expect(entry.date).toBe('2026-05-01');
-    });
+describe('root CHANGELOG-laymans.md', () => {
+  it('exists at the repo root and satisfies the contract', () => {
+    const root = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
+    const content = readFileSync(join(root, 'CHANGELOG-laymans.md'), 'utf8');
+    const entries = parseAll(content);
+    expect(entries.length).toBeGreaterThan(0);
+    expect(entries[0].version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(entries[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(entries[0].sections.length).toBeGreaterThan(0);
+  });
+});
 
-    it('does not include sections from the second version', () => {
-      const entry = parseLatestVersion(MULTI_VERSION)!;
+describe('line endings', () => {
+  it('parses a CRLF file the same as an LF one', () => {
+    // The bundled file is whatever bytes the deploying checkout holds; a
+    // CRLF rewrite must not turn every /changelog reply into "unavailable".
+    expect(parseAll(SAMPLE.replace(/\n/g, '\r\n'))).toEqual(parseAll(SAMPLE));
+  });
+});
 
-      // Only "Improvements" section from 2.5.1; "New Features" from 2.5.0 not included
-      expect(entry.sections).toHaveLength(1);
-      expect(entry.sections[0].title).toBe('Improvements');
-    });
+/** Numeric semver tuple for ordering assertions. */
+const semver = (v: string): number[] => v.split('.').map(Number);
+const semverCompare = (a: string, b: string): number => {
+  const [x, y] = [semver(a), semver(b)];
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i];
+  return 0;
+};
+
+describe("the bot's own CHANGELOG-laymans.md (bundled into /changelog)", () => {
+  it('is bundled as text and every entry satisfies the contract', () => {
+    expect(typeof botChangelog).toBe('string');
+    const entries = parseAll(botChangelog);
+    expect(entries.length).toBeGreaterThan(0);
+    for (const entry of entries) {
+      expect(entry.version, `version header ${entry.version}`).toMatch(/^\d+\.\d+\.\d+$/);
+      expect(entry.date, `date of ${entry.version}`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(entry.sections.length, `${entry.version} has no bullets`).toBeGreaterThan(0);
+    }
   });
 
-  describe('minimal changelog', () => {
-    it('parses a single section correctly', () => {
-      const entry = parseLatestVersion(MINIMAL_VERSION)!;
-
-      expect(entry.version).toBe('1.0.0');
-      expect(entry.sections).toHaveLength(1);
-      expect(entry.sections[0].title).toBe('Changes');
-      expect(entry.sections[0].items[0]).toBe('Initial release');
-    });
+  it('has no `## ` header off the grammar (such a header is silently dropped, or merged into the entry above it)', () => {
+    const headers = botChangelog.split(/\r?\n/).filter((line) => line.startsWith('## '));
+    for (const header of headers) {
+      expect(header).toMatch(/^## \[\d+\.\d+\.\d+\] - \d{4}-\d{2}-\d{2}$/);
+    }
+    expect(headers.length).toBe(parseAll(botChangelog).length);
   });
 
-  describe('edge cases', () => {
-    it('returns null for empty string', () => {
-      expect(parseLatestVersion(EMPTY_STRING)).toBeNull();
-    });
-
-    it('returns null for malformed header (no ## [x.y.z] - date pattern)', () => {
-      expect(parseLatestVersion(MALFORMED_HEADER)).toBeNull();
-    });
-
-    it('returns an entry with no sections when the version has no ### blocks', () => {
-      const entry = parseLatestVersion(NO_SECTIONS);
-
-      expect(entry).not.toBeNull();
-      expect(entry!.version).toBe('1.0.0');
-      expect(entry!.sections).toHaveLength(0);
-    });
-
-    it('handles asterisk bullet items as well as dash bullets', () => {
-      const markdown = `
-## [1.2.3] - 2025-06-01
-
-### Changes
-* First item
-* Second item
-`;
-      const entry = parseLatestVersion(markdown)!;
-
-      expect(entry.sections[0].items).toHaveLength(2);
-      expect(entry.sections[0].items[0]).toBe('First item');
-    });
-
-    it('trims whitespace from date and section titles', () => {
-      const markdown = `
-## [1.0.0] -   2024-01-01
-
-###   Whitespace Title
-- Item
-`;
-      const entry = parseLatestVersion(markdown)!;
-
-      expect(entry.date).toBe('2024-01-01');
-      expect(entry.sections[0].title).toBe('Whitespace Title');
-    });
-
-    it('skips sections with no items (does not include them in sections array)', () => {
-      const markdown = `
-## [1.0.0] - 2024-01-01
-
-### Empty Section
-
-### Non-Empty Section
-- Has an item
-`;
-      const entry = parseLatestVersion(markdown)!;
-
-      // Only "Non-Empty Section" has items; "Empty Section" is skipped
-      expect(entry.sections).toHaveLength(1);
-      expect(entry.sections[0].title).toBe('Non-Empty Section');
-    });
+  it('is ordered newest first, by version and by date', () => {
+    const entries = parseAll(botChangelog);
+    for (let i = 1; i < entries.length; i++) {
+      const [newer, older] = [entries[i - 1], entries[i]];
+      expect(semverCompare(newer.version, older.version), `${newer.version} above ${older.version}`).toBeGreaterThan(0);
+      expect(newer.date >= older.date, `${newer.version} (${newer.date}) above ${older.version} (${older.date})`).toBe(true);
+    }
   });
 
-  describe('return type shape', () => {
-    it('returns a ChangelogEntry with version, date, and sections', () => {
-      const entry = parseLatestVersion(SINGLE_VERSION) as ChangelogEntry;
+  it('never claims a release newer than the version this Worker ships as', () => {
+    // release-process.md: the layman's file may LAG a release that has
+    // nothing player-visible to say (security-only / dependency patches are
+    // folded out), but it must never run AHEAD of package.json — that would
+    // make /changelog describe a bot that is not deployed.
+    expect(
+      semverCompare(parseAll(botChangelog)[0].version, botPackage.version),
+      `newest entry ${parseAll(botChangelog)[0].version} vs package.json ${botPackage.version}`
+    ).toBeLessThanOrEqual(0);
+  });
 
-      expect(typeof entry.version).toBe('string');
-      expect(typeof entry.date).toBe('string');
-      expect(Array.isArray(entry.sections)).toBe(true);
-
-      for (const section of entry.sections) {
-        expect(typeof section.title).toBe('string');
-        expect(Array.isArray(section.items)).toBe(true);
-      }
-    });
+  it('renders its newest entry inside the /changelog embed budget, uncut', () => {
+    const newest = parseAll(botChangelog)[0];
+    const rendered = renderEntry(newest);
+    expect(rendered.endsWith('…'), 'newest entry is cut — trim it or split it').toBe(false);
+    expect(rendered.length).toBeLessThanOrEqual(DESCRIPTION_BUDGET);
   });
 });

@@ -1,0 +1,38 @@
+# gitleaks configuration — FINDING-030 (2026-08-21 security audit)
+#
+# Used by the `secret-scan` job in .github/workflows/ci.yml (GITLEAKS_CONFIG)
+# and by `gitleaks git|dir` locally. Every allowlist entry below was checked
+# against a full-history scan on 2026-08-21 (42 hits, all false positives);
+# add new ones only for a confirmed false positive, with the reason.
+
+title = "xivdyetools"
+
+[extend]
+useDefault = true
+# Discord application IDs and user/guild snowflakes are public identifiers
+# (they appear in docs, API contracts and test fixtures); the *secret* rules
+# (discord-client-secret, discord-api-token) stay active.
+disabledRules = ["discord-client-id"]
+
+# Test fixtures and mocks — fake secrets are the point of these files
+# (`test-signing-secret-padding-1234`, synthetic JWTs, `sk-1234…`).
+[[allowlists]]
+description = "Test fixtures and mocks"
+paths = [
+  '''(^|/)[^/]+\.test\.ts$''',
+  '''(^|/)[^/]+\.spec\.ts$''',
+  '''(^|/)__tests__/''',
+  '''(^|/)tests?/''',
+  '''(^|/)test-utils/''',
+  '''(^|/)e2e/''',
+]
+
+# Known non-secrets the generic rule trips on
+[[allowlists]]
+description = "OAuth client IDs (public, shipped in wrangler [vars]) and web-app localStorage key names"
+regexTarget = "line"
+regexes = [
+  '''XIVAUTH_CLIENT_ID''',
+  '''DISCORD_CLIENT_ID''',
+  '''storageKey\s*:''',
+]

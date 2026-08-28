@@ -11,8 +11,9 @@ import type {
   PresetData,
   CategoryMeta,
   Dye,
+  PresetSortOption,
 } from '@xivdyetools/types';
-import { dyeService as sharedDyeService } from './dye-service-wrapper';
+import { dyeService as sharedDyeService, resolvePresetDye } from './dye-service-wrapper';
 import {
   CommunityPresetService,
   communityPresetService,
@@ -20,6 +21,7 @@ import {
   type PresetFilters,
 } from './community-preset-service';
 import { logger } from '@shared/logger';
+import { sanitizeExampleLink, sanitizePreviewImageUrl } from '@shared/example-link';
 
 // ============================================
 // Types
@@ -33,6 +35,8 @@ export interface UnifiedPreset {
   name: string;
   description: string;
   category: PresetCategory;
+  /** Up to two extra categories; the rail matches on either slot */
+  secondaryCategories: PresetCategory[];
   dyes: number[];
   tags: string[];
   /** Author name for community presets, undefined for curated */
@@ -47,6 +51,10 @@ export interface UnifiedPreset {
   apiPresetId?: string;
   /** Creation date for community presets */
   createdAt?: string;
+  /** 8A: allowlisted example-link page URL, when the author gave one */
+  exampleLink?: string | null;
+  /** Approved preview image URL; absent until a moderator approves it. */
+  previewImageUrl?: string | null;
 }
 
 /**
@@ -61,10 +69,9 @@ export interface UnifiedCategory {
   isCurated: boolean;
 }
 
-/**
- * Sort options for presets
- */
-export type PresetSortOption = 'popular' | 'recent' | 'name';
+// PresetSortOption is the shared `@xivdyetools/types` contract, re-exported
+// here so existing `@services/hybrid-preset-service` imports keep working.
+export type { PresetSortOption };
 
 /**
  * Options for fetching presets
@@ -85,7 +92,7 @@ export interface GetPresetsOptions {
  * Hybrid Preset Service
  * Singleton that provides unified access to both local and community presets
  */
-export class HybridPresetService {
+class HybridPresetService {
   private static instance: HybridPresetService | null = null;
 
   private readonly localPresetService: PresetService;
@@ -146,6 +153,7 @@ export class HybridPresetService {
       name: preset.name,
       description: preset.description,
       category: preset.category,
+      secondaryCategories: [],
       dyes: preset.dyes,
       tags: preset.tags,
       author: preset.author,
@@ -164,6 +172,7 @@ export class HybridPresetService {
       name: preset.name,
       description: preset.description,
       category: preset.category_id,
+      secondaryCategories: preset.secondary_categories ?? [],
       dyes: preset.dyes,
       tags: preset.tags,
       author: preset.author_name || undefined,
@@ -172,6 +181,11 @@ export class HybridPresetService {
       isFromAPI: true,
       apiPresetId: preset.id,
       createdAt: preset.created_at,
+      // WEB-14: API → UI boundary. The server enforces the host allowlist;
+      // the read path re-checks so a server-side regression cannot put an
+      // arbitrary href/src into a trusted card.
+      exampleLink: sanitizeExampleLink(preset.example_link),
+      previewImageUrl: sanitizePreviewImageUrl(preset.preview_image_url),
     };
   }
 
@@ -209,33 +223,14 @@ export class HybridPresetService {
           if (existing) {
             // Add community count to existing category
             existing.presetCount += apiCat.preset_count;
-          } else if (apiCat.id === 'community') {
-            // Add community category
-            categoryMap.set('community', {
-              id: 'community',
-              name: apiCat.name,
-              description: apiCat.description,
-              icon: apiCat.icon || '🌐',
-              presetCount: apiCat.preset_count,
-              isCurated: false,
-            });
           }
+          // 5.0: the 'community' category value is dropped everywhere —
+          // community-ness is a source, not a category (rows carry their
+          // real category; the D1 migration removes the category row).
         }
       } catch (error) {
         logger.warn('HybridPresetService: Failed to fetch API categories', error);
       }
-    }
-
-    // Add community category if not present but API is available
-    if (this.apiAvailable && !categoryMap.has('community')) {
-      categoryMap.set('community', {
-        id: 'community',
-        name: 'Community',
-        description: 'User-submitted color palettes',
-        icon: '🌐',
-        presetCount: 0,
-        isCurated: false,
-      });
     }
 
     return Array.from(categoryMap.values());
@@ -261,8 +256,9 @@ export class HybridPresetService {
 
     let presets: UnifiedPreset[] = [];
 
-    // Handle community category specially
-    if (category === 'community') {
+    // 5.0: 'community' is no longer a category — kept only as an
+    // unreachable guard while callers migrate.
+    if ((category as string) === 'community') {
       if (this.apiAvailable && includeAPI) {
         try {
           const response = await this.communityService.getPresets({
@@ -285,7 +281,8 @@ export class HybridPresetService {
     if (category) {
       localPresets = this.localPresetService.getPresetsByCategory(category);
     } else if (search) {
-      localPresets = this.localPresetService.searchPresets(search);
+      // Pass the dye service so a palette matches on its dye names too
+      localPresets = this.localPresetService.searchPresets(search, this.dyeService);
     } else {
       localPresets = this.localPresetService.getAllPresets();
     }
@@ -416,7 +413,7 @@ export class HybridPresetService {
    * Resolve dye IDs to Dye objects
    */
   resolveDyes(dyeIds: number[]): (Dye | null)[] {
-    return dyeIds.map((id) => this.dyeService.getDyeById(id));
+    return dyeIds.map((id) => resolvePresetDye(id) ?? null);
   }
 
   /**

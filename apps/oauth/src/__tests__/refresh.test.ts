@@ -143,8 +143,9 @@ describe('Refresh Handler', () => {
         it('should reject token expired beyond grace period', async () => {
             const { token } = await createJWT(mockUser, mockEnv);
 
-            // Advance time past 24-hour grace period
-            vi.advanceTimersByTime((3600 + 24 * 60 * 60 + 1) * 1000);
+            // FINDING-001: the grace period is the shared REFRESH_GRACE_SECONDS
+            // (15 min), no longer 24 h — advance just past exp + grace
+            vi.advanceTimersByTime((3600 + 15 * 60 + 1) * 1000);
 
             const response = await SELF.fetch('http://localhost/auth/refresh', {
                 method: 'POST',
@@ -471,6 +472,58 @@ describe('Refresh Handler', () => {
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
+            expect(json.error).toContain('revoked');
+        });
+
+        it('FINDING-001: a revoked token stays un-refreshable after it expires (blacklist outlives exp)', async () => {
+            const envWithKV = createEnvWithKV();
+            const { token } = await createJWT(mockUser, envWithKV);
+
+            // User logs out while the token is still valid
+            const revokeResponse = await fetchWithEnv(envWithKV, 'http://localhost/auth/revoke', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            expect(revokeResponse.status).toBe(200);
+
+            // Token expires (1 h) — still inside the refresh grace window
+            vi.advanceTimersByTime((3600 + 60) * 1000);
+
+            const response = await fetchWithEnv(envWithKV, 'http://localhost/auth/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token }),
+            });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(401);
+            expect(json.error).toContain('revoked');
+        });
+
+        it('FINDING-001: a token that was already refreshed cannot be refreshed again after it expires', async () => {
+            const envWithKV = createEnvWithKV();
+            const { token } = await createJWT(mockUser, envWithKV);
+
+            // Refresh while valid → old jti is rotated out
+            vi.advanceTimersByTime(1000);
+            const first = await fetchWithEnv(envWithKV, 'http://localhost/auth/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token }),
+            });
+            expect(first.status).toBe(200);
+
+            // Old token expires; the 60 s minimum TTL of the old rotation revoke has long passed
+            vi.advanceTimersByTime((3600 + 120) * 1000);
+
+            const second = await fetchWithEnv(envWithKV, 'http://localhost/auth/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token }),
+            });
+            const json = (await second.json()) as Record<string, any>;
+
+            expect(second.status).toBe(401);
             expect(json.error).toContain('revoked');
         });
 

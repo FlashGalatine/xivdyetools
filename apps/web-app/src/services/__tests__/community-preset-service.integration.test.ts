@@ -254,7 +254,7 @@ describe('CommunityPresetService Integration Tests', () => {
         const result = await service.voteForPreset('preset-1');
 
         expect(result.success).toBe(false);
-        expect(result.error).toContain('logged in');
+        expect(result.errorCode).toBe('notLoggedIn');
       });
 
       it('should successfully vote when authenticated', async () => {
@@ -285,6 +285,7 @@ describe('CommunityPresetService Integration Tests', () => {
 
         expect(result.success).toBe(false);
         expect(result.already_voted).toBe(true);
+        expect(result.errorCode).toBe('alreadyVoted');
       });
     });
 
@@ -295,7 +296,7 @@ describe('CommunityPresetService Integration Tests', () => {
         const result = await service.removeVote('preset-1');
 
         expect(result.success).toBe(false);
-        expect(result.error).toContain('logged in');
+        expect(result.errorCode).toBe('notLoggedIn');
       });
 
       it('should successfully remove vote when authenticated', async () => {
@@ -409,5 +410,76 @@ describe('CommunityPresetService Integration Tests', () => {
       // This should timeout and throw
       await expect(service.getPresets()).rejects.toThrow('timeout');
     }, 20000);
+  });
+
+  // ============================================
+  // API origin + path encoding (2026-08-21 security audit)
+  // ============================================
+
+  describe('API origin and path encoding', () => {
+    const jsonResponse = (body: unknown) =>
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+    afterEach(() => {
+      delete (window as unknown as { PRESET_API_URL?: string }).PRESET_API_URL;
+    });
+
+    // FINDING-032 / WEB-4: a `window.PRESET_API_URL` global could be defined by
+    // DOM clobbering (`<a id="PRESET_API_URL" href="https://evil.workers.dev/">`)
+    // and would redirect bearer-token requests. The origin is build-time only.
+    it('ignores a window.PRESET_API_URL global and keeps the build-time API origin', async () => {
+      (window as unknown as { PRESET_API_URL?: string }).PRESET_API_URL =
+        'https://evil.workers.dev';
+      // @ts-expect-error - accessing private static for testing
+      CommunityPresetService.instance = null;
+      const clobbered = CommunityPresetService.getInstance();
+
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValue(jsonResponse({ id: 'preset-1' }));
+
+      await clobbered.getPreset('preset-1');
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(String(fetchSpy.mock.calls[0][0])).toBe(`${API_URL}/api/v1/presets/preset-1`);
+      fetchSpy.mockRestore();
+    });
+
+    // FINDING-020 / WEB-11: ids come from the API and the URL path today, but a
+    // path segment is a path segment — encode it.
+    it('percent-encodes the preset id in the preset path', async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({}));
+
+      await service.getPreset('a/b?c=d#e');
+
+      expect(String(fetchSpy.mock.calls[0][0])).toBe(`${API_URL}/api/v1/presets/a%2Fb%3Fc%3Dd%23e`);
+      fetchSpy.mockRestore();
+    });
+
+    it('percent-encodes the preset id in the vote paths', async () => {
+      vi.mocked(authService.isAuthenticated).mockReturnValue(true);
+      vi.mocked(authService.getAuthHeaders).mockReturnValue({
+        Authorization: 'Bearer test-token',
+      });
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(async () =>
+          jsonResponse({ success: true, new_vote_count: 1, has_voted: true, vote_count: 1 })
+        );
+
+      await service.voteForPreset('a/b');
+      await service.removeVote('a/b');
+      await service.hasVoted('a/b');
+
+      expect(fetchSpy.mock.calls.map((call) => String(call[0]))).toEqual([
+        `${API_URL}/api/v1/votes/a%2Fb`,
+        `${API_URL}/api/v1/votes/a%2Fb`,
+        `${API_URL}/api/v1/votes/a%2Fb/check`,
+      ]);
+      fetchSpy.mockRestore();
+    });
   });
 });

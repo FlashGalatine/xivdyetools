@@ -5,7 +5,8 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import type { MatchingMethod, OklchWeights } from '../../types/index.js';
+import type { MatchingMethod } from '../../types/index.js';
+import { COLOR_DISTANCE_MAX } from '../../constants/index.js';
 import { ColorConverter } from '../color/ColorConverter.js';
 import type { Point3D } from '../../utils/kd-tree.js';
 import type { DyeDatabase } from './DyeDatabase.js';
@@ -16,10 +17,8 @@ import type { DyeDatabase } from './DyeDatabase.js';
 export interface FindClosestOptions {
   /** Dye IDs to exclude from results */
   excludeIds?: number[];
-  /** Color matching algorithm (default: 'oklab') */
+  /** Color matching algorithm (default: 'ciede2000' — see DEFAULT_MATCHING_METHOD) */
   matchingMethod?: MatchingMethod;
-  /** Custom weights for oklch-weighted method */
-  weights?: OklchWeights;
 }
 
 /**
@@ -30,10 +29,8 @@ export interface FindWithinDistanceOptions {
   maxDistance: number;
   /** Maximum number of results to return */
   limit?: number;
-  /** Color matching algorithm (default: 'rgb' for backwards compatibility) */
+  /** Color matching algorithm (default: 'ciede2000' — see DEFAULT_MATCHING_METHOD) */
   matchingMethod?: MatchingMethod;
-  /** Custom weights for oklch-weighted method */
-  weights?: OklchWeights;
 }
 
 /**
@@ -54,31 +51,27 @@ export class DyeSearch {
    * @param hex1 - First color in hex format
    * @param hex2 - Second color in hex format
    * @param method - Matching algorithm to use
-   * @param weights - Custom weights for oklch-weighted method
    * @returns Distance value (lower = more similar)
    */
-  private calculateDistance(
-    hex1: string,
-    hex2: string,
-    method: MatchingMethod,
-    weights?: OklchWeights
-  ): number {
+  private calculateDistance(hex1: string, hex2: string, method: MatchingMethod): number {
     switch (method) {
       case 'rgb':
         return ColorConverter.getColorDistance(hex1, hex2);
+      case 'redmean':
+        return ColorConverter.getRedmeanDistance(hex1, hex2);
+      case 'distinguish':
+        // Unrounded percent: identical ranks to RGB DIST (no ranking ties);
+        // display rounding happens at the consumer, where ties badge TIE.
+        return (ColorConverter.getColorDistance(hex1, hex2) / COLOR_DISTANCE_MAX) * 100;
+      // The three perceptual methods share their spelling with DeltaEFormula
+      // (DEAD-037, 2026-08-18 audit) — no translation switch needed.
       case 'cie76':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
       case 'ciede2000':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
       case 'oklab':
-        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-      case 'hyab':
-        return ColorConverter.getDeltaE_HyAB(hex1, hex2);
-      case 'oklch-weighted':
-        return ColorConverter.getDeltaE_OklchWeighted(hex1, hex2, weights);
+        return ColorConverter.getDeltaE(hex1, hex2, method);
       default:
-        // Default to OKLAB for unknown methods
-        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
+        // Default to dE2000 for unknown methods (the suite default)
+        return ColorConverter.getDeltaE(hex1, hex2, 'ciede2000');
     }
   }
 
@@ -122,7 +115,7 @@ export class DyeSearch {
       excludeIds?: number[];
       minPrice?: number;
       maxPrice?: number;
-    } = {}
+    } = {},
   ): Dye[] {
     this.database.ensureLoaded();
     let results = [...this.database.getDyesInternal()];
@@ -155,27 +148,26 @@ export class DyeSearch {
    * Per P-7: Uses k-d tree for O(log n) initial candidates, then re-ranks
    * using the specified perceptual distance algorithm.
    *
-   * Per COLOR-MATCH-001: Supports multiple matching algorithms:
-   * - 'rgb': RGB Euclidean (fastest, least accurate)
+   * Per COLOR-MATCH-001 (5.0 suite): Supports the six `MatchingMethod`s:
+   * - 'ciede2000': CIEDE2000 (industry standard, accurate) — the default
+   * - 'oklab': OKLAB Euclidean (modern, good balance)
    * - 'cie76': CIE76 LAB Euclidean (fast, fair accuracy)
-   * - 'ciede2000': CIEDE2000 (industry standard, accurate)
-   * - 'oklab': OKLAB Euclidean (recommended, good balance)
-   * - 'hyab': HyAB hybrid (best for large color differences)
-   * - 'oklch-weighted': OKLCH with custom L/C/H weights
+   * - 'redmean': Redmean-weighted RGB (cheap perceptual approximation)
+   * - 'rgb': RGB Euclidean (fastest, least accurate)
+   * - 'distinguish': RGB distance as an unrounded percent of the max (same
+   *   ranking as 'rgb'; display-only rounding happens at the consumer)
+   *
+   * The v4 methods 'hyab' / 'oklch-weighted' are retired; unknown values fall
+   * back to CIEDE2000 (see `normalizeMatchingMethod`).
    *
    * @param hex - Target color in hex format
-   * @param excludeIdsOrOptions - Either an array of IDs to exclude (legacy) or options object
+   * @param options - Options object (excludeIds, matchingMethod)
    * @returns Closest matching dye, or null if none found
    */
-  findClosestDye(hex: string, excludeIdsOrOptions: number[] | FindClosestOptions = []): Dye | null {
+  findClosestDye(hex: string, options: FindClosestOptions = {}): Dye | null {
     this.database.ensureLoaded();
 
-    // Support both legacy signature and new options object
-    const options: FindClosestOptions = Array.isArray(excludeIdsOrOptions)
-      ? { excludeIds: excludeIdsOrOptions }
-      : excludeIdsOrOptions;
-
-    const { excludeIds = [], matchingMethod = 'oklab', weights } = options;
+    const { excludeIds = [], matchingMethod = 'ciede2000' } = options;
 
     try {
       const targetRgb = ColorConverter.hexToRgb(hex);
@@ -223,7 +215,7 @@ export class DyeSearch {
         }
 
         try {
-          const distance = this.calculateDistance(hex, dye.hex, matchingMethod, weights);
+          const distance = this.calculateDistance(hex, dye.hex, matchingMethod);
           if (distance < minDistance) {
             minDistance = distance;
             closest = dye;
@@ -240,7 +232,7 @@ export class DyeSearch {
       // CORE-REF-001 FIX: Log complete search failures (e.g., invalid input hex)
       // These are unexpected and indicate caller provided bad input
       this.logger.warn(
-        `[DyeSearch.findClosestDye] Search failed for hex "${hex}": ${error instanceof Error ? error.message : 'Unknown error'}`
+        `[DyeSearch.findClosestDye] Search failed for hex "${hex}": ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       return null;
     }
@@ -255,24 +247,13 @@ export class DyeSearch {
    * Per COLOR-MATCH-001: Supports multiple matching algorithms.
    *
    * @param hex - Target color in hex format
-   * @param maxDistanceOrOptions - Either maxDistance number (legacy) or options object
-   * @param limit - Maximum results (legacy parameter, use options.limit instead)
+   * @param options - Options object (maxDistance, limit, matchingMethod)
    * @returns Array of dyes within the distance threshold
    */
-  findDyesWithinDistance(
-    hex: string,
-    maxDistanceOrOptions: number | FindWithinDistanceOptions,
-    limit?: number
-  ): Dye[] {
+  findDyesWithinDistance(hex: string, options: FindWithinDistanceOptions): Dye[] {
     this.database.ensureLoaded();
 
-    // Support both legacy signature and new options object
-    const options: FindWithinDistanceOptions =
-      typeof maxDistanceOrOptions === 'number'
-        ? { maxDistance: maxDistanceOrOptions, limit }
-        : maxDistanceOrOptions;
-
-    const { maxDistance, limit: resultLimit, matchingMethod = 'rgb', weights } = options;
+    const { maxDistance, limit: resultLimit, matchingMethod = 'ciede2000' } = options;
 
     try {
       const targetRgb = ColorConverter.hexToRgb(hex);
@@ -314,7 +295,7 @@ export class DyeSearch {
             continue;
           }
 
-          const distance = this.calculateDistance(hex, dye.hex, matchingMethod, weights);
+          const distance = this.calculateDistance(hex, dye.hex, matchingMethod);
           if (distance <= maxDistance) {
             results.push({ dye, distance });
           }
@@ -336,51 +317,9 @@ export class DyeSearch {
       // CORE-REF-001 FIX: Log complete search failures (e.g., invalid input hex)
       // These are unexpected and indicate caller provided bad input
       this.logger.warn(
-        `[DyeSearch.findDyesWithinDistance] Search failed for hex "${hex}": ${error instanceof Error ? error.message : 'Unknown error'}`
+        `[DyeSearch.findDyesWithinDistance] Search failed for hex "${hex}": ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       return [];
     }
-  }
-
-  /**
-   * Get dyes sorted by brightness
-   */
-  getDyesSortedByBrightness(ascending: boolean = true): Dye[] {
-    this.database.ensureLoaded();
-
-    return [...this.database.getDyesInternal()].sort((a, b) => {
-      const brightnessA = a.hsv.v;
-      const brightnessB = b.hsv.v;
-
-      return ascending ? brightnessA - brightnessB : brightnessB - brightnessA;
-    });
-  }
-
-  /**
-   * Get dyes sorted by saturation
-   */
-  getDyesSortedBySaturation(ascending: boolean = true): Dye[] {
-    this.database.ensureLoaded();
-
-    return [...this.database.getDyesInternal()].sort((a, b) => {
-      const satA = a.hsv.s;
-      const satB = b.hsv.s;
-
-      return ascending ? satA - satB : satB - satA;
-    });
-  }
-
-  /**
-   * Get dyes sorted by hue
-   */
-  getDyesSortedByHue(ascending: boolean = true): Dye[] {
-    this.database.ensureLoaded();
-
-    return [...this.database.getDyesInternal()].sort((a, b) => {
-      const hueA = a.hsv.h;
-      const hueB = b.hsv.h;
-
-      return ascending ? hueA - hueB : hueB - hueA;
-    });
   }
 }

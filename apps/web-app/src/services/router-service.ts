@@ -8,6 +8,8 @@
  */
 
 import { logger } from '@shared/logger';
+import { APP_NAME } from '@shared/constants';
+import { LanguageService } from './language-service';
 
 // ============================================================================
 // Types
@@ -35,7 +37,12 @@ export type ToolId =
 export interface RouteDefinition {
   id: ToolId;
   path: string;
-  title: string;
+  /**
+   * Locale key for the route's display title (HC-SYS-006). The tool
+   * namespaces predate the v4 id rename, so two ids do not match their key:
+   * `extractor` → `tools.matcher.*` and `swatch` → `tools.character.*`.
+   */
+  titleKey: string;
 }
 
 export interface RouteState {
@@ -56,15 +63,15 @@ const DEFAULT_TOOL: ToolId = 'harmony';
  * Updated tool names and paths for v4 UI migration
  */
 export const ROUTES: RouteDefinition[] = [
-  { id: 'harmony', path: '/harmony', title: 'Harmony Explorer' },
-  { id: 'extractor', path: '/extractor', title: 'Palette Extractor' },
-  { id: 'accessibility', path: '/accessibility', title: 'Accessibility Checker' },
-  { id: 'comparison', path: '/comparison', title: 'Dye Comparison' },
-  { id: 'gradient', path: '/gradient', title: 'Gradient Builder' },
-  { id: 'presets', path: '/presets', title: 'Community Presets' },
-  { id: 'budget', path: '/budget', title: 'Budget Suggestions' },
-  { id: 'swatch', path: '/swatch', title: 'Swatch Matcher' },
-  { id: 'mixer', path: '/mixer', title: 'Dye Mixer' }, // NEW tool
+  { id: 'harmony', path: '/harmony', titleKey: 'tools.harmony.title' },
+  { id: 'extractor', path: '/extractor', titleKey: 'tools.matcher.title' },
+  { id: 'accessibility', path: '/accessibility', titleKey: 'tools.accessibility.title' },
+  { id: 'comparison', path: '/comparison', titleKey: 'tools.comparison.title' },
+  { id: 'gradient', path: '/gradient', titleKey: 'tools.gradient.title' },
+  { id: 'presets', path: '/presets', titleKey: 'tools.presets.title' },
+  { id: 'budget', path: '/budget', titleKey: 'tools.budget.title' },
+  { id: 'swatch', path: '/swatch', titleKey: 'tools.character.title' },
+  { id: 'mixer', path: '/mixer', titleKey: 'tools.mixer.title' }, // NEW tool
 ];
 
 /**
@@ -139,6 +146,15 @@ export class RouterService {
   }
 
   /**
+   * The router's own default tool. Consumers that need "somewhere deliberate"
+   * to land (Welcome's Get started, the tour prompt) call this instead of
+   * naming a tool — the default lives here and only here.
+   */
+  static getDefaultTool(): ToolId {
+    return DEFAULT_TOOL;
+  }
+
+  /**
    * Navigate to a tool
    * @param toolId - The tool to navigate to
    * @param additionalParams - Additional query parameters to add
@@ -174,11 +190,13 @@ export class RouterService {
     const queryString = newParams.toString();
     const url = route.path + (queryString ? `?${queryString}` : '');
 
+    const documentTitle = this.composeDocumentTitle(route);
+
     // Update browser history
-    history.pushState({ toolId }, route.title, url);
+    history.pushState({ toolId }, documentTitle, url);
 
     // Update document title
-    document.title = `${route.title} | XIV Dye Tools`;
+    document.title = documentTitle;
 
     // Update internal state and notify listeners
     this.currentToolId = toolId;
@@ -214,8 +232,9 @@ export class RouterService {
     const queryString = newParams.toString();
     const url = route.path + (queryString ? `?${queryString}` : '');
 
-    history.replaceState({ toolId }, route.title, url);
-    document.title = `${route.title} | XIV Dye Tools`;
+    const documentTitle = this.composeDocumentTitle(route);
+    history.replaceState({ toolId }, documentTitle, url);
+    document.title = documentTitle;
 
     this.currentToolId = toolId;
     this.notifyListeners();
@@ -248,6 +267,20 @@ export class RouterService {
   static subscribe(listener: RouteChangeListener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  /**
+   * Re-compose `document.title` for the current route in the active locale.
+   *
+   * Route titles are locale keys resolved at render time, so a language switch
+   * leaves the tab title stale until something re-reads them. The layout's
+   * locale subscriber calls this (HC-SYS-006).
+   */
+  static refreshDocumentTitle(): void {
+    const route = this.getRouteForTool(this.currentToolId);
+    if (route) {
+      document.title = this.composeDocumentTitle(route);
+    }
   }
 
   /**
@@ -321,6 +354,11 @@ export class RouterService {
   // Private Methods
   // ============================================================================
 
+  /** `"<localized tool title> | <app name>"` for a route. */
+  private static composeDocumentTitle(route: RouteDefinition): string {
+    return `${LanguageService.t(route.titleKey)} | ${APP_NAME}`;
+  }
+
   private static handlePopState = (event: PopStateEvent): void => {
     const state = event.state as { toolId?: ToolId } | null;
 
@@ -335,7 +373,7 @@ export class RouterService {
     // Update title
     const route = this.getRouteForTool(this.currentToolId);
     if (route) {
-      document.title = `${route.title} | XIV Dye Tools`;
+      document.title = this.composeDocumentTitle(route);
     }
 
     this.notifyListeners();
@@ -364,7 +402,7 @@ export class RouterService {
       // Update title
       const route = this.getRouteForTool(toolId);
       if (route) {
-        document.title = `${route.title} | XIV Dye Tools`;
+        document.title = this.composeDocumentTitle(route);
       }
     }
   }

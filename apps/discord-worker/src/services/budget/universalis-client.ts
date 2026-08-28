@@ -12,6 +12,7 @@
 
 import type { Env } from '../../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import { createTranslator, type LocaleCode } from '@xivdyetools/bot-logic/i18n';
 import { UniversalisError, type DyePriceData } from '../../types/budget.js';
 
 // ============================================================================
@@ -378,9 +379,11 @@ export async function validateWorld(
 export async function getWorldAutocomplete(
   env: Env,
   query: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
+  locale: LocaleCode = 'en',
 ): Promise<Array<{ name: string; value: string }>> {
   const normalizedQuery = query.toLowerCase().trim();
+  const t = createTranslator(locale);
 
   try {
     const [worlds, dataCenters] = await Promise.all([
@@ -394,7 +397,7 @@ export async function getWorldAutocomplete(
     for (const dc of dataCenters) {
       if (dc.name.toLowerCase().includes(normalizedQuery)) {
         suggestions.push({
-          name: `${dc.name} (${dc.region} Data Center)`,
+          name: t.t('budget.dataCenterLabel', { name: dc.name, region: dc.region }),
           value: dc.name,
         });
       }

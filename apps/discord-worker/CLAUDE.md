@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The primary FFXIV Dye Tools Discord bot, running on Cloudflare Workers via Discord HTTP Interactions (no Gateway WebSocket — fully serverless). All slash commands, autocompletes, button clicks, and modal submissions hit a single POST endpoint that verifies an Ed25519 signature and routes by interaction type.
 
-This worker replaces the deprecated `xivdyetools-discord-bot` (Node.js + discord.js Gateway bot). It hosts ~20 user-facing commands spanning color matching, harmony generation, image extraction, dye comparison, accessibility checks, favorites/collections, community presets, and a Universalis-backed `/budget` command. Renders SVG cards converted to PNG via `resvg-wasm` and uses `photon-wasm` for dominant-color extraction from uploaded images.
+This worker replaces the deprecated `xivdyetools-discord-bot` (Node.js + discord.js Gateway bot). It hosts the 5.0 command set spanning colour matching, harmony generation, image extraction, dye comparison, WCAG contrast, colour-vision accessibility, `.chara` character files, community presets, and the Universalis-backed 13G `/budget` ledger. The v4 `/match`, `/match_image`, `/favorites`, `/collection` and `/language` commands were deleted in 5.0. Renders SVG cards converted to PNG via `resvg-wasm`; dominant-color extraction from uploaded images is delegated to `xivdyetools-image-worker` over a Service Binding (`photon-wasm` moved there in the image-worker split — see `docs/operations/IMAGE_WORKER_SPLIT.md`).
 
 ## Commands
 
 ```bash
 npm run dev                  # wrangler dev (local interactions endpoint)
-npm run deploy               # Deploy to staging (default env)
+npm run deploy               # Deploy the BETA bot (xivdyetools-discord-worker-dev, *.workers.dev)
 npm run deploy:production    # Deploy to production env
 npm run test                 # vitest unit tests
 npm run test:integration     # vitest integration tests (separate config)
@@ -89,27 +89,30 @@ The `/webhooks/preset-submission` endpoint receives notifications from `presets-
 src/
 ├── index.ts                       # Hono app, routing, Ed25519 verification, webhooks
 ├── handlers/
-│   ├── commands/                  # One file per slash command (about, harmony, dye, match, match-image,
-│   │                              # accessibility, comparison, mixer-v4, gradient, swatch, extractor,
-│   │                              # favorites, collection, preset, preferences, language, stats, budget,
-│   │                              # manual) — preset-notifications.ts is NOT a command; it builds/sends
+│   ├── commands/                  # One file per slash command (about, harmony, dye, accessibility,
+│   │                              # comparison, contrast, mixer-v4, gradient, swatch, extractor,
+│   │                              # preset, preferences, stats, budget, changelog, manual).
+│   │                              # The v4 match / match-image / favorites / collection / language
+│   │                              # files were DELETED in 5.0 — don't reintroduce them.
+│   │                              # preset-notifications.ts is NOT a command; it builds/sends
 │   │                              # the moderation-channel embeds for incoming preset submissions
-│   ├── buttons/                   # Component handlers (copy.ts, index.ts dispatcher)
-│   └── modals/                    # Modal submission handlers (currently unused in this worker)
+│   └── buttons/                   # Component handlers (copy.ts, preview-image.ts moderation buttons, index.ts dispatcher)
+│                                  # The modals/ placeholder (index.ts only, never wired to a modal) was
+│                                  # removed 2026-08-18 — don't reintroduce it without a real consumer.
 ├── services/
 │   ├── analytics.ts               # KV counters + Analytics Engine writes
 │   ├── rate-limiter.ts            # Upstash-first sliding window with KV fallback
-│   ├── user-storage.ts            # Favorites + collections in KV
-│   ├── preferences.ts             # User preferences (race/clan, world, language)
+│   ├── preset-favorites.ts        # Per-user preset favourites in KV (/preset favorite add|remove|list)
+│   ├── preferences.ts             # User preferences (race/clan, world, language, matching, theme)
 │   ├── preset-api.ts              # Service Binding client to presets-api
 │   ├── i18n.ts                    # Locale resolution + dye name lookup
 │   ├── bot-i18n.ts                # Bot UI translator (createTranslator/createUserTranslator)
 │   ├── emoji.ts                   # Application emoji helpers
-│   ├── component-context.ts       # Encodes interaction context into custom_id payloads
-│   ├── changelog-parser.ts        # Parse CHANGELOG-laymans.md for /webhooks/github
+│   ├── fonts.ts                   # Bundled TTF buffers for resvg (brand + Noto Sans JP/SC/KR subsets)
+│   ├── changelog-parser.ts        # Parse CHANGELOG-laymans.md files (root → /webhooks/github; this app's → /changelog)
 │   ├── announcements.ts           # Send formatted release embeds
 │   ├── svg/                       # Card renderers + resvg PNG conversion
-│   ├── image/                     # Photon WASM dominant color + validators
+│   ├── image-client.ts            # IMAGE_WORKER service-binding client (photon moved to xivdyetools-image-worker)
 │   └── budget/                    # Universalis price cache, calculator, quick picks
 ├── utils/
 │   ├── verify.ts                  # Ed25519 signature verification + timingSafeEqual
@@ -126,6 +129,7 @@ src/
     ├── github.ts                  # GitHubPushPayload
     ├── budget.ts                  # Budget calculator types
     ├── image.ts                   # Image processing types
+    ├── markdown.d.ts              # `*.md` imports are strings (wrangler Text rule / vitest plugin)
     └── preferences.ts             # CLANS_BY_RACE, preference shapes
 ```
 
@@ -133,13 +137,13 @@ src/
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace | Rate limiting fallback, user preferences, favorites, collections, analytics counters |
-| `DB` | D1 (`xivdyetools-presets`) | Shared with presets-api / moderation-worker |
+| `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favourites, analytics counters |
 | `ANALYTICS` | Analytics Engine (`xivdyetools_bot_analytics`) | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
-| `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-universalis-proxy` | Market board prices for `/budget` |
+| `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes) |
+| `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Photon-backed pixel extraction for `/extractor` (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
 
-Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
+Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
 
 ### Required Secrets
 
@@ -153,7 +157,7 @@ Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom 
 | Secret | Purpose |
 |--------|---------|
 | `BOT_API_SECRET` | Bearer token for outbound calls to presets-api |
-| `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing |
+| `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing — min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys) |
 | `INTERNAL_WEBHOOK_SECRET` | Auth for inbound `/webhooks/preset-submission` |
 | `GITHUB_WEBHOOK_SECRET` | HMAC-SHA256 key for GitHub push webhook |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Primary rate-limit backend (KV is fallback) |
@@ -167,7 +171,7 @@ Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom 
 
 ### Command Routing (`src/index.ts`)
 
-A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `handlers/commands/`. Tracking is done in a `try/finally` so analytics record actual success/failure rather than assuming success. Rate-limit check runs before dispatch (skipped for `about`, `manual`, `stats`).
+A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `handlers/commands/`. Tracking is done in a `try/finally` so analytics record actual success/failure rather than assuming success. Rate-limit check runs before dispatch (skipped only for `about` and `manual` — `/stats` has been rate-limited since the 2026-08-21 security audit, FINDING-033).
 
 ### Deferred Responses
 
@@ -194,8 +198,7 @@ Always prefer the Service Binding (`env.PRESETS_API.fetch(req)`) — zero HTTP o
 ### Autocomplete
 
 Special routing inside `handleAutocomplete()`:
-- `/preset` autocomplete checks subcommand: `edit` shows the user's own presets, `show`/`vote` queries approved presets via the Service Binding.
-- `/collection` autocomplete reads collections from KV.
+- `/preset` autocomplete checks subcommand: `edit` shows the user's own presets, `favorite remove` shows the user's favourited presets, `show`/`vote`/`moderate` query approved presets via the Service Binding.
 - `/preferences` clan field uses `CLANS_BY_RACE` table; world field reuses budget's world autocomplete.
 - `/budget` delegates entirely to `handleBudgetAutocomplete()`.
 
@@ -215,7 +218,7 @@ Both `/webhooks/preset-submission` and `/webhooks/github` enforce 10KB payload c
 
 ### User Content Sanitization
 
-`sanitizePresetName()` and `sanitizePresetDescription()` strip control characters, invisible Unicode, and Zalgo before sending names/descriptions into Discord embeds.
+`sanitizePresetName()` and `sanitizePresetDescription()` (`utils/sanitize.ts`) delegate to `@xivdyetools/bot-logic`'s `sanitizeEmbedText` — control / zero-width / bidi stripping, `@everyone`/`@here`/`<@…>` defusing, markdown + masked-link escaping, length caps — and every user-sourced string that reaches an embed (preset names/descriptions/tags/authors, `/dye search` queries, `.chara` error echoes, `/budget` names, webhook author/tags) goes through them. Every outbound payload built in `utils/discord-api.ts` carries `allowed_mentions: { parse: [] }` unless the caller passes `allowedMentions` (FINDING-019, 2026-08-21 security audit). The swatch PNG still receives the raw text — the SVG layer XML-escapes it and backslashes would render.
 
 ### Security Headers
 
@@ -231,25 +234,22 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 
 | Command | Description |
 |---------|-------------|
-| `/about` | Bot info and links |
-| `/harmony` | Generate harmony palettes from a base color |
-| `/dye search\|info\|list\|random` | Dye database lookups |
-| `/match` | Closest dye to a hex color |
-| `/match_image` | Extract dominant colors from an attached image |
-| `/comparison` | Side-by-side dye comparison |
-| `/accessibility` | Colorblind simulation + WCAG contrast |
-| `/mixer` | V4 dye blending (six algorithms) |
-| `/gradient` | Color gradient between two endpoints |
-| `/swatch` | Single-dye swatch card |
-| `/extractor` | V4 image color extractor |
-| `/preferences` | Set race/clan/world/language preferences |
-| `/favorites` | Manage favorite dyes (KV-backed, 20 max) |
-| `/collection` | Custom dye collections (50 max, 20 dyes each) |
+| `/about` | Bot info, registry-built command roster, Removed-in-v5 field |
+| `/harmony` | Harmony palettes (11A card — found dye vs computed ideal) |
+| `/dye search\|info\|list\|random` | Dye database lookups (11B cards) |
+| `/comparison` | 14A Duel / 14C triangle router (2–4 dyes) |
+| `/contrast` | WCAG 1.4.11 ratios, 13A/13B/13C·1 router (2–4 dyes) |
+| `/accessibility` + `/a11y` | Colour-vision lenses (13D/13E/13H via `vision:`) |
+| `/mixer` | 12F ratio-sweep blending card |
+| `/gradient` | 12H gradient card (distinct dyes, 3-stage cap) |
+| `/swatch` | `.chara` character-file frame (required `file:` attachment) |
+| `/extractor` | Image ramp (14K) / colour sheet (14J·2) |
+| `/preferences` | Race/clan/world/language/matching/theme preferences |
 | `/preset` | Browse/submit/vote/edit community presets |
-| `/budget` | Universalis pricing for a dye palette |
-| `/language` | Set bot language (en/ja/de/fr/ko/zh) |
-| `/manual` | Help guide (`topic:` option for deep-links) |
-| `/stats` | Usage stats (gated by `STATS_AUTHORIZED_USERS`) |
+| `/budget` | 13G ledger — tier-group pricing via Universalis |
+| `/changelog` | The bot's own release notes — `apps/discord-worker/CHANGELOG-laymans.md`, bundled as text at deploy time (ephemeral) |
+| `/manual` | Help topics (📸 ♿ 🔲 📐 🪙 👤) with learn-more links |
+| `/stats` | Usage stats incl. the 5.0 adoption panel (gated) |
 
 ## Dependencies
 
@@ -259,15 +259,15 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 | `@xivdyetools/core` | Dye database, color algorithms, k-d tree matcher |
 | `@xivdyetools/types` | Branded types and shared interfaces |
 | `@xivdyetools/auth` | JWT verify, HMAC, Ed25519 helpers |
-| `@xivdyetools/rate-limiter` | Sliding window backends (Memory/KV/Upstash) |
+| `@xivdyetools/worker-kit/rate-limiter` | Sliding window backends (Memory/KV/Upstash) |
 | `@xivdyetools/svg` | Pure SVG card generators |
 | `@xivdyetools/bot-logic` | Platform-agnostic command business logic |
-| `@xivdyetools/bot-i18n` | Bot localization strings |
-| `@xivdyetools/color-blending` | Six blending algorithms |
+| `@xivdyetools/bot-logic/i18n` | Bot localization strings (absorbed from bot-i18n) |
+| `@xivdyetools/core/blending` | Six blending algorithms (moved from the retired `@xivdyetools/color-blending`) |
 | `@xivdyetools/logger` | Structured logging with secret redaction |
-| `@xivdyetools/worker-middleware` | Shared Hono middleware (request ID, logger, rate limit) |
+| `@xivdyetools/worker-kit` | Shared Hono middleware (request ID, logger, rate limit) |
 | `@resvg/resvg-wasm` | SVG → PNG rasterization |
-| `@cf-wasm/photon` | Image manipulation (dominant color) |
+| `IMAGE_WORKER` (service binding) | Photon-backed pixel extraction for `/extractor`, routed to `xivdyetools-image-worker` — `@cf-wasm/photon` itself was removed from this Worker's dependencies in the image-worker split (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
 
 ## Localization
 
@@ -276,7 +276,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 2. `interaction.locale` (Discord client locale)
 3. Default `en`
 
-Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/bot-i18n` via `createTranslator(locale)` / `createUserTranslator(env.KV, userId, locale, logger)`.
+Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/bot-logic/i18n` via `createTranslator(locale)` / `createUserTranslator(env.KV, userId, locale, logger)`.
 
 ## Webhook Endpoints
 
@@ -285,7 +285,7 @@ Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/
 | `GET /health` | None | Health probe |
 | `POST /` | Ed25519 | Discord interactions |
 | `POST /webhooks/preset-submission` | Bearer (`INTERNAL_WEBHOOK_SECRET`) | Forwarded preset submissions from web app |
-| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events that update `CHANGELOG-laymans.md` |
+| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events that update the root (product-level) `CHANGELOG-laymans.md` |
 
 ## Testing
 
@@ -300,9 +300,9 @@ npm run test:integration                                  # Integration suite
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/rate-limiter`, `@xivdyetools/svg`, `@xivdyetools/bot-logic`, `@xivdyetools/bot-i18n`, `@xivdyetools/color-blending`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
+**Dependencies:** `@xivdyetools/core` (incl. `/blending`), `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/svg`, `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/logger`, `@xivdyetools/worker-kit`
 
-**Service Bindings (outbound):** `xivdyetools-presets-api`, `xivdyetools-universalis-proxy`
+**Service Bindings (outbound):** `xivdyetools-presets-api`, `xivdyetools-api-worker` (Universalis proxy routes), `xivdyetools-image-worker` (photon pixel extraction for `/extractor`)
 
 **Service Bindings (inbound):** `xivdyetools-presets-api` calls back via `DISCORD_WORKER` for notifications
 
@@ -312,8 +312,7 @@ npm run test:integration                                  # Integration suite
 
 1. `wrangler secret list` — verify all required secrets are present.
 2. `npm run lint && npm run test -- --run && npm run type-check`.
-3. `npm run deploy` — push to staging.
+3. `npm run deploy` — publishes the BETA bot (`xivdyetools-discord-worker-dev`; there is no staging env).
 4. Smoke-test core commands in the test guild.
-5. `npm run deploy:production`.
-6. If slash command schemas changed: `npm run register-commands` (production token).
-7. Hit `https://bot.xivdyetools.app/health` to confirm the new build is live.
+5. `npm run deploy:production` — or simply merge to `main`: `deploy-discord-worker.yml` deploys `--env production` **and then runs `register-commands` itself** (`DISCORD_TOKEN` from repo secrets), so a manual `npm run register-commands` is only needed for out-of-band schema pushes. The beta workflow registers guild-scoped commands the same way.
+6. Hit `https://bot.xivdyetools.app/health` to confirm the new build is live.

@@ -1,295 +1,184 @@
 # Secret Rotation Procedures
 
-**Project:** xivdyetools-* Monorepo
-**Last Updated:** December 15, 2025
+**Project:** xivdyetools monorepo
+**Last updated:** August 21, 2026 (2026-08-21 security audit, FINDING-010 — full rewrite)
 **Classification:** Internal Operations
+**Next review:** November 21, 2026 (quarterly)
 
 ---
 
-## Overview
+## ⚠️ Read this first: which worker does `wrangler secret put` hit?
 
-This document outlines procedures for rotating secrets across the xivdyetools ecosystem. Regular secret rotation is a security best practice that limits the impact of compromised credentials.
+Every command in this runbook is written to run **from the monorepo root** as
+
+```bash
+pnpm --filter <app-package-name> exec wrangler secret put <NAME> [--env production]
+```
+
+and the `--env` flag is **load-bearing**. The top-level block of most `wrangler.toml` files is the routeless **dev/beta** worker, so a bare `wrangler secret put` sets the secret on the wrong worker and leaves the compromised value live in production. The one exception is inverted:
+
+| App (pnpm filter) | Production target | Dev / beta target |
+|---|---|---|
+| `xivdyetools-discord-worker` | `--env production` (`xivdyetools-discord-worker`) | bare (`…-dev`, the *beta* bot on workers.dev) |
+| `xivdyetools-moderation-worker` | `--env production` | bare (`…-dev`) |
+| `xivdyetools-presets-api` | `--env production` | bare (`…-dev`) |
+| `xivdyetools-api-worker` | `--env production` | bare (`…-dev`) |
+| `xivdyetools-og-worker` | `--env production` | bare (**routed beta** on `beta.xivdyetools.app`) |
+| `xivdyetools-image-worker` | `--env production` | bare (`…-dev`) |
+| `xivdyetools-oauth-worker` | **bare** (top-level block IS production, no `[env.production]`) | `--env development` (the `[env.preview]` block was deleted 2026-08-21, FINDING-029) |
+
+See `docs/operations/DEPLOY_ENVIRONMENTS.md` for the full story. `wrangler secret list --env production` (or bare for oauth) confirms where a secret landed.
 
 ---
 
-## Secret Inventory
+## Secret inventory
 
-| Secret | Used By | Location | Rotation Frequency |
-|--------|---------|----------|-------------------|
-| JWT_SECRET | oauth, presets-api | Cloudflare Secrets | Quarterly |
-| BOT_API_SECRET | discord-worker, moderation-worker, presets-api | Cloudflare Secrets | Quarterly |
-| DISCORD_TOKEN | discord-worker | Cloudflare Secrets | On compromise |
-| DISCORD_TOKEN | moderation-worker | Cloudflare Secrets | On compromise |
-| DISCORD_CLIENT_SECRET | oauth | Cloudflare Secrets | On compromise |
-| DISCORD_PUBLIC_KEY | discord-worker | Cloudflare Secrets | Never (public key) |
-| DISCORD_PUBLIC_KEY | moderation-worker | Cloudflare Secrets | Never (public key) |
-| MODERATOR_IDS | presets-api, moderation-worker | Cloudflare Secrets | As needed |
-| MODERATION_CHANNEL_ID | moderation-worker | Cloudflare Secrets | As needed |
-| MAINTAINER_API_KEY | maintainer (dev) | Local .env | N/A (dev only) |
+Names come from `env.X` reads in `apps/*/src` that are **not** in any `[vars]` block (plus the CI secrets). "Shared" secrets must carry the **same value** on every consumer; rotate them in the order given in the procedures below.
+
+### Cloudflare Worker secrets
+
+| Secret | Consumers (must match) | Kind | Rotation |
+|---|---|---|---|
+| `JWT_SECRET` | oauth, presets-api | shared HMAC key (≥ 32 bytes) | Quarterly / on compromise |
+| `BOT_API_SECRET` | discord-worker, moderation-worker, presets-api | shared bearer | Quarterly / on compromise |
+| `BOT_SIGNING_SECRET` | discord-worker, moderation-worker, presets-api | shared HMAC key (≥ 32 chars; required in prod) | Quarterly / on compromise |
+| `INTERNAL_WEBHOOK_SECRET` | presets-api → discord-worker (`/webhooks/preset-submission`) | shared HMAC key | Quarterly / on compromise |
+| `DISCORD_TOKEN` | discord-worker (main bot) | Discord bot token | On compromise |
+| `DISCORD_TOKEN` | moderation-worker (moderation bot) | Discord bot token | On compromise |
+| `MODERATION_BOT_TOKEN` | discord-worker (same token as moderation-worker's `DISCORD_TOKEN`) | Discord bot token | Together with the moderation bot token |
+| `DISCORD_PUBLIC_KEY` | discord-worker, moderation-worker | Ed25519 public key (per Discord app) | Only if the app is recreated |
+| `DISCORD_CLIENT_SECRET` | oauth | Discord OAuth2 secret | On compromise |
+| `XIVAUTH_CLIENT_SECRET` | oauth (optional, confidential-client mode) | XIVAuth OAuth2 secret | On compromise (rotated 2026-01-25) |
+| `GITHUB_WEBHOOK_SECRET` | discord-worker (`/webhooks/github` changelog push) | shared with the GitHub webhook | On compromise |
+| `PERSPECTIVE_API_KEY` | presets-api | Google API key | On compromise |
+| `CACHE_PURGE_API_TOKEN` | presets-api (optional, FINDING-018 — single-file edge purge of deleted / replaced preview images; pairs with the `CACHE_PURGE_ZONE_ID` **var** in `wrangler.toml`, the `xivdyetools.app` zone) | Cloudflare API token scoped to *Zone → Cache Purge → Purge* on that one zone only (it can read or write nothing else) | On compromise; created 2026-08-21 |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | discord-worker (rate-limit backend; **required in production** — the KV fallback cannot throttle fast clients, FINDING-003) | Upstash REST credentials | On compromise |
+| `MODERATOR_IDS` | discord-worker, moderation-worker, presets-api | CSV of Discord IDs (config, not secret) | As needed — all three at once |
+| `MODERATION_CHANNEL_ID`, `SUBMISSION_LOG_CHANNEL_ID` | discord-worker, moderation-worker | channel IDs (config) | As needed |
+| `STATS_AUTHORIZED_USERS` | discord-worker | CSV of Discord IDs (config) | As needed |
+| `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`, `MODERATION_WEBHOOK_URL`, `DISCORD_BOT_WEBHOOK_URL` | presets-api (legacy / optional paths — dead or fallback only) | — | Remove when unused (PAPI-16) |
+| `BOT_TOKEN` | stoat-worker (Node `.env`, parked) | Revolt bot token | On compromise |
+
+### GitHub Actions secrets (repository settings → Secrets)
+
+| Secret | Used by | Rotation |
+|---|---|---|
+| `CLOUDFLARE_API_TOKEN` | every deploy workflow (`cloudflare/wrangler-action`) — account-wide token | Quarterly / on compromise; scope it to Workers Scripts + Pages + KV/D1/R2 edit, this account only |
+| `CLOUDFLARE_ACCOUNT_ID` | every deploy workflow | not secret (account id) |
+| `DISCORD_TOKEN` | `deploy-discord-worker.yml` register-commands step (main bot) | together with the worker secret |
+| `BETA_DISCORD_TOKEN`, `BETA_DISCORD_GUILD_ID` | `deploy-discord-worker-beta.yml` (optional) | with the beta bot token |
+
+npm publishing uses **OIDC trusted publishing** — there is no npm token to rotate.
 
 ---
 
-## Rotation Schedule
+## Rotation schedule
 
-| Quarter | Secrets to Rotate | Due Date |
-|---------|-------------------|----------|
-| Q1 2026 | JWT_SECRET, BOT_API_SECRET | March 15, 2026 |
-| Q2 2026 | JWT_SECRET, BOT_API_SECRET | June 15, 2026 |
-| Q3 2026 | JWT_SECRET, BOT_API_SECRET | September 15, 2026 |
-| Q4 2026 | JWT_SECRET, BOT_API_SECRET | December 15, 2026 |
+| When | Secrets |
+|---|---|
+| Quarterly (Feb 15 / May 15 / Aug 15 / Nov 15) | `JWT_SECRET`, `BOT_API_SECRET`, `BOT_SIGNING_SECRET`, `INTERNAL_WEBHOOK_SECRET`, `CLOUDFLARE_API_TOKEN` |
+| On compromise | everything else in the inventory |
+
+Record each rotation in the log at the bottom of this file.
 
 ---
 
 ## Procedures
 
-### 1. JWT_SECRET Rotation
+Generate values with:
 
-**Impact:** All active user sessions will be invalidated. Users will need to re-authenticate.
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # 64 hex chars — fine for every HMAC/bearer secret here
+```
 
-**Grace Period:** Consider implementing a 24-hour grace period where both old and new secrets are valid.
+### 1. `JWT_SECRET` (oauth + presets-api)
 
-#### Steps
+**Impact:** every active web session is invalidated (tokens signed with the old key stop verifying); users log in again. Rotate presets-api **first** so no token minted with the new key is ever rejected.
 
-1. **Generate new secret:**
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-   ```
+```bash
+NEW=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+echo "$NEW" | pnpm --filter xivdyetools-presets-api    exec wrangler secret put JWT_SECRET --env production
+echo "$NEW" | pnpm --filter xivdyetools-oauth-worker   exec wrangler secret put JWT_SECRET   # oauth: bare = production
+```
 
-2. **Update OAuth Worker:**
-   ```bash
-   cd xivdyetools-oauth
-   wrangler secret put JWT_SECRET
-   # Paste new secret when prompted
-   ```
+Verify: log out, log in at https://xivdyetools.app, load **My Submissions**. Also run the checklist below.
 
-3. **Update Presets API Worker:**
-   ```bash
-   cd xivdyetools-presets-api
-   wrangler secret put JWT_SECRET
-   # Paste the SAME secret
-   ```
+### 2. `BOT_API_SECRET` / `BOT_SIGNING_SECRET` (both bots + presets-api)
 
-4. **Verify workers restarted:**
-   ```bash
-   wrangler tail xivdyetools-oauth-worker
-   # Watch for startup logs
-   ```
+**Impact:** bot → API calls fail (401) from the moment the first consumer changes until the last one does — presets-api compares for equality, there is no dual-secret grace. Do it in one sitting, bots first so the API flips last and the window is one command long:
 
-5. **Test authentication flow:**
-   - Visit https://xivdyetools.projectgalatine.com
-   - Complete Discord OAuth login
-   - Verify user data loads in presets
+```bash
+NEW=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+for app in xivdyetools-discord-worker xivdyetools-moderation-worker xivdyetools-presets-api; do
+  echo "$NEW" | pnpm --filter $app exec wrangler secret put BOT_API_SECRET --env production
+done
+# same loop for BOT_SIGNING_SECRET
+```
 
-#### Rollback
+Verify: `/preset search` (main bot), `/preset moderate action:pending` (moderation bot).
 
-If issues occur, you can temporarily support both old and new secrets by modifying the JWT verification code. However, this should be avoided in favor of quick re-deployment.
+### 3. `INTERNAL_WEBHOOK_SECRET` (presets-api → discord-worker)
 
----
+```bash
+NEW=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+echo "$NEW" | pnpm --filter xivdyetools-discord-worker exec wrangler secret put INTERNAL_WEBHOOK_SECRET --env production
+echo "$NEW" | pnpm --filter xivdyetools-presets-api    exec wrangler secret put INTERNAL_WEBHOOK_SECRET --env production
+```
 
-### 2. BOT_API_SECRET Rotation
+Verify: submit a preset from the web app; the moderation embed must appear (otherwise a `failed_notifications` row is written).
 
-**Impact:** Discord bots will fail to call presets API until all services are updated.
+### 4. Discord bot tokens
 
-**Coordination Required:** discord-worker, moderation-worker, and presets-api must be updated simultaneously.
+Discord Developer Portal → application → **Bot** → *Reset Token* (copy immediately).
 
-#### Steps
+- **Main bot** (`1447108133020369048`): `pnpm --filter xivdyetools-discord-worker exec wrangler secret put DISCORD_TOKEN --env production`, then update the GitHub secret `DISCORD_TOKEN` (register-commands in CI).
+- **Moderation bot** (`1453806659708129374`): `pnpm --filter xivdyetools-moderation-worker exec wrangler secret put DISCORD_TOKEN --env production` **and** `pnpm --filter xivdyetools-discord-worker exec wrangler secret put MODERATION_BOT_TOKEN --env production` (discord-worker posts the moderation embeds with it).
+- **Beta bot** (`1536085517270261771`): bare `wrangler secret put DISCORD_TOKEN` on discord-worker (top-level = beta) + GitHub secret `BETA_DISCORD_TOKEN`.
 
-1. **Generate new secret:**
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-   ```
+Verify: bot shows online; `/dye search red`; a moderation embed posts to the moderation channel.
 
-2. **Update Discord Worker:**
-   ```bash
-   cd xivdyetools-discord-worker
-   wrangler secret put BOT_API_SECRET
-   # Paste new secret
-   ```
+### 5. `DISCORD_CLIENT_SECRET` / `XIVAUTH_CLIENT_SECRET` (oauth)
 
-3. **Update Moderation Worker:**
-   ```bash
-   cd xivdyetools-moderation-worker
-   wrangler secret put BOT_API_SECRET
-   # Paste the SAME secret
-   ```
+Developer portal → OAuth2 → *Reset Secret*, then `pnpm --filter xivdyetools-oauth-worker exec wrangler secret put DISCORD_CLIENT_SECRET` (bare = production). Verify a full login.
 
-4. **Update Presets API (immediately after):**
-   ```bash
-   cd xivdyetools-presets-api
-   wrangler secret put BOT_API_SECRET
-   # Paste the SAME secret
-   ```
+### 6. `GITHUB_WEBHOOK_SECRET`
 
-5. **Test bot preset commands:**
-   - Use `/preset search` command in Discord (main bot)
-   - Use `/preset submit` command (main bot)
-   - Use `/preset moderate` command (moderation bot)
-   - Verify API responses are correct
+Generate, set on discord-worker (`--env production`), then update the webhook secret on the GitHub repository webhook (Settings → Webhooks → the changelog webhook). Verify with *Redeliver* on a recent `push` delivery → 200.
+
+### 7. `CLOUDFLARE_API_TOKEN` (CI)
+
+Cloudflare dashboard → My Profile → API Tokens → roll or create a token scoped to this account (Workers Scripts: Edit, Pages: Edit, Workers KV/D1/R2: Edit, Workers Routes: Edit) → update the GitHub secret → re-run any deploy workflow via *workflow_dispatch* → revoke the old token.
+
+### 8. `PERSPECTIVE_API_KEY`, Upstash credentials, `MODERATOR_IDS` & channel IDs
+
+Set on the listed consumers with `--env production`; no ordering constraints. For `MODERATOR_IDS`, all three consumers must agree or a moderator will be able to act in one surface and not another. moderation-worker caches the parsed list per isolate — redeploy (or wait for isolate recycling) after changing it (MOD-15).
 
 ---
 
-### 3. DISCORD_TOKEN Rotation
+## Emergency: suspected compromise
 
-**Impact:** The affected bot goes offline immediately until new token is deployed.
-
-**When to Rotate:** Only if compromised. Discord tokens do not expire.
-
-**Note:** There are TWO separate Discord applications with separate tokens:
-- **Main Bot** (XIV Dye Tools) - Used by discord-worker
-- **Moderation Bot** (XIV Dye Tools Moderation) - Used by moderation-worker
-
-#### Steps (Main Bot - discord-worker)
-
-1. **Go to Discord Developer Portal:**
-   https://discord.com/developers/applications
-
-2. **Navigate to XIV Dye Tools application → Bot section**
-
-3. **Click "Reset Token"**
-   - Copy the new token immediately (it won't be shown again)
-
-4. **Update Discord Worker:**
-   ```bash
-   cd xivdyetools-discord-worker
-   wrangler secret put DISCORD_TOKEN
-   # Paste new token
-   ```
-
-5. **Verify bot is online:**
-   - Check Discord server for bot presence
-   - Test a slash command (e.g., `/dye search red`)
-
-#### Steps (Moderation Bot - moderation-worker)
-
-1. **Go to Discord Developer Portal:**
-   https://discord.com/developers/applications
-
-2. **Navigate to XIV Dye Tools Moderation application → Bot section**
-
-3. **Click "Reset Token"**
-   - Copy the new token immediately (it won't be shown again)
-
-4. **Update Moderation Worker:**
-   ```bash
-   cd xivdyetools-moderation-worker
-   wrangler secret put DISCORD_TOKEN
-   # Paste new token
-   ```
-
-5. **Verify bot is online:**
-   - Check Discord server for moderation bot presence
-   - Test a moderation command (e.g., `/preset moderate action:pending`)
+1. Rotate the affected secret(s) with the procedures above — **on the production target**.
+2. `pnpm --filter <app> exec wrangler tail --env production --format=json | grep -i error` for unusual activity.
+3. If `JWT_SECRET` leaked: rotating it ends every session at once (all tokens stop verifying). The `TOKEN_BLACKLIST` KV needs no clearing.
+4. If `CLOUDFLARE_API_TOKEN` leaked: roll it **first** (it can redeploy every worker), then audit the account's deployment history.
+5. Write the incident up in `docs/incidents/`.
 
 ---
 
-### 4. DISCORD_CLIENT_SECRET Rotation
+## Verification checklist (after any rotation)
 
-**Impact:** OAuth login will fail until new secret is deployed.
-
-**When to Rotate:** Only if compromised.
-
-#### Steps
-
-1. **Go to Discord Developer Portal:**
-   https://discord.com/developers/applications
-
-2. **Navigate to your application → OAuth2 section**
-
-3. **Click "Reset Secret"**
-   - Copy the new secret immediately
-
-4. **Update OAuth Worker:**
-   ```bash
-   cd xivdyetools-oauth
-   wrangler secret put DISCORD_CLIENT_SECRET
-   # Paste new secret
-   ```
-
-5. **Test OAuth flow:**
-   - Log out of xivdyetools
-   - Complete Discord OAuth login
-   - Verify successful authentication
+- [ ] `wrangler secret list` (with the right `--env`) shows the secret on the **production** worker
+- [ ] OAuth login works; **My Submissions** loads (JWT accepted by presets-api)
+- [ ] `/preset search` and `/preset submit` (main bot) and `/preset moderate` (moderation bot) work
+- [ ] A web submission produces a moderation embed (service binding + `INTERNAL_WEBHOOK_SECRET`)
+- [ ] `https://bot.xivdyetools.app/health`, `https://api.xivdyetools.app/health`, `https://auth.xivdyetools.app/health` return 200
+- [ ] No error spike in the Cloudflare dashboard / `wrangler tail`
 
 ---
 
-## Emergency Procedures
+## Rotation log
 
-### Suspected Compromise
-
-If you suspect any secret has been compromised:
-
-1. **Immediately rotate the affected secret(s)**
-2. **Check logs for suspicious activity:**
-   ```bash
-   wrangler tail xivdyetools-oauth-worker --format=json | grep -i error
-   ```
-3. **Review KV storage for unexpected entries:**
-   ```bash
-   wrangler kv:key list --namespace-id=<ID>
-   ```
-4. **Document the incident** in `/docs/incidents/`
-
-### Revoke All Sessions
-
-To immediately invalidate all user sessions:
-
-1. Rotate JWT_SECRET
-2. Clear the token blacklist KV namespace (optional)
-3. Notify users via Discord announcement
-
----
-
-## Automation Recommendations
-
-### Future Improvements
-
-1. **Calendar Reminders:**
-   - Set quarterly reminders for rotation
-   - Add to team shared calendar
-
-2. **Automated Rotation Script:**
-   ```bash
-   #!/bin/bash
-   # rotate-secrets.sh (example)
-
-   NEW_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
-
-   echo "New JWT_SECRET generated"
-   echo "Updating oauth worker..."
-   cd xivdyetools-oauth && echo "$NEW_SECRET" | wrangler secret put JWT_SECRET
-
-   echo "Updating presets-api worker..."
-   cd ../xivdyetools-presets-api && echo "$NEW_SECRET" | wrangler secret put JWT_SECRET
-   ```
-
-3. **Monitoring:**
-   - Set up alerts for authentication failures
-   - Monitor for unusual API patterns
-
----
-
-## Verification Checklist
-
-After any secret rotation, verify:
-
-- [ ] OAuth login flow works
-- [ ] JWT tokens are being issued
-- [ ] Presets API accepts authenticated requests
-- [ ] Discord bot (main) slash commands work
-- [ ] Discord bot (moderation) slash commands work
-- [ ] Main bot-to-API communication works (`/preset search`)
-- [ ] Moderation bot-to-API communication works (`/preset moderate`)
-- [ ] No error spikes in Cloudflare dashboard
-
----
-
-## Contact
-
-For questions about secret rotation:
-- **Primary:** Flash Galatine (Balmung)
-- **Documentation:** xivdyetools-docs repository
-
----
-
-**Document Owner:** XIV Dye Tools Team
-**Next Review:** March 15, 2026 (Quarterly)
+| Date | Secret(s) | By | Notes |
+|---|---|---|---|
+| 2026-01-25 | `XIVAUTH_CLIENT_SECRET` | maintainer | leaked in a committed `.env` (audit 2026-01-25 FINDING-003); rotated same day |
+| 2026-08-21 | `CACHE_PURGE_API_TOKEN` | maintainer | created (not rotated) — purge-only token on the `xivdyetools.app` zone, set on the **production** presets-api worker (`--env production`) for FINDING-018; `CACHE_PURGE_ZONE_ID` shipped as a `wrangler.toml` var the same day |

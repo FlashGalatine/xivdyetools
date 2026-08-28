@@ -25,14 +25,17 @@ npm install @xivdyetools/bot-logic
 
 | Function | Description |
 |----------|-------------|
-| `executeDyeInfo(input)` | Dye info card with color values |
-| `executeRandom(input)` | Grid of random dyes |
-| `executeHarmony(input)` | Color harmony wheel (triadic, complementary, etc.) |
-| `executeGradient(input)` | Gradient bar between two colors |
-| `executeMixer(input)` | Blend two colors (6 blending modes) |
-| `executeMatch(input)` | Find closest dyes to a color |
-| `executeComparison(input)` | Side-by-side dye comparison grid |
-| `executeAccessibility(input)` | Colorblind simulation + WCAG contrast matrix |
+| `executeDyeInfo(input)` | Dye info card (11B) with color values |
+| `executeRandom(input)` | Row of up to 5 random dyes |
+| `executeHarmony(input)` | Harmony palette (11A — found dye vs computed ideal; triadic, complementary, inverted-tetradic, …) |
+| `executeGradient(input)` | N-step gradient (12H) with a ΔE2000 dye match per stop |
+| `executeMixer(input)` | Ratio-sweep blend of two colors (12F; 6 blending modes) |
+| `executeComparison(input)` | Side-by-side comparison of 2–4 dyes (14A / 14C) |
+| `executeContrast(input)` | WCAG 1.4.11 contrast ratios for 2–4 dyes (13A/13B/13C) — new in 2.0.0 |
+| `executeAccessibility(input)` | Colour-vision lens for one or two dyes, routed on `vision` (13D/13E/13H) |
+| `executeSwatch(input)` | `.chara` character-file colour matching — new in 2.0.0 |
+
+`executeMatch` was **removed in 2.0.0** (the v4 `/match` command is gone; colour → dye matching lives in discord-worker's `/extractor color` sheet). All distances are ΔE2000 and every result carries a card rendered by `@xivdyetools/svg` 2.0.0's frame system; every input accepts an optional `theme: 'dark' | 'light'`.
 
 Each function returns a discriminated union (`{ ok: true; ... } | { ok: false; error: ...; errorMessage: string }`).
 
@@ -68,7 +71,7 @@ import {
 
 // Resolve arbitrary input (hex, dye name, or CSS color name)
 const color = resolveColorInput('#FF6B6B', { findClosestForHex: true });
-// → { hex: '#FF6B6B', name: 'Coral Pink', id: 42, itemID: 5729, dye: Dye }
+// → { hex: '#FF6B6B', name: 'Coral Pink', id: 5741, itemID: 5741, dye: Dye }   // id === itemID (Coral Pink, stainID 13)
 
 // Resolve directly to a Dye object
 const dye = resolveDyeInput('jet black');
@@ -86,10 +89,11 @@ import { executeGradient, executeComparison } from '@xivdyetools/bot-logic';
 
 // Gradient between two dyes
 const gradient = await executeGradient({
-  startDye: pureWhite,
-  endDye: jetBlack,
-  steps: 7,
-  interpolation: 'oklch',
+  startColor: resolveColorInput('Pure White')!,
+  endColor: resolveColorInput('Jet Black')!,
+  stepCount: 7,           // default 6, including both ends
+  colorSpace: 'oklch',    // InterpolationMode
+  matchingMethod: 'ciede2000',
   locale: 'en',
 });
 
@@ -125,18 +129,32 @@ const comparison = await executeComparison({
 
 | Package | Purpose |
 |---------|---------|
-| `@xivdyetools/core` | Dye database, color algorithms, k-d tree matching |
-| `@xivdyetools/bot-i18n` | Translation engine for bot UI strings |
-| `@xivdyetools/svg` | SVG card generators (info cards, grids, wheels) |
-| `@xivdyetools/color-blending` | Color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |
+| `@xivdyetools/core` | Dye database, `DyeService`, `LocalizationService`, `filterDyes`, harmony types |
+| `@xivdyetools/core/blending` | Color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |
+| `@xivdyetools/svg` | SVG card generators (info cards, grids, harmony cards) |
+| `@xivdyetools/types` | `Dye`, `DyeTypeFilters`, `LocaleCode`, branded color types |
+
+The bot UI translation engine is **built in** at `@xivdyetools/bot-logic/i18n` — `Translator`, `createTranslator`, and six locale JSONs, absorbed from the retired `@xivdyetools/bot-i18n`. Color blending moved from the retired `@xivdyetools/color-blending` into `@xivdyetools/core/blending`. See [`DEPRECATIONS.md`](../../DEPRECATIONS.md).
+
+```typescript
+import { createTranslator } from '@xivdyetools/bot-logic/i18n';
+
+const t = createTranslator('ja');
+t.t('about.title');
+```
+
+## Consumers
+
+- [`apps/discord-worker`](../../apps/discord-worker/) — primary consumer. Each slash command handler calls one `execute*` and renders the result.
+- [`apps/stoat-worker`](../../apps/stoat-worker/) — Revolt bot. Same `execute*` calls, different rendering shim.
 
 ## Connect With Me
 
 **Flash Galatine** | Midgardsormr (Aether)
 
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
-📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
@@ -145,4 +163,11 @@ const comparison = await executeComparison({
 
 ## License
 
-MIT © 2025-2026 Flash Galatine
+MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
+
+## Legal Notice
+
+**FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+**FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
+
+XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.**

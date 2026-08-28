@@ -2,11 +2,20 @@ import { defineConfig } from 'vite'
 import { resolve } from 'path'
 import { asyncCss } from './vite-plugin-async-css'
 import { changelogParser } from './vite-plugin-changelog-parser'
+import { betaBranding } from './vite-plugin-beta-branding'
 import pkg from './package.json'
+
+// Set by .github/workflows/deploy-web-app-beta.yml. Absent everywhere else.
+const isBeta = process.env.VITE_APP_ENV === 'beta';
 
 export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    // About's BUILD stat cell (yyyy.mm.dd, stamped at build time)
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10).replace(/-/g, '.')),
+    // __APP_ENV__ is NOT defined here — betaBranding(isBeta)'s config() hook
+    // injects it, so the runtime marker and the branding (title/icons/headers)
+    // share one switch and cannot drift apart. See vite-plugin-beta-branding.ts.
   },
   root: 'src',
   base: '/',
@@ -52,10 +61,6 @@ export default defineConfig({
       '@components': resolve(__dirname, './src/components'),
       '@services': resolve(__dirname, './src/services'),
       '@shared': resolve(__dirname, './src/shared'),
-      '@apps': resolve(__dirname, './src/apps'),
-      '@data': resolve(__dirname, './src/data'),
-      '@assets': resolve(__dirname, './assets'),
-      '@v4': resolve(__dirname, './src/components/v4'),
     },
   },
   css: {
@@ -64,5 +69,6 @@ export default defineConfig({
   plugins: [
     asyncCss(),
     changelogParser(),
+    betaBranding(isBeta),
   ],
 })

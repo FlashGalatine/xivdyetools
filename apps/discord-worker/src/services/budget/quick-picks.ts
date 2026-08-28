@@ -183,13 +183,3 @@ export const QUICK_PICKS: QuickPickPreset[] = [
 export function getQuickPickById(id: string): QuickPickPreset | null {
   return QUICK_PICKS.find((pick) => pick.id === id) ?? null;
 }
-
-/**
- * Get all quick pick IDs for command choices
- */
-export function getQuickPickChoices(): Array<{ name: string; value: string }> {
-  return QUICK_PICKS.map((pick) => ({
-    name: `${pick.emoji} ${pick.name}`,
-    value: pick.id,
-  }));
-}

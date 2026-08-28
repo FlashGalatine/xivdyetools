@@ -1,16 +1,17 @@
 {
   "name": "xivdyetools-web-app",
-  "version": "4.12.0",
+  "version": "5.0.0",
   "private": true,
   "description": "A comprehensive web-based toolset for Final Fantasy XIV players",
-  "main": "index.html",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src/**/*.ts --fix",
+    "lint": "eslint src && knip",
+    "lint:dead": "knip",
+    "lint:fix": "eslint src --fix",
     "format": "prettier --write src/**/*.ts",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -23,10 +24,9 @@
     "test:e2e:coverage": "cross-env PLAYWRIGHT_PROJECT_NAME=chromium-coverage playwright test --project=chromium-coverage",
     "test:e2e:comparison": "playwright test dye-comparison.spec.ts",
     "test:e2e:mobile": "playwright test --project=mobile-chrome",
-    "build:css": "tailwindcss -i ./src/tailwind-input.css -o ./assets/css/tailwind.css",
-    "build:css:watch": "tailwindcss -i ./src/tailwind-input.css -o ./assets/css/tailwind.css --watch",
     "check-bundle-size": "node scripts/check-bundle-size.js",
-    "validate:i18n": "node scripts/validate-i18n.js",
+    "validate:i18n": "node scripts/validate-i18n.js && node scripts/i18n-parity.mjs",
+    "i18n:unused": "node scripts/analyze-unused-keys.js",
     "build:check": "npm run build && npm run check-bundle-size"
   },
   "keywords": [],
@@ -44,18 +44,19 @@
     "eslint-plugin-prettier": "^5.5.6",
     "jsdom": "^30.0.0",
     "msw": "^2.15.0",
-    "postcss": "^8.5.23",
+    "postcss": "^8.5.26",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.3.3",
     "vite": "^8.1.5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.120.0"
   },
   "dependencies": {
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
+    "@xivdyetools/svg": "workspace:*",
     "@xivdyetools/types": "workspace:*",
-    "lit": "^3.3.3",
-    "spectral.js": "^3.0.0"
+    "lit": "^3.3.3"
   },
   "engines": {
     "node": ">=18.0.0"

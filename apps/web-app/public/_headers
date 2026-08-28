@@ -7,14 +7,33 @@
 /*
   # Content Security Policy (CSP)
   # Note: 'unsafe-inline' for styles is required for dynamic color swatches
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://cdn.discordapp.com; connect-src 'self' https://universalis.app https://*.workers.dev https://*.xivdyetools.app; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
+  # font-src is 'self' only: REFACTOR-002 self-hosted the typefaces, so the
+  # fonts.googleapis.com / fonts.gstatic.com origins are gone from style-src
+  # and font-src. Do not re-add them -- a family that needs a third-party
+  # origin has escaped the font contract in styles/globals.css.
+  # img-src data.xivdyetools.app: item icons for the Swatch .chara import come
+  # through api-worker's /v1/chara/icon proxy -- never from v2.xivapi.com
+  # directly, so no third-party image origin is needed here either.
+  # connect-src names only first-party hosts (2026-08-21 security audit,
+  # FINDING-031). It used to carry https://*.workers.dev, which nothing in the
+  # bundle talks to (beta uses the production api/presets workers) and which
+  # anyone can register a subdomain of -- the one allowance that would have
+  # handed a markup injection a self-controlled beacon/exfil origin. A dev
+  # worker reachable only on *.workers.dev belongs in a local override, not
+  # here. object-src / frame-src 'none' close the plugin and frame sinks the
+  # app never uses. src/__tests__/security-headers.test.ts pins all of this.
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://universalis.app https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
 
   # Security Headers
+  # (No X-XSS-Protection: the legacy auditor is deprecated and itself abusable;
+  # the CSP above is the XSS control -- FINDING-031 / WEB-8.)
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
-  X-XSS-Protection: 1; mode=block
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  # camera=(self): the Palette Extractor ships a webcam capture path
+  # (services/camera-service.ts -> camera-preview-modal); an empty allowlist
+  # disabled getUserMedia for the document itself (FINDING-031 / WEB-7).
+  Permissions-Policy: geolocation=(), microphone=(), camera=(self)
 
   # HSTS (Strict Transport Security)
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
@@ -33,6 +52,45 @@
 # ============================================================================
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# ============================================================================
+# Social cards - the /fonts/* carve-out, for the same reason
+# ============================================================================
+# NOT content-hashed: og:image URLs have to be stable, so a revised card reuses
+# its filename. Under an immutable rule that would strand every cache on the old
+# artwork, and social scrapers are the least re-fetchable consumers there are.
+#
+# Short TTLs, and deliberately NOT og-worker's (24h browser / 7d edge) despite
+# these being the same cards. og-worker generates a distinct URL per dye and
+# harmony, so each of its cache keys is effectively immutable and a long edge TTL
+# costs nothing. These files are the opposite: one fixed URL whose bytes change
+# on deploy. Borrowing the 7d edge TTL meant the 3a root card redesign sat behind
+# a stale HIT while the origin already served the new artwork. There is no
+# traffic argument for caching these hard — a handful of scraper fetches — and a
+# week of staleness after a redesign is the whole cost.
+#
+# Changing these numbers does NOT evict entries already stored under the old
+# TTL; that needs a cache purge for the specific URL.
+#
+# These live at /og/ rather than /assets/og/ for a mechanical reason: Cloudflare
+# Pages MERGES the rules of overlapping path patterns rather than letting the
+# more specific one replace the broader — the same behaviour the beta
+# X-Robots-Tag block relies on to append itself to /*. Under /assets/ this rule
+# won the max-age but inherited `immutable` from /assets/*, producing
+# `max-age=86400, immutable, s-maxage=604800`. Moving out from under the
+# pattern removes the overlap instead of fighting the merge.
+/og/*
+  Cache-Control: public, max-age=3600, s-maxage=3600
+
+# ============================================================================
+# Self-hosted webfonts
+# ============================================================================
+# Not `immutable`: unlike /assets/*, these filenames are not content-hashed, so
+# a year-long immutable cache would strand a repeat visitor on a stale face
+# after a swap. 30 days still serves the repeat-visit case, which is the whole
+# point of self-hosting. If a face ever changes, rename the file.
+/fonts/*
+  Cache-Control: public, max-age=2592000
 
 # ============================================================================
 # JSON Data Files - Daily cache refresh

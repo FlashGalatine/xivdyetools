@@ -1,0 +1,129 @@
+{
+  "ModelType": 0,
+  "Race": "Elezen",
+  "Gender": "Feminine",
+  "Age": "Normal",
+  "Tribe": "Duskwight",
+  "Height": 100,
+  "Head": 4,
+  "Hair": 183,
+  "EnableHighlights": true,
+  "Skintone": 0,
+  "REyeColor": 42,
+  "HairTone": 71,
+  "Highlights": 36,
+  "FacialFeatures": "First, Second, Third, Fifth",
+  "LimbalEyes": 7,
+  "Eyebrows": 2,
+  "LEyeColor": 169,
+  "Eyes": 2,
+  "Nose": 3,
+  "Jaw": 1,
+  "Mouth": 2,
+  "LipsToneFurPattern": 53,
+  "EarMuscleTailSize": 100,
+  "TailEarsType": 3,
+  "Bust": 100,
+  "FacePaint": 0,
+  "FacePaintColor": 55,
+  "MainHand": {
+    "Color": "0, 0, 0",
+    "Scale": "0, 0, 0",
+    "ModelSet": 5603,
+    "ModelBase": 9,
+    "ModelVariant": 3,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "OffHand": {
+    "Color": "0, 0, 0",
+    "Scale": "0, 0, 0",
+    "ModelSet": 0,
+    "ModelBase": 0,
+    "ModelVariant": 0,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "HeadGear": {
+    "ModelBase": 813,
+    "ModelVariant": 2,
+    "DyeId": 92,
+    "DyeId2": 1
+  },
+  "Body": {
+    "ModelBase": 876,
+    "ModelVariant": 1,
+    "DyeId": 97,
+    "DyeId2": 92
+  },
+  "Hands": {
+    "ModelBase": 835,
+    "ModelVariant": 2,
+    "DyeId": 97,
+    "DyeId2": 0
+  },
+  "Legs": {
+    "ModelBase": 835,
+    "ModelVariant": 2,
+    "DyeId": 97,
+    "DyeId2": 0
+  },
+  "Feet": {
+    "ModelBase": 6135,
+    "ModelVariant": 1,
+    "DyeId": 97,
+    "DyeId2": 0
+  },
+  "Ears": {
+    "ModelBase": 124,
+    "ModelVariant": 6,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Neck": {
+    "ModelBase": 111,
+    "ModelVariant": 2,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Wrists": {
+    "ModelBase": 134,
+    "ModelVariant": 6,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "LeftRing": {
+    "ModelBase": 53,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "RightRing": {
+    "ModelBase": 53,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Glasses": {
+    "GlassesId": 0
+  },
+  "Transparency": 1,
+  "HeightMultiplier": 1.01,
+  "MuscleTone": 1,
+  "SkinColor": "0.8858132, 0.6977163, 0.7579239",
+  "SkinGloss": null,
+  "LeftEyeColor": "0.7443291, 0.53204155, 0.17937717",
+  "RightEyeColor": "0.28027683, 0.56692046, 0.40859672",
+  "LimbalRingColor": "0.12456748, 0.005551711, 0.01777778",
+  "HairColor": "0.5610304, 0.18948098, 0.16955018",
+  "HairGloss": null,
+  "HairHighlight": "0.24804306, 0.06903499, 0.16315264",
+  "MouthColor": "0.041584007, 0.0015378702, 0.012056901, 0.6",
+  "BustScale": null,
+  "IsExtendedAppearanceValid": true,
+  "Author": null,
+  "Description": null,
+  "Version": null,
+  "Base64Image": null,
+  "Tags": null
+}

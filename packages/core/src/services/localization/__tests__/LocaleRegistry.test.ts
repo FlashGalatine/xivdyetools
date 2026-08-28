@@ -35,13 +35,13 @@ describe('LocaleRegistry', () => {
       'Dye Vendor': 'Dye Vendor',
       Crafting: 'Crafting',
     },
-    metallicDyeIds: [13116, 13117],
     harmonyTypes: {
       complementary: 'Complementary',
       analogous: 'Analogous',
       triadic: 'Triadic',
       splitComplementary: 'Split-Complementary',
       tetradic: 'Tetradic',
+      invertedTetradic: 'Inverted Tetradic',
       square: 'Square',
       monochromatic: 'Monochromatic',
       compound: 'Compound',
@@ -53,35 +53,6 @@ describe('LocaleRegistry', () => {
       protanopia: 'Protanopia',
       tritanopia: 'Tritanopia',
       achromatopsia: 'Achromatopsia',
-    },
-    jobNames: {
-      paladin: 'paladin',
-      warrior: 'warrior',
-      darkKnight: 'darkKnight',
-      gunbreaker: 'gunbreaker',
-      whiteMage: 'whiteMage',
-      scholar: 'scholar',
-      astrologian: 'astrologian',
-      sage: 'sage',
-      monk: 'monk',
-      dragoon: 'dragoon',
-      ninja: 'ninja',
-      samurai: 'samurai',
-      reaper: 'reaper',
-      viper: 'viper',
-      bard: 'bard',
-      machinist: 'machinist',
-      dancer: 'dancer',
-      blackMage: 'blackMage',
-      summoner: 'summoner',
-      redMage: 'redMage',
-      pictomancer: 'pictomancer',
-      blueMage: 'blueMage',
-    },
-    grandCompanyNames: {
-      maelstrom: 'maelstrom',
-      twinAdder: 'twinAdder',
-      immortalFlames: 'immortalFlames',
     },
     races: {
       hyur: 'hyur',
@@ -106,7 +77,7 @@ describe('LocaleRegistry', () => {
       hellsguard: 'hellsguard',
       raen: 'raen',
       xaela: 'xaela',
-      helion: 'helion',
+      helions: 'helions',
       theLost: 'theLost',
       rava: 'rava',
       veena: 'veena',
@@ -222,7 +193,6 @@ describe('LocaleRegistry', () => {
       expect(result).toHaveProperty('dyeNames');
       expect(result).toHaveProperty('categories');
       expect(result).toHaveProperty('acquisitions');
-      expect(result).toHaveProperty('metallicDyeIds');
       expect(result).toHaveProperty('harmonyTypes');
       expect(result).toHaveProperty('visionTypes');
     });

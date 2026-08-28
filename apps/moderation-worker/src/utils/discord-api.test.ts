@@ -35,7 +35,7 @@ describe('discord-api', () => {
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: 'Follow-up message' }),
+          body: JSON.stringify({ allowed_mentions: { parse: [] }, content: 'Follow-up message' }),
         })
       );
     });
@@ -137,7 +137,7 @@ describe('discord-api', () => {
         expect.objectContaining({
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: 'Updated message' }),
+          body: JSON.stringify({ allowed_mentions: { parse: [] }, content: 'Updated message' }),
         })
       );
     });
@@ -383,5 +383,43 @@ describe('discord-api', () => {
 
       expect(response.status).toBe(401);
     });
+  });
+});
+
+// FINDING-019 (2026-08-21 security audit): every outbound Discord payload
+// carries `allowed_mentions` that parse nothing unless a caller overrides it.
+describe('allowed_mentions on outbound payloads (FINDING-019)', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 }))) as any;
+  });
+
+  const bodyOfLastCall = (): any => JSON.parse((global.fetch as any).mock.calls[0][1].body);
+
+  it('sendFollowUp sends allowed_mentions: { parse: [] }', async () => {
+    await sendFollowUp('app', 'tok', { content: '@everyone hi' });
+    expect(bodyOfLastCall().allowed_mentions).toEqual({ parse: [] });
+  });
+
+  it('editOriginalResponse sends allowed_mentions: { parse: [] }', async () => {
+    await editOriginalResponse('app', 'tok', { embeds: [{ title: 'x' }] });
+    expect(bodyOfLastCall().allowed_mentions).toEqual({ parse: [] });
+  });
+
+  it('sendMessage sends allowed_mentions: { parse: [] }', async () => {
+    await sendMessage('bot', 'chan', { content: '<@&123456789012345678>' });
+    expect(bodyOfLastCall().allowed_mentions).toEqual({ parse: [] });
+  });
+
+  it('editMessage sends allowed_mentions: { parse: [] }', async () => {
+    await editMessage('bot', 'chan', 'msg', { embeds: [] });
+    expect(bodyOfLastCall().allowed_mentions).toEqual({ parse: [] });
+  });
+
+  it('a caller-supplied allowed_mentions overrides the default', async () => {
+    await sendMessage('bot', 'chan', {
+      content: 'x',
+      allowed_mentions: { parse: ['users'] },
+    });
+    expect(bodyOfLastCall().allowed_mentions).toEqual({ parse: ['users'] });
   });
 });

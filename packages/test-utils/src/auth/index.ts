@@ -6,5 +6,4 @@
 
 export * from './jwt.js';
 export * from './signature.js';
-export * from './context.js';
 export * from './headers.js';

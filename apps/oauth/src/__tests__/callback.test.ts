@@ -4,11 +4,89 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SELF, fetchWithEnv, createProductionEnv, VALID_CODE_VERIFIER } from './mocks/cloudflare-test.js';
+import {
+    SELF,
+    fetchWithEnv,
+    createProductionEnv,
+    env,
+    VALID_CODE_VERIFIER,
+    VALID_CODE_CHALLENGE,
+} from './mocks/cloudflare-test.js';
 import { resetRateLimiter } from '../services/rate-limit.js';
+import { signState, type StateData } from '../utils/state-signing.js';
 
 // Store original fetch
 const originalFetch = globalThis.fetch;
+
+/**
+ * Real S256 challenge for a verifier (RFC 7636 §4.2) — VALID_CODE_CHALLENGE
+ * from test-utils is format-valid only, NOT the hash of VALID_CODE_VERIFIER.
+ */
+async function s256(verifier: string): Promise<string> {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+    return btoa(String.fromCharCode(...new Uint8Array(digest)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+/**
+ * Signed Discord-flow state, as the authorize handler would mint it
+ */
+async function createSignedState(overrides: Partial<StateData> = {}): Promise<string> {
+    const now = Math.floor(Date.now() / 1000);
+    return signState(
+        {
+            csrf: 'test-csrf',
+            code_challenge: VALID_CODE_CHALLENGE,
+            redirect_uri: 'http://localhost:5173/auth/callback',
+            return_path: '/',
+            provider: 'discord',
+            iat: now,
+            exp: now + 600,
+            ...overrides,
+        },
+        env.JWT_SECRET
+    );
+}
+
+/**
+ * What the SPA returns to the POST callback: a signed state whose
+ * code_challenge is the real S256 of VALID_CODE_VERIFIER (state is REQUIRED).
+ */
+async function boundState(): Promise<string> {
+    return createSignedState({ code_challenge: await s256(VALID_CODE_VERIFIER) });
+}
+
+/**
+ * Discord token + user endpoints mocked to succeed; returns the fetch mock so
+ * tests can assert whether the token exchange was attempted.
+ */
+function mockDiscordSuccess(): ReturnType<typeof vi.fn> {
+    const mock = vi.fn().mockImplementation((url: string) => {
+        if (url.includes('oauth2/token')) {
+            return Promise.resolve(new Response(JSON.stringify({
+                access_token: 'discord_token',
+                token_type: 'Bearer',
+                expires_in: 604800,
+                refresh_token: 'refresh',
+                scope: 'identify',
+            }), { status: 200 }));
+        }
+        if (url.includes('users/@me')) {
+            return Promise.resolve(new Response(JSON.stringify({
+                id: '123456789012345678',
+                username: 'testuser',
+                discriminator: '0001',
+                global_name: 'Test User',
+                avatar: 'abc123',
+            }), { status: 200 }));
+        }
+        return originalFetch(url);
+    });
+    globalThis.fetch = mock;
+    return mock;
+}
 
 describe('Callback Handler', () => {
     beforeEach(() => {
@@ -212,6 +290,253 @@ describe('Callback Handler', () => {
             const location = new URL(response.headers.get('location')!);
             expect(location.searchParams.get('error')).toContain('expired');
         });
+
+        // FINDING-012 / OAUTH-5: the SPA needs the worker-signed state back so it
+        // can hand it to POST /auth/callback, where the worker binds the
+        // code_verifier to the code_challenge it signed at authorize time.
+        it('should echo the signed state in the bounce so the SPA can return it for PKCE binding', async () => {
+            const state = await createSignedState({ csrf: 'echo-me' });
+
+            const response = await SELF.fetch(
+                `http://localhost/auth/callback?${new URLSearchParams({ code: 'code', state })}`,
+                { redirect: 'manual' }
+            );
+
+            expect(response.status).toBe(302);
+            const location = new URL(response.headers.get('location')!);
+            expect(location.searchParams.get('state')).toBe(state);
+            expect(location.searchParams.get('csrf')).toBe('echo-me');
+        });
+
+        // FINDING-012 / OAUTH-4: exact redirect target — an allowlisted origin is
+        // not enough, the path must be the SPA callback route.
+        it('should refuse to bounce the code to a non-callback path on an allowed origin', async () => {
+            const state = await createSignedState({
+                redirect_uri: 'http://localhost:5173/some/other/page',
+            });
+
+            const response = await SELF.fetch(
+                `http://localhost/auth/callback?${new URLSearchParams({ code: 'code', state })}`,
+                { redirect: 'manual' }
+            );
+
+            expect(response.status).toBe(302);
+            const location = new URL(response.headers.get('location')!);
+            expect(location.pathname).toBe('/auth/callback');
+            expect(location.searchParams.get('code')).toBeNull();
+            expect(location.searchParams.get('error')).toBe('Untrusted redirect target');
+        });
+    });
+
+    /**
+     * FINDING-012 / OAUTH-5 (2026-08-21 security audit): the worker never bound
+     * the code_verifier to the code_challenge it received — PKCE was delegated
+     * entirely to Discord. When the SPA returns the signed state, the worker
+     * must verify S256(code_verifier) === state.code_challenge BEFORE calling
+     * Discord, so a misconfigured IdP cannot weaken PKCE.
+     */
+    describe('POST /auth/callback — PKCE binding to the signed state', () => {
+        it('should reject a code_verifier that does not match the code_challenge in the signed state', async () => {
+            const fetchMock = mockDiscordSuccess();
+            // VALID_CODE_CHALLENGE is NOT S256(VALID_CODE_VERIFIER)
+            const state = await createSignedState({ code_challenge: VALID_CODE_CHALLENGE });
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.success).toBe(false);
+            expect(json.error).toBe('PKCE verification failed');
+            // Never reached the provider
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        it('should exchange the code when S256(code_verifier) matches the signed state', async () => {
+            const fetchMock = mockDiscordSuccess();
+            const state = await createSignedState({ code_challenge: await s256(VALID_CODE_VERIFIER) });
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.success).toBe(true);
+            expect(json.token).toBeTruthy();
+            expect(fetchMock).toHaveBeenCalled();
+        });
+
+        it('should reject an unsigned state', async () => {
+            const fetchMock = mockDiscordSuccess();
+            const state = btoa(JSON.stringify({
+                csrf: 'x',
+                code_challenge: await s256(VALID_CODE_VERIFIER),
+                redirect_uri: 'http://localhost:5173/auth/callback',
+                return_path: '/',
+                provider: 'discord',
+            }));
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid state');
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        it('should reject a state with a tampered signature', async () => {
+            const fetchMock = mockDiscordSuccess();
+            const signed = await createSignedState({ code_challenge: await s256(VALID_CODE_VERIFIER) });
+            const [payload, signature] = signed.split('.');
+            const flipped = signature[0] === 'A' ? 'B' : 'A';
+            const tampered = `${payload}.${flipped}${signature.slice(1)}`;
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: tampered }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid state');
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        it('should reject a state minted for another provider', async () => {
+            const fetchMock = mockDiscordSuccess();
+            const state = await createSignedState({
+                provider: 'xivauth',
+                code_challenge: await s256(VALID_CODE_VERIFIER),
+            });
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid state');
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        it('should reject an expired state', async () => {
+            const fetchMock = mockDiscordSuccess();
+            const now = Math.floor(Date.now() / 1000);
+            const state = await createSignedState({
+                code_challenge: await s256(VALID_CODE_VERIFIER),
+                iat: now - 1200,
+                exp: now - 600,
+            });
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid state');
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        it('should reject a state that is not a string', async () => {
+            const fetchMock = mockDiscordSuccess();
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: 12345 }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid state');
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        it('should reject a signed state that carries no code_challenge', async () => {
+            const fetchMock = mockDiscordSuccess();
+            const state = await createSignedState({ code_challenge: undefined });
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid state');
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        it('should reject an absurdly long state without trying to verify it', async () => {
+            const fetchMock = mockDiscordSuccess();
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: 'valid_code',
+                    code_verifier: VALID_CODE_VERIFIER,
+                    state: 'a'.repeat(5000) + '.' + 'b'.repeat(43),
+                }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid state');
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        // The web app forwards the signed state from the GET bounce, so the
+        // binding is mandatory: without a state there is nothing to bind the
+        // verifier to and the exchange must not reach the provider.
+        it('should reject a missing, null or empty state with 400 Missing state', async () => {
+            for (const body of [
+                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER },
+                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: null },
+                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: '' },
+            ]) {
+                const fetchMock = mockDiscordSuccess();
+
+                const response = await SELF.fetch('http://localhost/auth/callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+
+                const json = (await response.json()) as Record<string, any>;
+
+                expect(response.status, JSON.stringify(body)).toBe(400);
+                expect(json.success).toBe(false);
+                expect(json.error).toBe('Missing state');
+                expect(fetchMock).not.toHaveBeenCalled();
+            }
+        });
     });
 
     describe('POST /auth/callback', () => {
@@ -306,6 +631,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'invalid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -339,6 +665,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -369,6 +696,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -399,6 +727,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -438,6 +767,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -477,6 +807,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -516,6 +847,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -572,6 +904,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                     redirect_uri: 'http://localhost:5173/custom/callback',
                 }),
             });
@@ -608,6 +941,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -629,6 +963,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -660,6 +995,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'invalid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -687,6 +1023,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -721,6 +1058,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'invalid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 

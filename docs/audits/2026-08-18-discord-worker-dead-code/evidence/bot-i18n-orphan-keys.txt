@@ -1,0 +1,288 @@
+# bot-logic i18n orphan keys (packages/bot-logic/src/i18n/locales/*.json)
+# generated 2026-08-18 by track C; keys=621 live=343 dynamic=29 test-only=38 orphan=211
+# 'orphan' = leaf key path never appears as a string literal in any non-test file under apps/discord-worker, apps/stoat-worker, packages/bot-logic, packages/svg,
+#   and is not covered by any template/concat prefix found there. en value shown for context.
+
+## ORPHAN
+accessibility.simulatedAppearance	"Simulated Appearance"
+budget.alternative	"Alternative"
+budget.alternatives	"Cheaper Alternatives"
+budget.colorMatch	"Color Match"
+budget.distanceQuality.approximate	"Approximate"
+budget.distanceQuality.excellent	"Excellent"
+budget.distanceQuality.fair	"Fair"
+budget.distanceQuality.good	"Good"
+budget.distanceQuality.perfect	"Perfect"
+budget.errors.noWorldSet	"Please set your world first with `/budget set_world <world>` or specify a world with the `world` op
+budget.foundAlternatives	"Found {count} cheaper alternatives:"
+budget.gilAmount	"{amount} Gil"
+budget.headerLabel	"BUDGET ALTERNATIVES FOR"
+budget.listingCount	"{count} listings"
+budget.noAlternativesShort	"No cheaper alternatives found"
+budget.noListings	"No listings"
+budget.onWorld	"on {world}"
+budget.price	"Price"
+budget.pricesUpdated	"Prices updated {time}"
+budget.quickPick	"Quick Pick: {name}"
+budget.saveAmount	"Save {amount} ({percent}%)"
+budget.savings	"Savings"
+budget.sortMethods.color_match	"Best Color Match"
+budget.sortMethods.price	"Lowest Price"
+budget.sortMethods.value_score	"Best Value"
+budget.sortedBy	"Sorted by: {method}"
+budget.targetDye	"Target Dye"
+budget.targetPrice	"Target Price"
+budget.title	"Budget Dye Finder"
+budget.valueScore	"Value Score"
+budget.worldSetNote	"Future `/budget` commands will use this world by default."
+budget.worldUsed	"Prices from {world}"
+card.cost	"COST"
+card.idealKey	"outline = ideal · solid = found"
+common.closestDye	"Closest Dye"
+common.color	"Color"
+common.createdAt	"Created"
+common.distance	"Distance"
+common.dye	"Dye"
+common.inputColor	"Input Color"
+common.marketBoard	"Market Board"
+common.matchQuality	"Match Quality"
+common.quality	"Quality"
+common.success	"Success"
+comparison.colorDistance	"Color Distance"
+comparison.contrastRatio	"Contrast Ratio"
+comparison.mostDifferent	"Most Different"
+comparison.mostSimilar	"Most Similar"
+comparison.passes	"Pass"
+comparison.wcagAA	"WCAG AA"
+comparison.wcagAAA	"WCAG AAA"
+errors.colorNotFound	"Could not find a dye matching \"{input}\"."
+errors.failedToReset	"Could not clear your preference. Please try again later."
+errors.failedToSave	"Could not save your preference. Please try again later."
+errors.userNotFound	"Could not identify user."
+extractor.colorSubcommand	"Extract dyes from a color"
+extractor.dominantColor	"Dominant Color"
+extractor.extractedColors	"Extracted Colors"
+extractor.findingMatches	"Finding closest matches for {input}"
+extractor.imageSubcommand	"Extract dyes from an image"
+extractor.title	"Color Extractor: {name}"
+extractor.useInfoHint	"Use /dye info for acquisition details"
+extractor.useInfoNameHint	"Use /dye info <name> for acquisition details"
+gradient.description	"Create smooth color transitions between two colors"
+gradient.end	"END"
+gradient.gradientFrom	"Gradient from {start} to {end}"
+gradient.start	"START"
+harmony.harmonyColors	"Harmony Colors"
+matchImage.closestMatch	"Closest Dye Match"
+matchImage.colorMatch	"Color Match"
+matchImage.colorPalette	"{count} Color Palette"
+matchImage.extractionMethod	"Color extracted via K-means clustering"
+matchImage.topMatches	"Top {count} Matching Dyes"
+meta.flag	"🇺🇸"
+meta.nativeName	"English"
+mixer.blendedColor	"Blended Color"
+mixer.blendingMode	"Blending Mode"
+mixer.closestMatch	"Closest Match"
+mixer.footer	"Use /preferences set blending <mode> to change your default • /dye info {dyeName}"
+mixer.inputDyes	"Input Dyes"
+mixer.modeDescriptions.hsl	"Hue-Saturation-Lightness interpolation"
+mixer.modeDescriptions.lab	"Perceptually uniform CIELAB blending"
+mixer.modeDescriptions.oklab	"Modern perceptual color space (fixes blue→purple)"
+mixer.modeDescriptions.rgb	"Simple additive channel averaging"
+mixer.modeDescriptions.ryb	"Traditional artist's color wheel mixing"
+mixer.modeDescriptions.spectral	"Kubelka-Munk pigment physics simulation"
+mixer.modes.hsl	"HSL (Hue-based)"
+mixer.modes.lab	"LAB (Perceptual)"
+mixer.modes.oklab	"OKLAB (Modern Perceptual)"
+mixer.modes.rgb	"RGB Average"
+mixer.modes.ryb	"RYB (Artist)"
+mixer.modes.spectral	"Spectral (Pigment Physics)"
+mixer.title	"Dye Blender"
+mixer.topMatches	"Top {count} Matches"
+paletteGrid.extracted	"EXTRACTED"
+paletteGrid.matchedDye	"MATCHED DYE"
+paletteGrid.noColors	"No colors extracted from image"
+paletteGrid.ofImage	"of image"
+paletteGrid.quality.approximate	"APPROX"
+paletteGrid.quality.excellent	"EXCELLENT"
+paletteGrid.quality.fair	"FAIR"
+paletteGrid.quality.good	"GOOD"
+paletteGrid.quality.perfect	"PERFECT"
+preferences.descriptions.blending	"Default algorithm for /mixer"
+preferences.descriptions.clan	"Default clan for /swatch"
+preferences.descriptions.count	"Default number of results (1-10)"
+preferences.descriptions.gender	"Default gender for /swatch"
+preferences.descriptions.language	"Language for dye names and bot messages"
+preferences.descriptions.market	"Whether to show market prices by default"
+preferences.descriptions.matching	"Default color matching method"
+preferences.descriptions.showAcquisition	"Show dye acquisition source on result cards"
+preferences.descriptions.showDeltaE	"Show Delta-E color distance on result cards"
+preferences.descriptions.showHex	"Show hex color codes on result cards"
+preferences.descriptions.showHsv	"Show HSV values on result cards"
+preferences.descriptions.showLab	"Show LAB values on result cards"
+preferences.descriptions.showRgb	"Show RGB values on result cards"
+preferences.descriptions.world	"Default world/datacenter for market prices"
+preferences.errors.invalidTheme	"Theme must be dark or light."
+preferences.reset.all	"All preferences have been reset to defaults."
+preferences.set.affectedCommands	"This affects: {commands}"
+preferences.set.updated	"**{key}** has been set to **{value}**."
+preferences.show.title	"Current Preferences"
+preset.categories.aesthetics	"Aesthetics"
+preset.categories.community	"Community"
+preset.categories.events	"FFXIV Events"
+preset.categories.grand-companies	"Grand Companies"
+preset.categories.jobs	"FFXIV Jobs"
+preset.categories.seasons	"Seasons"
+preset.moderation.approved	"Preset Approved"
+preset.moderation.approvedDesc	"**{name}** has been approved and is now live!"
+preset.moderation.missingId	"Please specify a preset ID for this action."
+preset.moderation.missingReason	"Please provide a reason for rejection."
+preset.moderation.noPending	"No presets are currently awaiting moderation."
+preset.moderation.pendingCount	"{count} preset(s) pending review"
+preset.moderation.pendingQueue	"Presets Awaiting Moderation"
+preset.moderation.rejected	"Preset Rejected"
+preset.moderation.rejectedDesc	"**{name}** has been rejected."
+preset.moderation.stats	"Moderation Statistics"
+preset.notConfigured	"Community presets are not configured on this bot."
+preset.status.approved	"Approved"
+preset.status.flagged	"Flagged"
+preset.status.pending	"Pending"
+preset.status.rejected	"Rejected"
+stats.commands.leastUsed	"Least Used"
+stats.commands.legacyUsage	"Legacy Commands"
+stats.commands.title	"Command Statistics"
+stats.commands.topCommands	"Top Commands"
+stats.commands.v4Migration	"V4 Migration Status"
+stats.commands.v4Usage	"V4 Commands"
+stats.health.analyticsStatus	"Analytics Engine"
+stats.health.cacheStatus	"Cache API"
+stats.health.degraded	"Degraded"
+stats.health.down	"Down"
+stats.health.externalServices	"External Services"
+stats.health.kvLatency	"KV Latency"
+stats.health.operational	"Operational"
+stats.health.title	"System Health"
+stats.health.universalis	"Universalis API"
+stats.overview.avgLatency	"Avg Latency"
+stats.overview.period	"Last {days} days"
+stats.overview.successRate	"Success Rate"
+stats.overview.title	"Usage Overview"
+stats.overview.totalCommands	"Total Commands"
+stats.overview.uniqueUsers	"Unique Users"
+stats.preferences.blendingModes	"Blending Mode Usage"
+stats.preferences.languageDistribution	"Language Distribution"
+stats.preferences.matchingMethods	"Matching Method Usage"
+stats.preferences.sampleSize	"Sample size: {count} users"
+stats.preferences.title	"Preference Adoption"
+stats.summary.description	"A Discord bot for FFXIV dye color exploration and matching"
+stats.summary.features	"Features"
+stats.summary.featuresList	"• Color matching & extraction\n• Dye blending & gradients\n• Color harmony generation\n• Character 
+stats.summary.links	"Links"
+stats.summary.title	"XIV Dye Tools Bot"
+swatch.characterColor	"Character Color"
+swatch.clan	"Clan"
+swatch.closestDye	"Closest Dye"
+swatch.colorIndex	"Color Index"
+swatch.colorType	"Color Type"
+swatch.colorTypes.eyes	"Eye Color"
+swatch.colorTypes.facepaint_dark	"Face Paint (Dark)"
+swatch.colorTypes.facepaint_light	"Face Paint (Light)"
+swatch.colorTypes.hair	"Hair Color"
+swatch.colorTypes.highlight	"Hair Highlight"
+swatch.colorTypes.lips_dark	"Lip Color (Dark)"
+swatch.colorTypes.lips_light	"Lip Color (Light)"
+swatch.colorTypes.skin	"Skin Tone"
+swatch.colorTypes.tattoo	"Tattoo/Limbal Ring"
+swatch.column	"Column"
+swatch.errors.clanGenderRequired	"{typeName} requires {missing} to be specified.\n\nEither provide it as a parameter or set your defa
+swatch.errors.colorNotFound	"Could not find the specified character color."
+swatch.errors.gridOutOfRange	"Grid position ({row}, {col}) is out of range for {typeName}."
+swatch.errors.invalidClan	"Invalid clan: `{clan}`\n\nValid clans:\n{clanList}"
+swatch.errors.invalidColorType	"Invalid color type: `{type}`\n\nValid types: {validTypes}"
+swatch.errors.invalidColumn	"Invalid column. Must be between {min} and {max}."
+swatch.errors.invalidIndex	"Invalid index for {typeName}. Must be between {min} and {max}."
+swatch.errors.invalidRow	"Invalid row for {typeName}. Must be between {min} and {max}."
+swatch.errors.missingGridParams	"Parameters `type`, `row`, and `col` are all required."
+swatch.errors.missingTypeAndIndex	"Both `type` and `index` are required."
+swatch.footer	"Use /preferences set clan/gender to set defaults • /dye info {dyeName}"
+swatch.gender	"Gender"
+swatch.genders.female	"Female"
+swatch.genders.male	"Male"
+swatch.gridPosition	"Grid Position"
+swatch.index	"Index"
+swatch.matching	"Matching"
+swatch.raceSpecific	"Race-specific color palette"
+swatch.row	"Row"
+swatch.sharedPalette	"Shared color palette (all races)"
+swatch.title	"Character Color Match"
+swatch.topMatches	"Top {count} Matches"
+
+## TEST-ONLY (only *.test.ts reference the literal)
+about.categories.userData	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.about	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.accessibility	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.collection	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.comparison	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.dyeInfo	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.dyeList	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.dyeRandom	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.dyeSearch	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.favorites	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.harmony	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.language	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.manual	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.match	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.matchImage	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.mixer	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.preset	apps/discord-worker/src/handlers/commands/about.test.ts
+about.cmd.stats	apps/discord-worker/src/handlers/commands/about.test.ts
+accessibility.comparing	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.contrastAnalysis	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.contrastTitle	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.description	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.deuteranopiaDesc	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.matrixDescription	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.protanopiaDesc	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.simulationMethod	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.title	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.tritanopiaDesc	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.wcagAAADesc	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.wcagAADesc	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.wcagFailDesc	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+accessibility.wcagGuidelines	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+comparison.fails	apps/discord-worker/src/handlers/commands/accessibility.test.ts
+comparison.title	apps/discord-worker/src/handlers/commands/comparison.test.ts
+dye.random.descriptionUnique	apps/discord-worker/src/handlers/commands/dye.test.ts
+meta.locale	apps/discord-worker/src/services/bot-i18n.test.ts; packages/bot-logic/src/i18n/translator.test.ts
+meta.name	apps/discord-worker/src/services/bot-i18n.test.ts; packages/bot-logic/src/i18n/translator.test.ts
+preset.moderation.accessDenied	apps/discord-worker/src/handlers/commands/preset.test.ts
+
+## DYNAMIC-PREFIX-COVERED (assumed live; verify enumerations)
+accessibility.achromatopsia
+accessibility.deuteranopia
+accessibility.protanopia
+accessibility.tritanopia
+manual5.topics.characterFile.body
+manual5.topics.characterFile.name
+manual5.topics.colorVision.body
+manual5.topics.colorVision.name
+manual5.topics.contrast.body
+manual5.topics.contrast.name
+manual5.topics.matchingMethods.body
+manual5.topics.matchingMethods.name
+manual5.topics.spectrumPrices.body
+manual5.topics.spectrumPrices.name
+preferences.keys.blending
+preferences.keys.clan
+preferences.keys.count
+preferences.keys.gender
+preferences.keys.language
+preferences.keys.market
+preferences.keys.matching
+preferences.keys.showAcquisition
+preferences.keys.showDeltaE
+preferences.keys.showHex
+preferences.keys.showHsv
+preferences.keys.showLab
+preferences.keys.showRgb
+preferences.keys.theme
+preferences.keys.world

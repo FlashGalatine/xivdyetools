@@ -1,0 +1,656 @@
+{
+  "advisories": {
+    "1102341": {
+      "findings": [
+        {
+          "version": "0.21.5",
+          "paths": [
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vite>esbuild",
+            "apps__api-worker>vitepress>vite>esbuild"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1102341,
+      "title": "esbuild enables any website to send any requests to the development server and read the response",
+      "module_name": "esbuild",
+      "vulnerable_versions": "<=0.24.2",
+      "patched_versions": ">=0.24.3",
+      "severity": "moderate",
+      "cwe": "CWE-346",
+      "github_advisory_id": "GHSA-67mh-4wv8-2f99",
+      "url": "https://github.com/advisories/GHSA-67mh-4wv8-2f99"
+    },
+    "1116229": {
+      "findings": [
+        {
+          "version": "5.4.21",
+          "paths": [
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vite",
+            "apps__api-worker>vitepress>vite"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1116229,
+      "title": "Vite Vulnerable to Path Traversal in Optimized Deps `.map` Handling",
+      "module_name": "vite",
+      "vulnerable_versions": "<=6.4.1",
+      "patched_versions": ">=6.4.2",
+      "severity": "moderate",
+      "cwe": "CWE-22, CWE-200",
+      "github_advisory_id": "GHSA-4w7w-66w2-5vf9",
+      "url": "https://github.com/advisories/GHSA-4w7w-66w2-5vf9"
+    },
+    "1120680": {
+      "findings": [
+        {
+          "version": "0.27.3",
+          "paths": [
+            "apps__stoat-worker>tsup>bundle-require>esbuild",
+            "apps__stoat-worker>tsup>esbuild",
+            "apps__stoat-worker>vitest>@vitest/mocker>vite>esbuild",
+            "apps__stoat-worker>vitest>vite>esbuild"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1120680,
+      "title": "esbuild allows arbitrary file read when running the development server on Windows",
+      "module_name": "esbuild",
+      "vulnerable_versions": ">=0.27.3 <0.28.1",
+      "patched_versions": ">=0.28.1",
+      "severity": "low",
+      "cwe": "CWE-22",
+      "github_advisory_id": "GHSA-g7r4-m6w7-qqqr",
+      "url": "https://github.com/advisories/GHSA-g7r4-m6w7-qqqr"
+    },
+    "1120784": {
+      "findings": [
+        {
+          "version": "5.4.21",
+          "paths": [
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vite",
+            "apps__api-worker>vitepress>vite"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1120784,
+      "title": "launch-editor: NTLMv2 hash disclosure via UNC path handling on Windows",
+      "module_name": "vite",
+      "vulnerable_versions": "<=6.4.2",
+      "patched_versions": ">=6.4.3",
+      "severity": "moderate",
+      "cwe": "CWE-73, CWE-522",
+      "github_advisory_id": "GHSA-v6wh-96g9-6wx3",
+      "url": "https://github.com/advisories/GHSA-v6wh-96g9-6wx3"
+    },
+    "1123525": {
+      "findings": [
+        {
+          "version": "5.4.21",
+          "paths": [
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vite",
+            "apps__api-worker>vitepress>vite"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1123525,
+      "title": "vite: `server.fs.deny` bypass on Windows alternate paths",
+      "module_name": "vite",
+      "vulnerable_versions": "<=6.4.2",
+      "patched_versions": ">=6.4.3",
+      "severity": "high",
+      "cwe": "CWE-22, CWE-200",
+      "github_advisory_id": "GHSA-fx2h-pf6j-xcff",
+      "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff"
+    },
+    "1124299": {
+      "findings": [
+        {
+          "version": "1.5.0",
+          "paths": [
+            "apps__stoat-worker>revolt.js>@solid-primitives/map>@solid-primitives/trigger>@solid-primitives/utils>solid-js>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/map>@solid-primitives/trigger>@solid-primitives/utils>solid-js>seroval-plugins>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/map>@solid-primitives/trigger>solid-js>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/map>@solid-primitives/trigger>solid-js>seroval-plugins>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/map>solid-js>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/map>solid-js>seroval-plugins>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/set>@solid-primitives/trigger>@solid-primitives/utils>solid-js>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/set>@solid-primitives/trigger>@solid-primitives/utils>solid-js>seroval-plugins>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/set>@solid-primitives/trigger>solid-js>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/set>@solid-primitives/trigger>solid-js>seroval-plugins>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/set>solid-js>seroval",
+            "apps__stoat-worker>revolt.js>@solid-primitives/set>solid-js>seroval-plugins>seroval",
+            "apps__stoat-worker>revolt.js>solid-js>seroval",
+            "apps__stoat-worker>revolt.js>solid-js>seroval-plugins>seroval"
+          ],
+          "dev": false,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1124299,
+      "title": "seroval: `seroval.fromJSON()` Promise resolver type confusion invokes attacker-controlled methods during deserialization",
+      "module_name": "seroval",
+      "vulnerable_versions": "<=1.5.2",
+      "patched_versions": ">=1.5.3",
+      "severity": "critical",
+      "cwe": "CWE-502, CWE-843",
+      "github_advisory_id": "GHSA-mv8w-475r-vwqw",
+      "url": "https://github.com/advisories/GHSA-mv8w-475r-vwqw"
+    },
+    "1130591": {
+      "findings": [
+        {
+          "version": "5.0.7",
+          "paths": [
+            ".>@eslint/js>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>@eslint/js>eslint>minimatch>brace-expansion",
+            ".>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>eslint>minimatch>brace-expansion",
+            ".>rimraf>glob>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/parser>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/parser>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/parser>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/parser>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/parser>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/parser>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/utils>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>eslint>minimatch>brace-expansion",
+            "apps__web-app>eslint-config-prettier>eslint>@eslint/config-array>minimatch>brace-expansion",
+            "apps__web-app>eslint-config-prettier>eslint>minimatch>brace-expansion",
+            "apps__web-app>eslint-plugin-prettier>eslint>@eslint/config-array>minimatch>brace-expansion",
+            "apps__web-app>eslint-plugin-prettier>eslint>minimatch>brace-expansion",
+            "apps__web-app>eslint-plugin-prettier>eslint-config-prettier>eslint>@eslint/config-array>minimatch>brace-expansion",
+            "apps__web-app>eslint-plugin-prettier>eslint-config-prettier>eslint>minimatch>brace-expansion",
+            "packages__core>typedoc>minimatch>brace-expansion",
+            "packages__core>typedoc-plugin-markdown>typedoc>minimatch>brace-expansion"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1130591,
+      "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+      "module_name": "brace-expansion",
+      "vulnerable_versions": ">=4.0.0 <5.0.8",
+      "patched_versions": ">=5.0.8",
+      "severity": "high",
+      "cwe": "CWE-400, CWE-770",
+      "github_advisory_id": "GHSA-mh99-v99m-4gvg",
+      "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg"
+    },
+    "1130715": {
+      "findings": [
+        {
+          "version": "7.28.0",
+          "paths": [
+            "apps__api-worker>wrangler>miniflare>undici",
+            "apps__discord-worker>wrangler>miniflare>undici",
+            "apps__moderation-worker>wrangler>miniflare>undici",
+            "apps__oauth>miniflare>undici",
+            "apps__oauth>wrangler>miniflare>undici",
+            "apps__og-worker>wrangler>miniflare>undici",
+            "apps__presets-api>wrangler>miniflare>undici"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1130715,
+      "title": "undici vulnerable to downstream response desynchronization via retry interceptor",
+      "module_name": "undici",
+      "vulnerable_versions": ">=7.0.0 <7.29.0",
+      "patched_versions": ">=7.29.0",
+      "severity": "moderate",
+      "cwe": "CWE-444",
+      "github_advisory_id": "GHSA-8xcm-r25x-g524",
+      "url": "https://github.com/advisories/GHSA-8xcm-r25x-g524"
+    },
+    "1130718": {
+      "findings": [
+        {
+          "version": "7.28.0",
+          "paths": [
+            "apps__api-worker>wrangler>miniflare>undici",
+            "apps__discord-worker>wrangler>miniflare>undici",
+            "apps__moderation-worker>wrangler>miniflare>undici",
+            "apps__oauth>miniflare>undici",
+            "apps__oauth>wrangler>miniflare>undici",
+            "apps__og-worker>wrangler>miniflare>undici",
+            "apps__presets-api>wrangler>miniflare>undici"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1130718,
+      "title": "undici vulnerable to cross-user information disclosure and parse-time crash via degenerate private cache directives",
+      "module_name": "undici",
+      "vulnerable_versions": ">=7.0.0 <7.29.0",
+      "patched_versions": ">=7.29.0",
+      "severity": "high",
+      "cwe": "CWE-200, CWE-248, CWE-525",
+      "github_advisory_id": "GHSA-4cwx-7wf7-3272",
+      "url": "https://github.com/advisories/GHSA-4cwx-7wf7-3272"
+    },
+    "1130726": {
+      "findings": [
+        {
+          "version": "7.28.0",
+          "paths": [
+            "apps__api-worker>wrangler>miniflare>undici",
+            "apps__discord-worker>wrangler>miniflare>undici",
+            "apps__moderation-worker>wrangler>miniflare>undici",
+            "apps__oauth>miniflare>undici",
+            "apps__oauth>wrangler>miniflare>undici",
+            "apps__og-worker>wrangler>miniflare>undici",
+            "apps__presets-api>wrangler>miniflare>undici"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1130726,
+      "title": "undici vulnerable to CRLF Injection via blob-like body 'type' property",
+      "module_name": "undici",
+      "vulnerable_versions": ">=7.0.0 <7.29.0",
+      "patched_versions": ">=7.29.0",
+      "severity": "moderate",
+      "cwe": "CWE-93",
+      "github_advisory_id": "GHSA-m8rv-5g2x-5cg5",
+      "url": "https://github.com/advisories/GHSA-m8rv-5g2x-5cg5"
+    },
+    "1130729": {
+      "findings": [
+        {
+          "version": "7.28.0",
+          "paths": [
+            "apps__api-worker>wrangler>miniflare>undici",
+            "apps__discord-worker>wrangler>miniflare>undici",
+            "apps__moderation-worker>wrangler>miniflare>undici",
+            "apps__oauth>miniflare>undici",
+            "apps__oauth>wrangler>miniflare>undici",
+            "apps__og-worker>wrangler>miniflare>undici",
+            "apps__presets-api>wrangler>miniflare>undici"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1130729,
+      "title": "undici vulnerable to cross-user information disclosure via whitespace around equals in Cache-Control directives",
+      "module_name": "undici",
+      "vulnerable_versions": ">=7.0.0 <7.29.0",
+      "patched_versions": ">=7.29.0",
+      "severity": "moderate",
+      "cwe": "CWE-436, CWE-524",
+      "github_advisory_id": "GHSA-jr45-8vmc-qm54",
+      "url": "https://github.com/advisories/GHSA-jr45-8vmc-qm54"
+    },
+    "1130731": {
+      "findings": [
+        {
+          "version": "7.28.0",
+          "paths": [
+            "apps__api-worker>wrangler>miniflare>undici",
+            "apps__discord-worker>wrangler>miniflare>undici",
+            "apps__moderation-worker>wrangler>miniflare>undici",
+            "apps__oauth>miniflare>undici",
+            "apps__oauth>wrangler>miniflare>undici",
+            "apps__og-worker>wrangler>miniflare>undici",
+            "apps__presets-api>wrangler>miniflare>undici"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1130731,
+      "title": "undici vulnerable to cookie attribute injection via unsanitized domain and unparsed setCookie fields",
+      "module_name": "undici",
+      "vulnerable_versions": ">=7.0.0 <7.29.0",
+      "patched_versions": ">=7.29.0",
+      "severity": "moderate",
+      "cwe": "CWE-74",
+      "github_advisory_id": "GHSA-v3r7-h72x-cjcm",
+      "url": "https://github.com/advisories/GHSA-v3r7-h72x-cjcm"
+    },
+    "1130733": {
+      "findings": [
+        {
+          "version": "4.12.32",
+          "paths": [
+            "apps__api-worker>hono",
+            "apps__discord-worker>hono",
+            "apps__moderation-worker>hono",
+            "apps__oauth>hono",
+            "apps__og-worker>hono",
+            "apps__presets-api>hono",
+            "packages__worker-kit>hono"
+          ],
+          "dev": false,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1130733,
+      "title": "Hono: ReDoS in CORS middleware via Access-Control-Request-Headers",
+      "module_name": "hono",
+      "vulnerable_versions": "<4.12.34",
+      "patched_versions": ">=4.12.34",
+      "severity": "moderate",
+      "cwe": "CWE-1333",
+      "github_advisory_id": "GHSA-8j4g-w8fx-2239",
+      "url": "https://github.com/advisories/GHSA-8j4g-w8fx-2239"
+    },
+    "1130734": {
+      "findings": [
+        {
+          "version": "5.0.7",
+          "paths": [
+            ".>@eslint/js>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>@eslint/js>eslint>minimatch>brace-expansion",
+            ".>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>eslint>minimatch>brace-expansion",
+            ".>rimraf>glob>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/parser>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/parser>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/parser>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/parser>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/parser>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/parser>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/utils>@typescript-eslint/typescript-estree>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/utils>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>@typescript-eslint/utils>eslint>minimatch>brace-expansion",
+            ".>typescript-eslint>eslint>@eslint/config-array>minimatch>brace-expansion",
+            ".>typescript-eslint>eslint>minimatch>brace-expansion",
+            "apps__web-app>eslint-config-prettier>eslint>@eslint/config-array>minimatch>brace-expansion",
+            "apps__web-app>eslint-config-prettier>eslint>minimatch>brace-expansion",
+            "apps__web-app>eslint-plugin-prettier>eslint>@eslint/config-array>minimatch>brace-expansion",
+            "apps__web-app>eslint-plugin-prettier>eslint>minimatch>brace-expansion",
+            "apps__web-app>eslint-plugin-prettier>eslint-config-prettier>eslint>@eslint/config-array>minimatch>brace-expansion",
+            "apps__web-app>eslint-plugin-prettier>eslint-config-prettier>eslint>minimatch>brace-expansion",
+            "packages__core>typedoc>minimatch>brace-expansion",
+            "packages__core>typedoc-plugin-markdown>typedoc>minimatch>brace-expansion"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1130734,
+      "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+      "module_name": "brace-expansion",
+      "vulnerable_versions": ">=4.0.0 <5.0.9",
+      "patched_versions": ">=5.0.9",
+      "severity": "high",
+      "cwe": "CWE-400, CWE-770",
+      "github_advisory_id": "GHSA-rgw5-rvv9-x895",
+      "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895"
+    },
+    "1138771": {
+      "findings": [
+        {
+          "version": "4.12.32",
+          "paths": [
+            "apps__api-worker>hono",
+            "apps__discord-worker>hono",
+            "apps__moderation-worker>hono",
+            "apps__oauth>hono",
+            "apps__og-worker>hono",
+            "apps__presets-api>hono",
+            "packages__worker-kit>hono"
+          ],
+          "dev": false,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1138771,
+      "title": "Hono: `memo()` retains SSR output across requests, leading to cross-user data disclosure",
+      "module_name": "hono",
+      "vulnerable_versions": ">=3.8.0 <4.12.34",
+      "patched_versions": ">=4.12.34",
+      "severity": "moderate",
+      "cwe": "CWE-488",
+      "github_advisory_id": "GHSA-f23p-vx2j-j53r",
+      "url": "https://github.com/advisories/GHSA-f23p-vx2j-j53r"
+    },
+    "1138772": {
+      "findings": [
+        {
+          "version": "4.12.32",
+          "paths": [
+            "apps__api-worker>hono",
+            "apps__discord-worker>hono",
+            "apps__moderation-worker>hono",
+            "apps__oauth>hono",
+            "apps__og-worker>hono",
+            "apps__presets-api>hono",
+            "packages__worker-kit>hono"
+          ],
+          "dev": false,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1138772,
+      "title": "Hono: Proxy Helper does not remove response headers listed in the `Connection` header",
+      "module_name": "hono",
+      "vulnerable_versions": ">=4.7.0 <4.12.34",
+      "patched_versions": ">=4.12.34",
+      "severity": "low",
+      "cwe": "CWE-200",
+      "github_advisory_id": "GHSA-79qm-7rj5-m7r9",
+      "url": "https://github.com/advisories/GHSA-79qm-7rj5-m7r9"
+    },
+    "1138773": {
+      "findings": [
+        {
+          "version": "4.12.32",
+          "paths": [
+            "apps__api-worker>hono",
+            "apps__discord-worker>hono",
+            "apps__moderation-worker>hono",
+            "apps__oauth>hono",
+            "apps__og-worker>hono",
+            "apps__presets-api>hono",
+            "packages__worker-kit>hono"
+          ],
+          "dev": false,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1138773,
+      "title": "Hono: Algorithmic Complexity DoS in Language Middleware",
+      "module_name": "hono",
+      "vulnerable_versions": ">=4.12.0 <4.12.34",
+      "patched_versions": ">=4.12.34",
+      "severity": "moderate",
+      "cwe": "CWE-407",
+      "github_advisory_id": "GHSA-54fx-42gc-7vw4",
+      "url": "https://github.com/advisories/GHSA-54fx-42gc-7vw4"
+    },
+    "1138813": {
+      "findings": [
+        {
+          "version": "3.3.16",
+          "paths": [
+            "apps__api-worker>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__api-worker>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vite>postcss>nanoid",
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vue>@vue/compiler-sfc>postcss>nanoid",
+            "apps__api-worker>vitepress>@vueuse/core>@vueuse/shared>vue>@vue/compiler-sfc>postcss>nanoid",
+            "apps__api-worker>vitepress>@vueuse/core>vue>@vue/compiler-sfc>postcss>nanoid",
+            "apps__api-worker>vitepress>@vueuse/integrations>@vueuse/core>@vueuse/shared>vue>@vue/compiler-sfc>postcss>nanoid",
+            "apps__api-worker>vitepress>@vueuse/integrations>@vueuse/core>vue>@vue/compiler-sfc>postcss>nanoid",
+            "apps__api-worker>vitepress>@vueuse/integrations>@vueuse/shared>vue>@vue/compiler-sfc>postcss>nanoid",
+            "apps__api-worker>vitepress>@vueuse/integrations>vue>@vue/compiler-sfc>postcss>nanoid",
+            "apps__api-worker>vitepress>vite>postcss>nanoid",
+            "apps__api-worker>vitepress>vue>@vue/compiler-sfc>postcss>nanoid",
+            "apps__api-worker>vitepress>postcss>nanoid",
+            "apps__api-worker>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__api-worker>vitest>vite>postcss>nanoid",
+            "apps__api-worker>vue>@vue/compiler-sfc>postcss>nanoid",
+            "apps__discord-worker>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__discord-worker>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "apps__discord-worker>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__discord-worker>vitest>vite>postcss>nanoid",
+            "apps__moderation-worker>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__moderation-worker>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "apps__moderation-worker>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__moderation-worker>vitest>vite>postcss>nanoid",
+            "apps__oauth>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__oauth>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "apps__oauth>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__oauth>vitest>vite>postcss>nanoid",
+            "apps__og-worker>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__og-worker>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "apps__og-worker>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__og-worker>vitest>vite>postcss>nanoid",
+            "apps__presets-api>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__presets-api>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "apps__presets-api>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__presets-api>vitest>vite>postcss>nanoid",
+            "apps__stoat-worker>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__stoat-worker>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "apps__stoat-worker>tsup>postcss-load-config>postcss>nanoid",
+            "apps__stoat-worker>tsup>postcss>nanoid",
+            "apps__stoat-worker>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__stoat-worker>vitest>vite>postcss>nanoid",
+            "apps__stoat-worker>vitest>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__stoat-worker>vitest>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "apps__stoat-worker>vitest>@vitest/ui>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__stoat-worker>vitest>@vitest/ui>vitest>vite>postcss>nanoid",
+            "apps__web-app>@tailwindcss/postcss>postcss>nanoid",
+            "apps__web-app>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__web-app>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "apps__web-app>@vitest/ui>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__web-app>@vitest/ui>vitest>vite>postcss>nanoid",
+            "apps__web-app>autoprefixer>postcss>nanoid",
+            "apps__web-app>postcss>nanoid",
+            "apps__web-app>vite>postcss>nanoid",
+            "apps__web-app>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "apps__web-app>vitest>vite>postcss>nanoid",
+            "packages__auth>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__auth>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "packages__auth>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__auth>vitest>vite>postcss>nanoid",
+            "packages__bot-logic>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__bot-logic>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "packages__bot-logic>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__bot-logic>vitest>vite>postcss>nanoid",
+            "packages__core>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__core>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "packages__core>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__core>vitest>vite>postcss>nanoid",
+            "packages__logger>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__logger>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "packages__logger>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__logger>vitest>vite>postcss>nanoid",
+            "packages__svg>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__svg>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "packages__svg>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__svg>vitest>vite>postcss>nanoid",
+            "packages__test-utils>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__test-utils>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "packages__test-utils>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__test-utils>vitest>vite>postcss>nanoid",
+            "packages__types>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__types>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "packages__types>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__types>vitest>vite>postcss>nanoid",
+            "packages__worker-kit>@vitest/coverage-v8>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__worker-kit>@vitest/coverage-v8>vitest>vite>postcss>nanoid",
+            "packages__worker-kit>vitest>@vitest/mocker>vite>postcss>nanoid",
+            "packages__worker-kit>vitest>vite>postcss>nanoid"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1138813,
+      "title": "nanoid: custom generators can loop indefinitely when size is zero",
+      "module_name": "nanoid",
+      "vulnerable_versions": "<3.3.17",
+      "patched_versions": ">=3.3.17",
+      "severity": "high",
+      "cwe": "CWE-835",
+      "github_advisory_id": "GHSA-2v37-7h3g-55p8",
+      "url": "https://github.com/advisories/GHSA-2v37-7h3g-55p8"
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 2,
+      "moderate": 10,
+      "high": 5,
+      "critical": 1
+    },
+    "dependencies": 27,
+    "devDependencies": 685,
+    "optionalDependencies": 210,
+    "totalDependencies": 712
+  }
+}

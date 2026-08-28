@@ -6,6 +6,57 @@
 
 ---
 
+## ⚠️ Canonical Procedure (schema v2, updated 2026-08-11)
+
+The **Dye Maintainer GUI (`apps/maintainer`) has been removed** (Monorepo 2.0; see `DEPRECATIONS.md` and `docs/research/monorepo-2.0/03-maintainer-deprecation.md`). Dyes are added by editing `packages/core/src/data/dyes.json` directly — typically in a Claude Code session working from game data. Everything the tool enforced (and several things it didn't) now lives in CI:
+
+- **Closed vocabularies** — categories, acquisitions, and the acquisition → (price, currency) coupling are defined once in `packages/core/src/config/dye-vocabulary.ts` (`DYE_CATEGORIES` (8), `DYE_ACQUISITIONS` (4), `ACQUISITION_META`).
+- **Data invariants** — `packages/core/src/config/__tests__/dye-vocabulary.test.ts` asserts vocabulary membership, price/currency coupling, unique `stainID`s, hex validity (lowercase mandated), and Facewear consistency. `pnpm turbo run test --filter=@xivdyetools/core` is the new "did I get it right?".
+
+### Required fields per entry — seven, and only seven
+
+Since **schema v2** (core v3.0.0) the data file stores only:
+
+| Field | Notes |
+|-------|-------|
+| `stainID` | The game's Stain sheet row ID. **Canonical identifier** — this is the key |
+| `name` | English name, no "Dye" prefix |
+| `hex` | Lowercase 6-digit `#rrggbb`. **The single colour source of truth** |
+| `category` | One of the 8 in `DYE_CATEGORIES` (`Facewear` is no longer one of them) |
+| `acquisition` | One of the 4 in `DYE_ACQUISITIONS` |
+| `consolidationType` | `'A' \| 'B' \| 'C' \| null` — drives Patch 7.5 market resolution |
+| `legacyItemID` | The pre-consolidation itemID, or `null` for consolidated-only dyes |
+
+**Do not hand-write `rgb`, `hsv`, `lab`, `cost`, `currency`, or any `is*` flag.** They are all
+**derived at `DyeDatabase.initialize()`** — colour formats from `hex`, cost/currency from
+`ACQUISITION_META`, `isMetallic` from `METALLIC_STAIN_IDS`, `isCosmic ≡ consolidationType 'C'`,
+`isIshgardian ≡ 'B'`. Deriving them by construction is what fixed the long-standing Brass
+stored-HSV drift bug; re-introducing stored copies would re-introduce that class of bug.
+
+The runtime `Dye` object still exposes all 16 fields, so nothing downstream changes.
+
+### Adding a Facewear colour instead
+
+Facewear colours are **not dyes** and do not go in `dyes.json`. They live in
+`packages/core/src/data/facewear_colors.json` as `FacewearColor` — a string slug `id`, `name`,
+and `hex`. Do not add entries to `LEGACY_FACEWEAR_ITEM_IDS`; that map is frozen for compatibility
+with IDs persisted before schema v2.
+
+### Game-data sources (preferred over scraping)
+
+- **`Stain` sheet** (XIVAPI v2 `sheet/Stain`, or a Dalamud/Lumina export): new rows give stainID, name (no "Dye" prefix — no stripping needed), packed **BGR** color, and the gloss/metallic flag.
+- **`StainTransient` sheet**: stainID → purchasable item(s) — determines `itemID` and whether the dye resolves to a consolidated Spectrum item (`consolidationType`).
+- **Item sheet fallback:** if you must fetch Item names (en/ja/de/fr), strip the localized "Dye" prefix — try `prefix + ":"`, then `prefix + "："` (full-width colon U+FF1A), then the bare prefix, longest first (this was BUG-081's fix in the old GUI).
+- ko/zh names remain manually sourced into `dyenames.csv`.
+
+### After editing the JSON
+
+`pnpm --filter @xivdyetools/core run build:locales` (regenerates locale JSONs; also update `dyenames.csv` first for names) → `pnpm turbo run build test --filter=@xivdyetools/core` → version bump → publish per the standard flow.
+
+The sections below cover item-ID discovery and data formats in more detail; where they mention the GUI, substitute direct JSON editing.
+
+---
+
 ## Overview
 
 When Square Enix releases a new FFXIV patch that includes new dyes, the `xivdyetools-core` library needs to be updated with:
@@ -170,38 +221,31 @@ Use [Garland Tools](https://www.garlandtools.org/db/) or in-game resources:
 
 The dye data is split across two locations:
 
-1. **`colors_xiv.json`** - Mathematical, categorical, and vendor data
-2. **`locales/*.json`** - Localized dye names (6 languages)
+1. **`dyes.json`** — the seven stored fields per dye
+2. **`locales/*.json`** — localized dye names (6 languages), generated from `dyenames.csv`
 
-### File: `xivdyetools-core/src/data/colors_xiv.json`
+### File: `packages/core/src/data/dyes.json`
 
-Contains the core dye data (English name kept for backward compatibility):
+A schema-v2 entry, in full:
 
 ```json
 {
-  "itemID": 5734,
-  "category": "Neutral",
+  "stainID": 38,
   "name": "Soot Black",
   "hex": "#2b2923",
-  "acquisition": "Ixali Vendor",
-  "price": 216,
-  "currency": "Gil",
-  "rgb": {
-    "r": 43,
-    "g": 41,
-    "b": 35
-  },
-  "hsv": {
-    "h": 45,
-    "s": 18.6,
-    "v": 16.86
-  },
-  "isMetallic": false,
-  "isPastel": false,
-  "isDark": false,
-  "isCosmic": false
+  "category": "Neutral",
+  "acquisition": "Dye Vendor",
+  "consolidationType": "A",
+  "legacyItemID": 5734
 }
 ```
+
+That is the entire record. `rgb`, `hsv`, `lab`, `cost`, `currency`, and the five `is*` flags are
+**derived at `initialize()`** and must not appear in the file.
+
+> **Note**: the field table and JSON sample below predate schema v2 and describe the retired
+> `colors_xiv.json` layout. They remain useful for understanding what each *derived* field means
+> and where its value comes from, but do not hand-write them into the data file.
 
 ### Fields
 
@@ -276,9 +320,11 @@ Each locale file contains localized dye names keyed by `itemID`:
 
 ### Adding a New Dye
 
-1. Add entry to `colors_xiv.json` with all mathematical/vendor data
-2. Add localized name to **each** `locales/*.json` file under `dyeNames`
-3. Update `meta.dyeCount` in each locale file
+1. Add the seven-field entry to `dyes.json`
+2. Add the ko/zh names to `dyenames.csv` (en/ja/de/fr come from the game sheets)
+3. Run `pnpm --filter @xivdyetools/core run build:locales` — this regenerates every
+   `locales/*.json` including `meta.dyeCount`. **Do not hand-edit the generated locale files**;
+   edits there are overwritten on the next build.
 
 ---
 
@@ -326,17 +372,16 @@ npm run deploy:production
 ## Checklist for New Dyes
 
 - [ ] Item ID obtained (from Universalis or XIVAPI)
-- [ ] All 6 language names collected
-- [ ] RGB color sampled from Lodestone
-- [ ] HSV calculated from RGB
-- [ ] Category assigned
-- [ ] Rarity assigned
-- [ ] Source documented
-- [ ] Added to `colors_xiv.json`
-- [ ] Tests pass
-- [ ] Core library published
-- [ ] Web app updated
-- [ ] Discord worker updated
+- [ ] `stainID` taken from the game's `Stain` sheet
+- [ ] `hex` sampled and written lowercase — it is the single colour source of truth
+- [ ] `category` and `acquisition` are members of the closed vocabularies
+- [ ] `consolidationType` set from `StainTransient` (`'A' | 'B' | 'C' | null`)
+- [ ] `legacyItemID` set, or `null` for a consolidated-only dye
+- [ ] **No** `rgb` / `hsv` / `lab` / `cost` / `currency` / `is*` fields hand-written
+- [ ] ko/zh names added to `dyenames.csv`; `build:locales` run
+- [ ] `pnpm turbo run build test --filter=@xivdyetools/core` passes (the invariant tests are the gate)
+- [ ] Core version bumped and `CHANGELOG.md` updated
+- [ ] Core published; consumers bumped and redeployed
 
 ---
 

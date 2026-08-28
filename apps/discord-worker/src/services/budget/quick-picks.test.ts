@@ -2,7 +2,7 @@
  * Tests for Quick Picks Service
  */
 import { describe, it, expect } from 'vitest';
-import { QUICK_PICKS, getQuickPickById, getQuickPickChoices } from './quick-picks.js';
+import { QUICK_PICKS, getQuickPickById } from './quick-picks.js';
 
 describe('quick-picks.ts', () => {
   describe('QUICK_PICKS', () => {
@@ -53,33 +53,6 @@ describe('quick-picks.ts', () => {
         const preset = getQuickPickById(pick.id);
         expect(preset).toBeDefined();
         expect(preset?.id).toBe(pick.id);
-      });
-    });
-  });
-
-  describe('getQuickPickChoices', () => {
-    it('should return array of Discord choices', () => {
-      const choices = getQuickPickChoices();
-      expect(Array.isArray(choices)).toBe(true);
-      expect(choices.length).toBe(QUICK_PICKS.length);
-    });
-
-    it('should have correct format for Discord autocomplete', () => {
-      const choices = getQuickPickChoices();
-      choices.forEach((choice) => {
-        expect(choice).toHaveProperty('name');
-        expect(choice).toHaveProperty('value');
-        expect(typeof choice.name).toBe('string');
-        expect(typeof choice.value).toBe('string');
-      });
-    });
-
-    it('should include emoji in choice name', () => {
-      const choices = getQuickPickChoices();
-      // Each preset has an emoji
-      choices.forEach((choice) => {
-        // Emojis should be in the name for visual display
-        expect(choice.name.length).toBeGreaterThan(0);
       });
     });
   });

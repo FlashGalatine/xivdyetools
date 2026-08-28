@@ -11,48 +11,56 @@ vi.mock('@xivdyetools/core', () => {
   class MockDyeService {
     searchByName(query: string) {
       if (query.toLowerCase().includes('snow')) {
-        return [{
-          id: 1,
-          name: 'Snow White',
-          hex: '#FFFFFF',
-          rgb: { r: 255, g: 255, b: 255 },
-          hsv: { h: 0, s: 0, v: 100 },
-          category: 'Standard',
-          itemID: 5694,
-        }];
+        return [
+          {
+            id: 1,
+            name: 'Snow White',
+            hex: '#FFFFFF',
+            rgb: { r: 255, g: 255, b: 255 },
+            hsv: { h: 0, s: 0, v: 100 },
+            category: 'Standard',
+            itemID: 5694,
+          },
+        ];
       }
       if (query.toLowerCase().includes('soot')) {
-        return [{
-          id: 2,
-          name: 'Soot Black',
-          hex: '#1A1A1A',
-          rgb: { r: 26, g: 26, b: 26 },
-          hsv: { h: 0, s: 0, v: 10 },
-          category: 'Standard',
-          itemID: 5695,
-        }];
+        return [
+          {
+            id: 2,
+            name: 'Soot Black',
+            hex: '#1A1A1A',
+            rgb: { r: 26, g: 26, b: 26 },
+            hsv: { h: 0, s: 0, v: 10 },
+            category: 'Standard',
+            itemID: 5695,
+          },
+        ];
       }
       if (query.toLowerCase().includes('facewear')) {
-        return [{
-          id: 99,
-          name: 'Facewear Dye',
-          hex: '#FF0000',
-          rgb: { r: 255, g: 0, b: 0 },
-          category: 'Facewear',
-        }];
+        return [
+          {
+            id: 99,
+            name: 'Facewear Dye',
+            hex: '#FF0000',
+            rgb: { r: 255, g: 0, b: 0 },
+            category: 'Facewear',
+          },
+        ];
       }
       if (query.toLowerCase().includes('notfound')) {
         return [];
       }
-      return [{
-        id: 3,
-        name: 'Test Dye',
-        hex: '#FF5733',
-        rgb: { r: 255, g: 87, b: 51 },
-        hsv: { h: 11, s: 80, v: 100 },
-        category: 'Standard',
-        itemID: 5696,
-      }];
+      return [
+        {
+          id: 3,
+          name: 'Test Dye',
+          hex: '#FF5733',
+          rgb: { r: 255, g: 87, b: 51 },
+          hsv: { h: 11, s: 80, v: 100 },
+          category: 'Standard',
+          itemID: 5696,
+        },
+      ];
     }
     findClosestDye(hex: string) {
       return {
@@ -69,14 +77,25 @@ vi.mock('@xivdyetools/core', () => {
 
   class MockLocalizationService {
     async setLocale(_locale: string): Promise<void> {}
-    getDyeName(_itemID: number): string | undefined { return undefined; }
-    getCategory(category: string): string { return category; }
+    getDyeName(_itemID: number): string | undefined {
+      return undefined;
+    }
+    getCategory(category: string): string {
+      return category;
+    }
   }
+
+  // 13D/E/H: simulation + ΔE2000 separation run through ColorService
+  const ColorService = {
+    simulateColorblindnessHex: (hex: string, _lens: string) => hex,
+    getDistanceForMethod: () => 20,
+  };
 
   return {
     DyeService: MockDyeService,
     dyeDatabase: {},
     LocalizationService: MockLocalizationService,
+    ColorService,
   };
 });
 
@@ -88,54 +107,24 @@ vi.mock('../../services/bot-i18n.js', () => ({
         'errors.missingInput': 'Please provide at least one dye or color',
         'errors.invalidColor': `Could not find dye or parse color: ${vars?.input}`,
         'errors.generationFailed': 'Failed to generate image',
-        'accessibility.title': 'Color Accessibility Analysis',
-        'accessibility.description': 'How this color appears to users with color vision deficiencies',
         'accessibility.protanopia': 'Protanopia',
-        'accessibility.protanopiaDesc': 'Red-green blindness (missing red cones)',
         'accessibility.deuteranopia': 'Deuteranopia',
-        'accessibility.deuteranopiaDesc': 'Red-green blindness (missing green cones)',
         'accessibility.tritanopia': 'Tritanopia',
-        'accessibility.tritanopiaDesc': 'Blue-yellow blindness (missing blue cones)',
-        'accessibility.simulationMethod': 'Brettel algorithm simulation',
-        'accessibility.contrastTitle': 'Contrast Matrix',
-        'accessibility.contrastAnalysis': 'WCAG Contrast Analysis',
-        'accessibility.comparing': `Comparing ${vars?.count} dyes`,
-        'accessibility.matrixDescription': 'Each cell shows the contrast ratio',
-        'accessibility.wcagAAADesc': 'Excellent contrast',
-        'accessibility.wcagAADesc': 'Good contrast',
-        'accessibility.wcagFailDesc': 'Insufficient contrast',
-        'accessibility.wcagGuidelines': 'WCAG 2.1 Guidelines',
         'common.footer': 'XIV Dye Tools',
-        'comparison.fails': 'FAIL',
       };
       return translations[key] || key;
     },
     getLocale: () => 'en',
   }),
   createTranslator: vi.fn((locale: string) => ({
-    t: (key: string, vars?: Record<string, unknown>) => {
+    t: (key: string, _vars?: Record<string, unknown>) => {
       const translations: Record<string, string> = {
         'common.error': 'Error',
         'errors.generationFailed': 'Failed to generate image',
-        'accessibility.title': 'Color Accessibility Analysis',
-        'accessibility.description': 'How this color appears to users with color vision deficiencies',
         'accessibility.protanopia': 'Protanopia',
-        'accessibility.protanopiaDesc': 'Red-green blindness (missing red cones)',
         'accessibility.deuteranopia': 'Deuteranopia',
-        'accessibility.deuteranopiaDesc': 'Red-green blindness (missing green cones)',
         'accessibility.tritanopia': 'Tritanopia',
-        'accessibility.tritanopiaDesc': 'Blue-yellow blindness (missing blue cones)',
-        'accessibility.simulationMethod': 'Brettel algorithm simulation',
-        'accessibility.contrastTitle': 'Contrast Matrix',
-        'accessibility.contrastAnalysis': 'WCAG Contrast Analysis',
-        'accessibility.comparing': `Comparing ${vars?.count} dyes`,
-        'accessibility.matrixDescription': 'Each cell shows the contrast ratio',
-        'accessibility.wcagAAADesc': 'Excellent contrast',
-        'accessibility.wcagAADesc': 'Good contrast',
-        'accessibility.wcagFailDesc': 'Insufficient contrast',
-        'accessibility.wcagGuidelines': 'WCAG 2.1 Guidelines',
         'common.footer': 'XIV Dye Tools',
-        'comparison.fails': 'FAIL',
       };
       return translations[key] || key;
     },
@@ -150,8 +139,7 @@ vi.mock('../../services/i18n.js', () => ({
 }));
 
 vi.mock('@xivdyetools/svg', () => ({
-  generateAccessibilityComparison: vi.fn().mockReturnValue('<svg>accessibility</svg>'),
-  generateContrastMatrix: vi.fn().mockReturnValue('<svg>contrast</svg>'),
+  generateA11yCard: vi.fn().mockReturnValue('<svg>accessibility</svg>'),
 }));
 
 vi.mock('../../services/svg/renderer.js', () => ({
@@ -170,7 +158,7 @@ vi.mock('../../utils/discord-api.js', () => {
 });
 
 import { editOriginalResponse } from '../../utils/discord-api.js';
-import { generateAccessibilityComparison, generateContrastMatrix } from '@xivdyetools/svg';
+import { generateA11yCard } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 
 describe('accessibility.ts', () => {
@@ -229,9 +217,7 @@ describe('accessibility.ts', () => {
         type: 2,
         data: {
           name: 'accessibility',
-          options: [
-            { name: 'dye1', value: 'notfound', type: 3 },
-          ],
+          options: [{ name: 'dye1', value: 'notfound', type: 3 }],
         },
         user: { id: 'user-123' },
         id: 'int-1',
@@ -292,9 +278,7 @@ describe('accessibility.ts', () => {
         type: 2,
         data: {
           name: 'accessibility',
-          options: [
-            { name: 'dye1', value: 'snow white', type: 3 },
-          ],
+          options: [{ name: 'dye1', value: 'snow white', type: 3 }],
         },
         user: { id: 'user-123' },
         id: 'int-1',
@@ -314,9 +298,7 @@ describe('accessibility.ts', () => {
         type: 2,
         data: {
           name: 'accessibility',
-          options: [
-            { name: 'dye1', value: '#FF5733', type: 3 },
-          ],
+          options: [{ name: 'dye1', value: '#FF5733', type: 3 }],
         },
         user: { id: 'user-123' },
         id: 'int-1',
@@ -335,9 +317,7 @@ describe('accessibility.ts', () => {
         type: 2,
         data: {
           name: 'accessibility',
-          options: [
-            { name: 'dye1', value: 'FF5733', type: 3 },
-          ],
+          options: [{ name: 'dye1', value: 'FF5733', type: 3 }],
         },
         user: { id: 'user-123' },
         id: 'int-1',
@@ -356,9 +336,7 @@ describe('accessibility.ts', () => {
         type: 2,
         data: {
           name: 'accessibility',
-          options: [
-            { name: 'dye1', value: 'snow white', type: 3 },
-          ],
+          options: [{ name: 'dye1', value: 'snow white', type: 3 }],
         },
         user: { id: 'user-123' },
         id: 'int-1',
@@ -371,7 +349,7 @@ describe('accessibility.ts', () => {
       // Wait for background processing
       await Promise.all(waitUntilPromises);
 
-      expect(generateAccessibilityComparison).toHaveBeenCalled();
+      expect(generateA11yCard).toHaveBeenCalled();
       expect(renderSvgToPng).toHaveBeenCalled();
       expect(editOriginalResponse).toHaveBeenCalled();
     });
@@ -395,11 +373,8 @@ describe('accessibility.ts', () => {
       await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
       await Promise.all(waitUntilPromises);
 
-      expect(generateAccessibilityComparison).toHaveBeenCalledWith(
-        expect.objectContaining({
-          visionTypes: ['protanopia'],
-        })
-      );
+      // A single dye always renders 13H (every lens), whatever vision says
+      expect(generateA11yCard).toHaveBeenCalledWith(expect.objectContaining({ mode: 'solo' }));
     });
   });
 
@@ -445,7 +420,8 @@ describe('accessibility.ts', () => {
       await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
       await Promise.all(waitUntilPromises);
 
-      expect(generateContrastMatrix).toHaveBeenCalled();
+      // A pair with no vision option renders 13E (all lenses)
+      expect(generateA11yCard).toHaveBeenCalledWith(expect.objectContaining({ mode: 'all' }));
       expect(renderSvgToPng).toHaveBeenCalled();
       expect(editOriginalResponse).toHaveBeenCalled();
     });
@@ -483,9 +459,7 @@ describe('accessibility.ts', () => {
         type: 2,
         data: {
           name: 'accessibility',
-          options: [
-            { name: 'dye1', value: 'snow white', type: 3 },
-          ],
+          options: [{ name: 'dye1', value: 'snow white', type: 3 }],
         },
         user: { id: 'user-123' },
         id: 'int-1',
@@ -506,7 +480,7 @@ describe('accessibility.ts', () => {
               description: expect.stringContaining('Failed'),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -515,9 +489,7 @@ describe('accessibility.ts', () => {
         type: 2,
         data: {
           name: 'accessibility',
-          options: [
-            { name: 'dye1', value: 'facewear', type: 3 },
-          ],
+          options: [{ name: 'dye1', value: 'facewear', type: 3 }],
         },
         user: { id: 'user-123' },
         id: 'int-1',
@@ -542,9 +514,7 @@ describe('accessibility.ts', () => {
         type: 2,
         data: {
           name: 'accessibility',
-          options: [
-            { name: 'dye1', value: 'snow white', type: 3 },
-          ],
+          options: [{ name: 'dye1', value: 'snow white', type: 3 }],
         },
         user: { id: 'user-123' },
         id: 'int-1',
@@ -557,7 +527,7 @@ describe('accessibility.ts', () => {
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Accessibility render error',
-        expect.any(Error)
+        expect.any(Error),
       );
     });
 
@@ -569,9 +539,7 @@ describe('accessibility.ts', () => {
         type: 2,
         data: {
           name: 'accessibility',
-          options: [
-            { name: 'dye1', value: 'snow white', type: 3 },
-          ],
+          options: [{ name: 'dye1', value: 'snow white', type: 3 }],
         },
         user: { id: 'user-123' },
         id: 'int-1',
@@ -582,10 +550,7 @@ describe('accessibility.ts', () => {
       await handleAccessibilityCommand(interaction, mockEnv, mockCtx, mockLogger as any);
       await Promise.all(waitUntilPromises);
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Accessibility render error',
-        undefined
-      );
+      expect(mockLogger.error).toHaveBeenCalledWith('Accessibility render error', undefined);
     });
   });
 
@@ -595,9 +560,7 @@ describe('accessibility.ts', () => {
         type: 2,
         data: {
           name: 'accessibility',
-          options: [
-            { name: 'dye1', value: 'snow white', type: 3 },
-          ],
+          options: [{ name: 'dye1', value: 'snow white', type: 3 }],
         },
         user: { id: 'user-123' },
         locale: 'ja',
@@ -609,11 +572,7 @@ describe('accessibility.ts', () => {
       await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
 
       const { createUserTranslator } = await import('../../services/bot-i18n.js');
-      expect(createUserTranslator).toHaveBeenCalledWith(
-        mockEnv.KV,
-        'user-123',
-        'ja'
-      );
+      expect(createUserTranslator).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 'ja');
     });
   });
 });

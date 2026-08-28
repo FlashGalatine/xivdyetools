@@ -79,19 +79,3 @@ export interface JWTPayload {
   /** Primary FFXIV character info (if XIVAuth user) */
   primary_character?: PrimaryCharacter;
 }
-
-/**
- * OAuth state stored during authentication flow
- *
- * Stored temporarily while user is redirected to OAuth provider.
- */
-export interface OAuthState {
-  /** PKCE code verifier */
-  code_verifier: string;
-
-  /** Redirect URI used in the flow */
-  redirect_uri: string;
-
-  /** Path to redirect to after auth completes */
-  return_path?: string;
-}

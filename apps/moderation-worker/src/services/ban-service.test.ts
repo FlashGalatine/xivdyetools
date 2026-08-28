@@ -10,6 +10,7 @@ import {
   hideUserPresets,
   restoreUserPresets,
   getActiveBan,
+  isPresetAuthorBanned,
 } from './ban-service.js';
 
 describe('ban-service', () => {
@@ -468,7 +469,9 @@ describe('ban-service', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Database connection failed');
+      // MOD-8: the raw D1 message stays in `cause`; `error` is channel-safe
+      expect(result.error).toBe('Failed to ban user.');
+      expect((result.cause as Error).message).toBe('Database connection failed');
     });
 
     it('should hide user presets after banning', async () => {
@@ -606,7 +609,9 @@ describe('ban-service', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Connection timeout');
+      // MOD-8: the raw D1 message stays in `cause`; `error` is channel-safe
+      expect(result.error).toBe('Failed to unban user.');
+      expect((result.cause as Error).message).toBe('Connection timeout');
     });
   });
 
@@ -737,6 +742,139 @@ describe('ban-service', () => {
       await getActiveBan(db as unknown as D1Database, 'discord-999');
 
       expect(db._bindings[0]).toEqual(['discord-999']);
+    });
+  });
+});
+
+// MOD-4 / MOD-8 (FINDING-034, 2026-08-21 security audit)
+describe('ban-service hardening (FINDING-034)', () => {
+  let db: ReturnType<typeof createMockD1Database>;
+
+  beforeEach(() => {
+    db = createMockD1Database();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-21T12:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe('banUser (MOD-4 atomicity, MOD-8 safe errors)', () => {
+    it('writes the ban row and hides presets in ONE db.batch', async () => {
+      const batchSpy = vi.spyOn(db, 'batch');
+      db._setupMock((query) => {
+        if (query.includes('UPDATE presets')) return { meta: { changes: 2 } };
+        return { meta: { changes: 1 } };
+      });
+
+      const result = await banUser(
+        db as unknown as D1Database,
+        '123456789012345678',
+        'U',
+        'mod',
+        'Reason text'
+      );
+
+      expect(result).toEqual({ success: true, presetsHidden: 2 });
+      expect(batchSpy).toHaveBeenCalledTimes(1);
+      expect(batchSpy.mock.calls[0][0]).toHaveLength(2);
+      // both statements ran through the batch, insert first
+      const insertAt = db._queries.findIndex((q) => q.includes('INSERT INTO banned_users'));
+      const hideAt = db._queries.findIndex((q) => q.includes("SET status = 'hidden'"));
+      expect(insertAt).toBeGreaterThanOrEqual(0);
+      expect(hideAt).toBeGreaterThan(insertAt);
+    });
+
+    it('maps a UNIQUE-constraint race to "already banned" instead of echoing D1', async () => {
+      db._setupMock(() => {
+        throw new Error(
+          'D1_ERROR: UNIQUE constraint failed: banned_users.discord_id: SQLITE_CONSTRAINT'
+        );
+      });
+
+      const result = await banUser(
+        db as unknown as D1Database,
+        '123456789012345678',
+        'U',
+        'mod',
+        'Reason text'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('User is already banned.');
+    });
+
+    it('never returns a raw D1 message; keeps the cause for logging', async () => {
+      const boom = new Error('D1_ERROR: disk I/O error: SQLITE_IOERR');
+      db._setupMock(() => {
+        throw boom;
+      });
+
+      const result = await banUser(
+        db as unknown as D1Database,
+        '123456789012345678',
+        'U',
+        'mod',
+        'Reason text'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Failed to ban user.');
+      expect(result.error).not.toContain('SQLITE');
+      expect(result.cause).toBe(boom);
+    });
+  });
+
+  describe('unbanUser (MOD-4 atomicity, MOD-8 safe errors)', () => {
+    it('closes the ban row and restores presets in ONE db.batch', async () => {
+      db._setBanStatus(true);
+      const batchSpy = vi.spyOn(db, 'batch');
+      db._setupMock((query) => {
+        if (query.includes('UPDATE presets')) return { meta: { changes: 3 } };
+        return { meta: { changes: 1 } };
+      });
+
+      const result = await unbanUser(db as unknown as D1Database, '123456789012345678', 'mod');
+
+      expect(result).toEqual({ success: true, presetsRestored: 3 });
+      expect(batchSpy).toHaveBeenCalledTimes(1);
+      expect(batchSpy.mock.calls[0][0]).toHaveLength(2);
+    });
+
+    it('never returns a raw D1 message; keeps the cause for logging', async () => {
+      db._setBanStatus(true);
+      const boom = new Error('D1_ERROR: database is locked: SQLITE_BUSY');
+      db._setupMock(() => {
+        throw boom;
+      });
+
+      const result = await unbanUser(db as unknown as D1Database, '123456789012345678', 'mod');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Failed to unban user.');
+      expect(result.cause).toBe(boom);
+    });
+  });
+
+  describe('isPresetAuthorBanned (MOD-4: approve must refuse banned authors)', () => {
+    it('returns true when the preset author has an active ban', async () => {
+      db._setBanStatus(true);
+      await expect(
+        isPresetAuthorBanned(db as unknown as D1Database, 'a0000000-0000-4000-8000-000000000001')
+      ).resolves.toBe(true);
+      const q = db._queries[0];
+      expect(q).toMatch(/FROM presets/);
+      expect(q).toMatch(/banned_users/);
+      expect(q).toMatch(/unbanned_at IS NULL/);
+      expect(db._bindings[0]).toEqual(['a0000000-0000-4000-8000-000000000001']);
+    });
+
+    it('returns false otherwise', async () => {
+      db._setBanStatus(false);
+      await expect(
+        isPresetAuthorBanned(db as unknown as D1Database, 'a0000000-0000-4000-8000-000000000001')
+      ).resolves.toBe(false);
     });
   });
 });

@@ -12,7 +12,7 @@ import {
   dyeService,
   type ResolvedColor,
 } from '@xivdyetools/bot-logic';
-import type { LocaleCode } from '@xivdyetools/bot-i18n';
+import type { LocaleCode } from '@xivdyetools/bot-logic/i18n';
 
 /**
  * Threshold for adaptive multi-match behavior.

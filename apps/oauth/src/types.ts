@@ -19,7 +19,7 @@ export type { AuthProvider } from '@xivdyetools/types';
  * @deprecated Import directly from '@xivdyetools/types' instead.
  * These re-exports will be removed in the next major version.
  */
-export type { PrimaryCharacter, JWTPayload, OAuthState } from '@xivdyetools/types';
+export type { PrimaryCharacter, JWTPayload } from '@xivdyetools/types';
 
 /**
  * @deprecated Import directly from '@xivdyetools/types' instead.
@@ -67,8 +67,14 @@ export interface Env {
   JWT_SECRET: string;
 
   // KV Namespaces (optional for backward compatibility)
-  // Also backs the /auth/* rate limiter under the 'rl:' prefix (OPT-004)
+  // Also the FALLBACK /auth/* rate limiter under the 'rl:' prefix (OPT-004)
   TOKEN_BLACKLIST?: KVNamespace;
+
+  // FINDING-003 (2026-08-21 audit): native Workers Rate Limiting bindings
+  // (`[[ratelimits]]`), one per distinct OAUTH_LIMITS value — preferred over KV.
+  RL_AUTH_10?: RateLimit;
+  RL_AUTH_20?: RateLimit;
+  RL_AUTH_30?: RateLimit;
 
   // D1 Database for user management
   DB: D1Database;

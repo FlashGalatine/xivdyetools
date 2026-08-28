@@ -23,12 +23,15 @@
  * ```
  */
 
-import { base64UrlEncode, base64UrlEncodeBytes } from '../utils/crypto.js';
+import { base64UrlEncode, base64UrlEncodeBytes } from '@xivdyetools/auth/encoding';
 
 /**
  * JWT payload for test tokens
+ *
+ * Not exported (DEAD-027): nothing outside this module imports the type by
+ * name — callers just pass an object literal to `createTestJWT`/`createExpiredJWT`.
  */
-export interface TestJWTPayload {
+interface TestJWTPayload {
   /** Subject (user ID) */
   sub: string;
   /** Username */
@@ -41,8 +44,11 @@ export interface TestJWTPayload {
 
 /**
  * Full JWT payload including standard claims
+ *
+ * Not exported (DEAD-027): purely an internal implementation detail of
+ * `createTestJWT`.
  */
-export interface FullJWTPayload extends TestJWTPayload {
+interface FullJWTPayload extends TestJWTPayload {
   /** Issued at (Unix timestamp) */
   iat: number;
   /** Expiration (Unix timestamp) */
@@ -64,7 +70,7 @@ export async function createTestJWT(
   secret: string,
   payload: TestJWTPayload,
   expiresInSeconds = 3600,
-  issuer = 'xivdyetools-oauth-worker'
+  issuer = 'xivdyetools-oauth-worker',
 ): Promise<string> {
   const header = { alg: 'HS256', typ: 'JWT' };
   const now = Math.floor(Date.now() / 1000);
@@ -88,7 +94,7 @@ export async function createTestJWT(
     encoder.encode(secret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(signatureInput));
@@ -108,26 +114,8 @@ export async function createTestJWT(
  */
 export async function createExpiredJWT(
   secret: string,
-  payload: TestJWTPayload = { sub: '123', username: 'test' }
+  payload: TestJWTPayload = { sub: '123', username: 'test' },
 ): Promise<string> {
   // Create token that expired 1 hour ago
   return createTestJWT(secret, payload, -3600);
-}
-
-/**
- * Creates a JWT with a specific expiration time
- *
- * @param secret - The JWT signing secret
- * @param payload - The JWT payload
- * @param expTimestamp - The expiration Unix timestamp
- * @returns A signed JWT string
- */
-export async function createJWTWithExpiration(
-  secret: string,
-  payload: TestJWTPayload,
-  expTimestamp: number
-): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  const expiresInSeconds = expTimestamp - now;
-  return createTestJWT(secret, payload, expiresInSeconds);
 }

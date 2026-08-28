@@ -4,9 +4,18 @@
  */
 
 import { Hono } from 'hono';
-import type { Env, AuthContext, PresetFilters, PresetSubmission, PresetEditRequest, PresetPreviousValues } from '../types.js';
+import type { Context } from 'hono';
+import type {
+  Env,
+  AuthContext,
+  CommunityPreset,
+  PresetFilters,
+  PresetSubmission,
+  PresetEditRequest,
+  PresetPreviousValues,
+} from '../types.js';
 import { requireAuth, requireUserContext } from '../middleware/auth.js';
-import { requireNotBannedCheck } from '../middleware/ban-check.js';
+import { requireNotBanned } from '../middleware/ban-check.js';
 import {
   ErrorCode,
   invalidJsonResponse,
@@ -32,6 +41,9 @@ import {
   validatePresetDescription,
   validatePresetDyes,
   validatePresetTags,
+  validateExampleLink,
+  normalizeExampleLink,
+  validateSecondaryCategories,
 } from '../services/validation-service.js';
 import { addVote } from './votes.js';
 import {
@@ -40,6 +52,11 @@ import {
   getSubmissionCountToday,
   getNextResetUTC,
   DAILY_SUBMISSION_LIMIT,
+  // FINDING-008: append-only per-user quotas
+  checkDailyEventLimit,
+  recordSubmissionEvent,
+  DAILY_FLAGGED_EDIT_LIMIT,
+  DAILY_PREVIEW_UPLOAD_LIMIT,
 } from '../services/rate-limit-service.js';
 import {
   notifyDiscordBot,
@@ -47,6 +64,13 @@ import {
   type PresetNotificationPayload,
 } from '../services/notification-service.js';
 import { getValidCategories } from '../services/category-service.js';
+import {
+  sniffImageType,
+  storePreviewImage,
+  deletePreviewImage,
+  getPresetImageState,
+  MAX_PREVIEW_IMAGE_BYTES,
+} from '../services/preview-image-service.js';
 
 // REFACTOR-017: category cache moved to category-service; re-exported because
 // tests (and any external callers) reach it through this module
@@ -66,6 +90,96 @@ function stripAuditData<T extends { previous_values?: unknown }>(preset: T): Omi
   const publicPreset = { ...preset };
   delete publicPreset.previous_values;
   return publicPreset;
+}
+
+// FINDING-017 (PAPI-9): the ban check covers EVERY mutating route on this
+// router — DELETE /:id, PATCH /refresh-author and DELETE /:id/preview-image
+// previously had none. Registered once, here, ahead of the routes, so a new
+// route cannot forget it. Unauthenticated requests pass straight through
+// (nothing to check) and get their 401 from the handler exactly as before.
+presetsRouter.on(['POST', 'PATCH', 'DELETE'], '*', requireNotBanned);
+
+/**
+ * THE visibility rule (BUG-014, FINDING-016 / PAPI-11), in one place.
+ *
+ * A non-approved preset (pending / rejected / flagged / hidden) exists only
+ * for its owner and for moderators. Everyone else gets the same 404 as a
+ * nonexistent id — from GET, and from every mutating route as well: a 403
+ * from DELETE / PATCH / preview-image used to confirm that a hidden UUID
+ * exists while GET denied it. An approved preset is public, so the ordinary
+ * 403 ("not yours") reveals nothing there.
+ */
+function canSeePreset(
+  auth: AuthContext,
+  preset: { status: string; author_discord_id: string | null }
+): boolean {
+  return (
+    preset.status === 'approved' ||
+    auth.isModerator ||
+    (auth.userDiscordId !== undefined && preset.author_discord_id === auth.userDiscordId)
+  );
+}
+
+/**
+ * Answer a dye-signature collision on submit (FINDING-016 / PAPI-2 + PAPI-5).
+ *
+ * Before: the ENTIRE matching row — flagged text, `previous_values`,
+ * `author_discord_id` — came back whatever its status, and a vote was
+ * recorded on it, bypassing both the BUG-014 visibility gate and the
+ * approved-only vote rule.
+ *
+ *  - approved duplicate → vote for it (the long-standing "your submission
+ *    becomes a vote") and return it, audit snapshot stripped for
+ *    non-privileged callers exactly as GET /:id does;
+ *  - pending duplicate, caller is its owner or a moderator → return it (they
+ *    could GET it), but no vote: votes are for approved presets only;
+ *  - pending duplicate, anyone else → a bare 409 that names nothing. That the
+ *    combination is taken is unavoidable (the partial UNIQUE index would
+ *    reject the INSERT anyway); which preset holds it is not revealed.
+ */
+async function respondToDuplicate(
+  c: Context<{ Bindings: Env; Variables: Variables }>,
+  auth: AuthContext,
+  duplicate: CommunityPreset
+): Promise<Response> {
+  const isPrivileged =
+    auth.isModerator ||
+    (auth.userDiscordId !== undefined && duplicate.author_discord_id === auth.userDiscordId);
+
+  if (duplicate.status === 'approved') {
+    const voteResult = await addVote(c.env.DB, duplicate.id, auth.userDiscordId!);
+    return c.json({
+      success: true,
+      duplicate: isPrivileged ? duplicate : stripAuditData(duplicate),
+      vote_added: voteResult.success && !voteResult.already_voted,
+    });
+  }
+
+  if (isPrivileged) {
+    return c.json({ success: true, duplicate, vote_added: false });
+  }
+
+  return c.json(
+    {
+      success: false,
+      error: ErrorCode.DUPLICATE_RESOURCE,
+      message: 'This dye combination already exists',
+    },
+    409
+  );
+}
+
+/**
+ * The `{ id, name, author_name }` summary an edit's 409 may carry — only for a
+ * colliding preset the caller could GET (FINDING-016). For a pending preset
+ * belonging to someone else the 409 is sent bare.
+ */
+function duplicateSummaryFor(
+  auth: AuthContext,
+  duplicate: CommunityPreset | null
+): { id: string; name: string; author_name: string | null } | undefined {
+  if (!duplicate || !canSeePreset(auth, duplicate)) return undefined;
+  return { id: duplicate.id, name: duplicate.name, author_name: duplicate.author_name };
 }
 
 // ============================================
@@ -226,9 +340,17 @@ presetsRouter.delete('/:id', async (c) => {
   const auth = c.get('auth');
   const id = c.req.param('id');
 
-  // Get preset to check ownership
-  const preset = await getPresetById(c.env.DB, id);
+  // One row read answers both questions this handler has: who owns the preset,
+  // and which R2 object belongs to it. getPresetById returns a CommunityPreset,
+  // which deliberately hides preview_image_key, so it cannot answer the second
+  // — reading the row directly avoids a second SELECT for the same row.
+  const preset = await getPresetImageState(c.env.DB, id);
   if (!preset) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  // FINDING-016: a preset the caller could not GET does not exist for them
+  if (!canSeePreset(auth, preset)) {
     return notFoundResponse(c, 'Preset');
   }
 
@@ -236,6 +358,9 @@ presetsRouter.delete('/:id', async (c) => {
   if (preset.author_discord_id !== auth.userDiscordId && !auth.isModerator) {
     return forbiddenResponse(c, "Cannot delete another user's preset");
   }
+
+  // Captured before the batch, since the row that holds it is about to go.
+  const previousKey = preset.preview_image_key;
 
   // Delete votes and preset in transaction
   // PRESETS-PERF-001: Using batch() for atomicity guarantee, not performance.
@@ -245,6 +370,21 @@ presetsRouter.delete('/:id', async (c) => {
     c.env.DB.prepare('DELETE FROM votes WHERE preset_id = ?').bind(id),
     c.env.DB.prepare('DELETE FROM presets WHERE id = ?').bind(id),
   ]);
+
+  // DB write before the R2 delete, deliberately (same rule as the upload and
+  // moderator-reject paths): if the batch throws, leaving the delete undone
+  // just orphans the object in R2 — invisible and cheap to clean up later.
+  // Delete first would risk the opposite: a row still pointing at a key that
+  // no longer exists, so an approved preset's card serves a broken image.
+  // Never trade a broken live image for a tidy bucket.
+  //
+  // The row is already gone by this point, so an R2 hiccup here must not turn
+  // a completed delete into a 500 the caller would reasonably retry.
+  try {
+    await deletePreviewImage(c.env, previousKey);
+  } catch (err) {
+    console.error(`[preview-image] R2 delete failed after preset delete: id=${id}`, err);
+  }
 
   return c.json({ success: true, message: 'Preset deleted' });
 });
@@ -262,9 +402,7 @@ presetsRouter.patch('/:id', async (c) => {
   const userError = requireUserContext(c);
   if (userError) return userError;
 
-  // Check if user is banned
-  const banError = await requireNotBannedCheck(c);
-  if (banError) return banError;
+  // (ban check: router-level requireNotBanned, see top of file)
 
   const auth = c.get('auth');
   const id = c.req.param('id');
@@ -272,6 +410,11 @@ presetsRouter.patch('/:id', async (c) => {
   // Get preset to check ownership
   const preset = await getPresetById(c.env.DB, id);
   if (!preset) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  // FINDING-016: a preset the caller could not GET does not exist for them
+  if (!canSeePreset(auth, preset)) {
     return notFoundResponse(c, 'Preset');
   }
 
@@ -289,12 +432,20 @@ presetsRouter.patch('/:id', async (c) => {
   }
 
   // Check if any updates provided
-  if (!body.name && !body.description && !body.dyes && !body.tags) {
+  if (
+    !body.name &&
+    !body.description &&
+    !body.dyes &&
+    !body.tags &&
+    body.example_link === undefined &&
+    body.category_id === undefined &&
+    body.secondary_categories === undefined
+  ) {
     return validationErrorResponse(c, 'No updates provided');
   }
 
   // Validate provided fields
-  const validationError = validateEditRequest(body);
+  const validationError = await validateEditRequest(body, preset.category_id, c.env.DB);
   if (validationError) {
     return validationErrorResponse(c, validationError);
   }
@@ -303,16 +454,14 @@ presetsRouter.patch('/:id', async (c) => {
   if (body.dyes) {
     const duplicate = await findDuplicatePresetExcluding(c.env.DB, body.dyes, id);
     if (duplicate) {
+      // FINDING-016: describe the colliding preset only if the caller could GET it
+      const summary = duplicateSummaryFor(auth, duplicate);
       return c.json(
         {
           success: false,
           error: ErrorCode.DUPLICATE_RESOURCE,
           message: 'This dye combination already exists',
-          duplicate: {
-            id: duplicate.id,
-            name: duplicate.name,
-            author_name: duplicate.author_name,
-          },
+          ...(summary && { duplicate: summary }),
         },
         409
       );
@@ -333,6 +482,9 @@ presetsRouter.patch('/:id', async (c) => {
   let moderationStatus: 'approved' | 'pending' =
     preset.status === 'approved' ? 'approved' : 'pending';
   let previousValues: PresetPreviousValues | null | undefined;
+  // FINDING-008: only an edit that itself trips moderation counts against the
+  // daily flagged-edit cap (a preset that is merely still pending does not)
+  let flaggedByThisEdit = false;
 
   if (body.name || body.description) {
     // Run content moderation on new values
@@ -346,6 +498,7 @@ presetsRouter.patch('/:id', async (c) => {
     );
 
     if (!moderationResult.passed) {
+      flaggedByThisEdit = true;
       // BUG-052 (2026-07-18 audit): write-once snapshot — only capture
       // previous_values when none exists yet, so successive flagged edits
       // can't overwrite the oldest known-good state (the revert target).
@@ -363,6 +516,24 @@ presetsRouter.patch('/:id', async (c) => {
     // previous_values holds the oldest clean snapshot (last-known-good for
     // moderator revert), not an append-only history — leaving previousValues
     // undefined here preserves whatever snapshot already exists.
+  }
+
+  // FINDING-008: a flagged edit fans out a moderation embed, a Perspective call
+  // and dead-letter rows — cap them per user per day before persisting anything
+  if (flaggedByThisEdit) {
+    const cap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'flagged_edit');
+    if (!cap.allowed) {
+      return c.json(
+        {
+          success: false,
+          error: ErrorCode.RATE_LIMITED,
+          message: `You've reached your daily limit of edits that need moderator review (${DAILY_FLAGGED_EDIT_LIMIT} per day). Try again tomorrow.`,
+          remaining: 0,
+          reset_at: cap.resetAt.toISOString(),
+        },
+        429
+      );
+    }
   }
 
   // Update the preset
@@ -386,18 +557,14 @@ presetsRouter.patch('/:id', async (c) => {
       const duplicate = body.dyes
         ? await findDuplicatePresetExcluding(c.env.DB, body.dyes, id)
         : null;
+      // FINDING-016: same visibility rule as the pre-check above
+      const summary = duplicateSummaryFor(auth, duplicate);
       return c.json(
         {
           success: false,
           error: ErrorCode.DUPLICATE_RESOURCE,
           message: 'This dye combination already exists',
-          ...(duplicate && {
-            duplicate: {
-              id: duplicate.id,
-              name: duplicate.name,
-              author_name: duplicate.author_name,
-            },
-          }),
+          ...(summary && { duplicate: summary }),
         },
         409
       );
@@ -407,6 +574,15 @@ presetsRouter.patch('/:id', async (c) => {
 
   if (!updatedPreset) {
     return internalErrorResponse(c, 'Failed to update preset');
+  }
+
+  // FINDING-008: count this flagged edit against the daily cap (append-only)
+  if (flaggedByThisEdit) {
+    try {
+      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'flagged_edit', id);
+    } catch (err) {
+      console.error(`[FINDING-008] submission_events insert failed: preset=${id}`, err);
+    }
   }
 
   // If flagged, notify Discord for moderation
@@ -457,13 +633,13 @@ presetsRouter.get('/:id', async (c) => {
   // the same 404 as a nonexistent ID so hidden content can't be probed. The
   // previous_values audit snapshot is likewise privileged-only.
   const auth = c.get('auth');
-  const isPrivileged =
-    auth.isModerator ||
-    (auth.userDiscordId !== undefined && preset.author_discord_id === auth.userDiscordId);
-  if (preset.status !== 'approved' && !isPrivileged) {
+  if (!canSeePreset(auth, preset)) {
     return notFoundResponse(c, 'Preset');
   }
 
+  const isPrivileged =
+    auth.isModerator ||
+    (auth.userDiscordId !== undefined && preset.author_discord_id === auth.userDiscordId);
   return c.json(isPrivileged ? preset : stripAuditData(preset));
 });
 
@@ -480,9 +656,7 @@ presetsRouter.post('/', async (c) => {
   const userError = requireUserContext(c);
   if (userError) return userError;
 
-  // Check if user is banned
-  const banError = await requireNotBannedCheck(c);
-  if (banError) return banError;
+  // (ban check: router-level requireNotBanned, see top of file)
 
   const auth = c.get('auth');
 
@@ -515,17 +689,10 @@ presetsRouter.post('/', async (c) => {
     return validationErrorResponse(c, validationError);
   }
 
-  // Check for duplicate dye combinations
+  // Check for duplicate dye combinations (FINDING-016: see respondToDuplicate)
   const duplicate = await findDuplicatePreset(c.env.DB, body.dyes);
   if (duplicate) {
-    // Add vote to existing preset
-    const voteResult = await addVote(c.env.DB, duplicate.id, auth.userDiscordId!);
-
-    return c.json({
-      success: true,
-      duplicate,
-      vote_added: voteResult.success && !voteResult.already_voted,
-    });
+    return respondToDuplicate(c, auth, duplicate);
   }
 
   // Moderate content
@@ -559,16 +726,21 @@ presetsRouter.post('/', async (c) => {
       // Try to find and vote on the existing preset
       const existingPreset = await findDuplicatePreset(c.env.DB, body.dyes);
       if (existingPreset) {
-        const voteResult = await addVote(c.env.DB, existingPreset.id, auth.userDiscordId!);
-        return c.json({
-          success: true,
-          duplicate: existingPreset,
-          vote_added: voteResult.success && !voteResult.already_voted,
-        });
+        // FINDING-016: same rules as the pre-check branch
+        return respondToDuplicate(c, auth, existingPreset);
       }
     }
     // Re-throw if it's not a duplicate constraint error
     throw error;
+  }
+
+  // FINDING-008: append-only quota record — survives the author deleting the
+  // preset, so the daily cap cannot be refilled from the outside. Best-effort:
+  // a failed insert must not fail the submission that just landed.
+  try {
+    await recordSubmissionEvent(c.env.DB, auth.userDiscordId!, 'submission', preset.id);
+  } catch (err) {
+    console.error(`[FINDING-008] submission_events insert failed: preset=${preset.id}`, err);
   }
 
   // Auto-vote for own preset
@@ -632,6 +804,227 @@ presetsRouter.post('/', async (c) => {
   );
 });
 
+/**
+ * POST /:id/preview-image — the author uploads their card picture.
+ *
+ * Author-only: a preset's picture is the author's to choose. The upload lands
+ * as 'pending' and is invisible until a moderator approves it.
+ */
+presetsRouter.post('/:id/preview-image', async (c) => {
+  const authError = requireAuth(c);
+  if (authError) return authError;
+
+  const userError = requireUserContext(c);
+  if (userError) return userError;
+
+  // (ban check: router-level requireNotBanned, see top of file)
+
+  const auth = c.get('auth');
+  const presetId = c.req.param('id');
+
+  // Row-level read: we need preview_image_key, which CommunityPreset hides.
+  const preset = await getPresetImageState(c.env.DB, presetId);
+  if (!preset) {
+    return c.json(
+      { success: false, error: ErrorCode.NOT_FOUND, message: 'Preset not found' },
+      404
+    );
+  }
+
+  // FINDING-016: a preset the caller could not GET does not exist for them
+  if (!canSeePreset(auth, preset)) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  if (preset.author_discord_id !== auth.userDiscordId) {
+    return c.json(
+      {
+        success: false,
+        error: ErrorCode.FORBIDDEN,
+        message: 'Only the author can set a preview image',
+      },
+      403
+    );
+  }
+
+  // FINDING-008: each upload costs an image-worker decode, an R2 write and a
+  // moderation embed — cap per user per day before reading the body
+  const uploadCap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'preview_upload');
+  if (!uploadCap.allowed) {
+    return c.json(
+      {
+        success: false,
+        error: ErrorCode.RATE_LIMITED,
+        message: `You've reached your daily preview-image upload limit (${DAILY_PREVIEW_UPLOAD_LIMIT} per day). Try again tomorrow.`,
+        remaining: 0,
+        reset_at: uploadCap.resetAt.toISOString(),
+      },
+      429
+    );
+  }
+
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+
+  if (bytes.byteLength === 0) {
+    return c.json(
+      { success: false, error: ErrorCode.VALIDATION_ERROR, message: 'No image data provided' },
+      400
+    );
+  }
+
+  if (bytes.byteLength > MAX_PREVIEW_IMAGE_BYTES) {
+    return c.json(
+      {
+        success: false,
+        error: ErrorCode.VALIDATION_ERROR,
+        message: 'Image must be at most 5 MB',
+      },
+      400
+    );
+  }
+
+  if (!sniffImageType(bytes)) {
+    return c.json(
+      {
+        success: false,
+        error: ErrorCode.VALIDATION_ERROR,
+        message: 'Image must be a PNG, JPEG or WebP',
+      },
+      400
+    );
+  }
+
+  let key: string;
+  try {
+    key = await storePreviewImage(c.env, presetId, bytes);
+  } catch {
+    return c.json(
+      { success: false, error: ErrorCode.VALIDATION_ERROR, message: 'Image could not be processed' },
+      400
+    );
+  }
+
+  // Capture the OLD key before the UPDATE overwrites it, so the delete below
+  // can never target the object we just wrote.
+  const previousKey = preset.preview_image_key;
+
+  // DB UPDATE before the old-object delete, deliberately: if the UPDATE
+  // throws, leaving the delete undone just orphans the old object in R2
+  // (invisible, negligible cost, cleanable later). Doing it the other way
+  // round — delete then UPDATE — risks the opposite failure: a row left
+  // pointing at a key that no longer exists, so an approved preset's card
+  // starts 404ing on every view. Never trade a broken live image for a tidy
+  // bucket.
+  await c.env.DB.prepare(
+    `UPDATE presets SET preview_image_key = ?, preview_image_status = 'pending', updated_at = ? WHERE id = ?`
+  )
+    .bind(key, new Date().toISOString(), presetId)
+    .run();
+
+  // Replace any previous image so an abandoned object is not orphaned.
+  // The DB already points at the new key, so the author's upload has fully
+  // succeeded; an R2 hiccup deleting the *old* object must not be reported to
+  // them as a failed upload. The orphan is the accepted failure mode here.
+  try {
+    await deletePreviewImage(c.env, previousKey);
+  } catch (err) {
+    console.error(`[preview-image] R2 delete of replaced image failed: id=${presetId}`, err);
+  }
+
+  // Same fire-and-forget notification path as a new submission: retries with
+  // backoff, and a dead-letter row when they are exhausted, so a moderator
+  // queue entry is never silently lost. Not awaited — the image is stored and
+  // pending either way, and a notification failure must not fail the upload
+  // the author just completed.
+  const imagePayload: PresetNotificationPayload = {
+    type: 'preview_image',
+    preview_image_key: key,
+    preset: {
+      id: presetId,
+      name: preset.name ?? '',
+      author_name: auth.userName ?? '',
+    },
+  };
+  c.executionCtx.waitUntil(
+    notifyDiscordBot(c.env, imagePayload).catch(async (err) => {
+      console.error(`[preview-image] Discord notification failed: id=${presetId}`, err);
+      await storeFailedNotification(c.env.DB, imagePayload, err);
+    })
+  );
+
+  // FINDING-008: count this upload against the daily cap (append-only)
+  try {
+    await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'preview_upload', presetId);
+  } catch (err) {
+    console.error(`[FINDING-008] submission_events insert failed: preset=${presetId}`, err);
+  }
+
+  return c.json({ success: true, status: 'pending' });
+});
+
+/**
+ * DELETE /:id/preview-image — the author removes their card picture.
+ *
+ * Author-only; a moderator removing an image uses the existing reject action,
+ * which is an act of moderation and belongs in the moderation log.
+ *
+ * The preset's own `status` is deliberately untouched. Clearing the image
+ * clears the only condition the picture contributes to the moderation queue
+ * predicate, so a preset queued *solely* for its image leaves the queue here,
+ * while one that is also `status = 'pending'` for flagged text correctly stays.
+ * That is what "auto-pass assuming all other checks pass" means, and it needs
+ * no state of its own.
+ *
+ * Content moderation is NOT re-run: doing so would let an author launder
+ * flagged text by attaching and removing a picture.
+ */
+presetsRouter.delete('/:id/preview-image', async (c) => {
+  const authError = requireAuth(c);
+  if (authError) return authError;
+
+  const userError = requireUserContext(c);
+  if (userError) return userError;
+
+  const auth = c.get('auth');
+  const presetId = c.req.param('id');
+
+  // Row-level read: CommunityPreset hides preview_image_key by design.
+  const preset = await getPresetImageState(c.env.DB, presetId);
+  if (!preset) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  // FINDING-016: a preset the caller could not GET does not exist for them
+  if (!canSeePreset(auth, preset)) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  if (preset.author_discord_id !== auth.userDiscordId) {
+    return forbiddenResponse(c, 'Only the author can remove the preview image');
+  }
+
+  // Idempotent: nothing to remove is a success, not a 404. The client may be
+  // retrying, and the end state it asked for already holds.
+  const previousKey = preset.preview_image_key;
+
+  // DB UPDATE before the R2 delete, as everywhere else in this file: a failed
+  // delete orphans an invisible object, while the reverse leaves a row pointing
+  // at a key that no longer exists.
+  await c.env.DB.prepare(
+    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ? WHERE id = ?`
+  )
+    .bind(new Date().toISOString(), presetId)
+    .run();
+
+  try {
+    await deletePreviewImage(c.env, previousKey);
+  } catch (err) {
+    console.error(`[preview-image] R2 delete failed after author removal: id=${presetId}`, err);
+  }
+
+  return c.json({ success: true, preview_image_status: 'none' });
+});
+
 // ============================================
 // VALIDATION HELPERS
 // ============================================
@@ -657,11 +1050,22 @@ async function validateSubmission(body: PresetSubmission, db: D1Database): Promi
     return 'Invalid category';
   }
 
+  const secondaryError = validateSecondaryCategories(
+    body.secondary_categories,
+    body.category_id,
+    validCategories
+  );
+  if (secondaryError) return secondaryError;
+
   const dyesError = validatePresetDyes(body.dyes);
   if (dyesError) return dyesError;
 
   const tagsError = validatePresetTags(body.tags);
   if (tagsError) return tagsError;
+
+  const linkError = validateExampleLink(body.example_link);
+  if (linkError) return linkError;
+  body.example_link = normalizeExampleLink(body.example_link);
 
   return null;
 }
@@ -669,8 +1073,16 @@ async function validateSubmission(body: PresetSubmission, db: D1Database): Promi
 /**
  * Validate preset edit request (all fields optional)
  * PRESETS-REF-001 FIX: Uses centralized validators from validation-service
+ *
+ * Async because category validation is DB-backed, exactly like validateSubmission.
+ * `currentCategoryId` supplies the primary when the request does not change it —
+ * otherwise adding a secondary equal to the unchanged primary would slip through.
  */
-function validateEditRequest(body: PresetEditRequest): string | null {
+async function validateEditRequest(
+  body: PresetEditRequest,
+  currentCategoryId: string,
+  db: D1Database
+): Promise<string | null> {
   // All fields optional for edit, but validate if provided
   if (body.name !== undefined) {
     const nameError = validatePresetName(body.name);
@@ -690,6 +1102,28 @@ function validateEditRequest(body: PresetEditRequest): string | null {
   if (body.tags !== undefined) {
     const tagsError = validatePresetTags(body.tags);
     if (tagsError) return tagsError;
+  }
+
+  if (body.example_link !== undefined) {
+    const linkError = validateExampleLink(body.example_link);
+    if (linkError) return linkError;
+    body.example_link = normalizeExampleLink(body.example_link);
+  }
+
+  if (body.category_id !== undefined || body.secondary_categories !== undefined) {
+    const validCategories = await getValidCategories(db);
+
+    if (body.category_id !== undefined && !validCategories.includes(body.category_id)) {
+      return 'Invalid category';
+    }
+
+    const effectivePrimary = body.category_id ?? currentCategoryId;
+    const secondaryError = validateSecondaryCategories(
+      body.secondary_categories,
+      effectivePrimary,
+      validCategories
+    );
+    if (secondaryError) return secondaryError;
   }
 
   return null;

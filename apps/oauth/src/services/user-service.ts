@@ -1,6 +1,6 @@
 /**
  * User Service
- * Manages user creation, lookup, and account merging for multi-provider auth
+ * Manages user creation, lookup, and account linking for multi-provider auth
  */
 
 import type { AuthProvider, UserRow, XIVAuthCharacter } from '../types.js';
@@ -17,13 +17,26 @@ export interface CreateUserParams {
 }
 
 /**
- * Find existing user or create new one.
- * Handles account merging when same Discord ID exists from different providers.
+ * Minimal structured-logger surface used for account-link audit events.
+ * The request-scoped `ExtendedLogger` from @xivdyetools/worker-kit satisfies
+ * it; callers without a request context may omit it.
  *
- * Merging logic:
+ * FINDING-013 / OAUTH-7: events are logged WITHOUT identifiers — the request
+ * ID the logger already carries is the correlation handle.
+ */
+export interface UserServiceLogger {
+  info(message: string, context?: Record<string, unknown>): void;
+  warn(message: string, context?: Record<string, unknown>): void;
+}
+
+/**
+ * Find existing user or create new one.
+ * Handles account linking when the same Discord ID is seen from different providers.
+ *
+ * Linking logic:
  * 1. If logging in via XIVAuth, first try to find by xivauth_id
  * 2. If not found and Discord ID is available (from XIVAuth social link), try to find by discord_id
- * 3. If found by discord_id, update the existing user with the new xivauth_id (merge accounts)
+ * 3. If found, attach the identities this login asserts (see attachIdentities)
  * 4. If still not found, create a new user
  *
  * Race condition handling:
@@ -32,7 +45,8 @@ export interface CreateUserParams {
  */
 export async function findOrCreateUser(
   db: D1Database,
-  params: CreateUserParams
+  params: CreateUserParams,
+  logger?: UserServiceLogger
 ): Promise<UserRow> {
   const { discord_id, xivauth_id, username, avatar_url, auth_provider } = params;
 
@@ -55,42 +69,7 @@ export async function findOrCreateUser(
   }
 
   if (existingUser) {
-    // BUG-004 (2026-07-18 audit): if we're about to stamp a Discord ID onto
-    // this row but a *different* row already owns it (Discord-first login,
-    // then XIVAuth login, then the accounts got linked), the UPDATE would hit
-    // the partial UNIQUE(discord_id) index and 500 every subsequent login.
-    // Merge explicitly: keep this row (it has the provider ID we looked up
-    // by), move the other row's characters over, delete it, then claim the
-    // Discord ID — all in one atomic batch.
-    if (!existingUser.discord_id && discord_id) {
-      const owner = await db
-        .prepare('SELECT id FROM users WHERE discord_id = ? AND id != ?')
-        .bind(discord_id, existingUser.id)
-        .first<{ id: string }>();
-
-      if (owner) {
-        await db.batch([
-          db
-            .prepare('UPDATE xivauth_characters SET user_id = ? WHERE user_id = ?')
-            .bind(existingUser.id, owner.id),
-          db.prepare('DELETE FROM users WHERE id = ?').bind(owner.id),
-          db
-            .prepare("UPDATE users SET discord_id = ?, updated_at = datetime('now') WHERE id = ?")
-            .bind(discord_id, existingUser.id),
-        ]);
-      }
-    }
-
-    // Update existing user with potentially new info and merge provider IDs
-    return await updateUser(db, existingUser.id, {
-      // If logging in via XIVAuth and we have a new discord_id from social link, add it
-      discord_id: existingUser.discord_id || discord_id,
-      // If logging in via Discord and user exists from XIVAuth, preserve xivauth_id
-      xivauth_id: existingUser.xivauth_id || xivauth_id,
-      username,
-      avatar_url,
-      auth_provider,
-    });
+    return attachIdentities(db, existingUser, params, logger);
   }
 
   // 3. No existing user - create new one with conflict handling
@@ -134,19 +113,78 @@ export async function findOrCreateUser(
 
       if (raceUser) {
         // Update the existing user with our data
-        return await updateUser(db, raceUser.id, {
-          discord_id: raceUser.discord_id || discord_id,
-          xivauth_id: raceUser.xivauth_id || xivauth_id,
-          username,
-          avatar_url,
-          auth_provider,
-        });
+        return attachIdentities(db, raceUser, params, logger);
       }
     }
 
     // Not a constraint error or couldn't find user - rethrow
     throw error;
   }
+}
+
+/**
+ * Update an existing row with the identities this login asserts.
+ *
+ * FINDING-013 / OAUTH-9 (2026-08-21 security audit): the previous merge was
+ * driven solely by the Discord link XIVAuth asserts — when the XIVAuth user's
+ * row lacked a Discord ID but another local row already owned it, the other
+ * row was deleted and its Discord ID (the presets-api identity and moderator
+ * key) claimed by this one, and a re-linked account kept a stale xivauth_id.
+ *
+ * Now:
+ * - A Discord ID that another local account already owns is NOT claimed and
+ *   nothing is deleted — linking two existing local accounts needs an explicit,
+ *   signed-in confirmation step, which does not exist yet, so it simply does
+ *   not happen. The event is audit-logged (no identifiers).
+ * - A Discord ID nobody owns is linked (the XIVAuth social link is
+ *   OAuth-verified upstream; there is no competing local identity).
+ * - An existing Discord link is never overwritten from an XIVAuth assertion.
+ * - The XIVAuth ID of the account that is actually logging in wins over a
+ *   stale one left by an earlier link (the Discord account is the anchor).
+ */
+async function attachIdentities(
+  db: D1Database,
+  existing: UserRow,
+  params: CreateUserParams,
+  logger?: UserServiceLogger
+): Promise<UserRow> {
+  const { discord_id, xivauth_id, username, avatar_url, auth_provider } = params;
+
+  let discordId = existing.discord_id;
+  if (!existing.discord_id && discord_id) {
+    // BUG-004 (2026-07-18 audit): stamping a Discord ID another row already
+    // owns would hit the partial UNIQUE(discord_id) index and 500 every login.
+    const owner = await db
+      .prepare('SELECT id FROM users WHERE discord_id = ? AND id != ?')
+      .bind(discord_id, existing.id)
+      .first<{ id: string }>();
+
+    if (owner) {
+      logger?.warn(
+        'Discord identity is already linked to another account; not linked (explicit account linking required)',
+        { provider: auth_provider }
+      );
+    } else {
+      discordId = discord_id;
+      logger?.info('Linked Discord identity to existing account', { provider: auth_provider });
+    }
+  }
+
+  let xivauthId = existing.xivauth_id;
+  if (xivauth_id && xivauth_id !== existing.xivauth_id) {
+    if (existing.xivauth_id) {
+      logger?.info('Replaced stale XIVAuth link on account', { provider: auth_provider });
+    }
+    xivauthId = xivauth_id;
+  }
+
+  return updateUser(db, existing.id, {
+    discord_id: discordId,
+    xivauth_id: xivauthId,
+    username,
+    avatar_url,
+    auth_provider,
+  });
 }
 
 /**

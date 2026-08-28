@@ -17,12 +17,6 @@ export * from './auth/index.js';
 // Domain object factories
 export * from './factories/index.js';
 
-// DOM/browser utilities
-export * from './dom/index.js';
-
-// Response assertions
-export * from './assertions/index.js';
-
 // Test constants
 export * from './constants/index.js';
 

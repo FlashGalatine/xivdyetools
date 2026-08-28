@@ -1,0 +1,99 @@
+symbol                           defFile                                       sameFile otherSrc  tests scripts  docs
+ACQUISITION_META                 config/dye-vocabulary.ts                             1        2      2       0     3  DyeDatabase.ts:2
+APIServiceOptions                services/APIService.ts                               4        0      0       0     3  
+API_CACHE_TTL                    constants/index.ts                                   0        2     16       0     2  APIService.ts:2
+API_CACHE_VERSION                constants/index.ts                                   0        3      4       0     1  APIService.ts:3
+API_DEBOUNCE_DELAY               constants/index.ts                                   0        0      0       0     2  
+API_MAX_RESPONSE_SIZE            constants/index.ts                                   0        5      1       0     1  APIService.ts:5
+API_RATE_LIMIT_DELAY             constants/index.ts                                   0        3      0       0     1  APIService.ts:3
+AcquisitionMeta                  config/dye-vocabulary.ts                             1        0      0       0     1  
+BRETTEL_MATRICES                 constants/index.ts                                   1        3      4       0     3  ColorblindnessSimulator.ts:3
+BandCalibrationResult            config/band-calibration.ts                           1        0      0       0     1  
+BandContext                      config/band-vocabulary.ts                            3        0      0       0     1  
+BandMethod                       config/band-vocabulary.ts                            5        0      0       0     1  
+BandTier                         config/band-vocabulary.ts                            2        0      0       0     1  
+COLOR_DISTANCE_MAX               constants/index.ts                                   0        6      2       0     2  band-vocabulary.ts:2,ColorConverter.ts:2,DyeSearch.ts:2
+CacheMetrics                     services/APIService.ts                               2        0      0       0     1  
+CalibratedMethodBands            config/band-calibration.ts                           5        0      0       0     1  
+CalibratedMethodId               config/band-calibration.ts                           6        0      0       0     1  
+CharaColorSlotRaw                services/chara/chara-parser.ts                       3        0      0       0     1  
+CharaGearDye                     services/chara/chara-parser.ts                       2        0      0       0     1  
+CharaGearSlotId                  services/chara/chara-parser.ts                       2        2      0       0     1  chara-resolver.ts:2
+CharaSlotErrorCode               services/chara/chara-resolver.ts                     2        0      0       0     1  
+CharaSlotInertReason             services/chara/chara-parser.ts                       2        2      0       0     1  chara-resolver.ts:2
+CharaSlotVerdict                 services/chara/chara-resolver.ts                     1        0      0       0     1  
+CharacterMatchOptions            services/CharacterColorService.ts                    2        0      0       0     2  
+ConsolidatedDye                  config/consolidated-ids.ts                           1        0      0       0     2  
+DE2000_GROUND_TRUTH              config/band-calibration.ts                           6        0      2       0     1  
+DYE_ACQUISITIONS                 config/dye-vocabulary.ts                             1        0      2       0     2  
+DYE_CATEGORIES                   config/dye-vocabulary.ts                             1        0      2       0     2  
+DeltaEFormula                    services/color/ColorConverter.ts                     2        4      0       0     5  ColorService.ts:2,HarmonyGenerator.ts:2
+DyeAcquisition                   config/dye-vocabulary.ts                             1        2      3       0     1  DyeDatabase.ts:2
+DyeCategory                      config/dye-vocabulary.ts                             0        0      2       0     1  
+ExtractedColor                   services/PaletteService.ts                           2        0      0       0     0  
+HUE_MAX                          constants/index.ts                                   0        6      0       3     1  ColorConverter.ts:4,index.ts:2
+HUE_MIN                          constants/index.ts                                   0        2      0       0     1  index.ts:2
+HarmonyMatchingAlgorithm         services/dye/HarmonyGenerator.ts                     1        0      0       0     3  
+LEGACY_FACEWEAR_ITEM_IDS         config/facewear.ts                                   1        0     13       0     2  
+LODESTONE_BY_REGION              config/learn-links.ts                                2        0      3       0     1  
+LocalizedDyeName                 config/consolidated-ids.ts                           1        0      0       0     2  
+MACHADO_MATRICES                 constants/index.ts                                   0        2      0       0     1  ColorblindnessSimulator.ts:2
+MATCHING_METHODS                 types/index.ts                                       1        0     10       0     3  
+METALLIC_STAIN_IDS               config/dye-vocabulary.ts                             0        2      4       3     4  DyeDatabase.ts:2
+METHOD_DISPLAY_DP                config/band-calibration.ts                           1        0      0       0     1  
+ManualTopic                      config/learn-links.ts                                1        0      0       0     0  
+MemoryCacheBackend               services/APIService.ts                               2        0     10       3     3  
+MethodBandSet                    config/band-vocabulary.ts                            2        0      0       0     1  
+OFF_GRID_DELTA_E2000             services/chara/chara-resolver.ts                     1        0      3       0     1  
+PATTERNS                         constants/index.ts                                   0        2      0       0     1  index.ts:2
+PaletteExtractionOptions         services/PaletteService.ts                           3        0      0       0     1  
+PaletteServiceOptions            services/PaletteService.ts                           1        0      0       0     0  
+ParsedCharaFile                  services/chara/chara-parser.ts                       1        4      0       0     1  chara-resolver.ts:4
+ProductLink                      config/product-links.ts                              2        0      0       0     1  
+RATIO_BANDS                      config/band-vocabulary.ts                            0        0      3       0     1  
+RGB_MAX                          constants/index.ts                                   0       20      0       3     1  ColorConverter.ts:16,index.ts:4
+RGB_MIN                          constants/index.ts                                   0       20      0       0     1  ColorConverter.ts:16,index.ts:4
+RYB                              services/color/RybColorMixer.ts                     36       16     50       0    20  blending.ts:1,conversions.ts:1,types.ts:1,ColorService.ts:13
+RatioCalibration                 config/band-calibration.ts                           4        0      0       0     1  
+ResolvedGearDye                  services/chara/chara-resolver.ts                     1        0      0       0     1  
+ResolvedPreset                   services/PresetService.ts                            2        0      0       0     1  
+SATURATION_MAX                   constants/index.ts                                   0        2      0       0     0  index.ts:2
+SATURATION_MIN                   constants/index.ts                                   0        2      0       0     1  index.ts:2
+SEPARATION_TIER_KEYS             config/band-vocabulary.ts                            0        0      0       0     1  
+SUPPORTED_LOCALES                services/LocalizationService.ts                      6        0     11       0     3  
+StainIdLookup                    services/chara/chara-resolver.ts                     1        0      0       0     1  
+UNIVERSALIS_API_RETRY_COUNT      constants/index.ts                                   0        3      0       0     1  APIService.ts:3
+UNIVERSALIS_API_RETRY_DELAY      constants/index.ts                                   0        3      0       0     1  APIService.ts:3
+UNIVERSALIS_API_TIMEOUT          constants/index.ts                                   0        3      0       0     1  APIService.ts:3
+VALUE_MAX                        constants/index.ts                                   0        2      0       0     0  index.ts:2
+VALUE_MIN                        constants/index.ts                                   0        2      0       0     1  index.ts:2
+VERSION                          version.ts                                           0        0      0       3     3  
+VISION_TYPES                     constants/index.ts                                   0        0      0       3     3  
+VISION_TYPE_LABELS               constants/index.ts                                   0        0      0       0     2  
+XIVDYETOOLS_DOCS_URL             config/learn-links.ts                                1        0      0       0     1  
+calibrateBandVocabulary          config/band-calibration.ts                           0        0      2       2     1  
+clamp                            utils/index.ts                                       4       46     39       3     7  PaletteService.ts:1,ColorConverter.ts:22,ColorManipulator.ts:3,ColorblindnessSim
+classifyBandTierWithCuts         config/band-vocabulary.ts                            2        0      3       0     1  
+deriveDistinguishCuts            config/band-vocabulary.ts                            3        0      2       0     1  
+distance                         utils/index.ts                                       4      120     81       2    11  band-calibration.ts:1,band-vocabulary.ts:3,index.ts:1,CharacterColorService.ts:2
+facewearColors                   config/facewear.ts                                   1        0     10       0     4  
+filterNulls                      utils/index.ts                                       3        0      7       0     2  
+generateChecksum                 utils/index.ts                                       4        3     10       3     4  APIService.ts:3
+getFacewearColor                 config/facewear.ts                                   1        0      5       0     2  
+groupBy                          utils/index.ts                                       1        0      5       0     2  
+isAbortError                     utils/index.ts                                       2        0     10       0     4  
+isArray                          utils/index.ts                                       6        8     63       5     2  APIService.ts:2,chara-parser.ts:1,DyeDatabase.ts:3,DyeSearch.ts:1,LocaleLoader.t
+isNullish                        utils/index.ts                                       5        0      7       0     1  
+isNumber                         utils/index.ts                                       7        0     10       0     2  
+isObject                         utils/index.ts                                       5        0      9       0     1  
+isString                         utils/index.ts                                       4        0      9       0     2  
+isValidHSV                       utils/index.ts                                       6        2     12       0     2  ColorConverter.ts:2
+isValidHexColor                  utils/index.ts                                       5        2     12       5     4  ColorConverter.ts:2
+isValidRGB                       utils/index.ts                                       6       10     10       0     3  ColorConverter.ts:7,ColorblindnessSimulator.ts:3
+lerp                             utils/index.ts                                       4        0     11       3     6  
+resolveLocaleFromPreference      services/LocalizationService.ts                      4        0     17       0     2  
+retry                            utils/index.ts                                       7       11     12       4    11  APIService.ts:9,CharacterColorService.ts:2
+round                            utils/index.ts                                       7      101     50       0     2  blending.ts:3,conversions.ts:16,band-calibration.ts:2,band-vocabulary.ts:3,APISe
+sleep                            utils/index.ts                                       5        2      5       7     4  APIService.ts:2
+sortByProperty                   utils/index.ts                                       2        0      7       0     2  
+unique                           utils/index.ts                                       6        3     26       0     4  DyeService.ts:1,PaletteService.ts:1,DyeDatabase.ts:1

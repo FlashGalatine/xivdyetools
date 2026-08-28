@@ -286,7 +286,10 @@ describe('CategoriesHandler', () => {
     // ============================================
 
     describe('Category ID Validation', () => {
-        const validCategories = ['jobs', 'grand-companies', 'seasons', 'events', 'aesthetics', 'community'];
+        // 5.0 dropped 'community' from PresetCategory — community-ness is a source,
+        // not a category — and migration 0007 deletes the row from D1. These five
+        // are the whole set (see tests/types.test.ts).
+        const validCategories = ['jobs', 'grand-companies', 'seasons', 'events', 'aesthetics'];
 
         validCategories.forEach((categoryId) => {
             it(`should accept valid category ID: ${categoryId}`, async () => {
@@ -320,5 +323,13 @@ describe('CategoriesHandler', () => {
 
             expect(body.id).toBe('grand-companies');
         });
+    });
+
+    it('counts a preset under its secondary categories too', async () => {
+        mockDb._setupMock(() => []);
+
+        await app.request('/api/v1/categories', {}, env);
+
+        expect(mockDb._queries.join(' ')).toContain('json_each');
     });
 });

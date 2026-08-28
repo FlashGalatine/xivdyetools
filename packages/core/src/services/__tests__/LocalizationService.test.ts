@@ -328,7 +328,6 @@ class MockLocaleLoader extends LocaleLoader {
       dyeNames: data.dyeNames ?? {},
       categories: data.categories ?? {},
       acquisitions: data.acquisitions ?? {},
-      metallicDyeIds: (data.metallicDyeIds as number[]) ?? [],
       harmonyTypes: data.harmonyTypes ?? {},
       visionTypes: data.visionTypes ?? {},
     } as import('@xivdyetools/types').LocaleData;
@@ -362,7 +361,6 @@ describe('LocalizationService', () => {
       'Dye Vendor': 'Dye Vendor',
       Crafting: 'Crafting',
     },
-    metallicDyeIds: [],
     harmonyTypes: {
       complementary: 'Complementary',
       analogous: 'Analogous',
@@ -389,7 +387,6 @@ describe('LocalizationService', () => {
     acquisitions: {
       'Dye Vendor': '染料売り',
     },
-    metallicDyeIds: [],
     harmonyTypes: {
       complementary: '補色',
     },
@@ -577,14 +574,6 @@ describe('LocalizationService', () => {
     });
   });
 
-  describe('getMetallicDyeIds', () => {
-    it('should return array of metallic dye IDs', async () => {
-      await service.setLocale('en');
-      const ids = service.getMetallicDyeIds();
-      expect(Array.isArray(ids)).toBe(true);
-    });
-  });
-
   describe('getHarmonyType', () => {
     it('should return localized harmony type', async () => {
       await service.setLocale('en');
@@ -701,11 +690,6 @@ describe('LocalizationService', () => {
     it('should call static getAcquisition', () => {
       const result = LocalizationService.getAcquisition('Dye Vendor');
       expect(typeof result).toBe('string');
-    });
-
-    it('should call static getMetallicDyeIds', () => {
-      const ids = LocalizationService.getMetallicDyeIds();
-      expect(Array.isArray(ids)).toBe(true);
     });
 
     it('should call static getHarmonyType', () => {

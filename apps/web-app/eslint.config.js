@@ -48,16 +48,25 @@ export default [
         },
       ],
       '@typescript-eslint/no-floating-promises': 'error',
+      // console.warn/error are legitimate escalation paths; everything else must
+      // go through @shared/logger, whose info/debug are dev-gated. `info` was
+      // allowed here once, which is how ~24 emoji-tagged console.info traces
+      // (one of them logging the OAuth callback URL) shipped to production
+      // (2026-08-16 audit, DEAD-018).
       'no-console': [
         'warn',
         {
-          allow: ['warn', 'error', 'info'],
+          allow: ['warn', 'error'],
         },
       ],
       'prefer-const': 'error',
       'no-var': 'error',
       // Custom i18n rule: warn against fallback patterns
       'xivdyetools-i18n/no-i18n-fallback': 'warn',
+      // Custom i18n rule: user-visible English that never reaches
+      // LanguageService. `warn` while the tail from the 2026-08-20 audit is
+      // worked down - promote to `error` once the count reaches zero.
+      'xivdyetools-i18n/no-hardcoded-ui-strings': 'warn',
     },
   },
   pluginPrettier,

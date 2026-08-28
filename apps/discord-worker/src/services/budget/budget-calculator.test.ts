@@ -2,20 +2,14 @@
  * Tests for Budget Calculator Service
  */
 import { describe, it, expect } from 'vitest';
-import {
-  searchDyes,
-  getDyeById,
-  getDyeByName,
-  getDyeAutocomplete,
-  getAllDyes,
-  getCategories,
-} from './budget-calculator.js';
+import { dyeService, initializeLocale } from '@xivdyetools/bot-logic';
+import { getDyeById, getDyeByName, getDyeAutocomplete } from './budget-calculator.js';
 
 describe('budget-calculator.ts', () => {
   describe('getDyeById', () => {
     it('should return dye for valid ID', () => {
       // Get any dye first to test with a known valid ID
-      const allDyes = getAllDyes();
+      const allDyes = dyeService.getAllDyes();
       expect(allDyes.length).toBeGreaterThan(0);
 
       const testDye = allDyes[0];
@@ -33,7 +27,7 @@ describe('budget-calculator.ts', () => {
   describe('getDyeByName', () => {
     it('should return dye for exact name match', () => {
       // Get any dye to test with a known name
-      const allDyes = getAllDyes();
+      const allDyes = dyeService.getAllDyes();
       const testDye = allDyes[0];
 
       const dye = getDyeByName(testDye.name);
@@ -42,7 +36,7 @@ describe('budget-calculator.ts', () => {
     });
 
     it('should be case-insensitive', () => {
-      const allDyes = getAllDyes();
+      const allDyes = dyeService.getAllDyes();
       const testDye = allDyes[0];
 
       const dye = getDyeByName(testDye.name.toLowerCase());
@@ -50,42 +44,20 @@ describe('budget-calculator.ts', () => {
       expect(dye?.name).toBe(testDye.name);
     });
 
-    // BUG-032 (2026-07-18 audit): Facewear entries (synthetic negative itemIDs)
-    // must not resolve as budget targets — their IDs fail the whole
-    // Universalis price batch
-    it('should return null for Facewear color names', () => {
-      const facewear = getAllDyes().find((d) => d.itemID < 0);
-      expect(facewear).toBeDefined();
+    // BUG-032 (2026-07-18 audit) → schema v2 (2026-07-31): Facewear entries
+    // no longer exist in the dye database at all (they moved to core's
+    // facewearColors), so the negative-itemID hazard for Universalis price
+    // batches is gone by construction.
+    it('has no Facewear entries / negative itemIDs in the database (schema v2)', () => {
+      expect(dyeService.getAllDyes().every((d) => d.itemID > 0)).toBe(true);
 
-      const dye = getDyeByName(facewear!.name);
+      const dye = getDyeByName('Silver'); // a Facewear color name
       expect(dye).toBeNull();
     });
 
     it('should return null for non-existent dye', () => {
       const dye = getDyeByName('Fake Dye Color That Does Not Exist 12345');
       expect(dye).toBeNull();
-    });
-  });
-
-  describe('searchDyes', () => {
-    it('should find dyes by partial name match', () => {
-      const results = searchDyes('white');
-      expect(results.length).toBeGreaterThan(0);
-      // All results should contain 'white' in name (case-insensitive)
-      results.forEach((d) => {
-        expect(d.name.toLowerCase()).toContain('white');
-      });
-    });
-
-    it('should be case-insensitive', () => {
-      const resultsLower = searchDyes('white');
-      const resultsUpper = searchDyes('WHITE');
-      expect(resultsLower.length).toBe(resultsUpper.length);
-    });
-
-    it('should return empty array for no matches', () => {
-      const results = searchDyes('xyz123nonexistent9876');
-      expect(results).toEqual([]);
     });
   });
 
@@ -117,39 +89,22 @@ describe('budget-calculator.ts', () => {
         expect(choice.name.toLowerCase()).toContain('red');
       });
     });
-  });
 
-  describe('getAllDyes', () => {
-    it('should return all dyes', () => {
-      const dyes = getAllDyes();
-      expect(dyes.length).toBeGreaterThan(50); // FFXIV has many dyes
-    });
-
-    it('should return dyes with required properties', () => {
-      const dyes = getAllDyes();
-      dyes.forEach((dye) => {
-        expect(dye).toHaveProperty('itemID');
-        expect(dye).toHaveProperty('name');
-        expect(dye).toHaveProperty('hex');
-        expect(dye).toHaveProperty('category');
-      });
+    // 2026-08-20 i18n audit, F-02
+    it('matches and labels in the user locale', async () => {
+      await initializeLocale('ja');
+      const choices = getDyeAutocomplete('スノウ', 25, 'ja');
+      expect(choices.length).toBeGreaterThan(0);
+      expect(choices[0].name).toMatch(/^スノウホワイト \(/); // localized name + localized category
+      expect(choices[0].value).toMatch(/^\d+$/); // value stays the itemID
     });
   });
 
-  describe('getCategories', () => {
-    it('should return dye categories', () => {
-      const categories = getCategories();
-      expect(categories.length).toBeGreaterThan(0);
-      // Just verify it returns an array of strings
-      categories.forEach((cat) => {
-        expect(typeof cat).toBe('string');
-      });
-    });
-
-    it('should return unique categories', () => {
-      const categories = getCategories();
-      const uniqueCategories = [...new Set(categories)];
-      expect(categories.length).toBe(uniqueCategories.length);
+  describe('getDyeByName (localized)', () => {
+    it('resolves an exact Japanese name when the locale is passed', async () => {
+      await initializeLocale('ja');
+      expect(getDyeByName('スノウホワイト', 'ja')?.name).toBe('Snow White');
+      expect(getDyeByName('スノウホワイト')).toBeNull();
     });
   });
 });

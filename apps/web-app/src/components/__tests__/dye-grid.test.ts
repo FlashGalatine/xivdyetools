@@ -194,6 +194,20 @@ describe('DyeGrid', () => {
       const emptyState = query(container, '[role="grid"]');
       expect(emptyState?.innerHTML).toContain('dyeSelector.noDyesInCategory');
     });
+
+    // FINDING-011 / WEB-2: the typed query lands in an innerHTML template.
+    it('renders the search query as text, never as markup', () => {
+      grid = new DyeGrid(container);
+      grid.init();
+      // No double quotes: the mocked tInterpolate JSON-stringifies its params,
+      // which would escape them and make the textContent check read wrong.
+      const queryText = '<img src=x onerror=alert(1)><a href=https://evil.example>x</a>';
+      grid.setDyes([], { type: 'search', query: queryText });
+
+      const emptyState = query(container, '[role="grid"]')!;
+      expect(emptyState.querySelector('img, a')).toBeNull();
+      expect(emptyState.textContent).toContain(queryText);
+    });
   });
 
   // ============================================================================

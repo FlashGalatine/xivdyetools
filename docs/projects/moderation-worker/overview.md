@@ -1,6 +1,6 @@
 # Moderation Worker Overview
 
-**xivdyetools-moderation-worker** v1.1.8 - Serverless Discord bot for preset moderation
+**xivdyetools-moderation-worker** v1.4.0 - Serverless Discord bot for preset moderation
 
 ---
 
@@ -15,9 +15,9 @@ A separate Cloudflare Worker Discord bot dedicated to preset moderation commands
 
 ### Recent Changes
 
-- **v1.1.8** — Dependency updates
-- **v1.1.6** — Fixed `safeParseJSON` prototype pollution vulnerability; fixed rate limit responses returning HTTP 500 instead of 429
-- **v1.1.5** — Added startup environment validation (fails fast if required secrets are missing)
+- **v1.4.0** — Image-only queue entries (approved presets whose new preview picture is awaiting review) are marked 🖼 instead of being mis-approved/mis-rejected; `appearance` / `zones` / `raids-trials` category rows added and `community` dropped; `@xivdyetools/worker-kit` (+ `/rate-limiter`); dev/prod `wrangler.toml` split — a bare `wrangler deploy` now targets the routeless `xivdyetools-moderation-worker-dev`
+- **v1.3.0** — 2026-07-18 audit: throw-safe outcome-checked Discord API wrappers; `MODERATOR_IDS` parsed via the shared `@xivdyetools/bot-logic` grammar
+- **v1.2.0** — Global `onError` handler, placeholder `DISCORD_CLIENT_ID` detection, shared middleware
 
 ### Why Two Bots?
 
@@ -56,9 +56,13 @@ npm run dev
 # Register slash commands
 npm run register-commands
 
-# Deploy to production
+# Deploy — bare `deploy` targets the routeless dev worker (xivdyetools-moderation-worker-dev)
 npm run deploy
+# Production (xivdyetools-moderation-worker, moderation-bot.xivdyetools.app)
+npm run deploy:production
 ```
+
+See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../operations/DEPLOY_ENVIRONMENTS.md).
 
 ---
 
@@ -98,8 +102,8 @@ src/
 │   ├── bot-i18n.ts          # Bot-specific i18n
 │   └── i18n.ts              # i18n strings
 ├── middleware/
-│   ├── logger.ts            # Structured logging
-│   └── request-id.ts        # Request correlation
+│   └── rate-limit.ts        # KVRateLimiter from @xivdyetools/worker-kit/rate-limiter
+│                            # (request-ID + logger middleware come from @xivdyetools/worker-kit)
 ├── types/
 │   ├── env.ts               # Environment bindings
 │   ├── ban.ts               # Ban-related types
@@ -210,7 +214,7 @@ Uses the same `BOT_API_SECRET` as the main discord-worker to authenticate with t
 | Aspect | discord-worker | moderation-worker |
 |--------|----------------|-------------------|
 | **Purpose** | Public user commands | Moderator-only commands |
-| **Commands** | 20 slash commands | 3 subcommands |
+| **Commands** | 17 registered slash commands | 3 subcommands |
 | **Installation** | Any server | Admin servers only |
 | **Channel** | Any channel | Designated moderation channel |
 | **Image rendering** | SVG/PNG via resvg-wasm | None (text only) |

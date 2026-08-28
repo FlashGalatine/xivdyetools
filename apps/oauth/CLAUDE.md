@@ -13,13 +13,31 @@ The worker also owns a small D1 database (`xivdyetools-users`) that stores a uni
 ```bash
 npm run dev                          # wrangler dev (port 8788)
 npm run dev -- --env development     # Run with development env vars
-npm run deploy                       # Deploy (default = production-like)
-npm run deploy:production            # Deploy to production env
+npm run deploy                       # Deploy to PRODUCTION (auth.xivdyetools.app)
+npm run deploy:production            # Alias of the above — see the note
 npm run test                         # vitest
 npm run test:coverage                # Coverage via @vitest/coverage-v8
 npm run type-check                   # tsc --noEmit
 npm run lint                         # eslint src/
 ```
+
+> **This worker inverts the monorepo's deploy convention. Read before deploying.**
+>
+> `wrangler.toml` has **no `[env.production]`** — the **top-level** block is
+> production: it carries `name = "xivdyetools-oauth"` and the
+> `auth.xivdyetools.app` custom domain. The only other environment defined is
+> `development` (the former `preview` env was deleted — FINDING-029).
+>
+> So a bare `wrangler deploy` **is** the production deploy (and is what
+> `.github/workflows/deploy-oauth.yml` runs). `wrangler deploy --env production`
+> does not deploy at all — it hard-errors with *"No environment found in
+> configuration with name production"*. `deploy:production` is kept only as an
+> alias so following the repo-wide convention still lands on the right worker.
+>
+> This is the opposite of `api-worker` and `presets-api`, where the top-level
+> block is the routeless `…-dev` worker and production needs an explicit
+> `--env production`. Always check the worker's `wrangler.toml` first; see
+> `docs/operations/DEPLOY_ENVIRONMENTS.md`.
 
 ### Setting Secrets
 
@@ -62,7 +80,7 @@ Frontend                       OAuth Worker                       Discord
    │ ◄────────────── 302 /auth/callback?code=…&state=…────────────── │
    │                                │                                │
    │  POST /auth/callback           │  verifyState(signature + age)  │
-   │  { code, code_verifier, ... } ►│                                │
+   │  { code, code_verifier, state }►│                                │
    │                                │  exchange code+verifier (10s)  │
    │                                │ ──────────────────────────────►│
    │                                │ ◄────────── tokens ────────────│
@@ -97,7 +115,8 @@ src/
 ├── durable-objects/
 │   └── rate-limiter.ts               # Durable Object class for distributed rate limiting
 ├── utils/
-│   ├── oauth-validation.ts           # validateCodeChallenge, validateCodeVerifier, validateRedirectUri, validateScopes, validateStateExpiration
+│   ├── oauth-validation.ts           # validateCodeChallenge/Verifier, validateRedirectUri (origin + exact path), validateReturnPath, validateStateParam, validateScopes
+│   ├── pkce-binding.ts               # verifyPkceStateBinding: S256(code_verifier) vs the signed code_challenge (FINDING-012)
 │   ├── state-signing.ts              # signState/verifyState (HMAC-SHA256 over base64url JSON)
 │   └── env-validation.ts             # First-request env validation
 └── __tests__/                        # Test suites (separate __tests__ dir, not co-located)
@@ -111,7 +130,7 @@ src/
 | `TOKEN_BLACKLIST` | KV Namespace | Revoked JWT IDs (TTL matches token expiry) |
 | `RATE_LIMITER` | Durable Object Namespace (optional) | Persistent per-IP rate limit when `USE_DO_RATE_LIMITING = "true"` |
 
-Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID`, `FRONTEND_URL`, `WORKER_URL`, `JWT_EXPIRY` (seconds, default `3600`). Custom domains: `auth.xivdyetools.app`, `auth-preview.xivdyetools.app`, `auth.xivdyetools.projectgalatine.com`. The `wrangler.toml` also defines a development env (`xivdyetools-oauth-dev`) and a preview env (`xivdyetools-oauth-preview`) — note the dev D1 still has `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` placeholder.
+Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID`, `FRONTEND_URL`, `WORKER_URL`, `JWT_EXPIRY` (seconds, default `3600`). Custom domains: `auth.xivdyetools.app`, `auth.xivdyetools.projectgalatine.com`. The `wrangler.toml` also defines a development env (`xivdyetools-oauth-dev`) — note the dev D1 still has `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` placeholder. There is no preview env (deleted in the 2026-08-21 audit, FINDING-029); `ENVIRONMENT` must be `development` or `production`, and anything other than `development` gets the production gates (HTTPS-only URLs, fail-closed env validation, HSTS).
 
 ### Required Secrets
 
@@ -146,7 +165,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 | `/health` | GET | Liveness probe |
 | `/auth/discord` | GET | Initiates Discord OAuth (requires `code_challenge`) |
 | `/auth/callback` | GET | Discord redirect handler (exchanges code, mints JWT, redirects) |
-| `/auth/callback` | POST | SPA token exchange (`{ code, code_verifier, ... }`) |
+| `/auth/callback` | POST | SPA token exchange (`{ code, code_verifier, state }` — `state` is the signed value echoed by the GET callback; required) |
 | `/auth/xivauth` | GET | Initiates XIVAuth OAuth |
 | `/auth/xivauth/cb` | GET / POST | XIVAuth redirect handler |
 | `/auth/refresh` | POST | Refresh JWT (24h grace window after expiry) |
@@ -157,7 +176,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 ### PKCE Enforcement
 
-`validateCodeChallenge` rejects anything not matching `/^[A-Za-z0-9\-_]{43,128}$/`; `validateCodeVerifier` rejects anything not matching `/^[A-Za-z0-9\-._~]{43,128}$/`. Only `S256` is accepted as `code_challenge_method`. The verifier is **only** ever sent in the POST body — never as a query parameter — so it can't leak through redirects, server logs, or browser history.
+`validateCodeChallenge` rejects anything not matching `/^[A-Za-z0-9\-_]{43,128}$/`; `validateCodeVerifier` rejects anything not matching `/^[A-Za-z0-9\-._~]{43,128}$/`. Only `S256` is accepted as `code_challenge_method`. The verifier is **only** ever sent in the POST body — never as a query parameter — so it can't leak through redirects, server logs, or browser history. The GET callbacks echo the signed `state` in the bounce; the SPA must post it back (`400 Missing state` otherwise) and `utils/pkce-binding.ts` verifies it (signature, expiry, provider) and requires `S256(code_verifier) === state.code_challenge` before the provider is called (FINDING-012).
 
 ### State Parameter Signing
 
@@ -177,7 +196,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 ### Redirect URI Validation
 
-`validateRedirectUri(uri, ALLOWED_REDIRECT_ORIGINS)` parses the URL and compares the origin against an allowlist (constants/oauth.ts). Anything that doesn't parse, doesn't match, or fails origin equality is rejected — prevents open redirect attacks.
+`validateRedirectUri(uri, ALLOWED_REDIRECT_ORIGINS)` parses the URL, compares the origin against an allowlist (constants/oauth.ts) **and** requires the path to be exactly `REDIRECT_CALLBACK_PATH` (`/auth/callback`, no query string or fragment). Anything that doesn't parse, doesn't match, or fails origin/path equality is rejected — prevents open redirect attacks (FINDING-012). `validateReturnPath` / `validateStateParam` bound `return_path` and the SPA `state` (256 visible-ASCII characters) before they enter the signed state.
 
 ### Rate Limiting
 
@@ -189,7 +208,7 @@ Both emit `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 429
 
 ### CORS
 
-Allows `FRONTEND_URL` always; in `ENVIRONMENT === 'development'` only, also allows `localhost`/`127.0.0.1` on whitelisted ports `3000`, `5173`, `8787`. Requests without an `Origin` header (curl/Postman) are denied — server-to-server callers must use the relevant API endpoints rather than OAuth.
+CORS and redirect URIs share **one** allowlist (2.6.0 fix): the origin callback consults `getAllowedRedirectOrigins(env)` — `ALLOWED_REDIRECT_ORIGINS` in `src/constants/oauth.ts` (`https://xivdyetools.app`, `https://beta.xivdyetools.app`, the transition `projectgalatine.com` origin) plus `env.FRONTEND_URL`, with the loopback entries stripped outside `ENVIRONMENT === 'development'`. Development additionally allows `localhost`/`127.0.0.1` on whitelisted ports `3000`, `5173`, `8787`. Requests without an `Origin` header (curl/Postman) are denied — server-to-server callers must use the relevant API endpoints rather than OAuth.
 
 ### Body Hardening
 
@@ -234,11 +253,15 @@ JWT revocation is enforced on `/auth/me` and during refresh by checking `TOKEN_B
 |---------|---------|
 | `hono` | HTTP framework |
 | `@xivdyetools/types` | Shared interfaces (JWTPayload, AuthProvider, XIVAuthUser, etc.) |
-| `@xivdyetools/crypto` | Base64URL helpers |
-| `@xivdyetools/rate-limiter` | Backend-agnostic rate limiter primitives |
+| `@xivdyetools/auth` | JWT verification/revocation primitives + Base64URL helpers (`/encoding`) |
+| `@xivdyetools/worker-kit/rate-limiter` | Backend-agnostic rate limiter primitives |
 | `@xivdyetools/logger` | Structured logging |
-| `@xivdyetools/worker-middleware` | Shared Hono middleware (request ID, logger) |
-| `miniflare` (dev) | Local DO + KV emulation for tests |
+| `@xivdyetools/worker-kit` | Shared Hono middleware (request ID, logger) |
+
+Tests emulate KV/D1/DO with the hand-rolled `src/__tests__/mocks/cloudflare-test.ts` and
+`@xivdyetools/test-utils` — **not** `miniflare`. A direct `miniflare` devDependency was declared
+here but never imported; it was removed on 2026-08-10 because it pinned a second, older
+`miniflare` 4 (and with it `undici` 7.28.0) into the lockfile alongside the one `wrangler` resolves.
 
 ## Testing
 
@@ -252,7 +275,7 @@ npx vitest run -t "PKCE"                              # Pattern match
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/types`, `@xivdyetools/crypto`, `@xivdyetools/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
+**Dependencies:** `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
 
 **Shares `JWT_SECRET` with:** `xivdyetools-presets-api` (which verifies these JWTs on web auth)
 
@@ -265,6 +288,6 @@ npx vitest run -t "PKCE"                              # Pattern match
 3. Verify `wrangler.toml` has correct `FRONTEND_URL` and `WORKER_URL` for the target env.
 4. Apply schema if needed: `wrangler d1 execute xivdyetools-users --remote --file=./schema/users.sql`.
 5. `npm run lint && npm run test -- --run && npm run type-check`.
-6. `npm run deploy:production`.
+6. `npm run deploy` (bare — this worker has no `production` env; see the note under Commands).
 7. Smoke-test the full flow from the web app: `/auth/discord` → consent → callback → `/auth/me` returns user info with the issued JWT.
-8. If switching to DO rate limiting, set `USE_DO_RATE_LIMITING = "true"` and bind `RATE_LIMITER` (already present in wrangler.toml under `env.preview`).
+8. If switching to DO rate limiting, set `USE_DO_RATE_LIMITING = "true"` and bind `RATE_LIMITER`.

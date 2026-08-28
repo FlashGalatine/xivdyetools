@@ -11,34 +11,19 @@
 import { logger } from '@shared/logger';
 // FINDING-008: Import APIService to clear cache on logout
 import { APIService } from './api-service-wrapper.js';
+import type { AuthProvider, AuthUser, AuthResponse, JWTPayload } from '@xivdyetools/types';
 
 // ============================================
 // Types
 // ============================================
 
-/**
- * Supported authentication providers
- */
-export type AuthProvider = 'discord' | 'xivauth';
-
-/**
- * Primary FFXIV character info (XIVAuth only)
- */
-export interface PrimaryCharacter {
-  name: string;
-  server: string;
-  verified: boolean;
-}
-
-export interface AuthUser {
-  id: string;
-  username: string;
-  global_name: string | null;
-  avatar: string | null;
-  avatar_url: string | null;
-  auth_provider?: AuthProvider;
-  primary_character?: PrimaryCharacter;
-}
+// AuthProvider, AuthUser, AuthResponse and JWTPayload are the shared
+// `@xivdyetools/types` contracts (AuthUser/AuthProvider re-exported below —
+// AuthState's fields keep them part of this module's public shape).
+// PrimaryCharacter (a nested field on AuthUser/JWTPayload) is never named
+// directly in this file, so it is left unimported — its shape still flows
+// through structurally.
+export type { AuthProvider, AuthUser };
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -50,26 +35,14 @@ export interface AuthState {
 
 export type AuthStateListener = (state: AuthState) => void;
 
-interface JWTPayload {
-  sub: string;
-  iat: number;
-  exp: number;
-  iss: string;
-  username: string;
-  global_name: string | null;
-  avatar: string | null;
-  auth_provider?: AuthProvider;
-  discord_id?: string;
-  xivauth_id?: string;
-  primary_character?: PrimaryCharacter;
-}
-
-interface AuthResponse {
-  success: boolean;
-  token?: string;
-  user?: AuthUser;
-  expires_at?: number;
-  error?: string;
+/**
+ * Identity the presets API keys ownership by — see `AuthUser.id`.
+ * Mirrors `resolveJWTUserId()` in apps/presets-api/src/middleware/auth.ts.
+ */
+function presetsIdentity(payload: JWTPayload): string {
+  return typeof payload.discord_id === 'string' && payload.discord_id.length > 0
+    ? payload.discord_id
+    : payload.sub;
 }
 
 // ============================================
@@ -220,7 +193,7 @@ class AuthServiceImpl {
     });
 
     if (import.meta.env.DEV) {
-      console.info('🔐 [AuthService] Initializing...', { url: window.location.href });
+      logger.info('🔐 [AuthService] Initializing...', { url: window.location.href });
     }
 
     try {
@@ -230,15 +203,19 @@ class AuthServiceImpl {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const error = urlParams.get('error');
-      const providerFromUrl = urlParams.get('provider') as AuthProvider | null;
-
-      // If provider is in URL (from XIVAuth callback), store it for handleCallbackCode
-      if (providerFromUrl) {
+      // `provider=<name>` is the oauth worker's marker on the XIVAuth callback
+      // redirect. SECURITY (FINDING-032 / WEB-3): honour it only on an actual
+      // callback (a `code` is present) and only for a known provider — it
+      // used to be persisted from ANY page load, so a crafted share link
+      // (`/presets?provider=xivauth`) could route the victim's next Discord
+      // code exchange to the XIVAuth endpoint and silently fail the sign-in.
+      const providerFromUrl = this.parseProvider(urlParams.get('provider'));
+      if (code && providerFromUrl) {
         sessionStorage.setItem(OAUTH_PROVIDER_KEY, providerFromUrl);
       }
 
       if (import.meta.env.DEV) {
-        console.info('🔐 [AuthService] URL params:', {
+        logger.info('🔐 [AuthService] URL params:', {
           hasCode: !!code,
           hasError: !!error,
           provider: providerFromUrl,
@@ -248,16 +225,16 @@ class AuthServiceImpl {
       if (code) {
         // New secure PKCE flow: we receive the auth code, then exchange it with our stored code_verifier
         if (import.meta.env.DEV) {
-          console.info('🔐 [AuthService] Auth code found in URL, exchanging for token...');
+          logger.info('🔐 [AuthService] Auth code found in URL, exchanging for token...');
         }
-        await this.handleCallbackCode(code, urlParams.get('csrf'));
+        await this.handleCallbackCode(code, urlParams.get('csrf'), urlParams.get('state'));
         // Get return path before cleaning URL, default to home
         // SECURITY: Sanitize to prevent open redirect attacks
         const rawPath =
           urlParams.get('return_path') || sessionStorage.getItem(OAUTH_RETURN_PATH_KEY);
         const returnPath = sanitizeReturnPath(rawPath);
         if (import.meta.env.DEV) {
-          console.info(`🔐 [AuthService] Navigating to return path: ${returnPath}`);
+          logger.info(`🔐 [AuthService] Navigating to return path: ${returnPath}`);
         }
         sessionStorage.removeItem(OAUTH_RETURN_PATH_KEY);
         // Clean up URL and navigate to return path
@@ -276,7 +253,7 @@ class AuthServiceImpl {
 
       this.initialized = true;
       if (import.meta.env.DEV) {
-        console.info(
+        logger.info(
           `✅ [AuthService] Initialized: ${this.state.isAuthenticated ? 'Logged in as ' + this.state.user?.username : 'Not logged in'}`
         );
       }
@@ -339,7 +316,7 @@ class AuthServiceImpl {
         expiresAt,
         provider,
         user: {
-          id: payload.sub,
+          id: presetsIdentity(payload),
           username: payload.username,
           global_name: payload.global_name,
           avatar: payload.avatar,
@@ -356,15 +333,32 @@ class AuthServiceImpl {
   }
 
   /**
+   * Narrow an externally supplied provider name (URL param, sessionStorage)
+   * to the known set; anything else is `null` (→ the Discord default).
+   */
+  private parseProvider(value: string | null): AuthProvider | null {
+    return value === 'discord' || value === 'xivauth' ? value : null;
+  }
+
+  /**
    * Handle authorization code received from OAuth callback
    * Exchanges the code for a token via POST to the OAuth worker
    * This is the secure PKCE flow - the code_verifier never leaves the client
+   *
+   * @param code - Authorization code from the bounce
+   * @param csrf - The SPA's own state nonce echoed by the worker (CSRF check)
+   * @param signedState - The worker's signed state envelope (`?state=`), forwarded
+   *   so the worker can bind the verifier to its challenge; null on older bounces
    */
-  private async handleCallbackCode(code: string, csrf: string | null): Promise<void> {
+  private async handleCallbackCode(
+    code: string,
+    csrf: string | null,
+    signedState: string | null
+  ): Promise<void> {
     // Retrieve the stored code_verifier (stored during login initiation)
     const codeVerifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
     const storedState = sessionStorage.getItem(OAUTH_STATE_KEY);
-    const provider = (sessionStorage.getItem(OAUTH_PROVIDER_KEY) as AuthProvider) || 'discord';
+    const provider = this.parseProvider(sessionStorage.getItem(OAUTH_PROVIDER_KEY)) ?? 'discord';
 
     // Clean up PKCE session storage
     sessionStorage.removeItem(PKCE_VERIFIER_KEY);
@@ -390,10 +384,14 @@ class AuthServiceImpl {
           : `${OAUTH_WORKER_URL}/auth/callback`;
 
       if (import.meta.env.DEV) {
-        console.info(`🔐 [AuthService] Exchanging code via ${provider} endpoint`);
+        logger.info(`🔐 [AuthService] Exchanging code via ${provider} endpoint`);
       }
 
-      // Exchange code for token via POST (code_verifier sent directly, not through redirect)
+      // Exchange code for token via POST (code_verifier sent directly, not through redirect).
+      // FINDING-012 / OAUTH-5: the worker's bounce echoes its signed `state`
+      // envelope; forwarding it lets the worker bind this verifier to the
+      // challenge it issued (S256(code_verifier) must equal state.code_challenge).
+      // Older bounces carry none — then the body is exactly what it was.
       const response = await fetch(callbackEndpoint, {
         method: 'POST',
         headers: {
@@ -403,6 +401,7 @@ class AuthServiceImpl {
           code,
           code_verifier: codeVerifier,
           redirect_uri: `${window.location.origin}/auth/callback`,
+          ...(signedState ? { state: signedState } : {}),
         }),
       });
 
@@ -414,8 +413,16 @@ class AuthServiceImpl {
 
       const data: AuthResponse = await response.json();
 
-      if (!data.success || !data.token) {
+      if (!data.success) {
         logger.error('Token exchange returned error:', data.error);
+        return;
+      }
+
+      // Contract guarantees `token` once `success` is true; stay defensive
+      // against an empty string without depending on `.error`, which only
+      // exists on the failure branch of the union.
+      if (!data.token) {
+        logger.error('Token exchange succeeded but returned no token');
         return;
       }
 
@@ -470,7 +477,7 @@ class AuthServiceImpl {
       expiresAt,
       provider,
       user: {
-        id: payload.sub,
+        id: presetsIdentity(payload),
         username: payload.username,
         global_name: payload.global_name,
         avatar: payload.avatar,
@@ -537,7 +544,7 @@ class AuthServiceImpl {
     if (returnTool) {
       finalPath = `/${returnTool}`;
       if (import.meta.env.DEV) {
-        console.info(`🔐 [AuthService] Using returnTool: ${returnTool} -> ${finalPath}`);
+        logger.info(`🔐 [AuthService] Using returnTool: ${returnTool} -> ${finalPath}`);
       }
     }
 
@@ -637,6 +644,10 @@ class AuthServiceImpl {
       sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
       sessionStorage.setItem(OAUTH_STATE_KEY, state);
       sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, returnPath || window.location.pathname);
+      // Each flow starts clean: a provider marker left by an earlier XIVAuth
+      // attempt (or a crafted link) must not route THIS code exchange to the
+      // XIVAuth callback (FINDING-032 / WEB-3).
+      sessionStorage.removeItem(OAUTH_PROVIDER_KEY);
       // Store return tool if provided
       if (returnTool) {
         sessionStorage.setItem(OAUTH_RETURN_TOOL_KEY, returnTool);
@@ -726,6 +737,8 @@ class AuthServiceImpl {
 
     this.clearStorage();
     this.clearState();
+    // A half-finished OAuth flow must not outlive the session it started in
+    sessionStorage.removeItem(OAUTH_PROVIDER_KEY);
     // FINDING-008: Clear cached market prices so they don't persist across sessions
     void APIService.clearCache().catch(() => {});
     this.notifyListeners();
@@ -825,16 +838,3 @@ class AuthServiceImpl {
 // ============================================
 
 export const authService = new AuthServiceImpl();
-export { AuthServiceImpl as AuthService };
-
-/**
- * Get and consume the return tool ID stored during login
- * Returns the tool ID and removes it from sessionStorage
- */
-export function consumeReturnTool(): string | null {
-  const tool = sessionStorage.getItem(OAUTH_RETURN_TOOL_KEY);
-  if (tool) {
-    sessionStorage.removeItem(OAUTH_RETURN_TOOL_KEY);
-  }
-  return tool;
-}

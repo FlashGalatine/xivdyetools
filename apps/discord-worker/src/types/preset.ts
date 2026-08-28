@@ -15,23 +15,13 @@
  * @deprecated Import directly from '@xivdyetools/types' instead.
  * These re-exports will be removed in the next major version.
  */
-export type {
-  PresetStatus,
-  PresetCategory,
-  PresetSortOption,
-  CategoryMeta,
-  CommunityPreset,
-} from '@xivdyetools/types';
+export type { PresetCategory, CommunityPreset } from '@xivdyetools/types';
 
 /**
  * @deprecated Import directly from '@xivdyetools/types' instead.
  * These re-exports will be removed in the next major version.
  */
-export type {
-  PresetFilters,
-  PresetSubmission,
-  PresetEditRequest,
-} from '@xivdyetools/types';
+export type { PresetFilters, PresetSubmission, PresetEditRequest } from '@xivdyetools/types';
 
 /**
  * @deprecated Import directly from '@xivdyetools/types' instead.
@@ -44,12 +34,6 @@ export type {
   VoteResponse,
 } from '@xivdyetools/types';
 
-/**
- * @deprecated Import directly from '@xivdyetools/types' instead.
- * These re-exports will be removed in the next major version.
- */
-export type { ModerationLogEntry, ModerationStats } from '@xivdyetools/types';
-
 // ============================================================================
 // PROJECT-SPECIFIC TYPES
 // ============================================================================
@@ -58,10 +42,10 @@ export type { ModerationLogEntry, ModerationStats } from '@xivdyetools/types';
 import type { PresetStatus, PresetCategory } from '@xivdyetools/types';
 
 /**
- * Payload received from preset API webhook notifications
+ * A new or re-flagged preset arriving from presets-api. Carries the whole
+ * submission because the moderation embed renders all of it.
  */
-export interface PresetNotificationPayload {
-  /** Notification type */
+export interface PresetSubmissionNotification {
   type: 'submission';
   /** Preset data */
   preset: {
@@ -81,6 +65,28 @@ export interface PresetNotificationPayload {
     created_at: string;
   };
 }
+
+/**
+ * An author-uploaded preview image awaiting review. The upload changes no
+ * other column, so presets-api sends only what the embed needs — modelling it
+ * as the full submission shape would promise fields that never arrive.
+ */
+export interface PreviewImageNotification {
+  type: 'preview_image';
+  /** R2 key of the pending object, used to build the embed's image URL. */
+  preview_image_key?: string | null;
+  preset: {
+    id: string;
+    name: string;
+    author_name: string;
+  };
+}
+
+/**
+ * Payload received from preset API webhook notifications.
+ * Discriminated on `type`: narrow first, then read.
+ */
+export type PresetNotificationPayload = PresetSubmissionNotification | PreviewImageNotification;
 
 // ============================================================================
 // Error Types
@@ -103,49 +109,59 @@ export class PresetAPIError extends Error {
   }
 
   /**
-   * Get a safe, user-friendly error message based on status code.
-   * This prevents exposing internal API details to end users.
+   * Get the locale key of a safe, user-friendly error message based on status
+   * code (render with `t.t(error.getSafeMessageKey())`). This prevents
+   * exposing internal API details to end users.
    *
    * SECURITY: Use this method when displaying errors to users instead of `message`
    */
-  getSafeMessage(): string {
+  getSafeMessageKey(): string {
     switch (this.statusCode) {
       case 400:
-        return 'Invalid request. Please check your input and try again.';
+        return 'preset.api.badRequest';
       case 401:
       case 403:
-        return 'Permission denied.';
+        return 'preset.api.permissionDenied';
       case 404:
-        return 'Not found.';
+        return 'preset.api.notFound';
       case 409:
-        return 'This already exists or conflicts with another resource.';
+        return 'preset.api.conflict';
       case 429:
-        return 'Too many requests. Please wait a moment and try again.';
+        return 'preset.api.rateLimited';
       case 500:
       case 502:
       case 503:
-        return 'A server error occurred. Please try again later.';
+        return 'preset.api.serverError';
       default:
-        return 'An error occurred. Please try again.';
+        return 'preset.api.unknown';
     }
   }
 }
 
 // ============================================================================
-// UI Constants
+// Identifier guards
 // ============================================================================
 
 /**
- * Category display metadata for embeds
+ * presets-api preset IDs are `crypto.randomUUID()` values (UUID v4), the same
+ * shape moderation-worker's `isValidUuid` enforces on its own paths.
  */
-export const CATEGORY_DISPLAY: Record<PresetCategory, { icon: string; name: string }> = {
-  jobs: { icon: '⚔️', name: 'FFXIV Jobs' },
-  'grand-companies': { icon: '🏛️', name: 'Grand Companies' },
-  seasons: { icon: '🍂', name: 'Seasons' },
-  events: { icon: '🎉', name: 'FFXIV Events' },
-  aesthetics: { icon: '🎨', name: 'Aesthetics' },
-  community: { icon: '🌐', name: 'Community' },
-};
+const PRESET_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * FINDING-020 (2026-08-21 security audit): handler-boundary check for values
+ * that are about to be interpolated into a presets-api URL path. A value that
+ * is not a UUID is a free-typed NAME (autocomplete sends the UUID, a user who
+ * ignores it sends text) and must be resolved through the search query
+ * parameter instead — never sent as a path segment.
+ */
+export function isValidPresetId(value: unknown): value is string {
+  return typeof value === 'string' && PRESET_ID_PATTERN.test(value);
+}
+
+// ============================================================================
+// UI Constants
+// ============================================================================
 
 /**
  * Status display metadata for embeds

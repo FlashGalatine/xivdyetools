@@ -12,7 +12,6 @@
  */
 
 import { ColorService, dyeService, LanguageService } from '@services/index';
-import { ColorConverter } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
 import type { MatchingMethod, DyeFiltersConfig } from '@shared/tool-config-types';
 import { isDyeExcluded, hasActiveFilters } from '@shared/dye-filter-utils';
@@ -61,6 +60,7 @@ export const HARMONY_TYPE_IDS = [
   { id: 'triadic', icon: 'triadic' },
   { id: 'split-complementary', icon: 'split-complementary' },
   { id: 'tetradic', icon: 'tetradic' },
+  { id: 'inverted-tetradic', icon: 'inverted-tetradic' },
   { id: 'square', icon: 'square' },
   { id: 'monochromatic', icon: 'monochromatic' },
   { id: 'compound', icon: 'compound' },
@@ -76,6 +76,7 @@ export const HARMONY_OFFSETS: Record<string, number[]> = {
   triadic: [120, 240],
   'split-complementary': [150, 210],
   tetradic: [60, 180, 240],
+  'inverted-tetradic': [120, 180, 300],
   square: [90, 180, 270],
   monochromatic: [0],
   compound: [30, 180, 330],
@@ -119,22 +120,8 @@ export function calculateColorDistance(
   hex2: string,
   matchingMethod: MatchingMethod
 ): number {
-  switch (matchingMethod) {
-    case 'rgb':
-      return ColorService.getColorDistance(hex1, hex2);
-    case 'cie76':
-      return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
-    case 'ciede2000':
-      return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
-    case 'oklab':
-      return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-    case 'hyab':
-      return ColorConverter.getDeltaE_HyAB(hex1, hex2);
-    case 'oklch-weighted':
-      return ColorConverter.getDeltaE_OklchWeighted(hex1, hex2);
-    default:
-      return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-  }
+  // 5.0: one dispatch suite-wide (dE2000 default lives in core)
+  return ColorService.getDistanceForMethod(hex1, hex2, matchingMethod);
 }
 
 /**
@@ -314,57 +301,4 @@ export function findHarmonyDyes(
   }
 
   return results.slice(0, config.companionDyesCount * offsets.length);
-}
-
-/**
- * Generate harmony panel data for a specific offset.
- *
- * @param baseDye The base dye
- * @param offset Hue offset in degrees
- * @param config Harmony configuration
- * @param dyeFiltersConfig Optional dye filter configuration for exclusion rules
- * @param swappedDye Optional user-swapped dye to use instead of best match
- * @returns Object with displayDye, targetColor, deviance, and closestDyes
- */
-export function generateHarmonyPanelData(
-  baseDye: Dye,
-  offset: number,
-  config: HarmonyConfig,
-  dyeFiltersConfig?: DyeFiltersConfig | null,
-  swappedDye?: Dye | null
-): {
-  displayDye: Dye;
-  targetColor: string;
-  deviance: number;
-  closestDyes: Dye[];
-} {
-  const baseHsv = ColorService.hexToHsv(baseDye.hex);
-  const targetHue = (baseHsv.h + offset) % 360;
-  const targetColor = ColorService.hsvToHex(targetHue, baseHsv.s, baseHsv.v);
-
-  const allDyes = dyeService.getAllDyes();
-
-  // Get extra candidates to allow for filter replacements, then apply filters
-  let matches = findClosestDyesToHue(
-    allDyes,
-    targetHue,
-    config.companionDyesCount + 10,
-    config,
-    baseDye
-  );
-  matches = replaceExcludedDyes(matches, targetHue, dyeFiltersConfig ?? null);
-
-  // Use swapped dye if user has selected one, otherwise use best match
-  const displayDye = swappedDye || matches[0]?.dye || baseDye;
-  const deviance = swappedDye
-    ? calculateHueDeviance(swappedDye, targetHue)
-    : (matches[0]?.deviance ?? 0);
-
-  // Closest dyes excludes the currently displayed dye
-  const closestDyes = matches
-    .filter((m) => m.dye.itemID !== displayDye.itemID)
-    .slice(0, config.companionDyesCount)
-    .map((m) => m.dye);
-
-  return { displayDye, targetColor, deviance, closestDyes };
 }

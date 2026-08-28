@@ -8,17 +8,16 @@
 import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
-import { resolveColorInput as resolveColor } from '../../utils/color.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
-import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
+import { createUserTranslatorWithPrefs, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
-import { executeComparison } from '@xivdyetools/bot-logic';
+import { resolveColorInput as resolveColor, executeComparison } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
-function resolveColorInput(input: string): Dye | null {
-  const resolved = resolveColor(input, { excludeFacewear: true, findClosestForHex: true });
+function resolveColorInput(input: string, locale: LocaleCode): Dye | null {
+  const resolved = resolveColor(input, { excludeFacewear: true, findClosestForHex: true, locale });
   return resolved?.dye ?? null;
 }
 
@@ -26,10 +25,10 @@ export async function handleComparisonCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
 
   const options = interaction.data?.options || [];
   const dye1Input = options.find((opt) => opt.name === 'dye1')?.value as string | undefined;
@@ -45,11 +44,11 @@ export async function handleComparisonCommand(
   }
 
   const resolvedDyes: Array<{ input: string; dye: Dye | null }> = [
-    { input: dye1Input, dye: resolveColorInput(dye1Input) },
-    { input: dye2Input, dye: resolveColorInput(dye2Input) },
+    { input: dye1Input, dye: resolveColorInput(dye1Input, t.getLocale()) },
+    { input: dye2Input, dye: resolveColorInput(dye2Input, t.getLocale()) },
   ];
-  if (dye3Input) resolvedDyes.push({ input: dye3Input, dye: resolveColorInput(dye3Input) });
-  if (dye4Input) resolvedDyes.push({ input: dye4Input, dye: resolveColorInput(dye4Input) });
+  if (dye3Input) resolvedDyes.push({ input: dye3Input, dye: resolveColorInput(dye3Input, t.getLocale()) });
+  if (dye4Input) resolvedDyes.push({ input: dye4Input, dye: resolveColorInput(dye4Input, t.getLocale()) });
 
   const failures = resolvedDyes.filter((r) => r.dye === null);
   if (failures.length > 0) {
@@ -57,7 +56,9 @@ export async function handleComparisonCommand(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: failedInputs }))],
+        embeds: [
+          errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: failedInputs })),
+        ],
         flags: 64,
       },
     });
@@ -66,7 +67,7 @@ export async function handleComparisonCommand(
   const dyes = resolvedDyes.map((r) => r.dye as Dye);
   const locale = t.getLocale();
   const deferResponse = deferredResponse();
-  ctx.waitUntil(processComparisonCommand(interaction, env, dyes, locale, logger));
+  ctx.waitUntil(processComparisonCommand(interaction, env, dyes, locale, prefs.theme, logger));
   return deferResponse;
 }
 
@@ -75,12 +76,13 @@ async function processComparisonCommand(
   env: Env,
   dyes: Dye[],
   locale: LocaleCode,
-  logger?: ExtendedLogger
+  theme?: 'dark' | 'light',
+  logger?: ExtendedLogger,
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
 
-  const result = await executeComparison({ dyes, locale });
+  const result = await executeComparison({ dyes, locale, theme, logger });
 
   if (!result.ok) {
     if (logger) logger.error('Comparison command failed');
@@ -96,7 +98,7 @@ async function processComparisonCommand(
     // Build Discord embed description with platform-specific emojis
     const dyeList = dyes
       .map((dye, i) => {
-        const emoji = getDyeEmoji(dye.id);
+        const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
         const emojiPrefix = emoji ? `${emoji} ` : '';
         const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
         return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
@@ -104,13 +106,15 @@ async function processComparisonCommand(
       .join('\n');
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [{
-        title: result.embed.title,
-        description: dyeList,
-        color: result.embed.color,
-        image: { url: 'attachment://image.png' },
-        footer: { text: result.embed.footer ?? t.t('common.footer') },
-      }],
+      embeds: [
+        {
+          title: result.embed.title,
+          description: dyeList,
+          color: result.embed.color,
+          image: { url: 'attachment://image.png' },
+          footer: { text: result.embed.footer ?? t.t('common.footer') },
+        },
+      ],
       file: { name: 'comparison.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {

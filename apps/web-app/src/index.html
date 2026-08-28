@@ -9,9 +9,12 @@
       content="XIV Dye Tools - A comprehensive web-based toolset for Final Fantasy XIV players to explore dye colors, create harmonious color palettes, match colors from images, and simulate how dye combinations appear to colorblind players."
     />
     <meta name="keywords" content="FFXIV, dyes, color matcher, color harmony, accessibility checker, dye comparison, dye mixer, glamour, housing decoration, fashion, Final Fantasy XIV" />
-    <meta name="author" content="Flash Galatine (Balmung)" />
+    <meta name="author" content="Flash Galatine (Midgardsormr)" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#4F46E5" />
+    <!-- 5.0 identity: #CE2222 light / #EA4133 dark. Media-scoped rather than one
+         compromise value, so browser chrome matches the theme either way. -->
+    <meta name="theme-color" content="#CE2222" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#EA4133" media="(prefers-color-scheme: dark)" />
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://xivdyetools.app/" />
@@ -21,10 +24,14 @@
     <meta property="og:url" content="https://xivdyetools.app/" />
     <meta property="og:title" content="XIV Dye Tools - FFXIV Dye Color Matcher, Harmony Generator & Accessibility Checker" />
     <meta property="og:description" content="Free tools for FFXIV players: Color Matcher, Harmony Generator, Accessibility Checker, Dye Comparison, and Dye Mixer. Find perfect dyes for your glamour and housing." />
-    <meta property="og:image" content="https://xivdyetools.app/assets/icons/opengraph.png" />
+    <!-- The 5.0 root card. og-worker intercepts the nine /<tool>/ paths and emits
+         its own og:image; the site root is not in its route table, so this static
+         pair is the root's only card. Filenames and the 1200×1050 / 1200×630 frame
+         split mirror og-worker's /og/default.png and ?frame=x exactly. -->
+    <meta property="og:image" content="https://xivdyetools.app/og/default.png" />
     <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="XIV Dye Tools - A comprehensive suite of FFXIV dye color utilities featuring Color Harmony Explorer" />
+    <meta property="og:image:height" content="1050" />
+    <meta property="og:image:alt" content="XIV Dye Tools - icons for the nine FFXIV dye tools on a dark panel, over a six-color spectrum" />
     <meta property="og:site_name" content="XIV Dye Tools" />
     <meta property="og:locale" content="en_US" />
     
@@ -35,8 +42,9 @@
     <meta name="twitter:url" content="https://xivdyetools.app/" />
     <meta name="twitter:title" content="XIV Dye Tools - FFXIV Color Utilities" />
     <meta name="twitter:description" content="Free FFXIV dye color tools: matching, harmony, accessibility, comparison, and mixing utilities for glamour design." />
-    <meta name="twitter:image" content="https://xivdyetools.app/assets/icons/opengraph.png" />
-    <meta name="twitter:image:alt" content="XIV Dye Tools - FFXIV dye color utilities with Color Harmony Explorer" />
+    <!-- X gets the 1200×630 frame, matching og-worker's ?frame=x variant. -->
+    <meta name="twitter:image" content="https://xivdyetools.app/og/default-x.png" />
+    <meta name="twitter:image:alt" content="XIV Dye Tools - icons for the nine FFXIV dye tools over a six-color spectrum" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico" />
@@ -51,34 +59,33 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Windows Tiles -->
-    <meta name="msapplication-TileColor" content="#4f46e5" />
+    <meta name="msapplication-TileColor" content="#CE2222" />
     <meta name="msapplication-config" content="/browserconfig.xml" />
     
     <!-- Resource Hints for Performance -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- No font origins here: the typefaces are self-hosted from /fonts/ (REFACTOR-002). -->
     <link rel="dns-prefetch" href="https://universalis.app" />
     <link rel="preconnect" href="https://universalis.app" crossorigin />
     <!-- XIV Dye Tools API subdomains -->
     <link rel="dns-prefetch" href="https://auth.xivdyetools.app" />
     <link rel="dns-prefetch" href="https://api.xivdyetools.app" />
-    <link rel="dns-prefetch" href="https://proxy.xivdyetools.app" />
+    <link rel="dns-prefetch" href="https://data.xivdyetools.app" />
     <link rel="preconnect" href="https://auth.xivdyetools.app" crossorigin />
     <link rel="preconnect" href="https://api.xivdyetools.app" crossorigin />
-    <link rel="preconnect" href="https://proxy.xivdyetools.app" crossorigin />
-    <!-- Preload critical resources for faster FCP/LCP -->
-    <link rel="preload" href="/assets/icons/icon-40x40.webp" as="image" type="image/webp" fetchpriority="high" />
-    <link rel="preload" href="/assets/icons/icon-192x192.png" as="image" type="image/png" />
-    <!-- Load fonts asynchronously to prevent render blocking -->
-    <script src="/js/load-fonts.js" defer></script>
-    <noscript>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet"
-      />
-    </noscript>
+    <link rel="preconnect" href="https://data.xivdyetools.app" crossorigin />
+    <!--
+      Self-hosted typefaces (REFACTOR-002). The @font-face blocks live in
+      styles/globals.css, but vite-plugin-async-css defers the stylesheet to keep
+      it off the render path, so the browser would not discover the faces until
+      that CSS has loaded and parsed. These two preloads start the fetches
+      immediately instead; both render above the fold. Fragment Mono is left to
+      the stylesheet -- numeric readouts only appear once a tool has mounted.
+      `crossorigin` is required even though these are same-origin: fonts are
+      always fetched in CORS mode, and a preload whose mode differs from the real
+      request is discarded and fetched twice.
+    -->
+    <link rel="preload" href="/fonts/Onest-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body class="font-sans">
     <div id="app"></div>

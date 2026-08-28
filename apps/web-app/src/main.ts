@@ -8,13 +8,13 @@
 
 // Import global styles
 import '@/styles/themes.css';
-import '@/styles/v4-utilities.css'; // V4 glassmorphism and layout utilities
 import '@/styles/v4-layout.css'; // V4 layout and tool-specific styles
 import '@/styles/tailwind.css';
 
 // Import services
 import { initializeServices, getServicesStatus, LanguageService } from '@services/index';
 import { ErrorHandler } from '@shared/error-handler';
+import { renderFatalError } from '@shared/fatal-error';
 import { APP_VERSION } from '@shared/constants';
 import { logger } from '@shared/logger';
 
@@ -26,6 +26,52 @@ import { TutorialService } from '@services/index';
 
 // Import ShareService for analytics initialization
 import { ShareService } from '@services/share-service';
+
+/**
+ * The fatal-error overlay runs when service initialization threw, so
+ * LanguageService may never have loaded a locale — `t()` would echo raw keys
+ * at the one moment the user needs a sentence. These six lines are therefore
+ * inlined and picked off `navigator.language`, English when nothing matches.
+ * They are the ONLY strings in the app allowed to live outside `src/locales`.
+ */
+const FATAL_STRINGS: Record<string, { title: string; body: string; button: string }> = {
+  en: {
+    title: 'Application Error',
+    body: 'Failed to initialize XIV Dye Tools',
+    button: 'Reload Page',
+  },
+  de: {
+    title: 'Anwendungsfehler',
+    body: 'XIV Dye Tools konnte nicht initialisiert werden',
+    button: 'Seite neu laden',
+  },
+  fr: {
+    title: "Erreur de l'application",
+    body: "Échec de l'initialisation de XIV Dye Tools",
+    button: 'Recharger la page',
+  },
+  ja: {
+    title: 'アプリケーションエラー',
+    body: 'XIV Dye Tools の初期化に失敗しました',
+    button: 'ページを再読み込み',
+  },
+  ko: {
+    title: '애플리케이션 오류',
+    body: 'XIV Dye Tools 초기화에 실패했습니다',
+    button: '페이지 새로고침',
+  },
+  zh: {
+    title: '应用程序错误',
+    body: 'XIV Dye Tools 初始化失败',
+    button: '重新加载页面',
+  },
+};
+
+/** Fatal-overlay copy for the browser's language, falling back to English. */
+function fatalStrings(): { title: string; body: string; button: string } {
+  const lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  return FATAL_STRINGS[lang] ?? FATAL_STRINGS.en;
+}
 
 /**
  * Initialize the application
@@ -92,8 +138,8 @@ async function initializeApp(): Promise<void> {
     if (import.meta.env.DEV) {
       (window as unknown as Record<string, unknown>).TutorialService = TutorialService;
       (window as unknown as Record<string, unknown>).ShareService = ShareService;
-      console.info('[DEV] TutorialService exposed on window for debugging');
-      console.info(
+      logger.info('[DEV] TutorialService exposed on window for debugging');
+      logger.info(
         '[DEV] ShareService exposed on window for debugging (try ShareService.getAnalyticsStats())'
       );
     }
@@ -101,27 +147,19 @@ async function initializeApp(): Promise<void> {
     const appError = ErrorHandler.log(error);
     logger.error('❌ Failed to initialize application:', appError);
 
-    // Show error to user
+    // Show error to user. DOM-built with a real click listener: an inline
+    // onclick is blocked by the production CSP (WEB-9).
     const container = document.getElementById('app');
     if (container) {
-      container.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-red-50 dark:bg-red-900">
-          <div class="text-center">
-            <h1 class="text-2xl font-bold text-red-900 dark:text-red-100 mb-4">
-              Application Error
-            </h1>
-            <p class="text-red-700 dark:text-red-200 mb-4">
-              Failed to initialize XIV Dye Tools
-            </p>
-            <p class="text-sm text-red-600 dark:text-red-300">
-              ${ErrorHandler.createUserMessage(appError)}
-            </p>
-            <button onclick="location.reload()" class="mt-6 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-              Reload Page
-            </button>
-          </div>
-        </div>
-      `;
+      // WEB-9 DOM builder (no inline onclick) carrying the i18n-branch copy:
+      // fatalStrings() reads navigator.language, not LanguageService, so it
+      // is safe even when the language service is what failed.
+      renderFatalError(
+        container,
+        ErrorHandler.createUserMessage(appError),
+        () => window.location.reload(),
+        fatalStrings()
+      );
     }
 
     throw error;

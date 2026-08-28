@@ -11,6 +11,7 @@ import { BaseComponent } from './base-component';
 import { LanguageService, cameraService } from '@services/index';
 import { showCameraPreviewModal } from './camera-preview-modal';
 import { clearContainer } from '@shared/utils';
+import { MAX_USER_FILE_BYTES } from '@shared/constants';
 import { ICON_UPLOAD, ICON_CAMERA, ICON_HINT, ICON_LOCK } from '@shared/ui-icons';
 
 /**
@@ -164,12 +165,15 @@ export class ImageUploadDisplay extends BaseComponent {
     privacyNotice.appendChild(lockIcon);
     // Strong title
     const privacyTitle = this.createElement('strong', {
-      textContent: `${LanguageService.t('matcher.privacyTitle')}:`,
+      textContent: LanguageService.t('matcher.privacyTitle'),
     });
     privacyNotice.appendChild(privacyTitle);
     // Message text
+    // No separator space here: `privacyTitle` carries its own trailing space
+    // where the script needs one, and ja/zh end on a fullwidth colon that must
+    // butt straight against the message.
     const privacyMessage = document.createTextNode(
-      ` ${LanguageService.t('matcher.privacyMessage')} `
+      `${LanguageService.t('matcher.privacyMessage')} `
     );
     privacyNotice.appendChild(privacyMessage);
     // Learn more link (hardcoded URL is safe, only text is translated)
@@ -306,8 +310,8 @@ export class ImageUploadDisplay extends BaseComponent {
       return;
     }
 
-    // Validate file size (20MB max)
-    if (file.size > 20 * 1024 * 1024) {
+    // Validate file size (shared 20 MB cap — same as the drop/paste path)
+    if (file.size > MAX_USER_FILE_BYTES) {
       this.emit('error', { message: LanguageService.t('errors.imageTooLarge') });
       return;
     }

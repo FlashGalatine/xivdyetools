@@ -1,8 +1,15 @@
 /**
- * XIV Dye Tools v4.0 - Theme Modal Component
+ * XIV Dye Tools 5.0 - Theme Modal Component
  *
- * Modal displaying theme selection options in a grid layout.
- * Triggered by theme button in v4 header.
+ * The confirmed theme picker from Modal Directions: each theme is a swatch
+ * card showing background, surface and accent as three bands — more honest
+ * than a name. Selected is an accent border plus a tick. The sheet uses a
+ * reduced scrim because tapping a row applies the theme immediately and
+ * repaints the whole app behind the dialog — dimming it was hiding the
+ * feature. The footer says Done, not Cancel: there is no revert and never
+ * was.
+ *
+ * 5.0 fixed decision: Light and Dark only.
  *
  * @module components/v4/theme-modal
  */
@@ -10,7 +17,6 @@
 import { ModalService } from '@services/modal-service';
 import { ThemeService } from '@services/theme-service';
 import { LanguageService } from '@services/language-service';
-import { ColorService } from '@services/index';
 import type { ThemeName } from '@shared/types';
 
 // ============================================================================
@@ -18,9 +24,9 @@ import type { ThemeName } from '@shared/types';
 // ============================================================================
 
 /**
- * Theme modal showing available themes in a grid
+ * Theme modal showing the two themes as swatch cards
  */
-export class ThemeModal {
+class ThemeModal {
   private modalId: string | null = null;
   private currentTheme: ThemeName = 'standard-light';
   private themeUnsubscribe: (() => void) | null = null;
@@ -37,11 +43,13 @@ export class ThemeModal {
     this.modalId = ModalService.show({
       type: 'custom',
       title: LanguageService.t('header.themeSelector'),
+      eyebrow: LanguageService.t('themes.eyebrow'),
       content,
-      size: 'md',
       closable: true,
       closeOnBackdrop: true,
       closeOnEscape: true,
+      lightScrim: true,
+      confirmText: LanguageService.t('common.done'),
       onClose: () => {
         this.cleanup();
       },
@@ -82,163 +90,100 @@ export class ThemeModal {
     const container = document.querySelector('.theme-modal-content');
     if (!container) return;
 
-    // Update all theme buttons
     const buttons = container.querySelectorAll<HTMLButtonElement>('[data-theme]');
     buttons.forEach((btn) => {
       const themeName = btn.getAttribute('data-theme') as ThemeName;
       const isSelected = themeName === this.currentTheme;
 
       btn.setAttribute('aria-selected', String(isSelected));
+      btn.style.borderColor = isSelected ? 'var(--theme-primary)' : 'var(--theme-border)';
+      btn.style.boxShadow = isSelected ? '0 0 0 1px var(--theme-primary)' : 'none';
 
-      if (isSelected) {
-        btn.style.borderColor = 'var(--theme-primary)';
-        btn.style.boxShadow = '0 0 0 2px var(--theme-primary)';
-      } else {
-        btn.style.borderColor = 'var(--theme-border)';
-        btn.style.boxShadow = 'none';
-      }
+      const tick = btn.querySelector<HTMLElement>('[data-tick]');
+      if (tick) tick.style.visibility = isSelected ? 'visible' : 'hidden';
     });
   }
 
   /**
-   * Create modal content
+   * Create modal content: one swatch card per theme, three bands each.
    */
   private createContent(): HTMLElement {
     const container = document.createElement('div');
     container.className = 'theme-modal-content';
 
-    // Get all available themes and sort by display name
-    const themes = ThemeService.getAllThemes().sort((a, b) => {
-      // Standard themes always come first
-      if (a.name === 'standard-light') return -1;
-      if (b.name === 'standard-light') return 1;
-      if (a.name === 'standard-dark') return -1;
-      if (b.name === 'standard-dark') return 1;
+    // Mono legend for what the bands are
+    const legend = document.createElement('div');
+    legend.className = 'm16-label mb-2';
+    legend.textContent = LanguageService.t('themes.bandsLabel');
+    container.appendChild(legend);
 
-      // Extract theme family
-      const familyA = a.name.replace(/-light$|-dark$/, '');
-      const familyB = b.name.replace(/-light$|-dark$/, '');
+    const list = document.createElement('div');
+    list.className = 'flex flex-col gap-2';
+    list.setAttribute('role', 'listbox');
+    list.setAttribute('aria-label', LanguageService.t('header.themeOptions'));
 
-      // Sort by family name first
-      if (familyA !== familyB) {
-        return familyA.localeCompare(familyB);
-      }
-
-      // Within same family, light comes before dark
-      const isLightA = a.name.endsWith('-light');
-      const isLightB = b.name.endsWith('-light');
-      if (isLightA && !isLightB) return -1;
-      if (!isLightA && isLightB) return 1;
-      return 0;
-    });
-
-    // Create theme grid
-    const grid = document.createElement('div');
-    grid.className = 'grid grid-cols-2 gap-3';
-    grid.setAttribute('role', 'listbox');
-    grid.setAttribute('aria-label', LanguageService.t('header.themeOptions'));
-
-    for (const theme of themes) {
+    for (const theme of ThemeService.getAllThemes()) {
       const isSelected = theme.name === this.currentTheme;
       const localeKey = theme.name.replace(/-([a-z])/g, (_, letter: string) =>
         letter.toUpperCase()
       );
       const displayName = LanguageService.t(`themes.${localeKey}`);
 
-      // Calculate optimal text color for the theme's primary
-      const textColor = ColorService.getOptimalTextColor(theme.palette.primary);
-
       const themeBtn = document.createElement('button');
+      themeBtn.type = 'button';
       themeBtn.className =
-        'flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all cursor-pointer';
+        'flex items-center gap-3 w-full p-3 rounded-xl border transition-all cursor-pointer text-left';
       themeBtn.setAttribute('data-theme', theme.name);
       themeBtn.setAttribute('role', 'option');
       themeBtn.setAttribute('aria-selected', String(isSelected));
       themeBtn.style.backgroundColor = 'var(--theme-card-background)';
       themeBtn.style.borderColor = isSelected ? 'var(--theme-primary)' : 'var(--theme-border)';
-      themeBtn.style.boxShadow = isSelected ? '0 0 0 2px var(--theme-primary)' : 'none';
+      themeBtn.style.boxShadow = isSelected ? '0 0 0 1px var(--theme-primary)' : 'none';
 
-      // Color preview swatch (shows primary and background)
-      const swatchContainer = document.createElement('div');
-      swatchContainer.className = 'flex gap-1 rounded overflow-hidden';
-      swatchContainer.setAttribute('aria-hidden', 'true');
-
-      // Primary color swatch
-      const primarySwatch = document.createElement('div');
-      primarySwatch.className = 'w-8 h-8 rounded-l';
-      primarySwatch.style.backgroundColor = theme.palette.primary;
-      swatchContainer.appendChild(primarySwatch);
-
-      // Background color swatch
-      const bgSwatch = document.createElement('div');
-      bgSwatch.className = 'w-8 h-8 rounded-r';
-      bgSwatch.style.backgroundColor = theme.palette.background;
-      bgSwatch.style.border = '1px solid var(--theme-border)';
-      swatchContainer.appendChild(bgSwatch);
-
-      themeBtn.appendChild(swatchContainer);
+      // Three bands: background · surface · accent
+      const bands = document.createElement('div');
+      bands.className = 'flex rounded-lg overflow-hidden flex-shrink-0 border';
+      bands.style.borderColor = 'var(--theme-border)';
+      bands.setAttribute('aria-hidden', 'true');
+      const bandColors = [
+        theme.palette.background,
+        theme.palette.cardBackground,
+        theme.palette.primary,
+      ];
+      bandColors.forEach((color) => {
+        const band = document.createElement('div');
+        band.style.width = '22px';
+        band.style.height = '36px';
+        band.style.backgroundColor = color;
+        bands.appendChild(band);
+      });
+      themeBtn.appendChild(bands);
 
       // Theme name
       const nameSpan = document.createElement('span');
-      nameSpan.className = 'text-sm font-medium';
+      nameSpan.className = 'text-sm font-medium flex-1';
       nameSpan.style.color = 'var(--theme-text)';
       nameSpan.textContent = displayName;
       themeBtn.appendChild(nameSpan);
 
-      // Check mark for selected
-      if (isSelected) {
-        const checkMark = document.createElement('span');
-        checkMark.className =
-          'absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs';
-        checkMark.style.backgroundColor = 'var(--theme-primary)';
-        checkMark.style.color = textColor;
-        checkMark.textContent = '✓';
-        themeBtn.style.position = 'relative';
-        themeBtn.appendChild(checkMark);
-      }
+      // Tick (always in the DOM so selection updates never re-render)
+      const tick = document.createElement('span');
+      tick.setAttribute('data-tick', '');
+      tick.className = 'text-sm font-bold';
+      tick.style.color = 'var(--theme-primary)';
+      tick.style.visibility = isSelected ? 'visible' : 'hidden';
+      tick.textContent = '✓';
+      themeBtn.appendChild(tick);
 
-      // Hover effect
-      themeBtn.addEventListener('mouseenter', () => {
-        themeBtn.style.backgroundColor = 'var(--theme-card-hover)';
-      });
-      themeBtn.addEventListener('mouseleave', () => {
-        themeBtn.style.backgroundColor = 'var(--theme-card-background)';
-      });
-
-      // Click handler - just apply theme, don't close modal
-      // User can preview different themes; close via button or backdrop
+      // Apply on tap — live preview, no revert, footer says Done
       themeBtn.addEventListener('click', () => {
         ThemeService.setTheme(theme.name);
       });
 
-      grid.appendChild(themeBtn);
+      list.appendChild(themeBtn);
     }
 
-    container.appendChild(grid);
-
-    // Cancel button
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'flex justify-center mt-6';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className =
-      'px-6 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1';
-    closeBtn.style.backgroundColor = 'var(--theme-primary)';
-    closeBtn.style.color = 'var(--theme-text-header)';
-    closeBtn.addEventListener('mouseenter', () => {
-      closeBtn.style.filter = 'brightness(1.1)';
-    });
-    closeBtn.addEventListener('mouseleave', () => {
-      closeBtn.style.filter = '';
-    });
-    closeBtn.textContent = LanguageService.t('common.close');
-    closeBtn.addEventListener('click', () => {
-      this.close();
-    });
-
-    buttonContainer.appendChild(closeBtn);
-    container.appendChild(buttonContainer);
-
+    container.appendChild(list);
     return container;
   }
 }
@@ -255,14 +200,4 @@ export function showThemeModal(): void {
     themeModalInstance = new ThemeModal();
   }
   themeModalInstance.show();
-}
-
-/**
- * Close the theme modal if open
- */
-export function closeThemeModal(): void {
-  if (themeModalInstance) {
-    themeModalInstance.close();
-    themeModalInstance = null;
-  }
 }

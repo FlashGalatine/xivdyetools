@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import type { Env, DiscordTokenResponse, DiscordUser, AuthResponse } from '../types.js';
 import { createJWTForUser, getAvatarUrl } from '../services/jwt-service.js';
 import { findOrCreateUser } from '../services/user-service.js';
+import { verifyPkceStateBinding } from '../utils/pkce-binding.js';
 import { buildGetCallbackHandler } from './oauth-flow.js';
 import { DISCORD_FLOW_CONFIG } from './authorize.js';
 
@@ -41,10 +42,12 @@ callbackRouter.get('/callback', buildGetCallbackHandler(DISCORD_FLOW_CONFIG));
  * Body:
  * - code: Authorization code from Discord
  * - code_verifier: PKCE verifier to prove ownership
- * - redirect_uri: The redirect URI used in the initial request
+ * - state: the signed state echoed by GET /auth/callback — REQUIRED; the
+ *   verifier is bound to the code_challenge it carries (FINDING-012)
+ * - redirect_uri: The redirect URI used in the initial request (ignored)
  */
 callbackRouter.post('/callback', async (c) => {
-  let body: { code: string; code_verifier: string; redirect_uri?: string };
+  let body: { code: string; code_verifier: string; redirect_uri?: string; state?: unknown };
 
   try {
     body = await c.req.json();
@@ -58,7 +61,7 @@ callbackRouter.post('/callback', async (c) => {
     );
   }
 
-  const { code, code_verifier, redirect_uri } = body;
+  const { code, code_verifier, redirect_uri, state } = body;
 
   if (!code || !code_verifier) {
     return c.json<AuthResponse>(
@@ -79,6 +82,32 @@ callbackRouter.post('/callback', async (c) => {
       {
         success: false,
         error: 'Invalid code_verifier format',
+      },
+      400
+    );
+  }
+
+  // FINDING-012 / OAUTH-5 (2026-08-21 security audit): the SPA returns the
+  // signed state from the GET bounce; bind the verifier to the challenge this
+  // worker signed at authorize time BEFORE calling Discord, so PKCE holds
+  // regardless of provider behaviour. The state is REQUIRED — without it there
+  // is nothing to bind to and the exchange must not reach the provider.
+  if (state === undefined || state === null || state === '') {
+    return c.json<AuthResponse>(
+      {
+        success: false,
+        error: 'Missing state',
+      },
+      400
+    );
+  }
+
+  const binding = await verifyPkceStateBinding(state, code_verifier, 'discord', c.env.JWT_SECRET);
+  if (!binding.ok) {
+    return c.json<AuthResponse>(
+      {
+        success: false,
+        error: binding.reason === 'pkce_mismatch' ? 'PKCE verification failed' : 'Invalid state',
       },
       400
     );

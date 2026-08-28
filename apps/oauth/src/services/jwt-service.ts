@@ -15,17 +15,18 @@ import type { JWTPayload, Env, UserRow, AuthProvider, PrimaryCharacter } from '.
 import {
   base64UrlEncode as base64UrlEncodeString,
   base64UrlEncodeBytes,
-  base64UrlDecodeBytes,
-} from '@xivdyetools/crypto';
+} from '@xivdyetools/auth/encoding';
 import {
   verifyJWTSignatureOnly as sharedVerifyJWTSignatureOnly,
   decodeJWT as sharedDecodeJWT,
   isTokenRevoked as sharedIsTokenRevoked,
   revokeToken as sharedRevokeToken,
+  hmacSign,
+  hmacVerify,
 } from '@xivdyetools/auth';
 
-// REFACTOR-001: Re-export from @xivdyetools/crypto for backwards compatibility
-export { base64UrlDecode } from '@xivdyetools/crypto';
+// REFACTOR-001: Re-export for backwards compatibility (encoding absorbed into @xivdyetools/auth)
+export { base64UrlDecode } from '@xivdyetools/auth/encoding';
 
 /**
  * Base64URL encode a string or ArrayBuffer
@@ -41,48 +42,31 @@ export function base64UrlEncode(data: string | ArrayBuffer): string {
 }
 
 /**
- * Import secret key for HMAC signing
- */
-async function getSigningKey(secret: string): Promise<CryptoKey> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-
-  return crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign', 'verify']
-  );
-}
-
-/**
- * Sign data with HMAC-SHA256
+ * Sign data with HMAC-SHA256, base64url-encoded.
+ *
+ * DEAD-019 (2026-08-18 dead-code audit): delegates to `@xivdyetools/auth`'s
+ * `hmacSign` instead of a hand-rolled `crypto.subtle.importKey`/`sign` pair.
+ * Verified byte-for-byte identical for this worker's only secret (`JWT_SECRET`,
+ * which `utils/env-validation.ts` already enforces is >= 32 bytes — the
+ * precondition `hmacSign`'s key import silently requires).
  * OAUTH-REF-002: Exported for reuse in state-signing.ts
  */
 export async function signJwtData(data: string, secret: string): Promise<string> {
-  const key = await getSigningKey(secret);
-  const encoder = new TextEncoder();
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
-  return base64UrlEncode(signature);
+  return hmacSign(data, secret);
 }
 
 /**
- * Verify HMAC-SHA256 signature using crypto.subtle.verify (constant-time).
+ * Verify HMAC-SHA256 signature (base64url-encoded) using a timing-safe compare.
+ *
+ * DEAD-019: delegates to `@xivdyetools/auth`'s `hmacVerify` (see `signJwtData`).
  * Exported so state-signing.ts can use it instead of a non-constant-time string compare.
  */
 export async function verifyJwtData(
   data: string,
   signature: string,
-  secret: string
+  secret: string,
 ): Promise<boolean> {
-  const key = await getSigningKey(secret);
-  const encoder = new TextEncoder();
-
-  // Decode signature from base64url using shared crypto utility
-  const sigBytes = base64UrlDecodeBytes(signature);
-
-  return crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(data));
+  return hmacVerify(data, signature, secret);
 }
 
 /**
@@ -92,7 +76,7 @@ export async function verifyJwtData(
  */
 export async function signPayload(
   payload: JWTPayload,
-  secret: string
+  secret: string,
 ): Promise<{ token: string; expires_at: number }> {
   const header = { alg: 'HS256', typ: 'JWT' };
   const encodedHeader = base64UrlEncode(JSON.stringify(header));
@@ -122,7 +106,7 @@ export interface CreateJWTForUserOptions {
 export async function createJWTForUser(
   user: UserRow,
   env: Env,
-  options?: CreateJWTForUserOptions
+  options?: CreateJWTForUserOptions,
 ): Promise<{ token: string; expires_at: number; jti: string }> {
   const now = Math.floor(Date.now() / 1000);
   const expirySeconds = parseInt(env.JWT_EXPIRY, 10) || 3600;
@@ -168,10 +152,7 @@ export async function createJWTForUser(
  * REFACTOR-001: delegates to @xivdyetools/auth; this wrapper only preserves
  * the throwing contract this worker's handlers rely on.
  */
-export async function verifyJWT(
-  token: string,
-  secret: string
-): Promise<JWTPayload> {
+export async function verifyJWT(token: string, secret: string): Promise<JWTPayload> {
   // Signature/alg/structure + sub/exp presence via the shared verifier
   const payload = await sharedVerifyJWTSignatureOnly(token, secret);
   if (!payload) {
@@ -203,7 +184,7 @@ export function decodeJWT(token: string): JWTPayload | null {
  */
 export async function verifyJWTSignatureOnly(
   token: string,
-  secret: string
+  secret: string,
 ): Promise<JWTPayload | null> {
   const payload = await sharedVerifyJWTSignatureOnly(token, secret);
   return payload as unknown as JWTPayload | null;
@@ -212,10 +193,7 @@ export async function verifyJWTSignatureOnly(
 /**
  * Get Discord avatar URL from user info
  */
-export function getAvatarUrl(
-  userId: string,
-  avatarHash: string | null
-): string | null {
+export function getAvatarUrl(userId: string, avatarHash: string | null): string | null {
   if (!avatarHash) return null;
 
   const format = avatarHash.startsWith('a_') ? 'gif' : 'png';
@@ -237,7 +215,7 @@ export const revokeToken = sharedRevokeToken;
 export async function verifyJWTWithRevocationCheck(
   token: string,
   secret: string,
-  kv: KVNamespace | undefined
+  kv: KVNamespace | undefined,
 ): Promise<JWTPayload> {
   // First, verify signature and expiration
   const payload = await verifyJWT(token, secret);

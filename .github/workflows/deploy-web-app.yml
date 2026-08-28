@@ -8,7 +8,14 @@ on:
       - 'packages/core/**'
       - 'packages/types/**'
       - 'packages/logger/**'
+      - 'packages/svg/**'
   workflow_dispatch:
+
+# FINDING-009 (2026-08-21 security audit): least-privilege GITHUB_TOKEN —
+# the default repo token is never needed beyond checkout here. Jobs that need
+# more (npm OIDC publish) declare it at job level.
+permissions:
+  contents: read
 
 concurrency:
   group: deploy-web-app
@@ -18,12 +25,16 @@ jobs:
   deploy:
     name: Build & Deploy Web App
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # FINDING-009: bind production deploys/publishes to the `production` GitHub
+    # environment so branch restrictions / required reviewers can gate them.
+    environment: production
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -47,7 +58,8 @@ jobs:
         run: pnpm --filter xivdyetools-web-app exec node scripts/check-bundle-size.js
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v4
+        id: deploy
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -55,11 +67,23 @@ jobs:
           command: pages deploy dist --project-name=xivdyetools
           packageManager: pnpm
 
-      # ARCH-002: Verify deployed site responds after deployment
+      # ARCH-002: Verify the deployment we just made is live on the public URL and
+      # is NOT a beta build. `--expect-robots none` is the guard against a beta
+      # build reaching production and deindexing the live site; nothing else in CI
+      # catches that. See docs/superpowers/specs/2026-08-10-pages-smoke-test-design.md
+      #
+      # Note the deployment URL will be a *.xiv-colorexplorer.pages.dev host, not
+      # xivdyetools.pages.dev: Cloudflare assigns a Pages project's subdomain at
+      # creation and does not change it when the project is renamed. Reading it from
+      # the action output avoids having to know that.
       - name: Smoke test
-        run: |
-          sleep 5
-          curl --fail --retry 3 --retry-delay 5 --retry-all-errors \
-            -o /dev/null -w "%{http_code}" \
-            -H "User-Agent: xivdyetools-ci" \
-            https://xivdyetools.app/
+        # Not `pnpm --filter xivdyetools-web-app exec`: that form prints "No
+        # projects matched the filters" and exits 0 when the filter matches
+        # nothing, so a future filter typo would silently turn this gate into a
+        # passing no-op. A direct node invocation cannot do that.
+        working-directory: apps/web-app
+        run: >
+          node scripts/smoke-test-pages.js
+          --deployment-url "${{ steps.deploy.outputs.deployment-url }}"
+          --domain https://xivdyetools.app
+          --expect-robots none

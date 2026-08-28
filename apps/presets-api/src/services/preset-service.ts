@@ -21,6 +21,9 @@ export interface PresetServiceLogger {
   error(message: string, ...args: unknown[]): void;
 }
 
+/** R2 custom domain serving approved preview images. */
+export const PREVIEW_IMAGE_PUBLIC_BASE = 'https://shots.xivdyetools.app';
+
 /**
  * Escape special LIKE pattern characters in user input
  * Prevents SQL injection via wildcard characters (%, _, \)
@@ -72,11 +75,32 @@ export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): Commu
     }
   }
 
+  // Supplementary metadata, like previous_values — degrade to [] rather than
+  // throw. A corrupt list must not make the preset disappear from the gallery.
+  let secondary_categories: CommunityPreset['secondary_categories'] = [];
+  if (row.secondary_categories) {
+    try {
+      const parsed = JSON.parse(row.secondary_categories) as unknown;
+      if (Array.isArray(parsed)) {
+        secondary_categories = parsed as CommunityPreset['secondary_categories'];
+      } else {
+        (logger ?? console).error(
+          `[BUG-012] Preset ${row.id}: 'secondary_categories' is not an array, defaulting to []`
+        );
+      }
+    } catch {
+      (logger ?? console).error(
+        `[BUG-012] Preset ${row.id}: invalid JSON in 'secondary_categories', defaulting to []`
+      );
+    }
+  }
+
   return {
     id: row.id,
     name: row.name,
     description: row.description,
     category_id: row.category_id as CommunityPreset['category_id'],
+    secondary_categories,
     dyes,
     tags,
     author_discord_id: row.author_discord_id,
@@ -88,6 +112,19 @@ export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): Commu
     updated_at: row.updated_at,
     dye_signature: row.dye_signature || undefined,
     previous_values,
+    example_link: row.example_link ?? null,
+    // THE MODERATION GATE. An unapproved image must never be reachable from
+    // the API, so the URL is built only for 'approved'. Do not move this
+    // condition into a caller — one place, one rule.
+    preview_image_url:
+      row.preview_image_status === 'approved' && row.preview_image_key
+        ? `${PREVIEW_IMAGE_PUBLIC_BASE}/${row.preview_image_key}`
+        : null,
+    // The STATUS is safe to expose everywhere — it is a label, not a URL, and
+    // it is what lets an author's own view say "under review".
+    preview_image_status: (row.preview_image_status ??
+      'none') as CommunityPreset['preview_image_status'],
+    rejection_reason: row.rejection_reason ?? null,
   };
 }
 
@@ -137,8 +174,13 @@ export async function getPresets(
   const params: (string | number)[] = [safeStatus];
 
   if (category) {
-    conditions.push('category_id = ?');
-    params.push(category);
+    // A preset is "in" a category if it is the primary OR appears in the
+    // secondary list. Bound twice rather than as ?1: this query builds its
+    // params positionally, and mixing ? with ?1 is a trap for the next editor.
+    conditions.push(
+      '(category_id = ? OR EXISTS (SELECT 1 FROM json_each(presets.secondary_categories) WHERE value = ?))'
+    );
+    params.push(category, category);
   }
 
   if (search) {
@@ -277,8 +319,8 @@ export async function createPreset(
     INSERT INTO presets (
       id, name, description, category_id, dyes, tags,
       author_discord_id, author_name, vote_count, status, is_curated,
-      created_at, updated_at, dye_signature
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?, ?)
+      created_at, updated_at, dye_signature, example_link, secondary_categories
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?, ?, ?, ?)
   `;
 
   await db
@@ -295,7 +337,9 @@ export async function createPreset(
       status,
       now,
       now,
-      dyeSignature
+      dyeSignature,
+      submission.example_link ?? null,
+      JSON.stringify(submission.secondary_categories ?? [])
     )
     .run();
 
@@ -304,6 +348,7 @@ export async function createPreset(
     name: submission.name,
     description: submission.description,
     category_id: submission.category_id,
+    secondary_categories: submission.secondary_categories ?? [],
     dyes: submission.dyes,
     tags: submission.tags,
     author_discord_id: authorDiscordId,
@@ -314,6 +359,8 @@ export async function createPreset(
     created_at: now,
     updated_at: now,
     dye_signature: dyeSignature,
+    example_link: submission.example_link ?? null,
+    preview_image_status: 'none',
   };
 }
 
@@ -374,16 +421,53 @@ export function prepareRevert(
 }
 
 /**
- * Get pending presets for moderation
+ * A moderation-queue row: the preset plus the unapproved image URL.
+ *
+ * The pending URL is built HERE and not in rowToPreset, so the gate in
+ * rowToPreset — `preview_image_url` only when status is 'approved' — remains
+ * the single rule governing every public path. This field only ever reaches a
+ * moderator-guarded route. The R2 object is already publicly readable and the
+ * discord-worker embed links it directly; the gate is about not advertising
+ * an unreviewed image, not about secrecy.
  */
-export async function getPendingPresets(db: D1Database, logger?: PresetServiceLogger): Promise<CommunityPreset[]> {
+export type ModerationQueueEntry = CommunityPreset & {
+  pending_preview_image_url: string | null;
+};
+
+/**
+ * Get the moderation queue.
+ *
+ * Two reasons a preset needs a moderator: its own content is pending, or it
+ * carries an image awaiting review. Before this widened, an uploaded image
+ * NEVER appeared here — the only signal was a fire-and-forget Discord embed,
+ * so a dropped notification meant an image nobody would ever review.
+ */
+export async function getPendingPresets(
+  db: D1Database,
+  logger?: PresetServiceLogger
+): Promise<ModerationQueueEntry[]> {
   const query = `
     SELECT * FROM presets
-    WHERE status = 'pending'
+    WHERE status = 'pending' OR preview_image_status = 'pending'
     ORDER BY created_at ASC
   `;
   const result = await db.prepare(query).all<PresetRow>();
-  return rowsToPresets(result.results || [], logger);
+  return (result.results || []).flatMap((row) => {
+    try {
+      return [
+        {
+          ...rowToPreset(row, logger),
+          pending_preview_image_url:
+            row.preview_image_status === 'pending' && row.preview_image_key
+              ? `${PREVIEW_IMAGE_PUBLIC_BASE}/${row.preview_image_key}`
+              : null,
+        },
+      ];
+    } catch (error) {
+      (logger ?? console).error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
+      return [];
+    }
+  });
 }
 
 /**
@@ -396,10 +480,19 @@ export async function getPresetsByUser(
   authorDiscordId: string,
   logger?: PresetServiceLogger,
 ): Promise<CommunityPreset[]> {
+  // 8S My Submissions: surface the latest reject reason to the author —
+  // previously it lived only in moderation_log, and a rejected submission
+  // just failed to appear.
   const query = `
-    SELECT * FROM presets
-    WHERE author_discord_id = ?
-    ORDER BY created_at DESC
+    SELECT p.*, (
+      SELECT m.reason FROM moderation_log m
+      WHERE m.preset_id = p.id AND m.action = 'reject'
+      ORDER BY m.created_at DESC
+      LIMIT 1
+    ) AS rejection_reason
+    FROM presets p
+    WHERE p.author_discord_id = ?
+    ORDER BY p.created_at DESC
   `;
   const result = await db.prepare(query).bind(authorDiscordId).all<PresetRow>();
   return rowsToPresets(result.results || [], logger);
@@ -462,6 +555,21 @@ export async function updatePreset(
   if (updates.tags !== undefined) {
     setClauses.push('tags = ?');
     params.push(JSON.stringify(updates.tags));
+  }
+
+  if (updates.example_link !== undefined) {
+    setClauses.push('example_link = ?');
+    params.push(updates.example_link);
+  }
+
+  if (updates.category_id !== undefined) {
+    setClauses.push('category_id = ?');
+    params.push(updates.category_id);
+  }
+
+  if (updates.secondary_categories !== undefined) {
+    setClauses.push('secondary_categories = ?');
+    params.push(JSON.stringify(updates.secondary_categories));
   }
 
   if (previousValues !== undefined) {

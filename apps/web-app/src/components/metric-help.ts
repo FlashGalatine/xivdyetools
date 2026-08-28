@@ -1,0 +1,380 @@
+/**
+ * XIV Dye Tools 5.0 - MetricHelp (the pair-readout explainer)
+ *
+ * The inline expander behind the ⓘ beside a pair-readout heading, per the
+ * confirmed 6A Lens direction. Carries the active unit's definition, its
+ * caveat, the four-word tier legend (same words in every unit; only the
+ * numbers under them change), the unit switcher, and — for units without a
+ * published standard — the NOT A STANDARD badge. The WCAG ratio entry links
+ * to the W3C Understanding page.
+ *
+ * Shared: Accessibility (6A) owns it first; Comparison (7C) reuses it.
+ *
+ * @module components/metric-help
+ */
+
+import { LanguageService } from '@services/language-service';
+import { BAND_VOCABULARY, getLearnLink } from '@xivdyetools/core';
+import type { MatchingMethod } from '@xivdyetools/core';
+
+// ============================================================================
+// Unit definitions — bands from core's calibrated SEPARATION vocabulary
+// (Band Calibration, 2026-08-07). Ratio is the one deliberate exception:
+// WCAG 1.4.11 anchors by decision, not core's RATIO_BANDS.accessibility.
+// ============================================================================
+
+export type PairReadoutUnit = 'pct' | 'ratio' | 'de2000';
+
+export interface UnitBands {
+  good: number;
+  tight: number;
+  fail: number;
+}
+
+interface UnitDef {
+  id: PairReadoutUnit;
+  /** Locale key stem under accessibility.* */
+  stem: string;
+  standard: boolean;
+  /** Display precision — pair values round to it before display AND tier scoring */
+  dp: number;
+  /** Fixed bands, descending polarity (higher = safer) */
+  bands: UnitBands;
+  format: (v: number) => string;
+  /** Tier-legend number ranges, derived from the bands */
+  ranges: (b: UnitBands) => [string, string, string, string];
+}
+
+/** Descending-polarity view of core's ascending separation cuts. */
+function separationBands(method: 'ciede2000' | 'distinguish'): UnitBands {
+  const [fail, tight, good] = BAND_VOCABULARY.separation[method].cuts;
+  return { good, tight, fail };
+}
+
+export const PAIR_READOUT_UNITS: Record<PairReadoutUnit, UnitDef> = {
+  pct: {
+    id: 'pct',
+    stem: 'unitPct',
+    standard: false,
+    dp: BAND_VOCABULARY.separation.distinguish.dp,
+    bands: separationBands('distinguish'),
+    format: (v) => `${Math.round(v)}%`,
+    ranges: (b) => [
+      `${b.good}% +`,
+      `${b.tight}–${b.good - 1}%`,
+      `${b.fail}–${b.tight - 1}%`,
+      `< ${b.fail}%`,
+    ],
+  },
+  ratio: {
+    id: 'ratio',
+    stem: 'unitRatio',
+    standard: true,
+    dp: 2,
+    bands: { good: 7, tight: 4.5, fail: 3 },
+    format: (v) => `${v.toFixed(2)}:1`,
+    ranges: () => ['7:1 +', '4.5–7', '3–4.5', '< 3:1'],
+  },
+  de2000: {
+    id: 'de2000',
+    stem: 'unitDe',
+    standard: false,
+    dp: BAND_VOCABULARY.separation.ciede2000.dp,
+    bands: separationBands('ciede2000'),
+    format: (v) => `ΔE ${v.toFixed(1)}`,
+    ranges: (b) => [`${b.good} +`, `${b.tight}–${b.good}`, `${b.fail}–${b.tight}`, `< ${b.fail}`],
+  },
+};
+
+/**
+ * Tier colours per the drawn ramps (dark / light theme).
+ * Order: good, tight, fail, below.
+ */
+const TIER_COLORS_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'] as const;
+const TIER_COLORS_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
+
+/**
+ * Colour for a metric value under a unit's bands (higher = safer).
+ * Pass the display-rounded value — tiers score on what the user sees
+ * (round to the unit's `dp` first, as `pairValue` does at source).
+ */
+export function tierColor(value: number, bands: UnitBands, dark: boolean): string {
+  const ramp = dark ? TIER_COLORS_DARK : TIER_COLORS_LIGHT;
+  if (value >= bands.good) return ramp[0];
+  if (value >= bands.tight) return ramp[1];
+  if (value >= bands.fail) return ramp[2];
+  return ramp[3];
+}
+
+/**
+ * Colour for a ΔE *shift* (lens-introduced change; lower = safer).
+ * Cuts per the drawn `etier`: 5 / 10 / 20 / 35.
+ */
+export function shiftTierColor(deltaE: number, dark: boolean): string {
+  const ramp = dark ? TIER_COLORS_DARK : TIER_COLORS_LIGHT;
+  if (deltaE < 5) return ramp[0];
+  if (deltaE < 10) return ramp[1];
+  if (deltaE < 20) return ramp[2];
+  return deltaE < 35 ? (dark ? '#ff9800' : '#C2410C') : ramp[3];
+}
+
+// ============================================================================
+// Builder
+// ============================================================================
+
+export interface MetricHelpOptions {
+  unit: PairReadoutUnit;
+  dark: boolean;
+  /** Called when the user picks another unit from the switcher */
+  onUnitChange: (unit: PairReadoutUnit) => void;
+}
+
+/**
+ * Build the MetricHelp expander body for the active unit.
+ * The caller owns visibility (the ⓘ toggles it).
+ */
+export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
+  const t = (key: string): string => LanguageService.t(`accessibility.${key}`);
+  const def = PAIR_READOUT_UNITS[options.unit];
+  const bands = def.bands;
+
+  // Inline styles throughout: this renders inside the v4 shell's shadow
+  // DOM, where document-level Tailwind utilities do not reach
+  const box = document.createElement('div');
+  box.style.cssText =
+    'display: flex; flex-direction: column; gap: 10px; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: 1px solid var(--theme-border); background: var(--theme-card-background);';
+
+  // Title row: unit label + NOT A STANDARD badge (or nothing for ratio)
+  const titleRow = document.createElement('div');
+  titleRow.style.cssText = 'display: flex; align-items: center; gap: 8px; flex-wrap: wrap;';
+  const title = document.createElement('span');
+  title.style.cssText = 'font-size: 13px; font-weight: 600; color: var(--theme-text);';
+  title.textContent = t(`${def.stem}Label`);
+  titleRow.appendChild(title);
+  if (!def.standard) {
+    const badge = document.createElement('span');
+    badge.style.cssText =
+      "font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);";
+    badge.textContent = t('notAStandard');
+    titleRow.appendChild(badge);
+  }
+  box.appendChild(titleRow);
+
+  // Definition + caveat
+  const desc = document.createElement('p');
+  desc.style.cssText =
+    'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
+  desc.textContent = t(`${def.stem}Desc`);
+  box.appendChild(desc);
+
+  const caveat = document.createElement('p');
+  caveat.style.cssText =
+    'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
+  caveat.textContent = t(`${def.stem}Caveat`);
+  box.appendChild(caveat);
+
+  // Tier legend: same four words in every unit, numbers change
+  const legend = document.createElement('div');
+  legend.style.cssText = 'display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;';
+  const tierKeys = ['tierClear', 'tierFine', 'tierTight', 'tierCollapsed'] as const;
+  const ranges = def.ranges(bands);
+  const ramp = options.dark ? TIER_COLORS_DARK : TIER_COLORS_LIGHT;
+  tierKeys.forEach((key, i) => {
+    const cell = document.createElement('div');
+    cell.style.cssText =
+      'display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; border-radius: 8px; background: var(--theme-background-secondary);';
+    const bar = document.createElement('span');
+    bar.style.cssText = `display: block; border-radius: 2px; width: 70%; height: 4px; background: ${ramp[i]};`;
+    cell.appendChild(bar);
+    const word = document.createElement('span');
+    word.style.cssText = 'font-size: 11px; font-weight: 600; color: var(--theme-text);';
+    word.textContent = t(key);
+    cell.appendChild(word);
+    const range = document.createElement('span');
+    range.style.cssText =
+      "font-family: 'Fragment Mono', monospace; font-size: 10px; color: var(--theme-text-muted);";
+    range.textContent = ranges[i];
+    cell.appendChild(range);
+    legend.appendChild(cell);
+  });
+  box.appendChild(legend);
+
+  // Unit switcher
+  const switcher = document.createElement('div');
+  switcher.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap;';
+  (Object.keys(PAIR_READOUT_UNITS) as PairReadoutUnit[]).forEach((id) => {
+    const u = PAIR_READOUT_UNITS[id];
+    const active = id === options.unit;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.style.cssText = `padding: 6px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600; cursor: pointer; border: 1px solid ${active ? 'var(--theme-primary)' : 'var(--theme-border)'}; background: ${active ? 'var(--theme-primary)' : 'var(--theme-card-background)'}; color: ${active ? 'var(--theme-text-header)' : 'var(--theme-text)'};`;
+    chip.textContent = t(`${u.stem}Short`);
+    chip.setAttribute('aria-pressed', String(active));
+    chip.addEventListener('click', () => {
+      if (!active) options.onUnitChange(id);
+    });
+    switcher.appendChild(chip);
+  });
+  box.appendChild(switcher);
+
+  // Learn-more link (ratio — the only unit with a published standard),
+  // from core's per-locale authority table. An absent locale renders no
+  // link, never the English URL; the visible row names the authority.
+  if (options.unit === 'ratio') {
+    const learn = getLearnLink('contrast', LanguageService.getCurrentLocale());
+    if (learn) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;';
+      const link = document.createElement('a');
+      link.style.cssText =
+        'font-size: 12px; color: var(--theme-primary); text-decoration: underline;';
+      link.href = learn.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = t('learnMore');
+      row.appendChild(link);
+      const authority = document.createElement('span');
+      authority.style.cssText =
+        "font-family: 'Fragment Mono', monospace; font-size: 10px; color: var(--theme-text-muted);";
+      authority.textContent = `${learn.authority} · ${learn.host}`;
+      row.appendChild(authority);
+      box.appendChild(row);
+    }
+  }
+
+  return box;
+}
+
+// ============================================================================
+// Methods mode (7C Duel) — the six matching methods, perceptual → not
+// ============================================================================
+
+/** Ordered perceptual → not; "which formula you trust is the whole argument" */
+export const METHOD_ORDER: readonly MatchingMethod[] = [
+  'ciede2000',
+  'oklab',
+  'cie76',
+  'redmean',
+  'rgb',
+  'distinguish',
+] as const;
+
+const METHOD_STEM: Record<MatchingMethod, string> = {
+  ciede2000: 'mCiede2000',
+  oklab: 'mOklab',
+  cie76: 'mCie76',
+  redmean: 'mRedmean',
+  rgb: 'mRgb',
+  distinguish: 'mDistinguish',
+};
+
+/** 2 = perceptual, 1 = approximate, 0 = not perceptual */
+const METHOD_KIND: Record<MatchingMethod, 0 | 1 | 2> = {
+  ciede2000: 2,
+  oklab: 2,
+  cie76: 1,
+  redmean: 1,
+  rgb: 0,
+  distinguish: 0,
+};
+
+/**
+ * Colour-difference reading for the matching-method switch. Core's
+ * `getLearnLink()` table has no colour-difference topic (it covers contrast,
+ * colour vision and the docs site), so the per-locale articles live here — but
+ * they follow core's rule (`learn-links.ts`): an absent locale renders NO
+ * link, never the English URL. ko and zh have no article worth linking yet.
+ */
+const METHODS_LEARN_URLS: Record<string, string> = {
+  en: 'https://en.wikipedia.org/wiki/Color_difference#CIEDE2000',
+  de: 'https://de.wikipedia.org/wiki/Delta_E',
+  fr: 'https://fr.wikipedia.org/wiki/Delta_E',
+  ja: 'https://ja.wikipedia.org/wiki/色差',
+};
+
+/** Colour-difference article for the active locale, or undefined when absent. */
+function methodsLearnUrl(): string | undefined {
+  return METHODS_LEARN_URLS[LanguageService.getCurrentLocale()];
+}
+
+/** Mono tag for a method (used by readout rows and the switcher) */
+export function methodShort(method: MatchingMethod): string {
+  return LanguageService.t(`comparison.${METHOD_STEM[method]}Short`);
+}
+
+export interface MethodHelpOptions {
+  method: MatchingMethod;
+  dark: boolean;
+  onMethodChange: (method: MatchingMethod) => void;
+}
+
+/**
+ * Build the MetricHelp expander for 7C's matching-method switch: the active
+ * method's definition, its caveat, a perceptual-kind badge, the six-method
+ * switcher, and the colour-difference learn-more link.
+ */
+export function createMethodHelp(options: MethodHelpOptions): HTMLElement {
+  const t = (key: string): string => LanguageService.t(`comparison.${key}`);
+  const stem = METHOD_STEM[options.method];
+
+  const box = document.createElement('div');
+  box.style.cssText =
+    'display: flex; flex-direction: column; gap: 10px; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: 1px solid var(--theme-border); background: var(--theme-card-background);';
+
+  const titleRow = document.createElement('div');
+  titleRow.style.cssText = 'display: flex; align-items: center; gap: 8px; flex-wrap: wrap;';
+  const title = document.createElement('span');
+  title.style.cssText = 'font-size: 13px; font-weight: 600; color: var(--theme-text);';
+  title.textContent = t(`${stem}Label`);
+  titleRow.appendChild(title);
+  const kindBadge = document.createElement('span');
+  kindBadge.style.cssText =
+    "font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);";
+  kindBadge.textContent = t(`kind${METHOD_KIND[options.method]}`);
+  titleRow.appendChild(kindBadge);
+  box.appendChild(titleRow);
+
+  const desc = document.createElement('p');
+  desc.style.cssText =
+    'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
+  desc.textContent = t(`${stem}Desc`);
+  box.appendChild(desc);
+
+  const caveat = document.createElement('p');
+  caveat.style.cssText =
+    'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
+  caveat.textContent = t(`${stem}Caveat`);
+  box.appendChild(caveat);
+
+  const switcher = document.createElement('div');
+  switcher.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap;';
+  for (const id of METHOD_ORDER) {
+    const active = id === options.method;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.style.cssText = `padding: 6px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600; cursor: pointer; border: 1px solid ${active ? 'var(--theme-primary)' : 'var(--theme-border)'}; background: ${active ? 'var(--theme-primary)' : 'var(--theme-card-background)'}; color: ${active ? 'var(--theme-text-header)' : 'var(--theme-text)'};`;
+    chip.textContent = methodShort(id);
+    chip.setAttribute('aria-pressed', String(active));
+    chip.addEventListener('click', () => {
+      if (!active) options.onMethodChange(id);
+    });
+    switcher.appendChild(chip);
+  }
+  box.appendChild(switcher);
+
+  // An absent locale renders the absent state, exactly as the ratio branch
+  // above does with core's table — never the English article.
+  const learnUrl = methodsLearnUrl();
+  if (learnUrl) {
+    const link = document.createElement('a');
+    link.style.cssText =
+      'font-size: 12px; color: var(--theme-primary); text-decoration: underline;';
+    link.href = learnUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = t('methodsLearnMore');
+    box.appendChild(link);
+  }
+
+  return box;
+}

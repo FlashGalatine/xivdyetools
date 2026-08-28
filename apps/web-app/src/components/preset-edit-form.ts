@@ -11,11 +11,20 @@ import {
   ToastService,
   LanguageService,
   dyeService,
+  resolvePresetDye,
   authService,
   presetSubmissionService,
 } from '@services/index';
-import { getCategoryIcon } from '@shared/category-icons';
-import type { Dye, PresetCategory } from '@xivdyetools/types';
+import {
+  MAX_PREVIEW_IMAGE_BYTES,
+  removePreviewImage,
+  uploadPreviewImage,
+} from '@services/preset-submission-service';
+import { createCategorySelector, type CategorySelection } from './preset-category-selector';
+import { presetErrorMessage, presetValidationMessage } from '@shared/preset-i18n';
+import { exampleLinkError } from '@shared/example-link';
+import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
+import type { Dye } from '@xivdyetools/types';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { EditResult, PresetEditRequest } from '@services/preset-submission-service';
 
@@ -26,9 +35,22 @@ import type { EditResult, PresetEditRequest } from '@services/preset-submission-
 interface FormState {
   name: string;
   description: string;
-  category: PresetCategory; // Read-only, for display
+  /** Editable since 5.0 — was a locked read-only display */
+  categories: CategorySelection;
   selectedDyes: Dye[];
   tags: string;
+  exampleLink: string;
+  /** Picked file awaiting upload; null when nothing new was chosen */
+  newPreviewImage: File | null;
+  /**
+   * The author pressed Remove; mutually exclusive with newPreviewImage.
+   * Named `clearPreviewImage`, not `removePreviewImage`, so it cannot be
+   * confused with the imported service function of that name.
+   */
+  clearPreviewImage: boolean;
+  /** Status as loaded, so the field knows which affordance to render */
+  previewImageStatus: 'none' | 'pending' | 'approved';
+  previewImageUrl: string | null;
 }
 
 type OnEditCallback = (result: EditResult) => void;
@@ -37,22 +59,38 @@ type OnEditCallback = (result: EditResult) => void;
 // Configuration
 // ============================================
 
-const CATEGORIES: { id: PresetCategory; label: string }[] = [
-  { id: 'jobs', label: 'Jobs' },
-  { id: 'grand-companies', label: 'Grand Companies' },
-  { id: 'seasons', label: 'Seasons' },
-  { id: 'events', label: 'Events' },
-  { id: 'aesthetics', label: 'Aesthetics' },
-  { id: 'community', label: 'Community' },
-];
-
 const MIN_NAME_LENGTH = 2;
 const MAX_NAME_LENGTH = 50;
 const MIN_DESC_LENGTH = 10;
 const MAX_DESC_LENGTH = 200;
-const MIN_DYES = 2;
-const MAX_DYES = 5;
+// Match the submission form and the service: a 2-dye edit passed here and
+// then failed server-side, and a legal 6-dye palette could not be edited.
+const MIN_DYES = 3;
+const MAX_DYES = 6;
 const MAX_TAGS = 10;
+const MAX_TAG_LENGTH = 30;
+
+// ============================================
+// Localized Counters
+// ============================================
+
+/** "{n}/{max} (min {min})" — the description character counter. */
+function descCounterText(length: number): string {
+  return LanguageService.tInterpolate('preset.counterWithMin', {
+    n: length,
+    max: MAX_DESC_LENGTH,
+    min: MIN_DESC_LENGTH,
+  });
+}
+
+/** "{n}/{max} (min {min})" — the selected-dye counter. */
+function dyeCounterText(count: number): string {
+  return LanguageService.tInterpolate('preset.counterWithMin', {
+    n: count,
+    max: MAX_DYES,
+    min: MIN_DYES,
+  });
+}
 
 // ============================================
 // Show Modal Function
@@ -77,25 +115,33 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
 
   // Convert preset dyes to Dye objects
   const dyeObjects = preset.dyes
-    .map((dyeId) => dyeService.getDyeById(dyeId))
+    .map((dyeId) => resolvePresetDye(dyeId) ?? null)
     .filter((d): d is Dye => d !== null);
 
   // Initialize form state with existing values
   const state: FormState = {
     name: preset.name,
     description: preset.description,
-    category: preset.category_id,
+    categories: {
+      primary: preset.category_id,
+      secondary: preset.secondary_categories ?? [],
+    },
     selectedDyes: dyeObjects,
     tags: preset.tags.join(', '),
+    exampleLink: preset.example_link ?? '',
+    newPreviewImage: null,
+    clearPreviewImage: false,
+    previewImageStatus: preset.preview_image_status ?? 'none',
+    previewImageUrl: preset.preview_image_url ?? null,
   };
 
   // Create form content
-  const content = createFormContent(preset.id, state, onEdit);
+  const content = createFormContent(preset, state, onEdit);
 
   // Show modal using ModalService
   ModalService.show({
     type: 'custom',
-    title: 'Edit Preset',
+    title: LanguageService.t('preset.editTitle'),
     content,
     size: 'lg',
     closable: true,
@@ -107,7 +153,7 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
 // ============================================
 
 function createFormContent(
-  presetId: string,
+  preset: CommunityPreset,
   state: FormState,
   onEdit?: OnEditCallback
 ): HTMLElement {
@@ -120,8 +166,9 @@ function createFormContent(
   // Description textarea
   form.appendChild(createDescriptionInput(state));
 
-  // Category display (read-only)
-  form.appendChild(createCategoryDisplay(state));
+  // Editable since 5.0. The category was locked here, and PresetEditRequest
+  // had no category field at all, so a change had nowhere to go.
+  form.appendChild(createCategorySelector(state.categories));
 
   // Dye selector
   form.appendChild(createDyeSelector(state));
@@ -129,8 +176,14 @@ function createFormContent(
   // Tags input
   form.appendChild(createTagsInput(state));
 
+  // 8A: the example link is editable here too — it was submit-only, so a
+  // link could be added at creation and then never corrected.
+  form.appendChild(createExampleLinkInput(state));
+
+  form.appendChild(createPreviewImageField(state));
+
   // Submit button
-  form.appendChild(createSubmitButton(presetId, state, onEdit));
+  form.appendChild(createSubmitButton(preset, state, onEdit));
 
   return form;
 }
@@ -146,7 +199,7 @@ function createNameInput(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'block text-sm font-medium mb-1';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Preset Name';
+  label.textContent = LanguageService.t('preset.fieldName');
   label.htmlFor = 'edit-preset-name';
 
   const input = document.createElement('input');
@@ -156,7 +209,7 @@ function createNameInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
   input.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  input.placeholder = 'e.g., Dark Knight Abyssal';
+  input.placeholder = LanguageService.t('preset.fieldNamePlaceholder');
   input.maxLength = MAX_NAME_LENGTH;
   input.value = state.name;
 
@@ -191,7 +244,7 @@ function createDescriptionInput(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'block text-sm font-medium mb-1';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Description';
+  label.textContent = LanguageService.t('preset.fieldDesc');
   label.htmlFor = 'edit-preset-description';
 
   const textarea = document.createElement('textarea');
@@ -200,7 +253,7 @@ function createDescriptionInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none';
   textarea.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  textarea.placeholder = 'Describe your color palette and when to use it...';
+  textarea.placeholder = LanguageService.t('preset.fieldDescPlaceholder');
   textarea.rows = 3;
   textarea.maxLength = MAX_DESC_LENGTH;
   textarea.value = state.description;
@@ -208,11 +261,11 @@ function createDescriptionInput(state: FormState): HTMLElement {
   const counter = document.createElement('div');
   counter.className = 'text-xs mt-1 text-right';
   counter.style.color = 'var(--theme-text-secondary)';
-  counter.textContent = `${state.description.length}/${MAX_DESC_LENGTH} (min ${MIN_DESC_LENGTH})`;
+  counter.textContent = descCounterText(state.description.length);
 
   textarea.addEventListener('input', () => {
     state.description = textarea.value;
-    counter.textContent = `${state.description.length}/${MAX_DESC_LENGTH} (min ${MIN_DESC_LENGTH})`;
+    counter.textContent = descCounterText(state.description.length);
 
     if (state.description.length < MIN_DESC_LENGTH) {
       counter.style.color = '#ef4444';
@@ -228,28 +281,6 @@ function createDescriptionInput(state: FormState): HTMLElement {
   return wrapper;
 }
 
-function createCategoryDisplay(state: FormState): HTMLElement {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'form-field';
-
-  const label = document.createElement('label');
-  label.className = 'block text-sm font-medium mb-1';
-  label.style.color = 'var(--theme-text)';
-  label.textContent = 'Category (cannot be changed)';
-
-  const category = CATEGORIES.find((c) => c.id === state.category);
-  const display = document.createElement('div');
-  display.className = 'px-3 py-2 rounded-lg border text-sm flex items-center gap-2';
-  display.style.cssText =
-    'background-color: var(--theme-card-background); color: var(--theme-text-secondary); border-color: var(--theme-border);';
-  display.innerHTML = `<span class="w-4 h-4 inline-block">${getCategoryIcon(state.category)}</span><span>${category?.label || state.category}</span>`;
-
-  wrapper.appendChild(label);
-  wrapper.appendChild(display);
-
-  return wrapper;
-}
-
 function createDyeSelector(state: FormState): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
@@ -260,13 +291,13 @@ function createDyeSelector(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'text-sm font-medium';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Select Dyes';
+  label.textContent = `${LanguageService.t('preset.dyes')} — ${LanguageService.t('preset.dyesReq')}`;
 
   const counter = document.createElement('span');
   counter.className = 'text-xs';
   counter.id = 'edit-dye-counter';
   counter.style.color = 'var(--theme-text-secondary)';
-  counter.textContent = `${state.selectedDyes.length}/${MAX_DYES} (min ${MIN_DYES})`;
+  counter.textContent = dyeCounterText(state.selectedDyes.length);
 
   labelRow.appendChild(label);
   labelRow.appendChild(counter);
@@ -282,10 +313,15 @@ function createDyeSelector(state: FormState): HTMLElement {
       const chip = document.createElement('div');
       chip.className = 'flex items-center gap-1 px-2 py-1 rounded-full text-xs';
       chip.style.cssText = `background-color: ${dye.hex}; color: ${getContrastColor(dye.hex)};`;
-      chip.innerHTML = `
-        <span>${dye.name}</span>
-        <button type="button" class="ml-1 hover:opacity-75" data-remove="${dye.id}">&times;</button>
-      `;
+      const chipName = document.createElement('span');
+      chipName.textContent = localizedDyeName(dye);
+      const chipRemove = document.createElement('button');
+      chipRemove.type = 'button';
+      chipRemove.className = 'ml-1 hover:opacity-75';
+      chipRemove.dataset.remove = String(dye.id);
+      chipRemove.innerHTML = '&times;';
+      chip.appendChild(chipName);
+      chip.appendChild(chipRemove);
 
       chip.querySelector('button')?.addEventListener('click', () => {
         state.selectedDyes = state.selectedDyes.filter((d) => d.id !== dye.id);
@@ -300,7 +336,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   }
 
   function updateDyeCounter(): void {
-    counter.textContent = `${state.selectedDyes.length}/${MAX_DYES} (min ${MIN_DYES})`;
+    counter.textContent = dyeCounterText(state.selectedDyes.length);
     if (state.selectedDyes.length < MIN_DYES) {
       counter.style.color = '#ef4444';
     } else if (state.selectedDyes.length >= MAX_DYES) {
@@ -318,7 +354,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   // Search input
   const searchInput = document.createElement('input');
   searchInput.type = 'text';
-  searchInput.placeholder = 'Search dyes...';
+  searchInput.placeholder = LanguageService.t('colorPalette.searchPlaceholder');
   searchInput.className = 'w-full px-3 py-2 border-b focus:outline-none';
   searchInput.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
@@ -343,7 +379,7 @@ function createDyeSelector(state: FormState): HTMLElement {
       swatch.type = 'button';
       swatch.className = 'w-8 h-8 rounded border-2 hover:scale-110 transition-transform';
       swatch.style.cssText = `background-color: ${dye.hex}; border-color: transparent;`;
-      swatch.title = dye.name;
+      swatch.title = localizedDyeName(dye);
 
       swatch.addEventListener('click', () => {
         if (state.selectedDyes.length < MAX_DYES) {
@@ -362,7 +398,9 @@ function createDyeSelector(state: FormState): HTMLElement {
       empty.className = 'col-span-full text-center py-4 text-sm';
       empty.style.color = 'var(--theme-text-secondary)';
       empty.textContent =
-        filteredDyes.length === 0 ? 'No dyes found' : 'All matching dyes selected';
+        filteredDyes.length === 0
+          ? LanguageService.t('colorPalette.noDyesFound')
+          : LanguageService.t('preset.allMatchingSelected');
       dyeGrid.appendChild(empty);
     }
   }
@@ -371,7 +409,7 @@ function createDyeSelector(state: FormState): HTMLElement {
     const query = searchInput.value.toLowerCase().trim();
     if (query) {
       filteredDyes = allDyes.filter(
-        (d) => d.name.toLowerCase().includes(query) || d.category.toLowerCase().includes(query)
+        (d) => dyeNameMatches(d, query) || d.category.toLowerCase().includes(query)
       );
     } else {
       filteredDyes = [...allDyes];
@@ -394,6 +432,53 @@ function createDyeSelector(state: FormState): HTMLElement {
   return wrapper;
 }
 
+/**
+ * Example link (8A) — the same allowlisted-host field the submission form
+ * offers, validated by the same shared rule so the two cannot disagree.
+ * Blank clears the link.
+ */
+function createExampleLinkInput(state: FormState): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'form-field';
+
+  const label = document.createElement('label');
+  label.className = 'block text-sm font-medium mb-1';
+  label.style.color = 'var(--theme-text)';
+  label.textContent = LanguageService.t('preset.fieldLink');
+  label.htmlFor = 'edit-preset-example-link';
+
+  const input = document.createElement('input');
+  input.type = 'url';
+  input.id = 'edit-preset-example-link';
+  input.className =
+    'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
+  input.style.cssText =
+    'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
+  input.placeholder = 'eorzeacollection.com/glamour/44120';
+  input.value = state.exampleLink;
+
+  const hint = document.createElement('div');
+  hint.className = 'text-xs mt-1';
+  hint.style.color = 'var(--theme-text-secondary)';
+  hint.textContent = LanguageService.t('preset.fieldLinkHint');
+
+  input.addEventListener('input', () => {
+    state.exampleLink = input.value;
+  });
+  // Validate on blur, not per keystroke — a half-typed URL is not an error yet
+  input.addEventListener('blur', () => {
+    const error = exampleLinkError(state.exampleLink);
+    input.style.borderColor = error ? '#ef4444' : 'var(--theme-border)';
+    hint.style.color = error ? '#ef4444' : 'var(--theme-text-secondary)';
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  wrapper.appendChild(hint);
+
+  return wrapper;
+}
+
 function createTagsInput(state: FormState): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
@@ -401,7 +486,7 @@ function createTagsInput(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'block text-sm font-medium mb-1';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Tags (optional)';
+  label.textContent = `${LanguageService.t('preset.fieldTags')} ${LanguageService.t('common.optional')}`;
   label.htmlFor = 'edit-preset-tags';
 
   const input = document.createElement('input');
@@ -411,13 +496,16 @@ function createTagsInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
   input.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  input.placeholder = 'e.g., dark, edgy, tank (comma-separated)';
+  input.placeholder = LanguageService.t('preset.fieldTagsPlaceholder');
   input.value = state.tags;
 
   const hint = document.createElement('div');
   hint.className = 'text-xs mt-1';
   hint.style.color = 'var(--theme-text-secondary)';
-  hint.textContent = `Max ${MAX_TAGS} tags, 30 chars each`;
+  hint.textContent = LanguageService.tInterpolate('preset.fieldTagsLimit', {
+    max: MAX_TAGS,
+    chars: MAX_TAG_LENGTH,
+  });
 
   input.addEventListener('input', () => {
     state.tags = input.value;
@@ -430,11 +518,120 @@ function createTagsInput(state: FormState): HTMLElement {
   return wrapper;
 }
 
+const PREVIEW_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
+
+/**
+ * Preview image: upload, replace, or remove.
+ *
+ * A new upload re-queues the IMAGE only — the preset's own status is never
+ * touched, and the preset itself stays live and listed throughout. But a
+ * REPLACEMENT is not a quiet swap: `POST /:id/preview-image` overwrites
+ * `preview_image_key` and deletes the old R2 object in the same request, so
+ * `preview_image_url` goes null immediately — the card shows no picture at
+ * all (not the old one) until a moderator approves the new upload.
+ * Removing clears the picture and, with it, the only reason the preset was in
+ * the queue for its image.
+ */
+function createPreviewImageField(state: FormState): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'form-field';
+
+  const label = document.createElement('label');
+  label.className = 'block text-sm font-medium mb-1';
+  label.style.color = 'var(--theme-text)';
+  label.textContent = LanguageService.t('preset.fieldPreviewImage');
+
+  const body = document.createElement('div');
+  body.className = 'space-y-2';
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = PREVIEW_IMAGE_ACCEPT;
+  input.className = 'w-full text-sm';
+  input.style.color = 'var(--theme-text)';
+
+  input.addEventListener('change', () => {
+    const file = input.files?.[0] ?? null;
+    // Mirror the server limit so the author finds out before spending the upload.
+    if (file && file.size > MAX_PREVIEW_IMAGE_BYTES) {
+      ToastService.error(LanguageService.t('preset.previewImageTooLarge'));
+      input.value = '';
+      state.newPreviewImage = null;
+      return;
+    }
+    state.newPreviewImage = file;
+    // Picking a file supersedes a pending removal — they are mutually exclusive.
+    if (file) state.clearPreviewImage = false;
+    render();
+  });
+
+  function render(): void {
+    body.replaceChildren();
+
+    const hasStoredImage = state.previewImageStatus !== 'none' && !state.clearPreviewImage;
+
+    if (hasStoredImage && state.previewImageStatus === 'approved' && state.previewImageUrl) {
+      const img = document.createElement('img');
+      img.src = state.previewImageUrl;
+      img.alt = LanguageService.t('preset.previewImageCurrent');
+      img.style.cssText =
+        'width: 100%; max-width: 320px; border-radius: 8px; border: 1px solid var(--theme-border); display: block;';
+      body.appendChild(img);
+    } else if (hasStoredImage && state.previewImageStatus === 'pending') {
+      const note = document.createElement('div');
+      note.className = 'text-xs px-3 py-2 rounded-lg border';
+      note.style.cssText =
+        'border-color: rgba(244,191,79,0.35); background: rgba(244,191,79,0.08); color: var(--theme-text-secondary);';
+      note.textContent = LanguageService.t('preset.previewImageUnderReview');
+      body.appendChild(note);
+    }
+
+    if (state.clearPreviewImage) {
+      const note = document.createElement('div');
+      note.className = 'text-xs';
+      note.style.color = 'var(--theme-text-secondary)';
+      note.textContent = LanguageService.t('preset.previewImageRemoved');
+      body.appendChild(note);
+    }
+
+    body.appendChild(input);
+
+    if (hasStoredImage) {
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'px-3 py-1.5 rounded-lg border text-xs';
+      removeBtn.style.cssText =
+        'background-color: var(--theme-card-background); color: var(--theme-text); border-color: var(--theme-border);';
+      removeBtn.textContent = LanguageService.t('preset.previewImageRemove');
+      removeBtn.addEventListener('click', () => {
+        state.clearPreviewImage = true;
+        state.newPreviewImage = null;
+        input.value = '';
+        render();
+      });
+      body.appendChild(removeBtn);
+    }
+  }
+
+  render();
+
+  const hint = document.createElement('div');
+  hint.className = 'text-xs mt-1';
+  hint.style.color = 'var(--theme-text-secondary)';
+  hint.textContent = LanguageService.t('preset.fieldPreviewImageHint');
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(body);
+  wrapper.appendChild(hint);
+  return wrapper;
+}
+
 function createSubmitButton(
-  presetId: string,
+  preset: CommunityPreset,
   state: FormState,
   onEdit?: OnEditCallback
 ): HTMLElement {
+  const presetId = preset.id;
   const wrapper = document.createElement('div');
   wrapper.className = 'flex justify-end gap-2 pt-4 border-t';
   wrapper.style.borderColor = 'var(--theme-border)';
@@ -444,7 +641,7 @@ function createSubmitButton(
   cancelBtn.className = 'px-4 py-2 rounded-lg font-medium transition-colors';
   cancelBtn.style.cssText =
     'background-color: var(--theme-card-background); color: var(--theme-text); border: 1px solid var(--theme-border);';
-  cancelBtn.textContent = 'Cancel';
+  cancelBtn.textContent = LanguageService.t('common.cancel');
 
   cancelBtn.addEventListener('click', () => {
     ModalService.dismissTop();
@@ -463,7 +660,7 @@ function createSubmitButton(
   submitBtn.id = 'save-preset-btn';
   submitBtn.className = 'px-4 py-2 rounded-lg font-medium text-white transition-colors';
   submitBtn.style.cssText = 'background-color: var(--theme-primary);';
-  submitBtn.textContent = 'Save Changes';
+  submitBtn.textContent = LanguageService.t('preset.saveChanges');
 
   submitBtn.addEventListener('mouseenter', () => {
     submitBtn.style.opacity = '0.9';
@@ -474,73 +671,150 @@ function createSubmitButton(
   });
 
   submitBtn.addEventListener('click', async () => {
-    // Build edit request - only include fields that have values
-    const updates: PresetEditRequest = {};
-
-    if (state.name.trim()) {
-      updates.name = state.name.trim();
-    }
-    if (state.description.trim()) {
-      updates.description = state.description.trim();
-    }
-    if (state.selectedDyes.length >= MIN_DYES) {
-      updates.dyes = state.selectedDyes.map((d) => d.id);
-    }
-    updates.tags = state.tags
+    // Build the patch from what actually CHANGED, not from everything on the
+    // form. Two reasons: an image-only edit would otherwise send a body full of
+    // unchanged fields, and — because the API runs content moderation whenever
+    // `name` or `description` is present — every picture swap would spend a
+    // Perspective API call re-checking text nobody touched.
+    const name = state.name.trim();
+    const description = state.description.trim();
+    const dyes = state.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null);
+    const tags = state.tags
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
+    // Empty clears the link rather than leaving the old one in place
+    const exampleLink = state.exampleLink.trim() || null;
+    const originalSecondary = preset.secondary_categories ?? [];
 
-    // Validate
-    const errors: string[] = [];
-    if (updates.name && updates.name.length < MIN_NAME_LENGTH) {
-      errors.push('Name must be at least 2 characters');
+    const updates: PresetEditRequest = {};
+    if (name !== preset.name) updates.name = name;
+    if (description !== preset.description) updates.description = description;
+    if (dyes.join(',') !== preset.dyes.join(',')) updates.dyes = dyes;
+    if (tags.join(',') !== preset.tags.join(',')) updates.tags = tags;
+    if (exampleLink !== (preset.example_link ?? null)) updates.example_link = exampleLink;
+    if (state.categories.primary !== preset.category_id) {
+      updates.category_id = state.categories.primary;
     }
-    if (updates.description && updates.description.length < MIN_DESC_LENGTH) {
-      errors.push('Description must be at least 10 characters');
+    if (state.categories.secondary.join(',') !== originalSecondary.join(',')) {
+      updates.secondary_categories = state.categories.secondary;
+    }
+
+    // Validate against the form's values, not the patch: a field that did not
+    // change was already valid, and one that did must be checked either way.
+    const errors: string[] = [];
+    if (name.length < MIN_NAME_LENGTH) {
+      errors.push(
+        LanguageService.tInterpolate('preset.validation.nameMin', { n: MIN_NAME_LENGTH })
+      );
+    }
+    if (description.length < MIN_DESC_LENGTH) {
+      errors.push(
+        LanguageService.tInterpolate('preset.validation.descMin', { n: MIN_DESC_LENGTH })
+      );
     }
     if (state.selectedDyes.length < MIN_DYES) {
-      errors.push('Must include at least 2 dyes');
+      errors.push(LanguageService.tInterpolate('preset.validation.dyesMin', { n: MIN_DYES }));
     }
     if (state.selectedDyes.length > MAX_DYES) {
-      errors.push('Maximum 5 dyes allowed');
+      errors.push(LanguageService.tInterpolate('preset.maxDyesAllowed', { count: MAX_DYES }));
     }
 
     if (errors.length > 0) {
-      ToastService.error(errors.join('. '));
+      // One toast per error: joining them with ". " builds an English sentence
+      // out of translated fragments, which does not survive translation.
+      for (const error of errors) {
+        ToastService.error(error);
+      }
       return;
     }
 
-    // Disable button and show loading
+    const hasFieldChanges = Object.keys(updates).length > 0;
+    const hasImageChange = state.newPreviewImage !== null || state.clearPreviewImage;
+
+    // An empty PATCH body comes back as 400 "No updates provided", which would
+    // surface as a spurious error on an image-only edit that is about to
+    // succeed. Nothing at all to do is its own, quieter message.
+    if (!hasFieldChanges && !hasImageChange) {
+      ToastService.info(LanguageService.t('preset.noChanges'));
+      return;
+    }
+
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving...';
+    submitBtn.textContent = LanguageService.t('preset.saving');
 
     try {
-      const result = await presetSubmissionService.editPreset(presetId, updates);
+      let result: EditResult = { success: true };
 
-      if (result.success) {
-        if (result.moderation_status === 'pending') {
-          ToastService.info(LanguageService.t('preset.editPendingReview'));
-        } else {
-          ToastService.success(LanguageService.t('preset.editSuccess'));
+      if (hasFieldChanges) {
+        result = await presetSubmissionService.editPreset(presetId, updates);
+
+        if (!result.success) {
+          if (result.duplicate) {
+            const dupName = result.duplicate.name || LanguageService.t('preset.anotherPreset');
+            ToastService.error(
+              LanguageService.tInterpolate('preset.duplicateFound', { name: dupName })
+            );
+          } else if (result.validationErrors?.length) {
+            // One toast per rule; the service names the rule, the text is
+            // looked up here (same table the form's own checks use).
+            for (const error of result.validationErrors) {
+              ToastService.error(presetValidationMessage(error));
+            }
+          } else {
+            // `result.error` is the presets-API's own message when it sent one —
+            // shown as toast details under the translated headline.
+            ToastService.error(
+              presetErrorMessage(result.errorCode, 'errors.saveChangesFailed'),
+              result.error
+            );
+          }
+          return;
         }
-
-        ModalService.dismissTop();
-        onEdit?.(result);
-      } else if (result.duplicate) {
-        // Dye combination already exists
-        const dupName = result.duplicate.name || 'another preset';
-        ToastService.error(
-          LanguageService.tInterpolate('preset.duplicateFound', { name: dupName })
-        );
-      } else {
-        ToastService.error(result.error || LanguageService.t('errors.saveChangesFailed'));
       }
+
+      // Record what actually SUCCEEDED rather than re-reading the intent flags
+      // below. ToastService stacks rather than replaces, so branching on
+      // `state.newPreviewImage` after a failed upload would print "couldn't
+      // upload the picture" and "picture uploaded, awaiting review" together.
+      let imageUploaded = false;
+      let imageCleared = false;
+
+      if (state.newPreviewImage) {
+        try {
+          await uploadPreviewImage(presetId, state.newPreviewImage);
+          imageUploaded = true;
+        } catch {
+          ToastService.warning(LanguageService.t('preset.previewImageFailed'));
+        }
+      } else if (state.clearPreviewImage) {
+        try {
+          await removePreviewImage(presetId);
+          imageCleared = true;
+        } catch {
+          ToastService.warning(LanguageService.t('preset.previewImageRemoveFailed'));
+        }
+      }
+
+      // A new picture is the more surprising outcome — it is invisible until a
+      // moderator approves it — so when one actually landed it wins the message.
+      if (imageUploaded) {
+        ToastService.info(LanguageService.t('preset.previewImagePendingReview'));
+      } else if (result.moderation_status === 'pending') {
+        ToastService.info(LanguageService.t('preset.editPendingReview'));
+      } else if (hasFieldChanges || imageCleared) {
+        ToastService.success(LanguageService.t('preset.editSuccess'));
+      }
+      // Deliberately no `else`: an image-only edit whose image call failed has
+      // already shown its warning, and has nothing to report as a success.
+
+      ModalService.dismissTop();
+      onEdit?.(result);
     } catch {
       ToastService.error(LanguageService.t('errors.saveChangesFailed'));
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Save Changes';
+      submitBtn.textContent = LanguageService.t('preset.saveChanges');
     }
   });
 

@@ -17,7 +17,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import { dyeService } from '../../utils/color.js';
+import { dyeService, searchDyesByName, sanitizeEmbedText } from '@xivdyetools/bot-logic';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
   deferredResponse,
@@ -28,20 +28,26 @@ import {
   ephemeralResponse,
 } from '../../utils/response.js';
 import { sendMessage, safeEditOriginalResponse } from '../../utils/discord-api.js';
-import { generatePresetSwatch } from '@xivdyetools/svg';
+import { generatePresetSwatch, CATEGORY_DISPLAY } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
-import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
+import {
+  createUserTranslator,
+  createTranslator,
+  type Translator,
+} from '../../services/bot-i18n.js';
 import { sendModerationNotification } from './preset-notifications.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
+import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 import {
   type CommunityPreset,
   type PresetCategory,
-  CATEGORY_DISPLAY,
   STATUS_DISPLAY,
   PresetAPIError,
+  isValidPresetId,
 } from '../../types/preset.js';
+import { sanitizePresetName, sanitizePresetDescription } from '../../utils/sanitize.js';
 import * as presetApi from '../../services/preset-api.js';
 import {
   getPresetFavorites,
@@ -62,7 +68,7 @@ export async function handlePresetCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const userName =
@@ -86,7 +92,7 @@ export async function handlePresetCommand(
   const subcommand = options.find((opt) => opt.type === 1 || opt.type === 2);
 
   if (!subcommand) {
-    return ephemeralResponse('Invalid command structure');
+    return ephemeralResponse(t.t('preset.invalidStructure'));
   }
 
   // Route to subcommand handler
@@ -101,32 +107,66 @@ export async function handlePresetCommand(
       return handleRandomSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
 
     case 'submit':
-      return handleSubmitSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options, logger);
+      return handleSubmitSubcommand(
+        interaction,
+        env,
+        ctx,
+        t,
+        userId,
+        userName,
+        subcommand.options,
+        logger,
+      );
 
     case 'vote':
       return handleVoteSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
 
     case 'edit':
-      return handleEditSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options, logger);
+      return handleEditSubcommand(
+        interaction,
+        env,
+        ctx,
+        t,
+        userId,
+        userName,
+        subcommand.options,
+        logger,
+      );
 
     case 'favorite': {
       // Subcommand group — favorite add/remove/list
       const inner = subcommand.options?.[0];
-      if (!inner) return ephemeralResponse('Invalid command structure');
+      if (!inner) return ephemeralResponse(t.t('preset.invalidStructure'));
       switch (inner.name) {
         case 'add':
-          return handleFavoriteAddSubcommand(interaction, env, ctx, t, userId, inner.options, logger);
+          return handleFavoriteAddSubcommand(
+            interaction,
+            env,
+            ctx,
+            t,
+            userId,
+            inner.options,
+            logger,
+          );
         case 'remove':
-          return handleFavoriteRemoveSubcommand(interaction, env, ctx, t, userId, inner.options, logger);
+          return handleFavoriteRemoveSubcommand(
+            interaction,
+            env,
+            ctx,
+            t,
+            userId,
+            inner.options,
+            logger,
+          );
         case 'list':
           return handleFavoriteListSubcommand(interaction, env, ctx, t, userId, logger);
         default:
-          return ephemeralResponse(`Unknown favorite subcommand: ${inner.name}`);
+          return ephemeralResponse(t.t('errors.unknownSubcommand', { name: `favorite ${inner.name}` }));
       }
     }
 
     default:
-      return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);
+      return ephemeralResponse(t.t('errors.unknownSubcommand', { name: subcommand.name }));
   }
 }
 
@@ -144,17 +184,16 @@ async function handleListSubcommand(
   ctx: ExecutionContext,
   t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
-  const categoryValue = options?.find((opt) => opt.name === 'category')?.value as string | undefined;
+  const categoryValue = options?.find((opt) => opt.name === 'category')?.value as
+    string | undefined;
   const sortValue = (options?.find((opt) => opt.name === 'sort')?.value as string) || 'popular';
 
   // Defer response
   const deferResponse = deferredResponse();
 
-  ctx.waitUntil(
-    processListCommand(interaction, env, t, categoryValue, sortValue, logger)
-  );
+  ctx.waitUntil(processListCommand(interaction, env, t, categoryValue, sortValue, logger));
 
   return deferResponse;
 }
@@ -165,7 +204,7 @@ async function processListCommand(
   t: Translator,
   category: string | undefined,
   sort: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     const response = await presetApi.getPresets(env, {
@@ -180,9 +219,7 @@ async function processListCommand(
         embeds: [
           infoEmbed(
             t.t('preset.title'),
-            category
-              ? t.t('preset.noneInCategory')
-              : 'No presets found.'
+            category ? t.t('preset.noneInCategory') : t.t('preset.none'),
           ),
         ],
       });
@@ -190,24 +227,25 @@ async function processListCommand(
     }
 
     // Build preset list
-    const categoryDisplay = category
-      ? CATEGORY_DISPLAY[category as PresetCategory]
-      : null;
+    const categoryDisplay = category ? CATEGORY_DISPLAY[category as PresetCategory] : null;
 
     const title = categoryDisplay
       ? `${categoryDisplay.icon} ${categoryDisplay.name}`
       : t.t('preset.title');
 
+    // FINDING-019: stored names / authors are user content — escape before embedding
     const presetLines = response.presets.map((preset, index) => {
       const catIcon = CATEGORY_DISPLAY[preset.category_id]?.icon || '🎨';
-      const author = preset.author_name ? ` by ${preset.author_name}` : '';
-      return `**${index + 1}.** ${catIcon} ${preset.name} (${preset.vote_count}★)${author}`;
+      const author = preset.author_name
+        ? ` ${t.t('preset.byAuthor', { author: sanitizePresetName(preset.author_name) })}`
+        : '';
+      return `**${index + 1}.** ${catIcon} ${sanitizePresetName(preset.name)} (${preset.vote_count}★)${author}`;
     });
 
     const description = [
       presetLines.join('\n'),
       '',
-      `📊 Showing ${response.presets.length} of ${response.total} presets`,
+      `📊 ${t.t('preset.showing', { shown: response.presets.length, total: response.total })}`,
       '',
       t.t('preset.useShowTip'),
     ].join('\n');
@@ -217,7 +255,7 @@ async function processListCommand(
         {
           title,
           description,
-          color: 0x5865f2,
+          color: BRAND_ACCENT,
           footer: { text: t.t('common.footer') },
         },
       ],
@@ -227,7 +265,7 @@ async function processListCommand(
       logger.error('List presets error', error instanceof Error ? error : undefined);
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), 'Failed to load presets.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.loadFailed'))],
     });
   }
 }
@@ -243,7 +281,7 @@ async function handleShowSubcommand(
   t: Translator,
   _userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const presetId = options?.find((opt) => opt.name === 'name')?.value as string | undefined;
 
@@ -270,13 +308,14 @@ async function processShowCommand(
   t: Translator,
   presetId: string,
   locale: LocaleCode,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   await initializeLocale(locale);
 
   try {
-    // Get preset by ID
-    const preset = await presetApi.getPreset(env, presetId);
+    // FINDING-020: a UUID is fetched by ID; anything else is a typed NAME and
+    // goes through the search query — never into the URL path
+    const preset = await lookupPreset(env, presetId);
 
     if (!preset) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -291,7 +330,7 @@ async function processShowCommand(
       logger.error('Show preset error', error instanceof Error ? error : undefined);
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), 'Failed to load preset.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.loadOneFailed'))],
     });
   }
 }
@@ -307,7 +346,7 @@ async function handleRandomSubcommand(
   t: Translator,
   _userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const category = options?.find((opt) => opt.name === 'category')?.value as string | undefined;
 
@@ -327,7 +366,7 @@ async function processRandomCommand(
   t: Translator,
   category: string | undefined,
   locale: LocaleCode,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   await initializeLocale(locale);
 
@@ -339,7 +378,7 @@ async function processRandomCommand(
         embeds: [
           infoEmbed(
             t.t('preset.randomTitle'),
-            category ? t.t('preset.noneInCategory') : 'No presets found.'
+            category ? t.t('preset.noneInCategory') : t.t('preset.none'),
           ),
         ],
       });
@@ -352,7 +391,7 @@ async function processRandomCommand(
       logger.error('Random preset error', error instanceof Error ? error : undefined);
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), 'Failed to load random preset.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.loadRandomFailed'))],
     });
   }
 }
@@ -369,7 +408,7 @@ async function handleSubmitSubcommand(
   userId: string,
   userName: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   // Extract all options
   const presetName = options?.find((opt) => opt.name === 'preset_name')?.value as string;
@@ -405,7 +444,7 @@ async function handleSubmitSubcommand(
   // Resolve dye names to IDs
   const dyeIds: number[] = [];
   for (const name of dyeNames) {
-    const dyes = dyeService.searchByName(name);
+    const dyes = searchDyesByName(name, t.getLocale());
     if (dyes.length > 0) {
       dyeIds.push(dyes[0].id);
     } else {
@@ -418,20 +457,32 @@ async function handleSubmitSubcommand(
 
   // Parse tags
   const tags = tagsRaw
-    ? tagsRaw.split(',').map((tag) => tag.trim()).filter((tag) => tag.length > 0).slice(0, 10)
+    ? tagsRaw
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0)
+        .slice(0, 10)
     : [];
 
   // Defer response
   const deferResponse = deferredResponse();
 
   ctx.waitUntil(
-    processSubmitCommand(interaction, env, t, userId, userName, {
-      name: presetName,
-      description,
-      category_id: category as PresetCategory,
-      dyes: dyeIds,
-      tags,
-    }, logger)
+    processSubmitCommand(
+      interaction,
+      env,
+      t,
+      userId,
+      userName,
+      {
+        name: presetName,
+        description,
+        category_id: category as PresetCategory,
+        dyes: dyeIds,
+        tags,
+      },
+      logger,
+    ),
   );
 
   return deferResponse;
@@ -450,7 +501,7 @@ async function processSubmitCommand(
     dyes: number[];
     tags: string[];
   },
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     const response = await presetApi.submitPreset(env, submission, userId, userName);
@@ -462,8 +513,9 @@ async function processSubmitCommand(
           {
             title: `⚠️ ${t.t('preset.duplicateExists')}`,
             description: [
-              `A preset with the same dyes already exists:`,
-              `**"${response.duplicate.name}"** by ${response.duplicate.author_name || 'Official'}`,
+              t.t('preset.duplicateIntro'),
+              // FINDING-019: the duplicate's stored name/author are user content
+              `**"${sanitizePresetName(response.duplicate.name)}"** ${t.t('preset.byAuthor', { author: response.duplicate.author_name ? sanitizePresetName(response.duplicate.author_name) : t.t('preset.official') })}`,
               `(${response.duplicate.vote_count}★)`,
               '',
               response.vote_added ? `✅ ${t.t('preset.duplicateVoted')}` : '',
@@ -488,17 +540,17 @@ async function processSubmitCommand(
     const isApproved = response.moderation_status === 'approved';
 
     const embed = {
-      title: isApproved
-        ? `✅ ${t.t('preset.submitted')}`
-        : `⏳ ${t.t('preset.submitted')}`,
-      description: isApproved
-        ? t.t('preset.submittedApproved')
-        : t.t('preset.submittedPending'),
+      title: isApproved ? `✅ ${t.t('preset.submitted')}` : `⏳ ${t.t('preset.submitted')}`,
+      description: isApproved ? t.t('preset.submittedApproved') : t.t('preset.submittedPending'),
       color: isApproved ? 0x57f287 : 0xfee75c,
       fields: [
-        { name: 'Name', value: preset.name, inline: true },
-        { name: 'Category', value: CATEGORY_DISPLAY[preset.category_id]?.name || preset.category_id, inline: true },
-        { name: 'Dyes', value: `${preset.dyes.length} colors`, inline: true },
+        { name: t.t('preset.name'), value: sanitizePresetName(preset.name), inline: true },
+        {
+          name: t.t('common.category'),
+          value: CATEGORY_DISPLAY[preset.category_id]?.name || preset.category_id,
+          inline: true,
+        },
+        { name: t.t('common.dyes'), value: t.t('preset.colorCount', { n: preset.dyes.length }), inline: true },
       ],
       footer: { text: t.t('common.footer') },
     };
@@ -521,9 +573,8 @@ async function processSubmitCommand(
       logger.error('Submit preset error', error instanceof Error ? error : undefined);
     }
     // SECURITY: Use getSafeMessage() to prevent exposing internal API details
-    const message = error instanceof PresetAPIError
-      ? error.getSafeMessage()
-      : 'Failed to submit preset.';
+    const message =
+      error instanceof PresetAPIError ? t.t(error.getSafeMessageKey()) : t.t('preset.submitFailed');
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
@@ -542,7 +593,7 @@ async function handleVoteSubcommand(
   t: Translator,
   userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const presetId = options?.find((opt) => opt.name === 'preset')?.value as string | undefined;
 
@@ -566,10 +617,22 @@ async function processVoteCommand(
   env: Env,
   t: Translator,
   userId: string,
-  presetId: string,
-  logger?: ExtendedLogger
+  presetInput: string,
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
+    // FINDING-020: autocomplete sends the UUID; a typed value is a NAME and is
+    // resolved through the search query — only the API's own id reaches a path
+    const presetId = isValidPresetId(presetInput)
+      ? presetInput
+      : (await presetApi.getPresetByName(env, presetInput))?.id;
+    if (!presetId) {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), t.t('preset.notFound'))],
+      });
+      return;
+    }
+
     // Check if already voted
     const alreadyVoted = await presetApi.hasVoted(env, presetId, userId);
 
@@ -595,10 +658,7 @@ async function processVoteCommand(
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
-        successEmbed(
-          actionMessage,
-          t.t('preset.currentVotes', { count: response.new_vote_count })
-        ),
+        successEmbed(actionMessage, t.t('preset.currentVotes', { count: response.new_vote_count })),
       ],
     });
   } catch (error) {
@@ -606,7 +666,7 @@ async function processVoteCommand(
       logger.error('Vote error', error instanceof Error ? error : undefined);
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), 'Failed to process vote.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.voteFailed'))],
     });
   }
 }
@@ -623,7 +683,7 @@ async function handleEditSubcommand(
   userId: string,
   userName: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const presetId = options?.find((opt) => opt.name === 'preset')?.value as string | undefined;
 
@@ -636,7 +696,8 @@ async function handleEditSubcommand(
 
   // Extract optional update fields
   const newName = options?.find((opt) => opt.name === 'name')?.value as string | undefined;
-  const newDescription = options?.find((opt) => opt.name === 'description')?.value as string | undefined;
+  const newDescription = options?.find((opt) => opt.name === 'description')?.value as
+    string | undefined;
   const tagsRaw = options?.find((opt) => opt.name === 'tags')?.value as string | undefined;
 
   // Collect dye names (dye1-dye5)
@@ -647,10 +708,10 @@ async function handleEditSubcommand(
   }
 
   // Check if any updates provided
-  const hasAnyDye = dyeNames.some(d => d !== undefined);
+  const hasAnyDye = dyeNames.some((d) => d !== undefined);
   if (!newName && !newDescription && !tagsRaw && !hasAnyDye) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'Please provide at least one field to update.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.edit.noFields'))],
       flags: 64,
     });
   }
@@ -659,12 +720,21 @@ async function handleEditSubcommand(
   const deferResponse = deferredResponse();
 
   ctx.waitUntil(
-    processEditCommand(interaction, env, t, userId, userName, presetId, {
-      name: newName,
-      description: newDescription,
-      tagsRaw,
-      dyeNames,
-    }, logger)
+    processEditCommand(
+      interaction,
+      env,
+      t,
+      userId,
+      userName,
+      presetId,
+      {
+        name: newName,
+        description: newDescription,
+        tagsRaw,
+        dyeNames,
+      },
+      logger,
+    ),
   );
 
   return deferResponse;
@@ -683,11 +753,12 @@ async function processEditCommand(
     tagsRaw?: string;
     dyeNames: (string | undefined)[];
   },
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     // First, verify the preset exists and user owns it
-    const existingPreset = await presetApi.getPreset(env, presetId);
+    // FINDING-020: UUID → by id; anything else is a typed name (search query)
+    const existingPreset = await lookupPreset(env, presetId);
     if (!existingPreset) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('preset.notFound'))],
@@ -697,7 +768,7 @@ async function processEditCommand(
 
     if (existingPreset.author_discord_id !== userId) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [errorEmbed(t.t('common.error'), 'You can only edit your own presets.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('preset.edit.notOwner'))],
       });
       return;
     }
@@ -727,7 +798,7 @@ async function processEditCommand(
     }
 
     // Handle dyes - if any dye option is provided, we need to rebuild the full dye array
-    const hasAnyDye = updates.dyeNames.some(d => d !== undefined);
+    const hasAnyDye = updates.dyeNames.some((d) => d !== undefined);
     if (hasAnyDye) {
       // Start with existing dyes
       const newDyeIds: number[] = [...existingPreset.dyes];
@@ -736,7 +807,7 @@ async function processEditCommand(
       for (let i = 0; i < 5; i++) {
         const dyeName = updates.dyeNames[i];
         if (dyeName) {
-          const dyes = dyeService.searchByName(dyeName);
+          const dyes = searchDyesByName(dyeName, t.getLocale());
           if (dyes.length > 0) {
             if (i < newDyeIds.length) {
               newDyeIds[i] = dyes[0].id;
@@ -745,7 +816,13 @@ async function processEditCommand(
             }
           } else {
             await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-              embeds: [errorEmbed(t.t('common.error'), `Invalid dye: ${dyeName}`)],
+              embeds: [
+                errorEmbed(
+                  t.t('common.error'),
+                  // FINDING-019: typed option value echoed into a public embed
+                  t.t('preset.edit.invalidDye', { name: sanitizeEmbedText(dyeName, 100) }),
+                ),
+              ],
             });
             return;
           }
@@ -755,7 +832,7 @@ async function processEditCommand(
       // Validate dye count (2-5)
       if (newDyeIds.length < 2 || newDyeIds.length > 5) {
         await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-          embeds: [errorEmbed(t.t('common.error'), 'Preset must have 2-5 dyes.')],
+          embeds: [errorEmbed(t.t('common.error'), t.t('preset.edit.dyeCount'))],
         });
         return;
       }
@@ -763,22 +840,28 @@ async function processEditCommand(
       editPayload.dyes = newDyeIds;
     }
 
-    // Call the edit API
-    const response = await presetApi.editPreset(env, presetId, editPayload, userId, userName);
+    // Call the edit API — with the API's own id, never the raw option value
+    const response = await presetApi.editPreset(
+      env,
+      existingPreset.id,
+      editPayload,
+      userId,
+      userName,
+    );
 
     // Handle duplicate dyes error
     if (!response.success && 'duplicate' in response) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           {
-            title: '⚠️ Duplicate Dye Combination',
+            title: `⚠️ ${t.t('preset.edit.duplicateTitle')}`,
             description: [
-              'This dye combination already exists in another preset:',
-              `**"${response.duplicate.name}"** by ${response.duplicate.author_name || 'Unknown'}`,
+              t.t('preset.edit.duplicateIntro'),
+              `**"${sanitizePresetName(response.duplicate.name)}"** ${t.t('preset.byAuthor', { author: response.duplicate.author_name ? sanitizePresetName(response.duplicate.author_name) : t.t('preset.unknownAuthor') })}`,
               '',
-              'Please use a different dye combination.',
+              t.t('preset.edit.duplicateHint'),
             ].join('\n'),
-            color: 0xed4245,
+            color: STATE.error,
           },
         ],
       });
@@ -798,17 +881,27 @@ async function processEditCommand(
     const isPending = response.moderation_status === 'pending';
 
     const embed = {
-      title: isPending ? '⏳ Preset Updated - Pending Review' : '✅ Preset Updated',
+      title: isPending ? `⏳ ${t.t('preset.edit.updatedPending')}` : `✅ ${t.t('preset.edit.updated')}`,
       description: isPending
-        ? 'Your changes have been submitted for review due to content moderation.'
-        : 'Your changes have been applied.',
+        ? t.t('preset.edit.pendingDescription')
+        : t.t('preset.edit.appliedDescription'),
       color: isPending ? 0xfee75c : 0x57f287,
       fields: [
-        { name: 'Name', value: updatedPreset.name, inline: true },
-        { name: 'Category', value: CATEGORY_DISPLAY[updatedPreset.category_id]?.name || updatedPreset.category_id, inline: true },
-        { name: 'Dyes', value: `${updatedPreset.dyes.length} colors`, inline: true },
+        { name: t.t('preset.name'), value: sanitizePresetName(updatedPreset.name), inline: true },
+        {
+          name: t.t('common.category'),
+          value: CATEGORY_DISPLAY[updatedPreset.category_id]?.name || updatedPreset.category_id,
+          inline: true,
+        },
+        {
+          name: t.t('common.dyes'),
+          value: t.t('preset.colorCount', { n: updatedPreset.dyes.length }),
+          inline: true,
+        },
       ],
-      footer: { text: isPending ? 'A moderator will review your changes shortly.' : t.t('common.footer') },
+      footer: {
+        text: isPending ? t.t('preset.edit.pendingFooter') : t.t('common.footer'),
+      },
     };
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -824,7 +917,8 @@ async function processEditCommand(
       logger.error('Edit preset error', error instanceof Error ? error : undefined);
     }
     // SECURITY: Use getSafeMessage() to prevent exposing internal API details
-    const message = error instanceof PresetAPIError ? error.getSafeMessage() : 'Failed to edit preset.';
+    const message =
+      error instanceof PresetAPIError ? t.t(error.getSafeMessageKey()) : t.t('preset.editFailed');
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
     });
@@ -836,6 +930,22 @@ async function processEditCommand(
 // ============================================================================
 
 /**
+ * Resolve a user-supplied preset option to a preset.
+ *
+ * FINDING-020 (2026-08-21 security audit): autocomplete sends the preset's
+ * UUID, a user who ignores it sends free text. Only a UUID is ever fetched
+ * by id (and so interpolated into a presets-api path); anything else is a
+ * NAME and goes through the search query parameter. Errors propagate — the
+ * caller decides between "not found" and "load failed".
+ */
+async function lookupPreset(env: Env, input: string): Promise<CommunityPreset | null> {
+  if (isValidPresetId(input)) {
+    return presetApi.getPreset(env, input);
+  }
+  return presetApi.getPresetByName(env, input);
+}
+
+/**
  * Send a preset embed with color swatch image
  */
 async function sendPresetEmbed(
@@ -843,12 +953,20 @@ async function sendPresetEmbed(
   env: Env,
   t: Translator,
   preset: CommunityPreset,
-  locale: LocaleCode
+  locale: LocaleCode,
 ): Promise<void> {
-  // Resolve dye IDs to Dye objects
-  const dyes: (Dye | null)[] = preset.dyes.map((dyeId) => {
-    return dyeService.getDyeById(dyeId) || null;
+  // Resolve stain IDs to Dye objects (5.0: preset dyes are stainIDs)
+  const dyes: (Dye | null)[] = preset.dyes.map((stainId) => {
+    return dyeService.getByStainId(stainId) || null;
   });
+
+  // FINDING-019: the EMBED gets sanitised text (markdown escaped, mentions
+  // defused, controls stripped); the SVG card below keeps the raw strings —
+  // the svg layer XML-escapes itself and would otherwise print backslashes.
+  const safeName = sanitizePresetName(preset.name);
+  const safeDescription = sanitizePresetDescription(preset.description);
+  const safeAuthor = preset.author_name ? sanitizePresetName(preset.author_name) : null;
+  const safeTags = preset.tags.map((tag) => sanitizeEmbedText(tag, 50)).filter(Boolean);
 
   // Generate SVG swatch
   const svg = generatePresetSwatch({
@@ -858,6 +976,12 @@ async function sendPresetEmbed(
     dyes,
     authorName: preset.author_name,
     voteCount: preset.vote_count,
+    // F-11: the swatch card renders in the user's locale
+    authorLine: preset.author_name
+      ? t.t('preset.byAuthor', { author: preset.author_name })
+      : t.t('preset.official'),
+    emptyLabel: t.t('preset.noValidDyes'),
+    dyeName: (d) => getLocalizedDyeName(d.itemID, d.name, locale),
   });
 
   // Render to PNG
@@ -867,7 +991,7 @@ async function sendPresetEmbed(
   const dyeList = dyes
     .filter((d): d is Dye => d !== null)
     .map((dye) => {
-      const emoji = getDyeEmoji(dye.id);
+      const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
       const emojiPrefix = emoji ? `${emoji} ` : '';
       const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
       return `${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
@@ -875,21 +999,25 @@ async function sendPresetEmbed(
     .join('\n');
 
   const categoryDisplay = CATEGORY_DISPLAY[preset.category_id];
-  const author = preset.author_name ? `by ${preset.author_name}` : 'Official';
+  const author = safeAuthor
+    ? t.t('preset.byAuthor', { author: safeAuthor })
+    : t.t('preset.official');
 
   await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
     embeds: [
       {
-        title: `${categoryDisplay?.icon || '🎨'} ${preset.name}`,
+        title: `${categoryDisplay?.icon || '🎨'} ${safeName}`,
         description: [
-          preset.description,
+          safeDescription,
           '',
           `**${t.t('preset.colors')}:**`,
           dyeList,
           '',
-          preset.tags.length > 0 ? `**${t.t('preset.tags')}:** ${preset.tags.join(', ')}` : '',
-        ].filter(Boolean).join('\n'),
-        color: 0x5865f2,
+          safeTags.length > 0 ? `**${t.t('preset.tags')}:** ${safeTags.join(', ')}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+        color: BRAND_ACCENT,
         image: { url: 'attachment://preset.png' },
         fields: [
           { name: t.t('preset.author'), value: author, inline: true },
@@ -913,7 +1041,7 @@ async function notifySubmissionChannel(
   env: Env,
   preset: CommunityPreset,
   status: 'approved' | 'pending',
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   if (!env.SUBMISSION_LOG_CHANNEL_ID) return;
 
@@ -921,18 +1049,35 @@ async function notifySubmissionChannel(
   const statusDisplay = STATUS_DISPLAY[status];
   // Use English translator for admin notifications (no user context)
   const adminT = createTranslator('en');
+  // FINDING-019 (DW-1): this path used to skip the sanitiser the moderation
+  // path applies — same treatment for name / description / author now
+  const safeName = sanitizePresetName(preset.name);
+  const safeDescription = sanitizePresetDescription(preset.description);
+  const safeAuthor = sanitizePresetName(preset.author_name || 'Unknown');
 
   try {
     await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
       embeds: [
         {
-          title: `${statusDisplay.icon} New Preset: ${preset.name}`,
-          description: preset.description,
+          title: `${statusDisplay.icon} New Preset: ${safeName}`,
+          description: safeDescription,
           color: statusDisplay.color,
           fields: [
-            { name: adminT.t('webhook.fields.category'), value: categoryDisplay?.name || preset.category_id, inline: true },
-            { name: adminT.t('webhook.fields.author'), value: preset.author_name || 'Unknown', inline: true },
-            { name: adminT.t('webhook.fields.dyes'), value: `${preset.dyes.length} colors`, inline: true },
+            {
+              name: adminT.t('webhook.fields.category'),
+              value: categoryDisplay?.name || preset.category_id,
+              inline: true,
+            },
+            {
+              name: adminT.t('webhook.fields.author'),
+              value: safeAuthor,
+              inline: true,
+            },
+            {
+              name: adminT.t('webhook.fields.dyes'),
+              value: adminT.t('preset.colorCount', { n: preset.dyes.length }),
+              inline: true,
+            },
           ],
           footer: { text: `ID: ${preset.id}` },
           timestamp: new Date().toISOString(),
@@ -941,7 +1086,10 @@ async function notifySubmissionChannel(
     });
   } catch (error) {
     if (logger) {
-      logger.error('Failed to notify submission channel', error instanceof Error ? error : undefined);
+      logger.error(
+        'Failed to notify submission channel',
+        error instanceof Error ? error : undefined,
+      );
     }
   }
 }
@@ -953,7 +1101,7 @@ async function notifySubmissionChannel(
 async function notifyModerationChannel(
   env: Env,
   preset: CommunityPreset,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   await sendModerationNotification(
     env,
@@ -962,7 +1110,7 @@ async function notifyModerationChannel(
       preset,
       categoryName: CATEGORY_DISPLAY[preset.category_id]?.name,
     },
-    logger
+    logger,
   );
 }
 
@@ -973,7 +1121,7 @@ async function notifyEditModerationChannel(
   env: Env,
   updatedPreset: CommunityPreset,
   originalPreset: CommunityPreset,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   // REFACTOR-025/BUG-009/BUG-072: shared sanitized builder
   await sendModerationNotification(
@@ -984,7 +1132,7 @@ async function notifyEditModerationChannel(
       original: originalPreset,
       categoryName: CATEGORY_DISPLAY[updatedPreset.category_id]?.name,
     },
-    logger
+    logger,
   );
 }
 
@@ -1002,13 +1150,10 @@ async function notifyEditModerationChannel(
 async function resolvePresetByIdOrName(
   env: Env,
   idOrName: string,
-  _logger?: ExtendedLogger
+  _logger?: ExtendedLogger,
 ): Promise<CommunityPreset | null> {
-  // Try ID lookup first (UUID format from autocomplete)
-  const byId = await presetApi.getPreset(env, idOrName).catch(() => null);
-  if (byId) return byId;
-  // Fall back to name lookup for manually-typed values
-  return presetApi.getPresetByName(env, idOrName).catch(() => null);
+  // FINDING-020: UUID → by id, anything else → name search (never a path segment)
+  return lookupPreset(env, idOrName).catch(() => null);
 }
 
 /**
@@ -1022,12 +1167,12 @@ async function handleFavoriteAddSubcommand(
   t: Translator,
   userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const presetInput = options?.find((o) => o.name === 'preset_name')?.value as string | undefined;
   if (!presetInput) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'preset_name is required')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.favorite.nameRequired'))],
       flags: 64,
     });
   }
@@ -1042,31 +1187,40 @@ async function processFavoriteAdd(
   t: Translator,
   userId: string,
   presetInput: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     const preset = await resolvePresetByIdOrName(env, presetInput, logger);
     if (!preset) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [errorEmbed(t.t('common.error'), t.t('preset.errors.notFound', { name: presetInput }))],
+        embeds: [
+          errorEmbed(t.t('common.error'), t.t('preset.notFound')),
+        ],
       });
       return;
     }
     const result = await addPresetFavorite(env.KV, userId, preset.id, preset.name, logger);
+    // FINDING-019: stored preset name → escaped before it reaches the embed
+    const safeName = sanitizePresetName(preset.name);
     if (!result.success) {
       const reasonMsg =
         result.reason === 'alreadyExists'
-          ? `**${preset.name}** is already in your favorites.`
+          ? t.t('preset.favorite.alreadyExists', { name: safeName })
           : result.reason === 'limitReached'
-            ? `You've reached the limit of ${MAX_PRESET_FAVORITES} favorited presets.`
-            : 'Failed to add favorite — please try again.';
+            ? t.t('preset.favorite.limitReached', { max: MAX_PRESET_FAVORITES })
+            : t.t('preset.favorite.addFailed');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), reasonMsg)],
       });
       return;
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [successEmbed('⭐ Favorite added', `**${preset.name}** is now in your favorited presets.`)],
+      embeds: [
+        successEmbed(
+          `⭐ ${t.t('preset.favorite.addedTitle')}`,
+          t.t('preset.favorite.added', { name: safeName }),
+        ),
+      ],
     });
   } catch (error) {
     if (logger) {
@@ -1089,12 +1243,12 @@ async function handleFavoriteRemoveSubcommand(
   t: Translator,
   userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const presetInput = options?.find((o) => o.name === 'preset_name')?.value as string | undefined;
   if (!presetInput) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'preset_name is required')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.favorite.nameRequired'))],
       flags: 64,
     });
   }
@@ -1109,7 +1263,7 @@ async function processFavoriteRemove(
   t: Translator,
   userId: string,
   presetInput: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     // Try to resolve to ID first; if input already looks like an ID, use it directly.
@@ -1121,18 +1275,25 @@ async function processFavoriteRemove(
       presetName = preset.name;
     }
     const result = await removePresetFavorite(env.KV, userId, presetId, logger);
+    // FINDING-019: presetName may be the raw typed value when nothing resolved
+    const safeName = sanitizePresetName(presetName);
     if (!result.success) {
       const reasonMsg =
         result.reason === 'notFound'
-          ? `**${presetName}** is not in your favorites.`
-          : 'Failed to remove favorite — please try again.';
+          ? t.t('preset.favorite.notFound', { name: safeName })
+          : t.t('preset.favorite.removeFailed');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), reasonMsg)],
       });
       return;
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [successEmbed('🗑️ Favorite removed', `**${presetName}** has been removed from your favorites.`)],
+      embeds: [
+        successEmbed(
+          `🗑️ ${t.t('preset.favorite.removedTitle')}`,
+          t.t('preset.favorite.removed', { name: safeName }),
+        ),
+      ],
     });
   } catch (error) {
     if (logger) {
@@ -1154,7 +1315,7 @@ async function handleFavoriteListSubcommand(
   ctx: ExecutionContext,
   t: Translator,
   userId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const deferResponse = deferredResponse(true);
   ctx.waitUntil(processFavoriteList(interaction, env, t, userId, logger));
@@ -1166,33 +1327,27 @@ async function processFavoriteList(
   env: Env,
   t: Translator,
   userId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     const ids = await getPresetFavorites(env.KV, userId, logger);
     if (ids.length === 0) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
-          infoEmbed(
-            '⭐ Your favorite presets',
-            'You haven\'t favorited any presets yet. Use `/preset favorite add` to add one.'
-          ),
+          infoEmbed(`⭐ ${t.t('preset.favorite.listTitle')}`, t.t('preset.favorite.empty')),
         ],
       });
       return;
     }
     const resolved = await Promise.all(
-      ids.map((id) => presetApi.getPreset(env, id).catch(() => null))
+      ids.map((id) => presetApi.getPreset(env, id).catch(() => null)),
     );
     const presets = resolved.filter((p): p is CommunityPreset => p !== null);
 
     if (presets.length === 0) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
-          infoEmbed(
-            '⭐ Your favorite presets',
-            'All of your favorited presets appear to have been removed. Use `/preset favorite remove` to clean up entries.'
-          ),
+          infoEmbed(`⭐ ${t.t('preset.favorite.listTitle')}`, t.t('preset.favorite.allRemoved')),
         ],
       });
       return;
@@ -1201,15 +1356,15 @@ async function processFavoriteList(
     const lines = presets.map((p, i) => {
       const catEntry = CATEGORY_DISPLAY[p.category_id];
       const cat = catEntry?.name ?? p.category_id;
-      return `**${i + 1}.** ${p.name} — *${cat}*`;
+      return `**${i + 1}.** ${sanitizePresetName(p.name)} — *${cat}*`;
     });
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
-          title: `⭐ Your favorite presets (${presets.length}/${MAX_PRESET_FAVORITES})`,
+          title: `⭐ ${t.t('preset.favorite.listTitleCount', { n: presets.length, max: MAX_PRESET_FAVORITES })}`,
           description: lines.join('\n'),
-          color: 0xfee75c,
+          color: STATE.warning,
           footer: { text: t.t('common.footer') },
         },
       ],

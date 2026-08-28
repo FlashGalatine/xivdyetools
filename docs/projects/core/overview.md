@@ -1,6 +1,6 @@
 # Core Library Overview
 
-**@xivdyetools/core** v2.0.1 - The foundation of the XIV Dye Tools ecosystem
+**@xivdyetools/core** v4.0.0 - The foundation of the XIV Dye Tools ecosystem
 
 ---
 
@@ -8,10 +8,12 @@
 
 The core library is a TypeScript package that provides:
 
-- **136 Official FFXIV Dyes** - Complete database with accurate hex colors
-- **Facewear Dye Support** - Synthetic IDs (≤ -1000) for Facewear gear slot
-- **Color Algorithms** - Conversion, accessibility, colorblindness simulation
-- **Dye Matching** - O(log n) nearest-neighbor lookup via k-d tree
+- **125 Official FFXIV Dyes** - Complete database (`dyes.json`, schema v2, keyed by `stainID`)
+- **11 Facewear Colors** - A separate `facewearColors` collection; not dyes
+- **Color Algorithms** - Conversion (RGB/HSV/HSL/LAB/OKLAB/CMYK), accessibility, colorblindness simulation
+- **Color Blending** - Six algorithms incl. Kubelka-Munk spectral, via the `/blending` subpath
+- **Dye Matching** - k-d tree candidates re-ranked by one of six `MatchingMethod`s: `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` (`hyab` / `oklch-weighted` retired in 4.0.0; `normalizeMatchingMethod()` folds stored values), with per-method quality bands (`classifyBandTier`)
+- **Character files** - `.chara` (Anamnesis / Ktisis) parser + slot resolver, `SubRace 'Helions'`
 - **Color Harmonies** - Complementary, triadic, analogous, and more
 - **Palette Extraction** - K-means++ clustering from images
 - **Market Prices** - Universalis API integration with caching
@@ -102,11 +104,17 @@ The following categories of re-exports were removed from the core barrel:
 - **Auth types**: Various JWT and API response sub-types
 - **Logger classes**: `Logger`, `NoOpLogger`, `ConsoleLogger` (use `@xivdyetools/logger`)
 
+### New in v4.0.0 (5.0 wave)
+
+- **One matching vocabulary** — `MatchingMethod = 'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish'`, `DEFAULT_MATCHING_METHOD = 'ciede2000'`, `MATCHING_METHODS`, `normalizeMatchingMethod()`; per-method calibrated band tiers (`classifyBandTier`, `config/band-vocabulary.ts`) replace four divergent threshold copies
+- LCh hue rotation, Machado CVD matrices, `.chara` parser + `resolveCharaColors`, `dye-vocabulary.ts` (ex-maintainer), `presets.json` 2.0.0 (stainID-keyed, 15 curated rows), `MANUAL_TOPICS`, CMYK conversions, inverted-tetradic harmony
+- 3.0.0 (schema v2) and 2.8.0 (`/blending`) were folded in — neither was published to npm
+
 ### New in v2.0.0
 
 - **`ResolvedPreset`** — now exported from core's `PresetService` (migrated from types)
 - **28 symbols marked `@internal`** — still accessible via subpath imports but excluded from the public barrel export
-- **LRU cache for `rgbToOklab()`** — performance improvement for the recommended matching method
+- **LRU cache for `rgbToOklab()`** — performance improvement for OKLAB matching
 
 ---
 
@@ -128,11 +136,22 @@ The library works everywhere JavaScript runs:
 
 ### 1. Dye Database
 
-Complete database of 136 official FFXIV dyes with:
-- Accurate hex colors
-- Category classification (Basic, Brown, Red, etc.)
-- Item IDs for market lookup
+Complete database of **125 official FFXIV dyes** (`dyes.json`, schema v2). Each stored entry has
+seven fields — `stainID`, `name`, `hex`, `category`, `acquisition`, `consolidationType`,
+`legacyItemID` — and everything else is **derived at `DyeDatabase.initialize()`**:
+
+- `rgb` / `hsv` / `lab` computed from `hex` (the single colour source of truth)
+- `cost` / `currency` resolved through `ACQUISITION_META`
+- The five `is*` flags — `isMetallic` from `METALLIC_STAIN_IDS` (the Stain sheet's 16-dye gloss
+  set), `isCosmic ≡ consolidationType 'C'`, `isIshgardian ≡ 'B'`
 - Localized names in 6 languages
+
+The runtime `Dye` object therefore keeps its full 16-field shape; consumers of dye objects were
+unaffected by the schema migration. `Dye.itemID` remains a `number` (= `legacyItemID`, falling
+back to `stainID` for future consolidated-only dyes).
+
+The **11 Facewear colours are separate** — `facewearColors` / `facewear_colors.json`, typed as
+`FacewearColor`. They are excluded from the k-d tree because they are not market-tradeable.
 
 ```typescript
 import { dyeDatabase } from '@xivdyetools/core';
@@ -149,20 +168,19 @@ const browns = dyeDatabase.getByCategory('brown');
 
 ### 2. Color Matching
 
-Find the closest FFXIV dye to any color with O(log n) performance:
+Find the closest FFXIV dye to any color — k-d tree candidates, re-ranked by the chosen `MatchingMethod` (ΔE2000 by default):
 
 ```typescript
 const dyeService = new DyeService(dyeDatabase);
 
-// Single best match
+// Single best match (ciede2000)
 const best = dyeService.findClosestDye('#FF6B6B');
 
-// Top 5 matches
-const top5 = dyeService.findClosestDyes('#FF6B6B', 5);
+// With options: another method, exclusions
+const bestOklab = dyeService.findClosestDye('#FF6B6B', { matchingMethod: 'oklab', excludeIds: [] });
 
-// Match returns distance metrics
-console.log(best.distance);   // RGB distance
-console.log(best.deltaE);     // CIE deltaE (perceptual difference)
+// Every dye within a distance, sorted
+const near = dyeService.findDyesWithinDistance('#FF6B6B', { maxDistance: 10 });
 ```
 
 ### 3. Color Harmonies
@@ -225,8 +243,8 @@ const api = new APIService();
 // Get price for a specific item
 const prices = await api.getPriceData(19952, 'Gilgamesh');
 
-// Get prices for multiple items
-const bulkPrices = await api.getPricesForItems([19952, 19953], 'Gilgamesh');
+// Get prices for multiple items in a data center
+const bulkPrices = await api.getPricesForDataCenter([19952, 19953], 'Aether');
 ```
 
 ---
@@ -270,7 +288,7 @@ Built for speed with algorithmic optimizations:
 | rgbToOklab (cached) | O(1) amortized | <0.01ms |
 
 **v2.0.0 Performance Improvements**:
-- **LRU cache for `rgbToOklab()`** — OKLAB is the recommended matching method; caching eliminates redundant conversions on the hot path (OPT-001)
+- **LRU cache for `rgbToOklab()`** — caching eliminates redundant conversions on the OKLAB hot path (OPT-001); since 2.7.0 the perceptual search is an exact linear scan over the pool (~0.4 ms), the k-d tree serving the RGB path
 - **APIService cache metrics** — hit/miss/eviction tracking for observability (OPT-002)
 
 See [Algorithms](algorithms.md) for implementation details.

@@ -2,16 +2,10 @@
  * Command Handlers Index
  *
  * Re-exports all command handlers for cleaner imports.
- *
- * V4 Changes:
- * - Added: handleExtractorCommand (replaces handleMatchCommand + handleMatchImageCommand)
- * - Added: handleGradientCommand (replaces legacy mixer)
- * - Deprecated: handleMatchCommand, handleMatchImageCommand
- *   (kept for backward compatibility during migration)
  */
 
 export { handleAboutCommand } from './about.js';
-export { handleHarmonyCommand, getHarmonyTypeChoices } from './harmony.js';
+export { handleHarmonyCommand } from './harmony.js';
 export { handleDyeCommand } from './dye.js';
 
 // V4 Commands
@@ -21,16 +15,11 @@ export { handlePreferencesCommand } from './preferences.js';
 export { handleMixerV4Command } from './mixer-v4.js';
 export { handleSwatchCommand } from './swatch.js';
 
-// Legacy commands (deprecated in v4, kept for backward compatibility)
-export { handleMatchCommand } from './match.js';
-export { handleMatchImageCommand } from './match-image.js';
-
 export { handleAccessibilityCommand } from './accessibility.js';
+export { handleContrastCommand } from './contrast.js';
 export { handleManualCommand } from './manual.js';
+export { handleChangelogCommand } from './changelog.js';
 export { handleComparisonCommand } from './comparison.js';
-export { handleLanguageCommand } from './language.js';
-export { handleFavoritesCommand } from './favorites.js';
-export { handleCollectionCommand } from './collection.js';
 export { handlePresetCommand } from './preset.js';
 export { handleStatsCommand } from './stats.js';
 export { handleBudgetCommand, handleBudgetAutocomplete } from './budget.js';

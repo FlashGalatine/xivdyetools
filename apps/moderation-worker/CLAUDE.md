@@ -12,7 +12,7 @@ This split keeps the privileged moderation surface (ban/unban, approve/reject, r
 
 ```bash
 npm run dev                  # wrangler dev
-npm run deploy               # Deploy to staging
+npm run deploy               # Deploy to the DEV worker (xivdyetools-moderation-worker-dev, no routes)
 npm run deploy:production    # Deploy to production env
 npm run test                 # vitest unit tests
 npm run test:coverage        # Coverage via @vitest/coverage-v8
@@ -132,7 +132,7 @@ Vars: `DISCORD_CLIENT_ID = 1453806659708129374` (separate Discord app), `PRESETS
 | Secret | Purpose |
 |--------|---------|
 | `BOT_API_SECRET` | Bearer token for outbound calls to presets-api |
-| `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing (required in prod) |
+| `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing (required in prod) — min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys) |
 | `SUBMISSION_LOG_CHANNEL_ID` | Audit channel for approved submissions |
 
 ## Key Patterns
@@ -216,7 +216,7 @@ Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side
 
 | Command | Description |
 |---------|-------------|
-| `/preset moderate` | Browse pending presets, approve/reject via buttons |
+| `/preset moderate` | Browse the pending queue, approve/reject via buttons. Entries whose *preview picture* alone is awaiting review are marked 🖼 with a "Picture pending review" note — approve/reject there act on the preset's status, so picture review happens on the moderation embed discord-worker posts (1.4.0) |
 | `/preset ban_user` | Ban a user (autocomplete searches preset authors) |
 | `/preset unban_user` | Unban a user (autocomplete searches `banned_users`) |
 
@@ -226,10 +226,10 @@ Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side
 |---------|---------|
 | `hono` | HTTP framework |
 | `@xivdyetools/auth` | JWT/HMAC/Ed25519 helpers |
-| `@xivdyetools/rate-limiter` | KV sliding window backend |
+| `@xivdyetools/worker-kit/rate-limiter` | KV sliding window backend |
 | `@xivdyetools/types` | Shared interfaces |
 | `@xivdyetools/logger` | Structured logging |
-| `@xivdyetools/worker-middleware` | Shared Hono middleware |
+| `@xivdyetools/worker-kit` | Shared Hono middleware |
 | `discord-interactions` (dev) | Used by `scripts/register-commands.ts` |
 
 ## Localization
@@ -251,7 +251,7 @@ npx vitest run -t "ban"                                   # Pattern match
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/rate-limiter`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
+**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
 
 **Service Bindings (outbound):** `xivdyetools-presets-api`
 
@@ -261,7 +261,7 @@ npx vitest run -t "ban"                                   # Pattern match
 
 1. `wrangler secret list` — verify all required secrets are present (especially `BOT_SIGNING_SECRET` for production).
 2. `npm run lint && npm run test -- --run && npm run type-check`.
-3. `npm run deploy` — push to staging.
+3. `npm run deploy` — publishes the routeless `xivdyetools-moderation-worker-dev` worker (there is no staging env).
 4. Run `/preset moderate` in the test guild — confirm pending list loads via Service Binding.
 5. `npm run deploy:production`.
 6. If slash command schemas changed: `npm run register-commands` (with prod `DISCORD_CLIENT_ID = 1453806659708129374`).

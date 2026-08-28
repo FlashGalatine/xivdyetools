@@ -1,0 +1,482 @@
+
+📊 UNUSED TRANSLATION KEYS ANALYSIS
+
+======================================================================
+
+Total keys defined: 1485
+Keys directly referenced: 775
+Keys dynamically referenced: 201
+Truly unused keys: 507
+Effective usage rate: 65.9%
+
+🔄 Dynamic prefixes detected:
+   • "accessibility.visionDesc*" (5 keys)
+   • "accessibility.*" (62 keys)
+   • "swatch.*" (79 keys)
+   • "harmony.*" (64 keys)
+   • "comparison.*" (97 keys)
+   • "mixer.model*" (12 keys)
+   • "themes.*" (4 keys)
+   • "harmony.types.*" (10 keys)
+
+======================================================================
+
+📁 UNUSED KEYS BY NAMESPACE
+
+
+## preset (107 unused)
+   • preset.featured
+     "Featured"
+   • preset.allPresets
+     "All Presets"
+   • preset.loadMore
+     "Load More"
+   • preset.search
+     "Search"
+   • preset.browse
+     "Browse"
+   • preset.searchPlaceholder
+     "Search presets, dyes, tags…"
+   • preset.categoriesTitle
+     "Categories"
+   • preset.sortBy
+     "Sort By"
+   • preset.account
+     "Account"
+   • preset.submissions
+     "submissions"
+   ... and 97 more
+
+## mixer (61 unused)
+   • mixer.selectStartEnd
+     "Select Start & End Dyes"
+   • mixer.interpolationSteps
+     "Interpolation Steps"
+   • mixer.stepsHint
+     "More steps provide a smoother transition but may r..."
+   • mixer.colorSpaceRgb
+     "RGB (Linear)"
+   • mixer.colorSpaceHsv
+     "HSV (Perceptual)"
+   • mixer.colorSpaceHint
+     "HSV typically produces more natural-looking transi..."
+   • mixer.quickActions
+     "Quick Actions"
+   • mixer.saveGradient
+     "Save Gradient"
+   • mixer.copyShareUrl
+     "Copy Share URL"
+   • mixer.savedGradients
+     "Saved Gradients"
+   ... and 51 more
+
+## config (48 unused)
+   • config.showDeltaE
+     "Show Delta-E"
+   • config.hsvHueBased
+     "HSV (Hue-based)"
+   • config.rgbDirect
+     "RGB (Direct)"
+   • config.category
+     "Category"
+   • config.allCategories
+     "All Categories"
+   • config.jobs
+     "Jobs"
+   • config.grandCompanies
+     "Grand Companies"
+   • config.seasons
+     "Seasons"
+   • config.events
+     "Events"
+   • config.aesthetics
+     "Aesthetics"
+   ... and 38 more
+
+## matcher (43 unused)
+   • matcher.imageUpload
+     "Image Upload"
+   • matcher.manualColorInput
+     "Manual Color Input"
+   • matcher.orClickBrowse
+     "or click to browse"
+   • matcher.supportedFormats
+     "Supported formats: PNG, JPG, GIF, WebP"
+   • matcher.privacyNoteFull
+     "Privacy: Images never leave your browser. All proc..."
+   • matcher.privacyNoticeHtml
+     "<strong>Privacy Protected:</strong> Photos and ima..."
+   • matcher.pasteFromClipboard
+     "Paste from Clipboard"
+   • matcher.pasteNotSupported
+     "Clipboard API not available. Use Ctrl+V to paste."
+   • matcher.pickFromImage
+     "Pick from Image"
+   • matcher.imageColorPicker
+     "Image Color Picker"
+   ... and 33 more
+
+## tools (42 unused)
+   • tools.harmony.shortName
+     "Harmony"
+   • tools.harmony.description
+     "Generate harmonious color palettes"
+   • tools.harmony.subtitle
+     "Discover harmonious color combinations using color..."
+   • tools.matcher.title
+     "Palette Extractor"
+   • tools.matcher.shortName
+     "Extractor"
+   • tools.matcher.description
+     "Match colors from images"
+   • tools.matcher.subtitle
+     "Upload an image or select a color to find the clos..."
+   • tools.accessibility.description
+     "Simulate colorblindness"
+   • tools.accessibility.subtitle
+     "Check how dye combinations appear to players with ..."
+   • tools.comparison.description
+     "Compare up to 4 dyes"
+   ... and 32 more
+
+## tutorial (36 unused)
+   • tutorial.harmony.baseColor.title
+     "Select a Base Dye"
+   • tutorial.harmony.baseColor.description
+     "Choose a dye from the color palette to use as your..."
+   • tutorial.harmony.filters.title
+     "Search & Filter"
+   • tutorial.harmony.filters.description
+     "Use the search box to find dyes by name, or filter..."
+   • tutorial.harmony.favorites.title
+     "Your Favorites"
+   • tutorial.harmony.favorites.description
+     "Star any dye to save it to your favorites. Click t..."
+   • tutorial.harmony.toolBanner.title
+     "Switch Tools"
+   • tutorial.harmony.toolBanner.description
+     "Click any tool icon to switch between different fe..."
+   • tutorial.matcher.palette.title
+     "Color Palette"
+   • tutorial.matcher.palette.description
+     "Select dyes from the palette on the right to use i..."
+   ... and 26 more
+
+## budget (29 unused)
+   • budget.quickPicks
+     "Quick Picks"
+   • budget.budgetLimit
+     "Budget Limit"
+   • budget.sortBy
+     "Sort By"
+   • budget.maxPrice
+     "Max Price"
+   • budget.loading
+     "Loading alternatives..."
+   • budget.marketPrice
+     "Market Price"
+   • budget.alternativesWithinBudget
+     "alternatives within budget"
+   • budget.alternativeWithinBudget
+     "alternative within budget"
+   • budget.sortedBy
+     "Sorted by"
+   • budget.sortMatch
+     "Best Match"
+   ... and 19 more
+
+## common (26 unused)
+   • common.dye
+     "Dye"
+   • common.dyes
+     "dyes"
+   • common.generate
+     "Generate"
+   • common.select
+     "Select"
+   • common.copy
+     "Copy"
+   • common.search
+     "Search"
+   • common.filter
+     "Filter"
+   • common.or
+     "or"
+   • common.baseColor
+     "Base Color"
+   • common.targetColor
+     "Target Color"
+   ... and 16 more
+
+## gradient (21 unused)
+   • gradient.clickToSelectStart
+     "Click to select start color"
+   • gradient.clickToSelectEnd
+     "Click to select end color"
+   • gradient.idealLabel
+     "IDEAL"
+   • gradient.matchedLabel
+     "DYE"
+   • gradient.fromLabel
+     "FROM"
+   • gradient.toLabel
+     "TO"
+   • gradient.endpoints
+     "Endpoints"
+   • gradient.interpolation
+     "Interpolation"
+   • gradient.unpinStep
+     "Unpin"
+   • gradient.startColour
+     "Start colour"
+   ... and 11 more
+
+## palette (15 unused)
+   • palette.savedPalettes
+     "Saved Palettes"
+   • palette.savedCount
+     "{count} palette(s) saved"
+   • palette.noPalettes
+     "No saved palettes yet"
+   • palette.saveHint
+     "Click the bookmark icon on any harmony card to sav..."
+   • palette.name
+     "Palette Name"
+   • palette.preview
+     "Preview"
+   • palette.load
+     "Load"
+   • palette.export
+     "Export All"
+   • palette.import
+     "Import"
+   • palette.imported
+     "{count} palette(s) imported"
+   ... and 5 more
+
+## errors (13 unused)
+   • errors.invalidHex
+     "Invalid hexadecimal color format. Use #RRGGBB."
+   • errors.invalidRgb
+     "RGB values must be between 0 and 255."
+   • errors.dyeNotFound
+     "Dye not found in database."
+   • errors.databaseLoadFailed
+     "Failed to load dye database. Please refresh the pa..."
+   • errors.apiFailed
+     "Failed to fetch data from market board."
+   • errors.networkError
+     "Network connection error. Please check your intern..."
+   • errors.failedToLoadSubmissions
+     "Failed to load submissions. Please try again."
+   • errors.failedToDeletePreset
+     "Failed to delete preset. Please try again."
+   • errors.regionTooSmall
+     "Selected region is too small"
+   • errors.noPixelsInRegion
+     "No pixels to analyze in selected region"
+   ... and 3 more
+
+## colorPalette (12 unused)
+   • colorPalette.neutral
+     "Neutral"
+   • colorPalette.reds
+     "Reds"
+   • colorPalette.browns
+     "Browns"
+   • colorPalette.yellows
+     "Yellows"
+   • colorPalette.oranges
+     "Oranges"
+   • colorPalette.greens
+     "Greens"
+   • colorPalette.blues
+     "Blues"
+   • colorPalette.purples
+     "Purples"
+   • colorPalette.pinks
+     "Pinks"
+   • colorPalette.whites
+     "Whites"
+   ... and 2 more
+
+## filters (12 unused)
+   • filters.title
+     "Dye Filters"
+   • filters.advancedFilters
+     "Advanced Dye Filters"
+   • filters.category
+     "Category"
+   • filters.allCategories
+     "All Categories"
+   • filters.excludeMetallicDesc
+     "Hide dyes with "Metallic" in the name"
+   • filters.excludePastelDesc
+     "Hide dyes with "Pastel" in the name"
+   • filters.excludeDarkDesc
+     "Hide dyes that begin with "Dark""
+   • filters.excludeCosmicDesc
+     "Hide dyes from Cosmic Exploration & Cosmic Fortune..."
+   • filters.excludeExpensiveDesc
+     "Hide Jet Black & Pure White"
+   • filters.excludeSpecial
+     "Exclude Special Dyes"
+   ... and 2 more
+
+## marketBoard (8 unused)
+   • marketBoard.dataCenter
+     "Data Center"
+   • marketBoard.world
+     "World"
+   • marketBoard.selectWorld
+     "Select a world"
+   • marketBoard.standardSpectrumDye
+     "Standard Spectrum Dye"
+   • marketBoard.wideSpectrum1Dye
+     "Wide Spectrum #1 Dye"
+   • marketBoard.wideSpectrum2Dye
+     "Wide Spectrum #2 Dye"
+   • marketBoard.lastUpdated
+     "Last updated: {time}"
+   • marketBoard.fetchingPrices
+     "Fetching prices..."
+
+## advanced (6 unused)
+   • advanced.dataTitle
+     "Data"
+   • advanced.dataSummary
+     "reset · clear saved dyes, favorites, palettes"
+   • advanced.backupTitle
+     "Backup"
+   • advanced.backupSummary
+     "export / import settings as JSON"
+   • advanced.behaviorTitle
+     "Behaviour"
+   • advanced.behaviorSummary
+     "performance mode · analytics"
+
+## app (5 unused)
+   • app.title
+     "XIV Dye Tools"
+   • app.loading
+     "Loading..."
+   • app.error
+     "An error occurred"
+   • app.retry
+     "Retry"
+   • app.reload
+     "Reload Page"
+
+## collections (5 unused)
+   • collections.favoritesEmpty
+     "No favorites yet"
+   • collections.favoritesCount
+     "{count} favorite(s)"
+   • collections.collections
+     "Collections"
+   • collections.collectionsFull
+     "Maximum {max} collections allowed"
+   • collections.removeFromCollection
+     "Remove from collection"
+
+## auth (5 unused)
+   • auth.logout
+     "Logout"
+   • auth.loginWithDiscord
+     "Login with Discord"
+   • auth.loginWithXIVAuth
+     "Login with XIVAuth"
+   • auth.userMenu
+     "User menu"
+   • auth.verified
+     "Verified"
+
+## welcome (4 unused)
+   • welcome.lead.harmony
+     "Start from one dye and get the four or five that g..."
+   • welcome.lead.extractor
+     "Upload a screenshot; get the closest dye for every..."
+   • welcome.lead.mixer
+     "Blend two dyes to see what sits between them, then..."
+   • welcome.lead.gradient
+     "Build a ramp between two dyes — every step is a dy..."
+
+## success (3 unused)
+   • success.exported
+     "Data exported successfully!"
+   • success.settingsSaved
+     "Settings saved!"
+   • success.gradientSaved
+     "Gradient saved!"
+
+## header (1 unused)
+   • header.tools
+     "Tools"
+
+## footer (1 unused)
+   • footer.version
+     "Version"
+
+## dyeSelector (1 unused)
+   • dyeSelector.randomDyeSelected
+     "Random dye selected: {name}"
+
+## offline (1 unused)
+   • offline.pricesUnavailable
+     "Market prices unavailable while offline"
+
+## aria (1 unused)
+   • aria.refreshSubmissions
+     "Refresh submissions"
+
+## resultCard (1 unused)
+   • resultCard.categoryShort
+     "CAT."
+
+======================================================================
+
+📋 ANALYSIS & RECOMMENDATIONS
+
+📚 CATEGORIZATION:
+
+   🎓 Tutorial keys: 36
+      These may be for planned/removed tutorial features
+
+   🛠️  Feature-specific keys: 108
+      (mixer, matcher, welcome, export namespaces)
+      Review if these features have been refactored
+
+   🔧 Common utility keys: 26
+      Generic labels that may be used in future features
+
+   ❓ Other unused keys: 337
+      May be safe to remove after manual review
+
+======================================================================
+
+💡 RECOMMENDATIONS:
+
+1. KEEP: Tutorial keys (36) - may be re-enabled in future
+2. REVIEW: Feature keys - check if features were removed
+3. CONSIDER KEEPING: Common utility keys for future use
+4. SAFE TO REMOVE: Keys for deprecated features
+
+📦 Potential bundle size reduction: ~148.5 KB
+   (if all unused keys were removed from all 6 locales)
+
+Unused keys by namespace:
+   • preset: 107 keys
+   • mixer: 61 keys
+   • config: 48 keys
+   • matcher: 43 keys
+   • tools: 42 keys
+   • tutorial: 36 keys
+   • budget: 29 keys
+   • common: 26 keys
+   • gradient: 21 keys
+   • palette: 15 keys
+   • errors: 13 keys
+   • colorPalette: 12 keys
+   • filters: 12 keys
+   • marketBoard: 8 keys
+   • advanced: 6 keys

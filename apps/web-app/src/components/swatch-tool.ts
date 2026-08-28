@@ -24,12 +24,26 @@ import {
   ToastService,
 } from '@services/index';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
-import { CharacterColorService, ColorConverter } from '@xivdyetools/core';
-import type { CharacterColor, CharacterColorMatch, SubRace, Gender } from '@xivdyetools/types';
-import { ICON_TOOL_CHARACTER } from '@shared/tool-icons';
+import { CharacterColorService, normalizeMatchingMethod } from '@xivdyetools/core';
+import { RACE_SUBRACES } from '@xivdyetools/types';
+import type {
+  CharacterColor,
+  CharacterColorMatch,
+  SubRace,
+  Gender,
+  Race,
+} from '@xivdyetools/types';
+import {
+  ICON_TOOL_CHARACTER,
+  ICON_TOOL_HARMONY,
+  ICON_TOOL_COMPARISON,
+  ICON_TOOL_GRADIENT,
+  ICON_TOOL_ACCESSIBILITY,
+} from '@shared/tool-icons';
 import { ICON_PALETTE, ICON_MARKET } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type {
   SwatchConfig,
@@ -47,6 +61,7 @@ import '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import { ShareService } from '@services/share-service';
+import { CharaImport, type CharaSlotGridRef } from '@components/chara-import';
 
 // ============================================================================
 // Types and Constants
@@ -85,46 +100,48 @@ const STORAGE_KEYS = {
 } as const;
 
 /**
- * Mapping from SubRace type values to ClanKey for localization lookup
- * SubRace uses PascalCase, ClanKey uses camelCase
+ * Localization key for each race — a presentation concern local to this
+ * component (differs from the canonical `Race` key by casing).
  */
-const SUBRACE_TO_CLAN_KEY: Record<SubRace, string> = {
-  Midlander: 'midlander',
-  Highlander: 'highlander',
-  Wildwood: 'wildwood',
-  Duskwight: 'duskwight',
-  Plainsfolk: 'plainsfolk',
-  Dunesfolk: 'dunesfolk',
-  SeekerOfTheSun: 'seekerOfTheSun',
-  KeeperOfTheMoon: 'keeperOfTheMoon',
-  SeaWolf: 'seaWolf',
-  Hellsguard: 'hellsguard',
-  Raen: 'raen',
-  Xaela: 'xaela',
-  Helion: 'helion',
-  TheLost: 'theLost',
-  Rava: 'rava',
-  Veena: 'veena',
+const RACE_KEY_BY_RACE: Record<Race, string> = {
+  Hyur: 'hyur',
+  Elezen: 'elezen',
+  Lalafell: 'lalafell',
+  "Miqo'te": 'miqote',
+  Roegadyn: 'roegadyn',
+  AuRa: 'auRa',
+  Hrothgar: 'hrothgar',
+  Viera: 'viera',
 };
 
 /**
- * Race groups with their subraces and race key for localization
+ * Race groups with their subraces and race key for localization.
+ *
+ * The race/subrace *set* and order are sourced from the shared
+ * `RACE_SUBRACES` table in `@xivdyetools/types` (DEAD-024 adoption);
+ * `RACE_KEY_BY_RACE` above is this component's own presentation layer.
  */
-const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = [
-  { raceKey: 'hyur', subraces: ['Midlander', 'Highlander'] },
-  { raceKey: 'elezen', subraces: ['Wildwood', 'Duskwight'] },
-  { raceKey: 'lalafell', subraces: ['Plainsfolk', 'Dunesfolk'] },
-  { raceKey: 'miqote', subraces: ['SeekerOfTheSun', 'KeeperOfTheMoon'] },
-  { raceKey: 'roegadyn', subraces: ['SeaWolf', 'Hellsguard'] },
-  { raceKey: 'auRa', subraces: ['Raen', 'Xaela'] },
-  { raceKey: 'hrothgar', subraces: ['Helion', 'TheLost'] },
-  { raceKey: 'viera', subraces: ['Rava', 'Veena'] },
-];
+export const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = (
+  Object.entries(RACE_SUBRACES) as Array<[Race, readonly [SubRace, SubRace]]>
+).map(([race, subraces]) => ({
+  raceKey: RACE_KEY_BY_RACE[race],
+  subraces: [...subraces],
+}));
 
 /**
  * Categories that are race-specific (need subrace/gender)
  */
 const RACE_SPECIFIC_CATEGORIES: ColorCategory[] = ['hairColors', 'skinColors'];
+
+/**
+ * Categories whose preset palettes are retired by the Evercold expansion
+ * (January 2027): eye, hair, and skin colors switch to a free color picker
+ * in the character creator, so these preset grids will be replaced by a
+ * color-picker input. A notice banner is shown while they remain.
+ * (highlightColors may join this set if hair highlights are confirmed to use
+ * the free picker too.)
+ */
+const EVERCOLD_DEPRECATED_CATEGORIES: ColorCategory[] = ['eyeColors', 'hairColors', 'skinColors'];
 
 /**
  * Default values
@@ -135,6 +152,57 @@ const DEFAULTS = {
   colorCategory: 'eyeColors' as ColorCategory,
   matchCount: 3,
 };
+
+// ============================================================================
+// 10A Sheet vocabulary (drawn card metrics)
+// ============================================================================
+
+const MONO = "'Fragment Mono', monospace";
+
+/**
+ * Grid cell sizes per the 5.0 register: a dense 26px reference chart on
+ * desktop (the slot cards' chip size), 44px touch targets on mobile.
+ */
+const GRID_CELL_DESKTOP = 26;
+const GRID_CELL_MOBILE = 44;
+/** The swatch grid's own gap, shared by the 8-column template below. */
+const GRID_GAP = 4;
+/**
+ * Width of the desktop swatch grid: 8 cells plus 7 gaps.
+ *
+ * The grid panel is `width: fit-content`, so ANY child's max-content width can
+ * decide the panel's width. Prose children must therefore be capped to this,
+ * or a single long sentence resolves fit-content to the whole sentence on one
+ * line and blows the panel out (the Evercold notice did exactly that).
+ */
+const GRID_WIDTH_DESKTOP = GRID_CELL_DESKTOP * 8 + GRID_GAP * 7;
+/** Matches globals.css h1–h6 — Space Grotesk with the system fallback. */
+const SANS = "'Space Grotesk', system-ui, sans-serif";
+
+/**
+ * Method display tags — identifiers, never localised. Mirrors core's
+ * MATCHING_METHOD_TAGS (kept local so the tag map is available even where
+ * core is mocked/minimal).
+ *
+ * RGB DIST and DISTINGUISH % stay untranslated identifiers by decision (2026-08-20 i18n audit).
+ */
+const METHOD_TAGS: Record<MatchingMethod, string> = {
+  ciede2000: 'ΔE2000',
+  oklab: 'ΔEOK',
+  cie76: 'ΔE76',
+  redmean: 'REDMEAN',
+  rgb: 'RGB DIST',
+  distinguish: 'DISTINGUISH %',
+};
+
+/** The selected thing the verdict card describes (sheet slot or grid cell). */
+interface SwatchSelectionContext {
+  source: 'slot' | 'grid';
+  /** slot source only */
+  hex?: string;
+  label?: string;
+  gridRef?: CharaSlotGridRef | null;
+}
 
 // ============================================================================
 // CharacterTool Component
@@ -148,6 +216,7 @@ const DEFAULTS = {
 export class SwatchTool extends BaseComponent {
   private options: SwatchToolOptions;
   private characterColorService: CharacterColorService;
+  private charaImport: CharaImport | null = null;
   private marketBoardService: MarketBoardService;
 
   // State
@@ -163,7 +232,8 @@ export class SwatchTool extends BaseComponent {
 
   // Display options (from ConfigController) - for v4-result-card
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
-  private matchingMethod: MatchingMethod = 'oklab';
+  // 5.0: one vocabulary across the suite — ΔE2000 default, same as 7C/9C.
+  private matchingMethod: MatchingMethod = 'ciede2000';
   private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
 
   // Reverse matching state (dye/hex → closest swatch)
@@ -190,7 +260,12 @@ export class SwatchTool extends BaseComponent {
   // DOM References
   private colorGridContainer: HTMLElement | null = null;
   private matchResultsContainer: HTMLElement | null = null;
-  private selectedColorDisplay: HTMLElement | null = null;
+  /** 10A selection card (verdict sentence + IN-THE-CREATOR excerpt) */
+  private selectionCardContainer: HTMLElement | null = null;
+  /** 10A SEND TO handoff row (always at the flow's bottom) */
+  private handoffContainer: HTMLElement | null = null;
+  /** Mono unit tag beside the CLOSEST DYES header */
+  private unitTagEl: HTMLElement | null = null;
   private emptyStateContainer: HTMLElement | null = null;
   private shareButton: ShareButton | null = null;
   private reverseResultsContainer: HTMLElement | null = null;
@@ -202,6 +277,12 @@ export class SwatchTool extends BaseComponent {
   // Layout containers for responsive behavior
   private mainLayout: HTMLElement | null = null;
   private gridPanel: HTMLElement | null = null;
+  private paletteRailContainer: HTMLElement | null = null;
+  private gridTitleEl: HTMLElement | null = null;
+  /** Loaded .chara character — drives grid pins and the readout lock */
+  private charaResolved: import('@xivdyetools/core').ResolvedCharaCharacter | null = null;
+  /** What the selection card describes — the last slot pick or grid click */
+  private selectionContext: SwatchSelectionContext | null = null;
 
   // Mobile DOM References
   private mobileSubraceSelect: HTMLSelectElement | null = null;
@@ -218,7 +299,15 @@ export class SwatchTool extends BaseComponent {
     this.marketBoardService = MarketBoardService.getInstance();
 
     // Load persisted settings
-    this.subrace = StorageService.getItem<SubRace>(STORAGE_KEYS.subrace) ?? DEFAULTS.subrace;
+    {
+      // 5.0 stored-tribe migration: 'Helion' was renamed 'Helions' (the
+      // game's plural); migrate the persisted value on read.
+      const storedSubrace = StorageService.getItem<string>(STORAGE_KEYS.subrace);
+      this.subrace =
+        storedSubrace === 'Helion'
+          ? 'Helions'
+          : ((storedSubrace as SubRace | null) ?? DEFAULTS.subrace);
+    }
     this.gender = StorageService.getItem<Gender>(STORAGE_KEYS.gender) ?? DEFAULTS.gender;
     this.colorCategory =
       StorageService.getItem<ColorCategory>(STORAGE_KEYS.colorCategory) ?? DEFAULTS.colorCategory;
@@ -302,6 +391,8 @@ export class SwatchTool extends BaseComponent {
   destroy(): void {
     this.resultsPanelMediaQueryCleanup?.();
 
+    this.charaImport?.destroy();
+    this.charaImport = null;
     this.marketBoard?.destroy();
     this.marketPanel?.destroy();
     this.racePanel?.destroy();
@@ -523,7 +614,9 @@ export class SwatchTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
     this.reverseDyeHex = hex.startsWith('#') ? hex : `#${hex}`;
-    this.reverseDyeName = `Custom (${this.reverseDyeHex.toUpperCase()})`;
+    this.reverseDyeName = LanguageService.tInterpolate('common.customColorName', {
+      hex: this.reverseDyeHex.toUpperCase(),
+    });
     logger.info(`[SwatchTool] Reverse match: custom color ${this.reverseDyeHex}`);
     this.performReverseMatch();
   }
@@ -540,7 +633,8 @@ export class SwatchTool extends BaseComponent {
       return;
     }
 
-    const TOP_N = 3;
+    // 5.0: the hardcoded top-3 is cut — the result count follows the same
+    // maxResults control as the forward side.
     const scored: Array<{ color: CharacterColor; distance: number }> = [];
 
     for (const color of this.colors) {
@@ -549,7 +643,7 @@ export class SwatchTool extends BaseComponent {
     }
     scored.sort((a, b) => a.distance - b.distance);
 
-    this.reverseMatchedSwatches = scored.slice(0, TOP_N).map((s, i) => ({
+    this.reverseMatchedSwatches = scored.slice(0, this.maxResults).map((s, i) => ({
       color: s.color,
       distance: s.distance,
       rank: i + 1,
@@ -568,35 +662,22 @@ export class SwatchTool extends BaseComponent {
    * Mirrors CharacterColorService.calculateDistanceWithMethod.
    */
   private calculateColorDistance(hex1: string, hex2: string): number {
-    switch (this.matchingMethod) {
-      case 'rgb': {
-        const r1 = ColorService.hexToRgb(hex1);
-        const r2 = ColorService.hexToRgb(hex2);
-        const dr = r1.r - r2.r;
-        const dg = r1.g - r2.g;
-        const db = r1.b - r2.b;
-        return Math.sqrt(dr * dr + dg * dg + db * db);
-      }
-      case 'cie76':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
-      case 'ciede2000':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
-      case 'hyab':
-        return ColorConverter.getDeltaE_HyAB(hex1, hex2);
-      case 'oklab':
-      default:
-        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-    }
+    // 5.0: one dispatch suite-wide (dE2000 default lives in core)
+    return ColorService.getDistanceForMethod(hex1, hex2, this.matchingMethod);
   }
 
   /**
-   * Apply blue glow highlights to reverse-matched swatches.
-   * Uses box-shadow (distinct from forward selection's outline).
+   * Ring reverse-matched swatches. One vocabulary: the theme accent at three
+   * strengths by rank (the legacy blue second vocabulary was cut in 10A).
+   * Still a box-shadow, so it reads as distinct from the forward selection's
+   * outline without introducing a colour the palette never uses.
    */
   private updateReverseHighlights(): void {
     if (!this.colorGridContainer) return;
 
     const reverseMap = new Map(this.reverseMatchedSwatches.map((m) => [m.color.index, m.rank]));
+    const accent = (pct: number): string =>
+      `color-mix(in srgb, var(--theme-primary) ${pct}%, transparent)`;
 
     this.colorGridContainer.querySelectorAll('button').forEach((swatch) => {
       const el = swatch as HTMLElement;
@@ -607,13 +688,13 @@ export class SwatchTool extends BaseComponent {
       el.style.boxShadow = '';
 
       if (rank === 1) {
-        el.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.9), 0 0 12px rgba(59, 130, 246, 0.5)';
+        el.style.boxShadow = `0 0 0 3px ${accent(90)}, 0 0 12px ${accent(50)}`;
         if (index !== this.selectedColor?.index) el.style.zIndex = '9';
       } else if (rank === 2) {
-        el.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.6), 0 0 8px rgba(59, 130, 246, 0.3)';
+        el.style.boxShadow = `0 0 0 2px ${accent(60)}, 0 0 8px ${accent(30)}`;
         if (index !== this.selectedColor?.index) el.style.zIndex = '8';
       } else if (rank === 3) {
-        el.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 4px rgba(59, 130, 246, 0.15)';
+        el.style.boxShadow = `0 0 0 2px ${accent(30)}, 0 0 4px ${accent(15)}`;
         if (index !== this.selectedColor?.index) el.style.zIndex = '7';
       } else if (index !== this.selectedColor?.index) {
         el.style.zIndex = 'auto';
@@ -749,8 +830,12 @@ export class SwatchTool extends BaseComponent {
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            background: ${match.rank === 1 ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255, 255, 255, 0.08)'};
-            color: ${match.rank === 1 ? 'rgb(147, 197, 253)' : 'var(--theme-text-muted, #a0a0a0)'};
+            background: ${
+              match.rank === 1
+                ? 'color-mix(in srgb, var(--theme-primary) 18%, transparent)'
+                : 'var(--theme-background-secondary)'
+            };
+            color: ${match.rank === 1 ? 'var(--theme-primary)' : 'var(--theme-text-muted, #a0a0a0)'};
             font-size: 11px;
             font-weight: 700;
             flex-shrink: 0;
@@ -788,7 +873,10 @@ export class SwatchTool extends BaseComponent {
       });
 
       const posLabel = this.createElement('span', {
-        textContent: `Row ${gridRow}, Column ${gridCol}`,
+        textContent: LanguageService.tInterpolate('swatch.rowColumn', {
+          row: gridRow,
+          col: gridCol,
+        }),
         attributes: {
           style: `
             font-size: 13px;
@@ -1155,6 +1243,14 @@ export class SwatchTool extends BaseComponent {
     `
     );
 
+    // 10A: the .chara reader sits ABOVE the workspace — the drop zone is an
+    // offer, not a replacement; everything below keeps working without it.
+    // (Constructed further down, once the glamour container exists.)
+    const charaContainer = this.createElement('div', {
+      attributes: { style: 'width: 100%; max-width: 1400px;' },
+    });
+    right.appendChild(charaContainer);
+
     // Main layout container: Color Grid (LEFT) | Results Area (RIGHT)
     // Use align-items: flex-start so children size to their content, not stretch to fill
     // On mobile, switches to column layout via updateSwatchLayout()
@@ -1182,7 +1278,7 @@ export class SwatchTool extends BaseComponent {
       attributes: {
         style: `
           flex: 0 0 auto;
-          width: 420px;
+          width: fit-content;
           height: fit-content;
           background: var(--v4-glass-bg, rgba(30, 30, 30, 0.7));
           backdrop-filter: blur(12px);
@@ -1209,9 +1305,12 @@ export class SwatchTool extends BaseComponent {
         `,
       },
     });
-    const gridTitle = this.createElement('span', {
+    this.gridTitleEl = this.createElement('span', {
       className: 'section-title',
-      textContent: `${this.getCategoryDisplayName(this.colorCategory)} (${this.colors.length})`,
+      textContent: LanguageService.tInterpolate('swatch.gridTitle', {
+        name: this.getCategoryDisplayName(this.colorCategory),
+        count: this.colors.length,
+      }),
       attributes: {
         style: `
           font-size: 14px;
@@ -1222,16 +1321,26 @@ export class SwatchTool extends BaseComponent {
         `,
       },
     });
-    gridHeader.appendChild(gridTitle);
+    gridHeader.appendChild(this.gridTitleEl);
     this.gridPanel.appendChild(gridHeader);
 
-    // Color grid (8 columns with larger swatches)
-    // Swatch size adjusted via updateSwatchLayout() for mobile
+    // 10A: seven palettes, not nine — Dark and Light are one game control
+    // with two ranges, so lip/face-paint get a range toggle instead of
+    // doubling the list.
+    this.paletteRailContainer = this.createElement('div', {
+      attributes: { style: 'width: 100%; margin-bottom: 12px;' },
+    });
+    this.gridPanel.appendChild(this.paletteRailContainer);
+    this.renderPaletteRail();
+
+    // Colour grid, 8 columns. Register sizing: 26px on desktop (a dense
+    // reference chart you scan, same chip size as the slot cards), 44px on
+    // mobile (a touch target). updateSwatchLayout() swaps to the mobile size.
     this.colorGridContainer = this.createElement('div', {
       attributes: {
         style: `
           display: grid;
-          grid-template-columns: repeat(8, 44px);
+          grid-template-columns: repeat(8, ${GRID_CELL_DESKTOP}px);
           gap: 4px;
           width: fit-content;
         `,
@@ -1271,7 +1380,7 @@ export class SwatchTool extends BaseComponent {
     });
     const reverseTitle = this.createElement('span', {
       className: 'section-title',
-      textContent: 'Closest Swatches',
+      textContent: LanguageService.t('swatch.closestSwatchesHead'),
     });
     reverseHeader.appendChild(reverseTitle);
     this.reverseSection.appendChild(reverseHeader);
@@ -1289,44 +1398,12 @@ export class SwatchTool extends BaseComponent {
     this.reverseSection.appendChild(this.reverseResultsContainer);
     resultsArea.appendChild(this.reverseSection);
 
-    // Selected Color Section (shows technical info of selected swatch)
-    const selectedSection = this.createElement('div', {
-      attributes: {
-        style: `
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        `,
-      },
+    // 10A selection card: verdict sentence + IN-THE-CREATOR excerpt, one
+    // 14px-radius surface card. Hidden until something is selected.
+    this.selectionCardContainer = this.createElement('div', {
+      attributes: { style: 'width: 100%; display: none;' },
     });
-
-    // Section header (using consistent section-header/section-title pattern)
-    const selectedHeader = this.createElement('div', {
-      className: 'section-header',
-      attributes: { style: 'width: 100%;' },
-    });
-    const selectedTitle = this.createElement('span', {
-      className: 'section-title',
-      textContent: LanguageService.t('tools.character.selectedColor'),
-    });
-    selectedHeader.appendChild(selectedTitle);
-    selectedSection.appendChild(selectedHeader);
-
-    // Selected Color Card (V4 style matching result cards)
-    this.selectedColorDisplay = this.createElement('div', {
-      attributes: {
-        style: `
-          background: var(--theme-card-background, #2a2a2a);
-          border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-          border-radius: 12px;
-          overflow: hidden;
-          max-width: 320px;
-        `,
-      },
-    });
-    selectedSection.appendChild(this.selectedColorDisplay);
-    resultsArea.appendChild(selectedSection);
+    resultsArea.appendChild(this.selectionCardContainer);
 
     // Matching Dyes Section
     const matchSection = this.createElement('div', {
@@ -1340,7 +1417,7 @@ export class SwatchTool extends BaseComponent {
       },
     });
 
-    // Section header (using consistent section-header/section-title pattern)
+    // 10A header: mono CLOSEST DYES + unit tag right (plus the share button).
     const matchHeader = this.createElement('div', {
       className: 'section-header',
       attributes: {
@@ -1349,95 +1426,142 @@ export class SwatchTool extends BaseComponent {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 8px;
         `,
       },
     });
     const matchTitle = this.createElement('span', {
-      className: 'section-title',
-      textContent: LanguageService.t('tools.character.matchingDyes'),
+      textContent: LanguageService.t('swatch.matchesHead'),
+      attributes: {
+        style: `font-family: ${MONO}; font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--theme-text-muted);`,
+      },
     });
     matchHeader.appendChild(matchTitle);
+
+    const matchHeaderRight = this.createElement('div', {
+      attributes: { style: 'display: flex; align-items: center; gap: 10px; flex-shrink: 0;' },
+    });
+    // The unit is printed wherever a distance appears — identifiers, never localised.
+    this.unitTagEl = this.createElement('span', {
+      textContent: METHOD_TAGS[this.matchingMethod],
+      attributes: {
+        style: `font-family: ${MONO}; font-size: 9px; letter-spacing: 0.6px; white-space: nowrap; color: var(--theme-text-muted);`,
+      },
+    });
+    matchHeaderRight.appendChild(this.unitTagEl);
 
     // Share button
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
     this.shareButton.tool = 'swatch';
-    this.shareButton.compact = true;
+    // Full-text label, matching the other six tools — swatch was the lone
+    // icon-only holdout, which read as a different control rather than the
+    // same one.
     this.shareButton.disabled = true; // Disabled until a color is selected
-    matchHeader.appendChild(this.shareButton);
+    matchHeaderRight.appendChild(this.shareButton);
+    matchHeader.appendChild(matchHeaderRight);
 
     matchSection.appendChild(matchHeader);
 
-    // Match results container (CSS grid with max 4 columns)
+    // Match results container — shared results grid (3-up desktop / 2-up mobile)
     this.matchResultsContainer = this.createElement('div', {
-      attributes: {
-        style: `
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 16px;
-          width: 100%;
-        `,
-      },
+      className: 'v5-results-grid',
     });
     matchSection.appendChild(this.matchResultsContainer);
     resultsArea.appendChild(matchSection);
 
     // Empty state (shown when no color selected)
+    // Shared empty-state treatment — see v4-layout.ts for the injected rules.
     this.emptyStateContainer = this.createElement('div', {
-      attributes: {
-        style: `
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 48px 24px;
-          background: var(--theme-card-background, #2a2a2a);
-          border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-          border-radius: 12px;
-          min-width: 320px;
-        `,
-      },
+      className: 'v5-empty-state',
     });
     // Empty state icon
     const emptyIcon = this.createElement('div', {
-      attributes: {
-        style: `
-          width: 150px;
-          height: 150px;
-          opacity: 0.3;
-          margin-bottom: 16px;
-          color: var(--theme-text-muted, #888888);
-        `,
-      },
+      className: 'v5-empty-state-icon',
+      attributes: { 'aria-hidden': 'true' },
     });
-    emptyIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" width="150" height="150">
+    emptyIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" opacity="0.3"/>
       <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.5"/>
     </svg>`;
     this.emptyStateContainer.appendChild(emptyIcon);
 
     const emptyText = this.createElement('span', {
+      className: 'v5-empty-state-text',
       textContent: LanguageService.t('tools.character.noColorSelected'),
-      attributes: {
-        style: `
-          color: var(--theme-text-muted, #888888);
-          font-size: 14px;
-          text-align: center;
-          max-width: 280px;
-        `,
-      },
     });
     this.emptyStateContainer.appendChild(emptyText);
 
     // Add empty state to results area (will be shown/hidden by updateMatchResults)
     resultsArea.appendChild(this.emptyStateContainer);
 
+    // 10A: DYES ON THIS GLAMOUR renders here (after the matches, before the
+    // handoff row) — the CharaImport below owns its content.
+    const charaGlamourContainer = this.createElement('div', {
+      attributes: { style: 'width: 100%;' },
+    });
+    resultsArea.appendChild(charaGlamourContainer);
+
+    // 10A: SEND TO handoff row — always at the bottom of the flow.
+    this.handoffContainer = this.createElement('div', {
+      attributes: { style: 'width: 100%;' },
+    });
+    resultsArea.appendChild(this.handoffContainer);
+
     this.mainLayout.appendChild(resultsArea);
     right.appendChild(this.mainLayout);
 
+    this.charaImport?.destroy();
+    this.charaImport = new CharaImport(
+      charaContainer,
+      {
+        onSlotPick: (hex, label, gridRef) => {
+          this.selectionContext = { source: 'slot', hex, label, gridRef };
+          if (gridRef) {
+            // The selection card's excerpt centres on the slot's cell.
+            const target = gridRef.variant
+              ? `${gridRef.paletteBase}${gridRef.variant === 'light' ? 'Light' : 'Dark'}`
+              : gridRef.paletteBase;
+            if (target !== (this.colorCategory as string)) {
+              this.setConfig({ colorSheet: target });
+            } else {
+              this.updateColorGrid();
+            }
+          } else {
+            this.updateColorGrid();
+          }
+          this.selectCustomColor(hex);
+        },
+        onResolved: (resolved) => {
+          this.charaResolved = resolved;
+          if (resolved === null && this.selectionContext?.source === 'slot') {
+            this.selectionContext = null;
+          }
+          // Sidebar race/gender become a readout while a file is loaded —
+          // push through ConfigController so the sidebar sees the flag.
+          ConfigController.getInstance().setConfig('swatch', {
+            fileProvided: resolved !== null,
+          });
+          this.updateColorGrid();
+        },
+        onTribeGender: (tribe, gender) => {
+          // Through ConfigController so the sidebar readout follows the file.
+          ConfigController.getInstance().setConfig('swatch', { race: tribe, gender });
+        },
+        onSubmitPalette: (dyes, name) => {
+          void import('@components/preset-submission-form').then(({ showPresetSubmissionForm }) => {
+            showPresetSubmissionForm(undefined, { dyes, name });
+          });
+        },
+      },
+      { glamourContainer: charaGlamourContainer }
+    );
+    this.charaImport.init();
+
     // Initialize displays
-    this.updateSelectedColorDisplay();
+    this.updateSelectionCard();
     this.updateEmptyState();
     this.updateColorGrid();
+    this.updateHandoffRow();
   }
 
   /**
@@ -1449,8 +1573,12 @@ export class SwatchTool extends BaseComponent {
     const hasSelection = this.selectedColor !== null;
     const hasResults = this.matchedDyes.length > 0;
 
-    // Show empty state when no color selected OR when selected but no results yet
-    this.emptyStateContainer.style.display = hasSelection && hasResults ? 'none' : 'flex';
+    // Show empty state when no color selected OR when selected but no results
+    // yet. A sheet-slot pick counts as an answer too (the selection card and
+    // the ringed grid carry it), so it never reads as an empty workspace.
+    const slotPicked = this.selectionContext?.source === 'slot';
+    this.emptyStateContainer.style.display =
+      (hasSelection && hasResults) || slotPicked ? 'none' : 'flex';
 
     // Hide match section header when showing empty state
     const matchSection = this.matchResultsContainer.parentElement;
@@ -1463,9 +1591,9 @@ export class SwatchTool extends BaseComponent {
   }
 
   /**
-   * Update layout based on viewport width
-   * Mobile: Vertical stack with responsive swatch sizes
-   * Desktop: Horizontal layout with fixed 44px swatches
+   * Update layout based on viewport width.
+   * Mobile: vertical stack, 44px touch cells (scrolls sideways if needed).
+   * Desktop: horizontal layout, 26px reference cells.
    */
   private updateSwatchLayout(): void {
     if (!this.mainLayout || !this.gridPanel || !this.colorGridContainer) return;
@@ -1477,22 +1605,19 @@ export class SwatchTool extends BaseComponent {
       this.mainLayout.style.flexDirection = 'column';
       this.mainLayout.style.alignItems = 'center';
 
-      // Calculate available width for grid (viewport - padding)
+      // Register sizing: cells are touch targets on mobile, so 44px is a
+      // floor, not a ceiling. Where eight of them plus gaps overrun the
+      // viewport the grid scrolls sideways inside its own panel rather than
+      // shrinking below the target size.
       const viewportWidth = window.innerWidth;
       const containerPadding = 32; // From right panel padding
-      const gridPadding = 20; // From gridPanel padding on each side
       const availableWidth = viewportWidth - containerPadding * 2;
-
-      // Calculate swatch size: (available - grid padding - gaps) / 8 columns
-      // 7 gaps at 4px each = 28px
-      const gridInnerWidth = availableWidth - gridPadding * 2;
-      const swatchSize = Math.floor((gridInnerWidth - 28) / 8);
-      // Clamp to reasonable range (min 28px, max 44px)
-      const clampedSwatchSize = Math.max(28, Math.min(44, swatchSize));
+      const clampedSwatchSize = GRID_CELL_MOBILE;
 
       // Update grid panel width
       this.gridPanel.style.width = '100%';
       this.gridPanel.style.maxWidth = `${availableWidth}px`;
+      this.gridPanel.style.overflowX = 'auto';
 
       // Update grid template
       this.colorGridContainer.style.gridTemplateColumns = `repeat(8, ${clampedSwatchSize}px)`;
@@ -1509,16 +1634,17 @@ export class SwatchTool extends BaseComponent {
       this.mainLayout.style.alignItems = 'flex-start';
 
       // Restore fixed width
-      this.gridPanel.style.width = '420px';
+      this.gridPanel.style.width = '';
       this.gridPanel.style.maxWidth = '';
+      this.gridPanel.style.overflowX = '';
 
-      // Restore fixed swatch sizes
-      this.colorGridContainer.style.gridTemplateColumns = 'repeat(8, 44px)';
+      // Restore the register's desktop cell size
+      this.colorGridContainer.style.gridTemplateColumns = `repeat(8, ${GRID_CELL_DESKTOP}px)`;
 
       const swatches = this.colorGridContainer.querySelectorAll('button');
       swatches.forEach((swatch) => {
-        (swatch as HTMLElement).style.width = '44px';
-        (swatch as HTMLElement).style.height = '44px';
+        (swatch as HTMLElement).style.width = `${GRID_CELL_DESKTOP}px`;
+        (swatch as HTMLElement).style.height = `${GRID_CELL_DESKTOP}px`;
       });
     }
   }
@@ -1526,8 +1652,201 @@ export class SwatchTool extends BaseComponent {
   /**
    * Update the color grid
    */
+  /**
+   * Show or remove the Evercold deprecation notice above the swatch grid,
+   * depending on whether the active category's preset palette is being
+   * retired (eye/hair/skin → free color picker in the Evercold expansion,
+   * January 2027).
+   */
+  private updateEvercoldNotice(): void {
+    const parent = this.colorGridContainer?.parentElement;
+    if (!parent) return;
+
+    const existing = parent.querySelector('.evercold-notice');
+    const show = EVERCOLD_DEPRECATED_CATEGORIES.includes(this.colorCategory);
+
+    if (show && !existing && this.colorGridContainer) {
+      parent.insertBefore(this.createEvercoldNotice(), this.colorGridContainer);
+    } else if (!show && existing) {
+      existing.remove();
+    }
+  }
+
+  private createEvercoldNotice(): HTMLElement {
+    const notice = this.createElement('div', {
+      className: 'evercold-notice',
+      attributes: {
+        role: 'note',
+        style: `
+          box-sizing: border-box;
+          width: 100%;
+          max-width: ${GRID_WIDTH_DESKTOP}px;
+          margin-bottom: 12px;
+          padding: 10px 14px;
+          border-left: 3px solid var(--theme-primary);
+          border-radius: 4px;
+          background: var(--theme-background-secondary);
+          font-size: 0.85rem;
+          line-height: 1.5;
+          overflow-wrap: anywhere;
+        `,
+      },
+    });
+
+    const title = this.createElement('strong', {
+      textContent: LanguageService.t('tools.character.evercoldNoticeTitle'),
+      attributes: { style: 'display: block; margin-bottom: 2px; color: var(--theme-text);' },
+    });
+    const body = this.createElement('span', {
+      textContent: LanguageService.t('tools.character.evercoldNotice'),
+      attributes: { style: 'color: var(--theme-text-muted);' },
+    });
+
+    notice.appendChild(title);
+    notice.appendChild(body);
+    return notice;
+  }
+
+  /**
+   * 10A palette rail: seven palettes with a Dark/Light range toggle for the
+   * two split ones. Chips drive the same colorSheet config as the sidebar.
+   */
+  private renderPaletteRail(): void {
+    if (!this.paletteRailContainer) return;
+    clearContainer(this.paletteRailContainer);
+
+    const PALETTES: Array<{ base: string; labelKey: string; split: boolean }> = [
+      { base: 'eyeColors', labelKey: 'swatch.palEye', split: false },
+      { base: 'hairColors', labelKey: 'swatch.palHair', split: false },
+      { base: 'highlightColors', labelKey: 'swatch.palHighlight', split: false },
+      { base: 'skinColors', labelKey: 'swatch.palSkin', split: false },
+      { base: 'tattooColors', labelKey: 'swatch.palTattoo', split: false },
+      { base: 'lipColors', labelKey: 'swatch.palLip', split: true },
+      { base: 'facePaintColors', labelKey: 'swatch.palFacepaint', split: true },
+    ];
+
+    const current = this.colorCategory as string;
+    const currentBase = current.replace(/(Dark|Light)$/, '');
+    const currentRange = current.endsWith('Light') ? 'Light' : 'Dark';
+
+    const rail = this.createElement('div', {
+      attributes: { style: 'display: flex; gap: 6px; flex-wrap: wrap; align-items: center;' },
+    });
+
+    for (const palette of PALETTES) {
+      const active = currentBase === palette.base;
+      const chip = this.createElement('button', {
+        textContent: LanguageService.t(palette.labelKey),
+        attributes: {
+          type: 'button',
+          style: `font-size: 12px; padding: 5px 11px; border-radius: 999px; cursor: pointer; border: 1px solid ${
+            active ? 'var(--theme-primary)' : 'transparent'
+          }; background: ${
+            active
+              ? 'color-mix(in srgb, var(--theme-primary) 14%, transparent)'
+              : 'var(--theme-background-secondary)'
+          }; color: ${active ? 'var(--theme-primary)' : 'var(--theme-text-muted)'};`,
+        },
+      }) as HTMLButtonElement;
+      this.on(chip, 'click', () => {
+        if (this.selectionContext?.source === 'slot') this.selectionContext = null;
+        const target = palette.split ? `${palette.base}${currentRange}` : palette.base;
+        this.setConfig({ colorSheet: target });
+      });
+      rail.appendChild(chip);
+    }
+
+    // Range toggle — only the split palettes have a Light variant.
+    const activePalette = PALETTES.find((p) => p.base === currentBase);
+    if (activePalette?.split) {
+      const toggle = this.createElement('div', {
+        attributes: {
+          style:
+            'display: inline-flex; border: 1px solid var(--theme-border); border-radius: 999px; overflow: hidden; margin-left: 4px;',
+        },
+      });
+      for (const range of ['Dark', 'Light'] as const) {
+        const on = currentRange === range;
+        const btn = this.createElement('button', {
+          textContent: LanguageService.t(
+            range === 'Dark' ? 'swatch.rangeDark' : 'swatch.rangeLight'
+          ),
+          attributes: {
+            type: 'button',
+            style: `font-size: 11px; padding: 4px 10px; border: none; cursor: pointer; background: ${
+              on ? 'color-mix(in srgb, var(--theme-primary) 16%, transparent)' : 'transparent'
+            }; color: ${on ? 'var(--theme-primary)' : 'var(--theme-text-muted)'};`,
+          },
+        }) as HTMLButtonElement;
+        this.on(btn, 'click', () => {
+          if (this.selectionContext?.source === 'slot') this.selectionContext = null;
+          this.setConfig({ colorSheet: `${currentBase}${range}` });
+        });
+        toggle.appendChild(btn);
+      }
+      rail.appendChild(toggle);
+    }
+
+    this.paletteRailContainer.appendChild(rail);
+  }
+
+  /**
+   * Pins for the current palette from the loaded .chara: sheetIndex → badge.
+   * Co-located slots merge into one badge (1·2) — 84% of files put both
+   * eyes on one cell, and a naive pin map would overwrite one of them.
+   */
+  private currentPalettePins(): Map<number, string> {
+    const pins = new Map<number, string>();
+    if (!this.charaResolved) return pins;
+
+    const current = this.colorCategory as string;
+    const currentBase = current.replace(/(Dark|Light)$/, '');
+    const currentVariant = current.endsWith('Light')
+      ? 'light'
+      : current.endsWith('Dark')
+        ? 'dark'
+        : null;
+
+    const baseOf = (slot: string): string | null =>
+      slot === 'leftEye' || slot === 'rightEye'
+        ? 'eyeColors'
+        : slot === 'hair'
+          ? 'hairColors'
+          : slot === 'highlights'
+            ? 'highlightColors'
+            : slot === 'skin'
+              ? 'skinColors'
+              : slot === 'limbal'
+                ? 'tattooColors'
+                : slot === 'lip'
+                  ? 'lipColors'
+                  : slot === 'facePaint'
+                    ? 'facePaintColors'
+                    : null;
+
+    let pinNumber = 0;
+    for (const slot of this.charaResolved.slots) {
+      if (slot.sheetIndex === null) continue;
+      pinNumber++;
+      if (baseOf(slot.slot) !== currentBase) continue;
+      if (currentVariant && slot.sheetVariant && slot.sheetVariant !== currentVariant) continue;
+      const existing = pins.get(slot.sheetIndex);
+      pins.set(slot.sheetIndex, existing ? `${existing}·${pinNumber}` : String(pinNumber));
+    }
+    return pins;
+  }
+
   private updateColorGrid(): void {
+    this.renderPaletteRail();
+    // Title tracks the palette — it went stale on category change before.
+    if (this.gridTitleEl) {
+      this.gridTitleEl.textContent = LanguageService.tInterpolate('swatch.gridTitle', {
+        name: this.getCategoryDisplayName(this.colorCategory),
+        count: this.colors.length,
+      });
+    }
     if (!this.colorGridContainer) return;
+    this.updateEvercoldNotice();
     clearContainer(this.colorGridContainer);
 
     // Update the header label with category name and color count
@@ -1535,27 +1854,54 @@ export class SwatchTool extends BaseComponent {
     if (gridHeader) {
       const titleSpan = gridHeader.querySelector('.section-title');
       if (titleSpan) {
-        titleSpan.textContent = `${this.getCategoryDisplayName(this.colorCategory)} (${this.colors.length})`;
+        titleSpan.textContent = LanguageService.tInterpolate('swatch.gridTitle', {
+          name: this.getCategoryDisplayName(this.colorCategory),
+          count: this.colors.length,
+        });
       }
     }
 
-    for (const color of this.colors) {
+    // 10A: pins from the loaded file (merged when co-located — both eyes on
+    // one cell is the normal case). The grid itself stays full — the slow
+    // path — while the five-row excerpt lives on the selection card.
+    const pins = this.currentPalettePins();
+
+    for (let sheetIndex = 0; sheetIndex < this.colors.length; sheetIndex++) {
+      const color = this.colors[sheetIndex];
+      const cellRow = Math.floor(sheetIndex / 8);
+      // R/C grid address: an identifier by decision (2026-08-20 i18n audit).
+      const address = `R${cellRow + 1}·C${(sheetIndex % 8) + 1}`;
+
       const swatch = this.createElement('button', {
         className:
           'cursor-pointer transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-1',
         attributes: {
           style: `
-            width: 44px;
-            height: 44px;
+            position: relative;
+            width: ${GRID_CELL_DESKTOP}px;
+            height: ${GRID_CELL_DESKTOP}px;
             background-color: ${color.hex};
             border: 1px solid var(--theme-border);
             border-radius: 4px;
           `,
-          title: `${color.hex} (Index: ${color.index})`,
+          title: `${address} · ${color.hex}`,
           'data-index': String(color.index),
-          'aria-label': `Color ${color.index + 1}: ${color.hex}`,
+          'aria-label': `${address}: ${color.hex}`,
         },
       });
+
+      const pinLabel = pins.get(sheetIndex);
+      if (pinLabel) {
+        swatch.appendChild(
+          this.createElement('span', {
+            textContent: pinLabel,
+            attributes: {
+              style:
+                "position: absolute; top: -5px; right: -5px; font-family: 'Fragment Mono', monospace; font-size: 8px; line-height: 1; padding: 2px 4px; border-radius: 4px; background: var(--theme-primary); color: #fff; pointer-events: none;",
+            },
+          })
+        );
+      }
 
       swatch.addEventListener('click', () => {
         this.selectColor(color);
@@ -1570,217 +1916,390 @@ export class SwatchTool extends BaseComponent {
     if (this.reverseDyeHex) {
       this.performReverseMatch();
     }
+    // The selection card's excerpt reads this.colors, and the handoff chips
+    // and empty state follow the selection — refresh them with the grid.
+    this.updateSelectionCard();
+    this.updateHandoffRow();
+    this.updateEmptyState();
   }
 
   /**
-   * Update selected color display (V4 style card)
+   * The slot's palette must be the one on screen for the excerpt to be true —
+   * a sidebar category switch can leave a slot context pointing elsewhere.
    */
-  private updateSelectedColorDisplay(): void {
-    if (!this.selectedColorDisplay) return;
-    clearContainer(this.selectedColorDisplay);
+  private gridRefMatchesCategory(ref: CharaSlotGridRef): boolean {
+    const target = ref.variant
+      ? `${ref.paletteBase}${ref.variant === 'light' ? 'Light' : 'Dark'}`
+      : ref.paletteBase;
+    return target === (this.colorCategory as string);
+  }
 
-    // Get parent section to show/hide header
-    const parentSection = this.selectedColorDisplay.parentElement;
+  /** Closest pool dye to a bare colour under the current matching method. */
+  private closestDyeTo(hex: string): { dye: Dye; distance: number } | null {
+    let best: { dye: Dye; distance: number } | null = null;
+    for (const dye of dyeService.getAllDyes()) {
+      if (dye.itemID <= 0) continue;
+      const distance = this.calculateColorDistance(hex, dye.hex);
+      if (!best || distance < best.distance) best = { dye, distance };
+    }
+    return best;
+  }
 
-    if (!this.selectedColor) {
-      // Hide the entire section when no color selected
-      if (parentSection) {
-        parentSection.style.display = 'none';
+  /**
+   * 10A selection card — the plain reading the sheet was built to write:
+   * accent-soft slot tag + mono address, the verdict sentence naming the
+   * closest dye, and the IN-THE-CREATOR five-row excerpt around the selected
+   * cell. One 14px-radius surface card; replaces the v4 technical-info card
+   * (Row/Column title, HEX/RGB/HSV/LAB rows, copy button).
+   */
+  private updateSelectionCard(): void {
+    const container = this.selectionCardContainer;
+    if (!container) return;
+    clearContainer(container);
+
+    const ctx = this.selectionContext;
+    let tag = '';
+    let addr = '';
+    let subjectHex: string | null = null;
+    let anchor: number | null = null;
+    let offGrid = false;
+    let slotLabel: string | null = null;
+
+    if (ctx?.source === 'slot' && ctx.hex && ctx.label) {
+      subjectHex = ctx.hex;
+      slotLabel = ctx.label;
+      tag = ctx.label.toUpperCase();
+      if (ctx.gridRef) {
+        const row = Math.floor(ctx.gridRef.sheetIndex / 8) + 1;
+        const col = (ctx.gridRef.sheetIndex % 8) + 1;
+        addr =
+          ctx.gridRef.variant === 'light'
+            ? `R${row}·C${col} · ${LanguageService.t('swatch.rangeLight')}`
+            : `R${row}·C${col}`;
+        if (this.gridRefMatchesCategory(ctx.gridRef)) {
+          anchor = ctx.gridRef.sheetIndex;
+        }
+      } else {
+        // An arbitrary colour has no address — OFF GRID, never a fake one.
+        offGrid = true;
+        addr = LanguageService.t('swatch.offGrid');
       }
+    } else if (this.selectedColor) {
+      subjectHex = this.selectedColor.hex;
+      anchor = this.selectedColor.index;
+      tag = LanguageService.tInterpolate('swatch.cellTag', {
+        palette: this.getCategoryDisplayName(this.colorCategory).toUpperCase(),
+        index: this.selectedColor.index,
+      });
+      addr = `R${Math.floor(this.selectedColor.index / 8) + 1}·C${(this.selectedColor.index % 8) + 1}`;
+    }
+
+    if (!subjectHex) {
+      container.style.display = 'none';
       return;
     }
+    container.style.display = 'block';
 
-    // Show section when color is selected
-    if (parentSection) {
-      parentSection.style.display = 'flex';
+    // Closest dye for the sentence: the top forward match where one exists,
+    // otherwise computed against the dye pool with the current method.
+    let bestName: string | null = null;
+    let bestDelta: string | null = null;
+    if (ctx?.source !== 'slot' && this.matchedDyes.length > 0) {
+      const top = this.matchedDyes[0];
+      bestName = LanguageService.getDyeName(top.dye.itemID) || top.dye.name;
+      bestDelta = top.distance.toFixed(1);
+    } else {
+      const best = this.closestDyeTo(subjectHex);
+      if (best) {
+        bestName = LanguageService.getDyeName(best.dye.itemID) || best.dye.name;
+        bestDelta = best.distance.toFixed(1);
+      }
     }
 
-    // Calculate grid position (8 columns per row, 1-indexed)
-    const gridRow = Math.floor(this.selectedColor.index / 8) + 1;
-    const gridCol = (this.selectedColor.index % 8) + 1;
+    const palette = this.getCategoryDisplayName(this.colorCategory);
+    let sentence: string;
+    if (offGrid && slotLabel) {
+      sentence =
+        bestName && bestDelta
+          ? LanguageService.tInterpolate('swatch.selSentenceOffGrid', {
+              subject: slotLabel,
+              dye: bestName,
+              delta: bestDelta,
+            })
+          : `${slotLabel} · ${subjectHex.toUpperCase()}`;
+    } else if (slotLabel) {
+      sentence =
+        bestName && bestDelta
+          ? LanguageService.tInterpolate('swatch.selSentence', {
+              subject: slotLabel,
+              palette,
+              addr,
+              dye: bestName,
+              delta: bestDelta,
+            })
+          : `${slotLabel} · ${palette} ${addr}`;
+    } else {
+      sentence =
+        bestName && bestDelta
+          ? LanguageService.tInterpolate('swatch.selSentenceCell', {
+              palette,
+              addr,
+              dye: bestName,
+              delta: bestDelta,
+            })
+          : `${palette} ${addr}`;
+    }
 
-    // Calculate HSV values
-    const hsv = ColorService.rgbToHsv(
-      this.selectedColor.rgb.r,
-      this.selectedColor.rgb.g,
-      this.selectedColor.rgb.b
-    );
+    const note = offGrid
+      ? `${subjectHex.toUpperCase()} · ${LanguageService.t('swatch.offGridNote')}`
+      : subjectHex.toUpperCase();
 
-    // Calculate LAB values
-    const lab = ColorService.rgbToLab(
-      this.selectedColor.rgb.r,
-      this.selectedColor.rgb.g,
-      this.selectedColor.rgb.b
-    );
-
-    // Card title (grid position)
-    const titleBar = this.createElement('div', {
+    const card = this.createElement('div', {
       attributes: {
-        style: `
-          padding: 12px 16px;
-          background: var(--theme-card-header, rgba(0, 0, 0, 0.2));
-          border-bottom: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-          text-align: center;
-        `,
+        style:
+          'padding: 12px 13px; border-radius: 14px; background: var(--theme-card-background); border: 1px solid var(--theme-border); box-sizing: border-box; width: 100%;',
       },
     });
-    const title = this.createElement('span', {
-      textContent: `Row ${gridRow}, Column ${gridCol}`,
+    const inner = this.createElement('div', {
       attributes: {
-        style: `
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--theme-text, #e0e0e0);
-        `,
-      },
-    });
-    titleBar.appendChild(title);
-    this.selectedColorDisplay.appendChild(titleBar);
-
-    // Large color swatch preview
-    const swatchPreview = this.createElement('div', {
-      attributes: {
-        style: `
-          width: 100%;
-          height: 80px;
-          background-color: ${this.selectedColor.hex};
-        `,
-      },
-    });
-    this.selectedColorDisplay.appendChild(swatchPreview);
-
-    // Technical data section
-    const dataSection = this.createElement('div', {
-      attributes: {
-        style: `
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        `,
+        style:
+          'display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap;',
       },
     });
 
-    // Two-column layout for technical data
-    const dataGrid = this.createElement('div', {
+    // Left column: tag + address, sentence, note.
+    const left = this.createElement('div', {
       attributes: {
-        style: `
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px 16px;
-          font-size: 12px;
-        `,
+        style: 'flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 6px;',
       },
     });
-
-    // Helper to create data rows
-    const createDataRow = (label: string, value: string): HTMLElement => {
-      const row = this.createElement('div', {
+    const tagRow = this.createElement('div', {
+      attributes: { style: 'display: flex; align-items: center; gap: 7px; flex-wrap: wrap;' },
+    });
+    tagRow.appendChild(
+      this.createElement('span', {
+        textContent: tag,
         attributes: {
-          style: `
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          `,
+          style: `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: color-mix(in srgb, var(--theme-primary) 14%, transparent); color: var(--theme-primary); white-space: nowrap;`,
+        },
+      })
+    );
+    tagRow.appendChild(
+      this.createElement('span', {
+        textContent: addr,
+        attributes: {
+          style: `font-family: ${MONO}; font-size: 9.5px; letter-spacing: 0.5px; color: ${
+            offGrid ? '#F4BF4F' : 'var(--theme-text-muted)'
+          }; white-space: nowrap;`,
+        },
+      })
+    );
+    left.appendChild(tagRow);
+    left.appendChild(
+      this.createElement('div', {
+        textContent: sentence,
+        attributes: {
+          style: `font-family: ${SANS}; font-weight: 600; font-size: 17px; line-height: 1.25; color: var(--theme-text);`,
+        },
+      })
+    );
+    left.appendChild(
+      this.createElement('div', {
+        textContent: note,
+        attributes: {
+          style: 'font-size: 11px; line-height: 1.5; color: var(--theme-text-muted);',
+        },
+      })
+    );
+    inner.appendChild(left);
+
+    // Right column: IN THE CREATOR excerpt (only where an address exists).
+    if (anchor !== null && this.colors.length > 0) {
+      const right = this.createElement('div', {
+        attributes: {
+          style: 'flex-shrink: 0; display: flex; flex-direction: column; gap: 5px;',
         },
       });
-      const labelEl = this.createElement('span', {
-        textContent: label,
-        attributes: { style: 'color: var(--theme-text-muted, #a0a0a0);' },
-      });
-      const valueEl = this.createElement('span', {
-        className: 'number',
-        textContent: value,
-        attributes: { style: 'color: var(--theme-text, #e0e0e0); font-weight: 500;' },
-      });
-      row.appendChild(labelEl);
-      row.appendChild(valueEl);
-      return row;
-    };
+      right.appendChild(
+        this.createElement('span', {
+          textContent: LanguageService.t('swatch.inGrid'),
+          attributes: {
+            style: `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted);`,
+          },
+        })
+      );
+      right.appendChild(this.buildSelectionExcerpt(anchor));
+      inner.appendChild(right);
+    }
 
-    // Add data rows
-    dataGrid.appendChild(createDataRow('HEX', this.selectedColor.hex.toUpperCase()));
-    dataGrid.appendChild(createDataRow('Index', String(this.selectedColor.index)));
-    dataGrid.appendChild(
-      createDataRow(
-        'RGB',
-        `${this.selectedColor.rgb.r},${this.selectedColor.rgb.g},${this.selectedColor.rgb.b}`
-      )
-    );
-    dataGrid.appendChild(
-      createDataRow('HSV', `${Math.round(hsv.h)},${Math.round(hsv.s)},${Math.round(hsv.v)}`)
-    );
-    dataGrid.appendChild(
-      createDataRow('LAB', `${Math.round(lab.L)},${Math.round(lab.a)},${Math.round(lab.b)}`)
-    );
-
-    dataSection.appendChild(dataGrid);
-    this.selectedColorDisplay.appendChild(dataSection);
-
-    // Copy button
-    const copyBtn = this.createElement('button', {
-      attributes: {
-        style: `
-          width: 100%;
-          padding: 10px 16px;
-          background: var(--theme-primary, #d4a857);
-          color: var(--theme-primary-text, #1a1a1a);
-          border: none;
-          border-radius: 0 0 11px 11px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: opacity 0.2s;
-        `,
-      },
-      textContent: 'Copy Color Info',
-    });
-    copyBtn.addEventListener('mouseenter', () => {
-      copyBtn.style.opacity = '0.9';
-    });
-    copyBtn.addEventListener('mouseleave', () => {
-      copyBtn.style.opacity = '1';
-    });
-    copyBtn.addEventListener('click', () => this.copySelectedColorInfo());
-    this.selectedColorDisplay.appendChild(copyBtn);
+    card.appendChild(inner);
+    container.appendChild(card);
   }
 
   /**
-   * Copy selected color information to clipboard
+   * Five-row × 8-col excerpt of 22px cells around the anchor — enough to
+   * count to the cell in the creator, none of the wall. Row numbers left,
+   * column numbers top; the selected row/col labels take the accent; the
+   * selected cell is ringed. Reuses the sheet-index anchor machinery.
    */
-  private copySelectedColorInfo(): void {
-    if (!this.selectedColor) return;
+  private buildSelectionExcerpt(anchor: number): HTMLElement {
+    const totalRows = Math.ceil(this.colors.length / 8);
+    const anchorRow = Math.floor(anchor / 8);
+    const anchorCol = anchor % 8;
+    const rowCount = Math.min(5, totalRows);
+    const rowStart = Math.max(0, Math.min(anchorRow - 2, totalRows - rowCount));
 
-    const gridRow = Math.floor(this.selectedColor.index / 8) + 1;
-    const gridCol = (this.selectedColor.index % 8) + 1;
-    const hsv = ColorService.rgbToHsv(
-      this.selectedColor.rgb.r,
-      this.selectedColor.rgb.g,
-      this.selectedColor.rgb.b
-    );
-    const lab = ColorService.rgbToLab(
-      this.selectedColor.rgb.r,
-      this.selectedColor.rgb.g,
-      this.selectedColor.rgb.b
-    );
+    const grid = this.createElement('div', {
+      attributes: {
+        style:
+          'display: grid; grid-template-columns: 16px repeat(8, 22px); gap: 3px; align-items: center; justify-items: center;',
+      },
+    });
+    grid.appendChild(this.createElement('span'));
+    for (let col = 0; col < 8; col++) {
+      grid.appendChild(
+        this.createElement('span', {
+          textContent: String(col + 1),
+          attributes: {
+            style: `font-family: ${MONO}; font-size: 8.5px; color: ${
+              col === anchorCol ? 'var(--theme-primary)' : 'var(--theme-text-muted)'
+            };`,
+          },
+        })
+      );
+    }
+    for (let row = rowStart; row < rowStart + rowCount; row++) {
+      grid.appendChild(
+        this.createElement('span', {
+          textContent: String(row + 1),
+          attributes: {
+            style: `font-family: ${MONO}; font-size: 9px; justify-self: end; padding-right: 2px; color: ${
+              row === anchorRow ? 'var(--theme-primary)' : 'var(--theme-text-muted)'
+            };`,
+          },
+        })
+      );
+      for (let col = 0; col < 8; col++) {
+        const sheetIndex = row * 8 + col;
+        const color = this.colors[sheetIndex];
+        if (!color) {
+          grid.appendChild(
+            this.createElement('span', { attributes: { style: 'width: 22px; height: 22px;' } })
+          );
+          continue;
+        }
+        const hit = sheetIndex === anchor;
+        const cell = this.createElement('button', {
+          attributes: {
+            type: 'button',
+            title: `R${row + 1}·C${col + 1} · ${color.hex}`,
+            style: `width: 22px; height: 22px; padding: 0; border-radius: 5px; cursor: pointer; background: ${color.hex}; border: 1px solid ${
+              hit ? 'var(--theme-primary)' : 'var(--theme-border)'
+            }; box-shadow: ${
+              hit ? '0 0 0 2px var(--theme-primary)' : 'inset 0 0 0 1px rgba(127, 127, 127, 0.22)'
+            };`,
+          },
+        }) as HTMLButtonElement;
+        this.on(cell, 'click', () => this.selectColor(color));
+        grid.appendChild(cell);
+      }
+    }
+    return grid;
+  }
 
-    const info = [
-      `Grid Position: Row ${gridRow}, Column ${gridCol}`,
-      `Index: ${this.selectedColor.index}`,
-      `HEX: ${this.selectedColor.hex.toUpperCase()}`,
-      `RGB: ${this.selectedColor.rgb.r}, ${this.selectedColor.rgb.g}, ${this.selectedColor.rgb.b}`,
-      `HSV: ${Math.round(hsv.h)}, ${Math.round(hsv.s)}, ${Math.round(hsv.v)}`,
-      `LAB: ${Math.round(lab.L)}, ${Math.round(lab.a)}, ${Math.round(lab.b)}`,
-    ].join('\n');
+  /**
+   * SEND TO targets on the 5.0 stainID share grammar — mirrors the handoff
+   * row preset-detail builds (harmony ?dye=&harmony=, comparison and
+   * accessibility ?dyes=, gradient ?start=&end=).
+   */
+  private handoffTargets(ids: number[]): Array<{ icon: string; label: string; url: string }> {
+    return [
+      {
+        icon: ICON_TOOL_HARMONY,
+        label: LanguageService.t('tools.harmony.title'),
+        url: ids.length > 0 ? `/harmony/?dye=${ids[0]}&harmony=complementary` : '',
+      },
+      {
+        icon: ICON_TOOL_COMPARISON,
+        label: LanguageService.t('tools.comparison.title'),
+        url: ids.length > 0 ? `/comparison/?dyes=${ids.slice(0, 4).join(',')}` : '',
+      },
+      {
+        icon: ICON_TOOL_GRADIENT,
+        label: LanguageService.t('tools.gradient.title'),
+        url:
+          ids.length >= 2
+            ? `/gradient/?start=${ids[0]}&end=${ids[1]}`
+            : ids.length > 0
+              ? '/gradient/'
+              : '',
+      },
+      {
+        icon: ICON_TOOL_ACCESSIBILITY,
+        label: LanguageService.t('tools.accessibility.title'),
+        url: ids.length > 0 ? `/accessibility/?dyes=${ids.slice(0, 4).join(',')}` : '',
+      },
+    ];
+  }
 
-    navigator.clipboard
-      .writeText(info)
-      .then(() => {
-        ToastService.success(LanguageService.t('success.copiedToClipboard'));
+  /**
+   * 10A SEND TO row — always present at the flow's bottom so the page never
+   * dead-ends. Chips carry the matched dyes' stainIDs and dim until there
+   * is a selection to carry.
+   */
+  private updateHandoffRow(): void {
+    const container = this.handoffContainer;
+    if (!container) return;
+    clearContainer(container);
+
+    container.appendChild(
+      this.createElement('div', {
+        textContent: LanguageService.t('swatch.sendTo'),
+        attributes: {
+          style: `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-bottom: 7px;`,
+        },
       })
-      .catch(() => {
-        ToastService.error(LanguageService.t('common.copyFailed'));
+    );
+
+    const row = this.createElement('div', {
+      attributes: { style: 'display: flex; align-items: center; gap: 7px; flex-wrap: wrap;' },
+    });
+    let ids = this.matchedDyes
+      .map((match) => match.dye.stainID)
+      .filter((id): id is number => typeof id === 'number');
+    // A sheet-slot pick is a selection too — carry its closest dye when the
+    // forward matcher has nothing (reverse mode fills the grid, not results).
+    if (ids.length === 0 && this.selectionContext?.source === 'slot' && this.selectionContext.hex) {
+      const best = this.closestDyeTo(this.selectionContext.hex);
+      if (best && typeof best.dye.stainID === 'number') ids = [best.dye.stainID];
+    }
+
+    for (const target of this.handoffTargets(ids)) {
+      const enabled = target.url !== '';
+      const chip = this.createElement('button', {
+        attributes: {
+          type: 'button',
+          style: `display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--theme-border); background: var(--theme-card-background); color: var(--theme-text); font-size: 12px; font-weight: 600; font-family: inherit; cursor: ${
+            enabled ? 'pointer' : 'not-allowed'
+          }; opacity: ${enabled ? '1' : '0.45'};`,
+        },
+      }) as HTMLButtonElement;
+      chip.disabled = !enabled;
+      const glyph = this.createElement('span', {
+        attributes: {
+          style:
+            'display: block; width: 15px; height: 15px; flex-shrink: 0; color: var(--theme-text-muted);',
+        },
       });
+      glyph.innerHTML = target.icon || '';
+      chip.appendChild(glyph);
+      chip.appendChild(this.createElement('span', { textContent: target.label }));
+      if (enabled) {
+        this.on(chip, 'click', () => window.location.assign(target.url));
+      }
+      row.appendChild(chip);
+    }
+    container.appendChild(row);
   }
 
   /**
@@ -1793,6 +2312,11 @@ export class SwatchTool extends BaseComponent {
     // Update empty state visibility
     this.updateEmptyState();
 
+    // The unit is printed wherever a distance appears; the handoff chips
+    // carry the current matches' stainIDs.
+    if (this.unitTagEl) this.unitTagEl.textContent = METHOD_TAGS[this.matchingMethod];
+    this.updateHandoffRow();
+
     if (this.matchedDyes.length === 0) {
       return;
     }
@@ -1800,10 +2324,11 @@ export class SwatchTool extends BaseComponent {
     for (const match of this.matchedDyes) {
       // Create v4-result-card element
       const card = document.createElement('v4-result-card') as HTMLElement;
+      card.setAttribute('compact', '');
       card.setAttribute('show-actions', 'true');
       // Make primary button open context menu (same as the ... button)
       card.setAttribute('primary-opens-menu', 'true');
-      card.setAttribute('primary-action-label', 'Explore Dye');
+      card.setAttribute('primary-action-label', LanguageService.t('swatch.exploreDye'));
 
       // Get price data for this dye
       const priceDataForDye = this.priceData.get(match.dye.itemID);
@@ -1826,7 +2351,12 @@ export class SwatchTool extends BaseComponent {
       (card as unknown as { showRgb: boolean }).showRgb = this.displayOptions.showRgb;
       (card as unknown as { showHsv: boolean }).showHsv = this.displayOptions.showHsv;
       (card as unknown as { showLab: boolean }).showLab = this.displayOptions.showLab;
+      (card as unknown as { showCmyk: boolean }).showCmyk = this.displayOptions.showCmyk;
       (card as unknown as { showDeltaE: boolean }).showDeltaE = this.displayOptions.showDeltaE;
+      (card as unknown as { showHue: boolean }).showHue = this.displayOptions.showHue ?? true;
+      (card as unknown as { showStain: boolean }).showStain = this.displayOptions.showStain ?? true;
+      (card as unknown as { showConsolidation: boolean }).showConsolidation =
+        this.displayOptions.showSpectrum ?? true;
       (card as unknown as { showPrice: boolean }).showPrice = this.displayOptions.showPrice;
       (card as unknown as { showAcquisition: boolean }).showAcquisition =
         this.displayOptions.showAcquisition;
@@ -2210,19 +2740,20 @@ export class SwatchTool extends BaseComponent {
    */
   private selectColor(color: CharacterColor): void {
     this.selectedColor = color;
+    this.selectionContext = { source: 'grid' };
     StorageService.setItem(STORAGE_KEYS.selectedColorIndex, color.index);
 
     // Highlight selected swatch
     this.updateSwatchSelection();
-    this.updateSelectedColorDisplay();
     this.findMatchingDyes();
+    this.updateSelectionCard();
     this.updateShareButton();
 
     // On mobile, scroll to results section so user can see the matches
-    if (window.innerWidth < 768 && this.selectedColorDisplay) {
+    if (window.innerWidth < 768 && this.selectionCardContainer) {
       // Small delay to allow DOM updates before scrolling
       this.safeTimeout(() => {
-        this.selectedColorDisplay?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        this.selectionCardContainer?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
     }
   }
@@ -2309,7 +2840,8 @@ export class SwatchTool extends BaseComponent {
   private clearSelection(): void {
     this.selectedColor = null;
     this.matchedDyes = [];
-    this.updateSelectedColorDisplay();
+    this.selectionContext = null;
+    this.updateSelectionCard();
     this.updateMatchResults();
     this.updateShareButton();
   }
@@ -2336,9 +2868,13 @@ export class SwatchTool extends BaseComponent {
   private getShareParams(): Record<string, unknown> {
     if (!this.selectedColor) return {};
 
+    // Confirmed grammar: slot + i. A character swatch is identified by its
+    // cell address, not its hex — two cells can carry the same colour, and
+    // a hex lookup silently misses when the sheet reloads under a different
+    // tribe/gender. `i` is the index the R·C address is derived from.
     const params: Record<string, unknown> = {
-      color: this.selectedColor.hex.replace('#', ''), // Hex without #
-      sheet: this.colorCategory, // Which color sheet this color is from
+      slot: this.colorCategory,
+      i: this.selectedColor.index,
       algo: this.matchingMethod,
       limit: this.maxResults,
     };
@@ -2375,8 +2911,10 @@ export class SwatchTool extends BaseComponent {
     let hasChanges = false;
     let needsReload = false;
 
-    // Load color sheet (category) if specified - do this FIRST before loading colors
-    if (params.sheet && typeof params.sheet === 'string') {
+    // Load the slot (colour sheet) — FIRST, before the colours load.
+    // `sheet` is the pre-5.0 alias for the same value; both are accepted.
+    const slotParam = params.slot ?? params.sheet;
+    if (slotParam && typeof slotParam === 'string') {
       const validSheets: ColorCategory[] = [
         'eyeColors',
         'hairColors',
@@ -2388,8 +2926,8 @@ export class SwatchTool extends BaseComponent {
         'facePaintColorsDark',
         'facePaintColorsLight',
       ];
-      if (validSheets.includes(params.sheet as ColorCategory)) {
-        const newCategory = params.sheet as ColorCategory;
+      if (validSheets.includes(slotParam as ColorCategory)) {
+        const newCategory = slotParam as ColorCategory;
         if (newCategory !== this.colorCategory) {
           this.colorCategory = newCategory;
           StorageService.setItem(STORAGE_KEYS.colorCategory, newCategory);
@@ -2417,7 +2955,7 @@ export class SwatchTool extends BaseComponent {
           'Hellsguard',
           'Raen',
           'Xaela',
-          'Helion',
+          'Helions',
           'TheLost',
           'Rava',
           'Veena',
@@ -2456,13 +2994,12 @@ export class SwatchTool extends BaseComponent {
       this.syncDesktopSelectors();
     }
 
-    // Load matching algorithm if specified
+    // Load matching algorithm if specified. One vocabulary, six methods —
+    // normalize migrates legacy stored/shared spellings instead of dropping
+    // every link that isn't one of the three the old whitelist knew.
     if (params.algo && typeof params.algo === 'string') {
-      const validAlgos = ['oklab', 'ciede2000', 'euclidean'];
-      if (validAlgos.includes(params.algo)) {
-        this.matchingMethod = params.algo as MatchingMethod;
-        hasChanges = true;
-      }
+      this.matchingMethod = normalizeMatchingMethod(params.algo);
+      hasChanges = true;
     }
 
     // Load max results limit if specified
@@ -2472,10 +3009,38 @@ export class SwatchTool extends BaseComponent {
       hasChanges = true;
     }
 
-    // Load color if specified
-    if (params.color && typeof params.color === 'string') {
+    // Load the cell by index — the confirmed grammar's identity handle.
+    const indexRaw = params.i;
+    const sharedIndex =
+      typeof indexRaw === 'number'
+        ? indexRaw
+        : typeof indexRaw === 'string' && /^\d+$/.test(indexRaw)
+          ? Number(indexRaw)
+          : null;
+    if (sharedIndex !== null) {
+      if (this.colors.length === 0) {
+        await this.loadColors();
+      }
+      const cell = this.colors.find((c) => c.index === sharedIndex);
+      if (cell) {
+        this.selectedColor = cell;
+        this.selectionContext = { source: 'grid' };
+        StorageService.setItem(STORAGE_KEYS.selectedColorIndex, cell.index);
+        hasChanges = true;
+        logger.info(`[SwatchTool] Loaded cell ${sharedIndex} from share URL`);
+      } else {
+        logger.warn(
+          `[SwatchTool] Shared cell ${sharedIndex} is outside the ${this.colorCategory} sheet`
+        );
+      }
+    }
+
+    // Legacy hex links (pre-slot+i) still resolve by colour match
+    const sharedHexRaw = params.hex ?? params.color; // `color` accepted as legacy alias
+    if (sharedIndex === null && sharedHexRaw && typeof sharedHexRaw === 'string') {
       // Normalize hex color (add # prefix if missing)
-      const hexColor = params.color.startsWith('#') ? params.color : `#${params.color}`;
+      const hexColor = ShareService.parseSharedHex(sharedHexRaw);
+      if (!hexColor) return;
 
       // Ensure colors are loaded before searching
       if (this.colors.length === 0) {
@@ -2488,6 +3053,7 @@ export class SwatchTool extends BaseComponent {
       if (matchingColor) {
         // Found the color - select it
         this.selectedColor = matchingColor;
+        this.selectionContext = { source: 'grid' };
         hasChanges = true;
         logger.info(`[SwatchTool] Loaded color from share URL: ${hexColor}`);
       } else {
@@ -2502,13 +3068,13 @@ export class SwatchTool extends BaseComponent {
       // Update UI to reflect loaded state
       this.updateColorGrid();
       this.updateSwatchSelection();
-      this.updateSelectedColorDisplay();
       this.updateShareButton();
 
       // Find matching dyes if a color was selected
       if (this.selectedColor) {
         this.findMatchingDyes();
       }
+      this.updateSelectionCard();
     }
   }
 
@@ -2550,7 +3116,6 @@ export class SwatchTool extends BaseComponent {
    * Get localized category display name
    */
   private getCategoryDisplayName(category: ColorCategory): string {
-    const _key = `tools.character.${category.replace(/Colors?$/, 'Colors')}`;
     const labels: Record<ColorCategory, string> = {
       eyeColors: LanguageService.t('tools.character.eyeColors'),
       hairColors: LanguageService.t('tools.character.hairColors'),

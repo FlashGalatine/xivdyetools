@@ -6,8 +6,8 @@
     "noEmit": true,
     "declaration": false,
     "declarationMap": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noImplicitReturns": false,
     "verbatimModuleSyntax": false,
     "experimentalDecorators": true,
@@ -18,10 +18,7 @@
       "@/*": ["./src/*"],
       "@components/*": ["./src/components/*"],
       "@services/*": ["./src/services/*"],
-      "@shared/*": ["./src/shared/*"],
-      "@apps/*": ["./src/apps/*"],
-      "@data/*": ["./src/data/*"],
-      "@v4/*": ["./src/components/v4/*"]
+      "@shared/*": ["./src/shared/*"]
     },
     "types": ["vitest/globals", "node"]
   },

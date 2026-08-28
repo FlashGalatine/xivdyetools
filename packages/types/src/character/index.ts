@@ -64,14 +64,6 @@ export type SharedColorCategory =
 export type RaceSpecificColorCategory = 'hairColors' | 'skinColors';
 
 /**
- * All character color categories
- * @internal Convenience union — consumers use SharedColorCategory or RaceSpecificColorCategory directly
- */
-export type CharacterColorCategory =
-  | SharedColorCategory
-  | RaceSpecificColorCategory;
-
-/**
  * FFXIV playable subraces
  *
  * Each race has two subraces (clans) with potentially different
@@ -97,7 +89,7 @@ export type SubRace =
   | 'Raen'
   | 'Xaela'
   // Hrothgar
-  | 'Helion'
+  | 'Helions'
   | 'TheLost'
   // Viera
   | 'Rava'
@@ -113,14 +105,7 @@ export type Gender = 'Male' | 'Female';
  * @internal Used by core's CharacterColorService — apps use SubRace directly
  */
 export type Race =
-  | 'Hyur'
-  | 'Elezen'
-  | 'Lalafell'
-  | "Miqo'te"
-  | 'Roegadyn'
-  | 'AuRa'
-  | 'Hrothgar'
-  | 'Viera';
+  'Hyur' | 'Elezen' | 'Lalafell' | "Miqo'te" | 'Roegadyn' | 'AuRa' | 'Hrothgar' | 'Viera';
 
 /**
  * Mapping of races to their subraces
@@ -132,7 +117,7 @@ export const RACE_SUBRACES: Record<Race, [SubRace, SubRace]> = {
   "Miqo'te": ['SeekerOfTheSun', 'KeeperOfTheMoon'],
   Roegadyn: ['SeaWolf', 'Hellsguard'],
   AuRa: ['Raen', 'Xaela'],
-  Hrothgar: ['Helion', 'TheLost'],
+  Hrothgar: ['Helions', 'TheLost'],
   Viera: ['Rava', 'Veena'],
 };
 
@@ -152,26 +137,8 @@ export const SUBRACE_TO_RACE: Record<SubRace, Race> = {
   Hellsguard: 'Roegadyn',
   Raen: 'AuRa',
   Xaela: 'AuRa',
-  Helion: 'Hrothgar',
+  Helions: 'Hrothgar',
   TheLost: 'Hrothgar',
   Rava: 'Viera',
   Veena: 'Viera',
-};
-
-/**
- * Grid dimensions for different color categories
- */
-export const COLOR_GRID_DIMENSIONS: Record<
-  CharacterColorCategory,
-  { columns: 8; rows: 12 | 24 }
-> = {
-  eyeColors: { columns: 8, rows: 24 },
-  highlightColors: { columns: 8, rows: 24 },
-  lipColorsDark: { columns: 8, rows: 12 },
-  lipColorsLight: { columns: 8, rows: 12 },
-  tattooColors: { columns: 8, rows: 24 },
-  facePaintColorsDark: { columns: 8, rows: 24 },
-  facePaintColorsLight: { columns: 8, rows: 24 },
-  hairColors: { columns: 8, rows: 24 },
-  skinColors: { columns: 8, rows: 24 },
 };

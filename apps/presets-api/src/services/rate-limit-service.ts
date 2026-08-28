@@ -1,24 +1,45 @@
 /**
  * Rate Limit Service
- * Tracks submission limits per user per day
- * Limit: 10 submissions per user per day
+ * Tracks per-user daily quotas for quota-bearing mutations.
  *
  * REFACTOR-016 (2026-07-18 audit): this module owns *submission* limits only.
  * IP-based limiting lives in middleware/rate-limit.ts — the duplicate
  * MemoryRateLimiter singleton and dead checkPublicRateLimit/getClientIp
  * exports that used to live here consumed a different bucket than the
  * middleware and were removed.
+ *
+ * FINDING-008 / PAPI-1 (2026-08-21 security audit): the daily submission cap
+ * counted SURVIVING rows in `presets`, so an author could delete their own
+ * presets and submit again all day; flagged edits and preview-image uploads
+ * (each fanning out a moderation embed, a Perspective call and dead-letter
+ * rows) had no per-user cap at all. Every quota-bearing mutation now also
+ * writes an append-only `submission_events` row (migration 0011) that user
+ * actions never delete, and the caps count those rows — the live-row count is
+ * kept as a second, cheaper signal for submissions.
  */
 
 import type { RateLimitResult } from '../types.js';
 
-/**
- * Maximum submissions per user per day
- */
+/** Maximum submissions per user per day */
 export const DAILY_SUBMISSION_LIMIT = 10;
 
+/** Maximum content edits per user per day that get flagged for moderation */
+export const DAILY_FLAGGED_EDIT_LIMIT = 10;
+
+/** Maximum preview-image uploads/replacements per user per day */
+export const DAILY_PREVIEW_UPLOAD_LIMIT = 20;
+
+/** Kinds of quota-bearing events recorded in `submission_events`. */
+export type SubmissionEventKind = 'submission' | 'flagged_edit' | 'preview_upload';
+
+const DAILY_LIMITS: Record<SubmissionEventKind, number> = {
+  submission: DAILY_SUBMISSION_LIMIT,
+  flagged_edit: DAILY_FLAGGED_EDIT_LIMIT,
+  preview_upload: DAILY_PREVIEW_UPLOAD_LIMIT,
+};
+
 /**
- * Count a user's submissions for the current UTC day.
+ * Count a user's surviving submissions for the current UTC day.
  *
  * BUG-049 (2026-07-18 audit): exported so the submission handler can re-check
  * after its INSERT — the pre-check alone is check-then-insert and concurrent
@@ -48,14 +69,87 @@ export async function getSubmissionCountToday(
 }
 
 /**
+ * Count a user's append-only events of one kind for the current UTC day.
+ * Unlike the row count above, nothing the user can do lowers this number.
+ */
+export async function getEventCountToday(
+  db: D1Database,
+  userDiscordId: string,
+  kind: SubmissionEventKind
+): Promise<number> {
+  const today = getStartOfDayUTC();
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+
+  const query = `
+    SELECT COUNT(*) as count
+    FROM submission_events
+    WHERE user_discord_id = ?
+      AND kind = ?
+      AND created_at >= ?
+      AND created_at < ?
+  `;
+
+  const result = await db
+    .prepare(query)
+    .bind(userDiscordId, kind, today.toISOString(), tomorrow.toISOString())
+    .first<{ count: number }>();
+
+  return result?.count || 0;
+}
+
+/**
+ * Record one quota-bearing event. Best-effort from the caller's point of view
+ * (a failed insert must not fail the mutation the user just completed), but
+ * callers should still `await` it so the row lands before the response.
+ */
+export async function recordSubmissionEvent(
+  db: D1Database,
+  userDiscordId: string,
+  kind: SubmissionEventKind,
+  presetId: string | null = null
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO submission_events (user_discord_id, kind, preset_id) VALUES (?, ?, ?)`
+    )
+    .bind(userDiscordId, kind, presetId)
+    .run();
+}
+
+/**
+ * Check a per-user daily cap for one event kind (append-only count).
+ */
+export async function checkDailyEventLimit(
+  db: D1Database,
+  userDiscordId: string,
+  kind: SubmissionEventKind,
+  limit: number = DAILY_LIMITS[kind]
+): Promise<RateLimitResult> {
+  const used = await getEventCountToday(db, userDiscordId, kind);
+  return {
+    allowed: used < limit,
+    remaining: Math.max(0, limit - used),
+    resetAt: getNextResetUTC(),
+  };
+}
+
+/**
  * Check if a user can submit a preset
  * Returns rate limit status and remaining submissions
+ *
+ * Counts BOTH surviving rows (cheap, pre-0011 behaviour) and append-only
+ * submission events — whichever is higher is the number that counts, so
+ * deleting your own presets no longer refills the quota.
  */
 export async function checkSubmissionRateLimit(
   db: D1Database,
   userDiscordId: string
 ): Promise<RateLimitResult> {
-  const submissionsToday = await getSubmissionCountToday(db, userDiscordId);
+  const [rowsToday, eventsToday] = await Promise.all([
+    getSubmissionCountToday(db, userDiscordId),
+    getEventCountToday(db, userDiscordId, 'submission'),
+  ]);
+  const submissionsToday = Math.max(rowsToday, eventsToday);
   const remaining = Math.max(0, DAILY_SUBMISSION_LIMIT - submissionsToday);
 
   return {

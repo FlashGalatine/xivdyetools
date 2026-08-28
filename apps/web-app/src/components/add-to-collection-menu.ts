@@ -40,7 +40,6 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
 
   const { dye, anchorElement, onClose, onAdded } = options;
   const collections = CollectionService.getCollections();
-  const dyeName = LanguageService.getDyeName(dye.itemID) || dye.name;
 
   // Create menu container
   const menu = document.createElement('div');
@@ -87,7 +86,7 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
     list.appendChild(emptyItem);
   } else {
     for (const collection of collections) {
-      const item = createCollectionMenuItem(collection, dye.id, dyeName, (addedCollection) => {
+      const item = createCollectionMenuItem(collection, dye.stainID ?? 0, (addedCollection) => {
         closeAddToCollectionMenu();
         if (onAdded) {
           onAdded(addedCollection);
@@ -122,7 +121,7 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
     closeAddToCollectionMenu();
     showCreateCollectionDialog((newCollection) => {
       // Auto-add dye to the new collection
-      CollectionService.addDyeToCollection(newCollection.id, dye.id);
+      CollectionService.addDyeToCollection(newCollection.id, dye.stainID ?? 0);
       ToastService.success(
         LanguageService.tInterpolate('collections.addedToCollection', { name: newCollection.name })
       );
@@ -177,7 +176,6 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
 function createCollectionMenuItem(
   collection: Collection,
   dyeId: DyeId,
-  dyeName: string,
   onAdded: (collection: Collection) => void
 ): HTMLElement {
   const alreadyInCollection = collection.dyes.includes(dyeId);
@@ -219,7 +217,7 @@ function createCollectionMenuItem(
     rightSide.appendChild(checkmark);
   } else if (isFull) {
     const fullText = document.createElement('span');
-    fullText.textContent = 'Full';
+    fullText.textContent = LanguageService.t('collections.full');
     rightSide.appendChild(fullText);
   } else {
     const count = document.createElement('span');
@@ -254,7 +252,7 @@ function createCollectionMenuItem(
 /**
  * Close the add to collection menu
  */
-export function closeAddToCollectionMenu(): void {
+function closeAddToCollectionMenu(): void {
   // OPT-004: Clear any pending listener setup to prevent leak
   if (pendingSetupTimeout !== null) {
     clearTimeout(pendingSetupTimeout);
@@ -268,11 +266,4 @@ export function closeAddToCollectionMenu(): void {
     activeMenu.remove();
     activeMenu = null;
   }
-}
-
-/**
- * Check if menu is currently open
- */
-export function isAddToCollectionMenuOpen(): boolean {
-  return activeMenu !== null;
 }

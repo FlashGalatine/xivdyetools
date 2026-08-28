@@ -30,6 +30,8 @@ export interface MockMessage {
   id: string;
   content: string | null;
   authorId: string;
+  /** revolt.js `Message.author` — only the `bot` marker is modelled */
+  author?: { bot?: { owner: string } };
   channelId: string;
   channel: MockChannel;
   attachments: unknown[];

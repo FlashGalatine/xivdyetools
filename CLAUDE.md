@@ -12,29 +12,23 @@ This is the **XIV Dye Tools** monorepo: a pnpm workspace using Turborepo contain
 xivdyetools/
 ├── packages/                # Shared libraries (@xivdyetools scope, published to npm)
 │   ├── types/               # Branded types (HexColor, DyeId, etc.) and shared interfaces
-│   ├── crypto/              # Base64URL encoding utilities
 │   ├── logger/              # Multi-runtime logging with secret redaction
-│   ├── auth/                # JWT verification, HMAC signing, Discord Ed25519
-│   ├── rate-limiter/        # Sliding window rate limiting (Memory, KV, Upstash)
-│   ├── worker-middleware/   # Shared Hono middleware (request ID, logger, rate limit)
-│   ├── core/                # Color algorithms, dye database (125 standard + 11 Facewear), k-d tree, 6-language i18n
-│   ├── color-blending/      # Six blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral)
-│   ├── svg/                 # Pure SVG card generators (data → SVG string)
-│   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic
-│   ├── bot-i18n/            # Bot-facing translation engine (errors, help, status text)
-│   └── test-utils/          # CF Workers mocks (D1, KV, R2) and test factories
+│   ├── auth/                # JWT verification, HMAC signing, Discord Ed25519, Base64URL/hex (/encoding)
+│   ├── worker-kit/          # Worker toolkit: Hono middleware + sliding-window rate limiting (Memory, KV, Upstash)
+│   ├── core/                # Color algorithms, dye database (125 dyes, schema v2) + separate facewearColors (11), k-d tree, 6-language i18n, /blending
+│   ├── svg/                 # Pure SVG card generators on the 5.0 frame system (data → SVG string) + shared glyph set
+│   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic + bot UI i18n (/i18n)
+│   └── test-utils/          # CF Workers mocks (D1, KV, R2) and test factories (workspace-private, not published)
 ├── apps/                    # Applications
-│   ├── discord-worker/        # Primary Discord bot (CF Worker + Hono, 20 commands)
+│   ├── discord-worker/        # Primary Discord bot (CF Worker + Hono, 17 registered slash commands — see src/commands/registry.ts)
+│   ├── image-worker/          # Photon pixel extraction, service-binding-only (CF Worker)
 │   ├── moderation-worker/     # Moderation bot for community presets (CF Worker)
 │   ├── presets-api/           # Community presets REST API (CF Worker + D1)
 │   ├── oauth/                 # Discord OAuth + JWT issuance (CF Worker + D1)
-│   ├── api-worker/            # Public dye/color-matching API (CF Worker)
-│   ├── api-docs/              # VitePress docs site for the public API
-│   ├── universalis-proxy/     # CORS proxy for Universalis market data (CF Worker)
+│   ├── api-worker/            # Public dye/color-matching API + absorbed Universalis proxy + VitePress docs (CF Worker + KV)
 │   ├── og-worker/             # Dynamic OpenGraph image generation (CF Worker)
 │   ├── stoat-worker/          # Revolt chat bot (Node.js + revolt.js, NOT a CF Worker)
-│   ├── web-app/               # Main web app with 9 color tools (Vite + Lit + Tailwind)
-│   └── maintainer/            # Local dev tool for editing the dye database (Vite + Vue 3)
+│   └── web-app/               # Main web app with 9 color tools (Vite + Lit + Tailwind)
 ├── docs/                    # Architecture, specs, deployment guides, research
 └── scripts/                 # Repo-level utility scripts
 ```
@@ -42,18 +36,17 @@ xivdyetools/
 ## Dependency Flow
 
 ```
-types, crypto, logger, rate-limiter, ──────────────────────────┐ (Level 0: no internal deps)
-bot-i18n, color-blending ──────────────────────────────────────┤
-auth (→ crypto), test-utils (→ crypto, types) ─────────────────┤ (Level 1)
-core (→ types, logger) ────────────────────────────────────────┤ (Level 2)
-worker-middleware (→ logger, rate-limiter) ────────────────────┤
-svg (→ core, color-blending, types) ───────────────────────────┤ (Level 3)
-bot-logic (→ core, svg, color-blending, bot-i18n, types) ──────┤ (Level 4)
+types, logger, auth (incl. /encoding) ─────────────────────────┐ (Level 0: no internal deps)
+worker-kit (→ logger; incl. /rate-limiter) ────────────────────┤ (Level 1 — workers only)
+core (→ types, logger; incl. /blending) ───────────────────────┤ (Level 1)
+test-utils (→ auth, types; private) ───────────────────────────┤ (Level 1)
+svg (→ core, types) ───────────────────────────────────────────┤ (Level 2)
+bot-logic (→ core, svg, types; incl. /i18n) ───────────────────┤ (Level 3)
                                                                 │
                             Applications ◄─────────────────────┘
 ```
 
-`stoat-worker` consumes `bot-logic` + `bot-i18n` + `svg` so it shares command logic with `discord-worker` despite running on Node.js + Revolt instead of Cloudflare + Discord.
+`stoat-worker` consumes `bot-logic` (incl. its `/i18n` engine) so it shares command logic with `discord-worker` despite running on Node.js + Revolt instead of Cloudflare + Discord — `svg`, `core`, and `worker-kit` were dropped from its dependencies in Task 6 (it renders no cards and needs no Workers-only middleware).
 
 ## Common Commands
 
@@ -78,14 +71,20 @@ pnpm --filter @xivdyetools/core exec vitest run src/path/to/file.test.ts
 # Dev servers
 pnpm --filter xivdyetools-web-app run dev          # Vite, localhost:5173
 pnpm --filter xivdyetools-discord-worker run dev   # Wrangler local
-pnpm --filter xivdyetools-api-docs run dev         # VitePress docs site
+pnpm --filter xivdyetools-api-worker run docs:dev  # VitePress docs site (absorbed into api-worker)
 pnpm --filter xivdyetools-stoat-worker run dev     # tsx watch (Node.js)
 ```
 
 Workers additionally support:
 
 ```bash
-pnpm --filter xivdyetools-discord-worker run deploy              # Staging
+pnpm --filter xivdyetools-discord-worker run deploy              # BETA bot (…-dev, *.workers.dev)
+# NOTE: a bare `deploy` targets the routeless `…-dev` worker on discord-worker /
+# moderation-worker / presets-api / api-worker / image-worker, and the ROUTED BETA
+# worker on og-worker (beta.xivdyetools.app). Production needs `--env production`.
+# `oauth` is the INVERSE: it has no [env.production] — a bare `wrangler deploy` IS
+# the production deploy. Check the wrangler.toml first; see
+# docs/operations/DEPLOY_ENVIRONMENTS.md.
 pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
 ```
 
@@ -98,6 +97,7 @@ pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
 - **Vitest 4** for all packages and apps; **Playwright** for `web-app` E2E
 - **ESLint 10** flat config with typescript-eslint
 - **Prettier 3** for formatting
+- **knip 6** for dead code. The root `knip.jsonc` is the monorepo graph; `packages/{core,svg,bot-logic}` are gated on it via their own `lint:dead` (`knip --directory ../.. --workspace packages/<p>`, part of `lint`), while `apps/web-app` and `apps/og-worker` keep their own per-app `knip.jsonc`. Those three packages run with `includeEntryExports`, so a **barrel export nothing in the monorepo imports fails `lint` unless its specifier carries a `/** @public */` tag** (`"tags": ["-public"]`) — `@public` meaning "published npm API, deliberately kept without an in-repo consumer". `pnpm lint:dead` at the root sweeps every workspace, but as of 2026-08-18 it currently exits non-zero (~200 issues in the ungated apps plus `logger`'s alias duplicate) — it is a manual sweep for triage, not a gate; the per-package `lint` commands above are the actual gate.
 
 ### `verbatimModuleSyntax` Caveat
 The base tsconfig enables `verbatimModuleSyntax`, so type-only imports must be explicitly marked: `import type { Foo } from '...'`. A regular `import { Foo }` for something only used as a type is a compile error.
@@ -107,27 +107,30 @@ Workers communicate via Cloudflare **Service Bindings** (direct Worker-to-Worker
 
 ```
 discord-worker ──► presets-api
+discord-worker ──► image-worker        (POST /extract — palette pixels)
+discord-worker ──► api-worker          (UNIVERSALIS_PROXY binding — market prices for /budget)
 moderation-worker ──► presets-api
 presets-api ──► discord-worker (notifications)
+presets-api ──► image-worker           (POST /thumbnail — preview images)
 api-worker ──► (standalone, public-facing)
 ```
 
-All Cloudflare Workers use **Hono** as the HTTP framework. Persistence is **D1** (SQLite) for `presets-api` and `oauth`.
+All Cloudflare Workers use **Hono** (`^4.12.34` floor) as the HTTP framework and consume `@xivdyetools/worker-kit` for request-ID / logger / rate-limit middleware. Persistence is **D1** (SQLite): `presets-api` owns `xivdyetools-presets` (also bound read/write by `moderation-worker` — `discord-worker`'s own D1 binding was removed, DEAD-007; it reaches preset data only through the `presets-api` service binding), `oauth` owns `xivdyetools-users`; `presets-api` additionally stores preview images in R2.
 
 ### Localization
 6 languages throughout: `en`, `ja`, `de`, `fr`, `ko`, `zh`
 - XIVAPI v2 only serves en/ja/de/fr; Korean and Chinese names are manually sourced
 - Locale pipeline: `fetch_dye_names.py` → `dyenames.csv` → `build-locales.ts` → JSON
-- CJK rendering needs subset fonts (Noto Sans SC + Noto Sans KR) in SVG generation
+- CJK rendering needs subset fonts (Noto Sans JP + SC + KR, regenerated by each worker's `scripts/subset-cjk-fonts.py`) in SVG-to-PNG rendering
 
-### Dye Database Composition
-The dye database is **125 standard dyes plus 11 Facewear color entries** = 136 total entries in `colors_xiv.json`.
+### Dye Database Composition (schema v2, since 2026-07-31)
+The dye database is **125 standard dyes** in `packages/core/src/data/dyes.json` — 7 fields per entry (`stainID` [canonical key], `name`, `hex`, `category`, `acquisition`, `consolidationType`, `legacyItemID`). Everything else (`rgb`/`hsv`/`lab`, `cost`/`currency` via `ACQUISITION_META`, the five `is*` flags) is **derived at `DyeDatabase.initialize()`** — the runtime `Dye` object keeps its full 16-field shape, and `Dye.itemID` remains a `number` (= `legacyItemID`, falling back to `stainID` for future consolidated-only dyes). `isMetallic` = the Stain sheet's gloss set (`METALLIC_STAIN_IDS`, 16); `isCosmic ≡ consolidationType 'C'`; `isIshgardian ≡ 'B'`.
 
-The 11 Facewear color entries have `itemID: null` in the JSON; `DyeDatabase.initialize()` assigns synthetic **hash-based negative IDs** (e.g. `-1127`, derived from the name's char codes — **not** sequential `-1, -2, ...`). `Dye.itemID` is therefore always a `number` at runtime — never null. For market-board filtering use `dye.itemID > 0`, never a null-check. Facewear entries are excluded from the k-d tree (not market-tradeable).
+The **11 Facewear colors are NOT dyes** — they live in `facewear_colors.json` / the `facewearColors` export (`FacewearColor`: string slug `id`, `name`, `hex`). The pre-v2 synthetic negative itemIDs survive only as the frozen `LEGACY_FACEWEAR_ITEM_IDS` compatibility map (`getFacewearColorByLegacyItemID()`).
 
 ## Publishing Libraries to npm
 
-All 12 packages publish through the **Publish Packages to npm** GitHub Actions workflow (`workflow_dispatch`), which authenticates with npm via **trusted publishing (OIDC)**. There is no npm token anywhere in CI — the workflow's `id-token: write` permission mints a short-lived credential from its own GitHub identity, which also signs the provenance attestation.
+All 7 publishable packages — types, logger, auth, worker-kit, core, svg, bot-logic — publish through the **Publish Packages to npm** GitHub Actions workflow (`workflow_dispatch`), which authenticates with npm via **trusted publishing (OIDC)**. (`@xivdyetools/test-utils` is the 8th package; it is workspace-private and not published.) There is no npm token anywhere in CI — the workflow's `id-token: write` permission mints a short-lived credential from its own GitHub identity, which also signs the provenance attestation.
 
 ```bash
 # 1. Make changes in packages/<name>/
@@ -151,7 +154,7 @@ pnpm --filter @xivdyetools/<name> publish --provenance --access public --no-git-
 
 pnpm 11 publishes natively and performs the OIDC exchange itself — no npm CLI involvement. (Under pnpm 10 the publish was delegated to npm, which needed an explicit upgrade to ≥ 11.5.1 for OIDC support; that workflow step was removed with the pnpm 11 migration.)
 
-`@xivdyetools/core`'s `build` script runs `build:version` → `build:locales` → `tsc` → `copy:locales`. `build:locales` regenerates from `dyenames.csv` / `localize.yaml`, so hand-edits to the generated locale JSON are overwritten — fold corrections into the source files instead.
+`@xivdyetools/core`'s `build` script runs `build:locales` → `tsc` → `copy:locales`. `build:locales` regenerates from `dyenames.csv` / `localize.yaml`, so hand-edits to the generated locale JSON are overwritten — fold corrections into the source files instead.
 
 ## CI/CD
 
@@ -162,4 +165,4 @@ pnpm 11 publishes natively and performs the OIDC exchange itself — no npm CLI 
 
 ## Documentation Hub
 
-`docs/` contains architecture overviews, API contracts, deployment guides, and specs — its `CLAUDE.md` indexes all major topics. The public-facing API documentation lives in `apps/api-docs/` (VitePress) and ships separately.
+`docs/` contains architecture overviews, API contracts, deployment guides, and specs — its `CLAUDE.md` indexes all major topics. The public-facing API documentation lives in `apps/api-worker/docs/` (VitePress) and deploys with api-worker as Workers Static Assets on developers.xivdyetools.app.

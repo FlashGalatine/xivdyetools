@@ -31,10 +31,23 @@ function getUniversalisBaseUrl(): string {
     return envUrl;
   }
 
-  // In production, use the deployed proxy worker
-  // This ensures CORS headers are always present, even on error responses (like 429)
+  // api-worker's absorbed Universalis routes (Monorepo 2.0 Tier 2 — formerly
+  // the standalone proxy.xivdyetools.app worker). api-worker sets
+  // `cors({ origin: '*' })`, so this answers every origin: production, beta,
+  // and *.pages.dev alike. CORS headers are present even on errors like 429.
+  //
+  // HARD DEPENDENCY: these routes exist only once THIS branch's api-worker is
+  // deployed to data.xivdyetools.app. Until that deploy, every market call is a
+  // 404 and the Market Board is dead on any site built from this branch.
+  //
+  // The legacy `proxy.xivdyetools.app/api/v2` mount is NOT a usable stand-in
+  // for beta: the old worker replies `Access-Control-Allow-Origin:
+  // https://xivdyetools.app` to every caller regardless of Origin, so the
+  // browser blocks it from any host but production. Measured 2026-08-10 — do
+  // not "fix" a beta 404 by pointing back at it; that trades a 404 for a CORS
+  // failure. Deploy api-worker instead.
   if (import.meta.env.PROD) {
-    const proxyUrl = 'https://proxy.xivdyetools.app/api/v2';
+    const proxyUrl = 'https://data.xivdyetools.app/universalis';
     logger.info(`Using production Universalis proxy: ${proxyUrl}`);
     return proxyUrl;
   }
@@ -206,7 +219,7 @@ export class APIService {
           dbg('IndexedDB cache backend initialized');
         } else {
           // Fallback to console in test/mocked environments
-          console.info('IndexedDB cache backend initialized');
+          logger.info('IndexedDB cache backend initialized');
         }
       });
     }

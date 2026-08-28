@@ -1,8 +1,8 @@
 /**
  * SVG to PNG Renderer
  *
- * Uses resvg-wasm to convert SVG strings to PNG images.
- * Optimized for OpenGraph image generation (1200x630px).
+ * Uses resvg-wasm to convert SVG strings to PNG images. The 15E cards are
+ * drawn on the 400 design grid and rastered ×3 (Discord 1200×1050, X 1200×630).
  *
  * IMPORTANT: Cloudflare Workers requires static WASM imports.
  * Dynamic WebAssembly.instantiate() is disallowed by the runtime.
@@ -15,6 +15,10 @@ import { Resvg, initWasm } from '@resvg/resvg-wasm';
 import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
 
 import { getFontBuffers } from './fonts';
+import { GROUND } from './svg/tokens';
+
+/** The 15E raster: ×3 on the console ground. Every card is drawn on it. */
+const BAND_RENDER = { scale: 3, background: GROUND } as const;
 
 // Track WASM initialization state
 let wasmInitialized = false;
@@ -25,7 +29,7 @@ let wasmInitPromise: Promise<void> | null = null;
  * Must be called before rendering SVGs.
  * Safe to call multiple times - will only initialize once.
  */
-export async function initRenderer(): Promise<void> {
+async function initRenderer(): Promise<void> {
   if (wasmInitialized) return;
 
   if (wasmInitPromise) {
@@ -65,7 +69,7 @@ export async function initRenderer(): Promise<void> {
  * @param options - Rendering options
  * @returns PNG image as Uint8Array
  */
-export async function renderSvgToPng(
+async function renderSvgToPng(
   svgString: string,
   options: {
     /** Scale factor (1 = native resolution, 2 = 2x) */
@@ -109,7 +113,7 @@ export async function renderSvgToPng(
 /**
  * Renders an OG image SVG to a PNG response
  *
- * @param svgString - SVG content (should be 1200x630)
+ * @param svgString - SVG content on the 400 design grid (400×350 or 400×210)
  * @param ttl - Explicit browser/edge cache TTLs in seconds (BUG-068: the old
  *   single seconds param was silently multiplied by 7 for the edge TTL,
  *   turning a "7 days" call site into 49 days at the edge)
@@ -120,10 +124,7 @@ export async function renderOGImage(
   ttl: { browser: number; edge: number } = { browser: 86400, edge: 604800 }
 ): Promise<Response> {
   try {
-    const pngBuffer = await renderSvgToPng(svgString, {
-      scale: 1, // 1200x630 is already full resolution
-      background: '#1a1a2e', // Match theme background
-    });
+    const pngBuffer = await renderSvgToPng(svgString, BAND_RENDER);
 
     return new Response(pngBuffer, {
       status: 200,

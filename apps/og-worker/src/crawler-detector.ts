@@ -46,9 +46,9 @@ const CRAWLER_PATTERNS: Array<{ pattern: RegExp; type: CrawlerType }> = [
   // Apple iMessage preview
   { pattern: /Applebot/i, type: 'other' },
 
-  // Google (for rich results, not just search indexing)
-  // Note: We might want to let Googlebot through to the SPA for SEO
-  // { pattern: /Googlebot/i, type: 'other' },
+  // Deliberately EXCLUDED: Googlebot. Google must reach the SPA so its own
+  // SEO content is what gets indexed — see CLAUDE.md "Crawler Detection".
+  // crawler-detector.test.ts pins this.
 ];
 
 /**

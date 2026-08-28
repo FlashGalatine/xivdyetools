@@ -8,7 +8,7 @@
 
 import { Hono } from 'hono';
 import type { Env, Variables } from '../types.js';
-import { CONSOLIDATED_IDS, isConsolidationActive } from '@xivdyetools/core';
+import { CONSOLIDATED_IDS, isConsolidationActive, getFacewearColorByLegacyItemID } from '@xivdyetools/core';
 import { dyeService } from '../lib/services.js';
 import { serializeDye, localizedNameFor } from '../lib/dye-serializer.js';
 import { ApiError, ErrorCode } from '../lib/api-error.js';
@@ -40,12 +40,24 @@ const dyesRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 // GET /search — Name search
 // ============================================================================
 
+/** FINDING-025 / API-13: no dye name comes anywhere near this; anything longer is not a search. */
+const MAX_SEARCH_QUERY_CHARS = 100;
+/** FINDING-025 / API-13: 125 dyes at perPage=1 is 125 pages — 1000 is a generous ceiling. */
+const MAX_PAGE = 1000;
+
 dyesRouter.get('/search', (c) => {
   const q = c.req.query('q');
   if (!q || q.trim() === '') {
     throw new ApiError(ErrorCode.MISSING_PARAMETER, 'Missing required parameter: q', 400, {
       parameter: 'q',
       required: true,
+    });
+  }
+  if (q.length > MAX_SEARCH_QUERY_CHARS) {
+    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "q" must be at most ${MAX_SEARCH_QUERY_CHARS} characters.`, 400, {
+      parameter: 'q',
+      received: q.length,
+      expected: `<= ${MAX_SEARCH_QUERY_CHARS} characters`,
     });
   }
 
@@ -174,7 +186,7 @@ dyesRouter.get('/stain/:stainId', (c) => {
     throw new ApiError(ErrorCode.INVALID_STAIN_ID, `Invalid stain ID "${raw}". Must be a positive integer.`, 400, {
       parameter: 'stainId',
       received: raw,
-      expected: 'positive integer (1-125)',
+      expected: 'positive integer (1-254)',
     });
   }
 
@@ -224,8 +236,21 @@ dyesRouter.get('/:id', (c) => {
         { consolidatedType },
       );
     }
+    // Schema v2 (2026-07-31): legacy Facewear synthetic IDs are no longer
+    // dyes — explain instead of a bare 404.
+    if (resolution.type === 'facewear') {
+      const facewear = getFacewearColorByLegacyItemID(id);
+      throw new ApiError(
+        ErrorCode.NOT_FOUND,
+        facewear
+          ? `ID ${id} was the legacy synthetic ID for the Facewear color "${facewear.name}". Facewear colors are no longer served as dyes.`
+          : `Negative IDs (legacy Facewear synthetic IDs) are no longer served as dyes.`,
+        404,
+        facewear ? { facewearId: facewear.id, hex: facewear.hex } : undefined,
+      );
+    }
     const hint = resolution.type === 'invalid'
-      ? ` ID ${id} falls in the unassigned range (126-5728).`
+      ? ` ID ${id} falls in the unassigned range (255-5728).`
       : '';
     throw new ApiError(ErrorCode.NOT_FOUND, `No dye found with ID ${id}.${hint}`, 404);
   }
@@ -253,7 +278,7 @@ dyesRouter.get('/', (c) => {
   const sortRaw = c.req.query('sort');
   const sort = sortRaw !== undefined ? parseEnumParam(sortRaw, 'sort', VALID_SORT_FIELDS) : undefined;
   const order = parseEnumParam(c.req.query('order'), 'order', VALID_ORDERS, 'asc');
-  const page = parseIntParam(c.req.query('page'), 'page', { min: 1, defaultValue: 1 });
+  const page = parseIntParam(c.req.query('page'), 'page', { min: 1, max: MAX_PAGE, defaultValue: 1 });
   const perPage = parseIntParam(c.req.query('perPage'), 'perPage', { min: 1, max: 200, defaultValue: 50 });
 
   // Boolean filters

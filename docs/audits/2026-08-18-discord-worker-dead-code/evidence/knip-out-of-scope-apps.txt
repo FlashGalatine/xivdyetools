@@ -1,0 +1,32 @@
+Unused dependencies (4) :: apps/api-worker/package.json: @xivdyetools/logger, spectral.js
+Unused dependencies (4) :: apps/oauth/package.json: @xivdyetools/logger
+Unused dependencies (4) :: apps/presets-api/package.json: @xivdyetools/logger
+Unused dependencies (4) :: apps/stoat-worker/package.json: @xivdyetools/core, @xivdyetools/worker-kit, @xivdyetools/svg
+Unused devDependencies (7) :: apps/api-worker/package.json: vue
+Unused devDependencies (7) :: apps/moderation-worker/package.json: discord-interactions
+Unused devDependencies (7) :: apps/stoat-worker/package.json: @xivdyetools/test-utils
+Unused devDependencies (7) :: apps/web-app/package.json: wrangler
+Unused exports (19) :: apps/api-worker/src/lib/response.ts: errorResponse
+Unused exports (19) :: apps/api-worker/src/lib/services.ts: LocalizationService
+Unused exports (19) :: apps/api-worker/src/universalis/services/rate-limiter.ts: clearRateLimits
+Unused exports (19) :: apps/api-worker/src/universalis/test-setup.ts: createMockEnv
+Unused exports (19) :: apps/moderation-worker/src/handlers/buttons/index.ts: handlePresetApproveButton, handlePresetRejectButton, handlePresetRevertButton, isPresetModerationButton, handleBanConfirmButton, handleBanCancelButton, isBanConfirmButton, isBanCancelButton
+Unused exports (19) :: apps/moderation-worker/src/types/ban.ts: toBannedUser
+Unused exports (19) :: apps/moderation-worker/src/types/preset.ts: CATEGORY_DISPLAY
+Unused exports (19) :: apps/oauth/src/__tests__/mocks/cloudflare-test.ts: createBrokenProductionEnv
+Unused exports (19) :: apps/oauth/src/constants/oauth.ts: DISCORD_REQUIRED_SCOPES
+Unused exports (19) :: apps/oauth/src/utils/state-signing.ts: isStateSigned
+Unused exports (19) :: apps/og-worker/src/services/fonts.ts: cjkStack, FONT_FAMILIES
+Unused exports (19) :: apps/og-worker/src/services/svg/base.ts: truncateText
+Unused exports (19) :: apps/og-worker/src/services/svg/index.ts: generateBandCard, bandInk, cardFooter, cardHeader, ogMark, xStrip, BAND_FRAMES, BAND_CAP, DECK_H, FOOTER_H, HEADER_H, MARK_STRIPES
+Unused exports (19) :: apps/presets-api/src/services/validation-service.ts: validateStringLength, validateArray, validateEnum
+Unused exported types (17) :: apps/api-worker/src/universalis/types.ts: Env
+Unused exported types (17) :: apps/moderation-worker/src/types/env.ts: InteractionResponseBody
+Unused exported types (17) :: apps/moderation-worker/src/types/preset.ts: PresetCategory, PresetSortOption, CategoryMeta, PresetPreviousValues, PresetSubmission, PresetEditRequest, PresetSubmitResponse, PresetEditResponse, VoteResponse
+Unused exported types (17) :: apps/moderation-worker/src/utils/verify.ts: DiscordVerificationResult, DiscordVerifyOptions, VerificationResult
+Unused exported types (17) :: apps/oauth/src/types.ts: OAuthState, XIVAuthSocialIdentity
+Unused exported types (17) :: apps/og-worker/src/services/svg/index.ts: BandCardOptions, BandEntry, BandFrame, DefaultCardOptions, HarmonyOGOptions, GradientOGOptions, MixerOGOptions, SwatchOGOptions, ComparisonOGOptions, AccessibilityOGOptions, ExtractorOGOptions, PresetsOGOptions, BudgetOGOptions
+Unused exported types (17) :: apps/og-worker/src/types.ts: ShareParams
+Unused exported types (17) :: apps/presets-api/src/services/validation-service.ts: ModerationStatus
+Unused exported types (17) :: apps/presets-api/src/types.ts: PresetSubmitResponse, PresetEditResponse, ModerationResponse, CategoryListResponse
+Unused exported types (17) :: apps/presets-api/src/utils/api-response.ts: ErrorCodeType

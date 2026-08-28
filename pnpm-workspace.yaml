@@ -4,11 +4,27 @@ packages:
 
 # Dependency overrides (moved from package.json#pnpm.overrides — pnpm 11 no
 # longer reads that field). typescript keeps the workspace on one compiler;
-# rollup and qs are security floors.
+# rollup, qs and seroval are security floors.
 overrides:
   typescript: ^5.9.3
   rollup: '>=4.59.0'
   qs: '>=6.15.2'
+  # GHSA-mv8w-475r-vwqw (critical): seroval.fromJSON() Promise resolver type
+  # confusion invokes attacker-controlled methods during deserialization.
+  # Reaches us only transitively, via stoat-worker > revolt.js > solid-js, and
+  # seroval-plugins peers on `^1.0` so the floor satisfies it unchanged.
+  seroval: '>=1.5.3'
+  # FINDING-036 (2026-08-21 security audit) — dev-only advisories, none
+  # reachable at runtime, closed by scoped overrides rather than waiting on
+  # upstream majors:
+  # - vitepress 1.6.x pins vite ^5.4 (EOL; GHSA-fx2h-pf6j-xcff HIGH +
+  #   GHSA-4w7w-66w2-5vf9 / GHSA-v6wh-96g9-6wx3 MOD + esbuild 0.21 MOD via
+  #   @vitejs/plugin-vue). The docs build runs on Vite 6.4.x (same plugin-vue,
+  #   which peers on ^5 || ^6). Drop this when vitepress ships on Vite >= 6.4.3.
+  'vitepress>vite': '>=6.4.3 <7'
+  # - tsup 8.5 pins esbuild ^0.27 (GHSA-g7r4-m6w7-qqqr LOW); stoat-worker's
+  #   build + vitest run on 0.28.x like every other workspace.
+  'tsup>esbuild': '>=0.28.1'
 
 # Explicit build-script policy (pnpm 11 `allowBuilds` map — replaces the
 # pnpm 10 onlyBuiltDependencies/ignoredBuiltDependencies pair): no dependency
@@ -28,9 +44,6 @@ allowBuilds:
 # be at least 24 h old before install — a window in which compromised releases
 # are typically detected and yanked.
 minimumReleaseAge: 1440
-# postcss@8.5.24 entered the lockfile via the #112 dev-deps bump before this
-# policy existed and was published 2026-07-28T09:40Z. The exclusion is only
-# needed until that release is 24 h old — safe to remove any time after
-# 2026-07-29T09:40Z.
-minimumReleaseAgeExclude:
-  - postcss
+# (The one-off `minimumReleaseAgeExclude: [postcss]` carried here for the
+# 8.5.24 release expired on 2026-07-29 and was removed on 2026-08-10. There is
+# no standing exclusion — add one only with a dated expiry note like that.)

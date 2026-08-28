@@ -10,8 +10,9 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
+import { isValidSnowflake } from '@xivdyetools/types';
 import type { Env, DiscordInteraction } from '../../types/env.js';
-import { InteractionResponseType } from '../../types/env.js';
 import type { Translator } from '../../services/bot-i18n.js';
 import {
   deferredResponse,
@@ -20,18 +21,22 @@ import {
   errorEmbed,
   successEmbed,
   isValidUuid,
-  encodeBase64Url,
+  sanitizeErrorMessage,
 } from '../../utils/response.js';
+import { sanitizeName, sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
 import { editOriginalResponse, safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
-import { PresetAPIError, STATUS_DISPLAY } from '../../types/preset.js';
+import { STATUS_DISPLAY } from '../../types/preset.js';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-const PRESETS_WEB_URL = 'https://xivdyetools.com';
+// FINDING-023 (2026-08-21 security audit): the canonical web host. The old
+// `xivdyetools.com` does not resolve and is not known to be project-owned —
+// bot-authored links to it would have been a registrable phishing target.
+const PRESETS_WEB_URL = 'https://xivdyetools.app';
 
 // ============================================================================
 // Main Handler
@@ -145,6 +150,18 @@ async function validatePresetIdOrSendError(
 
 /**
  * Handle 'pending' action - list presets awaiting moderation
+ *
+ * FINDING-001 (2026-08-11 fix wave): the queue mixes two different reasons a
+ * preset needs a moderator \u2014 its own text is pending, or (since the queue
+ * widened) an already-approved preset's NEW picture is pending. Only the
+ * first kind is safe to approve/reject from this command: approving an
+ * image-only entry is a `WHERE status = 'approved'` no-op that leaves it
+ * stuck in the queue forever, and rejecting one takes a live, approved
+ * palette out of the gallery over a disliked picture \u2014 exactly backwards
+ * from "a bad picture is not a bad palette". `status === 'approved'` is the
+ * unambiguous signal for "image-only" (its text needs nothing); image review
+ * itself happens on the moderation embed discord-worker posts (see
+ * apps/discord-worker/src/handlers/buttons/preview-image.ts), not here.
  */
 async function handlePendingAction(ctx: ModerationContext): Promise<void> {
   const presets = await presetApi.getPendingPresets(ctx.env, ctx.userId);
@@ -161,9 +178,30 @@ async function handlePendingAction(ctx: ModerationContext): Promise<void> {
     return;
   }
 
-  const presetLines = presets.slice(0, 10).map((preset, i) => {
-    return `**${i + 1}.** ${preset.name} by ${preset.author_name || 'Unknown'}\n   ID: \`${preset.id}\``;
+  const visiblePresets = presets.slice(0, 10);
+  const hasImageOnlyEntries = visiblePresets.some((preset) => preset.status === 'approved');
+
+  const presetLines = visiblePresets.map((preset, i) => {
+    // FINDING-019: author-controlled name / author_name are sanitised
+    const name = sanitizeName(preset.name);
+    const author = sanitizeUserName(preset.author_name || 'Unknown');
+    const base = `**${i + 1}.** ${name} by ${author}\n   ID: \`${preset.id}\``;
+
+    // Text-pending entries keep today's rendering untouched.
+    if (preset.status !== 'approved') {
+      return base;
+    }
+
+    const imageNote = preset.pending_preview_image_url
+      ? ctx.t.t('preset.moderation.imageOnlyNote', { url: preset.pending_preview_image_url })
+      : ctx.t.t('preset.moderation.imageOnlyNoteNoUrl');
+
+    return `\uD83D\uDDBC ${base}\n   ${imageNote}`;
   });
+
+  const footerText = hasImageOnlyEntries
+    ? ctx.t.t('preset.moderation.footerMixedQueue')
+    : ctx.t.t('preset.moderation.footerTextOnly');
 
   await sendModerationResponse(ctx, {
     embeds: [
@@ -175,7 +213,7 @@ async function handlePendingAction(ctx: ModerationContext): Promise<void> {
           presetLines.join('\n\n'),
         ].join('\n'),
         color: 0xfee75c,
-        footer: { text: 'Use /preset moderate approve <id> or reject <id> <reason>' },
+        footer: { text: footerText },
       },
     ],
   });
@@ -194,13 +232,25 @@ async function handleApproveAction(
     return;
   }
 
+  // MOD-4 (FINDING-034, 2026-08-21 audit): a ban hides only the author's
+  // approved presets and presets-api's requireNotBanned guards submission /
+  // edit / vote — so without this check a banned author's pending or flagged
+  // entries could still be approved straight from the queue.
+  if (await banService.isPresetAuthorBanned(ctx.env.DB, presetId!)) {
+    await sendModerationResponse(ctx, {
+      embeds: [errorEmbed(ctx.t.t('common.error'), AUTHOR_BANNED_MESSAGE)],
+    });
+    return;
+  }
+
   const preset = await presetApi.approvePreset(ctx.env, presetId!, ctx.userId, reason);
+  const safeName = sanitizeName(preset.name); // FINDING-019
 
   await sendModerationResponse(ctx, {
     embeds: [
       successEmbed(
         ctx.t.t('preset.moderation.approved'),
-        ctx.t.t('preset.moderation.approvedDesc', { name: preset.name })
+        ctx.t.t('preset.moderation.approvedDesc', { name: safeName })
       ),
     ],
   });
@@ -210,7 +260,7 @@ async function handleApproveAction(
     await safeSendMessage(ctx.env.DISCORD_TOKEN, ctx.env.SUBMISSION_LOG_CHANNEL_ID, {
       embeds: [
         {
-          title: `\u2705 ${preset.name} - Approved`,
+          title: `\u2705 ${safeName} - Approved`,
           description: `Preset approved`,
           color: STATUS_DISPLAY.approved.color,
           footer: { text: `ID: ${preset.id}` },
@@ -247,9 +297,10 @@ async function handleRejectAction(
     embeds: [
       {
         title: `\u274C ${ctx.t.t('preset.moderation.rejected')}`,
-        description: ctx.t.t('preset.moderation.rejectedDesc', { name: preset.name }),
+        // FINDING-019: author-controlled name + moderator-typed reason sanitised
+        description: ctx.t.t('preset.moderation.rejectedDesc', { name: sanitizeName(preset.name) }),
         color: 0xed4245,
-        fields: [{ name: 'Reason', value: reason }],
+        fields: [{ name: 'Reason', value: sanitizeReason(reason) }],
       },
     ],
   });
@@ -365,19 +416,28 @@ async function processModerateCommand(
 
       default:
         await sendModerationResponse(ctx, {
-          embeds: [errorEmbed(t.t('common.error'), `Unknown action: ${action}`)],
+          // FINDING-019: the option value is client-supplied text
+          embeds: [errorEmbed(t.t('common.error'), `Unknown action: ${sanitizeEmbedText(action, 64)}`)],
         });
     }
   } catch (error) {
     if (logger) {
       logger.error('Moderate error', error instanceof Error ? error : undefined);
     }
-    const message = error instanceof PresetAPIError ? error.message : 'Moderation action failed.';
+    // MOD-8 (FINDING-034): 4xx API messages are actionable and pass through;
+    // 5xx bodies, D1 and other internals fall back to the generic text.
     await sendModerationResponse(ctx, {
-      embeds: [errorEmbed(t.t('common.error'), message)],
+      embeds: [errorEmbed(t.t('common.error'), sanitizeErrorMessage(error, 'Moderation action failed.'))],
     });
   }
 }
+
+/** MOD-4: shown when an approve action targets a banned author's preset. */
+const AUTHOR_BANNED_MESSAGE =
+  'Cannot approve: the author is currently banned from Preset Palettes. Reject the preset or lift the ban first.';
+
+/** FINDING-020: ban / unban targets must be Discord snowflakes before they reach D1 or a custom_id. */
+const INVALID_USER_ID_MESSAGE = 'Invalid user ID. Pick a user from the suggestions.';
 
 // ============================================================================
 // /preset ban_user
@@ -407,6 +467,9 @@ async function handleBanUserSubcommand(
   if (!targetUserId) {
     return ephemeralResponse('Please specify a user to ban.');
   }
+  if (!isValidSnowflake(targetUserId)) {
+    return ephemeralResponse(INVALID_USER_ID_MESSAGE);
+  }
 
   // Get user details for confirmation
   const confirmationData = await banService.getUserForBanConfirmation(
@@ -421,53 +484,57 @@ async function handleBanUserSubcommand(
 
   const { user, recentPresets } = confirmationData;
 
+  // FINDING-019 / MOD-6: the preset name is the masked-link LABEL — escaped, a
+  // name like `x](https://evil.example) [y` can no longer close the link and
+  // open its own; the target is always our own share URL.
   const presetLinks =
     recentPresets.length > 0
-      ? recentPresets.map((p) => `\u2022 [${p.name}](${p.shareUrl})`).join('\n')
+      ? recentPresets.map((p) => `\u2022 [${sanitizeName(p.name)}](${p.shareUrl})`).join('\n')
       : '_No presets found_';
 
-  return Response.json({
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: {
-      embeds: [
-        {
-          title: `\u26A0\uFE0F ${t.t('ban.confirmTitle')}`,
-          description: t.t('ban.confirmDesc'),
-          color: 0xed4245,
-          fields: [
-            { name: t.t('ban.username'), value: user.username, inline: true },
-            { name: t.t('ban.discordId'), value: user.discordId || 'N/A', inline: true },
-            { name: t.t('ban.totalPresets'), value: String(user.presetCount), inline: true },
-            { name: t.t('ban.recentPresets'), value: presetLinks, inline: false },
-          ],
-          footer: {
-            text: t.t('ban.confirmFooter'),
+  return messageResponse({
+    embeds: [
+      {
+        title: `\u26A0\uFE0F ${t.t('ban.confirmTitle')}`,
+        description: t.t('ban.confirmDesc'),
+        color: 0xed4245,
+        fields: [
+          { name: t.t('ban.username'), value: sanitizeUserName(user.username), inline: true },
+          { name: t.t('ban.discordId'), value: user.discordId || 'N/A', inline: true },
+          { name: t.t('ban.totalPresets'), value: String(user.presetCount), inline: true },
+          { name: t.t('ban.recentPresets'), value: presetLinks, inline: false },
+        ],
+        footer: {
+          text: t.t('ban.confirmFooter'),
+        },
+      },
+    ],
+    components: [
+      {
+        type: 1, // Action Row
+        components: [
+          {
+            type: 2, // Button
+            style: 4, // Danger (red)
+            label: t.t('ban.yesBan'),
+            emoji: { name: '\uD83D\uDD28' },
+            // FINDING-007: id only — the username used to ride along base64url-
+            // encoded and overflowed Discord's 100-char custom_id cap for long
+            // CJK/emoji names, which made those users un-bannable. The reason
+            // modal resolves the name from D1 at submit time.
+            custom_id: `ban_confirm_${targetUserId}`,
           },
-        },
-      ],
-      components: [
-        {
-          type: 1, // Action Row
-          components: [
-            {
-              type: 2, // Button
-              style: 4, // Danger (red)
-              label: t.t('ban.yesBan'),
-              emoji: { name: '\uD83D\uDD28' },
-              custom_id: `ban_confirm_${targetUserId}_${encodeBase64Url(user.username)}`,
-            },
-            {
-              type: 2, // Button
-              style: 2, // Secondary (gray)
-              label: t.t('ban.cancel'),
-              emoji: { name: '\u274C' },
-              custom_id: `ban_cancel_${targetUserId}`,
-            },
-          ],
-        },
-      ],
-      flags: 64, // Ephemeral
-    },
+          {
+            type: 2, // Button
+            style: 2, // Secondary (gray)
+            label: t.t('ban.cancel'),
+            emoji: { name: '\u274C' },
+            custom_id: `ban_cancel_${targetUserId}`,
+          },
+        ],
+      },
+    ],
+    flags: 64, // Ephemeral
   });
 }
 
@@ -499,6 +566,9 @@ async function handleUnbanUserSubcommand(
   const targetUserId = options?.find((opt) => opt.name === 'user')?.value as string | undefined;
   if (!targetUserId) {
     return ephemeralResponse('Please specify a user to unban.');
+  }
+  if (!isValidSnowflake(targetUserId)) {
+    return ephemeralResponse(INVALID_USER_ID_MESSAGE);
   }
 
   // Defer response for async processing
@@ -536,6 +606,13 @@ async function processUnban(
     const result = await banService.unbanUser(env.DB, targetUserId, moderatorId);
 
     if (!result.success) {
+      // MOD-8: `result.error` is channel-safe; the raw cause goes to the log only
+      if (result.cause !== undefined) {
+        logger?.error(
+          `Unban failed for ${targetUserId}`,
+          result.cause instanceof Error ? result.cause : undefined
+        );
+      }
       await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), result.error || 'Failed to unban user.')],
       });
@@ -547,7 +624,8 @@ async function processUnban(
       embeds: [
         {
           title: `\u2705 ${t.t('ban.userUnbanned')}`,
-          description: `Successfully unbanned **${activeBan.username}**.`,
+          // FINDING-019: the stored username is author-controlled
+          description: `Successfully unbanned **${sanitizeUserName(activeBan.username)}**.`,
           color: 0x57f287, // Green
           fields: [
             { name: 'User ID', value: targetUserId, inline: true },

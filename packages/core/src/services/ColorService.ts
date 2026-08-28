@@ -36,8 +36,10 @@ import type {
   OKLCH,
   LCH,
   HSL,
+  CMYK,
 } from '@xivdyetools/types';
 import { ColorConverter, type DeltaEFormula } from './color/ColorConverter.js';
+import type { MatchingMethod } from '../types/index.js';
 import { ColorblindnessSimulator } from './color/ColorblindnessSimulator.js';
 import { ColorAccessibility } from './color/ColorAccessibility.js';
 import { ColorManipulator } from './color/ColorManipulator.js';
@@ -150,6 +152,47 @@ export class ColorService {
     return ColorConverter.getColorDistance(hex1, hex2);
   }
 
+  /**
+   * Calculate "redmean" weighted RGB distance between two colors.
+   * Low-cost perceptual approximation; 0 identical, ~765 white vs black.
+   */
+  static getRedmeanDistance(hex1: string, hex2: string): number {
+    return ColorConverter.getRedmeanDistance(hex1, hex2);
+  }
+
+  /**
+   * Distinguishability percentage: RGB distance rescaled to 0-100
+   * (`round(distance / 441.67 × 100)`). Identical ranks to RGB distance —
+   * a display unit, not a separate metric, and not a WCAG standard.
+   */
+  static getDistinguishabilityPercent(hex1: string, hex2: string): number {
+    return ColorConverter.getDistinguishabilityPercent(hex1, hex2);
+  }
+
+  /**
+   * Distance between two colors in a 5.0 matching-vocabulary method's native
+   * unit — the one dispatch every surface shares (web readouts, bot cards,
+   * OG images). `distinguish` returns the display-rounded integer percent;
+   * for *ranking* use DyeSearch, which ranks distinguish by the unrounded
+   * value so display ties never scramble an ordering.
+   */
+  static getDistanceForMethod(hex1: string, hex2: string, method: MatchingMethod): number {
+    switch (method) {
+      // The three perceptual methods share their spelling with DeltaEFormula
+      // (DEAD-037, 2026-08-18 audit) — no translation switch needed.
+      case 'ciede2000':
+      case 'oklab':
+      case 'cie76':
+        return ColorConverter.getDeltaE(hex1, hex2, method);
+      case 'redmean':
+        return ColorConverter.getRedmeanDistance(hex1, hex2);
+      case 'rgb':
+        return ColorConverter.getColorDistance(hex1, hex2);
+      case 'distinguish':
+        return ColorConverter.getDistinguishabilityPercent(hex1, hex2);
+    }
+  }
+
   // ============================================================================
   // Colorblindness Simulation (delegated to ColorblindnessSimulator)
   // ============================================================================
@@ -167,6 +210,21 @@ export class ColorService {
    */
   static simulateColorblindnessHex(hex: string, visionType: VisionType): HexColor {
     return ColorblindnessSimulator.simulateColorblindnessHex(hex, visionType);
+  }
+
+  /**
+   * Simulate colorblindness using the Machado (2009) severity-1.0 model
+   * (linear-RGB pipeline). The 5.0 SEPARATION band calibration uses this path.
+   */
+  static simulateColorblindnessMachado(rgb: RGB, visionType: VisionType): RGB {
+    return ColorblindnessSimulator.simulateColorblindnessMachado(rgb, visionType);
+  }
+
+  /**
+   * Simulate colorblindness on a hex color via the Machado (2009) model
+   */
+  static simulateColorblindnessMachadoHex(hex: string, visionType: VisionType): HexColor {
+    return ColorblindnessSimulator.simulateColorblindnessMachadoHex(hex, visionType);
   }
 
   // ============================================================================
@@ -246,6 +304,15 @@ export class ColorService {
   }
 
   /**
+   * Rotate hue of a color in CIE LCh space (perceptual hue rotation).
+   * Preserves perceived lightness/chroma; use for harmony "ideal hue" math.
+   * @param degrees Amount to rotate hue (can be negative or positive)
+   */
+  static rotateHueLch(hex: string, degrees: number): HexColor {
+    return ColorManipulator.rotateHueLch(hex, degrees);
+  }
+
+  /**
    * Invert a color (create complementary color)
    */
   static invert(hex: string): HexColor {
@@ -283,7 +350,8 @@ export class ColorService {
    * Calculate DeltaE (color difference) between two hex colors
    * @param hex1 First hex color
    * @param hex2 Second hex color
-   * @param formula DeltaE formula to use ('cie76' or 'cie2000', default: 'cie76')
+   * @param formula DeltaE formula to use ('cie76', 'ciede2000' (alias: 'cie2000')
+   *                or 'oklab'; default: 'cie76')
    * @returns DeltaE value (0 = identical, <1 imperceptible, <3 barely noticeable, >5 clearly different)
    */
   static getDeltaE(hex1: string, hex2: string, formula: DeltaEFormula = 'cie76'): number {
@@ -454,6 +522,35 @@ export class ColorService {
     return ColorConverter.hslToHex(h, s, l);
   }
 
+  /**
+   * Convert RGB to CMYK (naive device-independent conversion)
+   * @example rgbToCmyk(255, 0, 0) -> { c: 0, m: 100, y: 100, k: 0 }
+   */
+  static rgbToCmyk(r: number, g: number, b: number): CMYK {
+    return ColorConverter.rgbToCmyk(r, g, b);
+  }
+
+  /**
+   * Convert CMYK to RGB
+   */
+  static cmykToRgb(c: number, m: number, y: number, k: number): RGB {
+    return ColorConverter.cmykToRgb(c, m, y, k);
+  }
+
+  /**
+   * Convert hex color to CMYK
+   */
+  static hexToCmyk(hex: string): CMYK {
+    return ColorConverter.hexToCmyk(hex);
+  }
+
+  /**
+   * Convert CMYK to hex color
+   */
+  static cmykToHex(c: number, m: number, y: number, k: number): HexColor {
+    return ColorConverter.cmykToHex(c, m, y, k);
+  }
+
   // ============================================================================
   // Color Mixing (RGB, LAB, RYB, OKLAB, HSL)
   // ============================================================================
@@ -603,7 +700,7 @@ export class ColorService {
     h1: number,
     h2: number,
     ratio: number,
-    method: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter'
+    method: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter',
   ): number {
     let diff = h2 - h1;
 
@@ -628,63 +725,6 @@ export class ColorService {
   }
 
   /**
-   * Mix two colors using OKLCH cylindrical mixing
-   *
-   * OKLCH provides control over hue interpolation direction,
-   * useful for creating gradients that go "through" specific colors.
-   *
-   * @param hex1 First hex color
-   * @param hex2 Second hex color
-   * @param ratio Mix ratio (0 = all hex1, 0.5 = equal mix, 1 = all hex2). Default: 0.5
-   * @param hueMethod Hue interpolation method ('shorter' | 'longer' | 'increasing' | 'decreasing')
-   * @returns Mixed color as hex
-   */
-  static mixColorsOklch(
-    hex1: string,
-    hex2: string,
-    ratio: number = 0.5,
-    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter'
-  ): HexColor {
-    const oklch1 = ColorConverter.hexToOklch(hex1);
-    const oklch2 = ColorConverter.hexToOklch(hex2);
-
-    const L = oklch1.L + (oklch2.L - oklch1.L) * ratio;
-    const C = oklch1.C + (oklch2.C - oklch1.C) * ratio;
-    const h = this.interpolateHue(oklch1.h, oklch2.h, ratio, hueMethod);
-
-    return ColorConverter.oklchToHex(L, C, h);
-  }
-
-  /**
-   * Mix two colors using LCH cylindrical mixing
-   *
-   * LCH is the cylindrical form of CIE LAB, providing hue control
-   * for perceptual mixing. Note: May produce unexpected hues for
-   * blue+yellow due to LAB's red bias (use OKLCH for better results).
-   *
-   * @param hex1 First hex color
-   * @param hex2 Second hex color
-   * @param ratio Mix ratio (0 = all hex1, 0.5 = equal mix, 1 = all hex2). Default: 0.5
-   * @param hueMethod Hue interpolation method ('shorter' | 'longer' | 'increasing' | 'decreasing')
-   * @returns Mixed color as hex
-   */
-  static mixColorsLch(
-    hex1: string,
-    hex2: string,
-    ratio: number = 0.5,
-    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter'
-  ): HexColor {
-    const lch1 = ColorConverter.hexToLch(hex1);
-    const lch2 = ColorConverter.hexToLch(hex2);
-
-    const L = lch1.L + (lch2.L - lch1.L) * ratio;
-    const C = lch1.C + (lch2.C - lch1.C) * ratio;
-    const h = this.interpolateHue(lch1.h, lch2.h, ratio, hueMethod);
-
-    return ColorConverter.lchToHex(L, C, h);
-  }
-
-  /**
    * Mix two colors using HSL hue averaging
    *
    * Simple and intuitive mixing based on hue wheel position.
@@ -701,7 +741,7 @@ export class ColorService {
     hex1: string,
     hex2: string,
     ratio: number = 0.5,
-    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter'
+    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter',
   ): HexColor {
     const hsl1 = ColorConverter.hexToHsl(hex1);
     const hsl2 = ColorConverter.hexToHsl(hex2);
@@ -711,34 +751,6 @@ export class ColorService {
     const l = hsl1.l + (hsl2.l - hsl1.l) * ratio;
 
     return ColorConverter.hslToHex(h, s, l);
-  }
-
-  /**
-   * Mix two colors using HSV hue averaging
-   *
-   * Similar to HSL but uses Value instead of Lightness.
-   * Useful when working with existing HSV-based workflows.
-   *
-   * @param hex1 First hex color
-   * @param hex2 Second hex color
-   * @param ratio Mix ratio (0 = all hex1, 0.5 = equal mix, 1 = all hex2). Default: 0.5
-   * @param hueMethod Hue interpolation method ('shorter' | 'longer' | 'increasing' | 'decreasing')
-   * @returns Mixed color as hex
-   */
-  static mixColorsHsv(
-    hex1: string,
-    hex2: string,
-    ratio: number = 0.5,
-    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter'
-  ): HexColor {
-    const hsv1 = ColorConverter.hexToHsv(hex1);
-    const hsv2 = ColorConverter.hexToHsv(hex2);
-
-    const h = this.interpolateHue(hsv1.h, hsv2.h, ratio, hueMethod);
-    const s = hsv1.s + (hsv2.s - hsv1.s) * ratio;
-    const v = hsv1.v + (hsv2.v - hsv1.v) * ratio;
-
-    return ColorConverter.hsvToHex(h, s, v);
   }
 
   // ============================================================================
@@ -768,41 +780,6 @@ export class ColorService {
    */
   static mixColorsSpectral(hex1: string, hex2: string, ratio: number = 0.5): HexColor {
     return SpectralMixer.mixColors(hex1, hex2, ratio);
-  }
-
-  /**
-   * Mix multiple colors using Kubelka-Munk spectral mixing
-   *
-   * @param colors Array of hex colors to mix
-   * @param weights Optional array of weights (defaults to equal weights)
-   * @returns Mixed color as hex
-   */
-  static mixMultipleSpectral(colors: string[], weights?: number[]): HexColor {
-    return SpectralMixer.mixMultiple(colors, weights);
-  }
-
-  /**
-   * Generate a gradient using spectral mixing
-   *
-   * Creates a series of colors that transition smoothly using
-   * Kubelka-Munk theory for realistic blending.
-   *
-   * @param hex1 Starting color
-   * @param hex2 Ending color
-   * @param steps Number of colors in the gradient
-   * @returns Array of hex colors
-   */
-  static gradientSpectral(hex1: string, hex2: string, steps: number): HexColor[] {
-    return SpectralMixer.gradient(hex1, hex2, steps);
-  }
-
-  /**
-   * Check if spectral mixing is available
-   *
-   * @returns true if spectral.js is loaded and functional
-   */
-  static isSpectralAvailable(): boolean {
-    return SpectralMixer.isAvailable();
   }
 }
 

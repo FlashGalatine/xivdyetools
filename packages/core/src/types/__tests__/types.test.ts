@@ -122,9 +122,9 @@ describe('createDyeId', () => {
       expect(id).toBe(100);
     });
 
-    it('should accept valid dye ID (200)', () => {
-      const id = createDyeId(200);
-      expect(id).toBe(200);
+    it('should accept valid dye ID (254, top of the stainID window)', () => {
+      const id = createDyeId(254);
+      expect(id).toBe(254);
     });
 
     it('should accept typical FFXIV dye IDs', () => {
@@ -146,8 +146,8 @@ describe('createDyeId', () => {
       expect(id).toBeNull();
     });
 
-    it('should return null for numbers above 200', () => {
-      const id = createDyeId(201);
+    it('should return null for numbers above 254', () => {
+      const id = createDyeId(255);
       expect(id).toBeNull();
     });
 
@@ -182,16 +182,16 @@ describe('createDyeId', () => {
       expect(createDyeId(1)).toBe(1);
     });
 
-    it('should accept maximum valid ID (200)', () => {
-      expect(createDyeId(200)).toBe(200);
+    it('should accept maximum valid ID (254)', () => {
+      expect(createDyeId(254)).toBe(254);
     });
 
     it('should reject just below minimum (0)', () => {
       expect(createDyeId(0)).toBeNull();
     });
 
-    it('should reject just above maximum (201)', () => {
-      expect(createDyeId(201)).toBeNull();
+    it('should reject just above maximum (255)', () => {
+      expect(createDyeId(255)).toBeNull();
     });
   });
 

@@ -52,7 +52,7 @@ export async function initRenderer(logger?: ExtendedLogger): Promise<void> {
       }
       throw new Error(
         `Failed to initialize SVG renderer: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { cause: error }
+        { cause: error },
       );
     }
   })();
@@ -82,7 +82,7 @@ export async function renderSvgToPng(
     /** Background color (default: transparent) */
     background?: string;
   } = {},
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Uint8Array> {
   // Ensure WASM is initialized
   await initRenderer(logger);
@@ -114,28 +114,7 @@ export async function renderSvgToPng(
     }
     throw new Error(
       `Failed to render SVG: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      { cause: error }
+      { cause: error },
     );
   }
-}
-
-/**
- * Renders an SVG to a PNG and returns it as a base64 data URL
- * Useful for embedding in HTML or testing
- */
-export async function renderSvgToDataUrl(svgString: string): Promise<string> {
-  const pngBuffer = await renderSvgToPng(svgString);
-  const base64 = bufferToBase64(pngBuffer);
-  return `data:image/png;base64,${base64}`;
-}
-
-/**
- * Converts a Uint8Array to a base64 string
- */
-function bufferToBase64(buffer: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < buffer.length; i++) {
-    binary += String.fromCharCode(buffer[i]);
-  }
-  return btoa(binary);
 }

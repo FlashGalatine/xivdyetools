@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { LocaleCode } from '@xivdyetools/bot-i18n';
+import type { LocaleCode } from './i18n/index.js';
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from './localization.js';
 
 describe('localization', () => {

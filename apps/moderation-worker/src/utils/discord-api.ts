@@ -5,8 +5,9 @@
  * and other Discord API operations.
  */
 
+import { ALLOWED_MENTIONS_NONE } from '@xivdyetools/bot-logic';
 import { sanitizeUrl, sanitizeErrorMessage } from './url-sanitizer.js';
-import type { DiscordEmbed, DiscordActionRow } from './response.js';
+import type { DiscordEmbed, DiscordActionRow, AllowedMentions } from './response.js';
 
 const DISCORD_API_BASE = 'https://discord.com/api/v10';
 
@@ -16,6 +17,16 @@ export interface FollowUpOptions {
   components?: DiscordActionRow[];
   /** Make the message ephemeral (only visible to user) */
   ephemeral?: boolean;
+  /**
+   * FINDING-019 (2026-08-21 security audit): defaults to
+   * `ALLOWED_MENTIONS_NONE` — nothing pings unless a caller opts in.
+   */
+  allowed_mentions?: AllowedMentions;
+}
+
+/** Every outbound body starts with `allowed_mentions` (caller override wins). */
+function baseBody(options: { allowed_mentions?: AllowedMentions }): Record<string, unknown> {
+  return { allowed_mentions: options.allowed_mentions ?? ALLOWED_MENTIONS_NONE };
 }
 
 /**
@@ -28,7 +39,7 @@ export async function sendFollowUp(
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}`;
 
-  const body: Record<string, unknown> = {};
+  const body = baseBody(options);
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
@@ -61,7 +72,7 @@ export async function editOriginalResponse(
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
 
-  const body: Record<string, unknown> = {};
+  const body = baseBody(options);
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
@@ -112,6 +123,8 @@ export interface SendMessageOptions {
   content?: string;
   embeds?: DiscordEmbed[];
   components?: DiscordActionRow[];
+  /** FINDING-019: defaults to `ALLOWED_MENTIONS_NONE`. */
+  allowed_mentions?: AllowedMentions;
 }
 
 /**
@@ -125,7 +138,7 @@ export async function sendMessage(
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/channels/${channelId}/messages`;
 
-  const body: Record<string, unknown> = {};
+  const body = baseBody(options);
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
@@ -161,7 +174,7 @@ export async function editMessage(
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/channels/${channelId}/messages/${messageId}`;
 
-  const body: Record<string, unknown> = {};
+  const body = baseBody(options);
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;

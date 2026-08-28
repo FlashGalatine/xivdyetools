@@ -2,22 +2,15 @@
  * Tests for JWT Verification Utilities
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  decodeJWT,
-  verifyJWT,
-  verifyJWTSignatureOnly,
-  isJWTExpired,
-  getJWTTimeToExpiry,
-  type JWTPayload,
-} from './jwt.js';
-import { base64UrlEncode, base64UrlEncodeBytes } from '@xivdyetools/crypto';
+import { decodeJWT, verifyJWT, verifyJWTSignatureOnly, type JWTPayload } from './jwt.js';
+import { base64UrlEncode, base64UrlEncodeBytes } from './encoding/index.js';
 import { createHmacKey } from './hmac.js';
 
 // Helper to create a valid JWT for testing
 async function createTestJWT(
   payload: JWTPayload,
   secret: string,
-  algorithm = 'HS256'
+  algorithm = 'HS256',
 ): Promise<string> {
   const header = { alg: algorithm, typ: 'JWT' };
   const headerB64 = base64UrlEncode(JSON.stringify(header));
@@ -25,11 +18,7 @@ async function createTestJWT(
 
   const signatureInput = `${headerB64}.${payloadB64}`;
   const key = await createHmacKey(secret, 'sign');
-  const signature = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    new TextEncoder().encode(signatureInput)
-  );
+  const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(signatureInput));
   const signatureB64 = base64UrlEncodeBytes(new Uint8Array(signature));
 
   return `${headerB64}.${payloadB64}.${signatureB64}`;
@@ -78,9 +67,7 @@ describe('jwt.ts', () => {
 
     it('should return null for invalid JSON payload', () => {
       const headerB64 = base64UrlEncode('{"alg":"HS256","typ":"JWT"}');
-      const payloadB64 = base64UrlEncodeBytes(
-        new TextEncoder().encode('not-json')
-      );
+      const payloadB64 = base64UrlEncodeBytes(new TextEncoder().encode('not-json'));
       const decoded = decodeJWT(`${headerB64}.${payloadB64}.signature`);
       expect(decoded).toBeNull();
     });
@@ -185,7 +172,7 @@ describe('jwt.ts', () => {
       const signature = await crypto.subtle.sign(
         'HMAC',
         key,
-        new TextEncoder().encode(signatureInput)
+        new TextEncoder().encode(signatureInput),
       );
       const signatureB64 = base64UrlEncodeBytes(new Uint8Array(signature));
       const token = `${headerB64}.${payloadB64}.${signatureB64}`;
@@ -211,7 +198,7 @@ describe('jwt.ts', () => {
       const signature = await crypto.subtle.sign(
         'HMAC',
         key,
-        new TextEncoder().encode(signatureInput)
+        new TextEncoder().encode(signatureInput),
       );
       const signatureB64 = base64UrlEncodeBytes(new Uint8Array(signature));
       const token = `${headerB64}.${payloadB64}.${signatureB64}`;
@@ -248,7 +235,10 @@ describe('jwt.ts', () => {
       };
       const token = await createTestJWT(payload, secret);
 
-      const verified = await verifyJWTSignatureOnly(token, 'wrong-secret-that-is-at-least-32-bytes!!');
+      const verified = await verifyJWTSignatureOnly(
+        token,
+        'wrong-secret-that-is-at-least-32-bytes!!',
+      );
 
       expect(verified).toBeNull();
     });
@@ -312,7 +302,7 @@ describe('jwt.ts', () => {
       const signature = await crypto.subtle.sign(
         'HMAC',
         key,
-        new TextEncoder().encode(signatureInput)
+        new TextEncoder().encode(signatureInput),
       );
       const signatureB64 = base64UrlEncodeBytes(new Uint8Array(signature));
       const token = `${headerB64}.${payloadB64}.${signatureB64}`;
@@ -321,69 +311,6 @@ describe('jwt.ts', () => {
 
       // BUG-010: No sub means token is rejected
       expect(verified).toBeNull();
-    });
-  });
-
-  describe('isJWTExpired', () => {
-    it('should return false for valid non-expired token', async () => {
-      const payload: JWTPayload = {
-        sub: '123456789',
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        type: 'access',
-      };
-      const token = await createTestJWT(payload, secret);
-
-      expect(isJWTExpired(token)).toBe(false);
-    });
-
-    it('should return true for expired token', async () => {
-      const payload: JWTPayload = {
-        sub: '123456789',
-        iat: Math.floor(Date.now() / 1000) - 7200,
-        exp: Math.floor(Date.now() / 1000) - 3600,
-        type: 'access',
-      };
-      const token = await createTestJWT(payload, secret);
-
-      expect(isJWTExpired(token)).toBe(true);
-    });
-
-    it('should return true for malformed token', () => {
-      expect(isJWTExpired('not-a-jwt')).toBe(true);
-    });
-  });
-
-  describe('getJWTTimeToExpiry', () => {
-    it('should return correct time to expiry', async () => {
-      const expiresIn = 3600; // 1 hour
-      const payload: JWTPayload = {
-        sub: '123456789',
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + expiresIn,
-        type: 'access',
-      };
-      const token = await createTestJWT(payload, secret);
-
-      const ttl = getJWTTimeToExpiry(token);
-
-      expect(ttl).toBe(expiresIn);
-    });
-
-    it('should return 0 for expired token', async () => {
-      const payload: JWTPayload = {
-        sub: '123456789',
-        iat: Math.floor(Date.now() / 1000) - 7200,
-        exp: Math.floor(Date.now() / 1000) - 3600,
-        type: 'access',
-      };
-      const token = await createTestJWT(payload, secret);
-
-      expect(getJWTTimeToExpiry(token)).toBe(0);
-    });
-
-    it('should return 0 for malformed token', () => {
-      expect(getJWTTimeToExpiry('not-a-jwt')).toBe(0);
     });
   });
 
@@ -425,6 +352,84 @@ describe('jwt.ts', () => {
       expect(await verifyJWTSignatureOnly(token, secret, 60_000)).toBeNull();
       // Without an age cap, iat is not consulted at all
       expect(await verifyJWTSignatureOnly(token, secret)).not.toBeNull();
+    });
+  });
+
+  describe('claim hardening (FINDING-015)', () => {
+    const now = () => Math.floor(Date.now() / 1000);
+
+    it('verifyJWT rejects a signed token whose exp is a string', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: String(now() + 3600) } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret)).toBeNull();
+    });
+
+    it('verifyJWT rejects a signed token whose exp is an object', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: {} } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret)).toBeNull();
+    });
+
+    it('verifyJWT rejects a signed token whose sub is not a string', async () => {
+      const token = await createTestJWT(
+        { sub: 123, iat: now(), exp: now() + 3600 } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret)).toBeNull();
+    });
+
+    it('verifyJWTSignatureOnly rejects a signed token whose exp is a string', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: String(now() + 3600) } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWTSignatureOnly(token, secret)).toBeNull();
+    });
+
+    it('verifyJWT rejects a token whose nbf is in the future', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: now() + 3600, nbf: now() + 600 } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret)).toBeNull();
+    });
+
+    it('verifyJWT accepts a token whose nbf is in the past', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: now() + 3600, nbf: now() - 5 } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret)).not.toBeNull();
+    });
+
+    it('verifyJWT enforces the issuer option when provided', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: now() + 3600, iss: 'https://auth.example' },
+        secret,
+      );
+      expect(await verifyJWT(token, secret, { issuer: 'https://auth.example' })).not.toBeNull();
+      expect(await verifyJWT(token, secret, { issuer: 'https://evil.example' })).toBeNull();
+      expect(
+        await verifyJWT(token, secret, { issuer: ['https://other.example', 'https://auth.example'] }),
+      ).not.toBeNull();
+    });
+
+    it('verifyJWT rejects a token with no iss when an issuer is required', async () => {
+      const token = await createTestJWT({ sub: '123', iat: now(), exp: now() + 3600 }, secret);
+      expect(await verifyJWT(token, secret, { issuer: 'https://auth.example' })).toBeNull();
+    });
+
+    it('verifyJWT enforces the audience option when provided', async () => {
+      const token = await createTestJWT(
+        { sub: '123', iat: now(), exp: now() + 3600, aud: 'presets-api' } as unknown as JWTPayload,
+        secret,
+      );
+      expect(await verifyJWT(token, secret, { audience: 'presets-api' })).not.toBeNull();
+      expect(await verifyJWT(token, secret, { audience: 'other' })).toBeNull();
     });
   });
 });

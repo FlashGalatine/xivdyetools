@@ -1,12 +1,19 @@
-name = "xivdyetools-presets-api"
+# DEPLOY_ENVIRONMENTS (docs/operations/DEPLOY_ENVIRONMENTS.md): the default
+# (top-level) env is a separate dev worker with its own name and NO routes, so
+# a plain `wrangler deploy` can never overwrite the production API on
+# api.xivdyetools.app with the development vars below (note CORS_ORIGIN is
+# localhost here). Production config lives exclusively under [env.production]
+# and ships via `wrangler deploy --env production`.
+#
+# `routes` and `workers_dev` are INHERITABLE keys: a named environment takes
+# the top-level value unless it overrides it. `routes` therefore MOVED into
+# [env.production] — leaving it here would attach the production custom
+# domains to the dev worker.
+name = "xivdyetools-presets-api-dev"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
-
-routes = [
-  { pattern = "api.xivdyetools.app", custom_domain = true },
-  { pattern = "api.xivdyetools.projectgalatine.com", custom_domain = true }
-]
+workers_dev = false
 
 [dev]
 port = 8787
@@ -21,14 +28,45 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 binding = "DISCORD_WORKER"
 service = "xivdyetools-discord-worker"
 
+[[r2_buckets]]
+binding = "THUMBNAILS"
+bucket_name = "xivdyetools-presets-preview-thumbnails"
+
+[[services]]
+binding = "IMAGE_WORKER"
+service = "xivdyetools-image-worker"
+
+# FINDING-002: the oauth worker's jti blacklist (same namespace as oauth's
+# TOKEN_BLACKLIST) so revoked tokens are rejected here too. Dev → oauth dev ns.
+[[kv_namespaces]]
+binding = "TOKEN_BLACKLIST"
+id = "891bbbe834ba4055a06b672b589094be"
+
+# FINDING-003: native Workers Rate Limiting binding for the public per-IP limiter (100 / 60 s).
+[[ratelimits]]
+name = "RL_PUBLIC"
+namespace_id = "1012"
+simple = { limit = 100, period = 60 }
+
 [vars]
 ENVIRONMENT = "development"
 API_VERSION = "v1"
 CORS_ORIGIN = "http://localhost:5173"
+# FINDING-015: pin the JWT issuer (oauth WORKER_URL) — dev oauth runs on :8788
+JWT_ISSUER = "http://localhost:8788"
 
 [env.production]
 name = "xivdyetools-presets-api"
-vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com" }
+routes = [
+  { pattern = "api.xivdyetools.app", custom_domain = true },
+  { pattern = "api.xivdyetools.projectgalatine.com", custom_domain = true }
+]
+vars ={ ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app", CACHE_PURGE_ZONE_ID = "ec1fb94c1ee9f6763f631b6fcfa3c52c" }
+# CACHE_PURGE_ZONE_ID is the `xivdyetools.app` zone that serves the R2 custom
+# domain shots.xivdyetools.app (`wrangler r2 bucket domain list
+# xivdyetools-presets-preview-thumbnails` → zone_id). A zone id is not a
+# secret — it is config, kept here so the purge target is reviewable; only
+# CACHE_PURGE_API_TOKEN is a secret (FINDING-018).
 
 [[env.production.d1_databases]]
 binding = "DB"
@@ -39,7 +77,30 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 binding = "DISCORD_WORKER"
 service = "xivdyetools-discord-worker"
 
+[[env.production.r2_buckets]]
+binding = "THUMBNAILS"
+bucket_name = "xivdyetools-presets-preview-thumbnails"
+
+[[env.production.services]]
+binding = "IMAGE_WORKER"
+service = "xivdyetools-image-worker"
+
 # Secrets: BOT_API_SECRET, BOT_SIGNING_SECRET, JWT_SECRET,
 # MODERATOR_IDS, PERSPECTIVE_API_KEY, MODERATION_WEBHOOK_URL,
 # OWNER_DISCORD_ID, DISCORD_BOT_TOKEN,
-# DISCORD_BOT_WEBHOOK_URL, INTERNAL_WEBHOOK_SECRET
+# DISCORD_BOT_WEBHOOK_URL, INTERNAL_WEBHOOK_SECRET,
+# CACHE_PURGE_API_TOKEN (optional, FINDING-018: a token with only
+#   Zone → Cache Purge on the xivdyetools.app zone; pairs with the
+#   CACHE_PURGE_ZONE_ID var above; unset → preview-image takedowns skip
+#   the edge purge. Set on production 2026-08-21.)
+
+# FINDING-002: production oauth TOKEN_BLACKLIST namespace (see apps/oauth/wrangler.toml)
+[[env.production.kv_namespaces]]
+binding = "TOKEN_BLACKLIST"
+id = "0d6f3be3b4704e91a83e6387b9769e45"
+
+# FINDING-003: production public per-IP rate-limit binding
+[[env.production.ratelimits]]
+name = "RL_PUBLIC"
+namespace_id = "1011"
+simple = { limit = 100, period = 60 }

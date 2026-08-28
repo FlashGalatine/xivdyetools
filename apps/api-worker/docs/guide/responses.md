@@ -1,0 +1,106 @@
+# Responses
+
+All `/v1` responses use a consistent JSON envelope regardless of endpoint. (The [Universalis proxy](../reference/universalis) at `/universalis/*` and the `/health` check are the exceptions — they return raw bodies.)
+
+## Success
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "meta": {
+    "requestId": "550e8400-e29b-41d4-a716-446655440000",
+    "apiVersion": "v1",
+    "locale": "ja"
+  }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `success` | `true` | Always `true` on 2xx responses |
+| `data` | object \| array | The response payload |
+| `meta.requestId` | string | UUID — echo this when reporting issues |
+| `meta.apiVersion` | string | `"v1"` |
+| `meta.locale` | string? | Effective locale — present only when a non-English `locale` was requested (omitted for `en`) |
+
+## Errors
+
+```json
+{
+  "success": false,
+  "error": "INVALID_HEX",
+  "message": "Invalid hex color format. Expected #RRGGBB or RRGGBB.",
+  "details": {
+    "parameter": "hex",
+    "received": "not-a-color",
+    "expected": "Hex color string matching /^#?[0-9A-Fa-f]{6}$/"
+  },
+  "meta": {
+    "requestId": "550e8400-e29b-41d4-a716-446655440000",
+    "apiVersion": "v1"
+  }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `success` | `false` | Always `false` on 4xx/5xx responses |
+| `error` | string | Machine-readable error code — safe to `switch` on |
+| `message` | string | Human-readable description |
+| `details` | object? | Additional context (which param, what was received) |
+
+See the [Error Reference](./errors) for the full code catalog.
+
+## Paginated Lists
+
+Endpoints returning arrays include a `pagination` field alongside `data`:
+
+```json
+{
+  "success": true,
+  "data": [ ... ],
+  "pagination": {
+    "page": 2,
+    "perPage": 50,
+    "total": 125,
+    "totalPages": 3,
+    "hasNext": true,
+    "hasPrev": true
+  },
+  "meta": { ... }
+}
+```
+
+Control pagination with `?page=` and `?perPage=` (max 200). Non-paginated endpoints (`/search`, `/categories`, `/match/*`) return all results in `data` without a `pagination` field.
+
+## Response Headers
+
+Every `/v1` response includes these headers (`X-RateLimit-*` are set only on `/v1/*`):
+
+| Header | Example | Description |
+|---|---|---|
+| `X-Request-ID` | `550e8400-…` | Unique ID — matches `meta.requestId` in body |
+| `X-API-Version` | `v1` | API version |
+| `X-RateLimit-Limit` | `65` | Requests allowed per window (60 + 5 burst) |
+| `X-RateLimit-Remaining` | `42` | Requests remaining in this window |
+| `X-RateLimit-Reset` | `1702684860` | Unix timestamp when the window resets |
+| `Cache-Control` | `public, max-age=3600, s-maxage=86400` | Caching directives |
+| `Access-Control-Allow-Origin` | `*` | Open CORS — callable from any origin |
+
+## Caching
+
+Dye data is deterministic and changes only with FFXIV patches, so aggressive caching is safe:
+
+| Endpoint group | Cache-Control |
+|---|---|
+| `/v1/dyes/*` | `public, max-age=3600, s-maxage=86400` |
+| `/v1/match/*` | `public, max-age=3600, s-maxage=86400` |
+| `/universalis/aggregated/*` | `public, max-age=300, stale-while-revalidate=120` (stale hits: `max-age=0, must-revalidate`) + `X-Cache` headers |
+| `/universalis/data-centers`, `/universalis/worlds` | `public, max-age=86400, stale-while-revalidate=21600` |
+
+The `Age` header (set by Cloudflare) tells you how old the cached response is. A fresh cache hit means sub-millisecond response time at the nearest PoP.
+
+## Compression
+
+Cloudflare automatically negotiates Brotli or gzip based on your `Accept-Encoding` header. No configuration needed.

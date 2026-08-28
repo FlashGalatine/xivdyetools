@@ -1,0 +1,109 @@
+Unused files (2)
+apps/discord-worker/src/services/svg/index.ts: apps/discord-worker/src/services/svg/index.ts
+apps/discord-worker/src/types/image.ts: apps/discord-worker/src/types/image.ts
+Unused dependencies (4)
+apps/api-worker/package.json: @xivdyetools/logger, spectral.js
+apps/oauth/package.json: @xivdyetools/logger
+apps/presets-api/package.json: @xivdyetools/logger
+apps/stoat-worker/package.json: @xivdyetools/core, @xivdyetools/worker-kit, @xivdyetools/svg
+Unused devDependencies (7)
+apps/api-worker/package.json: vue
+apps/moderation-worker/package.json: discord-interactions
+apps/stoat-worker/package.json: @xivdyetools/test-utils
+apps/web-app/package.json: wrangler
+packages/bot-logic/package.json: @xivdyetools/test-utils
+packages/core/package.json: typedoc-plugin-markdown
+packages/test-utils/package.json: @testing-library/dom
+Unresolved imports (1)
+packages/core/typedoc.json: d, e, f, a, u, l, t
+Unused exports (43)
+apps/api-worker/src/lib/response.ts: errorResponse
+apps/api-worker/src/lib/services.ts: LocalizationService
+apps/api-worker/src/universalis/services/rate-limiter.ts: clearRateLimits
+apps/api-worker/src/universalis/test-setup.ts: createMockEnv
+apps/discord-worker/src/handlers/buttons/index.ts: createHexButton, handlePreviewImageButton, isPreviewImageButton
+apps/discord-worker/src/services/budget/index.ts: fetchPrices, fetchPricesBatched, CACHE_TTL_SECONDS, getCachedPrice, setCachedPrice, getCachedPrices, setCachedPrices, fetchWithCache, searchDyes, getAllDyes, getCategories, QUICK_PICKS, getQuickPickChoices
+apps/discord-worker/src/services/preferences.ts: resolvePreference
+apps/discord-worker/src/test-utils.ts: createMockExecutionContext, createMockDyes, createMockPreset
+apps/discord-worker/src/utils/color.ts: isValidHex, normalizeHex, resolveDyeInput
+apps/moderation-worker/src/handlers/buttons/index.ts: handlePresetApproveButton, handlePresetRejectButton, handlePresetRevertButton, isPresetModerationButton, handleBanConfirmButton, handleBanCancelButton, isBanConfirmButton, isBanCancelButton
+apps/moderation-worker/src/types/ban.ts: toBannedUser
+apps/moderation-worker/src/types/preset.ts: CATEGORY_DISPLAY
+apps/oauth/src/__tests__/mocks/cloudflare-test.ts: createBrokenProductionEnv
+apps/oauth/src/constants/oauth.ts: DISCORD_REQUIRED_SCOPES
+apps/oauth/src/utils/state-signing.ts: isStateSigned
+apps/og-worker/src/services/fonts.ts: cjkStack, FONT_FAMILIES
+apps/og-worker/src/services/svg/base.ts: truncateText
+apps/og-worker/src/services/svg/index.ts: generateBandCard, bandInk, cardFooter, cardHeader, ogMark, xStrip, BAND_FRAMES, BAND_CAP, DECK_H, FOOTER_H, HEADER_H, MARK_STRIPES
+apps/presets-api/src/services/validation-service.ts: validateStringLength, validateArray, validateEnum
+apps/web-app/functions/_middleware.ts: onRequest
+apps/web-app/scripts/analyze-unused-keys.d.ts: flattenKeys, listSourceFiles, buildUsageOracle, findUnusedKeys
+apps/web-app/scripts/check-bundle-size.d.ts: limitFor, computeTotals, discoverLocaleCodes, localeChunkPattern
+packages/auth/src/index.ts: isJWTExpired, getJWTTimeToExpiry, createHmacKey, hmacSign, hmacSignHex, hmacVerify, hmacVerifyHex, timingSafeEqualBytes, base64UrlEncode, base64UrlEncodeBytes, base64UrlDecode, base64UrlDecodeBytes, hexToBytes, bytesToHex
+packages/bot-logic/src/index.ts: isValidHex, normalizeHex, getLocalizedCurrency, getColorDistance, getMatchQualityInfo, HARMONY_TYPES, VISION_TYPES, isValidDiscordSnowflake
+packages/core/src/config/band-vocabulary.ts: SEPARATION_TIER_KEYS
+packages/core/src/constants/index.ts: VISION_TYPES, VISION_TYPE_LABELS, API_DEBOUNCE_DELAY
+packages/core/src/index.ts: MemoryCacheBackend, SUPPORTED_LOCALES, resolveLocaleFromPreference, MATCHING_METHODS, DYE_CATEGORIES, DYE_ACQUISITIONS, ACQUISITION_META, METALLIC_STAIN_IDS, RATIO_BANDS, SEPARATION_TIER_KEYS, classifyBandTierWithCuts, deriveDistinguishCuts, calibrateBandVocabulary, DE2000_GROUND_TRUTH, METHOD_DISPLAY_DP, OFF_GRID_DELTA_E2000, LODESTONE_BY_REGION, XIVDYETOOLS_DOCS_URL, facewearColors, LEGACY_FACEWEAR_ITEM_IDS, getFacewearColor, RGB_MIN, RGB_MAX, HUE_MIN, HUE_MAX, SATURATION_MIN, SATURATION_MAX, VALUE_MIN, VALUE_MAX, COLOR_DISTANCE_MAX, VISION_TYPES, VISION_TYPE_LABELS, BRETTEL_MATRICES, MACHADO_MATRICES, PATTERNS, UNIVERSALIS_API_TIMEOUT, UNIVERSALIS_API_RETRY_COUNT, UNIVERSALIS_API_RETRY_DELAY, API_CACHE_TTL, API_DEBOUNCE_DELAY, API_CACHE_VERSION, API_MAX_RESPONSE_SIZE, API_RATE_LIMIT_DELAY, clamp, lerp, round, distance, unique, groupBy, sortByProperty, filterNulls, isValidHexColor, isValidRGB, isValidHSV, isString, isNumber, isArray, isObject, isNullish, sleep, retry, isAbortError, generateChecksum, VERSION
+packages/core/src/version.ts: VERSION
+packages/logger/src/adapters/index.ts: ConsoleAdapter, JsonAdapter, NoopAdapter
+packages/logger/src/core/index.ts: BaseLogger, createSimpleLogger
+packages/logger/src/index.ts: BaseLogger, createSimpleLogger, ConsoleAdapter, JsonAdapter, NoopAdapter, createBrowserLogger, browserLogger, perf, createWorkerLogger, createRequestLogger, NoOpLogger, ConsoleLogger
+packages/logger/src/presets/index.ts: createBrowserLogger, browserLogger, perf, createWorkerLogger, createRequestLogger, NoOpLogger, ConsoleLogger
+packages/svg/src/base.ts: DEFAULT_DISPLAY_OPTIONS
+packages/svg/src/icons/tool-icons.ts: GLYPH_ACCENT_LIGHT
+packages/svg/src/index.ts: arcPath, truncateText, rgbToHsv, ACCENT, NUMFMT, DEFAULT_DISPLAY_OPTIONS, CARD_TYPE, HARMONY_ROW_CAP, cardShell, cardText, textWidth, fitText, commandChip, placeGlyph, appIcon, markFooter, swatch, idealSwatch, dashedRule, hairline, formatMeasure, bandSlices, LEDGER_HEADER_H, LEDGER_COLHEAD_H, LEDGER_FOOTER_H, LEDGER_FOOTER_2LINE_H, GLYPH_SETS, GLYPH_ACCENT_LIGHT
+packages/test-utils/src/factories/index.ts: randomId, randomStringId
+packages/test-utils/src/utils/crypto.ts: base64UrlDecodeBytes
+packages/types/src/auth/index.ts: createSnowflake
+packages/types/src/character/index.ts: RACE_SUBRACES, SUBRACE_TO_RACE, COLOR_GRID_DIMENSIONS
+packages/types/src/color/index.ts: MATCH_QUALITY_TIERS
+packages/types/src/index.ts: MATCH_QUALITY_TIERS, RACE_SUBRACES, SUBRACE_TO_RACE, COLOR_GRID_DIMENSIONS
+packages/worker-kit/src/rate-limiter/index.ts: formatRateLimitMessage, OAUTH_LIMITS, DISCORD_COMMAND_LIMITS, MODERATION_LIMITS, UNIVERSALIS_PROXY_LIMITS
+packages/worker-kit/src/rate-limiter/presets/index.ts: OAUTH_LIMITS, getOAuthLimit, DISCORD_COMMAND_LIMITS, getDiscordCommandLimit, MODERATION_LIMITS, PUBLIC_API_LIMITS, UNIVERSALIS_PROXY_LIMITS
+Unused exported types (41)
+apps/api-worker/src/universalis/types.ts: Env
+apps/discord-worker/src/services/bot-i18n.ts: LocaleCode
+apps/discord-worker/src/services/budget/index.ts: UniversalisWorld, UniversalisDataCenter
+apps/discord-worker/src/types/budget.ts: UserWorldPreference
+apps/discord-worker/src/types/github.ts: GitHubPushPayload
+apps/discord-worker/src/types/preset.ts: PresetSortOption
+apps/discord-worker/src/utils/color.ts: ResolvedColor, ResolveColorOptions
+apps/discord-worker/src/utils/verify.ts: DiscordVerificationResult, DiscordVerifyOptions
+apps/moderation-worker/src/types/env.ts: InteractionResponseBody
+apps/moderation-worker/src/types/preset.ts: PresetCategory, PresetSortOption, CategoryMeta, PresetPreviousValues, PresetSubmission, PresetEditRequest, PresetSubmitResponse, PresetEditResponse, VoteResponse
+apps/moderation-worker/src/utils/verify.ts: DiscordVerificationResult, DiscordVerifyOptions, VerificationResult
+apps/oauth/src/types.ts: OAuthState, XIVAuthSocialIdentity
+apps/og-worker/src/services/svg/index.ts: BandCardOptions, BandEntry, BandFrame, DefaultCardOptions, HarmonyOGOptions, GradientOGOptions, MixerOGOptions, SwatchOGOptions, ComparisonOGOptions, AccessibilityOGOptions, ExtractorOGOptions, PresetsOGOptions, BudgetOGOptions
+apps/og-worker/src/types.ts: ShareParams
+apps/presets-api/src/services/validation-service.ts: ModerationStatus
+apps/presets-api/src/types.ts: PresetSubmitResponse, PresetEditResponse, ModerationResponse, CategoryListResponse
+apps/presets-api/src/utils/api-response.ts: ErrorCodeType
+apps/web-app/e2e/fixtures/coverage.ts: Locator, BrowserContext, TestInfo
+packages/auth/src/index.ts: JWTPayload, VerifyJWTOptions, RevocationStore, BotSignatureOptions, DiscordVerificationResult, DiscordVerifyOptions
+packages/bot-logic/src/commands/harmony.ts: HarmonyColorSpace
+packages/bot-logic/src/i18n/index.ts: LocaleData, TranslatorLogger
+packages/bot-logic/src/index.ts: ResolveColorOptions, LocaleCode, EmbedData, EmbedField, MatchQualityInfo, HarmonyInput, HarmonyResult, HarmonyColorSpace, DyeInfoInput, DyeInfoResult, RandomInput, RandomResult, MixerInput, MixerResult, MixerMatch, BlendingMode, GradientInput, GradientResult, GradientStepResult, MatchingMethod, ComparisonInput, ComparisonResult, AccessibilityInput, AccessibilityResult, SwatchResult, ContrastInput, ContrastResult
+packages/core/src/blending/index.ts: RGB, LAB, HSL, BlendResult
+packages/core/src/index.ts: APIServiceOptions, CacheMetrics, ResolvedPreset, PaletteExtractionOptions, ExtractedColor, PaletteServiceOptions, CharacterMatchOptions, HarmonyMatchingAlgorithm, DeltaEFormula, RYB, ConsolidatedDye, LocalizedDyeName, DyeCategory, DyeAcquisition, AcquisitionMeta, BandContext, BandMethod, BandTier, MethodBandSet, ProductLink, BandCalibrationResult, CalibratedMethodId, CalibratedMethodBands, RatioCalibration, ParsedCharaFile, CharaColorSlotRaw, CharaGearDye, CharaGearSlotId, CharaSlotInertReason, ResolvedGearDye, CharaSlotVerdict, CharaSlotErrorCode, StainIdLookup, ManualTopic
+packages/logger/src/index.ts: LogLevel, LogContext, LogEntry, Logger, LoggerConfig, ErrorTracker, BrowserLoggerOptions, WorkerLoggerOptions
+packages/logger/src/presets/index.ts: BrowserLoggerOptions, WorkerLoggerOptions
+packages/svg/src/a11y-card.ts: AllVisionTypes
+packages/svg/src/index.ts: DisplayOptions, CardTheme, CardTextOptions, CommandChipOptions, MeasuredLead, MeasuredRowOptions, MeasuredRowWidths, HarmonyCardLabels, HarmonyCardOptions, GradientCardOptions, MixerCardOptions, PaletteBandEntry, PaletteRowEntry, PaletteGridOptions, PaletteGridLabels, NearestSheetLabels, NearestSheetOptions, A11yCardOptions, A11yCardLabels, AllVisionTypes, ContrastCardLabels, ContrastCardOptions, RandomGridLabels, RandomDyesGridOptions, ComparisonCardLabels, ComparisonCardOptions, SwatchCardLabels, SwatchCardOptions, DyeInfoCardOptions, DyeInfoLabels, PresetSwatchOptions, BudgetLedgerRow, BudgetLedgerLabels, BudgetLedgerOptions, ChromeGlyphName, PanelGlyphName
+packages/test-utils/src/auth/context.ts: AuthSource
+packages/types/src/auth/index.ts: OAuthState, DiscordSnowflake, XIVAuthSocialIdentity, AuthSuccessResponse, AuthErrorResponse, RefreshSuccessResponse, RefreshErrorResponse, UserInfoData, UserInfoSuccessResponse, UserInfoErrorResponse
+packages/types/src/auth/jwt.ts: OAuthState
+packages/types/src/color/index.ts: Matrix3x3
+packages/types/src/dye/database.ts: DyeDatabase
+packages/types/src/dye/index.ts: DyeDatabase
+packages/types/src/error/index.ts: ErrorSeverity
+packages/types/src/index.ts: PresetSortOption, PresetSubmitCreatedResponse, PresetSubmitDuplicateResponse, PresetSubmitErrorResponse, PresetEditDuplicateInfo, PresetEditSuccessResponse, PresetEditDuplicateResponse, PresetEditErrorResponse, VoteSuccessResponse, VoteErrorResponse, ModerationSuccessResponse, ModerationErrorResponse, ModerationResponse, CategoryListResponse, OAuthState, XIVAuthSocialIdentity, AuthUser, ErrorSeverity
+packages/types/src/preset/index.ts: PresetSortOption, PresetSubmitCreatedResponse, PresetSubmitDuplicateResponse, PresetSubmitErrorResponse, PresetEditDuplicateInfo, PresetEditSuccessResponse, PresetEditDuplicateResponse, PresetEditErrorResponse, VoteSuccessResponse, VoteErrorResponse, ModerationSuccessResponse, ModerationErrorResponse, ModerationResponse, CategoryListResponse
+packages/types/src/preset/response.ts: ModerationResponse, CategoryListResponse
+packages/worker-kit/src/middleware/index.ts: RequestIdOptions, LoggerMiddlewareOptions, RateLimitMiddlewareOptions
+packages/worker-kit/src/rate-limiter/index.ts: EndpointRateLimitConfig, ExtendedRateLimiter, MemoryRateLimiterOptions, KVRateLimiterOptions, UpstashRateLimiterOptions, RateLimiterLogger, GetClientIpOptions
+packages/worker-kit/src/rate-limiter/types.ts: EndpointRateLimitConfig
+Unused exported enum members (1)
+apps/discord-worker/src/types/env.ts: UPDATE_MESSAGE, MODAL (InteractionResponseType)
+Duplicate exports (2)
+packages/logger/src/constants.ts: CORE_REDACT_FIELDS, DEFAULT_REDACT_FIELDS
+packages/test-utils/src/factories/vote.ts: createMockVoteRow, createMockVote

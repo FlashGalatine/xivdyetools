@@ -8,3 +8,8 @@ from inside `src/` would have added 10+ MiB to the bundle and blown the
 
 Re-subsetting (when dyes are added) reads from here and writes the subsets to
 `src/fonts/` — see the CJK font subsetting notes in the project docs.
+
+DEAD-008 (2026-08-18 dead-code audit): `NotoSansSC-Regular.ttf`, a static face
+left over from the pre-5.0 era, was removed — `subset-cjk-fonts.py` cuts the SC
+subset from the variable face only and never read this file. Only
+`NotoSansKR-Variable.ttf` remains here as a live subset input.

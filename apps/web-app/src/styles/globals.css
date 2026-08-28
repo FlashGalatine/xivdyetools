@@ -1,31 +1,119 @@
-/* XIV Dye Tools v2.0.0 - Global Styles */
+/* XIV Dye Tools 5.0 - Global Styles */
 
 /* ============================================================================
-   Custom Font Faces
-   ============================================================================ */
+   The Font Contract
+   ============================================================================
 
-/* Habibi - Used for numerical values (HEX codes, prices, distances, etc.) */
+   This block is the ONLY place the web app declares a typeface. Three families,
+   all self-hosted from `/fonts/`, matching `FONTS` in `packages/svg/src/base.ts`
+   so a dye name or a delta-E value reads the same on the web as on a bot card:
+
+     display   Space Grotesk    headings, wordmarks
+     body      Onest            everything else
+     mono      Fragment Mono    numerics, hex codes, code, keycaps
+
+   Consumers read `--font-display` / `--font-body` / `--font-mono` below; nothing
+   outside this file should name a family directly. `tailwind.config.js` points
+   its `sans` / `mono` entries at the same variables, so a Tailwind utility and
+   a hand-written rule cannot disagree.
+
+   Self-hosted rather than fetched at runtime (REFACTOR-002). Four sources used
+   to declare the typefaces and no two agreed: `public/js/load-fonts.js` requested
+   Space Grotesk / Onest / Fira Code / Varela Round; the `<noscript>` fallback
+   downloaded Inter / Outfit / JetBrains Mono that no CSS rule ever referenced;
+   this file named a fifth combination and `v4-layout.css` a sixth. Serving the
+   faces ourselves means the no-JS path loads the same stylesheet as the JS path,
+   which makes the divergence structurally impossible rather than merely fixed.
+   It also drops a render-blocking third-party request and the Google Fonts
+   origins from the CSP -- no per-visitor request to fonts.googleapis.com.
+
+   Space Grotesk and Onest are variable fonts carrying exactly the axis ranges
+   the old Google Fonts request asked for (wght 300..700 and 100..900), so no
+   weight coverage was lost in the move.
+
+   `font-display: swap` throughout: a failed self-host degrades to the system
+   tail of each stack rather than to invisible text. */
+
 @font-face {
-  font-family: 'Habibi';
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/SpaceGrotesk-Variable.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/Onest-Variable.woff2') format('woff2-variations');
+}
+
+/* Same binary the Discord and OG card generators load, as
+   `apps/discord-worker/src/fonts/FragmentMono-Regular.ttf`.
+
+   Do NOT write that path as a glob here. `apps/` + `*` + `/src` contains the
+   comment-closing sequence, so a glob silently ends this comment early and CSS
+   error-recovery then swallows the @font-face rule below it. That is exactly
+   what happened between Sprint 4 and Sprint 5: `.number` computed to
+   'Fragment Mono', the woff2 served fine, and the face was never registered --
+   every numeric readout was quietly rendering in the Consolas fallback. */
+@font-face {
+  font-family: 'Fragment Mono';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/habibi-v22-latin_latin-ext-regular.woff2') format('woff2');
+  src: url('/fonts/FragmentMono-Regular.woff2') format('woff2');
 }
 
-/* ============================================================================
-   Numerical Values Typography
-   ============================================================================ */
+:root {
+  /*
+   * The CJK tail, named explicitly rather than left to the browser default.
+   * None of the three Latin faces carries CJK and ja/ko/zh are shipping
+   * locales, so without this every CJK glyph fell through to an unspecified
+   * per-OS default -- it worked, but it was an accident rather than a decision.
+   *
+   * Nothing here is downloaded: every name is a locally installed family.
+   * Noto first, mirroring `FONTS.cjk` on the SVG surfaces, then the stock
+   * families for macOS/iOS, Windows-JP, Windows-SC and Windows-KR.
+   */
+  --font-cjk: 'Noto Sans JP', 'Noto Sans SC', 'Noto Sans KR', 'Hiragino Sans', 'Yu Gothic UI',
+    'Microsoft YaHei', 'Malgun Gothic';
 
-/* 
- * The .number class applies the Habibi serif font to numerical values
- * including: HEX codes, market prices, delta-E values, distance values,
- * contrast ratios, degrees, percentages, and chart values.
+  --font-display: 'Space Grotesk', var(--font-cjk), -apple-system, BlinkMacSystemFont, system-ui,
+    sans-serif;
+  --font-body: 'Onest', var(--font-cjk), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+  /*
+   * The generic `sans-serif` is the deliberate last resort, not a typo: on a
+   * CJK system it resolves to a CJK-capable face, so a mono-styled string that
+   * happens to wrap a dye name degrades to real glyphs instead of tofu.
+   */
+  --font-mono: 'Fragment Mono', ui-monospace, 'Cascadia Mono', Consolas, var(--font-cjk), monospace,
+    sans-serif;
+}
+
+/*
+ * Han-unification override for `--font-cjk`, per locale.
+ *
+ * The base list above puts Noto Sans JP first for every locale, which is
+ * fine for ja but wrong for zh/ko: a Simplified-Chinese or Korean reader who
+ * also has Noto Sans JP installed (common -- it ships as part of the Google
+ * Noto CJK family pack) would get Han characters drawn with Japanese glyph
+ * forms (骨, 直, 曜, 令, 糸 ...) because the JP face matches first and
+ * carries the codepoint too. `LanguageService.setLocale` sets
+ * `document.documentElement.lang`, so `:root:lang(...)` reliably tracks the
+ * active locale and can retarget `--font-cjk` without touching the
+ * three families above. ja is intentionally left alone -- the default
+ * order already puts the correct glyph forms first for it.
  */
-.number,
-.font-numeric {
-  font-family: 'Habibi', serif !important;
-  letter-spacing: 0.02em;
+:root:lang(zh) {
+  --font-cjk: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans JP', 'Noto Sans KR';
+}
+
+:root:lang(ko) {
+  --font-cjk: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans JP', 'Noto Sans SC';
 }
 
 /* ============================================================================
@@ -38,7 +126,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Space Grotesk', '-apple-system', 'BlinkMacSystemFont', 'system-ui', sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -59,9 +147,9 @@ h3 {
   line-height: 1.4;
 }
 
-/* Body text - Onest font */
+/* Body text - Onest */
 body {
-  font-family: 'Onest', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -91,57 +179,26 @@ body {
   }
 }
 
-/* Monospace elements */
+/* Monospace elements. Was Fira Code, which was a fourth mono-ish answer on a
+   surface that had already settled on Fragment Mono for numerics -- there is
+   one mono face now, so `code` and a delta-E readout match. */
 code,
 pre,
 .font-mono {
-  font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-family: var(--font-mono);
 }
 
-/* Buttons and navigation elements - Varela Round */
+/* Buttons and navigation elements. Was Varela Round, a fifth family loaded from
+   Google Fonts for controls alone; it left button labels in a different voice
+   from the text they sat beside. Controls now speak in the body face. */
 button,
-.btn,
-.nav-item,
-input[type="button"],
-input[type="submit"],
-input[type="reset"] {
-  font-family: 'Varela Round', '-apple-system', 'BlinkMacSystemFont', 'system-ui', sans-serif;
+input[type="button"] {
+  font-family: var(--font-body);
 }
 
 /* Improve text rendering */
 * {
   text-rendering: optimizeLegibility;
-}
-
-/* Font feature settings for Inter (improves number display) */
-body {
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-}
-
-/* Tool card styling for index.html */
-.tool-card {
-  transition: all 0.3s ease;
-}
-
-.tool-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-/* Theme-aware styles for tool cards */
-body.dark-mode .tool-card,
-body.standard-dark .tool-card,
-body.theme-og-classic-dark .tool-card,
-body.theme-sugar-riot .tool-card {
-  background-color: var(--theme-card-bg);
-  border-color: var(--theme-border);
-}
-
-body.dark-mode .tool-card:hover,
-body.standard-dark .tool-card:hover,
-body.theme-og-classic-dark .tool-card:hover,
-body.theme-sugar-riot .tool-card:hover {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
 }
 
 /* ============================================================================
@@ -237,10 +294,7 @@ body.theme-sugar-riot .tool-card:hover {
 }
 
 /* Dark theme toast colors - darker backgrounds with brighter text for visibility */
-.dark,
-[class*="-dark"],
-.theme-sugar-riot,
-.theme-og-classic-dark {
+[class*="-dark"] {
   /* Success - dark green tinted background */
   --toast-success-bg: color-mix(in srgb, #1f2937 85%, #22c55e 15%);
   --toast-success-border: color-mix(in srgb, #374151 60%, #22c55e 40%);
@@ -263,12 +317,7 @@ body.theme-sugar-riot .tool-card:hover {
 }
 
 /* Light themes that need adjusted warning colors for better contrast */
-.theme-standard-light,
-.theme-cotton-candy,
-.theme-grayscale-light,
-.theme-high-contrast-light,
-.theme-parchment-light,
-.theme-hydaelyn-light {
+.theme-standard-light {
   --toast-warning-text: #b45309;
 }
 
@@ -297,76 +346,6 @@ body.theme-sugar-riot .tool-card:hover {
   color: var(--toast-info-text) !important;
 }
 
-/* Theme-aware semantic text colors */
-.text-warning {
-  color: var(--toast-warning-text);
-}
-
-.text-error {
-  color: var(--toast-error-text);
-}
-
-.text-success {
-  color: var(--toast-success-text);
-}
-
-.text-info {
-  color: var(--toast-info-text);
-}
-
-/* ============================================================================
-   Loading Spinner
-   ============================================================================ */
-
-@keyframes spinner-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes spinner-pulse {
-
-  0%,
-  100% {
-    opacity: 0.4;
-  }
-
-  50% {
-    opacity: 1;
-  }
-}
-
-.loading-spinner {
-  animation: spinner-spin 1s linear infinite;
-}
-
-/* Reduced motion: pulse instead of spin */
-@media (prefers-reduced-motion: reduce) {
-  .loading-spinner {
-    animation: spinner-pulse 2s ease-in-out infinite;
-  }
-}
-
-/* Spinner sizes */
-.spinner-sm {
-  width: 1rem;
-  height: 1rem;
-}
-
-.spinner-md {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.spinner-lg {
-  width: 2rem;
-  height: 2rem;
-}
-
 /* ============================================================================
    Empty State
    ============================================================================ */
@@ -384,19 +363,19 @@ body.theme-sugar-riot .tool-card:hover {
   max-height: 80vh;
 }
 
+/* 5.0: full-strength ink in the measured quiet grey — state never comes from
+   opacity. Glyphs render at the 62 px detail-class placement. */
 .empty-state-icon {
-  font-size: 8rem;
   margin-bottom: 1.5rem;
-  opacity: 0.3;
-  color: var(--theme-text);
+  color: var(--theme-text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .empty-state-icon svg {
-  width: 180px;
-  height: 180px;
+  width: 62px;
+  height: 62px;
 }
 
 .empty-state-title {
@@ -418,110 +397,6 @@ body.theme-sugar-riot .tool-card:hover {
 }
 
 /* ============================================================================
-   Modal Dialogs
-   ============================================================================ */
-
-/* Modal backdrop animation */
-@keyframes modal-backdrop-fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-/* Modal dialog animation */
-@keyframes modal-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes modal-fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-/* Modal slide out animation */
-@keyframes modal-slide-out {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-
-  to {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-}
-
-.modal-backdrop-animate-in {
-  animation: modal-backdrop-fade-in 0.2s ease-out forwards;
-}
-
-.modal-animate-in {
-  animation: modal-slide-up 0.3s ease-out forwards;
-}
-
-.modal-animate-out {
-  animation: modal-slide-out 0.15s ease-in forwards;
-}
-
-/* Reduced motion: instant display */
-@media (prefers-reduced-motion: reduce) {
-
-  .modal-backdrop-animate-in,
-  .modal-animate-in {
-    animation: modal-fade-in 0.01ms ease-out forwards;
-  }
-
-  .modal-animate-out {
-    animation: modal-fade-in 0.01ms ease-in reverse forwards;
-  }
-}
-
-/* ============================================================================
-   Dye Preview Overlay Animations
-   ============================================================================ */
-
-@keyframes preview-pulse {
-
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  50% {
-    transform: scale(1.3);
-    opacity: 0.7;
-  }
-}
-
-.dye-preview-overlay .pulse-dot {
-  animation: preview-pulse 1.5s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dye-preview-overlay .pulse-dot {
-    animation: none;
-  }
-}
-
-/* ============================================================================
    Dye Swatch Micro-interactions
    ============================================================================ */
 
@@ -540,29 +415,6 @@ body.theme-sugar-riot .tool-card:hover {
   transform: scale(0.98);
 }
 
-/* Selected state indicator */
-.dye-swatch.selected {
-  position: relative;
-  box-shadow: 0 0 0 3px var(--theme-primary);
-}
-
-.dye-swatch.selected::after {
-  content: '✓';
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: var(--theme-primary);
-  color: white;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
-
 /* Reduced motion: simpler effects */
 @media (prefers-reduced-motion: reduce) {
   .dye-swatch {
@@ -579,39 +431,10 @@ body.theme-sugar-riot .tool-card:hover {
   }
 }
 
-/* Card hover effects for harmony cards */
-.harmony-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.harmony-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .harmony-card {
-    transition: none;
-  }
-
-  .harmony-card:hover {
-    transform: none;
-  }
-}
-
 /* Modal dialog styling */
 .modal-dialog {
   max-height: 90vh;
   overflow-y: auto;
-}
-
-/* Dark theme modal overrides */
-body.standard-dark .modal-dialog,
-body.theme-og-classic-dark .modal-dialog,
-body.theme-sugar-riot .modal-dialog,
-body.theme-grayscale-dark .modal-dialog {
-  background-color: var(--theme-card-background);
-  border-color: var(--theme-border);
 }
 
 /* ============================================================================
@@ -695,43 +518,6 @@ body.theme-grayscale-dark .modal-dialog {
   }
 }
 
-/* Dark theme tooltip (inverted for visibility) */
-body.standard-dark .tooltip,
-body.theme-og-classic-dark .tooltip,
-body.theme-sugar-riot .tooltip,
-body.theme-grayscale-dark .tooltip {
-  background-color: #f3f4f6;
-  color: #1f2937;
-}
-
-body.standard-dark .tooltip[data-position="top"] .tooltip-arrow,
-body.theme-og-classic-dark .tooltip[data-position="top"] .tooltip-arrow,
-body.theme-sugar-riot .tooltip[data-position="top"] .tooltip-arrow,
-body.theme-grayscale-dark .tooltip[data-position="top"] .tooltip-arrow {
-  border-top-color: #f3f4f6;
-}
-
-body.standard-dark .tooltip[data-position="bottom"] .tooltip-arrow,
-body.theme-og-classic-dark .tooltip[data-position="bottom"] .tooltip-arrow,
-body.theme-sugar-riot .tooltip[data-position="bottom"] .tooltip-arrow,
-body.theme-grayscale-dark .tooltip[data-position="bottom"] .tooltip-arrow {
-  border-bottom-color: #f3f4f6;
-}
-
-body.standard-dark .tooltip[data-position="left"] .tooltip-arrow,
-body.theme-og-classic-dark .tooltip[data-position="left"] .tooltip-arrow,
-body.theme-sugar-riot .tooltip[data-position="left"] .tooltip-arrow,
-body.theme-grayscale-dark .tooltip[data-position="left"] .tooltip-arrow {
-  border-left-color: #f3f4f6;
-}
-
-body.standard-dark .tooltip[data-position="right"] .tooltip-arrow,
-body.theme-og-classic-dark .tooltip[data-position="right"] .tooltip-arrow,
-body.theme-sugar-riot .tooltip[data-position="right"] .tooltip-arrow,
-body.theme-grayscale-dark .tooltip[data-position="right"] .tooltip-arrow {
-  border-right-color: #f3f4f6;
-}
-
 /* ============================================================================
    Screen Reader Only Utility (A3)
    Visually hidden but accessible to screen readers
@@ -749,19 +535,6 @@ body.theme-grayscale-dark .tooltip[data-position="right"] .tooltip-arrow {
   border: 0;
 }
 
-/* Allow sr-only content to be focusable for skip links */
-.sr-only-focusable:focus,
-.sr-only-focusable:active {
-  position: static;
-  width: auto;
-  height: auto;
-  padding: inherit;
-  margin: inherit;
-  overflow: visible;
-  clip: auto;
-  white-space: normal;
-}
-
 /* ============================================================================
    Focus Ring Visibility (A2)
    Consistent, high-visibility focus indicators for keyboard navigation
@@ -777,15 +550,6 @@ body.theme-grayscale-dark .tooltip[data-position="right"] .tooltip-arrow {
 /* Remove default outline for mouse/touch focus, keep for keyboard */
 :focus:not(:focus-visible) {
   outline: none;
-}
-
-/* Ensure focus ring is visible on dark backgrounds */
-body.standard-dark :focus-visible,
-body.theme-og-classic-dark :focus-visible,
-body.theme-sugar-riot :focus-visible,
-body.theme-grayscale-dark :focus-visible {
-  outline-color: var(--theme-primary, #60a5fa);
-  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2);
 }
 
 /* High contrast mode enhancement */

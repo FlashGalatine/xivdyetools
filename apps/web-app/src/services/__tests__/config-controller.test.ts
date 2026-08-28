@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ConfigController, getConfigController } from '../config-controller';
 import { StorageService } from '../storage-service';
-import type { ConfigKey } from '@shared/tool-config-types';
+import { getDefaultConfig, type ConfigKey, type ToolConfigMap } from '@shared/tool-config-types';
 
 // Mock StorageService
 vi.mock('../storage-service', () => ({
@@ -407,6 +407,68 @@ describe('ConfigController', () => {
   // ============================================================================
   // Storage Failure Handling Tests
   // ============================================================================
+
+  // WEB-6 (2026-08-21 security audit): `importConfigs` whitelisted the
+  // top-level tool keys but spread each tool's object raw into state and
+  // storage, so unknown / ill-typed fields from a hand-edited settings file
+  // survived. Each imported field must be a known key with the default's type.
+  describe('importConfigs', () => {
+    it('keeps only known, correctly-typed fields of each tool config', () => {
+      const controller = ConfigController.getInstance();
+      const defaults = getDefaultConfig('harmony');
+
+      controller.importConfigs({
+        harmony: {
+          harmonyType: 'triadic',
+          strictMatching: 'yes',
+          companionDyesCount: '3',
+          bogus: 1,
+        },
+      } as unknown as Partial<ToolConfigMap>);
+
+      const harmony = controller.getConfig('harmony');
+      expect(harmony.harmonyType).toBe('triadic');
+      expect(harmony.strictMatching).toBe(defaults.strictMatching);
+      expect(harmony.companionDyesCount).toBe(defaults.companionDyesCount);
+      expect('bogus' in harmony).toBe(false);
+    });
+
+    it('ignores a tool entry that is not a plain object', () => {
+      const controller = ConfigController.getInstance();
+
+      controller.importConfigs({
+        harmony: 'nope',
+        gradient: ['steps', 5],
+        mixer: null,
+      } as unknown as Partial<ToolConfigMap>);
+
+      expect(controller.getConfig('harmony')).toEqual(getDefaultConfig('harmony'));
+      expect(controller.getConfig('gradient')).toEqual(getDefaultConfig('gradient'));
+      expect(controller.getConfig('mixer')).toEqual(getDefaultConfig('mixer'));
+    });
+
+    it('accepts nested option objects only when the default is an object too', () => {
+      const controller = ConfigController.getInstance();
+      const defaults = getDefaultConfig('harmony');
+
+      controller.importConfigs({
+        harmony: { displayOptions: 'all', dyeFilters: { ...defaults.dyeFilters } },
+      } as unknown as Partial<ToolConfigMap>);
+
+      const harmony = controller.getConfig('harmony');
+      expect(harmony.displayOptions).toEqual(defaults.displayOptions);
+      expect(harmony.dyeFilters).toEqual(defaults.dyeFilters);
+    });
+
+    it('ignores unknown top-level keys (existing behaviour)', () => {
+      const controller = ConfigController.getInstance();
+
+      expect(() =>
+        controller.importConfigs({ evil: { x: 1 } } as unknown as Partial<ToolConfigMap>)
+      ).not.toThrow();
+      expect(controller.isValidConfigKey('evil')).toBe(false);
+    });
+  });
 
   describe('Storage Failure Handling', () => {
     it('should handle storage save failure gracefully', () => {

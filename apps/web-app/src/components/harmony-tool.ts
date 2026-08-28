@@ -10,14 +10,12 @@
  * @module components/tools/harmony-tool
  */
 
+import { normalizeMatchingMethod } from '@xivdyetools/core';
+import { ShareService } from '@services/share-service';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
 import { MarketBoard } from '@components/market-board';
-import { HarmonyType } from '@components/harmony-type';
-import { HarmonyResultPanel } from '@components/harmony-result-panel';
-import { ColorWheelDisplay } from '@components/color-wheel-display';
-import { PaletteExporter } from '@components/palette-exporter';
 import {
   ColorService,
   dyeService,
@@ -32,13 +30,15 @@ import {
   calculateHueDeviance,
   findClosestDyesToHue,
   replaceExcludedDyes,
-  findHarmonyDyes,
 } from '@services/index';
 import type { ScoredDyeMatch, HarmonyConfig } from '@services/index';
 import { ConfigController } from '@services/config-controller';
+import { ThemeService } from '@services/theme-service';
+import { applyDisplayOptions } from '@services/display-options-helper';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { makeCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import {
   DisplayOptionsConfig,
@@ -50,7 +50,7 @@ import {
 // WEB-REF-003 FIX: ColorConverter usage moved to harmony-generator.ts
 import { HARMONY_ICONS } from '@shared/harmony-icons';
 import { ICON_MARKET, ICON_BEAKER, ICON_MUSIC } from '@shared/ui-icons';
-import { ICON_TOOL_HARMONY } from '@shared/tool-icons';
+import { createEmptyState, EMPTY_STATE_PRESETS } from '@components/empty-state';
 import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
 
 // V4 Components - Import to register custom elements
@@ -98,6 +98,7 @@ interface MarketPanelRefs {
  */
 const STORAGE_KEYS = {
   harmonyType: 'v3_harmony_type',
+  railHintSeen: 'v5_harmony_rail_hint_seen',
   companionCount: 'v3_harmony_companions',
   suggestionsMode: 'v3_harmony_mode',
   selectedDyeId: 'v3_harmony_selected_dye',
@@ -125,6 +126,12 @@ export class HarmonyTool extends BaseComponent {
   private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
   /** Tracks user-swapped dyes per harmony slot (harmonyIndex -> swapped dye) */
   private swappedDyes: Map<number, Dye> = new Map();
+  /** The dye each harmony slot is currently showing — the wheel mirrors this */
+  private slotDyes: Dye[] = [];
+  private railMql: MediaQueryList | null = null;
+  private onRailBreakpoint = (): void => {
+    this.renderTypeRail();
+  };
   /** V4 result card elements for updating prices after fetch */
   private v4ResultCards: ResultCard[] = [];
 
@@ -144,17 +151,13 @@ export class HarmonyTool extends BaseComponent {
   // Display options (from ConfigController)
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
   private usePerceptualMatching: boolean = false;
-  private matchingMethod: MatchingMethod = 'oklab';
+  private matchingMethod: MatchingMethod = 'ciede2000';
   private preventDuplicates: boolean = true;
 
   // Child components (desktop left panel)
   private dyeSelector: DyeSelector | null = null;
   private marketBoard: MarketBoard | null = null;
   private marketPanel: CollapsiblePanel | null = null;
-  private colorWheel: ColorWheelDisplay | null = null;
-  private harmonyDisplays: Map<string, HarmonyType> = new Map();
-  private resultPanels: HarmonyResultPanel[] = [];
-  private paletteExporter: PaletteExporter | null = null;
 
   // Child components (mobile drawer) - separate instances for mobile config
   private drawerDyeSelector: DyeSelector | null = null;
@@ -166,10 +169,15 @@ export class HarmonyTool extends BaseComponent {
 
   // DOM References
   private harmonyTypesContainer: HTMLElement | null = null;
+  /** 1A: the visible type rail centred over the wheel */
+  private typeRailContainer: HTMLElement | null = null;
   private companionSlider: HTMLInputElement | null = null;
   private companionDisplay: HTMLElement | null = null;
   private colorWheelContainer: HTMLElement | null = null;
   private harmonyGridContainer: HTMLElement | null = null;
+  private marketStripContainer: HTMLElement | null = null;
+  /** The last price fetch failed — the board is unreachable this session */
+  private marketFailed = false;
   private emptyStateContainer: HTMLElement | null = null;
   private resultsSection: HTMLElement | null = null;
   private shareButton: ShareButton | null = null;
@@ -260,23 +268,7 @@ export class HarmonyTool extends BaseComponent {
     this.marketPanel?.destroy();
     this.marketPanel = null;
 
-    this.colorWheel?.destroy();
-    this.colorWheel = null;
-
-    this.paletteExporter?.destroy();
-    this.paletteExporter = null;
-
     this.shareButton = null;
-
-    for (const display of this.harmonyDisplays.values()) {
-      display.destroy();
-    }
-    this.harmonyDisplays.clear();
-
-    for (const panel of this.resultPanels) {
-      panel.destroy();
-    }
-    this.resultPanels = [];
 
     // Mobile drawer components
     this.drawerDyeSelector?.destroy();
@@ -322,7 +314,9 @@ export class HarmonyTool extends BaseComponent {
     const harmonyConfig = configController.getConfig('harmony');
     this.displayOptions = harmonyConfig.displayOptions ?? { ...DEFAULT_DISPLAY_OPTIONS };
     this.usePerceptualMatching = harmonyConfig.strictMatching;
-    this.matchingMethod = harmonyConfig.matchingMethod ?? 'oklab';
+    // Suite default is ΔE2000; normalize so persisted 4.x values migrate
+    // (the last tool still hard-booting 'oklab' — see gradient/mixer).
+    this.matchingMethod = normalizeMatchingMethod(harmonyConfig.matchingMethod ?? 'ciede2000');
     this.preventDuplicates = harmonyConfig.preventDuplicates ?? true;
     this.dyeFiltersConfig = harmonyConfig.dyeFilters ?? { ...DEFAULT_DYE_FILTERS };
 
@@ -333,15 +327,16 @@ export class HarmonyTool extends BaseComponent {
     // Subscribe to harmony config changes
     this.subs.add(
       configController.subscribe('harmony', (config) => {
+        // Shared helper carries the complete key list — a hand-rolled
+        // comparison here silently missed showCmyk and the 5.0 rows.
         const newDisplayOptions = config.displayOptions ?? { ...DEFAULT_DISPLAY_OPTIONS };
-        const needsRerender =
-          this.displayOptions.showHex !== newDisplayOptions.showHex ||
-          this.displayOptions.showRgb !== newDisplayOptions.showRgb ||
-          this.displayOptions.showHsv !== newDisplayOptions.showHsv ||
-          this.displayOptions.showLab !== newDisplayOptions.showLab ||
-          this.displayOptions.showPrice !== newDisplayOptions.showPrice ||
-          this.displayOptions.showDeltaE !== newDisplayOptions.showDeltaE ||
-          this.displayOptions.showAcquisition !== newDisplayOptions.showAcquisition;
+        const displayResult = applyDisplayOptions({
+          current: this.displayOptions,
+          incoming: newDisplayOptions,
+          toolName: 'HarmonyTool',
+          logChanges: false,
+        });
+        const needsRerender = displayResult.hasChanges;
 
         // Perceptual matching, matching method, dedup, or dye filter changes require regenerating harmonies
         const newDyeFilters = config.dyeFilters ?? { ...DEFAULT_DYE_FILTERS };
@@ -351,9 +346,18 @@ export class HarmonyTool extends BaseComponent {
         const algorithmChanged =
           this.usePerceptualMatching !== config.strictMatching ||
           (config.matchingMethod !== undefined && this.matchingMethod !== config.matchingMethod) ||
-          this.preventDuplicates !== (config.preventDuplicates ?? true);
+          this.preventDuplicates !== (config.preventDuplicates ?? true) ||
+          (config.companionDyesCount !== undefined &&
+            this.companionDyesCount !== config.companionDyesCount);
 
-        this.displayOptions = newDisplayOptions;
+        // The companion count lives in the sidebar now — the tool's own
+        // left-panel slider was orphaned when config moved behind the gear.
+        if (config.companionDyesCount !== undefined) {
+          this.companionDyesCount = config.companionDyesCount;
+          StorageService.setItem(STORAGE_KEYS.companionCount, config.companionDyesCount);
+        }
+
+        this.displayOptions = displayResult.options;
         this.usePerceptualMatching = config.strictMatching;
         if (config.matchingMethod !== undefined) {
           this.matchingMethod = config.matchingMethod;
@@ -399,6 +403,8 @@ export class HarmonyTool extends BaseComponent {
 
   destroy(): void {
     // Cleanup subscriptions
+    this.railMql?.removeEventListener('change', this.onRailBreakpoint);
+    this.railMql = null;
 
     // Cleanup child components
     this.destroyChildComponents();
@@ -421,6 +427,7 @@ export class HarmonyTool extends BaseComponent {
 
     // Support both 'dye' (new share URLs) and 'dyeId' (legacy deep links)
     const dyeIdParam = params.get('dye') ?? params.get('dyeId');
+    const hexParam = params.get('hex');
     const harmonyParam = params.get('harmony');
     const algoParam = params.get('algo');
     const perceptualParam = params.get('perceptual');
@@ -436,7 +443,7 @@ export class HarmonyTool extends BaseComponent {
     });
 
     // If no share params present, skip
-    if (!dyeIdParam && !harmonyParam) {
+    if (!dyeIdParam && !hexParam && !harmonyParam) {
       return;
     }
 
@@ -451,6 +458,7 @@ export class HarmonyTool extends BaseComponent {
         'triadic',
         'split-complementary',
         'tetradic',
+        'inverted-tetradic',
         'square',
         'monochromatic',
         'compound',
@@ -479,20 +487,14 @@ export class HarmonyTool extends BaseComponent {
       }
     }
 
-    // Apply matching algorithm if valid
+    // Apply matching algorithm (5.0: legacy/unknown values normalise loudly-defaulted)
     if (algoParam) {
-      const validAlgorithms = ['oklab', 'ciede2000', 'euclidean'];
-      const normalizedAlgo = algoParam.toLowerCase();
+      const normalizedAlgo = normalizeMatchingMethod(algoParam.toLowerCase());
+      this.matchingMethod = normalizedAlgo;
+      logger.info(`[HarmonyTool] Share URL loaded matching algorithm: ${normalizedAlgo}`);
 
-      if (validAlgorithms.includes(normalizedAlgo)) {
-        this.matchingMethod = normalizedAlgo as typeof this.matchingMethod;
-        logger.info(`[HarmonyTool] Share URL loaded matching algorithm: ${normalizedAlgo}`);
-
-        // Sync with ConfigController so sidebar updates
-        configController.setConfig('harmony', { matchingMethod: normalizedAlgo as MatchingMethod });
-      } else {
-        logger.warn(`[HarmonyTool] Invalid algorithm in URL: ${algoParam}`);
-      }
+      // Sync with ConfigController so sidebar updates
+      configController.setConfig('harmony', { matchingMethod: normalizedAlgo });
     }
 
     // Apply perceptual matching flag
@@ -508,13 +510,18 @@ export class HarmonyTool extends BaseComponent {
       configController.setConfig('harmony', { strictMatching: this.usePerceptualMatching });
     }
 
-    // Load dye by itemID
+    // A bare-colour base: `hex` is the declared slot for a custom base,
+    // exclusive with `dye`. Wrapped in a virtual dye so the whole tool
+    // treats it like any other base.
+    if (!dyeIdParam && hexParam && /^#?[0-9a-fA-F]{6}$/.test(hexParam)) {
+      this.selectCustomColor(`#${hexParam.replace(/^#/, '')}`);
+      logger.info(`[HarmonyTool] Share URL loaded custom base: #${hexParam}`);
+    }
+
+    // Load dye by stainID (5.0 grammar; legacy itemIDs fail loudly)
     if (dyeIdParam) {
-      const dyeId = parseInt(dyeIdParam, 10);
-      if (!isNaN(dyeId)) {
-        // Find dye by itemID (FFXIV item ID)
-        const allDyes = dyeService.getAllDyes();
-        const dye = allDyes.find((d) => d.itemID === dyeId);
+      {
+        const dye = ShareService.resolveSharedDye(dyeIdParam);
 
         if (dye) {
           this.selectedDye = dye;
@@ -544,8 +551,6 @@ export class HarmonyTool extends BaseComponent {
           if (this.showPrices) {
             void this.fetchPricesForDisplayedDyes();
           }
-        } else {
-          logger.warn(`[HarmonyTool] Share URL dye not found: itemID=${dyeId}`);
         }
       }
     } else if (harmonyParam && this.selectedDye) {
@@ -906,7 +911,6 @@ export class HarmonyTool extends BaseComponent {
 
       this.renderCurrentDyeDisplayInto(displayContainer);
       this.generateHarmonies();
-      this.updateDrawerContent();
     }) as EventListener);
   }
 
@@ -940,15 +944,20 @@ export class HarmonyTool extends BaseComponent {
     this.selectedHarmonyType = typeId;
     StorageService.setItem(STORAGE_KEYS.harmonyType, typeId);
 
+    // Publish so the sidebar follows the rail. Every path that changes the
+    // type goes through here; without this the rail regenerated results while
+    // the sidebar dropdown still read the old type.
+    ConfigController.getInstance().setConfig('harmony', { harmonyType: typeId });
+
     // Clear swapped dyes when harmony type changes
     this.swappedDyes.clear();
 
     // Update button styles for both desktop and drawer
     this.updateHarmonyTypeButtonStyles(this.harmonyTypesContainer, typeId);
     this.updateHarmonyTypeButtonStyles(this.drawerHarmonyTypesContainer, typeId);
+    this.renderTypeRail();
 
     this.generateHarmonies();
-    this.updateDrawerContent();
   }
 
   /**
@@ -987,6 +996,17 @@ export class HarmonyTool extends BaseComponent {
       },
     });
 
+    // 1A: harmony-type chips centred over the wheel — the picker lives with
+    // the dial, not in a sidebar nobody opens.
+    this.typeRailContainer = this.createElement('div', { attributes: { style: '' } });
+    this.applyTypeRailLayout();
+    contentWrapper.appendChild(this.typeRailContainer);
+    this.renderTypeRail();
+
+    // Re-lay the rail across the breakpoint (scrolling row ↔ centred wrap)
+    this.railMql = window.matchMedia('(max-width: 768px)');
+    this.railMql.addEventListener('change', this.onRailBreakpoint);
+
     // Color Wheel Section - centered with inline styles for reliability
     this.colorWheelContainer = this.createElement('div', {
       className: 'color-wheel-container',
@@ -1020,18 +1040,24 @@ export class HarmonyTool extends BaseComponent {
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
     this.shareButton.tool = 'harmony';
     this.shareButton.shareParams = this.getShareParams();
+    // Disabled from the first paint: without this the button sits
+    // enabled with empty params until the first update, and a click
+    // there fails ShareService validation instead of being inert.
+    this.shareButton.disabled = !this.selectedDye;
 
     resultsHeader.appendChild(resultsTitle);
     resultsHeader.appendChild(this.shareButton);
     this.resultsSection.appendChild(resultsHeader);
 
-    // Harmony Results - horizontal row layout with inline styles for reliability
+    // One strip for a market failure, above the grid it applies to
+    this.marketStripContainer = this.createElement('div', {
+      attributes: { style: 'display: none;' },
+    });
+    this.resultsSection.appendChild(this.marketStripContainer);
+
+    // Harmony Results — shared results grid (3-up desktop / 2-up mobile)
     this.harmonyGridContainer = this.createElement('div', {
-      className: 'harmony-results-container',
-      attributes: {
-        style:
-          'display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; --v4-result-card-width: 280px;',
-      },
+      className: 'harmony-results-container v5-results-grid',
     });
     this.resultsSection.appendChild(this.harmonyGridContainer);
 
@@ -1067,6 +1093,10 @@ export class HarmonyTool extends BaseComponent {
       const matchedDyes = this.getMatchedDyesForCurrentHarmony();
 
       wheel.setAttribute('base-color', this.selectedDye.hex);
+      wheel.setAttribute(
+        'base-name',
+        LanguageService.getDyeName(this.selectedDye.itemID) || this.selectedDye.name
+      );
       wheel.harmonyColors = matchedDyes.map((dye) => dye.hex);
       wheel.harmonyDyes = matchedDyes;
     } else {
@@ -1074,7 +1104,123 @@ export class HarmonyTool extends BaseComponent {
       wheel.setAttribute('empty', '');
     }
 
+    // 1A: node pucks are tappable — a tap jumps the base dye to that node.
+    wheel.addEventListener('node-click', ((e: CustomEvent<{ color: string; hue: number }>) => {
+      const nearest = dyeService.findClosestDye(e.detail.color);
+      if (nearest) {
+        this.selectDye(Array.isArray(nearest) ? nearest[0] : nearest);
+      }
+    }) as EventListener);
+
+    // 1A: the hub is the base-dye button — it opens the picker
+    wheel.addEventListener('hub-click', () => {
+      this.container.dispatchEvent(
+        new CustomEvent('open-palette-drawer', { bubbles: true, composed: true })
+      );
+    });
+
     this.colorWheelContainer.appendChild(wheel);
+  }
+
+  /**
+   * 1A: all nine harmony types as icon chips centred over the wheel.
+   */
+  /**
+   * 1A: the ten types are a *scrolling* icon rail on mobile — one row you
+   * swipe, not a wrapped block that pushes the dial off-screen. Desktop keeps
+   * the centred wrap.
+   */
+  private applyTypeRailLayout(): void {
+    if (!this.typeRailContainer) return;
+    const narrow = window.matchMedia('(max-width: 768px)').matches;
+    this.typeRailContainer.setAttribute(
+      'style',
+      narrow
+        ? 'display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; width: 100%; margin-bottom: 1rem; padding-bottom: 4px;'
+        : 'display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; width: 100%; margin-bottom: 1rem;'
+    );
+  }
+
+  private renderTypeRail(): void {
+    if (!this.typeRailContainer) return;
+    clearContainer(this.typeRailContainer);
+    this.applyTypeRailLayout();
+
+    for (const type of getHarmonyTypes()) {
+      const active = this.selectedHarmonyType === type.id;
+      const chip = this.createElement('button', {
+        attributes: {
+          type: 'button',
+          title: type.name,
+          'aria-pressed': String(active),
+          style: `display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 11px; border-radius: 999px; cursor: pointer; border: 1px solid ${
+            active ? 'var(--theme-primary)' : 'transparent'
+          }; background: ${
+            active
+              ? 'color-mix(in srgb, var(--theme-primary) 14%, transparent)'
+              : 'var(--theme-background-secondary)'
+          }; color: ${active ? 'var(--theme-primary)' : 'var(--theme-text-muted)'};`,
+        },
+      }) as HTMLButtonElement;
+      const icon = HARMONY_ICONS[type.icon];
+      if (icon) {
+        const iconSpan = this.createElement('span', {
+          attributes: { style: 'width: 14px; height: 14px; display: inline-flex;' },
+        });
+        iconSpan.innerHTML = icon;
+        chip.appendChild(iconSpan);
+      }
+      chip.appendChild(
+        this.createElement('span', {
+          textContent: type.name,
+        })
+      );
+      chip.style.flex = '0 0 auto';
+      chip.style.scrollSnapAlign = 'start';
+      this.on(chip, 'click', () => {
+        this.selectHarmonyType(type.id);
+        this.renderTypeRail();
+      });
+      this.typeRailContainer.appendChild(chip);
+    }
+
+    // Keep the active chip in view when the rail scrolls rather than wraps
+    const active = this.typeRailContainer.querySelector<HTMLElement>('[aria-pressed="true"]');
+    active?.scrollIntoView({ block: 'nearest', inline: 'center' });
+
+    this.renderRailSwipeHint();
+  }
+
+  /**
+   * First-run swipe hint: the rail scrolls on mobile, and a row that only
+   * *looks* full hides the types past the edge. Shown once, then dismissed
+   * by the first scroll.
+   */
+  private renderRailSwipeHint(): void {
+    if (!this.typeRailContainer) return;
+    const narrow = window.matchMedia('(max-width: 768px)').matches;
+    if (!narrow || StorageService.getItem<boolean>(STORAGE_KEYS.railHintSeen)) return;
+
+    const hint = this.createElement('span', {
+      textContent: LanguageService.t('harmony.railSwipeHint'),
+      attributes: {
+        style:
+          "flex: 0 0 auto; align-self: center; font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 0.5px; padding: 4px 8px; border-radius: 999px; white-space: nowrap; color: var(--theme-text-muted); background: var(--theme-background-secondary);",
+      },
+    });
+    this.typeRailContainer.appendChild(hint);
+
+    const dismiss = (): void => {
+      StorageService.setItem(STORAGE_KEYS.railHintSeen, true);
+      hint.remove();
+    };
+    // Bind on the next frame: keeping the active chip in view scrolls the
+    // rail programmatically, which would otherwise dismiss the hint before
+    // it was ever seen.
+    const rail = this.typeRailContainer;
+    requestAnimationFrame(() => {
+      rail.addEventListener('scroll', dismiss, { once: true, passive: true });
+    });
   }
 
   /**
@@ -1084,36 +1230,17 @@ export class HarmonyTool extends BaseComponent {
     if (!this.emptyStateContainer) return;
     clearContainer(this.emptyStateContainer);
 
-    const empty = this.createElement('div', {
-      className: 'harmony-results-empty',
-      attributes: {
-        style: `
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          flex: 1;
-          padding: 40px;
-          text-align: center;
-          color: var(--theme-text-muted, #a0a0a0);
-        `,
-      },
-    });
-
-    // Harmony tool icon using official tool icon
-    empty.innerHTML = `
-      <div style="width: 150px; height: 150px; margin-bottom: 24px; opacity: 0.4; color: currentColor;">
-        ${ICON_TOOL_HARMONY}
-      </div>
-      <div style="font-size: 18px; font-weight: 500; color: var(--theme-text, #e0e0e0); margin-bottom: 12px;">
-        ${LanguageService.t('harmony.noColorSelected')}
-      </div>
-      <div style="font-size: 14px; color: var(--theme-text-muted, #a0a0a0); max-width: 300px; line-height: 1.5;">
-        ${LanguageService.t('harmony.selectDyePrompt')}
-      </div>
-    `;
-
-    this.emptyStateContainer.appendChild(empty);
+    // The confirmed empty-state system: detail glyph, authored copy and an
+    // action. This was a hand-rolled 150px tool icon at 0.4 opacity with no
+    // way out of the state.
+    createEmptyState(
+      this.emptyStateContainer,
+      EMPTY_STATE_PRESETS.noHarmonyResults(() => {
+        this.container.dispatchEvent(
+          new CustomEvent('open-palette-drawer', { bubbles: true, composed: true })
+        );
+      })
+    );
   }
 
   // ============================================================================
@@ -1234,15 +1361,6 @@ export class HarmonyTool extends BaseComponent {
   // selectHarmonyTypeFromDrawer, renderDrawerCompanionSlider, renderDrawerFiltersPanel,
   // and renderDrawerMarketPanel removed - now using shared builders in renderDrawerContent
 
-  /**
-   * Update drawer content - no longer needed since drawer has full interactive controls
-   * Kept for backwards compatibility but now just syncs the current dye display
-   */
-  private updateDrawerContent(): void {
-    // The drawer now has full interactive controls that sync via state
-    // No need to rebuild the entire drawer content on every change
-  }
-
   // ============================================================================
   // Harmony Generation
   // ============================================================================
@@ -1259,16 +1377,9 @@ export class HarmonyTool extends BaseComponent {
 
     this.showEmptyState(false);
 
-    // Clear existing result panels
-    for (const panel of this.resultPanels) {
-      panel.destroy();
-    }
-    this.resultPanels = [];
+    // Clear existing result cards
     this.v4ResultCards = []; // Clear v4 card references
     clearContainer(this.harmonyGridContainer);
-
-    // Update color wheel
-    this.renderColorWheel();
 
     // Get offsets for the SELECTED harmony type only
     const offsets = HARMONY_OFFSETS[this.selectedHarmonyType] || [];
@@ -1288,6 +1399,7 @@ export class HarmonyTool extends BaseComponent {
     // Track dyes already used across slots to prevent duplicates
     const usedDyeIds = new Set<number>();
     usedDyeIds.add(this.selectedDye.itemID);
+    this.slotDyes = [];
 
     // Render Harmony panels for each offset in the selected harmony type
     offsets.forEach((offset, index) => {
@@ -1322,6 +1434,9 @@ export class HarmonyTool extends BaseComponent {
         deviance = matches[0].deviance;
       }
 
+      // Record what this slot shows so the wheel can mirror the grid
+      this.slotDyes[index] = displayDye;
+
       // Closest dyes excludes the currently displayed dye
       // When dedup is on, also exclude dyes already used in other slots
       const closestDyes = matches
@@ -1339,7 +1454,7 @@ export class HarmonyTool extends BaseComponent {
         });
 
       this.renderResultPanel({
-        label: `${LanguageService.t('harmony.harmony')} ${index + 1}`,
+        label: LanguageService.tInterpolate('harmony.harmonyN', { n: index + 1 }),
         matchedDye: displayDye,
         targetColor,
         deviance,
@@ -1349,6 +1464,9 @@ export class HarmonyTool extends BaseComponent {
         onSwapDye: (dye) => this.handleSwapDye(index, dye),
       });
     });
+
+    // The wheel mirrors the grid, so it renders once the slots are decided
+    this.renderColorWheel();
 
     logger.info(
       '[HarmonyTool] Generated harmonies for:',
@@ -1383,13 +1501,19 @@ export class HarmonyTool extends BaseComponent {
 
     // Create v4-result-card custom element
     const card = document.createElement('v4-result-card') as ResultCard;
+    card.compact = true;
 
     // Get price data for this dye
     const priceInfo = this.priceData.get(options.matchedDye.itemID);
 
-    // Calculate Delta-E between target color and matched dye
-    const deltaE =
-      ColorService.getDeltaE?.(options.targetColor, options.matchedDye.hex) ?? undefined;
+    // Drift in the selected method — getDeltaE() defaults to CIE76 in core,
+    // and the card trusts a value tagged ciede2000, so calling it unqualified
+    // printed a ΔE76 number under the ΔE2000 label.
+    const deltaE = ColorService.getDistanceForMethod(
+      options.targetColor,
+      options.matchedDye.hex,
+      this.matchingMethod
+    );
 
     // Get market server name - prefer worldId from price data (actual listing location)
     // Fall back to selected server if worldId not available or can't be resolved
@@ -1414,6 +1538,9 @@ export class HarmonyTool extends BaseComponent {
       marketServer: marketServer,
       price: this.showPrices && priceInfo ? priceInfo.currentAverage : undefined,
       vendorCost: options.matchedDye.cost,
+      // The companions were already computed for this slot and thrown away —
+      // they ride the card now as swatch dots (drawn 1A).
+      alternates: options.closestDyes,
     };
 
     card.data = cardData;
@@ -1424,7 +1551,11 @@ export class HarmonyTool extends BaseComponent {
     card.showRgb = this.displayOptions.showRgb;
     card.showHsv = this.displayOptions.showHsv;
     card.showLab = this.displayOptions.showLab;
+    card.showCmyk = this.displayOptions.showCmyk;
     card.showDeltaE = this.displayOptions.showDeltaE;
+    card.showHue = this.displayOptions.showHue ?? true;
+    card.showStain = this.displayOptions.showStain ?? true;
+    card.showConsolidation = this.displayOptions.showSpectrum ?? true;
     card.showPrice = this.displayOptions.showPrice;
     card.showAcquisition = this.displayOptions.showAcquisition;
 
@@ -1433,6 +1564,15 @@ export class HarmonyTool extends BaseComponent {
       logger.info(`[HarmonyTool] Card selected: ${e.detail.dye.name}`);
       this.selectDye(e.detail.dye);
     }) as EventListener);
+
+    // Tapping an alternate swaps just this slot — the grid stays put
+    if (options.onSwapDye) {
+      const swap = options.onSwapDye;
+      card.addEventListener('alternate-select', ((e: CustomEvent<{ dye: Dye }>) => {
+        logger.info(`[HarmonyTool] Alternate picked for ${options.label}: ${e.detail.dye.name}`);
+        swap(e.detail.dye);
+      }) as EventListener);
+    }
 
     // Handle context menu actions
     card.addEventListener('context-action', ((
@@ -1522,24 +1662,15 @@ export class HarmonyTool extends BaseComponent {
   }
 
   /**
-   * Find matching dyes for a specific harmony type (delegated to harmony-generator)
-   */
-  private findHarmonyDyesInternal(typeId: string): ScoredDyeMatch[] {
-    if (!this.selectedDye) return [];
-    return findHarmonyDyes(
-      this.selectedDye,
-      typeId,
-      this.getHarmonyConfig(),
-      this.dyeFiltersConfig
-    );
-  }
-
-  /**
-   * Get matched dyes for the current harmony type (for color wheel)
+   * The dyes the result grid is actually showing, slot by slot.
+   *
+   * The wheel used to call the generator again on its own, which meant no
+   * dedup and no user swaps: with a companion count above 1, node N showed a
+   * lower-ranked companion of slot 1, and tapping it jumped to a dye no card
+   * displayed. The grid records what it rendered and the wheel mirrors it.
    */
   private getMatchedDyesForCurrentHarmony(): Dye[] {
-    const matches = this.findHarmonyDyesInternal(this.selectedHarmonyType);
-    return matches.map((m) => m.dye);
+    return this.slotDyes;
   }
 
   /**
@@ -1554,18 +1685,6 @@ export class HarmonyTool extends BaseComponent {
     }
     // Update share button state
     this.updateShareButton();
-  }
-
-  /**
-   * Update price data on harmony displays and result panels
-   */
-  private updateHarmonyDisplayPrices(): void {
-    for (const display of this.harmonyDisplays.values()) {
-      display.setPriceData(this.priceData);
-    }
-    for (const panel of this.resultPanels) {
-      panel.setPriceData(this.priceData);
-    }
   }
 
   /**
@@ -1645,14 +1764,59 @@ export class HarmonyTool extends BaseComponent {
     try {
       const prices = await this.marketBoardService.fetchPricesForDyes(dyesToFetch);
 
+      // The service swallows its own errors and hands back an empty Map, so
+      // "asked for dyes and got nothing" is the only failure signal there is
+      // — the same test budget uses.
+      this.marketFailed = dyesToFetch.length > 0 && prices.size === 0;
+      this.renderMarketStrip();
+
       // Always update UI after fetch completes (even if empty/stale)
       // This ensures cards reflect current state when server changes
-      this.updateHarmonyDisplayPrices();
       this.updateV4ResultCardPrices();
       logger.info(`[HarmonyTool] Fetched prices for ${prices.size} dyes`);
     } catch (error) {
       logger.error('[HarmonyTool] Failed to fetch prices:', error);
+      // One strip for the whole grid, not a dash repeated on every card:
+      // the board being unreachable is one fact about the session.
+      this.marketFailed = true;
+      this.renderMarketStrip();
     }
+  }
+
+  /**
+   * The single market-failure strip. Prices are the only part of a harmony
+   * that depends on the network, so their absence is stated once above the
+   * results rather than implied by dashes scattered through them.
+   */
+  private renderMarketStrip(): void {
+    if (!this.marketStripContainer) return;
+    clearContainer(this.marketStripContainer);
+    if (!this.marketFailed || !this.showPrices) {
+      this.marketStripContainer.style.display = 'none';
+      return;
+    }
+    this.marketStripContainer.style.display = '';
+
+    const amber = ThemeService.isDarkMode() ? '#F4BF4F' : '#B45309';
+    const strip = this.createElement('div', {
+      attributes: {
+        role: 'status',
+        style: `display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; border-radius: 10px; border: 1px solid ${amber}59; background: ${amber}14;`,
+      },
+    });
+    strip.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('harmony.marketFailTitle'),
+        attributes: { style: `font-size: 13px; font-weight: 600; color: var(--theme-text);` },
+      })
+    );
+    strip.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('harmony.marketFailBody'),
+        attributes: { style: 'font-size: 12px; color: var(--theme-text-muted);' },
+      })
+    );
+    this.marketStripContainer.appendChild(strip);
   }
 
   /**
@@ -1669,14 +1833,12 @@ export class HarmonyTool extends BaseComponent {
       // Resolve worldId to world name via MarketBoardService
       const marketServer = this.marketBoardService.getWorldNameForPrice(priceInfo);
 
-      // Update card data with new price info (triggers Lit re-render)
+      // Update card data with new price info (triggers Lit re-render).
+      // Spread, don't re-list: enumerating the fields dropped matchingMethod,
+      // and without it the card stops deriving ΔE2000 and prints whatever
+      // method the tool ordered by under the ΔE2000 label.
       card.data = {
-        dye: currentData.dye,
-        originalColor: currentData.originalColor,
-        matchedColor: currentData.matchedColor,
-        deltaE: currentData.deltaE,
-        hueDeviance: currentData.hueDeviance,
-        vendorCost: currentData.vendorCost,
+        ...currentData,
         price: this.showPrices && priceInfo ? priceInfo.currentAverage : undefined,
         marketServer: marketServer,
       };
@@ -1699,8 +1861,15 @@ export class HarmonyTool extends BaseComponent {
       return {};
     }
 
+    // A custom base has no stainID — share it as the declared bare-colour
+    // slot instead of the invalid dye=0 that lost the colour entirely.
+    const base =
+      this.selectedDye.stainID !== null
+        ? { dye: this.selectedDye.stainID }
+        : { hex: this.selectedDye.hex.replace('#', '') };
+
     return {
-      dye: this.selectedDye.itemID,
+      ...base,
       harmony: this.selectedHarmonyType,
       algo: this.matchingMethod,
       perceptual: this.usePerceptualMatching,
@@ -1775,7 +1944,6 @@ export class HarmonyTool extends BaseComponent {
     // Re-render if needed
     if (needsRerender && this.selectedDye) {
       this.generateHarmonies();
-      this.updateDrawerContent();
 
       // Update harmony type buttons if they exist (shared method handles null containers)
       this.updateHarmonyTypeButtonStyles(this.harmonyTypesContainer, this.selectedHarmonyType);
@@ -1809,7 +1977,6 @@ export class HarmonyTool extends BaseComponent {
     // Show empty state
     this.showEmptyState(true);
     this.renderColorWheel();
-    this.updateDrawerContent();
   }
 
   /**
@@ -1834,7 +2001,6 @@ export class HarmonyTool extends BaseComponent {
 
     // Generate harmonies and update UI
     this.generateHarmonies();
-    this.updateDrawerContent();
   }
 
   /**
@@ -1846,29 +2012,10 @@ export class HarmonyTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
 
-    // Create a virtual "dye" object for the custom color
-    // Using negative ID to distinguish from real dyes
-    const virtualDye: Dye = {
-      id: -1,
-      itemID: -1,
-      stainID: null, // Custom colors don't have a stain ID
-      name: `Custom (${hex})`,
-      hex: hex.toUpperCase(),
-      rgb: ColorService.hexToRgb(hex),
-      hsv: ColorService.hexToHsv(hex),
-      category: 'Custom',
-      acquisition: 'Custom',
-      cost: 0,
-      currency: null,
-      isMetallic: false,
-      isPastel: false,
-      isDark: false,
-      isCosmic: false,
-
-      isIshgardian: false,
-
-      consolidationType: null,
-    };
+    // Create a virtual "dye" object for the custom color.
+    // Harmony keeps its own id scheme: the single base slot is always -1, so
+    // `usedDyeIds` and the (never-restored) persisted id stay stable.
+    const virtualDye: Dye = { ...makeCustomDye(hex), id: -1, itemID: -1 };
 
     this.selectedDye = virtualDye;
 
@@ -1883,6 +2030,5 @@ export class HarmonyTool extends BaseComponent {
 
     // Generate harmonies and update UI
     this.generateHarmonies();
-    this.updateDrawerContent();
   }
 }

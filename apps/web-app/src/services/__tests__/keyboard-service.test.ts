@@ -32,13 +32,6 @@ vi.mock('@components/shortcuts-panel', () => ({
   showShortcutsPanel: vi.fn(),
 }));
 
-// Mock FEATURE_FLAGS
-vi.mock('@shared/constants', () => ({
-  FEATURE_FLAGS: {
-    ENABLE_KEYBOARD_SHORTCUTS: true,
-  },
-}));
-
 describe('KeyboardService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -95,7 +88,7 @@ describe('KeyboardService', () => {
   // Tool Navigation Tests
   // ============================================================================
 
-  describe('Tool Navigation (1-5 keys)', () => {
+  describe('Tool Navigation (1-9 keys)', () => {
     beforeEach(() => {
       KeyboardService.initialize();
     });
@@ -116,7 +109,7 @@ describe('KeyboardService', () => {
       window.removeEventListener('keyboard-navigate-tool', listener);
     });
 
-    it('should dispatch navigation event for key 2 (matcher)', () => {
+    it('should dispatch navigation event for key 2 (extractor)', () => {
       const listener = vi.fn();
       window.addEventListener('keyboard-navigate-tool', listener);
 
@@ -125,7 +118,7 @@ describe('KeyboardService', () => {
 
       expect(listener).toHaveBeenCalledWith(
         expect.objectContaining({
-          detail: { toolId: 'matcher' },
+          detail: { toolId: 'extractor' },
         })
       );
 
@@ -164,11 +157,27 @@ describe('KeyboardService', () => {
       window.removeEventListener('keyboard-navigate-tool', listener);
     });
 
-    it('should dispatch navigation event for key 5 (mixer)', () => {
+    it('should dispatch navigation event for key 5 (gradient)', () => {
       const listener = vi.fn();
       window.addEventListener('keyboard-navigate-tool', listener);
 
       const event = new KeyboardEvent('keydown', { key: '5' });
+      document.dispatchEvent(event);
+
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: { toolId: 'gradient' },
+        })
+      );
+
+      window.removeEventListener('keyboard-navigate-tool', listener);
+    });
+
+    it('should dispatch navigation event for key 9 (mixer)', () => {
+      const listener = vi.fn();
+      window.addEventListener('keyboard-navigate-tool', listener);
+
+      const event = new KeyboardEvent('keydown', { key: '9' });
       document.dispatchEvent(event);
 
       expect(listener).toHaveBeenCalledWith(
@@ -296,6 +305,73 @@ describe('KeyboardService', () => {
   });
 
   // ============================================================================
+  // Share Shortcut Tests
+  // ============================================================================
+
+  describe('Share Shortcut (Shift+S)', () => {
+    let shell: HTMLElement;
+    let shareButton: HTMLElement & { share: () => void };
+
+    beforeEach(() => {
+      KeyboardService.initialize();
+      // The share buttons live inside the layout shell's shadow DOM, so the
+      // fixture has to reproduce that boundary — a light-DOM button would
+      // pass a test the real lookup would fail.
+      shell = document.createElement('v4-layout-shell');
+      const root = shell.attachShadow({ mode: 'open' });
+      shareButton = document.createElement('v4-share-button') as HTMLElement & {
+        share: () => void;
+      };
+      // share(), not click(): the component's @click binding sits on an inner
+      // <button> in its own shadow root, so a host click is a silent no-op.
+      // Asserting on click() here would pass while the feature was broken.
+      shareButton.share = vi.fn();
+      root.appendChild(shareButton);
+      document.body.appendChild(shell);
+    });
+
+    afterEach(() => {
+      shell.remove();
+    });
+
+    it('should share the active tool on Shift+S', () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'S', shiftKey: true }));
+
+      expect(shareButton.share).toHaveBeenCalled();
+    });
+
+    it('should share on Shift+s (lowercase)', () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', shiftKey: true }));
+
+      expect(shareButton.share).toHaveBeenCalled();
+    });
+
+    it('should ignore a disabled share button rather than firing a bad share', () => {
+      shareButton.setAttribute('disabled', '');
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'S', shiftKey: true }));
+
+      expect(shareButton.share).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing when the active tool has no share button', () => {
+      shareButton.remove();
+
+      expect(() =>
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'S', shiftKey: true }))
+      ).not.toThrow();
+    });
+
+    it('should not share while a modal is open', () => {
+      (ModalService.hasOpenModals as ReturnType<typeof vi.fn>).mockReturnValue(true);
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'S', shiftKey: true }));
+
+      expect(shareButton.share).not.toHaveBeenCalled();
+    });
+  });
+
+  // ============================================================================
   // Help Shortcut Tests
   // ============================================================================
 
@@ -414,6 +490,55 @@ describe('KeyboardService', () => {
       document.body.removeChild(textarea);
     });
 
+    // REGRESSION: every tool renders inside V4LayoutShell's shadow root, so
+    // `document.activeElement` retargets to the HOST (<v4-layout-shell>) and the
+    // old guard saw no input at all — meaning shortcuts fired while typing
+    // anywhere in the app. Reported as Shift+T flipping the theme while naming a
+    // palette after a .chara import; the same slip hit `1`-`9` in any search box.
+    // The three tests above miss it because a light-DOM input does not retarget.
+    it('should not handle shortcuts when typing in an input inside a shadow root', () => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const shadow = host.attachShadow({ mode: 'open' });
+      const input = document.createElement('input');
+      shadow.appendChild(input);
+      input.focus();
+
+      const listener = vi.fn();
+      window.addEventListener('keyboard-navigate-tool', listener);
+
+      // composed: true — a real keystroke crosses the shadow boundary on its
+      // way to the document-level listener.
+      const event = new KeyboardEvent('keydown', { key: '1', bubbles: true, composed: true });
+      input.dispatchEvent(event);
+
+      expect(listener).not.toHaveBeenCalled();
+
+      window.removeEventListener('keyboard-navigate-tool', listener);
+      document.body.removeChild(host);
+    });
+
+    it('should not toggle the theme on Shift+T typed into a shadow-root input', () => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const shadow = host.attachShadow({ mode: 'open' });
+      const input = document.createElement('input');
+      shadow.appendChild(input);
+      input.focus();
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'T',
+        shiftKey: true,
+        bubbles: true,
+        composed: true,
+      });
+      input.dispatchEvent(event);
+
+      expect(ThemeService.toggleDarkMode).not.toHaveBeenCalled();
+
+      document.body.removeChild(host);
+    });
+
     it('should not handle shortcuts when typing in contenteditable', () => {
       const div = document.createElement('div');
       div.setAttribute('contenteditable', 'true');
@@ -456,14 +581,18 @@ describe('KeyboardService', () => {
       window.removeEventListener('keyboard-navigate-tool', listener);
     });
 
-    it('should ignore key 6 (not mapped)', () => {
+    it('should dispatch navigation event for key 6 (presets)', () => {
       const listener = vi.fn();
       window.addEventListener('keyboard-navigate-tool', listener);
 
       const event = new KeyboardEvent('keydown', { key: '6' });
       document.dispatchEvent(event);
 
-      expect(listener).not.toHaveBeenCalled();
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: { toolId: 'presets' },
+        })
+      );
 
       window.removeEventListener('keyboard-navigate-tool', listener);
     });

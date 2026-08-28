@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createMockKV } from '@xivdyetools/test-utils/cloudflare';
 
 // Mock xivdyetools-core to avoid JSON import issues
 vi.mock('@xivdyetools/core', () => ({
@@ -15,25 +16,30 @@ vi.mock('@xivdyetools/core', () => ({
     };
   }),
   // bot-logic/input-resolution.ts creates a DyeService instance at module load time
-  DyeService: vi.fn().mockImplementation(function () { return {}; }),
+  DyeService: vi.fn().mockImplementation(function () {
+    return {};
+  }),
   dyeDatabase: [],
+  // 5.0 matching vocabulary (mirrors core; the mock exists only to dodge
+  // JSON imports, not to change behaviour)
+  MATCHING_METHODS: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'],
+  DEFAULT_MATCHING_METHOD: 'ciede2000',
+  LEGACY_MATCHING_METHOD_MAP: {
+    hyab: 'ciede2000',
+    'oklch-weighted': 'ciede2000',
+    euclidean: 'rgb',
+  },
+  isMatchingMethod: (v: unknown) =>
+    typeof v === 'string' &&
+    ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'].includes(v),
+  normalizeMatchingMethod: (v: unknown) => {
+    const valid = ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'];
+    if (typeof v === 'string' && valid.includes(v)) return v;
+    if (v === 'hyab' || v === 'oklch-weighted') return 'ciede2000';
+    if (v === 'euclidean') return 'rgb';
+    return 'ciede2000';
+  },
 }));
-
-// Create mock KV namespace
-function createMockKV() {
-  const store = new Map<string, string>();
-
-  return {
-    get: vi.fn(async (key: string) => store.get(key) ?? null),
-    put: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
-    }),
-    delete: vi.fn(async (key: string) => {
-      store.delete(key);
-    }),
-    _store: store,
-  } as unknown as KVNamespace & { _store: Map<string, string> };
-}
 
 // Create mock logger
 function createMockLogger() {
@@ -51,7 +57,6 @@ import {
   resolveBlendingMode,
   resolveMatchingMethod,
   resolveCount,
-  resolveMarket,
   validatePreferenceValue,
   getDefaultValue,
   getAffectedCommands,
@@ -59,12 +64,12 @@ import {
 import type { UserPreferences } from '../types/preferences.js';
 
 describe('Preferences Service', () => {
-  let mockKV: ReturnType<typeof createMockKV>;
+  let mockKV: KVNamespace & { _store: Map<string, string> };
   let mockLogger: ReturnType<typeof createMockLogger>;
   const testUserId = 'user-123456';
 
   beforeEach(() => {
-    mockKV = createMockKV();
+    mockKV = createMockKV() as unknown as KVNamespace & { _store: Map<string, string> };
     mockLogger = createMockLogger();
   });
 
@@ -100,10 +105,13 @@ describe('Preferences Service', () => {
     });
 
     it('migrates legacy world preference', async () => {
-      mockKV._store.set(`budget:world:v1:${testUserId}`, JSON.stringify({
-        world: 'Cactuar',
-        setAt: '2025-01-01T00:00:00Z',
-      }));
+      mockKV._store.set(
+        `budget:world:v1:${testUserId}`,
+        JSON.stringify({
+          world: 'Cactuar',
+          setAt: '2025-01-01T00:00:00Z',
+        }),
+      );
 
       const prefs = await getUserPreferences(mockKV, testUserId, mockLogger);
       expect(prefs.world).toBe('Cactuar');
@@ -111,10 +119,13 @@ describe('Preferences Service', () => {
 
     it('migrates both legacy preferences', async () => {
       mockKV._store.set(`i18n:user:${testUserId}`, 'fr');
-      mockKV._store.set(`budget:world:v1:${testUserId}`, JSON.stringify({
-        world: 'Gilgamesh',
-        setAt: '2025-01-01T00:00:00Z',
-      }));
+      mockKV._store.set(
+        `budget:world:v1:${testUserId}`,
+        JSON.stringify({
+          world: 'Gilgamesh',
+          setAt: '2025-01-01T00:00:00Z',
+        }),
+      );
 
       const prefs = await getUserPreferences(mockKV, testUserId, mockLogger);
       expect(prefs.language).toBe('fr');
@@ -257,9 +268,9 @@ describe('Preferences Service', () => {
         expect(resolveBlendingMode(undefined, prefs)).toBe('spectral');
       });
 
-      it('uses default when no explicit or preference', () => {
+      it('uses default when no explicit or preference (ryb — the web app Mixer default)', () => {
         const prefs: UserPreferences = {};
-        expect(resolveBlendingMode(undefined, prefs)).toBe('rgb');
+        expect(resolveBlendingMode(undefined, prefs)).toBe('ryb');
       });
 
       it('ignores invalid explicit value', () => {
@@ -271,7 +282,12 @@ describe('Preferences Service', () => {
     describe('resolveMatchingMethod', () => {
       it('uses explicit value when provided', () => {
         const prefs: UserPreferences = { matching: 'ciede2000' };
-        expect(resolveMatchingMethod('hyab', prefs)).toBe('hyab');
+        expect(resolveMatchingMethod('redmean', prefs)).toBe('redmean');
+      });
+
+      it('a retired explicit value falls through to the (normalised) preference', () => {
+        const prefs: UserPreferences = { matching: 'hyab' as never };
+        expect(resolveMatchingMethod('hyab', prefs)).toBe('ciede2000');
       });
 
       it('uses preference when no explicit value', () => {
@@ -281,7 +297,7 @@ describe('Preferences Service', () => {
 
       it('uses default when no explicit or preference', () => {
         const prefs: UserPreferences = {};
-        expect(resolveMatchingMethod(undefined, prefs)).toBe('oklab');
+        expect(resolveMatchingMethod(undefined, prefs)).toBe('ciede2000');
       });
     });
 
@@ -298,29 +314,7 @@ describe('Preferences Service', () => {
 
       it('uses default when no explicit or preference', () => {
         const prefs: UserPreferences = {};
-        expect(resolveCount(undefined, prefs)).toBe(5);
-      });
-    });
-
-    describe('resolveMarket', () => {
-      it('uses explicit true', () => {
-        const prefs: UserPreferences = { market: false };
-        expect(resolveMarket(true, prefs)).toBe(true);
-      });
-
-      it('uses explicit false', () => {
-        const prefs: UserPreferences = { market: true };
-        expect(resolveMarket(false, prefs)).toBe(false);
-      });
-
-      it('uses preference when no explicit', () => {
-        const prefs: UserPreferences = { market: true };
-        expect(resolveMarket(undefined, prefs)).toBe(true);
-      });
-
-      it('uses default when no explicit or preference', () => {
-        const prefs: UserPreferences = {};
-        expect(resolveMarket(undefined, prefs)).toBe(false);
+        expect(resolveCount(undefined, prefs)).toBe(1);
       });
     });
   });
@@ -377,9 +371,9 @@ describe('Preferences Service', () => {
   describe('getDefaultValue', () => {
     it('returns correct defaults', () => {
       expect(getDefaultValue('language')).toBe('en');
-      expect(getDefaultValue('blending')).toBe('rgb');
-      expect(getDefaultValue('matching')).toBe('oklab');
-      expect(getDefaultValue('count')).toBe(5);
+      expect(getDefaultValue('blending')).toBe('ryb');
+      expect(getDefaultValue('matching')).toBe('ciede2000');
+      expect(getDefaultValue('count')).toBe(1);
       expect(getDefaultValue('market')).toBe(false);
       expect(getDefaultValue('clan')).toBeUndefined();
       expect(getDefaultValue('gender')).toBeUndefined();
@@ -389,7 +383,7 @@ describe('Preferences Service', () => {
 
   describe('getAffectedCommands', () => {
     it('returns correct commands for each key', () => {
-      expect(getAffectedCommands('language')).toContain('all commands');
+      expect(getAffectedCommands('language')).toContain('preferences.affects.allCommands');
       expect(getAffectedCommands('blending')).toContain('/mixer');
       expect(getAffectedCommands('blending')).toContain('/gradient');
       expect(getAffectedCommands('matching')).toContain('/extractor');

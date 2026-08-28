@@ -11,9 +11,52 @@
 import type { Dye } from '@xivdyetools/types';
 import { DyeService, dyeDatabase } from '@xivdyetools/core';
 import { resolveCssColorName } from './css-colors.js';
+import { getLocalizedDyeName, type LocaleCode } from './localization.js';
 
 // Initialize DyeService singleton for color resolution
 const dyeService = new DyeService(dyeDatabase);
+
+/**
+ * Search dyes by name in English AND the given locale (2026-08-20 i18n audit,
+ * F-02). `DyeService.searchByName` only knows the English `nameLower`, so a
+ * Japanese user typing スノウ got nothing. This matches the English name OR the
+ * locale's name (both case-insensitive substring), English hits first in
+ * `searchByName` order, then localized-only hits in database order.
+ *
+ * Relies on the per-locale cache populated by `initializeLocale(locale)`; if
+ * the locale has not been loaded yet this degrades to the English search
+ * (`getLocalizedDyeName` returns the fallback), never throws.
+ */
+export function searchDyesByName(query: string, locale: LocaleCode = 'en'): Dye[] {
+  const english = dyeService.searchByName(query);
+  if (locale === 'en') return english;
+  const q = query.toLowerCase().trim();
+  if (q.length === 0) return english;
+  const seen = new Set(english.map((d) => d.id));
+  const localized = dyeService
+    .getAllDyes()
+    .filter((d) => !seen.has(d.id) && getLocalizedDyeName(d.itemID, d.name, locale).toLowerCase().includes(q));
+  return [...english, ...localized];
+}
+
+/**
+ * Exact-match (case-insensitive) lookup by English or localized name.
+ * Returns null when nothing matches exactly — callers that want fuzzy
+ * behaviour should use `searchDyesByName`.
+ */
+export function findDyeByName(name: string, locale: LocaleCode = 'en'): Dye | null {
+  const n = name.toLowerCase().trim();
+  if (n.length === 0) return null;
+  return (
+    dyeService
+      .getAllDyes()
+      .find(
+        (d) =>
+          d.name.toLowerCase() === n ||
+          (locale !== 'en' && getLocalizedDyeName(d.itemID, d.name, locale).toLowerCase() === n),
+      ) ?? null
+  );
+}
 
 /**
  * Validates if a string is a valid hex color
@@ -85,6 +128,8 @@ export interface ResolvedColor {
   id?: number;
   /** FFXIV item ID if resolved from a dye */
   itemID?: number | null;
+  /** Game stain ID if resolved from a dye (5.0 canonical key) */
+  stainID?: number | null;
   /** The full Dye object if resolved from a dye */
   dye?: Dye;
 }
@@ -98,6 +143,11 @@ export interface ResolveColorOptions {
   excludeFacewear?: boolean;
   /** If true, finds closest dye when given a hex color. Default: false */
   findClosestForHex?: boolean;
+  /**
+   * Locale whose dye names should also match the input (F-02). Defaults to
+   * English-only matching. Requires `initializeLocale(locale)` to have run.
+   */
+  locale?: LocaleCode;
 }
 
 /**
@@ -120,6 +170,7 @@ export function resolveColorInput(
 ): ResolvedColor | null {
   const excludeFacewear = options?.excludeFacewear ?? true;
   const findClosestForHex = options?.findClosestForHex ?? false;
+  const locale = options?.locale ?? 'en';
 
   // Check if it's a hex color
   if (isValidHex(input)) {
@@ -134,6 +185,7 @@ export function resolveColorInput(
           name: closest.name,
           id: closest.id,
           itemID: closest.itemID,
+          stainID: closest.stainID,
           dye: closest,
         };
       }
@@ -143,8 +195,8 @@ export function resolveColorInput(
     return { hex };
   }
 
-  // Try to find a dye by name
-  const dyes = dyeService.searchByName(input);
+  // Try to find a dye by name (English + locale)
+  const dyes = searchDyesByName(input, locale);
 
   if (dyes.length > 0) {
     // Filter based on options
@@ -161,6 +213,7 @@ export function resolveColorInput(
         name: dye.name,
         id: dye.id,
         itemID: dye.itemID,
+      stainID: dye.stainID,
         dye,
       };
     }
@@ -177,6 +230,7 @@ export function resolveColorInput(
           name: closest.name,
           id: closest.id,
           itemID: closest.itemID,
+          stainID: closest.stainID,
           dye: closest,
         };
       }
@@ -194,11 +248,12 @@ export function resolveColorInput(
  * this always returns the full Dye object or null.
  *
  * @param input - Dye name or hex color code
+ * @param locale - Locale whose dye names should also match (default: English only)
  * @returns Matching Dye object, or null if not found
  */
-export function resolveDyeInput(input: string): Dye | null {
-  // Try finding by name first
-  const dyes = dyeService.searchByName(input);
+export function resolveDyeInput(input: string, locale: LocaleCode = 'en'): Dye | null {
+  // Try finding by name first (English + locale)
+  const dyes = searchDyesByName(input, locale);
   if (dyes.length > 0) {
     // Filter out Facewear dyes (synthetic IDs, not tradeable)
     const nonFacewear = dyes.filter((d) => d.category !== 'Facewear');
