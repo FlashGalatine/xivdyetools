@@ -110,15 +110,24 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
 
 ## 1. Merge day (what runs, what to watch)
 
-- [ ] Merge → path-filtered deploy workflows run (`deploy-*.yml`); **discord-worker's job runs
+- [x] Merge → path-filtered deploy workflows run (`deploy-*.yml`); **discord-worker's job runs
       `register-commands` globally** — no manual registration for the main bot.
+      **Done 2026-08-28:** PR #123 merged with a merge commit (`2790344a`, 23:36:41Z, 464 commits,
+      main had no divergent commits). All nine runs on the merge commit green: CI `33221014926`,
+      discord-worker `33221014958` (*Register Discord commands* step `success`; production
+      deployment 23:37:50Z), presets-api `33221015036` (deployment 23:37:33Z), web-app
+      `33221015165` (Pages deployment `dddbb46f`), api-worker `33221014866`, oauth `33221015055`,
+      og-worker `33221014841`, image-worker `33221015057`, moderation-worker `33221014877`.
 - [ ] **moderation-worker slash commands (user-run):** `register-commands` is *not* in its deploy
       workflow and the 5.0 remediation changed the command shape (`default_member_permissions`,
       `dm_permission: false`, guild-only contexts — FINDING-006/007). Run
       `pnpm --filter xivdyetools-moderation-worker run register-commands` with the moderation
-      bot's production token / guild.
-- [ ] **presets-api production D1 — the two data migrations (user-run, moved here from §0):**
-  - [ ] **JWT-identity backfill — immediately after `deploy-presets-api.yml` goes green** (the
+      bot's production token / guild. *Still open after merge day (2026-08-28): the moderation
+      bot's token is not among the repository secrets (`DISCORD_TOKEN` there is the main bot's), so
+      nothing in CI can do this.*
+- [x] **presets-api production D1 — the two data migrations (user-run, moved here from §0):**
+      both applied 2026-08-28, detail below.
+  - [x] **JWT-identity backfill — immediately after `deploy-presets-api.yml` goes green** (the
         2.1.0 build resolves web sessions to the Discord snowflake; until the backfill runs the 16
         existing presets / 33 votes are invisible to their authors, and before the deploy the
         backfill would hide them from the old build instead — so the window is the deploy itself).
@@ -132,7 +141,14 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         both clients), delete the UUID row and keep the earlier snowflake row.
         Verify with `SELECT COUNT(*) FROM presets WHERE length(author_discord_id) = 36` → 1 at most
         (the single XIVAuth-only account).
-  - [ ] **stainID rewrite — after the web-app Pages deploy AND the discord-worker deploy are live**
+        **Done 2026-08-28 ~23:40Z**, minutes after run `33221015036` went green. oauth `users` had
+        18 rows, 17 with a `discord_id`, **0 duplicate `discord_id`s** (so a `votes` PK collision was
+        impossible — no snowflake-keyed rows existed yet). One `d1 execute --file` batch of 34
+        UPDATEs re-keyed **14 presets + 24 votes**. What is left under a UUID is **one account**
+        (`f23de5ea…`, `discord_id IS NULL` in oauth = the XIVAuth-only user) owning 2 presets + 9
+        votes — by design. NB the verification query above counts *rows*; read "→ 1 at most" as
+        "one distinct UUID at most" (`SELECT COUNT(DISTINCT author_discord_id) … length(...) = 36`).
+  - [x] **stainID rewrite — after the web-app Pages deploy AND the discord-worker deploy are live**
         (4.x clients render the stored array by itemID; the 5.0 ones read both eras), from
         `apps/presets-api`: dump `SELECT id, dyes, previous_values FROM presets` with `--json`,
         `npx tsx scripts/migrate-dyes-to-stainids.ts <dump.json> > migrations/generated-stainid-updates.sql`,
@@ -140,14 +156,45 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         Idempotent. Verify: `SELECT COUNT(*) FROM presets WHERE CAST(json_extract(dyes,'$[0]') AS INTEGER) > 254` → 0.
         Until this runs, 5.0 clients keep working through `resolvePresetDye`'s legacy fallback;
         the §3 "legacy itemID preset fallback" removal is gated on it.
-- [ ] Web-app Pages deploy + smoke test job; confirm the custom domain and the `pages.dev` alias
+        **Done 2026-08-28 ~23:45Z**, after Pages deployment `dddbb46f` and the discord-worker
+        deployment were live: 16 UPDATEs generated from a fresh dump, applied, verified —
+        `CAST(json_extract(dyes,'$[0]') AS INTEGER) > 254` → **0**, every `dye_signature` equals its
+        sorted `dyes` array, no `previous_values` rows existed. **Trap hit on the first attempt:**
+        D1 refuses the explicit `BEGIN TRANSACTION;` / `COMMIT;` the script used to emit
+        (`To execute a transaction, please use the state.storage.transaction() … APIs instead of the
+        SQL BEGIN TRANSACTION or SAVEPOINT statements`) and the batch failed before touching data;
+        a `--file` batch is atomic anyway, so the script now emits a comment instead (same day).
+- [x] Web-app Pages deploy + smoke test job; confirm the custom domain and the `pages.dev` alias
       serve the same asset hashes (cache-poisoning check — `docs/…/xiv-pages-asset-cache-poisoning`).
+      **Done 2026-08-28:** run `33221015165`, deployment `dddbb46f` (`index-TtM1bHty.js`); the smoke
+      test confirmed `xivdyetools.app` serves that deployment (sha256 `a23d5678f856`). NB the
+      project's alias is **`xiv-colorexplorer.pages.dev`** (a renamed Pages project keeps its
+      original subdomain) — `xivdyetools.pages.dev` does not exist. `/` carries the CSP, HSTS
+      (preload), `nosniff` and `X-Frame-Options: DENY` headers.
 - [ ] `CHANGELOG-laymans.md` announcement webhook fired once.
+      **Did not fire, and cannot as configured (found 2026-08-28):** the repository has exactly one
+      webhook (id `596896553`) — Discord's *native* GitHub-push integration
+      (`discord.com/api/webhooks/…/github`; it delivered 204 for the merge push at 23:36:52Z and
+      posts commit summaries, not the changelog). Nothing points at discord-worker's
+      `POST /webhooks/github` (`https://bot.xivdyetools.app/webhooks/github`, HMAC-verified against
+      `GITHUB_WEBHOOK_SECRET`), so the laymans announcement handler has never received a push.
+      To wire it: Settings → Webhooks → Add: that URL, content type `application/json`, secret =
+      the value of the worker's `GITHUB_WEBHOOK_SECRET`, event *push*. The next push to `main` that
+      touches the root `CHANGELOG-laymans.md` then announces — or *Redeliver* a qualifying delivery
+      from the new hook's *Recent Deliveries* once one exists.
 - [ ] **npm publish** (Actions → *Publish Packages to npm*), tier order: types → logger → auth →
       core → **worker-kit (first publish is a manual 2FA publish + trusted-publisher setup on
       npmjs.com — OIDC cannot create a package)** → svg → bot-logic. Then `npm deprecate`
       crypto, bot-i18n, color-blending, worker-middleware, rate-limiter (messages in
       `DEPRECATIONS.md`).
+      **Run `33221213399` (dispatched 2026-08-28 23:40Z, `all-modified`) published six of seven —
+      types 2.0.0, logger 2.1.0, auth 1.4.0, core 4.0.1, svg 2.0.1, bot-logic 2.1.0 (verified with
+      `npm view`) — and failed on worker-kit exactly as predicted:
+      `E404 Not Found - PUT https://registry.npmjs.org/@xivdyetools%2fworker-kit`.** Still open:
+      the 2FA first publish of worker-kit 1.1.0
+      (`pnpm --filter @xivdyetools/worker-kit publish --provenance --access public --no-git-checks --otp=<code>`),
+      then its trusted-publisher entry on npmjs.com (GitHub Actions, `FlashGalatine/xivdyetools`,
+      `publish-packages.yml`), then the five `npm deprecate` calls.
 - [ ] **User-run afterwards:** `npm run upload-emojis` (production credentials, stainID-keyed set);
       `scripts/cleanup-v4-kv.ts`; og-worker beta deploy then production; purge the edge cache for
       `/og/default.png` / `/og/default-x.png`.
@@ -155,18 +202,36 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
   - [ ] `wrangler tail` each production worker for 10 minutes: no `KV rate limiter fallback`
         warning (discord-worker / api-worker / oauth / moderation-worker), presets-api accepting
         `X-Request-Signature-V2` (bot `/preset` commands work end-to-end), no 5xx bursts.
+        *2026-08-28: presets-api tailed for 150 s right after the deploy — one request, `outcome:
+        ok`, no warnings or exceptions; too little traffic to prove anything, so the 10-minute
+        tails (and the bot `/preset` round trip) remain.*
   - [ ] oauth: login → refresh → logout → refresh is rejected (FINDING-001 revocation TTL).
-  - [ ] api-worker: `/v1/dyes` returns `RateLimit-*` headers from the binding; `/universalis/*`
+        (`/health` 200 on 2026-08-28; the token flow needs a browser session.)
+  - [x] api-worker: `/v1/dyes` returns `RateLimit-*` headers from the binding; `/universalis/*`
         proxy OK; `developers.xivdyetools.app` docs render.
-  - [ ] og-worker: `/og/<tool>/…` returns `cf-cache-status: HIT` on the second request;
+        **2026-08-28:** `/v1/dyes` 200 with `X-RateLimit-Limit: 65` / `X-RateLimit-Remaining` /
+        `X-RateLimit-Reset` (the headers are `X-RateLimit-*`, not `RateLimit-*`);
+        `/universalis/data-centers` 200; `developers.xivdyetools.app` 200 `text/html`.
+  - [x] og-worker: `/og/<tool>/…` returns `cf-cache-status: HIT` on the second request;
         Discord / X link previews render (validators).
+        **2026-08-28, with two corrections to the expectation.** Images are served from
+        **`og.xivdyetools.app/og/…png`** (the crawler HTML on `xivdyetools.app/<tool>/*` points
+        there); `xivdyetools.app/og/*` is *not* routed to og-worker — it falls through to the Pages
+        SPA, which is what a naive probe sees. `/og/harmony/10/complementary.png` → 200 `image/png`,
+        `Cache-Control: public, max-age=86400, s-maxage=604800`. **There is no `cf-cache-status`
+        header on this path**: the worker caches through `caches.default` (`cache.match` /
+        `cache.put` in `index.ts`), which is invisible in response headers — verify hits from the
+        worker's logs or Analytics, not headers. Validators still to run by hand.
   - [ ] image-worker: a > 1,000-px PNG is rejected at the header gate (FINDING-004).
+        (Not reachable from outside — service-binding only; exercise it through `/swatch` with an
+        oversize PNG.)
   - [ ] presets-api preview-image purge (FINDING-018, credentials set 2026-08-21): upload a
         preview → `curl -I https://shots.xivdyetools.app/<key>` twice → `cf-cache-status: HIT`;
         delete it → the next `curl -I` is not `HIT`; the tail shows `[preview-image] cache purged`
         and no `cache purge failed`.
   - [ ] web-app: response headers (`_headers`) as intended incl. CSP; Swatch `.chara` import
         resolves gear; presets list/submit/vote; OG card for `/`.
+        (Headers verified 2026-08-28 — see the Pages item above; the in-app checks are manual.)
   - [ ] moderation bot: autocomplete only for moderators; ban flow on a long CJK name
         (FINDING-006/007).
 

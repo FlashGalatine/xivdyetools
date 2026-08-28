@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- `scripts/migrate-dyes-to-stainids.ts` no longer wraps its output in `BEGIN TRANSACTION` / `COMMIT`. D1 rejects explicit transaction statements outright ("use the state.storage.transaction() APIs instead of the SQL BEGIN TRANSACTION or SAVEPOINT statements"), so the generated file failed before touching a row on the 2026-08-28 production run; a `wrangler d1 execute --file` batch is atomic on its own. The production rewrite (16 presets) was applied with the two statements stripped and verified (no legacy itemIDs left, every `dye_signature` consistent).
+
 ## [2.1.0] - 2026-08-21
 
 Security audit remediation (docs/audits/2026-08-21-security, FINDING-002 / FINDING-015). Minor bump: two new bindings, stricter JWT acceptance, no contract break for valid tokens.
