@@ -535,6 +535,15 @@ export class ResultCard extends BaseLitComponent {
         border-top: 1px dashed var(--theme-border, rgba(255, 255, 255, 0.12));
       }
 
+      /* The market label carries the server name ("MARKET · HALICARNASSUS"),
+         which cannot fit the 62px label column of the full variant — it folded
+         onto three lines for long world names (Budget target card, Comparison).
+         The row sits alone under its dashed rule, so it needs no column
+         alignment: let the label take its natural width, as compact does. */
+      .zrow.market .zlabel {
+        width: auto;
+      }
+
       .market-error {
         color: #f4645a;
         letter-spacing: 0.5px;
