@@ -270,3 +270,85 @@ describe('helpers', () => {
     expect(TelemetryService.normalizeProducer(input)).toBe(expected);
   });
 });
+
+describe('dwell', () => {
+  function setVisibility(state: 'visible' | 'hidden'): void {
+    Object.defineProperty(document, 'visibilityState', { value: state, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }
+
+  beforeEach(() => {
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+  });
+
+  it('emits tool_leave with whole visible seconds on endTool', () => {
+    enable(true);
+    TelemetryService.startTool('harmony', 'initial');
+    vi.advanceTimersByTime(12_400);
+    TelemetryService.endTool();
+    TelemetryService.flush();
+    expect(lastBatch().events).toEqual([
+      { n: 'tool_leave', p: { tool: 'harmony', entry: 'initial' }, d: 12 },
+    ]);
+  });
+
+  it('pauses the clock while the tab is hidden', () => {
+    enable(true);
+    TelemetryService.startTool('mixer', 'nav');
+    vi.advanceTimersByTime(5_000);
+    setVisibility('hidden'); // also flushes — nothing queued yet
+    vi.advanceTimersByTime(60_000);
+    setVisibility('visible');
+    vi.advanceTimersByTime(3_000);
+    TelemetryService.endTool();
+    TelemetryService.flush();
+    expect(lastBatch().events.at(-1)).toEqual({
+      n: 'tool_leave',
+      p: { tool: 'mixer', entry: 'nav' },
+      d: 8,
+    });
+  });
+
+  it('caps at DWELL_CAP_S', () => {
+    enable(true);
+    TelemetryService.startTool('presets', 'nav');
+    vi.advanceTimersByTime(3 * 60 * 60 * 1000);
+    TelemetryService.endTool();
+    TelemetryService.flush();
+    expect(lastBatch().events[0].d).toBe(TelemetryService.DWELL_CAP_S);
+  });
+
+  it('endTool without a started tool is a no-op, and a second endTool does not double-emit', () => {
+    enable(true);
+    TelemetryService.endTool();
+    TelemetryService.startTool('budget', 'nav');
+    TelemetryService.endTool();
+    TelemetryService.endTool();
+    TelemetryService.flush();
+    expect(lastBatch().events).toHaveLength(1);
+  });
+
+  it('pagehide ends the current tool before flushing', () => {
+    enable(true);
+    TelemetryService.startTool('swatch', 'share');
+    vi.advanceTimersByTime(2_000);
+    window.dispatchEvent(new Event('pagehide'));
+    expect(lastBatch().events).toEqual([
+      { n: 'tool_leave', p: { tool: 'swatch', entry: 'share' }, d: 2 },
+    ]);
+  });
+
+  it('keeps timing even while disabled so a late opt-in does not emit a stale tool_leave', () => {
+    enable(false);
+    TelemetryService.startTool('harmony', 'initial');
+    vi.advanceTimersByTime(30_000);
+    configListener!({ analyticsEnabled: true, performanceMode: false });
+    vi.advanceTimersByTime(1_000);
+    TelemetryService.endTool();
+    TelemetryService.flush();
+    // The clock was reset at opt-in: only the second after enabling counts.
+    expect(lastBatch().events).toEqual([
+      { n: 'tool_leave', p: { tool: 'harmony', entry: 'initial' }, d: 1 },
+    ]);
+  });
+});

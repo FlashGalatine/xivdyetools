@@ -17,7 +17,7 @@
 import { ConfigController } from './config-controller';
 import { LanguageService } from './language-service';
 import { ThemeService } from './theme-service';
-import { RouterService } from './router-service';
+import { RouterService, type ToolId } from './router-service';
 import { getApiWorkerBase } from './api-worker-origin';
 import { APP_ENV, APP_VERSION } from '@shared/constants';
 import { logger } from '@shared/logger';
@@ -41,6 +41,7 @@ export class TelemetryService {
   /** Flush threshold — api-worker accepts 25 per batch; leave headroom for a trailing tool_leave. */
   static readonly MAX_BATCH = 20;
   static readonly FLUSH_DELAY_MS = 15_000;
+  static readonly DWELL_CAP_S = 1800;
 
   private static initialized = false;
   private static toggleOn = false;
@@ -48,10 +49,21 @@ export class TelemetryService {
   private static flushTimer: ReturnType<typeof setTimeout> | null = null;
   private static unsubscribeConfig: (() => void) | null = null;
 
+  private static currentTool: { tool: ToolId; entry: ToolEntry } | null = null;
+  /** `Date.now()` when the current visible stretch began; null while hidden or idle. */
+  private static visibleSince: number | null = null;
+  private static accumulatedMs = 0;
+
   private static readonly onVisibilityChange = (): void => {
-    if (document.visibilityState === 'hidden') TelemetryService.flush();
+    if (document.visibilityState === 'hidden') {
+      TelemetryService.pauseClock();
+      TelemetryService.flush();
+    } else {
+      TelemetryService.resumeClock();
+    }
   };
   private static readonly onPageHide = (): void => {
+    TelemetryService.endTool();
     TelemetryService.flush();
   };
 
@@ -65,7 +77,13 @@ export class TelemetryService {
       const next = config.analyticsEnabled;
       if (next === this.toggleOn) return;
       this.toggleOn = next;
-      if (!next) this.dropQueue();
+      if (next) {
+        // Opt-in mid-visit: dwell starts now, not at page load.
+        this.accumulatedMs = 0;
+        this.visibleSince = document.visibilityState === 'visible' ? Date.now() : null;
+      } else {
+        this.dropQueue();
+      }
       logger.debug(`[Telemetry] ${next ? 'enabled' : 'disabled'}`);
     });
 
@@ -96,6 +114,25 @@ export class TelemetryService {
   /** A deliberate dye pick — the tool is the current route. */
   static trackDyePick(stainID: number, via: DyePickVia): void {
     this.track('dye_pick', { tool: RouterService.getCurrentToolId(), stainID, via });
+  }
+
+  /** Begin timing a tool view. Any tool already being timed is ended first. */
+  static startTool(tool: ToolId, entry: ToolEntry): void {
+    this.endTool();
+    this.currentTool = { tool, entry };
+    this.accumulatedMs = 0;
+    this.visibleSince = document.visibilityState === 'visible' ? Date.now() : null;
+  }
+
+  /** Emit tool_leave for the tool being timed (no-op when none). */
+  static endTool(): void {
+    const current = this.currentTool;
+    if (!current) return;
+    this.pauseClock();
+    const seconds = Math.min(Math.round(this.accumulatedMs / 1000), this.DWELL_CAP_S);
+    this.currentTool = null;
+    this.accumulatedMs = 0;
+    this.track('tool_leave', { tool: current.tool, entry: current.entry }, seconds);
   }
 
   /** `.chara` `TypeName` → allowlisted producer bucket (never the raw string). */
@@ -142,6 +179,9 @@ export class TelemetryService {
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     window.removeEventListener('pagehide', this.onPageHide);
     this.initialized = false;
+    this.currentTool = null;
+    this.accumulatedMs = 0;
+    this.visibleSince = null;
   }
 
   // --------------------------------------------------------------------------
@@ -168,6 +208,19 @@ export class TelemetryService {
   private static dropQueue(): void {
     this.clearTimer();
     this.queue = [];
+  }
+
+  private static pauseClock(): void {
+    if (this.visibleSince !== null) {
+      this.accumulatedMs += Date.now() - this.visibleSince;
+      this.visibleSince = null;
+    }
+  }
+
+  private static resumeClock(): void {
+    if (this.currentTool && this.visibleSince === null) {
+      this.visibleSince = Date.now();
+    }
   }
 
   private static clearTimer(): void {
