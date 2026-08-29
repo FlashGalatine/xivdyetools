@@ -35,7 +35,7 @@ Rules:
   path filter.
 -->
 
-## [5.0.0] - 2026-08-16
+## [5.0.0] - 2026-08-28
 
 ### 🎨 Every card redrawn
 

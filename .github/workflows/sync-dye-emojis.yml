@@ -1,0 +1,68 @@
+name: Sync Dye Emojis
+
+# Manual, production-affecting: re-renders the 125 dye chips from
+# packages/core/src/data/dyes.json and syncs them onto the MAIN bot's
+# application emoji set (app 1447108133020369048) with the same
+# scripts/upload-emojis.ts a maintainer would run locally — except the bot
+# token stays in the repository secret DISCORD_TOKEN instead of a shell.
+#
+# When the recorded artwork tag differs from the script's ARTWORK_VERSION the
+# script DELETES and re-uploads the whole set (see the script header), and it
+# rewrites apps/discord-worker/src/data/emoji-mapping.json with the new emoji
+# ids. That file is bundled into the worker, so the run is only half the job:
+# download the `emoji-mapping` artifact, commit it, and let
+# deploy-discord-worker.yml ship it. Until that deploy lands, embeds reference
+# emoji ids that no longer exist — dispatch this when you can merge the
+# mapping straight away.
+on:
+  workflow_dispatch:
+
+# FINDING-009: least-privilege GITHUB_TOKEN; nothing here writes to the repo.
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-dye-emojis
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync dye emojis (main bot)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # FINDING-009: production-affecting, so gated by the `production`
+    # environment like the deploys (deployment branches: main only).
+    environment: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Upload emojis to the main bot application
+        working-directory: apps/discord-worker
+        run: pnpm run upload-emojis
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          DISCORD_CLIENT_ID: "1447108133020369048"
+
+      - name: Show mapping diff
+        if: always()
+        run: git diff --stat -- apps/discord-worker/src/data/emoji-mapping.json
+
+      # Even a failed run may have rewritten part of the mapping — keep it for
+      # diagnosis either way.
+      - name: Upload emoji-mapping.json
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: emoji-mapping
+          path: apps/discord-worker/src/data/emoji-mapping.json
+          retention-days: 7
+          if-no-files-found: error

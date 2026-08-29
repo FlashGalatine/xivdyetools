@@ -69,6 +69,21 @@ vi.mock('./utils/discord-api.js', () => ({
   sendMessage: vi.fn(),
 }));
 
+// /webhooks/github: the HMAC check and the two downstream services are
+// mocked so the route's own gates (size, ref, changelog detection) are
+// what the tests exercise.
+vi.mock('./utils/github-verify.js', () => ({
+  verifyGitHubSignature: vi.fn(),
+}));
+
+vi.mock('./services/changelog-parser.js', () => ({
+  parseLatestVersion: vi.fn(),
+}));
+
+vi.mock('./services/announcements.js', () => ({
+  sendAnnouncement: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('./services/i18n.js', () => ({
   getLocalizedDyeName: vi.fn((_itemId: number, name: string) => name),
   discordLocaleToLocaleCode: vi.fn(() => 'en'),
@@ -477,6 +492,138 @@ describe('index.ts', () => {
 
       const res = await app.fetch(req, mockEnv, mockCtx);
       expect(res.status).toBe(502);
+    });
+  });
+
+  describe('POST /webhooks/github', () => {
+    const githubEnv = (): Env => ({
+      ...mockEnv,
+      GITHUB_WEBHOOK_SECRET: 'test-github-secret', // pragma: allowlist secret
+      ANNOUNCEMENT_CHANNEL_ID: 'test-announcement-channel',
+    });
+
+    /** A push payload shaped like GitHub's, padded to a realistic size. */
+    const pushPayload = (overrides: Record<string, unknown> = {}) => ({
+      ref: 'refs/heads/main',
+      repository: {
+        full_name: 'FlashGalatine/xivdyetools',
+        html_url: 'https://github.com/FlashGalatine/xivdyetools',
+        // GitHub's real `repository` object alone is several KB; this pushes the
+        // body past the old 10 KB cap the way a two-commit merge push did
+        // (18,196 bytes on 2026-08-29).
+        description: 'x'.repeat(16_000),
+      },
+      commits: [],
+      head_commit: null,
+      ...overrides,
+    });
+
+    const postPush = (body: string, env: Env = githubEnv()) =>
+      app.fetch(
+        new Request('http://localhost/webhooks/github', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Hub-Signature-256': 'sha256=irrelevant-mocked',
+          },
+          body,
+        }),
+        env,
+        mockCtx,
+      );
+
+    it('accepts a real-sized push payload (> 10 KB) instead of answering 413', async () => {
+      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+      vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
+
+      const body = JSON.stringify(pushPayload({ ref: 'refs/heads/topic' }));
+      expect(body.length).toBeGreaterThan(10_240);
+
+      const res = await postPush(body);
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ message: 'Not main branch, skipping' });
+      expect(verifyGitHubSignature).toHaveBeenCalledOnce();
+    });
+
+    it('still refuses a body over 1 MiB', async () => {
+      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+      vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
+
+      const body = JSON.stringify(pushPayload({ padding: 'y'.repeat(1_100_000) }));
+      const res = await postPush(body);
+
+      expect(res.status).toBe(413);
+      expect(verifyGitHubSignature).not.toHaveBeenCalled();
+    });
+
+    it('announces when only head_commit lists CHANGELOG-laymans.md (commits truncated)', async () => {
+      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+      const { parseLatestVersion } = await import('./services/changelog-parser.js');
+      const { sendAnnouncement } = await import('./services/announcements.js');
+      vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
+      const entry = { version: '5.0.0', date: '2026-08-28', sections: [] };
+      vi.mocked(parseLatestVersion).mockReturnValue(entry as never);
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValue(new Response('## [5.0.0] - 2026-08-28\n', { status: 200 }));
+
+      try {
+        const mergeCommit = {
+          id: 'abc',
+          message: 'Merge pull request',
+          timestamp: '2026-08-28T23:36:41Z',
+          url: 'https://github.com/FlashGalatine/xivdyetools/commit/abc',
+          author: { name: 'x', email: 'x@example.com', username: 'x' },
+          added: [],
+          removed: [],
+          modified: ['CHANGELOG-laymans.md'],
+        };
+        const res = await postPush(
+          JSON.stringify(pushPayload({ commits: [], head_commit: mergeCommit })),
+        );
+
+        expect(res.status).toBe(200);
+        expect(fetchSpy).toHaveBeenCalledWith(
+          'https://raw.githubusercontent.com/FlashGalatine/xivdyetools/main/CHANGELOG-laymans.md',
+          expect.anything(),
+        );
+        expect(sendAnnouncement).toHaveBeenCalledWith(
+          'test-token',
+          'test-announcement-channel',
+          entry,
+          'https://github.com/FlashGalatine/xivdyetools',
+        );
+      } finally {
+        fetchSpy.mockRestore();
+      }
+    });
+
+    it('skips when neither commits nor head_commit touch the changelog', async () => {
+      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+      const { sendAnnouncement } = await import('./services/announcements.js');
+      vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
+
+      const res = await postPush(
+        JSON.stringify(
+          pushPayload({
+            head_commit: {
+              id: 'def',
+              message: 'chore',
+              timestamp: '2026-08-29T00:00:00Z',
+              url: 'https://github.com/FlashGalatine/xivdyetools/commit/def',
+              author: { name: 'x', email: 'x@example.com', username: 'x' },
+              added: [],
+              removed: [],
+              modified: ['README.md'],
+            },
+          }),
+        ),
+      );
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ message: 'Changelog not modified, skipping' });
+      expect(sendAnnouncement).not.toHaveBeenCalled();
     });
   });
 

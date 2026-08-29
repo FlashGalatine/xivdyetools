@@ -70,6 +70,19 @@ import { sanitizePresetName, sanitizePresetDescription } from './utils/sanitize.
 import { CLANS_BY_RACE } from './types/preferences.js';
 import { getWorldAutocomplete } from './services/budget/index.js';
 
+/**
+ * Upper bound for a GitHub push payload on `/webhooks/github` (BUG-005:
+ * bounded buffering before the HMAC check). GitHub's push event carries the
+ * full `repository` object plus up to 2048 commits, so real payloads are far
+ * larger than the 10 KB the internal preset-submission webhook uses — a
+ * two-commit merge push measured 18,196 bytes on 2026-08-29 and was refused
+ * with 413 for as long as this shared the 10 KB cap. 1 MiB keeps the guard
+ * meaningful while leaving room for a release merge.
+ */
+const GITHUB_WEBHOOK_MAX_BYTES = 1_048_576;
+
+type PushCommit = import('./types/github.js').GitHubCommit;
+
 function formatDyesForEmbed(dyeIds: number[]): string {
   return dyeIds
     .map((dyeId) => {
@@ -420,7 +433,7 @@ app.post('/webhooks/github', async (c) => {
 
   // BUG-005: Check Content-Length before reading body to avoid buffering oversized payloads
   const contentLength = parseInt(c.req.header('content-length') || '0', 10);
-  if (contentLength > 10240) {
+  if (contentLength > GITHUB_WEBHOOK_MAX_BYTES) {
     logger.warn('GitHub webhook payload too large', { contentLength });
     return c.json({ error: 'Payload too large' }, 413);
   }
@@ -429,7 +442,7 @@ app.post('/webhooks/github', async (c) => {
   const rawBody = await c.req.text();
 
   // Defense-in-depth: verify actual body size (Content-Length can be missing or spoofed)
-  if (rawBody.length > 10240) {
+  if (rawBody.length > GITHUB_WEBHOOK_MAX_BYTES) {
     logger.warn('GitHub webhook body exceeds limit despite Content-Length', {
       size: rawBody.length,
     });
@@ -458,12 +471,16 @@ app.post('/webhooks/github', async (c) => {
     return c.json({ success: true, message: 'Not main branch, skipping' });
   }
 
-  // Check if any commit modified CHANGELOG-laymans.md
-  const changelogModified = payload.commits.some(
-    (commit) =>
-      commit.added.includes('CHANGELOG-laymans.md') ||
-      commit.modified.includes('CHANGELOG-laymans.md'),
-  );
+  // Check if any commit modified CHANGELOG-laymans.md. `head_commit` is checked
+  // as well: GitHub truncates `commits` on very large pushes (a release merge
+  // can carry hundreds of commits), but the head commit — for a merge, the
+  // merge commit with its first-parent file list — is always present.
+  const touchesChangelog = (commit: PushCommit | null): boolean =>
+    commit !== null &&
+    (commit.added.includes('CHANGELOG-laymans.md') ||
+      commit.modified.includes('CHANGELOG-laymans.md'));
+  const changelogModified =
+    payload.commits.some(touchesChangelog) || touchesChangelog(payload.head_commit);
 
   if (!changelogModified) {
     return c.json({ success: true, message: 'Changelog not modified, skipping' });

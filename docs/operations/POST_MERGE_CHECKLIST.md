@@ -81,7 +81,14 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       `JWT_ISSUER = https://auth.xivdyetools.app`, `[[ratelimits]] RL_PUBLIC`; api-worker
       `API_RATE_LIMITER`; oauth `RL_AUTH_10/20/30` (top-level = production); moderation-worker two
       `[[ratelimits]]`; discord-worker uses Upstash + KV (no `ratelimits` binding by design).
-  - [ ] Confirm in the dashboard after the first production deploy (Worker → Settings → Bindings).
+  - [x] Confirm in the dashboard after the first production deploy (Worker → Settings → Bindings).
+        Verified 2026-08-29 via the API (`GET /accounts/…/workers/scripts/<name>/settings`) on all
+        seven production scripts: presets-api `TOKEN_BLACKLIST` + `RL_PUBLIC` + `CACHE_PURGE_ZONE_ID`
+        + D1/R2/two services; api-worker `API_RATE_LIMITER` (+ the `RATE_LIMIT` KV fallback);
+        oauth `RL_AUTH_10/20/30` + `TOKEN_BLACKLIST`; moderation-worker `RL_COMMAND` +
+        `RL_AUTOCOMPLETE`; discord-worker Upstash + KV + `IMAGE_WORKER`/`PRESETS_API`/
+        `UNIVERSALIS_PROXY` services + `ANNOUNCEMENT_CHANNEL_ID`; og-worker `ANALYTICS`;
+        image-worker none. The §3 orphan secrets are still present, as expected.
 - [x] **Optional presets-api cache-purge credentials** (FINDING-018) — done 2026-08-21:
       `CACHE_PURGE_API_TOKEN` (purge-only token on the `xivdyetools.app` zone) set by the
       maintainer on the **production** worker (`wrangler secret list --env production` shows it);
@@ -178,8 +185,19 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       project's alias is **`xiv-colorexplorer.pages.dev`** (a renamed Pages project keeps its
       original subdomain) — `xivdyetools.pages.dev` does not exist. `/` carries the CSP, HSTS
       (preload), `nosniff` and `X-Frame-Options: DENY` headers.
-- [ ] `CHANGELOG-laymans.md` announcement webhook fired once.
-      **Did not fire, and cannot as configured (found 2026-08-28):** the repository has exactly one
+- [x] `CHANGELOG-laymans.md` announcement webhook fired once.
+      **Wired 2026-08-29:** GitHub webhook `671693119` (push, JSON) →
+      `https://bot.xivdyetools.app/webhooks/github`, with a freshly generated shared secret set
+      as production `GITHUB_WEBHOOK_SECRET` in the same step (the old value had no consumer);
+      GitHub's creation ping was answered **200** — but the 10-minute tail then showed the handler
+      answering **413** to real push payloads (`contentLength: 18196` against a 10 KB cap shared
+      with the internal preset-submission webhook; GitHub's `repository` object alone is several
+      KB). Fixed in the same close-out change: the GitHub route now allows 1 MiB and also checks
+      `head_commit`, with route tests. The 5.0 announcement is carried by the push that merges
+      this checklist (it corrects the `[5.0.0]` date in both laymans files to the real ship date,
+      2026-08-28) — GitHub delivers that push before the fixed worker is deployed, so it is
+      **redelivered from the hook's Recent Deliveries once `deploy-discord-worker.yml` is green**.
+      *Original finding (2026-08-28):* the repository had exactly one
       webhook (id `596896553`) — Discord's *native* GitHub-push integration
       (`discord.com/api/webhooks/…/github`; it delivered 204 for the merge push at 23:36:52Z and
       posts commit summaries, not the changelog). Nothing points at discord-worker's
@@ -209,6 +227,18 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
 - [ ] **User-run afterwards:** `npm run upload-emojis` (production credentials, stainID-keyed set);
       `scripts/cleanup-v4-kv.ts`; og-worker beta deploy then production; purge the edge cache for
       `/og/default.png` / `/og/default-x.png`.
+      **Status 2026-08-29:** `cleanup-v4-kv.ts` **done** — the production KV held exactly one
+      `xivdye:favorites:*` and one `xivdye:collections:*` key (same user), both deleted; zero
+      `i18n:user:*` keys; the one `budget:world:v1:*` key stays (DEAD-010: product decision, the
+      read-side migration still folds it). The script is removed in the same commit (§3 row).
+      Note its documented commands ran bare — add `--env production` or they hit the dev
+      namespace. **og-worker: nothing to do** — production deployed by CI on the merge
+      (23:37:28Z) and the beta worker (last deploy 2026-08-21T20:09Z) had no og-worker / svg /
+      core commits after it. **Purge: nothing to do** — `/og/default.png`'s cached bytes equal a
+      cache-busted render (sha256 `1dee1bc9…`) and `/og/default-x.png` no longer exists (404;
+      stale item). **`upload-emojis`: moved into CI** — `sync-dye-emojis.yml` (`workflow_dispatch`,
+      `production` environment, token from `secrets.DISCORD_TOKEN`) runs the script and publishes
+      the rewritten `emoji-mapping.json` as an artifact to commit; still to run.
 - [ ] Post-deploy verification (same day):
   - [ ] `wrangler tail` each production worker for 10 minutes: no `KV rate limiter fallback`
         warning (discord-worker / api-worker / oauth / moderation-worker), presets-api accepting
@@ -216,6 +246,15 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         *2026-08-28: presets-api tailed for 150 s right after the deploy — one request, `outcome:
         ok`, no warnings or exceptions; too little traffic to prove anything, so the 10-minute
         tails (and the bot `/preset` round trip) remain.*
+        **2026-08-29, 10-minute tails on all five (discord-worker, api-worker, oauth,
+        moderation-worker, presets-api): every request `outcome: ok`, 0 exceptions, 0 5xx, 0
+        `KV rate limiter fallback` warnings** — but only 10 requests in total, so the fallback
+        check is "clean under light load", not proof under pressure. The single warning caught was
+        real and unrelated to rate limiting: `GitHub webhook payload too large`
+        (`contentLength: 18196`) — the freshly wired `/webhooks/github` hook was rejecting GitHub's
+        real push payloads because the handler's cap was 10 KB (GitHub's creation ping is smaller
+        and had passed). Fixed in the same close-out change; see the webhook item. The bot
+        `/preset` v2-signature round trip still needs a real command invocation to observe.
   - [ ] oauth: login → refresh → logout → refresh is rejected (FINDING-001 revocation TTL).
         (`/health` 200 on 2026-08-28; the token flow needs a browser session.)
   - [x] api-worker: `/v1/dyes` returns `RateLimit-*` headers from the binding; `/universalis/*`
@@ -294,7 +333,7 @@ is gone, and a CHANGELOG line.
 | **Orphan production secrets** (set on the worker, no code reference as of 2026-08-21): discord-worker `PRESET_API_SECRET`, `PERSPECTIVE_API_KEY`; presets-api `MODERATOR_CHANNEL_ID` (+ the four PAPI-16 vars above once their code goes) | `wrangler secret delete <NAME> --env production` from the app dir | the §1 tail is clean for a day (proves nothing deployed still reads them) |
 | **oauth `[env.preview]`** bound to production D1/KV with a dead redirect | `apps/oauth/wrangler.toml` | none — delete if the 2026-08-21 oauth remediation (FINDING-029) kept it |
 | `LocalStorageCacheBackend` | web-app (`DEPRECATIONS.md`) | confirm no active path |
-| `scripts/cleanup-v4-kv.ts` | repo | after it has been run once in production |
+| ~~`scripts/cleanup-v4-kv.ts`~~ | repo | **removed 2026-08-29** after its one production run (2 orphaned keys deleted; `budget:world:v1:*` deliberately kept — DEAD-010) |
 | `/api/v2/*` compat mount of the absorbed universalis proxy | api-worker | after the proxy-domain cutover window (`DEPRECATIONS.md`) |
 | `LEGACY_FACEWEAR_ITEM_IDS` | `@xivdyetools/core` | **do not remove** — frozen compatibility map by design |
 

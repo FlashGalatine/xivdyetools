@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — 2026-08-29 merge-day close-out
+
+- `CHANGELOG-laymans.md`'s `[5.0.0]` entry now carries the real ship date (2026-08-28, the `monorepo-2.0-prep` → `main` merge) instead of the 2026-08-16 changelog-sync date; the root product-level file was corrected the same way, which is also the push that fires the first release announcement through the newly wired GitHub webhook (`/webhooks/github`).
+- **New CI workflow `sync-dye-emojis.yml`** (`workflow_dispatch`, `production` environment): runs `scripts/upload-emojis.ts` against the main bot application with the repository secret `DISCORD_TOKEN` and publishes the rewritten `src/data/emoji-mapping.json` as an artifact to commit — the bot token no longer needs to touch a local shell for the 5.0 emoji regeneration.
+
+### Removed
+
+- `scripts/cleanup-v4-kv.ts` — ran once against production on 2026-08-29 (one orphaned `xivdye:favorites:*` key and one `xivdye:collections:*` key deleted; no `i18n:user:*` keys existed). The `budget:world:v1:*` sweep it deliberately did not cover (DEAD-010) remains a product decision; `preferences.ts` still folds that prefix on read.
+
 ### Security — 2026-08-21 security audit (`docs/audits/2026-08-21-security/`, FINDING-003)
 
 - Rate limiter logs a one-time warning per isolate when it falls back from Upstash to KV (`services/rate-limiter.ts`). The KV backend cannot throttle a fast client (KV 1 write/s/key, swallowed put failures, eventually-consistent reads), so it is a dev fallback only — production must configure `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`, and the warning makes a missing configuration visible in the logs instead of silently running unthrottled.
