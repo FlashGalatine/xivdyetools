@@ -35,7 +35,7 @@ We are committed to protecting your privacy and being transparent about our data
 
 ### Usage Analytics
 
-To keep the Bot healthy and to power the `/stats` dashboard we record, for each command you run:
+To keep the Bot healthy and to power the `/stats` dashboard we record, for each command you run or copy button you press:
 
 | Data | Where | Retention |
 |------|-------|-----------|

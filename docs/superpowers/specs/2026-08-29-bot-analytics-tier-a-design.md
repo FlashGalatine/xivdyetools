@@ -46,7 +46,7 @@ keep their meaning so nothing that reads the existing series breaks.
 | `blob3` | `guild` \| `dm` | unchanged |
 | `blob4` | `1` \| `0` success | unchanged, **now true** for deferred commands |
 | `blob5` | **outcome class** (below); `ok` on success | was `errorType`, never set |
-| `blob6` | **subcommand** (`info`, `search`, `list`, `random`, `browse`, `find`, `quick`, `set-world`, `show`, `set`, `reset`, …) or `''`; for buttons the button kind (`copy_hex` \| `copy_rgb` \| `copy_hsv`) | new |
+| `blob6` | **subcommand** (`info`, `search`, `list`, `random`, `browse`, `find`, `quick`, `set-world`, `show`, `set`, `reset`, …) or `''`; subcommand **groups** are recorded as `<group>_<sub>` (`favorite_add`); for buttons the button kind (`copy_hex` \| `copy_rgb` \| `copy_hsv`) | new |
 | `blob7` | **locale bucket** — `discordLocaleToLocaleCode(interaction.locale)` → `en\|ja\|de\|fr\|ko\|zh`, else `other` | new |
 | `blob8` | **kind** — `command` \| `button` | new |
 | `double1` | success `1`/`0` | unchanged |
@@ -122,7 +122,9 @@ export function classifyError(error: unknown): OutcomeClass;
   No deferred-response detection is needed.
 - Subcommand for the trace: `interaction.data?.options?.[0]?.name` when that option is a
   subcommand (`type === 1`) — the same expression the rate-limit scope already uses; the tracked
-  command name keeps the `extractor_<sub>` form so KV and existing queries are stable.
+  command name keeps the `extractor_<sub>` form so KV and existing queries are stable. A
+  subcommand GROUP (`type === 2`, e.g. `/preset favorite add|remove|list`, `/preferences
+  filters …`) is recorded as `<group>_<sub>` (`favorite_add`) instead of flattening to `''`.
 - The button path (`handleComponent` → `handleButtonInteraction`): write a `kind=button` datapoint
   with `blob6 = copy_hex | copy_rgb | copy_hsv` and `blob1 = index1 = 'button'`; unknown
   `custom_id`s and the preview-image moderation buttons are not tracked. No KV counters for

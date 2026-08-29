@@ -21,7 +21,7 @@ Rows written before 2026-08-29 have `blob5 = ''`, `blob6..8 = ''` and `double2 =
 | `blob3` | `guild` \| `dm` |
 | `blob4` | `1` \| `0` success |
 | `blob5` | outcome class: `ok`, `rate_limited`, `upstream_universalis`, `upstream_presets`, `image_input`, `render`, `unknown` |
-| `blob6` | subcommand (`info`, `browse`, `find`, …) or button kind (`copy_hex`, `copy_rgb`, `copy_hsv`) |
+| `blob6` | subcommand (`info`, `browse`, `find`, …) or button kind (`copy_hex`, `copy_rgb`, `copy_hsv`); subcommand groups are `<group>_<sub>` (`favorite_add`) |
 | `blob7` | locale bucket `en ja de fr ko zh other` |
 | `blob8` | `command` \| `button` |
 | `double1` | success 1/0 · `double2` latency ms (deferred work included) · `double3` 1 |
@@ -45,6 +45,9 @@ FROM xivdyetools_bot_analytics
 WHERE blob8 = 'command' AND blob4 = '1' AND timestamp > now() - INTERVAL '30' DAY
 GROUP BY command ORDER BY p95_ms DESC
 ```
+
+`blob4 = '1'` restricts this to successful runs on purpose — a rate-limited request returns near-
+instantly, so mixing it in would drag the median toward 0 and understate real latency.
 
 ### 3. Failure share by outcome class
 
