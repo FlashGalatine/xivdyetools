@@ -181,7 +181,8 @@ describe('/swatch attachment handling', () => {
 
       expect(fetch).toHaveBeenCalledWith(
         CDN_URL,
-        expect.objectContaining({ redirect: 'error', signal: expect.any(AbortSignal) }),
+        // `manual`, not `error` — workerd rejects `error` outright (2026-08-29)
+        expect.objectContaining({ redirect: 'manual', signal: expect.any(AbortSignal) }),
       );
     });
 

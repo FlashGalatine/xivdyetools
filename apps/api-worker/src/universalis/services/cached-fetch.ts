@@ -144,7 +144,12 @@ async function fetchFromUpstream(url: string): Promise<Response> {
     },
     // FINDING-025 / API-9: never follow a redirect to a third host and cache
     // whatever it serves; never wait on a hung upstream indefinitely.
-    redirect: 'error',
+    // `manual`, NOT `error`: the Workers runtime implements only `follow` and
+    // `manual` and throws `TypeError: Invalid redirect value` on `error` —
+    // every upstream fetch failed that way in production (502) from the
+    // 2026-08-28 deploy until 2026-08-29. A 3xx now comes back as a response,
+    // which the `!response.ok` check below refuses without following it.
+    redirect: 'manual',
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
 

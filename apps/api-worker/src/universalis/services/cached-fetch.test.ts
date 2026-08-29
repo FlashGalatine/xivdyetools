@@ -63,9 +63,34 @@ describe('cachedFetch', () => {
         // FINDING-025 / API-9: a hung upstream cannot pin the request (and
         // every coalesced waiter) indefinitely, and a redirecting upstream
         // cannot send the worker to a third host whose body then gets cached.
-        redirect: 'error',
+        // `manual`, not `error`: workerd implements only follow/manual and
+        // throws a TypeError on `error` — which took the whole proxy down
+        // with 502s on 2026-08-28/29.
+        redirect: 'manual',
         signal: expect.any(AbortSignal),
       });
+    });
+
+    it('refuses a redirecting upstream instead of following it (FINDING-025 / API-9)', async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(null, {
+          status: 302,
+          statusText: 'Found',
+          headers: { Location: 'https://evil.example/whatever' },
+        })
+      );
+
+      await expect(
+        cachedFetch({
+          cacheKey: 'redirect-key',
+          config: testConfig,
+          upstreamUrl,
+          ctx: mockCtx,
+          baseUrl,
+        })
+      ).rejects.toThrow(UpstreamError);
+      // one fetch only — the Location target is never requested
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it('should throw UpstreamError on non-OK response', async () => {

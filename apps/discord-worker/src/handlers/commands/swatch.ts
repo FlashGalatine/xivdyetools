@@ -179,9 +179,12 @@ async function processSwatchCommand(
   const t = createTranslator(locale);
 
   try {
-    // FINDING-033: bounded wait, no redirect following, bounded read
+    // FINDING-033: bounded wait, no redirect following, bounded read.
+    // `manual`, NOT `error`: workerd implements only follow/manual and throws
+    // on `error` (which broke every /swatch download until 2026-08-29). A
+    // redirect now surfaces as a 3xx response, refused by the `!ok` check.
     const fileResponse = await fetch(fileUrl, {
-      redirect: 'error',
+      redirect: 'manual',
       signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
     });
     if (!fileResponse.ok) {
