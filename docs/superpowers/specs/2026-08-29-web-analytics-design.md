@@ -14,9 +14,10 @@ Engine** (AE), so an established pipeline exists to join.
 
 ## Decisions (user, 2026-08-29)
 
-1. **Three questions, no more, for v1:** most popular tool (correcting for Harmony being the
-   default tool by also measuring dwell), dye popularity, and how many `.chara` files have been
-   parsed. Everything else (feature choices, share funnel, errors, perf) is a later pass.
+1. **Four questions, no more, for v1:** most popular tool (correcting for Harmony being the
+   default tool by also measuring dwell), dye popularity, how many `.chara` files have been
+   parsed, and Light vs. Dark theme preference (added 2026-08-29, second round). Everything else
+   (feature choices, share funnel, errors, perf) is a later pass.
 2. **Dye popularity counts explicit picks only** — a dye the user deliberately chose in a
    picker/grid/drawer. Tool-computed matches (extractor, swatch matcher, mixer results) and
    random-dye picks are excluded.
@@ -47,6 +48,13 @@ world/character names, any id that persists across page loads.
 | `tool_leave` | `tool`, `entry` | `active_s` — whole seconds the tab was **visible** on that tool; capped at 1800 | on tool switch (before the next `tool_view`) and on `pagehide` |
 | `dye_pick` | `stainID` (1–125 range validated against core's DB), `tool` (current route), `via` = `drawer` \| `grid` | — | the `dye-selected` listener in `v4-layout.ts` (palette drawer path, `via: 'drawer'`) and `DyeGrid`'s `emit('dye-selected', dye)` (`via: 'grid'`, covers the inline pickers of harmony / comparison / gradient / mixer / accessibility). The drawer's random-dye path is **not** tracked. |
 | `chara_parse` | `ok` (`true` \| `false`), `producer` — the parsed `TypeName`, allowlisted (`anamnesis`, `ktisis`, `brio`; anything else → `other`, `null` → `none`) | — | `loadFile()` in `components/chara-import.ts`: `ok:true` after `resolveCharaColors` succeeds, `ok:false` in the catch. The size-cap early return is not a parse and is not tracked. |
+| `theme_change` | `to` (`standard-light` \| `standard-dark`) | — | the user's pick in `components/v4/theme-modal.ts` (the `ThemeService.setTheme(theme.name)` call). **Not** hooked into `ThemeService` itself, so boot, legacy-name migration and settings-import do not count as a choice. |
+
+Theme preference is read two ways: the envelope's `theme` (below) gives the theme in use on every
+batch, and `theme_change` gives deliberate switches. Because the default is a fixed
+`standard-dark` (no OS `prefers-color-scheme` check), the envelope share alone over-counts Dark;
+the share of batches on `standard-light` is a floor for "chose Light", and `theme_change` shows
+how often people leave the default in either direction.
 
 `entry` semantics: `initial` = the tool the app booted into (whatever it was — usually Harmony via
 the default route), `share` = the boot URL carried query params for that tool (a share link), `nav`
@@ -123,6 +131,8 @@ Hook-point changes:
 - `chara-import.ts`: `track('chara_parse', { ok: true, producer })` after `resolveCharaColors`
   resolves; `track('chara_parse', { ok: false, producer: 'none' })` in the catch. Producer mapping
   lives in `telemetry-service.ts` (`normalizeProducer(typeName: string | null)`).
+- `v4/theme-modal.ts`: `track('theme_change', { to: theme.name })` next to the user-pick
+  `ThemeService.setTheme(theme.name)` call, only when `theme.name` differs from the theme in use.
 
 ## 4. Server — `apps/api-worker/src/telemetry/`
 
@@ -141,7 +151,7 @@ Hook-point changes:
     **silently dropped** (a counter of dropped events is logged at `debug` with the request id).
     `tool` ∈ the nine ToolIds (string list kept in `schema.ts` — api-worker does not depend on
     web-app); `stainID` must return a dye from `DyeDatabase` (core is already a dependency);
-    `active_s` is an integer 0–1800.
+    `active_s` is an integer 0–1800; `to` ∈ the two ThemeNames (`theme_change` has no `tool`).
   - Response: `204` when the batch parsed (even if every event was dropped); `400` / `413` only for
     unparseable or oversized bodies. No response body.
 - Write: `c.executionCtx.waitUntil(Promise.resolve().then(() => events.forEach(write)))` with the
@@ -156,7 +166,7 @@ Hook-point changes:
 | `index1` | event name |
 | `blob1` | event name |
 | `blob2` | `tool` (or `''`) |
-| `blob3` | dim A — `entry` / `via` / `ok` |
+| `blob3` | dim A — `entry` / `via` / `ok` / `to` |
 | `blob4` | dim B — `stainID` as string / `producer` / `''` |
 | `blob5` | `locale` |
 | `blob6` | `theme` |
@@ -192,6 +202,9 @@ all using `sum(_sample_interval)` rather than `count()` because AE samples under
 2. Median dwell per tool — `quantiles(0.5)(double1)` where `index1='tool_leave'`, grouped by `blob2`.
 3. Top 20 dyes overall and per tool — `index1='dye_pick'`, grouped by `blob4` (and `blob2`).
 4. `.chara` parses per ISO week, split by `blob3` (`ok`) and `blob4` (producer).
+5. Theme preference — (a) share of `tool_view` datapoints by `blob6` (theme in use, Light share
+   is the floor for "chose Light"), (b) `index1='theme_change'` grouped by `blob3` (`to`) for
+   deliberate switches per week.
 
 Also documents: retention (~3 months on AE — a rollup into KV/D1 is explicitly out of scope until
 history is wanted), and that dev-worker writes land in `_dev` and are ignorable.
@@ -229,8 +242,9 @@ never lets a `writeDataPoint` failure escape `waitUntil` (caught and logged, as 
   at 15 s (fake timers); `visibilitychange` and `pagehide` flush via a stubbed `sendBeacon`;
   `fetch` keepalive fallback when `sendBeacon` returns `false`; dwell accumulates only while
   visible and caps at 1800; toggling off clears the queue; `normalizeProducer` mapping. Hook-point
-  assertions added to the existing `v4-layout`, `dye-grid`, `dye-palette-drawer` and
-  `chara-import` suites (spy on `TelemetryService.track`; random-dye path must not track). The
+  assertions added to the existing `v4-layout`, `dye-grid`, `dye-palette-drawer`, `chara-import`
+  and `theme-modal` suites (spy on `TelemetryService.track`; random-dye path must not track;
+  re-picking the current theme must not track; `ThemeService.initialize()` must not track). The
   i18n parity/order gates cover the six-locale copy change.
 - **api-worker (Vitest):** `telemetry/router.test.ts` — 204 with datapoints for a valid batch;
   column layout asserted against a mock `writeDataPoint`; 26th event dropped; unknown event /
@@ -254,7 +268,7 @@ Analytics, a "view my data" UI, and the discord-worker/og-worker datasets (untou
 **web-app:** `services/telemetry-service.ts` (+test), `services/api-worker-origin.ts`,
 `services/chara-resolve-service.ts` (re-export), `services/share-service.ts` (+test cleanup),
 `components/v4-layout.ts`, `components/dye-grid.ts`, `components/v4/dye-palette-drawer.ts`,
-`components/chara-import.ts`, `main.ts`, `shared/browser-api-types.ts`,
+`components/chara-import.ts`, `components/v4/theme-modal.ts`, `main.ts`, `shared/browser-api-types.ts`,
 `shared/tool-config-types.ts`, `locales/{en,ja,de,fr,ko,zh}.json`, `e2e/telemetry.spec.ts`,
 `CLAUDE.md`.
 **api-worker:** `src/telemetry/{router,schema}.ts` (+tests), `src/index.ts`, `src/types.ts`,
