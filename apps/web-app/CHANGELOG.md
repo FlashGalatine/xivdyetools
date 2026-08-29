@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — 2026-08-29
+
+- **Layout shell no longer bundles the preset submission form.** `config-sidebar.ts` imported `showPresetSubmissionForm` statically while `swatch-tool.ts` loaded it lazily; vite 8.1.x happened to keep the form in its own chunk, but vite 8.2.2 (Dependabot #134) follows Rollup semantics — a module reached statically from the shell cannot be split out — and inlined ~27 KB of source into `v4-layout`, pushing it 8.4 KB past its 215 KB budget and failing the production deploy's bundle gate. The sidebar now loads the form on click like the swatch tool does; `v4-layout` is back to 210 KB and `preset-submission-form` is its own 14 KB chunk again.
+
 The 2026-08-20 i18n audit (`docs/audits/2026-08-20-web-app-i18n/`) found ≈270 hardcoded-English rows across the nine tools, one outright bug, and a 58-cell vocabulary split with core — this remediation closes all of it. Locale files grow from 1,075 to 1,153 keys per language (all six re-validated for structure, key order and value parity); no core package changed. It lands together with the 2026-08-21 security-audit remediation below.
 
 ### Security — 2026-08-21 security audit

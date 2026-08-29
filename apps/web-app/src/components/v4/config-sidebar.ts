@@ -38,7 +38,8 @@ import type {
   MatchingMethod,
 } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
-import { showPresetSubmissionForm } from '@components/preset-submission-form';
+// NB: `@components/preset-submission-form` is deliberately NOT imported here —
+// see handleSubmitPreset().
 import type { DataCenter, World } from '@shared/types';
 import { logger } from '@shared/logger';
 
@@ -1674,15 +1675,29 @@ export class ConfigSidebar extends BaseLitComponent {
   }
 
   /**
-   * Handle submit preset button click
+   * Handle submit preset button click.
+   *
+   * The submission form is loaded lazily, the way swatch-tool.ts loads it.
+   * This component is part of the layout shell, and a static import from the
+   * shell inlines the form (~27 KB of source, needed only by preset authors)
+   * into the `v4-layout` chunk — rolldown follows Rollup semantics here: a
+   * module that any statically-loaded importer pulls in cannot be split out,
+   * however many dynamic importers it also has. vite 8.1.x happened to keep
+   * the split; 8.2.2 stopped, and the shell blew its bundle budget.
    */
   private handleSubmitPreset(): void {
-    showPresetSubmissionForm((result) => {
-      if (result.success) {
-        logger.info('[ConfigSidebar] Preset submitted successfully');
-        // The preset tool will handle refreshing the list
-      }
-    });
+    void import('@components/preset-submission-form')
+      .then(({ showPresetSubmissionForm }) => {
+        showPresetSubmissionForm((result) => {
+          if (result.success) {
+            logger.info('[ConfigSidebar] Preset submitted successfully');
+            // The preset tool will handle refreshing the list
+          }
+        });
+      })
+      .catch((error: unknown) => {
+        logger.error('[ConfigSidebar] Failed to load the preset submission form', error);
+      });
   }
 
   /**
