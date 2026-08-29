@@ -58,12 +58,12 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
-    "@upstash/redis": "^1.38.0",
+    "@upstash/redis": "^1.38.2",
     "@xivdyetools/logger": "workspace:*"
   },
   "peerDependencies": {
     "@cloudflare/workers-types": "^4.0.0",
-    "hono": "^4.12.34"
+    "hono": "^4.13.4"
   },
   "peerDependenciesMeta": {
     "@cloudflare/workers-types": {
@@ -74,8 +74,8 @@
     }
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260727.1",
-    "hono": "^4.12.34",
+    "@cloudflare/workers-types": "^5.20260826.1",
+    "hono": "^4.13.4",
     "@vitest/coverage-v8": "^4.1.11",
     "vitest": "^4.1.11"
   },
