@@ -21,14 +21,14 @@ export const QUICK_PICKS: QuickPickPreset[] = [
   {
     id: 'jet_black',
     name: 'Jet Black',
-    targetDyeId: 5763,
+    targetDyeId: 13115,
     description: 'Darkest black, popular for edgy looks',
     emoji: '⬛',
   },
   {
     id: 'pure_white',
     name: 'Pure White',
-    targetDyeId: 5762,
+    targetDyeId: 13114,
     description: 'Most sought-after for clean glamours',
     emoji: '⬜',
   },
