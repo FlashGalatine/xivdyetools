@@ -46,7 +46,7 @@ function realCtx() {
   return {
     waitUntil: vi.fn((p: Promise<unknown>) => { promises.push(p); }),
     passThroughOnException: vi.fn(),
-    _all: () => Promise.all(promises),
+    _all: () => Promise.allSettled(promises),
   } as unknown as ExecutionContext & { _all: () => Promise<unknown[]> };
 }
 

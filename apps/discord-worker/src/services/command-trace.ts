@@ -70,12 +70,12 @@ export function tracedExecutionContext(real: ExecutionContext, trace: CommandTra
   return {
     waitUntil(promise: Promise<unknown>): void {
       trace.pending.push(promise);
-      // Rejections are classified via `trace.pending` in drainAndWrite (which
-      // uses Promise.allSettled, so nothing here goes uncaught); the real
-      // runtime only needs the promise to keep the isolate alive, not its
-      // outcome, so forward a settled-safe view to avoid a second, redundant
-      // unhandled-rejection surface on the platform's own ExecutionContext.
-      real.waitUntil(promise.catch(() => undefined));
+      // Forward the RAW promise: `drainAndWrite`'s Promise.allSettled over
+      // `trace.pending` already attaches a handler, so this isn't for
+      // unhandled-rejection safety — it's so the real Workers runtime still
+      // sees (and logs) a rejection from a handler with no catch of its own
+      // (spec §2 "Handlers"), same as an untraced `ctx.waitUntil` would.
+      real.waitUntil(promise);
     },
     passThroughOnException(): void {
       real.passThroughOnException();
