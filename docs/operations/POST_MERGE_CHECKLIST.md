@@ -122,9 +122,16 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       workflow and the 5.0 remediation changed the command shape (`default_member_permissions`,
       `dm_permission: false`, guild-only contexts — FINDING-006/007). Run
       `pnpm --filter xivdyetools-moderation-worker run register-commands` with the moderation
-      bot's production token / guild. *Still open after merge day (2026-08-28): the moderation
-      bot's token is not among the repository secrets (`DISCORD_TOKEN` there is the main bot's), so
-      nothing in CI can do this.*
+      bot's production token / guild.
+      **Resolved 2026-08-29 by moving it into CI:** the maintainer reset the moderation bot's token
+      (Developer Portal) and stored it as the GitHub secret `MODERATION_DISCORD_TOKEN`;
+      `deploy-moderation-worker.yml` now has a *Register Discord commands* step (global, app
+      `1453806659708129374`) after every production deploy, like the main bot. The first
+      registration is the `workflow_dispatch` run right after that change merged. **A token reset
+      invalidates the old value everywhere:** production moderation-worker `DISCORD_TOKEN` and
+      discord-worker `MODERATION_BOT_TOKEN` must be re-set to the new token
+      (`wrangler secret put … --env production` from each app dir) or moderation embeds / channel
+      posts 401 — tracked in `SECRET_ROTATION.md`'s log.
 - [x] **presets-api production D1 — the two data migrations (user-run, moved here from §0):**
       both applied 2026-08-28, detail below.
   - [x] **JWT-identity backfill — immediately after `deploy-presets-api.yml` goes green** (the
