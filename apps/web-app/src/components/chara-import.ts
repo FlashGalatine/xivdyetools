@@ -1416,7 +1416,6 @@ export class CharaImport {
    * buttons (disabled + inert outside the window), not just recoloured.
    */
   private renderPalettePanel(): HTMLElement {
-    const resolved = this.resolved!;
     const worn = this.wornDyes().filter((w) => w.dye !== null) as Array<{
       stainId: number;
       dye: Dye;
@@ -1452,10 +1451,11 @@ export class CharaImport {
     );
     panel.appendChild(titleRow);
 
-    // Name input — defaults to the character's nickname.
+    // Name input — deliberately NOT pre-filled with the character's nickname
+    // (it may be a real name and this name can be published to the community).
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
-    nameInput.value = this.paletteNameDraft ?? resolved.nickname ?? '';
+    nameInput.value = this.paletteNameDraft ?? '';
     nameInput.placeholder = this.t('paletteNamePlaceholder');
     nameInput.maxLength = 50;
     nameInput.setAttribute(
@@ -1592,12 +1592,12 @@ export class CharaImport {
   }
 
   private paletteName(): string {
-    const draft = (this.paletteNameDraft ?? this.resolved?.nickname ?? '').trim();
-    return (
-      draft ||
-      this.fileName?.replace(/\.chara$/i, '') ||
-      LanguageService.t('swatch.paletteDefaultName')
-    ).slice(0, 50);
+    // Deliberately does NOT fall back to the character's nickname or the
+    // attachment filename — this name can reach `onSubmitPalette`, which
+    // opens the community preset submission form (see the sibling comment
+    // on the name input above).
+    const draft = (this.paletteNameDraft ?? '').trim();
+    return (draft || LanguageService.t('swatch.paletteDefaultName')).slice(0, 50);
   }
 
   /**
