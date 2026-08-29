@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed — 2026-08-29
 
-- `/dye info` sheet (11B): the dye's name and each nearest-dye caption are set in bold (700; the title was 600, the captions 500) so the names read before the numbers. Both display and body faces are variable-weight, so no font file changes. `dye-info-card.test.ts` pins the weight.
+- `/dye info` sheet (11B): the dye's name and each nearest-dye caption are set in bold (700; the title was 600, the captions 500) so the names read before the numbers. `dye-info-card.test.ts` pins the weight. *Correction (2026-08-29):* "variable-weight, so no font file changes" was wrong for the renderer — resvg ignores variable axes, so a consumer must bundle static instances for any `weight` in this package to take effect (`apps/discord-worker` does since 2026-08-29; see its changelog).
 
 ## [2.0.1] - 2026-08-21
 

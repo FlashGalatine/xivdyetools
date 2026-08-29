@@ -12,11 +12,23 @@ import { describe, it, expect, vi } from 'vitest';
 // and a stale one (this file mocked the long-deleted Habibi-Regular.ttf) is
 // silent too. The byte lengths below are distinct so the assertions can prove
 // every font actually arrived.
-vi.mock('../fonts/SpaceGrotesk-VariableFont_wght.ttf', () => ({
+vi.mock('../fonts/SpaceGrotesk-Regular.ttf', () => ({
   default: new ArrayBuffer(100),
 }));
-vi.mock('../fonts/Onest-VariableFont_wght.ttf', () => ({
+vi.mock('../fonts/SpaceGrotesk-SemiBold.ttf', () => ({
+  default: new ArrayBuffer(101),
+}));
+vi.mock('../fonts/SpaceGrotesk-Bold.ttf', () => ({
+  default: new ArrayBuffer(102),
+}));
+vi.mock('../fonts/Onest-Regular.ttf', () => ({
   default: new ArrayBuffer(200),
+}));
+vi.mock('../fonts/Onest-SemiBold.ttf', () => ({
+  default: new ArrayBuffer(201),
+}));
+vi.mock('../fonts/Onest-Bold.ttf', () => ({
+  default: new ArrayBuffer(202),
 }));
 vi.mock('../fonts/FragmentMono-Regular.ttf', () => ({
   default: new ArrayBuffer(175),
@@ -41,7 +53,7 @@ describe('fonts.ts', () => {
       const buffers = getFontBuffers();
 
       expect(Array.isArray(buffers)).toBe(true);
-      expect(buffers).toHaveLength(6);
+      expect(buffers).toHaveLength(10);
 
       for (const buffer of buffers) {
         expect(buffer).toBeInstanceOf(Uint8Array);
@@ -54,8 +66,12 @@ describe('fonts.ts', () => {
       // Asserting the exact byte lengths is what makes a drifted mock
       // list fail loudly instead of silently rendering nothing.
       expect(getFontBuffers().map((b) => b.byteLength)).toEqual([
-        100, // Space Grotesk
-        200, // Onest
+        100, // Space Grotesk Regular
+        101, // Space Grotesk SemiBold
+        102, // Space Grotesk Bold
+        200, // Onest Regular
+        201, // Onest SemiBold
+        202, // Onest Bold
         175, // Fragment Mono
         222, // Noto Sans SC
         155, // Noto Sans KR

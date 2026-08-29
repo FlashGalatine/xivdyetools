@@ -24,11 +24,27 @@
  * reports the real figure).
  */
 
-// Static font imports - wrangler bundles these as ArrayBuffer at build time
+// Static font imports - wrangler bundles these as ArrayBuffer at build time.
+//
+// The brand faces ship as STATIC instances (Regular / SemiBold / Bold), never
+// the variable files: resvg's font database cannot move a variable axis, so a
+// variable file exposes only its default instance and every `font-weight` the
+// cards asked for rendered at that one weight (Space Grotesk's default is
+// Light 300 — every title shipped thin until 2026-08-29). Regenerate with
+// scripts/instance-latin-fonts.py (sources in scripts/font-sources/);
+// font-faces.test.ts renders 400 / 600 / 700 and fails if any two match.
 // @ts-expect-error - Binary imports are handled by wrangler bundler
-import spaceGroteskData from '../fonts/SpaceGrotesk-VariableFont_wght.ttf';
+import spaceGroteskRegular from '../fonts/SpaceGrotesk-Regular.ttf';
 // @ts-expect-error - Binary imports are handled by wrangler bundler
-import onestData from '../fonts/Onest-VariableFont_wght.ttf';
+import spaceGroteskSemiBold from '../fonts/SpaceGrotesk-SemiBold.ttf';
+// @ts-expect-error - Binary imports are handled by wrangler bundler
+import spaceGroteskBold from '../fonts/SpaceGrotesk-Bold.ttf';
+// @ts-expect-error - Binary imports are handled by wrangler bundler
+import onestRegular from '../fonts/Onest-Regular.ttf';
+// @ts-expect-error - Binary imports are handled by wrangler bundler
+import onestSemiBold from '../fonts/Onest-SemiBold.ttf';
+// @ts-expect-error - Binary imports are handled by wrangler bundler
+import onestBold from '../fonts/Onest-Bold.ttf';
 // @ts-expect-error - Binary imports are handled by wrangler bundler
 import fragmentMonoData from '../fonts/FragmentMono-Regular.ttf';
 
@@ -67,8 +83,12 @@ export function getFontBuffers(): Uint8Array[] {
   }
 
   const buffers: Uint8Array[] = [
-    new Uint8Array(spaceGroteskData as ArrayBuffer),
-    new Uint8Array(onestData as ArrayBuffer),
+    new Uint8Array(spaceGroteskRegular as ArrayBuffer),
+    new Uint8Array(spaceGroteskSemiBold as ArrayBuffer),
+    new Uint8Array(spaceGroteskBold as ArrayBuffer),
+    new Uint8Array(onestRegular as ArrayBuffer),
+    new Uint8Array(onestSemiBold as ArrayBuffer),
+    new Uint8Array(onestBold as ArrayBuffer),
     new Uint8Array(fragmentMonoData as ArrayBuffer),
   ];
 

@@ -22,7 +22,11 @@ npm run type-check           # tsc --noEmit
 npm run lint                 # eslint src/
 npm run register-commands    # tsx scripts/register-commands.ts (publish slash command schemas)
 npm run upload-emojis        # tsx scripts/upload-emojis.ts (sync application emojis)
+python scripts/instance-latin-fonts.py   # regenerate the static Space Grotesk / Onest faces (see below)
+python scripts/subset-cjk-fonts.py       # regenerate the Noto Sans JP/SC/KR subsets
 ```
+
+**Fonts ship as static instances, never variable files.** resvg's font database cannot move a variable axis — a variable file exposes only its default instance, so every `font-weight` in the card system rendered at one weight (Space Grotesk's default is Light 300) until 2026-08-29. `src/fonts/` holds `SpaceGrotesk-{Regular,SemiBold,Bold}.ttf` and `Onest-{Regular,SemiBold,Bold}.ttf`, instanced by `scripts/instance-latin-fonts.py` from the variable sources in `scripts/font-sources/`; `font-faces.test.ts` renders 400/600/700 through resvg-wasm and fails if any two match. Three lists mirror the `fonts.ts` imports and must move together: `fonts.test.ts` (DEAD-005 mocks), `font-coverage.test.ts` (cmaps) — `font-faces.test.ts` reads the list off `fonts.ts` itself.
 
 ### Registering Commands
 
