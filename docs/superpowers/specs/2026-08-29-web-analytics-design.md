@@ -62,7 +62,9 @@ the default route), `share` = the boot URL carried query params for that tool (a
 `share`; every later one is `nav`.
 
 Answering the Harmony-default problem: popularity queries filter `entry != 'initial'`, and
-`tool_leave.active_s` gives median dwell per tool as the second signal.
+`tool_leave.active_s` gives median dwell per tool as the second signal. Caveat: `tool_leave` fires
+only on navigation or `pagehide`, and a mobile browser can discard a hidden tab without firing
+`pagehide`, so dwell is biased toward desktop sessions.
 
 ## 2. Wire format
 

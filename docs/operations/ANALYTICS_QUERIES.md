@@ -47,12 +47,17 @@ to see which tools arrive via share links.
 ## 2. Median visible time per tool
 
 ```sql
-SELECT blob2 AS tool, quantiles(0.5)(double1) AS median_s, sum(_sample_interval) AS leaves
+SELECT blob2 AS tool, quantileExactWeighted(0.5)(double1, _sample_interval) AS median_s,
+  sum(_sample_interval) AS leaves
 FROM xivdyetools_web_analytics
 WHERE index1 = 'tool_leave' AND blob9 = 'production'
   AND timestamp > now() - INTERVAL '30' DAY
 GROUP BY tool ORDER BY median_s DESC
 ```
+
+Caveat: `tool_leave` fires only on a tool switch or `pagehide`. Mobile browsers can discard a
+hidden tab without firing `pagehide`, so the last tool of such a session has a `tool_view` but no
+matching `tool_leave` — dwell here is biased toward desktop sessions.
 
 ## 3. Most-picked dyes (overall / per tool)
 
@@ -67,7 +72,7 @@ GROUP BY stainID ORDER BY picks DESC LIMIT 20
 Add `blob2 AS tool` to the SELECT/GROUP BY for per-tool lists. Map stainIDs to
 names with `GET https://data.xivdyetools.app/v1/dyes/stain/<id>`.
 
-## 4. .chara parses per ISO week
+## 4. .chara parses per week
 
 ```sql
 SELECT toStartOfWeek(timestamp) AS week, blob3 AS ok, blob4 AS producer, sum(_sample_interval) AS parses
@@ -75,6 +80,10 @@ FROM xivdyetools_web_analytics
 WHERE index1 = 'chara_parse' AND blob9 = 'production'
 GROUP BY week, ok, producer ORDER BY week
 ```
+
+`toStartOfWeek` treats Monday as the first day of the week (fixed — no mode argument), but this is
+not full ISO-8601 week numbering. Queries 4 and 5b deliberately carry no `timestamp` window — they
+report weekly history over the full retention window, not a rolling 30 days.
 
 ## 5. Theme preference
 
@@ -89,7 +98,7 @@ WHERE index1 = 'tool_view' AND blob9 = 'production'
   AND timestamp > now() - INTERVAL '30' DAY
 GROUP BY theme
 
--- (b) deliberate switches per week
+-- (b) deliberate switches per week (no time window — see §4)
 SELECT toStartOfWeek(timestamp) AS week, blob3 AS switched_to, sum(_sample_interval) AS switches
 FROM xivdyetools_web_analytics
 WHERE index1 = 'theme_change' AND blob9 = 'production'
