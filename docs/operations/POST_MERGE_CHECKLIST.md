@@ -199,7 +199,11 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       **redelivered from the hook's Recent Deliveries once `deploy-discord-worker.yml` is green**.
       **Done:** the merge push of PR #138 (delivered 01:01:32Z → 413 by the old build) was
       redelivered at **01:05:26Z → 200** after run `33225254977` shipped the fix; the 5.0 entry
-      posted to `ANNOUNCEMENT_CHANNEL_ID`. Two gotchas for next time: reading a single delivery's
+      posted to `ANNOUNCEMENT_CHANNEL_ID` — **which was the wrong channel**: production's
+      `wrangler.toml` still carried the top-level (beta) value `1441800851747508314`. Corrected to
+      `1434357606008356874` in `[env.production.vars]` and the push redelivered once more after
+      that deploy (the stray post in the old channel is deleted by hand — the bot token is not
+      available to the session). Two gotchas for next time: reading a single delivery's
       payload needs the `admin:repo_hook` token scope (listing does not) — correlate by the PR's
       `mergedAt` instead; and Workers Logs is not enabled on discord-worker, so `wrangler tail`
       is the only live view of the handler.
