@@ -141,3 +141,18 @@ describe('generateDyeInfoCard', () => {
     expect(svg).not.toContain('Run again');
   });
 });
+
+// 2026-08-29: the dye names on the sheet are set in bold — the title and each
+// nearest-dye caption — so the names read first, before the numbers.
+describe('generateDyeInfoCard — name weight', () => {
+  const escape = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  it('sets the title and every nearest-dye name in bold (700)', () => {
+    const svg = generateDyeInfoCard(defaultOptions);
+
+    expect(svg).toMatch(new RegExp(`<text[^>]*font-weight="700"[^>]*>${escape('Dalamud Red')}</text>`));
+    for (const n of defaultOptions.nearest) {
+      expect(svg).toMatch(new RegExp(`<text[^>]*font-weight="700"[^>]*>${escape(n.name)}</text>`));
+    }
+  });
+});

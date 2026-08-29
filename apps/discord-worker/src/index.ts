@@ -958,9 +958,14 @@ async function handleAutocomplete(
  * Get dye autocomplete choices for the given query.
  *
  * F-02 (2026-08-20 i18n audit): matches English OR the locale's dye name and
- * labels each choice with the localized name. The `value` stays the English
- * name so every downstream resolver (`resolveColorInput`, `searchDyesByName`)
- * keeps working unchanged.
+ * labels each choice with the localized name. The query may also be a bare
+ * stainID or legacy item id — `searchDyesByName` resolves those to the one dye.
+ *
+ * 2026-08-29: the `value` is the **stainID** (it used to be the English name,
+ * which Discord echoed verbatim under every locale — `name: Carmine Red`).
+ * Every downstream resolver (`resolveColorInput`, `resolveDyeInput`,
+ * `searchDyesByName`, `findDyeByName`) accepts a stainID, a legacy item id, or
+ * a name in any supported locale, so a typed value keeps working too.
  */
 function getDyeAutocompleteChoices(
   query: string,
@@ -971,11 +976,11 @@ function getDyeAutocompleteChoices(
 
   // Filter out Facewear dyes and limit to 25 (Discord's maximum)
   return matchingDyes
-    .filter((dye) => dye.category !== 'Facewear')
+    .filter((dye) => dye.category !== 'Facewear' && dye.stainID != null)
     .slice(0, 25)
     .map((dye) => ({
       name: `${getLocalizedDyeName(dye.itemID, dye.name, locale)} (${dye.hex.toUpperCase()})`,
-      value: dye.name,
+      value: String(dye.stainID),
     }));
 }
 

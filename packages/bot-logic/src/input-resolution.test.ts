@@ -355,3 +355,55 @@ describe('resolveDyeInput', () => {
     expect(dye).toHaveProperty('itemID');
   });
 });
+
+// ============================================================================
+// stainID input (2026-08-29)
+// ============================================================================
+// The Discord autocomplete hands every dye option a stainID (1–254) as its
+// value; a human may still type a name or a hex. A bare 1–3 digit number in
+// range is a stainID — a hex shorthand must carry '#' or a hex letter.
+
+describe('stainID input', () => {
+  it('searchDyesByName resolves a bare stainID to exactly that dye', () => {
+    const results = searchDyesByName('95');
+    expect(results.map((d) => d.name)).toEqual(['Carmine Red']);
+  });
+
+  it('findDyeByName resolves a bare stainID', () => {
+    expect(findDyeByName('95')?.name).toBe('Carmine Red');
+  });
+
+  it('resolveColorInput prefers the stainID over a 3-digit hex shorthand', () => {
+    expect(resolveColorInput('101')?.name).toBe('Pure White');
+    // …but a hash still means hex, exactly as before
+    expect(resolveColorInput('#101')).toEqual({ hex: '#110011' });
+  });
+
+  it('resolveDyeInput resolves a bare stainID', () => {
+    expect(resolveDyeInput('102')?.name).toBe('Jet Black');
+  });
+
+  it('numbers outside 1–254 are not stainIDs', () => {
+    expect(resolveDyeInput('255')).toBeNull();
+    expect(resolveDyeInput('0')).toBeNull();
+    expect(findDyeByName('999')).toBeNull();
+  });
+});
+
+describe('legacy item id input', () => {
+  // A 4.x habit (and what the pre-5.0 autocomplete sent): item ids start at
+  // 5729, so the range never overlaps the stainID byte.
+  it('searchDyesByName resolves a legacy item id to exactly that dye', () => {
+    expect(searchDyesByName('13114').map((d) => d.name)).toEqual(['Pure White']);
+  });
+
+  it('resolveColorInput and resolveDyeInput resolve a legacy item id', () => {
+    expect(resolveColorInput('5763')?.name).toBe('Ul Brown');
+    expect(resolveDyeInput('13115')?.name).toBe('Jet Black');
+  });
+
+  it('a number in the gap between the ranges resolves nothing', () => {
+    expect(searchDyesByName('3000')).toEqual([]);
+    expect(findDyeByName('3000')).toBeNull();
+  });
+});

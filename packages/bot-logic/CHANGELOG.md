@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`/dye` cards link somewhere real.** The share line was `https://xivdyetools.app/dye?stain=<stainID>`, but the web app has no `/dye` page and its share grammar reads `dye` / `dyes`, never `stain` — the link opened the app with nothing selected. It now points at the Comparison tool, the app's single-dye view: `https://xivdyetools.app/comparison?dyes=<stainID>`.
 - The bot UI strings for `/preset` dye counts say "at least 3" / "3–6" in all six locales (presets-api 5.0 bounds; the bot enforced 2–5 before).
 
+### Added — 2026-08-29
+
+- **Every dye input accepts an id as well as a name.** `parseDyeIdInput` reads a bare number as a stainID (1–254) or a legacy item id (≥ 5729 — the ranges are disjoint), and `searchDyesByName`, `findDyeByName`, `resolveColorInput` and `resolveDyeInput` all route through it, so a dye option can carry a stainID (what the Discord autocomplete now sends), a legacy item id (what 4.x habits type), or a name in any of the six locales. `resolveColorInput` checks the id before hex, so `'101'` is Pure White while `'#101'` stays the colour — a bare 3-digit hex shorthand without `#` was the one ambiguity and it resolves in the id's favour.
+
 ## [2.1.0] - 2026-08-21
 
 ### Changed — 2026-08-22 (`/changelog` is bot-scoped)

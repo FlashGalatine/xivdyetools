@@ -135,7 +135,7 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
       fill: '#FFFFFF',
       size: 23,
       font: 'display',
-      weight: 600,
+      weight: 700, // the dye's name is the headline — bold, like the nearest-dye captions
     })
   );
   parts.push(
@@ -225,7 +225,7 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
         fill: theme.name,
         size: 12,
         font: 'body',
-        weight: 500,
+        weight: 700, // dye names read first; the ΔE figure under them stays regular
       })
     );
     const barY = stripTop + 26 + 5 + 15 + 5;

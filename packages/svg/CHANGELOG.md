@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed — 2026-08-29
+
+- `/dye info` sheet (11B): the dye's name and each nearest-dye caption are set in bold (700; the title was 600, the captions 500) so the names read before the numbers. Both display and body faces are variable-weight, so no font file changes. `dye-info-card.test.ts` pins the weight.
+
 ## [2.0.1] - 2026-08-21
 
 ### Security — 2026-08-21 security audit (FINDING-028)
