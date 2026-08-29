@@ -213,7 +213,7 @@ describe('/swatch attachment handling', () => {
       await settle();
 
       expect(mockExecuteSwatch).toHaveBeenCalledWith(
-        expect.objectContaining({ fileText: '{"SkinColor":1}', fileName: 'char.chara' }),
+        expect.objectContaining({ fileText: '{"SkinColor":1}' }),
       );
     });
 

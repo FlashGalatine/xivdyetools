@@ -1,6 +1,6 @@
 # XIV Dye Tools Discord Bot - Privacy Policy
 
-**Last Updated**: August 21, 2026
+**Last Updated**: August 29, 2026
 
 ## 1. Introduction
 
@@ -56,6 +56,7 @@ We explicitly do **not** collect:
 - ❌ Direct messages
 - ❌ Voice data
 - ❌ Images (processed in-memory, not stored)
+- ❌ Character names from `.chara` files (never displayed on cards or embeds, never stored)
 
 ### Image Processing
 

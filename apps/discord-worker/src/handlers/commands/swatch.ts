@@ -153,7 +153,6 @@ export async function handleSwatchCommand(
 
   const input: SwatchInput = {
     fileText: '',
-    fileName: attachment.filename,
     locale: t.getLocale(),
     logger,
   };
