@@ -165,7 +165,7 @@ export class CharaImport {
   private selectedSlotKey: string | null = null;
   /** Make-a-palette panel expansion state (survives re-renders) */
   private paletteOpen = false;
-  /** Name field draft; null = default to the character's nickname */
+  /** Name field draft; null = empty field (deliberately NOT the character's nickname) */
   private paletteNameDraft: string | null = null;
   /** Equipment identity from api-worker — null until the round-trip lands */
   private equipment: CharaResolveResult | null = null;
