@@ -27,7 +27,34 @@ const dyeService = new DyeService(dyeDatabase);
  * the locale has not been loaded yet this degrades to the English search
  * (`getLocalizedDyeName` returns the fallback), never throws.
  */
+/**
+ * A bare number names a dye by id: 1–254 is a stainID (the value every dye
+ * autocomplete sends since 2026-08-29), ≥ 5729 a legacy item id (what 4.x
+ * clients and old habits still type). The two ranges are disjoint — the Stain
+ * sheet is a byte, item ids start at 5729 — so the number itself picks the
+ * lookup; the gap, zero and negatives resolve nothing. Digits only: a hex
+ * shorthand must carry '#' or a hex letter (`'101'` is Pure White, `'#101'`
+ * is a colour), and anything with letters falls through to the name search.
+ */
+export function parseDyeIdInput(input: string): Dye | null {
+  const m = /^\s*(\d{1,6})\s*$/.exec(input);
+  if (!m) return null;
+  const n = Number(m[1]);
+  if (n >= 1 && n <= 254) return dyeService.getByStainId(n);
+  if (n >= 5729) return dyeService.getDyeById(n);
+  return null;
+}
+
+/** True when the input is a bare number — an id lookup, never a name search. */
+function isBareNumber(input: string): boolean {
+  return /^\s*\d+\s*$/.test(input);
+}
+
 export function searchDyesByName(query: string, locale: LocaleCode = 'en'): Dye[] {
+  if (isBareNumber(query)) {
+    const byId = parseDyeIdInput(query);
+    return byId ? [byId] : [];
+  }
   const english = dyeService.searchByName(query);
   if (locale === 'en') return english;
   const q = query.toLowerCase().trim();
@@ -45,6 +72,7 @@ export function searchDyesByName(query: string, locale: LocaleCode = 'en'): Dye[
  * behaviour should use `searchDyesByName`.
  */
 export function findDyeByName(name: string, locale: LocaleCode = 'en'): Dye | null {
+  if (isBareNumber(name)) return parseDyeIdInput(name);
   const n = name.toLowerCase().trim();
   if (n.length === 0) return null;
   return (
@@ -171,6 +199,14 @@ export function resolveColorInput(
   const excludeFacewear = options?.excludeFacewear ?? true;
   const findClosestForHex = options?.findClosestForHex ?? false;
   const locale = options?.locale ?? 'en';
+
+  // A bare number is an id (stainID / legacy item id) — checked ahead of hex
+  // so `'101'` is Pure White rather than the shorthand for #110011.
+  if (isBareNumber(input)) {
+    const dye = parseDyeIdInput(input);
+    if (!dye || (excludeFacewear && dye.category === 'Facewear')) return null;
+    return { hex: dye.hex, name: dye.name, id: dye.id, itemID: dye.itemID, stainID: dye.stainID, dye };
+  }
 
   // Check if it's a hex color
   if (isValidHex(input)) {

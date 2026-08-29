@@ -100,19 +100,23 @@ vi.mock('@xivdyetools/core', () => {
         name: `Dye ${id}`,
         hex: '#FF0000',
         itemID: id,
+        stainID: 7,
       };
+    }
+    getByStainId(stainId: number) {
+      return this.getAllDyes().find((d) => d.stainID === stainId) ?? null;
     }
     searchByName(_query: string) {
       return [
-        { id: 1, name: 'Snow White', hex: '#FFFFFF', category: 'Standard' },
-        { id: 2, name: 'Ash Grey', hex: '#CCCCCC', category: 'Standard' },
+        { id: 1, name: 'Snow White', hex: '#FFFFFF', category: 'Standard', stainID: 1 },
+        { id: 2, name: 'Ash Grey', hex: '#CCCCCC', category: 'Standard', stainID: 2 },
       ];
     }
     getAllDyes() {
       return [
-        { id: 1, name: 'Snow White', hex: '#FFFFFF', category: 'Standard' },
-        { id: 2, name: 'Ash Grey', hex: '#CCCCCC', category: 'Standard' },
-        { id: 3, name: 'Red', hex: '#FF0000', category: 'Facewear' },
+        { id: 1, name: 'Snow White', hex: '#FFFFFF', category: 'Standard', stainID: 1 },
+        { id: 2, name: 'Ash Grey', hex: '#CCCCCC', category: 'Standard', stainID: 2 },
+        { id: 3, name: 'Red', hex: '#FF0000', category: 'Facewear', stainID: null },
       ];
     }
   }
@@ -928,6 +932,59 @@ describe('index.ts', () => {
         const data = (await res.json()) as InteractionResponseBody;
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
         expect(data.data!.choices).toBeInstanceOf(Array);
+      });
+
+      // 2026-08-29: the value was the English canonical name (so `/dye info
+      // name: Carmine Red` echoed English under every locale); it is the
+      // stainID now, and every resolver accepts one.
+      it('offers dye choices whose value is the stainID', async () => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const body = JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+          data: {
+            name: 'harmony',
+            options: [{ name: 'dye', value: 'snow', focused: true }],
+          },
+          user: { id: 'user-123' },
+        });
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({ isValid: true, body, error: '' });
+
+        const res = await app.fetch(
+          new Request('http://localhost/', { method: 'POST', body }),
+          mockEnv,
+          mockCtx,
+        );
+        const data = (await res.json()) as InteractionResponseBody;
+        const choices = data.data!.choices as Array<{ name: string; value: string }>;
+
+        expect(choices[0]).toEqual({ name: 'Snow White (#FFFFFF)', value: '1' });
+        for (const choice of choices) expect(choice.value).toMatch(/^\d{1,3}$/);
+      });
+
+      // The typed query may itself be a stainID or a legacy item id (or a name
+      // in any supported locale — that path is searchDyesByName's own tests).
+      it('resolves a numeric query — stainID or legacy item id — to that one dye', async () => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const ask = async (value: string): Promise<Array<{ name: string; value: string }>> => {
+          const body = JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: { name: 'harmony', options: [{ name: 'dye', value, focused: true }] },
+            user: { id: 'user-123' },
+          });
+          vi.mocked(verifyDiscordRequest).mockResolvedValue({ isValid: true, body, error: '' });
+          const res = await app.fetch(
+            new Request('http://localhost/', { method: 'POST', body }),
+            mockEnv,
+            mockCtx,
+          );
+          return ((await res.json()) as InteractionResponseBody).data!.choices as Array<{
+            name: string;
+            value: string;
+          }>;
+        };
+
+        expect(await ask('2')).toEqual([{ name: 'Ash Grey (#CCCCCC)', value: '2' }]);
+        expect(await ask('13114')).toEqual([{ name: 'Dye 13114 (#FF0000)', value: '7' }]);
       });
 
       it('should handle preset autocomplete for approved presets', async () => {
