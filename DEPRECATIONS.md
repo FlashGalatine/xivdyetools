@@ -187,7 +187,7 @@ consumers were the auth/JWT path. The source moved verbatim to `packages/auth/sr
 - [x] Move source + tests into `packages/auth/src/encoding/` (2026-07-30)
 - [x] Flip all workspace consumers: auth, oauth, test-utils (2026-07-30)
 - [x] Remove from publish-packages.yml and deploy path filters (2026-07-30)
-- [ ] `npm deprecate @xivdyetools/crypto "Merged into @xivdyetools/auth (import from @xivdyetools/auth/encoding)"` — requires npm 2FA, manual step
+- [x] `npm deprecate @xivdyetools/crypto "Merged into @xivdyetools/auth (import from @xivdyetools/auth/encoding)"` (2026-08-28, by the maintainer via `npm login --auth-type=web` — the package disallows tokens)
 
 ---
 
@@ -214,7 +214,7 @@ bot-logic. The source moved verbatim to `packages/bot-logic/src/i18n/` and ships
 - [x] Move source + tests + locale JSON into `packages/bot-logic/src/i18n/` (2026-07-30)
 - [x] Flip all workspace consumers: bot-logic, discord-worker, stoat-worker (2026-07-30)
 - [x] Remove from publish-packages.yml and deploy path filters (2026-07-30)
-- [ ] `npm deprecate @xivdyetools/bot-i18n "Merged into @xivdyetools/bot-logic (import from @xivdyetools/bot-logic/i18n)"` — requires npm 2FA, manual step
+- [x] `npm deprecate @xivdyetools/bot-i18n "Merged into @xivdyetools/bot-logic (import from @xivdyetools/bot-logic/i18n)"` (2026-08-28, via `npm login --auth-type=web`)
 
 ---
 
@@ -241,7 +241,7 @@ verbatim to `packages/core/src/blending/` and ships as `@xivdyetools/core/blendi
 - [x] Move source + tests into `packages/core/src/blending/` (2026-07-31)
 - [x] Flip all workspace consumers: svg, bot-logic, discord-worker; drop unused dep from stoat-worker (2026-07-31)
 - [x] Remove from publish-packages.yml and deploy path filters (2026-07-31)
-- [ ] `npm deprecate @xivdyetools/color-blending "Merged into @xivdyetools/core (import from @xivdyetools/core/blending)"` — requires npm 2FA, manual step
+- [x] `npm deprecate @xivdyetools/color-blending "Merged into @xivdyetools/core (import from @xivdyetools/core/blending)"` (2026-08-28, via `npm login --auth-type=web`)
 - [ ] ~~Follow-up refactor: unify duplicated conversions with ColorService inside core~~ —
       **declined 2026-08-18** (DEAD-037, dead-code audit Wave 4b). `blending/conversions.ts` stays.
       An equivalence guard (`packages/core/src/blending/conversions.equivalence.test.ts`) compares every
@@ -294,8 +294,8 @@ Both APIs are unchanged.
 - [x] Assemble `packages/worker-kit` (worker-middleware shell renamed, rate-limiter absorbed) (2026-07-31)
 - [x] Flip all 8 consuming apps (package.json + imports) (2026-07-31)
 - [x] Replace both packages in publish-packages.yml and all deploy path filters (2026-07-31)
-- [ ] **npm trusted-publisher setup for `@xivdyetools/worker-kit`** (npmjs.com → package → Settings) + first version must be published manually by a 2FA-authenticated human — OIDC cannot create a new package
-- [ ] `npm deprecate` both old packages pointing at `@xivdyetools/worker-kit` — requires npm 2FA, manual step
+- [x] **npm trusted-publisher setup for `@xivdyetools/worker-kit`** + first version published by hand (2026-08-28): the *Publish Packages to npm* run on merge day failed on this package with `E404 PUT` exactly as expected; the maintainer published 1.1.0 from a local shell with a granular access token (bypass 2FA, no `--provenance`), then set the package to "Require 2FA and disallow tokens" and added the trusted publisher (`FlashGalatine/xivdyetools`, `publish-packages.yml`, environment `production`). Next bumps go through OIDC like the other six.
+- [x] `npm deprecate` both old packages pointing at `@xivdyetools/worker-kit` (2026-08-28, via `npm login --auth-type=web`): worker-middleware → "Merged into @xivdyetools/worker-kit (import from @xivdyetools/worker-kit or @xivdyetools/worker-kit/middleware)", rate-limiter → "Merged into @xivdyetools/worker-kit (import from @xivdyetools/worker-kit/rate-limiter)"
 
 ---
 
