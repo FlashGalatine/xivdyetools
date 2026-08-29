@@ -47,6 +47,15 @@ import {
 } from './services/rate-limiter.js';
 import { trackCommandWithKV } from './services/analytics.js';
 import {
+  startCommandTrace,
+  tracedExecutionContext,
+  finishCommandTrace,
+  trackedCommandName,
+  subcommandOf,
+  bucketLocale,
+  buttonKindOf,
+} from './services/command-trace.js';
+import {
   getPresetFavoriteEntries,
   savePresetFavoriteEntries,
 } from './services/preset-favorites.js';
@@ -648,6 +657,18 @@ async function handleCommand(
 
   logger.info('Handling command', { command: commandName, userId });
 
+  // Tier A telemetry: the trace is started before the rate-limit check so a
+  // limited request is still counted, and finished in the finally below once
+  // the handler's background work (captured through `handlerCtx`) settles.
+  const trace = startCommandTrace(interaction, {
+    command: trackedCommandName(interaction) ?? 'unknown',
+    subcommand: subcommandOf(interaction),
+    userId,
+    guildId: interaction.guild_id,
+    locale: bucketLocale(interaction.locale),
+  });
+  const handlerCtx = tracedExecutionContext(ctx, trace);
+
   // Check rate limit (skip for utility commands). Aliases (/a11y) share the
   // canonical command's bucket; /extractor tiers its image subcommand
   // separately (Photon path, 5/min) from the plain color lookup.
@@ -669,6 +690,7 @@ async function handleCommand(
     if (!rateLimitResult.allowed) {
       logger.info('User rate limited', { userId, command: commandName });
       const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
+      finishCommandTrace(env, interaction, ctx, logger, 'rate_limited');
       return ephemeralResponse(formatRateLimitMessage(rateLimitResult, t));
     }
   }
@@ -690,37 +712,37 @@ async function handleCommand(
     // Route to specific command handlers
     switch (commandName) {
       case 'about':
-        response = await handleAboutCommand(interaction, env, ctx);
+        response = await handleAboutCommand(interaction, env, handlerCtx);
         break;
 
       case 'harmony':
-        response = await handleHarmonyCommand(interaction, env, ctx, logger);
+        response = await handleHarmonyCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'dye':
-        response = await handleDyeCommand(interaction, env, ctx);
+        response = await handleDyeCommand(interaction, env, handlerCtx);
         break;
 
       // V4 Commands
       case 'extractor':
-        response = await handleExtractorCommand(interaction, env, ctx, logger);
+        response = await handleExtractorCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'gradient':
-        response = await handleGradientCommand(interaction, env, ctx, logger);
+        response = await handleGradientCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'preferences':
-        response = await handlePreferencesCommand(interaction, env, ctx, logger);
+        response = await handlePreferencesCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'mixer':
         // V4: New /mixer command for dye blending (old /mixer gradient is now /gradient)
-        response = await handleMixerV4Command(interaction, env, ctx, logger);
+        response = await handleMixerV4Command(interaction, env, handlerCtx, logger);
         break;
 
       case 'swatch':
-        response = await handleSwatchCommand(interaction, env, ctx, logger);
+        response = await handleSwatchCommand(interaction, env, handlerCtx, logger);
         break;
 
       // v5: /match, /match_image, /favorites, /collection and /language are
@@ -730,35 +752,35 @@ async function handleCommand(
       // alias mechanism; the chip prints the command the user actually typed
       case 'accessibility':
       case 'a11y':
-        response = await handleAccessibilityCommand(interaction, env, ctx, logger);
+        response = await handleAccessibilityCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'contrast':
-        response = await handleContrastCommand(interaction, env, ctx, logger);
+        response = await handleContrastCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'manual':
-        response = await handleManualCommand(interaction, env, ctx);
+        response = await handleManualCommand(interaction, env, handlerCtx);
         break;
 
       case 'changelog':
-        response = await handleChangelogCommand(interaction, env, ctx);
+        response = await handleChangelogCommand(interaction, env, handlerCtx);
         break;
 
       case 'comparison':
-        response = await handleComparisonCommand(interaction, env, ctx, logger);
+        response = await handleComparisonCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'preset':
-        response = await handlePresetCommand(interaction, env, ctx, logger);
+        response = await handlePresetCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'stats':
-        response = await handleStatsCommand(interaction, env, ctx, logger);
+        response = await handleStatsCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'budget':
-        response = await handleBudgetCommand(interaction, env, ctx, logger);
+        response = await handleBudgetCommand(interaction, env, handlerCtx, logger);
         break;
 
       default:
@@ -779,28 +801,9 @@ async function handleCommand(
       (await routerTranslator(env, interaction, logger)).t('errors.commandFailed'),
     );
   } finally {
-    // Track command usage with actual success status (fire-and-forget).
-    // 5.0 telemetry: /extractor records its subcommand (extractor_image /
-    // extractor_color) so the /stats adoption panel can tell them apart.
-    let trackedName = commandName;
-    if (commandName === 'extractor') {
-      const sub = interaction.data?.options?.[0]?.name;
-      if (sub) trackedName = `extractor_${sub}`;
-    }
-    if (userId && trackedName) {
-      ctx.waitUntil(
-        trackCommandWithKV(env, {
-          commandName: trackedName,
-          userId,
-          guildId: interaction.guild_id,
-          success,
-        }).catch((error) => {
-          logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, {
-            error: String(error),
-          });
-        }),
-      );
-    }
+    // Tier A: one datapoint per command, written after the handler's captured
+    // background work settles (see services/command-trace.ts).
+    finishCommandTrace(env, interaction, ctx, logger, success ? undefined : 'unknown');
   }
 
   return response;
@@ -1109,6 +1112,29 @@ async function handleComponent(
 
   // Buttons have component_type 2
   if (componentType === 2) {
+    // Tier A: copy-button clicks are counted (kind=button, no KV counters);
+    // moderation/preview buttons and unknown ids are not.
+    const kind = buttonKindOf(customId ?? '');
+    const buttonUserId = interaction.member?.user?.id ?? interaction.user?.id;
+    if (kind && buttonUserId) {
+      ctx.waitUntil(
+        trackCommandWithKV(env, {
+          commandName: 'button',
+          userId: buttonUserId,
+          guildId: interaction.guild_id,
+          success: true,
+          outcome: 'ok',
+          subcommand: kind,
+          locale: bucketLocale(interaction.locale),
+          kind: 'button',
+          latencyMs: 0,
+        }).catch((error) => {
+          logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, {
+            error: String(error),
+          });
+        }),
+      );
+    }
     return handleButtonInteraction(interaction, env, ctx, logger);
   }
 

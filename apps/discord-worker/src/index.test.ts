@@ -84,9 +84,9 @@ vi.mock('./services/announcements.js', () => ({
   sendAnnouncement: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('./services/i18n.js', () => ({
+vi.mock('./services/i18n.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./services/i18n.js')>()),
   getLocalizedDyeName: vi.fn((_itemId: number, name: string) => name),
-  discordLocaleToLocaleCode: vi.fn(() => 'en'),
   resolveUserLocale: vi.fn().mockResolvedValue('en'),
   initializeLocale: vi.fn().mockResolvedValue(undefined),
 }));
@@ -1537,6 +1537,132 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res).toBeDefined();
         expect(handleDyeCommand).toHaveBeenCalled();
+      });
+    });
+
+    describe('Tier A command trace', () => {
+      function post(body: unknown) {
+        return new Request('http://localhost/', { method: 'POST', body: JSON.stringify(body) });
+      }
+      async function allowRateLimit() {
+        const { checkRateLimit } = await import('./services/rate-limiter.js');
+        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
+      }
+      async function verified(body: unknown) {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({ isValid: true, body: JSON.stringify(body), error: '' });
+      }
+
+      it('writes one datapoint for an immediate command with subcommand and locale bucket', async () => {
+        const body = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name: 'dye', options: [{ name: 'info', type: 1, options: [] }] },
+          member: { user: { id: 'user-123' } },
+          guild_id: 'g1',
+          locale: 'ja',
+        };
+        await verified(body);
+        await allowRateLimit();
+        const { handleDyeCommand } = await import('./handlers/commands/index.js');
+        vi.mocked(handleDyeCommand).mockResolvedValue(new Response());
+        const { trackCommandWithKV } = await import('./services/analytics.js');
+        vi.mocked(trackCommandWithKV).mockClear();
+        const collected: Promise<unknown>[] = [];
+        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+
+        await app.fetch(post(body), mockEnv, ctx);
+        await Promise.all(collected);
+
+        expect(trackCommandWithKV).toHaveBeenCalledTimes(1);
+        expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, expect.objectContaining({
+          commandName: 'dye', subcommand: 'info', userId: 'user-123', guildId: 'g1', locale: 'ja',
+          success: true, outcome: 'ok', kind: 'command', latencyMs: expect.any(Number),
+        }));
+      });
+
+      it('waits for a deferring handler\'s work and records its marked outcome', async () => {
+        const body = { type: InteractionType.APPLICATION_COMMAND, data: { name: 'harmony' }, user: { id: 'user-123' } };
+        await verified(body);
+        await allowRateLimit();
+        const { handleHarmonyCommand } = await import('./handlers/commands/index.js');
+        const { markCommandOutcome } = await import('./services/command-trace.js');
+        let release!: () => void;
+        const work = new Promise<void>((r) => { release = r; });
+        vi.mocked(handleHarmonyCommand).mockImplementation(async (interaction, _env, handlerCtx) => {
+          handlerCtx.waitUntil(work.then(() => { markCommandOutcome(interaction, 'render'); }));
+          return new Response(JSON.stringify({ type: 5 }));
+        });
+        const { trackCommandWithKV } = await import('./services/analytics.js');
+        vi.mocked(trackCommandWithKV).mockClear();
+        const collected: Promise<unknown>[] = [];
+        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+
+        await app.fetch(post(body), mockEnv, ctx);
+        expect(trackCommandWithKV).not.toHaveBeenCalled();
+        release();
+        await Promise.all(collected);
+
+        expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, expect.objectContaining({
+          commandName: 'harmony', success: false, outcome: 'render', kind: 'command',
+        }));
+      });
+
+      it('records a rate-limited request as rate_limited', async () => {
+        const body = { type: InteractionType.APPLICATION_COMMAND, data: { name: 'harmony' }, user: { id: 'user-123' } };
+        await verified(body);
+        const { checkRateLimit } = await import('./services/rate-limiter.js');
+        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: false, remaining: 0, resetAt: Date.now() + 60000 });
+        const { trackCommandWithKV } = await import('./services/analytics.js');
+        vi.mocked(trackCommandWithKV).mockClear();
+        const collected: Promise<unknown>[] = [];
+        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+
+        await app.fetch(post(body), mockEnv, ctx);
+        await Promise.all(collected);
+        expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, expect.objectContaining({
+          commandName: 'harmony', success: false, outcome: 'rate_limited',
+        }));
+      });
+
+      it('records a handler throw as unknown', async () => {
+        const body = { type: InteractionType.APPLICATION_COMMAND, data: { name: 'harmony' }, user: { id: 'user-123' } };
+        await verified(body);
+        await allowRateLimit();
+        const { handleHarmonyCommand } = await import('./handlers/commands/index.js');
+        vi.mocked(handleHarmonyCommand).mockRejectedValue(new Error('boom'));
+        const { trackCommandWithKV } = await import('./services/analytics.js');
+        vi.mocked(trackCommandWithKV).mockClear();
+        const collected: Promise<unknown>[] = [];
+        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+
+        await app.fetch(post(body), mockEnv, ctx);
+        await Promise.all(collected);
+        expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, expect.objectContaining({ success: false, outcome: 'unknown' }));
+      });
+
+      it('writes a button datapoint for copy buttons and nothing for other buttons', async () => {
+        const { handleButtonInteraction } = await import('./handlers/buttons/index.js');
+        vi.mocked(handleButtonInteraction).mockResolvedValue(new Response());
+        const { trackCommandWithKV } = await import('./services/analytics.js');
+        vi.mocked(trackCommandWithKV).mockClear();
+        const collected: Promise<unknown>[] = [];
+        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+
+        const copy = { type: InteractionType.MESSAGE_COMPONENT, data: { custom_id: 'copy_hex_FF0000', component_type: 2 }, user: { id: 'user-123' }, locale: 'de' };
+        await verified(copy);
+        await app.fetch(post(copy), mockEnv, ctx);
+        await Promise.all(collected);
+        expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, {
+          commandName: 'button', userId: 'user-123', guildId: undefined, success: true,
+          outcome: 'ok', subcommand: 'copy_hex', locale: 'de', kind: 'button', latencyMs: 0,
+        });
+
+        vi.mocked(trackCommandWithKV).mockClear();
+        const other = { type: InteractionType.MESSAGE_COMPONENT, data: { custom_id: 'preview_approve_1', component_type: 2 }, user: { id: 'user-123' } };
+        await verified(other);
+        await app.fetch(post(other), mockEnv, ctx);
+        await Promise.all(collected);
+        expect(trackCommandWithKV).not.toHaveBeenCalled();
       });
     });
 
