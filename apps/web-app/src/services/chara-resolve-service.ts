@@ -18,6 +18,10 @@
 
 import type { CharaGearModel, CharaGearSlotId } from '@xivdyetools/core';
 import { logger } from '@shared/logger';
+import { getApiWorkerBase } from './api-worker-origin';
+
+// Re-exported so existing callers/tests keep their import path.
+export { getApiWorkerBase };
 
 export interface CharaItemNames {
   en: string;
@@ -65,22 +69,7 @@ export class CharaResolveUnavailableError extends Error {
   }
 }
 
-const PROD_API_BASE = 'https://data.xivdyetools.app';
-/** `wrangler dev` port from apps/api-worker/wrangler.toml */
-const DEV_API_BASE = 'http://localhost:8790';
 const REQUEST_TIMEOUT_MS = 12_000;
-
-/**
- * api-worker origin. `VITE_API_WORKER_URL` wins (local dev against a tunnel
- * or the `-dev` worker); production builds use data.xivdyetools.app, which
- * answers every origin (`cors({ origin: '*' })`) — production, beta and
- * *.pages.dev alike.
- */
-export function getApiWorkerBase(): string {
-  const env = import.meta.env.VITE_API_WORKER_URL;
-  if (env) return env.replace(/\/$/, '');
-  return import.meta.env.PROD ? PROD_API_BASE : DEV_API_BASE;
-}
 
 /** Icon PNG URL for a resolved item / glasses row (api-worker proxy, edge-cached). */
 export function charaIconUrl(iconId: number): string {
