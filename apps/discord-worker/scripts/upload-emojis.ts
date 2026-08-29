@@ -147,7 +147,16 @@ async function uploadEmoji(name: string, png: Buffer): Promise<DiscordEmoji> {
   const res = await fetch(API, {
     method: 'POST',
     headers: HEADERS,
-    body: JSON.stringify({ name, image: `data:image/png;base64,${png.toString('base64')}` }),
+    // `Buffer.from(png).toString('base64')` rather than `png.toString('base64')`:
+    // @cloudflare/workers-types >= 5.20260825.1 declares a global `Buffer: any`
+    // that collides with @types/node in this Node-only script (tsconfig loads
+    // both), leaving `png: Buffer` with Uint8Array's zero-argument `toString()`
+    // and a TS2554 on the encoded call. Going through the constructor
+    // type-checks under both type sets.
+    body: JSON.stringify({
+      name,
+      image: `data:image/png;base64,${Buffer.from(png).toString('base64')}`,
+    }),
   });
   if (res.status === 429) {
     const retry = ((await res.json()) as { retry_after?: number }).retry_after ?? 30;
