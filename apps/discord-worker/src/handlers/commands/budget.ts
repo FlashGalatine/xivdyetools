@@ -40,6 +40,7 @@ import {
 } from '../../services/budget/index.js';
 import type { LedgerSearchOptions } from '../../types/budget.js';
 import { UniversalisError } from '../../types/budget.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 
@@ -380,6 +381,7 @@ async function processFindCommand(
     });
     if (logger) logger.info('Budget: response sent successfully');
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     const errorMsg = error instanceof Error ? error.message : String(error);
     if (logger) {
       logger.error('Budget find error', error instanceof Error ? error : undefined);

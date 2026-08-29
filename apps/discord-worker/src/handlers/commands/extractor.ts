@@ -50,6 +50,7 @@ import {
   resolveMatchingMethod,
   resolveCount,
 } from '../../services/preferences.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // ============================================================================
@@ -586,6 +587,7 @@ async function processImageExtraction(
       },
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('Extractor image command error', error instanceof Error ? error : undefined);
     }

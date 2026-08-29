@@ -20,6 +20,7 @@ import {
 } from '../../services/i18n.js';
 import { resolveColorInput, executeContrast, type ContrastDyeInput } from '@xivdyetools/bot-logic';
 import { getUserPreferences } from '../../services/preferences.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleContrastCommand(
@@ -112,6 +113,7 @@ async function processContrastCommand(
       file: { name: 'contrast.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error, 'render'));
     if (logger) logger.error('Contrast render error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],

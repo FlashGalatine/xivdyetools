@@ -22,6 +22,7 @@ import { initializeLocale } from '../../services/i18n.js';
 import { resolveColorInput, executeMixer } from '@xivdyetools/bot-logic';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleMixerV4Command(
@@ -114,6 +115,7 @@ export async function handleMixerV4Command(
           },
         });
       } catch (error) {
+        markCommandOutcome(interaction, classifyError(error, 'render'));
         if (logger) logger.error('Mixer render error', error instanceof Error ? error : undefined);
         await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
           embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],

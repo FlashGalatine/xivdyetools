@@ -1292,6 +1292,9 @@ describe('/preset command', () => {
         },
       };
 
+      const { getCommandTrace, startCommandTrace } = await import('../../services/command-trace.js');
+      startCommandTrace(interaction, { command: 'preset', subcommand: 'list', userId: 'u1', locale: 'en' });
+
       await handlePresetCommand(interaction, env, ctx);
       await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -1306,6 +1309,7 @@ describe('/preset command', () => {
           ]),
         }),
       );
+      expect(getCommandTrace(interaction)?.outcome).toBe('unknown');
     });
   });
 

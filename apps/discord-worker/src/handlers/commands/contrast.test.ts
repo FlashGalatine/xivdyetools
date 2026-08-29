@@ -296,18 +296,18 @@ describe('handleContrastCommand', () => {
       vi.mocked(renderSvgToPng).mockRejectedValue(new Error('resvg exploded'));
       const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 
-      await handleContrastCommand(
-        interaction(['Snow White', 'Soot Black']),
-        env,
-        ctx,
-        logger as never,
-      );
+      const { getCommandTrace, startCommandTrace } = await import('../../services/command-trace.js');
+      const int = interaction(['Snow White', 'Soot Black']);
+      startCommandTrace(int, { command: 'contrast', subcommand: '', userId: 'u1', locale: 'en' });
+
+      await handleContrastCommand(int, env, ctx, logger as never);
       await settle();
 
       expect(logger.error).toHaveBeenCalled();
       expect(JSON.stringify(vi.mocked(safeEditOriginalResponse).mock.calls[0][2])).toContain(
         'errors.generationFailed',
       );
+      expect(getCommandTrace(int)?.outcome).toBe('render');
     });
 
     it('survives a non-Error rejection and still answers the interaction', async () => {

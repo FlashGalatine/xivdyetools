@@ -31,6 +31,7 @@ import {
   type SwatchSlotOption,
 } from '@xivdyetools/bot-logic';
 import { getUserPreferences } from '../../services/preferences.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 /** .chara files are small JSON — anything past 1 MiB is not one. */
@@ -214,6 +215,7 @@ async function processSwatchCommand(
     }
     input.fileText = fileText;
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error, 'render'));
     if (logger) logger.error('Swatch download error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
@@ -251,6 +253,7 @@ async function processSwatchCommand(
       file: { name: 'swatch.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error, 'render'));
     if (logger) logger.error('Swatch render error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
