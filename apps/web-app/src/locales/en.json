@@ -220,7 +220,7 @@
     "performanceMode": "Performance Mode",
     "performanceModeDesc": "Reduce animations and effects for better performance on slower devices",
     "enableAnalytics": "Enable Analytics",
-    "analyticsDesc": "Help improve XIV Dye Tools by sharing anonymous usage data",
+    "analyticsDesc": "Share anonymous usage data — which tools and dyes are used, and .chara imports. No identifiers, no images.",
     "exportSettings": "Export",
     "importSettings": "Import",
     "importError": "Failed to import settings. Please check the file format.",

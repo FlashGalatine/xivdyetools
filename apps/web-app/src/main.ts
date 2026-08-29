@@ -24,8 +24,8 @@ import { offlineBanner } from '@components/offline-banner';
 // Import TutorialService for dev mode console access
 import { TutorialService } from '@services/index';
 
-// Import ShareService for analytics initialization
 import { ShareService } from '@services/share-service';
+import { TelemetryService } from '@services/telemetry-service';
 
 /**
  * The fatal-error overlay runs when service initialization threw, so
@@ -96,9 +96,8 @@ async function initializeApp(): Promise<void> {
     logger.info('🌐 Initializing language service...');
     await LanguageService.initialize();
 
-    // Initialize share analytics (client-side tracking)
-    logger.info('📊 Initializing share analytics...');
-    ShareService.initializeAnalytics();
+    // Opt-in usage telemetry (default off; honours Global Privacy Control)
+    TelemetryService.initialize();
 
     // Log service status
     const status = await getServicesStatus();
@@ -139,9 +138,7 @@ async function initializeApp(): Promise<void> {
       (window as unknown as Record<string, unknown>).TutorialService = TutorialService;
       (window as unknown as Record<string, unknown>).ShareService = ShareService;
       logger.info('[DEV] TutorialService exposed on window for debugging');
-      logger.info(
-        '[DEV] ShareService exposed on window for debugging (try ShareService.getAnalyticsStats())'
-      );
+      logger.info('[DEV] ShareService exposed on window for debugging');
     }
   } catch (error) {
     const appError = ErrorHandler.log(error);

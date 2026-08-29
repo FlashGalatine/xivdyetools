@@ -220,7 +220,7 @@
     "performanceMode": "性能模式",
     "performanceModeDesc": "减少动画和效果，以在较慢的设备上获得更好的性能",
     "enableAnalytics": "启用分析",
-    "analyticsDesc": "通过分享匿名使用数据来帮助改进 XIV 染色工具",
+    "analyticsDesc": "分享匿名使用数据 — 使用的工具与染剂，以及 .chara 导入。不含任何标识符或图片。",
     "exportSettings": "导出",
     "importSettings": "导入",
     "importError": "导入设置失败。请检查文件格式。",

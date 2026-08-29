@@ -124,7 +124,8 @@ src/
 │   ├── hybrid-preset-service.ts     # Local + community preset combiner
 │   ├── market-board-service.ts      # Universalis pricing for budget/comparison
 │   ├── world-service.ts             # FFXIV worlds + datacenters
-│   ├── share-service.ts             # Share URLs + analytics
+│   ├── share-service.ts             # Share URLs (generate/parse/copy)
+│   ├── telemetry-service.ts         # Opt-in usage telemetry → api-worker POST /v1/telemetry (default off, GPC-aware, no ids)
 │   ├── modal-service.ts             # Modal stack
 │   ├── toast-service.ts             # Toasts
 │   ├── tooltip-service.ts           # Hoverable tooltips
@@ -256,7 +257,7 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 - **innerHTML for static SVG only** — icons in `shared/*-icons.ts` are compile-time constants. User content always goes through `textContent` or `escapeHtml`.
 - **Tokens in localStorage** — `auth-service.ts` documents the rationale: strict CSP prevents XSS exfil, expiry is checked on every `isAuthenticated()` call, server revokes on logout.
 - **CSP** — production headers prevent inline scripts, frame embedding, and form hijacking.
-- **No PII in analytics** — `share-service.ts` analytics uses opaque event names only.
+- **No PII in telemetry** — `telemetry-service.ts` sends only allowlisted event names/dimensions (tool id, stainID, entry, producer bucket, theme) plus version/env/locale/theme/viewport bucket; no ids, nothing persisted. Default off; `navigator.globalPrivacyControl` honoured. Spec: `docs/superpowers/specs/2026-08-29-web-analytics-design.md`.
 
 ## Testing
 
@@ -277,7 +278,7 @@ npx playwright test --project=mobile-chrome
 **Sibling apps it talks to:**
 - `xivdyetools-presets-api` — community presets (HTTPS)
 - `xivdyetools-oauth` — Discord login + JWT issuance
-- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Swatch Matcher's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` already covers `*.xivdyetools.app`). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design
+- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Swatch Matcher's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` already covers `*.xivdyetools.app`). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design; opt-in telemetry via `POST /v1/telemetry`
 - `xivdyetools-og-worker` — dynamic OpenGraph images for share links
 
 ## Documentation

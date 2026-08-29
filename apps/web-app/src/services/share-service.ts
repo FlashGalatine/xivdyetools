@@ -158,16 +158,6 @@ export interface ParsedShareUrl {
   params: Record<string, string | number | boolean | string[] | number[]>;
 }
 
-/**
- * Share analytics event
- */
-export interface ShareAnalyticsEvent {
-  event: 'share_initiated' | 'share_copied' | 'share_failed';
-  tool: ToolId;
-  params: Record<string, unknown>;
-  timestamp: number;
-}
-
 // ============================================================================
 // Share Service Class
 // ============================================================================
@@ -191,8 +181,6 @@ export interface ShareAnalyticsEvent {
  * ```
  */
 export class ShareService {
-  private static analyticsListeners: Set<(event: ShareAnalyticsEvent) => void> = new Set();
-
   // ==========================================================================
   // URL Generation
   // ==========================================================================
@@ -477,13 +465,6 @@ export class ShareService {
 
       ToastService.success(LanguageService.t('share.linkCopied'));
 
-      this.trackAnalytics({
-        event: 'share_copied',
-        tool: this.parseUrl(url)?.tool || 'harmony',
-        params: {},
-        timestamp: Date.now(),
-      });
-
       return true;
     } catch (error) {
       logger.error('[ShareService] Failed to copy to clipboard:', error);
@@ -537,56 +518,13 @@ export class ShareService {
         return null;
       }
 
-      this.trackAnalytics({
-        event: 'share_initiated',
-        tool: shareData.tool,
-        params: shareData.params as Record<string, unknown>,
-        timestamp: Date.now(),
-      });
-
       return result;
     } catch (error) {
       logger.error('[ShareService] Share failed:', error);
 
-      this.trackAnalytics({
-        event: 'share_failed',
-        tool: shareData.tool,
-        params: shareData.params as Record<string, unknown>,
-        timestamp: Date.now(),
-      });
-
       ToastService.error(LanguageService.t('share.generateFailed'));
       return null;
     }
-  }
-
-  // ==========================================================================
-  // Analytics
-  // ==========================================================================
-
-  /**
-   * Subscribe to share analytics events
-   * @returns Unsubscribe function
-   */
-  static subscribeToAnalytics(listener: (event: ShareAnalyticsEvent) => void): () => void {
-    this.analyticsListeners.add(listener);
-    return () => this.analyticsListeners.delete(listener);
-  }
-
-  /**
-   * Track an analytics event
-   */
-  private static trackAnalytics(event: ShareAnalyticsEvent): void {
-    this.analyticsListeners.forEach((listener) => {
-      try {
-        listener(event);
-      } catch (error) {
-        logger.warn('[ShareService] Analytics listener error:', error);
-      }
-    });
-
-    // Log for debugging
-    logger.info(`[ShareService] Analytics: ${event.event}`, event);
   }
 
   // ==========================================================================
@@ -690,108 +628,6 @@ export class ShareService {
     }
     if (!hasDye) {
       errors.push(`Missing required parameter: ${dyeKey}`);
-    }
-  }
-
-  // ==========================================================================
-  // Client-Side Analytics Storage
-  // ==========================================================================
-
-  private static readonly ANALYTICS_STORAGE_KEY = 'xiv_share_analytics';
-  private static readonly MAX_STORED_EVENTS = 100;
-  private static analyticsInitialized = false;
-
-  /**
-   * Initialize client-side analytics storage
-   * Automatically subscribes to share events and persists them
-   */
-  static initializeAnalytics(): void {
-    if (this.analyticsInitialized) return;
-
-    this.subscribeToAnalytics((event) => {
-      this.storeAnalyticsEvent(event);
-    });
-
-    this.analyticsInitialized = true;
-    logger.info('[ShareService] Client-side analytics initialized');
-  }
-
-  /**
-   * Store an analytics event in localStorage
-   */
-  private static storeAnalyticsEvent(event: ShareAnalyticsEvent): void {
-    try {
-      const events = this.getStoredAnalyticsEvents();
-      events.push(event);
-
-      // Keep only the most recent events
-      if (events.length > this.MAX_STORED_EVENTS) {
-        events.splice(0, events.length - this.MAX_STORED_EVENTS);
-      }
-
-      localStorage.setItem(this.ANALYTICS_STORAGE_KEY, JSON.stringify(events));
-    } catch (error) {
-      logger.warn('[ShareService] Failed to store analytics event:', error);
-    }
-  }
-
-  /**
-   * Get all stored analytics events
-   */
-  static getStoredAnalyticsEvents(): ShareAnalyticsEvent[] {
-    try {
-      const stored = localStorage.getItem(this.ANALYTICS_STORAGE_KEY);
-      return stored ? (JSON.parse(stored) as ShareAnalyticsEvent[]) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  /**
-   * Get share analytics statistics
-   */
-  static getAnalyticsStats(): {
-    totalShares: number;
-    sharesByTool: Record<string, number>;
-    successRate: number;
-    recentShares: ShareAnalyticsEvent[];
-  } {
-    const events = this.getStoredAnalyticsEvents();
-
-    const initiated = events.filter((e) => e.event === 'share_initiated').length;
-    const copied = events.filter((e) => e.event === 'share_copied').length;
-
-    // Count by tool (from initiated events)
-    const sharesByTool: Record<string, number> = {};
-    events
-      .filter((e) => e.event === 'share_initiated')
-      .forEach((e) => {
-        sharesByTool[e.tool] = (sharesByTool[e.tool] || 0) + 1;
-      });
-
-    // Success rate (copied / initiated)
-    const successRate = initiated > 0 ? (copied / initiated) * 100 : 0;
-
-    // Get last 10 events
-    const recentShares = events.slice(-10).reverse();
-
-    return {
-      totalShares: initiated,
-      sharesByTool,
-      successRate: Math.round(successRate),
-      recentShares,
-    };
-  }
-
-  /**
-   * Clear stored analytics data
-   */
-  static clearAnalyticsData(): void {
-    try {
-      localStorage.removeItem(this.ANALYTICS_STORAGE_KEY);
-      logger.info('[ShareService] Analytics data cleared');
-    } catch (error) {
-      logger.warn('[ShareService] Failed to clear analytics data:', error);
     }
   }
 }
