@@ -17,6 +17,7 @@
 import { ModalService } from '@services/modal-service';
 import { ThemeService } from '@services/theme-service';
 import { LanguageService } from '@services/language-service';
+import { TelemetryService } from '@services/telemetry-service';
 import type { ThemeName } from '@shared/types';
 
 // ============================================================================
@@ -177,6 +178,10 @@ class ThemeModal {
 
       // Apply on tap — live preview, no revert, footer says Done
       themeBtn.addEventListener('click', () => {
+        // Telemetry: only a deliberate switch counts (spec: theme_change)
+        if (theme.name !== this.currentTheme) {
+          TelemetryService.track('theme_change', { to: theme.name });
+        }
         ThemeService.setTheme(theme.name);
       });
 

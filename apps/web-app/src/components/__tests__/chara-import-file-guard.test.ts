@@ -12,8 +12,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { CharaImport } from '../chara-import';
 import { LanguageService, ToastService } from '@services/index';
+import { TelemetryService } from '@services/telemetry-service';
 import { MAX_USER_FILE_BYTES } from '@shared/constants';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
+
+/**
+ * Galatine-shaped Anamnesis fixture (same shape as chara-import-glamour.test.ts's
+ * FIXTURE) — enough key presence for core's `parseCharaFile` to succeed and for
+ * `TypeName` to normalise to the 'anamnesis' producer bucket.
+ */
+const ANAMNESIS_FIXTURE = JSON.stringify({
+  TypeName: 'Anamnesis Character File',
+  REyeColor: 42,
+  MainHand: { ModelSet: 634, ModelBase: 19, ModelVariant: 1, DyeId: 6, DyeId2: 0 },
+  OffHand: { ModelSet: 698, ModelBase: 149, ModelVariant: 1, DyeId: 6, DyeId2: 0 },
+  HeadGear: { ModelBase: 361, ModelVariant: 5, DyeId: 1, DyeId2: 0 },
+  Body: { ModelBase: 9903, ModelVariant: 1, DyeId: 56, DyeId2: 33 },
+  Feet: { ModelBase: 376, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+  Ears: { ModelBase: 0, ModelVariant: 0, DyeId: 0, DyeId2: 0 },
+  Glasses: { GlassesId: 0 },
+});
 
 const { resolveMock } = vi.hoisted(() => ({ resolveMock: vi.fn() }));
 vi.mock('@services/chara-resolve-service', async (importOriginal) => {
@@ -73,5 +91,43 @@ describe('CharaImport — .chara file size guard (WEB-13)', () => {
 
     expect(textSpy).toHaveBeenCalledTimes(1);
     expect(errorSpy).not.toHaveBeenCalledWith(LanguageService.t('errors.fileTooLarge'));
+  });
+});
+
+describe('CharaImport — telemetry', () => {
+  let container: HTMLElement;
+  let importer: CharaImport;
+
+  beforeEach(() => {
+    resolveMock.mockReset();
+    resolveMock.mockReturnValue(new Promise(() => {}));
+    container = createTestContainer('chara-host-telemetry');
+    importer = new CharaImport(container, { onSlotPick: vi.fn() }, {});
+    importer.init();
+  });
+
+  afterEach(() => {
+    cleanupTestContainer(container);
+    vi.restoreAllMocks();
+  });
+
+  it('records a failed parse with producer none', async () => {
+    const track = vi.spyOn(TelemetryService, 'track').mockImplementation(() => {});
+    vi.spyOn(ToastService, 'error').mockImplementation(() => 'toast');
+    await (importer as unknown as LoadFile).loadFile(fileOfSize(10, '{"not":"a chara"}'));
+    expect(track).toHaveBeenCalledWith('chara_parse', { ok: false, producer: 'none' });
+  });
+
+  it('records a successful parse with the normalised producer', async () => {
+    const track = vi.spyOn(TelemetryService, 'track').mockImplementation(() => {});
+    await (importer as unknown as LoadFile).loadFile(fileOfSize(10, ANAMNESIS_FIXTURE));
+    expect(track).toHaveBeenCalledWith('chara_parse', { ok: true, producer: 'anamnesis' });
+  });
+
+  it('does not count a size-refused file as a parse', async () => {
+    const track = vi.spyOn(TelemetryService, 'track').mockImplementation(() => {});
+    vi.spyOn(ToastService, 'error').mockImplementation(() => 'toast');
+    await (importer as unknown as LoadFile).loadFile(fileOfSize(MAX_USER_FILE_BYTES + 1));
+    expect(track).not.toHaveBeenCalled();
   });
 });

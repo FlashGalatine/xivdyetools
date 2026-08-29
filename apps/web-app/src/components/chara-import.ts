@@ -43,6 +43,7 @@ import {
   ToastService,
 } from '@services/index';
 import { ThemeService } from '@services/theme-service';
+import { TelemetryService } from '@services/telemetry-service';
 import {
   resolveCharaEquipment,
   itemNameFor,
@@ -227,10 +228,15 @@ export class CharaImport {
         this.callbacks.onTribeGender(this.resolved.tribe, this.resolved.gender);
       }
       this.callbacks.onResolved?.(this.resolved);
+      TelemetryService.track('chara_parse', {
+        ok: true,
+        producer: TelemetryService.normalizeProducer(this.resolved.producer),
+      });
       logger.info(
         `[CharaImport] Parsed ${file.name} (${this.resolved.producer ?? 'unknown producer'})`
       );
     } catch (error) {
+      TelemetryService.track('chara_parse', { ok: false, producer: 'none' });
       logger.error('[CharaImport] Parse failed:', error);
       // Loud failure naming the field and value — core's messages do that,
       // and they ride in as {reason} inside the localized sentence.
