@@ -156,3 +156,63 @@ describe('generateDyeInfoCard — name weight', () => {
     }
   });
 });
+
+// 2026-08-29: the header band is the dye's own colour, so its ink is picked
+// per dye by the frame's band-ink law — near-black on the ~60 light dyes
+// (Pure White, Snow White, Honey Yellow …), white on the rest. Before this
+// every band took white ink and a Pure White sheet had an invisible title.
+describe('generateDyeInfoCard — band ink', () => {
+  const pureWhite = createMockDye({
+    id: 101,
+    itemID: 13114,
+    stainID: 101,
+    name: 'Pure White',
+    hex: '#F9F8F4',
+    rgb: { r: 249, g: 248, b: 244 },
+    hsv: { h: 48, s: 2, v: 98 },
+    category: 'Special',
+  });
+  const lightOptions: DyeInfoCardOptions = {
+    ...defaultOptions,
+    dye: pureWhite,
+    localizedName: 'Pure White',
+    localizedCategory: 'Special',
+    stainID: 101,
+  };
+
+  it('sets the name, stain readout, category and chip label in near-black ink on a light dye', () => {
+    const svg = generateDyeInfoCard(lightOptions);
+
+    expect(svg).toMatch(/<text[^>]*fill="#0A0A0A"[^>]*>Pure White<\/text>/);
+    expect(svg).toMatch(/<text[^>]*fill="rgba\(10,10,10,0\.85\)"[^>]*>STAIN 101<\/text>/);
+    expect(svg).toMatch(/<text[^>]*fill="rgba\(10,10,10,0\.72\)"[^>]*>Special<\/text>/);
+    expect(svg).toMatch(/<text[^>]*fill="rgba\(10,10,10,0\.85\)"[^>]*>\/DYE INFO<\/text>/);
+  });
+
+  it('leaves no white ink on a light band — the chip glyph included', () => {
+    const svg = generateDyeInfoCard(lightOptions);
+
+    // The three white tiers the band used to hard-code; the glyph took the
+    // 0.85 one as both its ink and its accent.
+    expect(svg).not.toContain('rgba(255,255,255,0.85)');
+    expect(svg).not.toContain('rgba(255,255,255,0.72)');
+    expect(svg).not.toMatch(/<text[^>]*fill="#FFFFFF"[^>]*>Pure White<\/text>/);
+  });
+
+  it('keeps white ink on a dark dye', () => {
+    const svg = generateDyeInfoCard(defaultOptions);
+
+    expect(svg).toMatch(/<text[^>]*fill="#FFFFFF"[^>]*>Dalamud Red<\/text>/);
+    expect(svg).toMatch(/<text[^>]*fill="rgba\(255,255,255,0\.85\)"[^>]*>STAIN 10<\/text>/);
+    expect(svg).toMatch(/<text[^>]*fill="rgba\(255,255,255,0\.72\)"[^>]*>Reds<\/text>/);
+    expect(svg).not.toContain('#0A0A0A');
+  });
+
+  it('picks the ink from the dye colour, not the card theme', () => {
+    const light = generateDyeInfoCard({ ...lightOptions, theme: 'light' });
+    const dark = generateDyeInfoCard({ ...defaultOptions, theme: 'light' });
+
+    expect(light).toMatch(/<text[^>]*fill="#0A0A0A"[^>]*>Pure White<\/text>/);
+    expect(dark).toMatch(/<text[^>]*fill="#FFFFFF"[^>]*>Dalamud Red<\/text>/);
+  });
+});
