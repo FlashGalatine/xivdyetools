@@ -56,7 +56,7 @@ const ENVS = ['production', 'beta'] as const;
 const VIEWPORTS = ['m', 't', 'd'] as const;
 const DWELL_CAP_S = 1800;
 const VER_MAX_LENGTH = 16;
-const VER_PATTERN = /^\d+\.\d+\.\d+/;
+const VER_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?$/;
 const INVALID = 'invalid';
 
 type Props = Record<string, unknown>;

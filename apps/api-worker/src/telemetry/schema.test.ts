@@ -160,4 +160,13 @@ describe('parseTelemetryBatch', () => {
     expect(parsed!.points[0].blobs[8]).toBe('beta');
     expect(parsed!.points[0].blobs[7]).toBe('5.0.3-beta.20260');
   });
+
+  it("rejects a ver with trailing free text as 'invalid'", () => {
+    const parsed = parseTelemetryBatch(
+      batch([{ n: 'tool_view', p: { tool: 'harmony', entry: 'nav' } }], {
+        ver: '5.0.3 free text',
+      }),
+    );
+    expect(parsed!.points[0].blobs[7]).toBe('invalid');
+  });
 });

@@ -83,7 +83,7 @@ describe('POST /v1/telemetry', () => {
     expect(((await notBatch.json()) as any).error).toBe('INVALID_BODY');
   });
 
-  it('answers 413 for a body over 16 KB without reading it all', async () => {
+  it('answers 413 INVALID_BODY for a body over 16 KB', async () => {
     const huge = JSON.stringify({ ...VALID, pad: 'x'.repeat(17 * 1024) });
     const res = await post(huge).res;
     expect(res.status).toBe(413);

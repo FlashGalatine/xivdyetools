@@ -106,6 +106,7 @@ Route registration in `routes/dyes.ts` is order-sensitive: static paths (`/searc
 | `UNIVERSALIS_API_BASE` | Var | `https://universalis.app/api/v2` — upstream for the proxy |
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Var | Proxy's per-IP memory limiter — `30`/`60` in production, `60`/`60` in dev |
 | `XIVAPI_BASE` / `XIVAPI_VERSION` / `XIVAPI_SCHEMA` | Var | `/v1/chara/*` upstream (`https://v2.xivapi.com`), the game-version pin (`latest` or a `/api/version` key — ALSO the row-cache namespace; after a patch search 503s on the new key until ingested, so roll forward by hand once a probe answers 200), optional `exdschema@2:rev:<sha>` schema pin |
+| `ANALYTICS` | Analytics Engine dataset | `xivdyetools_web_analytics` (prod) / `xivdyetools_web_analytics_dev` (top-level dev); absent → the route accepts and discards |
 
 Routes (production env only): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app` (all custom domains). The top-level env is the routeless `xivdyetools-api-worker-dev` worker. Dev runs on port `8790`. Compatibility date `2024-12-01`. **No `nodejs_compat`** — the worker uses zero Node.js APIs (per ARCH-001 comment in `wrangler.toml`).
 

@@ -26,12 +26,11 @@ import { MAX_BODY_BYTES, parseTelemetryBatch, type TelemetryDataPoint } from './
 
 const telemetryRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// eslint-disable-next-line @typescript-eslint/require-await -- writeDataPoint is synchronous; async so the call site can waitUntil it
-async function writePoints(
+function writePoints(
   analytics: AnalyticsEngineDataset,
   points: TelemetryDataPoint[],
   log: ReturnType<typeof getLogger> | undefined,
-): Promise<void> {
+): void {
   for (const point of points) {
     try {
       analytics.writeDataPoint(point);
@@ -72,7 +71,9 @@ telemetryRouter.post('/', async (c) => {
 
   const analytics = c.env.ANALYTICS;
   if (analytics && parsed.points.length > 0) {
-    c.executionCtx.waitUntil(writePoints(analytics, parsed.points, log));
+    c.executionCtx.waitUntil(
+      Promise.resolve().then(() => writePoints(analytics, parsed.points, log)),
+    );
   }
 
   return c.body(null, 204);
