@@ -1,8 +1,9 @@
 /**
  * /dye info — the confirmed 11B Sheet (Turn 11), 400×350.
  *
- * Header band in the dye's own colour (pill goes mono on it — the accent is
- * unpredictable against an arbitrary hue), a 2-col numeric grid, SRC/MKT
+ * Header band in the dye's own colour (its ink is `bandInk(dye.hex)` — white
+ * on a dark dye, near-black on a light one — and the pill goes mono on it:
+ * the accent is unpredictable against an arbitrary hue), a 2-col numeric grid, SRC/MKT
  * rows, and the nearest-dyes strip: the one thing a dye page should answer
  * next, and the only content not already in the embed. The 350 cap cost the
  * COST row — price rides SRC. The Spectrum item name stays verbatim EN, like
@@ -18,6 +19,8 @@ import { panelGlyph } from './icons/tool-icons.js';
 import {
   CARD_WIDTH,
   CARD_TYPE,
+  bandInk,
+  pillInkOnDye,
   cardShell,
   cardTheme,
   cardText,
@@ -85,10 +88,6 @@ export interface DyeInfoCardOptions {
 const H = 350;
 const PAD = 15;
 
-/** White ink over an arbitrary dye colour needs a scrim, not a guess. */
-const BAND_INK = 'rgba(255,255,255,0.85)';
-const BAND_INK_DIM = 'rgba(255,255,255,0.72)';
-
 /**
  * Generate the /dye info card (11B, 400×350).
  */
@@ -106,24 +105,29 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
     commandLabel = '/DYE INFO',
   } = options;
   const theme: CardTheme = cardTheme(options.theme);
+  // The band is the dye's own colour, so its ink is picked per dye (white on
+  // Dalamud Red, near-black on Pure White); the pill's ink is judged through
+  // its scrim separately.
+  const ink = bandInk(dye.hex);
+  const pillInk = pillInkOnDye(dye.hex);
   // /dye is not one of the nine tools — it takes the bare chip, mono on the
   // dye-coloured ground (the accent is unpredictable against an arbitrary hue).
   const commandGlyph =
     options.commandGlyph !== undefined
       ? options.commandGlyph
-      : panelGlyph('dye', { size: 13, ink: BAND_INK, accent: BAND_INK });
+      : panelGlyph('dye', { size: 13, ink: pillInk, accent: pillInk });
   const parts: string[] = [];
 
   // --- Header band: the dye's own colour, 78 px, square top corners under the shell radius
   parts.push(
     `<path d="M 0 16 Q 0 0 16 0 H ${CARD_WIDTH - 16} Q ${CARD_WIDTH} 0 ${CARD_WIDTH} 16 V 78 H 0 Z" fill="${escapeXml(dye.hex)}"/>`
   );
-  const chip = commandChip(14, 11, commandLabel, theme, { glyph: commandGlyph, onDye: true });
+  const chip = commandChip(14, 11, commandLabel, theme, { glyph: commandGlyph, onDye: dye.hex });
   parts.push(chip.svg);
   if (stainID != null) {
     parts.push(
       cardText(CARD_WIDTH - 14, 24, `${labels.stain} ${stainID}`, {
-        fill: BAND_INK,
+        fill: ink.onMid,
         size: CARD_TYPE.value,
         font: 'mono',
         anchor: 'end',
@@ -132,7 +136,7 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
   }
   parts.push(
     cardText(15, 53, fitText(localizedName, CARD_WIDTH - 30, 23, 'display'), {
-      fill: '#FFFFFF',
+      fill: ink.on,
       size: 23,
       font: 'display',
       weight: 700, // the dye's name is the headline — bold, like the nearest-dye captions
@@ -140,7 +144,7 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
   );
   parts.push(
     cardText(16, 70, localizedCategory, {
-      fill: BAND_INK_DIM,
+      fill: ink.onDim,
       size: 12,
       font: 'mono',
     })

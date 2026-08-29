@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — 2026-08-29
+
+- `/dye info` sheet (11B): the header band's ink is picked per dye instead of being always white. `frame.ts` gains `bandInk(hex)` — near-black (`#0A0A0A`, with 85 % / 72 % tiers) or white, whichever measures the higher WCAG contrast against the dye; the same law as og-worker's band, so the bot card and the OG card agree per dye — and `pillInkOnDye(hex)`, which judges the command pill's ink against the dye seen through the pill's 34 % black scrim (a mid-tone such as Qiqirn Brown takes dark ink on the band but white inside the pill). `commandChip`'s `onDye` option is now the ground hex rather than a boolean. 59 of the 125 dyes (Pure White, Snow White, Honey Yellow, the pastels, most metallics …) now render a readable title, stain readout, category and pill; dark dyes are byte-identical to before. New `frame.test.ts` pins the law and its crossover; `dye-info-card.test.ts` pins the inks on Pure White and Dalamud Red.
+
 ### Changed — 2026-08-29
 
 - `/dye info` sheet (11B): the dye's name and each nearest-dye caption are set in bold (700; the title was 600, the captions 500) so the names read before the numbers. Both display and body faces are variable-weight, so no font file changes. `dye-info-card.test.ts` pins the weight.

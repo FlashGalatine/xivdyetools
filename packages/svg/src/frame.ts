@@ -17,7 +17,7 @@
  */
 
 import { classifyBandTier, type MatchingMethod } from '@xivdyetools/core';
-import { escapeXml, estimateTextWidth, num } from './base.js';
+import { escapeXml, estimateTextWidth, getLuminance, hexToRgb, num } from './base.js';
 import { GLYPH_ACCENT_LIGHT } from './icons/tool-icons.js';
 
 // ============================================================================
@@ -226,10 +226,12 @@ export interface CommandChipOptions {
    */
   glyph?: string | null;
   /**
-   * On a dye-coloured ground the pill is a dark scrim and the glyph goes
-   * mono (accent = ink) — #FF6257 is unpredictable against an arbitrary hue.
+   * The hex of a dye-coloured ground the pill sits on. The pill becomes a
+   * dark scrim whose ink follows `pillInkOnDye(hex)` — white on a dark dye,
+   * near-black on a light one — and the glyph goes mono (accent = ink):
+   * #FF6257 is unpredictable against an arbitrary hue.
    */
-  onDye?: boolean;
+  onDye?: string;
 }
 
 /** Inject x/y into a rendered glyph's opening `<svg` tag so it can be placed. */
@@ -248,7 +250,7 @@ export function commandChip(
   theme: CardTheme,
   options: CommandChipOptions = {},
 ): { svg: string; width: number; height: number } {
-  const { glyph = null, onDye = false } = options;
+  const { glyph = null, onDye = null } = options;
   const padX = 8;
   const glyphSize = 13;
   const gap = 6;
@@ -256,8 +258,8 @@ export function commandChip(
   const labelW = Math.ceil(estimateTextWidth(label, CARD_TYPE.label * 0.62) + label.length * 1.1);
   const width = padX * 2 + (glyph ? glyphSize + gap : 0) + labelW;
 
-  const bg = onDye ? 'rgba(0,0,0,0.34)' : theme.pillBg;
-  const ink = onDye ? 'rgba(255,255,255,0.85)' : theme.pillInk;
+  const bg = onDye ? `rgba(0,0,0,${PILL_SCRIM_ALPHA})` : theme.pillBg;
+  const ink = onDye ? pillInkOnDye(onDye) : theme.pillInk;
 
   let svg = `<rect x="${x}" y="${y}" width="${width}" height="${chipH}" rx="6" fill="${escapeXml(bg)}"/>`;
   let tx = x + padX;
@@ -272,6 +274,51 @@ export function commandChip(
     letterSpacing: 1.1,
   });
   return { svg, width, height: chipH };
+}
+
+// ============================================================================
+// Band ink — text set directly on a dye colour
+// ============================================================================
+
+/** The ink tiers a dye-coloured band hands its text. */
+export interface BandInk {
+  /** Full strength — the headline */
+  on: string;
+  /** 85 % — readouts */
+  onMid: string;
+  /** 72 % — captions */
+  onDim: string;
+}
+
+/**
+ * Ink for text set directly on a dye colour: near-black or white, whichever
+ * MEASURES the higher WCAG contrast against the ground — the same law as
+ * og-worker's band, so the bot card and the OG card agree per dye. About 60
+ * of the 125 dyes (Pure White, Snow White, Honey Yellow, the pastels, most
+ * metallics) take the dark ink; a fixed white ink was invisible on them.
+ */
+export function bandInk(hex: string): BandInk {
+  const l = getLuminance(hex);
+  const preferDark = (l + 0.05) / 0.05 >= 1.05 / (l + 0.05);
+  return preferDark
+    ? { on: '#0A0A0A', onMid: 'rgba(10,10,10,0.85)', onDim: 'rgba(10,10,10,0.72)' }
+    : { on: '#FFFFFF', onMid: 'rgba(255,255,255,0.85)', onDim: 'rgba(255,255,255,0.72)' };
+}
+
+/** The command pill's black scrim over a dye ground. */
+const PILL_SCRIM_ALPHA = 0.34;
+
+/**
+ * Ink for the command pill (and its glyph) on a dye ground. The pill is a
+ * black scrim, so the ink is judged against the dye seen THROUGH it (sRGB
+ * compositing, as resvg does it), not the bare dye — a mid-tone that takes
+ * dark ink on the band still wants white inside the darkened pill.
+ */
+export function pillInkOnDye(hex: string): string {
+  const { r, g, b } = hexToRgb(hex);
+  const keep = 1 - PILL_SCRIM_ALPHA;
+  const under = [r, g, b].map((c) => Math.round(c * keep).toString(16).padStart(2, '0')).join('');
+  return bandInk(`#${under}`).onMid;
 }
 
 // ============================================================================
