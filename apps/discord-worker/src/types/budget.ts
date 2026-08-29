@@ -148,7 +148,7 @@ export interface QuickPickPreset {
   /** Display name */
   name: string;
 
-  /** The expensive dye's item ID */
+  /** The expensive dye's stainID (1–254; the 5.0 value space, resolved by resolveTargetDye) */
   targetDyeId: number;
 
   /** Description of why this is a popular pick */

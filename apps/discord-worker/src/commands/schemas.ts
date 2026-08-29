@@ -997,9 +997,9 @@ export const commands = [
           },
           {
             name: 'dye3',
-            description: 'Third dye (optional)',
+            description: 'Third dye (required)',
             type: OptionType.STRING,
-            required: false,
+            required: true,
             autocomplete: true,
           },
           {
@@ -1012,6 +1012,13 @@ export const commands = [
           {
             name: 'dye5',
             description: 'Fifth dye (optional)',
+            type: OptionType.STRING,
+            required: false,
+            autocomplete: true,
+          },
+          {
+            name: 'dye6',
+            description: 'Sixth dye (optional)',
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
@@ -1099,6 +1106,13 @@ export const commands = [
           {
             name: 'dye5',
             description: 'Fifth dye',
+            type: OptionType.STRING,
+            required: false,
+            autocomplete: true,
+          },
+          {
+            name: 'dye6',
+            description: 'Sixth dye',
             type: OptionType.STRING,
             required: false,
             autocomplete: true,

@@ -19,6 +19,7 @@ export {
 export {
   findBudgetLedger,
   getDyeById,
+  resolveTargetDye,
   getDyeByName,
   getDyeAutocomplete,
 } from './budget-calculator.js';

@@ -4,6 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { dyeService, initializeLocale } from '@xivdyetools/bot-logic';
 import { getDyeById, getDyeByName, getDyeAutocomplete } from './budget-calculator.js';
+import * as budgetCalc from './budget-calculator.js';
 
 describe('budget-calculator.ts', () => {
   describe('getDyeById', () => {
@@ -88,6 +89,39 @@ describe('budget-calculator.ts', () => {
       choices.forEach((choice) => {
         expect(choice.name.toLowerCase()).toContain('red');
       });
+    });
+
+    // 2026-08-29: 5.0 is stainID-first everywhere a user can see an id. The
+    // option value used to be the legacy item id (Pure White showed up as
+    // `target_dye: 13114` in the command echo); it is the stainID now.
+    it('offers stainIDs as choice values, never legacy item ids', () => {
+      const pureWhite = getDyeAutocomplete('pure white').find((c) => c.name.startsWith('Pure White'));
+      expect(pureWhite?.value).toBe('101');
+      for (const choice of getDyeAutocomplete('')) {
+        const value = Number(choice.value);
+        expect(value).toBeGreaterThanOrEqual(1);
+        expect(value).toBeLessThanOrEqual(254);
+      }
+    });
+  });
+
+  // 2026-08-29: a typed or autocompleted number may be a stainID (1–254, the
+  // 5.0 value space) or a legacy item id (≥ 5729, what 4.x clients and old
+  // habits still send). The two ranges are disjoint, so both resolve.
+  describe('resolveTargetDye', () => {
+    it('resolves a stainID', () => {
+      expect(budgetCalc.resolveTargetDye(101)?.name).toBe('Pure White');
+    });
+
+    it('still resolves a legacy item id', () => {
+      expect(budgetCalc.resolveTargetDye(13114)?.name).toBe('Pure White');
+      expect(budgetCalc.resolveTargetDye(5763)?.name).toBe('Ul Brown');
+    });
+
+    it('returns null for the gap between the two ranges and for unknown ids', () => {
+      expect(budgetCalc.resolveTargetDye(999)).toBeNull();
+      expect(budgetCalc.resolveTargetDye(0)).toBeNull();
+      expect(budgetCalc.resolveTargetDye(-5)).toBeNull();
     });
 
     // 2026-08-20 i18n audit, F-02

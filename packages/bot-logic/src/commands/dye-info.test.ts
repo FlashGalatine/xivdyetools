@@ -50,6 +50,19 @@ describe('executeDyeInfo', () => {
     expect(result.embed.description).toContain('xivdyetools.app');
   });
 
+  // 2026-08-29: the link used to be `/dye?stain=…`, but the web app has no
+  // /dye page and reads `dye` / `dyes`, never `stain` — it opened the app with
+  // nothing selected. The Comparison tool is the app's single-dye view.
+  it('links to the web app comparison tool by stainID', async () => {
+    const result = await executeDyeInfo({ dye: snowWhite, locale: 'en' });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(snowWhite.stainID).toBe(1);
+    expect(result.embed.description).toBe('https://xivdyetools.app/comparison?dyes=1');
+  });
+
   it('sets embed color from dye hex', async () => {
     const result = await executeDyeInfo({ dye: snowWhite, locale: 'en' });
 

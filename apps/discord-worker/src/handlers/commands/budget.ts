@@ -30,7 +30,7 @@ import { setPreference } from '../../services/preferences.js';
 import { MATCHING_METHODS, isValidMatchingMethod, type UserPreferences } from '../../types/preferences.js';
 import {
   findBudgetLedger,
-  getDyeById,
+  resolveTargetDye,
   getDyeByName,
   getDyeAutocomplete,
   isUniversalisEnabled,
@@ -183,7 +183,7 @@ async function handleFindSubcommand(
   // entirely numeric — parseInt('255 Brown') would otherwise parse as 255.
   const isNumericInput = /^\s*\d+\s*$/.test(targetDyeInput);
   const targetDye = isNumericInput
-    ? getDyeById(parseInt(targetDyeInput, 10))
+    ? resolveTargetDye(parseInt(targetDyeInput, 10))
     : getDyeByName(targetDyeInput, t.getLocale());
 
   if (!targetDye || targetDye.itemID <= 0) {

@@ -126,7 +126,7 @@ export async function findBudgetLedger(
   const matchLine = Math.max(2, Math.min(20, options.matchLine ?? DEFAULT_MATCH_LINE));
   const threshold = method === 'ciede2000' ? matchLine : BAND_VOCABULARY.match[method].cuts[1];
 
-  const targetDye = dyeService.getDyeById(targetDyeId);
+  const targetDye = resolveTargetDye(targetDyeId);
   if (!targetDye) {
     throw new Error(`Dye not found: ${targetDyeId}`);
   }
@@ -300,6 +300,21 @@ export function getDyeById(id: number): Dye | null {
 }
 
 /**
+ * Resolve a numeric target the user (or a quick pick) handed us.
+ *
+ * 5.0 is stainID-first: the autocomplete offers stainIDs (1–254) and quick
+ * picks are keyed by them. A legacy item id (≥ 5729 — what 4.x clients and
+ * old habits still type) must keep resolving, and the two ranges are disjoint
+ * (the Stain sheet is a byte; item ids start at 5729), so the number itself
+ * says which lookup applies. Anything in the gap, zero or negative is nothing.
+ */
+export function resolveTargetDye(id: number): Dye | null {
+  if (!Number.isInteger(id) || id <= 0) return null;
+  if (id <= 254) return dyeService.getByStainId(id);
+  return dyeService.getDyeById(id);
+}
+
+/**
  * Get a dye by name (exact match, case-insensitive)
  *
  * BUG-032 (2026-07-18 audit): Facewear entries (synthetic negative itemIDs)
@@ -316,17 +331,21 @@ export function getDyeByName(name: string, locale: LocaleCode = 'en'): Dye | nul
  * Get autocomplete suggestions for dye names.
  *
  * F-02: matches English OR the locale's name and labels with the localized
- * name + category; `value` stays the itemID.
+ * name + category. `value` is the stainID (2026-08-29 — it used to be the
+ * legacy item id, which showed up verbatim in the command echo); the handler
+ * resolves either range through resolveTargetDye.
  */
 export function getDyeAutocomplete(
   query: string,
   limit: number = 25,
   locale: LocaleCode = 'en',
 ): Array<{ name: string; value: string }> {
-  const matches = searchDyesByName(query, locale).filter((dye) => dye.itemID > 0);
+  const matches = searchDyesByName(query, locale).filter(
+    (dye) => dye.itemID > 0 && dye.stainID != null,
+  );
 
   return matches.slice(0, limit).map((dye) => ({
     name: `${getLocalizedDyeName(dye.itemID, dye.name, locale)} (${getLocalizedCategory(dye.category, locale)})`,
-    value: String(dye.itemID),
+    value: String(dye.stainID),
   }));
 }

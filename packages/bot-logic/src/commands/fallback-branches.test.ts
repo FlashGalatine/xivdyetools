@@ -132,7 +132,8 @@ describe('executeDyeInfo — optional metadata', () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.embed.description).toContain(`stain=${snowWhite.stainID}`);
+    // the web app's single-dye view is the Comparison tool (`?dyes=` stainIDs)
+    expect(result.embed.description).toContain(`comparison?dyes=${snowWhite.stainID}`);
   });
 
   it('names the consolidated item for a consolidated dye', async () => {

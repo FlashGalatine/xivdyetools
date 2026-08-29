@@ -140,7 +140,7 @@ export async function executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult
     // One line: the picture is self-contained
     const shareUrl =
       dye.stainID != null
-        ? `https://xivdyetools.app/dye?stain=${dye.stainID}`
+        ? `https://xivdyetools.app/comparison?dyes=${dye.stainID}`
         : 'https://xivdyetools.app';
     const embed: EmbedData = {
       title: localizedName,
