@@ -143,7 +143,7 @@ The **5.0 command set** — the Discord half of the XIV Dye Tools 5.0 redesign (
 
 ### Known issues (not fixed in this release — deferred to a 5.1 discord-worker release, decision 2026-08-16)
 
-- `/preset submit` and `/preset edit` still send `dye.id` (the legacy itemID) and validate 2–5 dyes, while presets-api 5.0 accepts **stainIDs (1–254) and 3–6 dyes** and rejects legacy IDs loudly ("looks like a legacy item ID"). Bot-side preset submission/editing therefore fails against the migrated API until the handler is moved to `dye.stainID` — tracked as the open "presets stainID P1" item; browsing/voting/favorites are unaffected.
+- **Resolved 2026-08-29 — see Unreleased.** `/preset submit` and `/preset edit` used to send `dye.id` (the legacy itemID) and validate 2–5 dyes, while presets-api 5.0 accepts **stainIDs (1–254) and 3–6 dyes** and rejects legacy IDs loudly ("looks like a legacy item ID"). Bot-side preset submission/editing therefore fails against the migrated API until the handler is moved to `dye.stainID` — tracked as the open "presets stainID P1" item; browsing/voting/favorites are unaffected.
 
 ## [4.7.0] - 2026-07-19
 
