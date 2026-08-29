@@ -1,6 +1,6 @@
 # XIV Dye Tools Discord Bot - Privacy Policy
 
-**Last Updated**: August 21, 2026
+**Last Updated**: August 29, 2026
 
 ## 1. Introduction
 
@@ -39,7 +39,7 @@ To keep the Bot healthy and to power the `/stats` dashboard we record, for each 
 
 | Data | Where | Retention |
 |------|-------|-----------|
-| Command name, whether it succeeded, whether it ran in a server or a DM (`guild` / `dm` — never the server's ID), and your Discord User ID (used only to count unique users) | Cloudflare Workers Analytics Engine | Cloudflare's Analytics Engine retention window (3 months at the time of writing) |
+| Command name and subcommand, whether it succeeded and — if not — a coarse failure class (rate-limited, market data unavailable, preset service unavailable, image could not be read, rendering failed, unknown; never an error message), how long it took, whether it ran in a server or a DM (`guild` / `dm` — never the server's ID), your Discord client language (one of the six the Bot supports, or "other"), which copy button you pressed (hex / RGB / HSV), and your Discord User ID (used only to count unique users) | Cloudflare Workers Analytics Engine | Cloudflare's Analytics Engine retention window (3 months at the time of writing) |
 | Aggregate counters — total commands, per-command counts, successes/failures (no user data) | Cloudflare KV | 30 days (automatic TTL) |
 | One key per user per day (`usertrack:{date}:{userId}`, value `1`) so daily active users can be counted | Cloudflare KV | 30 days (automatic TTL) |
 
@@ -76,7 +76,7 @@ When you use `/match_image`, your uploaded image is:
 | Community presets | User ID, Username, Preset content |
 | Voting system | User ID, Preset ID |
 | Prevent abuse | User ID, Rate limit counters |
-| Usage statistics (`/stats`) | Command name, success flag, server-or-DM flag, User ID (counted, never listed) |
+| Usage statistics (`/stats`) | Command name and subcommand, outcome class, latency, server-or-DM flag, client language bucket, copy-button kind, User ID (counted, never listed) |
 
 ## 5. Data Storage
 

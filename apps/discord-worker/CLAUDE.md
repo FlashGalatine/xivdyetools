@@ -104,7 +104,8 @@ src/
 │                                  # The modals/ placeholder (index.ts only, never wired to a modal) was
 │                                  # removed 2026-08-18 — don't reintroduce it without a real consumer.
 ├── services/
-│   ├── analytics.ts               # KV counters + Analytics Engine writes
+│   ├── analytics.ts               # KV counters + Analytics Engine writes (Tier A column layout)
+│   ├── command-trace.ts           # Per-interaction trace: traced ctx, outcome marks, classifier
 │   ├── rate-limiter.ts            # Upstash-first sliding window with KV fallback
 │   ├── preset-favorites.ts        # Per-user preset favourites in KV (/preset favorite add|remove|list)
 │   ├── preferences.ts             # User preferences (race/clan, world, language, matching, theme)
@@ -197,7 +198,7 @@ Always prefer the Service Binding (`env.PRESETS_API.fetch(req)`) — zero HTTP o
 
 ### Analytics Tracking
 
-`trackCommandWithKV(env, { commandName, userId, guildId, success })` increments KV counters (real-time `/stats` data) and writes to Analytics Engine (`ANALYTICS` binding) for long-term aggregation. Always called from the `finally` block.
+Tier A (2026-08-29, spec `docs/superpowers/specs/2026-08-29-bot-analytics-tier-a-design.md`): `handleCommand()` starts a `CommandTrace` (`services/command-trace.ts`) before the rate-limit check and hands every handler a **traced `ExecutionContext`** whose `waitUntil` also records the promise on the trace; the `finally` calls `finishCommandTrace()`, which drains those promises and then writes the datapoint through `trackCommandWithKV()` — so `success`/latency describe the deferred work, not the deferred ack. Handlers never finish a trace; a catch that ends the command with an error embed calls `markCommandOutcome(interaction, classifyError(error[, 'render']))`. Columns: blobs 1–5 unchanged (command, userId, guild/dm, success, **outcome class**), blob6 subcommand/button kind, blob7 locale bucket, blob8 `command|button`, double2 real latency. Copy-button clicks are AE-only `kind=button` rows. **Never record an option value, hex, search text, world, image name, guild/channel id or error message** — `PRIVACY_POLICY.md` §2 promises it. Queries: `docs/operations/ANALYTICS_QUERIES.md` (Discord section).
 
 ### Autocomplete
 
