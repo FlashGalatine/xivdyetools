@@ -587,7 +587,7 @@ async function processImageExtraction(
       },
     });
   } catch (error) {
-    markCommandOutcome(interaction, classifyError(error));
+    markCommandOutcome(interaction, classifyError(error, 'unknown', { imageInput: true }));
     if (logger) {
       logger.error('Extractor image command error', error instanceof Error ? error : undefined);
     }

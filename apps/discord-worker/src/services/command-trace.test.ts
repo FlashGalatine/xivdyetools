@@ -196,6 +196,15 @@ describe('helpers', () => {
     expect(subcommandOf(interaction({ data: { name: 'about' } }))).toBe('');
   });
 
+  it('subcommandOf records a subcommand group as <group>_<sub>', () => {
+    expect(subcommandOf(interaction({
+      data: { name: 'preset', options: [{ name: 'favorite', type: 2, options: [{ name: 'add', type: 1, options: [] }] }] },
+    }))).toBe('favorite_add');
+    expect(subcommandOf(interaction({
+      data: { name: 'preset', options: [{ name: 'favorite', type: 2, options: [] }] },
+    }))).toBe('favorite_');
+  });
+
   it('trackedCommandName keeps the extractor split and passes everything else through', () => {
     expect(trackedCommandName(interaction({ data: { name: 'extractor', options: [{ name: 'image', type: 1 }] } }))).toBe('extractor_image');
     expect(trackedCommandName(interaction({ data: { name: 'dye', options: [{ name: 'info', type: 1 }] } }))).toBe('dye');
@@ -209,17 +218,19 @@ describe('helpers', () => {
   });
 
   it.each([
-    [new UniversalisError(503, 'x'), undefined, 'upstream_universalis'],
-    [new PresetAPIError(500, 'x'), undefined, 'upstream_presets'],
-    [new Error('SSRF blocked'), undefined, 'image_input'],
-    [new Error('Only Discord CDN attachments'), undefined, 'image_input'],
-    [new Error('Image too large'), undefined, 'image_input'],
-    [new Error('Unsupported format'), undefined, 'image_input'],
-    [new Error('fetch timeout'), undefined, 'image_input'],
-    [new Error('boom'), 'render', 'render'],
-    [new Error('boom'), undefined, 'unknown'],
-    ['not an error', undefined, 'unknown'],
-  ] as const)('classifyError(%o, %s) → %s', (error, fallback, expected) => {
-    expect(classifyError(error, fallback)).toBe(expected);
+    [new UniversalisError(503, 'x'), undefined, {}, 'upstream_universalis'],
+    [new PresetAPIError(500, 'x'), undefined, {}, 'upstream_presets'],
+    [new Error('SSRF blocked'), undefined, { imageInput: true }, 'image_input'],
+    [new Error('Only Discord CDN attachments'), undefined, { imageInput: true }, 'image_input'],
+    [new Error('Image too large'), undefined, { imageInput: true }, 'image_input'],
+    [new Error('Unsupported format'), undefined, { imageInput: true }, 'image_input'],
+    [new Error('fetch timeout'), undefined, { imageInput: true }, 'image_input'],
+    [new Error('Invalid SVG format'), 'render', {}, 'render'],
+    [new Error('fetch timeout'), undefined, {}, 'unknown'],
+    [new Error('boom'), 'render', {}, 'render'],
+    [new Error('boom'), undefined, {}, 'unknown'],
+    ['not an error', undefined, {}, 'unknown'],
+  ] as const)('classifyError(%o, %s, %o) → %s', (error, fallback, options, expected) => {
+    expect(classifyError(error, fallback, options)).toBe(expected);
   });
 });

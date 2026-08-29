@@ -1640,6 +1640,19 @@ describe('index.ts', () => {
         expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, expect.objectContaining({ success: false, outcome: 'unknown' }));
       });
 
+      it('writes no datapoint when the interaction carries no command name', async () => {
+        const body = { type: InteractionType.APPLICATION_COMMAND, data: {}, user: { id: 'user-123' } };
+        await verified(body);
+        const { trackCommandWithKV } = await import('./services/analytics.js');
+        vi.mocked(trackCommandWithKV).mockClear();
+        const collected: Promise<unknown>[] = [];
+        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+
+        await app.fetch(post(body), mockEnv, ctx);
+        await Promise.all(collected);
+        expect(trackCommandWithKV).not.toHaveBeenCalled();
+      });
+
       it('writes a button datapoint for copy buttons and nothing for other buttons', async () => {
         const { handleButtonInteraction } = await import('./handlers/buttons/index.js');
         vi.mocked(handleButtonInteraction).mockResolvedValue(new Response());

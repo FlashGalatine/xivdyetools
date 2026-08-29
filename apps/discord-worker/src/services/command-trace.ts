@@ -174,13 +174,24 @@ const IMAGE_INPUT_MARKERS = ['SSRF', 'Discord CDN', 'too large', 'format', 'time
 /**
  * Map a thrown value onto an outcome class. `fallback` is what an
  * unrecognised Error means at the call site (a render catch passes 'render').
- * The message is inspected only for the extractor's known markers — it is
- * never recorded.
+ * The message is inspected for the extractor's known markers only when
+ * `options.imageInput` is set — those markers ("format", "timeout", …) are
+ * generic enough to misclassify a render/API error from a command that never
+ * touched an image, so callers with no image input must not run the scan.
+ * The message itself is never recorded.
  */
-export function classifyError(error: unknown, fallback: OutcomeClass = 'unknown'): OutcomeClass {
+export function classifyError(
+  error: unknown,
+  fallback: OutcomeClass = 'unknown',
+  options: { imageInput?: boolean } = {},
+): OutcomeClass {
   if (error instanceof UniversalisError) return 'upstream_universalis';
   if (error instanceof PresetAPIError) return 'upstream_presets';
-  if (error instanceof Error && IMAGE_INPUT_MARKERS.some((m) => error.message.includes(m))) {
+  if (
+    options.imageInput &&
+    error instanceof Error &&
+    IMAGE_INPUT_MARKERS.some((m) => error.message.includes(m))
+  ) {
     return 'image_input';
   }
   return error instanceof Error ? fallback : 'unknown';
@@ -191,10 +202,16 @@ export function bucketLocale(locale: string | undefined): string {
   return (locale && discordLocaleToLocaleCode(locale)) || 'other';
 }
 
-/** The subcommand name when the first option is a subcommand (type 1, or untyped without a value). */
+/**
+ * The subcommand name when the first option is a subcommand (type 1, or
+ * untyped without a value). A subcommand GROUP (type 2 — `/preset favorite
+ * add`, `/preferences filters …`) is recorded as `<group>_<sub>` so it isn't
+ * flattened to `''`.
+ */
 export function subcommandOf(interaction: DiscordInteraction): string {
   const first = interaction.data?.options?.[0];
   if (!first) return '';
+  if (first.type === 2) return `${first.name}_${first.options?.[0]?.name ?? ''}`;
   const isSubcommand = first.type === 1 || (first.type === undefined && first.value === undefined);
   return isSubcommand ? first.name : '';
 }

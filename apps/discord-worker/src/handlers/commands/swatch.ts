@@ -215,7 +215,7 @@ async function processSwatchCommand(
     }
     input.fileText = fileText;
   } catch (error) {
-    markCommandOutcome(interaction, classifyError(error, 'render'));
+    markCommandOutcome(interaction, classifyError(error, 'render', { imageInput: true }));
     if (logger) logger.error('Swatch download error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],

@@ -660,14 +660,22 @@ async function handleCommand(
   // Tier A telemetry: the trace is started before the rate-limit check so a
   // limited request is still counted, and finished in the finally below once
   // the handler's background work (captured through `handlerCtx`) settles.
-  const trace = startCommandTrace(interaction, {
-    command: trackedCommandName(interaction) ?? 'unknown',
-    subcommand: subcommandOf(interaction),
-    userId,
-    guildId: interaction.guild_id,
-    locale: bucketLocale(interaction.locale),
-  });
-  const handlerCtx = tracedExecutionContext(ctx, trace);
+  // No trace (and no `cmd:unknown` KV counter) when the interaction carries
+  // no command name — the handler still gets a working ExecutionContext,
+  // just an untraced one.
+  const trackedName = trackedCommandName(interaction);
+  const handlerCtx = trackedName
+    ? tracedExecutionContext(
+        ctx,
+        startCommandTrace(interaction, {
+          command: trackedName,
+          subcommand: subcommandOf(interaction),
+          userId,
+          guildId: interaction.guild_id,
+          locale: bucketLocale(interaction.locale),
+        }),
+      )
+    : ctx;
 
   // Check rate limit (skip for utility commands). Aliases (/a11y) share the
   // canonical command's bucket; /extractor tiers its image subcommand
@@ -1113,7 +1121,10 @@ async function handleComponent(
   // Buttons have component_type 2
   if (componentType === 2) {
     // Tier A: copy-button clicks are counted (kind=button, no KV counters);
-    // moderation/preview buttons and unknown ids are not.
+    // moderation/preview buttons and unknown ids are not. The datapoint is
+    // enqueued BEFORE `handleButtonInteraction` runs, and deliberately
+    // unconditionally — a click is a click even if the copy itself fails, so
+    // this does not wait on (or depend on the outcome of) the handler below.
     const kind = buttonKindOf(customId ?? '');
     const buttonUserId = interaction.member?.user?.id ?? interaction.user?.id;
     if (kind && buttonUserId) {

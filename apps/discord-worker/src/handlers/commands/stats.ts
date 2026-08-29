@@ -16,6 +16,7 @@
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { getStats } from '../../services/analytics.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { messageResponse, errorEmbed } from '../../utils/response.js';
 import { grp, num } from '@xivdyetools/svg';
@@ -131,6 +132,7 @@ export async function handleStatsCommand(
         });
     }
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('Error in stats command', error instanceof Error ? error : undefined);
     }
