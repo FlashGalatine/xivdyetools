@@ -157,4 +157,26 @@ describe('DyePaletteDrawer category headings (HC-SYS-001 / TERM-002)', () => {
     expect(tSpy).not.toHaveBeenCalledWith('Blues');
     expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('Translation not found'));
   });
+
+  it('marks the random-dye emit so the layout can skip telemetry for it', async () => {
+    await import('../../v4/dye-palette-drawer');
+    const drawer = document.createElement('dye-palette-drawer') as unknown as HTMLElement & {
+      isOpen: boolean;
+      updateComplete: Promise<boolean>;
+      allDyes: Dye[];
+    };
+    drawer.isOpen = true;
+    container.appendChild(drawer);
+    await drawer.updateComplete;
+
+    const detail: Array<{ dye: Dye; random?: boolean }> = [];
+    drawer.addEventListener('dye-selected', ((e: CustomEvent) => {
+      detail.push(e.detail);
+    }) as EventListener);
+    (drawer as unknown as { handleDyeClick(d: Dye): void }).handleDyeClick(drawer.allDyes[0]);
+    (drawer as unknown as { handleRandomDye(): void }).handleRandomDye();
+
+    expect(detail[0].random).toBeUndefined();
+    expect(detail[1].random).toBe(true);
+  });
 });

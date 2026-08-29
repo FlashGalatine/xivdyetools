@@ -1,5 +1,6 @@
 import { BaseComponent } from './base-component';
 import { LanguageService, CollectionService, ToastService } from '@services/index';
+import { TelemetryService } from '@services/telemetry-service';
 import { Dye } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
 import { localizedDyeName } from '@shared/dye-name';
@@ -56,6 +57,12 @@ export class DyeGrid extends BaseComponent {
   public setSelectedDyes(dyes: Dye[]): void {
     this.selectedDyes = dyes;
     this.updateSelectionVisuals();
+  }
+
+  /** Emit the selection and record it as a deliberate pick (telemetry). */
+  private selectDye(dye: Dye): void {
+    TelemetryService.trackDyePick(dye.stainID ?? 0, 'grid');
+    this.emit('dye-selected', dye);
   }
 
   renderContent(): void {
@@ -126,7 +133,7 @@ export class DyeGrid extends BaseComponent {
             return;
           }
           e.stopPropagation();
-          this.emit('dye-selected', dye);
+          this.selectDye(dye);
         });
 
         // Content wrapper
@@ -246,7 +253,7 @@ export class DyeGrid extends BaseComponent {
       if (target) {
         const id = parseInt(target.getAttribute('data-dye-id') || '0', 10);
         const dye = this.dyes.find((d) => d.id === id);
-        if (dye) this.emit('dye-selected', dye);
+        if (dye) this.selectDye(dye);
       }
     });
 
@@ -421,7 +428,7 @@ export class DyeGrid extends BaseComponent {
       case ' ':
         event.preventDefault();
         if (this.focusedIndex >= 0 && this.focusedIndex < this.dyes.length) {
-          this.emit('dye-selected', this.dyes[this.focusedIndex]);
+          this.selectDye(this.dyes[this.focusedIndex]);
         }
         return;
 

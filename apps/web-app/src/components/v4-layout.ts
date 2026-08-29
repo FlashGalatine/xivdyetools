@@ -14,6 +14,7 @@
 import { RouterService, type ToolId } from '@services/router-service';
 import { LanguageService, StorageService, ModalService } from '@services/index';
 import { TutorialService, type TutorialTool } from '@services/tutorial-service';
+import { TelemetryService, type ToolEntry } from '@services/telemetry-service';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import { STORAGE_PREFIX } from '@shared/constants';
@@ -49,6 +50,10 @@ let navigationSeq = 0;
 let tutorialPromptTimer: ReturnType<typeof setTimeout> | null = null;
 let modalContainer: ModalContainer | null = null;
 let toastContainer: ToastContainer | null = null;
+
+// Telemetry: only the tool the app booted into can be an 'initial' or 'share'
+// entry; every later navigation is 'nav' (spec §1).
+let firstToolView = true;
 
 // ============================================================================
 // Tutorial Integration
@@ -183,10 +188,18 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
 
   // Listen for dye selections from the Color Palette drawer
   layoutElement.addEventListener('dye-selected', ((
-    e: CustomEvent<{ dye: { id: number; name: string; hex: string } }>
+    e: CustomEvent<{
+      dye: { id: number; name: string; hex: string; stainID?: number };
+      random?: boolean;
+    }>
   ) => {
-    const { dye } = e.detail;
+    const { dye, random } = e.detail;
     logger.debug(`[V4 Layout] Dye selected from palette: ${dye.name}`);
+
+    // Telemetry: a swatch click is a deliberate pick; the random button is not
+    if (!random && typeof dye.stainID === 'number') {
+      TelemetryService.trackDyePick(dye.stainID, 'drawer');
+    }
 
     // Route dye selection to active tool if it has selectDye method
     if (activeTool && 'selectDye' in activeTool) {
@@ -458,6 +471,28 @@ function toolDisplayName(toolId: ToolId): string {
 }
 
 /**
+ * Reset the "is this the boot tool" telemetry flag (for testing only).
+ * `firstToolView` is module state that otherwise survives for the whole
+ * test-file run, so a later suite's tool load would look like a "later"
+ * navigation instead of the boot view.
+ * @internal
+ */
+export function __resetTelemetryStateForTesting(): void {
+  firstToolView = true;
+}
+
+/** Record a completed tool load for telemetry (tool_view + dwell clock). */
+function recordToolView(toolId: ToolId): void {
+  let entry: ToolEntry = 'nav';
+  if (firstToolView) {
+    firstToolView = false;
+    entry = RouterService.getCurrentRoute().params.toString() !== '' ? 'share' : 'initial';
+  }
+  TelemetryService.startTool(toolId, entry);
+  TelemetryService.track('tool_view', { tool: toolId, entry });
+}
+
+/**
  * Load tool content into the V4 layout content area
  */
 async function loadToolContent(toolId: ToolId): Promise<void> {
@@ -479,6 +514,9 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     logger.error('[V4 Layout] Content container not found');
     return;
   }
+
+  // Telemetry: close the dwell window of whatever was showing (no-op if nothing was)
+  TelemetryService.endTool();
 
   // Cleanup previous tool
   if (activeTool) {
@@ -600,6 +638,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
         const presetTool = document.createElement('v4-preset-tool');
         contentContainer.appendChild(presetTool);
         logger.info('[V4 Layout] Presets tool loaded (v4)');
+        recordToolView(toolId);
         return; // Early return since we handled the container directly
       }
       case 'budget': {
@@ -634,6 +673,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     // Clear loading and append tool container
     clearContainer(contentContainer);
     contentContainer.appendChild(toolContainer);
+    recordToolView(toolId);
 
     // Check if we should prompt for tutorial on first visit to this tool
     const tutorialTool = TOOL_TO_TUTORIAL[toolId];

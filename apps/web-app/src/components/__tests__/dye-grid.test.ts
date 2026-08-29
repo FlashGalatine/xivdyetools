@@ -30,6 +30,11 @@ const { mockAddFavorite, mockRemoveFavorite, mockIsFavorite, mockSubscribeFavori
   })
 );
 
+const { mockTrackDyePick } = vi.hoisted(() => ({ mockTrackDyePick: vi.fn() }));
+vi.mock('@services/telemetry-service', () => ({
+  TelemetryService: { trackDyePick: mockTrackDyePick },
+}));
+
 vi.mock('@services/index', () => ({
   LanguageService: {
     t: (key: string) => key,
@@ -492,6 +497,49 @@ describe('DyeGrid', () => {
 
       const card = query(container, '.dye-select-btn');
       expect(getAttr(card, 'type')).toBe('button');
+    });
+  });
+
+  // ============================================================================
+  // Telemetry Tests
+  // ============================================================================
+
+  describe('telemetry', () => {
+    beforeEach(() => mockTrackDyePick.mockClear());
+
+    it('reports a click on a dye as a grid pick', () => {
+      grid = new DyeGrid(container);
+      grid.init();
+      grid.setDyes(mockDyes);
+
+      const btn = query<HTMLButtonElement>(container, '.dye-select-btn');
+      click(btn);
+
+      expect(mockTrackDyePick).toHaveBeenCalledWith(mockDyes[0].stainID, 'grid');
+    });
+
+    it('reports an Enter-key selection as a grid pick', () => {
+      grid = new DyeGrid(container);
+      grid.init();
+      grid.setDyes(mockDyes);
+
+      const gridEl = query(container, '[role="grid"]');
+      // Home sets focusedIndex to 0 (see the Keyboard Navigation tests above)
+      gridEl?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+      gridEl?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(mockTrackDyePick).toHaveBeenCalledWith(mockDyes[0].stainID, 'grid');
+    });
+
+    it('does not report a favorite toggle', () => {
+      grid = new DyeGrid(container, { showFavorites: true });
+      grid.init();
+      grid.setDyes([mockDyes[0]]);
+
+      const fav = query<HTMLButtonElement>(container, '.favorite-btn');
+      click(fav);
+
+      expect(mockTrackDyePick).not.toHaveBeenCalled();
     });
   });
 
