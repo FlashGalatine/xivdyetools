@@ -425,10 +425,13 @@ export async function fetchImageWithTimeout(
         throw new Error(`Unsafe redirect target: ${redirectResult.error}`);
       }
 
-      // Follow the validated redirect (one hop only)
+      // Follow the validated redirect (one hop only). `manual`, not `error`:
+      // workerd has no `error` mode (it throws a TypeError on it — found
+      // 2026-08-29); a second redirect comes back as a 3xx that the `!ok`
+      // check below rejects, so it is still never followed.
       response = await fetch(redirectResult.normalizedUrl!, {
         signal: controller.signal,
-        redirect: 'error', // No further redirects allowed
+        redirect: 'manual', // No further redirects allowed
         headers: {
           'User-Agent': 'XIV Dye Tools Discord Bot/1.0',
         },

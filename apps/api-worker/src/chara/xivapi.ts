@@ -188,10 +188,16 @@ export class XivapiClient {
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
         // FINDING-025 / API-9: never follow a redirect to a third host and
         // then cache (or proxy) whatever it serves — XIVAPI answers directly.
-        redirect: 'error',
+        // `manual`, NOT `error`: workerd implements only follow/manual and
+        // throws a TypeError on `error` (every XIVAPI call failed that way in
+        // production until 2026-08-29); a 3xx is refused just below instead.
+        redirect: 'manual',
       });
     } catch (error) {
       throw new UpstreamUnavailableError(0, error instanceof Error ? error.message : 'fetch failed');
+    }
+    if (response.status >= 300 && response.status < 400) {
+      throw new UpstreamUnavailableError(response.status, 'redirect refused');
     }
     if (response.status === 503 || response.status >= 500 || response.status === 429) {
       throw new UpstreamUnavailableError(response.status, response.statusText || 'unavailable');

@@ -114,10 +114,23 @@ describe('XivapiClient', () => {
     expect(u.searchParams.get('query')).toBe('+((+EquipSlotCategory.Head=1 +ModelMain=328041))');
     expect(u.searchParams.get('fields')).toContain('EquipSlotCategory.FingerR');
     expect((init.headers as Record<string, string>)['User-Agent']).toMatch(/XIVDyeTools/);
-    // FINDING-025 / API-9: a redirecting upstream must not be followed to a third host
-    expect(init.redirect).toBe('error');
+    // FINDING-025 / API-9: a redirecting upstream must not be followed to a third
+    // host — `manual` (workerd has no `error` mode; it throws on it)
+    expect(init.redirect).toBe('manual');
     expect(client.versionKey).toBe('vkey');
     expect(res.truncated).toBe(false);
+  });
+
+  it('treats a redirecting XIVAPI as unavailable instead of following it', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(null, { status: 302, headers: { Location: 'https://elsewhere.test/' } })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new XivapiClient({ XIVAPI_BASE: 'https://xivapi.test/' });
+    await expect(client.searchItems([{ field: 'Head', key: '1' }])).rejects.toThrow(
+      UpstreamUnavailableError
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('skips the network for an empty lookup list', async () => {

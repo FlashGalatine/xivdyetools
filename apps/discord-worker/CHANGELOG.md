@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — 2026-08-29
+
+- **`/swatch` could not download any attachment.** The FINDING-033 hardening set `redirect: 'error'` on the CDN fetch; the Workers runtime implements only `follow` and `manual` and throws `TypeError: Invalid redirect value` on `error`, so every download failed. Now `redirect: 'manual'` — a redirect comes back as a 3xx response that the existing `!ok` check refuses, so the "never follow" intent is unchanged. A shared ESLint rule now rejects `redirect: 'error'` anywhere in the workspace.
+
 ### Changed — 2026-08-29 merge-day close-out
 
 - `CHANGELOG-laymans.md`'s `[5.0.0]` entry now carries the real ship date (2026-08-28, the `monorepo-2.0-prep` → `main` merge) instead of the 2026-08-16 changelog-sync date; the root product-level file was corrected the same way, which is also the push that fires the first release announcement through the newly wired GitHub webhook (`/webhooks/github`).

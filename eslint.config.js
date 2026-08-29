@@ -53,6 +53,21 @@ export default tseslint.config(
       'no-eval': 'error',
       'no-implied-eval': 'error',
       'no-new-func': 'error',
+
+      // Workers runtime: fetch() accepts only redirect: 'follow' | 'manual'.
+      // 'error' type-checks (lib.dom) but workerd throws
+      // `TypeError: Invalid redirect value` at run time — which unit tests
+      // never see because they mock fetch. It took the Universalis proxy,
+      // the .chara resolver and /swatch down in production on 2026-08-28/29.
+      // Use 'manual' and refuse 3xx responses explicitly.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "Property[key.name='redirect'] > Literal[value='error']",
+          message:
+            "redirect: 'error' is not implemented by the Workers runtime (only 'follow' | 'manual'); use 'manual' and treat a 3xx response as a failure.",
+        },
+      ],
     },
   },
 

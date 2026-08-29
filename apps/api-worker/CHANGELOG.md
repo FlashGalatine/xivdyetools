@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed — 2026-08-29
+
+- **Every upstream fetch failed with 502 — the Market Board on the web app and the bot's `/budget` had no prices, and `POST /v1/chara/resolve` answered 503.** The FINDING-025 / API-9 hardening set `redirect: 'error'` on the Universalis and XIVAPI fetches; the Workers runtime implements only `follow` and `manual` and throws `TypeError: Invalid redirect value` on `error`, so the fetch never left the worker (logged as "Error proxying to Universalis"). Both clients now use `redirect: 'manual'`: the proxy's existing `!response.ok` check refuses a 3xx without following it, and the XIVAPI client throws `UpstreamUnavailableError` on one. The unit tests, which mock `fetch`, had pinned the broken value — they now pin `manual` and cover the refused redirect; a shared ESLint rule rejects `redirect: 'error'` workspace-wide.
+
 ## [0.8.0] - 2026-08-21
 
 Security audit remediation (docs/audits/2026-08-21-security, FINDING-003 + FINDING-025 with the API-n items of `evidence/review-api-worker.md`). Minor bump: new binding, no intended API contract change — only malformed inputs that used to be accepted leniently are now rejected (API-4, API-13 below).

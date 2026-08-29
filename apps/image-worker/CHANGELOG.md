@@ -5,6 +5,12 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed — 2026-08-29
+
+- The one-hop redirect follow in `validateAndFetchImage` used `redirect: 'error'` for the second request; the Workers runtime has no `error` mode and throws on it, so a Discord CDN URL that redirected once failed with a `TypeError` instead of being fetched. The second hop now uses `redirect: 'manual'` like the first; a further redirect comes back as a 3xx that the existing `!ok` check rejects — still never followed.
+
 ## [1.1.0] - 2026-08-21
 
 Security audit remediation (docs/audits/2026-08-21-security, FINDING-004). Minor bump: stricter input handling, same service-binding contract and error envelope.
