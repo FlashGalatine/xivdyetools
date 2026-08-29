@@ -566,6 +566,7 @@
     "swatchGear": "장비 염료: {list}",
     "swatchDropped": "제외(가장 근접한 일치): {slot} · ΔE {de}",
     "swatchParseError": "파일을 읽을 수 없습니다 — {message}",
+    "swatchTitle": "캐릭터 색상 견본",
     "swatchNoSlots": "이 파일에 활성 색상 부위가 없습니다.",
     "swatchSlotMissing": "{slot}은(는) 이 파일에서 활성 부위가 아닙니다.",
     "perDe": "GIL/ΔE"

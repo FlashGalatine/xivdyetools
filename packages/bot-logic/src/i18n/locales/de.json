@@ -566,6 +566,7 @@
     "swatchGear": "Ausrüstungsfarben: {list}",
     "swatchDropped": "Entfernt (sicherster Treffer): {slot} · ΔE {de}",
     "swatchParseError": "Datei nicht lesbar — {message}",
+    "swatchTitle": "Charakter-Farbmuster",
     "swatchNoSlots": "Keine aktiven Farb-Slots in dieser Datei.",
     "swatchSlotMissing": "{slot} ist in dieser Datei kein aktiver Slot.",
     "perDe": "GIL/ΔE"

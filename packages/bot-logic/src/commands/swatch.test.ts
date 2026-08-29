@@ -19,7 +19,6 @@ describe('executeSwatch', () => {
   it('renders the character sheet with live slots only', async () => {
     const result = await executeSwatch({
       fileText: fixture('duskwight-heterochromia.chara'),
-      fileName: 'duskwight.chara',
       locale: 'en',
     });
 
@@ -99,5 +98,30 @@ describe('executeSwatch', () => {
     if (!result.ok) return;
     expect(result.svgString).toContain('HAUT');
     expect(result.svgString).toContain('NÄCHSTE FARBE');
+  });
+
+  it('never displays the character name — nickname or filename — on the card or embed', async () => {
+    // Players routinely use their real name as a Ktisis nickname or as the
+    // `.chara` export filename ("Firstname Lastname.chara"). Inject a
+    // nickname into the fixture and confirm neither it nor the (formerly
+    // accepted) filename ever reaches the rendered SVG or the embed.
+    const withNickname = fixture('duskwight-heterochromia.chara').replace(
+      '"ModelType": 0,',
+      '"ModelType": 0,\n  "Nickname": "Real Name",'
+    );
+    const result = await executeSwatch({
+      fileText: withNickname,
+      locale: 'en',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.svgString).not.toContain('Real Name');
+    expect(result.svgString).not.toContain('duskwight');
+    expect(result.embed.title).not.toContain('Real Name');
+    expect(result.embed.title).not.toContain('duskwight');
+    expect(result.embed.description).not.toContain('Real Name');
+    expect(result.embed.description).not.toContain('duskwight');
+    expect(result.embed.title).toBe('Character swatch');
   });
 });

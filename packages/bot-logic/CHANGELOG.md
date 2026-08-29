@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.2.0] - 2026-08-29
+
+### Security — chara-name privacy
+
+- `/swatch` no longer displays a character's name anywhere. `SwatchInput.fileName` is removed and `executeSwatch` no longer reads `character.nickname` (Ktisis nickname) or an attachment filename fallback — both the PNG card's title and the embed `title` in every branch now render the neutral, localized `card.swatchTitle` ("Character swatch" / DE/FR/JA/KO/ZH equivalents) instead. Players routinely name `.chara` exports "Firstname Lastname.chara" and use their real name as a Ktisis nickname; neither ever reaches a message now. Consumes `@xivdyetools/svg` 2.1.0's `SwatchCardOptions.title` rename.
 
 ### Fixed — 2026-08-29
 

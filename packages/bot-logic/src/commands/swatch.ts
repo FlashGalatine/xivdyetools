@@ -63,8 +63,6 @@ export interface SwatchInput {
   logger?: TranslatorLogger;
   /** Raw text of the .chara attachment */
   fileText: string;
-  /** Attachment filename — the name fallback when the file has no nickname */
-  fileName?: string;
   /** slots (file order, default) | hardest (worst-first) — same five rows */
   order?: 'slots' | 'hardest';
   /** Routes to 14J·2 with this slot's winning colour as target */
@@ -231,8 +229,6 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     ]
       .filter(Boolean)
       .join(' · ');
-    const charName =
-      character.nickname ?? input.fileName?.replace(/\.chara$/i, '') ?? '—';
     const shareUrl = 'https://xivdyetools.app/swatch';
 
     // slot: routes to 14J·2 — the slot's winning colour as target
@@ -283,7 +279,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
         }),
       });
       const embed: EmbedData = {
-        title: charName,
+        title: t.t('card.swatchTitle'),
         description: `${target.label} \`${target.sourceHex.toUpperCase()}\`\n${shareUrl}`,
         color: parseInt(target.sourceHex.replace('#', ''), 16),
       };
@@ -319,7 +315,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     const svgString = generateSwatchCard({
       stripHexes: rows.map((r) => r.sourceHex),
       charSub,
-      charName,
+      title: t.t('card.swatchTitle'),
       rows: cardRows,
       labels: {
         lSlot: t.t('card.swatchSlot'),
@@ -370,7 +366,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     lines.push(shareUrl);
 
     const embed: EmbedData = {
-      title: charName,
+      title: t.t('card.swatchTitle'),
       description: lines.join('\n'),
       color: parseInt(kept[0].sourceHex.replace('#', ''), 16),
     };
