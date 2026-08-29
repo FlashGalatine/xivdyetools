@@ -8,7 +8,7 @@
  * subset had never seen rendered as tofu, and no test went red (2026-08-18
  * dead-code audit, DEAD-020 — the reverse case: 99 stale glyphs nobody needed).
  *
- * This test reads the six bundled fonts' `cmap` tables directly (formats 0 /
+ * This test reads the bundled fonts' `cmap` tables directly (formats 0 /
  * 4 / 6 / 12 — ~50 lines, no font library) and asserts:
  *   1. every codepoint in any locale's runtime strings (`LocaleLoader`), in
  *      `og-strings.ts`'s ×6 tables, and in the glyphs the adapters emit from
@@ -161,8 +161,11 @@ const fontsDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'fonts');
 const font = (name: string): Set<number> => readCmapCodepoints(new Uint8Array(readFileSync(join(fontsDir, name))));
 
 const cmaps = {
-  onest: font('Onest-VariableFont_wght.ttf'),
-  spaceGrotesk: font('SpaceGrotesk-VariableFont_wght.ttf'),
+  // The brand faces ship as static Regular / SemiBold / Bold instances of one
+  // variable source each (apps/discord-worker/scripts/instance-latin-fonts.py
+  // --app og-worker), so the three files share a cmap — the Regular stands in.
+  onest: font('Onest-Regular.ttf'),
+  spaceGrotesk: font('SpaceGrotesk-Regular.ttf'),
   fragmentMono: font('FragmentMono-Regular.ttf'),
   jp: font('NotoSansJP-Subset.ttf'),
   sc: font('NotoSansSC-Subset.ttf'),
@@ -180,7 +183,7 @@ const fmt = (cps: number[]): string =>
 // ---------------------------------------------------------------------------
 
 describe('bundled fonts cover every string the cards can render', () => {
-  it('parses all six fonts (sanity: Latin in the brand fonts, CJK in the subsets)', () => {
+  it('parses every bundled family (sanity: Latin in the brand fonts, CJK in the subsets)', () => {
     expect(cmaps.onest.has('A'.codePointAt(0)!)).toBe(true);
     expect(cmaps.fragmentMono.has('#'.codePointAt(0)!)).toBe(true);
     expect(cmaps.jp.size).toBeGreaterThan(200);
@@ -189,7 +192,7 @@ describe('bundled fonts cover every string the cards can render', () => {
   });
 
   for (const locale of LOCALES) {
-    it(`${locale}: every runtime string codepoint is drawable (union of the six fonts) — no tofu`, () => {
+    it(`${locale}: every runtime string codepoint is drawable (union of the bundled fonts) — no tofu`, () => {
       const needed = codepointsOf(stringsFor(locale));
       const missing = [...needed].filter((cp) => !union.has(cp)).sort((a, b) => a - b);
       expect(missing, `re-run scripts/subset-cjk-fonts.py — missing: ${fmt(missing)}`).toEqual([]);
