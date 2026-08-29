@@ -238,7 +238,10 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       cache-busted render (sha256 `1dee1bc9…`) and `/og/default-x.png` no longer exists (404;
       stale item). **`upload-emojis`: moved into CI** — `sync-dye-emojis.yml` (`workflow_dispatch`,
       `production` environment, token from `secrets.DISCORD_TOKEN`) runs the script and publishes
-      the rewritten `emoji-mapping.json` as an artifact to commit; still to run.
+      the rewritten `emoji-mapping.json` as an artifact to commit. **Run 2026-08-29
+      (`33225293642`): "125 dyes → uploaded 125 (replaced 125), deleted 0 orphans"** — the main
+      bot's set is now the stainID-keyed `chip-1` artwork; the mapping was committed from the
+      artifact in the follow-up PR and shipped by `deploy-discord-worker.yml`.
 - [ ] Post-deploy verification (same day):
   - [ ] `wrangler tail` each production worker for 10 minutes: no `KV rate limiter fallback`
         warning (discord-worker / api-worker / oauth / moderation-worker), presets-api accepting
