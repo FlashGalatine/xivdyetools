@@ -76,7 +76,8 @@ export type SwatchResult =
       ok: true;
       svgString: string;
       embed: EmbedData;
-      character: ResolvedCharaCharacter;
+      /** Never carries the character's name — see PRIVACY_POLICY §3. */
+      character: Omit<ResolvedCharaCharacter, 'nickname'>;
     }
   | {
       ok: false;
@@ -156,6 +157,18 @@ function nearestDye(hex: string): { dye: Dye; deltaE: number } {
 function tribeDisplay(tribe: string | null): string {
   if (!tribe) return '';
   return tribe.replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
+}
+
+/**
+ * Strips the Ktisis nickname before a character record leaves this module —
+ * `SwatchResult.character` must never carry the character's name (PRIVACY_POLICY §3).
+ */
+function withoutNickname(
+  character: ResolvedCharaCharacter
+): Omit<ResolvedCharaCharacter, 'nickname'> {
+  const { nickname, ...safeCharacter } = character;
+  void nickname;
+  return safeCharacter;
 }
 
 interface LiveRow {
@@ -283,7 +296,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
         description: `${target.label} \`${target.sourceHex.toUpperCase()}\`\n${shareUrl}`,
         color: parseInt(target.sourceHex.replace('#', ''), 16),
       };
-      return { ok: true, svgString, embed, character };
+      return { ok: true, svgString, embed, character: withoutNickname(character) };
     }
 
     // Tail rule: past five live slots the SAFEST match drops — both orders
@@ -371,7 +384,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       color: parseInt(kept[0].sourceHex.replace('#', ''), 16),
     };
 
-    return { ok: true, svgString, embed, character };
+    return { ok: true, svgString, embed, character: withoutNickname(character) };
   } catch {
     return {
       ok: false,

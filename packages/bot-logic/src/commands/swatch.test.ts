@@ -124,4 +124,38 @@ describe('executeSwatch', () => {
     expect(result.embed.description).not.toContain('duskwight');
     expect(result.embed.title).toBe('Character swatch');
   });
+
+  it('never displays the character name on the slot: route either', async () => {
+    const withNickname = fixture('duskwight-heterochromia.chara').replace(
+      '"ModelType": 0,',
+      '"ModelType": 0,\n  "Nickname": "Real Name",'
+    );
+    const result = await executeSwatch({
+      fileText: withNickname,
+      locale: 'en',
+      slot: 'hair',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.svgString).not.toContain('Real Name');
+    expect(result.embed.title).not.toContain('Real Name');
+    expect(result.embed.description).not.toContain('Real Name');
+    expect(result.embed.title).toBe('Character swatch');
+  });
+
+  it('never returns the Ktisis nickname on result.character', async () => {
+    const withNickname = fixture('duskwight-heterochromia.chara').replace(
+      '"ModelType": 0,',
+      '"ModelType": 0,\n  "Nickname": "Real Name",'
+    );
+    const result = await executeSwatch({
+      fileText: withNickname,
+      locale: 'en',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect('nickname' in result.character).toBe(false);
+  });
 });
