@@ -64,6 +64,20 @@ jobs:
           command: deploy --env production
           packageManager: pnpm
 
+      # Re-register the moderation bot's slash commands on every production
+      # deploy, mirroring deploy-discord-worker.yml. Discord only learns about a
+      # changed command shape (FINDING-006/007: default_member_permissions,
+      # dm_permission: false, guild-only contexts) when the commands are PUT
+      # again, and until 2026-08-29 nothing did that for this application
+      # (1453806659708129374 — a separate Discord app from the main bot, with its
+      # own token). Global registration: DISCORD_GUILD_ID deliberately unset.
+      - name: Register Discord commands
+        working-directory: apps/moderation-worker
+        run: pnpm run register-commands
+        env:
+          DISCORD_TOKEN: ${{ secrets.MODERATION_DISCORD_TOKEN }}
+          DISCORD_CLIENT_ID: "1453806659708129374"
+
       # ARCH-002: Verify deployed worker responds after deployment
       - name: Smoke test (health check)
         run: |
