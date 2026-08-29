@@ -197,6 +197,12 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       this checklist (it corrects the `[5.0.0]` date in both laymans files to the real ship date,
       2026-08-28) — GitHub delivers that push before the fixed worker is deployed, so it is
       **redelivered from the hook's Recent Deliveries once `deploy-discord-worker.yml` is green**.
+      **Done:** the merge push of PR #138 (delivered 01:01:32Z → 413 by the old build) was
+      redelivered at **01:05:26Z → 200** after run `33225254977` shipped the fix; the 5.0 entry
+      posted to `ANNOUNCEMENT_CHANNEL_ID`. Two gotchas for next time: reading a single delivery's
+      payload needs the `admin:repo_hook` token scope (listing does not) — correlate by the PR's
+      `mergedAt` instead; and Workers Logs is not enabled on discord-worker, so `wrangler tail`
+      is the only live view of the handler.
       *Original finding (2026-08-28):* the repository had exactly one
       webhook (id `596896553`) — Discord's *native* GitHub-push integration
       (`discord.com/api/webhooks/…/github`; it delivered 204 for the merge push at 23:36:52Z and
@@ -241,7 +247,8 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       the rewritten `emoji-mapping.json` as an artifact to commit. **Run 2026-08-29
       (`33225293642`): "125 dyes → uploaded 125 (replaced 125), deleted 0 orphans"** — the main
       bot's set is now the stainID-keyed `chip-1` artwork; the mapping was committed from the
-      artifact in the follow-up PR and shipped by `deploy-discord-worker.yml`.
+      artifact in PR #140 and shipped by `deploy-discord-worker.yml` run `33225589268` (about
+      25 minutes after the upload — the window during which embeds referenced deleted ids).
 - [ ] Post-deploy verification (same day):
   - [ ] `wrangler tail` each production worker for 10 minutes: no `KV rate limiter fallback`
         warning (discord-worker / api-worker / oauth / moderation-worker), presets-api accepting
@@ -287,6 +294,21 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         (Headers verified 2026-08-28 — see the Pages item above; the in-app checks are manual.)
   - [ ] moderation bot: autocomplete only for moderators; ban flow on a long CJK name
         (FINDING-006/007).
+- [x] **Post-merge dependency bumps (2026-08-29).** Dependabot's pre-merge PRs (#132/#126)
+      touched packages the branch had deleted, so `@dependabot recreate` produced #134 (14 dev
+      deps) and #133 (4 production deps). **#134 merged → 7 deploys + CI green, `deploy-web-app`
+      RED at the bundle gate**: vite 8.1.5 → 8.2.2's rolldown inlined `preset-submission-form`
+      (+27 KB source) into `v4-layout` (223 KB vs the 215 KB budget) because `config-sidebar.ts`
+      imported it statically while `swatch-tool.ts` imported it lazily — 8.1.x had merely happened
+      to keep the split. Fixed in PR #139 by loading the form on click (210 KB; no budget change);
+      its deploy `33225454857` went green and the domain now serves deployment `edae096d`. The
+      failed deploy never reached the Pages step, so production stayed on the merge-day build
+      meanwhile. **#133** needed a one-line fix first — `@cloudflare/workers-types` 5.20260825.1
+      declares a global `Buffer: any` that collides with `@types/node` in `scripts/upload-emojis.ts`
+      (`TS2554`); encode via `Buffer.from(png)`. That fix was first pushed onto the Dependabot
+      branch, but once #134's lockfile landed #133 **conflicted**, and a Dependabot rebase would
+      drop a manual commit — so the fix was moved to `main` (cherry-pick `e65ee1c3`, this PR) and
+      #133 is `@dependabot recreate`d on top of it; its merge is recorded in the PR trail.
 
 ## 2. First week after the merge
 
