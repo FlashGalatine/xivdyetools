@@ -69,8 +69,8 @@ export interface SwatchCardOptions {
   stripHexes: string[];
   /** Tribe EN + gender symbol + producer — NOT localized (identifier line) */
   charSub: string;
-  /** Ktisis nickname, else the attachment filename */
-  charName: string;
+  /** Neutral card title (localized "Character swatch") — NEVER the character's name or the attachment filename; players may use their real name. */
+  title: string;
   /** Ordered + capped by the caller */
   rows: SwatchCardRow[];
   labels: SwatchCardLabels;
@@ -101,7 +101,7 @@ export function generateSwatchCard(options: SwatchCardOptions): string {
   const rightX = CARD_WIDTH - PAD;
   const parts: string[] = [];
 
-  // Header: live-slot strip · charSub over charName · /SWATCH chip
+  // Header: live-slot strip · charSub over title · /SWATCH chip
   const stripW = 66;
   const stripes = options.stripHexes.length > 0 ? options.stripHexes : ['#000000'];
   const stripeW = stripW / stripes.length;
@@ -132,7 +132,7 @@ export function generateSwatchCard(options: SwatchCardOptions): string {
     })
   );
   parts.push(
-    cardText(textX, 41, fitText(options.charName, textMax, 14, 'body'), {
+    cardText(textX, 41, fitText(options.title, textMax, 14, 'body'), {
       fill: theme.name,
       size: 14,
       font: 'body',

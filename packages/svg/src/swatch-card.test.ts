@@ -40,7 +40,7 @@ const row = (over: Partial<SwatchCardRow> = {}): SwatchCardRow => ({
 const defaultOptions: SwatchCardOptions = {
   stripHexes: ['#E0BFA8', '#3B2A20', '#6A8FA8', '#B54A5C'],
   charSub: 'Miqo\'te ♀ · Ktisis',
-  charName: 'Nunh Test',
+  title: 'Character swatch',
   rows: [
     row(),
     row({ slotLabel: 'HAIR', addr: 'R4·C7', sourceHex: '#3B2A20', dyeHex: '#3A2B23', name: 'Soot Black', deltaE: 1.8 }),
@@ -87,7 +87,7 @@ describe('generateSwatchCard', () => {
   it('renders the identifier lines and the column heads', () => {
     const svg = generateSwatchCard(defaultOptions);
 
-    expect(svg).toContain('Nunh Test');
+    expect(svg).toContain('Character swatch');
     expect(svg).toContain('Miqo&apos;te ♀ · Ktisis');
     expect(svg).toContain('>SLOT</text>');
     expect(svg).toContain('NEAREST DYE');
@@ -165,9 +165,19 @@ describe('generateSwatchCard', () => {
   });
 
   it('escapes character names rather than emitting raw markup', () => {
-    const svg = generateSwatchCard({ ...defaultOptions, charName: '<script>x</script>' });
+    const svg = generateSwatchCard({ ...defaultOptions, title: '<script>x</script>' });
 
     expect(svg).toContain('&lt;script&gt;');
     expect(svg).not.toContain('<script>');
+  });
+
+  it('never displays a character name — the title is the neutral card label only', () => {
+    // Guards against a future option re-adding a name field: with `title` set
+    // to the neutral localized label and no name anywhere in the options, the
+    // rendered SVG must carry that label and nothing name-shaped.
+    const svg = generateSwatchCard({ ...defaultOptions, title: 'Character swatch' });
+
+    expect(svg).toContain('Character swatch');
+    expect(svg).not.toContain('Nunh Test');
   });
 });

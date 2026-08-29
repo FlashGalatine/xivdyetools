@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.0] - 2026-08-29
+
+### Changed — chara-name privacy
+
+- `SwatchCardOptions.charName` is renamed to `title`: a neutral card title (localized "Character swatch"), never the character's name or the attachment filename — players routinely use their real name as a Ktisis nickname or `.chara` export filename. `packages/bot-logic` (2.2.0) is the only consumer and now passes the localized `card.swatchTitle` key instead of the parsed name.
 
 ### Fixed — 2026-08-29
 
