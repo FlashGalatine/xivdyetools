@@ -20,6 +20,7 @@ import { dyesRouter } from './routes/dyes.js';
 import { matchRouter } from './routes/match.js';
 import { universalisRouter } from './universalis/router.js';
 import { charaRouter } from './chara/router.js';
+import { telemetryRouter } from './telemetry/router.js';
 
 // Lib
 import { ApiError, ErrorCode } from './lib/api-error.js';
@@ -147,6 +148,10 @@ app.route('/v1/match', matchRouter);
 // .chara equipment-model resolution (web-app Swatch Matcher import) — one
 // XIVAPI search per file, per-key edge cache, icons proxied. See chara/router.ts.
 app.route('/v1/chara', charaRouter);
+
+// Opt-in web-app usage telemetry → Analytics Engine. Internal, undocumented,
+// 204-only; see telemetry/router.ts and docs/operations/ANALYTICS_QUERIES.md.
+app.route('/v1/telemetry', telemetryRouter);
 
 // Universalis market-board proxy (absorbed from apps/universalis-proxy).
 // Canonical mount + /api/v2 compatibility mount for the proxy.xivdyetools.app

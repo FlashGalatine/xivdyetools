@@ -35,4 +35,19 @@ describe('wrangler.toml', () => {
     expect(production).toContain('data.xivdyetools.app');
     expect(production).not.toMatch(/^workers_dev = true$/m);
   });
+
+  /**
+   * Web-app telemetry (POST /v1/telemetry) writes to Analytics Engine. The
+   * dev worker must have its own dataset so ad-hoc `pnpm dev` traffic never
+   * pollutes the production series, and production must never point at it.
+   */
+  it('binds a separate Analytics Engine dataset per environment', () => {
+    expect(topLevel).toMatch(
+      /^\[\[analytics_engine_datasets\]\]\nbinding = "ANALYTICS"\ndataset = "xivdyetools_web_analytics_dev"$/m,
+    );
+    expect(production).toMatch(
+      /^\[\[env\.production\.analytics_engine_datasets\]\]\nbinding = "ANALYTICS"\ndataset = "xivdyetools_web_analytics"$/m,
+    );
+    expect(production).not.toContain('xivdyetools_web_analytics_dev');
+  });
 });

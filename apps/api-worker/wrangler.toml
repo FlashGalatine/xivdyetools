@@ -50,6 +50,12 @@ name = "API_RATE_LIMITER"
 namespace_id = "1002"
 simple = { limit = 65, period = 60 }
 
+# Web-app opt-in telemetry (POST /v1/telemetry → Analytics Engine). Separate
+# dev dataset so `pnpm dev` traffic never lands in the production series.
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "xivdyetools_web_analytics_dev"
+
 [env.production]
 name = "xivdyetools-api-worker"
 # proxy.* domains absorbed from the retired universalis-proxy worker (Tier 2).
@@ -87,3 +93,9 @@ id = "a57d958973884b578889e827311f9ee2"
 name = "API_RATE_LIMITER"
 namespace_id = "1001"
 simple = { limit = 65, period = 60 }
+
+# Web-app telemetry — production dataset. Beta (beta.xivdyetools.app) also
+# reaches this worker; beta vs production is the `env` blob, not the dataset.
+[[env.production.analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "xivdyetools_web_analytics"
