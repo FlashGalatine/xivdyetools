@@ -3,11 +3,30 @@
  */
 import { describe, it, expect } from 'vitest';
 import { QUICK_PICKS, getQuickPickById } from './quick-picks.js';
+import { getDyeById } from './budget-calculator.js';
 
 describe('quick-picks.ts', () => {
   describe('QUICK_PICKS', () => {
     it('should have 22 presets', () => {
       expect(QUICK_PICKS.length).toBe(22);
+    });
+
+    // 2026-08-29: `jet_black` carried 5763 and `pure_white` 5762 — Ul Brown's
+    // and Bone White's item ids — so `/budget quick` built the ledger for the
+    // wrong dye and nothing here noticed, because no test ever resolved an id.
+    it('every preset id resolves to the dye it is named after', () => {
+      const mismatches = QUICK_PICKS.map((preset) => {
+        const dye = getDyeById(preset.targetDyeId);
+        return dye?.name === preset.name
+          ? null
+          : `${preset.id}: ${preset.targetDyeId} → ${dye?.name ?? 'no dye'} (expected ${preset.name})`;
+      }).filter((m): m is string => m !== null);
+      expect(mismatches).toEqual([]);
+    });
+
+    it('resolves the two headline presets to the right item ids', () => {
+      expect(getQuickPickById('jet_black')?.targetDyeId).toBe(13115);
+      expect(getQuickPickById('pure_white')?.targetDyeId).toBe(13114);
     });
 
     it('should have required properties for each preset', () => {

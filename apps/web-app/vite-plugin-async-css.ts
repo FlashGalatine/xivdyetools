@@ -4,12 +4,27 @@
 import type { Plugin } from 'vite'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { resolve, dirname } from 'path'
+import { createHash } from 'crypto'
+
+/**
+ * The loader's file name carries a content hash for the same reason every
+ * other file under /assets/ does: `_headers` marks `/assets/*` as
+ * `immutable` for a year. An un-hashed `load-css-async.js` stayed cached at
+ * the edge and in browsers across deploys — production served a v4-era copy
+ * (old CSS hash + a Google Fonts stylesheet the CSP then blocked) for weeks
+ * after the 5.0 release, found 2026-08-29. A new stylesheet list is a new
+ * file name, so an old cache entry can never be picked up by new HTML.
+ */
+export function asyncCssLoaderName(scriptContent: string): string {
+  const hash = createHash('sha256').update(scriptContent).digest('hex').slice(0, 8)
+  return `load-css-async-${hash}.js`
+}
 
 export function asyncCss(): Plugin {
   return {
     name: 'async-css',
     apply: 'build',
-    writeBundle(options, bundle) {
+    writeBundle(options, _bundle) {
       // Find the HTML file in the bundle
       const htmlFile = resolve(options.dir || 'dist', 'index.html')
       
@@ -22,7 +37,7 @@ export function asyncCss(): Plugin {
         // Find all CSS links
         html = html.replace(
           /<link\s+rel="stylesheet"[^>]*href="([^"]+\.css)"[^>]*>/g,
-          (match, href) => {
+          (_match, href) => {
             cssFiles.push(href)
             // Remove the blocking CSS link, we'll load it async
             return ''
@@ -52,8 +67,9 @@ export function asyncCss(): Plugin {
   });
 })();`
           
-          const scriptPath = resolve(options.dir || 'dist', 'assets', 'load-css-async.js')
-          const scriptUrl = '/assets/load-css-async.js'
+          const scriptName = asyncCssLoaderName(scriptContent)
+          const scriptPath = resolve(options.dir || 'dist', 'assets', scriptName)
+          const scriptUrl = `/assets/${scriptName}`
           
           // Write the script file
           const scriptDir = dirname(scriptPath)
