@@ -81,6 +81,21 @@ function createMockAnalytics() {
   };
 }
 
+// Create mock Env for direct test calls
+function createMockEnv() {
+  const mockKV = createMockKV();
+  const mockAnalytics = createMockAnalytics();
+  return {
+    DISCORD_PUBLIC_KEY: 'test-key',
+    DISCORD_TOKEN: 'test-token',
+    DISCORD_CLIENT_ID: 'test-app-id',
+    PRESETS_API_URL: 'https://test-api.example.com',
+    INTERNAL_WEBHOOK_SECRET: 'test-secret', // pragma: allowlist secret
+    KV: mockKV,
+    ANALYTICS: mockAnalytics as unknown as AnalyticsEngineDataset,
+  } as Env;
+}
+
 describe('analytics.ts', () => {
   let mockKV: ReturnType<typeof createMockKV>;
   let mockAnalytics: ReturnType<typeof createMockAnalytics>;
@@ -124,7 +139,7 @@ describe('analytics.ts', () => {
       // ('guild' | 'dm'), never the guild id itself
       expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
         indexes: ['harmony'],
-        blobs: ['harmony', 'user-123', 'guild', '1', ''],
+        blobs: ['harmony', 'user-123', 'guild', '1', 'ok', '', 'other', 'command'],
         doubles: [1, 150, 1],
       });
     });
@@ -161,22 +176,36 @@ describe('analytics.ts', () => {
       );
     });
 
-    it('should track failed commands with error type', () => {
-      const event: CommandEvent = {
-        commandName: 'dye',
-        userId: 'user-123',
-        guildId: 'guild-456',
-        success: false,
-        errorType: 'VALIDATION_ERROR',
-      };
-
-      trackCommand(mockEnv, event);
-
-      expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
-        indexes: ['dye'],
-        blobs: ['dye', 'user-123', 'guild', '0', 'VALIDATION_ERROR'],
-        doubles: [0, 0, 1],
+    it('writes the Tier A column layout with defaults for the new fields', () => {
+      const env = createMockEnv();
+      trackCommand(env, { commandName: 'harmony', userId: 'u1', guildId: 'g1', success: true });
+      const analytics = env.ANALYTICS as unknown as { writeDataPoint: ReturnType<typeof vi.fn> };
+      expect(analytics.writeDataPoint).toHaveBeenCalledWith({
+        indexes: ['harmony'],
+        blobs: ['harmony', 'u1', 'guild', '1', 'ok', '', 'other', 'command'],
+        doubles: [1, 0, 1],
       });
+    });
+
+    it('writes subcommand, locale, outcome, kind and latency when provided', () => {
+      const env = createMockEnv();
+      trackCommand(env, {
+        commandName: 'dye', userId: 'u1', success: false,
+        outcome: 'upstream_presets', subcommand: 'info', locale: 'ja', kind: 'command', latencyMs: 1234,
+      });
+      const analytics = env.ANALYTICS as unknown as { writeDataPoint: ReturnType<typeof vi.fn> };
+      expect(analytics.writeDataPoint).toHaveBeenCalledWith({
+        indexes: ['dye'],
+        blobs: ['dye', 'u1', 'dm', '0', 'upstream_presets', 'info', 'ja', 'command'],
+        doubles: [0, 1234, 1],
+      });
+    });
+
+    it('defaults outcome to unknown for a failure without a class', () => {
+      const env = createMockEnv();
+      trackCommand(env, { commandName: 'dye', userId: 'u1', success: false });
+      const analytics = env.ANALYTICS as unknown as { writeDataPoint: ReturnType<typeof vi.fn> };
+      expect(analytics.writeDataPoint.mock.calls[0][0].blobs[4]).toBe('unknown');
     });
 
     it('should silently skip when Analytics is not configured', () => {
@@ -355,6 +384,20 @@ describe('analytics.ts', () => {
   });
 
   describe('trackCommandWithKV', () => {
+    it('writes a button datapoint without touching KV counters', async () => {
+      const env = createMockEnv();
+      await trackCommandWithKV(env, {
+        commandName: 'button', userId: 'u1', success: true, kind: 'button', subcommand: 'copy_hex',
+      });
+      const analytics = env.ANALYTICS as unknown as { writeDataPoint: ReturnType<typeof vi.fn> };
+      expect(analytics.writeDataPoint).toHaveBeenCalledWith({
+        indexes: ['button'],
+        blobs: ['button', 'u1', 'dm', '1', 'ok', 'copy_hex', 'other', 'button'],
+        doubles: [1, 0, 1],
+      });
+      expect((env.KV as unknown as { put: ReturnType<typeof vi.fn> }).put).not.toHaveBeenCalled();
+    });
+
     it('should track both Analytics Engine and KV counters', async () => {
       const event: CommandEvent = {
         commandName: 'harmony',
@@ -381,7 +424,7 @@ describe('analytics.ts', () => {
         commandName: 'dye',
         userId: 'user-456',
         success: false,
-        errorType: 'NOT_FOUND',
+        outcome: 'upstream_universalis',
       };
 
       await trackCommandWithKV(mockEnv, event);

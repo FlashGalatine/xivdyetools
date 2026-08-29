@@ -11,8 +11,24 @@
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 
+/** Coarse, message-free reason a command did not serve (spec §1). */
+export type OutcomeClass =
+  | 'ok'
+  | 'rate_limited'
+  | 'upstream_universalis'
+  | 'upstream_presets'
+  | 'image_input'
+  | 'render'
+  | 'unknown';
+
 /**
- * Data point structure for Analytics Engine
+ * Data point structure for Analytics Engine.
+ *
+ * Tier A (2026-08-29, docs/superpowers/specs/2026-08-29-bot-analytics-tier-a-design.md):
+ * columns are additive — blobs 1–5 keep their pre-Tier-A meaning so existing
+ * queries keep working. NEVER put a command option value, hex, search text,
+ * world, image name, guild/channel id or error message in here — the privacy
+ * policy promises none of those are recorded.
  */
 export interface CommandEvent {
   commandName: string;
@@ -23,7 +39,15 @@ export interface CommandEvent {
    */
   guildId?: string;
   success: boolean;
-  errorType?: string;
+  /** blob5 — defaults to 'ok' on success, 'unknown' on failure */
+  outcome?: OutcomeClass;
+  /** blob6 — subcommand name ('' when none); the button kind for kind='button' */
+  subcommand?: string;
+  /** blob7 — Discord client locale bucket (en|ja|de|fr|ko|zh|other) */
+  locale?: string;
+  /** blob8 — what produced the datapoint */
+  kind?: 'command' | 'button';
+  /** double2 — dispatcher start → trace finish (deferred work included) */
   latencyMs?: number;
 }
 
@@ -45,34 +69,30 @@ export function trackCommand(
   logger?: ExtendedLogger
 ): void {
   if (!env.ANALYTICS) {
-    // Analytics not configured, silently skip
     return;
   }
 
   try {
     env.ANALYTICS.writeDataPoint({
-      // Use command name as index for efficient querying
       indexes: [event.commandName],
-      // String dimensions
       blobs: [
-        event.commandName,           // blob1: command name
-        event.userId,                // blob2: user ID (pseudonymous; unique-user counting)
-        // blob3: FINDING-022 (2026-08-21 audit) — the CONTEXT, never the guild
-        // id. The privacy policy promises guild ids are not stored; a
-        // guild-vs-DM split is all the telemetry ever used.
+        event.commandName,                                   // blob1: command name
+        event.userId,                                        // blob2: user ID (pseudonymous; unique-user counting)
+        // blob3: FINDING-022 — the CONTEXT, never the guild id
         event.guildId ? 'guild' : 'dm',
-        event.success ? '1' : '0',   // blob4: success flag
-        event.errorType || '',       // blob5: error type if failed
+        event.success ? '1' : '0',                           // blob4: success flag
+        event.outcome ?? (event.success ? 'ok' : 'unknown'), // blob5: outcome class
+        event.subcommand ?? '',                              // blob6: subcommand / button kind
+        event.locale ?? 'other',                             // blob7: locale bucket
+        event.kind ?? 'command',                             // blob8: command | button
       ],
-      // Numeric values
       doubles: [
-        event.success ? 1 : 0,       // double1: success count (for aggregation)
-        event.latencyMs || 0,        // double2: latency in ms
-        1,                           // double3: total count (always 1)
+        event.success ? 1 : 0,                               // double1: success count
+        event.latencyMs ?? 0,                                // double2: latency in ms
+        1,                                                   // double3: total count
       ],
     });
   } catch (error) {
-    // Don't let analytics errors affect command execution
     if (logger) {
       logger.error('Analytics tracking error', error instanceof Error ? error : undefined);
     }
@@ -198,7 +218,10 @@ export async function trackUniqueUser(
 }
 
 /**
- * Track command for both Analytics Engine and KV-based stats
+ * Track command for both Analytics Engine and KV-based stats.
+ *
+ * Buttons write to Analytics Engine only; KV counters feed /stats' per-command panel
+ * which is command-only.
  */
 export async function trackCommandWithKV(
   env: Env,
@@ -206,6 +229,9 @@ export async function trackCommandWithKV(
 ): Promise<void> {
   // Write to Analytics Engine (for long-term storage)
   trackCommand(env, event);
+
+  // Buttons are AE-only: the KV counters feed /stats' per-command panel.
+  if (event.kind === 'button') return;
 
   // Also update KV counters for in-worker querying
   await Promise.all([
