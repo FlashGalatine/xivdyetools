@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed — 2026-08-29
+
+- **`/dye` cards link somewhere real.** The share line was `https://xivdyetools.app/dye?stain=<stainID>`, but the web app has no `/dye` page and its share grammar reads `dye` / `dyes`, never `stain` — the link opened the app with nothing selected. It now points at the Comparison tool, the app's single-dye view: `https://xivdyetools.app/comparison?dyes=<stainID>`.
+- The bot UI strings for `/preset` dye counts say "at least 3" / "3–6" in all six locales (presets-api 5.0 bounds; the bot enforced 2–5 before).
+
 ## [2.1.0] - 2026-08-21
 
 ### Changed — 2026-08-22 (`/changelog` is bot-scoped)

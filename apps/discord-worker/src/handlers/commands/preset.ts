@@ -416,9 +416,9 @@ async function handleSubmitSubcommand(
   const category = options?.find((opt) => opt.name === 'category')?.value as string;
   const tagsRaw = options?.find((opt) => opt.name === 'tags')?.value as string | undefined;
 
-  // Collect dye names (dye1-dye5)
+  // Collect dye names (dye1-dye6 — presets-api 5.0 takes 3–6 dyes)
   const dyeNames: string[] = [];
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 6; i++) {
     const dyeValue = options?.find((opt) => opt.name === `dye${i}`)?.value as string | undefined;
     if (dyeValue) {
       dyeNames.push(dyeValue);
@@ -433,20 +433,22 @@ async function handleSubmitSubcommand(
     });
   }
 
-  // Validate dye count
-  if (dyeNames.length < 2) {
+  // Validate dye count (the API's own floor is 3)
+  if (dyeNames.length < 3) {
     return messageResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('preset.notEnoughDyes'))],
       flags: 64,
     });
   }
 
-  // Resolve dye names to IDs
+  // Resolve dye names to stainIDs — presets-api 5.0 is stainID-keyed and
+  // rejects the legacy item id (`dye.id`) this used to send.
   const dyeIds: number[] = [];
   for (const name of dyeNames) {
     const dyes = searchDyesByName(name, t.getLocale());
-    if (dyes.length > 0) {
-      dyeIds.push(dyes[0].id);
+    const stainId = dyes[0]?.stainID;
+    if (stainId != null) {
+      dyeIds.push(stainId);
     } else {
       return messageResponse({
         embeds: [errorEmbed(t.t('common.error'), t.t('preset.invalidDye'))],
@@ -700,9 +702,9 @@ async function handleEditSubcommand(
     string | undefined;
   const tagsRaw = options?.find((opt) => opt.name === 'tags')?.value as string | undefined;
 
-  // Collect dye names (dye1-dye5)
+  // Collect dye names (dye1-dye6 — positions map onto the stored 3–6 stainIDs)
   const dyeNames: (string | undefined)[] = [];
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 6; i++) {
     const dyeValue = options?.find((opt) => opt.name === `dye${i}`)?.value as string | undefined;
     dyeNames.push(dyeValue);
   }
@@ -803,16 +805,18 @@ async function processEditCommand(
       // Start with existing dyes
       const newDyeIds: number[] = [...existingPreset.dyes];
 
-      // Replace any specified positions
-      for (let i = 0; i < 5; i++) {
+      // Replace any specified positions (stored dyes are stainIDs — send the
+      // same key back, never the legacy `dye.id`)
+      for (let i = 0; i < 6; i++) {
         const dyeName = updates.dyeNames[i];
         if (dyeName) {
           const dyes = searchDyesByName(dyeName, t.getLocale());
-          if (dyes.length > 0) {
+          const stainId = dyes[0]?.stainID;
+          if (stainId != null) {
             if (i < newDyeIds.length) {
-              newDyeIds[i] = dyes[0].id;
+              newDyeIds[i] = stainId;
             } else {
-              newDyeIds.push(dyes[0].id);
+              newDyeIds.push(stainId);
             }
           } else {
             await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -829,8 +833,8 @@ async function processEditCommand(
         }
       }
 
-      // Validate dye count (2-5)
-      if (newDyeIds.length < 2 || newDyeIds.length > 5) {
+      // Validate dye count (3-6, the API's own bounds)
+      if (newDyeIds.length < 3 || newDyeIds.length > 6) {
         await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
           embeds: [errorEmbed(t.t('common.error'), t.t('preset.edit.dyeCount'))],
         });

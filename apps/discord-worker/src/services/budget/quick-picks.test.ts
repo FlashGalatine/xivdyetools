@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { QUICK_PICKS, getQuickPickById } from './quick-picks.js';
-import { getDyeById } from './budget-calculator.js';
+import * as budgetCalc from './budget-calculator.js';
 
 describe('quick-picks.ts', () => {
   describe('QUICK_PICKS', () => {
@@ -16,7 +16,7 @@ describe('quick-picks.ts', () => {
     // wrong dye and nothing here noticed, because no test ever resolved an id.
     it('every preset id resolves to the dye it is named after', () => {
       const mismatches = QUICK_PICKS.map((preset) => {
-        const dye = getDyeById(preset.targetDyeId);
+        const dye = budgetCalc.resolveTargetDye(preset.targetDyeId);
         return dye?.name === preset.name
           ? null
           : `${preset.id}: ${preset.targetDyeId} → ${dye?.name ?? 'no dye'} (expected ${preset.name})`;
@@ -24,9 +24,15 @@ describe('quick-picks.ts', () => {
       expect(mismatches).toEqual([]);
     });
 
-    it('resolves the two headline presets to the right item ids', () => {
-      expect(getQuickPickById('jet_black')?.targetDyeId).toBe(13115);
-      expect(getQuickPickById('pure_white')?.targetDyeId).toBe(13114);
+    // 2026-08-29: presets are keyed by stainID (the 5.0 value space), not by
+    // the legacy item id — the two headline dyes are stain 102 / 101.
+    it('keys every preset by stainID (1–254)', () => {
+      for (const preset of QUICK_PICKS) {
+        expect(preset.targetDyeId).toBeGreaterThanOrEqual(1);
+        expect(preset.targetDyeId).toBeLessThanOrEqual(254);
+      }
+      expect(getQuickPickById('jet_black')?.targetDyeId).toBe(102);
+      expect(getQuickPickById('pure_white')?.targetDyeId).toBe(101);
     });
 
     it('should have required properties for each preset', () => {

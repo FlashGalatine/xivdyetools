@@ -63,6 +63,20 @@ describe('findBudgetLedger (13G model)', () => {
     expect(sootBlack.consolidationType).toBe('A');
   });
 
+  // 2026-08-29: quick picks and the autocomplete now hand over stainIDs; a
+  // legacy item id (what 4.x clients still type) must keep working too.
+  it('accepts the target as a stainID or as a legacy item id', async () => {
+    setPrices([price(jetBlack.itemID, 71400), price(CONSOLIDATED_IDS.A!, 248)]);
+
+    const byStain = await findBudgetLedger(env, jetBlack.stainID!, 'Cactuar', {});
+    const byItem = await findBudgetLedger(env, jetBlack.itemID, 'Cactuar', {});
+
+    expect(jetBlack.stainID).toBe(102);
+    expect(byStain.targetDye.name).toBe('Jet Black');
+    expect(byStain.targetPrice).toBe(71400);
+    expect(byItem.targetDye.name).toBe('Jet Black');
+  });
+
   it('groups carry the single price; the A group takes min(vendor, board) with the flag', async () => {
     setPrices([price(jetBlack.itemID, 71400), price(CONSOLIDATED_IDS.A!, 248)]);
     const result = await findBudgetLedger(env, jetBlack.itemID, 'Cactuar', {});

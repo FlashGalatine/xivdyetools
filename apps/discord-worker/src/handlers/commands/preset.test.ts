@@ -8,14 +8,18 @@ import type { DiscordInteraction, Env, InteractionResponseBody } from '../../typ
 // ---------------------------------------------------------------------------
 // Mock Dyes
 // ---------------------------------------------------------------------------
-const dyeRed = { id: 1, name: 'Rolanberry Red', hex: '#FF0000', category: 'General', itemID: 1001 };
-const dyeBlue = { id: 2, name: 'Ceruleum Blue', hex: '#0000FF', category: 'General', itemID: 1002 };
+// stainID deliberately differs from `id` / `itemID`: the API payload must carry
+// the stainID (5.0 presets are stainID-keyed), and a test that used the same
+// number for all three could not tell which one the handler sent.
+const dyeRed = { id: 1, name: 'Rolanberry Red', hex: '#FF0000', category: 'General', itemID: 1001, stainID: 11 };
+const dyeBlue = { id: 2, name: 'Ceruleum Blue', hex: '#0000FF', category: 'General', itemID: 1002, stainID: 12 };
 const dyeGreen = {
   id: 3,
   name: 'Celeste Green',
   hex: '#00FF00',
   category: 'General',
   itemID: 1003,
+  stainID: 13,
 };
 
 // ---------------------------------------------------------------------------
@@ -148,7 +152,7 @@ const translator = {
       'preset.apiDisabled': 'Preset API is disabled',
       'preset.noneInCategory': 'No presets in this category',
       'preset.notFound': 'Preset not found',
-      'preset.notEnoughDyes': 'At least 2 dyes required',
+      'preset.notEnoughDyes': 'At least 3 dyes required',
       'preset.invalidDye': 'Invalid dye name',
       'preset.submitted': 'Preset Submitted',
       'preset.submittedApproved': 'Your preset has been approved!',
@@ -167,7 +171,7 @@ const translator = {
       'preset.loadRandomFailed': 'Failed to load random preset.',
       'preset.edit.notOwner': 'You can only edit your own presets.',
       'preset.edit.invalidDye': 'Invalid dye: {name}',
-      'preset.edit.dyeCount': 'Preset must have 2-5 dyes.',
+      'preset.edit.dyeCount': 'Preset must have 3-6 dyes.',
       'preset.edit.updatedPending': 'Preset Updated - Pending Review',
       'preset.edit.updated': 'Preset Updated',
       'errors.unknownSubcommand': 'Unknown subcommand: {name}',
@@ -502,7 +506,9 @@ describe('/preset command', () => {
       expect(body.data!.embeds![0].description).toBe('Missing input');
     });
 
-    it('returns error when less than 2 dyes provided', async () => {
+    // presets-api 5.0 accepts 3–6 dyes; two used to pass here and then be
+    // rejected by the API.
+    it('returns error when fewer than 3 dyes provided', async () => {
       const interaction: DiscordInteraction = {
         ...baseInteraction,
         data: {
@@ -516,6 +522,7 @@ describe('/preset command', () => {
                 { name: 'description', value: 'A test' },
                 { name: 'category', value: 'glamour' },
                 { name: 'dye1', value: 'Rolanberry Red' },
+                { name: 'dye2', value: 'Ceruleum Blue' },
               ],
             },
           ],
@@ -525,7 +532,46 @@ describe('/preset command', () => {
       const res = await handlePresetCommand(interaction, env, ctx);
       const body = (await res.json()) as InteractionResponseBody;
 
-      expect(body.data!.embeds![0].description).toBe('At least 2 dyes required');
+      expect(body.data!.embeds![0].description).toBe('At least 3 dyes required');
+      expect(mockSubmitPreset).not.toHaveBeenCalled();
+    });
+
+    // 2026-08-29: the payload carried `dye.id` (the legacy item id), which the
+    // migrated API rejects as "looks like a legacy item ID". stainIDs now.
+    it('submits the dyes as stainIDs, in the order given, up to six', async () => {
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            {
+              type: 1,
+              name: 'submit',
+              options: [
+                { name: 'preset_name', value: 'Test Preset' },
+                { name: 'description', value: 'A test' },
+                { name: 'category', value: 'glamour' },
+                { name: 'dye1', value: 'Rolanberry Red' },
+                { name: 'dye2', value: 'Ceruleum Blue' },
+                { name: 'dye3', value: 'Celeste Green' },
+                { name: 'dye4', value: 'Rolanberry Red' },
+                { name: 'dye5', value: 'Ceruleum Blue' },
+                { name: 'dye6', value: 'Celeste Green' },
+              ],
+            },
+          ],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockSubmitPreset).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ dyes: [11, 12, 13, 11, 12, 13] }),
+        expect.anything(),
+        expect.anything(),
+      );
     });
 
     it('returns error for invalid dye name', async () => {
@@ -543,6 +589,7 @@ describe('/preset command', () => {
                 { name: 'category', value: 'glamour' },
                 { name: 'dye1', value: 'Rolanberry Red' },
                 { name: 'dye2', value: 'Unknown Dye' },
+                { name: 'dye3', value: 'Celeste Green' },
               ],
             },
           ],
@@ -570,6 +617,7 @@ describe('/preset command', () => {
                 { name: 'category', value: 'glamour' },
                 { name: 'dye1', value: 'Rolanberry Red' },
                 { name: 'dye2', value: 'Ceruleum Blue' },
+                { name: 'dye3', value: 'Celeste Green' },
               ],
             },
           ],
@@ -598,6 +646,7 @@ describe('/preset command', () => {
                 { name: 'category', value: 'glamour' },
                 { name: 'dye1', value: 'Rolanberry Red' },
                 { name: 'dye2', value: 'Ceruleum Blue' },
+                { name: 'dye3', value: 'Celeste Green' },
                 { name: 'tags', value: 'tag1, tag2, tag3' },
               ],
             },
@@ -901,7 +950,7 @@ describe('/preset command', () => {
         expect.anything(),
         PRESET_ID,
         expect.objectContaining({
-          dyes: expect.arrayContaining([2]), // dyeBlue.id
+          dyes: expect.arrayContaining([12]), // dyeBlue.stainID — never its legacy id (2)
         }),
         expect.anything(),
         expect.anything(),
@@ -911,7 +960,7 @@ describe('/preset command', () => {
     it('edits preset with dye addition extending array', async () => {
       mockGetPreset.mockResolvedValueOnce({
         ...mockPreset,
-        dyes: [1, 2], // Only 2 dyes
+        dyes: [1, 2, 3], // three stored stainIDs; the edit adds a fourth
       });
 
       const interaction: DiscordInteraction = {
@@ -924,7 +973,7 @@ describe('/preset command', () => {
               name: 'edit',
               options: [
                 { name: 'preset', value: PRESET_ID },
-                { name: 'dye3', value: 'Celeste Green' }, // Add at position 3
+                { name: 'dye4', value: 'Celeste Green' }, // Add at position 4
               ],
             },
           ],
@@ -938,7 +987,7 @@ describe('/preset command', () => {
         expect.anything(),
         PRESET_ID,
         expect.objectContaining({
-          dyes: [1, 2, 3], // Extended with green
+          dyes: [1, 2, 3, 13], // Extended with green's stainID
         }),
         expect.anything(),
         expect.anything(),
@@ -979,10 +1028,10 @@ describe('/preset command', () => {
       );
     });
 
-    it('returns error when dye count falls below 2', async () => {
+    it('returns error when dye count falls below 3', async () => {
       mockGetPreset.mockResolvedValueOnce({
         ...mockPreset,
-        dyes: [1], // Only 1 dye (invalid)
+        dyes: [1, 2], // Only 2 dyes (invalid for the 5.0 API)
       });
 
       const interaction: DiscordInteraction = {
@@ -1011,7 +1060,7 @@ describe('/preset command', () => {
         expect.objectContaining({
           embeds: expect.arrayContaining([
             expect.objectContaining({
-              description: expect.stringContaining('2-5 dyes'),
+              description: expect.stringContaining('3-6 dyes'),
             }),
           ]),
         }),
@@ -1371,6 +1420,7 @@ describe('/preset command', () => {
                 { name: 'category', value: 'glamour' },
                 { name: 'dye1', value: 'Rolanberry Red' },
                 { name: 'dye2', value: 'Ceruleum Blue' },
+                { name: 'dye3', value: 'Celeste Green' },
               ],
             },
           ],
@@ -1413,6 +1463,7 @@ describe('/preset command', () => {
                 { name: 'category', value: 'glamour' },
                 { name: 'dye1', value: 'Rolanberry Red' },
                 { name: 'dye2', value: 'Ceruleum Blue' },
+                { name: 'dye3', value: 'Celeste Green' },
               ],
             },
           ],
@@ -1452,6 +1503,7 @@ describe('/preset command', () => {
                 { name: 'category', value: 'glamour' },
                 { name: 'dye1', value: 'Rolanberry Red' },
                 { name: 'dye2', value: 'Ceruleum Blue' },
+                { name: 'dye3', value: 'Celeste Green' },
               ],
             },
           ],
@@ -1492,6 +1544,7 @@ describe('/preset command', () => {
                 { name: 'category', value: 'glamour' },
                 { name: 'dye1', value: 'Rolanberry Red' },
                 { name: 'dye2', value: 'Ceruleum Blue' },
+                { name: 'dye3', value: 'Celeste Green' },
               ],
             },
           ],
@@ -1850,6 +1903,7 @@ describe('/preset command', () => {
                 { name: 'category', value: 'glamour' },
                 { name: 'dye1', value: 'Rolanberry Red' },
                 { name: 'dye2', value: 'Ceruleum Blue' },
+                { name: 'dye3', value: 'Celeste Green' },
               ],
             },
           ],
