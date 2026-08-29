@@ -79,7 +79,10 @@ DISCORD_CLIENT_ID = "1447108133020369048"
 PRESETS_API_URL = "https://api.xivdyetools.app"
 # vars are NOT inheritable — this must be repeated here or the GitHub
 # release-announcement webhook loses its target channel.
-ANNOUNCEMENT_CHANNEL_ID = "1441800851747508314"
+ANNOUNCEMENT_CHANNEL_ID = "1434357606008356874"
+# Production release-announcement channel — deliberately different from the
+# top-level (beta) value above; 2026-08-29 the 5.0 announcement went to the beta
+# channel because this line had been copied from it.
 
 [[env.production.kv_namespaces]]
 binding = "KV"
