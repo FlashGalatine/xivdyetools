@@ -144,13 +144,22 @@ pnpm turbo run build test --filter=@xivdyetools/<name>
 
 **A version bump is required.** The workflow's `detect` job only publishes a package when its local version differs from the published one; with versions at parity it does nothing.
 
-**Local publishing is deliberately not a normal path.** Every package is set to *"Require two-factor authentication and disallow tokens"*, so an unattended local publish is impossible by design. Break-glass only, after `npm login`, supplying a 2FA one-time code:
+**Local publishing is deliberately not a normal path.** Every package is set to *"Require two-factor authentication and disallow tokens"*, so an unattended local publish is impossible by design. The break-glass case is a **new package's first version** (OIDC cannot create a package that doesn't exist yet — `worker-kit` on 2026-08-28 was the last one). The maintainer's 2FA is a security key, not an OTP app, so the flow is token-based, not `--otp`:
+
+1. Log in to npmjs.com (security key) → *Access Tokens* → generate a **granular access token**: scope `@xivdyetools` read + write, **Bypass 2FA** on, a short expiry.
+2. Put it in the **user-level** `~/.npmrc` (`//registry.npmjs.org/:_authToken=…`) — never the committed repo `.npmrc`.
+3. Build and publish **without `--provenance`** (provenance generation only works inside CI and aborts a local publish):
 
 ```bash
-pnpm --filter @xivdyetools/<name> publish --provenance --access public --no-git-checks --otp=<code>
+pnpm turbo run build --filter=@xivdyetools/<name>
+pnpm --filter @xivdyetools/<name> publish --access public --no-git-checks
 ```
 
-**Trusted publisher config** (npmjs.com → package → Settings): GitHub Actions, `FlashGalatine/xivdyetools`, workflow `publish-packages.yml`, permission `npm publish`. A new package needs this configured before it can publish, and its *first* version must be published by a 2FA-authenticated human — OIDC cannot create a package that doesn't exist yet.
+4. On npmjs.com set the new package to *Require two-factor authentication and disallow tokens*, add its trusted publisher (below), then delete the token and the `~/.npmrc` line.
+
+Writes to a package that *already* disallows tokens (`npm deprecate`, a re-publish) reject the token with `Two-factor authentication is required to publish this package but an automation token was specified` — for those, `npm login --auth-type=web` (the browser prompt takes the security key) and rerun.
+
+**Trusted publisher config** (npmjs.com → package → Settings): GitHub Actions, `FlashGalatine/xivdyetools`, workflow `publish-packages.yml`, environment `production` (the publish job runs in that environment), permission `npm publish`. A new package needs this configured before the workflow can publish it.
 
 pnpm 11 publishes natively and performs the OIDC exchange itself — no npm CLI involvement. (Under pnpm 10 the publish was delegated to npm, which needed an explicit upgrade to ≥ 11.5.1 for OIDC support; that workflow step was removed with the pnpm 11 migration.)
 

@@ -42,7 +42,7 @@
 | **Types** | v2.0.0 | `@xivdyetools/types` | npm | Active — publish pending |
 | **Auth** (incl. `/encoding`) | v1.4.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.1.0 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.1.0 | `@xivdyetools/worker-kit` | npm | Active (first publish pending) |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.1.0 | `@xivdyetools/worker-kit` | npm | Active (first publish 2026-08-28) |
 | **SVG** | v2.0.1 | `@xivdyetools/svg` | npm | Active — publish pending |
 | **Bot Logic** (incl. `/i18n`) | v2.1.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending |
 | **Test Utils** | v1.2.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |

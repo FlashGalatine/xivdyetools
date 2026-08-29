@@ -182,19 +182,23 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       the value of the worker's `GITHUB_WEBHOOK_SECRET`, event *push*. The next push to `main` that
       touches the root `CHANGELOG-laymans.md` then announces — or *Redeliver* a qualifying delivery
       from the new hook's *Recent Deliveries* once one exists.
-- [ ] **npm publish** (Actions → *Publish Packages to npm*), tier order: types → logger → auth →
+- [x] **npm publish** (Actions → *Publish Packages to npm*), tier order: types → logger → auth →
       core → **worker-kit (first publish is a manual 2FA publish + trusted-publisher setup on
       npmjs.com — OIDC cannot create a package)** → svg → bot-logic. Then `npm deprecate`
       crypto, bot-i18n, color-blending, worker-middleware, rate-limiter (messages in
       `DEPRECATIONS.md`).
-      **Run `33221213399` (dispatched 2026-08-28 23:40Z, `all-modified`) published six of seven —
-      types 2.0.0, logger 2.1.0, auth 1.4.0, core 4.0.1, svg 2.0.1, bot-logic 2.1.0 (verified with
-      `npm view`) — and failed on worker-kit exactly as predicted:
-      `E404 Not Found - PUT https://registry.npmjs.org/@xivdyetools%2fworker-kit`.** Still open:
-      the 2FA first publish of worker-kit 1.1.0
-      (`pnpm --filter @xivdyetools/worker-kit publish --provenance --access public --no-git-checks --otp=<code>`),
-      then its trusted-publisher entry on npmjs.com (GitHub Actions, `FlashGalatine/xivdyetools`,
-      `publish-packages.yml`), then the five `npm deprecate` calls.
+      **Done 2026-08-28.** Run `33221213399` (dispatched 23:40Z, `all-modified`) published six of
+      seven — types 2.0.0, logger 2.1.0, auth 1.4.0, core 4.0.1, svg 2.0.1, bot-logic 2.1.0 — and
+      failed on worker-kit exactly as predicted (`E404 Not Found - PUT
+      https://registry.npmjs.org/@xivdyetools%2fworker-kit`). The maintainer then published
+      **worker-kit 1.1.0 by hand** (granular access token with *Bypass 2FA* in the user-level
+      `~/.npmrc`, no `--provenance`; registry shows 67 files and all nine export subpaths), set the
+      package to *Require 2FA and disallow tokens* and added its trusted publisher. The five
+      **`npm deprecate` calls are live** (verified with `npm view … deprecated`); the token was
+      refused for them (`Two-factor authentication is required to publish this package but an
+      automation token was specified` — those packages disallow tokens), so they went through
+      `npm login --auth-type=web` with the security key. The root `CLAUDE.md` / `.npmrc` break-glass
+      text now describes this token flow instead of `--otp` (the maintainer's 2FA is a security key).
 - [ ] **User-run afterwards:** `npm run upload-emojis` (production credentials, stainID-keyed set);
       `scripts/cleanup-v4-kv.ts`; og-worker beta deploy then production; purge the edge cache for
       `/og/default.png` / `/og/default-x.png`.
