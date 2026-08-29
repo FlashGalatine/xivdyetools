@@ -61,7 +61,9 @@ export class DyeGrid extends BaseComponent {
 
   /** Emit the selection and record it as a deliberate pick (telemetry). */
   private selectDye(dye: Dye): void {
-    TelemetryService.trackDyePick(dye.stainID ?? 0, 'grid');
+    if (dye.stainID != null) {
+      TelemetryService.trackDyePick(dye.stainID, 'grid');
+    }
     this.emit('dye-selected', dye);
   }
 

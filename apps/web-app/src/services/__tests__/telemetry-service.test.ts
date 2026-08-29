@@ -338,6 +338,32 @@ describe('dwell', () => {
     ]);
   });
 
+  it('resumes the dwell clock on a bfcache pageshow without a new tool_view', () => {
+    enable(true);
+    TelemetryService.startTool('harmony', 'initial');
+    vi.advanceTimersByTime(2_000);
+    window.dispatchEvent(new Event('pagehide'));
+    expect(lastBatch().events).toEqual([
+      { n: 'tool_leave', p: { tool: 'harmony', entry: 'initial' }, d: 2 },
+    ]);
+
+    let pageshowEvent: Event;
+    try {
+      pageshowEvent = new PageTransitionEvent('pageshow', { persisted: true });
+    } catch {
+      pageshowEvent = new Event('pageshow');
+      Object.defineProperty(pageshowEvent, 'persisted', { value: true });
+    }
+    window.dispatchEvent(pageshowEvent);
+
+    vi.advanceTimersByTime(3_000);
+    TelemetryService.endTool();
+    TelemetryService.flush();
+    const events = lastBatch().events;
+    expect(events).toEqual([{ n: 'tool_leave', p: { tool: 'harmony', entry: 'initial' }, d: 3 }]);
+    expect(events.some((e) => e.n === 'tool_view')).toBe(false);
+  });
+
   it('keeps timing even while disabled so a late opt-in does not emit a stale tool_leave', () => {
     enable(false);
     TelemetryService.startTool('harmony', 'initial');

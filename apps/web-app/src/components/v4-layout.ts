@@ -52,8 +52,10 @@ let modalContainer: ModalContainer | null = null;
 let toastContainer: ToastContainer | null = null;
 
 // Telemetry: only the tool the app booted into can be an 'initial' or 'share'
-// entry; every later navigation is 'nav' (spec §1).
-let firstToolView = true;
+// entry; every later navigation is 'nav' (spec §1). Captured once in
+// initializeV4Layout before the first loadToolContent call, then consumed
+// (set back to null) by the first recordToolView.
+let bootEntry: ToolEntry | null = null;
 
 // ============================================================================
 // Tutorial Integration
@@ -436,6 +438,10 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     layoutElement.shadowRoot.appendChild(gridStyle);
   }
 
+  // Telemetry: capture the boot entry BEFORE the first loadToolContent — a
+  // share link carries query params, a plain boot does not (spec §1).
+  bootEntry = RouterService.getCurrentRoute().params.toString() !== '' ? 'share' : 'initial';
+
   // Load initial tool
   await loadToolContent(initialTool);
 
@@ -471,23 +477,20 @@ function toolDisplayName(toolId: ToolId): string {
 }
 
 /**
- * Reset the "is this the boot tool" telemetry flag (for testing only).
- * `firstToolView` is module state that otherwise survives for the whole
+ * Reset the "is this the boot tool" telemetry state (for testing only).
+ * `bootEntry` is module state that otherwise survives for the whole
  * test-file run, so a later suite's tool load would look like a "later"
  * navigation instead of the boot view.
  * @internal
  */
 export function __resetTelemetryStateForTesting(): void {
-  firstToolView = true;
+  bootEntry = null;
 }
 
 /** Record a completed tool load for telemetry (tool_view + dwell clock). */
 function recordToolView(toolId: ToolId): void {
-  let entry: ToolEntry = 'nav';
-  if (firstToolView) {
-    firstToolView = false;
-    entry = RouterService.getCurrentRoute().params.toString() !== '' ? 'share' : 'initial';
-  }
+  const entry: ToolEntry = bootEntry ?? 'nav';
+  bootEntry = null;
   TelemetryService.startTool(toolId, entry);
   TelemetryService.track('tool_view', { tool: toolId, entry });
 }

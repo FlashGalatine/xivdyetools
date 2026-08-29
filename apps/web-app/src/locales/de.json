@@ -220,7 +220,7 @@
     "performanceMode": "Leistungsmodus",
     "performanceModeDesc": "Reduziert Animationen und Effekte für bessere Leistung auf langsameren Geräten",
     "enableAnalytics": "Analysen aktivieren",
-    "analyticsDesc": "Anonyme Nutzungsdaten teilen – welche Werkzeuge und Färbemittel verwendet werden sowie .chara-Importe. Keine Kennungen, keine Bilder.",
+    "analyticsDesc": "Anonyme Nutzungsdaten teilen – welche Werkzeuge und Farbstoffe verwendet werden sowie .chara-Importe. Keine Kennungen, keine Bilder.",
     "exportSettings": "Exportieren",
     "importSettings": "Importieren",
     "importError": "Einstellungen konnten nicht importiert werden. Bitte überprüfen Sie das Dateiformat.",

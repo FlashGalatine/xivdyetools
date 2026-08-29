@@ -53,6 +53,8 @@ export class TelemetryService {
   /** `Date.now()` when the current visible stretch began; null while hidden or idle. */
   private static visibleSince: number | null = null;
   private static accumulatedMs = 0;
+  /** The last tool endTool() closed out — restored (no new tool_view) on a bfcache pageshow. */
+  private static lastEnded: { tool: ToolId; entry: ToolEntry } | null = null;
 
   private static readonly onVisibilityChange = (): void => {
     if (document.visibilityState === 'hidden') {
@@ -65,6 +67,17 @@ export class TelemetryService {
   private static readonly onPageHide = (): void => {
     TelemetryService.endTool();
     TelemetryService.flush();
+  };
+  /**
+   * bfcache restore: the page was frozen (pagehide already emitted tool_leave)
+   * rather than reloaded, so there is no fresh boot — resume the dwell clock
+   * on the tool that was showing without emitting another tool_view.
+   */
+  private static readonly onPageShow = (event: PageTransitionEvent): void => {
+    if (event.persisted && !TelemetryService.currentTool && TelemetryService.lastEnded) {
+      const { tool, entry } = TelemetryService.lastEnded;
+      TelemetryService.startTool(tool, entry);
+    }
   };
 
   static initialize(): void {
@@ -89,6 +102,7 @@ export class TelemetryService {
 
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     window.addEventListener('pagehide', this.onPageHide);
+    window.addEventListener('pageshow', this.onPageShow);
   }
 
   static isEnabled(): boolean {
@@ -132,6 +146,7 @@ export class TelemetryService {
     const seconds = Math.min(Math.round(this.accumulatedMs / 1000), this.DWELL_CAP_S);
     this.currentTool = null;
     this.accumulatedMs = 0;
+    this.lastEnded = { tool: current.tool, entry: current.entry };
     this.track('tool_leave', { tool: current.tool, entry: current.entry }, seconds);
   }
 
@@ -178,10 +193,12 @@ export class TelemetryService {
     this.unsubscribeConfig = null;
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     window.removeEventListener('pagehide', this.onPageHide);
+    window.removeEventListener('pageshow', this.onPageShow);
     this.initialized = false;
     this.currentTool = null;
     this.accumulatedMs = 0;
     this.visibleSince = null;
+    this.lastEnded = null;
   }
 
   // --------------------------------------------------------------------------

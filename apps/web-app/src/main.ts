@@ -99,6 +99,13 @@ async function initializeApp(): Promise<void> {
     // Opt-in usage telemetry (default off; honours Global Privacy Control)
     TelemetryService.initialize();
 
+    // Cleanup: pre-5.x ShareService localStorage buffer, retired by this change.
+    try {
+      localStorage.removeItem('xiv_share_analytics');
+    } catch {
+      /* storage unavailable */
+    }
+
     // Log service status
     const status = await getServicesStatus();
     logger.info({
