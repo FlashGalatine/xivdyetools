@@ -199,6 +199,29 @@ describe('/og/* canonical path grammar', () => {
     expect(renderOGImage).not.toHaveBeenCalled();
   });
 
+  // 2026-08-29 FINDING-024 (OG-4, ruling S7-R16): /og/:tool/default.png is
+  // registered before /og/presets/:presetId, so the suffixed spelling
+  // always rendered the real default card — but once S7-R13 made `.png`
+  // optional, `/og/presets/default` (no suffix) started reaching THIS
+  // handler instead, passing the slug grammar and rendering presets' own
+  // notFoundBand: a DIFFERENT card, a 200, cached under the SAME key the
+  // real default.png uses. `default` is now reserved and renders the
+  // identical default card either way — verified here by comparing the
+  // actual rendered SVG (not just the cached response), with caching
+  // inactive in this describe block so both requests genuinely render.
+  it('/og/presets/default and /og/presets/default.png render byte-identical output', async () => {
+    const noSuffix = await app.request('/og/presets/default', {}, TEST_ENV, execCtx);
+    const withSuffix = await app.request('/og/presets/default.png', {}, TEST_ENV, execCtx);
+    expect(noSuffix.status).toBe(200);
+    expect(withSuffix.status).toBe(200);
+    expect(rendered).toHaveLength(2);
+    // band.ts's mark clip-path id carries a module-level call counter
+    // (`ogm5b`, `ogm6b`, …) that is cosmetic, not content — normalise it out
+    // before comparing, same as the services/svg pinning tests do.
+    const normalizeMarkUid = (svg: string): string => svg.replace(/ogm\d+/g, 'ogmX');
+    expect(normalizeMarkUid(rendered[0])).toBe(normalizeMarkUid(rendered[1]));
+  });
+
   // Ruling S7-R13: String.replace('.png', '') is unanchored and
   // first-occurrence, so a `.png` appearing anywhere in the segment used to
   // strip and leave a "valid" enum value.
@@ -234,6 +257,22 @@ describe('/og/* canonical path grammar', () => {
   it('rejects a comparison dye list containing a non-canonical entry, rather than silently rendering the valid ones', async () => {
     const res = await app.request('/og/comparison/1,2,x,3', {}, TEST_ENV, execCtx);
     expect(res.status).toBe(400);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  // 2026-08-29 FINDING-024 (OG-4, ruling S7-R16): re-verifying the reviewer's
+  // claim that presets is the ONLY /og/<literal-tool>/:singleParam route the
+  // `default.png`-shadowing regression reaches — comparison, extractor, and
+  // budget share that exact route shape, but their grammars are
+  // numeric/hex-only, so "default" is rejected as malformed before it could
+  // ever reach a render, let alone get cached as a 200 under the shared key.
+  it('does NOT collide on the stripped "default" path for comparison, extractor, or budget', async () => {
+    const comparison = await app.request('/og/comparison/default', {}, TEST_ENV, execCtx);
+    expect(comparison.status).toBe(400);
+    const extractor = await app.request('/og/extractor/default', {}, TEST_ENV, execCtx);
+    expect(extractor.status).toBe(400);
+    const budget = await app.request('/og/budget/default', {}, TEST_ENV, execCtx);
+    expect(budget.status).toBe(400);
     expect(renderOGImage).not.toHaveBeenCalled();
   });
 });
@@ -359,6 +398,24 @@ describe('/og/* edge cache', () => {
       await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
 
       const second = await app.request('/og/harmony/1/complementary.png', {}, TEST_ENV, execCtx);
+      expect(second.status).toBe(200);
+      expect(renderOGImage).toHaveBeenCalledTimes(1);
+    });
+
+    // 2026-08-29 FINDING-024 (OG-4, ruling S7-R16): the regression this
+    // closes — before it, these two spellings rendered DIFFERENT cards (the
+    // real default vs presets' own not-found band) under the one cache key
+    // S7-R13 gave them, so a single unauthenticated GET of the suffix-less
+    // spelling could poison the cached entry the emitted
+    // /og/presets/default.png URL depends on for up to 7 days. Now they
+    // render the same card, so sharing the key is safe — one render, two
+    // requests, exactly like the harmony case above.
+    it('closes the amplification: /og/presets/default and /og/presets/default.png share one cache entry', async () => {
+      const first = await app.request('/og/presets/default.png', {}, TEST_ENV, execCtx);
+      expect(first.status).toBe(200);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+      const second = await app.request('/og/presets/default', {}, TEST_ENV, execCtx);
       expect(second.status).toBe(200);
       expect(renderOGImage).toHaveBeenCalledTimes(1);
     });

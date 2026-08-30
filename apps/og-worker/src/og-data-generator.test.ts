@@ -879,12 +879,20 @@ describe('FINDING-024: echoed parameters are validated (OG-2 / OG-6)', () => {
     expect(gen('swatch', 'hex=AABBCC&limit=0').imageUrl).toBe('https://og.xivdyetools.app/og/swatch/AABBCC/1.png');
   });
 
-  it("comparison / accessibility dye lists are capped at the image routes' 16", () => {
+  // 2026-08-29 FINDING-024 (OG-4, ruling S7-R17): the share URL's dye list
+  // is still capped at 16 (parseDyeIdList, OG_MAX_COMPARISON_DYES) — that
+  // part is unchanged, and `url` still carries it. The image URL is capped
+  // further, to COMPARISON_MAX_DYES / ACCESSIBILITY_MAX_DYES (4) — as many
+  // ids as the card actually draws, not as many as the share URL accepted.
+  // Before this, the image URL carried all 16 even though 12 of them never
+  // appeared on the card: a request could spell the identical 4-dye card
+  // many ways just by varying ids past position 4.
+  it("comparison / accessibility: the share URL's dye list is capped at 16, the image URL only ever carries as many ids as the card draws", () => {
     const c = gen('comparison', `dyes=${ids(40)}`);
-    expect(c.imageUrl).toBe(`https://og.xivdyetools.app/og/comparison/${ids(16)}.png`);
     expect(c.url).toBe(`https://xivdyetools.app/comparison/?dyes=${ids(16)}&v=1`);
+    expect(c.imageUrl).toBe(`https://og.xivdyetools.app/og/comparison/${ids(4)}.png`);
     const a = gen('accessibility', `dyes=${ids(40)}&vision=protanopia`);
-    expect(a.imageUrl).toBe(`https://og.xivdyetools.app/og/accessibility/${ids(16)}/protanopia.png`);
+    expect(a.imageUrl).toBe(`https://og.xivdyetools.app/og/accessibility/${ids(4)}/protanopia.png`);
   });
 
   it('an unknown ?algo= never reaches og:url (swatch / extractor used to echo it raw)', () => {

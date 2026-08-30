@@ -34,6 +34,15 @@ export interface AccessibilityOGOptions {
 /** The as-designed strip height (the drawn structural-variant size here). */
 const DESIGNED_STRIP_H = 52;
 
+/**
+ * The card draws at most this many bands — extra `dyeIds` beyond this are
+ * silently ignored by the render below. Exported so callers that BUILD a
+ * `/og/accessibility/...` URL (`og-data-generator.ts`) can emit only as many
+ * ids as the card actually uses instead of guessing a number that could
+ * drift from this one (2026-08-29 FINDING-024, OG-4, ruling S7-R17).
+ */
+export const ACCESSIBILITY_MAX_DYES = 4;
+
 /** Lens short codes — untranslated identifiers, the suite's vocabulary. */
 const LENS_SHORT: Record<string, string> = {
   normal: 'NORM',
@@ -50,7 +59,7 @@ export function generateAccessibilityOG(options: AccessibilityOGOptions): string
   const { visionType = 'deuteranopia', locale = 'en', frame = 'discord' } = options;
 
   const dyes = options.dyeIds
-    .slice(0, 4)
+    .slice(0, ACCESSIBILITY_MAX_DYES)
     .map((id) => getDyeByItemId(id))
     .filter((d): d is Dye => d !== undefined);
   if (dyes.length === 0) {

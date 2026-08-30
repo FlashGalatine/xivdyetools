@@ -12,6 +12,8 @@ import { DEFAULT_MATCHING_METHOD, normalizeMatchingMethod, presetData } from '@x
 import type { PresetData } from '@xivdyetools/types';
 import { getDyeByItemId } from './services/svg/dye-helpers';
 import { GROUND, MARK_STRIPES } from './services/svg/tokens';
+import { COMPARISON_MAX_DYES } from './services/svg/comparison';
+import { ACCESSIBILITY_MAX_DYES } from './services/svg/accessibility';
 import { getOgDeck } from './services/og-strings';
 import { embed } from './services/og-embed';
 import {
@@ -356,34 +358,36 @@ export function generateComparisonOGData(
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  // Title/description only ever name the first 4 (a card can't reasonably
-  // list 16 names) — unchanged from before this fix.
-  const dyes = params.dyes.slice(0, 4).map((id) => getDyeInfo(id, locale)).filter(Boolean);
+  // 2026-08-29 FINDING-024 (OG-4, ruling S7-R17): COMPARISON_MAX_DYES is the
+  // SAME constant services/svg/comparison.ts slices its bands on, imported
+  // rather than re-guessed, so the two cannot drift apart silently. One
+  // list, sliced once, feeds both the title (a card can't reasonably list
+  // 16 names — that was already true) and the image URL (this is the fix:
+  // before it, the URL carried every resolved id up to OG_MAX_COMPARISON_DYES
+  // (16), most of which the card never draws — a request could still spell
+  // the identical 4-dye card many ways by varying ids past position 4, the
+  // same "many spellings render one card" shape ruling S7-R12 closes for
+  // malformed ids). Resolving before slicing out nulls also fixes the
+  // now-parked ?dyes=-5,1,2 case from the previous pass: an id that never
+  // resolves cannot reach the URL either way.
+  const resolved = params.dyes
+    .slice(0, COMPARISON_MAX_DYES)
+    .map((id) => ({ id, dye: getDyeInfo(id, locale) }))
+    .filter((r): r is { id: number; dye: { name: string; hex: string } } => r.dye !== null);
 
-  if (dyes.length === 0) {
+  if (resolved.length === 0) {
     return toolDefault('comparison', env, locale, embed('comparison.descriptionDefault', locale));
   }
 
-  const dyeNames = dyes.map((d) => d!.name).join(', ');
-  // 2026-08-29 FINDING-024 (OG-4, Sprint 7 fix wave): the PICTURE can show
-  // up to OG_MAX_COMPARISON_DYES (16), not just the 4 the title names, so
-  // this filters the FULL list — not the sliced-to-4 `dyes` above — down to
-  // ids that actually resolve. Before this it was the raw, unfiltered
-  // `params.dyes`: a share URL mixing a bogus id with valid ones
-  // (?dyes=-5,1,2) baked that bogus id into the emitted /og/comparison/…
-  // URL even though it never resolved to a dye or appeared in the card —
-  // the same "many spellings render one card" amplification the /og/*
-  // route's canonical grammar (ruling S7-R12) now rejects at the route, so
-  // this emitter must never produce a spelling that grammar would reject.
-  const validIds = params.dyes.filter((id) => getDyeInfo(id, locale) !== null);
+  const dyeNames = resolved.map((r) => r.dye.name).join(', ');
 
   return {
     title: site(embed('comparison.title', locale, { names: dyeNames })),
-    description: embed('comparison.description', locale, { n: dyes.length, names: dyeNames }),
+    description: embed('comparison.description', locale, { n: resolved.length, names: dyeNames }),
     url: `${env.APP_BASE_URL}/comparison/?dyes=${params.dyes.join(',')}&v=1`,
-    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/comparison/${validIds.join(',')}.png`, locale),
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/comparison/${resolved.map((r) => r.id).join(',')}.png`, locale),
     siteName: SITE_NAME,
-    themeColor: dyes[0]!.hex,
+    themeColor: resolved[0].dye.hex,
     locale,
   };
 }
@@ -396,30 +400,32 @@ export function generateAccessibilityOGData(
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  // Title/description only ever name the first 4 — unchanged from before this fix.
-  const dyes = params.dyes.slice(0, 4).map((id) => getDyeInfo(id, locale)).filter(Boolean);
+  // 2026-08-29 FINDING-024 (OG-4, ruling S7-R17): same reasoning as
+  // generateComparisonOGData above — ACCESSIBILITY_MAX_DYES is the constant
+  // services/svg/accessibility.ts slices its bands on; one resolved-and-sliced
+  // list feeds both the title and the image URL, so the URL can never carry
+  // an id the card doesn't draw.
+  const resolved = params.dyes
+    .slice(0, ACCESSIBILITY_MAX_DYES)
+    .map((id) => ({ id, dye: getDyeInfo(id, locale) }))
+    .filter((r): r is { id: number; dye: { name: string; hex: string } } => r.dye !== null);
   const visionName = params.vision
     ? getLocalizedVisionName(params.vision, locale)
     : embed('accessibility.lensAll', locale);
 
-  if (dyes.length === 0) {
+  if (resolved.length === 0) {
     return toolDefault('accessibility', env, locale, embed('accessibility.descriptionDefault', locale));
   }
 
-  const dyeNames = dyes.map((d) => d!.name).join(', ');
-  // 2026-08-29 FINDING-024 (OG-4, Sprint 7 fix wave): same reasoning as
-  // generateComparisonOGData above — the picture can show up to
-  // OG_MAX_COMPARISON_DYES, so this filters the FULL list, not the
-  // sliced-to-4 `dyes` above.
-  const validIds = params.dyes.filter((id) => getDyeInfo(id, locale) !== null);
+  const dyeNames = resolved.map((r) => r.dye.name).join(', ');
 
   return {
     title: site(embed('accessibility.title', locale, { lens: visionName, names: dyeNames })),
     description: embed('accessibility.description', locale, { names: dyeNames, lens: lc(visionName, locale) }),
     url: `${env.APP_BASE_URL}/accessibility/?dyes=${params.dyes.join(',')}&vision=${encodeURIComponent(params.vision || 'normal')}&v=1`,
-    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${validIds.join(',')}/${encodeURIComponent(params.vision || 'normal')}.png`, locale),
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${resolved.map((r) => r.id).join(',')}/${encodeURIComponent(params.vision || 'normal')}.png`, locale),
     siteName: SITE_NAME,
-    themeColor: dyes[0]!.hex,
+    themeColor: resolved[0].dye.hex,
     locale,
   };
 }

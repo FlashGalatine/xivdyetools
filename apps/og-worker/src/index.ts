@@ -991,6 +991,26 @@ app.get('/og/presets/:presetId', async (c) => {
     timestamp: Date.now(),
   });
 
+  // Ruling S7-R16 (regression from S7-R13's .png strip, presets is the only
+  // /og/<literal-tool>/:singleParam route this reaches — re-verified against
+  // all four of that shape: comparison/extractor/budget's grammars are
+  // numeric/hex-only and already reject the word "default" as malformed, so
+  // only presets' general slug grammar lets it through). `/og/:tool/
+  // default.png` above already owns the path `/og/presets/default.png`; once
+  // `.png` became optional, `/og/presets/default` (no suffix) started
+  // sharing that exact cache key while still reaching THIS handler, which
+  // passed the slug grammar, found no such preset, and rendered presets' own
+  // notFoundBand — a 200, cached under the key the real default card also
+  // uses. One unauthenticated GET could poison every presets-fallback
+  // unfurl for up to 7 days. `default` is therefore a RESERVED slug — no
+  // curated preset can be given that id, because the emitted
+  // `/og/presets/default.png` URL already shadows it — and both spellings
+  // render the identical default card, so the shared key is correct by
+  // construction rather than by special-casing the cache layer.
+  if (presetId === 'default') {
+    return renderOGImage(buildDefaultCardSvg('presets', frameFromQuery(c), locale));
+  }
+
   return renderOGImage(generatePresetsOG({ presetId, locale, frame: frameFromQuery(c) }));
 });
 
