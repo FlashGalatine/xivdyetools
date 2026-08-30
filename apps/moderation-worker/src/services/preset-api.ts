@@ -11,7 +11,6 @@
 
 import { parseModeratorIds } from '@xivdyetools/bot-logic';
 import {
-  hmacSignHex,
   createBotSignatureV2,
   BOT_SIGNATURE_V2_HEADER,
   BOT_SIGNATURE_NONCE_HEADER,
@@ -28,67 +27,6 @@ import type {
   ModerationQueueEntry,
 } from '../types/preset.js';
 import { PresetAPIError } from '../types/preset.js';
-
-// ============================================================================
-// HMAC Signature Generation
-// ============================================================================
-
-/**
- * Generate HMAC-SHA256 signature for bot authentication
- *
- * The signature proves that:
- * 1. Request came from authorized moderation bot
- * 2. Request has not been tampered with
- * 3. Request is recent (timestamp prevents replay attacks)
- *
- * SECURITY REQUIREMENTS FOR RECEIVING API:
- * - MUST validate timestamp is within 5 minutes of current time
- * - MUST use constant-time comparison for signature validation
- * - MUST reject requests with timestamps older than 5 minutes
- * - SHOULD allow 60-second clock skew for future timestamps
- *
- * Signature format: HMAC-SHA256(timestamp:discordId:userName)
- *
- * Delegates to `@xivdyetools/auth`'s `hmacSignHex` (follow-up 3, superseding
- * DEAD-019's "kept as-is" from the 2026-08-18 dead-code audit) — same change
- * as discord-worker's `services/preset-api.ts`. That audit held off because
- * `hmacSignHex` throws for secrets under 32 bytes (FINDING-009) and
- * `BOT_SIGNING_SECRET` had no length floor; env-validation now enforces
- * ≥32 bytes wherever the secret is set, so the throw path is unreachable in
- * a valid deployment.
- *
- * @see docs/HMAC_SIGNATURE_SPEC.md for complete specification
- * @param timestamp - Unix timestamp in seconds (not milliseconds)
- * @param userDiscordId - Discord user ID initiating the request
- * @param userName - Discord username (for audit trail)
- * @param signingSecret - Shared secret between bots (env.BOT_SIGNING_SECRET)
- * @returns Hex-encoded HMAC signature
- *
- * @example
- * ```typescript
- * const timestamp = Math.floor(Date.now() / 1000);
- * const signature = await generateRequestSignature(
- *   timestamp,
- *   '123456789',
- *   'username',
- *   env.BOT_SIGNING_SECRET
- * );
- * // Use in headers:
- * // X-Request-Timestamp: timestamp
- * // X-Request-Signature: signature
- * ```
- */
-async function generateRequestSignature(
-  timestamp: number,
-  userDiscordId: string | undefined,
-  userName: string | undefined,
-  signingSecret: string,
-): Promise<string> {
-  // Message format: timestamp:discordId:userName
-  // Empty string for missing fields to maintain consistent format
-  const message = `${timestamp}:${userDiscordId || ''}:${userName || ''}`;
-  return hmacSignHex(message, signingSecret);
-}
 
 // ============================================================================
 // Core Request Function
@@ -137,17 +75,13 @@ async function request<T>(
 
   if (env.BOT_SIGNING_SECRET) {
     const timestamp = Math.floor(Date.now() / 1000); // Unix seconds
-    const signature = await generateRequestSignature(
-      timestamp,
-      options.userDiscordId,
-      options.userName,
-      env.BOT_SIGNING_SECRET,
-    );
     headers['X-Request-Timestamp'] = String(timestamp);
-    headers['X-Request-Signature'] = signature; // v1 — kept during rollover
 
     // FINDING-014 (2026-08-21 audit): v2 binds method + path + body hash +
-    // nonce + identity (60 s window); presets-api verifies it whenever present
+    // nonce + identity (60 s window); presets-api verifies it whenever present.
+    // The legacy v1 header (a bare timestamp:userId:userName HMAC that bound
+    // nothing about the request itself) is no longer sent — presets-api stopped
+    // accepting it in 2.2.0 (FINDING-015, 2026-08-29 audit).
     const nonce = crypto.randomUUID();
     headers[BOT_SIGNATURE_NONCE_HEADER] = nonce;
     headers[BOT_SIGNATURE_V2_HEADER] = await createBotSignatureV2(
@@ -162,9 +96,6 @@ async function request<T>(
       },
       env.BOT_SIGNING_SECRET,
     );
-
-    // CRITICAL: The receiving API MUST validate this timestamp is within 5 minutes
-    // to prevent replay attacks. See docs/HMAC_SIGNATURE_SPEC.md
 
     if (options.logger) {
       options.logger.debug('Generated HMAC signature', {

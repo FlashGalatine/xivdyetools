@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createMockFetcher } from '@xivdyetools/test-utils';
+import { verifyBotSignatureV2 } from '@xivdyetools/auth';
 import {
   isApiEnabled,
   isModerator,
@@ -141,7 +142,7 @@ describe('preset-api', () => {
   });
 
   describe('HMAC signature generation', () => {
-    it('should include X-Request-Signature header when BOT_SIGNING_SECRET is set', async () => {
+    it('signs with the timestamp and the v2 signature, never the retired v1 header', async () => {
       mockFetcher._setupHandler(() => Response.json({ presets: [], total: 0, page: 1 }));
 
       await getPresets(mockEnv);
@@ -149,8 +150,10 @@ describe('preset-api', () => {
       const fetchCall = mockFetcher._calls[0];
       const headers = fetchCall.headers;
 
-      expect(headers['x-request-signature']).toBeDefined();
+      // FINDING-015 (2026-08-29 audit): presets-api 2.2.0 stopped accepting v1
+      expect(headers['x-request-signature']).toBeUndefined();
       expect(headers['x-request-timestamp']).toBeDefined();
+      expect(headers['x-request-signature-v2']).toBeDefined();
     });
 
     it('should not include signature headers when BOT_SIGNING_SECRET is not set', async () => {
@@ -170,17 +173,32 @@ describe('preset-api', () => {
       expect(headers['x-request-timestamp']).toBeUndefined();
     });
 
-    it('should generate valid HMAC-SHA256 signature', async () => {
+    it('should generate a valid HMAC-SHA256 v2 signature over the request', async () => {
       mockFetcher._setupHandler(() => Response.json({ presets: [], total: 0, page: 1 }));
 
       await getPendingPresets(mockEnv, 'mod-1');
 
-      const fetchCall = mockFetcher._calls[0];
-      const headers = fetchCall.headers;
-      const signature = headers['x-request-signature'];
+      const call = mockFetcher._calls[0];
+      const signature = call.headers['x-request-signature-v2'];
 
       // HMAC-SHA256 produces 64 hex characters
       expect(signature).toMatch(/^[0-9a-f]{64}$/);
+      // ...and it verifies against the request it was computed over
+      await expect(
+        verifyBotSignatureV2(
+          signature,
+          {
+            method: call.method,
+            path: new URL(call.url).pathname,
+            body: call.body,
+            timestamp: call.headers['x-request-timestamp'],
+            nonce: call.headers['x-request-nonce'],
+            userDiscordId: call.headers['x-user-discord-id'],
+            userName: call.headers['x-user-discord-name'],
+          },
+          mockEnv.BOT_SIGNING_SECRET!,
+        ),
+      ).resolves.toBe(true);
     });
 
     it('should use current timestamp for signature', async () => {
@@ -193,26 +211,6 @@ describe('preset-api', () => {
       const timestamp = headers['x-request-timestamp'];
 
       expect(timestamp).toBe('1736942400'); // Unix timestamp for 2025-01-15T12:00:00Z
-    });
-
-    it('produces the exact pinned HMAC-SHA256 hex for a fixed input (follow-up 3)', async () => {
-      // Pinned vector computed 2026-08-18 with the pre-hmacSignHex hand-rolled
-      // implementation (crypto.subtle.importKey('raw')/sign('HMAC')/hex, byte
-      // for byte identical to @xivdyetools/auth's hmacSignHex) for message
-      // "1736942400:mod-1:" (mockEnv's fixed system time + BOT_SIGNING_SECRET
-      // 'test-signing-secret-padding-1234'). This proves the switch to
-      // hmacSignHex in generateRequestSignature did not change the output.
-      mockFetcher._setupHandler(() => Response.json({ presets: [] }));
-
-      await getPendingPresets(mockEnv, 'mod-1');
-
-      const fetchCall = mockFetcher._calls[0];
-      const headers = fetchCall.headers;
-
-      expect(headers['x-request-timestamp']).toBe('1736942400');
-      expect(headers['x-request-signature']).toBe(
-        '2efd37939be24d69c3cc7064e9e77d0e457a2e7602fe4952a694a7f0e534f09c',
-      );
     });
   });
 

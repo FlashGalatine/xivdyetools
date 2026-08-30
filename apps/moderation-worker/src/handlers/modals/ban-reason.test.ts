@@ -924,4 +924,28 @@ describe('ban reason modal — security audit remediations', () => {
     expect(post.embeds[0].description).not.toContain('SQLITE');
     expect(post.embeds[0].description).toContain('An unexpected error occurred');
   });
+
+  // FINDING-011 (2026-08-29 security audit)
+  it('FINDING-011: the ban log line carries ids, counts and a length — never the username or the reason', async () => {
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as never;
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('DistinctiveBannedName');
+    vi.mocked(banService.banUser).mockResolvedValueOnce({ success: true, presetsHidden: 2 });
+    const reason = 'Repeatedly submitted harassing text as preset descriptions';
+
+    await handleBanReasonModal(modal(reason), env, ctx, logger);
+    await flushWaitUntil();
+
+    expect((logger as any).info).toHaveBeenCalledWith('User banned', {
+      targetUserId: TARGET,
+      moderatorId: 'mod-1',
+      presetsHidden: 2,
+      reasonLength: reason.length,
+    });
+
+    const context = (logger as any).info.mock.calls.at(-1)?.[1] as Record<string, unknown>;
+    expect(Object.keys(context)).not.toContain('targetUsername');
+    expect(Object.keys(context)).not.toContain('reason');
+    expect(JSON.stringify(context)).not.toContain('DistinctiveBannedName');
+    expect(JSON.stringify(context)).not.toContain('harassing');
+  });
 });

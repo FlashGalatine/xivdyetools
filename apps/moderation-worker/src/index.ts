@@ -231,6 +231,19 @@ async function handleCommand(
 }
 
 /**
+ * FINDING-012 (2026-08-29 security audit): `CloudflareRateLimiter` allows the
+ * request when the native binding errors — an accepted trade-off, on the
+ * condition that fail-open events are visible. They were not: the limiter is a
+ * per-isolate singleton (middleware/rate-limit.ts) built without a logger, so a
+ * broken `RL_COMMAND` / `RL_AUTOCOMPLETE` binding silently disabled per-user
+ * limiting. `checkRateLimit` now surfaces `backendError` and both call sites
+ * log it here, once per request, on the request's own logger. Nothing but the
+ * interaction type goes in the context, and nothing goes back to the client:
+ * a header would tell an abuser exactly when the limiter is off.
+ */
+const RATE_LIMIT_FAIL_OPEN_WARNING = 'Rate limiter backend error — request allowed (fail-open)';
+
+/**
  * Per-user `command` rate limit (FINDING-003: native bindings when bound, KV
  * fallback). MOD-12 (FINDING-034, 2026-08-21 audit): button clicks and modal
  * submits now share it with slash commands — they were the only interaction
@@ -252,6 +265,11 @@ async function enforceCommandRateLimit(
     RATE_LIMIT_CONFIGS.command,
     moderationRateLimitBindings(env)
   );
+
+  // FINDING-012: the limiter failed open — say so (see the constant above)
+  if (rateLimitCheck.backendError) {
+    logger.warn(RATE_LIMIT_FAIL_OPEN_WARNING, { type: 'command' });
+  }
 
   if (!rateLimitCheck.allowed) {
     logger.warn('Rate limit exceeded', {
@@ -326,6 +344,11 @@ export async function handleAutocomplete(
     RATE_LIMIT_CONFIGS.autocomplete,
     moderationRateLimitBindings(env)
   );
+
+  // FINDING-012: the limiter failed open — say so (see the constant above)
+  if (rateLimitCheck.backendError) {
+    logger.warn(RATE_LIMIT_FAIL_OPEN_WARNING, { type: 'autocomplete' });
+  }
 
   if (!rateLimitCheck.allowed) {
     logger.warn('Autocomplete rate limit exceeded', {

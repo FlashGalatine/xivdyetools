@@ -41,6 +41,15 @@ namespace_id = "1034"
 simple = { limit = 70, period = 60 }
 
 [vars]
+# FINDING-013 (2026-08-29 security audit): which deployment this is.
+# `validateEnv` requires RL_COMMAND / RL_AUTOCOMPLETE only when this reads
+# "production", so it must be declared in BOTH blocks — vars are not
+# inheritable, and a production deploy without the line would skip the check.
+# On this routeless dev worker "development" also switches on the `isDev` arm
+# of the global error handler (src/index.ts), which adds the message and stack
+# to a 500 body; nothing is routed here and workers_dev is false, so that body
+# is only ever seen by a `wrangler dev` session.
+ENVIRONMENT = "development"
 DISCORD_CLIENT_ID = "1453806659708129374"
 PRESETS_API_URL = "https://api.xivdyetools.app"
 
@@ -56,6 +65,10 @@ routes = [
 ]
 
 [env.production.vars]
+# FINDING-013: turns on validateEnv's production block (RL_COMMAND and
+# RL_AUTOCOMPLETE become required). See the top-level [vars] comment — vars are
+# NOT inheritable, so this must be repeated here.
+ENVIRONMENT = "production"
 DISCORD_CLIENT_ID = "1453806659708129374"
 PRESETS_API_URL = "https://api.xivdyetools.app"
 

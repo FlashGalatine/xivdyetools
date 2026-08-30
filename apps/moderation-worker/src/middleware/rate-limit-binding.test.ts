@@ -28,6 +28,15 @@ function fakeBinding(outcomes: boolean[]): RateLimit & { calls: string[] } {
   } as unknown as RateLimit & { calls: string[] };
 }
 
+/** A binding whose `limit()` rejects — the outage the fail-open path covers. */
+function throwingBinding(): RateLimit {
+  return {
+    limit: async () => {
+      throw new Error('rate limit binding unavailable');
+    },
+  } as unknown as RateLimit;
+}
+
 describe('moderation-worker rate limiter backend selection', () => {
   let mockKV: ReturnType<typeof createMockKV> & KVNamespace<string>;
 
@@ -75,5 +84,39 @@ describe('moderation-worker rate limiter backend selection', () => {
     await incrementRateLimit(mockKV, 'user-3', 'command');
     expect(result.allowed).toBe(true);
     expect(mockKV._store.size).toBe(1);
+  });
+
+  // FINDING-012 (2026-08-29 security audit): the fail-open trade-off stays,
+  // but it must not be silent — `checkRateLimit` has to carry the flag out to
+  // the caller, which is the only place a request-scoped logger exists.
+  it('surfaces backendError when the command binding throws, and still allows the request', async () => {
+    const result = await checkRateLimit(mockKV, 'user-4', 'command', RATE_LIMIT_CONFIGS.command, {
+      command: throwingBinding(),
+    });
+
+    expect(result.allowed).toBe(true);
+    expect(result.backendError).toBe(true);
+  });
+
+  it('surfaces backendError when the autocomplete binding throws', async () => {
+    const result = await checkRateLimit(
+      mockKV,
+      'user-5',
+      'autocomplete',
+      RATE_LIMIT_CONFIGS.autocomplete,
+      { autocomplete: throwingBinding() },
+    );
+
+    expect(result.allowed).toBe(true);
+    expect(result.backendError).toBe(true);
+  });
+
+  it('leaves backendError unset on a healthy binding', async () => {
+    const result = await checkRateLimit(mockKV, 'user-6', 'command', RATE_LIMIT_CONFIGS.command, {
+      command: fakeBinding([true]),
+    });
+
+    expect(result.allowed).toBe(true);
+    expect(result.backendError).toBeUndefined();
   });
 });

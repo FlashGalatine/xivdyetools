@@ -62,6 +62,18 @@ export interface RateLimitResult {
 
   /** Seconds to wait before retrying (only set if !allowed) */
   retryAfter?: number;
+
+  /**
+   * FINDING-012 (2026-08-29 security audit): set when the underlying backend
+   * (currently only the native Cloudflare binding) errored and the request was
+   * allowed through on the fail-open trade-off. The limiter below is a
+   * per-isolate singleton and so cannot hold a request-scoped logger — the
+   * caller (index.ts's command / autocomplete paths) reads this flag and logs
+   * the event with the logger it has for THIS request. Deliberately not
+   * surfaced to the client in any header: that would tell an abuser exactly
+   * when the limiter is off.
+   */
+  backendError?: boolean;
 }
 
 /**
@@ -130,6 +142,12 @@ function effectiveLimit(type: RateLimitType): number {
  * supplied, KV otherwise. The native limiter's `checkOnly` consumes a slot and
  * its `increment` is a no-op, so the two-phase call pattern below counts each
  * interaction exactly once on either backend.
+ *
+ * FINDING-012: deliberately built WITHOUT `options.logger`. This instance
+ * outlives the request that created it, and the only loggers this worker has
+ * are request-scoped (`c.get('logger')`), so caching one here would attribute
+ * every later isolate's fail-open to the first request's id. The flag travels
+ * out on `RateLimitResult.backendError` instead and is logged at the call site.
  */
 function getLimiter(kv: KVNamespace, bindings?: ModerationRateLimitBindings): ExtendedRateLimiter {
   if (!limiterInstance) {
@@ -190,6 +208,9 @@ export async function checkRateLimit(
     remaining: result.remaining,
     resetTime: result.resetAt.getTime(),
     retryAfter: result.retryAfter,
+    // FINDING-012: carry the fail-open flag out to the caller, which is where
+    // a request-scoped logger exists
+    backendError: result.backendError,
   };
 }
 

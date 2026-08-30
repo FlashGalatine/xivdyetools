@@ -158,7 +158,7 @@ Vars: `DISCORD_CLIENT_ID = 1453806659708129374` (separate Discord app), `PRESETS
 | `command` | 20/min | +5 | 120s |
 | `autocomplete` | 60/min | +10 | 120s |
 
-Both fail open (allow on KV error) and use `ctx.waitUntil()` for the increment so the user response is not delayed.
+Both fail open (allow on backend error) and use `ctx.waitUntil()` for the increment so the user response is not delayed. A fail-open is no longer silent: `checkRateLimit` returns `backendError: true` and `index.ts` warns `Rate limiter backend error — request allowed (fail-open)` with the interaction type on the request logger (FINDING-012). Nothing goes back to the client — a header would tell an abuser when the limiter is off.
 
 ### Moderator Authorization
 
@@ -201,14 +201,16 @@ On the first request per isolate, `validateEnv()` + `presetApi.validateSecurityC
 
 ### Bot → Presets API Signing
 
-When calling `presets-api`, `preset-api.ts` HMACs `timestamp:userId:userName` with `BOT_SIGNING_SECRET` and sends:
+When calling `presets-api`, `preset-api.ts` signs the request with `BOT_SIGNING_SECRET` via `@xivdyetools/auth`'s `createBotSignatureV2` — which binds the method, path, body hash, timestamp, nonce and identity (60 s window) — and sends:
 
-> **REFACTOR-027 (2026-07-18 audit):** the signature covers ONLY timestamp + user identity — the HTTP method, path, and body are **not** bound to it. A captured request's headers are reusable for any endpoint within the 5-minute window (relevant only on the `PRESETS_API_URL` fallback path; the Service Binding never leaves Cloudflare). A v2 scheme binding `method:path:sha256(body)` is planned once the signer is extracted into a shared package (REFACTOR-010).
 - `Authorization: Bearer <BOT_API_SECRET>`
-- `X-Request-Signature: <hex>`
+- `X-Request-Signature-V2: <hex>`
+- `X-Request-Nonce: <uuid>`
 - `X-Request-Timestamp: <unix>`
 - `X-User-Discord-ID: <moderator id>`
 - `X-User-Discord-Name: <moderator name>`
+
+> The legacy v1 header (`X-Request-Signature`, a bare `timestamp:userId:userName` HMAC that bound nothing about the request itself — REFACTOR-027, 2026-07-18) is **no longer sent**: presets-api stopped accepting it in 2.2.0 and this bot stopped sending it in 1.6.0 (FINDING-015, `docs/audits/2026-08-29-security`).
 
 Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side (see presets-api `auth.ts`).
 

@@ -33,6 +33,9 @@ export interface EnvValidationResult {
  * - KV: KV namespace for rate limiting and preferences
  * - DB: D1 database binding
  * - PRESETS_API: Service binding to Presets API worker
+ *
+ * Required additionally when `ENVIRONMENT === 'production'` (FINDING-013):
+ * - RL_COMMAND / RL_AUTOCOMPLETE: the two native rate-limit bindings
  */
 export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
@@ -120,6 +123,22 @@ export function validateEnv(env: Env): EnvValidationResult {
   // Check PRESETS_API service binding
   if (!env.PRESETS_API) {
     errors.push('Missing required service binding: PRESETS_API');
+  }
+
+  // FINDING-013 (2026-08-29 security audit): production must bind both native
+  // `[[ratelimits]]` bindings. FINDING-003 moved per-user limiting onto them,
+  // and losing one degrades in SILENCE — the worker falls back to the KV
+  // limiter, which cannot throttle a fast client (1 write/s/key, swallowed put
+  // failures, eventually-consistent reads), with no error and no log line.
+  // That fallback is exactly what dev and tests want, so the requirement is
+  // production-only, mirroring presets-api's block.
+  if (env.ENVIRONMENT === 'production') {
+    if (!env.RL_COMMAND) {
+      errors.push('Missing required env var in production: RL_COMMAND');
+    }
+    if (!env.RL_AUTOCOMPLETE) {
+      errors.push('Missing required env var in production: RL_AUTOCOMPLETE');
+    }
   }
 
   return {
