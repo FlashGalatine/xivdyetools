@@ -12,7 +12,6 @@
 
 import { isModeratorId } from '@xivdyetools/bot-logic';
 import {
-  hmacSignHex,
   createBotSignatureV2,
   BOT_SIGNATURE_V2_HEADER,
   BOT_SIGNATURE_NONCE_HEADER,
@@ -33,39 +32,6 @@ import {
 
 /** Upper bound on one presets-api call (service binding or URL fallback). */
 export const PRESET_API_TIMEOUT_MS = 10_000;
-
-// ============================================================================
-// HMAC Signature Generation
-// ============================================================================
-
-/**
- * Generate HMAC-SHA256 signature for bot authentication
- *
- * SECURITY: This cryptographically binds the user headers to the request,
- * preventing header spoofing attacks even if BOT_API_SECRET is leaked.
- *
- * Delegates to `@xivdyetools/auth`'s `hmacSignHex` (follow-up 3, superseding
- * DEAD-019's "kept as-is" from the 2026-08-18 dead-code audit). That audit
- * held off because `hmacSignHex` throws for secrets under 32 bytes
- * (FINDING-009) and `BOT_SIGNING_SECRET` had no length floor; env-validation
- * now enforces ≥32 bytes wherever the secret is set, so the throw path is
- * unreachable in a valid deployment.
- *
- * @param timestamp - Unix timestamp (seconds)
- * @param userDiscordId - User's Discord ID
- * @param userName - User's Discord name
- * @param signingSecret - The BOT_SIGNING_SECRET
- * @returns Hex-encoded HMAC signature
- */
-async function generateRequestSignature(
-  timestamp: number,
-  userDiscordId: string | undefined,
-  userName: string | undefined,
-  signingSecret: string,
-): Promise<string> {
-  const message = `${timestamp}:${userDiscordId || ''}:${userName || ''}`;
-  return hmacSignHex(message, signingSecret);
-}
 
 // ============================================================================
 // Core Request Function
@@ -138,17 +104,13 @@ async function request<T>(
   // as the Presets API requires signature verification in production
   if (env.BOT_SIGNING_SECRET) {
     const timestamp = Math.floor(Date.now() / 1000);
-    const signature = await generateRequestSignature(
-      timestamp,
-      options.userDiscordId,
-      options.userName,
-      env.BOT_SIGNING_SECRET,
-    );
     headers['X-Request-Timestamp'] = String(timestamp);
-    headers['X-Request-Signature'] = signature; // v1 — kept during rollover
 
     // FINDING-014 (2026-08-21 audit): v2 binds method + path + body hash +
-    // nonce + identity (60 s window); presets-api verifies it whenever present
+    // nonce + identity (60 s window); presets-api verifies it whenever present.
+    // The legacy v1 header (a bare timestamp:userId:userName HMAC that bound
+    // nothing about the request itself) is no longer sent — presets-api
+    // stopped accepting it in 2.2.0 (FINDING-015, 2026-08-29 audit).
     const nonce = crypto.randomUUID();
     headers[BOT_SIGNATURE_NONCE_HEADER] = nonce;
     headers[BOT_SIGNATURE_V2_HEADER] = await createBotSignatureV2(

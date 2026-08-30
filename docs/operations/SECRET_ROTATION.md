@@ -144,7 +144,7 @@ Developer portal → OAuth2 → *Reset Secret*, then `pnpm --filter xivdyetools-
 
 ### 6. `GITHUB_WEBHOOK_SECRET`
 
-Generate, set on discord-worker (`--env production`), then update the webhook secret on the GitHub repository webhook (Settings → Webhooks → the changelog webhook). Verify with *Redeliver* on a recent `push` delivery → 200. The redelivery is safe to repeat: since FINDING-021 the route announces only `push` events from `FlashGalatine/xivdyetools` and only once per version (memoised in KV for 90 days), so a rerun answers `200 {"message":"Already announced"}` instead of re-posting the release.
+Generate, set on discord-worker (`--env production`), then update the webhook secret on the GitHub repository webhook (Settings → Webhooks → the changelog webhook). Verify with *Redeliver* on a recent `push` delivery → 200. The redelivery is safe to repeat either way, but the response differs by what the delivery touched: since FINDING-021 the route announces only `push` events from `FlashGalatine/xivdyetools`, and a delivery that modified `CHANGELOG-laymans.md` for a version already recorded in KV (`announced:v:<version>`, 90-day TTL) answers `200 {"message":"Already announced"}` instead of re-posting the release; an ordinary push redelivery that didn't touch the changelog answers `200 {"message":"Changelog not modified, skipping"}` regardless of the memo. The memo is keyed by version, not by delivery, so a corrected changelog re-pushed for an already-announced version is not re-announced automatically — clear the `announced:v:<version>` KV key first if you need to force it.
 
 ### 7. `CLOUDFLARE_API_TOKEN` (CI)
 

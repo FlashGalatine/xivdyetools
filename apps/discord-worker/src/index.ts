@@ -575,6 +575,13 @@ app.post('/webhooks/github', async (c) => {
   // FINDING-021: announce each version exactly once. The changelog is fetched
   // from the pinned repository, so this key is derived from our own release
   // notes rather than from anything the payload said.
+  //
+  // This read is deliberately unguarded, unlike the write below. A KV outage
+  // here throws, which falls through to the app's error handler and answers
+  // 500 — GitHub logs a failed delivery and no announcement is sent until a
+  // Redeliver succeeds. That is the safe direction: it blocks an announcement
+  // rather than risking one it cannot confirm is new, so it can never cause a
+  // double post.
   const announcedKey = `announced:v:${latestEntry.version}`;
   if (await env.KV.get(announcedKey)) {
     logger.info('Version already announced, skipping', { version: latestEntry.version });
@@ -601,8 +608,11 @@ app.post('/webhooks/github', async (c) => {
   // delivery and invites exactly the Redeliver that double-posts.
   try {
     await env.KV.put(announcedKey, '1', { expirationTtl: ANNOUNCED_VERSION_TTL_SECONDS });
-  } catch {
-    logger.warn('Announcement memo write failed', { version: latestEntry.version });
+  } catch (err) {
+    logger.warn('Announcement memo write failed', {
+      version: latestEntry.version,
+      errorName: err instanceof Error ? err.name : 'unknown',
+    });
   }
 
   logger.info('Changelog announcement sent', { version: latestEntry.version });

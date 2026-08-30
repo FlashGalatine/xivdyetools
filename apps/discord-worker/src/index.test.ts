@@ -788,6 +788,26 @@ describe('index.ts', () => {
       expect(sendAnnouncement).not.toHaveBeenCalled();
     });
 
+    // FINDING-015 follow-up: the signature check must gate every event type,
+    // `ping` included — an unsigned caller must not be able to reach the
+    // pong-only branch just by claiming to be a hook-creation ping. This pins
+    // the ordering (signature verified before the event-type switch); if the
+    // handler were reordered to check the event type first, an unsigned ping
+    // would answer 200 pong instead of 401 and this test would catch it.
+    it('refuses an unsigned ping with 401 before checking the event type', async () => {
+      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+      const { sendAnnouncement } = await import('./services/announcements.js');
+      vi.mocked(verifyGitHubSignature).mockResolvedValue(false);
+
+      const res = await postPush(JSON.stringify(pushPayload()), {
+        headers: { 'X-GitHub-Event': 'ping' },
+      });
+
+      expect(res.status).toBe(401);
+      expect(await res.json()).toMatchObject({ error: 'Unauthorized' });
+      expect(sendAnnouncement).not.toHaveBeenCalled();
+    });
+
     // FINDING-021: 2xx (not 4xx) keeps the hook healthy in GitHub's delivery log.
     it.each([
       ['a non-push event', { 'X-GitHub-Event': 'release' }],

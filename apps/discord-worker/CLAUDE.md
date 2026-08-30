@@ -288,7 +288,7 @@ Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/
 | `GET /health` | None | Health probe |
 | `POST /` | Ed25519 | Discord interactions |
 | `POST /webhooks/preset-submission` | Bearer (`INTERNAL_WEBHOOK_SECRET`) | Forwarded preset submissions from web app |
-| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events that update the root (product-level) `CHANGELOG-laymans.md` — `push` events from `FlashGalatine/xivdyetools` only (`ping` → pong, other events → `Ignored event`, other repositories → 403), each version announced once (redelivery is safe) |
+| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events that update the root (product-level) `CHANGELOG-laymans.md` — `push` events from `FlashGalatine/xivdyetools` only (`ping` → pong, other events → `Ignored event`, other repositories → 403), each version announced once via a versioned memo (`announced:v:<version>`), so redelivery is safe but a corrected changelog needs that KV key cleared to be re-announced |
 
 ## Testing
 

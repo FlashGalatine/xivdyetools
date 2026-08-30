@@ -23,7 +23,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.0.0 | `xivdyetools-web-app` | Cloudflare Pages | Active — release pending |
-| **Discord Bot** | v5.0.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
+| **Discord Bot** | v5.1.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
 | **Image Worker** | v1.1.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.5.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.0.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -132,6 +132,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v5.1.0** | **Aug 2026** | **2026-08-29 security audit (Sprints 1–3) — rate-limit counters move from Upstash Redis to native `[[ratelimits]]` bindings, `/about`/`/manual`/`/changelog` take the normal per-command rate limit, the first-run notice flag expires after 180 days, `/preferences set world:` validates against Universalis and stores the canonical spelling (also checked on read), log lines carry ids/lengths instead of values, the release-announcement webhook is repo-pinned and de-duplicated per version, and the bot stops sending the legacy v1 request signature to presets-api (FINDING-007/008/011/015/019/020/021); PRIVACY_POLICY.md refreshed to match** |
 | **v5.0.1** | **Aug 2026** | **Chara-name privacy (2026-08-29) — `/swatch` never shows the character's name or the attachment filename (neutral "Character swatch" title on card + embed, filename no longer forwarded to the renderer), PRIVACY_POLICY §3 amended; bot-logic 3.0.0 / svg 3.0.0** |
 | **v5.0.0** | **Aug 2026** | **5.0 command set — v4 commands (`/match`, `/match_image`, `/favorites`, `/collection`, `/language`) deleted; `COMMAND_REGISTRY` becomes the roster of record; `/contrast` split out of `/accessibility` for WCAG 1.4.11 pairs; `/changelog` added; `/a11y` registered as an alias; `/swatch` takes a `.chara` file; every card redrawn on the svg 2.0.0 frame system; matching vocabulary + `/preferences set theme`; Photon decoding moved to `image-worker` behind a service binding (2,632 KiB gzip); beta bot on the routeless `-dev` env** |
 | **v4.7.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-009 moderation approve/reject buttons finally routable (embeds post via `MODERATION_BOT_TOKEN` so clicks reach moderation-worker), BUG-035 throw-safe outcome-checked Discord API wrappers, BUG-033 world → DC → region price-scope cascade in `/budget`** |

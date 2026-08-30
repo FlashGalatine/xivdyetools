@@ -73,7 +73,7 @@ When you use `/extractor image`, your uploaded image is:
 | Purpose | Data Used |
 |---------|-----------|
 | Provide Bot functionality | User ID, Guild ID, Channel ID |
-| Save your preferences | User ID, Locale |
+| Save your preferences | User ID and the preference values you set |
 | Manage your preset favorites | User ID, Preset ID |
 | Community presets | User ID, Username, Preset content |
 | Voting system | User ID, Preset ID |
