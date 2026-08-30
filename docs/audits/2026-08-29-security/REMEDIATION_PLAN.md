@@ -99,7 +99,7 @@ Anchor: FINDING-011 (ban log line) and FINDING-018 (the one migration in the pla
 
 **Deploy needs:** hand-run `apps/presets-api/migrations/0013_moderation_log_user_actions.sql` on `xivdyetools-presets` **BEFORE** the moderation-worker 1.6.0 deploy (`wrangler d1 execute xivdyetools-presets --remote --file=migrations/0013_moderation_log_user_actions.sql` from `apps/presets-api`; run the header's verification queries; never `d1 migrations apply`). Safe for the currently deployed code; if run late, every ban/unban fails loudly (atomic batch) until it is applied — nothing is lost. Production now refuses every request (incl. `/health`) while `RL_COMMAND` or `RL_AUTOCOMPLETE` is missing — a wrong toml is a red smoke test. Rulings: rows written directly on the shared D1 in the ban batch (not via presets-api); one `ban`/`unban` row per action plus one `hide`/`restore` row per affected preset; `ENVIRONMENT` var added (the routeless dev worker now shows stack traces in 500s — intended). **Follow-ups routed:** Sprint 11 — `@xivdyetools/types` `ModerationLogEntry` action union + `preset_id: string` are narrower than the table; Sprint 9 — worker-kit anchor of FINDING-012; seven `customId` log sites may carry legacy base64url usernames from pre-2026-08-21 modal ids (no live path) — unscheduled.
 
-## Sprint 5 — api-worker: telemetry sink hardening (P2)
+## Sprint 5 — api-worker: telemetry sink hardening (P2) ✅ COMPLETED 2026-08-30 (commits `ca909247..81035796`, 2 commits, api-worker 0.10.0; two reviewed tasks + whole-branch review)
 Anchor: FINDING-014. The datapoint schema is a positive control — do not touch the columns.
 
 | ID | Source | Sev / Exposure | Item |
@@ -108,6 +108,8 @@ Anchor: FINDING-014. The datapoint schema is a positive control — do not touch
 | FINDING-010 (part) | security | LOW / INTERNET-UNAUTH | `src/index.ts:66-73`: drop `logUserAgent: true`; fix `CHANGELOG.md:16` wording if it overstates. |
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-api-worker` → merge to `main` → `deploy-api-worker.yml` (`deploy:production`).
+
+**Deploy needs:** nothing hand-run. After the deploy, run the telemetry sanity query (`docs/operations/ANALYTICS_QUERIES.md`) once — a silent zero after a web-app host change means the Origin allowlist needs the new host (drops are debug-only and Workers Logs are off). Rulings: unaccepted origins answer 204-and-drop, never 4xx (the plan row said 403 — overridden per the audit's own evidence); env derives from the Origin, with localhost + validated body env only on non-production workers; GPC checked before Origin. **Follow-ups routed:** Sprint 9 — worker-kit rate-limit middleware logs the bucket key (= client IP here) at warn on backend errors; the "default flip" item there is a no-op (already `false`). Unscheduled polish: a duplicated `Sec-GPC` header (`1, 1`) is treated as absent (conforming browsers never send one; the drop errs open only for a hand-crafted sender); local-dev rows in the dev dataset can carry `blob9 = production` (body-sourced; pre-existing).
 
 ## Sprint 6 — web-app: keep the privacy guide true (P2)
 Anchor: FINDING-009. Also carries the documentation halves of 002 and 006 because `apps/web-app/PRIVACY.md` is this unit's file. Six-locale copy change → i18n parity/order gates.

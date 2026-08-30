@@ -13,4 +13,4 @@
 - Require `Origin ∈ {https://xivdyetools.app, https://beta.xivdyetools.app}` (`sendBeacon` always sends it) and derive `env` from it; drop on `Sec-GPC: 1`; `failOpen: false` for this sink (a dropped batch costs nothing).
 
 ## Status
-OPEN
+FIXED 2026-08-30 ca909247 (api-worker 0.10.0: only `Origin` `https://xivdyetools.app` / `https://beta.xivdyetools.app` reach a datapoint (exact-origin match; localhost only on non-production workers), `env` (blob9) is derived from the Origin rather than the body, batches carrying `Sec-GPC: 1` answer 204 with no write and no log line, and the telemetry rate-limit bucket fails closed (`failOpen: false` + `onError: fail-closed`; the API bucket keeps its documented fail-open). Unaccepted batches still answer 204 with no write — a 4xx would only inform a scripted sender (controller ruling; the audit evidence recommended the same). Column layout untouched.)

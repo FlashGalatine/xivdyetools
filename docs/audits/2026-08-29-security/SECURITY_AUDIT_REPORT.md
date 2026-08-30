@@ -115,7 +115,7 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-016 | FIXED 2026-08-30 | 896f3f7e |
 | FINDING-017 | FIXED 2026-08-30 | 780cf992, 9eb84a4c |
 | FINDING-015 | PARTIAL — presets-api requires v2 + nonce replay check; neither bot sends v1; `@xivdyetools/auth` v1 export → Sprint 11 | 01ea3dec, 1a0cf89f, b5d4c53b |
-| FINDING-010 | PARTIAL — presets-api + oauth opt-ins removed; api-worker/worker-kit → Sprints 5, 9 | efd495a4, b14cade9 |
+| FINDING-010 | PARTIAL — presets-api + oauth + api-worker opt-ins removed (none left in the tree); worker-kit limiter-key logging → Sprint 9 | efd495a4, b14cade9, 81035796 |
 | FINDING-011 | FIXED 2026-08-30 (all three units log ids/lengths only; seven legacy `customId` sites ledgered) | efd495a4, a3e8ee14, dfc6de47, b5d4c53b |
 | FINDING-013 | FIXED 2026-08-30 (all four units fail closed in production when a security binding is missing) | efd495a4, a3e8ee14, b14cade9, 4d734c8c, fe86a881, b5d4c53b, c94bfa8f |
 | FINDING-023 | PARTIAL — presets-api + oauth + moderation-worker config tests; image-worker anchor → Sprint 8 | efd495a4, b14cade9, 519c80da |
@@ -130,7 +130,8 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-020 | FIXED 2026-08-30 | 6c14889f, d28f76a4 |
 | FINDING-021 | FIXED 2026-08-30 | fb3d4120, 6014be93 |
 | FINDING-018 | FIXED 2026-08-30 (Sprint 4, moderation-worker 1.6.0) — needs hand-run migration `0013` BEFORE the merge | dfb49aa1, 034badcd |
-| FINDING-009, 014, 024–031 | OPEN — Sprints 5–13 | — |
+| FINDING-014 | FIXED 2026-08-30 (Sprint 5, api-worker 0.10.0) | ca909247 |
+| FINDING-009, 024–031 | OPEN — Sprints 6–13 | — |
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.

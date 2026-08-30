@@ -13,4 +13,4 @@
 - Default `logUserAgent` to `false` in worker-kit and remove the three opt-ins; on limiter errors log the key's scope, not its value; note in `docs/operations` that Workers Logs must not be enabled before FINDING-010/011 are closed.
 
 ## Status
-PARTIAL — presets-api opt-in removed 2026-08-30 efd495a4 (2.2.0) and oauth opt-in removed 2026-08-30 b14cade9 (3.0.0), each with a test that the request-start log has no `userAgent`; api-worker (Sprint 5) opt-in and the worker-kit default flip + limiter-key logging (Sprint 9) pending.
+PARTIAL — api-worker part FIXED 2026-08-30 81035796 (0.10.0: the last `logUserAgent: true` opt-in in the tree is gone — request logs match the web privacy page; note the worker-kit default was already `false`, so Sprint 9's "default flip" item is a no-op and only the limiter-key logging remains there). presets-api opt-in removed 2026-08-30 efd495a4 (2.2.0) and oauth opt-in removed 2026-08-30 b14cade9 (3.0.0), each with a test that the request-start log has no `userAgent`; api-worker (Sprint 5) opt-in and the worker-kit default flip + limiter-key logging (Sprint 9) pending.
