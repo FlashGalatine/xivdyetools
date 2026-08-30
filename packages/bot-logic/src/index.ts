@@ -111,6 +111,7 @@ export { executeSwatch } from './commands/swatch.js';
 export type {
   SwatchInput,
   /** @public */ SwatchResult,
+  /** @public */ SwatchCharacter,
   SwatchSlotOption,
 } from './commands/swatch.js';
 

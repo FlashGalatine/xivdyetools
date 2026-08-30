@@ -3,7 +3,8 @@
  * fixture corpus (real parse rules, real palette sheets, real dye matching).
  */
 import { describe, it, expect } from 'vitest';
-import { executeSwatch } from './swatch.js';
+import { parseCharaFile } from '@xivdyetools/core';
+import { executeSwatch, type SwatchInput } from './swatch.js';
 import {
   DUSKWIGHT_HETEROCHROMIA,
   HROTHGAR_HELIONS,
@@ -14,6 +15,21 @@ const FIXTURES: Record<string, string> = {
   'hrothgar-helions.chara': HROTHGAR_HELIONS,
 };
 const fixture = (name: string): string => FIXTURES[name];
+
+/** The fixture as an object, for format-proof field injection. */
+const parsedFixture = (name: string): Record<string, unknown> =>
+  JSON.parse(fixture(name)) as Record<string, unknown>;
+
+/**
+ * The Duskwight fixture with a Ktisis nickname, injected by object merge
+ * rather than string surgery so a re-vendored fixture cannot silently turn
+ * the injection into a no-op. Players routinely use their real name here —
+ * and as the `.chara` export filename ("Firstname Lastname.chara").
+ */
+const WITH_NICKNAME = JSON.stringify({
+  ...parsedFixture('duskwight-heterochromia.chara'),
+  Nickname: 'Real Name',
+});
 
 describe('executeSwatch', () => {
   it('renders the character sheet with live slots only', async () => {
@@ -100,62 +116,75 @@ describe('executeSwatch', () => {
     expect(result.svgString).toContain('NÄCHSTE FARBE');
   });
 
-  it('never displays the character name — nickname or filename — on the card or embed', async () => {
-    // Players routinely use their real name as a Ktisis nickname or as the
-    // `.chara` export filename ("Firstname Lastname.chara"). Inject a
-    // nickname into the fixture and confirm neither it nor the (formerly
-    // accepted) filename ever reaches the rendered SVG or the embed.
-    const withNickname = fixture('duskwight-heterochromia.chara').replace(
-      '"ModelType": 0,',
-      '"ModelType": 0,\n  "Nickname": "Real Name",'
-    );
-    const result = await executeSwatch({
-      fileText: withNickname,
-      locale: 'en',
+  describe('chara-name privacy (PRIVACY_POLICY §3)', () => {
+    it('the nickname fixture really carries the nickname — guards the guards below', () => {
+      expect(parseCharaFile(WITH_NICKNAME).nickname).toBe('Real Name');
     });
 
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.svgString).not.toContain('Real Name');
-    expect(result.svgString).not.toContain('duskwight');
-    expect(result.embed.title).not.toContain('Real Name');
-    expect(result.embed.title).not.toContain('duskwight');
-    expect(result.embed.description).not.toContain('Real Name');
-    expect(result.embed.description).not.toContain('duskwight');
-    expect(result.embed.title).toBe('Character swatch');
-  });
+    it('never displays the character name on the card or the embed', async () => {
+      const result = await executeSwatch({ fileText: WITH_NICKNAME, locale: 'en' });
 
-  it('never displays the character name on the slot: route either', async () => {
-    const withNickname = fixture('duskwight-heterochromia.chara').replace(
-      '"ModelType": 0,',
-      '"ModelType": 0,\n  "Nickname": "Real Name",'
-    );
-    const result = await executeSwatch({
-      fileText: withNickname,
-      locale: 'en',
-      slot: 'hair',
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.svgString).not.toContain('Real Name');
+      expect(result.embed.title).not.toContain('Real Name');
+      expect(result.embed.description).not.toContain('Real Name');
+      expect(result.embed.title).toBe('Character swatch');
     });
 
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.svgString).not.toContain('Real Name');
-    expect(result.embed.title).not.toContain('Real Name');
-    expect(result.embed.description).not.toContain('Real Name');
-    expect(result.embed.title).toBe('Character swatch');
-  });
+    it('never displays the character name on the slot: route either', async () => {
+      const result = await executeSwatch({ fileText: WITH_NICKNAME, locale: 'en', slot: 'hair' });
 
-  it('never returns the Ktisis nickname on result.character', async () => {
-    const withNickname = fixture('duskwight-heterochromia.chara').replace(
-      '"ModelType": 0,',
-      '"ModelType": 0,\n  "Nickname": "Real Name",'
-    );
-    const result = await executeSwatch({
-      fileText: withNickname,
-      locale: 'en',
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.svgString).not.toContain('Real Name');
+      expect(result.embed.title).not.toContain('Real Name');
+      expect(result.embed.description).not.toContain('Real Name');
+      expect(result.embed.title).toBe('Character swatch');
     });
 
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect('nickname' in result.character).toBe(false);
+    it('never returns the Ktisis nickname on result.character', async () => {
+      const result = await executeSwatch({ fileText: WITH_NICKNAME, locale: 'en' });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect('nickname' in result.character).toBe(false);
+    });
+
+    it('takes no filename — the attachment name cannot reach the renderer', () => {
+      // Type-level guard: `SwatchInput.fileName` was removed in 3.0.0. If the
+      // field ever returns, the excess-property error below disappears and
+      // the `@ts-expect-error` itself fails type-check.
+      const input: SwatchInput = {
+        fileText: fixture('duskwight-heterochromia.chara'),
+        locale: 'en',
+        // @ts-expect-error — no `fileName` on SwatchInput (chara-name privacy, 3.0.0)
+        fileName: 'duskwight.chara',
+      };
+      expect(input.fileText).toContain('"Tribe": "Duskwight"');
+    });
+
+    it('prints only a known producer token — a hand-edited TypeName is omitted', async () => {
+      // `TypeName` is free text the uploader controls; only the exporter
+      // families print (as a fixed token), so the identifier line can never
+      // carry a name smuggled in through that field.
+      const base = parsedFixture('duskwight-heterochromia.chara');
+      const named = await executeSwatch({
+        fileText: JSON.stringify({ ...base, TypeName: 'Firstname Lastname' }),
+        locale: 'en',
+      });
+      const known = await executeSwatch({
+        fileText: JSON.stringify({ ...base, TypeName: 'Anamnesis Character File' }),
+        locale: 'en',
+      });
+
+      expect(named.ok && known.ok).toBe(true);
+      if (!named.ok || !known.ok) return;
+      expect(named.svgString).not.toContain('Firstname');
+      expect(named.svgString).not.toContain('FIRSTNAME');
+      expect(named.embed.description).not.toContain('Firstname');
+      expect(known.svgString).toContain('DUSKWIGHT ♀ · ANAMNESIS');
+      expect(known.svgString).not.toContain('CHARACTER FILE');
+    });
   });
 });
