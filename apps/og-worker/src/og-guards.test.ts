@@ -202,6 +202,27 @@ describe('/og/* edge cache', () => {
     expect(renderOGImage).toHaveBeenCalledTimes(1);
   });
 
+  // 2026-08-29 FINDING-024 (OG-4, ruling S7-R11): the untested direction of
+  // the S7-R8 fix — a HEAD arriving on a COLD cache. It renders and must
+  // `cache.put` the FULL response body, because a later GET is served
+  // whatever got stored. If a future change ever stored what the HEAD
+  // *client* sees (a bodiless response — Hono strips the body only in the
+  // outer wrapper, after this middleware has already run) instead of what
+  // the inner render actually produced, every GET after a HEAD would return
+  // an empty PNG: a broken preview image, cached for a week. A status-only
+  // or call-count-only assertion would not catch that — this test reads the
+  // GET's actual body.
+  it('a HEAD on a cold cache renders and stores the FULL body for a later GET', async () => {
+    const head = await app.request('/og/harmony/1/complementary', { method: 'HEAD' }, TEST_ENV, execCtx);
+    expect(head.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+    const get = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+    expect(get.status).toBe(200);
+    expect(await get.text()).toBe('mock-png-data');
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+  });
+
   // 2026-08-29 FINDING-024 (OG-4): the key is now canonical — pathname plus
   // the RESOLVED lang/frame and the RAW algo — instead of the full URL. This
   // block replaces the old "keys the cache on the full URL" test, which
