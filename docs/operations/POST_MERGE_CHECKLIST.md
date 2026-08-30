@@ -396,11 +396,15 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       rule scoped to `http.host eq "og.xivdyetools.app" and http.request.uri.path starts_with
       "/og/"`. (**Not** `xivdyetools.app/og/*` — that host/path combination is never routed to
       this worker; production image renders are served only from `og.xivdyetools.app/og/*`, per
-      `wrangler.toml`'s `[env.production].routes`.) Start at a generous threshold — e.g. 300
-      requests / 10 s from one IP, action "Managed Challenge" rather than "Block" — and watch a
-      week of traffic before tightening: Discord's and X's link-preview fetchers share source
-      IPs (Sprint 7 ruling S7-R1), so a tight or blocking threshold throttles legitimate previews
-      exactly when a shared link goes viral. Still wanted after Sprint 7's cache-key
+      `wrangler.toml`'s `[env.production].routes`.) Start generous — e.g. 300 requests / 10 s
+      from one IP — and start the action on **Log**, not Managed Challenge: Discord's and X's
+      link-preview fetchers share source IPs (Sprint 7 ruling S7-R1) *and* cannot solve a
+      challenge, so a challenge action is a block for exactly the clients this endpoint exists
+      to serve, at exactly the moment a shared link goes viral. Read a week of the rule's own
+      logs, then switch to **Block** at whatever threshold that week says is safely above the
+      legitimate fleets. Mirror the rule on `og-beta.xivdyetools.app` only if beta is ever
+      abused — it renders the same cards and is equally public, but carries no real traffic to
+      calibrate against. Still wanted after Sprint 7's cache-key
       canonicalisation (OG-4): that bounds the *repeat* cost of one path, but does nothing for a
       client enumerating many distinct *valid* paths (dye IDs, harmony types, …), each a
       legitimate cache miss on first render — this WAF rule is the only bound on that count.
