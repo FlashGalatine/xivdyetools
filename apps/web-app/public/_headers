@@ -20,9 +20,15 @@
   # anyone can register a subdomain of -- the one allowance that would have
   # handed a markup injection a self-controlled beacon/exfil origin. A dev
   # worker reachable only on *.workers.dev belongs in a local override, not
-  # here. object-src / frame-src 'none' close the plugin and frame sinks the
+  # here. It also carried https://universalis.app until the 2026-08-29 audit
+  # (FINDING-026): the browser never talks to Universalis directly -- every
+  # market call goes through api-worker's proxy on data.xivdyetools.app
+  # (services/api-service-wrapper.ts) -- so that allowance only widened the
+  # exfil surface, exactly like *.workers.dev before it. The matching
+  # dns-prefetch/preconnect hints came out of src/index.html in the same
+  # change. object-src / frame-src 'none' close the plugin and frame sinks the
   # app never uses. src/__tests__/security-headers.test.ts pins all of this.
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://universalis.app https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
 
   # Security Headers
   # (No X-XSS-Protection: the legacy auditor is deprecated and itself abusable;

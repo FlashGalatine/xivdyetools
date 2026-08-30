@@ -1,6 +1,7 @@
 /**
  * Cloudflare Pages Middleware
- * Handles domain redirects from old domain to new domain
+ * Handles domain redirects from old domain to new domain, and keeps the SPA
+ * catch-all out of the immutable asset cache.
  */
 
 export async function onRequest(context: {
@@ -16,6 +17,23 @@ export async function onRequest(context: {
     newUrl.hostname = 'xivdyetools.app';
 
     return Response.redirect(newUrl.toString(), 301);
+  }
+
+  // FINDING-027 -- the SPA catch-all must never be cached as a script under the
+  // `/assets/*` immutable rule; see the 2026-08 cache-poisoning incident.
+  // `public/_redirects` answers every unmatched path with `/index.html 200`,
+  // and Cloudflare Pages merges overlapping `_headers` patterns, so a request
+  // for a hashed asset this deployment does not have came back as HTML carrying
+  // `max-age=31536000, immutable` and was served as the script for a year.
+  if (url.pathname.startsWith('/assets/')) {
+    const response = await next();
+    if (response.headers.get('Content-Type')?.includes('text/html')) {
+      return new Response('Not found', {
+        status: 404,
+        headers: { 'Cache-Control': 'no-store' },
+      });
+    }
+    return response;
   }
 
   // Continue to next middleware or route handler
