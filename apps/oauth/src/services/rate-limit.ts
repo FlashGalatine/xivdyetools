@@ -21,7 +21,7 @@
  * Limits (per IP, per path — see OAUTH_LIMITS):
  * - /auth/discord, /auth/xivauth: 10 req/min (initiate login)
  * - /auth/callback, /auth/xivauth/callback: 20 req/min (token exchange)
- * - /auth/refresh and everything else: 30 req/min
+ * - /auth/me, /auth/revoke and everything else: 30 req/min (OAUTH_LIMITS.default)
  */
 
 import {

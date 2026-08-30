@@ -867,6 +867,29 @@ describe('Callback Handler', () => {
             expect(json.user.avatar_url).toContain('cdn.discordapp.com');
         });
 
+        // FINDING-022 (2026-08-29 security audit): this response body carries a
+        // bearer JWT — RFC 6749 §5.1 requires it never be cached.
+        it('should send Cache-Control: no-store on the token response', async () => {
+            mockDiscordSuccess();
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: 'valid_code',
+                    code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
+                }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.token).toBeTruthy();
+            expect(response.headers.get('Cache-Control')).toBe('no-store');
+            expect(response.headers.get('Pragma')).toBe('no-cache');
+        });
+
         it('should ignore custom redirect_uri and use worker callback', async () => {
             globalThis.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
                 if (url.includes('oauth2/token')) {

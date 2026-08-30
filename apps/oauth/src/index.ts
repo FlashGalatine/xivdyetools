@@ -8,7 +8,7 @@ import { cors } from 'hono/cors';
 import type { Env } from './types.js';
 import { authorizeRouter } from './handlers/authorize.js';
 import { callbackRouter } from './handlers/callback.js';
-import { tokenRouter } from './handlers/refresh.js';
+import { tokenRouter } from './handlers/token.js';
 import { xivauthRouter } from './handlers/xivauth.js';
 import { checkRateLimit, getClientIp, oauthRateLimitTiers } from './services/rate-limit.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
@@ -137,6 +137,15 @@ app.use('*', async (c, next) => {
   c.header('X-Content-Type-Options', 'nosniff');
   // Prevent clickjacking by denying iframe embedding
   c.header('X-Frame-Options', 'DENY');
+  // FINDING-022 (2026-08-29 security audit): nothing this worker returns is
+  // cacheable. The token responses are bearer JWTs (RFC 6749 §5.1 mandates
+  // no-store on them), the callback bounces carry an authorization code, and
+  // /auth/me is per-user. Nothing caches in the path today — this stops a
+  // future CDN rule or a browser heuristic on a 200 JSON body from storing a
+  // JWT. Applied to every route, not just /auth/*: /health has nothing worth
+  // caching either. Pragma is for HTTP/1.0 intermediaries.
+  c.header('Cache-Control', 'no-store');
+  c.header('Pragma', 'no-cache');
   // Enforce HTTPS for 1 year everywhere except local development (FINDING-029:
   // was production-only, so any other non-development env went without HSTS)
   if (c.env.ENVIRONMENT !== 'development') {
@@ -223,15 +232,18 @@ app.get('/health', (c) => {
 // │  /auth/xivauth/cb   - XIVAuth callback   │
 // ├──────────────────────────────────────────┤
 // │ Token Management                         │
-// │  /auth/refresh      - Refresh JWT token  │
+// │  /auth/me           - Current user info  │
 // │  /auth/revoke       - Revoke session     │
 // └──────────────────────────────────────────┘
+//
+// FINDING-003 (2026-08-29 security audit): /auth/refresh was removed — it had
+// no client and let a copied token be re-minted for up to 30 days.
 // ============================================
 
 app.route('/auth', authorizeRouter);  // Discord: /auth/discord
 app.route('/auth', callbackRouter);   // Discord: /auth/callback
 app.route('/auth', xivauthRouter);    // XIVAuth: /auth/xivauth, /auth/xivauth/cb
-app.route('/auth', tokenRouter);      // Tokens: /auth/refresh, /auth/revoke
+app.route('/auth', tokenRouter);      // Tokens: /auth/me, /auth/revoke
 
 // ============================================
 // ERROR HANDLING

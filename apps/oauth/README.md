@@ -32,9 +32,10 @@ All auth routes are mounted under `/auth`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/auth/refresh` | Exchange a refresh token for a new access token |
 | `POST` | `/auth/revoke` | Revoke a token — adds its `jti` to the KV blacklist |
 | `GET` | `/auth/me` | Return the authenticated user's profile |
+
+There is no refresh endpoint. `POST /auth/refresh` was removed in 3.0.0 and now 404s — see [Tokens](#tokens).
 
 ### Utility
 
@@ -47,7 +48,11 @@ All auth routes are mounted under `/auth`.
 
 Access tokens are **HS256 JWTs** with a one-hour default lifetime (`JWT_EXPIRY = 3600`), issued with `iss` set to `WORKER_URL` — `https://auth.xivdyetools.app` in production.
 
-Revocation is a KV-backed `jti` blacklist (`TOKEN_BLACKLIST`) whose entries live for the token's remaining lifetime **plus the refresh grace window** (`REFRESH_GRACE_SECONDS` from `@xivdyetools/auth`, 15 min — the same constant `/auth/refresh` uses to accept a recently expired token), so a revoked token can neither be used nor refreshed, and entries still clean themselves up afterwards (FINDING-001, 2026-08-21 audit). `presets-api` binds the same namespace and rejects revoked tokens too (FINDING-002), so `/auth/revoke` really does end a session. Revocation checks **fail open**: if KV is unavailable the check returns `false` rather than throwing, keeping auth functional during an outage at the cost of briefly honouring a revoked token.
+**A session ends at `exp`.** There is no way to extend one: `POST /auth/refresh` was removed in 3.0.0 (FINDING-003, 2026-08-29 audit) and the route 404s. It had no client — the web app signs in again rather than refreshing — but it accepted a token on signature alone for a grace window past `exp` and re-minted the new token from the *old* token's claims, so anyone holding a copied token could keep the chain alive for up to 30 days and survive the victim's `/auth/revoke` (only the presented `jti` was blacklisted).
+
+Revocation is a KV-backed `jti` blacklist (`TOKEN_BLACKLIST`) whose entries live for the token's remaining lifetime **plus `REFRESH_GRACE_SECONDS`** (`@xivdyetools/auth`, 15 min — now purely a clock-skew margin), so a revoked token cannot be used and entries still clean themselves up afterwards (FINDING-001, 2026-08-21 audit). `presets-api` binds the same namespace and rejects revoked tokens too (FINDING-002), so `/auth/revoke` really does end a session. Revocation checks **fail open**: if KV is unavailable the check returns `false` rather than throwing, keeping auth functional during an outage at the cost of briefly honouring a revoked token.
+
+Every response carries `Cache-Control: no-store` and `Pragma: no-cache` (FINDING-022; RFC 6749 §5.1).
 
 ## Development
 

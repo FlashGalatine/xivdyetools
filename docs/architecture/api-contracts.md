@@ -576,21 +576,12 @@ SPA-friendly token exchange.
 }
 ```
 
-### POST /auth/refresh
+### ~~POST /auth/refresh~~ — removed in oauth 3.0.0
 
-Refresh an expired JWT (within 24h grace period).
-
-**Headers:**
-```http
-Authorization: Bearer <EXPIRED_JWT>
-```
-
-**Response:**
-```json
-{
-  "token": "NEW_JWT_TOKEN"
-}
-```
+Removed by FINDING-003 (`docs/audits/2026-08-29-security`); the route now 404s. No client
+ever called it — the web app re-runs the sign-in flow — while it accepted a token on signature
+alone past `exp` and re-minted from the old token's claims, letting a copied token be kept alive
+for up to 30 days past the victim's logout. **A session ends at `exp`; clients sign in again.**
 
 ### GET /auth/me
 

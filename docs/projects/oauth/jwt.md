@@ -107,13 +107,13 @@ Uses the Web Crypto API (`crypto.subtle`) for Cloudflare Workers compatibility.
 |---------|-------|
 | Default lifetime | 1 hour (3600 seconds) |
 | Configurable via | `JWT_EXPIRY` environment variable |
-| Refresh grace period | 24 hours after expiry |
+| Extension | None — there is no refresh endpoint (removed in 3.0.0) |
 
 **Expiration check:**
 ```typescript
 const now = Math.floor(Date.now() / 1000);
 if (payload.exp < now) {
-  // Token expired — try refresh if within 24-hour grace period
+  // Token expired — the client must start a new PKCE sign-in flow
 }
 ```
 
@@ -141,15 +141,14 @@ At `GET /auth/me` and other authenticated endpoints:
 4. Check JTI against revocation blacklist (if KV available)
 5. Return verified claims
 
-### Refresh
+### ~~Refresh~~ — removed in 3.0.0
 
-At `POST /auth/refresh`:
+`POST /auth/refresh` was removed by FINDING-003 (`docs/audits/2026-08-29-security`) and now 404s.
+It verified the signature only, accepting a token past `exp`, and minted the replacement from the
+*old* token's claims — so a copied token could be re-minted up to the 30-day `orig_iat` cap and
+outlive the victim's `/auth/revoke`, which blacklists only the presented `jti`. Nothing called it.
 
-1. Verify signature (ignores expiry)
-2. Check if within 24-hour grace period
-3. Check revocation blacklist
-4. Issue new token with fresh `iat`, `exp`, and `jti`
-5. Old token remains valid until its natural expiry
+**A token's life ends at `exp`.** The client starts a new PKCE sign-in flow.
 
 ### Revocation
 
@@ -170,9 +169,9 @@ At `POST /auth/revoke`:
 // Display user info
 const { username, global_name, avatar_url } = user;
 
-// Check expiry for refresh
+// Expired tokens cannot be extended — sign in again
 if (payload.exp < Date.now() / 1000) {
-  await refreshToken();
+  await startLogin();
 }
 ```
 

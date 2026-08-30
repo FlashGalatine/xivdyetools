@@ -653,6 +653,25 @@ describe('XIVAuth Handler', () => {
             });
         });
 
+        // FINDING-022 (2026-08-29 security audit): this response body carries a
+        // bearer JWT — RFC 6749 §5.1 requires it never be cached.
+        it('should send Cache-Control: no-store on the token response', async () => {
+            mockXIVAuth({ characters: [{ lodestone_id: 12345678, name: 'Test Character', home_world: 'Excalibur', verified: true }] });
+
+            const response = await postXIVAuthCallback({
+                code: 'valid_code',
+                code_verifier: VALID_CODE_VERIFIER,
+                state: await boundState(),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.token).toBeTruthy();
+            expect(response.headers.get('Cache-Control')).toBe('no-store');
+            expect(response.headers.get('Pragma')).toBe('no-cache');
+        });
+
         it('should handle characters fetch failure gracefully', async () => {
             globalThis.fetch = vi.fn().mockImplementation((url: string) => {
                 if (url.includes('xivauth.net/oauth/token')) {

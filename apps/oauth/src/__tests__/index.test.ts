@@ -180,6 +180,30 @@ describe('OAuth Worker App', () => {
         });
     });
 
+    /**
+     * FINDING-022 (2026-08-29 security audit): every response this worker
+     * emits is auth material or a step towards it, so none of it may be
+     * cached (RFC 6749 §5.1). The header middleware used to set only
+     * nosniff / X-Frame-Options / HSTS.
+     */
+    describe('Cache-Control (FINDING-022)', () => {
+        it('should send no-store and Pragma: no-cache on every response', async () => {
+            const response = await SELF.fetch('http://localhost/health');
+
+            expect(response.status).toBe(200);
+            expect(response.headers.get('Cache-Control')).toBe('no-store');
+            expect(response.headers.get('Pragma')).toBe('no-cache');
+        });
+
+        it('should send no-store on a 404 too', async () => {
+            const response = await SELF.fetch('http://localhost/unknown/route');
+
+            expect(response.status).toBe(404);
+            expect(response.headers.get('Cache-Control')).toBe('no-store');
+            expect(response.headers.get('Pragma')).toBe('no-cache');
+        });
+    });
+
     describe('Rate Limiting Middleware', () => {
         it('should add rate limit headers to auth responses', async () => {
             const response = await SELF.fetch(`http://localhost/auth/discord?code_challenge=${VALID_CODE_CHALLENGE}`);

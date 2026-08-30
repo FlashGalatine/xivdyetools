@@ -87,7 +87,7 @@ Frontend                       OAuth Worker                       Discord
    │                                │  fetch /users/@me (5s)         │
    │                                │  upsert user in D1             │
    │                                │  createJWTForUser (HS256)      │
-   │ ◄── { jwt, user, refreshAt } ──│                                │
+   │ ◄─ { jwt, user, expires_at } ──│                                │
 ```
 
 XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/cb`, plus pulls `/api/v1/characters` and stores them in `xivauth_characters`.
@@ -104,7 +104,7 @@ src/
 │   ├── authorize.ts                  # GET /auth/discord (PKCE entry point)
 │   ├── callback.ts                   # GET + POST /auth/callback (token exchange + JWT mint)
 │   ├── xivauth.ts                    # XIVAuth GET /auth/xivauth + /auth/xivauth/cb
-│   └── refresh.ts                    # POST /auth/refresh, POST /auth/revoke, GET /auth/me
+│   └── token.ts                      # POST /auth/revoke, GET /auth/me
 ├── middleware/
 │   └── body-validation.ts            # bodySizeLimit (10KB), jsonDepthLimit
 ├── services/
@@ -168,9 +168,10 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 | `/auth/callback` | POST | SPA token exchange (`{ code, code_verifier, state }` — `state` is the signed value echoed by the GET callback; required) |
 | `/auth/xivauth` | GET | Initiates XIVAuth OAuth |
 | `/auth/xivauth/cb` | GET / POST | XIVAuth redirect handler |
-| `/auth/refresh` | POST | Refresh JWT (24h grace window after expiry) |
 | `/auth/revoke` | POST | Revoke a token (writes JTI to `TOKEN_BLACKLIST`) |
 | `/auth/me` | GET | User info for a valid Bearer JWT (revocation-checked via `TOKEN_BLACKLIST`) |
+
+`POST /auth/refresh` was **removed in 3.0.0** (FINDING-003, `docs/audits/2026-08-29-security`) and now 404s. Sessions end at `exp`; clients sign in again.
 
 ## Key Patterns
 
@@ -188,11 +189,17 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 - Includes `sub`, `iat`, `exp`, `iss`, `username`, `global_name`, `avatar`, and a per-token `jti` for revocation.
 - `verifyJWT` rejects non-HS256 algorithms, validates signature, and checks `exp`.
 - `verifyJWTWithRevocationCheck` additionally queries `TOKEN_BLACKLIST` for the `jti`.
-- `revokeToken` writes the `jti` with TTL = remaining lifetime so it auto-expires.
+- `revokeToken` writes the `jti` with TTL = remaining lifetime + `REFRESH_GRACE_SECONDS` so it auto-expires (FINDING-001).
 
-### Refresh Grace Window
+### No Token Refresh (removed in 3.0.0)
 
-`POST /auth/refresh` accepts tokens that are expired by up to **24 hours** so a user with a stale tab can re-acquire a fresh token without re-running the OAuth flow. Tokens expired beyond 24 hours are rejected.
+`POST /auth/refresh` is gone (FINDING-003, 2026-08-29 audit) and the route 404s. It had no client — the web app re-runs the sign-in flow — but it accepted a token on signature alone for `REFRESH_GRACE_SECONDS` past `exp` and re-minted from the *old* token's claims, so a copied token could be kept alive to the 30-day `orig_iat` cap and outlive the victim's `/auth/revoke`. A session now ends at `exp` (1 h) and the user signs in again.
+
+`REFRESH_GRACE_SECONDS` (15 min, `@xivdyetools/auth`) still sizes the blacklist TTL in `revokeToken` — with no refresh endpoint it is simply a clock-skew margin on the revocation entry.
+
+### Cache-Control
+
+Every response carries `Cache-Control: no-store` and `Pragma: no-cache` (FINDING-022; RFC 6749 §5.1) — token bodies, callback bounces carrying an authorization code, `/auth/me`, and the health routes alike.
 
 ### Redirect URI Validation
 
@@ -241,7 +248,7 @@ Prevents the worker from hanging on a slow Discord/XIVAuth response.
 
 ### Token Revocation
 
-JWT revocation is enforced on `/auth/me` and during refresh by checking `TOKEN_BLACKLIST` for the `jti`. TTL on the blacklist key matches the token's remaining lifetime so storage stays bounded.
+JWT revocation is enforced on `/auth/me` by checking `TOKEN_BLACKLIST` for the `jti` (`presets-api` binds the same namespace and checks it too). TTL on the blacklist key is the token's remaining lifetime plus `REFRESH_GRACE_SECONDS`, so storage stays bounded.
 
 ### Generic Error Responses
 

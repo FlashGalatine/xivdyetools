@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+2026-08-29 security audit remediation (`docs/audits/2026-08-29-security`).
+
+### Removed
+
+- **`POST /auth/refresh` is gone; the route now 404s (FINDING-003).** It accepted a token on signature alone for `REFRESH_GRACE_SECONDS` past `exp` and minted the replacement from the **old token's claims** rather than the user row, with `orig_iat` capping the chain at 30 days and only the presented `jti` ever blacklisted. So whoever held a copied token could re-mint it every hour for up to a month, and the victim's `/auth/revoke` — which blacklists only the `jti` the victim holds — never touched the attacker's chain. There is no per-user revocation epoch and no reuse detection to catch it. **No client ever called the endpoint**: `grep -rn 'auth/refresh' apps/*/src` found callers only inside oauth itself, and the web app re-runs the PKCE sign-in flow instead of refreshing — so removing it costs nothing and closes the whole chain. A session now ends at `exp` (1 h, `JWT_EXPIRY`). `src/handlers/refresh.ts` is renamed `src/handlers/token.ts`, which keeps `GET /auth/me` and `POST /auth/revoke` unchanged. The `REFRESH_GRACE_SECONDS` blacklist-TTL grace in `revokeToken` **stays exactly as it is** (FINDING-001, 2026-08-21) — with no refresh endpoint it is simply a clock-skew margin on the revocation entry.
+
+### Security
+
+- **`Cache-Control: no-store` and `Pragma: no-cache` on every response (FINDING-022).** The security-headers middleware set only `X-Content-Type-Options`, `X-Frame-Options` and HSTS, so the token bodies from `POST /auth/callback` and `POST /auth/xivauth/callback` went out cacheable — which RFC 6749 §5.1 forbids for a bearer token — as did `GET /auth/me` and the callback bounces carrying an authorization code. Nothing caches in the path today (Workers origin, bearer flow, `fetch` from the SPA), so this is hygiene against a future CDN rule or a browser heuristic on a 200 JSON body. Applied worker-wide rather than to `/auth/*` only: the health routes have nothing worth caching either. CORS and the other headers are untouched.
+
 ## [2.7.0] - 2026-08-21
 
 Security audit remediation (docs/audits/2026-08-21-security — FINDING-001, FINDING-003, FINDING-012, FINDING-013, FINDING-029). Minor bump: behaviour changes on `/auth/refresh`, on authorize/callback validation and on XIVAuth account linking; no contract break for the web app.

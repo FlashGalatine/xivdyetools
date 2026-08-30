@@ -1,13 +1,14 @@
 /**
- * Refresh Handler Tests
- * Tests for token refresh, user info, and revoke endpoints
+ * Token Handler Tests
+ * Tests for the user-info and revoke endpoints, plus a guard that the removed
+ * /auth/refresh endpoint stays removed (FINDING-003).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SELF, env, fetchWithEnv, createEnvWithKV } from './mocks/cloudflare-test.js';
 import { createJWTForUser, revokeToken, isTokenRevoked } from '../services/jwt-service.js';
 import { resetRateLimiter } from '../services/rate-limit.js';
-import type { DiscordUser, Env, UserRow } from '../types.js';
+import type { DiscordUser, Env } from '../types.js';
 
 // Get environment from test context
 const getEnv = (): Env => env;
@@ -41,7 +42,7 @@ const createJWT = (
         { auth_provider: 'discord', global_name: user.global_name, avatar: user.avatar },
     );
 
-describe('Refresh Handler', () => {
+describe('Token Handler', () => {
     let mockEnv: Env;
     let mockUser: DiscordUser;
 
@@ -51,60 +52,23 @@ describe('Refresh Handler', () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2024-01-01T12:00:00Z'));
         resetRateLimiter();
-
-        // BUG-021: /auth/refresh re-validates the user exists in D1 — seed the
-        // shared mock user store with the token's subject
-        const users = (mockEnv.DB as unknown as { _users: Map<string, UserRow> })._users;
-        users.set(mockUser.id, {
-            id: mockUser.id,
-            discord_id: mockUser.id,
-            xivauth_id: null,
-            auth_provider: 'discord',
-            username: mockUser.username,
-            avatar_url: null,
-            created_at: '2024-01-01T00:00:00Z',
-            updated_at: '2024-01-01T00:00:00Z',
-        });
     });
 
     afterEach(() => {
         vi.useRealTimers();
     });
 
-    describe('POST /auth/refresh', () => {
-        it('should reject invalid JSON body', async () => {
-            const response = await SELF.fetch('http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: 'not-json',
-            });
-
-            const json = (await response.json()) as Record<string, any>;
-
-            expect(response.status).toBe(400);
-            expect(json.success).toBe(false);
-            expect(json.error).toBe('Invalid request body');
-        });
-
-        it('should reject missing token', async () => {
-            const response = await SELF.fetch('http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({}),
-            });
-
-            const json = (await response.json()) as Record<string, any>;
-
-            expect(response.status).toBe(400);
-            expect(json.success).toBe(false);
-            expect(json.error).toBe('Missing token');
-        });
-
-        it('should refresh a valid non-expired token', async () => {
+    /**
+     * FINDING-003 (2026-08-29 security audit): /auth/refresh is gone. No client
+     * ever called it — the web app re-runs the sign-in flow — while anyone
+     * holding a copied token could re-mint it every hour for up to 30 days and
+     * survive the victim's logout (only the presented jti was blacklisted).
+     * The route must now 404 like any other unknown path, even for a token
+     * that is perfectly valid.
+     */
+    describe('POST /auth/refresh (removed — FINDING-003)', () => {
+        it('should 404 a valid token instead of minting a new one', async () => {
             const { token } = await createJWT(mockUser, mockEnv);
-
-            // Advance time by 1 second so the new token will have a different iat
-            vi.advanceTimersByTime(1000);
 
             const response = await SELF.fetch('http://localhost/auth/refresh', {
                 method: 'POST',
@@ -114,131 +78,9 @@ describe('Refresh Handler', () => {
 
             const json = (await response.json()) as Record<string, any>;
 
-            expect(response.status).toBe(200);
-            expect(json.success).toBe(true);
-            expect(json.token).toBeTruthy();
-            expect(json.token).not.toBe(token); // Should be a new token with different iat
-            expect(json.expires_at).toBeGreaterThan(Date.now() / 1000);
-        });
-
-        it('should refresh an expired token within grace period', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
-
-            // Advance time past expiry but within 24-hour grace period
-            vi.advanceTimersByTime(3601 * 1000); // Just past 1 hour expiry
-
-            const response = await SELF.fetch('http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token }),
-            });
-
-            const json = (await response.json()) as Record<string, any>;
-
-            expect(response.status).toBe(200);
-            expect(json.success).toBe(true);
-            expect(json.token).toBeTruthy();
-        });
-
-        it('should reject token expired beyond grace period', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
-
-            // FINDING-001: the grace period is the shared REFRESH_GRACE_SECONDS
-            // (15 min), no longer 24 h — advance just past exp + grace
-            vi.advanceTimersByTime((3600 + 15 * 60 + 1) * 1000);
-
-            const response = await SELF.fetch('http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token }),
-            });
-
-            const json = (await response.json()) as Record<string, any>;
-
-            expect(response.status).toBe(401);
-            expect(json.success).toBe(false);
-            expect(json.error).toContain('expired');
-        });
-
-        it('should reject malformed token', async () => {
-            const response = await SELF.fetch('http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: 'invalid-token-format' }),
-            });
-
-            const json = (await response.json()) as Record<string, any>;
-
-            expect(response.status).toBe(401);
-            expect(json.success).toBe(false);
-            expect(json.error).toContain('Invalid token');
-        });
-
-        it('should reject forged token with invalid signature (SECURITY)', async () => {
-            // SECURITY TEST: Attacker crafts a token with arbitrary user ID
-            // Even if the payload looks valid and is within grace period,
-            // the signature must match our secret
-            const now = Math.floor(Date.now() / 1000);
-            const forgedPayload = {
-                sub: 'attacker-controlled-user-id',
-                iat: now - 3600,
-                exp: now - 1800, // Expired 30 mins ago (within 24h grace)
-                iss: 'https://xivdyetools-oauth.ashejunius.workers.dev',
-                username: 'victim',
-                global_name: 'Victim User',
-                avatar: null,
-            };
-
-            // Create a "valid-looking" JWT but with wrong signature
-            const base64UrlEncode = (data: string): string => {
-                const bytes = new TextEncoder().encode(data);
-                const base64 = btoa(String.fromCharCode(...bytes));
-                return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-            };
-
-            const header = { alg: 'HS256', typ: 'JWT' };
-            const encodedHeader = base64UrlEncode(JSON.stringify(header));
-            const encodedPayload = base64UrlEncode(JSON.stringify(forgedPayload));
-            // Use a fake signature (would require attacker to know our secret)
-            const fakeSignature = 'ZmFrZS1zaWduYXR1cmUtZm9yLXRlc3Rpbmc';
-
-            const forgedToken = `${encodedHeader}.${encodedPayload}.${fakeSignature}`;
-
-            const response = await SELF.fetch('http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: forgedToken }),
-            });
-
-            const json = (await response.json()) as Record<string, any>;
-
-            // Should reject - signature doesn't match our secret
-            expect(response.status).toBe(401);
-            expect(json.success).toBe(false);
-            expect(json.error).toContain('Invalid token');
-        });
-
-        it('should preserve user info in refreshed token', async () => {
-            const { token: originalToken } = await createJWT(mockUser, mockEnv);
-
-            const response = await SELF.fetch('http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: originalToken }),
-            });
-
-            const json = (await response.json()) as Record<string, any>;
-            expect(json.success).toBe(true);
-
-            // Verify by using /me endpoint
-            const meResponse = await SELF.fetch('http://localhost/auth/me', {
-                headers: { Authorization: `Bearer ${json.token}` },
-            });
-
-            const meJson = (await meResponse.json()) as Record<string, any>;
-
-            expect(meJson.user.id).toBe(mockUser.id);
-            expect(meJson.user.username).toBe(mockUser.username);
+            expect(response.status).toBe(404);
+            expect(json.error).toBe('Not Found');
+            expect(json).not.toHaveProperty('token');
         });
     });
 
@@ -278,6 +120,20 @@ describe('Refresh Handler', () => {
             expect(json.user.username).toBe(mockUser.username);
             expect(json.user.global_name).toBe(mockUser.global_name);
             expect(json.user.avatar).toBe(mockUser.avatar);
+        });
+
+        // FINDING-022 (2026-08-29 security audit): the profile a bearer token
+        // buys is as cacheable-sensitive as the token itself (RFC 6749 §5.1).
+        it('should send Cache-Control: no-store on the user-info response', async () => {
+            const { token } = await createJWT(mockUser, mockEnv);
+
+            const response = await SELF.fetch('http://localhost/auth/me', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            expect(response.status).toBe(200);
+            expect(response.headers.get('Cache-Control')).toBe('no-store');
+            expect(response.headers.get('Pragma')).toBe('no-cache');
         });
 
         it('should include avatar_url in response', async () => {
@@ -450,83 +306,6 @@ describe('Refresh Handler', () => {
             expect(isRevoked).toBe(true);
         });
 
-        it('should reject refresh of revoked token', async () => {
-            const envWithKV = createEnvWithKV();
-            const { token, jti, expires_at } = await createJWT(mockUser, envWithKV);
-
-            // Revoke the token
-            await revokeToken(jti, expires_at, envWithKV.TOKEN_BLACKLIST);
-
-            // Try to refresh the revoked token
-            const response = await fetchWithEnv(
-                envWithKV,
-                'http://localhost/auth/refresh',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token }),
-                }
-            );
-
-            const json = (await response.json()) as Record<string, any>;
-
-            expect(response.status).toBe(401);
-            expect(json.success).toBe(false);
-            expect(json.error).toContain('revoked');
-        });
-
-        it('FINDING-001: a revoked token stays un-refreshable after it expires (blacklist outlives exp)', async () => {
-            const envWithKV = createEnvWithKV();
-            const { token } = await createJWT(mockUser, envWithKV);
-
-            // User logs out while the token is still valid
-            const revokeResponse = await fetchWithEnv(envWithKV, 'http://localhost/auth/revoke', {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            expect(revokeResponse.status).toBe(200);
-
-            // Token expires (1 h) — still inside the refresh grace window
-            vi.advanceTimersByTime((3600 + 60) * 1000);
-
-            const response = await fetchWithEnv(envWithKV, 'http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token }),
-            });
-            const json = (await response.json()) as Record<string, any>;
-
-            expect(response.status).toBe(401);
-            expect(json.error).toContain('revoked');
-        });
-
-        it('FINDING-001: a token that was already refreshed cannot be refreshed again after it expires', async () => {
-            const envWithKV = createEnvWithKV();
-            const { token } = await createJWT(mockUser, envWithKV);
-
-            // Refresh while valid → old jti is rotated out
-            vi.advanceTimersByTime(1000);
-            const first = await fetchWithEnv(envWithKV, 'http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token }),
-            });
-            expect(first.status).toBe(200);
-
-            // Old token expires; the 60 s minimum TTL of the old rotation revoke has long passed
-            vi.advanceTimersByTime((3600 + 120) * 1000);
-
-            const second = await fetchWithEnv(envWithKV, 'http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token }),
-            });
-            const json = (await second.json()) as Record<string, any>;
-
-            expect(second.status).toBe(401);
-            expect(json.error).toContain('revoked');
-        });
-
         it('should reject /me endpoint with revoked token', async () => {
             const envWithKV = createEnvWithKV();
             const { token, jti, expires_at } = await createJWT(mockUser, envWithKV);
@@ -692,31 +471,6 @@ describe('Refresh Handler', () => {
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
             expect(json.error).toContain('Invalid token');
-        });
-    });
-
-    describe('POST /auth/refresh error handling', () => {
-        it('should return 500 when refresh encounters unexpected error', async () => {
-            // This tests lines 134-143 in refresh.ts
-            // We need to cause an error after signature verification but during payload processing
-            // Create a token that will pass initial checks but fail during createJWTFromPayload
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-            // Use a very malformed token that causes issues during processing
-            const weirdToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..';
-
-            const response = await SELF.fetch('http://localhost/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: weirdToken }),
-            });
-
-            const json = (await response.json()) as Record<string, any>;
-
-            // Should return error (either 401 or 500 depending on where it fails)
-            expect(json.success).toBe(false);
-
-            consoleSpy.mockRestore();
         });
     });
 });
