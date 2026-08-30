@@ -1,5 +1,6 @@
 /**
- * Rate limiting middleware for /v1/* — per-client IP.
+ * Rate limiting middleware for /v1/* — per-client IP — plus a separate bucket
+ * for `POST /v1/telemetry` (see TELEMETRY_LIMIT).
  *
  * FINDING-003 (2026-08-21 security audit): the KV backend cannot throttle a
  * fast client (KV allows 1 write/s/key, the increment swallows the resulting
@@ -47,13 +48,23 @@ export function selectApiRateLimiter(env: Env): RateLimiter {
   return new KVRateLimiter({ kv: env.RATE_LIMIT, keyPrefix: 'api:ip:' });
 }
 
+/** `POST /v1/telemetry` — carved out of the API bucket, limited on its own (see below). */
+export const TELEMETRY_PATH = '/v1/telemetry';
+
+export function isTelemetryPath(path: string): boolean {
+  return path === TELEMETRY_PATH || path.startsWith(`${TELEMETRY_PATH}/`);
+}
+
 /**
  * Build a fresh /v1/* rate-limit middleware. A factory (rather than a single
  * module-level instance) so each test can exercise backend selection on its
- * own isolate-scoped cache.
+ * own isolate-scoped cache. `skipPath` exempts a route from this bucket
+ * (production passes `isTelemetryPath`).
  */
-export function createApiRateLimitMiddleware(): MiddlewareHandler {
-  return createRateLimitMiddleware({
+export function createApiRateLimitMiddleware(
+  skipPath?: (path: string) => boolean,
+): MiddlewareHandler {
+  const limiter = createRateLimitMiddleware({
     backend: (c: Context<{ Bindings: Env }>) => selectApiRateLimiter(c.env),
     keyExtractor: (c) => getClientIp(c.req.raw),
     config: API_LIMIT,
@@ -74,6 +85,74 @@ export function createApiRateLimitMiddleware(): MiddlewareHandler {
         429,
       ),
   });
+  if (!skipPath) return limiter;
+  return async (c, next) => {
+    if (skipPath(c.req.path)) {
+      await next();
+      return;
+    }
+    return limiter(c, next);
+  };
 }
 
-export const rateLimitMiddleware = createApiRateLimitMiddleware();
+/** The `/v1/*` API bucket — every route except `POST /v1/telemetry`, which has its own. */
+export const rateLimitMiddleware = createApiRateLimitMiddleware(isTelemetryPath);
+
+/**
+ * `POST /v1/telemetry` gets its own bucket. The limiter keys per client IP,
+ * and one opted-in tab beacons every 15 s plus once per hide / pagehide; a
+ * NAT or VPN egress can carry dozens of such tabs. Sharing the 65 / 60 s API
+ * bucket would let telemetry 429 the user-facing `/v1/chara/*` calls behind
+ * that address — so beacons draw on `TELEMETRY_RATE_LIMITER` (240 / 60 s,
+ * ≈ 60 tabs at the steady rate) and never on `API_RATE_LIMITER`. The client
+ * ignores the response either way (`sendBeacon`), so the 429 body is minimal.
+ */
+const TELEMETRY_LIMIT = {
+  maxRequests: 240,
+  windowMs: 60_000,
+  burstAllowance: 0,
+  failOpen: true,
+} as const;
+
+/** Backend for the telemetry bucket: the native binding when bound, KV (own key prefix) otherwise. */
+export function selectTelemetryRateLimiter(env: Env): RateLimiter {
+  if (env.TELEMETRY_RATE_LIMITER) {
+    return new CloudflareRateLimiter({
+      tiers: [
+        {
+          limit: TELEMETRY_LIMIT.maxRequests,
+          periodSeconds: 60,
+          binding: env.TELEMETRY_RATE_LIMITER,
+        },
+      ],
+      keyPrefix: 'telemetry:ip:',
+    });
+  }
+  return new KVRateLimiter({ kv: env.RATE_LIMIT, keyPrefix: 'telemetry:ip:' });
+}
+
+/** Build a fresh `/v1/telemetry` rate-limit middleware (factory for the same reason as above). */
+export function createTelemetryRateLimitMiddleware(): MiddlewareHandler {
+  return createRateLimitMiddleware({
+    backend: (c: Context<{ Bindings: Env }>) => selectTelemetryRateLimiter(c.env),
+    keyExtractor: (c) => getClientIp(c.req.raw),
+    config: TELEMETRY_LIMIT,
+    onError: 'fail-open',
+    formatError: (c: Context<{ Bindings: Env; Variables: Variables }>, retryAfter) =>
+      c.json(
+        {
+          success: false,
+          error: ErrorCode.RATE_LIMITED,
+          message: 'Telemetry rate limit exceeded. Retry after the indicated number of seconds.',
+          retryAfter,
+          meta: {
+            requestId: c.get('requestId') || 'unknown',
+            apiVersion: c.env.API_VERSION || 'v1',
+          },
+        },
+        429,
+      ),
+  });
+}
+
+export const telemetryRateLimitMiddleware = createTelemetryRateLimitMiddleware();

@@ -264,7 +264,8 @@ Per-client abuse limiting uses the native **Workers Rate Limiting binding** (`[[
 
 | Worker | Binding | limit / period | namespace_id (prod / dev) | Fallback when absent |
 |--------|---------|----------------|---------------------------|----------------------|
-| api-worker | `API_RATE_LIMITER` | 65 / 60 s (60 + 5 burst per IP on `/v1/*`) | 1001 / 1002 | KV `RATE_LIMIT` |
+| api-worker | `API_RATE_LIMITER` | 65 / 60 s (60 + 5 burst per IP on `/v1/*`, except `/v1/telemetry`) | 1001 / 1002 | KV `RATE_LIMIT` |
+| api-worker | `TELEMETRY_RATE_LIMITER` | 240 / 60 s per IP on `POST /v1/telemetry` — its own bucket, so web-app beacons behind a shared NAT address never 429 `/v1/chara/*` | 1003 / 1004 | KV `RATE_LIMIT` (`telemetry:ip:` prefix) |
 | presets-api | `RL_PUBLIC` | 100 / 60 s per IP on `/api/*` | 1011 / 1012 | per-isolate memory |
 | oauth | `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` | 10 / 20 / 30 per 60 s per IP+path (`OAUTH_LIMITS`) | 1021-1023 (top-level = prod), 1024-1026 (development) — the preview tier (1027-1029) went with the deleted `[env.preview]` block (FINDING-029) | KV `TOKEN_BLACKLIST` (`rl:` prefix), then memory |
 | moderation-worker | `RL_COMMAND` / `RL_AUTOCOMPLETE` | 25 / 70 per 60 s per Discord user | 1031-1032 / 1033-1034 | KV `KV` |

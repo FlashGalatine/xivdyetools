@@ -84,34 +84,40 @@ function stainId(value: unknown): string | null {
   return dyeService.getByStainId(value) ? String(value) : null;
 }
 
-const EVENT_SCHEMAS: Record<string, EventMapper> = {
-  tool_view: (p) => {
+/**
+ * A Map, not an object literal: the event name is client-controlled, and an
+ * object lookup would resolve inherited members (`constructor`, `__proto__`,
+ * `toString`, …) as mappers and throw inside parseTelemetryBatch — a 500 on a
+ * route that promises 204 once the batch parses.
+ */
+const EVENT_SCHEMAS: ReadonlyMap<string, EventMapper> = new Map<string, EventMapper>([
+  ['tool_view', (p) => {
     const tool = toolOf(p);
     const entry = oneOf(p['entry'], ENTRIES);
     return tool && entry ? [tool, entry, '', 0] : null;
-  },
-  tool_leave: (p, d) => {
+  }],
+  ['tool_leave', (p, d) => {
     const tool = toolOf(p);
     const entry = oneOf(p['entry'], ENTRIES);
     const seconds = dwell(d);
     return tool && entry && seconds !== null ? [tool, entry, '', seconds] : null;
-  },
-  dye_pick: (p) => {
+  }],
+  ['dye_pick', (p) => {
     const tool = toolOf(p);
     const via = oneOf(p['via'], VIAS);
     const id = stainId(p['stainID']);
     return tool && via && id ? [tool, via, id, 0] : null;
-  },
-  chara_parse: (p) => {
+  }],
+  ['chara_parse', (p) => {
     const ok = p['ok'];
     const producer = oneOf(p['producer'], PRODUCERS);
     return typeof ok === 'boolean' && producer ? ['', String(ok), producer, 0] : null;
-  },
-  theme_change: (p) => {
+  }],
+  ['theme_change', (p) => {
     const to = oneOf(p['to'], THEMES);
     return to ? ['', to, '', 0] : null;
-  },
-};
+  }],
+]);
 
 function envelopeField(value: unknown, allowed: readonly string[]): string {
   return oneOf(value, allowed) ?? INVALID;
@@ -166,7 +172,7 @@ export function parseTelemetryBatch(body: unknown): ParsedBatch | null {
 
 function mapEvent(raw: unknown): [string, string, string, string, number] | null {
   if (!isRecord(raw) || typeof raw['n'] !== 'string') return null;
-  const mapper = EVENT_SCHEMAS[raw['n']];
+  const mapper = EVENT_SCHEMAS.get(raw['n']);
   if (!mapper) return null;
   const props = isRecord(raw['p']) ? raw['p'] : null;
   if (!props) return null;

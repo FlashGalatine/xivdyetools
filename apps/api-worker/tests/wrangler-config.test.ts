@@ -41,6 +41,23 @@ describe('wrangler.toml', () => {
    * dev worker must have its own dataset so ad-hoc `pnpm dev` traffic never
    * pollutes the production series, and production must never point at it.
    */
+  /**
+   * POST /v1/telemetry must not share the API bucket: both environments bind
+   * TELEMETRY_RATE_LIMITER at 240 / 60 s, and every namespace_id in the file
+   * is unique (the platform requires uniqueness per account).
+   */
+  it('binds a separate telemetry rate-limit bucket per environment with unique namespace ids', () => {
+    expect(topLevel).toMatch(
+      /^\[\[ratelimits\]\]\nname = "TELEMETRY_RATE_LIMITER"\nnamespace_id = "\d+"\nsimple = \{ limit = 240, period = 60 \}$/m,
+    );
+    expect(production).toMatch(
+      /^\[\[env\.production\.ratelimits\]\]\nname = "TELEMETRY_RATE_LIMITER"\nnamespace_id = "\d+"\nsimple = \{ limit = 240, period = 60 \}$/m,
+    );
+    const ids = [...toml.matchAll(/^namespace_id = "(\d+)"$/gm)].map((m) => m[1]);
+    expect(ids).toHaveLength(4);
+    expect(new Set(ids).size).toBe(4);
+  });
+
   it('binds a separate Analytics Engine dataset per environment', () => {
     expect(topLevel).toMatch(
       /^\[\[analytics_engine_datasets\]\]\nbinding = "ANALYTICS"\ndataset = "xivdyetools_web_analytics_dev"$/m,

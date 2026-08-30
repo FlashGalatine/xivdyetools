@@ -38,7 +38,8 @@ Request
   ├─► loggerMiddleware              (structured logger via @xivdyetools/worker-kit)
   ├─► Security headers              (X-Content-Type-Options, X-Frame-Options, HSTS in prod)
   ├─► CORS (origin: *, GET/OPTIONS) (exposes RateLimit + Request-Id headers)
-  ├─► rateLimitMiddleware           (only on /v1/*, KV-backed, fail-open)
+  ├─► rateLimitMiddleware           (only on /v1/*, native binding API_RATE_LIMITER, fail-open;
+  │                                    POST /v1/telemetry is carved out onto its own TELEMETRY_RATE_LIMITER bucket)
   ├─► localeMiddleware              (only on /v1/*, ensures locale data is loaded + sets c.var.locale)
   ├─► API version header            (X-API-Version)
   └─► Route handler                 ──► successResponse / paginatedResponse / ApiError
@@ -88,7 +89,7 @@ All `GET`. All `/v1` routes cache `Cache-Control: public, max-age=3600, s-maxage
 | GET | `/v1/match/within-distance?hex=&maxDistance=` | All dyes within a distance threshold in the method's unit (`maxDistance` ≥ 0.01, `limit` 1–125 default 20, applied after excludes/filters) |
 | POST | `/v1/chara/resolve` | `.chara` equipment-model resolution (web-app Swatch Matcher 11a/11c) — body `{ gear: [{ slot, set?, base, variant }], glasses? }`; per slot: lowest-row_id item, names ×6 (ko/zh from build-time tables), `iconId`, `familySize` + `alternates`, `viaMainHand` off-hand rule; `null` = no Item row. One XIVAPI search max, per-key Cache API (~7 d, `chara-resolve` store, namespaced by `XIVAPI_VERSION`); `503 UPSTREAM_UNAVAILABLE` while XIVAPI re-indexes after a patch. `src/chara/` |
 | GET | `/v1/chara/icon/:iconId` | Item icon PNG proxied from XIVAPI `/api/asset` (`_hr1`), edge-cached 30 d immutable |
-| POST | `/v1/telemetry` | **Internal, undocumented, may change** — web-app opt-in usage telemetry → Analytics Engine (`ANALYTICS` binding, `xivdyetools_web_analytics` / `_dev`). `text/plain` JSON batch ≤ 25 events / 16 KB; allowlist schema in `src/telemetry/schema.ts` drops anything unknown; `204` always once parsed, `400`/`413` only for non-JSON / oversized. Fixed blob layout documented in `docs/operations/ANALYTICS_QUERIES.md`. Spec: `docs/superpowers/specs/2026-08-29-web-analytics-design.md` |
+| POST | `/v1/telemetry` | **Internal, undocumented, may change** — web-app opt-in usage telemetry → Analytics Engine (`ANALYTICS` binding, `xivdyetools_web_analytics` / `_dev`). `text/plain` JSON batch ≤ 25 events / 16 KB; allowlist schema in `src/telemetry/schema.ts` drops anything unknown; `204` always once parsed (bare, no envelope — the client is `sendBeacon`), `400`/`413` (enveloped) only for non-JSON / oversized. Own per-IP bucket `TELEMETRY_RATE_LIMITER` (240 / 60 s), not the `/v1/*` API bucket. Fixed blob layout documented in `docs/operations/ANALYTICS_QUERIES.md`. Spec: `docs/superpowers/specs/2026-08-29-web-analytics-design.md` |
 | GET | `/universalis/aggregated/:dc/:itemIds` | Universalis proxy — cached 300 s + 120 s SWR, coalesced, per-IP memory limiter (`RATE_LIMIT_REQUESTS`/`RATE_LIMIT_WINDOW_SECONDS`: 30/60 prod, 60/60 dev); raw Universalis body, no envelope |
 | GET | `/universalis/data-centers`, `/universalis/worlds` | Universalis proxy — cached 24 h + 6 h SWR |
 | GET | `/api/v2/*` | Same router as `/universalis/*` — compatibility mount for `proxy.xivdyetools.app` and the discord-worker service binding |
@@ -107,6 +108,7 @@ Route registration in `routes/dyes.ts` is order-sensitive: static paths (`/searc
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Var | Proxy's per-IP memory limiter — `30`/`60` in production, `60`/`60` in dev |
 | `XIVAPI_BASE` / `XIVAPI_VERSION` / `XIVAPI_SCHEMA` | Var | `/v1/chara/*` upstream (`https://v2.xivapi.com`), the game-version pin (`latest` or a `/api/version` key — ALSO the row-cache namespace; after a patch search 503s on the new key until ingested, so roll forward by hand once a probe answers 200), optional `exdschema@2:rev:<sha>` schema pin |
 | `ANALYTICS` | Analytics Engine dataset | `xivdyetools_web_analytics` (prod) / `xivdyetools_web_analytics_dev` (top-level dev); absent → the route accepts and discards |
+| `TELEMETRY_RATE_LIMITER` | Rate Limiting binding | `POST /v1/telemetry` bucket, 240 / 60 s per IP (`namespace_id` 1003 prod / 1004 dev); absent → KV `RATE_LIMIT` under `telemetry:ip:` |
 
 Routes (production env only): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app` (all custom domains). The top-level env is the routeless `xivdyetools-api-worker-dev` worker. Dev runs on port `8790`. Compatibility date `2024-12-01`. **No `nodejs_compat`** — the worker uses zero Node.js APIs (per ARCH-001 comment in `wrangler.toml`).
 
@@ -119,6 +121,8 @@ None. The worker is fully public and stateless — no Discord secrets, no JWT ke
 ### Response Envelope
 
 Every success response uses `{ success: true, data, meta }`; paginated responses add `pagination`. Every error uses `{ success: false, error: ErrorCode, message, details?, meta }`. `meta` always carries `requestId` + `apiVersion`, and `locale` when ≠ `en`. See `lib/response.ts`.
+
+Two deliberate exceptions: the Universalis proxy mounts (`/universalis/*`, `/api/v2/*`) return raw upstream shapes, and the internal `POST /v1/telemetry` answers a bare `204` with no body — its caller is `navigator.sendBeacon`, which cannot read a response. Its `400` / `413` errors still use the envelope.
 
 ### ApiError Flow
 
@@ -182,8 +186,8 @@ Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/
 ## Deployment Checklist
 
 1. `pnpm lint && pnpm type-check && pnpm test` — must be green.
-2. Bump `version` in `package.json` if behavior changed (currently `0.6.0`).
+2. Bump `version` in `package.json` if behavior changed (currently `0.9.0`).
 3. Merging to `main` **is** the production deploy: `.github/workflows/deploy-api-worker.yml` builds deps, type-checks, tests, runs `build:docs`, runs `wrangler deploy --env production`, then smoke-tests `data.xivdyetools.app/health` and `developers.xivdyetools.app/`. There is no staging worker — `pnpm deploy` only pushes the routeless `xivdyetools-api-worker-dev` worker, which has `workers_dev = false` (FINDING-025) and is therefore not reachable over `*.workers.dev`; ad-hoc testing is `pnpm dev`.
 4. Deploying by hand: `pnpm build:docs && pnpm deploy:production` (the assets directory must exist or the production deploy fails). See `docs/operations/DEPLOY_ENVIRONMENTS.md`.
-5. If any new endpoints/parameters were added, update **both** `docs/reference/dyes.md` (or `matching.md` / `universalis.md`) and the `index.md` quick-start examples — the docs site is the public contract.
+5. If any new endpoints/parameters were added, update **both** `docs/reference/dyes.md` (or `matching.md` / `universalis.md`) and the `index.md` quick-start examples — the docs site is the public contract. Internal routes (`/v1/telemetry`) stay off the docs site on purpose; record them in this file's route table instead.
 6. Verify `X-RateLimit-*` headers appear on a `/v1/*` response and `X-Request-Id` is unique per call.

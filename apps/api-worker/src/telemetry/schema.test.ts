@@ -19,6 +19,17 @@ function batch(events: unknown[], overrides: Record<string, unknown> = {}) {
 }
 
 describe('parseTelemetryBatch', () => {
+  it('drops events whose name is an inherited Object member instead of throwing', () => {
+    // A plain-object schema table would resolve these to Object.prototype
+    // functions and call them as mappers (500 on a 204-only route).
+    for (const name of ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf']) {
+      const parsed = parseTelemetryBatch(batch([{ n: name, p: {} }]));
+      expect(parsed, name).not.toBeNull();
+      expect(parsed!.points, name).toEqual([]);
+      expect(parsed!.dropped, name).toBe(1);
+    }
+  });
+
   it('returns null for anything that is not a v1 batch object', () => {
     expect(parseTelemetryBatch(null)).toBeNull();
     expect(parseTelemetryBatch('x')).toBeNull();

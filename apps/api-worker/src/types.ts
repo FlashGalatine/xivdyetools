@@ -6,6 +6,12 @@ export interface Env {
    * limit 65 / 60 s) — the /v1/* per-IP limiter when bound; KV is the fallback.
    */
   API_RATE_LIMITER?: RateLimit;
+  /**
+   * Native rate-limit binding for `POST /v1/telemetry` (240 / 60 s per IP) —
+   * a separate bucket so beacons never consume `API_RATE_LIMITER`. Absent →
+   * KV `RATE_LIMIT` under the `telemetry:ip:` prefix.
+   */
+  TELEMETRY_RATE_LIMITER?: RateLimit;
   ENVIRONMENT: string;
   API_VERSION: string;
   /** Universalis proxy routes (absorbed from apps/universalis-proxy) */

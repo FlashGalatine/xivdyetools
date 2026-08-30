@@ -8,7 +8,11 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { Hono } from 'hono';
-import { createApiRateLimitMiddleware } from './rate-limit';
+import {
+  createApiRateLimitMiddleware,
+  createTelemetryRateLimitMiddleware,
+  isTelemetryPath,
+} from './rate-limit';
 import type { Env } from '../types';
 
 function fakeBinding(outcomes: boolean[]): RateLimit & { calls: string[] } {
@@ -49,6 +53,16 @@ function buildApp(): Hono<{ Bindings: Env }> {
   return app;
 }
 
+/** Mirrors index.ts: the API bucket skips /v1/telemetry, which has its own limiter. */
+function buildAppWithTelemetry(): Hono<{ Bindings: Env }> {
+  const app = new Hono<{ Bindings: Env }>();
+  app.use('/v1/*', createApiRateLimitMiddleware(isTelemetryPath));
+  app.use('/v1/telemetry', createTelemetryRateLimitMiddleware());
+  app.get('/v1/ping', (c) => c.json({ ok: true }));
+  app.post('/v1/telemetry', (c) => c.body(null, 204));
+  return app;
+}
+
 const baseEnv = (overrides: Partial<Env>): Env =>
   ({
     ENVIRONMENT: 'test',
@@ -76,6 +90,61 @@ describe('api-worker rate-limit middleware backend selection', () => {
     expect(second.headers.get('Retry-After')).toBeTruthy();
     expect(binding.calls).toEqual(['api:ip:203.0.113.9', 'api:ip:203.0.113.9']);
     expect(kv.puts).toBe(0); // KV never touched when the binding is present
+  });
+
+  it('gives /v1/telemetry its own bucket so beacons never consume the API bucket', async () => {
+    const apiBinding = fakeBinding([true]);
+    const telemetryBinding = fakeBinding([true, true, false]);
+    const env = baseEnv({
+      API_RATE_LIMITER: apiBinding,
+      TELEMETRY_RATE_LIMITER: telemetryBinding,
+    });
+    const app = buildAppWithTelemetry();
+    const headers = { 'CF-Connecting-IP': '203.0.113.9' };
+
+    const beacon1 = await app.request('/v1/telemetry', { method: 'POST', headers }, env);
+    const beacon2 = await app.request('/v1/telemetry', { method: 'POST', headers }, env);
+    const beacon3 = await app.request('/v1/telemetry', { method: 'POST', headers }, env);
+    const api = await app.request('/v1/ping', { headers }, env);
+
+    expect([beacon1.status, beacon2.status, beacon3.status]).toEqual([204, 204, 429]);
+    // The API bucket saw only the API call — three beacons never touched it.
+    expect(apiBinding.calls).toEqual(['api:ip:203.0.113.9']);
+    expect(telemetryBinding.calls).toEqual([
+      'telemetry:ip:203.0.113.9',
+      'telemetry:ip:203.0.113.9',
+      'telemetry:ip:203.0.113.9',
+    ]);
+    expect(api.status).toBe(200);
+  });
+
+  it('an exhausted API bucket does not block telemetry (and vice versa)', async () => {
+    const env = baseEnv({
+      API_RATE_LIMITER: fakeBinding([false]),
+      TELEMETRY_RATE_LIMITER: fakeBinding([true]),
+    });
+    const app = buildAppWithTelemetry();
+    const headers = { 'CF-Connecting-IP': '203.0.113.9' };
+
+    expect((await app.request('/v1/ping', { headers }, env)).status).toBe(429);
+    expect((await app.request('/v1/telemetry', { method: 'POST', headers }, env)).status).toBe(204);
+  });
+
+  it('telemetry falls back to KV under its own key prefix when TELEMETRY_RATE_LIMITER is not bound', async () => {
+    const kv = fakeKV();
+    const env = baseEnv({ RATE_LIMIT: kv });
+    const app = buildAppWithTelemetry();
+
+    const res = await app.request(
+      '/v1/telemetry',
+      { method: 'POST', headers: { 'CF-Connecting-IP': '203.0.113.9' } },
+      env,
+    );
+
+    expect(res.status).toBe(204);
+    expect(res.headers.get('X-RateLimit-Limit')).toBe('240');
+    expect(kv.puts).toBe(1);
+    expect((kv.put as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain('telemetry:ip:');
   });
 
   it('falls back to the KV limiter when API_RATE_LIMITER is not bound', async () => {

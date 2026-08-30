@@ -40,6 +40,18 @@ describe('POST /v1/telemetry', () => {
     writeDataPoint.mockReset();
   });
 
+  it('answers 204 and writes nothing for an event named after an Object.prototype member', async () => {
+    const body = JSON.stringify({
+      ...VALID,
+      events: [{ n: 'constructor', p: {} }, { n: '__proto__', p: {} }, { n: 'toString', p: {} }],
+    });
+    const { res, ctx } = post(body);
+    const response = await res;
+    expect(response.status).toBe(204);
+    await (ctx as unknown as { _waitForAll: () => Promise<unknown> })._waitForAll();
+    expect(writeDataPoint).not.toHaveBeenCalled();
+  });
+
   it('answers 204 with no body and writes one datapoint per valid event', async () => {
     const { res, ctx } = post(JSON.stringify(VALID));
     const response = await res;

@@ -50,6 +50,13 @@ name = "API_RATE_LIMITER"
 namespace_id = "1002"
 simple = { limit = 65, period = 60 }
 
+# POST /v1/telemetry has its own bucket (240 / 60 s per IP) so web-app beacons
+# from many tabs behind one NAT address never consume the API bucket above.
+[[ratelimits]]
+name = "TELEMETRY_RATE_LIMITER"
+namespace_id = "1004"
+simple = { limit = 240, period = 60 }
+
 # Web-app opt-in telemetry (POST /v1/telemetry → Analytics Engine). Separate
 # dev dataset so `pnpm dev` traffic never lands in the production series.
 [[analytics_engine_datasets]]
@@ -93,6 +100,12 @@ id = "a57d958973884b578889e827311f9ee2"
 name = "API_RATE_LIMITER"
 namespace_id = "1001"
 simple = { limit = 65, period = 60 }
+
+# Production telemetry bucket (see top-level block)
+[[env.production.ratelimits]]
+name = "TELEMETRY_RATE_LIMITER"
+namespace_id = "1003"
+simple = { limit = 240, period = 60 }
 
 # Web-app telemetry — production dataset. Beta (beta.xivdyetools.app) also
 # reaches this worker; beta vs production is the `env` blob, not the dataset.

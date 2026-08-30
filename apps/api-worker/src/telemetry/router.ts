@@ -9,9 +9,11 @@
  * `writeDataPoint` in `waitUntil`, so the response never waits on AE.
  *
  * Deliberately NOT part of the public API: undocumented on
- * developers.xivdyetools.app, no envelope, no body on success. Mounted under
- * `/v1` so the per-IP rate limiter applies (65 / 60 s is far above one
- * beacon every 15 s).
+ * developers.xivdyetools.app, no envelope, no body on success. Rate-limited
+ * per IP on its own bucket (`TELEMETRY_RATE_LIMITER`, 240 / 60 s — see
+ * middleware/rate-limit.ts): the API bucket keys per IP too, and many opted-in
+ * tabs behind one NAT address must never 429 the user-facing `/v1/chara/*`
+ * calls sharing that address.
  *
  * Privacy: nothing from the request other than the validated batch reaches a
  * datapoint — no IP, no User-Agent, no request id.
