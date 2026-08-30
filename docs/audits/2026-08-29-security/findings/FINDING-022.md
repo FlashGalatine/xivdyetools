@@ -13,4 +13,4 @@ Unchanged 2026-08-21 INFO OAUTH-13.
 - `c.header('Cache-Control', 'no-store'); c.header('Pragma', 'no-cache');` in the middleware for `/auth/*`.
 
 ## Status
-OPEN
+FIXED 2026-08-30 50c283b9 (oauth 3.0.0) — `Cache-Control: no-store` + `Pragma: no-cache` on every response the app dispatches (CORS preflight 204s, answered by `cors()` before the header middleware, are the one exception — after-merge follow-up: register the header middleware first).

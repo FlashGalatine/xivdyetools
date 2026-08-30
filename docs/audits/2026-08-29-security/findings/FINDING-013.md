@@ -13,4 +13,4 @@
 - Require the security bindings in production `validateEnv` and fail every request when missing (the BUG-017 pattern already used for weak secrets); pair with FINDING-023's config tests.
 
 ## Status
-PARTIAL — presets-api part FIXED 2026-08-30 efd495a4, a3e8ee14 (2.2.0: production `validateEnv` requires `JWT_SECRET` ≥ 32 chars, `JWT_ISSUER` https, `TOKEN_BLACKLIST`, `RL_PUBLIC` and fails every request when missing; one-variable tests); oauth (Sprint 2) and moderation-worker (Sprint 4) parts pending.
+PARTIAL — presets-api part FIXED 2026-08-30 efd495a4, a3e8ee14 (2.2.0: production `validateEnv` requires `JWT_SECRET` ≥ 32 chars, `JWT_ISSUER` https, `TOKEN_BLACKLIST`, `RL_PUBLIC` and fails every request when missing; one-variable tests); oauth part FIXED 2026-08-30 b14cade9 (3.0.0: production `validateEnv` requires `RL_AUTH_10/20/30` + `TOKEN_BLACKLIST` and fails every request when one is missing; one-binding tests); moderation-worker (Sprint 4) part pending.

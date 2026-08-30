@@ -13,4 +13,4 @@
 - Create the `users` row lazily on first submission/vote (or document the sign-in record + add a deletion route to the web guide); drop `avatar_url` and unverified `primary_character` from storage/claims — mint only what presets-api reads; correct the sign-in copy.
 
 ## Status
-OPEN
+PARTIAL — code half FIXED 2026-08-30 cdd53fbf (oauth 3.0.0): `users.avatar_url` no longer written (dropped by migration 0001), the JWT mints only `sub, iat, exp, iss, jti, username, global_name, avatar, auth_provider, discord_id` — no `orig_iat`, `xivauth_id` or `primary_character` — and the XIVAuth response carries no character. Ruling R1: the sign-in `users` row stays (it is the identity behind `sub`); the web-guide disclosure of that record, the deletion route and the sign-in copy are Sprint 6 (web-app).

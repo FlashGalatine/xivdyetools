@@ -54,6 +54,18 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         from `apps/presets-api`, checking `SELECT COUNT(*) FROM submission_events` before and after.
         Order does not matter for safety — before the 2.2.0 deploy is cleanest; applied late, the new
         per-user text-edit cap is simply inert until it lands. Nothing else in `0012+` exists.
+      - **oauth (`xivdyetools-users` D1) — `apps/oauth/migrations/0001_drop_xivauth_characters.sql` exists
+        since 2026-08-30 (oauth 3.0.0, security audit 2026-08-29 Sprint 2 / FINDING-001 + 002) and is a
+        HAND-RUN step AFTER the 3.0.0 deploy is live:** `DROP TABLE xivauth_characters` + `ALTER TABLE users
+        DROP COLUMN avatar_url`. Run the header's precondition queries first, then
+        `wrangler d1 execute xivdyetools-users --remote --file=migrations/0001_drop_xivauth_characters.sql`
+        from `apps/oauth`. Never `wrangler d1 migrations apply` here either (the directory matches wrangler's
+        default `migrations_dir` and the ALTER is not idempotent). The 3.0.0 code neither reads nor writes
+        either column, so a late run is inert — but FINDING-001 stays open until the roster rows are gone.
+        **Never run it before the 3.0.0 deploy** (2.7.0 writes both on every sign-in → 500s), and **once it
+        has run, never roll the worker back below 3.0.0** — roll forward, or restore the schema first
+        (`ALTER TABLE users ADD COLUMN avatar_url TEXT;` + recreate `xivauth_characters` from
+        `git show c7c1782b:apps/oauth/schema/users.sql`).
       - **The generated stainID rewrite is NOT applied** (16 presets, 16 still keyed by legacy
         itemIDs — first element > 254 — 0 by stainID) and **must not be applied before the merge**:
         the production web-app (4.x) and discord-worker (4.x) render preset palettes by itemID and
@@ -284,7 +296,7 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         real push payloads because the handler's cap was 10 KB (GitHub's creation ping is smaller
         and had passed). Fixed in the same close-out change; see the webhook item. The bot
         `/preset` v2-signature round trip still needs a real command invocation to observe.
-  - [ ] oauth: login → refresh → logout → refresh is rejected (FINDING-001 revocation TTL).
+  - [ ] oauth: login → `POST /auth/revoke` → `GET /auth/me` **and** an authenticated presets-api write with the same token both answer 401 (2026-08-21 FINDING-001 revocation TTL; `/auth/refresh` no longer exists as of oauth 3.0.0 — 2026-08-29 FINDING-003).
         (`/health` 200 on 2026-08-28; the token flow needs a browser session.)
   - [x] api-worker: `/v1/dyes` returns `RateLimit-*` headers from the binding; `/universalis/*`
         proxy OK; `developers.xivdyetools.app` docs render.

@@ -15,4 +15,4 @@
 - Stop calling `storeCharacters`; drop (or truncate) `xivauth_characters` in a migration; delete `getCharacters`. If a future feature needs the roster, collect it then, minimally, and disclose it first.
 
 ## Status
-OPEN
+CODE FIXED 2026-08-30 cdd53fbf (oauth 3.0.0) — `storeCharacters`/`getCharacters` deleted, the roster is read in memory and never persisted; `schema/users.sql` no longer defines `xivauth_characters`. **Remains OPEN until the hand-run migration `apps/oauth/migrations/0001_drop_xivauth_characters.sql` is applied after the 3.0.0 deploy** (drops the table and its historical rows) — see the plan's Sprint 2 *Ends with* and `POST_MERGE_CHECKLIST.md`.

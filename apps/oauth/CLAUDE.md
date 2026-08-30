@@ -187,7 +187,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 ### JWT Service
 
 - HS256 via Web Crypto (`crypto.subtle.sign('HMAC', ...)`).
-- Mints exactly `sub`, `iat`, `exp`, `iss`, `jti`, `username`, `global_name`, `avatar`, `auth_provider` and `discord_id` — what the clients read, and nothing else (FINDING-002). `orig_iat` (its only reader, `/auth/refresh`, is gone), `xivauth_id` (never had one) and `primary_character` (an FFXIV character name + home world the web app copies and never renders, unverified registrations included) are no longer minted. All three are optional in `@xivdyetools/types`.
+- Mints exactly `sub`, `iat`, `exp`, `iss`, `jti`, `username`, `global_name`, `avatar`, `auth_provider` and — whenever the account has one — `discord_id` (an XIVAuth-only account gets nine claims): what the clients read, and nothing else (FINDING-002). `orig_iat` (its only reader, `/auth/refresh`, is gone), `xivauth_id` (never had one) and `primary_character` (an FFXIV character name + home world the web app copies and never renders, unverified registrations included) are no longer minted. All three are optional in `@xivdyetools/types`.
 - `verifyJWT` rejects non-HS256 algorithms, validates signature, and checks `exp`.
 - `verifyJWTWithRevocationCheck` additionally queries `TOKEN_BLACKLIST` for the `jti`.
 - `revokeToken` writes the `jti` with TTL = remaining lifetime + `REFRESH_GRACE_SECONDS` so it auto-expires (FINDING-001).

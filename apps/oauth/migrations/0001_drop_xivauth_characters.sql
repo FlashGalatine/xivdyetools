@@ -16,6 +16,15 @@
 -- HAND-RUN. NOT part of any deploy. RUN ONLY AFTER the release that stops
 -- writing these (oauth 3.0.0) is live — running it first makes every sign-in
 -- 500 on the missing column/table.
+--
+-- ROLLBACK TRAP: once this has run, do NOT roll the worker back below 3.0.0
+-- (a revert commit → CI bare deploy = production) — 2.7.0's INSERT names
+-- `avatar_url` and its XIVAuth path batches `DELETE FROM xivauth_characters`,
+-- so every sign-in would 500. Roll forward instead. If a rollback is truly
+-- unavoidable, restore the schema first:
+--   ALTER TABLE users ADD COLUMN avatar_url TEXT;
+--   (recreate `xivauth_characters` from
+--    `git show c7c1782b:apps/oauth/schema/users.sql`)
 -- ==========================================================================
 --
 -- Run from `apps/oauth`:

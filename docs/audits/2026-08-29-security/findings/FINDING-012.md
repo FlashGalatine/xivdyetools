@@ -12,4 +12,4 @@
 - worker-kit: fall back to `console.warn` when no logger is supplied and expose `backendError` on the result/headers; consumers: pass the request logger, count `backendError`; add a throwing-binding test per consumer; consider `failOpen: false` on oauth `/auth/*`.
 
 ## Status
-OPEN
+PARTIAL — oauth part FIXED 2026-08-30 b14cade9 (3.0.0: `backendError` surfaced per request through the request logger, path only, deliberately no client-visible header — ruling R3; throwing-binding test proves the request is still served and the warn is emitted). moderation-worker (Sprint 4) and the worker-kit anchor (Sprint 9: `console.warn` fallback, binding validation, KV-backend `backendError` parity; consider `failOpen: false` for `/auth/*`) pending.

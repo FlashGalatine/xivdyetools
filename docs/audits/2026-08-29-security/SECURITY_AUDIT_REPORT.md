@@ -115,11 +115,16 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-016 | FIXED 2026-08-30 | 896f3f7e |
 | FINDING-017 | FIXED 2026-08-30 | 780cf992, 9eb84a4c |
 | FINDING-015 | PARTIAL — presets-api requires v2 + nonce replay check; bots/auth package → Sprints 3, 4, 11 | 01ea3dec |
-| FINDING-010 | PARTIAL — presets-api opt-in removed; oauth/api-worker/worker-kit → Sprints 2, 5, 9 | efd495a4 |
+| FINDING-010 | PARTIAL — presets-api + oauth opt-ins removed; api-worker/worker-kit → Sprints 5, 9 | efd495a4, b14cade9 |
 | FINDING-011 | PARTIAL — presets-api logging ids-only; moderation-/discord-worker → Sprints 4, 3 | efd495a4, a3e8ee14 |
-| FINDING-013 | PARTIAL — presets-api validateEnv; oauth/moderation-worker → Sprints 2, 4 | efd495a4, a3e8ee14 |
-| FINDING-023 | PARTIAL — presets-api config test; oauth/moderation-/image-worker → Sprints 2, 4, 8 | efd495a4 |
-| FINDING-001, 002, 003, 007, 008, 009, 012, 014, 018–022, 024–031 | OPEN — Sprints 2–13 | — |
+| FINDING-013 | PARTIAL — presets-api + oauth validateEnv; moderation-worker → Sprint 4 | efd495a4, a3e8ee14, b14cade9 |
+| FINDING-023 | PARTIAL — presets-api + oauth config tests; moderation-/image-worker → Sprints 4, 8 | efd495a4, b14cade9 |
+| FINDING-003 | FIXED 2026-08-30 (Sprint 2, oauth 3.0.0) — `/auth/refresh` removed | 50c283b9 |
+| FINDING-022 | FIXED 2026-08-30 — `no-store` on every dispatched response | 50c283b9 |
+| FINDING-001 | CODE FIXED 2026-08-30 — OPEN until migration `0001` is hand-run after the 3.0.0 deploy | cdd53fbf |
+| FINDING-002 | PARTIAL — code half fixed (claims trimmed, `avatar_url` dropped); disclosure + deletion route → Sprint 6 | cdd53fbf |
+| FINDING-012 | PARTIAL — oauth `backendError` logged; moderation-worker/worker-kit → Sprints 4, 9 | b14cade9 |
+| FINDING-007, 008, 009, 014, 018–021, 024–031 | OPEN — Sprints 3–13 | — |
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.

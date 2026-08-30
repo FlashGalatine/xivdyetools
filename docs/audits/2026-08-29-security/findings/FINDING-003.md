@@ -14,4 +14,4 @@
 - Remove `/auth/refresh` (no consumer). If kept: require a still-valid token, re-read the user row, add a per-user revocation epoch checked by presets-api, and cut the grace window to minutes.
 
 ## Status
-OPEN
+FIXED 2026-08-30 50c283b9 (oauth 3.0.0) — `/auth/refresh` removed (404 even for a valid token; the token router is now `handlers/token.ts` with `/auth/me` + `/auth/revoke` unchanged); the revocation blacklist TTL still outlives `exp` by `REFRESH_GRACE_SECONDS` as clock-skew margin. No client ever called the endpoint.
