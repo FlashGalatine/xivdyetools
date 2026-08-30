@@ -114,6 +114,12 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       1.15.0), logger 2.1.0 (1.3.0), auth 1.4.0 (1.2.0), worker-kit 1.1.0 (never published),
       core 4.0.1 (2.7.0), svg 2.0.1 (1.2.1), bot-logic 2.1.0 (1.3.0); `docs/versions.md` agrees
       with every `package.json` (7 packages + 8 apps).
+      **2026-08-29 (PR #151, chara-name privacy):** svg → **3.0.0** and bot-logic → **3.0.0**
+      (both breaking; npm still has 2.0.1 / 2.1.0), discord-worker → 5.0.1; `docs/versions.md`
+      updated. **Publish svg 3.0.0 before bot-logic 3.0.0** — bot-logic's `workspace:*` on svg is
+      rewritten to the exact `3.0.0` at publish time, so a bot-logic-first publish leaves every
+      external `npm install @xivdyetools/bot-logic@3.0.0` unresolvable (ETARGET on svg), and
+      bot-logic 3.0.0 resolved against svg 2.x would crash at render (`title` vs `charName`).
 
 ## 1. Merge day (what runs, what to watch)
 
@@ -234,6 +240,9 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       automation token was specified` — those packages disallow tokens), so they went through
       `npm login --auth-type=web` with the security key. The root `CLAUDE.md` / `.npmrc` break-glass
       text now describes this token flow instead of `--otp` (the maintainer's 2FA is a security key).
+      **Pending 2026-08-29 (PR #151):** publish `@xivdyetools/svg` 3.0.0 **then**
+      `@xivdyetools/bot-logic` 3.0.0 — the order is load-bearing (see §0 above); `all-modified`
+      keeps the tier order by itself, a single-package dispatch does not.
 - [ ] **User-run afterwards:** `npm run upload-emojis` (production credentials, stainID-keyed set);
       `scripts/cleanup-v4-kv.ts`; og-worker beta deploy then production; purge the edge cache for
       `/og/default.png` / `/og/default-x.png`.

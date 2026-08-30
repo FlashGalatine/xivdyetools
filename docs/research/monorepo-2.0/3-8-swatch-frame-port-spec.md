@@ -18,10 +18,15 @@ parse is embed text with the field and value named, never a frame.
 ## The frame (400 × 350, one card, two orders)
 
 - Header: 66×30 strip of the live slot colours (equal stripes, file order) ·
-  charSub 11px mono over charName 14px body 600 · `/SWATCH` chip right.
+  charSub 11px mono over title 14px body 600 · `/SWATCH` chip right.
   **charSub is NOT localized** (the doc keeps `DUNESFOLK ♂ · ANAMNESIS`
-  constant across all four locales): tribe EN + gender symbol + producer.
-  charName = Ktisis nickname, else the attachment filename.
+  constant across all four locales): tribe EN + gender symbol + producer
+  token (allowlisted — ANAMNESIS / KTISIS / BRIO; any other `TypeName` is
+  omitted, never printed). title = the neutral localized `card.swatchTitle`
+  ("Character swatch") — **never** the Ktisis nickname or the attachment
+  filename: players use their real name in both. (Chara-name privacy,
+  2026-08-29: svg 3.0.0 renamed `charName` → `title`, bot-logic 3.0.0
+  dropped `SwatchInput.fileName`; discord-worker PRIVACY_POLICY §3.)
 - Column header: `lSlot` 56px · `lNearest` flex · `ΔE` 36px right.
 - Rows are **measuredRow consumer #5** — the abstraction holds with all five
   slots; the lead is a *shaped label* (slot short over grid address), still one

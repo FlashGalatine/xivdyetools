@@ -93,7 +93,13 @@ export interface ParsedCharaFile {
   /** The tribe string exactly as the file spelled it */
   tribeRaw: string | null;
   gender: Gender | null;
-  /** Ktisis nickname — the default name for exported palettes */
+  /**
+   * Ktisis nickname. On-device display only (a file card label): players use
+   * their real name here, so it is never a card or embed title and never the
+   * default for a name that can be published — the bot strips it before a
+   * record leaves `executeSwatch` (discord-worker PRIVACY_POLICY §3) and the
+   * web-app never pre-fills the community palette name with it.
+   */
   nickname: string | null;
   /** True only when IsExtendedAppearanceValid is present AND true */
   extendedValid: boolean;

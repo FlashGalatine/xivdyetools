@@ -35,6 +35,12 @@ Rules:
   path filter.
 -->
 
+## [5.0.1] - 2026-08-29
+
+### 🔒 Your character's name stays yours
+
+- `/swatch` no longer shows your character's name or your file's name anywhere — the card and the reply are simply titled "Character swatch". Many exports are named after the character, and some players use their real name, so neither reaches the channel now.
+
 ## [5.0.0] - 2026-08-28
 
 ### 🎨 Every card redrawn
