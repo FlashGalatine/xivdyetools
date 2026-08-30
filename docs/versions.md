@@ -2,7 +2,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: August 21, 2026*
+*Last Updated: August 30, 2026*
 
 > **Versions below are read from each project's `package.json` on the working branch.** The 5.0
 > wave — `core` v4.0.1, `types` v2.0.0, `svg` v2.0.1, `bot-logic` v2.1.0, `worker-kit` v1.1.0,

@@ -294,8 +294,13 @@ describe('Index/App', () => {
         // BUG-017 (2026-07-18 audit): a misconfigured production isolate must
         // fail EVERY request, not just the first one
         it('should 500 on every request when production env is misconfigured', async () => {
+            // FINDING-013 review fix: must start from a fully-valid production
+            // env and remove exactly this one variable — otherwise the env also
+            // fails JWT_ISSUER/TOKEN_BLACKLIST/RL_PUBLIC validation, and this
+            // test would stay red even if the BOT_SIGNING_SECRET check itself
+            // were deleted from validateEnv.
             const badProdEnv = createMockEnv({
-                ENVIRONMENT: 'production',
+                ...validProductionOverrides(),
                 BOT_SIGNING_SECRET: undefined, // required in production
             });
 

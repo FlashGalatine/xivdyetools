@@ -317,12 +317,17 @@ export async function storeFailedNotification(
         retries + 1
       )
       .run();
-  } catch {
-    // Best-effort — if the table doesn't exist yet or insert fails, log and
-    // move on. FINDING-011: RetentionLogger is declared narrowly (message
-    // only) so this can't grow into logging the notification it failed to
-    // store — same reasoning as the prune-failure warning below.
-    logger?.warn('[BUG-015] Failed to store notification in dead-letter table');
+  } catch (insertErr) {
+    // Best-effort — a failed insert must not fail the caller, whose retries
+    // have already been exhausted. FINDING-011 (review fix): log the
+    // failure's error NAME only, never its message — a D1 error can quote
+    // the failing SQL statement, and the statement text is exactly the
+    // payload this table is no longer allowed to carry. `(logger ?? console)`
+    // so the failure is never completely silent when no logger was passed
+    // (tests, or any future caller that forgets to thread one through).
+    (logger ?? console).warn('[BUG-015] Failed to store notification in dead-letter table', {
+      cause: insertErr instanceof Error ? insertErr.name : 'unknown',
+    });
   }
 }
 
