@@ -114,22 +114,23 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-006 | PARTIAL — code half fixed; web PRIVACY.md wording → Sprint 6 | e10d740e |
 | FINDING-016 | FIXED 2026-08-30 | 896f3f7e |
 | FINDING-017 | FIXED 2026-08-30 | 780cf992, 9eb84a4c |
-| FINDING-015 | PARTIAL — presets-api requires v2 + nonce replay check; discord-worker no longer sends v1; moderation-worker / auth package → Sprints 4, 11 | 01ea3dec, 1a0cf89f |
+| FINDING-015 | PARTIAL — presets-api requires v2 + nonce replay check; neither bot sends v1; `@xivdyetools/auth` v1 export → Sprint 11 | 01ea3dec, 1a0cf89f, b5d4c53b |
 | FINDING-010 | PARTIAL — presets-api + oauth opt-ins removed; api-worker/worker-kit → Sprints 5, 9 | efd495a4, b14cade9 |
-| FINDING-011 | PARTIAL — presets-api + discord-worker logging ids-only; moderation-worker → Sprint 4 | efd495a4, a3e8ee14, dfc6de47 |
-| FINDING-013 | PARTIAL — presets-api + oauth + discord-worker validateEnv; moderation-worker → Sprint 4 | efd495a4, a3e8ee14, b14cade9, 4d734c8c, fe86a881 |
-| FINDING-023 | PARTIAL — presets-api + oauth config tests; moderation-/image-worker → Sprints 4, 8 | efd495a4, b14cade9 |
+| FINDING-011 | FIXED 2026-08-30 (all three units log ids/lengths only; seven legacy `customId` sites ledgered) | efd495a4, a3e8ee14, dfc6de47, b5d4c53b |
+| FINDING-013 | FIXED 2026-08-30 (all four units fail closed in production when a security binding is missing) | efd495a4, a3e8ee14, b14cade9, 4d734c8c, fe86a881, b5d4c53b, c94bfa8f |
+| FINDING-023 | PARTIAL — presets-api + oauth + moderation-worker config tests; image-worker anchor → Sprint 8 | efd495a4, b14cade9, 519c80da |
 | FINDING-003 | FIXED 2026-08-30 (Sprint 2, oauth 3.0.0) — `/auth/refresh` removed | 50c283b9 |
 | FINDING-022 | FIXED 2026-08-30 — `no-store` on every dispatched response | 50c283b9 |
 | FINDING-001 | CODE FIXED 2026-08-30 — OPEN until migration `0001` is hand-run after the 3.0.0 deploy | cdd53fbf |
 | FINDING-002 | PARTIAL — code half fixed (claims trimmed, `avatar_url` dropped); disclosure + deletion route → Sprint 6 | cdd53fbf |
-| FINDING-012 | PARTIAL — oauth `backendError` logged; moderation-worker/worker-kit → Sprints 4, 9 | b14cade9 |
+| FINDING-012 | PARTIAL — oauth + moderation-worker `backendError` logged; worker-kit anchor → Sprint 9 | b14cade9, b5d4c53b |
 | FINDING-007 | FIXED 2026-08-30 (Sprint 3, discord-worker 5.1.0) — needs the post-deploy Upstash secret deletion | 6c14889f, d28f76a4, f5d5f596, 4d734c8c, fe86a881 |
 | FINDING-008 | FIXED 2026-08-30 | 2041ac39, 886d46a1, f5d5f596, 1a0cf89f |
 | FINDING-019 | FIXED 2026-08-30 | dfc6de47 |
 | FINDING-020 | FIXED 2026-08-30 | 6c14889f, d28f76a4 |
 | FINDING-021 | FIXED 2026-08-30 | fb3d4120, 6014be93 |
-| FINDING-009, 014, 018, 024–031 | OPEN — Sprints 4–13 | — |
+| FINDING-018 | FIXED 2026-08-30 (Sprint 4, moderation-worker 1.6.0) — needs hand-run migration `0013` BEFORE the merge | dfb49aa1, 034badcd |
+| FINDING-009, 014, 024–031 | OPEN — Sprints 5–13 | — |
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.

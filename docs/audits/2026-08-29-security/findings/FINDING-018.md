@@ -12,4 +12,4 @@ Supersedes the deferred part of `2026-08-21-security/FINDING-034`.
 - Migration: make `moderation_log.preset_id` nullable (or add `target_discord_id`); log the four actions through presets-api.
 
 ## Status
-OPEN
+FIXED 2026-08-30 dfb49aa1 (moderation-worker 1.6.0 + migration `apps/presets-api/migrations/0013_moderation_log_user_actions.sql` — hand-run on `xivdyetools-presets` BEFORE the 1.6.0 deploy, never `d1 migrations apply`: rebuilds `moderation_log` with `preset_id` nullable + `target_discord_id`, re-run-guarded by a leading `ADD COLUMN`. `banUser`/`unbanUser` write one `ban`/`unban` row (`preset_id` NULL) plus one `hide`/`restore` row per affected preset in the SAME `batch()` as the ban — atomic, so a pre-migration deploy makes bans fail loudly instead of silently unlogged; history and `/stats` now see them. Rulings: direct D1 writes (not a presets-api route); `@xivdyetools/types` `ModerationLogEntry` still narrower than the table → Sprint 11.)

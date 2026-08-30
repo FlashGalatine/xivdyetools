@@ -83,7 +83,8 @@ app.use('*', async (c, next) => {
 // headers middleware (2026-08-29 audit follow-up): those three are `await
 // next()`-then-decorate middleware, so whichever response the REST of the
 // chain produces — including this gate's own early 500 — still passes back
-// through them and picks up a request id and the hardened headers. Before
+// through them and picks up a request id, the hardened headers and the
+// logger's request-started / request-completed lines. Before
 // this reorder the gate ran first and returned before any of the three ran,
 // so its 500 carried neither (env-validation-gate.test.ts's `nosniff` /
 // `X-Request-Id` assertions pin this).

@@ -37,7 +37,7 @@
 -- lands: 1.6.0 writes the `moderation_log` rows in the same batch as the
 -- `banned_users` insert and a D1 batch is atomic, so the missing column aborts
 -- the whole batch — the user is not banned, no preset is hidden, there is no
--- half state, and the moderator sees "Failed to ban user." (the raw D1 message
+-- half state, and the moderator sees "Ban system schema is out of date — apply presets-api migration 0013." (the raw D1 message
 -- is logged, never posted to Discord). Applying this file fixes it with no
 -- redeploy.
 --
@@ -72,7 +72,7 @@
 --     `DROP TABLE IF EXISTS moderation_log_new`, which would destroy that
 --     surviving copy and then fail (the following `INSERT … SELECT … FROM
 --     moderation_log` has no source table left to select from). Instead, run
---     only the two statements that finish the rebuild from where it stopped:
+--     only the four statements that finish the rebuild from where it stopped:
 --       ALTER TABLE moderation_log_new RENAME TO moderation_log;
 --       CREATE INDEX IF NOT EXISTS idx_moderation_log_preset ON moderation_log(preset_id);
 --       CREATE INDEX IF NOT EXISTS idx_moderation_log_moderator ON moderation_log(moderator_discord_id);
