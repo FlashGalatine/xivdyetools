@@ -408,6 +408,30 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       canonicalisation (OG-4): that bounds the *repeat* cost of one path, but does nothing for a
       client enumerating many distinct *valid* paths (dye IDs, harmony types, …), each a
       legitimate cache miss on first render — this WAF rule is the only bound on that count.
+- [ ] og-worker (2026-08-29 FINDING-024, OG-4) **deploy-day expectation, not an action:** the
+      `/og/*` cache key's shape changed (Sprint 7 — canonical decoded path × resolved lang ×
+      resolved frame × raw algo, checked/filled for `GET` and `HEAD`), which orphans every entry
+      already sitting in `caches.default` under the old full-URL key. Expect a one-time burst of
+      cold-cache re-renders across live previews right after this deploys — normal, not a
+      regression, as real traffic re-populates the cache under the new key shape. The orphaned
+      entries need no manual purge; they are simply unreachable and age out on their own 7-day
+      `s-maxage`. Useful side effect: this same reshuffle also flushes any card still cached from
+      before the font-weight fix in this same release (pre-fix cards rendered every band name in
+      Light 300 instead of its intended weight, `689a0679`), so that fix needs no separate purge
+      either.
+- [ ] og-worker (2026-08-29 FINDING-024, OG-4) **deploy-day expectation, not an action:** a
+      share/preview URL that used to force a fresh card by appending a cache-buster (`?v=2`,
+      `?t=<timestamp>`, …) to an `/og/*` image URL now gets a `404` — the query-key allowlist
+      (ruling S7-R4) rejects any key outside `lang`/`frame`/`algo`. If a real card genuinely
+      needs to be forced fresh before its TTL expires (e.g. a dye's colour data changed), the
+      only remaining way is a Cloudflare cache purge of `og.xivdyetools.app`, not a URL trick.
+      The credential for this already exists — `CACHE_PURGE_API_TOKEN` (purge-only, scoped to
+      the `xivdyetools.app` zone, set 2026-08-21; see the "Optional presets-api cache-purge
+      credentials" entry above) is currently wired only into presets-api's own
+      delete-preview-image flow, but being zone-scoped rather than worker-scoped, the same
+      credential is usable to purge `og.xivdyetools.app/og/*` URLs by hand too (Cloudflare
+      dashboard *Caching → Purge Cache*, or a direct `POST /zones/{zone_id}/purge_cache` call) —
+      there is no automated purge path from og-worker itself.
 - [ ] If a `xivdyetools-oauth-preview` worker or the `auth-preview.xivdyetools.app` custom domain
       ever existed, delete both (the `[env.preview]` config is gone — FINDING-029; DNS is NXDOMAIN
       today, so most likely nothing to do).

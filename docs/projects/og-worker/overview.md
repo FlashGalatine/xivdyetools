@@ -132,9 +132,13 @@ Image responses are cached `max-age=86400, s-maxage=604800` (24 h browser / 7 d 
 
 ### Query Parameters
 
+`lang`, `frame`, and `algo` are the **only** query keys any `/og/*` image route may carry
+(2026-08-29 FINDING-024, OG-4) — any other key gets a `404` before the cache lookup or a
+render, without echoing the key back. A present-but-invalid `algo` gets `400`.
+
 | Parameter | Description |
 |-----------|-------------|
-| `algo` | Matching method: `ciede2000`, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` (legacy `euclidean` / `hyab` / `oklch-weighted` accepted and normalised). Direct image routes fall back to `oklab` when the parameter is absent |
+| `algo` | Matching method: `ciede2000`, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` (legacy `euclidean` / `hyab` / `oklch-weighted` accepted and normalised). Direct image routes fall back to **`ciede2000`** (`DEFAULT_MATCHING_METHOD`) when the parameter is absent — not `oklab` |
 | `lang` | `en` (default, unparameterised) / `ja` / `de` / `fr` / `ko` / `zh` — localizes the metadata **and** the picture |
 | `frame` | `x` for the 1200×630 X/Twitter frame; otherwise the 1200×1050 Discord frame |
 
@@ -220,9 +224,22 @@ Shows start and end dyes with stepped gradient between:
 
 | Content | Cache TTL | Cache Location |
 |---------|-----------|----------------|
-| OG HTML | 1 hour | Edge (Cache-Control) |
-| PNG Images | 24 hours | Edge (Cache-Control) |
+| OG HTML | 1 hour browser / 24 hours edge | Edge (Cache-Control) |
+| PNG Images | 24 hours browser / 7 days edge | Edge (Cache-Control) |
 | Static assets | 1 year | Edge (immutable) |
+
+The `Cache-Control` headers above describe TTLs but do nothing by themselves on a Worker
+response — `index.ts` also stores every successful `/og/*` render in Cloudflare's
+`caches.default` (the Cache API) and serves repeat requests from there instead of
+re-rastering through resvg. The key is **canonical**, not the full request URL
+(2026-08-29 FINDING-024, OG-4): the decoded path (with a trailing `.png` stripped — the
+suffix is optional) plus the resolved `lang`, the resolved `frame`, and the raw `algo`
+(omitted when absent) — so `?lang=EN`/`?lang=en-US`/no `lang` share one entry, as do
+`.png` and no-suffix spellings of one card, and a percent-encoded path spelling that
+decodes to the same route. This is checked and filled for `HEAD` requests as well as
+`GET`. It bounds *spellings of one card* to one cache entry — it does not bound how many
+*distinct* ids a client can request (see the Query Parameters note above and the WAF
+rate-limiting rule in `docs/operations/POST_MERGE_CHECKLIST.md`).
 
 ---
 

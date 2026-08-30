@@ -141,15 +141,36 @@ route reading the param at all (ruling S7-R7):
 | `GET /og/default.png` | Root fallback card; cached 7 days |
 | `GET *` | Fallthrough — crawlers get a minimal **404** (`no-store`) page; humans are passed through only on the `APP_BASE_URL` host (any other host → 302 to the app) — FINDING-024 |
 
+Every path parameter above must be **canonical**, not merely well-formed — the same
+amplification the query-key allowlist closes, one axis over (2026-08-29 FINDING-024, OG-4,
+ruling S7-R12): a dye/step/ratio/limit id needs no leading zeros, no sign, no trailing
+junk, and no `%2F` spelling (Hono's router leaves `%2F` encoded, but `c.req.param()`
+decodes it to `/`, so `parseInt` used to read `1%2F0` as dye `1`); comparison/
+accessibility's dye list 400s as a whole if any entry isn't a canonical integer — it used
+to `.filter()` out the bad ones silently and render whichever dyes survived; `:color` on
+swatch and the `RRGGBB[-share]` entries on extractor must match the exact upper-case form
+`parseHexColor` (`og-params.ts`) emits, not any of the 64 case spellings of one hex value.
+`presets/:presetId`'s slug grammar was already canonical. `.png` stays optional
+everywhere (ruling S7-R13), but the strip is now anchored to a true trailing suffix — it
+no longer matches `.png` wherever it happens to appear in the segment. **This bounds every
+*spelling* of one card to a single URL. It does not bound how many *distinct* ids a
+client can request** — most render the "not found" default card, and each is a legitimate
+first-render cache miss; that is request-volume enumeration, not a cache-key problem, and
+it is the WAF rate-limiting rule's job (`docs/operations/POST_MERGE_CHECKLIST.md`), not
+this table's.
+
 All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
 
 The `caches.default` edge cache in `index.ts` (`ogCacheKey`) is checked and filled for `GET`
 *and* `HEAD` (ruling S7-R8 — `c.req.method` reads `'HEAD'` inside Hono middleware even though
 routing re-dispatched it as `GET`; treating `HEAD` as uncacheable let a `HEAD` loop against one
-URL re-render every time). It keys on the *decoded* path (`c.req.path`, what the router actually
-matched on, not `new URL(c.req.url).pathname` — ruling S7-R9: two percent-encoded spellings that
-decode alike already route alike, so keying on the raw pathname let each spelling buy its own
-entry for the same card) + the *resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (2026-08-29 FINDING-024, OG-4) — not the full URL. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary, even on a route that never reads `algo` itself — and an EMPTY `algo` (`?algo=` or bare `?algo`,
+URL re-render every time). It keys on the *decoded* path (`c.req.path`, what the router
+actually matched on, not `new URL(c.req.url).pathname` — ruling S7-R9: two percent-encoded
+spellings that decode alike already route alike, so keying on the raw pathname let each
+spelling buy its own entry for the same card), with a trailing `.png` stripped from that
+path the same way the routes strip it (ruling S7-R13 — `.png` is optional everywhere, so
+the suffixed and suffix-less spellings of one card must share one entry, not two) + the
+*resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (2026-08-29 FINDING-024, OG-4) — not the full URL. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary, even on a route that never reads `algo` itself — and an EMPTY `algo` (`?algo=` or bare `?algo`,
 both of which `URLSearchParams.get` reports as `''`) counts as absent there and here, not a
 validation failure, matching what the five algo-aware routes already did with
 `c.req.query('algo') || DEFAULT_MATCHING_METHOD` (ruling S7-R10). Combined with the query-key allowlist above, the key space is bounded to (pathname × lang × frame × algo) — a client can no longer defeat the cache by appending an arbitrary throwaway param.
