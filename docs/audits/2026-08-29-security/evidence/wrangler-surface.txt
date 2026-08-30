@@ -1,0 +1,82 @@
+apps/api-worker/wrangler.toml:2:# worker with its own name and NO routes, so a plain `wrangler deploy` can
+apps/api-worker/wrangler.toml:11:# FINDING-025 / API-5 (2026-08-21 security audit): this env has no routes, and
+apps/api-worker/wrangler.toml:12:# without routes wrangler defaults workers_dev (and, on wrangler >= 4.44,
+apps/api-worker/wrangler.toml:18:workers_dev = false
+apps/api-worker/wrangler.toml:19:preview_urls = false
+apps/api-worker/wrangler.toml:29:[vars]
+apps/api-worker/wrangler.toml:66:[env.production]
+apps/api-worker/wrangler.toml:72:routes = [
+apps/api-worker/wrangler.toml:73:  { pattern = "data.xivdyetools.app", custom_domain = true },
+apps/api-worker/wrangler.toml:74:  { pattern = "proxy.xivdyetools.app", custom_domain = true },
+apps/api-worker/wrangler.toml:75:  { pattern = "proxy.xivdyetools.projectgalatine.com", custom_domain = true },
+apps/api-worker/wrangler.toml:76:  { pattern = "developers.xivdyetools.app", custom_domain = true }
+apps/api-worker/wrangler.toml:82:# run_worker_first: the worker's host check routes developers.* to assets and
+apps/api-worker/wrangler.toml:88:[env.production.assets]
+apps/discord-worker/wrangler.toml:3:# application, its own KV namespace, and NO routes — so a plain
+apps/discord-worker/wrangler.toml:8:# `routes` and `workers_dev` are INHERITABLE keys: a named environment takes
+apps/discord-worker/wrangler.toml:10:# explicitly in both environments — leaving `routes` up here would attach the
+apps/discord-worker/wrangler.toml:16:workers_dev = true
+apps/discord-worker/wrangler.toml:41:[vars]
+apps/discord-worker/wrangler.toml:69:[env.production]
+apps/discord-worker/wrangler.toml:71:workers_dev = false
+apps/discord-worker/wrangler.toml:72:routes = [
+apps/discord-worker/wrangler.toml:73:  { pattern = "bot.xivdyetools.app", custom_domain = true },
+apps/discord-worker/wrangler.toml:74:  { pattern = "bot.xivdyetools.projectgalatine.com", custom_domain = true }
+apps/discord-worker/wrangler.toml:77:[env.production.vars]
+apps/image-worker/wrangler.toml:3:# routes, so a plain `wrangler deploy` can never overwrite production. Production
+apps/image-worker/wrangler.toml:11:# 10 MB from a CDN and runs a full photon WASM decode. workers_dev = true here would
+apps/image-worker/wrangler.toml:15:workers_dev = false
+apps/image-worker/wrangler.toml:17:[env.production]
+apps/image-worker/wrangler.toml:19:# No routes and no workers_dev: reachable ONLY via service binding from
+apps/image-worker/wrangler.toml:21:workers_dev = false
+apps/moderation-worker/wrangler.toml:2:# (top-level) env is a separate dev worker with its own name and NO routes, so
+apps/moderation-worker/wrangler.toml:7:# `routes` and `workers_dev` are INHERITABLE keys: a named environment takes
+apps/moderation-worker/wrangler.toml:8:# the top-level value unless it overrides it. `routes` therefore MOVED into
+apps/moderation-worker/wrangler.toml:17:workers_dev = false
+apps/moderation-worker/wrangler.toml:43:[vars]
+apps/moderation-worker/wrangler.toml:51:[env.production]
+apps/moderation-worker/wrangler.toml:53:routes = [
+apps/moderation-worker/wrangler.toml:54:  { pattern = "moderation-bot.xivdyetools.app", custom_domain = true },
+apps/moderation-worker/wrangler.toml:55:  { pattern = "moderation-bot.xivdyetools.projectgalatine.com", custom_domain = true }
+apps/moderation-worker/wrangler.toml:58:[env.production.vars]
+apps/oauth/wrangler.toml:6:routes = [
+apps/oauth/wrangler.toml:7:  { pattern = "auth.xivdyetools.app", custom_domain = true },
+apps/oauth/wrangler.toml:8:  { pattern = "auth.xivdyetools.projectgalatine.com", custom_domain = true }
+apps/oauth/wrangler.toml:15:[vars]
+apps/oauth/wrangler.toml:48:[env.development]
+apps/og-worker/wrangler.toml:7:# beta.xivdyetools.app routes, where it used to carry none. A bare
+apps/og-worker/wrangler.toml:9:# cannot touch production or the xivdyetools.app zone routes, because
+apps/og-worker/wrangler.toml:10:# [env.production] declares its own `routes`. Mirrors discord-worker, whose
+apps/og-worker/wrangler.toml:17:# `routes` and `workers_dev` are INHERITABLE keys: a named environment takes the
+apps/og-worker/wrangler.toml:19:# environments so beta's routes can never leak into production, and so
+apps/og-worker/wrangler.toml:23:# It already has the zone routes below and the og-beta custom domain; the
+apps/og-worker/wrangler.toml:27:workers_dev = false
+apps/og-worker/wrangler.toml:28:routes = [
+apps/og-worker/wrangler.toml:40:  { pattern = "og-beta.xivdyetools.app", custom_domain = true }
+apps/og-worker/wrangler.toml:54:[vars]
+apps/og-worker/wrangler.toml:63:[env.production]
+apps/og-worker/wrangler.toml:65:workers_dev = false
+apps/og-worker/wrangler.toml:66:routes = [
+apps/og-worker/wrangler.toml:77:  { pattern = "og.xivdyetools.app", custom_domain = true }
+apps/og-worker/wrangler.toml:80:[env.production.vars]
+apps/presets-api/wrangler.toml:2:# (top-level) env is a separate dev worker with its own name and NO routes, so
+apps/presets-api/wrangler.toml:8:# `routes` and `workers_dev` are INHERITABLE keys: a named environment takes
+apps/presets-api/wrangler.toml:9:# the top-level value unless it overrides it. `routes` therefore MOVED into
+apps/presets-api/wrangler.toml:16:workers_dev = false
+apps/presets-api/wrangler.toml:51:[vars]
+apps/presets-api/wrangler.toml:58:[env.production]
+apps/presets-api/wrangler.toml:60:routes = [
+apps/presets-api/wrangler.toml:61:  { pattern = "api.xivdyetools.app", custom_domain = true },
+apps/presets-api/wrangler.toml:62:  { pattern = "api.xivdyetools.projectgalatine.com", custom_domain = true }
+--- git check-ignore -v apps/*/.dev.vars apps/*/.dev.vars.* ---
+.gitignore:11:.dev.vars	apps/*/.dev.vars
+.gitignore:12:.dev.vars.*	apps/*/.dev.vars.*
+--- .gitignore lines mentioning dev.vars / .env / secret / wrangler ---
+8:# Wrangler — wrangler also reads per-environment `.dev.vars.<env>` files
+10:.wrangler/
+11:.dev.vars
+12:.dev.vars.*
+13:!.dev.vars.example
+28:.env
+29:.env.*
+30:!.env.example

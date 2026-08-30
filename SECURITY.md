@@ -31,7 +31,7 @@ the project calls (XIVAPI, Universalis, XIVAuth, Cloudflare).
 ## How the project keeps itself honest
 
 - Periodic whole-monorepo audits with every finding tracked to closure
-  (`docs/audits/`, latest `docs/audits/2026-08-21-security/`).
+  (`docs/audits/`, latest `docs/audits/2026-08-29-security/`).
 - CI: `pnpm audit --prod` nightly, gitleaks secret scanning on every push / PR, SHA-pinned
   GitHub Actions with least-privilege tokens, OIDC trusted publishing to npm (no long-lived tokens).
 - Secrets are never committed; rotation procedures live in `docs/operations/SECRET_ROTATION.md`.
