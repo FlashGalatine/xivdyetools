@@ -169,10 +169,10 @@ await sendFollowup(interaction, env, {
 
 ### Rate Limiting
 
-Per-user, per-command sliding windows via `@xivdyetools/worker-kit/rate-limiter` (`DISCORD_COMMAND_LIMITS`, keyed by top-level command name):
-- `/dye`: 20/minute; `/accessibility`, `/budget`: 10/minute; everything else: 15/minute
-- `/about`, `/manual`, `/stats`, `/changelog` are exempt
-- Backend: Upstash Redis when `UPSTASH_REDIS_REST_URL`/`_TOKEN` are set, otherwise Cloudflare KV
+Per-user, per-command limits via `@xivdyetools/worker-kit/rate-limiter` (`DISCORD_COMMAND_LIMITS`, keyed by top-level command name):
+- `/dye`: 20/minute; `/accessibility`, `/budget`: 10/minute; `/about`, `/manual`, `/changelog`: 30/minute; everything else: 15/minute
+- No command is exempt (`/stats` since FINDING-033, the three utility commands since FINDING-020)
+- Backend: the native `[[ratelimits]]` bindings (`RL_5`…`RL_70`, one per distinct per-minute limit), with Cloudflare KV as the fallback only when no tier is bound
 
 ### User Storage
 
@@ -190,6 +190,7 @@ KV holds per-user preferences (`prefs:v1:*`), preset favourites, the 15-minute b
 | `PRESETS_API` | Service Binding | `xivdyetools-presets-api` |
 | `UNIVERSALIS_PROXY` | Service Binding | `xivdyetools-api-worker` (absorbed the universalis-proxy) — market prices |
 | `IMAGE_WORKER` | Service Binding | `xivdyetools-image-worker` — `POST /extract` pixels for `/extractor image` |
+| `RL_5`, `RL_10`, `RL_15`, `RL_20`, `RL_30`, `RL_70` | Rate Limiting (`[[ratelimits]]`, 60 s) | Per-user command counters, one tier per per-minute limit |
 
 ---
 
@@ -204,7 +205,6 @@ Optional:
 - `MODERATOR_IDS` - Comma-separated user IDs
 - `MODERATION_BOT_TOKEN` - Moderation bot's token (component clicks route to the posting application)
 - `STATS_AUTHORIZED_USERS` - Users who can view the admin `/stats` subcommands
-- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` - Preferred rate-limit backend (KV fallback)
 
 ---
 

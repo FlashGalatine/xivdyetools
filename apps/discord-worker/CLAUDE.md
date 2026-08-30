@@ -46,8 +46,6 @@ wrangler secret put BOT_API_SECRET
 wrangler secret put BOT_SIGNING_SECRET
 wrangler secret put INTERNAL_WEBHOOK_SECRET
 wrangler secret put GITHUB_WEBHOOK_SECRET
-wrangler secret put UPSTASH_REDIS_REST_URL
-wrangler secret put UPSTASH_REDIS_REST_TOKEN
 wrangler secret put STATS_AUTHORIZED_USERS   # CSV of Discord IDs for /stats
 wrangler secret put MODERATOR_IDS            # CSV of Discord IDs
 wrangler secret put MODERATION_CHANNEL_ID
@@ -76,7 +74,7 @@ Discord  ──POST /──►  Ed25519 verify (utils/verify.ts)
        PING         APPLICATION_COMMAND  AUTOCOMPLETE   MESSAGE_COMPONENT
        PONG               │                 │              │
                           ▼                 ▼              ▼
-                  rate-limiter (KV/Upstash) handlers/buttons
+                  rate-limiter (RL_* bindings) handlers/buttons
                           │
                           ▼
                   handlers/commands/<name>
@@ -106,7 +104,7 @@ src/
 ├── services/
 │   ├── analytics.ts               # KV counters + Analytics Engine writes (Tier A column layout)
 │   ├── command-trace.ts           # Per-interaction trace: traced ctx, outcome marks, classifier
-│   ├── rate-limiter.ts            # Upstash-first sliding window with KV fallback
+│   ├── rate-limiter.ts            # Native `[[ratelimits]]` bindings (RL_5…RL_70), KV fallback only when unbound
 │   ├── preset-favorites.ts        # Per-user preset favourites in KV (/preset favorite add|remove|list)
 │   ├── preferences.ts             # User preferences (race/clan, world, language, matching, theme)
 │   ├── preset-api.ts              # Service Binding client to presets-api
@@ -147,6 +145,7 @@ src/
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
 | `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes) |
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Photon-backed pixel extraction for `/extractor` (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
+| `RL_5`, `RL_10`, `RL_15`, `RL_20`, `RL_30`, `RL_70` | Rate Limiting (`[[ratelimits]]`, 60 s period) | Per-user command counters — one tier per distinct effective limit in `DISCORD_COMMAND_LIMITS`; KV is the fallback only when none is bound (FINDING-007) |
 
 Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
 
@@ -165,7 +164,6 @@ Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom 
 | `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing — min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys) |
 | `INTERNAL_WEBHOOK_SECRET` | Auth for inbound `/webhooks/preset-submission` |
 | `GITHUB_WEBHOOK_SECRET` | HMAC-SHA256 key for GitHub push webhook |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Primary rate-limit backend (KV is fallback) |
 | `MODERATOR_IDS` | CSV of Discord IDs allowed to moderate presets |
 | `MODERATION_CHANNEL_ID` | Channel for pending presets posted from web app |
 | `MODERATION_BOT_TOKEN` | BUG-009: bot token of the MODERATION Discord application. When set, moderation embeds are posted with it so approve/reject buttons route to moderation-worker; when unset, embeds omit buttons and hint at `/preset moderate` |
@@ -184,7 +182,7 @@ Long-running handlers return `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` immediately,
 
 ### Rate Limiting
 
-`services/rate-limiter.ts` prefers Upstash Redis (real distributed sliding window) and falls back to per-isolate KV reads. Image processing commands have tighter limits than text commands. Missing `userId` is treated as a hard reject to prevent bypass.
+`services/rate-limiter.ts` counts against the native `[[ratelimits]]` bindings (`RL_5`…`RL_70`, one per distinct per-minute limit in worker-kit's `DISCORD_COMMAND_LIMITS`), with the KV fallback used only when no tier is bound (tests / local dev). Image processing commands have tighter limits than text commands; every command is limited, including `/about`, `/manual` and `/changelog` (FINDING-020). Missing `userId` is treated as a hard reject to prevent bypass.
 
 ### SVG → PNG Pipeline
 
@@ -264,7 +262,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 | `@xivdyetools/core` | Dye database, color algorithms, k-d tree matcher |
 | `@xivdyetools/types` | Branded types and shared interfaces |
 | `@xivdyetools/auth` | JWT verify, HMAC, Ed25519 helpers |
-| `@xivdyetools/worker-kit/rate-limiter` | Sliding window backends (Memory/KV/Upstash) |
+| `@xivdyetools/worker-kit/rate-limiter` | Rate-limit backends — this worker uses the native `[[ratelimits]]` one (`CloudflareRateLimiter`), with `KVRateLimiter` as the unbound fallback |
 | `@xivdyetools/svg` | Pure SVG card generators |
 | `@xivdyetools/bot-logic` | Platform-agnostic command business logic |
 | `@xivdyetools/bot-logic/i18n` | Bot localization strings (absorbed from bot-i18n) |

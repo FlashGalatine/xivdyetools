@@ -1,15 +1,20 @@
 /**
- * FINDING-003 (2026-08-21 security audit): the KV rate-limit backend cannot
- * throttle a fast client (KV allows 1 write/s/key, failed puts are swallowed,
- * reads are eventually consistent). discord-worker's primary backend is
- * Upstash (atomic INCR); KV is only a dev fallback. When the fallback is
- * selected the worker must say so loudly — once per isolate — so a production
- * deployment without Upstash credentials is visible in the logs instead of
- * silently running with an ineffective limiter.
+ * FINDING-003 (2026-08-21 security audit) / FINDING-007 (2026-08-29): the KV
+ * rate-limit backend cannot throttle a fast client (KV allows 1 write/s/key,
+ * failed puts are swallowed, reads are eventually consistent). The bot's
+ * primary backend is the native `[[ratelimits]]` binding; KV is only the
+ * fallback for tests and local dev without bindings. When the fallback is
+ * selected the worker must say so loudly — once per isolate — so a deployment
+ * that lost its `RL_*` bindings is visible in the logs instead of silently
+ * running with an ineffective limiter.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { checkRateLimit, resetRateLimiterInstance } from './rate-limiter.js';
+import {
+  checkRateLimit,
+  resetRateLimiterInstance,
+  type DiscordRateLimitBindings,
+} from './rate-limiter.js';
 
 function createMockKV(): KVNamespace {
   const store = new Map<string, string>();
@@ -40,7 +45,7 @@ describe('discord-worker rate limiter KV fallback warning (FINDING-003)', () => 
     resetRateLimiterInstance();
   });
 
-  it('warns once per isolate when falling back to KV without Upstash', async () => {
+  it('warns once per isolate when no RL_* tier is bound', async () => {
     const logger = mockLogger();
     const kv = createMockKV();
 
@@ -51,30 +56,26 @@ describe('discord-worker rate limiter KV fallback warning (FINDING-003)', () => 
       String(msg).includes('KV fallback'),
     );
     expect(fallbackWarnings).toHaveLength(1);
-    expect(String(fallbackWarnings[0][0])).toContain('Upstash');
+    expect(String(fallbackWarnings[0][0])).toContain('RL_*');
+    // The counters really did go to KV.
+    expect(kv.put).toHaveBeenCalled();
   });
 
-  it('does not warn when Upstash credentials are configured', async () => {
+  it('does not warn when a rate-limit binding is bound', async () => {
     const logger = mockLogger();
-    // Upstash backend construction does not hit the network; the check will
-    // fail open against the unmocked fetch, which is fine for this assertion.
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(JSON.stringify({ result: 1 }), { status: 200 })),
+    const binding = { limit: vi.fn().mockResolvedValue({ success: true }) };
+
+    await checkRateLimit(
+      { bindings: { RL_15: binding } as unknown as DiscordRateLimitBindings, kv: createMockKV() },
+      'user-1',
+      'harmony',
+      logger,
     );
-    try {
-      await checkRateLimit(
-        { upstashUrl: 'https://example.upstash.io', upstashToken: 'token', kv: createMockKV() },
-        'user-1',
-        'harmony',
-        logger,
-      );
-    } finally {
-      vi.unstubAllGlobals();
-    }
+
     const fallbackWarnings = logger.warn.mock.calls.filter(([msg]) =>
       String(msg).includes('KV fallback'),
     );
     expect(fallbackWarnings).toHaveLength(0);
+    expect(binding.limit).toHaveBeenCalledWith({ key: 'ratelimit:user:user-1:harmony' });
   });
 });

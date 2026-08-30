@@ -231,8 +231,8 @@ deliberately out of scope (see below).
    npx wrangler secret put DISCORD_TOKEN        # beta bot token
    npx wrangler secret put DISCORD_PUBLIC_KEY   # beta app public key
    ```
-   Optional secrets (`BOT_API_SECRET`, `INTERNAL_WEBHOOK_SECRET`, Upstash credentials) may be
-   omitted — the rate limiter falls back to KV when Upstash is absent.
+   Optional secrets (`BOT_API_SECRET`, `INTERNAL_WEBHOOK_SECRET`) may be omitted. Rate limiting
+   needs no secret — it runs on the `[[ratelimits]]` bindings declared in `wrangler.toml`.
 9. In the Discord portal, set **Interactions Endpoint URL** to the `workers.dev` URL from
    step 7. Discord sends a signed PING and refuses to save unless verification passes; a
    successful save confirms `DISCORD_PUBLIC_KEY` is correct.

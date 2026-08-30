@@ -112,6 +112,7 @@ The Worker bundle is close enough to Cloudflare's compressed limit to be worth w
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Preset CRUD |
 | `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market prices for `/budget` |
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Pixel extraction for `/extractor` |
+| `RL_5`, `RL_10`, `RL_15`, `RL_20`, `RL_30`, `RL_70` | Rate Limiting (`[[ratelimits]]`, 60 s) | Per-user command counters, one tier per per-minute limit; KV is the fallback only when none is bound |
 
 ### Required Secrets
 
@@ -127,7 +128,6 @@ The Worker bundle is close enough to Cloudflare's compressed limit to be worth w
 | `BOT_API_SECRET` / `BOT_SIGNING_SECRET` | Authenticating outbound calls to `presets-api` — `BOT_SIGNING_SECRET` min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys) |
 | `INTERNAL_WEBHOOK_SECRET` | Auth for inbound `/webhooks/preset-submission` |
 | `GITHUB_WEBHOOK_SECRET` | HMAC key for the GitHub push webhook |
-| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Primary rate-limit backend (KV is the fallback) |
 | `MODERATOR_IDS` | CSV of Discord IDs allowed to moderate presets |
 | `MODERATION_CHANNEL_ID` | Channel for pending presets |
 | `MODERATION_BOT_TOKEN` | The **moderation** app's token. When set, moderation embeds post with it so approve/reject buttons route to `moderation-worker`; when unset, embeds omit buttons and point at `/preset moderate` |

@@ -52,7 +52,7 @@ Names come from `env.X` reads in `apps/*/src` that are **not** in any `[vars]` b
 | `GITHUB_WEBHOOK_SECRET` | discord-worker (`/webhooks/github` changelog push) | shared with the GitHub webhook | On compromise |
 | `PERSPECTIVE_API_KEY` | presets-api | Google API key | On compromise |
 | `CACHE_PURGE_API_TOKEN` | presets-api (optional, FINDING-018 — single-file edge purge of deleted / replaced preview images; pairs with the `CACHE_PURGE_ZONE_ID` **var** in `wrangler.toml`, the `xivdyetools.app` zone) | Cloudflare API token scoped to *Zone → Cache Purge → Purge* on that one zone only (it can read or write nothing else) | On compromise; created 2026-08-21 |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | discord-worker (rate-limit backend; **required in production** — the KV fallback cannot throttle fast clients, FINDING-003) | Upstash REST credentials | On compromise |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | **Retired in discord-worker 5.1.0** (FINDING-007) — no longer read by any worker; the rate limiter runs on the native `[[ratelimits]]` bindings (`RL_5`…`RL_70`) | — (was Upstash REST credentials) | **Delete, not rotate** — after the 5.1.0 deploy is live, from `apps/discord-worker`: `wrangler secret delete UPSTASH_REDIS_REST_URL --env production` and `wrangler secret delete UPSTASH_REDIS_REST_TOKEN --env production` |
 | `MODERATOR_IDS` | discord-worker, moderation-worker, presets-api | CSV of Discord IDs (config, not secret) | As needed — all three at once |
 | `MODERATION_CHANNEL_ID`, `SUBMISSION_LOG_CHANNEL_ID` | discord-worker, moderation-worker | channel IDs (config) | As needed |
 | `STATS_AUTHORIZED_USERS` | discord-worker | CSV of Discord IDs (config) | As needed |
@@ -150,7 +150,7 @@ Generate, set on discord-worker (`--env production`), then update the webhook se
 
 Cloudflare dashboard → My Profile → API Tokens → roll or create a token scoped to this account (Workers Scripts: Edit, Pages: Edit, Workers KV/D1/R2: Edit, Workers Routes: Edit) → update the GitHub secret → re-run any deploy workflow via *workflow_dispatch* → revoke the old token.
 
-### 8. `PERSPECTIVE_API_KEY`, Upstash credentials, `MODERATOR_IDS` & channel IDs
+### 8. `PERSPECTIVE_API_KEY`, `MODERATOR_IDS` & channel IDs
 
 Set on the listed consumers with `--env production`; no ordering constraints. For `MODERATOR_IDS`, all three consumers must agree or a moderator will be able to act in one surface and not another. moderation-worker caches the parsed list per isolate — redeploy (or wait for isolate recycling) after changing it (MOD-15).
 

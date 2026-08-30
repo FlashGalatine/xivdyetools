@@ -93,19 +93,32 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       `wrangler secret delete … --env production`, listed in §3): discord-worker
       `PRESET_API_SECRET` and `PERSPECTIVE_API_KEY`; presets-api `MODERATOR_CHANNEL_ID`
       (plus the four PAPI-16 dead vars already tracked there).
+  - [ ] **After the discord-worker 5.1.0 deploy is live** (FINDING-007) — the worker no longer
+        reads Upstash, so retire the two now-orphaned secrets and confirm the new bindings:
+        ```bash
+        # from apps/discord-worker
+        wrangler secret delete UPSTASH_REDIS_REST_URL --env production
+        wrangler secret delete UPSTASH_REDIS_REST_TOKEN --env production
+        ```
+        Then confirm in the dashboard (Worker → Settings → Bindings) that **both** environments
+        list the six rate-limit bindings `RL_5`, `RL_10`, `RL_15`, `RL_20`, `RL_30`, `RL_70`.
 - [x] **New bindings/vars from the audit remediation exist in production config** — verified in
       the `wrangler.toml` `[env.production]` blocks 2026-08-21: presets-api `TOKEN_BLACKLIST`
       KV id `0d6f3be3…` **= oauth's production namespace** (dev `891bbbe8…` = oauth dev),
       `JWT_ISSUER = https://auth.xivdyetools.app`, `[[ratelimits]] RL_PUBLIC`; api-worker
       `API_RATE_LIMITER`; oauth `RL_AUTH_10/20/30` (top-level = production); moderation-worker two
-      `[[ratelimits]]`; discord-worker uses Upstash + KV (no `ratelimits` binding by design).
+      `[[ratelimits]]`; discord-worker had no `ratelimits` binding at the time. **Superseded
+      2026-08-30 (FINDING-007):** discord-worker now declares six `[[ratelimits]]` tiers per
+      environment — `RL_5`/`RL_10`/`RL_15`/`RL_20`/`RL_30`/`RL_70`, `namespace_id` 1041–1046
+      (production) and 1051–1056 (top-level beta) — and reads no Upstash secret.
   - [x] Confirm in the dashboard after the first production deploy (Worker → Settings → Bindings).
         Verified 2026-08-29 via the API (`GET /accounts/…/workers/scripts/<name>/settings`) on all
         seven production scripts: presets-api `TOKEN_BLACKLIST` + `RL_PUBLIC` + `CACHE_PURGE_ZONE_ID`
         + D1/R2/two services; api-worker `API_RATE_LIMITER` (+ the `RATE_LIMIT` KV fallback);
         oauth `RL_AUTH_10/20/30` + `TOKEN_BLACKLIST`; moderation-worker `RL_COMMAND` +
         `RL_AUTOCOMPLETE`; discord-worker Upstash + KV + `IMAGE_WORKER`/`PRESETS_API`/
-        `UNIVERSALIS_PROXY` services + `ANNOUNCEMENT_CHANNEL_ID`; og-worker `ANALYTICS`;
+        `UNIVERSALIS_PROXY` services + `ANNOUNCEMENT_CHANNEL_ID` (the six `RL_*` tiers land with
+        the 5.1.0 deploy — see the FINDING-007 step in the secrets bullet above); og-worker `ANALYTICS`;
         image-worker none. The §3 orphan secrets are still present, as expected.
 - [x] **Optional presets-api cache-purge credentials** (FINDING-018) — done 2026-08-21:
       `CACHE_PURGE_API_TOKEN` (purge-only token on the `xivdyetools.app` zone) set by the

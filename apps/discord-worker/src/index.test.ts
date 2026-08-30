@@ -36,6 +36,7 @@ vi.mock('./handlers/commands/index.js', () => ({
   handleSwatchCommand: vi.fn(),
   handleAccessibilityCommand: vi.fn(),
   handleManualCommand: vi.fn(),
+  handleChangelogCommand: vi.fn(),
   handleComparisonCommand: vi.fn(),
   handlePresetCommand: vi.fn(),
   handleStatsCommand: vi.fn(),
@@ -838,6 +839,60 @@ describe('index.ts', () => {
         );
         expect(data.data!.flags).toBe(64);
         expect(handleStatsCommand).not.toHaveBeenCalled();
+      });
+
+      // FINDING-020 (2026-08-29 security audit): /about, /manual and
+      // /changelog were exempt from the limiter, yet each call still made the
+      // three shared hot-key KV counter writes in trackCommandWithKV — the
+      // cheapest denial-of-service in the worker. They now take the 30/min
+      // tier worker-kit already defined for them.
+      it.each([
+        ['about', 'handleAboutCommand'],
+        ['manual', 'handleManualCommand'],
+        ['changelog', 'handleChangelogCommand'],
+      ] as const)('rate-limits /%s like any other command', async (command, handlerName) => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { checkRateLimit, formatRateLimitMessage } = await import(
+          './services/rate-limiter.js'
+        );
+        const handlers = await import('./handlers/commands/index.js');
+
+        const interaction = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name: command },
+          user: { id: 'user-123' },
+        };
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify(interaction),
+          error: '',
+        });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: false,
+          retryAfter: 30,
+          remaining: 0,
+          resetAt: Date.now() + 30000,
+        });
+        vi.mocked(formatRateLimitMessage).mockReturnValue('Rate limited');
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify(interaction),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = (await res.json()) as InteractionResponseBody;
+        expect(checkRateLimit).toHaveBeenCalledWith(
+          expect.anything(),
+          'user-123',
+          command,
+          undefined,
+          undefined,
+        );
+        expect(data.data!.flags).toBe(64); // Ephemeral
+        expect(data.data!.content).toBe('Rate limited');
+        expect(vi.mocked(handlers[handlerName])).not.toHaveBeenCalled();
       });
 
       it('should handle unknown command', async () => {

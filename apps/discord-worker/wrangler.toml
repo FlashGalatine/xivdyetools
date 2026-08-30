@@ -38,6 +38,45 @@ service = "xivdyetools-api-worker"
 binding = "IMAGE_WORKER"
 service = "xivdyetools-image-worker"
 
+# FINDING-007 (2026-08-29 security audit): native Workers Rate Limiting
+# bindings now own the per-user command counters, which used to live in a
+# third-party Redis. Each `[[ratelimits]]` entry is ONE fixed { limit, period },
+# so there is one tier per distinct effective limit (maxRequests +
+# burstAllowance) in worker-kit's DISCORD_COMMAND_LIMITS. worker-kit picks the
+# smallest bound tier whose limit is >= the command's effective limit, so these
+# six cover every entry of the preset exactly. namespace_id is unique per
+# account — >= 1041 is this worker's reserved range (1001-1034 belong to the
+# other four workers).
+[[ratelimits]]
+name = "RL_5"
+namespace_id = "1051"
+simple = { limit = 5, period = 60 }
+
+[[ratelimits]]
+name = "RL_10"
+namespace_id = "1052"
+simple = { limit = 10, period = 60 }
+
+[[ratelimits]]
+name = "RL_15"
+namespace_id = "1053"
+simple = { limit = 15, period = 60 }
+
+[[ratelimits]]
+name = "RL_20"
+namespace_id = "1054"
+simple = { limit = 20, period = 60 }
+
+[[ratelimits]]
+name = "RL_30"
+namespace_id = "1055"
+simple = { limit = 30, period = 60 }
+
+[[ratelimits]]
+name = "RL_70"
+namespace_id = "1056"
+simple = { limit = 70, period = 60 }
+
 [vars]
 # The BETA Discord application — separate from production because an
 # application has exactly one Interactions Endpoint URL.
@@ -46,9 +85,10 @@ PRESETS_API_URL = "https://api.xivdyetools.app"
 ANNOUNCEMENT_CHANNEL_ID = "1441800851747508314"
 
 # Secrets: DISCORD_TOKEN, DISCORD_PUBLIC_KEY, BOT_API_SECRET,
-# BOT_SIGNING_SECRET, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
-# Beta needs only DISCORD_TOKEN + DISCORD_PUBLIC_KEY; the rate limiter falls
-# back to KV when Upstash is absent.
+# BOT_SIGNING_SECRET
+# Beta needs only DISCORD_TOKEN + DISCORD_PUBLIC_KEY. Rate limiting needs no
+# secret at all: it runs on the `RL_*` bindings above and falls back to KV
+# only when no tier is bound (tests / local dev without bindings).
 
 [[rules]]
 type = "Data"
@@ -103,3 +143,36 @@ service = "xivdyetools-image-worker"
 [[env.production.analytics_engine_datasets]]
 binding = "ANALYTICS"
 dataset = "xivdyetools_bot_analytics"
+
+# FINDING-007: the same six tiers as the top-level block (see the comment
+# there). `ratelimits` is NOT inheritable, and each environment needs its own
+# namespace_ids so beta traffic can never consume production's allowance.
+[[env.production.ratelimits]]
+name = "RL_5"
+namespace_id = "1041"
+simple = { limit = 5, period = 60 }
+
+[[env.production.ratelimits]]
+name = "RL_10"
+namespace_id = "1042"
+simple = { limit = 10, period = 60 }
+
+[[env.production.ratelimits]]
+name = "RL_15"
+namespace_id = "1043"
+simple = { limit = 15, period = 60 }
+
+[[env.production.ratelimits]]
+name = "RL_20"
+namespace_id = "1044"
+simple = { limit = 20, period = 60 }
+
+[[env.production.ratelimits]]
+name = "RL_30"
+namespace_id = "1045"
+simple = { limit = 30, period = 60 }
+
+[[env.production.ratelimits]]
+name = "RL_70"
+namespace_id = "1046"
+simple = { limit = 70, period = 60 }

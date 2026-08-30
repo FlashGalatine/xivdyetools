@@ -8,7 +8,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    // `tests/` holds suites that assert on repo files rather than modules
+    // (wrangler.toml deploy-time invariants); source tests stay co-located.
+    include: ['tests/**/*.test.ts', 'src/**/*.test.ts'],
     // vitest.integration.config.ts owns *.integration.test.ts — without this
     // exclude, `src/**/*.test.ts` also matches it and test:all runs it twice.
     exclude: [...configDefaults.exclude, 'src/**/*.integration.test.ts'],

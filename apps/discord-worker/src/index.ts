@@ -43,6 +43,7 @@ import {
 import {
   checkRateLimit,
   formatRateLimitMessage,
+  rateLimitBindings,
   resolveRateLimitScope,
 } from './services/rate-limiter.js';
 import {
@@ -678,18 +679,21 @@ async function handleCommand(
       )
     : ctx;
 
-  // Check rate limit (skip for utility commands). Aliases (/a11y) share the
+  // Check the rate limit for EVERY command. Aliases (/a11y) share the
   // canonical command's bucket; /extractor tiers its image subcommand
   // separately (Photon path, 5/min) from the plain color lookup.
   // FINDING-033 (2026-08-21 audit): /stats is NOT exempt — its public summary
   // runs paginated KV list() scans, so it takes the default per-user tier.
-  if (commandName && !['about', 'manual', 'changelog'].includes(commandName)) {
+  // FINDING-020 (2026-08-29 audit): neither are /about, /manual and
+  // /changelog — the exemption skipped only the limiter, not the three shared
+  // hot-key KV counter writes every finished command makes, which was the
+  // cheapest denial-of-service in the worker. They take their 30/min tier.
+  if (commandName) {
     const scope = resolveRateLimitScope(commandName, interaction.data?.options?.[0]?.name);
     const rateLimitResult = await checkRateLimit(
       {
-        upstashUrl: env.UPSTASH_REDIS_REST_URL,
-        upstashToken: env.UPSTASH_REDIS_REST_TOKEN,
-        kv: env.KV, // fallback if Upstash not configured
+        bindings: rateLimitBindings(env),
+        kv: env.KV, // fallback when no RL_* tier is bound
       },
       userId,
       scope.command,
@@ -839,8 +843,7 @@ async function handleAutocomplete(
   if (acUserId) {
     const acLimit = await checkRateLimit(
       {
-        upstashUrl: env.UPSTASH_REDIS_REST_URL,
-        upstashToken: env.UPSTASH_REDIS_REST_TOKEN,
+        bindings: rateLimitBindings(env),
         kv: env.KV,
       },
       acUserId,
