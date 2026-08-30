@@ -282,13 +282,16 @@ Allowlist comes from `CORS_ORIGIN` + `ADDITIONAL_CORS_ORIGINS`. In dev mode only
 
 ```
 Authorization: Bearer <BOT_API_SECRET>
-X-Request-Signature: HMAC-SHA256(BOT_SIGNING_SECRET, "<timestamp>:<userDiscordId>:<userName>")
+X-Request-Signature-V2: HMAC-SHA256(BOT_SIGNING_SECRET, canonical(method, path, sha256(body), timestamp, nonce, userDiscordId, userName))
 X-Request-Timestamp: <unix-seconds>
+X-Request-Nonce: <uuid>
 X-User-Discord-ID: <discord-id>
 X-User-Discord-Name: <username>
 ```
 
-Timestamp validity: max age 5 minutes (`SIGNATURE_MAX_AGE_SECONDS = 300`), 1-minute future skew tolerance. Algorithm in `@xivdyetools/auth.verifyBotSignature`.
+Timestamp validity: max age 60 s, 60 s future skew tolerance. Algorithm in `@xivdyetools/auth.verifyBotSignatureV2` (`BOT_SIGNATURE_V2_MAX_AGE_MS`); the canonical string is length-prefixed field-per-line, so no delimiter inside a field can collide with another.
+
+**v2 is the only accepted signature** (FINDING-015, 2026-08-29 audit). A request without a valid `X-Request-Signature-V2` is unauthenticated whatever the legacy `X-Request-Signature` (v1: `timestamp:userId:userName`, 5-minute window, nothing about the request bound) carries — both bots have sent v2 since 2026-08-21 and still send the ignored v1 header until a later sprint drops it. The nonce must be non-empty, ≤ 64 chars and `[A-Za-z0-9._-]`, and every accepted one is stored in `TOKEN_BLACKLIST` under `botnonce:` for 120 s so the same signed request cannot be replayed inside its window. That cache is best-effort — KV is eventually consistent, and a KV error or an unbound namespace (dev/tests) skips the *replay* check, never the signature or the nonce format.
 
 ### JWT Verification
 

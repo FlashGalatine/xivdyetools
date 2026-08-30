@@ -9,12 +9,12 @@ import type { Context, Next } from 'hono';
 import type { Env, AuthContext } from '../types.js';
 import {
   verifyJWT as sharedVerifyJWT,
-  verifyBotSignature,
   verifyBotSignatureV2,
   BOT_SIGNATURE_V2_HEADER,
   BOT_SIGNATURE_NONCE_HEADER,
   isTokenRevoked,
 } from '@xivdyetools/auth';
+import { getLogger } from '@xivdyetools/worker-kit';
 
 type Variables = {
   auth: AuthContext;
@@ -147,6 +147,90 @@ async function timingSafeEqualStr(a: string, b: string): Promise<boolean> {
 }
 
 // ============================================
+// BOT SIGNATURE NONCE (replay cache)
+// ============================================
+
+/** Key prefix for accepted v2 nonces inside the shared `TOKEN_BLACKLIST` KV. */
+const NONCE_KEY_PREFIX = 'botnonce:';
+
+/**
+ * How long an accepted nonce is remembered: 2× the 60 s v2 signature window,
+ * and above KV's 60 s minimum TTL. A signature older than its window is already
+ * refused by `verifyBotSignatureV2`, so the entry only has to outlive it.
+ */
+const NONCE_TTL_SECONDS = 120;
+
+/** Longest nonce we will store (the bots send a 36-char UUID). */
+const NONCE_MAX_LENGTH = 64;
+
+/** Nonces are opaque, but they become part of a KV key, so keep them boring. */
+const NONCE_PATTERN = /^[A-Za-z0-9._-]+$/;
+
+/**
+ * The slice of the request logger the nonce cache needs. Declared narrowly —
+ * message only, no context argument — so no later edit can attach the nonce
+ * itself (or the signature) to a log line; the request logger already carries
+ * the request id, and `loggerMiddleware` logs method + path for every request.
+ */
+interface NonceCacheLogger {
+  debug(message: string): void;
+  warn(message: string): void;
+}
+
+/**
+ * Single-use check for the v2 request nonce (FINDING-015, 2026-08-29 audit).
+ *
+ * The nonce is bound into the v2 signature but was never checked for reuse, so
+ * a captured request could be replayed verbatim for the whole 60 s freshness
+ * window. Accepted nonces are now recorded in the shared `TOKEN_BLACKLIST` KV
+ * namespace (oauth's revocation store; `botnonce:` keeps the two key spaces
+ * apart) and a second sighting is refused.
+ *
+ * Called only after `verifyBotSignatureV2` has succeeded, so an unauthenticated
+ * caller cannot write entries into the namespace.
+ *
+ * KV is eventually consistent: a write is not guaranteed to be visible from
+ * another colo right away, so cross-colo replay detection is best-effort and
+ * the 60 s signature window remains the primary bound. Read-after-write within
+ * a colo — where a replay is cheapest to mount — is immediate. For the same
+ * reason a KV *error* skips the check rather than failing the request: a KV
+ * incident must not lock both bots out of the API, and the signature window
+ * still applies. The binding being absent (dev/tests) skips it likewise.
+ *
+ * @returns true when the request may proceed, false when it must be refused
+ */
+async function isFreshBotNonce(
+  nonce: string | undefined,
+  cache: KVNamespace | undefined,
+  logger: NonceCacheLogger | undefined
+): Promise<boolean> {
+  if (!nonce || nonce.length > NONCE_MAX_LENGTH || !NONCE_PATTERN.test(nonce)) {
+    logger?.warn('Bot auth: request nonce missing or malformed');
+    return false;
+  }
+
+  if (!cache) {
+    logger?.debug('Bot auth: nonce replay cache not bound - replay check skipped');
+    return true;
+  }
+
+  const key = `${NONCE_KEY_PREFIX}${nonce}`;
+  try {
+    if ((await cache.get(key)) !== null) {
+      logger?.warn('Bot auth: request nonce replayed');
+      return false;
+    }
+    await cache.put(key, '1', { expirationTtl: NONCE_TTL_SECONDS });
+  } catch {
+    // The error is deliberately not logged: a KV error message can quote the
+    // key that failed, and the key contains the nonce.
+    logger?.warn('Bot auth: nonce replay cache unavailable - replay check skipped');
+  }
+
+  return true;
+}
+
+// ============================================
 // MIDDLEWARE
 // ============================================
 
@@ -200,17 +284,22 @@ export async function authMiddleware(
           // Don't authenticate - let the request proceed as unauthenticated
         }
       } else {
-        const signature = c.req.header('X-Request-Signature');
         const signatureV2 = c.req.header(BOT_SIGNATURE_V2_HEADER);
         const timestamp = c.req.header('X-Request-Timestamp');
+        const nonce = c.req.header(BOT_SIGNATURE_NONCE_HEADER);
 
-        let isValidSignature: boolean;
+        // FINDING-014 (2026-08-21 audit): v2 binds method + path + body hash +
+        // timestamp + nonce + identity with a 60 s window.
+        // FINDING-015 (2026-08-29 audit): it is now the ONLY accepted signature.
+        // v1 signed `timestamp:userId:userName` on a 5-minute window and bound
+        // nothing about the request, so a captured tuple could be replayed
+        // against any route as that user simply by dropping the v2 header. Both
+        // bots have sent v2 alongside v1 since 2026-08-21 and were deployed on
+        // it on 2026-08-28, so nothing legitimate still needs the fallback;
+        // v1 emission and the `verifyBotSignature` export go in later sprints.
+        // Body read via Hono's cache so downstream c.req.json() still works.
+        let isValidSignature = false;
         if (signatureV2 !== undefined) {
-          // FINDING-014 (2026-08-21 audit): v2 binds method + path + body hash +
-          // timestamp + nonce + identity with a 60 s window. When the header is
-          // present it MUST verify — never fall back to v1, or a captured v1
-          // tuple could be replayed against any route by dropping the v2 header.
-          // Body read via Hono's cache so downstream c.req.json() still works.
           const body = ['GET', 'HEAD'].includes(c.req.method) ? undefined : await c.req.arrayBuffer();
           isValidSignature = await verifyBotSignatureV2(
             signatureV2,
@@ -219,21 +308,10 @@ export async function authMiddleware(
               path: new URL(c.req.url).pathname,
               body,
               timestamp,
-              nonce: c.req.header(BOT_SIGNATURE_NONCE_HEADER),
+              nonce,
               userDiscordId,
               userName,
             },
-            c.env.BOT_SIGNING_SECRET
-          );
-        } else {
-          // v1 (timestamp:userId:userName) — kept for rollover; both bots send v2
-          // as of 2026-08-21 and v1 is slated for removal once they are deployed.
-          // REFACTOR-003: Uses @xivdyetools/auth for bot signature verification
-          isValidSignature = await verifyBotSignature(
-            signature,
-            timestamp,
-            userDiscordId,
-            userName,
             c.env.BOT_SIGNING_SECRET
           );
         }
@@ -241,13 +319,13 @@ export async function authMiddleware(
         if (!isValidSignature) {
           // Log failed signature attempts (but don't reveal details)
           console.warn('Bot auth: Invalid or missing request signature', {
-            hasSignature: !!signature,
+            hasSignature: !!signatureV2,
             hasTimestamp: !!timestamp,
             path: c.req.path,
           });
           // Don't authenticate - let the request proceed as unauthenticated
           // The route handler will return 401 if auth is required
-        } else {
+        } else if (await isFreshBotNonce(nonce, c.env.TOKEN_BLACKLIST, getLogger(c))) {
           auth = {
             isAuthenticated: true,
             isModerator: checkModerator(userDiscordId, c.env.MODERATOR_IDS),
@@ -256,6 +334,9 @@ export async function authMiddleware(
             authSource: 'bot',
           };
         }
+        // Otherwise the signature verified but the nonce was malformed or has
+        // already been used: isFreshBotNonce logged why and the request stays
+        // unauthenticated, exactly as an invalid signature does (FINDING-015).
       }
     }
     // Method 2: Web authentication (JWT)
