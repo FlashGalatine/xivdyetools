@@ -197,7 +197,7 @@ These are stricter than the main discord-worker because all responses contain po
 
 ### Environment Validation
 
-On the first request per isolate, `validateEnv()` + `presetApi.validateSecurityConfig()` log errors/warnings for missing or misconfigured secrets. Critical missing secrets are logged but the worker continues so partial functionality (e.g., autocomplete) still works.
+`validateEnv()` runs on every request; the first request per isolate additionally reports it (`logValidationErrors` + `presetApi.validateSecurityConfig()`). Missing or misconfigured secrets are logged and the worker continues, so partial functionality (e.g., autocomplete) still works — **except** the production-only errors (FINDING-013): when `ENVIRONMENT === 'production'` and `RL_COMMAND` or `RL_AUTOCOMPLETE` is unbound, every request is refused with `500 {"error":"Service misconfigured"}`, `/health` included, until it is fixed. Those errors carry `PRODUCTION_ENV_ERROR_PREFIX` (exported by `utils/env-validation.ts`, matched in `index.ts`) and cannot be raised outside production, so the dev worker keeps the log-only path and its KV fallback.
 
 ### Bot → Presets API Signing
 

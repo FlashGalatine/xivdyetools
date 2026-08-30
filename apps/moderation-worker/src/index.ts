@@ -36,7 +36,11 @@ import {
 } from './handlers/modals/index.js';
 import * as banService from './services/ban-service.js';
 import * as presetApi from './services/preset-api.js';
-import { validateEnv, logValidationErrors } from './utils/env-validation.js';
+import {
+  validateEnv,
+  logValidationErrors,
+  PRODUCTION_ENV_ERROR_PREFIX,
+} from './utils/env-validation.js';
 import { createUserTranslator } from './services/bot-i18n.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
 import type { ExtendedLogger } from '@xivdyetools/logger';
@@ -50,15 +54,19 @@ type Variables = MiddlewareVariables;
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Startup validation middleware - validates all required env vars on first request
-// REFACTOR-001: Added full env validation alongside existing security config check
+// Environment validation middleware.
+// REFACTOR-001: Added full env validation alongside existing security config check.
+// The env is re-validated on EVERY request; only the reporting is once per
+// isolate (see FINDING-013 below — a misconfigured worker must not be able to
+// serve one 500 and then quietly process the rest of the isolate's traffic).
 let startupValidationDone = false;
-app.use('*', (c, next) => {
+app.use('*', async (c, next) => {
+  // REFACTOR-001: Full environment variable validation
+  const envResult = validateEnv(c.env);
+
   if (!startupValidationDone) {
     startupValidationDone = true;
 
-    // REFACTOR-001: Full environment variable validation
-    const envResult = validateEnv(c.env);
     if (!envResult.valid) {
       logValidationErrors(envResult.errors);
     }
@@ -76,6 +84,24 @@ app.use('*', (c, next) => {
       console.log('✅ Security configuration validated');
     }
   }
+
+  // FINDING-013 (2026-08-29 audit): the production-only errors are fatal —
+  // every request is refused, `/health` included, for as long as one stands.
+  // They can only be raised when `ENVIRONMENT === 'production'` (the two
+  // `RL_*` rate-limit bindings), so this match cannot touch the dev worker or
+  // the tests, and it deliberately does NOT cover the pre-existing non-fatal
+  // errors (a malformed MODERATOR_IDS, a short BOT_SIGNING_SECRET), which
+  // stay logged-and-served exactly as before. Logging alone is not a signal
+  // here: Workers Logs are off on this script, so `logValidationErrors` above
+  // reaches nobody, and a production bot that lost a binding would go on
+  // serving with per-user limiting silently degraded to the KV fallback. A
+  // moderation bot that answers errors is noticed in minutes; the same
+  // fail-closed treatment presets-api 2.2.0, oauth 3.0.0 and discord-worker
+  // 5.1.0 took under this finding.
+  if (envResult.errors.some((e) => e.startsWith(PRODUCTION_ENV_ERROR_PREFIX))) {
+    return c.json({ error: 'Service misconfigured' }, 500);
+  }
+
   return next();
 });
 

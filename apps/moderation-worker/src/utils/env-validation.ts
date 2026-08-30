@@ -17,6 +17,15 @@ export interface EnvValidationResult {
 }
 
 /**
+ * Prefix of every error raised ONLY when `ENVIRONMENT === 'production'`
+ * (FINDING-013). `src/index.ts` matches on it to refuse the request, so the
+ * producer and the consumer share one constant rather than two copies of the
+ * string — and because these errors cannot be raised outside production, the
+ * match is inherently production-scoped.
+ */
+export const PRODUCTION_ENV_ERROR_PREFIX = 'Missing required env var in production: ';
+
+/**
  * Validates all required environment variables for the Moderation worker.
  *
  * Required secrets:
@@ -132,12 +141,16 @@ export function validateEnv(env: Env): EnvValidationResult {
   // failures, eventually-consistent reads), with no error and no log line.
   // That fallback is exactly what dev and tests want, so the requirement is
   // production-only, mirroring presets-api's block.
+  //
+  // `src/index.ts` refuses every request while one of these errors stands
+  // (500 "Service misconfigured", `/health` included) — logging alone reaches
+  // nobody with Workers Logs off on this script.
   if (env.ENVIRONMENT === 'production') {
     if (!env.RL_COMMAND) {
-      errors.push('Missing required env var in production: RL_COMMAND');
+      errors.push(`${PRODUCTION_ENV_ERROR_PREFIX}RL_COMMAND`);
     }
     if (!env.RL_AUTOCOMPLETE) {
-      errors.push('Missing required env var in production: RL_AUTOCOMPLETE');
+      errors.push(`${PRODUCTION_ENV_ERROR_PREFIX}RL_AUTOCOMPLETE`);
     }
   }
 
