@@ -54,12 +54,13 @@ keep their meaning so nothing that reads the existing series breaks.
 | `double2` | **latency ms** — dispatcher start → `finishCommandTrace`, so deferred work is included; `0` for buttons | was always `0` |
 | `double3` | `1` | unchanged |
 
-**Outcome classes** (`blob5`): `ok`, `rate_limited`, `upstream_universalis`, `upstream_presets`,
-`image_input`, `render`, `unknown`. Derived by one
-`classifyError(error, fallback = 'unknown', { imageInput? }): OutcomeClass` helper:
-`UniversalisError` / `PresetAPIError` → `upstream_*` for 429, 5xx and network (status 0), but
-**`ok` for any other 4xx** — a user condition (not the owner, duplicate vote, unknown world) the
-handler already answers with a friendly message; image-worker's input rejections (the one marker
+**Outcome classes** (`blob5`): `ok`, `rejected`, `rate_limited`, `upstream_universalis`,
+`upstream_presets`, `image_input`, `render`, `unknown`. Two axes per row (amendment 2): `blob4`
+= the user got an answer, `blob5` = the most significant thing of ours that broke, or `ok`.
+Derived by one `classifyError(error, fallback = 'unknown', { imageInput? }): OutcomeClass`
+helper: `UniversalisError` / `PresetAPIError` → `upstream_*` for 429, 5xx and network (status 0),
+but **`rejected` for any other 4xx** — the service's own reply (not the owner, duplicate vote,
+unknown world, validation) that the handler relays; it counts as answered; image-worker's input rejections (the one marker
 table in `services/image-input-errors.ts`: URL, size, format, timed-out fetch), only when the
 caller passes `imageInput: true` → `image_input`; anything else thrown from a render/SVG path
 (callers pass `fallback = 'render'`) → `render`; else `unknown`. **Never** the error message.
@@ -67,7 +68,8 @@ caller passes `imageInput: true` → `image_input`; anything else thrown from a 
 **Known gap, deliberate:** handler validation early-returns (52 `t('errors.*')` sites) still count
 as `ok`. Routing them through a helper is a v2 item. Non-throwing branches that mean *we* failed
 are marked, though: bot-logic's `GENERATION_FAILED` → `render` (including `/dye`'s text
-fallbacks, which still answer the user), an unreadable image / `.chara` → `image_input`.
+fallbacks, marked `served` so the row stays answered), an unreadable image / `.chara` →
+`image_input`.
 
 **Not recorded** (unchanged promises): option values, hex/search text, image metadata, world,
 guild/channel ids, message content.
@@ -237,23 +239,31 @@ changes, KV schema changes, moderation-worker, stoat-worker.
 
 ## Amendments — 2026-08-29 pre-merge review (PR #150)
 
-Three decisions in the approved text above were changed while resolving the review; each is
-reversible in one line and is called out on the PR so the maintainer can veto it:
+Three points in the approved text above were reopened by the review; the maintainer decided each
+on 2026-08-29 (options and trade-offs are in the PR thread):
 
 1. **Rate-limited requests no longer touch the KV counters** (§2 said "counts as a `failure` in
    KV"). Every KV counter is a read-modify-write on a shared hot key capped at one write per
    second; routing rejected bursts through them 429s the writes, burns the daily write budget,
    and lets one user's rejected spam drive the PUBLIC `/stats` success rate and top-10. Pre-Tier-A
    the early return touched KV zero times; that is preserved. The AE row still carries
-   `rate_limited`. Revert: delete the `outcome === 'rate_limited'` clause in `trackCommandWithKV`.
-2. **A 4xx other than 429 from presets-api / Universalis classifies as `ok`** (§1 said every
-   `PresetAPIError` → `upstream_presets`). `preset-api.ts` wraps every non-2xx in
-   `PresetAPIError`, including the API's own 403 not-owner / 409 duplicate-vote / 404 replies that
-   the handlers answer with friendly messages — counting those as upstream outages would blame
-   the upstream for user input. Revert: drop `isUserCondition` in `classifyError`.
-3. **`/dye`'s text fallbacks count as `render`** (§2 said dye.ts has no catches — it has two).
-   The user still gets an answer, but the card was lost; this is the only way a renderer outage on
-   the busiest command is visible in the outcome column. Revert: remove the two marks in `dye.ts`.
+   `rate_limited`. **Decision: kept** — abuse questions are answered from AE (query 3 filtered to
+   `rate_limited`); a dedicated `/stats` counter is a possible follow-up, not part of Tier A.
+2. **Two axes: `success` (blob4) and `outcome` (blob5) are no longer the same bit.** The review
+   found that `preset-api.ts` wraps every non-2xx in `PresetAPIError`, so the API's own 403
+   not-owner / 409 duplicate / 404 replies were `upstream_presets`; classifying them `ok` instead
+   would have hidden a systematic 4xx caused by our own payload (the 5.0-launch `/preset submit`
+   400s) — the one failure mode the bot has actually shipped. **Decision: a new class `rejected`**
+   (4xx other than 429 from presets-api / Universalis, relayed to the user), which counts as
+   *answered* (`blob4 = 1`, KV `success`) but is its own class in `blob5`. `blob4` now means "the
+   user got an answer to what they asked"; `blob5` means "the most significant thing of ours that
+   broke, or `ok`". Query 3 filters `blob5 <> 'ok'`.
+3. **`/dye`'s text fallbacks are `render` AND answered** (§2 said dye.ts has no catches — it has
+   two, plus two `GENERATION_FAILED` branches). The card was lost but a text embed answered, so
+   the mark carries `served: true` (`markCommandOutcome(interaction, 'render', { served: true })`):
+   the renderer outage stays visible on the busiest command in `blob5`, and `/stats`' success
+   rate does not drop for users who still got an answer. Every other `render` mark (an error
+   embed was sent) stays unanswered. **Decision: implemented.**
 
 Also resolved by the review, within the approved design: a 20 s drain deadline
 (`DRAIN_DEADLINE_MS`; a stalled upstream is written as `unknown` rather than lost) plus 10 s

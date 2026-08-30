@@ -11,9 +11,20 @@
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 
-/** Coarse, message-free reason a command did not serve (spec §1). */
+/**
+ * Coarse, message-free class for the most significant thing of ours that
+ * broke during a command, or `ok` (spec §1). It is one of two axes: the
+ * `success` flag says whether the user got an answer, the outcome says what
+ * failed — a row can be answered AND carry a class (`rejected`, or `render`
+ * when `/dye` served its text fallback). See `command-trace.ts`.
+ *
+ * `rejected`: presets-api / Universalis answered our request with a 4xx other
+ * than 429 (not the owner, duplicate vote or preset, unknown item / world,
+ * validation) and the handler relayed the service's own reply.
+ */
 export type OutcomeClass =
   | 'ok'
+  | 'rejected'
   | 'rate_limited'
   | 'upstream_universalis'
   | 'upstream_presets'
@@ -38,6 +49,7 @@ export interface CommandEvent {
    * context blob (FINDING-022); the id itself is never written anywhere.
    */
   guildId?: string;
+  /** blob4 / double1 — the user got an answer to what they asked (not the same bit as `outcome === 'ok'`) */
   success: boolean;
   /** blob5 — defaults to 'ok' on success, 'unknown' on failure */
   outcome?: OutcomeClass;
@@ -80,7 +92,7 @@ export function trackCommand(
         event.userId,                                        // blob2: user ID (pseudonymous; unique-user counting)
         // blob3: FINDING-022 — the CONTEXT, never the guild id
         event.guildId ? 'guild' : 'dm',
-        event.success ? '1' : '0',                           // blob4: success flag
+        event.success ? '1' : '0',                           // blob4: answered flag
         event.outcome ?? (event.success ? 'ok' : 'unknown'), // blob5: outcome class
         event.subcommand ?? '',                              // blob6: subcommand / button kind
         event.locale ?? 'other',                             // blob7: locale bucket

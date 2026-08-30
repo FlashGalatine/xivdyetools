@@ -13,6 +13,14 @@
  * dispatcher marks its own two failure paths the same way, so the trace has
  * exactly one writer (`markCommandOutcome`) and one finisher.
  *
+ * Two axes per datapoint: `success` (blob4) = the user got an answer to what
+ * they asked; `outcome` (blob5) = the most significant thing of ours that
+ * broke, or `ok`. They are NOT the same bit — an upstream 4xx the handler
+ * relayed is answered + `rejected`, and `/dye`'s text fallback is answered +
+ * `render` (marked `served`). `/stats`' KV success/failure counters follow
+ * `success`, so a renderer outage or a burst of rejected requests stays
+ * visible in Analytics Engine without dropping the public success rate.
+ *
  * Privacy: the trace carries the command identity, the pseudonymous user id,
  * the guild/dm context, a locale bucket and an outcome CLASS. Never an option
  * value, hex, search text, world, image name, guild/channel id or message
@@ -48,9 +56,19 @@ export interface CommandTrace {
   locale: string;
   startedAt: number;
   outcome: OutcomeClass | null;
+  /** The marked outcome is a failure of ours, but the user still got a real answer (`/dye` text fallback). */
+  served: boolean;
   pending: Promise<unknown>[];
   finished: boolean;
 }
+
+/**
+ * Outcomes that always mean the user was answered: nothing of ours failed
+ * (`ok`), or an upstream answered our request with its own 4xx that the
+ * handler relayed (`rejected`). Every other class is a failure unless the
+ * mark said `served`.
+ */
+const ANSWERED_OUTCOMES: ReadonlySet<OutcomeClass> = new Set<OutcomeClass>(['ok', 'rejected']);
 
 const traces = new WeakMap<DiscordInteraction, CommandTrace>();
 
@@ -62,6 +80,7 @@ export function startCommandTrace(
     ...fields,
     startedAt: Date.now(),
     outcome: null,
+    served: false,
     pending: [],
     finished: false,
   };
@@ -119,15 +138,24 @@ export function tracedExecutionContext(real: ExecutionContext, trace: CommandTra
 }
 
 /**
- * Record the command's outcome class. First mark wins; no trace → no-op;
- * never throws. Handlers call this where a command ends with an error embed;
- * the dispatcher calls it for a rate-limited request and for a handler throw.
- * Marking `ok` (a 4xx user condition from an upstream, see `classifyError`)
- * pins the trace to success the same way.
+ * Record the command's outcome class. First mark wins (a later mark, and its
+ * `served` flag, is ignored); no trace → no-op; never throws. Handlers call
+ * this where a command ends with an error embed; the dispatcher calls it for
+ * a rate-limited request and for a handler throw. Marking `ok` or `rejected`
+ * pins the trace to answered; `served: true` says the marked failure was
+ * covered by a real answer (`/dye`'s text fallback), so the row is answered
+ * while the outcome column still shows what broke.
  */
-export function markCommandOutcome(interaction: DiscordInteraction, outcome: OutcomeClass): void {
+export function markCommandOutcome(
+  interaction: DiscordInteraction,
+  outcome: OutcomeClass,
+  options: { served?: boolean } = {},
+): void {
   const trace = traces.get(interaction);
-  if (trace && trace.outcome === null) trace.outcome = outcome;
+  if (trace && trace.outcome === null) {
+    trace.outcome = outcome;
+    trace.served = options.served === true;
+  }
 }
 
 /**
@@ -209,7 +237,7 @@ async function drainAndWrite(env: Env, trace: CommandTrace): Promise<void> {
     commandName: trace.command,
     userId: trace.userId,
     guildId: trace.guildId,
-    success: outcome === 'ok',
+    success: ANSWERED_OUTCOMES.has(outcome) || trace.served,
     outcome,
     subcommand: trace.subcommand,
     locale: trace.locale,
@@ -249,11 +277,14 @@ function withDeadline(work: Promise<void>, ms: number): Promise<boolean> {
  * Map a thrown value onto an outcome class. `fallback` is what an
  * unrecognised Error means at the call site (a render catch passes 'render').
  *
- * Upstream errors: a 4xx other than 429 from presets-api or Universalis is a
- * USER condition (not the owner, duplicate vote, unknown world, …) that the
- * handler already answers with a friendly message, so it classifies as `ok` —
- * the same rule as a validation reply; 429, 5xx and status 0/undefined
- * (network, binding) are the upstream's fault.
+ * Upstream errors: a 4xx other than 429 from presets-api or Universalis is
+ * the service answering our request with its own reply (not the owner,
+ * duplicate vote, unknown world, validation) that the handler relays as a
+ * friendly message — `rejected`, which counts as answered (see
+ * `ANSWERED_OUTCOMES`) but stays visible as its own class so a systematic
+ * 4xx caused by OUR payload (the 5.0-launch `/preset submit` 400s) is a
+ * spike, not silence; 429, 5xx and status 0/undefined (network, binding)
+ * are the upstream's fault → `upstream_*`.
  *
  * The message is inspected for image-worker's input rejections
  * (`isImageInputError`) only when `options.imageInput` is set — those markers
@@ -267,10 +298,10 @@ export function classifyError(
   options: { imageInput?: boolean } = {},
 ): OutcomeClass {
   if (error instanceof UniversalisError) {
-    return isUserCondition(error.status) ? 'ok' : 'upstream_universalis';
+    return isUserCondition(error.status) ? 'rejected' : 'upstream_universalis';
   }
   if (error instanceof PresetAPIError) {
-    return isUserCondition(error.statusCode) ? 'ok' : 'upstream_presets';
+    return isUserCondition(error.statusCode) ? 'rejected' : 'upstream_presets';
   }
   if (options.imageInput && isImageInputError(error)) return 'image_input';
   return error instanceof Error ? fallback : 'unknown';

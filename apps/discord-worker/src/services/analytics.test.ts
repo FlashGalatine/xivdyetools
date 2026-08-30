@@ -388,6 +388,18 @@ describe('analytics.ts', () => {
       expect(await getCounter(mockKV as unknown as KVNamespace, 'failure')).toBe(0);
     });
 
+    it('a rejected row (upstream 4xx relayed to the user) is answered: KV success moves, failure does not', async () => {
+      await trackCommandWithKV(mockEnv, {
+        commandName: 'preset', userId: 'u1', success: true, outcome: 'rejected', subcommand: 'vote', kind: 'command',
+      });
+      const blobs = mockAnalytics.writeDataPoint.mock.calls[0][0].blobs;
+      expect(blobs[3]).toBe('1');
+      expect(blobs[4]).toBe('rejected');
+      expect(await getCounter(mockKV as unknown as KVNamespace, 'success')).toBe(1);
+      expect(await getCounter(mockKV as unknown as KVNamespace, 'failure')).toBe(0);
+      expect(await getCounter(mockKV as unknown as KVNamespace, 'cmd:preset')).toBe(1);
+    });
+
     it('should track both Analytics Engine and KV counters', async () => {
       const event: CommandEvent = {
         commandName: 'harmony',

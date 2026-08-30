@@ -219,16 +219,58 @@ describe('lifecycle', () => {
     expect(trackMock.mock.calls[0][1]).toMatchObject({ success: false, outcome: 'upstream_presets' });
   });
 
-  it('a 4xx user condition marked through classifyError pins the trace to ok', async () => {
+  it('an upstream 4xx marked through classifyError is rejected AND answered (two axes)', async () => {
     const env = createMockEnv();
     const ix = interaction();
     const ctx = realCtx();
     const trace = startCommandTrace(ix, fields);
     markCommandOutcome(ix, classifyError(new PresetAPIError(403, 'not the owner')));
-    expect(trace.outcome).toBe('ok');
+    expect(trace.outcome).toBe('rejected');
+    finishCommandTrace(env, ix, ctx, logger);
+    await ctx._all();
+    expect(trackMock.mock.calls[0][1]).toMatchObject({ success: true, outcome: 'rejected' });
+  });
+
+  it('a served failure (/dye text fallback) is answered but keeps its outcome; unserved render is a failure', async () => {
+    const env = createMockEnv();
+    const ix = interaction({ data: { name: 'dye' } });
+    const ctx = realCtx();
+    startCommandTrace(ix, { ...fields, command: 'dye', subcommand: 'info' });
+    markCommandOutcome(ix, 'render', { served: true });
+    finishCommandTrace(env, ix, ctx, logger);
+    await ctx._all();
+    expect(trackMock.mock.calls[0][1]).toMatchObject({ success: true, outcome: 'render' });
+
+    trackMock.mockClear();
+    const ix2 = interaction({ id: 'i2' });
+    const ctx2 = realCtx();
+    startCommandTrace(ix2, fields);
+    markCommandOutcome(ix2, 'render');
+    finishCommandTrace(env, ix2, ctx2, logger);
+    await ctx2._all();
+    expect(trackMock.mock.calls[0][1]).toMatchObject({ success: false, outcome: 'render' });
+  });
+
+  it('served is a no-op on ok, and a later mark cannot flip an earlier unserved failure', async () => {
+    const env = createMockEnv();
+    const ix = interaction();
+    const ctx = realCtx();
+    startCommandTrace(ix, fields);
+    markCommandOutcome(ix, 'ok', { served: true });
     finishCommandTrace(env, ix, ctx, logger);
     await ctx._all();
     expect(trackMock.mock.calls[0][1]).toMatchObject({ success: true, outcome: 'ok' });
+
+    trackMock.mockClear();
+    const ix2 = interaction({ id: 'i2' });
+    const ctx2 = realCtx();
+    const trace2 = startCommandTrace(ix2, fields);
+    markCommandOutcome(ix2, 'render');
+    markCommandOutcome(ix2, 'render', { served: true });
+    expect(trace2.served).toBe(false);
+    finishCommandTrace(env, ix2, ctx2, logger);
+    await ctx2._all();
+    expect(trackMock.mock.calls[0][1]).toMatchObject({ success: false, outcome: 'render' });
   });
 
   it('finish without a trace is a no-op; a tracking failure is logged, never thrown', async () => {
@@ -326,11 +368,15 @@ describe('helpers', () => {
     [new UniversalisError(0, 'network'), undefined, {}, 'upstream_universalis'],
     [new PresetAPIError(500, 'x'), undefined, {}, 'upstream_presets'],
     [new PresetAPIError(502, 'x'), 'render', {}, 'upstream_presets'],
-    // upstream: a 4xx other than 429 is a user condition the handler already answered
-    [new UniversalisError(400, 'unknown world'), undefined, {}, 'ok'],
-    [new PresetAPIError(403, 'not the owner'), undefined, {}, 'ok'],
-    [new PresetAPIError(404, 'no such preset'), undefined, {}, 'ok'],
-    [new PresetAPIError(409, 'already voted'), undefined, {}, 'ok'],
+    // upstream: a 4xx other than 429 is the service's own reply, relayed by the handler → rejected
+    [new UniversalisError(400, 'unknown world'), undefined, {}, 'rejected'],
+    [new UniversalisError(404, 'no such item'), undefined, {}, 'rejected'],
+    [new PresetAPIError(400, 'validation'), undefined, {}, 'rejected'],
+    [new PresetAPIError(403, 'not the owner'), undefined, {}, 'rejected'],
+    [new PresetAPIError(404, 'no such preset'), undefined, {}, 'rejected'],
+    [new PresetAPIError(409, 'already voted'), undefined, {}, 'rejected'],
+    [new PresetAPIError(429, 'slow down'), undefined, {}, 'upstream_presets'],
+    [new PresetAPIError(undefined as unknown as number, 'binding'), undefined, {}, 'upstream_presets'],
     // image input: image-worker's real messages, only when the caller had an image
     [new Error('Only Discord CDN URLs are allowed for security'), undefined, { imageInput: true }, 'image_input'],
     [new Error('Image too large. Maximum size is 10MB'), undefined, { imageInput: true }, 'image_input'],

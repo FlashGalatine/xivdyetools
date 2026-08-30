@@ -198,8 +198,8 @@ async function processInfoCard(
 
   if (!result.ok) {
     // GENERATION_FAILED: the card could not be generated — the text fallback
-    // still answers the user, but the datapoint records the lost card.
-    markCommandOutcome(interaction, 'render');
+    // still answers the user (`served`), and the outcome records the lost card.
+    markCommandOutcome(interaction, 'render', { served: true });
     await sendDyeInfoFallback(interaction, env, dye, locale, t);
     return;
   }
@@ -236,8 +236,8 @@ async function processInfoCard(
     });
   } catch {
     // The PNG render or the Discord edit failed; a degraded text card is
-    // served, and the datapoint records the failed render.
-    markCommandOutcome(interaction, 'render');
+    // served, and the outcome records the failed render.
+    markCommandOutcome(interaction, 'render', { served: true });
     await sendDyeInfoFallback(interaction, env, dye, locale, t);
   }
 }
@@ -381,7 +381,7 @@ async function processRandomGrid(
       });
     } else {
       // GENERATION_FAILED: the card generator threw; text fallback served.
-      markCommandOutcome(interaction, 'render');
+      markCommandOutcome(interaction, 'render', { served: true });
       await sendRandomFallback(interaction, env, t, locale);
     }
     return;
@@ -414,7 +414,7 @@ async function processRandomGrid(
     });
   } catch {
     // The PNG render or the Discord edit failed; text fallback served.
-    markCommandOutcome(interaction, 'render');
+    markCommandOutcome(interaction, 'render', { served: true });
     await sendRandomFallback(interaction, env, t, locale);
   }
 }
