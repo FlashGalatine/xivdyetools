@@ -602,10 +602,16 @@ app.post('/', async (c) => {
   return badRequestResponse(`Unknown interaction type: ${interaction.type}`);
 });
 
+const FIRST_RUN_FLAG_TTL_SECONDS = 180 * 24 * 60 * 60; // 180 days (FINDING-008)
+
 /**
  * 5.0 first-run notice: one ephemeral follow-up naming what changed, gated
- * by a permanent KV flag. Existing users (stored preferences) are flagged
- * silently — the redesign notice is for people meeting the bot fresh.
+ * by a KV flag that expires after 180 days (FINDING-008 — previously
+ * permanent, so every user who ever ran a command left a KV record
+ * forever). Existing users (stored preferences) are flagged silently — the
+ * redesign notice is for people meeting the bot fresh. A user who returns
+ * after the flag has expired with no stored preferences may see the notice
+ * once more; that's an acceptable trade for not keeping the record forever.
  */
 async function maybeSendFirstRunNotice(
   env: Env,
@@ -617,7 +623,7 @@ async function maybeSendFirstRunNotice(
   const seen = await env.KV.get(flagKey);
   if (seen) return;
   // Flag before sending — a failed send must never become a repeat notice
-  await env.KV.put(flagKey, '1');
+  await env.KV.put(flagKey, '1', { expirationTtl: FIRST_RUN_FLAG_TTL_SECONDS });
 
   const prefs = await env.KV.get(`prefs:v1:${userId}`);
   if (prefs) return; // existing user — suppressed by decision

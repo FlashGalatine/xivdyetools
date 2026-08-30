@@ -1,6 +1,6 @@
 # XIV Dye Tools Discord Bot - Privacy Policy
 
-**Last Updated**: August 29, 2026
+**Last Updated**: August 30, 2026
 
 ## 1. Introduction
 
@@ -23,15 +23,17 @@ We are committed to protecting your privacy and being transparent about our data
 
 | Data Type | Purpose | Retention |
 |-----------|---------|-----------|
-| Favorite Dyes | Save up to 20 favorite dye IDs | Until you remove them or request deletion |
-| Collections | Up to 50 custom collections with names, descriptions, and dyes | Until you delete them or request deletion |
+| Preferences | Language, blending mode, matching algorithm, result count, clan, gender, default world / data center, market data center, color-display toggles, and theme | Until you reset them or request deletion |
+| Preset favorites | Up to 50 community presets you mark with `/preset favorite add` — the preset's id and the name it had when you saved it | Until you remove them or request deletion |
+| First-run notice flag | A per-user marker that the 5.0 welcome notice was shown to you; carries no content | Expires automatically after 180 days |
 | Preset Submissions | Name, description, dyes, tags, category | Indefinitely (community content) |
 | Votes | Your votes on community presets | Until you remove vote or request deletion |
 
 ### Rate Limiting Data
 
-- Per-user, per-command counters stored in Cloudflare KV
-- **Retention**: 70 seconds (automatic TTL expiration)
+- Per-user, per-command counters are held by Cloudflare's Workers rate-limiting service for the 60-second window and are never written to KV.
+- **Fallback**: if that service is unavailable, the counter is kept in Cloudflare KV instead, with a 120-second expiry.
+- No third party is involved.
 
 ### Usage Analytics
 
@@ -60,7 +62,7 @@ We explicitly do **not** collect:
 
 ### Image Processing
 
-When you use `/match_image`, your uploaded image is:
+When you use `/extractor image`, your uploaded image is:
 1. Processed in-memory on Cloudflare's edge servers
 2. Analyzed for dominant colors
 3. **Immediately discarded** after processing
@@ -72,8 +74,7 @@ When you use `/match_image`, your uploaded image is:
 |---------|-----------|
 | Provide Bot functionality | User ID, Guild ID, Channel ID |
 | Save your preferences | User ID, Locale |
-| Manage your favorites | User ID, Dye IDs |
-| Manage your collections | User ID, Collection data |
+| Manage your preset favorites | User ID, Preset ID |
 | Community presets | User ID, Username, Preset content |
 | Voting system | User ID, Preset ID |
 | Prevent abuse | User ID, Rate limit counters |
@@ -85,7 +86,7 @@ When you use `/match_image`, your uploaded image is:
 
 | Service | Data Stored | Location |
 |---------|-------------|----------|
-| Cloudflare KV | Favorites, Collections, Preferences, Rate limits, usage counters and daily-activity keys (30-day TTL) | Global edge network |
+| Cloudflare KV | Preferences, preset favorites, the first-run notice flag, usage counters and daily-activity keys (30-day TTL), and the rate-limit counters only while the KV fallback is in use (120-second TTL) | Global edge network |
 | Cloudflare D1 | Community presets, Votes, Moderation history, moderation-notification failure records, daily submission / edit counters (see *Data Retention*) | Cloudflare's database infrastructure |
 | Cloudflare Workers Analytics Engine | Command usage telemetry (see *Usage Analytics*) | Cloudflare's analytics infrastructure |
 
@@ -105,7 +106,7 @@ The Bot integrates with these third-party services:
 | Service | Purpose | Their Privacy Policy |
 |---------|---------|---------------------|
 | Discord | Bot platform, authentication | [Discord Privacy Policy](https://discord.com/privacy) |
-| Cloudflare | Hosting, data storage (KV, D1) | [Cloudflare Privacy Policy](https://www.cloudflare.com/privacypolicy/) |
+| Cloudflare | Hosting, data storage (KV, D1), rate limiting, analytics | [Cloudflare Privacy Policy](https://www.cloudflare.com/privacypolicy/) |
 | Universalis | FFXIV market board data | [Universalis](https://universalis.app/) |
 | Perspective API | Content moderation (optional) | [Google Privacy Policy](https://policies.google.com/privacy) |
 
@@ -116,14 +117,16 @@ We do not sell, trade, or share your personal data with third parties for market
 You have the right to:
 
 ### Access Your Data
-- Use `/favorites` to view your saved favorites
-- Use `/collection list` to view your collections
+- Use `/preferences show` to view your saved preferences
+- Use `/preset favorite list` to view your favorited presets
 - Contact us to request a full data export
 
 ### Delete Your Data
-- Use `/favorites remove` to remove favorites
-- Use `/collection delete` to remove collections
+- Use `/preferences reset` to reset all your preferences, or `/preferences reset key:<preference>` to reset just one
+- Use `/preset favorite remove` to remove a favorited preset
 - Contact us to request complete data deletion
+
+The first-run notice flag is not user-manageable — it expires on its own after 180 days.
 
 ### Request Full Data Deletion
 
@@ -140,13 +143,13 @@ We will process deletion requests within 30 days.
 
 | Data Type | Retention Period |
 |-----------|-----------------|
-| Rate limit counters | 70 seconds |
+| Rate limit counters | 60 seconds (120 seconds while the KV fallback is in use) |
 | Usage counters (Cloudflare KV) | 30 days |
 | Daily per-user activity keys (Cloudflare KV) | 30 days |
 | Command usage telemetry (Analytics Engine) | Cloudflare's Analytics Engine retention window (3 months at the time of writing) |
 | User preferences | Until deleted by user |
-| Favorites | Until deleted by user |
-| Collections | Until deleted by user |
+| Preset favorites | Until removed by you |
+| First-run notice flag | 180 days |
 | Community presets | Indefinitely (public content) |
 | Votes | Until removed or account deletion |
 | Moderation-notification failure records (preset id, error, timestamps) | 30 days after resolution, 90 days if unresolved — deleted immediately if the preset is deleted |

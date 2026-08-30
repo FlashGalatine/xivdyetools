@@ -68,6 +68,7 @@ vi.mock('./services/preset-api.js', () => ({
 
 vi.mock('./utils/discord-api.js', () => ({
   sendMessage: vi.fn(),
+  sendFollowUp: vi.fn(),
 }));
 
 // /webhooks/github: the HMAC check and the two downstream services are
@@ -1025,6 +1026,58 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
         expect(data.data!.content).toContain('not yet implemented');
+      });
+    });
+
+    describe('first-run notice (FINDING-008)', () => {
+      it('flags the first-run KV marker with a 180-day TTL, not a permanent one', async () => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { checkRateLimit } = await import('./services/rate-limiter.js');
+        const { handleAboutCommand } = await import('./handlers/commands/index.js');
+        const { sendFollowUp } = await import('./utils/discord-api.js');
+
+        const body = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name: 'about' },
+          user: { id: 'user-firstrun' },
+        };
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify(body),
+          error: '',
+        });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: true,
+          remaining: 14,
+          resetAt: Date.now() + 60000,
+        });
+        vi.mocked(handleAboutCommand).mockResolvedValue(new Response());
+        vi.mocked(sendFollowUp).mockResolvedValue(new Response(null, { status: 200 }));
+
+        // handleCommand fires the notice via ctx.waitUntil without awaiting
+        // it, so this ExecutionContext keeps every waitUntil promise for the
+        // test to await once app.fetch() returns.
+        const collected: Promise<unknown>[] = [];
+        const ctx = {
+          waitUntil: vi.fn((p: Promise<unknown>) => {
+            collected.push(p);
+          }),
+          passThroughOnException: vi.fn(),
+        } as unknown as ExecutionContext;
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+
+        await app.fetch(req, mockEnv, ctx);
+        await Promise.all(collected);
+
+        expect(mockEnv.KV.put).toHaveBeenCalledWith(
+          'firstrun:v5:user-firstrun',
+          '1',
+          expect.objectContaining({ expirationTtl: 15_552_000 }),
+        );
       });
     });
 
