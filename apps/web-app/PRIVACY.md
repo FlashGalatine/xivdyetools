@@ -1,6 +1,6 @@
 # XIV Dye Tools — Privacy Guide (web app)
 
-**Last updated:** 2026-08-29 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-08-30 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The colour tools — the Colour Extractor, Harmony Explorer,
@@ -10,8 +10,9 @@ and the sections below are the complete list.
 
 ## Images and camera captures
 
-- Uploaded, pasted, dragged-in and camera-captured images never leave your device. They are read
-  with the browser's Canvas API and discarded when you clear the image, close the tab or reload.
+- Uploaded, pasted, dragged-in and camera-captured images never leave your device, and are never
+  written to browser storage. They are read with the browser's Canvas API, held in the page's memory
+  for that session only, and discarded when you clear the image, close the tab or reload.
 - The extractor's "Privacy Protected" notice links here.
 
 ## Character files (`.chara`)
@@ -29,6 +30,11 @@ and the sections below are the complete list.
 settings (including the analytics switch below), favourite dyes, saved palettes and collections,
 and — if you sign in — your community-presets session token. Nothing here is a tracking identifier.
 "Reset settings" in Advanced Options and your browser's site-data controls clear it.
+
+`IndexedDB` holds one thing: a cache of market-board prices already fetched, so the same lookup is
+not repeated. It holds no images — an earlier version of the app kept your last extractor image
+there, and that copy is deleted the first time you open the app after this update. Your browser's
+site-data controls clear it.
 
 ## Network access
 

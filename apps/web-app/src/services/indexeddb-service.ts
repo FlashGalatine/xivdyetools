@@ -13,7 +13,7 @@ import { logger } from '@shared/logger';
  * Database configuration
  */
 const DB_NAME = 'xivdyetools';
-const DB_VERSION = 2; // v2: + image_cache (OPT-012)
+const DB_VERSION = 3; // v3: − image_cache (FINDING-009); v2: + image_cache (OPT-012)
 
 /**
  * Store names in the database
@@ -22,8 +22,6 @@ export const STORES = {
   PRICE_CACHE: 'price_cache',
   PALETTES: 'palettes',
   SETTINGS: 'settings',
-  /** OPT-012: extractor images (formerly multi-MB data-URLs in localStorage) */
-  IMAGE_CACHE: 'image_cache',
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -122,9 +120,12 @@ export class IndexedDBService {
             logger.debug('Created settings store');
           }
 
-          if (!db.objectStoreNames.contains(STORES.IMAGE_CACHE)) {
-            db.createObjectStore(STORES.IMAGE_CACHE, { keyPath: 'key' });
-            logger.debug('Created image_cache store');
+          // FINDING-009: one-time purge of the images stored by ≤ 5.0.0 visits.
+          // The extractor no longer persists anything, so the whole store goes
+          // — this runs once per browser, on the first open at v3.
+          if (db.objectStoreNames.contains('image_cache')) {
+            db.deleteObjectStore('image_cache');
+            logger.debug('Deleted image_cache store');
           }
 
           logger.info('📦 IndexedDB schema upgraded');

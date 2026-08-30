@@ -85,6 +85,7 @@ describe('IndexedDBService', () => {
         contains: vi.fn().mockReturnValue(false),
       },
       createObjectStore: vi.fn().mockReturnValue(mockStore),
+      deleteObjectStore: vi.fn(),
     };
 
     // Helper to create mock request
@@ -179,6 +180,71 @@ describe('IndexedDBService', () => {
       expect(STORES.PRICE_CACHE).toBe('price_cache');
       expect(STORES.PALETTES).toBe('palettes');
       expect(STORES.SETTINGS).toBe('settings');
+    });
+
+    it('no longer offers an image store (FINDING-009)', () => {
+      // The extractor's image_cache was the one store holding something the
+      // user handed the app rather than something the app fetched. Keeping the
+      // name exported invites the persistence straight back in.
+      expect(STORES).not.toHaveProperty('IMAGE_CACHE');
+      expect(Object.values(STORES)).not.toContain('image_cache');
+    });
+  });
+
+  /**
+   * FINDING-009: uploaded / pasted / dragged / camera images used to live in an
+   * `image_cache` object store and were restored on the next visit. The store is
+   * gone; the DB_VERSION 2 → 3 upgrade has to delete what earlier visits left on
+   * disk, without taking the user's own data with it.
+   */
+  describe('schema upgrade (FINDING-009)', () => {
+    /** Typed view of a mock member reached through the untyped mockDB record. */
+    const callsOf = (fn: unknown): unknown[][] =>
+      (fn as { mock: { calls: unknown[][] } }).mock.calls;
+
+    /** Pretend every store already exists — i.e. a fully-populated v2 database. */
+    const asV2Database = (): void => {
+      mockDB.objectStoreNames = { contains: vi.fn().mockReturnValue(true) };
+    };
+
+    it('deletes the image_cache store left behind by a v2 database', async () => {
+      asV2Database();
+
+      await indexedDBService.initialize();
+
+      expect(mockDB.deleteObjectStore).toHaveBeenCalledWith('image_cache');
+    });
+
+    it('keeps the three surviving stores when upgrading from v2', async () => {
+      asV2Database();
+
+      await indexedDBService.initialize();
+
+      // A purge that took price_cache, palettes or settings with it would wipe
+      // the user's own work, not just the image
+      expect(callsOf(mockDB.deleteObjectStore).map((c) => c[0])).toEqual(['image_cache']);
+    });
+
+    it('adds and removes nothing when upgrading a v1 database', async () => {
+      // v1 predates OPT-012: the three stores exist, image_cache never did
+      mockDB.objectStoreNames = { contains: vi.fn((name: string) => name !== 'image_cache') };
+
+      await indexedDBService.initialize();
+
+      expect(mockDB.createObjectStore).not.toHaveBeenCalled();
+      expect(mockDB.deleteObjectStore).not.toHaveBeenCalled();
+    });
+
+    it('never creates image_cache in a fresh database', async () => {
+      // contains() answers false for everything here — a first-ever visitor
+      await indexedDBService.initialize();
+
+      expect(callsOf(mockDB.createObjectStore).map((c) => c[0])).toEqual([
+        'price_cache',
+        'palettes',
+        'settings',
+      ]);
+      expect(mockDB.deleteObjectStore).not.toHaveBeenCalled();
     });
   });
 
