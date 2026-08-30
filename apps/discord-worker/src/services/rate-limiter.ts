@@ -66,9 +66,13 @@ export interface RateLimiterConfig {
  * Each binding's configured `simple.limit`, smallest first. Keep in step with
  * `wrangler.toml` — worker-kit routes a command to the smallest tier whose
  * limit can hold `maxRequests + burstAllowance`, so a wrong number here hands
- * out the wrong allowance rather than failing.
+ * out the wrong allowance rather than failing. `tests/wrangler-config.test.ts`
+ * checks the TOML against this table so the two cannot drift.
  */
-const BINDING_TIERS: ReadonlyArray<{ name: keyof DiscordRateLimitBindings; limit: number }> = [
+export const BINDING_TIERS: ReadonlyArray<{
+  name: keyof DiscordRateLimitBindings;
+  limit: number;
+}> = [
   { name: 'RL_5', limit: 5 },
   { name: 'RL_10', limit: 10 },
   { name: 'RL_15', limit: 15 },
@@ -99,6 +103,13 @@ let limiterInstance: RateLimiter | null = null;
 let configuredBackend: 'cloudflare' | 'kv' | null = null;
 /** FINDING-003: the KV-fallback warning is emitted once per isolate */
 let kvFallbackWarned = false;
+/**
+ * FINDING-007: the `RL_*` tiers the limiter was built WITHOUT while still on
+ * the Cloudflare backend (empty unless `0 < bound < BINDING_TIERS.length`).
+ */
+let missingTierNames: ReadonlyArray<string> = [];
+/** FINDING-007: the partial-binding warning is emitted once per isolate */
+let partialTiersWarned = false;
 
 /**
  * Get or create the rate limiter instance
@@ -116,14 +127,23 @@ function getLimiter(config: RateLimiterConfig): RateLimiter {
     return limiterInstance;
   }
 
-  // Prefer the native bindings — any subset works (the limiter falls back to
-  // its largest tier), but both environments bind all six.
+  // Prefer the native bindings — any subset works (worker-kit's selectTier
+  // routes a command to the next LARGER bound tier, and to the largest bound
+  // tier when nothing fits), but both environments bind all six.
   const tiers: CloudflareRateLimitTier[] = [];
+  const missing: string[] = [];
   for (const { name, limit } of BINDING_TIERS) {
     const binding = config.bindings?.[name];
     if (binding) tiers.push({ limit, periodSeconds: 60, binding });
+    else missing.push(name);
   }
   if (tiers.length > 0) {
+    // A PARTIAL set is the dangerous shape: it keeps the Cloudflare backend,
+    // so nothing falls back and nothing errors — the commands whose own tier
+    // vanished silently take the next larger allowance (losing RL_5 hands
+    // `/extractor image` 10/min). Remembered here, reported by checkRateLimit
+    // on the current request's logger.
+    missingTierNames = missing;
     limiterInstance = new CloudflareRateLimiter({ tiers, keyPrefix: KEY_PREFIX });
     configuredBackend = 'cloudflare';
     return limiterInstance;
@@ -236,6 +256,18 @@ export async function checkRateLimit(
     );
   }
 
+  // FINDING-007 (whole-branch review of the 2026-08-29 audit): a PARTIAL set
+  // of tiers never reaches the KV branch above — it stays on the Cloudflare
+  // backend and just hands the orphaned commands the next larger allowance.
+  // Binding names only; there is no user data here.
+  if (missingTierNames.length > 0 && !partialTiersWarned) {
+    partialTiersWarned = true;
+    logger?.warn?.(
+      'Rate limiter: some RL_* bindings are missing — affected commands use the next larger tier',
+      { missing: [...missingTierNames] },
+    );
+  }
+
   // Build compound key for user:command rate limiting. A subcommand that has
   // its own tier (e.g. extractor:image) gets its own bucket so it cannot
   // borrow allowance from the cheaper sibling.
@@ -289,4 +321,6 @@ export function resetRateLimiterInstance(): void {
   limiterInstance = null;
   configuredBackend = null;
   kvFallbackWarned = false;
+  missingTierNames = [];
+  partialTiersWarned = false;
 }

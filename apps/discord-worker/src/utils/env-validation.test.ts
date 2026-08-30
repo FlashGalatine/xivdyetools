@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { validateEnv, logValidationErrors } from './env-validation.js';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import type { RateLimitBinding } from '@xivdyetools/worker-kit/rate-limiter';
 
 // Create a minimal valid env for testing
 function createMinimalEnv(overrides: Partial<Env> = {}): Env {
@@ -233,6 +234,84 @@ describe('env-validation.ts', () => {
 
         expect(result.valid).toBe(false);
         expect(result.errors).toContain('Invalid Discord ID in STATS_AUTHORIZED_USERS: invalid-id');
+      });
+    });
+
+    // FINDING-013 (2026-08-29 security audit): production also requires the
+    // six `[[ratelimits]]` bindings FINDING-007 moved the per-user command
+    // counters onto. Losing one is silent — worker-kit routes the orphaned
+    // commands to the next larger tier — and Workers Logs are off on this
+    // script, so `services/rate-limiter.ts`'s once-per-isolate warning is not
+    // a production signal. Development and tests keep them optional so the KV
+    // fallback still works without bindings.
+    describe('production-only requirements (FINDING-013)', () => {
+      function createValidProductionEnv(overrides: Partial<Env> = {}): Env {
+        return createMinimalEnv({
+          ENVIRONMENT: 'production',
+          RL_5: {} as RateLimitBinding,
+          RL_10: {} as RateLimitBinding,
+          RL_15: {} as RateLimitBinding,
+          RL_20: {} as RateLimitBinding,
+          RL_30: {} as RateLimitBinding,
+          RL_70: {} as RateLimitBinding,
+          ...overrides,
+        });
+      }
+
+      it('should pass when every production-only requirement is satisfied', () => {
+        const result = validateEnv(createValidProductionEnv());
+
+        expect(result.valid).toBe(true);
+        expect(result.errors).toHaveLength(0);
+      });
+
+      it.each(['RL_5', 'RL_10', 'RL_15', 'RL_20', 'RL_30', 'RL_70'] as const)(
+        'should fail when the %s binding is missing in production',
+        (binding) => {
+          const result = validateEnv(createValidProductionEnv({ [binding]: undefined }));
+
+          expect(result.valid).toBe(false);
+          expect(result.errors).toContain(`Missing required env var in production: ${binding}`);
+        },
+      );
+
+      it('should collect all six errors together when no tier is bound', () => {
+        const result = validateEnv(
+          createValidProductionEnv({
+            RL_5: undefined,
+            RL_10: undefined,
+            RL_15: undefined,
+            RL_20: undefined,
+            RL_30: undefined,
+            RL_70: undefined,
+          }),
+        );
+
+        expect(result.valid).toBe(false);
+        expect(result.errors).toEqual(
+          expect.arrayContaining([
+            'Missing required env var in production: RL_5',
+            'Missing required env var in production: RL_10',
+            'Missing required env var in production: RL_15',
+            'Missing required env var in production: RL_20',
+            'Missing required env var in production: RL_30',
+            'Missing required env var in production: RL_70',
+          ]),
+        );
+      });
+
+      it('keeps the six RL_* bindings optional outside production', () => {
+        const result = validateEnv(createMinimalEnv({ ENVIRONMENT: 'development' }));
+
+        expect(result.valid).toBe(true);
+        expect(result.errors).toHaveLength(0);
+      });
+
+      it('keeps the six RL_* bindings optional when ENVIRONMENT is unset', () => {
+        const result = validateEnv(createMinimalEnv());
+
+        expect(result.valid).toBe(true);
+        expect(result.errors).toHaveLength(0);
       });
     });
 

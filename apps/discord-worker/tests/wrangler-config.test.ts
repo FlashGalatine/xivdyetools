@@ -15,6 +15,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { BINDING_TIERS } from '../src/services/rate-limiter.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Normalise CRLF so `$` anchors line ends on a Windows checkout too.
@@ -25,19 +26,18 @@ const topLevel = toml.slice(0, productionStart);
 const production = toml.slice(productionStart);
 
 /**
- * One tier per distinct effective limit (`maxRequests + burstAllowance`) in
- * worker-kit's DISCORD_COMMAND_LIMITS: extractor:image 5, budget/preset/
- * accessibility 10, the default and the rendering commands 15, dye/preferences
- * 20, about/manual/changelog 30, autocomplete 60 + 10 burst.
+ * The expectation is `BINDING_TIERS` itself — the table `services/rate-limiter.ts`
+ * builds the limiter from — rather than a second copy of the same literals:
+ * a copy can only ever agree with itself, while this fails whenever the TOML
+ * and the code disagree about a tier's name or its `simple.limit`. One tier
+ * per distinct effective limit (`maxRequests + burstAllowance`) in worker-kit's
+ * DISCORD_COMMAND_LIMITS: extractor:image 5, budget/preset/accessibility 10,
+ * the default and the rendering commands 15, dye/preferences 20,
+ * about/manual/changelog 30, autocomplete 60 + 10 burst.
  */
-const EXPECTED_TIERS: ReadonlyArray<readonly [string, number]> = [
-  ['RL_5', 5],
-  ['RL_10', 10],
-  ['RL_15', 15],
-  ['RL_20', 20],
-  ['RL_30', 30],
-  ['RL_70', 70],
-];
+const EXPECTED_TIERS: ReadonlyArray<readonly [string, number]> = BINDING_TIERS.map(
+  ({ name, limit }) => [name, limit] as const,
+);
 
 interface ParsedTier {
   namespaceId: number;
@@ -101,6 +101,17 @@ describe('wrangler.toml', () => {
     // 1001-1034 belong to api-worker / presets-api / oauth / moderation-worker.
     for (const id of ids) expect(id).toBeGreaterThanOrEqual(1041);
     expect(new Set(ids).size).toBe(12);
+  });
+
+  /**
+   * FINDING-013: `validateEnv`'s production block — which requires the six
+   * `RL_*` bindings — is keyed on this var, and `vars` is NOT inheritable, so
+   * both blocks must declare it. A production deploy that lost the line would
+   * silently skip the check it exists for.
+   */
+  it('pins ENVIRONMENT in both environments (FINDING-013)', () => {
+    expect(topLevel).toMatch(/^ENVIRONMENT = "development"$/m);
+    expect(production).toMatch(/^ENVIRONMENT = "production"$/m);
   });
 
   it('names no Upstash secret (FINDING-007 — Upstash is no longer a processor)', () => {

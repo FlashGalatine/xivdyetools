@@ -64,6 +64,15 @@ export interface Env {
   /** URL of the Presets API worker */
   PRESETS_API_URL: string;
 
+  /**
+   * Which deployment this is — `"development"` on the beta worker,
+   * `"production"` on the live bot. Declared in BOTH `wrangler.toml` blocks
+   * (vars are not inheritable) and optional here so tests and `wrangler dev`
+   * can leave it unset. FINDING-013: `validateEnv` requires the six `RL_*`
+   * bindings only when this reads `"production"`.
+   */
+  ENVIRONMENT?: string;
+
   // =========================================================================
   // Bindings (configured in wrangler.toml)
   // =========================================================================

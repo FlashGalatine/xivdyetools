@@ -147,7 +147,7 @@ src/
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Photon-backed pixel extraction for `/extractor` (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
 | `RL_5`, `RL_10`, `RL_15`, `RL_20`, `RL_30`, `RL_70` | Rate Limiting (`[[ratelimits]]`, 60 s period) | Per-user command counters — one tier per distinct effective limit in `DISCORD_COMMAND_LIMITS`; KV is the fallback only when none is bound (FINDING-007) |
 
-Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
+Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID` — all four declared in **both** `wrangler.toml` blocks, since `vars` are not inheritable. `ENVIRONMENT` is `"development"` on the beta bot and `"production"` on the live one; the only thing that reads it is `validateEnv`, which requires the six `RL_*` bindings in production (FINDING-013). Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
 
 ### Required Secrets
 
@@ -182,7 +182,7 @@ Long-running handlers return `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` immediately,
 
 ### Rate Limiting
 
-`services/rate-limiter.ts` counts against the native `[[ratelimits]]` bindings (`RL_5`…`RL_70`, one per distinct per-minute limit in worker-kit's `DISCORD_COMMAND_LIMITS`), with the KV fallback used only when no tier is bound (tests / local dev). Image processing commands have tighter limits than text commands; every command is limited, including `/about`, `/manual` and `/changelog` (FINDING-020). Missing `userId` is treated as a hard reject to prevent bypass.
+`services/rate-limiter.ts` counts against the native `[[ratelimits]]` bindings (`RL_5`…`RL_70`, one per distinct per-minute limit in worker-kit's `DISCORD_COMMAND_LIMITS`), with the KV fallback used only when no tier is bound (tests / local dev). Image processing commands have tighter limits than text commands; every command is limited, including `/about`, `/manual` and `/changelog` (FINDING-020). Missing `userId` is treated as a hard reject to prevent bypass. Both degraded shapes warn once per isolate on the request logger — no tier bound (KV fallback) and a *partial* set, where worker-kit keeps the Cloudflare backend and silently routes the orphaned commands to the next larger tier — and `validateEnv` refuses to call a `production` deployment valid unless all six are bound (FINDING-013).
 
 ### SVG → PNG Pipeline
 

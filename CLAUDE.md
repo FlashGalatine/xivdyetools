@@ -14,7 +14,7 @@ xivdyetools/
 │   ├── types/               # Branded types (HexColor, DyeId, etc.) and shared interfaces
 │   ├── logger/              # Multi-runtime logging with secret redaction
 │   ├── auth/                # JWT verification, HMAC signing, Discord Ed25519, Base64URL/hex (/encoding)
-│   ├── worker-kit/          # Worker toolkit: Hono middleware + sliding-window rate limiting (Memory, KV, Upstash)
+│   ├── worker-kit/          # Worker toolkit: Hono middleware + sliding-window rate limiting (Memory, KV, Upstash, Cloudflare native binding)
 │   ├── core/                # Color algorithms, dye database (125 dyes, schema v2) + separate facewearColors (11), k-d tree, 6-language i18n, /blending
 │   ├── svg/                 # Pure SVG card generators on the 5.0 frame system (data → SVG string) + shared glyph set
 │   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic + bot UI i18n (/i18n)

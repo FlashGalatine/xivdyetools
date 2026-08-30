@@ -228,6 +228,10 @@ describe('rate-limiter.ts', () => {
   describe('native [[ratelimits]] bindings', () => {
     it.each([
       { command: 'budget', subcommand: undefined, tier: 'RL_10', key: 'budget' },
+      // RL_20 is the only tier no other row covers — without these two, a
+      // wrangler.toml that dropped it would still pass this table.
+      { command: 'dye', subcommand: undefined, tier: 'RL_20', key: 'dye' },
+      { command: 'preferences', subcommand: undefined, tier: 'RL_20', key: 'preferences' },
       { command: 'about', subcommand: undefined, tier: 'RL_30', key: 'about' },
       { command: 'manual', subcommand: undefined, tier: 'RL_30', key: 'manual' },
       // FINDING-020: worker-kit has no `changelog` tier yet — the local

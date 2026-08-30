@@ -164,8 +164,12 @@ app.use(
 );
 
 // Environment validation middleware
-// Validates required env vars once per isolate and caches result
-// Note: Discord worker doesn't have an ENVIRONMENT var, so validation always logs warnings
+// Validates required env vars on every request; the ERRORS are logged once
+// per isolate. FINDING-013 (2026-08-29 audit): `wrangler.toml` now sets
+// `ENVIRONMENT` in both blocks, so `validateEnv` additionally requires the six
+// `RL_*` rate-limit bindings on the production worker. Only a missing
+// DISCORD_TOKEN / DISCORD_PUBLIC_KEY refuses the request (below) — every other
+// error is logged and the request proceeds, unchanged by this audit.
 app.use('*', async (c, next) => {
   const result = validateEnv(c.env);
   if (!result.valid) {

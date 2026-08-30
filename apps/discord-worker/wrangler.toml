@@ -78,6 +78,11 @@ namespace_id = "1056"
 simple = { limit = 70, period = 60 }
 
 [vars]
+# FINDING-013 (2026-08-29 security audit): which deployment this is.
+# `validateEnv` requires the six `RL_*` bindings only when this reads
+# "production", so it must be declared in BOTH blocks — vars are not
+# inheritable, and a production deploy without the line would skip the check.
+ENVIRONMENT = "development"
 # The BETA Discord application — separate from production because an
 # application has exactly one Interactions Endpoint URL.
 DISCORD_CLIENT_ID = "1536085517270261771"
@@ -115,6 +120,9 @@ routes = [
 ]
 
 [env.production.vars]
+# FINDING-013: turns on validateEnv's production block (the six `RL_*`
+# bindings become required). See the top-level [vars] comment — not inherited.
+ENVIRONMENT = "production"
 DISCORD_CLIENT_ID = "1447108133020369048"
 PRESETS_API_URL = "https://api.xivdyetools.app"
 # vars are NOT inheritable — this must be repeated here or the GitHub
