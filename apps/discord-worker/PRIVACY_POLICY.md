@@ -86,7 +86,7 @@ When you use `/match_image`, your uploaded image is:
 | Service | Data Stored | Location |
 |---------|-------------|----------|
 | Cloudflare KV | Favorites, Collections, Preferences, Rate limits, usage counters and daily-activity keys (30-day TTL) | Global edge network |
-| Cloudflare D1 | Community presets, Votes, Moderation history | Cloudflare's database infrastructure |
+| Cloudflare D1 | Community presets, Votes, Moderation history, moderation-notification failure records, daily submission / edit counters (see *Data Retention*) | Cloudflare's database infrastructure |
 | Cloudflare Workers Analytics Engine | Command usage telemetry (see *Usage Analytics*) | Cloudflare's analytics infrastructure |
 
 All data is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Policy](https://www.cloudflare.com/privacypolicy/) for more information.
@@ -149,6 +149,8 @@ We will process deletion requests within 30 days.
 | Collections | Until deleted by user |
 | Community presets | Indefinitely (public content) |
 | Votes | Until removed or account deletion |
+| Moderation-notification failure records (preset id, error, timestamps) | 30 days after resolution, 90 days if unresolved — deleted immediately if the preset is deleted |
+| Daily submission / edit counters (user id, kind, timestamp) | 30 days |
 
 ## 9. Children's Privacy
 

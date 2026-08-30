@@ -390,12 +390,26 @@ presetsRouter.delete('/:id', async (c) => {
   // Captured before the batch, since the row that holds it is about to go.
   const previousKey = preset.preview_image_key;
 
-  // Delete votes and preset in transaction
+  // Delete votes, dead letters and preset in transaction
   // PRESETS-PERF-001: Using batch() for atomicity guarantee, not performance.
-  // D1 batch() ensures both deletes succeed or both fail.
-  // For 2 queries, overhead is negligible vs. transaction safety benefit.
+  // D1 batch() ensures every delete succeeds or none does.
+  // For 3 queries, overhead is negligible vs. transaction safety benefit.
+  //
+  // FINDING-017 (2026-08-29 security audit): a dead-letter row names the preset
+  // whose moderation embed never arrived. Once the preset is gone there is
+  // nothing left for a moderator to act on, and a row that survived would be
+  // the author's deletion request outlived by a record of their submission.
+  // It rides the same batch as the preset delete so the two can never disagree.
+  // `json_valid` guards the extract: SQLite raises on malformed JSON, and this
+  // delete must not be the thing that fails an owner's DELETE. `$.preset.id` is
+  // the pre-FINDING-017 shape, still present in rows that have not aged out.
   await c.env.DB.batch([
     c.env.DB.prepare('DELETE FROM votes WHERE preset_id = ?').bind(id),
+    c.env.DB.prepare(
+      `DELETE FROM failed_notifications
+       WHERE json_valid(payload)
+         AND (json_extract(payload, '$.preset_id') = ? OR json_extract(payload, '$.preset.id') = ?)`
+    ).bind(id, id),
     c.env.DB.prepare('DELETE FROM presets WHERE id = ?').bind(id),
   ]);
 
@@ -545,7 +559,7 @@ presetsRouter.patch('/:id', async (c) => {
       );
     }
     try {
-      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'text_edit', id);
+      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'text_edit', id, c.get('logger'));
     } catch (err) {
       // Best-effort, exactly like the other event kinds: a failed quota row
       // must not fail the edit. Needs migration 0012 before rows of this kind
@@ -677,7 +691,7 @@ presetsRouter.patch('/:id', async (c) => {
   // was always protecting.
   if (notifiesModerators) {
     try {
-      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'flagged_edit', id);
+      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'flagged_edit', id, c.get('logger'));
     } catch (err) {
       console.error(`[FINDING-008] submission_events insert failed: preset=${id}`, err);
     }
@@ -708,7 +722,9 @@ presetsRouter.patch('/:id', async (c) => {
       notifyDiscordBot(c.env, editPayload).catch(async (err) => {
         console.error(`[PRESETS-REF-002] Discord notification failed for preset edit: id=${updatedPreset.id}, name="${updatedPreset.name}"`, err);
         // BUG-015: Persist failed notification for moderator review
-        await storeFailedNotification(c.env.DB, editPayload, err);
+        // FINDING-017: the row keeps the preset id, not the payload, and the
+        // write prunes rows that have aged out (counts only in the log).
+        await storeFailedNotification(c.env.DB, editPayload, err, c.get('logger'));
       })
     );
   }
@@ -858,7 +874,7 @@ presetsRouter.post('/', async (c) => {
   // preset, so the daily cap cannot be refilled from the outside. Best-effort:
   // a failed insert must not fail the submission that just landed.
   try {
-    await recordSubmissionEvent(c.env.DB, auth.userDiscordId!, 'submission', preset.id);
+    await recordSubmissionEvent(c.env.DB, auth.userDiscordId!, 'submission', preset.id, c.get('logger'));
   } catch (err) {
     console.error(`[FINDING-008] submission_events insert failed: preset=${preset.id}`, err);
   }
@@ -908,7 +924,8 @@ presetsRouter.post('/', async (c) => {
     notifyDiscordBot(c.env, submissionPayload).catch(async (err) => {
       console.error(`[PRESETS-REF-002] Discord notification failed for new preset: id=${preset.id}, name="${preset.name}"`, err);
       // BUG-015: Persist failed notification for moderator review
-      await storeFailedNotification(c.env.DB, submissionPayload, err);
+      // FINDING-017: preset id only, and ageing rows are pruned on the way in.
+      await storeFailedNotification(c.env.DB, submissionPayload, err, c.get('logger'));
     })
   );
 
@@ -1069,13 +1086,14 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   c.executionCtx.waitUntil(
     notifyDiscordBot(c.env, imagePayload).catch(async (err) => {
       console.error(`[preview-image] Discord notification failed: id=${presetId}`, err);
-      await storeFailedNotification(c.env.DB, imagePayload, err);
+      // FINDING-017: preset id only — never the R2 key or the author's name.
+      await storeFailedNotification(c.env.DB, imagePayload, err, c.get('logger'));
     })
   );
 
   // FINDING-008: count this upload against the daily cap (append-only)
   try {
-    await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'preview_upload', presetId);
+    await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'preview_upload', presetId, c.get('logger'));
   } catch (err) {
     console.error(`[FINDING-008] submission_events insert failed: preset=${presetId}`, err);
   }

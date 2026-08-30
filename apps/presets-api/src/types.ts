@@ -75,6 +75,23 @@ export interface PresetModerationResult extends Omit<SharedModerationResult, 'me
 }
 
 // ============================================
+// RETENTION (Project-specific)
+// ============================================
+
+/**
+ * The slice of `ExtendedLogger` the age-based prunes need (FINDING-017,
+ * 2026-08-29 security audit). Structurally satisfied by the request logger
+ * `c.get('logger')` returns; declared narrowly because a prune must never be
+ * able to log anything but a count — no user id, no preset id, no error text
+ * (a D1 error can quote the statement that failed, and quoting a statement
+ * over these tables is how the content this finding removes gets back into a
+ * log line).
+ */
+export interface RetentionLogger {
+  warn(message: string, context?: Record<string, unknown>): void;
+}
+
+// ============================================
 // CLOUDFLARE BINDINGS (Project-specific)
 // ============================================
 

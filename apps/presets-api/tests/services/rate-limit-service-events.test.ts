@@ -15,6 +15,7 @@ import {
     DAILY_SUBMISSION_LIMIT,
     DAILY_FLAGGED_EDIT_LIMIT,
     DAILY_PREVIEW_UPLOAD_LIMIT,
+    SUBMISSION_EVENT_RETENTION_DAYS,
 } from '../../src/services/rate-limit-service';
 import { createMockD1Database } from '../test-utils';
 
@@ -85,5 +86,63 @@ describe('append-only daily quotas', () => {
     it('exposes sane default caps', () => {
         expect(DAILY_FLAGGED_EDIT_LIMIT).toBeGreaterThan(0);
         expect(DAILY_PREVIEW_UPLOAD_LIMIT).toBeGreaterThan(0);
+    });
+});
+
+/**
+ * FINDING-017 (2026-08-29 audit): `submission_events` rows named a user for
+ * ever — nothing anywhere deleted one, and the bot's retention table had no
+ * line for them. The log stays append-only from the user's point of view
+ * (FINDING-008): the prune is age-based, never scoped to a user or a kind, and
+ * only reaches rows far outside the UTC day a daily cap counts.
+ */
+describe('submission_events retention (FINDING-017)', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-08-29T12:00:00.000Z'));
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('prunes events older than 30 days before recording a new one', async () => {
+        const db = createMockD1Database();
+        db._setupMock(() => ({ meta: { changes: 0 } }));
+
+        await recordSubmissionEvent(db, '123456789012345678', 'submission', 'preset-1');
+
+        const pruneIndex = db._queries.findIndex((q) => /DELETE FROM submission_events/i.test(q));
+        expect(pruneIndex).toBeGreaterThanOrEqual(0);
+        expect(db._queries[pruneIndex]).toMatch(/created_at\s*<\s*\?/i);
+        // 2026-08-29T12:00:00Z − 30 days, in the ISO-with-milliseconds format
+        // `created_at` is written in (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')).
+        expect(db._bindings[pruneIndex]).toEqual(['2026-07-30T12:00:00.000Z']);
+        expect(SUBMISSION_EVENT_RETENTION_DAYS).toBe(30);
+
+        // Age only: a prune narrowed by user or kind would be a user-triggered
+        // delete of the very log FINDING-008 made append-only.
+        expect(db._queries[pruneIndex]).not.toMatch(/user_discord_id/i);
+        expect(db._queries[pruneIndex]).not.toMatch(/\bkind\b/i);
+
+        const insertIndex = db._queries.findIndex((q) => /INSERT INTO submission_events/i.test(q));
+        expect(insertIndex).toBeGreaterThan(pruneIndex);
+    });
+
+    it('a failed prune never costs the append-only quota row', async () => {
+        const db = createMockD1Database();
+        db._setupMock((query) => {
+            if (/DELETE FROM submission_events/i.test(query)) {
+                throw new Error('D1_ERROR: no such table: submission_events');
+            }
+            return { meta: { changes: 1 } };
+        });
+
+        await expect(
+            recordSubmissionEvent(db, '123456789012345678', 'submission', 'preset-1')
+        ).resolves.toBeUndefined();
+
+        expect(db._queries.some((q) => /DELETE FROM submission_events/i.test(q))).toBe(true);
+        expect(db._queries.some((q) => /INSERT INTO submission_events/i.test(q))).toBe(true);
     });
 });

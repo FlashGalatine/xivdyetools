@@ -1728,6 +1728,56 @@ describe('PresetsHandler', () => {
             expect(body.success).toBe(true);
         });
 
+        // FINDING-017 (docs/audits/2026-08-29-security): a dead-letter row named
+        // the preset for ever — it outlived the preset and the deletion request.
+        it('deletes the preset dead-letter rows in the same batch (FINDING-017)', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            // D1 statements are opaque once prepared, so remember the SQL each
+            // one was built from and read the batch back through that map.
+            const sqlOf = new Map<unknown, string>();
+            const prepare = mockDb.prepare.bind(mockDb);
+            mockDb.prepare = (query: string) => {
+                const statement = prepare(query);
+                sqlOf.set(statement, query);
+                return statement;
+            };
+            const batchSpy = vi.spyOn(mockDb, 'batch');
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+
+            // The cascade rides the batch that deletes the preset: it must not
+            // survive a delete that failed, nor be skipped by one that succeeded.
+            const deleteBatch = batchSpy.mock.calls
+                .map((call) => call[0].map((statement) => sqlOf.get(statement) ?? ''))
+                .find((queries) => queries.some((q) => q.includes('DELETE FROM presets')));
+            expect(deleteBatch).toBeDefined();
+            const cascade = deleteBatch!.find((q) => /DELETE FROM failed_notifications/i.test(q));
+            expect(cascade).toBeDefined();
+            expect(cascade!).toContain("json_extract(payload, '$.preset_id')");
+
+            const cascadeIndex = mockDb._queries.findIndex((q) =>
+                /DELETE FROM failed_notifications/i.test(q)
+            );
+            expect(mockDb._bindings[cascadeIndex]).toContain('preset-123');
+        });
+
         it('should allow moderator to delete any preset', async () => {
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
