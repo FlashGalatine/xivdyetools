@@ -2121,8 +2121,11 @@ describe('PresetsHandler', () => {
             expect(body.moderation_status).toBe('approved');
         });
 
+        // BUG-001 (2026-07-18) + FINDING-004 (2026-08-29): an owner edit neither
+        // self-approves a preset nor moves any other status a moderator set —
+        // a rejected preset used to be written back as 'pending' by any edit.
         it.each(['rejected', 'flagged', 'pending'] as const)(
-            'should not self-approve a %s preset via edit',
+            'should leave a %s preset in its own status after an owner edit',
             async (status) => {
                 const mockRow = createMockPresetRow({
                     id: 'preset-123',
@@ -2152,7 +2155,7 @@ describe('PresetsHandler', () => {
 
                 expect(res.status).toBe(200);
                 const body = await res.json() as { moderation_status: string };
-                expect(body.moderation_status).toBe('pending');
+                expect(body.moderation_status).toBe(status);
             }
         );
 

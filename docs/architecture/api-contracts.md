@@ -275,16 +275,34 @@ Every field is optional; at least one must be present (`No updates provided`).
 
 - `secondary_categories: []` clears the list; `example_link: null` clears the link.
 - Changing `dyes` re-runs duplicate detection (excluding this preset).
-- Changing `name`/`description` re-runs content moderation. If it fails, the preset goes to
-  `pending` and a write-once `previous_values` snapshot is taken (the moderator revert target).
-- An edit can never lift a moderator-set status: only a currently-`approved` preset stays `approved`;
-  `pending`/`rejected`/`flagged` stay in (or return to) the queue; `hidden` → 403
-  `This preset cannot be edited`.
+- Changing `name`/`description` re-runs content moderation. If it fails, a write-once
+  `previous_values` snapshot is taken (the moderator revert target), and an `approved` preset drops
+  to `pending`.
+- An edit can never move a moderator-set status (FINDING-004): the only transition an owner edit may
+  cause is `approved` → `pending` when their own new text trips moderation. `pending`, `rejected`
+  and `flagged` are left exactly as they are; `hidden` → 403 `This preset cannot be edited`.
+- Moderators are notified only when the edit gives them something new to judge: it tripped
+  moderation, or it changed the `name`/`description` of a preset that was already `pending`. A tag /
+  dye / category / example-link edit, or re-sending the stored text unchanged, notifies nobody, and
+  neither does any edit of a `rejected` or `flagged` preset. Every notification counts against
+  `DAILY_FLAGGED_EDIT_LIMIT` (10 / UTC day) — see the 429 below.
 - Vote counts are preserved across edits.
 
-**Response:**
+**Response** — `moderation_status` is the status the preset is in after the edit
+(`approved` | `pending` | `rejected` | `flagged`):
 ```json
 { "success": true, "preset": { …preset… }, "moderation_status": "approved" }
+```
+
+**429 (daily limit on edits that reach a moderator)** — nothing is written:
+```json
+{
+  "success": false,
+  "error": "RATE_LIMITED",
+  "message": "You've reached your daily limit of edits that need moderator review (10 per day). Try again tomorrow.",
+  "remaining": 0,
+  "reset_at": "…"
+}
 ```
 
 **409 (duplicate dye combination):**

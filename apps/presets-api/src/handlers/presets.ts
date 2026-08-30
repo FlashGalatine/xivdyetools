@@ -468,10 +468,12 @@ presetsRouter.patch('/:id', async (c) => {
     }
   }
 
-  // BUG-001 (2026-07-18 audit): an owner edit must never lift a moderator-set
-  // status. Hidden presets cannot be resurfaced by editing at all; a preset
-  // that is pending/rejected/flagged stays in (or returns to) the moderation
-  // queue. Only a currently-approved preset may remain approved after an edit.
+  // BUG-001 (2026-07-18 audit) / FINDING-004 (2026-08-29 security audit): a
+  // status is a moderator's decision, and an owner edit must never move one.
+  // Hidden presets cannot be edited at all; rejected and flagged presets keep
+  // the status they were given. The single status an owner edit may write is
+  // 'pending', and only because their own new text just tripped moderation on
+  // a preset that was live (see `nextStatus` below).
   if (preset.status === 'hidden') {
     return forbiddenResponse(c, 'This preset cannot be edited');
   }
@@ -479,12 +481,17 @@ presetsRouter.patch('/:id', async (c) => {
   // Determine if content moderation is needed (name or description changed)
   // PRESETS-BUG-003: Vote counts are preserved during edits - this is intentional
   // as users voted on the dye combination, not just the name/description.
-  let moderationStatus: 'approved' | 'pending' =
-    preset.status === 'approved' ? 'approved' : 'pending';
   let previousValues: PresetPreviousValues | null | undefined;
-  // FINDING-008: only an edit that itself trips moderation counts against the
-  // daily flagged-edit cap (a preset that is merely still pending does not)
+  // Did the text *this* request supplied trip moderation? (A preset that is
+  // merely still pending has not; see `notifiesModerators` below.)
   let flaggedByThisEdit = false;
+
+  // FINDING-004: the two fields a moderator actually reads. Tags, dyes, the
+  // category and the example link change nothing they judge, so an edit that
+  // touches only those brings them nothing new however often it is repeated.
+  const textChanged =
+    (body.name !== undefined && body.name !== preset.name) ||
+    (body.description !== undefined && body.description !== preset.description);
 
   if (body.name || body.description) {
     // Run content moderation on new values
@@ -510,7 +517,6 @@ presetsRouter.patch('/:id', async (c) => {
           dyes: preset.dyes,
         };
       }
-      moderationStatus = 'pending';
     }
     // PRESETS-CRITICAL-004: Do NOT clear previous_values when moderation passes.
     // previous_values holds the oldest clean snapshot (last-known-good for
@@ -518,9 +524,34 @@ presetsRouter.patch('/:id', async (c) => {
     // undefined here preserves whatever snapshot already exists.
   }
 
-  // FINDING-008: a flagged edit fans out a moderation embed, a Perspective call
-  // and dead-letter rows — cap them per user per day before persisting anything
-  if (flaggedByThisEdit) {
+  // FINDING-004: the only status transition an owner edit may cause — the text
+  // they just wrote tripped moderation on a live preset, so it leaves public
+  // view. `undefined` means "do not write the status column at all", which is
+  // what keeps a rejected or flagged preset exactly where the moderator left
+  // it. (PRESETS-BUG-002's "edit to un-flag yourself" affordance *was* the
+  // workflow bypass this closes: every edit of a non-approved preset used to
+  // be written back as 'pending', so a rejected preset re-entered the queue
+  // with its rejected text intact and a flagged one silently lost its flag.)
+  const nextStatus: 'pending' | undefined =
+    preset.status === 'approved' && flaggedByThisEdit ? 'pending' : undefined;
+  const resultingStatus = nextStatus ?? preset.status;
+
+  // FINDING-004: THE rule for putting an owner edit in front of a moderator,
+  // in one place. They hear about it only when it gives them something new to
+  // judge: text this edit flagged, or new text on a preset already waiting in
+  // their queue. A rejected or flagged preset has already been judged and is
+  // already out of public view, so editing one notifies nobody — resubmission,
+  // if the product ever wants it, is a separate explicit action.
+  const ownerMayQueue = preset.status === 'pending' || preset.status === 'approved';
+  const notifiesModerators =
+    ownerMayQueue && (flaggedByThisEdit || (preset.status === 'pending' && textChanged));
+
+  // FINDING-008 + FINDING-004: every moderator notification fans out a
+  // moderation embed and, when it fails, dead-letter rows — cap them per user
+  // per day before persisting anything. Only edits that tripped moderation
+  // used to be capped, so `PATCH {"tags":["a"]}` on the caller's own pending
+  // preset sent one uncapped embed per request.
+  if (notifiesModerators) {
     const cap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'flagged_edit');
     if (!cap.allowed) {
       return c.json(
@@ -537,8 +568,6 @@ presetsRouter.patch('/:id', async (c) => {
   }
 
   // Update the preset
-  // PRESETS-BUG-002: Always pass moderation status so that presets
-  // previously flagged can be un-flagged when the user fixes the content
   let updatedPreset;
   try {
     updatedPreset = await updatePreset(
@@ -546,7 +575,7 @@ presetsRouter.patch('/:id', async (c) => {
       id,
       body,
       previousValues,
-      moderationStatus
+      nextStatus
     );
   } catch (error) {
     // BUG-003 (2026-07-18 audit): the duplicate pre-check races with concurrent
@@ -576,8 +605,11 @@ presetsRouter.patch('/:id', async (c) => {
     return internalErrorResponse(c, 'Failed to update preset');
   }
 
-  // FINDING-008: count this flagged edit against the daily cap (append-only)
-  if (flaggedByThisEdit) {
+  // FINDING-008 + FINDING-004: count this notification against the daily cap
+  // (append-only). Same event kind as before, so no migration is needed — the
+  // kind now means "an edit that reached a moderator", which is what the cap
+  // was always protecting.
+  if (notifiesModerators) {
     try {
       await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'flagged_edit', id);
     } catch (err) {
@@ -585,18 +617,24 @@ presetsRouter.patch('/:id', async (c) => {
     }
   }
 
-  // If flagged, notify Discord for moderation
+  // Notify Discord for moderation when this edit brought something new to judge
   // PRESETS-REF-002: Fire-and-forget notification - errors don't fail the request
   // but are logged with preset context for debugging
-  if (moderationStatus === 'pending') {
+  if (notifiesModerators) {
     const editPayload: PresetNotificationPayload = {
       type: 'submission',
       preset: {
         ...updatedPreset,
         author_name: preset.author_name || 'Unknown User',
         author_discord_id: preset.author_discord_id,
+        // Every branch of `notifiesModerators` leaves the preset pending: a
+        // preset that was already pending stays there, and an approved one
+        // whose new text was flagged has just been moved there.
         status: 'pending',
-        moderation_status: 'flagged',
+        // FINDING-004: a clean text edit on a preset that is merely still in
+        // the queue has not tripped anything — claiming 'flagged' told
+        // moderators every edit had failed the filter.
+        moderation_status: flaggedByThisEdit ? 'flagged' : 'clean',
         source: auth.authSource,
       },
     };
@@ -609,10 +647,15 @@ presetsRouter.patch('/:id', async (c) => {
     );
   }
 
+  // FINDING-004: the status the preset is actually in now — 'pending' only
+  // when it really is queued for review. It used to report 'pending' for a
+  // rejected or flagged preset as well, telling the owner an edit had put
+  // their preset back in front of a moderator when nothing of the sort
+  // happened.
   return c.json({
     success: true,
     preset: updatedPreset,
-    moderation_status: moderationStatus,
+    moderation_status: resultingStatus,
   });
 });
 
