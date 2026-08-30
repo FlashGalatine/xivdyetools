@@ -65,11 +65,12 @@ export interface RateLimitResult {
 
   /**
    * FINDING-012 (2026-08-29 security audit): set when the underlying backend
-   * (currently only the native Cloudflare binding) errored and the request was
-   * allowed through on the fail-open trade-off. The limiter below is a
-   * per-isolate singleton and so cannot hold a request-scoped logger — the
-   * caller (index.ts's command / autocomplete paths) reads this flag and logs
-   * the event with the logger it has for THIS request. Deliberately not
+   * (the native Cloudflare binding, or worker-kit's KV backend — both set it,
+   * see `packages/worker-kit/src/rate-limiter/backends/kv.ts`) errored and the
+   * request was allowed through on the fail-open trade-off. The limiter below
+   * is a per-isolate singleton and so cannot hold a request-scoped logger —
+   * the caller (index.ts's command / autocomplete paths) reads this flag and
+   * logs the event with the logger it has for THIS request. Deliberately not
    * surfaced to the client in any header: that would tell an abuser exactly
    * when the limiter is off.
    */

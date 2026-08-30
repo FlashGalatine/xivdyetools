@@ -54,11 +54,39 @@ type Variables = MiddlewareVariables;
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+// REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
+app.use('*', requestIdMiddleware());
+app.use('*', loggerMiddleware({
+  serviceName: 'xivdyetools-moderation-worker',
+  readEnvironmentFromEnv: false,
+  sanitizePath: sanitizeUrl,
+}));
+
+// Security headers middleware
+app.use('*', async (c, next) => {
+  await next();
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('X-Frame-Options', 'DENY');
+  c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  c.header('Cache-Control', 'no-store');
+  c.header('Content-Security-Policy', "default-src 'none'");
+  c.header('Referrer-Policy', 'no-referrer');
+});
+
 // Environment validation middleware.
 // REFACTOR-001: Added full env validation alongside existing security config check.
 // The env is re-validated on EVERY request; only the reporting is once per
 // isolate (see FINDING-013 below — a misconfigured worker must not be able to
 // serve one 500 and then quietly process the rest of the isolate's traffic).
+//
+// Registered AFTER requestIdMiddleware / loggerMiddleware / the security
+// headers middleware (2026-08-29 audit follow-up): those three are `await
+// next()`-then-decorate middleware, so whichever response the REST of the
+// chain produces — including this gate's own early 500 — still passes back
+// through them and picks up a request id and the hardened headers. Before
+// this reorder the gate ran first and returned before any of the three ran,
+// so its 500 carried neither (env-validation-gate.test.ts's `nosniff` /
+// `X-Request-Id` assertions pin this).
 let startupValidationDone = false;
 app.use('*', async (c, next) => {
   // REFACTOR-001: Full environment variable validation
@@ -103,25 +131,6 @@ app.use('*', async (c, next) => {
   }
 
   return next();
-});
-
-// REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
-app.use('*', requestIdMiddleware());
-app.use('*', loggerMiddleware({
-  serviceName: 'xivdyetools-moderation-worker',
-  readEnvironmentFromEnv: false,
-  sanitizePath: sanitizeUrl,
-}));
-
-// Security headers middleware
-app.use('*', async (c, next) => {
-  await next();
-  c.header('X-Content-Type-Options', 'nosniff');
-  c.header('X-Frame-Options', 'DENY');
-  c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  c.header('Cache-Control', 'no-store');
-  c.header('Content-Security-Policy', "default-src 'none'");
-  c.header('Referrer-Policy', 'no-referrer');
 });
 
 /**

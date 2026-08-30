@@ -54,10 +54,29 @@
 -- guard is deliberate — without it a second run would rebuild the table again
 -- and silently discard every `target_discord_id` written since. The same error
 -- is the right answer on a database created fresh from `schema.sql`, which
--- already carries the new shape. (The one state the guard cannot re-enter — the
--- column added but the rebuild abandoned before `ALTER … RENAME` — should be
--- unreachable for an atomic batch; if it ever happens, run this file with its
--- first statement removed.)
+-- already carries the new shape.
+--
+-- The one state the guard cannot re-enter — the column added but the rebuild
+-- abandoned before `ALTER … RENAME` — should be unreachable for a single
+-- atomic batch, but treat it as possible (a `--file` run is not guaranteed to
+-- be one transaction end to end). Recovery depends on which side of
+-- `DROP TABLE moderation_log` it stopped on — check with
+-- `wrangler d1 execute xivdyetools-presets --remote --command "SELECT COUNT(*) FROM moderation_log"`:
+-- an error ("no such table") means it dropped; a row count means it didn't.
+--   * Abandoned BEFORE the DROP (`moderation_log` still exists): re-run this
+--     file with its first statement (the `ALTER TABLE … ADD COLUMN`) removed,
+--     exactly as the paragraph above.
+--   * Abandoned AFTER the DROP (`moderation_log` is gone; `moderation_log_new`
+--     is the ONLY copy and already holds every migrated row): do NOT re-run
+--     the file, even with its first statement removed — its next statement is
+--     `DROP TABLE IF EXISTS moderation_log_new`, which would destroy that
+--     surviving copy and then fail (the following `INSERT … SELECT … FROM
+--     moderation_log` has no source table left to select from). Instead, run
+--     only the two statements that finish the rebuild from where it stopped:
+--       ALTER TABLE moderation_log_new RENAME TO moderation_log;
+--       CREATE INDEX IF NOT EXISTS idx_moderation_log_preset ON moderation_log(preset_id);
+--       CREATE INDEX IF NOT EXISTS idx_moderation_log_moderator ON moderation_log(moderator_discord_id);
+--       CREATE INDEX IF NOT EXISTS idx_moderation_log_created ON moderation_log(created_at DESC);
 --
 -- `npm run db:migrate` will NOT apply this: schema.sql is all
 -- CREATE TABLE IF NOT EXISTS, so it skips the existing table and exits 0.

@@ -91,6 +91,15 @@ describe('FINDING-013: production refuses requests while a rate-limit binding is
 
       expect(res.status).toBe(500);
       expect(await res.json()).toEqual({ error: 'Service misconfigured' });
+      // The gate must run AFTER requestIdMiddleware / loggerMiddleware / the
+      // security-headers middleware, not before them — otherwise this 500
+      // carries neither a request id nor the hardened headers every other
+      // response gets (moderation-worker CLAUDE.md's Global Error Handler /
+      // Hardened Security Headers sections).
+      expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+      expect(res.headers.get('X-Request-Id')).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
     },
   );
 

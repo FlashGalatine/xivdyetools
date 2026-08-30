@@ -25,7 +25,7 @@
 | **Web Application** | v5.0.0 | `xivdyetools-web-app` | Cloudflare Pages | Active — release pending |
 | **Discord Bot** | v5.1.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
 | **Image Worker** | v1.1.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.5.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.6.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.0.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.2.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
 | **Public REST API** | v0.9.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
@@ -256,6 +256,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.6.0** | **Aug 2026** | **2026-08-29 security audit — ban/unban/hide/restore written to `moderation_log` via presets-api migration 0013 (FINDING-018); ban log line ids-only (FINDING-011); rate-limiter fail-open surfaced (FINDING-012); production refuses every request while an RL binding is missing (FINDING-013); v1 bot signature no longer sent (FINDING-015); `wrangler.toml` invariant test (FINDING-023)** |
 | **v1.5.0** | **Aug 2026** | **2026-08-21 security audit — native `RL_COMMAND` / `RL_AUTOCOMPLETE` rate-limit bindings (FINDING-003); autocomplete moderator-gated (FINDING-006); ban-flow `custom_id`s carry only the snowflake, username resolved from D1 (FINDING-007); command registration guild-scoped** |
 | **v1.4.0** | **Aug 2026** | **Image-only queue entries marked instead of mis-approved; new preset category rows; `worker-kit`; dev/prod `wrangler.toml` split (bare deploy = routeless `-dev` worker)** |
 | **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-035 throw-safe outcome-checked Discord API wrappers (failures logged, not silently dropped), BUG-073 `MODERATOR_IDS` parsed via the shared `@xivdyetools/bot-logic` grammar** |
