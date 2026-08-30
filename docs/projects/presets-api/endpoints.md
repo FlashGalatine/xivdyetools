@@ -44,6 +44,21 @@ List all preset categories with their preset counts.
 
 ## Presets (Public)
 
+Every preset leaving this Worker over HTTP passes through `toPublicPreset()`
+(`services/preset-service.ts`), which decides who sees the author's Discord id (FINDING-016,
+2026-08-29 audit):
+
+| Caller | `author_discord_id` | `is_owner` |
+|--------|---------------------|------------|
+| Anonymous | absent | absent |
+| Web (JWT), someone else's preset | absent | `false` |
+| Web (JWT), own preset | present | `true` |
+| Web (JWT), moderator | present | `true` / `false` |
+| Bot (HMAC) | present | absent (bot responses are unchanged) |
+
+`author_name` is the author identity the gallery shows and is sent to everyone. The moderation
+routes and the server-to-bot notification payloads keep the id.
+
 ### `GET /api/v1/presets`
 
 List approved presets with pagination.

@@ -33,6 +33,8 @@ import {
   findDuplicatePresetExcluding,
   createPreset,
   updatePreset,
+  toPublicPreset,
+  type PublicPreset,
 } from '../services/preset-service.js';
 import { moderateContent } from '../services/moderation-service.js';
 // PRESETS-REF-001 FIX: Import from centralized validation service
@@ -94,6 +96,21 @@ function stripAuditData<T extends { previous_values?: unknown }>(preset: T): Omi
   return publicPreset;
 }
 
+/**
+ * FINDING-016: every preset this router hands to an HTTP client goes through
+ * `toPublicPreset` (author id / `is_owner` rule) — never past it. The audit
+ * snapshot rule differs per route, so `stripAuditData` stays the caller's
+ * decision and composes here. The notification payloads deliberately use the
+ * raw preset instead: the bots need the author id.
+ */
+function presetForViewer(
+  preset: CommunityPreset,
+  auth: AuthContext,
+  { keepAuditData = false }: { keepAuditData?: boolean } = {}
+): PublicPreset {
+  return toPublicPreset(keepAuditData ? preset : stripAuditData(preset), auth);
+}
+
 // FINDING-017 (PAPI-9): the ban check covers EVERY mutating route on this
 // router — DELETE /:id, PATCH /refresh-author and DELETE /:id/preview-image
 // previously had none. Registered once, here, ahead of the routes, so a new
@@ -152,13 +169,17 @@ async function respondToDuplicate(
     const voteResult = await addVote(c.env.DB, duplicate.id, auth.userDiscordId!);
     return c.json({
       success: true,
-      duplicate: isPrivileged ? duplicate : stripAuditData(duplicate),
+      duplicate: presetForViewer(duplicate, auth, { keepAuditData: isPrivileged }),
       vote_added: voteResult.success && !voteResult.already_voted,
     });
   }
 
   if (isPrivileged) {
-    return c.json({ success: true, duplicate, vote_added: false });
+    return c.json({
+      success: true,
+      duplicate: presetForViewer(duplicate, auth, { keepAuditData: true }),
+      vote_added: false,
+    });
   }
 
   return c.json(
@@ -219,10 +240,12 @@ presetsRouter.get('/', async (c) => {
   };
 
   const response = await getPresets(c.env.DB, filters, c.get('logger'));
-  if (!auth.isModerator) {
-    return c.json({ ...response, presets: response.presets.map(stripAuditData) });
-  }
-  return c.json(response);
+  return c.json({
+    ...response,
+    presets: response.presets.map((preset) =>
+      presetForViewer(preset, auth, { keepAuditData: auth.isModerator })
+    ),
+  });
 });
 
 /**
@@ -230,9 +253,10 @@ presetsRouter.get('/', async (c) => {
  * Get top-voted presets for homepage display
  */
 presetsRouter.get('/featured', async (c) => {
+  const auth = c.get('auth');
   const presets = await getFeaturedPresets(c.env.DB, c.get('logger'));
   // BUG-014 (2026-07-18 audit): keep audit snapshots out of public responses
-  return c.json({ presets: presets.map(stripAuditData) });
+  return c.json({ presets: presets.map((preset) => presetForViewer(preset, auth)) });
 });
 
 // ============================================
@@ -257,7 +281,9 @@ presetsRouter.get('/mine', async (c) => {
   const presets = await getPresetsByUser(c.env.DB, auth.userDiscordId!, c.get('logger'));
 
   return c.json({
-    presets,
+    // Every row here is the caller's own, so the id and the audit snapshot both
+    // stay — this is the view the "My Submissions" page and the edit form read.
+    presets: presets.map((preset) => presetForViewer(preset, auth, { keepAuditData: true })),
     total: presets.length,
   });
 });
@@ -703,7 +729,9 @@ presetsRouter.patch('/:id', async (c) => {
 
   return c.json({
     success: true,
-    preset: updatedPreset,
+    // Owner-only route (see the ownership check above), so the caller always
+    // gets their own id back and `is_owner: true`.
+    preset: presetForViewer(updatedPreset, auth, { keepAuditData: true }),
     ...(reportedStatus !== undefined && { moderation_status: reportedStatus }),
   });
 });
@@ -732,7 +760,7 @@ presetsRouter.get('/:id', async (c) => {
   const isPrivileged =
     auth.isModerator ||
     (auth.userDiscordId !== undefined && preset.author_discord_id === auth.userDiscordId);
-  return c.json(isPrivileged ? preset : stripAuditData(preset));
+  return c.json(presetForViewer(preset, auth, { keepAuditData: isPrivileged }));
 });
 
 /**
@@ -887,7 +915,8 @@ presetsRouter.post('/', async (c) => {
   return c.json(
     {
       success: true,
-      preset,
+      // The submitter's own brand-new preset: their id comes back with it.
+      preset: presetForViewer(preset, auth, { keepAuditData: true }),
       moderation_status: status,
       // OPT-016: derived from the enforcement count above — no extra query
       remaining_submissions: Math.max(0, DAILY_SUBMISSION_LIMIT - submissionsToday),

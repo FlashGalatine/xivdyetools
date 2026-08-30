@@ -14,6 +14,7 @@ import {
     createMockPresetRow,
     createMockSubmission,
     authHeaders,
+    createTestJWT,
 } from '../test-utils';
 
 type Variables = {
@@ -3328,6 +3329,225 @@ describe('PresetsHandler', () => {
             );
 
             expect(res.status).toBe(200);
+        });
+    });
+
+    // ============================================
+    // FINDING-016 (2026-08-29 security audit): author_discord_id is not public
+    // ============================================
+
+    describe('author_discord_id visibility (FINDING-016)', () => {
+        const AUTHOR = 'author-9001';
+        const STRANGER = 'stranger-4242';
+        const MODERATOR = '123456789'; // In MODERATOR_IDS
+
+        const authorRow = (overrides: Record<string, unknown> = {}) =>
+            createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: AUTHOR,
+                author_name: 'TestUser',
+                ...overrides,
+            });
+
+        /** A web session token — the identity a browser client presents. */
+        const jwtFor = (sub: string) =>
+            createTestJWT(env.JWT_SECRET as string, { sub, username: 'Someone' });
+
+        type PresetBody = Record<string, unknown>;
+
+        it('is absent from every preset in the anonymous listing', async () => {
+            mockDb._setupMock(() => [{ ...authorRow(), _total: 1 }]);
+
+            const res = await app.request('/api/v1/presets', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: PresetBody[] };
+            expect(body.presets[0]).not.toHaveProperty('author_discord_id');
+            expect(body.presets[0].author_name).toBe('TestUser');
+        });
+
+        it('is absent from an anonymous search / category listing', async () => {
+            mockDb._setupMock(() => [{ ...authorRow(), _total: 1 }]);
+
+            const res = await app.request('/api/v1/presets?search=sunset&category=jobs', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: PresetBody[] };
+            expect(body.presets[0]).not.toHaveProperty('author_discord_id');
+            expect(body.presets[0].author_name).toBe('TestUser');
+        });
+
+        it('is absent from the anonymous featured list', async () => {
+            mockDb._setupMock(() => [authorRow()]);
+
+            const res = await app.request('/api/v1/presets/featured', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: PresetBody[] };
+            expect(body.presets[0]).not.toHaveProperty('author_discord_id');
+            expect(body.presets[0].author_name).toBe('TestUser');
+        });
+
+        it('is absent from an anonymous detail response', async () => {
+            mockDb._setupMock(() => authorRow());
+
+            const res = await app.request('/api/v1/presets/preset-123', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as PresetBody;
+            expect(body).not.toHaveProperty('author_discord_id');
+            expect(body.author_name).toBe('TestUser');
+        });
+
+        it('reaches the owner, with is_owner: true (the edit form needs both)', async () => {
+            mockDb._setupMock(() => authorRow());
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                { headers: authHeaders(await jwtFor(AUTHOR)) },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as PresetBody;
+            expect(body.author_discord_id).toBe(AUTHOR);
+            expect(body.is_owner).toBe(true);
+        });
+
+        it('does not reach another signed-in user, who is told is_owner: false', async () => {
+            mockDb._setupMock(() => authorRow());
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                { headers: authHeaders(await jwtFor(STRANGER)) },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as PresetBody;
+            expect(body).not.toHaveProperty('author_discord_id');
+            expect(body.is_owner).toBe(false);
+        });
+
+        it('reaches a moderator — they act on the author', async () => {
+            mockDb._setupMock(() => authorRow());
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                { headers: authHeaders(await jwtFor(MODERATOR)) },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as PresetBody;
+            expect(body.author_discord_id).toBe(AUTHOR);
+            expect(body.is_owner).toBe(false);
+        });
+
+        it('reaches a moderator listing non-approved presets', async () => {
+            mockDb._setupMock(() => [{ ...authorRow({ status: 'pending' }), _total: 1 }]);
+
+            const res = await app.request(
+                '/api/v1/presets?status=pending',
+                { headers: authHeaders(await jwtFor(MODERATOR)) },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: PresetBody[] };
+            expect(body.presets[0].author_discord_id).toBe(AUTHOR);
+        });
+
+        it('reaches the bot, whose own owner check needs it', async () => {
+            mockDb._setupMock(() => authorRow());
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                { headers: authHeaders('test-bot-secret', STRANGER, 'Someone') },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as PresetBody;
+            expect(body.author_discord_id).toBe(AUTHOR);
+        });
+
+        it('is present on the caller\'s own /mine listing, with is_owner: true', async () => {
+            mockDb._setupMock(() => [authorRow()]);
+
+            const res = await app.request(
+                '/api/v1/presets/mine',
+                { headers: authHeaders(await jwtFor(AUTHOR)) },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: PresetBody[] };
+            expect(body.presets[0].author_discord_id).toBe(AUTHOR);
+            expect(body.presets[0].is_owner).toBe(true);
+        });
+
+        it('is present on the owner\'s edit response, with is_owner: true', async () => {
+            mockDb._setupMock(() => authorRow({ status: 'approved' }));
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeaders(await jwtFor(AUTHOR)),
+                    },
+                    body: JSON.stringify({ tags: ['updated'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { preset: PresetBody };
+            expect(body.preset.author_discord_id).toBe(AUTHOR);
+            expect(body.preset.is_owner).toBe(true);
+        });
+
+        it('is present on the submitter\'s own creation response, with is_owner: true', async () => {
+            const waitUntilPromises: Promise<unknown>[] = [];
+            const mockExecutionCtx = {
+                waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                passThroughOnException: () => {},
+            };
+            mockDb._setupMock((query: string) => {
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                }
+                if (query.includes('dye_signature')) {
+                    return null;
+                }
+                if (query.includes('COUNT')) {
+                    return { count: 0 };
+                }
+                return { success: true };
+            });
+
+            const res = await app.request(
+                '/api/v1/presets',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeaders(await jwtFor(AUTHOR)),
+                    },
+                    body: JSON.stringify(createMockSubmission()),
+                },
+                env,
+                mockExecutionCtx as unknown as ExecutionContext
+            );
+
+            expect(res.status).toBe(201);
+            const body = await res.json() as { preset: PresetBody };
+            expect(body.preset.author_discord_id).toBe(AUTHOR);
+            expect(body.preset.is_owner).toBe(true);
+
+            await Promise.all(waitUntilPromises);
         });
     });
 });

@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
     generateDyeSignature,
     rowToPreset,
+    toPublicPreset,
     getPresets,
     getFeaturedPresets,
     getPresetById,
@@ -23,7 +24,7 @@ import {
     createMockPresetRow,
     createMockSubmission,
 } from '../test-utils';
-import type { PresetRow } from '../../src/types';
+import type { AuthContext, PresetRow } from '../../src/types';
 
 describe('PresetService', () => {
     beforeEach(() => {
@@ -769,5 +770,102 @@ describe('secondary categories and preview_image_status', () => {
     );
     expect(approved.preview_image_status).toBe('approved');
     expect(approved.preview_image_url).toBe('https://shots.xivdyetools.app/p/a.webp');
+  });
+});
+
+// ============================================
+// toPublicPreset — FINDING-016 (2026-08-29 security audit)
+// ============================================
+
+describe('toPublicPreset', () => {
+  const AUTHOR = 'author-discord-id';
+
+  const preset = () => rowToPreset(createMockPresetRow({
+    author_discord_id: AUTHOR,
+    author_name: 'TestUser',
+  }));
+
+  const anonymous: AuthContext = {
+    isAuthenticated: false,
+    isModerator: false,
+    authSource: 'none',
+  };
+  const owner: AuthContext = {
+    isAuthenticated: true,
+    isModerator: false,
+    userDiscordId: AUTHOR,
+    authSource: 'web',
+  };
+  const stranger: AuthContext = {
+    isAuthenticated: true,
+    isModerator: false,
+    userDiscordId: 'someone-else',
+    authSource: 'web',
+  };
+  const moderator: AuthContext = {
+    isAuthenticated: true,
+    isModerator: true,
+    userDiscordId: 'moderator-id',
+    authSource: 'web',
+  };
+  const bot: AuthContext = {
+    isAuthenticated: true,
+    isModerator: false,
+    userDiscordId: 'someone-else',
+    authSource: 'bot',
+  };
+
+  it('omits author_discord_id for an anonymous viewer but keeps the display name', () => {
+    const view = toPublicPreset(preset(), anonymous);
+
+    expect(view).not.toHaveProperty('author_discord_id');
+    expect(view.author_name).toBe('TestUser');
+  });
+
+  it('tells an anonymous viewer nothing about ownership', () => {
+    expect(toPublicPreset(preset(), anonymous)).not.toHaveProperty('is_owner');
+  });
+
+  it('gives the owner their own id and is_owner: true', () => {
+    const view = toPublicPreset(preset(), owner);
+
+    expect(view.author_discord_id).toBe(AUTHOR);
+    expect(view.is_owner).toBe(true);
+  });
+
+  it('gives another signed-in user is_owner: false and no id', () => {
+    const view = toPublicPreset(preset(), stranger);
+
+    expect(view.is_owner).toBe(false);
+    expect(view).not.toHaveProperty('author_discord_id');
+  });
+
+  it('gives a moderator the id (they act on the author) with is_owner: false', () => {
+    const view = toPublicPreset(preset(), moderator);
+
+    expect(view.author_discord_id).toBe(AUTHOR);
+    expect(view.is_owner).toBe(false);
+  });
+
+  it('leaves a bot response untouched — the bots do their own owner checks', () => {
+    const view = toPublicPreset(preset(), bot);
+
+    expect(view.author_discord_id).toBe(AUTHOR);
+    expect(view).not.toHaveProperty('is_owner');
+  });
+
+  it('never claims ownership of a curated preset with no author', () => {
+    const curated = rowToPreset(createMockPresetRow({ author_discord_id: null }));
+    const view = toPublicPreset(curated, { ...owner, userDiscordId: undefined });
+
+    expect(view.is_owner).toBe(false);
+    expect(view).not.toHaveProperty('author_discord_id');
+  });
+
+  it('does not mutate the source preset — the notification payloads still need the id', () => {
+    const source = preset();
+    toPublicPreset(source, anonymous);
+
+    expect(source.author_discord_id).toBe(AUTHOR);
   });
 });

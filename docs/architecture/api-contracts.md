@@ -98,7 +98,9 @@ POST/PATCH bodies (415 otherwise). Field-level rules come from
 ### The preset object
 
 Every route that returns a preset returns this shape (`CommunityPreset` in `@xivdyetools/types`,
-serialised by `rowToPreset()` in `services/preset-service.ts`):
+serialised by `rowToPreset()` and then by `toPublicPreset()` in `services/preset-service.ts`, which
+applies the viewer rules for `author_discord_id` / `is_owner` below). The example is what an
+**anonymous** caller receives:
 
 ```json
 {
@@ -109,7 +111,6 @@ serialised by `rowToPreset()` in `services/preset-service.ts`):
   "secondary_categories": ["aesthetics"],
   "dyes": [23, 40, 57],
   "tags": ["tank", "earthy"],
-  "author_discord_id": "123456789012345678",
   "author_name": "Username",
   "vote_count": 42,
   "status": "approved",
@@ -131,6 +132,9 @@ serialised by `rowToPreset()` in `services/preset-service.ts`):
 | `category_id` | Primary category slug: `jobs`, `grand-companies`, `seasons`, `events`, `aesthetics`, `appearance`, `zones`, `raids-trials`. There is no `community` category (migration 0007). |
 | `secondary_categories` | 0–2 further slugs, never containing `category_id`. Category filters match either slot. |
 | `status` | `pending` \| `approved` \| `rejected` \| `flagged` \| `hidden` (hidden = author banned; restored on unban). |
+| `author_name` | The author's display name at submission time — the only author identity an anonymous caller receives. |
+| `author_discord_id` | The author's Discord snowflake. **Never sent to an anonymous caller** (FINDING-016, 2026-08-29 audit): the key is absent unless the viewer is the preset's own author, a moderator, or a bot (HMAC) caller. `null` for curated presets. |
+| `is_owner` | Added for a signed-in **web (JWT)** caller: `true` when the preset is theirs. Absent from anonymous responses (they are told nothing about ownership) and from bot responses (unchanged for the bots). |
 | `vote_count` | Single toggleable upvote count. There are no downvotes. |
 | `dye_signature` | Sorted `dyes` as JSON (`"[23,40,57]"`); UNIQUE in D1 and the basis of duplicate detection. Omitted when null. |
 | `previous_values` | `{ name, description, tags, dyes }` snapshot taken the first time an edit is flagged (revert target). **Stripped from every public response** — present only for the owner (`GET /presets/:id`, `/mine`) and moderators. |
@@ -589,7 +593,9 @@ Base URL: `https://bot.xivdyetools.app`. presets-api never uses the URL — it c
 ### POST /webhooks/preset-submission
 
 Receives preset notifications from presets-api (`services/notification-service.ts`; consumer types in
-`apps/discord-worker/src/types/preset.ts`). Body ≤ 10 KB.
+`apps/discord-worker/src/types/preset.ts`). Body ≤ 10 KB. This payload is server-to-bot and keeps
+`author_discord_id` — the moderation embed needs it; the FINDING-016 rule above governs HTTP
+responses to clients, not this webhook.
 
 **Headers:**
 ```http
