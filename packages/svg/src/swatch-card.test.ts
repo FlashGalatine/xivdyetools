@@ -87,7 +87,7 @@ describe('generateSwatchCard', () => {
   it('renders the identifier lines and the column heads', () => {
     const svg = generateSwatchCard(defaultOptions);
 
-    expect(svg).toContain('Character swatch');
+    expect(svg).toContain(defaultOptions.title);
     expect(svg).toContain('Miqo&apos;te ♀ · Ktisis');
     expect(svg).toContain('>SLOT</text>');
     expect(svg).toContain('NEAREST DYE');
@@ -164,20 +164,25 @@ describe('generateSwatchCard', () => {
     expect(svg).not.toContain(CARD_DARK.surface);
   });
 
-  it('escapes character names rather than emitting raw markup', () => {
+  it('escapes the title rather than emitting raw markup', () => {
     const svg = generateSwatchCard({ ...defaultOptions, title: '<script>x</script>' });
 
     expect(svg).toContain('&lt;script&gt;');
     expect(svg).not.toContain('<script>');
   });
 
-  it('never displays a character name — the title is the neutral card label only', () => {
-    // Guards against a future option re-adding a name field: with `title` set
-    // to the neutral localized label and no name anywhere in the options, the
-    // rendered SVG must carry that label and nothing name-shaped.
-    const svg = generateSwatchCard({ ...defaultOptions, title: 'Character swatch' });
+  it('takes no character-name option — the title is the neutral card label only', () => {
+    // Type-level guard (chara-name privacy, 3.0.0): `charName` was removed
+    // and the card must never grow a name-shaped option again. If one is
+    // re-added, the excess-property error below disappears and the
+    // `@ts-expect-error` itself fails type-check.
+    const options: SwatchCardOptions = {
+      ...defaultOptions,
+      // @ts-expect-error — no `charName` on SwatchCardOptions; pass a neutral `title`
+      charName: 'Nunh Test',
+    };
+    const svg = generateSwatchCard(options);
 
-    expect(svg).toContain('Character swatch');
-    expect(svg).not.toContain('Nunh Test');
+    expect(svg).toContain(defaultOptions.title);
   });
 });

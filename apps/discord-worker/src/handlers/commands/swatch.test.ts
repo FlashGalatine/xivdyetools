@@ -215,6 +215,9 @@ describe('/swatch attachment handling', () => {
       expect(mockExecuteSwatch).toHaveBeenCalledWith(
         expect.objectContaining({ fileText: '{"SkinColor":1}' }),
       );
+      // The attachment filename must never reach the renderer — players name
+      // exports "Firstname Lastname.chara" (chara-name privacy, bot-logic 3.0.0).
+      expect(mockExecuteSwatch.mock.calls[0][0]).not.toHaveProperty('fileName');
     });
 
     it('still refuses an attachment Discord itself reports as over the cap', async () => {
