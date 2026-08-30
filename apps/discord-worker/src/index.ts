@@ -306,8 +306,10 @@ app.post('/webhooks/preset-submission', async (c) => {
   }
 
   const { preset } = payload;
+  // FINDING-011 (2026-08-29 security audit): the preset's name is
+  // user-authored free text about a submission that may never be published —
+  // the id identifies it just as well for anything a log needs to answer.
   logger.info('Received preset webhook', {
-    presetName: preset.name,
     presetId: preset.id,
     source: preset.source,
   });

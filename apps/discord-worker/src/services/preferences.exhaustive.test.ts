@@ -18,6 +18,7 @@ import {
   resetPreference,
   setPreference,
   validatePreferenceValue,
+  WORLD_NAME_MAX_LENGTH,
 } from './preferences.js';
 import type { PreferenceKey } from '../types/preferences.js';
 
@@ -138,6 +139,56 @@ describe('validatePreferenceValue', () => {
     expect(validatePreferenceValue('count', '3')).toEqual({ valid: true });
     expect(validatePreferenceValue('count', 'three').valid).toBe(false);
   });
+
+  // FINDING-019 (2026-08-29 security audit): `world` used to accept ANY
+  // non-empty string, so a 6000-character Discord option value was stored
+  // verbatim in `prefs:v1:<userId>` and later forwarded to the Universalis
+  // proxy and the price-cache key. The sync guard is a shape check only —
+  // whether the name exists is settled by the async `validateWorld()`.
+  describe('world (FINDING-019)', () => {
+    it('rejects a value longer than the schema cap', () => {
+      expect(validatePreferenceValue('world', 'B'.repeat(WORLD_NAME_MAX_LENGTH + 1))).toEqual({
+        valid: false,
+        reason: 'invalidWorld',
+      });
+    });
+
+    it('accepts a value exactly at the cap', () => {
+      expect(validatePreferenceValue('world', 'B'.repeat(WORLD_NAME_MAX_LENGTH))).toEqual({
+        valid: true,
+      });
+    });
+
+    it.each([
+      ['NUL', 'Bal\u0000mung'],
+      ['newline', 'Bal\nmung'],
+      ['unit separator', 'Bal\u001Fmung'],
+      ['DEL', 'Bal\u007Fmung'],
+    ])('rejects an embedded %s control character', (_label, value) => {
+      expect(validatePreferenceValue('world', value)).toEqual({
+        valid: false,
+        reason: 'invalidWorld',
+      });
+    });
+
+    // The CN and KR worlds are non-Latin: an ASCII check would lock those
+    // players out of `/budget` entirely.
+    it.each([['红玉海'], ['카벙클'], ['Ravana']])('accepts the non-Latin world %s', (value) => {
+      expect(validatePreferenceValue('world', value)).toEqual({ valid: true });
+    });
+
+    it('accepts a padded value — length is measured after trimming', () => {
+      expect(validatePreferenceValue('world', '  Balmung  ')).toEqual({ valid: true });
+      expect(validatePreferenceValue('world', `  ${'B'.repeat(32)}  `)).toEqual({ valid: true });
+    });
+
+    it('still rejects a whitespace-only value', () => {
+      expect(validatePreferenceValue('world', '   ')).toEqual({
+        valid: false,
+        reason: 'invalidWorld',
+      });
+    });
+  });
 });
 
 describe('setPreference — one arm per key', () => {
@@ -188,6 +239,51 @@ describe('setPreference — one arm per key', () => {
 
     expect(result).toEqual({ success: false, reason: 'error' });
     expect(logger.error).toHaveBeenCalled();
+  });
+
+  // FINDING-011 (2026-08-29 security audit): the failure log carried the
+  // preference VALUE — the user's home world, clan or language, i.e. mildly
+  // identifying personal data, in a log line. Shape only from now on.
+  it('logs the shape of a failed value, never the value itself', async () => {
+    const failing = memoryKv();
+    vi.mocked(failing.put).mockRejectedValue(new Error('KV down'));
+    const logger = silentLogger();
+
+    await setPreference(failing, 'user-1', 'world', 'Gilgamesh', logger as never);
+
+    const context = logger.error.mock.calls[0]?.[2] as Record<string, unknown>;
+    expect(context).toEqual({ key: 'world', valueType: 'string', valueLength: 9 });
+    expect(JSON.stringify(logger.error.mock.calls)).not.toContain('Gilgamesh');
+  });
+
+  it('records no length for a non-string failed value', async () => {
+    const failing = memoryKv();
+    vi.mocked(failing.put).mockRejectedValue(new Error('KV down'));
+    const logger = silentLogger();
+
+    await setPreference(failing, 'user-1', 'count', 5, logger as never);
+
+    expect(logger.error.mock.calls[0]?.[2]).toEqual({
+      key: 'count',
+      valueType: 'number',
+      valueLength: undefined,
+    });
+  });
+
+  // FINDING-019: `/budget set_world` hands over an already-canonical name,
+  // but `/preferences set world:` is free text — what is stored must be the
+  // trimmed value the validator measured, not the padded original.
+  it('stores a world without its surrounding whitespace', async () => {
+    await setPreference(kv, 'user-1', 'world', '  Balmung  ');
+
+    expect(JSON.parse([...kv.store.values()][0]).world).toBe('Balmung');
+  });
+
+  it('refuses an over-long world without touching KV', async () => {
+    const result = await setPreference(kv, 'user-1', 'world', 'B'.repeat(33));
+
+    expect(result).toEqual({ success: false, reason: 'invalidWorld' });
+    expect(kv.put).not.toHaveBeenCalled();
   });
 
   it('survives a KV write failure with no logger', async () => {

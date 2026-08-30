@@ -270,6 +270,51 @@ describe('index.ts', () => {
       expect(call.embeds[0].description).toContain('/preset moderate');
     });
 
+    // FINDING-011 (2026-08-29 security audit): the webhook's own log line
+    // carried `presetName` — user-authored free text describing an
+    // unpublished submission — into the structured log sink. The assertion is
+    // on what actually reaches the sink (the JSON adapter writes to
+    // console.log), not on the call arguments, so a name reintroduced
+    // anywhere in this request's logging fails it.
+    it('logs the preset id and source, never the submitted name', async () => {
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+      const sink = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const preset = {
+        id: 'preset-789',
+        name: 'Sunset Over Costa del Sol',
+        description: 'A private draft',
+        category_id: 'test-category',
+        author_name: 'Test Author',
+        source: 'web' as const,
+        dyes: [1, 2, 3],
+        tags: [],
+        status: 'pending' as const,
+        created_at: new Date().toISOString(),
+      };
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test-webhook-secret' },
+        body: JSON.stringify({ type: 'submission', preset }),
+      });
+
+      const res = await app.fetch(req, mockEnv, mockCtx);
+      const emitted = sink.mock.calls.map(([line]) => String(line));
+      sink.mockRestore();
+
+      expect(res.status).toBe(200);
+      const webhookLine = emitted.find((line) => line.includes('Received preset webhook'));
+      expect(webhookLine, 'the webhook log line never ran').toBeDefined();
+      expect(
+        (JSON.parse(webhookLine!) as { context?: Record<string, unknown> }).context,
+      ).toMatchObject({ presetId: 'preset-789', source: 'web' });
+      expect(emitted.filter((line) => line.includes(preset.name))).toEqual([]);
+    });
+
     it('should handle approved preset submission', async () => {
       const { timingSafeEqual } = await import('@xivdyetools/auth');
       const { sendMessage } = await import('./utils/discord-api.js');

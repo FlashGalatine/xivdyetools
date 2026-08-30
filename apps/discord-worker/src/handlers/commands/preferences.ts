@@ -22,7 +22,9 @@ import {
   resetPreference,
   getDefaultValue,
   getAffectedCommands,
+  validatePreferenceValue,
 } from '../../services/preferences.js';
+import { validateWorld } from '../../services/budget/index.js';
 import {
   BLENDING_MODES,
   MATCHING_METHODS,
@@ -302,13 +304,33 @@ async function handleSetSubcommand(
 
   for (const opt of options) {
     const key = resolveOptionKey(opt.name);
-    const value = opt.value;
+    let value = opt.value;
 
     // Skip if no value provided
     if (value === undefined) continue;
 
     // Validate key is a known preference
     if (!PREFERENCE_ORDER.includes(key)) continue;
+
+    // FINDING-019 (2026-08-29 security audit): `world` writes the same field
+    // `/budget set_world` fills, and `/budget` prices against it — so it
+    // takes the same Universalis lookup here, and what gets stored is the
+    // CANONICAL name ("balmung" → "Balmung"). The cheap shape guard runs
+    // first so a rejected value never costs a lookup.
+    if (key === 'world' && typeof value === 'string') {
+      const typed = value.trim();
+      const shape = validatePreferenceValue('world', typed);
+      if (!shape.valid) {
+        updates.push({ key, value: typed, success: false, reason: shape.reason });
+        continue;
+      }
+      const canonical = await validateWorld(env, typed, logger);
+      if (!canonical) {
+        updates.push({ key, value: typed, success: false, reason: 'invalidWorld' });
+        continue;
+      }
+      value = canonical;
+    }
 
     // Attempt to set the preference
     const result = await setPreference(env.KV, userId, key, value, logger);
