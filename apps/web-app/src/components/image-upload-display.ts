@@ -181,7 +181,7 @@ export class ImageUploadDisplay extends BaseComponent {
       textContent: LanguageService.t('matcher.privacyLearnMore'),
       className: 'underline font-semibold',
       attributes: {
-        href: 'https://github.com/FlashGalatine/xivdyetools-web-app/blob/main/docs/PRIVACY.md',
+        href: 'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/web-app/PRIVACY.md',
         target: '_blank',
         rel: 'noopener noreferrer',
       },

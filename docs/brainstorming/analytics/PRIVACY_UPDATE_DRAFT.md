@@ -1,8 +1,8 @@
 # Proposed PRIVACY.md Updates
 
-**Status**: Draft for Review
+**Status**: **Applied 2026-08-29** — superseded by [`apps/web-app/PRIVACY.md`](../../../apps/web-app/PRIVACY.md) (PR #149). The shipped design differs from this draft: analytics are **opt-in (default OFF)**, switched in Advanced Options → *Enable Analytics*, honour Global Privacy Control, use Analytics Engine only (no Cloudflare Web Analytics, no country-level data), and the code lives in the monorepo (`apps/web-app/src/services/telemetry-service.ts`, `apps/api-worker/src/telemetry/`) rather than a separate worker. Kept for history.
 **Date**: January 15, 2026
-**Context**: Proposed additions to [xivdyetools-web-app/docs/PRIVACY.md](../../xivdyetools-web-app/docs/PRIVACY.md) for analytics transparency
+**Context**: Proposed additions to the archived web-app repo's `docs/PRIVACY.md` for analytics transparency
 
 ---
 
