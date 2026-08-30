@@ -5,6 +5,8 @@
  * project-specific types for the presets API worker.
  */
 
+import type { ModerationResult as SharedModerationResult } from '@xivdyetools/types';
+
 // ============================================
 // RE-EXPORT SHARED TYPES
 // ============================================
@@ -39,6 +41,38 @@ export type { AuthSource, AuthContext } from '@xivdyetools/types';
  * These re-exports will be removed in the next major version.
  */
 export type { ModerationResult, ModerationLogEntry, RateLimitResult } from '@xivdyetools/types';
+
+// ============================================
+// MODERATION (Project-specific)
+// ============================================
+
+/**
+ * How a moderation verdict was reached — the shared `ModerationResult.method`
+ * plus this worker's fourth outcome.
+ *
+ * FINDING-005 (2026-08-29 security audit): a Perspective call that produced no
+ * usable verdict (non-OK status including 429, the 5 s timeout, a thrown fetch,
+ * an unparsable body) used to return `null`, which `moderateContent` read as
+ * "clean, checked locally". Perspective's default quota is ~1 QPS, so a burst
+ * of edits auto-approved everything behind the first 429 with only the local
+ * word list — one entry — standing between it and publication.
+ * `'perspective_unavailable'` is a *failure to decide*, never a pass: it is
+ * reported with `passed: false` so every caller queues the content for a human,
+ * and it is distinguishable from `'perspective'` (a real toxicity verdict) for
+ * logging and for the moderator-facing copy.
+ *
+ * This union is local to presets-api rather than widened in `@xivdyetools/types`
+ * because it describes this worker's moderation pipeline, not the published
+ * preset contract, which is unchanged.
+ */
+export type PresetModerationMethod =
+  | SharedModerationResult['method']
+  | 'perspective_unavailable';
+
+/** A `ModerationResult` that can also report "the service could not answer". */
+export interface PresetModerationResult extends Omit<SharedModerationResult, 'method'> {
+  method: PresetModerationMethod;
+}
 
 // ============================================
 // CLOUDFLARE BINDINGS (Project-specific)

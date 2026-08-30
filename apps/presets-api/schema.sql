@@ -181,15 +181,17 @@ CREATE INDEX IF NOT EXISTS idx_failed_notifications_unresolved
   WHERE resolved_at IS NULL;
 
 -- ============================================
--- SUBMISSION EVENTS TABLE (Migration 0011 / FINDING-008)
+-- SUBMISSION EVENTS TABLE (Migrations 0011 / FINDING-008, 0012 / FINDING-005)
 -- Append-only per-user log of quota-bearing mutations (submission,
--- flagged_edit, preview_upload). User actions never delete rows here, so the
--- daily caps cannot be reset by deleting one's own presets.
+-- flagged_edit, preview_upload, text_edit). User actions never delete rows
+-- here, so the daily caps cannot be reset by deleting one's own presets.
+-- An EXISTING database needs migrations/0012_submission_events_text_edit.sql
+-- for 'text_edit' — this file only ever creates missing tables.
 -- ============================================
 CREATE TABLE IF NOT EXISTS submission_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_discord_id TEXT NOT NULL,
-  kind TEXT NOT NULL CHECK (kind IN ('submission', 'flagged_edit', 'preview_upload')),
+  kind TEXT NOT NULL CHECK (kind IN ('submission', 'flagged_edit', 'preview_upload', 'text_edit')),
   preset_id TEXT,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );

@@ -12,7 +12,8 @@ This document explains security-related design decisions where we've consciously
 2. [Fail-Open Rate Limiting](#fail-open-rate-limiting)
 3. [JWT Algorithm Restrictions](#jwt-algorithm-restrictions)
 4. [Timing-Safe Comparison Fallback](#timing-safe-comparison-fallback)
-5. [Summary Matrix](#summary-matrix)
+5. [Content Moderation Fails Closed](#content-moderation-fails-closed)
+6. [Summary Matrix](#summary-matrix)
 
 ---
 
@@ -246,6 +247,57 @@ if (input[1] !== secret[1]) return false; // Slightly slower
 
 ---
 
+## Content Moderation Fails Closed
+
+**ID:** FINDING-005 (2026-08-29 security audit) | **Status:** INTENTIONAL | **Priority:** Safety
+
+### The Trade-Off
+
+`presets-api` moderates a preset's name and description with a local word list plus Google Perspective. When Perspective is *configured* but cannot produce a verdict — non-OK status (429 included), the 5 s timeout, a thrown fetch, an unparsable body — the content is **not published**. It is persisted with status `pending` and a moderator is notified, exactly as if the text had been flagged.
+
+```
+PERSPECTIVE_API_KEY set ─► verdict          ─► pass / flag as scored
+                        ─► no verdict       ─► pending + notify moderators  (fail closed)
+PERSPECTIVE_API_KEY unset ─► local list alone decides                       (dev / tests)
+```
+
+This is the opposite choice from [Fail-Open Rate Limiting](#fail-open-rate-limiting) above, deliberately: a skipped rate-limit check costs some spare capacity, a skipped moderation check publishes whatever was typed under the project's name.
+
+### Why We Accept the Cost
+
+Perspective's default quota is about **1 QPS**. Before this, a failed call returned `null` and `moderateContent` reported `{ passed: true, method: 'local' }` — so a burst that pushed Perspective to 429 auto-approved everything behind it, with a **single-entry** local list as the only remaining filter (`src/data/profanity/en.ts`). The failure mode was both cheap to trigger and invisible.
+
+| Factor | Assessment |
+|--------|------------|
+| **Cost of failing closed** | A queue entry a moderator clears; the author sees `moderation_status: "pending"` |
+| **Cost of failing open** | Unmoderated text published under the project's name, on a card the bot renders into Discord |
+| **Frequency** | Bounded by the caps below; a genuine Perspective outage queues the day's submissions |
+| **Recovery** | Automatic — the next successful call scores normally; queued items are approved by hand |
+
+### Mitigations
+
+1. **A distinct outcome, not a silent one**: `method: 'perspective_unavailable'` (with `passed: false`) is separate from `'perspective'`, so a real toxicity verdict and a non-answer are distinguishable in logs and in moderator-facing copy.
+2. **Per-user pre-moderation cap**: `DAILY_TEXT_EDIT_LIMIT` = 30 name/description edits per UTC day (`submission_events` kind `text_edit`, migration `0012`), checked **before** the Perspective call and for every preset status, so one account cannot drive Perspective to 429 and cannot flood the queue by failing it. Submissions (10/day) and notifying edits (10/day) keep their own caps.
+3. **The slot is charged at the point of spend**, not after a successful UPDATE — otherwise a user already refused by the flagged-edit cap could loop text edits, spending a Perspective call each time and never being counted.
+4. **Local list still runs first** and short-circuits, so an obvious hit never reaches Perspective at all.
+5. **Dev/test unchanged**: with no `PERSPECTIVE_API_KEY` there is nothing to fail, and the local list alone decides.
+
+### Code References
+
+```typescript
+// apps/presets-api/src/services/moderation-service.ts
+//   moderationUnavailable() — { passed: false, method: 'perspective_unavailable' }
+//   checkWithPerspective()  — null ONLY when no key is configured
+// apps/presets-api/src/handlers/presets.ts
+//   PATCH /:id — checkDailyEventLimit(db, user, 'text_edit') before moderateContent
+// apps/presets-api/src/services/rate-limit-service.ts — DAILY_TEXT_EDIT_LIMIT
+// apps/presets-api/migrations/0012_submission_events_text_edit.sql
+```
+
+Related: FINDING-006 in the same audit moved the Perspective key out of the query string into the `x-goog-api-key` header and added `doNotStore: true`, so the user-typed text is not retained for research.
+
+---
+
 ## Summary Matrix
 
 | Trade-Off | We Chose | Over | Rationale |
@@ -254,6 +306,7 @@ if (input[1] !== secret[1]) return false; // Slightly slower
 | Fail-Open | **Availability** | Strict enforcement | Users > abuse prevention for hobby tool |
 | Single JWT Algorithm | **Security** | Flexibility | Eliminates entire class of attacks |
 | Timing-Safe Fallback | **Compatibility** | Guarantee | Best-effort is sufficient for our threat model |
+| Moderation Fail-Closed | **Safety** | Availability of publishing | A queued preset costs a moderator a click; an unmoderated one is published under our name |
 
 ---
 
@@ -265,6 +318,7 @@ These trade-offs should be reconsidered if:
 2. **Fail-Open**: Service becomes target of coordinated abuse
 3. **JWT Algorithm**: Need to accept tokens from external issuers
 4. **Timing-Safe**: Protecting high-value secrets in non-Worker environments
+5. **Moderation Fail-Closed**: Perspective outages start filling the queue faster than moderators drain it — the answer is a paid quota or a second scorer, not a fail-open path
 
 ---
 

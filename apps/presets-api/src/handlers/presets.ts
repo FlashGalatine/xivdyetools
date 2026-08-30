@@ -57,6 +57,8 @@ import {
   recordSubmissionEvent,
   DAILY_FLAGGED_EDIT_LIMIT,
   DAILY_PREVIEW_UPLOAD_LIMIT,
+  // FINDING-005: pre-moderation cap on name/description edits
+  DAILY_TEXT_EDIT_LIMIT,
 } from '../services/rate-limit-service.js';
 import {
   notifyDiscordBot,
@@ -494,6 +496,39 @@ presetsRouter.patch('/:id', async (c) => {
     (body.description !== undefined && body.description !== preset.description);
 
   if (body.name || body.description) {
+    // FINDING-005: the Perspective call is the scarce resource — its default
+    // quota is ~1 QPS — so the per-user cap has to sit in front of it. The
+    // flagged-edit cap below cannot do that job: it runs *after* the call, and
+    // only for edits that reach a moderator, so edits moderation clears and any
+    // edit of an already-judged (rejected / flagged) preset used to spend a
+    // Perspective call bounded only by the 100/min per-IP limiter. This cap
+    // applies to every status, and the slot is charged here, at the point of
+    // spend, rather than after a successful UPDATE — otherwise a user sitting
+    // on the flagged-edit 429 could loop text edits and never be counted.
+    const textEditCap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'text_edit');
+    if (!textEditCap.allowed) {
+      return c.json(
+        {
+          success: false,
+          error: ErrorCode.RATE_LIMITED,
+          message: `You've reached your daily limit of name and description edits (${DAILY_TEXT_EDIT_LIMIT} per day). Try again tomorrow.`,
+          remaining: 0,
+          reset_at: textEditCap.resetAt.toISOString(),
+        },
+        429
+      );
+    }
+    try {
+      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'text_edit', id);
+    } catch (err) {
+      // Best-effort, exactly like the other event kinds: a failed quota row
+      // must not fail the edit. Needs migration 0012 before rows of this kind
+      // are accepted — until it is applied the cap simply never engages.
+      c.get('logger')?.error('[FINDING-005] submission_events text_edit insert failed', err, {
+        preset_id: id,
+      });
+    }
+
     // Run content moderation on new values
     const nameToCheck = body.name || preset.name;
     const descriptionToCheck = body.description || preset.description;
@@ -504,6 +539,11 @@ presetsRouter.patch('/:id', async (c) => {
       c.env
     );
 
+    // FINDING-005: `passed: false` now covers a third outcome —
+    // `method: 'perspective_unavailable'`, meaning nobody judged this text. It
+    // is handled here exactly like flagged content: the write-once revert
+    // snapshot is taken, an approved preset drops to `pending`, and a moderator
+    // is notified (subject to the flagged-edit cap below).
     if (!moderationResult.passed) {
       flaggedByThisEdit = true;
       // BUG-052 (2026-07-18 audit): write-once snapshot — only capture
