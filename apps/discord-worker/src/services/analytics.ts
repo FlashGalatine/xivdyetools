@@ -221,7 +221,13 @@ export async function trackUniqueUser(
  * Track command for both Analytics Engine and KV-based stats.
  *
  * Buttons write to Analytics Engine only; KV counters feed /stats' per-command panel
- * which is command-only.
+ * which is command-only. Rate-limited requests are AE-only too (`blob5 =
+ * 'rate_limited'`): the limiter exists to absorb bursts, and each KV counter is
+ * a read-modify-write on a shared hot key (`total`, `failure`, `cmd:<name>`)
+ * capped at one write per second — routing rejected spam through them would
+ * 429 the writes, burn the daily KV write budget and let one user's rejected
+ * burst drive the PUBLIC `/stats` success rate and top-10. Pre-Tier-A the
+ * rate-limit early return touched KV zero times; that is preserved.
  */
 export async function trackCommandWithKV(
   env: Env,
@@ -230,8 +236,9 @@ export async function trackCommandWithKV(
   // Write to Analytics Engine (for long-term storage)
   trackCommand(env, event);
 
-  // Buttons are AE-only: the KV counters feed /stats' per-command panel.
-  if (event.kind === 'button') return;
+  // Buttons and rate-limited requests are AE-only: the KV counters feed
+  // /stats' per-command panel, which counts commands that actually ran.
+  if (event.kind === 'button' || event.outcome === 'rate_limited') return;
 
   // Also update KV counters for in-worker querying
   await Promise.all([

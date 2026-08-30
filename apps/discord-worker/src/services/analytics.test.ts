@@ -81,21 +81,6 @@ function createMockAnalytics() {
   };
 }
 
-// Create mock Env for direct test calls
-function createMockEnv() {
-  const mockKV = createMockKV();
-  const mockAnalytics = createMockAnalytics();
-  return {
-    DISCORD_PUBLIC_KEY: 'test-key',
-    DISCORD_TOKEN: 'test-token',
-    DISCORD_CLIENT_ID: 'test-app-id',
-    PRESETS_API_URL: 'https://test-api.example.com',
-    INTERNAL_WEBHOOK_SECRET: 'test-secret', // pragma: allowlist secret
-    KV: mockKV,
-    ANALYTICS: mockAnalytics as unknown as AnalyticsEngineDataset,
-  } as Env;
-}
-
 describe('analytics.ts', () => {
   let mockKV: ReturnType<typeof createMockKV>;
   let mockAnalytics: ReturnType<typeof createMockAnalytics>;
@@ -177,10 +162,8 @@ describe('analytics.ts', () => {
     });
 
     it('writes the Tier A column layout with defaults for the new fields', () => {
-      const env = createMockEnv();
-      trackCommand(env, { commandName: 'harmony', userId: 'u1', guildId: 'g1', success: true });
-      const analytics = env.ANALYTICS as unknown as { writeDataPoint: ReturnType<typeof vi.fn> };
-      expect(analytics.writeDataPoint).toHaveBeenCalledWith({
+      trackCommand(mockEnv, { commandName: 'harmony', userId: 'u1', guildId: 'g1', success: true });
+      expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
         indexes: ['harmony'],
         blobs: ['harmony', 'u1', 'guild', '1', 'ok', '', 'other', 'command'],
         doubles: [1, 0, 1],
@@ -188,13 +171,11 @@ describe('analytics.ts', () => {
     });
 
     it('writes subcommand, locale, outcome, kind and latency when provided', () => {
-      const env = createMockEnv();
-      trackCommand(env, {
+      trackCommand(mockEnv, {
         commandName: 'dye', userId: 'u1', success: false,
         outcome: 'upstream_presets', subcommand: 'info', locale: 'ja', kind: 'command', latencyMs: 1234,
       });
-      const analytics = env.ANALYTICS as unknown as { writeDataPoint: ReturnType<typeof vi.fn> };
-      expect(analytics.writeDataPoint).toHaveBeenCalledWith({
+      expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
         indexes: ['dye'],
         blobs: ['dye', 'u1', 'dm', '0', 'upstream_presets', 'info', 'ja', 'command'],
         doubles: [0, 1234, 1],
@@ -202,10 +183,8 @@ describe('analytics.ts', () => {
     });
 
     it('defaults outcome to unknown for a failure without a class', () => {
-      const env = createMockEnv();
-      trackCommand(env, { commandName: 'dye', userId: 'u1', success: false });
-      const analytics = env.ANALYTICS as unknown as { writeDataPoint: ReturnType<typeof vi.fn> };
-      expect(analytics.writeDataPoint.mock.calls[0][0].blobs[4]).toBe('unknown');
+      trackCommand(mockEnv, { commandName: 'dye', userId: 'u1', success: false });
+      expect(mockAnalytics.writeDataPoint.mock.calls[0][0].blobs[4]).toBe('unknown');
     });
 
     it('should silently skip when Analytics is not configured', () => {
@@ -385,17 +364,28 @@ describe('analytics.ts', () => {
 
   describe('trackCommandWithKV', () => {
     it('writes a button datapoint without touching KV counters', async () => {
-      const env = createMockEnv();
-      await trackCommandWithKV(env, {
+      await trackCommandWithKV(mockEnv, {
         commandName: 'button', userId: 'u1', success: true, kind: 'button', subcommand: 'copy_hex',
       });
-      const analytics = env.ANALYTICS as unknown as { writeDataPoint: ReturnType<typeof vi.fn> };
-      expect(analytics.writeDataPoint).toHaveBeenCalledWith({
+      expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
         indexes: ['button'],
         blobs: ['button', 'u1', 'dm', '1', 'ok', 'copy_hex', 'other', 'button'],
         doubles: [1, 0, 1],
       });
-      expect((env.KV as unknown as { put: ReturnType<typeof vi.fn> }).put).not.toHaveBeenCalled();
+      expect(mockKV.put).not.toHaveBeenCalled();
+      expect(mockKV.get).not.toHaveBeenCalled();
+    });
+
+    it('writes a rate-limited request to Analytics Engine only — no KV counter moves', async () => {
+      await trackCommandWithKV(mockEnv, {
+        commandName: 'harmony', userId: 'u1', success: false, outcome: 'rate_limited', kind: 'command',
+      });
+      expect(mockAnalytics.writeDataPoint).toHaveBeenCalledTimes(1);
+      expect(mockAnalytics.writeDataPoint.mock.calls[0][0].blobs[4]).toBe('rate_limited');
+      expect(mockKV.put).not.toHaveBeenCalled();
+      expect(mockKV.getWithMetadata).not.toHaveBeenCalled();
+      expect(mockKV.get).not.toHaveBeenCalled();
+      expect(await getCounter(mockKV as unknown as KVNamespace, 'failure')).toBe(0);
     });
 
     it('should track both Analytics Engine and KV counters', async () => {
