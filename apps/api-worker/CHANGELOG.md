@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **`POST /v1/telemetry` accepted a batch from anyone, and believed whatever environment it claimed** (`docs/audits/2026-08-29-security` FINDING-014). Any third-party page could `sendBeacon` allowlisted events from its visitors' browsers — or a script could `curl` them — straight into the production dataset, so the four product metrics were poisonable and the production/beta split (one `blob9` value, since beta shares the production worker) was whatever the body asserted. The sink now gates on the sender before it reads a byte of the body: only `Origin: https://xivdyetools.app` and `https://beta.xivdyetools.app` are written — plus `http://localhost[:port]` / `http://127.0.0.1[:port]` when `ENVIRONMENT` is not `production`, for `wrangler dev` — and the accepted origin *is* the `env` dimension, so a beta page can no longer label its traffic `production`. An unaccepted beacon gets the same bare `204` with no write rather than a 4xx (the client is `sendBeacon` and cannot read the response; a 403 would only inform a scripted sender), and the `Origin` value never reaches a log line. The column layout and the event allowlist are unchanged — only how `blob9` is computed. New `src/telemetry/origin.ts`; matching is exact, so `https://xivdyetools.app.evil.example` and `http://xivdyetools.app` are rejected.
+- **`Sec-GPC: 1` beacons are now dropped server-side.** The web app's privacy page promises analytics never run when the browser sends the Global Privacy Control signal, but the promise was kept only client-side — a batch that reached the worker with the header set was still written. Such a request now answers `204` with no datapoint and no log line of its own.
+- **The telemetry rate-limit bucket fails closed.** With `failOpen: true` and `onError: 'fail-open'`, a broken limiter backend admitted unlimited batches, each worth up to 25 metered Analytics Engine writes. Both settings are flipped (`failOpen: false` makes the backend rethrow instead of swallowing the error into `allowed: true`; `onError: 'fail-closed'` turns the throw into the existing minimal 429 body — either alone left the gap open). The `/v1/*` `API_RATE_LIMITER` bucket is deliberately unchanged and still fails open: dropping a beacon costs nothing, dropping a dye lookup costs a user.
+
 ## [0.9.0] - 2026-08-29
 
 Minor bump: one new (internal) endpoint and two new bindings; no change to the public `/v1` contract.

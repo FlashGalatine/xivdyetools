@@ -91,6 +91,8 @@ so `sendBeacon` needs no preflight; the server parses the text as JSON regardles
 }
 ```
 
+> **Addendum 2026-08-30 (FINDING-014, `docs/audits/2026-08-29-security`):** the server no longer takes `env` from the body — it derives it from the request `Origin` (`https://xivdyetools.app` → `production`, `https://beta.xivdyetools.app` → `beta`), and only a loopback origin on a non-production worker still falls back to the body field; any other origin, and any beacon carrying `Sec-GPC: 1`, is dropped with a bare 204.
+
 Limits: ≤ 25 events per batch (AE allows 25 `writeDataPoint` calls per invocation), ≤ 16 KB body.
 Event order inside a batch is preserved by array order; the server does not use client timestamps —
 AE stamps each datapoint at write time (batching skews times by ≤ 15 s, which is fine for these

@@ -172,6 +172,34 @@ describe('parseTelemetryBatch', () => {
     expect(parsed!.points[0].blobs[7]).toBe('5.0.3-beta.20260');
   });
 
+  it('lets a server-derived env override the body without touching the other columns', () => {
+    // FINDING-014: the env dimension now comes from the request Origin, so a
+    // beta page can no longer label its traffic 'production'.
+    const parsed = parseTelemetryBatch(
+      batch([{ n: 'tool_view', p: { tool: 'harmony', entry: 'nav' } }], { env: 'production' }),
+      { env: 'beta' },
+    );
+    expect(parsed!.points).toEqual([
+      {
+        indexes: ['tool_view'],
+        blobs: ['tool_view', 'harmony', 'nav', '', 'en', 'standard-dark', 'd', '5.0.3', 'beta'],
+        doubles: [0],
+      },
+    ]);
+  });
+
+  it('falls back to the validated body env when no server env is supplied', () => {
+    // The localhost case on a non-production worker: no origin-derived env.
+    const events = [{ n: 'tool_view', p: { tool: 'harmony', entry: 'nav' } }];
+    expect(parseTelemetryBatch(batch(events, { env: 'beta' }), {})!.points[0].blobs[8]).toBe('beta');
+    expect(
+      parseTelemetryBatch(batch(events, { env: 'beta' }), { env: undefined })!.points[0].blobs[8],
+    ).toBe('beta');
+    expect(parseTelemetryBatch(batch(events, { env: 'staging' }), {})!.points[0].blobs[8]).toBe(
+      'invalid',
+    );
+  });
+
   it("rejects a ver with trailing free text as 'invalid'", () => {
     const parsed = parseTelemetryBatch(
       batch([{ n: 'tool_view', p: { tool: 'harmony', entry: 'nav' } }], {

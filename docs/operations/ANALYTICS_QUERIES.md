@@ -40,6 +40,11 @@ api-worker; schema in `apps/api-worker/src/telemetry/schema.ts`. Spec:
 | `blob5`–`blob9` | locale · theme · viewport (m/t/d) · app version · env |
 | `double1` | `active_s` for tool_leave, else 0 |
 
+**Addendum 2026-08-30 (FINDING-014):** `blob9` is server-derived from the request
+`Origin` (`https://xivdyetools.app` → `production`, `https://beta.xivdyetools.app`
+→ `beta`), not taken from the beacon body — production/beta splits are now
+trustworthy, and rows written before 2026-08-30 are not.
+
 What counts (the hooks are deliberately narrow):
 
 - `entry`: `initial` = the tool the page loaded into; `share` = the page loaded from a share link

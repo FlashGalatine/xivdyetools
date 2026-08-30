@@ -106,12 +106,20 @@ export const rateLimitMiddleware = createApiRateLimitMiddleware(isTelemetryPath)
  * that address — so beacons draw on `TELEMETRY_RATE_LIMITER` (240 / 60 s,
  * ≈ 60 tabs at the steady rate) and never on `API_RATE_LIMITER`. The client
  * ignores the response either way (`sendBeacon`), so the 429 body is minimal.
+ *
+ * FINDING-014 (2026-08-29 audit): this bucket fails CLOSED, unlike the API
+ * one. A broken backend used to admit unlimited batches, each worth up to 25
+ * metered Analytics Engine writes; a dropped beacon costs nothing but a data
+ * point, so unavailability must not widen the sink. `failOpen: false` makes
+ * the backend rethrow instead of swallowing the error into `allowed: true`,
+ * and `onError: 'fail-closed'` below turns that throw into a 429 — either
+ * setting alone leaves the gap open.
  */
 const TELEMETRY_LIMIT = {
   maxRequests: 240,
   windowMs: 60_000,
   burstAllowance: 0,
-  failOpen: true,
+  failOpen: false,
 } as const;
 
 /** Backend for the telemetry bucket: the native binding when bound, KV (own key prefix) otherwise. */
@@ -131,13 +139,16 @@ export function selectTelemetryRateLimiter(env: Env): RateLimiter {
   return new KVRateLimiter({ kv: env.RATE_LIMIT, keyPrefix: 'telemetry:ip:' });
 }
 
-/** Build a fresh `/v1/telemetry` rate-limit middleware (factory for the same reason as above). */
+/**
+ * Build a fresh `/v1/telemetry` rate-limit middleware (factory for the same
+ * reason as above). Fails closed — see TELEMETRY_LIMIT (FINDING-014).
+ */
 export function createTelemetryRateLimitMiddleware(): MiddlewareHandler {
   return createRateLimitMiddleware({
     backend: (c: Context<{ Bindings: Env }>) => selectTelemetryRateLimiter(c.env),
     keyExtractor: (c) => getClientIp(c.req.raw),
     config: TELEMETRY_LIMIT,
-    onError: 'fail-open',
+    onError: 'fail-closed',
     formatError: (c: Context<{ Bindings: Env; Variables: Variables }>, retryAfter) =>
       c.json(
         {
