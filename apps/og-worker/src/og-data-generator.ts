@@ -356,6 +356,8 @@ export function generateComparisonOGData(
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
+  // Title/description only ever name the first 4 (a card can't reasonably
+  // list 16 names) — unchanged from before this fix.
   const dyes = params.dyes.slice(0, 4).map((id) => getDyeInfo(id, locale)).filter(Boolean);
 
   if (dyes.length === 0) {
@@ -363,12 +365,23 @@ export function generateComparisonOGData(
   }
 
   const dyeNames = dyes.map((d) => d!.name).join(', ');
+  // 2026-08-29 FINDING-024 (OG-4, Sprint 7 fix wave): the PICTURE can show
+  // up to OG_MAX_COMPARISON_DYES (16), not just the 4 the title names, so
+  // this filters the FULL list — not the sliced-to-4 `dyes` above — down to
+  // ids that actually resolve. Before this it was the raw, unfiltered
+  // `params.dyes`: a share URL mixing a bogus id with valid ones
+  // (?dyes=-5,1,2) baked that bogus id into the emitted /og/comparison/…
+  // URL even though it never resolved to a dye or appeared in the card —
+  // the same "many spellings render one card" amplification the /og/*
+  // route's canonical grammar (ruling S7-R12) now rejects at the route, so
+  // this emitter must never produce a spelling that grammar would reject.
+  const validIds = params.dyes.filter((id) => getDyeInfo(id, locale) !== null);
 
   return {
     title: site(embed('comparison.title', locale, { names: dyeNames })),
     description: embed('comparison.description', locale, { n: dyes.length, names: dyeNames }),
     url: `${env.APP_BASE_URL}/comparison/?dyes=${params.dyes.join(',')}&v=1`,
-    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/comparison/${params.dyes.join(',')}.png`, locale),
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/comparison/${validIds.join(',')}.png`, locale),
     siteName: SITE_NAME,
     themeColor: dyes[0]!.hex,
     locale,
@@ -383,6 +396,7 @@ export function generateAccessibilityOGData(
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
+  // Title/description only ever name the first 4 — unchanged from before this fix.
   const dyes = params.dyes.slice(0, 4).map((id) => getDyeInfo(id, locale)).filter(Boolean);
   const visionName = params.vision
     ? getLocalizedVisionName(params.vision, locale)
@@ -393,12 +407,17 @@ export function generateAccessibilityOGData(
   }
 
   const dyeNames = dyes.map((d) => d!.name).join(', ');
+  // 2026-08-29 FINDING-024 (OG-4, Sprint 7 fix wave): same reasoning as
+  // generateComparisonOGData above — the picture can show up to
+  // OG_MAX_COMPARISON_DYES, so this filters the FULL list, not the
+  // sliced-to-4 `dyes` above.
+  const validIds = params.dyes.filter((id) => getDyeInfo(id, locale) !== null);
 
   return {
     title: site(embed('accessibility.title', locale, { lens: visionName, names: dyeNames })),
     description: embed('accessibility.description', locale, { names: dyeNames, lens: lc(visionName, locale) }),
     url: `${env.APP_BASE_URL}/accessibility/?dyes=${params.dyes.join(',')}&vision=${encodeURIComponent(params.vision || 'normal')}&v=1`,
-    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${params.dyes.join(',')}/${encodeURIComponent(params.vision || 'normal')}.png`, locale),
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${validIds.join(',')}/${encodeURIComponent(params.vision || 'normal')}.png`, locale),
     siteName: SITE_NAME,
     themeColor: dyes[0]!.hex,
     locale,

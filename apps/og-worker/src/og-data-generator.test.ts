@@ -257,6 +257,20 @@ describe('og-data-generator', () => {
       expect(result.title).toBe('Dye Comparison | XIV Dye Tools');
       expect(result.imageUrl).toContain('/comparison/default.png');
     });
+
+    // 2026-08-29 FINDING-024 (OG-4, Sprint 7 fix wave): imageUrl used to be
+    // built from the RAW params.dyes, so a bogus id mixed in with valid
+    // ones (e.g. a hand-edited share URL's ?dyes=999999,43,44) baked the
+    // bogus id into the emitted /og/comparison/… URL even though it never
+    // resolved to a dye or appeared in the card. The /og/* route's
+    // canonical dye-list grammar (ruling S7-R12) would 400 that spelling —
+    // this emitter must never produce it.
+    it('drops an unresolved id from the image URL without dropping the resolved ones', () => {
+      const result = generateComparisonOGData({ dyes: [999999, 43, 44] }, mockEnv);
+
+      expect(result.imageUrl).toContain('/comparison/43,44.png');
+      expect(result.imageUrl).not.toContain('999999');
+    });
   });
 
   describe('generateAccessibilityOGData', () => {
@@ -302,6 +316,15 @@ describe('og-data-generator', () => {
 
       expect(result.title).toBe('Accessibility Checker | XIV Dye Tools');
       expect(result.imageUrl).toContain('/accessibility/default.png');
+    });
+
+    // 2026-08-29 FINDING-024 (OG-4, Sprint 7 fix wave): same fix as
+    // generateComparisonOGData above.
+    it('drops an unresolved id from the image URL without dropping the resolved ones', () => {
+      const result = generateAccessibilityOGData({ dyes: [999999, 43, 44] }, mockEnv);
+
+      expect(result.imageUrl).toContain('/accessibility/43,44/');
+      expect(result.imageUrl).not.toContain('999999');
     });
   });
 

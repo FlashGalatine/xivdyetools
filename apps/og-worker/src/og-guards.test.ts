@@ -161,6 +161,83 @@ describe('/og/* query-key allowlist', () => {
   });
 });
 
+// 2026-08-29 FINDING-024 (OG-4, ruling S7-R12): the query axis was bounded
+// in the earlier rounds; this block closes the PATH axis, at the same
+// attacker cost — every one of these used to render the identical card
+// under a distinct cache key.
+describe('/og/* canonical path grammar', () => {
+  beforeEach(() => {
+    rendered.length = 0;
+    vi.mocked(renderOGImage).mockClear();
+  });
+
+  it('rejects trailing junk on a dye ID', async () => {
+    const res = await app.request('/og/harmony/102aaa/complementary', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(400);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  it('rejects a leading-zero dye ID', async () => {
+    const res = await app.request('/og/harmony/00102/complementary', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(400);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  it('rejects a signed dye ID', async () => {
+    const res = await app.request('/og/harmony/+102/complementary', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(400);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  // Hono's getPath() decodes with decodeURI, which deliberately leaves %2F
+  // encoded — it survives routing as a literal path segment and only
+  // becomes an actual "/" once c.req.param() runs decodeURIComponent on it,
+  // so parseInt("1/0", 10) used to resolve to dye 1.
+  it('rejects a %2F-encoded dye ID spelling', async () => {
+    const res = await app.request('/og/harmony/1%2F0/complementary', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(400);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  // Ruling S7-R13: String.replace('.png', '') is unanchored and
+  // first-occurrence, so a `.png` appearing anywhere in the segment used to
+  // strip and leave a "valid" enum value.
+  it('rejects a harmonyType with .png as a prefix rather than a true suffix', async () => {
+    const res = await app.request('/og/harmony/1/.pngcomplementary', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(400);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  it('rejects a harmonyType with .png in the middle rather than a true suffix', async () => {
+    const res = await app.request('/og/harmony/1/co.pngmplementary', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(400);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  it('rejects a lowercase swatch colour', async () => {
+    const res = await app.request('/og/swatch/ff5500/5', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(400);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  it('still renders the canonical (upper-case) swatch colour', async () => {
+    const res = await app.request('/og/swatch/FF5500/5', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(200);
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+  });
+
+  // The bug this closes: `.filter((id) => !isNaN(id))` used to drop "x"
+  // silently and render a 3-dye card from [1, 2, 3] — a caller could not
+  // tell the request had been degraded, and every way of spelling the
+  // dropped entry bought a fresh cache key for that same silently-degraded
+  // card.
+  it('rejects a comparison dye list containing a non-canonical entry, rather than silently rendering the valid ones', async () => {
+    const res = await app.request('/og/comparison/1,2,x,3', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(400);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+});
+
 describe('/og/* edge cache', () => {
   let caches: ReturnType<typeof fakeCacheStorage>;
 
@@ -270,6 +347,18 @@ describe('/og/* edge cache', () => {
       await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
 
       const second = await app.request('/og/harmony/1/complementary?frame=bogus', {}, TEST_ENV, execCtx);
+      expect(second.status).toBe(200);
+      expect(renderOGImage).toHaveBeenCalledTimes(1);
+    });
+
+    // Ruling S7-R13: `.png` stays optional (both spellings render the same
+    // card), so it must not buy a second cache entry either.
+    it('closes the amplification: .png and no suffix share one cache entry', async () => {
+      const first = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+      expect(first.status).toBe(200);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+      const second = await app.request('/og/harmony/1/complementary.png', {}, TEST_ENV, execCtx);
       expect(second.status).toBe(200);
       expect(renderOGImage).toHaveBeenCalledTimes(1);
     });
