@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 2026-08-29 security audit follow-up remediation (`docs/audits/2026-08-29-security`,
 FINDING-024 / OG-4 — a residual of the 2026-08-21 audit's FINDING-005/OG-4). Minor bump:
 `/og/*` now rejects unrecognised query parameters and invalid `algo` values, and the edge
-cache key is bounded; card output for every previously-valid request is unchanged.
+cache is bounded — on the decoded path, on `HEAD` as well as `GET`, and with an empty `algo`
+folded into the no-algo entry; card output for every previously-valid request is unchanged.
 
 ### Security
 
@@ -49,6 +50,31 @@ cache key is bounded; card output for every previously-valid request is unchange
   cache-defeat amplification the query-key allowlist above closes, just narrowed to one
   parameter name. Bounds the cache key space to pathname × 6 locales × 2 frames × 10 algo
   states (9 spellings + absent).
+- **Three more axes of the same cache bound, closed together** (`index.ts`; fix round 2 on
+  this finding, rulings S7-R8/S7-R9/S7-R10 — all three are Hono-4.13.4-specific behaviour, not
+  reachable by reading this file alone, and were confirmed against the installed version):
+  - **`HEAD` is cacheable exactly like `GET`.** Hono re-dispatches a `HEAD` request as `GET`
+    for routing but builds the middleware `Context` from the original request, so
+    `c.req.method` still read `'HEAD'` inside this guard — the cache lookup and store were
+    both skipped on every `HEAD`, so the render ran every time. **Behaviour change an operator
+    will see:** none for a real client — a `HEAD` on an already-rendered `/og/*` URL is now
+    served from cache like a `GET` is, instead of always re-rendering; this was the *cheapest*
+    version of the amplification this task closes (`curl -I` in a loop, no distinct URLs
+    needed at all).
+  - **The cache key is built from the *decoded* path** (`c.req.path`, what Hono's router
+    actually matched on), not the raw, possibly percent-encoded one. Every handler already
+    reads `c.req.param()` / `searchParams`, never the raw path, so this is safe in the one
+    direction it runs: two raw paths that decode alike always route alike. Before this,
+    `/og/harmony/102/%63omplementary.png`, `/og/harmony/102/c%6Fmplementary.png`, and the
+    plain spelling all rendered the identical card under three different cache keys — millions
+    of spellings of one image, all inside the existing 64/512-char length caps. (The length
+    guard still measures the *raw* pathname, on purpose — capping the undecoded string is the
+    conservative side of that check.)
+  - **An empty `algo` (`?algo=` or bare `?algo`) is absent, not invalid**, in both the guard
+    and the cache key. `isAlgorithm('')` is false, so without this the `?algo=` validation
+    added above would 400 a request that, before this whole entry, fell through
+    `c.req.query('algo') || DEFAULT_MATCHING_METHOD` on the five algo-aware routes and
+    rendered the default algorithm's card — behaviour this sprint never set out to change.
 
 ## [2.3.0] - 2026-08-21
 

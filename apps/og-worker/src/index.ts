@@ -204,6 +204,17 @@ const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo']);
  * means no such resource variant exists, but a known key with a bad value
  * is the malformed-request shape the rest of the codebase already answers
  * with 400.
+ *
+ * Ruling S7-R10 (fix round 2, same finding): an EMPTY `algo` (`?algo=` or
+ * bare `?algo`) is treated as absent, not invalid — verified
+ * `new URL(...).searchParams.get('algo')` returns `''` (not `null`) for
+ * both spellings, same as Hono's own query parser. `isAlgorithm('')` is
+ * false, so without this carve-out an empty value would 400 here where it
+ * previously fell through each algo-aware route's own
+ * `c.req.query('algo') || DEFAULT_MATCHING_METHOD` and rendered the default
+ * algorithm's card — this guard must not change behaviour the sprint never
+ * set out to change. `if (algo && ...)` reads `''` as falsy, same as
+ * `null`.
  */
 app.use('/og/*', async (c, next) => {
   const { searchParams } = new URL(c.req.url);
@@ -213,7 +224,7 @@ app.use('/og/*', async (c, next) => {
     }
   }
   const algo = searchParams.get('algo');
-  if (algo !== null && !isAlgorithm(algo)) {
+  if (algo && !isAlgorithm(algo)) {
     return c.json({ error: 'Invalid algorithm' }, 400);
   }
   return next();
@@ -233,10 +244,22 @@ app.use('/og/*', async (c, next) => {
  * and collapsing two spellings that could render differently onto one slot
  * would risk serving the wrong picture for one of them (ruling S7-R4). By
  * the time this runs, the query-key guard above has already rejected a
- * present-but-invalid `algo` (ruling S7-R7), so this function only ever
- * sees one of the 9 `VALID_ALGORITHMS` spellings or `null` — the raw value
- * is safe precisely because it is a validated one.
- * `origin` keeps beta and production in separate entries.
+ * present-and-invalid `algo` (ruling S7-R7) and normalised an empty one to
+ * absent (ruling S7-R10, matched here by the same `if (algo)` truthy check
+ * — `''` and `null` both skip the `params.set`), so this function only ever
+ * keys on one of the 9 `VALID_ALGORITHMS` spellings or nothing.
+ * `origin` keeps beta and production in separate entries. **Path is
+ * `c.req.path`, not `new URL(c.req.url).pathname`** (ruling S7-R9): Hono
+ * decodes before it routes (`getPath` in `hono/utils/url`), and every
+ * handler below reads `c.req.param()` / `searchParams`, never the raw path
+ * — so `/og/harmony/102/%63omplementary.png`, `.../c%6Fmplementary.png`,
+ * and `.../complementary.png` already route to the identical handler with
+ * the identical decoded param, and keying on the raw pathname let each
+ * percent-encoded spelling buy its own cache entry for the same card,
+ * within the 64/512-char length caps. Collapsing is one-directional and
+ * safe: two raw paths that decode alike always route alike. (The length
+ * guard above this still measures the raw pathname on purpose — capping
+ * the undecoded string is the conservative side of that check.)
  */
 function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   const url = new URL(c.req.url);
@@ -244,10 +267,10 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   params.set('lang', resolveLocale(url.searchParams));
   params.set('frame', frameFromQuery(c));
   const algo = url.searchParams.get('algo');
-  if (algo !== null) {
+  if (algo) {
     params.set('algo', algo);
   }
-  return new Request(`${url.origin}${url.pathname}?${params.toString()}`, { method: 'GET' });
+  return new Request(`${url.origin}${c.req.path}?${params.toString()}`, { method: 'GET' });
 }
 
 /**
@@ -255,13 +278,27 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
  * headers set by renderOGImage describe the TTLs but do nothing by themselves
  * on a Worker response — every hit was a full resvg raster. Key = the
  * canonical key above (the query-key allowlist above guarantees no other
- * query key ever reaches this point), GET only, 200s only; the Cache API
- * honours the response's own s-maxage for expiry. Absent outside Workers
+ * query key ever reaches this point), GET *and HEAD*, 200s only; the Cache
+ * API honours the response's own s-maxage for expiry. Absent outside Workers
  * (tests, Node) → pass-through.
+ *
+ * Ruling S7-R8 (fix round 2, same finding): HEAD is cacheable exactly like
+ * GET. Hono re-dispatches a HEAD request as GET for *routing*
+ * (`hono-base.js#dispatch`), but builds this middleware's `Context` from
+ * the original request, so `c.req.method` still reads `'HEAD'` here —
+ * treating that as uncacheable meant `cache.match` and `cache.put` were
+ * both skipped on every HEAD, and the render below ran every time: a HEAD
+ * loop against ONE url (`curl -I` in a loop — no distinct URLs needed at
+ * all) was a strictly cheaper version of the amplification this task
+ * exists to close. Safe to fold in: `ogCacheKey` always builds its `Request`
+ * with `{ method: 'GET' }` regardless of the inbound method, so `cache.put`
+ * stays legal; and Hono's outer HEAD wrapper (`new Response(null, await
+ * innerDispatch)`) strips the body afterward no matter which branch below
+ * produced the response, so a HEAD still comes back bodiless either way.
  */
 app.use('/og/*', async (c, next) => {
   const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
-  if (!cache || c.req.method !== 'GET') {
+  if (!cache || (c.req.method !== 'GET' && c.req.method !== 'HEAD')) {
     return next();
   }
 

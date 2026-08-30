@@ -186,6 +186,22 @@ describe('/og/* edge cache', () => {
     expect(caches.store.size).toBe(1);
   });
 
+  // 2026-08-29 FINDING-024 (OG-4, ruling S7-R8): Hono re-dispatches a HEAD
+  // request as GET for routing but builds this middleware's Context from the
+  // original request, so c.req.method reads 'HEAD' — before this fix the
+  // cache middleware's `c.req.method !== 'GET'` check treated every HEAD as
+  // uncacheable and the route re-rendered on every single one, no distinct
+  // URLs required (a plain `curl -I` loop against ONE url).
+  it('a HEAD after a GET of the same URL is served from the cache, not re-rendered', async () => {
+    const first = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+    expect(first.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+    const head = await app.request('/og/harmony/1/complementary', { method: 'HEAD' }, TEST_ENV, execCtx);
+    expect(head.status).toBe(200);
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+  });
+
   // 2026-08-29 FINDING-024 (OG-4): the key is now canonical — pathname plus
   // the RESOLVED lang/frame and the RAW algo — instead of the full URL. This
   // block replaces the old "keys the cache on the full URL" test, which
@@ -233,6 +249,42 @@ describe('/og/* edge cache', () => {
       await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
 
       const second = await app.request('/og/harmony/1/complementary?frame=bogus', {}, TEST_ENV, execCtx);
+      expect(second.status).toBe(200);
+      expect(renderOGImage).toHaveBeenCalledTimes(1);
+    });
+
+    // 2026-08-29 FINDING-024 (OG-4, ruling S7-R9): the key is built from
+    // c.req.path (Hono's DECODED path — what the router actually matched
+    // on), not the raw pathname. Before this fix, every percent-encoded
+    // spelling of the same path bought its own cache entry for the
+    // identical card.
+    it('closes the amplification: a percent-encoded spelling of an already-cached path is a cache hit', async () => {
+      const first = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+      expect(first.status).toBe(200);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+      // %63 = 'c' — decodes to the identical /og/harmony/1/complementary path.
+      const second = await app.request('/og/harmony/1/%63omplementary', {}, TEST_ENV, execCtx);
+      expect(second.status).toBe(200);
+      expect(renderOGImage).toHaveBeenCalledTimes(1);
+    });
+
+    // 2026-08-29 FINDING-024 (OG-4, ruling S7-R10): an empty `algo` value
+    // (`?algo=`) is absent, not invalid — verified against Hono 4.13.4 that
+    // both `?algo=` and bare `?algo` yield `''` from `URLSearchParams.get`,
+    // same as Hono's own query parser. `isAlgorithm('')` is false, so
+    // without this carve-out the guard would 400 a spelling that used to
+    // fall through `c.req.query('algo') || DEFAULT_MATCHING_METHOD` and
+    // render the default algorithm's card. This test fails on `.toBe(200)`
+    // if the guard fix is reverted, and on `.toHaveBeenCalledTimes(1)` if
+    // only the guard (not ogCacheKey) is fixed — an empty algo would then
+    // pass the guard but still mint its own cache entry.
+    it('treats an empty ?algo= as absent: renders 200 and shares the no-algo cache entry', async () => {
+      const first = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+      expect(first.status).toBe(200);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+      const second = await app.request('/og/harmony/1/complementary?algo=', {}, TEST_ENV, execCtx);
       expect(second.status).toBe(200);
       expect(renderOGImage).toHaveBeenCalledTimes(1);
     });

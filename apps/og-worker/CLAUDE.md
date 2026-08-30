@@ -143,7 +143,16 @@ route reading the param at all (ruling S7-R7):
 
 All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
 
-The `caches.default` edge cache in `index.ts` (`ogCacheKey`) keys on pathname + the *resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (2026-08-29 FINDING-024, OG-4) — not the full URL. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary, even on a route that never reads `algo` itself. Combined with the query-key allowlist above, the key space is bounded to (pathname × lang × frame × algo) — a client can no longer defeat the cache by appending an arbitrary throwaway param.
+The `caches.default` edge cache in `index.ts` (`ogCacheKey`) is checked and filled for `GET`
+*and* `HEAD` (ruling S7-R8 — `c.req.method` reads `'HEAD'` inside Hono middleware even though
+routing re-dispatched it as `GET`; treating `HEAD` as uncacheable let a `HEAD` loop against one
+URL re-render every time). It keys on the *decoded* path (`c.req.path`, what the router actually
+matched on, not `new URL(c.req.url).pathname` — ruling S7-R9: two percent-encoded spellings that
+decode alike already route alike, so keying on the raw pathname let each spelling buy its own
+entry for the same card) + the *resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (2026-08-29 FINDING-024, OG-4) — not the full URL. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary, even on a route that never reads `algo` itself — and an EMPTY `algo` (`?algo=` or bare `?algo`,
+both of which `URLSearchParams.get` reports as `''`) counts as absent there and here, not a
+validation failure, matching what the five algo-aware routes already did with
+`c.req.query('algo') || DEFAULT_MATCHING_METHOD` (ruling S7-R10). Combined with the query-key allowlist above, the key space is bounded to (pathname × lang × frame × algo) — a client can no longer defeat the cache by appending an arbitrary throwaway param.
 
 ### Environment Bindings (wrangler.toml)
 
