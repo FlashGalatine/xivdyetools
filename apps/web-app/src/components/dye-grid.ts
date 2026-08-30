@@ -58,6 +58,15 @@ export class DyeGrid extends BaseComponent {
     this.updateSelectionVisuals();
   }
 
+  /**
+   * Emit the selection. Whether it is ACCEPTED (and therefore counts as a
+   * dye_pick for telemetry) is the consumer's call — DyeSelector treats a
+   * click on a selected dye as a removal and drops picks at maxSelections.
+   */
+  private selectDye(dye: Dye): void {
+    this.emit('dye-selected', dye);
+  }
+
   renderContent(): void {
     // Use compact 3-column layout when compactMode is enabled
     const gridClasses = this.options.compactMode
@@ -121,12 +130,14 @@ export class DyeGrid extends BaseComponent {
         });
 
         this.on(btn, 'click', (e) => {
-          // Don't trigger selection if clicking the favorite button
-          if ((e.target as HTMLElement).closest('.favorite-btn')) {
+          // The favorite / collection buttons live inside the card: neither is
+          // a selection, and both are handled by the delegated wrapper
+          // listener in bindEvents — so let the click bubble to it untouched
+          if ((e.target as HTMLElement).closest('.favorite-btn, .collection-btn')) {
             return;
           }
           e.stopPropagation();
-          this.emit('dye-selected', dye);
+          this.selectDye(dye);
         });
 
         // Content wrapper
@@ -246,7 +257,7 @@ export class DyeGrid extends BaseComponent {
       if (target) {
         const id = parseInt(target.getAttribute('data-dye-id') || '0', 10);
         const dye = this.dyes.find((d) => d.id === id);
-        if (dye) this.emit('dye-selected', dye);
+        if (dye) this.selectDye(dye);
       }
     });
 
@@ -421,7 +432,7 @@ export class DyeGrid extends BaseComponent {
       case ' ':
         event.preventDefault();
         if (this.focusedIndex >= 0 && this.focusedIndex < this.dyes.length) {
-          this.emit('dye-selected', this.dyes[this.focusedIndex]);
+          this.selectDye(this.dyes[this.focusedIndex]);
         }
         return;
 

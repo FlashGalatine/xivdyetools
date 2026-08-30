@@ -496,6 +496,54 @@ describe('DyeGrid', () => {
   });
 
   // ============================================================================
+  // Card action buttons (favorite / add-to-collection) are not selections
+  // ============================================================================
+
+  describe('card action buttons', () => {
+    it('lets a collection-button click reach the delegated handler instead of selecting the dye', () => {
+      grid = new DyeGrid(container, { showFavorites: true });
+      grid.init();
+      grid.setDyes([mockDyes[0]]);
+      const onSelected = vi.fn();
+      container.addEventListener('dye-selected', onSelected);
+      // The per-card click handler used to stopPropagation() before the
+      // wrapper-level delegate could see the click, so the menu never opened.
+      const openMenu = vi
+        .spyOn(grid as unknown as { handleCollectionClick: () => void }, 'handleCollectionClick')
+        .mockImplementation(() => {});
+
+      click(query<HTMLButtonElement>(container, '.collection-btn'));
+
+      expect(onSelected).not.toHaveBeenCalled();
+      expect(openMenu).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not treat a favorite-button click as a selection', () => {
+      grid = new DyeGrid(container, { showFavorites: true });
+      grid.init();
+      grid.setDyes([mockDyes[0]]);
+      const onSelected = vi.fn();
+      container.addEventListener('dye-selected', onSelected);
+
+      click(query<HTMLButtonElement>(container, '.favorite-btn'));
+
+      expect(onSelected).not.toHaveBeenCalled();
+    });
+
+    it('emits exactly one dye-selected for a click on the card itself', () => {
+      grid = new DyeGrid(container, { showFavorites: true });
+      grid.init();
+      grid.setDyes([mockDyes[0]]);
+      const onSelected = vi.fn();
+      container.addEventListener('dye-selected', onSelected);
+
+      click(query<HTMLButtonElement>(container, '.dye-select-btn'));
+
+      expect(onSelected).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ============================================================================
   // Lifecycle Tests
   // ============================================================================
 

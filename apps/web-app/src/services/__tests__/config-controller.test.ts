@@ -470,6 +470,74 @@ describe('ConfigController', () => {
     });
   });
 
+  describe('Cross-tab sync (StorageEvent)', () => {
+    const ADVANCED_KEY = 'xivdyetools_v4_config_advanced';
+
+    it('re-reads a config another tab saved and notifies its subscribers', () => {
+      const controller = ConfigController.getInstance();
+      const listener = vi.fn();
+      controller.subscribe('advanced', listener);
+      expect(controller.getConfig('advanced').analyticsEnabled).toBe(false);
+
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockReturnValue({
+        analyticsEnabled: true,
+        performanceMode: false,
+      });
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: ADVANCED_KEY,
+          newValue: JSON.stringify({ analyticsEnabled: true, performanceMode: false }),
+        })
+      );
+
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ analyticsEnabled: true }));
+      expect(controller.getConfig('advanced').analyticsEnabled).toBe(true);
+    });
+
+    it('falls back to the defaults when another tab clears storage (key null)', () => {
+      const controller = ConfigController.getInstance();
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockReturnValue({
+        analyticsEnabled: true,
+        performanceMode: false,
+      });
+      expect(controller.getConfig('advanced').analyticsEnabled).toBe(true);
+      const listener = vi.fn();
+      controller.subscribe('advanced', listener);
+
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockReturnValue(null);
+      window.dispatchEvent(new StorageEvent('storage', { key: null }));
+
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ analyticsEnabled: false }));
+      expect(controller.getConfig('advanced').analyticsEnabled).toBe(false);
+    });
+
+    it('ignores keys that are not persisted configs', () => {
+      const controller = ConfigController.getInstance();
+      const listener = vi.fn();
+      controller.subscribe('advanced', listener);
+      controller.getConfig('advanced');
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockClear();
+
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: 'xivdyetools_theme', newValue: 'x' })
+      );
+
+      expect(listener).not.toHaveBeenCalled();
+      expect(StorageService.getItem).not.toHaveBeenCalled();
+    });
+
+    it('stops listening once the instance is reset', () => {
+      const controller = ConfigController.getInstance();
+      controller.getConfig('advanced');
+      ConfigController.resetInstance();
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockClear();
+
+      window.dispatchEvent(new StorageEvent('storage', { key: ADVANCED_KEY, newValue: '{}' }));
+
+      expect(StorageService.getItem).not.toHaveBeenCalled();
+    });
+  });
+
   describe('Storage Failure Handling', () => {
     it('should handle storage save failure gracefully', () => {
       (StorageService.setItem as ReturnType<typeof vi.fn>).mockReturnValue(false);

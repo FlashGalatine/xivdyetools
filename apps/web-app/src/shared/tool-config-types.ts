@@ -265,7 +265,7 @@ export interface MarketConfig {
  * Advanced Settings configuration (debug/utility options)
  */
 export interface AdvancedConfig {
-  /** Enable anonymous analytics data collection (placeholder for future) */
+  /** Opt-in usage telemetry — read by TelemetryService (docs/superpowers/specs/2026-08-29-web-analytics-design.md) */
   analyticsEnabled: boolean;
   /** Enable performance mode (reduce animations, disable blur effects) */
   performanceMode: boolean;

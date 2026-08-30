@@ -12,7 +12,11 @@ import type { Env, Variables } from './types.js';
 
 // Middleware
 import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
-import { rateLimitMiddleware } from './middleware/rate-limit.js';
+import {
+  rateLimitMiddleware,
+  telemetryRateLimitMiddleware,
+  TELEMETRY_PATH,
+} from './middleware/rate-limit.js';
 import { localeMiddleware } from './middleware/locale.js';
 
 // Routes
@@ -20,6 +24,7 @@ import { dyesRouter } from './routes/dyes.js';
 import { matchRouter } from './routes/match.js';
 import { universalisRouter } from './universalis/router.js';
 import { charaRouter } from './chara/router.js';
+import { telemetryRouter } from './telemetry/router.js';
 
 // Lib
 import { ApiError, ErrorCode } from './lib/api-error.js';
@@ -107,8 +112,11 @@ app.use(
   }),
 );
 
-// 5. Rate limiting on API routes
+// 5. Rate limiting on API routes. POST /v1/telemetry is carved out of the
+//    API bucket (rateLimitMiddleware skips it) and limited on its own bucket:
+//    beacons from many tabs behind one NAT address must never 429 /v1/chara/*.
 app.use('/v1/*', rateLimitMiddleware);
+app.use(TELEMETRY_PATH, telemetryRateLimitMiddleware);
 
 // 6. Locale resolution on API routes (OPT-001 — 2026-04-28 audit)
 //    Reads ?locale= once per request and sets the LocalizationService state
@@ -147,6 +155,10 @@ app.route('/v1/match', matchRouter);
 // .chara equipment-model resolution (web-app Swatch Matcher import) — one
 // XIVAPI search per file, per-key edge cache, icons proxied. See chara/router.ts.
 app.route('/v1/chara', charaRouter);
+
+// Opt-in web-app usage telemetry → Analytics Engine. Internal, undocumented,
+// 204-only; see telemetry/router.ts and docs/operations/ANALYTICS_QUERIES.md.
+app.route(TELEMETRY_PATH, telemetryRouter);
 
 // Universalis market-board proxy (absorbed from apps/universalis-proxy).
 // Canonical mount + /api/v2 compatibility mount for the proxy.xivdyetools.app

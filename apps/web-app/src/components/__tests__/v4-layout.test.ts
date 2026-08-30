@@ -33,6 +33,20 @@ const {
   mockRefreshDocumentTitle: vi.fn(),
 }));
 
+const { mockTelemetry, mockIsShareUrl, mockGetSubPath } = vi.hoisted(() => ({
+  mockTelemetry: {
+    startTool: vi.fn(),
+    endTool: vi.fn(),
+    track: vi.fn(),
+    trackDyePick: vi.fn(),
+  },
+  mockIsShareUrl: vi.fn().mockReturnValue(false),
+  mockGetSubPath: vi.fn().mockReturnValue(null),
+}));
+
+vi.mock('@services/telemetry-service', () => ({ TelemetryService: mockTelemetry }));
+vi.mock('@services/share-service', () => ({ ShareService: { isShareUrl: mockIsShareUrl } }));
+
 vi.mock('@services/router-service', () => ({
   RouterService: {
     initialize: mockInitialize,
@@ -41,6 +55,7 @@ vi.mock('@services/router-service', () => ({
     navigateTo: mockNavigateTo,
     getRouteForTool: mockGetRouteForTool,
     refreshDocumentTitle: mockRefreshDocumentTitle,
+    getSubPath: mockGetSubPath,
   },
 }));
 
@@ -135,6 +150,25 @@ vi.mock('../v4/theme-modal', () => ({
 vi.mock('../v4/language-modal', () => ({
   showLanguageModal: vi.fn(),
 }));
+
+// Mock the real tool components so `loadToolContent` can complete a load
+// without pulling in their full service graphs (e.g. HarmonyTool needs
+// MarketBoardService, which the `@services/index` mock above doesn't
+// provide) — the telemetry hooks below need a load that actually succeeds.
+class MockTool {
+  init() {}
+  destroy() {}
+}
+// Mixer accepts drawer picks (selectDye); Harmony's mock deliberately does not,
+// so the drawer-pick telemetry test can tell "taken by a tool" from "dropped".
+class MockToolWithSelect extends MockTool {
+  selectDye() {}
+}
+vi.mock('@components/harmony-tool', () => ({ HarmonyTool: MockTool }));
+vi.mock('@components/mixer-tool', () => ({ MixerTool: MockToolWithSelect }));
+// The Presets tool is a Lit element created by tag name; the module import is
+// for side effects only, so an empty module lets the load complete.
+vi.mock('../v4/preset-tool', () => ({}));
 
 // Mock V4LayoutShell custom element
 class MockV4LayoutShell extends HTMLElement {
@@ -312,6 +346,139 @@ describe('V4Layout', () => {
       localeListener();
 
       expect(mockRefreshDocumentTitle).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ============================================================================
+  // Telemetry Hooks
+  // ============================================================================
+
+  describe('telemetry hooks', () => {
+    beforeEach(() => {
+      Object.values(mockTelemetry).forEach((fn) => fn.mockClear());
+      mockIsShareUrl.mockReturnValue(false);
+      mockGetSubPath.mockReturnValue(null);
+      // Earlier describe blocks in this file (e.g. "should set initial tool
+      // attribute") leave mockGetCurrentToolId pointed at a non-default
+      // return value — vi.clearAllMocks() clears call history, not
+      // implementations. Pin it back to what these tests assume booted.
+      mockGetCurrentToolId.mockReturnValue('harmony');
+    });
+
+    /** The route-change listener v4-layout registered with RouterService.subscribe */
+    function routeListener(): (state: { toolId: string }) => void {
+      return mockSubscribe.mock.calls[0][0] as (state: { toolId: string }) => void;
+    }
+
+    /** loadToolContent is fire-and-forget from the route listener; let its awaits settle. */
+    async function settle(): Promise<void> {
+      for (let i = 0; i < 5; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
+
+    function dropPick(random?: boolean): void {
+      const layout = container.querySelector('v4-layout-shell')!;
+      layout.dispatchEvent(
+        new CustomEvent('dye-selected', {
+          detail: {
+            dye: { id: 1, stainID: 102, name: 'Jet Black', hex: '#000' },
+            ...(random ? { random: true } : {}),
+          },
+        })
+      );
+    }
+
+    it('records the boot tool as an initial view and starts its dwell clock', async () => {
+      await initializeV4Layout(container);
+      await vi.waitFor(() => expect(mockTelemetry.track).toHaveBeenCalled());
+      expect(mockTelemetry.endTool).toHaveBeenCalled();
+      expect(mockTelemetry.startTool).toHaveBeenCalledWith('harmony', 'initial');
+      expect(mockTelemetry.track).toHaveBeenCalledWith('tool_view', {
+        tool: 'harmony',
+        entry: 'initial',
+      });
+    });
+
+    it('records a boot from a share link (ShareService v= marker) as a share entry', async () => {
+      mockIsShareUrl.mockReturnValue(true);
+      await initializeV4Layout(container);
+      await vi.waitFor(() =>
+        expect(mockTelemetry.startTool).toHaveBeenCalledWith('harmony', 'share')
+      );
+    });
+
+    it('does not treat a preserved param or in-app hand-off in the address bar as a share', async () => {
+      // `?dye=` survives navigations (RouterService PRESERVED_PARAMS) and is what
+      // Budget → Harmony hand-offs set; without the v= marker it is not a share.
+      window.history.replaceState({}, '', '/harmony?dye=102');
+      try {
+        await initializeV4Layout(container);
+        await vi.waitFor(() =>
+          expect(mockTelemetry.startTool).toHaveBeenCalledWith('harmony', 'initial')
+        );
+      } finally {
+        window.history.replaceState({}, '', '/');
+      }
+    });
+
+    it('records a preset deep link (/presets/<id>) as a share entry', async () => {
+      mockGetCurrentToolId.mockReturnValue('presets');
+      mockGetSubPath.mockReturnValue('community-abc');
+      await initializeV4Layout(container);
+      await vi.waitFor(() =>
+        expect(mockTelemetry.startTool).toHaveBeenCalledWith('presets', 'share')
+      );
+    });
+
+    it('records later navigations as nav', async () => {
+      await initializeV4Layout(container);
+      await vi.waitFor(() => expect(mockTelemetry.startTool).toHaveBeenCalledTimes(1));
+      routeListener()({ toolId: 'mixer' });
+      await vi.waitFor(() => expect(mockTelemetry.startTool).toHaveBeenCalledWith('mixer', 'nav'));
+      expect(mockTelemetry.track).toHaveBeenLastCalledWith('tool_view', {
+        tool: 'mixer',
+        entry: 'nav',
+      });
+    });
+
+    it('does not emit a leave/view pair when re-navigating to the tool already showing', async () => {
+      await initializeV4Layout(container);
+      await vi.waitFor(() => expect(mockTelemetry.startTool).toHaveBeenCalledTimes(1));
+      mockTelemetry.endTool.mockClear();
+
+      // The Welcome modal's "Get started" navigates to the default tool — the
+      // one already on screen. That remounts it, but it is not a new view.
+      routeListener()({ toolId: 'harmony' });
+      await settle();
+
+      expect(mockTelemetry.endTool).not.toHaveBeenCalled();
+      expect(mockTelemetry.startTool).toHaveBeenCalledTimes(1);
+      expect(mockTelemetry.track).toHaveBeenCalledTimes(1);
+
+      // A real switch afterwards is still a view (entry nav, never initial)
+      routeListener()({ toolId: 'mixer' });
+      await vi.waitFor(() => expect(mockTelemetry.startTool).toHaveBeenCalledWith('mixer', 'nav'));
+      expect(mockTelemetry.endTool).toHaveBeenCalledTimes(1);
+    });
+
+    it('tracks a palette-drawer pick only when a tool takes it, and never a random pick', async () => {
+      await initializeV4Layout(container);
+      await vi.waitFor(() => expect(mockTelemetry.startTool).toHaveBeenCalledTimes(1));
+
+      // Harmony's mock has no selectDye/addDye: nothing consumed the pick
+      dropPick();
+      expect(mockTelemetry.trackDyePick).not.toHaveBeenCalled();
+
+      routeListener()({ toolId: 'mixer' });
+      await vi.waitFor(() => expect(mockTelemetry.startTool).toHaveBeenCalledWith('mixer', 'nav'));
+
+      dropPick();
+      expect(mockTelemetry.trackDyePick).toHaveBeenCalledWith(102, 'drawer');
+
+      mockTelemetry.trackDyePick.mockClear();
+      dropPick(true);
+      expect(mockTelemetry.trackDyePick).not.toHaveBeenCalled();
     });
   });
 });

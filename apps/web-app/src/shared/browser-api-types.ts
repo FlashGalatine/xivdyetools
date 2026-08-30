@@ -17,4 +17,9 @@ declare global {
   interface Window {
     EyeDropper?: EyeDropperConstructor;
   }
+
+  interface Navigator {
+    /** Global Privacy Control (https://globalprivacycontrol.org/) — honoured by TelemetryService. */
+    globalPrivacyControl?: boolean;
+  }
 }

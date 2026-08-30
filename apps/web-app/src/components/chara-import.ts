@@ -43,6 +43,7 @@ import {
   ToastService,
 } from '@services/index';
 import { ThemeService } from '@services/theme-service';
+import { TelemetryService } from '@services/telemetry-service';
 import {
   resolveCharaEquipment,
   itemNameFor,
@@ -212,25 +213,28 @@ export class CharaImport {
       ToastService.error(LanguageService.t('errors.fileTooLarge'));
       return;
     }
+    // Reading is not parsing: a stale handle (the picker's File outliving the
+    // file on disk) fails here, before the parser ever sees it — no chara_parse.
+    let text: string;
     try {
-      const text = await file.text();
+      text = await file.text();
+    } catch (error) {
+      logger.error('[CharaImport] Read failed:', error);
+      ToastService.error(
+        LanguageService.tInterpolate('swatch.parseFailed', {
+          reason: error instanceof Error ? error.message : String(error),
+        })
+      );
+      return;
+    }
+    let resolved: ResolvedCharaCharacter;
+    try {
       const parsed = parseCharaFile(text);
-      this.resolved = await resolveCharaColors(parsed, this.characterColors, {
+      resolved = await resolveCharaColors(parsed, this.characterColors, {
         getByStainId: (stainId: number) => dyeService.getByStainId(stainId),
       });
-      this.fileName = file.name;
-      this.droppedStainIds.clear();
-      this.selectedSlotKey = null;
-      this.paletteOpen = false;
-      this.paletteNameDraft = null;
-      if (this.resolved.tribe && this.resolved.gender && this.callbacks.onTribeGender) {
-        this.callbacks.onTribeGender(this.resolved.tribe, this.resolved.gender);
-      }
-      this.callbacks.onResolved?.(this.resolved);
-      logger.info(
-        `[CharaImport] Parsed ${file.name} (${this.resolved.producer ?? 'unknown producer'})`
-      );
     } catch (error) {
+      TelemetryService.track('chara_parse', { ok: false, producer: 'none' });
       logger.error('[CharaImport] Parse failed:', error);
       // Loud failure naming the field and value — core's messages do that,
       // and they ride in as {reason} inside the localized sentence.
@@ -241,6 +245,27 @@ export class CharaImport {
       );
       return;
     }
+    // The parse succeeded — recorded before the host callbacks run, so a
+    // consumer that throws is a host bug (logged below), not a parse failure.
+    TelemetryService.track('chara_parse', {
+      ok: true,
+      producer: TelemetryService.normalizeProducer(resolved.producer),
+    });
+    this.resolved = resolved;
+    this.fileName = file.name;
+    this.droppedStainIds.clear();
+    this.selectedSlotKey = null;
+    this.paletteOpen = false;
+    this.paletteNameDraft = null;
+    try {
+      if (resolved.tribe && resolved.gender && this.callbacks.onTribeGender) {
+        this.callbacks.onTribeGender(resolved.tribe, resolved.gender);
+      }
+      this.callbacks.onResolved?.(resolved);
+    } catch (error) {
+      logger.error('[CharaImport] Host callback failed:', error);
+    }
+    logger.info(`[CharaImport] Parsed ${file.name} (${resolved.producer ?? 'unknown producer'})`);
     // Dyes never wait: the round-trip is started first so the block renders
     // in its RESOLVING state (skeleton where the name lands) with the file's
     // stains already on it; the names re-render the block in place.

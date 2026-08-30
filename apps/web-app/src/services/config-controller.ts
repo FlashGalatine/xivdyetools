@@ -155,6 +155,38 @@ export class ConfigController {
    */
   private constructor() {
     logger.info('[ConfigController] Initializing');
+    // Cross-tab sync: a StorageEvent fires in every OTHER tab when a config is
+    // saved or the store is cleared, so a switch flipped in one tab — Enable
+    // Analytics off, Reset settings — reaches this tab's subscribers too
+    // (TelemetryService drops its queue on the resulting notification).
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', this.onStorage);
+    }
+  }
+
+  /**
+   * Another tab wrote (or cleared) a persisted config: re-read it and notify.
+   * Only configs this tab has already loaded are refreshed — the rest read the
+   * new value lazily on first access anyway.
+   */
+  private readonly onStorage = (event: StorageEvent): void => {
+    if (event.key === null) {
+      // localStorage.clear() elsewhere
+      for (const key of [...this.loadedFromStorage]) {
+        this.reloadFromStorage(key);
+      }
+      return;
+    }
+    if (!event.key.startsWith(CONFIG_STORAGE_PREFIX)) return;
+    const key = event.key.slice(CONFIG_STORAGE_PREFIX.length);
+    if (this.isValidConfigKey(key) && this.loadedFromStorage.has(key)) {
+      this.reloadFromStorage(key);
+    }
+  };
+
+  private reloadFromStorage(key: ConfigKey): void {
+    this.loadFromStorage(key);
+    this.notifyListeners(key, this.getConfig(key));
   }
 
   /**
@@ -172,6 +204,9 @@ export class ConfigController {
    */
   static resetInstance(): void {
     if (ConfigController.instance) {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', ConfigController.instance.onStorage);
+      }
       ConfigController.instance.listeners.clear();
       ConfigController.instance.configs.clear();
       ConfigController.instance.loadedFromStorage.clear();

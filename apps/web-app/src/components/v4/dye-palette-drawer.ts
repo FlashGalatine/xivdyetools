@@ -43,7 +43,8 @@ const SPECTRUM_FILTERS: { key: SpectrumKey; labelKey: string }[] = [
  * V4 Dye Palette Drawer - Right-side color selection panel
  *
  * @fires dye-selected - When a dye swatch is clicked or random dye is selected
- *   - detail.dye: The selected Dye object
+ *   - detail: { dye: Dye, random?: true } — `random` is set only for the dice
+ *     button, so consumers (telemetry) can tell a deliberate pick from a random one
  * @fires drawer-toggle - When close button is clicked
  * @fires clear-all-dyes - When clear all button is clicked, signals tool to reset
  *
@@ -866,7 +867,8 @@ export class DyePaletteDrawer extends BaseLitComponent {
     const randomIndex = Math.floor(Math.random() * this.allDyes.length);
     const randomDye = this.allDyes[randomIndex];
 
-    this.emit('dye-selected', { dye: randomDye });
+    // `random: true` lets the layout exclude this from dye-popularity telemetry
+    this.emit('dye-selected', { dye: randomDye, random: true });
     logger.debug(`[DyePaletteDrawer] Random dye selected: ${randomDye.name}`);
     ToastService.info(
       LanguageService.tInterpolate('colorPalette.randomDyeSelected', {

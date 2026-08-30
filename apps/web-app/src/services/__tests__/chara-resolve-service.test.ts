@@ -9,9 +9,9 @@ import {
   clearCharaResolveCache,
   charaIconUrl,
   itemNameFor,
-  getApiWorkerBase,
   CharaResolveUnavailableError,
 } from '../chara-resolve-service';
+import { getApiWorkerBase } from '../api-worker-origin';
 
 const GEAR = [
   { slot: 'HeadGear' as const, base: 361, variant: 5 },

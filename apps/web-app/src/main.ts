@@ -12,7 +12,12 @@ import '@/styles/v4-layout.css'; // V4 layout and tool-specific styles
 import '@/styles/tailwind.css';
 
 // Import services
-import { initializeServices, getServicesStatus, LanguageService } from '@services/index';
+import {
+  initializeServices,
+  getServicesStatus,
+  LanguageService,
+  StorageService,
+} from '@services/index';
 import { ErrorHandler } from '@shared/error-handler';
 import { renderFatalError } from '@shared/fatal-error';
 import { APP_VERSION } from '@shared/constants';
@@ -24,8 +29,8 @@ import { offlineBanner } from '@components/offline-banner';
 // Import TutorialService for dev mode console access
 import { TutorialService } from '@services/index';
 
-// Import ShareService for analytics initialization
 import { ShareService } from '@services/share-service';
+import { TelemetryService } from '@services/telemetry-service';
 
 /**
  * The fatal-error overlay runs when service initialization threw, so
@@ -96,9 +101,11 @@ async function initializeApp(): Promise<void> {
     logger.info('🌐 Initializing language service...');
     await LanguageService.initialize();
 
-    // Initialize share analytics (client-side tracking)
-    logger.info('📊 Initializing share analytics...');
-    ShareService.initializeAnalytics();
+    // Opt-in usage telemetry (default off; honours Global Privacy Control)
+    TelemetryService.initialize();
+
+    // Cleanup: pre-5.x ShareService localStorage buffer, retired by this change.
+    StorageService.removeItem('xiv_share_analytics');
 
     // Log service status
     const status = await getServicesStatus();
@@ -139,9 +146,7 @@ async function initializeApp(): Promise<void> {
       (window as unknown as Record<string, unknown>).TutorialService = TutorialService;
       (window as unknown as Record<string, unknown>).ShareService = ShareService;
       logger.info('[DEV] TutorialService exposed on window for debugging');
-      logger.info(
-        '[DEV] ShareService exposed on window for debugging (try ShareService.getAnalyticsStats())'
-      );
+      logger.info('[DEV] ShareService exposed on window for debugging');
     }
   } catch (error) {
     const appError = ErrorHandler.log(error);

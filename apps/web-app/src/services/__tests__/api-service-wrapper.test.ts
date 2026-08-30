@@ -91,25 +91,36 @@ describe('APIService Wrapper', () => {
   });
 
   describe('getPriceData', () => {
+    // These used to call the live Universalis API with a 15 s timeout and
+    // flaked CI whenever the upstream was slow. A stubbed 404 answers at once
+    // and, being a deterministic 4xx, is never retried (OPT-014).
+    let fetchMock: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 404 }));
+      vi.stubGlobal('fetch', fetchMock);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
     it('should accept itemID parameter', async () => {
-      // This calls the actual API - we just verify it doesn't throw
-      // and returns expected shape (or null for non-existent item)
       const result = await APIService.getPriceData(99999999);
-      // Non-existent item should return null or price data
+      // Non-existent item resolves null (or price data) — never throws
       expect(result === null || typeof result === 'object').toBe(true);
-    }, 15000); // Extended timeout for real API call
+      expect(fetchMock).toHaveBeenCalled();
+    });
 
     it('should accept worldID parameter', async () => {
-      // Verify the method accepts the parameter without throwing
       const result = await APIService.getPriceData(99999999, 67);
       expect(result === null || typeof result === 'object').toBe(true);
-    }, 15000); // Extended timeout for real API call
+    });
 
     it('should accept dataCenterID parameter', async () => {
-      // Verify the method accepts the parameter without throwing
       const result = await APIService.getPriceData(99999999, undefined, 'Crystal');
       expect(result === null || typeof result === 'object').toBe(true);
-    }, 15000); // Extended timeout for real API call
+    });
   });
 });
 

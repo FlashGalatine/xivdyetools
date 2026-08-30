@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-29
+
+Minor bump: one new (internal) endpoint and two new bindings; no change to the public `/v1` contract.
+
+### Added
+
+- **`POST /v1/telemetry` — the web app's opt-in usage telemetry lands in Analytics Engine** (`ANALYTICS` binding: `xivdyetools_web_analytics` in production, `xivdyetools_web_analytics_dev` on the routeless dev worker). The browser beacons a `text/plain` JSON batch (≤ 25 events / 16 KB, CORS-safelisted so no preflight); `src/telemetry/schema.ts` is an allowlist — every event is mapped onto a fixed column layout (`index1`/`blob1` event, `blob2` tool, `blob3`/`blob4` two coarse dimensions, `blob5`–`blob9` locale · theme · viewport bucket · app version · env, `double1` visible seconds) and anything unknown or malformed is dropped, never written. `204` with no body once the batch parses; `400` / `413` only for non-JSON / oversized bodies. Nothing from the request other than the validated batch reaches a datapoint — no IP, no User-Agent, no request id. Internal and deliberately undocumented on developers.xivdyetools.app. Queries: `docs/operations/ANALYTICS_QUERIES.md`; spec: `docs/superpowers/specs/2026-08-29-web-analytics-design.md`.
+- **Telemetry has its own per-IP rate-limit bucket (`TELEMETRY_RATE_LIMITER`, 240 / 60 s; `namespace_id` 1003 prod / 1004 dev; KV fallback under `telemetry:ip:`).** The `/v1/*` limiter keys per client IP, and one opted-in tab beacons every 15 s plus once per hide/pagehide — dozens of tabs behind one NAT or VPN address would have exhausted the shared 65 / 60 s bucket and 429'd the user-facing `/v1/chara/resolve` + icon calls from that address. `/v1/telemetry` is carved out of the API bucket in `index.ts`; `createTelemetryRateLimitMiddleware()` / `selectTelemetryRateLimiter()` are exported for tests.
+
 ### Fixed — 2026-08-29
+
+- **Telemetry event names that collide with `Object.prototype` members no longer 500.** The schema table was an object literal, so `{ n: 'constructor' }` resolved `Object` as its mapper and threw inside `parseTelemetryBatch` (an error-level log per request; `n: 'toString'` produced a garbage datapoint). The table is a `Map` now; such events are dropped like any other unknown name.
 
 - **Every upstream fetch failed with 502 — the Market Board on the web app and the bot's `/budget` had no prices, and `POST /v1/chara/resolve` answered 503.** The FINDING-025 / API-9 hardening set `redirect: 'error'` on the Universalis and XIVAPI fetches; the Workers runtime implements only `follow` and `manual` and throws `TypeError: Invalid redirect value` on `error`, so the fetch never left the worker (logged as "Error proxying to Universalis"). Both clients now use `redirect: 'manual'`: the proxy's existing `!response.ok` check refuses a 3xx without following it, and the XIVAPI client throws `UpstreamUnavailableError` on one. The unit tests, which mock `fetch`, had pinned the broken value — they now pin `manual` and cover the refused redirect; a shared ESLint rule rejects `redirect: 'error'` workspace-wide.
 

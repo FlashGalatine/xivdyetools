@@ -9,6 +9,7 @@
 
 import { BaseComponent } from './base-component';
 import { DyeService, LanguageService, CollectionService } from '@services/index';
+import { TelemetryService } from '@services/telemetry-service';
 import type { Dye } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
@@ -245,22 +246,38 @@ export class DyeSelector extends BaseComponent {
     this.on(document, 'keydown', this.handleGlobalKeydown);
   }
 
-  private handleDyeSelection(dye: Dye): void {
+  /**
+   * Apply a pick from the grid, the Favorites strip or the random button.
+   * Telemetry counts a pick only when it was ACCEPTED here (spec decision 2,
+   * "explicit picks only"): a click that removes an already-selected dye or is
+   * dropped at maxSelections is not a pick, and neither is a random dye.
+   */
+  private handleDyeSelection(dye: Dye, source: 'pick' | 'random' = 'pick'): void {
+    let accepted = true;
     if (this.options.allowMultiple) {
       if (this.allowDuplicates) {
         if (this.selectedDyes.length < (this.options.maxSelections ?? 4)) {
           this.selectedDyes.push(dye);
+        } else {
+          accepted = false;
         }
       } else {
         const index = this.selectedDyes.findIndex((d) => d.id === dye.id);
         if (index >= 0) {
           this.selectedDyes.splice(index, 1);
+          accepted = false;
         } else if (this.selectedDyes.length < (this.options.maxSelections ?? 4)) {
           this.selectedDyes.push(dye);
+        } else {
+          accepted = false;
         }
       }
     } else {
       this.selectedDyes = [dye];
+    }
+
+    if (accepted && source === 'pick' && dye.stainID != null) {
+      TelemetryService.trackDyePick(dye.stainID, 'grid');
     }
 
     this.updateSelectedList();
@@ -292,8 +309,8 @@ export class DyeSelector extends BaseComponent {
     const randomIndex = Math.floor(Math.random() * availableDyes.length);
     const randomDye = availableDyes[randomIndex];
 
-    // Use the same selection handler
-    this.handleDyeSelection(randomDye);
+    // Use the same selection handler (not a deliberate pick for telemetry)
+    this.handleDyeSelection(randomDye, 'random');
 
     // Log for debugging
     logger.info(`DyeSelector: Random dye selected - ${randomDye.name}`);

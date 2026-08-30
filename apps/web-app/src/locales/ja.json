@@ -220,7 +220,7 @@
     "performanceMode": "パフォーマンスモード",
     "performanceModeDesc": "低速デバイスでのパフォーマンス向上のため、アニメーションとエフェクトを軽減します",
     "enableAnalytics": "分析を有効にする",
-    "analyticsDesc": "匿名の使用データを共有してXIV Dye Toolsの改善にご協力ください",
+    "analyticsDesc": "匿名の使用データを共有します — 使用したツールと染料、.chara の読み込み。識別子や画像は含まれません。",
     "exportSettings": "エクスポート",
     "importSettings": "インポート",
     "importError": "設定のインポートに失敗しました。ファイル形式を確認してください。",

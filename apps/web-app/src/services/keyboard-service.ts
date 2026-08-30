@@ -8,7 +8,7 @@
  * @module services/keyboard-service
  */
 
-import { ThemeService } from './theme-service';
+import { toggleThemeVariant } from './theme-switch';
 import { LanguageService } from './language-service';
 import { ModalService } from './modal-service';
 import { showShortcutsPanel } from '@components/shortcuts-panel';
@@ -202,7 +202,9 @@ export class KeyboardService {
    */
   private static handleToggleTheme(): void {
     try {
-      ThemeService.toggleDarkMode();
+      // Through the shared switch so the deliberate change is recorded
+      // (telemetry) exactly like a pick in the theme modal.
+      toggleThemeVariant();
       logger.info('Theme toggled via keyboard shortcut');
     } catch (error) {
       logger.error('Failed to toggle theme:', error);
