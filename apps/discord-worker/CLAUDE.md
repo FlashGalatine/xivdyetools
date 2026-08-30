@@ -217,7 +217,7 @@ Special routing inside `handleAutocomplete()`:
 
 ### Webhook Payload Limits
 
-Both `/webhooks/preset-submission` and `/webhooks/github` enforce 10KB payload caps before parsing JSON.
+Both webhook routes check `Content-Length` before reading the body, but the caps differ: `/webhooks/preset-submission` allows 10 KB (10,240 bytes), while `/webhooks/github` allows 1 MiB (`GITHUB_WEBHOOK_MAX_BYTES = 1_048_576` — GitHub's push payload carries the whole `repository` object plus up to 2048 commits, and a two-commit merge push measured 18,196 bytes) and re-checks the actual body length after reading it, since `Content-Length` can be missing or spoofed. Both refuse an oversized body with 413 before any JSON is parsed.
 
 ### User Content Sanitization
 

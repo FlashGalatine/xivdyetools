@@ -621,6 +621,7 @@ describe('index.ts', () => {
     };
 
     let fetchSpy: MockInstance<typeof fetch> | undefined;
+    let logSpy: MockInstance<typeof console.log> | undefined;
 
     /** Signature verified + changelog fetched/parsed — the announce path's setup. */
     const arrangeAnnounce = async () => {
@@ -638,9 +639,20 @@ describe('index.ts', () => {
       return { entry, fetchSpy, sendAnnouncement: vi.mocked(sendAnnouncement) };
     };
 
+    /** Captures the structured logger's JSON lines (it writes via console.log). */
+    const captureLogLines = (): string[] => {
+      const lines: string[] = [];
+      logSpy = vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
+        lines.push(String(line));
+      });
+      return lines;
+    };
+
     afterEach(() => {
       fetchSpy?.mockRestore();
       fetchSpy = undefined;
+      logSpy?.mockRestore();
+      logSpy = undefined;
     });
 
     it('accepts a real-sized push payload (> 10 KB) instead of answering 413', async () => {
@@ -856,6 +868,29 @@ describe('index.ts', () => {
       expect(retried.status).toBe(200);
       expect(sendAnnouncement).toHaveBeenCalledTimes(2);
       expect(memo.get('announced:v:5.0.0')).toBe('1');
+    });
+
+    // FINDING-021: the release is already posted by the time the memo is
+    // written, so a KV failure must not become a 500 — that shows as a failed
+    // delivery and invites the Redeliver that double-posts.
+    it('answers 200 and warns when the memo write fails after a successful send', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      const kv = announceKV();
+      kv.put.mockRejectedValue(new Error('KV unavailable'));
+      const logLines = captureLogLines();
+
+      const res = await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
+        env: githubEnv(kv),
+      });
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ success: true, version: '5.0.0' });
+      expect(sendAnnouncement).toHaveBeenCalledOnce();
+
+      const warned = logLines.filter((line) => line.includes('Announcement memo write failed'));
+      expect(warned).toHaveLength(1);
+      expect(warned[0]).toContain('"level":"warn"');
+      expect(warned[0]).toContain('"version":"5.0.0"');
     });
   });
 

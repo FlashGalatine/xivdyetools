@@ -595,8 +595,15 @@ app.post('/webhooks/github', async (c) => {
   );
 
   // Memoised only after the send succeeded: a failed announcement leaves no
-  // key behind, so a Redeliver can still get the release out.
-  await env.KV.put(announcedKey, '1', { expirationTtl: ANNOUNCED_VERSION_TTL_SECONDS });
+  // key behind, so a Redeliver can still get the release out. The write itself
+  // is best-effort — the release has already been posted by the time it runs,
+  // so a KV failure must not turn into a 500: that shows up as a failed
+  // delivery and invites exactly the Redeliver that double-posts.
+  try {
+    await env.KV.put(announcedKey, '1', { expirationTtl: ANNOUNCED_VERSION_TTL_SECONDS });
+  } catch {
+    logger.warn('Announcement memo write failed', { version: latestEntry.version });
+  }
 
   logger.info('Changelog announcement sent', { version: latestEntry.version });
   return c.json({ success: true, version: latestEntry.version });
