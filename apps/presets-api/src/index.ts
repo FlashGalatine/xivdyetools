@@ -46,10 +46,13 @@ let envErrorsLogged = false;
 
 // REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
 app.use('*', requestIdMiddleware());
+// FINDING-010 (2026-08-29 security audit): logUserAgent defaults to false in
+// worker-kit; this worker never opts back in. The privacy guide promises the
+// UA is never collected, and the "Request started" log line previously put
+// it in the structured context on every request.
 app.use('*', loggerMiddleware({
   serviceName: 'xivdyetools-presets-api',
   readApiVersionFromEnv: true,
-  logUserAgent: true,
 }));
 
 // Environment validation middleware
@@ -57,15 +60,13 @@ app.use('*', loggerMiddleware({
 app.use('*', async (c, next) => {
   const result = validateEnv(c.env);
   if (!result.valid) {
+    const logger = getLogger(c);
     if (!envErrorsLogged) {
       envErrorsLogged = true;
-      logValidationErrors(result.errors);
+      logValidationErrors(result.errors, logger);
       if (c.env.ENVIRONMENT !== 'production') {
         // In development, log warnings but continue
-        const logger = getLogger(c);
-        if (logger) {
-          logger.warn('Continuing with invalid env configuration (development mode)');
-        }
+        logger?.warn('Continuing with invalid env configuration (development mode)');
       }
     }
     // In production, fail fast on misconfiguration — on every request, not
@@ -261,14 +262,10 @@ app.onError((err, c) => {
   // Don't expose internal errors in production
   const isDev = c.env.ENVIRONMENT === 'development';
 
-  // Use structured logger if available
-  if (logger) {
-    logger.error('Unhandled error', err, { operation: 'globalErrorHandler' });
-  } else {
-    // Fallback to console if logger not available
-    const logMessage = isDev ? err : { name: err.name, message: err.message };
-    console.error(`[${requestId}] Unhandled error:`, logMessage);
-  }
+  // FINDING-011: route through the structured logger; console is only the
+  // last-resort fallback if loggerMiddleware never ran and no request-scoped
+  // logger was ever set.
+  (logger ?? console).error('Unhandled error', err, { operation: 'globalErrorHandler', requestId });
 
   return c.json(
     {

@@ -6,7 +6,7 @@
 
 > **Versions below are read from each project's `package.json` on the working branch.** The 5.0
 > wave — `core` v4.0.1, `types` v2.0.0, `svg` v2.0.1, `bot-logic` v2.1.0, `worker-kit` v1.1.0,
-> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.3.0, `presets-api` v2.1.0 and the
+> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.3.0, `presets-api` v2.2.0 and the
 > rest (the patch/minor bumps on top of the 5.0 versions are the 2026-08-21 security-audit
 > remediation) — is complete on `monorepo-2.0-prep` with every `CHANGELOG.md` written, but **not
 > yet merged to `main` or published to npm**. Merging to `main` is the release; the root
@@ -27,7 +27,7 @@
 | **Image Worker** | v1.1.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.5.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v2.7.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.1.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
+| **Presets API** | v2.2.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
 | **Public REST API** | v0.9.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.3.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.2.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
@@ -181,6 +181,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.2.0** | **Aug 2026** | **2026-08-29 security audit Sprint 1 (FINDING-004/005/006/010/011/013/015/016/017/023) — `author_discord_id` dropped from anonymous responses (`is_owner` added for web callers), v1 bot signature no longer accepted, moderation fails closed and gains a per-user `text_edit` daily cap (migration 0012), owner edits capped and status-transition-safe, dead-letter rows hold only the preset id, `console.*` eliminated in favor of the structured logger (no personal fields), production `validateEnv` requires `JWT_SECRET`/`JWT_ISSUER`/`TOKEN_BLACKLIST`/`RL_PUBLIC`, new wrangler-config invariant test** |
 | **v2.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-002/015) — oauth `TOKEN_BLACKLIST` KV bound: revoked JWTs rejected by `authMiddleware`; `JWT_ISSUER` var pins `iss`; claim typing via `@xivdyetools/auth` 1.4.0** |
 | **v2.0.0** | **Aug 2026** | **BREAKING — preset dyes are stainIDs (3–6 per preset; legacy itemIDs rejected loudly), `community` category dropped (migration 0007) and `appearance` / `zones` / `raids-trials` added with 1 primary + ≤2 secondary categories (0010), `example_link` (0008), moderated preview images via image-worker `POST /thumbnail` + R2 (0009), `rejection_reason`, beta CORS origin, `worker-kit`; dev/prod `wrangler.toml` split** |
 | **v1.6.0** | **Jul 2026** | **2026-07-18 audit (Sprint 1) — CRITICAL: moderation self-approval gap closed (submitters could approve their own presets); state-machine transitions validated server-side with D1 `batch()` transactions and `changes()`-gated updates; migration 0006 unique preset-signature index applied to production** |

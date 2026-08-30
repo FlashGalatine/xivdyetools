@@ -280,7 +280,7 @@ export async function authMiddleware(
           };
         } else {
           // CRITICAL: BOT_SIGNING_SECRET not configured in production - reject bot auth
-          console.error('Bot auth: BOT_SIGNING_SECRET not configured - rejecting authentication');
+          (getLogger(c) ?? console).error('Bot auth: BOT_SIGNING_SECRET not configured - rejecting authentication');
           // Don't authenticate - let the request proceed as unauthenticated
         }
       } else {
@@ -317,9 +317,12 @@ export async function authMiddleware(
         }
 
         if (!isValidSignature) {
-          // Log failed signature attempts (but don't reveal details)
-          console.warn('Bot auth: Invalid or missing request signature', {
-            hasSignature: !!signatureV2,
+          // Log failed signature attempts (but don't reveal details).
+          // FINDING-011: hasSignatureV2 (was hasSignature) — its meaning
+          // changed with the v2-only cutover (FINDING-015): it now reports
+          // whether the ONLY accepted header was present, not one of two.
+          (getLogger(c) ?? console).warn('Bot auth: Invalid or missing request signature', {
+            hasSignatureV2: !!signatureV2,
             hasTimestamp: !!timestamp,
             path: c.req.path,
           });

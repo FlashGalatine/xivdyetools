@@ -9,6 +9,17 @@
 import type { Env, ModerationResult, PresetModerationResult } from '../types.js';
 import { profanityLists } from '../data/profanity/index.js';
 
+/**
+ * FINDING-011 (2026-08-29 security audit): minimal logger interface for this
+ * module — mirrors preset-service.ts's PresetServiceLogger shape so callers
+ * without a request-scoped logger (tests, this module's own defaults) keep
+ * getting `console` behaviour via the `(logger ?? console)` fallback used
+ * throughout this file.
+ */
+export interface ModerationServiceLogger {
+  error(message: string, ...args: unknown[]): void;
+}
+
 // ============================================
 // LOCAL PROFANITY FILTER
 // ============================================
@@ -232,7 +243,8 @@ function moderationUnavailable(): PresetModerationResult {
  */
 async function checkWithPerspective(
   text: string,
-  env: Env
+  env: Env,
+  logger?: ModerationServiceLogger
 ): Promise<PresetModerationResult | null> {
   if (!env.PERSPECTIVE_API_KEY) {
     return null; // Skip if not configured
@@ -267,17 +279,21 @@ async function checkWithPerspective(
 
     if (!response.ok) {
       // Includes 429: Perspective's default quota is ~1 QPS, so this is the
-      // ordinary back-pressure case, not an exotic outage.
-      console.error('Perspective API error:', response.status, await response.text());
+      // ordinary back-pressure case, not an exotic outage. FINDING-011: the
+      // status only — the upstream body is never logged (it's an opaque
+      // Google error payload we don't control the shape or contents of).
+      (logger ?? console).error('Perspective API error', { status: response.status });
       return moderationUnavailable();
     }
 
     const result: PerspectiveResponse = await response.json();
 
     // A 200 whose body is not the shape we asked for is no verdict either.
-    // Thrown rather than returned so the one `catch` below owns the logging.
+    // FINDING-011: logged and returned directly now that a logger is in
+    // scope — previously thrown purely so the `catch` below could log it.
     if (!result?.attributeScores || typeof result.attributeScores !== 'object') {
-      throw new Error('Perspective response carried no attributeScores');
+      (logger ?? console).error('Perspective API error: response carried no attributeScores');
+      return moderationUnavailable();
     }
 
     const scores: Record<string, number> = {
@@ -312,7 +328,7 @@ async function checkWithPerspective(
     };
   } catch (error) {
     // The 5 s AbortSignal lands here too.
-    console.error('Perspective API error:', error);
+    (logger ?? console).error('Perspective API error', error);
     return moderationUnavailable();
   }
 }
@@ -333,7 +349,8 @@ async function checkWithPerspective(
 export async function moderateContent(
   name: string,
   description: string,
-  env: Env
+  env: Env,
+  logger?: ModerationServiceLogger
 ): Promise<PresetModerationResult> {
   // 1. Local word filter (fast, always runs)
   const localResult = checkLocalFilter(name, description);
@@ -344,7 +361,8 @@ export async function moderateContent(
   // 2. Perspective API (optional, catches evasion/context)
   const perspectiveResult = await checkWithPerspective(
     `${name} ${description}`,
-    env
+    env,
+    logger
   );
 
   // Covers both a real toxicity verdict and "the service could not answer".
@@ -379,7 +397,8 @@ interface ModerationAlert {
  */
 export async function notifyModerators(
   alert: ModerationAlert,
-  env: Env
+  env: Env,
+  logger?: ModerationServiceLogger
 ): Promise<void> {
   const embed = {
     title: '⚠️ Palette Pending Review',
@@ -406,7 +425,7 @@ export async function notifyModerators(
         body: JSON.stringify({ embeds: [embed] }),
       });
     } catch (error) {
-      console.error('Failed to send webhook notification:', error);
+      (logger ?? console).error('Failed to send webhook notification', error);
     }
   }
 
@@ -443,7 +462,7 @@ export async function notifyModerators(
         );
       }
     } catch (error) {
-      console.error('Failed to send DM notification:', error);
+      (logger ?? console).error('Failed to send DM notification', error);
     }
   }
 }

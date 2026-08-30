@@ -167,7 +167,7 @@ async function respondToDuplicate(
     (auth.userDiscordId !== undefined && duplicate.author_discord_id === auth.userDiscordId);
 
   if (duplicate.status === 'approved') {
-    const voteResult = await addVote(c.env.DB, duplicate.id, auth.userDiscordId!);
+    const voteResult = await addVote(c.env.DB, duplicate.id, auth.userDiscordId!, c.get('logger'));
     return c.json({
       success: true,
       duplicate: presetForViewer(duplicate, auth, { keepAuditData: isPrivileged }),
@@ -424,9 +424,9 @@ presetsRouter.delete('/:id', async (c) => {
   // The row is already gone by this point, so an R2 hiccup here must not turn
   // a completed delete into a 500 the caller would reasonably retry.
   try {
-    await deletePreviewImage(c.env, previousKey);
+    await deletePreviewImage(c.env, previousKey, c.get('logger'));
   } catch (err) {
-    console.error(`[preview-image] R2 delete failed after preset delete: id=${id}`, err);
+    c.get('logger')?.error('[preview-image] R2 delete failed after preset delete', err, { presetId: id });
   }
 
   return c.json({ success: true, message: 'Preset deleted' });
@@ -577,7 +577,8 @@ presetsRouter.patch('/:id', async (c) => {
     const moderationResult = await moderateContent(
       nameToCheck,
       descriptionToCheck,
-      c.env
+      c.env,
+      c.get('logger')
     );
 
     // FINDING-005: `passed: false` now covers a third outcome —
@@ -694,7 +695,7 @@ presetsRouter.patch('/:id', async (c) => {
     try {
       await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'flagged_edit', id, c.get('logger'));
     } catch (err) {
-      console.error(`[FINDING-008] submission_events insert failed: preset=${id}`, err);
+      c.get('logger')?.error('[FINDING-008] submission_events insert failed', err, { presetId: id });
     }
   }
 
@@ -720,8 +721,11 @@ presetsRouter.patch('/:id', async (c) => {
       },
     };
     c.executionCtx.waitUntil(
-      notifyDiscordBot(c.env, editPayload).catch(async (err) => {
-        console.error(`[PRESETS-REF-002] Discord notification failed for preset edit: id=${updatedPreset.id}, name="${updatedPreset.name}"`, err);
+      notifyDiscordBot(c.env, editPayload, c.get('logger')).catch(async (err) => {
+        // FINDING-011: preset id only — never the user-typed preset name.
+        c.get('logger')?.error('[PRESETS-REF-002] Discord notification failed for preset edit', err, {
+          presetId: updatedPreset.id,
+        });
         // BUG-015: Persist failed notification for moderator review
         // FINDING-017: the row keeps the preset id, not the payload, and the
         // write prunes rows that have aged out (counts only in the log).
@@ -836,7 +840,8 @@ presetsRouter.post('/', async (c) => {
   const moderationResult = await moderateContent(
     body.name,
     body.description,
-    c.env
+    c.env,
+    c.get('logger')
   );
 
   // Determine status based on moderation
@@ -877,11 +882,11 @@ presetsRouter.post('/', async (c) => {
   try {
     await recordSubmissionEvent(c.env.DB, auth.userDiscordId!, 'submission', preset.id, c.get('logger'));
   } catch (err) {
-    console.error(`[FINDING-008] submission_events insert failed: preset=${preset.id}`, err);
+    c.get('logger')?.error('[FINDING-008] submission_events insert failed', err, { presetId: preset.id });
   }
 
   // Auto-vote for own preset
-  await addVote(c.env.DB, preset.id, auth.userDiscordId!);
+  await addVote(c.env.DB, preset.id, auth.userDiscordId!, c.get('logger'));
 
   // BUG-049 (2026-07-18 audit): the pre-check above is check-then-insert, so N
   // concurrent submissions at 9/10 quota could all pass. Re-count now that our
@@ -922,8 +927,11 @@ presetsRouter.post('/', async (c) => {
     },
   };
   c.executionCtx.waitUntil(
-    notifyDiscordBot(c.env, submissionPayload).catch(async (err) => {
-      console.error(`[PRESETS-REF-002] Discord notification failed for new preset: id=${preset.id}, name="${preset.name}"`, err);
+    notifyDiscordBot(c.env, submissionPayload, c.get('logger')).catch(async (err) => {
+      // FINDING-011: preset id only — never the user-typed preset name.
+      c.get('logger')?.error('[PRESETS-REF-002] Discord notification failed for new preset', err, {
+        presetId: preset.id,
+      });
       // BUG-015: Persist failed notification for moderator review
       // FINDING-017: preset id only, and ageing rows are pruned on the way in.
       await storeFailedNotification(c.env.DB, submissionPayload, err, c.get('logger'));
@@ -1075,9 +1083,9 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   // succeeded; an R2 hiccup deleting the *old* object must not be reported to
   // them as a failed upload. The orphan is the accepted failure mode here.
   try {
-    await deletePreviewImage(c.env, previousKey);
+    await deletePreviewImage(c.env, previousKey, c.get('logger'));
   } catch (err) {
-    console.error(`[preview-image] R2 delete of replaced image failed: id=${presetId}`, err);
+    c.get('logger')?.error('[preview-image] R2 delete of replaced image failed', err, { presetId });
   }
 
   // Same fire-and-forget notification path as a new submission: retries with
@@ -1095,8 +1103,8 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     },
   };
   c.executionCtx.waitUntil(
-    notifyDiscordBot(c.env, imagePayload).catch(async (err) => {
-      console.error(`[preview-image] Discord notification failed: id=${presetId}`, err);
+    notifyDiscordBot(c.env, imagePayload, c.get('logger')).catch(async (err) => {
+      c.get('logger')?.error('[preview-image] Discord notification failed', err, { presetId });
       // FINDING-017: preset id only — never the R2 key or the author's name.
       await storeFailedNotification(c.env.DB, imagePayload, err, c.get('logger'));
     })
@@ -1106,7 +1114,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   try {
     await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'preview_upload', presetId, c.get('logger'));
   } catch (err) {
-    console.error(`[FINDING-008] submission_events insert failed: preset=${presetId}`, err);
+    c.get('logger')?.error('[FINDING-008] submission_events insert failed', err, { presetId });
   }
 
   return c.json({ success: true, status: 'pending' });
@@ -1167,9 +1175,9 @@ presetsRouter.delete('/:id/preview-image', async (c) => {
     .run();
 
   try {
-    await deletePreviewImage(c.env, previousKey);
+    await deletePreviewImage(c.env, previousKey, c.get('logger'));
   } catch (err) {
-    console.error(`[preview-image] R2 delete failed after author removal: id=${presetId}`, err);
+    c.get('logger')?.error('[preview-image] R2 delete failed after author removal', err, { presetId });
   }
 
   return c.json({ success: true, preview_image_status: 'none' });

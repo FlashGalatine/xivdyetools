@@ -287,6 +287,112 @@ describe('Environment Validation', () => {
             });
         });
 
+        // FINDING-013 (2026-08-29 security audit): production also requires
+        // the security bindings/vars the 2026-08-21 fixes rely on — a dropped
+        // binding (config edit, dashboard change) previously degraded to "no
+        // revocation" / "no issuer pinning" / a fallback rate limiter with no
+        // error and no log. Development keeps them optional.
+        describe('production-only requirements (FINDING-013)', () => {
+            function createValidProductionEnv(overrides: Partial<Env> = {}): Env {
+                return createValidEnv({
+                    ENVIRONMENT: 'production',
+                    BOT_SIGNING_SECRET: 'test-signing-secret',
+                    JWT_SECRET: 'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!',
+                    JWT_ISSUER: 'https://auth.xivdyetools.app',
+                    TOKEN_BLACKLIST: {} as unknown as KVNamespace,
+                    RL_PUBLIC: {} as unknown as RateLimit,
+                    ...overrides,
+                });
+            }
+
+            it('should pass when every production-only requirement is satisfied', () => {
+                const result = validateEnv(createValidProductionEnv());
+
+                expect(result.valid).toBe(true);
+                expect(result.errors).toHaveLength(0);
+            });
+
+            it('should fail when JWT_SECRET is missing in production', () => {
+                const result = validateEnv(createValidProductionEnv({ JWT_SECRET: undefined }));
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain('Missing required env var in production: JWT_SECRET');
+            });
+
+            it('should fail when JWT_SECRET is shorter than 32 characters in production', () => {
+                const result = validateEnv(createValidProductionEnv({ JWT_SECRET: 'short-secret' }));
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain('Missing required env var in production: JWT_SECRET');
+            });
+
+            it('should fail when JWT_ISSUER is missing in production', () => {
+                const result = validateEnv(createValidProductionEnv({ JWT_ISSUER: undefined }));
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain('Missing required env var in production: JWT_ISSUER');
+            });
+
+            it('should fail when JWT_ISSUER does not start with https:// in production', () => {
+                const result = validateEnv(
+                    createValidProductionEnv({ JWT_ISSUER: 'http://auth.xivdyetools.app' })
+                );
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain('Missing required env var in production: JWT_ISSUER');
+            });
+
+            it('should fail when the TOKEN_BLACKLIST binding is missing in production', () => {
+                const result = validateEnv(createValidProductionEnv({ TOKEN_BLACKLIST: undefined }));
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain('Missing required env var in production: TOKEN_BLACKLIST');
+            });
+
+            it('should fail when the RL_PUBLIC binding is missing in production', () => {
+                const result = validateEnv(createValidProductionEnv({ RL_PUBLIC: undefined }));
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain('Missing required env var in production: RL_PUBLIC');
+            });
+
+            it('should collect all four errors together when nothing is configured', () => {
+                const result = validateEnv(
+                    createValidProductionEnv({
+                        JWT_SECRET: undefined,
+                        JWT_ISSUER: undefined,
+                        TOKEN_BLACKLIST: undefined,
+                        RL_PUBLIC: undefined,
+                    })
+                );
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toEqual(
+                    expect.arrayContaining([
+                        'Missing required env var in production: JWT_SECRET',
+                        'Missing required env var in production: JWT_ISSUER',
+                        'Missing required env var in production: TOKEN_BLACKLIST',
+                        'Missing required env var in production: RL_PUBLIC',
+                    ])
+                );
+            });
+
+            it('keeps JWT_SECRET, JWT_ISSUER, TOKEN_BLACKLIST and RL_PUBLIC optional outside production', () => {
+                const result = validateEnv(
+                    createValidEnv({
+                        ENVIRONMENT: 'development',
+                        JWT_SECRET: undefined,
+                        JWT_ISSUER: undefined,
+                        TOKEN_BLACKLIST: undefined,
+                        RL_PUBLIC: undefined,
+                    })
+                );
+
+                expect(result.valid).toBe(true);
+                expect(result.errors).toHaveLength(0);
+            });
+        });
+
         describe('multiple errors', () => {
             it('should collect all errors in a single validation run', () => {
                 const env = {

@@ -11,6 +11,16 @@
 
 import type { Env, RetentionLogger } from '../types.js';
 
+/**
+ * FINDING-011 (2026-08-29 security audit): the slice of the logger
+ * notifyDiscordBot needs for its own operational retry chatter — never the
+ * payload it is retrying, which is what RetentionLogger below is declared
+ * narrowly to keep out of these calls too.
+ */
+interface NotificationLogger {
+  info(message: string, context?: Record<string, unknown>): void;
+}
+
 /** A new (or re-flagged) preset needing moderator eyes. */
 export interface PresetSubmissionNotification {
   type: 'submission';
@@ -154,10 +164,14 @@ function getBackoffDelay(attempt: number): number {
  * PRESETS-CRITICAL-003: Now includes retry with exponential backoff
  * Retries up to 3 times on transient failures
  */
-export async function notifyDiscordBot(env: Env, payload: PresetNotificationPayload): Promise<void> {
+export async function notifyDiscordBot(
+  env: Env,
+  payload: PresetNotificationPayload,
+  logger?: NotificationLogger
+): Promise<void> {
   // Check if service binding is configured
   if (!env.DISCORD_WORKER || !env.INTERNAL_WEBHOOK_SECRET) {
-    console.log('Discord worker binding not configured, skipping notification');
+    (logger ?? console).info('Discord worker binding not configured, skipping notification');
     return;
   }
 
@@ -180,7 +194,7 @@ export async function notifyDiscordBot(env: Env, payload: PresetNotificationPayl
 
       if (response.ok) {
         if (attempt > 0) {
-          console.log(`Discord notification succeeded on retry ${attempt}`);
+          (logger ?? console).info(`Discord notification succeeded on retry ${attempt}`);
         }
         return; // Success!
       }
@@ -204,7 +218,7 @@ export async function notifyDiscordBot(env: Env, payload: PresetNotificationPayl
     // If we have more retries, wait before trying again
     if (attempt < NOTIFICATION_RETRY_CONFIG.maxRetries) {
       const delay = getBackoffDelay(attempt);
-      console.log(`Discord notification failed, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${NOTIFICATION_RETRY_CONFIG.maxRetries})`);
+      (logger ?? console).info(`Discord notification failed, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${NOTIFICATION_RETRY_CONFIG.maxRetries})`);
       await sleep(delay);
     }
   }
@@ -303,9 +317,12 @@ export async function storeFailedNotification(
         retries + 1
       )
       .run();
-  } catch (insertErr) {
-    // Best-effort — if the table doesn't exist yet or insert fails, log and move on
-    console.error('[BUG-015] Failed to store notification in dead-letter table:', insertErr);
+  } catch {
+    // Best-effort — if the table doesn't exist yet or insert fails, log and
+    // move on. FINDING-011: RetentionLogger is declared narrowly (message
+    // only) so this can't grow into logging the notification it failed to
+    // store — same reasoning as the prune-failure warning below.
+    logger?.warn('[BUG-015] Failed to store notification in dead-letter table');
   }
 }
 

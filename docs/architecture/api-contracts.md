@@ -16,16 +16,23 @@ Authorization: Bearer <BOT_API_SECRET>
 X-User-Discord-ID: 123456789012345678
 X-User-Discord-Name: Username
 X-Request-Timestamp: 1702684800
-X-Request-Signature: <hex HMAC-SHA256>
+X-Request-Nonce: <uuid>
+X-Request-Signature-V2: <hex HMAC-SHA256>
 Content-Type: application/json
 ```
 
 **Verification** (`apps/presets-api/src/middleware/auth.ts`): the bearer is compared to `BOT_API_SECRET`
-in constant time, then `verifyBotSignature()` from `@xivdyetools/auth` checks the HMAC over
-`"<timestamp>:<X-User-Discord-ID>:<X-User-Discord-Name>"` with `BOT_SIGNING_SECRET` (timestamp is
-Unix seconds; ≤ 5 min old, ≤ 60 s future skew). In production a missing/invalid signature leaves the
-request **unauthenticated** (the route then answers 401) — only `ENVIRONMENT=development|test` accepts
-an unsigned bot call.
+in constant time, then `verifyBotSignatureV2()` from `@xivdyetools/auth` checks the HMAC over the
+method, the path, a SHA-256 hash of the body, `X-Request-Timestamp`, `X-Request-Nonce`,
+`X-User-Discord-ID` and `X-User-Discord-Name`, with `BOT_SIGNING_SECRET` (timestamp: ≤ 60 s old, ≤ 60 s
+future skew). The nonce must be non-empty, at most 64 characters, `[A-Za-z0-9._-]`, and single-use —
+each accepted nonce is recorded in the `TOKEN_BLACKLIST` KV namespace under a `botnonce:` prefix for
+120 s, and a repeat is refused. **v1 (`X-Request-Signature`, a bare `timestamp:userId:userName` HMAC
+that bound nothing about the request itself) is no longer accepted, as of presets-api 2.2.0**
+(FINDING-015, 2026-08-29 security audit) — a request without a valid `X-Request-Signature-V2` is
+unauthenticated whatever the legacy header carries. In production a missing/invalid signature leaves
+the request **unauthenticated** (the route then answers 401) — only `ENVIRONMENT=development|test`
+accepts an unsigned bot call.
 
 ```typescript
 // Resulting auth context
