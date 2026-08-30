@@ -335,6 +335,9 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         **2026-08-28:** `/v1/dyes` 200 with `X-RateLimit-Limit: 65` / `X-RateLimit-Remaining` /
         `X-RateLimit-Reset` (the headers are `X-RateLimit-*`, not `RateLimit-*`);
         `/universalis/data-centers` 200; `developers.xivdyetools.app` 200 `text/html`.
+  - [ ] api-worker telemetry sanity — `docs/operations/ANALYTICS_QUERIES.md` §0: rows written to
+        `xivdyetools_web_analytics` in the last 24 h are non-zero (a silent zero right after a
+        web-app host change means the Origin allowlist needs the new host — FINDING-014).
   - [x] og-worker: `/og/<tool>/…` returns `cf-cache-status: HIT` on the second request;
         Discord / X link previews render (validators).
         **2026-08-28, with two corrections to the expectation.** Images are served from

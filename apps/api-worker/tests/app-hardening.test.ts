@@ -4,6 +4,9 @@
  * - API-10 the docs host (ASSETS) gets the same security headers as the API
  * - API-11 CORS no longer advertises the non-existent X-API-Key header
  * - API-13 4xx/5xx envelopes are explicitly non-cacheable
+ *
+ * Plus FINDING-010 (2026-08-29 security audit): the logger middleware no
+ * longer logs the User-Agent header.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import app from '../src/index.js';
@@ -112,5 +115,55 @@ describe('CORS (API-11)', () => {
     );
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
     expect(res.headers.get('Access-Control-Allow-Headers') ?? '').not.toMatch(/x-api-key/i);
+  });
+});
+
+/**
+ * FINDING-010 (2026-08-29 security audit): loggerMiddleware was opted into
+ * `logUserAgent: true`, so every request's User-Agent rode into the "Request
+ * started" log context — contradicting the web app's privacy page, which
+ * promises the telemetry server "discards everything about the request
+ * except the validated events" (apps/web-app/PRIVACY.md) and, more broadly,
+ * that no User-Agent is ever collected.
+ *
+ * The worker-kit request logger is always the JSON adapter
+ * (packages/logger/src/adapters/json-adapter.ts:
+ * `console.log(safeStringify(entry))` regardless of level — never
+ * console.info/warn/etc.), so this spies on console.log and parses the
+ * structured entry, rather than asserting on a header the app never sends
+ * back to the client (mirrors apps/oauth/src/__tests__/index.test.ts and
+ * apps/presets-api/tests/index.test.ts).
+ */
+describe('Logger Middleware (FINDING-010)', () => {
+  it('does not log the User-Agent header on "Request started"', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      await app.request(
+        '/health',
+        { headers: { 'User-Agent': 'test-agent/1.0 (should-not-be-logged)' } },
+        createMockEnv(),
+      );
+
+      const entries = logSpy.mock.calls
+        .map(([line]) => {
+          try {
+            return JSON.parse(String(line)) as {
+              message?: string;
+              context?: Record<string, unknown>;
+            };
+          } catch {
+            return null;
+          }
+        })
+        .filter(
+          (entry): entry is { message?: string; context?: Record<string, unknown> } => entry !== null,
+        );
+      const startEntry = entries.find((entry) => entry.message === 'Request started');
+
+      expect(startEntry).toBeDefined();
+      expect(startEntry!.context).not.toHaveProperty('userAgent');
+    } finally {
+      logSpy.mockRestore();
+    }
   });
 });

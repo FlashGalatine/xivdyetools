@@ -28,7 +28,7 @@
 | **Moderation Bot** | v1.6.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.0.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.2.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
-| **Public REST API** | v0.9.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.10.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.3.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.2.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -413,6 +413,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v0.10.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-010 + FINDING-014) — `POST /v1/telemetry` gates on `Origin` + honours `Sec-GPC: 1` before reading the body, derives `env` from the accepted origin (loopback keeps the body's `env`, non-production only), and fails closed on limiter errors; request logs drop the last `logUserAgent: true` opt-in in the repo** |
 | **v0.9.0** | **Aug 2026** | **`POST /v1/telemetry` — the web app's opt-in usage telemetry → Analytics Engine (`ANALYTICS` dataset binding, allowlist schema, fixed blob layout, 204-only, internal); own per-IP bucket `TELEMETRY_RATE_LIMITER` (240 / 60 s) so beacons never consume the `/v1/*` API bucket** |
 | **v0.8.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-003) — `/v1/*` per-IP limiter now uses the native Workers Rate Limiting binding `API_RATE_LIMITER` (65 / 60 s); KV (which cannot throttle a fast client) is only the fallback** |
 | **v0.6.0** | **Aug 2026** | **Absorbed universalis-proxy (`/universalis/*` canonical, `/api/v2/*` compat) and the api-docs VitePress site (Workers Static Assets on `developers.xivdyetools.app`); serves schema v2 (125 dyes, `facewearColors`, negative legacy IDs → 404 with slug); accepts the 5.0 matching vocabulary (`hyab` / `oklch-weighted` normalised to `ciede2000`, `kL/kC/kH` ignored); `worker-kit`; dev/prod split** |

@@ -61,6 +61,20 @@ What counts (the hooks are deliberately narrow):
   (`blob6`) is the theme in force when the batch's events happened: a switch sends the pending
   batch first.
 
+### 0. Sanity check — is anything landing at all?
+
+```sql
+SELECT sum(_sample_interval) AS rows
+FROM xivdyetools_web_analytics
+WHERE timestamp > now() - INTERVAL '24' HOUR
+```
+
+Run this first when a dashboard looks emptier than expected. A silent zero right after a web-app
+host change (a new Pages custom domain, a beta cutover) almost always means the Origin allowlist in
+`src/telemetry/origin.ts` needs the new host — an unrecognised `Origin` is dropped with only a
+`telemetry batch dropped` debug log line (FINDING-014), and Workers Logs are off for this script, so
+the drop is otherwise invisible.
+
 ### 1. Tool popularity — deliberate opens only (last 30 days)
 
 ```sql

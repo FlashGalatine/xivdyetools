@@ -187,7 +187,7 @@ Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/
 ## Deployment Checklist
 
 1. `pnpm lint && pnpm type-check && pnpm test` — must be green.
-2. Bump `version` in `package.json` if behavior changed (currently `0.9.0`).
+2. Bump `version` in `package.json` if behavior changed (currently `0.10.0`).
 3. Merging to `main` **is** the production deploy: `.github/workflows/deploy-api-worker.yml` builds deps, type-checks, tests, runs `build:docs`, runs `wrangler deploy --env production`, then smoke-tests `data.xivdyetools.app/health` and `developers.xivdyetools.app/`. There is no staging worker — `pnpm deploy` only pushes the routeless `xivdyetools-api-worker-dev` worker, which has `workers_dev = false` (FINDING-025) and is therefore not reachable over `*.workers.dev`; ad-hoc testing is `pnpm dev`.
 4. Deploying by hand: `pnpm build:docs && pnpm deploy:production` (the assets directory must exist or the production deploy fails). See `docs/operations/DEPLOY_ENVIRONMENTS.md`.
 5. If any new endpoints/parameters were added, update **both** `docs/reference/dyes.md` (or `matching.md` / `universalis.md`) and the `index.md` quick-start examples — the docs site is the public contract. Internal routes (`/v1/telemetry`) stay off the docs site on purpose; record them in this file's route table instead.
