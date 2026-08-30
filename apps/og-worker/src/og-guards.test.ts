@@ -122,6 +122,25 @@ describe('/og/* query-key allowlist', () => {
     expect(renderOGImage).toHaveBeenCalledTimes(1);
   });
 
+  // 2026-08-29 FINDING-024 (OG-4, ruling S7-R7): `algo` is an allowed KEY on
+  // every /og/* route, but comparison (like accessibility / extractor /
+  // presets / budget / both default-card routes) never reads it — without
+  // this check, ?algo=1, ?algo=2, … on a route with no isAlgorithm check of
+  // its own would each mint a fresh canonical cache key and force a fresh
+  // render, the same amplification the allowlist otherwise closes.
+  it('rejects an invalid algo value even on a route that never reads algo, without rendering', async () => {
+    const res = await app.request('/og/comparison/1,2,3.png?algo=1', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: 'Invalid algorithm' });
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  it('still renders a valid algo value on a route that never reads algo', async () => {
+    const res = await app.request('/og/comparison/1,2,3.png?algo=oklab', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(200);
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+  });
+
   it('a repeated allowed key is not an error', async () => {
     const res = await app.request('/og/harmony/1/complementary?lang=ja&lang=de', {}, TEST_ENV, execCtx);
     expect(res.status).toBe(200);

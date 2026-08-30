@@ -119,7 +119,11 @@ for.
 localizes only when asked) and `?frame=x` (the 400×210 X frame; `twitter:image`
 carries it). `lang`, `frame`, and `algo` are the *only* query keys any `/og/*`
 request may carry (2026-08-29 FINDING-024, OG-4) — any other key gets a `404`
-before the cache lookup or a render, without echoing the key back:
+before the cache lookup or a render, without echoing the key back. A *present*
+`algo` is also validated against `VALID_ALGORITHMS` by that same guard, on
+every route — not just the five below that read it — so `400
+{"error":"Invalid algorithm"}` for a bad spelling no longer depends on a
+route reading the param at all (ruling S7-R7):
 
 | Pattern | Notes |
 |---|---|
@@ -139,7 +143,7 @@ before the cache lookup or a render, without echoing the key back:
 
 All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
 
-The `caches.default` edge cache in `index.ts` (`ogCacheKey`) keys on pathname + the *resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (2026-08-29 FINDING-024, OG-4) — not the full URL. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot). Combined with the query-key allowlist above, the key space is bounded to (pathname × lang × frame × algo) — a client can no longer defeat the cache by appending an arbitrary throwaway param.
+The `caches.default` edge cache in `index.ts` (`ogCacheKey`) keys on pathname + the *resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (2026-08-29 FINDING-024, OG-4) — not the full URL. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary, even on a route that never reads `algo` itself. Combined with the query-key allowlist above, the key space is bounded to (pathname × lang × frame × algo) — a client can no longer defeat the cache by appending an arbitrary throwaway param.
 
 ### Environment Bindings (wrangler.toml)
 

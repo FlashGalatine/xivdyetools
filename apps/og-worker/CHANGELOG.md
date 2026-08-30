@@ -15,8 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 2026-08-29 security audit follow-up remediation (`docs/audits/2026-08-29-security`,
 FINDING-024 / OG-4 — a residual of the 2026-08-21 audit's FINDING-005/OG-4). Minor bump:
-`/og/*` now rejects unrecognised query parameters and the edge cache key is bounded;
-card output for every previously-valid request is unchanged.
+`/og/*` now rejects unrecognised query parameters and invalid `algo` values, and the edge
+cache key is bounded; card output for every previously-valid request is unchanged.
 
 ### Security
 
@@ -38,6 +38,17 @@ card output for every previously-valid request is unchanged.
   a missing `lang` now share one cache entry, as do an unrecognised `?frame=` and a missing
   one). `algo` is kept verbatim, never normalised — two spellings `normalizeMatchingMethod`
   treats differently at render time must not collapse onto one cache slot.
+- **`algo`'s value is now validated on every `/og/*` route, not just the five that read it**
+  (`index.ts`, same guard as above; fix round 1 on this finding, ruling S7-R7): a present
+  `?algo=` outside the 9 spellings in `VALID_ALGORITHMS` now gets `400
+  {"error":"Invalid algorithm"}` — the same status and body the five algo-aware routes
+  (harmony, gradient, both mixer routes, swatch) already returned for this — before the cache
+  lookup or a render. **Behaviour change an operator will see:** without this, the other seven
+  `/og/*` route patterns (both default-card routes, comparison, accessibility, extractor,
+  presets, budget) never read `algo` at all, so it was still a free key for the same
+  cache-defeat amplification the query-key allowlist above closes, just narrowed to one
+  parameter name. Bounds the cache key space to pathname × 6 locales × 2 frames × 10 algo
+  states (9 spellings + absent).
 
 ## [2.3.0] - 2026-08-21
 

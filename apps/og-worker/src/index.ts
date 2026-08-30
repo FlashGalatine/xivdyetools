@@ -186,6 +186,24 @@ const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo']);
  * resource for that URL variant at all, rather than reporting an error on
  * it. The body never echoes the offending key (the OG-8 rule: a validation
  * response never echoes attacker input).
+ *
+ * Ruling S7-R7 (fix round 1, same finding): `algo`'s *value* is validated
+ * here too, not just its key. Being an allowed key is not the same as being
+ * bounded — the five algo-aware routes below already reject a bad spelling
+ * themselves (BUG-002), but seven other /og/* route patterns (both
+ * default-card routes, comparison, accessibility, extractor, presets,
+ * budget) never read `algo` at all, so `?algo=1`, `?algo=2`, … sailed
+ * through the key allowlist unchecked and each minted a fresh canonical
+ * cache key below — the exact amplification this guard exists to close,
+ * just narrowed from "any key" to "algo's value". Rejecting it here bounds
+ * the key space to pathname × 6 locales × 2 frames × 10 algo states (the 9
+ * spellings in VALID_ALGORITHMS + absent). Status/body match what the five
+ * algo-aware routes already return for this exact condition (400, `{error:
+ * 'Invalid algorithm'}`) — that existing contract wins over matching this
+ * guard's own 404-for-unknown-key convention just above: an unknown key
+ * means no such resource variant exists, but a known key with a bad value
+ * is the malformed-request shape the rest of the codebase already answers
+ * with 400.
  */
 app.use('/og/*', async (c, next) => {
   const { searchParams } = new URL(c.req.url);
@@ -193,6 +211,10 @@ app.use('/og/*', async (c, next) => {
     if (!OG_ALLOWED_QUERY_KEYS.has(key)) {
       return c.json({ error: 'Unknown query parameter' }, 404);
     }
+  }
+  const algo = searchParams.get('algo');
+  if (algo !== null && !isAlgorithm(algo)) {
+    return c.json({ error: 'Invalid algorithm' }, 400);
   }
   return next();
 });
@@ -209,7 +231,11 @@ app.use('/og/*', async (c, next) => {
  * verbatim, omitted when absent: og-params.ts's legacy spellings only
  * normalise at render time (normalizeMatchingMethod, inside deltaForAlgorithm),
  * and collapsing two spellings that could render differently onto one slot
- * would risk serving the wrong picture for one of them (ruling S7-R4).
+ * would risk serving the wrong picture for one of them (ruling S7-R4). By
+ * the time this runs, the query-key guard above has already rejected a
+ * present-but-invalid `algo` (ruling S7-R7), so this function only ever
+ * sees one of the 9 `VALID_ALGORITHMS` spellings or `null` — the raw value
+ * is safe precisely because it is a validated one.
  * `origin` keeps beta and production in separate entries.
  */
 function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
@@ -485,6 +511,11 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
   if (!isHarmonyType(harmonyTypeRaw)) {
     return c.json({ error: 'Invalid harmony type' }, 400);
   }
+  // Unreachable over HTTP as of 2026-08-29 FINDING-024 (OG-4, ruling S7-R7):
+  // the shared /og/* guard above already validates `algo` before any route
+  // handler runs. Left in place as this route's own invariant rather than
+  // deleted as dead code — the same reasoning covers the identical check on
+  // the other four algo-aware routes below, unremarked there.
   if (!isAlgorithm(algorithm)) {
     return c.json({ error: 'Invalid algorithm' }, 400);
   }
