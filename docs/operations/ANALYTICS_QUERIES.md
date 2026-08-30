@@ -1,6 +1,134 @@
 # Analytics Engine query cookbook
 
-The web-app section is added by PR #149; this file currently covers the Discord bot only.
+Two Workers Analytics Engine datasets on the same Cloudflare account, one cookbook:
+
+| Section | Dataset | Written by |
+|---|---|---|
+| [Web-app analytics](#web-app-analytics--reading-the-data) | `xivdyetools_web_analytics` | api-worker `POST /v1/telemetry` (opt-in, PR #149) |
+| [Discord bot analytics](#discord-bot-analytics--reading-the-data) | `xivdyetools_bot_analytics` | discord-worker `services/analytics.ts` (Tier A, PR #150) |
+
+Both datasets keep ~3 months of rows and neither has a rollup yet — if history matters, add a
+monthly cron that copies the aggregates you care about into KV/D1.
+
+## Running a query
+
+```bash
+curl -s https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/analytics_engine/sql \
+  -H "Authorization: Bearer $CF_API_TOKEN" \
+  --data "<SQL>"
+```
+
+Always aggregate with `sum(_sample_interval)` — Analytics Engine samples under
+load and `count()` under-reports.
+
+## Web-app analytics — reading the data
+
+Dataset: `xivdyetools_web_analytics` (production worker; `env` blob separates
+`production` from `beta`). `xivdyetools_web_analytics_dev` receives only local
+`wrangler dev` traffic and can be ignored. Written by `POST /v1/telemetry` on
+api-worker; schema in `apps/api-worker/src/telemetry/schema.ts`. Spec:
+`docs/superpowers/specs/2026-08-29-web-analytics-design.md`.
+
+### Column layout (fixed — every event uses the same slots)
+
+| Column | Content |
+|---|---|
+| `index1` / `blob1` | event: `tool_view`, `tool_leave`, `dye_pick`, `chara_parse`, `theme_change` |
+| `blob2` | tool id (`''` for chara_parse / theme_change) |
+| `blob3` | `entry` (initial/share/nav) · `via` (drawer/grid) · `ok` (true/false) · `to` (theme) |
+| `blob4` | `stainID` (dye_pick) · `producer` (chara_parse) · `''` |
+| `blob5`–`blob9` | locale · theme · viewport (m/t/d) · app version · env |
+| `double1` | `active_s` for tool_leave, else 0 |
+
+What counts (the hooks are deliberately narrow):
+
+- `entry`: `initial` = the tool the page loaded into; `share` = the page loaded from a share link
+  (ShareService's `v=` marker) or a preset deep link (`/presets/<id>`); `nav` = every later switch.
+  A `?dye=` / `?dc=` left in the address bar by an in-app hand-off, and a reload of it, is
+  `initial`. Re-navigating to the tool already showing (the Welcome modal's "Get started", Presets'
+  own history entries) is a remount, not a view — no `tool_leave`/`tool_view` pair.
+- `dye_pick`: accepted, explicit picks only. `grid` = a click in a tool's dye grid **or its
+  Favorites strip** that the selector kept (a click that removes an already-selected dye, or is
+  dropped at the selection cap, is not a pick); `drawer` = a palette-drawer swatch a tool took.
+  Random-dye buttons never count. Budget's quick picks and the preset editor do not go through
+  either hook, so they are not counted.
+- `theme_change`: every deliberate switch — the theme modal and Shift+T. The envelope `theme`
+  (`blob6`) is the theme in force when the batch's events happened: a switch sends the pending
+  batch first.
+
+### 1. Tool popularity — deliberate opens only (last 30 days)
+
+```sql
+SELECT blob2 AS tool, sum(_sample_interval) AS views
+FROM xivdyetools_web_analytics
+WHERE index1 = 'tool_view' AND blob3 <> 'initial' AND blob9 = 'production'
+  AND timestamp > now() - INTERVAL '30' DAY
+GROUP BY tool ORDER BY views DESC
+```
+
+`blob3 <> 'initial'` removes the Harmony-by-default bias. Add `AND blob3 = 'share'`
+to see which tools arrive via share links.
+
+### 2. Median visible time per tool
+
+```sql
+SELECT blob2 AS tool, quantileExactWeighted(0.5)(double1, _sample_interval) AS median_s,
+  sum(_sample_interval) AS leaves
+FROM xivdyetools_web_analytics
+WHERE index1 = 'tool_leave' AND blob9 = 'production'
+  AND timestamp > now() - INTERVAL '30' DAY
+GROUP BY tool ORDER BY median_s DESC
+```
+
+Caveat: `tool_leave` fires only on a tool switch or `pagehide`. Mobile browsers can discard a
+hidden tab without firing `pagehide`, so the last tool of such a session has a `tool_view` but no
+matching `tool_leave` — dwell here is biased toward desktop sessions.
+
+### 3. Most-picked dyes (overall / per tool)
+
+```sql
+SELECT blob4 AS stainID, sum(_sample_interval) AS picks
+FROM xivdyetools_web_analytics
+WHERE index1 = 'dye_pick' AND blob9 = 'production'
+  AND timestamp > now() - INTERVAL '30' DAY
+GROUP BY stainID ORDER BY picks DESC LIMIT 20
+```
+
+Add `blob2 AS tool` to the SELECT/GROUP BY for per-tool lists. Map stainIDs to
+names with `GET https://data.xivdyetools.app/v1/dyes/stain/<id>`.
+
+### 4. .chara parses per week
+
+```sql
+SELECT toStartOfWeek(timestamp) AS week, blob3 AS ok, blob4 AS producer, sum(_sample_interval) AS parses
+FROM xivdyetools_web_analytics
+WHERE index1 = 'chara_parse' AND blob9 = 'production'
+GROUP BY week, ok, producer ORDER BY week
+```
+
+`toStartOfWeek` treats Monday as the first day of the week (fixed — no mode argument), but this is
+not full ISO-8601 week numbering. Queries 4 and 5b deliberately carry no `timestamp` window — they
+report weekly history over the full retention window, not a rolling 30 days.
+
+### 5. Theme preference
+
+The default theme is a fixed `standard-dark` (no OS-preference check), so the
+share of batches on Dark over-counts preference. Read both:
+
+```sql
+-- (a) theme in use — Light share is the floor for "chose Light"
+SELECT blob6 AS theme, sum(_sample_interval) AS views
+FROM xivdyetools_web_analytics
+WHERE index1 = 'tool_view' AND blob9 = 'production'
+  AND timestamp > now() - INTERVAL '30' DAY
+GROUP BY theme
+
+-- (b) deliberate switches per week (no time window — see §4)
+SELECT toStartOfWeek(timestamp) AS week, blob3 AS switched_to, sum(_sample_interval) AS switches
+FROM xivdyetools_web_analytics
+WHERE index1 = 'theme_change' AND blob9 = 'production'
+GROUP BY week, switched_to ORDER BY week
+```
 
 ## Discord bot analytics — reading the data
 
