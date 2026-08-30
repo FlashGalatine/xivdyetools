@@ -566,6 +566,7 @@
     "swatchGear": "装备染剂：{list}",
     "swatchDropped": "已省略（最接近的匹配）：{slot} · ΔE {de}",
     "swatchParseError": "无法读取文件 — {message}",
+    "swatchTitle": "角色色板",
     "swatchNoSlots": "此文件中没有有效的颜色部位。",
     "swatchSlotMissing": "{slot}在此文件中不是有效部位。",
     "perDe": "GIL/ΔE"

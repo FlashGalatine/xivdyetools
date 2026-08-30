@@ -165,7 +165,7 @@ export class CharaImport {
   private selectedSlotKey: string | null = null;
   /** Make-a-palette panel expansion state (survives re-renders) */
   private paletteOpen = false;
-  /** Name field draft; null = default to the character's nickname */
+  /** Name field draft; null = empty field (deliberately NOT the character's nickname) */
   private paletteNameDraft: string | null = null;
   /** Equipment identity from api-worker — null until the round-trip lands */
   private equipment: CharaResolveResult | null = null;
@@ -1416,7 +1416,6 @@ export class CharaImport {
    * buttons (disabled + inert outside the window), not just recoloured.
    */
   private renderPalettePanel(): HTMLElement {
-    const resolved = this.resolved!;
     const worn = this.wornDyes().filter((w) => w.dye !== null) as Array<{
       stainId: number;
       dye: Dye;
@@ -1452,10 +1451,11 @@ export class CharaImport {
     );
     panel.appendChild(titleRow);
 
-    // Name input — defaults to the character's nickname.
+    // Name input — deliberately NOT pre-filled with the character's nickname
+    // (it may be a real name and this name can be published to the community).
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
-    nameInput.value = this.paletteNameDraft ?? resolved.nickname ?? '';
+    nameInput.value = this.paletteNameDraft ?? '';
     nameInput.placeholder = this.t('paletteNamePlaceholder');
     nameInput.maxLength = 50;
     nameInput.setAttribute(
@@ -1580,7 +1580,7 @@ export class CharaImport {
         submitBtn.addEventListener('click', () => {
           this.callbacks.onSubmitPalette?.(
             kept.map((w) => w.dye),
-            this.paletteName()
+            this.communityPaletteName()
           );
         });
       }
@@ -1591,13 +1591,31 @@ export class CharaImport {
     return panel;
   }
 
-  private paletteName(): string {
-    const draft = (this.paletteNameDraft ?? this.resolved?.nickname ?? '').trim();
-    return (
-      draft ||
+  /**
+   * The name handed to `onSubmitPalette` (the community preset submission
+   * form): the typed draft only. Deliberately NOT the character's nickname
+   * or the attachment filename — players use their real name in both — and
+   * not a generic default either, which would satisfy the form's own
+   * minimum length unedited. Empty means the user still has to type one;
+   * the form enforces that.
+   */
+  private communityPaletteName(): string {
+    return (this.paletteNameDraft ?? '').trim().slice(0, 50);
+  }
+
+  /**
+   * The name for the on-device `kind: 'palette'` record: the draft, else the
+   * same local-only fallback `saveCharacterRecord` uses (nickname → file name
+   * → localized default). It stays in this browser's storage like the
+   * character record; the community path above never reads it.
+   */
+  private localPaletteName(): string {
+    const draft = (this.paletteNameDraft ?? '').trim();
+    const fallback =
+      this.resolved?.nickname ||
       this.fileName?.replace(/\.chara$/i, '') ||
-      LanguageService.t('swatch.paletteDefaultName')
-    ).slice(0, 50);
+      this.t('paletteDefaultName');
+    return (draft || fallback).slice(0, 50);
   }
 
   /**
@@ -1605,7 +1623,7 @@ export class CharaImport {
    * CollectionService store (the 10A glamour export's sibling record).
    */
   private saveLocalPalette(kept: Array<{ stainId: number; dye: Dye }>): void {
-    const base = this.paletteName();
+    const base = this.localPaletteName();
     let name = base;
     let suffix = 1;
     while (CollectionService.getCollectionByName(name)) {

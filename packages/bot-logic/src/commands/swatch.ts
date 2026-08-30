@@ -63,8 +63,6 @@ export interface SwatchInput {
   logger?: TranslatorLogger;
   /** Raw text of the .chara attachment */
   fileText: string;
-  /** Attachment filename — the name fallback when the file has no nickname */
-  fileName?: string;
   /** slots (file order, default) | hardest (worst-first) — same five rows */
   order?: 'slots' | 'hardest';
   /** Routes to 14J·2 with this slot's winning colour as target */
@@ -73,12 +71,21 @@ export interface SwatchInput {
   theme?: 'dark' | 'light';
 }
 
+/**
+ * A resolved character as this module lets it leave: the Ktisis nickname is
+ * gone from the TYPE, not just the runtime object, so no branch of
+ * `executeSwatch` can read it into a card or an embed (PRIVACY_POLICY §3 —
+ * players use their real name there).
+ */
+export type SwatchCharacter = Omit<ResolvedCharaCharacter, 'nickname'>;
+
 export type SwatchResult =
   | {
       ok: true;
       svgString: string;
       embed: EmbedData;
-      character: ResolvedCharaCharacter;
+      /** Never carries the character's name — see PRIVACY_POLICY §3. */
+      character: SwatchCharacter;
     }
   | {
       ok: false;
@@ -160,6 +167,35 @@ function tribeDisplay(tribe: string | null): string {
   return tribe.replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
 }
 
+/**
+ * Strips the Ktisis nickname before a character record leaves this module —
+ * `SwatchResult.character` must never carry the character's name (PRIVACY_POLICY §3).
+ */
+function withoutNickname(character: ResolvedCharaCharacter): SwatchCharacter {
+  const { nickname, ...safeCharacter } = character;
+  void nickname;
+  return safeCharacter;
+}
+
+/**
+ * Producer token for the card's identifier line. `producer` is the file's raw
+ * `TypeName` — free text the uploader controls — so only the known exporter
+ * families print, as a fixed token; anything else is omitted rather than
+ * rendered (the allowlist discipline core already applies to Race / Tribe /
+ * Gender). Order matters only for a string naming several families.
+ */
+const PRODUCER_TOKENS: ReadonlyArray<readonly [needle: string, token: string]> = [
+  ['brio', 'BRIO'],
+  ['ktisis', 'KTISIS'],
+  ['anamnesis', 'ANAMNESIS'],
+];
+
+function producerToken(producer: string | null): string | null {
+  if (!producer) return null;
+  const haystack = producer.toLowerCase();
+  return PRODUCER_TOKENS.find(([needle]) => haystack.includes(needle))?.[1] ?? null;
+}
+
 interface LiveRow {
   slot: ResolvedCharaSlot;
   label: string;
@@ -180,10 +216,18 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
   const t = createTranslator(locale, input.logger);
   await initializeLocale(locale);
 
-  let character: ResolvedCharaCharacter;
+  // Neutral, localized title for the card and every embed — never the
+  // character's name or the attachment filename (PRIVACY_POLICY §3).
+  const title = t.t('card.swatchTitle');
+
+  // The nickname is stripped the moment the record is resolved: `character`
+  // has no `nickname` member, so nothing below can print one.
+  let character: SwatchCharacter;
   try {
     const parsed = parseCharaFile(input.fileText);
-    character = await resolveCharaColors(parsed, getCharacterColors(), dyeService);
+    character = withoutNickname(
+      await resolveCharaColors(parsed, getCharacterColors(), dyeService)
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return {
@@ -227,12 +271,10 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       character.gender === 'Male' ? '♂' : character.gender === 'Female' ? '♀' : '';
     const charSub = [
       [tribeDisplay(character.tribe), genderSymbol].filter(Boolean).join(' '),
-      character.producer ? character.producer.toUpperCase() : null,
+      producerToken(character.producer),
     ]
       .filter(Boolean)
       .join(' · ');
-    const charName =
-      character.nickname ?? input.fileName?.replace(/\.chara$/i, '') ?? '—';
     const shareUrl = 'https://xivdyetools.app/swatch';
 
     // slot: routes to 14J·2 — the slot's winning colour as target
@@ -283,7 +325,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
         }),
       });
       const embed: EmbedData = {
-        title: charName,
+        title,
         description: `${target.label} \`${target.sourceHex.toUpperCase()}\`\n${shareUrl}`,
         color: parseInt(target.sourceHex.replace('#', ''), 16),
       };
@@ -319,7 +361,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     const svgString = generateSwatchCard({
       stripHexes: rows.map((r) => r.sourceHex),
       charSub,
-      charName,
+      title,
       rows: cardRows,
       labels: {
         lSlot: t.t('card.swatchSlot'),
@@ -370,7 +412,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     lines.push(shareUrl);
 
     const embed: EmbedData = {
-      title: charName,
+      title,
       description: lines.join('\n'),
       color: parseInt(kept[0].sourceHex.replace('#', ''), 16),
     };

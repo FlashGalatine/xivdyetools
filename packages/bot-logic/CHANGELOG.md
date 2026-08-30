@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0] - 2026-08-29
+
+### ⚠️ BREAKING — chara-name privacy
+
+`/swatch` no longer displays a character's name anywhere. `executeSwatch` no longer reads `character.nickname` (Ktisis nickname) or an attachment filename fallback — both the PNG card's title and the embed `title` in every branch now render the neutral, localized `card.swatchTitle` ("Character swatch" / DE/FR/JA/KO/ZH equivalents) instead. `SwatchResult.character` also no longer carries `nickname` (typed as `Omit<ResolvedCharaCharacter, 'nickname'>`). Players routinely name `.chara` exports "Firstname Lastname.chara" and use their real name as a Ktisis nickname; neither ever reaches a message or the returned character record now. Requires `@xivdyetools/svg` ≥ 3.0.0.
+
+| Removed | Replacement |
+|---|---|
+| `SwatchInput.fileName?: string` | dropped — no replacement; the renderer never took a name |
+| `SwatchResult.character: ResolvedCharaCharacter` | `character: Omit<ResolvedCharaCharacter, 'nickname'>` |
+
+**Migration:** stop passing `fileName` into `SwatchInput`; if a caller read `result.character.nickname`, it must stop — the field is no longer present on the type or the runtime object.
 
 ### Fixed — 2026-08-29
 

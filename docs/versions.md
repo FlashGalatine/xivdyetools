@@ -23,7 +23,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.0.0 | `xivdyetools-web-app` | Cloudflare Pages | Active — release pending |
-| **Discord Bot** | v5.0.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
+| **Discord Bot** | v5.0.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
 | **Image Worker** | v1.1.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.5.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v2.7.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -43,8 +43,8 @@
 | **Auth** (incl. `/encoding`) | v1.4.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.1.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.1.0 | `@xivdyetools/worker-kit` | npm | Active (first publish 2026-08-28) |
-| **SVG** | v2.0.1 | `@xivdyetools/svg` | npm | Active — publish pending |
-| **Bot Logic** (incl. `/i18n`) | v2.1.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending |
+| **SVG** | v3.0.0 | `@xivdyetools/svg` | npm | Active — publish pending (publish **before** bot-logic 3.0.0) |
+| **Bot Logic** (incl. `/i18n`) | v3.0.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending (requires svg 3.0.0 on npm first) |
 | **Test Utils** | v1.2.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -132,6 +132,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v5.0.1** | **Aug 2026** | **Chara-name privacy (2026-08-29) — `/swatch` never shows the character's name or the attachment filename (neutral "Character swatch" title on card + embed, filename no longer forwarded to the renderer), PRIVACY_POLICY §3 amended; bot-logic 3.0.0 / svg 3.0.0** |
 | **v5.0.0** | **Aug 2026** | **5.0 command set — v4 commands (`/match`, `/match_image`, `/favorites`, `/collection`, `/language`) deleted; `COMMAND_REGISTRY` becomes the roster of record; `/contrast` split out of `/accessibility` for WCAG 1.4.11 pairs; `/changelog` added; `/a11y` registered as an alias; `/swatch` takes a `.chara` file; every card redrawn on the svg 2.0.0 frame system; matching vocabulary + `/preferences set theme`; Photon decoding moved to `image-worker` behind a service binding (2,632 KiB gzip); beta bot on the routeless `-dev` env** |
 | **v4.7.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-009 moderation approve/reject buttons finally routable (embeds post via `MODERATION_BOT_TOKEN` so clicks reach moderation-worker), BUG-035 throw-safe outcome-checked Discord API wrappers, BUG-033 world → DC → region price-scope cascade in `/budget`** |
 | v4.6.1 | Jun 2026 | Dead-code cleanup (DEAD-113–120) — unused "Error UX Standard V4" module and ~1,300 lines of orphaned exports removed |
@@ -346,6 +347,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v3.0.0** | **Aug 2026** | **⚠️ BREAKING — chara-name privacy (2026-08-29): `SwatchCardOptions.charName` → `title`, a neutral card label that is never the character's name or the attachment filename** |
 | **v2.0.1** | **Aug 2026** | **2026-08-21 security audit (FINDING-028) — `escapeXml` strips XML-illegal controls / U+FFFE / U+FFFF / lone surrogates; `fill` attributes escaped in contrast-card, gradient, dye-info-card, swatch-card** |
 | **v2.0.0** | **Aug 2026** | **5.0 card frame system (`frame.ts`: 400 px canvas, 350 px ceiling, `CARD_DARK` / `CARD_LIGHT`), nine new generators (`generateContrastCard`, `generateA11yCard`, `generateBudgetLedger`, `generateNearestSheet`, `generateSwatchCard`, …), icon home (`icons/tool-icons.ts`), Fragment Mono + JP/SC/KR font stacks, `frame-budget` guard; five 4.x `build*Svg` modules deleted** |
 | v1.2.1 | Jul 2026 | Release-infrastructure validation — publish via npm trusted publishing (OIDC), confirming `workspace:*` rewriting under npm 11; contents identical to 1.2.0 |
@@ -360,6 +362,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v3.0.0** | **Aug 2026** | **⚠️ BREAKING — chara-name privacy (2026-08-29): `SwatchInput.fileName` removed, `SwatchResult.character` is `SwatchCharacter` (no `nickname`), card + embed titles are the neutral localized `card.swatchTitle`, the card's producer line is allowlisted; requires `@xivdyetools/svg` 3.0.0** |
 | **v2.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-019) — `escapeDiscordMarkdown`, `sanitizeEmbedText`, `ALLOWED_MENTIONS_NONE` shared by both bots (and stoat)** |
 | **v2.0.0** | **Aug 2026** | **5.0 wave — one-line embeds, `executeContrast` / `executeSwatch`, gradient row capping, mixer ratio sweep, lens-based accessibility, `card.*` strings ×6 locales; `executeMatch` removed (1.4.0 / 1.5.0 never published)** |
 | v1.5.0 | Aug 2026 | `inverted-tetradic` harmony type on `/harmony` (via core's `findInvertedTetradicDyes`), localized in all six bot locales — requires re-running slash-command registration |
@@ -437,6 +440,7 @@
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
 | Web App v5.0+ | @xivdyetools/core v4.0.0+ | Schema v2, 5.0 matching vocabulary + band tiers, `.chara` parser; `@xivdyetools/types` v2.0.0+ |
+| Discord Worker v5.0.1+ | @xivdyetools/core v4.0.0+ | `@xivdyetools/svg` v3.0.0+ and `@xivdyetools/bot-logic` v3.0.0+ (neutral `/swatch` title — chara-name privacy); publish svg before bot-logic |
 | Discord Worker v5.0+ | @xivdyetools/core v4.0.0+ | Also `@xivdyetools/svg` v2.0.0+, `@xivdyetools/bot-logic` v2.0.0+ (incl. `/i18n`), `@xivdyetools/worker-kit` v1.0.0+ |
 | OG Worker v2.0+ | @xivdyetools/svg v2.0.0+ | 15E band frame generators |
 | Any consumer of blending | @xivdyetools/core v2.8.0+ | `@xivdyetools/color-blending` retired; import from `@xivdyetools/core/blending` |

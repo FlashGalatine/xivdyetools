@@ -40,7 +40,7 @@ const row = (over: Partial<SwatchCardRow> = {}): SwatchCardRow => ({
 const defaultOptions: SwatchCardOptions = {
   stripHexes: ['#E0BFA8', '#3B2A20', '#6A8FA8', '#B54A5C'],
   charSub: 'Miqo\'te ♀ · Ktisis',
-  charName: 'Nunh Test',
+  title: 'Character swatch',
   rows: [
     row(),
     row({ slotLabel: 'HAIR', addr: 'R4·C7', sourceHex: '#3B2A20', dyeHex: '#3A2B23', name: 'Soot Black', deltaE: 1.8 }),
@@ -87,7 +87,7 @@ describe('generateSwatchCard', () => {
   it('renders the identifier lines and the column heads', () => {
     const svg = generateSwatchCard(defaultOptions);
 
-    expect(svg).toContain('Nunh Test');
+    expect(svg).toContain(defaultOptions.title);
     expect(svg).toContain('Miqo&apos;te ♀ · Ktisis');
     expect(svg).toContain('>SLOT</text>');
     expect(svg).toContain('NEAREST DYE');
@@ -164,10 +164,25 @@ describe('generateSwatchCard', () => {
     expect(svg).not.toContain(CARD_DARK.surface);
   });
 
-  it('escapes character names rather than emitting raw markup', () => {
-    const svg = generateSwatchCard({ ...defaultOptions, charName: '<script>x</script>' });
+  it('escapes the title rather than emitting raw markup', () => {
+    const svg = generateSwatchCard({ ...defaultOptions, title: '<script>x</script>' });
 
     expect(svg).toContain('&lt;script&gt;');
     expect(svg).not.toContain('<script>');
+  });
+
+  it('takes no character-name option — the title is the neutral card label only', () => {
+    // Type-level guard (chara-name privacy, 3.0.0): `charName` was removed
+    // and the card must never grow a name-shaped option again. If one is
+    // re-added, the excess-property error below disappears and the
+    // `@ts-expect-error` itself fails type-check.
+    const options: SwatchCardOptions = {
+      ...defaultOptions,
+      // @ts-expect-error — no `charName` on SwatchCardOptions; pass a neutral `title`
+      charName: 'Nunh Test',
+    };
+    const svg = generateSwatchCard(options);
+
+    expect(svg).toContain(defaultOptions.title);
   });
 });

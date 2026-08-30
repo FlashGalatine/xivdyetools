@@ -566,6 +566,7 @@
     "swatchGear": "Teintures d'équipement : {list}",
     "swatchDropped": "Retiré (le plus sûr) : {slot} · ΔE {de}",
     "swatchParseError": "Fichier illisible — {message}",
+    "swatchTitle": "Nuancier du personnage",
     "swatchNoSlots": "Aucun emplacement de couleur actif dans ce fichier.",
     "swatchSlotMissing": "{slot} n’est pas un emplacement actif dans ce fichier.",
     "perDe": "GIL/ΔE"

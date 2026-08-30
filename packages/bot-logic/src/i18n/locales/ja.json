@@ -566,6 +566,7 @@
     "swatchGear": "装備のカララント: {list}",
     "swatchDropped": "省略（最も近い一致）: {slot} · ΔE {de}",
     "swatchParseError": "ファイルを読み取れません — {message}",
+    "swatchTitle": "キャラクターの色見本",
     "swatchNoSlots": "このファイルに有効なカラー部位がありません。",
     "swatchSlotMissing": "{slot}はこのファイルでは有効な部位ではありません。",
     "perDe": "GIL/ΔE"
