@@ -288,7 +288,7 @@ Authorization: Bearer <BOT_API_SECRET>
 
 The legacy v1 `X-Request-Signature` header (`${timestamp}:${discordId}:${userName}`, 5-minute
 window) is no longer accepted since presets-api 2.2.0 (2026-08-29 audit, FINDING-015) and is no
-longer sent by discord-worker 5.1.0; moderation-worker stops sending it in its next release.
+longer sent by discord-worker 5.1.0 or moderation-worker 1.6.0.
 Verification is `verifyBotSignatureV2()` from `@xivdyetools/auth` (header names
 `BOT_SIGNATURE_V2_HEADER` / `BOT_SIGNATURE_NONCE_HEADER` live there); the nonce replay cache is in
 `apps/presets-api/src/middleware/auth.ts`.

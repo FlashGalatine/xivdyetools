@@ -303,10 +303,15 @@ const MODERATION_LOG_COLUMNS =
 const SQL_UUID_V4 =
   "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', abs(random() % 4) + 1, 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))";
 
-/** One row for a user-level action — no preset, so `preset_id` is NULL. */
-function userActionLogStatement(
+/**
+ * The `ban` row — a user-level action, so `preset_id` is NULL. Unconditional:
+ * it is batched with an INSERT that either lands or aborts the whole batch
+ * (`idx_banned_users_discord_active` refuses a second active ban), so there is
+ * no state in which this row can outlive the ban it describes. The `unban` row
+ * has no such guarantee — see `unbanLogStatement`.
+ */
+function banLogStatement(
   db: D1Database,
-  action: 'ban' | 'unban',
   targetDiscordId: string,
   moderatorDiscordId: string,
   reason: string | null,
@@ -319,7 +324,32 @@ function userActionLogStatement(
       VALUES (?, NULL, ?, ?, ?, ?, ?)
       `
     )
-    .bind(crypto.randomUUID(), moderatorDiscordId, action, reason, targetDiscordId, now);
+    .bind(crypto.randomUUID(), moderatorDiscordId, 'ban', reason, targetDiscordId, now);
+}
+
+/**
+ * The `unban` row, conditional on the `banned_users` UPDATE that must precede
+ * it in the batch: `changes()` reads that UPDATE inside the batch's own
+ * transaction, so when a concurrent moderator has already closed the ban and
+ * the UPDATE matches zero rows, no row is written. Without the guard the batch
+ * still commits and the audit trail claims an unban that never happened
+ * (whole-branch review, 2026-08-30). Same idiom presets-api uses for its own
+ * status-change rows (`handlers/moderation.ts`).
+ */
+function unbanLogStatement(
+  db: D1Database,
+  targetDiscordId: string,
+  moderatorDiscordId: string,
+  now: string
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `
+      INSERT INTO moderation_log (${MODERATION_LOG_COLUMNS})
+      SELECT ?, NULL, ?, 'unban', NULL, ?, ? WHERE changes() > 0
+      `
+    )
+    .bind(crypto.randomUUID(), moderatorDiscordId, targetDiscordId, now);
 }
 
 /**
@@ -384,7 +414,7 @@ export async function banUser(
     // The hide log must precede the UPDATE it mirrors, and 'approved' must stay
     // in step with `hideUserPresetsStatement`'s WHERE clause.
     const [, , , hideResult] = await db.batch([
-      userActionLogStatement(db, 'ban', discordId, moderatorDiscordId, reason, now),
+      banLogStatement(db, discordId, moderatorDiscordId, reason, now),
       presetActionLogStatement(db, 'hide', 'approved', discordId, moderatorDiscordId, reason, now),
       db
         .prepare(
@@ -409,6 +439,20 @@ export async function banUser(
         success: false,
         presetsHidden: 0,
         error: 'Ban system not configured. Please run the database migration first.',
+      };
+    }
+
+    // FINDING-018: on a database that has not had presets-api migration 0013
+    // applied, the batch's moderation_log write aborts the whole ban with
+    // "has no column named target_discord_id". Loud is right, but the generic
+    // message left the moderator with nothing to act on. Name the fix, never
+    // the schema (MOD-8) — the raw message still reaches the logs via `cause`.
+    if (/has no column named|no such column/i.test(errorMessage)) {
+      return {
+        success: false,
+        presetsHidden: 0,
+        error: 'Ban system schema is out of date — apply presets-api migration 0013.',
+        cause: error,
       };
     }
 
@@ -454,12 +498,13 @@ export async function unbanUser(
     const now = new Date().toISOString();
 
     // MOD-4: close the ban row and restore the presets in ONE batch.
-    // FINDING-018: [unban log, restore log, ban-row UPDATE, restore] — same
-    // ordering rule as banUser. The unban command takes no reason, so the rows
-    // carry NULL rather than an invented one.
-    const [, , updateResult, restoreResult] = await db.batch([
-      userActionLogStatement(db, 'unban', discordId, moderatorDiscordId, null, now),
-      presetActionLogStatement(db, 'restore', 'hidden', discordId, moderatorDiscordId, null, now),
+    // FINDING-018: [ban-row UPDATE, unban log, restore log, restore] — the
+    // unban log comes straight after the UPDATE because it is conditional on
+    // it (`changes() > 0`), so a lost race against another moderator's unban
+    // commits no row; the restore log still precedes the UPDATE it mirrors.
+    // The unban command takes no reason, so the rows carry NULL rather than an
+    // invented one.
+    const [updateResult, , , restoreResult] = await db.batch([
       db
         .prepare(
           `
@@ -469,6 +514,8 @@ export async function unbanUser(
         `
         )
         .bind(now, moderatorDiscordId, discordId),
+      unbanLogStatement(db, discordId, moderatorDiscordId, now),
+      presetActionLogStatement(db, 'restore', 'hidden', discordId, moderatorDiscordId, null, now),
       restoreUserPresetsStatement(db, discordId),
     ]);
 

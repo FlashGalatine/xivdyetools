@@ -68,16 +68,21 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         `git show c7c1782b:apps/oauth/schema/users.sql`).
       - **presets-api D1 — `0013_moderation_log_user_actions.sql` exists since 2026-08-30 (security audit
         2026-08-29 Sprint 4 / FINDING-018) and is a HAND-RUN step BEFORE the moderation-worker 1.6.0
-        deploy:** it rebuilds `moderation_log` so `preset_id` is nullable and adds `target_discord_id`,
-        which is what lets moderation-worker log `ban` / `unban` / `hide` / `restore`. Apply with
+        deploy — i.e. before merging `security-audit-2026-08-29`, since `deploy-moderation-worker.yml`
+        runs on push to `main` and the merge auto-deploys 1.6.0:** the migration is safe against what is
+        deployed today (1.5.0 writes nothing to `moderation_log`, presets-api 2.2.0 always binds a real
+        `preset_id`), so run it now rather than trying to time it against the merge. It rebuilds
+        `moderation_log` so `preset_id` is nullable and adds `target_discord_id`, which is what lets
+        moderation-worker log `ban` / `unban` / `hide` / `restore`. Apply with
         `wrangler d1 execute xivdyetools-presets --remote --file=migrations/0013_moderation_log_user_actions.sql`
         from `apps/presets-api`. Verify with `SELECT COUNT(*) FROM moderation_log` before and after (the
         rebuild copies every row, so the two numbers must match) and `PRAGMA table_info(moderation_log)`
         (`preset_id` notnull = 0, `target_discord_id` present). No presets-api deploy is needed — presets-api
         neither writes nor reads the new column. **Run late and every ban and unban fails until it is
         applied**: 1.6.0 writes the audit rows in the same atomic batch as the `banned_users` insert, so the
-        missing column aborts the whole batch — nothing is lost, no half state, the moderator just sees
-        "Failed to ban user." until the migration lands (no redeploy needed afterwards). Never
+        missing column aborts the whole batch — nothing is lost, no half state, and the moderator sees
+        "Ban system schema is out of date — apply presets-api migration 0013." until it lands (no
+        redeploy needed afterwards). Never
         `wrangler d1 migrations apply` here either; a second `--file` run is refused by the migration's own
         first statement ("duplicate column name: target_discord_id").
       - **The generated stainID rewrite is NOT applied** (16 presets, 16 still keyed by legacy
@@ -409,7 +414,7 @@ is gone, and a CHANGELOG line.
 
 | Remove | Where | Gate |
 |---|---|---|
-| **v1 bot HMAC acceptance** (`verifyBotSignature`, `X-Request-Signature` fallback) and the v1 header a bot still sends — presets-api stopped accepting it in 2.2.0, discord-worker stopped sending it in 5.1.0 (2026-08-29 security audit FINDING-015) | ~~`apps/presets-api/src/middleware/auth.ts`~~; ~~`apps/discord-worker/src/services/preset-api.ts`~~; `apps/moderation-worker/src/services/preset-api.ts`; then deprecate `createBotSignature`/`verifyBotSignature` in `@xivdyetools/auth` (Sprint 11) | moderation-worker's production deploy carries the v2-only client (tail shows only v2 verifications) — FINDING-014/015 |
+| **v1 bot HMAC acceptance** (`verifyBotSignature`, `X-Request-Signature` fallback) — presets-api stopped accepting it in 2.2.0, discord-worker stopped sending it in 5.1.0 and moderation-worker in 1.6.0, so **no bot sends the v1 header any more** (2026-08-29 security audit FINDING-015) | ~~`apps/presets-api/src/middleware/auth.ts`~~; ~~`apps/discord-worker/src/services/preset-api.ts`~~; ~~`apps/moderation-worker/src/services/preset-api.ts`~~; remaining: deprecate `createBotSignature`/`verifyBotSignature` in `@xivdyetools/auth` (Sprint 11) | both bots' production deploys carry the v2-only client (tail shows only v2 verifications) — FINDING-014/015 |
 | **KV rate-limiter fallbacks** (`selectApiRateLimiter` KV branch, oauth `kv` backend, discord-worker / moderation-worker KV paths, the `RATE_LIMIT_KV` namespaces) | api-worker `middleware/rate-limit.ts`, oauth `services/rate-limit.ts`, discord-worker `services/rate-limiter.ts`, moderation-worker `middleware/rate-limit.ts`, wrangler KV bindings | one week of production logs with no fallback warning — FINDING-003/005 |
 | **Legacy itemID preset fallback** (`resolvePresetDye` legacy path) | presets-api | stainID D1 rewrite applied + backfill verified |
 | **Dead notification path + env vars** `notifyModerators`, `MODERATION_WEBHOOK_URL`, `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`, `DISCORD_BOT_WEBHOOK_URL` | presets-api `services/moderation-service.ts`, `Env`, docs/env-var table (PAPI-16) | none — dead today; remove in the first cleanup PR (unless the 2026-08-21 presets-api remediation already did — check its CHANGELOG) |

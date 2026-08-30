@@ -555,16 +555,16 @@ describe('ban-service', () => {
         'mod-123'
       );
 
-      // [0] ban check, then the batch: [1] unban log, [2] restore log
-      // (FINDING-018), [3] banned_users UPDATE, [4] restore UPDATE
-      const updateQuery = db._queries[3];
+      // [0] ban check, then the batch: [1] banned_users UPDATE, [2] unban log
+      // (conditional on it), [3] restore log, [4] restore UPDATE
+      const updateQuery = db._queries[1];
       expect(updateQuery).toContain('UPDATE banned_users');
       expect(updateQuery).toContain('SET unbanned_at = ?');
       expect(updateQuery).toContain('unban_moderator_discord_id = ?');
       expect(updateQuery).toContain('WHERE discord_id = ?');
       expect(updateQuery).toContain('AND unbanned_at IS NULL');
 
-      const bindings = db._bindings[3];
+      const bindings = db._bindings[1];
       expect(bindings[0]).toBe('2025-01-15T12:00:00.000Z'); // unbanned_at
       expect(bindings[1]).toBe('mod-123'); // unban_moderator_discord_id
       expect(bindings[2]).toBe('discord-789'); // discord_id
@@ -970,6 +970,35 @@ describe('ban-service moderation_log rows (FINDING-018)', () => {
       expect(hideLogAt).toBeGreaterThan(0);
       expect(hideUpdateAt).toBeGreaterThan(hideLogAt);
     });
+
+    it('tells the moderator to apply migration 0013 when the schema is out of date', async () => {
+      // What a pre-0013 database answers when the batch reaches the audit row.
+      db._setupMock(() => {
+        throw new Error(
+          'D1_ERROR: table moderation_log has no column named target_discord_id: SQLITE_ERROR'
+        );
+      });
+
+      const result = await banUser(
+        db as unknown as D1Database,
+        TARGET,
+        USERNAME,
+        'mod-1',
+        'Spamming the gallery'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.presetsHidden).toBe(0);
+      expect(result.error).toBe(
+        'Ban system schema is out of date — apply presets-api migration 0013.'
+      );
+      // MOD-8: channel-facing text names no table, column or D1 internal
+      expect(result.error).not.toContain('moderation_log');
+      expect(result.error).not.toContain('target_discord_id');
+      expect(result.error).not.toContain('D1_');
+      // the raw message still reaches the logs through `cause`
+      expect((result.cause as Error).message).toContain('target_discord_id');
+    });
   });
 
   describe('unbanUser', () => {
@@ -981,7 +1010,7 @@ describe('ban-service moderation_log rows (FINDING-018)', () => {
       return unbanUser(db as unknown as D1Database, TARGET, 'mod-2');
     }
 
-    it('batches the unban row, the restore rows, the ban-row UPDATE and the restore UPDATE in that order', async () => {
+    it('batches the ban-row UPDATE, the unban row, the restore rows and the restore UPDATE in that order', async () => {
       const batchSpy = vi.spyOn(db, 'batch');
 
       const result = await unban();
@@ -990,33 +1019,64 @@ describe('ban-service moderation_log rows (FINDING-018)', () => {
       expect(batchSpy).toHaveBeenCalledTimes(1);
       expect(batchSpy.mock.calls[0][0]).toHaveLength(4);
 
-      const [unbanLog, restoreLog, banUpdate, restoreUpdate] = db._queries.slice(1);
+      const [banUpdate, unbanLog, restoreLog, restoreUpdate] = db._queries.slice(1);
+      expect(banUpdate).toContain('UPDATE banned_users');
       expect(unbanLog).toContain('INSERT INTO moderation_log');
-      expect(unbanLog).toContain('VALUES (?, NULL, ?, ?, ?, ?, ?)');
+      // conditional on the UPDATE above it — see the lost-race test below
+      expect(unbanLog).toContain('WHERE changes() > 0');
       expect(restoreLog).toContain('INSERT INTO moderation_log');
       expect(restoreLog).toContain('FROM presets p');
-      expect(banUpdate).toContain('UPDATE banned_users');
       expect(restoreUpdate).toContain("SET status = 'approved'");
     });
 
     it('binds a UUID id, the moderator and the target on the unban row, with a NULL reason', async () => {
       await unban();
 
-      const [unbanLogId, ...unbanLogRest] = db._bindings[1];
+      expect(db._queries[2]).toContain("SELECT ?, NULL, ?, 'unban', NULL, ?, ?");
+      const [unbanLogId, ...unbanLogRest] = db._bindings[2];
       expect(unbanLogId).toMatch(UUID_V4);
-      expect(unbanLogRest).toEqual(['mod-2', 'unban', null, TARGET, NOW]);
+      expect(unbanLogRest).toEqual(['mod-2', TARGET, NOW]);
     });
 
     it('logs one restore row per preset the UPDATE flips, selected before it flips them', async () => {
       await unban();
 
-      expect(db._queries[2]).toContain(`SELECT ${SQL_UUID_V4}, p.id, ?, ?, ?, ?, ?`);
-      expect(db._bindings[2]).toEqual(['mod-2', 'restore', null, TARGET, NOW, TARGET, 'hidden']);
+      expect(db._queries[3]).toContain(`SELECT ${SQL_UUID_V4}, p.id, ?, ?, ?, ?, ?`);
+      expect(db._bindings[3]).toEqual(['mod-2', 'restore', null, TARGET, NOW, TARGET, 'hidden']);
 
       const restoreLogAt = db._queries.findIndex((q) => q.includes('FROM presets p'));
       const restoreUpdateAt = db._queries.findIndex((q) => q.includes("SET status = 'approved'"));
       expect(restoreLogAt).toBeGreaterThan(0);
       expect(restoreUpdateAt).toBeGreaterThan(restoreLogAt);
+    });
+
+    it('writes no unban row when another moderator closed the ban first', async () => {
+      // The lost race: the pre-check saw an active ban, but by the time the
+      // batch runs the row is already closed, so the UPDATE matches nothing.
+      db._setBanStatus(true);
+      db._setupMock((query) => {
+        if (query.includes('UPDATE banned_users')) return { meta: { changes: 0 } };
+        if (query.includes('UPDATE presets')) return { meta: { changes: 3 } };
+        return { meta: { changes: 1 } };
+      });
+
+      const result = await unbanUser(db as unknown as D1Database, TARGET, 'mod-2');
+
+      // The unban did not happen, so nothing may claim it did.
+      expect(result).toEqual({
+        success: false,
+        presetsRestored: 0,
+        error: 'Failed to update ban record.',
+      });
+
+      // The mock records statements without evaluating them, so the guard is
+      // asserted structurally: `changes()` reads the statement immediately
+      // before it in the batch, which must be the banned_users UPDATE.
+      const banUpdateAt = db._queries.findIndex((q) => q.includes('UPDATE banned_users'));
+      const unbanLogAt = db._queries.findIndex((q) => q.includes("'unban'"));
+      expect(banUpdateAt).toBe(1);
+      expect(unbanLogAt).toBe(banUpdateAt + 1);
+      expect(db._queries[unbanLogAt]).toContain('WHERE changes() > 0');
     });
   });
 });

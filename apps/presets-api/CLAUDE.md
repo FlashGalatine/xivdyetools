@@ -159,7 +159,7 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 | `categories` | 8 seeded categories: jobs, grand-companies, seasons, events, aesthetics, plus appearance / zones / raids-trials added by `migrations/0010`. `community` was retired by `migrations/0007` — community-ness is a source, not a category; any stragglers land in `aesthetics` |
 | `presets` | Both curated and community palettes; `status ∈ {pending, approved, rejected, flagged}`, `dye_signature` enforces unique dye combinations. Later columns arrived one migration each: `example_link` (`0008`), `preview_image_key` / `preview_image_status` (`0009`), `secondary_categories` (`0010`) |
 | `votes` | One row per (preset_id, user_discord_id); composite PK |
-| `moderation_log` | Audit trail of approve/reject/flag/unflag/revert actions |
+| `moderation_log` | Audit trail of approve/reject/flag/unflag/revert actions, plus ban/unban/hide/restore written by moderation-worker directly (`migrations/0013` — `preset_id` is NULL on the user-level `ban`/`unban` rows, `target_discord_id` names the moderated user) |
 | `rate_limits` | **Dropped** by `migrations/0006` (REFACTOR-018 — never read or written; IP limits are in-memory). Still present in `schema.sql` only for fresh local DBs |
 | `banned_users` | Tracked via `discord_id` or `xivauth_id`; partial unique index for active bans |
 | `failed_notifications` | Dead-letter queue (BUG-015) for Discord notifications that exhausted retries |
