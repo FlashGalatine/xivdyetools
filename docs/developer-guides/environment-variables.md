@@ -44,10 +44,18 @@ VITE_PRESETS_API_URL=https://api.xivdyetools.app
 
 ### wrangler.toml Variables
 
+All four are declared **explicitly in both blocks** — `vars` are not inheritable, so a named environment that omits one simply does not have it.
+
 ```toml
+# top-level = the BETA bot; [env.production.vars] repeats all four
 [vars]
-ENVIRONMENT = "production"    # "development" | "production"
+ENVIRONMENT = "development"          # "development" (beta) | "production" (live bot)
+DISCORD_CLIENT_ID = "..."            # the environment's own Discord application
+PRESETS_API_URL = "https://api.xivdyetools.app"
+ANNOUNCEMENT_CHANNEL_ID = "..."      # release-announcement channel (differs per environment)
 ```
+
+`ENVIRONMENT` is read by exactly one thing: `validateEnv` (`src/utils/env-validation.ts`). When it reads `production` the six `RL_*` rate-limit bindings become **required**, and `src/index.ts` refuses every request with `500 {"error":"Service misconfigured"}` — `/health` included — while any of them is unbound, the same as for a missing `DISCORD_TOKEN` (FINDING-013, `docs/audits/2026-08-29-security`). Losing a tier is otherwise silent: worker-kit routes the orphaned commands to the next larger tier, and Workers Logs are off on this script. On the beta worker (`development`) they stay optional and the limiter falls back to KV.
 
 ### Secrets (set via `wrangler secret put`)
 
@@ -62,9 +70,10 @@ ENVIRONMENT = "production"    # "development" | "production"
 | `MODERATION_CHANNEL_ID` | No | Channel for pending presets / preview images |
 | `SUBMISSION_LOG_CHANNEL_ID` | No | Channel for all submissions |
 | `MODERATION_BOT_TOKEN` | No | Moderation bot token — Discord routes button clicks to the posting application |
-| `ANNOUNCEMENT_CHANNEL_ID` | No | Release-announcement channel — a **var**, declared under `[env.production.vars]` (vars are not inherited) |
 
-Bindings: `KV`, `ANALYTICS`, the six `[[ratelimits]]` tiers `RL_5`/`RL_10`/`RL_15`/`RL_20`/`RL_30`/`RL_70`, and service bindings `PRESETS_API` → `xivdyetools-presets-api`, `UNIVERSALIS_PROXY` → `xivdyetools-api-worker`, `IMAGE_WORKER` → `xivdyetools-image-worker`. The top-level `wrangler.toml` block is the beta bot (`xivdyetools-discord-worker-dev`); production lives under `[env.production]`.
+(`ANNOUNCEMENT_CHANNEL_ID` is a **var**, not a secret — see the `[vars]` block above.)
+
+Bindings: `KV`, `ANALYTICS`, the six `[[ratelimits]]` tiers `RL_5`/`RL_10`/`RL_15`/`RL_20`/`RL_30`/`RL_70` (**required in production** — see `ENVIRONMENT` above), and service bindings `PRESETS_API` → `xivdyetools-presets-api`, `UNIVERSALIS_PROXY` → `xivdyetools-api-worker`, `IMAGE_WORKER` → `xivdyetools-image-worker`. The top-level `wrangler.toml` block is the beta bot (`xivdyetools-discord-worker-dev`); production lives under `[env.production]`.
 
 ### Setting Secrets
 

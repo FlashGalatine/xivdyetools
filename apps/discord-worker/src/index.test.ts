@@ -178,6 +178,124 @@ describe('index.ts', () => {
     });
   });
 
+  /**
+   * FINDING-013 (2026-08-29 security audit): `validateEnv` raises
+   * `Missing required env var in production: RL_N` for each rate-limit tier a
+   * PRODUCTION worker is missing, and the middleware must refuse the request
+   * on it exactly as it does for a missing Discord secret. Workers Logs are
+   * off on this script, so the once-per-isolate console line is not a signal
+   * anyone would see; a bot that answers errors is noticed in minutes. The
+   * beta worker (`ENVIRONMENT = "development"`) keeps the log-only behaviour
+   * and its KV fallback.
+   */
+  describe('environment validation (FINDING-013)', () => {
+    let consoleErrorSpy: MockInstance;
+
+    const TIER_NAMES = ['RL_5', 'RL_10', 'RL_15', 'RL_20', 'RL_30', 'RL_70'] as const;
+
+    /** The six `[[ratelimits]]` bindings as both environments bind them. */
+    function boundTiers(except?: (typeof TIER_NAMES)[number]): Partial<Env> {
+      return Object.fromEntries(
+        TIER_NAMES.filter((name) => name !== except).map((name) => [
+          name,
+          { limit: vi.fn().mockResolvedValue({ success: true }) },
+        ]),
+      ) as unknown as Partial<Env>;
+    }
+
+    /** POST one command interaction through the real middleware chain. */
+    async function postCommand(env: Env): Promise<Response> {
+      const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+      const { checkRateLimit } = await import('./services/rate-limiter.js');
+      const interaction = {
+        type: InteractionType.APPLICATION_COMMAND,
+        data: { name: 'unknown_command' },
+        user: { id: 'user-123' },
+      };
+      vi.mocked(verifyDiscordRequest).mockResolvedValue({
+        isValid: true,
+        body: JSON.stringify(interaction),
+        error: '',
+      });
+      vi.mocked(checkRateLimit).mockResolvedValue({
+        allowed: true,
+        remaining: 14,
+        resetAt: Date.now() + 60_000,
+      });
+      return app.fetch(
+        new Request('http://localhost/', { method: 'POST', body: JSON.stringify(interaction) }),
+        env,
+        mockCtx,
+      );
+    }
+
+    beforeEach(() => {
+      // logValidationErrors() falls through to console.error when it is given
+      // no logger — keep the suite's output clean.
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('refuses an interaction when DISCORD_TOKEN is missing (the shape below must match)', async () => {
+      const res = await postCommand({ ...mockEnv, DISCORD_TOKEN: '' });
+
+      expect(res.status).toBe(500);
+      expect(await res.json()).toEqual({ error: 'Service misconfigured' });
+    });
+
+    it('refuses an interaction when a production RL_* binding is missing', async () => {
+      const res = await postCommand({
+        ...mockEnv,
+        ENVIRONMENT: 'production',
+        ...boundTiers('RL_5'),
+      } as Env);
+
+      expect(res.status).toBe(500);
+      expect(await res.json()).toEqual({ error: 'Service misconfigured' });
+    });
+
+    it('serves an interaction when production binds all six tiers', async () => {
+      const res = await postCommand({
+        ...mockEnv,
+        ENVIRONMENT: 'production',
+        ...boundTiers(),
+      } as Env);
+
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as InteractionResponseBody;
+      expect(data.data!.content).toContain('not yet implemented');
+    });
+
+    it('serves an interaction on the beta worker with no tier bound (KV fallback)', async () => {
+      const res = await postCommand({ ...mockEnv, ENVIRONMENT: 'development' } as Env);
+
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as InteractionResponseBody;
+      expect(data.data!.content).toContain('not yet implemented');
+    });
+
+    it('refuses /health on a misconfigured production worker, exactly as a missing token does', async () => {
+      const missingTier = await app.fetch(
+        new Request('http://localhost/health'),
+        { ...mockEnv, ENVIRONMENT: 'production', ...boundTiers('RL_70') } as Env,
+        mockCtx,
+      );
+      const missingToken = await app.fetch(
+        new Request('http://localhost/health'),
+        { ...mockEnv, DISCORD_TOKEN: '' },
+        mockCtx,
+      );
+
+      expect(missingTier.status).toBe(500);
+      expect(await missingTier.json()).toEqual({ error: 'Service misconfigured' });
+      // The two failures are indistinguishable to a caller, by design.
+      expect(missingTier.status).toBe(missingToken.status);
+    });
+  });
+
   describe('POST /webhooks/preset-submission', () => {
     it('should reject unauthorized requests', async () => {
       const { timingSafeEqual } = await import('@xivdyetools/auth');

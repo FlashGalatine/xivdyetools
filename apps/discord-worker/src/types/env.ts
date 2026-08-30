@@ -69,7 +69,8 @@ export interface Env {
    * `"production"` on the live bot. Declared in BOTH `wrangler.toml` blocks
    * (vars are not inheritable) and optional here so tests and `wrangler dev`
    * can leave it unset. FINDING-013: `validateEnv` requires the six `RL_*`
-   * bindings only when this reads `"production"`.
+   * bindings only when this reads `"production"`, and `index.ts` then refuses
+   * every request until they are bound.
    */
   ENVIRONMENT?: string;
 

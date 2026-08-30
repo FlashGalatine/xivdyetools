@@ -15,6 +15,15 @@ export interface EnvValidationResult {
 }
 
 /**
+ * Prefix of every error raised ONLY when `ENVIRONMENT === 'production'`
+ * (FINDING-013). `src/index.ts` matches on it to refuse the request, so the
+ * producer and the consumer share one constant rather than two copies of the
+ * string — and because these errors cannot be raised outside production, the
+ * match is inherently production-scoped.
+ */
+export const PRODUCTION_ENV_ERROR_PREFIX = 'Missing required env var in production: ';
+
+/**
  * Validates all required environment variables for the Discord worker.
  *
  * Required variables:
@@ -97,6 +106,8 @@ export function validateEnv(env: Env): EnvValidationResult {
   // limiter that cannot throttle a fast client at all. Workers Logs are off on
   // this script, so the once-per-isolate warning in `services/rate-limiter.ts`
   // is not a production signal — a missing binding has to fail loudly here.
+  // `src/index.ts` refuses every request while one of these errors stands
+  // (500 "Service misconfigured"), the same as for a missing Discord secret.
   // Optional in development and tests so the KV fallback still works.
   if (env.ENVIRONMENT === 'production') {
     const requiredRateLimitBindings: Array<keyof Env> = [
@@ -109,7 +120,7 @@ export function validateEnv(env: Env): EnvValidationResult {
     ];
     for (const key of requiredRateLimitBindings) {
       if (!env[key]) {
-        errors.push(`Missing required env var in production: ${key}`);
+        errors.push(`${PRODUCTION_ENV_ERROR_PREFIX}${key}`);
       }
     }
   }

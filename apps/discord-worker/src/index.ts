@@ -75,7 +75,11 @@ import {
 } from './services/i18n.js';
 import { createTranslator, createUserTranslator, type Translator } from './services/bot-i18n.js';
 import { sendModerationNotification } from './handlers/commands/preset-notifications.js';
-import { validateEnv, logValidationErrors } from './utils/env-validation.js';
+import {
+  validateEnv,
+  logValidationErrors,
+  PRODUCTION_ENV_ERROR_PREFIX,
+} from './utils/env-validation.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
 import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
 import { sanitizePresetName, sanitizePresetDescription } from './utils/sanitize.js';
@@ -165,11 +169,7 @@ app.use(
 
 // Environment validation middleware
 // Validates required env vars on every request; the ERRORS are logged once
-// per isolate. FINDING-013 (2026-08-29 audit): `wrangler.toml` now sets
-// `ENVIRONMENT` in both blocks, so `validateEnv` additionally requires the six
-// `RL_*` rate-limit bindings on the production worker. Only a missing
-// DISCORD_TOKEN / DISCORD_PUBLIC_KEY refuses the request (below) — every other
-// error is logged and the request proceeds, unchanged by this audit.
+// per isolate.
 app.use('*', async (c, next) => {
   const result = validateEnv(c.env);
   if (!result.valid) {
@@ -177,13 +177,28 @@ app.use('*', async (c, next) => {
       envErrorsLogged = true;
       logValidationErrors(result.errors);
     }
-    // Discord worker should still try to handle requests even with missing optional vars
-    // Only fail hard if critical secrets (DISCORD_TOKEN, DISCORD_PUBLIC_KEY) are missing.
+    // The bot still serves requests with missing OPTIONAL vars; a fatal
+    // misconfiguration refuses every request instead.
+    //
     // BUG-017 (2026-07-18 audit): checked on every request, not just the first
     // one in the isolate, so a misconfigured worker can't serve one 500 and
     // then silently process later traffic.
+    //
+    // FINDING-013 (2026-08-29 audit): the production-only errors are fatal
+    // too. They are raised only when `ENVIRONMENT === 'production'` (the six
+    // `RL_*` rate-limit bindings), so this match cannot affect the beta
+    // worker, and a production bot missing a tier degrades in complete
+    // silence otherwise — worker-kit hands the orphaned commands the next
+    // larger allowance, and Workers Logs are off on this script, so the
+    // `logValidationErrors` line above reaches nobody. Failing the request is
+    // what actually gets noticed.
     if (
-      result.errors.some((e) => e.includes('DISCORD_TOKEN') || e.includes('DISCORD_PUBLIC_KEY'))
+      result.errors.some(
+        (e) =>
+          e.includes('DISCORD_TOKEN') ||
+          e.includes('DISCORD_PUBLIC_KEY') ||
+          e.startsWith(PRODUCTION_ENV_ERROR_PREFIX),
+      )
     ) {
       return c.json({ error: 'Service misconfigured' }, 500);
     }
