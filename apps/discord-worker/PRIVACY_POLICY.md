@@ -14,7 +14,7 @@ We are committed to protecting your privacy and being transparent about our data
 
 | Data Type | Purpose | Retention |
 |-----------|---------|-----------|
-| Discord User ID | Identify users for favorites, collections, voting, rate limiting; counted (never listed) in usage statistics — see *Usage Analytics* below | Until data deletion requested (usage-statistics records: see *Usage Analytics*) |
+| Discord User ID | Identify users for preferences, preset favorites, voting, rate limiting, and the first-run notice flag; also keys a daily per-user activity marker and is counted (never listed) in usage statistics — see *Usage Analytics* below | Until data deletion requested (usage-statistics records: see *Usage Analytics*) |
 | Discord Username | Attribute community preset submissions | Until data deletion requested |
 | User Locale | Provide localized bot responses; the Discord client language (bucketed to one of the six the Bot supports, or "other") is also recorded in usage statistics — see *Usage Analytics* below | Stored preference: until cleared. Usage-statistics bucket: see *Usage Analytics* |
 | Guild ID / Channel ID | Process commands in context | Not stored. Usage statistics record only *whether* a command ran in a server or in a DM (the values `guild` / `dm`) — never the server's or channel's ID |
