@@ -164,16 +164,33 @@ export const env: Env = {
     DB: mockDB,
 };
 
+// FINDING-012 (2026-08-29 security audit): a minimal always-allow RateLimit
+// binding — good enough to satisfy validateEnv's "is it a present object"
+// check and the middleware's happy path. Suites that need throw/deny
+// behaviour build their own fake (see rate-limit-binding.test.ts,
+// index.test.ts's "Rate limiter backend errors" describe).
+export const createMockRateLimit = (): RateLimit =>
+    ({
+        limit: async () => ({ success: true }),
+    }) as unknown as RateLimit;
+
 // Create production environment for testing production-specific code paths
 // BUG-017 (2026-07-18 audit): must pass validateEnv — production requires
 // HTTPS URLs and a real Discord snowflake, and env validation now runs on
 // every request instead of only the first one per isolate.
+// FINDING-013 (2026-08-29 security audit): production validateEnv now also
+// requires TOKEN_BLACKLIST and the three RL_AUTH_* bindings — without these
+// every request through this fixture would 500 "Service misconfigured".
 export const createProductionEnv = (): Env => ({
     ...env,
     ENVIRONMENT: 'production',
     FRONTEND_URL: 'https://xivdyetools.app',
     WORKER_URL: 'https://auth.xivdyetools.app',
     DISCORD_CLIENT_ID: '123456789012345678',
+    TOKEN_BLACKLIST: createMockKV() as unknown as KVNamespace,
+    RL_AUTH_10: createMockRateLimit(),
+    RL_AUTH_20: createMockRateLimit(),
+    RL_AUTH_30: createMockRateLimit(),
 });
 
 // Create broken production environment for testing env validation failure

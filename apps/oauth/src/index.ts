@@ -34,9 +34,14 @@ let envErrorsLogged = false;
 
 // REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
 app.use('*', requestIdMiddleware());
+// FINDING-010 (2026-08-29 security audit): logUserAgent used to be opted in
+// here, so every request's User-Agent rode into the "Request started" log
+// context — contradicting the web privacy guide's promise that the server
+// "discards everything about the request". Nothing here ever consumed the
+// value. worker-kit's own default is `false`, so simply not setting it is
+// the fix.
 app.use('*', loggerMiddleware({
   serviceName: 'xivdyetools-oauth',
-  logUserAgent: true,
 }));
 
 // Environment validation middleware
@@ -173,6 +178,18 @@ app.use('/auth/*', async (c, next) => {
     cloudflare: oauthRateLimitTiers(c.env),
     kv: c.env.TOKEN_BLACKLIST,
   });
+
+  // FINDING-012 (2026-08-29 security audit): CloudflareRateLimiter is a
+  // per-isolate singleton (services/rate-limit.ts) and cannot hold a
+  // request-scoped logger, so a fail-open event (the accepted trade-off —
+  // the request is still served) used to be invisible. Surfaced on the
+  // result and logged here instead, once per request, through the request
+  // logger. No client-visible signal (no header) and no key/IP in the log
+  // context — just which endpoint saw the error.
+  if (result.backendError) {
+    const logger = getLogger(c);
+    logger?.warn('Rate limiter backend error — request allowed (fail-open)', { path });
+  }
 
   // Set rate limit headers on all responses
   c.header('X-RateLimit-Limit', result.limit.toString());

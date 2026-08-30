@@ -26,6 +26,16 @@
 --     --command "SELECT COUNT(*) FROM xivauth_characters"
 --   wrangler d1 execute xivdyetools-users --remote --command "PRAGMA table_info(users)"
 --
+--   #    Live precondition check — the DROP COLUMN preconditions below were
+--   #    verified against the checked-in `schema/users.sql`, not the live
+--   #    database. Run these two BEFORE the ALTER so an ad-hoc index or a
+--   #    hand-added constraint on avatar_url in the live DB (schema drift the
+--   #    repo's schema file would not show) is caught as a clean error here
+--   #    instead of a failed ALTER mid-file:
+--   wrangler d1 execute xivdyetools-users --remote --command "PRAGMA index_list(users)"
+--   wrangler d1 execute xivdyetools-users --remote \
+--     --command "SELECT sql FROM sqlite_master WHERE tbl_name = 'users'"
+--
 --   # 2. APPLY
 --   wrangler d1 execute xivdyetools-users --remote \
 --     --file=migrations/0001_drop_xivauth_characters.sql

@@ -248,7 +248,7 @@ Rate limits are per-IP using a sliding window algorithm (`@xivdyetools/worker-ki
 
 ## Security Headers
 
-Set on **every** response (including `/`, `/health` and 404s):
+Set on every response the app dispatches (including `/`, `/health` and 404s), with one exception: Hono's `cors()` middleware answers an OPTIONS preflight with its own 204 before the header middleware — registered after `cors()` — ever runs, so a preflight response carries the CORS headers only, none of these:
 
 | Header | Value |
 |--------|-------|
@@ -280,7 +280,7 @@ requires never be cached, and the callback bounces carry an authorization code.
 
 ## Global Security Headers
 
-All responses include:
+Every response the app dispatches includes (CORS preflight 204s excluded — see Security Headers above):
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `Strict-Transport-Security: max-age=31536000` (production only)

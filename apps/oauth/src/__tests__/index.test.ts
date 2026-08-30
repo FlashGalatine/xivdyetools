@@ -204,6 +204,49 @@ describe('OAuth Worker App', () => {
         });
     });
 
+    /**
+     * FINDING-010 (2026-08-29 security audit): loggerMiddleware was opted
+     * into `logUserAgent: true`, so every request's User-Agent rode into the
+     * "Request started" log context — contradicting the web privacy guide's
+     * promise that the server "discards everything about the request".
+     *
+     * The worker-kit request logger is always the JSON adapter
+     * (packages/logger/src/adapters/json-adapter.ts: `console.log(safeStringify(entry))`
+     * regardless of level — never console.info/warn/etc.), so this spies on
+     * console.log and parses the structured entry, rather than asserting on a
+     * header the app never sends back to the client (mirrors
+     * apps/presets-api/tests/index.test.ts).
+     */
+    describe('Logger Middleware (FINDING-010)', () => {
+        it('does not log the User-Agent header on "Request started"', async () => {
+            const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            try {
+                await SELF.fetch('http://localhost/health', {
+                    headers: { 'User-Agent': 'test-agent/1.0 (should-not-be-logged)' },
+                });
+
+                const entries = logSpy.mock.calls
+                    .map(([line]) => {
+                        try {
+                            return JSON.parse(String(line)) as {
+                                message?: string;
+                                context?: Record<string, unknown>;
+                            };
+                        } catch {
+                            return null;
+                        }
+                    })
+                    .filter((entry): entry is { message?: string; context?: Record<string, unknown> } => entry !== null);
+                const startEntry = entries.find((entry) => entry.message === 'Request started');
+
+                expect(startEntry).toBeDefined();
+                expect(startEntry!.context).not.toHaveProperty('userAgent');
+            } finally {
+                logSpy.mockRestore();
+            }
+        });
+    });
+
     describe('Rate Limiting Middleware', () => {
         it('should add rate limit headers to auth responses', async () => {
             const response = await SELF.fetch(`http://localhost/auth/discord?code_challenge=${VALID_CODE_CHALLENGE}`);
@@ -257,6 +300,104 @@ describe('OAuth Worker App', () => {
             );
 
             expect(response.status).toBe(302); // Should redirect, not rate limited
+        });
+    });
+
+    /**
+     * FINDING-012 (2026-08-29 security audit): CloudflareRateLimiter is a
+     * per-isolate singleton (services/rate-limit.ts) constructed without a
+     * logger, and the middleware dropped `result.backendError` — so a
+     * throwing RL_AUTH_* binding fell back to fail-open (the accepted
+     * trade-off) with no signal anywhere that it had happened. The fix
+     * surfaces `backendError` on checkRateLimit()'s result and logs it here,
+     * per request, through the request-scoped logger — the limiter itself
+     * cannot hold one. Same console.log/JSON-parse approach as the
+     * FINDING-010 test above; the context is checked for exactly `path` plus
+     * an explicit absence of the client's key/IP (constraints.md: no
+     * client-visible header, no key/IP in the context).
+     */
+    describe('Rate limiter backend errors (FINDING-012)', () => {
+        function throwingRateLimitBinding(): RateLimit {
+            return {
+                limit: async () => {
+                    throw new Error('binding unavailable');
+                },
+            } as unknown as RateLimit;
+        }
+
+        function healthyRateLimitBinding(): RateLimit {
+            return {
+                limit: async () => ({ success: true }),
+            } as unknown as RateLimit;
+        }
+
+        function parseLogEntries(
+            calls: unknown[][]
+        ): Array<{ level?: string; message?: string; context?: Record<string, unknown> }> {
+            return calls
+                .map(([line]: unknown[]) => {
+                    try {
+                        return JSON.parse(String(line)) as {
+                            level?: string;
+                            message?: string;
+                            context?: Record<string, unknown>;
+                        };
+                    } catch {
+                        return null;
+                    }
+                })
+                .filter(
+                    (entry): entry is { level?: string; message?: string; context?: Record<string, unknown> } =>
+                        entry !== null
+                );
+        }
+
+        it('still serves the request and logs a warn when the RL_AUTH_10 binding throws', async () => {
+            const throwingEnv = { ...env, RL_AUTH_10: throwingRateLimitBinding() };
+            const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            try {
+                const response = await fetchWithEnv(
+                    throwingEnv,
+                    `http://localhost/auth/discord?code_challenge=${VALID_CODE_CHALLENGE}`
+                );
+
+                // Fail-open (existing accepted trade-off): still served, not 500/429.
+                expect(response.status).toBe(302);
+
+                const warnEntry = parseLogEntries(logSpy.mock.calls).find(
+                    (entry) => entry.message === 'Rate limiter backend error — request allowed (fail-open)'
+                );
+
+                expect(warnEntry).toBeDefined();
+                expect(warnEntry!.level).toBe('warn');
+                expect(warnEntry!.context).toMatchObject({ path: '/auth/discord' });
+                expect(warnEntry!.context).not.toHaveProperty('key');
+                expect(warnEntry!.context).not.toHaveProperty('ip');
+                expect(warnEntry!.context).not.toHaveProperty('error');
+            } finally {
+                logSpy.mockRestore();
+            }
+        });
+
+        it('does not log a warn when the binding is healthy', async () => {
+            const healthyEnv = { ...env, RL_AUTH_10: healthyRateLimitBinding() };
+            const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            try {
+                const response = await fetchWithEnv(
+                    healthyEnv,
+                    `http://localhost/auth/discord?code_challenge=${VALID_CODE_CHALLENGE}`
+                );
+
+                expect(response.status).toBe(302);
+
+                const warnEntry = parseLogEntries(logSpy.mock.calls).find(
+                    (entry) => entry.message === 'Rate limiter backend error — request allowed (fail-open)'
+                );
+
+                expect(warnEntry).toBeUndefined();
+            } finally {
+                logSpy.mockRestore();
+            }
         });
     });
 

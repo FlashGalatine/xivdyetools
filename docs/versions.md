@@ -26,7 +26,7 @@
 | **Discord Bot** | v5.0.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
 | **Image Worker** | v1.1.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.5.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v2.7.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **OAuth Worker** | v3.0.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.2.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
 | **Public REST API** | v0.9.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.3.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
@@ -160,6 +160,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v3.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit Sprint 2 (FINDING-001/002/003/010/012/013/022/023) — `/auth/refresh` removed; `orig_iat`/`xivauth_id`/`primary_character` no longer minted; `users.avatar_url` and the `xivauth_characters` roster table dropped by a hand-run migration (no known client used any of them); `Cache-Control: no-store` + `Pragma: no-cache` worker-wide; request logger drops the User-Agent; rate-limit binding fail-open events now logged; production `validateEnv` requires `RL_AUTH_10`/`RL_AUTH_20`/`RL_AUTH_30`/`TOKEN_BLACKLIST`; new wrangler-config invariant test; fixed `GET /auth/me`'s `avatar_url` (was built from the internal UUID, not the Discord snowflake)** |
 | **v2.7.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-001) — `/auth/refresh` grace window 24 h → shared `REFRESH_GRACE_SECONDS` (15 min); revocation blacklist entries now outlive `exp` by that window, so a revoked/leaked token can no longer be re-minted after it expires** |
 | **v2.6.0** | **Aug 2026** | **Beta origin (`https://beta.xivdyetools.app`) on the redirect + CORS allowlist (unified — beta login hang fixed); migrated to `@xivdyetools/worker-kit` and `@xivdyetools/auth/encoding`** |
 | **v2.5.0** | **Jul 2026** | **2026-07-18 audit (Sprint 2) — refresh rotation with `jti`-based revocation + `orig_iat` absolute session anchor (refresh chains can no longer extend a session indefinitely), state-signing hardening, single JWT verifier via `@xivdyetools/auth` 1.2.0** |

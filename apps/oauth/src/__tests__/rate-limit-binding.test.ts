@@ -23,6 +23,15 @@ function fakeBinding(outcomes: boolean[]): RateLimit & { calls: string[] } {
     } as unknown as RateLimit & { calls: string[] };
 }
 
+/** A binding whose `limit()` always throws — the native binding's own failure mode. */
+function throwingBinding(): RateLimit {
+    return {
+        limit: async () => {
+            throw new Error('binding unavailable');
+        },
+    } as unknown as RateLimit;
+}
+
 function fakeKV(): KVNamespace & { puts: number } {
     const kv = {
         puts: 0,
@@ -99,5 +108,34 @@ describe('oauth rate limiter backend selection', () => {
         const result = await checkRateLimit('198.51.100.9', '/auth/discord');
         expect(result.allowed).toBe(true);
         expect(result.limit).toBe(10);
+    });
+
+    /**
+     * FINDING-012 (2026-08-29 security audit): CloudflareRateLimiter fails
+     * open on a throwing binding (the accepted trade-off) but the fail-open
+     * event used to be invisible — no consumer passed it a logger and
+     * `backendError` was dropped by the caller. `checkRateLimit()`'s result
+     * must surface it so `index.ts`'s per-request middleware (which owns the
+     * request-scoped logger the per-isolate limiter singleton cannot hold)
+     * can log it.
+     */
+    describe('backendError propagation (FINDING-012)', () => {
+        it('surfaces backendError: true when the selected tier binding throws', async () => {
+            const result = await checkRateLimit('198.51.100.10', '/auth/discord', {
+                cloudflare: [{ limit: 10, binding: throwingBinding() }],
+            });
+
+            expect(result.allowed).toBe(true); // fail-open: the request is still served
+            expect(result.backendError).toBe(true);
+        });
+
+        it('does not set backendError for a healthy binding', async () => {
+            const result = await checkRateLimit('198.51.100.11', '/auth/discord', {
+                cloudflare: [{ limit: 10, binding: fakeBinding([true]) }],
+            });
+
+            expect(result.allowed).toBe(true);
+            expect(result.backendError).toBeUndefined();
+        });
     });
 });

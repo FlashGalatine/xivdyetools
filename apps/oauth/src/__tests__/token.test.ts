@@ -163,6 +163,76 @@ describe('Token Handler', () => {
             expect(json.user.avatar_url).toBeNull();
         });
 
+        /**
+         * 2026-08-29 security-audit remediation (Sprint 2 review of Task 2,
+         * oauth 3.0.0): `payload.sub` is the *internal* user UUID
+         * (jwt-service.ts: `sub: user.id`), not the Discord snowflake
+         * getAvatarUrl() needs — callback.ts's Discord path correctly passes
+         * `discordUser.id`, but this handler passed `payload.sub`. Every
+         * fixture elsewhere in this file (createJWT() above) sets the mock
+         * UserRow's internal `id` EQUAL to the Discord id, which makes `sub`
+         * and `discord_id` indistinguishable and hid the bug — this test
+         * deliberately uses two different values so a regression can't hide
+         * the same way. Not a numbered finding; discovered incidentally
+         * while confirming nothing needed the (now-removed) stored
+         * avatar_url column.
+         */
+        it('should build avatar_url from the Discord snowflake (discord_id), not the internal UUID (sub)', async () => {
+            const internalUuid = 'a1b2c3d4-0000-4000-8000-000000000000';
+            const discordSnowflake = '999888777666555444';
+            const { token } = await createJWTForUser(
+                {
+                    id: internalUuid,
+                    discord_id: discordSnowflake,
+                    xivauth_id: null,
+                    auth_provider: 'discord',
+                    username: 'distinct-id-user',
+                    created_at: '2024-01-01T00:00:00Z',
+                    updated_at: '2024-01-01T00:00:00Z',
+                },
+                mockEnv,
+                { auth_provider: 'discord', global_name: 'Distinct Id User', avatar: 'abc123' }
+            );
+
+            const response = await SELF.fetch('http://localhost/auth/me', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.user.id).toBe(internalUuid); // sub still surfaces as `id` — unrelated to the bug
+            expect(json.user.avatar_url).toContain(discordSnowflake);
+            expect(json.user.avatar_url).not.toContain(internalUuid);
+        });
+
+        it('should return a null avatar_url (falling back, not building a bogus URL) when discord_id is absent', async () => {
+            const { token } = await createJWTForUser(
+                {
+                    id: 'xivauth-only-internal-uuid',
+                    discord_id: null,
+                    xivauth_id: 'xiv-user-123',
+                    auth_provider: 'xivauth',
+                    username: 'XIVAuth User xiv-user',
+                    created_at: '2024-01-01T00:00:00Z',
+                    updated_at: '2024-01-01T00:00:00Z',
+                },
+                mockEnv,
+                // avatar deliberately non-null: proves the discord_id guard itself
+                // (not getAvatarUrl's own null-avatar-hash short-circuit, which
+                // "should return null avatar_url when avatar is null" above
+                // already covers) is what returns null here.
+                { auth_provider: 'xivauth', global_name: null, avatar: 'some-hash' }
+            );
+
+            const response = await SELF.fetch('http://localhost/auth/me', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.user.avatar_url).toBeNull();
+        });
+
         it('should reject expired token', async () => {
             const { token } = await createJWT(mockUser, mockEnv);
 

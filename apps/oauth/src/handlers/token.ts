@@ -60,7 +60,15 @@ tokenRouter.get('/me', async (c) => {
         username: payload.username,
         global_name: payload.global_name,
         avatar: payload.avatar,
-        avatar_url: getAvatarUrl(payload.sub, payload.avatar),
+        // 2026-08-29 security-audit remediation (Sprint 2 review of Task 2,
+        // oauth 3.0.0): getAvatarUrl() builds a Discord CDN URL and needs the
+        // Discord snowflake — `payload.sub` is the *internal* user UUID
+        // (services/jwt-service.ts: `sub: user.id`), not a Discord id.
+        // Passing it here built a URL that could never resolve. Falls back
+        // to `null` when discord_id is absent (XIVAuth-only accounts with no
+        // linked Discord identity) rather than building a URL around
+        // `undefined`.
+        avatar_url: payload.discord_id ? getAvatarUrl(payload.discord_id, payload.avatar) : null,
       },
     });
   } catch (err) {

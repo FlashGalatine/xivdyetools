@@ -20,6 +20,24 @@ const createValidEnv = (): Env => ({
     DB: {} as D1Database,
 });
 
+// FINDING-013 (2026-08-29 security audit): a fully valid production
+// environment — every test in the "production-only requirements" describe
+// below starts from this and removes exactly ONE binding (the Sprint 1
+// lesson recorded in apps/presets-api/tests/utils/env-validation.test.ts: a
+// test that removes several vars at once proves nothing about any one of
+// them).
+const createValidProductionEnv = (overrides: Partial<Env> = {}): Env => ({
+    ...createValidEnv(),
+    ENVIRONMENT: 'production',
+    FRONTEND_URL: 'https://xivdyetools.example.com',
+    WORKER_URL: 'https://oauth.example.com',
+    TOKEN_BLACKLIST: {} as unknown as KVNamespace,
+    RL_AUTH_10: {} as unknown as RateLimit,
+    RL_AUTH_20: {} as unknown as RateLimit,
+    RL_AUTH_30: {} as unknown as RateLimit,
+    ...overrides,
+});
+
 describe('Environment Validation', () => {
     describe('validateEnv', () => {
         it('should pass with valid development environment', () => {
@@ -31,12 +49,7 @@ describe('Environment Validation', () => {
         });
 
         it('should pass with valid production environment using HTTPS', () => {
-            const env = createValidEnv();
-            env.ENVIRONMENT = 'production';
-            env.FRONTEND_URL = 'https://xivdyetools.example.com';
-            env.WORKER_URL = 'https://oauth.example.com';
-
-            const result = validateEnv(env);
+            const result = validateEnv(createValidProductionEnv());
 
             expect(result.valid).toBe(true);
             expect(result.errors).toHaveLength(0);
@@ -197,6 +210,79 @@ describe('Environment Validation', () => {
 
             expect(result.valid).toBe(false);
             expect(result.errors.some(e => e.includes('DISCORD_CLIENT_ID') && e.includes('snowflake'))).toBe(true);
+        });
+
+        // FINDING-013 (2026-08-29 security audit): production also requires
+        // the bindings the 2026-08-21 fixes rely on — a dropped binding
+        // (config edit, dashboard change) previously degraded silently: the
+        // KV or in-memory rate-limit fallback instead of the native
+        // per-client limiter, or no revocation check, with no error and no
+        // log. Development keeps them optional.
+        describe('production-only requirements (FINDING-013)', () => {
+            it('should pass when every production-only requirement is satisfied', () => {
+                const result = validateEnv(createValidProductionEnv());
+
+                expect(result.valid).toBe(true);
+                expect(result.errors).toHaveLength(0);
+            });
+
+            it('should fail when the RL_AUTH_10 binding is missing in production', () => {
+                const result = validateEnv(createValidProductionEnv({ RL_AUTH_10: undefined }));
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain('Missing required env var in production: RL_AUTH_10');
+            });
+
+            it('should fail when the RL_AUTH_20 binding is missing in production', () => {
+                const result = validateEnv(createValidProductionEnv({ RL_AUTH_20: undefined }));
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain('Missing required env var in production: RL_AUTH_20');
+            });
+
+            it('should fail when the RL_AUTH_30 binding is missing in production', () => {
+                const result = validateEnv(createValidProductionEnv({ RL_AUTH_30: undefined }));
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain('Missing required env var in production: RL_AUTH_30');
+            });
+
+            it('should fail when the TOKEN_BLACKLIST binding is missing in production', () => {
+                const result = validateEnv(createValidProductionEnv({ TOKEN_BLACKLIST: undefined }));
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain('Missing required env var in production: TOKEN_BLACKLIST');
+            });
+
+            it('should collect all four errors together when nothing is configured', () => {
+                const result = validateEnv(
+                    createValidProductionEnv({
+                        RL_AUTH_10: undefined,
+                        RL_AUTH_20: undefined,
+                        RL_AUTH_30: undefined,
+                        TOKEN_BLACKLIST: undefined,
+                    })
+                );
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toEqual(
+                    expect.arrayContaining([
+                        'Missing required env var in production: RL_AUTH_10',
+                        'Missing required env var in production: RL_AUTH_20',
+                        'Missing required env var in production: RL_AUTH_30',
+                        'Missing required env var in production: TOKEN_BLACKLIST',
+                    ])
+                );
+            });
+
+            it('keeps RL_AUTH_10, RL_AUTH_20, RL_AUTH_30 and TOKEN_BLACKLIST optional outside production', () => {
+                const result = validateEnv(
+                    createValidEnv() // development; none of the four bindings set
+                );
+
+                expect(result.valid).toBe(true);
+                expect(result.errors).toHaveLength(0);
+            });
         });
     });
 

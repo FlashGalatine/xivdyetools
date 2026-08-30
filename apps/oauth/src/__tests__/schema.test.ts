@@ -75,7 +75,15 @@ describe('migrations/0001_drop_xivauth_characters.sql', () => {
         expect(source).toContain('SELECT COUNT(*) FROM xivauth_characters');
         expect(source).toContain('PRAGMA table_info(users)');
         // The ordering constraint is the dangerous part: running this before the
-        // deploy that stops writing would 500 every sign-in.
-        expect(source).toMatch(/AFTER/);
+        // deploy that stops writing would 500 every sign-in. Match the actual
+        // sentence that carries it, not a bare /AFTER/ — the word also appears
+        // in the "# 3. AFTER —" verification-step label, so a bare match would
+        // stay green even if the ordering warning sentence itself were deleted.
+        expect(source).toMatch(/RUN ONLY AFTER/);
+    });
+
+    it('should document a live precondition check before the ALTER (DROP COLUMN preconditions can drift from the checked-in schema)', () => {
+        expect(source).toContain('PRAGMA index_list(users)');
+        expect(source).toContain("SELECT sql FROM sqlite_master WHERE tbl_name = 'users'");
     });
 });

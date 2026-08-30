@@ -43,6 +43,15 @@ export interface RateLimitResult {
   remaining: number;
   resetAt: Date;
   limit: number;
+  /**
+   * FINDING-012 (2026-08-29 security audit): set when the underlying
+   * backend (currently only the native Cloudflare binding) errored and the
+   * request was allowed through on the fail-open trade-off. The limiter
+   * instances below are per-isolate singletons and so cannot hold a
+   * request-scoped logger — the caller (index.ts's /auth/* middleware) reads
+   * this flag and logs the event with the logger it has for THIS request.
+   */
+  backendError?: boolean;
 }
 
 /**
@@ -142,6 +151,7 @@ export async function checkRateLimit(
     remaining: result.remaining,
     resetAt: result.resetAt,
     limit: result.limit,
+    backendError: result.backendError,
   };
 }
 
