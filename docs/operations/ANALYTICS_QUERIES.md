@@ -17,10 +17,10 @@ Rows written before 2026-08-29 have `blob5 = ''`, `blob6..8 = ''` and `double2 =
 | Column | Content |
 |---|---|
 | `index1` / `blob1` | command name (`extractor_image` / `extractor_color` split kept) or `button` |
-| `blob2` | Discord user id (pseudonymous; use only for `uniq()`) |
+| `blob2` | Discord user id (pseudonymous; use only for `count(DISTINCT blob2)`) |
 | `blob3` | `guild` \| `dm` |
 | `blob4` | `1` \| `0` success |
-| `blob5` | outcome class: `ok`, `rate_limited`, `upstream_universalis`, `upstream_presets`, `image_input`, `render`, `unknown` |
+| `blob5` | outcome class: `ok`, `rate_limited`, `upstream_universalis`, `upstream_presets`, `image_input` (the uploaded image or `.chara` file could not be read), `render`, `unknown` |
 | `blob6` | subcommand (`info`, `browse`, `find`, …) or button kind (`copy_hex`, `copy_rgb`, `copy_hsv`); subcommand groups are `<group>_<sub>` (`favorite_add`) |
 | `blob7` | locale bucket `en ja de fr ko zh other` |
 | `blob8` | `command` \| `button` |
@@ -47,7 +47,9 @@ GROUP BY command ORDER BY p95_ms DESC
 ```
 
 `blob4 = '1'` restricts this to successful runs on purpose — a rate-limited request returns near-
-instantly, so mixing it in would drag the median toward 0 and understate real latency.
+instantly, so mixing it in would drag the median toward 0 and understate real latency. Rows whose
+work stalled past the 20 s drain deadline are `unknown` with `double2 ≈ 20000`, so they are
+excluded here too.
 
 ### 3. Failure share by outcome class
 
@@ -58,8 +60,30 @@ WHERE blob8 = 'command' AND blob4 = '0' AND timestamp > now() - INTERVAL '30' DA
 GROUP BY command, outcome ORDER BY runs DESC
 ```
 
-Known gap: handler validation replies and non-exception error embeds (e.g. "no matches") still
-count as `ok` — only thrown errors and rate limits are classified.
+How a row gets its class (`services/command-trace.ts` `classifyError` + the handlers' marks):
+
+- **Validation replies count as `ok`** — "no matches", a missing option, a `.chara` slot that is
+  not in the file, and a **4xx other than 429 from presets-api / Universalis** (not the owner,
+  duplicate vote, unknown world …): the handler answered the user, nothing of ours failed.
+  `429`, `5xx` and a network/binding failure are `upstream_*`.
+- **A lost card counts as `render`** even when the user still got an answer: bot-logic's
+  `GENERATION_FAILED`, a resvg/PNG failure, and `/dye`'s text fallbacks (its card commands degrade
+  to a text embed instead of an error). This is how a renderer outage on the busiest command shows
+  up at all.
+- **`image_input`** is image-worker rejecting the image (marker table in
+  `services/image-input-errors.ts`: URL, size, format, timed-out fetch) plus a `/swatch`
+  attachment that could not be downloaded or parsed. A `/extractor image` failure AFTER the pixels
+  came back is `render`; one during the round trip that matches no marker is `unknown`.
+- **`rate_limited`** rows are AE-only: they do not move the KV `total` / `failure` / `cmd:*`
+  counters behind `/stats` (those count commands that ran; the limiter exists to absorb bursts and
+  KV allows one write per second per key).
+- **`unknown`** also covers a command whose deferred work had not settled 20 s after the response
+  (`DRAIN_DEADLINE_MS`) — the row is written then rather than lost with the isolate.
+
+Known blind spots: a Discord edit that fails (`safeEditOriginalResponse` returning `false` — a
+429/5xx on the PATCH or the PNG upload timing out) is still `ok`; and `double2` spans I/O only —
+Workers freeze `Date.now()` between I/O events, so CPU spent after a handler's last await is not
+in the latency.
 
 ### 4. Locale mix (Discord client language, not the stored preference)
 
@@ -82,8 +106,11 @@ GROUP BY button
 ### 6. Daily unique users
 
 ```sql
-SELECT toStartOfDay(timestamp) AS day, uniq(blob2) AS users
+SELECT toStartOfDay(timestamp) AS day, count(DISTINCT blob2) AS users
 FROM xivdyetools_bot_analytics
 WHERE timestamp > now() - INTERVAL '30' DAY
 GROUP BY day ORDER BY day
 ```
+
+Analytics Engine's SQL has no `uniq()`; `count(DISTINCT …)` is the documented distinct count. Note
+this counts sampled rows, not `sum(_sample_interval)` — at the bot's volume nothing is sampled.
