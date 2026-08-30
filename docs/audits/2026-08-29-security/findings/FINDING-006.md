@@ -12,4 +12,4 @@
 - Add `doNotStore: true` to the request body; add Perspective/Google to the web guide's community-presets section (what is sent, why, that it is not stored).
 
 ## Status
-OPEN
+PARTIAL — code half FIXED 2026-08-30 e10d740e (presets-api 2.2.0: `doNotStore: true`, key in the header, no query string); docs half (name Google Perspective in `apps/web-app/PRIVACY.md`) pending Sprint 6 (web-app).

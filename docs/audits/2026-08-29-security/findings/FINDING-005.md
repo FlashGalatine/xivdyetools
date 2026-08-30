@@ -14,4 +14,4 @@
 - On Perspective error/429/timeout set `moderationStatus = 'pending'` for name/description changes (fail closed into the moderator queue); send the key in `x-goog-api-key`; apply a small per-user pre-moderation edit cap.
 
 ## Status
-OPEN
+FIXED 2026-08-30 e10d740e (+ 1e80ebff docs; presets-api 2.2.0) — Perspective error / 429 / timeout / unparsable → "needs manual review": persisted `pending` + moderator notification, treated exactly like a flagged result; per-user `text_edit` cap (30/day) before `moderateContent` for every status — **needs hand-run migration `0012_submission_events_text_edit.sql`** (inert until applied); key sent in `x-goog-api-key`; decision recorded in `docs/architecture/security-trade-offs.md`.

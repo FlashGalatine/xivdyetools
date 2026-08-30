@@ -27,7 +27,9 @@ Nothing is exploitable now — no finding ships out-of-band. Two prerequisites, 
 
 **Ends with:** the token re-issued (or confirmed already narrow) + the runbook commit. No deploy.
 
-## Sprint 1 — presets-api: moderation queue integrity + privacy hygiene (P1)
+## Sprint 1 — presets-api: moderation queue integrity + privacy hygiene (P1) ✅ COMPLETED 2026-08-30 (commits `bd3cc35d..1e80ebff`, 10 commits, presets-api 2.2.0; six reviewed tasks + one whole-branch review with a single fix wave)
+**Deploy needs:** hand-run migration `0012_submission_events_text_edit.sql` (see *Ends with*); merge to `main` = production deploy. Ledger of rulings and deferred minors: `.superpowers/sdd/REMEDIATION_PLAN/progress.md` (git-ignored; the rulings are also listed in the sprint's closing report).
+**Follow-ups surfaced by the reviews (not scheduled here):** post-edit client messaging should branch on `preset.status`, not the optional `moderation_status` (Sprints 3, 6); forward a moderation reason so moderators can tell an outage from a flag (Sprint 3); the web privacy guide needs the same two retention rows the bot policy got (fold into Sprint 6 / FINDING-006); `verifyBotSignatureV2` should reject an absent/malformed nonce itself (Sprint 11); `@xivdyetools/types` `CommunityPreset.author_discord_id` still required (Sprint 6 / types); `packages/test-utils/integration/**` still simulates v1 acceptance (Sprint 11); a presets-api dead-code pass (`notifyModerators`, `requireNotBannedCheck`); after-merge minors from the ledger (description-only `textChanged` test, 429-envelope helper, ownership predicate helper, `no-console` selector for `(logger ?? console)`, wrangler `[[routes]]` form, INSERT-failure catch test, prune log levels).
 Anchor: FINDING-004/005 (any logged-in user can spam the moderation channel and, under Perspective back-pressure, publish unmoderated text). Everything else in this unit rides along so one deploy closes it.
 
 | ID | Source | Sev / Exposure | Item |
@@ -43,7 +45,7 @@ Anchor: FINDING-004/005 (any logged-in user can spam the moderation channel and,
 | FINDING-011 (part) | security | LOW / INTERNET-AUTH | `handlers/presets.ts:605,789` + the other `console.*` sites → worker-kit logger; log ids, never preset names. |
 | FINDING-023 (part) | security | LOW / LOCAL | `tests/wrangler-config.test.ts`: `workers_dev = false`, prod `TOKEN_BLACKLIST` id = oauth's, `RL_PUBLIC` present, `JWT_ISSUER` = auth host. |
 
-**Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api` → merge to `main` → `deploy-presets-api.yml` (`deploy:production`). No D1 migration in this sprint.
+**Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api` → **apply migration `apps/presets-api/migrations/0012_submission_events_text_edit.sql` by hand** (`wrangler d1 execute xivdyetools-presets --remote --file=…` from `apps/presets-api`; verify `SELECT COUNT(*) FROM submission_events` before/after — it rebuilds the table to admit the new `text_edit` kind) → merge to `main` → `deploy-presets-api.yml` (`deploy:production`). Applying 0012 right after the deploy is also safe: until it lands the new text-edit cap is inert (the insert fails its CHECK and is caught) and nothing else depends on it. *(Corrected 2026-08-30 — the original "No D1 migration in this sprint" was wrong: `submission_events.kind` carries a CHECK constraint, discovered in Task 2.)*
 
 ## Sprint 2 — oauth: token lifetime + identity minimisation (P1/P2)
 Anchor: FINDING-003 (no client uses `/auth/refresh`). FINDING-001/002 remove data the worker has no reason to hold. **Bare `wrangler deploy` is production on this worker.**

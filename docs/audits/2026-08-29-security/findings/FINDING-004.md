@@ -14,4 +14,4 @@
 - Notify only when this edit flagged (`flaggedByThisEdit`) or when name/description changed while pending; never lift `rejected` to `pending` on an owner edit (require an explicit resubmit that counts against the flagged-edit cap).
 
 ## Status
-OPEN
+FIXED 2026-08-30 bd3cc35d, b207c4f9, 1e80ebff (presets-api 2.2.0) — owner edits never re-queue or re-notify without passing the `flagged_edit` daily cap; only a flagged edit or a real name/description change on a pending preset notifies; a rejected preset is resubmitted only by changing its text (capped, the web-app's Resubmit path); `flagged` stays moderator-owned; the PATCH response carries `moderation_status` only for approved|pending.

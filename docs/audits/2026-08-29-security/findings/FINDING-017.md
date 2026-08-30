@@ -13,4 +13,4 @@
 - Store the preset id instead of the payload in the dead-letter row; prune resolved rows and events older than N days (scheduled job or on write); add a retention row.
 
 ## Status
-OPEN
+FIXED 2026-08-30 780cf992, 9eb84a4c (presets-api 2.2.0) — dead-letter rows store `{type, preset_id}` only (legacy rows summarised on read, aged out ≤ 90 d); pruning (30 d resolved / 90 d unresolved / 30 d `submission_events`) on the write paths, moderator list/resolve and every submission (`waitUntil`); owner delete cascades; retention rows in `PRIVACY_POLICY.md` §5/§8.

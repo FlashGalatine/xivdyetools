@@ -109,7 +109,17 @@ No finding leaked a secret; nothing else needs rotation.
 ## Remediation status
 | ID | Status | Commit |
 |---|---|---|
-| FINDING-001 … FINDING-031 | OPEN | — |
+| FINDING-004 | FIXED 2026-08-30 (Sprint 1, presets-api 2.2.0) | bd3cc35d, b207c4f9, 1e80ebff |
+| FINDING-005 | FIXED 2026-08-30 — needs hand-run migration `0012` | e10d740e, 1e80ebff |
+| FINDING-006 | PARTIAL — code half fixed; web PRIVACY.md wording → Sprint 6 | e10d740e |
+| FINDING-016 | FIXED 2026-08-30 | 896f3f7e |
+| FINDING-017 | FIXED 2026-08-30 | 780cf992, 9eb84a4c |
+| FINDING-015 | PARTIAL — presets-api requires v2 + nonce replay check; bots/auth package → Sprints 3, 4, 11 | 01ea3dec |
+| FINDING-010 | PARTIAL — presets-api opt-in removed; oauth/api-worker/worker-kit → Sprints 2, 5, 9 | efd495a4 |
+| FINDING-011 | PARTIAL — presets-api logging ids-only; moderation-/discord-worker → Sprints 4, 3 | efd495a4, a3e8ee14 |
+| FINDING-013 | PARTIAL — presets-api validateEnv; oauth/moderation-worker → Sprints 2, 4 | efd495a4, a3e8ee14 |
+| FINDING-023 | PARTIAL — presets-api config test; oauth/moderation-/image-worker → Sprints 2, 4, 8 | efd495a4 |
+| FINDING-001, 002, 003, 007, 008, 009, 012, 014, 018–022, 024–031 | OPEN — Sprints 2–13 | — |
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.

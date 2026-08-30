@@ -13,4 +13,4 @@ Promotes 2026-08-21 INFO PAPI-14.
 - Strip `author_discord_id` from anonymous responses; return `is_owner: boolean` for the authenticated caller and keep the id on bot/moderator routes.
 
 ## Status
-OPEN
+FIXED 2026-08-30 896f3f7e (presets-api 2.2.0) — one serialiser `toPublicPreset(preset, viewer)` via `presetForViewer()` on every HTTP preset response: anonymous callers get no `author_discord_id`; JWT callers get `is_owner` and the id only for their own presets or as moderators; bot (HMAC) and moderation routes unchanged; contract docs updated.

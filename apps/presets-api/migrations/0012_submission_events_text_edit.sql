@@ -4,7 +4,7 @@
 -- `DAILY_FLAGGED_EDIT_LIMIT` is charged only to an edit that reaches a
 -- moderator, and only AFTER the Perspective call it is meant to bound. So a
 -- stream of name/description edits that moderation clears — or any edit of an
--- already-judged (rejected / flagged) preset, which notifies nobody — drove
+-- already-judged (rejected / flagged) preset, which that cap never charged — drove
 -- Google Perspective towards its ~1 QPS default quota with no per-user bound
 -- at all beyond the 100/min per-IP limiter. `PATCH /api/v1/presets/:id` now
 -- checks `checkDailyEventLimit(db, user, 'text_edit')` (30/UTC day) BEFORE

@@ -9,7 +9,7 @@
  *
  * And the gap FINDING-004 left behind (FINDING-005, same audit): the Perspective
  * call itself is capped per user *before* it is made — the flagged-edit cap runs
- * after it, and never at all for an already-judged preset — and an unavailable
+ * after it, and for an already-judged preset only when the edit resubmits it — and an unavailable
  * Perspective is treated exactly as flagged content instead of as an all-clear.
  */
 

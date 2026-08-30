@@ -13,4 +13,4 @@
 - Add `tests/wrangler-config.test.ts` to the four workers (parse the toml, assert the invariants); optionally a cheap `X-Internal-Caller` header check in image-worker as defence in depth.
 
 ## Status
-OPEN
+PARTIAL — presets-api part FIXED 2026-08-30 efd495a4 (2.2.0: `tests/wrangler-config.test.ts` pins `workers_dev`, routes, production `JWT_ISSUER`/`ENVIRONMENT`, `TOKEN_BLACKLIST` ids cross-checked against oauth's toml, `RL_PUBLIC`, no `[env.preview]`); oauth (Sprint 2), moderation-worker (Sprint 4) and the image-worker anchor (Sprint 8) pending.

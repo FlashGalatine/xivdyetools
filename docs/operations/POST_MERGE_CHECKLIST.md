@@ -47,7 +47,13 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         exist). **`d1_migrations` is empty** — every file was applied with `d1 execute --file`, which
         is this project's documented procedure; **never run `wrangler d1 migrations apply`** against
         this database, it would replay `002`–`0010` and fail on the first duplicate column.
-      - No `0012+` exists (`apps/presets-api/migrations/` ends at `0011`).
+      - **`0012_submission_events_text_edit.sql` exists since 2026-08-30 (presets-api 2.2.0, security
+        audit 2026-08-29 Sprint 1 / FINDING-005) and is a HAND-RUN step:** it rebuilds `submission_events`
+        to admit the new `text_edit` kind (SQLite cannot alter a CHECK). Apply with
+        `wrangler d1 execute xivdyetools-presets --remote --file=migrations/0012_submission_events_text_edit.sql`
+        from `apps/presets-api`, checking `SELECT COUNT(*) FROM submission_events` before and after.
+        Order does not matter for safety — before the 2.2.0 deploy is cleanest; applied late, the new
+        per-user text-edit cap is simply inert until it lands. Nothing else in `0012+` exists.
       - **The generated stainID rewrite is NOT applied** (16 presets, 16 still keyed by legacy
         itemIDs — first element > 254 — 0 by stainID) and **must not be applied before the merge**:
         the production web-app (4.x) and discord-worker (4.x) render preset palettes by itemID and
