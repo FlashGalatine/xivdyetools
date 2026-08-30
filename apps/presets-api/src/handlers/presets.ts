@@ -65,6 +65,7 @@ import {
 import {
   notifyDiscordBot,
   storeFailedNotification,
+  pruneFailedNotifications,
   type PresetNotificationPayload,
 } from '../services/notification-service.js';
 import { getValidCategories } from '../services/category-service.js';
@@ -928,6 +929,16 @@ presetsRouter.post('/', async (c) => {
       await storeFailedNotification(c.env.DB, submissionPayload, err, c.get('logger'));
     })
   );
+
+  // FINDING-017: the dead-letter retention window is a promise in the privacy
+  // policy, so it cannot depend on the dead-letter write alone — that only runs
+  // when a notification exhausts every retry, which is rare by design. A quiet
+  // month would leave rows (including pre-FINDING-017 rows carrying an author id
+  // and preset text) well past their window. Submission is the busiest write in
+  // the worker, so hanging the prune off it keeps the promise honest. Off the
+  // response path via waitUntil, and it never throws, so it cannot affect the
+  // 201 the author is waiting for.
+  c.executionCtx.waitUntil(pruneFailedNotifications(c.env.DB, c.get('logger')));
 
   return c.json(
     {

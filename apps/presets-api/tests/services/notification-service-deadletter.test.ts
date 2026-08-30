@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
     storeFailedNotification,
     listFailedNotifications,
+    resolveFailedNotification,
     FAILED_NOTIFICATION_RESOLVED_RETENTION_DAYS,
     FAILED_NOTIFICATION_UNRESOLVED_RETENTION_DAYS,
     type PresetNotificationPayload,
@@ -64,6 +65,22 @@ function statementsMatching(
     return db._queries
         .map((query, index) => ({ index, query, bindings: db._bindings[index] }))
         .filter(({ query }) => pattern.test(query));
+}
+
+/**
+ * Both retention DELETEs, with the cutoffs the frozen clock implies:
+ * 2026-08-29T12:00:00Z − 30 days for a resolved row, − 90 for an unresolved one,
+ * in the `datetime('now')` format both columns are written in.
+ */
+function expectPruned(db: ReturnType<typeof createMockD1Database>): void {
+    const deletes = statementsMatching(db, /DELETE FROM failed_notifications/i);
+    expect(deletes).toHaveLength(2);
+    expect(deletes.find((s) => /resolved_at IS NOT NULL/i.test(s.query))?.bindings).toEqual([
+        '2026-07-30 12:00:00',
+    ]);
+    expect(deletes.find((s) => /resolved_at IS NULL/i.test(s.query))?.bindings).toEqual([
+        '2026-05-31 12:00:00',
+    ]);
 }
 
 describe('dead-letter queue (FINDING-017)', () => {
@@ -117,7 +134,7 @@ describe('dead-letter queue (FINDING-017)', () => {
 
     });
 
-    describe('age-based pruning on the write path', () => {
+    describe('age-based pruning', () => {
         it('drops resolved rows after 30 days and unresolved rows after 90, before inserting', async () => {
             const db = createMockD1Database();
             db._setupMock(() => ({ meta: { changes: 0 } }));
@@ -166,6 +183,64 @@ describe('dead-letter queue (FINDING-017)', () => {
 
             expect(db._queries.some((q) => /DELETE FROM failed_notifications/i.test(q))).toBe(true);
             expect(db._queries.some((q) => /INSERT INTO failed_notifications/i.test(q))).toBe(true);
+        });
+    });
+
+    /**
+     * The dead-letter *write* is by design a rare event — it needs a Discord
+     * notification to exhaust every retry — so hanging retention off it alone
+     * would leave rows sitting for as long as nothing failed, while the privacy
+     * policy promises 30 / 90 days. The moderator paths touch this table far
+     * more often, and both already tolerate failure.
+     */
+    describe('prune trigger sites', () => {
+        it('a moderator listing the queue prunes it first', async () => {
+            const db = createMockD1Database();
+            db._setupMock((query) => (/^\s*SELECT/i.test(query) ? [] : { meta: { changes: 0 } }));
+
+            await listFailedNotifications(db, false);
+
+            expectPruned(db);
+            // Before the read, so a row past its window is never listed.
+            const selectIndex = db._queries.findIndex((q) => /^\s*SELECT/i.test(q));
+            const lastDelete = Math.max(
+                ...statementsMatching(db, /DELETE FROM failed_notifications/i).map((s) => s.index)
+            );
+            expect(selectIndex).toBeGreaterThan(lastDelete);
+        });
+
+        it('a moderator resolving a row prunes the queue first', async () => {
+            const db = createMockD1Database();
+            db._setupMock(() => ({ meta: { changes: 1 } }));
+
+            await expect(resolveFailedNotification(db, '7')).resolves.toBe(true);
+
+            expectPruned(db);
+            const updateIndex = db._queries.findIndex((q) => /UPDATE failed_notifications/i.test(q));
+            const lastDelete = Math.max(
+                ...statementsMatching(db, /DELETE FROM failed_notifications/i).map((s) => s.index)
+            );
+            expect(updateIndex).toBeGreaterThan(lastDelete);
+        });
+
+        it('a failed prune never fails a moderator read or resolve', async () => {
+            const db = createMockD1Database();
+            db._setupMock((query) => {
+                if (/DELETE FROM failed_notifications/i.test(query)) {
+                    throw new Error('D1_ERROR: no such table: failed_notifications');
+                }
+                if (/^\s*SELECT/i.test(query)) return [];
+                return { meta: { changes: 1 } };
+            });
+
+            await expect(listFailedNotifications(db, false)).resolves.toEqual([]);
+            await expect(resolveFailedNotification(db, '7')).resolves.toBe(true);
+
+            // The prune really was attempted on both paths — without this the
+            // test would pass against code that never prunes at all.
+            expect(
+                statementsMatching(db, /DELETE FROM failed_notifications/i).length
+            ).toBeGreaterThanOrEqual(2);
         });
     });
 

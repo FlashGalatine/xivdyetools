@@ -662,6 +662,135 @@ describe('PresetsHandler', () => {
             _resetPatternsForTesting();
         });
 
+        // FINDING-017: the dead-letter retention window is a promise in the
+        // privacy policy, and the dead-letter *write* is by design rare (a
+        // notification has to exhaust every retry). Submission is the busiest
+        // write in the worker, so it carries the prune too — off the response
+        // path, via waitUntil.
+        describe('dead-letter retention (FINDING-017)', () => {
+            /** Mock that walks a submission through to its 201. */
+            function setupSubmissionMock(
+                extra: (query: string) => unknown = () => undefined
+            ): void {
+                mockDb._setupMock((query: string) => {
+                    const override = extra(query);
+                    if (override !== undefined) return override;
+                    if (query.includes('COUNT') && query.includes('author_discord_id')) {
+                        return { count: 0 };
+                    }
+                    if (query.includes('FROM categories')) {
+                        return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                    }
+                    if (query.includes('dye_signature')) return null;
+                    if (query.includes('INSERT')) return { success: true, meta: { changes: 1 } };
+                    if (query.includes('COUNT')) return { count: 1 };
+                    return { success: true };
+                });
+            }
+
+            async function submit(executionCtx: unknown): Promise<Response> {
+                return app.request(
+                    '/api/v1/presets',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: 'Bearer test-bot-secret',
+                            'X-User-Discord-ID': '123',
+                            'X-User-Discord-Name': 'TestUser',
+                        },
+                        body: JSON.stringify(createMockSubmission()),
+                    },
+                    env,
+                    executionCtx as ExecutionContext
+                );
+            }
+
+            it('prunes aged-out dead letters off the response path', async () => {
+                vi.useFakeTimers();
+                vi.setSystemTime(new Date('2026-08-29T12:00:00.000Z'));
+                try {
+                    const waitUntilPromises: Promise<unknown>[] = [];
+                    const mockExecutionCtx = {
+                        waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                        passThroughOnException: () => {},
+                    };
+                    setupSubmissionMock();
+
+                    // Hold the prune's batch open (and only it — addVote batches
+                    // too, and the response legitimately waits for that one). A
+                    // 201 that arrives while the prune is still blocked is the
+                    // proof that it rides waitUntil rather than the response.
+                    const sqlOf = new Map<unknown, string>();
+                    const prepare = mockDb.prepare.bind(mockDb);
+                    mockDb.prepare = (query: string) => {
+                        const statement = prepare(query);
+                        sqlOf.set(statement, query);
+                        return statement;
+                    };
+                    let releasePrune!: () => void;
+                    const pruneGate = new Promise<void>((resolve) => { releasePrune = resolve; });
+                    const realBatch = mockDb.batch.bind(mockDb);
+                    mockDb.batch = (async (statements: Parameters<typeof realBatch>[0]) => {
+                        const isPrune = statements.some((s) =>
+                            /DELETE FROM failed_notifications/i.test(sqlOf.get(s) ?? '')
+                        );
+                        if (isPrune) await pruneGate;
+                        return realBatch(statements);
+                    }) as typeof mockDb.batch;
+
+                    const res = await submit(mockExecutionCtx);
+
+                    expect(res.status).toBe(201);
+                    expect(
+                        mockDb._queries.some((q) => /DELETE FROM failed_notifications/i.test(q))
+                    ).toBe(false);
+
+                    releasePrune();
+                    await Promise.allSettled(waitUntilPromises);
+
+                    const deletes = mockDb._queries
+                        .map((query, index) => ({ query, bindings: mockDb._bindings[index] }))
+                        .filter(({ query }) => /DELETE FROM failed_notifications/i.test(query));
+                    expect(deletes).toHaveLength(2);
+                    expect(
+                        deletes.find((d) => /resolved_at IS NOT NULL/i.test(d.query))?.bindings
+                    ).toEqual(['2026-07-30 12:00:00']);
+                    expect(
+                        deletes.find((d) => /resolved_at IS NULL/i.test(d.query))?.bindings
+                    ).toEqual(['2026-05-31 12:00:00']);
+                } finally {
+                    vi.useRealTimers();
+                }
+            });
+
+            it('answers 201 even when the prune throws', async () => {
+                const waitUntilPromises: Promise<unknown>[] = [];
+                const mockExecutionCtx = {
+                    waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                    passThroughOnException: () => {},
+                };
+                setupSubmissionMock((query) => {
+                    if (/DELETE FROM failed_notifications/i.test(query)) {
+                        throw new Error('D1_ERROR: no such table: failed_notifications');
+                    }
+                    return undefined;
+                });
+
+                const res = await submit(mockExecutionCtx);
+
+                expect(res.status).toBe(201);
+                // The prune ran and swallowed its own failure — nothing the
+                // author is waiting on, and no unhandled rejection in waitUntil.
+                await expect(Promise.all(waitUntilPromises)).resolves.toHaveLength(
+                    waitUntilPromises.length
+                );
+                expect(
+                    mockDb._queries.some((q) => /DELETE FROM failed_notifications/i.test(q))
+                ).toBe(true);
+            });
+        });
+
         it('should skip Discord notification when bindings not configured', async () => {
             const waitUntilPromises: Promise<unknown>[] = [];
             const mockExecutionCtx = {

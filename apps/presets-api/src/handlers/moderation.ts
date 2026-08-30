@@ -320,7 +320,8 @@ moderationRouter.get('/failed-notifications', async (c) => {
   const includeResolved = c.req.query('include_resolved') === 'true';
 
   // REFACTOR-017: dead-letter read path lives in notification-service
-  const notifications = await listFailedNotifications(c.env.DB, includeResolved);
+  // FINDING-017: the read also prunes rows past their retention window
+  const notifications = await listFailedNotifications(c.env.DB, includeResolved, c.get('logger'));
   return c.json({ notifications, total: notifications.length });
 });
 
@@ -335,7 +336,7 @@ moderationRouter.patch('/failed-notifications/:id/resolve', async (c) => {
   const id = c.req.param('id');
 
   try {
-    const resolved = await resolveFailedNotification(c.env.DB, id);
+    const resolved = await resolveFailedNotification(c.env.DB, id, c.get('logger'));
     if (!resolved) {
       return notFoundResponse(c, 'Failed notification');
     }

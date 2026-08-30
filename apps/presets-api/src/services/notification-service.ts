@@ -214,22 +214,37 @@ export async function notifyDiscordBot(env: Env, payload: PresetNotificationPayl
 }
 
 /**
- * FINDING-017: drop dead letters that have aged out, on the write path.
+ * FINDING-017: drop dead letters that have aged out.
  *
- * presets-api has no cron trigger, so retention has to ride a request. This is
- * the natural one: it runs exactly when the table grows, and it is already off
- * the response path (every caller is inside a `waitUntil`).
+ * presets-api has no cron trigger, so retention has to ride requests — and the
+ * policy now promises a window ("30 days after resolution, 90 if unresolved"),
+ * so it has to ride requests that actually happen. Hanging it off the
+ * dead-letter *write* alone would not: that write only runs when a Discord
+ * notification exhausts every retry, which is by design rare, so a quiet
+ * six months would leave every row — including pre-FINDING-017 rows still
+ * carrying an author id, a display name and preset text — sitting untouched.
+ * It is therefore called from four places, all best-effort:
  *
- * Deliberately NOT in the same `db.batch` as the insert that follows: a D1
- * batch is atomic, so a prune that failed would take the dead-letter row down
- * with it — losing the one thing the queue exists to keep. Housekeeping never
- * outranks the row it is making space for. The two DELETEs do share a batch.
+ *   1. `storeFailedNotification` — when the table grows;
+ *   2. `listFailedNotifications` — every moderator read of the queue;
+ *   3. `resolveFailedNotification` — every moderator resolve;
+ *   4. `POST /api/v1/presets`, via `waitUntil` — the busiest write in the
+ *      worker, so the window holds as long as anyone submits a preset.
  *
- * Never throws. Logs counts only: a D1 error can quote the statement that
- * failed, and quoting a statement over this table is how the content this
- * finding removes would find its way back into a log line.
+ * Deliberately NOT in the same `db.batch` as the insert in (1): a D1 batch is
+ * atomic, so a prune that failed would take the dead-letter row down with it —
+ * losing the one thing the queue exists to keep. Housekeeping never outranks
+ * the row it is making space for. The two DELETEs do share a batch.
+ *
+ * Never throws, so a caller can `await` it without a guard of its own. Logs
+ * counts only: a D1 error can quote the statement that failed, and quoting a
+ * statement over this table is how the content this finding removes would find
+ * its way back into a log line.
  */
-async function pruneFailedNotifications(db: D1Database, logger?: RetentionLogger): Promise<void> {
+export async function pruneFailedNotifications(
+  db: D1Database,
+  logger?: RetentionLogger
+): Promise<void> {
   const now = Date.now();
   const resolvedCutoff = toSqliteDateTime(
     now - FAILED_NOTIFICATION_RESOLVED_RETENTION_DAYS * MS_PER_DAY
@@ -369,12 +384,17 @@ function summarizeFailedNotification(row: FailedNotificationRow): FailedNotifica
  * Returns an empty list if the table doesn't exist yet.
  *
  * FINDING-017: returns the projection above rather than the raw row, so the
- * fat payload of a pre-FINDING-017 row is never published again.
+ * fat payload of a pre-FINDING-017 row is never published again — and prunes
+ * first, because a moderator opening the queue is far more frequent than a
+ * notification exhausting its retries, and the retention window is a promise.
  */
 export async function listFailedNotifications(
   db: D1Database,
-  includeResolved: boolean
+  includeResolved: boolean,
+  logger?: RetentionLogger
 ): Promise<FailedNotificationSummary[]> {
+  await pruneFailedNotifications(db, logger);
+
   const columns = 'id, payload, error, attempts, created_at, resolved_at';
   const query = includeResolved
     ? `SELECT ${columns} FROM failed_notifications ORDER BY created_at DESC LIMIT 50`
@@ -392,11 +412,18 @@ export async function listFailedNotifications(
 /**
  * Mark a failed notification as resolved.
  * Returns false when the row doesn't exist or was already resolved.
+ *
+ * FINDING-017: prunes first, for the same reason as the listing above. A row
+ * that the 90-day unresolved window has already reached is deleted rather than
+ * resolved, and the caller's 404 is then the truthful answer — it is gone.
  */
 export async function resolveFailedNotification(
   db: D1Database,
-  id: string
+  id: string,
+  logger?: RetentionLogger
 ): Promise<boolean> {
+  await pruneFailedNotifications(db, logger);
+
   const result = await db
     .prepare(
       "UPDATE failed_notifications SET resolved_at = datetime('now') WHERE id = ? AND resolved_at IS NULL"
