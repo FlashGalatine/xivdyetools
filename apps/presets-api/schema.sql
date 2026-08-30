@@ -198,3 +198,8 @@ CREATE TABLE IF NOT EXISTS submission_events (
 
 CREATE INDEX IF NOT EXISTS idx_submission_events_user_kind_created
   ON submission_events(user_discord_id, kind, created_at);
+
+-- The age-based prune (FINDING-017) matches on `created_at` alone, which the
+-- composite index above cannot serve; it runs on every quota write.
+CREATE INDEX IF NOT EXISTS idx_submission_events_created
+  ON submission_events(created_at);

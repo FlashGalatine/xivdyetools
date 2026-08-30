@@ -20,6 +20,10 @@
 -- FINDING-005:
 --   wrangler d1 execute xivdyetools-presets --remote --file=migrations/0012_submission_events_text_edit.sql
 --
+-- This rebuild copies every row, so verify the count is unchanged — run this
+-- BEFORE the migration and again AFTER, and compare the two numbers:
+--   wrangler d1 execute xivdyetools-presets --remote --command "SELECT COUNT(*) FROM submission_events"
+--
 -- Until it is applied the worker still works: the 'text_edit' INSERT is
 -- best-effort and its CHECK violation is caught and logged, so edits succeed —
 -- but no row lands, the count stays 0 and the new cap never engages.
@@ -49,3 +53,10 @@ ALTER TABLE submission_events_new RENAME TO submission_events;
 -- Dropping the old table dropped its index with it.
 CREATE INDEX IF NOT EXISTS idx_submission_events_user_kind_created
   ON submission_events(user_discord_id, kind, created_at);
+
+-- FINDING-017's age-based prune (`DELETE FROM submission_events WHERE
+-- created_at < ?`) runs on every quota write and matches on `created_at`
+-- alone, which the composite index above cannot serve — it is a full scan
+-- without this one.
+CREATE INDEX IF NOT EXISTS idx_submission_events_created
+  ON submission_events(created_at);

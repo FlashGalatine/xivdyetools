@@ -276,7 +276,7 @@ Perspective's default quota is about **1 QPS**. Before this, a failed call retur
 
 ### Mitigations
 
-1. **A distinct outcome, not a silent one**: `method: 'perspective_unavailable'` (with `passed: false`) is separate from `'perspective'`, so a real toxicity verdict and a non-answer are distinguishable in logs and in moderator-facing copy.
+1. **A distinct outcome, not a silent one**: `method: 'perspective_unavailable'` (with `passed: false`) is separate from `'perspective'`, so a real toxicity verdict and a non-answer are distinguishable **in the logs**. They are *not* distinguishable to a moderator: `flaggedReason` is never forwarded, and the webhook payload carries `moderation_status: 'flagged'` for both — the notification's union (`'clean' | 'flagged' | 'auto_approved'`) is consumed by discord-worker, so widening it is a later-sprint item.
 2. **Per-user pre-moderation cap**: `DAILY_TEXT_EDIT_LIMIT` = 30 name/description edits per UTC day (`submission_events` kind `text_edit`, migration `0012`), checked **before** the Perspective call and for every preset status, so one account cannot drive Perspective to 429 and cannot flood the queue by failing it. Submissions (10/day) and notifying edits (10/day) keep their own caps.
 3. **The slot is charged at the point of spend**, not after a successful UPDATE — otherwise a user already refused by the flagged-edit cap could loop text edits, spending a Perspective call each time and never being counted.
 4. **Local list still runs first** and short-circuits, so an obvious hit never reaches Perspective at all.

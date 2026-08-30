@@ -286,24 +286,48 @@ Every field is optional; at least one must be present (`No updates provided`).
 
 - `secondary_categories: []` clears the list; `example_link: null` clears the link.
 - Changing `dyes` re-runs duplicate detection (excluding this preset).
-- Changing `name`/`description` re-runs content moderation. If it fails, a write-once
-  `previous_values` snapshot is taken (the moderator revert target), and an `approved` preset drops
-  to `pending`.
-- An edit can never move a moderator-set status (FINDING-004): the only transition an owner edit may
-  cause is `approved` → `pending` when their own new text trips moderation. `pending`, `rejected`
-  and `flagged` are left exactly as they are; `hidden` → 403 `This preset cannot be edited`.
-- Moderators are notified only when the edit gives them something new to judge: it tripped
-  moderation, or it changed the `name`/`description` of a preset that was already `pending`. A tag /
-  dye / category / example-link edit, or re-sending the stored text unchanged, notifies nobody, and
-  neither does any edit of a `rejected` or `flagged` preset. Every notification counts against
-  `DAILY_FLAGGED_EDIT_LIMIT` (10 / UTC day) — see the 429 below.
+- Sending `name` or `description` at all is charged to `DAILY_TEXT_EDIT_LIMIT` (30 / UTC day)
+  **before** content moderation runs, for every preset status — see the first 429 below — and then
+  re-runs content moderation. If moderation fails, or cannot answer at all (FINDING-005), a
+  write-once `previous_values` snapshot is taken: the moderator revert target.
+- **What the edit does to the status** (FINDING-004). "New text" below means the submitted `name` or
+  `description` differs from the stored value, or the text sent tripped moderation; everything else
+  — tags, dyes, category, example link, or text re-sent unchanged — is applied and changes no status
+  and notifies nobody, however often it is repeated.
+
+  | Stored status | New text | Any other edit |
+  |---------------|----------|----------------|
+  | `pending` | stays `pending`; moderators re-notified | applied; nothing else |
+  | `approved` | stays `approved`, unless the text tripped moderation → `pending` + notify | applied; nothing else |
+  | `rejected` | → `pending` + notify: **editing the text is the resubmission** | applied; stays `rejected` |
+  | `flagged` | applied; stays `flagged`; nobody notified — the flag is the moderator's | applied; nothing else |
+  | `hidden` | 403 `This preset cannot be edited` | 403 |
+
+  So an owner edit can only move a preset *into* the review queue, never out of one. The web app's
+  **Resubmit** button on a rejected preset is exactly this PATCH (it reopens the edit form).
+- Every notification counts against `DAILY_FLAGGED_EDIT_LIMIT` (10 / UTC day — see the second 429
+  below) and carries `moderation_status: "flagged"` when this edit tripped moderation, `"clean"`
+  otherwise.
 - Vote counts are preserved across edits.
 
 **Response** — `moderation_status` is the status the preset is in after the edit, and is
-**present only when that is `approved` or `pending`**. A preset left in a status only a moderator
-can set (`rejected`, `flagged`) omits the field entirely — `preset.status` carries it instead:
+**present only when that is `approved` or `pending`** (so a resubmitted `rejected` preset reports
+`"pending"`). A preset left in a status only a moderator can set (`rejected`, `flagged`) omits the
+field entirely — `preset.status` carries it instead:
 ```json
 { "success": true, "preset": { …preset… }, "moderation_status": "approved" }
+```
+
+**429 (daily limit on name/description edits)** — checked before content moderation and before any
+write, whatever the preset's status; nothing is written:
+```json
+{
+  "success": false,
+  "error": "RATE_LIMITED",
+  "message": "You've reached your daily limit of name and description edits (30 per day). Try again tomorrow.",
+  "remaining": 0,
+  "reset_at": "…"
+}
 ```
 
 **429 (daily limit on edits that reach a moderator)** — nothing is written:

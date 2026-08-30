@@ -98,7 +98,8 @@ function stripAuditData<T extends { previous_values?: unknown }>(preset: T): Omi
 }
 
 /**
- * FINDING-016: every preset this router hands to an HTTP client goes through
+ * FINDING-016 (2026-08-29 audit — not the 2026-08-21 audit's FINDING-016 /
+ * PAPI-11 below): every preset this router hands to an HTTP client goes through
  * `toPublicPreset` (author id / `is_owner` rule) — never past it. The audit
  * snapshot rule differs per route, so `stripAuditData` stays the caller's
  * decision and composes here. The notification payloads deliberately use the
@@ -433,6 +434,71 @@ presetsRouter.delete('/:id', async (c) => {
 });
 
 /**
+ * THE rule for what an owner edit does to a preset's status, and whether a
+ * moderator hears about it (FINDING-004, 2026-08-29 audit) — all four statuses
+ * in one place, because the answer differs for each and used to be spread
+ * across three expressions.
+ *
+ * The edit's fields are always applied; this decides only the `status` column
+ * and the moderator notification. "New text" = the name or description
+ * actually changed, or the text sent just tripped moderation.
+ *
+ * | stored     | new text                                     | anything else |
+ * |------------|----------------------------------------------|---------------|
+ * | `pending`  | stays `pending`, moderators re-notified       | no status write, no notify |
+ * | `approved` | stays `approved` unless it tripped moderation, then → `pending` + notify | no status write, no notify |
+ * | `rejected` | → `pending` + notify — this IS the resubmission | no status write, no notify |
+ * | `flagged`  | no status write, no notify — the flag is the moderator's alone | no status write, no notify |
+ *
+ * `nextStatus: undefined` means "do not write the `status` column at all",
+ * which is what leaves a moderator's decision intact. Every branch that
+ * notifies leaves the preset `pending`, which the notification payload relies
+ * on. `hidden` never reaches here (403 above), and an unknown status falls to
+ * the `flagged` case — fail closed.
+ */
+function ownerEditOutcome(
+  status: string,
+  { textChanged, flaggedByThisEdit }: { textChanged: boolean; flaggedByThisEdit: boolean }
+): { nextStatus: 'pending' | undefined; notifiesModerators: boolean } {
+  // Text a moderator has not judged in this form yet: either it differs from
+  // what is stored, or the filter just tripped on what was sent.
+  const newTextToJudge = textChanged || flaggedByThisEdit;
+
+  switch (status) {
+    // Already in the queue — nothing to write, and moderators only need to
+    // re-read it when the text they judge changed. (PRESETS-BUG-002's "any
+    // edit re-queues" affordance was the workflow bypass FINDING-004 closed:
+    // `PATCH {"tags":["a"]}` used to be an uncapped moderation-channel ping.)
+    case 'pending':
+      return { nextStatus: undefined, notifiesModerators: newTextToJudge };
+
+    // Live. It leaves public view only because the owner's own new text just
+    // tripped moderation; a clean edit of an approved preset is nobody's
+    // business and must never re-queue it.
+    case 'approved':
+      return flaggedByThisEdit
+        ? { nextStatus: 'pending', notifiesModerators: true }
+        : { nextStatus: undefined, notifiesModerators: false };
+
+    // Judged and out of public view, but the next move is the author's:
+    // editing the text IS the resubmission (the web app's "Resubmit" button
+    // reopens the edit form and PATCHes it, and the user guide says so). It
+    // re-enters the queue and is charged to the same daily cap as every other
+    // notifying edit. A tag / dye / category edit, or text re-sent unchanged,
+    // gives a moderator nothing new, so it still changes nothing.
+    case 'rejected':
+      return newTextToJudge
+        ? { nextStatus: 'pending', notifiesModerators: true }
+        : { nextStatus: undefined, notifiesModerators: false };
+
+    // `flagged` — and any status this router does not know — is the
+    // moderator's alone: no owner edit moves it or puts it in front of them.
+    default:
+      return { nextStatus: undefined, notifiesModerators: false };
+  }
+}
+
+/**
  * PATCH /api/v1/presets/:id
  * Edit a preset (owner only)
  */
@@ -512,11 +578,9 @@ presetsRouter.patch('/:id', async (c) => {
   }
 
   // BUG-001 (2026-07-18 audit) / FINDING-004 (2026-08-29 security audit): a
-  // status is a moderator's decision, and an owner edit must never move one.
-  // Hidden presets cannot be edited at all; rejected and flagged presets keep
-  // the status they were given. The single status an owner edit may write is
-  // 'pending', and only because their own new text just tripped moderation on
-  // a preset that was live (see `nextStatus` below).
+  // status is a moderator's decision, and an owner edit may move it only in
+  // the two cases `ownerEditOutcome` above allows — both of them *into* the
+  // queue, never out of it. Hidden presets cannot be edited at all.
   if (preset.status === 'hidden') {
     return forbiddenResponse(c, 'This preset cannot be edited');
   }
@@ -526,7 +590,7 @@ presetsRouter.patch('/:id', async (c) => {
   // as users voted on the dye combination, not just the name/description.
   let previousValues: PresetPreviousValues | null | undefined;
   // Did the text *this* request supplied trip moderation? (A preset that is
-  // merely still pending has not; see `notifiesModerators` below.)
+  // merely still pending has not; see `ownerEditOutcome` above.)
   let flaggedByThisEdit = false;
 
   // FINDING-004: the two fields a moderator actually reads. Tags, dyes, the
@@ -540,9 +604,10 @@ presetsRouter.patch('/:id', async (c) => {
     // FINDING-005: the Perspective call is the scarce resource — its default
     // quota is ~1 QPS — so the per-user cap has to sit in front of it. The
     // flagged-edit cap below cannot do that job: it runs *after* the call, and
-    // only for edits that reach a moderator, so edits moderation clears and any
-    // edit of an already-judged (rejected / flagged) preset used to spend a
-    // Perspective call bounded only by the 100/min per-IP limiter. This cap
+    // only for edits that reach a moderator — an edit an approved preset's
+    // moderation clears, or any edit of a `flagged` one, reaches nobody, so it
+    // would spend a Perspective call and cost nothing, bounded only by the
+    // 100/min per-IP limiter (which is per IP, not per user). This cap
     // applies to every status, and the slot is charged here, at the point of
     // spend, rather than after a successful UPDATE — otherwise a user sitting
     // on the flagged-edit 429 could loop text edits and never be counted.
@@ -584,8 +649,8 @@ presetsRouter.patch('/:id', async (c) => {
     // FINDING-005: `passed: false` now covers a third outcome —
     // `method: 'perspective_unavailable'`, meaning nobody judged this text. It
     // is handled here exactly like flagged content: the write-once revert
-    // snapshot is taken, an approved preset drops to `pending`, and a moderator
-    // is notified (subject to the flagged-edit cap below).
+    // snapshot is taken, an approved (or rejected) preset moves to `pending`,
+    // and a moderator is notified (subject to the flagged-edit cap below).
     if (!moderationResult.passed) {
       flaggedByThisEdit = true;
       // BUG-052 (2026-07-18 audit): write-once snapshot — only capture
@@ -606,27 +671,15 @@ presetsRouter.patch('/:id', async (c) => {
     // undefined here preserves whatever snapshot already exists.
   }
 
-  // FINDING-004: the only status transition an owner edit may cause — the text
-  // they just wrote tripped moderation on a live preset, so it leaves public
-  // view. `undefined` means "do not write the status column at all", which is
-  // what keeps a rejected or flagged preset exactly where the moderator left
-  // it. (PRESETS-BUG-002's "edit to un-flag yourself" affordance *was* the
-  // workflow bypass this closes: every edit of a non-approved preset used to
-  // be written back as 'pending', so a rejected preset re-entered the queue
-  // with its rejected text intact and a flagged one silently lost its flag.)
-  const nextStatus: 'pending' | undefined =
-    preset.status === 'approved' && flaggedByThisEdit ? 'pending' : undefined;
+  // FINDING-004: what this edit does to the status, and whether a moderator
+  // hears about it — see `ownerEditOutcome` above for the whole four-status
+  // rule. A rejected preset's text edit is its resubmission; every other
+  // moderator decision survives the edit untouched.
+  const { nextStatus, notifiesModerators } = ownerEditOutcome(preset.status, {
+    textChanged,
+    flaggedByThisEdit,
+  });
   const resultingStatus = nextStatus ?? preset.status;
-
-  // FINDING-004: THE rule for putting an owner edit in front of a moderator,
-  // in one place. They hear about it only when it gives them something new to
-  // judge: text this edit flagged, or new text on a preset already waiting in
-  // their queue. A rejected or flagged preset has already been judged and is
-  // already out of public view, so editing one notifies nobody — resubmission,
-  // if the product ever wants it, is a separate explicit action.
-  const ownerMayQueue = preset.status === 'pending' || preset.status === 'approved';
-  const notifiesModerators =
-    ownerMayQueue && (flaggedByThisEdit || (preset.status === 'pending' && textChanged));
 
   // FINDING-008 + FINDING-004: every moderator notification fans out a
   // moderation embed and, when it fails, dead-letter rows — cap them per user
@@ -709,9 +762,10 @@ presetsRouter.patch('/:id', async (c) => {
         ...updatedPreset,
         author_name: preset.author_name || 'Unknown User',
         author_discord_id: preset.author_discord_id,
-        // Every branch of `notifiesModerators` leaves the preset pending: a
-        // preset that was already pending stays there, and an approved one
-        // whose new text was flagged has just been moved there.
+        // Every branch of `notifiesModerators` leaves the preset pending: one
+        // that was already pending stays there, and an approved one whose new
+        // text was flagged — or a rejected one being resubmitted — has just
+        // been moved there.
         status: 'pending',
         // FINDING-004: a clean text edit on a preset that is merely still in
         // the queue has not tripped anything — claiming 'flagged' told
@@ -734,10 +788,11 @@ presetsRouter.patch('/:id', async (c) => {
     );
   }
 
-  // FINDING-004: 'pending' only when the preset really is queued for review.
-  // It used to report 'pending' for a rejected or flagged preset as well,
-  // telling the owner an edit had put it back in front of a moderator when
-  // nothing of the sort happened. The published contract
+  // FINDING-004: 'pending' only when the preset really is queued for review —
+  // which now includes a rejected preset the caller just resubmitted. It used
+  // to report 'pending' for *every* rejected or flagged preset, telling the
+  // owner an edit had put it back in front of a moderator when nothing of the
+  // sort had happened. The published contract
   // (`PresetEditSuccessResponse.moderation_status?: 'approved' | 'pending'` in
   // @xivdyetools/types) admits only those two values, so a preset left in a
   // moderator's own status reports no `moderation_status` at all rather than a

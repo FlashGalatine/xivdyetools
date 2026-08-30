@@ -2301,13 +2301,15 @@ describe('PresetsHandler', () => {
             expect(body.moderation_status).toBe('approved');
         });
 
-        // BUG-001 (2026-07-18) + FINDING-004 (2026-08-29): an owner edit neither
-        // self-approves a preset nor moves any other status a moderator set —
-        // a rejected preset used to be written back as 'pending' by any edit.
+        // BUG-001 (2026-07-18) + FINDING-004 (2026-08-29): a tag-only edit
+        // neither self-approves a preset nor moves any status a moderator set —
+        // *every* edit used to be written back as 'pending'. (Editing a rejected
+        // preset's text is its resubmission and does queue it; that rule and its
+        // limits live in tests/handlers/presets-quotas.test.ts.)
         // `moderation_status` is typed `approved | pending`, so the two statuses
-        // an owner edit cannot produce are reported by omitting the field.
+        // this edit cannot produce are reported by omitting the field.
         it.each(['rejected', 'flagged'] as const)(
-            'should leave a %s preset alone and report no moderation_status',
+            'should leave a %s preset alone on a tag-only edit and report no moderation_status',
             async (status) => {
                 const mockRow = createMockPresetRow({
                     id: 'preset-123',

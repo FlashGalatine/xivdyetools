@@ -36,10 +36,10 @@ export const DAILY_PREVIEW_UPLOAD_LIMIT = 20;
  * FINDING-005 (2026-08-29 security audit): `DAILY_FLAGGED_EDIT_LIMIT` above is
  * charged only to an edit that reaches a moderator, and it is charged *after*
  * the Perspective call it is meant to bound — so a stream of edits that
- * moderation clears (or that lands on an already-judged preset, which notifies
- * nobody) drove Perspective to its ~1 QPS quota for free. This cap is checked
- * before the call, for every status, so a name/description edit costs a slot
- * whatever moderation goes on to decide. Deliberately generous: an author
+ * moderation clears, or that lands on a `flagged` preset (which notifies
+ * nobody at all), drove Perspective to its ~1 QPS quota for free. This cap is
+ * checked before the call, for every status, so a name/description edit costs
+ * a slot whatever moderation goes on to decide. Deliberately generous: an author
  * polishing one preset's wording should never meet it.
  */
 export const DAILY_TEXT_EDIT_LIMIT = 30;

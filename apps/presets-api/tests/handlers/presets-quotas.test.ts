@@ -333,24 +333,94 @@ describe('daily quotas (FINDING-008)', () => {
             }
         );
 
-        it.each(['rejected', 'flagged'])(
-            'still notifies nobody when new text on a %s preset trips moderation',
-            async (status) => {
-                ownPreset(status);
+        it('still notifies nobody when new text on a flagged preset trips moderation', async () => {
+            // `flagged` is the moderator's own state: no owner edit moves it or
+            // puts it back in front of them (unlike `rejected` below, which the
+            // author owns the next move on).
+            ownPreset('flagged');
 
-                const res = await patch({ name: 'flagged name that is long enough' });
+            const res = await patch({ name: 'flagged name that is long enough' });
 
-                expect(res.status).toBe(200);
-                expect(appliedUpdate().query).not.toMatch(/status\s*=\s*\?/);
-                expect(await notifications()).toEqual([]);
-                // No moderator hears about it, so no flagged_edit — but the
-                // Perspective call it spent is counted (FINDING-005).
-                expect(eventInserts().map((b) => b[1])).toEqual(['text_edit']);
-                // BUG-052: the write-once revert snapshot is still taken
-                expect(appliedUpdate().query).toMatch(/previous_values\s*=\s*\?/);
-                expect(await res.json()).not.toHaveProperty('moderation_status');
-            }
-        );
+            expect(res.status).toBe(200);
+            expect(appliedUpdate().query).not.toMatch(/status\s*=\s*\?/);
+            expect(await notifications()).toEqual([]);
+            // No moderator hears about it, so no flagged_edit — but the
+            // Perspective call it spent is counted (FINDING-005).
+            expect(eventInserts().map((b) => b[1])).toEqual(['text_edit']);
+            // BUG-052: the write-once revert snapshot is still taken
+            expect(appliedUpdate().query).toMatch(/previous_values\s*=\s*\?/);
+            expect(await res.json()).not.toHaveProperty('moderation_status');
+        });
+
+        // FINDING-004 follow-up: editing a rejected preset's text IS the
+        // resubmission — it is what the web app's "Resubmit" button does (it
+        // reopens the edit form). Leaving the status at `rejected` applied the
+        // edit, told the author "changes saved" and showed no moderator
+        // anything, so a rejected preset could never come back.
+        it('resubmits a rejected preset when its new text is clean', async () => {
+            ownPreset('rejected');
+
+            const res = await patch({ name: 'A perfectly clean name' });
+
+            expect(res.status).toBe(200);
+            expect(appliedUpdate().query).toMatch(/status\s*=\s*\?/);
+            expect(appliedUpdate().bindings).toContain('pending');
+            const sent = await notifications();
+            expect(sent).toHaveLength(1);
+            expect(sent[0].preset.status).toBe('pending');
+            expect(sent[0].preset.moderation_status).toBe('clean');
+            // Charged to the same daily cap as every other notifying edit
+            expect(eventInserts().map((b) => b[1])).toEqual(['text_edit', 'flagged_edit']);
+            const body = (await res.json()) as { moderation_status: string };
+            expect(body.moderation_status).toBe('pending');
+        });
+
+        it('resubmits a rejected preset as flagged when its new text trips moderation', async () => {
+            ownPreset('rejected');
+
+            const res = await patch({ name: 'flagged name that is long enough' });
+
+            expect(res.status).toBe(200);
+            expect(appliedUpdate().query).toMatch(/status\s*=\s*\?/);
+            expect(appliedUpdate().bindings).toContain('pending');
+            const sent = await notifications();
+            expect(sent).toHaveLength(1);
+            expect(sent[0].preset.status).toBe('pending');
+            expect(sent[0].preset.moderation_status).toBe('flagged');
+            expect(eventInserts().map((b) => b[1])).toEqual(['text_edit', 'flagged_edit']);
+            // BUG-052: the write-once revert snapshot is still taken
+            expect(appliedUpdate().query).toMatch(/previous_values\s*=\s*\?/);
+            const body = (await res.json()) as { moderation_status: string };
+            expect(body.moderation_status).toBe('pending');
+        });
+
+        it('resubmits nothing when a rejected preset\'s stored text is re-sent unchanged', async () => {
+            // FINDING-004's exploit stays closed: a moderator gets nothing new
+            // to judge, so nothing is queued and nobody is pinged.
+            ownPreset('rejected');
+
+            const res = await patch({ name: STORED_NAME, tags: ['a'] });
+
+            expect(res.status).toBe(200);
+            expect(appliedUpdate().query).not.toMatch(/status\s*=\s*\?/);
+            expect(await notifications()).toEqual([]);
+            expect(eventInserts().map((b) => b[1])).toEqual(['text_edit']);
+            expect(await res.json()).not.toHaveProperty('moderation_status');
+        });
+
+        it('refuses a rejected preset\'s resubmission once the notifying-edit cap is used up', async () => {
+            ownPreset('rejected', DAILY_FLAGGED_EDIT_LIMIT);
+
+            const res = await patch({ name: 'A perfectly clean name' });
+
+            expect(res.status).toBe(429);
+            const body = (await res.json()) as { error: string; reset_at: string };
+            expect(body.error).toBe('RATE_LIMITED');
+            expect(body.reset_at).toBeTruthy();
+            expect(presetUpdate()).toBeNull();
+            expect(await notifications()).toEqual([]);
+            expect(eventInserts().map((b) => b[1])).toEqual(['text_edit']);
+        });
 
         it('sends an approved preset to pending when its new name is flagged', async () => {
             ownPreset('approved');
@@ -450,11 +520,13 @@ describe('daily quotas (FINDING-008)', () => {
         });
 
         it.each(['rejected', 'flagged'])(
-            'caps a %s preset\'s text edit too, though it notifies nobody',
+            'caps an already-judged (%s) preset\'s text edit too',
             async (status) => {
-                // The gap FINDING-004 left behind: an already-judged preset
-                // never reaches the flagged-edit cap, so its Perspective call
-                // had no per-user bound at all.
+                // The gap FINDING-004 left behind: this cap is the only one an
+                // edit of a `flagged` preset ever meets (it notifies nobody, so
+                // it never reaches the flagged-edit cap), and it is the first
+                // one a `rejected` preset's resubmission meets. Without it the
+                // Perspective call had no per-user bound at all.
                 ownPreset(status, { text_edit: DAILY_TEXT_EDIT_LIMIT });
 
                 const res = await patch({ description: 'A completely new description here.' });

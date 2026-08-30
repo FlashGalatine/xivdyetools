@@ -135,8 +135,19 @@ Get the authenticated user's own presets. Returns presets in all statuses, inclu
 Edit an owned preset. Validates that the authenticated user owns the preset.
 
 - If `dyes` are changed, runs duplicate detection.
+- If `name` or `description` are sent, the edit is charged to a per-user daily cap of 30
+  (`DAILY_TEXT_EDIT_LIMIT`, `submission_events` kind `text_edit`) **before** content moderation is
+  called, for every preset status; over the cap the edit is refused with `429 RATE_LIMITED`
+  ("You've reached your daily limit of name and description edits (30 per day). Try again
+  tomorrow.", plus `remaining: 0` and `reset_at`) and nothing is moderated or written.
 - If `name` or `description` are changed, runs content moderation.
-- If the edit is flagged by moderation, the previous values are stored in `previous_values` and the preset status is set to `pending`.
+- If the edit is flagged by moderation, the previous values are stored in `previous_values`.
+- Status (FINDING-004): a `pending` preset stays pending; an `approved` one drops to `pending` only
+  if the new text tripped moderation; a **`rejected`** one returns to `pending` when its text is
+  edited — that edit *is* the resubmission the web app's "Resubmit" button performs; a `flagged` one
+  never moves and never notifies; `hidden` is 403. Tag / dye / category edits and text re-sent
+  unchanged change no status and notify nobody. Every notifying edit is charged to a second daily
+  cap of 10 (`DAILY_FLAGGED_EDIT_LIMIT`, kind `flagged_edit`, its own `429 RATE_LIMITED`).
 
 ### `DELETE /api/v1/presets/:id`
 
