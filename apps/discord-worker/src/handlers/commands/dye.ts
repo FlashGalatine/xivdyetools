@@ -33,6 +33,7 @@ import {
   type LocaleCode,
 } from '../../services/i18n.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
+import { markCommandOutcome } from '../../services/command-trace.js';
 import {
   dyeService,
   searchDyesByName,
@@ -196,7 +197,9 @@ async function processInfoCard(
   const result = await executeDyeInfo({ dye, locale, theme });
 
   if (!result.ok) {
-    // Fallback to text-based response on error
+    // GENERATION_FAILED: the card could not be generated — the text fallback
+    // still answers the user (`served`), and the outcome records the lost card.
+    markCommandOutcome(interaction, 'render', { served: true });
     await sendDyeInfoFallback(interaction, env, dye, locale, t);
     return;
   }
@@ -232,6 +235,9 @@ async function processInfoCard(
       },
     });
   } catch {
+    // The PNG render or the Discord edit failed; a degraded text card is
+    // served, and the outcome records the failed render.
+    markCommandOutcome(interaction, 'render', { served: true });
     await sendDyeInfoFallback(interaction, env, dye, locale, t);
   }
 }
@@ -374,6 +380,8 @@ async function processRandomGrid(
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.noDyesAvailable'))],
       });
     } else {
+      // GENERATION_FAILED: the card generator threw; text fallback served.
+      markCommandOutcome(interaction, 'render', { served: true });
       await sendRandomFallback(interaction, env, t, locale);
     }
     return;
@@ -405,6 +413,8 @@ async function processRandomGrid(
       file: { name: 'random-dyes.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch {
+    // The PNG render or the Discord edit failed; text fallback served.
+    markCommandOutcome(interaction, 'render', { served: true });
     await sendRandomFallback(interaction, env, t, locale);
   }
 }

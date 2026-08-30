@@ -12,6 +12,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { escapeDiscordMarkdown } from '@xivdyetools/bot-logic';
 import { handleSwatchCommand } from './swatch.js';
+import { startCommandTrace } from '../../services/command-trace.js';
+import { renderSvgToPng } from '../../services/svg/renderer.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
 
 vi.mock('../../services/svg/renderer.js', () => ({
@@ -248,6 +250,60 @@ describe('/swatch attachment handling', () => {
       expect(description).not.toContain('@everyone');
       expect(description).not.toContain('**now**');
       expect(description).toContain('SkinColor');
+    });
+  });
+
+  describe('outcome classification (Tier A)', () => {
+    const traced = () => {
+      const interaction = makeInteraction(CDN_URL);
+      const trace = startCommandTrace(interaction, {
+        command: 'swatch', subcommand: '', userId: 'user-1', locale: 'en',
+      });
+      return { interaction, trace };
+    };
+
+    it('an attachment the CDN refuses (non-2xx) is image_input', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => new Response('gone', { status: 403 })));
+      const { interaction, trace } = traced();
+      await handleSwatchCommand(interaction, env, ctx);
+      await settle();
+      expect(trace.outcome).toBe('image_input');
+      expect(mockExecuteSwatch).not.toHaveBeenCalled();
+    });
+
+    it('a network failure while downloading is unknown — neither the renderer nor the file', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Network connection lost'); }));
+      const { interaction, trace } = traced();
+      await handleSwatchCommand(interaction, env, ctx);
+      await settle();
+      expect(trace.outcome).toBe('unknown');
+    });
+
+    it.each([
+      ['PARSE_FAILED', 'image_input'],
+      ['GENERATION_FAILED', 'render'],
+    ] as const)('executeSwatch %s → %s', async (error, expected) => {
+      mockExecuteSwatch.mockResolvedValue({ ok: false, error, errorMessage: 'nope' });
+      const { interaction, trace } = traced();
+      await handleSwatchCommand(interaction, env, ctx);
+      await settle();
+      expect(trace.outcome).toBe(expected);
+    });
+
+    it('a slot that is simply absent from the file is answered like validation and stays ok', async () => {
+      mockExecuteSwatch.mockResolvedValue({ ok: false, error: 'SLOT_MISSING', errorMessage: 'no such slot' });
+      const { interaction, trace } = traced();
+      await handleSwatchCommand(interaction, env, ctx);
+      await settle();
+      expect(trace.outcome).toBeNull();
+    });
+
+    it('a failed PNG render is render', async () => {
+      vi.mocked(renderSvgToPng).mockRejectedValueOnce(new Error('resvg exploded'));
+      const { interaction, trace } = traced();
+      await handleSwatchCommand(interaction, env, ctx);
+      await settle();
+      expect(trace.outcome).toBe('render');
     });
   });
 });

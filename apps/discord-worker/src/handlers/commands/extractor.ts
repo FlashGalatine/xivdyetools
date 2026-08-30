@@ -50,6 +50,8 @@ import {
   resolveMatchingMethod,
   resolveCount,
 } from '../../services/preferences.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
+import { imageInputReason } from '../../services/image-input-errors.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // ============================================================================
@@ -380,7 +382,8 @@ async function renderColorSheet(
         contentType: 'image/png',
       },
     });
-  } catch {
+  } catch (error) {
+    markCommandOutcome(interaction, classifyError(error, 'render'));
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.noMatchFound'))],
     });
@@ -496,9 +499,13 @@ async function processImageExtraction(
   // Initialize localization for dye names
   await initializeLocale(locale);
 
+  // Which phase a thrown error belongs to: the image-worker round trip (the
+  // user's image, or the binding) or our own palette/SVG/PNG work afterwards.
+  let phase: 'input' | 'render' = 'input';
   try {
     // Steps 1-2: validate, fetch and decode remotely (image-worker owns photon)
     const processed = await extractImagePixels(env, imageUrl);
+    phase = 'render';
 
     // Step 3: Convert pixels to RGB array (filtering transparent pixels)
     const rgbPixels = PaletteService.pixelDataToRGBFiltered(
@@ -507,6 +514,7 @@ async function processImageExtraction(
     );
 
     if (rgbPixels.length === 0) {
+      markCommandOutcome(interaction, 'image_input');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('matchImage.noColors'))],
       });
@@ -528,6 +536,7 @@ async function processImageExtraction(
       : rawMatches;
 
     if (matches.length === 0) {
+      markCommandOutcome(interaction, 'image_input');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('matchImage.extractionFailed'))],
       });
@@ -586,23 +595,31 @@ async function processImageExtraction(
       },
     });
   } catch (error) {
+    // Input phase: image-worker's rejection markers name the user's image
+    // (`image_input`), anything else there is the binding (`unknown`); once
+    // the pixels are back, a throw is our palette/SVG/resvg work (`render`).
+    markCommandOutcome(
+      interaction,
+      classifyError(error, phase === 'render' ? 'render' : 'unknown', {
+        imageInput: phase === 'input',
+      }),
+    );
     if (logger) {
       logger.error('Extractor image command error', error instanceof Error ? error : undefined);
     }
 
-    // Determine error message
-    let errorMessage = t.t('matchImage.processingFailed');
-    if (error instanceof Error) {
-      if (error.message.includes('SSRF') || error.message.includes('Discord CDN')) {
-        errorMessage = t.t('matchImage.onlyDiscord');
-      } else if (error.message.includes('too large')) {
-        errorMessage = t.t('matchImage.imageTooLarge');
-      } else if (error.message.includes('format')) {
-        errorMessage = t.t('matchImage.unsupportedFormat');
-      } else if (error.message.includes('timeout')) {
-        errorMessage = t.t('matchImage.timeout');
-      }
-    }
+    // The user-facing message follows the same marker table (services/image-input-errors.ts).
+    const reason = phase === 'input' ? imageInputReason(error) : null;
+    const errorMessage =
+      reason === 'url'
+        ? t.t('matchImage.onlyDiscord')
+        : reason === 'too_large'
+          ? t.t('matchImage.imageTooLarge')
+          : reason === 'format'
+            ? t.t('matchImage.unsupportedFormat')
+            : reason === 'timeout'
+              ? t.t('matchImage.timeout')
+              : t.t('matchImage.processingFailed');
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), errorMessage)],

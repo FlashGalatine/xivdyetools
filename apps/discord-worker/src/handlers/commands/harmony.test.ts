@@ -405,11 +405,15 @@ describe('handleHarmonyCommand', () => {
       },
     } as unknown as DiscordInteraction;
 
+    const { startCommandTrace } = await import('../../services/command-trace.js');
+    const trace = startCommandTrace(interaction, { command: 'harmony', subcommand: '', userId: 'u1', locale: 'en' });
+
     const response = await handleHarmonyCommand(interaction, env, ctx);
     await Promise.all(waitUntilCalls);
     expect(response.status).toBe(200);
     // Should have called editOriginalResponse with error
     expect(editOriginalResponseMock).toHaveBeenCalled();
+    expect(trace.outcome).toBe('render');
   });
 
   it('handles rendering error with logger', async () => {

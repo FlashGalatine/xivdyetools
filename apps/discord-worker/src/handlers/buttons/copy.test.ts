@@ -2,7 +2,13 @@
  * Tests for Copy Button Handlers
  */
 import { describe, it, expect } from 'vitest';
-import { handleCopyHex, handleCopyRgb, handleCopyHsv, createCopyButtons } from './copy.js';
+import {
+  handleCopyHex,
+  handleCopyRgb,
+  handleCopyHsv,
+  createCopyButtons,
+  COPY_BUTTON_KINDS,
+} from './copy.js';
 import { InteractionResponseType, type InteractionResponseBody } from '../../types/env.js';
 
 describe('copy.ts', () => {
@@ -193,6 +199,14 @@ describe('copy.ts', () => {
 
       expect(row.components[0].label).toBe('HEX: #AABBCC');
       expect(row.components[0].custom_id).toBe('copy_hex_aabbcc');
+    });
+
+    it('emits one button per COPY_BUTTON_KINDS entry, in order (the analytics kind list)', () => {
+      const row = createCopyButtons('FF5733', { r: 255, g: 87, b: 51 }, { h: 11, s: 80, v: 100 });
+      const kinds = row.components.map((c) =>
+        COPY_BUTTON_KINDS.find((kind) => c.custom_id.startsWith(`${kind}_`)),
+      );
+      expect(kinds).toEqual([...COPY_BUTTON_KINDS]);
     });
   });
 });

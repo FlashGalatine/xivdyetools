@@ -31,6 +31,7 @@ import {
   type SwatchSlotOption,
 } from '@xivdyetools/bot-logic';
 import { getUserPreferences } from '../../services/preferences.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 /** .chara files are small JSON — anything past 1 MiB is not one. */
@@ -187,6 +188,8 @@ async function processSwatchCommand(
       signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
     });
     if (!fileResponse.ok) {
+      // An expired / forbidden attachment URL or a redirect: the file could not be read.
+      markCommandOutcome(interaction, 'image_input');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           errorEmbed(
@@ -199,6 +202,7 @@ async function processSwatchCommand(
     }
     const fileText = await readTextCapped(fileResponse, MAX_FILE_BYTES);
     if (fileText === null) {
+      markCommandOutcome(interaction, 'image_input');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           errorEmbed(
@@ -213,6 +217,9 @@ async function processSwatchCommand(
     }
     input.fileText = fileText;
   } catch (error) {
+    // Only the CDN fetch and the capped read live in this try: a network
+    // failure or timeout here is neither our renderer nor the user's file.
+    markCommandOutcome(interaction, classifyError(error, 'unknown'));
     if (logger) logger.error('Swatch download error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
@@ -223,6 +230,11 @@ async function processSwatchCommand(
   const result = await executeSwatch(input);
 
   if (!result.ok) {
+    // PARSE_FAILED = the .chara file could not be read (user input);
+    // GENERATION_FAILED = the card generator threw. NO_LIVE_SLOTS /
+    // SLOT_MISSING are answered like a validation reply and stay `ok`.
+    if (result.error === 'PARSE_FAILED') markCommandOutcome(interaction, 'image_input');
+    if (result.error === 'GENERATION_FAILED') markCommandOutcome(interaction, 'render');
     if (logger) logger.warn('Swatch command failed', { error: result.error });
     // FINDING-019: the parser names the offending field VALUE (file content)
     // and this edit is public — escape markdown / masked links, defuse
@@ -250,6 +262,7 @@ async function processSwatchCommand(
       file: { name: 'swatch.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error, 'render'));
     if (logger) logger.error('Swatch render error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],

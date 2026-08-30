@@ -104,7 +104,8 @@ src/
 │                                  # The modals/ placeholder (index.ts only, never wired to a modal) was
 │                                  # removed 2026-08-18 — don't reintroduce it without a real consumer.
 ├── services/
-│   ├── analytics.ts               # KV counters + Analytics Engine writes
+│   ├── analytics.ts               # KV counters + Analytics Engine writes (Tier A column layout)
+│   ├── command-trace.ts           # Per-interaction trace: traced ctx, outcome marks, classifier
 │   ├── rate-limiter.ts            # Upstash-first sliding window with KV fallback
 │   ├── preset-favorites.ts        # Per-user preset favourites in KV (/preset favorite add|remove|list)
 │   ├── preferences.ts             # User preferences (race/clan, world, language, matching, theme)
@@ -175,7 +176,7 @@ Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom 
 
 ### Command Routing (`src/index.ts`)
 
-A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `handlers/commands/`. Tracking is done in a `try/finally` so analytics record actual success/failure rather than assuming success. Rate-limit check runs before dispatch (skipped only for `about` and `manual` — `/stats` has been rate-limited since the 2026-08-21 security audit, FINDING-033).
+A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `handlers/commands/`. Tracking is a dispatcher-owned `CommandTrace` finished in the `finally` after the handler's background work settles (see Analytics Tracking below). Rate-limit check runs before dispatch (skipped only for `about`, `manual` and `changelog` — `/stats` has been rate-limited since the 2026-08-21 security audit, FINDING-033).
 
 ### Deferred Responses
 
@@ -197,7 +198,7 @@ Always prefer the Service Binding (`env.PRESETS_API.fetch(req)`) — zero HTTP o
 
 ### Analytics Tracking
 
-`trackCommandWithKV(env, { commandName, userId, guildId, success })` increments KV counters (real-time `/stats` data) and writes to Analytics Engine (`ANALYTICS` binding) for long-term aggregation. Always called from the `finally` block.
+Tier A (2026-08-29, spec `docs/superpowers/specs/2026-08-29-bot-analytics-tier-a-design.md`): `handleCommand()` starts a `CommandTrace` (`services/command-trace.ts`) before the rate-limit check and hands every handler a **traced `ExecutionContext`** whose `waitUntil` also records the promise on the trace; the `finally` calls `finishCommandTrace()`, which drains those promises (bounded by `DRAIN_DEADLINE_MS` = 20 s, after which the row is written as `unknown` instead of being lost) and then writes the datapoint through `trackCommandWithKV()` — so `success`/latency describe the deferred work, not the deferred ack. The trace has **one writer**: `markCommandOutcome()`. Handlers call it wherever a command ends with an error embed — a catch (`classifyError(error[, 'render'])`), a bot-logic `GENERATION_FAILED` branch (`'render'`), an unreadable image/`.chara` (`'image_input'`); `/dye`'s text fallbacks mark `'render'` with `{ served: true }`; the dispatcher calls it for a rate-limited request and a handler throw; nobody else finishes a trace. **Two axes per datapoint:** `success` (blob4, and the KV `success`/`failure` counters behind `/stats`) = the user got an answer to what they asked; the outcome class (blob5) = the most significant thing of ours that broke, or `ok` — `ok`, `rejected`, `rate_limited`, `upstream_universalis`, `upstream_presets`, `image_input`, `render`, `unknown`. `classifyError` maps a presets-api / Universalis **4xx other than 429 to `rejected`** (the service's own reply, relayed to the user — answered, but visible as its own class so a systematic 4xx from our payload is a spike); a `served` mark is answered too; everything else with a class is a failure. Rate-limited requests are AE-only (no KV counters — `/stats` counts commands that ran, and KV allows one write per second per key). Columns: blobs 1–4 unchanged (command, userId, guild/dm, answered), blob5 **outcome class** (was the never-set `errorType`), blob6 subcommand/button kind, blob7 locale bucket, blob8 `command|button`, double2 real latency. Copy-button clicks are AE-only `kind=button` rows via `trackButtonClick()`; the button kinds are `COPY_BUTTON_KINDS` in `handlers/buttons/copy.ts`; the image-worker rejection markers are `services/image-input-errors.ts`. The list of what must **never** be recorded lives on `CommandEvent` in `services/analytics.ts` (the only place a value is written) and is promised by `PRIVACY_POLICY.md` §2. Queries and the outcome rules: `docs/operations/ANALYTICS_QUERIES.md` (Discord section).
 
 ### Autocomplete
 

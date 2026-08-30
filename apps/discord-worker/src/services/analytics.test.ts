@@ -124,7 +124,7 @@ describe('analytics.ts', () => {
       // ('guild' | 'dm'), never the guild id itself
       expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
         indexes: ['harmony'],
-        blobs: ['harmony', 'user-123', 'guild', '1', ''],
+        blobs: ['harmony', 'user-123', 'guild', '1', 'ok', '', 'other', 'command'],
         doubles: [1, 150, 1],
       });
     });
@@ -161,22 +161,30 @@ describe('analytics.ts', () => {
       );
     });
 
-    it('should track failed commands with error type', () => {
-      const event: CommandEvent = {
-        commandName: 'dye',
-        userId: 'user-123',
-        guildId: 'guild-456',
-        success: false,
-        errorType: 'VALIDATION_ERROR',
-      };
+    it('writes the Tier A column layout with defaults for the new fields', () => {
+      trackCommand(mockEnv, { commandName: 'harmony', userId: 'u1', guildId: 'g1', success: true });
+      expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
+        indexes: ['harmony'],
+        blobs: ['harmony', 'u1', 'guild', '1', 'ok', '', 'other', 'command'],
+        doubles: [1, 0, 1],
+      });
+    });
 
-      trackCommand(mockEnv, event);
-
+    it('writes subcommand, locale, outcome, kind and latency when provided', () => {
+      trackCommand(mockEnv, {
+        commandName: 'dye', userId: 'u1', success: false,
+        outcome: 'upstream_presets', subcommand: 'info', locale: 'ja', kind: 'command', latencyMs: 1234,
+      });
       expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
         indexes: ['dye'],
-        blobs: ['dye', 'user-123', 'guild', '0', 'VALIDATION_ERROR'],
-        doubles: [0, 0, 1],
+        blobs: ['dye', 'u1', 'dm', '0', 'upstream_presets', 'info', 'ja', 'command'],
+        doubles: [0, 1234, 1],
       });
+    });
+
+    it('defaults outcome to unknown for a failure without a class', () => {
+      trackCommand(mockEnv, { commandName: 'dye', userId: 'u1', success: false });
+      expect(mockAnalytics.writeDataPoint.mock.calls[0][0].blobs[4]).toBe('unknown');
     });
 
     it('should silently skip when Analytics is not configured', () => {
@@ -355,6 +363,43 @@ describe('analytics.ts', () => {
   });
 
   describe('trackCommandWithKV', () => {
+    it('writes a button datapoint without touching KV counters', async () => {
+      await trackCommandWithKV(mockEnv, {
+        commandName: 'button', userId: 'u1', success: true, kind: 'button', subcommand: 'copy_hex',
+      });
+      expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
+        indexes: ['button'],
+        blobs: ['button', 'u1', 'dm', '1', 'ok', 'copy_hex', 'other', 'button'],
+        doubles: [1, 0, 1],
+      });
+      expect(mockKV.put).not.toHaveBeenCalled();
+      expect(mockKV.get).not.toHaveBeenCalled();
+    });
+
+    it('writes a rate-limited request to Analytics Engine only — no KV counter moves', async () => {
+      await trackCommandWithKV(mockEnv, {
+        commandName: 'harmony', userId: 'u1', success: false, outcome: 'rate_limited', kind: 'command',
+      });
+      expect(mockAnalytics.writeDataPoint).toHaveBeenCalledTimes(1);
+      expect(mockAnalytics.writeDataPoint.mock.calls[0][0].blobs[4]).toBe('rate_limited');
+      expect(mockKV.put).not.toHaveBeenCalled();
+      expect(mockKV.getWithMetadata).not.toHaveBeenCalled();
+      expect(mockKV.get).not.toHaveBeenCalled();
+      expect(await getCounter(mockKV as unknown as KVNamespace, 'failure')).toBe(0);
+    });
+
+    it('a rejected row (upstream 4xx relayed to the user) is answered: KV success moves, failure does not', async () => {
+      await trackCommandWithKV(mockEnv, {
+        commandName: 'preset', userId: 'u1', success: true, outcome: 'rejected', subcommand: 'vote', kind: 'command',
+      });
+      const blobs = mockAnalytics.writeDataPoint.mock.calls[0][0].blobs;
+      expect(blobs[3]).toBe('1');
+      expect(blobs[4]).toBe('rejected');
+      expect(await getCounter(mockKV as unknown as KVNamespace, 'success')).toBe(1);
+      expect(await getCounter(mockKV as unknown as KVNamespace, 'failure')).toBe(0);
+      expect(await getCounter(mockKV as unknown as KVNamespace, 'cmd:preset')).toBe(1);
+    });
+
     it('should track both Analytics Engine and KV counters', async () => {
       const event: CommandEvent = {
         commandName: 'harmony',
@@ -381,7 +426,7 @@ describe('analytics.ts', () => {
         commandName: 'dye',
         userId: 'user-456',
         success: false,
-        errorType: 'NOT_FOUND',
+        outcome: 'upstream_universalis',
       };
 
       await trackCommandWithKV(mockEnv, event);

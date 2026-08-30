@@ -14,6 +14,14 @@
 import { InteractionResponseType } from '../../types/env.js';
 import { createTranslator, type Translator } from '../../services/bot-i18n.js';
 
+/**
+ * The copy-button `custom_id` prefixes, owned here: `createCopyButtons`
+ * builds them, the router (`./index.ts`) dispatches on them and the analytics
+ * trace (`services/command-trace.ts` `buttonKindOf`) counts them by this list.
+ */
+export const COPY_BUTTON_KINDS = ['copy_hex', 'copy_rgb', 'copy_hsv'] as const;
+export type CopyButtonKind = (typeof COPY_BUTTON_KINDS)[number];
+
 interface ButtonInteraction {
   data?: {
     custom_id?: string;

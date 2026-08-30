@@ -16,6 +16,7 @@
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { getStats } from '../../services/analytics.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { messageResponse, errorEmbed } from '../../utils/response.js';
 import { grp, num } from '@xivdyetools/svg';
@@ -109,20 +110,23 @@ export async function handleStatsCommand(
 
   try {
     switch (subcommand) {
+      // `return await`, not `return`: a bare `return promise` inside a try
+      // hands the rejection straight past the catch below (KV list() errors
+      // then surfaced as the dispatcher's generic "command failed").
       case 'summary':
-        return handleSummarySubcommand(env, t, logger);
+        return await handleSummarySubcommand(env, t, logger);
 
       case 'overview':
-        return handleOverviewSubcommand(env, logger);
+        return await handleOverviewSubcommand(env, logger);
 
       case 'commands':
-        return handleCommandsSubcommand(env, logger);
+        return await handleCommandsSubcommand(env, logger);
 
       case 'preferences':
-        return handlePreferencesSubcommand(env, logger);
+        return await handlePreferencesSubcommand(env, logger);
 
       case 'health':
-        return handleHealthSubcommand(env, logger);
+        return await handleHealthSubcommand(env, logger);
 
       default:
         return messageResponse({
@@ -131,6 +135,7 @@ export async function handleStatsCommand(
         });
     }
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('Error in stats command', error instanceof Error ? error : undefined);
     }

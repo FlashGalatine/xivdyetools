@@ -21,6 +21,7 @@ import {
 } from '../../services/i18n.js';
 import { resolveColorInput, executeGradient, type InterpolationMode } from '@xivdyetools/bot-logic';
 import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleGradientCommand(
@@ -139,6 +140,8 @@ async function processGradientCommand(
   });
 
   if (!result.ok) {
+    // GENERATION_FAILED: the card generator threw inside bot-logic.
+    markCommandOutcome(interaction, 'render');
     if (logger) logger.error('Gradient command error');
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
@@ -208,6 +211,7 @@ async function processGradientCommand(
       file: { name: `gradient-${stepCount}-steps.png`, data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error, 'render'));
     if (logger) logger.error('Gradient render error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],

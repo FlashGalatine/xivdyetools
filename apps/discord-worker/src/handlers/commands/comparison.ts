@@ -14,6 +14,7 @@ import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslatorWithPrefs, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import { resolveColorInput as resolveColor, executeComparison } from '@xivdyetools/bot-logic';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 function resolveColorInput(input: string, locale: LocaleCode): Dye | null {
@@ -85,6 +86,8 @@ async function processComparisonCommand(
   const result = await executeComparison({ dyes, locale, theme, logger });
 
   if (!result.ok) {
+    // GENERATION_FAILED: the card generator threw inside bot-logic.
+    markCommandOutcome(interaction, 'render');
     if (logger) logger.error('Comparison command failed');
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
@@ -118,6 +121,7 @@ async function processComparisonCommand(
       file: { name: 'comparison.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error, 'render'));
     if (logger) logger.error('Comparison render error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],

@@ -967,56 +967,43 @@ describe('stats.ts', () => {
   // ==========================================================================
 
   describe('error handling', () => {
-    // NOTE: The try-catch in handleStatsCommand uses `return handler()` without
-    // `await`, so async rejections from subcommand handlers propagate as unhandled
-    // promise rejections rather than being caught. The tests below verify the actual
-    // behavior (rejections bubble up). This is a known limitation; fixing would
-    // require `return await handler()` in the switch cases.
-
-    it('should propagate getStats rejection from summary subcommand', async () => {
-      vi.mocked(getStats).mockImplementationOnce(() => Promise.reject(new Error('KV unavailable')));
-
-      const interaction = makeInteraction('anyone', 'summary');
-
-      await expect(handleStatsCommand(interaction, mockEnv, mockCtx)).rejects.toThrow(
-        'KV unavailable',
+    // The switch cases `return await` their subcommand handlers, so an async
+    // rejection (a KV outage) is caught here and answered with the localized
+    // `stats.fetchFailed` embed — a bare `return handler()` used to hand the
+    // rejection straight past the catch to the dispatcher's generic reply.
+    const fetchFailed = async (response: Promise<Response>) => {
+      const data = (await (await response).json()) as InteractionResponseBody;
+      expect(data.data!.flags).toBe(64);
+      expect(data.data!.embeds![0].description).toBe(
+        (await import('@xivdyetools/bot-logic/i18n')).createTranslator('en').t('stats.fetchFailed'),
       );
+    };
+
+    it('answers a getStats rejection from the summary subcommand with the fetch-failed embed', async () => {
+      vi.mocked(getStats).mockImplementationOnce(() => Promise.reject(new Error('KV unavailable')));
+      await fetchFailed(handleStatsCommand(makeInteraction('anyone', 'summary'), mockEnv, mockCtx));
     });
 
-    it('should propagate getStats rejection from overview subcommand', async () => {
+    it('answers a getStats rejection from the overview subcommand with the fetch-failed embed', async () => {
       vi.mocked(getStats).mockImplementationOnce(() => Promise.reject(new Error('KV unavailable')));
-
-      const interaction = makeInteraction('admin-123', 'overview');
-
-      await expect(handleStatsCommand(interaction, mockEnv, mockCtx)).rejects.toThrow(
-        'KV unavailable',
-      );
+      await fetchFailed(handleStatsCommand(makeInteraction('admin-123', 'overview'), mockEnv, mockCtx));
     });
 
-    it('should propagate getStats rejection from commands subcommand', async () => {
+    it('answers a getStats rejection from the commands subcommand with the fetch-failed embed', async () => {
       vi.mocked(getStats).mockImplementationOnce(() => Promise.reject(new Error('KV unavailable')));
-
-      const interaction = makeInteraction('admin-123', 'commands');
-
-      await expect(handleStatsCommand(interaction, mockEnv, mockCtx)).rejects.toThrow(
-        'KV unavailable',
-      );
+      await fetchFailed(handleStatsCommand(makeInteraction('admin-123', 'commands'), mockEnv, mockCtx));
     });
 
-    it('should propagate KV list rejection from preferences subcommand', async () => {
+    it('answers a KV list rejection from the preferences subcommand with the fetch-failed embed', async () => {
       vi.mocked(mockKV.list).mockImplementationOnce(() =>
         Promise.reject(new Error('KV list failed')),
       );
-
-      const interaction = makeInteraction('admin-123', 'preferences');
-
-      await expect(handleStatsCommand(interaction, mockEnv, mockCtx)).rejects.toThrow(
-        'KV list failed',
-      );
+      await fetchFailed(handleStatsCommand(makeInteraction('admin-123', 'preferences'), mockEnv, mockCtx));
     });
 
-    it('should propagate rejection even when logger is provided', async () => {
-      vi.mocked(getStats).mockImplementationOnce(() => Promise.reject(new Error('KV unavailable')));
+    it('logs the failure when a logger is provided and records the outcome as unknown', async () => {
+      const failure = new Error('KV unavailable');
+      vi.mocked(getStats).mockImplementationOnce(() => Promise.reject(failure));
 
       const mockLogger = {
         error: vi.fn(),
@@ -1027,23 +1014,19 @@ describe('stats.ts', () => {
       } as any;
 
       const interaction = makeInteraction('admin-123', 'overview');
+      const { startCommandTrace } = await import('../../services/command-trace.js');
+      const trace = startCommandTrace(interaction, { command: 'stats', subcommand: 'overview', userId: 'u1', locale: 'en' });
 
-      await expect(handleStatsCommand(interaction, mockEnv, mockCtx, mockLogger)).rejects.toThrow(
-        'KV unavailable',
-      );
+      await fetchFailed(handleStatsCommand(interaction, mockEnv, mockCtx, mockLogger));
 
-      // Logger is NOT called because the catch block is never reached
-      // (return without await bypasses try-catch for async rejections)
-      expect(mockLogger.error).not.toHaveBeenCalled();
+      expect(mockLogger.error).toHaveBeenCalledWith('Error in stats command', failure);
+      expect(trace.outcome).toBe('unknown');
     });
 
-    it('should propagate non-Error rejection values', async () => {
+    it('answers a non-Error rejection value the same way', async () => {
       // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
       vi.mocked(getStats).mockImplementationOnce(() => Promise.reject('string error'));
-
-      const interaction = makeInteraction('anyone', 'summary');
-
-      await expect(handleStatsCommand(interaction, mockEnv, mockCtx)).rejects.toBe('string error');
+      await fetchFailed(handleStatsCommand(makeInteraction('anyone', 'summary'), mockEnv, mockCtx));
     });
 
     it('should catch synchronous errors in the switch routing', async () => {

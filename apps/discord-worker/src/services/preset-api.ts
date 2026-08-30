@@ -31,6 +31,9 @@ import {
   PresetAPIError,
 } from '../types/preset.js';
 
+/** Upper bound on one presets-api call (service binding or URL fallback). */
+export const PRESET_API_TIMEOUT_MS = 10_000;
+
 // ============================================================================
 // HMAC Signature Generation
 // ============================================================================
@@ -165,6 +168,10 @@ async function request<T>(
   try {
     let response: Response;
 
+    // Bounded wait either way: a stalled presets-api/D1 call must surface as a
+    // failure (and its analytics row as `upstream_presets`) instead of holding
+    // the command's trace until the runtime ends the isolate.
+    const signal = AbortSignal.timeout(PRESET_API_TIMEOUT_MS);
     if (env.PRESETS_API) {
       // Use Service Binding for Worker-to-Worker communication
       // This avoids Cloudflare error 1042
@@ -173,6 +180,7 @@ async function request<T>(
           method,
           headers,
           body: bodyText,
+          signal,
         }),
       );
     } else {
@@ -182,6 +190,7 @@ async function request<T>(
         method,
         headers,
         body: bodyText,
+        signal,
       });
     }
 

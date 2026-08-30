@@ -19,13 +19,22 @@ export interface ExtractedImage {
 }
 
 /**
+ * Upper bound on one image-worker round trip (its own CDN fetch is capped at
+ * 10 s inside the worker). Without it a stalled binding call would hold the
+ * command's analytics trace until the runtime ended the isolate.
+ */
+export const IMAGE_WORKER_TIMEOUT_MS = 10_000;
+
+/**
  * Validate, fetch and decode an image, returning raw RGBA pixels.
  *
  * Server-side failures are rethrown with their message preserved verbatim,
- * because the caller substring-matches it ('SSRF', 'Discord CDN', 'too large',
- * 'format', 'timeout') to choose a localized user-facing message.
+ * because two callers substring-match it — the extractor to choose the
+ * localized user-facing message, the command trace to classify the failure as
+ * `image_input`. The one table of markers is `services/image-input-errors.ts`.
  *
- * @throws Error if the binding is absent or the image worker rejects the image
+ * @throws Error if the binding is absent, the image worker rejects the image,
+ *   or the call exceeds {@link IMAGE_WORKER_TIMEOUT_MS} (a `TimeoutError`)
  */
 export async function extractImagePixels(
   env: Env,
@@ -46,6 +55,7 @@ export async function extractImagePixels(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(IMAGE_WORKER_TIMEOUT_MS),
     })
   );
 

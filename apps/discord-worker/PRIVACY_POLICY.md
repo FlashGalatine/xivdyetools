@@ -16,7 +16,7 @@ We are committed to protecting your privacy and being transparent about our data
 |-----------|---------|-----------|
 | Discord User ID | Identify users for favorites, collections, voting, rate limiting; counted (never listed) in usage statistics — see *Usage Analytics* below | Until data deletion requested (usage-statistics records: see *Usage Analytics*) |
 | Discord Username | Attribute community preset submissions | Until data deletion requested |
-| User Locale | Provide localized bot responses | Until preference cleared |
+| User Locale | Provide localized bot responses; the Discord client language (bucketed to one of the six the Bot supports, or "other") is also recorded in usage statistics — see *Usage Analytics* below | Stored preference: until cleared. Usage-statistics bucket: see *Usage Analytics* |
 | Guild ID / Channel ID | Process commands in context | Not stored. Usage statistics record only *whether* a command ran in a server or in a DM (the values `guild` / `dm`) — never the server's or channel's ID |
 
 ### Information You Provide
@@ -35,11 +35,11 @@ We are committed to protecting your privacy and being transparent about our data
 
 ### Usage Analytics
 
-To keep the Bot healthy and to power the `/stats` dashboard we record, for each command you run:
+To keep the Bot healthy and to power the `/stats` dashboard we record, for each command you run or copy button you press:
 
 | Data | Where | Retention |
 |------|-------|-----------|
-| Command name, whether it succeeded, whether it ran in a server or a DM (`guild` / `dm` — never the server's ID), and your Discord User ID (used only to count unique users) | Cloudflare Workers Analytics Engine | Cloudflare's Analytics Engine retention window (3 months at the time of writing) |
+| Command name and subcommand, whether it was answered and — if anything went wrong — a coarse failure class (rate-limited, request rejected by the preset or market service, market data unavailable, preset service unavailable, the uploaded image or `.chara` file could not be read, rendering failed, unknown; never an error message), how long it took, whether it ran in a server or a DM (`guild` / `dm` — never the server's ID), your Discord client language (one of the six the Bot supports, or "other"), which copy button you pressed (hex / RGB / HSV), and your Discord User ID (used only to count unique users) | Cloudflare Workers Analytics Engine | Cloudflare's Analytics Engine retention window (3 months at the time of writing) |
 | Aggregate counters — total commands, per-command counts, successes/failures (no user data) | Cloudflare KV | 30 days (automatic TTL) |
 | One key per user per day (`usertrack:{date}:{userId}`, value `1`) so daily active users can be counted | Cloudflare KV | 30 days (automatic TTL) |
 
@@ -77,7 +77,7 @@ When you use `/match_image`, your uploaded image is:
 | Community presets | User ID, Username, Preset content |
 | Voting system | User ID, Preset ID |
 | Prevent abuse | User ID, Rate limit counters |
-| Usage statistics (`/stats`) | Command name, success flag, server-or-DM flag, User ID (counted, never listed) |
+| Usage statistics (`/stats`) | Command name and subcommand, outcome class, latency, server-or-DM flag, client language bucket, copy-button kind, User ID (counted, never listed) |
 
 ## 5. Data Storage
 

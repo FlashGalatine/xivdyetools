@@ -918,17 +918,21 @@ To support the expanded `/stats` subcommands, the Analytics Engine data points a
 | blob1 | string | No | Command name |
 | blob2 | string | No | User ID |
 | blob3 | string | No | Guild ID or `'dm'` |
-| blob4 | string | No | Success flag (`'1'`/`'0'`) |
-| blob5 | string | No | Error type (if failed) |
-| blob6 | string | **Yes** | Blending mode used (if applicable) |
-| blob7 | string | **Yes** | Matching method used (if applicable) |
-| blob8 | string | **Yes** | Market flag (`'1'`/`'0'`) |
-| blob9 | string | **Yes** | Cache status (`'hit'`/`'miss'`/`'skip'`) |
+| blob4 | string | No | Answered flag (`'1'`/`'0'`) — the user got an answer; not the same bit as `blob5 = 'ok'` |
+| blob5 | string | No | Outcome class — the most significant thing of ours that broke, or `ok`: `ok` / `rejected` (upstream 4xx relayed, answered) / `rate_limited` / `upstream_universalis` / `upstream_presets` / `image_input` / `render` (answered only for `/dye`'s text fallbacks) / `unknown` (since 2026-08-29 Tier A; was the never-set `errorType`, so rows before that date carry `''`) |
+| blob6 | string | **Yes** | Subcommand (`<group>_<sub>` for groups) or copy-button kind — NOT the blending mode: option values are never recorded (Tier A decision, `docs/superpowers/specs/2026-08-29-bot-analytics-tier-a-design.md`) |
+| blob7 | string | **Yes** | Discord client locale bucket (`en ja de fr ko zh other`) — NOT the matching method |
+| blob8 | string | **Yes** | `command` \| `button` — NOT a market flag |
+| blob9 | string | No | Unused (the cache-status idea was dropped) |
 | double1 | number | No | Success count (0 or 1) |
-| double2 | number | No | Latency (ms) |
+| double2 | number | No | Latency (ms) — dispatcher start → deferred work settled, since Tier A |
 | double3 | number | No | Total count (always 1) |
-| double4 | number | **Yes** | Universalis latency (ms, 0 if no market call) |
-| double5 | number | **Yes** | Cache lookup latency (ms) |
+| double4 | number | No | Unused (per-upstream latency not recorded) |
+| double5 | number | No | Unused |
+
+> **2026-08-29:** the blob6–blob9 / double4–5 plan above was superseded by the Tier A schema
+> (no option values, no per-upstream latency). The table now shows what is actually written;
+> `docs/operations/ANALYTICS_QUERIES.md` is the authoritative column layout.
 
 **KV Counter Extensions**:
 

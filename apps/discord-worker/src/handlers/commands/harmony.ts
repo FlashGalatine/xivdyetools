@@ -16,6 +16,7 @@ import { createUserTranslator, createTranslator } from '../../services/bot-i18n.
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import { resolveColorInput, executeHarmony, type HarmonyType } from '@xivdyetools/bot-logic';
 import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleHarmonyCommand(
@@ -141,6 +142,8 @@ async function processHarmonyCommand(
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.noMatchFound'))],
       });
     } else {
+      // GENERATION_FAILED: the card generator threw inside bot-logic.
+      markCommandOutcome(interaction, 'render');
       if (logger) logger.error('Harmony command error');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
@@ -179,6 +182,7 @@ async function processHarmonyCommand(
       file: { name: `harmony-${harmonyType}.png`, data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error, 'render'));
     if (logger) logger.error('Harmony render error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],

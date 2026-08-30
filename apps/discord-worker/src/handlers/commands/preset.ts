@@ -56,6 +56,7 @@ import {
   MAX_PRESET_FAVORITES,
 } from '../../services/preset-favorites.js';
 import type { DiscordInteraction } from '../../types/env.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 
 // ============================================================================
 // Main Handler
@@ -261,6 +262,7 @@ async function processListCommand(
       ],
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('List presets error', error instanceof Error ? error : undefined);
     }
@@ -326,6 +328,7 @@ async function processShowCommand(
 
     await sendPresetEmbed(interaction, env, t, preset, locale);
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('Show preset error', error instanceof Error ? error : undefined);
     }
@@ -387,6 +390,7 @@ async function processRandomCommand(
 
     await sendPresetEmbed(interaction, env, t, preset, locale);
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('Random preset error', error instanceof Error ? error : undefined);
     }
@@ -571,6 +575,7 @@ async function processSubmitCommand(
       await notifyModerationChannel(env, preset);
     }
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('Submit preset error', error instanceof Error ? error : undefined);
     }
@@ -664,6 +669,7 @@ async function processVoteCommand(
       ],
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('Vote error', error instanceof Error ? error : undefined);
     }
@@ -917,6 +923,7 @@ async function processEditCommand(
       await notifyEditModerationChannel(env, updatedPreset, existingPreset);
     }
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('Edit preset error', error instanceof Error ? error : undefined);
     }
@@ -1227,6 +1234,7 @@ async function processFavoriteAdd(
       ],
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('preset favorite add failed', error instanceof Error ? error : undefined);
     }
@@ -1300,6 +1308,7 @@ async function processFavoriteRemove(
       ],
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('preset favorite remove failed', error instanceof Error ? error : undefined);
     }
@@ -1374,6 +1383,7 @@ async function processFavoriteList(
       ],
     });
   } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
     if (logger) {
       logger.error('preset favorite list failed', error instanceof Error ? error : undefined);
     }
