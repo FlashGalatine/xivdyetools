@@ -13,4 +13,4 @@
 - Pin `full_name`/`html_url` to constants (or a `GITHUB_REPO` var); require `X-GitHub-Event: push`; remember the last announced version (KV) and skip repeats.
 
 ## Status
-OPEN
+FIXED 2026-08-30 fb3d4120, 6014be93 (discord-worker 5.1.0: repository pinned to `FlashGalatine/xivdyetools` — mismatch → 403; `X-GitHub-Event` gate after the HMAC check (ping → pong, non-push → ignored, both 200); `announced:v:<version>` KV memo (90 d) checked before the send and written best-effort after a successful one — a Redeliver no longer double-posts; `html_url` is never read; the fetch URL and the memo key derive only from the pinned constant and the fetched changelog.)

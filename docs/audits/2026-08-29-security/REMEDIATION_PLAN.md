@@ -11,7 +11,7 @@
 | FINDING-010 | S9 worker-kit (default flip) | S1 presets-api, S2 oauth, S5 api-worker (drop `logUserAgent: true`) |
 | FINDING-011 | S4 moderation-worker | S1 presets-api, S3 discord-worker |
 | FINDING-012 | S9 worker-kit | S2 oauth, S4 moderation-worker |
-| FINDING-013 | S1 presets-api | S2 oauth, S4 moderation-worker |
+| FINDING-013 | S1 presets-api | S2 oauth, S4 moderation-worker, S3 discord-worker (added 2026-08-30 by the Sprint 3 whole-branch review) |
 | FINDING-015 | S11 auth (v1 export removal, MAJOR) | S1 presets-api (stop accepting v1, nonce cache), S3 discord-worker + S4 moderation-worker (stop sending v1) |
 | FINDING-023 | S8 image-worker | S1 presets-api, S2 oauth, S4 moderation-worker |
 | FINDING-002 | S2 oauth | S6 web-app (sign-in copy) |
@@ -65,7 +65,7 @@ Anchor: FINDING-003 (no client uses `/auth/refresh`). FINDING-001/002 remove dat
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-oauth-worker` → merge to `main` → `deploy-oauth.yml` (bare `wrangler deploy` = production) → **then, after the deploy is live**, `wrangler d1 execute xivdyetools-users --remote --file=migrations/0001_drop_xivauth_characters.sql` from `apps/oauth` (drops `xivauth_characters` and `users.avatar_url`; run the header's precondition queries first; **never `wrangler d1 migrations apply`** — the new `migrations/` dir matches wrangler's default and the `ALTER` is not idempotent). **Order matters:** the migration must follow the deploy — 2.7.0 still writes both on every sign-in and would 500 on the missing column/table. Once 3.0.0 is live the gap is inert (the code neither reads nor writes either column); until the migration runs, the historical roster rows remain in D1 (FINDING-001 stays open until then). **Rollback trap:** once it has run, never roll the worker back below 3.0.0 — roll forward, or restore the schema first (see the migration header).
 
-## Sprint 3 — discord-worker: policy truth + input bounds (P2)
+## Sprint 3 — discord-worker: policy truth + input bounds (P2) ✅ COMPLETED 2026-08-30 (commits `6c14889f..fe86a881`, 11 commits, discord-worker 5.1.0; five reviewed tasks + whole-branch review with one fix wave, which also added the FINDING-013 discord-worker part)
 Anchor: FINDING-007/008 (the bot's own policy is wrong about where and what it stores). Recommendation for 007: move to the native binding like the other four workers rather than disclosing Upstash.
 
 | ID | Source | Sev / Exposure | Item |
@@ -77,8 +77,11 @@ Anchor: FINDING-007/008 (the bot's own policy is wrong about where and what it s
 | FINDING-021 | security | LOW / INTERNET-AUTH | `src/index.ts:481-535` + `services/announcements.ts`: pin repo `full_name`/`html_url` to constants, require `X-GitHub-Event: push`, remember the last announced version in KV and skip repeats; tests. |
 | FINDING-011 (part) | security | LOW / INTERNET-AUTH | `budget.ts:247`, `services/preferences.ts:218-221`, `src/index.ts:308-312`: log lengths/ids, not values or names. |
 | FINDING-015 (part) | security | LOW / INTERNAL | `services/preset-api.ts:147-160`: stop sending `X-Request-Signature` (v1); update `preset-api-v2.test.ts:59`. |
+| FINDING-013 (part) | security | LOW / INTERNET-UNAUTH | Added 2026-08-30 by the whole-branch review: `ENVIRONMENT` var in both envs; production `validateEnv` requires the six `RL_*` bindings and refuses every request while one is missing (fail closed, like presets-api/oauth). |
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-discord-worker` (+ `font-coverage.test.ts` untouched — no locale text changes) → merge to `main` → `deploy-discord-worker.yml` (`deploy:production`, register-commands in CI) → secret deletion by hand.
+
+**Deploy needs:** nothing before the merge. After `deploy-discord-worker.yml` is green: `wrangler secret delete UPSTASH_REDIS_REST_URL --env production` and `wrangler secret delete UPSTASH_REDIS_REST_TOKEN --env production` (from `apps/discord-worker`); confirm the six `RL_*` bindings per env in the dashboard (namespace ids 1041–1046 production / 1051–1056 beta must be unclaimed by any other worker — a collision would silently merge two workers' counters); hand-deploy the beta bot (bare `wrangler deploy` from `apps/discord-worker`) so it runs the new code. Production refuses every interaction (and `/health`) while any of the six bindings is missing — a wrong `wrangler.toml` shows up as a red smoke test, not a silent KV fallback. **Follow-ups routed:** Sprint 9 — `changelog` preset entry in worker-kit (then delete the local override); Sprint 11 — `packages/test-utils/integration/**` still constructs `X-Request-Signature`; unscheduled polish — distinguish "lookup failed" from "unknown world" in `validateWorld` (an outage currently answers the unknown-world reply), a `ping` on an env without `ANNOUNCEMENT_CHANNEL_ID` answers 500 before pong, and `src/index.ts` (1.3 k lines) / `index.test.ts` (2.3 k) are due a webhook extraction.
 
 ## Sprint 4 — moderation-worker: logging + accountability (P3)
 Anchor: FINDING-011 (ban log line) and FINDING-018 (the one migration in the plan — `moderation_log.preset_id` nullable, user-run on the shared presets D1 **before** the deploy).

@@ -280,12 +280,17 @@ Authorization: Bearer <BOT_API_SECRET>
 
 | Header | Description |
 |--------|-------------|
-| `X-Request-Timestamp` | Unix timestamp (seconds) for replay protection — max age 5 minutes, 1 minute future skew |
-| `X-Request-Signature` | Hex HMAC-SHA256 over `${timestamp}:${discordId}:${userName}` with `BOT_SIGNING_SECRET` |
+| `X-Request-Timestamp` | Unix timestamp (seconds); a v2 signature is accepted for 60 seconds (60 s future skew) |
+| `X-Request-Signature-V2` | Hex HMAC-SHA256 with `BOT_SIGNING_SECRET` over the length-prefixed canonical string — one field per line, each prefixed with its length: `v2`, `METHOD`, path (no origin, no query), `sha256(body)`, timestamp, nonce, Discord ID, username |
+| `X-Request-Nonce` | Random single-use nonce (`[A-Za-z0-9._-]{1,64}`; the bots send a UUID) bound into the signature; accepted nonces are remembered for 120 s in the shared `TOKEN_BLACKLIST` KV (`botnonce:` prefix) and a repeat is refused |
 | `X-User-Discord-ID` | Discord user ID (snowflake) of the acting user |
 | `X-User-Discord-Name` | Discord username of the acting user (optional; part of the signed message) |
 
-Verification is `verifyBotSignature()` from `@xivdyetools/auth`; the header names live in
+The legacy v1 `X-Request-Signature` header (`${timestamp}:${discordId}:${userName}`, 5-minute
+window) is no longer accepted since presets-api 2.2.0 (2026-08-29 audit, FINDING-015) and is no
+longer sent by discord-worker 5.1.0; moderation-worker stops sending it in its next release.
+Verification is `verifyBotSignatureV2()` from `@xivdyetools/auth` (header names
+`BOT_SIGNATURE_V2_HEADER` / `BOT_SIGNATURE_NONCE_HEADER` live there); the nonce replay cache is in
 `apps/presets-api/src/middleware/auth.ts`.
 
 ---

@@ -14,4 +14,4 @@ Supersedes the residual of `2026-08-21-security/FINDING-014`.
 - Delete v1 acceptance, emitters and export (auth minor bump → both bots → presets-api); add a 120 s nonce cache (KV or memory) in presets-api; include the sorted query string in the canonical string.
 
 ## Status
-PARTIAL — presets-api part FIXED 2026-08-30 01ea3dec (2.2.0: v1 signature no longer accepted; nonce validated and replay-checked through `TOKEN_BLACKLIST` (`botnonce:`, 120 s TTL, best-effort across colos)). Both bots still send v1 harmlessly — discord-worker (Sprint 3) and moderation-worker (Sprint 4) stop sending it, `@xivdyetools/auth` drops the v1 export in Sprint 11; query-string signing stays INFO (PKG-03).
+PARTIAL — presets-api part FIXED 2026-08-30 01ea3dec (2.2.0: v1 signature no longer accepted; nonce validated and replay-checked through `TOKEN_BLACKLIST` (`botnonce:`, 120 s TTL, best-effort across colos)). discord-worker part FIXED 2026-08-30 1a0cf89f (5.1.0 no longer sends `X-Request-Signature`; `generateRequestSignature` deleted); moderation-worker (Sprint 4) stops sending it next, `@xivdyetools/auth` drops the v1 export in Sprint 11; query-string signing stays INFO (PKG-03).

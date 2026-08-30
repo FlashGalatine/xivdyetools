@@ -13,4 +13,4 @@
 - Log ids and lengths, never names, option values, free text or preset names; route presets-api `console.*` through the worker-kit logger.
 
 ## Status
-PARTIAL — presets-api part FIXED 2026-08-30 efd495a4, a3e8ee14 (2.2.0: all 30 `console.*` sites routed through the worker-kit logger with ids/counts only; preset names dropped from the notification-failure lines; dead-letter insert failures log `err.name` only); moderation-worker (Sprint 4) and discord-worker (Sprint 3) parts pending.
+PARTIAL — presets-api part FIXED 2026-08-30 efd495a4, a3e8ee14 (2.2.0: all 30 `console.*` sites routed through the worker-kit logger with ids/counts only; preset names dropped from the notification-failure lines; dead-letter insert failures log `err.name` only); discord-worker part FIXED 2026-08-30 dfc6de47 (5.1.0: `{ targetDyeId, hasWorld }`, `{ key, valueType, valueLength }`, `{ presetId, source }`; an independent sweep found no other name or value in any log context — Discord API error bodies stay, they name fields, not values); moderation-worker (Sprint 4) pending.

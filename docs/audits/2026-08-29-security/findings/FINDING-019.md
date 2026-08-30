@@ -13,4 +13,4 @@ Supersedes the "not done" item of `2026-08-21-security/FINDING-033`.
 - `validateWorld` on set and on read; `max_length: 32` in the command schema.
 
 ## Status
-OPEN
+FIXED 2026-08-30 dfc6de47 (discord-worker 5.1.0: `max_length: 32` on all four `world` options; sync guard 1–32 trimmed characters and no control characters (non-Latin names allowed); `/preferences set world:` validates through `validateWorld` and stores the canonical name; `resolveWorld` validates a stored world on read — a non-resolving one gets the existing unknown-world reply; `budget.test.ts:145` flipped to assert validation.)

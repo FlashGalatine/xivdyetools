@@ -13,4 +13,4 @@
 - Put a TTL on the first-run flag (or fold it into `prefs:v1`); list preset favourites, the first-run flag and the actual preference fields in §2/§5/§8; replace the removed commands with the live ones (`/preset favorite …`, `/preferences reset`).
 
 ## Status
-OPEN
+FIXED 2026-08-30 2041ac39, 886d46a1, f5d5f596 (discord-worker 5.1.0: `firstrun:v5:*` carries a 180-day `expirationTtl`; PRIVACY_POLICY.md lists preset favorites, the first-run flag and all 16 preference fields, states where rate-limit counters live, cites the live commands (`/preferences show|reset`, `/preset favorite list|remove`, `/extractor image`) and no longer references any removed feature; §4 "Save your preferences" row corrected in 1a0cf89f.)

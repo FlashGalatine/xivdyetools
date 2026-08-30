@@ -12,4 +12,4 @@
 - Apply the configured tiers to the three commands, or make their tracking Analytics-Engine-only (the pattern already used for rate-limited requests).
 
 ## Status
-OPEN
+FIXED 2026-08-30 6c14889f, d28f76a4 (discord-worker 5.1.0: the exemption is gone — `/about` and `/manual` take the preset's 30/min tier, `/changelog` a discord-worker-local 30/min override until Sprint 9 adds the preset entry; rate-limited calls stay AE-only in analytics.)
