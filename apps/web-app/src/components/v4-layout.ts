@@ -15,6 +15,7 @@ import { RouterService, type ToolId } from '@services/router-service';
 import { LanguageService, StorageService, ModalService } from '@services/index';
 import { TutorialService, type TutorialTool } from '@services/tutorial-service';
 import { TelemetryService, type ToolEntry } from '@services/telemetry-service';
+import { ShareService } from '@services/share-service';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import { STORAGE_PREFIX } from '@shared/constants';
@@ -54,8 +55,12 @@ let toastContainer: ToastContainer | null = null;
 // Telemetry: only the tool the app booted into can be an 'initial' or 'share'
 // entry; every later navigation is 'nav' (spec §1). Captured once in
 // initializeV4Layout before the first loadToolContent call, then consumed
-// (set back to null) by the first recordToolView.
+// (set back to null) at the top of that first loadToolContent — before any
+// await, so a superseded or failed boot load cannot leak it onto the next one.
 let bootEntry: ToolEntry | null = null;
+// The tool whose view is currently being timed (set once its load completed).
+// Re-navigating to it is a remount, not a new view.
+let mountedToolId: ToolId | null = null;
 
 // ============================================================================
 // Tutorial Integration
@@ -198,21 +203,24 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     const { dye, random } = e.detail;
     logger.debug(`[V4 Layout] Dye selected from palette: ${dye.name}`);
 
-    // Telemetry: a swatch click is a deliberate pick; the random button is not
-    if (!random && typeof dye.stainID === 'number') {
-      TelemetryService.trackDyePick(dye.stainID, 'drawer');
-    }
-
     // Route dye selection to active tool if it has selectDye method
+    let consumed = true;
     if (activeTool && 'selectDye' in activeTool) {
       (activeTool as BaseComponent & { selectDye: (dye: unknown) => void }).selectDye(dye);
     } else if (activeTool && 'addDye' in activeTool) {
       // Fallback for tools that use addDye instead of selectDye
       (activeTool as BaseComponent & { addDye: (dye: unknown) => void }).addDye(dye);
     } else {
+      consumed = false;
       logger.debug(
         `[V4 Layout] Tool ${RouterService.getCurrentToolId()} does not support dye selection`
       );
+    }
+
+    // Telemetry: a swatch click a tool took is a deliberate pick; the random
+    // button, and a click while no tool (or one without dye input) is mounted, are not
+    if (consumed && !random && typeof dye.stainID === 'number') {
+      TelemetryService.trackDyePick(dye.stainID, 'drawer');
     }
   }) as EventListener);
 
@@ -438,9 +446,9 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     layoutElement.shadowRoot.appendChild(gridStyle);
   }
 
-  // Telemetry: capture the boot entry BEFORE the first loadToolContent — a
-  // share link carries query params, a plain boot does not (spec §1).
-  bootEntry = RouterService.getCurrentRoute().params.toString() !== '' ? 'share' : 'initial';
+  // Telemetry: capture the boot entry BEFORE the first loadToolContent (spec §1).
+  mountedToolId = null;
+  bootEntry = isShareBoot(initialTool) ? 'share' : 'initial';
 
   // Load initial tool
   await loadToolContent(initialTool);
@@ -477,20 +485,24 @@ function toolDisplayName(toolId: ToolId): string {
 }
 
 /**
- * Reset the "is this the boot tool" telemetry state (for testing only).
- * `bootEntry` is module state that otherwise survives for the whole
- * test-file run, so a later suite's tool load would look like a "later"
- * navigation instead of the boot view.
- * @internal
+ * Telemetry: did the app boot from a share link? ShareService's `v=` marker
+ * (every generated share URL carries it) or a deep link into one preset
+ * (`/presets/<id>`, path-based). Preserved params (`?dye=`, `?dc=`, `?ui=`),
+ * in-app hand-offs (`?add=`) and reloads of those are NOT shares.
  */
-export function __resetTelemetryStateForTesting(): void {
-  bootEntry = null;
+function isShareBoot(toolId: ToolId): boolean {
+  return ShareService.isShareUrl() || (toolId === 'presets' && RouterService.getSubPath() !== null);
 }
 
-/** Record a completed tool load for telemetry (tool_view + dwell clock). */
-function recordToolView(toolId: ToolId): void {
-  const entry: ToolEntry = bootEntry ?? 'nav';
-  bootEntry = null;
+/**
+ * Telemetry: a tool load completed. A fresh view starts the dwell clock and
+ * emits tool_view; a remount of the tool already showing (Welcome modal's
+ * "Get started" re-navigates to the default tool, Presets pushes history
+ * entries within itself) records nothing and keeps the clock running.
+ */
+function completeToolLoad(toolId: ToolId, entry: ToolEntry, remount: boolean): void {
+  mountedToolId = toolId;
+  if (remount) return;
   TelemetryService.startTool(toolId, entry);
   TelemetryService.track('tool_view', { tool: toolId, entry });
 }
@@ -503,6 +515,12 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
   // awaits; only the latest sequence may instantiate its tool
   const seq = ++navigationSeq;
   const superseded = (): boolean => seq !== navigationSeq;
+
+  // Telemetry: resolve the entry NOW, before the first await — a superseded or
+  // failed boot load must not leak 'initial'/'share' onto the next navigation
+  const remount = mountedToolId === toolId;
+  const entry: ToolEntry = bootEntry ?? 'nav';
+  bootEntry = null;
 
   // BUG-078: a tutorial prompt scheduled by the previous tool must not fire
   // over this one
@@ -518,8 +536,12 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     return;
   }
 
-  // Telemetry: close the dwell window of whatever was showing (no-op if nothing was)
-  TelemetryService.endTool();
+  // Telemetry: close the dwell window of whatever was showing (no-op if nothing
+  // was); a remount of the same tool keeps its window open
+  if (!remount) {
+    TelemetryService.endTool();
+    mountedToolId = null;
+  }
 
   // Cleanup previous tool
   if (activeTool) {
@@ -641,7 +663,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
         const presetTool = document.createElement('v4-preset-tool');
         contentContainer.appendChild(presetTool);
         logger.info('[V4 Layout] Presets tool loaded (v4)');
-        recordToolView(toolId);
+        completeToolLoad(toolId, entry, remount);
         return; // Early return since we handled the container directly
       }
       case 'budget': {
@@ -676,7 +698,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     // Clear loading and append tool container
     clearContainer(contentContainer);
     contentContainer.appendChild(toolContainer);
-    recordToolView(toolId);
+    completeToolLoad(toolId, entry, remount);
 
     // Check if we should prompt for tutorial on first visit to this tool
     const tutorialTool = TOOL_TO_TUTORIAL[toolId];
@@ -685,6 +707,9 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     }
   } catch (error) {
     logger.error(`[V4 Layout] Failed to load ${toolId}:`, error);
+    // Telemetry: nothing is showing — a failed remount ends the view it kept open
+    mountedToolId = null;
+    TelemetryService.endTool();
     contentContainer.innerHTML = `
       <div class="flex flex-col items-center justify-center text-center" style="min-height: 400px; padding: 3rem 2rem;">
         <svg style="width: 150px; height: 150px; opacity: 0.25; margin-bottom: 1.5rem; color: var(--theme-text);" fill="none" stroke="currentColor" viewBox="0 0 24 24">

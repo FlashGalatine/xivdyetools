@@ -44,11 +44,11 @@ world/character names, any id that persists across page loads.
 
 | Event | Dimensions | Value (`double1`) | Hook point |
 |---|---|---|---|
-| `tool_view` | `tool` (ToolId), `entry` = `initial` \| `share` \| `nav` | — | end of `loadToolContent()` in `components/v4-layout.ts` (after the tool's `init()` succeeds; a superseded navigation does not fire) |
+| `tool_view` | `tool` (ToolId), `entry` = `initial` \| `share` \| `nav` | — | end of `loadToolContent()` in `components/v4-layout.ts` (after the tool's `init()` succeeds; a superseded navigation does not fire; re-navigating to the tool already showing is a remount and fires nothing) |
 | `tool_leave` | `tool`, `entry` | `active_s` — whole seconds the tab was **visible** on that tool; capped at 1800 | on tool switch (before the next `tool_view`) and on `pagehide` |
-| `dye_pick` | `stainID` (1–125 range validated against core's DB), `tool` (current route), `via` = `drawer` \| `grid` | — | the `dye-selected` listener in `v4-layout.ts` (palette drawer path, `via: 'drawer'`) and `DyeGrid`'s `emit('dye-selected', dye)` (`via: 'grid'`, covers the inline pickers of harmony / comparison / gradient / mixer / accessibility). The drawer's random-dye path is **not** tracked. |
+| `dye_pick` | `stainID` (1–125 range validated against core's DB), `tool` (current route), `via` = `drawer` \| `grid` | — | **accepted** picks only. The `dye-selected` listener in `v4-layout.ts` tracks a palette-drawer swatch once a tool's `selectDye`/`addDye` took it (`via: 'drawer'`); `DyeSelector.handleDyeSelection` tracks a grid or Favorites-strip pick it kept (`via: 'grid'`, covers the inline pickers of harmony / comparison / gradient / mixer / accessibility) — a click that removes an already-selected dye or is dropped at `maxSelections` is not a pick. Random-dye paths (drawer dice, selector random) are **not** tracked. |
 | `chara_parse` | `ok` (`true` \| `false`), `producer` — the parsed `TypeName`, allowlisted (`anamnesis`, `ktisis`, `brio`; anything else → `other`, `null` → `none`) | — | `loadFile()` in `components/chara-import.ts`: `ok:true` after `resolveCharaColors` succeeds, `ok:false` in the catch. The size-cap early return is not a parse and is not tracked. |
-| `theme_change` | `to` (`standard-light` \| `standard-dark`) | — | the user's pick in `components/v4/theme-modal.ts` (the `ThemeService.setTheme(theme.name)` call). **Not** hooked into `ThemeService` itself, so boot, legacy-name migration and settings-import do not count as a choice. |
+| `theme_change` | `to` (`standard-light` \| `standard-dark`) | — | `services/theme-switch.ts` (`switchTheme` / `toggleThemeVariant`) — the one path the theme modal and the Shift+T shortcut use. **Not** hooked into `ThemeService` itself, so boot, legacy-name migration and settings-import do not count as a choice. Tracked before the switch is applied: `TelemetryService.track('theme_change')` flushes the pending batch first, so its envelope carries the outgoing theme. |
 
 Theme preference is read two ways: the envelope's `theme` (below) gives the theme in use on every
 batch, and `theme_change` gives deliberate switches. Because the default is a fixed
@@ -57,9 +57,13 @@ the share of batches on `standard-light` is a floor for "chose Light", and `them
 how often people leave the default in either direction.
 
 `entry` semantics: `initial` = the tool the app booted into (whatever it was — usually Harmony via
-the default route), `share` = the boot URL carried query params for that tool (a share link), `nav`
-= the user switched to it after boot. Only the first `tool_view` per page load can be `initial` or
-`share`; every later one is `nav`.
+the default route), `share` = the app booted from a share link — `ShareService.isShareUrl()` (the
+`v=` marker every generated share URL carries) or a preset deep link (`/presets/<id>`), `nav` = the
+user switched to it after boot. A preserved param or in-app hand-off left in the address bar
+(`?dye=`, `?dc=`, `?add=`) and a reload of it are `initial`, not `share`. Only the first `tool_view`
+per page load can be `initial` or `share`; every later one is `nav` — the entry is resolved at the
+top of the first `loadToolContent()`, before any await, so a superseded or failed boot load cannot
+leak it onto the next navigation.
 
 Answering the Harmony-default problem: popularity queries filter `entry != 'initial'`, and
 `tool_leave.active_s` gives median dwell per tool as the second signal. Caveat: `tool_leave` fires
@@ -122,14 +126,18 @@ Hook-point changes:
 
 - `v4-layout.ts`: `loadToolContent()` calls `TelemetryService.endTool()` before destroying the
   previous tool and `TelemetryService.startTool(toolId, entry)` + `track('tool_view', …)` after
-  the new tool's `init()`; `entry` is computed once at boot (`share` if `RouterService.getCurrentRoute().params` is non-empty, else `initial`) and `nav` thereafter. The existing `dye-selected`
-  listener adds `track('dye_pick', { tool, stainID: dye.stainID, via: 'drawer' })` — but only for
-  the swatch-click path: the drawer's random-dye emit must be distinguishable. The drawer already
-  has two emit sites (`dye-palette-drawer.ts` swatch click vs. random); the random path adds
+  the new tool's `init()`; `entry` is computed once at boot (`share` if `ShareService.isShareUrl()`
+  or a `/presets/<id>` sub-path, else `initial`) and `nav` thereafter, and resolved at the top of
+  `loadToolContent()` before its first await. A navigation to the tool already mounted is a remount:
+  no `endTool`, no `tool_view`, the dwell clock keeps running. The existing `dye-selected` listener
+  adds `trackDyePick(dye.stainID, 'drawer')` once a tool's `selectDye`/`addDye` took the pick — and
+  only for the swatch-click path: the drawer's random-dye emit must be distinguishable. The drawer
+  already has two emit sites (`dye-palette-drawer.ts` swatch click vs. random); the random path adds
   `random: true` to its event detail and the listener skips tracking when it is set.
-- `dye-grid.ts`: every `emit('dye-selected', dye)` (click, keyboard) is preceded by
-  `TelemetryService.track('dye_pick', { tool: RouterService.getCurrentToolId(), stainID: dye.stainID, via: 'grid' })`.
-  (`DyeGrid` is also used by `dye-selector.ts`, which the tools mount — same path, no extra hook.)
+- `dye-selector.ts`: `handleDyeSelection()` tracks `dye_pick` (`via: 'grid'`) only when it
+  accepted the pick — grid click, keyboard, or the Favorites strip — and never for its random
+  button. `DyeGrid` itself only emits; its per-card click guard ignores the favorite and
+  add-to-collection buttons so the delegated handlers get them.
 - `chara-import.ts`: `track('chara_parse', { ok: true, producer })` after `resolveCharaColors`
   resolves; `track('chara_parse', { ok: false, producer: 'none' })` in the catch. Producer mapping
   lives in `telemetry-service.ts` (`normalizeProducer(typeName: string | null)`).

@@ -1,14 +1,14 @@
 /**
- * Theme modal — the theme_change telemetry hook. Only a deliberate pick of a
- * DIFFERENT theme counts; re-tapping the current one, and ThemeService's own
- * boot/migration, never do.
+ * Theme modal — a tap on a theme goes through the shared `switchTheme`
+ * (services/theme-switch.ts), which is the one place a deliberate change is
+ * recorded for telemetry. The modal itself never calls ThemeService.setTheme
+ * or TelemetryService directly, so it cannot emit or miss the event on its own.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const { mockShow, mockSetTheme, mockTrack } = vi.hoisted(() => ({
+const { mockShow, mockSwitchTheme } = vi.hoisted(() => ({
   mockShow: vi.fn().mockReturnValue('modal-1'),
-  mockSetTheme: vi.fn(),
-  mockTrack: vi.fn(),
+  mockSwitchTheme: vi.fn(),
 }));
 
 vi.mock('@services/modal-service', () => ({
@@ -28,27 +28,26 @@ vi.mock('@services/theme-service', () => ({
       },
     ],
     subscribe: vi.fn().mockReturnValue(() => {}),
-    setTheme: mockSetTheme,
+    setTheme: vi.fn(),
   },
 }));
 vi.mock('@services/language-service', () => ({
   LanguageService: { t: (k: string) => k },
 }));
-vi.mock('@services/telemetry-service', () => ({
-  TelemetryService: { track: mockTrack },
-}));
+vi.mock('@services/theme-switch', () => ({ switchTheme: mockSwitchTheme }));
 
 import { showThemeModal } from '../../v4/theme-modal';
+import { ThemeService } from '@services/theme-service';
 
 function contentOf(): HTMLElement {
   return mockShow.mock.calls[0][0].content as HTMLElement;
 }
 
-describe('theme modal telemetry', () => {
+describe('theme modal theme switching', () => {
   beforeEach(() => {
     mockShow.mockClear();
-    mockSetTheme.mockClear();
-    mockTrack.mockClear();
+    mockSwitchTheme.mockClear();
+    vi.mocked(ThemeService.setTheme).mockClear();
   });
 
   afterEach(() => {
@@ -57,19 +56,19 @@ describe('theme modal telemetry', () => {
     onClose?.();
   });
 
-  it('tracks a switch to the other theme', () => {
+  it('applies a tap on the other theme through the shared switch', () => {
     showThemeModal();
     const light = contentOf().querySelector<HTMLButtonElement>('[data-theme="standard-light"]')!;
     light.click();
-    expect(mockSetTheme).toHaveBeenCalledWith('standard-light');
-    expect(mockTrack).toHaveBeenCalledWith('theme_change', { to: 'standard-light' });
+    expect(mockSwitchTheme).toHaveBeenCalledWith('standard-light');
+    expect(ThemeService.setTheme).not.toHaveBeenCalled();
   });
 
-  it('does not track re-picking the current theme', () => {
+  it('applies a re-tap of the current theme through the same switch (live preview)', () => {
     showThemeModal();
     const dark = contentOf().querySelector<HTMLButtonElement>('[data-theme="standard-dark"]')!;
     dark.click();
-    expect(mockSetTheme).toHaveBeenCalledWith('standard-dark');
-    expect(mockTrack).not.toHaveBeenCalled();
+    // switchTheme decides that nothing changed and records nothing — see theme-switch.test.ts
+    expect(mockSwitchTheme).toHaveBeenCalledWith('standard-dark');
   });
 });

@@ -232,17 +232,26 @@ export class ThemeService {
   }
 
   /**
-   * Toggle between light and dark variants of the current theme
+   * The other variant of the current theme (light ↔ dark), or null when the
+   * current theme has none. Pure — nothing is applied.
    */
-  static toggleDarkMode(): void {
+  static toggledVariant(): ThemeName | null {
     const isCurrentlyDark = this.currentTheme.endsWith('-dark');
     const baseName = this.currentTheme.replace(/-dark$|(-light)$/, '');
     const newTheme = (isCurrentlyDark ? `${baseName}-light` : `${baseName}-dark`) as ThemeName;
+    return this.isValidThemeName(newTheme) ? newTheme : null;
+  }
+
+  /**
+   * Toggle between light and dark variants of the current theme
+   */
+  static toggleDarkMode(): void {
+    const newTheme = this.toggledVariant();
 
     // Check if the new theme variant exists
-    if (!this.isValidThemeName(newTheme)) {
+    if (!newTheme) {
       logger.warn(
-        `Theme ${this.currentTheme} does not have a ${isCurrentlyDark ? 'light' : 'dark'} variant`
+        `Theme ${this.currentTheme} does not have a ${this.currentTheme.endsWith('-dark') ? 'light' : 'dark'} variant`
       );
       return;
     }

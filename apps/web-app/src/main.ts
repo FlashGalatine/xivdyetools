@@ -12,7 +12,12 @@ import '@/styles/v4-layout.css'; // V4 layout and tool-specific styles
 import '@/styles/tailwind.css';
 
 // Import services
-import { initializeServices, getServicesStatus, LanguageService } from '@services/index';
+import {
+  initializeServices,
+  getServicesStatus,
+  LanguageService,
+  StorageService,
+} from '@services/index';
 import { ErrorHandler } from '@shared/error-handler';
 import { renderFatalError } from '@shared/fatal-error';
 import { APP_VERSION } from '@shared/constants';
@@ -100,11 +105,7 @@ async function initializeApp(): Promise<void> {
     TelemetryService.initialize();
 
     // Cleanup: pre-5.x ShareService localStorage buffer, retired by this change.
-    try {
-      localStorage.removeItem('xiv_share_analytics');
-    } catch {
-      /* storage unavailable */
-    }
+    StorageService.removeItem('xiv_share_analytics');
 
     // Log service status
     const status = await getServicesStatus();

@@ -4,16 +4,15 @@
  */
 
 import { KeyboardService } from '../keyboard-service';
-import { ThemeService } from '../theme-service';
+import { toggleThemeVariant } from '../theme-switch';
 import { LanguageService } from '../language-service';
 import { ModalService } from '../modal-service';
 import * as shortcutsPanel from '@components/shortcuts-panel';
 
-// Mock dependencies
-vi.mock('../theme-service', () => ({
-  ThemeService: {
-    toggleDarkMode: vi.fn(),
-  },
+// Mock dependencies — Shift+T goes through the shared theme switch (the one
+// path that records a deliberate theme change), never ThemeService directly
+vi.mock('../theme-switch', () => ({
+  toggleThemeVariant: vi.fn(),
 }));
 
 vi.mock('../language-service', () => ({
@@ -247,22 +246,22 @@ describe('KeyboardService', () => {
       KeyboardService.initialize();
     });
 
-    it('should toggle theme on Shift+T', () => {
+    it('should toggle theme on Shift+T through the shared theme switch', () => {
       const event = new KeyboardEvent('keydown', { key: 'T', shiftKey: true });
       document.dispatchEvent(event);
 
-      expect(ThemeService.toggleDarkMode).toHaveBeenCalled();
+      expect(toggleThemeVariant).toHaveBeenCalled();
     });
 
     it('should toggle theme on Shift+t (lowercase)', () => {
       const event = new KeyboardEvent('keydown', { key: 't', shiftKey: true });
       document.dispatchEvent(event);
 
-      expect(ThemeService.toggleDarkMode).toHaveBeenCalled();
+      expect(toggleThemeVariant).toHaveBeenCalled();
     });
 
     it('should handle theme toggle error gracefully', () => {
-      (ThemeService.toggleDarkMode as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      vi.mocked(toggleThemeVariant).mockImplementation(() => {
         throw new Error('Theme error');
       });
 
@@ -434,7 +433,7 @@ describe('KeyboardService', () => {
       const event = new KeyboardEvent('keydown', { key: 'T', shiftKey: true });
       document.dispatchEvent(event);
 
-      expect(ThemeService.toggleDarkMode).not.toHaveBeenCalled();
+      expect(toggleThemeVariant).not.toHaveBeenCalled();
     });
 
     it('should not cycle language when modal is open', () => {
@@ -534,7 +533,7 @@ describe('KeyboardService', () => {
       });
       input.dispatchEvent(event);
 
-      expect(ThemeService.toggleDarkMode).not.toHaveBeenCalled();
+      expect(toggleThemeVariant).not.toHaveBeenCalled();
 
       document.body.removeChild(host);
     });
@@ -575,7 +574,7 @@ describe('KeyboardService', () => {
       document.dispatchEvent(event);
 
       expect(listener).not.toHaveBeenCalled();
-      expect(ThemeService.toggleDarkMode).not.toHaveBeenCalled();
+      expect(toggleThemeVariant).not.toHaveBeenCalled();
       expect(LanguageService.cycleToNextLocale).not.toHaveBeenCalled();
 
       window.removeEventListener('keyboard-navigate-tool', listener);

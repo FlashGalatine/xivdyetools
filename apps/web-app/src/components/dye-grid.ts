@@ -1,6 +1,5 @@
 import { BaseComponent } from './base-component';
 import { LanguageService, CollectionService, ToastService } from '@services/index';
-import { TelemetryService } from '@services/telemetry-service';
 import { Dye } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
 import { localizedDyeName } from '@shared/dye-name';
@@ -59,11 +58,12 @@ export class DyeGrid extends BaseComponent {
     this.updateSelectionVisuals();
   }
 
-  /** Emit the selection and record it as a deliberate pick (telemetry). */
+  /**
+   * Emit the selection. Whether it is ACCEPTED (and therefore counts as a
+   * dye_pick for telemetry) is the consumer's call — DyeSelector treats a
+   * click on a selected dye as a removal and drops picks at maxSelections.
+   */
   private selectDye(dye: Dye): void {
-    if (dye.stainID != null) {
-      TelemetryService.trackDyePick(dye.stainID, 'grid');
-    }
     this.emit('dye-selected', dye);
   }
 
@@ -130,8 +130,10 @@ export class DyeGrid extends BaseComponent {
         });
 
         this.on(btn, 'click', (e) => {
-          // Don't trigger selection if clicking the favorite button
-          if ((e.target as HTMLElement).closest('.favorite-btn')) {
+          // The favorite / collection buttons live inside the card: neither is
+          // a selection, and both are handled by the delegated wrapper
+          // listener in bindEvents — so let the click bubble to it untouched
+          if ((e.target as HTMLElement).closest('.favorite-btn, .collection-btn')) {
             return;
           }
           e.stopPropagation();

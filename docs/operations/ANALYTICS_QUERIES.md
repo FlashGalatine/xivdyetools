@@ -20,6 +20,22 @@ monthly cron that copies these aggregates into KV/D1.
 | `blob5`–`blob9` | locale · theme · viewport (m/t/d) · app version · env |
 | `double1` | `active_s` for tool_leave, else 0 |
 
+What counts (the hooks are deliberately narrow):
+
+- `entry`: `initial` = the tool the page loaded into; `share` = the page loaded from a share link
+  (ShareService's `v=` marker) or a preset deep link (`/presets/<id>`); `nav` = every later switch.
+  A `?dye=` / `?dc=` left in the address bar by an in-app hand-off, and a reload of it, is
+  `initial`. Re-navigating to the tool already showing (the Welcome modal's "Get started", Presets'
+  own history entries) is a remount, not a view — no `tool_leave`/`tool_view` pair.
+- `dye_pick`: accepted, explicit picks only. `grid` = a click in a tool's dye grid **or its
+  Favorites strip** that the selector kept (a click that removes an already-selected dye, or is
+  dropped at the selection cap, is not a pick); `drawer` = a palette-drawer swatch a tool took.
+  Random-dye buttons never count. Budget's quick picks and the preset editor do not go through
+  either hook, so they are not counted.
+- `theme_change`: every deliberate switch — the theme modal and Shift+T. The envelope `theme`
+  (`blob6`) is the theme in force when the batch's events happened: a switch sends the pending
+  batch first.
+
 ## Running a query
 
 ```bash

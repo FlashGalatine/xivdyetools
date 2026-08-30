@@ -441,8 +441,11 @@ export class ShareService {
    * Check if the current URL is a share URL (has share-specific params)
    */
   static isShareUrl(): boolean {
-    const params = new URLSearchParams(window.location.search);
-    return params.has('v') || params.has('dye') || params.has('color') || params.has('dyes');
+    // Every URL this service has ever generated carries the `v=` marker, so it
+    // is the one reliable signal. `dye=` alone is not: RouterService preserves
+    // it across navigations and in-app hand-offs (Budget → Harmony, …) set it,
+    // so it survives in the address bar of URLs nobody shared.
+    return new URLSearchParams(window.location.search).has('v');
   }
 
   /**

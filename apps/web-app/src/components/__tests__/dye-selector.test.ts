@@ -16,11 +16,18 @@ import {
   query,
 } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
+import { CollectionService } from '@services/index';
+
+const { mockTrackDyePick } = vi.hoisted(() => ({ mockTrackDyePick: vi.fn() }));
+vi.mock('@services/telemetry-service', () => ({
+  TelemetryService: { trackDyePick: mockTrackDyePick },
+}));
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById, JA_DYE_NAMES } = vi.hoisted(() => ({
+const { mockGetAllDyes, mockGetDyeById, mockGetByStainId, JA_DYE_NAMES } = vi.hoisted(() => ({
   mockGetAllDyes: vi.fn(),
   mockGetDyeById: vi.fn(),
+  mockGetByStainId: vi.fn(),
   /**
    * Localized names for the mockDyes itemIDs, deliberately numbered so that
    * their alphabetical order is the REVERSE of the English one: `mockDyes[0]`
@@ -69,6 +76,7 @@ vi.mock('@services/index', () => ({
     getInstance: vi.fn().mockReturnValue({
       getAllDyes: mockGetAllDyes,
       getDyeById: mockGetDyeById,
+      getByStainId: mockGetByStainId,
       getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
     }),
   },
@@ -117,6 +125,7 @@ describe('DyeSelector', () => {
     // Set up mock return values
     mockGetAllDyes.mockReturnValue(mockDyes);
     mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id));
+    mockGetByStainId.mockImplementation((id: number) => mockDyes.find((d) => d.stainID === id));
     // Mock scrollIntoView since jsdom doesn't implement it
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -373,6 +382,69 @@ describe('DyeSelector', () => {
 
       // Component should render and respond to events
       expect(container.children.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ============================================================================
+  // Telemetry — accepted, explicit picks only (spec decision 2)
+  // ============================================================================
+
+  describe('Telemetry', () => {
+    /** The dye behind a rendered grid button (the grid sorts by localized name). */
+    function dyeOf(btn: HTMLButtonElement | null) {
+      const id = parseInt(btn?.getAttribute('data-dye-id') ?? '0', 10);
+      return mockDyes.find((d) => d.id === id)!;
+    }
+
+    beforeEach(() => mockTrackDyePick.mockClear());
+
+    it('counts a grid click that adds a dye, not the click that removes it again', () => {
+      selector = new DyeSelector(container, { allowMultiple: true, maxSelections: 4 });
+      selector.init();
+      const btn = query<HTMLButtonElement>(container, '.dye-select-btn');
+
+      click(btn);
+      expect(selector.getSelectedDyes()).toHaveLength(1);
+      expect(mockTrackDyePick).toHaveBeenCalledWith(dyeOf(btn).stainID, 'grid');
+
+      mockTrackDyePick.mockClear();
+      click(btn); // second click on a selected dye removes it
+      expect(selector.getSelectedDyes()).toHaveLength(0);
+      expect(mockTrackDyePick).not.toHaveBeenCalled();
+    });
+
+    it('does not count a click dropped at maxSelections', () => {
+      selector = new DyeSelector(container, { allowMultiple: true, maxSelections: 1 });
+      selector.init();
+      const buttons = container.querySelectorAll<HTMLButtonElement>('.dye-select-btn');
+
+      click(buttons[0]);
+      expect(mockTrackDyePick).toHaveBeenCalledTimes(1);
+
+      click(buttons[1]); // the cap is 1: silently dropped
+      expect(selector.getSelectedDyes()).toHaveLength(1);
+      expect(mockTrackDyePick).toHaveBeenCalledTimes(1);
+    });
+
+    it('counts a pick from the Favorites strip', () => {
+      vi.mocked(CollectionService.getFavorites).mockReturnValueOnce([mockDyes[0].stainID!]);
+      selector = new DyeSelector(container, { showFavorites: true });
+      selector.init();
+
+      click(query<HTMLButtonElement>(container, '.favorite-dye-card'));
+
+      expect(selector.getSelectedDyes().map((d) => d.id)).toEqual([mockDyes[0].id]);
+      expect(mockTrackDyePick).toHaveBeenCalledWith(mockDyes[0].stainID, 'grid');
+    });
+
+    it('does not count a random dye', () => {
+      selector = new DyeSelector(container);
+      selector.init();
+
+      (selector as unknown as { selectRandomDye: () => void }).selectRandomDye();
+
+      expect(selector.getSelectedDyes()).toHaveLength(1);
+      expect(mockTrackDyePick).not.toHaveBeenCalled();
     });
   });
 

@@ -17,7 +17,7 @@
 import { ModalService } from '@services/modal-service';
 import { ThemeService } from '@services/theme-service';
 import { LanguageService } from '@services/language-service';
-import { TelemetryService } from '@services/telemetry-service';
+import { switchTheme } from '@services/theme-switch';
 import type { ThemeName } from '@shared/types';
 
 // ============================================================================
@@ -176,13 +176,11 @@ class ThemeModal {
       tick.textContent = '✓';
       themeBtn.appendChild(tick);
 
-      // Apply on tap — live preview, no revert, footer says Done
+      // Apply on tap — live preview, no revert, footer says Done. Through the
+      // shared switch: a deliberate pick of a DIFFERENT theme is recorded
+      // (telemetry theme_change); re-tapping the current one is not.
       themeBtn.addEventListener('click', () => {
-        // Telemetry: only a deliberate switch counts (spec: theme_change)
-        if (theme.name !== this.currentTheme) {
-          TelemetryService.track('theme_change', { to: theme.name });
-        }
-        ThemeService.setTheme(theme.name);
+        switchTheme(theme.name);
       });
 
       list.appendChild(themeBtn);

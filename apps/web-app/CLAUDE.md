@@ -126,6 +126,7 @@ src/
 │   ├── world-service.ts             # FFXIV worlds + datacenters
 │   ├── share-service.ts             # Share URLs (generate/parse/copy)
 │   ├── telemetry-service.ts         # Opt-in usage telemetry → api-worker POST /v1/telemetry (default off, GPC-aware, no ids)
+│   ├── theme-switch.ts              # Deliberate theme changes (theme modal, Shift+T) — the one path that records theme_change
 │   ├── modal-service.ts             # Modal stack
 │   ├── toast-service.ts             # Toasts
 │   ├── tooltip-service.ts           # Hoverable tooltips

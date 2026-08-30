@@ -9,7 +9,13 @@
  * five coarse dimensions (version, env, locale, theme, viewport bucket).
  *
  * Gating: `advanced.analyticsEnabled` (default OFF) AND not
- * `navigator.globalPrivacyControl`. Turning the toggle off drops the queue.
+ * `navigator.globalPrivacyControl`. Turning the toggle off drops the queue —
+ * in every tab: ConfigController re-reads a config another tab saved
+ * (StorageEvent) and notifies its subscribers, so the switch reaches here.
+ *
+ * The batch envelope (theme, locale, viewport) is read when a batch is sent,
+ * so a `theme_change` flushes whatever is queued first — the events before
+ * the switch go out under the theme they happened in.
  *
  * @module services/telemetry-service
  */
@@ -65,13 +71,16 @@ export class TelemetryService {
     }
   };
   private static readonly onPageHide = (): void => {
-    TelemetryService.endTool();
+    // The only close-out that arms the bfcache restore below.
+    TelemetryService.closeTool(true);
     TelemetryService.flush();
   };
   /**
    * bfcache restore: the page was frozen (pagehide already emitted tool_leave)
    * rather than reloaded, so there is no fresh boot — resume the dwell clock
-   * on the tool that was showing without emitting another tool_view.
+   * on the tool that was showing without emitting another tool_view. The
+   * remembered tool is consumed here (startTool clears it), so a restore can
+   * never re-arm a tool that was closed by a switch or a failed load.
    */
   private static readonly onPageShow = (event: PageTransitionEvent): void => {
     if (event.persisted && !TelemetryService.currentTool && TelemetryService.lastEnded) {
@@ -112,6 +121,9 @@ export class TelemetryService {
   static track(name: TelemetryEventName, props: TelemetryProps, value?: number): void {
     try {
       if (!this.isEnabled()) return;
+      // Callers track a theme switch BEFORE applying it (services/theme-switch.ts):
+      // send the queue now so its envelope still carries the outgoing theme.
+      if (name === 'theme_change') this.flush();
       const event: TelemetryEvent = { n: name, p: props };
       if (value !== undefined) event.d = value;
       this.queue.push(event);
@@ -133,20 +145,31 @@ export class TelemetryService {
   /** Begin timing a tool view. Any tool already being timed is ended first. */
   static startTool(tool: ToolId, entry: ToolEntry): void {
     this.endTool();
+    this.lastEnded = null;
     this.currentTool = { tool, entry };
     this.accumulatedMs = 0;
     this.visibleSince = document.visibilityState === 'visible' ? Date.now() : null;
   }
 
-  /** Emit tool_leave for the tool being timed (no-op when none). */
+  /**
+   * Emit tool_leave for the tool being timed (no-op when none). This is the
+   * tool-switch close-out: it never arms the bfcache restore — only pagehide
+   * does — so a Back/Forward round trip while the next tool is still loading
+   * cannot resurrect the tool that was just left.
+   */
   static endTool(): void {
+    this.closeTool(false);
+  }
+
+  private static closeTool(rememberForRestore: boolean): void {
     const current = this.currentTool;
+    this.lastEnded = null;
     if (!current) return;
     this.pauseClock();
-    const seconds = Math.min(Math.round(this.accumulatedMs / 1000), this.DWELL_CAP_S);
+    const seconds = Math.max(0, Math.min(Math.round(this.accumulatedMs / 1000), this.DWELL_CAP_S));
     this.currentTool = null;
     this.accumulatedMs = 0;
-    this.lastEnded = { tool: current.tool, entry: current.entry };
+    if (rememberForRestore) this.lastEnded = { tool: current.tool, entry: current.entry };
     this.track('tool_leave', { tool: current.tool, entry: current.entry }, seconds);
   }
 
@@ -229,7 +252,8 @@ export class TelemetryService {
 
   private static pauseClock(): void {
     if (this.visibleSince !== null) {
-      this.accumulatedMs += Date.now() - this.visibleSince;
+      // Wall clock: a backwards step (NTP, manual change) must not go negative
+      this.accumulatedMs += Math.max(0, Date.now() - this.visibleSince);
       this.visibleSince = null;
     }
   }

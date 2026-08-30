@@ -2,7 +2,8 @@
  * Telemetry — the Enable Analytics toggle is honoured end-to-end.
  * The api-worker route is intercepted; no worker runs.
  */
-import { test, expect, type Page, type Request } from './fixtures/coverage';
+import type { Request } from '@playwright/test';
+import { test, expect, type Page } from './fixtures/coverage';
 import {
   seedStartupStorage,
   dismissBlockingOverlays,

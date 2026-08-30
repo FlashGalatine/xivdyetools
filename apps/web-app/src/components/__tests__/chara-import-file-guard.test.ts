@@ -124,6 +124,42 @@ describe('CharaImport — telemetry', () => {
     expect(track).toHaveBeenCalledWith('chara_parse', { ok: true, producer: 'anamnesis' });
   });
 
+  it('records a successful parse even when a host callback throws (a host bug is not a parse failure)', async () => {
+    const track = vi.spyOn(TelemetryService, 'track').mockImplementation(() => {});
+    const host = createTestContainer('chara-host-throwing');
+    const throwing = new CharaImport(
+      host,
+      {
+        onSlotPick: vi.fn(),
+        onResolved: () => {
+          throw new Error('host bug');
+        },
+      },
+      {}
+    );
+    throwing.init();
+    try {
+      await (throwing as unknown as LoadFile).loadFile(fileOfSize(10, ANAMNESIS_FIXTURE));
+    } finally {
+      throwing.destroy();
+      cleanupTestContainer(host);
+    }
+    expect(track).toHaveBeenCalledWith('chara_parse', { ok: true, producer: 'anamnesis' });
+    expect(track).not.toHaveBeenCalledWith('chara_parse', expect.objectContaining({ ok: false }));
+  });
+
+  it('does not record a parse when the file cannot be read (stale handle)', async () => {
+    const track = vi.spyOn(TelemetryService, 'track').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(ToastService, 'error').mockImplementation(() => 'toast');
+    const file = fileOfSize(10, '{}');
+    vi.spyOn(file, 'text').mockRejectedValue(new Error('file changed on disk'));
+
+    await (importer as unknown as LoadFile).loadFile(file);
+
+    expect(track).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('does not count a size-refused file as a parse', async () => {
     const track = vi.spyOn(TelemetryService, 'track').mockImplementation(() => {});
     vi.spyOn(ToastService, 'error').mockImplementation(() => 'toast');

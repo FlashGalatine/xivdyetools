@@ -47,6 +47,23 @@ function lastBatch(): {
   return JSON.parse(call[1] as string);
 }
 
+/** Every event sent so far, across all beacons. */
+function allEvents(): Array<{ n: string; p: Record<string, unknown>; d?: number }> {
+  return sendBeacon.mock.calls.flatMap(
+    (call) => (JSON.parse(call[1] as string) as { events: ReturnType<typeof allEvents> }).events
+  );
+}
+
+function pageshowPersisted(): Event {
+  try {
+    return new PageTransitionEvent('pageshow', { persisted: true });
+  } catch {
+    const event = new Event('pageshow');
+    Object.defineProperty(event, 'persisted', { value: true });
+    return event;
+  }
+}
+
 function enable(enabled = true): void {
   mockGetConfig.mockReturnValue({ analyticsEnabled: enabled, performanceMode: false });
   TelemetryService.initialize();
@@ -78,11 +95,10 @@ beforeEach(() => {
 afterEach(() => {
   TelemetryService.reset();
   vi.useRealTimers();
-  vi.restoreAllMocks();
-  // `vi.restoreAllMocks()` only restores spies created via `vi.spyOn` — it
-  // does not clear call history on the plain `vi.fn()` mocks hoisted above
-  // (mockSubscribe et al.), so `vi.clearAllMocks()` is needed too to keep
-  // per-test call-count assertions (e.g. "initialize is idempotent") isolated.
+  // The fetch-fallback test stubs the global; nothing here uses vi.spyOn, so
+  // clearing call history on the hoisted vi.fn() mocks is all the isolation
+  // per-test call-count assertions (e.g. "initialize is idempotent") need.
+  vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
 
@@ -248,6 +264,24 @@ describe('batching and transport', () => {
   });
 });
 
+describe('theme_change', () => {
+  it('sends the queued events first so they go out under the outgoing theme', () => {
+    enable(true);
+    TelemetryService.track('tool_view', { tool: 'harmony', entry: 'nav' });
+    expect(sendBeacon).not.toHaveBeenCalled();
+
+    // services/theme-switch.ts tracks BEFORE ThemeService.setTheme runs
+    TelemetryService.track('theme_change', { to: 'standard-dark' });
+
+    expect(sendBeacon).toHaveBeenCalledTimes(1);
+    expect(lastBatch().events).toEqual([{ n: 'tool_view', p: { tool: 'harmony', entry: 'nav' } }]);
+
+    TelemetryService.flush();
+    expect(sendBeacon).toHaveBeenCalledTimes(2);
+    expect(lastBatch().events).toEqual([{ n: 'theme_change', p: { to: 'standard-dark' } }]);
+  });
+});
+
 describe('helpers', () => {
   it('trackDyePick adds the current tool', () => {
     mockGetCurrentToolId.mockReturnValue('comparison');
@@ -362,6 +396,52 @@ describe('dwell', () => {
     const events = lastBatch().events;
     expect(events).toEqual([{ n: 'tool_leave', p: { tool: 'harmony', entry: 'initial' }, d: 3 }]);
     expect(events.some((e) => e.n === 'tool_view')).toBe(false);
+  });
+
+  it('never records a negative dwell when the wall clock steps backwards', () => {
+    enable(true);
+    TelemetryService.startTool('harmony', 'initial');
+    vi.setSystemTime(Date.now() - 60_000);
+    TelemetryService.endTool();
+    TelemetryService.flush();
+    expect(lastBatch().events).toEqual([
+      { n: 'tool_leave', p: { tool: 'harmony', entry: 'initial' }, d: 0 },
+    ]);
+  });
+
+  it('a tool switch does not arm the bfcache restore', () => {
+    enable(true);
+    TelemetryService.startTool('harmony', 'initial');
+    // loadToolContent('mixer') closes harmony, then awaits mixer's chunk…
+    TelemetryService.endTool();
+    // …and the user goes Back and Forward (bfcache) while it is still loading
+    window.dispatchEvent(new Event('pagehide'));
+    window.dispatchEvent(pageshowPersisted());
+    vi.advanceTimersByTime(5_000);
+    // the pending mixer load completes
+    TelemetryService.startTool('mixer', 'nav');
+    TelemetryService.flush();
+
+    const events = allEvents();
+    expect(events.filter((e) => e.n === 'tool_leave' && e.p.tool === 'harmony')).toEqual([
+      { n: 'tool_leave', p: { tool: 'harmony', entry: 'initial' }, d: 0 },
+    ]);
+    expect(events.some((e) => e.n === 'tool_view')).toBe(false);
+  });
+
+  it('consumes the bfcache restore once', () => {
+    enable(true);
+    TelemetryService.startTool('harmony', 'initial');
+    window.dispatchEvent(new Event('pagehide')); // leave #1, arms the restore
+    window.dispatchEvent(pageshowPersisted()); // resumed harmony
+    TelemetryService.endTool(); // leave #2 — a switch; nothing is armed now
+    window.dispatchEvent(pageshowPersisted()); // must not resurrect harmony
+    vi.advanceTimersByTime(3_000);
+    TelemetryService.startTool('mixer', 'nav');
+    TelemetryService.flush();
+
+    const leaves = allEvents().filter((e) => e.n === 'tool_leave' && e.p.tool === 'harmony');
+    expect(leaves).toHaveLength(2);
   });
 
   it('keeps timing even while disabled so a late opt-in does not emit a stale tool_leave', () => {

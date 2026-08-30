@@ -20,9 +20,6 @@ import type { CharaGearModel, CharaGearSlotId } from '@xivdyetools/core';
 import { logger } from '@shared/logger';
 import { getApiWorkerBase } from './api-worker-origin';
 
-// Re-exported so existing callers/tests keep their import path.
-export { getApiWorkerBase };
-
 export interface CharaItemNames {
   en: string;
   ja: string;

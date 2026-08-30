@@ -17,10 +17,4 @@ describe('getApiWorkerBase', () => {
     const { getApiWorkerBase } = await import('../api-worker-origin');
     expect(getApiWorkerBase()).toBe('http://localhost:8790');
   });
-
-  it('is re-exported from chara-resolve-service for existing callers', async () => {
-    const origin = await import('../api-worker-origin');
-    const chara = await import('../chara-resolve-service');
-    expect(chara.getApiWorkerBase).toBe(origin.getApiWorkerBase);
-  });
 });
