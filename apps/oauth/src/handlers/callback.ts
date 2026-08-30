@@ -218,12 +218,14 @@ callbackRouter.post('/callback', async (c) => {
       );
     }
 
-    // Find or create user in database
+    // Find or create user in database.
+    // FINDING-002 (2026-08-29 security audit): the avatar URL is NOT persisted
+    // — the response below recomputes it from the id + hash, as does /auth/me
+    // and the web app.
     const user = await findOrCreateUser(c.env.DB, {
       discord_id: discordUser.id,
       xivauth_id: null, // Discord login doesn't provide XIVAuth ID
       username: discordUser.global_name || discordUser.username,
-      avatar_url: getAvatarUrl(discordUser.id, discordUser.avatar),
       auth_provider: 'discord',
     });
 

@@ -14,7 +14,7 @@ import type {
   AuthResponse,
 } from '../types.js';
 import { createJWTForUser } from '../services/jwt-service.js';
-import { findOrCreateUser, storeCharacters } from '../services/user-service.js';
+import { findOrCreateUser } from '../services/user-service.js';
 import {
   REQUEST_TIMEOUT_MS,
   USER_INFO_TIMEOUT_MS,
@@ -313,12 +313,16 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     }
 
     // FINDING-013 / OAUTH-8: only a VERIFIED character may become the display
-    // identity (username / global_name — the preset author name downstream).
-    // An unverified registration is still carried as primary_character, flagged
-    // verified:false, so consumers can decide; otherwise the opaque label is
-    // used (XIVAuth does not expose an account name).
+    // identity (username / global_name — the preset author name downstream);
+    // otherwise the opaque label is used (XIVAuth does not expose an account
+    // name).
+    //
+    // FINDING-001 / FINDING-002 (2026-08-29 security audit): the roster is read
+    // in memory to make exactly that choice and is then discarded. Nothing else
+    // about it is stored (no `xivauth_characters` row) or minted (no
+    // `primary_character` claim, no `primary_character` in the response) — an
+    // unverified registration in particular is now dropped entirely.
     const verifiedCharacter = characters.find((ch) => ch.verified) ?? null;
-    const primaryCharacter = verifiedCharacter ?? characters[0] ?? null;
     const displayName = verifiedCharacter?.name ?? null;
     const username = displayName ?? `XIVAuth User ${xivauthUser.id.slice(0, 8)}`;
 
@@ -336,37 +340,15 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
         xivauth_id: xivauthUser.id,
         discord_id: linkedDiscordId,
         username,
-        avatar_url: null, // XIVAuth user endpoint doesn't provide avatar_url
         auth_provider: 'xivauth',
       },
       logger
     );
 
-    // Store characters if present (for future features)
-    if (characters.length > 0) {
-      // Convert XIVAuthCharacterRegistration to the format expected by storeCharacters
-      const characterData = characters.map((ch) => ({
-        id: ch.lodestone_id,
-        name: ch.name,
-        home_world: ch.home_world, // XIVAuth uses home_world
-        verified: ch.verified,
-      }));
-      await storeCharacters(c.env.DB, user.id, characterData);
-    }
-
-    const primaryCharacterClaim = primaryCharacter
-      ? {
-          name: primaryCharacter.name,
-          server: primaryCharacter.home_world, // XIVAuth uses home_world
-          verified: primaryCharacter.verified,
-        }
-      : undefined;
-
     // Create JWT with user info
     const { token, expires_at } = await createJWTForUser(user, c.env, {
       auth_provider: 'xivauth',
       global_name: displayName,
-      primary_character: primaryCharacterClaim,
     });
 
     return c.json<AuthResponse>({
@@ -379,7 +361,6 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
         avatar: null,
         avatar_url: null, // XIVAuth doesn't provide avatar URL
         auth_provider: 'xivauth',
-        primary_character: primaryCharacterClaim,
       },
       expires_at,
     });

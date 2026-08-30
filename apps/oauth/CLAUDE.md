@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Cloudflare Worker that handles OAuth authentication for the XIV Dye Tools ecosystem. Supports two providers — **Discord** (primary, used everywhere) and **XIVAuth** (FFXIV community SSO that adds character verification). Both flows are PKCE-only (no implicit grant, no client_secret in the browser) and issue HS256 JWTs that downstream services (`xivdyetools-presets-api`, `xivdyetools-web-app`) verify with a shared `JWT_SECRET`.
 
-The worker also owns a small D1 database (`xivdyetools-users`) that stores a unified user identity per provider plus a separate table for verified FFXIV characters from XIVAuth. JWT revocation is supported via a KV-backed blacklist with TTL matching token expiry.
+The worker also owns a small D1 database (`xivdyetools-users`) holding exactly one thing: a unified user identity row per provider (the record behind the JWT `sub`). JWT revocation is supported via a KV-backed blacklist with TTL matching token expiry.
 
 ## Commands
 
@@ -90,7 +90,7 @@ Frontend                       OAuth Worker                       Discord
    │ ◄─ { jwt, user, expires_at } ──│                                │
 ```
 
-XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/cb`, plus pulls `/api/v1/characters` and stores them in `xivauth_characters`.
+XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/cb`, plus pulls `/api/v1/characters` to pick the **verified** character whose name becomes `username` / `global_name`. The roster is read in memory and discarded — none of it is stored (FINDING-001, 2026-08-29 audit).
 
 ### Key Directories
 
@@ -109,7 +109,7 @@ src/
 │   └── body-validation.ts            # bodySizeLimit (10KB), jsonDepthLimit
 ├── services/
 │   ├── jwt-service.ts                # HS256 sign/verify via Web Crypto, jti, revocation check
-│   ├── user-service.ts               # findOrCreateUser, storeCharacters (D1 upserts)
+│   ├── user-service.ts               # findOrCreateUser + find-by-id lookups (D1 upserts)
 │   ├── rate-limit.ts                 # In-memory legacy rate limiter (per-isolate)
 │   └── rate-limit-do.ts              # Durable Object rate limiter (persistent, distributed)
 ├── durable-objects/
@@ -126,7 +126,7 @@ src/
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `DB` | D1 (`xivdyetools-users`) | Users + XIVAuth characters |
+| `DB` | D1 (`xivdyetools-users`) | User identity rows (one table) |
 | `TOKEN_BLACKLIST` | KV Namespace | Revoked JWT IDs (TTL matches token expiry) |
 | `RATE_LIMITER` | Durable Object Namespace (optional) | Persistent per-IP rate limit when `USE_DO_RATE_LIMITING = "true"` |
 
@@ -152,10 +152,11 @@ Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID`, `FRONTEND_URL`, `
 
 | Table | Purpose |
 |-------|---------|
-| `users` | Unified identity row; `discord_id` and `xivauth_id` are nullable but at least one must be set (CHECK constraint). `auth_provider` records the most-recent login source. |
-| `xivauth_characters` | FFXIV characters fetched from XIVAuth (Lodestone ID, name, server, verified flag); composite PK `(user_id, lodestone_id)`. |
+| `users` | The only table. Unified identity row — `id`, `discord_id`, `xivauth_id`, `auth_provider`, `username`, timestamps. `discord_id` and `xivauth_id` are nullable but at least one must be set (CHECK constraint); `auth_provider` records the most-recent login source. |
 
 Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uniqueness while still allowing rows with only one ID set.
+
+**Removed in 3.0.0** (`docs/audits/2026-08-29-security`): the `xivauth_characters` roster table (FINDING-001) and the `users.avatar_url` column (FINDING-002). Neither had a reader — the roster was written "for future features" that never arrived, and every response recomputes the avatar URL from the Discord id + `avatar` hash. `schema/users.sql` already reflects this; an existing database is brought into line by `migrations/0001_drop_xivauth_characters.sql`, which is **hand-run after** the deploy that stops writing (see its header — `wrangler d1 execute … --file=`, never `d1 migrations apply`; this database keeps no `d1_migrations` table).
 
 ## API Endpoints
 
@@ -186,7 +187,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 ### JWT Service
 
 - HS256 via Web Crypto (`crypto.subtle.sign('HMAC', ...)`).
-- Includes `sub`, `iat`, `exp`, `iss`, `username`, `global_name`, `avatar`, and a per-token `jti` for revocation.
+- Mints exactly `sub`, `iat`, `exp`, `iss`, `jti`, `username`, `global_name`, `avatar`, `auth_provider` and `discord_id` — what the clients read, and nothing else (FINDING-002). `orig_iat` (its only reader, `/auth/refresh`, is gone), `xivauth_id` (never had one) and `primary_character` (an FFXIV character name + home world the web app copies and never renders, unverified registrations included) are no longer minted. All three are optional in `@xivdyetools/types`.
 - `verifyJWT` rejects non-HS256 algorithms, validates signature, and checks `exp`.
 - `verifyJWTWithRevocationCheck` additionally queries `TOKEN_BLACKLIST` for the `jti`.
 - `revokeToken` writes the `jti` with TTL = remaining lifetime + `REFRESH_GRACE_SECONDS` so it auto-expires (FINDING-001).

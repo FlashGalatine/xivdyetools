@@ -11,7 +11,7 @@
  * were deleted; revocation helpers moved into the shared package.
  */
 
-import type { JWTPayload, Env, UserRow, AuthProvider, PrimaryCharacter } from '../types.js';
+import type { JWTPayload, Env, UserRow, AuthProvider } from '../types.js';
 import {
   base64UrlEncode as base64UrlEncodeString,
   base64UrlEncodeBytes,
@@ -95,13 +95,22 @@ export async function signPayload(
  */
 export interface CreateJWTForUserOptions {
   auth_provider?: AuthProvider;
-  primary_character?: PrimaryCharacter;
   global_name?: string | null;
   avatar?: string | null;
 }
 
 /**
- * Create a JWT for a database user (supports both Discord and XIVAuth)
+ * Create a JWT for a database user (supports both Discord and XIVAuth).
+ *
+ * FINDING-002 (2026-08-29 security audit): mints only the claims a consumer
+ * actually reads. `orig_iat` anchored the refresh chain and lost its only
+ * reader when `/auth/refresh` went (FINDING-003); `xivauth_id` never had one;
+ * `primary_character` carried an FFXIV character name and home world — an
+ * *unverified* registration included — that the web app copies into `AuthUser`
+ * and never renders. presets-api reads `sub` / `discord_id` / `username` /
+ * `global_name`; the web app additionally reads `avatar` and `auth_provider`.
+ * All three removed claims are declared optional on `JWTPayload` in
+ * `@xivdyetools/types`, so nothing type-breaks by omitting them.
  */
 export async function createJWTForUser(
   user: UserRow,
@@ -123,10 +132,6 @@ export async function createJWTForUser(
     iss: env.WORKER_URL,
     jti,
 
-    // BUG-021: anchor for the absolute session lifetime — refreshes carry
-    // this forward unchanged so a chain can't outlive the maximum session age
-    orig_iat: now,
-
     // User info
     username: user.username,
     global_name: options?.global_name ?? null,
@@ -135,10 +140,6 @@ export async function createJWTForUser(
     // Multi-provider support
     auth_provider: options?.auth_provider ?? (user.auth_provider as AuthProvider),
     discord_id: user.discord_id ?? undefined,
-    xivauth_id: user.xivauth_id ?? undefined,
-
-    // XIVAuth-specific
-    primary_character: options?.primary_character,
   };
 
   const { token, expires_at } = await signPayload(payload, env.JWT_SECRET);

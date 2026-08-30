@@ -1,6 +1,10 @@
 /**
  * User Service Tests
- * Tests for user database operations: findOrCreate, find by ID, store/get characters
+ * Tests for user database operations: findOrCreate, find by ID / provider ID
+ *
+ * FINDING-001 (2026-08-29 security audit): the `storeCharacters` /
+ * `getCharacters` suites went with the functions and the `xivauth_characters`
+ * table — the roster is no longer persisted anywhere.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -9,10 +13,8 @@ import {
     findUserById,
     findUserByDiscordId,
     findUserByXIVAuthId,
-    storeCharacters,
-    getCharacters,
 } from '../services/user-service.js';
-import type { UserRow, XIVAuthCharacter } from '../types.js';
+import type { UserRow } from '../types.js';
 
 /**
  * Creates a mock D1Database for testing user service operations
@@ -20,7 +22,6 @@ import type { UserRow, XIVAuthCharacter } from '../types.js';
  */
 const createTestDB = () => {
     const users = new Map<string, UserRow>();
-    const characters = new Map<string, XIVAuthCharacter[]>();
 
     const createStatement = (sql: string) => {
         let boundParams: unknown[] = [];
@@ -61,8 +62,8 @@ const createTestDB = () => {
             run: async () => {
                 // INSERT new user
                 if (sql.includes('INSERT INTO users')) {
-                    const [id, discord_id, xivauth_id, auth_provider, username, avatar_url] =
-                        boundParams as [string, string | null, string | null, string, string, string | null];
+                    const [id, discord_id, xivauth_id, auth_provider, username] =
+                        boundParams as [string, string | null, string | null, string, string];
                     const now = new Date().toISOString();
                     users.set(id, {
                         id,
@@ -70,7 +71,6 @@ const createTestDB = () => {
                         xivauth_id,
                         auth_provider,
                         username,
-                        avatar_url,
                         created_at: now,
                         updated_at: now,
                     });
@@ -97,46 +97,9 @@ const createTestDB = () => {
                     }
                     return { success: true, meta: {} };
                 }
-                // DELETE characters
-                if (sql.includes('DELETE FROM xivauth_characters')) {
-                    const userId = boundParams[0] as string;
-                    characters.delete(userId);
-                    return { success: true, meta: {} };
-                }
-                // INSERT character
-                if (sql.includes('INSERT INTO xivauth_characters')) {
-                    const [userId, lodestone_id, name, server, verified] = boundParams as [
-                        string,
-                        number,
-                        string,
-                        string,
-                        number
-                    ];
-                    const userChars = characters.get(userId) || [];
-                    userChars.push({
-                        id: lodestone_id,
-                        name,
-                        home_world: server,
-                        verified: verified === 1,
-                    });
-                    characters.set(userId, userChars);
-                    return { success: true, meta: {} };
-                }
                 return { success: true, meta: {} };
             },
             all: async <T>(): Promise<D1Result<T>> => {
-                // SELECT characters for user
-                if (sql.includes('SELECT') && sql.includes('xivauth_characters')) {
-                    const userId = boundParams[0] as string;
-                    const userChars = characters.get(userId) || [];
-                    const results = userChars.map((c) => ({
-                        lodestone_id: c.id,
-                        name: c.name,
-                        server: c.home_world,
-                        verified: c.verified ? 1 : 0,
-                    }));
-                    return { results: results as T[], success: true, meta: {} as D1Meta & Record<string, unknown> };
-                }
                 return { results: [] as T[], success: true, meta: {} as D1Meta & Record<string, unknown> };
             },
         };
@@ -145,8 +108,6 @@ const createTestDB = () => {
 
     return {
         _users: users,
-        _characters: characters,
-        // OPT-003: storeCharacters now uses db.batch — execute each statement
         batch: async (stmts: { run: () => Promise<unknown> }[]) => {
             const results = [];
             for (const stmt of stmts) {
@@ -159,7 +120,6 @@ const createTestDB = () => {
         dump: async () => new ArrayBuffer(0),
     } as unknown as D1Database & {
         _users: Map<string, UserRow>;
-        _characters: Map<string, XIVAuthCharacter[]>;
     };
 };
 
@@ -175,7 +135,6 @@ describe('User Service', () => {
             const user = await findOrCreateUser(db, {
                 discord_id: '123456789',
                 username: 'testuser',
-                avatar_url: 'https://cdn.discordapp.com/avatars/123/abc.png',
                 auth_provider: 'discord',
             });
 
@@ -228,7 +187,6 @@ describe('User Service', () => {
             const discordUser = await findOrCreateUser(db, {
                 discord_id: '111222333',
                 username: 'discorduser',
-                avatar_url: 'https://cdn.discordapp.com/avatars/111/def.png',
                 auth_provider: 'discord',
             });
 
@@ -251,11 +209,9 @@ describe('User Service', () => {
             const user = await findOrCreateUser(db, {
                 discord_id: '555666777',
                 username: 'user',
-                avatar_url: null,
                 auth_provider: 'discord',
             });
 
-            expect(user.avatar_url).toBeNull();
             expect(user.xivauth_id).toBeNull();
         });
 
@@ -470,99 +426,6 @@ describe('User Service', () => {
         });
     });
 
-    describe('storeCharacters', () => {
-        it('should store characters for a user', async () => {
-            const user = await findOrCreateUser(db, {
-                xivauth_id: 'user-with-chars',
-                username: 'charuser',
-                auth_provider: 'xivauth',
-            });
-
-            const characters: XIVAuthCharacter[] = [
-                { id: 12345678, name: 'Main Character', home_world: 'Excalibur', verified: true },
-                { id: 87654321, name: 'Alt Character', home_world: 'Balmung', verified: false },
-            ];
-
-            await storeCharacters(db, user.id, characters);
-
-            // Verify characters were stored
-            const stored = await getCharacters(db, user.id);
-            expect(stored).toHaveLength(2);
-            expect(stored[0].name).toBe('Main Character');
-            expect(stored[1].name).toBe('Alt Character');
-        });
-
-        it('should replace existing characters', async () => {
-            const user = await findOrCreateUser(db, {
-                xivauth_id: 'user-replace-chars',
-                username: 'replaceuser',
-                auth_provider: 'xivauth',
-            });
-
-            // Store initial characters
-            await storeCharacters(db, user.id, [
-                { id: 11111111, name: 'Old Character', home_world: 'Gilgamesh', verified: true },
-            ]);
-
-            // Store new characters (should replace)
-            await storeCharacters(db, user.id, [
-                { id: 22222222, name: 'New Character', home_world: 'Cactuar', verified: false },
-            ]);
-
-            const stored = await getCharacters(db, user.id);
-            expect(stored).toHaveLength(1);
-            expect(stored[0].name).toBe('New Character');
-        });
-
-        it('should handle empty character array', async () => {
-            const user = await findOrCreateUser(db, {
-                xivauth_id: 'user-no-chars',
-                username: 'nochars',
-                auth_provider: 'xivauth',
-            });
-
-            await storeCharacters(db, user.id, []);
-
-            const stored = await getCharacters(db, user.id);
-            expect(stored).toHaveLength(0);
-        });
-    });
-
-    describe('getCharacters', () => {
-        it('should return empty array for user with no characters', async () => {
-            const user = await findOrCreateUser(db, {
-                discord_id: 'discord-no-chars',
-                username: 'nocharuser',
-                auth_provider: 'discord',
-            });
-
-            const chars = await getCharacters(db, user.id);
-
-            expect(chars).toEqual([]);
-        });
-
-        it('should return characters with correct structure', async () => {
-            const user = await findOrCreateUser(db, {
-                xivauth_id: 'user-structured-chars',
-                username: 'structuser',
-                auth_provider: 'xivauth',
-            });
-
-            await storeCharacters(db, user.id, [
-                { id: 99999999, name: 'Test Character', home_world: 'Tonberry', verified: true },
-            ]);
-
-            const chars = await getCharacters(db, user.id);
-
-            expect(chars).toHaveLength(1);
-            expect(chars[0]).toMatchObject({
-                id: 99999999,
-                name: 'Test Character',
-                home_world: 'Tonberry',
-                verified: true,
-            });
-        });
-    });
 });
 
 /**
@@ -584,7 +447,6 @@ describe('User Service - Error Handling', () => {
                                 xivauth_id: null,
                                 auth_provider: 'discord',
                                 username: 'test',
-                                avatar_url: null,
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString(),
                             };
@@ -638,7 +500,6 @@ describe('User Service - Race Condition Handling', () => {
                                 xivauth_id: 'race-xivauth-id',
                                 auth_provider: 'xivauth',
                                 username: 'race-user',
-                                avatar_url: null,
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString(),
                             };
@@ -651,7 +512,6 @@ describe('User Service - Race Condition Handling', () => {
                                 xivauth_id: 'race-xivauth-id',
                                 auth_provider: 'xivauth',
                                 username: 'updated-name',
-                                avatar_url: null,
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString(),
                             };
@@ -707,7 +567,6 @@ describe('User Service - Race Condition Handling', () => {
                                 xivauth_id: null,
                                 auth_provider: 'discord',
                                 username: 'race-user',
-                                avatar_url: null,
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString(),
                             };
@@ -720,7 +579,6 @@ describe('User Service - Race Condition Handling', () => {
                                 xivauth_id: null,
                                 auth_provider: 'discord',
                                 username: 'updated-name',
-                                avatar_url: null,
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString(),
                             };

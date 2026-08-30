@@ -65,7 +65,6 @@ Content-Type: application/json
     "exp": 1702688400,
     "iss": "https://auth.xivdyetools.app",
     "jti": "token-uuid",
-    "orig_iat": 1702684800,
     "username": "username",
     "global_name": "Display Name",
     "avatar": "avatar_hash",

@@ -52,18 +52,25 @@ All tokens use HMAC-SHA256 signing.
 
 | Claim | Type | Description |
 |-------|------|-------------|
-| `discord_id` | string? | Discord user ID (snowflake) |
-| `xivauth_id` | string? | XIVAuth user ID |
-| `primary_character` | object? | XIVAuth character info |
+| `discord_id` | string? | Discord user ID (snowflake) — present whenever the account has one, including an XIVAuth login with a verified Discord social link |
 
-**Primary character object** (XIVAuth only):
-```json
-{
-  "name": "Character Name",
-  "server": "Adamantoise",
-  "verified": true
-}
-```
+That is the complete claim set. `presets-api` reads `sub` / `discord_id` / `username` /
+`global_name`; the web app additionally reads `avatar` and `auth_provider`.
+
+### Claims removed in 3.0.0
+
+FINDING-002 (`docs/audits/2026-08-29-security`) — data minimisation. `@xivdyetools/types`
+still declares all three as **optional**, so nothing type-breaks; they are simply never minted.
+
+| Claim | Why it went |
+|-------|-------------|
+| `orig_iat` | Anchored the absolute session age for refresh chains. Its only reader was `POST /auth/refresh`, removed in the same release (FINDING-003). |
+| `xivauth_id` | Never had a consumer. The `users.xivauth_id` **column** stays — it is the XIVAuth lookup key. |
+| `primary_character` | Carried an FFXIV character name, home world and verified flag — *including an unverified registration*, which the sign-in copy explicitly denies collecting. The web app copies it into `AuthUser` and never renders it. |
+
+A verified character's name still reaches consumers, as `username` / `global_name` — that
+is the display identity (FINDING-013), and it is the only part of the roster that leaves
+the worker.
 
 ### Example Payload (Discord)
 

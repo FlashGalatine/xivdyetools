@@ -25,6 +25,28 @@ export const createMockKV = sharedCreateMockKV;
 // In-memory user store for D1 mock
 const userStore = new Map<string, UserRow>();
 
+/**
+ * One executed D1 statement, as the worker issued it.
+ *
+ * The 2026-08-29 audit (FINDING-001 / FINDING-002) turns "what does a login
+ * write?" into an assertion, so the mock records every statement it executes
+ * instead of quietly swallowing the ones the test does not model.
+ */
+export interface RecordedStatement {
+    sql: string;
+    params: unknown[];
+}
+
+const statementLog: RecordedStatement[] = [];
+
+/** Every statement executed since the last reset, in order. */
+export const recordedStatements: RecordedStatement[] = statementLog;
+
+/** Clear the statement log — call from `beforeEach` in suites that assert on it. */
+export const resetRecordedStatements = (): void => {
+    statementLog.length = 0;
+};
+
 // Mock D1Database for user management tests
 export const createMockDB = (): D1Database & { _users: Map<string, UserRow> } => {
     const users = userStore;
@@ -33,12 +55,17 @@ export const createMockDB = (): D1Database & { _users: Map<string, UserRow> } =>
     const createStatement = (sql: string) => {
         let boundParams: unknown[] = [];
 
+        const record = (): void => {
+            statementLog.push({ sql, params: [...boundParams] });
+        };
+
         const statement = {
             bind: (...params: unknown[]) => {
                 boundParams = params;
                 return statement;
             },
             first: async <T>(): Promise<T | null> => {
+                record();
                 // Handle SELECT queries
                 if (sql.includes('SELECT') && sql.includes('discord_id = ?')) {
                     const discordId = boundParams[0] as string;
@@ -65,10 +92,11 @@ export const createMockDB = (): D1Database & { _users: Map<string, UserRow> } =>
                 return null;
             },
             run: async () => {
+                record();
                 // Handle INSERT for new users
                 if (sql.includes('INSERT INTO users')) {
-                    const [id, discord_id, xivauth_id, auth_provider, username, avatar_url] =
-                        boundParams as [string, string | null, string | null, string, string, string | null];
+                    const [id, discord_id, xivauth_id, auth_provider, username] =
+                        boundParams as [string, string | null, string | null, string, string];
                     const now = new Date().toISOString();
                     users.set(id, {
                         id,
@@ -76,7 +104,6 @@ export const createMockDB = (): D1Database & { _users: Map<string, UserRow> } =>
                         xivauth_id,
                         auth_provider,
                         username,
-                        avatar_url,
                         created_at: now,
                         updated_at: now,
                     });
@@ -91,18 +118,13 @@ export const createMockDB = (): D1Database & { _users: Map<string, UserRow> } =>
                     }
                     return { success: true, meta: {} };
                 }
-                // Handle DELETE for characters (no-op for now)
-                if (sql.includes('DELETE FROM xivauth_characters')) {
-                    return { success: true, meta: {} };
-                }
-                // Handle INSERT for characters (no-op for now)
-                if (sql.includes('INSERT INTO xivauth_characters')) {
-                    return { success: true, meta: {} };
-                }
+                // FINDING-001: the xivauth_characters special cases are gone
+                // with the table. Any statement this mock does not model is
+                // still recorded above, so a suite can assert on it.
                 return { success: true, meta: {} };
             },
             all: async <T>(): Promise<D1Result<T>> => {
-                // Handle character queries (return empty for now)
+                record();
                 return { results: [] as T[], success: true, meta: {} as D1Meta & Record<string, unknown> };
             },
         };
@@ -113,7 +135,15 @@ export const createMockDB = (): D1Database & { _users: Map<string, UserRow> } =>
         _users: users,
         prepare: (sql: string) => createStatement(sql),
         exec: async () => ({ count: 0, duration: 0 }),
-        batch: async () => [],
+        // Execute (and therefore record) the batched statements rather than
+        // dropping them — a batch is how a handler would write bulk rows.
+        batch: async (stmts: { run: () => Promise<unknown> }[]) => {
+            const results = [];
+            for (const stmt of stmts) {
+                results.push(await stmt.run());
+            }
+            return results;
+        },
         dump: async () => new ArrayBuffer(0),
     } as unknown as D1Database & { _users: Map<string, UserRow> };
 };

@@ -110,21 +110,18 @@ XIVAuth redirect handler. Same behavior as `/auth/callback` with `provider=xivau
 
 ### POST /auth/xivauth/callback
 
-XIVAuth token exchange. Same request format as `POST /auth/callback`.
+XIVAuth token exchange. Same request format and same response shape as `POST /auth/callback`,
+with `auth_provider: "xivauth"` and `avatar` / `avatar_url` always `null` (XIVAuth exposes no
+avatar).
 
-**Additional response data:**
-```json
-{
-  "user": {
-    "auth_provider": "xivauth",
-    "primary_character": {
-      "name": "<character_name>",
-      "server": "<world_name>",
-      "verified": true
-    }
-  }
-}
-```
+The `character` scope is used to find the caller's **verified** character, whose name becomes
+`username` and `global_name`. The rest of the roster is read in memory and discarded.
+
+**`primary_character` was removed in 3.0.0** — from the response body and from the JWT
+(FINDING-001 / FINDING-002, `docs/audits/2026-08-29-security`). It carried a character name,
+home world and verified flag, *including for an unverified registration*, that no consumer
+renders; the matching `xivauth_characters` table is gone too. A verified character's name still
+reaches consumers as `username` / `global_name`.
 
 **Additional validation:** Requires `user` and `character` scopes.
 
