@@ -111,7 +111,7 @@ No finding leaked a secret; nothing else needs rotation.
 |---|---|---|
 | FINDING-004 | FIXED 2026-08-30 (Sprint 1, presets-api 2.2.0) | bd3cc35d, b207c4f9, 1e80ebff |
 | FINDING-005 | FIXED 2026-08-30 — needs hand-run migration `0012` | e10d740e, 1e80ebff |
-| FINDING-006 | PARTIAL — code half fixed; web PRIVACY.md wording → Sprint 6 | e10d740e |
+| FINDING-006 | FIXED 2026-08-30 (both halves: doNotStore + the guide names Perspective) | e10d740e, 114f6dde |
 | FINDING-016 | FIXED 2026-08-30 | 896f3f7e |
 | FINDING-017 | FIXED 2026-08-30 | 780cf992, 9eb84a4c |
 | FINDING-015 | PARTIAL — presets-api requires v2 + nonce replay check; neither bot sends v1; `@xivdyetools/auth` v1 export → Sprint 11 | 01ea3dec, 1a0cf89f, b5d4c53b |
@@ -122,7 +122,7 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-003 | FIXED 2026-08-30 (Sprint 2, oauth 3.0.0) — `/auth/refresh` removed | 50c283b9 |
 | FINDING-022 | FIXED 2026-08-30 — `no-store` on every dispatched response | 50c283b9 |
 | FINDING-001 | CODE FIXED 2026-08-30 — OPEN until migration `0001` is hand-run after the 3.0.0 deploy | cdd53fbf |
-| FINDING-002 | PARTIAL — code half fixed (claims trimmed, `avatar_url` dropped); disclosure + deletion route → Sprint 6 | cdd53fbf |
+| FINDING-002 | FIXED 2026-08-30 (claims trimmed; sign-in record disclosed + deletion route; dead readers gone — types field → Sprint 11) | cdd53fbf, 114f6dde |
 | FINDING-012 | PARTIAL — oauth + moderation-worker `backendError` logged; worker-kit anchor → Sprint 9 | b14cade9, b5d4c53b |
 | FINDING-007 | FIXED 2026-08-30 (Sprint 3, discord-worker 5.1.0) — needs the post-deploy Upstash secret deletion | 6c14889f, d28f76a4, f5d5f596, 4d734c8c, fe86a881 |
 | FINDING-008 | FIXED 2026-08-30 | 2041ac39, 886d46a1, f5d5f596, 1a0cf89f |
@@ -131,7 +131,10 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-021 | FIXED 2026-08-30 | fb3d4120, 6014be93 |
 | FINDING-018 | FIXED 2026-08-30 (Sprint 4, moderation-worker 1.6.0) — needs hand-run migration `0013` BEFORE the merge | dfb49aa1, 034badcd |
 | FINDING-014 | FIXED 2026-08-30 (Sprint 5, api-worker 0.10.0) | ca909247 |
-| FINDING-009, 024–031 | OPEN — Sprints 6–13 | — |
+| FINDING-009 | FIXED 2026-08-30 (Sprint 6, web-app: images session-only, stored blobs purged, e2e guard inverted) | 73fbf59f, c84d4263 |
+| FINDING-026 | FIXED 2026-08-30 | 2ffe6d13 |
+| FINDING-027 | FIXED 2026-08-30 | 2ffe6d13 |
+| FINDING-024, 025, 028–031 | OPEN — Sprints 7–13 (030 = the Sprint 0 token check) | — |
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.

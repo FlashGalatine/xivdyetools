@@ -111,7 +111,7 @@ Anchor: FINDING-014. The datapoint schema is a positive control — do not touch
 
 **Deploy needs:** nothing hand-run. After the deploy, run the telemetry sanity query (`docs/operations/ANALYTICS_QUERIES.md`) once — a silent zero after a web-app host change means the Origin allowlist needs the new host (drops are debug-only and Workers Logs are off). Rulings: unaccepted origins answer 204-and-drop, never 4xx (the plan row said 403 — overridden per the audit's own evidence); env derives from the Origin, with localhost + validated body env only on non-production workers; GPC checked before Origin. **Follow-ups routed:** Sprint 9 — worker-kit rate-limit middleware logs the bucket key (= client IP here) at warn on backend errors; the "default flip" item there is a no-op (already `false`). Unscheduled polish: a duplicated `Sec-GPC` header (`1, 1`) is treated as absent (conforming browsers never send one; the drop errs open only for a hand-crafted sender); local-dev rows in the dev dataset can carry `blob9 = production` (body-sourced; pre-existing).
 
-## Sprint 6 — web-app: keep the privacy guide true (P2)
+## Sprint 6 — web-app: keep the privacy guide true (P2) ✅ COMPLETED 2026-08-30 (commits `73fbf59f..114f6dde`, 4 commits; three reviewed tasks + whole-branch review; no version cut — entries under `[Unreleased]` for the pending 5.0 launch)
 Anchor: FINDING-009. Also carries the documentation halves of 002 and 006 because `apps/web-app/PRIVACY.md` is this unit's file. Six-locale copy change → i18n parity/order gates.
 
 | ID | Source | Sev / Exposure | Item |
@@ -122,7 +122,9 @@ Anchor: FINDING-009. Also carries the documentation halves of 002 and 006 becaus
 | FINDING-002 (part) | security | MED / INTERNET-AUTH | `locales/*.json` sign-in copy (`en.json:1072`): say what is actually stored/minted; `PRIVACY.md` "Community presets": sign-in record + deletion route (or the lazy-row behaviour from S2). |
 | FINDING-006 (part) | security | MED / INTERNET-AUTH | `PRIVACY.md` "Network access": Google Perspective receives preset name + description for moderation, not stored (`doNotStore`). |
 
-**Ends with:** `pnpm --filter xivdyetools-web-app run lint && test && type-check && build:check` (+ `i18n:parity`) → merge to `main` → `deploy-web-app.yml` (beta via `deploy-web-app-beta.yml` on the branch first).
+**Ends with:** `pnpm --filter xivdyetools-web-app run lint && test && type-check && build:check` (+ `validate:i18n` — the real script name; it is manual, not in CI) → merge to `main` → `deploy-web-app.yml` (beta via `deploy-web-app-beta.yml` on the branch first).
+
+**Deploy needs:** nothing hand-run. After the Pages deploy: `curl -I https://xivdyetools.app/assets/does-not-exist.js` once — expect 404 with `Cache-Control: no-store` (confirms Pages does not overlay the `/assets/*` immutable header onto the Function's own response; the middleware guard was built on the read that `_headers` binds only static-asset responses). Returning visitors' stored extractor images are purged by the IndexedDB v3 upgrade on their first visit (an old tab holding the v2 connection defers it until closed). Rulings: image persistence removed rather than made opt-in (S6-R1); sign-in copy states the account record in all six locales; Perspective disclosed with an honest "may be sent" hedge (the API key is optional); deletion route points at the existing contact section — no automated deletion invented. **Follow-ups routed:** Sprint 11 — `@xivdyetools/types` drops `primary_character` (`AuthUser` + `JWTPayload`); unscheduled polish — `handleDroppedFile` still carries the full data URL in an event no listener consumes.
 
 ## Sprint 7 — og-worker: bounded renders (P2)
 | ID | Source | Sev / Exposure | Item |

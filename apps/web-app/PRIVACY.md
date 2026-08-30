@@ -39,7 +39,7 @@ site-data controls clear it.
 ## Network access
 
 The app talks only to these first-party hosts (the site's Content-Security-Policy allows nothing
-else) plus the two third parties named below:
+else) plus the third parties named below:
 
 1. **Market-board prices** (optional — the "Show Prices" toggle): item ids and the world or data
    centre you chose go to our proxy at `data.xivdyetools.app`, which fetches from

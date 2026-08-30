@@ -13,4 +13,4 @@
 - Remove both hints; drop `universalis.app` from the production `connect-src` (dev can keep a separate header set); tighten the header test to reject it.
 
 ## Status
-OPEN
+FIXED 2026-08-30 2ffe6d13 (web-app: both universalis.app link hints removed from index.html — no page load opens a third-party connection any more; `connect-src` in `public/_headers` drops universalis.app and the security-headers test's host regex now admits only xivdyetools.app origins, plus an index.html no-hint assertion; the About-modal attribution link and the user-clicked market link stay — they are navigation, not background connections.)

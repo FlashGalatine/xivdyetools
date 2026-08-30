@@ -13,4 +13,4 @@
 - Drop the persistence, or make it an explicit opt-in ("remember last image"), clear it on Reset settings / logout / "clear image", and document it in the on-device list.
 
 ## Status
-OPEN
+FIXED 2026-08-30 73fbf59f (web-app: the IndexedDB image persistence is gone — images live only in component memory for the session; `DB_VERSION` 2→3 deletes the `image_cache` store on the next visit (one-time purge of blobs stored by earlier visits; an old tab holding the v2 connection defers it until closed) and `mount()` idempotently removes the legacy `v3_matcher_image` localStorage key; PRIVACY.md's images bullet is now literally true and the on-device inventory names IndexedDB's one real content — the market-price cache. Ruling S6-R1: removal over an opt-in.)

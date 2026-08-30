@@ -2,12 +2,13 @@
 
 ---
 
-## Unreleased — Translation fixes across every tool
+## Unreleased — Translation fixes and a privacy improvement
 
 - **If you use the app in Japanese, German, French, Korean, or Chinese, a lot of leftover English just went away.** The dye category headings in the color palette drawer (Whites, Reds, Blues, and so on) were silently stuck in English for every language due to a bug — they now show in your language. The whole Community Presets flow — editing a preset, submitting one, error messages, vote buttons — is now fully translated instead of switching back to English partway through.
 - Screens that used to freeze on the old language after you switched (some result cards and panels) now update immediately.
 - Gil amounts, dates, and numbers now format the way your language expects, and imported palette names read naturally in your language instead of always saying "(imported 2)" in English.
 - Chinese and Korean readers should also notice Chinese/Korean characters rendering in the correct regional style instead of borrowing Japanese letterforms when both fonts are installed.
+- **The Palette Extractor no longer remembers your last image between visits.** Uploaded, pasted, dragged-in or camera-captured images now stay only in your current tab and are gone on reload — nothing is written to disk any more. If an earlier visit saved one, the app wipes it the next time you open it.
 
 ---
 

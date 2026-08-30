@@ -13,4 +13,4 @@
 - In `_middleware.ts`: for `/assets/*`, return 404 `no-store` when the upstream response is `text/html`; or scope the immutable rule to the hashed filename pattern.
 
 ## Status
-OPEN
+FIXED 2026-08-30 2ffe6d13 (web-app: `functions/_middleware.ts` now answers 404 `Cache-Control: no-store` when a `/assets/*` request would be served `text/html` (the SPA catch-all), so a stale or pruned hashed URL can never be cached as a script under the `/assets/*` immutable rule; the legacy-domain 301 keeps precedence; `/og/*` and `/fonts/*` provably unaffected; unit-tested via `src/__tests__/pages-middleware.test.ts`, which also pulls the middleware into the tsc program for the first time.)
