@@ -1580,7 +1580,7 @@ export class CharaImport {
         submitBtn.addEventListener('click', () => {
           this.callbacks.onSubmitPalette?.(
             kept.map((w) => w.dye),
-            this.paletteName()
+            this.communityPaletteName()
           );
         });
       }
@@ -1591,13 +1591,31 @@ export class CharaImport {
     return panel;
   }
 
-  private paletteName(): string {
-    // Deliberately does NOT fall back to the character's nickname or the
-    // attachment filename — this name can reach `onSubmitPalette`, which
-    // opens the community preset submission form (see the sibling comment
-    // on the name input above).
+  /**
+   * The name handed to `onSubmitPalette` (the community preset submission
+   * form): the typed draft only. Deliberately NOT the character's nickname
+   * or the attachment filename — players use their real name in both — and
+   * not a generic default either, which would satisfy the form's own
+   * minimum length unedited. Empty means the user still has to type one;
+   * the form enforces that.
+   */
+  private communityPaletteName(): string {
+    return (this.paletteNameDraft ?? '').trim().slice(0, 50);
+  }
+
+  /**
+   * The name for the on-device `kind: 'palette'` record: the draft, else the
+   * same local-only fallback `saveCharacterRecord` uses (nickname → file name
+   * → localized default). It stays in this browser's storage like the
+   * character record; the community path above never reads it.
+   */
+  private localPaletteName(): string {
     const draft = (this.paletteNameDraft ?? '').trim();
-    return (draft || LanguageService.t('swatch.paletteDefaultName')).slice(0, 50);
+    const fallback =
+      this.resolved?.nickname ||
+      this.fileName?.replace(/\.chara$/i, '') ||
+      this.t('paletteDefaultName');
+    return (draft || fallback).slice(0, 50);
   }
 
   /**
@@ -1605,7 +1623,7 @@ export class CharaImport {
    * CollectionService store (the 10A glamour export's sibling record).
    */
   private saveLocalPalette(kept: Array<{ stainId: number; dye: Dye }>): void {
-    const base = this.paletteName();
+    const base = this.localPaletteName();
     let name = base;
     let suffix = 1;
     while (CollectionService.getCollectionByName(name)) {
