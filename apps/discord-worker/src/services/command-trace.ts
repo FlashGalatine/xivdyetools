@@ -9,21 +9,36 @@
  * each handler a traced ExecutionContext whose `waitUntil` also records the
  * promise here; `finishCommandTrace` drains those promises first, so latency
  * and outcome describe the real work. Handlers never finish a trace — they
- * only `markCommandOutcome` in a catch that ends the command with an error.
+ * only `markCommandOutcome` where a command ends with an error embed; the
+ * dispatcher marks its own two failure paths the same way, so the trace has
+ * exactly one writer (`markCommandOutcome`) and one finisher.
  *
  * Privacy: the trace carries the command identity, the pseudonymous user id,
  * the guild/dm context, a locale bucket and an outcome CLASS. Never an option
- * value, hex, search text, world, image name, guild/channel id or message.
+ * value, hex, search text, world, image name, guild/channel id or message
+ * (the full list lives on `CommandEvent` in analytics.ts, the only place a
+ * value can actually be written).
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { DiscordInteraction, Env } from '../types/env.js';
 import { UniversalisError } from '../types/budget.js';
 import { PresetAPIError } from '../types/preset.js';
+import { OptionType } from '../commands/schemas.js';
+import { COPY_BUTTON_KINDS, type CopyButtonKind } from '../handlers/buttons/copy.js';
 import { discordLocaleToLocaleCode } from './i18n.js';
 import { trackCommandWithKV, type OutcomeClass } from './analytics.js';
+import { isImageInputError } from './image-input-errors.js';
 
-export type { OutcomeClass };
+/**
+ * How long `finishCommandTrace` waits for a handler's captured background
+ * work before writing the datapoint anyway. The two service-binding calls
+ * (image-worker, presets-api) carry their own 10 s `AbortSignal.timeout`, the
+ * CDN / Universalis / Discord fetches 5–10 s, so a healthy command settles
+ * well inside this; a stalled one is recorded as `unknown` instead of being
+ * lost when the runtime ends the post-response `waitUntil` window.
+ */
+export const DRAIN_DEADLINE_MS = 20_000;
 
 export interface CommandTrace {
   command: string;
@@ -52,10 +67,6 @@ export function startCommandTrace(
   };
   traces.set(interaction, trace);
   return trace;
-}
-
-export function getCommandTrace(interaction: DiscordInteraction): CommandTrace | undefined {
-  return traces.get(interaction);
 }
 
 /**
@@ -107,7 +118,13 @@ export function tracedExecutionContext(real: ExecutionContext, trace: CommandTra
   };
 }
 
-/** Record why a command failed. First mark wins; no trace → no-op. Never throws. */
+/**
+ * Record the command's outcome class. First mark wins; no trace → no-op;
+ * never throws. Handlers call this where a command ends with an error embed;
+ * the dispatcher calls it for a rate-limited request and for a handler throw.
+ * Marking `ok` (a 4xx user condition from an upstream, see `classifyError`)
+ * pins the trace to success the same way.
+ */
 export function markCommandOutcome(interaction: DiscordInteraction, outcome: OutcomeClass): void {
   const trace = traces.get(interaction);
   if (trace && trace.outcome === null) trace.outcome = outcome;
@@ -115,49 +132,85 @@ export function markCommandOutcome(interaction: DiscordInteraction, outcome: Out
 
 /**
  * Finish the trace: drain the captured promises (looping while the drain
- * itself added more), then write the datapoint + KV counters. Idempotent;
- * everything runs inside `realCtx.waitUntil` so the response is never delayed.
+ * itself added more, bounded by `DRAIN_DEADLINE_MS`), then write the datapoint
+ * + KV counters. Idempotent; everything runs inside `realCtx.waitUntil` so the
+ * response is never delayed.
  */
 export function finishCommandTrace(
   env: Env,
   interaction: DiscordInteraction,
   realCtx: ExecutionContext,
   logger: ExtendedLogger,
-  outcome?: OutcomeClass,
 ): void {
   const trace = traces.get(interaction);
   if (!trace || trace.finished) return;
   trace.finished = true;
-  if (outcome && trace.outcome === null) trace.outcome = outcome;
+  enqueueWrite(realCtx, logger, drainAndWrite(env, trace));
+}
 
-  realCtx.waitUntil(
-    drainAndWrite(env, trace).catch((error: unknown) => {
-      logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, {
-        error: String(error),
-      });
+/**
+ * A copy-button click: one AE-only `kind=button` row (no KV counters — those
+ * feed /stats' per-command panel). Written unconditionally, before the button
+ * handler runs — a click is a click even if the copy itself fails.
+ */
+export function trackButtonClick(
+  env: Env,
+  ctx: ExecutionContext,
+  logger: ExtendedLogger,
+  interaction: DiscordInteraction,
+  kind: CopyButtonKind,
+): void {
+  const { userId, guildId, locale } = interactionIdentity(interaction);
+  if (!userId) return;
+  enqueueWrite(
+    ctx,
+    logger,
+    trackCommandWithKV(env, {
+      commandName: 'button',
+      userId,
+      guildId,
+      success: true,
+      outcome: 'ok',
+      subcommand: kind,
+      locale,
+      kind: 'button',
+      latencyMs: 0,
+    }),
+  );
+}
+
+/** The identity columns every datapoint carries, derived one way for commands and buttons. */
+export function interactionIdentity(interaction: DiscordInteraction): {
+  userId: string | undefined;
+  guildId: string | undefined;
+  locale: string;
+} {
+  return {
+    userId: interaction.member?.user?.id ?? interaction.user?.id,
+    guildId: interaction.guild_id,
+    locale: bucketLocale(interaction.locale),
+  };
+}
+
+/** Fire-and-forget an analytics write: a tracking failure is logged, never thrown into a handler. */
+function enqueueWrite(ctx: ExecutionContext, logger: ExtendedLogger, write: Promise<void>): void {
+  ctx.waitUntil(
+    write.catch((error: unknown) => {
+      logger.error('Analytics tracking failed', error);
     }),
   );
 }
 
 async function drainAndWrite(env: Env, trace: CommandTrace): Promise<void> {
-  let seen = 0;
-  while (seen < trace.pending.length) {
-    const batch = trace.pending.slice(seen);
-    seen = trace.pending.length;
-    const results = await Promise.allSettled(batch);
-    for (const result of results) {
-      if (result.status === 'rejected' && trace.outcome === null) {
-        trace.outcome = classifyError(result.reason);
-      }
-    }
-  }
-  const failed = trace.outcome !== null && trace.outcome !== 'ok';
+  const drained = await withDeadline(drain(trace), DRAIN_DEADLINE_MS);
+  if (!drained && trace.outcome === null) trace.outcome = 'unknown';
+  const outcome = trace.outcome ?? 'ok';
   await trackCommandWithKV(env, {
     commandName: trace.command,
     userId: trace.userId,
     guildId: trace.guildId,
-    success: !failed,
-    outcome: failed ? (trace.outcome as OutcomeClass) : 'ok',
+    success: outcome === 'ok',
+    outcome,
     subcommand: trace.subcommand,
     locale: trace.locale,
     kind: 'command',
@@ -165,36 +218,66 @@ async function drainAndWrite(env: Env, trace: CommandTrace): Promise<void> {
   });
 }
 
+/** Await every captured promise, including ones a draining promise adds. */
+async function drain(trace: CommandTrace): Promise<void> {
+  while (trace.pending.length > 0) {
+    const results = await Promise.allSettled(trace.pending.splice(0));
+    for (const result of results) {
+      if (result.status === 'rejected' && trace.outcome === null) {
+        trace.outcome = classifyError(result.reason);
+      }
+    }
+  }
+}
+
+/** Resolves `true` when `work` settles first, `false` when the deadline fires first. */
+function withDeadline(work: Promise<void>, ms: number): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<boolean>((resolve) => {
+    timer = setTimeout(() => resolve(false), ms);
+  });
+  return Promise.race([work.then(() => true, () => true), deadline]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer);
+  });
+}
+
 // ============================================================================
 // Classification and extraction helpers
 // ============================================================================
 
-const IMAGE_INPUT_MARKERS = ['SSRF', 'Discord CDN', 'too large', 'format', 'timeout'];
-
 /**
  * Map a thrown value onto an outcome class. `fallback` is what an
  * unrecognised Error means at the call site (a render catch passes 'render').
- * The message is inspected for the extractor's known markers only when
- * `options.imageInput` is set — those markers ("format", "timeout", …) are
- * generic enough to misclassify a render/API error from a command that never
- * touched an image, so callers with no image input must not run the scan.
- * The message itself is never recorded.
+ *
+ * Upstream errors: a 4xx other than 429 from presets-api or Universalis is a
+ * USER condition (not the owner, duplicate vote, unknown world, …) that the
+ * handler already answers with a friendly message, so it classifies as `ok` —
+ * the same rule as a validation reply; 429, 5xx and status 0/undefined
+ * (network, binding) are the upstream's fault.
+ *
+ * The message is inspected for image-worker's input rejections
+ * (`isImageInputError`) only when `options.imageInput` is set — those markers
+ * ("format", "timed out", …) are generic enough to misclassify a render/API
+ * error from a command that never touched an image. The message itself is
+ * never recorded.
  */
 export function classifyError(
   error: unknown,
   fallback: OutcomeClass = 'unknown',
   options: { imageInput?: boolean } = {},
 ): OutcomeClass {
-  if (error instanceof UniversalisError) return 'upstream_universalis';
-  if (error instanceof PresetAPIError) return 'upstream_presets';
-  if (
-    options.imageInput &&
-    error instanceof Error &&
-    IMAGE_INPUT_MARKERS.some((m) => error.message.includes(m))
-  ) {
-    return 'image_input';
+  if (error instanceof UniversalisError) {
+    return isUserCondition(error.status) ? 'ok' : 'upstream_universalis';
   }
+  if (error instanceof PresetAPIError) {
+    return isUserCondition(error.statusCode) ? 'ok' : 'upstream_presets';
+  }
+  if (options.imageInput && isImageInputError(error)) return 'image_input';
   return error instanceof Error ? fallback : 'unknown';
+}
+
+function isUserCondition(status: number | undefined): boolean {
+  return typeof status === 'number' && status >= 400 && status < 500 && status !== 429;
 }
 
 /** Discord client locale → one of the six supported codes, else 'other'. */
@@ -203,17 +286,18 @@ export function bucketLocale(locale: string | undefined): string {
 }
 
 /**
- * The subcommand name when the first option is a subcommand (type 1, or
- * untyped without a value). A subcommand GROUP (type 2 — `/preset favorite
- * add`, `/preferences filters …`) is recorded as `<group>_<sub>` so it isn't
- * flattened to `''`.
+ * The subcommand name when the first option is a subcommand. A subcommand
+ * GROUP (`/preset favorite add`, `/preferences filters …`) is recorded as
+ * `<group>_<sub>` so it isn't flattened to `''`. Discord always types its
+ * options, so a plain option (a value) is never mistaken for a subcommand.
  */
 export function subcommandOf(interaction: DiscordInteraction): string {
   const first = interaction.data?.options?.[0];
   if (!first) return '';
-  if (first.type === 2) return `${first.name}_${first.options?.[0]?.name ?? ''}`;
-  const isSubcommand = first.type === 1 || (first.type === undefined && first.value === undefined);
-  return isSubcommand ? first.name : '';
+  if (first.type === OptionType.SUB_COMMAND_GROUP) {
+    return `${first.name}_${first.options?.[0]?.name ?? ''}`;
+  }
+  return first.type === OptionType.SUB_COMMAND ? first.name : '';
 }
 
 /** Command name as tracked: /extractor keeps its 5.0 subcommand split (extractor_image / extractor_color). */
@@ -227,9 +311,7 @@ export function trackedCommandName(interaction: DiscordInteraction): string | un
   return name;
 }
 
-const BUTTON_KINDS = ['copy_hex', 'copy_rgb', 'copy_hsv'] as const;
-
 /** Tracked button kinds only; moderation/preview buttons and unknown ids return null. */
-export function buttonKindOf(customId: string): (typeof BUTTON_KINDS)[number] | null {
-  return BUTTON_KINDS.find((kind) => customId.startsWith(`${kind}_`)) ?? null;
+export function buttonKindOf(customId: string): CopyButtonKind | null {
+  return COPY_BUTTON_KINDS.find((kind) => customId.startsWith(`${kind}_`)) ?? null;
 }

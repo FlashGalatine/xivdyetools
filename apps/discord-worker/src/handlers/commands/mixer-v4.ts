@@ -91,7 +91,11 @@ export async function handleMixerV4Command(
             result.error === 'NO_MATCHES'
               ? t.t('errors.noMatchFound')
               : t.t('errors.generationFailed');
-          if (result.error !== 'NO_MATCHES' && logger) logger.error('Mixer command error');
+          if (result.error !== 'NO_MATCHES') {
+            // GENERATION_FAILED: the card generator threw inside bot-logic.
+            markCommandOutcome(interaction, 'render');
+            if (logger) logger.error('Mixer command error');
+          }
           await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
             embeds: [errorEmbed(t.t('common.error'), message)],
           });

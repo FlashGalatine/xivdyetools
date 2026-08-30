@@ -142,6 +142,8 @@ async function processHarmonyCommand(
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.noMatchFound'))],
       });
     } else {
+      // GENERATION_FAILED: the card generator threw inside bot-logic.
+      markCommandOutcome(interaction, 'render');
       if (logger) logger.error('Harmony command error');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],

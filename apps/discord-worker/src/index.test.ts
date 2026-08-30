@@ -2,7 +2,7 @@
  * Tests for the main Hono app and interaction handlers
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import app from './index.js';
 import {
   InteractionType,
@@ -1552,6 +1552,24 @@ describe('index.ts', () => {
         const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         vi.mocked(verifyDiscordRequest).mockResolvedValue({ isValid: true, body: JSON.stringify(body), error: '' });
       }
+      /** A real-ish ExecutionContext that keeps every waitUntil promise so the test can await the trace's write. */
+      function collectingCtx() {
+        const collected: Promise<unknown>[] = [];
+        const ctx = {
+          waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }),
+          passThroughOnException: vi.fn(),
+        } as unknown as ExecutionContext;
+        return { ctx, collected };
+      }
+      afterEach(async () => {
+        // The outer beforeEach only clears call history: a `mockRejectedValue`
+        // or an `allowed: false` armed here would otherwise leak into every
+        // later test that does not re-arm the mock.
+        const { handleHarmonyCommand } = await import('./handlers/commands/index.js');
+        vi.mocked(handleHarmonyCommand).mockReset();
+        const { checkRateLimit } = await import('./services/rate-limiter.js');
+        vi.mocked(checkRateLimit).mockReset();
+      });
 
       it('writes one datapoint for an immediate command with subcommand and locale bucket', async () => {
         const body = {
@@ -1567,8 +1585,7 @@ describe('index.ts', () => {
         vi.mocked(handleDyeCommand).mockResolvedValue(new Response());
         const { trackCommandWithKV } = await import('./services/analytics.js');
         vi.mocked(trackCommandWithKV).mockClear();
-        const collected: Promise<unknown>[] = [];
-        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+        const { ctx, collected } = collectingCtx();
 
         await app.fetch(post(body), mockEnv, ctx);
         await Promise.all(collected);
@@ -1594,8 +1611,7 @@ describe('index.ts', () => {
         });
         const { trackCommandWithKV } = await import('./services/analytics.js');
         vi.mocked(trackCommandWithKV).mockClear();
-        const collected: Promise<unknown>[] = [];
-        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+        const { ctx, collected } = collectingCtx();
 
         await app.fetch(post(body), mockEnv, ctx);
         expect(trackCommandWithKV).not.toHaveBeenCalled();
@@ -1614,8 +1630,7 @@ describe('index.ts', () => {
         vi.mocked(checkRateLimit).mockResolvedValue({ allowed: false, remaining: 0, resetAt: Date.now() + 60000 });
         const { trackCommandWithKV } = await import('./services/analytics.js');
         vi.mocked(trackCommandWithKV).mockClear();
-        const collected: Promise<unknown>[] = [];
-        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+        const { ctx, collected } = collectingCtx();
 
         await app.fetch(post(body), mockEnv, ctx);
         await Promise.all(collected);
@@ -1632,8 +1647,7 @@ describe('index.ts', () => {
         vi.mocked(handleHarmonyCommand).mockRejectedValue(new Error('boom'));
         const { trackCommandWithKV } = await import('./services/analytics.js');
         vi.mocked(trackCommandWithKV).mockClear();
-        const collected: Promise<unknown>[] = [];
-        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+        const { ctx, collected } = collectingCtx();
 
         await app.fetch(post(body), mockEnv, ctx);
         await Promise.all(collected);
@@ -1645,8 +1659,7 @@ describe('index.ts', () => {
         await verified(body);
         const { trackCommandWithKV } = await import('./services/analytics.js');
         vi.mocked(trackCommandWithKV).mockClear();
-        const collected: Promise<unknown>[] = [];
-        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+        const { ctx, collected } = collectingCtx();
 
         await app.fetch(post(body), mockEnv, ctx);
         await Promise.all(collected);
@@ -1658,8 +1671,7 @@ describe('index.ts', () => {
         vi.mocked(handleButtonInteraction).mockResolvedValue(new Response());
         const { trackCommandWithKV } = await import('./services/analytics.js');
         vi.mocked(trackCommandWithKV).mockClear();
-        const collected: Promise<unknown>[] = [];
-        const ctx = { waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+        const { ctx, collected } = collectingCtx();
 
         const copy = { type: InteractionType.MESSAGE_COMPONENT, data: { custom_id: 'copy_hex_FF0000', component_type: 2 }, user: { id: 'user-123' }, locale: 'de' };
         await verified(copy);

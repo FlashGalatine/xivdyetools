@@ -140,6 +140,8 @@ async function processGradientCommand(
   });
 
   if (!result.ok) {
+    // GENERATION_FAILED: the card generator threw inside bot-logic.
+    markCommandOutcome(interaction, 'render');
     if (logger) logger.error('Gradient command error');
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],

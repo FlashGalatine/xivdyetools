@@ -45,15 +45,17 @@ import {
   formatRateLimitMessage,
   resolveRateLimitScope,
 } from './services/rate-limiter.js';
-import { trackCommandWithKV } from './services/analytics.js';
 import {
   startCommandTrace,
   tracedExecutionContext,
+  markCommandOutcome,
   finishCommandTrace,
+  classifyError,
   trackedCommandName,
   subcommandOf,
-  bucketLocale,
+  interactionIdentity,
   buttonKindOf,
+  trackButtonClick,
 } from './services/command-trace.js';
 import {
   getPresetFavoriteEntries,
@@ -670,9 +672,8 @@ async function handleCommand(
         startCommandTrace(interaction, {
           command: trackedName,
           subcommand: subcommandOf(interaction),
+          ...interactionIdentity(interaction),
           userId,
-          guildId: interaction.guild_id,
-          locale: bucketLocale(interaction.locale),
         }),
       )
     : ctx;
@@ -697,8 +698,9 @@ async function handleCommand(
     );
     if (!rateLimitResult.allowed) {
       logger.info('User rate limited', { userId, command: commandName });
+      markCommandOutcome(interaction, 'rate_limited');
+      finishCommandTrace(env, interaction, ctx, logger);
       const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
-      finishCommandTrace(env, interaction, ctx, logger, 'rate_limited');
       return ephemeralResponse(formatRateLimitMessage(rateLimitResult, t));
     }
   }
@@ -712,8 +714,8 @@ async function handleCommand(
     }),
   );
 
-  // DISCORD-CRITICAL-001: Track analytics AFTER command execution with actual success status
-  let success = true;
+  // DISCORD-CRITICAL-001: the datapoint is written AFTER the handler's work
+  // (finishCommandTrace in the finally), never on the deferred ack.
   let response: Response;
 
   try {
@@ -801,7 +803,9 @@ async function handleCommand(
         break;
     }
   } catch (error) {
-    success = false;
+    // A handler that threw before deferring: classify it like a handler's own
+    // catch would (an upstream error keeps its class; anything else is unknown).
+    markCommandOutcome(interaction, classifyError(error));
     logger.error('Command execution failed', error instanceof Error ? error : undefined, {
       command: commandName,
     });
@@ -811,7 +815,7 @@ async function handleCommand(
   } finally {
     // Tier A: one datapoint per command, written after the handler's captured
     // background work settles (see services/command-trace.ts).
-    finishCommandTrace(env, interaction, ctx, logger, success ? undefined : 'unknown');
+    finishCommandTrace(env, interaction, ctx, logger);
   }
 
   return response;
@@ -1121,31 +1125,10 @@ async function handleComponent(
   // Buttons have component_type 2
   if (componentType === 2) {
     // Tier A: copy-button clicks are counted (kind=button, no KV counters);
-    // moderation/preview buttons and unknown ids are not. The datapoint is
-    // enqueued BEFORE `handleButtonInteraction` runs, and deliberately
-    // unconditionally — a click is a click even if the copy itself fails, so
-    // this does not wait on (or depend on the outcome of) the handler below.
+    // moderation/preview buttons and unknown ids are not. Enqueued BEFORE
+    // `handleButtonInteraction` runs and independent of its outcome.
     const kind = buttonKindOf(customId ?? '');
-    const buttonUserId = interaction.member?.user?.id ?? interaction.user?.id;
-    if (kind && buttonUserId) {
-      ctx.waitUntil(
-        trackCommandWithKV(env, {
-          commandName: 'button',
-          userId: buttonUserId,
-          guildId: interaction.guild_id,
-          success: true,
-          outcome: 'ok',
-          subcommand: kind,
-          locale: bucketLocale(interaction.locale),
-          kind: 'button',
-          latencyMs: 0,
-        }).catch((error) => {
-          logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, {
-            error: String(error),
-          });
-        }),
-      );
-    }
+    if (kind) trackButtonClick(env, ctx, logger, interaction, kind);
     return handleButtonInteraction(interaction, env, ctx, logger);
   }
 

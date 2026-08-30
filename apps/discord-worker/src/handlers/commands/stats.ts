@@ -110,20 +110,23 @@ export async function handleStatsCommand(
 
   try {
     switch (subcommand) {
+      // `return await`, not `return`: a bare `return promise` inside a try
+      // hands the rejection straight past the catch below (KV list() errors
+      // then surfaced as the dispatcher's generic "command failed").
       case 'summary':
-        return handleSummarySubcommand(env, t, logger);
+        return await handleSummarySubcommand(env, t, logger);
 
       case 'overview':
-        return handleOverviewSubcommand(env, logger);
+        return await handleOverviewSubcommand(env, logger);
 
       case 'commands':
-        return handleCommandsSubcommand(env, logger);
+        return await handleCommandsSubcommand(env, logger);
 
       case 'preferences':
-        return handlePreferencesSubcommand(env, logger);
+        return await handlePreferencesSubcommand(env, logger);
 
       case 'health':
-        return handleHealthSubcommand(env, logger);
+        return await handleHealthSubcommand(env, logger);
 
       default:
         return messageResponse({

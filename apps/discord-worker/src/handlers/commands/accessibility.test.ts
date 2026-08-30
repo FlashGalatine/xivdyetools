@@ -467,8 +467,8 @@ describe('accessibility.ts', () => {
         token: 'token-1',
       };
 
-      const { getCommandTrace, startCommandTrace } = await import('../../services/command-trace.js');
-      startCommandTrace(interaction, { command: 'accessibility', subcommand: '', userId: 'u1', locale: 'en' });
+      const { startCommandTrace } = await import('../../services/command-trace.js');
+      const trace = startCommandTrace(interaction, { command: 'accessibility', subcommand: '', userId: 'u1', locale: 'en' });
 
       await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
       await Promise.all(waitUntilPromises);
@@ -485,7 +485,7 @@ describe('accessibility.ts', () => {
           ]),
         }),
       );
-      expect(getCommandTrace(interaction)?.outcome).toBe('render');
+      expect(trace.outcome).toBe('render');
     });
 
     it('should filter out Facewear dyes', async () => {
