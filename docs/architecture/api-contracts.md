@@ -473,7 +473,10 @@ public responses withhold).
 
 `status` ∈ `approved` | `rejected` | `flagged` | `pending` (`hidden` cannot be set here). The update
 and its `moderation_log` row (`approve` / `reject` / `flag` / `unflag`) land in one batch, conditional
-on the status the moderator saw.
+on the status the moderator saw. `revert` is the fifth action this API writes; `xivdyetools-moderation-worker`
+writes four more of its own straight to the shared D1 — `ban` and `unban` (user-level, `preset_id` NULL)
+plus one `hide` / `restore` per preset a ban hides or an unban restores, so those appear in a preset's
+`GET /moderation/:presetId/history` too (migration 0013).
 
 **Response:** `{ "success": true, "preset": { …preset… } }`
 

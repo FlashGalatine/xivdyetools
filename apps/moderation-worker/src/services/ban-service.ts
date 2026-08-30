@@ -273,6 +273,84 @@ export async function getPresetAuthorName(
 }
 
 // ============================================================================
+// Moderation Log (FINDING-018)
+// ============================================================================
+
+/**
+ * FINDING-018 (2026-08-29 audit; the half of FINDING-034 that 1.5.0 deferred):
+ * a ban wrote `banned_users` and hid the author's presets without leaving a
+ * single `moderation_log` row, so a preset's history could not explain why it
+ * had vanished from the gallery and `/moderation/stats` never counted a ban.
+ *
+ * presets-api owns the table; migration `0013_moderation_log_user_actions.sql`
+ * made `preset_id` nullable and added `target_discord_id`. The rows are written
+ * here, in the SAME `db.batch()` as the statements they describe, so the trail
+ * cannot drift from the effect — and on a database that has not had 0013
+ * applied the whole batch fails loudly instead of banning without a record.
+ *
+ * Rows never carry a username: `moderator_discord_id` and `target_discord_id`
+ * are Discord snowflakes, and `reason` is the moderator's own typed text.
+ */
+const MODERATION_LOG_COLUMNS =
+  'id, preset_id, moderator_discord_id, action, reason, target_discord_id, created_at';
+
+/**
+ * UUID v4 built by SQLite, because the per-preset rows come from one
+ * `INSERT … SELECT` and each needs its own id. `hex()` yields uppercase, hence
+ * the `lower()`; the `'-4'` and `'89ab'` pieces pin the version and variant
+ * nibbles so the ids are indistinguishable from `crypto.randomUUID()`'s.
+ */
+const SQL_UUID_V4 =
+  "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', abs(random() % 4) + 1, 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))";
+
+/** One row for a user-level action — no preset, so `preset_id` is NULL. */
+function userActionLogStatement(
+  db: D1Database,
+  action: 'ban' | 'unban',
+  targetDiscordId: string,
+  moderatorDiscordId: string,
+  reason: string | null,
+  now: string
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `
+      INSERT INTO moderation_log (${MODERATION_LOG_COLUMNS})
+      VALUES (?, NULL, ?, ?, ?, ?, ?)
+      `
+    )
+    .bind(crypto.randomUUID(), moderatorDiscordId, action, reason, targetDiscordId, now);
+}
+
+/**
+ * One row per preset the matching UPDATE is about to flip. `fromStatus` must be
+ * the status that UPDATE's WHERE clause selects on (`hideUserPresetsStatement` /
+ * `restoreUserPresetsStatement`), and this statement must sit BEFORE it in the
+ * batch — afterwards the presets no longer carry that status and it would
+ * select, and therefore log, nothing.
+ */
+function presetActionLogStatement(
+  db: D1Database,
+  action: 'hide' | 'restore',
+  fromStatus: 'approved' | 'hidden',
+  targetDiscordId: string,
+  moderatorDiscordId: string,
+  reason: string | null,
+  now: string
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `
+      INSERT INTO moderation_log (${MODERATION_LOG_COLUMNS})
+      SELECT ${SQL_UUID_V4}, p.id, ?, ?, ?, ?, ?
+      FROM presets p
+      WHERE p.author_discord_id = ? AND p.status = ?
+      `
+    )
+    .bind(moderatorDiscordId, action, reason, targetDiscordId, now, targetDiscordId, fromStatus);
+}
+
+// ============================================================================
 // Ban Operations
 // ============================================================================
 
@@ -301,8 +379,13 @@ export async function banUser(
 
     // MOD-4 (FINDING-034, 2026-08-21 audit): ban row + hide in ONE batch
     // (D1 batches are transactional) — a failed hide can no longer leave a
-    // banned_users row next to still-visible presets.
-    const [, hideResult] = await db.batch([
+    // banned_users row next to still-visible presets. FINDING-018 (2026-08-29)
+    // puts the audit rows in the same batch: [ban log, hide log, ban row, hide].
+    // The hide log must precede the UPDATE it mirrors, and 'approved' must stay
+    // in step with `hideUserPresetsStatement`'s WHERE clause.
+    const [, , , hideResult] = await db.batch([
+      userActionLogStatement(db, 'ban', discordId, moderatorDiscordId, reason, now),
+      presetActionLogStatement(db, 'hide', 'approved', discordId, moderatorDiscordId, reason, now),
       db
         .prepare(
           `
@@ -370,8 +453,13 @@ export async function unbanUser(
 
     const now = new Date().toISOString();
 
-    // MOD-4: close the ban row and restore the presets in ONE batch
-    const [updateResult, restoreResult] = await db.batch([
+    // MOD-4: close the ban row and restore the presets in ONE batch.
+    // FINDING-018: [unban log, restore log, ban-row UPDATE, restore] — same
+    // ordering rule as banUser. The unban command takes no reason, so the rows
+    // carry NULL rather than an invented one.
+    const [, , updateResult, restoreResult] = await db.batch([
+      userActionLogStatement(db, 'unban', discordId, moderatorDiscordId, null, now),
+      presetActionLogStatement(db, 'restore', 'hidden', discordId, moderatorDiscordId, null, now),
       db
         .prepare(
           `

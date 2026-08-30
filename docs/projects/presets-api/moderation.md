@@ -77,32 +77,38 @@ Presets progress through the following states:
 
 ## Ban System
 
-| Endpoint | Description |
-|------------------------------------------|-------------------------------|
-| `POST /api/v1/moderation/ban` | Ban a user by Discord ID |
-| `DELETE /api/v1/moderation/ban/:discordId` | Unban a user |
+**This API has no ban routes** — [`endpoints.md`](endpoints.md) ("Bans") is the authority. Bans are
+written by `xivdyetools-moderation-worker` (`/preset ban_user`, `/preset unban_user`) directly on the
+shared `xivdyetools-presets` D1, in one atomic `db.batch()`:
 
-- Banned users receive `403` on both submissions and edits.
-- Ban check middleware runs on all authenticated endpoints.
-- Bans are stored in the `banned_users` table, which includes an `unbanned_at` column for tracking.
+- a `banned_users` row (closed with `unbanned_at` on unban, never deleted);
+- the author's `approved` presets flipped to `hidden`, and back to `approved` on unban;
+- since moderation-worker 1.6.0 (2026-08-29 audit, FINDING-018) the matching `moderation_log` rows —
+  one `ban` / `unban` per user action, plus one `hide` / `restore` per preset actually flipped.
+
+This API only *checks* the table: banned users receive `403` on submissions, edits and votes
+(`requireNotBanned` / `middleware/ban-check.ts`).
 
 ---
 
 ## Moderation Log
 
-Every moderation action creates an entry in the `moderation_log` table:
+Every moderation action creates an entry in the `moderation_log` table (full schema in
+[database.md](database.md)):
 
 | Column | Purpose |
-|-------------------|----------------------------------------------|
-| `preset_id` | The preset acted upon |
-| `moderator_id` | Discord ID of the moderator |
-| `action` | The action taken (approve, reject, revert, etc.) |
+|------------------------|--------------------------------------------------------------|
+| `id` | UUID v4 |
+| `preset_id` | The preset acted upon — NULL for the user-level `ban` / `unban` |
+| `moderator_discord_id` | Discord ID of the moderator |
+| `action` | `approve` \| `reject` \| `flag` \| `unflag` \| `revert` (this API) · `ban` \| `unban` \| `hide` \| `restore` (moderation-worker) |
 | `reason` | Optional reason text |
-| `previous_status` | Status before the action |
-| `new_status` | Status after the action |
+| `target_discord_id` | The moderated user — set for `ban` \| `unban` \| `hide` \| `restore` |
 | `created_at` | Timestamp |
 
-The log is queryable via `GET /api/v1/moderation/:id/history`.
+The log is queryable via `GET /api/v1/moderation/:id/history`, which filters on `preset_id` — so a
+preset hidden by its author's ban now shows the `hide` row that explains it. `GET
+/api/v1/moderation/stats` counts every row from the last 7 days, ban-related ones included.
 
 ---
 

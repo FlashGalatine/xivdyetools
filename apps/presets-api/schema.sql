@@ -112,12 +112,16 @@ CREATE INDEX IF NOT EXISTS idx_votes_user ON votes(user_discord_id);
 -- MODERATION LOG TABLE
 -- Audit trail for moderation actions
 -- ============================================
+-- Migration 0013 (2026-08-29 audit, FINDING-018) relaxed preset_id and added
+-- target_discord_id so the user-level ban / unban actions xivdyetools-moderation-worker
+-- performs on this database can be logged here too.
 CREATE TABLE IF NOT EXISTS moderation_log (
   id TEXT PRIMARY KEY,                    -- UUID v4
-  preset_id TEXT NOT NULL,
+  preset_id TEXT,                         -- NULL for user-level actions (ban | unban)
   moderator_discord_id TEXT NOT NULL,
-  action TEXT NOT NULL,                   -- approve | reject | flag | unflag | revert
+  action TEXT NOT NULL,                   -- approve | reject | flag | unflag | revert | ban | unban | hide | restore
   reason TEXT,
+  target_discord_id TEXT,                 -- the moderated user: set for ban | unban | hide | restore
   created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (preset_id) REFERENCES presets(id) ON DELETE CASCADE
 );

@@ -67,18 +67,21 @@ One vote per user per preset. Used alongside the denormalized `vote_count` on `p
 
 ### moderation_log
 
-Append-only log of all moderation actions taken on presets.
+Append-only audit trail of moderation actions. presets-api writes the preset-level ones; `xivdyetools-moderation-worker` writes the ban-related ones directly on this shared database (see [moderation.md](moderation.md)).
 
 | Column | Type | Notes |
 |--------|------|-------|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT |
-| preset_id | TEXT | REFERENCES presets(id) |
-| moderator_id | TEXT | NOT NULL |
-| action | TEXT | NOT NULL (approve / reject / flag / hide / revert) |
-| reason | TEXT | 10-200 chars |
-| previous_status | TEXT | |
-| new_status | TEXT | |
-| created_at | TEXT | ISO timestamp |
+| id | TEXT | PRIMARY KEY — UUID v4 |
+| preset_id | TEXT | REFERENCES presets(id) ON DELETE CASCADE. **Nullable since migration 0013** — NULL for the user-level actions `ban` / `unban` |
+| moderator_discord_id | TEXT | NOT NULL |
+| action | TEXT | NOT NULL — `approve` \| `reject` \| `flag` \| `unflag` \| `revert` (presets-api) and `ban` \| `unban` \| `hide` \| `restore` (moderation-worker) |
+| reason | TEXT | Optional; NULL on `unban` / `restore` (the unban command takes no reason) |
+| target_discord_id | TEXT | **Added by migration 0013** — the moderated user; set for `ban` / `unban` / `hide` / `restore`, NULL otherwise |
+| created_at | TEXT | DEFAULT `(datetime('now'))`, but every writer binds an ISO-8601 `…T…Z` string (BUG-050) |
+
+Indexes: `idx_moderation_log_preset(preset_id)`, `idx_moderation_log_moderator(moderator_discord_id)`, `idx_moderation_log_created(created_at DESC)`.
+
+Nothing enforces the `action` vocabulary in SQL (no CHECK constraint), and `GET /api/v1/moderation/:presetId/history` returns rows as stored — a `hide` / `restore` row therefore shows up in a preset's history, and `/moderation/stats` counts every row in its 7-day `actions_last_week` figure.
 
 ### rate_limits *(dropped by migration 0006)*
 
@@ -95,16 +98,22 @@ Was: per-user daily action counters for submission throttling. It was never read
 
 ### banned_users
 
-Users banned from the presets system.
+Users banned from the presets system (migration 0003). Written by `xivdyetools-moderation-worker`; presets-api only reads it (`middleware/ban-check.ts`, `middleware/auth.ts`).
 
 | Column | Type | Notes |
 |--------|------|-------|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT |
-| discord_id | TEXT | NOT NULL, UNIQUE |
-| reason | TEXT | |
-| banned_by | TEXT | Moderator discord ID |
-| banned_at | TEXT | ISO timestamp |
-| unbanned_at | TEXT | NULL if still banned |
+| id | TEXT | PRIMARY KEY — UUID v4 |
+| discord_id | TEXT | Discord snowflake, nullable |
+| xivauth_id | TEXT | XIVAuth UUID, nullable |
+| username | TEXT | NOT NULL — display name at the time of the ban |
+| moderator_discord_id | TEXT | NOT NULL — moderator who issued the ban |
+| reason | TEXT | NOT NULL (10-500 chars) |
+| banned_at | TEXT | DEFAULT `(datetime('now'))` |
+| unbanned_at | TEXT | NULL while the ban is active |
+| unban_moderator_discord_id | TEXT | Moderator who lifted the ban |
+| | | CHECK (discord_id IS NOT NULL OR xivauth_id IS NOT NULL) |
+
+An unban closes the row (`unbanned_at`) rather than deleting it, and two **partial unique** indexes — `idx_banned_users_discord_active` on `discord_id` and `idx_banned_users_xivauth_active` on `xivauth_id`, both `WHERE … IS NOT NULL AND unbanned_at IS NULL` — allow only one *active* ban per identity while keeping the history. Also `idx_banned_users_active(banned_at DESC) WHERE unbanned_at IS NULL` and `idx_banned_users_moderator(moderator_discord_id)`.
 
 ---
 

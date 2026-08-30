@@ -66,6 +66,20 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         has run, never roll the worker back below 3.0.0** — roll forward, or restore the schema first
         (`ALTER TABLE users ADD COLUMN avatar_url TEXT;` + recreate `xivauth_characters` from
         `git show c7c1782b:apps/oauth/schema/users.sql`).
+      - **presets-api D1 — `0013_moderation_log_user_actions.sql` exists since 2026-08-30 (security audit
+        2026-08-29 Sprint 4 / FINDING-018) and is a HAND-RUN step BEFORE the moderation-worker 1.6.0
+        deploy:** it rebuilds `moderation_log` so `preset_id` is nullable and adds `target_discord_id`,
+        which is what lets moderation-worker log `ban` / `unban` / `hide` / `restore`. Apply with
+        `wrangler d1 execute xivdyetools-presets --remote --file=migrations/0013_moderation_log_user_actions.sql`
+        from `apps/presets-api`. Verify with `SELECT COUNT(*) FROM moderation_log` before and after (the
+        rebuild copies every row, so the two numbers must match) and `PRAGMA table_info(moderation_log)`
+        (`preset_id` notnull = 0, `target_discord_id` present). No presets-api deploy is needed — presets-api
+        neither writes nor reads the new column. **Run late and every ban and unban fails until it is
+        applied**: 1.6.0 writes the audit rows in the same atomic batch as the `banned_users` insert, so the
+        missing column aborts the whole batch — nothing is lost, no half state, the moderator just sees
+        "Failed to ban user." until the migration lands (no redeploy needed afterwards). Never
+        `wrangler d1 migrations apply` here either; a second `--file` run is refused by the migration's own
+        first statement ("duplicate column name: target_discord_id").
       - **The generated stainID rewrite is NOT applied** (16 presets, 16 still keyed by legacy
         itemIDs — first element > 254 — 0 by stainID) and **must not be applied before the merge**:
         the production web-app (4.x) and discord-worker (4.x) render preset palettes by itemID and
@@ -409,9 +423,11 @@ is gone, and a CHANGELOG line.
 Also 5.1 work, not removal: discord-worker `/preset submit` / `/preset edit` still send legacy
 itemIDs (deferred; recorded under discord-worker 5.0.0 "Known issues"); the web-app submission
 form does not yet mirror presets-api's new tag charset / control-character rules (users see the
-API's 400 message — FINDING-019/028); `moderation_log` rows for ban / unban / hide / restore need a
-presets-api-owned decision (table has `preset_id NOT NULL`; moderation-worker deferred it —
-FINDING-034); cross-identity (`xivauth_id`) bans need oauth + moderation changes (FINDING-017).
+API's 400 message — FINDING-019/028); ~~`moderation_log` rows for ban / unban / hide / restore need a
+presets-api-owned decision~~ **DONE — FINDING-018, moderation-worker 1.6.0 + migration 0013** (the rows
+are written by moderation-worker itself, in the same batch as the ban; `preset_id` is nullable and
+`target_discord_id` was added); cross-identity (`xivauth_id`) bans need oauth + moderation changes
+(FINDING-017).
 
 ## 4. Audits to (re-)run after the merge
 

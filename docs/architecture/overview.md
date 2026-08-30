@@ -146,7 +146,7 @@ Layer 0: Shared Foundation
 | **Authentication** | User → OAuth → Discord API → JWT → Consumer | User identity |
 | **Preset Submission** | User → Client → Presets API → Moderation → Storage | Community content |
 | **Preset Voting** | User → Client → Presets API → Database | Community curation |
-| **User Banning** | Moderator → Discord Bot → Presets API → Database | Content moderation |
+| **User Banning** | Moderator → Moderation Worker → Shared D1 (`banned_users` + `moderation_log`, one batch) | Content moderation — presets-api has no ban routes and only reads `banned_users` |
 
 ---
 
