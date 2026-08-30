@@ -1069,7 +1069,7 @@
     "gateSubmitNote": "Your name is shown on the card.",
     "providerDiscordNote": "Most players already have one",
     "providerXivauthNote": "Verifies your character",
-    "privacyNote": "We store your display name and provider ID. No character data, no email, nothing sold.",
+    "privacyNote": "Signing in creates an account record: your Discord or XIVAuth ID and username. Your display name appears on presets you submit. No character data, no email, nothing sold.",
     "submitTitle": "Submit a preset",
     "submitSub": "Reviewed before it appears",
     "previewLabel": "HOW IT WILL LOOK",

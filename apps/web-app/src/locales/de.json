@@ -1069,7 +1069,7 @@
     "gateSubmitNote": "Dein Name steht auf der Karte.",
     "providerDiscordNote": "Haben die meisten schon",
     "providerXivauthNote": "Bestätigt deinen Charakter",
-    "privacyNote": "Gespeichert werden Anzeigename und Provider-ID. Keine Charakterdaten, keine E-Mail, nichts wird verkauft.",
+    "privacyNote": "Beim Anmelden wird ein Kontoeintrag angelegt: deine Discord- oder XIVAuth-ID und dein Benutzername. Dein Anzeigename erscheint auf Paletten, die du einreichst. Keine Charakterdaten, keine E-Mail, nichts wird verkauft.",
     "submitTitle": "Palette einreichen",
     "submitSub": "Wird vor Veröffentlichung geprüft",
     "previewLabel": "SO WIRD SIE AUSSEHEN",

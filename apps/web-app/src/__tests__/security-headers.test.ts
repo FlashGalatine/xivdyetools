@@ -108,6 +108,12 @@ describe('public/_headers security contract', () => {
         if (source.startsWith("'")) continue;
         expect(source, source).toMatch(/^https:\/\/([a-z0-9-]+\.|\*\.)?xivdyetools\.app$/);
       }
+      // …nor anywhere else a directive could smuggle it back in (comments may
+      // still name it — that is where the removal is explained).
+      const directiveLines = HEADERS.split('\n').filter(
+        (line) => line.trim() && !line.trim().startsWith('#')
+      );
+      expect(directiveLines.join('\n')).not.toMatch(/universalis\.app/);
     });
 
     it("closes the plugin and frame sinks with object-src / frame-src 'none' (WEB-5)", () => {
@@ -167,7 +173,9 @@ describe('src/index.html resource hints', () => {
     expect(HINTS.length).toBeGreaterThan(0);
     for (const hint of HINTS) {
       const href = /\bhref="([^"]*)"/.exec(hint)?.[1] ?? '';
-      if (href.startsWith('/')) continue; // same-origin (self-hosted fonts)
+      // same-origin (self-hosted fonts) — but a protocol-relative `//host` href
+      // also starts with '/' and is NOT same-origin, so it must not be skipped.
+      if (href.startsWith('/') && !href.startsWith('//')) continue;
       expect(href, hint).toMatch(/^https:\/\/([a-z0-9-]+\.)?xivdyetools\.app$/);
     }
   });

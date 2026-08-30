@@ -1069,7 +1069,7 @@
     "gateSubmitNote": "カードに名前が表示されます。",
     "providerDiscordNote": "ほとんどの人が持っています",
     "providerXivauthNote": "キャラクターを認証",
-    "privacyNote": "表示名とプロバイダIDのみ保存します。キャラクター情報もメールも取得せず、販売もしません。",
+    "privacyNote": "ログインするとアカウントの記録が作成され、Discord または XIVAuth の ID とユーザー名が保存されます。表示名は投稿したパレットに表示されます。キャラクター情報もメールも取得せず、販売もしません。",
     "submitTitle": "パレット投稿",
     "submitSub": "公開前に審査があります",
     "previewLabel": "表示イメージ",

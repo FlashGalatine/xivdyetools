@@ -51,7 +51,13 @@ describe('functions/_middleware onRequest', () => {
     it('passes a real asset response through untouched', async () => {
       const downstream = new Response('export const a = 1;\n', {
         status: 200,
-        headers: { 'Content-Type': 'application/javascript', 'Cache-Control': 'immutable' },
+        headers: {
+          'Content-Type': 'application/javascript',
+          // The real value /assets/* carries in public/_headers, not a stand-in
+          // — a middleware bug that only preserved part of the header would
+          // still pass a fixture that just said 'immutable'.
+          'Cache-Control': 'public, max-age=31536000, immutable',
+        },
       });
       const { result } = run('https://xivdyetools.app/assets/index-abc123.js', downstream);
       const response = await result;
@@ -60,7 +66,7 @@ describe('functions/_middleware onRequest', () => {
       expect(response).toBe(downstream);
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('application/javascript');
-      expect(response.headers.get('Cache-Control')).toBe('immutable');
+      expect(response.headers.get('Cache-Control')).toBe('public, max-age=31536000, immutable');
       expect(await response.text()).toBe('export const a = 1;\n');
     });
 
