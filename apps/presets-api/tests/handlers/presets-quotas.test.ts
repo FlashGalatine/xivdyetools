@@ -316,8 +316,9 @@ describe('daily quotas (FINDING-008)', () => {
                 expect(appliedUpdate().query).not.toMatch(/status\s*=\s*\?/);
                 expect(await notifications()).toEqual([]);
                 expect(eventInserts()).toHaveLength(0);
-                const body = (await res.json()) as { moderation_status: string };
-                expect(body.moderation_status).toBe(status);
+                // `moderation_status` is typed `approved | pending`, so a preset
+                // left in a moderator's own status reports none at all
+                expect(await res.json()).not.toHaveProperty('moderation_status');
             }
         );
 
@@ -334,8 +335,7 @@ describe('daily quotas (FINDING-008)', () => {
                 expect(eventInserts()).toHaveLength(0);
                 // BUG-052: the write-once revert snapshot is still taken
                 expect(appliedUpdate().query).toMatch(/previous_values\s*=\s*\?/);
-                const body = (await res.json()) as { moderation_status: string };
-                expect(body.moderation_status).toBe(status);
+                expect(await res.json()).not.toHaveProperty('moderation_status');
             }
         );
 

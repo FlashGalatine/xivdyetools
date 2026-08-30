@@ -288,8 +288,9 @@ Every field is optional; at least one must be present (`No updates provided`).
   `DAILY_FLAGGED_EDIT_LIMIT` (10 / UTC day) — see the 429 below.
 - Vote counts are preserved across edits.
 
-**Response** — `moderation_status` is the status the preset is in after the edit
-(`approved` | `pending` | `rejected` | `flagged`):
+**Response** — `moderation_status` is the status the preset is in after the edit, and is
+**present only when that is `approved` or `pending`**. A preset left in a status only a moderator
+can set (`rejected`, `flagged`) omits the field entirely — `preset.status` carries it instead:
 ```json
 { "success": true, "preset": { …preset… }, "moderation_status": "approved" }
 ```

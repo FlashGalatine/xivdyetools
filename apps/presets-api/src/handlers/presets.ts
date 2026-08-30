@@ -647,15 +647,24 @@ presetsRouter.patch('/:id', async (c) => {
     );
   }
 
-  // FINDING-004: the status the preset is actually in now — 'pending' only
-  // when it really is queued for review. It used to report 'pending' for a
-  // rejected or flagged preset as well, telling the owner an edit had put
-  // their preset back in front of a moderator when nothing of the sort
-  // happened.
+  // FINDING-004: 'pending' only when the preset really is queued for review.
+  // It used to report 'pending' for a rejected or flagged preset as well,
+  // telling the owner an edit had put it back in front of a moderator when
+  // nothing of the sort happened. The published contract
+  // (`PresetEditSuccessResponse.moderation_status?: 'approved' | 'pending'` in
+  // @xivdyetools/types) admits only those two values, so a preset left in a
+  // moderator's own status reports no `moderation_status` at all rather than a
+  // value clients are typed not to expect — the field is optional, and
+  // `preset.status` carries the truth for anyone who needs it.
+  const reportedStatus: 'approved' | 'pending' | undefined =
+    resultingStatus === 'approved' || resultingStatus === 'pending'
+      ? resultingStatus
+      : undefined;
+
   return c.json({
     success: true,
     preset: updatedPreset,
-    moderation_status: resultingStatus,
+    ...(reportedStatus !== undefined && { moderation_status: reportedStatus }),
   });
 });
 

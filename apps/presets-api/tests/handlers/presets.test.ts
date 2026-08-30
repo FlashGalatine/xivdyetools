@@ -2124,8 +2124,10 @@ describe('PresetsHandler', () => {
         // BUG-001 (2026-07-18) + FINDING-004 (2026-08-29): an owner edit neither
         // self-approves a preset nor moves any other status a moderator set —
         // a rejected preset used to be written back as 'pending' by any edit.
-        it.each(['rejected', 'flagged', 'pending'] as const)(
-            'should leave a %s preset in its own status after an owner edit',
+        // `moderation_status` is typed `approved | pending`, so the two statuses
+        // an owner edit cannot produce are reported by omitting the field.
+        it.each(['rejected', 'flagged'] as const)(
+            'should leave a %s preset alone and report no moderation_status',
             async (status) => {
                 const mockRow = createMockPresetRow({
                     id: 'preset-123',
@@ -2154,10 +2156,36 @@ describe('PresetsHandler', () => {
                 );
 
                 expect(res.status).toBe(200);
-                const body = await res.json() as { moderation_status: string };
-                expect(body.moderation_status).toBe(status);
+                expect(await res.json()).not.toHaveProperty('moderation_status');
             }
         );
+
+        it('should keep a pending preset pending after an owner edit', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                status: 'pending',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: JSON.stringify({ tags: ['updated'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { moderation_status: string };
+            expect(body.moderation_status).toBe('pending');
+        });
 
         it('should refuse to edit a hidden preset', async () => {
             const mockRow = createMockPresetRow({
