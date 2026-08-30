@@ -135,7 +135,7 @@ route reading the param at all (ruling S7-R7):
 | `GET /og/comparison/:dyes[.png]` | `:dyes` is comma-separated stainIDs, max 16, sliced to 4 |
 | `GET /og/accessibility/:dyes/:visionType[.png]` | vision: normal, protanopia, deuteranopia, tritanopia, achromatopsia |
 | `GET /og/extractor/:colors[.png]` | `RRGGBB` or `RRGGBB-share` entries, comma-separated, max 5. Bare entries (the web-app share grammar carries no shares) draw **equal, ranked** bands — proportion is only claimed where it was measured |
-| `GET /og/presets/:presetId[.png]` | slug `^[a-z0-9-]{1,64}$` |
+| `GET /og/presets/:presetId[.png]` | slug `^[a-z0-9-]{1,64}$`. **`default` is reserved** — it renders the presets default card (ruling S7-R16), so no curated preset may be given that id; the emitted `/og/presets/default.png` URL already shadows it |
 | `GET /og/budget/:dyeId[.png]` | stainID |
 | `GET /og/:tool/default.png` | Per-tool 2a fallback card |
 | `GET /og/default.png` | Root fallback card; cached 7 days |
@@ -152,12 +152,24 @@ swatch and the `RRGGBB[-share]` entries on extractor must match the exact upper-
 `parseHexColor` (`og-params.ts`) emits, not any of the 64 case spellings of one hex value.
 `presets/:presetId`'s slug grammar was already canonical. `.png` stays optional
 everywhere (ruling S7-R13), but the strip is now anchored to a true trailing suffix — it
-no longer matches `.png` wherever it happens to appear in the segment. **This bounds every
-*spelling* of one card to a single URL. It does not bound how many *distinct* ids a
-client can request** — most render the "not found" default card, and each is a legitimate
-first-render cache miss; that is request-volume enumeration, not a cache-key problem, and
-it is the WAF rate-limiting rule's job (`docs/operations/POST_MERGE_CHECKLIST.md`), not
-this table's.
+no longer matches `.png` wherever it happens to appear in the segment.
+
+**This bounds every *malformed or non-canonical spelling* of one card to a single URL. It
+does not bound two other things.** First, how many *distinct* ids a client can request —
+most render the "not found" default card, and each is a legitimate first-render cache
+miss; that is request-volume enumeration, not a cache-key problem, and it is the WAF
+rate-limiting rule's job (`docs/operations/POST_MERGE_CHECKLIST.md`), not this table's.
+Second, a *canonically-formed* request naming more ids/entries or a wider count than a
+card actually draws: comparison/accessibility accept up to 16 dye ids but the card draws
+4 (`COMPARISON_MAX_DYES` / `ACCESSIBILITY_MAX_DYES` in `services/svg/{comparison,
+accessibility}.ts`), extractor accepts more colour entries than the 5 it draws, and
+gradient's `steps` / swatch's `limit` accept a wider range than the card's own band cap
+uses — this worker deliberately does **not** reject that tail at the route (ruling
+S7-R17: it would `404` image URLs already embedded in links shared before a given
+deploy), so a hand-built or already-shared URL naming ids past what the card draws can
+still spell one card several ways, bounded by the same WAF rule. What this release *does*
+do is stop `og-data-generator.ts`'s own crawler embed from **emitting** that tail — new
+share links only ever carry as many ids as the card draws.
 
 All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
 

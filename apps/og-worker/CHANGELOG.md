@@ -11,19 +11,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 FINDING-024 / OG-4 — a residual of the 2026-08-21 audit's FINDING-005/OG-4), plus the
 2026-08-29 card font-weight fix below. Minor bump.
 
-**What this closes, precisely:** every card now has exactly one canonical URL spelling.
-An unrecognised query key, an invalid `algo`, or a non-canonical path parameter (leading
-zeros, wrong case, trailing junk, a `%2F` encoding, a silently-dropped list entry, a
-`.png` split mid-string) is rejected outright rather than rendered or folded into a
-different cache entry — so the same card can no longer be forced to re-render under an
-effectively unbounded number of distinct spellings. **What this does not close:** a
-client can still request many *distinct*, canonically-formed ids — most of which render
-a "not found" default card rather than 400 — and each is a legitimate first-render cache
-miss; that is request-volume enumeration, a different problem from cache-key cardinality,
-and it is bounded by the WAF rate-limiting rule in
-`docs/operations/POST_MERGE_CHECKLIST.md`, not by anything in this release. Card output
-for every *canonical* request is unchanged; some previously-accepted non-canonical
-spellings (see below) now 400 or 404 instead of rendering.
+**What this closes, precisely:** a query key outside `lang`/`frame`/`algo`, an invalid
+`algo`, or a non-canonical path parameter (leading zeros, wrong case, trailing junk, a
+`%2F` encoding, a silently-dropped list entry, a `.png` split mid-string, the reserved
+`default` preset slug) is rejected outright rather than rendered or folded into a
+different cache entry — so those spellings can no longer force a card to re-render under
+an effectively unbounded key space. **What this does not close — two different residual
+ways one card can still have more than one URL, both intentionally left alone, both
+bounded the same way:** (1) a client can still request many *distinct*, canonically-formed
+ids — most of which render a "not found" default card rather than 400 — each a legitimate
+first-render cache miss; that is request-volume enumeration, not a cache-key problem. (2)
+comparison/accessibility accept up to 16 dye ids and extractor accepts more colour entries
+than either card actually draws, and gradient's `steps` / swatch's `limit` accept a wider
+numeric range than the card's own band cap uses — accepting *that* tail is deliberate (see
+below: rejecting it would `404` image URLs already embedded in links shared before this
+deploy), so a request naming ids/entries/counts past what the card draws can still spell
+one rendered card several ways. Neither (1) nor (2) is a cache-key defect this release can
+fix without breaking a live link or serving the wrong picture; both are bounded by the same
+WAF rate-limiting rule in `docs/operations/POST_MERGE_CHECKLIST.md`, not by anything else
+in this release. This release does stop *this worker's own* crawler embed from emitting new
+(2)-shaped URLs (below) — new share links are already canonical; only a hand-built or
+already-shared URL can still exhibit it. Card output for every *canonical* request, and for
+every accepted (2)-shaped request, is unchanged; some previously-accepted non-canonical
+spellings (see below) now `400` or `404` instead of rendering.
 
 ### Security
 
@@ -104,14 +114,36 @@ spellings (see below) now 400 or 404 instead of rendering.
   real trailing-suffix match (`stripPngSuffix`). The cache key also strips a genuine
   trailing `.png` from the path, so the suffixed and suffix-less spellings of one card
   share one entry instead of two.
-- **Two latent instances of the same amplification, found while checking these grammars
-  against what `og-data-generator.ts` actually emits** (not asked for by this finding, but
-  the same bug, reached a different way): `generateComparisonOGData` and
-  `generateAccessibilityOGData` built their `og:image` URL from the raw, unvalidated
-  `?dyes=` list, so a share URL mixing an out-of-range id with valid ones (`?dyes=-5,1,2`)
-  baked that id into the emitted `/og/comparison/…` URL even though it never resolved to a
-  dye or appeared in the card — a crawler-embed path to the exact shape S7-R12 above closes
-  at the route. Both now emit only the ids that actually resolved.
+- **`/og/presets/default` and `/og/presets/default.png` used to render *different* cards
+  under the *same* cache key — a real cache-poisoning regression from the `.png` fix above**
+  (`index.ts`; ruling S7-R16): `/og/:tool/default.png` is registered before
+  `/og/presets/:presetId`, so the suffixed spelling always rendered the real presets default
+  card, but once `.png` became optional the suffix-less spelling started reaching the presets
+  handler instead — it passed the slug grammar, found no such preset, and rendered presets'
+  own not-found band: a *different*, but still `200`, card, cached under the identical key.
+  `/og/presets/default.png` is a real emitted `og:image` URL, so **one unauthenticated `GET
+  /og/presets/default` could have poisoned every presets-fallback unfurl for up to 7 days.**
+  Fixed by making `presetId === 'default'` render the identical default card the `.png` route
+  produces, so the shared key is correct by construction. **`default` is now a reserved
+  slug** — no curated preset may be given that id, because the emitted
+  `/og/presets/default.png` URL already shadows it. Re-verified (not just trusted) that no
+  other `/og/<literal-tool>/:singleParam` route shares this shape: comparison, extractor, and
+  budget have the identical two-segment route shape, but their grammars are numeric/hex-only,
+  so `default` was already rejected as malformed on all three before this fix and needed none.
+- **`generateComparisonOGData` / `generateAccessibilityOGData` now emit only as many dye ids
+  as the card draws, not as many as the share URL accepted** (`og-data-generator.ts`; ruling
+  S7-R17): both used to build their `og:image` URL from the full, up-to-16-entry `?dyes=`
+  list (`OG_MAX_COMPARISON_DYES`), even though both cards (`services/svg/comparison.ts`,
+  `services/svg/accessibility.ts`) only ever draw the first 4 (`COMPARISON_MAX_DYES` /
+  `ACCESSIBILITY_MAX_DYES`, exported so this file imports the same constant the card slices
+  on rather than a second, independently-guessable number) — so a share URL naming 5–16 ids
+  could still spell the identical 4-dye card many ways past position 4, and (separately)
+  an id that never resolved to a dye no longer reaches the URL either, closing the
+  `?dyes=-5,1,2` case a previous pass in this same entry only partly closed. **This worker's
+  own image *route* still accepts up to 16 ids** (rejecting the tail there would `404` image
+  URLs already embedded in links shared before this deploy) — only the *emitter* is
+  tightened, so new share links are already canonical and a hand-built URL past position 4
+  is the residual the WAF rule bounds (see above).
 
 ### Fixed
 
