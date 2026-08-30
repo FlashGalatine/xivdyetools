@@ -134,7 +134,8 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-009 | FIXED 2026-08-30 (Sprint 6, web-app: images session-only, stored blobs purged, e2e guard inverted) | 73fbf59f, c84d4263 |
 | FINDING-026 | FIXED 2026-08-30 | 2ffe6d13 |
 | FINDING-027 | FIXED 2026-08-30 | 2ffe6d13 |
-| FINDING-024, 025, 028–031 | OPEN — Sprints 7–13 (030 = the Sprint 0 token check) | — |
+| FINDING-024 | FIXED 2026-08-30 (Sprint 7, og-worker 2.4.0; query *and* path axes) — enumeration of distinct ids still costs a render, bounded by the WAF rule, which stays an unticked dashboard action | c6bd962b, 9b2f4ca3, e2bdeec6, e2e9ca6b, 636e42ec, ebdc49ed, e9b6f471 |
+| FINDING-025, 028–031 | OPEN — Sprints 8–13 (030 = the Sprint 0 token check) | — |
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.
