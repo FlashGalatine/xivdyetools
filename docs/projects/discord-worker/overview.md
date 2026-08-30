@@ -185,7 +185,6 @@ KV holds per-user preferences (`prefs:v1:*`), preset favourites, the 15-minute b
 | Binding | Type | Purpose |
 |---------|------|---------|
 | `KV` | KV Namespace | Rate limits, preferences, preset favourites, button context, stats |
-| `DB` | D1 Database | Preset storage (shared with presets-api) |
 | `ANALYTICS` | Analytics Engine | Command tracking |
 | `PRESETS_API` | Service Binding | `xivdyetools-presets-api` |
 | `UNIVERSALIS_PROXY` | Service Binding | `xivdyetools-api-worker` (absorbed the universalis-proxy) — market prices |

@@ -105,11 +105,13 @@ let kvFallbackWarned = false;
  *
  * Priority: native `[[ratelimits]]` bindings > Cloudflare KV.
  *
- * The instance is a per-isolate singleton, so the logger it is built with is
- * the first request's. That only affects the limiter's own fail-open warning;
- * `checkRateLimit` reports `backendError` with the CURRENT request's logger.
+ * Deliberately built WITHOUT a logger: the instance is a per-isolate
+ * singleton, so it would freeze the first request's `requestId` onto every
+ * later request's log line. The fail-open signal is `result.backendError`,
+ * which `checkRateLimit` reports below with the CURRENT request's logger —
+ * the same shape as the other four workers.
  */
-function getLimiter(config: RateLimiterConfig, logger?: ExtendedLogger): RateLimiter {
+function getLimiter(config: RateLimiterConfig): RateLimiter {
   if (limiterInstance && configuredBackend) {
     return limiterInstance;
   }
@@ -122,7 +124,7 @@ function getLimiter(config: RateLimiterConfig, logger?: ExtendedLogger): RateLim
     if (binding) tiers.push({ limit, periodSeconds: 60, binding });
   }
   if (tiers.length > 0) {
-    limiterInstance = new CloudflareRateLimiter({ tiers, keyPrefix: KEY_PREFIX, logger });
+    limiterInstance = new CloudflareRateLimiter({ tiers, keyPrefix: KEY_PREFIX });
     configuredBackend = 'cloudflare';
     return limiterInstance;
   }
@@ -160,7 +162,9 @@ const SUBCOMMAND_SCOPED = new Set<string>(['extractor']);
 
 /**
  * Tiers this worker defines on top of worker-kit's `DISCORD_COMMAND_LIMITS`,
- * consulted first.
+ * consulted first. An entry here is keyed by command name only and shadows
+ * ANY `command:subcommand` tier the preset defines for it, so only commands
+ * without subcommand-scoped tiers belong in this table.
  */
 const LOCAL_COMMAND_LIMITS: Record<string, RateLimitConfig> = {
   // same tier as /about and /manual; moves into worker-kit's preset in Sprint 9 (FINDING-020)
@@ -214,7 +218,7 @@ export async function checkRateLimit(
   logger?: ExtendedLogger,
   subcommand?: string,
 ): Promise<RateLimitResult> {
-  const limiter = getLimiter(config, logger);
+  const limiter = getLimiter(config);
   const limitConfig =
     (commandName ? LOCAL_COMMAND_LIMITS[commandName] : undefined) ??
     getDiscordCommandLimit(commandName ?? 'default', subcommand);

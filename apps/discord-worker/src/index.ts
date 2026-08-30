@@ -697,7 +697,9 @@ async function handleCommand(
       },
       userId,
       scope.command,
-      undefined,
+      // The request logger, so the limiter's KV-fallback warning and its
+      // fail-open report are attributed to THIS request (FINDING-007).
+      logger,
       scope.subcommand,
     );
     if (!rateLimitResult.allowed) {
@@ -848,6 +850,7 @@ async function handleAutocomplete(
       },
       acUserId,
       'autocomplete',
+      logger,
     );
     if (!acLimit.allowed) {
       return Response.json({

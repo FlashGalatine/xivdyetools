@@ -7,6 +7,11 @@
  * selected the worker must say so loudly — once per isolate — so a deployment
  * that lost its `RL_*` bindings is visible in the logs instead of silently
  * running with an ineffective limiter.
+ *
+ * The warning goes to the logger `checkRateLimit` is CALLED with (the
+ * dispatcher passes the request logger), not to one held by the limiter
+ * singleton — so these tests pass their own logger the way `src/index.ts`
+ * does. `src/index.test.ts` covers the same warning through the real route.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ExtendedLogger } from '@xivdyetools/logger';

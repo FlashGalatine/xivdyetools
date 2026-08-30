@@ -174,7 +174,7 @@ Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom 
 
 ### Command Routing (`src/index.ts`)
 
-A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `handlers/commands/`. Tracking is a dispatcher-owned `CommandTrace` finished in the `finally` after the handler's background work settles (see Analytics Tracking below). Rate-limit check runs before dispatch (skipped only for `about`, `manual` and `changelog` — `/stats` has been rate-limited since the 2026-08-21 security audit, FINDING-033).
+A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `handlers/commands/`. Tracking is a dispatcher-owned `CommandTrace` finished in the `finally` after the handler's background work settles (see Analytics Tracking below). Rate-limit check runs before dispatch for every command — `/stats` since FINDING-033, `/about`, `/manual` and `/changelog` since FINDING-020 (2026-08-29 audit).
 
 ### Deferred Responses
 

@@ -834,7 +834,9 @@ describe('index.ts', () => {
           expect.anything(),
           'user-123',
           'stats',
-          undefined,
+          // the request logger — the limiter's degradation warnings are
+          // attributed to this request (FINDING-007)
+          expect.objectContaining({ warn: expect.any(Function) }),
           undefined,
         );
         expect(data.data!.flags).toBe(64);
@@ -880,19 +882,115 @@ describe('index.ts', () => {
           body: JSON.stringify(interaction),
         });
 
-        const res = await app.fetch(req, mockEnv, mockCtx);
+        // Bind the 30/min tier so the assertion below proves the dispatcher
+        // really lifts the binding off `env` into the limiter config.
+        const env = { ...mockEnv, RL_30: { limit: vi.fn() } } as unknown as Env;
+        const res = await app.fetch(req, env, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
         expect(checkRateLimit).toHaveBeenCalledWith(
-          expect.anything(),
+          expect.objectContaining({
+            bindings: expect.objectContaining({ RL_30: env.RL_30 }),
+            kv: expect.anything(),
+          }),
           'user-123',
           command,
-          undefined,
+          expect.objectContaining({ warn: expect.any(Function) }),
           undefined,
         );
         expect(data.data!.flags).toBe(64); // Ephemeral
         expect(data.data!.content).toBe('Rate limited');
         expect(vi.mocked(handlers[handlerName])).not.toHaveBeenCalled();
+      });
+
+      /**
+       * FINDING-007 follow-up: the limiter's two degradation signals — the
+       * one-time "running on the KV fallback" warning and the per-request
+       * fail-open report — only exist if the dispatcher actually hands
+       * `checkRateLimit` the request logger. Both were unreachable in the
+       * deployed worker while the call sites passed `undefined`. These run
+       * the REAL rate limiter through the real route and read the JSON the
+       * request logger writes.
+       */
+      describe('limiter degradation reaches the request logger', () => {
+        let logLines: string[];
+        let logSpy: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(async () => {
+          const actual = await vi.importActual<typeof import('./services/rate-limiter.js')>(
+            './services/rate-limiter.js',
+          );
+          actual.resetRateLimiterInstance();
+          // Undo this file's blanket mock for these tests only.
+          const { checkRateLimit } = await import('./services/rate-limiter.js');
+          vi.mocked(checkRateLimit).mockImplementation(actual.checkRateLimit);
+
+          // @xivdyetools/logger's worker preset (JsonAdapter) writes every
+          // level as one JSON line through console.log.
+          logLines = [];
+          logSpy = vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
+            logLines.push(String(line));
+          });
+        });
+
+        afterEach(async () => {
+          logSpy.mockRestore();
+          // `vi.clearAllMocks()` clears calls but not implementations — put
+          // the module mock back so later tests get the bare vi.fn() again.
+          const { checkRateLimit } = await import('./services/rate-limiter.js');
+          vi.mocked(checkRateLimit).mockReset();
+        });
+
+        async function dispatchAbout(env: Env): Promise<void> {
+          const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+          const { handleAboutCommand } = await import('./handlers/commands/index.js');
+          const interaction = {
+            type: InteractionType.APPLICATION_COMMAND,
+            data: { name: 'about' },
+            user: { id: 'user-123' },
+          };
+          vi.mocked(verifyDiscordRequest).mockResolvedValue({
+            isValid: true,
+            body: JSON.stringify(interaction),
+            error: '',
+          });
+          vi.mocked(handleAboutCommand).mockResolvedValue(new Response('{}'));
+
+          await app.fetch(
+            new Request('http://localhost/', {
+              method: 'POST',
+              body: JSON.stringify(interaction),
+            }),
+            env,
+            mockCtx,
+          );
+        }
+
+        it('warns that it is running on the KV fallback when no RL_* tier is bound', async () => {
+          await dispatchAbout(mockEnv); // mockEnv binds KV only
+
+          const warning = logLines.find((line) => line.includes('KV fallback'));
+          expect(warning).toBeDefined();
+          expect(warning).toContain('no RL_* binding bound');
+          // Written by the request-scoped logger, so it carries the request id.
+          expect(warning).toContain('"requestId"');
+        });
+
+        it('reports the fail-open when the rate-limit binding throws', async () => {
+          const { handleAboutCommand } = await import('./handlers/commands/index.js');
+          const failing = {
+            limit: vi.fn().mockRejectedValue(new Error('binding unavailable')),
+          };
+
+          await dispatchAbout({ ...mockEnv, RL_30: failing } as unknown as Env);
+
+          expect(failing.limit).toHaveBeenCalled();
+          const failOpen = logLines.find((line) => line.includes('Rate limit check failed'));
+          expect(failOpen).toBeDefined();
+          expect(failOpen).toContain('"requestId"');
+          // Fail-open: the command still runs.
+          expect(handleAboutCommand).toHaveBeenCalled();
+        });
       });
 
       it('should handle unknown command', async () => {

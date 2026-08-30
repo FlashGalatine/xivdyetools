@@ -64,7 +64,7 @@ ENVIRONMENT = "production"    # "development" | "production"
 | `MODERATION_BOT_TOKEN` | No | Moderation bot token — Discord routes button clicks to the posting application |
 | `ANNOUNCEMENT_CHANNEL_ID` | No | Release-announcement channel — a **var**, declared under `[env.production.vars]` (vars are not inherited) |
 
-Bindings: `KV`, `DB` (D1 `xivdyetools-presets`), `ANALYTICS`, the six `[[ratelimits]]` tiers `RL_5`/`RL_10`/`RL_15`/`RL_20`/`RL_30`/`RL_70`, and service bindings `PRESETS_API` → `xivdyetools-presets-api`, `UNIVERSALIS_PROXY` → `xivdyetools-api-worker`, `IMAGE_WORKER` → `xivdyetools-image-worker`. The top-level `wrangler.toml` block is the beta bot (`xivdyetools-discord-worker-dev`); production lives under `[env.production]`.
+Bindings: `KV`, `ANALYTICS`, the six `[[ratelimits]]` tiers `RL_5`/`RL_10`/`RL_15`/`RL_20`/`RL_30`/`RL_70`, and service bindings `PRESETS_API` → `xivdyetools-presets-api`, `UNIVERSALIS_PROXY` → `xivdyetools-api-worker`, `IMAGE_WORKER` → `xivdyetools-image-worker`. The top-level `wrangler.toml` block is the beta bot (`xivdyetools-discord-worker-dev`); production lives under `[env.production]`.
 
 ### Setting Secrets
 
