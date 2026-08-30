@@ -47,6 +47,8 @@ function fakeCacheStorage(): { default: Cache; store: Map<string, Response> } {
 
 const execCtx = { waitUntil: vi.fn(), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
 
+const CRAWLER_UA = 'Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)';
+
 describe('/og/* parameter length guard', () => {
   beforeEach(() => {
     rendered.length = 0;
@@ -84,6 +86,62 @@ describe('/og/* parameter length guard', () => {
   });
 });
 
+// 2026-08-29 FINDING-024 (OG-4): the /og/* query-key allowlist. Without it,
+// appending an arbitrary throwaway key (?x=1, ?x=2, …) to a valid /og/* URL
+// was free — each variant missed the edge cache and forced a fresh,
+// unauthenticated, unrate-limited resvg raster.
+describe('/og/* query-key allowlist', () => {
+  beforeEach(() => {
+    rendered.length = 0;
+    vi.mocked(renderOGImage).mockClear();
+  });
+
+  it('rejects an unknown query key on a valid /og/* path with 404, without rendering', async () => {
+    const res = await app.request('/og/harmony/1/complementary?x=1', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(404);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  // OG-8: a validation response never echoes attacker input.
+  it('does not echo the offending key name in the 404 body', async () => {
+    const res = await app.request('/og/harmony/1/complementary?utm_source=evil', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(404);
+    const body = await res.text();
+    expect(body).not.toContain('utm_source');
+    expect(body).not.toContain('evil');
+  });
+
+  it('allows exactly lang, frame, and algo together', async () => {
+    const res = await app.request(
+      '/og/harmony/1/complementary?lang=ja&frame=x&algo=oklab',
+      {},
+      TEST_ENV,
+      execCtx,
+    );
+    expect(res.status).toBe(200);
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+  });
+
+  it('a repeated allowed key is not an error', async () => {
+    const res = await app.request('/og/harmony/1/complementary?lang=ja&lang=de', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(200);
+  });
+
+  // The allowlist is scoped to /og/* only — the crawler-intercept tool
+  // routes carry the SPA's own share params (utm_source and friends) and
+  // must keep passing a crawler UA through to the crawler HTML untouched.
+  it('leaves the crawler-intercept tool routes unaffected by the /og/* allowlist', async () => {
+    const res = await app.request(
+      '/harmony/?dye=102&harmony=tetradic&utm_source=x',
+      { headers: { 'User-Agent': CRAWLER_UA } },
+      TEST_ENV,
+      execCtx,
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('text/html; charset=utf-8');
+  });
+});
+
 describe('/og/* edge cache', () => {
   let caches: ReturnType<typeof fakeCacheStorage>;
 
@@ -109,11 +167,56 @@ describe('/og/* edge cache', () => {
     expect(caches.store.size).toBe(1);
   });
 
-  it('keys the cache on the full URL (lang/frame/algo vary the image)', async () => {
-    await app.request('/og/harmony/1/complementary?lang=de', {}, TEST_ENV, execCtx);
-    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
-    await app.request('/og/harmony/1/complementary?lang=ja', {}, TEST_ENV, execCtx);
-    expect(renderOGImage).toHaveBeenCalledTimes(2);
+  // 2026-08-29 FINDING-024 (OG-4): the key is now canonical — pathname plus
+  // the RESOLVED lang/frame and the RAW algo — instead of the full URL. This
+  // block replaces the old "keys the cache on the full URL" test, which
+  // described the pre-fix behaviour that let an unbounded key space defeat
+  // this exact cache.
+  describe('canonical key contract', () => {
+    it('lang varies the key: ?lang=de and ?lang=ja render twice', async () => {
+      await app.request('/og/harmony/1/complementary?lang=de', {}, TEST_ENV, execCtx);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+      await app.request('/og/harmony/1/complementary?lang=ja', {}, TEST_ENV, execCtx);
+      expect(renderOGImage).toHaveBeenCalledTimes(2);
+    });
+
+    it('frame varies the key: default and ?frame=x render twice', async () => {
+      await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+      await app.request('/og/harmony/1/complementary?frame=x', {}, TEST_ENV, execCtx);
+      expect(renderOGImage).toHaveBeenCalledTimes(2);
+    });
+
+    it('algo varies the key: ?algo=oklab and ?algo=cie76 render twice', async () => {
+      await app.request('/og/harmony/1/complementary?algo=oklab', {}, TEST_ENV, execCtx);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+      await app.request('/og/harmony/1/complementary?algo=cie76', {}, TEST_ENV, execCtx);
+      expect(renderOGImage).toHaveBeenCalledTimes(2);
+    });
+
+    // The amplification this sprint closes: a query value that RESOLVES to
+    // the same card must not buy a fresh cache entry. Under the old
+    // full-URL key, both of these missed the cache a second time — that gap
+    // is FINDING-024 / OG-4.
+    it('closes the amplification: ?lang=en-US resolves like a missing lang, so the second request is a cache hit', async () => {
+      const first = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+      expect(first.status).toBe(200);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+      const second = await app.request('/og/harmony/1/complementary?lang=en-US', {}, TEST_ENV, execCtx);
+      expect(second.status).toBe(200);
+      expect(renderOGImage).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes the amplification: ?frame=bogus resolves like a missing frame, so the second request is a cache hit', async () => {
+      const first = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+      expect(first.status).toBe(200);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+      const second = await app.request('/og/harmony/1/complementary?frame=bogus', {}, TEST_ENV, execCtx);
+      expect(second.status).toBe(200);
+      expect(renderOGImage).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('does not cache error responses', async () => {

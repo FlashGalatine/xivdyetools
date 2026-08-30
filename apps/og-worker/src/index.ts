@@ -166,11 +166,71 @@ app.use('/og/*', async (c, next) => {
 });
 
 /**
+ * The only query keys any /og/* request may legitimately carry: `resolveLocale`
+ * (below) reads `lang`, `frameFromQuery` reads `frame`, and the five
+ * algo-aware image routes read `algo` — og-data-generator.ts emits exactly
+ * these three onto an emitted image URL (withLang / withAlgo / the ?frame=x
+ * twitter branch), so no URL this worker itself produces ever carries a
+ * fourth key.
+ */
+const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo']);
+
+/**
+ * 2026-08-29 FINDING-024 (OG-4): reject any /og/* request carrying a query
+ * key outside the allowlist, before the cache lookup below and before any
+ * render. Nothing bounded the *count* of distinct renders for one path —
+ * appending a throwaway key (?x=1, ?x=2, …) produced a fresh URL on every
+ * request, and the canonical cache key below still varies with anything it
+ * is handed, so each variant was a full, unauthenticated, unrate-limited
+ * resvg raster. 404, not 400: this worker deliberately refuses to mint a
+ * resource for that URL variant at all, rather than reporting an error on
+ * it. The body never echoes the offending key (the OG-8 rule: a validation
+ * response never echoes attacker input).
+ */
+app.use('/og/*', async (c, next) => {
+  const { searchParams } = new URL(c.req.url);
+  for (const key of searchParams.keys()) {
+    if (!OG_ALLOWED_QUERY_KEYS.has(key)) {
+      return c.json({ error: 'Unknown query parameter' }, 404);
+    }
+  }
+  return next();
+});
+
+/**
+ * Canonical cache key for a /og/* request (2026-08-29 FINDING-024, OG-4):
+ * pathname + the allowed query axes, RESOLVED, in a fixed order — bounds the
+ * key space to (pathname × lang × frame × algo) instead of the full URL.
+ * `lang` is the *resolved* locale (resolveLocale already collapses
+ * ?lang=EN / ?lang=en-US / a missing lang onto the same rendered card) and
+ * `frame` is the *resolved* 'discord' | 'x' (an unrecognised ?frame= renders
+ * 'discord', so it shares that entry) — both safe to canonicalise because
+ * they already render identically. `algo` stays the *raw* query value,
+ * verbatim, omitted when absent: og-params.ts's legacy spellings only
+ * normalise at render time (normalizeMatchingMethod, inside deltaForAlgorithm),
+ * and collapsing two spellings that could render differently onto one slot
+ * would risk serving the wrong picture for one of them (ruling S7-R4).
+ * `origin` keeps beta and production in separate entries.
+ */
+function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
+  const url = new URL(c.req.url);
+  const params = new URLSearchParams();
+  params.set('lang', resolveLocale(url.searchParams));
+  params.set('frame', frameFromQuery(c));
+  const algo = url.searchParams.get('algo');
+  if (algo !== null) {
+    params.set('algo', algo);
+  }
+  return new Request(`${url.origin}${url.pathname}?${params.toString()}`, { method: 'GET' });
+}
+
+/**
  * Edge cache for rendered PNGs. The `Cache-Control` / `CDN-Cache-Control`
  * headers set by renderOGImage describe the TTLs but do nothing by themselves
- * on a Worker response — every hit was a full resvg raster. Key = full URL
- * (lang / frame / algo all vary the image), GET only, 200s only; the Cache
- * API honours the response's own s-maxage for expiry. Absent outside Workers
+ * on a Worker response — every hit was a full resvg raster. Key = the
+ * canonical key above (the query-key allowlist above guarantees no other
+ * query key ever reaches this point), GET only, 200s only; the Cache API
+ * honours the response's own s-maxage for expiry. Absent outside Workers
  * (tests, Node) → pass-through.
  */
 app.use('/og/*', async (c, next) => {
@@ -179,7 +239,7 @@ app.use('/og/*', async (c, next) => {
     return next();
   }
 
-  const cacheKey = new Request(c.req.url, { method: 'GET' });
+  const cacheKey = ogCacheKey(c);
   const hit = await cache.match(cacheKey);
   if (hit) {
     return hit;

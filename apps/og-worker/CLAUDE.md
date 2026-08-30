@@ -117,7 +117,9 @@ for.
 
 **OG image routes** (return `image/png`). Every route takes `?lang=` (the picture
 localizes only when asked) and `?frame=x` (the 400×210 X frame; `twitter:image`
-carries it):
+carries it). `lang`, `frame`, and `algo` are the *only* query keys any `/og/*`
+request may carry (2026-08-29 FINDING-024, OG-4) — any other key gets a `404`
+before the cache lookup or a render, without echoing the key back:
 
 | Pattern | Notes |
 |---|---|
@@ -136,6 +138,8 @@ carries it):
 | `GET *` | Fallthrough — crawlers get a minimal **404** (`no-store`) page; humans are passed through only on the `APP_BASE_URL` host (any other host → 302 to the app) — FINDING-024 |
 
 All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
+
+The `caches.default` edge cache in `index.ts` (`ogCacheKey`) keys on pathname + the *resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (2026-08-29 FINDING-024, OG-4) — not the full URL. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot). Combined with the query-key allowlist above, the key space is bounded to (pathname × lang × frame × algo) — a client can no longer defeat the cache by appending an arbitrary throwaway param.
 
 ### Environment Bindings (wrangler.toml)
 

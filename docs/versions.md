@@ -29,7 +29,7 @@
 | **OAuth Worker** | v3.0.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.2.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
 | **Public REST API** | v0.10.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.3.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.4.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.2.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -273,6 +273,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.4.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-024, OG-4) — `/og/*` allows only `lang`/`frame`/`algo` query keys (anything else 404s before a cache lookup or render), and the edge cache key is canonical (pathname × resolved lang × resolved frame × raw algo) instead of the full URL, closing a cache-defeat amplification** |
 | **v2.3.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-005) — /og/* segment-length guard (400), linear-time `fit`/`wrapName` (a 16 KB not-found label took 177 s), not-found echo capped at 32 chars, `caches.default` edge cache for rendered PNGs** |
 | **v2.1.0** | **Aug 2026** | **Dead-code audit cleanup: extractor / presets / budget embeds reach their cards (were unreachable — root default only), `/presets/:id` crawler route, comparison honours `?frame=x`, `?algo=` rides harmony/gradient/mixer image URLs, ~500 lines of 15E-rewrite sediment removed (colour-sheet lookup, `base.ts`), CJK subsets −45 KB, base tsconfig flags restored** |
 | **v2.0.0** | **Aug 2026** | **15E band cards for all nine tools (Discord 1200×1050 + X 1200×630), per-tool default cards, `?lang=` localization, stainID paths, `@xivdyetools/svg` 2.0.0 frame system, routed beta env (`deploy-og-worker-beta.yml`)** |
