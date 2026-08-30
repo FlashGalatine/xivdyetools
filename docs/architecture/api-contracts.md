@@ -676,7 +676,7 @@ when Discord rejects the post — presets-api retries with backoff (3×, 1–10 
 
 ### POST /webhooks/github
 
-Release-announcement hook (GitHub webhook, `GITHUB_WEBHOOK_SECRET`) — posts the parsed `CHANGELOG-laymans.md` entry to `ANNOUNCEMENT_CHANNEL_ID`. There is no `/webhooks/moderation` route; the live surface is `GET /health` plus `POST /`, `POST /webhooks/preset-submission`, `POST /webhooks/github`.
+Release-announcement hook (GitHub webhook, `GITHUB_WEBHOOK_SECRET`) — posts the parsed `CHANGELOG-laymans.md` entry to `ANNOUNCEMENT_CHANNEL_ID`. Only `push` events from `FlashGalatine/xivdyetools` are announced (a `ping` answers `200 {"message":"pong"}`, any other event `200 {"message":"Ignored event"}`, another repository **403** `{ "error": "Repository not allowed" }`), and each version is announced once — a repeat answers `200 {"message":"Already announced"}`, so redelivering a qualifying delivery is safe. There is no `/webhooks/moderation` route; the live surface is `GET /health` plus `POST /`, `POST /webhooks/preset-submission`, `POST /webhooks/github`.
 
 ---
 

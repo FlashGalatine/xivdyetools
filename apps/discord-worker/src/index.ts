@@ -93,6 +93,28 @@ import { getWorldAutocomplete } from './services/budget/index.js';
  */
 const GITHUB_WEBHOOK_MAX_BYTES = 1_048_576;
 
+/**
+ * The one repository whose release notes this bot announces (FINDING-021,
+ * 2026-08-29 audit). `GITHUB_WEBHOOK_SECRET` is the only gate on
+ * `/webhooks/github`, and the payload used to pick BOTH the changelog fetched
+ * (`repository.full_name`) and the link posted (`repository.html_url`) — so a
+ * holder of the secret could announce any repository's notes, under any
+ * masked link, inside an xivdyetools-looking embed. Both are constants now;
+ * the payload's `repository` is only ever compared against the first.
+ */
+const GITHUB_ANNOUNCE_REPO = 'FlashGalatine/xivdyetools';
+const GITHUB_ANNOUNCE_REPO_URL = 'https://github.com/FlashGalatine/xivdyetools';
+
+/**
+ * How long an announced version stays memoised in KV (90 days). The hook fires
+ * as the push lands, before `deploy-discord-worker.yml` has shipped the build,
+ * so a *Redeliver* from GitHub's delivery log is part of the normal release
+ * flow — without a memo it re-posted the same release (three times on
+ * 2026-08-29). 90 days outlives any plausible redelivery window while still
+ * letting the key expire.
+ */
+const ANNOUNCED_VERSION_TTL_SECONDS = 90 * 24 * 60 * 60;
+
 type PushCommit = import('./types/github.js').GitHubCommit;
 
 function formatDyesForEmbed(dyeIds: number[]): string {
@@ -425,8 +447,10 @@ app.post('/webhooks/preset-submission', async (c) => {
 /**
  * Webhook endpoint for GitHub push events
  *
- * Listens for pushes to main that modify CHANGELOG-laymans.md,
- * parses the latest version, and posts a Discord announcement embed.
+ * Listens for `push` events on main, from `GITHUB_ANNOUNCE_REPO` only, that
+ * modify CHANGELOG-laymans.md; parses the latest version and posts a Discord
+ * announcement embed — once per version (FINDING-021), so redelivering a
+ * qualifying push is safe.
  *
  * @see Phase 7 of v4.0.0 migration plan
  */
@@ -472,12 +496,35 @@ app.post('/webhooks/github', async (c) => {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
+  // FINDING-021: the signature says the sender holds the secret, not what the
+  // body is — GitHub signs pings and every other event type too. The event name
+  // is the only thing that distinguishes them, so it is checked before the body
+  // is parsed at all. Everything that is not a push is answered 2xx: a 4xx would
+  // mark the hook unhealthy in GitHub's delivery log for a delivery we simply
+  // do not act on.
+  const githubEvent = c.req.header('X-GitHub-Event');
+  if (githubEvent === 'ping') {
+    // GitHub sends exactly one of these when the hook is created.
+    return c.json({ success: true, message: 'pong' });
+  }
+  if (githubEvent !== 'push') {
+    return c.json({ success: true, message: 'Ignored event' });
+  }
+
   // Parse payload
   let payload: import('./types/github.js').GitHubPushPayload;
   try {
     payload = JSON.parse(rawBody) as import('./types/github.js').GitHubPushPayload;
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  // FINDING-021: the announced repository is pinned, never taken from the
+  // payload. The offending name is deliberately absent from the log line — a
+  // rejected delivery records only that the check ran and failed.
+  if (payload.repository?.full_name !== GITHUB_ANNOUNCE_REPO) {
+    logger.warn('GitHub webhook rejected: repository not allowed', { repoAllowed: false });
+    return c.json({ error: 'Repository not allowed' }, 403);
   }
 
   // Only process pushes to main branch
@@ -501,11 +548,11 @@ app.post('/webhooks/github', async (c) => {
   }
 
   logger.info('Changelog update detected, fetching latest version', {
-    repo: payload.repository.full_name,
+    repo: GITHUB_ANNOUNCE_REPO,
   });
 
   // Fetch the raw changelog from GitHub
-  const changelogUrl = `https://raw.githubusercontent.com/${payload.repository.full_name}/main/CHANGELOG-laymans.md`;
+  const changelogUrl = `https://raw.githubusercontent.com/${GITHUB_ANNOUNCE_REPO}/main/CHANGELOG-laymans.md`;
   // BUG-074: bounded — a hung GitHub response must not hold the request open
   const changelogResponse = await fetch(changelogUrl, { signal: AbortSignal.timeout(10_000) });
 
@@ -525,14 +572,31 @@ app.post('/webhooks/github', async (c) => {
     return c.json({ success: true, message: 'No version entry found' });
   }
 
+  // FINDING-021: announce each version exactly once. The changelog is fetched
+  // from the pinned repository, so this key is derived from our own release
+  // notes rather than from anything the payload said.
+  const announcedKey = `announced:v:${latestEntry.version}`;
+  if (await env.KV.get(announcedKey)) {
+    logger.info('Version already announced, skipping', { version: latestEntry.version });
+    return c.json({
+      success: true,
+      message: 'Already announced',
+      version: latestEntry.version,
+    });
+  }
+
   // Send announcement to Discord
   const { sendAnnouncement } = await import('./services/announcements.js');
   await sendAnnouncement(
     env.DISCORD_TOKEN,
     env.ANNOUNCEMENT_CHANNEL_ID,
     latestEntry,
-    payload.repository.html_url,
+    GITHUB_ANNOUNCE_REPO_URL,
   );
+
+  // Memoised only after the send succeeded: a failed announcement leaves no
+  // key behind, so a Redeliver can still get the release out.
+  await env.KV.put(announcedKey, '1', { expirationTtl: ANNOUNCED_VERSION_TTL_SECONDS });
 
   logger.info('Changelog announcement sent', { version: latestEntry.version });
   return c.json({ success: true, version: latestEntry.version });

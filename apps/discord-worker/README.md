@@ -143,6 +143,8 @@ The Worker bundle is close enough to Cloudflare's compressed limit to be worth w
 | `POST /webhooks/preset-submission` | Bearer (`INTERNAL_WEBHOOK_SECRET`) | Preset submissions forwarded from the web app |
 | `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events updating the root (product-level) `CHANGELOG-laymans.md`, announced to the release channel |
 
+Only `push` events from `FlashGalatine/xivdyetools` are announced, and each version is announced once (the fetched changelog and the posted link are pinned constants, and the version is memoised in KV for 90 days), so redelivering a qualifying delivery is safe.
+
 Both webhook endpoints cap payloads at 10 KB before parsing. Discord interaction bodies are capped at 100 KB, with `Content-Length` validated before the body is read.
 
 ## Localization

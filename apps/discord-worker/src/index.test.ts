@@ -2,7 +2,7 @@
  * Tests for the main Hono app and interaction handlers
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import app from './index.js';
 import {
   InteractionType,
@@ -547,8 +547,21 @@ describe('index.ts', () => {
   });
 
   describe('POST /webhooks/github', () => {
-    const githubEnv = (): Env => ({
+    /**
+     * KV double this suite asserts on directly: the announce-once memo
+     * (`announced:v:<version>`, FINDING-021) is read and written through it.
+     */
+    const announceKV = () => ({
+      get: vi.fn().mockResolvedValue(null),
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
+      getWithMetadata: vi.fn().mockResolvedValue({ value: null, metadata: null }),
+    });
+
+    const githubEnv = (kv: ReturnType<typeof announceKV> = announceKV()): Env => ({
       ...mockEnv,
+      KV: kv as unknown as KVNamespace,
       GITHUB_WEBHOOK_SECRET: 'test-github-secret', // pragma: allowlist secret
       ANNOUNCEMENT_CHANNEL_ID: 'test-announcement-channel',
     });
@@ -569,19 +582,66 @@ describe('index.ts', () => {
       ...overrides,
     });
 
-    const postPush = (body: string, env: Env = githubEnv()) =>
-      app.fetch(
-        new Request('http://localhost/webhooks/github', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Hub-Signature-256': 'sha256=irrelevant-mocked',
-          },
-          body,
-        }),
-        env,
+    /** A head commit whose file list touches the product-level changelog. */
+    const changelogCommit = (overrides: Record<string, unknown> = {}) => ({
+      id: 'abc',
+      message: 'Merge pull request',
+      timestamp: '2026-08-28T23:36:41Z',
+      url: 'https://github.com/FlashGalatine/xivdyetools/commit/abc',
+      author: { name: 'x', email: 'x@example.com', username: 'x' },
+      added: [],
+      removed: [],
+      modified: ['CHANGELOG-laymans.md'],
+      ...overrides,
+    });
+
+    /**
+     * `options.headers` overrides the defaults; an explicit `undefined` drops
+     * the header entirely (GitHub always stamps `X-GitHub-Event`, but a
+     * hand-rolled caller need not).
+     */
+    const postPush = (
+      body: string,
+      options: { env?: Env; headers?: Record<string, string | undefined> } = {},
+    ) => {
+      const merged: Record<string, string | undefined> = {
+        'Content-Type': 'application/json',
+        'X-Hub-Signature-256': 'sha256=irrelevant-mocked',
+        'X-GitHub-Event': 'push',
+        ...options.headers,
+      };
+      const headers = Object.fromEntries(
+        Object.entries(merged).filter((pair): pair is [string, string] => pair[1] !== undefined),
+      );
+      return app.fetch(
+        new Request('http://localhost/webhooks/github', { method: 'POST', headers, body }),
+        options.env ?? githubEnv(),
         mockCtx,
       );
+    };
+
+    let fetchSpy: MockInstance<typeof fetch> | undefined;
+
+    /** Signature verified + changelog fetched/parsed — the announce path's setup. */
+    const arrangeAnnounce = async () => {
+      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+      const { parseLatestVersion } = await import('./services/changelog-parser.js');
+      const { sendAnnouncement } = await import('./services/announcements.js');
+      vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
+      const entry = { version: '5.0.0', date: '2026-08-28', sections: [] };
+      vi.mocked(parseLatestVersion).mockReturnValue(entry as never);
+      // A fresh Response per call: a redelivery test calls the route twice and
+      // a Response body can only be consumed once.
+      fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(async () => new Response('## [5.0.0] - 2026-08-28\n', { status: 200 }));
+      return { entry, fetchSpy, sendAnnouncement: vi.mocked(sendAnnouncement) };
+    };
+
+    afterEach(() => {
+      fetchSpy?.mockRestore();
+      fetchSpy = undefined;
+    });
 
     it('accepts a real-sized push payload (> 10 KB) instead of answering 413', async () => {
       const { verifyGitHubSignature } = await import('./utils/github-verify.js');
@@ -609,45 +669,23 @@ describe('index.ts', () => {
     });
 
     it('announces when only head_commit lists CHANGELOG-laymans.md (commits truncated)', async () => {
-      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
-      const { parseLatestVersion } = await import('./services/changelog-parser.js');
-      const { sendAnnouncement } = await import('./services/announcements.js');
-      vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
-      const entry = { version: '5.0.0', date: '2026-08-28', sections: [] };
-      vi.mocked(parseLatestVersion).mockReturnValue(entry as never);
-      const fetchSpy = vi
-        .spyOn(globalThis, 'fetch')
-        .mockResolvedValue(new Response('## [5.0.0] - 2026-08-28\n', { status: 200 }));
+      const { fetchSpy: fetched, sendAnnouncement, entry } = await arrangeAnnounce();
 
-      try {
-        const mergeCommit = {
-          id: 'abc',
-          message: 'Merge pull request',
-          timestamp: '2026-08-28T23:36:41Z',
-          url: 'https://github.com/FlashGalatine/xivdyetools/commit/abc',
-          author: { name: 'x', email: 'x@example.com', username: 'x' },
-          added: [],
-          removed: [],
-          modified: ['CHANGELOG-laymans.md'],
-        };
-        const res = await postPush(
-          JSON.stringify(pushPayload({ commits: [], head_commit: mergeCommit })),
-        );
+      const res = await postPush(
+        JSON.stringify(pushPayload({ commits: [], head_commit: changelogCommit() })),
+      );
 
-        expect(res.status).toBe(200);
-        expect(fetchSpy).toHaveBeenCalledWith(
-          'https://raw.githubusercontent.com/FlashGalatine/xivdyetools/main/CHANGELOG-laymans.md',
-          expect.anything(),
-        );
-        expect(sendAnnouncement).toHaveBeenCalledWith(
-          'test-token',
-          'test-announcement-channel',
-          entry,
-          'https://github.com/FlashGalatine/xivdyetools',
-        );
-      } finally {
-        fetchSpy.mockRestore();
-      }
+      expect(res.status).toBe(200);
+      expect(fetched).toHaveBeenCalledWith(
+        'https://raw.githubusercontent.com/FlashGalatine/xivdyetools/main/CHANGELOG-laymans.md',
+        expect.anything(),
+      );
+      expect(sendAnnouncement).toHaveBeenCalledWith(
+        'test-token',
+        'test-announcement-channel',
+        entry,
+        'https://github.com/FlashGalatine/xivdyetools',
+      );
     });
 
     it('skips when neither commits nor head_commit touch the changelog', async () => {
@@ -658,16 +696,7 @@ describe('index.ts', () => {
       const res = await postPush(
         JSON.stringify(
           pushPayload({
-            head_commit: {
-              id: 'def',
-              message: 'chore',
-              timestamp: '2026-08-29T00:00:00Z',
-              url: 'https://github.com/FlashGalatine/xivdyetools/commit/def',
-              author: { name: 'x', email: 'x@example.com', username: 'x' },
-              added: [],
-              removed: [],
-              modified: ['README.md'],
-            },
+            head_commit: changelogCommit({ id: 'def', modified: ['README.md'] }),
           }),
         ),
       );
@@ -675,6 +704,158 @@ describe('index.ts', () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toMatchObject({ message: 'Changelog not modified, skipping' });
       expect(sendAnnouncement).not.toHaveBeenCalled();
+    });
+
+    // FINDING-021: the HMAC secret is the only gate on this route, so a holder
+    // of it must not be able to choose which repository gets announced.
+    it('refuses a push whose repository is not the pinned one', async () => {
+      const { fetchSpy: fetched, sendAnnouncement } = await arrangeAnnounce();
+
+      const res = await postPush(
+        JSON.stringify(
+          pushPayload({
+            repository: {
+              full_name: 'evil/xivdyetools',
+              html_url: 'https://evil.example/x',
+              description: 'x'.repeat(16_000),
+            },
+            head_commit: changelogCommit(),
+          }),
+        ),
+      );
+
+      expect(res.status).toBe(403);
+      expect(await res.json()).toMatchObject({ error: 'Repository not allowed' });
+      expect(fetched).not.toHaveBeenCalled();
+      expect(sendAnnouncement).not.toHaveBeenCalled();
+    });
+
+    // FINDING-021: the announced link is a constant, so a payload that lies
+    // about `html_url` cannot mask an arbitrary destination in the embed.
+    it('announces with the pinned repository URL, not the payload html_url', async () => {
+      const { fetchSpy: fetched, sendAnnouncement, entry } = await arrangeAnnounce();
+
+      const res = await postPush(
+        JSON.stringify(
+          pushPayload({
+            repository: {
+              full_name: 'FlashGalatine/xivdyetools',
+              html_url: 'https://evil.example/x',
+              description: 'x'.repeat(16_000),
+            },
+            head_commit: changelogCommit(),
+          }),
+        ),
+      );
+
+      expect(res.status).toBe(200);
+      expect(fetched).toHaveBeenCalledWith(
+        'https://raw.githubusercontent.com/FlashGalatine/xivdyetools/main/CHANGELOG-laymans.md',
+        expect.anything(),
+      );
+      expect(sendAnnouncement).toHaveBeenCalledWith(
+        'test-token',
+        'test-announcement-channel',
+        entry,
+        'https://github.com/FlashGalatine/xivdyetools',
+      );
+    });
+
+    // FINDING-021: GitHub signs the `ping` it sends when a hook is created.
+    it('answers a ping with pong without parsing the body', async () => {
+      const { fetchSpy: fetched, sendAnnouncement } = await arrangeAnnounce();
+
+      // Deliberately not JSON: a 200 pong proves the body is never parsed.
+      const res = await postPush('{ this is not json', {
+        headers: { 'X-GitHub-Event': 'ping' },
+      });
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ success: true, message: 'pong' });
+      expect(fetched).not.toHaveBeenCalled();
+      expect(sendAnnouncement).not.toHaveBeenCalled();
+    });
+
+    // FINDING-021: 2xx (not 4xx) keeps the hook healthy in GitHub's delivery log.
+    it.each([
+      ['a non-push event', { 'X-GitHub-Event': 'release' }],
+      ['a delivery with no event header', { 'X-GitHub-Event': undefined }],
+    ])('ignores %s', async (_label, headers) => {
+      const { fetchSpy: fetched, sendAnnouncement } = await arrangeAnnounce();
+
+      const res = await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
+        headers,
+      });
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ success: true, message: 'Ignored event' });
+      expect(fetched).not.toHaveBeenCalled();
+      expect(sendAnnouncement).not.toHaveBeenCalled();
+    });
+
+    // FINDING-021: the hook fires before the deploy finishes, so a Redeliver is
+    // routine — it must not re-post a version that already went out (3× on
+    // 2026-08-29).
+    it('memoises the announced version for 90 days', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      const kv = announceKV();
+
+      const res = await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
+        env: githubEnv(kv),
+      });
+
+      expect(res.status).toBe(200);
+      expect(sendAnnouncement).toHaveBeenCalledOnce();
+      expect(kv.put).toHaveBeenCalledWith(
+        'announced:v:5.0.0',
+        '1',
+        expect.objectContaining({ expirationTtl: 7_776_000 }),
+      );
+    });
+
+    it('skips a version the memo already holds', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      const kv = announceKV();
+      kv.get.mockImplementation(async (key: string) => (key === 'announced:v:5.0.0' ? '1' : null));
+
+      const res = await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
+        env: githubEnv(kv),
+      });
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({
+        success: true,
+        message: 'Already announced',
+        version: '5.0.0',
+      });
+      expect(sendAnnouncement).not.toHaveBeenCalled();
+      expect(kv.put).not.toHaveBeenCalled();
+    });
+
+    it('does not memoise a failed send, so a redelivery still announces', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      // A stateful memo: what the first delivery writes, the second reads.
+      const memo = new Map<string, string>();
+      const kv = announceKV();
+      kv.get.mockImplementation(async (key: string) => memo.get(key) ?? null);
+      kv.put.mockImplementation(async (key: string, value: string) => {
+        memo.set(key, value);
+      });
+      const env = githubEnv(kv);
+      const body = JSON.stringify(pushPayload({ head_commit: changelogCommit() }));
+
+      sendAnnouncement.mockRejectedValueOnce(new Error('Discord rejected the embed'));
+      const failed = await postPush(body, { env });
+
+      expect(failed.status).toBe(500);
+      expect(await failed.json()).toMatchObject({ error: 'Internal Server Error' });
+      expect(memo.has('announced:v:5.0.0')).toBe(false);
+
+      const retried = await postPush(body, { env });
+
+      expect(retried.status).toBe(200);
+      expect(sendAnnouncement).toHaveBeenCalledTimes(2);
+      expect(memo.get('announced:v:5.0.0')).toBe('1');
     });
   });
 

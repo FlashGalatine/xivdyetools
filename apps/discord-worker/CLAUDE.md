@@ -83,7 +83,7 @@ Discord  ──POST /──►  Ed25519 verify (utils/verify.ts)
                   defer  →  follow-up via Discord REST
 ```
 
-The `/webhooks/preset-submission` endpoint receives notifications from `presets-api` and posts embeds + approve/reject buttons to the moderation channel. The `/webhooks/github` endpoint listens for pushes that modify `CHANGELOG-laymans.md` and announces releases to the announcement channel.
+The `/webhooks/preset-submission` endpoint receives notifications from `presets-api` and posts embeds + approve/reject buttons to the moderation channel. The `/webhooks/github` endpoint listens for pushes that modify `CHANGELOG-laymans.md` and announces releases to the announcement channel — only `push` events from `FlashGalatine/xivdyetools` (`GITHUB_ANNOUNCE_REPO`/`GITHUB_ANNOUNCE_REPO_URL` in `src/index.ts`; the payload's `repository` is only compared, never used to build a URL), and each version only once (KV `announced:v:<version>`, 90-day TTL, written after a successful send), so a GitHub *Redeliver* is safe (FINDING-021).
 
 ### Key Directories
 
@@ -140,7 +140,7 @@ src/
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favourites, analytics counters |
+| `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favourites, analytics counters, announced-version memo (`announced:v:<version>`) |
 | `ANALYTICS` | Analytics Engine (`xivdyetools_bot_analytics`) | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
 | `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes) |
@@ -288,7 +288,7 @@ Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/
 | `GET /health` | None | Health probe |
 | `POST /` | Ed25519 | Discord interactions |
 | `POST /webhooks/preset-submission` | Bearer (`INTERNAL_WEBHOOK_SECRET`) | Forwarded preset submissions from web app |
-| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events that update the root (product-level) `CHANGELOG-laymans.md` |
+| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events that update the root (product-level) `CHANGELOG-laymans.md` — `push` events from `FlashGalatine/xivdyetools` only (`ping` → pong, other events → `Ignored event`, other repositories → 403), each version announced once (redelivery is safe) |
 
 ## Testing
 

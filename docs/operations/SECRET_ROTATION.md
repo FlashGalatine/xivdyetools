@@ -144,7 +144,7 @@ Developer portal → OAuth2 → *Reset Secret*, then `pnpm --filter xivdyetools-
 
 ### 6. `GITHUB_WEBHOOK_SECRET`
 
-Generate, set on discord-worker (`--env production`), then update the webhook secret on the GitHub repository webhook (Settings → Webhooks → the changelog webhook). Verify with *Redeliver* on a recent `push` delivery → 200.
+Generate, set on discord-worker (`--env production`), then update the webhook secret on the GitHub repository webhook (Settings → Webhooks → the changelog webhook). Verify with *Redeliver* on a recent `push` delivery → 200. The redelivery is safe to repeat: since FINDING-021 the route announces only `push` events from `FlashGalatine/xivdyetools` and only once per version (memoised in KV for 90 days), so a rerun answers `200 {"message":"Already announced"}` instead of re-posting the release.
 
 ### 7. `CLOUDFLARE_API_TOKEN` (CI)
 
