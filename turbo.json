@@ -57,8 +57,13 @@
       // Accepted cost: since `inputs` is one shared definition for every
       // package, `apps/*/wrangler.toml` makes ANY app's wrangler.toml edit
       // invalidate the test cache for EVERY package in the monorepo, not
-      // just the four that read one — there is no narrower glob that still
-      // covers the cross-package reads without listing each pair by hand.
+      // just the four that read one — no glob narrower than this shared
+      // list still covers the cross-package reads. A per-package
+      // Turborepo 2.x Package Configuration (`"extends": ["//"]` in e.g.
+      // apps/image-worker/turbo.json) COULD let each of the four name only
+      // its own pair(s) instead; the repo uses none of those today, and
+      // the single shared glob was kept as the simpler choice, not because
+      // no narrower alternative exists.
       "inputs": [
         "src/**",
         "tests/**",

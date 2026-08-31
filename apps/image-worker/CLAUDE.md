@@ -190,6 +190,15 @@ reachable on a *real* custom-domain hostname, which never ends in `.workers.dev`
 straight past the guard into `validateAndFetchImage`. Only `src/wrangler-config.test.ts` — which
 asserts no `routes` exist in any spelling wrangler accepts — covers that axis.
 
+**Both controls guard the REPO's config, not Cloudflare's live account state.**
+`src/wrangler-config.test.ts` reads `wrangler.toml` from disk; it cannot see a `workers_dev`
+toggle or a route added directly through the Cloudflare dashboard or API, bypassing the repo
+entirely. The in-code hostname guard still catches a dashboard-enabled `workers_dev`, since it
+checks the actual incoming hostname at runtime rather than any file — but a dashboard-added route
+produces a real custom-domain hostname that neither control sees, invisible until the next
+`wrangler deploy` overwrites the account's state with what the repo declares (none, today).
+"Test-enforced" means the repo cannot drift silently; it does not mean the account cannot.
+
 ### SSRF Protection
 
 `validateImageUrl()` (`validators.ts`) only allows `https:` URLs whose hostname is exactly

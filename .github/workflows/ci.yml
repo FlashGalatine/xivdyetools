@@ -130,6 +130,50 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # 2026-08-30 FINDING-023 S8-R14: every step below is filtered by
+      # '...[HEAD^]' -- changed packages PLUS THEIR PNPM/TURBO DEPENDENTS.
+      # These four wrangler-config tests are the one place in the repo a
+      # CROSS-PACKAGE invariant is asserted (each reads at least one
+      # sibling app's wrangler.toml), and none of the four apps is a
+      # dependent of any other in the pnpm/turbo graph (image-worker
+      # depends only on worker-kit) -- so affected-package selection is
+      # structurally wrong for them. A PR that edits only, say,
+      # discord-worker/wrangler.toml (retargeting the IMAGE_WORKER service
+      # binding, or presets-api/wrangler.toml retargeting TOKEN_BLACKLIST)
+      # selects that one app alone; the sibling's cross-worker assertion --
+      # the only test that would have caught the drift -- never runs, and
+      # the PR merges green only to fail loudly at deploy time with nothing
+      # here to warn first. Run unconditionally, every CI invocation,
+      # regardless of what changed. Cheap (single-digit seconds each) and
+      # needs nothing beyond the install above -- no build, no --filter.
+      # `--coverage.enabled=false` overrides oauth's vitest.config.ts
+      # (`coverage.enabled: true` unconditionally, 90/85/90/90 thresholds),
+      # which would otherwise fail this narrow a slice on coverage alone,
+      # not on its assertions; applied to all four for one consistent
+      # invocation shape even though only oauth needs it today. `set +e` +
+      # manual exit-code accumulation so all four run and report even when
+      # an earlier one is red, instead of bash's default stop-on-first-
+      # failure (verified locally: a mid-list failure still lets the last
+      # one run, and the step's own exit code is still non-zero).
+      #
+      # Do NOT add apps/*/wrangler.toml to any DEPLOY workflow's path
+      # filter -- that would make editing one worker's config deploy a
+      # different one. This step only ever runs `vitest run` against a
+      # named file; it deploys nothing.
+      - name: Wrangler config invariants (cross-package, always run)
+        run: |
+          set +e
+          status=0
+          pnpm --filter xivdyetools-image-worker exec vitest run src/wrangler-config.test.ts --coverage.enabled=false
+          status=$((status + $?))
+          pnpm --filter xivdyetools-presets-api exec vitest run tests/wrangler-config.test.ts --coverage.enabled=false
+          status=$((status + $?))
+          pnpm --filter xivdyetools-moderation-worker exec vitest run tests/wrangler-config.test.ts --coverage.enabled=false
+          status=$((status + $?))
+          pnpm --filter xivdyetools-oauth-worker exec vitest run src/__tests__/wrangler-config.test.ts --coverage.enabled=false
+          status=$((status + $?))
+          exit $status
+
       - name: Lint (affected)
         run: pnpm turbo run lint --filter='...[HEAD^]'
 
