@@ -178,6 +178,13 @@ Worker could turn into an unauthenticated INTERNET-facing decode/SSRF surface):
   that neither environment has `workers_dev` on or any route declared. It only matters if that
   primary control is ever defeated by a config flip.
 
+**The guard and the config test cover different axes, and neither substitutes for the other.**
+The hostname guard only ever sees a `*.workers.dev` hostname — what a `workers_dev` flip
+produces. It cannot see a `routes` addition: a route makes this Worker reachable on a real
+custom-domain hostname that never ends in `.workers.dev`, reaching the decode path straight past
+the guard. Only the config test's routes check (widened in a later fix round to cover every
+spelling wrangler accepts, not just one) covers that axis.
+
 See `apps/image-worker/CHANGELOG.md`'s `[1.2.0]` entry and `apps/image-worker/CLAUDE.md`'s
 "Public-Surface Guard" section for the current, maintained description.
 

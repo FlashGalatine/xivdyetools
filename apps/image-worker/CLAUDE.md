@@ -182,6 +182,14 @@ unmatched-route response, via `c.notFound()`) rather than a `403`: a flipped dep
 still look exactly like the routeless worker it is supposed to be, not confirm to a scanner that
 something is being deliberately gatekept.
 
+**The guard and the config test cover different axes of the same invariant, and neither
+substitutes for the other.** The hostname guard only ever sees a `*.workers.dev` hostname —
+exactly what a `workers_dev` flip produces. It cannot see a `routes` addition: a route (e.g.
+`route = { pattern = "img.xivdyetools.app", custom_domain = true }`) makes this Worker publicly
+reachable on a *real* custom-domain hostname, which never ends in `.workers.dev` and sails
+straight past the guard into `validateAndFetchImage`. Only `src/wrangler-config.test.ts` — which
+asserts no `routes` exist in any spelling wrangler accepts — covers that axis.
+
 ### SSRF Protection
 
 `validateImageUrl()` (`validators.ts`) only allows `https:` URLs whose hostname is exactly

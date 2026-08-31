@@ -63,9 +63,15 @@ app.use(
  *
  * Placed after requestId/logger rather than before: neither of those two
  * middlewares reads the body, fetches, or decodes anything, so ordering
- * after them still satisfies "before any body read/fetch/decode" while
- * making a config-drift hit visible in the structured request log instead
- * of disappearing silently.
+ * after them still satisfies "before any body read/fetch/decode". Fix
+ * round 2 (S8-R13): this comment previously claimed the ordering makes a
+ * config-drift hit "visible in the structured request log" — optimistic.
+ * No `wrangler.toml` in this repo declares an `[observability]` block, and
+ * the 2026-08-29 security audit found Workers Logs off on all nine
+ * scripts, so by default nothing persists that log line anywhere. Ordering
+ * after requestId/logger means a hit is visible during a live
+ * `wrangler tail` session, not after the fact — still worth the free
+ * ordering, just not the retroactive visibility this used to claim.
  *
  * 404, not 403: this Worker's whole premise is "no public surface exists
  * here" (see CLAUDE.md / README.md). A flipped deployment should still

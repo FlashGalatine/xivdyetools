@@ -21,9 +21,23 @@
  * nothing to notice. This is the fourth and last of a config-drift test set
  * this branch added — presets-api (Sprint 1), oauth (Sprint 2),
  * moderation-worker (Sprint 4) — after this file, FINDING-023 closes.
+ *
+ * Fix round 2 (S8-R12): the edit this file most needs to catch is not
+ * setting `workers_dev` to `true` — it is deleting the `workers_dev = false`
+ * line entirely. wrangler 4.126.0 (the pinned version; verified directly
+ * against its bundled source, `getSubdomainValues`/`getSubdomainValuesAPIMock`
+ * in wrangler-dist/cli.js) computes `defaultWorkersDev = routes.length === 0`
+ * whenever the key is absent from config, and both of this worker's
+ * environments have zero routes — so a "tidy-up" that drops the line
+ * publishes it exactly as surely as writing `true` would, with no line that
+ * even looks suspicious in a diff. The two POSITIVE `toMatch(/^workers_dev =
+ * false$/m)` assertions below catch a deletion (the expected string is
+ * simply no longer there); the "never true anywhere" guard on its own would
+ * NOT, since a deleted line leaves no `true` text to find. Both assertion
+ * styles matter, for two different failure shapes.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -75,6 +89,20 @@ const presetsApiToml = readFileSync(
  * the character right after `^\s*` would have to be `#`, and neither
  * alternative accepts that. Verified directly (see the mutation table in
  * the task report) rather than assumed.
+ *
+ * Known limit of matching text instead of parsing TOML: a few spellings
+ * that move the relevant key or header off the shape these regexes expect
+ * still slip through — a quoted bare key (`"routes" = [...]`, which
+ * wrangler normalises like the unquoted one) and an inline table (`[env]`
+ * + `staging = { routes = [...] }`), both ruled out by the same limitation
+ * in the `workers_dev` check above and in all three sibling tests. The
+ * SAME class of gap applies to the environment-name check further below:
+ * a quoted environment name in a header (`[env."staging"]`) is not seen by
+ * `env\.(\w+)` either, since `"` is not a word character. All were
+ * confirmed deployable, and none are closed here. Recorded rather than
+ * chased: nobody writes wrangler config that way, and closing it means
+ * taking on a TOML parser for a guard whose job is to catch an ordinary
+ * edit.
  */
 const ROUTE_DECLARATION = new RegExp(
   [
@@ -95,6 +123,20 @@ function serviceBinding(source: string, header: string, binding: string): string
 }
 
 describe('wrangler.toml', () => {
+  /**
+   * Fix round 2 (S8-R11): wrangler resolves config in a fixed order —
+   * wrangler.json, then wrangler.jsonc, then wrangler.toml — so either file
+   * existing alongside wrangler.toml would SHADOW the exact file every
+   * other assertion in this suite reads: wrangler would deploy from a
+   * config this file has never looked at, while staying green throughout.
+   * Checked first, ahead of every other assertion here, because if this one
+   * fails the rest are meaningless.
+   */
+  it('has no wrangler.json or wrangler.jsonc shadowing wrangler.toml', () => {
+    expect(existsSync(join(__dirname, '..', 'wrangler.json'))).toBe(false);
+    expect(existsSync(join(__dirname, '..', 'wrangler.jsonc'))).toBe(false);
+  });
+
   it('finds the [env.production] header (sanity check for the slice below)', () => {
     expect(productionStart).toBeGreaterThan(-1);
   });
@@ -162,7 +204,9 @@ describe('wrangler.toml', () => {
    * header shape, this extracts the environment NAME from every header
    * that starts with `env.` — sub-tables and array-of-tables included —
    * and asserts the set of distinct names, which is what actually
-   * determines what `--env` values are deployable.
+   * determines what `--env` values are deployable. (A quoted environment
+   * name — `[env."staging"]` — is the one shape this still misses; see the
+   * "known limit" note on `ROUTE_DECLARATION` above.)
    */
   it('declares exactly one environment name (production) across every env.* header', () => {
     const envNames = [...new Set([...toml.matchAll(/^\s*\[{1,2}\s*env\.(\w+)/gm)].map((m) => m[1]))];

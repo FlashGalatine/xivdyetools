@@ -42,13 +42,32 @@
       // contract test; vitest.*.ts covers the md-as-text plugin and the
       // integration config. Without them an edit to the notes replays a
       // cached PASS.
+      //
+      // 2026-08-30 FINDING-023 S8-R9: `wrangler.toml` (this package's own)
+      // and `$TURBO_ROOT$/apps/*/wrangler.toml` (every package's — the
+      // cross-package half, same `$TURBO_ROOT$` technique the `lint` task
+      // above already uses for the root knip.jsonc) were both missing.
+      // presets-api/oauth/moderation-worker/image-worker's wrangler-config
+      // tests read their own toml AND at least one sibling's, so without
+      // these a commit touching only a toml left every hashed input
+      // byte-identical and `pnpm turbo run … test` replayed a cached PASS
+      // over exactly the edit those tests exist to catch — demonstrated
+      // empirically (Sprint 8 fix-round-2 commit message, image-worker) by
+      // editing image-worker's wrangler.toml and observing FULL TURBO.
+      // Accepted cost: since `inputs` is one shared definition for every
+      // package, `apps/*/wrangler.toml` makes ANY app's wrangler.toml edit
+      // invalidate the test cache for EVERY package in the monorepo, not
+      // just the four that read one — there is no narrower glob that still
+      // covers the cross-package reads without listing each pair by hand.
       "inputs": [
         "src/**",
         "tests/**",
         "scripts/**/*.js",
         "vitest.config.*",
         "vitest.*.ts",
-        "CHANGELOG-laymans.md"
+        "CHANGELOG-laymans.md",
+        "wrangler.toml",
+        "$TURBO_ROOT$/apps/*/wrangler.toml"
       ],
       "outputs": ["coverage/**"]
     },
