@@ -1,9 +1,15 @@
-# gitleaks configuration — FINDING-030 (2026-08-21 security audit)
+# gitleaks configuration — FINDING-030 (2026-08-21 security audit), narrowed by
+# 2026-08-29 FINDING-029 (the path allowlist used to exempt three whole directory trees, and
+# the line allowlist used to exempt any line that merely *mentioned* a public identifier's
+# name rather than one whose own matched text had the identifier's value shape — both let a
+# real secret riding along on the same path/line go unreported; see that finding for the fix).
 #
 # Used by the `secret-scan` job in .github/workflows/ci.yml (GITLEAKS_CONFIG)
 # and by `gitleaks git|dir` locally. Every allowlist entry below was checked
-# against a full-history scan on 2026-08-21 (42 hits, all false positives);
-# add new ones only for a confirmed false positive, with the reason.
+# against a full-history scan on 2026-08-21 (42 hits, all false positives) and re-derived from
+# a fresh, allowlist-free scan on 2026-08-31 (36 working-tree hits, 35 history hits — every one
+# accounted for below; see FINDING-029's evidence file); add new ones only for a confirmed
+# false positive, with the reason and how it was verified.
 
 title = "xivdyetools"
 
@@ -16,23 +22,54 @@ disabledRules = ["discord-client-id"]
 
 # Test fixtures and mocks — fake secrets are the point of these files
 # (`test-signing-secret-padding-1234`, synthetic JWTs, `sk-1234…`).
+#
+# FINDING-029: this used to also exempt three whole directory trees — `(^|/)tests?/`,
+# `(^|/)test-utils/`, `(^|/)e2e/` — so a real secret committed to any *non-test* file under
+# those paths (fixtures, helpers, all of packages/test-utils/src/**, which every test run
+# consumes) was never reported. A 2026-08-31 scan with those three patterns removed found zero
+# leaks, tree or full history, among the 35 tracked files that lost the exemption (evidence:
+# FINDING-029's evidence file) — so nothing is added back; only file-shaped patterns remain.
 [[allowlists]]
 description = "Test fixtures and mocks"
 paths = [
   '''(^|/)[^/]+\.test\.ts$''',
   '''(^|/)[^/]+\.spec\.ts$''',
   '''(^|/)__tests__/''',
-  '''(^|/)tests?/''',
-  '''(^|/)test-utils/''',
-  '''(^|/)e2e/''',
 ]
 
-# Known non-secrets the generic rule trips on
+# Known non-secrets the generic rule trips on — anchored to the PUBLIC VALUE's shape, not to
+# the name of the variable that holds it (FINDING-029: the previous version set
+# `regexTarget = "line"` with bare variable-name substrings, so any line merely mentioning one
+# of these names — e.g. `DISCORD_CLIENT_ID=… DISCORD_CLIENT_SECRET=…` on one line — was exempt
+# from every rule, not just the one that recognised the public value). `regexTarget` here is
+# the default ("match": the specific candidate string a rule flagged), so each regex only
+# suppresses a finding whose own matched text has the known-public shape; a different value
+# sharing the line is judged on its own merits.
 [[allowlists]]
 description = "OAuth client IDs (public, shipped in wrangler [vars]) and web-app localStorage key names"
-regexTarget = "line"
+regexTarget = "match"
 regexes = [
-  '''XIVAUTH_CLIENT_ID''',
-  '''DISCORD_CLIENT_ID''',
-  '''storageKey\s*:''',
+  # Discord application/client IDs are Discord snowflakes: 17-20 decimal digits, always public
+  # (sent to end users in OAuth/invite URLs; the dedicated discord-client-id rule is already
+  # off, above). Verified 2026-08-31: with that rule disabled and no line-level allowlist, a
+  # full tree+history scan found zero findings on any DISCORD_CLIENT_ID line — none of
+  # gitleaks' other default rules currently match a bare 17-20-digit value. Kept anyway,
+  # narrowed to the value shape, as a documented backstop if a future rule ever does — it is
+  # not silencing anything today.
+  '''DISCORD_CLIENT_ID\s*[:=]\s*['"]?\d{17,20}['"]?''',
+  # XIVAuth's OAuth client id (apps/oauth/wrangler.toml), a `phx-`-prefixed token — public by
+  # the same client-id/client-secret split as Discord's (sent in the authorize URL,
+  # apps/oauth/src/handlers/xivauth.ts). Verified 2026-08-31: matches exactly the 2 tree + 3
+  # history findings this id produces (wrangler.toml at its current and two prior line
+  # numbers, plus one audit doc quoting it) and nothing else.
+  '''XIVAUTH_CLIENT_ID\s*[:=]\s*['"]?phx-[A-Za-z0-9_-]{16,}['"]?''',
+  # web-app localStorage key names: compile-time string literals naming a persisted UI-state
+  # slot (apps/web-app/src/services/tool-panel-builders.ts), never a credential. Anchored to
+  # an identifier/slug shape — letters, digits, `_`/`-`, starting with a letter — rather than
+  # the bare `storageKey` name, so a real secret would itself have to look like a plain
+  # identifier (no `.`, `+`, `/`, `=` padding, or high-entropy runs) to slip through. Verified
+  # 2026-08-31: matches exactly the 3 tree + 3 history comparison-tool.ts findings that
+  # actually trip the generic-api-key rule (most storageKey values are short/low-entropy
+  # enough that no rule flags them at all) and nothing else.
+  '''storageKey\s*[:=]\s*['"][A-Za-z][A-Za-z0-9_-]*['"]''',
 ]
