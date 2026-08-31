@@ -23,6 +23,7 @@ A bare `wrangler deploy` does **not** mean the same thing on every worker.
 | `deploy-web-app-beta.yml` | The beta Pages project (`beta.xivdyetools.app`) | same paths as `deploy-web-app.yml` above, but push to **any non-main branch** (not just `main`) — this is the premise of 2026-08-29 FINDING-028, not a typo |
 | `deploy-discord-worker.yml` | `xivdyetools-discord-worker` | `apps/discord-worker/**`, `packages/{core,types,logger,auth,bot-logic,svg,worker-kit}/**` |
 | `deploy-discord-worker-beta.yml` | `xivdyetools-discord-worker-dev` (the beta bot) | same paths as `deploy-discord-worker.yml` above, but push to **any non-main branch** (not just `main`) |
+| `deploy-og-worker-beta.yml` | `xivdyetools-og-worker-dev` (the routed beta worker: `beta.xivdyetools.app/*` + `og-beta.xivdyetools.app`) | same paths as `deploy-og-worker.yml` below, but push to **any non-main branch** (not just `main`) |
 | `deploy-image-worker.yml` | `xivdyetools-image-worker` | `apps/image-worker/**` |
 | `deploy-moderation-worker.yml` | `xivdyetools-moderation-worker` | `apps/moderation-worker/**` + shared packages |
 | `deploy-presets-api.yml` | `xivdyetools-presets-api` | `apps/presets-api/**` + shared packages |

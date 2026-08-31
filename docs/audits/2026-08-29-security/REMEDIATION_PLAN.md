@@ -190,7 +190,7 @@ Terminal for FINDING-015: every consumer stopped using v1 in S1/S3/S4, so removi
 
 **Ends with:** auth gates + `pnpm turbo run type-check --filter='./apps/*'` (no consumer still imports v1) → bump `1.4.0 → 2.0.0` (MAJOR: public export removal) → merge → Actions publish (`@xivdyetools/auth`).
 
-## Sprint 12 — CI / repo hardening (P3)
+## Sprint 12 — CI / repo hardening (P3) ✅ COMPLETED 2026-08-31 (commits `ae9ef136..55ff3852`, 8 commits; two reviewed tasks, one ruled fix round each; **FINDING-029 closed, FINDING-028 partial — the maintainer action is outstanding**)
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
 | FINDING-028 | security | LOW / LOCAL | GitHub: create environment `beta` with its own Cloudflare token (separate, narrow); `deploy-*-beta.yml`: `environment: beta` + `secrets.CLOUDFLARE_API_TOKEN_BETA`; the production token lives only in `production`; document in `DEPLOY_ENVIRONMENTS.md` + `SECRET_ROTATION.md`. |
