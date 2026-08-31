@@ -303,6 +303,13 @@ describe('S10-R18 (2026-08-30 fix round 4): safeStringify bounds a maximally-sha
   // `TestLogger.entries`, because capturing the in-memory tree is exactly
   // why this was invisible to the suite before.
 
+  // NOTE on the two tests below: if `MAX_STRINGIFY_NODES` is ever removed or
+  // raised past this shape, the depth-40 case does not go RED — it HANGS, and
+  // vitest cannot preempt synchronous JS, so CI would time out rather than
+  // report a failure. The depth-17 case is the one that fails cleanly (~106 ms)
+  // and is therefore the load-bearing regression test; depth 40 earns its place
+  // only by pinning the exact shape that stalled in review. Keep both, and
+  // reach for depth 17 first when changing the bound.
   it('bounds the EXACT structure and depth that reportedly stalled >300s (the S10-R12 test shape, 40 levels)', () => {
     let level: Record<string, unknown> = { leaf: 'x' };
     for (let i = 0; i < 40; i++) {
