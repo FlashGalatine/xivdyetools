@@ -21,36 +21,43 @@ const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
  * `ancestors` is an ANCESTOR set — nodes currently on the recursion path —
  * not a "seen anywhere" set. A node is added right before recursing into
  * its children and removed right after (in a `finally`), so a genuine
- * cycle (a node reachable from itself) is still caught, but a value
- * ALIASED from two sibling branches (`{ a: shared, b: shared }`) is
- * redacted at every reference instead of only the first. The previous
- * global "seen anywhere" `WeakSet` (BUG-024) prevented infinite recursion
- * the same way but had exactly this leak: the second reference to an
- * aliased value was skipped as "already visited" and returned unredacted —
- * `FINDING-025`'s own headline example (`{ tokens: [...] }`) leaked at the
- * second reference whenever the array was aliased.
+ * cycle (a node reachable from itself) is still caught: the callee sees
+ * itself in `ancestors` and returns the raw, unprocessed reference instead
+ * of recursing forever. The previous global "seen anywhere" `WeakSet`
+ * (BUG-024) prevented infinite recursion the same way but had a leak: a
+ * value ALIASED from two sibling branches (`{ a: shared, b: shared }`) —
+ * not a cycle, just referenced twice — was permanently marked "visited" by
+ * the first branch, so the second branch's reference came back unredacted.
+ * `FINDING-025`'s own headline example (`{ tokens: [...] }`) leaked exactly
+ * this way whenever the array was aliased.
  *
- * `budget` bounds total node visits across the whole call. Removing the
- * global dedup means a heavily-ALIASED-but-acyclic structure (the same
- * child referenced from both branches at every level of a binary chain) is
- * now walked once per path to it — exponential in depth. The budget makes
- * a pathological structure degrade safely (stop descending once
- * exhausted, leaving the un-walked remainder as-is — the same "leave it
- * alone" posture already used for a detected cycle) instead of hanging.
+ * `memo` (S10-R12, 2026-08-30 fix round 2) is a `WeakMap` from a node to
+ * its FULLY redacted result, populated on the way OUT of
+ * `redactSensitiveFields`/`redactArrayItems` — after that node's own
+ * children have all been processed, never before. This is what makes
+ * aliasing cheap instead of either (a) re-walked on every reference
+ * (exponential in an aliased structure's depth — the original motivation
+ * for a since-removed node-visit budget) or (b) silently left unscanned
+ * past some cutoff, which is what that budget did: it failed OPEN, letting
+ * an oversized context emit anything beyond the cutoff completely
+ * unredacted — a redaction bypass, not just a performance limit. With
+ * memoization every distinct node is processed exactly once, aliased
+ * references all resolve to that one (reference-identical) redacted
+ * result, and there is no cutoff to fail open past — see the S10-R12
+ * CHANGELOG entry for why a belt-and-braces cutoff was judged unnecessary
+ * on top of this rather than kept and made fail-closed.
+ *
+ * Memoizing on the way IN instead (before a node's children are processed)
+ * would be wrong: a node reached again through a genuine cycle would then
+ * receive its OWN partially-built, not-yet-fully-scanned result instead of
+ * being recognised as a cycle and left alone. The `ancestors` check runs
+ * first for exactly this reason — a node currently being processed must
+ * never be treated as "already memoized".
  */
 interface RedactionGuard {
   ancestors: WeakSet<object>;
-  budget: { remaining: number };
+  memo: WeakMap<object, unknown>;
 }
-
-/**
- * S10-R8: total node-visit budget for one top-level redaction call. Sized
- * generously for any real log context (dozens to low hundreds of nested
- * fields) while keeping a pathological structure's worst case bounded to a
- * small, fast, constant amount of work instead of the exponential blowup
- * an ancestor-only guard would otherwise allow.
- */
-const MAX_REDACT_NODES = 5000;
 
 /**
  * Abstract base logger with common functionality
@@ -194,6 +201,15 @@ export abstract class BaseLogger implements ExtendedLogger {
     // key name, so `{"token":"abc"}` and `token = abc` bypassed sanitization.
     const K = (name: string): string => `["']?${name}["']?\\s*[=:]\\s*`;
 
+    // S10-R11 (2026-08-30 fix round 1, refined in fix round 2): add the
+    // 'g' flag for a global free-text substring replace without risking a
+    // duplicate — `re.flags + 'g'` would throw `SyntaxError: Invalid flags
+    // supplied to RegExp constructor 'gg'` at the first call if either
+    // source pattern ever gained its own 'g' flag; this line's whole job
+    // is preventing future drift, so it has to survive that case too.
+    const withGlobalFlag = (re: RegExp): RegExp =>
+      new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`);
+
     return (
       message
         // Bearer tokens - typically single tokens without spaces
@@ -211,15 +227,12 @@ export abstract class BaseLogger implements ExtendedLogger {
         // verdict — see its comment for why running it over free text would
         // be a false-positive risk (sha256 hashes, cache keys) this package
         // cannot afford.
-        // S10-R11 (2026-08-30 fix round 1): preserve the source pattern's
-        // own flags (both are flagless today) instead of hardcoding 'g' —
-        // a future 'i'/'u' added to either pattern would otherwise silently
-        // not apply here, defeating the "can't drift" guarantee above.
-        .replace(new RegExp(JWT_VALUE_PATTERN.source, JWT_VALUE_PATTERN.flags + 'g'), '[REDACTED]')
-        .replace(
-          new RegExp(DISCORD_TOKEN_VALUE_PATTERN.source, DISCORD_TOKEN_VALUE_PATTERN.flags + 'g'),
-          '[REDACTED]',
-        )
+        // Preserve each source pattern's own flags (both are flagless
+        // today) instead of hardcoding 'g' — a future 'i'/'u' added to
+        // either pattern would otherwise silently not apply here,
+        // defeating the "can't drift" guarantee above.
+        .replace(withGlobalFlag(JWT_VALUE_PATTERN), '[REDACTED]')
+        .replace(withGlobalFlag(DISCORD_TOKEN_VALUE_PATTERN), '[REDACTED]')
         // BUG-025: JSON-shaped pass — catches every "…token"/"…secret"/"…password"/
         // "…key"-suffixed quoted key in one sweep, including compound names
         // (sessionToken, webhook_secret) that the per-key patterns below miss.
@@ -269,19 +282,34 @@ export abstract class BaseLogger implements ExtendedLogger {
    * `RedactionGuard`'s doc comment for why that distinction is the fix (a
    * value aliased from two sibling keys used to be redacted only at its
    * first reference, leaking the second verbatim).
+   *
+   * S10-R12 (2026-08-30 fix round 2): memoized, not budgeted. A node is
+   * checked against `ancestors` first (genuine cycle → return the raw,
+   * unprocessed reference) and `memo` second (already fully redacted via
+   * an earlier, unrelated reference → return that SAME result, so aliases
+   * resolve to one reference-identical object). Every distinct node is
+   * therefore processed exactly once regardless of how many times it is
+   * referenced, which is what makes a heavily-aliased structure cheap
+   * without needing a cutoff that could fail open on an oversized one.
    */
   protected redactSensitiveFields(context: LogContext, guard?: RedactionGuard): LogContext {
     const g: RedactionGuard = guard ?? {
       ancestors: new WeakSet<object>(),
-      budget: { remaining: MAX_REDACT_NODES },
+      memo: new WeakMap<object, unknown>(),
     };
 
-    if (g.budget.remaining <= 0) {
-      // S10-R8: budget exhausted — stop descending and leave this subtree
-      // as-is, the same posture already used for a detected cycle below.
+    if (g.ancestors.has(context)) {
+      // Genuine cycle on the CURRENT path — leave as-is rather than
+      // recursing forever. This must be checked before `memo`: a node
+      // still being processed has no memo entry yet (memoized only on the
+      // way OUT, below), so this order is actually load-bearing, not just
+      // defensive — see `RedactionGuard`'s doc comment.
       return context;
     }
-    g.budget.remaining -= 1;
+    const cached = g.memo.get(context);
+    if (cached !== undefined) {
+      return cached as LogContext;
+    }
 
     g.ancestors.add(context);
     try {
@@ -311,17 +339,12 @@ export abstract class BaseLogger implements ExtendedLogger {
         }
       }
 
-      // Recursively redact nested plain objects and array elements (FINDING-007)
+      // Recursively redact nested plain objects and array elements
+      // (FINDING-007). No pre-check against `ancestors`/`memo` needed here
+      // (S10-R12) — the callee now does both checks at its own entry, so
+      // every nested object/array is simply handed off unconditionally.
       for (const [key, value] of Object.entries(redacted)) {
         if (redacted[key] === '[REDACTED]' || value === null || typeof value !== 'object') {
-          continue;
-        }
-        if (g.ancestors.has(value)) {
-          // Genuine cycle on the CURRENT path — leave as-is rather than
-          // recursing forever. An aliased-but-acyclic sibling reference is
-          // NOT caught here, because by the time we reach it the earlier
-          // branch has already popped it from `ancestors` (see `finally`
-          // below) — that is what makes S10-R8 work.
           continue;
         }
         if (Array.isArray(value)) {
@@ -331,10 +354,17 @@ export abstract class BaseLogger implements ExtendedLogger {
         }
       }
 
+      // S10-R12: memoize on the way OUT, after every child has been fully
+      // processed — never on the way in. Memoizing early would let a node
+      // reached again through a genuine CYCLE receive its own
+      // partially-built result instead of being recognised as a cycle by
+      // the `ancestors` check above.
+      g.memo.set(context, redacted);
       return redacted;
     } finally {
       // Pop this node so a SIBLING branch that aliases the same object
-      // (not a descendant of it) sees it as unvisited and redacts it too.
+      // (not a descendant of it) sees it as unvisited — the ancestors
+      // check fails, the memo check (now populated) succeeds instead.
       g.ancestors.delete(context);
     }
   }
@@ -365,34 +395,45 @@ export abstract class BaseLogger implements ExtendedLogger {
    * Nested arrays now recurse through this method instead, so array-ness
    * is preserved at every depth.
    *
-   * S10-R8 (2026-08-30 fix round 1): shares the same ancestor+budget guard
-   * as `redactSensitiveFields` — see `RedactionGuard`'s doc comment. An
+   * S10-R8 (2026-08-30 fix round 1): shares the same ancestor guard as
+   * `redactSensitiveFields` — see `RedactionGuard`'s doc comment. An
    * aliased array (`{ a: arr, b: arr }`) is now redacted at both `a` and
    * `b`, not just the first one reached.
+   *
+   * S10-R12 (2026-08-30 fix round 2): and the same memo, for the same
+   * reason — every distinct array is walked once, aliased references
+   * resolve to the one reference-identical redacted result.
    */
   protected redactArrayItems(items: unknown[], guard: RedactionGuard): unknown[] {
-    if (guard.budget.remaining <= 0) {
+    if (guard.ancestors.has(items)) {
+      // Genuine cycle — see the matching check in redactSensitiveFields.
       return items;
     }
-    guard.budget.remaining -= 1;
+    const cached = guard.memo.get(items);
+    if (cached !== undefined) {
+      return cached as unknown[];
+    }
 
     guard.ancestors.add(items);
     try {
-      return items.map((item: unknown) => {
+      const redacted = items.map((item: unknown) => {
         if (typeof item === 'string') {
           return looksLikeSecretValue(item) ? '[REDACTED]' : item;
         }
         if (Array.isArray(item)) {
           // `Array.isArray` narrows to `any[]` per the lib types; re-assert
-          // as `unknown[]` so the branch doesn't return an implicit `any`.
-          const nested = item as unknown[];
-          return guard.ancestors.has(nested) ? nested : this.redactArrayItems(nested, guard);
+          // as `unknown[]` so this branch doesn't return an implicit `any`.
+          // No pre-check against ancestors/memo needed (S10-R12) — the
+          // callee does both at its own entry.
+          return this.redactArrayItems(item as unknown[], guard);
         }
-        if (typeof item === 'object' && item !== null && !guard.ancestors.has(item)) {
+        if (typeof item === 'object' && item !== null) {
           return this.redactSensitiveFields(item as LogContext, guard);
         }
         return item;
       });
+      guard.memo.set(items, redacted);
+      return redacted;
     } finally {
       guard.ancestors.delete(items);
     }

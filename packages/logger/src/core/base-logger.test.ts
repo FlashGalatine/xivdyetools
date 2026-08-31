@@ -772,6 +772,10 @@ describe('redaction cycle safety', () => {
     const ctx = logger.entries[0].context as { a: LogContext; b: LogContext };
     expect(ctx.a.password).toBe('[REDACTED]');
     expect(ctx.b.password).toBe('[REDACTED]');
+    // S10-R12 (2026-08-30 fix round 2): memoized on the way out, so both
+    // references resolve to the SAME redacted object, not two independently
+    // (and, before this fix, inconsistently) redacted copies.
+    expect(ctx.a).toBe(ctx.b);
   });
 
   it('redacts an aliased ARRAY at every reference too, not just the first (S10-R8)', () => {
@@ -790,52 +794,80 @@ describe('redaction cycle safety', () => {
     const ctx = logger.entries[0].context as { a: string[]; b: string[] };
     expect(ctx.a[0]).toBe('[REDACTED]');
     expect(ctx.b[0]).toBe('[REDACTED]');
+    // S10-R12: same memoization property as the object case above.
+    expect(ctx.a).toBe(ctx.b);
   });
 
-  it('bounds total work on a pathological, heavily-aliased structure instead of hanging (S10-R8 budget)', () => {
+  it('processes a heavily-aliased structure in work LINEAR in its depth, not exponential (S10-R12: memoization, not a budget)', () => {
     const logger = new TestLogger({ level: 'debug' });
+    // redactSensitiveFields is `protected`; spying on the INSTANCE (not the
+    // prototype) still intercepts every internal `this.redactSensitiveFields(...)`
+    // call made during recursion, since `this` stays this same instance
+    // throughout.
+    const spy = vi.spyOn(
+      logger as unknown as { redactSensitiveFields: (...args: unknown[]) => unknown },
+      'redactSensitiveFields',
+    );
 
     // Binary alias chain: each level references the SAME child object from
-    // BOTH of its own keys. An ancestor-only guard (no global dedup, which
-    // is exactly what S10-R8 removes) would revisit that shared child once
-    // per path to it — 2^40 visits at 40 levels, which would never finish.
-    // MAX_REDACT_NODES must cut this off instead of hanging the process.
-    let level: LogContext = { leaf: 'x' };
-    for (let i = 0; i < 40; i++) {
+    // BOTH of its own keys. Without memoization, this makes the number of
+    // redactSensitiveFields calls exponential in DEPTH (2^DEPTH). A prior
+    // version of this test asserted a wall-clock bound instead of a call
+    // count and relied on "an exponential regression will just time out";
+    // a live probe of that assumption during review showed vitest workers
+    // do NOT cleanly time out synchronous code — the run just hangs until
+    // something external kills it, so a wall-clock (or "let it hang")
+    // assertion would not go red on a regression, it would stall CI
+    // indefinitely. Counting actual calls is deterministic regardless of
+    // whether the underlying algorithm is linear or exponential, and
+    // DEPTH=15 keeps the UNMEMOIZED case safely bounded too (2^15 = 32768
+    // cheap calls, comfortably finishes either way) — this test can only
+    // pass or fail, never hang.
+    const DEPTH = 15;
+    let level: LogContext = { password: 'hunter2' };
+    for (let i = 0; i < DEPTH; i++) {
       level = { a: level, b: level };
     }
 
-    const start = Date.now();
-    expect(() => logger.info('deep', level)).not.toThrow();
-    // Generous on purpose: a correct budget finishes in low single-digit
-    // milliseconds (a few thousand cheap node visits); an unbounded
-    // ancestor-only walk of this structure would not finish in this
-    // process's lifetime, let alone 2 seconds — this is a wide margin, not
-    // a tight timing assertion.
-    expect(Date.now() - start).toBeLessThan(2000);
-    expect(logger.entries).toHaveLength(1);
+    logger.info('deep', level);
+
+    // Memoized: one real call per distinct level (DEPTH of them, plus the
+    // one-off top-level `merged` wrapper from mergeContext) plus one cheap
+    // memo-hit call per alias edge (DEPTH of them) — linear in DEPTH.
+    // Unmemoized, this would be on the order of 2^DEPTH = 32768 calls, so a
+    // generous linear-shaped ceiling (well above the true ~2×DEPTH+1, well
+    // below any exponential reading) cleanly separates the two.
+    expect(spy.mock.calls.length).toBeLessThan(DEPTH * 4);
+
+    // And the actual redaction still happened, all the way to the bottom —
+    // the secret DEPTH levels down is exactly where a budget-based cutoff
+    // would have missed it.
+    let node = logger.entries[0].context as unknown as LogContext;
+    for (let i = 0; i < DEPTH; i++) {
+      node = node.a as LogContext;
+    }
+    expect(node.password).toBe('[REDACTED]');
   });
 
-  it('honors MAX_REDACT_NODES deterministically: redacts well within budget, leaves well beyond it as-is (S10-R8 budget correctness)', () => {
+  it('redacts every reference in a large shared structure, not just the first N (S10-R12: no budget to exhaust)', () => {
     const logger = new TestLogger({ level: 'debug' });
-    // 5500 DISTINCT (non-aliased) objects — no exponential blowup here, just
-    // more nodes than the 5000-node budget. Not timing-based: this proves
-    // the budget is actually wired in and doing something observable,
-    // rather than only inferring it from "did not hang".
-    const items: LogContext[] = [];
-    for (let i = 0; i < 5500; i++) {
-      items.push({ password: 'hunter2' });
-    }
+    const shared: LogContext = { password: 'hunter2' };
+    // 6000 references to the SAME object — comfortably past the size where
+    // the since-removed MAX_REDACT_NODES=5000 budget would have kicked in
+    // and silently left the tail of this array unredacted (that budget
+    // failed OPEN — the exact defect S10-R12 replaced it for). With
+    // memoization there is no cutoff: every reference resolves to the one
+    // shared, fully-redacted copy.
+    const refs: LogContext[] = new Array(6000).fill(shared);
 
-    logger.info('wide', { items });
+    logger.info('wide', { refs });
 
-    const ctx = logger.entries[0].context as { items: LogContext[] };
-    // Well within the ~5000-node budget (root + array + item redactions).
-    expect(ctx.items[10].password).toBe('[REDACTED]');
-    // Well beyond it: the budget must be exhausted by here, so this item is
-    // left as-is — the same "leave it alone" posture already used for a
-    // detected cycle — rather than the budget being decorative and every
-    // item still getting fully redacted regardless.
-    expect(ctx.items[5499].password).toBe('hunter2');
+    const ctx = logger.entries[0].context as { refs: LogContext[] };
+    expect(ctx.refs).toHaveLength(6000);
+    expect(ctx.refs[0].password).toBe('[REDACTED]');
+    expect(ctx.refs[5999].password).toBe('[REDACTED]');
+    // Memoized: every reference is the SAME redacted object, not 6000
+    // independently redacted copies.
+    expect(ctx.refs[0]).toBe(ctx.refs[5999]);
   });
 });
