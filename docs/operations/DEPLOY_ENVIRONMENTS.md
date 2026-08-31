@@ -58,6 +58,44 @@ domain. Also guarded by that test file.
 **Scope:** `discord-worker`, `moderation-worker`, `presets-api` wrangler config; a new beta
 Discord application; documentation corrections.
 
+### Update 2026-08-29 — beta gets its own Cloudflare API token (FINDING-028)
+
+All three beta deploy workflows — `deploy-discord-worker-beta.yml`,
+`deploy-og-worker-beta.yml`, `deploy-web-app-beta.yml` — ran on any push to a non-main
+branch with **no `environment:`** and authenticated with the same repository-wide
+`secrets.CLOUDFLARE_API_TOKEN` the *production* workflows use. The 2026-08-21 audit had
+already gated the production workflows on `environment: production` (deployment branch
+policy: `main` only), but that gate constrains the workflow **YAML**, not the credential —
+a repository secret is readable by any workflow run regardless of which `environment:` it
+declares, or whether it declares one at all. A workflow file edited on a branch could
+therefore add `--env production` to a beta deploy command and, with no gate in its way,
+push straight to production with a token nothing about the beta pattern was ever meant to
+expose it to.
+
+The fix: all three now declare `environment: beta` and authenticate with
+`secrets.CLOUDFLARE_API_TOKEN_BETA` instead. **Deliberately no fallback** — never
+`CLOUDFLARE_API_TOKEN_BETA || CLOUDFLARE_API_TOKEN` — because that would leave the beta job
+able to read the production token, silently and possibly forever, which is the entire
+finding. Until the `beta` GitHub environment and its `CLOUDFLARE_API_TOKEN_BETA` secret
+exist, **all three beta deploys fail** at the `wrangler-action` step with an authentication
+error. That is true right now, on every push to a non-main branch — not only after this
+branch merges to `main` — since these workflows already trigger on branch pushes today.
+
+| | Production workflows | Beta workflows |
+|---|---|---|
+| GitHub environment | `production` | `beta` |
+| Cloudflare credential | `secrets.CLOUDFLARE_API_TOKEN` | `secrets.CLOUDFLARE_API_TOKEN_BETA` |
+| Token scope (intended) | this whole Cloudflare account | the beta Worker names + the `xivdyetools-beta` Pages project only |
+| `CLOUDFLARE_ACCOUNT_ID` | shared repository secret | shared repository secret — an account id, not a credential, so there is nothing to isolate |
+
+**Setup is a manual, one-time step**, tracked as the pre-merge item in
+`docs/operations/POST_MERGE_CHECKLIST.md` §0: create the `beta` environment, mint the
+narrow token, store it — and move `CLOUDFLARE_API_TOKEN` itself out of the repository
+secret store into the `production` environment, which closes the same gap for the nine
+*other* `environment: production` workflows (their gate has the identical weakness until
+that move happens). `docs/operations/SECRET_ROTATION.md` carries the inventory and
+rotation procedure for both tokens.
+
 ---
 
 ## Problem
@@ -261,6 +299,7 @@ is the beta worker.
 | `cancel-in-progress` | `false` | `true` — a newer commit supersedes |
 | Command registration | global, always | **guild-scoped**, only if secrets are set |
 | Smoke test | `bot.xivdyetools.app/health` | none (the `*.workers.dev` host is account-specific) |
+| Cloudflare credential | `environment: production` + `secrets.CLOUDFLARE_API_TOKEN` | `environment: beta` + `secrets.CLOUDFLARE_API_TOKEN_BETA` — separate credential since 2026-08-29 (FINDING-028) |
 
 **Optional secrets.** Add `BETA_DISCORD_TOKEN` and `BETA_DISCORD_GUILD_ID` to enable automatic
 command registration. Without them the worker still deploys and the workflow emits a notice —
@@ -330,6 +369,7 @@ Cloudflare Pages project** rather than a preview branch of the production one.
 | Workflow | `deploy-web-app.yml` (push to `main`) | `deploy-web-app-beta.yml` (push to any non-`main` branch that touches its `paths:` filter — `apps/web-app/**`, `packages/core/**`, `packages/types/**`, `packages/logger/**`, `packages/svg/**`) |
 | Deploy command | `pages deploy dist --project-name=xivdyetools` | `pages deploy dist --project-name=xivdyetools-beta --branch=beta` |
 | Backends | production `auth.` / `api.xivdyetools.app` | **the same production backends** |
+| Cloudflare credential | `environment: production` + `secrets.CLOUDFLARE_API_TOKEN` | `environment: beta` + `secrets.CLOUDFLARE_API_TOKEN_BETA` — separate credential since 2026-08-29 (FINDING-028) |
 
 **Why a second project rather than a preview branch.** A preview-branch setup
 separates beta from production by a CLI flag and a hand-edited CNAME target —

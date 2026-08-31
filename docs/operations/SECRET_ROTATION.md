@@ -63,8 +63,9 @@ Names come from `env.X` reads in `apps/*/src` that are **not** in any `[vars]` b
 
 | Secret | Used by | Rotation |
 |---|---|---|
-| `CLOUDFLARE_API_TOKEN` | every deploy workflow (`cloudflare/wrangler-action`) — account-wide token | Quarterly / on compromise; scope it to Workers Scripts + Pages + KV/D1/R2 edit, this account only |
-| `CLOUDFLARE_ACCOUNT_ID` | every deploy workflow | not secret (account id) |
+| `CLOUDFLARE_API_TOKEN` | every **production** deploy workflow (`environment: production`, `cloudflare/wrangler-action`) — account-wide token. Still a **repository** secret as of 2026-08-31, not yet homed in the `production` environment — see the FINDING-028 pre-merge item in `POST_MERGE_CHECKLIST.md` §0 | Quarterly / on compromise; scope it to Workers Scripts + Pages + KV/D1/R2 edit, this account only |
+| `CLOUDFLARE_API_TOKEN_BETA` | the three beta deploy workflows (`deploy-discord-worker-beta.yml`, `deploy-og-worker-beta.yml`, `deploy-web-app-beta.yml`) — `environment: beta`, `cloudflare/wrangler-action`. Does not exist yet (created by the FINDING-028 pre-merge item, 2026-08-29 security audit); until it does, all three beta deploys fail on purpose rather than fall back to the production token | Quarterly / on compromise, same cadence as `CLOUDFLARE_API_TOKEN`; scope narrower — Workers Scripts: Edit + Pages: Edit, limited to the beta Worker names and the `xivdyetools-beta` Pages project only |
+| `CLOUDFLARE_ACCOUNT_ID` | every deploy workflow | not secret (account id) — shared between beta and production on purpose, since both live in the one Cloudflare account |
 | `DISCORD_TOKEN` | `deploy-discord-worker.yml` register-commands step (main bot) | together with the worker secret |
 | `MODERATION_DISCORD_TOKEN` | `deploy-moderation-worker.yml` register-commands step (moderation bot, added 2026-08-29) | together with moderation-worker's `DISCORD_TOKEN` and discord-worker's `MODERATION_BOT_TOKEN` |
 | `BETA_DISCORD_TOKEN`, `BETA_DISCORD_GUILD_ID` | `deploy-discord-worker-beta.yml` (optional) | with the beta bot token |
@@ -77,7 +78,7 @@ npm publishing uses **OIDC trusted publishing** — there is no npm token to rot
 
 | When | Secrets |
 |---|---|
-| Quarterly (Feb 15 / May 15 / Aug 15 / Nov 15) | `JWT_SECRET`, `BOT_API_SECRET`, `BOT_SIGNING_SECRET`, `INTERNAL_WEBHOOK_SECRET`, `CLOUDFLARE_API_TOKEN` |
+| Quarterly (Feb 15 / May 15 / Aug 15 / Nov 15) | `JWT_SECRET`, `BOT_API_SECRET`, `BOT_SIGNING_SECRET`, `INTERNAL_WEBHOOK_SECRET`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_API_TOKEN_BETA` |
 | On compromise | everything else in the inventory |
 
 Record each rotation in the log at the bottom of this file.
@@ -146,9 +147,11 @@ Developer portal → OAuth2 → *Reset Secret*, then `pnpm --filter xivdyetools-
 
 Generate, set on discord-worker (`--env production`), then update the webhook secret on the GitHub repository webhook (Settings → Webhooks → the changelog webhook). Verify with *Redeliver* on a recent `push` delivery → 200. The redelivery is safe to repeat either way, but the response differs by what the delivery touched: since FINDING-021 the route announces only `push` events from `FlashGalatine/xivdyetools`, and a delivery that modified `CHANGELOG-laymans.md` for a version already recorded in KV (`announced:v:<version>`, 90-day TTL) answers `200 {"message":"Already announced"}` instead of re-posting the release; an ordinary push redelivery that didn't touch the changelog answers `200 {"message":"Changelog not modified, skipping"}` regardless of the memo. The memo is keyed by version, not by delivery, so a corrected changelog re-pushed for an already-announced version is not re-announced automatically — clear the `announced:v:<version>` KV key first if you need to force it.
 
-### 7. `CLOUDFLARE_API_TOKEN` (CI)
+### 7. `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_API_TOKEN_BETA` (CI)
 
-Cloudflare dashboard → My Profile → API Tokens → roll or create a token scoped to this account (Workers Scripts: Edit, Pages: Edit, Workers KV/D1/R2: Edit, Workers Routes: Edit) → update the GitHub secret → re-run any deploy workflow via *workflow_dispatch* → revoke the old token.
+Cloudflare dashboard → My Profile → API Tokens → roll or create a token scoped to this account (Workers Scripts: Edit, Pages: Edit, Workers KV/D1/R2: Edit, Workers Routes: Edit) → update the GitHub secret → re-run any deploy workflow via *workflow_dispatch* → revoke the old token. `CLOUDFLARE_API_TOKEN` belongs on the **`production` environment** (Settings → Environments → production), not the repository — a repository secret is readable by any workflow run regardless of its `environment:`, the same class of exposure FINDING-028 flagged for the beta workflows.
+
+`CLOUDFLARE_API_TOKEN_BETA` (FINDING-028, 2026-08-29) follows the same steps but scoped narrower — Workers Scripts: Edit + Pages: Edit, limited to the beta Worker names and the `xivdyetools-beta` Pages project — and lives as an environment secret on **`beta`** (Settings → Environments → beta), never at the repository level, or the point of splitting it from the production token is lost. Re-run a beta workflow via *workflow_dispatch* to verify. Record the creation in the rotation log below the same way `CACHE_PURGE_API_TOKEN` was ("created, not rotated").
 
 ### 8. `PERSPECTIVE_API_KEY`, `MODERATOR_IDS` & channel IDs
 
@@ -161,7 +164,7 @@ Set on the listed consumers with `--env production`; no ordering constraints. Fo
 1. Rotate the affected secret(s) with the procedures above — **on the production target**.
 2. `pnpm --filter <app> exec wrangler tail --env production --format=json | grep -i error` for unusual activity.
 3. If `JWT_SECRET` leaked: rotating it ends every session at once (all tokens stop verifying). The `TOKEN_BLACKLIST` KV needs no clearing.
-4. If `CLOUDFLARE_API_TOKEN` leaked: roll it **first** (it can redeploy every worker), then audit the account's deployment history.
+4. If `CLOUDFLARE_API_TOKEN` leaked: roll it **first** (it can redeploy every worker), then audit the account's deployment history. If `CLOUDFLARE_API_TOKEN_BETA` leaked instead: same steps, but the blast radius is scoped to the beta Worker names and the `xivdyetools-beta` Pages project only — that narrower scope, not needing a full-account audit, is the entire point of keeping it separate (FINDING-028).
 5. Write the incident up in `docs/incidents/`.
 
 ---

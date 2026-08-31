@@ -100,6 +100,39 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       the REST API with **Deployment branches: `main` only** (custom branch policy, `main`/branch).
       **Required reviewers were NOT added** — every merge-day deploy + publish job would wait for
       a click; add them under Settings → Environments → production if you want that gate.
+- [ ] **Create the `beta` GitHub environment + `CLOUDFLARE_API_TOKEN_BETA`, and move
+      `CLOUDFLARE_API_TOKEN` out of the repository secret store** (2026-08-29 FINDING-028) —
+      `deploy-discord-worker-beta.yml`, `deploy-og-worker-beta.yml` and `deploy-web-app-beta.yml`
+      now declare `environment: beta` and read `secrets.CLOUDFLARE_API_TOKEN_BETA` instead of the
+      production token; **deliberately no fallback** (ruling S12-R1: never
+      `CLOUDFLARE_API_TOKEN_BETA || CLOUDFLARE_API_TOKEN`), so all three fail loudly at the
+      `wrangler-action` step until both exist. **Verified not yet done, 2026-08-31**
+      (`gh api repos/FlashGalatine/xivdyetools/environments` lists only `production`; `.../actions/secrets`
+      shows `CLOUDFLARE_API_TOKEN` as a **repository** secret, not scoped to any environment, and no
+      `CLOUDFLARE_API_TOKEN_BETA` anywhere) — **and this already applies to every push to a non-main
+      branch, starting now, not only after this branch merges**: the three workflows trigger on
+      branch pushes today, including pushes to `security-audit-2026-08-29` itself.
+      Settings → Environments → New environment → `beta`. The repo is public
+      (`visibility: public`, confirmed the same way), so unlike a private repo on GitHub Free this
+      needs no plan upgrade. Give it no protection rules — beta is meant to deploy from any branch,
+      unlike `production`'s `main`-only policy. Then Cloudflare dashboard → My Profile → API Tokens
+      → Create Token, scoped **narrow**: Workers Scripts: Edit + Pages: Edit, limited to the beta
+      Worker names (`xivdyetools-*-dev`) and the `xivdyetools-beta` Pages project — **not** a copy
+      of the production token, which reaches every Worker and Pages project on the account. Store
+      it as an environment secret named `CLOUDFLARE_API_TOKEN_BETA` on `beta` (Settings →
+      Environments → beta → Add secret — a *repository* secret would defeat the point, since any
+      workflow can read one of those). Then close the other half: add `CLOUDFLARE_API_TOKEN` as an
+      environment secret on `production` with its current value (an environment secret takes
+      precedence over a same-named repository secret, so the nine other `environment: production`
+      workflows keep working unchanged), and delete the repository-level `CLOUDFLARE_API_TOKEN`.
+      That last step is not optional polish: `environment: production` only restricts a secret that
+      is actually homed in that environment — left at the repository level, the token stays
+      readable by any workflow run regardless of what `environment:` it declares — the same class of
+      exposure FINDING-028 describes, just for every other production-deploying workflow instead of
+      the three beta ones this task fixed. `CLOUDFLARE_ACCOUNT_ID` stays a repository secret on
+      purpose — it is an account identifier, not a credential, and beta and production share the
+      one Cloudflare account. Log both changes in `SECRET_ROTATION.md`'s rotation log (see its §7).
+      See `docs/operations/DEPLOY_ENVIRONMENTS.md` for the full write-up.
 - [x] **Secrets present on the PRODUCTION workers** — `wrangler secret list --env production`
       (oauth bare) on 2026-08-21 matches the `SECRET_ROTATION.md` inventory name-for-name:
       discord-worker (incl. `UPSTASH_REDIS_REST_URL/TOKEN`, `BOT_SIGNING_SECRET`,
