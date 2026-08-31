@@ -56,7 +56,22 @@ jobs:
       # setup-node, wrangler-action) never see it. Both secrets are optional:
       # without them the worker still deploys and only registration is skipped.
       HAS_BETA_REGISTRATION_SECRETS: ${{ secrets.BETA_DISCORD_TOKEN != '' && secrets.BETA_DISCORD_GUILD_ID != '' }}
+      # S12-R8 (FINDING-028 fix round 1): lets the guard step below fail fast,
+      # by name, before wrangler's own error names the wrong variable.
+      HAS_BETA_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_BETA != '' }}
     steps:
+      # S12-R8 (fix round 1, FINDING-028): wrangler's own auth failure names
+      # CLOUDFLARE_API_TOKEN — the env var, not CLOUDFLARE_API_TOKEN_BETA, the
+      # secret actually unset — and an empty apiToken is silently omitted from
+      # the action's `with:` echo. Without this, the failure reads like "wrong
+      # token" and invites pointing this job at the production secret instead,
+      # which is exactly what FINDING-028 closed. Fail here, by name, first.
+      - name: Guard against a missing beta Cloudflare token
+        if: env.HAS_BETA_CF_TOKEN != 'true'
+        run: |
+          echo "::error::CLOUDFLARE_API_TOKEN_BETA is unset on the 'beta' GitHub environment (Settings -> Environments -> beta). This deploy cannot authenticate. Create it per docs/operations/POST_MERGE_CHECKLIST.md section 0 -- do NOT reuse CLOUDFLARE_API_TOKEN, the production credential (FINDING-028)."
+          exit 1
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
