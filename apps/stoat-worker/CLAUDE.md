@@ -102,7 +102,7 @@ There is no `wrangler.toml` and no Cloudflare secrets — this runs on a regular
 
 ## Differences From discord-worker
 
-This is the most important section. `stoat-worker` and `discord-worker` look superficially similar (both depend on `@xivdyetools/bot-logic`, both render dye info cards, both speak six languages) but the platforms differ in important ways.
+This is the most important section. `stoat-worker` and `discord-worker` look superficially similar (both depend on `@xivdyetools/bot-logic`, both speak six languages) but the platforms differ in important ways — including that discord-worker renders dye info as an image card while stoat-worker currently sends the same data as a text embed (`info.ts`: "Image rendering (SVG→PNG) is deferred to a future implementation step"; see **Image rendering** in the comparison table below).
 
 | Concern | discord-worker | stoat-worker |
 |---------|----------------|--------------|

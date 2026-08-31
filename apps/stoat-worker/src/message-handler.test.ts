@@ -23,7 +23,7 @@ vi.mock('@xivdyetools/logger', () => ({
 
 import { createLibraryLogger } from '@xivdyetools/logger';
 import { createMessageHandler } from './message-handler.js';
-import { createMockMessage } from './test-utils/revolt-mocks.js';
+import { createMockMessage, createMockChannel } from './test-utils/revolt-mocks.js';
 import { MessageContextStore } from './services/message-context.js';
 import { CommandThrottle } from './services/command-throttle.js';
 import type { BotConfig } from './config.js';
@@ -207,6 +207,40 @@ describe('createMessageHandler', () => {
 
       const allDebugCalls = JSON.stringify(mockLogger.debug.mock.calls);
       expect(allDebugCalls).not.toContain('blahblah');
+    });
+
+    // S13-R6 (fix round 2): the error-handler log line looked safe because an
+    // unregistered command doesn't throw *by itself* — but router.ts's own
+    // "unknown command" fallback still does a live, unguarded `sendMessage`
+    // (FINDING-019 sanitises what it *echoes*, not what a log line records),
+    // and that call can reject on every mistype (permission error, rate
+    // limit, network blip), not just on a registered handler's bug. Uses the
+    // real `routeCommand` (no `route` override) so the fallback branch's
+    // `sendMessage` actually runs and actually rejects.
+    it('logs a placeholder, not the user-typed token, when the fallback reply to an unregistered command fails', async () => {
+      const rejectingChannel = createMockChannel({
+        sendMessage: vi.fn().mockRejectedValue(new Error('403: Missing Permission')),
+      });
+      const { handler } = setup();
+      const message = createMockMessage({
+        content: '!xd blahblah',
+        authorId: 'user-03',
+        channel: rejectingChannel,
+      });
+
+      await handler(message as any);
+
+      // Confirms the real fallback branch actually ran (and rejected) rather
+      // than this test silently exercising a different path.
+      expect(rejectingChannel.sendMessage).toHaveBeenCalled();
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Unhandled error in command handler',
+        expect.objectContaining({ command: '(unregistered)', subcommand: null }),
+      );
+
+      const allErrorCalls = JSON.stringify(mockLogger.error.mock.calls);
+      expect(allErrorCalls).not.toContain('blahblah');
     });
   });
 });

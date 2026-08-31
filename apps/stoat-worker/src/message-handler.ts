@@ -125,9 +125,20 @@ export function createMessageHandler(
         messageContextStore: deps.messageContextStore,
       });
     } catch (error) {
+      // SECURITY (2026-08-29 audit, FINDING-031 / S13-R6, fix round 2): this
+      // line logged `parsed.command`/`parsed.subcommand` raw, on the
+      // reasoning that an unregistered command never throws — it takes
+      // router.ts's fallback branch and returns normally. That reasoning
+      // missed that the fallback branch's only action is a live, unguarded
+      // `sendMessage` (`router.ts`'s "unknown command" reply): a 403, a 429,
+      // or a network blip there rejects and lands right here, with the
+      // user's own unregistered token still in `parsed.command`/
+      // `subcommand` — on every mistype, not just a registered handler's
+      // bug. Same `loggableCommand` swap as the two log lines above.
+      const errorCommand = loggableCommand(parsed.command, parsed.subcommand);
       logger.error('Unhandled error in command handler', {
-        command: parsed.command,
-        subcommand: parsed.subcommand,
+        command: errorCommand.command,
+        subcommand: errorCommand.subcommand,
         error: error instanceof Error ? error.message : String(error),
       });
 
