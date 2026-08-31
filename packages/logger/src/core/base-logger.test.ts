@@ -932,4 +932,23 @@ describe('redaction cycle safety', () => {
     expect(result.self).toBe(cyclic);
     expect(result.self).not.toBe(result);
   });
+
+  it('pins the design invariant (S10-R16, extended to redactArrayItems): an array cycle back-edge is the RAW original, never the redacted copy or itself', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const inner: unknown[] = ['leaf'];
+    inner.push(inner); // inner[1] === inner — a cycle through the array itself
+
+    const result = logger.testRedactSensitiveFields({ arr: inner }) as { arr: unknown[] };
+
+    expect(result.arr[0]).toBe('leaf');
+    // Same invariant as the object-path test above (`ancestors` checked
+    // before `memo`, `memo` populated only on the way out), pinned here
+    // for `redactArrayItems` specifically — it shares the identical guard
+    // logic but was previously left unpinned by any test. The back-edge
+    // must stay the RAW original array — not the redacted copy
+    // (`result.arr` itself, which would make it self-referential) and not
+    // any other value.
+    expect(result.arr[1]).toBe(inner);
+    expect(result.arr[1]).not.toBe(result.arr);
+  });
 });

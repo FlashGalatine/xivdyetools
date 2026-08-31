@@ -292,3 +292,65 @@ describe('S10-R14 (2026-08-30 fix round 3): safeStringify is path-scoped, not "s
     expect(json).toBe('{"n":"123"}');
   });
 });
+
+describe('S10-R18 (2026-08-30 fix round 4): safeStringify bounds a maximally-shared DAG', () => {
+  // Memoization (S10-R12) guarantees the redacted tree is maximally
+  // shared; path-scoping (S10-R14) correctly does NOT treat that sharing
+  // as a cycle, which means a shared subtree is walked once PER PATH to
+  // it, not once per distinct node. For a binary alias chain that's
+  // exponential in depth. These tests go through `safeStringify` itself —
+  // the actual serialiser every Worker's `JsonAdapter` calls — not
+  // `TestLogger.entries`, because capturing the in-memory tree is exactly
+  // why this was invisible to the suite before.
+
+  it('bounds the EXACT structure and depth that reportedly stalled >300s (the S10-R12 test shape, 40 levels)', () => {
+    let level: Record<string, unknown> = { leaf: 'x' };
+    for (let i = 0; i < 40; i++) {
+      level = { a: level, b: level };
+    }
+    const json = safeStringify(level);
+    // Deterministic, not timing-based: a correct bound always produces
+    // this marker for a structure this size, regardless of how fast the
+    // machine is. (Separately confirmed via a throwaway probe, not
+    // committed, that this now completes in low tens of milliseconds —
+    // not asserted here per the house lesson that a wall-clock assertion
+    // on synchronous code is a flake, or worse, a hang, waiting to
+    // happen.)
+    expect(json).toContain('[Truncated]');
+  });
+
+  it('bounds a smaller-but-still-exponential structure too (depth 17, 131072 paths)', () => {
+    let level: Record<string, unknown> = { leaf: 'x' };
+    for (let i = 0; i < 17; i++) {
+      level = { a: level, b: level };
+    }
+    const json = safeStringify(level);
+    expect(json).toContain('[Truncated]');
+  });
+
+  it('does NOT truncate a small, legitimately-aliased structure (regression guard against over-truncation)', () => {
+    let level: Record<string, unknown> = { leaf: 'x' };
+    for (let i = 0; i < 10; i++) {
+      level = { a: level, b: level };
+    }
+    const json = safeStringify(level);
+    expect(json).not.toContain('[Truncated]');
+    // The leaf is still reachable and intact at this size.
+    expect(json).toContain('"leaf":"x"');
+  });
+
+  it('truncates deterministically past the bound on a flat, linear (non-exponential) structure', () => {
+    // 60000 DISTINCT numbers — no aliasing, no exponential cost, purely a
+    // count past MAX_STRINGIFY_NODES. This isolates "does the bound exist
+    // and fire" from "does it correctly avoid firing on the pathological
+    // shape" (the tests above).
+    const arr = Array.from({ length: 60_000 }, (_, i) => i);
+    const json = safeStringify(arr);
+    const parsed = JSON.parse(json) as unknown[];
+    expect(parsed).toHaveLength(60_000);
+    // Comfortably within the budget: the real value survives.
+    expect(parsed[100]).toBe(100);
+    // Comfortably past it: truncated, not the real value.
+    expect(parsed[59_999]).toBe('[Truncated]');
+  });
+});

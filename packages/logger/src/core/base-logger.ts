@@ -634,6 +634,20 @@ export function looksLikeSecretValue(value: string): boolean {
 }
 
 /**
+ * S10-R18 (2026-08-30 fix round 4): total replacer-invocation budget for
+ * one `safeStringify` call. See the long comment on `safeStringify` for
+ * why this is a fail-CLOSED bound and why that makes it a different tool
+ * from the fail-open redaction budget S10-R12 removed, not a reversal of
+ * that decision. Sized to comfortably clear any legitimate log payload
+ * (tens of thousands of distinct fields would already be an unusual log
+ * line) while keeping a maximally-shared, deeply-aliased structure's worst
+ * case bounded to a small, fast, constant amount of work — at ~2^17 paths
+ * a heavily-aliased binary chain is already emitting hundreds of KB
+ * unbounded; this stops well short of that.
+ */
+const MAX_STRINGIFY_NODES = 50_000;
+
+/**
  * JSON.stringify that never throws: cycles become `"[Circular]"`, BigInt
  * becomes its decimal string, and anything else that refuses to serialise is
  * replaced rather than failing the log call (and with it, the request).
@@ -654,24 +668,71 @@ export function looksLikeSecretValue(value: string): boolean {
  * belonged to a sibling branch that has already finished serialising and
  * can be discarded.
  *
- * Why this needed fixing now: S10-R12 made `redactSensitiveFields` memoize
- * aliased references onto the SAME redacted object, so `{ a: shared, b:
- * shared }` now really does hand this function the identical object twice.
- * The previous "seen anywhere" `WeakSet` — harmless while every reference
- * was still a distinct object, pre-memoization — started reading the
- * second, legitimate reference as a cycle and replacing it with
- * `"[Circular]"`: a regression that fails CLOSED (data dropped, nothing
- * leaked) rather than open, but one that would have shipped every deployed
- * Worker silently mangling repeated (not circular) data on the
- * `JsonAdapter.write` path.
+ * Why this needed fixing at S10-R14: S10-R12 made `redactSensitiveFields`
+ * memoize aliased references onto the SAME redacted object, so
+ * `{ a: shared, b: shared }` now really does hand this function the
+ * identical object twice. The previous "seen anywhere" `WeakSet` —
+ * harmless while every reference was still a distinct object,
+ * pre-memoization — started reading the second, legitimate reference as a
+ * cycle and replacing it with `"[Circular]"`: a regression that failed
+ * CLOSED (data dropped, nothing leaked) rather than open, but one that
+ * would have shipped every deployed Worker silently mangling repeated
+ * (not circular) data on the `JsonAdapter.write` path.
+ *
+ * S10-R18 (2026-08-30 fix round 4): fixing THAT introduced a second,
+ * sharper problem. Memoization guarantees the redacted tree is *maximally
+ * shared* — a value referenced 1000 times in the source is referenced
+ * 1000 times, by the SAME object, in the redacted output. Path-scoped
+ * detection is correct about NOT treating that sharing as a cycle, but
+ * `JSON.stringify` has no concept of "already emitted this subtree" — it
+ * walks the object graph exactly as given, so a shared subtree gets
+ * walked AND EMITTED once per PATH that reaches it, not once per distinct
+ * node. For a tree that just happens to have some repeated references,
+ * that's a modest constant-factor cost. For the pathological case this
+ * package's OWN S10-R12 test constructs on purpose — a binary chain where
+ * each level aliases the SAME child from both of its own keys — path
+ * count is exponential in depth (2^40 for the 40-level chain), and
+ * measured serialisation time/output tracks that: 3ms/147KB at 12 levels,
+ * 608ms/~37MB at 20, no measured completion at 40. The redaction step
+ * itself stays fast (memoized, linear) — this is purely a serialisation-time
+ * cost, and the reason it's new: before S10-R12, no maximally-shared tree
+ * ever reached this function to expand; before S10-R14, the (wrong)
+ * global seen-set accidentally bounded it by treating every repeat as
+ * `"[Circular]"`.
+ *
+ * `MAX_STRINGIFY_NODES` bounds this the same way S10-R12 removed a budget
+ * from the OTHER side of this file — but it is not a reversal of that
+ * decision, because what exhaustion COSTS is the opposite here. In
+ * `redactSensitiveFields`, stopping early meant emitting the remainder
+ * UNSCANNED — real, possibly-secret data the redaction passes never
+ * touched. That is a leak, and a fail-open budget is never an acceptable
+ * tool for it. Here, by the time anything reaches `safeStringify` it has
+ * ALREADY been through the redaction pass in full (these are two
+ * sequential steps, not one) — there is no unredacted data anywhere in
+ * this function's input, regardless of where serialisation stops. Cutting
+ * off here can only drop already-safe data from the emitted log line —
+ * diagnostics, not secrets. So this bound fails CLOSED: past the limit,
+ * every remaining value (object, array, or primitive) becomes the literal
+ * string `"[Truncated]"` instead of being walked further, rather than
+ * either hanging or emitting anything raw.
  */
 export function safeStringify(value: unknown): string {
   // `stack[i]` is the ancestor object/array at depth `i` on the branch
   // currently being serialised. Primitives never enter it — only an
   // object/array can be an ancestor, so there is nothing to track for one.
   const stack: unknown[] = [];
+  let nodesRemaining = MAX_STRINGIFY_NODES;
   try {
     const json = JSON.stringify(value, function (this: unknown, _key, v: unknown) {
+      // S10-R18: checked first and unconditionally — once exhausted,
+      // EVERY further value (object, array, or primitive) is truncated,
+      // so the output never has a confusing mix of "some data past the
+      // cutoff, some not". Safe to do for any value type because nothing
+      // reaching this function is ever unredacted (see the comment above).
+      if (nodesRemaining <= 0) {
+        return '[Truncated]';
+      }
+      nodesRemaining -= 1;
       if (typeof v === 'bigint') return v.toString();
       if (typeof v !== 'object' || v === null) {
         return v;
