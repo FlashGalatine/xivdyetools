@@ -45,8 +45,9 @@ export {
   hmacSignHex,
   hmacVerify,
   hmacVerifyHex,
-  verifyBotSignature,
-  // FINDING-014 (2026-08-21 audit): request-bound bot signature v2
+  // FINDING-014 (2026-08-21 audit): request-bound bot signature v2 — the
+  // only bot signature scheme since v1's `verifyBotSignature` was removed
+  // (FINDING-015, 2026-08-29 audit, 2.0.0)
   createBotSignatureV2,
   verifyBotSignatureV2,
   BOT_SIGNATURE_V2_MAX_AGE_MS,

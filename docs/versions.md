@@ -2,7 +2,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: August 30, 2026*
+*Last Updated: August 31, 2026*
 
 > **Versions below are read from each project's `package.json` on the working branch.** The 5.0
 > wave — `core` v4.0.1, `types` v2.0.0, `svg` v2.0.1, `bot-logic` v2.1.0, `worker-kit` v1.1.0,
@@ -40,7 +40,7 @@
 |---------|---------|--------------|----------|--------|
 | **Core** (incl. `/blending` + schema-v2 data) | v4.0.1 | `@xivdyetools/core` | npm | Active — publish pending |
 | **Types** | v2.0.0 | `@xivdyetools/types` | npm | Active — publish pending |
-| **Auth** (incl. `/encoding`) | v1.4.0 | `@xivdyetools/auth` | npm | Active |
+| **Auth** (incl. `/encoding`) | v2.0.0 | `@xivdyetools/auth` | npm | Active — publish pending |
 | **Logger** | v2.1.1 | `@xivdyetools/logger` | npm | Active — publish pending |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.2.0 | `@xivdyetools/worker-kit` | npm | Active — publish pending (first publish 2026-08-28) |
 | **SVG** | v3.0.0 | `@xivdyetools/svg` | npm | Active — publish pending (publish **before** bot-logic 3.0.0) |
@@ -317,6 +317,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit (FINDING-015): `verifyBotSignature` (v1 bot request signature, `timestamp:userId:userName`, no request binding) removed from `hmac.ts` and the barrel; `createBotSignatureV2`/`verifyBotSignatureV2` (1.4.0) are now the only signature scheme. No in-repo caller remained — `presets-api` 2.2.0, `discord-worker` 5.1.0 and `moderation-worker` 1.6.0 had already stopped accepting/sending v1** |
 | **v1.4.0** | **Aug 2026** | **2026-08-21 security audit — `revokeToken` TTL = exp + `REFRESH_GRACE_SECONDS` (FINDING-001); `verifyJWT` claim typing, `nbf`, `issuer`/`audience` options (FINDING-015)** |
 | **v1.3.0** | **Jul 2026** | **Monorepo 2.0 Tier 1 — absorbed `@xivdyetools/crypto` v1.1.2: Base64URL and hex utilities now live at `@xivdyetools/auth/encoding`. API identical; only the import specifier changes** |
 | **v1.2.0** | **Jul 2026** | **2026-07-18 audit (Sprints 2 & 6) — `jti`-based revocation + `orig_iat` absolute session anchoring primitives (consumed by oauth's refresh rotation); BUG-059 `verifyDiscordRequest` body-size check measures UTF-8 bytes, not UTF-16 code units** |

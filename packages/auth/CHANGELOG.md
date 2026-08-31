@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-08-31
+
+Security audit remediation (docs/audits/2026-08-29-security, FINDING-015) — finishes the bot
+signature rollover that 1.4.0 started. **BREAKING**: this is the package's first MAJOR release —
+a public export is gone.
+
+### Removed
+
+- **`verifyBotSignature`** (v1 bot request signature: `${timestamp}:${userDiscordId}:${userName}`,
+  hex HMAC-SHA256, 5-minute freshness window, no binding to method/path/body) is deleted from
+  `hmac.ts` and the package barrel. `createBotSignatureV2` / `verifyBotSignatureV2` (FINDING-014,
+  1.4.0) have been the **only** accepted bot signature since `presets-api` 2.2.0 (2026-08-30);
+  `discord-worker` 5.1.0 and `moderation-worker` 1.6.0 stopped *sending* v1 the same day. No code
+  in this monorepo referenced `verifyBotSignature` before this release, so the removal is a no-op
+  in-repo — the entire cost lands on npm consumers outside this workspace.
+
+  **Migration:** replace a `verifyBotSignature(sig, ts, userId, userName, secret, opts?)` call with
+  `verifyBotSignatureV2(sig, req, secret, opts?)`, where `req` is a `BotSignatureV2Request` object —
+  it still carries `timestamp`, `userDiscordId` and `userName`, but now also `method`, `path`,
+  `body` and an optional `nonce`, none of which v1 bound at all:
+
+  ```typescript
+  // v1 (gone)
+  const ok = await verifyBotSignature(sigHeader, tsHeader, userId, userName, secret);
+
+  // v2
+  const ok = await verifyBotSignatureV2(
+    req.headers.get('X-Request-Signature-V2'),
+    {
+      method: req.method,
+      path: new URL(req.url).pathname,        // no origin, no query
+      body: await req.clone().arrayBuffer(),  // omit for GET/HEAD
+      timestamp: req.headers.get('X-Request-Timestamp') ?? undefined,
+      nonce: req.headers.get('X-Request-Nonce') ?? undefined,
+      userDiscordId: req.headers.get('X-User-Discord-ID') ?? undefined,
+      userName: req.headers.get('X-User-Discord-Name') ?? undefined,
+    },
+    secret
+  );
+  ```
+
+  On the signing side, replace whatever produced the old `X-Request-Signature` header with
+  `createBotSignatureV2(req, secret)`, and send its result as `X-Request-Signature-V2` alongside
+  `X-Request-Nonce` — `X-Request-Signature` is no longer read by anything in this ecosystem.
+  `BotSignatureOptions` (`maxAgeMs` / `clockSkewMs`) is unchanged and still accepted by
+  `verifyBotSignatureV2`; only its effective default tightened, from v1's 5-minute window to v2's
+  own default of `BOT_SIGNATURE_V2_MAX_AGE_MS` (60 s), because v2 also has to cover the window a
+  nonce-replay check runs in, which v1 never had.
+
+  A consumer with no immediate path to v2 must pin `@xivdyetools/auth@^1` — 1.4.0 stays on the
+  registry with `verifyBotSignature` intact.
+
 ## [1.4.0] - 2026-08-21
 
 Security audit remediation (docs/audits/2026-08-21-security, FINDING-001 / FINDING-015). Minor bump: additive API, one behavioural change in `revokeToken` TTLs.

@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **JWT verification** (HS256-only, signature + expiration + `sub` claim)
 - **HMAC-SHA256 signing/verification** with a module-level `CryptoKey` LRU cache
-- **Bot signature verification** for inter-worker calls (`timestamp:userId:userName`)
+- **Bot request signature (v2) signing/verification** for inter-worker calls — binds method, path, a body hash, timestamp, nonce and identity
 - **Discord Ed25519 signature verification** for HTTP Interactions endpoints
 - **Timing-safe equality** with native `crypto.subtle.timingSafeEqual` and a manual XOR fallback
 
@@ -42,7 +42,7 @@ Five single-responsibility modules under `src/` plus an `encoding/` directory, a
 ```
 src/
 ├── jwt.ts        # verifyJWT, verifyJWTSignatureOnly, decodeJWT
-├── hmac.ts       # createHmacKey, hmacSign(Hex), hmacVerify(Hex), verifyBotSignature, getOrCreateHmacKey (internal LRU)
+├── hmac.ts       # createHmacKey, hmacSign(Hex), hmacVerify(Hex), createBotSignatureV2/verifyBotSignatureV2, getOrCreateHmacKey (internal LRU)
 ├── timing.ts     # timingSafeEqual
 ├── discord.ts    # verifyDiscordRequest, unauthorizedResponse, badRequestResponse
 ├── revocation.ts # isTokenRevoked, revokeToken (KV-backed jti blacklist)
@@ -72,8 +72,18 @@ function decodeJWT(token: string): JWTPayload | null;  // no signature check
 
 ```typescript
 interface BotSignatureOptions {
-  maxAgeMs?: number;      // default 5 min
+  maxAgeMs?: number;      // default BOT_SIGNATURE_V2_MAX_AGE_MS (60 s)
   clockSkewMs?: number;   // default 1 min
+}
+
+interface BotSignatureV2Request {
+  method: string;
+  path: string;                                  // URL path only — no origin, no query
+  body?: string | Uint8Array | ArrayBuffer | null; // absent/empty for GET/HEAD
+  timestamp: string | undefined;                  // unix seconds, as sent in X-Request-Timestamp
+  nonce?: string;                                 // as sent in X-Request-Nonce
+  userDiscordId?: string;
+  userName?: string;
 }
 
 function createHmacKey(secret: string, usage?: 'sign' | 'verify' | 'both'): Promise<CryptoKey>;
@@ -81,14 +91,17 @@ function hmacSign(data: string, secret: string): Promise<string>;     // base64u
 function hmacSignHex(data: string, secret: string): Promise<string>;  // hex
 function hmacVerify(data: string, signature: string, secret: string): Promise<boolean>;
 function hmacVerifyHex(data: string, signature: string, secret: string): Promise<boolean>;
-function verifyBotSignature(
-  signature: string | undefined,
-  timestamp: string | undefined,
-  userDiscordId: string | undefined,
-  userName: string | undefined,
+function createBotSignatureV2(req: BotSignatureV2Request, secret: string): Promise<string>;
+function verifyBotSignatureV2(
+  signature: string | undefined | null,
+  req: BotSignatureV2Request,
   secret: string,
   options?: BotSignatureOptions
 ): Promise<boolean>;
+
+const BOT_SIGNATURE_V2_MAX_AGE_MS: number;   // 60_000
+const BOT_SIGNATURE_V2_HEADER: string;       // 'X-Request-Signature-V2'
+const BOT_SIGNATURE_NONCE_HEADER: string;    // 'X-Request-Nonce'
 ```
 
 ### Timing-safe (`@xivdyetools/auth/timing`)
@@ -154,16 +167,34 @@ All HMAC and JWT verification routes through `crypto.subtle.verify('HMAC', key, 
 
 `createHmacKey` enforces `keyData.length >= 32` bytes (HMAC-SHA256 minimum, FINDING-009) and throws otherwise.
 
-### Bot signature format
+### Bot signature format (v2 — the only version since 2.0.0)
 
-Inter-worker calls (e.g. `presets-api → discord-worker` notifications) use:
+Inter-worker calls (`discord-worker` / `moderation-worker` → `presets-api`) sign a
+`BotSignatureV2Request` as a length-prefixed, one-field-per-line canonical string —
+`method`, URL `path` (no origin/query), a SHA-256 hex digest of the body (of an empty
+body for GET/HEAD), `timestamp`, an optional `nonce`, and the identity fields — so no
+delimiter inside one field can collide with another the way v1's plain `:`-joined
+string could (`(123,"a:b")` and `("123:a","b")` produced the same v1 message):
 
+```typescript
+const sig = await createBotSignatureV2(
+  { method, path, body, timestamp, nonce, userDiscordId, userName },
+  BOT_SIGNING_SECRET
+);
+// sent as X-Request-Signature-V2, alongside X-Request-Timestamp and X-Request-Nonce
 ```
-message  = `${timestamp}:${userDiscordId ?? ''}:${userName ?? ''}`
-signature = hmacSignHex(message, BOT_SIGNING_SECRET)
-```
 
-`verifyBotSignature` checks signature presence, timestamp parses to a number, age ≤ `maxAgeMs` (default 5 min), and that the timestamp isn't more than `clockSkewMs` (default 1 min) in the future. `userDiscordId` and `userName` are optional for system-level requests; both empty strings are allowed in the message.
+`verifyBotSignatureV2` checks signature presence, timestamp parses to a number, age ≤
+`maxAgeMs` (default `BOT_SIGNATURE_V2_MAX_AGE_MS` = 60 s), and that the timestamp isn't
+more than `clockSkewMs` (default 1 min) in the future, then verifies the full canonical
+string. Nonce **replay** protection is the caller's job — this package only binds the
+nonce into the signed string; `presets-api`'s `middleware/auth.ts` is what actually
+remembers accepted nonces (`botnonce:` keys in the shared `TOKEN_BLACKLIST` KV, 120 s
+TTL). `userDiscordId` and `userName` are optional for system-level requests, same as v1.
+
+**v1 (`verifyBotSignature`: `${timestamp}:${userDiscordId}:${userName}`, no request
+binding) was removed in 2.0.0** (FINDING-015, 2026-08-29 security audit) — see
+CHANGELOG.md `[2.0.0]` for the migration.
 
 ### Discord Ed25519 verification
 
@@ -188,7 +219,7 @@ Grepped from `package.json` files in the monorepo:
 
 The `oauth` worker issues tokens itself (it does not call `verifyJWT` for issuance) but consumes `verifyJWTSignatureOnly`, `decodeJWT`, `isTokenRevoked`, `revokeToken`, `hmacSign`/`hmacVerify` (2026-08-18 dead-code audit — DEAD-019 adoption replaced a hand-rolled base64url HMAC pair) and the `/encoding` primitives from this package (`apps/oauth/src/services/jwt-service.ts`).
 
-`discord-worker`'s `services/preset-api.ts`/`utils/github-verify.ts` and `moderation-worker`'s `services/preset-api.ts` keep their own hand-rolled HMAC (2026-08-18 audit, DEAD-019: not adopted) — `createHmacKey`'s `>= 32` byte minimum (FINDING-009) would silently fail-closed for `BOT_SIGNING_SECRET`/`GITHUB_WEBHOOK_SECRET`, which have no length floor anywhere in this repo (existing tests use 17-20 character secrets).
+`discord-worker`'s and `moderation-worker`'s `services/preset-api.ts` both call this package's `createBotSignatureV2` directly to sign bot → `presets-api` requests. The hand-rolled `crypto.subtle` signer DEAD-019 once described (`generateRequestSignature`) produced only the v1 signature, so both workers deleted it outright — rather than repointing it at v2 — when they stopped sending v1 (`discord-worker` 5.1.0, `moderation-worker` 1.6.0; FINDING-015, 2026-08-29 audit). `discord-worker`'s `utils/github-verify.ts` remains the one intentional hand-rolled-HMAC holdout: GitHub webhook verification, unrelated to bot signatures, and `GITHUB_WEBHOOK_SECRET` has no minimum-length requirement anywhere in this repo — `createHmacKey`'s `>= 32` byte floor (FINDING-009) would silently fail-closed on a real secret shorter than that.
 
 ## Internal Dependencies
 
