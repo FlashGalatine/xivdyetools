@@ -67,7 +67,7 @@ npm run lint && npm run test -- --run && npm run type-check
 ```
 src/
 ├── index.ts                     # Bootstrap: load config, create Client, register handlers, login
-├── message-handler.ts           # messageCreate gate: bot-ignore, per-user throttle, route, error reply (FINDING-035)
+├── message-handler.ts           # messageCreate gate: bot-ignore, per-user throttle, route, error reply (FINDING-035); logs the command only, never the author/channel id or raw text (FINDING-031)
 ├── config.ts                    # loadConfig() from env, ULID validation, isAuthorized()
 ├── router.ts                    # CommandContext, COMMAND_ROUTES dispatch table
 ├── commands/
@@ -164,7 +164,7 @@ await withLoadingIndicator(message, async () => {
 - **Build tool:** `tsup` produces a single ESM bundle + `.d.ts` in `dist/`. `npm run start` runs `node dist/index.js`.
 - **Dev tool:** `tsx watch` for hot reload on save.
 - **Node version:** `engines.node >= 22.0.0`.
-- **Logger:** `createLibraryLogger('stoat')` from `@xivdyetools/logger` — same redaction rules as discord-worker, but Node runtime.
+- **Logger:** `createLibraryLogger('stoat')` from `@xivdyetools/logger` — same redaction rules as discord-worker, but Node runtime. Two independent instances (module-level singletons, not shared): `index.ts` passes `{ level: 'info' }`, overriding the library preset's `debug` default, since that file only ever calls `.info()`/`.error()`; `message-handler.ts` keeps its own instance at the preset's `debug` default so its per-command debug line stays visible to an operator by default — safe since that line (and the throttle-drop line beside it) no longer carry a user id, channel id, or raw message text (FINDING-031, 2026-08-29 security audit).
 
 ## Dependencies
 

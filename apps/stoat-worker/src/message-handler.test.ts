@@ -6,7 +6,22 @@
  * other bots are ignored (no bot-to-bot loops) and each user is throttled.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Captured so FINDING-031 tests can assert on exactly what reached the
+// logger — `createLibraryLogger('stoat')` is a module-level singleton in
+// message-handler.ts, so this factory is only ever called once; every test
+// below reads/clears the same mock instance.
+vi.mock('@xivdyetools/logger', () => ({
+  createLibraryLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+}));
+
+import { createLibraryLogger } from '@xivdyetools/logger';
 import { createMessageHandler } from './message-handler.js';
 import { createMockMessage } from './test-utils/revolt-mocks.js';
 import { MessageContextStore } from './services/message-context.js';
@@ -14,6 +29,13 @@ import { CommandThrottle } from './services/command-throttle.js';
 import type { BotConfig } from './config.js';
 
 const BOT_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
+
+const mockLogger = vi.mocked(createLibraryLogger).mock.results[0]!.value as {
+  debug: ReturnType<typeof vi.fn>;
+  info: ReturnType<typeof vi.fn>;
+  warn: ReturnType<typeof vi.fn>;
+  error: ReturnType<typeof vi.fn>;
+};
 
 function setup(options: { throttle?: CommandThrottle; route?: () => Promise<void> } = {}) {
   const config: BotConfig = { botToken: 'test-token', authorizedUsers: [] };
@@ -28,6 +50,13 @@ function setup(options: { throttle?: CommandThrottle; route?: () => Promise<void
 }
 
 describe('createMessageHandler', () => {
+  beforeEach(() => {
+    mockLogger.debug.mockClear();
+    mockLogger.info.mockClear();
+    mockLogger.warn.mockClear();
+    mockLogger.error.mockClear();
+  });
+
   it('routes a command from a human author', async () => {
     const { handler } = setup();
     const message = createMockMessage({ content: '!xd ping', authorId: 'user-01' });
@@ -92,5 +121,55 @@ describe('createMessageHandler', () => {
     const content: string = send.mock.calls[0][0].content;
     expect(content).toMatch(/unexpected error/i);
     expect(content).not.toContain('secret details');
+  });
+
+  // FINDING-031 (2026-08-29 security audit): stoat shipped the author id,
+  // channel id, and raw message text to stdout on every command, at a level
+  // that is on by default. These pin the fixed shape — reverting either
+  // source line (putting `userId`/`channelId`/`args` back) turns the
+  // matching test red.
+  describe('command logging omits user/channel identifiers (FINDING-031)', () => {
+    it('logs the command, not the author id, when a command is throttled', async () => {
+      const { handler } = setup({ throttle: new CommandThrottle({ limit: 1, windowMs: 10_000 }) });
+      const first = createMockMessage({ content: '!xd ping', authorId: 'spammer-01' });
+      const second = createMockMessage({ content: '!xd ping', authorId: 'spammer-01' });
+
+      await handler(first as any);
+      await handler(second as any);
+
+      // The throttled (second) call logs the command, not who sent it.
+      expect(mockLogger.debug).toHaveBeenCalledWith('Command dropped by per-user throttle', {
+        command: 'ping',
+        subcommand: null,
+      });
+
+      const dropCall = mockLogger.debug.mock.calls.find(
+        ([msg]) => msg === 'Command dropped by per-user throttle',
+      );
+      expect(dropCall).toBeDefined();
+      // Belt-and-braces: the author id must not appear anywhere in the call,
+      // even under a renamed key.
+      expect(JSON.stringify(dropCall)).not.toContain('spammer-01');
+    });
+
+    it('logs only the command for an accepted command — no channel id, no raw args', async () => {
+      const { handler } = setup();
+      const message = createMockMessage({
+        content: '!xd info Snow White',
+        authorId: 'user-01',
+        channelId: 'channel-secret-99',
+      });
+
+      await handler(message as any);
+
+      // Exact-arity match: a second (context) argument reappearing — even an
+      // empty object — fails this, same as the message text changing.
+      expect(mockLogger.debug).toHaveBeenCalledWith('Command: dye.info');
+
+      const allDebugCalls = JSON.stringify(mockLogger.debug.mock.calls);
+      expect(allDebugCalls).not.toContain('channel-secret-99');
+      expect(allDebugCalls).not.toContain('Snow White');
+      expect(allDebugCalls).not.toContain('user-01');
+    });
   });
 });

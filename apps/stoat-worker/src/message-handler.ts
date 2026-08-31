@@ -53,15 +53,30 @@ export function createMessageHandler(
 
     const authorId = message.authorId ?? 'unknown';
     if (!throttle.tryAcquire(authorId)) {
-      logger.debug('Command dropped by per-user throttle', { userId: authorId });
+      // SECURITY (2026-08-29 audit, FINDING-031 / ruling S13-R1): the author id
+      // used to sit here. Sprint 9 of this same audit already replaced the
+      // rate limiter's per-client key with a non-identifying scope on every
+      // other bot's logs; leaving a user id on stoat's own throttle-drop line
+      // would have made this bot the one exception. The command name is what
+      // an operator can actually act on (which command is being hammered),
+      // and — unlike the sibling Discord bot, which has a written privacy
+      // policy — stoat has none, so there is no basis for keeping who did it.
+      logger.debug('Command dropped by per-user throttle', {
+        command: parsed.command,
+        subcommand: parsed.subcommand,
+      });
       return;
     }
 
-    logger.debug(`Command: ${parsed.command}${parsed.subcommand ? `.${parsed.subcommand}` : ''}`, {
-      userId: authorId,
-      channelId: message.channelId,
-      args: parsed.rawArgs,
-    });
+    // SECURITY (2026-08-29 audit, FINDING-031): this line used to carry
+    // `{ userId, channelId, args: parsed.rawArgs }` — the author's id, the
+    // channel id, and the raw message text — to whatever captures stdout.
+    // The sibling Discord bot's privacy policy forbids channel ids and
+    // message content in any record; stoat has no policy of its own, which
+    // is exactly why this needed the same treatment rather than an
+    // exception. The command (and subcommand, if any) is already in the
+    // message text below and costs nothing to keep.
+    logger.debug(`Command: ${parsed.command}${parsed.subcommand ? `.${parsed.subcommand}` : ''}`);
 
     try {
       await route({

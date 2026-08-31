@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-08-31
+
+Security-audit remediation only (2026-08-29 security audit, `docs/audits/2026-08-29-security/`, Sprint 13 — the last sprint of that audit). The bot stays parked; if this bot is ever unparked, its logs no longer carry anything about who ran a command or what channel it ran in.
+
+### Security
+
+- **FINDING-031 — command logging carried identity and message content**: `message-handler.ts`'s per-command debug line used to attach `{ userId, channelId, args: parsed.rawArgs }` — the author's Stoat ULID, the channel id, and the raw message text — to every accepted command. The line now logs only `Command: <command>[.<subcommand>]`; the identifiers and free text are gone, not redacted or truncated. The sibling Discord bot's privacy policy forbids channel ids and message content in any record — stoat had no policy of its own, which is exactly why this line existed unfixed. The throttle-drop line (`FINDING-035`, 2026-08-21) had the same shape at a smaller scale — `{ userId: authorId }` is now `{ command, subcommand }` (ruling S13-R1), consistent with Sprint 9 of this same audit replacing the rate limiter's per-client key with a non-identifying scope on every other bot.
+- **`index.ts` admin roster at boot (ruling S13-R2, not in the original finding)** — the boot-time `ready` handler used to `.join(', ')` the entire `authorizedUsers` list into one `info`-level line: the complete roster of privileged account ids, unconditionally, on every start. It now logs the count (`authorizedUsers.length`), keeping the `(none)` signal for an empty list. This was at `info`, not `debug`, so the level fix below would not have hidden it.
+- **`index.ts` logger default** — `createLibraryLogger('stoat')` took the library preset's `level: 'debug'` default (`packages/logger/src/presets/library.ts`); this file now passes `{ level: 'info' }` explicitly, since it only ever calls `.info()`/`.error()`. `message-handler.ts` keeps its own `createLibraryLogger('stoat')` instance (a separate object) at the preset's debug default on purpose — its command-name debug lines carry no identifiers any more, so there's nothing left for that level to expose, and leaving it at debug keeps them visible to an operator by default.
+- Swept the rest of the unit (`commands/**`, `services/**`, `router.ts`, `config.ts`) for other log lines carrying a user id, channel id, or message content — none found; the three sites above (two from the finding, one from ruling S13-R2) are the whole surface. The error-reply path (`message-handler.ts`, unhandled-error branch) was left as-is: it logs `command`, `subcommand`, and `error.message`, none of which carry user identity — `executeDyeInfo` (the one path that could throw mid-command) catches internally and returns a static localized error string, never the user's input.
+
+### Tests
+
+- `message-handler.test.ts`: two new cases assert on the logger's captured call arguments (not just "something was logged") — a throttled command logs `{ command, subcommand }` and never the author id; an accepted command logs the bare `Command: <name>` string with no second argument at all, so channel id and raw args have nothing to hide behind. Both are pinned to fail if either source line regresses.
+
 ## [0.2.2] - 2026-08-21
 
 Security-audit remediation only (2026-08-21 security audit, `docs/audits/2026-08-21-security/`). The bot stays parked — these close the gaps the audit wanted fixed *before* any revival.

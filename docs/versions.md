@@ -30,7 +30,7 @@
 | **Presets API** | v2.2.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
 | **Public REST API** | v0.10.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.4.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
-| **Stoat Bot** | v0.2.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
+| **Stoat Bot** | v0.2.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 
@@ -413,6 +413,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v0.2.3** | **Aug 2026** | **2026-08-29 security audit (FINDING-031, Sprint 13 — closes the audit) — `message-handler.ts` no longer logs the author id, channel id, or raw command text (the per-command debug line drops all three; the throttle-drop line logs `{ command, subcommand }` instead of the user id, matching Sprint 9's non-identifying rate-limiter scope); `index.ts`'s logger now defaults to `info` instead of the library preset's `debug`; the boot-time admin-roster log prints the authorized-admin count instead of every id (ruling S13-R2, not in the original finding); still parked** |
 | v0.2.2 | Aug 2026 | 2026-08-21 security audit — bot authors ignored + per-user throttle (`message-handler.ts`), `Object.hasOwn` command tables, sanitised echoes, `.app` links; still parked |
 | v0.2.1 | Aug 2026 | Dependency retargets only (`bot-logic/i18n`, `core/blending`); parked |
 | **v0.2.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-038 message context keyed by the bot reply's message ID (reaction handlers can actually find it; multi-match responses no longer overwrite each other); dead reaction affordances removed** |
