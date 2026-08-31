@@ -100,7 +100,7 @@ No finding leaked a secret; nothing else needs rotation.
 ## Recommendations
 - **Policy ↔ inventory gate:** keep a machine-readable inventory (KV prefixes, D1 tables/columns, AE blobs, third-party hosts) and a test that fails when code adds one the two privacy documents do not list — 13 of 31 findings would have been caught at PR time.
 - Ship the four missing `wrangler-config.test.ts` files (FINDING-023) and the throwing-binding test per native limiter consumer (FINDING-012); require security bindings in production `validateEnv` (FINDING-013).
-- Do not enable Workers Logs / Logpush / tail consumers on any script before FINDING-010/011 close; then enable with redaction verified (`evidence/workers-log-retention.md`).
+- **Workers Logs / Logpush / tail consumers stay off until this branch is merged AND every worker has redeployed.** The redaction that makes them safe (FINDING-010, worker-kit 1.2.0) exists only on this branch: production is still running code that logs the raw limiter key, so enabling log retention before the redeploy would retain exactly the client IPs this audit set out to remove. Once every worker is redeployed the condition is met (FINDING-011 closed in Sprint 4, FINDING-010 in Sprint 9) — then enable, and verify the redaction on a sampled request first (`evidence/workers-log-retention.md`).
 - Turn the two `POST_MERGE_CHECKLIST` §3 rollover items (v1 signature, KV fallback) into scheduled sprints rather than checklist lines — one is already overdue (FINDING-015).
 - Record the moderation fail-closed decision (FINDING-005) and the localStorage-JWT trade-off in `docs/architecture/security-trade-offs.md`.
 - Separate `beta` GitHub environment + token (FINDING-028); GitHub secret scanning + push protection (FINDING-029); narrower CI token (FINDING-030).
@@ -115,7 +115,7 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-016 | FIXED 2026-08-30 | 896f3f7e |
 | FINDING-017 | FIXED 2026-08-30 | 780cf992, 9eb84a4c |
 | FINDING-015 | PARTIAL — presets-api requires v2 + nonce replay check; neither bot sends v1; `@xivdyetools/auth` v1 export → Sprint 11 | 01ea3dec, 1a0cf89f, b5d4c53b |
-| FINDING-010 | PARTIAL — presets-api + oauth + api-worker opt-ins removed (none left in the tree); worker-kit limiter-key logging → Sprint 9 | efd495a4, b14cade9, 81035796 |
+| FINDING-010 | FIXED 2026-08-30 (all four units) — UA opt-ins gone; the limiter key is now logged as a non-identifying scope at all six sites | efd495a4, b14cade9, 81035796, 3f5dc8e2, e502384a, 2bf2a5cb |
 | FINDING-011 | FIXED 2026-08-30 (all three units log ids/lengths only; seven legacy `customId` sites ledgered) | efd495a4, a3e8ee14, dfc6de47, b5d4c53b |
 | FINDING-013 | FIXED 2026-08-30 (all four units fail closed in production when a security binding is missing) | efd495a4, a3e8ee14, b14cade9, 4d734c8c, fe86a881, b5d4c53b, c94bfa8f |
 | FINDING-023 | FIXED 2026-08-30 — all four units carry a wrangler-config invariant test (image-worker also refuses a `*.workers.dev` hostname in code) | efd495a4, b14cade9, 519c80da, 96920c5a, 71181a8f |
@@ -123,7 +123,7 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-022 | FIXED 2026-08-30 — `no-store` on every dispatched response | 50c283b9 |
 | FINDING-001 | CODE FIXED 2026-08-30 — OPEN until migration `0001` is hand-run after the 3.0.0 deploy | cdd53fbf |
 | FINDING-002 | FIXED 2026-08-30 (claims trimmed; sign-in record disclosed + deletion route; dead readers gone — types field → Sprint 11) | cdd53fbf, 114f6dde |
-| FINDING-012 | PARTIAL — oauth + moderation-worker `backendError` logged; worker-kit anchor → Sprint 9 | b14cade9, b5d4c53b |
+| FINDING-012 | FIXED 2026-08-30 (all three units) — fail-open is never silent (console.warn fallback), the Cloudflare binding is validated at construction | b14cade9, b5d4c53b, 3f5dc8e2, 2bf2a5cb |
 | FINDING-007 | FIXED 2026-08-30 (Sprint 3, discord-worker 5.1.0) — needs the post-deploy Upstash secret deletion | 6c14889f, d28f76a4, f5d5f596, 4d734c8c, fe86a881 |
 | FINDING-008 | FIXED 2026-08-30 | 2041ac39, 886d46a1, f5d5f596, 1a0cf89f |
 | FINDING-019 | FIXED 2026-08-30 | dfc6de47 |
@@ -135,7 +135,7 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-026 | FIXED 2026-08-30 | 2ffe6d13 |
 | FINDING-027 | FIXED 2026-08-30 | 2ffe6d13 |
 | FINDING-024 | FIXED 2026-08-30 (Sprint 7, og-worker 2.4.0; query *and* path axes) — enumeration of distinct ids still costs a render, bounded by the WAF rule, which stays an unticked dashboard action | c6bd962b, 9b2f4ca3, e2bdeec6, e2e9ca6b, 636e42ec, ebdc49ed, e9b6f471 |
-| FINDING-025, 028–031 | OPEN — Sprints 9–13 (030 = the Sprint 0 token check) | — |
+| FINDING-025, 028–031 | OPEN — Sprints 10–13 (030 = the Sprint 0 token check) | — |
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.

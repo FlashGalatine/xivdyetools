@@ -13,4 +13,18 @@
 - Default `logUserAgent` to `false` in worker-kit and remove the three opt-ins; on limiter errors log the key's scope, not its value; note in `docs/operations` that Workers Logs must not be enabled before FINDING-010/011 are closed.
 
 ## Status
-PARTIAL — api-worker part FIXED 2026-08-30 81035796 (0.10.0: the last `logUserAgent: true` opt-in in the tree is gone — request logs match the web privacy page; note the worker-kit default was already `false`, so Sprint 9's "default flip" item is a no-op and only the limiter-key logging remains there). presets-api opt-in removed 2026-08-30 efd495a4 (2.2.0) and oauth opt-in removed 2026-08-30 b14cade9 (3.0.0), each with a test that the request-start log has no `userAgent`; api-worker (Sprint 5) opt-in and the worker-kit default flip + limiter-key logging (Sprint 9) pending.
+FIXED 2026-08-30 (all four units) — worker-kit part `3f5dc8e2`, `e502384a`, `2bf2a5cb` (1.2.0).
+Six log sites carried the raw limiter key — a client IP or a Discord user id — on their
+fail-open / backend-error paths: `middleware/rate-limit.ts`'s two warns, all three fallible
+backends' fail-open catches, and `kv.ts`'s increment retry-exhausted path (its logger call *and*
+its `console.error` fallback). `kv.ts` logged it twice, once as `key` and once embedded in the
+derived `kvKey`. All six now log a `keyScope` through one helper (`scopeRateLimitKey`): a
+configured `keyPrefix` — chosen by deploying code, never derived from request data — *is* the
+scope and the key is discarded outright; otherwise the key is classified by shape (`ip` / `id` /
+`unknown` / `unscoped` / `empty`) without echoing any substring of it. Deliberately not a hash: a
+hashed IP is still an IP-shaped identifier that correlates two log lines. `keyPrefix` is the one
+remaining input written verbatim, and its public JSDoc now says so on all three option types.
+The `logUserAgent` "default flip" was a no-op (already `false`); the real defect was the JSDoc
+example recommending `true`, now corrected.
+
+Consumer halves, for the record: api-worker part FIXED 2026-08-30 81035796 (0.10.0: the last `logUserAgent: true` opt-in in the tree is gone — request logs match the web privacy page; note the worker-kit default was already `false`, so Sprint 9's "default flip" item is a no-op and only the limiter-key logging remains there). presets-api opt-in removed 2026-08-30 efd495a4 (2.2.0) and oauth opt-in removed 2026-08-30 b14cade9 (3.0.0), each with a test that the request-start log has no `userAgent` (all shipped earlier in this branch).
