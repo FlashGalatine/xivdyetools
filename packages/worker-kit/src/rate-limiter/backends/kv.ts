@@ -46,6 +46,7 @@ import type {
   KVRateLimiterOptions,
   RateLimiterLogger,
 } from '../types.js';
+import { scopeRateLimitKey } from '../key-scope.js';
 
 /**
  * Default key prefix for rate limit entries
@@ -161,13 +162,24 @@ export class KVRateLimiter implements ExtendedRateLimiter {
     } catch (error) {
       // Fail-open on KV errors (availability over strict limiting)
       if (config.failOpen !== false) {
-        // Log fail-open event for monitoring/alerting
-        this.logger?.warn('Rate limiter fail-open: KV read error, allowing request', {
-          key,
+        // 2026-08-29 FINDING-010: neither `key` nor `kvKey` belongs in this
+        // context — `kvKey` is `${keyPrefix}${key}|${window}`, so it embeds
+        // the raw key just as much as `key` does; redacting only one would
+        // be theatre. Log the scope instead.
+        const context = {
+          keyScope: scopeRateLimitKey(key, this.keyPrefix),
           operation: 'checkOnly',
           error: error instanceof Error ? error.message : String(error),
-          kvKey,
-        });
+        };
+        // 2026-08-29 FINDING-012: fall back to console.warn with no logger —
+        // see the matching comment in backends/cloudflare.ts. Some callers
+        // use checkOnly()/increment() directly instead of through
+        // rateLimitMiddleware, so this fail-open must be visible either way.
+        if (this.logger) {
+          this.logger.warn('Rate limiter fail-open: KV read error, allowing request', context);
+        } else {
+          console.warn('Rate limiter fail-open: KV read error, allowing request', context);
+        }
 
         return {
           allowed: true,
@@ -225,12 +237,13 @@ export class KVRateLimiter implements ExtendedRateLimiter {
       } catch (error) {
         // Log error on last attempt (structured logging if logger provided)
         if (attempt === this.maxRetries - 1) {
+          // 2026-08-29 FINDING-010: same redaction as the checkOnly
+          // fail-open above — neither `key` nor `kvKey` belongs here.
           const errorContext = {
-            key,
+            keyScope: scopeRateLimitKey(key, this.keyPrefix),
             operation: 'increment',
             attempts: attempt + 1,
             maxRetries: this.maxRetries,
-            kvKey,
           };
 
           if (this.logger) {

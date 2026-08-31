@@ -34,6 +34,7 @@ import type {
   RateLimiterLogger,
   UpstashRateLimiterOptions,
 } from '../types.js';
+import { scopeRateLimitKey } from '../key-scope.js';
 
 /**
  * Default key prefix for rate limit entries
@@ -97,11 +98,19 @@ export class UpstashRateLimiter implements RateLimiter {
     } catch (error) {
       // Fail-open on Redis errors (availability over strict limiting)
       if (config.failOpen !== false) {
-        this.logger?.warn('Rate limiter fail-open: Redis error, allowing request', {
-          key,
+        // 2026-08-29 FINDING-010: scope, not the raw Discord id / IP.
+        const context = {
+          keyScope: scopeRateLimitKey(key, this.keyPrefix),
           operation: 'check',
           error: error instanceof Error ? error.message : String(error),
-        });
+        };
+        // 2026-08-29 FINDING-012: fall back to console.warn with no logger —
+        // see the matching comment in backends/cloudflare.ts.
+        if (this.logger) {
+          this.logger.warn('Rate limiter fail-open: Redis error, allowing request', context);
+        } else {
+          console.warn('Rate limiter fail-open: Redis error, allowing request', context);
+        }
 
         return {
           allowed: true,

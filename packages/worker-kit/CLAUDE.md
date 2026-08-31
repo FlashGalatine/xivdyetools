@@ -36,7 +36,7 @@ pnpm --filter @xivdyetools/worker-kit run test
 - **Middleware factory pattern** — each middleware is a factory returning a Hono `MiddlewareHandler`; canonical order is requestId → logger → rateLimit (each reads the previous one's context).
 - **Request-ID validation** — upstream `X-Request-ID` accepted only if UUID-v4-shaped (log-injection defense); otherwise replaced via `crypto.randomUUID()`.
 - **Rate-limit backend memoization (BUG-061)** — a `backend` factory's result is cached per isolate; never construct `MemoryRateLimiter` inside the factory.
-- **Fail-open default** — backend errors let requests through (logged); `onError: 'fail-closed'` opts into 429.
+- **Fail-open default** — backend errors let requests through; `onError: 'fail-closed'` opts into 429. Logged on every fail-open path even with no logger configured (FINDING-012, 2026-08-29: `console.warn` fallback in `CloudflareRateLimiter`, `KVRateLimiter.checkOnly`, `UpstashRateLimiter` — previously silent when a consumer passed none), and the log context never carries the raw key (FINDING-010: `keyScope` via the internal `scopeRateLimitKey()` helper, e.g. `public:ip` or a shape label like `ip`/`id` when no `keyPrefix` is configured) — never widen that to a hash, a hashed IP still correlates two log lines by client. `CloudflareRateLimiter`'s constructor also validates every tier's `binding.limit` is callable and throws if not, rather than fail-opening silently on the first request that reaches a misconfigured tier.
 - **`getClientIp` only** for keys (SEC-002) — `X-Forwarded-For` is spoofable.
 - **Standard headers** — `X-RateLimit-Limit/Remaining/Reset` on every response; `Retry-After` on 429.
 
@@ -51,4 +51,4 @@ All eight backend apps: discord-worker, moderation-worker, presets-api, oauth, a
 
 ## Publishing
 
-Publishing goes through the **Publish Packages to npm** workflow (OIDC trusted publishing). ⚠️ **First-publish caveat:** as a brand-new npm package, `@xivdyetools/worker-kit` needs its trusted-publisher config created on npmjs.com AND its first version published manually by a 2FA-authenticated human — OIDC cannot create a package that doesn't exist yet (see root `CLAUDE.md` and `DEPRECATIONS.md`).
+Publishing goes through the **Publish Packages to npm** workflow (OIDC trusted publishing). The package's first version published 2026-08-28 (the break-glass manual-publish + trusted-publisher-config path in the root `CLAUDE.md` and `DEPRECATIONS.md` was for that one release only) — a version bump here now goes through the normal OIDC workflow like every other package.

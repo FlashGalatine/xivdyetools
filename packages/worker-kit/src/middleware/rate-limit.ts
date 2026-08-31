@@ -20,6 +20,7 @@ import type {
   RateLimitResult,
 } from '../rate-limiter/index.js';
 import { getRateLimitHeaders } from '../rate-limiter/index.js';
+import { scopeRateLimitKey } from '../rate-limiter/key-scope.js';
 
 /**
  * Options for the rate limit middleware factory.
@@ -141,9 +142,13 @@ export function rateLimitMiddleware(
       // outages/misconfigurations undiagnosable from logs.
       const logger = c.get('logger');
       if (logger) {
+        // 2026-08-29 FINDING-010: log which bucket class failed, never the
+        // key itself — this middleware has no `keyPrefix` of its own (that
+        // lives on the backend), so `key` here is the extractor's raw
+        // output (a client IP or a Discord id) and is redacted by shape.
         logger.warn('Rate limiter backend error', {
           onError,
-          key,
+          keyScope: scopeRateLimitKey(key),
           path: c.req.path,
           method: c.req.method,
           error: err instanceof Error ? err.message : String(err),
@@ -175,8 +180,9 @@ export function rateLimitMiddleware(
     if (result.backendError) {
       const logger = c.get('logger');
       if (logger) {
+        // 2026-08-29 FINDING-010: see the comment on the catch block above.
         logger.warn('Rate limiter backend error (failing open)', {
-          key,
+          keyScope: scopeRateLimitKey(key),
           path: c.req.path,
           method: c.req.method,
         });

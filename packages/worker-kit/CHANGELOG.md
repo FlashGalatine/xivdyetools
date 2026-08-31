@@ -2,6 +2,25 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
+## [1.2.0] - 2026-08-30
+
+Security audit remediation (docs/audits/2026-08-29-security, FINDING-010 + FINDING-012). Minor bump: a behaviour change in what gets logged, plus a constructor that now throws in a case it previously let through silently.
+
+### Security
+
+- **Rate-limit backend-error and fail-open log lines no longer carry the raw key.** The `key` passed to `RateLimiter.check()`/`checkOnly()` is a client IP or a Discord user id — exactly the kind of per-client identifier `apps/web-app/PRIVACY.md` promises is never collected — and every fail-open / backend-error log line logged it verbatim (the KV backend logged it **twice**: once as `key`, once embedded in the derived `kvKey`). All six sites now log a `keyScope` field instead (e.g. `public:ip`, `ratelimit`, or a shape label like `ip` / `id` / `unknown` when no `keyPrefix` is configured), via one new internal helper (`scopeRateLimitKey`) so the sites cannot drift apart. **If you parse these log lines for anything other than the message text, the `key`/`kvKey` fields are gone and a `keyScope` field has taken their place** — `middleware/rate-limit.ts`'s two warns (`'Rate limiter backend error'`, `'Rate limiter backend error (failing open)'`), `CloudflareRateLimiter`'s fail-open warn, `KVRateLimiter`'s `checkOnly` fail-open warn and its `increment` retry-exhausted error (both the structured-logger and the `console.error` fallback), and `UpstashRateLimiter`'s fail-open warn.
+- **Fail-open is no longer silent when no logger is configured.** `CloudflareRateLimiter`, `KVRateLimiter` (`checkOnly`) and `UpstashRateLimiter` now fall back to `console.warn` with the same redacted context when constructed without a `logger` — previously `this.logger?.warn(...)` meant a limiter built without one (every consumer, until this branch's Sprints 2 and 4) fell open with **no signal anywhere**. `docs/architecture/security-trade-offs.md` accepts fail-open on the condition that fail-open events are logged and alertable; this closes the gap between that condition and what the code actually did. `KVRateLimiter.increment()`'s existing `console.error` fallback was the in-repo precedent this shape follows, not a new convention.
+- **`CloudflareRateLimiter`'s constructor now validates every tier's binding.** A tier whose `binding` has no callable `limit()` — a `[[ratelimits]]` name typo, or the wrong binding type — used to compile and construct without error, then fail *open* on the first request that reached it (the `check()` catch allows the request through). The constructor now throws immediately naming the offending tier's configured limit, the same fail-closed-at-startup trade Sprints 1-4 made for other missing security bindings elsewhere in this monorepo.
+- **`result.backendError` was verified, not changed** — all three fallible backends (`CloudflareRateLimiter`, `KVRateLimiter`, `UpstashRateLimiter`) already set it correctly on every fail-open path, including through `KVRateLimiter.check()`'s wrapping of `checkOnly()`. No client-visible header was added for it — a `backendError: true` header would tell a brute-forcer exactly when the limiter is degraded; read it from `result.backendError` in your own request-scoped logger instead, the way `oauth` 3.0.0 and `moderation-worker` 1.6.0 already do.
+
+### Fixed
+
+- `loggerMiddleware`'s JSDoc usage example showed `logUserAgent: true` — the package's own documentation recommending the exact option this audit removed from three consumers' opt-ins. The example and the option's JSDoc now state the default (`false`) and why it stays that way.
+
+### Operator notes
+
+- This closes the worker-kit half of FINDING-010 and FINDING-012 (docs/audits/2026-08-29-security). Both findings' consumer halves already shipped: `presets-api` 2.2.0, `oauth` 3.0.0 and `api-worker` 0.10.0 removed their `logUserAgent: true` opt-ins; `oauth` 3.0.0 and `moderation-worker` 1.6.0 already pass a request logger and count `backendError`. In-repo consumers pick this up at their next build via `workspace:*`; npm consumers get it at the next publish of this package.
+
 ## [1.1.0] - 2026-08-21
 
 Security audit remediation (docs/audits/2026-08-21-security, FINDING-003). Minor bump: additive API.

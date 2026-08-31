@@ -62,7 +62,6 @@ app.use('*', requestIdMiddleware());
 app.use('*', loggerMiddleware({
   serviceName: 'xivdyetools-presets-api',
   readApiVersionFromEnv: true,
-  logUserAgent: true,
 }));
 
 // In handlers:
@@ -168,12 +167,11 @@ app.use('*', loggerMiddleware({
   readEnvironmentFromEnv: false,
 }));
 
-// presets-api — has ENVIRONMENT + API_VERSION, logs user agent
+// presets-api — has ENVIRONMENT + API_VERSION
 app.use('*', requestIdMiddleware());
 app.use('*', loggerMiddleware({
   serviceName: 'xivdyetools-presets-api',
   readApiVersionFromEnv: true,
-  logUserAgent: true,
 }));
 
 // moderation-worker — custom URL sanitizer

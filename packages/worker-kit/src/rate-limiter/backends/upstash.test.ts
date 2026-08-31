@@ -198,6 +198,29 @@ describe('UpstashRateLimiter', () => {
       expect(result.backendError).toBe(true);
       expect(result.remaining).toBe(5);
       expect(logger.warn).toHaveBeenCalledOnce();
+      // 2026-08-29 FINDING-010: assert the raw key is gone AND the scope
+      // that replaces it is present — a test that only checked `warn` fired
+      // would still pass if this redaction were reverted.
+      const [, context] = logger.warn.mock.calls[0] as [string, Record<string, unknown>];
+      expect(context.key).toBeUndefined();
+      expect(context.keyScope).toBe('ratelimit'); // default keyPrefix, trimmed
+    });
+
+    it('FINDING-012: falls back to console.warn (redacted) when no logger is supplied', async () => {
+      // `limiter` (from beforeEach) has no logger — before this sprint that
+      // meant a Redis error fell open with NO signal anywhere.
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      mockPipeline.exec.mockRejectedValue(new Error('Redis connection failed'));
+
+      const result = await limiter.check('user1', defaultConfig);
+
+      expect(result.backendError).toBe(true);
+      expect(consoleSpy).toHaveBeenCalledTimes(1);
+      const [message, context] = consoleSpy.mock.calls[0] as [string, Record<string, unknown>];
+      expect(message).toBe('Rate limiter fail-open: Redis error, allowing request');
+      expect(context.key).toBeUndefined();
+      expect(context.keyScope).toBe('ratelimit');
+      consoleSpy.mockRestore();
     });
 
     it('allows request on Redis error when failOpen is true', async () => {

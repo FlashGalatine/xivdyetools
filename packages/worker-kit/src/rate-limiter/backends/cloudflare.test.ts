@@ -130,6 +130,53 @@ describe('CloudflareRateLimiter', () => {
     expect(warn).toHaveBeenCalledTimes(1);
   });
 
+  it('FINDING-010: logs the key scope on fail-open, never the raw key or bindingKey', async () => {
+    const binding = fakeBinding(async () => {
+      throw new Error('binding unavailable');
+    });
+    const warn = vi.fn();
+    const limiter = new CloudflareRateLimiter({
+      tiers: [{ limit: 10, binding }],
+      keyPrefix: 'public:ip:',
+      logger: { warn, error: vi.fn() },
+    });
+    await limiter.check('1.2.3.4', { maxRequests: 10, windowMs: 60_000 });
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    const [, context] = warn.mock.calls[0] as [string, Record<string, unknown>];
+    // A test that only asserted `warn` fired would still pass if the
+    // redaction were reverted — assert the value is gone, not merely that a
+    // warning happened.
+    expect(context.key).toBeUndefined();
+    expect(JSON.stringify(context)).not.toContain('1.2.3.4');
+    expect(context.keyScope).toBe('public:ip');
+  });
+
+  it('FINDING-012: falls back to console.warn (redacted) when no logger is supplied', async () => {
+    // Before this sprint, `this.logger?.warn(...)` alone meant a limiter
+    // built without a logger fell open on a binding error with NO signal
+    // anywhere — exactly the state oauth and moderation-worker were in
+    // before their own Sprint 2/4 fixes.
+    const binding = fakeBinding(async () => {
+      throw new Error('binding unavailable');
+    });
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const limiter = new CloudflareRateLimiter({
+      tiers: [{ limit: 10, binding }],
+      keyPrefix: 'api:ip:',
+    });
+
+    const result = await limiter.check('5.6.7.8', { maxRequests: 10, windowMs: 60_000 });
+
+    expect(result.backendError).toBe(true);
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    const [message, context] = consoleSpy.mock.calls[0] as [string, Record<string, unknown>];
+    expect(message).toBe('Rate limiter fail-open: rate-limit binding error, allowing request');
+    expect(context.key).toBeUndefined();
+    expect(context.keyScope).toBe('api:ip');
+    consoleSpy.mockRestore();
+  });
+
   it('throws when the binding throws and failOpen is false (caller decides)', async () => {
     const binding = fakeBinding(async () => {
       throw new Error('binding unavailable');
@@ -159,5 +206,40 @@ describe('CloudflareRateLimiter', () => {
 
   it('rejects construction with no tiers', () => {
     expect(() => new CloudflareRateLimiter({ tiers: [] })).toThrow();
+  });
+
+  describe('FINDING-012: binding validation at construction', () => {
+    it('throws when a tier binding has no callable limit()', () => {
+      const brokenBinding = {} as RateLimitBinding;
+      expect(
+        () => new CloudflareRateLimiter({ tiers: [{ limit: 10, binding: brokenBinding }] }),
+      ).toThrow(/binding\.limit/);
+    });
+
+    it('throws when a tier binding has a non-function limit property', () => {
+      const wrongShape = { limit: 42 } as unknown as RateLimitBinding;
+      expect(
+        () => new CloudflareRateLimiter({ tiers: [{ limit: 10, binding: wrongShape }] }),
+      ).toThrow(/binding\.limit/);
+    });
+
+    it('throws naming the offending tier when only one of several tiers is broken', () => {
+      const good = fakeBinding([true]);
+      const broken = {} as RateLimitBinding;
+      expect(
+        () =>
+          new CloudflareRateLimiter({
+            tiers: [
+              { limit: 10, binding: good },
+              { limit: 30, binding: broken },
+            ],
+          }),
+      ).toThrow(/limit=30/);
+    });
+
+    it('still constructs normally when every tier has a callable limit()', () => {
+      const binding = fakeBinding([true]);
+      expect(() => new CloudflareRateLimiter({ tiers: [{ limit: 10, binding }] })).not.toThrow();
+    });
   });
 });
