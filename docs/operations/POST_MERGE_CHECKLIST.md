@@ -480,10 +480,13 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       what FINDING-030 asked for). Both live under Settings → Code security and analysis.
       **Secret scanning** is detection only: GitHub diffs pushed content against known
       providers' token/key formats and opens an alert on a match — after the fact, on content
-      already in the repository. **Push protection** is prevention: it runs at `git push` time
-      and rejects a push containing a matching pattern before the objects ever reach GitHub
-      (with an override for a confirmed false positive); it requires secret scanning on first,
-      since it enforces the same detectors at push time instead of after the fact. Both are
+      already in the repository. **Push protection** is prevention: it runs server-side during
+      `git push` — the pushed objects are received and scanned, and on a match GitHub rejects
+      the *ref update* rather than accepting the push and merely alerting afterward, so the
+      push itself fails and the branch never moves (with an override path for a confirmed false
+      positive); the received-but-unreferenced objects are then subject to normal garbage
+      collection instead of becoming part of any branch history. It requires secret scanning on
+      first, since it enforces the same detectors at push time instead of after the fact. Both are
       free for a public repository on any plan, which this one is (confirmed `visibility:
       public` in §0 above) — no plan upgrade gates either toggle.
       **Push protection is the one that matters more here.** The repo already runs two

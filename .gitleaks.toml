@@ -42,9 +42,15 @@ paths = [
 # `regexTarget = "line"` with bare variable-name substrings, so any line merely mentioning one
 # of these names — e.g. `DISCORD_CLIENT_ID=… DISCORD_CLIENT_SECRET=…` on one line — was exempt
 # from every rule, not just the one that recognised the public value). `regexTarget` here is
-# the default ("match": the specific candidate string a rule flagged), so each regex only
-# suppresses a finding whose own matched text has the known-public shape; a different value
-# sharing the line is judged on its own merits.
+# set explicitly to `"match"` — NOT gitleaks' default, which is `"secret"` (the narrower
+# substring a rule captured as the credential itself, excluding the surrounding key name).
+# These three regexes need that surrounding key name (`DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID`,
+# `storageKey`) to stay narrow, and `"secret"` never includes it, so this line is load-bearing:
+# delete it trusting a "match is the default" assumption and all three entries silently stop
+# matching anything, and the values they cover start being reported again (a false-positive
+# annoyance, not a hidden-secret risk, but real breakage). With it set, each regex suppresses
+# only a finding whose own matched text has the known-public shape; a different value sharing
+# the line is judged on its own merits.
 [[allowlists]]
 description = "OAuth client IDs (public, shipped in wrangler [vars]) and web-app localStorage key names"
 regexTarget = "match"
@@ -59,17 +65,33 @@ regexes = [
   '''DISCORD_CLIENT_ID\s*[:=]\s*['"]?\d{17,20}['"]?''',
   # XIVAuth's OAuth client id (apps/oauth/wrangler.toml), a `phx-`-prefixed token — public by
   # the same client-id/client-secret split as Discord's (sent in the authorize URL,
-  # apps/oauth/src/handlers/xivauth.ts). Verified 2026-08-31: matches exactly the 2 tree + 3
+  # apps/oauth/src/handlers/xivauth.ts). Verified 2026-08-31: matches exactly the 3 tree + 4
   # history findings this id produces (wrangler.toml at its current and two prior line
-  # numbers, plus one audit doc quoting it) and nothing else.
+  # numbers — three appearances across history — plus one audit doc quoting it, in both tree
+  # and history) and nothing else.
   '''XIVAUTH_CLIENT_ID\s*[:=]\s*['"]?phx-[A-Za-z0-9_-]{16,}['"]?''',
   # web-app localStorage key names: compile-time string literals naming a persisted UI-state
-  # slot (apps/web-app/src/services/tool-panel-builders.ts), never a credential. Anchored to
-  # an identifier/slug shape — letters, digits, `_`/`-`, starting with a letter — rather than
-  # the bare `storageKey` name, so a real secret would itself have to look like a plain
-  # identifier (no `.`, `+`, `/`, `=` padding, or high-entropy runs) to slip through. Verified
-  # 2026-08-31: matches exactly the 3 tree + 3 history comparison-tool.ts findings that
-  # actually trip the generic-api-key rule (most storageKey values are short/low-entropy
-  # enough that no rule flags them at all) and nothing else.
-  '''storageKey\s*[:=]\s*['"][A-Za-z][A-Za-z0-9_-]*['"]''',
+  # slot (apps/web-app/src/services/tool-panel-builders.ts), always written as a TS
+  # object-literal property (`storageKey: '...'`) — never an assignment, so the separator is
+  # `:` only, not `[:=]`. S12-R9 (fix-round review): an earlier version of this regex used
+  # `[:=]`, reasoning that TOML uses `=` and TS uses `:` (true for the other two regexes above,
+  # which really do appear in both forms) — but `storageKey` never appears in a TOML file in
+  # this repo, and widening to `=` also matches a plain variable ASSIGNMENT
+  # (`const storageKey = "<value>"`), a context where a real secret could genuinely be stored
+  # under that name. The reviewer demonstrated the regression directly: a synthetic
+  # `const storageKey = "<letter-leading 64-hex string>"` (an R2/S3 secret-access-key shape —
+  # this repo uses R2 in presets-api) was reported under the pre-fix-round config and silently
+  # suppressed by the `[:=]` version of this line. Reverted to `:` only, plus a length bound —
+  # `[A-Za-z0-9_-]*` alone bounds neither entropy nor length, so a high-entropy value of any
+  # length in that same character class would still have matched. The 48 real (non-doc-example)
+  # storageKey values in this repo top out at 35 characters
+  # (`v3_mixer_mobile_dye_selection_panel` / `v4_mixer_mobile_dye_selection_panel` — verified by
+  # extracting every `storageKey` value in the tree, not assumed); `{1,40}` below keeps every
+  # one of them exempt with 5 characters of headroom while excluding a 64-character hex or
+  # base64 key by length alone, regardless of character-class overlap. Verified 2026-08-31:
+  # matches exactly the 6 tree (3 in comparison-tool.ts + 3 duplicated in its stray local
+  # `dist/` bundle) + 3 history comparison-tool.ts findings that actually trip the
+  # generic-api-key rule (most storageKey values are short/low-entropy enough that no rule
+  # flags them at all) and nothing else.
+  '''storageKey\s*:\s*['"][A-Za-z][A-Za-z0-9_-]{0,39}['"]''',
 ]

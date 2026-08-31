@@ -27,18 +27,31 @@ FIXED 2026-08-31 — all three items in this finding's own Fix section are done 
    `*.test.ts` / `__tests__/` files, which stayed covered throughout.
 2. **Line allowlist → value-anchored.** `regexTarget` changed from `"line"` (any line
    *mentioning* `DISCORD_CLIENT_ID` / `XIVAUTH_CLIENT_ID` / `storageKey` was exempt from every
-   rule, whatever else the line held) to the default `"match"` (only a finding whose own
-   matched text has the known-public shape is exempt). The remaining 9 tree / 7 history raw
-   hits — Discord snowflakes in CI/wrangler config, the XIVAuth `phx-…` client id in
-   `apps/oauth/wrangler.toml` (plus one audit doc quoting it), and three web-app `storageKey`
-   values the generic-api-key rule happens to match — are exactly what the three new
-   value-anchored regexes cover, confirmed by testing each regex against every raw finding's
-   actual `Match` text: 100% of the 16 non-test hits matched one of the three, 0% of the 55
-   test-file hits matched any of them.
+   rule, whatever else the line held) to an explicit `"match"` (only a finding whose own
+   matched text has the known-public shape is exempt) — **not** gitleaks' actual default, which
+   is `"secret"`, the narrower captured-value substring alone; a fix-round review (S12-R11)
+   caught the original comment here claiming `"match"` was the default, which is false and
+   would matter if anyone ever deleted the line trusting that claim. The remaining 9 tree / 7
+   history raw hits — 3 tree + 4 history for the XIVAuth `phx-…` client id
+   (`apps/oauth/wrangler.toml` at three different line numbers across history, plus one audit
+   doc quoting it), and 6 tree + 3 history for `storageKey` (3 in `comparison-tool.ts` + 3
+   duplicated in a stray local `dist/` build artifact; 0 for the Discord snowflake shape, see
+   `.gitleaks.toml`) — are exactly what the three new value-anchored regexes cover, confirmed by
+   testing each regex against every raw finding's actual `Match` text: 100% of the 16 non-test
+   hits matched one of the three, 0% of the 55 test-file hits matched any of them. A fix-round
+   review (S12-R9) also caught a real regression in the first version of the `storageKey` regex
+   — it accepted both `:` and `=` as the separator, which also exempted a plain variable
+   *assignment* (`const storageKey = "<value>"`), a context a real secret could legitimately
+   occupy; reverted to `:` only (the only form any real usage in this repo takes) plus a
+   `{1,40}`-character length bound verified against the 48 real values in the tree (longest: 35
+   characters) — see `.gitleaks.toml` for the full account and the proof.
 3. **GitHub secret scanning + push protection.** Verified live 2026-08-31 via `gh api
    repos/FlashGalatine/xivdyetools --jq '.security_and_analysis'` — both `secret_scanning` and
-   `secret_scanning_push_protection` read `"enabled"` (turned on by the maintainer independently
-   of this fix). The Evidence bullet above ("still unticked") is now stale;
+   `secret_scanning_push_protection` read `"enabled"`: enabled as of 2026-08-31 (API-verified);
+   not enabled by this change. (The API call proves current state, not who flipped it or when —
+   and GitHub enables both by default on public repositories in some circumstances, so this is
+   not necessarily a deliberate maintainer action either.) The Evidence bullet above ("still
+   unticked") is now stale;
    `docs/operations/POST_MERGE_CHECKLIST.md`'s item is corrected and ticked, with the two
    settings' distinct roles and why push protection matters more than scanning alone written out.
 
