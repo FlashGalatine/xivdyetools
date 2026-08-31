@@ -508,8 +508,13 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
 - [ ] Branch protection / ruleset on `main`: require the `ci`, `audit` and `secret-scan` checks,
       linear history, no force-push.
 - [ ] `production` environment protection rules verified (see §0).
-- [ ] `CLOUDFLARE_API_TOKEN` scoped to Workers Scripts + Pages + KV/D1/R2 edit on this account
-      only (SECRET_ROTATION.md §7); note the rotation date in the rotation log.
+- [ ] `CLOUDFLARE_API_TOKEN` scoped to **Workers Scripts: Edit + Pages: Edit on this account, and
+      Workers Routes: Edit on the `xivdyetools.app` zone** — and **no KV / D1 / R2 Edit**, which
+      deploys never need (2026-08-29 FINDING-030; SECRET_ROTATION.md §7). Inspect the live token
+      first: re-issue only if it currently carries those storage grants, then update the secret,
+      re-run one deploy via *workflow_dispatch*, revoke the old token, and note the date in the
+      rotation log. Same grants as `CLOUDFLARE_API_TOKEN_BETA` (FINDING-028) — Cloudflare cannot
+      scope either one narrower.
 - [ ] **Code security → Private vulnerability reporting: ON** — `SECURITY.md` (new) points
       reporters at it.
 

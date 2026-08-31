@@ -198,7 +198,7 @@ Terminal for FINDING-015: every consumer stopped using v1 in S1/S3/S4, so removi
 
 **Ends with:** CI green on the PR (`secret-scan` with the new config, `gitleaks git .` clean locally) → merge to `main`; one beta deploy succeeds with the new environment/token.
 
-## Sprint 13 — stoat-worker (P3, parked)
+## Sprint 13 — stoat-worker (P3, parked) ✅ COMPLETED 2026-08-31 (commits `25285961`+; one reviewed task + one ruled fix round; stoat-worker 0.2.3 — **the last sprint; 28 of 31 findings now FIXED, the other three awaiting maintainer credentials/migrations, not code**)
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
 | FINDING-031 | security | LOW / LOCAL | `src/message-handler.ts:56,60-64`: log the command name only; `index.ts:17`: `createLibraryLogger(…, { level: 'info' })`; tests. |

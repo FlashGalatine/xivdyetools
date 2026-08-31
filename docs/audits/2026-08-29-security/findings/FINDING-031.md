@@ -12,4 +12,28 @@
 - Log command name only (drop `channelId`, `args`); default stoat's logger to `info`.
 
 ## Status
-OPEN
+FIXED 2026-08-31 (stoat-worker 0.2.3) — commits `25285961`, plus the fix round below.
+
+The two sites the finding names are fixed — the throttle-drop and accepted-command lines no longer
+carry `userId`, `channelId` or `args` (the last being raw message content) — and the logger is
+pinned to `info` at stoat's own call site rather than taking `createLibraryLogger`'s `debug`
+default (verified in `packages/logger/src/presets/library.ts`; the preset default is deliberate for
+library consumers and was left alone).
+
+**Two sites the finding did not name, both found by sweeping the unit rather than working the
+list:**
+1. `index.ts:41-43` logged the **complete roster of authorized admin ids** — `config.authorizedUsers.join(', ')`
+   — at **`info`**, on every boot, so the `debug` → `info` change would not have hidden it. It now
+   logs the count, keeping the "(none)" signal that is the operationally useful part.
+2. `parsed.command` is not a validated vocabulary: a message matching the bot's prefix but no
+   registered route put the user's own token into both log lines verbatim. `router.ts` already
+   treats that exact value as untrusted — its unknown-command reply sanitises and caps it
+   (2026-08-21 FINDING-019) — so logging it raw one function away contradicted the file's own
+   reasoning. The command is now logged only when it is a registered route, tested with the same
+   `Object.hasOwn` check the router uses so `constructor` / `__proto__` cannot read as known;
+   anything else logs a fixed placeholder rather than a truncated token, because a log line has no
+   reason to carry it at all.
+
+**Deliberately not done:** stoat still has no privacy policy of its own, which is what makes the
+sibling bot's policy the only written rule here. Writing one for a parked, undeployed bot was not
+this sprint's job — recorded rather than done.

@@ -138,7 +138,23 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-025 | FIXED 2026-08-31 (logger 2.1.1) — array items + free text scanned; three further leaks found in review (aliased references, a fail-open budget, DAG data loss) closed with it | 425cd1d0, 617c907e, b3800667, b1ec25aa |
 | FINDING-028 | PARTIAL — code FIXED 2026-08-31 (beta env + separate token, no fallback, named guard); OPEN until the maintainer mints the token and homes the production one in its environment | ae9ef136, 892f1b0e, 2277ff35, febf54ce, 1c8a5725 |
 | FINDING-029 | FIXED 2026-08-31 — directory allowlists replaced by value-anchored rules; tree + 948-commit history re-scanned clean (zero real secrets); GitHub secret scanning + push protection verified already enabled | 6206e5b5, c0550334, 55ff3852 |
-| FINDING-030, 031 | OPEN — Sprint 0 token check / Sprint 13 | — |
+| FINDING-031 | FIXED 2026-08-31 (Sprint 13, stoat-worker 0.2.3) — ids and message content out of the logs; two further sites found by sweeping (the admin roster at `info`, and unregistered commands echoing the user's own token) | 25285961 |
+| FINDING-030 | OPEN — Sprint 0, conditional: inspect the live CI token's scopes and re-issue only if it carries KV/D1/R2 Edit (maintainer) | — |
+
+**Remediation complete as of 2026-08-31: 28 of 31 findings FIXED**, and the three that remain need
+no product code — a database migration, a minted token, and a token-scope check respectively:
+**FINDING-001** (code fixed; the oauth migration `0001` must be hand-run *after* the 3.0.0 deploy),
+**FINDING-028** (partial: mint the `beta` Cloudflare token, then home `CLOUDFLARE_API_TOKEN` in the
+`production` environment and delete the repository copy), and **FINDING-030** (inspect the live CI
+token; re-issue only if it still carries KV/D1/R2 Edit — its runbook half was corrected in Sprint 13,
+so nothing in the repo blocks it).
+
+**"FIXED" does not mean "nothing left to do."** Four closed findings carry a step outside the code:
+**005** and **018** need hand-run migrations `0012` and `0013` (0013 **before** the merge, since it
+auto-deploys moderation-worker 1.6.0), **007** needs the two Upstash secrets deleted after the
+discord-worker deploy, and **024** leaves a WAF rate-limiting rule as a dashboard action. Every one
+of them is in [`docs/operations/POST_MERGE_CHECKLIST.md`](../../operations/POST_MERGE_CHECKLIST.md),
+which is the list to work from on merge day — not this table.
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.
