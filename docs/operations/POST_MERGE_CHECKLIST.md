@@ -453,7 +453,36 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
 ## 2. First week after the merge
 
 ### GitHub repository settings (not configurable from the repo)
-- [ ] **Code security → Secret scanning + Push protection: ON** (FINDING-030).
+- [x] **Code security → Secret scanning + Push protection: ON** (2026-08-21 FINDING-030).
+      **Verified live 2026-08-31** — `gh api repos/FlashGalatine/xivdyetools --jq
+      '.security_and_analysis'` shows both `secret_scanning` and
+      `secret_scanning_push_protection` as `"enabled"` (`dependabot_security_updates`,
+      `secret_scanning_validity_checks` and `secret_scanning_non_provider_patterns` are
+      separate toggles on the same page, still `"disabled"` — out of scope for this item, not
+      what FINDING-030 asked for). Both live under Settings → Code security and analysis.
+      **Secret scanning** is detection only: GitHub diffs pushed content against known
+      providers' token/key formats and opens an alert on a match — after the fact, on content
+      already in the repository. **Push protection** is prevention: it runs at `git push` time
+      and rejects a push containing a matching pattern before the objects ever reach GitHub
+      (with an override for a confirmed false positive); it requires secret scanning on first,
+      since it enforces the same detectors at push time instead of after the fact. Both are
+      free for a public repository on any plan, which this one is (confirmed `visibility:
+      public` in §0 above) — no plan upgrade gates either toggle.
+      **Push protection is the one that matters more here.** The repo already runs two
+      independent *post-commit* checks — the `secret-scan` gitleaks job in CI (every push) and
+      now GitHub's own secret scanning — and both the 2026-08-21 full-history triage (42 hits,
+      all false positives) and 2026-08-29 FINDING-029's allowlist-free re-scan (36 working-tree
+      + 35 history hits across all 943 commits, every one a test fixture or a known-public
+      identifier — see `.gitleaks.toml`) already found the tracked history clean, so a second
+      *detector* adds little today — there is nothing left in history for one to find. What
+      neither gitleaks-in-CI nor GitHub secret scanning can do is stop a leak from landing in
+      the first place: both run only after a push has already succeeded, so the secret is
+      already in the remote repository — and, the repo being public, potentially already
+      fetched by a clone, a fork, or a crawler — even if the very next CI run flags it red;
+      recovery from there is rotation, not deletion, because the object stays reachable in
+      history and in anyone who already pulled. Push protection is the only one of the three
+      layers that runs *before* the push completes, so it is the only one that can turn the
+      next accidental commit into a rejected push instead of an incident that needs a rotation.
 - [ ] Dependabot alerts + security updates ON (the nightly `pnpm audit` job is the in-repo half).
 - [ ] Branch protection / ruleset on `main`: require the `ci`, `audit` and `secret-scan` checks,
       linear history, no force-push.
