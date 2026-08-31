@@ -125,9 +125,34 @@ For a dye color tool, availability is more important than strict rate limiting.
 
 ### Mitigations
 
-1. **Logging/Alerting**: `backendError: true` flag + structured logging (v1.1.0)
-2. **Monitoring**: Operators can detect fail-open events via logs
-3. **Circuit breaker ready**: Architecture supports adding circuit breaker if needed
+1. **Logging/Alerting**: `backendError: true` flag + structured logging on every fail-open path,
+   including when no logger is configured (`@xivdyetools/worker-kit` 1.2.0, 2026-08-29 FINDING-010 +
+   FINDING-012). The three backends (`CloudflareRateLimiter`, `KVRateLimiter`, `UpstashRateLimiter`)
+   fall back to `console.warn` with the same context when constructed without a `logger` — before
+   1.2.0 this was not true: a limiter built without one failed open with **no signal anywhere**, and
+   every in-repo consumer builds one without a logger by design (see Monitoring below), so this
+   condition was aspirational until this release. The logged value is a non-identifying scope
+   (`keyScope`, e.g. `public:ip`), never the raw client IP or Discord user id, so meeting this
+   condition does not reintroduce the identifier `apps/web-app/PRIVACY.md` promises is never
+   collected.
+2. **Monitoring**: Operators can detect fail-open events via logs. In this repo the backend is
+   deliberately constructed without a `logger` in all five Workers that use one (`api-worker`,
+   `presets-api`, `oauth`, `moderation-worker`, `discord-worker`) — a long-lived per-isolate instance
+   would otherwise freeze a stale request id onto every later line — and each instead reads
+   `result.backendError` after the call and reports it through its own request-scoped logger. A
+   fail-open event there now produces **two** log lines (the backend's raw `console.warn` plus the
+   worker's own structured one), which is accepted deliberately rather than treated as noise to
+   suppress: visibility must not depend on whether a logger happened to be configured.
+3. **Circuit breaker ready**: Architecture supports adding circuit breaker if needed.
+
+**Known gap, not closed by 1.2.0:** `rateLimitMiddleware`'s own fail-open handling — its caught
+backend throw and its separate `result.backendError` check — still guards `logger.warn(...)` on
+`c.get('logger')` alone, with no `console.warn` fallback. Reaching it requires a backend configured
+`failOpen: false` while the middleware's `onError` is left at its default `'fail-open'` (or the
+middleware wired up without `loggerMiddleware` in the same chain); nothing in this repo is in that
+shape today — the one in-repo `failOpen: false` config (`api-worker`'s telemetry bucket) pairs it
+with an explicit `onError: 'fail-closed'`, so it never reaches this path either — but a future or
+external consumer could be. Routed as a follow-up, not covered by mitigation 1 above.
 
 ### Configuration
 

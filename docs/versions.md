@@ -340,8 +340,8 @@
 | Version | Date | Highlights |
 |---------|------|------------|
 | **v1.2.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-010 + FINDING-012) — rate-limit fail-open / backend-error log lines carry a `keyScope`, never the raw client IP or Discord id, at all six sites across the middleware and the three fallible backends; `console.warn` fallback when no logger is configured (previously silent); `CloudflareRateLimiter`'s constructor validates every tier's `binding.limit` is callable and throws rather than fail-opening per-request** |
-| **v1.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-003) — `CloudflareRateLimiter`, a backend over the native Workers Rate Limiting binding (atomic per-colo counting, no storage writes); now the preferred per-client limiter over KV, which cannot throttle a fast client** |
-| **v1.0.0** | **Aug 2026** | **New npm package, first publish 2026-08-28 — Monorepo 2.0 Tier 1 merger of `@xivdyetools/worker-middleware` v1.2.0 and `@xivdyetools/rate-limiter` v1.5.0 (both source trees moved verbatim, neither API changed); optional `hono`/`@cloudflare/workers-types` peers; `hono` floor raised to `^4.12.34` (2026-08-09 audit FINDING-001, CORS ReDoS)** |
+| **v1.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-003) — `CloudflareRateLimiter`, a backend over the native Workers Rate Limiting binding (atomic per-colo counting, no storage writes); now the preferred per-client limiter over KV, which cannot throttle a fast client. This is the version actually first published to npm, 2026-08-28 (hand-published, see `POST_MERGE_CHECKLIST.md`) — 1.0.0 below never reached the registry** |
+| **v1.0.0** | **Aug 2026** | **New package — never published to npm; superseded by 1.1.0 before the first publish. Monorepo 2.0 Tier 1 merger of `@xivdyetools/worker-middleware` v1.2.0 and `@xivdyetools/rate-limiter` v1.5.0 (both source trees moved verbatim, neither API changed); optional `hono`/`@cloudflare/workers-types` peers; `hono` floor raised to `^4.12.34` (2026-08-09 audit FINDING-001, CORS ReDoS)** |
 
 ### @xivdyetools/rate-limiter (retired — merged into `@xivdyetools/worker-kit/rate-limiter` 2026-07-31)
 

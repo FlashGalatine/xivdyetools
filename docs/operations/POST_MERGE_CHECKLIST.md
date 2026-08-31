@@ -293,6 +293,15 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       **Pending 2026-08-29 (PR #151):** publish `@xivdyetools/svg` 3.0.0 **then**
       `@xivdyetools/bot-logic` 3.0.0 — the order is load-bearing (see §0 above); `all-modified`
       keeps the tier order by itself, a single-package dispatch does not.
+      **Pending (Sprint 9, worker-kit 1.2.0, docs/audits/2026-08-29-security FINDING-010 +
+      FINDING-012):** after merge, Actions → *Publish Packages to npm* → `@xivdyetools/worker-kit`.
+      This is an ordinary re-publish over OIDC trusted publishing — 1.1.0 is already on the
+      registry and its trusted-publisher config is already set, so this is not the first-publish
+      break-glass flow above and needs no npm token (the package requires 2FA and disallows
+      tokens, which would reject one anyway). **The publish is not what delivers the fix** — all
+      seven consumer workers resolve `@xivdyetools/worker-kit` via `workspace:*` and pick up
+      1.2.0 from this merge at their own next deploy; the npm publish only matters to an external
+      consumer of the package.
 - [ ] **User-run afterwards:** `npm run upload-emojis` (production credentials, stainID-keyed set);
       `scripts/cleanup-v4-kv.ts`; og-worker beta deploy then production; purge the edge cache for
       `/og/default.png` / `/og/default-x.png`.
@@ -312,6 +321,18 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       bot's set is now the stainID-keyed `chip-1` artwork; the mapping was committed from the
       artifact in PR #140 and shipped by `deploy-discord-worker.yml` run `33225589268` (about
       25 minutes after the upload — the window during which embeds referenced deleted ids).
+- [ ] **Workers Logs / Logpush / tail consumers stay OFF** until this branch is merged AND every
+      one of the seven `@xivdyetools/worker-kit` consumer workers has redeployed: `api-worker`,
+      `discord-worker`, `image-worker`, `moderation-worker`, `oauth`, `og-worker`, `presets-api`
+      (`stoat-worker` is parked and no longer depends on `worker-kit` — not one of the seven).
+      FINDING-010 and FINDING-012 (docs/audits/2026-08-29-security) close in `worker-kit` 1.2.0,
+      but until each worker above has actually redeployed, production keeps running the pre-fix
+      code that logs the rate limiter's raw key (a client IP or Discord user id) on backend-error
+      and fail-open paths — enabling log retention before then would retain exactly the
+      identifiers this audit set out to stop collecting. Once every worker has redeployed,
+      spot-verify the redaction first (`wrangler tail`, trigger a fail-open, confirm the line
+      carries `keyScope` — e.g. `public:ip` or `ip` — and no raw IP or snowflake) before turning
+      Workers Logs on for real. See `findings/FINDING-010.md`.
 - [ ] Post-deploy verification (same day):
   - [ ] `wrangler tail` each production worker for 10 minutes: no `KV rate limiter fallback`
         warning (discord-worker / api-worker / oauth / moderation-worker), presets-api accepting
