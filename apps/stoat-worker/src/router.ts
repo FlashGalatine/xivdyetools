@@ -36,6 +36,34 @@ export interface CommandContext {
 export type CommandHandler = (ctx: CommandContext) => Promise<void>;
 
 /**
+ * Compound routing key for a parsed command: `command` alone, or
+ * `command.subcommand` when a subcommand is present. The one place this is
+ * computed — `routeCommand` and `isRegisteredCommand` both go through it, so
+ * the two can't drift apart into different notions of "the route key".
+ */
+function routeKeyFor(command: string, subcommand: string | null): string {
+  return subcommand ? `${command}.${subcommand}` : command;
+}
+
+/**
+ * Whether `command`/`subcommand` resolve to a registered route in
+ * `COMMAND_ROUTES` — the exact lookup `routeCommand` performs (it calls this
+ * too, so there is exactly one `Object.hasOwn` check on this table in the
+ * whole file). Exported so other modules can ask "is this a known command?"
+ * without re-deriving the check — `message-handler.ts`'s logging does,
+ * FINDING-031 / S13-R5 (2026-08-29 security audit, fix round 1): an
+ * unrecognized token is the user's own text, and this predicate is what
+ * lets the logger tell the difference from a real command name.
+ *
+ * Own-property check: `constructor` / `__proto__` must not read as known
+ * (FINDING-027, 2026-08-21 security audit) — same reasoning as the inline
+ * check this replaced in `routeCommand`.
+ */
+export function isRegisteredCommand(command: string, subcommand: string | null): boolean {
+  return Object.hasOwn(COMMAND_ROUTES, routeKeyFor(command, subcommand));
+}
+
+/**
  * Route a parsed command to its handler and execute it.
  *
  * Commands are matched by `command` and optional `subcommand`:
@@ -49,20 +77,15 @@ export type CommandHandler = (ctx: CommandContext) => Promise<void>;
 export async function routeCommand(ctx: CommandContext): Promise<void> {
   const { command, subcommand } = ctx.parsed;
 
-  // Build a compound key for subcommand routing
-  const routeKey = subcommand ? `${command}.${subcommand}` : command;
-
-  // Own-property check: `constructor` / `__proto__` are not routes
-  // (FINDING-027, 2026-08-21 security audit).
-  if (Object.hasOwn(COMMAND_ROUTES, routeKey)) {
-    await COMMAND_ROUTES[routeKey](ctx);
+  if (isRegisteredCommand(command, subcommand)) {
+    await COMMAND_ROUTES[routeKeyFor(command, subcommand)](ctx);
     return;
   }
 
   // Fallback: unknown command. The token is user text — sanitise and cap it
   // before echoing it under the bot's identity (FINDING-019 / STOAT-4).
   await ctx.message.channel?.sendMessage({
-    content: `Unknown command "${sanitizeEcho(routeKey, 32)}". Try \`!xd help\` for a list of commands.`,
+    content: `Unknown command "${sanitizeEcho(routeKeyFor(command, subcommand), 32)}". Try \`!xd help\` for a list of commands.`,
     replies: [{ id: ctx.message.id, mention: false }],
   });
 }

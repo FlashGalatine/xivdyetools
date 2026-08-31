@@ -171,5 +171,42 @@ describe('createMessageHandler', () => {
       expect(allDebugCalls).not.toContain('Snow White');
       expect(allDebugCalls).not.toContain('user-01');
     });
+
+    // S13-R5 (fix round 1): `parsed.command` is not a validated vocabulary —
+    // parser.ts returns whatever token the user typed when it doesn't match
+    // a registered route. router.ts already treats that same value as
+    // untrusted user text one function away (`sanitizeEcho`, FINDING-019);
+    // these prove the log lines go through `isRegisteredCommand` too, not
+    // just around a fixed set of field names. Reverting either call site to
+    // log `parsed.command`/`parsed.subcommand` directly (skipping
+    // `loggableCommand`) turns the matching test red.
+    it('logs a placeholder, not the user-typed token, when an unregistered command is throttled', async () => {
+      const { handler } = setup({ throttle: new CommandThrottle({ limit: 1, windowMs: 10_000 }) });
+      const first = createMockMessage({ content: '!xd blahblah', authorId: 'spammer-02' });
+      const second = createMockMessage({ content: '!xd blahblah', authorId: 'spammer-02' });
+
+      await handler(first as any);
+      await handler(second as any);
+
+      expect(mockLogger.debug).toHaveBeenCalledWith('Command dropped by per-user throttle', {
+        command: '(unregistered)',
+        subcommand: null,
+      });
+
+      const allDebugCalls = JSON.stringify(mockLogger.debug.mock.calls);
+      expect(allDebugCalls).not.toContain('blahblah');
+    });
+
+    it('logs a placeholder, not the user-typed token, for an unregistered command', async () => {
+      const { handler } = setup();
+      const message = createMockMessage({ content: '!xd blahblah', authorId: 'user-02' });
+
+      await handler(message as any);
+
+      expect(mockLogger.debug).toHaveBeenCalledWith('Command: (unregistered)');
+
+      const allDebugCalls = JSON.stringify(mockLogger.debug.mock.calls);
+      expect(allDebugCalls).not.toContain('blahblah');
+    });
   });
 });

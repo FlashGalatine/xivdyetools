@@ -15,12 +15,38 @@
 import type { Message } from 'revolt.js';
 import { createLibraryLogger } from '@xivdyetools/logger';
 import { parseCommand } from './commands/parser.js';
-import { routeCommand, type CommandContext } from './router.js';
+import { routeCommand, isRegisteredCommand, type CommandContext } from './router.js';
 import type { BotConfig } from './config.js';
 import type { MessageContextStore } from './services/message-context.js';
 import { CommandThrottle } from './services/command-throttle.js';
 
 const logger = createLibraryLogger('stoat');
+
+/**
+ * Placeholder logged in place of the command name when it isn't a
+ * registered route (FINDING-031 / S13-R5, fix round 1). `parser.ts` accepts
+ * any whitespace-delimited first token as `command` — for anything that
+ * doesn't resolve via `isRegisteredCommand` (router.ts), that token is the
+ * user's own text, one function away from where `router.ts` already treats
+ * the same value as untrusted (`sanitizeEcho`, FINDING-019 / STOAT-4). A log
+ * line has no reason to carry it at all — not sanitised, not capped, not
+ * present.
+ */
+const UNREGISTERED_COMMAND_LOG = '(unregistered)';
+
+/**
+ * What's safe to put in a log line for a parsed command: the real
+ * command/subcommand when `router.ts` would actually route them, or the
+ * fixed placeholder above when it wouldn't.
+ */
+function loggableCommand(
+  command: string,
+  subcommand: string | null,
+): { command: string; subcommand: string | null } {
+  return isRegisteredCommand(command, subcommand)
+    ? { command, subcommand }
+    : { command: UNREGISTERED_COMMAND_LOG, subcommand: null };
+}
 
 export interface MessageHandlerDeps {
   /** The revolt.js client (only `user.id` is read) */
@@ -61,9 +87,12 @@ export function createMessageHandler(
       // an operator can actually act on (which command is being hammered),
       // and — unlike the sibling Discord bot, which has a written privacy
       // policy — stoat has none, so there is no basis for keeping who did it.
+      // S13-R5 (fix round 1): route the value through `loggableCommand` too —
+      // an unregistered "command" is just whatever token the user typed.
+      const droppedCommand = loggableCommand(parsed.command, parsed.subcommand);
       logger.debug('Command dropped by per-user throttle', {
-        command: parsed.command,
-        subcommand: parsed.subcommand,
+        command: droppedCommand.command,
+        subcommand: droppedCommand.subcommand,
       });
       return;
     }
@@ -75,8 +104,18 @@ export function createMessageHandler(
     // message content in any record; stoat has no policy of its own, which
     // is exactly why this needed the same treatment rather than an
     // exception. The command (and subcommand, if any) is already in the
-    // message text below and costs nothing to keep.
-    logger.debug(`Command: ${parsed.command}${parsed.subcommand ? `.${parsed.subcommand}` : ''}`);
+    // message text below and costs nothing to keep — PROVIDED it is actually
+    // a command. S13-R5 (fix round 1): `parsed.command`/`subcommand` are not
+    // a validated vocabulary — `parser.ts` returns whatever whitespace-
+    // delimited token the user typed when it isn't a registered alias, so an
+    // unrecognized "command" is user text, not metadata. `loggableCommand`
+    // swaps in a fixed placeholder for anything `isRegisteredCommand`
+    // (router.ts) doesn't recognize, the same table `routeCommand` itself
+    // dispatches through.
+    const acceptedCommand = loggableCommand(parsed.command, parsed.subcommand);
+    logger.debug(
+      `Command: ${acceptedCommand.command}${acceptedCommand.subcommand ? `.${acceptedCommand.subcommand}` : ''}`,
+    );
 
     try {
       await route({
