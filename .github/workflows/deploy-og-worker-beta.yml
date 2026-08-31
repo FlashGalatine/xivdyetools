@@ -48,6 +48,11 @@ jobs:
     name: Deploy Beta OG Worker
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # FINDING-028 (2026-08-29 security audit): beta authenticates with its own
+    # CLOUDFLARE_API_TOKEN_BETA, scoped to this `beta` environment, instead of
+    # the repository-wide token production uses. Deploys fail on purpose until
+    # the maintainer creates both — see docs/operations/DEPLOY_ENVIRONMENTS.md.
+    environment: beta
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -73,7 +78,7 @@ jobs:
       - name: Deploy beta worker
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN_BETA }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/og-worker
           command: deploy

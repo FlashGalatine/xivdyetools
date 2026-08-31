@@ -45,6 +45,11 @@ jobs:
     name: Deploy Beta Discord Worker
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # FINDING-028 (2026-08-29 security audit): beta authenticates with its own
+    # CLOUDFLARE_API_TOKEN_BETA, scoped to this `beta` environment, instead of
+    # the repository-wide token production uses. Deploys fail on purpose until
+    # the maintainer creates both — see docs/operations/DEPLOY_ENVIRONMENTS.md.
+    environment: beta
     env:
       # FINDING-009 (2026-08-21 audit): only a boolean reaches the job scope — the
       # token itself is step-scoped below, so third-party actions (checkout,
@@ -76,7 +81,7 @@ jobs:
       - name: Deploy beta worker
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN_BETA }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/discord-worker
           command: deploy
