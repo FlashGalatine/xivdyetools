@@ -30,10 +30,22 @@ axis with no counts, consistent with the above.
 
 ---
 
-**Update (2026-08-30, Sprint 9):** the guardrail's condition is now met. FINDING-011 (personal fields —
-display names, free-text ban reasons, option values, preset names) closed in Sprint 4 across
-moderation-worker/discord-worker/presets-api; FINDING-010's remaining piece (the rate-limiter's raw
-client-IP / Discord-id key on fail-open and backend-error log lines) closed here in `@xivdyetools/worker-kit`
-1.2.0 — those lines now carry a non-identifying `keyScope` instead. Workers Logs / Logpush / tail consumers
-may now be enabled on any of the scripts above; still spot-verify the redaction on a sampled request before
-flipping the toggle, since this table describes the settings at audit time, not a live guarantee.
+**Update (2026-08-30, Sprint 9): the code is fixed; the guardrail's condition is NOT met yet.**
+FINDING-011 (personal fields — display names, free-text ban reasons, option values, preset names) closed in
+Sprint 4 across moderation-worker/discord-worker/presets-api; FINDING-010's remaining piece (the
+rate-limiter's raw client-IP / Discord-id key on fail-open and backend-error log lines) closed in
+`@xivdyetools/worker-kit` 1.2.0 — those lines now carry a non-identifying `keyScope` instead.
+
+**But all of that exists only on the `security-audit-2026-08-29` branch.** Every deployed worker in the
+table above is still running the older code, which logs the raw key. So:
+
+> **Keep Workers Logs / Logpush / tail consumers OFF until this branch is merged AND all seven
+> worker-kit consumers have redeployed** (api-worker, discord-worker, image-worker, moderation-worker,
+> oauth, og-worker, presets-api — `stoat-worker` is parked and no longer depends on worker-kit).
+> Enabling retention before the redeploy would retain exactly the client IPs this audit set out to
+> remove.
+
+Each of those seven deploy workflows carries `packages/worker-kit/**` in its `paths:` filter, so the
+merge redeploys them all; the condition is met once those runs are green. Then enable — and still
+spot-verify the redaction on a sampled request first, since this table describes the settings at audit
+time, not a live guarantee.

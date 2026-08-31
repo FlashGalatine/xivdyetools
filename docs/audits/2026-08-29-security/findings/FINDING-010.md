@@ -22,8 +22,17 @@ derived `kvKey`. All six now log a `keyScope` through one helper (`scopeRateLimi
 configured `keyPrefix` — chosen by deploying code, never derived from request data — *is* the
 scope and the key is discarded outright; otherwise the key is classified by shape (`ip` / `id` /
 `unknown` / `unscoped` / `empty`) without echoing any substring of it. Deliberately not a hash: a
-hashed IP is still an IP-shaped identifier that correlates two log lines. `keyPrefix` is the one
-remaining input written verbatim, and its public JSDoc now says so on all three option types.
+hashed IP is still an IP-shaped identifier that correlates two log lines.
+
+Two inputs are still written verbatim, deliberately. **`keyPrefix`** — safe because deploying code
+chooses it, and its public JSDoc now says so on all three option types, since
+`keyPrefix: \`tenant:${tenantId}:\`` is an ordinary pattern for an npm consumer. And **the backend's
+own `error.message`**, kept because it is what makes an outage diagnosable. That second one leaves a
+latent path: KV and the `[[ratelimits]]` binding do not echo the key in their error strings, but a
+Redis error can (`ERR unknown command '…', with args beginning with: 'ratelimit:<key>'`), so
+`UpstashRateLimiter`'s fail-open line could carry a key on someone else's deployment. No in-repo
+worker uses Upstash any more (discord-worker went to the native binding in Sprint 3), so this is
+npm-consumer-only — recorded rather than closed.
 The `logUserAgent` "default flip" was a no-op (already `false`); the real defect was the JSDoc
 example recommending `true`, now corrected.
 
