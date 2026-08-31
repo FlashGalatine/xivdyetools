@@ -118,7 +118,7 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-010 | PARTIAL — presets-api + oauth + api-worker opt-ins removed (none left in the tree); worker-kit limiter-key logging → Sprint 9 | efd495a4, b14cade9, 81035796 |
 | FINDING-011 | FIXED 2026-08-30 (all three units log ids/lengths only; seven legacy `customId` sites ledgered) | efd495a4, a3e8ee14, dfc6de47, b5d4c53b |
 | FINDING-013 | FIXED 2026-08-30 (all four units fail closed in production when a security binding is missing) | efd495a4, a3e8ee14, b14cade9, 4d734c8c, fe86a881, b5d4c53b, c94bfa8f |
-| FINDING-023 | PARTIAL — presets-api + oauth + moderation-worker config tests; image-worker anchor → Sprint 8 | efd495a4, b14cade9, 519c80da |
+| FINDING-023 | FIXED 2026-08-30 — all four units carry a wrangler-config invariant test (image-worker also refuses a `*.workers.dev` hostname in code) | efd495a4, b14cade9, 519c80da, 96920c5a, 71181a8f |
 | FINDING-003 | FIXED 2026-08-30 (Sprint 2, oauth 3.0.0) — `/auth/refresh` removed | 50c283b9 |
 | FINDING-022 | FIXED 2026-08-30 — `no-store` on every dispatched response | 50c283b9 |
 | FINDING-001 | CODE FIXED 2026-08-30 — OPEN until migration `0001` is hand-run after the 3.0.0 deploy | cdd53fbf |
@@ -135,7 +135,7 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-026 | FIXED 2026-08-30 | 2ffe6d13 |
 | FINDING-027 | FIXED 2026-08-30 | 2ffe6d13 |
 | FINDING-024 | FIXED 2026-08-30 (Sprint 7, og-worker 2.4.0; query *and* path axes) — enumeration of distinct ids still costs a render, bounded by the WAF rule, which stays an unticked dashboard action | c6bd962b, 9b2f4ca3, e2bdeec6, e2e9ca6b, 636e42ec, ebdc49ed, e9b6f471 |
-| FINDING-025, 028–031 | OPEN — Sprints 8–13 (030 = the Sprint 0 token check) | — |
+| FINDING-025, 028–031 | OPEN — Sprints 9–13 (030 = the Sprint 0 token check) | — |
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.
