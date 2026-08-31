@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-08-31
+
+Security audit remediation (docs/audits/2026-08-29-security, FINDING-015, Sprint 11 fix round). Not published — this package is workspace-private (see 1.2.0 below); no external consumers to break.
+
+### Removed
+
+- **`auth/signature.ts`** (`createBotSignature`, `createTimestampedSignature`, `verifyBotSignature`, `TEST_SIGNING_SECRET` — 103 lines) and its dedicated unit test `tests/auth/signature.test.ts` (17 tests). The 2026-08-18 dead-code audit (DEAD-026) called this module "shim-only" but kept it because `integration/setup.ts` and `integration/discord-presets/bot-authentication.test.ts` still imported `createBotSignature`/`createTimestampedSignature` — see the 1.2.0 entry below. That justification no longer holds: `@xivdyetools/auth` 2.0.0 (same finding) removed its own v1 `verifyBotSignature`, which had been the only signature presets-api still accepted a fallback for; once presets-api accepted only `X-Request-Signature-V2`, the v1-signature test blocks in `bot-authentication.test.ts` were asserting against a hand-rolled local simulation of a contract that no longer existed anywhere, and were deleted along with the `createSignedBotHeaders`/`createInvalidSignatureHeaders` header builders and the `verifyBotRequestSignature`/`SIGNATURE_MAX_AGE_SECONDS` local verifier in `setup.ts` and the test file itself that only those blocks used. `setup.ts`'s exported `BOT_SIGNING_SECRET` constant survives as an inline literal (was derived from the deleted `TEST_SIGNING_SECRET`) — `createMockPresetsEnv()`'s mock environment still needs a value for that field.
+- **`bot-authentication.test.ts` narrowed from 15 tests to 5.** Kept: the unsigned dev/test bot-auth bypass (API-secret path, user-context pass-through, moderator recognition) and wrong-API-secret / missing-Authorization rejection — all still real, still mirror live `presets-api/src/middleware/auth.ts` behaviour. Lost: all coverage of the signed (production) bot-request path, since this file's `processBotAuth` simulation never modeled the v2 contract and had nothing live left to assert once v1 was gone. Restoring that coverage — porting the harness to sign with `@xivdyetools/auth`'s `createBotSignatureV2` — is a follow-up, not done in this pass; the file's own module comment documents the gap.
+
 ## [1.2.0] - 2026-08-16
 
 Monorepo 2.0 / web-app 5.0 branch. **This version is not published** — see "Changed" below; 1.1.8 remains the last release on npm.

@@ -10,7 +10,6 @@
 import { createMockD1Database, type MockD1Database } from '../src/cloudflare/d1.js';
 import { createMockKV, type MockKVNamespace } from '../src/cloudflare/kv.js';
 import { createTestJWT, createExpiredJWT } from '../src/auth/jwt.js';
-import { createBotSignature, createTimestampedSignature, TEST_SIGNING_SECRET } from '../src/auth/signature.js';
 
 // ============================================================================
 // Shared Test Constants
@@ -22,8 +21,14 @@ export const SHARED_JWT_SECRET = 'test-jwt-secret-key-for-testing-32chars';
 /** Bot API secret for Discord worker authentication */
 export const BOT_API_SECRET = 'test-bot-api-secret';
 
-/** Bot signing secret for HMAC request signatures */
-export const BOT_SIGNING_SECRET = TEST_SIGNING_SECRET;
+/**
+ * Bot signing secret for HMAC request signatures (>= 32 bytes, FINDING-009).
+ * Was `= TEST_SIGNING_SECRET` (re-exported from the now-deleted `../src/auth/signature.js`)
+ * until 2026-08-31 (FINDING-015, Sprint 11 fix round) — inlined here since it now has
+ * no signing helper left to share the value with; kept as the same literal so any
+ * fixture that happened to compare against the old string is unaffected.
+ */
+export const BOT_SIGNING_SECRET = 'test-signing-secret-at-least-32-bytes!!!';
 
 /** Moderator Discord IDs */
 export const MODERATOR_IDS = '111111111111111111,222222222222222222';
@@ -197,56 +202,13 @@ export function createBotHeaders(
   return headers;
 }
 
-/**
- * Create headers for bot authentication with HMAC signature
- * Used for production environments where signature is required
- */
-export async function createSignedBotHeaders(
-  userDiscordId: string,
-  userName: string
-): Promise<BotAuthHeaders> {
-  const { signature, timestamp } = await createTimestampedSignature(
-    userDiscordId,
-    userName,
-    BOT_SIGNING_SECRET
-  );
-
-  return {
-    Authorization: `Bearer ${BOT_API_SECRET}`,
-    'Content-Type': 'application/json',
-    'X-User-Discord-ID': userDiscordId,
-    'X-User-Discord-Name': userName,
-    'X-Request-Timestamp': timestamp,
-    'X-Request-Signature': signature,
-  };
-}
-
-/**
- * Create headers with an invalid/expired signature
- * Used for testing signature validation
- */
-export async function createInvalidSignatureHeaders(
-  userDiscordId: string,
-  userName: string
-): Promise<BotAuthHeaders> {
-  // Use an old timestamp (more than 2 minutes ago)
-  const oldTimestamp = (Math.floor(Date.now() / 1000) - 300).toString();
-  const signature = await createBotSignature(
-    oldTimestamp,
-    userDiscordId,
-    userName,
-    BOT_SIGNING_SECRET
-  );
-
-  return {
-    Authorization: `Bearer ${BOT_API_SECRET}`,
-    'Content-Type': 'application/json',
-    'X-User-Discord-ID': userDiscordId,
-    'X-User-Discord-Name': userName,
-    'X-Request-Timestamp': oldTimestamp,
-    'X-Request-Signature': signature,
-  };
-}
+// `createSignedBotHeaders` / `createInvalidSignatureHeaders` (v1 HMAC-signed header
+// builders) were removed 2026-08-31 (FINDING-015, Sprint 11 fix round) along with the
+// v1-signature test blocks they existed to support — presets-api has accepted only
+// `X-Request-Signature-V2` since 2.2.0, and neither builder ever produced that header.
+// A v2 equivalent (using `@xivdyetools/auth`'s `createBotSignatureV2`) would need to be
+// written from scratch, not adapted from these; see bot-authentication.test.ts's module
+// comment for the coverage gap this leaves.
 
 // ============================================================================
 // Web Authentication Helpers (Simulates Web App)
@@ -361,4 +323,3 @@ export function seedPreset(
 // ============================================================================
 
 export { createMockD1Database, createMockKV, createTestJWT, createExpiredJWT };
-export { createBotSignature, createTimestampedSignature };

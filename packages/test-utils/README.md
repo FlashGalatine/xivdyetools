@@ -15,7 +15,7 @@ Shared testing utilities for the xivdyetools ecosystem. Provides mocks for Cloud
 ## Features
 
 - **Cloudflare Workers Mocks**: D1Database, KVNamespace, R2Bucket, AnalyticsEngineDataset, Fetcher (Service Bindings)
-- **Auth Helpers**: JWT creation, HMAC bot signatures, bearer-token headers
+- **Auth Helpers**: JWT creation, bearer-token headers
 - **Domain Factories**: Preset row, Category row, Dye mock data factories
 
 ## Usage
@@ -46,7 +46,7 @@ db._reset();
 ### Auth Helpers
 
 ```typescript
-import { createTestJWT, createBotSignature, authHeaders } from '@xivdyetools/test-utils/auth';
+import { createTestJWT, authHeaders } from '@xivdyetools/test-utils/auth';
 
 // Create a valid JWT for testing
 const jwt = await createTestJWT('your-secret', {
@@ -54,14 +54,6 @@ const jwt = await createTestJWT('your-secret', {
   username: 'TestUser',
   global_name: 'Test User',
 });
-
-// Create HMAC signature for bot auth
-const signature = await createBotSignature(
-  timestamp,
-  'user-discord-id',
-  'username',
-  'signing-secret'
-);
 
 // Build a bearer-token Authorization header
 const headers = authHeaders(jwt, 'user-discord-id', 'username');

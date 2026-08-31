@@ -37,7 +37,6 @@ Shared package providing all mocking infrastructure:
 ### Auth Helpers
 - `createTestJWT(payload, secret)` — Generate valid JWT for testing
 - `createExpiredJWT()` — Generate expired JWT
-- `createBotSignature(secret, timestamp, userId, userName)` — HMAC signature
 - `authHeaders(token)` — Pre-built Authorization header objects
 - `createAuthContext()` / `createModeratorContext()` / `createUnauthenticatedContext()`
 

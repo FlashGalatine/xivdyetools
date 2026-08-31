@@ -45,7 +45,7 @@
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.2.0 | `@xivdyetools/worker-kit` | npm | Active — publish pending (first publish 2026-08-28) |
 | **SVG** | v3.0.0 | `@xivdyetools/svg` | npm | Active — publish pending (publish **before** bot-logic 3.0.0) |
 | **Bot Logic** (incl. `/i18n`) | v3.0.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending (requires svg 3.0.0 on npm first) |
-| **Test Utils** | v1.2.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
+| **Test Utils** | v1.3.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
 
@@ -301,6 +301,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.3.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-015, Sprint 11 fix round) — `auth/signature.ts`'s v1 bot-signature helpers (`createBotSignature`/`createTimestampedSignature`/`verifyBotSignature`) removed once their only remaining consumer, `bot-authentication.test.ts`'s v1-signature test blocks, was deleted (presets-api accepts only v2); that integration suite narrows from 15 tests to 5, keeping the still-live dev/test bypass and Authorization-rejection coverage** |
 | v1.2.0 | Jul 2026 | Monorepo 2.0 Tier 1 — package made workspace-private and unpublished from npm; factories updated for schema v2 |
 | v1.1.8 | Jul 2026 | 2026-07-18 audit (Sprints 1 & 6) — BUG-062 MockD1 `exec()` keeps `_queries`/`_bindings` index-aligned; `batch()` routes through `run()` semantics (honors RETURNING + mutation meta) |
 | v1.1.7 | Mar 2026 | Mock dye factories updated with `currency`, `consolidationType`, `isIshgardian` fields |
