@@ -5,11 +5,26 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-08-30
 
-### Fixed — 2026-08-29
+Security audit remediation (docs/audits/2026-08-29-security, FINDING-023). Minor bump: the
+private-only design is now enforced, not just documented.
+
+### Fixed
 
 - The one-hop redirect follow in `validateAndFetchImage` used `redirect: 'error'` for the second request; the Workers runtime has no `error` mode and throws on it, so a Discord CDN URL that redirected once failed with a `TypeError` instead of being fetched. The second hop now uses `redirect: 'manual'` like the first; a further redirect comes back as a 3xx that the existing `!ok` check rejects — still never followed.
+
+### Security
+
+- **Config-drift test for the private-only invariant.** New `src/wrangler-config.test.ts` (deliberately in `src/`, not `tests/` — this app's vitest `include` is `src/**/*.test.ts`) pins: no `routes` in either environment or by inheritance, `workers_dev = false` and the new `preview_urls = false` explicit in both, exactly one named environment (`[env.production]`, nothing else), and — the cross-worker contract — that production's `name` is exactly what both discord-worker's and presets-api's `IMAGE_WORKER` service bindings point at, in every one of their own environments. This is the last of a four-worker config-drift test set this branch added (presets-api, oauth, moderation-worker, now image-worker); FINDING-023 closes with this release.
+- **`preview_urls = false`**, added explicitly in both environments alongside `workers_dev = false` (matching `api-worker`'s existing precedent), and pinned by the new test.
+- **In-code hostname guard.** A request whose URL hostname ends in `.workers.dev` is now refused with a `404` before any body read, fetch, or decode — for every route, `/health` included. Both callers reach this Worker only through a Service Binding (`new Request('https://image-worker/…')`, never resolved over DNS), so a `*.workers.dev` hostname can only mean a real public request — reachable only if `workers_dev` is ever flipped on by mistake. This is defence in depth, not the primary control; the primary control remains that there is no public surface at all.
+
+### Deploy-day steps
+
+Nothing to set: no secrets, no vars, no new bindings. Deploy `--env production` as usual — the
+config pins and the hostname guard take effect immediately, with no coordination needed from
+either caller.
 
 ## [1.1.0] - 2026-08-21
 

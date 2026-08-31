@@ -184,3 +184,100 @@ describe('POST /thumbnail', () => {
     });
   });
 });
+
+// FINDING-023 (2026-08-29 security audit): the workers.dev hostname guard in
+// index.ts. `https://image-worker/...` is the exact literal both real
+// callers construct (discord-worker's image-client.ts:54, presets-api's
+// preview-image-service.ts:152) — see-through it above is the pre-existing
+// `http://localhost/...` test convenience, which also isn't a workers.dev
+// host and so was never at risk of being caught by this guard.
+describe('workers.dev hostname guard (FINDING-023)', () => {
+  beforeEach(() => {
+    vi.mocked(validateAndFetchImage).mockReset();
+    vi.mocked(processImageForExtraction).mockReset();
+    vi.mocked(processImageForThumbnail).mockReset();
+  });
+
+  it('refuses /health on a workers.dev hostname', async () => {
+    const res = await app.request(
+      'https://xivdyetools-image-worker.example-account.workers.dev/health',
+      {},
+      env
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  it('refuses /extract on a workers.dev hostname and does no work', async () => {
+    const res = await app.request(
+      'https://xivdyetools-image-worker.example-account.workers.dev/extract',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: 'https://cdn.discordapp.com/x.png' }),
+      },
+      env
+    );
+
+    expect(res.status).toBe(404);
+    expect(validateAndFetchImage).not.toHaveBeenCalled();
+    expect(processImageForExtraction).not.toHaveBeenCalled();
+  });
+
+  it('refuses /thumbnail on a workers.dev hostname and does no work', async () => {
+    const res = await app.request(
+      'https://xivdyetools-image-worker.example-account.workers.dev/thumbnail',
+      {
+        method: 'POST',
+        body: new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
+      },
+      env
+    );
+
+    expect(res.status).toBe(404);
+    expect(processImageForThumbnail).not.toHaveBeenCalled();
+  });
+
+  it("still serves /extract on the callers' real hostname", async () => {
+    vi.mocked(validateAndFetchImage).mockResolvedValue({
+      buffer: new Uint8Array([1]),
+      format: 'png',
+    });
+    vi.mocked(processImageForExtraction).mockResolvedValue({
+      pixels: new Uint8Array([0, 0, 0, 255]),
+      width: 1,
+      height: 1,
+    });
+
+    const res = await app.request(
+      'https://image-worker/extract',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: 'https://cdn.discordapp.com/x.png' }),
+      },
+      env
+    );
+
+    expect(res.status).toBe(200);
+    expect(validateAndFetchImage).toHaveBeenCalled();
+    expect(processImageForExtraction).toHaveBeenCalled();
+  });
+
+  it("still serves /thumbnail on the callers' real hostname", async () => {
+    const webpBytes = new Uint8Array([0x52, 0x49, 0x46, 0x46]);
+    vi.mocked(processImageForThumbnail).mockReturnValue(webpBytes);
+
+    const res = await app.request(
+      'https://image-worker/thumbnail',
+      {
+        method: 'POST',
+        body: new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
+      },
+      env
+    );
+
+    expect(res.status).toBe(200);
+    expect(processImageForThumbnail).toHaveBeenCalled();
+  });
+});

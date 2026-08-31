@@ -45,6 +45,48 @@ app.use(
   })
 );
 
+/**
+ * FINDING-023 (2026-08-29 security audit): this Worker has no legitimate
+ * public route. Both callers reach it purely through a Service Binding —
+ * discord-worker's image-client.ts:54 and presets-api's
+ * preview-image-service.ts:152 each construct
+ * `new Request('https://image-worker/<path>', …)`, a URL that is never
+ * resolved over DNS, so a service-binding call always arrives here with
+ * hostname literally `image-worker`. The only way a *different* hostname
+ * ever reaches this handler is a genuine public request — reachable only if
+ * `workers_dev` is ever flipped back to true by mistake, since neither
+ * environment declares any routes (wrangler.toml, pinned by
+ * src/wrangler-config.test.ts). That request would carry the account's
+ * `*.workers.dev` hostname. Refuse it here, before any body read, fetch, or
+ * decode — for every route, /health included, so a scanner gets the same
+ * answer whichever path it tries.
+ *
+ * Placed after requestId/logger rather than before: neither of those two
+ * middlewares reads the body, fetches, or decodes anything, so ordering
+ * after them still satisfies "before any body read/fetch/decode" while
+ * making a config-drift hit visible in the structured request log instead
+ * of disappearing silently.
+ *
+ * 404, not 403: this Worker's whole premise is "no public surface exists
+ * here" (see CLAUDE.md / README.md). A flipped deployment should still
+ * look exactly like the routeless worker it is supposed to be, rather than
+ * confirm to a scanner that something is being deliberately gatekept —
+ * `c.notFound()` is Hono's own unmatched-route response, so a refused
+ * request is byte-for-byte indistinguishable from one that hit an
+ * undefined path. The hostname itself is never echoed back.
+ *
+ * This is defence in depth, not the primary control. The primary control
+ * is that there is no public surface to reach at all: workers_dev = false
+ * and no routes, in both environments.
+ */
+app.use('*', async (c, next) => {
+  const { hostname } = new URL(c.req.url);
+  if (hostname.endsWith('.workers.dev')) {
+    return c.notFound();
+  }
+  await next();
+});
+
 app.get('/health', (c) => c.json({ status: 'ok' }));
 
 /**

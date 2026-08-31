@@ -24,7 +24,7 @@
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.0.0 | `xivdyetools-web-app` | Cloudflare Pages | Active — release pending |
 | **Discord Bot** | v5.1.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
-| **Image Worker** | v1.1.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Image Worker** | v1.2.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.6.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.0.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.2.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
@@ -292,6 +292,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.2.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-023) — `src/wrangler-config.test.ts` pins no routes, `workers_dev = false` + new `preview_urls = false` in both environments, exactly one named environment, and the production `name` both discord-worker's and presets-api's `IMAGE_WORKER` bindings depend on; in-code guard refuses any `*.workers.dev` hostname with a `404` before fetch/decode (defence in depth); closes the four-worker config-drift test set (presets-api, oauth, moderation-worker, image-worker); also fixes a `redirect: 'error'` `TypeError` on a Discord CDN redirect hop** |
 | **v1.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-004) — header-only dimension gate before photon decodes (PNG/JPEG/GIF/WebP/BMP; 4096 px / 16 MP), `maxDimension` validated, byte caps enforced while streaming on /extract fetches and /thumbnail bodies** |
 | **v1.0.0** | **Aug 2026** | **Initial release — split out of `discord-worker` (`docs/operations/IMAGE_WORKER_SPLIT.md`) to carry `@cf-wasm/photon`, bringing `discord-worker` back under Cloudflare's 3 MiB gzip limit (3,209.3 → 2,589.70 KiB). `POST /extract` decodes an image URL and returns raw RGBA pixels; `POST /thumbnail` returns a WebP preview for presets-api's preview images; reachable only via the `IMAGE_WORKER` service bindings (discord-worker, presets-api), no public surface** |
 

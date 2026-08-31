@@ -50,6 +50,7 @@ The URL passed to `/extract` is fetched server-side, so `validateAndFetchImage()
 - **Size limits** — oversized payloads are rejected before decoding.
 - **Format validation** — only real decodable image formats pass.
 - **Timeouts** — a slow origin cannot hold the isolate open.
+- **No public surface, enforced** — `workers_dev` and `preview_urls` are `false` in both environments, pinned by `src/wrangler-config.test.ts` (FINDING-023). Any request that still lands here on a `*.workers.dev` hostname is refused with a `404` before any of the above ever runs.
 
 ## Development
 

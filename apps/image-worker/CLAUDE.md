@@ -13,9 +13,13 @@ dropped `discord-worker` to 2,589.70 KiB gzipped (482 KiB headroom); this Worker
 639.35 KiB gzipped (1,648.82 KiB raw). See `docs/operations/IMAGE_WORKER_SPLIT.md` for the full
 rationale and measurements.
 
-**It has no public surface.** `workers_dev = false` in `[env.production]` and there are no
-routes — the only way to reach it is an `IMAGE_WORKER` service binding. It holds no secrets and
-no storage bindings (KV/D1/R2); it is the smallest operational footprint in the monorepo.
+**It has no public surface.** `workers_dev = false` and `preview_urls = false` in both
+environments, and there are no routes anywhere — the only way to reach it is an `IMAGE_WORKER`
+service binding. `src/wrangler-config.test.ts` now pins that shape (2026-08-29 FINDING-023), so a
+config flip fails `pnpm test` instead of relying on a comment; a request that still reaches this
+Worker on a `*.workers.dev` hostname is refused with a `404` before any body read, fetch, or
+decode, as defence in depth. It holds no secrets and no storage bindings (KV/D1/R2); it is the
+smallest operational footprint in the monorepo.
 
 It has since become the monorepo's general photon host rather than a single-caller split. Two
 endpoints, two callers:
@@ -157,6 +161,26 @@ None. This Worker has no secrets — it fetches only from an SSRF-restricted all
 authenticating.
 
 ## Key Patterns
+
+### Public-Surface Guard (FINDING-023, 2026-08-29 security audit)
+
+This Worker's entire security model rests on having no public surface — `workers_dev = false`
+and `preview_urls = false` in both environments, no routes ever, service-binding-only. That
+invariant used to be enforced by nothing but a `wrangler.toml` comment; `src/wrangler-config.test.ts`
+now pins it (no `routes` anywhere or by inheritance, `workers_dev`/`preview_urls` explicit
+`false` in both environments, exactly one named environment, and — the cross-worker contract —
+that production's `name` is exactly what both discord-worker's and presets-api's `IMAGE_WORKER`
+service bindings point at, in every one of their own environments).
+
+As defence in depth (not the primary control), `index.ts` also refuses any request whose URL
+hostname ends in `.workers.dev`, for every route including `/health`, before any body read,
+fetch, or decode. Both callers reach this Worker only through a Service Binding — they construct
+`new Request('https://image-worker/<path>', …)`, a URL never resolved over DNS — so a
+`*.workers.dev` hostname can only mean a real public request, which is only reachable if
+`workers_dev` is ever flipped on by mistake. The refusal is a plain `404` (Hono's own
+unmatched-route response, via `c.notFound()`) rather than a `403`: a flipped deployment should
+still look exactly like the routeless worker it is supposed to be, not confirm to a scanner that
+something is being deliberately gatekept.
 
 ### SSRF Protection
 
