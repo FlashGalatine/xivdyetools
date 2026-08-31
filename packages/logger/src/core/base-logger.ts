@@ -14,6 +14,45 @@ import { DEFAULT_REDACT_FIELDS } from '../constants.js';
 const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
 
 /**
+ * S10-R8 (2026-08-30 fix round 1): redaction recursion state for ONE
+ * top-level log call, threaded through `redactSensitiveFields` /
+ * `redactArrayItems`.
+ *
+ * `ancestors` is an ANCESTOR set — nodes currently on the recursion path —
+ * not a "seen anywhere" set. A node is added right before recursing into
+ * its children and removed right after (in a `finally`), so a genuine
+ * cycle (a node reachable from itself) is still caught, but a value
+ * ALIASED from two sibling branches (`{ a: shared, b: shared }`) is
+ * redacted at every reference instead of only the first. The previous
+ * global "seen anywhere" `WeakSet` (BUG-024) prevented infinite recursion
+ * the same way but had exactly this leak: the second reference to an
+ * aliased value was skipped as "already visited" and returned unredacted —
+ * `FINDING-025`'s own headline example (`{ tokens: [...] }`) leaked at the
+ * second reference whenever the array was aliased.
+ *
+ * `budget` bounds total node visits across the whole call. Removing the
+ * global dedup means a heavily-ALIASED-but-acyclic structure (the same
+ * child referenced from both branches at every level of a binary chain) is
+ * now walked once per path to it — exponential in depth. The budget makes
+ * a pathological structure degrade safely (stop descending once
+ * exhausted, leaving the un-walked remainder as-is — the same "leave it
+ * alone" posture already used for a detected cycle) instead of hanging.
+ */
+interface RedactionGuard {
+  ancestors: WeakSet<object>;
+  budget: { remaining: number };
+}
+
+/**
+ * S10-R8: total node-visit budget for one top-level redaction call. Sized
+ * generously for any real log context (dozens to low hundreds of nested
+ * fields) while keeping a pathological structure's worst case bounded to a
+ * small, fast, constant amount of work instead of the exponential blowup
+ * an ancestor-only guard would otherwise allow.
+ */
+const MAX_REDACT_NODES = 5000;
+
+/**
  * Abstract base logger with common functionality
  *
  * Extend this class and implement the `write` method to create
@@ -172,8 +211,15 @@ export abstract class BaseLogger implements ExtendedLogger {
         // verdict — see its comment for why running it over free text would
         // be a false-positive risk (sha256 hashes, cache keys) this package
         // cannot afford.
-        .replace(new RegExp(JWT_VALUE_PATTERN.source, 'g'), '[REDACTED]')
-        .replace(new RegExp(DISCORD_TOKEN_VALUE_PATTERN.source, 'g'), '[REDACTED]')
+        // S10-R11 (2026-08-30 fix round 1): preserve the source pattern's
+        // own flags (both are flagless today) instead of hardcoding 'g' —
+        // a future 'i'/'u' added to either pattern would otherwise silently
+        // not apply here, defeating the "can't drift" guarantee above.
+        .replace(new RegExp(JWT_VALUE_PATTERN.source, JWT_VALUE_PATTERN.flags + 'g'), '[REDACTED]')
+        .replace(
+          new RegExp(DISCORD_TOKEN_VALUE_PATTERN.source, DISCORD_TOKEN_VALUE_PATTERN.flags + 'g'),
+          '[REDACTED]',
+        )
         // BUG-025: JSON-shaped pass — catches every "…token"/"…secret"/"…password"/
         // "…key"-suffixed quoted key in one sweep, including compound names
         // (sessionToken, webhook_secret) that the per-key patterns below miss.
@@ -211,57 +257,86 @@ export abstract class BaseLogger implements ExtendedLogger {
   /**
    * Redact sensitive fields from context
    *
-   * FINDING-008: Recursively walks nested objects (up to MAX_REDACT_DEPTH)
-   * to redact sensitive fields at any nesting level, not just top-level.
+   * FINDING-008: recursively walks nested objects and arrays to redact
+   * sensitive fields/values at any nesting level, not just top-level. This
+   * comment used to say "up to MAX_REDACT_DEPTH" — stale even before this
+   * fix; BUG-024 (2026-07-18 audit) already replaced that fixed depth cap
+   * with a cycle guard. S10-R10 (2026-08-30 fix round 1): corrected here to
+   * match reality and the parallel correction in this package's CLAUDE.md.
+   *
+   * S10-R8 (2026-08-30 fix round 1): the guard is an ANCESTOR set (nodes on
+   * the current recursion path), not a global "seen anywhere" set — see
+   * `RedactionGuard`'s doc comment for why that distinction is the fix (a
+   * value aliased from two sibling keys used to be redacted only at its
+   * first reference, leaking the second verbatim).
    */
-  protected redactSensitiveFields(context: LogContext, seen?: WeakSet<object>): LogContext {
-    // BUG-024: cycle guard replaces the old fixed depth cap (MAX_REDACT_DEPTH=3),
-    // which let exact-match secrets nested 4+ levels deep through verbatim.
-    const visited = seen ?? new WeakSet<object>();
-    visited.add(context);
+  protected redactSensitiveFields(context: LogContext, guard?: RedactionGuard): LogContext {
+    const g: RedactionGuard = guard ?? {
+      ancestors: new WeakSet<object>(),
+      budget: { remaining: MAX_REDACT_NODES },
+    };
 
-    const redacted = { ...context };
-    const fieldsToRedact = this.config.redactFields || DEFAULT_REDACT_FIELDS;
-
-    // BUG-024: match case-insensitively with separators collapsed, so
-    // Token/TOKEN/Authorization/jwtSecret hit the same list entries as
-    // token/authorization/jwt_secret; plus a suffix heuristic that catches
-    // compound keys like sessionToken/webhookSecret/userPassword.
-    const normalize = (k: string): string => k.toLowerCase().replace(/[_-]/g, '');
-    const redactSet = new Set(fieldsToRedact.map(normalize));
-    const SENSITIVE_SUFFIX = /(token|secret|password|apikey)$/;
-
-    for (const key of Object.keys(redacted)) {
-      const n = normalize(key);
-      if (redactSet.has(n) || SENSITIVE_SUFFIX.test(n)) {
-        redacted[key] = '[REDACTED]';
-        continue;
-      }
-      // FINDING-026 (2026-08-21 audit): secret-SHAPED values under innocuous
-      // keys (a Bearer header pasted into `note`, a JWT in `detail`, a Discord
-      // bot token in `raw`) — the key-name list cannot anticipate those.
-      const value = redacted[key];
-      if (typeof value === 'string' && looksLikeSecretValue(value)) {
-        redacted[key] = '[REDACTED]';
-      }
+    if (g.budget.remaining <= 0) {
+      // S10-R8: budget exhausted — stop descending and leave this subtree
+      // as-is, the same posture already used for a detected cycle below.
+      return context;
     }
+    g.budget.remaining -= 1;
 
-    // Recursively redact nested plain objects and array elements (FINDING-007)
-    for (const [key, value] of Object.entries(redacted)) {
-      if (redacted[key] === '[REDACTED]' || value === null || typeof value !== 'object') {
-        continue;
+    g.ancestors.add(context);
+    try {
+      const redacted = { ...context };
+      const fieldsToRedact = this.config.redactFields || DEFAULT_REDACT_FIELDS;
+
+      // BUG-024: match case-insensitively with separators collapsed, so
+      // Token/TOKEN/Authorization/jwtSecret hit the same list entries as
+      // token/authorization/jwt_secret; plus a suffix heuristic that catches
+      // compound keys like sessionToken/webhookSecret/userPassword.
+      const normalize = (k: string): string => k.toLowerCase().replace(/[_-]/g, '');
+      const redactSet = new Set(fieldsToRedact.map(normalize));
+      const SENSITIVE_SUFFIX = /(token|secret|password|apikey)$/;
+
+      for (const key of Object.keys(redacted)) {
+        const n = normalize(key);
+        if (redactSet.has(n) || SENSITIVE_SUFFIX.test(n)) {
+          redacted[key] = '[REDACTED]';
+          continue;
+        }
+        // FINDING-026 (2026-08-21 audit): secret-SHAPED values under innocuous
+        // keys (a Bearer header pasted into `note`, a JWT in `detail`, a Discord
+        // bot token in `raw`) — the key-name list cannot anticipate those.
+        const value = redacted[key];
+        if (typeof value === 'string' && looksLikeSecretValue(value)) {
+          redacted[key] = '[REDACTED]';
+        }
       }
-      if (visited.has(value)) {
-        continue;
+
+      // Recursively redact nested plain objects and array elements (FINDING-007)
+      for (const [key, value] of Object.entries(redacted)) {
+        if (redacted[key] === '[REDACTED]' || value === null || typeof value !== 'object') {
+          continue;
+        }
+        if (g.ancestors.has(value)) {
+          // Genuine cycle on the CURRENT path — leave as-is rather than
+          // recursing forever. An aliased-but-acyclic sibling reference is
+          // NOT caught here, because by the time we reach it the earlier
+          // branch has already popped it from `ancestors` (see `finally`
+          // below) — that is what makes S10-R8 work.
+          continue;
+        }
+        if (Array.isArray(value)) {
+          redacted[key] = this.redactArrayItems(value, g);
+        } else {
+          redacted[key] = this.redactSensitiveFields(value as LogContext, g);
+        }
       }
-      if (Array.isArray(value)) {
-        redacted[key] = this.redactArrayItems(value, visited);
-      } else {
-        redacted[key] = this.redactSensitiveFields(value as LogContext, visited);
-      }
+
+      return redacted;
+    } finally {
+      // Pop this node so a SIBLING branch that aliases the same object
+      // (not a descendant of it) sees it as unvisited and redacts it too.
+      g.ancestors.delete(context);
     }
-
-    return redacted;
   }
 
   /**
@@ -289,24 +364,38 @@ export abstract class BaseLogger implements ExtendedLogger {
    * `{ a: [[1, 2]] }` silently logged as `{ a: [{ '0': 1, '1': 2 }] }`.
    * Nested arrays now recurse through this method instead, so array-ness
    * is preserved at every depth.
+   *
+   * S10-R8 (2026-08-30 fix round 1): shares the same ancestor+budget guard
+   * as `redactSensitiveFields` — see `RedactionGuard`'s doc comment. An
+   * aliased array (`{ a: arr, b: arr }`) is now redacted at both `a` and
+   * `b`, not just the first one reached.
    */
-  protected redactArrayItems(items: unknown[], visited: WeakSet<object>): unknown[] {
-    visited.add(items);
-    return items.map((item: unknown) => {
-      if (typeof item === 'string') {
-        return looksLikeSecretValue(item) ? '[REDACTED]' : item;
-      }
-      if (Array.isArray(item)) {
-        // `Array.isArray` narrows to `any[]` per the lib types; re-assert
-        // as `unknown[]` so the branch doesn't return an implicit `any`.
-        const nested = item as unknown[];
-        return visited.has(nested) ? nested : this.redactArrayItems(nested, visited);
-      }
-      if (typeof item === 'object' && item !== null && !visited.has(item)) {
-        return this.redactSensitiveFields(item as LogContext, visited);
-      }
-      return item;
-    });
+  protected redactArrayItems(items: unknown[], guard: RedactionGuard): unknown[] {
+    if (guard.budget.remaining <= 0) {
+      return items;
+    }
+    guard.budget.remaining -= 1;
+
+    guard.ancestors.add(items);
+    try {
+      return items.map((item: unknown) => {
+        if (typeof item === 'string') {
+          return looksLikeSecretValue(item) ? '[REDACTED]' : item;
+        }
+        if (Array.isArray(item)) {
+          // `Array.isArray` narrows to `any[]` per the lib types; re-assert
+          // as `unknown[]` so the branch doesn't return an implicit `any`.
+          const nested = item as unknown[];
+          return guard.ancestors.has(nested) ? nested : this.redactArrayItems(nested, guard);
+        }
+        if (typeof item === 'object' && item !== null && !guard.ancestors.has(item)) {
+          return this.redactSensitiveFields(item as LogContext, guard);
+        }
+        return item;
+      });
+    } finally {
+      guard.ancestors.delete(items);
+    }
   }
 
   /**

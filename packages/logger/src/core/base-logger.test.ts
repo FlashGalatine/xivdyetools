@@ -757,13 +757,85 @@ describe('redaction cycle safety', () => {
     expect(() => logger.info('array cycle', cyclic)).not.toThrow();
   });
 
-  it('still redacts the same object seen twice at different keys', () => {
+  it('still redacts the same object seen twice at different keys (S10-R8: at EVERY reference, not just the first)', () => {
     const logger = new TestLogger({ level: 'debug' });
     const shared: LogContext = { password: 'hunter2' };
 
     logger.info('shared', { a: shared, b: shared });
 
-    const ctx = logger.entries[0].context as { a: LogContext };
+    // S10-R8 (2026-08-30 fix round 1): the old guard was a global "seen
+    // anywhere" WeakSet, so the SECOND reference to `shared` was skipped as
+    // already-visited and returned unredacted — ctx.b.password used to
+    // still be 'hunter2'. The guard is now an ancestor (recursion-path) set
+    // that gets popped after each branch finishes, so `a` and `b` are each
+    // redacted independently.
+    const ctx = logger.entries[0].context as { a: LogContext; b: LogContext };
     expect(ctx.a.password).toBe('[REDACTED]');
+    expect(ctx.b.password).toBe('[REDACTED]');
+  });
+
+  it('redacts an aliased ARRAY at every reference too, not just the first (S10-R8)', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    // Reused from hardening.test.ts: a JWT that trips looksLikeSecretValue.
+    const jwt =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMifQ.c2lnbmF0dXJlLXNpZ25hdHVyZS1zaWduYXR1cmU';
+    const arr = [jwt];
+
+    logger.info('shared array', { a: arr, b: arr });
+
+    // This is FINDING-025's own headline example (`{ tokens: ['eyJ…'] }`)
+    // aliased — before S10-R8, redactArrayItems marked the array itself as
+    // "visited" globally, so the second reference's items were returned
+    // unscanned.
+    const ctx = logger.entries[0].context as { a: string[]; b: string[] };
+    expect(ctx.a[0]).toBe('[REDACTED]');
+    expect(ctx.b[0]).toBe('[REDACTED]');
+  });
+
+  it('bounds total work on a pathological, heavily-aliased structure instead of hanging (S10-R8 budget)', () => {
+    const logger = new TestLogger({ level: 'debug' });
+
+    // Binary alias chain: each level references the SAME child object from
+    // BOTH of its own keys. An ancestor-only guard (no global dedup, which
+    // is exactly what S10-R8 removes) would revisit that shared child once
+    // per path to it — 2^40 visits at 40 levels, which would never finish.
+    // MAX_REDACT_NODES must cut this off instead of hanging the process.
+    let level: LogContext = { leaf: 'x' };
+    for (let i = 0; i < 40; i++) {
+      level = { a: level, b: level };
+    }
+
+    const start = Date.now();
+    expect(() => logger.info('deep', level)).not.toThrow();
+    // Generous on purpose: a correct budget finishes in low single-digit
+    // milliseconds (a few thousand cheap node visits); an unbounded
+    // ancestor-only walk of this structure would not finish in this
+    // process's lifetime, let alone 2 seconds — this is a wide margin, not
+    // a tight timing assertion.
+    expect(Date.now() - start).toBeLessThan(2000);
+    expect(logger.entries).toHaveLength(1);
+  });
+
+  it('honors MAX_REDACT_NODES deterministically: redacts well within budget, leaves well beyond it as-is (S10-R8 budget correctness)', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    // 5500 DISTINCT (non-aliased) objects — no exponential blowup here, just
+    // more nodes than the 5000-node budget. Not timing-based: this proves
+    // the budget is actually wired in and doing something observable,
+    // rather than only inferring it from "did not hang".
+    const items: LogContext[] = [];
+    for (let i = 0; i < 5500; i++) {
+      items.push({ password: 'hunter2' });
+    }
+
+    logger.info('wide', { items });
+
+    const ctx = logger.entries[0].context as { items: LogContext[] };
+    // Well within the ~5000-node budget (root + array + item redactions).
+    expect(ctx.items[10].password).toBe('[REDACTED]');
+    // Well beyond it: the budget must be exhausted by here, so this item is
+    // left as-is — the same "leave it alone" posture already used for a
+    // detected cycle — rather than the budget being decorative and every
+    // item still getting fully redacted regardless.
+    expect(ctx.items[5499].password).toBe('hunter2');
   });
 });
