@@ -42,7 +42,7 @@
 | **Types** | v2.0.0 | `@xivdyetools/types` | npm | Active — publish pending |
 | **Auth** (incl. `/encoding`) | v1.4.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.1.0 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.1.0 | `@xivdyetools/worker-kit` | npm | Active (first publish 2026-08-28) |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.2.0 | `@xivdyetools/worker-kit` | npm | Active — publish pending (first publish 2026-08-28) |
 | **SVG** | v3.0.0 | `@xivdyetools/svg` | npm | Active — publish pending (publish **before** bot-logic 3.0.0) |
 | **Bot Logic** (incl. `/i18n`) | v3.0.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending (requires svg 3.0.0 on npm first) |
 | **Test Utils** | v1.2.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
@@ -334,6 +334,14 @@
 | v1.1.1 | Jul 2026 | OPT-019 chunked `String.fromCharCode.apply` in `base64UrlEncodeBytes` — identical output, ~10-50× faster for KB+ payloads |
 | v1.1.0 | Feb 2026 | Validate hex input in hexToBytes |
 | v1.0.0 | Nov 2025 | Initial release |
+
+### @xivdyetools/worker-kit
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| **v1.2.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-010 + FINDING-012) — rate-limit fail-open / backend-error log lines carry a `keyScope`, never the raw client IP or Discord id, at all six sites across the middleware and the three fallible backends; `console.warn` fallback when no logger is configured (previously silent); `CloudflareRateLimiter`'s constructor validates every tier's `binding.limit` is callable and throws rather than fail-opening per-request** |
+| **v1.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-003) — `CloudflareRateLimiter`, a backend over the native Workers Rate Limiting binding (atomic per-colo counting, no storage writes); now the preferred per-client limiter over KV, which cannot throttle a fast client** |
+| **v1.0.0** | **Aug 2026** | **New npm package, first publish 2026-08-28 — Monorepo 2.0 Tier 1 merger of `@xivdyetools/worker-middleware` v1.2.0 and `@xivdyetools/rate-limiter` v1.5.0 (both source trees moved verbatim, neither API changed); optional `hono`/`@cloudflare/workers-types` peers; `hono` floor raised to `^4.12.34` (2026-08-09 audit FINDING-001, CORS ReDoS)** |
 
 ### @xivdyetools/rate-limiter (retired — merged into `@xivdyetools/worker-kit/rate-limiter` 2026-07-31)
 

@@ -23,7 +23,7 @@ Nothing is exploitable now — no finding ships out-of-band. Two prerequisites, 
 | ID | Source | Tier | Action |
 |---|---|---|---|
 | FINDING-030 | security | P3 / LOCAL · ROTATE (conditional) | Cloudflare dashboard: inspect the live CI token's scopes; if it carries KV/D1/R2 Edit, re-issue with **Workers Scripts: Edit, Workers Routes: Edit, Pages: Edit** (this account only), update the GitHub secret, re-run one deploy via `workflow_dispatch`, revoke the old token. Then fix `docs/operations/SECRET_ROTATION.md:66,151` and tick `POST_MERGE_CHECKLIST.md:334-335`. |
-| — | guardrail | — | **Do not enable Workers Logs / Logpush / tail consumers on any script** until Sprints 1–5 and 9 close (FINDING-010/011) — `evidence/workers-log-retention.md`. |
+| — | guardrail | — | ~~Do not enable Workers Logs / Logpush / tail consumers on any script until Sprints 1–5 and 9 close (FINDING-010/011)~~ — **lifted 2026-08-30**: FINDING-011 closed in Sprint 4, FINDING-010 closed in Sprint 9 (worker-kit 1.2.0, limiter-key logging redacted). Workers Logs / Logpush / tail consumers may now be enabled on any script; still verify the redaction on a sampled request first — `evidence/workers-log-retention.md`. |
 
 **Ends with:** the token re-issued (or confirmed already narrow) + the runbook commit. No deploy.
 
@@ -207,6 +207,6 @@ Terminal for FINDING-015: every consumer stopped using v1 in S1/S3/S4, so removi
 - Verify each finding's evidence against the code before fixing — findings are leads (`file:line` in `findings/` and `evidence/review-*.md`).
 - One commit per row (or per sprint when tiny); the standing verification gate at every sprint boundary (`release-mechanics.md`); stage only your own paths; update the finding's `## Status` and the report's status table in the same commit.
 - FINDING-030 stays open until the token is re-issued or confirmed narrow, whatever the docs say. No other finding needs rotation.
-- Never enable Workers Logs / Logpush before S1–S5 + S9 land (FINDING-010/011); when enabling, verify the redaction on a sampled request first.
+- ~~Never enable Workers Logs / Logpush before S1–S5 + S9 land (FINDING-010/011)~~ — **that condition is met as of 2026-08-30** (FINDING-011 closed in Sprint 4; FINDING-010 closed in Sprint 9, worker-kit 1.2.0). Workers Logs / Logpush may now be enabled on any script; still verify the redaction on a sampled request first, per the original condition.
 - Re-run `evidence/scripts/*.sh` after S12 (gitleaks config change) and after the last sprint; a change to any datapoint blob, KV prefix, D1 column or outbound host needs a privacy-doc diff in the same PR.
 - Annotate executed sprints in the heading: **✅ COMPLETED <date> <commits>** + **Deploy needs:** — the plan doubles as the tracker.
