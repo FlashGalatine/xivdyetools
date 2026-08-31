@@ -23,10 +23,10 @@
     "@xivdyetools/auth": "workspace:*",
     "@xivdyetools/types": "workspace:*",
     "@xivdyetools/worker-kit": "workspace:*",
-    "hono": "^4.13.4"
+    "hono": "^4.13.5"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260826.1",
+    "@cloudflare/workers-types": "^5.20260828.1",
     "@types/node": "^26.3.0",
     "@vitest/coverage-v8": "^4.1.11",
     "@xivdyetools/test-utils": "workspace:*",
