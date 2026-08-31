@@ -849,7 +849,7 @@ describe('redaction cycle safety', () => {
     expect(node.password).toBe('[REDACTED]');
   });
 
-  it('redacts every reference in a large shared structure, not just the first N (S10-R12: no budget to exhaust)', () => {
+  it('redacts every ALIASED reference in a large shared structure, not just the first N (S10-R12: no budget to exhaust)', () => {
     const logger = new TestLogger({ level: 'debug' });
     const shared: LogContext = { password: 'hunter2' };
     // 6000 references to the SAME object — comfortably past the size where
@@ -858,6 +858,14 @@ describe('redaction cycle safety', () => {
     // failed OPEN — the exact defect S10-R12 replaced it for). With
     // memoization there is no cutoff: every reference resolves to the one
     // shared, fully-redacted copy.
+    //
+    // S10-R15 (2026-08-30 fix round 3): this test alone is NOT a
+    // regression test for the original S10-R8 budget bypass — memoization
+    // satisfies 6000 ALIASED references in O(1) (one real computation, the
+    // rest memo hits), which even a budget of 5000 would arguably have
+    // survived (only ~2 "real" node visits are needed: the shared object
+    // and the array). The test that actually exercises the many-DISTINCT-
+    // nodes path the old budget bypassed is the next one below.
     const refs: LogContext[] = new Array(6000).fill(shared);
 
     logger.info('wide', { refs });
@@ -869,5 +877,59 @@ describe('redaction cycle safety', () => {
     // Memoized: every reference is the SAME redacted object, not 6000
     // independently redacted copies.
     expect(ctx.refs[0]).toBe(ctx.refs[5999]);
+  });
+
+  it('redacts a secret in the LAST of >5000 DISTINCT (non-aliased) object nodes (S10-R15: the actual bypass regression test)', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    // 6000 DISTINCT objects — a fresh object literal each iteration, never
+    // the same reference twice, so memoization never hits and every single
+    // one is a genuine, independent redactSensitiveFields call. This is
+    // the exact shape of the original S10-R8 budget bypass (measured by
+    // review at a deterministic ~4998-node cutoff): with that budget, the
+    // secret below — the 6000th distinct node, comfortably past the
+    // cutoff — would have been emitted completely unscanned. This test
+    // would have gone red at 617c907e (budget present) and is green from
+    // b3800667 onward (memoization, no cutoff).
+    const items: LogContext[] = [];
+    for (let i = 0; i < 5999; i++) {
+      items.push({ index: i });
+    }
+    items.push({ password: 'hunter2' });
+
+    logger.info('wide-distinct', { items });
+
+    const ctx = logger.entries[0].context as { items: LogContext[] };
+    expect(ctx.items).toHaveLength(6000);
+    expect(ctx.items[5999].password).toBe('[REDACTED]');
+  });
+
+  it('pins the design invariant (S10-R16): a cycle back-edge is the RAW original, never the redacted copy or itself', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const cyclic: LogContext = { name: 'root', password: 'hunter2' };
+    cyclic.self = cyclic;
+
+    const result = logger.testRedactSensitiveFields(cyclic);
+
+    // The primary occurrence is redacted...
+    expect(result.password).toBe('[REDACTED]');
+    // ...but the back-edge is a genuine CYCLE, not an alias, and must stay
+    // the RAW original object — not the redacted copy (`result` itself,
+    // which would make the output graph self-referential — a shape this
+    // package has never produced) and not any other value.
+    //
+    // This holds ONLY because `ancestors` is checked before `memo`, AND
+    // `memo` is populated only on the way OUT (after a node's own children
+    // are fully processed). Both properties were verified independently:
+    // mutating EITHER one alone (memoize-on-the-way-IN while still
+    // checking ancestors first; or check memo-before-ancestors while still
+    // memoizing way-out) leaves this assertion — and the whole suite —
+    // green, because a currently-active ancestor is, by construction,
+    // never yet in `memo` regardless of which check runs first or exactly
+    // when memo.set() executes UNLESS BOTH properties are violated
+    // together. Mutating both together makes the back-edge resolve to the
+    // (self-referential) redacted copy instead — `result.self` becomes
+    // `result` itself — which this assertion catches.
+    expect(result.self).toBe(cyclic);
+    expect(result.self).not.toBe(result);
   });
 });

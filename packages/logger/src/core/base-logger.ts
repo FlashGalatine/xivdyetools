@@ -637,16 +637,68 @@ export function looksLikeSecretValue(value: string): boolean {
  * JSON.stringify that never throws: cycles become `"[Circular]"`, BigInt
  * becomes its decimal string, and anything else that refuses to serialise is
  * replaced rather than failing the log call (and with it, the request).
+ *
+ * S10-R14 (2026-08-30 fix round 3): the cycle-detection stack is
+ * PATH-SCOPED, not a "seen anywhere" set — the same distinction S10-R8 made
+ * for redaction, one layer down at serialisation time. `JSON.stringify`'s
+ * replacer only fires "entering a value" events; there is no explicit
+ * "leaving a value" callback, so path-scoping has to be reconstructed
+ * rather than tracked directly. The trick (the same one the long-standing
+ * `json-stringify-safe` npm package uses — reimplemented here, not
+ * depended on, per the "no new dependencies" constraint): inside the
+ * replacer, `this` is always the object/array that directly CONTAINS the
+ * key currently being visited, and `JSON.stringify` calls the replacer in
+ * strict pre-order depth-first sequence. So finding `this` in `stack` and
+ * truncating everything past it reconstructs "how far back up the tree
+ * we've returned since the last call" — anything deeper in `stack`
+ * belonged to a sibling branch that has already finished serialising and
+ * can be discarded.
+ *
+ * Why this needed fixing now: S10-R12 made `redactSensitiveFields` memoize
+ * aliased references onto the SAME redacted object, so `{ a: shared, b:
+ * shared }` now really does hand this function the identical object twice.
+ * The previous "seen anywhere" `WeakSet` — harmless while every reference
+ * was still a distinct object, pre-memoization — started reading the
+ * second, legitimate reference as a cycle and replacing it with
+ * `"[Circular]"`: a regression that fails CLOSED (data dropped, nothing
+ * leaked) rather than open, but one that would have shipped every deployed
+ * Worker silently mangling repeated (not circular) data on the
+ * `JsonAdapter.write` path.
  */
 export function safeStringify(value: unknown): string {
-  const seen = new WeakSet<object>();
+  // `stack[i]` is the ancestor object/array at depth `i` on the branch
+  // currently being serialised. Primitives never enter it — only an
+  // object/array can be an ancestor, so there is nothing to track for one.
+  const stack: unknown[] = [];
   try {
-    const json = JSON.stringify(value, (_key, v: unknown) => {
+    const json = JSON.stringify(value, function (this: unknown, _key, v: unknown) {
       if (typeof v === 'bigint') return v.toString();
-      if (typeof v === 'object' && v !== null) {
-        if (seen.has(v)) return '[Circular]';
-        seen.add(v);
+      if (typeof v !== 'object' || v === null) {
+        return v;
       }
+      if (stack.length === 0) {
+        // First call: `this` is JSON.stringify's own internal wrapper
+        // object, which can never appear in `stack` — just seed it with
+        // the root value we're about to enter.
+        stack.push(v);
+        return v;
+      }
+      const thisPos = stack.indexOf(this);
+      if (thisPos === -1) {
+        // Should not happen once seeded (every later `this` is a value
+        // this function already returned), but fail safe by extending
+        // rather than losing track of the current path.
+        stack.push(this);
+      } else {
+        // Back up (or across) the tree to `this`'s depth — anything past
+        // it belonged to a sibling branch that has already finished.
+        stack.splice(thisPos + 1);
+      }
+      if (stack.indexOf(v) !== -1) {
+        // `v` is its own ancestor on THIS path — a genuine cycle.
+        return '[Circular]';
+      }
+      stack.push(v);
       return v;
     });
     // JSON.stringify(undefined) / functions / symbols yield undefined

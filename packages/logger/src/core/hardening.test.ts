@@ -18,6 +18,7 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { JsonAdapter } from '../adapters/json-adapter.js';
+import { safeStringify } from './base-logger.js';
 
 function capture(): { logger: JsonAdapter; lines: () => string[] } {
   const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -214,5 +215,80 @@ describe('FINDING-025 (2026-08-29 audit): array items and free text', () => {
       expect(out).toContain(requestId);
       expect(out).not.toContain('[REDACTED]');
     });
+  });
+});
+
+describe('S10-R14 (2026-08-30 fix round 3): safeStringify is path-scoped, not "seen anywhere"', () => {
+  // S10-R12's memoization made an aliased reference the SAME object, not
+  // an independent copy — safeStringify's OLD global "seen" set read that
+  // as a cycle and replaced the second (and later) occurrence with
+  // "[Circular]", silently dropping legitimate repeated data. These
+  // assert on the EMITTED JSON STRING (safeStringify's return value)
+  // rather than an in-memory tree, because capturing the in-memory tree is
+  // exactly why the earlier suite could not see this regression.
+
+  it('does not flag an aliased sibling object as circular', () => {
+    const shared = { password: '[REDACTED]' };
+    const json = safeStringify({ a: shared, b: shared });
+    expect(json).not.toContain('[Circular]');
+    expect(JSON.parse(json)).toEqual({
+      a: { password: '[REDACTED]' },
+      b: { password: '[REDACTED]' },
+    });
+  });
+
+  it('does not flag the same object repeated across array items as circular', () => {
+    const dye = { id: 5, hex: '#fff' };
+    const json = safeStringify({ list: [dye, dye, dye] });
+    expect(json).not.toContain('[Circular]');
+    expect(JSON.parse(json)).toEqual({
+      list: [
+        { id: 5, hex: '#fff' },
+        { id: 5, hex: '#fff' },
+        { id: 5, hex: '#fff' },
+      ],
+    });
+  });
+
+  it('does not flag a heavily-aliased array (fill) as circular', () => {
+    const o = { id: 1 };
+    const json = safeStringify(new Array(6).fill(o));
+    expect(json).not.toContain('[Circular]');
+    expect(JSON.parse(json)).toEqual(new Array(6).fill({ id: 1 }));
+  });
+
+  it('still flags a genuine self-cycle as circular', () => {
+    const o: Record<string, unknown> = { name: 'o', password: 'hunter2' };
+    o.self = o;
+    const json = safeStringify({ o });
+    expect(json).toContain('"self":"[Circular]"');
+  });
+
+  it('still flags a genuine two-node cycle as circular', () => {
+    const a: Record<string, unknown> = { password: 'p1' };
+    const b: Record<string, unknown> = { ref: a };
+    a.other = b;
+    const json = safeStringify(a);
+    expect(json).toContain('"ref":"[Circular]"');
+  });
+
+  it('handles aliasing and a genuine cycle together in one call', () => {
+    const shared = { tag: 'shared' };
+    const cyclic: Record<string, unknown> = { name: 'cyc' };
+    cyclic.self = cyclic;
+    const json = safeStringify({ a: shared, b: shared, c: cyclic });
+    const parsed = JSON.parse(json) as {
+      a: { tag: string };
+      b: { tag: string };
+      c: { name: string; self: string };
+    };
+    expect(parsed.a).toEqual({ tag: 'shared' });
+    expect(parsed.b).toEqual({ tag: 'shared' });
+    expect(parsed.c.self).toBe('[Circular]');
+  });
+
+  it('still converts BigInt to its decimal string (unchanged by the rewrite)', () => {
+    const json = safeStringify({ n: 123n });
+    expect(json).toBe('{"n":"123"}');
   });
 });
