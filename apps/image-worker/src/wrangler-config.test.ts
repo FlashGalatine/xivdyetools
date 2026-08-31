@@ -49,6 +49,41 @@ const presetsApiToml = readFileSync(
   'utf-8',
 ).replace(/\r\n/g, '\n');
 
+/**
+ * Fix round 1 (S8-R6): matches a route declared in ANY shape wrangler
+ * 4.126.0 (the pinned version) actually accepts, not just the one spelling
+ * this repo happens to use elsewhere (`routes = [...]`). Verified against
+ * the pinned wrangler with `--dry-run`: an invented key produces a config
+ * warning, but every shape below is accepted silently, so silence is the
+ * signal that wrangler recognises it as real.
+ *
+ * Two independent forms, unioned:
+ *  - Assignment: `route = …` / `routes = …` — singular (one route, string
+ *    or inline table) or plural (an array of either). An optional dotted
+ *    prefix (`env.production.routes = …`) is matched too: this repo always
+ *    nests routes under an `[env.X]` HEADER instead, but TOML's dotted-key
+ *    syntax permits an inline top-level spelling as well, and the point is
+ *    to catch every shape wrangler parses, not just the shape used so far.
+ *  - Table header: `[route]` / `[routes]` / `[[route]]` / `[[routes]]`,
+ *    with the same optional `env.X.` prefix and either bracket depth —
+ *    `route` is a single table, `routes` an array of tables, and wrangler
+ *    accepts both spellings.
+ *
+ * `^\s*` anchors every alternative to (optional leading whitespace then)
+ * the start of the line, so a `#`-prefixed comment — this file's own
+ * wrangler.toml has several mentioning "routes" in prose — can never match:
+ * the character right after `^\s*` would have to be `#`, and neither
+ * alternative accepts that. Verified directly (see the mutation table in
+ * the task report) rather than assumed.
+ */
+const ROUTE_DECLARATION = new RegExp(
+  [
+    String.raw`^\s*(?:[\w.]+\.)?routes?\s*=`,
+    String.raw`^\s*\[{1,2}\s*(?:[\w.]+\.)?routes?\s*\]{1,2}\s*$`,
+  ].join('|'),
+  'm',
+);
+
 /** Anchored `[[<header>]]` service-binding matcher, same technique as the
  *  sibling tests' PRESETS_API / DISCORD_WORKER binding assertions. */
 function serviceBinding(source: string, header: string, binding: string): string | undefined {
@@ -92,9 +127,18 @@ describe('wrangler.toml', () => {
    * appears somewhere in the document. Its absence anywhere rules out both,
    * so this one assertion cannot pass merely because a `routes` key moved to
    * a slice this file isn't looking at.
+   *
+   * Fix round 1 (S8-R6): a single spelling (`routes = [`) is not the whole
+   * invariant — wrangler also accepts the singular `route = …` assignment
+   * and both the singular and plural table-header forms, in any named
+   * environment, and a review with a runnable wrangler confirmed all of
+   * them deploy with no config warning. `ROUTE_DECLARATION` (declared
+   * above) covers every shape; this assertion is the same "absence
+   * anywhere" argument as before, just against a complete pattern instead
+   * of one spelling of it.
    */
-  it('never declares routes, in either environment or by inheritance', () => {
-    expect(toml).not.toMatch(/^routes = \[/m);
+  it('never declares a route, in any spelling, in either environment or by inheritance', () => {
+    expect(toml).not.toMatch(ROUTE_DECLARATION);
   });
 
   // Belt-and-suspenders against a corrupted or duplicated key slipping past
@@ -107,9 +151,22 @@ describe('wrangler.toml', () => {
     expect(toml).not.toMatch(/^preview_urls = true$/m);
   });
 
-  it('declares exactly one named environment ([env.production]) and nothing else', () => {
-    const envHeaders = toml.match(/^\[env\.\w+\]$/gm) ?? [];
-    expect(envHeaders).toEqual(['[env.production]']);
+  /**
+   * Fix round 1 (S8-R7): the original version of this test matched only a
+   * BARE `[env.NAME]` header, so `[env.staging.vars]` — a real, deployable
+   * environment (`wrangler deploy --env staging` targets it) that never
+   * declares a bare `[env.staging]` header at all — passed straight
+   * through undetected. wrangler does not require the bare header to
+   * exist; any `[env.NAME...]` or `[[env.NAME...]]` table, at any nesting,
+   * is enough to define the environment. So instead of matching a specific
+   * header shape, this extracts the environment NAME from every header
+   * that starts with `env.` — sub-tables and array-of-tables included —
+   * and asserts the set of distinct names, which is what actually
+   * determines what `--env` values are deployable.
+   */
+  it('declares exactly one environment name (production) across every env.* header', () => {
+    const envNames = [...new Set([...toml.matchAll(/^\s*\[{1,2}\s*env\.(\w+)/gm)].map((m) => m[1]))];
+    expect(envNames).toEqual(['production']);
   });
 
   /**

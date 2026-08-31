@@ -78,10 +78,20 @@ app.use(
  * This is defence in depth, not the primary control. The primary control
  * is that there is no public surface to reach at all: workers_dev = false
  * and no routes, in both environments.
+ *
+ * Fix round 1 (S8-R8): a hostname is allowed one trailing dot (RFC 1035's
+ * absolute-FQDN form — `acct.workers.dev.` and `acct.workers.dev` name the
+ * same host), and `URL` preserves it in `.hostname` rather than
+ * normalising it away, so `acct.workers.dev.` used to slip past
+ * `endsWith('.workers.dev')` and reach the real handler. Strip at most one
+ * trailing dot before the suffix check closes that gap without weakening
+ * it: `image-worker` (no trailing dot; both real callers' literal host)
+ * is untouched by the strip, so it is exactly as unaffected as before.
  */
 app.use('*', async (c, next) => {
   const { hostname } = new URL(c.req.url);
-  if (hostname.endsWith('.workers.dev')) {
+  const normalizedHostname = hostname.endsWith('.') ? hostname.slice(0, -1) : hostname;
+  if (normalizedHostname.endsWith('.workers.dev')) {
     return c.notFound();
   }
   await next();

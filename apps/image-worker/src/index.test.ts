@@ -208,6 +208,19 @@ describe('workers.dev hostname guard (FINDING-023)', () => {
     expect(res.status).toBe(404);
   });
 
+  // Fix round 1 (S8-R8): a trailing dot is the RFC 1035 absolute-FQDN
+  // spelling of the same host (`acct.workers.dev.` === `acct.workers.dev`)
+  // and used to slip past a bare `endsWith('.workers.dev')` check.
+  it('refuses /health on a workers.dev hostname with a trailing dot', async () => {
+    const res = await app.request(
+      'https://xivdyetools-image-worker.example-account.workers.dev./health',
+      {},
+      env
+    );
+
+    expect(res.status).toBe(404);
+  });
+
   it('refuses /extract on a workers.dev hostname and does no work', async () => {
     const res = await app.request(
       'https://xivdyetools-image-worker.example-account.workers.dev/extract',
