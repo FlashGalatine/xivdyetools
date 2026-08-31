@@ -109,8 +109,9 @@ Deploy workflows cover `api-worker`, `discord-worker` (+ beta), `image-worker`, 
 
 | Secret | Used by |
 |--------|---------|
-| `CLOUDFLARE_API_TOKEN` | All deploy workflows |
-| `CLOUDFLARE_ACCOUNT_ID` | All deploy workflows |
+| `CLOUDFLARE_API_TOKEN` | The 8 non-beta deploy workflows (`environment: production`) |
+| `CLOUDFLARE_API_TOKEN_BETA` | The 3 `*-beta.yml` deploy workflows (`environment: beta`, since 2026-08-29 FINDING-028 — a separate credential so a beta job can't read the production token) |
+| `CLOUDFLARE_ACCOUNT_ID` | All 11 deploy workflows — an account id, not a credential, shared by both environments |
 
 The publish workflow needs **no secret**. It authenticates to npm with [trusted publishing (OIDC)](https://docs.npmjs.com/trusted-publishers) using its own GitHub Actions identity via the `id-token: write` permission, which also signs the provenance attestation.
 

@@ -85,17 +85,38 @@ branch merges to `main` — since these workflows already trigger on branch push
 |---|---|---|
 | GitHub environment | `production` | `beta` |
 | Cloudflare credential | `secrets.CLOUDFLARE_API_TOKEN` | `secrets.CLOUDFLARE_API_TOKEN_BETA` |
-| Token scope (intended) | this whole Cloudflare account | the beta Worker names + the `xivdyetools-beta` Pages project only |
+| Cloudflare-side permissions | Account: Workers Scripts + Pages Edit; Zone: Workers Routes Edit on `xivdyetools.app` | the same three grants — Cloudflare token policies only support User/Account/Zone resource types, so there is no dashboard control that scopes either token to just its own Worker names or Pages project |
 | `CLOUDFLARE_ACCOUNT_ID` | shared repository secret | shared repository secret — an account id, not a credential, so there is nothing to isolate |
 
+**What the split actually buys, given the permissions overlap above.** The named exploit
+path — an edited beta workflow reading the repository-wide `secrets.CLOUDFLARE_API_TOKEN`
+because nothing gated which jobs could see it — is closed: that secret is no longer
+referenced anywhere in these three files. What is *not* closed by a Cloudflare permission
+wall is a beta workflow edited to add `--env production` to its own (legitimate)
+`secrets.CLOUDFLARE_API_TOKEN_BETA` deploy — that would still succeed, for the same reason
+`--env production` on the *production* token always has: nothing about a Cloudflare API
+token can be scoped to "only the beta Worker." The defense left standing against that
+specific edit, on both credentials alike, is procedural — nobody has made it — the same
+posture `environment: production`'s branch policy already relied on before this task. The
+real, structural gain is that `CLOUDFLARE_API_TOKEN_BETA` is a separate value: rotating or
+revoking it never touches production's credential, only `environment: beta` jobs can read
+it, and a beta-workflow compromise no longer directly hands over the production token by
+name.
+
+**Minting it needs a Zone grant, not just Account ones.** og-worker's beta config
+(`apps/og-worker/wrangler.toml` top level) declares ten `beta.xivdyetools.app/*` routes plus
+the `og-beta.xivdyetools.app` custom domain, and `wrangler deploy` reconciles routes on every
+deploy — that needs **Zone → Workers Routes: Edit on `xivdyetools.app`** in addition to the
+two Account grants. Mint the token without it and discord-worker's and web-app's beta
+deploys go green while og-worker's fails on an authorization error.
+
 **Setup is a manual, one-time step**, tracked as the pre-merge item in
-`docs/operations/POST_MERGE_CHECKLIST.md` §0: create the `beta` environment, mint the
-narrow token, store it — and move `CLOUDFLARE_API_TOKEN` itself out of the repository
-secret store into the `production` environment, which closes the same gap for the eight
-*other* workflows gating a Cloudflare deploy on `environment: production` (their gate has
-the identical weakness until that move happens). `docs/operations/SECRET_ROTATION.md`
-carries the inventory and
-rotation procedure for both tokens.
+`docs/operations/POST_MERGE_CHECKLIST.md` §0: create the `beta` environment, mint the token
+at the real minimum above, store it — and move `CLOUDFLARE_API_TOKEN` itself out of the
+repository secret store into the `production` environment, which closes the same gap for the
+eight *other* workflows gating a Cloudflare deploy on `environment: production` (their gate
+has the identical weakness until that move happens). `docs/operations/SECRET_ROTATION.md`
+carries the inventory and rotation procedure for both tokens.
 
 ---
 

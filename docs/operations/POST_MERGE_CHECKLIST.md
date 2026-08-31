@@ -106,19 +106,37 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       now declare `environment: beta` and read `secrets.CLOUDFLARE_API_TOKEN_BETA` instead of the
       production token; **deliberately no fallback** (ruling S12-R1: never
       `CLOUDFLARE_API_TOKEN_BETA || CLOUDFLARE_API_TOKEN`), so all three fail loudly at the
-      `wrangler-action` step until both exist. **Verified not yet done, 2026-08-31**
-      (`gh api repos/FlashGalatine/xivdyetools/environments` lists only `production`; `.../actions/secrets`
-      shows `CLOUDFLARE_API_TOKEN` as a **repository** secret, not scoped to any environment, and no
-      `CLOUDFLARE_API_TOKEN_BETA` anywhere) — **and this already applies to every push to a non-main
-      branch, starting now, not only after this branch merges**: the three workflows trigger on
-      branch pushes today, including pushes to `security-audit-2026-08-29` itself.
-      Settings → Environments → New environment → `beta`. The repo is public
+      `wrangler-action` step until both exist. **Verified 2026-08-31, before any push had exercised
+      this fix:** `gh api repos/FlashGalatine/xivdyetools/environments` listed only `production`;
+      `.../actions/secrets` showed `CLOUDFLARE_API_TOKEN` as a **repository** secret, not scoped to
+      any environment, and no `CLOUDFLARE_API_TOKEN_BETA` anywhere. **Confirmed live the same day,
+      once the fix actually shipped:** the first push to exercise these workflows (run
+      `33365469624`, `deploy-discord-worker-beta.yml` — its `paths:` filter includes
+      `packages/auth/**`) failed the deploy step in 54 s with wrangler's own missing-token error and
+      skipped everything after it, exactly as predicted, and GitHub auto-created the `beta`
+      environment one second later (`2026-08-31T06:45:16Z`) — empty, `protection_rules: []`, no
+      branch policy. **That auto-created shell is not a substitute for the two steps below**: nobody
+      has added `CLOUDFLARE_API_TOKEN_BETA` to it, and `CLOUDFLARE_API_TOKEN` is still a repository
+      secret — so all three beta deploys keep failing until both are done. This already applies to
+      every push to a non-main branch, starting the moment this fix landed on this branch — not only
+      after `security-audit-2026-08-29` itself merges to `main`.
+      Settings → Environments → `beta` — likely already listed, empty, per the auto-creation above;
+      if it somehow isn't, **New environment** → `beta` creates it identically. The repo is public
       (`visibility: public`, confirmed the same way), so unlike a private repo on GitHub Free this
       needs no plan upgrade. Give it no protection rules — beta is meant to deploy from any branch,
       unlike `production`'s `main`-only policy. Then Cloudflare dashboard → My Profile → API Tokens
-      → Create Token, scoped **narrow**: Workers Scripts: Edit + Pages: Edit, limited to the beta
-      Worker names (`xivdyetools-*-dev`) and the `xivdyetools-beta` Pages project — **not** a copy
-      of the production token, which reaches every Worker and Pages project on the account. Store
+      → Create Token, scoped to the real minimum — Cloudflare token policies only support three
+      resource types (User, Account, Zone), so there is no per-Worker-script or per-Pages-project
+      selector to scope either token narrower than this: **Account → Workers Scripts: Edit +
+      Cloudflare Pages: Edit (this account only), plus Zone → Workers Routes: Edit on
+      `xivdyetools.app`**. The Zone grant is not optional: og-worker's beta config declares ten
+      `beta.xivdyetools.app/*` routes plus the `og-beta.xivdyetools.app` custom domain, and
+      `wrangler deploy` reconciles routes on every deploy — omit it and discord-worker's and
+      web-app's beta deploys go green while og-worker's fails on an authorization error. **What this
+      buys is a separate, independently revocable credential that only `environment: beta` jobs can
+      read — not a token technically incapable of touching production Workers, Pages projects or
+      routes**, since Account/Zone-scoped permissions can't be narrowed to "beta resources only."
+      Store
       it as an environment secret named `CLOUDFLARE_API_TOKEN_BETA` on `beta` (Settings →
       Environments → beta → Add secret — a *repository* secret would defeat the point, since any
       workflow can read one of those). Then close the other half: add `CLOUDFLARE_API_TOKEN` as an

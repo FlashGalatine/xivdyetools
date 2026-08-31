@@ -170,7 +170,7 @@ pnpm 11 publishes natively and performs the OIDC exchange itself — no npm CLI 
 - **CI**: lint, type-check, test, build on affected packages (push/PR)
 - **Deploy**: path-filtered workflows per worker (push to main + manual dispatch)
 - **Publish**: manual `workflow_dispatch` to publish a selected npm package, authenticated via OIDC trusted publishing (no token)
-- **Secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+- **Secrets**: `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` for the 8 production deploy workflows; the 3 `*-beta.yml` workflows use a separate `CLOUDFLARE_API_TOKEN_BETA` instead (2026-08-29 FINDING-028)
 
 ## Documentation Hub
 
