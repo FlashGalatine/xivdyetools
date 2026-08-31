@@ -21,7 +21,7 @@ import { MemoryRateLimiter, KVRateLimiter, getClientIp,
 import { UpstashRateLimiter } from '@xivdyetools/worker-kit/rate-limiter/upstash'; // single backend
 ```
 
-The root export re-exports both modules; subpaths keep bundles lean (rate-limiter-only consumers like `stoat-worker` never touch hono — both `hono` and `@cloudflare/workers-types` are optional peers).
+The root export re-exports both modules; subpaths keep bundles lean for a consumer that needs only the rate-limiter engine and not the Hono middleware — `hono` and `@cloudflare/workers-types` are both optional peers for exactly that reason. No in-repo consumer is currently rate-limiter-only (see Consumers below).
 
 ## Commands
 
@@ -42,7 +42,7 @@ pnpm --filter @xivdyetools/worker-kit run test
 
 ## Consumers
 
-All eight backend apps: discord-worker, moderation-worker, presets-api, oauth, api-worker (incl. its absorbed universalis routes), og-worker and image-worker (middleware only — request ID + logger, no rate limiting) and stoat-worker (declares it for the rate-limiter — the Upstash backend is still *planned*, nothing is imported yet). web-app does not consume it.
+All seven backend apps: discord-worker, moderation-worker, presets-api, oauth, api-worker (incl. its absorbed universalis routes), og-worker and image-worker (middleware only — request ID + logger, no rate limiting) — confirmed by `turbo --filter=...@xivdyetools/worker-kit`, which resolves to exactly these seven. `stoat-worker` does **not** consume this package (it depends only on `bot-logic`, `logger` and `types` — `worker-kit` was dropped along with `svg`/`core`, since it renders no cards and needs no Workers-only middleware), and `web-app` never has.
 
 ## Internal Dependencies
 
