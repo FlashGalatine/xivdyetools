@@ -51,8 +51,16 @@ a public export is gone.
   `X-Request-Nonce` — `X-Request-Signature` is no longer read by anything in this ecosystem.
   `BotSignatureOptions` (`maxAgeMs` / `clockSkewMs`) is unchanged and still accepted by
   `verifyBotSignatureV2`; only its effective default tightened, from v1's 5-minute window to v2's
-  own default of `BOT_SIGNATURE_V2_MAX_AGE_MS` (60 s), because v2 also has to cover the window a
-  nonce-replay check runs in, which v1 never had.
+  own default of `BOT_SIGNATURE_V2_MAX_AGE_MS` (60 s) — a narrower freshness window that a
+  caller-implemented nonce-replay check can fit inside, since a single-use nonce is only useful
+  for as long as its signature is.
+
+  **This package does not implement that replay check.** `verifyBotSignatureV2` binds `nonce`
+  into the signed string — a captured request can't be replayed with a different nonce — but
+  never checks whether a given nonce has been seen before; migrating from v1 to v2 buys full
+  request binding (method, path, body, timestamp, nonce, identity) and nothing else. A caller
+  wanting single-use enforcement has to keep its own store for the 60 s window (this monorepo's
+  is `presets-api`'s, a KV-backed `botnonce:` cache — not part of this package).
 
   A consumer with no immediate path to v2 must pin `@xivdyetools/auth@^1` — 1.4.0 stays on the
   registry with `verifyBotSignature` intact.

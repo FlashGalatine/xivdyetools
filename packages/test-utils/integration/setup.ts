@@ -175,8 +175,6 @@ export interface BotAuthHeaders {
   'Content-Type': string;
   'X-User-Discord-ID'?: string;
   'X-User-Discord-Name'?: string;
-  'X-Request-Timestamp'?: string;
-  'X-Request-Signature'?: string;
 }
 
 /**

@@ -15,10 +15,14 @@ import {
 } from './encoding/index.js';
 
 /**
- * Options for bot signature verification
+ * Options for bot signature verification.
+ *
+ * The only consumer is `verifyBotSignatureV2` below — v1's `verifyBotSignature`
+ * (5-minute `maxAgeMs` default) was removed in 2.0.0 (FINDING-015, 2026-08-29
+ * security audit).
  */
 export interface BotSignatureOptions {
-  /** Maximum age of signature in milliseconds (default: 5 minutes) */
+  /** Maximum age of signature in milliseconds (default: `BOT_SIGNATURE_V2_MAX_AGE_MS`, 60 seconds) */
   maxAgeMs?: number;
   /** Allowed clock skew in milliseconds (default: 1 minute) */
   clockSkewMs?: number;
