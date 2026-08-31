@@ -181,7 +181,7 @@ Consumers already removed their opt-ins in S1/S2/S5 and pass loggers in S2/S4; t
 
 **Follow-ups routed:** memoizing on the way *in* rather than out appears to close the cycle back-edge residual entirely (evidence in the sprint's review record) — worth its own analysis; the plural-key rule needs a decision about gating on value type; `Date`/`Map`/`Set`/`URL` in a context still serialise to `{}`; and a ~3000-deep array context throws `RangeError` out of the log call.
 
-## Sprint 11 — @xivdyetools/auth: finish the signature rollover (P3, MAJOR publish)
+## Sprint 11 — @xivdyetools/auth: finish the signature rollover (P3, MAJOR publish) ✅ COMPLETED 2026-08-31 (commits `e003aaa8`, `77e08c34`, `dc3b9405`; one reviewed task + two ruled fix rounds; auth 2.0.0 — **FINDING-015 now closed across all four units**)
 Terminal for FINDING-015: every consumer stopped using v1 in S1/S3/S4, so removing the export is safe in-repo; it is MAJOR for npm consumers.
 
 | ID | Source | Sev / Exposure | Item |

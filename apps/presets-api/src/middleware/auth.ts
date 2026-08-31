@@ -295,8 +295,10 @@ export async function authMiddleware(
         // nothing about the request, so a captured tuple could be replayed
         // against any route as that user simply by dropping the v2 header. Both
         // bots have sent v2 alongside v1 since 2026-08-21 and were deployed on
-        // it on 2026-08-28, so nothing legitimate still needs the fallback;
-        // v1 emission and the `verifyBotSignature` export go in later sprints.
+        // it on 2026-08-28, so nothing legitimate still needs the fallback.
+        // Both bots stopped sending v1 in discord-worker 5.1.0 / moderation-worker
+        // 1.6.0, and `@xivdyetools/auth` 2.0.0 removed the v1 verifier outright —
+        // there is no v1 left anywhere to fall back to.
         // Body read via Hono's cache so downstream c.req.json() still works.
         let isValidSignature = false;
         if (signatureV2 !== undefined) {

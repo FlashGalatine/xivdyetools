@@ -337,6 +337,24 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       seven consumer workers resolve `@xivdyetools/worker-kit` via `workspace:*` and pick up
       1.2.0 from this merge at their own next deploy; the npm publish only matters to an external
       consumer of the package.
+
+      **Pending (Sprint 10, logger 2.1.1, FINDING-025):** same shape — Actions → *Publish Packages
+      to npm* → `@xivdyetools/logger`. 2.1.0 is on the registry, so an ordinary OIDC re-publish, no
+      token. Deliberately a **patch** rather than a minor: semver here decides who receives the
+      redaction fix automatically, and a consumer pinned `~2.1.0` gets a patch but not a minor.
+
+      **Pending (Sprint 11, auth 2.0.0, FINDING-015) — the branch's first MAJOR:**
+      Actions → *Publish Packages to npm* → `@xivdyetools/auth`. Also an ordinary OIDC re-publish
+      (1.4.0 published from this workflow on 2026-08-28, trusted publisher already configured), and
+      auth is Level 0, so it has **no ordering constraint** against svg → bot-logic or worker-kit.
+      MAJOR because a public export disappears: `verifyBotSignature` (the v1 bot-request signature).
+      **No worker needs a redeploy for it** — all five in-repo consumers resolve `workspace:*`, and
+      every one of them stopped using v1 earlier in this same branch (presets-api 2.2.0 stopped
+      accepting it, discord-worker 5.1.0 and moderation-worker 1.6.0 stopped sending it). The break
+      is only for an external consumer still calling v1; `packages/auth/CHANGELOG.md` 2.0.0 carries
+      the migration, and pinning `@xivdyetools/auth@^1` is the escape hatch. Note that no
+      deprecation release preceded this — the audit's evidence suggested one, and the plan chose
+      straight removal.
 - [ ] **User-run afterwards:** `npm run upload-emojis` (production credentials, stainID-keyed set);
       `scripts/cleanup-v4-kv.ts`; og-worker beta deploy then production; purge the edge cache for
       `/og/default.png` / `/og/default-x.png`.

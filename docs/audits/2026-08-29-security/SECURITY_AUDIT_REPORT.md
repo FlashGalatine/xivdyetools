@@ -114,7 +114,7 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-006 | FIXED 2026-08-30 (both halves: doNotStore + the guide names Perspective) | e10d740e, 114f6dde |
 | FINDING-016 | FIXED 2026-08-30 | 896f3f7e |
 | FINDING-017 | FIXED 2026-08-30 | 780cf992, 9eb84a4c |
-| FINDING-015 | PARTIAL — presets-api requires v2 + nonce replay check; neither bot sends v1; `@xivdyetools/auth` v1 export → Sprint 11 | 01ea3dec, 1a0cf89f, b5d4c53b |
+| FINDING-015 | FIXED 2026-08-31 (all four units) — v1 refused, no longer sent, and the export removed in auth 2.0.0 (MAJOR) | 01ea3dec, 1a0cf89f, b5d4c53b, e003aaa8, 77e08c34, dc3b9405 |
 | FINDING-010 | FIXED 2026-08-30 (all four units) — UA opt-ins gone; the limiter key is now logged as a non-identifying scope at all six sites | efd495a4, b14cade9, 81035796, 3f5dc8e2, e502384a, 2bf2a5cb |
 | FINDING-011 | FIXED 2026-08-30 (all three units log ids/lengths only; seven legacy `customId` sites ledgered) | efd495a4, a3e8ee14, dfc6de47, b5d4c53b |
 | FINDING-013 | FIXED 2026-08-30 (all four units fail closed in production when a security binding is missing) | efd495a4, a3e8ee14, b14cade9, 4d734c8c, fe86a881, b5d4c53b, c94bfa8f |
