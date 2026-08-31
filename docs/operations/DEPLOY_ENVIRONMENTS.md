@@ -91,9 +91,10 @@ branch merges to `main` — since these workflows already trigger on branch push
 **Setup is a manual, one-time step**, tracked as the pre-merge item in
 `docs/operations/POST_MERGE_CHECKLIST.md` §0: create the `beta` environment, mint the
 narrow token, store it — and move `CLOUDFLARE_API_TOKEN` itself out of the repository
-secret store into the `production` environment, which closes the same gap for the nine
-*other* `environment: production` workflows (their gate has the identical weakness until
-that move happens). `docs/operations/SECRET_ROTATION.md` carries the inventory and
+secret store into the `production` environment, which closes the same gap for the eight
+*other* workflows gating a Cloudflare deploy on `environment: production` (their gate has
+the identical weakness until that move happens). `docs/operations/SECRET_ROTATION.md`
+carries the inventory and
 rotation procedure for both tokens.
 
 ---

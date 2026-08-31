@@ -123,8 +123,10 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       Environments → beta → Add secret — a *repository* secret would defeat the point, since any
       workflow can read one of those). Then close the other half: add `CLOUDFLARE_API_TOKEN` as an
       environment secret on `production` with its current value (an environment secret takes
-      precedence over a same-named repository secret, so the nine other `environment: production`
-      workflows keep working unchanged), and delete the repository-level `CLOUDFLARE_API_TOKEN`.
+      precedence over a same-named repository secret, so the eight other workflows that read
+      `secrets.CLOUDFLARE_API_TOKEN` under `environment: production` — every `deploy-*.yml` in the
+      repo except these three beta ones — keep working unchanged), and delete the repository-level
+      `CLOUDFLARE_API_TOKEN`.
       That last step is not optional polish: `environment: production` only restricts a secret that
       is actually homed in that environment — left at the repository level, the token stays
       readable by any workflow run regardless of what `environment:` it declares — the same class of
