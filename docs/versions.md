@@ -41,7 +41,7 @@
 | **Core** (incl. `/blending` + schema-v2 data) | v4.0.1 | `@xivdyetools/core` | npm | Active — publish pending |
 | **Types** | v2.0.0 | `@xivdyetools/types` | npm | Active — publish pending |
 | **Auth** (incl. `/encoding`) | v1.4.0 | `@xivdyetools/auth` | npm | Active |
-| **Logger** | v2.1.0 | `@xivdyetools/logger` | npm | Active |
+| **Logger** | v2.1.1 | `@xivdyetools/logger` | npm | Active — publish pending |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.2.0 | `@xivdyetools/worker-kit` | npm | Active — publish pending (first publish 2026-08-28) |
 | **SVG** | v3.0.0 | `@xivdyetools/svg` | npm | Active — publish pending (publish **before** bot-logic 3.0.0) |
 | **Bot Logic** (incl. `/i18n`) | v3.0.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending (requires svg 3.0.0 on npm first) |
@@ -241,6 +241,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.1.1** | **Aug 2026** | **2026-08-29 security audit (FINDING-025) — value-shape scan now reaches string array items (incl. arrays nested in arrays) and bare JWT/Discord-token substrings inside `message` / `error.message` / non-Error throws; a ≥64-hex run is deliberately NOT scanned in free text (false-positive risk: content hashes, cache keys); fixed a shape bug where an array item that was itself an array logged as `{'0':…,'1':…}` instead of staying an array** |
 | **v2.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-026) — `safeStringify` (cycles / BigInt never throw in `write()`), `message` + non-Error throws sanitised, redact list extended, value-shape redaction (Bearer / JWT / Discord-token / long hex), browser `errorTracker` stack sanitised** |
 | **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprint 6) — BUG-024 case-insensitive redaction with sensitive-suffix heuristic + WeakSet cycle guard (depth cap removed), BUG-025 JSON-shaped error-message sanitization, BUG-026 `errorTracker` path redacts before forwarding, OPT-020 child loggers time with their own context** |
 | v1.2.2 | Mar 2026 | Dependency updates |

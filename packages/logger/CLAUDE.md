@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - A core `Logger` interface (debug/info/warn/error) plus an `ExtendedLogger` with `child()`, `setContext()`, and `time()`/`timeAsync()` performance helpers.
 - Three pre-built presets (`browser`, `worker`, `library`) tuned for each runtime.
-- Field-level secret redaction (recursive, up to depth 3) and pattern-based error-message sanitization.
+- Field-level secret redaction (recursive, cycle-guarded — not depth-limited), a value-shape scan for secret-shaped strings regardless of key (context fields, array items including nested arrays, and — for JWT/Discord-token shapes only — bare tokens inside free-text messages), and pattern-based `key=value` error-message sanitization.
 
 The package exists so that the workers, web app, and shared libraries can emit consistent JSON-structured logs (worker side) or pretty console output (browser/library side) without each app re-implementing redaction, correlation IDs, and adapter selection. It ships with `sideEffects: false`.
 
@@ -121,9 +121,9 @@ The browser preset auto-detects dev mode in this order:
 
 The worker preset doesn't probe — `ENVIRONMENT` is passed in explicitly via worker bindings. The library preset is runtime-agnostic and defers to its caller.
 
-### Secret redaction (two layers)
+### Secret redaction (three mechanisms)
 
-**Field redaction** in `BaseLogger.redactSensitiveFields` walks `LogContext` recursively (max depth 3) and replaces values whose keys appear in `redactFields` with `'[REDACTED]'`. The default list is `CORE_REDACT_FIELDS` from `constants.ts`:
+**1. Key-name field redaction** in `BaseLogger.redactSensitiveFields` walks `LogContext` recursively — cycle-guarded via a `WeakSet` (BUG-024), **not depth-limited**; an earlier version of this doc said "max depth 3", which was already stale before the 2026-08-29 audit (that cap was replaced by the cycle guard back in the 2026-07-18 audit) — and replaces values whose keys appear in `redactFields`, or end in `token`/`secret`/`password`/`apikey`, with `'[REDACTED]'`. The default list is `CORE_REDACT_FIELDS` from `constants.ts`:
 
 ```
 password, token, secret, authorization, cookie, api_key, apiKey,
@@ -138,7 +138,9 @@ The worker preset extends this with `WORKER_REDACT_FIELDS`:
 
 User-supplied `redactFields` are **merged** with the defaults, never replaced (FINDING-008).
 
-**Error-message sanitization** in `BaseLogger.sanitizeErrorMessage` runs regex replacements against `error.message` for `Bearer ...`, `token=...`, `secret=...`, `password=...`, `api_key=...`, `authorization=...`, `access_token=...`, `refresh_token=...`, `client_secret=...`, `private_key=...`, `signing_key=...`, `webhook_secret=...`, `auth_token=...`, `credentials=...`. Both quoted and unquoted values are matched. Stack traces are dropped when `sanitizeErrors` is true.
+**2. Value-shape redaction** (`looksLikeSecretValue`, FINDING-026 + FINDING-025) redacts a string that itself *looks* like a secret regardless of its key — `Bearer …`, a three-part JWT, a Discord bot token, or a `≥64`-hex blob. This ran only against top-level context field values until the 2026-08-29 audit (FINDING-025); it now also reaches a **string item inside an array**, including arrays nested inside arrays (an array item has no key of its own, so this is the only one of the three mechanisms that can apply to it — the key-name rule needs a key, and the array's *own* key gets checked separately, one level up). That same fix corrected a shape bug in the array recursion: an item that was itself an array used to be spread into a plain object with numeric-string keys (`{ a: [[1, 2]] }` logged as `{ a: [{ '0': 1, '1': 2 }] }`) instead of staying an array.
+
+**3. Free-text sanitization** in `BaseLogger.sanitizeErrorMessage` runs against `message`, `error.message`, and non-`Error` throws alike (three call sites, one shared implementation, so they can't drift): `key=value` regex replacements for `Bearer ...`, `token=...`, `secret=...`, `password=...`, `api_key=...`, `authorization=...`, `access_token=...`, `refresh_token=...`, `client_secret=...`, `private_key=...`, `signing_key=...`, `webhook_secret=...`, `auth_token=...`, `credentials=...` (both quoted and unquoted values matched), plus — since FINDING-025 — the same JWT and Discord-bot-token *shape* patterns from mechanism 2, reused as `\b`-delimited substring redactions so a bare token with no key name in front of it (`refresh failed for eyJhbGci…`) still gets caught, redacting only the matched span and leaving the rest of the sentence readable. The `≥64`-hex pattern from mechanism 2 is **deliberately not** reused here: a free-standing 64-hex run inside a log line is far more likely a sha256 content hash or cache key than a secret, and whole-value anchoring is what makes it safe on a field/array item, not on a substring of prose. Stack traces are dropped when `sanitizeErrors` is true.
 
 ### Structured field convention
 

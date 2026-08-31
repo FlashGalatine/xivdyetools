@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-08-30
+
+### Security — 2026-08-29 security audit (FINDING-025)
+
+This finding claimed two gaps; only one was still open — the other (free-text `message`/`error.message` sanitization) was already fixed by FINDING-026 in 2.1.0. What actually changed here:
+
+- **String items inside arrays now get the same value-shape scan a top-level string field already gets.** `logger.warn('x', { tokens: ['eyJ…'] })` used to log the JWT verbatim — the array branch recursed only into object items and returned every other item, strings included, unchanged. A bare item has no key of its own, so this is a value-shape check only (`looksLikeSecretValue`), not the key-name list; it also reaches arrays nested inside arrays.
+- **A bare token with no key name in front of it is now redacted inside free text** (`message`, `error.message`, and a non-`Error` throw — all three go through one shared function, so they can't drift). Only the JWT and Discord-bot-token shape patterns are applied here, as `\b`-delimited substring replacements that redact just the matched span and leave the rest of the sentence readable (`refresh failed for [REDACTED] at 12:04`). **The `≥64`-hex pattern is deliberately NOT applied to free text** — unlike the other two patterns it is whole-value-anchored by design, and a 64-hex *substring* inside a log message is far more likely a sha256 content hash, an artifact digest, or a cache key than a secret. If your logs legitimately contain long hex strings in prose (not as a dedicated field or array item — those are still caught), they are unaffected by this release.
+- **Fixed a shape bug in the same array recursion:** an item that was itself an array (`{ a: [[1, 2]] }`) used to be spread through the object-redaction path's `{ ...context }`, turning it into `{ a: [{ '0': 1, '1': 2 }] }` in the logged output. Nested arrays now stay arrays at every depth.
+- **Still not covered:** a bare 64-hex secret with no key name in front of it inside free text — by design, per the false-positive reasoning above. If you log raw high-entropy hex outside a dedicated field, prefer putting it under a key name so the key-name/value-shape mechanisms can see it.
+
 ## [2.1.0] - 2026-08-21
 
 ### Security — 2026-08-21 security audit (FINDING-026)

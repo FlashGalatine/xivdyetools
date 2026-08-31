@@ -159,6 +159,21 @@ export abstract class BaseLogger implements ExtendedLogger {
       message
         // Bearer tokens - typically single tokens without spaces
         .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
+        // FINDING-025 (2026-08-29 audit): the value-SHAPE scan reaches free
+        // text too, for a bare token with no key name in front of it
+        // ("refresh failed for eyJhbGci…"). Only the two `\b`-delimited
+        // SUBSTRING patterns below are safe here — a match redacts just the
+        // token span and leaves the rest of the sentence diagnosable
+        // ("refresh failed for [REDACTED] at 12:04"). The other two
+        // SECRET_VALUE_PATTERNS entries are deliberately NOT reused: Bearer
+        // is already fully handled by the line above (a real global
+        // substring replace, unlike the ^-anchored whole-value pattern this
+        // scan otherwise uses), and HEX64_VALUE_PATTERN is a whole-value
+        // verdict — see its comment for why running it over free text would
+        // be a false-positive risk (sha256 hashes, cache keys) this package
+        // cannot afford.
+        .replace(new RegExp(JWT_VALUE_PATTERN.source, 'g'), '[REDACTED]')
+        .replace(new RegExp(DISCORD_TOKEN_VALUE_PATTERN.source, 'g'), '[REDACTED]')
         // BUG-025: JSON-shaped pass — catches every "…token"/"…secret"/"…password"/
         // "…key"-suffixed quoted key in one sweep, including compound names
         // (sessionToken, webhook_secret) that the per-key patterns below miss.
@@ -240,18 +255,58 @@ export abstract class BaseLogger implements ExtendedLogger {
         continue;
       }
       if (Array.isArray(value)) {
-        visited.add(value);
-        redacted[key] = value.map((item: unknown) =>
-          typeof item === 'object' && item !== null && !visited.has(item)
-            ? this.redactSensitiveFields(item as LogContext, visited)
-            : item,
-        );
+        redacted[key] = this.redactArrayItems(value, visited);
       } else {
         redacted[key] = this.redactSensitiveFields(value as LogContext, visited);
       }
     }
 
     return redacted;
+  }
+
+  /**
+   * FINDING-025 (2026-08-29 audit): give a string array item the same
+   * value-shape scan a top-level string field already gets —
+   * `logger.warn('x', { tokens: ['eyJ…'] })` used to log the JWT verbatim,
+   * because the old array branch recursed only into object items and
+   * returned every other item, strings included, unchanged.
+   *
+   * An item has no key of its own, so the key-name rules (`redactSet` /
+   * `SENSITIVE_SUFFIX` above) cannot apply to it — only the value-SHAPE
+   * scan (`looksLikeSecretValue`) can, and that is all a string item gets
+   * here. (The array's own key — `tokens` in the example above — still
+   * goes through the normal key-name check one level up before this ever
+   * runs, but verify before assuming that alone is enough: `tokens`
+   * normalizes to `tokens`, and `SENSITIVE_SUFFIX` requires the key to
+   * literally END in "token" — "tokens" does not, so that key is NOT
+   * wholesale-redacted upstream. This scan is the only thing that catches
+   * it, not a belt-and-suspenders duplicate of the key-name rule.)
+   *
+   * Also fixes a shape bug in the same recursion: an item that is itself
+   * an array is `typeof 'object'`, so it used to be handed to
+   * `redactSensitiveFields(item)`, whose `{ ...context }` spread turns an
+   * array into a plain object with numeric-string keys —
+   * `{ a: [[1, 2]] }` silently logged as `{ a: [{ '0': 1, '1': 2 }] }`.
+   * Nested arrays now recurse through this method instead, so array-ness
+   * is preserved at every depth.
+   */
+  protected redactArrayItems(items: unknown[], visited: WeakSet<object>): unknown[] {
+    visited.add(items);
+    return items.map((item: unknown) => {
+      if (typeof item === 'string') {
+        return looksLikeSecretValue(item) ? '[REDACTED]' : item;
+      }
+      if (Array.isArray(item)) {
+        // `Array.isArray` narrows to `any[]` per the lib types; re-assert
+        // as `unknown[]` so the branch doesn't return an implicit `any`.
+        const nested = item as unknown[];
+        return visited.has(nested) ? nested : this.redactArrayItems(nested, visited);
+      }
+      if (typeof item === 'object' && item !== null && !visited.has(item)) {
+        return this.redactSensitiveFields(item as LogContext, visited);
+      }
+      return item;
+    });
   }
 
   /**
@@ -404,15 +459,43 @@ class DelegatingLogger implements ExtendedLogger {
 // ===========================================================================
 
 /**
- * Value shapes that are secrets regardless of the key they hang off:
- * `Bearer …`, a three-part JWT, a Discord bot token (base64 id . 6 chars .
- * 27+ chars), and long hex/base64url blobs that look like API keys.
+ * Value shapes that are secrets regardless of the key they hang off, used
+ * WHOLE-VALUE by `looksLikeSecretValue()` below (a field or array item that
+ * IS one of these, in full, gets redacted). Named individually because two
+ * of the four are also reused as free-text SUBSTRING matchers in
+ * `sanitizeErrorMessage` — see the FINDING-025 comments on each.
  */
+const BEARER_VALUE_PATTERN = /^\s*Bearer\s+\S+/i;
+/**
+ * Three-part JWT (header.payload.signature). `\b`-delimited with no `^`/`$`
+ * anchor, so it already behaves as a substring matcher: FINDING-025
+ * (2026-08-29 audit) reuses its `.source` with a `g` flag in
+ * `sanitizeErrorMessage` to redact a bare JWT inside free text while
+ * leaving the surrounding prose intact.
+ */
+const JWT_VALUE_PATTERN = /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/;
+/**
+ * Discord bot token (base64 snowflake . 6-char timestamp . 27+ char HMAC).
+ * Same `\b`-delimited, unanchored shape as the JWT pattern — FINDING-025
+ * reuses it the same way for free text.
+ */
+const DISCORD_TOKEN_VALUE_PATTERN = /\b[MN][A-Za-z\d]{23,}\.[\w-]{6}\.[\w-]{27,}\b/;
+/**
+ * 64+ hex chars, anchored `^...$` on purpose: a FIELD or ARRAY ITEM that IS
+ * one of these end-to-end is almost certainly a raw secret (API key,
+ * signing key). FINDING-025 (2026-08-29 audit): deliberately NOT reused for
+ * free text — a 64-hex SUBSTRING inside a log message is far more likely a
+ * sha256 content hash, an artifact digest, or a cache key than a secret,
+ * and this package redacts OTHER people's log output, so eating a
+ * legitimate hash out of a message is its own defect, not a safe default.
+ */
+const HEX64_VALUE_PATTERN = /^[A-Fa-f0-9]{64,}$/;
+
 const SECRET_VALUE_PATTERNS: RegExp[] = [
-  /^\s*Bearer\s+\S+/i,
-  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/,
-  /\b[MN][A-Za-z\d]{23,}\.[\w-]{6}\.[\w-]{27,}\b/,
-  /^[A-Fa-f0-9]{64,}$/,
+  BEARER_VALUE_PATTERN,
+  JWT_VALUE_PATTERN,
+  DISCORD_TOKEN_VALUE_PATTERN,
+  HEX64_VALUE_PATTERN,
 ];
 
 /** @internal */
