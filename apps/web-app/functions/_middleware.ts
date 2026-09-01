@@ -1,7 +1,8 @@
 /**
- * Cloudflare Pages Middleware
- * Handles domain redirects from old domain to new domain, and keeps the SPA
- * catch-all out of the immutable asset cache.
+ * Cloudflare Pages middleware.
+ *
+ * @testonly No importer by design — Pages loads this by path convention from
+ * functions/, so static analysis cannot see the call site. Deployed code.
  */
 
 export async function onRequest(context: {

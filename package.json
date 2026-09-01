@@ -9,6 +9,7 @@
     "lint:dead": "knip",
     "type-check": "turbo run type-check",
     "coverage:report": "tsx scripts/coverage-report.ts",
+    "dead-code:check": "tsx scripts/check-dead-code.ts",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
     "clean": "turbo run clean"
