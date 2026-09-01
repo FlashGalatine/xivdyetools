@@ -247,8 +247,8 @@ export class ModalService {
   /**
    * Get current modals (readonly copy)
    *
-   * @testonly how ~60 behaviour tests observe the service; components render
-   * from `subscribe()`.
+   * @testonly how ~27 references in modal-service.test.ts observe the
+   * service; components render from `subscribe()`.
    */
   static getModals(): readonly Modal[] {
     return [...this.modals];

@@ -370,8 +370,8 @@ export class ImageUploadDisplay extends BaseComponent {
    *
    * @testonly exercised for the null-guard state (no image loaded, after
    * clear()) in image-upload-display.test.ts; no production caller reads the
-   * uploaded image back out — extractor-tool.ts consumes it via the
-   * component's own internal canvas/pixel-sampling methods.
+   * uploaded image back out — extractor-tool.ts receives it via the
+   * image-loaded event and samples pixels itself.
    */
   getImage(): HTMLImageElement | null {
     return this.uploadedImage;

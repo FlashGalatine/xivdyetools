@@ -200,8 +200,8 @@ export class ToastService {
   /**
    * Get current toasts (readonly copy)
    *
-   * @testonly how ~60 behaviour tests observe the service; components render
-   * from `subscribe()`.
+   * @testonly how ~39 references in toast-service.test.ts observe the
+   * service; components render from `subscribe()`.
    */
   static getToasts(): readonly Toast[] {
     return [...this.toasts];

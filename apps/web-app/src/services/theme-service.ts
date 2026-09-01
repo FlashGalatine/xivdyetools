@@ -380,9 +380,9 @@ export class ThemeService {
    * Allows testing initialize() behavior with different storage states
    * @internal
    *
-   * @testonly `beforeEach` isolation — clears the `isInitialized` guard so a
-   * suite can re-exercise `initialize()` (including legacy-theme migration)
-   * against a fresh storage state without a prior test's init leaking in.
+   * @testonly clears the `isInitialized` guard so a suite can re-exercise
+   * `initialize()` (including legacy-theme migration) against a fresh
+   * storage state without a prior test's init leaking in.
    */
   static __resetForTesting(): void {
     this.isInitialized = false;

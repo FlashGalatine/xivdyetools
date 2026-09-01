@@ -334,9 +334,9 @@ export function categoryGlyph(name: CategoryGlyphName, options: GlyphRenderOptio
 /**
  * Every glyph name per set — for shims, galleries, and parity tests.
  *
- * @testonly file-local fixture for the glyph parity test (asserts every
- * TOOL_COMPACT/TOOL_DETAIL/HARMONY/CHROME key renders); no shim or gallery
- * consumer exists in this workspace despite the docblock above.
+ * @testonly file-local fixture for the glyph parity test (asserts every set
+ * renders); no shim or gallery consumer exists in this workspace despite the
+ * docblock above.
  */
 export const GLYPH_SETS = {
   tool: Object.keys(TOOL_COMPACT) as ToolGlyphName[],
