@@ -2,12 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createMockKV } from '@xivdyetools/test-utils';
 import {
   isValidLocale,
-  getLocaleInfo,
   discordLocaleToLocaleCode,
   getUserLanguagePreference,
   resolveUserLocale,
   SUPPORTED_LOCALES,
-  type LocaleCode,
 } from './i18n.js';
 
 describe('i18n', () => {
@@ -77,59 +75,6 @@ describe('i18n', () => {
     it('should return false for Discord locale format', () => {
       expect(isValidLocale('en-US')).toBe(false);
       expect(isValidLocale('zh-CN')).toBe(false);
-    });
-  });
-
-  describe('getLocaleInfo', () => {
-    it('should return locale info for English', () => {
-      const info = getLocaleInfo('en');
-      expect(info).toEqual({
-        code: 'en',
-        name: 'English',
-        nativeName: 'English',
-        flag: '🇺🇸',
-      });
-    });
-
-    it('should return locale info for Japanese', () => {
-      const info = getLocaleInfo('ja');
-      expect(info).toEqual({
-        code: 'ja',
-        name: 'Japanese',
-        nativeName: '日本語',
-        flag: '🇯🇵',
-      });
-    });
-
-    it('should return locale info for German', () => {
-      const info = getLocaleInfo('de');
-      expect(info).toBeDefined();
-      expect(info?.code).toBe('de');
-      expect(info?.name).toBe('German');
-      expect(info?.nativeName).toBe('Deutsch');
-    });
-
-    it('should return locale info for French', () => {
-      const info = getLocaleInfo('fr');
-      expect(info?.code).toBe('fr');
-      expect(info?.nativeName).toBe('Français');
-    });
-
-    it('should return locale info for Korean', () => {
-      const info = getLocaleInfo('ko');
-      expect(info?.code).toBe('ko');
-      expect(info?.nativeName).toBe('한국어');
-    });
-
-    it('should return locale info for Chinese', () => {
-      const info = getLocaleInfo('zh');
-      expect(info?.code).toBe('zh');
-      expect(info?.nativeName).toBe('中文');
-    });
-
-    it('should return undefined for invalid locale code', () => {
-      const info = getLocaleInfo('es' as LocaleCode);
-      expect(info).toBeUndefined();
     });
   });
 

@@ -203,13 +203,6 @@ export class Translator {
 }
 
 /**
- * Create a translator for a specific locale
- */
-export function createTranslator(locale: LocaleCode, logger?: ExtendedLogger): Translator {
-  return new Translator(locale, logger);
-}
-
-/**
  * Create a translator for a user, resolving their locale preference
  */
 export async function createUserTranslator(

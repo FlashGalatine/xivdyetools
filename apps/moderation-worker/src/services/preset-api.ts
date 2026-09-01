@@ -22,7 +22,6 @@ import type {
   CommunityPreset,
   PresetListResponse,
   ModerationStats,
-  ModerationLogEntry,
   PresetFilters,
 } from '@xivdyetools/types';
 import type { ModerationQueueEntry } from '../types/preset.js';
@@ -187,13 +186,6 @@ export function validateSecurityConfig(env: Env): {
     warnings,
     errors,
   };
-}
-
-/**
- * Check if the preset API is configured and available
- */
-export function isApiEnabled(env: Env): boolean {
-  return Boolean(env.PRESETS_API || (env.PRESETS_API_URL && env.BOT_API_SECRET));
 }
 
 // Module-level cache for moderator IDs
@@ -386,23 +378,6 @@ export async function getModerationStats(env: Env, moderatorId: string): Promise
     { userDiscordId: moderatorId },
   );
   return response.stats;
-}
-
-/**
- * Get moderation history for a preset
- */
-export async function getModerationHistory(
-  env: Env,
-  presetId: string,
-  moderatorId: string,
-): Promise<ModerationLogEntry[]> {
-  const response = await request<{ history: ModerationLogEntry[] }>(
-    env,
-    'GET',
-    `/api/v1/moderation/${pathSegment(presetId)}/history`,
-    { userDiscordId: moderatorId },
-  );
-  return response.history;
 }
 
 /**

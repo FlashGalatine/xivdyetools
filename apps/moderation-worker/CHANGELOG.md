@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Base64URL encoding now comes from `@xivdyetools/auth/encoding` (`base64UrlEncode` /
+  `base64UrlDecode`) instead of a hand-rolled pair in `utils/response.ts` (DEAD-017). The two
+  implementations were equivalent; the local one also spread the whole byte array into
+  `String.fromCharCode`, which the package avoids. `handlers/modals/ban-reason.ts` decodes legacy
+  encoded usernames through the package, and the three test files that build legacy `custom_id`
+  fixtures encode through it — so the round trip is still covered end to end.
+
 ### Removed
 
-Dead-code sweep (`docs/audits/2026-09-01-dead-code`, DEAD-015/016/018) — moderation-worker's
-first dead-code pass. No behaviour change.
+Dead-code sweep (`docs/audits/2026-09-01-dead-code`, DEAD-014/015/016/017/018/019) —
+moderation-worker's first dead-code pass. No behaviour change.
 
 - The eight barrel re-exports in `handlers/buttons/index.ts`. `index.ts` imports only
   `handleButtonInteraction`, and the two `import * as buttons` tests assert only that name.
@@ -19,6 +28,14 @@ first dead-code pass. No behaviour change.
   `services/ban-service.ts`.
 - The `discord-interactions` devDependency. Nothing imported it; the CLAUDE.md line claiming
   `scripts/register-commands.ts` used it was wrong — that script imports only `dotenv/config`.
+- Twelve exported helpers with no production call site (DEAD-014, 191 lines), spread across six
+  files this worker copied from discord-worker: `autocompleteResponse`, `embedResponse`,
+  `infoEmbed`, `hexToDiscordColor` (`utils/response.ts`); `sendFollowUp`, `deleteOriginalResponse`
+  (`utils/discord-api.ts`); `getLocaleInfo` (`services/i18n.ts`); `createTranslator`
+  (`services/bot-i18n.ts` — the worker uses `createUserTranslator`); `getModerationHistory`,
+  `isApiEnabled` (`services/preset-api.ts`); `getRateLimitInfo` (`middleware/rate-limit.ts`);
+  `isPresetModerationButton` (`handlers/buttons/preset-moderation.ts` — `handleButtonInteraction`
+  matches the `custom_id` prefix directly). Their test blocks went with them.
 - The whole `@xivdyetools/types` re-export block in `types/preset.ts` (DEAD-019). Nine of the
   fourteen names had no importer and the other five had exactly one, so `services/preset-api.ts`
   now imports them from `@xivdyetools/types` directly and the pass-through is gone. The

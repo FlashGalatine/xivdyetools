@@ -304,14 +304,3 @@ export async function handlePresetRevertButton(
     },
   });
 }
-
-/**
- * Check if a custom_id is a preset moderation button
- */
-export function isPresetModerationButton(customId: string): boolean {
-  return (
-    customId.startsWith('preset_approve_') ||
-    customId.startsWith('preset_reject_') ||
-    customId.startsWith('preset_revert_')
-  );
-}

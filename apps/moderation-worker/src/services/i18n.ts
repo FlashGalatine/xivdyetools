@@ -51,13 +51,6 @@ export function isValidLocale(code: string): code is LocaleCode {
 }
 
 /**
- * Get locale info by code
- */
-export function getLocaleInfo(code: LocaleCode): LocaleInfo | undefined {
-  return SUPPORTED_LOCALES.find((l) => l.code === code);
-}
-
-/**
  * Maps Discord locale codes to our supported locales
  */
 export function discordLocaleToLocaleCode(discordLocale: string): LocaleCode | null {
