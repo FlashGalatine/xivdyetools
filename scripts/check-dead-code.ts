@@ -369,7 +369,27 @@ function main(): void {
   const tests = all.filter(isTestFile);
   const prod = all.filter((f) => !isTestFile(f));
 
-  const results = [findOrphanModules(prod, tests, texts), findTestOnlyExports(prod, tests, texts)];
+  const orphanResult = findOrphanModules(prod, tests, texts);
+  const exportResult = findTestOnlyExports(prod, tests, texts);
+
+  // A file-level verdict — violation or exemption — subsumes symbol-level verdicts
+  // within that same file. A file already carrying (or needing) one tag shouldn't
+  // also demand one per export, and a file already reported as an orphan
+  // shouldn't re-report each of its exports as a separate finding: fixing the
+  // file fixes all of them at once.
+  const fileVerdicted = new Set<string>([
+    ...orphanResult.violations.map((v) => v.file),
+    ...orphanResult.testOnlyExempt,
+    ...orphanResult.entrypointExempt,
+  ]);
+  const fileOf = (entry: string): string => entry.slice(0, entry.lastIndexOf(':'));
+  exportResult.violations = exportResult.violations.filter((v) => !fileVerdicted.has(v.file));
+  exportResult.testOnlyExempt = exportResult.testOnlyExempt.filter((e) => !fileVerdicted.has(fileOf(e)));
+  exportResult.entrypointExempt = exportResult.entrypointExempt.filter(
+    (e) => !fileVerdicted.has(fileOf(e)),
+  );
+
+  const results = [orphanResult, exportResult];
   const violations = results.flatMap((r) => r.violations);
   const testOnlyExempt = results.flatMap((r) => r.testOnlyExempt);
   const entrypointExempt = results.flatMap((r) => r.entrypointExempt);
