@@ -121,9 +121,6 @@ export interface Env {
   BOT_SIGNING_SECRET?: string; // HMAC signing key for bot request verification
   MODERATOR_IDS: string;
   PERSPECTIVE_API_KEY?: string;
-  MODERATION_WEBHOOK_URL?: string;
-  OWNER_DISCORD_ID?: string;
-  DISCORD_BOT_TOKEN?: string;
 
   // Web OAuth (shared with xivdyetools-oauth-worker)
   JWT_SECRET?: string;
@@ -138,8 +135,7 @@ export interface Env {
    */
   TOKEN_BLACKLIST?: KVNamespace;
 
-  // Discord bot webhook for notifications
-  DISCORD_BOT_WEBHOOK_URL?: string;
+  // Shared secret for the DISCORD_WORKER service-binding notification call
   INTERNAL_WEBHOOK_SECRET?: string;
 
   /**

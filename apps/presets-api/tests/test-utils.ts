@@ -47,11 +47,7 @@ export function createMockEnv(overrides: Partial<Env> = {}): Env {
     MODERATOR_IDS: '123456789,987654321',
     JWT_SECRET: 'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!',
     PERSPECTIVE_API_KEY: undefined,
-    MODERATION_WEBHOOK_URL: undefined,
-    OWNER_DISCORD_ID: undefined,
-    DISCORD_BOT_TOKEN: undefined,
     DISCORD_WORKER: undefined,
-    DISCORD_BOT_WEBHOOK_URL: undefined,
     INTERNAL_WEBHOOK_SECRET: undefined,
     THUMBNAILS: createMockR2Bucket() as unknown as R2Bucket,
     IMAGE_WORKER: {

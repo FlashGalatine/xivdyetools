@@ -41,10 +41,6 @@ wrangler secret put BOT_SIGNING_SECRET
 wrangler secret put JWT_SECRET                 # Must match xivdyetools-oauth
 wrangler secret put MODERATOR_IDS              # CSV of Discord user IDs
 wrangler secret put PERSPECTIVE_API_KEY        # Optional: ML toxicity scoring
-wrangler secret put OWNER_DISCORD_ID
-wrangler secret put DISCORD_BOT_TOKEN
-wrangler secret put DISCORD_BOT_WEBHOOK_URL
-wrangler secret put MODERATION_WEBHOOK_URL
 wrangler secret put INTERNAL_WEBHOOK_SECRET
 wrangler secret put CACHE_PURGE_API_TOKEN --env production   # Optional (FINDING-018): token scoped to Zone → Cache Purge on xivdyetools.app; pairs with the CACHE_PURGE_ZONE_ID var in wrangler.toml
 ```
@@ -144,9 +140,6 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 | Secret | Purpose |
 |--------|---------|
 | `PERSPECTIVE_API_KEY` | Google Perspective API for ML toxicity scoring |
-| `MODERATION_WEBHOOK_URL` | Fallback webhook URL when Service Binding unavailable |
-| `OWNER_DISCORD_ID` | Owner override for elevated debug routes |
-| `DISCORD_BOT_TOKEN` / `DISCORD_BOT_WEBHOOK_URL` | Optional direct bot notification path |
 | `INTERNAL_WEBHOOK_SECRET` | Shared with discord-worker for `/webhooks/preset-submission` |
 | `CACHE_PURGE_API_TOKEN` | FINDING-018: API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone (the zone that serves `shots.xivdyetools.app`); pairs with the `CACHE_PURGE_ZONE_ID` **var** in `wrangler.toml` `[env.production]` (a zone id is config, not a secret). When set, every preview-image takedown purges the image URL from the edge cache and logs `[preview-image] cache purged …`. Absent → purge skipped, the object's one-day `s-maxage` is the only bound. Set on production 2026-08-21 |
 

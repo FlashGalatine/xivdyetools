@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (same file) and `ErrorCodeType` (`utils/api-response.ts`). Dead-code sweep
   (`docs/audits/2026-09-01-dead-code`, DEAD-010): 108 lines with no call sites and no tests
   either. The per-field validators further down the same file are what the handlers use.
+- `notifyModerators` and its `ModerationAlert` type (`services/moderation-service.ts`, DEAD-009 /
+  PAPI-16) — 88 lines of webhook + owner-DM notification with **no caller**, plus the four `Env`
+  fields only it read: `MODERATION_WEBHOOK_URL`, `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN` and
+  `DISCORD_BOT_WEBHOOK_URL` (that last one was read nowhere at all). Its ~197-line test block went
+  too. Flagged-content notification runs through moderation-worker and the announcement webhook.
+  `PERSPECTIVE_API_KEY` in the same file is live and untouched.
+  **Deploy step:** delete the three orphaned production secrets once a day of clean tail confirms
+  nothing reads them — `wrangler secret delete <NAME> --env production` from `apps/presets-api`
+  (`docs/operations/POST_MERGE_CHECKLIST.md` §3).
 - `checkBanStatus` and `requireNotBannedCheck` (`middleware/ban-check.ts`, DEAD-011) — the two
   unused alternatives to the mounted `requireNotBanned` middleware, 61 lines. Ban enforcement is
   unchanged: `requireNotBanned` is still registered per router for every mutating method on

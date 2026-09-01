@@ -168,7 +168,7 @@ Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`,
 | `BOT_SIGNING_SECRET` | No | HMAC signing key for bot request verification |
 | `PERSPECTIVE_API_KEY` | No | Google Perspective API for ML moderation |
 | `CACHE_PURGE_API_TOKEN` | No | API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone — enables single-file edge purge of deleted/replaced preview images (FINDING-018); pairs with the `CACHE_PURGE_ZONE_ID` **var** (see above). Without it the 1-day `s-maxage` is the bound. Set on production 2026-08-21 |
-| `MODERATION_WEBHOOK_URL` / `DISCORD_BOT_WEBHOOK_URL` / `INTERNAL_WEBHOOK_SECRET` | No | Notification webhooks |
+| `INTERNAL_WEBHOOK_SECRET` | No | Shared secret for the `DISCORD_WORKER` service-binding notification call |
 
 ### Setting Secrets
 
