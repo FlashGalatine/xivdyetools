@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The four permanently-skipped tests in `tests/handlers/presets.test.ts` (DEAD-012). All were
+  marked "requires Cloudflare Workers" because the submit route hands its notification to
+  `c.executionCtx.waitUntil` — solvable in-process by passing a mock `ExecutionContext` as
+  `app.request`'s fourth argument, which a sibling test in the same file already did.
+  - Two were duplicates and are gone: the skipped "create preset with valid data" was superseded
+    by the `mock executionCtx` test immediately below it, and "attempt notification when
+    DISCORD_WORKER is configured" by "notify Discord worker when configured and content is
+    flagged", which actually asserts the fetch.
+  - Two now run and assert something: the unconfigured case binds a spy worker with no
+    `INTERNAL_WEBHOOK_SECRET` and asserts it is **never** called (the real guard at
+    `notification-service.ts:173`), and the failure case asserts the fetch happened and the
+    response is still 201. That one mocks a **4xx**, not 5xx — `notifyDiscordBot` retries server
+    errors three times with real backoff sleeps, which blows the 5 s test timeout.
+
 ### Removed
 
 - Three generic validators — `validateStringLength`, `validateArray`, `validateEnum`
