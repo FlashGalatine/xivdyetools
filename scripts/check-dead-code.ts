@@ -375,6 +375,37 @@ function groupByBasename(tracked: readonly string[]): Map<string, string[]> {
 }
 
 /**
+ * `check-dead-code.ts` imports nothing from any workspace package or app, so
+ * every textual match inside it is prose or a string literal, never a real
+ * reference — and the same holds for its test file, whose fixture strings
+ * are synthetic source that never runs as code. Both are excluded from the
+ * REFERRER side of every reference computation below (they remain
+ * *subjects* — still checked for their own dead-code status, still
+ * classified prod/test exactly as before) so a doc comment or fixture that
+ * happens to name a real symbol can never again mask a finding by counting
+ * as production or test usage of it — the exact bug that reopened itself in
+ * each of the two prior fix rounds. Named by path relative to the repo
+ * root, not by basename, and deliberately not generalised to "a file with
+ * no workspace imports is never a referrer": a Lit web component is
+ * legitimately referenced by tag name from another component's template,
+ * and its members reached through a `querySelector(...)` cast, with no
+ * import at all — a general rule here would manufacture false positives.
+ */
+const EXCLUDED_REFERRERS = new Set<string>([
+  'scripts/check-dead-code.ts',
+  'scripts/check-dead-code.test.ts',
+]);
+
+/** True when `file` must never count as a referrer — see `EXCLUDED_REFERRERS`. */
+export function isExcludedReferrer(file: string): boolean {
+  return EXCLUDED_REFERRERS.has(file);
+}
+
+/** `files`, minus anything `isExcludedReferrer` rejects — the referrer-eligible subset. */
+const asReferrers = (files: readonly string[]): string[] =>
+  files.filter((f) => !isExcludedReferrer(f));
+
+/**
  * Builds, for a cohort of importer files (production or test), a map from
  * each referenced repo-relative path to the set of importers referencing
  * it. A relative specifier resolves to a real file when possible; anything
@@ -434,8 +465,8 @@ export function findOrphanModules(
   const publicExempt: string[] = [];
   const tracked = new Set<string>([...prod, ...tests]);
   const basenameGroups = groupByBasename([...tracked]);
-  const prodRefs = buildReferenceMap(prod, tracked, basenameGroups, texts);
-  const testRefsMap = buildReferenceMap(tests, tracked, basenameGroups, texts);
+  const prodRefs = buildReferenceMap(asReferrers(prod), tracked, basenameGroups, texts);
+  const testRefsMap = buildReferenceMap(asReferrers(tests), tracked, basenameGroups, texts);
   for (const file of prod) {
     if (!/\.(ts|tsx)$/.test(file)) continue;
     const base = basename(file).replace(/\.(tsx?|jsx?)$/, '');
@@ -512,6 +543,8 @@ export function findTestOnlyExports(
   const testOnlyExempt: string[] = [];
   const entrypointExempt: string[] = [];
   const publicExempt: string[] = [];
+  const prodReferrers = asReferrers(prod);
+  const testReferrers = asReferrers(tests);
   for (const file of prod) {
     if (!/\.(ts|tsx)$/.test(file)) continue;
     const lines = (texts.get(file) ?? '').split('\n');
@@ -531,13 +564,13 @@ export function findTestOnlyExports(
       const declLines = new Set(indices);
       // Any non-test reference outside this symbol's own declaration lines
       // counts as production use.
-      const usedInProd = prod.some((f) => {
+      const usedInProd = prodReferrers.some((f) => {
         const t = texts.get(f) ?? '';
         if (f !== file) return word.test(t);
         return t.split('\n').some((l, j) => !declLines.has(j) && word.test(l));
       });
       if (usedInProd) continue;
-      const testRefs = tests.filter((f) => word.test(texts.get(f) ?? '')).length;
+      const testRefs = testReferrers.filter((f) => word.test(texts.get(f) ?? '')).length;
       if (testRefs === 0) continue; // knip's job
 
       // Each signature line may carry its own docblock; a bare tag on any one
@@ -964,7 +997,8 @@ export function findTestOnlyMembers(
 
   const tracked = new Set<string>([...prod, ...tests]);
   const basenameGroups = groupByBasename([...tracked]);
-  const testImportersOf = buildReferenceMap(tests, tracked, basenameGroups, texts);
+  const testImportersOf = buildReferenceMap(asReferrers(tests), tracked, basenameGroups, texts);
+  const prodReferrers = asReferrers(prod);
 
   for (const file of prod) {
     if (!/\.(ts|tsx)$/.test(file)) continue;
@@ -1004,7 +1038,7 @@ export function findTestOnlyMembers(
       const dotted = new RegExp(`\\.${escapeRe(name)}\\b`);
       const bracketed = new RegExp(`\\[\\s*(['"\`])${escapeRe(name)}\\1\\s*\\]`);
       const isReferenced = (text: string): boolean => dotted.test(text) || bracketed.test(text);
-      if (prod.some((f) => isReferenced(texts.get(f) ?? ''))) continue;
+      if (prodReferrers.some((f) => isReferenced(texts.get(f) ?? ''))) continue;
       // Only a test file that actually imports THIS file counts — otherwise an
       // unrelated same-named call in a test that never imports the declaring
       // module (e.g. Playwright's own Locator type's isVisible method)

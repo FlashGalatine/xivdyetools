@@ -21,6 +21,7 @@ import {
   findTestOnlyExports,
   findTestOnlyMembers,
   hasBareTag,
+  isExcludedReferrer,
   isPublic,
   leadingDocblock,
   maskSource,
@@ -1160,4 +1161,39 @@ test("45. findTestOnlyMembers: a stray '}' inside a string literal (not just a c
     result.violations.some((v) => v.name === 'foo'),
     false,
   );
+});
+
+// ============================================================================
+// fix-3: the checker's own two files can never count as referrers
+// ============================================================================
+
+test('46. isExcludedReferrer: rejects both checker paths, accepts an arbitrary prod file', () => {
+  assert.equal(isExcludedReferrer('scripts/check-dead-code.ts'), true);
+  assert.equal(isExcludedReferrer('scripts/check-dead-code.test.ts'), true);
+  assert.equal(isExcludedReferrer('apps/x/src/y.ts'), false);
+  // Matched by path relative to the repo root, not by basename: a
+  // same-named file in a different directory must NOT be excluded.
+  assert.equal(isExcludedReferrer('apps/x/scripts/check-dead-code.ts'), false);
+});
+
+test('47. findTestOnlyExports: a reference existing only in an excluded referrer file does not count', () => {
+  const prodFile = 'src/target.ts';
+  const realTestFile = 'src/target.test.ts';
+  // The REAL excluded path, used as an additional "referrer" here, so this
+  // exercises the actual isExcludedReferrer predicate wired into
+  // findTestOnlyExports -- not a stand-in for it.
+  const excludedReferrerFile = 'scripts/check-dead-code.ts';
+  const prodText = 'export function helper4(): void {}';
+  const realTestText = 'helper4();\n';
+  // If this counted, testRefs would be 2, not 1 -- the discriminating check.
+  const excludedReferrerText = 'helper4();\n';
+  const texts = new Map([
+    [prodFile, prodText],
+    [realTestFile, realTestText],
+    [excludedReferrerFile, excludedReferrerText],
+  ]);
+  const result = findTestOnlyExports([prodFile], [realTestFile, excludedReferrerFile], texts);
+  const finding = result.violations.find((v) => v.name === 'helper4');
+  assert.ok(finding, 'expected a violation for helper4');
+  assert.equal(finding?.testRefs, 1);
 });
