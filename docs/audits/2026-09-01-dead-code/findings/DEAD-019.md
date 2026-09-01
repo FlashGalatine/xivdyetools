@@ -18,4 +18,5 @@ Per-name status in `evidence/shim-usage.txt`:
 Gate per app: `pnpm turbo run build type-check lint test --filter=<app>`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `7d173835` — 13 dead names removed; moderation-worker's whole pass-through block went (5 live names now import from `@xivdyetools/types` directly). oauth and presets-api keep their remaining `@deprecated` re-exports — finishing those is a ~30-import refactor, still outstanding.
+

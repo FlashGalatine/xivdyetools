@@ -14,4 +14,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api`.
 
 ## Status
-OPEN
+OPEN — deliberately held with DEAD-007; the script and the client fallback it unblocked should go in the same commit, after the D1 check.
+

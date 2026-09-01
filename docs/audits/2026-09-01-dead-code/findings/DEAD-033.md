@@ -15,4 +15,5 @@
 No gate needed — docs only.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `45be904f` — section marked complete with the evidence.
+

@@ -20,4 +20,5 @@ Spans measured in `evidence/measure.txt`:
 Gate per commit: `pnpm turbo run build type-check lint test --filter=xivdyetools-moderation-worker`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `ac96e79a` — 12 removed. `encodeBase64Url` was **not** dead as filed (three test files build legacy custom_ids with it) and was replaced by the package function instead — see DEAD-017.
+

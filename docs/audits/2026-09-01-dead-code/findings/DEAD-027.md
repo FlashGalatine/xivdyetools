@@ -15,4 +15,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-image-worker`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `46713036`.
+

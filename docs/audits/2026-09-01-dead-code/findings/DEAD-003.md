@@ -16,4 +16,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-web-app`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `c89a822c` — module and test removed. The a11y decision is recorded in the web-app CHANGELOG: it queued and de-duplicated announcements, so recover it from git rather than rewriting if the open 5.0 a11y work wants one announcer.
+

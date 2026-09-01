@@ -15,4 +15,5 @@
 Gate: `pnpm turbo run build test --filter=xivdyetools-web-app` + `pnpm --filter xivdyetools-web-app run build:check` (a stylesheet edit moves the CSS bundle).
 
 ## Status
-OPEN
+FIXED 2026-09-01 `45be904f` — six selectors removed (more than filed: a per-class count showed only `.dark\:bg-blue-900` is referenced).
+

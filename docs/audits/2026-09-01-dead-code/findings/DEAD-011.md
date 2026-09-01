@@ -16,4 +16,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `befee92c` — both removed; `requireNotBanned` and the shared fail-closed helpers untouched.
+

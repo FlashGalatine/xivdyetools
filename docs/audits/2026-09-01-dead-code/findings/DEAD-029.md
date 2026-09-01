@@ -16,4 +16,5 @@
 **Revisit trigger:** if the roster-parity test is ever deleted, `registryCommandNames` goes with it. If `InteractionResponseBody` still shows `prod=1` in a future sweep, move it to `src/types/testing.ts` so its test-only status is declared rather than inferred.
 
 ## Status
-OPEN (KEEP) — superseded the REMOVE recommendation this finding was filed with; see Evidence.
+OPEN (KEEP) — recommendation reversed during execution: `registryCommandNames` backs the registry↔schema roster-parity gate and the 2026-08-18 audit had already kept it deliberately.
+

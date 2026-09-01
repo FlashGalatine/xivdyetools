@@ -17,4 +17,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-moderation-worker --filter=@xivdyetools/auth`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `ac96e79a` — `base64UrlEncode`/`base64UrlDecode` from `@xivdyetools/auth/encoding` adopted at the one production call site and in the three test files; the local pair deleted.
+

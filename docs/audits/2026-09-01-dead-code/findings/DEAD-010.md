@@ -17,4 +17,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `825a45c0` — three validators + two type aliases removed (108 lines).
+

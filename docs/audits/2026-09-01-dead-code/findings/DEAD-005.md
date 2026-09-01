@@ -20,4 +20,5 @@ Full table in `evidence/members.txt` (rows flagged `extSrc=0 … unitSrc=0` with
 Gate after each class: `pnpm turbo run build type-check lint test --filter=xivdyetools-web-app`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `a7cb99f8` — 31 of 37 removed. Six KEPT after checking what they serve: `ToastService.dismissAll`/`.getToasts` and `ModalService.dismissAll`/`.getModals` (how ~60 real behaviour tests observe those services — the first cut deleted them), `StorageService.resetAvailabilityCache` and `ThemeService.resetToDefault` (isolation hooks), `MarketBoardService.getIsFetching` (sole observer of the flag behind BUG-039). Each now documents why.
+

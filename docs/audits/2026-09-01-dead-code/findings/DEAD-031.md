@@ -18,4 +18,5 @@
 The `coverage-testing` skill assumes an aggregate view exists, which argues for adopt.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `6a53a956` — adopted, not deleted: root `coverage:report` script + `tsx` devDependency, documented in CLAUDE.md. Verified by running it.
+

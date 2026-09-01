@@ -16,4 +16,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-api-worker`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `2fd2c2a7` — the dead `src/` copy removed. The structural point (test-only code living under `src/`) is still open as a follow-up.
+

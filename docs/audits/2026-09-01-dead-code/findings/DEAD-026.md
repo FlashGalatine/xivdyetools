@@ -15,4 +15,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-oauth-worker`. Same production-deploy caveat as DEAD-025.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `c99da102` — three wrappers and their test blocks removed.
+

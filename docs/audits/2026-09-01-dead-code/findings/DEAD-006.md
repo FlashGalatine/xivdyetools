@@ -15,4 +15,5 @@
 **Revisit trigger:** the next core major for any other reason — fold the removal into that bump, together with a check of whether `getRaceSpecificColors` should instead become the *only* entry point (its two callees are public today, so the facade adds nothing).
 
 ## Status
-OPEN (KEEP)
+OPEN (KEEP) — unchanged; revisit at the next `@xivdyetools/core` major.
+

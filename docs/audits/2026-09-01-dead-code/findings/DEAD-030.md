@@ -18,4 +18,5 @@
 **Revisit trigger:** the moment stoat-worker is either (a) un-parked for active work — do this cleanup in the first sprint, starting with turning `noUnusedLocals` back on, or (b) formally retired — then the finding is superseded by deleting the app and adding a `DEPRECATIONS.md` entry.
 
 ## Status
-OPEN (KEEP)
+OPEN (KEEP, P3) — stoat-worker stays parked. Its four unused test imports were removed as part of DEAD-032 (`8c12d0ac`) so the tsconfig override could go.
+

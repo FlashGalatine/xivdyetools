@@ -1,10 +1,10 @@
 # Dead code — whole monorepo (2026-09-01)
 
-- **Branch/commit:** `worktree-dead-code-audit-2026-09-01` @ `8ca1bb09` (= `main`), clean tree · **no source file was modified by this audit**
+- **Branch/commit:** audited at `8ca1bb09` (= `main`), clean tree. **Remediated on the same branch** — see the status table at the foot of this file; `1deef4ef` is the catalog as filed, everything after it is execution.
 - **Scope:** all 17 deploy units — 8 packages + 9 apps (≈141k non-test TS lines, ≈144k test lines) plus root tooling, `wrangler.toml` bindings, static assets, six locale sets and the web-app stylesheets
 - **Method:** knip 6.33 (root monorepo config + web-app's and og-worker's own configs, `--production` for og-worker) · `tsc --noEmit --noUnusedLocals --noUnusedParameters` forced in all 17 workspaces · per-export reference bucketing over `git ls-files` (1,200+ exports) · class-member survey (knip 6 has no `classMembers` rule) · a **test-only module** scan · i18n orphan gates plus a by-hand resolution of the 175 dynamically-keyed web-app keys · dead-CSS, asset, binding and dependency sweeps. Scripts in `evidence/scripts/`, raw output in `evidence/`.
 - **Baseline gates (before):** `pnpm turbo run type-check` 25/25 green; `pnpm turbo run test` 25/25 green **on the second run** — the first run failed `@xivdyetools/svg#test` with `Test timed out in 5000ms` on the *first* test of `src/index.test.ts`, which passes in 1.1 s in isolation and passed on a forced re-run of the whole graph. Treat it as a load-dependent flake, not a red baseline (`evidence/gates-test.txt`, `gates-test-rerun.txt`).
-- **Totals:** 34 findings — 26 REMOVE / REMOVE WITH CAUTION · 3 REFACTOR FIRST (adopt-or-delete) · 5 KEEP with a revisit trigger · **Sprint 0 (act now): none** — nothing here is a live defect or a security issue.
+- **Totals:** 34 findings — **28 FIXED, 2 open (both blocked on a production D1 check), 4 KEEP** · Sprint 0: none — nothing here was a live defect or a security issue.
 - **Measured weight:** ≈**2,690 non-test source lines** + **82 CSS lines** + ≈**1,840 test lines** + 2 dependency declarations + 4 dead `Env` fields + 13 dead type re-exports + 3 orphaned scripts. Packages contribute almost none of it.
 
 Three things are worth reading before the catalog.
@@ -133,10 +133,95 @@ Guardrails that would have caught this pass's findings, roughly in value order:
 
 ## Remediation status
 
+Executed 2026-09-01 on `worktree-dead-code-audit-2026-09-01`, quick wins first then least → most
+risky, one commit per step with the unit's gates green at each boundary. Whole-graph verification
+after the last commit: `pnpm turbo run build type-check lint test --force` → **61/61 green**.
+
 | ID | Status | Commit |
 |----|--------|--------|
-| DEAD-001 … DEAD-034 | OPEN | — |
+| DEAD-001 | FIXED | `c89a822c` |
+| DEAD-002 | FIXED | `c89a822c` |
+| DEAD-003 | FIXED | `c89a822c` |
+| DEAD-004 | FIXED (4 of 5; 1 reclassified KEEP) | `a7cb99f8` |
+| DEAD-005 | FIXED (31 of 37; 6 reclassified KEEP) | `a7cb99f8` |
+| DEAD-006 | KEEP | — |
+| DEAD-007 | **OPEN — blocked on a production D1 check** | — |
+| DEAD-008 | FIXED | `45be904f` |
+| DEAD-009 | FIXED (ops step outstanding) | `e09b462d` |
+| DEAD-010 | FIXED | `825a45c0` |
+| DEAD-011 | FIXED | `befee92c` |
+| DEAD-012 | FIXED | `15a7cea6`, `00a33fae` |
+| DEAD-013 | **OPEN — held with DEAD-007** | — |
+| DEAD-014 | FIXED (12 of 13; 1 reclassified → DEAD-017) | `ac96e79a` |
+| DEAD-015 | FIXED | `6341acfc` |
+| DEAD-016 | FIXED | `6341acfc` |
+| DEAD-017 | FIXED | `ac96e79a` |
+| DEAD-018 | FIXED | `6341acfc` |
+| DEAD-019 | FIXED (13 dead names; the two `@deprecated` blocks remain) | `7d173835` |
+| DEAD-020 | FIXED | `2fd2c2a7` |
+| DEAD-021 | FIXED | `2fd2c2a7` |
+| DEAD-022 | FIXED | `2fd2c2a7` |
+| DEAD-023 | FIXED | `2fd2c2a7` |
+| DEAD-024 | FIXED | `4d4ec7aa` |
+| DEAD-025 | FIXED | `c99da102` |
+| DEAD-026 | FIXED | `c99da102` |
+| DEAD-027 | FIXED | `46713036` |
+| DEAD-028 | FIXED | `192c81e1` |
+| DEAD-029 | KEEP (recommendation reversed during execution) | — |
+| DEAD-030 | KEEP (P3) | partially via `8c12d0ac` |
+| DEAD-031 | FIXED (adopted, not deleted) | `6a53a956` |
+| DEAD-032 | FIXED | `8c12d0ac` |
+| DEAD-033 | FIXED | `45be904f` |
+| DEAD-034 | KEEP | — |
+
+### Verdicts that changed once the code was in front of us
+
+Eight of the 34 were wrong or too broad as filed. Each is corrected in its own finding:
+
+- **DEAD-029** — `registryCommandNames` backs the registry↔schema roster-parity gate, and the
+  2026-08-18 audit had already kept it deliberately. Reversed from REMOVE to KEEP before touching it.
+- **DEAD-005** — six of the 37 methods are load-bearing: `ToastService`/`ModalService`'s
+  `dismissAll`/`getToasts`/`getModals` are how ~60 real behaviour tests observe those services (the
+  first cut deleted them all), `StorageService.resetAvailabilityCache` and
+  `ThemeService.resetToDefault` are `beforeEach` hooks, and `MarketBoardService.getIsFetching` is
+  the only observer of the flag behind BUG-039.
+- **DEAD-004** — `clearCharaResolveCache` is an isolation hook too.
+- **DEAD-014** — `encodeBase64Url` is not unused: three test files build legacy `custom_id`
+  fixtures with it. It became a DEAD-017 adoption instead of a deletion.
+- **DEAD-008** — the dead set was *larger* than filed; only `.dark:bg-blue-900` is referenced.
+- **DEAD-024** — the documented "pnpm strict isolation needs it" rationale was wrong, proven by
+  bundling with `wrangler deploy --dry-run` rather than by argument.
+- **DEAD-018** — the CLAUDE.md row justifying `discord-interactions` was wrong; the script it named
+  imports only `dotenv/config`.
+- **DEAD-012** — two of the four skipped tests were duplicates of tests that already existed.
+
+### Cascades the removals exposed
+
+- Deleting `dye-action-dropdown.ts` orphaned 17 `harmony.*` locale keys across six languages. The
+  i18n orphan gate caught it immediately — the guardrail working exactly as intended.
+- Deleting `tooltip-service.ts` orphaned a 77-line `.tooltip*` block in `globals.css` that the
+  general dead-CSS scan could not see, because a dead module still counts as a consumer.
+- `noUnusedLocals` (re-enabled by DEAD-032) caught two more: `LocaleDisplay`/`LOCALE_DISPLAY_INFO`
+  in `language-service.ts`, and the `isFetching` field that led to the DEAD-005 reversal above.
+- `turbo`'s `type-check` task does not take `tests/` as an input, so a test-only edit can pass a
+  cached per-unit gate. One type error slipped through that way and was caught by the whole-graph
+  `--force` run (`00a33fae`). **Run the graph gate before merging, not just the per-unit one.**
 
 ## Next steps
 
-Nothing has been removed. Hand this catalog to `remediation-planner` for a risk-ordered cleanup plan (`CLEANUP_PLAN.md`), then work the sprints with the standing verification gate at each boundary. The confirmation gate applies first: no deletion before an explicit yes.
+The catalog is executed. What remains:
+
+1. **DEAD-007 + DEAD-013** — run the production D1 check
+   (`SELECT COUNT(*) FROM presets WHERE CAST(json_extract(dyes,'$[0]') AS INTEGER) > 254`, and the
+   same over `previous_values`; expect 0). If clean, collapse `resolvePresetDye` to the stainID
+   branch and delete `scripts/migrate-dyes-to-stainids.ts` in the same commit, and fix the
+   `POST_MERGE_CHECKLIST.md` §3 row that attributes the path to presets-api rather than web-app.
+2. **DEAD-009 ops step** — `wrangler secret delete MODERATION_WEBHOOK_URL|OWNER_DISCORD_ID|DISCORD_BOT_TOKEN --env production`
+   from `apps/presets-api`, after a day of clean tail.
+3. **DEAD-034** — the KV rate-limiter fallbacks still need a week of clean production logs before
+   they can go.
+4. **Guardrails from the Recommendations section** — items 1–3 (the test-only-module gate, the
+   class-member survey, knip for the five ungated workers) are the ones that would have caught this
+   pass's largest findings. Item 4 landed as DEAD-032; item 8 (svg's `testTimeout`) is still open.
+5. **DEAD-019 tail** — oauth and presets-api still carry `@deprecated` re-export blocks whose
+   "removed in the next major version" promise predates their current majors.

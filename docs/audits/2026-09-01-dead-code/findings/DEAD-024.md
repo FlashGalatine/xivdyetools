@@ -17,4 +17,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-api-worker`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `4d4ec7aa` — verified against the real bundler: with the dependency gone, `wrangler deploy --dry-run` still bundles spectral from `packages/core/node_modules`. The CLAUDE.md/README rationale was wrong and both rows went too.
+

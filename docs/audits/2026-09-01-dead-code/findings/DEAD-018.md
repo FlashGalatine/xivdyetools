@@ -16,4 +16,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-moderation-worker`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `6341acfc` — dependency and the (incorrect) CLAUDE.md row removed; `scripts/register-commands.ts` imports only `dotenv/config`.
+

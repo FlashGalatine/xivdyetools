@@ -16,4 +16,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-oauth-worker`. **Deploy note:** oauth has no `[env.production]` — a bare `wrangler deploy` from `apps/oauth` **is** the production deploy.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `c99da102`.
+

@@ -17,4 +17,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-web-app` + `pnpm --filter xivdyetools-web-app run build:check`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `c89a822c` — module, its test and the seven dead `vi.mock` blocks removed; the 17 `harmony.*` locale keys it owned went with it (the orphan gate caught them).
+

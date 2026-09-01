@@ -17,4 +17,5 @@
 Gate: `pnpm turbo run test --filter=xivdyetools-presets-api` — expect the count to rise by 3, not fall.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `15a7cea6` (+ `00a33fae`) — two skips deleted as duplicates, two un-skipped with assertions that can fail. Zero `it.skip` left in the monorepo.
+

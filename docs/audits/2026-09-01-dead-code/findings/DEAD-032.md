@@ -16,4 +16,5 @@
 Gate: `pnpm turbo run type-check` across the graph.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `8c12d0ac` — all four overrides removed; `noUnusedLocals`/`noUnusedParameters` now uniform across all 17 workspaces.
+

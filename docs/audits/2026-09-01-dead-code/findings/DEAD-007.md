@@ -16,4 +16,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-web-app`.
 
 ## Status
-OPEN
+OPEN — **blocked on a production D1 check.** Needs `SELECT COUNT(*) FROM presets WHERE CAST(json_extract(dyes,'$[0]') AS INTEGER) > 254` (and the same over `previous_values`) to return 0 on the day of the change. Not runnable from this session.
+

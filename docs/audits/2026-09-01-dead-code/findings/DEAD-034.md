@@ -20,4 +20,5 @@ Supersedes `docs/operations/POST_MERGE_CHECKLIST.md` §3 row "KV rate-limiter fa
 **Revisit trigger:** a week of clean production tail on all four workers (or the equivalent from the existing analytics), after which removal is one commit per worker plus deletion of the now-unused KV namespaces. Until then the branches are insurance, not dead code.
 
 ## Status
-OPEN (KEEP)
+OPEN (KEEP) — unchanged; gate is a week of clean production logs.
+

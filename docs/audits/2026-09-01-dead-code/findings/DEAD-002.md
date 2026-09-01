@@ -18,4 +18,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-web-app`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `c89a822c` — module, both tests, the false "TooltipService ready" log and the 77-line `.tooltip*` block in `globals.css` removed.
+

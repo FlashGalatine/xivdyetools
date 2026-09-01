@@ -17,4 +17,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `e09b462d` — function, its `ModerationAlert` type, four `Env` fields, the ~197-line test block and the wrangler/CLAUDE/env-guide rows removed. **Ops step outstanding:** delete the three orphaned production secrets after a day of clean tail.
+

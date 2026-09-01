@@ -15,4 +15,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-discord-worker`.
 
 ## Status
-OPEN
+FIXED 2026-09-01 `192c81e1` — script deleted; the CJK fallback order it documented in prose is now asserted in `packages/svg/src/base.test.ts`.
+
