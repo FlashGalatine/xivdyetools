@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+Dead-code sweep (`docs/audits/2026-09-01-dead-code`, DEAD-025/026) — oauth's first dead-code pass.
+No route, token or D1 behaviour changes.
+
+- `DISCORD_REQUIRED_SCOPES` (`constants/oauth.ts`) and `isStateSigned` (`utils/state-signing.ts`) —
+  neither had a single reference in the repo, tests included. State signatures are verified
+  unconditionally by `verifyState`, so the "is this even signed?" probe had no place in the flow.
+- `findUserById`, `findUserByDiscordId`, `findUserByXIVAuthId` (`services/user-service.ts`) — three
+  single-query wrappers with no production caller; both handlers use `findOrCreateUser`, which
+  already runs the same lookups. Their test blocks went with them.
+
 ## [3.0.0] - 2026-08-30
 
 Security audit remediation (docs/audits/2026-08-29-security, Sprint 2: FINDING-001 / 002 / 003 / 010 / 012 / 013 / 022 / 023). **Major bump:** `/auth/refresh` removed; `orig_iat`, `xivauth_id` and `primary_character` are no longer minted; `users.avatar_url` and the `xivauth_characters` table are dropped by a hand-run migration — no known client used any of them.

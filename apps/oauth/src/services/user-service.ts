@@ -231,27 +231,6 @@ async function updateUser(
 }
 
 /**
- * Find user by internal ID
- */
-export async function findUserById(db: D1Database, userId: string): Promise<UserRow | null> {
-  return db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first<UserRow>();
-}
-
-/**
- * Find user by Discord ID
- */
-export async function findUserByDiscordId(db: D1Database, discordId: string): Promise<UserRow | null> {
-  return db.prepare('SELECT * FROM users WHERE discord_id = ?').bind(discordId).first<UserRow>();
-}
-
-/**
- * Find user by XIVAuth ID
- */
-export async function findUserByXIVAuthId(db: D1Database, xivauthId: string): Promise<UserRow | null> {
-  return db.prepare('SELECT * FROM users WHERE xivauth_id = ?').bind(xivauthId).first<UserRow>();
-}
-
-/**
  * FINDING-001 (2026-08-29 security audit): `storeCharacters` / `getCharacters`
  * and the `xivauth_characters` table are gone. Every XIVAuth sign-in used to
  * persist the caller's whole FFXIV roster — Lodestone id, character name and

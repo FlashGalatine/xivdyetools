@@ -69,9 +69,3 @@ export const USER_INFO_TIMEOUT_MS = 5000; // 5 seconds
  * Must be present in token response
  */
 export const XIVAUTH_REQUIRED_SCOPES = ['user', 'character'];
-
-/**
- * Required OAuth scopes for Discord provider
- * Must be present in token response
- */
-export const DISCORD_REQUIRED_SCOPES = ['identify'];
