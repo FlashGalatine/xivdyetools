@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+Dead-code sweep (`docs/audits/2026-09-01-dead-code`, DEAD-015/016/018) — moderation-worker's
+first dead-code pass. No behaviour change.
+
+- The eight barrel re-exports in `handlers/buttons/index.ts`. `index.ts` imports only
+  `handleButtonInteraction`, and the two `import * as buttons` tests assert only that name.
+- `toBannedUser` (`types/ban.ts`) and `InteractionResponseBody` (`types/env.ts`) — neither had a
+  single reference anywhere in the repo, tests included. Row → model conversion happens inline in
+  `services/ban-service.ts`.
+- The `discord-interactions` devDependency. Nothing imported it; the CLAUDE.md line claiming
+  `scripts/register-commands.ts` used it was wrong — that script imports only `dotenv/config`.
+
 ## [1.6.0] - 2026-08-30
 
 Security audit remediation (docs/audits/2026-08-29-security — FINDING-011/012/013/015/018/023). Minor bump: one D1 migration (hand-run, presets-api-owned) and a wrangler-config regression test; no behaviour change for users under the limits.

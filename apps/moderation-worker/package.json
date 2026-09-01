@@ -37,7 +37,6 @@
     "@types/node": "^26.4.0",
     "@vitest/coverage-v8": "^4.1.11",
     "@xivdyetools/test-utils": "workspace:*",
-    "discord-interactions": "^4.4.0",
     "dotenv": "^17.4.2",
     "tsx": "^4.23.12",
     "vitest": "^4.1.11",
