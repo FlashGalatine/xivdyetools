@@ -167,7 +167,6 @@ Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/
 | Package | Purpose |
 |---|---|
 | `hono` | HTTP framework + CORS middleware |
-| `spectral.js` | Not imported by this worker's own code — declared explicitly because core's blending module needs it and pnpm's strict isolation would otherwise fail to resolve it |
 | `@xivdyetools/core` | DyeService, dyeDatabase, ColorService, LocalizationService, DEFAULT_MATCHING_METHOD, LEGACY_MATCHING_METHOD_MAP, getFacewearColorByLegacyItemID |
 | `@xivdyetools/types` | `Dye` interface |
 | `@xivdyetools/logger` | Structured logger (wired up by `worker-kit`'s `loggerMiddleware`) |

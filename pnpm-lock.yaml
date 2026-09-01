@@ -55,9 +55,6 @@ importers:
       hono:
         specifier: ^4.13.5
         version: 4.13.5
-      spectral.js:
-        specifier: ^3.0.0
-        version: 3.0.0
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20260828.1

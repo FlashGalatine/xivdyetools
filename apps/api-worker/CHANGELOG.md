@@ -20,6 +20,13 @@ caller; the `/v1` contract is untouched.
   `tests/test-utils.ts`, which is the one all six test files use.
 - `CacheService.deleteEntry` / `.deleteAsync` — the cache-invalidation pair had no production
   caller; entries expire by TTL. Their two tests went with them.
+- The direct `spectral.js` dependency (DEAD-024). `ColorService` does reach it (via
+  `SpectralMixer`), so the declaration was not obviously redundant — it was checked against the
+  real bundler rather than argued: with the dependency gone, `wrangler deploy --dry-run` still
+  produces a 3.9 MB bundle that contains spectral, resolved from `packages/core/node_modules`,
+  because core declares it. The CLAUDE.md/README claim that "pnpm's strict isolation would
+  otherwise fail to resolve it" was wrong and both rows are gone. Matches what web-app did in
+  2026-08-16 (DEAD-007).
 
 ## [0.10.0] - 2026-08-30
 
