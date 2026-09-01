@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `resolvePresetDye` (`services/dye-service-wrapper.ts`) no longer falls back to the 4.x
+  legacy-itemID lookup (`docs/audits/2026-09-01-dead-code`, DEAD-007). Every producer writes
+  stainIDs — the bot since discord-worker 5.1.0, this app's own form by validation — and the
+  stainID D1 rewrite ran 2026-08-28. Re-verified on the day of removal with `json_each` over every
+  position of every `dyes` array in production: **0 legacy IDs across all 16 rows**, with
+  `previous_values` empty on all of them. Out-of-range input now resolves to `undefined` (the same
+  "unknown dye" outcome callers already handle) and is logged, so a regression surfaces instead of
+  being absorbed by a second ID space. The tripwire test that guarded the old branch was inverted
+  rather than deleted: it now pins that the pre-migration itemIDs resolve to nothing.
+
 ### Removed
 
 - Three orphaned modules — 1,240 source lines, 1,472 test lines and 17 locale keys × 6 languages

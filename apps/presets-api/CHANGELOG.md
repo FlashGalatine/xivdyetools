@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (same file) and `ErrorCodeType` (`utils/api-response.ts`). Dead-code sweep
   (`docs/audits/2026-09-01-dead-code`, DEAD-010): 108 lines with no call sites and no tests
   either. The per-field validators further down the same file are what the handlers use.
+- `scripts/migrate-dyes-to-stainids.ts` (DEAD-013) — the one-shot stainID migration it existed for
+  ran 2026-08-28 and was re-verified 2026-09-01 (0 legacy IDs across all 16 production rows). It is
+  removed together with the client-side fallback it unblocked (web-app DEAD-007), so neither half
+  of a retired ID space outlives the other. `scripts/migrate-presets.ts` (`db:seed`) is unaffected.
 - `notifyModerators` and its `ModerationAlert` type (`services/moderation-service.ts`, DEAD-009 /
   PAPI-16) — 88 lines of webhook + owner-DM notification with **no caller**, plus the four `Env`
   fields only it read: `MODERATION_WEBHOOK_URL`, `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN` and
