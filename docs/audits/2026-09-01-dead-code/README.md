@@ -22,15 +22,13 @@ The theme: the largest tier is the one no gate in this repo can see. knip counts
 
 ## What is left
 
-Nothing is left in code. Three operational items remain:
+Nothing is left in code, and the audit's own operational item is closed: all seven orphaned
+production secrets were deleted 2026-09-01 (presets-api 12 → 7, discord-worker 13 → 11), which also
+closes `POST_MERGE_CHECKLIST.md` §3's orphan-secrets row. Remaining:
 
-1. **DEAD-009 ops step (needs a human)** — three secrets still set on the deployed presets-api
-   (`MODERATION_WEBHOOK_URL`, `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`). Their reader is gone and all
-   three are optional fields whose absence was already a no-op, so deletion is safe at any point;
-   cleanest right after this branch merges and deploys.
-2. **DEAD-034** — KV rate-limiter fallbacks, gated on a week of clean production logs (and do not
+1. **DEAD-034** — KV rate-limiter fallbacks, gated on a week of clean production logs (and do not
    enable Workers Logs without re-checking the 2026-08-29 audit's FINDING-010/011).
-3. **Guardrails** — the report's Recommendations 1–3 (test-only-module gate, class-member survey,
+2. **Guardrails** — the report's Recommendations 1–3 (test-only-module gate, class-member survey,
    knip for the five ungated workers) are the ones that would have caught this pass's largest
    findings; none of them is wired into CI yet.
 

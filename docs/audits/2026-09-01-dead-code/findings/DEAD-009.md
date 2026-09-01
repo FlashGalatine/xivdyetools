@@ -17,5 +17,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api`.
 
 ## Status
-FIXED 2026-09-01 `e09b462d` — function, its `ModerationAlert` type, four `Env` fields, the ~197-line test block and the wrangler/CLAUDE/env-guide rows removed. **Ops step outstanding:** delete the three orphaned production secrets after a day of clean tail.
+FIXED 2026-09-01 `e09b462d` — function, its `ModerationAlert` type, four `Env` fields, the ~197-line test block and the wrangler/CLAUDE/env-guide rows removed. **Ops step also complete**: all four orphaned production secrets deleted the same day (with `MODERATOR_CHANNEL_ID`, and discord-worker's two — seven in total). presets-api 12 → 7 secrets, verified by `wrangler secret list`.
 

@@ -209,16 +209,13 @@ Eight of the 34 were wrong or too broad as filed. Each is corrected in its own f
 
 ## Next steps
 
-Every finding is closed in code. What remains is operational, and needs credentials this audit
-should not spend unattended:
+Every finding is closed in code, and the one operational item this audit created is closed too.
+What remains:
 
-1. **DEAD-009 ops step (needs a human)** — three secrets are still set on the deployed presets-api:
-   `MODERATION_WEBHOOK_URL`, `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`. Their only reader is gone from
-   the code, and all three are optional (`?:`) fields whose absence was already a no-op, so deletion
-   is safe at any point; cleanest immediately after this branch merges and deploys:
-   `wrangler secret delete <NAME> --env production` from `apps/presets-api`.
-   The same §3 row also lists discord-worker `PRESET_API_SECRET` / `PERSPECTIVE_API_KEY` and
-   presets-api `MODERATOR_CHANNEL_ID`, which predate this audit.
+1. ~~**DEAD-009 ops step**~~ **DONE 2026-09-01** — all seven orphaned production secrets deleted
+   (presets-api 12 → 7, discord-worker 13 → 11), closing `POST_MERGE_CHECKLIST.md` §3's
+   orphan-secrets row. `PERSPECTIVE_API_KEY` was removed from discord-worker only; presets-api's
+   copy is live and was confirmed still present.
 2. **DEAD-034 (time-gated)** — the KV rate-limiter fallbacks still want a week of clean production
    logs. Note the standing constraint: do not enable Workers Logs without re-checking the
    2026-08-29 security audit's FINDING-010/011 first.
