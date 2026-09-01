@@ -11,6 +11,7 @@
  * the observable outcome — never re-implement the parsing being tested.
  */
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   docblockAbove,
@@ -154,6 +155,99 @@ const cases: DocCase[] = [
       assert.equal(hasBareTag(doc), true);
     },
   },
+  {
+    name: '10. prelude 1a: a reason wrapped across two continuation lines joins with a single space',
+    lines: [
+      'const noop = 1;',
+      '',
+      '/**',
+      ' * @testonly This is a long reason that',
+      ' * wraps onto a second line.',
+      ' */',
+      'export function j(): void {}',
+    ],
+    declIndex: 6,
+    check: (doc) =>
+      assert.equal(testOnlyReason(doc), 'This is a long reason that wraps onto a second line.'),
+  },
+  {
+    name: '11. prelude 1b: a reason on the line after a bare-looking @tag is captured, not bare',
+    lines: [
+      'const noop = 1;',
+      '',
+      '/**',
+      ' * @testonly',
+      ' * Because the availability probe is memoized.',
+      ' */',
+      'export function k(): void {}',
+    ],
+    declIndex: 6,
+    check: (doc) => {
+      assert.equal(hasBareTag(doc), false);
+      assert.equal(testOnlyReason(doc), 'Because the availability probe is memoized.');
+    },
+  },
+  {
+    name: '12. prelude 1: no reason anywhere in the docblock (incl. a blank interior line) stays bare',
+    lines: [
+      'const noop = 1;',
+      '',
+      '/**',
+      ' * @testonly',
+      ' *',
+      ' */',
+      'export function l(): void {}',
+    ],
+    declIndex: 6,
+    check: (doc) => {
+      assert.equal(testOnlyReason(doc), null);
+      assert.equal(hasBareTag(doc), true);
+    },
+  },
+  {
+    name: '13. prelude 1: a second @tag after a wrapped reason stops the first reason there',
+    lines: [
+      'const noop = 1;',
+      '',
+      '/**',
+      ' * @testonly reason for testonly,',
+      ' * continued here',
+      ' * @entrypoint reason for entrypoint',
+      ' */',
+      'export function m(): void {}',
+    ],
+    declIndex: 7,
+    check: (doc) => {
+      assert.equal(testOnlyReason(doc), 'reason for testonly, continued here');
+      assert.equal(entrypointReason(doc), 'reason for entrypoint');
+    },
+  },
+  {
+    name: '14. prelude 3 (NEW-2 regression guard): a bare single-line /** @testonly */ is bare, reason null',
+    lines: ['const noop = 1;', '', '/** @testonly */', 'export function n(): void {}'],
+    declIndex: 3,
+    check: (doc) => {
+      assert.equal(testOnlyReason(doc), null);
+      assert.equal(hasBareTag(doc), true);
+    },
+  },
+  {
+    name: '15. prelude 2 (NEW-1): a multi-line decorator argument list is skipped as a unit, so the docblock still attaches',
+    lines: [
+      'const noop = 1;',
+      '',
+      '/**',
+      ' * @testonly reason fifteen',
+      ' */',
+      '',
+      "@customElement(",
+      "  'my-element'",
+      ')',
+      'export class Foo {}',
+    ],
+    declIndex: 9,
+    check: (doc) => assert.equal(testOnlyReason(doc), 'reason fifteen'),
+  },
 ];
 
 for (const c of cases) {
@@ -223,5 +317,19 @@ test('9b. bug D: an untagged overload gets exactly one violation, not one per si
   assert.equal(
     result.violations.filter((v) => v.file === prodFile && v.name === 'over2').length,
     1,
+  );
+});
+
+test('prelude 1a (live instance): _middleware.ts now captures its full two-line @entrypoint reason', () => {
+  // The concrete case that motivated the multi-line reason fix: before it, this
+  // file's reason silently truncated to "No importer by design — Pages loads
+  // this by path convention from" at the line break. Read from disk (not
+  // reconstructed inline) so this test fails if the real file's docblock ever
+  // drifts from what it asserts.
+  const text = readFileSync('apps/web-app/functions/_middleware.ts', 'utf8');
+  const doc = leadingDocblock(text);
+  assert.equal(
+    entrypointReason(doc),
+    'No importer by design — Pages loads this by path convention from functions/, so static analysis cannot see the call site.',
   );
 });

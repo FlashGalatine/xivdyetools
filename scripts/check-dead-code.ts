@@ -85,27 +85,81 @@ export function listTracked(): string[] {
 const TESTONLY = 'testonly';
 const ENTRYPOINT = 'entrypoint';
 
+/** A line that opens a new `@tag`, used to know where a reason's continuation must stop. */
+const ANY_TAG_START_RE = /^[ \t]*(?:\/\*\*|\*)?[ \t]*@[A-Za-z]\w*\b/i;
+
+/**
+ * Strips one docblock line down to its bare reason content: a leading `*`
+ * doc-marker (if present) is removed, and — if this line carries the block's
+ * closing `*\/` — everything from the `*\/` onward is cut first, before the
+ * marker strip and trim, and `closed` comes back true. Doing the `*\/` cut
+ * before the marker strip (rather than relying on a character-class
+ * exclusion) is what keeps a bare `/** @tag *\/` from ever reading the
+ * closing delimiter back as if it were reason text.
+ */
+function stripDocLine(line: string): { content: string; closed: boolean } {
+  let s = line;
+  let closed = false;
+  const closeIdx = s.indexOf('*/');
+  if (closeIdx !== -1) {
+    s = s.slice(0, closeIdx);
+    closed = true;
+  }
+  s = s.replace(/^[ \t]*\*[ \t]?/, '');
+  return { content: s.trim(), closed };
+}
+
 /**
  * `@<tag> <reason>` parsing, shared by `@testonly` and `@entrypoint` so the
  * two escape hatches get identical mandatory-reason enforcement from one
- * regex pair instead of two hand-duplicated copies.
+ * function instead of two hand-duplicated copies.
  *
- * Anchored to a docblock line start — either a JSDoc continuation (`*`) or,
- * for a single-line `/** @tag reason *\/` docblock, the opening `/**` itself
- * — with a trailing word boundary on the tag name, so `@testonlyish` and a
- * prose mention mid-sentence (e.g. "derived from the old @testonly
- * annotations") don't satisfy it. The reason capture stops at end-of-line and
- * its first character can't be `*`, so on a single-line docblock it doesn't
- * swallow the closing `*\/` as if it were reason text; it can't span multiple
- * lines or read past the docblock it was given.
+ * The tag itself is found on a docblock line start — either a JSDoc
+ * continuation (`*`) or, for a single-line `/** @tag reason *\/` docblock,
+ * the opening `/**` itself — with a trailing word boundary on the tag name,
+ * so `@testonlyish` and a prose mention mid-sentence (e.g. "derived from the
+ * old @testonly annotations") don't satisfy it.
+ *
+ * The reason is not limited to that same line: it continues across
+ * `*`-continuation lines, joined with a single space, until the docblock
+ * closes or another `@tag` begins — so a reason wrapped onto a second line,
+ * or written entirely on the line after a bare `@tag`, is captured in full
+ * rather than truncated or missed. `stripDocLine` strips the closing `*\/`
+ * before any content is read, so a bare single-line docblock can never have
+ * `*\/` misread as reason text. A tag with no reason text on any of its
+ * lines — before the block closes or the next tag starts — stays bare
+ * (returns null), same as before.
  */
 function tagReason(docblock: string, tag: string): string | null {
-  const re = new RegExp(
-    String.raw`^[ \t]*(?:\/\*\*|\*)?[ \t]*@${tag}\b[ \t]+([^\s*][^\n*]*)`,
-    'im',
-  );
-  const m = re.exec(docblock);
-  return m ? m[1].trim() : null;
+  const lines = docblock.split('\n');
+  const startRe = new RegExp(String.raw`^[ \t]*(?:\/\*\*|\*)?[ \t]*@${tag}\b(.*)$`, 'i');
+
+  let startLine = -1;
+  let afterTag = '';
+  for (let i = 0; i < lines.length; i++) {
+    const m = startRe.exec(lines[i]);
+    if (m) {
+      startLine = i;
+      afterTag = m[1];
+      break;
+    }
+  }
+  if (startLine === -1) return null;
+
+  const parts: string[] = [];
+  const first = stripDocLine(afterTag);
+  if (first.content !== '') parts.push(first.content);
+
+  if (!first.closed) {
+    for (let i = startLine + 1; i < lines.length; i++) {
+      if (ANY_TAG_START_RE.test(lines[i])) break;
+      const { content, closed } = stripDocLine(lines[i]);
+      if (content !== '') parts.push(content);
+      if (closed) break;
+    }
+  }
+
+  return parts.length ? parts.join(' ').trim() : null;
 }
 
 function tagPresent(docblock: string, tag: string): boolean {
@@ -132,6 +186,16 @@ export function hasBareTag(docblock: string): boolean {
 /** A decorator line applied to the next declaration: `@Identifier` or `@Identifier(...)`. */
 const DECORATOR_LINE_RE = /^@[A-Za-z_$][\w$]*/;
 
+/** Net `(` minus `)` count in a line — a plain character count, not a parser. */
+function parenDelta(line: string): number {
+  let d = 0;
+  for (const ch of line) {
+    if (ch === '(') d++;
+    else if (ch === ')') d--;
+  }
+  return d;
+}
+
 /**
  * True when every line before `openIndex` is blank, or — line 0 only — a
  * shebang. This restates, over an already-split `lines` array, the same rule
@@ -155,15 +219,22 @@ function isLeadingDocblockStart(lines: string[], openIndex: number): boolean {
  * Walking upward, blank lines and decorator lines (`@Foo`, `@Foo(...)`) are
  * skipped rather than treated as a wall: a blank line for readability, or a
  * Lit `@customElement(...)`/`@property()` between a docblock and its
- * declaration, must not hide a real tag. Once a candidate docblock is found,
- * though, it is refused — the walk returns '' — when it is the file's own
- * leading docblock (nothing but whitespace or a shebang precedes its opening
- * `/**`). Without that check, skipping blank lines would let a file-header
- * comment silently attach to whichever export happens to sit first,
- * exempting it by accident. A genuine file-level tag is already handled by
- * `leadingDocblock` at file granularity, and the file-subsumes-symbol rule in
- * `main` means an exempt file never needs symbol-level attribution anyway, so
- * refusing to reuse the header here costs nothing.
+ * declaration, must not hide a real tag. A decorator whose own argument list
+ * spans multiple raw lines — `@customElement(\n  'my-element'\n)` — is
+ * skipped as a unit too: a wall line with more `)` than `(` is treated as a
+ * candidate call tail, and the walk sums `parenDelta` further upward until
+ * the balance returns to zero; if the line that balances it is itself a
+ * decorator start, the whole span is the argument list and the walk resumes
+ * from there, otherwise the balance-probe changes nothing and the original
+ * line is still a genuine wall. Once a candidate docblock is found, though,
+ * it is refused — the walk returns '' — when it is the file's own leading
+ * docblock (nothing but whitespace or a shebang precedes its opening `/**`).
+ * Without that check, skipping blank lines would let a file-header comment
+ * silently attach to whichever export happens to sit first, exempting it by
+ * accident. A genuine file-level tag is already handled by `leadingDocblock`
+ * at file granularity, and the file-subsumes-symbol rule in `main` means an
+ * exempt file never needs symbol-level attribution anyway, so refusing to
+ * reuse the header here costs nothing.
  */
 export function docblockAbove(lines: string[], declIndex: number): string {
   let i = declIndex;
@@ -172,6 +243,18 @@ export function docblockAbove(lines: string[], declIndex: number): string {
     if (prev === '' || DECORATOR_LINE_RE.test(prev)) {
       i--;
       continue;
+    }
+    if (parenDelta(prev) < 0) {
+      let depth = parenDelta(prev);
+      let k = i - 1;
+      while (depth < 0 && k > 0) {
+        k--;
+        depth += parenDelta(lines[k]);
+      }
+      if (depth === 0 && DECORATOR_LINE_RE.test(lines[k].trim())) {
+        i = k;
+        continue;
+      }
     }
     break;
   }
