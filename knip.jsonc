@@ -93,6 +93,33 @@
         "eslint-rules/*.js"
       ],
       "project": ["src/**/*.{ts,js}", "scripts/**", "functions/**", "e2e/**", "*.ts", "*.js"]
+    },
+
+    // includeEntryExports is safe for apps and NOT for packages: an app has no
+    // external consumers, so a barrel export with no in-repo importer IS dead.
+    // These keys MUST stay after "apps/*" — placing them before strips the glob's
+    // entry/project settings for that workspace (verified 2026-09-01).
+    //
+    // docs/.vitepress/{config,theme/index}.ts are NOT in the plain "entry" array:
+    // knip's built-in vitepress plugin auto-detects `.vitepress/config.ts` /
+    // `.vitepress/theme/index.ts` at the WORKSPACE ROOT, but this site's root is
+    // `docs/` (see package.json's `build:docs`), so the default pattern misses.
+    // Overriding the plugin's own `entry` (below) re-enables it at the right
+    // path. That matters because plugin-sourced entries are marked
+    // skipExportsAnalysis internally — their default export (read by the
+    // `vitepress` CLI, never imported in-repo) is exempt from includeEntryExports
+    // scrutiny. Listing the same two files in the plain "entry" array instead
+    // makes them ordinary entries, and with includeEntryExports: true knip then
+    // reports their default export as unused — a false positive (verified
+    // 2026-09-01: confirmed against knip 6.33.0's graph/build.js, which only
+    // sets skipExportsAnalysis for plugin-routed inputs).
+    "apps/api-worker": {
+      "includeEntryExports": true,
+      "entry": ["src/index.ts!", "src/**/*.test.ts", "tests/**/*.ts", "scripts/**/*.{ts,js,mjs}!"],
+      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "docs/.vitepress/**", "*.ts"],
+      "vitepress": {
+        "entry": ["docs/.vitepress/config.ts", "docs/.vitepress/theme/index.ts"]
+      }
     }
   }
 }

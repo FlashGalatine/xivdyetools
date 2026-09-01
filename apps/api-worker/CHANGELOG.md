@@ -28,6 +28,15 @@ caller; the `/v1` contract is untouched.
   otherwise fail to resolve it" was wrong and both rows are gone. Matches what web-app did in
   2026-08-16 (DEAD-007).
 
+This app is now the first gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`,
+folded into `lint`; root `knip.jsonc`; `docs/superpowers/specs/2026-09-01-dead-code-guardrails-design.md`).
+It immediately caught two leftovers the manual sweep above missed:
+
+- `Env` from `src/universalis/types.ts` — a same-named duplicate of the real `Env` in
+  `src/types.ts`. Every consumer, including this subtree's own `universalis/router.ts`, already
+  imported the one in `types.ts`; this one had no importer at all.
+- `buildRequest` from `tests/test-utils.ts` — an unused request-builder helper with no call sites.
+
 ## [0.10.0] - 2026-08-30
 
 Security audit remediation (docs/audits/2026-08-29-security, FINDING-010 + FINDING-014). No change to the public `/v1` contract — telemetry gains sender/GPC/fail-closed gating, and the worker's request logs drop the last `logUserAgent: true` opt-in in the repository.
