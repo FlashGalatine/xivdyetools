@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Three orphaned modules — 1,240 source lines, 1,472 test lines and 17 locale keys × 6 languages
+  (`docs/audits/2026-09-01-dead-code`, DEAD-001/002/003). None had a production importer; all three
+  were invisible to knip, which counts test files as entries.
+  - `components/dye-action-dropdown.ts` (570) — a finished dye actions menu (copy hex, add to
+    comparison / mixer / accessibility, slot replacement) that nothing ever mounted. Seven tool
+    test files carried a `vi.mock` for a module their subject never imported. Its 17 `harmony.*`
+    locale keys had no other consumer and went with it — the orphan gate caught them.
+  - `services/tooltip-service.ts` (475) plus the 77-line `.tooltip*` block in `globals.css` it was
+    the only consumer of, and the `services/index.ts` line that logged "✅ TooltipService ready"
+    for a service nothing constructed. Tooltips are native `title=` attributes.
+  - `services/announcer-service.ts` (195) — the v2.1 screen-reader announcer, never mounted; the
+    five components that announce use their own `aria-live` regions. **It queued and de-duplicated
+    announcements, which the per-component regions do not** — if the open 5.0 a11y work wants one
+    announcer, recover this file from git rather than rewriting it. The
+    `no-hardcoded-ui-strings` lint rule keeps `AnnouncerService` in its allowlist so a future one
+    is covered from day one.
 - Six v3-era Tailwind utility overrides in `styles/themes.css` that no template carries any more —
   `.text-green-600`/`.dark:text-green-400`, `.bg-blue-100`, `.text-blue-900`,
   `.dark:text-blue-100`, `.border-blue-200`/`.dark:border-blue-800`, `.bg-gradient-to-r`
