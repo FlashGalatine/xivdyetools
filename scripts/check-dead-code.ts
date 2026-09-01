@@ -298,6 +298,64 @@ export function findOrphanModules(
   return { violations, testOnlyExempt, entrypointExempt };
 }
 
+const EXPORT_DECL = /^export\s+(?:async\s+)?(?:function|const|let|class)\s+([A-Za-z_]\w*)/;
+
+/** Escapes regex metacharacters so an identifier can be dropped into a `\b...\b` pattern. */
+const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Exported-symbol granularity: a module-level `function`/`const`/`let`/`class`
+ * export that only test files reference by name. This is the gap file-level
+ * reachability can't see — the test import already makes the *file* reachable,
+ * so `findOrphanModules` sees nothing wrong; only checking the individual
+ * symbol's own references catches a dead export living inside a used file.
+ *
+ * Matching is a word-boundary identifier regex against raw file text, not a
+ * syntax-aware parse — a symbol named after a common word (`render`,
+ * `logger`) will find an unrelated textual hit elsewhere and be judged
+ * referenced. That under-reports, the same conservative direction the
+ * file-level fallback already takes, and is accepted rather than tightened.
+ */
+export function findTestOnlyExports(
+  prod: string[],
+  tests: string[],
+  texts: Map<string, string>,
+): { violations: Violation[]; testOnlyExempt: string[]; entrypointExempt: string[] } {
+  const violations: Violation[] = [];
+  const testOnlyExempt: string[] = [];
+  const entrypointExempt: string[] = [];
+  for (const file of prod) {
+    if (!/\.(ts|tsx)$/.test(file)) continue;
+    const lines = (texts.get(file) ?? '').split('\n');
+    lines.forEach((line, i) => {
+      const m = EXPORT_DECL.exec(line);
+      if (!m) return;
+      const name = m[1];
+      const word = new RegExp(`\\b${escapeRe(name)}\\b`);
+      // Any non-test reference outside this declaration line counts as production use.
+      const usedInProd = prod.some((f) => {
+        const t = texts.get(f) ?? '';
+        if (f !== file) return word.test(t);
+        return t.split('\n').some((l, j) => j !== i && word.test(l));
+      });
+      if (usedInProd) return;
+      const testRefs = tests.filter((f) => word.test(texts.get(f) ?? '')).length;
+      if (testRefs === 0) return; // knip's job
+      const doc = docblockAbove(lines, i);
+      if (hasBareTag(doc)) {
+        violations.push({ kind: 'export', file, name, testRefs });
+        return;
+      }
+      const eReason = entrypointReason(doc);
+      const tReason = testOnlyReason(doc);
+      if (eReason) entrypointExempt.push(`${file}:${name}`);
+      else if (tReason) testOnlyExempt.push(`${file}:${name}`);
+      else violations.push({ kind: 'export', file, name, testRefs });
+    });
+  }
+  return { violations, testOnlyExempt, entrypointExempt };
+}
+
 function main(): void {
   const all = listTracked();
   const texts = new Map<string, string>();
@@ -311,12 +369,19 @@ function main(): void {
   const tests = all.filter(isTestFile);
   const prod = all.filter((f) => !isTestFile(f));
 
-  const { violations, testOnlyExempt, entrypointExempt } = findOrphanModules(prod, tests, texts);
+  const results = [findOrphanModules(prod, tests, texts), findTestOnlyExports(prod, tests, texts)];
+  const violations = results.flatMap((r) => r.violations);
+  const testOnlyExempt = results.flatMap((r) => r.testOnlyExempt);
+  const entrypointExempt = results.flatMap((r) => r.entrypointExempt);
 
   for (const v of violations) {
-    console.error(`✗ ${v.file} — imported by ${v.testRefs} test file(s), 0 production files`);
+    const what = v.name ? `${v.file}:${v.name}` : v.file;
+    const how = v.kind === 'file' ? 'imported by' : 'referenced by';
+    console.error(`✗ ${what} — ${how} ${v.testRefs} test file(s), 0 production files`);
     console.error(
-      '    → delete it, or add `@testonly <why>` or `@entrypoint <why>` to the file docblock',
+      v.kind === 'file'
+        ? '    → delete it, or add `@testonly <why>` or `@entrypoint <why>` to the file docblock'
+        : '    → delete it, or add `@testonly <why>` or `@entrypoint <why>` to its docblock',
     );
   }
   if (testOnlyExempt.length) {

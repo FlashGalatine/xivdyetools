@@ -172,6 +172,8 @@ export async function resolveCharaEquipment(
  * Test-isolation hook: `beforeEach` calls it so one test's cached resolve
  * cannot answer the next one's request. Kept for that reason rather than pruned
  * as test-only (2026-09-01 dead-code audit, DEAD-005).
+ *
+ * @testonly beforeEach isolation — one test's cached resolve must not answer the next one's request.
  */
 export function clearCharaResolveCache(): void {
   sessionCache.clear();
