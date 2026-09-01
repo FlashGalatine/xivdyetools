@@ -1,8 +1,8 @@
 /**
  * Cloudflare Pages middleware.
  *
- * @testonly No importer by design — Pages loads this by path convention from
- * functions/, so static analysis cannot see the call site. Deployed code.
+ * @entrypoint No importer by design — Pages loads this by path convention
+ * from functions/, so static analysis cannot see the call site.
  */
 
 export async function onRequest(context: {
