@@ -11,7 +11,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createMockClient, createMockMessage } from '../test-utils/revolt-mocks.js';
-import { routeCommand, type CommandContext } from '../router.js';
+import { routeCommand } from '../router.js';
 import { parseCommand } from './parser.js';
 import { MessageContextStore } from '../services/message-context.js';
 import type { BotConfig } from '../config.js';

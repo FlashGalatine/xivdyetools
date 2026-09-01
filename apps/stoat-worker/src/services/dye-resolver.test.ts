@@ -5,12 +5,11 @@
  * single, multiple, disambiguation, none.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   resolveDyeInputMulti,
   MULTI_MATCH_THRESHOLD,
   MAX_DISAMBIGUATION_RESULTS,
-  type DyeResolutionResult,
 } from './dye-resolver.js';
 
 describe('resolveDyeInputMulti', () => {
