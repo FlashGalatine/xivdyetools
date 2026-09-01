@@ -15,6 +15,25 @@
  * that "someone eventually questions" doesn't conflate deletable with
  * load-bearing.
  *
+ * **Text invariant: candidates come from MASKED text; references and
+ * exemption tags come from RAW text.** Every declaration scan that decides
+ * what *is* a candidate — `EXPORT_DECL`, `CLASS_DECL`, `MEMBER_DECL`,
+ * `TYPE_BLOCK_RE`, `TOP_LEVEL_RESYNC_RE` — runs on `maskSource` output (via
+ * `declarationLines`, which falls back to raw for the handful of files whose
+ * mask desynced — see there), so a commented-out `export class Old {}` or a
+ * member-shaped line inside a template literal can never invent a symbol that
+ * does not exist (a false positive, this checker's worst direction, and the
+ * one masking exists to prevent). Every scan that decides whether
+ * a candidate is *reached* — import specifiers in `buildReferenceMap`, the
+ * `\bname\b` export search, the `dotted`/`bracketed` member patterns — stays
+ * on raw text: a mention inside a comment then counts as a reference, which
+ * under-reports (the safe direction), whereas masking that corpus would let
+ * one masker desync swallow a real call site and manufacture a false
+ * positive. Exemption tags live in doc comments, so `docblockAbove` and every
+ * tag lookup read raw lines by necessity. The two views stay interchangeable
+ * by index because `maskSource` only ever replaces non-code characters with
+ * spaces — never inserting, deleting, or moving a line or column.
+ *
  * @entrypoint No importer — the root `dead-code:check` script runs this directly, and tests reach it via `test:scripts`.
  * Spec: docs/superpowers/specs/2026-09-01-dead-code-guardrails-design.md
  */
@@ -514,8 +533,9 @@ const nameOf = (entry: string): string => entry.slice(entry.lastIndexOf(':') + 1
  * so `findOrphanModules` sees nothing wrong; only checking the individual
  * symbol's own references catches a dead export living inside a used file.
  *
- * Matching is a word-boundary identifier regex against raw file text, not a
- * syntax-aware parse — a symbol named after a common word (`render`,
+ * *Reference* matching is a word-boundary identifier regex against raw file
+ * text, not a syntax-aware parse (candidacy, by contrast, comes from
+ * `EXPORT_DECL` on masked text) — a symbol named after a common word (`render`,
  * `logger`) will find an unrelated textual hit elsewhere and be judged
  * referenced. That under-reports, the same conservative direction the
  * file-level fallback already takes, and is accepted rather than tightened.
@@ -547,10 +567,18 @@ export function findTestOnlyExports(
   const testReferrers = asReferrers(tests);
   for (const file of prod) {
     if (!/\.(ts|tsx)$/.test(file)) continue;
-    const lines = (texts.get(file) ?? '').split('\n');
+    const text = texts.get(file) ?? '';
+    const lines = text.split('\n');
+    // Candidacy is decided on MASKED text (the file docblock's invariant): a
+    // column-0 `export function ghost() {}` on the middle line of a block
+    // comment is not a declaration. Masking is line-preserving, so an index
+    // found here indexes raw `lines` unchanged for the docblock lookup below,
+    // and `declLines` still excludes the right lines from the raw reference
+    // scan.
+    const candidateLines = declarationLines(text);
 
     const byName = new Map<string, number[]>();
-    lines.forEach((line, i) => {
+    candidateLines.forEach((line, i) => {
       const m = EXPORT_DECL.exec(line);
       if (!m) return;
       const name = m[1];
@@ -639,9 +667,13 @@ const TOP_LEVEL_RESYNC_RE =
  * Blanks out comments, string literals, and template literals in `text` —
  * replacing every character inside them with a space, except newlines
  * (always left untouched, so line numbers and column positions never shift)
- * — so a downstream brace count only ever sees a real code brace, never one
- * hiding inside a comment (`// see }`), a string (`'{'`), or a Lit
- * `html`…`` / `css`…`` template. A hand-written character scanner with a
+ * — so a downstream brace count only ever sees a real code brace, and a
+ * downstream *declaration* scan only ever sees a real declaration, never one
+ * hiding inside a comment (`// see }`, `// export class Old {}`), a string
+ * (`'{'`), or a Lit `html`…`` / `css`…`` template. Every caller that decides
+ * candidacy reaches this output through `declarationLines`; see the file
+ * docblock's invariant for which scans deliberately do not.
+ * A hand-written character scanner with a
  * small state stack, not a parser or a full-language tokenizer: the only
  * structure it tracks is which of these spans — line comment, block comment,
  * `'...'`, `"..."`, `` `...` ``, or a template's `${…}` — the scanner is
@@ -663,9 +695,23 @@ const TOP_LEVEL_RESYNC_RE =
  * division `/` requires knowing the preceding token, which this scanner does
  * not attempt (a parser's job). A `{` inside one (`/\{/`) can still desync a
  * brace walk built on this mask; `attributeLinesToBlocks`'s column-0 resync
- * is what bounds that residual gap, not this function.
+ * is what bounds that residual gap, not this function. A *quote or backtick*
+ * inside one is the worse case — `` /`([^`]+)`/g `` opens a span that runs
+ * past the end of the line — which is what `scanSource`'s `clean` flag exists
+ * to detect; see `declarationLines`.
  */
 export function maskSource(text: string): string {
+  return scanSource(text).masked;
+}
+
+/**
+ * `maskSource`'s scanner, plus whether it ended where well-formed source must:
+ * back at the top-level `code` frame, with every comment, string, and template
+ * it opened also closed. `clean === false` means the mask is not trustworthy
+ * for this file — in practice a quote or backtick inside an unmasked regex
+ * literal opened a span that swallowed real code after it.
+ */
+function scanSource(text: string): { masked: string; clean: boolean } {
   const chars = [...text];
   const n = chars.length;
 
@@ -805,7 +851,36 @@ export function maskSource(text: string): string {
     }
   }
 
-  return chars.join('');
+  // The base `code` frame is never popped, so a scan that consumed every span
+  // it opened ends with exactly it on the stack.
+  return { masked: chars.join(''), clean: stack.length === 1 };
+}
+
+/**
+ * The lines every DECLARATION scan runs over (the file docblock's invariant):
+ * masked, so a commented-out `export class Old {}` or a member-shaped line
+ * inside a template literal is not a candidate — **unless the mask desynced
+ * on this file**, in which case the raw lines are used instead.
+ *
+ * The fallback matters because masking is the only thing standing between a
+ * declaration and the candidate list, so a runaway span silently *deletes*
+ * real declarations — the opposite error from the one masking prevents, and
+ * invisible in the gate's output because a deleted candidate simply never
+ * appears. Two real instances exist in this repo, both a backtick inside an
+ * unmasked regex literal (`packages/bot-logic/src/discord-markdown.ts`'s
+ * `` /([*_~`|>#\\[\]()])/g `` and `apps/web-app/vite-plugin-changelog-parser.ts`'s
+ * `` /`([^`]+)`/g ``), each of which blanked every export below it. Falling
+ * back to raw restores exactly the pre-masking behavior for such a file —
+ * never worse than the checker has always been — while the other ~500 files
+ * still get the stricter masked reading.
+ *
+ * `attributeLinesToBlocks` deliberately does NOT take this fallback: raw
+ * braces are precisely what masking fixed for the brace walk, and it carries
+ * its own bound for a desync (the column-0 resync).
+ */
+export function declarationLines(text: string): string[] {
+  const { masked, clean } = scanSource(text);
+  return (clean ? masked : text).split('\n');
 }
 
 /**
@@ -834,10 +909,11 @@ export function maskSource(text: string): string {
  *    `pendingName` off a line whose own `{` had just been blanked, leaving
  *    it to be claimed by the next *real* `{`. Masking is invisible to both
  *    regexes on real code (they match only keywords and identifiers, never
- *    string, comment, or template text). `lines` itself (unmasked) remains
- *    what callers use for everything else — member-name capture, docblock
- *    lookup — since masking never shifts a line or column, only blanks
- *    non-code characters within one.
+ *    string, comment, or template text). That is one instance of the file
+ *    docblock's invariant: every declaration scan reads masked text, while
+ *    reference scans and docblock/tag lookups read raw `lines`. Both views
+ *    index identically, since masking never shifts a line or column — it only
+ *    blanks non-code characters within one.
  * b. If a `class`/`interface`/`export`/`function`/`const`/`let`/`var`/
  *    `type`/`enum`/`import`/decorator line sits at column 0
  *    (`TOP_LEVEL_RESYNC_RE`) while the stack still claims an open block, the
@@ -1018,10 +1094,20 @@ export function findTestOnlyMembers(
 
   for (const file of prod) {
     if (!/\.(ts|tsx)$/.test(file)) continue;
-    const lines = (texts.get(file) ?? '').split('\n');
+    const text = texts.get(file) ?? '';
+    const lines = text.split('\n');
+    // Both scans below decide CANDIDACY, so both read the masked view (the
+    // file docblock's invariant). `attributeLinesToBlocks` masks `lines`
+    // itself rather than taking this array: `maskSource` is a pure function of
+    // the text, so the second pass costs one scan and nothing else, and
+    // keeping it internal leaves that function's signature and its tested
+    // behavior untouched — it also must NOT take `declarationLines`' raw
+    // fallback, whose whole point is candidacy, not brace tracking.
+    const candidateLines = declarationLines(text);
     // Only scan files that actually declare an exported class. MEMBER_DECL is an
-    // indentation heuristic and would otherwise match object-literal methods.
-    if (!lines.some((l) => CLASS_DECL.test(l))) continue;
+    // indentation heuristic and would otherwise match object-literal methods —
+    // which a commented-out `export class Old {}` would otherwise let in.
+    if (!candidateLines.some((l) => CLASS_DECL.test(l))) continue;
 
     const blockOfLine = attributeLinesToBlocks(lines);
     const importingTests = [...(testImportersOf.get(file) ?? [])];
@@ -1030,11 +1116,13 @@ export function findTestOnlyMembers(
       string,
       { name: string; declaringType: string | null; indices: number[] }
     >();
-    lines.forEach((line, i) => {
+    candidateLines.forEach((line, i) => {
       const m = MEMBER_DECL.exec(line);
       if (!m) return;
       const name = m[1];
       if (MEMBER_SKIP.has(name)) return;
+      // Masked, so `private` has to be a real modifier: a trailing
+      // `// private helper` comment no longer skips a public member.
       if (/\bprivate\b|\bprotected\b/.test(line) || name.startsWith('#')) return;
       const declaringType = blockOfLine[i];
       // A declaration this pass could not attribute to any tracked

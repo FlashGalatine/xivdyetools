@@ -15,6 +15,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   attributeLinesToBlocks,
+  declarationLines,
   docblockAbove,
   entrypointReason,
   findOrphanModules,
@@ -1291,5 +1292,161 @@ test("50. findTestOnlyMembers: a template-embedded column-0 declaration in class
   assert.equal(
     result.violations.some((v) => v.name === 'foo'),
     false,
+  );
+});
+
+// ============================================================================
+// fix-5: candidates come from MASKED text; references and tags stay RAW
+// ============================================================================
+
+/** Every list a candidate could land in, for "appears nowhere" assertions. */
+const namesEverywhere = (r: {
+  violations: { name?: string }[];
+  testOnlyExempt: string[];
+  entrypointExempt: string[];
+  publicExempt: string[];
+}): string[] => [
+  ...r.violations.map((v) => v.name ?? ''),
+  ...r.testOnlyExempt,
+  ...r.entrypointExempt,
+  ...r.publicExempt,
+];
+
+test('51. findTestOnlyExports: an export declared only inside a block comment is never a candidate', () => {
+  const prodFile = 'src/commented-export.ts';
+  const testFile = 'src/commented-export.test.ts';
+  const prodText = [
+    '/*',
+    // Column-0 and declaration-shaped, but commented out: EXPORT_DECL
+    // matching it on the raw line invents a symbol that does not exist.
+    'export function ghost() {}',
+    '*/',
+    'export function live(): void {}',
+  ].join('\n');
+  const testText = ["import { live } from './commented-export';", 'ghost();', 'live();'].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyExports([prodFile], [testFile], texts);
+  // ghost is in no list at all -- not a violation, not exempt.
+  assert.equal(
+    namesEverywhere(result).some((n) => n.includes('ghost')),
+    false,
+  );
+  // The real export beside it is unaffected.
+  assert.equal(
+    result.violations.some((v) => v.name === 'live'),
+    true,
+  );
+});
+
+test('52. findTestOnlyMembers: a member-shaped line inside a template literal is never a candidate', () => {
+  const prodFile = 'src/template-member.ts';
+  const testFile = 'src/template-member.test.ts';
+  const prodText = [
+    'export class A {',
+    '  real(): string {',
+    '    return `',
+    // Template *content*, not a declaration -- MEMBER_DECL matching it on the
+    // raw line reports a member that does not exist: a false positive.
+    '  ghostMember(): void {',
+    '`;',
+    '  }',
+    '}',
+  ].join('\n');
+  const testText = [
+    "import { A } from './template-member';",
+    'new A().ghostMember();',
+    'new A().real();',
+  ].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(
+    result.violations.some((v) => v.name === 'A.real'),
+    true,
+  );
+  assert.equal(
+    namesEverywhere(result).some((n) => n.includes('ghostMember')),
+    false,
+  );
+});
+
+test('53. findTestOnlyMembers: a commented-out exported class does not open the file for member scanning', () => {
+  const prodFile = 'src/commented-class.ts';
+  const testFile = 'src/commented-class.test.ts';
+  const prodText = [
+    '/*',
+    // The CLASS_DECL gate exists to keep object-literal methods out of the
+    // member scan; a commented-out class must not open it.
+    'export class Old {}',
+    '*/',
+    'export const api = {',
+    '  helper(): void {},',
+    '};',
+  ].join('\n');
+  const testText = ["import { api } from './commented-class';", 'api.helper();'].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.deepEqual(namesEverywhere(result), []);
+});
+
+test('54. findTestOnlyMembers: a trailing "// private helper" comment does not suppress a public member', () => {
+  const prodFile = 'src/comment-private.ts';
+  const testFile = 'src/comment-private.test.ts';
+  const prodText = [
+    'export class A {',
+    // The word `private` lives in a comment, not in the modifiers: reading
+    // the raw line skips a genuinely public member.
+    '  doThing(): void {} // private helper',
+    '}',
+  ].join('\n');
+  const testText = ["import { A } from './comment-private';", 'new A().doThing();'].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(
+    result.violations.some((v) => v.name === 'A.doThing'),
+    true,
+  );
+});
+
+test('55. declarationLines: a backtick inside a regex literal desyncs the mask, so candidacy falls back to raw', () => {
+  // A real shape from this repo (packages/bot-logic/src/discord-markdown.ts,
+  // apps/web-app/vite-plugin-changelog-parser.ts): the unmasked regex literal's
+  // backtick opens a template span that never closes, blanking every line
+  // below it. Masking must not be allowed to DELETE a real declaration.
+  const prodFile = 'src/regex-backtick.ts';
+  const testFile = 'src/regex-backtick.test.ts';
+  const prodText = ['const SPECIALS = /([*_~`|])/g;', 'export function afterRegex(): void {}'].join(
+    '\n',
+  );
+  const testText = ["import { afterRegex } from './regex-backtick';", 'afterRegex();'].join('\n');
+  // The mask really is unusable here -- the declaration is blanked ...
+  const masked = maskSource(prodText).split('\n');
+  assert.equal(/afterRegex/.test(masked[1]), false);
+  // ... so declarationLines hands back the raw lines instead.
+  assert.deepEqual(declarationLines(prodText), prodText.split('\n'));
+  // A clean file still gets the masked view, or the fallback would be a
+  // blanket opt-out of the whole fix.
+  const cleanText = ['/*', 'export function ghost2() {}', '*/', 'export const ok = 1;'].join('\n');
+  assert.equal(declarationLines(cleanText)[1].trim(), '');
+  // End to end: the export below the regex is still a candidate.
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyExports([prodFile], [testFile], texts);
+  assert.equal(
+    result.violations.some((v) => v.name === 'afterRegex'),
+    true,
   );
 });
