@@ -16,9 +16,11 @@ import test from 'node:test';
 import {
   docblockAbove,
   entrypointReason,
+  findOrphanModules,
   findTestOnlyExports,
   findTestOnlyMembers,
   hasBareTag,
+  isPublic,
   leadingDocblock,
   testOnlyReason,
 } from './check-dead-code.js';
@@ -357,7 +359,9 @@ test('16. findTestOnlyMembers: a method referenced only by tests is a violation'
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
   assert.equal(result.violations.length, 1);
   assert.equal(result.violations[0].file, prodFile);
-  assert.equal(result.violations[0].name, 'doThing');
+  // Qualified with its declaring type (fix-1 item 1) even though there's only
+  // one class in this file — qualification doesn't depend on ambiguity.
+  assert.equal(result.violations[0].name, 'Widget.doThing');
   assert.equal(result.violations[0].kind, 'member');
 });
 
@@ -534,7 +538,7 @@ test('23. findTestOnlyMembers: a valid @testonly reason exempts a member', () =>
   ]);
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
   assert.equal(result.violations.length, 0);
-  assert.deepEqual(result.testOnlyExempt, [`${prodFile}:resetForTesting`]);
+  assert.deepEqual(result.testOnlyExempt, [`${prodFile}:Widget7.resetForTesting`]);
   assert.equal(result.entrypointExempt.length, 0);
 });
 
@@ -556,7 +560,7 @@ test('24. findTestOnlyMembers: a valid @entrypoint reason exempts a member', () 
   ]);
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
   assert.equal(result.violations.length, 0);
-  assert.deepEqual(result.entrypointExempt, [`${prodFile}:externalHook`]);
+  assert.deepEqual(result.entrypointExempt, [`${prodFile}:Widget8.externalHook`]);
   assert.equal(result.testOnlyExempt.length, 0);
 });
 
@@ -578,7 +582,7 @@ test('25. findTestOnlyMembers: a bare @testonly with no reason still fails as a 
   ]);
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
   assert.equal(result.violations.length, 1);
-  assert.equal(result.violations[0].name, 'resetForTesting');
+  assert.equal(result.violations[0].name, 'Widget9.resetForTesting');
   assert.equal(result.testOnlyExempt.length, 0);
 });
 
@@ -608,10 +612,10 @@ test('26. findTestOnlyMembers: a getter/setter pair shares one name and gets exa
     [testFile, testText],
   ]);
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
-  assert.equal(result.violations.filter((v) => v.name === 'color').length, 0);
+  assert.equal(result.violations.filter((v) => v.name === 'Widget10.color').length, 0);
   assert.deepEqual(
-    result.testOnlyExempt.filter((e) => e === `${prodFile}:color`),
-    [`${prodFile}:color`],
+    result.testOnlyExempt.filter((e) => e === `${prodFile}:Widget10.color`),
+    [`${prodFile}:Widget10.color`],
   );
 });
 
@@ -638,7 +642,7 @@ test('27. findTestOnlyMembers: an untagged getter/setter pair gets exactly one v
     [testFile, testText],
   ]);
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
-  assert.equal(result.violations.filter((v) => v.name === 'label').length, 1);
+  assert.equal(result.violations.filter((v) => v.name === 'Widget11.label').length, 1);
 });
 
 test('28. findTestOnlyMembers: a member reached only via bracket-notation string access in prod is not falsely flagged', () => {
@@ -663,4 +667,201 @@ test('28. findTestOnlyMembers: a member reached only via bracket-notation string
   ]);
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
   assert.equal(result.violations.filter((v) => v.name === 'dynamicThing').length, 0);
+});
+
+// ============================================================================
+// fix-1: declaring-type-aware grouping (item 1), import-scoped test refs
+// (item 3), and @public (item 4)
+// ============================================================================
+
+test('29. findTestOnlyMembers: two classes sharing a member name are grouped separately — only the tagged one is exempt', () => {
+  const prodFile = 'src/two-classes.ts';
+  const testFile = 'src/two-classes.test.ts';
+  const prodText = [
+    'export class Alpha {',
+    '  /**',
+    '   * @testonly alpha-specific test hook',
+    '   */',
+    '  reset(): void {}',
+    '}',
+    '',
+    'class Beta {',
+    '  reset(): void {}',
+    '}',
+  ].join('\n');
+  const testText = [
+    "import { Alpha } from './two-classes';",
+    'const a = new Alpha();',
+    'a.reset();',
+  ].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  // Both are textually `.reset` so both get the SAME testRefs (usage detection
+  // has no notion of which class a call site binds to) -- but the VERDICT must
+  // differ: Alpha's is tagged and exempt, Beta's is untagged and a violation.
+  assert.deepEqual(result.testOnlyExempt, [`${prodFile}:Alpha.reset`]);
+  assert.equal(result.violations.filter((v) => v.name === 'Beta.reset').length, 1);
+  // The pre-fix grouping (by name alone) would have merged these into one
+  // entry keyed by "reset", producing either a contradictory pair (one exempt
+  // AND one violation for the literal same string) or silently exempting
+  // Beta.reset under a reason that only describes Alpha.
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:reset`),
+    false,
+  );
+});
+
+test('30. findTestOnlyMembers: an interface signature and a class method sharing a name are not merged', () => {
+  const prodFile = 'src/iface.ts';
+  const testFile = 'src/iface.test.ts';
+  const prodText = [
+    'export interface Greeter {',
+    '  greet(): string;',
+    '}',
+    '',
+    'export class EnglishGreeter implements Greeter {',
+    '  /**',
+    '   * @testonly only ever driven from the test suite',
+    '   */',
+    '  greet(): string {',
+    '    return "hello";',
+    '  }',
+    '}',
+  ].join('\n');
+  const testText = [
+    "import { EnglishGreeter } from './iface';",
+    'new EnglishGreeter().greet();',
+  ].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  // EnglishGreeter.greet is tagged and exempt.
+  assert.deepEqual(result.testOnlyExempt, [`${prodFile}:EnglishGreeter.greet`]);
+  // Greeter.greet (the interface signature) is a SEPARATE finding, not
+  // silently exempted by the implementing class's tag.
+  assert.equal(result.violations.filter((v) => v.name === 'Greeter.greet').length, 1);
+});
+
+test('31. findTestOnlyMembers: a test file that does not import the declaring module does not count as a reference', () => {
+  const prodFile = 'src/real-target.ts';
+  const otherProdFile = 'src/unrelated.ts';
+  const unrelatedTestFile = 'src/unrelated-thing.spec.ts';
+  const prodText = ['export class RealTarget {', '  doSomething(): void {}', '}'].join('\n');
+  const otherProdText = ['export class Unrelated {', '  doSomething(): void {}', '}'].join('\n');
+  // This test file never imports real-target.ts -- it happens to call a
+  // same-named method on a completely different class (the way Playwright's
+  // own Locator type's isVisible method collided with BaseComponent's
+  // isVisible in the real repo).
+  const unrelatedTestText = [
+    "import { Unrelated } from './unrelated';",
+    'new Unrelated().doSomething();',
+  ].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [otherProdFile, otherProdText],
+    [unrelatedTestFile, unrelatedTestText],
+  ]);
+  const result = findTestOnlyMembers([prodFile, otherProdFile], [unrelatedTestFile], texts);
+  // RealTarget.doSomething has zero genuine test references -- the only test
+  // file textually matching `.doSomething` never imports real-target.ts --
+  // that is knip's job, not a violation here.
+  assert.equal(
+    result.violations.some((v) => v.file === prodFile),
+    false,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e.startsWith(prodFile)),
+    false,
+  );
+  assert.equal(
+    result.entrypointExempt.some((e) => e.startsWith(prodFile)),
+    false,
+  );
+});
+
+test('32. isPublic: a bare /** @public */ is exempt-eligible and hasBareTag is false', () => {
+  const lines = ['const noop = 1;', '', '/** @public */', 'export function pub(): void {}'];
+  const doc = docblockAbove(lines, 3);
+  assert.equal(isPublic(doc), true);
+  assert.equal(hasBareTag(doc), false);
+});
+
+test('33. hasBareTag: adding @public does not weaken bare @testonly enforcement', () => {
+  const lines = [
+    'const noop = 1;',
+    '',
+    '/**',
+    ' * @testonly',
+    ' */',
+    'export function f2(): void {}',
+  ];
+  const doc = docblockAbove(lines, 5);
+  assert.equal(hasBareTag(doc), true);
+  assert.equal(testOnlyReason(doc), null);
+  assert.equal(isPublic(doc), false);
+});
+
+test('34. findOrphanModules: a bare @public file is publicExempt, not a violation', () => {
+  const prodFile = 'src/public-file.ts';
+  const testFile = 'src/public-file.test.ts';
+  const prodText = ['/**', ' * @public', ' */', 'export function helper(): void {}'].join('\n');
+  const testText = "import { helper } from './public-file';\nhelper();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findOrphanModules([prodFile], [testFile], texts);
+  assert.equal(result.violations.length, 0);
+  assert.deepEqual(result.publicExempt, [prodFile]);
+});
+
+test('35. findTestOnlyExports: a bare @public export is publicExempt, not a violation', () => {
+  const prodFile = 'src/public-export.ts';
+  const testFile = 'src/public-export.test.ts';
+  // A preceding line keeps this from being the file's OWN leading docblock --
+  // docblockAbove deliberately refuses to reuse that one for symbol-level
+  // attribution (see leadingDocblock's own file-granularity job), same as
+  // every other findTestOnlyExports fixture in this file does.
+  const prodText = [
+    'const noop = 1;',
+    '',
+    '/**',
+    ' * @public',
+    ' */',
+    'export function helper2(): void {}',
+  ].join('\n');
+  const testText = "import { helper2 } from './public-export';\nhelper2();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyExports([prodFile], [testFile], texts);
+  assert.equal(result.violations.length, 0);
+  assert.deepEqual(result.publicExempt, [`${prodFile}:helper2`]);
+});
+
+test('36. findTestOnlyMembers: a bare @public member is publicExempt, not a violation', () => {
+  const prodFile = 'src/public-member.ts';
+  const testFile = 'src/public-member.test.ts';
+  const prodText = [
+    'export class PublicApi {',
+    '  /**',
+    '   * @public',
+    '   */',
+    '  helper3(): void {}',
+    '}',
+  ].join('\n');
+  const testText = "import { PublicApi } from './public-member';\nnew PublicApi().helper3();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.length, 0);
+  assert.deepEqual(result.publicExempt, [`${prodFile}:PublicApi.helper3`]);
 });
