@@ -120,6 +120,11 @@
       "vitepress": {
         "entry": ["docs/.vitepress/config.ts", "docs/.vitepress/theme/index.ts"]
       }
-    }
+    },
+    "apps/discord-worker": { "includeEntryExports": true },
+    "apps/moderation-worker": { "includeEntryExports": true },
+    "apps/oauth": { "includeEntryExports": true },
+    "apps/presets-api": { "includeEntryExports": true },
+    "apps/image-worker": { "includeEntryExports": true }
   }
 }

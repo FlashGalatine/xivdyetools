@@ -53,6 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the only two names in that `@deprecated` block with no importer. Fifteen re-exports remain; the
   block's "removed in the next major version" promise is still outstanding for those.
 
+This app is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded into
+`lint`; root `knip.jsonc`). It immediately caught one more: `createMockRequest`
+(`tests/test-utils.ts`), a request-builder test helper with no importer across the suite.
+
 ### Changed
 
 - **Schema: `moderation_log.preset_id` is nullable and the table carries `target_discord_id`** (docs/audits/2026-08-29-security, FINDING-018 — migration `0013_moderation_log_user_actions.sql`, **hand-run**, see its header). A ban is a user-level action with no preset, so `preset_id NOT NULL` made it impossible to log one: `xivdyetools-moderation-worker` wrote `banned_users` and flipped the author's `approved` presets to `hidden` without leaving a single row here, and a moderator looking at `GET /api/v1/moderation/:presetId/history` had no way to see why a preset had disappeared from the gallery. The rows are written by moderation-worker 1.6.0 itself, in the same atomic batch as the ban — one `ban` / `unban` per user action plus one `hide` / `restore` per preset it actually flips — so **no presets-api code changed and no presets-api deploy is required**; run the migration before deploying moderation-worker 1.6.0. Reading side effects: `/moderation/:presetId/history` (filters on `preset_id`) now also returns the `hide` / `restore` rows that explain a hidden preset, and `/moderation/stats`'s `actions_last_week` counts the ban-related rows like any other. Existing rows are unchanged — the rebuild copies every one of them, `target_discord_id` is NULL on all of them, and the three indexes are re-created. `@xivdyetools/types`' `ModerationLogEntry` still types `preset_id` as `string` and `action` as the five old values; widening it is tracked separately.

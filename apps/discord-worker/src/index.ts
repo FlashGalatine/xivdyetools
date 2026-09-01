@@ -12,6 +12,7 @@ import { cors } from 'hono/cors';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env, DiscordInteraction } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
+import type { GitHubPushPayload } from './types/github.js';
 import {
   verifyDiscordRequest,
   unauthorizedResponse,
@@ -531,9 +532,9 @@ app.post('/webhooks/github', async (c) => {
   }
 
   // Parse payload
-  let payload: import('./types/github.js').GitHubPushPayload;
+  let payload: GitHubPushPayload;
   try {
-    payload = JSON.parse(rawBody) as import('./types/github.js').GitHubPushPayload;
+    payload = JSON.parse(rawBody) as GitHubPushPayload;
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }

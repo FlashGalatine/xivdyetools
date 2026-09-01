@@ -23,6 +23,11 @@ No route, token or D1 behaviour changes.
   re-exports go "in the next major version" is still outstanding for the other nine; finishing it
   means rewriting their local imports to `@xivdyetools/types`.
 
+This app is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded into
+`lint`; root `knip.jsonc`). It immediately caught one more: `createBrokenProductionEnv`
+(`src/__tests__/mocks/cloudflare-test.ts`), a `Partial<Env>` test fixture with no importer
+anywhere in the suite.
+
 ## [3.0.0] - 2026-08-30
 
 Security audit remediation (docs/audits/2026-08-29-security, Sprint 2: FINDING-001 / 002 / 003 / 010 / 012 / 013 / 022 / 023). **Major bump:** `/auth/refresh` removed; `orig_iat`, `xivauth_id` and `primary_character` are no longer minted; `users.avatar_url` and the `xivauth_characters` table are dropped by a hand-run migration — no known client used any of them.

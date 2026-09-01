@@ -28,6 +28,12 @@ moderation-worker's first dead-code pass. No behaviour change.
   `services/ban-service.ts`.
 - The `discord-interactions` devDependency. Nothing imported it; the CLAUDE.md line claiming
   `scripts/register-commands.ts` used it was wrong — that script imports only `dotenv/config`.
+
+This app is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded into
+`lint`; root `knip.jsonc`). It immediately caught three more: `DiscordVerificationResult`,
+`DiscordVerifyOptions` and their alias `VerificationResult`, all re-exported types in
+`utils/verify.ts` that no file in this app imports — `index.ts` only pulls the three verification
+*functions* (`verifyDiscordRequest`, `unauthorizedResponse`, `badRequestResponse`) from it.
 - Twelve exported helpers with no production call site (DEAD-014, 191 lines), spread across six
   files this worker copied from discord-worker: `autocompleteResponse`, `embedResponse`,
   `infoEmbed`, `hexToDiscordColor` (`utils/response.ts`); `sendFollowUp`, `deleteOriginalResponse`

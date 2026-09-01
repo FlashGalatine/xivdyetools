@@ -62,33 +62,3 @@ export function createMockEnv(overrides: Partial<Env> = {}): Env {
     ...overrides,
   };
 }
-
-// ============================================
-// PROJECT-SPECIFIC: REQUEST HELPERS
-// ============================================
-
-/**
- * Create a mock request for testing handlers
- */
-export function createMockRequest(
-  method: string,
-  url: string,
-  options: {
-    headers?: Record<string, string>;
-    body?: unknown;
-  } = {},
-): Request {
-  const init: RequestInit = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  };
-
-  if (options.body && method !== 'GET') {
-    init.body = JSON.stringify(options.body);
-  }
-
-  return new Request(url, init);
-}

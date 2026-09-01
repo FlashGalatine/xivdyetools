@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   discord-worker and never gained a caller here; dimension checks run through
   `validators.ts`'s header path instead. No behaviour change on `/extract` or `/thumbnail`.
 
+This app is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded into
+`lint`; root `knip.jsonc`) — clean on first run, no unused exports.
+
 ## [1.2.0] - 2026-08-30
 
 Security audit remediation (docs/audits/2026-08-29-security, FINDING-023). Minor bump: the
