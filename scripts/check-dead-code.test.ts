@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  attributeLinesToBlockFrames,
   attributeLinesToBlocks,
   declarationLines,
   docblockAbove,
@@ -1449,4 +1450,83 @@ test('55. declarationLines: a backtick inside a regex literal desyncs the mask, 
     result.violations.some((v) => v.name === 'afterRegex'),
     true,
   );
+});
+
+// ============================================================================
+// fix-7: member candidacy is depth-aware — a statement inside a method body
+// is not a declaration
+// ============================================================================
+
+test('56. findTestOnlyMembers: a bare call statement inside a method body is not a member candidate', () => {
+  // The live shape this fixes: apps/web-app/src/services/keyboard-service.ts
+  // calls the imported free function `showShortcutsPanel()` from inside
+  // `handleKeyDown`'s body, and its test spies on the module
+  // (`expect(shortcutsPanel.showShortcutsPanel).toHaveBeenCalled()`). The
+  // indentation-only MEMBER_DECL matched the call statement, attribution put
+  // it on the enclosing class, and the spy's property access satisfied the
+  // dotted reference pattern -- inventing `KeyboardService.showShortcutsPanel`,
+  // a member that does not exist.
+  const prodFile = 'src/nested-call.ts';
+  const helperFile = 'src/helper.ts';
+  const testFile = 'src/nested-call.test.ts';
+  const prodText = [
+    "import { helper } from './helper';",
+    'export class A {',
+    '  real(): void {',
+    // Six spaces deep, inside a method body: a statement, not a declaration.
+    '    helper();',
+    '  }',
+    '',
+    '  later(): void {}',
+    '}',
+  ].join('\n');
+  const helperText = 'export function helper(): void {}';
+  const testText = [
+    "import { A } from './nested-call';",
+    "import * as mod from './helper';",
+    'new A().real();',
+    'new A().later();',
+    'expect(mod.helper).toHaveBeenCalled();',
+  ].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [helperFile, helperText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile, helperFile], [testFile], texts);
+  // Positive controls: both real members are still candidates -- including
+  // `later`, declared AFTER the method whose body holds the nested call, which
+  // is only reachable if the brace walk returns to the class body's own depth.
+  assert.equal(
+    result.violations.some((v) => v.name === 'A.real'),
+    true,
+  );
+  assert.equal(
+    result.violations.some((v) => v.name === 'A.later'),
+    true,
+  );
+  // The phantom: `helper` must not appear under ANY key -- neither qualified
+  // (`A.helper`) nor via the name-only `null`-attribution fallback (`helper`).
+  const everything = namesEverywhere(result);
+  assert.deepEqual(
+    everything.filter((n) => /(?:^|[.:])helper$/.test(n)),
+    [],
+  );
+});
+
+test('57. attributeLinesToBlockFrames: direct members vs nested statements', () => {
+  const lines = ['export class A {', '  real(): void {', '    helper();', '  }', '}'];
+  const frames = attributeLinesToBlockFrames(lines);
+  // The class's own header line is outside its body -- the block opens on the
+  // `{` at the END of the per-character walk of that line.
+  assert.equal(frames[0], null);
+  // A member declaration sits at the class body's own depth ...
+  assert.deepEqual(frames[1], { name: 'A', direct: true });
+  // ... while a statement inside that member's body is one brace deeper.
+  assert.deepEqual(frames[2], { name: 'A', direct: false });
+  // The name-only contract `attributeLinesToBlocks` publishes is unchanged:
+  // both lines are still textually enclosed by A.
+  const blocks = attributeLinesToBlocks(lines);
+  assert.equal(blocks[1], 'A');
+  assert.equal(blocks[2], 'A');
 });

@@ -657,8 +657,9 @@ const TYPE_BLOCK_RE =
  * leading whitespace at all. In this prettier-formatted repo, every real
  * class, interface, function, or variable declaration at module scope is
  * printed flush left; anything indented is nested inside something else.
- * Used only by `attributeLinesToBlocks` to detect and bound a brace-tracking
- * desync — never to attribute a member or infer module structure on its own.
+ * Used only by `attributeLinesToBlockFrames` to detect and bound a
+ * brace-tracking desync — never to attribute a member or infer module
+ * structure on its own.
  */
 const TOP_LEVEL_RESYNC_RE =
   /^(?:class\b|interface\b|export\b|function\b|const\b|let\b|var\b|type\b|enum\b|import\b|@[A-Za-z_$])/;
@@ -694,8 +695,8 @@ const TOP_LEVEL_RESYNC_RE =
  * Regex literals are deliberately not masked — telling a regex `/` from a
  * division `/` requires knowing the preceding token, which this scanner does
  * not attempt (a parser's job). A `{` inside one (`/\{/`) can still desync a
- * brace walk built on this mask; `attributeLinesToBlocks`'s column-0 resync
- * is what bounds that residual gap, not this function. A *quote or backtick*
+ * brace walk built on this mask; `attributeLinesToBlockFrames`'s column-0
+ * resync is what bounds that residual gap, not this function. A *quote or backtick*
  * inside one is the worse case — `` /`([^`]+)`/g `` opens a span that runs
  * past the end of the line — which is what `scanSource`'s `clean` flag exists
  * to detect; see `declarationLines`.
@@ -874,13 +875,29 @@ function scanSource(text: string): { masked: string; clean: boolean } {
  * never worse than the checker has always been — while the other ~500 files
  * still get the stricter masked reading.
  *
- * `attributeLinesToBlocks` deliberately does NOT take this fallback: raw
+ * `attributeLinesToBlockFrames` (and so `attributeLinesToBlocks`, its
+ * name-only projection) deliberately does NOT take this fallback: raw
  * braces are precisely what masking fixed for the brace walk, and it carries
  * its own bound for a desync (the column-0 resync).
  */
 export function declarationLines(text: string): string[] {
   const { masked, clean } = scanSource(text);
   return (clean ? masked : text).split('\n');
+}
+
+/**
+ * One line's attribution: the innermost enclosing class/interface block's
+ * `name`, plus whether the line sits at that block's OWN body depth
+ * (`direct`) or is nested deeper inside something within it — a method body,
+ * a control-flow block, an object literal.
+ *
+ * `direct` is the bit that separates a member *declaration* from a
+ * *statement*: both match `MEMBER_DECL`'s indentation heuristic, only the
+ * first is a member. See `findTestOnlyMembers`, its sole consumer.
+ */
+export interface BlockFrame {
+  name: string;
+  direct: boolean;
 }
 
 /**
@@ -892,6 +909,10 @@ export function declarationLines(text: string): string[] {
  * `blocks[i]` is the enclosing type's name, or `null` for a line outside any
  * tracked block (module scope, or nested inside some other construct
  * entirely — object-literal methods, local functions).
+ *
+ * This is the name-only projection of `attributeLinesToBlockFrames`, kept as
+ * its own export because "which type encloses this line" is a complete
+ * question in its own right and several tests assert on exactly that answer.
  *
  * Persisting a brace count across a whole file is exactly what makes it
  * fragile — a single stray `{`/`}` anywhere in the file can desync every
@@ -924,6 +945,16 @@ export function declarationLines(text: string): string[] {
  *    be in. This bounds any residual desync to the remainder of one class
  *    body rather than letting it cascade through the rest of the file.
  *
+ * Known limit, same residual gap seen from the `direct` bit's side: an
+ * unbalanced brace in an unmasked regex literal inside a class body
+ * (`/\{/`) inflates `depth` without a matching close, so every member
+ * declared *after* it in that class reads as nested rather than direct and
+ * `findTestOnlyMembers` drops it as a candidate — until the next column-0
+ * declaration resyncs. The direction is a false NEGATIVE (a missed finding,
+ * never a false accusation of a member that does not exist), and it is
+ * bounded to the remainder of that one class, exactly as (b) bounds
+ * attribution itself.
+ *
  * A `class`/`interface` line does not open its own block until the first `{`
  * at or after it is reached, so a multi-line header (`class Foo\n extends
  * Bar\n{`) still attributes correctly — it's the brace, not the declaration
@@ -934,8 +965,29 @@ export function declarationLines(text: string): string[] {
  * so they can never close it early.
  */
 export function attributeLinesToBlocks(lines: string[]): (string | null)[] {
+  return attributeLinesToBlockFrames(lines).map((f) => f?.name ?? null);
+}
+
+/**
+ * `attributeLinesToBlocks`'s walk, carrying the one extra bit that walk
+ * already computes and used to discard: whether the line sits at its
+ * enclosing block's OWN body depth (`direct: true`) or is nested deeper
+ * inside it (`direct: false`). See `BlockFrame`, and
+ * `attributeLinesToBlocks` above for the brace-tracking design, its two
+ * desync defenses, and the block-open/close rules — all of which live here
+ * and are unchanged by the extra bit.
+ *
+ * `direct` is measured at the START of line `i`, before the line's own
+ * characters are walked, for the same reason `blocks[i]` is: a line is
+ * attributed to the state it *opens* in, not the state its own braces leave
+ * behind. So `export class A {` is `null` (its block opens on that line's own
+ * `{`, at its end), the `  member() {` line that follows is `direct` at A's
+ * body depth, and the `    stmt();` inside that member's body is one deeper
+ * and is not.
+ */
+export function attributeLinesToBlockFrames(lines: string[]): (BlockFrame | null)[] {
   const maskedLines = maskSource(lines.join('\n')).split('\n');
-  const blocks: (string | null)[] = new Array(lines.length).fill(null);
+  const blocks: (BlockFrame | null)[] = new Array(lines.length).fill(null);
   const stack: { openDepth: number; name: string }[] = [];
   let depth = 0;
   let pendingName: string | null = null;
@@ -954,7 +1006,8 @@ export function attributeLinesToBlocks(lines: string[]): (string | null)[] {
       depth = 0;
       pendingName = null;
     }
-    blocks[i] = stack.length > 0 ? stack[stack.length - 1].name : null;
+    const top = stack.length > 0 ? stack[stack.length - 1] : null;
+    blocks[i] = top === null ? null : { name: top.name, direct: depth === top.openDepth };
     if (pendingName === null) {
       const m = TYPE_BLOCK_RE.exec(line);
       if (m) pendingName = m[1];
@@ -999,18 +1052,35 @@ export function attributeLinesToBlocks(lines: string[]): (string | null)[] {
  * care whether a matching line belongs to that exported class, a second
  * *non-exported* class in the same file, or an *interface*'s method
  * signature (which has the identical `name(...)` shape as an implementation,
- * just terminated by `;` instead of `{`) — so declarations are first
- * attributed to their enclosing type via `attributeLinesToBlocks`, and
- * grouped by *(declaring type, name)*, not by name alone. Two unrelated
- * classes' same-named methods — or an interface signature and the class
- * implementing it — are never merged: each gets its own verdict, so a
- * `@testonly`/`@entrypoint`/`@public` tag on one can never silently exempt
- * the other. A declaration `attributeLinesToBlocks` cannot place inside any
- * tracked block (attribution returns `null`) falls back to the pre-fix,
- * file-flat behavior — grouped by name alone across the whole file — rather
- * than being dropped; in this repo today every declaration matched by
- * `MEMBER_DECL` lands inside a tracked block, so that fallback is currently
- * unexercised.
+ * just terminated by `;` instead of `{`) — nor, for the same reason, whether
+ * it is a *declaration* at all rather than a call statement sitting at the
+ * same indentation inside some method's body. So lines are first attributed
+ * via `attributeLinesToBlockFrames`, which answers both questions at once,
+ * and candidacy follows its two bits:
+ *
+ * - **Attributed and `direct`** (the line sits at its block's own body
+ *   depth) — a real member. Grouped by *(declaring type, name)*, not by name
+ *   alone, so two unrelated classes' same-named methods — or an interface
+ *   signature and the class implementing it — are never merged: each gets
+ *   its own verdict, and a `@testonly`/`@entrypoint`/`@public` tag on one can
+ *   never silently exempt the other.
+ * - **Attributed but nested deeper** — a statement inside a member's body,
+ *   typically a bare call to an imported or module-level free function.
+ *   Skipped: it declares nothing. Without this, `keyboard-service.ts`'s
+ *   `showShortcutsPanel();` — a call to the function imported from
+ *   `@components/shortcuts-panel`, six spaces deep inside `handleKeyDown` —
+ *   became a candidate `KeyboardService.showShortcutsPanel`, a member that
+ *   does not exist, and its test's spy assertion on the *module*
+ *   (`expect(shortcutsPanel.showShortcutsPanel).toHaveBeenCalled()`)
+ *   supplied the `.showShortcutsPanel` test reference that made it a
+ *   finding.
+ * - **Not attributable to any tracked block** (attribution returns `null`) —
+ *   falls back to the pre-fix, file-flat behavior, grouped by name alone
+ *   across the whole file, rather than being dropped. Deliberately
+ *   conservative and unchanged by the depth rule: with no block there is no
+ *   body depth to compare against, so nothing can be judged nested. In this
+ *   repo today every declaration matched by `MEMBER_DECL` lands inside a
+ *   tracked block, so that fallback is currently unexercised.
  *
  * Usage is checked as `.name` — a word-boundary match for the
  * property-access form every real call site has to use, whatever the
@@ -1097,7 +1167,7 @@ export function findTestOnlyMembers(
     const text = texts.get(file) ?? '';
     const lines = text.split('\n');
     // Both scans below decide CANDIDACY, so both read the masked view (the
-    // file docblock's invariant). `attributeLinesToBlocks` masks `lines`
+    // file docblock's invariant). `attributeLinesToBlockFrames` masks `lines`
     // itself rather than taking this array: `maskSource` is a pure function of
     // the text, so the second pass costs one scan and nothing else, and
     // keeping it internal leaves that function's signature and its tested
@@ -1109,7 +1179,7 @@ export function findTestOnlyMembers(
     // which a commented-out `export class Old {}` would otherwise let in.
     if (!candidateLines.some((l) => CLASS_DECL.test(l))) continue;
 
-    const blockOfLine = attributeLinesToBlocks(lines);
+    const frameOfLine = attributeLinesToBlockFrames(lines);
     const importingTests = [...(testImportersOf.get(file) ?? [])];
 
     const byGroup = new Map<
@@ -1124,7 +1194,14 @@ export function findTestOnlyMembers(
       // Masked, so `private` has to be a real modifier: a trailing
       // `// private helper` comment no longer skips a public member.
       if (/\bprivate\b|\bprotected\b/.test(line) || name.startsWith('#')) return;
-      const declaringType = blockOfLine[i];
+      const frame = frameOfLine[i];
+      // Inside a tracked block but BELOW its own body depth: a statement in
+      // some member's body, not a declaration. MEMBER_DECL is indentation
+      // plus `identifier(`, which a bare call statement satisfies exactly as
+      // well as a real member does — brace depth is the only thing that tells
+      // them apart. Skip it rather than inventing a member.
+      if (frame !== null && !frame.direct) return;
+      const declaringType = frame === null ? null : frame.name;
       // A declaration this pass could not attribute to any tracked
       // class/interface block falls back to the pre-fix, file-flat grouping
       // (name alone) rather than being silently dropped.
