@@ -3207,7 +3207,7 @@ describe('PresetsHandler', () => {
             return { waitUntilPromises, mockExecutionCtx };
         }
 
-        function submit(
+        async function submit(
             targetEnv: Env,
             ctx: { waitUntil: (p: Promise<unknown>) => void; passThroughOnException: () => void }
         ): Promise<Response> {
