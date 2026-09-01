@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  attributeLinesToBlocks,
   docblockAbove,
   entrypointReason,
   findOrphanModules,
@@ -22,8 +23,11 @@ import {
   hasBareTag,
   isPublic,
   leadingDocblock,
+  maskSource,
+  subsumeMembersByOwner,
   testOnlyReason,
 } from './check-dead-code.js';
+import type { MemberFindings } from './check-dead-code.js';
 
 type DocCase = {
   name: string;
@@ -864,4 +868,296 @@ test('36. findTestOnlyMembers: a bare @public member is publicExempt, not a viol
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
   assert.equal(result.violations.length, 0);
   assert.deepEqual(result.publicExempt, [`${prodFile}:PublicApi.helper3`]);
+});
+
+// ============================================================================
+// fix-2: attributeLinesToBlocks must not desync on strings/comments/templates
+// (item 1a), must resync on a column-0 declaration (item 1b), and the
+// per-member subsumption decision is directly testable (item 2)
+// ============================================================================
+
+test("37. findTestOnlyMembers: a stray '{' inside a string literal in class A does not merge its member with class B's", () => {
+  const prodFile = 'src/string-brace.ts';
+  const testFile = 'src/string-brace.test.ts';
+  const prodText = [
+    'export class A {',
+    '  helper(): void {',
+    "    const marker = '{';",
+    '  }',
+    '',
+    '  foo(): void {}',
+    '}',
+    '',
+    'class B {',
+    '  /**',
+    '   * @testonly only B is meant to be exempt',
+    '   */',
+    '  foo(): void {}',
+    '}',
+  ].join('\n');
+  const testText = ["import { A } from './string-brace';", 'new A().foo();'].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  // Without masking, the stray '{' would desync the brace walk, popping A's
+  // stack entry early -- A's own, untagged foo would then fall into the
+  // file-flat fallback and share a verdict with B's tagged foo.
+  assert.equal(
+    result.violations.some((v) => v.name === 'A.foo'),
+    true,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:B.foo`),
+    true,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:A.foo`),
+    false,
+  );
+  assert.equal(
+    result.violations.some((v) => v.name === 'foo'),
+    false,
+  );
+});
+
+test("38. findTestOnlyMembers: a stray '}' inside a line comment in class A does not merge its member with class B's", () => {
+  const prodFile = 'src/comment-brace.ts';
+  const testFile = 'src/comment-brace.test.ts';
+  const prodText = [
+    'export class A {',
+    '  helper(): void {',
+    '    // }',
+    '  }',
+    '',
+    '  foo(): void {}',
+    '}',
+    '',
+    'class B {',
+    '  /**',
+    '   * @testonly only B is meant to be exempt',
+    '   */',
+    '  foo(): void {}',
+    '}',
+  ].join('\n');
+  const testText = ["import { A } from './comment-brace';", 'new A().foo();'].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(
+    result.violations.some((v) => v.name === 'A.foo'),
+    true,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:B.foo`),
+    true,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:A.foo`),
+    false,
+  );
+  assert.equal(
+    result.violations.some((v) => v.name === 'foo'),
+    false,
+  );
+});
+
+test('39. findTestOnlyMembers: a Lit template with a string-embedded "{" in its ${} does not desync attribution', () => {
+  const prodFile = 'src/template-brace.ts';
+  const testFile = 'src/template-brace.test.ts';
+  const prodText = [
+    "import { html } from 'lit';",
+    '',
+    'export class A {',
+    '  render(x: boolean) {',
+    "    return html`<div>${x ? '{' : ''}</div>`;",
+    '  }',
+    '',
+    '  foo(): void {}',
+    '}',
+    '',
+    'class B {',
+    '  /**',
+    '   * @testonly only B is meant to be exempt',
+    '   */',
+    '  foo(): void {}',
+    '}',
+  ].join('\n');
+  const testText = ["import { A } from './template-brace';", 'new A().foo();'].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(
+    result.violations.some((v) => v.name === 'A.foo'),
+    true,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:B.foo`),
+    true,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:A.foo`),
+    false,
+  );
+  assert.equal(
+    result.violations.some((v) => v.name === 'foo'),
+    false,
+  );
+});
+
+test('40. attributeLinesToBlocks: masking a multi-line block comment preserves line numbers, so a member after it attributes to its true line', () => {
+  const lines = [
+    'export class A {',
+    '  /*',
+    '   * a multi-line',
+    '   * block comment',
+    '   * with a stray } inside',
+    '   */',
+    '  foo(): void {}',
+    '}',
+  ];
+  const masked = maskSource(lines.join('\n')).split('\n');
+  assert.equal(masked.length, lines.length);
+  // The stray brace inside the comment is blanked, not left for the brace
+  // count to trip over.
+  assert.equal(/[{}]/.test(masked[4]), false);
+  const blocks = attributeLinesToBlocks(lines);
+  // foo's true line (index 6) is correctly attributed to A -- not shifted by
+  // the 5-line comment above it, and not desynced by the brace inside it.
+  assert.equal(blocks[6], 'A');
+});
+
+test('41. attributeLinesToBlocks: a regex literal desyncs the brace count, but the column-0 resync clears the stale stack on the next declaration', () => {
+  const lines = [
+    'export class A {',
+    '  pattern = /\\{/;',
+    '  foo(): void {}',
+    '}',
+    '',
+    'export class B {',
+    '  bar(): void {}',
+    '}',
+  ];
+  const blocks = attributeLinesToBlocks(lines);
+  assert.equal(blocks[2], 'A'); // foo, before the regex-induced desync
+  // B's own declaration line (index 5) is the discriminating assertion: an
+  // unmatched '{' inside the regex leaves A's stack entry stuck open (A's
+  // own real closing brace at index 3 can't pop it, being one level short),
+  // so without the resync this reads 'A' (stale) here, not null. bar()
+  // itself (index 6) attributes to 'B' either way in this two-class shape --
+  // stack-top semantics already put whichever class is pushed most recently
+  // on top, resync or not -- so this construction alone would not catch a
+  // missing resync through member attribution; the resync's effect is
+  // visible on the declaration line's own attribution, which is what this
+  // asserts directly.
+  assert.equal(blocks[5], null);
+  assert.equal(blocks[6], 'B'); // bar, still correctly attributed to B
+});
+
+test('42. subsumeMembersByOwner: a class-level @testonly exemption subsumes its own member violation', () => {
+  const symbolVerdictedNames = new Set(['src/foo.ts:Foo']);
+  const memberFindings: MemberFindings = {
+    violations: [{ kind: 'member', file: 'src/foo.ts', name: 'Foo.bar', testRefs: 1 }],
+    testOnlyExempt: [],
+    entrypointExempt: [],
+    publicExempt: [],
+  };
+  const result = subsumeMembersByOwner(memberFindings, symbolVerdictedNames);
+  assert.equal(result.violations.length, 0);
+});
+
+test("43. subsumeMembersByOwner: class A verdicted does not subsume class B's same-named member", () => {
+  const symbolVerdictedNames = new Set(['src/two.ts:A']); // only A is verdicted, not B
+  const memberFindings: MemberFindings = {
+    violations: [
+      { kind: 'member', file: 'src/two.ts', name: 'A.reset', testRefs: 1 },
+      { kind: 'member', file: 'src/two.ts', name: 'B.reset', testRefs: 1 },
+    ],
+    testOnlyExempt: [],
+    entrypointExempt: [],
+    publicExempt: [],
+  };
+  const result = subsumeMembersByOwner(memberFindings, symbolVerdictedNames);
+  assert.equal(
+    result.violations.some((v) => v.name === 'A.reset'),
+    false,
+  );
+  assert.equal(
+    result.violations.some((v) => v.name === 'B.reset'),
+    true,
+  );
+});
+
+test('44. subsumeMembersByOwner: a class-level violation (not just an exemption) also subsumes its own members', () => {
+  // symbolVerdictedNames unions export-level VIOLATIONS with all three exempt
+  // categories in main() -- confirm a violation-sourced entry subsumes a
+  // member exactly like an exempt-sourced one does.
+  const symbolVerdictedNames = new Set(['src/baz.ts:Baz']);
+  const memberFindings: MemberFindings = {
+    violations: [{ kind: 'member', file: 'src/baz.ts', name: 'Baz.qux', testRefs: 1 }],
+    testOnlyExempt: ['src/baz.ts:Baz.quux'],
+    entrypointExempt: [],
+    publicExempt: [],
+  };
+  const result = subsumeMembersByOwner(memberFindings, symbolVerdictedNames);
+  assert.equal(result.violations.length, 0);
+  assert.equal(result.testOnlyExempt.length, 0);
+});
+
+test("45. findTestOnlyMembers: a stray '}' inside a string literal (not just a comment) does not pop class A early either", () => {
+  // Complements #37/#39: a stray '{' inside a string/template leaves an
+  // unmatched OPEN brace, which (empirically verified while writing this
+  // test suite -- see the report) is self-correcting for a same-class
+  // member even without masking, because the enclosing class's own frame
+  // just never pops until the walk hits the next class's declaration. A
+  // stray '}' is the genuinely dangerous direction: it can pop the
+  // enclosing class's stack entry EARLY, at the moment depth coincidentally
+  // matches that class's own openDepth -- exactly #38's comment case, here
+  // reproduced inside a string literal instead of a comment, to confirm
+  // masking protects strings against this direction too, not just comments.
+  const prodFile = 'src/string-close-brace.ts';
+  const testFile = 'src/string-close-brace.test.ts';
+  const prodText = [
+    'export class A {',
+    '  helper(): void {',
+    "    const marker = '}';",
+    '  }',
+    '',
+    '  foo(): void {}',
+    '}',
+    '',
+    'class B {',
+    '  /**',
+    '   * @testonly only B is meant to be exempt',
+    '   */',
+    '  foo(): void {}',
+    '}',
+  ].join('\n');
+  const testText = ["import { A } from './string-close-brace';", 'new A().foo();'].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(
+    result.violations.some((v) => v.name === 'A.foo'),
+    true,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:B.foo`),
+    true,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:A.foo`),
+    false,
+  );
+  assert.equal(
+    result.violations.some((v) => v.name === 'foo'),
+    false,
+  );
 });

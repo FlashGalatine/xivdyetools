@@ -467,6 +467,16 @@ const EXPORT_DECL = /^export\s+(?:async\s+)?(?:function|const|let|class)\s+([A-Z
 const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
+ * The file portion of a `${file}:${name}` exempt-array entry (the LAST colon
+ * splits them, since a qualified member name can itself contain one — e.g. a
+ * `file.ts:` prefix followed by BaseLogger's own `timeAsync`, dot-joined).
+ */
+const fileOf = (entry: string): string => entry.slice(0, entry.lastIndexOf(':'));
+
+/** The name portion of a `${file}:${name}` exempt-array entry — see `fileOf`. */
+const nameOf = (entry: string): string => entry.slice(entry.lastIndexOf(':') + 1);
+
+/**
  * Exported-symbol granularity: a module-level `function`/`const`/`let`/`class`
  * export that only test files reference by name. This is the gap file-level
  * reachability can't see — the test import already makes the *file* reachable,
@@ -582,13 +592,220 @@ const TYPE_BLOCK_RE =
   /^(?:export\s+)?(?:default\s+)?(?:abstract\s+)?(?:class|interface)\s+([A-Za-z_]\w*)/;
 
 /**
+ * A top-level declaration keyword or decorator sitting at column 0 — no
+ * leading whitespace at all. In this prettier-formatted repo, every real
+ * class, interface, function, or variable declaration at module scope is
+ * printed flush left; anything indented is nested inside something else.
+ * Used only by `attributeLinesToBlocks` to detect and bound a brace-tracking
+ * desync — never to attribute a member or infer module structure on its own.
+ */
+const TOP_LEVEL_RESYNC_RE =
+  /^(?:class\b|interface\b|export\b|function\b|const\b|let\b|var\b|type\b|enum\b|import\b|@[A-Za-z_$])/;
+
+/**
+ * Blanks out comments, string literals, and template literals in `text` —
+ * replacing every character inside them with a space, except newlines
+ * (always left untouched, so line numbers and column positions never shift)
+ * — so a downstream brace count only ever sees a real code brace, never one
+ * hiding inside a comment (`// see }`), a string (`'{'`), or a Lit
+ * `html`…`` / `css`…`` template. A hand-written character scanner with a
+ * small state stack, not a parser or a full-language tokenizer: the only
+ * structure it tracks is which of these spans — line comment, block comment,
+ * `'...'`, `"..."`, `` `...` ``, or a template's `${…}` — the scanner is
+ * currently inside, nested as deep as the source actually nests them (a
+ * template's `${…}` can itself contain a string, a nested template, or a
+ * comment, and this repo's Lit `html`…`` templates do exactly that: see the
+ * dedicated test for `` html`<div>${x ? '{' : ''}</div>` `` ).
+ *
+ * A template literal is masked in full, `${…}` included — nothing inside a
+ * template can be a real class/interface boundary, so there is no reason to
+ * leave its interpolated expression's own braces unmasked. The scanner only
+ * needs enough `${…}` awareness to find the matching `}` that ends it (so a
+ * nested object literal like `${fn({x: 1})}` does not close the
+ * interpolation early) and to keep recognizing nested strings/templates/
+ * comments inside it (so a stray backtick or brace inside THOSE does not end
+ * the interpolation, or the outer template, early either).
+ *
+ * Regex literals are deliberately not masked — telling a regex `/` from a
+ * division `/` requires knowing the preceding token, which this scanner does
+ * not attempt (a parser's job). A `{` inside one (`/\{/`) can still desync a
+ * brace walk built on this mask; `attributeLinesToBlocks`'s column-0 resync
+ * is what bounds that residual gap, not this function.
+ */
+export function maskSource(text: string): string {
+  const chars = [...text];
+  const n = chars.length;
+
+  type Frame =
+    | { kind: 'code' }
+    | { kind: 'templateExpr'; depth: number }
+    | { kind: 'template' }
+    | { kind: 'lineComment' }
+    | { kind: 'blockComment' }
+    | { kind: 'singleQuote' }
+    | { kind: 'doubleQuote' };
+
+  const stack: Frame[] = [{ kind: 'code' }];
+  const blank = (idx: number): void => {
+    if (chars[idx] !== '\n') chars[idx] = ' ';
+  };
+
+  let i = 0;
+  while (i < n) {
+    const top = stack[stack.length - 1];
+    const ch = chars[i];
+
+    if (top.kind === 'lineComment') {
+      if (ch === '\n') {
+        stack.pop();
+      } else {
+        blank(i);
+      }
+      i += 1;
+      continue;
+    }
+
+    if (top.kind === 'blockComment') {
+      if (ch === '*' && chars[i + 1] === '/') {
+        blank(i);
+        blank(i + 1);
+        stack.pop();
+        i += 2;
+      } else {
+        blank(i);
+        i += 1;
+      }
+      continue;
+    }
+
+    if (top.kind === 'singleQuote' || top.kind === 'doubleQuote') {
+      const quote = top.kind === 'singleQuote' ? "'" : '"';
+      if (ch === '\n') {
+        // An unescaped newline can't appear in a real string literal --
+        // bail out defensively rather than let one malformed file cascade
+        // the mask across the rest of it.
+        stack.pop();
+        i += 1;
+      } else if (ch === '\\' && i + 1 < n) {
+        blank(i);
+        blank(i + 1);
+        i += 2;
+      } else if (ch === quote) {
+        blank(i);
+        stack.pop();
+        i += 1;
+      } else {
+        blank(i);
+        i += 1;
+      }
+      continue;
+    }
+
+    if (top.kind === 'template') {
+      if (ch === '\\' && i + 1 < n) {
+        blank(i);
+        blank(i + 1);
+        i += 2;
+      } else if (ch === '`') {
+        blank(i);
+        stack.pop();
+        i += 1;
+      } else if (ch === '$' && chars[i + 1] === '{') {
+        blank(i);
+        blank(i + 1);
+        stack.push({ kind: 'templateExpr', depth: 1 });
+        i += 2;
+      } else {
+        blank(i);
+        i += 1;
+      }
+      continue;
+    }
+
+    // 'code' (true top level) and 'templateExpr' (inside a template's
+    // `${…}`) share the same recognition of comments/strings/templates;
+    // templateExpr additionally masks every character it sees directly (the
+    // whole template is masked, `${…}` included) and tracks its own brace
+    // depth to know when its `${` is closed by the matching `}`. 'code'
+    // leaves a bare `{`/`}` untouched -- those are real code braces a
+    // downstream brace count must still see.
+    const inExpr = top.kind === 'templateExpr';
+    if (ch === '/' && chars[i + 1] === '/') {
+      if (inExpr) {
+        blank(i);
+        blank(i + 1);
+      }
+      stack.push({ kind: 'lineComment' });
+      i += 2;
+    } else if (ch === '/' && chars[i + 1] === '*') {
+      if (inExpr) {
+        blank(i);
+        blank(i + 1);
+      }
+      stack.push({ kind: 'blockComment' });
+      i += 2;
+    } else if (ch === "'") {
+      if (inExpr) blank(i);
+      stack.push({ kind: 'singleQuote' });
+      i += 1;
+    } else if (ch === '"') {
+      if (inExpr) blank(i);
+      stack.push({ kind: 'doubleQuote' });
+      i += 1;
+    } else if (ch === '`') {
+      if (inExpr) blank(i);
+      stack.push({ kind: 'template' });
+      i += 1;
+    } else if (inExpr && ch === '{') {
+      (top as { kind: 'templateExpr'; depth: number }).depth += 1;
+      blank(i);
+      i += 1;
+    } else if (inExpr && ch === '}') {
+      const frame = top as { kind: 'templateExpr'; depth: number };
+      blank(i);
+      frame.depth -= 1;
+      i += 1;
+      if (frame.depth === 0) stack.pop();
+    } else {
+      if (inExpr) blank(i);
+      i += 1;
+    }
+  }
+
+  return chars.join('');
+}
+
+/**
  * Attributes every line in `lines` to the name of the innermost class or
  * interface block that textually encloses it, by tracking brace depth — a
- * plain per-character count, not a parser, the same heuristic `parenDelta`
- * already uses for decorator argument lists. Returns a parallel array:
+ * plain per-character count, not a parser, the same heuristic class
+ * `parenDelta` uses for decorator argument lists, extended here to persist
+ * across an entire file instead of one line. Returns a parallel array:
  * `blocks[i]` is the enclosing type's name, or `null` for a line outside any
  * tracked block (module scope, or nested inside some other construct
  * entirely — object-literal methods, local functions).
+ *
+ * Persisting a brace count across a whole file is exactly what makes it
+ * fragile — a single stray `{`/`}` anywhere in the file can desync every
+ * line after it — so two defenses keep real code that merely *contains* an
+ * unbalanced-looking brace from corrupting attribution:
+ *
+ * a. The brace walk runs over `maskSource(lines.join('\n'))`, not `lines`
+ *    directly, so a brace inside a comment, string, or template is never
+ *    seen as a real one. `lines` itself (unmasked) is still what
+ *    `TYPE_BLOCK_RE` matches against and what callers use for everything
+ *    else (member-name capture, docblock lookup) — masking only changes
+ *    what the brace *count* sees, never the text this function returns
+ *    positions into.
+ * b. If a `class`/`interface`/`export`/`function`/`const`/`let`/`var`/
+ *    `type`/`enum`/`import`/decorator line sits at column 0
+ *    (`TOP_LEVEL_RESYNC_RE`) while the stack still claims an open block, the
+ *    tracker has desynced — most plausibly from a regex literal, the one
+ *    thing (a) doesn't mask. Resync by discarding the stack and resetting
+ *    depth to 0: a column-0 declaration is by definition not nested in
+ *    anything, so this is exactly the state a correctly-synced walk would
+ *    be in. This bounds any residual desync to the remainder of one class
+ *    body rather than letting it cascade through the rest of the file.
  *
  * A `class`/`interface` line does not open its own block until the first `{`
  * at or after it is reached, so a multi-line header (`class Foo\n extends
@@ -599,19 +816,25 @@ const TYPE_BLOCK_RE =
  * literals) only ever push depth higher before returning to that same level,
  * so they can never close it early.
  */
-function attributeLinesToBlocks(lines: string[]): (string | null)[] {
+export function attributeLinesToBlocks(lines: string[]): (string | null)[] {
+  const maskedLines = maskSource(lines.join('\n')).split('\n');
   const blocks: (string | null)[] = new Array(lines.length).fill(null);
   const stack: { openDepth: number; name: string }[] = [];
   let depth = 0;
   let pendingName: string | null = null;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    if (stack.length > 0 && TOP_LEVEL_RESYNC_RE.test(line)) {
+      stack.length = 0;
+      depth = 0;
+      pendingName = null;
+    }
     blocks[i] = stack.length > 0 ? stack[stack.length - 1].name : null;
     if (pendingName === null) {
       const m = TYPE_BLOCK_RE.exec(line);
       if (m) pendingName = m[1];
     }
-    for (const ch of line) {
+    for (const ch of maskedLines[i] ?? '') {
       if (ch === '{') {
         depth += 1;
         if (pendingName !== null) {
@@ -814,6 +1037,61 @@ export function findTestOnlyMembers(
   return { violations, testOnlyExempt, entrypointExempt, publicExempt };
 }
 
+/** The shape `findTestOnlyMembers` (and `subsumeMembersByOwner`) return. */
+export type MemberFindings = {
+  violations: Violation[];
+  testOnlyExempt: string[];
+  entrypointExempt: string[];
+  publicExempt: string[];
+};
+
+/**
+ * A symbol-level verdict on an exported *class* subsumes member-level
+ * verdicts for that class: tagging or fixing the class handles every member
+ * inside it, so re-reporting each member separately from an already-
+ * verdicted class is redundant noise. This is the mechanism that stops a
+ * class-A tag from leaking onto an unrelated class-B member sharing its
+ * name — extracted out of `main()` and exported specifically so that
+ * property has a direct test, not just a hand-trace.
+ *
+ * Precise per member, not per file: `findTestOnlyMembers` gives every
+ * attributable member a declaring type (reported as `Type.member`), so this
+ * checks each member's OWN declaring type against `symbolVerdictedNames` (a
+ * set of `${file}:${name}` strings — every export-level violation plus all
+ * three of its exempt categories) rather than a file-wide "does this file
+ * have exactly one exported class, and is it verdicted" special case. A
+ * member `findTestOnlyMembers` could not attribute to a declaring type (the
+ * file-flat fallback, `qualifiedName` with no `.`) is never subsumed this
+ * way — `declaringTypeOf` returns `null` for it, and `ownerVerdicted` treats
+ * `null` as "no verdict to inherit," same as an ambiguous owner was never
+ * subsumed under the file-wide rule this replaced.
+ */
+export function subsumeMembersByOwner(
+  memberFindings: MemberFindings,
+  symbolVerdictedNames: ReadonlySet<string>,
+): MemberFindings {
+  const declaringTypeOf = (qualifiedName: string): string | null => {
+    const dot = qualifiedName.indexOf('.');
+    return dot === -1 ? null : qualifiedName.slice(0, dot);
+  };
+  const ownerVerdicted = (file: string, qualifiedName: string): boolean => {
+    const declaringType = declaringTypeOf(qualifiedName);
+    return declaringType !== null && symbolVerdictedNames.has(`${file}:${declaringType}`);
+  };
+  return {
+    violations: memberFindings.violations.filter(
+      (v) => !(v.name && ownerVerdicted(v.file, v.name)),
+    ),
+    testOnlyExempt: memberFindings.testOnlyExempt.filter(
+      (e) => !ownerVerdicted(fileOf(e), nameOf(e)),
+    ),
+    entrypointExempt: memberFindings.entrypointExempt.filter(
+      (e) => !ownerVerdicted(fileOf(e), nameOf(e)),
+    ),
+    publicExempt: memberFindings.publicExempt.filter((e) => !ownerVerdicted(fileOf(e), nameOf(e))),
+  };
+}
+
 function main(): void {
   const all = listTracked();
   const texts = new Map<string, string>();
@@ -842,8 +1120,6 @@ function main(): void {
     ...orphanResult.entrypointExempt,
     ...orphanResult.publicExempt,
   ]);
-  const fileOf = (entry: string): string => entry.slice(0, entry.lastIndexOf(':'));
-  const nameOf = (entry: string): string => entry.slice(entry.lastIndexOf(':') + 1);
   exportResult.violations = exportResult.violations.filter((v) => !fileVerdicted.has(v.file));
   exportResult.testOnlyExempt = exportResult.testOnlyExempt.filter(
     (e) => !fileVerdicted.has(fileOf(e)),
@@ -866,51 +1142,19 @@ function main(): void {
   );
 
   // A symbol-level verdict on an exported *class* subsumes member-level verdicts
-  // for that class: tagging or fixing the class handles every member inside it,
-  // so re-reporting each member separately from an already-verdicted class is
-  // redundant noise. This is precise per member, not per file — fix-1 item 1 gave
-  // findTestOnlyMembers a declaring type for every member it can attribute
-  // (reported as `Type.member`), so subsumption checks each member's OWN
-  // declaring type directly instead of the file-wide "exactly one exported
-  // class" special case this replaces. That special case existed because a
-  // file's single exported class's verdict used to apply to every member
-  // indiscriminately; now that same-named members across unrelated classes are
-  // correctly split into separate findings (item 1), keeping the old file-wide
-  // rule would have reopened cross-class leakage from the opposite direction —
-  // a second, unrelated class's method wrongly subsumed by the first class's
-  // verdict. A member this pass could not attribute to a declaring type (the
-  // file-flat fallback) is never subsumed this way, same as an ambiguous owner
-  // was never subsumed before. No-op against today's data (no symbol-level
-  // violation or exempt name is a class name) — kept for correctness, not
-  // because it changes today's headline.
+  // for that class — see subsumeMembersByOwner's own doc comment for why this
+  // is precise per member rather than a file-wide special case. No-op against
+  // today's data (no symbol-level violation or exempt name is a class name) —
+  // kept for correctness, not because it changes today's headline.
   const symbolVerdictedNames = new Set<string>([
     ...exportResult.violations.map((v) => `${v.file}:${v.name}`),
     ...exportResult.testOnlyExempt,
     ...exportResult.entrypointExempt,
     ...exportResult.publicExempt,
   ]);
-  const declaringTypeOf = (qualifiedName: string): string | null => {
-    const dot = qualifiedName.indexOf('.');
-    return dot === -1 ? null : qualifiedName.slice(0, dot);
-  };
-  const memberOwnerVerdicted = (file: string, qualifiedName: string): boolean => {
-    const declaringType = declaringTypeOf(qualifiedName);
-    return declaringType !== null && symbolVerdictedNames.has(`${file}:${declaringType}`);
-  };
-  memberResult.violations = memberResult.violations.filter(
-    (v) => !(v.name && memberOwnerVerdicted(v.file, v.name)),
-  );
-  memberResult.testOnlyExempt = memberResult.testOnlyExempt.filter(
-    (e) => !memberOwnerVerdicted(fileOf(e), nameOf(e)),
-  );
-  memberResult.entrypointExempt = memberResult.entrypointExempt.filter(
-    (e) => !memberOwnerVerdicted(fileOf(e), nameOf(e)),
-  );
-  memberResult.publicExempt = memberResult.publicExempt.filter(
-    (e) => !memberOwnerVerdicted(fileOf(e), nameOf(e)),
-  );
+  const subsumedMemberResult = subsumeMembersByOwner(memberResult, symbolVerdictedNames);
 
-  const results = [orphanResult, exportResult, memberResult];
+  const results = [orphanResult, exportResult, subsumedMemberResult];
   const violations = results.flatMap((r) => r.violations);
   const testOnlyExempt = results.flatMap((r) => r.testOnlyExempt);
   const entrypointExempt = results.flatMap((r) => r.entrypointExempt);
