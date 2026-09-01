@@ -15,7 +15,26 @@
     "type-check": {
       "dependsOn": ["^build"],
       "cache": true,
-      "inputs": ["src/**", "tsconfig.json"]
+      // 2026-09-01 dead-code audit: `src/**` alone under-hashed this task.
+      // Five workspaces compile files OUTSIDE src/ — api-worker
+      // (`tests/**/*.ts`), discord-worker and moderation-worker
+      // (`scripts/**/*` + `tests/**/*`), presets-api (both, `.ts`), and oauth
+      // (`vitest.config.ts`) — so an edit to any of those left every hashed
+      // input byte-identical and `turbo run type-check --filter=<unit>`
+      // replayed a cached PASS over code tsc had never seen. Demonstrated by a
+      // type error in presets-api's tests that survived a filtered green gate
+      // and only surfaced on a whole-graph `--force` run.
+      // web-app is immune by accident: its tests live under `src/`.
+      // Same failure mode the `test` task was fixed for twice (scripts/**/*.js,
+      // then wrangler.toml). Keep this list in step with the tsconfig
+      // `include` globs, not with what a task "feels like" it reads.
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "scripts/**/*.ts",
+        "vitest.config.*",
+        "tsconfig.json"
+      ]
     },
     "lint": {
       "dependsOn": ["^build"],
@@ -29,7 +48,23 @@
       // but note that root sweep currently exits non-zero (~200 issues in
       // the ungated apps plus logger's alias duplicate) and is manual
       // triage only; this per-package `lint` task is the actual gate.
-      "inputs": ["src/**", "eslint.config.*", "knip.jsonc", "$TURBO_ROOT$/knip.jsonc"]
+      //
+      // 2026-09-01 dead-code audit: `tests/**` and `scripts/**` added for the
+      // same reason as `type-check` above, but via knip rather than tsc —
+      // knip treats test files as ENTRIES, so deleting the last test that
+      // imported a module is exactly what turns that module unused. Hashing
+      // only `src/**` meant the edit that creates a knip finding could not
+      // invalidate the gate that reports it. (`eslint src` is unaffected;
+      // this is the knip half of the task.)
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "scripts/**",
+        "eslint.config.*",
+        "eslint-rules/**",
+        "knip.jsonc",
+        "$TURBO_ROOT$/knip.jsonc"
+      ]
     },
     "test": {
       "dependsOn": ["^build"],
