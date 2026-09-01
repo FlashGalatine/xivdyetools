@@ -520,6 +520,133 @@ export function findTestOnlyExports(
   return { violations, testOnlyExempt, entrypointExempt };
 }
 
+const CLASS_DECL = /^export\s+(?:abstract\s+)?class\s+([A-Za-z_]\w*)/;
+const MEMBER_DECL =
+  /^ {2,}(?:public\s+|static\s+|async\s+|get\s+|set\s+)*([A-Za-z_]\w*)\s*(?:<[^>]*>)?\(/;
+const MEMBER_SKIP = new Set([
+  'constructor',
+  'if',
+  'for',
+  'while',
+  'switch',
+  'catch',
+  'return',
+  'super',
+]);
+
+/**
+ * Class-member granularity: a method (or getter/setter) with no reference
+ * anywhere in production code, only in tests. This is the gap neither file-
+ * nor export-level reachability can see — the class itself is used in
+ * production (so the file and the class's own export name both look fine),
+ * and knip 6 dropped its `classMembers` rule entirely, so a dead public
+ * method is otherwise invisible to every gate that exists.
+ *
+ * `MEMBER_DECL` is a plain indentation heuristic, not a syntax-aware parse,
+ * so it is only matched in files that declare at least one exported class —
+ * without that gate it would also match an object-literal method sitting at
+ * the same indentation. `MEMBER_SKIP` excludes `constructor` (constructed,
+ * never called by name, so "no `.constructor` reference" would always be a
+ * false positive) and control-flow keywords that share the same `keyword(`
+ * shape at 2+ indent (`if (`, `for (`, `while (`, `switch (`, `catch (`),
+ * plus `return`/`super` immediately preceding a parenthesized expression.
+ *
+ * Usage is checked as `.name` — a word-boundary match for the
+ * property-access form every real call site has to use, whatever the
+ * receiver: an external caller, a `this.name()` call from a sibling method
+ * in the same class, a `super.name()` call from a subclass, or a call
+ * through an interface-typed variable (`(x as IFoo).name()` is still
+ * literally `.name` in the source text, regardless of the receiver's static
+ * type). The scan covers every production file, this member's own file
+ * included, so an internal self-call counts as production use exactly like
+ * an external one — it does not need the declaration-line exclusion
+ * `findTestOnlyExports` uses for its bare-identifier match, because a method
+ * declaration (`dismissAll(): void {`) has no leading dot to begin with and
+ * so never self-matches its own `.name` pattern.
+ *
+ * A getter/setter pair (or, in principle, overloaded method signatures)
+ * shares one name across several declaration lines in `byName`; each may
+ * carry its own docblock, so verdicts are grouped exactly like
+ * `findTestOnlyExports` groups overloads — a bare tag on any one line still
+ * fails the whole member, a valid reason on any one line exempts it, and
+ * either way there is exactly one verdict per member name per file, never a
+ * duplicate or a contradicting pair.
+ *
+ * This is a text scan, not a call graph. Usage is checked as `.name` OR a
+ * literal-string bracket key (`obj['name']`/`obj["name"]`, quotes matched by
+ * backreference so a call reached only that way in production is not
+ * misjudged as test-only just because a test happens to call it with plain
+ * dot syntax) — but a fully *computed* key, `obj[key]()` where `key` is a
+ * variable, is still invisible to either pattern and could be misjudged.
+ * That residual gap is a real limit of the technique — the same
+ * conservative-in-the-wrong-direction trade-off `findTestOnlyExports`
+ * already accepts for its own identifier matching — not a defect specific to
+ * this pass; every violation this run actually reports was checked by hand
+ * (bracket-notation grep across the whole repo, zero hits for any of them)
+ * before being reported.
+ */
+export function findTestOnlyMembers(
+  prod: string[],
+  tests: string[],
+  texts: Map<string, string>,
+): { violations: Violation[]; testOnlyExempt: string[]; entrypointExempt: string[] } {
+  const violations: Violation[] = [];
+  const testOnlyExempt: string[] = [];
+  const entrypointExempt: string[] = [];
+  for (const file of prod) {
+    if (!/\.(ts|tsx)$/.test(file)) continue;
+    const lines = (texts.get(file) ?? '').split('\n');
+    // Only scan files that actually declare an exported class. MEMBER_DECL is an
+    // indentation heuristic and would otherwise match object-literal methods.
+    if (!lines.some((l) => CLASS_DECL.test(l))) continue;
+
+    const byName = new Map<string, number[]>();
+    lines.forEach((line, i) => {
+      const m = MEMBER_DECL.exec(line);
+      if (!m) return;
+      const name = m[1];
+      if (MEMBER_SKIP.has(name)) return;
+      if (/\bprivate\b|\bprotected\b/.test(line) || name.startsWith('#')) return;
+      const arr = byName.get(name);
+      if (arr) arr.push(i);
+      else byName.set(name, [i]);
+    });
+
+    for (const [name, indices] of byName) {
+      // Members are always called on a receiver, so `.name` (property access) is
+      // the usual reference form — but `obj['name']`/`obj["name"]` (a literal
+      // string key, quotes matched by backreference) is also a real call site a
+      // member-only-here scan must not miss, or a member reached only that way
+      // in production would be misjudged as test-only the moment a test happens
+      // to call it with ordinary dot syntax. A fully computed key (`obj[expr]`)
+      // is still invisible to this or any text scan — accepted, same direction
+      // as the identifier-matching trade-off `findTestOnlyExports` already
+      // takes — but the literal-string form costs one more regex to close.
+      const dotted = new RegExp(`\\.${escapeRe(name)}\\b`);
+      const bracketed = new RegExp(`\\[\\s*(['"\`])${escapeRe(name)}\\1\\s*\\]`);
+      const isReferenced = (text: string): boolean => dotted.test(text) || bracketed.test(text);
+      if (prod.some((f) => isReferenced(texts.get(f) ?? ''))) continue;
+      const testRefs = tests.filter((f) => isReferenced(texts.get(f) ?? '')).length;
+      if (testRefs === 0) continue; // knip's job
+
+      let anyBare = false;
+      let eReason: string | null = null;
+      let tReason: string | null = null;
+      for (const i of indices) {
+        const doc = docblockAbove(lines, i);
+        if (hasBareTag(doc)) anyBare = true;
+        if (!eReason) eReason = entrypointReason(doc);
+        if (!tReason) tReason = testOnlyReason(doc);
+      }
+      if (anyBare) violations.push({ kind: 'member', file, name, testRefs });
+      else if (eReason) entrypointExempt.push(`${file}:${name}`);
+      else if (tReason) testOnlyExempt.push(`${file}:${name}`);
+      else violations.push({ kind: 'member', file, name, testRefs });
+    }
+  }
+  return { violations, testOnlyExempt, entrypointExempt };
+}
+
 function main(): void {
   const all = listTracked();
   const texts = new Map<string, string>();
@@ -535,12 +662,13 @@ function main(): void {
 
   const orphanResult = findOrphanModules(prod, tests, texts);
   const exportResult = findTestOnlyExports(prod, tests, texts);
+  const memberResult = findTestOnlyMembers(prod, tests, texts);
 
-  // A file-level verdict — violation or exemption — subsumes symbol-level verdicts
-  // within that same file. A file already carrying (or needing) one tag shouldn't
-  // also demand one per export, and a file already reported as an orphan
-  // shouldn't re-report each of its exports as a separate finding: fixing the
-  // file fixes all of them at once.
+  // A file-level verdict — violation or exemption — subsumes symbol- and member-level
+  // verdicts within that same file. A file already carrying (or needing) one tag
+  // shouldn't also demand one per export or per member, and a file already reported
+  // as an orphan shouldn't re-report each of its exports/members as a separate
+  // finding: fixing the file fixes all of them at once.
   const fileVerdicted = new Set<string>([
     ...orphanResult.violations.map((v) => v.file),
     ...orphanResult.testOnlyExempt,
@@ -554,14 +682,61 @@ function main(): void {
   exportResult.entrypointExempt = exportResult.entrypointExempt.filter(
     (e) => !fileVerdicted.has(fileOf(e)),
   );
+  memberResult.violations = memberResult.violations.filter((v) => !fileVerdicted.has(v.file));
+  memberResult.testOnlyExempt = memberResult.testOnlyExempt.filter(
+    (e) => !fileVerdicted.has(fileOf(e)),
+  );
+  memberResult.entrypointExempt = memberResult.entrypointExempt.filter(
+    (e) => !fileVerdicted.has(fileOf(e)),
+  );
 
-  const results = [orphanResult, exportResult];
+  // A symbol-level verdict on an exported *class* subsumes member-level verdicts
+  // for that class, same rationale one layer down: tagging or fixing the class
+  // handles every member inside it, so re-reporting each member separately from
+  // an already-verdicted class is redundant noise. Scoped to files that declare
+  // exactly one exported class — findTestOnlyMembers's scan has no brace/scope
+  // tracking, so a file with two or more exported classes can't be attributed
+  // member-by-member to the right owner, and subsumption is skipped there rather
+  // than risk hiding a violation that belongs to a different, unverdicted class.
+  // (No file in this repo currently declares more than one exported class, and no
+  // current symbol-level violation or exempt name is a class name, so this is a
+  // no-op against today's data — kept for correctness, not because it changes
+  // today's headline.)
+  const classNamesByFile = new Map<string, string[]>();
+  for (const file of prod) {
+    if (!/\.(ts|tsx)$/.test(file)) continue;
+    const names = (texts.get(file) ?? '')
+      .split('\n')
+      .map((l) => CLASS_DECL.exec(l)?.[1])
+      .filter((n): n is string => Boolean(n));
+    if (names.length) classNamesByFile.set(file, names);
+  }
+  const symbolVerdictedNames = new Set<string>([
+    ...exportResult.violations.map((v) => `${v.file}:${v.name}`),
+    ...exportResult.testOnlyExempt,
+    ...exportResult.entrypointExempt,
+  ]);
+  const classVerdictedFiles = new Set<string>();
+  for (const [file, names] of classNamesByFile) {
+    if (names.length !== 1) continue; // ambiguous owner — do not subsume
+    if (symbolVerdictedNames.has(`${file}:${names[0]}`)) classVerdictedFiles.add(file);
+  }
+  memberResult.violations = memberResult.violations.filter((v) => !classVerdictedFiles.has(v.file));
+  memberResult.testOnlyExempt = memberResult.testOnlyExempt.filter(
+    (e) => !classVerdictedFiles.has(fileOf(e)),
+  );
+  memberResult.entrypointExempt = memberResult.entrypointExempt.filter(
+    (e) => !classVerdictedFiles.has(fileOf(e)),
+  );
+
+  const results = [orphanResult, exportResult, memberResult];
   const violations = results.flatMap((r) => r.violations);
   const testOnlyExempt = results.flatMap((r) => r.testOnlyExempt);
   const entrypointExempt = results.flatMap((r) => r.entrypointExempt);
 
   for (const v of violations) {
-    const what = v.name ? `${v.file}:${v.name}` : v.file;
+    const what =
+      v.kind === 'member' ? `${v.file}:${v.name}()` : v.name ? `${v.file}:${v.name}` : v.file;
     const how = v.kind === 'file' ? 'imported by' : 'referenced by';
     console.error(`✗ ${what} — ${how} ${v.testRefs} test file(s), 0 production files`);
     console.error(

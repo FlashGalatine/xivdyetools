@@ -17,6 +17,7 @@ import {
   docblockAbove,
   entrypointReason,
   findTestOnlyExports,
+  findTestOnlyMembers,
   hasBareTag,
   leadingDocblock,
   testOnlyReason,
@@ -240,7 +241,7 @@ const cases: DocCase[] = [
       ' * @testonly reason fifteen',
       ' */',
       '',
-      "@customElement(",
+      '@customElement(',
       "  'my-element'",
       ')',
       'export class Foo {}',
@@ -332,4 +333,334 @@ test('prelude 1a (live instance): _middleware.ts now captures its full two-line 
     entrypointReason(doc),
     'No importer by design — Pages loads this by path convention from functions/, so static analysis cannot see the call site.',
   );
+});
+
+// ============================================================================
+// findTestOnlyMembers — class-member granularity (Task 6)
+// ============================================================================
+
+test('16. findTestOnlyMembers: a method referenced only by tests is a violation', () => {
+  const prodFile = 'src/widget.ts';
+  const testFile = 'src/widget.test.ts';
+  const prodText = [
+    'export class Widget {',
+    '  doThing(): void {',
+    '    // no-op',
+    '  }',
+    '}',
+  ].join('\n');
+  const testText = "import { Widget } from './widget';\nnew Widget().doThing();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.length, 1);
+  assert.equal(result.violations[0].file, prodFile);
+  assert.equal(result.violations[0].name, 'doThing');
+  assert.equal(result.violations[0].kind, 'member');
+});
+
+test('17. findTestOnlyMembers: a method called via this.x() from a sibling method is not a violation', () => {
+  // False-positive guard #1 named in the task: an internal self-call must count
+  // as production use even though the only OTHER reference is from a test.
+  const prodFile = 'src/widget2.ts';
+  const testFile = 'src/widget2.test.ts';
+  const prodText = [
+    'export class Widget2 {',
+    '  run(): void {',
+    '    this.helper();',
+    '  }',
+    '  helper(): void {',
+    '    // no-op',
+    '  }',
+    '}',
+  ].join('\n');
+  const testText = "import { Widget2 } from './widget2';\nnew Widget2().helper();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.filter((v) => v.name === 'helper').length, 0);
+  assert.equal(result.testOnlyExempt.filter((e) => e.endsWith(':helper')).length, 0);
+});
+
+test('18. findTestOnlyMembers: a method called through an interface-typed variable is not a violation', () => {
+  // False-positive guard #2 named in the task: a call through an interface-typed
+  // receiver is still literally `.process` in the source text.
+  const prodFile = 'src/widget3.ts';
+  const testFile = 'src/widget3.test.ts';
+  const prodText = [
+    'interface IWidget3 {',
+    '  process(): void;',
+    '}',
+    '',
+    'export class Widget3 implements IWidget3 {',
+    '  process(): void {',
+    '    // no-op',
+    '  }',
+    '}',
+    '',
+    'export function runIt(w: IWidget3): void {',
+    '  w.process();',
+    '}',
+  ].join('\n');
+  const testText = "import { Widget3 } from './widget3';\nnew Widget3().process();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.filter((v) => v.name === 'process').length, 0);
+});
+
+test('19. findTestOnlyMembers: private and protected members are excluded, never reported', () => {
+  const prodFile = 'src/widget4.ts';
+  const testFile = 'src/widget4.test.ts';
+  const prodText = [
+    'export class Widget4 {',
+    '  private secretThing(): void {}',
+    '  protected guardedThing(): void {}',
+    '}',
+  ].join('\n');
+  // Even a textual `.name` reference in a test must not surface these — they
+  // can never be reached from outside the class, so nothing legitimately
+  // reaches them by that syntax; a test that appears to is not a real call site.
+  const testText = [
+    "import { Widget4 } from './widget4';",
+    'const w = Widget4 as unknown as { secretThing(): void; guardedThing(): void };',
+    'w.secretThing();',
+    'w.guardedThing();',
+  ].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.length, 0);
+  assert.equal(result.testOnlyExempt.length, 0);
+  assert.equal(result.entrypointExempt.length, 0);
+});
+
+test('20. findTestOnlyMembers: a #-prefixed true-private member is never reported', () => {
+  // MEMBER_DECL's name capture is [A-Za-z_]\w* — a `#`-prefixed name never
+  // matches it in the first place, so this is invisible to the scan from the
+  // start (the explicit name.startsWith('#') guard is defense in depth for the
+  // same outcome). This test pins the observable result, not the mechanism.
+  const prodFile = 'src/widget5.ts';
+  const testFile = 'src/widget5.test.ts';
+  const prodText = ['export class Widget5 {', '  #trulyPrivate(): void {}', '}'].join('\n');
+  const testText = 'w.#trulyPrivate();\n';
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.length, 0);
+});
+
+test('21. findTestOnlyMembers: control-flow keywords at member indentation are not mistaken for methods', () => {
+  const prodFile = 'src/widget6.ts';
+  const testFile = 'src/widget6.test.ts';
+  const prodText = [
+    'export class Widget6 {',
+    '  run(): void {',
+    '    if (true) {',
+    '      doStuff();',
+    '    }',
+    '    switch (1) {',
+    '      default:',
+    '        break;',
+    '    }',
+    '  }',
+    '}',
+  ].join('\n');
+  // Nonsense call shapes: if MEMBER_SKIP did not exclude "if"/"switch", these
+  // would otherwise register as test references to fake members named after
+  // the keywords.
+  const testText = 'w.if(); w.switch();\n';
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(
+    result.violations.some((v) => v.name === 'if' || v.name === 'switch'),
+    false,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e.endsWith(':if') || e.endsWith(':switch')),
+    false,
+  );
+});
+
+test('22. findTestOnlyMembers: a file with no exported class is never scanned (object-literal methods ignored)', () => {
+  const prodFile = 'src/config-object.ts';
+  const testFile = 'src/config-object.test.ts';
+  const prodText = [
+    'export const handlers = {',
+    '  doThing(): void {',
+    '    // no-op',
+    '  },',
+    '};',
+  ].join('\n');
+  const testText = "import { handlers } from './config-object';\nhandlers.doThing();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.length, 0);
+  assert.equal(result.testOnlyExempt.length, 0);
+  assert.equal(result.entrypointExempt.length, 0);
+});
+
+test('23. findTestOnlyMembers: a valid @testonly reason exempts a member', () => {
+  const prodFile = 'src/widget7.ts';
+  const testFile = 'src/widget7.test.ts';
+  const prodText = [
+    'export class Widget7 {',
+    '  /**',
+    '   * @testonly only used to reset state between test runs',
+    '   */',
+    '  resetForTesting(): void {}',
+    '}',
+  ].join('\n');
+  const testText = "import { Widget7 } from './widget7';\nnew Widget7().resetForTesting();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.length, 0);
+  assert.deepEqual(result.testOnlyExempt, [`${prodFile}:resetForTesting`]);
+  assert.equal(result.entrypointExempt.length, 0);
+});
+
+test('24. findTestOnlyMembers: a valid @entrypoint reason exempts a member', () => {
+  const prodFile = 'src/widget8.ts';
+  const testFile = 'src/widget8.test.ts';
+  const prodText = [
+    'export class Widget8 {',
+    '  /**',
+    '   * @entrypoint invoked by an external harness by convention',
+    '   */',
+    '  externalHook(): void {}',
+    '}',
+  ].join('\n');
+  const testText = "import { Widget8 } from './widget8';\nnew Widget8().externalHook();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.length, 0);
+  assert.deepEqual(result.entrypointExempt, [`${prodFile}:externalHook`]);
+  assert.equal(result.testOnlyExempt.length, 0);
+});
+
+test('25. findTestOnlyMembers: a bare @testonly with no reason still fails as a violation', () => {
+  const prodFile = 'src/widget9.ts';
+  const testFile = 'src/widget9.test.ts';
+  const prodText = [
+    'export class Widget9 {',
+    '  /**',
+    '   * @testonly',
+    '   */',
+    '  resetForTesting(): void {}',
+    '}',
+  ].join('\n');
+  const testText = "import { Widget9 } from './widget9';\nnew Widget9().resetForTesting();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.length, 1);
+  assert.equal(result.violations[0].name, 'resetForTesting');
+  assert.equal(result.testOnlyExempt.length, 0);
+});
+
+test('26. findTestOnlyMembers: a getter/setter pair shares one name and gets exactly one exempt verdict', () => {
+  const prodFile = 'src/widget10.ts';
+  const testFile = 'src/widget10.test.ts';
+  const prodText = [
+    'export class Widget10 {',
+    '  /**',
+    '   * @testonly the whole accessor pair only exists for test setup',
+    '   */',
+    '  get color(): string {',
+    '    return this._color;',
+    '  }',
+    '',
+    '  set color(v: string) {',
+    '    this._color = v;',
+    '  }',
+    '',
+    '  private _color = "red";',
+    '}',
+  ].join('\n');
+  const testText =
+    "import { Widget10 } from './widget10';\nconst w = new Widget10();\nw.color = 'blue';\nw.color;\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.filter((v) => v.name === 'color').length, 0);
+  assert.deepEqual(
+    result.testOnlyExempt.filter((e) => e === `${prodFile}:color`),
+    [`${prodFile}:color`],
+  );
+});
+
+test('27. findTestOnlyMembers: an untagged getter/setter pair gets exactly one violation, not two', () => {
+  const prodFile = 'src/widget11.ts';
+  const testFile = 'src/widget11.test.ts';
+  const prodText = [
+    'export class Widget11 {',
+    '  get label(): string {',
+    '    return this._label;',
+    '  }',
+    '',
+    '  set label(v: string) {',
+    '    this._label = v;',
+    '  }',
+    '',
+    '  private _label = "x";',
+    '}',
+  ].join('\n');
+  const testText =
+    "import { Widget11 } from './widget11';\nconst w = new Widget11();\nw.label = 'y';\nw.label;\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.filter((v) => v.name === 'label').length, 1);
+});
+
+test('28. findTestOnlyMembers: a member reached only via bracket-notation string access in prod is not falsely flagged', () => {
+  // False-positive guard #3 named in the task: "dynamically by string". A
+  // literal-string bracket key in production must count as a real call site
+  // even though a test happens to call the same member with dot syntax.
+  const prodFile = 'src/widget12.ts';
+  const testFile = 'src/widget12.test.ts';
+  const prodText = [
+    'export class Widget12 {',
+    '  dynamicThing(): void {}',
+    '}',
+    '',
+    'export function dispatch(w: Widget12): void {',
+    "  (w as unknown as Record<string, () => void>)['dynamicThing']();",
+    '}',
+  ].join('\n');
+  const testText = "import { Widget12 } from './widget12';\nnew Widget12().dynamicThing();\n";
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  assert.equal(result.violations.filter((v) => v.name === 'dynamicThing').length, 0);
 });
