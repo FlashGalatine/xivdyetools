@@ -5,6 +5,15 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- `getImageDimensions` (`src/photon.ts`) and its three tests — dead-code sweep
+  (`docs/audits/2026-09-01-dead-code`, DEAD-027). It arrived with the 1.0.0 copy-in from
+  discord-worker and never gained a caller here; dimension checks run through
+  `validators.ts`'s header path instead. No behaviour change on `/extract` or `/thumbnail`.
+
 ## [1.2.0] - 2026-08-30
 
 Security audit remediation (docs/audits/2026-08-29-security, FINDING-023). Minor bump: the
