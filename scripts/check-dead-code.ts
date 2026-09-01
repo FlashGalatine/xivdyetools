@@ -88,20 +88,26 @@ const ENTRYPOINT = 'entrypoint';
  * two escape hatches get identical mandatory-reason enforcement from one
  * regex pair instead of two hand-duplicated copies.
  *
- * Anchored to a docblock line start (optionally after a JSDoc `*` prefix)
- * with a trailing word boundary on the tag name, so `@testonlyish` and a
+ * Anchored to a docblock line start — either a JSDoc continuation (`*`) or,
+ * for a single-line `/** @tag reason *\/` docblock, the opening `/**` itself
+ * — with a trailing word boundary on the tag name, so `@testonlyish` and a
  * prose mention mid-sentence (e.g. "derived from the old @testonly
- * annotations") don't satisfy it. The reason capture stops at end-of-line —
- * it can't span multiple lines or read past the docblock it was given.
+ * annotations") don't satisfy it. The reason capture stops at end-of-line and
+ * its first character can't be `*`, so on a single-line docblock it doesn't
+ * swallow the closing `*\/` as if it were reason text; it can't span multiple
+ * lines or read past the docblock it was given.
  */
 function tagReason(docblock: string, tag: string): string | null {
-  const re = new RegExp(String.raw`^[ \t]*\*?[ \t]*@${tag}\b[ \t]+(\S[^\n*]*)`, 'im');
+  const re = new RegExp(
+    String.raw`^[ \t]*(?:\/\*\*|\*)?[ \t]*@${tag}\b[ \t]+([^\s*][^\n*]*)`,
+    'im',
+  );
   const m = re.exec(docblock);
   return m ? m[1].trim() : null;
 }
 
 function tagPresent(docblock: string, tag: string): boolean {
-  return new RegExp(String.raw`^[ \t]*\*?[ \t]*@${tag}\b`, 'im').test(docblock);
+  return new RegExp(String.raw`^[ \t]*(?:\/\*\*|\*)?[ \t]*@${tag}\b`, 'im').test(docblock);
 }
 
 /** `@testonly <reason>` — returns the reason, or null when absent. */
@@ -121,17 +127,63 @@ export function hasBareTag(docblock: string): boolean {
   );
 }
 
-/** The `/** … *\/` block immediately above `declIndex`, or ''. */
+/** A decorator line applied to the next declaration: `@Identifier` or `@Identifier(...)`. */
+const DECORATOR_LINE_RE = /^@[A-Za-z_$][\w$]*/;
+
+/**
+ * True when every line before `openIndex` is blank, or — line 0 only — a
+ * shebang. This restates, over an already-split `lines` array, the same rule
+ * `leadingDocblock`'s regex applies from the start of the raw file text, so
+ * `docblockAbove` can check "is this the file's leading docblock" without
+ * re-joining and re-scanning the file.
+ */
+function isLeadingDocblockStart(lines: string[], openIndex: number): boolean {
+  for (let k = 0; k < openIndex; k++) {
+    const t = lines[k].trim();
+    if (t === '') continue;
+    if (k === 0 && t.startsWith('#!')) continue;
+    return false;
+  }
+  return true;
+}
+
+/**
+ * The `/** … *\/` block attached to `declIndex`, or ''.
+ *
+ * Walking upward, blank lines and decorator lines (`@Foo`, `@Foo(...)`) are
+ * skipped rather than treated as a wall: a blank line for readability, or a
+ * Lit `@customElement(...)`/`@property()` between a docblock and its
+ * declaration, must not hide a real tag. Once a candidate docblock is found,
+ * though, it is refused — the walk returns '' — when it is the file's own
+ * leading docblock (nothing but whitespace or a shebang precedes its opening
+ * `/**`). Without that check, skipping blank lines would let a file-header
+ * comment silently attach to whichever export happens to sit first,
+ * exempting it by accident. A genuine file-level tag is already handled by
+ * `leadingDocblock` at file granularity, and the file-subsumes-symbol rule in
+ * `main` means an exempt file never needs symbol-level attribution anyway, so
+ * refusing to reuse the header here costs nothing.
+ */
 export function docblockAbove(lines: string[], declIndex: number): string {
-  const out: string[] = [];
   let i = declIndex;
   while (i > 0) {
     const prev = lines[i - 1].trim();
+    if (prev === '' || DECORATOR_LINE_RE.test(prev)) {
+      i--;
+      continue;
+    }
+    break;
+  }
+  const out: string[] = [];
+  let j = i;
+  while (j > 0) {
+    const prev = lines[j - 1].trim();
     if (!prev.startsWith('*') && !prev.startsWith('/**')) break;
-    out.unshift(lines[i - 1]);
-    i--;
+    out.unshift(lines[j - 1]);
+    j--;
     if (prev.startsWith('/**')) break;
   }
+  if (out.length === 0) return '';
+  if (isLeadingDocblockStart(lines, j)) return '';
   return out.join('\n');
 }
 
@@ -315,6 +367,15 @@ const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
  * `logger`) will find an unrelated textual hit elsewhere and be judged
  * referenced. That under-reports, the same conservative direction the
  * file-level fallback already takes, and is accepted rather than tightened.
+ *
+ * `EXPORT_DECL` matches per line, so an overloaded signature (several
+ * `export function foo(...)` lines for one name) produces several matching
+ * lines for the same symbol. Those are grouped by name before any verdict is
+ * computed: the "is this used in production" scan excludes every one of the
+ * symbol's own declaration lines — not just whichever line is currently being
+ * looked at, which would otherwise let sibling overload lines count as each
+ * other's "usage" — and a valid tag on any one signature exempts the whole
+ * symbol. One verdict per exported name per file, never a duplicate.
  */
 export function findTestOnlyExports(
   prod: string[],
@@ -327,31 +388,49 @@ export function findTestOnlyExports(
   for (const file of prod) {
     if (!/\.(ts|tsx)$/.test(file)) continue;
     const lines = (texts.get(file) ?? '').split('\n');
+
+    const byName = new Map<string, number[]>();
     lines.forEach((line, i) => {
       const m = EXPORT_DECL.exec(line);
       if (!m) return;
       const name = m[1];
+      const arr = byName.get(name);
+      if (arr) arr.push(i);
+      else byName.set(name, [i]);
+    });
+
+    for (const [name, indices] of byName) {
       const word = new RegExp(`\\b${escapeRe(name)}\\b`);
-      // Any non-test reference outside this declaration line counts as production use.
+      const declLines = new Set(indices);
+      // Any non-test reference outside this symbol's own declaration lines
+      // counts as production use.
       const usedInProd = prod.some((f) => {
         const t = texts.get(f) ?? '';
         if (f !== file) return word.test(t);
-        return t.split('\n').some((l, j) => j !== i && word.test(l));
+        return t.split('\n').some((l, j) => !declLines.has(j) && word.test(l));
       });
-      if (usedInProd) return;
+      if (usedInProd) continue;
       const testRefs = tests.filter((f) => word.test(texts.get(f) ?? '')).length;
-      if (testRefs === 0) return; // knip's job
-      const doc = docblockAbove(lines, i);
-      if (hasBareTag(doc)) {
-        violations.push({ kind: 'export', file, name, testRefs });
-        return;
+      if (testRefs === 0) continue; // knip's job
+
+      // Each signature line may carry its own docblock; a bare tag on any one
+      // of them still fails the gate (same precedence as a single-signature
+      // export), otherwise a valid reason on any one of them exempts the
+      // whole symbol.
+      let anyBare = false;
+      let eReason: string | null = null;
+      let tReason: string | null = null;
+      for (const i of indices) {
+        const doc = docblockAbove(lines, i);
+        if (hasBareTag(doc)) anyBare = true;
+        if (!eReason) eReason = entrypointReason(doc);
+        if (!tReason) tReason = testOnlyReason(doc);
       }
-      const eReason = entrypointReason(doc);
-      const tReason = testOnlyReason(doc);
-      if (eReason) entrypointExempt.push(`${file}:${name}`);
+      if (anyBare) violations.push({ kind: 'export', file, name, testRefs });
+      else if (eReason) entrypointExempt.push(`${file}:${name}`);
       else if (tReason) testOnlyExempt.push(`${file}:${name}`);
       else violations.push({ kind: 'export', file, name, testRefs });
-    });
+    }
   }
   return { violations, testOnlyExempt, entrypointExempt };
 }
@@ -384,7 +463,9 @@ function main(): void {
   ]);
   const fileOf = (entry: string): string => entry.slice(0, entry.lastIndexOf(':'));
   exportResult.violations = exportResult.violations.filter((v) => !fileVerdicted.has(v.file));
-  exportResult.testOnlyExempt = exportResult.testOnlyExempt.filter((e) => !fileVerdicted.has(fileOf(e)));
+  exportResult.testOnlyExempt = exportResult.testOnlyExempt.filter(
+    (e) => !fileVerdicted.has(fileOf(e)),
+  );
   exportResult.entrypointExempt = exportResult.entrypointExempt.filter(
     (e) => !fileVerdicted.has(fileOf(e)),
   );
