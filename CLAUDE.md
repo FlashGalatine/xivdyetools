@@ -58,6 +58,10 @@ pnpm turbo run build                  # Build all packages (respects dependency 
 pnpm turbo run test                   # Test all packages
 pnpm turbo run type-check             # Type-check all packages
 pnpm turbo run lint                   # Lint all packages
+pnpm coverage:report                  # Aggregate coverage vs baselines (90% packages / 80% apps).
+                                      # Reads each workspace's coverage/coverage-summary.json, so
+                                      # run the coverage suites first — it silently skips any
+                                      # workspace that has no summary yet.
 
 # Filter to specific packages/apps
 pnpm turbo run build --filter=@xivdyetools/core

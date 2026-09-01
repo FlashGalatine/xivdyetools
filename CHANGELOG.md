@@ -8,6 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- Root `pnpm coverage:report` script + the `tsx` devDependency needed to run it. `scripts/coverage-report.ts`
+  (245 lines) had been sitting unreachable: no npm script, no CI step, and no `tsx` at the root, so
+  the `pnpm tsx scripts/coverage-report.ts` in its own header failed on a clean install
+  (`docs/audits/2026-09-01-dead-code`, DEAD-031). Adopted rather than deleted — it is the only
+  aggregate view of coverage against the 90 %/80 % baselines, and the `coverage-testing` skill
+  assumes one exists. It reads each workspace's `coverage/coverage-summary.json` and skips
+  workspaces that have none, so run the coverage suites first.
+
+### Changed
+
+- `tsconfig.base.json`'s `noUnusedLocals` / `noUnusedParameters` are no longer overridden anywhere.
+  `packages/svg`, `packages/bot-logic`, `apps/image-worker` and `apps/stoat-worker` had switched
+  them off; the first three were already clean, and stoat-worker's four unused test imports were
+  removed (DEAD-032). The setting is now uniform across all 17 workspaces.
+
 ## [2.0.0] - 2026-08-16
 
 **Monorepo 2.0 + the XIV Dye Tools 5.0 wave.** 314 commits on `monorepo-2.0-prep` since 1.18.0, spanning the workspace consolidation (12 → 8 packages, 11 → 9 apps), the schema-v2 / stainID-first data model, the 5.0 web-app redesign, the 5.0 Discord command set on a new card frame system, redrawn link previews, a beta environment for every public surface, and full remediation of the 2026-08-09 pre-release audit. Nothing on this branch has been published to npm and no production worker or web-app release carries it yet (exceptions: the beta surfaces, and `image-worker`'s one-time pre-merge production deploy on 2026-08-09). **Merging to main is the release** — see "Deploy sequence" below. Per-package detail lives in each package's / app's own `CHANGELOG.md`; the plain-language, player-facing summary is the root `CHANGELOG-laymans.md`.
