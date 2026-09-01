@@ -19,7 +19,7 @@ export type { AuthProvider } from '@xivdyetools/types';
  * @deprecated Import directly from '@xivdyetools/types' instead.
  * These re-exports will be removed in the next major version.
  */
-export type { PrimaryCharacter, JWTPayload } from '@xivdyetools/types';
+export type { JWTPayload } from '@xivdyetools/types';
 
 /**
  * @deprecated Import directly from '@xivdyetools/types' instead.
@@ -33,7 +33,6 @@ export type { DiscordTokenResponse, DiscordUser } from '@xivdyetools/types';
  */
 export type {
   XIVAuthTokenResponse,
-  XIVAuthCharacter,
   XIVAuthCharacterRegistration,
   XIVAuthSocialIdentity,
   XIVAuthUser,
@@ -85,7 +84,12 @@ export interface Env {
 // ============================================
 
 /**
- * Database user row
+ * Database user row.
+ *
+ * FINDING-002 (2026-08-29 security audit): no `avatar_url`. The column was
+ * write-only — every response recomputes the CDN URL from the Discord id and
+ * the `avatar` hash — and `migrations/0001_drop_xivauth_characters.sql` drops
+ * it from the live database.
  */
 export interface UserRow {
   id: string; // Our internal UUID
@@ -93,7 +97,6 @@ export interface UserRow {
   xivauth_id: string | null;
   auth_provider: string;
   username: string;
-  avatar_url: string | null;
   created_at: string;
   updated_at: string;
 }

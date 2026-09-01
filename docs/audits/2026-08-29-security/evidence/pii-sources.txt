@@ -1,0 +1,1521 @@
+apps/api-worker/src/index.ts:20:import { localeMiddleware } from './middleware/locale.js';
+apps/api-worker/src/index.ts:39:// so docs requests skip rate limiting, locale handling, and API headers.
+apps/api-worker/src/index.ts:122://    Reads ?locale= once per request and sets the LocalizationService state
+apps/api-worker/src/index.ts:166:// Deliberately outside /v1/* (no KV rate limit / locale middleware) and
+apps/api-worker/src/lib/dye-serializer.ts:70: * Resolve a dye's localized name for the given request locale.
+apps/api-worker/src/lib/dye-serializer.ts:73: * itemIDs which are not keys in the locale dye-name maps — no localized names
+apps/api-worker/src/lib/dye-serializer.ts:76: * BUG-006: the locale is passed explicitly — never read from singleton state.
+apps/api-worker/src/lib/dye-serializer.ts:78:export function localizedNameFor(dye: Dye, locale: string): string | undefined {
+apps/api-worker/src/lib/dye-serializer.ts:79:  if (locale === 'en') return undefined;
+apps/api-worker/src/lib/dye-serializer.ts:81:  return LocalizationService.getDyeName(dye.itemID, locale as LocaleCode) || undefined;
+apps/api-worker/src/lib/response.ts:14:  locale?: string;
+apps/api-worker/src/lib/response.ts:26:function buildMeta(c: AppContext, locale?: string): ResponseMeta {
+apps/api-worker/src/lib/response.ts:31:  if (locale && locale !== 'en') {
+apps/api-worker/src/lib/response.ts:32:    meta.locale = locale;
+apps/api-worker/src/lib/response.ts:37:export function successResponse<T>(c: AppContext, data: T, locale?: string) {
+apps/api-worker/src/lib/response.ts:41:    meta: buildMeta(c, locale),
+apps/api-worker/src/lib/response.ts:49:  locale?: string,
+apps/api-worker/src/lib/response.ts:55:    meta: buildMeta(c, locale),
+apps/api-worker/src/lib/validation.ts:300:/** Parse the locale param, defaulting to 'en'. */
+apps/api-worker/src/lib/validation.ts:304:    throw new ApiError(ErrorCode.INVALID_LOCALE, `Unsupported locale "${value}". Supported: ${VALID_LOCALES.join(', ')}`, 400, {
+apps/api-worker/src/lib/validation.ts:305:      parameter: 'locale',
+apps/api-worker/src/middleware/locale.ts:4: * Reads `?locale=` once per request, validates it, ensures the locale's data
+apps/api-worker/src/middleware/locale.ts:6: * code at `c.var.locale`. Handlers read it via `c.get('locale')` and pass it
+apps/api-worker/src/middleware/locale.ts:15:  const locale = parseLocale(c.req.query('locale'));
+apps/api-worker/src/middleware/locale.ts:16:  // BUG-006 (2026-07-18 audit): ensureLocaleLoaded registers the locale data
+apps/api-worker/src/middleware/locale.ts:17:  // WITHOUT mutating the singleton's current locale. The old per-request
+apps/api-worker/src/middleware/locale.ts:20:  // cacheable for 24h under the correct-locale URL. Handlers now pass
+apps/api-worker/src/middleware/locale.ts:21:  // c.get('locale') explicitly to every localization read.
+apps/api-worker/src/middleware/locale.ts:22:  await LocalizationService.ensureLocaleLoaded(locale);
+apps/api-worker/src/middleware/locale.ts:23:  c.set('locale', locale);
+apps/api-worker/src/routes/dyes.ts:64:  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
+apps/api-worker/src/routes/dyes.ts:66:  // BUG-006: explicit locale — no singleton state involved
+apps/api-worker/src/routes/dyes.ts:67:  const results: Dye[] = locale !== 'en'
+apps/api-worker/src/routes/dyes.ts:68:    ? dyeService.searchByLocalizedName(q, locale)
+apps/api-worker/src/routes/dyes.ts:71:  const serialized = results.map((dye) => serializeDye(dye, localizedNameFor(dye, locale)));
+apps/api-worker/src/routes/dyes.ts:74:  return successResponse(c, serialized, locale);
+apps/api-worker/src/routes/dyes.ts:104:  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
+apps/api-worker/src/routes/dyes.ts:121:      found.push(serializeDye(dye, localizedNameFor(dye, locale)));
+apps/api-worker/src/routes/dyes.ts:128:  return successResponse(c, { dyes: found, notFound }, locale);
+apps/api-worker/src/routes/dyes.ts:193:  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
+apps/api-worker/src/routes/dyes.ts:200:  return successResponse(c, serializeDye(dye, localizedNameFor(dye, locale)), locale);
+apps/api-worker/src/routes/dyes.ts:258:  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
+apps/api-worker/src/routes/dyes.ts:261:  return successResponse(c, serializeDye(dye, localizedNameFor(dye, locale)), locale);
+apps/api-worker/src/routes/dyes.ts:269:  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
+apps/api-worker/src/routes/dyes.ts:335:  const serialized = paged.map((dye) => serializeDye(dye, localizedNameFor(dye, locale)));
+apps/api-worker/src/routes/dyes.ts:338:  return paginatedResponse(c, serialized, pagination, locale);
+apps/api-worker/src/routes/match.ts:36:  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
+apps/api-worker/src/routes/match.ts:70:  const localizedName = localizedNameFor(dye, locale);
+apps/api-worker/src/routes/match.ts:77:  }, locale);
+apps/api-worker/src/routes/match.ts:89:  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
+apps/api-worker/src/routes/match.ts:123:    return serializeDyeWithDistance(dye, dist, localizedNameFor(dye, locale));
+apps/api-worker/src/routes/match.ts:136:  }, locale);
+apps/api-worker/src/telemetry/schema.ts:17: *   blob5  = locale, blob6 = theme, blob7 = vp, blob8 = ver, blob9 = env
+apps/api-worker/src/telemetry/schema.ts:145:    envelopeField(body['locale'], SUPPORTED_LOCALES),
+apps/api-worker/src/types.ts:48:  locale: 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
+apps/api-worker/src/universalis/router.ts:21: * NOT mounted under `/v1/*`: that would add the KV rate limiter and the locale
+apps/discord-worker/scripts/register-commands.ts:71:  // name_localizations from the bot-logic locale files before publishing.
+apps/discord-worker/scripts/register-commands.ts:72:  await Promise.all(LOCALE_CODES.map((locale) => initializeLocale(locale)));
+apps/discord-worker/scripts/test-font-rendering.ts:15: * All three CJK faces are *subsets*, built from the locale files' codepoints
+apps/discord-worker/scripts/test-font-rendering.ts:23:const __filename = fileURLToPath(import.meta.url);
+apps/discord-worker/scripts/test-font-rendering.ts:24:const __dirname = dirname(__filename);
+apps/discord-worker/src/commands/localize.ts:10: * `localizeCommands()` deep-copies the schema and attaches, per Discord locale:
+apps/discord-worker/src/commands/localize.ts:12: *     `commands.<name>.description` (bot-logic locale files);
+apps/discord-worker/src/commands/localize.ts:17: * A locale is only attached when the key resolves (the Translator returns the
+apps/discord-worker/src/commands/localize.ts:24: * (run by CI on merge) does, after `initializeLocale()` for every locale so
+apps/discord-worker/src/commands/localize.ts:31:/** Discord locale tag → bot locale. en-US / en-GB need no entry (base text is English). */
+apps/discord-worker/src/commands/localize.ts:32:export const DISCORD_LOCALE_MAP: ReadonlyArray<readonly [discord: string, locale: LocaleCode]> = [
+apps/discord-worker/src/commands/localize.ts:74:function tFor(locale: LocaleCode): Translator {
+apps/discord-worker/src/commands/localize.ts:75:  let t = translators.get(locale);
+apps/discord-worker/src/commands/localize.ts:77:    t = createTranslator(locale);
+apps/discord-worker/src/commands/localize.ts:78:    translators.set(locale, t);
+apps/discord-worker/src/commands/localize.ts:84: * Build a localizations map from a resolver. A locale is skipped when the
+apps/discord-worker/src/commands/localize.ts:89:  resolve: (t: Translator, locale: LocaleCode) => string | undefined,
+apps/discord-worker/src/commands/localize.ts:93:  for (const [discord, locale] of DISCORD_LOCALE_MAP) {
+apps/discord-worker/src/commands/localize.ts:94:    const value = resolve(tFor(locale), locale);
+apps/discord-worker/src/commands/localize.ts:138:    // Core locale `categories` (Reds → 赤系 / Rot / …) — needs initializeLocale()
+apps/discord-worker/src/commands/localize.ts:139:    return buildLocalizations((_t, locale) => {
+apps/discord-worker/src/commands/localize.ts:140:      const v = getLocalizedCategory(value, locale);
+apps/discord-worker/src/commands/registry.ts:12: * (never localised) — locale files key their labels off them.
+apps/discord-worker/src/handlers/buttons/index.ts:23:  channel_id?: string;
+apps/discord-worker/src/handlers/buttons/index.ts:38:      username?: string;
+apps/discord-worker/src/handlers/buttons/index.ts:43:    username?: string;
+apps/discord-worker/src/handlers/buttons/index.ts:49:  /** Discord client locale of the clicking user (e.g. 'ja', 'en-US') */
+apps/discord-worker/src/handlers/buttons/index.ts:50:  locale?: string;
+apps/discord-worker/src/handlers/buttons/index.ts:68:  // Copy buttons (F-05: replies in the clicking user's locale)
+apps/discord-worker/src/handlers/buttons/index.ts:76:      ? createUserTranslator(env.KV, userId, interaction.locale, logger)
+apps/discord-worker/src/handlers/buttons/index.ts:77:      : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+apps/discord-worker/src/handlers/buttons/preview-image.ts:51:  channel_id?: string;
+apps/discord-worker/src/handlers/buttons/preview-image.ts:59:      username?: string;
+apps/discord-worker/src/handlers/buttons/preview-image.ts:64:    username?: string;
+apps/discord-worker/src/handlers/buttons/preview-image.ts:122:  const userName = interaction.member?.user?.username ?? interaction.user?.username;
+apps/discord-worker/src/handlers/buttons/preview-image.ts:169:    if (interaction.channel_id && interaction.message?.id) {
+apps/discord-worker/src/handlers/buttons/preview-image.ts:180:        interaction.channel_id,
+apps/discord-worker/src/handlers/commands/about.ts:21: * Verbatim in every locale, for the same reason the Spectrum item name is:
+apps/discord-worker/src/handlers/commands/about.ts:97:  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/accessibility.ts:50:    ? await createUserTranslator(env.KV, userId, interaction.locale)
+apps/discord-worker/src/handlers/commands/accessibility.ts:51:    : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+apps/discord-worker/src/handlers/commands/accessibility.ts:67:      locale: t.getLocale(),
+apps/discord-worker/src/handlers/commands/accessibility.ts:88:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/accessibility.ts:99:      locale,
+apps/discord-worker/src/handlers/commands/accessibility.ts:113:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/accessibility.ts:118:  const t = createTranslator(locale);
+apps/discord-worker/src/handlers/commands/accessibility.ts:119:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/accessibility.ts:126:    locale,
+apps/discord-worker/src/handlers/commands/budget.ts:89:  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale, logger);
+apps/discord-worker/src/handlers/commands/budget.ts:250:    const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/budget.ts:251:    await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/budget.ts:257:      locale
+apps/discord-worker/src/handlers/commands/budget.ts:268:    const priceStr = (v: number): string => `${grp(v, locale)} GIL`;
+apps/discord-worker/src/handlers/commands/budget.ts:300:      // locale (F-10); acquisition groups by the localized acquisition.
+apps/discord-worker/src/handlers/commands/budget.ts:302:        ? getLocalizedAcquisition(g.acquisition, locale)
+apps/discord-worker/src/handlers/commands/budget.ts:304:          ? (CONSOLIDATED_DYES[g.type].names[locale] ?? CONSOLIDATED_DYES[g.type].names.en)
+apps/discord-worker/src/handlers/commands/budget.ts:310:        name: getLocalizedDyeName(r.dye.itemID, r.dye.name, locale),
+apps/discord-worker/src/handlers/commands/budget.ts:311:        de: num(r.de, locale, dp),
+apps/discord-worker/src/handlers/commands/budget.ts:314:        perDe: r.perDe !== null ? fmtPerDe(r.perDe, locale) : null,
+apps/discord-worker/src/handlers/commands/budget.ts:343:      lang: locale,
+apps/discord-worker/src/handlers/commands/budget.ts:355:            de: num(result.groups[0].rows[0].de2000, locale, 1),
+apps/discord-worker/src/handlers/commands/budget.ts:361:        .map((o) => getLocalizedDyeName(o.itemID, o.name, locale))
+apps/discord-worker/src/handlers/commands/budget.ts:511:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/budget.ts:535:      choices = getDyeAutocomplete(query, 25, locale);
+apps/discord-worker/src/handlers/commands/budget.ts:539:      choices = await getWorldAutocomplete(env, query, logger, locale);
+apps/discord-worker/src/handlers/commands/changelog.ts:66:  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/comparison.ts:20:function resolveColorInput(input: string, locale: LocaleCode): Dye | null {
+apps/discord-worker/src/handlers/commands/comparison.ts:21:  const resolved = resolveColor(input, { excludeFacewear: true, findClosestForHex: true, locale });
+apps/discord-worker/src/handlers/commands/comparison.ts:32:  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/comparison.ts:69:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/comparison.ts:71:  ctx.waitUntil(processComparisonCommand(interaction, env, dyes, locale, prefs.theme, logger));
+apps/discord-worker/src/handlers/commands/comparison.ts:79:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/comparison.ts:83:  const t = createTranslator(locale);
+apps/discord-worker/src/handlers/commands/comparison.ts:84:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/comparison.ts:86:  const result = await executeComparison({ dyes, locale, theme, logger });
+apps/discord-worker/src/handlers/commands/comparison.ts:106:        const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+apps/discord-worker/src/handlers/commands/contrast.ts:43:    ? await createUserTranslator(env.KV, userId, interaction.locale)
+apps/discord-worker/src/handlers/commands/contrast.ts:44:    : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+apps/discord-worker/src/handlers/commands/contrast.ts:56:    const resolved = resolveColorInput(value, { excludeFacewear: true, findClosestForHex: true, locale: t.getLocale() });
+apps/discord-worker/src/handlers/commands/contrast.ts:74:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/contrast.ts:76:  ctx.waitUntil(processContrastCommand(interaction, env, resolvedDyes, locale, theme, logger));
+apps/discord-worker/src/handlers/commands/contrast.ts:84:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/contrast.ts:88:  const t = createTranslator(locale);
+apps/discord-worker/src/handlers/commands/contrast.ts:89:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/contrast.ts:91:  const result = await executeContrast({ dyes, locale, theme, logger });
+apps/discord-worker/src/handlers/commands/dye.ts:58:  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/dye.ts:60:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/dye.ts:61:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/dye.ts:77:      return handleInfoSubcommand(interaction, env, ctx, t, locale, theme, subcommand.options);
+apps/discord-worker/src/handlers/commands/dye.ts:81:      return handleRandomSubcommand(interaction, env, ctx, t, locale, theme, subcommand.options);
+apps/discord-worker/src/handlers/commands/dye.ts:162:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/dye.ts:185:  ctx.waitUntil(processInfoCard(interaction, env, dye, locale, theme));
+apps/discord-worker/src/handlers/commands/dye.ts:193:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/dye.ts:196:  const t = createTranslator(locale);
+apps/discord-worker/src/handlers/commands/dye.ts:197:  const result = await executeDyeInfo({ dye, locale, theme });
+apps/discord-worker/src/handlers/commands/dye.ts:203:    await sendDyeInfoFallback(interaction, env, dye, locale, t);
+apps/discord-worker/src/handlers/commands/dye.ts:241:    await sendDyeInfoFallback(interaction, env, dye, locale, t);
+apps/discord-worker/src/handlers/commands/dye.ts:249:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/dye.ts:252:  const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+apps/discord-worker/src/handlers/commands/dye.ts:253:  const localizedCategory = getLocalizedCategory(dye.category, locale);
+apps/discord-worker/src/handlers/commands/dye.ts:357:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/dye.ts:363:  ctx.waitUntil(processRandomGrid(interaction, env, uniqueCategories, locale, theme));
+apps/discord-worker/src/handlers/commands/dye.ts:371:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/dye.ts:374:  const t = createTranslator(locale);
+apps/discord-worker/src/handlers/commands/dye.ts:375:  const result = await executeRandom({ locale, count: 5, uniqueCategories, theme });
+apps/discord-worker/src/handlers/commands/dye.ts:385:      await sendRandomFallback(interaction, env, t, locale);
+apps/discord-worker/src/handlers/commands/dye.ts:398:        const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+apps/discord-worker/src/handlers/commands/dye.ts:418:    await sendRandomFallback(interaction, env, t, locale);
+apps/discord-worker/src/handlers/commands/dye.ts:426:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/dye.ts:429:  const result = await executeRandom({ locale, count: 5 });
+apps/discord-worker/src/handlers/commands/dye.ts:441:      const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+apps/discord-worker/src/handlers/commands/dye.ts:442:      const localizedCategory = getLocalizedCategory(dye.category, locale);
+apps/discord-worker/src/handlers/commands/dye.ts:463:function formatDyeListItem(dye: Dye, locale: LocaleCode, applicationId: string): string {
+apps/discord-worker/src/handlers/commands/dye.ts:466:  const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+apps/discord-worker/src/handlers/commands/extractor.ts:89:function resolveColorInput(input: string, locale: LocaleCode): { hex: string; fromDye?: Dye } | null {
+apps/discord-worker/src/handlers/commands/extractor.ts:90:  const resolved = resolveColor(input, { excludeFacewear: true, locale });
+apps/discord-worker/src/handlers/commands/extractor.ts:178:    const t = createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+apps/discord-worker/src/handlers/commands/extractor.ts:195:      const t = createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+apps/discord-worker/src/handlers/commands/extractor.ts:222:  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/extractor.ts:226:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/extractor.ts:227:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/extractor.ts:316:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/extractor.ts:319:      ? getLocalizedDyeName(fromDye.itemID, fromDye.name, locale)
+apps/discord-worker/src/handlers/commands/extractor.ts:328:        name: getLocalizedDyeName(m.dye.itemID, m.dye.name, locale),
+apps/discord-worker/src/handlers/commands/extractor.ts:337:      lang: locale,
+apps/discord-worker/src/handlers/commands/extractor.ts:347:        const name = getLocalizedDyeName(m.dye.itemID, m.dye.name, locale);
+apps/discord-worker/src/handlers/commands/extractor.ts:348:        return `**${i + 6}.** ${name} (\`${m.dye.hex.toUpperCase()}\`) · ${num(m.distance, locale, 1)}`;
+apps/discord-worker/src/handlers/commands/extractor.ts:418:    ? await createUserTranslator(env.KV, userId, interaction.locale)
+apps/discord-worker/src/handlers/commands/extractor.ts:419:    : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+apps/discord-worker/src/handlers/commands/extractor.ts:452:  // Resolve locale for background processing
+apps/discord-worker/src/handlers/commands/extractor.ts:453:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/extractor.ts:469:    processImageExtraction(interaction, env, attachment.url, colorCount, locale, {
+apps/discord-worker/src/handlers/commands/extractor.ts:488:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/extractor.ts:497:  const t = createTranslator(locale);
+apps/discord-worker/src/handlers/commands/extractor.ts:500:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/extractor.ts:557:      matchedName: getLocalizedDyeName(m.matchedDye.itemID, m.matchedDye.name, locale),
+apps/discord-worker/src/handlers/commands/extractor.ts:571:      lang: locale,
+apps/discord-worker/src/handlers/commands/gradient.ts:45:    ? await createUserTranslator(env.KV, userId, interaction.locale)
+apps/discord-worker/src/handlers/commands/gradient.ts:46:    : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+apps/discord-worker/src/handlers/commands/gradient.ts:55:  const startResolved = resolveColorInput(startInput, { locale: t.getLocale() });
+apps/discord-worker/src/handlers/commands/gradient.ts:68:  const endResolved = resolveColorInput(endInput, { locale: t.getLocale() });
+apps/discord-worker/src/handlers/commands/gradient.ts:79:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/gradient.ts:93:      locale,
+apps/discord-worker/src/handlers/commands/gradient.ts:122:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/gradient.ts:127:  const t = createTranslator(locale);
+apps/discord-worker/src/handlers/commands/gradient.ts:128:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/gradient.ts:136:    locale,
+apps/discord-worker/src/handlers/commands/gradient.ts:222:/** Maps `classifyMatchDistance`'s tier key onto the bot's `quality.*` locale keys. */
+apps/discord-worker/src/handlers/commands/harmony.ts:29:  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/harmony.ts:55:  const resolved = resolveColorInput(colorInput, { excludeFacewear: false, locale: t.getLocale() });
+apps/discord-worker/src/handlers/commands/harmony.ts:68:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/harmony.ts:87:      locale,
+apps/discord-worker/src/handlers/commands/harmony.ts:109:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/harmony.ts:119:  const t = createTranslator(locale);
+apps/discord-worker/src/handlers/commands/harmony.ts:120:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/harmony.ts:128:    locale,
+apps/discord-worker/src/handlers/commands/harmony.ts:163:        const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+apps/discord-worker/src/handlers/commands/manual.ts:241:/** Topic id → manual5.topics.* locale key (identifiers never localise). */
+apps/discord-worker/src/handlers/commands/manual.ts:251: * Spectrum & Prices links the Lodestone **by game region, not locale** —
+apps/discord-worker/src/handlers/commands/manual.ts:315:  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/manual.ts:316:  const locale: LocaleCode = t.getLocale();
+apps/discord-worker/src/handlers/commands/manual.ts:332:        : getLearnLink(topicId, locale);
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:35:  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:51:  const dye1Resolved = resolveColorInput(dye1Input, { excludeFacewear: true, locale: t.getLocale() });
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:59:  const dye2Resolved = resolveColorInput(dye2Input, { excludeFacewear: true, locale: t.getLocale() });
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:70:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:72:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:83:          locale,
+apps/discord-worker/src/handlers/commands/preferences.ts:11: * REFACTOR-004: All user-facing strings now use i18n keys from locale files
+apps/discord-worker/src/handlers/commands/preferences.ts:137:  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/preferences.ts:251:  // the viewer's own locale and timezone, so no server-side date formatting
+apps/discord-worker/src/handlers/commands/preferences.ts:252:  // (F-05/F-08 — the old `toLocaleString()` ignored the user's locale).
+apps/discord-worker/src/handlers/commands/preset.ts:76:    interaction.member?.user?.global_name ||
+apps/discord-worker/src/handlers/commands/preset.ts:77:    interaction.member?.user?.username ||
+apps/discord-worker/src/handlers/commands/preset.ts:78:    interaction.user?.global_name ||
+apps/discord-worker/src/handlers/commands/preset.ts:79:    interaction.user?.username ||
+apps/discord-worker/src/handlers/commands/preset.ts:81:  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/preset.ts:299:  // Use translator's resolved locale instead of calling resolveUserLocale again
+apps/discord-worker/src/handlers/commands/preset.ts:300:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/preset.ts:302:  ctx.waitUntil(processShowCommand(interaction, env, t, presetId, locale, logger));
+apps/discord-worker/src/handlers/commands/preset.ts:312:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/preset.ts:315:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/preset.ts:329:    await sendPresetEmbed(interaction, env, t, preset, locale);
+apps/discord-worker/src/handlers/commands/preset.ts:358:  // Use translator's resolved locale instead of calling resolveUserLocale again
+apps/discord-worker/src/handlers/commands/preset.ts:359:  const locale = t.getLocale();
+apps/discord-worker/src/handlers/commands/preset.ts:361:  ctx.waitUntil(processRandomCommand(interaction, env, t, category, locale, logger));
+apps/discord-worker/src/handlers/commands/preset.ts:371:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/preset.ts:374:  await initializeLocale(locale);
+apps/discord-worker/src/handlers/commands/preset.ts:391:    await sendPresetEmbed(interaction, env, t, preset, locale);
+apps/discord-worker/src/handlers/commands/preset.ts:967:  locale: LocaleCode,
+apps/discord-worker/src/handlers/commands/preset.ts:990:    // F-11: the swatch card renders in the user's locale
+apps/discord-worker/src/handlers/commands/preset.ts:995:    dyeName: (d) => getLocalizedDyeName(d.itemID, d.name, locale),
+apps/discord-worker/src/handlers/commands/preset.ts:1007:      const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+apps/discord-worker/src/handlers/commands/stats.ts:87:  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+apps/discord-worker/src/handlers/commands/swatch.ts:7: * (core parse rules: key presence not TypeName, gamma on the floats, flag
+apps/discord-worker/src/handlers/commands/swatch.ts:130:    ? await createUserTranslator(env.KV, userId, interaction.locale)
+apps/discord-worker/src/handlers/commands/swatch.ts:131:    : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+apps/discord-worker/src/handlers/commands/swatch.ts:157:    locale: t.getLocale(),
+apps/discord-worker/src/handlers/commands/swatch.ts:178:  const locale: LocaleCode = input.locale;
+apps/discord-worker/src/handlers/commands/swatch.ts:179:  const t = createTranslator(locale);
+apps/discord-worker/src/index.ts:624:  const t = createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+apps/discord-worker/src/index.ts:703:      const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
+apps/discord-worker/src/index.ts:906:  // user's locale (stored preference → Discord client locale → en).
+apps/discord-worker/src/index.ts:907:  const locale = await resolveUserLocale(env.KV, acUserId ?? '', interaction.locale);
+apps/discord-worker/src/index.ts:908:  await initializeLocale(locale);
+apps/discord-worker/src/index.ts:942:      choices = getDyeAutocompleteChoices(query, locale);
+apps/discord-worker/src/index.ts:947:    return handleBudgetAutocomplete(interaction, env, locale, logger);
+apps/discord-worker/src/index.ts:958:      choices = await getWorldAutocomplete(env, query, logger, locale);
+apps/discord-worker/src/index.ts:963:    choices = getDyeAutocompleteChoices(query, locale);
+apps/discord-worker/src/index.ts:975: * F-02 (2026-08-20 i18n audit): matches English OR the locale's dye name and
+apps/discord-worker/src/index.ts:980: * which Discord echoed verbatim under every locale — `name: Carmine Red`).
+apps/discord-worker/src/index.ts:983: * a name in any supported locale, so a typed value keeps working too.
+apps/discord-worker/src/index.ts:987:  locale: LocaleCode = 'en',
+apps/discord-worker/src/index.ts:990:  const matchingDyes = query.length >= 1 ? searchDyesByName(query, locale) : dyeService.getAllDyes();
+apps/discord-worker/src/index.ts:997:      name: `${getLocalizedDyeName(dye.itemID, dye.name, locale)} (${dye.hex.toUpperCase()})`,
+apps/discord-worker/src/index.ts:1144: * client locale, else English. Only built on the rare paths that need it.
+apps/discord-worker/src/index.ts:1152:  if (userId) return createUserTranslator(env.KV, userId, interaction.locale, logger);
+apps/discord-worker/src/index.ts:1153:  return createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+apps/discord-worker/src/services/analytics.ts:58:  /** blob7 — Discord client locale bucket (en|ja|de|fr|ko|zh|other) */
+apps/discord-worker/src/services/analytics.ts:59:  locale?: string;
+apps/discord-worker/src/services/analytics.ts:98:        event.locale ?? 'other',                             // blob7: locale bucket
+apps/discord-worker/src/services/bot-i18n.ts:6: * createUserTranslator (which resolves locale from KV).
+apps/discord-worker/src/services/bot-i18n.ts:23: * Create a translator for a user, resolving their locale from KV preferences.
+apps/discord-worker/src/services/bot-i18n.ts:27: * @param discordLocale - Discord's detected locale
+apps/discord-worker/src/services/bot-i18n.ts:36:  const locale = await resolveUserLocale(kv, userId, discordLocale);
+apps/discord-worker/src/services/bot-i18n.ts:37:  // F-02 (2026-08-20 i18n audit): warm the per-locale dye-name cache here so
+apps/discord-worker/src/services/bot-i18n.ts:38:  // `resolveColorInput(..., { locale })` / `searchDyesByName` can match
+apps/discord-worker/src/services/bot-i18n.ts:40:  // the first call per locale; the bot-logic command executors also call it.
+apps/discord-worker/src/services/bot-i18n.ts:41:  await initializeLocale(locale);
+apps/discord-worker/src/services/bot-i18n.ts:42:  return new Translator(locale, logger);
+apps/discord-worker/src/services/bot-i18n.ts:51: * legacy i18n preference → Discord locale → 'en' (resolveUserLocale still
+apps/discord-worker/src/services/bot-i18n.ts:66:  const locale = await resolveUserLocale(kv, userId, discordLocale);
+apps/discord-worker/src/services/bot-i18n.ts:67:  await initializeLocale(locale);
+apps/discord-worker/src/services/bot-i18n.ts:68:  return { t: new Translator(locale, logger), prefs };
+apps/discord-worker/src/services/budget/budget-calculator.ts:324:export function getDyeByName(name: string, locale: LocaleCode = 'en'): Dye | null {
+apps/discord-worker/src/services/budget/budget-calculator.ts:326:  const dye = findDyeByName(name, locale);
+apps/discord-worker/src/services/budget/budget-calculator.ts:333: * F-02: matches English OR the locale's name and labels with the localized
+apps/discord-worker/src/services/budget/budget-calculator.ts:341:  locale: LocaleCode = 'en',
+apps/discord-worker/src/services/budget/budget-calculator.ts:343:  const matches = searchDyesByName(query, locale).filter(
+apps/discord-worker/src/services/budget/budget-calculator.ts:348:    name: `${getLocalizedDyeName(dye.itemID, dye.name, locale)} (${getLocalizedCategory(dye.category, locale)})`,
+apps/discord-worker/src/services/budget/universalis-client.ts:383:  locale: LocaleCode = 'en',
+apps/discord-worker/src/services/budget/universalis-client.ts:386:  const t = createTranslator(locale);
+apps/discord-worker/src/services/command-trace.ts:25: * the guild/dm context, a locale bucket and an outcome CLASS. Never an option
+apps/discord-worker/src/services/command-trace.ts:56:  locale: string;
+apps/discord-worker/src/services/command-trace.ts:77:  fields: { command: string; subcommand: string; userId: string; guildId?: string; locale: string },
+apps/discord-worker/src/services/command-trace.ts:191:  const { userId, guildId, locale } = interactionIdentity(interaction);
+apps/discord-worker/src/services/command-trace.ts:203:      locale,
+apps/discord-worker/src/services/command-trace.ts:214:  locale: string;
+apps/discord-worker/src/services/command-trace.ts:218:    guildId: interaction.guild_id,
+apps/discord-worker/src/services/command-trace.ts:219:    locale: bucketLocale(interaction.locale),
+apps/discord-worker/src/services/command-trace.ts:243:    locale: trace.locale,
+apps/discord-worker/src/services/command-trace.ts:314:/** Discord client locale → one of the six supported codes, else 'other'. */
+apps/discord-worker/src/services/command-trace.ts:315:export function bucketLocale(locale: string | undefined): string {
+apps/discord-worker/src/services/command-trace.ts:316:  return (locale && discordLocaleToLocaleCode(locale)) || 'other';
+apps/discord-worker/src/services/fonts.ts:15: * core + bot-logic/i18n locale JSON files (re-run it after any locale edit):
+apps/discord-worker/src/services/i18n.ts:6: * - Locale resolution (user preference → Discord locale → default)
+apps/discord-worker/src/services/i18n.ts:10: * - i18n.ts (this file): Preferences, locale resolution, core library integration
+apps/discord-worker/src/services/i18n.ts:16: * - Both need user locale preferences, so i18n.ts handles that shared concern
+apps/discord-worker/src/services/i18n.ts:39: * Validates if a string is a valid locale code
+apps/discord-worker/src/services/i18n.ts:46: * Maps Discord locale codes to our supported locales
+apps/discord-worker/src/services/i18n.ts:84: * Resolve the effective locale for a user
+apps/discord-worker/src/services/i18n.ts:89: * 3. Discord client locale (interaction.locale)
+apps/discord-worker/src/services/i18n.ts:94: * @param discordLocale - Discord's detected locale
+apps/discord-worker/src/services/i18n.ts:95: * @returns Effective locale code
+apps/discord-worker/src/services/i18n.ts:123:  // 3. Try Discord locale
+apps/discord-worker/src/services/preferences.ts:523: * a `preferences.affects.*` locale key the caller renders with `t.t()`
+apps/discord-worker/src/services/preset-api.ts:152:    const nonce = crypto.randomUUID();
+apps/discord-worker/src/services/rate-limiter.ts:218: * Format a rate limit error message for the user in their locale
+apps/discord-worker/src/types/env.ts:115:  locale?: string; // User's locale (e.g., "en-US", "ja")
+apps/discord-worker/src/types/env.ts:116:  guild_id?: string;
+apps/discord-worker/src/types/env.ts:117:  channel_id?: string;
+apps/discord-worker/src/types/env.ts:121:      username?: string;
+apps/discord-worker/src/types/env.ts:122:      discriminator?: string;
+apps/discord-worker/src/types/env.ts:123:      avatar?: string;
+apps/discord-worker/src/types/env.ts:124:      global_name?: string;
+apps/discord-worker/src/types/env.ts:129:    username?: string;
+apps/discord-worker/src/types/env.ts:130:    discriminator?: string;
+apps/discord-worker/src/types/env.ts:131:    avatar?: string;
+apps/discord-worker/src/types/env.ts:132:    global_name?: string;
+apps/discord-worker/src/types/env.ts:171:          filename: string;
+apps/discord-worker/src/types/preferences.ts:142: * MATCHING_METHODS locale keys in the graphics port; the tags themselves
+apps/discord-worker/src/types/preset.ts:112:   * Get the locale key of a safe, user-friendly error message based on status
+apps/discord-worker/src/types/preset.ts:146: * presets-api preset IDs are `crypto.randomUUID()` values (UUID v4), the same
+apps/discord-worker/src/utils/discord-api.ts:136:        filename: options.file.name,
+apps/discord-worker/src/utils/discord-api.ts:222:        filename: options.file.name,
+apps/moderation-worker/scripts/register-commands.ts:94:            description: 'User to ban (search by username)',
+apps/moderation-worker/scripts/register-commands.ts:108:            description: 'User to unban (search by username)',
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:7: * - ban_confirm_{discordId}_{username} - Confirm ban (opens reason modal)
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:28:  channel_id?: string;
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:35:      username: string;
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:40:    username: string;
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:76:  // username suffix is simply ignored; the reason modal resolves the name
+apps/moderation-worker/src/handlers/buttons/index.ts:45:  channel_id?: string;
+apps/moderation-worker/src/handlers/buttons/index.ts:60:      username: string;
+apps/moderation-worker/src/handlers/buttons/index.ts:65:    username: string;
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:34:  channel_id?: string;
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:49:      username: string;
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:54:    username: string;
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:79:  const userName = interaction.member?.user?.username ?? interaction.user?.username ?? 'Moderator';
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:116:      if (interaction.channel_id && interaction.message?.id) {
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:118:        await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:140:    if (interaction.channel_id && interaction.message?.id) {
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:143:      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:178:    if (interaction.channel_id && interaction.message?.id) {
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:181:      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+apps/moderation-worker/src/handlers/commands/preset.ts:93:  return interaction.channel_id === env.MODERATION_CHANNEL_ID;
+apps/moderation-worker/src/handlers/commands/preset.ts:502:          { name: t.t('ban.username'), value: sanitizeUserName(user.username), inline: true },
+apps/moderation-worker/src/handlers/commands/preset.ts:521:            // FINDING-007: id only — the username used to ride along base64url-
+apps/moderation-worker/src/handlers/commands/preset.ts:595:    // Get ban info before unbanning (for username in response)
+apps/moderation-worker/src/handlers/commands/preset.ts:627:          // FINDING-019: the stored username is author-controlled
+apps/moderation-worker/src/handlers/commands/preset.ts:628:          description: `Successfully unbanned **${sanitizeUserName(activeBan.username)}**.`,
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:6: * Modal custom_id pattern: ban_reason_modal_{discordId}_{username}
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:53:  // username is resolved from D1 here. Older modals
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:74:    logger?.error('Failed to resolve target username', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:101:        // FINDING-019: the username comes from D1 (author-controlled)
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:120:  // FINDING-019: everything rendered below is user-sourced — D1 username,
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:92:    if (interaction.channel_id && interaction.message?.id) {
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:95:      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:132:    if (interaction.channel_id && interaction.message?.id) {
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:135:      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:216:    if (interaction.channel_id && interaction.message?.id) {
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:217:      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:254:    if (interaction.channel_id && interaction.message?.id) {
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:257:      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+apps/moderation-worker/src/index.ts:212:  const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
+apps/moderation-worker/src/index.ts:423:        `${user.username} (discord:${user.discordId}) - ${user.presetCount} presets`
+apps/moderation-worker/src/index.ts:450:        name: clampChoiceName(`${user.username} (discord:${user.discordId})`),
+apps/moderation-worker/src/index.ts:545:  locale?: string;
+apps/moderation-worker/src/index.ts:546:  guild_id?: string;
+apps/moderation-worker/src/index.ts:547:  channel_id?: string;
+apps/moderation-worker/src/index.ts:551:      username: string;
+apps/moderation-worker/src/index.ts:552:      discriminator: string;
+apps/moderation-worker/src/index.ts:553:      avatar?: string;
+apps/moderation-worker/src/index.ts:558:    username: string;
+apps/moderation-worker/src/index.ts:559:    discriminator: string;
+apps/moderation-worker/src/index.ts:560:    avatar?: string;
+apps/moderation-worker/src/services/ban-service.ts:91:          p.author_name as username,
+apps/moderation-worker/src/services/ban-service.ts:104:      .all<{ discord_id: string; username: string; preset_count: number }>();
+apps/moderation-worker/src/services/ban-service.ts:108:      username: row.username,
+apps/moderation-worker/src/services/ban-service.ts:118:          author_name as username,
+apps/moderation-worker/src/services/ban-service.ts:129:      .all<{ discord_id: string; username: string; preset_count: number }>();
+apps/moderation-worker/src/services/ban-service.ts:133:      username: row.username,
+apps/moderation-worker/src/services/ban-service.ts:161:          username,
+apps/moderation-worker/src/services/ban-service.ts:165:          AND (username LIKE ? ESCAPE '\\' OR discord_id LIKE ? ESCAPE '\\')
+apps/moderation-worker/src/services/ban-service.ts:166:        ORDER BY username ASC
+apps/moderation-worker/src/services/ban-service.ts:174:        username: string;
+apps/moderation-worker/src/services/ban-service.ts:181:      username: row.username,
+apps/moderation-worker/src/services/ban-service.ts:206:        author_name as username,
+apps/moderation-worker/src/services/ban-service.ts:214:    .first<{ discord_id: string; username: string; preset_count: number }>();
+apps/moderation-worker/src/services/ban-service.ts:236:      username: userResult.username,
+apps/moderation-worker/src/services/ban-service.ts:285:  username: string,
+apps/moderation-worker/src/services/ban-service.ts:299:    const id = crypto.randomUUID();
+apps/moderation-worker/src/services/ban-service.ts:309:        INSERT INTO banned_users (id, discord_id, username, moderator_discord_id, reason, banned_at)
+apps/moderation-worker/src/services/ban-service.ts:313:        .bind(id, discordId, username, moderatorDiscordId, reason, now),
+apps/moderation-worker/src/services/ban-service.ts:485:    username: row.username,
+apps/moderation-worker/src/services/bot-i18n.ts:19:    locale: string;
+apps/moderation-worker/src/services/bot-i18n.ts:28: * English locale data (moderation-focused)
+apps/moderation-worker/src/services/bot-i18n.ts:32:    locale: 'en',
+apps/moderation-worker/src/services/bot-i18n.ts:90:    username: 'Username',
+apps/moderation-worker/src/services/bot-i18n.ts:151: * Translator class for a specific locale
+apps/moderation-worker/src/services/bot-i18n.ts:154:  private locale: LocaleCode;
+apps/moderation-worker/src/services/bot-i18n.ts:159:  constructor(locale: LocaleCode, logger?: ExtendedLogger) {
+apps/moderation-worker/src/services/bot-i18n.ts:160:    this.locale = locale;
+apps/moderation-worker/src/services/bot-i18n.ts:161:    this.data = locales[locale] || locales.en;
+apps/moderation-worker/src/services/bot-i18n.ts:172:    if (value === undefined && this.locale !== 'en') {
+apps/moderation-worker/src/services/bot-i18n.ts:178:        this.logger.warn(`Missing translation: ${key} for locale ${this.locale}`);
+apps/moderation-worker/src/services/bot-i18n.ts:191:   * Get the current locale code
+apps/moderation-worker/src/services/bot-i18n.ts:194:    return this.locale;
+apps/moderation-worker/src/services/bot-i18n.ts:198:   * Get locale metadata
+apps/moderation-worker/src/services/bot-i18n.ts:206: * Create a translator for a specific locale
+apps/moderation-worker/src/services/bot-i18n.ts:208:export function createTranslator(locale: LocaleCode, logger?: ExtendedLogger): Translator {
+apps/moderation-worker/src/services/bot-i18n.ts:209:  return new Translator(locale, logger);
+apps/moderation-worker/src/services/bot-i18n.ts:213: * Create a translator for a user, resolving their locale preference
+apps/moderation-worker/src/services/bot-i18n.ts:221:  const locale = await resolveUserLocale(kv, userId, discordLocale);
+apps/moderation-worker/src/services/bot-i18n.ts:222:  return new Translator(locale, logger);
+apps/moderation-worker/src/services/i18n.ts:6: * - Locale resolution (user preference -> Discord locale -> default)
+apps/moderation-worker/src/services/i18n.ts:17: * Supported locale codes
+apps/moderation-worker/src/services/i18n.ts:47: * Validates if a string is a valid locale code
+apps/moderation-worker/src/services/i18n.ts:54: * Get locale info by code
+apps/moderation-worker/src/services/i18n.ts:61: * Maps Discord locale codes to our supported locales
+apps/moderation-worker/src/services/i18n.ts:100: * Resolve the effective locale for a user
+apps/moderation-worker/src/services/i18n.ts:113:  // 2. Try Discord locale
+apps/moderation-worker/src/services/preset-api.ts:63: * @param userName - Discord username (for audit trail)
+apps/moderation-worker/src/services/preset-api.ts:73: *   'username',
+apps/moderation-worker/src/services/preset-api.ts:151:    const nonce = crypto.randomUUID();
+apps/moderation-worker/src/types/ban.ts:15:  username: string;
+apps/moderation-worker/src/types/ban.ts:30:  username: string;
+apps/moderation-worker/src/types/ban.ts:44:  /** Display username from their preset submissions */
+apps/moderation-worker/src/types/ban.ts:45:  username: string;
+apps/moderation-worker/src/types/ban.ts:58:  /** Display username */
+apps/moderation-worker/src/types/ban.ts:59:  username: string;
+apps/moderation-worker/src/types/ban.ts:122:    username: row.username,
+apps/moderation-worker/src/types/env.ts:81:  locale?: string;
+apps/moderation-worker/src/types/env.ts:82:  guild_id?: string;
+apps/moderation-worker/src/types/env.ts:83:  channel_id?: string;
+apps/moderation-worker/src/types/env.ts:87:      username?: string;
+apps/moderation-worker/src/types/env.ts:88:      discriminator?: string;
+apps/moderation-worker/src/types/env.ts:89:      avatar?: string;
+apps/moderation-worker/src/types/env.ts:90:      global_name?: string;
+apps/moderation-worker/src/types/env.ts:95:    username?: string;
+apps/moderation-worker/src/types/env.ts:96:    discriminator?: string;
+apps/moderation-worker/src/types/env.ts:97:    avatar?: string;
+apps/moderation-worker/src/types/env.ts:98:    global_name?: string;
+apps/moderation-worker/src/types/modal.ts:17:  channel_id?: string;
+apps/moderation-worker/src/types/modal.ts:32:      username: string;
+apps/moderation-worker/src/types/modal.ts:37:    username: string;
+apps/moderation-worker/src/types/modal.ts:96: * Get the username from a modal interaction
+apps/moderation-worker/src/types/modal.ts:100: * @returns The username or the default name
+apps/moderation-worker/src/types/modal.ts:106:  return interaction.member?.user?.username ?? interaction.user?.username ?? defaultName;
+apps/moderation-worker/src/utils/embed-text.ts:28:/** A Discord username / display name / preset author name. */
+apps/oauth/src/handlers/callback.ts:207:    if (!discordUser.id || !discordUser.username) {
+apps/oauth/src/handlers/callback.ts:210:        hasUsername: !!discordUser.username,
+apps/oauth/src/handlers/callback.ts:225:      username: discordUser.global_name || discordUser.username,
+apps/oauth/src/handlers/callback.ts:226:      avatar_url: getAvatarUrl(discordUser.id, discordUser.avatar),
+apps/oauth/src/handlers/callback.ts:233:      global_name: discordUser.global_name,
+apps/oauth/src/handlers/callback.ts:234:      avatar: discordUser.avatar,
+apps/oauth/src/handlers/callback.ts:242:        username: discordUser.username,
+apps/oauth/src/handlers/callback.ts:243:        global_name: discordUser.global_name,
+apps/oauth/src/handlers/callback.ts:244:        avatar: discordUser.avatar,
+apps/oauth/src/handlers/callback.ts:245:        avatar_url: getAvatarUrl(discordUser.id, discordUser.avatar),
+apps/oauth/src/handlers/oauth-flow.ts:151:      csrf: state || crypto.randomUUID(),
+apps/oauth/src/handlers/refresh.ts:158:    const newJti = crypto.randomUUID();
+apps/oauth/src/handlers/refresh.ts:167:      username: payload.username,
+apps/oauth/src/handlers/refresh.ts:168:      global_name: payload.global_name,
+apps/oauth/src/handlers/refresh.ts:169:      avatar: payload.avatar,
+apps/oauth/src/handlers/refresh.ts:236:        username: payload.username,
+apps/oauth/src/handlers/refresh.ts:237:        global_name: payload.global_name,
+apps/oauth/src/handlers/refresh.ts:238:        avatar: payload.avatar,
+apps/oauth/src/handlers/refresh.ts:239:        avatar_url: getAvatarUrl(payload.sub, payload.avatar),
+apps/oauth/src/handlers/xivauth.ts:40:// - user: Basic user info (User ID, username)
+apps/oauth/src/handlers/xivauth.ts:73: * identifiers — no XIVAuth id, linked Discord id, username, character name or
+apps/oauth/src/handlers/xivauth.ts:316:    // identity (username / global_name — the preset author name downstream).
+apps/oauth/src/handlers/xivauth.ts:323:    const username = displayName ?? `XIVAuth User ${xivauthUser.id.slice(0, 8)}`;
+apps/oauth/src/handlers/xivauth.ts:338:        username,
+apps/oauth/src/handlers/xivauth.ts:368:      global_name: displayName,
+apps/oauth/src/handlers/xivauth.ts:377:        username: user.username,
+apps/oauth/src/handlers/xivauth.ts:378:        global_name: displayName, // verified character name only
+apps/oauth/src/handlers/xivauth.ts:379:        avatar: null,
+apps/oauth/src/handlers/xivauth.ts:380:        avatar_url: null, // XIVAuth doesn't provide avatar URL
+apps/oauth/src/services/jwt-service.ts:99:  global_name?: string | null;
+apps/oauth/src/services/jwt-service.ts:100:  avatar?: string | null;
+apps/oauth/src/services/jwt-service.ts:116:  const jti = crypto.randomUUID();
+apps/oauth/src/services/jwt-service.ts:131:    username: user.username,
+apps/oauth/src/services/jwt-service.ts:132:    global_name: options?.global_name ?? null,
+apps/oauth/src/services/jwt-service.ts:133:    avatar: options?.avatar ?? null,
+apps/oauth/src/services/jwt-service.ts:194: * Get Discord avatar URL from user info
+apps/oauth/src/services/user-service.ts:14:  username: string;
+apps/oauth/src/services/user-service.ts:51:  const { discord_id, xivauth_id, username, avatar_url, auth_provider } = params;
+apps/oauth/src/services/user-service.ts:76:  const newId = crypto.randomUUID();
+apps/oauth/src/services/user-service.ts:81:        `INSERT INTO users (id, discord_id, xivauth_id, auth_provider, username, avatar_url)
+apps/oauth/src/services/user-service.ts:84:      .bind(newId, discord_id || null, xivauth_id || null, auth_provider, username, avatar_url || null)
+apps/oauth/src/services/user-service.ts:92:      username,
+apps/oauth/src/services/user-service.ts:151:  const { discord_id, xivauth_id, username, avatar_url, auth_provider } = params;
+apps/oauth/src/services/user-service.ts:184:    username,
+apps/oauth/src/services/user-service.ts:209:  if (updates.username) {
+apps/oauth/src/services/user-service.ts:210:    fields.push('username = ?');
+apps/oauth/src/services/user-service.ts:211:    values.push(updates.username);
+apps/oauth/src/types.ts:95:  username: string;
+apps/og-worker/src/crawler-detector.ts:100:  const userAgent = request.headers.get('user-agent');
+apps/og-worker/src/index.ts:269: * Resolve the locale for an OG request.
+apps/og-worker/src/index.ts:290:    const locale = resolveLocale(url.searchParams);
+apps/og-worker/src/index.ts:314:    // Generate OG data for this tool (locale-aware display names). Presets are
+apps/og-worker/src/index.ts:317:    const ogData = generateOGDataForTool(tool, url.searchParams, env, locale, pathId);
+apps/og-worker/src/index.ts:324:      locale,
+apps/og-worker/src/index.ts:365:  locale: LocaleCode
+apps/og-worker/src/index.ts:369:    const strings = getOgDeck(tool, locale);
+apps/og-worker/src/index.ts:373:      tool: { glyphName: deck.glyphName, label: `/${getToolTag(tool, locale)}` },
+apps/og-worker/src/index.ts:377:      methodTag: tool === 'presets' ? role('curated', locale) : 'ΔE2000',
+apps/og-worker/src/index.ts:381:  const root = getOgDeck('root', locale);
+apps/og-worker/src/index.ts:417:  const locale = resolveLocale(new URL(c.req.url).searchParams);
+apps/og-worker/src/index.ts:444:    locale,
+apps/og-worker/src/index.ts:460:  const locale = resolveLocale(new URL(c.req.url).searchParams);
+apps/og-worker/src/index.ts:488:    locale,
+apps/og-worker/src/index.ts:504:  const locale = resolveLocale(new URL(c.req.url).searchParams);
+apps/og-worker/src/index.ts:532:    locale,
+apps/og-worker/src/index.ts:549:  const locale = resolveLocale(new URL(c.req.url).searchParams);
+apps/og-worker/src/index.ts:578:    locale,
+apps/og-worker/src/index.ts:593:  const locale = resolveLocale(new URL(c.req.url).searchParams);
+apps/og-worker/src/index.ts:616:    locale,
+apps/og-worker/src/index.ts:630:  const locale = resolveLocale(new URL(c.req.url).searchParams);
+apps/og-worker/src/index.ts:643:  const svg = generateComparisonOG({ dyeIds, locale, frame: frameFromQuery(c) });
+apps/og-worker/src/index.ts:657:  const locale = resolveLocale(new URL(c.req.url).searchParams);
+apps/og-worker/src/index.ts:678:    locale,
+apps/og-worker/src/index.ts:693:  const locale = resolveLocale(new URL(c.req.url).searchParams);
+apps/og-worker/src/index.ts:716:  return renderOGImage(generateExtractorOG({ entries, locale, frame: frameFromQuery(c) }));
+apps/og-worker/src/index.ts:725:  const locale = resolveLocale(new URL(c.req.url).searchParams);
+apps/og-worker/src/index.ts:739:  return renderOGImage(generatePresetsOG({ presetId, locale, frame: frameFromQuery(c) }));
+apps/og-worker/src/index.ts:748:  const locale = resolveLocale(new URL(c.req.url).searchParams);
+apps/og-worker/src/index.ts:761:  return renderOGImage(generateBudgetOG({ dyeId, locale, frame: frameFromQuery(c) }));
+apps/og-worker/src/og-data-generator.ts:70: * Append the locale to an emitted image URL — the picture never localises
+apps/og-worker/src/og-data-generator.ts:74:function withLang(url: string, locale: LocaleCode): string {
+apps/og-worker/src/og-data-generator.ts:75:  if (locale === 'en') return url;
+apps/og-worker/src/og-data-generator.ts:76:  return `${url}${url.includes('?') ? '&' : '?'}lang=${locale}`;
+apps/og-worker/src/og-data-generator.ts:100: * harmonies"); no other locale does, and German nouns must keep their
+apps/og-worker/src/og-data-generator.ts:103:function lc(s: string, locale: LocaleCode): string {
+apps/og-worker/src/og-data-generator.ts:104:  return locale === 'en' ? s.toLowerCase() : s;
+apps/og-worker/src/og-data-generator.ts:113:function getToolName(tool: ToolId, locale: LocaleCode): string {
+apps/og-worker/src/og-data-generator.ts:114:  return getOgDeck(tool, locale).name;
+apps/og-worker/src/og-data-generator.ts:118:function toolDefault(tool: ToolId, env: Env, locale: LocaleCode, description: string): OGData {
+apps/og-worker/src/og-data-generator.ts:120:    title: site(getToolName(tool, locale)),
+apps/og-worker/src/og-data-generator.ts:123:    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/${tool}/default.png`, locale),
+apps/og-worker/src/og-data-generator.ts:125:    locale,
+apps/og-worker/src/og-data-generator.ts:129:function getSheetName(sheet: ColorSheetCategory, locale: LocaleCode): string {
+apps/og-worker/src/og-data-generator.ts:130:  return ogTranslator.getSheetName(sheet as SheetKey, locale);
+apps/og-worker/src/og-data-generator.ts:133:function getGenderName(raw: CharacterGender | string, locale: LocaleCode): string {
+apps/og-worker/src/og-data-generator.ts:135:  if (g === 'male' || g === 'female') return embed(`gender.${g}`, locale);
+apps/og-worker/src/og-data-generator.ts:157:function getDyeInfo(stainID: number, locale: LocaleCode): { name: string; hex: string } | null {
+apps/og-worker/src/og-data-generator.ts:166:    name: getLocalizedDyeName(dye, locale),
+apps/og-worker/src/og-data-generator.ts:188:  locale: LocaleCode = 'en',
+apps/og-worker/src/og-data-generator.ts:190:  const dyeInfo = getDyeInfo(params.dye, locale);
+apps/og-worker/src/og-data-generator.ts:191:  const harmonyName = getLocalizedHarmonyName(params.harmony, locale);
+apps/og-worker/src/og-data-generator.ts:195:      title: site(embed('harmony.titleNoDye', locale, { harmony: harmonyName })),
+apps/og-worker/src/og-data-generator.ts:196:      description: embed('harmony.descriptionNoDye', locale, { harmony: lc(harmonyName, locale) }),
+apps/og-worker/src/og-data-generator.ts:198:      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/harmony/default.png`, locale),
+apps/og-worker/src/og-data-generator.ts:200:      locale,
+apps/og-worker/src/og-data-generator.ts:205:    title: site(embed('harmony.title', locale, { dye: dyeInfo.name, harmony: harmonyName })),
+apps/og-worker/src/og-data-generator.ts:206:    description: embed('harmony.description', locale, {
+apps/og-worker/src/og-data-generator.ts:207:      harmony: lc(harmonyName, locale),
+apps/og-worker/src/og-data-generator.ts:213:    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${encodeURIComponent(params.harmony)}.png`, params.algo), locale),
+apps/og-worker/src/og-data-generator.ts:216:    locale,
+apps/og-worker/src/og-data-generator.ts:226:  locale: LocaleCode = 'en',
+apps/og-worker/src/og-data-generator.ts:228:  const startDye = getDyeInfo(params.start, locale);
+apps/og-worker/src/og-data-generator.ts:229:  const endDye = getDyeInfo(params.end, locale);
+apps/og-worker/src/og-data-generator.ts:232:    return toolDefault('gradient', env, locale, embed('gradient.descriptionDefault', locale));
+apps/og-worker/src/og-data-generator.ts:236:    title: site(embed('gradient.title', locale, { start: startDye.name, end: endDye.name })),
+apps/og-worker/src/og-data-generator.ts:237:    description: embed('gradient.description', locale, {
+apps/og-worker/src/og-data-generator.ts:245:    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/gradient/${params.start}/${params.end}/${params.steps}.png`, params.algo), locale),
+apps/og-worker/src/og-data-generator.ts:248:    locale,
+apps/og-worker/src/og-data-generator.ts:258:  locale: LocaleCode = 'en',
+apps/og-worker/src/og-data-generator.ts:260:  const dyeA = getDyeInfo(params.dyeA, locale);
+apps/og-worker/src/og-data-generator.ts:261:  const dyeB = getDyeInfo(params.dyeB, locale);
+apps/og-worker/src/og-data-generator.ts:262:  const dyeC = params.dyeC ? getDyeInfo(params.dyeC, locale) : null;
+apps/og-worker/src/og-data-generator.ts:265:    return toolDefault('mixer', env, locale, embed('mixer.descriptionDefault', locale));
+apps/og-worker/src/og-data-generator.ts:272:      title: site(embed('mixer.title3', locale, names)),
+apps/og-worker/src/og-data-generator.ts:273:      description: embed('mixer.description3', locale, names),
+apps/og-worker/src/og-data-generator.ts:275:      imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, params.algo), locale),
+apps/og-worker/src/og-data-generator.ts:278:      locale,
+apps/og-worker/src/og-data-generator.ts:285:    title: site(embed('mixer.title2', locale, vars)),
+apps/og-worker/src/og-data-generator.ts:286:    description: embed('mixer.description2', locale, vars),
+apps/og-worker/src/og-data-generator.ts:288:    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, params.algo), locale),
+apps/og-worker/src/og-data-generator.ts:291:    locale,
+apps/og-worker/src/og-data-generator.ts:301:  locale: LocaleCode = 'en',
+apps/og-worker/src/og-data-generator.ts:308:  let description = embed('swatch.description', locale, { n: limit, hex: hexColor });
+apps/og-worker/src/og-data-generator.ts:312:    const sheetName = lc(getSheetName(sheet, locale), locale);
+apps/og-worker/src/og-data-generator.ts:314:      description = embed('swatch.descriptionSheetRace', locale, {
+apps/og-worker/src/og-data-generator.ts:315:        gender: getGenderName(gender, locale),
+apps/og-worker/src/og-data-generator.ts:316:        race: getLocalizedClanOrRace(race, locale),
+apps/og-worker/src/og-data-generator.ts:321:      description = embed('swatch.descriptionSheet', locale, { sheet: sheetName, hex: hexColor });
+apps/og-worker/src/og-data-generator.ts:338:  const imageUrl = withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/swatch/${encodeURIComponent(params.color)}/${limit}.png`, params.algo), locale);
+apps/og-worker/src/og-data-generator.ts:341:    title: site(embed('swatch.title', locale, { hex: hexColor })),
+apps/og-worker/src/og-data-generator.ts:347:    locale,
+apps/og-worker/src/og-data-generator.ts:357:  locale: LocaleCode = 'en',
+apps/og-worker/src/og-data-generator.ts:359:  const dyes = params.dyes.slice(0, 4).map((id) => getDyeInfo(id, locale)).filter(Boolean);
+apps/og-worker/src/og-data-generator.ts:362:    return toolDefault('comparison', env, locale, embed('comparison.descriptionDefault', locale));
+apps/og-worker/src/og-data-generator.ts:368:    title: site(embed('comparison.title', locale, { names: dyeNames })),
+apps/og-worker/src/og-data-generator.ts:369:    description: embed('comparison.description', locale, { n: dyes.length, names: dyeNames }),
+apps/og-worker/src/og-data-generator.ts:371:    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/comparison/${params.dyes.join(',')}.png`, locale),
+apps/og-worker/src/og-data-generator.ts:374:    locale,
+apps/og-worker/src/og-data-generator.ts:384:  locale: LocaleCode = 'en',
+apps/og-worker/src/og-data-generator.ts:386:  const dyes = params.dyes.slice(0, 4).map((id) => getDyeInfo(id, locale)).filter(Boolean);
+apps/og-worker/src/og-data-generator.ts:388:    ? getLocalizedVisionName(params.vision, locale)
+apps/og-worker/src/og-data-generator.ts:389:    : embed('accessibility.lensAll', locale);
+apps/og-worker/src/og-data-generator.ts:392:    return toolDefault('accessibility', env, locale, embed('accessibility.descriptionDefault', locale));
+apps/og-worker/src/og-data-generator.ts:398:    title: site(embed('accessibility.title', locale, { lens: visionName, names: dyeNames })),
+apps/og-worker/src/og-data-generator.ts:399:    description: embed('accessibility.description', locale, { names: dyeNames, lens: lc(visionName, locale) }),
+apps/og-worker/src/og-data-generator.ts:401:    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${params.dyes.join(',')}/${encodeURIComponent(params.vision || 'normal')}.png`, locale),
+apps/og-worker/src/og-data-generator.ts:404:    locale,
+apps/og-worker/src/og-data-generator.ts:416:  locale: LocaleCode = 'en',
+apps/og-worker/src/og-data-generator.ts:420:    return toolDefault('extractor', env, locale, embed('extractor.descriptionDefault', locale));
+apps/og-worker/src/og-data-generator.ts:427:    title: site(embed('extractor.title', locale, { n: colors.length })),
+apps/og-worker/src/og-data-generator.ts:428:    description: embed('extractor.description', locale, { list }),
+apps/og-worker/src/og-data-generator.ts:431:    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/extractor/${colors.join(',')}.png`, locale),
+apps/og-worker/src/og-data-generator.ts:434:    locale,
+apps/og-worker/src/og-data-generator.ts:450:  locale: LocaleCode = 'en',
+apps/og-worker/src/og-data-generator.ts:456:    return toolDefault('presets', env, locale, embed('presets.descriptionDefault', locale));
+apps/og-worker/src/og-data-generator.ts:460:    .map((id) => getDyeInfo(id, locale))
+apps/og-worker/src/og-data-generator.ts:466:    title: site(embed('presets.title', locale, { preset: preset.name, tool: getToolName('presets', locale) })),
+apps/og-worker/src/og-data-generator.ts:468:      ? embed('presets.description', locale, { names: dyeNames })
+apps/og-worker/src/og-data-generator.ts:469:      : embed('presets.descriptionNoDyes', locale)) + blurb,
+apps/og-worker/src/og-data-generator.ts:471:    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/presets/${preset.id}.png`, locale),
+apps/og-worker/src/og-data-generator.ts:474:    locale,
+apps/og-worker/src/og-data-generator.ts:485:  locale: LocaleCode = 'en',
+apps/og-worker/src/og-data-generator.ts:487:  const target = params.dye !== null ? getDyeInfo(params.dye, locale) : null;
+apps/og-worker/src/og-data-generator.ts:489:    return toolDefault('budget', env, locale, embed('budget.descriptionDefault', locale));
+apps/og-worker/src/og-data-generator.ts:493:    title: site(embed('budget.title', locale, { dye: target.name })),
+apps/og-worker/src/og-data-generator.ts:494:    description: embed('budget.description', locale, { dye: target.name, hex: target.hex }),
+apps/og-worker/src/og-data-generator.ts:496:    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/budget/${params.dye}.png`, locale),
+apps/og-worker/src/og-data-generator.ts:499:    locale,
+apps/og-worker/src/og-data-generator.ts:507:export function generateRootOGData(env: Env, locale: LocaleCode = 'en'): OGData {
+apps/og-worker/src/og-data-generator.ts:509:    title: embed('root.title', locale),
+apps/og-worker/src/og-data-generator.ts:510:    description: embed('root.description', locale),
+apps/og-worker/src/og-data-generator.ts:512:    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
+apps/og-worker/src/og-data-generator.ts:514:    locale,
+apps/og-worker/src/og-data-generator.ts:519:export function generateFallbackOGData(env: Env, locale: LocaleCode = 'en'): OGData {
+apps/og-worker/src/og-data-generator.ts:522:    description: embed('fallback.description', locale),
+apps/og-worker/src/og-data-generator.ts:524:    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
+apps/og-worker/src/og-data-generator.ts:526:    locale,
+apps/og-worker/src/og-data-generator.ts:539:/** `og:locale` wants a territory; these are the six the app ships. */
+apps/og-worker/src/og-data-generator.ts:553: * - Standard OG tags (og:title, og:description, og:image, og:locale, etc.)
+apps/og-worker/src/og-data-generator.ts:562:  const locale: LocaleCode = ogData.locale ?? 'en';
+apps/og-worker/src/og-data-generator.ts:568:<html lang="${locale}">
+apps/og-worker/src/og-data-generator.ts:580:  <meta property="og:locale" content="${OG_LOCALE[locale] ?? OG_LOCALE.en}">
+apps/og-worker/src/og-data-generator.ts:651:      <p><a href="${escapeHtml(ogData.url)}">${escapeHtml(embed('body.open', locale))}</a></p>
+apps/og-worker/src/og-data-generator.ts:681: * @param locale - Optional locale for display-name localization (defaults to 'en').
+apps/og-worker/src/og-data-generator.ts:692:  locale: LocaleCode = 'en',
+apps/og-worker/src/og-data-generator.ts:709:      return generateHarmonyOGData(params, env, locale);
+apps/og-worker/src/og-data-generator.ts:719:      return generateGradientOGData(params, env, locale);
+apps/og-worker/src/og-data-generator.ts:731:      return generateMixerOGData(params, env, locale);
+apps/og-worker/src/og-data-generator.ts:741:        return toolDefault('swatch', env, locale, embed('swatch.descriptionDefault', locale));
+apps/og-worker/src/og-data-generator.ts:750:        // only a slug a locale table knows is ever looked up or echoed
+apps/og-worker/src/og-data-generator.ts:754:      return generateSwatchOGData(params, env, locale);
+apps/og-worker/src/og-data-generator.ts:759:      return generateComparisonOGData(params, env, locale);
+apps/og-worker/src/og-data-generator.ts:768:      return generateAccessibilityOGData(params, env, locale);
+apps/og-worker/src/og-data-generator.ts:779:      return generateExtractorOGData(params, env, locale);
+apps/og-worker/src/og-data-generator.ts:788:      return generatePresetsOGData(params, env, locale);
+apps/og-worker/src/og-data-generator.ts:795:      return generateBudgetOGData(params, env, locale);
+apps/og-worker/src/og-data-generator.ts:802:        description: embed('unknown.description', locale),
+apps/og-worker/src/og-data-generator.ts:804:        imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
+apps/og-worker/src/og-data-generator.ts:806:        locale,
+apps/og-worker/src/services/og-embed.ts:20: * `{…}` placeholders are filled by `embed()`. Every locale carries the same
+apps/og-worker/src/services/og-embed.ts:340:  locale: LocaleCode,
+apps/og-worker/src/services/og-embed.ts:343:  const template = OG_EMBED[locale]?.[key] ?? OG_EMBED.en[key];
+apps/og-worker/src/services/og-strings.ts:110:/** Deck strings for a tool (or 'root') in a locale, EN fallback. */
+apps/og-worker/src/services/og-strings.ts:111:export function getOgDeck(key: DeckKey, locale: LocaleCode): OgDeckStrings {
+apps/og-worker/src/services/og-strings.ts:112:  return OG_DECK[locale]?.[key] ?? OG_DECK.en[key];
+apps/og-worker/src/services/og-strings.ts:201:/** The header tool tag for a tool in a locale, EN fallback. */
+apps/og-worker/src/services/og-strings.ts:202:export function getToolTag(key: ToolTagKey, locale: LocaleCode): string {
+apps/og-worker/src/services/og-strings.ts:203:  return TOOL_TAG[locale]?.[key] ?? TOOL_TAG.en[key];
+apps/og-worker/src/services/og-strings.ts:262:  locale: LocaleCode,
+apps/og-worker/src/services/og-strings.ts:265:  const template = OG_DECK_LINE[locale]?.[key] ?? OG_DECK_LINE.en[key];
+apps/og-worker/src/services/og-strings.ts:411:/** A band role label in a locale, EN fallback. */
+apps/og-worker/src/services/og-strings.ts:412:export function role(key: RoleKey, locale: LocaleCode): string {
+apps/og-worker/src/services/og-strings.ts:413:  return OG_ROLE[locale]?.[key] ?? OG_ROLE.en[key];
+apps/og-worker/src/services/svg/accessibility.ts:29:  locale?: LocaleCode;
+apps/og-worker/src/services/svg/accessibility.ts:50:  const { visionType = 'deuteranopia', locale = 'en', frame = 'discord' } = options;
+apps/og-worker/src/services/svg/accessibility.ts:58:      getToolTag('accessibility', locale),
+apps/og-worker/src/services/svg/accessibility.ts:63:      locale
+apps/og-worker/src/services/svg/accessibility.ts:69:  // what moves to the footer on X — from the same locale key the embed uses.
+apps/og-worker/src/services/svg/accessibility.ts:70:  const lensName = getLocalizedVisionName(visionType, locale);
+apps/og-worker/src/services/svg/accessibility.ts:81:      role: role('asDesigned', locale),
+apps/og-worker/src/services/svg/accessibility.ts:82:      name: getLocalizedDyeName(dye, locale),
+apps/og-worker/src/services/svg/accessibility.ts:91:    toolTag: getToolTag('accessibility', locale),
+apps/og-worker/src/services/svg/accessibility.ts:94:    deck: `${lensName} · ${deckLine('a11yDyeCount', locale, { n: dyes.length })}`,
+apps/og-worker/src/services/svg/band-shared.ts:48:  locale: LocaleCode = 'en'
+apps/og-worker/src/services/svg/band-shared.ts:55:    bands: [{ hex: '#17171A', role: role('notFound', locale), name: shown, nameSize: 17 }],
+apps/og-worker/src/services/svg/budget.ts:28:  locale?: LocaleCode;
+apps/og-worker/src/services/svg/budget.ts:37:function tierLabel(dye: Dye, locale: LocaleCode): string {
+apps/og-worker/src/services/svg/budget.ts:41:  return dye.acquisition === 'Venture Coffers' ? role('coffer', locale) : role('board', locale);
+apps/og-worker/src/services/svg/budget.ts:53:  const { dyeId, locale = 'en', frame = 'discord' } = options;
+apps/og-worker/src/services/svg/budget.ts:57:    return notFoundBand(getToolTag('budget', locale), 'budget', `#${dyeId}`, 'budget', frame, locale);
+apps/og-worker/src/services/svg/budget.ts:77:      role: `${role('target', locale)} · ${tierLabel(target, locale)}`,
+apps/og-worker/src/services/svg/budget.ts:78:      name: getLocalizedDyeName(target, locale),
+apps/og-worker/src/services/svg/budget.ts:94:      role: tierPrice(c.dye) !== '—' ? tierPrice(c.dye) : tierLabel(c.dye, locale),
+apps/og-worker/src/services/svg/budget.ts:95:      name: getLocalizedDyeName(c.dye, locale),
+apps/og-worker/src/services/svg/budget.ts:102:  const bestName = getLocalizedDyeName((best ?? { dye: target }).dye, locale);
+apps/og-worker/src/services/svg/budget.ts:106:    toolTag: getToolTag('budget', locale),
+apps/og-worker/src/services/svg/budget.ts:111:    deck: deckLine('budgetBest', locale, { name: bestName }),
+apps/og-worker/src/services/svg/budget.ts:112:    footRight: frame === 'x' ? `${role('best', locale)} · ${bestName}` : `${role('vendor', locale)} 216 G`,
+apps/og-worker/src/services/svg/comparison.ts:25:  locale?: LocaleCode;
+apps/og-worker/src/services/svg/comparison.ts:34:  const { locale = 'en', frame = 'discord' } = options;
+apps/og-worker/src/services/svg/comparison.ts:42:      getToolTag('comparison', locale),
+apps/og-worker/src/services/svg/comparison.ts:47:      locale
+apps/og-worker/src/services/svg/comparison.ts:69:    role: i < 2 ? role('closestPair', locale) : '',
+apps/og-worker/src/services/svg/comparison.ts:70:    name: getLocalizedDyeName(dye, locale),
+apps/og-worker/src/services/svg/comparison.ts:76:  const closestLine = `${getLocalizedDyeName(closest.a, locale)} ↔ ${getLocalizedDyeName(closest.b, locale)}`;
+apps/og-worker/src/services/svg/comparison.ts:80:    toolTag: getToolTag('comparison', locale),
+apps/og-worker/src/services/svg/comparison.ts:86:    footRight: frame === 'x' ? `${role('closest', locale)} Δ${closest.delta.toFixed(1)}` : 'ΔE2000',
+apps/og-worker/src/services/svg/extractor.ts:38:  locale?: LocaleCode;
+apps/og-worker/src/services/svg/extractor.ts:50:  const { locale = 'en', frame = 'discord' } = options;
+apps/og-worker/src/services/svg/extractor.ts:65:    return notFoundBand(getToolTag('extractor', locale), 'extractor', '—', 'extractor', frame, locale);
+apps/og-worker/src/services/svg/extractor.ts:84:      name: frame === 'x' ? undefined : getLocalizedDyeName(best!, locale),
+apps/og-worker/src/services/svg/extractor.ts:94:    toolTag: getToolTag('extractor', locale),
+apps/og-worker/src/services/svg/extractor.ts:97:    deck: deckLine('extractorCount', locale, { n: entries.length }),
+apps/og-worker/src/services/svg/gradient.ts:32:  locale?: LocaleCode;
+apps/og-worker/src/services/svg/gradient.ts:50:  const { startDyeId, endDyeId, algorithm = 'oklab', locale = 'en', frame = 'discord' } = options;
+apps/og-worker/src/services/svg/gradient.ts:56:      getToolTag('gradient', locale),
+apps/og-worker/src/services/svg/gradient.ts:61:      locale
+apps/og-worker/src/services/svg/gradient.ts:76:        role: i === 0 ? role('start', locale) : role('end', locale),
+apps/og-worker/src/services/svg/gradient.ts:77:        name: getLocalizedDyeName(dye, locale),
+apps/og-worker/src/services/svg/gradient.ts:99:        name: getLocalizedDyeName(best, locale),
+apps/og-worker/src/services/svg/gradient.ts:106:  const startName = getLocalizedDyeName(startDye, locale);
+apps/og-worker/src/services/svg/gradient.ts:107:  const endName = getLocalizedDyeName(endDye, locale);
+apps/og-worker/src/services/svg/gradient.ts:111:    toolTag: getToolTag('gradient', locale),
+apps/og-worker/src/services/svg/harmony.ts:30:  locale?: LocaleCode;
+apps/og-worker/src/services/svg/harmony.ts:100:  const { dyeId, harmonyType, algorithm = 'oklab', locale = 'en', frame = 'discord' } = options;
+apps/og-worker/src/services/svg/harmony.ts:106:    return notFoundBand(getToolTag('harmony', locale), 'harmony', `#${dyeId}`, 'harmony', frame, locale);
+apps/og-worker/src/services/svg/harmony.ts:110:  const baseName = getLocalizedDyeName(dye, locale);
+apps/og-worker/src/services/svg/harmony.ts:111:  const harmonyName = getLocalizedHarmonyName(harmonyType, locale);
+apps/og-worker/src/services/svg/harmony.ts:117:      role: role('base', locale),
+apps/og-worker/src/services/svg/harmony.ts:127:      name: getLocalizedDyeName(m.dye, locale),
+apps/og-worker/src/services/svg/harmony.ts:137:    toolTag: getToolTag('harmony', locale),
+apps/og-worker/src/services/svg/mixer.ts:33:  locale?: LocaleCode;
+apps/og-worker/src/services/svg/mixer.ts:58:  const { dyeAId, dyeBId, dyeCId, algorithm = 'oklab', locale = 'en', frame = 'discord' } = options;
+apps/og-worker/src/services/svg/mixer.ts:65:    return notFoundBand(getToolTag('mixer', locale), 'mixer', `#${dyeAId} + #${dyeBId}`, 'mixer', frame, locale);
+apps/og-worker/src/services/svg/mixer.ts:79:    name: getLocalizedDyeName(dye, locale),
+apps/og-worker/src/services/svg/mixer.ts:93:      role: role('buyable', locale),
+apps/og-worker/src/services/svg/mixer.ts:94:      name: getLocalizedDyeName(hit.dye, locale),
+apps/og-worker/src/services/svg/mixer.ts:105:    toolTag: getToolTag('mixer', locale),
+apps/og-worker/src/services/svg/mixer.ts:110:    deck: getLocalizedDyeName(hit.dye, locale),
+apps/og-worker/src/services/svg/presets.ts:24:  locale?: LocaleCode;
+apps/og-worker/src/services/svg/presets.ts:33:  const { presetId, locale = 'en', frame = 'discord' } = options;
+apps/og-worker/src/services/svg/presets.ts:38:    return notFoundBand(getToolTag('presets', locale), 'presets', presetId, 'presets', frame, locale);
+apps/og-worker/src/services/svg/presets.ts:45:    return notFoundBand(getToolTag('presets', locale), 'presets', presetId, 'presets', frame, locale);
+apps/og-worker/src/services/svg/presets.ts:51:    name: getLocalizedDyeName(dye, locale),
+apps/og-worker/src/services/svg/presets.ts:59:    toolTag: getToolTag('presets', locale),
+apps/og-worker/src/services/svg/presets.ts:65:    footRight: frame === 'x' ? `${preset.name} · ${role('curated', locale)}` : role('curated', locale),
+apps/og-worker/src/services/svg/swatch.ts:29:  locale?: LocaleCode;
+apps/og-worker/src/services/svg/swatch.ts:41:  const { algorithm = 'oklab', locale = 'en', frame = 'discord' } = options;
+apps/og-worker/src/services/svg/swatch.ts:45:    return notFoundBand(getToolTag('swatch', locale), 'swatch', `#${clean}`, 'swatch', frame, locale);
+apps/og-worker/src/services/svg/swatch.ts:62:      role: role('target', locale),
+apps/og-worker/src/services/svg/swatch.ts:64:      tag: role('noStainId', locale),
+apps/og-worker/src/services/svg/swatch.ts:71:      name: getLocalizedDyeName(m.dye, locale),
+apps/og-worker/src/services/svg/swatch.ts:80:    toolTag: getToolTag('swatch', locale),
+apps/og-worker/src/services/svg/swatch.ts:83:    deck: deckLine('swatchNearest', locale, { n: matches.length, hex: targetHex }),
+apps/og-worker/src/services/translator.ts:11: * Shared by og-data-generator and the SVG generators so locale data is only
+apps/og-worker/src/services/translator.ts:12: * loaded once per isolate. Stateless: every call passes locale explicitly.
+apps/og-worker/src/services/translator.ts:27: * `dye.name` when the locale lookup returns nothing.
+apps/og-worker/src/services/translator.ts:29:export function getLocalizedDyeName(dye: Dye, locale: LocaleCode): string {
+apps/og-worker/src/services/translator.ts:30:  return ogTranslator.getDyeName(dye.itemID, locale) ?? dye.name;
+apps/og-worker/src/services/translator.ts:33:/** Route form (`split-complementary`) → locale key form (`splitComplementary`). */
+apps/og-worker/src/services/translator.ts:42:export function getLocalizedHarmonyName(harmony: string, locale: LocaleCode): string {
+apps/og-worker/src/services/translator.ts:43:  return ogTranslator.getHarmonyType(harmonyToKey(harmony), locale);
+apps/og-worker/src/services/translator.ts:47:export function getLocalizedVisionName(vision: VisionType, locale: LocaleCode): string {
+apps/og-worker/src/services/translator.ts:48:  return ogTranslator.getVisionShort(vision, locale);
+apps/og-worker/src/services/translator.ts:51:/** `SeekerOfTheSun` → `seekerOfTheSun`: the URL slug as a locale-table key. */
+apps/og-worker/src/services/translator.ts:57: * Does a locale table know this clan or race? Own properties only
+apps/og-worker/src/services/translator.ts:76:export function getLocalizedClanOrRace(raw: string, locale: LocaleCode): string {
+apps/og-worker/src/services/translator.ts:79:  if (en?.clans && Object.hasOwn(en.clans, key)) return ogTranslator.getClan(key as ClanKey, locale);
+apps/og-worker/src/services/translator.ts:80:  if (en?.races && Object.hasOwn(en.races, key)) return ogTranslator.getRace(key as RaceKey, locale);
+apps/og-worker/src/types.ts:70:  /** The locale the copy was authored in — `<html lang>` / `og:locale`. Defaults to `en`. */
+apps/og-worker/src/types.ts:71:  locale?: LocaleCode;
+apps/presets-api/scripts/migrate-presets.ts:95:    const id = crypto.randomUUID();
+apps/presets-api/src/handlers/moderation.ts:93:  const logId = crypto.randomUUID();
+apps/presets-api/src/handlers/moderation.ts:167:  const logId = crypto.randomUUID();
+apps/presets-api/src/middleware/auth.ts:42:  username?: string;
+apps/presets-api/src/middleware/auth.ts:43:  global_name?: string | null;
+apps/presets-api/src/middleware/auth.ts:44:  avatar?: string | null;
+apps/presets-api/src/middleware/auth.ts:266:        // Use display name if available, fallback to username
+apps/presets-api/src/middleware/auth.ts:267:        const displayName = jwtPayload.global_name || jwtPayload.username;
+apps/presets-api/src/services/preset-service.ts:314:  const id = crypto.randomUUID();
+apps/presets-api/src/services/preview-image-service.ts:152:  const key = `${presetId}/${crypto.randomUUID()}.webp`;
+apps/stoat-worker/src/commands/info.ts:38:  const locale: LocaleCode = 'en'; // TODO: resolve from user preferences
+apps/stoat-worker/src/commands/info.ts:39:  const resolution = resolveDyeInputMulti(dyeName, locale);
+apps/stoat-worker/src/commands/info.ts:66:      await sendDyeInfoResponse(ctx, resolution.dye.dye, locale);
+apps/stoat-worker/src/commands/info.ts:74:          await sendDyeInfoResponse(ctx, resolved.dye, locale);
+apps/stoat-worker/src/commands/info.ts:88:  locale: LocaleCode,
+apps/stoat-worker/src/commands/info.ts:90:  const result = await executeDyeInfo({ dye, locale });
+apps/stoat-worker/src/index.ts:40:    logger.info(`Logged in as ${client.user?.username ?? 'unknown'}`);
+apps/stoat-worker/src/services/dye-resolver.ts:41: * @param locale - User's locale for localized name matching
+apps/stoat-worker/src/services/response-formatter.ts:31:    avatar?: string;
+apps/stoat-worker/src/test-utils/revolt-mocks.ts:64:    user: { id: string; username: string } | null;
+apps/stoat-worker/src/test-utils/revolt-mocks.ts:84:    user: { id: 'bot-user-01', username: 'XIV Dye Tools' },
+apps/web-app/e2e/fixtures/coverage.ts:113:        // Generate unique filename for this test
+apps/web-app/e2e/telemetry.spec.ts:101:      expect(Object.keys(body).sort()).toEqual(['env', 'events', 'locale', 'theme', 'v', 'ver', 'vp']);
+apps/web-app/e2e/ui-interactions.spec.ts:64:    // What's New · About · locale · theme · gear
+apps/web-app/src/components/about-modal.ts:253:    // colon, and a future locale may want it mid-sentence.
+apps/web-app/src/components/budget-tool.ts:123: * for the match-line bands, untranslated in every locale. rampIndex maps into
+apps/web-app/src/components/chara-import.ts:81: * Core slot-failure code → locale key. Spelled out (not `` `swatch.slotError.${code}` ``)
+apps/web-app/src/components/chara-import.ts:169:  /** Name field draft; null = empty field (deliberately NOT the character's nickname) */
+apps/web-app/src/components/chara-import.ts:666:        resolved.nickname ?? this.fileName ?? LanguageService.t('swatch.unnamedCharacter')
+apps/web-app/src/components/chara-import.ts:751:      resolved.nickname ??
+apps/web-app/src/components/chara-import.ts:1479:    // Name input — deliberately NOT pre-filled with the character's nickname
+apps/web-app/src/components/chara-import.ts:1621:   * form): the typed draft only. Deliberately NOT the character's nickname
+apps/web-app/src/components/chara-import.ts:1622:   * or the attachment filename — players use their real name in both — and
+apps/web-app/src/components/chara-import.ts:1633:   * same local-only fallback `saveCharacterRecord` uses (nickname → file name
+apps/web-app/src/components/chara-import.ts:1640:      this.resolved?.nickname ||
+apps/web-app/src/components/collection-manager-modal.ts:534: * `CollectionService` names the reason (it has no locale); the three
+apps/web-app/src/components/export-sheet.ts:33: * App-locale strings for the generated text. Built here rather than in
+apps/web-app/src/components/export-sheet.ts:105:  // The generators are pure and service-free, so the locale-aware name lookup
+apps/web-app/src/components/gradient-tool.ts:1117:    // had no export at all — only its locale string existed.
+apps/web-app/src/components/metric-help.ts:221:  // from core's per-locale authority table. An absent locale renders no
+apps/web-app/src/components/metric-help.ts:284: * colour vision and the docs site), so the per-locale articles live here — but
+apps/web-app/src/components/metric-help.ts:285: * they follow core's rule (`learn-links.ts`): an absent locale renders NO
+apps/web-app/src/components/metric-help.ts:295:/** Colour-difference article for the active locale, or undefined when absent. */
+apps/web-app/src/components/metric-help.ts:365:  // An absent locale renders the absent state, exactly as the ratio branch
+apps/web-app/src/components/mixer-tool.ts:1162:    // (2026-08-20 i18n audit), identical in every locale. The tooltip carries
+apps/web-app/src/components/v4-layout.ts:329:    // Route titles are locale keys, so the tab title is stale until re-read.
+apps/web-app/src/components/v4/config-sidebar.ts:57: * First character of a display name, for the avatar chip shown when the auth
+apps/web-app/src/components/v4/config-sidebar.ts:58: * provider gave us no avatar URL.
+apps/web-app/src/components/v4/config-sidebar.ts:60: * This replaces a `parseInt(user.id) % 5` guess at Discord's default-avatar
+apps/web-app/src/components/v4/config-sidebar.ts:62: * `crypto.randomUUID()` in the oauth worker -- not a Discord snowflake. When the
+apps/web-app/src/components/v4/config-sidebar.ts:69: * app-locale aware: bare `toLocaleUpperCase()` follows the BROWSER locale, so a
+apps/web-app/src/components/v4/config-sidebar.ts:70: * Turkish-locale browser would render a dotted `İ` for an English UI.
+apps/web-app/src/components/v4/config-sidebar.ts:576:      .user-avatar {
+apps/web-app/src/components/v4/config-sidebar.ts:583:      /* Shown when the provider gave us no avatar. Local, so it cannot 404 and
+apps/web-app/src/components/v4/config-sidebar.ts:585:      .user-avatar--initial {
+apps/web-app/src/components/v4/config-sidebar.ts:1602:        user.global_name || user.username || LanguageService.t('config.userFallback');
+apps/web-app/src/components/v4/config-sidebar.ts:1611:                ? html`<img class="user-avatar" src="${user.avatar_url}" alt="${displayName}" />`
+apps/web-app/src/components/v4/config-sidebar.ts:1612:                : html`<div class="user-avatar user-avatar--initial" aria-hidden="true">
+apps/web-app/src/components/v4/language-modal.ts:17: * English name the tiles used to print regardless of locale. Keys are written
+apps/web-app/src/components/v4/language-modal.ts:65:    this.languageUnsubscribe = LanguageService.subscribe((locale) => {
+apps/web-app/src/components/v4/language-modal.ts:66:      this.currentLocale = locale;
+apps/web-app/src/components/v4/language-modal.ts:100:    const buttons = container.querySelectorAll<HTMLButtonElement>('[data-locale]');
+apps/web-app/src/components/v4/language-modal.ts:102:      const localeCode = btn.getAttribute('data-locale') as LocaleCode;
+apps/web-app/src/components/v4/language-modal.ts:136:    for (const locale of LOCALE_DISPLAY_INFO) {
+apps/web-app/src/components/v4/language-modal.ts:137:      const isSelected = locale.code === this.currentLocale;
+apps/web-app/src/components/v4/language-modal.ts:142:      localeBtn.setAttribute('data-locale', locale.code);
+apps/web-app/src/components/v4/language-modal.ts:152:      flag.textContent = locale.flag;
+apps/web-app/src/components/v4/language-modal.ts:164:      nativeName.textContent = locale.name;
+apps/web-app/src/components/v4/language-modal.ts:168:      // (the current locale's own tile, e.g. Deutsch/Deutsch under de).
+apps/web-app/src/components/v4/language-modal.ts:169:      const exonym = LanguageService.t(LANGUAGE_NAME_KEYS[locale.code]);
+apps/web-app/src/components/v4/language-modal.ts:170:      if (exonym !== locale.name) {
+apps/web-app/src/components/v4/language-modal.ts:200:        if (locale.code !== this.currentLocale) {
+apps/web-app/src/components/v4/language-modal.ts:201:          await LanguageService.setLocale(locale.code);
+apps/web-app/src/components/v4/preset-card.ts:260:    // Nothing on this card re-rendered on a locale switch: its own labels
+apps/web-app/src/components/v4/preset-detail.ts:42: * Vote failure code -> locale key.
+apps/web-app/src/components/v4/preset-detail.ts:44: * `community-preset-service` has no locale, so it names the reason and the
+apps/web-app/src/components/v4/preset-detail.ts:591:    // Curated name/description and this page's chrome both follow the locale
+apps/web-app/src/components/v4/result-card.ts:210:   * construction, so the default froze at whatever locale was active when the
+apps/web-app/src/components/v4/result-card.ts:1496:    const locale = LanguageService.getCurrentLocale();
+apps/web-app/src/components/v4/result-card.ts:1497:    const isLatin = locale === 'en' || locale === 'de' || locale === 'fr';
+apps/web-app/src/components/v4/result-card.ts:1509:        lang="${locale}"
+apps/web-app/src/components/v4/v4-app-header.ts:5: * chrome cluster on the right (What's New · About · locale code · theme ·
+apps/web-app/src/components/v4/v4-app-header.ts:25: * 3F responsive locale chrome: globe + locale code on desktop, the mono code
+apps/web-app/src/main.ts:37: * LanguageService may never have loaded a locale — `t()` would echo raw keys
+apps/web-app/src/services/auth-service.ts:257:          `✅ [AuthService] Initialized: ${this.state.isAuthenticated ? 'Logged in as ' + this.state.user?.username : 'Not logged in'}`
+apps/web-app/src/services/auth-service.ts:303:      // Build avatar URL based on provider
+apps/web-app/src/services/auth-service.ts:305:      if (provider === 'discord' && payload.discord_id && payload.avatar) {
+apps/web-app/src/services/auth-service.ts:306:        avatarUrl = this.getAvatarUrl(payload.discord_id, payload.avatar);
+apps/web-app/src/services/auth-service.ts:308:        // XIVAuth avatar URL is stored directly (no CDN construction needed)
+apps/web-app/src/services/auth-service.ts:320:          username: payload.username,
+apps/web-app/src/services/auth-service.ts:321:          global_name: payload.global_name,
+apps/web-app/src/services/auth-service.ts:322:          avatar: payload.avatar,
+apps/web-app/src/services/auth-service.ts:467:    // Build avatar URL based on provider
+apps/web-app/src/services/auth-service.ts:469:    if (provider === 'discord' && payload.discord_id && payload.avatar) {
+apps/web-app/src/services/auth-service.ts:470:      avatarUrl = this.getAvatarUrl(payload.discord_id, payload.avatar);
+apps/web-app/src/services/auth-service.ts:481:        username: payload.username,
+apps/web-app/src/services/auth-service.ts:482:        global_name: payload.global_name,
+apps/web-app/src/services/auth-service.ts:483:        avatar: payload.avatar,
+apps/web-app/src/services/auth-service.ts:495:        `Logged in via XIVAuth as ${payload.username} (${payload.primary_character.name} @ ${payload.primary_character.server})`
+apps/web-app/src/services/auth-service.ts:498:      logger.info(`Logged in as ${this.state.user?.global_name || this.state.user?.username}`);
+apps/web-app/src/services/auth-service.ts:805:   * Get Discord avatar URL
+apps/web-app/src/services/chara-resolve-service.ts:77:export function itemNameFor(names: CharaItemNames, locale: string): string {
+apps/web-app/src/services/chara-resolve-service.ts:78:  const localized = (names as unknown as Record<string, string | undefined>)[locale];
+apps/web-app/src/services/collection-service.ts:110: * verbatim in every locale. It now names the reason and (where the message
+apps/web-app/src/services/collection-service.ts:358:   * defect that broke records across locale switches) into `kind: 'palette'`
+apps/web-app/src/services/collection-service.ts:359:   * records. Base resolves by hex first (locale-free), then name; companions
+apps/web-app/src/services/collection-service.ts:360:   * resolve by EN name, then the current locale's dye names. Unresolvable
+apps/web-app/src/services/collection-service.ts:377:      // Names in the active locale — best-effort cover for the stored-name
+apps/web-app/src/services/collection-service.ts:378:      // defect (cross-locale switchers may still lose dyes, loudly)
+apps/web-app/src/services/collection-service.ts:961:   * `LanguageService.t()` echoes the key back when the locale bundles have not
+apps/web-app/src/services/community-preset-service.ts:30: * Why a vote failure is a code and not a sentence: this service has no locale,
+apps/web-app/src/services/language-service.ts:45:   * Loads saved locale preference or detects browser language
+apps/web-app/src/services/language-service.ts:53:      // Try to load saved locale preference
+apps/web-app/src/services/language-service.ts:56:      let locale: LocaleCode;
+apps/web-app/src/services/language-service.ts:58:        locale = saved;
+apps/web-app/src/services/language-service.ts:59:        logger.info(`Loaded saved locale preference: ${locale}`);
+apps/web-app/src/services/language-service.ts:62:        locale = this.detectBrowserLocale();
+apps/web-app/src/services/language-service.ts:63:        logger.info(`Detected browser locale: ${locale}`);
+apps/web-app/src/services/language-service.ts:66:      await this.setLocale(locale);
+apps/web-app/src/services/language-service.ts:71:      // Fallback to default locale
+apps/web-app/src/services/language-service.ts:78:   * Get the current locale
+apps/web-app/src/services/language-service.ts:85:   * Get current locale display info
+apps/web-app/src/services/language-service.ts:92:   * Set the current locale
+apps/web-app/src/services/language-service.ts:95:  static async setLocale(locale: LocaleCode): Promise<void> {
+apps/web-app/src/services/language-service.ts:96:    if (!this.isValidLocale(locale)) {
+apps/web-app/src/services/language-service.ts:97:      logger.warn(`Invalid locale: ${locale}, falling back to ${DEFAULT_LOCALE}`);
+apps/web-app/src/services/language-service.ts:98:      locale = DEFAULT_LOCALE;
+apps/web-app/src/services/language-service.ts:102:      // Set locale in core library (handles dye names, categories, etc.)
+apps/web-app/src/services/language-service.ts:103:      await LocalizationService.setLocale(locale);
+apps/web-app/src/services/language-service.ts:106:      if (!webAppTranslations.has(locale)) {
+apps/web-app/src/services/language-service.ts:107:        await this.loadWebAppTranslations(locale);
+apps/web-app/src/services/language-service.ts:112:      // the locale WAS en (or its file failed), so non-English users saw raw
+apps/web-app/src/services/language-service.ts:113:      // dot-path keys for any string not yet translated in their locale
+apps/web-app/src/services/language-service.ts:114:      if (locale !== 'en' && !webAppTranslations.has('en')) {
+apps/web-app/src/services/language-service.ts:118:      this.currentLocale = locale;
+apps/web-app/src/services/language-service.ts:122:      document.documentElement.lang = locale;
+apps/web-app/src/services/language-service.ts:125:      StorageService.setItem(STORAGE_KEYS.LOCALE, locale);
+apps/web-app/src/services/language-service.ts:130:          listener(locale);
+apps/web-app/src/services/language-service.ts:132:          logger.error('Error in locale change listener:', error);
+apps/web-app/src/services/language-service.ts:136:      logger.info(`Locale changed to: ${locale}`);
+apps/web-app/src/services/language-service.ts:138:      logger.error(`Failed to set locale ${locale}:`, error);
+apps/web-app/src/services/language-service.ts:144:   * Cycle to the next locale in the supported locales list
+apps/web-app/src/services/language-service.ts:145:   * Wraps around to the first locale after the last
+apps/web-app/src/services/language-service.ts:154:   * Subscribe to locale changes
+apps/web-app/src/services/language-service.ts:169:   * Falls back to English if key not found in current locale
+apps/web-app/src/services/language-service.ts:175:    // Try current locale first
+apps/web-app/src/services/language-service.ts:289:   * Check if locale is valid
+apps/web-app/src/services/language-service.ts:291:  static isValidLocale(locale: unknown): locale is LocaleCode {
+apps/web-app/src/services/language-service.ts:292:    return typeof locale === 'string' && SUPPORTED_LOCALES.includes(locale as LocaleCode);
+apps/web-app/src/services/language-service.ts:296:   * Detect browser locale
+apps/web-app/src/services/language-service.ts:307:      // Check if it's a supported locale
+apps/web-app/src/services/language-service.ts:315:      logger.warn('Failed to detect browser locale:', error);
+apps/web-app/src/services/language-service.ts:323:  private static async loadWebAppTranslations(locale: LocaleCode): Promise<void> {
+apps/web-app/src/services/language-service.ts:325:      // Dynamic import of locale JSON
+apps/web-app/src/services/language-service.ts:326:      const module = await import(`../locales/${locale}.json`);
+apps/web-app/src/services/language-service.ts:327:      webAppTranslations.set(locale, module.default || module);
+apps/web-app/src/services/language-service.ts:328:      logger.info(`Loaded web app translations for: ${locale}`);
+apps/web-app/src/services/language-service.ts:330:      logger.warn(`Failed to load translations for ${locale}:`, error);
+apps/web-app/src/services/language-service.ts:333:      if (locale !== 'en' && !webAppTranslations.has('en')) {
+apps/web-app/src/services/language-service.ts:370:      .filter((locale) => !webAppTranslations.has(locale))
+apps/web-app/src/services/language-service.ts:371:      .map((locale) => this.loadWebAppTranslations(locale));
+apps/web-app/src/services/market-board-service.ts:449: * locale. `formatGil` takes both from the app language.
+apps/web-app/src/services/preset-submission-service.ts:26: * service is the wrong layer to hold UI copy — it has no locale — so it now
+apps/web-app/src/services/router-service.ts:273:   * Re-compose `document.title` for the current route in the active locale.
+apps/web-app/src/services/router-service.ts:275:   * Route titles are locale keys resolved at render time, so a language switch
+apps/web-app/src/services/router-service.ts:277:   * locale subscriber calls this (HC-SYS-006).
+apps/web-app/src/services/share-service.ts:203:    // The sharer's locale rides the link so og-worker can localize the unfurl —
+apps/web-app/src/services/share-service.ts:204:    // it resolves locale from `?lang=` and from nothing else (crawlers send no
+apps/web-app/src/services/share-service.ts:207:    const locale = LanguageService.getCurrentLocale();
+apps/web-app/src/services/share-service.ts:208:    if (locale !== 'en') {
+apps/web-app/src/services/share-service.ts:209:      url.searchParams.set('lang', locale);
+apps/web-app/src/services/telemetry-service.ts:9: * five coarse dimensions (version, env, locale, theme, viewport bucket).
+apps/web-app/src/services/telemetry-service.ts:16: * The batch envelope (theme, locale, viewport) is read when a batch is sent,
+apps/web-app/src/services/telemetry-service.ts:59:  /** `Date.now()` when the current visible stretch began; null while hidden or idle. */
+apps/web-app/src/services/telemetry-service.ts:176:  /** `.chara` `TypeName` → allowlisted producer bucket (never the raw string). */
+apps/web-app/src/services/telemetry-service.ts:197:        locale: LanguageService.getCurrentLocale(),
+apps/web-app/src/shared/beta-branding.ts:81: * *prefix* rather than against a list of filenames, so adding an icon to
+apps/web-app/src/shared/constants.ts:57: * Supported locale codes — derived from @xivdyetools/core's own
+apps/web-app/src/shared/dye-name.ts:5: * name for the current locale, or `null` when none exists (English, or an
+apps/web-app/src/shared/format.ts:5: * app's current locale, plus a gil formatter that routes the unit label
+apps/web-app/src/shared/format.ts:15:/** Format a number with locale-appropriate grouping/decimal separators. */
+apps/web-app/src/shared/format.ts:18:  locale: LocaleCode = LanguageService.getCurrentLocale()
+apps/web-app/src/shared/format.ts:20:  return n.toLocaleString(locale);
+apps/web-app/src/shared/format.ts:23:/** Format a date with locale-appropriate ordering/separators. */
+apps/web-app/src/shared/format.ts:26:  locale: LocaleCode = LanguageService.getCurrentLocale()
+apps/web-app/src/shared/format.ts:28:  return new Date(d).toLocaleDateString(locale);
+apps/web-app/src/shared/format.ts:32: * Join items into one list phrase with the locale's own conjunction and
+apps/web-app/src/shared/format.ts:37:  locale: LocaleCode = LanguageService.getCurrentLocale()
+apps/web-app/src/shared/format.ts:39:  return new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }).format(items);
+apps/web-app/src/shared/i18n-types.ts:10: * Supported locale codes
+apps/web-app/src/shared/i18n-types.ts:19:  /** ISO locale code */
+apps/web-app/src/shared/i18n-types.ts:30: * Listener function type for locale changes
+apps/web-app/src/shared/i18n-types.ts:32:export type LocaleChangeListener = (locale: LocaleCode) => void;
+apps/web-app/src/shared/palette-export.ts:75: * browser. `openExportSheet` supplies the app-locale resolver; the defaults
+apps/web-app/src/shared/palette-export.ts:101:  /** Tool slug — used for the filename. */
+apps/web-app/src/shared/palette-export.ts:111:   * `openExportSheet` supplies the locale-aware resolver, and the default keeps
+apps/web-app/src/shared/palette-export.ts:134:/** ISO date (yyyy-mm-dd) used in headers and filenames. */
+apps/web-app/src/shared/preset-i18n.ts:2: * Preset text lookup: curated copy, category labels, and the locale keys the
+apps/web-app/src/shared/preset-i18n.ts:15: * has no locale: it returns a code naming what failed, and the two forms share
+apps/web-app/src/shared/preset-i18n.ts:56: * Category slug -> locale key.
+apps/web-app/src/shared/preset-i18n.ts:58: * The slugs are kebab-case because they are the API's wire values; the locale
+apps/web-app/src/shared/preset-i18n.ts:59: * keys are camelCase because that is the convention inside the locale files.
+apps/web-app/src/shared/preset-i18n.ts:91:// Service error codes -> locale keys
+apps/web-app/src/shared/preset-i18n.ts:95: * Validation code -> locale key.
+apps/web-app/src/shared/preset-i18n.ts:137: * Transport/auth code -> locale key. `duplicate` and `validation` are absent on
+apps/web-app/src/shared/region-name.ts:6: * `한국`), and the server pickers printed it verbatim in every locale. The
+apps/web-app/src/shared/region-name.ts:19:/** Region string (as shipped in `data-centers.json`) → locale key. */
+apps/web-app/src/shared/subrace-clan.ts:11: * would otherwise print the raw PascalCase `SubRace` in every locale.
+apps/web-app/vite-plugin-changelog-parser.ts:217:/** Candidate filenames for the user-friendly changelog, in priority order */
+apps/web-app/vite-plugin-changelog-parser.ts:232:      // Try each candidate filename, use the first one that exists
+apps/web-app/vite-plugin-changelog-parser.ts:233:      for (const filename of CHANGELOG_CANDIDATES) {
+apps/web-app/vite-plugin-changelog-parser.ts:234:        const candidate = resolve(projectDir, filename);
+packages/auth/src/hmac.ts:221: * @param userName - Discord username
+packages/auth/src/hmac.ts:346: * const nonce = crypto.randomUUID();
+packages/auth/src/jwt.ts:36:   * Token type discriminator.
+packages/auth/src/jwt.ts:51:  /** Discord username */
+packages/auth/src/jwt.ts:52:  username?: string;
+packages/auth/src/jwt.ts:54:  global_name?: string | null;
+packages/auth/src/jwt.ts:55:  /** Discord avatar hash */
+packages/auth/src/jwt.ts:56:  avatar?: string | null;
+packages/auth/src/jwt.ts:255:    // BUG-057: Enforce token-type discriminator when the caller expects one
+packages/bot-logic/src/commands/accessibility.ts:81:  locale: LocaleCode;
+packages/bot-logic/src/commands/accessibility.ts:136:  const { dyes, locale, vision, theme, commandLabel } = input;
+packages/bot-logic/src/commands/accessibility.ts:137:  const t = createTranslator(locale, input.logger);
+packages/bot-logic/src/commands/accessibility.ts:139:  await initializeLocale(locale);
+packages/bot-logic/src/commands/accessibility.ts:143:      d.itemID ? getLocalizedDyeName(d.itemID, d.name, locale) : d.name,
+packages/bot-logic/src/commands/accessibility.ts:181:        lang: locale,
+packages/bot-logic/src/commands/accessibility.ts:217:        lang: locale,
+packages/bot-logic/src/commands/accessibility.ts:235:      lang: locale,
+packages/bot-logic/src/commands/comparison.ts:40:  locale: LocaleCode;
+packages/bot-logic/src/commands/comparison.ts:86:  const { dyes, locale, theme } = input;
+packages/bot-logic/src/commands/comparison.ts:87:  const t = createTranslator(locale, input.logger);
+packages/bot-logic/src/commands/comparison.ts:89:  await initializeLocale(locale);
+packages/bot-logic/src/commands/comparison.ts:93:      const name = getLocalizedDyeName(dye.itemID, dye.name, locale);
+packages/bot-logic/src/commands/comparison.ts:98:        abbr: abbreviateDyeName(name, locale),
+packages/bot-logic/src/commands/comparison.ts:117:      lang: locale,
+packages/bot-logic/src/commands/contrast.ts:44:  locale: LocaleCode;
+packages/bot-logic/src/commands/contrast.ts:66:  const { dyes, locale, theme } = input;
+packages/bot-logic/src/commands/contrast.ts:67:  const t = createTranslator(locale, input.logger);
+packages/bot-logic/src/commands/contrast.ts:69:  await initializeLocale(locale);
+packages/bot-logic/src/commands/contrast.ts:73:      d.itemID ? getLocalizedDyeName(d.itemID, d.name, locale) : d.name
+packages/bot-logic/src/commands/contrast.ts:85:          abbrA: abbreviateDyeName(localized[i], locale),
+packages/bot-logic/src/commands/contrast.ts:86:          abbrB: abbreviateDyeName(localized[j], locale),
+packages/bot-logic/src/commands/contrast.ts:111:      lang: locale,
+packages/bot-logic/src/commands/dye-info.ts:48:  locale: LocaleCode;
+packages/bot-logic/src/commands/dye-info.ts:70: * search for — in the user's locale, since the market board lists the
+packages/bot-logic/src/commands/dye-info.ts:75:function marketValue(dye: Dye, locale: LocaleCode): string {
+packages/bot-logic/src/commands/dye-info.ts:79:    return `${consolidated.names[locale] ?? consolidated.names.en} · ${consolidated.itemID}`;
+packages/bot-logic/src/commands/dye-info.ts:88:  const { dye, locale, theme } = input;
+packages/bot-logic/src/commands/dye-info.ts:89:  const t = createTranslator(locale, input.logger);
+packages/bot-logic/src/commands/dye-info.ts:91:  await initializeLocale(locale);
+packages/bot-logic/src/commands/dye-info.ts:94:    const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+packages/bot-logic/src/commands/dye-info.ts:95:    const localizedCategory = getLocalizedCategory(dye.category, locale);
+packages/bot-logic/src/commands/dye-info.ts:98:    const acquisition = getLocalizedAcquisition(dye.acquisition, locale);
+packages/bot-logic/src/commands/dye-info.ts:101:        ? `${acquisition} · ${grp(dye.cost, locale)} ${getLocalizedCurrency(dye.currency, locale)}`
+packages/bot-logic/src/commands/dye-info.ts:116:      name: getLocalizedDyeName(n.dye.itemID, n.dye.name, locale),
+packages/bot-logic/src/commands/dye-info.ts:127:      mktValue: marketValue(dye, locale),
+packages/bot-logic/src/commands/dye-info.ts:136:      lang: locale,
+packages/bot-logic/src/commands/dye-info.ts:167:  locale: LocaleCode;
+packages/bot-logic/src/commands/dye-info.ts:190:  const { locale, uniqueCategories = false, theme } = input;
+packages/bot-logic/src/commands/dye-info.ts:193:  const t = createTranslator(locale, input.logger);
+packages/bot-logic/src/commands/dye-info.ts:195:  await initializeLocale(locale);
+packages/bot-logic/src/commands/dye-info.ts:237:      localizedName: getLocalizedDyeName(dye.itemID, dye.name, locale),
+packages/bot-logic/src/commands/dye-info.ts:238:      localizedCategory: getLocalizedCategory(dye.category, locale),
+packages/bot-logic/src/commands/gradient.ts:49:  locale: LocaleCode;
+packages/bot-logic/src/commands/gradient.ts:247:    locale,
+packages/bot-logic/src/commands/gradient.ts:253:  const t = createTranslator(locale, input.logger);
+packages/bot-logic/src/commands/gradient.ts:255:  await initializeLocale(locale);
+packages/bot-logic/src/commands/gradient.ts:290:        ? getLocalizedDyeName(closestDye.itemID, closestDye.name, locale)
+packages/bot-logic/src/commands/gradient.ts:334:      lang: locale,
+packages/bot-logic/src/commands/harmony.ts:52:  locale: LocaleCode;
+packages/bot-logic/src/commands/harmony.ts:166:    locale,
+packages/bot-logic/src/commands/harmony.ts:174:  const t = createTranslator(locale, input.logger);
+packages/bot-logic/src/commands/harmony.ts:176:  await initializeLocale(locale);
+packages/bot-logic/src/commands/harmony.ts:263:        localizedName: getLocalizedDyeName(dye.itemID, dye.name, locale),
+packages/bot-logic/src/commands/harmony.ts:280:        ? [weakest.angleLabel, weakest.localizedName, num(weakest.deltaE, locale, 1)]
+packages/bot-logic/src/commands/harmony.ts:288:        ? getLocalizedDyeName(baseItemID, baseName, locale)
+packages/bot-logic/src/commands/harmony.ts:312:      lang: locale,
+packages/bot-logic/src/commands/mixer.ts:36:  locale: LocaleCode;
+packages/bot-logic/src/commands/mixer.ts:104:  const { dye1, dye2, blendingMode, locale, dyeFilters, matchingMethod } = input;
+packages/bot-logic/src/commands/mixer.ts:105:  const t = createTranslator(locale, input.logger);
+packages/bot-logic/src/commands/mixer.ts:107:  await initializeLocale(locale);
+packages/bot-logic/src/commands/mixer.ts:129:        ? getLocalizedDyeName(dye1.itemID, dye1.name, locale)
+packages/bot-logic/src/commands/mixer.ts:133:        ? getLocalizedDyeName(dye2.itemID, dye2.name, locale)
+packages/bot-logic/src/commands/mixer.ts:140:      name: getLocalizedDyeName(s.dye.itemID, s.dye.name, locale),
+packages/bot-logic/src/commands/mixer.ts:151:      lang: locale,
+packages/bot-logic/src/commands/mixer.ts:156:    const bestName = getLocalizedDyeName(bestStop.dye.itemID, bestStop.dye.name, locale);
+packages/bot-logic/src/commands/swatch.ts:5: * TypeName, gamma on the floats, flag gating, the Helions guard, never
+packages/bot-logic/src/commands/swatch.ts:70:  locale: LocaleCode;
+packages/bot-logic/src/commands/swatch.ts:75: * A resolved character as this module lets it leave: the Ktisis nickname is
+packages/bot-logic/src/commands/swatch.ts:80:export type SwatchCharacter = Omit<ResolvedCharaCharacter, 'nickname'>;
+packages/bot-logic/src/commands/swatch.ts:114:/** kind → slot-short locale key (leftEye/rightEye share the eyes label). */
+packages/bot-logic/src/commands/swatch.ts:171: * Strips the Ktisis nickname before a character record leaves this module —
+packages/bot-logic/src/commands/swatch.ts:174:function withoutNickname(character: ResolvedCharaCharacter): SwatchCharacter {
+packages/bot-logic/src/commands/swatch.ts:175:  const { nickname, ...safeCharacter } = character;
+packages/bot-logic/src/commands/swatch.ts:176:  void nickname;
+packages/bot-logic/src/commands/swatch.ts:182: * `TypeName` — free text the uploader controls — so only the known exporter
+packages/bot-logic/src/commands/swatch.ts:215:  const { locale } = input;
+packages/bot-logic/src/commands/swatch.ts:216:  const t = createTranslator(locale, input.logger);
+packages/bot-logic/src/commands/swatch.ts:217:  await initializeLocale(locale);
+packages/bot-logic/src/commands/swatch.ts:220:  // character's name or the attachment filename (PRIVACY_POLICY §3).
+packages/bot-logic/src/commands/swatch.ts:223:  // The nickname is stripped the moment the record is resolved: `character`
+packages/bot-logic/src/commands/swatch.ts:224:  // has no `nickname` member, so nothing below can print one.
+packages/bot-logic/src/commands/swatch.ts:228:    character = withoutNickname(
+packages/bot-logic/src/commands/swatch.ts:304:        name: getLocalizedDyeName(n.dye.itemID, n.dye.name, locale),
+packages/bot-logic/src/commands/swatch.ts:318:        lang: locale,
+packages/bot-logic/src/commands/swatch.ts:357:      name: getLocalizedDyeName(r.dye.itemID, r.dye.name, locale),
+packages/bot-logic/src/commands/swatch.ts:371:      lang: locale,
+packages/bot-logic/src/commands/swatch.ts:392:          alpha: num(lip.slot.alpha, locale, 2),
+packages/bot-logic/src/commands/swatch.ts:402:          .map((g) => getLocalizedDyeName(g.dye!.itemID, g.dye!.name, locale))
+packages/bot-logic/src/commands/swatch.ts:409:      lines.push(t.t('card.swatchDropped', { slot: d.label, de: num(d.deltaE, locale, 1) }));
+packages/bot-logic/src/i18n/translator.ts:3:// Bundled locale data (static imports work in both CF Workers and Node.js)
+packages/bot-logic/src/i18n/translator.ts:48: * Translator for a specific locale.
+packages/bot-logic/src/i18n/translator.ts:52:  private locale: LocaleCode;
+packages/bot-logic/src/i18n/translator.ts:57:  constructor(locale: LocaleCode, logger?: TranslatorLogger) {
+packages/bot-logic/src/i18n/translator.ts:58:    this.locale = locale;
+packages/bot-logic/src/i18n/translator.ts:59:    this.data = locales[locale] || locales.en;
+packages/bot-logic/src/i18n/translator.ts:66:   * Falls back to English if the key is missing in the current locale.
+packages/bot-logic/src/i18n/translator.ts:67:   * Returns the raw key if not found in any locale.
+packages/bot-logic/src/i18n/translator.ts:76:    if (value === undefined && this.locale !== 'en') {
+packages/bot-logic/src/i18n/translator.ts:81:      this.logger?.warn(`Missing translation: ${key} for locale ${this.locale}`);
+packages/bot-logic/src/i18n/translator.ts:92:   * template alongside `variables`. Every locale file carries both forms
+packages/bot-logic/src/i18n/translator.ts:95:   * Two CLDR categories (one/other) cover the shipped locales; a locale with
+packages/bot-logic/src/i18n/translator.ts:109:  /** Whether `key` resolves to a string in this locale or the English fallback. */
+packages/bot-logic/src/i18n/translator.ts:115:  /** Get the current locale code. */
+packages/bot-logic/src/i18n/translator.ts:117:    return this.locale;
+packages/bot-logic/src/i18n/translator.ts:126: * Create a translator for a specific locale.
+packages/bot-logic/src/i18n/translator.ts:129:export function createTranslator(locale: LocaleCode, logger?: TranslatorLogger): Translator {
+packages/bot-logic/src/i18n/translator.ts:130:  return new Translator(locale, logger);
+packages/bot-logic/src/i18n/types.ts:2: * Supported locale codes.
+packages/bot-logic/src/i18n/types.ts:8: * Structure of a locale JSON file.
+packages/bot-logic/src/i18n/types.ts:13:    locale: string;
+packages/bot-logic/src/input-resolution.ts:20: * Search dyes by name in English AND the given locale (2026-08-20 i18n audit,
+packages/bot-logic/src/input-resolution.ts:23: * locale's name (both case-insensitive substring), English hits first in
+packages/bot-logic/src/input-resolution.ts:26: * Relies on the per-locale cache populated by `initializeLocale(locale)`; if
+packages/bot-logic/src/input-resolution.ts:27: * the locale has not been loaded yet this degrades to the English search
+packages/bot-logic/src/input-resolution.ts:53:export function searchDyesByName(query: string, locale: LocaleCode = 'en'): Dye[] {
+packages/bot-logic/src/input-resolution.ts:59:  if (locale === 'en') return english;
+packages/bot-logic/src/input-resolution.ts:65:    .filter((d) => !seen.has(d.id) && getLocalizedDyeName(d.itemID, d.name, locale).toLowerCase().includes(q));
+packages/bot-logic/src/input-resolution.ts:74:export function findDyeByName(name: string, locale: LocaleCode = 'en'): Dye | null {
+packages/bot-logic/src/input-resolution.ts:84:          (locale !== 'en' && getLocalizedDyeName(d.itemID, d.name, locale).toLowerCase() === n),
+packages/bot-logic/src/input-resolution.ts:176:   * English-only matching. Requires `initializeLocale(locale)` to have run.
+packages/bot-logic/src/input-resolution.ts:178:  locale?: LocaleCode;
+packages/bot-logic/src/input-resolution.ts:201:  const locale = options?.locale ?? 'en';
+packages/bot-logic/src/input-resolution.ts:234:  // Try to find a dye by name (English + locale)
+packages/bot-logic/src/input-resolution.ts:235:  const dyes = searchDyesByName(input, locale);
+packages/bot-logic/src/input-resolution.ts:287: * @param locale - Locale whose dye names should also match (default: English only)
+packages/bot-logic/src/input-resolution.ts:290:export function resolveDyeInput(input: string, locale: LocaleCode = 'en'): Dye | null {
+packages/bot-logic/src/input-resolution.ts:291:  // Try finding by name first (English + locale)
+packages/bot-logic/src/input-resolution.ts:292:  const dyes = searchDyesByName(input, locale);
+packages/bot-logic/src/localization.ts:4: * Wraps xivdyetools-core LocalizationService for per-locale dye name and
+packages/bot-logic/src/localization.ts:5: * category lookups. Uses a per-locale instance cache to avoid singleton
+packages/bot-logic/src/localization.ts:25: * Per-locale LocalizationService instance cache.
+packages/bot-logic/src/localization.ts:27: * Each locale gets its own instance with `currentLocale` permanently set.
+packages/bot-logic/src/localization.ts:36: * Get or create a LocalizationService instance for a specific locale.
+packages/bot-logic/src/localization.ts:37: * Instances are cached so each locale is loaded at most once per isolate.
+packages/bot-logic/src/localization.ts:39:async function getLocaleInstance(locale: LocaleCode): Promise<LocalizationService> {
+packages/bot-logic/src/localization.ts:40:  const existing = localeInstances.get(locale);
+packages/bot-logic/src/localization.ts:44:  await instance.setLocale(locale);
+packages/bot-logic/src/localization.ts:45:  localeInstances.set(locale, instance);
+packages/bot-logic/src/localization.ts:54: * Initialize localization for a specific locale.
+packages/bot-logic/src/localization.ts:56: * Pre-loads the locale instance into the cache for subsequent getter calls.
+packages/bot-logic/src/localization.ts:59: * @param locale - Locale code to initialize
+packages/bot-logic/src/localization.ts:61:export async function initializeLocale(locale: LocaleCode): Promise<void> {
+packages/bot-logic/src/localization.ts:63:    await getLocaleInstance(locale);
+packages/bot-logic/src/localization.ts:73: * Uses per-locale instances to avoid singleton race conditions.
+packages/bot-logic/src/localization.ts:74: * Defaults to 'en' for backward compatibility with callers that don't pass locale.
+packages/bot-logic/src/localization.ts:78: * @param locale - Locale code (defaults to 'en')
+packages/bot-logic/src/localization.ts:81:export function getLocalizedDyeName(itemID: number, fallbackName: string, locale: LocaleCode = 'en'): string {
+packages/bot-logic/src/localization.ts:83:    const instance = localeInstances.get(locale);
+packages/bot-logic/src/localization.ts:95: * Uses per-locale instances to avoid singleton race conditions.
+packages/bot-logic/src/localization.ts:98: * @param locale - Locale code (defaults to 'en')
+packages/bot-logic/src/localization.ts:101:export function getLocalizedCategory(category: string, locale: LocaleCode = 'en'): string {
+packages/bot-logic/src/localization.ts:103:    const instance = localeInstances.get(locale);
+packages/bot-logic/src/localization.ts:116: * @param locale - Locale code (defaults to 'en')
+packages/bot-logic/src/localization.ts:119:export function getLocalizedAcquisition(acquisition: string, locale: LocaleCode = 'en'): string {
+packages/bot-logic/src/localization.ts:121:    const instance = localeInstances.get(locale);
+packages/bot-logic/src/localization.ts:134: * @param locale - Locale code (defaults to 'en')
+packages/bot-logic/src/localization.ts:137:export function getLocalizedCurrency(currency: string, locale: LocaleCode = 'en'): string {
+packages/bot-logic/src/localization.ts:139:    const instance = localeInstances.get(locale);
+packages/core/scripts/build-locales.ts:3: * Build-time locale generator
+packages/core/scripts/build-locales.ts:4: * Converts YAML + CSV → JSON locale files
+packages/core/scripts/build-locales.ts:47:  console.log('🌐 Building locale files...\n');
+packages/core/scripts/build-locales.ts:66:  // Build each locale
+packages/core/scripts/build-locales.ts:75:  for (const locale of locales) {
+packages/core/scripts/build-locales.ts:76:    console.log(`Building ${LOCALE_NAMES[locale]} (${locale})...`);
+packages/core/scripts/build-locales.ts:78:    const localeData = buildLocaleData(locale, yamlData, csvRows);
+packages/core/scripts/build-locales.ts:79:    const outputPath = path.join(outputDir, `${locale}.json`);
+packages/core/scripts/build-locales.ts:84:    // it is. Otherwise every build dirties all six locale JSONs and buries real
+packages/core/scripts/build-locales.ts:106: * Reads a previously generated locale file, or null if it is absent or
+packages/core/scripts/build-locales.ts:120: * Compares two locale payloads ignoring `meta.generated`, so a rebuild that
+packages/core/scripts/build-locales.ts:160:  locale: LocaleCode,
+packages/core/scripts/build-locales.ts:164:  const labels = buildLabels(locale, yamlData[locale]);
+packages/core/scripts/build-locales.ts:165:  const dyeNames = buildDyeNames(locale, csvRows);
+packages/core/scripts/build-locales.ts:166:  const categories = buildCategories(locale);
+packages/core/scripts/build-locales.ts:169:    locale,
+packages/core/scripts/build-locales.ts:173:      // the unchanged-file check in main(). So this marks when the locale data
+packages/core/scripts/build-locales.ts:181:    acquisitions: buildAcquisitions(locale),
+packages/core/scripts/build-locales.ts:182:    currencies: buildCurrencies(locale),
+packages/core/scripts/build-locales.ts:183:    harmonyTypes: buildHarmonyTypes(locale),
+packages/core/scripts/build-locales.ts:184:    visionTypes: buildVisionTypes(locale),
+packages/core/scripts/build-locales.ts:185:    visions: buildVisionsShort(locale),
+packages/core/scripts/build-locales.ts:186:    tools: buildTools(locale),
+packages/core/scripts/build-locales.ts:187:    sheets: buildSheets(locale),
+packages/core/scripts/build-locales.ts:188:    races: buildRaces(locale),
+packages/core/scripts/build-locales.ts:189:    clans: buildClans(locale),
+packages/core/scripts/build-locales.ts:194:  locale: LocaleCode,
+packages/core/scripts/build-locales.ts:223:  // Use fallback if YAML data doesn't exist for this locale
+packages/core/scripts/build-locales.ts:225:    return fallbackLabels[locale] || fallbackLabels.en;
+packages/core/scripts/build-locales.ts:249:function buildDyeNames(locale: LocaleCode, csvRows: CsvRow[]): Record<string, string> {
+packages/core/scripts/build-locales.ts:250:  const nameColumn = `${LOCALE_NAMES[locale]} Name` as keyof CsvRow;
+packages/core/scripts/build-locales.ts:251:  // Fallback to English if a locale column is missing or empty
+packages/core/scripts/build-locales.ts:257:    // Try locale column first, fall back to English
+packages/core/scripts/build-locales.ts:268:function buildCategories(locale: LocaleCode): Record<string, string> {
+packages/core/scripts/build-locales.ts:339:  return translations[locale];
+packages/core/scripts/build-locales.ts:342:function buildAcquisitions(locale: LocaleCode): Record<string, string> {
+packages/core/scripts/build-locales.ts:401:  return translations[locale];
+packages/core/scripts/build-locales.ts:404:function buildCurrencies(locale: LocaleCode): Record<string, string> {
+packages/core/scripts/build-locales.ts:487:  return translations[locale];
+packages/core/scripts/build-locales.ts:490:function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
+packages/core/scripts/build-locales.ts:567:  return translations[locale];
+packages/core/scripts/build-locales.ts:570:function buildVisionTypes(locale: LocaleCode): Record<string, string> {
+packages/core/scripts/build-locales.ts:617:  return translations[locale];
+packages/core/scripts/build-locales.ts:620:function buildVisionsShort(locale: LocaleCode): Record<string, string> {
+packages/core/scripts/build-locales.ts:669:  return translations[locale];
+packages/core/scripts/build-locales.ts:672:function buildTools(locale: LocaleCode): Record<string, string> {
+packages/core/scripts/build-locales.ts:726:  return translations[locale];
+packages/core/scripts/build-locales.ts:729:function buildSheets(locale: LocaleCode): Record<string, string> {
+packages/core/scripts/build-locales.ts:802:  return translations[locale];
+packages/core/scripts/build-locales.ts:805:function buildRaces(locale: LocaleCode): Record<string, string> {
+packages/core/scripts/build-locales.ts:870:  return translations[locale];
+packages/core/scripts/build-locales.ts:873:function buildClans(locale: LocaleCode): Record<string, string> {
+packages/core/scripts/build-locales.ts:986:  return translations[locale];
+packages/core/scripts/copy-locales.ts:3: * Copy locale JSON files from src/data/locales to dist/data/locales
+packages/core/scripts/copy-locales.ts:40:  console.log(`📦 Copying ${files.length} locale files to dist...`);
+packages/core/src/config/consolidated-ids.ts:121: * Falls back to English when the requested locale's translation is `null`
+packages/core/src/config/consolidated-ids.ts:124:export function getConsolidatedDyeName(type: ConsolidationType, locale: LocaleCode): string {
+packages/core/src/config/consolidated-ids.ts:126:  return names[locale] ?? names.en;
+packages/core/src/config/learn-links.ts:11: * - The lead sentence and its tail are authored together per locale (JA
+packages/core/src/config/learn-links.ts:13: *   the locale string tables, not here.
+packages/core/src/config/learn-links.ts:29: * - Spectrum & Prices: Lodestone **by game region, not locale**.
+packages/core/src/config/learn-links.ts:44:/** FFXIV Lodestone regions (per-region hosts, not per-locale). */
+packages/core/src/config/learn-links.ts:60:   * Per-locale learn-more links. An absent locale means NO link — consumers
+packages/core/src/config/learn-links.ts:189:    links: {}, // region-keyed — resolve via LODESTONE_BY_REGION, not locale
+packages/core/src/config/learn-links.ts:199: * Learn-more link for a topic + locale. Returns null for the absent state —
+packages/core/src/config/learn-links.ts:202:export function getLearnLink(topic: ManualTopicId, locale: LocaleCode): LearnLink | null {
+packages/core/src/config/learn-links.ts:204:  return entry?.links[locale] ?? null;
+packages/core/src/index.ts:23:// that prefer explicit-locale APIs over the singleton + setLocale pattern.
+packages/core/src/services/DyeService.ts:289:   * If no locale is loaded, falls back to English-only search
+packages/core/src/services/DyeService.ts:301:  searchByLocalizedName(query: string, locale?: LocaleCode): Dye[] {
+packages/core/src/services/DyeService.ts:302:    // BUG-006 (2026-07-18 audit): pass an explicit locale in concurrent
+packages/core/src/services/DyeService.ts:303:    // multi-locale servers — reading the singleton's current locale races
+packages/core/src/services/DyeService.ts:305:    if (!LocalizationService.isLocaleLoaded(locale)) {
+packages/core/src/services/DyeService.ts:319:      const localizedName = LocalizationService.getDyeName(dye.itemID, locale);
+packages/core/src/services/LocalizationService.ts:30: * List of supported locale codes
+packages/core/src/services/LocalizationService.ts:42: * Extract 2-letter locale code from longer locale strings
+packages/core/src/services/LocalizationService.ts:45: * @param locale - Locale string (e.g., 'en-US', 'ja', 'de-DE')
+packages/core/src/services/LocalizationService.ts:46: * @returns 2-letter locale code or null
+packages/core/src/services/LocalizationService.ts:55:export function extractLocaleCode(locale: string): LocaleCode | null {
+packages/core/src/services/LocalizationService.ts:56:  const code = locale.split('-')[0].toLowerCase();
+packages/core/src/services/LocalizationService.ts:61: * Resolve locale from preference chain
+packages/core/src/services/LocalizationService.ts:62: * Pure function - determines locale based on priority without side effects
+packages/core/src/services/LocalizationService.ts:67: * @returns Resolved locale code
+packages/core/src/services/LocalizationService.ts:134: * // Set locale (lazy loads locale data)
+packages/core/src/services/LocalizationService.ts:151: * @example Discord bot locale resolution
+packages/core/src/services/LocalizationService.ts:156: *     system: interaction.locale,
+packages/core/src/services/LocalizationService.ts:194:   * Set active locale (loads locale file if not cached)
+packages/core/src/services/LocalizationService.ts:198:   * static API). In concurrent multi-locale servers (Cloudflare Workers,
+packages/core/src/services/LocalizationService.ts:200:   * request A can read another request's locale after any `await`. Such
+packages/core/src/services/LocalizationService.ts:202:   * `ensureLocaleLoaded(locale)` once and pass the request's locale
+packages/core/src/services/LocalizationService.ts:203:   * explicitly to every getter (`getDyeName(id, locale)`), or use the
+packages/core/src/services/LocalizationService.ts:206:   * @param locale - Locale code ('en', 'ja', 'de', 'fr')
+packages/core/src/services/LocalizationService.ts:207:   * @throws {AppError} If locale file fails to load
+packages/core/src/services/LocalizationService.ts:215:  async setLocale(locale: LocaleCode): Promise<void> {
+packages/core/src/services/LocalizationService.ts:217:    if (this.registry.hasLocale(locale)) {
+packages/core/src/services/LocalizationService.ts:218:      this.currentLocale = locale;
+packages/core/src/services/LocalizationService.ts:223:    // Load locale data (synchronous as of v1.1.3, async signature kept for API compatibility)
+packages/core/src/services/LocalizationService.ts:225:    const localeData = this.loader.loadLocale(locale);
+packages/core/src/services/LocalizationService.ts:227:    this.currentLocale = locale;
+packages/core/src/services/LocalizationService.ts:232:   * Static method: Set locale using default instance
+packages/core/src/services/LocalizationService.ts:234:  static async setLocale(locale: LocaleCode): Promise<void> {
+packages/core/src/services/LocalizationService.ts:235:    return this.getDefault().setLocale(locale);
+packages/core/src/services/LocalizationService.ts:239:   * Ensure a locale's data is loaded/registered WITHOUT mutating the current
+packages/core/src/services/LocalizationService.ts:240:   * locale. BUG-006 (2026-07-18 audit): the race-safe alternative to a
+packages/core/src/services/LocalizationService.ts:241:   * per-request `setLocale` — combine with explicit-locale getters
+packages/core/src/services/LocalizationService.ts:242:   * (`getDyeName(id, locale)`).
+packages/core/src/services/LocalizationService.ts:244:  async ensureLocaleLoaded(locale: LocaleCode): Promise<void> {
+packages/core/src/services/LocalizationService.ts:245:    if (this.registry.hasLocale(locale)) {
+packages/core/src/services/LocalizationService.ts:248:    // Load locale data (synchronous as of v1.1.3, async signature kept for API compatibility)
+packages/core/src/services/LocalizationService.ts:250:    this.registry.registerLocale(this.loader.loadLocale(locale));
+packages/core/src/services/LocalizationService.ts:254:   * Static method: Ensure a locale is loaded in the default instance
+packages/core/src/services/LocalizationService.ts:256:  static async ensureLocaleLoaded(locale: LocaleCode): Promise<void> {
+packages/core/src/services/LocalizationService.ts:257:    return this.getDefault().ensureLocaleLoaded(locale);
+packages/core/src/services/LocalizationService.ts:261:   * Set locale from preference object with priority chain
+packages/core/src/services/LocalizationService.ts:277:   * // Sets locale to 'de' (highest priority)
+packages/core/src/services/LocalizationService.ts:281:    const locale = resolveLocaleFromPreference(preference);
+packages/core/src/services/LocalizationService.ts:282:    await this.setLocale(locale);
+packages/core/src/services/LocalizationService.ts:286:   * Static method: Set locale from preference using default instance
+packages/core/src/services/LocalizationService.ts:293:   * Get current active locale
+packages/core/src/services/LocalizationService.ts:295:   * @returns Current locale code
+packages/core/src/services/LocalizationService.ts:307:   * Static method: Get current locale from default instance
+packages/core/src/services/LocalizationService.ts:314:   * Check if service is initialized with a locale
+packages/core/src/services/LocalizationService.ts:316:   * @returns true if locale data is loaded
+packages/core/src/services/LocalizationService.ts:325:  isLocaleLoaded(locale?: LocaleCode): boolean {
+packages/core/src/services/LocalizationService.ts:326:    // BUG-006: with an explicit locale, report on that locale's data instead
+packages/core/src/services/LocalizationService.ts:328:    if (locale !== undefined) {
+packages/core/src/services/LocalizationService.ts:329:      return this.registry.hasLocale(locale);
+packages/core/src/services/LocalizationService.ts:335:   * Static method: Check if locale is loaded in default instance
+packages/core/src/services/LocalizationService.ts:337:  static isLocaleLoaded(locale?: LocaleCode): boolean {
+packages/core/src/services/LocalizationService.ts:338:    return this.getDefault().isLocaleLoaded(locale);
+packages/core/src/services/LocalizationService.ts:347:  getLabel(key: TranslationKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:348:    return this.translator.getLabel(key, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:354:  static getLabel(key: TranslationKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:355:    return this.getDefault().getLabel(key, locale);
+packages/core/src/services/LocalizationService.ts:364:  getDyeName(itemID: number, locale?: LocaleCode): string | null {
+packages/core/src/services/LocalizationService.ts:365:    return this.translator.getDyeName(itemID, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:371:  static getDyeName(itemID: number, locale?: LocaleCode): string | null {
+packages/core/src/services/LocalizationService.ts:372:    return this.getDefault().getDyeName(itemID, locale);
+packages/core/src/services/LocalizationService.ts:381:  getCategory(category: string, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:382:    return this.translator.getCategory(category, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:388:  static getCategory(category: string, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:389:    return this.getDefault().getCategory(category, locale);
+packages/core/src/services/LocalizationService.ts:398:  getAcquisition(acquisition: string, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:399:    return this.translator.getAcquisition(acquisition, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:405:  static getAcquisition(acquisition: string, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:406:    return this.getDefault().getAcquisition(acquisition, locale);
+packages/core/src/services/LocalizationService.ts:415:  getCurrency(currency: string, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:416:    return this.translator.getCurrency(currency, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:422:  static getCurrency(currency: string, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:423:    return this.getDefault().getCurrency(currency, locale);
+packages/core/src/services/LocalizationService.ts:432:  getHarmonyType(key: HarmonyTypeKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:433:    return this.translator.getHarmonyType(key, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:439:  static getHarmonyType(key: HarmonyTypeKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:440:    return this.getDefault().getHarmonyType(key, locale);
+packages/core/src/services/LocalizationService.ts:449:  getVisionType(key: VisionType, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:450:    return this.translator.getVisionType(key, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:456:  static getVisionType(key: VisionType, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:457:    return this.getDefault().getVisionType(key, locale);
+packages/core/src/services/LocalizationService.ts:466:  getVisionShort(key: VisionType, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:467:    return this.translator.getVisionShort(key, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:473:  static getVisionShort(key: VisionType, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:474:    return this.getDefault().getVisionShort(key, locale);
+packages/core/src/services/LocalizationService.ts:483:  getToolName(key: ToolKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:484:    return this.translator.getToolName(key, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:490:  static getToolName(key: ToolKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:491:    return this.getDefault().getToolName(key, locale);
+packages/core/src/services/LocalizationService.ts:500:  getSheetName(key: SheetKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:501:    return this.translator.getSheetName(key, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:507:  static getSheetName(key: SheetKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:508:    return this.getDefault().getSheetName(key, locale);
+packages/core/src/services/LocalizationService.ts:517:  getRace(key: RaceKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:518:    return this.translator.getRace(key, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:524:  static getRace(key: RaceKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:525:    return this.getDefault().getRace(key, locale);
+packages/core/src/services/LocalizationService.ts:534:  getClan(key: ClanKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:535:    return this.translator.getClan(key, locale ?? this.currentLocale);
+packages/core/src/services/LocalizationService.ts:541:  static getClan(key: ClanKey, locale?: LocaleCode): string {
+packages/core/src/services/LocalizationService.ts:542:    return this.getDefault().getClan(key, locale);
+packages/core/src/services/LocalizationService.ts:546:   * Get all available locale codes
+packages/core/src/services/LocalizationService.ts:548:   * @returns Array of supported locale codes
+packages/core/src/services/LocalizationService.ts:565:   * @param locales - Array of locale codes to preload
+packages/core/src/services/LocalizationService.ts:568:    await Promise.all(locales.map((locale) => this.setLocale(locale)));
+packages/core/src/services/chara/chara-parser.ts:6: * - **Parse by key presence, never the declared `TypeName`** — producers
+packages/core/src/services/chara/chara-parser.ts:7: *   (Anamnesis versions, Ktisis) write different key sets. `TypeName` is
+packages/core/src/services/chara/chara-parser.ts:89:  /** Declared producer (`TypeName`), shown in UI — never used for parsing */
+packages/core/src/services/chara/chara-parser.ts:97:   * Ktisis nickname. On-device display only (a file card label): players use
+packages/core/src/services/chara/chara-parser.ts:103:  nickname: string | null;
+packages/core/src/services/chara/chara-parser.ts:404:    producer: typeof record['TypeName'] === 'string' ? record['TypeName'] : null,
+packages/core/src/services/chara/chara-parser.ts:409:    nickname: typeof record['Nickname'] === 'string' ? record['Nickname'] : null,
+packages/core/src/services/chara/chara-resolver.ts:93:  nickname: string | null;
+packages/core/src/services/chara/chara-resolver.ts:358:    nickname: parsed.nickname,
+packages/core/src/services/localization/LocaleLoader.ts:2: * LocaleLoader - Loads locale JSON files
+packages/core/src/services/localization/LocaleLoader.ts:4: * Per R-4: Single Responsibility - locale file loading only
+packages/core/src/services/localization/LocaleLoader.ts:13:// Static imports for all locale files (bundler-compatible)
+packages/core/src/services/localization/LocaleLoader.ts:21:// Map of locale codes to pre-loaded data
+packages/core/src/services/localization/LocaleLoader.ts:32: * Loads locale data from pre-bundled JSON files
+packages/core/src/services/localization/LocaleLoader.ts:36:   * Load locale data from pre-bundled JSON
+packages/core/src/services/localization/LocaleLoader.ts:38:   * @param locale - Locale code to load
+packages/core/src/services/localization/LocaleLoader.ts:40:   * @throws {AppError} If locale file fails to load or is invalid
+packages/core/src/services/localization/LocaleLoader.ts:49:  loadLocale(locale: LocaleCode): LocaleData {
+packages/core/src/services/localization/LocaleLoader.ts:51:      const data = localeMap[locale];
+packages/core/src/services/localization/LocaleLoader.ts:54:        throw new Error(`Locale "${locale}" not found in bundled locales`);
+packages/core/src/services/localization/LocaleLoader.ts:59:        throw new Error(`Invalid locale data structure for ${locale}`);
+packages/core/src/services/localization/LocaleLoader.ts:66:        `Failed to load locale "${locale}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+packages/core/src/services/localization/LocaleLoader.ts:73:   * Validate locale data structure
+packages/core/src/services/localization/LocaleLoader.ts:87:      typeof localeData.locale === 'string' &&
+packages/core/src/services/localization/LocaleRegistry.ts:2: * LocaleRegistry - Manages loaded locale data cache
+packages/core/src/services/localization/LocaleRegistry.ts:13: * Registry for loaded locale data with caching
+packages/core/src/services/localization/LocaleRegistry.ts:19:   * Register a loaded locale in the cache
+packages/core/src/services/localization/LocaleRegistry.ts:30:    this.locales.set(data.locale, data);
+packages/core/src/services/localization/LocaleRegistry.ts:34:   * Check if locale is already loaded
+packages/core/src/services/localization/LocaleRegistry.ts:36:   * @param locale - Locale code to check
+packages/core/src/services/localization/LocaleRegistry.ts:37:   * @returns true if locale is cached
+packages/core/src/services/localization/LocaleRegistry.ts:46:  hasLocale(locale: LocaleCode): boolean {
+packages/core/src/services/localization/LocaleRegistry.ts:47:    return this.locales.has(locale);
+packages/core/src/services/localization/LocaleRegistry.ts:51:   * Get loaded locale data
+packages/core/src/services/localization/LocaleRegistry.ts:53:   * @param locale - Locale code to retrieve
+packages/core/src/services/localization/LocaleRegistry.ts:64:  getLocale(locale: LocaleCode): LocaleData | null {
+packages/core/src/services/localization/LocaleRegistry.ts:65:    return this.locales.get(locale) || null;
+packages/core/src/services/localization/TranslationProvider.ts:5: * Fallback chain: requested locale → English → formatted key
+packages/core/src/services/localization/TranslationProvider.ts:30: * Fallback chain: requested locale → English → formatted key / original value
+packages/core/src/services/localization/TranslationProvider.ts:34: * This is intentional — empty strings in locale files indicate untranslated entries.
+packages/core/src/services/localization/TranslationProvider.ts:37: * For detecting incomplete locale files at build time, see `build-locales.ts`.
+packages/core/src/services/localization/TranslationProvider.ts:46:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:55:  getLabel(key: TranslationKey, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:56:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:58:    // Try requested locale (FINDING-027: own-property lookups — a key such as
+packages/core/src/services/localization/TranslationProvider.ts:65:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:80:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:89:  getDyeName(itemID: number, locale: LocaleCode): string | null {
+packages/core/src/services/localization/TranslationProvider.ts:90:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:93:    // Try requested locale
+packages/core/src/services/localization/TranslationProvider.ts:99:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:107:    // CONSOLIDATED_DYES, not in the CSV-driven locale registry. Fall back
+packages/core/src/services/localization/TranslationProvider.ts:113:        return names[locale] ?? names.en;
+packages/core/src/services/localization/TranslationProvider.ts:124:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:133:  getCategory(category: string, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:134:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:136:    // Try requested locale
+packages/core/src/services/localization/TranslationProvider.ts:142:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:157:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:166:  getAcquisition(acquisition: string, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:167:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:169:    // Try requested locale
+packages/core/src/services/localization/TranslationProvider.ts:175:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:190:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:199:  getCurrency(currency: string, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:200:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:202:    // Try requested locale
+packages/core/src/services/localization/TranslationProvider.ts:208:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:223:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:232:  getHarmonyType(key: HarmonyTypeKey, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:233:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:235:    // Try requested locale
+packages/core/src/services/localization/TranslationProvider.ts:241:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:256:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:265:  getVisionType(key: VisionType, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:266:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:268:    // Try requested locale
+packages/core/src/services/localization/TranslationProvider.ts:274:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:293:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:302:  getVisionShort(key: VisionType, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:303:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:309:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:326:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:335:  getToolName(key: ToolKey, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:336:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:342:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:359:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:368:  getSheetName(key: SheetKey, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:369:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:375:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:389:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:398:  getRace(key: RaceKey, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:399:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:401:    // Try requested locale
+packages/core/src/services/localization/TranslationProvider.ts:407:    if (locale !== 'en') {
+packages/core/src/services/localization/TranslationProvider.ts:422:   * @param locale - Requested locale
+packages/core/src/services/localization/TranslationProvider.ts:431:  getClan(key: ClanKey, locale: LocaleCode): string {
+packages/core/src/services/localization/TranslationProvider.ts:432:    const localeData = this.registry.getLocale(locale);
+packages/core/src/services/localization/TranslationProvider.ts:434:    // Try requested locale
+packages/core/src/services/localization/TranslationProvider.ts:440:    if (locale !== 'en') {
+packages/core/src/utils/index.ts:468: * @param locale - Locale code; `ja`/`zh`/`ko` take the CJK path
+packages/core/src/utils/index.ts:479:export function abbreviateDyeName(name: string, locale: string): string {
+packages/core/src/utils/index.ts:480:  if (locale === 'ja' || locale === 'zh' || locale === 'ko') return name.slice(0, 3);
+packages/logger/src/index.ts:26: *     const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
+packages/logger/src/presets/worker.ts:48: *     const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
+packages/logger/src/presets/worker.ts:97: *   const requestId = c.req.header('x-request-id') || crypto.randomUUID();
+packages/logger/src/types.ts:229:  setUser(user: { id?: string; username?: string; email?: string }): void;
+packages/svg/src/dye-info-card.ts:75:  /** BCP-47ish locale code for number formatting */
+packages/svg/src/icons/tool-icons.ts:319:/** Render a chrome glyph (about paint can, sun/moon theme pair, locale globe). */
+packages/svg/src/swatch-card.ts:72:  /** Neutral card title (localized "Character swatch") — NEVER the character's name or the attachment filename; players may use their real name. */
+packages/test-utils/integration/setup.ts:44:  username: string;
+packages/test-utils/integration/setup.ts:46:  avatar: string | null;
+packages/test-utils/integration/setup.ts:54:    username: 'testuser',
+packages/test-utils/integration/setup.ts:56:    avatar: null,
+packages/test-utils/integration/setup.ts:62:    username: 'moduser',
+packages/test-utils/integration/setup.ts:64:    avatar: 'abc123',
+packages/test-utils/integration/setup.ts:70:    username: 'another',
+packages/test-utils/integration/setup.ts:72:    avatar: null,
+packages/test-utils/integration/setup.ts:147:    username: user.username,
+packages/test-utils/integration/setup.ts:148:    global_name: user.globalName,
+packages/test-utils/integration/setup.ts:149:    avatar: user.avatar,
+packages/test-utils/integration/setup.ts:159:    username: user.username,
+packages/test-utils/integration/setup.ts:160:    global_name: user.globalName,
+packages/test-utils/src/auth/headers.ts:22: * @param userName - Optional Discord username
+packages/test-utils/src/auth/jwt.ts:12: *   username: 'TestUser',
+packages/test-utils/src/auth/jwt.ts:13: *   global_name: 'Test User',
+packages/test-utils/src/auth/jwt.ts:38:  username: string;
+packages/test-utils/src/auth/jwt.ts:40:  global_name?: string | null;
+packages/test-utils/src/auth/jwt.ts:42:  avatar?: string | null;
+packages/test-utils/src/auth/jwt.ts:64: * @param payload - The JWT payload (sub, username, etc.)
+packages/test-utils/src/auth/jwt.ts:117:  payload: TestJWTPayload = { sub: '123', username: 'test' },
+packages/test-utils/src/auth/signature.ts:14: *   'username',
+packages/test-utils/src/auth/signature.ts:23: *   'X-User-Discord-Name': 'username',
+packages/test-utils/src/auth/signature.ts:40: * @param userName - Discord username
+packages/test-utils/src/auth/signature.ts:70: * @param userName - Discord username
+packages/test-utils/src/auth/signature.ts:90: * @param userName - Discord username
+packages/types/src/auth/discord.ts:36:  /** Username (not nickname) */
+packages/types/src/auth/discord.ts:37:  username: string;
+packages/types/src/auth/discord.ts:39:  /** Legacy discriminator (usually "0" now) */
+packages/types/src/auth/discord.ts:40:  discriminator: string;
+packages/types/src/auth/discord.ts:43:  global_name: string | null;
+packages/types/src/auth/discord.ts:46:  avatar: string | null;
+packages/types/src/auth/discord.ts:63:  /** User's locale setting */
+packages/types/src/auth/discord.ts:64:  locale?: string;
+packages/types/src/auth/discord.ts:66:  /** True if email is verified */
+packages/types/src/auth/discord.ts:69:  /** User's email (requires email scope) */
+packages/types/src/auth/discord.ts:70:  email?: string | null;
+packages/types/src/auth/jwt.ts:59:  /** Display username */
+packages/types/src/auth/jwt.ts:60:  username: string;
+packages/types/src/auth/jwt.ts:63:  global_name: string | null;
+packages/types/src/auth/jwt.ts:66:  avatar: string | null;
+packages/types/src/auth/response.ts:19:  /** Display username */
+packages/types/src/auth/response.ts:20:  username: string;
+packages/types/src/auth/response.ts:23:  global_name: string | null;
+packages/types/src/auth/response.ts:26:  avatar: string | null;
+packages/types/src/auth/response.ts:28:  /** Full avatar URL */
+packages/types/src/auth/response.ts:75: *   console.log(response.user.username);
+packages/types/src/auth/response.ts:124:  username: string;
+packages/types/src/auth/response.ts:125:  global_name: string | null;
+packages/types/src/auth/response.ts:126:  avatar: string | null;
+packages/types/src/auth/xivauth.ts:81:  /** Nickname on the external service */
+packages/types/src/auth/xivauth.ts:82:  nickname: string | null;
+packages/types/src/auth/xivauth.ts:95: * XIVAuth does NOT return username or avatar_url in user endpoint.
+packages/types/src/dye/dye.ts:92:   * Type flags for locale-independent filtering
+packages/types/src/error/codes.ts:34:  /** Failed to load locale data */
+packages/types/src/localization/index.ts:12: * Supported locale codes
+packages/types/src/localization/index.ts:90:  locale: LocaleCode;
+packages/types/src/localization/index.ts:92:  /** Metadata about the locale file */
+packages/types/src/localization/index.ts:157:  /** Fallback locale (always 'en') */
+packages/worker-kit/src/middleware/logger.ts:143:      startContext.userAgent = c.req.header('user-agent');
+packages/worker-kit/src/middleware/request-id.ts:63:        requestId = UUID_PATTERN.test(headerRequestId) ? headerRequestId : crypto.randomUUID();
+packages/worker-kit/src/middleware/request-id.ts:68:      requestId = crypto.randomUUID();

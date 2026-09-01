@@ -44,6 +44,21 @@ List all preset categories with their preset counts.
 
 ## Presets (Public)
 
+Every preset leaving this Worker over HTTP passes through `toPublicPreset()`
+(`services/preset-service.ts`), which decides who sees the author's Discord id (FINDING-016,
+2026-08-29 audit):
+
+| Caller | `author_discord_id` | `is_owner` |
+|--------|---------------------|------------|
+| Anonymous | absent | absent |
+| Web (JWT), someone else's preset | absent | `false` |
+| Web (JWT), own preset | present | `true` |
+| Web (JWT), moderator | present | `true` / `false` |
+| Bot (HMAC) | present | absent (bot responses are unchanged) |
+
+`author_name` is the author identity the gallery shows and is sent to everyone. The moderation
+routes and the server-to-bot notification payloads keep the id.
+
 ### `GET /api/v1/presets`
 
 List approved presets with pagination.
@@ -120,8 +135,19 @@ Get the authenticated user's own presets. Returns presets in all statuses, inclu
 Edit an owned preset. Validates that the authenticated user owns the preset.
 
 - If `dyes` are changed, runs duplicate detection.
+- If `name` or `description` are sent, the edit is charged to a per-user daily cap of 30
+  (`DAILY_TEXT_EDIT_LIMIT`, `submission_events` kind `text_edit`) **before** content moderation is
+  called, for every preset status; over the cap the edit is refused with `429 RATE_LIMITED`
+  ("You've reached your daily limit of name and description edits (30 per day). Try again
+  tomorrow.", plus `remaining: 0` and `reset_at`) and nothing is moderated or written.
 - If `name` or `description` are changed, runs content moderation.
-- If the edit is flagged by moderation, the previous values are stored in `previous_values` and the preset status is set to `pending`.
+- If the edit is flagged by moderation, the previous values are stored in `previous_values`.
+- Status (FINDING-004): a `pending` preset stays pending; an `approved` one drops to `pending` only
+  if the new text tripped moderation; a **`rejected`** one returns to `pending` when its text is
+  edited — that edit *is* the resubmission the web app's "Resubmit" button performs; a `flagged` one
+  never moves and never notifies; `hidden` is 403. Tag / dye / category edits and text re-sent
+  unchanged change no status and notify nobody. Every notifying edit is charged to a second daily
+  cap of 10 (`DAILY_FLAGGED_EDIT_LIMIT`, kind `flagged_edit`, its own `429 RATE_LIMITED`).
 
 ### `DELETE /api/v1/presets/:id`
 
@@ -254,12 +280,17 @@ Authorization: Bearer <BOT_API_SECRET>
 
 | Header | Description |
 |--------|-------------|
-| `X-Request-Timestamp` | Unix timestamp (seconds) for replay protection — max age 5 minutes, 1 minute future skew |
-| `X-Request-Signature` | Hex HMAC-SHA256 over `${timestamp}:${discordId}:${userName}` with `BOT_SIGNING_SECRET` |
+| `X-Request-Timestamp` | Unix timestamp (seconds); a v2 signature is accepted for 60 seconds (60 s future skew) |
+| `X-Request-Signature-V2` | Hex HMAC-SHA256 with `BOT_SIGNING_SECRET` over the length-prefixed canonical string — one field per line, each prefixed with its length: `v2`, `METHOD`, path (no origin, no query), `sha256(body)`, timestamp, nonce, Discord ID, username |
+| `X-Request-Nonce` | Random single-use nonce (`[A-Za-z0-9._-]{1,64}`; the bots send a UUID) bound into the signature; accepted nonces are remembered for 120 s in the shared `TOKEN_BLACKLIST` KV (`botnonce:` prefix) and a repeat is refused |
 | `X-User-Discord-ID` | Discord user ID (snowflake) of the acting user |
 | `X-User-Discord-Name` | Discord username of the acting user (optional; part of the signed message) |
 
-Verification is `verifyBotSignature()` from `@xivdyetools/auth`; the header names live in
+The legacy v1 `X-Request-Signature` header (`${timestamp}:${discordId}:${userName}`, 5-minute
+window) is no longer accepted since presets-api 2.2.0 (2026-08-29 audit, FINDING-015) and is no
+longer sent by discord-worker 5.1.0 or moderation-worker 1.6.0.
+Verification is `verifyBotSignatureV2()` from `@xivdyetools/auth` (header names
+`BOT_SIGNATURE_V2_HEADER` / `BOT_SIGNATURE_NONCE_HEADER` live there); the nonce replay cache is in
 `apps/presets-api/src/middleware/auth.ts`.
 
 ---

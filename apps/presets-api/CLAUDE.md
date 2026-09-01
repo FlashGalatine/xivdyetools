@@ -159,7 +159,7 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 | `categories` | 8 seeded categories: jobs, grand-companies, seasons, events, aesthetics, plus appearance / zones / raids-trials added by `migrations/0010`. `community` was retired by `migrations/0007` — community-ness is a source, not a category; any stragglers land in `aesthetics` |
 | `presets` | Both curated and community palettes; `status ∈ {pending, approved, rejected, flagged}`, `dye_signature` enforces unique dye combinations. Later columns arrived one migration each: `example_link` (`0008`), `preview_image_key` / `preview_image_status` (`0009`), `secondary_categories` (`0010`) |
 | `votes` | One row per (preset_id, user_discord_id); composite PK |
-| `moderation_log` | Audit trail of approve/reject/flag/unflag/revert actions |
+| `moderation_log` | Audit trail of approve/reject/flag/unflag/revert actions, plus ban/unban/hide/restore written by moderation-worker directly (`migrations/0013` — `preset_id` is NULL on the user-level `ban`/`unban` rows, `target_discord_id` names the moderated user) |
 | `rate_limits` | **Dropped** by `migrations/0006` (REFACTOR-018 — never read or written; IP limits are in-memory). Still present in `schema.sql` only for fresh local DBs |
 | `banned_users` | Tracked via `discord_id` or `xivauth_id`; partial unique index for active bans |
 | `failed_notifications` | Dead-letter queue (BUG-015) for Discord notifications that exhausted retries |
@@ -282,13 +282,16 @@ Allowlist comes from `CORS_ORIGIN` + `ADDITIONAL_CORS_ORIGINS`. In dev mode only
 
 ```
 Authorization: Bearer <BOT_API_SECRET>
-X-Request-Signature: HMAC-SHA256(BOT_SIGNING_SECRET, "<timestamp>:<userDiscordId>:<userName>")
+X-Request-Signature-V2: HMAC-SHA256(BOT_SIGNING_SECRET, canonical(method, path, sha256(body), timestamp, nonce, userDiscordId, userName))
 X-Request-Timestamp: <unix-seconds>
+X-Request-Nonce: <uuid>
 X-User-Discord-ID: <discord-id>
 X-User-Discord-Name: <username>
 ```
 
-Timestamp validity: max age 5 minutes (`SIGNATURE_MAX_AGE_SECONDS = 300`), 1-minute future skew tolerance. Algorithm in `@xivdyetools/auth.verifyBotSignature`.
+Timestamp validity: max age 60 s, 60 s future skew tolerance. Algorithm in `@xivdyetools/auth.verifyBotSignatureV2` (`BOT_SIGNATURE_V2_MAX_AGE_MS`); the canonical string is length-prefixed field-per-line, so no delimiter inside a field can collide with another.
+
+**v2 is the only accepted signature** (FINDING-015, 2026-08-29 audit). A request without a valid `X-Request-Signature-V2` is unauthenticated whatever the legacy `X-Request-Signature` (v1: `timestamp:userId:userName`, 5-minute window, nothing about the request bound) carries — and as of discord-worker 5.1.0 / moderation-worker 1.6.0 neither bot sends that header at all, while `@xivdyetools/auth` 2.0.0 removed its verifier, so no v1 remains anywhere in the monorepo. The nonce must be non-empty, ≤ 64 chars and `[A-Za-z0-9._-]`, and every accepted one is stored in `TOKEN_BLACKLIST` under `botnonce:` for 120 s so the same signed request cannot be replayed inside its window. That cache is best-effort — KV is eventually consistent, and a KV error or an unbound namespace (dev/tests) skips the *replay* check, never the signature or the nonce format.
 
 ### JWT Verification
 

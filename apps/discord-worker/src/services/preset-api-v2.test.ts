@@ -1,8 +1,10 @@
 /**
  * Bot → presets-api request signing v2 (FINDING-014, 2026-08-21 audit).
  *
- * Every signed request must also carry `X-Request-Signature-V2` (+ a nonce)
- * binding method, path and body; v1 headers stay during rollover.
+ * Every signed request carries `X-Request-Signature-V2` (+ a nonce) binding
+ * method, path and body. The legacy v1 header (`X-Request-Signature`) is no
+ * longer sent — presets-api stopped accepting it in 2.2.0 and the bot stopped
+ * sending it in 5.1.0 (FINDING-015, 2026-08-29 audit).
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { verifyBotSignatureV2 } from '@xivdyetools/auth';
@@ -56,7 +58,7 @@ describe('preset-api v2 request signatures', () => {
     const sig = req.headers.get('X-Request-Signature-V2');
     expect(sig).toMatch(/^[0-9a-f]{64}$/);
     expect(req.headers.get('X-Request-Nonce')).toBeTruthy();
-    expect(req.headers.get('X-Request-Signature')).toMatch(/^[0-9a-f]{64}$/); // v1 during rollover
+    expect(req.headers.get('X-Request-Signature')).toBeNull(); // v1 retired (FINDING-015)
 
     await expect(verifyBotSignatureV2(sig, await reqFields(req), SECRET)).resolves.toBe(true);
   });

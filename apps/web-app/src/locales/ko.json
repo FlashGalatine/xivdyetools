@@ -1069,7 +1069,7 @@
     "gateSubmitNote": "카드에 이름이 표시됩니다.",
     "providerDiscordNote": "대부분 이미 보유",
     "providerXivauthNote": "캐릭터를 인증",
-    "privacyNote": "표시 이름과 로그인 제공자 ID만 저장합니다. 캐릭터 정보도 이메일도 수집하지 않으며, 판매하지 않습니다.",
+    "privacyNote": "로그인하면 계정 기록이 생성되어 Discord 또는 XIVAuth ID와 사용자 이름이 저장됩니다. 표시 이름은 투고한 팔레트에 표시됩니다. 캐릭터 정보도 이메일도 수집하지 않으며, 판매하지 않습니다.",
     "submitTitle": "팔레트 투고",
     "submitSub": "공개 전 검토를 거칩니다",
     "previewLabel": "표시 미리보기",

@@ -58,7 +58,6 @@ These must be set before the worker will function:
 | `MODERATOR_IDS` | Comma-separated Discord user IDs with moderator privileges |
 | `MODERATION_BOT_TOKEN` | Moderation bot token — Discord routes button clicks to the posting application |
 | `STATS_AUTHORIZED_USERS` | Users who can view the admin `/stats` subcommands |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Preferred rate-limit backend (falls back to KV) |
 | `INTERNAL_WEBHOOK_SECRET` | Webhook authentication |
 | `MODERATION_CHANNEL_ID` | Channel for moderation notifications |
 | `SUBMISSION_LOG_CHANNEL_ID` | Channel for submission announcements |

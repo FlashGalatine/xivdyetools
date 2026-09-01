@@ -757,13 +757,198 @@ describe('redaction cycle safety', () => {
     expect(() => logger.info('array cycle', cyclic)).not.toThrow();
   });
 
-  it('still redacts the same object seen twice at different keys', () => {
+  it('still redacts the same object seen twice at different keys (S10-R8: at EVERY reference, not just the first)', () => {
     const logger = new TestLogger({ level: 'debug' });
     const shared: LogContext = { password: 'hunter2' };
 
     logger.info('shared', { a: shared, b: shared });
 
-    const ctx = logger.entries[0].context as { a: LogContext };
+    // S10-R8 (2026-08-30 fix round 1): the old guard was a global "seen
+    // anywhere" WeakSet, so the SECOND reference to `shared` was skipped as
+    // already-visited and returned unredacted — ctx.b.password used to
+    // still be 'hunter2'. The guard is now an ancestor (recursion-path) set
+    // that gets popped after each branch finishes, so `a` and `b` are each
+    // redacted independently.
+    const ctx = logger.entries[0].context as { a: LogContext; b: LogContext };
     expect(ctx.a.password).toBe('[REDACTED]');
+    expect(ctx.b.password).toBe('[REDACTED]');
+    // S10-R12 (2026-08-30 fix round 2): memoized on the way out, so both
+    // references resolve to the SAME redacted object, not two independently
+    // (and, before this fix, inconsistently) redacted copies.
+    expect(ctx.a).toBe(ctx.b);
+  });
+
+  it('redacts an aliased ARRAY at every reference too, not just the first (S10-R8)', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    // Reused from hardening.test.ts: a JWT that trips looksLikeSecretValue.
+    const jwt =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMifQ.c2lnbmF0dXJlLXNpZ25hdHVyZS1zaWduYXR1cmU';
+    const arr = [jwt];
+
+    logger.info('shared array', { a: arr, b: arr });
+
+    // This is FINDING-025's own headline example (`{ tokens: ['eyJ…'] }`)
+    // aliased — before S10-R8, redactArrayItems marked the array itself as
+    // "visited" globally, so the second reference's items were returned
+    // unscanned.
+    const ctx = logger.entries[0].context as { a: string[]; b: string[] };
+    expect(ctx.a[0]).toBe('[REDACTED]');
+    expect(ctx.b[0]).toBe('[REDACTED]');
+    // S10-R12: same memoization property as the object case above.
+    expect(ctx.a).toBe(ctx.b);
+  });
+
+  it('processes a heavily-aliased structure in work LINEAR in its depth, not exponential (S10-R12: memoization, not a budget)', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    // redactSensitiveFields is `protected`; spying on the INSTANCE (not the
+    // prototype) still intercepts every internal `this.redactSensitiveFields(...)`
+    // call made during recursion, since `this` stays this same instance
+    // throughout.
+    const spy = vi.spyOn(
+      logger as unknown as { redactSensitiveFields: (...args: unknown[]) => unknown },
+      'redactSensitiveFields',
+    );
+
+    // Binary alias chain: each level references the SAME child object from
+    // BOTH of its own keys. Without memoization, this makes the number of
+    // redactSensitiveFields calls exponential in DEPTH (2^DEPTH). A prior
+    // version of this test asserted a wall-clock bound instead of a call
+    // count and relied on "an exponential regression will just time out";
+    // a live probe of that assumption during review showed vitest workers
+    // do NOT cleanly time out synchronous code — the run just hangs until
+    // something external kills it, so a wall-clock (or "let it hang")
+    // assertion would not go red on a regression, it would stall CI
+    // indefinitely. Counting actual calls is deterministic regardless of
+    // whether the underlying algorithm is linear or exponential, and
+    // DEPTH=15 keeps the UNMEMOIZED case safely bounded too (2^15 = 32768
+    // cheap calls, comfortably finishes either way) — this test can only
+    // pass or fail, never hang.
+    const DEPTH = 15;
+    let level: LogContext = { password: 'hunter2' };
+    for (let i = 0; i < DEPTH; i++) {
+      level = { a: level, b: level };
+    }
+
+    logger.info('deep', level);
+
+    // Memoized: one real call per distinct level (DEPTH of them, plus the
+    // one-off top-level `merged` wrapper from mergeContext) plus one cheap
+    // memo-hit call per alias edge (DEPTH of them) — linear in DEPTH.
+    // Unmemoized, this would be on the order of 2^DEPTH = 32768 calls, so a
+    // generous linear-shaped ceiling (well above the true ~2×DEPTH+1, well
+    // below any exponential reading) cleanly separates the two.
+    expect(spy.mock.calls.length).toBeLessThan(DEPTH * 4);
+
+    // And the actual redaction still happened, all the way to the bottom —
+    // the secret DEPTH levels down is exactly where a budget-based cutoff
+    // would have missed it.
+    let node = logger.entries[0].context as unknown as LogContext;
+    for (let i = 0; i < DEPTH; i++) {
+      node = node.a as LogContext;
+    }
+    expect(node.password).toBe('[REDACTED]');
+  });
+
+  it('redacts every ALIASED reference in a large shared structure, not just the first N (S10-R12: no budget to exhaust)', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const shared: LogContext = { password: 'hunter2' };
+    // 6000 references to the SAME object — comfortably past the size where
+    // the since-removed MAX_REDACT_NODES=5000 budget would have kicked in
+    // and silently left the tail of this array unredacted (that budget
+    // failed OPEN — the exact defect S10-R12 replaced it for). With
+    // memoization there is no cutoff: every reference resolves to the one
+    // shared, fully-redacted copy.
+    //
+    // S10-R15 (2026-08-30 fix round 3): this test alone is NOT a
+    // regression test for the original S10-R8 budget bypass — memoization
+    // satisfies 6000 ALIASED references in O(1) (one real computation, the
+    // rest memo hits), which even a budget of 5000 would arguably have
+    // survived (only ~2 "real" node visits are needed: the shared object
+    // and the array). The test that actually exercises the many-DISTINCT-
+    // nodes path the old budget bypassed is the next one below.
+    const refs: LogContext[] = new Array(6000).fill(shared);
+
+    logger.info('wide', { refs });
+
+    const ctx = logger.entries[0].context as { refs: LogContext[] };
+    expect(ctx.refs).toHaveLength(6000);
+    expect(ctx.refs[0].password).toBe('[REDACTED]');
+    expect(ctx.refs[5999].password).toBe('[REDACTED]');
+    // Memoized: every reference is the SAME redacted object, not 6000
+    // independently redacted copies.
+    expect(ctx.refs[0]).toBe(ctx.refs[5999]);
+  });
+
+  it('redacts a secret in the LAST of >5000 DISTINCT (non-aliased) object nodes (S10-R15: the actual bypass regression test)', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    // 6000 DISTINCT objects — a fresh object literal each iteration, never
+    // the same reference twice, so memoization never hits and every single
+    // one is a genuine, independent redactSensitiveFields call. This is
+    // the exact shape of the original S10-R8 budget bypass (measured by
+    // review at a deterministic ~4998-node cutoff): with that budget, the
+    // secret below — the 6000th distinct node, comfortably past the
+    // cutoff — would have been emitted completely unscanned. This test
+    // would have gone red at 617c907e (budget present) and is green from
+    // b3800667 onward (memoization, no cutoff).
+    const items: LogContext[] = [];
+    for (let i = 0; i < 5999; i++) {
+      items.push({ index: i });
+    }
+    items.push({ password: 'hunter2' });
+
+    logger.info('wide-distinct', { items });
+
+    const ctx = logger.entries[0].context as { items: LogContext[] };
+    expect(ctx.items).toHaveLength(6000);
+    expect(ctx.items[5999].password).toBe('[REDACTED]');
+  });
+
+  it('pins the design invariant (S10-R16): a cycle back-edge is the RAW original, never the redacted copy or itself', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const cyclic: LogContext = { name: 'root', password: 'hunter2' };
+    cyclic.self = cyclic;
+
+    const result = logger.testRedactSensitiveFields(cyclic);
+
+    // The primary occurrence is redacted...
+    expect(result.password).toBe('[REDACTED]');
+    // ...but the back-edge is a genuine CYCLE, not an alias, and must stay
+    // the RAW original object — not the redacted copy (`result` itself,
+    // which would make the output graph self-referential — a shape this
+    // package has never produced) and not any other value.
+    //
+    // This holds ONLY because `ancestors` is checked before `memo`, AND
+    // `memo` is populated only on the way OUT (after a node's own children
+    // are fully processed). Both properties were verified independently:
+    // mutating EITHER one alone (memoize-on-the-way-IN while still
+    // checking ancestors first; or check memo-before-ancestors while still
+    // memoizing way-out) leaves this assertion — and the whole suite —
+    // green, because a currently-active ancestor is, by construction,
+    // never yet in `memo` regardless of which check runs first or exactly
+    // when memo.set() executes UNLESS BOTH properties are violated
+    // together. Mutating both together makes the back-edge resolve to the
+    // (self-referential) redacted copy instead — `result.self` becomes
+    // `result` itself — which this assertion catches.
+    expect(result.self).toBe(cyclic);
+    expect(result.self).not.toBe(result);
+  });
+
+  it('pins the design invariant (S10-R16, extended to redactArrayItems): an array cycle back-edge is the RAW original, never the redacted copy or itself', () => {
+    const logger = new TestLogger({ level: 'debug' });
+    const inner: unknown[] = ['leaf'];
+    inner.push(inner); // inner[1] === inner — a cycle through the array itself
+
+    const result = logger.testRedactSensitiveFields({ arr: inner }) as { arr: unknown[] };
+
+    expect(result.arr[0]).toBe('leaf');
+    // Same invariant as the object-path test above (`ancestors` checked
+    // before `memo`, `memo` populated only on the way out), pinned here
+    // for `redactArrayItems` specifically — it shares the identical guard
+    // logic but was previously left unpinned by any test. The back-edge
+    // must stay the RAW original array — not the redacted copy
+    // (`result.arr` itself, which would make it self-referential) and not
+    // any other value.
+    expect(result.arr[1]).toBe(inner);
+    expect(result.arr[1]).not.toBe(result.arr);
   });
 });

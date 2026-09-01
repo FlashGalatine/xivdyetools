@@ -36,7 +36,11 @@ import {
 } from './handlers/modals/index.js';
 import * as banService from './services/ban-service.js';
 import * as presetApi from './services/preset-api.js';
-import { validateEnv, logValidationErrors } from './utils/env-validation.js';
+import {
+  validateEnv,
+  logValidationErrors,
+  PRODUCTION_ENV_ERROR_PREFIX,
+} from './utils/env-validation.js';
 import { createUserTranslator } from './services/bot-i18n.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
 import type { ExtendedLogger } from '@xivdyetools/logger';
@@ -49,35 +53,6 @@ type Variables = MiddlewareVariables;
 
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
-
-// Startup validation middleware - validates all required env vars on first request
-// REFACTOR-001: Added full env validation alongside existing security config check
-let startupValidationDone = false;
-app.use('*', (c, next) => {
-  if (!startupValidationDone) {
-    startupValidationDone = true;
-
-    // REFACTOR-001: Full environment variable validation
-    const envResult = validateEnv(c.env);
-    if (!envResult.valid) {
-      logValidationErrors(envResult.errors);
-    }
-
-    // Existing: security config validation (signing secrets, API connectivity)
-    const validation = presetApi.validateSecurityConfig(c.env);
-
-    if (validation.errors.length > 0) {
-      console.error('❌ Security configuration errors:', validation.errors);
-    }
-    if (validation.warnings.length > 0) {
-      console.warn('⚠️  Security configuration warnings:', validation.warnings);
-    }
-    if (validation.valid && envResult.valid && validation.warnings.length === 0) {
-      console.log('✅ Security configuration validated');
-    }
-  }
-  return next();
-});
 
 // REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
 app.use('*', requestIdMiddleware());
@@ -96,6 +71,67 @@ app.use('*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
   c.header('Content-Security-Policy', "default-src 'none'");
   c.header('Referrer-Policy', 'no-referrer');
+});
+
+// Environment validation middleware.
+// REFACTOR-001: Added full env validation alongside existing security config check.
+// The env is re-validated on EVERY request; only the reporting is once per
+// isolate (see FINDING-013 below — a misconfigured worker must not be able to
+// serve one 500 and then quietly process the rest of the isolate's traffic).
+//
+// Registered AFTER requestIdMiddleware / loggerMiddleware / the security
+// headers middleware (2026-08-29 audit follow-up): those three are `await
+// next()`-then-decorate middleware, so whichever response the REST of the
+// chain produces — including this gate's own early 500 — still passes back
+// through them and picks up a request id, the hardened headers and the
+// logger's request-started / request-completed lines. Before
+// this reorder the gate ran first and returned before any of the three ran,
+// so its 500 carried neither (env-validation-gate.test.ts's `nosniff` /
+// `X-Request-Id` assertions pin this).
+let startupValidationDone = false;
+app.use('*', async (c, next) => {
+  // REFACTOR-001: Full environment variable validation
+  const envResult = validateEnv(c.env);
+
+  if (!startupValidationDone) {
+    startupValidationDone = true;
+
+    if (!envResult.valid) {
+      logValidationErrors(envResult.errors);
+    }
+
+    // Existing: security config validation (signing secrets, API connectivity)
+    const validation = presetApi.validateSecurityConfig(c.env);
+
+    if (validation.errors.length > 0) {
+      console.error('❌ Security configuration errors:', validation.errors);
+    }
+    if (validation.warnings.length > 0) {
+      console.warn('⚠️  Security configuration warnings:', validation.warnings);
+    }
+    if (validation.valid && envResult.valid && validation.warnings.length === 0) {
+      console.log('✅ Security configuration validated');
+    }
+  }
+
+  // FINDING-013 (2026-08-29 audit): the production-only errors are fatal —
+  // every request is refused, `/health` included, for as long as one stands.
+  // They can only be raised when `ENVIRONMENT === 'production'` (the two
+  // `RL_*` rate-limit bindings), so this match cannot touch the dev worker or
+  // the tests, and it deliberately does NOT cover the pre-existing non-fatal
+  // errors (a malformed MODERATOR_IDS, a short BOT_SIGNING_SECRET), which
+  // stay logged-and-served exactly as before. Logging alone is not a signal
+  // here: Workers Logs are off on this script, so `logValidationErrors` above
+  // reaches nobody, and a production bot that lost a binding would go on
+  // serving with per-user limiting silently degraded to the KV fallback. A
+  // moderation bot that answers errors is noticed in minutes; the same
+  // fail-closed treatment presets-api 2.2.0, oauth 3.0.0 and discord-worker
+  // 5.1.0 took under this finding.
+  if (envResult.errors.some((e) => e.startsWith(PRODUCTION_ENV_ERROR_PREFIX))) {
+    return c.json({ error: 'Service misconfigured' }, 500);
+  }
+
+  return next();
 });
 
 /**
@@ -231,6 +267,19 @@ async function handleCommand(
 }
 
 /**
+ * FINDING-012 (2026-08-29 security audit): `CloudflareRateLimiter` allows the
+ * request when the native binding errors — an accepted trade-off, on the
+ * condition that fail-open events are visible. They were not: the limiter is a
+ * per-isolate singleton (middleware/rate-limit.ts) built without a logger, so a
+ * broken `RL_COMMAND` / `RL_AUTOCOMPLETE` binding silently disabled per-user
+ * limiting. `checkRateLimit` now surfaces `backendError` and both call sites
+ * log it here, once per request, on the request's own logger. Nothing but the
+ * interaction type goes in the context, and nothing goes back to the client:
+ * a header would tell an abuser exactly when the limiter is off.
+ */
+const RATE_LIMIT_FAIL_OPEN_WARNING = 'Rate limiter backend error — request allowed (fail-open)';
+
+/**
  * Per-user `command` rate limit (FINDING-003: native bindings when bound, KV
  * fallback). MOD-12 (FINDING-034, 2026-08-21 audit): button clicks and modal
  * submits now share it with slash commands — they were the only interaction
@@ -252,6 +301,11 @@ async function enforceCommandRateLimit(
     RATE_LIMIT_CONFIGS.command,
     moderationRateLimitBindings(env)
   );
+
+  // FINDING-012: the limiter failed open — say so (see the constant above)
+  if (rateLimitCheck.backendError) {
+    logger.warn(RATE_LIMIT_FAIL_OPEN_WARNING, { type: 'command' });
+  }
 
   if (!rateLimitCheck.allowed) {
     logger.warn('Rate limit exceeded', {
@@ -326,6 +380,11 @@ export async function handleAutocomplete(
     RATE_LIMIT_CONFIGS.autocomplete,
     moderationRateLimitBindings(env)
   );
+
+  // FINDING-012: the limiter failed open — say so (see the constant above)
+  if (rateLimitCheck.backendError) {
+    logger.warn(RATE_LIMIT_FAIL_OPEN_WARNING, { type: 'autocomplete' });
+  }
 
   if (!rateLimitCheck.allowed) {
     logger.warn('Autocomplete rate limit exceeded', {

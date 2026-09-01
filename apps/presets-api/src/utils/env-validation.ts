@@ -26,6 +26,15 @@ export interface EnvValidationResult {
  *
  * Production-only required (FINDING-001):
  * - BOT_SIGNING_SECRET: HMAC signing key for bot request signature verification
+ *
+ * Production-only required (FINDING-013, 2026-08-29 security audit): the
+ * bindings/vars the 2026-08-21 fixes rely on. A dropped one (a config edit, a
+ * dashboard change) previously degraded silently — no revocation, no issuer
+ * pinning, a fallback rate limiter — with no error and no log.
+ * - JWT_SECRET: HS256 signing key, non-empty and at least 32 characters
+ * - JWT_ISSUER: expected `iss` claim, must start with `https://`
+ * - TOKEN_BLACKLIST: the oauth revocation KV binding
+ * - RL_PUBLIC: the native Workers Rate Limiting binding for the public limiter
  */
 export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
@@ -89,6 +98,24 @@ export function validateEnv(env: Env): EnvValidationResult {
     errors.push('Missing required env var in production: BOT_SIGNING_SECRET');
   }
 
+  // FINDING-013: production also requires the security bindings/vars the
+  // 2026-08-21 fixes rely on. Optional in development/tests, same as
+  // BOT_SIGNING_SECRET above.
+  if (env.ENVIRONMENT === 'production') {
+    if (!env.JWT_SECRET || env.JWT_SECRET.trim() === '' || env.JWT_SECRET.length < 32) {
+      errors.push('Missing required env var in production: JWT_SECRET');
+    }
+    if (!env.JWT_ISSUER || !env.JWT_ISSUER.startsWith('https://')) {
+      errors.push('Missing required env var in production: JWT_ISSUER');
+    }
+    if (!env.TOKEN_BLACKLIST) {
+      errors.push('Missing required env var in production: TOKEN_BLACKLIST');
+    }
+    if (!env.RL_PUBLIC) {
+      errors.push('Missing required env var in production: RL_PUBLIC');
+    }
+  }
+
   // Check D1 database binding
   if (!env.DB) {
     errors.push('Missing required D1 database binding: DB');
@@ -101,12 +128,23 @@ export function validateEnv(env: Env): EnvValidationResult {
 }
 
 /**
- * Logs validation errors to console.
+ * FINDING-011 (2026-08-29 security audit): minimal logger interface — these
+ * are operator-configuration diagnostics (which env var, what shape it
+ * failed), never user data, so the message-only shape is just to keep this
+ * file's `console` fallback usable by the direct unit tests.
+ */
+export interface EnvValidationLogger {
+  error(message: string, ...args: unknown[]): void;
+}
+
+/**
+ * Logs validation errors via the structured logger when available, console
+ * otherwise (e.g. when called outside a request, or by tests).
  * Used by the validation middleware for debugging.
  */
-export function logValidationErrors(errors: string[]): void {
-  console.error('Environment validation failed:');
+export function logValidationErrors(errors: string[], logger?: EnvValidationLogger): void {
+  (logger ?? console).error('Environment validation failed:');
   for (const error of errors) {
-    console.error(`  - ${error}`);
+    (logger ?? console).error(`  - ${error}`);
   }
 }

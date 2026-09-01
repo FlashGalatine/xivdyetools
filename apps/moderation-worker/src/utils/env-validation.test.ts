@@ -167,6 +167,70 @@ describe('validateEnv', () => {
     });
   });
 
+  // FINDING-013 (2026-08-29 security audit): FINDING-003 moved per-user
+  // limiting onto the native `RL_COMMAND` / `RL_AUTOCOMPLETE` bindings, but
+  // losing one only degrades to the KV limiter — which cannot throttle a fast
+  // client — with no error and no log. Production must say so. Optional in
+  // development and tests so the KV fallback still works there.
+  describe('production-only requirements (FINDING-013)', () => {
+    function productionEnv(overrides: Partial<Env> = {}): Env {
+      return validEnv({
+        ENVIRONMENT: 'production',
+        RL_COMMAND: {} as unknown as RateLimit,
+        RL_AUTOCOMPLETE: {} as unknown as RateLimit,
+        ...overrides,
+      });
+    }
+
+    it('passes when both rate-limit bindings are present in production', () => {
+      const result = validateEnv(productionEnv());
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it('fails when the RL_COMMAND binding is missing in production', () => {
+      const result = validateEnv(productionEnv({ RL_COMMAND: undefined }));
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Missing required env var in production: RL_COMMAND');
+    });
+
+    it('fails when the RL_AUTOCOMPLETE binding is missing in production', () => {
+      const result = validateEnv(productionEnv({ RL_AUTOCOMPLETE: undefined }));
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Missing required env var in production: RL_AUTOCOMPLETE');
+    });
+
+    it('collects both errors together when neither is bound', () => {
+      const result = validateEnv(
+        productionEnv({ RL_COMMAND: undefined, RL_AUTOCOMPLETE: undefined }),
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toEqual(
+        expect.arrayContaining([
+          'Missing required env var in production: RL_COMMAND',
+          'Missing required env var in production: RL_AUTOCOMPLETE',
+        ]),
+      );
+    });
+
+    it('keeps both bindings optional outside production', () => {
+      const result = validateEnv(
+        validEnv({
+          ENVIRONMENT: 'development',
+          RL_COMMAND: undefined,
+          RL_AUTOCOMPLETE: undefined,
+        }),
+      );
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+  });
+
   it('accumulates every problem rather than stopping at the first', () => {
     const result = validateEnv({
       PRESETS_API_URL: 'not a url',

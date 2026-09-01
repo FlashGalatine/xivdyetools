@@ -14,7 +14,7 @@ xivdyetools/
 │   ├── types/               # Branded types (HexColor, DyeId, etc.) and shared interfaces
 │   ├── logger/              # Multi-runtime logging with secret redaction
 │   ├── auth/                # JWT verification, HMAC signing, Discord Ed25519, Base64URL/hex (/encoding)
-│   ├── worker-kit/          # Worker toolkit: Hono middleware + sliding-window rate limiting (Memory, KV, Upstash)
+│   ├── worker-kit/          # Worker toolkit: Hono middleware + sliding-window rate limiting (Memory, KV, Upstash, Cloudflare native binding)
 │   ├── core/                # Color algorithms, dye database (125 dyes, schema v2) + separate facewearColors (11), k-d tree, 6-language i18n, /blending
 │   ├── svg/                 # Pure SVG card generators on the 5.0 frame system (data → SVG string) + shared glyph set
 │   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic + bot UI i18n (/i18n)
@@ -170,7 +170,7 @@ pnpm 11 publishes natively and performs the OIDC exchange itself — no npm CLI 
 - **CI**: lint, type-check, test, build on affected packages (push/PR)
 - **Deploy**: path-filtered workflows per worker (push to main + manual dispatch)
 - **Publish**: manual `workflow_dispatch` to publish a selected npm package, authenticated via OIDC trusted publishing (no token)
-- **Secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+- **Secrets**: `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` for the 8 production deploy workflows; the 3 `*-beta.yml` workflows use a separate `CLOUDFLARE_API_TOKEN_BETA` instead (2026-08-29 FINDING-028)
 
 ## Documentation Hub
 

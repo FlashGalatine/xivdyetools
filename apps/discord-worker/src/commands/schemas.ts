@@ -659,6 +659,10 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            // FINDING-019: an uncapped STRING option accepts up to 6000
+            // characters; the service guard uses the same number
+            // (WORLD_NAME_MAX_LENGTH in services/preferences.ts).
+            max_length: 32,
           },
           {
             name: 'market',
@@ -1189,6 +1193,7 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: 32,
           },
           {
             name: 'matching',
@@ -1237,6 +1242,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: 32,
           },
         ],
       },
@@ -1266,6 +1272,7 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: 32,
           },
         ],
       },

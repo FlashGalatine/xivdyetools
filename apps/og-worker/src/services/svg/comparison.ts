@@ -28,13 +28,22 @@ export interface ComparisonOGOptions {
 }
 
 /**
+ * The card draws at most this many bands — extra `dyeIds` beyond this are
+ * silently ignored by the render below. Exported so callers that BUILD a
+ * `/og/comparison/...` URL (`og-data-generator.ts`) can emit only as many
+ * ids as the card actually uses instead of guessing a number that could
+ * drift from this one (2026-08-29 FINDING-024, OG-4, ruling S7-R17).
+ */
+export const COMPARISON_MAX_DYES = 4;
+
+/**
  * Generates the Comparison OG image SVG (400-grid — raster ×3 downstream).
  */
 export function generateComparisonOG(options: ComparisonOGOptions): string {
   const { locale = 'en', frame = 'discord' } = options;
 
   const dyes = options.dyeIds
-    .slice(0, 4)
+    .slice(0, COMPARISON_MAX_DYES)
     .map((id) => getDyeByItemId(id))
     .filter((d): d is Dye => d !== undefined);
   if (dyes.length < 2) {

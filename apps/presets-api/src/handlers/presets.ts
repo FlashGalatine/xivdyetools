@@ -33,6 +33,8 @@ import {
   findDuplicatePresetExcluding,
   createPreset,
   updatePreset,
+  toPublicPreset,
+  type PublicPreset,
 } from '../services/preset-service.js';
 import { moderateContent } from '../services/moderation-service.js';
 // PRESETS-REF-001 FIX: Import from centralized validation service
@@ -57,10 +59,13 @@ import {
   recordSubmissionEvent,
   DAILY_FLAGGED_EDIT_LIMIT,
   DAILY_PREVIEW_UPLOAD_LIMIT,
+  // FINDING-005: pre-moderation cap on name/description edits
+  DAILY_TEXT_EDIT_LIMIT,
 } from '../services/rate-limit-service.js';
 import {
   notifyDiscordBot,
   storeFailedNotification,
+  pruneFailedNotifications,
   type PresetNotificationPayload,
 } from '../services/notification-service.js';
 import { getValidCategories } from '../services/category-service.js';
@@ -90,6 +95,22 @@ function stripAuditData<T extends { previous_values?: unknown }>(preset: T): Omi
   const publicPreset = { ...preset };
   delete publicPreset.previous_values;
   return publicPreset;
+}
+
+/**
+ * FINDING-016 (2026-08-29 audit — not the 2026-08-21 audit's FINDING-016 /
+ * PAPI-11 below): every preset this router hands to an HTTP client goes through
+ * `toPublicPreset` (author id / `is_owner` rule) — never past it. The audit
+ * snapshot rule differs per route, so `stripAuditData` stays the caller's
+ * decision and composes here. The notification payloads deliberately use the
+ * raw preset instead: the bots need the author id.
+ */
+function presetForViewer(
+  preset: CommunityPreset,
+  auth: AuthContext,
+  { keepAuditData = false }: { keepAuditData?: boolean } = {}
+): PublicPreset {
+  return toPublicPreset(keepAuditData ? preset : stripAuditData(preset), auth);
 }
 
 // FINDING-017 (PAPI-9): the ban check covers EVERY mutating route on this
@@ -147,16 +168,20 @@ async function respondToDuplicate(
     (auth.userDiscordId !== undefined && duplicate.author_discord_id === auth.userDiscordId);
 
   if (duplicate.status === 'approved') {
-    const voteResult = await addVote(c.env.DB, duplicate.id, auth.userDiscordId!);
+    const voteResult = await addVote(c.env.DB, duplicate.id, auth.userDiscordId!, c.get('logger'));
     return c.json({
       success: true,
-      duplicate: isPrivileged ? duplicate : stripAuditData(duplicate),
+      duplicate: presetForViewer(duplicate, auth, { keepAuditData: isPrivileged }),
       vote_added: voteResult.success && !voteResult.already_voted,
     });
   }
 
   if (isPrivileged) {
-    return c.json({ success: true, duplicate, vote_added: false });
+    return c.json({
+      success: true,
+      duplicate: presetForViewer(duplicate, auth, { keepAuditData: true }),
+      vote_added: false,
+    });
   }
 
   return c.json(
@@ -217,10 +242,12 @@ presetsRouter.get('/', async (c) => {
   };
 
   const response = await getPresets(c.env.DB, filters, c.get('logger'));
-  if (!auth.isModerator) {
-    return c.json({ ...response, presets: response.presets.map(stripAuditData) });
-  }
-  return c.json(response);
+  return c.json({
+    ...response,
+    presets: response.presets.map((preset) =>
+      presetForViewer(preset, auth, { keepAuditData: auth.isModerator })
+    ),
+  });
 });
 
 /**
@@ -228,9 +255,10 @@ presetsRouter.get('/', async (c) => {
  * Get top-voted presets for homepage display
  */
 presetsRouter.get('/featured', async (c) => {
+  const auth = c.get('auth');
   const presets = await getFeaturedPresets(c.env.DB, c.get('logger'));
   // BUG-014 (2026-07-18 audit): keep audit snapshots out of public responses
-  return c.json({ presets: presets.map(stripAuditData) });
+  return c.json({ presets: presets.map((preset) => presetForViewer(preset, auth)) });
 });
 
 // ============================================
@@ -255,7 +283,9 @@ presetsRouter.get('/mine', async (c) => {
   const presets = await getPresetsByUser(c.env.DB, auth.userDiscordId!, c.get('logger'));
 
   return c.json({
-    presets,
+    // Every row here is the caller's own, so the id and the audit snapshot both
+    // stay — this is the view the "My Submissions" page and the edit form read.
+    presets: presets.map((preset) => presetForViewer(preset, auth, { keepAuditData: true })),
     total: presets.length,
   });
 });
@@ -362,12 +392,26 @@ presetsRouter.delete('/:id', async (c) => {
   // Captured before the batch, since the row that holds it is about to go.
   const previousKey = preset.preview_image_key;
 
-  // Delete votes and preset in transaction
+  // Delete votes, dead letters and preset in transaction
   // PRESETS-PERF-001: Using batch() for atomicity guarantee, not performance.
-  // D1 batch() ensures both deletes succeed or both fail.
-  // For 2 queries, overhead is negligible vs. transaction safety benefit.
+  // D1 batch() ensures every delete succeeds or none does.
+  // For 3 queries, overhead is negligible vs. transaction safety benefit.
+  //
+  // FINDING-017 (2026-08-29 security audit): a dead-letter row names the preset
+  // whose moderation embed never arrived. Once the preset is gone there is
+  // nothing left for a moderator to act on, and a row that survived would be
+  // the author's deletion request outlived by a record of their submission.
+  // It rides the same batch as the preset delete so the two can never disagree.
+  // `json_valid` guards the extract: SQLite raises on malformed JSON, and this
+  // delete must not be the thing that fails an owner's DELETE. `$.preset.id` is
+  // the pre-FINDING-017 shape, still present in rows that have not aged out.
   await c.env.DB.batch([
     c.env.DB.prepare('DELETE FROM votes WHERE preset_id = ?').bind(id),
+    c.env.DB.prepare(
+      `DELETE FROM failed_notifications
+       WHERE json_valid(payload)
+         AND (json_extract(payload, '$.preset_id') = ? OR json_extract(payload, '$.preset.id') = ?)`
+    ).bind(id, id),
     c.env.DB.prepare('DELETE FROM presets WHERE id = ?').bind(id),
   ]);
 
@@ -381,13 +425,78 @@ presetsRouter.delete('/:id', async (c) => {
   // The row is already gone by this point, so an R2 hiccup here must not turn
   // a completed delete into a 500 the caller would reasonably retry.
   try {
-    await deletePreviewImage(c.env, previousKey);
+    await deletePreviewImage(c.env, previousKey, c.get('logger'));
   } catch (err) {
-    console.error(`[preview-image] R2 delete failed after preset delete: id=${id}`, err);
+    c.get('logger')?.error('[preview-image] R2 delete failed after preset delete', err, { presetId: id });
   }
 
   return c.json({ success: true, message: 'Preset deleted' });
 });
+
+/**
+ * THE rule for what an owner edit does to a preset's status, and whether a
+ * moderator hears about it (FINDING-004, 2026-08-29 audit) — all four statuses
+ * in one place, because the answer differs for each and used to be spread
+ * across three expressions.
+ *
+ * The edit's fields are always applied; this decides only the `status` column
+ * and the moderator notification. "New text" = the name or description
+ * actually changed, or the text sent just tripped moderation.
+ *
+ * | stored     | new text                                     | anything else |
+ * |------------|----------------------------------------------|---------------|
+ * | `pending`  | stays `pending`, moderators re-notified       | no status write, no notify |
+ * | `approved` | stays `approved` unless it tripped moderation, then → `pending` + notify | no status write, no notify |
+ * | `rejected` | → `pending` + notify — this IS the resubmission | no status write, no notify |
+ * | `flagged`  | no status write, no notify — the flag is the moderator's alone | no status write, no notify |
+ *
+ * `nextStatus: undefined` means "do not write the `status` column at all",
+ * which is what leaves a moderator's decision intact. Every branch that
+ * notifies leaves the preset `pending`, which the notification payload relies
+ * on. `hidden` never reaches here (403 above), and an unknown status falls to
+ * the `flagged` case — fail closed.
+ */
+function ownerEditOutcome(
+  status: string,
+  { textChanged, flaggedByThisEdit }: { textChanged: boolean; flaggedByThisEdit: boolean }
+): { nextStatus: 'pending' | undefined; notifiesModerators: boolean } {
+  // Text a moderator has not judged in this form yet: either it differs from
+  // what is stored, or the filter just tripped on what was sent.
+  const newTextToJudge = textChanged || flaggedByThisEdit;
+
+  switch (status) {
+    // Already in the queue — nothing to write, and moderators only need to
+    // re-read it when the text they judge changed. (PRESETS-BUG-002's "any
+    // edit re-queues" affordance was the workflow bypass FINDING-004 closed:
+    // `PATCH {"tags":["a"]}` used to be an uncapped moderation-channel ping.)
+    case 'pending':
+      return { nextStatus: undefined, notifiesModerators: newTextToJudge };
+
+    // Live. It leaves public view only because the owner's own new text just
+    // tripped moderation; a clean edit of an approved preset is nobody's
+    // business and must never re-queue it.
+    case 'approved':
+      return flaggedByThisEdit
+        ? { nextStatus: 'pending', notifiesModerators: true }
+        : { nextStatus: undefined, notifiesModerators: false };
+
+    // Judged and out of public view, but the next move is the author's:
+    // editing the text IS the resubmission (the web app's "Resubmit" button
+    // reopens the edit form and PATCHes it, and the user guide says so). It
+    // re-enters the queue and is charged to the same daily cap as every other
+    // notifying edit. A tag / dye / category edit, or text re-sent unchanged,
+    // gives a moderator nothing new, so it still changes nothing.
+    case 'rejected':
+      return newTextToJudge
+        ? { nextStatus: 'pending', notifiesModerators: true }
+        : { nextStatus: undefined, notifiesModerators: false };
+
+    // `flagged` — and any status this router does not know — is the
+    // moderator's alone: no owner edit moves it or puts it in front of them.
+    default:
+      return { nextStatus: undefined, notifiesModerators: false };
+  }
+}
 
 /**
  * PATCH /api/v1/presets/:id
@@ -468,10 +577,10 @@ presetsRouter.patch('/:id', async (c) => {
     }
   }
 
-  // BUG-001 (2026-07-18 audit): an owner edit must never lift a moderator-set
-  // status. Hidden presets cannot be resurfaced by editing at all; a preset
-  // that is pending/rejected/flagged stays in (or returns to) the moderation
-  // queue. Only a currently-approved preset may remain approved after an edit.
+  // BUG-001 (2026-07-18 audit) / FINDING-004 (2026-08-29 security audit): a
+  // status is a moderator's decision, and an owner edit may move it only in
+  // the two cases `ownerEditOutcome` above allows — both of them *into* the
+  // queue, never out of it. Hidden presets cannot be edited at all.
   if (preset.status === 'hidden') {
     return forbiddenResponse(c, 'This preset cannot be edited');
   }
@@ -479,14 +588,53 @@ presetsRouter.patch('/:id', async (c) => {
   // Determine if content moderation is needed (name or description changed)
   // PRESETS-BUG-003: Vote counts are preserved during edits - this is intentional
   // as users voted on the dye combination, not just the name/description.
-  let moderationStatus: 'approved' | 'pending' =
-    preset.status === 'approved' ? 'approved' : 'pending';
   let previousValues: PresetPreviousValues | null | undefined;
-  // FINDING-008: only an edit that itself trips moderation counts against the
-  // daily flagged-edit cap (a preset that is merely still pending does not)
+  // Did the text *this* request supplied trip moderation? (A preset that is
+  // merely still pending has not; see `ownerEditOutcome` above.)
   let flaggedByThisEdit = false;
 
+  // FINDING-004: the two fields a moderator actually reads. Tags, dyes, the
+  // category and the example link change nothing they judge, so an edit that
+  // touches only those brings them nothing new however often it is repeated.
+  const textChanged =
+    (body.name !== undefined && body.name !== preset.name) ||
+    (body.description !== undefined && body.description !== preset.description);
+
   if (body.name || body.description) {
+    // FINDING-005: the Perspective call is the scarce resource — its default
+    // quota is ~1 QPS — so the per-user cap has to sit in front of it. The
+    // flagged-edit cap below cannot do that job: it runs *after* the call, and
+    // only for edits that reach a moderator — an edit an approved preset's
+    // moderation clears, or any edit of a `flagged` one, reaches nobody, so it
+    // would spend a Perspective call and cost nothing, bounded only by the
+    // 100/min per-IP limiter (which is per IP, not per user). This cap
+    // applies to every status, and the slot is charged here, at the point of
+    // spend, rather than after a successful UPDATE — otherwise a user sitting
+    // on the flagged-edit 429 could loop text edits and never be counted.
+    const textEditCap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'text_edit');
+    if (!textEditCap.allowed) {
+      return c.json(
+        {
+          success: false,
+          error: ErrorCode.RATE_LIMITED,
+          message: `You've reached your daily limit of name and description edits (${DAILY_TEXT_EDIT_LIMIT} per day). Try again tomorrow.`,
+          remaining: 0,
+          reset_at: textEditCap.resetAt.toISOString(),
+        },
+        429
+      );
+    }
+    try {
+      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'text_edit', id, c.get('logger'));
+    } catch (err) {
+      // Best-effort, exactly like the other event kinds: a failed quota row
+      // must not fail the edit. Needs migration 0012 before rows of this kind
+      // are accepted — until it is applied the cap simply never engages.
+      c.get('logger')?.error('[FINDING-005] submission_events text_edit insert failed', err, {
+        preset_id: id,
+      });
+    }
+
     // Run content moderation on new values
     const nameToCheck = body.name || preset.name;
     const descriptionToCheck = body.description || preset.description;
@@ -494,9 +642,15 @@ presetsRouter.patch('/:id', async (c) => {
     const moderationResult = await moderateContent(
       nameToCheck,
       descriptionToCheck,
-      c.env
+      c.env,
+      c.get('logger')
     );
 
+    // FINDING-005: `passed: false` now covers a third outcome —
+    // `method: 'perspective_unavailable'`, meaning nobody judged this text. It
+    // is handled here exactly like flagged content: the write-once revert
+    // snapshot is taken, an approved (or rejected) preset moves to `pending`,
+    // and a moderator is notified (subject to the flagged-edit cap below).
     if (!moderationResult.passed) {
       flaggedByThisEdit = true;
       // BUG-052 (2026-07-18 audit): write-once snapshot — only capture
@@ -510,7 +664,6 @@ presetsRouter.patch('/:id', async (c) => {
           dyes: preset.dyes,
         };
       }
-      moderationStatus = 'pending';
     }
     // PRESETS-CRITICAL-004: Do NOT clear previous_values when moderation passes.
     // previous_values holds the oldest clean snapshot (last-known-good for
@@ -518,9 +671,22 @@ presetsRouter.patch('/:id', async (c) => {
     // undefined here preserves whatever snapshot already exists.
   }
 
-  // FINDING-008: a flagged edit fans out a moderation embed, a Perspective call
-  // and dead-letter rows — cap them per user per day before persisting anything
-  if (flaggedByThisEdit) {
+  // FINDING-004: what this edit does to the status, and whether a moderator
+  // hears about it — see `ownerEditOutcome` above for the whole four-status
+  // rule. A rejected preset's text edit is its resubmission; every other
+  // moderator decision survives the edit untouched.
+  const { nextStatus, notifiesModerators } = ownerEditOutcome(preset.status, {
+    textChanged,
+    flaggedByThisEdit,
+  });
+  const resultingStatus = nextStatus ?? preset.status;
+
+  // FINDING-008 + FINDING-004: every moderator notification fans out a
+  // moderation embed and, when it fails, dead-letter rows — cap them per user
+  // per day before persisting anything. Only edits that tripped moderation
+  // used to be capped, so `PATCH {"tags":["a"]}` on the caller's own pending
+  // preset sent one uncapped embed per request.
+  if (notifiesModerators) {
     const cap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'flagged_edit');
     if (!cap.allowed) {
       return c.json(
@@ -537,8 +703,6 @@ presetsRouter.patch('/:id', async (c) => {
   }
 
   // Update the preset
-  // PRESETS-BUG-002: Always pass moderation status so that presets
-  // previously flagged can be un-flagged when the user fixes the content
   let updatedPreset;
   try {
     updatedPreset = await updatePreset(
@@ -546,7 +710,7 @@ presetsRouter.patch('/:id', async (c) => {
       id,
       body,
       previousValues,
-      moderationStatus
+      nextStatus
     );
   } catch (error) {
     // BUG-003 (2026-07-18 audit): the duplicate pre-check races with concurrent
@@ -576,43 +740,75 @@ presetsRouter.patch('/:id', async (c) => {
     return internalErrorResponse(c, 'Failed to update preset');
   }
 
-  // FINDING-008: count this flagged edit against the daily cap (append-only)
-  if (flaggedByThisEdit) {
+  // FINDING-008 + FINDING-004: count this notification against the daily cap
+  // (append-only). Same event kind as before, so no migration is needed — the
+  // kind now means "an edit that reached a moderator", which is what the cap
+  // was always protecting.
+  if (notifiesModerators) {
     try {
-      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'flagged_edit', id);
+      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'flagged_edit', id, c.get('logger'));
     } catch (err) {
-      console.error(`[FINDING-008] submission_events insert failed: preset=${id}`, err);
+      c.get('logger')?.error('[FINDING-008] submission_events insert failed', err, { presetId: id });
     }
   }
 
-  // If flagged, notify Discord for moderation
+  // Notify Discord for moderation when this edit brought something new to judge
   // PRESETS-REF-002: Fire-and-forget notification - errors don't fail the request
   // but are logged with preset context for debugging
-  if (moderationStatus === 'pending') {
+  if (notifiesModerators) {
     const editPayload: PresetNotificationPayload = {
       type: 'submission',
       preset: {
         ...updatedPreset,
         author_name: preset.author_name || 'Unknown User',
         author_discord_id: preset.author_discord_id,
+        // Every branch of `notifiesModerators` leaves the preset pending: one
+        // that was already pending stays there, and an approved one whose new
+        // text was flagged — or a rejected one being resubmitted — has just
+        // been moved there.
         status: 'pending',
-        moderation_status: 'flagged',
+        // FINDING-004: a clean text edit on a preset that is merely still in
+        // the queue has not tripped anything — claiming 'flagged' told
+        // moderators every edit had failed the filter.
+        moderation_status: flaggedByThisEdit ? 'flagged' : 'clean',
         source: auth.authSource,
       },
     };
     c.executionCtx.waitUntil(
-      notifyDiscordBot(c.env, editPayload).catch(async (err) => {
-        console.error(`[PRESETS-REF-002] Discord notification failed for preset edit: id=${updatedPreset.id}, name="${updatedPreset.name}"`, err);
+      notifyDiscordBot(c.env, editPayload, c.get('logger')).catch(async (err) => {
+        // FINDING-011: preset id only — never the user-typed preset name.
+        c.get('logger')?.error('[PRESETS-REF-002] Discord notification failed for preset edit', err, {
+          presetId: updatedPreset.id,
+        });
         // BUG-015: Persist failed notification for moderator review
-        await storeFailedNotification(c.env.DB, editPayload, err);
+        // FINDING-017: the row keeps the preset id, not the payload, and the
+        // write prunes rows that have aged out (counts only in the log).
+        await storeFailedNotification(c.env.DB, editPayload, err, c.get('logger'));
       })
     );
   }
 
+  // FINDING-004: 'pending' only when the preset really is queued for review —
+  // which now includes a rejected preset the caller just resubmitted. It used
+  // to report 'pending' for *every* rejected or flagged preset, telling the
+  // owner an edit had put it back in front of a moderator when nothing of the
+  // sort had happened. The published contract
+  // (`PresetEditSuccessResponse.moderation_status?: 'approved' | 'pending'` in
+  // @xivdyetools/types) admits only those two values, so a preset left in a
+  // moderator's own status reports no `moderation_status` at all rather than a
+  // value clients are typed not to expect — the field is optional, and
+  // `preset.status` carries the truth for anyone who needs it.
+  const reportedStatus: 'approved' | 'pending' | undefined =
+    resultingStatus === 'approved' || resultingStatus === 'pending'
+      ? resultingStatus
+      : undefined;
+
   return c.json({
     success: true,
-    preset: updatedPreset,
-    moderation_status: moderationStatus,
+    // Owner-only route (see the ownership check above), so the caller always
+    // gets their own id back and `is_owner: true`.
+    preset: presetForViewer(updatedPreset, auth, { keepAuditData: true }),
+    ...(reportedStatus !== undefined && { moderation_status: reportedStatus }),
   });
 });
 
@@ -640,7 +836,7 @@ presetsRouter.get('/:id', async (c) => {
   const isPrivileged =
     auth.isModerator ||
     (auth.userDiscordId !== undefined && preset.author_discord_id === auth.userDiscordId);
-  return c.json(isPrivileged ? preset : stripAuditData(preset));
+  return c.json(presetForViewer(preset, auth, { keepAuditData: isPrivileged }));
 });
 
 /**
@@ -699,7 +895,8 @@ presetsRouter.post('/', async (c) => {
   const moderationResult = await moderateContent(
     body.name,
     body.description,
-    c.env
+    c.env,
+    c.get('logger')
   );
 
   // Determine status based on moderation
@@ -738,13 +935,13 @@ presetsRouter.post('/', async (c) => {
   // preset, so the daily cap cannot be refilled from the outside. Best-effort:
   // a failed insert must not fail the submission that just landed.
   try {
-    await recordSubmissionEvent(c.env.DB, auth.userDiscordId!, 'submission', preset.id);
+    await recordSubmissionEvent(c.env.DB, auth.userDiscordId!, 'submission', preset.id, c.get('logger'));
   } catch (err) {
-    console.error(`[FINDING-008] submission_events insert failed: preset=${preset.id}`, err);
+    c.get('logger')?.error('[FINDING-008] submission_events insert failed', err, { presetId: preset.id });
   }
 
   // Auto-vote for own preset
-  await addVote(c.env.DB, preset.id, auth.userDiscordId!);
+  await addVote(c.env.DB, preset.id, auth.userDiscordId!, c.get('logger'));
 
   // BUG-049 (2026-07-18 audit): the pre-check above is check-then-insert, so N
   // concurrent submissions at 9/10 quota could all pass. Re-count now that our
@@ -785,17 +982,32 @@ presetsRouter.post('/', async (c) => {
     },
   };
   c.executionCtx.waitUntil(
-    notifyDiscordBot(c.env, submissionPayload).catch(async (err) => {
-      console.error(`[PRESETS-REF-002] Discord notification failed for new preset: id=${preset.id}, name="${preset.name}"`, err);
+    notifyDiscordBot(c.env, submissionPayload, c.get('logger')).catch(async (err) => {
+      // FINDING-011: preset id only — never the user-typed preset name.
+      c.get('logger')?.error('[PRESETS-REF-002] Discord notification failed for new preset', err, {
+        presetId: preset.id,
+      });
       // BUG-015: Persist failed notification for moderator review
-      await storeFailedNotification(c.env.DB, submissionPayload, err);
+      // FINDING-017: preset id only, and ageing rows are pruned on the way in.
+      await storeFailedNotification(c.env.DB, submissionPayload, err, c.get('logger'));
     })
   );
+
+  // FINDING-017: the dead-letter retention window is a promise in the privacy
+  // policy, so it cannot depend on the dead-letter write alone — that only runs
+  // when a notification exhausts every retry, which is rare by design. A quiet
+  // month would leave rows (including pre-FINDING-017 rows carrying an author id
+  // and preset text) well past their window. Submission is the busiest write in
+  // the worker, so hanging the prune off it keeps the promise honest. Off the
+  // response path via waitUntil, and it never throws, so it cannot affect the
+  // 201 the author is waiting for.
+  c.executionCtx.waitUntil(pruneFailedNotifications(c.env.DB, c.get('logger')));
 
   return c.json(
     {
       success: true,
-      preset,
+      // The submitter's own brand-new preset: their id comes back with it.
+      preset: presetForViewer(preset, auth, { keepAuditData: true }),
       moderation_status: status,
       // OPT-016: derived from the enforcement count above — no extra query
       remaining_submissions: Math.max(0, DAILY_SUBMISSION_LIMIT - submissionsToday),
@@ -926,9 +1138,9 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   // succeeded; an R2 hiccup deleting the *old* object must not be reported to
   // them as a failed upload. The orphan is the accepted failure mode here.
   try {
-    await deletePreviewImage(c.env, previousKey);
+    await deletePreviewImage(c.env, previousKey, c.get('logger'));
   } catch (err) {
-    console.error(`[preview-image] R2 delete of replaced image failed: id=${presetId}`, err);
+    c.get('logger')?.error('[preview-image] R2 delete of replaced image failed', err, { presetId });
   }
 
   // Same fire-and-forget notification path as a new submission: retries with
@@ -946,17 +1158,18 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     },
   };
   c.executionCtx.waitUntil(
-    notifyDiscordBot(c.env, imagePayload).catch(async (err) => {
-      console.error(`[preview-image] Discord notification failed: id=${presetId}`, err);
-      await storeFailedNotification(c.env.DB, imagePayload, err);
+    notifyDiscordBot(c.env, imagePayload, c.get('logger')).catch(async (err) => {
+      c.get('logger')?.error('[preview-image] Discord notification failed', err, { presetId });
+      // FINDING-017: preset id only — never the R2 key or the author's name.
+      await storeFailedNotification(c.env.DB, imagePayload, err, c.get('logger'));
     })
   );
 
   // FINDING-008: count this upload against the daily cap (append-only)
   try {
-    await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'preview_upload', presetId);
+    await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'preview_upload', presetId, c.get('logger'));
   } catch (err) {
-    console.error(`[FINDING-008] submission_events insert failed: preset=${presetId}`, err);
+    c.get('logger')?.error('[FINDING-008] submission_events insert failed', err, { presetId });
   }
 
   return c.json({ success: true, status: 'pending' });
@@ -1017,9 +1230,9 @@ presetsRouter.delete('/:id/preview-image', async (c) => {
     .run();
 
   try {
-    await deletePreviewImage(c.env, previousKey);
+    await deletePreviewImage(c.env, previousKey, c.get('logger'));
   } catch (err) {
-    console.error(`[preview-image] R2 delete failed after author removal: id=${presetId}`, err);
+    c.get('logger')?.error('[preview-image] R2 delete failed after author removal', err, { presetId });
   }
 
   return c.json({ success: true, preview_image_status: 'none' });

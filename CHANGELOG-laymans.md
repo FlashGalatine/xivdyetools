@@ -23,6 +23,18 @@ Rules:
   this exact root path.
 -->
 
+## [5.1.0] - 2026-08-31
+
+### 🔒 A privacy pass over everything
+
+- Web app: the Palette Extractor no longer remembers your last image between visits. Pictures you upload, paste or photograph are used while the tab is open and are gone when you close it — nothing is kept on your device any more, and if an earlier visit saved one, the app wipes it the next time you open the page.
+- Web app: every page load used to open a connection to an outside price service before you had asked for anything — handing it your IP address for a request that never came. That connection is gone; prices are still fetched normally when a tool actually needs them.
+- Web app: the sign-in box now says plainly what signing in creates — an account record holding your Discord or XIVAuth ID and username. The privacy guide covers how to ask for it to be removed.
+- Discord bot: the counters behind the per-command limits no longer leave Cloudflare. They used to be kept by an outside company, which meant your Discord ID sat in someone else's database purely to count how often you used a command.
+- Discord bot: `/preferences set world:` now checks that the world or data centre you type actually exists and saves it with the game's own spelling, instead of storing whatever you typed.
+- Discord bot: the privacy policy was refreshed — it now lists your preset favourites, the one-time welcome notice and your saved preference fields, along with the commands to view or delete them.
+- Everywhere: the servers stopped writing things into their logs that they had no business writing — your IP address on the web side, your Discord ID on the bot side when a rate-limit check failed. Those logs were never kept anywhere, so nothing about you was stored; the lines simply should not have been written in the first place.
+
 ## [5.0.0] - 2026-08-28
 
 ### 🎨 The 5.0 redesign

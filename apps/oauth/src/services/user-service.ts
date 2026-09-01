@@ -3,16 +3,20 @@
  * Manages user creation, lookup, and account linking for multi-provider auth
  */
 
-import type { AuthProvider, UserRow, XIVAuthCharacter } from '../types.js';
+import type { AuthProvider, UserRow } from '../types.js';
 
 /**
- * Parameters for creating or updating a user
+ * Parameters for creating or updating a user.
+ *
+ * FINDING-002 (2026-08-29 security audit): no `avatar_url`. The column was
+ * written on every Discord sign-in and never read back — `/auth/me`, both
+ * callbacks and the web app all recompute the CDN URL from the Discord id and
+ * the `avatar` hash (`getAvatarUrl`).
  */
 export interface CreateUserParams {
   discord_id?: string | null;
   xivauth_id?: string | null;
   username: string;
-  avatar_url?: string | null;
   auth_provider: AuthProvider;
 }
 
@@ -48,7 +52,7 @@ export async function findOrCreateUser(
   params: CreateUserParams,
   logger?: UserServiceLogger
 ): Promise<UserRow> {
-  const { discord_id, xivauth_id, username, avatar_url, auth_provider } = params;
+  const { discord_id, xivauth_id, username, auth_provider } = params;
 
   // 1. Try to find by provider-specific ID first
   let existingUser: UserRow | null = null;
@@ -78,10 +82,10 @@ export async function findOrCreateUser(
   try {
     await db
       .prepare(
-        `INSERT INTO users (id, discord_id, xivauth_id, auth_provider, username, avatar_url)
-         VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO users (id, discord_id, xivauth_id, auth_provider, username)
+         VALUES (?, ?, ?, ?, ?)`
       )
-      .bind(newId, discord_id || null, xivauth_id || null, auth_provider, username, avatar_url || null)
+      .bind(newId, discord_id || null, xivauth_id || null, auth_provider, username)
       .run();
 
     return {
@@ -90,7 +94,6 @@ export async function findOrCreateUser(
       xivauth_id: xivauth_id || null,
       auth_provider,
       username,
-      avatar_url: avatar_url || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -148,7 +151,7 @@ async function attachIdentities(
   params: CreateUserParams,
   logger?: UserServiceLogger
 ): Promise<UserRow> {
-  const { discord_id, xivauth_id, username, avatar_url, auth_provider } = params;
+  const { discord_id, xivauth_id, username, auth_provider } = params;
 
   let discordId = existing.discord_id;
   if (!existing.discord_id && discord_id) {
@@ -182,7 +185,6 @@ async function attachIdentities(
     discord_id: discordId,
     xivauth_id: xivauthId,
     username,
-    avatar_url,
     auth_provider,
   });
 }
@@ -209,10 +211,6 @@ async function updateUser(
   if (updates.username) {
     fields.push('username = ?');
     values.push(updates.username);
-  }
-  if (updates.avatar_url !== undefined) {
-    fields.push('avatar_url = ?');
-    values.push(updates.avatar_url || null);
   }
   if (updates.auth_provider) {
     fields.push('auth_provider = ?');
@@ -254,45 +252,13 @@ export async function findUserByXIVAuthId(db: D1Database, xivauthId: string): Pr
 }
 
 /**
- * Store XIVAuth characters for a user (replaces existing characters)
+ * FINDING-001 (2026-08-29 security audit): `storeCharacters` / `getCharacters`
+ * and the `xivauth_characters` table are gone. Every XIVAuth sign-in used to
+ * persist the caller's whole FFXIV roster — Lodestone id, character name and
+ * home world, unverified registrations included — "for future features" that
+ * never arrived: nothing read the table, there was no retention or purge, and
+ * the web privacy guide never disclosed it. The handler still reads the roster
+ * in memory to pick the verified character that becomes the display name; it
+ * writes none of it. If a feature ever needs the roster, collect it then,
+ * minimally, and disclose it first.
  */
-export async function storeCharacters(
-  db: D1Database,
-  userId: string,
-  characters: XIVAuthCharacter[]
-): Promise<void> {
-  // OPT-003 (2026-07-18 audit): one atomic batch instead of 1 + N sequential
-  // round trips on the login critical path — also closes the partial-write
-  // window the non-atomic delete-then-insert loop left open
-  await db.batch([
-    db.prepare('DELETE FROM xivauth_characters WHERE user_id = ?').bind(userId),
-    ...characters.map((char) =>
-      db
-        .prepare(
-          `INSERT INTO xivauth_characters (user_id, lodestone_id, name, server, verified)
-           VALUES (?, ?, ?, ?, ?)`
-        )
-        .bind(userId, char.id, char.name, char.home_world, char.verified ? 1 : 0)
-    ),
-  ]);
-}
-
-/**
- * Get characters for a user
- */
-export async function getCharacters(
-  db: D1Database,
-  userId: string
-): Promise<XIVAuthCharacter[]> {
-  const result = await db
-    .prepare('SELECT lodestone_id, name, server, verified FROM xivauth_characters WHERE user_id = ?')
-    .bind(userId)
-    .all<{ lodestone_id: number; name: string; server: string; verified: number }>();
-
-  return result.results.map((row) => ({
-    id: row.lodestone_id,
-    name: row.name,
-    home_world: row.server,
-    verified: row.verified === 1,
-  }));
-}

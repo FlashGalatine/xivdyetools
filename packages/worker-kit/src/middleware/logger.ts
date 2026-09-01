@@ -44,6 +44,14 @@ export interface LoggerMiddlewareOptions {
   /**
    * Log the User-Agent header in the "Request started" log entry.
    *
+   * 2026-08-29 FINDING-010: defaults to `false` and should stay that way.
+   * The User-Agent is per-client context that `apps/web-app/PRIVACY.md`
+   * promises is "never collected" — every current consumer either omits
+   * this option or sets it `false` explicitly (the three that opted in
+   * dropped it in the 2026-08-29 audit's Sprints 1, 2 and 5). Opting back in
+   * puts that promise's contents into whatever transport carries this log
+   * line (`wrangler tail`, and Workers Logs wherever a consumer enables it).
+   *
    * @default false
    */
   logUserAgent?: boolean;
@@ -96,7 +104,7 @@ function getRequestInfo(
  * app.use('*', loggerMiddleware({
  *   serviceName: 'xivdyetools-presets-api',
  *   readApiVersionFromEnv: true,
- *   logUserAgent: true,
+ *   logUserAgent: false, // 2026-08-29 FINDING-010: keep false — see the option's JSDoc
  *   sanitizePath: (path) => path.replace(/token=[^&]+/, 'token=***'),
  * }));
  * ```

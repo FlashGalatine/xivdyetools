@@ -257,37 +257,42 @@ describe('GET /og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', () => {
 // OG Image Routes: Swatch
 // ============================================================================
 
+// FF5500 (upper-case), not ff5500: 2026-08-29 FINDING-024 (OG-4, ruling
+// S7-R12) validates :color against the canonical (upper-case) form
+// parseHexColor emits — lowercase is now a 400 (og-guards.test.ts covers
+// that rejection directly). These fixtures use a canonical colour so each
+// test keeps exercising only the :limit behaviour its name describes.
 describe('GET /og/swatch/:color/:limit', () => {
   it('returns 400 for limit below minimum (< 1)', async () => {
-    const res = await app.request('/og/swatch/ff5500/0', {}, TEST_ENV);
+    const res = await app.request('/og/swatch/FF5500/0', {}, TEST_ENV);
     expect(res.status).toBe(400);
     const body = await res.json() as Record<string, unknown>;
     expect(body.error).toContain('limit must be between 1 and 20');
   });
 
   it('returns 400 for limit above maximum (> 20)', async () => {
-    const res = await app.request('/og/swatch/ff5500/21', {}, TEST_ENV);
+    const res = await app.request('/og/swatch/FF5500/21', {}, TEST_ENV);
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for NaN limit', async () => {
-    const res = await app.request('/og/swatch/ff5500/abc', {}, TEST_ENV);
+    const res = await app.request('/og/swatch/FF5500/abc', {}, TEST_ENV);
     expect(res.status).toBe(400);
   });
 
   it('returns image for valid parameters', async () => {
-    const res = await app.request('/og/swatch/ff5500/5', {}, TEST_ENV);
+    const res = await app.request('/og/swatch/FF5500/5', {}, TEST_ENV);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
   });
 
   it('accepts boundary limit=1', async () => {
-    const res = await app.request('/og/swatch/ff5500/1', {}, TEST_ENV);
+    const res = await app.request('/og/swatch/FF5500/1', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
 
   it('accepts boundary limit=20', async () => {
-    const res = await app.request('/og/swatch/ff5500/20', {}, TEST_ENV);
+    const res = await app.request('/og/swatch/FF5500/20', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
 });
@@ -320,10 +325,16 @@ describe('GET /og/comparison/:dyes', () => {
     expect(rendered.at(-1)).toContain('height="350"');
   });
 
-  it('filters out NaN IDs from comma-separated list', async () => {
-    // "abc,43" should parse to [43] which is valid (length 1)
+  // 2026-08-29 FINDING-024 (OG-4, ruling S7-R12): this used to silently
+  // filter "abc,43" down to the single valid id [43] and render 200 — the
+  // same "many spellings render one card" shape the canonical dye-list
+  // grammar now closes (og-guards.test.ts has the "1,2,x,3" case). A list
+  // with any non-canonical entry is rejected outright, not trimmed.
+  it('rejects a dye list containing a non-canonical entry instead of silently dropping it', async () => {
     const res = await app.request('/og/comparison/abc,43', {}, TEST_ENV);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
+    const body = await res.json() as Record<string, unknown>;
+    expect(body.error).toContain('comparison requires 1–16 valid dye IDs');
   });
 
   it('returns 400 when all IDs are NaN', async () => {

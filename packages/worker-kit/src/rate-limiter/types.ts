@@ -164,6 +164,13 @@ export interface KVRateLimiterOptions {
 
   /**
    * Key prefix for rate limit entries
+   *
+   * Logged verbatim on a fail-open event (2026-08-29 FINDING-010 —
+   * `scopeRateLimitKey()` trusts this string as the safe "which bucket
+   * class" scope). Do not derive it from request data — a per-tenant or
+   * per-user prefix (e.g. `` `tenant:${tenantId}:` ``) puts exactly the
+   * client-identifying value this redaction exists to avoid back into your
+   * logs.
    * @default 'ratelimit:'
    */
   keyPrefix?: string;
@@ -217,6 +224,13 @@ export interface UpstashRateLimiterOptions {
 
   /**
    * Key prefix for rate limit entries
+   *
+   * Logged verbatim on a fail-open event (2026-08-29 FINDING-010 —
+   * `scopeRateLimitKey()` trusts this string as the safe "which bucket
+   * class" scope). Do not derive it from request data — a per-tenant or
+   * per-user prefix (e.g. `` `tenant:${tenantId}:` ``) puts exactly the
+   * client-identifying value this redaction exists to avoid back into your
+   * logs.
    * @default 'ratelimit:'
    */
   keyPrefix?: string;

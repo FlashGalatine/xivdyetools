@@ -117,7 +117,13 @@ for.
 
 **OG image routes** (return `image/png`). Every route takes `?lang=` (the picture
 localizes only when asked) and `?frame=x` (the 400×210 X frame; `twitter:image`
-carries it):
+carries it). `lang`, `frame`, and `algo` are the *only* query keys any `/og/*`
+request may carry (2026-08-29 FINDING-024, OG-4) — any other key gets a `404`
+before the cache lookup or a render, without echoing the key back. A *present*
+`algo` is also validated against `VALID_ALGORITHMS` by that same guard, on
+every route — not just the five below that read it — so `400
+{"error":"Invalid algorithm"}` for a bad spelling no longer depends on a
+route reading the param at all (ruling S7-R7):
 
 | Pattern | Notes |
 |---|---|
@@ -129,13 +135,57 @@ carries it):
 | `GET /og/comparison/:dyes[.png]` | `:dyes` is comma-separated stainIDs, max 16, sliced to 4 |
 | `GET /og/accessibility/:dyes/:visionType[.png]` | vision: normal, protanopia, deuteranopia, tritanopia, achromatopsia |
 | `GET /og/extractor/:colors[.png]` | `RRGGBB` or `RRGGBB-share` entries, comma-separated, max 5. Bare entries (the web-app share grammar carries no shares) draw **equal, ranked** bands — proportion is only claimed where it was measured |
-| `GET /og/presets/:presetId[.png]` | slug `^[a-z0-9-]{1,64}$` |
+| `GET /og/presets/:presetId[.png]` | slug `^[a-z0-9-]{1,64}$`. **`default` is reserved** — it renders the presets default card (ruling S7-R16), so no curated preset may be given that id; the emitted `/og/presets/default.png` URL already shadows it |
 | `GET /og/budget/:dyeId[.png]` | stainID |
 | `GET /og/:tool/default.png` | Per-tool 2a fallback card |
 | `GET /og/default.png` | Root fallback card; cached 7 days |
 | `GET *` | Fallthrough — crawlers get a minimal **404** (`no-store`) page; humans are passed through only on the `APP_BASE_URL` host (any other host → 302 to the app) — FINDING-024 |
 
+Every path parameter above must be **canonical**, not merely well-formed — the same
+amplification the query-key allowlist closes, one axis over (2026-08-29 FINDING-024, OG-4,
+ruling S7-R12): a dye/step/ratio/limit id needs no leading zeros, no sign, no trailing
+junk, and no `%2F` spelling (Hono's router leaves `%2F` encoded, but `c.req.param()`
+decodes it to `/`, so `parseInt` used to read `1%2F0` as dye `1`); comparison/
+accessibility's dye list 400s as a whole if any entry isn't a canonical integer — it used
+to `.filter()` out the bad ones silently and render whichever dyes survived; `:color` on
+swatch and the `RRGGBB[-share]` entries on extractor must match the exact upper-case form
+`parseHexColor` (`og-params.ts`) emits, not any of the 64 case spellings of one hex value.
+`presets/:presetId`'s slug grammar was already canonical. `.png` stays optional
+everywhere (ruling S7-R13), but the strip is now anchored to a true trailing suffix — it
+no longer matches `.png` wherever it happens to appear in the segment.
+
+**This bounds every *malformed or non-canonical spelling* of one card to a single URL. It
+does not bound two other things.** First, how many *distinct* ids a client can request —
+most render the "not found" default card, and each is a legitimate first-render cache
+miss; that is request-volume enumeration, not a cache-key problem, and it is the WAF
+rate-limiting rule's job (`docs/operations/POST_MERGE_CHECKLIST.md`), not this table's.
+Second, a *canonically-formed* request naming more ids/entries or a wider count than a
+card actually draws: comparison/accessibility accept up to 16 dye ids but the card draws
+4 (`COMPARISON_MAX_DYES` / `ACCESSIBILITY_MAX_DYES` in `services/svg/{comparison,
+accessibility}.ts`), extractor accepts more colour entries than the 5 it draws, and
+gradient's `steps` / swatch's `limit` accept a wider range than the card's own band cap
+uses — this worker deliberately does **not** reject that tail at the route (ruling
+S7-R17: it would `404` image URLs already embedded in links shared before a given
+deploy), so a hand-built or already-shared URL naming ids past what the card draws can
+still spell one card several ways, bounded by the same WAF rule. What this release *does*
+do is stop `og-data-generator.ts`'s own crawler embed from **emitting** that tail — new
+share links only ever carry as many ids as the card draws.
+
 All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
+
+The `caches.default` edge cache in `index.ts` (`ogCacheKey`) is checked and filled for `GET`
+*and* `HEAD` (ruling S7-R8 — `c.req.method` reads `'HEAD'` inside Hono middleware even though
+routing re-dispatched it as `GET`; treating `HEAD` as uncacheable let a `HEAD` loop against one
+URL re-render every time). It keys on the *decoded* path (`c.req.path`, what the router
+actually matched on, not `new URL(c.req.url).pathname` — ruling S7-R9: two percent-encoded
+spellings that decode alike already route alike, so keying on the raw pathname let each
+spelling buy its own entry for the same card), with a trailing `.png` stripped from that
+path the same way the routes strip it (ruling S7-R13 — `.png` is optional everywhere, so
+the suffixed and suffix-less spellings of one card must share one entry, not two) + the
+*resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (2026-08-29 FINDING-024, OG-4) — not the full URL. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary, even on a route that never reads `algo` itself — and an EMPTY `algo` (`?algo=` or bare `?algo`,
+both of which `URLSearchParams.get` reports as `''`) counts as absent there and here, not a
+validation failure, matching what the five algo-aware routes already did with
+`c.req.query('algo') || DEFAULT_MATCHING_METHOD` (ruling S7-R10). Combined with the query-key allowlist above, the key space is bounded to (pathname × lang × frame × algo) — a client can no longer defeat the cache by appending an arbitrary throwaway param.
 
 ### Environment Bindings (wrangler.toml)
 

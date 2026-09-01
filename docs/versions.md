@@ -2,11 +2,11 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: August 21, 2026*
+*Last Updated: August 31, 2026*
 
 > **Versions below are read from each project's `package.json` on the working branch.** The 5.0
 > wave — `core` v4.0.1, `types` v2.0.0, `svg` v2.0.1, `bot-logic` v2.1.0, `worker-kit` v1.1.0,
-> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.3.0, `presets-api` v2.1.0 and the
+> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.3.0, `presets-api` v2.2.0 and the
 > rest (the patch/minor bumps on top of the 5.0 versions are the 2026-08-21 security-audit
 > remediation) — is complete on `monorepo-2.0-prep` with every `CHANGELOG.md` written, but **not
 > yet merged to `main` or published to npm**. Merging to `main` is the release; the root
@@ -23,14 +23,14 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.0.0 | `xivdyetools-web-app` | Cloudflare Pages | Active — release pending |
-| **Discord Bot** | v5.0.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
-| **Image Worker** | v1.1.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.5.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v2.7.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.1.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
-| **Public REST API** | v0.9.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.3.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
-| **Stoat Bot** | v0.2.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
+| **Discord Bot** | v5.1.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
+| **Image Worker** | v1.2.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.6.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **OAuth Worker** | v3.0.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **Presets API** | v2.2.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
+| **Public REST API** | v0.10.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **OpenGraph Worker** | v2.4.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **Stoat Bot** | v0.2.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 
@@ -40,12 +40,12 @@
 |---------|---------|--------------|----------|--------|
 | **Core** (incl. `/blending` + schema-v2 data) | v4.0.1 | `@xivdyetools/core` | npm | Active — publish pending |
 | **Types** | v2.0.0 | `@xivdyetools/types` | npm | Active — publish pending |
-| **Auth** (incl. `/encoding`) | v1.4.0 | `@xivdyetools/auth` | npm | Active |
-| **Logger** | v2.1.0 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.1.0 | `@xivdyetools/worker-kit` | npm | Active (first publish 2026-08-28) |
+| **Auth** (incl. `/encoding`) | v2.0.0 | `@xivdyetools/auth` | npm | Active — publish pending |
+| **Logger** | v2.1.1 | `@xivdyetools/logger` | npm | Active — publish pending |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.2.0 | `@xivdyetools/worker-kit` | npm | Active — publish pending (first publish 2026-08-28) |
 | **SVG** | v3.0.0 | `@xivdyetools/svg` | npm | Active — publish pending (publish **before** bot-logic 3.0.0) |
 | **Bot Logic** (incl. `/i18n`) | v3.0.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending (requires svg 3.0.0 on npm first) |
-| **Test Utils** | v1.2.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
+| **Test Utils** | v1.3.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
 
@@ -132,6 +132,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v5.1.0** | **Aug 2026** | **2026-08-29 security audit (Sprint 3) — rate-limit counters move from Upstash Redis to native `[[ratelimits]]` bindings, `/about`/`/manual`/`/changelog` take the normal per-command rate limit, the first-run notice flag expires after 180 days, `/preferences set world:` validates against Universalis and stores the canonical spelling (also checked on read), log lines carry ids/lengths instead of values, the release-announcement webhook is repo-pinned and de-duplicated per version, the bot stops sending the legacy v1 request signature to presets-api, and production `validateEnv` now requires all six `RL_*` bindings via a new `ENVIRONMENT` var (FINDING-007/008/011/013/015/019/020/021); PRIVACY_POLICY.md refreshed to match** |
 | **v5.0.1** | **Aug 2026** | **Chara-name privacy (2026-08-29) — `/swatch` never shows the character's name or the attachment filename (neutral "Character swatch" title on card + embed, filename no longer forwarded to the renderer), PRIVACY_POLICY §3 amended; bot-logic 3.0.0 / svg 3.0.0** |
 | **v5.0.0** | **Aug 2026** | **5.0 command set — v4 commands (`/match`, `/match_image`, `/favorites`, `/collection`, `/language`) deleted; `COMMAND_REGISTRY` becomes the roster of record; `/contrast` split out of `/accessibility` for WCAG 1.4.11 pairs; `/changelog` added; `/a11y` registered as an alias; `/swatch` takes a `.chara` file; every card redrawn on the svg 2.0.0 frame system; matching vocabulary + `/preferences set theme`; Photon decoding moved to `image-worker` behind a service binding (2,632 KiB gzip); beta bot on the routeless `-dev` env** |
 | **v4.7.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-009 moderation approve/reject buttons finally routable (embeds post via `MODERATION_BOT_TOKEN` so clicks reach moderation-worker), BUG-035 throw-safe outcome-checked Discord API wrappers, BUG-033 world → DC → region price-scope cascade in `/budget`** |
@@ -160,6 +161,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v3.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit Sprint 2 (FINDING-001/002/003/010/012/013/022/023) — `/auth/refresh` removed; `orig_iat`/`xivauth_id`/`primary_character` no longer minted; `users.avatar_url` and the `xivauth_characters` roster table dropped by a hand-run migration (no known client used any of them); `Cache-Control: no-store` + `Pragma: no-cache` worker-wide; request logger drops the User-Agent; rate-limit binding fail-open events now logged; production `validateEnv` requires `RL_AUTH_10`/`RL_AUTH_20`/`RL_AUTH_30`/`TOKEN_BLACKLIST`; new wrangler-config invariant test; fixed `GET /auth/me`'s `avatar_url` (was built from the internal UUID, not the Discord snowflake)** |
 | **v2.7.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-001) — `/auth/refresh` grace window 24 h → shared `REFRESH_GRACE_SECONDS` (15 min); revocation blacklist entries now outlive `exp` by that window, so a revoked/leaked token can no longer be re-minted after it expires** |
 | **v2.6.0** | **Aug 2026** | **Beta origin (`https://beta.xivdyetools.app`) on the redirect + CORS allowlist (unified — beta login hang fixed); migrated to `@xivdyetools/worker-kit` and `@xivdyetools/auth/encoding`** |
 | **v2.5.0** | **Jul 2026** | **2026-07-18 audit (Sprint 2) — refresh rotation with `jti`-based revocation + `orig_iat` absolute session anchor (refresh chains can no longer extend a session indefinitely), state-signing hardening, single JWT verifier via `@xivdyetools/auth` 1.2.0** |
@@ -181,6 +183,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.2.0** | **Aug 2026** | **2026-08-29 security audit Sprint 1 (FINDING-004/005/006/010/011/013/015/016/017/023) — `author_discord_id` dropped from anonymous responses (`is_owner` added for web callers), v1 bot signature no longer accepted, moderation fails closed and gains a per-user `text_edit` daily cap (migration 0012), owner edits capped and status-transition-safe, dead-letter rows hold only the preset id, `console.*` eliminated in favor of the structured logger (no personal fields), production `validateEnv` requires `JWT_SECRET`/`JWT_ISSUER`/`TOKEN_BLACKLIST`/`RL_PUBLIC`, new wrangler-config invariant test** |
 | **v2.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-002/015) — oauth `TOKEN_BLACKLIST` KV bound: revoked JWTs rejected by `authMiddleware`; `JWT_ISSUER` var pins `iss`; claim typing via `@xivdyetools/auth` 1.4.0** |
 | **v2.0.0** | **Aug 2026** | **BREAKING — preset dyes are stainIDs (3–6 per preset; legacy itemIDs rejected loudly), `community` category dropped (migration 0007) and `appearance` / `zones` / `raids-trials` added with 1 primary + ≤2 secondary categories (0010), `example_link` (0008), moderated preview images via image-worker `POST /thumbnail` + R2 (0009), `rejection_reason`, beta CORS origin, `worker-kit`; dev/prod `wrangler.toml` split** |
 | **v1.6.0** | **Jul 2026** | **2026-07-18 audit (Sprint 1) — CRITICAL: moderation self-approval gap closed (submitters could approve their own presets); state-machine transitions validated server-side with D1 `batch()` transactions and `changes()`-gated updates; migration 0006 unique preset-signature index applied to production** |
@@ -238,6 +241,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.1.1** | **Aug 2026** | **2026-08-29 security audit (FINDING-025) — value-shape scan now reaches string array items (incl. arrays nested in arrays) and bare JWT/Discord-token substrings inside `message` / `error.message` / non-Error throws; a ≥64-hex run is deliberately NOT scanned in free text (false-positive risk: content hashes, cache keys); fixed a shape bug where an array item that was itself an array logged as `{'0':…,'1':…}` instead of staying an array; S10-R8 — the cycle guard was a *global* seen-set, so a value aliased from two keys was redacted only at its first reference, now an ancestor (recursion-path) set so every reference is redacted; S10-R12 — that fix's own node-visit budget (added to bound the ancestor set's exponential cost on a heavily-aliased structure) turned out to fail OPEN, emitting anything past a ~5000-node cutoff completely unscanned — replaced with memoization (every node processed exactly once, aliases resolve to the same redacted object, no cutoff to fail open past); S10-R14 — memoization surfaced a matching bug one layer down in `safeStringify` (global "seen" set on every `JsonAdapter.write` line started reading aliased-not-circular references as cycles, dropping repeated data) — fixed with the same path-scoped technique; S10-R18 — path-scoping then serialises a shared subtree once per PATH to it, exponential on a maximally-aliased structure (the fix round's own 40-level test case: unbounded, never finished) — `safeStringify` now carries its own fail-CLOSED bound (50,000 values/call, `"[Truncated]"` past it — loses diagnostics, not secrets, since everything reaching it is already redacted, unlike the fail-open redaction budget S10-R12 removed)** |
 | **v2.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-026) — `safeStringify` (cycles / BigInt never throw in `write()`), `message` + non-Error throws sanitised, redact list extended, value-shape redaction (Bearer / JWT / Discord-token / long hex), browser `errorTracker` stack sanitised** |
 | **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprint 6) — BUG-024 case-insensitive redaction with sensitive-suffix heuristic + WeakSet cycle guard (depth cap removed), BUG-025 JSON-shaped error-message sanitization, BUG-026 `errorTracker` path redacts before forwarding, OPT-020 child loggers time with their own context** |
 | v1.2.2 | Mar 2026 | Dependency updates |
@@ -253,6 +257,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.6.0** | **Aug 2026** | **2026-08-29 security audit — ban/unban/hide/restore written to `moderation_log` via presets-api migration 0013 (FINDING-018); ban log line ids-only (FINDING-011); rate-limiter fail-open surfaced (FINDING-012); production refuses every request while an RL binding is missing (FINDING-013); v1 bot signature no longer sent (FINDING-015); `wrangler.toml` invariant test (FINDING-023)** |
 | **v1.5.0** | **Aug 2026** | **2026-08-21 security audit — native `RL_COMMAND` / `RL_AUTOCOMPLETE` rate-limit bindings (FINDING-003); autocomplete moderator-gated (FINDING-006); ban-flow `custom_id`s carry only the snowflake, username resolved from D1 (FINDING-007); command registration guild-scoped** |
 | **v1.4.0** | **Aug 2026** | **Image-only queue entries marked instead of mis-approved; new preset category rows; `worker-kit`; dev/prod `wrangler.toml` split (bare deploy = routeless `-dev` worker)** |
 | **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-035 throw-safe outcome-checked Discord API wrappers (failures logged, not silently dropped), BUG-073 `MODERATOR_IDS` parsed via the shared `@xivdyetools/bot-logic` grammar** |
@@ -269,6 +274,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.4.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-024, OG-4) — `/og/*` allows only `lang`/`frame`/`algo` query keys and every path parameter must be canonical (no leading zeros, wrong case, `%2F` spellings, silently-dropped dye-list entries, or the `default` preset slug, which now renders the reserved default card after it was found to collide with a real not-found render under one cache key), `.png` stays optional but only as a true trailing suffix, `HEAD` is cacheable like `GET`, and the edge cache key is the canonical decoded path × resolved lang × resolved frame × raw algo instead of the full URL — closing the cache-defeat amplification for every *malformed or non-canonical* spelling of a card (two narrower residuals remain, both bounded by the WAF rule, not the cache key: distinct-id enumeration, and a card's own dye-list/count tail past what it actually draws — the crawler's own emitted links no longer produce the latter); plus the card font-weight fix (Space Grotesk/Onest ship as static instances, fixing every band name rendering at Light instead of its intended weight)** |
 | **v2.3.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-005) — /og/* segment-length guard (400), linear-time `fit`/`wrapName` (a 16 KB not-found label took 177 s), not-found echo capped at 32 chars, `caches.default` edge cache for rendered PNGs** |
 | **v2.1.0** | **Aug 2026** | **Dead-code audit cleanup: extractor / presets / budget embeds reach their cards (were unreachable — root default only), `/presets/:id` crawler route, comparison honours `?frame=x`, `?algo=` rides harmony/gradient/mixer image URLs, ~500 lines of 15E-rewrite sediment removed (colour-sheet lookup, `base.ts`), CJK subsets −45 KB, base tsconfig flags restored** |
 | **v2.0.0** | **Aug 2026** | **15E band cards for all nine tools (Discord 1200×1050 + X 1200×630), per-tool default cards, `?lang=` localization, stainID paths, `@xivdyetools/svg` 2.0.0 frame system, routed beta env (`deploy-og-worker-beta.yml`)** |
@@ -287,6 +293,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.2.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-023) — `src/wrangler-config.test.ts` pins no routes, `workers_dev = false` + new `preview_urls = false` in both environments, exactly one named environment, and the production `name` both discord-worker's and presets-api's `IMAGE_WORKER` bindings depend on; in-code guard refuses any `*.workers.dev` hostname with a `404` before fetch/decode (defence in depth); closes the four-worker config-drift test set (presets-api, oauth, moderation-worker, image-worker); also fixes a `redirect: 'error'` `TypeError` on a Discord CDN redirect hop** |
 | **v1.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-004) — header-only dimension gate before photon decodes (PNG/JPEG/GIF/WebP/BMP; 4096 px / 16 MP), `maxDimension` validated, byte caps enforced while streaming on /extract fetches and /thumbnail bodies** |
 | **v1.0.0** | **Aug 2026** | **Initial release — split out of `discord-worker` (`docs/operations/IMAGE_WORKER_SPLIT.md`) to carry `@cf-wasm/photon`, bringing `discord-worker` back under Cloudflare's 3 MiB gzip limit (3,209.3 → 2,589.70 KiB). `POST /extract` decodes an image URL and returns raw RGBA pixels; `POST /thumbnail` returns a WebP preview for presets-api's preview images; reachable only via the `IMAGE_WORKER` service bindings (discord-worker, presets-api), no public surface** |
 
@@ -294,6 +301,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.3.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-015, Sprint 11 fix round) — `auth/signature.ts`'s v1 bot-signature helpers (`createBotSignature`/`createTimestampedSignature`/`verifyBotSignature`) removed once their only remaining consumer, `bot-authentication.test.ts`'s v1-signature test blocks, was deleted (presets-api accepts only v2); that integration suite narrows from 15 tests to 5, keeping the still-live dev/test bypass and Authorization-rejection coverage** |
 | v1.2.0 | Jul 2026 | Monorepo 2.0 Tier 1 — package made workspace-private and unpublished from npm; factories updated for schema v2 |
 | v1.1.8 | Jul 2026 | 2026-07-18 audit (Sprints 1 & 6) — BUG-062 MockD1 `exec()` keeps `_queries`/`_bindings` index-aligned; `batch()` routes through `run()` semantics (honors RETURNING + mutation meta) |
 | v1.1.7 | Mar 2026 | Mock dye factories updated with `currency`, `consolidationType`, `isIshgardian` fields |
@@ -310,6 +318,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit (FINDING-015): `verifyBotSignature` (v1 bot request signature, `timestamp:userId:userName`, no request binding) removed from `hmac.ts` and the barrel; `createBotSignatureV2`/`verifyBotSignatureV2` (1.4.0) are now the only signature scheme. No in-repo caller remained — `presets-api` 2.2.0, `discord-worker` 5.1.0 and `moderation-worker` 1.6.0 had already stopped accepting/sending v1** |
 | **v1.4.0** | **Aug 2026** | **2026-08-21 security audit — `revokeToken` TTL = exp + `REFRESH_GRACE_SECONDS` (FINDING-001); `verifyJWT` claim typing, `nbf`, `issuer`/`audience` options (FINDING-015)** |
 | **v1.3.0** | **Jul 2026** | **Monorepo 2.0 Tier 1 — absorbed `@xivdyetools/crypto` v1.1.2: Base64URL and hex utilities now live at `@xivdyetools/auth/encoding`. API identical; only the import specifier changes** |
 | **v1.2.0** | **Jul 2026** | **2026-07-18 audit (Sprints 2 & 6) — `jti`-based revocation + `orig_iat` absolute session anchoring primitives (consumed by oauth's refresh rotation); BUG-059 `verifyDiscordRequest` body-size check measures UTF-8 bytes, not UTF-16 code units** |
@@ -328,6 +337,14 @@
 | v1.1.1 | Jul 2026 | OPT-019 chunked `String.fromCharCode.apply` in `base64UrlEncodeBytes` — identical output, ~10-50× faster for KB+ payloads |
 | v1.1.0 | Feb 2026 | Validate hex input in hexToBytes |
 | v1.0.0 | Nov 2025 | Initial release |
+
+### @xivdyetools/worker-kit
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| **v1.2.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-010 + FINDING-012) — rate-limit fail-open / backend-error log lines carry a `keyScope`, never the raw client IP or Discord id, at all six sites across the middleware and the three fallible backends; `console.warn` fallback when no logger is configured (previously silent); `CloudflareRateLimiter`'s constructor validates every tier's `binding.limit` is callable and throws rather than fail-opening per-request** |
+| **v1.1.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-003) — `CloudflareRateLimiter`, a backend over the native Workers Rate Limiting binding (atomic per-colo counting, no storage writes); now the preferred per-client limiter over KV, which cannot throttle a fast client. This is the version actually first published to npm, 2026-08-28 (hand-published, see `POST_MERGE_CHECKLIST.md`) — 1.0.0 below never reached the registry** |
+| **v1.0.0** | **Aug 2026** | **New package — never published to npm; superseded by 1.1.0 before the first publish. Monorepo 2.0 Tier 1 merger of `@xivdyetools/worker-middleware` v1.2.0 and `@xivdyetools/rate-limiter` v1.5.0 (both source trees moved verbatim, neither API changed); optional `hono`/`@cloudflare/workers-types` peers; `hono` floor raised to `^4.12.34` (2026-08-09 audit FINDING-001, CORS ReDoS)** |
 
 ### @xivdyetools/rate-limiter (retired — merged into `@xivdyetools/worker-kit/rate-limiter` 2026-07-31)
 
@@ -396,6 +413,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v0.2.3** | **Aug 2026** | **2026-08-29 security audit (FINDING-031, Sprint 13 — closes the audit) — `message-handler.ts` no longer logs the author id, channel id, or raw command text (the per-command debug line drops all three; the throttle-drop line logs `{ command, subcommand }` instead of the user id, matching Sprint 9's non-identifying rate-limiter scope); `index.ts`'s logger now defaults to `info` instead of the library preset's `debug`; the boot-time admin-roster log prints the authorized-admin count instead of every id (ruling S13-R2, not in the original finding); still parked** |
 | v0.2.2 | Aug 2026 | 2026-08-21 security audit — bot authors ignored + per-user throttle (`message-handler.ts`), `Object.hasOwn` command tables, sanitised echoes, `.app` links; still parked |
 | v0.2.1 | Aug 2026 | Dependency retargets only (`bot-logic/i18n`, `core/blending`); parked |
 | **v0.2.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-038 message context keyed by the bot reply's message ID (reaction handlers can actually find it; multi-match responses no longer overwrite each other); dead reaction affordances removed** |
@@ -409,6 +427,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v0.10.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-010 + FINDING-014) — `POST /v1/telemetry` gates on `Origin` + honours `Sec-GPC: 1` before reading the body, derives `env` from the accepted origin (loopback keeps the body's `env`, non-production only), and fails closed on limiter errors; request logs drop the last `logUserAgent: true` opt-in in the repo** |
 | **v0.9.0** | **Aug 2026** | **`POST /v1/telemetry` — the web app's opt-in usage telemetry → Analytics Engine (`ANALYTICS` dataset binding, allowlist schema, fixed blob layout, 204-only, internal); own per-IP bucket `TELEMETRY_RATE_LIMITER` (240 / 60 s) so beacons never consume the `/v1/*` API bucket** |
 | **v0.8.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-003) — `/v1/*` per-IP limiter now uses the native Workers Rate Limiting binding `API_RATE_LIMITER` (65 / 60 s); KV (which cannot throttle a fast client) is only the fallback** |
 | **v0.6.0** | **Aug 2026** | **Absorbed universalis-proxy (`/universalis/*` canonical, `/api/v2/*` compat) and the api-docs VitePress site (Workers Static Assets on `developers.xivdyetools.app`); serves schema v2 (125 dyes, `facewearColors`, negative legacy IDs → 404 with slug); accepts the 5.0 matching vocabulary (`hyab` / `oklch-weighted` normalised to `ciede2000`, `kL/kC/kH` ignored); `worker-kit`; dev/prod split** |

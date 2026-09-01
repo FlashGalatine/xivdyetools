@@ -11,6 +11,8 @@ import {
     env,
     VALID_CODE_VERIFIER,
     VALID_CODE_CHALLENGE,
+    recordedStatements,
+    resetRecordedStatements,
 } from './mocks/cloudflare-test.js';
 import { resetRateLimiter } from '../services/rate-limit.js';
 import { signState, type StateData } from '../utils/state-signing.js';
@@ -867,6 +869,29 @@ describe('Callback Handler', () => {
             expect(json.user.avatar_url).toContain('cdn.discordapp.com');
         });
 
+        // FINDING-022 (2026-08-29 security audit): this response body carries a
+        // bearer JWT — RFC 6749 §5.1 requires it never be cached.
+        it('should send Cache-Control: no-store on the token response', async () => {
+            mockDiscordSuccess();
+
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: 'valid_code',
+                    code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
+                }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.token).toBeTruthy();
+            expect(response.headers.get('Cache-Control')).toBe('no-store');
+            expect(response.headers.get('Pragma')).toBe('no-cache');
+        });
+
         it('should ignore custom redirect_uri and use worker callback', async () => {
             globalThis.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
                 if (url.includes('oauth2/token')) {
@@ -1066,6 +1091,129 @@ describe('Callback Handler', () => {
             expect(consoleSpy).toHaveBeenCalledWith('Token exchange failed:', { error: 'invalid_grant' });
 
             consoleSpy.mockRestore();
+        });
+    });
+
+    /**
+     * FINDING-002 (2026-08-29 security audit): `users.avatar_url` was written on
+     * every Discord sign-in and never read back — every response recomputes the
+     * CDN URL from the Discord id + avatar hash. The JWT also carried `orig_iat`
+     * (whose only reader, `/auth/refresh`, is gone), `xivauth_id` and
+     * `primary_character`, none of which any consumer reads.
+     */
+    describe('POST /auth/callback — data minimisation', () => {
+        beforeEach(() => {
+            resetRecordedStatements();
+        });
+
+        /** Discord endpoints mocked to succeed for a specific account. */
+        function mockDiscordUser(discordId: string, avatar: string | null): void {
+            globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+                if (url.includes('oauth2/token')) {
+                    return Promise.resolve(new Response(JSON.stringify({
+                        access_token: 'discord_token',
+                        token_type: 'Bearer',
+                        expires_in: 604800,
+                        refresh_token: 'refresh',
+                        scope: 'identify',
+                    }), { status: 200 }));
+                }
+                if (url.includes('users/@me')) {
+                    return Promise.resolve(new Response(JSON.stringify({
+                        id: discordId,
+                        username: 'minimisation-user',
+                        discriminator: '0001',
+                        global_name: 'Minimisation User',
+                        avatar,
+                    }), { status: 200 }));
+                }
+                return originalFetch(url);
+            });
+        }
+
+        function exchange(): Promise<Response> {
+            return boundState().then((state) =>
+                SELF.fetch('http://localhost/auth/callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state }),
+                })
+            );
+        }
+
+        it('should not persist the avatar URL when creating the user row, but still return it', async () => {
+            mockDiscordUser('222333444555666777', 'deadbeefdeadbeefdeadbeefdeadbeef');
+
+            const response = await exchange();
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+
+            const insert = recordedStatements.find((s) => s.sql.includes('INSERT INTO users'));
+            expect(insert).toBeDefined();
+            expect(insert!.sql).not.toContain('avatar_url');
+            expect(insert!.params).toEqual([
+                json.user.id,
+                '222333444555666777',
+                null,
+                'discord',
+                'Minimisation User',
+            ]);
+
+            // The response still carries the URL — recomputed, not stored
+            expect(json.user.avatar_url).toBe(
+                'https://cdn.discordapp.com/avatars/222333444555666777/deadbeefdeadbeefdeadbeefdeadbeef.png'
+            );
+        });
+
+        it('should not persist the avatar URL when an existing user signs in again', async () => {
+            mockDiscordUser('333444555666777888', 'aaaabbbbccccddddeeeeffff00001111');
+            await exchange();
+
+            resetRecordedStatements();
+            mockDiscordUser('333444555666777888', 'a_1111222233334444555566667777888');
+            const response = await exchange();
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+
+            const update = recordedStatements.find((s) => s.sql.includes('UPDATE users'));
+            expect(update).toBeDefined();
+            expect(update!.sql).not.toContain('avatar_url');
+            expect(update!.params.some((p) => typeof p === 'string' && p.includes('cdn.discordapp.com'))).toBe(false);
+
+            // ...and the (animated) avatar still resolves in the response
+            expect(json.user.avatar_url).toContain('.gif');
+        });
+
+        it('should mint exactly the claims consumers read for a Discord login', async () => {
+            mockDiscordUser('444555666777888999', 'abc123abc123abc123abc123abc123ab');
+
+            const response = await exchange();
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            const [, encodedPayload] = (json.token as string).split('.');
+            let base64 = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4 !== 0) base64 += '=';
+            const payload = JSON.parse(atob(base64)) as Record<string, unknown>;
+
+            expect(Object.keys(payload).sort()).toEqual([
+                'auth_provider',
+                'avatar',
+                'discord_id',
+                'exp',
+                'global_name',
+                'iat',
+                'iss',
+                'jti',
+                'sub',
+                'username',
+            ]);
+            expect(payload.sub).toBe(json.user.id);
+            expect(payload.discord_id).toBe('444555666777888999');
+            expect(payload.avatar).toBe('abc123abc123abc123abc123abc123ab');
+            expect(payload.auth_provider).toBe('discord');
         });
     });
 });

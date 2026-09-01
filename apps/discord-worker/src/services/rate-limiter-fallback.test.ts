@@ -1,15 +1,25 @@
 /**
- * FINDING-003 (2026-08-21 security audit): the KV rate-limit backend cannot
- * throttle a fast client (KV allows 1 write/s/key, failed puts are swallowed,
- * reads are eventually consistent). discord-worker's primary backend is
- * Upstash (atomic INCR); KV is only a dev fallback. When the fallback is
- * selected the worker must say so loudly — once per isolate — so a production
- * deployment without Upstash credentials is visible in the logs instead of
- * silently running with an ineffective limiter.
+ * FINDING-003 (2026-08-21 security audit) / FINDING-007 (2026-08-29): the KV
+ * rate-limit backend cannot throttle a fast client (KV allows 1 write/s/key,
+ * failed puts are swallowed, reads are eventually consistent). The bot's
+ * primary backend is the native `[[ratelimits]]` binding; KV is only the
+ * fallback for tests and local dev without bindings. When the fallback is
+ * selected the worker must say so loudly — once per isolate — so a deployment
+ * that lost its `RL_*` bindings is visible in the logs instead of silently
+ * running with an ineffective limiter.
+ *
+ * The warning goes to the logger `checkRateLimit` is CALLED with (the
+ * dispatcher passes the request logger), not to one held by the limiter
+ * singleton — so these tests pass their own logger the way `src/index.ts`
+ * does. `src/index.test.ts` covers the same warning through the real route.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { checkRateLimit, resetRateLimiterInstance } from './rate-limiter.js';
+import {
+  checkRateLimit,
+  resetRateLimiterInstance,
+  type DiscordRateLimitBindings,
+} from './rate-limiter.js';
 
 function createMockKV(): KVNamespace {
   const store = new Map<string, string>();
@@ -40,7 +50,7 @@ describe('discord-worker rate limiter KV fallback warning (FINDING-003)', () => 
     resetRateLimiterInstance();
   });
 
-  it('warns once per isolate when falling back to KV without Upstash', async () => {
+  it('warns once per isolate when no RL_* tier is bound', async () => {
     const logger = mockLogger();
     const kv = createMockKV();
 
@@ -51,30 +61,136 @@ describe('discord-worker rate limiter KV fallback warning (FINDING-003)', () => 
       String(msg).includes('KV fallback'),
     );
     expect(fallbackWarnings).toHaveLength(1);
-    expect(String(fallbackWarnings[0][0])).toContain('Upstash');
+    expect(String(fallbackWarnings[0][0])).toContain('RL_*');
+    // The counters really did go to KV.
+    expect(kv.put).toHaveBeenCalled();
   });
 
-  it('does not warn when Upstash credentials are configured', async () => {
+  it('does not warn when a rate-limit binding is bound', async () => {
     const logger = mockLogger();
-    // Upstash backend construction does not hit the network; the check will
-    // fail open against the unmocked fetch, which is fine for this assertion.
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(JSON.stringify({ result: 1 }), { status: 200 })),
+    const binding = { limit: vi.fn().mockResolvedValue({ success: true }) };
+
+    await checkRateLimit(
+      { bindings: { RL_15: binding } as unknown as DiscordRateLimitBindings, kv: createMockKV() },
+      'user-1',
+      'harmony',
+      logger,
     );
-    try {
-      await checkRateLimit(
-        { upstashUrl: 'https://example.upstash.io', upstashToken: 'token', kv: createMockKV() },
-        'user-1',
-        'harmony',
-        logger,
-      );
-    } finally {
-      vi.unstubAllGlobals();
-    }
+
     const fallbackWarnings = logger.warn.mock.calls.filter(([msg]) =>
       String(msg).includes('KV fallback'),
     );
     expect(fallbackWarnings).toHaveLength(0);
+    expect(binding.limit).toHaveBeenCalledWith({ key: 'ratelimit:user:user-1:harmony' });
+  });
+});
+
+/** One `[[ratelimits]]` binding stub that admits every request. */
+function tierBinding() {
+  return { limit: vi.fn().mockResolvedValue({ success: true }) };
+}
+
+/** All the partial-binding warnings this logger saw, in call order. */
+function partialWarnings(logger: ReturnType<typeof mockLogger>) {
+  return logger.warn.mock.calls.filter(([msg]) =>
+    String(msg).includes('RL_* bindings are missing'),
+  );
+}
+
+/**
+ * FINDING-007 follow-up (whole-branch review of the 2026-08-29 audit): only
+ * losing ALL six tiers falls back to KV and warns. Losing ONE — a dashboard
+ * edit, a half-applied wrangler.toml — keeps the Cloudflare backend, and
+ * worker-kit's `selectTier` then routes the orphaned commands to the next
+ * LARGER tier: dropping `RL_5` quietly hands `/extractor image` 10/min. The
+ * partial case must be as visible as the total one, once per isolate, on the
+ * same request-logger path.
+ */
+describe('discord-worker rate limiter partial RL_* binding warning (FINDING-007)', () => {
+  beforeEach(() => {
+    resetRateLimiterInstance();
+  });
+
+  it('warns once per isolate naming the missing tier, and still serves the command', async () => {
+    const logger = mockLogger();
+    // Five of six bound — RL_5, `/extractor image`'s own tier, is missing.
+    const bindings = {
+      RL_10: tierBinding(),
+      RL_15: tierBinding(),
+      RL_20: tierBinding(),
+      RL_30: tierBinding(),
+      RL_70: tierBinding(),
+    };
+    const config = {
+      bindings: bindings as unknown as DiscordRateLimitBindings,
+      kv: createMockKV(),
+    };
+
+    const result = await checkRateLimit(config, 'user-1', 'extractor', logger, 'image');
+    await checkRateLimit(config, 'user-1', 'extractor', logger, 'image');
+
+    const warnings = partialWarnings(logger);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0][0]).toBe(
+      'Rate limiter: some RL_* bindings are missing — affected commands use the next larger tier',
+    );
+    expect(warnings[0][1]).toEqual({ missing: ['RL_5'] });
+
+    // …and the warning describes something real: the 5/min command was served
+    // by the 10/min tier.
+    expect(result.allowed).toBe(true);
+    expect(bindings.RL_10.limit).toHaveBeenCalledWith({
+      key: 'ratelimit:user:user-1:extractor:image',
+    });
+  });
+
+  it('names every missing tier, not just the first', async () => {
+    const logger = mockLogger();
+    const bindings = { RL_15: tierBinding(), RL_30: tierBinding() };
+
+    await checkRateLimit(
+      { bindings: bindings as unknown as DiscordRateLimitBindings, kv: createMockKV() },
+      'user-1',
+      'harmony',
+      logger,
+    );
+
+    expect(partialWarnings(logger)[0][1]).toEqual({ missing: ['RL_5', 'RL_10', 'RL_20', 'RL_70'] });
+  });
+
+  it('does not warn when all six tiers are bound', async () => {
+    const logger = mockLogger();
+    const bindings = {
+      RL_5: tierBinding(),
+      RL_10: tierBinding(),
+      RL_15: tierBinding(),
+      RL_20: tierBinding(),
+      RL_30: tierBinding(),
+      RL_70: tierBinding(),
+    };
+
+    await checkRateLimit(
+      { bindings: bindings as unknown as DiscordRateLimitBindings, kv: createMockKV() },
+      'user-1',
+      'extractor',
+      logger,
+      'image',
+    );
+
+    expect(partialWarnings(logger)).toHaveLength(0);
+    expect(bindings.RL_5.limit).toHaveBeenCalledWith({
+      key: 'ratelimit:user:user-1:extractor:image',
+    });
+  });
+
+  it('does not warn when NO tier is bound — that is the KV-fallback warning', async () => {
+    const logger = mockLogger();
+
+    await checkRateLimit({ kv: createMockKV() }, 'user-1', 'harmony', logger);
+
+    expect(partialWarnings(logger)).toHaveLength(0);
+    expect(
+      logger.warn.mock.calls.filter(([msg]) => String(msg).includes('KV fallback')),
+    ).toHaveLength(1);
   });
 });

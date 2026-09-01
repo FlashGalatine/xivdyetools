@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Package Overview
 
-`@xivdyetools/test-utils` is the **shared testing toolbox** for the entire workspace: Cloudflare Workers binding mocks (D1, KV, R2, Service Bindings, Analytics Engine), authentication helpers (JWT, HMAC bot signatures, bearer-token headers), domain object factories (`createMockPresetRow`, `createMockCategoryRow`, `createMockDye`, `mockDyes`, etc.), and test constants (PKCE values). A 2026-08-18 dead-code audit (DEAD-026/027, Task 5) removed the `/dom` and `/assertions` subpaths and the `factories/user.ts` / `factories/vote.ts` / `auth/context.ts` / `constants/secrets.ts` modules — all had zero consumers anywhere in the workspace; see the package CHANGELOG's "Removed (2026-08-18 dead-code audit)" entry for the full list, including the two DEAD-026 candidates that turned out to have live consumers in this package's own `integration/` suite and were kept instead.
+`@xivdyetools/test-utils` is the **shared testing toolbox** for the entire workspace: Cloudflare Workers binding mocks (D1, KV, R2, Service Bindings, Analytics Engine), authentication helpers (JWT, bearer-token headers), domain object factories (`createMockPresetRow`, `createMockCategoryRow`, `createMockDye`, `mockDyes`, etc.), and test constants (PKCE values). A 2026-08-18 dead-code audit (DEAD-026/027, Task 5) removed the `/dom` and `/assertions` subpaths and the `factories/user.ts` / `factories/vote.ts` / `auth/context.ts` / `constants/secrets.ts` modules — all had zero consumers anywhere in the workspace; see the package CHANGELOG's "Removed (2026-08-18 dead-code audit)" entry for the full list, including the two DEAD-026 candidates that turned out to have live consumers in this package's own `integration/` suite and were kept instead. One of those two was reversed 2026-08-31 (FINDING-015, Sprint 11 fix round): `auth/signature.ts`'s v1 bot-signature helpers lost their only remaining consumer when the v1-signature integration tests they backed were deleted, and are gone along with it — see "Removed (2026-08-31, FINDING-015)" in the CHANGELOG.
 
 Every worker app that declares it (`discord-worker`, `presets-api`, `oauth`, `moderation-worker`, `api-worker`) uses these mocks in their Vitest suites — see "Consumers" below for the actual per-app slice. `vitest >= 2.0.0` is a peer dependency; consumers bring their own `vitest`.
 
@@ -45,11 +45,8 @@ src/
 │   ├── fetcher.ts            # createMockFetcher for service bindings
 │   └── analytics.ts          # createMockAnalyticsEngine (consumed by discord-worker's
 │                              #   src/test-utils.ts since Task 5's DEAD-005 consolidation)
-├── auth/                     # JWT, HMAC signature, header helpers
+├── auth/                     # JWT, header helpers
 │   ├── jwt.ts                 # createTestJWT, createExpiredJWT
-│   ├── signature.ts          # createBotSignature, createTimestampedSignature,
-│   │                          #   verifyBotSignature, TEST_SIGNING_SECRET — also used
-│   │                          #   by this package's own integration/ suite
 │   └── headers.ts            # authHeaders (bearer-token header builder)
 ├── factories/                # Domain object factories
 │   ├── preset.ts              # createMockPresetRow, createMockSubmission
@@ -61,7 +58,7 @@ src/
     └── counters.ts            # randomId, randomStringId (parallel-safe; TEST-DESIGN-001)
 ```
 
-`/dom`, `/assertions`, `factories/user.ts`, `factories/vote.ts`, `auth/context.ts`, `constants/secrets.ts`, and `utils/crypto.ts` were removed 2026-08-18 (dead-code audit, DEAD-026/027) — zero consumers anywhere in the workspace. Internal callers of the old `utils/crypto.ts` pass-through now import `@xivdyetools/auth/encoding` directly.
+`/dom`, `/assertions`, `factories/user.ts`, `factories/vote.ts`, `auth/context.ts`, `constants/secrets.ts`, and `utils/crypto.ts` were removed 2026-08-18 (dead-code audit, DEAD-026/027) — zero consumers anywhere in the workspace. Internal callers of the old `utils/crypto.ts` pass-through now import `@xivdyetools/auth/encoding` directly. `auth/signature.ts` (kept in that same 2026-08-18 pass because the integration suite still used it) was removed later, 2026-08-31 — its v1 bot-signature helpers lost their only consumer when the v1-signature test blocks in `integration/discord-presets/bot-authentication.test.ts` were deleted (FINDING-015, 2026-08-29 security audit, Sprint 11 fix round).
 
 ## Public API
 
@@ -106,12 +103,10 @@ function createMockAnalyticsEngine(): MockAnalyticsEngineDataset;
 ```ts
 function createTestJWT(secret, payload, expiresInSeconds?, issuer?): Promise<string>;
 function createExpiredJWT(secret, payload?): Promise<string>;
-function createBotSignature(timestamp, userDiscordId, userName, secret?): Promise<string>;
-function createTimestampedSignature(userDiscordId, userName, secret?): Promise<{ signature; timestamp }>;
-function verifyBotSignature(signature, timestamp, userDiscordId, userName, secret?): Promise<boolean>;
-const TEST_SIGNING_SECRET: string;
 function authHeaders(token, userId?, userName?): Record<string, string>;
 ```
+
+The v1 bot-signature helpers (`createBotSignature`, `createTimestampedSignature`, `verifyBotSignature`, `TEST_SIGNING_SECRET`) that used to be documented here were removed 2026-08-31 — see "Key Directories" above.
 
 ### `@xivdyetools/test-utils/factories`
 

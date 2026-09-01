@@ -2,7 +2,7 @@
  * Tests for the main Hono app and interaction handlers
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import app from './index.js';
 import {
   InteractionType,
@@ -36,6 +36,7 @@ vi.mock('./handlers/commands/index.js', () => ({
   handleSwatchCommand: vi.fn(),
   handleAccessibilityCommand: vi.fn(),
   handleManualCommand: vi.fn(),
+  handleChangelogCommand: vi.fn(),
   handleComparisonCommand: vi.fn(),
   handlePresetCommand: vi.fn(),
   handleStatsCommand: vi.fn(),
@@ -67,6 +68,7 @@ vi.mock('./services/preset-api.js', () => ({
 
 vi.mock('./utils/discord-api.js', () => ({
   sendMessage: vi.fn(),
+  sendFollowUp: vi.fn(),
 }));
 
 // /webhooks/github: the HMAC check and the two downstream services are
@@ -176,6 +178,124 @@ describe('index.ts', () => {
     });
   });
 
+  /**
+   * FINDING-013 (2026-08-29 security audit): `validateEnv` raises
+   * `Missing required env var in production: RL_N` for each rate-limit tier a
+   * PRODUCTION worker is missing, and the middleware must refuse the request
+   * on it exactly as it does for a missing Discord secret. Workers Logs are
+   * off on this script, so the once-per-isolate console line is not a signal
+   * anyone would see; a bot that answers errors is noticed in minutes. The
+   * beta worker (`ENVIRONMENT = "development"`) keeps the log-only behaviour
+   * and its KV fallback.
+   */
+  describe('environment validation (FINDING-013)', () => {
+    let consoleErrorSpy: MockInstance;
+
+    const TIER_NAMES = ['RL_5', 'RL_10', 'RL_15', 'RL_20', 'RL_30', 'RL_70'] as const;
+
+    /** The six `[[ratelimits]]` bindings as both environments bind them. */
+    function boundTiers(except?: (typeof TIER_NAMES)[number]): Partial<Env> {
+      return Object.fromEntries(
+        TIER_NAMES.filter((name) => name !== except).map((name) => [
+          name,
+          { limit: vi.fn().mockResolvedValue({ success: true }) },
+        ]),
+      ) as unknown as Partial<Env>;
+    }
+
+    /** POST one command interaction through the real middleware chain. */
+    async function postCommand(env: Env): Promise<Response> {
+      const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+      const { checkRateLimit } = await import('./services/rate-limiter.js');
+      const interaction = {
+        type: InteractionType.APPLICATION_COMMAND,
+        data: { name: 'unknown_command' },
+        user: { id: 'user-123' },
+      };
+      vi.mocked(verifyDiscordRequest).mockResolvedValue({
+        isValid: true,
+        body: JSON.stringify(interaction),
+        error: '',
+      });
+      vi.mocked(checkRateLimit).mockResolvedValue({
+        allowed: true,
+        remaining: 14,
+        resetAt: Date.now() + 60_000,
+      });
+      return app.fetch(
+        new Request('http://localhost/', { method: 'POST', body: JSON.stringify(interaction) }),
+        env,
+        mockCtx,
+      );
+    }
+
+    beforeEach(() => {
+      // logValidationErrors() falls through to console.error when it is given
+      // no logger — keep the suite's output clean.
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('refuses an interaction when DISCORD_TOKEN is missing (the shape below must match)', async () => {
+      const res = await postCommand({ ...mockEnv, DISCORD_TOKEN: '' });
+
+      expect(res.status).toBe(500);
+      expect(await res.json()).toEqual({ error: 'Service misconfigured' });
+    });
+
+    it('refuses an interaction when a production RL_* binding is missing', async () => {
+      const res = await postCommand({
+        ...mockEnv,
+        ENVIRONMENT: 'production',
+        ...boundTiers('RL_5'),
+      } as Env);
+
+      expect(res.status).toBe(500);
+      expect(await res.json()).toEqual({ error: 'Service misconfigured' });
+    });
+
+    it('serves an interaction when production binds all six tiers', async () => {
+      const res = await postCommand({
+        ...mockEnv,
+        ENVIRONMENT: 'production',
+        ...boundTiers(),
+      } as Env);
+
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as InteractionResponseBody;
+      expect(data.data!.content).toContain('not yet implemented');
+    });
+
+    it('serves an interaction on the beta worker with no tier bound (KV fallback)', async () => {
+      const res = await postCommand({ ...mockEnv, ENVIRONMENT: 'development' } as Env);
+
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as InteractionResponseBody;
+      expect(data.data!.content).toContain('not yet implemented');
+    });
+
+    it('refuses /health on a misconfigured production worker, exactly as a missing token does', async () => {
+      const missingTier = await app.fetch(
+        new Request('http://localhost/health'),
+        { ...mockEnv, ENVIRONMENT: 'production', ...boundTiers('RL_70') } as Env,
+        mockCtx,
+      );
+      const missingToken = await app.fetch(
+        new Request('http://localhost/health'),
+        { ...mockEnv, DISCORD_TOKEN: '' },
+        mockCtx,
+      );
+
+      expect(missingTier.status).toBe(500);
+      expect(await missingTier.json()).toEqual({ error: 'Service misconfigured' });
+      // The two failures are indistinguishable to a caller, by design.
+      expect(missingTier.status).toBe(missingToken.status);
+    });
+  });
+
   describe('POST /webhooks/preset-submission', () => {
     it('should reject unauthorized requests', async () => {
       const { timingSafeEqual } = await import('@xivdyetools/auth');
@@ -266,6 +386,51 @@ describe('index.ts', () => {
       };
       expect(call.components).toBeUndefined();
       expect(call.embeds[0].description).toContain('/preset moderate');
+    });
+
+    // FINDING-011 (2026-08-29 security audit): the webhook's own log line
+    // carried `presetName` — user-authored free text describing an
+    // unpublished submission — into the structured log sink. The assertion is
+    // on what actually reaches the sink (the JSON adapter writes to
+    // console.log), not on the call arguments, so a name reintroduced
+    // anywhere in this request's logging fails it.
+    it('logs the preset id and source, never the submitted name', async () => {
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+      const sink = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const preset = {
+        id: 'preset-789',
+        name: 'Sunset Over Costa del Sol',
+        description: 'A private draft',
+        category_id: 'test-category',
+        author_name: 'Test Author',
+        source: 'web' as const,
+        dyes: [1, 2, 3],
+        tags: [],
+        status: 'pending' as const,
+        created_at: new Date().toISOString(),
+      };
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test-webhook-secret' },
+        body: JSON.stringify({ type: 'submission', preset }),
+      });
+
+      const res = await app.fetch(req, mockEnv, mockCtx);
+      const emitted = sink.mock.calls.map(([line]) => String(line));
+      sink.mockRestore();
+
+      expect(res.status).toBe(200);
+      const webhookLine = emitted.find((line) => line.includes('Received preset webhook'));
+      expect(webhookLine, 'the webhook log line never ran').toBeDefined();
+      expect(
+        (JSON.parse(webhookLine!) as { context?: Record<string, unknown> }).context,
+      ).toMatchObject({ presetId: 'preset-789', source: 'web' });
+      expect(emitted.filter((line) => line.includes(preset.name))).toEqual([]);
     });
 
     it('should handle approved preset submission', async () => {
@@ -500,8 +665,21 @@ describe('index.ts', () => {
   });
 
   describe('POST /webhooks/github', () => {
-    const githubEnv = (): Env => ({
+    /**
+     * KV double this suite asserts on directly: the announce-once memo
+     * (`announced:v:<version>`, FINDING-021) is read and written through it.
+     */
+    const announceKV = () => ({
+      get: vi.fn().mockResolvedValue(null),
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
+      getWithMetadata: vi.fn().mockResolvedValue({ value: null, metadata: null }),
+    });
+
+    const githubEnv = (kv: ReturnType<typeof announceKV> = announceKV()): Env => ({
       ...mockEnv,
+      KV: kv as unknown as KVNamespace,
       GITHUB_WEBHOOK_SECRET: 'test-github-secret', // pragma: allowlist secret
       ANNOUNCEMENT_CHANNEL_ID: 'test-announcement-channel',
     });
@@ -522,19 +700,78 @@ describe('index.ts', () => {
       ...overrides,
     });
 
-    const postPush = (body: string, env: Env = githubEnv()) =>
-      app.fetch(
-        new Request('http://localhost/webhooks/github', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Hub-Signature-256': 'sha256=irrelevant-mocked',
-          },
-          body,
-        }),
-        env,
+    /** A head commit whose file list touches the product-level changelog. */
+    const changelogCommit = (overrides: Record<string, unknown> = {}) => ({
+      id: 'abc',
+      message: 'Merge pull request',
+      timestamp: '2026-08-28T23:36:41Z',
+      url: 'https://github.com/FlashGalatine/xivdyetools/commit/abc',
+      author: { name: 'x', email: 'x@example.com', username: 'x' },
+      added: [],
+      removed: [],
+      modified: ['CHANGELOG-laymans.md'],
+      ...overrides,
+    });
+
+    /**
+     * `options.headers` overrides the defaults; an explicit `undefined` drops
+     * the header entirely (GitHub always stamps `X-GitHub-Event`, but a
+     * hand-rolled caller need not).
+     */
+    const postPush = (
+      body: string,
+      options: { env?: Env; headers?: Record<string, string | undefined> } = {},
+    ) => {
+      const merged: Record<string, string | undefined> = {
+        'Content-Type': 'application/json',
+        'X-Hub-Signature-256': 'sha256=irrelevant-mocked',
+        'X-GitHub-Event': 'push',
+        ...options.headers,
+      };
+      const headers = Object.fromEntries(
+        Object.entries(merged).filter((pair): pair is [string, string] => pair[1] !== undefined),
+      );
+      return app.fetch(
+        new Request('http://localhost/webhooks/github', { method: 'POST', headers, body }),
+        options.env ?? githubEnv(),
         mockCtx,
       );
+    };
+
+    let fetchSpy: MockInstance<typeof fetch> | undefined;
+    let logSpy: MockInstance<typeof console.log> | undefined;
+
+    /** Signature verified + changelog fetched/parsed — the announce path's setup. */
+    const arrangeAnnounce = async () => {
+      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+      const { parseLatestVersion } = await import('./services/changelog-parser.js');
+      const { sendAnnouncement } = await import('./services/announcements.js');
+      vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
+      const entry = { version: '5.0.0', date: '2026-08-28', sections: [] };
+      vi.mocked(parseLatestVersion).mockReturnValue(entry as never);
+      // A fresh Response per call: a redelivery test calls the route twice and
+      // a Response body can only be consumed once.
+      fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(async () => new Response('## [5.0.0] - 2026-08-28\n', { status: 200 }));
+      return { entry, fetchSpy, sendAnnouncement: vi.mocked(sendAnnouncement) };
+    };
+
+    /** Captures the structured logger's JSON lines (it writes via console.log). */
+    const captureLogLines = (): string[] => {
+      const lines: string[] = [];
+      logSpy = vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
+        lines.push(String(line));
+      });
+      return lines;
+    };
+
+    afterEach(() => {
+      fetchSpy?.mockRestore();
+      fetchSpy = undefined;
+      logSpy?.mockRestore();
+      logSpy = undefined;
+    });
 
     it('accepts a real-sized push payload (> 10 KB) instead of answering 413', async () => {
       const { verifyGitHubSignature } = await import('./utils/github-verify.js');
@@ -562,45 +799,23 @@ describe('index.ts', () => {
     });
 
     it('announces when only head_commit lists CHANGELOG-laymans.md (commits truncated)', async () => {
-      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
-      const { parseLatestVersion } = await import('./services/changelog-parser.js');
-      const { sendAnnouncement } = await import('./services/announcements.js');
-      vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
-      const entry = { version: '5.0.0', date: '2026-08-28', sections: [] };
-      vi.mocked(parseLatestVersion).mockReturnValue(entry as never);
-      const fetchSpy = vi
-        .spyOn(globalThis, 'fetch')
-        .mockResolvedValue(new Response('## [5.0.0] - 2026-08-28\n', { status: 200 }));
+      const { fetchSpy: fetched, sendAnnouncement, entry } = await arrangeAnnounce();
 
-      try {
-        const mergeCommit = {
-          id: 'abc',
-          message: 'Merge pull request',
-          timestamp: '2026-08-28T23:36:41Z',
-          url: 'https://github.com/FlashGalatine/xivdyetools/commit/abc',
-          author: { name: 'x', email: 'x@example.com', username: 'x' },
-          added: [],
-          removed: [],
-          modified: ['CHANGELOG-laymans.md'],
-        };
-        const res = await postPush(
-          JSON.stringify(pushPayload({ commits: [], head_commit: mergeCommit })),
-        );
+      const res = await postPush(
+        JSON.stringify(pushPayload({ commits: [], head_commit: changelogCommit() })),
+      );
 
-        expect(res.status).toBe(200);
-        expect(fetchSpy).toHaveBeenCalledWith(
-          'https://raw.githubusercontent.com/FlashGalatine/xivdyetools/main/CHANGELOG-laymans.md',
-          expect.anything(),
-        );
-        expect(sendAnnouncement).toHaveBeenCalledWith(
-          'test-token',
-          'test-announcement-channel',
-          entry,
-          'https://github.com/FlashGalatine/xivdyetools',
-        );
-      } finally {
-        fetchSpy.mockRestore();
-      }
+      expect(res.status).toBe(200);
+      expect(fetched).toHaveBeenCalledWith(
+        'https://raw.githubusercontent.com/FlashGalatine/xivdyetools/main/CHANGELOG-laymans.md',
+        expect.anything(),
+      );
+      expect(sendAnnouncement).toHaveBeenCalledWith(
+        'test-token',
+        'test-announcement-channel',
+        entry,
+        'https://github.com/FlashGalatine/xivdyetools',
+      );
     });
 
     it('skips when neither commits nor head_commit touch the changelog', async () => {
@@ -611,16 +826,7 @@ describe('index.ts', () => {
       const res = await postPush(
         JSON.stringify(
           pushPayload({
-            head_commit: {
-              id: 'def',
-              message: 'chore',
-              timestamp: '2026-08-29T00:00:00Z',
-              url: 'https://github.com/FlashGalatine/xivdyetools/commit/def',
-              author: { name: 'x', email: 'x@example.com', username: 'x' },
-              added: [],
-              removed: [],
-              modified: ['README.md'],
-            },
+            head_commit: changelogCommit({ id: 'def', modified: ['README.md'] }),
           }),
         ),
       );
@@ -628,6 +834,201 @@ describe('index.ts', () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toMatchObject({ message: 'Changelog not modified, skipping' });
       expect(sendAnnouncement).not.toHaveBeenCalled();
+    });
+
+    // FINDING-021: the HMAC secret is the only gate on this route, so a holder
+    // of it must not be able to choose which repository gets announced.
+    it('refuses a push whose repository is not the pinned one', async () => {
+      const { fetchSpy: fetched, sendAnnouncement } = await arrangeAnnounce();
+
+      const res = await postPush(
+        JSON.stringify(
+          pushPayload({
+            repository: {
+              full_name: 'evil/xivdyetools',
+              html_url: 'https://evil.example/x',
+              description: 'x'.repeat(16_000),
+            },
+            head_commit: changelogCommit(),
+          }),
+        ),
+      );
+
+      expect(res.status).toBe(403);
+      expect(await res.json()).toMatchObject({ error: 'Repository not allowed' });
+      expect(fetched).not.toHaveBeenCalled();
+      expect(sendAnnouncement).not.toHaveBeenCalled();
+    });
+
+    // FINDING-021: the announced link is a constant, so a payload that lies
+    // about `html_url` cannot mask an arbitrary destination in the embed.
+    it('announces with the pinned repository URL, not the payload html_url', async () => {
+      const { fetchSpy: fetched, sendAnnouncement, entry } = await arrangeAnnounce();
+
+      const res = await postPush(
+        JSON.stringify(
+          pushPayload({
+            repository: {
+              full_name: 'FlashGalatine/xivdyetools',
+              html_url: 'https://evil.example/x',
+              description: 'x'.repeat(16_000),
+            },
+            head_commit: changelogCommit(),
+          }),
+        ),
+      );
+
+      expect(res.status).toBe(200);
+      expect(fetched).toHaveBeenCalledWith(
+        'https://raw.githubusercontent.com/FlashGalatine/xivdyetools/main/CHANGELOG-laymans.md',
+        expect.anything(),
+      );
+      expect(sendAnnouncement).toHaveBeenCalledWith(
+        'test-token',
+        'test-announcement-channel',
+        entry,
+        'https://github.com/FlashGalatine/xivdyetools',
+      );
+    });
+
+    // FINDING-021: GitHub signs the `ping` it sends when a hook is created.
+    it('answers a ping with pong without parsing the body', async () => {
+      const { fetchSpy: fetched, sendAnnouncement } = await arrangeAnnounce();
+
+      // Deliberately not JSON: a 200 pong proves the body is never parsed.
+      const res = await postPush('{ this is not json', {
+        headers: { 'X-GitHub-Event': 'ping' },
+      });
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ success: true, message: 'pong' });
+      expect(fetched).not.toHaveBeenCalled();
+      expect(sendAnnouncement).not.toHaveBeenCalled();
+    });
+
+    // FINDING-015 follow-up: the signature check must gate every event type,
+    // `ping` included — an unsigned caller must not be able to reach the
+    // pong-only branch just by claiming to be a hook-creation ping. This pins
+    // the ordering (signature verified before the event-type switch); if the
+    // handler were reordered to check the event type first, an unsigned ping
+    // would answer 200 pong instead of 401 and this test would catch it.
+    it('refuses an unsigned ping with 401 before checking the event type', async () => {
+      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+      const { sendAnnouncement } = await import('./services/announcements.js');
+      vi.mocked(verifyGitHubSignature).mockResolvedValue(false);
+
+      const res = await postPush(JSON.stringify(pushPayload()), {
+        headers: { 'X-GitHub-Event': 'ping' },
+      });
+
+      expect(res.status).toBe(401);
+      expect(await res.json()).toMatchObject({ error: 'Unauthorized' });
+      expect(sendAnnouncement).not.toHaveBeenCalled();
+    });
+
+    // FINDING-021: 2xx (not 4xx) keeps the hook healthy in GitHub's delivery log.
+    it.each([
+      ['a non-push event', { 'X-GitHub-Event': 'release' }],
+      ['a delivery with no event header', { 'X-GitHub-Event': undefined }],
+    ])('ignores %s', async (_label, headers) => {
+      const { fetchSpy: fetched, sendAnnouncement } = await arrangeAnnounce();
+
+      const res = await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
+        headers,
+      });
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ success: true, message: 'Ignored event' });
+      expect(fetched).not.toHaveBeenCalled();
+      expect(sendAnnouncement).not.toHaveBeenCalled();
+    });
+
+    // FINDING-021: the hook fires before the deploy finishes, so a Redeliver is
+    // routine — it must not re-post a version that already went out (3× on
+    // 2026-08-29).
+    it('memoises the announced version for 90 days', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      const kv = announceKV();
+
+      const res = await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
+        env: githubEnv(kv),
+      });
+
+      expect(res.status).toBe(200);
+      expect(sendAnnouncement).toHaveBeenCalledOnce();
+      expect(kv.put).toHaveBeenCalledWith(
+        'announced:v:5.0.0',
+        '1',
+        expect.objectContaining({ expirationTtl: 7_776_000 }),
+      );
+    });
+
+    it('skips a version the memo already holds', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      const kv = announceKV();
+      kv.get.mockImplementation(async (key: string) => (key === 'announced:v:5.0.0' ? '1' : null));
+
+      const res = await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
+        env: githubEnv(kv),
+      });
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({
+        success: true,
+        message: 'Already announced',
+        version: '5.0.0',
+      });
+      expect(sendAnnouncement).not.toHaveBeenCalled();
+      expect(kv.put).not.toHaveBeenCalled();
+    });
+
+    it('does not memoise a failed send, so a redelivery still announces', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      // A stateful memo: what the first delivery writes, the second reads.
+      const memo = new Map<string, string>();
+      const kv = announceKV();
+      kv.get.mockImplementation(async (key: string) => memo.get(key) ?? null);
+      kv.put.mockImplementation(async (key: string, value: string) => {
+        memo.set(key, value);
+      });
+      const env = githubEnv(kv);
+      const body = JSON.stringify(pushPayload({ head_commit: changelogCommit() }));
+
+      sendAnnouncement.mockRejectedValueOnce(new Error('Discord rejected the embed'));
+      const failed = await postPush(body, { env });
+
+      expect(failed.status).toBe(500);
+      expect(await failed.json()).toMatchObject({ error: 'Internal Server Error' });
+      expect(memo.has('announced:v:5.0.0')).toBe(false);
+
+      const retried = await postPush(body, { env });
+
+      expect(retried.status).toBe(200);
+      expect(sendAnnouncement).toHaveBeenCalledTimes(2);
+      expect(memo.get('announced:v:5.0.0')).toBe('1');
+    });
+
+    // FINDING-021: the release is already posted by the time the memo is
+    // written, so a KV failure must not become a 500 — that shows as a failed
+    // delivery and invites the Redeliver that double-posts.
+    it('answers 200 and warns when the memo write fails after a successful send', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      const kv = announceKV();
+      kv.put.mockRejectedValue(new Error('KV unavailable'));
+      const logLines = captureLogLines();
+
+      const res = await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
+        env: githubEnv(kv),
+      });
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ success: true, version: '5.0.0' });
+      expect(sendAnnouncement).toHaveBeenCalledOnce();
+
+      const warned = logLines.filter((line) => line.includes('Announcement memo write failed'));
+      expect(warned).toHaveLength(1);
+      expect(warned[0]).toContain('"level":"warn"');
+      expect(warned[0]).toContain('"version":"5.0.0"');
     });
   });
 
@@ -833,11 +1234,163 @@ describe('index.ts', () => {
           expect.anything(),
           'user-123',
           'stats',
-          undefined,
+          // the request logger — the limiter's degradation warnings are
+          // attributed to this request (FINDING-007)
+          expect.objectContaining({ warn: expect.any(Function) }),
           undefined,
         );
         expect(data.data!.flags).toBe(64);
         expect(handleStatsCommand).not.toHaveBeenCalled();
+      });
+
+      // FINDING-020 (2026-08-29 security audit): /about, /manual and
+      // /changelog were exempt from the limiter, yet each call still made the
+      // three shared hot-key KV counter writes in trackCommandWithKV — the
+      // cheapest denial-of-service in the worker. They now take the 30/min
+      // tier worker-kit already defined for them.
+      it.each([
+        ['about', 'handleAboutCommand'],
+        ['manual', 'handleManualCommand'],
+        ['changelog', 'handleChangelogCommand'],
+      ] as const)('rate-limits /%s like any other command', async (command, handlerName) => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { checkRateLimit, formatRateLimitMessage } = await import(
+          './services/rate-limiter.js'
+        );
+        const handlers = await import('./handlers/commands/index.js');
+
+        const interaction = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name: command },
+          user: { id: 'user-123' },
+        };
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify(interaction),
+          error: '',
+        });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: false,
+          retryAfter: 30,
+          remaining: 0,
+          resetAt: Date.now() + 30000,
+        });
+        vi.mocked(formatRateLimitMessage).mockReturnValue('Rate limited');
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify(interaction),
+        });
+
+        // Bind the 30/min tier so the assertion below proves the dispatcher
+        // really lifts the binding off `env` into the limiter config.
+        const env = { ...mockEnv, RL_30: { limit: vi.fn() } } as unknown as Env;
+        const res = await app.fetch(req, env, mockCtx);
+        expect(res.status).toBe(200);
+        const data = (await res.json()) as InteractionResponseBody;
+        expect(checkRateLimit).toHaveBeenCalledWith(
+          expect.objectContaining({
+            bindings: expect.objectContaining({ RL_30: env.RL_30 }),
+            kv: expect.anything(),
+          }),
+          'user-123',
+          command,
+          expect.objectContaining({ warn: expect.any(Function) }),
+          undefined,
+        );
+        expect(data.data!.flags).toBe(64); // Ephemeral
+        expect(data.data!.content).toBe('Rate limited');
+        expect(vi.mocked(handlers[handlerName])).not.toHaveBeenCalled();
+      });
+
+      /**
+       * FINDING-007 follow-up: the limiter's two degradation signals — the
+       * one-time "running on the KV fallback" warning and the per-request
+       * fail-open report — only exist if the dispatcher actually hands
+       * `checkRateLimit` the request logger. Both were unreachable in the
+       * deployed worker while the call sites passed `undefined`. These run
+       * the REAL rate limiter through the real route and read the JSON the
+       * request logger writes.
+       */
+      describe('limiter degradation reaches the request logger', () => {
+        let logLines: string[];
+        let logSpy: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(async () => {
+          const actual = await vi.importActual<typeof import('./services/rate-limiter.js')>(
+            './services/rate-limiter.js',
+          );
+          actual.resetRateLimiterInstance();
+          // Undo this file's blanket mock for these tests only.
+          const { checkRateLimit } = await import('./services/rate-limiter.js');
+          vi.mocked(checkRateLimit).mockImplementation(actual.checkRateLimit);
+
+          // @xivdyetools/logger's worker preset (JsonAdapter) writes every
+          // level as one JSON line through console.log.
+          logLines = [];
+          logSpy = vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
+            logLines.push(String(line));
+          });
+        });
+
+        afterEach(async () => {
+          logSpy.mockRestore();
+          // `vi.clearAllMocks()` clears calls but not implementations — put
+          // the module mock back so later tests get the bare vi.fn() again.
+          const { checkRateLimit } = await import('./services/rate-limiter.js');
+          vi.mocked(checkRateLimit).mockReset();
+        });
+
+        async function dispatchAbout(env: Env): Promise<void> {
+          const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+          const { handleAboutCommand } = await import('./handlers/commands/index.js');
+          const interaction = {
+            type: InteractionType.APPLICATION_COMMAND,
+            data: { name: 'about' },
+            user: { id: 'user-123' },
+          };
+          vi.mocked(verifyDiscordRequest).mockResolvedValue({
+            isValid: true,
+            body: JSON.stringify(interaction),
+            error: '',
+          });
+          vi.mocked(handleAboutCommand).mockResolvedValue(new Response('{}'));
+
+          await app.fetch(
+            new Request('http://localhost/', {
+              method: 'POST',
+              body: JSON.stringify(interaction),
+            }),
+            env,
+            mockCtx,
+          );
+        }
+
+        it('warns that it is running on the KV fallback when no RL_* tier is bound', async () => {
+          await dispatchAbout(mockEnv); // mockEnv binds KV only
+
+          const warning = logLines.find((line) => line.includes('KV fallback'));
+          expect(warning).toBeDefined();
+          expect(warning).toContain('no RL_* binding bound');
+          // Written by the request-scoped logger, so it carries the request id.
+          expect(warning).toContain('"requestId"');
+        });
+
+        it('reports the fail-open when the rate-limit binding throws', async () => {
+          const { handleAboutCommand } = await import('./handlers/commands/index.js');
+          const failing = {
+            limit: vi.fn().mockRejectedValue(new Error('binding unavailable')),
+          };
+
+          await dispatchAbout({ ...mockEnv, RL_30: failing } as unknown as Env);
+
+          expect(failing.limit).toHaveBeenCalled();
+          const failOpen = logLines.find((line) => line.includes('Rate limit check failed'));
+          expect(failOpen).toBeDefined();
+          expect(failOpen).toContain('"requestId"');
+          // Fail-open: the command still runs.
+          expect(handleAboutCommand).toHaveBeenCalled();
+        });
       });
 
       it('should handle unknown command', async () => {
@@ -872,6 +1425,58 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
         expect(data.data!.content).toContain('not yet implemented');
+      });
+    });
+
+    describe('first-run notice (FINDING-008)', () => {
+      it('flags the first-run KV marker with a 180-day TTL, not a permanent one', async () => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { checkRateLimit } = await import('./services/rate-limiter.js');
+        const { handleAboutCommand } = await import('./handlers/commands/index.js');
+        const { sendFollowUp } = await import('./utils/discord-api.js');
+
+        const body = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name: 'about' },
+          user: { id: 'user-firstrun' },
+        };
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify(body),
+          error: '',
+        });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: true,
+          remaining: 14,
+          resetAt: Date.now() + 60000,
+        });
+        vi.mocked(handleAboutCommand).mockResolvedValue(new Response());
+        vi.mocked(sendFollowUp).mockResolvedValue(new Response(null, { status: 200 }));
+
+        // handleCommand fires the notice via ctx.waitUntil without awaiting
+        // it, so this ExecutionContext keeps every waitUntil promise for the
+        // test to await once app.fetch() returns.
+        const collected: Promise<unknown>[] = [];
+        const ctx = {
+          waitUntil: vi.fn((p: Promise<unknown>) => {
+            collected.push(p);
+          }),
+          passThroughOnException: vi.fn(),
+        } as unknown as ExecutionContext;
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+
+        await app.fetch(req, mockEnv, ctx);
+        await Promise.all(collected);
+
+        expect(mockEnv.KV.put).toHaveBeenCalledWith(
+          'firstrun:v5:user-firstrun',
+          '1',
+          expect.objectContaining({ expirationTtl: 15_552_000 }),
+        );
       });
     });
 

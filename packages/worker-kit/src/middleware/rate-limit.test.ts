@@ -252,10 +252,16 @@ describe('rateLimitMiddleware', () => {
       app.get('/test', (c) => c.json({ ok: true }));
 
       await app.request('/test');
-      expect(warnFn).toHaveBeenCalledWith(
-        'Rate limiter backend error',
-        expect.objectContaining({ onError: 'fail-open', key: '10.0.0.1' }),
-      );
+      expect(warnFn).toHaveBeenCalledTimes(1);
+      const [message, context] = warnFn.mock.calls[0] as [string, Record<string, unknown>];
+      expect(message).toBe('Rate limiter backend error');
+      // 2026-08-29 FINDING-010: the scope replaces the key, it doesn't sit
+      // alongside it — assert the raw client IP is gone AND that the scope
+      // that replaces it is present. A test that only checked `warn` fired
+      // would still pass if this redaction were reverted.
+      expect(context.key).toBeUndefined();
+      expect(context.keyScope).toBe('ip');
+      expect(context.onError).toBe('fail-open');
     });
 
     it('should log warning on backendError flag in result', async () => {
@@ -283,10 +289,12 @@ describe('rateLimitMiddleware', () => {
 
       const res = await app.request('/test');
       expect(res.status).toBe(200);
-      expect(warnFn).toHaveBeenCalledWith(
-        'Rate limiter backend error (failing open)',
-        expect.objectContaining({ key: '10.0.0.1' }),
-      );
+      expect(warnFn).toHaveBeenCalledTimes(1);
+      const [message, context] = warnFn.mock.calls[0] as [string, Record<string, unknown>];
+      expect(message).toBe('Rate limiter backend error (failing open)');
+      // 2026-08-29 FINDING-010: same property as the catch-block test above.
+      expect(context.key).toBeUndefined();
+      expect(context.keyScope).toBe('ip');
     });
 
     it('should use custom formatError when fail-closed and formatError is provided', async () => {

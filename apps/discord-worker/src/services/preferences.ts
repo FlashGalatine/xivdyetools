@@ -59,6 +59,35 @@ const PREFS_KEY_PREFIX = 'prefs:v1:';
 const LEGACY_I18N_PREFIX = 'i18n:user:';
 const LEGACY_WORLD_PREFIX = 'budget:world:v1:';
 
+/**
+ * Longest world / data-centre name this service will store.
+ *
+ * FINDING-019 (2026-08-29 security audit): `world` used to accept any
+ * non-empty string, so a `/preferences set world:` value of up to Discord's
+ * 6000 characters was written verbatim into `prefs:v1:<userId>` and later
+ * forwarded to the Universalis proxy and the shared price-cache key. Every
+ * live world and data-centre name sits comfortably inside 32 characters, and
+ * the same number is published as `max_length` on all four registered
+ * `world` options (`commands/schemas.ts`) — `commands/schemas.test.ts` pins
+ * the two together.
+ */
+export const WORLD_NAME_MAX_LENGTH = 32;
+
+/**
+ * True when the string contains a C0 control character or DEL.
+ *
+ * Deliberately NOT an ASCII check: the CN and KR worlds are non-Latin
+ * (`红玉海`, `카벙클`), so anything stricter than "no control characters"
+ * would lock those players out of `/budget`.
+ */
+function hasControlCharacters(value: string): boolean {
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f) return true;
+  }
+  return false;
+}
+
 // ============================================================================
 // Core Functions
 // ============================================================================
@@ -177,7 +206,8 @@ export async function setPreference(
         prefs.gender = value as Gender;
         break;
       case 'world':
-        prefs.world = value as string;
+        // Store what the guard measured, not the padded original
+        prefs.world = (value as string).trim();
         break;
       case 'market':
         prefs.market = value === true || value === 'on' || value === 'true';
@@ -215,9 +245,13 @@ export async function setPreference(
     return { success: true };
   } catch (error) {
     if (logger) {
+      // FINDING-011 (2026-08-29 security audit): the value itself is the
+      // user's home world / clan / language — personal data that has no
+      // business in a log line. Its shape is what diagnoses a write failure.
       logger.error('Failed to set preference', error instanceof Error ? error : undefined, {
         key,
-        value,
+        valueType: typeof value,
+        valueLength: typeof value === 'string' ? value.length : undefined,
       });
     }
     return { success: false, reason: 'error' };
@@ -371,13 +405,23 @@ export function validatePreferenceValue(
       }
       break;
 
-    case 'world':
-      if (typeof value !== 'string' || value.length === 0) {
+    case 'world': {
+      // Shape only (FINDING-019). Whether the name exists is settled by the
+      // async, Universalis-backed `validateWorld()` in the command handlers —
+      // this switch is synchronous and cannot make that call.
+      if (typeof value !== 'string') {
         return { valid: false, reason: 'invalidWorld' };
       }
-      // Note: Full world validation would require a list of valid FFXIV worlds
-      // For now, we accept any non-empty string
+      const trimmed = value.trim();
+      if (
+        trimmed.length === 0 ||
+        trimmed.length > WORLD_NAME_MAX_LENGTH ||
+        hasControlCharacters(trimmed)
+      ) {
+        return { valid: false, reason: 'invalidWorld' };
+      }
       break;
+    }
 
     case 'theme':
       if (value !== 'dark' && value !== 'light') {

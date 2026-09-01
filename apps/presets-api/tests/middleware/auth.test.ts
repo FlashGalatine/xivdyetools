@@ -13,7 +13,7 @@ import {
 import type { Env, AuthContext } from '../../src/types';
 import { createMockEnv, createTestJWT, createExpiredJWT } from '../test-utils';
 import { createMockKV } from '@xivdyetools/test-utils';
-import { base64UrlEncode, base64UrlEncodeBytes } from '@xivdyetools/auth';
+import { base64UrlEncode, base64UrlEncodeBytes, createBotSignatureV2 } from '@xivdyetools/auth';
 
 type Variables = {
     auth: AuthContext;
@@ -725,34 +725,50 @@ describe('AuthMiddleware', () => {
     // HMAC Request Signing (Bot Auth Security)
     // ============================================
 
-    describe('Bot Auth with Signing Secret', () => {
+    describe('Bot Auth with Signing Secret (v2)', () => {
+        const SIGNING_SECRET = 'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!';
         let signingEnv: Env;
 
         beforeEach(() => {
-            signingEnv = createMockEnv({
-                BOT_SIGNING_SECRET: 'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!',
-            });
+            signingEnv = createMockEnv({ BOT_SIGNING_SECRET: SIGNING_SECRET });
         });
 
-        async function createValidSignature(
-            timestamp: string,
-            userDiscordId: string,
-            userName: string,
-            secret: string
-        ): Promise<string> {
-            const message = `${timestamp}:${userDiscordId}:${userName}`;
-            const encoder = new TextEncoder();
-            const key = await crypto.subtle.importKey(
-                'raw',
-                encoder.encode(secret),
-                { name: 'HMAC', hash: 'SHA-256' },
-                false,
-                ['sign']
+        /**
+         * Headers for a v2-signed `GET /test/auth`.
+         *
+         * FINDING-015 (2026-08-29 audit): v1 (`timestamp:userId:userName`) is no
+         * longer accepted, so freshness, identity binding and malformed-timestamp
+         * handling are exercised through the v2 signature both bots actually send
+         * (a v1-only request is rejected — see auth-v2.test.ts). Each call signs a
+         * fresh nonce; no KV is bound here, so the replay cache is inert.
+         */
+        async function signedHeaders(
+            options: {
+                timestamp?: string;
+                userDiscordId?: string;
+                userName?: string;
+                /** Identity put on the wire when it must differ from the signed one */
+                sentUserDiscordId?: string;
+            } = {}
+        ): Promise<Record<string, string>> {
+            const timestamp = options.timestamp ?? Math.floor(Date.now() / 1000).toString();
+            const userDiscordId = options.userDiscordId ?? '123456789';
+            const userName = options.userName ?? 'TestUser';
+            const nonce = crypto.randomUUID();
+            const signature = await createBotSignatureV2(
+                { method: 'GET', path: '/test/auth', timestamp, nonce, userDiscordId, userName },
+                SIGNING_SECRET
             );
-            const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
-            return Array.from(new Uint8Array(signature))
-                .map((b) => b.toString(16).padStart(2, '0'))
-                .join('');
+            const headers: Record<string, string> = {
+                Authorization: 'Bearer test-bot-secret',
+                'X-Request-Timestamp': timestamp,
+                'X-Request-Nonce': nonce,
+                'X-Request-Signature-V2': signature,
+            };
+            const sentUserDiscordId = options.sentUserDiscordId ?? userDiscordId;
+            if (sentUserDiscordId) headers['X-User-Discord-ID'] = sentUserDiscordId;
+            if (userName) headers['X-User-Discord-Name'] = userName;
+            return headers;
         }
 
         it('should reject bot auth without signature when signing secret configured', async () => {
@@ -774,27 +790,7 @@ describe('AuthMiddleware', () => {
         });
 
         it('should authenticate with valid signature', async () => {
-            const timestamp = Math.floor(Date.now() / 1000).toString();
-            const signature = await createValidSignature(
-                timestamp,
-                '123456789',
-                'TestUser',
-                'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!'
-            );
-
-            const res = await app.request(
-                '/test/auth',
-                {
-                    headers: {
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': '123456789',
-                        'X-User-Discord-Name': 'TestUser',
-                        'X-Request-Signature': signature,
-                        'X-Request-Timestamp': timestamp,
-                    },
-                },
-                signingEnv
-            );
+            const res = await app.request('/test/auth', { headers: await signedHeaders() }, signingEnv);
             const body = await res.json() as AuthContext;
 
             expect(body.isAuthenticated).toBe(true);
@@ -803,46 +799,21 @@ describe('AuthMiddleware', () => {
         });
 
         it('should reject request with invalid signature', async () => {
-            const timestamp = Math.floor(Date.now() / 1000).toString();
+            const headers = await signedHeaders();
+            headers['X-Request-Signature-V2'] = 'invalid-signature';
 
-            const res = await app.request(
-                '/test/auth',
-                {
-                    headers: {
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': '123456789',
-                        'X-User-Discord-Name': 'TestUser',
-                        'X-Request-Signature': 'invalid-signature',
-                        'X-Request-Timestamp': timestamp,
-                    },
-                },
-                signingEnv
-            );
+            const res = await app.request('/test/auth', { headers }, signingEnv);
             const body = await res.json() as AuthContext;
 
             expect(body.isAuthenticated).toBe(false);
         });
 
-        it('should reject request with expired timestamp (>5 minutes old)', async () => {
+        it('should reject request with expired timestamp (older than the v2 window)', async () => {
             const expiredTimestamp = (Math.floor(Date.now() / 1000) - 400).toString(); // 6+ minutes ago
-            const signature = await createValidSignature(
-                expiredTimestamp,
-                '123456789',
-                'TestUser',
-                'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!'
-            );
 
             const res = await app.request(
                 '/test/auth',
-                {
-                    headers: {
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': '123456789',
-                        'X-User-Discord-Name': 'TestUser',
-                        'X-Request-Signature': signature,
-                        'X-Request-Timestamp': expiredTimestamp,
-                    },
-                },
+                { headers: await signedHeaders({ timestamp: expiredTimestamp }) },
                 signingEnv
             );
             const body = await res.json() as AuthContext;
@@ -850,26 +821,12 @@ describe('AuthMiddleware', () => {
             expect(body.isAuthenticated).toBe(false);
         });
 
-        it('should reject request with future timestamp (>5 minutes ahead)', async () => {
+        it('should reject request with future timestamp (beyond the clock-skew allowance)', async () => {
             const futureTimestamp = (Math.floor(Date.now() / 1000) + 400).toString(); // 6+ minutes in future
-            const signature = await createValidSignature(
-                futureTimestamp,
-                '123456789',
-                'TestUser',
-                'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!'
-            );
 
             const res = await app.request(
                 '/test/auth',
-                {
-                    headers: {
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': '123456789',
-                        'X-User-Discord-Name': 'TestUser',
-                        'X-Request-Signature': signature,
-                        'X-Request-Timestamp': futureTimestamp,
-                    },
-                },
+                { headers: await signedHeaders({ timestamp: futureTimestamp }) },
                 signingEnv
             );
             const body = await res.json() as AuthContext;
@@ -878,54 +835,28 @@ describe('AuthMiddleware', () => {
         });
 
         it('should reject request with invalid timestamp format', async () => {
-            const res = await app.request(
-                '/test/auth',
-                {
-                    headers: {
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': '123456789',
-                        'X-User-Discord-Name': 'TestUser',
-                        'X-Request-Signature': 'some-signature',
-                        'X-Request-Timestamp': 'not-a-number',
-                    },
-                },
-                signingEnv
-            );
+            const headers = await signedHeaders({ timestamp: 'not-a-number' });
+
+            const res = await app.request('/test/auth', { headers }, signingEnv);
             const body = await res.json() as AuthContext;
 
             expect(body.isAuthenticated).toBe(false);
         });
 
         it('should handle missing timestamp', async () => {
-            const res = await app.request(
-                '/test/auth',
-                {
-                    headers: {
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': '123456789',
-                        'X-Request-Signature': 'some-signature',
-                    },
-                },
-                signingEnv
-            );
+            const headers = await signedHeaders();
+            delete headers['X-Request-Timestamp'];
+
+            const res = await app.request('/test/auth', { headers }, signingEnv);
             const body = await res.json() as AuthContext;
 
             expect(body.isAuthenticated).toBe(false);
         });
 
         it('should work with empty user ID and name in signature', async () => {
-            const timestamp = Math.floor(Date.now() / 1000).toString();
-            const signature = await createValidSignature(timestamp, '', '', 'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!');
-
             const res = await app.request(
                 '/test/auth',
-                {
-                    headers: {
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-Request-Signature': signature,
-                        'X-Request-Timestamp': timestamp,
-                    },
-                },
+                { headers: await signedHeaders({ userDiscordId: '', userName: '' }) },
                 signingEnv
             );
             const body = await res.json() as AuthContext;
@@ -935,27 +866,10 @@ describe('AuthMiddleware', () => {
         });
 
         it('should reject tampered user ID (header spoofing attempt)', async () => {
-            const timestamp = Math.floor(Date.now() / 1000).toString();
-            // Sign with one user ID
-            const signature = await createValidSignature(
-                timestamp,
-                '123456789',
-                'TestUser',
-                'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!'
-            );
-
-            // But send different user ID in header (spoofing attempt)
+            // Sign with one user ID, send a different one in the header
             const res = await app.request(
                 '/test/auth',
-                {
-                    headers: {
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': 'different-user-id',
-                        'X-User-Discord-Name': 'TestUser',
-                        'X-Request-Signature': signature,
-                        'X-Request-Timestamp': timestamp,
-                    },
-                },
+                { headers: await signedHeaders({ sentUserDiscordId: 'different-user-id' }) },
                 signingEnv
             );
             const body = await res.json() as AuthContext;

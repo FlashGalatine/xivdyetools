@@ -40,6 +40,11 @@ api-worker; schema in `apps/api-worker/src/telemetry/schema.ts`. Spec:
 | `blob5`–`blob9` | locale · theme · viewport (m/t/d) · app version · env |
 | `double1` | `active_s` for tool_leave, else 0 |
 
+**Addendum 2026-08-30 (FINDING-014):** `blob9` is server-derived from the request
+`Origin` (`https://xivdyetools.app` → `production`, `https://beta.xivdyetools.app`
+→ `beta`), not taken from the beacon body — production/beta splits are now
+trustworthy, and rows written before 2026-08-30 are not.
+
 What counts (the hooks are deliberately narrow):
 
 - `entry`: `initial` = the tool the page loaded into; `share` = the page loaded from a share link
@@ -55,6 +60,20 @@ What counts (the hooks are deliberately narrow):
 - `theme_change`: every deliberate switch — the theme modal and Shift+T. The envelope `theme`
   (`blob6`) is the theme in force when the batch's events happened: a switch sends the pending
   batch first.
+
+### 0. Sanity check — is anything landing at all?
+
+```sql
+SELECT sum(_sample_interval) AS rows
+FROM xivdyetools_web_analytics
+WHERE timestamp > now() - INTERVAL '24' HOUR
+```
+
+Run this first when a dashboard looks emptier than expected. A silent zero right after a web-app
+host change (a new Pages custom domain, a beta cutover) almost always means the Origin allowlist in
+`src/telemetry/origin.ts` needs the new host — an unrecognised `Origin` is dropped with only a
+`telemetry batch dropped` debug log line (FINDING-014), and Workers Logs are off for this script, so
+the drop is otherwise invisible.
 
 ### 1. Tool popularity — deliberate opens only (last 30 days)
 

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { routeCommand, type CommandContext } from '../router.js';
+import { routeCommand, isRegisteredCommand, type CommandContext } from '../router.js';
 import { createMockMessage } from '../test-utils/revolt-mocks.js';
 import { MessageContextStore } from '../services/message-context.js';
 import type { ParsedCommand } from './parser.js';
@@ -81,5 +81,33 @@ describe('routeCommand', () => {
     // and sends some message.
     await routeCommand(ctx);
     expect(ctx.message.channel?.sendMessage).toHaveBeenCalled();
+  });
+});
+
+// FINDING-031 / S13-R5 (2026-08-29 security audit, fix round 1): exported so
+// message-handler.ts's logging can ask "is this a real command?" without
+// re-deriving routeCommand's own COMMAND_ROUTES lookup.
+describe('isRegisteredCommand', () => {
+  it('is true for registered single-word commands', () => {
+    expect(isRegisteredCommand('ping', null)).toBe(true);
+    expect(isRegisteredCommand('help', null)).toBe(true);
+    expect(isRegisteredCommand('about', null)).toBe(true);
+  });
+
+  it('is true for a registered command.subcommand pair', () => {
+    expect(isRegisteredCommand('dye', 'info')).toBe(true);
+  });
+
+  it('is false for an unregistered single-word command', () => {
+    expect(isRegisteredCommand('blahblah', null)).toBe(false);
+  });
+
+  it('is false for a real command name paired with an unregistered subcommand', () => {
+    expect(isRegisteredCommand('dye', 'nonsense')).toBe(false);
+  });
+
+  it('is false for a registered subcommand key used as a bare command', () => {
+    // "dye.info" is a route key, but "dye" alone (no subcommand) is not.
+    expect(isRegisteredCommand('dye', null)).toBe(false);
   });
 });

@@ -45,6 +45,64 @@ app.use(
   })
 );
 
+/**
+ * FINDING-023 (2026-08-29 security audit): this Worker has no legitimate
+ * public route. Both callers reach it purely through a Service Binding —
+ * discord-worker's image-client.ts:54 and presets-api's
+ * preview-image-service.ts:152 each construct
+ * `new Request('https://image-worker/<path>', …)`, a URL that is never
+ * resolved over DNS, so a service-binding call always arrives here with
+ * hostname literally `image-worker`. The only way a *different* hostname
+ * ever reaches this handler is a genuine public request — reachable only if
+ * `workers_dev` is ever flipped back to true by mistake, since neither
+ * environment declares any routes (wrangler.toml, pinned by
+ * src/wrangler-config.test.ts). That request would carry the account's
+ * `*.workers.dev` hostname. Refuse it here, before any body read, fetch, or
+ * decode — for every route, /health included, so a scanner gets the same
+ * answer whichever path it tries.
+ *
+ * Placed after requestId/logger rather than before: neither of those two
+ * middlewares reads the body, fetches, or decodes anything, so ordering
+ * after them still satisfies "before any body read/fetch/decode". Fix
+ * round 2 (S8-R13): this comment previously claimed the ordering makes a
+ * config-drift hit "visible in the structured request log" — optimistic.
+ * No `wrangler.toml` in this repo declares an `[observability]` block, and
+ * the 2026-08-29 security audit found Workers Logs off on all nine
+ * scripts, so by default nothing persists that log line anywhere. Ordering
+ * after requestId/logger means a hit is visible during a live
+ * `wrangler tail` session, not after the fact — still worth the free
+ * ordering, just not the retroactive visibility this used to claim.
+ *
+ * 404, not 403: this Worker's whole premise is "no public surface exists
+ * here" (see CLAUDE.md / README.md). A flipped deployment should still
+ * look exactly like the routeless worker it is supposed to be, rather than
+ * confirm to a scanner that something is being deliberately gatekept —
+ * `c.notFound()` is Hono's own unmatched-route response, so a refused
+ * request is byte-for-byte indistinguishable from one that hit an
+ * undefined path. The hostname itself is never echoed back.
+ *
+ * This is defence in depth, not the primary control. The primary control
+ * is that there is no public surface to reach at all: workers_dev = false
+ * and no routes, in both environments.
+ *
+ * Fix round 1 (S8-R8): a hostname is allowed one trailing dot (RFC 1035's
+ * absolute-FQDN form — `acct.workers.dev.` and `acct.workers.dev` name the
+ * same host), and `URL` preserves it in `.hostname` rather than
+ * normalising it away, so `acct.workers.dev.` used to slip past
+ * `endsWith('.workers.dev')` and reach the real handler. Strip at most one
+ * trailing dot before the suffix check closes that gap without weakening
+ * it: `image-worker` (no trailing dot; both real callers' literal host)
+ * is untouched by the strip, so it is exactly as unaffected as before.
+ */
+app.use('*', async (c, next) => {
+  const { hostname } = new URL(c.req.url);
+  const normalizedHostname = hostname.endsWith('.') ? hostname.slice(0, -1) : hostname;
+  if (normalizedHostname.endsWith('.workers.dev')) {
+    return c.notFound();
+  }
+  await next();
+});
+
 app.get('/health', (c) => c.json({ status: 'ok' }));
 
 /**

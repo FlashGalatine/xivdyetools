@@ -40,7 +40,6 @@ import {
   ICON_CLOSE,
 } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
-import { indexedDBService, STORES } from '@services/indexeddb-service';
 import { clearContainer } from '@shared/utils';
 import { MAX_USER_FILE_BYTES } from '@shared/constants';
 import type { Dye, DyeWithDistance, PriceData, RGB } from '@xivdyetools/types';
@@ -79,17 +78,13 @@ const STORAGE_KEYS = {
   paletteMode: 'v3_matcher_palette_mode',
   paletteColorCount: 'v3_matcher_palette_count',
   vibrancyBoost: 'v3_matcher_vibrancy_boost',
+  /** FINDING-009: never written any more — kept for the cleanup in mount(). */
   imageDataUrl: 'v3_matcher_image',
   selectedColor: 'v3_matcher_color',
   extractedColors: 'v3_matcher_extracted_colors',
 } as const;
 
-// OPT-012: images persist to IndexedDB (image_cache store) instead of
-// localStorage — a 2 MB data-URL string consumed up to ~80% of the shared
-// ~5 MB localStorage budget and made every later setItem silently fail on
-// QuotaExceededError. IndexedDB has no such practical constraint, so the cap
-// only bounds memory/extraction cost.
-const MAX_IMAGE_STORAGE_SIZE = 8 * 1024 * 1024;
+// FINDING-009: images are session-only — nothing about them is persisted.
 
 // ============================================================================
 // 3C "Loupe + roll" workspace constants
@@ -301,8 +296,8 @@ export class ExtractorTool extends BaseComponent {
 
     // Image upload events - listen on leftPanel where ImageUploadDisplay is rendered
     this.onPanelEvent(leftPanel, 'image-loaded', (event: CustomEvent) => {
-      const { image, dataUrl } = event.detail;
-      this.onImageLoaded(image, dataUrl);
+      const { image } = event.detail;
+      this.onImageLoaded(image);
     });
 
     this.onPanelEvent(leftPanel, 'error', (event: CustomEvent) => {
@@ -400,9 +395,10 @@ export class ExtractorTool extends BaseComponent {
       })
     );
 
-    // Restore saved image (OPT-012: IndexedDB, with one-time localStorage
-    // migration for the legacy v3_matcher_image key)
-    void this.restoreImageFromStorage();
+    // FINDING-009: images are never restored — they live in memory for this
+    // session only. A visitor who last used a pre-OPT-012 build may still be
+    // carrying the data URL in localStorage; drop it (idempotent).
+    StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
 
     // Restore extracted colors history from storage
     const savedExtractedColors = StorageService.getItem<Array<{ hex: string; timestamp: number }>>(
@@ -428,83 +424,6 @@ export class ExtractorTool extends BaseComponent {
     }
 
     logger.info('[MatcherTool] Mounted');
-  }
-
-  /**
-   * OPT-012: persist the current image data-URL to IndexedDB. Oversized
-   * images clear any previous entry instead (matching the old behavior).
-   */
-  private async persistImage(dataUrl: string): Promise<void> {
-    if (dataUrl.length < MAX_IMAGE_STORAGE_SIZE) {
-      const ok = await indexedDBService.set(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl, dataUrl);
-      if (ok) {
-        logger.info('[ExtractorTool] Image saved to IndexedDB');
-      }
-    } else {
-      await indexedDBService.delete(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
-      logger.info('[ExtractorTool] Image too large to persist, cleared storage');
-    }
-  }
-
-  /**
-   * OPT-012: load the saved image from IndexedDB; if absent, migrate any
-   * legacy localStorage entry (freeing up to ~4 MB of the shared quota).
-   */
-  private async restoreImageFromStorage(): Promise<void> {
-    let dataUrl = await indexedDBService.get<string>(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
-
-    if (!dataUrl) {
-      const legacy = StorageService.getItem<string>(STORAGE_KEYS.imageDataUrl);
-      if (legacy) {
-        dataUrl = legacy;
-        await indexedDBService.set(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl, legacy);
-        StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
-        logger.info('[ExtractorTool] Migrated saved image from localStorage to IndexedDB');
-      }
-    }
-
-    if (dataUrl && !this.isDestroyed) {
-      this.restoreSavedImage(dataUrl);
-    }
-  }
-
-  /**
-   * Restore a saved image from storage
-   */
-  private restoreSavedImage(dataUrl: string): void {
-    const img = new Image();
-
-    img.onload = () => {
-      this.currentImage = img;
-
-      if (this.imageZoom) {
-        this.imageZoom.setImage(img);
-        // Auto-fit image after restoring
-        this.imageZoom.autoFit();
-      }
-
-      this.updateFlowVisibility();
-
-      logger.info('[ExtractorTool] Restored saved image from storage');
-
-      // Clear handlers
-      img.onload = null;
-      img.onerror = null;
-
-      // Auto-extract palette to restore results
-      void this.extractPalette();
-    };
-
-    img.onerror = () => {
-      // Failed to load saved image, clear it from storage
-      void indexedDBService.delete(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
-      StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
-      logger.warn('[MatcherTool] Failed to restore saved image, cleared storage');
-      img.onload = null;
-      img.onerror = null;
-    };
-
-    img.src = dataUrl;
   }
 
   destroy(): void {
@@ -1553,16 +1472,12 @@ export class ExtractorTool extends BaseComponent {
 
   /**
    * Shared image-arrival path (drop, file dialog, camera, paste, left-panel
-   * uploader): persist, hand to the zoom controller, flip the workspace to
-   * the loaded flow and auto-extract.
+   * uploader): hand to the zoom controller, flip the workspace to the loaded
+   * flow and auto-extract. FINDING-009: the image is held in memory only — it
+   * is never written to localStorage or IndexedDB.
    */
-  private onImageLoaded(image: HTMLImageElement, dataUrl?: string): void {
+  private onImageLoaded(image: HTMLImageElement): void {
     this.currentImage = image;
-
-    // OPT-012: persist to IndexedDB (async, off the image-load critical path)
-    if (dataUrl) {
-      void this.persistImage(dataUrl);
-    }
 
     if (this.imageZoom) {
       this.imageZoom.setImage(image);
@@ -1592,7 +1507,7 @@ export class ExtractorTool extends BaseComponent {
       const dataUrl = e.target?.result as string;
       const img = new Image();
       img.onload = () => {
-        this.onImageLoaded(img, dataUrl);
+        this.onImageLoaded(img);
         this.emit('image-loaded', { image: img, dataUrl });
       };
       img.src = dataUrl;
@@ -1632,13 +1547,9 @@ export class ExtractorTool extends BaseComponent {
    * Clear the current image and reset to the empty state
    */
   private clearImage(): void {
-    // Clear image state
+    // Clear image state. FINDING-009: nothing was persisted, so dropping the
+    // reference is the whole clear — there is no stored copy to chase.
     this.currentImage = null;
-
-    // Clear from storage (both the legacy localStorage key and the OPT-012
-    // IndexedDB copy — otherwise the cleared image returns on reload)
-    StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
-    void indexedDBService.delete(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
 
     // Clear palette results (price cache managed by MarketBoardService)
     this.lastPaletteResults = [];

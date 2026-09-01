@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The XIV Dye Tools bot for [Stoat / Revolt](https://revolt.chat). Despite living under `apps/` alongside the Cloudflare Workers, **this is a Node.js process, not a CF Worker.** It runs `revolt.js` as a long-lived WebSocket client, listens for `messageCreate` events, and dispatches prefix commands (`!xivdye <cmd>` or the shortcut `!xd <cmd>`).
 
-The bot reuses as much logic from `discord-worker` as it can by depending on the platform-agnostic shared packages — `@xivdyetools/core` (incl. `/blending`), `@xivdyetools/bot-logic` (incl. its `/i18n` engine), `@xivdyetools/svg`. Only the I/O surface (Stoat embed shape, prefix parsing, reactions-as-buttons, masquerade) is platform-specific.
+The bot reuses as much logic from `discord-worker` as it can by depending on the platform-agnostic shared package `@xivdyetools/bot-logic` (incl. its `/i18n` engine) — `@xivdyetools/core`, `@xivdyetools/svg`, and `@xivdyetools/worker-kit` were dropped from this app's dependencies in the Monorepo 2.0 Task 6 work (stoat renders no cards and needs no direct database access or Workers-only middleware; `bot-logic` covers everything it actually calls). Only the I/O surface (Stoat embed shape, prefix parsing, reactions-as-buttons, masquerade) is platform-specific.
 
 The project is in early development; only `ping`, `help`, `about`, and `dye info` are implemented end-to-end. Most other commands documented in `README.md` are tagged "planned".
 
@@ -67,7 +67,7 @@ npm run lint && npm run test -- --run && npm run type-check
 ```
 src/
 ├── index.ts                     # Bootstrap: load config, create Client, register handlers, login
-├── message-handler.ts           # messageCreate gate: bot-ignore, per-user throttle, route, error reply (FINDING-035)
+├── message-handler.ts           # messageCreate gate: bot-ignore, per-user throttle, route, error reply (FINDING-035); logs the command only, never the author/channel id or raw text (FINDING-031)
 ├── config.ts                    # loadConfig() from env, ULID validation, isAuthorized()
 ├── router.ts                    # CommandContext, COMMAND_ROUTES dispatch table
 ├── commands/
@@ -102,7 +102,7 @@ There is no `wrangler.toml` and no Cloudflare secrets — this runs on a regular
 
 ## Differences From discord-worker
 
-This is the most important section. `stoat-worker` and `discord-worker` look superficially similar (both depend on `@xivdyetools/bot-logic`, both render dye info cards, both speak six languages) but the platforms differ in important ways.
+This is the most important section. `stoat-worker` and `discord-worker` look superficially similar (both depend on `@xivdyetools/bot-logic`, both speak six languages) but the platforms differ in important ways — including that discord-worker renders dye info as an image card while stoat-worker currently sends the same data as a text embed (`info.ts`: "Image rendering (SVG→PNG) is deferred to a future implementation step"; see **Image rendering** in the comparison table below).
 
 | Concern | discord-worker | stoat-worker |
 |---------|----------------|--------------|
@@ -164,7 +164,7 @@ await withLoadingIndicator(message, async () => {
 - **Build tool:** `tsup` produces a single ESM bundle + `.d.ts` in `dist/`. `npm run start` runs `node dist/index.js`.
 - **Dev tool:** `tsx watch` for hot reload on save.
 - **Node version:** `engines.node >= 22.0.0`.
-- **Logger:** `createLibraryLogger('stoat')` from `@xivdyetools/logger` — same redaction rules as discord-worker, but Node runtime.
+- **Logger:** `createLibraryLogger('stoat')` from `@xivdyetools/logger` — same redaction rules as discord-worker, but Node runtime. Two independent instances (module-level singletons, not shared): `index.ts` passes `{ level: 'info' }`, overriding the library preset's `debug` default, since that file only ever calls `.info()`/`.error()`; `message-handler.ts` keeps its own instance at the preset's `debug` default so its per-command debug line stays visible to an operator by default — safe since that line (and the throttle-drop line beside it) no longer carry a user id, channel id, or raw message text (FINDING-031, 2026-08-29 security audit).
 
 ## Dependencies
 
@@ -173,15 +173,19 @@ await withLoadingIndicator(message, async () => {
 | `revolt.js` | Stoat WebSocket client (login, events, sendMessage, react, masquerade) |
 | `@xivdyetools/bot-logic` | Platform-agnostic command execution (`executeDyeInfo`, etc.) |
 | `@xivdyetools/bot-logic/i18n` | Six-language localized error/help/status strings (absorbed from bot-i18n) |
-| `@xivdyetools/core` | Dye database, color algorithms, `DyeDatabase` |
-| `@xivdyetools/svg` | SVG dye-card generators (used by future image-rendering commands) |
-| `@xivdyetools/core/blending` | Color blending algorithms for the planned mixer command (subpath of core since `@xivdyetools/color-blending` was retired) |
 | `@xivdyetools/types` | `Dye`, `LocaleCode`, branded color types |
 | `@xivdyetools/logger` | Structured logging |
-| `@xivdyetools/worker-kit/rate-limiter` | Sliding-window limiter (Upstash backend planned) |
-| `@xivdyetools/test-utils` | Test factories (devDependency) |
 | `tsup` / `tsx` | Build / dev runtime (devDependencies) |
 | `vitest` / `@vitest/coverage-v8` | Tests |
+
+`@xivdyetools/core`, `@xivdyetools/svg`, and `@xivdyetools/worker-kit` are **not** dependencies —
+dropped in the Monorepo 2.0 Task 6 work (this bot renders no cards, needs no direct database
+access, and needs no Workers-only middleware; `bot-logic`'s `executeDyeInfo`/`resolveDyeInput*`/
+`dyeService` cover everything it actually calls). `@xivdyetools/test-utils` was also dropped as a
+devDependency (2026-08-18 dead-code audit — zero imports from any test file); `src/test-utils/`
+is this app's own hand-written mock factories, not that package. Recorded here so this table isn't
+wrong again the next time someone reads it (noticed stale during the FINDING-031 remediation,
+2026-08-29 security audit).
 
 ## Available Commands
 
@@ -204,14 +208,16 @@ await withLoadingIndicator(message, async () => {
 ## Related Projects
 
 **Shared packages (logic ≅ discord-worker):**
-- `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/svg`, `@xivdyetools/core` (incl. `/blending`), `@xivdyetools/types`
+- `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/types` — discord-worker additionally
+  depends on `@xivdyetools/core` and `@xivdyetools/svg` for card rendering; stoat does not (dropped
+  in the Monorepo 2.0 Task 6 work).
 
 **Sibling app:**
-- `xivdyetools-discord-worker` — same business logic, different platform glue. When changing `bot-logic` or `svg`, verify both bots still build and tests pass.
+- `xivdyetools-discord-worker` — same business logic, different platform glue. When changing `bot-logic`, verify both bots still build and tests pass.
 
 ## Testing
 
-Vitest with `@xivdyetools/test-utils` for shared factories and `src/test-utils/revolt-mocks.ts` for revolt.js Client/Message/Channel stubs. Tests are co-located: `parser.test.ts`, `router.test.ts`, `info.test.ts`, etc.
+Vitest, with `src/test-utils/revolt-mocks.ts` — this app's own hand-written mock factories, not `@xivdyetools/test-utils` (not a dependency here; see the note under Dependencies above) — for revolt.js Client/Message/Channel stubs. Tests are co-located: `parser.test.ts`, `router.test.ts`, `info.test.ts`, etc.
 
 ```bash
 npx vitest run src/commands/parser.test.ts

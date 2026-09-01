@@ -16,16 +16,23 @@ Authorization: Bearer <BOT_API_SECRET>
 X-User-Discord-ID: 123456789012345678
 X-User-Discord-Name: Username
 X-Request-Timestamp: 1702684800
-X-Request-Signature: <hex HMAC-SHA256>
+X-Request-Nonce: <uuid>
+X-Request-Signature-V2: <hex HMAC-SHA256>
 Content-Type: application/json
 ```
 
 **Verification** (`apps/presets-api/src/middleware/auth.ts`): the bearer is compared to `BOT_API_SECRET`
-in constant time, then `verifyBotSignature()` from `@xivdyetools/auth` checks the HMAC over
-`"<timestamp>:<X-User-Discord-ID>:<X-User-Discord-Name>"` with `BOT_SIGNING_SECRET` (timestamp is
-Unix seconds; ≤ 5 min old, ≤ 60 s future skew). In production a missing/invalid signature leaves the
-request **unauthenticated** (the route then answers 401) — only `ENVIRONMENT=development|test` accepts
-an unsigned bot call.
+in constant time, then `verifyBotSignatureV2()` from `@xivdyetools/auth` checks the HMAC over the
+method, the path, a SHA-256 hash of the body, `X-Request-Timestamp`, `X-Request-Nonce`,
+`X-User-Discord-ID` and `X-User-Discord-Name`, with `BOT_SIGNING_SECRET` (timestamp: ≤ 60 s old, ≤ 60 s
+future skew). The nonce must be non-empty, at most 64 characters, `[A-Za-z0-9._-]`, and single-use —
+each accepted nonce is recorded in the `TOKEN_BLACKLIST` KV namespace under a `botnonce:` prefix for
+120 s, and a repeat is refused. **v1 (`X-Request-Signature`, a bare `timestamp:userId:userName` HMAC
+that bound nothing about the request itself) is no longer accepted, as of presets-api 2.2.0**
+(FINDING-015, 2026-08-29 security audit) — a request without a valid `X-Request-Signature-V2` is
+unauthenticated whatever the legacy header carries. In production a missing/invalid signature leaves
+the request **unauthenticated** (the route then answers 401) — only `ENVIRONMENT=development|test`
+accepts an unsigned bot call.
 
 ```typescript
 // Resulting auth context
@@ -58,7 +65,6 @@ Content-Type: application/json
     "exp": 1702688400,
     "iss": "https://auth.xivdyetools.app",
     "jti": "token-uuid",
-    "orig_iat": 1702684800,
     "username": "username",
     "global_name": "Display Name",
     "avatar": "avatar_hash",
@@ -98,7 +104,9 @@ POST/PATCH bodies (415 otherwise). Field-level rules come from
 ### The preset object
 
 Every route that returns a preset returns this shape (`CommunityPreset` in `@xivdyetools/types`,
-serialised by `rowToPreset()` in `services/preset-service.ts`):
+serialised by `rowToPreset()` and then by `toPublicPreset()` in `services/preset-service.ts`, which
+applies the viewer rules for `author_discord_id` / `is_owner` below). The example is what an
+**anonymous** caller receives:
 
 ```json
 {
@@ -109,7 +117,6 @@ serialised by `rowToPreset()` in `services/preset-service.ts`):
   "secondary_categories": ["aesthetics"],
   "dyes": [23, 40, 57],
   "tags": ["tank", "earthy"],
-  "author_discord_id": "123456789012345678",
   "author_name": "Username",
   "vote_count": 42,
   "status": "approved",
@@ -131,6 +138,9 @@ serialised by `rowToPreset()` in `services/preset-service.ts`):
 | `category_id` | Primary category slug: `jobs`, `grand-companies`, `seasons`, `events`, `aesthetics`, `appearance`, `zones`, `raids-trials`. There is no `community` category (migration 0007). |
 | `secondary_categories` | 0–2 further slugs, never containing `category_id`. Category filters match either slot. |
 | `status` | `pending` \| `approved` \| `rejected` \| `flagged` \| `hidden` (hidden = author banned; restored on unban). |
+| `author_name` | The author's display name at submission time — the only author identity an anonymous caller receives. |
+| `author_discord_id` | The author's Discord snowflake. **Never sent to an anonymous caller** (FINDING-016, 2026-08-29 audit): the key is absent unless the viewer is the preset's own author, a moderator, or a bot (HMAC) caller. `null` for curated presets. |
+| `is_owner` | Added for a signed-in **web (JWT)** caller: `true` when the preset is theirs. Absent from anonymous responses (they are told nothing about ownership) and from bot responses (unchanged for the bots). |
 | `vote_count` | Single toggleable upvote count. There are no downvotes. |
 | `dye_signature` | Sorted `dyes` as JSON (`"[23,40,57]"`); UNIQUE in D1 and the basis of duplicate detection. Omitted when null. |
 | `previous_values` | `{ name, description, tags, dyes }` snapshot taken the first time an edit is flagged (revert target). **Stripped from every public response** — present only for the owner (`GET /presets/:id`, `/mine`) and moderators. |
@@ -275,16 +285,59 @@ Every field is optional; at least one must be present (`No updates provided`).
 
 - `secondary_categories: []` clears the list; `example_link: null` clears the link.
 - Changing `dyes` re-runs duplicate detection (excluding this preset).
-- Changing `name`/`description` re-runs content moderation. If it fails, the preset goes to
-  `pending` and a write-once `previous_values` snapshot is taken (the moderator revert target).
-- An edit can never lift a moderator-set status: only a currently-`approved` preset stays `approved`;
-  `pending`/`rejected`/`flagged` stay in (or return to) the queue; `hidden` → 403
-  `This preset cannot be edited`.
+- Sending `name` or `description` at all is charged to `DAILY_TEXT_EDIT_LIMIT` (30 / UTC day)
+  **before** content moderation runs, for every preset status — see the first 429 below — and then
+  re-runs content moderation. If moderation fails, or cannot answer at all (FINDING-005), a
+  write-once `previous_values` snapshot is taken: the moderator revert target.
+- **What the edit does to the status** (FINDING-004). "New text" below means the submitted `name` or
+  `description` differs from the stored value, or the text sent tripped moderation; everything else
+  — tags, dyes, category, example link, or text re-sent unchanged — is applied and changes no status
+  and notifies nobody, however often it is repeated.
+
+  | Stored status | New text | Any other edit |
+  |---------------|----------|----------------|
+  | `pending` | stays `pending`; moderators re-notified | applied; nothing else |
+  | `approved` | stays `approved`, unless the text tripped moderation → `pending` + notify | applied; nothing else |
+  | `rejected` | → `pending` + notify: **editing the text is the resubmission** | applied; stays `rejected` |
+  | `flagged` | applied; stays `flagged`; nobody notified — the flag is the moderator's | applied; nothing else |
+  | `hidden` | 403 `This preset cannot be edited` | 403 |
+
+  So an owner edit can only move a preset *into* the review queue, never out of one. The web app's
+  **Resubmit** button on a rejected preset is exactly this PATCH (it reopens the edit form).
+- Every notification counts against `DAILY_FLAGGED_EDIT_LIMIT` (10 / UTC day — see the second 429
+  below) and carries `moderation_status: "flagged"` when this edit tripped moderation, `"clean"`
+  otherwise.
 - Vote counts are preserved across edits.
 
-**Response:**
+**Response** — `moderation_status` is the status the preset is in after the edit, and is
+**present only when that is `approved` or `pending`** (so a resubmitted `rejected` preset reports
+`"pending"`). A preset left in a status only a moderator can set (`rejected`, `flagged`) omits the
+field entirely — `preset.status` carries it instead:
 ```json
 { "success": true, "preset": { …preset… }, "moderation_status": "approved" }
+```
+
+**429 (daily limit on name/description edits)** — checked before content moderation and before any
+write, whatever the preset's status; nothing is written:
+```json
+{
+  "success": false,
+  "error": "RATE_LIMITED",
+  "message": "You've reached your daily limit of name and description edits (30 per day). Try again tomorrow.",
+  "remaining": 0,
+  "reset_at": "…"
+}
+```
+
+**429 (daily limit on edits that reach a moderator)** — nothing is written:
+```json
+{
+  "success": false,
+  "error": "RATE_LIMITED",
+  "message": "You've reached your daily limit of edits that need moderator review (10 per day). Try again tomorrow.",
+  "remaining": 0,
+  "reset_at": "…"
+}
 ```
 
 **409 (duplicate dye combination):**
@@ -420,7 +473,10 @@ public responses withhold).
 
 `status` ∈ `approved` | `rejected` | `flagged` | `pending` (`hidden` cannot be set here). The update
 and its `moderation_log` row (`approve` / `reject` / `flag` / `unflag`) land in one batch, conditional
-on the status the moderator saw.
+on the status the moderator saw. `revert` is the fifth action this API writes; `xivdyetools-moderation-worker`
+writes four more of its own straight to the shared D1 — `ban` and `unban` (user-level, `preset_id` NULL)
+plus one `hide` / `restore` per preset a ban hides or an unban restores, so those appear in a preset's
+`GET /moderation/:presetId/history` too (migration 0013).
 
 **Response:** `{ "success": true, "preset": { …preset… } }`
 
@@ -522,21 +578,12 @@ SPA-friendly token exchange.
 }
 ```
 
-### POST /auth/refresh
+### ~~POST /auth/refresh~~ — removed in oauth 3.0.0
 
-Refresh an expired JWT (within 24h grace period).
-
-**Headers:**
-```http
-Authorization: Bearer <EXPIRED_JWT>
-```
-
-**Response:**
-```json
-{
-  "token": "NEW_JWT_TOKEN"
-}
-```
+Removed by FINDING-003 (`docs/audits/2026-08-29-security`); the route now 404s. No client
+ever called it — the web app re-runs the sign-in flow — while it accepted a token on signature
+alone past `exp` and re-minted from the old token's claims, letting a copied token be kept alive
+for up to 30 days past the victim's logout. **A session ends at `exp`; clients sign in again.**
 
 ### GET /auth/me
 
@@ -570,7 +617,9 @@ Base URL: `https://bot.xivdyetools.app`. presets-api never uses the URL — it c
 ### POST /webhooks/preset-submission
 
 Receives preset notifications from presets-api (`services/notification-service.ts`; consumer types in
-`apps/discord-worker/src/types/preset.ts`). Body ≤ 10 KB.
+`apps/discord-worker/src/types/preset.ts`). Body ≤ 10 KB. This payload is server-to-bot and keeps
+`author_discord_id` — the moderation embed needs it; the FINDING-016 rule above governs HTTP
+responses to clients, not this webhook.
 
 **Headers:**
 ```http
@@ -630,7 +679,7 @@ when Discord rejects the post — presets-api retries with backoff (3×, 1–10 
 
 ### POST /webhooks/github
 
-Release-announcement hook (GitHub webhook, `GITHUB_WEBHOOK_SECRET`) — posts the parsed `CHANGELOG-laymans.md` entry to `ANNOUNCEMENT_CHANNEL_ID`. There is no `/webhooks/moderation` route; the live surface is `GET /health` plus `POST /`, `POST /webhooks/preset-submission`, `POST /webhooks/github`.
+Release-announcement hook (GitHub webhook, `GITHUB_WEBHOOK_SECRET`) — posts the parsed `CHANGELOG-laymans.md` entry to `ANNOUNCEMENT_CHANNEL_ID`. Only `push` events from `FlashGalatine/xivdyetools` are announced (a `ping` answers `200 {"message":"pong"}`, any other event `200 {"message":"Ignored event"}`, another repository **403** `{ "error": "Repository not allowed" }`), and each version is announced once — a repeat answers `200 {"message":"Already announced"}`, so redelivering a qualifying delivery is safe. The de-dup key (`announced:v:<version>`) is versioned, not delivery-specific, so a corrected changelog re-pushed under an already-announced version needs that KV key cleared to be re-announced. There is no `/webhooks/moderation` route; the live surface is `GET /health` plus `POST /`, `POST /webhooks/preset-submission`, `POST /webhooks/github`.
 
 ---
 

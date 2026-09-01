@@ -32,6 +32,14 @@ export const ALLOWED_ENVIRONMENTS: readonly string[] = ['development', 'producti
  * - FRONTEND_URL: Web app URL for redirects
  * - WORKER_URL: This worker's public URL
  * - DB: D1 database binding
+ *
+ * Production-only required (FINDING-013, 2026-08-29 security audit): the
+ * bindings the 2026-08-21 fixes rely on. A dropped one (a config edit, a
+ * dashboard change) previously degraded silently — the KV or in-memory
+ * rate-limit fallback instead of the native per-client limiter, or no
+ * revocation check — with no error and no log.
+ * - RL_AUTH_10, RL_AUTH_20, RL_AUTH_30: native Workers Rate Limiting bindings
+ * - TOKEN_BLACKLIST: the revocation KV binding checked by GET /auth/me
  */
 export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
@@ -100,6 +108,27 @@ export function validateEnv(env: Env): EnvValidationResult {
       } catch {
         errors.push(`Invalid URL for ${key}: ${value}`);
       }
+    }
+  }
+
+  // FINDING-013 (2026-08-29 security audit): production also requires the
+  // security bindings the 2026-08-21 fixes rely on. A dropped binding (a
+  // config edit, a dashboard change) previously degraded silently — the
+  // KV or in-memory rate-limit fallback instead of the native per-client
+  // limiter (FINDING-003), or no revocation check on /auth/me — with no
+  // error and no log anywhere. Optional in development/tests.
+  if (env.ENVIRONMENT === 'production') {
+    if (!env.RL_AUTH_10) {
+      errors.push('Missing required env var in production: RL_AUTH_10');
+    }
+    if (!env.RL_AUTH_20) {
+      errors.push('Missing required env var in production: RL_AUTH_20');
+    }
+    if (!env.RL_AUTH_30) {
+      errors.push('Missing required env var in production: RL_AUTH_30');
+    }
+    if (!env.TOKEN_BLACKLIST) {
+      errors.push('Missing required env var in production: TOKEN_BLACKLIST');
     }
   }
 

@@ -264,7 +264,20 @@ test.describe('Extractor Tool - User Journeys', () => {
       }
     });
 
-    test('should persist uploaded image across page reload', async ({ page }) => {
+    /**
+     * FINDING-009: this was `should persist uploaded image across page reload`
+     * and asserted a canvas was attached afterwards. The extractor no longer
+     * writes images anywhere, so a reload genuinely discards one — which is
+     * what PRIVACY.md promises — and the canvas assertion would have passed
+     * either way: `renderImageCanvas()` builds the zoom canvas unconditionally,
+     * image or no image. The flow's visibility is the real signal:
+     * `#extractor-drop-zone` (the empty flow) and `.x3c-image-card` (the loaded
+     * flow) swap `display` on `currentImage` in `updateFlowVisibility()`.
+     */
+    test('discards the uploaded image on reload', async ({ page }) => {
+      const dropZone = page.locator('#extractor-drop-zone').first();
+      const imageCard = page.locator('.x3c-image-card').first();
+
       // Upload an image
       const fileInput = page.locator('input[type="file"][accept*="image"]').first();
       const testImageBuffer = Buffer.from(
@@ -280,9 +293,10 @@ test.describe('Extractor Tool - User Journeys', () => {
 
       await page.waitForTimeout(2000);
 
-      // Verify image loaded
-      const canvasBefore = page.locator('canvas').first();
-      await expect(canvasBefore).toBeAttached();
+      // Baseline: the image really did load, so "gone after reload" means
+      // something — the loaded flow is up and the drop-zone offer is gone
+      await expect(imageCard).toBeVisible();
+      await expect(dropZone).toBeHidden();
 
       // Reload the page
       await page.reload();
@@ -290,12 +304,18 @@ test.describe('Extractor Tool - User Journeys', () => {
       await page.waitForTimeout(1000);
 
       // Navigate back to the tool
-  await gotoTool(page, 'extractor');
+      await gotoTool(page, 'extractor');
       await page.waitForTimeout(2000);
 
-      // Verify image was restored (canvas should still be attached with content)
-      const canvasAfter = page.locator('canvas').first();
-      await expect(canvasAfter).toBeAttached();
+      // The image is gone: the empty flow is back, the image card is attached
+      // but hidden (so `toBeHidden` cannot pass by the element simply being
+      // absent), and nothing was re-extracted. All three failed before
+      // FINDING-009 — the saved image was mounted from IndexedDB and
+      // auto-extracted, which is exactly what a shared device leaked.
+      await expect(dropZone).toBeVisible();
+      await expect(imageCard).toBeAttached();
+      await expect(imageCard).toBeHidden();
+      await expect(page.locator('v4-result-card')).toHaveCount(0);
     });
   });
 

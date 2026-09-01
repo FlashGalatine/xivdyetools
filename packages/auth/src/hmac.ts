@@ -15,10 +15,14 @@ import {
 } from './encoding/index.js';
 
 /**
- * Options for bot signature verification
+ * Options for bot signature verification.
+ *
+ * The only consumer is `verifyBotSignatureV2` below — v1's `verifyBotSignature`
+ * (5-minute `maxAgeMs` default) was removed in 2.0.0 (FINDING-015, 2026-08-29
+ * security audit).
  */
 export interface BotSignatureOptions {
-  /** Maximum age of signature in milliseconds (default: 5 minutes) */
+  /** Maximum age of signature in milliseconds (default: `BOT_SIGNATURE_V2_MAX_AGE_MS`, 60 seconds) */
   maxAgeMs?: number;
   /** Allowed clock skew in milliseconds (default: 1 minute) */
   clockSkewMs?: number;
@@ -210,71 +214,21 @@ export async function hmacVerifyHex(
 }
 
 /**
- * Verify a bot request signature.
- *
- * Bot signatures use the format: `${timestamp}:${userDiscordId}:${userName}`
- * Signatures are hex-encoded HMAC-SHA256.
- *
- * @param signature - Hex-encoded signature
- * @param timestamp - Unix timestamp string (seconds)
- * @param userDiscordId - Discord user ID
- * @param userName - Discord username
- * @param secret - The signing secret
- * @param options - Verification options
- * @returns true if signature is valid and not expired
- *
- * @example
- * ```typescript
- * const isValid = await verifyBotSignature(
- *   request.headers.get('X-Signature'),
- *   request.headers.get('X-Timestamp'),
- *   request.headers.get('X-User-Id'),
- *   request.headers.get('X-User-Name'),
- *   env.BOT_SIGNING_SECRET
- * );
- * ```
+ * Bot request signature v1 (`verifyBotSignature`) was removed here in 2.0.0
+ * (FINDING-015, 2026-08-29 security audit). It signed
+ * `${timestamp}:${userDiscordId}:${userName}` on a 5-minute freshness window
+ * and bound nothing about the request itself — method, path and body could
+ * all change underneath a valid signature — so a captured tuple could be
+ * replayed against any route as that user. `presets-api` stopped accepting
+ * it in 2.2.0 and both bots stopped sending it (`discord-worker` 5.1.0,
+ * `moderation-worker` 1.6.0) before this export left the package, so the
+ * removal costs nothing in-repo. An npm consumer still calling
+ * `verifyBotSignature` (or signing a matching `X-Request-Signature` header)
+ * must move to `createBotSignatureV2` / `verifyBotSignatureV2` below, which
+ * bind method, path, a body hash, timestamp, nonce and identity instead of
+ * three colon-joined fields — see CHANGELOG.md `[2.0.0]` for the concrete
+ * migration.
  */
-export async function verifyBotSignature(
-  signature: string | undefined,
-  timestamp: string | undefined,
-  userDiscordId: string | undefined,
-  userName: string | undefined,
-  secret: string,
-  options: BotSignatureOptions = {}
-): Promise<boolean> {
-  const { maxAgeMs = 5 * 60 * 1000, clockSkewMs = 60 * 1000 } = options;
-
-  // Validate required fields (signature and timestamp are required;
-  // userDiscordId and userName are optional for system-level bot requests)
-  if (!signature || !timestamp) {
-    return false;
-  }
-
-  // Validate timestamp format
-  const timestampNum = parseInt(timestamp, 10);
-  if (isNaN(timestampNum)) {
-    return false;
-  }
-
-  // Check timestamp age (with clock skew tolerance)
-  const now = Date.now();
-  const signatureTime = timestampNum * 1000; // Convert to milliseconds
-  const age = now - signatureTime;
-
-  // Reject if too old
-  if (age > maxAgeMs) {
-    return false;
-  }
-
-  // Reject if too far in the future (clock skew protection)
-  if (signatureTime > now + clockSkewMs) {
-    return false;
-  }
-
-  // Verify the signature
-  const message = `${timestamp}:${userDiscordId ?? ''}:${userName ?? ''}`;
-  return hmacVerifyHex(message, signature, secret);
-}
 
 // ============================================================================
 // Bot request signature v2 (FINDING-014, 2026-08-21 security audit)
@@ -283,7 +237,7 @@ export async function verifyBotSignature(
 /** Default freshness window for v2 signatures (60 s — v1 allowed 5 min). */
 export const BOT_SIGNATURE_V2_MAX_AGE_MS = 60 * 1000;
 
-/** Header carrying the v2 signature (v1 stays on `X-Request-Signature`). */
+/** Header carrying the v2 signature (v1's `X-Request-Signature` is gone — see above). */
 export const BOT_SIGNATURE_V2_HEADER = 'X-Request-Signature-V2';
 /** Header carrying the optional per-request nonce. */
 export const BOT_SIGNATURE_NONCE_HEADER = 'X-Request-Nonce';

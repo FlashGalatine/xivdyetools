@@ -53,6 +53,8 @@ const VIAS = ['drawer', 'grid'] as const;
 const PRODUCERS = ['anamnesis', 'ktisis', 'brio', 'other', 'none'] as const;
 const THEMES = ['standard-light', 'standard-dark'] as const;
 const ENVS = ['production', 'beta'] as const;
+/** The `blob9` dimension. Derived from the request Origin since FINDING-014 — see origin.ts. */
+export type TelemetryEnv = (typeof ENVS)[number];
 const VIEWPORTS = ['m', 't', 'd'] as const;
 const DWELL_CAP_S = 1800;
 const VER_MAX_LENGTH = 16;
@@ -133,12 +135,25 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+export interface ParseTelemetryBatchOptions {
+  /**
+   * The environment derived from the request `Origin` (FINDING-014). When
+   * present it *replaces* the body's `env` field, so a beta page cannot label
+   * its traffic `production`. Absent only for a loopback beacon on a
+   * non-production worker, where the validated body field is used instead.
+   */
+  env?: TelemetryEnv;
+}
+
 /**
  * Validate a batch. `null` means "not a v1 batch at all" (the router answers
  * 400); otherwise every event that passed its schema, in order, plus how
  * many were dropped.
  */
-export function parseTelemetryBatch(body: unknown): ParsedBatch | null {
+export function parseTelemetryBatch(
+  body: unknown,
+  options?: ParseTelemetryBatchOptions,
+): ParsedBatch | null {
   if (!isRecord(body) || body['v'] !== 1 || !Array.isArray(body['events'])) return null;
 
   const envelope = [
@@ -146,7 +161,7 @@ export function parseTelemetryBatch(body: unknown): ParsedBatch | null {
     envelopeField(body['theme'], THEMES),
     envelopeField(body['vp'], VIEWPORTS),
     version(body['ver']),
-    envelopeField(body['env'], ENVS),
+    options?.env ?? envelopeField(body['env'], ENVS),
   ];
 
   const events = body['events'] as unknown[];

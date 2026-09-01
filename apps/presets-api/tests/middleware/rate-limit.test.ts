@@ -202,9 +202,16 @@ describe('PublicRateLimitMiddleware', () => {
         }, env);
 
         expect(res.status).toBe(200);
-        expect(warnFn).toHaveBeenCalledWith(
-            'Rate limiter backend error (failing open)',
-            expect.objectContaining({ key: expect.any(String) })
-        );
+        expect(warnFn).toHaveBeenCalledTimes(1);
+        const [message, context] = warnFn.mock.calls[0] as [string, Record<string, unknown>];
+        expect(message).toBe('Rate limiter backend error (failing open)');
+        // 2026-08-29 FINDING-010 (worker-kit 1.2.0, S9-R10): the client IP is redacted
+        // to a non-identifying bucket-class scope before it reaches this log line.
+        // Assert the scope is present AND that the raw IP appears nowhere in the
+        // logged context — the old `objectContaining({ key: expect.any(String) })`
+        // assertion here would still pass whether or not the redaction exists, since
+        // it never checked what the value actually was.
+        expect(context.keyScope).toBe('ip');
+        expect(JSON.stringify(context)).not.toContain('10.0.0.99');
     });
 });

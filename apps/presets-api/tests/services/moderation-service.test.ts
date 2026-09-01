@@ -475,26 +475,6 @@ describe('ModerationService', () => {
             expect(result.flaggedReason).toContain('identityAttack');
         });
 
-        it('should gracefully handle Perspective API errors', async () => {
-            const env = createMockEnv({ PERSPECTIVE_API_KEY: 'test-api-key' });
-
-            fetchMock.mockResolvedValueOnce({
-                ok: false,
-                status: 500,
-                text: async () => 'Internal Server Error',
-            });
-
-            const result = await moderateContent(
-                'Test Palette',
-                'Normal description',
-                env
-            );
-
-            // Should still pass if local filter passed and API failed
-            expect(result.passed).toBe(true);
-            expect(result.method).toBe('local');
-        });
-
         it('should handle missing score attributes from Perspective API', async () => {
             const env = createMockEnv({ PERSPECTIVE_API_KEY: 'test-api-key' });
 
@@ -521,21 +501,6 @@ describe('ModerationService', () => {
             // Missing scores should default to 0
             expect(result.scores!.severeToxicity).toBe(0);
             expect(result.scores!.identityAttack).toBe(0);
-        });
-
-        it('should gracefully handle network errors', async () => {
-            const env = createMockEnv({ PERSPECTIVE_API_KEY: 'test-api-key' });
-
-            fetchMock.mockRejectedValueOnce(new Error('Network error'));
-
-            const result = await moderateContent(
-                'Test Palette',
-                'Normal description',
-                env
-            );
-
-            expect(result.passed).toBe(true);
-            expect(result.method).toBe('local');
         });
 
         it('should call Perspective API regardless since local lists are empty', async () => {
@@ -565,6 +530,137 @@ describe('ModerationService', () => {
             // If Perspective flags it, it should fail
             expect(result.passed).toBe(false);
         });
+    });
+
+    // ============================================
+    // Perspective request hygiene + fail-closed
+    // (FINDING-005 / FINDING-006, 2026-08-29 security audit)
+    // ============================================
+
+    describe('moderateContent - Perspective request hygiene (FINDING-006)', () => {
+        const PERSPECTIVE_URL = 'https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze';
+
+        /** A 200 from Perspective with every score well below the threshold. */
+        const cleanVerdict = () => ({
+            ok: true,
+            json: async () => ({
+                attributeScores: {
+                    TOXICITY: { summaryScore: { value: 0.1 } },
+                    SEVERE_TOXICITY: { summaryScore: { value: 0.05 } },
+                    IDENTITY_ATTACK: { summaryScore: { value: 0.02 } },
+                    INSULT: { summaryScore: { value: 0.1 } },
+                    PROFANITY: { summaryScore: { value: 0.1 } },
+                },
+            }),
+        });
+
+        it('sends the API key in the x-goog-api-key header and never in the URL', async () => {
+            const env = createMockEnv({ PERSPECTIVE_API_KEY: 'super-secret-key' });
+            fetchMock.mockResolvedValueOnce(cleanVerdict());
+
+            await moderateContent('Nice Palette', 'A beautiful description', env);
+
+            const [url, init] = fetchMock.mock.calls[0];
+            // A key in the query string is logged by proxies, CDNs and Google's
+            // own access logs; a header is not.
+            expect(String(url)).toBe(PERSPECTIVE_URL);
+            expect(String(url)).not.toContain('key=');
+            expect(String(url)).not.toContain('super-secret-key');
+            expect(init.headers['x-goog-api-key']).toBe('super-secret-key');
+            expect(init.headers['Content-Type']).toBe('application/json');
+        });
+
+        it('asks Perspective not to retain the comment, and keeps the abort signal', async () => {
+            const env = createMockEnv({ PERSPECTIVE_API_KEY: 'test-api-key' });
+            fetchMock.mockResolvedValueOnce(cleanVerdict());
+
+            await moderateContent('Nice Palette', 'A beautiful description', env);
+
+            const init = fetchMock.mock.calls[0][1];
+            const body = JSON.parse(init.body);
+            // Without doNotStore, Perspective may keep the user-typed
+            // name/description for research (FINDING-006).
+            expect(body.doNotStore).toBe(true);
+            expect(body.comment.text).toBe('Nice Palette A beautiful description');
+            // PRESETS-HIGH-001's 5 s timeout survives the rewrite.
+            expect(init.signal).toBeInstanceOf(AbortSignal);
+        });
+    });
+
+    describe('moderateContent - fails closed when Perspective cannot answer (FINDING-005)', () => {
+        let consoleError: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            // The service logs the failure it is reacting to; keep the suite's
+            // own output clean without hiding the behaviour under test.
+            consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            consoleError.mockRestore();
+        });
+
+        it.each([
+            [
+                '429 (Perspective\'s default quota is ~1 QPS)',
+                () =>
+                    fetchMock.mockResolvedValueOnce({
+                        ok: false,
+                        status: 429,
+                        text: async () => 'RESOURCE_EXHAUSTED',
+                    }),
+            ],
+            [
+                'a 500',
+                () =>
+                    fetchMock.mockResolvedValueOnce({
+                        ok: false,
+                        status: 500,
+                        text: async () => 'Internal Server Error',
+                    }),
+            ],
+            [
+                'the 5 s timeout aborting the request',
+                () =>
+                    fetchMock.mockRejectedValueOnce(
+                        new DOMException('The operation was aborted due to timeout', 'TimeoutError')
+                    ),
+            ],
+            ['a thrown network error', () => fetchMock.mockRejectedValueOnce(new Error('Network error'))],
+            [
+                'a body that will not parse',
+                () =>
+                    fetchMock.mockResolvedValueOnce({
+                        ok: true,
+                        json: async () => {
+                            throw new SyntaxError('Unexpected token < in JSON');
+                        },
+                    }),
+            ],
+            [
+                'a 200 carrying no attributeScores',
+                () => fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({}) }),
+            ],
+        ])('does not pass content on %s', async (_case, arrangeFetch) => {
+            const env = createMockEnv({ PERSPECTIVE_API_KEY: 'test-api-key' });
+            arrangeFetch();
+
+            const result = await moderateContent('Test Palette', 'Normal description', env);
+
+            // A configured moderation service that cannot answer is not an
+            // all-clear: the caller must queue this for a human.
+            expect(result.passed).toBe(false);
+            expect(result.method).toBe('perspective_unavailable');
+            expect(result.flaggedReason).toBeTruthy();
+            expect(result.scores).toBeUndefined();
+        });
+
+        // The other side of this rule — with NO key configured nothing can fail
+        // closed and the local list alone decides — is pinned by the existing
+        // "should skip Perspective API if not configured" / "should return local
+        // method when no Perspective API configured" / "should return early when
+        // local filter catches flagged content" tests above, which assert
+        // `passed: true, method: 'local'` and that fetch is never called.
     });
 
     // ============================================

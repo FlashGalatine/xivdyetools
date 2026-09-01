@@ -112,12 +112,16 @@ CREATE INDEX IF NOT EXISTS idx_votes_user ON votes(user_discord_id);
 -- MODERATION LOG TABLE
 -- Audit trail for moderation actions
 -- ============================================
+-- Migration 0013 (2026-08-29 audit, FINDING-018) relaxed preset_id and added
+-- target_discord_id so the user-level ban / unban actions xivdyetools-moderation-worker
+-- performs on this database can be logged here too.
 CREATE TABLE IF NOT EXISTS moderation_log (
   id TEXT PRIMARY KEY,                    -- UUID v4
-  preset_id TEXT NOT NULL,
+  preset_id TEXT,                         -- NULL for user-level actions (ban | unban)
   moderator_discord_id TEXT NOT NULL,
-  action TEXT NOT NULL,                   -- approve | reject | flag | unflag | revert
+  action TEXT NOT NULL,                   -- approve | reject | flag | unflag | revert | ban | unban | hide | restore
   reason TEXT,
+  target_discord_id TEXT,                 -- the moderated user: set for ban | unban | hide | restore
   created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (preset_id) REFERENCES presets(id) ON DELETE CASCADE
 );
@@ -181,18 +185,25 @@ CREATE INDEX IF NOT EXISTS idx_failed_notifications_unresolved
   WHERE resolved_at IS NULL;
 
 -- ============================================
--- SUBMISSION EVENTS TABLE (Migration 0011 / FINDING-008)
+-- SUBMISSION EVENTS TABLE (Migrations 0011 / FINDING-008, 0012 / FINDING-005)
 -- Append-only per-user log of quota-bearing mutations (submission,
--- flagged_edit, preview_upload). User actions never delete rows here, so the
--- daily caps cannot be reset by deleting one's own presets.
+-- flagged_edit, preview_upload, text_edit). User actions never delete rows
+-- here, so the daily caps cannot be reset by deleting one's own presets.
+-- An EXISTING database needs migrations/0012_submission_events_text_edit.sql
+-- for 'text_edit' — this file only ever creates missing tables.
 -- ============================================
 CREATE TABLE IF NOT EXISTS submission_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_discord_id TEXT NOT NULL,
-  kind TEXT NOT NULL CHECK (kind IN ('submission', 'flagged_edit', 'preview_upload')),
+  kind TEXT NOT NULL CHECK (kind IN ('submission', 'flagged_edit', 'preview_upload', 'text_edit')),
   preset_id TEXT,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_submission_events_user_kind_created
   ON submission_events(user_discord_id, kind, created_at);
+
+-- The age-based prune (FINDING-017) matches on `created_at` alone, which the
+-- composite index above cannot serve; it runs on every quota write.
+CREATE INDEX IF NOT EXISTS idx_submission_events_created
+  ON submission_events(created_at);

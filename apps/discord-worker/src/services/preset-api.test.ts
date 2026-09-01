@@ -708,46 +708,7 @@ describe('preset-api.ts', () => {
       // Verify the fetch was called with signature headers
       const calledOptions = mockFetch.mock.calls[0][1];
       expect(calledOptions.headers['X-Request-Timestamp']).toBeDefined();
-      expect(calledOptions.headers['X-Request-Signature']).toBeDefined();
-    });
-
-    it('produces the exact pinned HMAC-SHA256 hex for a fixed input (follow-up 3)', async () => {
-      // Pinned vector computed 2026-08-18 with the pre-hmacSignHex hand-rolled
-      // implementation (crypto.subtle.importKey('raw')/sign('HMAC')/hex, byte
-      // for byte identical to @xivdyetools/auth's hmacSignHex) for message
-      // "1700000000:123456789012345678:testuser" and the secret below. This
-      // proves the switch to hmacSignHex in generateRequestSignature did not
-      // change the output.
-      const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000);
-
-      const env = createMockEnv({ withUrlConfig: true });
-      env.BOT_SIGNING_SECRET = 'pinned-vector-test-secret-32bytes!!';
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ id: 'preset-pinned' }),
-      });
-
-      await submitPreset(
-        env,
-        {
-          name: 'Pinned Vector Preset',
-          description: 'Test description text',
-          category_id: 'aesthetics',
-          dyes: [1, 2],
-          tags: [],
-        },
-        '123456789012345678',
-        'testuser',
-      );
-
-      const calledOptions = mockFetch.mock.calls[0][1];
-      expect(calledOptions.headers['X-Request-Timestamp']).toBe('1700000000');
-      expect(calledOptions.headers['X-Request-Signature']).toBe(
-        'e9251e253e12be84b34b7401a97d990e4a5341d9532ce13ffe572dfea82a76e4',
-      );
-
-      dateNowSpy.mockRestore();
+      expect(calledOptions.headers['X-Request-Signature']).toBeUndefined(); // v1 retired (FINDING-015)
     });
   });
 

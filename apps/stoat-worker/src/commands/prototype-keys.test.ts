@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { parseCommand } from './parser.js';
-import { routeCommand, type CommandContext } from '../router.js';
+import { routeCommand, isRegisteredCommand, type CommandContext } from '../router.js';
 import { handleHelpCommand } from './help.js';
 import { createMockMessage } from '../test-utils/revolt-mocks.js';
 import { MessageContextStore } from '../services/message-context.js';
@@ -50,6 +50,16 @@ describe('routeCommand — prototype keys are unknown commands', () => {
     await routeCommand(ctx);
     expect(ctx.message.channel?.sendMessage).toHaveBeenCalledOnce();
     expect(sentContent(ctx)).toMatch(/Unknown command/);
+  });
+});
+
+// FINDING-031 / S13-R5 (2026-08-29 security audit, fix round 1): the
+// predicate message-handler.ts's logging relies on to decide "safe to log
+// verbatim" must fail closed on inherited Object.prototype members the same
+// way routeCommand's own dispatch does.
+describe('isRegisteredCommand — prototype keys are not registered', () => {
+  it.each(PROTO_KEYS)('"%s" is not a registered command', (key) => {
+    expect(isRegisteredCommand(key, null)).toBe(false);
   });
 });
 

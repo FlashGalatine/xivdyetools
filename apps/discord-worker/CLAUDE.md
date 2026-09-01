@@ -46,8 +46,6 @@ wrangler secret put BOT_API_SECRET
 wrangler secret put BOT_SIGNING_SECRET
 wrangler secret put INTERNAL_WEBHOOK_SECRET
 wrangler secret put GITHUB_WEBHOOK_SECRET
-wrangler secret put UPSTASH_REDIS_REST_URL
-wrangler secret put UPSTASH_REDIS_REST_TOKEN
 wrangler secret put STATS_AUTHORIZED_USERS   # CSV of Discord IDs for /stats
 wrangler secret put MODERATOR_IDS            # CSV of Discord IDs
 wrangler secret put MODERATION_CHANNEL_ID
@@ -76,7 +74,7 @@ Discord  ──POST /──►  Ed25519 verify (utils/verify.ts)
        PING         APPLICATION_COMMAND  AUTOCOMPLETE   MESSAGE_COMPONENT
        PONG               │                 │              │
                           ▼                 ▼              ▼
-                  rate-limiter (KV/Upstash) handlers/buttons
+                  rate-limiter (RL_* bindings) handlers/buttons
                           │
                           ▼
                   handlers/commands/<name>
@@ -85,7 +83,7 @@ Discord  ──POST /──►  Ed25519 verify (utils/verify.ts)
                   defer  →  follow-up via Discord REST
 ```
 
-The `/webhooks/preset-submission` endpoint receives notifications from `presets-api` and posts embeds + approve/reject buttons to the moderation channel. The `/webhooks/github` endpoint listens for pushes that modify `CHANGELOG-laymans.md` and announces releases to the announcement channel.
+The `/webhooks/preset-submission` endpoint receives notifications from `presets-api` and posts embeds + approve/reject buttons to the moderation channel. The `/webhooks/github` endpoint listens for pushes that modify `CHANGELOG-laymans.md` and announces releases to the announcement channel — only `push` events from `FlashGalatine/xivdyetools` (`GITHUB_ANNOUNCE_REPO`/`GITHUB_ANNOUNCE_REPO_URL` in `src/index.ts`; the payload's `repository` is only compared, never used to build a URL), and each version only once (KV `announced:v:<version>`, 90-day TTL, written after a successful send), so a GitHub *Redeliver* is safe (FINDING-021).
 
 ### Key Directories
 
@@ -106,7 +104,7 @@ src/
 ├── services/
 │   ├── analytics.ts               # KV counters + Analytics Engine writes (Tier A column layout)
 │   ├── command-trace.ts           # Per-interaction trace: traced ctx, outcome marks, classifier
-│   ├── rate-limiter.ts            # Upstash-first sliding window with KV fallback
+│   ├── rate-limiter.ts            # Native `[[ratelimits]]` bindings (RL_5…RL_70), KV fallback only when unbound
 │   ├── preset-favorites.ts        # Per-user preset favourites in KV (/preset favorite add|remove|list)
 │   ├── preferences.ts             # User preferences (race/clan, world, language, matching, theme)
 │   ├── preset-api.ts              # Service Binding client to presets-api
@@ -142,13 +140,14 @@ src/
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favourites, analytics counters |
+| `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favourites, analytics counters, announced-version memo (`announced:v:<version>`) |
 | `ANALYTICS` | Analytics Engine (`xivdyetools_bot_analytics`) | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
 | `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes) |
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Photon-backed pixel extraction for `/extractor` (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
+| `RL_5`, `RL_10`, `RL_15`, `RL_20`, `RL_30`, `RL_70` | Rate Limiting (`[[ratelimits]]`, 60 s period) | Per-user command counters — one tier per distinct effective limit in `DISCORD_COMMAND_LIMITS`; KV is the fallback only when none is bound (FINDING-007) |
 
-Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
+Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID` — all four declared in **both** `wrangler.toml` blocks, since `vars` are not inheritable. `ENVIRONMENT` is `"development"` on the beta bot and `"production"` on the live one; the only thing that reads it is `validateEnv`, which requires the six `RL_*` bindings in production (FINDING-013). Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
 
 ### Required Secrets
 
@@ -165,7 +164,6 @@ Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom 
 | `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing — min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys) |
 | `INTERNAL_WEBHOOK_SECRET` | Auth for inbound `/webhooks/preset-submission` |
 | `GITHUB_WEBHOOK_SECRET` | HMAC-SHA256 key for GitHub push webhook |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Primary rate-limit backend (KV is fallback) |
 | `MODERATOR_IDS` | CSV of Discord IDs allowed to moderate presets |
 | `MODERATION_CHANNEL_ID` | Channel for pending presets posted from web app |
 | `MODERATION_BOT_TOKEN` | BUG-009: bot token of the MODERATION Discord application. When set, moderation embeds are posted with it so approve/reject buttons route to moderation-worker; when unset, embeds omit buttons and hint at `/preset moderate` |
@@ -176,7 +174,7 @@ Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom 
 
 ### Command Routing (`src/index.ts`)
 
-A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `handlers/commands/`. Tracking is a dispatcher-owned `CommandTrace` finished in the `finally` after the handler's background work settles (see Analytics Tracking below). Rate-limit check runs before dispatch (skipped only for `about`, `manual` and `changelog` — `/stats` has been rate-limited since the 2026-08-21 security audit, FINDING-033).
+A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `handlers/commands/`. Tracking is a dispatcher-owned `CommandTrace` finished in the `finally` after the handler's background work settles (see Analytics Tracking below). Rate-limit check runs before dispatch for every command — `/stats` since FINDING-033, `/about`, `/manual` and `/changelog` since FINDING-020 (2026-08-29 audit).
 
 ### Deferred Responses
 
@@ -184,7 +182,7 @@ Long-running handlers return `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` immediately,
 
 ### Rate Limiting
 
-`services/rate-limiter.ts` prefers Upstash Redis (real distributed sliding window) and falls back to per-isolate KV reads. Image processing commands have tighter limits than text commands. Missing `userId` is treated as a hard reject to prevent bypass.
+`services/rate-limiter.ts` counts against the native `[[ratelimits]]` bindings (`RL_5`…`RL_70`, one per distinct per-minute limit in worker-kit's `DISCORD_COMMAND_LIMITS`), with the KV fallback used only when no tier is bound (tests / local dev). Image processing commands have tighter limits than text commands; every command is limited, including `/about`, `/manual` and `/changelog` (FINDING-020). Missing `userId` is treated as a hard reject to prevent bypass. Both degraded shapes warn once per isolate on the request logger — no tier bound (KV fallback) and a *partial* set, where worker-kit keeps the Cloudflare backend and silently routes the orphaned commands to the next larger tier — and on a `production` deployment `validateEnv` requires all six, with `src/index.ts` refusing every request (500 `Service misconfigured`, `/health` included) while one is unbound — the beta worker keeps the log-only path (FINDING-013).
 
 ### SVG → PNG Pipeline
 
@@ -219,7 +217,7 @@ Special routing inside `handleAutocomplete()`:
 
 ### Webhook Payload Limits
 
-Both `/webhooks/preset-submission` and `/webhooks/github` enforce 10KB payload caps before parsing JSON.
+Both webhook routes check `Content-Length` before reading the body, but the caps differ: `/webhooks/preset-submission` allows 10 KB (10,240 bytes), while `/webhooks/github` allows 1 MiB (`GITHUB_WEBHOOK_MAX_BYTES = 1_048_576` — GitHub's push payload carries the whole `repository` object plus up to 2048 commits, and a two-commit merge push measured 18,196 bytes) and re-checks the actual body length after reading it, since `Content-Length` can be missing or spoofed. Both refuse an oversized body with 413 before any JSON is parsed.
 
 ### User Content Sanitization
 
@@ -264,7 +262,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 | `@xivdyetools/core` | Dye database, color algorithms, k-d tree matcher |
 | `@xivdyetools/types` | Branded types and shared interfaces |
 | `@xivdyetools/auth` | JWT verify, HMAC, Ed25519 helpers |
-| `@xivdyetools/worker-kit/rate-limiter` | Sliding window backends (Memory/KV/Upstash) |
+| `@xivdyetools/worker-kit/rate-limiter` | Rate-limit backends — this worker uses the native `[[ratelimits]]` one (`CloudflareRateLimiter`), with `KVRateLimiter` as the unbound fallback |
 | `@xivdyetools/svg` | Pure SVG card generators |
 | `@xivdyetools/bot-logic` | Platform-agnostic command business logic |
 | `@xivdyetools/bot-logic/i18n` | Bot localization strings (absorbed from bot-i18n) |
@@ -290,7 +288,7 @@ Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/
 | `GET /health` | None | Health probe |
 | `POST /` | Ed25519 | Discord interactions |
 | `POST /webhooks/preset-submission` | Bearer (`INTERNAL_WEBHOOK_SECRET`) | Forwarded preset submissions from web app |
-| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events that update the root (product-level) `CHANGELOG-laymans.md` |
+| `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events that update the root (product-level) `CHANGELOG-laymans.md` — `push` events from `FlashGalatine/xivdyetools` only (`ping` → pong, other events → `Ignored event`, other repositories → 403), each version announced once via a versioned memo (`announced:v:<version>`), so redelivery is safe but a corrected changelog needs that KV key cleared to be re-announced |
 
 ## Testing
 

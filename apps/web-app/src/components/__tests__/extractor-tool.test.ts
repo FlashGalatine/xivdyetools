@@ -262,13 +262,19 @@ vi.mock('@services/index', () => ({
   },
 }));
 
+/**
+ * FINDING-009: the extractor no longer imports this module at all. The mock
+ * stays as the sentinel for that — the image-privacy tests below assert these
+ * three spies are never touched, which is what "images are session-only" means
+ * in practice. STORES mirrors the real module, which has no image store.
+ */
 vi.mock('@services/indexeddb-service', () => ({
   indexedDBService: {
     get: vi.fn().mockResolvedValue(null),
     set: vi.fn().mockResolvedValue(true),
     delete: vi.fn().mockResolvedValue(undefined),
   },
-  STORES: { IMAGE_CACHE: 'image_cache' },
+  STORES: { PRICE_CACHE: 'price_cache', PALETTES: 'palettes', SETTINGS: 'settings' },
 }));
 
 vi.mock('@shared/logger', () => ({
@@ -991,21 +997,6 @@ describe('ExtractorTool', () => {
       expect(ctx.drawImage).toHaveBeenCalled();
     });
 
-    it('persists the loaded image to IndexedDB, not localStorage (OPT-012)', async () => {
-      const { indexedDBService } = await import('@services/indexeddb-service');
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      vi.mocked(StorageService.setItem).mockClear();
-
-      await loadImage();
-
-      // A ~2 MB data URL in localStorage consumed most of the shared 5 MB
-      // budget and made every later setItem fail silently on quota
-      expect(indexedDBService.set).toHaveBeenCalled();
-      const localKeys = vi.mocked(StorageService.setItem).mock.calls.map((c) => c[0]);
-      expect(localKeys).not.toContain('v3_matcher_image');
-    });
-
     it('re-samples the image when the colour count changes', async () => {
       tool = mount();
       await loadImage();
@@ -1482,26 +1473,59 @@ describe('ExtractorTool', () => {
       });
     });
 
-    describe('restoring a saved image', () => {
-      it('restores from IndexedDB and re-extracts on mount', async () => {
+    /**
+     * FINDING-009: every image the tool saw (upload, drop, Ctrl+V, camera) was
+     * written to IndexedDB and restored — and re-extracted — the next time the
+     * Palette Extractor was opened, so a pasted screenshot was the next
+     * visitor's first view on a shared device. Images are session-only now:
+     * nothing is written, nothing is read back, and the pre-OPT-012
+     * localStorage copy is cleaned up on mount.
+     */
+    describe('image privacy (FINDING-009)', () => {
+      it('does not restore an image an earlier version left in IndexedDB', async () => {
         const { indexedDBService } = await import('@services/indexeddb-service');
-        vi.mocked(indexedDBService.get).mockResolvedValueOnce('data:image/png;base64,AAAA');
+        vi.mocked(indexedDBService.get).mockResolvedValue('data:image/png;base64,AAAA');
 
         tool = mount();
         for (let i = 0; i < 8; i++) await flush();
 
-        // Restoring must bring the RESULTS back too, not just the bitmap —
-        // otherwise a reload shows the image above an empty panel. The cards
-        // are rendered on the far side of extractPalette()'s frame, so this
-        // waits on them rather than betting a flush count against ~16 ms.
-        expect(rightPanel.querySelector('canvas')).not.toBeNull();
-        await vi.waitFor(() => expect(resultCards().length).toBeGreaterThan(0));
+        expect(indexedDBService.get).not.toHaveBeenCalled();
+        // The old restore path also re-ran the extraction, so the previous
+        // visitor's palette came back on screen with the image
+        expect(resultCards().length).toBe(0);
       });
 
-      it('migrates a legacy localStorage image into IndexedDB', async () => {
+      it('never writes a loaded image to storage', async () => {
         const { indexedDBService } = await import('@services/indexeddb-service');
         const { StorageService } = await import('@services/index');
-        vi.mocked(indexedDBService.get).mockResolvedValueOnce(null);
+        tool = mount();
+        vi.mocked(StorageService.setItem).mockClear();
+
+        await loadImage();
+
+        expect(indexedDBService.set).not.toHaveBeenCalled();
+        const localKeys = vi.mocked(StorageService.setItem).mock.calls.map((c) => c[0]);
+        expect(localKeys).not.toContain('v3_matcher_image');
+      });
+
+      it('removes the legacy localStorage image key on mount', async () => {
+        const { StorageService } = await import('@services/index');
+
+        tool = mount();
+        for (let i = 0; i < 8; i++) await flush();
+
+        // Idempotent cleanup: a visitor who last used a pre-OPT-012 build still
+        // carries the data URL in localStorage, and nothing else deletes it
+        expect(StorageService.removeItem).toHaveBeenCalledWith('v3_matcher_image');
+      });
+
+      it('drops a legacy localStorage image instead of restoring it', async () => {
+        const { indexedDBService } = await import('@services/indexeddb-service');
+        const { StorageService } = await import('@services/index');
+        // Explicit, not inherited: `mockResolvedValue` above survives
+        // `clearAllMocks`, and an IndexedDB hit would skip the legacy path this
+        // test is about
+        vi.mocked(indexedDBService.get).mockResolvedValue(null);
         vi.mocked(StorageService.getItem).mockImplementation((key: string) =>
           key === 'v3_matcher_image' ? ('data:image/png;base64,AAAA' as never) : (null as never)
         );
@@ -1509,35 +1533,10 @@ describe('ExtractorTool', () => {
         tool = mount();
         for (let i = 0; i < 8; i++) await flush();
 
-        // OPT-012: the copy moves, it does not get duplicated — leaving the
-        // localStorage entry keeps the quota pressure the migration exists to remove
-        expect(indexedDBService.set).toHaveBeenCalledWith(
-          expect.anything(),
-          'v3_matcher_image',
-          'data:image/png;base64,AAAA'
-        );
+        // It used to be migrated into IndexedDB and mounted; now it is deleted
+        expect(indexedDBService.set).not.toHaveBeenCalled();
         expect(StorageService.removeItem).toHaveBeenCalledWith('v3_matcher_image');
-      });
-
-      it('clears a saved image that will not decode', async () => {
-        const { indexedDBService } = await import('@services/indexeddb-service');
-        const { StorageService } = await import('@services/index');
-        vi.mocked(indexedDBService.get).mockResolvedValueOnce('data:image/png;base64,BROKEN');
-        class FailingImage {
-          onload: (() => void) | null = null;
-          onerror: (() => void) | null = null;
-          set src(_v: string) {
-            queueMicrotask(() => this.onerror?.());
-          }
-        }
-        globalThis.Image = FailingImage as unknown as typeof Image;
-
-        tool = mount();
-        for (let i = 0; i < 8; i++) await flush();
-
-        // A corrupt blob that is never cleared re-fails on every single load
-        expect(indexedDBService.delete).toHaveBeenCalled();
-        expect(StorageService.removeItem).toHaveBeenCalledWith('v3_matcher_image');
+        expect(resultCards().length).toBe(0);
       });
     });
 
@@ -1677,12 +1676,11 @@ describe('ExtractorTool', () => {
     });
 
     it('clears the image and offers the drop zone again', async () => {
-      const { StorageService } = await import('@services/index');
-      const { indexedDBService } = await import('@services/indexeddb-service');
       tool = mount();
       await loadImage();
-      vi.mocked(StorageService.removeItem).mockClear();
-      vi.mocked(indexedDBService.delete).mockClear();
+      expect(resultCards().length).toBeGreaterThan(0);
+      // The loaded flow is what is on screen while an image is in
+      expect(dropZone().parentElement!.style.display).toBe('none');
 
       // The X on the image card, found by its label rather than by icon
       // markup — the Replace button next to it also carries an SVG
@@ -1693,10 +1691,10 @@ describe('ExtractorTool', () => {
       clearBtn!.click();
       await flush();
 
-      // Both copies go: the legacy localStorage key AND the OPT-012 IndexedDB
-      // blob, or the cleared image returns on the next reload
-      expect(StorageService.removeItem).toHaveBeenCalledWith('v3_matcher_image');
-      expect(indexedDBService.delete).toHaveBeenCalled();
+      // FINDING-009: nothing was persisted, so dropping the reference IS the
+      // clear — the empty flow comes back and the palette goes with it
+      expect(dropZone().parentElement!.style.display).toBe('flex');
+      expect(resultCards().length).toBe(0);
     });
   });
 

@@ -52,6 +52,7 @@ import type {
   RateLimitResult,
   RateLimiterLogger,
 } from '../types.js';
+import { scopeRateLimitKey } from '../key-scope.js';
 
 /**
  * Structural type for the Workers Rate Limiting binding
@@ -79,6 +80,13 @@ export interface CloudflareRateLimiterOptions {
   /**
    * Prefix prepended to every binding key. Use it to namespace limiters that
    * share a binding (e.g. `'api:ip:'`).
+   *
+   * Logged verbatim on a fail-open event (2026-08-29 FINDING-010 —
+   * `scopeRateLimitKey()` trusts this string as the safe "which bucket
+   * class" scope). Do not derive it from request data — a per-tenant or
+   * per-user prefix (e.g. `` `tenant:${tenantId}:` ``) puts exactly the
+   * client-identifying value this redaction exists to avoid back into your
+   * logs.
    * @default ''
    */
   keyPrefix?: string;
@@ -108,6 +116,23 @@ export class CloudflareRateLimiter implements ExtendedRateLimiter {
   constructor(options: CloudflareRateLimiterOptions) {
     if (!options.tiers || options.tiers.length === 0) {
       throw new Error('CloudflareRateLimiter requires at least one tier');
+    }
+    // 2026-08-29 FINDING-012: a tier whose `binding` has no callable
+    // `limit()` compiles fine — `RateLimitBinding` is a structural type, so
+    // TS cannot see a wrangler config typo or a binding of the wrong kind —
+    // and previously sailed through construction to fail per REQUEST inside
+    // `check()`'s catch, which fails OPEN: every request would be silently
+    // allowed with no way to tell from the constructor call that anything
+    // was wrong. Failing loudly here costs a worker with a misconfigured
+    // binding its first request (a 500 at startup) instead of unlimited
+    // traffic forever — the same trade Sprints 1-4 made for other missing
+    // security bindings.
+    for (const tier of options.tiers) {
+      if (typeof tier.binding?.limit !== 'function') {
+        throw new Error(
+          `CloudflareRateLimiter: tier (limit=${tier.limit}) has no callable binding.limit() — check the [[ratelimits]] binding name in wrangler config`,
+        );
+      }
     }
     this.tiers = options.tiers
       .map((t) => ({ limit: t.limit, periodSeconds: t.periodSeconds ?? 60, binding: t.binding }))
@@ -158,11 +183,33 @@ export class CloudflareRateLimiter implements ExtendedRateLimiter {
       };
     } catch (error) {
       if (config.failOpen !== false) {
-        this.logger?.warn('Rate limiter fail-open: rate-limit binding error, allowing request', {
-          key: bindingKey,
+        const context = {
+          // 2026-08-29 FINDING-010: `bindingKey` is `keyPrefix + key` — it
+          // embeds the caller's raw IP/Discord id just like `key` does, so
+          // logging the scope means never building `bindingKey` into the
+          // log line at all, not stripping it back out.
+          keyScope: scopeRateLimitKey(key, this.keyPrefix),
           tierLimit: tier.limit,
           error: error instanceof Error ? error.message : String(error),
-        });
+        };
+        // 2026-08-29 FINDING-012: fall back to console.warn when no logger
+        // was supplied. docs/architecture/security-trade-offs.md accepts
+        // fail-open on the condition that fail-open events are logged and
+        // alertable; `this.logger?.warn` alone left that condition unmet for
+        // every consumer that (like oauth and moderation-worker, until their
+        // own Sprint 2026-08-30 fixes) never passed a logger — the request
+        // was still let through, but nothing said so anywhere.
+        if (this.logger) {
+          this.logger.warn(
+            'Rate limiter fail-open: rate-limit binding error, allowing request',
+            context,
+          );
+        } else {
+          console.warn(
+            'Rate limiter fail-open: rate-limit binding error, allowing request',
+            context,
+          );
+        }
         return {
           allowed: true,
           remaining: tier.limit,

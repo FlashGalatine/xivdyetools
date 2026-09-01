@@ -14,6 +14,7 @@ import type { Context, Next } from 'hono';
 import type { Env } from '../types.js';
 import type { AuthContext } from '@xivdyetools/types';
 import { ErrorCode } from '../utils/api-response.js';
+import { getLogger } from '@xivdyetools/worker-kit';
 
 type Variables = {
   auth: AuthContext;
@@ -61,10 +62,11 @@ function banLookupFailure(
   c: Context<{ Bindings: Env; Variables: Variables }>,
   error: unknown
 ): Response | null {
-  console.error('Ban check failed:', error);
+  const logger = getLogger(c);
+  (logger ?? console).error('Ban check failed', error);
 
   if (c.env.ENVIRONMENT === 'development') {
-    console.warn(
+    (logger ?? console).warn(
       '[ban-check] ban lookup failed — continuing WITHOUT a ban check because ENVIRONMENT is development ' +
         '(a fresh local D1 may lack banned_users: run `npm run db:migrate:local`). Every other environment fails closed.'
     );

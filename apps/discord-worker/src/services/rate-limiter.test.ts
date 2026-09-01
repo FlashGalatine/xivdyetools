@@ -1,18 +1,22 @@
 /**
  * Tests for Rate Limiter Service
  *
- * Tests both KV fallback and new config-based interface.
+ * Covers the native `[[ratelimits]]` binding path (FINDING-007) and the KV
+ * fallback that runs when no `RL_*` tier is bound.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createTranslator } from '@xivdyetools/bot-logic/i18n';
 import {
   checkRateLimit,
+  rateLimitBindings,
   resolveRateLimitScope,
   formatRateLimitMessage,
   resetRateLimiterInstance,
+  type DiscordRateLimitBindings,
   type RateLimitResult,
   type RateLimiterConfig,
 } from './rate-limiter.js';
+import type { Env } from '../types/env.js';
 
 // Create mock KV namespace with getWithMetadata support for KVRateLimiter
 function createMockKV() {
@@ -44,6 +48,18 @@ function createMockKV() {
   };
 }
 
+/** Tier names in the order they are declared in wrangler.toml. */
+const TIER_NAMES = ['RL_5', 'RL_10', 'RL_15', 'RL_20', 'RL_30', 'RL_70'] as const;
+
+type FakeBindings = Record<(typeof TIER_NAMES)[number], { limit: ReturnType<typeof vi.fn> }>;
+
+/** All six `[[ratelimits]]` tiers bound, each admitting the request by default. */
+function createMockBindings(success = true): FakeBindings {
+  return Object.fromEntries(
+    TIER_NAMES.map((name) => [name, { limit: vi.fn().mockResolvedValue({ success }) }]),
+  ) as FakeBindings;
+}
+
 describe('rate-limiter.ts', () => {
   let mockKV: ReturnType<typeof createMockKV>;
   let config: RateLimiterConfig;
@@ -52,7 +68,8 @@ describe('rate-limiter.ts', () => {
   beforeEach(() => {
     resetRateLimiterInstance();
     mockKV = createMockKV();
-    // Use KV backend for tests (Upstash would require mocking the fetch layer)
+    // Backend-selection tests aside, these exercise the KV fallback (no
+    // `RL_*` binding bound) because its counters are observable.
     config = { kv: mockKV };
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-01-01T12:00:00Z'));
@@ -198,6 +215,110 @@ describe('rate-limiter.ts', () => {
       await expect(checkRateLimit(emptyConfig, mockUserId, 'harmony')).rejects.toThrow(
         'No rate limiter backend configured',
       );
+    });
+  });
+
+  /**
+   * FINDING-007 (2026-08-29 security audit): the counters used to live in a
+   * third-party Redis the privacy policy never named. They now live in the
+   * native Workers rate-limiting bindings, one `[[ratelimits]]` tier per
+   * distinct effective limit, and worker-kit routes each command to the
+   * smallest tier that can hold it.
+   */
+  describe('native [[ratelimits]] bindings', () => {
+    it.each([
+      { command: 'budget', subcommand: undefined, tier: 'RL_10', key: 'budget' },
+      // RL_20 is the only tier no other row covers — without these two, a
+      // wrangler.toml that dropped it would still pass this table.
+      { command: 'dye', subcommand: undefined, tier: 'RL_20', key: 'dye' },
+      { command: 'preferences', subcommand: undefined, tier: 'RL_20', key: 'preferences' },
+      { command: 'about', subcommand: undefined, tier: 'RL_30', key: 'about' },
+      { command: 'manual', subcommand: undefined, tier: 'RL_30', key: 'manual' },
+      // FINDING-020: worker-kit has no `changelog` tier yet — the local
+      // override keeps it with its /about and /manual siblings.
+      { command: 'changelog', subcommand: undefined, tier: 'RL_30', key: 'changelog' },
+      { command: 'autocomplete', subcommand: undefined, tier: 'RL_70', key: 'autocomplete' },
+      { command: 'extractor', subcommand: 'image', tier: 'RL_5', key: 'extractor:image' },
+      { command: 'no_such_command', subcommand: undefined, tier: 'RL_15', key: 'no_such_command' },
+    ] as const)('routes /$command to $tier', async ({ command, subcommand, tier, key: scope }) => {
+      const key = `ratelimit:user:${mockUserId}:${scope}`;
+      const bindings = createMockBindings();
+      const result = await checkRateLimit(
+        { bindings: bindings as unknown as DiscordRateLimitBindings, kv: mockKV },
+        mockUserId,
+        command,
+        undefined,
+        subcommand,
+      );
+
+      expect(result.allowed).toBe(true);
+      expect(bindings[tier].limit).toHaveBeenCalledWith({ key });
+      for (const name of TIER_NAMES) {
+        if (name !== tier) expect(bindings[name].limit).not.toHaveBeenCalled();
+      }
+      // The bindings replace KV entirely — no counter writes.
+      expect(mockKV.put).not.toHaveBeenCalled();
+    });
+
+    it('denies the request when the binding rejects it', async () => {
+      const bindings = createMockBindings(false);
+
+      const result = await checkRateLimit(
+        { bindings: bindings as unknown as DiscordRateLimitBindings, kv: mockKV },
+        mockUserId,
+        'budget',
+      );
+
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
+      expect(result.retryAfter).toBeGreaterThan(0);
+    });
+
+    it('uses the bindings even when only some tiers are bound', async () => {
+      const bindings = createMockBindings();
+      // Only the 30/min tier bound: /budget (10/min) has no tier that fits
+      // below it, so worker-kit falls back to the largest bound tier.
+      const result = await checkRateLimit(
+        { bindings: { RL_30: bindings.RL_30 } as unknown as DiscordRateLimitBindings, kv: mockKV },
+        mockUserId,
+        'budget',
+      );
+
+      expect(result.allowed).toBe(true);
+      expect(bindings.RL_30.limit).toHaveBeenCalledWith({ key: 'ratelimit:user:user-123:budget' });
+      expect(mockKV.put).not.toHaveBeenCalled();
+    });
+
+    it('rateLimitBindings carries exactly the six RL_* tiers off the env', async () => {
+      const bindings = createMockBindings();
+      const env = {
+        KV: mockKV,
+        DISCORD_TOKEN: 'secret', // pragma: allowlist secret
+        ...bindings,
+      } as unknown as Env;
+
+      // Exactly the six tiers, nothing else off the env.
+      expect(rateLimitBindings(env)).toEqual({
+        RL_5: bindings.RL_5,
+        RL_10: bindings.RL_10,
+        RL_15: bindings.RL_15,
+        RL_20: bindings.RL_20,
+        RL_30: bindings.RL_30,
+        RL_70: bindings.RL_70,
+      });
+
+      // …and the result really drives the limiter: a helper that dropped
+      // RL_5 would push the Photon path up to the next tier.
+      await checkRateLimit(
+        { bindings: rateLimitBindings(env), kv: env.KV },
+        mockUserId,
+        'extractor',
+        undefined,
+        'image',
+      );
+      expect(bindings.RL_5.limit).toHaveBeenCalledWith({
+        key: 'ratelimit:user:user-123:extractor:image',
+      });
     });
   });
 

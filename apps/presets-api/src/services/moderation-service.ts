@@ -6,8 +6,19 @@
  * Production code uses the default profanity lists, while tests can inject custom patterns.
  */
 
-import type { Env, ModerationResult } from '../types.js';
+import type { Env, ModerationResult, PresetModerationResult } from '../types.js';
 import { profanityLists } from '../data/profanity/index.js';
+
+/**
+ * FINDING-011 (2026-08-29 security audit): minimal logger interface for this
+ * module — mirrors preset-service.ts's PresetServiceLogger shape so callers
+ * without a request-scoped logger (tests, this module's own defaults) keep
+ * getting `console` behaviour via the `(logger ?? console)` fallback used
+ * throughout this file.
+ */
+export interface ModerationServiceLogger {
+  error(message: string, ...args: unknown[]): void;
+}
 
 // ============================================
 // LOCAL PROFANITY FILTER
@@ -203,46 +214,87 @@ interface PerspectiveResponse {
   };
 }
 
+const PERSPECTIVE_ENDPOINT = 'https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze';
+
 /**
- * Check text using Google Perspective API
- * Returns null if API is not configured or fails
+ * FINDING-005: the verdict for "the moderation service could not answer".
+ *
+ * Not a flag — nothing was found — and emphatically not a pass: callers treat
+ * it exactly as they treat flagged content, which puts the text in front of a
+ * moderator instead of publishing it unchecked.
+ */
+function moderationUnavailable(): PresetModerationResult {
+  return {
+    passed: false,
+    flaggedField: 'content',
+    flaggedReason: 'Moderation service unavailable — queued for manual review',
+    method: 'perspective_unavailable',
+  };
+}
+
+/**
+ * Check text using Google Perspective API.
+ *
+ * Returns `null` only when no key is configured (dev / tests), where the local
+ * word list alone decides. When a key IS configured, every call resolves to
+ * either a real verdict or `moderationUnavailable()` — FINDING-005: a
+ * configured moderation service that cannot answer must not read as an
+ * all-clear.
  */
 async function checkWithPerspective(
   text: string,
-  env: Env
-): Promise<ModerationResult | null> {
+  env: Env,
+  logger?: ModerationServiceLogger
+): Promise<PresetModerationResult | null> {
   if (!env.PERSPECTIVE_API_KEY) {
     return null; // Skip if not configured
   }
 
   try {
-    // PRESETS-HIGH-001: Added 5 second timeout to prevent submission hangs
-    // If Perspective API is slow or unavailable, we'll skip it and allow the submission
-    const response = await fetch(
-      `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${env.PERSPECTIVE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          comment: { text },
-          requestedAttributes: {
-            TOXICITY: {},
-            SEVERE_TOXICITY: {},
-            IDENTITY_ATTACK: {},
-            INSULT: {},
-            PROFANITY: {},
-          },
-        }),
-        signal: AbortSignal.timeout(5000), // 5 second timeout
-      }
-    );
+    // PRESETS-HIGH-001: 5 second timeout to prevent submission hangs. A trip
+    // is now a moderator queue entry, not a free pass (FINDING-005).
+    const response = await fetch(PERSPECTIVE_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // FINDING-006: the key is a credential. In the query string it lands in
+        // every proxy, CDN and access log between here and Google.
+        'x-goog-api-key': env.PERSPECTIVE_API_KEY,
+      },
+      body: JSON.stringify({
+        comment: { text },
+        requestedAttributes: {
+          TOXICITY: {},
+          SEVERE_TOXICITY: {},
+          IDENTITY_ATTACK: {},
+          INSULT: {},
+          PROFANITY: {},
+        },
+        // FINDING-006: `text` is a user-typed preset name + description.
+        // Without this, Perspective may retain it for research.
+        doNotStore: true,
+      }),
+      signal: AbortSignal.timeout(5000), // 5 second timeout
+    });
 
     if (!response.ok) {
-      console.error('Perspective API error:', response.status, await response.text());
-      return null; // Don't block on API failure
+      // Includes 429: Perspective's default quota is ~1 QPS, so this is the
+      // ordinary back-pressure case, not an exotic outage. FINDING-011: the
+      // status only — the upstream body is never logged (it's an opaque
+      // Google error payload we don't control the shape or contents of).
+      (logger ?? console).error('Perspective API error', { status: response.status });
+      return moderationUnavailable();
     }
 
     const result: PerspectiveResponse = await response.json();
+
+    // A 200 whose body is not the shape we asked for is no verdict either.
+    // FINDING-011: logged and returned directly now that a logger is in
+    // scope — previously thrown purely so the `catch` below could log it.
+    if (!result?.attributeScores || typeof result.attributeScores !== 'object') {
+      (logger ?? console).error('Perspective API error: response carried no attributeScores');
+      return moderationUnavailable();
+    }
 
     const scores: Record<string, number> = {
       toxicity: result.attributeScores.TOXICITY?.summaryScore?.value || 0,
@@ -275,8 +327,9 @@ async function checkWithPerspective(
       scores,
     };
   } catch (error) {
-    console.error('Perspective API error:', error);
-    return null; // Don't block on API failure
+    // The 5 s AbortSignal lands here too.
+    (logger ?? console).error('Perspective API error', error);
+    return moderationUnavailable();
   }
 }
 
@@ -285,13 +338,20 @@ async function checkWithPerspective(
 // ============================================
 
 /**
- * Moderate content using local filter and optional Perspective API
+ * Moderate content using local filter and optional Perspective API.
+ *
+ * FINDING-005: with a key configured this now has three outcomes, not two —
+ * passed, flagged, and `method: 'perspective_unavailable'` (also `passed:
+ * false`), which means "nobody has judged this yet". Callers must treat the
+ * third exactly as they treat the second. Without a key the local list alone
+ * decides, unchanged.
  */
 export async function moderateContent(
   name: string,
   description: string,
-  env: Env
-): Promise<ModerationResult> {
+  env: Env,
+  logger?: ModerationServiceLogger
+): Promise<PresetModerationResult> {
   // 1. Local word filter (fast, always runs)
   const localResult = checkLocalFilter(name, description);
   if (localResult && !localResult.passed) {
@@ -301,9 +361,11 @@ export async function moderateContent(
   // 2. Perspective API (optional, catches evasion/context)
   const perspectiveResult = await checkWithPerspective(
     `${name} ${description}`,
-    env
+    env,
+    logger
   );
 
+  // Covers both a real toxicity verdict and "the service could not answer".
   if (perspectiveResult && !perspectiveResult.passed) {
     return perspectiveResult;
   }
@@ -335,7 +397,8 @@ interface ModerationAlert {
  */
 export async function notifyModerators(
   alert: ModerationAlert,
-  env: Env
+  env: Env,
+  logger?: ModerationServiceLogger
 ): Promise<void> {
   const embed = {
     title: '⚠️ Palette Pending Review',
@@ -362,7 +425,7 @@ export async function notifyModerators(
         body: JSON.stringify({ embeds: [embed] }),
       });
     } catch (error) {
-      console.error('Failed to send webhook notification:', error);
+      (logger ?? console).error('Failed to send webhook notification', error);
     }
   }
 
@@ -399,7 +462,7 @@ export async function notifyModerators(
         );
       }
     } catch (error) {
-      console.error('Failed to send DM notification:', error);
+      (logger ?? console).error('Failed to send DM notification', error);
     }
   }
 }

@@ -12,19 +12,20 @@
 🎭 **Masquerade** — Bot replies adopt the dye's color and name per-message
 ⏳ **Loading Indicators** — React/unreact pattern for visual processing feedback
 🌍 **6 Languages** — English, Japanese, German, French, Korean, Chinese
-📊 **Shared Logic** — Built on the same `@xivdyetools/bot-logic` and `@xivdyetools/svg` packages as the Discord bot
+📊 **Shared Logic** — Built on the same `@xivdyetools/bot-logic` package as the Discord bot
 
 ## Architecture
 
 - **Runtime:** Node.js 22+ (persistent process, not serverless)
 - **Bot library:** [revolt.js](https://www.npmjs.com/package/revolt.js) WebSocket client
 - **Command model:** Prefix commands (`!xivdye <command>` or `!xd <shortcut>`)
-- **Shared packages:** `@xivdyetools/core` (incl. `/blending`), `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/svg`, `@xivdyetools/types`, `@xivdyetools/logger`
+- **Shared packages:** `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/types`, `@xivdyetools/logger` — `@xivdyetools/core` and `@xivdyetools/svg` are **not** dependencies (dropped in the Monorepo 2.0 Task 6 work: this bot renders no image cards and needs no direct database access; `bot-logic` covers everything it actually calls)
+- **Rate limiting:** in-memory per-user `CommandThrottle` (5 commands / 10 s, silent drop — `services/command-throttle.ts`, since 0.2.2)
 
 ### Planned (not yet implemented)
 
 - **Storage:** SQLite (better-sqlite3) for preferences/analytics
-- **Rate limiting:** Upstash Redis via `@xivdyetools/worker-kit/rate-limiter`
+- **Multi-instance rate limiting:** Upstash Redis backend via `@xivdyetools/worker-kit/rate-limiter` — the current `CommandThrottle` above is in-memory and per-process, which is enough for the single Node process this bot runs as today
 - **Image rendering:** `@resvg/resvg-js` (Node.js native, not WASM)
 - **Image processing:** `sharp` (replaces `@cf-wasm/photon`)
 - **Hosting:** Fly.io

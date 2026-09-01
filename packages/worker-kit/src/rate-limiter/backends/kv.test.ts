@@ -158,6 +158,27 @@ describe('KVRateLimiter', () => {
       expect(result.backendError).toBe(true);
     });
 
+    it('FINDING-012: falls back to console.warn (redacted) when no logger is supplied, so fail-open is never silent', async () => {
+      // Before this sprint, `this.logger?.warn(...)` alone meant a limiter
+      // built without a logger (every consumer, until Sprints 2/4 of the
+      // 2026-08-29 audit) fell open on a KV error with NO signal anywhere —
+      // docs/architecture/security-trade-offs.md accepts fail-open only on
+      // the condition that fail-open events are logged and alertable.
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.mocked(mockKV.get).mockRejectedValueOnce(new Error('KV error'));
+
+      const result = await limiter.checkOnly('user1', defaultConfig);
+
+      expect(result.backendError).toBe(true);
+      expect(consoleSpy).toHaveBeenCalledTimes(1);
+      const [message, context] = consoleSpy.mock.calls[0] as [string, Record<string, unknown>];
+      expect(message).toBe('Rate limiter fail-open: KV read error, allowing request');
+      expect(context.key).toBeUndefined();
+      expect(context.kvKey).toBeUndefined();
+      expect(context.keyScope).toBe('ratelimit');
+      consoleSpy.mockRestore();
+    });
+
     it('throws on KV error when failOpen is false', async () => {
       vi.mocked(mockKV.get).mockRejectedValueOnce(new Error('KV error'));
 
@@ -255,14 +276,21 @@ describe('KVRateLimiter', () => {
       expect(result.allowed).toBe(true);
       expect(result.backendError).toBe(true);
       expect(mockLogger.warn).toHaveBeenCalledTimes(1);
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        'Rate limiter fail-open: KV read error, allowing request',
-        expect.objectContaining({
-          key: 'user1',
-          operation: 'checkOnly',
-          error: 'KV unavailable',
-        })
-      );
+      const [message, context] = mockLogger.warn.mock.calls[0] as [
+        string,
+        Record<string, unknown>,
+      ];
+      expect(message).toBe('Rate limiter fail-open: KV read error, allowing request');
+      // 2026-08-29 FINDING-010: neither the raw key nor the derived kvKey
+      // (which embeds it) may appear — only the scope. A test that just
+      // checked `warn` fired would still pass if this redaction were
+      // reverted, so assert on the absence of the value, not merely the
+      // presence of a warning.
+      expect(context.key).toBeUndefined();
+      expect(context.kvKey).toBeUndefined();
+      expect(context.keyScope).toBe('ratelimit'); // default keyPrefix, trimmed
+      expect(context.operation).toBe('checkOnly');
+      expect(context.error).toBe('KV unavailable');
     });
 
     it('logs error on increment failure after retries', async () => {
@@ -279,28 +307,40 @@ describe('KVRateLimiter', () => {
       await loggedLimiter.increment('user1', defaultConfig);
 
       expect(mockLogger.error).toHaveBeenCalledTimes(1);
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Rate limiter KV increment failed after retries',
-        expect.any(Error),
-        expect.objectContaining({
-          key: 'user1',
-          operation: 'increment',
-          attempts: 2,
-          maxRetries: 2,
-        })
-      );
+      const [message, err, context] = mockLogger.error.mock.calls[0] as [
+        string,
+        unknown,
+        Record<string, unknown>,
+      ];
+      expect(message).toBe('Rate limiter KV increment failed after retries');
+      expect(err).toBeInstanceOf(Error);
+      // 2026-08-29 FINDING-010: same property as the checkOnly test above.
+      expect(context.key).toBeUndefined();
+      expect(context.kvKey).toBeUndefined();
+      expect(context.keyScope).toBe('ratelimit');
+      expect(context.attempts).toBe(2);
+      expect(context.maxRetries).toBe(2);
     });
 
-    it('does not log when no logger is provided', async () => {
-      // Use limiter without logger (default behavior)
+    it('falls back to console.error (redacted) when no logger is provided', async () => {
+      // 2026-08-29 FINDING-012: this fallback already existed before this
+      // sprint (it is the in-repo precedent the fail-open console.warn
+      // fallbacks were modeled on) — this test locks in that the FINDING-010
+      // redaction also reaches it, since it shares `errorContext` with the
+      // structured-logger branch above.
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       vi.mocked(mockKV.get).mockRejectedValue(new Error('KV write failed'));
 
       await limiter.increment('user1', defaultConfig);
 
-      // Should fall back to console.error
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledTimes(1);
+      const [message, context] = consoleSpy.mock.calls[0] as [string, Record<string, unknown>];
+      expect(message).toBe('Rate limit increment error after retries');
+      expect(context.key).toBeUndefined();
+      expect(context.kvKey).toBeUndefined();
+      expect(context.keyScope).toBe('ratelimit');
+      expect(JSON.stringify(context)).not.toContain('user1');
       consoleSpy.mockRestore();
     });
   });

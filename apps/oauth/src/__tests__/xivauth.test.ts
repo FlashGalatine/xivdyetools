@@ -4,7 +4,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SELF, fetchWithEnv, createProductionEnv, env, VALID_CODE_VERIFIER, VALID_CODE_CHALLENGE } from './mocks/cloudflare-test.js';
+import {
+    SELF,
+    fetchWithEnv,
+    createProductionEnv,
+    env,
+    VALID_CODE_VERIFIER,
+    VALID_CODE_CHALLENGE,
+    recordedStatements,
+    resetRecordedStatements,
+} from './mocks/cloudflare-test.js';
 import { resetRateLimiter } from '../services/rate-limit.js';
 import { signState, type StateData } from '../utils/state-signing.js';
 import type { Env } from '../types.js';
@@ -646,11 +655,30 @@ describe('XIVAuth Handler', () => {
             // user.id is our internal database UUID
             expect(json.user.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
             expect(json.user.auth_provider).toBe('xivauth');
-            expect(json.user.primary_character).toMatchObject({
-                name: 'Test Character',
-                server: 'Excalibur',
-                verified: true,
+            // The verified character is the display identity — and, since
+            // FINDING-001 / FINDING-002, the only thing the roster contributes
+            expect(json.user.username).toBe('Test Character');
+            expect(json.user.global_name).toBe('Test Character');
+            expect(json.user).not.toHaveProperty('primary_character');
+        });
+
+        // FINDING-022 (2026-08-29 security audit): this response body carries a
+        // bearer JWT — RFC 6749 §5.1 requires it never be cached.
+        it('should send Cache-Control: no-store on the token response', async () => {
+            mockXIVAuth({ characters: [{ lodestone_id: 12345678, name: 'Test Character', home_world: 'Excalibur', verified: true }] });
+
+            const response = await postXIVAuthCallback({
+                code: 'valid_code',
+                code_verifier: VALID_CODE_VERIFIER,
+                state: await boundState(),
             });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.token).toBeTruthy();
+            expect(response.headers.get('Cache-Control')).toBe('no-store');
+            expect(response.headers.get('Pragma')).toBe('no-cache');
         });
 
         it('should handle characters fetch failure gracefully', async () => {
@@ -695,8 +723,9 @@ describe('XIVAuth Handler', () => {
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
             expect(json.user.auth_provider).toBe('xivauth');
-            // No primary character since fetch failed
-            expect(json.user.primary_character).toBeUndefined();
+            // No character was reachable, so the opaque label is the identity
+            expect(json.user.username).toContain('XIVAuth User');
+            expect(json.user.global_name).toBeNull();
         });
 
         it('should handle characters fetch error gracefully', async () => {
@@ -839,9 +868,11 @@ describe('XIVAuth Handler', () => {
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
-            // Should prefer verified character
-            expect(json.user.primary_character.name).toBe('Verified Character');
-            expect(json.user.primary_character.verified).toBe(true);
+            // Should prefer the verified character as the display identity
+            expect(json.user.username).toBe('Verified Character');
+            expect(json.user.global_name).toBe('Verified Character');
+            // ...and the unverified one leaves no trace in the response
+            expect(JSON.stringify(json.user)).not.toContain('Unverified Character');
         });
 
         it('should handle generic errors gracefully', async () => {
@@ -1070,8 +1101,11 @@ describe('XIVAuth Handler', () => {
             expect(json.user.username).toContain('XIVAuth User');
             expect(json.user.username).not.toContain('Famous Streamer');
             expect(json.user.global_name).toBeNull();
-            // The registration is still carried, flagged as unverified, so consumers can decide
-            expect(json.user.primary_character).toMatchObject({ name: 'Famous Streamer', verified: false });
+            // FINDING-001 / FINDING-002: the unverified registration is no
+            // longer carried at all — it used to ride along as
+            // `primary_character { verified: false }`
+            expect(json.user).not.toHaveProperty('primary_character');
+            expect(JSON.stringify(json.user)).not.toContain('Famous Streamer');
 
             const payload = decodeJwtPayload(json.token);
             expect(payload.username).toContain('XIVAuth User');
@@ -1208,6 +1242,168 @@ describe('XIVAuth Handler', () => {
 
             expect(response.status).toBe(401);
             expect(lines.join('\n')).toContain('DEV-ONLY-BODY-MARKER');
+        });
+    });
+
+    /**
+     * FINDING-001 / FINDING-002 (2026-08-29 security audit): a sign-in used to
+     * persist the caller's whole FFXIV roster (Lodestone ids, character names,
+     * home worlds — unverified registrations included) into `xivauth_characters`
+     * "for future features" that never arrived, and minted three claims nothing
+     * reads. Only what a consumer actually reads is stored or minted now.
+     */
+    describe('POST /auth/xivauth/callback — data minimisation', () => {
+        beforeEach(() => {
+            resetRecordedStatements();
+        });
+
+        /** The SQL text of every statement this login executed. */
+        function executedSql(): string {
+            return recordedStatements.map((s) => s.sql).join('\n');
+        }
+
+        /** Every value bound into any statement this login executed. */
+        function boundValues(): unknown[] {
+            return recordedStatements.flatMap((s) => s.params);
+        }
+
+        it('should sign a roster-carrying user in without writing the roster to D1', async () => {
+            mockXIVAuth({
+                userId: 'xivauth-roster-user',
+                characters: [
+                    { lodestone_id: 12345678, name: 'Roster Main', home_world: 'Excalibur', verified: true },
+                    { lodestone_id: 87654321, name: 'Roster Alt', home_world: 'Balmung', verified: false },
+                ],
+            });
+
+            const response = await postXIVAuthCallback({
+                code: 'valid_code',
+                code_verifier: VALID_CODE_VERIFIER,
+                state: await boundState(),
+            });
+            const json = (await response.json()) as Record<string, any>;
+
+            // The login itself still works, and the verified character is still
+            // the display identity
+            expect(response.status).toBe(200);
+            expect(json.success).toBe(true);
+            expect(json.user.username).toBe('Roster Main');
+
+            // ...but nothing touched the roster table
+            expect(recordedStatements.length).toBeGreaterThan(0);
+            expect(executedSql()).not.toContain('xivauth_characters');
+
+            // ...and no roster attribute was bound anywhere. (The verified
+            // character's name IS the username by design — FINDING-013 — so it
+            // is the only roster value allowed through.)
+            const bound = boundValues();
+            expect(bound).not.toContain('Roster Alt');
+            expect(bound).not.toContain('Excalibur');
+            expect(bound).not.toContain('Balmung');
+            expect(bound).not.toContain(12345678);
+            expect(bound).not.toContain(87654321);
+        });
+
+        it('should sign in a user whose roster holds no verified character without writing the roster', async () => {
+            mockXIVAuth({
+                userId: 'xivauth-unverified-roster-user',
+                characters: [
+                    { lodestone_id: 55555555, name: 'Unverified Only', home_world: 'Gilgamesh', verified: false },
+                ],
+            });
+
+            const response = await postXIVAuthCallback({
+                code: 'valid_code',
+                code_verifier: VALID_CODE_VERIFIER,
+                state: await boundState(),
+            });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.success).toBe(true);
+            expect(json.user.username).toContain('XIVAuth User');
+            expect(executedSql()).not.toContain('xivauth_characters');
+            expect(boundValues()).not.toContain('Unverified Only');
+        });
+
+        it('should bind no avatar URL column when creating the XIVAuth user row', async () => {
+            mockXIVAuth({ userId: 'xivauth-no-avatar-column-user' });
+
+            const response = await postXIVAuthCallback({
+                code: 'valid_code',
+                code_verifier: VALID_CODE_VERIFIER,
+                state: await boundState(),
+            });
+
+            expect(response.status).toBe(200);
+            const insert = recordedStatements.find((s) => s.sql.includes('INSERT INTO users'));
+            expect(insert).toBeDefined();
+            expect(insert!.sql).not.toContain('avatar_url');
+            expect(insert!.params).toHaveLength(5);
+        });
+
+        it('should mint exactly the claims consumers read — no orig_iat, xivauth_id or primary_character', async () => {
+            mockXIVAuth({
+                userId: 'xivauth-claims-user',
+                // A snowflake no other test in this file uses: the shared mock's
+                // UPDATE branch does not apply field values, so reusing one
+                // would resolve to that earlier row and its username
+                socialIdentities: [{ provider: 'discord', external_id: '112233445566778899' }],
+                characters: [
+                    { lodestone_id: 24681357, name: 'Claims Character', home_world: 'Cactuar', verified: true },
+                ],
+            });
+
+            const response = await postXIVAuthCallback({
+                code: 'valid_code',
+                code_verifier: VALID_CODE_VERIFIER,
+                state: await boundState(),
+            });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            const payload = decodeJwtPayload(json.token);
+
+            expect(Object.keys(payload).sort()).toEqual([
+                'auth_provider',
+                'avatar',
+                'discord_id',
+                'exp',
+                'global_name',
+                'iat',
+                'iss',
+                'jti',
+                'sub',
+                'username',
+            ]);
+            expect(payload.sub).toBe(json.user.id);
+            expect(payload.discord_id).toBe('112233445566778899');
+            expect(payload.username).toBe('Claims Character');
+            expect(payload.auth_provider).toBe('xivauth');
+            expect(payload.iss).toBe(env.WORKER_URL);
+            expect(payload.jti).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+        });
+
+        it('should not return primary_character in the token response body', async () => {
+            mockXIVAuth({
+                userId: 'xivauth-response-shape-user',
+                characters: [
+                    { lodestone_id: 13572468, name: 'Response Character', home_world: 'Tonberry', verified: true },
+                ],
+            });
+
+            const response = await postXIVAuthCallback({
+                code: 'valid_code',
+                code_verifier: VALID_CODE_VERIFIER,
+                state: await boundState(),
+            });
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.user).not.toHaveProperty('primary_character');
+            // The home world and Lodestone id never leave the worker at all
+            expect(JSON.stringify(json.user)).not.toContain('Tonberry');
+            expect(JSON.stringify(json.user)).not.toContain('13572468');
         });
     });
 });

@@ -71,6 +71,19 @@ export default tseslint.config(
     },
   },
 
+  // FINDING-011 (2026-08-29 security audit): presets-api's src/ now routes
+  // every log line through the worker-kit request logger (getLogger(c) / an
+  // explicit `logger?` parameter, falling back to `console` only when no
+  // logger was supplied) so personal fields never bypass the logger's
+  // redaction via a bare console.* call. Scoped to this one app's src/ so it
+  // doesn't force the same discipline on every other worker in one pass.
+  {
+    files: ['apps/presets-api/src/**/*.ts'],
+    rules: {
+      'no-console': 'error',
+    },
+  },
+
   // Relaxed rules for test files and test infrastructure
   {
     files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/__tests__/**', '**/test-setup.ts', '**/test-helpers.ts', '**/test-utils/src/**', '**/test-utils.ts', '**/test-utils.*.ts'],

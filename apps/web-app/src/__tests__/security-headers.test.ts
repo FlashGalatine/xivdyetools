@@ -11,6 +11,10 @@
  * Remember that Cloudflare Pages MERGES overlapping path patterns: anything
  * declared under `/*` also applies to `/assets/*`, `/og/*`, `/fonts/*`.
  *
+ * The second half pins `src/index.html`'s resource hints, because a
+ * `dns-prefetch` / `preconnect` opens a connection the CSP never gets asked
+ * about (2026-08-29 security audit, FINDING-026).
+ *
  * @module __tests__/security-headers.test
  */
 
@@ -21,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 
 const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const HEADERS = readFileSync(resolve(APP_ROOT, 'public/_headers'), 'utf-8');
+const INDEX_HTML = readFileSync(resolve(APP_ROOT, 'src/index.html'), 'utf-8');
 
 /** Parse `_headers` into path-pattern → { header-name (lowercase) → value }. */
 function parseHeaders(text: string): Map<string, Map<string, string>> {
@@ -92,15 +97,23 @@ describe('public/_headers security contract', () => {
       expect(directiveLines.join('\n')).not.toMatch(/workers\.dev/);
     });
 
+    // FINDING-026: `universalis.app` was the last third-party host here. The
+    // browser never talks to it — market prices come through the first-party
+    // proxy at data.xivdyetools.app (services/api-service-wrapper.ts) — so the
+    // allowance only widened the exfil surface an injection could reach.
     it('only names own or first-party hosts in connect-src', () => {
       const connect = CSP.get('connect-src') ?? [];
       expect(connect).toContain("'self'");
       for (const source of connect) {
         if (source.startsWith("'")) continue;
-        expect(source, source).toMatch(
-          /^https:\/\/([a-z0-9-]+\.|\*\.)?(xivdyetools\.app|universalis\.app)$/
-        );
+        expect(source, source).toMatch(/^https:\/\/([a-z0-9-]+\.|\*\.)?xivdyetools\.app$/);
       }
+      // …nor anywhere else a directive could smuggle it back in (comments may
+      // still name it — that is where the removal is explained).
+      const directiveLines = HEADERS.split('\n').filter(
+        (line) => line.trim() && !line.trim().startsWith('#')
+      );
+      expect(directiveLines.join('\n')).not.toMatch(/universalis\.app/);
     });
 
     it("closes the plugin and frame sinks with object-src / frame-src 'none' (WEB-5)", () => {
@@ -143,5 +156,27 @@ describe('public/_headers security contract', () => {
     // never carry it (the beta plugin's idempotency guard reads a directive,
     // not a comment — see shared/beta-branding.ts).
     expect(HEADERS).not.toMatch(/^\s+X-Robots-Tag:/im);
+  });
+});
+
+// FINDING-026: a `dns-prefetch` / `preconnect` hint is a connection the page
+// opens on load whether or not a request ever follows — the visitor's IP and
+// the SNI reach that host on every visit, and no CSP directive is consulted.
+// `universalis.app` sat here for years while every market call went through
+// data.xivdyetools.app, so the hints bought nothing and contradicted
+// PRIVACY.md's "first-party hosts only".
+describe('src/index.html resource hints', () => {
+  const HINT_LINK = /<link\b[^>]*\brel="(?:dns-prefetch|preconnect|prefetch|preload)"[^>]*>/g;
+  const HINTS = [...INDEX_HTML.matchAll(HINT_LINK)].map((m) => m[0]);
+
+  it('names no third-party origin', () => {
+    expect(HINTS.length).toBeGreaterThan(0);
+    for (const hint of HINTS) {
+      const href = /\bhref="([^"]*)"/.exec(hint)?.[1] ?? '';
+      // same-origin (self-hosted fonts) — but a protocol-relative `//host` href
+      // also starts with '/' and is NOT same-origin, so it must not be skipped.
+      if (href.startsWith('/') && !href.startsWith('//')) continue;
+      expect(href, hint).toMatch(/^https:\/\/([a-z0-9-]+\.)?xivdyetools\.app$/);
+    }
   });
 });

@@ -5,11 +5,33 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-08-30
 
-### Fixed — 2026-08-29
+Security audit remediation (docs/audits/2026-08-29-security, FINDING-023). Minor bump: the
+private-only design is now enforced, not just documented.
+
+### Fixed
 
 - The one-hop redirect follow in `validateAndFetchImage` used `redirect: 'error'` for the second request; the Workers runtime has no `error` mode and throws on it, so a Discord CDN URL that redirected once failed with a `TypeError` instead of being fetched. The second hop now uses `redirect: 'manual'` like the first; a further redirect comes back as a 3xx that the existing `!ok` check rejects — still never followed.
+
+### Security
+
+- **Config-drift test for the private-only invariant.** New `src/wrangler-config.test.ts` (deliberately in `src/`, not `tests/` — this app's vitest `include` is `src/**/*.test.ts`) pins: no `routes` in any spelling wrangler accepts, in either environment or by inheritance; `workers_dev = false` and the new `preview_urls = false` explicit in both; exactly one named environment (`[env.production]`, nothing else); no `wrangler.json`/`wrangler.jsonc` shadowing the `wrangler.toml` this test (and wrangler itself) reads; and — the cross-worker contract — that production's `name` is exactly what both discord-worker's and presets-api's `IMAGE_WORKER` service bindings point at, in every one of their own environments. This is the last of a four-worker config-drift test set this branch added (presets-api, oauth, moderation-worker, now image-worker); FINDING-023 closes with this release.
+- **The edit this test most needs to catch is not setting `workers_dev` to `true` — it is deleting the `workers_dev = false` line.** wrangler defaults an absent `workers_dev` to `routes.length === 0` (verified against the pinned 4.126.0), which is `true` for this routeless worker in both environments — so a "tidy-up" that drops the line publishes this Worker exactly as surely as writing `true` would, with no line that even looks suspicious in a diff. The test's positive assertions (`workers_dev = false` must be present) catch a deletion; a check that only looked for a stray `true` would not.
+- **`preview_urls = false`**, added explicitly in both environments alongside `workers_dev = false` (matching `api-worker`'s existing precedent), and pinned by the new test.
+- **In-code hostname guard.** A request whose URL hostname ends in `.workers.dev` is now refused with a `404` before any body read, fetch, or decode — for every route, `/health` included. Both callers reach this Worker only through a Service Binding (`new Request('https://image-worker/…')`, never resolved over DNS), so a `*.workers.dev` hostname can only mean a real public request — reachable only if `workers_dev` is ever flipped on by mistake. This is defence in depth, not the primary control; the primary control remains that there is no public surface at all. **This guard and the config test cover different axes and neither substitutes for the other**: the guard only ever sees a `*.workers.dev` hostname, which is what a `workers_dev` flip produces — it cannot see a `routes` addition, because a route (e.g. `route = { pattern = "img.xivdyetools.app", custom_domain = true }`) makes this Worker reachable on a real custom-domain hostname that never ends in `.workers.dev`, reaching `validateAndFetchImage` straight past the guard. Only the config test's routes check covers that axis.
+
+### Deploy-day steps
+
+No secrets, no vars, no new bindings, and no operator action needed — but `preview_urls` was
+previously absent from this Worker's config, so every deploy sent `undefined` for it and
+whatever the account had stored (if anything) stood; **this is the first deploy that actively
+sends `preview_urls = false`.** No known failure mode either way, and nothing depends on preview
+URLs today, but it is a real one-way change: a code-only rollback (reverting this commit) removes
+the line from `wrangler.toml` again, which on the *next* deploy goes back to sending `undefined`
+— it does not, by itself, re-enable whatever was previously set. Deploy `--env production` as
+usual; the config pins and the hostname guard take effect immediately, with no coordination
+needed from either caller.
 
 ## [1.1.0] - 2026-08-21
 

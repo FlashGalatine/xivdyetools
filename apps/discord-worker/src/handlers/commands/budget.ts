@@ -123,8 +123,15 @@ export async function handleBudgetCommand(
  * an hour) and the CANONICAL name is what reaches the Universalis proxy and
  * the price-cache key.
  *
- * @returns the world to use; `undefined` when nothing is set (no override,
- *          no preference); `null` when the override names an unknown world
+ * FINDING-019 (2026-08-29 audit) closed the other half: the STORED
+ * preference skipped validation too, so anything `/preferences set world:`
+ * had written — it accepted any non-empty string — reached the proxy and the
+ * shared cache key on every `/budget` call. Both sources now take the same
+ * lookup (one cached call per command), and a preference that no longer
+ * resolves is answered rather than priced.
+ *
+ * @returns the canonical world to use; `undefined` when nothing is set (no
+ *          override, no preference); `null` when the named world is unknown
  */
 async function resolveWorld(
   env: Env,
@@ -132,10 +139,9 @@ async function resolveWorld(
   prefs: UserPreferences,
   logger?: ExtendedLogger
 ): Promise<string | null | undefined> {
-  if (worldOverride) {
-    return validateWorld(env, worldOverride, logger);
-  }
-  return prefs.world || undefined;
+  const named = worldOverride || prefs.world;
+  if (!named) return undefined;
+  return validateWorld(env, named, logger);
 }
 
 // ============================================================================
@@ -194,14 +200,16 @@ async function handleFindSubcommand(
     );
   }
 
-  // World: explicit option > stored preference. FINDING-033 (2026-08-21
-  // audit): the override is validated like `set_world` — only a known world
-  // or data centre (canonical name) reaches the Universalis proxy and the
-  // shared price-cache key.
+  // World: explicit option > stored preference. FINDING-033 / FINDING-019:
+  // both are validated like `set_world` — only a known world or data centre
+  // (canonical name) reaches the Universalis proxy and the shared
+  // price-cache key. The echo names whichever one the user must correct.
   const world = await resolveWorld(env, worldOverride, prefs, logger);
   if (world === null) {
     return ephemeralResponse(
-      t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldOverride ?? '', 64) })
+      t.t('budget.errors.worldNotFound', {
+        world: sanitizeEmbedText(worldOverride || prefs.world || '', 64),
+      })
     );
   }
   if (!world) {
@@ -244,7 +252,9 @@ async function processFindCommand(
   logger?: ExtendedLogger
 ): Promise<void> {
   try {
-    if (logger) logger.info('Budget: building ledger', { targetDyeId, world });
+    // FINDING-011: a player's home world is mildly identifying — the log
+    // needs only to say that one was resolved, never which.
+    if (logger) logger.info('Budget: building ledger', { targetDyeId, hasWorld: Boolean(world) });
     const result = await findBudgetLedger(env, targetDyeId, world, searchOptions, logger);
 
     const locale = t.getLocale();
@@ -471,11 +481,13 @@ async function handleQuickSubcommand(
     );
   }
 
-  // FINDING-033: same world validation as find / set_world
+  // FINDING-033 / FINDING-019: same world validation as find / set_world
   const world = await resolveWorld(env, worldOverride, prefs, logger);
   if (world === null) {
     return ephemeralResponse(
-      t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldOverride ?? '', 64) })
+      t.t('budget.errors.worldNotFound', {
+        world: sanitizeEmbedText(worldOverride || prefs.world || '', 64),
+      })
     );
   }
   if (!world) {

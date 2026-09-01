@@ -5,9 +5,147 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.4.0] - 2026-08-30
 
-### Fixed — 2026-08-29
+2026-08-29 security audit follow-up remediation (`docs/audits/2026-08-29-security`,
+FINDING-024 / OG-4 — a residual of the 2026-08-21 audit's FINDING-005/OG-4), plus the
+2026-08-29 card font-weight fix below. Minor bump.
+
+**What this closes, precisely:** a query key outside `lang`/`frame`/`algo`, an invalid
+`algo`, or a non-canonical path parameter (leading zeros, wrong case, trailing junk, a
+`%2F` encoding, a silently-dropped list entry, a `.png` split mid-string, the reserved
+`default` preset slug) is rejected outright rather than rendered or folded into a
+different cache entry — so those spellings can no longer force a card to re-render under
+an effectively unbounded key space. **What this does not close — two different residual
+ways one card can still have more than one URL, both intentionally left alone, both
+bounded the same way:** (1) a client can still request many *distinct*, canonically-formed
+ids — most of which render a "not found" default card rather than 400 — each a legitimate
+first-render cache miss; that is request-volume enumeration, not a cache-key problem. (2)
+comparison/accessibility accept up to 16 dye ids and extractor accepts more colour entries
+than either card actually draws, and gradient's `steps` / swatch's `limit` accept a wider
+numeric range than the card's own band cap uses — accepting *that* tail is deliberate (see
+below: rejecting it would `404` image URLs already embedded in links shared before this
+deploy), so a request naming ids/entries/counts past what the card draws can still spell
+one rendered card several ways. Neither (1) nor (2) is a cache-key defect this release can
+fix without breaking a live link or serving the wrong picture; both are bounded by the same
+WAF rate-limiting rule in `docs/operations/POST_MERGE_CHECKLIST.md`, not by anything else
+in this release. This release does stop *this worker's own* crawler embed from emitting new
+(2)-shaped URLs (below) — new share links are already canonical; only a hand-built or
+already-shared URL can still exhibit it. Card output for every *canonical* request, and for
+every accepted (2)-shaped request, is unchanged; some previously-accepted non-canonical
+spellings (see below) now `400` or `404` instead of rendering.
+
+### Security
+
+- **`/og/*` now allows exactly three query keys — `lang`, `frame`, `algo`** (`index.ts`): any
+  other key gets a `404 {"error":"Unknown query parameter"}` before the cache lookup or a
+  render, and the body never echoes the offending key (OG-8). **Behaviour change an operator
+  will see:** a client that appends a cache-buster or tracking param to an `/og/*` image URL —
+  `…/complementary.png?cb=173…`, `…?utm_source=x` — now gets a `404` instead of a rendered PNG.
+  Nothing changes for the nine tool share routes (`/harmony/`, `/gradient/`, …) or for any
+  `/og/*` URL this worker's own crawler HTML emits — those only ever carry `lang`/`frame`/`algo`.
+- **The edge cache key is now canonical, not the full URL** (`index.ts`, `ogCacheKey`): the key
+  is pathname + the *resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (omitted when
+  absent), bounding the key space to (pathname × lang × frame × algo) instead of one entry per
+  distinct URL. Before this, `GET /og/harmony/102/complementary.png?x=1`, `?x=2`, `?x=3`, …
+  each missed `caches.default` and each ran a full resvg raster — unauthenticated and
+  unrate-limited, so one client turned the cache into a no-op (this is what the query-key
+  allowlist above closes at the source; the canonical key closes the same gap for any
+  *allowed* param spelling that resolves to the same card, e.g. `?lang=en-US` / `?lang=EN` /
+  a missing `lang` now share one cache entry, as do an unrecognised `?frame=` and a missing
+  one). `algo` is kept verbatim, never normalised — two spellings `normalizeMatchingMethod`
+  treats differently at render time must not collapse onto one cache slot.
+- **`algo`'s value is now validated on every `/og/*` route, not just the five that read it**
+  (`index.ts`, same guard as above; fix round 1 on this finding, ruling S7-R7): a present
+  `?algo=` outside the 9 spellings in `VALID_ALGORITHMS` now gets `400
+  {"error":"Invalid algorithm"}` — the same status and body the five algo-aware routes
+  (harmony, gradient, both mixer routes, swatch) already returned for this — before the cache
+  lookup or a render. **Behaviour change an operator will see:** without this, the other seven
+  `/og/*` route patterns (both default-card routes, comparison, accessibility, extractor,
+  presets, budget) never read `algo` at all, so it was still a free key for the same
+  cache-defeat amplification the query-key allowlist above closes, just narrowed to one
+  parameter name. Bounds the cache key space to pathname × 6 locales × 2 frames × 10 algo
+  states (9 spellings + absent).
+- **Three more axes of the same cache bound, closed together** (`index.ts`; fix round 2 on
+  this finding, rulings S7-R8/S7-R9/S7-R10 — all three are Hono-4.13.4-specific behaviour, not
+  reachable by reading this file alone, and were confirmed against the installed version):
+  - **`HEAD` is cacheable exactly like `GET`.** Hono re-dispatches a `HEAD` request as `GET`
+    for routing but builds the middleware `Context` from the original request, so
+    `c.req.method` still read `'HEAD'` inside this guard — the cache lookup and store were
+    both skipped on every `HEAD`, so the render ran every time. **Behaviour change an operator
+    will see:** none for a real client — a `HEAD` on an already-rendered `/og/*` URL is now
+    served from cache like a `GET` is, instead of always re-rendering; this was the *cheapest*
+    version of the amplification this task closes (`curl -I` in a loop, no distinct URLs
+    needed at all).
+  - **The cache key is built from the *decoded* path** (`c.req.path`, what Hono's router
+    actually matched on), not the raw, possibly percent-encoded one. Every handler already
+    reads `c.req.param()` / `searchParams`, never the raw path, so this is safe in the one
+    direction it runs: two raw paths that decode alike always route alike. Before this,
+    `/og/harmony/102/%63omplementary.png`, `/og/harmony/102/c%6Fmplementary.png`, and the
+    plain spelling all rendered the identical card under three different cache keys — millions
+    of spellings of one image, all inside the existing 64/512-char length caps. (The length
+    guard still measures the *raw* pathname, on purpose — capping the undecoded string is the
+    conservative side of that check.)
+  - **An empty `algo` (`?algo=` or bare `?algo`) is absent, not invalid**, in both the guard
+    and the cache key. `isAlgorithm('')` is false, so without this the `?algo=` validation
+    added above would 400 a request that, before this whole entry, fell through
+    `c.req.query('algo') || DEFAULT_MATCHING_METHOD` on the five algo-aware routes and
+    rendered the default algorithm's card — behaviour this sprint never set out to change.
+- **Every `/og/*` path parameter is canonical now too, not just query params** (`index.ts`;
+  fix wave on this finding, ruling S7-R12 — the query axis was closed above, but the path
+  axis was wide open at the same attacker cost): a dye/step/ratio/limit id with leading
+  zeros, a sign, trailing junk, or a `%2F`-encoded spelling is rejected — Hono's `getPath`
+  deliberately leaves `%2F` encoded when routing (`decodeURI` never touches it), so
+  `/og/harmony/1%2F0/…` routed with `dyeId` captured as the literal segment `1%2F0`, which
+  `c.req.param()` then `decodeURIComponent`s into `1/0`, and `parseInt('1/0', 10)` is `1`.
+  Comparison/accessibility's dye list is validated as a whole — it used to
+  `.filter((id) => !isNaN(id))` silently, so `1,2,x,3` rendered a 3-dye card instead of
+  being rejected. `:color` on swatch is validated for the first time ever (any of the 64
+  case spellings of one hex value rendered the same card); extractor's `RRGGBB[-share]`
+  entries get the same two rules. `presets/:presetId`'s existing slug grammar needed no
+  change — it was already canonical. **Behaviour change an operator will see:**
+  `/og/harmony/00102/complementary.png`, `/og/swatch/ff5500/5.png`, and
+  `/og/comparison/1,2,x,3.png` (and their many equivalents) now `400` instead of rendering
+  the same card their canonical spelling already serves; no canonically-formed request is
+  affected.
+- **`.png` stays optional, correctly** (`index.ts`; ruling S7-R13): every route's
+  `.replace('.png', '')` was unanchored and first-occurrence, so `.pngcomplementary` and
+  `co.pngmplementary` both stripped down to the "valid" enum value `complementary` — now a
+  real trailing-suffix match (`stripPngSuffix`). The cache key also strips a genuine
+  trailing `.png` from the path, so the suffixed and suffix-less spellings of one card
+  share one entry instead of two.
+- **`/og/presets/default` and `/og/presets/default.png` used to render *different* cards
+  under the *same* cache key — a real cache-poisoning regression from the `.png` fix above**
+  (`index.ts`; ruling S7-R16): `/og/:tool/default.png` is registered before
+  `/og/presets/:presetId`, so the suffixed spelling always rendered the real presets default
+  card, but once `.png` became optional the suffix-less spelling started reaching the presets
+  handler instead — it passed the slug grammar, found no such preset, and rendered presets'
+  own not-found band: a *different*, but still `200`, card, cached under the identical key.
+  `/og/presets/default.png` is a real emitted `og:image` URL, so **one unauthenticated `GET
+  /og/presets/default` could have poisoned every presets-fallback unfurl for up to 7 days.**
+  Fixed by making `presetId === 'default'` render the identical default card the `.png` route
+  produces, so the shared key is correct by construction. **`default` is now a reserved
+  slug** — no curated preset may be given that id, because the emitted
+  `/og/presets/default.png` URL already shadows it. Re-verified (not just trusted) that no
+  other `/og/<literal-tool>/:singleParam` route shares this shape: comparison, extractor, and
+  budget have the identical two-segment route shape, but their grammars are numeric/hex-only,
+  so `default` was already rejected as malformed on all three before this fix and needed none.
+- **`generateComparisonOGData` / `generateAccessibilityOGData` now emit only as many dye ids
+  as the card draws, not as many as the share URL accepted** (`og-data-generator.ts`; ruling
+  S7-R17): both used to build their `og:image` URL from the full, up-to-16-entry `?dyes=`
+  list (`OG_MAX_COMPARISON_DYES`), even though both cards (`services/svg/comparison.ts`,
+  `services/svg/accessibility.ts`) only ever draw the first 4 (`COMPARISON_MAX_DYES` /
+  `ACCESSIBILITY_MAX_DYES`, exported so this file imports the same constant the card slices
+  on rather than a second, independently-guessable number) — so a share URL naming 5–16 ids
+  could still spell the identical 4-dye card many ways past position 4, and (separately)
+  an id that never resolved to a dye no longer reaches the URL either, closing the
+  `?dyes=-5,1,2` case a previous pass in this same entry only partly closed. **This worker's
+  own image *route* still accepts up to 16 ids** (rejecting the tail there would `404` image
+  URLs already embedded in links shared before this deploy) — only the *emitter* is
+  tightened, so new share links are already canonical and a hand-built URL past position 4
+  is the residual the WAF rule bounds (see above).
+
+### Fixed
 
 - **Every band card's `font-weight` was a no-op — names shipped in Light.** The Worker bundled the *variable* Space Grotesk and Onest files, and resvg's font database cannot move a variable axis: each file exposed only its default instance, so the 600 on band names rendered at that one weight — and Space Grotesk's default instance is **Light 300**. The brand faces now ship as static instances (`SpaceGrotesk-{Regular,SemiBold,Bold}.ttf`, `Onest-{Regular,SemiBold,Bold}.ttf`, generated by `apps/discord-worker/scripts/instance-latin-fonts.py --app og-worker` from the variable sources tracked in `apps/discord-worker/scripts/font-sources/`), which fontdb matches by `usWeightClass`. New `font-faces.test.ts` renders 400 / 600 / 700 through the real resvg-wasm with exactly the faces `fonts.ts` imports and fails if any two match, or if a variable font reappears; `font-coverage.test.ts` reads each family's cmap off its Regular (the union is unchanged). Same fix as `apps/discord-worker`'s.
 

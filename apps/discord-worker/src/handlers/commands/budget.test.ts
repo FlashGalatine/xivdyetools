@@ -142,7 +142,15 @@ describe('/budget world override validation (FINDING-033)', () => {
       );
     });
 
-    it('uses the stored preference without validating when no override is given', async () => {
+    // FINDING-019 (2026-08-29 security audit): the stored preference used to
+    // skip validation entirely — whatever `/preferences set world:` had
+    // written went straight to the Universalis proxy and the shared
+    // price-cache key. It now takes the same (hour-cached) lookup the
+    // override does, and the ledger is priced on the CANONICAL name.
+    it('validates the stored preference before pricing', async () => {
+      prefs.world = 'balmung';
+      mockValidateWorld.mockResolvedValue('Balmung');
+
       const res = await handleBudgetCommand(
         interaction('find', [{ name: 'target_dye', value: 'Jet Black' }]),
         env,
@@ -151,7 +159,7 @@ describe('/budget world override validation (FINDING-033)', () => {
 
       expect(((await res.json()) as InteractionResponseBody).type).toBe(5);
       await settle();
-      expect(mockValidateWorld).not.toHaveBeenCalled();
+      expect(mockValidateWorld).toHaveBeenCalledWith(env, 'balmung', undefined);
       expect(mockFindBudgetLedger).toHaveBeenCalledWith(
         env,
         5729,
@@ -159,6 +167,42 @@ describe('/budget world override validation (FINDING-033)', () => {
         expect.anything(),
         undefined,
       );
+    });
+
+    it('answers the unknown-world reply when the stored world no longer resolves', async () => {
+      prefs.world = 'Retired';
+      mockValidateWorld.mockResolvedValue(null);
+
+      const res = await handleBudgetCommand(
+        interaction('find', [{ name: 'target_dye', value: 'Jet Black' }]),
+        env,
+        ctx,
+      );
+      const body = (await res.json()) as InteractionResponseBody;
+
+      expect(body.type).toBe(4);
+      expect(body.data!.flags).toBe(64);
+      expect(body.data!.content).toContain('Could not find world');
+      // The name the user must correct is the stored one, not an empty slot
+      expect(body.data!.content).toContain('Retired');
+      expect(ctx.waitUntil).not.toHaveBeenCalled();
+      expect(mockFindBudgetLedger).not.toHaveBeenCalled();
+    });
+
+    it('asks for a world when none is stored, without a lookup', async () => {
+      delete prefs.world;
+
+      const res = await handleBudgetCommand(
+        interaction('find', [{ name: 'target_dye', value: 'Jet Black' }]),
+        env,
+        ctx,
+      );
+      const body = (await res.json()) as InteractionResponseBody;
+
+      expect(body.type).toBe(4);
+      expect(body.data!.content).toContain('No world set');
+      expect(mockValidateWorld).not.toHaveBeenCalled();
+      expect(mockFindBudgetLedger).not.toHaveBeenCalled();
     });
   });
 
@@ -224,6 +268,34 @@ describe('/budget world override validation (FINDING-033)', () => {
       expect(body.data!.content).not.toContain('@everyone');
       expect(body.data!.content).not.toContain('**Nowhere**');
       expect(body.data!.content).toContain('Nowhere');
+    });
+  });
+
+  // FINDING-011 (2026-08-29 security audit): the ledger log line carried the
+  // world name — a player's home world is mildly identifying, and the log
+  // needs only to say whether one was resolved.
+  describe('log hygiene (FINDING-011)', () => {
+    it('logs the target dye and whether a world resolved, never the world name', async () => {
+      prefs.world = 'Balmung';
+      mockValidateWorld.mockResolvedValue('Balmung');
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+      const res = await handleBudgetCommand(
+        interaction('find', [{ name: 'target_dye', value: 'Jet Black' }]),
+        env,
+        ctx,
+        logger as never,
+      );
+
+      expect(((await res.json()) as InteractionResponseBody).type).toBe(5);
+      await settle();
+
+      const call = logger.info.mock.calls.find(
+        ([message]) => message === 'Budget: building ledger',
+      );
+      expect(call, 'the ledger log line never ran').toBeDefined();
+      expect(call![1]).toEqual({ targetDyeId: 5729, hasWorld: true });
+      expect(JSON.stringify(logger.info.mock.calls)).not.toContain('Balmung');
     });
   });
 });

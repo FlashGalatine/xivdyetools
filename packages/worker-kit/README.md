@@ -13,7 +13,7 @@ Formed in the Monorepo 2.0 Tier 1 consolidation by merging `@xivdyetools/worker-
 pnpm add @xivdyetools/worker-kit
 ```
 
-**Optional peer dependencies:** `hono ^4.12.34` and `@cloudflare/workers-types ^4.0.0`. Both are optional so rate-limiter-only consumers (such as `stoat-worker`, a Node process) never pull in Hono.
+**Optional peer dependencies:** `hono ^4.12.34` and `@cloudflare/workers-types ^4.0.0`. Both are optional so a consumer that only needs the rate-limiter engine, not the middleware, never pulls in Hono — no current in-repo consumer is rate-limiter-only (see Consumers below).
 
 ## Import Paths
 
@@ -62,7 +62,6 @@ app.use('*', requestIdMiddleware());
 app.use('*', loggerMiddleware({
   serviceName: 'xivdyetools-presets-api',
   readApiVersionFromEnv: true,
-  logUserAgent: true,
 }));
 
 // In handlers:
@@ -168,12 +167,11 @@ app.use('*', loggerMiddleware({
   readEnvironmentFromEnv: false,
 }));
 
-// presets-api — has ENVIRONMENT + API_VERSION, logs user agent
+// presets-api — has ENVIRONMENT + API_VERSION
 app.use('*', requestIdMiddleware());
 app.use('*', loggerMiddleware({
   serviceName: 'xivdyetools-presets-api',
   readApiVersionFromEnv: true,
-  logUserAgent: true,
 }));
 
 // moderation-worker — custom URL sanitizer
@@ -197,7 +195,7 @@ app.use('*', loggerMiddleware({
 
 ## Consumers
 
-All eight backend apps: [`discord-worker`](../../apps/discord-worker/), [`moderation-worker`](../../apps/moderation-worker/), [`presets-api`](../../apps/presets-api/), [`oauth`](../../apps/oauth/), [`api-worker`](../../apps/api-worker/), [`og-worker`](../../apps/og-worker/) and [`image-worker`](../../apps/image-worker/) (middleware only), and [`stoat-worker`](../../apps/stoat-worker/) (declared for the planned rate-limiter backend). The web app does not consume it.
+All seven backend apps: [`discord-worker`](../../apps/discord-worker/), [`moderation-worker`](../../apps/moderation-worker/), [`presets-api`](../../apps/presets-api/), [`oauth`](../../apps/oauth/), [`api-worker`](../../apps/api-worker/), [`og-worker`](../../apps/og-worker/) and [`image-worker`](../../apps/image-worker/) (middleware only). [`stoat-worker`](../../apps/stoat-worker/) does not depend on this package — it was dropped along with `svg`/`core` (it renders no cards and needs no Workers-only middleware) — and the web app never has.
 
 ## Connect With Me
 

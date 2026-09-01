@@ -64,8 +64,12 @@
     
     <!-- Resource Hints for Performance -->
     <!-- No font origins here: the typefaces are self-hosted from /fonts/ (REFACTOR-002). -->
-    <link rel="dns-prefetch" href="https://universalis.app" />
-    <link rel="preconnect" href="https://universalis.app" crossorigin />
+    <!-- First-party origins only. universalis.app was hinted here for years while
+         every market call went through data.xivdyetools.app, so each page load
+         opened a TLS connection (the visitor's IP and the SNI) to a third party
+         that no request ever followed - and no CSP directive is consulted for a
+         hint (2026-08-29 security audit, FINDING-026). Do not re-add a host the
+         bundle does not fetch from. -->
     <!-- XIV Dye Tools API subdomains -->
     <link rel="dns-prefetch" href="https://auth.xivdyetools.app" />
     <link rel="dns-prefetch" href="https://api.xivdyetools.app" />

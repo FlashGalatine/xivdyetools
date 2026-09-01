@@ -20,9 +20,10 @@ A bare `wrangler deploy` does **not** mean the same thing on every worker.
 | Workflow | Deploys | Triggered by changes to |
 |----------|---------|-------------------------|
 | `deploy-web-app.yml` | Cloudflare Pages project `xivdyetools` | `apps/web-app/**`, `packages/{core,types,logger}/**` |
-| `deploy-web-app-beta.yml` | The beta Pages project | manual dispatch |
+| `deploy-web-app-beta.yml` | The beta Pages project (`beta.xivdyetools.app`) | same paths as `deploy-web-app.yml` above, but push to **any non-main branch** (not just `main`) — this is the premise of 2026-08-29 FINDING-028, not a typo |
 | `deploy-discord-worker.yml` | `xivdyetools-discord-worker` | `apps/discord-worker/**`, `packages/{core,types,logger,auth,bot-logic,svg,worker-kit}/**` |
-| `deploy-discord-worker-beta.yml` | `xivdyetools-discord-worker-dev` | manual dispatch |
+| `deploy-discord-worker-beta.yml` | `xivdyetools-discord-worker-dev` (the beta bot) | same paths as `deploy-discord-worker.yml` above, but push to **any non-main branch** (not just `main`) |
+| `deploy-og-worker-beta.yml` | `xivdyetools-og-worker-dev` (the routed beta worker: `beta.xivdyetools.app/*` + `og-beta.xivdyetools.app`) | same paths as `deploy-og-worker.yml` below, but push to **any non-main branch** (not just `main`) |
 | `deploy-image-worker.yml` | `xivdyetools-image-worker` | `apps/image-worker/**` |
 | `deploy-moderation-worker.yml` | `xivdyetools-moderation-worker` | `apps/moderation-worker/**` + shared packages |
 | `deploy-presets-api.yml` | `xivdyetools-presets-api` | `apps/presets-api/**` + shared packages |
@@ -43,8 +44,12 @@ bitten the repo repeatedly (see the `ARCH-001` and `MONO2` comments in the workf
 
 ### Required secrets
 
-`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. There is **no npm token** — publishing uses
-OIDC trusted publishing (see [Release Process](release-process.md)).
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` for the production workflows in the table above
+(each gated on `environment: production`). The three `*-beta.yml` workflows in that same table use
+a separate `CLOUDFLARE_API_TOKEN_BETA` under `environment: beta` instead — added 2026-08-29
+(FINDING-028) so an edited beta workflow can no longer read the production-capable token; see
+[Deploy Environments](../operations/DEPLOY_ENVIRONMENTS.md). There is **no npm token** — publishing
+uses OIDC trusted publishing (see [Release Process](release-process.md)).
 
 ---
 

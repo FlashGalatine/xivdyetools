@@ -53,7 +53,7 @@ Both **fail open**: if the store is unavailable or absent, they return `false` r
 ### HMAC Signing
 
 ```typescript
-import { hmacSign, hmacVerify, verifyBotSignature } from '@xivdyetools/auth';
+import { hmacSign, hmacVerify, createBotSignatureV2, verifyBotSignatureV2 } from '@xivdyetools/auth';
 
 // Sign data with HMAC-SHA256 (base64url output)
 const signature = await hmacSign(data, secret);
@@ -61,14 +61,22 @@ const signature = await hmacSign(data, secret);
 // Verify signature
 const isValid = await hmacVerify(data, signature, secret);
 
-// Verify bot request signature (with timestamp validation)
-const isValidBot = await verifyBotSignature(
-  signature,    // X-Request-Signature header
-  timestamp,    // X-Request-Timestamp header
-  userDiscordId,
-  userName,
-  secret,
-  { maxAgeMs: 5 * 60 * 1000 }  // Optional: 5 minute max age
+// Sign a bot -> API request — binds method, path, a body hash, timestamp,
+// nonce and identity, not just three colon-joined fields
+const timestamp = String(Math.floor(Date.now() / 1000));
+const nonce = crypto.randomUUID();
+const sig = await createBotSignatureV2(
+  { method: 'POST', path: '/api/v1/presets', body, timestamp, nonce, userDiscordId, userName },
+  secret
+);
+// send as X-Request-Signature-V2, alongside X-Request-Timestamp and X-Request-Nonce
+
+// Verify it on the receiving end
+const isValidBot = await verifyBotSignatureV2(
+  request.headers.get('X-Request-Signature-V2'),
+  { method: request.method, path: new URL(request.url).pathname, body, timestamp, nonce, userDiscordId, userName },
+  secret
+  // { maxAgeMs: 60_000 }  // Optional: overrides the default BOT_SIGNATURE_V2_MAX_AGE_MS
 );
 ```
 
@@ -137,7 +145,8 @@ import { base64UrlEncode, base64UrlDecode, bytesToHex, hexToBytes } from '@xivdy
 | `hmacSignHex(data, secret)` | Sign data, return hex signature |
 | `hmacVerify(data, signature, secret)` | Verify base64url signature |
 | `hmacVerifyHex(data, signature, secret)` | Verify hex signature |
-| `verifyBotSignature(sig, ts, userId, userName, secret, opts?)` | Verify bot request signature |
+| `createBotSignatureV2(req, secret)` | Sign a bot → API request (binds method, path, body hash, timestamp, nonce, identity) |
+| `verifyBotSignatureV2(sig, req, secret, opts?)` | Verify a bot request signature |
 
 ### Timing (`@xivdyetools/auth/timing`)
 

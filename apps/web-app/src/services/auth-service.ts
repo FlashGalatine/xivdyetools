@@ -20,9 +20,11 @@ import type { AuthProvider, AuthUser, AuthResponse, JWTPayload } from '@xivdyeto
 // AuthProvider, AuthUser, AuthResponse and JWTPayload are the shared
 // `@xivdyetools/types` contracts (AuthUser/AuthProvider re-exported below —
 // AuthState's fields keep them part of this module's public shape).
-// PrimaryCharacter (a nested field on AuthUser/JWTPayload) is never named
-// directly in this file, so it is left unimported — its shape still flows
-// through structurally.
+// `primary_character` (a nested field on AuthUser/JWTPayload) is never read
+// in this file: oauth 3.0.0 stopped minting it, and this file's own readers
+// of it were removed with it (FINDING-002 carried item). The optional field
+// stays on the shared type until Sprint 11, so PrimaryCharacter itself is
+// left unimported — nothing here names it.
 export type { AuthProvider, AuthUser };
 
 export interface AuthState {
@@ -322,7 +324,6 @@ class AuthServiceImpl {
           avatar: payload.avatar,
           avatar_url: avatarUrl,
           auth_provider: payload.auth_provider,
-          primary_character: payload.primary_character,
         },
       };
     } catch (err) {
@@ -483,20 +484,12 @@ class AuthServiceImpl {
         avatar: payload.avatar,
         avatar_url: avatarUrl,
         auth_provider: payload.auth_provider,
-        primary_character: payload.primary_character,
       },
     };
 
     this.notifyListeners();
 
-    // Log with character info for XIVAuth users
-    if (provider === 'xivauth' && payload.primary_character) {
-      logger.info(
-        `Logged in via XIVAuth as ${payload.username} (${payload.primary_character.name} @ ${payload.primary_character.server})`
-      );
-    } else {
-      logger.info(`Logged in as ${this.state.user?.global_name || this.state.user?.username}`);
-    }
+    logger.info(`Logged in as ${this.state.user?.global_name || this.state.user?.username}`);
 
     // Refresh author name on all user's presets (fire-and-forget)
     // This keeps preset attribution in sync with the user's current Discord display name

@@ -79,8 +79,9 @@
 │  ┌──────────────────────────────────┐                                                     │
 │  │ @xivdyetools/worker-kit          │                                                     │
 │  │ ──────────────────────────────── │   Hono middleware (request ID, logger, rate limit)  │
-│  │ + /rate-limiter (Memory/KV/      │   consumed by every Cloudflare Worker               │
-│  │   Upstash sliding-window)        │                                                     │
+│  │ + /rate-limiter (Memory, KV,     │   consumed by every Cloudflare Worker               │
+│  │   Upstash sliding-window +       │                                                     │
+│  │   Cloudflare native binding)     │                                                     │
 │  └──────────────────────────────────┘                                                     │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```

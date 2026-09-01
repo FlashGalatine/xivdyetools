@@ -10,6 +10,16 @@
 import type { Env } from '../types.js';
 import { PREVIEW_IMAGE_PUBLIC_BASE } from './preset-service.js';
 
+/**
+ * FINDING-011 (2026-08-29 security audit): minimal logger interface for this
+ * module — the purge/delete path only ever logs a URL (built from an
+ * already-random object key) and an HTTP status, never a preset name.
+ */
+interface PreviewImageLogger {
+  info(message: string, ...args: unknown[]): void;
+  error(message: string, ...args: unknown[]): void;
+}
+
 /** Cloudflare's cap for this route; also bounds what image-worker decodes. */
 export const MAX_PREVIEW_IMAGE_BYTES = 5 * 1024 * 1024;
 
@@ -51,7 +61,8 @@ export type CachePurgeResult = 'purged' | 'skipped' | 'failed';
  */
 export async function purgePreviewImageCache(
   env: Env,
-  key: string | null
+  key: string | null,
+  logger?: PreviewImageLogger
 ): Promise<CachePurgeResult> {
   if (!key) return 'skipped';
   const zoneId = env.CACHE_PURGE_ZONE_ID?.trim();
@@ -73,15 +84,15 @@ export async function purgePreviewImageCache(
       }
     );
     if (!response.ok) {
-      console.error(`[preview-image] cache purge failed for ${url}: HTTP ${response.status}`);
+      (logger ?? console).error(`[preview-image] cache purge failed for ${url}: HTTP ${response.status}`);
       return 'failed';
     }
     // Success is logged too, so a production tail can prove the purge path is
     // live (not merely that it did not fail) once the optional credentials are set.
-    console.info(`[preview-image] cache purged ${url}`);
+    (logger ?? console).info(`[preview-image] cache purged ${url}`);
     return 'purged';
   } catch (err) {
-    console.error(`[preview-image] cache purge failed for ${url}`, err);
+    (logger ?? console).error(`[preview-image] cache purge failed for ${url}`, err);
     return 'failed';
   }
 }
@@ -175,10 +186,14 @@ export async function storePreviewImage(
  * already treats an R2 failure as "orphaned object, not a failed request").
  * The purge itself never throws.
  */
-export async function deletePreviewImage(env: Env, key: string | null): Promise<void> {
+export async function deletePreviewImage(
+  env: Env,
+  key: string | null,
+  logger?: PreviewImageLogger
+): Promise<void> {
   if (!key) return;
   await env.THUMBNAILS.delete(key);
-  await purgePreviewImageCache(env, key);
+  await purgePreviewImageCache(env, key, logger);
 }
 
 /** The columns a mutating route needs to decide ownership, visibility and which object to touch. */

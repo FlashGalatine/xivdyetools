@@ -166,12 +166,18 @@ async function processBan(
     }
 
     if (logger) {
+      // FINDING-011 (2026-08-29 security audit): ids, counts and lengths only.
+      // This line used to carry the banned user's Discord display name and the
+      // moderator's free-text reason — commentary about a person, in a log
+      // nobody promised to retain or protect. The accountability copy lives in
+      // `moderation_log` (FINDING-018) and the moderation channel post, both of
+      // which are the record of record; the log line only needs to say that a
+      // ban happened and how big it was.
       logger.info('User banned', {
         targetUserId,
-        targetUsername,
         moderatorId,
         presetsHidden: result.presetsHidden,
-        reason,
+        reasonLength: reason.length,
       });
     }
   } catch (error) {

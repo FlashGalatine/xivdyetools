@@ -79,7 +79,7 @@ src/
 ├── handlers/
 │   ├── authorize.ts         # GET /auth/discord
 │   ├── callback.ts          # GET/POST /auth/callback
-│   └── refresh.ts           # POST /auth/refresh, GET /auth/me
+│   └── token.ts             # GET /auth/me, POST /auth/revoke
 └── services/
     └── jwt-service.ts       # JWT creation/verification
 ```
@@ -93,9 +93,10 @@ src/
 | `/auth/discord` | GET | Start OAuth flow (PKCE required) |
 | `/auth/callback` | GET | Discord redirect handler |
 | `/auth/callback` | POST | SPA token exchange |
-| `/auth/refresh` | POST | Refresh expired JWT |
 | `/auth/me` | GET | Get user info from JWT |
-| `/auth/revoke` | POST | Logout (client-side) |
+| `/auth/revoke` | POST | Logout (blacklists the `jti`) |
+
+`POST /auth/refresh` was removed in 3.0.0 and now 404s — see below.
 
 ---
 
@@ -175,22 +176,17 @@ wrangler secret put JWT_SECRET
 
 ---
 
-## Refresh Token Grace Period
+## No Token Refresh (removed in 3.0.0)
 
-JWTs can be refreshed within 24 hours after expiration:
+A session ends when the JWT expires (1 h by default); the client then runs the PKCE sign-in flow
+again. `POST /auth/refresh` was removed by FINDING-003 (`docs/audits/2026-08-29-security`) and the
+route now 404s.
 
-```typescript
-// Token expired 2 hours ago
-// Client sends: POST /auth/refresh with expired JWT
-
-// Server checks:
-// 1. Is JWT signature valid?
-// 2. Is expiration within 24h grace period?
-
-// If yes, issue new JWT
-```
-
-This allows users to stay logged in without re-authenticating frequently.
+The endpoint had no caller — the web app has always re-authenticated rather than refreshed — but it
+accepted a token on signature alone past `exp` and re-minted the replacement from the *old* token's
+claims. Anyone holding a copied token could therefore refresh it every hour up to the 30-day
+`orig_iat` cap, and the victim's `/auth/revoke` only blacklisted the `jti` the victim held, so the
+attacker's chain outlived the logout.
 
 ---
 

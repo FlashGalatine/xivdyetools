@@ -1,0 +1,915 @@
+apps/api-worker/src/chara/router.ts:342:    c.executionCtx.waitUntil(edge.put(cacheKey, response.clone()).catch(() => {}));
+apps/api-worker/src/index.ts:214:    logger.error('Unhandled error', err, { operation: 'globalErrorHandler' });
+apps/api-worker/src/telemetry/router.ts:38:      analytics.writeDataPoint(point);
+apps/api-worker/src/universalis/services/cache-service.ts:131:      await cache.put(new Request(cacheUrl), response);
+apps/discord-worker/src/handlers/buttons/index.ts:65:    logger.info('Handling button', { customId });
+apps/discord-worker/src/handlers/buttons/index.ts:96:    logger.warn(`Unknown button custom_id: ${customId}`);
+apps/discord-worker/src/handlers/commands/accessibility.ts:135:    if (logger) logger.error('Accessibility command failed');
+apps/discord-worker/src/handlers/commands/accessibility.ts:159:      logger.error('Accessibility render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/budget.ts:247:    if (logger) logger.info('Budget: building ledger', { targetDyeId, world });
+apps/discord-worker/src/handlers/commands/budget.ts:382:    if (logger) logger.info('Budget: response sent successfully');
+apps/discord-worker/src/handlers/commands/budget.ts:387:      logger.error('Budget find error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/budget.ts:388:      logger.error(`Budget error details: ${errorMsg}`);
+apps/discord-worker/src/handlers/commands/comparison.ts:91:    if (logger) logger.error('Comparison command failed');
+apps/discord-worker/src/handlers/commands/comparison.ts:125:    if (logger) logger.error('Comparison render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/contrast.ts:96:    if (logger) logger.error('Contrast command failed');
+apps/discord-worker/src/handlers/commands/contrast.ts:119:    if (logger) logger.error('Contrast render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/extractor.ts:608:      logger.error('Extractor image command error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/gradient.ts:145:    if (logger) logger.error('Gradient command error');
+apps/discord-worker/src/handlers/commands/gradient.ts:215:    if (logger) logger.error('Gradient render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/harmony.ts:147:      if (logger) logger.error('Harmony command error');
+apps/discord-worker/src/handlers/commands/harmony.ts:186:    if (logger) logger.error('Harmony render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:97:            if (logger) logger.error('Mixer command error');
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:123:        if (logger) logger.error('Mixer render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preferences.ts:659:  await env.KV.put(key, JSON.stringify(prefs));
+apps/discord-worker/src/handlers/commands/preferences.ts:724:    await env.KV.put(key, JSON.stringify(prefs));
+apps/discord-worker/src/handlers/commands/preset.ts:267:      logger.error('List presets error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:333:      logger.error('Show preset error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:395:      logger.error('Random preset error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:580:      logger.error('Submit preset error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:674:      logger.error('Vote error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:928:      logger.error('Edit preset error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:1100:      logger.error(
+apps/discord-worker/src/handlers/commands/preset.ts:1239:      logger.error('preset favorite add failed', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:1313:      logger.error('preset favorite remove failed', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:1388:      logger.error('preset favorite list failed', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/stats.ts:140:      logger.error('Error in stats command', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/swatch.ts:223:    if (logger) logger.error('Swatch download error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/swatch.ts:238:    if (logger) logger.warn('Swatch command failed', { error: result.error });
+apps/discord-worker/src/handlers/commands/swatch.ts:266:    if (logger) logger.error('Swatch render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/index.ts:209:    logger.error('Webhook secret not configured');
+apps/discord-worker/src/index.ts:215:    logger.error('Webhook authentication failed');
+apps/discord-worker/src/index.ts:223:    logger.warn('Webhook payload too large', { contentLength });
+apps/discord-worker/src/index.ts:296:      logger.error('Preview-image notification rejected by Discord', undefined, {
+apps/discord-worker/src/index.ts:308:  logger.info('Received preset webhook', {
+apps/discord-worker/src/index.ts:412:      logger.error('Submission-log notification rejected by Discord', undefined, {
+apps/discord-worker/src/index.ts:436:    logger.error('GitHub webhook secret not configured');
+apps/discord-worker/src/index.ts:441:    logger.error('Announcement channel ID not configured');
+apps/discord-worker/src/index.ts:448:    logger.warn('GitHub webhook payload too large', { contentLength });
+apps/discord-worker/src/index.ts:457:    logger.warn('GitHub webhook body exceeds limit despite Content-Length', {
+apps/discord-worker/src/index.ts:468:    logger.error('GitHub webhook signature verification failed');
+apps/discord-worker/src/index.ts:500:  logger.info('Changelog update detected, fetching latest version', {
+apps/discord-worker/src/index.ts:510:    logger.error('Failed to fetch changelog', { status: changelogResponse.status });
+apps/discord-worker/src/index.ts:521:    logger.warn('No version entry found in changelog');
+apps/discord-worker/src/index.ts:534:  logger.info('Changelog announcement sent', { version: latestEntry.version });
+apps/discord-worker/src/index.ts:556:    logger.error('Signature verification failed', undefined, { error: error || 'Unknown error' });
+apps/discord-worker/src/index.ts:572:    logger.info('Received PING, responding with PONG');
+apps/discord-worker/src/index.ts:600:  logger.warn('Unknown interaction type', { interactionType: interaction.type });
+apps/discord-worker/src/index.ts:619:  await env.KV.put(flagKey, '1');
+apps/discord-worker/src/index.ts:636:    logger.warn('First-run follow-up rejected', { status: response.status });
+apps/discord-worker/src/index.ts:654:    logger.error('Unable to identify user from interaction', { commandName });
+apps/discord-worker/src/index.ts:660:  logger.info('Handling command', { command: commandName, userId });
+apps/discord-worker/src/index.ts:700:      logger.info('User rate limited', { userId, command: commandName });
+apps/discord-worker/src/index.ts:713:      logger.warn('First-run notice failed', { error: String(error) });
+apps/discord-worker/src/index.ts:809:    logger.error('Command execution failed', error instanceof Error ? error : undefined, {
+apps/discord-worker/src/index.ts:1060:    logger.error(
+apps/discord-worker/src/index.ts:1103:    logger.error(
+apps/discord-worker/src/index.ts:1123:  logger.info('Handling component', { customId, componentType });
+apps/discord-worker/src/index.ts:1166:  logger.info('Handling modal', { customId });
+apps/discord-worker/src/index.ts:1184:    logger.error('Unhandled error', err, { path: c.req.path });
+apps/discord-worker/src/services/analytics.ts:88:    env.ANALYTICS.writeDataPoint({
+apps/discord-worker/src/services/analytics.ts:109:      logger.error('Analytics tracking error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/analytics.ts:188:  await kv.put(fullKey, String(newValue), {
+apps/discord-worker/src/services/analytics.ts:229:  await kv.put(key, '1', { expirationTtl: STATS_TTL });
+apps/discord-worker/src/services/budget/budget-calculator.ts:180:    logger.info('Budget ledger: candidates priced', {
+apps/discord-worker/src/services/budget/price-cache.ts:86:      logger.error('Failed to get cached price', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/budget/price-cache.ts:121:    await cache.put(url, response);
+apps/discord-worker/src/services/budget/price-cache.ts:125:      logger.error('Failed to cache price', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/budget/universalis-client.ts:177:      options.logger.error('Universalis request failed', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/budget/universalis-client.ts:370:      logger.error('Failed to validate world', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/budget/universalis-client.ts:420:      logger.error('Failed to get world autocomplete', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/command-trace.ts:227:      logger.error('Analytics tracking failed', error);
+apps/discord-worker/src/services/preferences.ts:103:      logger.error('Failed to get user preferences', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/preferences.ts:213:    await kv.put(buildPrefsKey(userId), JSON.stringify(prefs));
+apps/discord-worker/src/services/preferences.ts:218:      logger.error('Failed to set preference', error instanceof Error ? error : undefined, {
+apps/discord-worker/src/services/preferences.ts:262:      await kv.put(buildPrefsKey(userId), JSON.stringify(prefs));
+apps/discord-worker/src/services/preferences.ts:270:      logger.error('Failed to reset preference', error instanceof Error ? error : undefined, {
+apps/discord-worker/src/services/preferences.ts:462:      await kv.put(buildPrefsKey(userId), JSON.stringify(prefs));
+apps/discord-worker/src/services/preferences.ts:465:        logger.info('Migrated legacy preferences to unified format', {
+apps/discord-worker/src/services/preferences.ts:473:      logger.error(
+apps/discord-worker/src/services/preset-api.ts:214:      options.logger.error('Preset API request failed', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/preset-api.ts:437:      logger.error('Failed to check vote status', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/preset-api.ts:526:      options.logger.error(
+apps/discord-worker/src/services/preset-favorites.ts:119:  await kv.put(buildV2Key(userId), JSON.stringify(entries));
+apps/discord-worker/src/services/preset-favorites.ts:120:  await kv.put(buildKey(userId), JSON.stringify(entries.map((e) => e.id)));
+apps/discord-worker/src/services/preset-favorites.ts:160:      logger.error('Failed to add preset favorite', error instanceof Error ? error : undefined, {
+apps/discord-worker/src/services/preset-favorites.ts:189:      logger.error('Failed to remove preset favorite', error instanceof Error ? error : undefined, {
+apps/discord-worker/src/services/rate-limiter.ts:192:      logger.error('Rate limit check failed', new Error(`${configuredBackend} backend error`));
+apps/discord-worker/src/services/rate-limiter.ts:206:      logger.error('Rate limit check failed', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/svg/renderer.ts:47:        logger.info('resvg-wasm initialized successfully');
+apps/discord-worker/src/services/svg/renderer.ts:51:        logger.error('WASM initialization failed', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/svg/renderer.ts:113:      logger.error('SVG rendering failed', error instanceof Error ? error : undefined);
+apps/discord-worker/src/utils/discord-api.ts:270:        logger.error('Discord follow-up edit failed', undefined, { status: res.status, body });
+apps/discord-worker/src/utils/discord-api.ts:279:      logger.error('Discord follow-up edit threw', e instanceof Error ? e : undefined);
+apps/discord-worker/src/utils/env-validation.ts:114:    logger.error('Environment validation failed', undefined, { errors });
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:175:      logger.error('Failed to approve preset', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/commands/preset.ts:425:      logger.error('Moderate error', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/commands/preset.ts:641:      logger.info('User unbanned', {
+apps/moderation-worker/src/handlers/commands/preset.ts:649:      logger.error('Failed to unban user', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:169:      logger.info('User banned', {
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:179:      logger.error('Failed to ban user', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:129:      logger.error('Failed to reject preset', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:251:      logger.error('Failed to revert preset', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/index.ts:130:    logger.error('Signature verification failed', undefined, { error: error || 'Unknown error' });
+apps/moderation-worker/src/index.ts:142:    logger.warn('JSON parse failed', { error: parseResult.error });
+apps/moderation-worker/src/index.ts:147:    logger.info('JSON parse warnings', { warnings: parseResult.warnings });
+apps/moderation-worker/src/index.ts:156:    logger.info('Received PING, responding with PONG');
+apps/moderation-worker/src/index.ts:184:  logger.warn('Unknown interaction type', { interactionType: interaction.type });
+apps/moderation-worker/src/index.ts:201:    logger.error('Unable to identify user from interaction', { commandName });
+apps/moderation-worker/src/index.ts:209:  logger.info('Handling command', { command: commandName, userId });
+apps/moderation-worker/src/index.ts:228:    logger.error('Command execution failed', error instanceof Error ? error : undefined, { command: commandName });
+apps/moderation-worker/src/index.ts:257:    logger.warn('Rate limit exceeded', {
+apps/moderation-worker/src/index.ts:269:      logger.error('Failed to increment command rate limit', err instanceof Error ? err : undefined);
+apps/moderation-worker/src/index.ts:307:    logger.error('Unable to identify user from autocomplete interaction', { commandName });
+apps/moderation-worker/src/index.ts:317:    logger.warn('Autocomplete from non-moderator ignored', { userId, commandName });
+apps/moderation-worker/src/index.ts:331:    logger.warn('Autocomplete rate limit exceeded', {
+apps/moderation-worker/src/index.ts:349:        logger.error(
+apps/moderation-worker/src/index.ts:428:    logger.error('Failed to get ban user autocomplete', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/index.ts:454:    logger.error('Failed to get unban user autocomplete', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/index.ts:474:  logger.info('Handling component', { customId, componentType });
+apps/moderation-worker/src/index.ts:477:    logger.error('Unable to identify user from component interaction', { customId });
+apps/moderation-worker/src/index.ts:507:  logger.info('Handling modal', { customId });
+apps/moderation-worker/src/index.ts:510:    logger.error('Unable to identify user from modal interaction', { customId });
+apps/moderation-worker/src/index.ts:610:    logger.error('Unhandled error', err instanceof Error ? err : undefined);
+apps/moderation-worker/src/services/ban-service.ts:36:    .prepare(
+apps/moderation-worker/src/services/ban-service.ts:58:    .prepare(
+apps/moderation-worker/src/services/ban-service.ts:87:      .prepare(
+apps/moderation-worker/src/services/ban-service.ts:114:      .prepare(
+apps/moderation-worker/src/services/ban-service.ts:156:      .prepare(
+apps/moderation-worker/src/services/ban-service.ts:202:    .prepare(
+apps/moderation-worker/src/services/ban-service.ts:221:    .prepare(
+apps/moderation-worker/src/services/ban-service.ts:260:    .prepare(
+apps/moderation-worker/src/services/ban-service.ts:307:        .prepare(
+apps/moderation-worker/src/services/ban-service.ts:309:        INSERT INTO banned_users (id, discord_id, username, moderator_discord_id, reason, banned_at)
+apps/moderation-worker/src/services/ban-service.ts:376:        .prepare(
+apps/moderation-worker/src/services/ban-service.ts:417:    .prepare(
+apps/moderation-worker/src/services/ban-service.ts:430:    .prepare(
+apps/moderation-worker/src/services/ban-service.ts:468:    .prepare(
+apps/moderation-worker/src/services/bot-i18n.ts:178:        this.logger.warn(`Missing translation: ${key} for locale ${this.locale}`);
+apps/moderation-worker/src/services/i18n.ts:93:      logger.error('Failed to get user language preference', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/services/preset-api.ts:170:      options.logger.debug('Generated HMAC signature', {
+apps/moderation-worker/src/services/preset-api.ts:214:      options.logger.error('Preset API request failed', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/services/preset-api.ts:536:      options.logger.error(
+apps/moderation-worker/src/utils/env-validation.ts:140:    logger.error('Environment validation failed', undefined, { errors });
+apps/moderation-worker/src/utils/safe-json.ts:92: *   logger.warn('Malicious JSON detected', { error: result.error });
+apps/moderation-worker/src/utils/sql-helpers.ts:17: * db.prepare('SELECT * FROM items WHERE name LIKE ? ESCAPE \'\\\'')
+apps/moderation-worker/src/utils/sql-helpers.ts:67: * db.prepare('SELECT * FROM users WHERE name LIKE ? ESCAPE \'\\\'')
+apps/moderation-worker/src/utils/sql-helpers.ts:166: * return db.prepare('SELECT * FROM users WHERE name LIKE ? ESCAPE \'\\\'')
+apps/moderation-worker/src/utils/url-sanitizer.ts:222: * logger.debug('Making request', logData);
+apps/moderation-worker/src/utils/url-sanitizer.ts:264: * logger.debug('Response received', logData);
+apps/oauth/src/index.ts:62:          logger.warn('Continuing with invalid env configuration (development mode)');
+apps/oauth/src/index.ts:259:    logger.error('Unhandled error', err, { operation: 'globalErrorHandler' });
+apps/oauth/src/services/user-service.ts:58:      .prepare('SELECT * FROM users WHERE xivauth_id = ?')
+apps/oauth/src/services/user-service.ts:66:      .prepare('SELECT * FROM users WHERE discord_id = ?')
+apps/oauth/src/services/user-service.ts:80:      .prepare(
+apps/oauth/src/services/user-service.ts:81:        `INSERT INTO users (id, discord_id, xivauth_id, auth_provider, username, avatar_url)
+apps/oauth/src/services/user-service.ts:108:        raceUser = await db.prepare('SELECT * FROM users WHERE xivauth_id = ?').bind(xivauth_id).first<UserRow>();
+apps/oauth/src/services/user-service.ts:111:        raceUser = await db.prepare('SELECT * FROM users WHERE discord_id = ?').bind(discord_id).first<UserRow>();
+apps/oauth/src/services/user-service.ts:158:      .prepare('SELECT id FROM users WHERE discord_id = ? AND id != ?')
+apps/oauth/src/services/user-service.ts:224:  await db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).bind(...values, userId).run();
+apps/oauth/src/services/user-service.ts:226:  const updated = await db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first<UserRow>();
+apps/oauth/src/services/user-service.ts:239:  return db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first<UserRow>();
+apps/oauth/src/services/user-service.ts:246:  return db.prepare('SELECT * FROM users WHERE discord_id = ?').bind(discordId).first<UserRow>();
+apps/oauth/src/services/user-service.ts:253:  return db.prepare('SELECT * FROM users WHERE xivauth_id = ?').bind(xivauthId).first<UserRow>();
+apps/oauth/src/services/user-service.ts:268:    db.prepare('DELETE FROM xivauth_characters WHERE user_id = ?').bind(userId),
+apps/oauth/src/services/user-service.ts:271:        .prepare(
+apps/oauth/src/services/user-service.ts:272:          `INSERT INTO xivauth_characters (user_id, lodestone_id, name, server, verified)
+apps/oauth/src/services/user-service.ts:288:    .prepare('SELECT lodestone_id, name, server, verified FROM xivauth_characters WHERE user_id = ?')
+apps/og-worker/src/index.ts:192:    const put = cache.put(cacheKey, res.clone());
+apps/og-worker/src/index.ts:216:    env.ANALYTICS.writeDataPoint({
+apps/og-worker/src/index.ts:838:    logger.error('Unhandled error', err, { operation: 'globalErrorHandler' });
+apps/presets-api/src/handlers/categories.ts:55:  const result = await db.prepare(query).all<CategoryRow & { preset_count: number }>();
+apps/presets-api/src/handlers/categories.ts:122:  const row = await c.env.DB.prepare(query).bind(id).first<
+apps/presets-api/src/handlers/moderation.ts:102:      .prepare(
+apps/presets-api/src/handlers/moderation.ts:103:        `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
+apps/presets-api/src/handlers/moderation.ts:173:      .prepare(
+apps/presets-api/src/handlers/moderation.ts:174:        `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
+apps/presets-api/src/handlers/moderation.ts:224:    await c.env.DB.prepare(
+apps/presets-api/src/handlers/moderation.ts:242:  await c.env.DB.prepare(
+apps/presets-api/src/handlers/moderation.ts:278:  const result = await c.env.DB.prepare(query).bind(presetId).all();
+apps/presets-api/src/handlers/moderation.ts:304:  const stats = await c.env.DB.prepare(query).first();
+apps/presets-api/src/handlers/presets.ts:309:  const result = await c.env.DB.prepare(`
+apps/presets-api/src/handlers/presets.ts:370:    c.env.DB.prepare('DELETE FROM votes WHERE preset_id = ?').bind(id),
+apps/presets-api/src/handlers/presets.ts:371:    c.env.DB.prepare('DELETE FROM presets WHERE id = ?').bind(id),
+apps/presets-api/src/handlers/presets.ts:758:      c.env.DB.prepare('DELETE FROM votes WHERE preset_id = ?').bind(preset.id),
+apps/presets-api/src/handlers/presets.ts:759:      c.env.DB.prepare('DELETE FROM presets WHERE id = ?').bind(preset.id),
+apps/presets-api/src/handlers/presets.ts:918:  await c.env.DB.prepare(
+apps/presets-api/src/handlers/presets.ts:1013:  await c.env.DB.prepare(
+apps/presets-api/src/handlers/votes.ts:57:        .prepare(
+apps/presets-api/src/handlers/votes.ts:58:          'INSERT INTO votes (preset_id, user_discord_id, created_at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING'
+apps/presets-api/src/handlers/votes.ts:62:        .prepare(
+apps/presets-api/src/handlers/votes.ts:112:        .prepare('DELETE FROM votes WHERE preset_id = ? AND user_discord_id = ?')
+apps/presets-api/src/handlers/votes.ts:115:        .prepare(
+apps/presets-api/src/handlers/votes.ts:171:  const preset = await c.env.DB.prepare(APPROVED_PRESET_GATE).bind(presetId).first();
+apps/presets-api/src/handlers/votes.ts:208:  const preset = await c.env.DB.prepare(APPROVED_PRESET_GATE).bind(presetId).first();
+apps/presets-api/src/handlers/votes.ts:234:  const vote = await c.env.DB.prepare(
+apps/presets-api/src/index.ts:67:          logger.warn('Continuing with invalid env configuration (development mode)');
+apps/presets-api/src/index.ts:266:    logger.error('Unhandled error', err, { operation: 'globalErrorHandler' });
+apps/presets-api/src/middleware/ban-check.ts:31:    .prepare('SELECT 1 FROM banned_users WHERE discord_id = ? AND unbanned_at IS NULL LIMIT 1')
+apps/presets-api/src/services/category-service.ts:48:    .prepare('SELECT id FROM categories')
+apps/presets-api/src/services/notification-service.ts:164:      .prepare(
+apps/presets-api/src/services/notification-service.ts:165:        'INSERT INTO failed_notifications (payload, error, attempts) VALUES (?, ?, ?)'
+apps/presets-api/src/services/notification-service.ts:193:    const result = await db.prepare(query).all<Record<string, unknown>>();
+apps/presets-api/src/services/notification-service.ts:210:    .prepare(
+apps/presets-api/src/services/preset-service.ts:228:    .prepare(query)
+apps/presets-api/src/services/preset-service.ts:241:      .prepare(`SELECT COUNT(*) as total FROM presets WHERE ${whereClause}`)
+apps/presets-api/src/services/preset-service.ts:271:  const result = await db.prepare(query).all<PresetRow>();
+apps/presets-api/src/services/preset-service.ts:283:  const row = await db.prepare(query).bind(id).first<PresetRow>();
+apps/presets-api/src/services/preset-service.ts:300:  const row = await db.prepare(query).bind(signature).first<PresetRow>();
+apps/presets-api/src/services/preset-service.ts:319:    INSERT INTO presets (
+apps/presets-api/src/services/preset-service.ts:327:    .prepare(query)
+apps/presets-api/src/services/preset-service.ts:389:  return db.prepare(query).bind(status, now, id, expectedStatus);
+apps/presets-api/src/services/preset-service.ts:411:    .prepare(query)
+apps/presets-api/src/services/preset-service.ts:454:  const result = await db.prepare(query).all<PresetRow>();
+apps/presets-api/src/services/preset-service.ts:497:  const result = await db.prepare(query).bind(authorDiscordId).all<PresetRow>();
+apps/presets-api/src/services/preset-service.ts:516:  const row = await db.prepare(query).bind(signature, excludePresetId).first<PresetRow>();
+apps/presets-api/src/services/preset-service.ts:598:  const row = await db.prepare(query).bind(...params).first<PresetRow>();
+apps/presets-api/src/services/preview-image-service.ts:154:  await env.THUMBNAILS.put(key, webp, {
+apps/presets-api/src/services/preview-image-service.ts:207:    .prepare('SELECT author_discord_id, preview_image_key, name, status FROM presets WHERE id = ?')
+apps/presets-api/src/services/rate-limit-service.ts:64:    .prepare(query)
+apps/presets-api/src/services/rate-limit-service.ts:93:    .prepare(query)
+apps/presets-api/src/services/rate-limit-service.ts:112:    .prepare(
+apps/presets-api/src/services/rate-limit-service.ts:113:      `INSERT INTO submission_events (user_discord_id, kind, preset_id) VALUES (?, ?, ?)`
+apps/stoat-worker/src/index.ts:29:  logger.info('Configuration loaded');
+apps/stoat-worker/src/index.ts:40:    logger.info(`Logged in as ${client.user?.username ?? 'unknown'}`);
+apps/stoat-worker/src/index.ts:41:    logger.info(
+apps/stoat-worker/src/index.ts:54:    logger.info('Shutting down...');
+apps/stoat-worker/src/index.ts:62:  logger.info('Connecting to Stoat...');
+apps/stoat-worker/src/index.ts:68:  logger.error('Fatal error during startup', {
+apps/stoat-worker/src/message-handler.ts:56:      logger.debug('Command dropped by per-user throttle', { userId: authorId });
+apps/stoat-worker/src/message-handler.ts:60:    logger.debug(`Command: ${parsed.command}${parsed.subcommand ? `.${parsed.subcommand}` : ''}`, {
+apps/stoat-worker/src/message-handler.ts:74:      logger.error('Unhandled error in command handler', {
+apps/stoat-worker/src/message-handler.ts:88:        logger.error('Failed to send error reply to user');
+apps/web-app/e2e/budget-tool.spec.ts:271:      localStorage.setItem('xivdyetools_welcome_seen', 'true');
+apps/web-app/e2e/budget-tool.spec.ts:272:      localStorage.setItem('xivdyetools_last_version_viewed', '4.0.0');
+apps/web-app/e2e/fixtures/navigation.ts:131:    localStorage.setItem('xivdyetools_welcome_seen', 'true');
+apps/web-app/e2e/fixtures/navigation.ts:132:    localStorage.setItem('xivdyetools_last_version_viewed', version);
+apps/web-app/e2e/fixtures/navigation.ts:133:    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
+apps/web-app/e2e/telemetry.spec.ts:18:    localStorage.setItem(
+apps/web-app/e2e/ui-interactions.spec.ts:141:      localStorage.setItem(
+apps/web-app/src/components/accessibility-tool.ts:301:      logger.info(
+apps/web-app/src/components/accessibility-tool.ts:306:    logger.info('[AccessibilityTool] Mounted');
+apps/web-app/src/components/accessibility-tool.ts:325:    logger.info('[AccessibilityTool] Destroyed');
+apps/web-app/src/components/accessibility-tool.ts:341:    logger.info('[AccessibilityTool] All dyes cleared');
+apps/web-app/src/components/accessibility-tool.ts:390:    logger.info(`[AccessibilityTool] Selected dye from palette: ${dye.name}`);
+apps/web-app/src/components/accessibility-tool.ts:440:          logger.info(`[AccessibilityTool] setConfig: ${configKey} -> ${configValue}`);
+apps/web-app/src/components/accessibility-tool.ts:457:        logger.info(
+apps/web-app/src/components/accessibility-tool.ts:570:        logger.info(
+apps/web-app/src/components/accessibility-tool.ts:1193:    logger.info(`[AccessibilityTool] Removed dye: ${dye.name}`);
+apps/web-app/src/components/accessibility-tool.ts:1200:    logger.info(`[AccessibilityTool] Context action: ${action} for ${dye.name}`);
+apps/web-app/src/components/accessibility-tool.ts:1663:        logger.info(`[AccessibilityTool] Drawer: Selected ${this.selectedDyes.length} dyes`);
+apps/web-app/src/components/accessibility-tool.ts:2062:        logger.info(
+apps/web-app/src/components/accessibility-tool.ts:2094:        logger.info(`[AccessibilityTool] Loaded vision type from share URL: ${shared}`);
+apps/web-app/src/components/advanced-options-panel.ts:253:        logger.info('[AdvancedOptions] All settings reset to defaults');
+apps/web-app/src/components/advanced-options-panel.ts:261:        logger.info('[AdvancedOptions] Clear dyes event emitted');
+apps/web-app/src/components/advanced-options-panel.ts:270:        logger.info('[AdvancedOptions] Favorites cleared');
+apps/web-app/src/components/advanced-options-panel.ts:281:        logger.info(`[AdvancedOptions] Cleared ${deleted} saved palettes`);
+apps/web-app/src/components/advanced-options-panel.ts:289:      logger.info('[AdvancedOptions] Tutorial reset');
+apps/web-app/src/components/advanced-options-panel.ts:313:      logger.info('[AdvancedOptions] Settings exported');
+apps/web-app/src/components/advanced-options-panel.ts:336:        logger.info('[AdvancedOptions] Settings imported successfully');
+apps/web-app/src/components/advanced-options-panel.ts:338:        logger.error('[AdvancedOptions] Import failed:', error);
+apps/web-app/src/components/base-component.ts:128:      logger.warn('Component already initialized');
+apps/web-app/src/components/base-component.ts:150:      logger.warn('Component not initialized');
+apps/web-app/src/components/base-component.ts:311:    logger.error(`[${this.constructor.name}] Render failed:`, normalizedError.message);
+apps/web-app/src/components/base-component.ts:364:      logger.error('[BaseComponent] Error boundary:', this.errorState.error.message);
+apps/web-app/src/components/base-component.ts:723:    logger.info(`🔍 ${this.constructor.name} Debug Info`);
+apps/web-app/src/components/base-component.ts:724:    logger.info(this.getDebugInfo());
+apps/web-app/src/components/base-component.ts:725:    logger.info('--- End Debug Info ---');
+apps/web-app/src/components/budget-tool.ts:292:    logger.info('[BudgetTool] Mounted');
+apps/web-app/src/components/budget-tool.ts:308:    logger.info('[BudgetTool] Destroyed');
+apps/web-app/src/components/budget-tool.ts:328:        logger.info(`[BudgetTool] setConfig: matchLine -> ${line}`);
+apps/web-app/src/components/budget-tool.ts:342:      logger.info(`[BudgetTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
+apps/web-app/src/components/budget-tool.ts:399:        logger.info('[BudgetTool] setConfig: dyeFilters updated');
+apps/web-app/src/components/budget-tool.ts:598:      logger.error('[BudgetTool] Error building ledger:', error);
+apps/web-app/src/components/budget-tool.ts:629:      logger.warn('[BudgetTool] Error fetching prices:', error);
+apps/web-app/src/components/budget-tool.ts:1856:    logger.info('[BudgetTool] All dyes cleared');
+apps/web-app/src/components/budget-tool.ts:1876:    logger.info(`[BudgetTool] Target selected: ${dye.name}`);
+apps/web-app/src/components/camera-preview-modal.ts:188:          logger.warn('Video play failed:', err);
+apps/web-app/src/components/camera-preview-modal.ts:210:      logger.error('Failed to start camera:', error);
+apps/web-app/src/components/camera-preview-modal.ts:244:      logger.error('Capture failed:', error);
+apps/web-app/src/components/camera-preview-modal.ts:287:          logger.error('Camera switch error:', error);
+apps/web-app/src/components/chara-import.ts:222:      logger.error('[CharaImport] Read failed:', error);
+apps/web-app/src/components/chara-import.ts:238:      logger.error('[CharaImport] Parse failed:', error);
+apps/web-app/src/components/chara-import.ts:266:      logger.error('[CharaImport] Host callback failed:', error);
+apps/web-app/src/components/chara-import.ts:268:    logger.info(`[CharaImport] Parsed ${file.name} (${resolved.producer ?? 'unknown producer'})`);
+apps/web-app/src/components/chara-import.ts:311:        logger.warn('[CharaImport] Equipment names unavailable:', error);
+apps/web-app/src/components/chara-import.ts:763:    logger.info(`[CharaImport] Saved character "${name}" (${stainIds.length} colours)`);
+apps/web-app/src/components/chara-import.ts:1668:    logger.info(`[CharaImport] Saved glamour palette "${name}" (${kept.length} dyes)`);
+apps/web-app/src/components/color-picker-display.ts:266:      logger.info('Eyedropper cancelled or not supported');
+apps/web-app/src/components/comparison-tool.ts:250:    logger.info('[ComparisonTool] Mounted');
+apps/web-app/src/components/comparison-tool.ts:312:        logger.info(`[ComparisonTool] Loaded ${dyes.length} persisted dyes`);
+apps/web-app/src/components/comparison-tool.ts:343:    logger.info('[ComparisonTool] Destroyed');
+apps/web-app/src/components/comparison-tool.ts:367:      logger.info(`[ComparisonTool] setConfig: matchThreshold -> ${config.matchThreshold}`);
+apps/web-app/src/components/comparison-tool.ts:382:        logger.info(`[ComparisonTool] setConfig: displayOptions.showHex -> ${opts.showHex}`);
+apps/web-app/src/components/comparison-tool.ts:388:        logger.info(`[ComparisonTool] setConfig: displayOptions.showRgb -> ${opts.showRgb}`);
+apps/web-app/src/components/comparison-tool.ts:394:        logger.info(`[ComparisonTool] setConfig: displayOptions.showHsv -> ${opts.showHsv}`);
+apps/web-app/src/components/comparison-tool.ts:400:        logger.info(`[ComparisonTool] setConfig: displayOptions.showLab -> ${opts.showLab}`);
+apps/web-app/src/components/comparison-tool.ts:406:        logger.info(`[ComparisonTool] setConfig: displayOptions.showCmyk -> ${opts.showCmyk}`);
+apps/web-app/src/components/comparison-tool.ts:417:        logger.info(`[ComparisonTool] setConfig: displayOptions.showDeltaE -> ${opts.showDeltaE}`);
+apps/web-app/src/components/comparison-tool.ts:428:        logger.info(`[ComparisonTool] setConfig: displayOptions.showPrice -> ${opts.showPrice}`);
+apps/web-app/src/components/comparison-tool.ts:2337:    logger.info('[ComparisonTool] All dyes cleared');
+apps/web-app/src/components/comparison-tool.ts:2371:      logger.debug(`[ComparisonTool] Dye already in selection: ${dye.name}`);
+apps/web-app/src/components/comparison-tool.ts:2376:      logger.debug(`[ComparisonTool] Max dyes reached (4), cannot add: ${dye.name}`);
+apps/web-app/src/components/comparison-tool.ts:2381:    logger.info(`[ComparisonTool] External dye added: ${dye.name}`);
+apps/web-app/src/components/comparison-tool.ts:2489:      logger.warn('[ComparisonTool] No valid dyes found in share URL');
+apps/web-app/src/components/comparison-tool.ts:2509:    logger.info(
+apps/web-app/src/components/dye-action-dropdown.ts:432:  logger.info(
+apps/web-app/src/components/dye-selector.ts:172:      logger.warn('DyeSelector: gridContainer not found for dye-selected event listener.');
+apps/web-app/src/components/dye-selector.ts:304:      logger.warn('DyeSelector: No dyes available to select randomly');
+apps/web-app/src/components/dye-selector.ts:316:    logger.info(`DyeSelector: Random dye selected - ${randomDye.name}`);
+apps/web-app/src/components/export-sheet.ts:77:    logger.warn('[ExportSheet] Clipboard API unavailable, using fallback', error);
+apps/web-app/src/components/export-sheet.ts:88:      logger.error('[ExportSheet] Copy failed', fallbackError);
+apps/web-app/src/components/extractor-tool.ts:43:import { indexedDBService, STORES } from '@services/indexeddb-service';
+apps/web-app/src/components/extractor-tool.ts:310:      logger.error('[MatcherTool] Image upload error:', event.detail);
+apps/web-app/src/components/extractor-tool.ts:426:        logger.info('[MatcherTool] Restored saved color:', savedColor);
+apps/web-app/src/components/extractor-tool.ts:430:    logger.info('[MatcherTool] Mounted');
+apps/web-app/src/components/extractor-tool.ts:439:      const ok = await indexedDBService.set(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl, dataUrl);
+apps/web-app/src/components/extractor-tool.ts:441:        logger.info('[ExtractorTool] Image saved to IndexedDB');
+apps/web-app/src/components/extractor-tool.ts:444:      await indexedDBService.delete(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
+apps/web-app/src/components/extractor-tool.ts:445:      logger.info('[ExtractorTool] Image too large to persist, cleared storage');
+apps/web-app/src/components/extractor-tool.ts:454:    let dataUrl = await indexedDBService.get<string>(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
+apps/web-app/src/components/extractor-tool.ts:460:        await indexedDBService.set(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl, legacy);
+apps/web-app/src/components/extractor-tool.ts:462:        logger.info('[ExtractorTool] Migrated saved image from localStorage to IndexedDB');
+apps/web-app/src/components/extractor-tool.ts:488:      logger.info('[ExtractorTool] Restored saved image from storage');
+apps/web-app/src/components/extractor-tool.ts:500:      void indexedDBService.delete(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
+apps/web-app/src/components/extractor-tool.ts:502:      logger.warn('[MatcherTool] Failed to restore saved image, cleared storage');
+apps/web-app/src/components/extractor-tool.ts:526:    logger.info('[MatcherTool] Destroyed');
+apps/web-app/src/components/extractor-tool.ts:545:      logger.info(`[ExtractorTool] setConfig: vibrancyBoost -> ${config.vibrancyBoost}`);
+apps/web-app/src/components/extractor-tool.ts:553:      logger.info(`[ExtractorTool] setConfig: maxColors -> ${config.maxColors}`);
+apps/web-app/src/components/extractor-tool.ts:568:      logger.info(`[ExtractorTool] setConfig: displayOptions updated`, config.displayOptions);
+apps/web-app/src/components/extractor-tool.ts:574:      logger.info(`[ExtractorTool] setConfig: dragThreshold -> ${config.dragThreshold}`);
+apps/web-app/src/components/extractor-tool.ts:580:      logger.info(`[ExtractorTool] setConfig: sampleAreaSize -> ${config.sampleAreaSize}`);
+apps/web-app/src/components/extractor-tool.ts:587:      logger.info(`[ExtractorTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
+apps/web-app/src/components/extractor-tool.ts:597:      logger.info(`[ExtractorTool] setConfig: preventDuplicates -> ${config.preventDuplicates}`);
+apps/web-app/src/components/extractor-tool.ts:606:        logger.info(`[ExtractorTool] setConfig: dyeFilters updated`);
+apps/web-app/src/components/extractor-tool.ts:837:        logger.info('🔔 [ExtractorTool] onPricesToggled called, showPrices=', this.showPrices);
+apps/web-app/src/components/extractor-tool.ts:851:        logger.info('🔔 [ExtractorTool] onServerChanged called, showPrices=', this.showPrices);
+apps/web-app/src/components/extractor-tool.ts:1626:      logger.warn('[ExtractorTool] Clipboard read failed:', error);
+apps/web-app/src/components/extractor-tool.ts:1641:    void indexedDBService.delete(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
+apps/web-app/src/components/extractor-tool.ts:1676:    logger.info('[ExtractorTool] Image cleared');
+apps/web-app/src/components/extractor-tool.ts:2197:    logger.info('[MatcherTool] Matched color:', hex, 'Found:', this.matchedDyes.length, 'dyes');
+apps/web-app/src/components/extractor-tool.ts:2297:    logger.info('💰 [ExtractorTool] fetchPricesForMatches called, showPrices=', this.showPrices);
+apps/web-app/src/components/extractor-tool.ts:2318:      logger.info(`[ExtractorTool] Fetched prices for ${prices.size} dyes`);
+apps/web-app/src/components/extractor-tool.ts:2322:      logger.error('[ExtractorTool] Failed to fetch prices:', error);
+apps/web-app/src/components/extractor-tool.ts:2385:    logger.info(
+apps/web-app/src/components/extractor-tool.ts:2402:      logger.info(
+apps/web-app/src/components/extractor-tool.ts:2513:      logger.info('[MatcherTool] Palette extracted:', matches.length, 'colors');
+apps/web-app/src/components/extractor-tool.ts:2515:      logger.error('[MatcherTool] Palette extraction failed:', error);
+apps/web-app/src/components/gradient-tool.ts:292:        logger.info('[MixerTool] Migrated dye selection from old storage format');
+apps/web-app/src/components/gradient-tool.ts:462:    logger.info('[GradientTool] Mounted');
+apps/web-app/src/components/gradient-tool.ts:491:    logger.info('[MixerTool] Destroyed');
+apps/web-app/src/components/gradient-tool.ts:512:      logger.info(`[GradientTool] setConfig: preventDuplicates -> ${config.preventDuplicates}`);
+apps/web-app/src/components/gradient-tool.ts:523:      logger.info(`[GradientTool] setConfig: stepCount -> ${config.stepCount}`);
+apps/web-app/src/components/gradient-tool.ts:541:        logger.info(`[GradientTool] setConfig: interpolation -> ${config.interpolation}`);
+apps/web-app/src/components/gradient-tool.ts:549:      logger.info(`[GradientTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
+apps/web-app/src/components/gradient-tool.ts:556:      logger.info('[GradientTool] setConfig: displayOptions updated', config.displayOptions);
+apps/web-app/src/components/gradient-tool.ts:568:        logger.info('[GradientTool] Re-rendered results with new display options');
+apps/web-app/src/components/gradient-tool.ts:576:      logger.info(`[GradientTool] setConfig: showPrices -> ${showPrices}`);
+apps/web-app/src/components/gradient-tool.ts:596:      logger.info(`[GradientTool] setConfig: selectedServer -> ${selectedServer}`);
+apps/web-app/src/components/gradient-tool.ts:619:        logger.info('[GradientTool] setConfig: dyeFilters updated');
+apps/web-app/src/components/gradient-tool.ts:1213:        logger.info('[GradientTool] Swapped start and end dyes');
+apps/web-app/src/components/gradient-tool.ts:1993:          logger.info(`[GradientTool] Set ${selectedDye.name} as start dye from v4-result-card`);
+apps/web-app/src/components/gradient-tool.ts:1998:          logger.info(`[GradientTool] Set ${selectedDye.name} as end dye from v4-result-card`);
+apps/web-app/src/components/gradient-tool.ts:2051:    logger.info(`[GradientTool] Context action: ${action} for dye: ${dye.name}`);
+apps/web-app/src/components/gradient-tool.ts:2582:        logger.info(`[GradientTool] Fetched prices for ${prices.size} dyes`);
+apps/web-app/src/components/gradient-tool.ts:2584:        logger.error('[GradientTool] Failed to fetch prices:', error);
+apps/web-app/src/components/gradient-tool.ts:2618:    logger.info('[GradientTool] All dyes cleared');
+apps/web-app/src/components/gradient-tool.ts:2655:        logger.info(`[GradientTool] ${dye.name} already set for that endpoint, ignoring`);
+apps/web-app/src/components/gradient-tool.ts:2672:      logger.info(
+apps/web-app/src/components/gradient-tool.ts:2686:      logger.info(`[GradientTool] External dye set as start: ${dye.name}`);
+apps/web-app/src/components/gradient-tool.ts:2693:        logger.info(`[GradientTool] Prevented duplicate: ${dye.name} is already start`);
+apps/web-app/src/components/gradient-tool.ts:2697:      logger.info(`[GradientTool] External dye set as end: ${dye.name}`);
+apps/web-app/src/components/gradient-tool.ts:2706:        logger.info(`[GradientTool] Dye ${dye.name} is already start, ignoring`);
+apps/web-app/src/components/gradient-tool.ts:2715:        logger.info(`[GradientTool] Swapped: ${dye.name} is now start`);
+apps/web-app/src/components/gradient-tool.ts:2720:        logger.info(`[GradientTool] Shifted dyes: ${dye.name} is now start`);
+apps/web-app/src/components/gradient-tool.ts:2753:    logger.info(`[GradientTool] Custom color selected: ${hex}`);
+apps/web-app/src/components/harmony-tool.ts:208:      logger.info(
+apps/web-app/src/components/harmony-tool.ts:211:      logger.info(`[HarmonyTool] Attempting to restore dye with ID: ${savedDyeId}`);
+apps/web-app/src/components/harmony-tool.ts:216:        logger.info(`[HarmonyTool] Restored persisted dye: ${dye.name} (itemID=${dye.itemID})`);
+apps/web-app/src/components/harmony-tool.ts:221:          logger.warn(
+apps/web-app/src/components/harmony-tool.ts:226:          logger.info(`[HarmonyTool] Using fallback search to restore: ${foundBySearch.name}`);
+apps/web-app/src/components/harmony-tool.ts:228:          logger.warn(
+apps/web-app/src/components/harmony-tool.ts:401:    logger.info('[HarmonyTool] Mounted');
+apps/web-app/src/components/harmony-tool.ts:413:    logger.info('[HarmonyTool] Destroyed');
+apps/web-app/src/components/harmony-tool.ts:437:    logger.info(`[HarmonyTool] handleDeepLink called - URL search: "${window.location.search}"`, {
+apps/web-app/src/components/harmony-tool.ts:474:        logger.info(`[HarmonyTool] Share URL loaded harmony type: ${normalizedHarmony}`);
+apps/web-app/src/components/harmony-tool.ts:486:        logger.warn(`[HarmonyTool] Invalid harmony type in URL: ${harmonyParam}`);
+apps/web-app/src/components/harmony-tool.ts:494:      logger.info(`[HarmonyTool] Share URL loaded matching algorithm: ${normalizedAlgo}`);
+apps/web-app/src/components/harmony-tool.ts:505:      logger.info(
+apps/web-app/src/components/harmony-tool.ts:518:      logger.info(`[HarmonyTool] Share URL loaded custom base: #${hexParam}`);
+apps/web-app/src/components/harmony-tool.ts:529:          logger.info(`[HarmonyTool] Share URL loaded dye: ${dye.name} (itemID=${dye.itemID})`);
+apps/web-app/src/components/harmony-tool.ts:903:        logger.info(`[HarmonyTool] Saved dye: ${this.selectedDye.name} (itemID=${dyeIdToSave})`);
+apps/web-app/src/components/harmony-tool.ts:906:        logger.info('[HarmonyTool] Cleared saved dye');
+apps/web-app/src/components/harmony-tool.ts:1285:          logger.info(`[HarmonyTool] Saved dye from drawer: ${this.selectedDye.name}`);
+apps/web-app/src/components/harmony-tool.ts:1471:    logger.info(
+apps/web-app/src/components/harmony-tool.ts:1564:      logger.info(`[HarmonyTool] Card selected: ${e.detail.dye.name}`);
+apps/web-app/src/components/harmony-tool.ts:1572:        logger.info(`[HarmonyTool] Alternate picked for ${options.label}: ${e.detail.dye.name}`);
+apps/web-app/src/components/harmony-tool.ts:1594:    logger.info(`[HarmonyTool] Context action: ${action} for dye: ${dye.name}`);
+apps/web-app/src/components/harmony-tool.ts:1615:          logger.info(`[HarmonyTool] Copied hex: ${dye.hex}`);
+apps/web-app/src/components/harmony-tool.ts:1776:      logger.info(`[HarmonyTool] Fetched prices for ${prices.size} dyes`);
+apps/web-app/src/components/harmony-tool.ts:1778:      logger.error('[HarmonyTool] Failed to fetch prices:', error);
+apps/web-app/src/components/harmony-tool.ts:1918:      logger.info(`[HarmonyTool] setConfig: harmonyType -> ${config.harmonyType}`);
+apps/web-app/src/components/harmony-tool.ts:1925:      logger.info(`[HarmonyTool] setConfig: strictMatching -> ${config.strictMatching}`);
+apps/web-app/src/components/harmony-tool.ts:1932:      logger.debug(`[HarmonyTool] setConfig: showNames -> ${config.showNames}`);
+apps/web-app/src/components/harmony-tool.ts:1935:      logger.debug(`[HarmonyTool] setConfig: showHex -> ${config.showHex}`);
+apps/web-app/src/components/harmony-tool.ts:1938:      logger.debug(`[HarmonyTool] setConfig: showRgb -> ${config.showRgb}`);
+apps/web-app/src/components/harmony-tool.ts:1941:      logger.debug(`[HarmonyTool] setConfig: showHsv -> ${config.showHsv}`);
+apps/web-app/src/components/harmony-tool.ts:1966:    logger.info('[HarmonyTool] All dyes cleared');
+apps/web-app/src/components/harmony-tool.ts:1995:    logger.info(`[HarmonyTool] External dye selected: ${dye.name} (itemID=${dye.itemID})`);
+apps/web-app/src/components/harmony-tool.ts:2024:    logger.info(`[HarmonyTool] Custom color selected: ${hex}`);
+apps/web-app/src/components/market-board.ts:69:      logger.error('Error ensuring WorldService initialization:', error);
+apps/web-app/src/components/market-board.ts:293:        logger.info('📣 [MarketBoard] Emitting server-changed, server=', serverSelect.value);
+apps/web-app/src/components/market-board.ts:312:        logger.info('📣 [MarketBoard] Emitting showPricesChanged, checked=', toggleInput.checked);
+apps/web-app/src/components/market-board.ts:375:      logger.error('Error refreshing prices:', error);
+apps/web-app/src/components/market-board.ts:448:      logger.info('📣 [MarketBoard] Relaying server-changed from service, server=', server);
+apps/web-app/src/components/market-board.ts:472:      logger.info(
+apps/web-app/src/components/mixer-tool.ts:207:    logger.info('[MixerTool] Initializing Dye Mixer');
+apps/web-app/src/components/mixer-tool.ts:626:    logger.info('[MixerTool] Mounted');
+apps/web-app/src/components/mixer-tool.ts:663:    logger.info('[MixerTool] Loading from share URL:', params);
+apps/web-app/src/components/mixer-tool.ts:738:    logger.info('[MixerTool] Destroyed');
+apps/web-app/src/components/mixer-tool.ts:756:    logger.info('[MixerTool] All dyes cleared');
+apps/web-app/src/components/mixer-tool.ts:823:    logger.info(`[MixerTool] Selected dye from palette: ${dye.name}`);
+apps/web-app/src/components/mixer-tool.ts:837:    logger.info(`[MixerTool] Custom color selected: ${hex}`);
+apps/web-app/src/components/mixer-tool.ts:857:        logger.info(`[MixerTool] setConfig: showPrices -> ${config.showPrices}`);
+apps/web-app/src/components/mixer-tool.ts:866:        logger.info(`[MixerTool] setConfig: selectedServer -> ${config.selectedServer}`);
+apps/web-app/src/components/mixer-tool.ts:879:      logger.info(`[MixerTool] setConfig: maxResults -> ${config.maxResults}`);
+apps/web-app/src/components/mixer-tool.ts:894:      logger.info(`[MixerTool] setConfig: mixingMode -> ${config.mixingMode}`);
+apps/web-app/src/components/mixer-tool.ts:908:      logger.info(`[MixerTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
+apps/web-app/src/components/mixer-tool.ts:924:        logger.info('[MixerTool] setConfig: displayOptions updated');
+apps/web-app/src/components/mixer-tool.ts:935:        logger.info('[MixerTool] setConfig: dyeFilters updated');
+apps/web-app/src/components/mixer-tool.ts:1361:    logger.info(`[MixerTool] Saved mix "${name}" (${stainIds.length} dyes)`);
+apps/web-app/src/components/mixer-tool.ts:2200:      logger.info(`[MixerTool] Fetched prices for ${prices.size} dyes`);
+apps/web-app/src/components/mixer-tool.ts:2202:      logger.error('[MixerTool] Failed to fetch prices:', error);
+apps/web-app/src/components/offline-banner.ts:43:    logger.info(`📡 Offline banner initialized (online: ${this.isOnline})`);
+apps/web-app/src/components/offline-banner.ts:53:      logger.info('📡 Connection restored');
+apps/web-app/src/components/offline-banner.ts:59:      logger.info('📡 Connection lost - offline mode');
+apps/web-app/src/components/preset-submission-form.ts:724:          logger.info('[PresetSubmissionForm] calling ModalService.dismissTop() for duplicate');
+apps/web-app/src/components/preset-submission-form.ts:726:          logger.info('[PresetSubmissionForm] dismissTop() returned for duplicate');
+apps/web-app/src/components/preset-submission-form.ts:730:            sessionStorage.setItem('pendingPresetId', result.duplicate.id);
+apps/web-app/src/components/preset-submission-form.ts:757:        logger.info('[PresetSubmissionForm] calling ModalService.dismissTop()');
+apps/web-app/src/components/preset-submission-form.ts:759:        logger.info('[PresetSubmissionForm] dismissTop() returned');
+apps/web-app/src/components/swatch-tool.ts:388:    logger.info('[SwatchTool] Mounted');
+apps/web-app/src/components/swatch-tool.ts:415:    logger.info('[CharacterTool] Destroyed');
+apps/web-app/src/components/swatch-tool.ts:435:      logger.info(`[SwatchTool] setConfig: race -> ${config.race}`);
+apps/web-app/src/components/swatch-tool.ts:443:      logger.info(`[SwatchTool] setConfig: gender -> ${config.gender}`);
+apps/web-app/src/components/swatch-tool.ts:452:      logger.info(`[SwatchTool] setConfig: colorSheet -> ${config.colorSheet}`);
+apps/web-app/src/components/swatch-tool.ts:460:      logger.info(`[SwatchTool] setConfig: maxResults -> ${config.maxResults}`);
+apps/web-app/src/components/swatch-tool.ts:467:      logger.info(`[SwatchTool] setConfig: displayOptions updated`);
+apps/web-app/src/components/swatch-tool.ts:474:      logger.info(`[SwatchTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
+apps/web-app/src/components/swatch-tool.ts:484:        logger.info('[SwatchTool] setConfig: dyeFilters updated');
+apps/web-app/src/components/swatch-tool.ts:529:      logger.info(`[SwatchTool] setMarketConfig: showPrices -> ${showPrices}`);
+apps/web-app/src/components/swatch-tool.ts:550:      logger.info(`[SwatchTool] setMarketConfig: selectedServer -> ${selectedServer}`);
+apps/web-app/src/components/swatch-tool.ts:586:      logger.warn(`[SwatchTool] Incoming dye not found: id=${dyeId}`);
+apps/web-app/src/components/swatch-tool.ts:594:        logger.info(`[SwatchTool] Incoming dye from navigation: "${dye.name}" (id=${dyeId})`);
+apps/web-app/src/components/swatch-tool.ts:607:    logger.info(`[SwatchTool] Reverse match: dye "${this.reverseDyeName}" (${dye.hex})`);
+apps/web-app/src/components/swatch-tool.ts:620:    logger.info(`[SwatchTool] Reverse match: custom color ${this.reverseDyeHex}`);
+apps/web-app/src/components/swatch-tool.ts:652:    logger.info(
+apps/web-app/src/components/swatch-tool.ts:2735:    logger.info(`[CharacterTool] Loaded ${this.colors.length} colors for ${this.colorCategory}`);
+apps/web-app/src/components/swatch-tool.ts:2810:    logger.info(`[CharacterTool] Found ${this.matchedDyes.length} matching dyes`);
+apps/web-app/src/components/swatch-tool.ts:2833:      logger.warn('[CharacterTool] Error fetching prices:', error);
+apps/web-app/src/components/swatch-tool.ts:2857:    logger.info('[SwatchTool] All selections cleared');
+apps/web-app/src/components/swatch-tool.ts:2936:          logger.info(`[SwatchTool] Switched to color sheet: ${newCategory}`);
+apps/web-app/src/components/swatch-tool.ts:3030:        logger.info(`[SwatchTool] Loaded cell ${sharedIndex} from share URL`);
+apps/web-app/src/components/swatch-tool.ts:3032:        logger.warn(
+apps/web-app/src/components/swatch-tool.ts:3058:        logger.info(`[SwatchTool] Loaded color from share URL: ${hexColor}`);
+apps/web-app/src/components/swatch-tool.ts:3061:        logger.warn(
+apps/web-app/src/components/tutorial-spotlight.ts:228:      logger.warn(`Tutorial target not found: ${step.target}`);
+apps/web-app/src/components/v4-layout.ts:166:  logger.info(`[V4 Layout] Initializing with tool: ${initialTool}`);
+apps/web-app/src/components/v4-layout.ts:184:    logger.debug(`[V4 Layout] Config change: ${tool}.${key} = ${value}`);
+apps/web-app/src/components/v4-layout.ts:204:    logger.debug(`[V4 Layout] Dye selected from palette: ${dye.name}`);
+apps/web-app/src/components/v4-layout.ts:215:      logger.debug(
+apps/web-app/src/components/v4-layout.ts:229:    logger.debug('[V4 Layout] Clear all dyes requested');
+apps/web-app/src/components/v4-layout.ts:238:      logger.debug(
+apps/web-app/src/components/v4-layout.ts:247:    logger.debug(`[V4 Layout] Custom color selected: ${hex}`);
+apps/web-app/src/components/v4-layout.ts:255:      logger.debug(
+apps/web-app/src/components/v4-layout.ts:263:    logger.debug('[V4 Layout] Changelog button clicked');
+apps/web-app/src/components/v4-layout.ts:269:    logger.debug('[V4 Layout] Theme button clicked');
+apps/web-app/src/components/v4-layout.ts:275:    logger.debug('[V4 Layout] About button clicked');
+apps/web-app/src/components/v4-layout.ts:283:    logger.debug('[V4 Layout] Advanced options button clicked');
+apps/web-app/src/components/v4-layout.ts:289:    logger.debug('[V4 Layout] Language button clicked');
+apps/web-app/src/components/v4-layout.ts:317:    logger.info(`[V4 Layout] Route changed to: ${state.toolId}`);
+apps/web-app/src/components/v4-layout.ts:328:    logger.info('[V4 Layout] Language changed, tool may need refresh');
+apps/web-app/src/components/v4-layout.ts:456:  logger.info('[V4 Layout] Initialized successfully');
+apps/web-app/src/components/v4-layout.ts:468:    logger.warn('[V4 Layout] No shadow root found on layout element');
+apps/web-app/src/components/v4-layout.ts:535:    logger.error('[V4 Layout] Content container not found');
+apps/web-app/src/components/v4-layout.ts:595:        logger.info('[V4 Layout] Harmony tool loaded');
+apps/web-app/src/components/v4-layout.ts:607:        logger.info('[V4 Layout] Extractor tool loaded');
+apps/web-app/src/components/v4-layout.ts:619:        logger.info('[V4 Layout] Accessibility tool loaded');
+apps/web-app/src/components/v4-layout.ts:631:        logger.info('[V4 Layout] Comparison tool loaded');
+apps/web-app/src/components/v4-layout.ts:643:        logger.info('[V4 Layout] Gradient Builder loaded');
+apps/web-app/src/components/v4-layout.ts:655:        logger.info('[V4 Layout] Dye Mixer loaded');
+apps/web-app/src/components/v4-layout.ts:665:        logger.info('[V4 Layout] Presets tool loaded (v4)');
+apps/web-app/src/components/v4-layout.ts:678:        logger.info('[V4 Layout] Budget tool loaded');
+apps/web-app/src/components/v4-layout.ts:690:        logger.info('[V4 Layout] Swatch Matcher loaded');
+apps/web-app/src/components/v4-layout.ts:709:    logger.error(`[V4 Layout] Failed to load ${toolId}:`, error);
+apps/web-app/src/components/v4/base-lit-component.ts:87:    logger.debug(`[${this.tagName}] Connected to DOM`);
+apps/web-app/src/components/v4/base-lit-component.ts:95:    logger.debug(`[${this.tagName}] Disconnected from DOM`);
+apps/web-app/src/components/v4/base-lit-component.ts:103:    logger.debug(`[${this.tagName}] First render complete`);
+apps/web-app/src/components/v4/base-lit-component.ts:128:      logger.error(`[${this.tagName}] ${message}`, error);
+apps/web-app/src/components/v4/config-sidebar.ts:729:      logger.info(
+apps/web-app/src/components/v4/config-sidebar.ts:737:      logger.error('[ConfigSidebar] Error loading server data:', error);
+apps/web-app/src/components/v4/config-sidebar.ts:1693:            logger.info('[ConfigSidebar] Preset submitted successfully');
+apps/web-app/src/components/v4/config-sidebar.ts:1699:        logger.error('[ConfigSidebar] Failed to load the preset submission form', error);
+apps/web-app/src/components/v4/dye-palette-drawer.ts:730:      logger.debug(`[DyePaletteDrawer] Loaded ${this.allDyes.length} dyes`);
+apps/web-app/src/components/v4/dye-palette-drawer.ts:732:      logger.error('[DyePaletteDrawer] Failed to load dyes:', error);
+apps/web-app/src/components/v4/dye-palette-drawer.ts:850:    logger.debug(`[DyePaletteDrawer] Dye selected: ${dye.name}`);
+apps/web-app/src/components/v4/dye-palette-drawer.ts:872:    logger.debug(`[DyePaletteDrawer] Random dye selected: ${randomDye.name}`);
+apps/web-app/src/components/v4/dye-palette-drawer.ts:886:    logger.debug('[DyePaletteDrawer] Clear all dyes requested');
+apps/web-app/src/components/v4/dye-palette-drawer.ts:907:      logger.debug(
+apps/web-app/src/components/v4/dye-palette-drawer.ts:977:    logger.debug(`[DyePaletteDrawer] Custom color applied: ${hex}`);
+apps/web-app/src/components/v4/preset-tool.ts:427:    logger.info('[v4-preset-tool] Deep link detected:', presetId);
+apps/web-app/src/components/v4/preset-tool.ts:438:        logger.warn('[v4-preset-tool] Local palette not found for deep link:', presetId);
+apps/web-app/src/components/v4/preset-tool.ts:448:        logger.warn('[v4-preset-tool] Preset not found for deep link:', presetId);
+apps/web-app/src/components/v4/preset-tool.ts:451:      logger.error('[v4-preset-tool] Failed to load deep-linked preset:', error);
+apps/web-app/src/components/v4/preset-tool.ts:475:      logger.error('[v4-preset-tool] Failed to load presets:', error);
+apps/web-app/src/components/v4/preset-tool.ts:502:        logger.info(
+apps/web-app/src/components/v4/preset-tool.ts:518:      logger.warn('[v4-preset-tool] Failed to load user submissions:', error);
+apps/web-app/src/components/v4/preset-tool.ts:770:      logger.error('[v4-preset-tool] Vote failed:', error);
+apps/web-app/src/components/v4/preset-tool.ts:795:      logger.warn('[v4-preset-tool] Cannot edit preset without API ID');
+apps/web-app/src/components/v4/preset-tool.ts:800:      logger.warn('[v4-preset-tool] Cannot find original community preset for editing');
+apps/web-app/src/components/v4/preset-tool.ts:844:          logger.error('[v4-preset-tool] Failed to delete preset:', error);
+apps/web-app/src/main.ts:87:    logger.info(`🚀 XIV Dye Tools v${APP_VERSION}`);
+apps/web-app/src/main.ts:88:    logger.info('🏗️ Build System: Vite + TypeScript');
+apps/web-app/src/main.ts:97:    logger.info('🔧 Initializing services...');
+apps/web-app/src/main.ts:101:    logger.info('🌐 Initializing language service...');
+apps/web-app/src/main.ts:112:    logger.info({
+apps/web-app/src/main.ts:120:    logger.info('🎨 Initializing v4 layout shell...');
+apps/web-app/src/main.ts:125:    logger.info('📚 Initializing tutorial spotlight...');
+apps/web-app/src/main.ts:129:    logger.info('✅ Application initialized successfully');
+apps/web-app/src/main.ts:142:    logger.info('📡 Offline banner initialized');
+apps/web-app/src/main.ts:148:      logger.info('[DEV] TutorialService exposed on window for debugging');
+apps/web-app/src/main.ts:149:      logger.info('[DEV] ShareService exposed on window for debugging');
+apps/web-app/src/main.ts:153:    logger.error('❌ Failed to initialize application:', appError);
+apps/web-app/src/services/announcer-service.ts:67:      logger.debug('AnnouncerService already initialized');
+apps/web-app/src/services/announcer-service.ts:91:    logger.info('📢 AnnouncerService initialized');
+apps/web-app/src/services/announcer-service.ts:137:      logger.debug(`📢 [assertive] ${latest.message}`);
+apps/web-app/src/services/announcer-service.ts:148:      logger.debug(`📢 [polite] ${combinedMessage}`);
+apps/web-app/src/services/announcer-service.ts:159:      logger.warn('AnnouncerService not initialized, announcement lost:', message);
+apps/web-app/src/services/announcer-service.ts:193:    logger.info('📢 AnnouncerService destroyed');
+apps/web-app/src/services/api-service-wrapper.ts:14:import { indexedDBService, STORES } from './indexeddb-service';
+apps/web-app/src/services/api-service-wrapper.ts:30:    logger.info(`Using Universalis proxy from env: ${envUrl}`);
+apps/web-app/src/services/api-service-wrapper.ts:51:    logger.info(`Using production Universalis proxy: ${proxyUrl}`);
+apps/web-app/src/services/api-service-wrapper.ts:57:  logger.warn('Using direct Universalis API - CORS issues may occur on rate limit');
+apps/web-app/src/services/api-service-wrapper.ts:86:    const success = await indexedDBService.initialize();
+apps/web-app/src/services/api-service-wrapper.ts:124:      await indexedDBService.set(STORES.PRICE_CACHE, key, value);
+apps/web-app/src/services/api-service-wrapper.ts:127:        logger.warn(
+apps/web-app/src/services/api-service-wrapper.ts:135:        logger.error(
+apps/web-app/src/services/api-service-wrapper.ts:147:    void indexedDBService.delete(STORES.PRICE_CACHE, key).catch((error) => {
+apps/web-app/src/services/api-service-wrapper.ts:148:      logger.warn('Failed to delete from IndexedDB:', error);
+apps/web-app/src/services/api-service-wrapper.ts:154:    indexedDBService.clear(STORES.PRICE_CACHE).catch((error) => {
+apps/web-app/src/services/api-service-wrapper.ts:155:      logger.warn('Failed to clear IndexedDB cache:', error);
+apps/web-app/src/services/api-service-wrapper.ts:168:      const keys = await indexedDBService.keys(STORES.PRICE_CACHE);
+apps/web-app/src/services/api-service-wrapper.ts:170:        const data = await indexedDBService.get<CachedData<PriceData>>(STORES.PRICE_CACHE, key);
+apps/web-app/src/services/api-service-wrapper.ts:176:        logger.debug(`Loaded ${keys.length} price cache entries from IndexedDB`);
+apps/web-app/src/services/api-service-wrapper.ts:179:      logger.warn('Failed to load price cache from IndexedDB:', error);
+apps/web-app/src/services/api-service-wrapper.ts:211:      logger.info('✅ APIService initialized from xivdyetools-core with IndexedDB cache');
+apps/web-app/src/services/api-service-wrapper.ts:222:          logger.info('IndexedDB cache backend initialized');
+apps/web-app/src/services/auth-service.ts:184:          logger.info('Token cleared in another tab, synchronizing logout');
+apps/web-app/src/services/auth-service.ts:196:      logger.info('🔐 [AuthService] Initializing...', { url: window.location.href });
+apps/web-app/src/services/auth-service.ts:214:        sessionStorage.setItem(OAUTH_PROVIDER_KEY, providerFromUrl);
+apps/web-app/src/services/auth-service.ts:218:        logger.info('🔐 [AuthService] URL params:', {
+apps/web-app/src/services/auth-service.ts:228:          logger.info('🔐 [AuthService] Auth code found in URL, exchanging for token...');
+apps/web-app/src/services/auth-service.ts:237:          logger.info(`🔐 [AuthService] Navigating to return path: ${returnPath}`);
+apps/web-app/src/services/auth-service.ts:243:        logger.error('OAuth error:', error);
+apps/web-app/src/services/auth-service.ts:256:        logger.info(
+apps/web-app/src/services/auth-service.ts:261:      logger.error('Failed to initialize auth service:', err);
+apps/web-app/src/services/auth-service.ts:275:        logger.info('🔐 No stored auth found, clearing state');
+apps/web-app/src/services/auth-service.ts:285:        logger.info('Stored token has expired, clearing session');
+apps/web-app/src/services/auth-service.ts:329:      logger.error('Error loading auth from storage:', err);
+apps/web-app/src/services/auth-service.ts:369:      logger.error('Missing code_verifier - OAuth flow may have been tampered with');
+apps/web-app/src/services/auth-service.ts:375:      logger.error('CSRF state validation failed');
+apps/web-app/src/services/auth-service.ts:387:        logger.info(`🔐 [AuthService] Exchanging code via ${provider} endpoint`);
+apps/web-app/src/services/auth-service.ts:410:        logger.error('Token exchange failed:', errorData);
+apps/web-app/src/services/auth-service.ts:417:        logger.error('Token exchange returned error:', data.error);
+apps/web-app/src/services/auth-service.ts:425:        logger.error('Token exchange succeeded but returned no token');
+apps/web-app/src/services/auth-service.ts:430:      localStorage.setItem(PROVIDER_STORAGE_KEY, provider);
+apps/web-app/src/services/auth-service.ts:435:      logger.error('Error exchanging code for token:', err);
+apps/web-app/src/services/auth-service.ts:446:      logger.error('Invalid token - decode failed');
+apps/web-app/src/services/auth-service.ts:454:      logger.warn('Token expiry looks like milliseconds — converting to seconds');
+apps/web-app/src/services/auth-service.ts:462:    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+apps/web-app/src/services/auth-service.ts:463:    localStorage.setItem(EXPIRY_STORAGE_KEY, expiresAt.toString());
+apps/web-app/src/services/auth-service.ts:464:    localStorage.setItem(PROVIDER_STORAGE_KEY, provider);
+apps/web-app/src/services/auth-service.ts:465:    logger.info(`Token stored, expires: ${new Date(expiresAt * 1000).toISOString()}`);
+apps/web-app/src/services/auth-service.ts:494:      logger.info(
+apps/web-app/src/services/auth-service.ts:498:      logger.info(`Logged in as ${this.state.user?.global_name || this.state.user?.username}`);
+apps/web-app/src/services/auth-service.ts:504:      logger.warn('Failed to refresh author name on presets:', err);
+apps/web-app/src/services/auth-service.ts:524:          logger.info(`Updated author name on ${result.updated} preset(s)`);
+apps/web-app/src/services/auth-service.ts:529:      logger.warn('Error refreshing author name:', err);
+apps/web-app/src/services/auth-service.ts:547:        logger.info(`🔐 [AuthService] Using returnTool: ${returnTool} -> ${finalPath}`);
+apps/web-app/src/services/auth-service.ts:635:    logger.info('Initiating Discord OAuth login...');
+apps/web-app/src/services/auth-service.ts:644:      sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
+apps/web-app/src/services/auth-service.ts:645:      sessionStorage.setItem(OAUTH_STATE_KEY, state);
+apps/web-app/src/services/auth-service.ts:646:      sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, returnPath || window.location.pathname);
+apps/web-app/src/services/auth-service.ts:653:        sessionStorage.setItem(OAUTH_RETURN_TOOL_KEY, returnTool);
+apps/web-app/src/services/auth-service.ts:669:      logger.error('Failed to initiate OAuth login:', err);
+apps/web-app/src/services/auth-service.ts:683:    logger.info('Initiating XIVAuth OAuth login...');
+apps/web-app/src/services/auth-service.ts:692:      sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
+apps/web-app/src/services/auth-service.ts:693:      sessionStorage.setItem(OAUTH_STATE_KEY, state);
+apps/web-app/src/services/auth-service.ts:694:      sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, returnPath || window.location.pathname);
+apps/web-app/src/services/auth-service.ts:695:      sessionStorage.setItem(OAUTH_PROVIDER_KEY, 'xivauth'); // Mark as XIVAuth flow
+apps/web-app/src/services/auth-service.ts:697:        sessionStorage.setItem(OAUTH_RETURN_TOOL_KEY, returnTool);
+apps/web-app/src/services/auth-service.ts:713:      logger.error('Failed to initiate XIVAuth login:', err);
+apps/web-app/src/services/auth-service.ts:722:    logger.info('Logging out...');
+apps/web-app/src/services/auth-service.ts:746:    logger.info('Logged out successfully');
+apps/web-app/src/services/auth-service.ts:772:        logger.error('Auth listener error:', err);
+apps/web-app/src/services/camera-service.ts:75:      logger.info(
+apps/web-app/src/services/camera-service.ts:81:      logger.warn('Camera enumeration failed:', error);
+apps/web-app/src/services/camera-service.ts:112:      logger.error('Failed to enumerate cameras:', error);
+apps/web-app/src/services/camera-service.ts:167:      logger.warn('Camera permission denied or failed:', error);
+apps/web-app/src/services/camera-service.ts:202:      logger.info('📷 Camera stream started');
+apps/web-app/src/services/camera-service.ts:205:      logger.error('Failed to start camera stream:', error);
+apps/web-app/src/services/camera-service.ts:224:        logger.debug('📷 Camera track stopped:', track.label);
+apps/web-app/src/services/camera-service.ts:227:      logger.info('📷 Camera stream stopped');
+apps/web-app/src/services/camera-service.ts:333:      logger.info('📷 Device change detected, re-enumerating cameras');
+apps/web-app/src/services/chara-resolve-service.ts:137:    logger.warn(`[CharaResolve] api-worker answered ${response.status}`);
+apps/web-app/src/services/collection-service.ts:218:    logger.info('📚 CollectionService initialized');
+apps/web-app/src/services/collection-service.ts:229:        logger.warn(
+apps/web-app/src/services/collection-service.ts:264:        logger.warn(`[CollectionService] Dropped unresolvable dye ref ${stored} in ${label}`);
+apps/web-app/src/services/collection-service.ts:284:        logger.warn(
+apps/web-app/src/services/collection-service.ts:300:        if (!ok) logger.warn('[CollectionService] Skipped malformed stored collection record');
+apps/web-app/src/services/collection-service.ts:311:          logger.warn(
+apps/web-app/src/services/collection-service.ts:407:        logger.warn(
+apps/web-app/src/services/collection-service.ts:423:        logger.warn(
+apps/web-app/src/services/collection-service.ts:435:    logger.info(
+apps/web-app/src/services/collection-service.ts:511:      logger.warn(`[CollectionService] Rejected non-stainID favorite ${dyeId}`);
+apps/web-app/src/services/collection-service.ts:517:      logger.debug(`Dye ${dyeId} is already a favorite`);
+apps/web-app/src/services/collection-service.ts:523:      logger.warn(`Cannot add favorite: maximum ${MAX_FAVORITES} favorites reached`);
+apps/web-app/src/services/collection-service.ts:529:    logger.info(`⭐ Added dye ${dyeId} to favorites`);
+apps/web-app/src/services/collection-service.ts:548:    logger.info(`☆ Removed dye ${dyeId} from favorites`);
+apps/web-app/src/services/collection-service.ts:597:    logger.info('Cleared all favorites');
+apps/web-app/src/services/collection-service.ts:662:      logger.warn(`Invalid swap target ${options.target} — not a stainID`);
+apps/web-app/src/services/collection-service.ts:669:      logger.warn('Invalid collection name');
+apps/web-app/src/services/collection-service.ts:675:      logger.warn(`Collection "${trimmedName}" already exists`);
+apps/web-app/src/services/collection-service.ts:681:      logger.warn(`Cannot create collection: maximum ${MAX_COLLECTIONS} collections reached`);
+apps/web-app/src/services/collection-service.ts:688:      logger.warn('Description too long');
+apps/web-app/src/services/collection-service.ts:706:    logger.info(`📁 Created collection "${trimmedName}"`);
+apps/web-app/src/services/collection-service.ts:760:    logger.info(`🗑️ Deleted collection "${deleted.name}"`);
+apps/web-app/src/services/collection-service.ts:789:    logger.info(`🗑️ Deleted ${doomed.length} ${kind} collections`);
+apps/web-app/src/services/collection-service.ts:821:      logger.warn(`[CollectionService] Rejected non-stainID dye ref ${dyeId}`);
+apps/web-app/src/services/collection-service.ts:835:      logger.warn(`Cannot add dye: maximum ${MAX_DYES_PER_COLLECTION} dyes per collection`);
+apps/web-app/src/services/collection-service.ts:1022:            logger.info(`[CollectionService] Skipped tombstoned record "${collection.name}"`);
+apps/web-app/src/services/collection-service.ts:1063:      logger.info(
+apps/web-app/src/services/collection-service.ts:1068:      logger.error('Import failed:', error);
+apps/web-app/src/services/collection-service.ts:1190:    logger.info('CollectionService reset');
+apps/web-app/src/services/community-preset-service.ts:199:        logger.info('CommunityPresetService: API available');
+apps/web-app/src/services/community-preset-service.ts:201:        logger.warn('CommunityPresetService: API returned non-OK status');
+apps/web-app/src/services/community-preset-service.ts:204:      logger.warn('CommunityPresetService: API not available', error);
+apps/web-app/src/services/community-preset-service.ts:348:    logger.info('CommunityPresetService: Cache cleared');
+apps/web-app/src/services/community-preset-service.ts:415:      logger.info(`Voted for preset ${presetId}`);
+apps/web-app/src/services/community-preset-service.ts:418:      logger.error('Error voting for preset:', error);
+apps/web-app/src/services/community-preset-service.ts:467:      logger.info(`Removed vote from preset ${presetId}`);
+apps/web-app/src/services/community-preset-service.ts:470:      logger.error('Error removing vote:', error);
+apps/web-app/src/services/community-preset-service.ts:517:      logger.error('Error checking vote status:', error);
+apps/web-app/src/services/config-controller.ts:157:    logger.info('[ConfigController] Initializing');
+apps/web-app/src/services/config-controller.ts:266:    logger.debug(`[ConfigController] Updated ${key} config:`, partial);
+apps/web-app/src/services/config-controller.ts:285:    logger.debug(`[ConfigController] Subscribed to ${key} config changes`);
+apps/web-app/src/services/config-controller.ts:290:      logger.debug(`[ConfigController] Unsubscribed from ${key} config changes`);
+apps/web-app/src/services/config-controller.ts:305:    logger.info(`[ConfigController] Reset ${key} config to defaults`);
+apps/web-app/src/services/config-controller.ts:351:    logger.info('[ConfigController] Imported configs');
+apps/web-app/src/services/config-controller.ts:391:      logger.debug(`[ConfigController] Loaded ${key} config from storage`);
+apps/web-app/src/services/config-controller.ts:395:      logger.debug(`[ConfigController] Using default ${key} config`);
+apps/web-app/src/services/config-controller.ts:409:      logger.warn(`[ConfigController] Failed to save ${key} config to storage`);
+apps/web-app/src/services/config-controller.ts:426:        logger.error(`[ConfigController] Listener error for ${key}:`, error);
+apps/web-app/src/services/display-options-helper.ts:128:        logger.info(`[${toolName}] setConfig: displayOptions.${key} -> ${incoming[key]}`);
+apps/web-app/src/services/dye-service-wrapper.ts:24:      logger.info('✅ DyeService initialized from xivdyetools-core');
+apps/web-app/src/services/hybrid-preset-service.ts:131:    logger.info(
+apps/web-app/src/services/hybrid-preset-service.ts:232:        logger.warn('HybridPresetService: Failed to fetch API categories', error);
+apps/web-app/src/services/hybrid-preset-service.ts:273:          logger.warn('HybridPresetService: Failed to fetch community presets', error);
+apps/web-app/src/services/hybrid-preset-service.ts:316:        logger.warn('HybridPresetService: Failed to fetch API presets', error);
+apps/web-app/src/services/hybrid-preset-service.ts:346:      logger.warn('HybridPresetService: Failed to fetch featured presets', error);
+apps/web-app/src/services/index.ts:59:  logger.info('🔧 Initializing all services...');
+apps/web-app/src/services/index.ts:63:    logger.info('✅ ThemeService ready');
+apps/web-app/src/services/index.ts:67:    logger.info('✅ LanguageService ready');
+apps/web-app/src/services/index.ts:70:    logger.info('✅ DyeService ready');
+apps/web-app/src/services/index.ts:73:    logger.info(
+apps/web-app/src/services/index.ts:78:    logger.info('✅ APIService ready');
+apps/web-app/src/services/index.ts:81:    logger.info('✅ ToastService ready');
+apps/web-app/src/services/index.ts:84:    logger.info('✅ ModalService ready');
+apps/web-app/src/services/index.ts:87:    logger.info('✅ TooltipService ready');
+apps/web-app/src/services/index.ts:96:    logger.info('✅ KeyboardService ready');
+apps/web-app/src/services/index.ts:100:    logger.info(`✅ WorldService: ${WorldService.isInitialized() ? 'Ready' : 'Failed'}`);
+apps/web-app/src/services/index.ts:105:    logger.info(
+apps/web-app/src/services/index.ts:112:    logger.info(
+apps/web-app/src/services/index.ts:119:    logger.info(`✅ AuthService: ${authService.isAuthenticated() ? 'Logged in' : 'Not logged in'}`);
+apps/web-app/src/services/index.ts:121:    logger.info('🚀 All services initialized successfully');
+apps/web-app/src/services/index.ts:123:    logger.error('Failed to initialize services:', error);
+apps/web-app/src/services/indexeddb-service.ts:47:    this.isSupported = typeof indexedDB !== 'undefined';
+apps/web-app/src/services/indexeddb-service.ts:82:      logger.warn('IndexedDB is not supported in this browser');
+apps/web-app/src/services/indexeddb-service.ts:92:        const request = indexedDB.open(DB_NAME, DB_VERSION);
+apps/web-app/src/services/indexeddb-service.ts:95:          logger.error('Failed to open IndexedDB:', request.error);
+apps/web-app/src/services/indexeddb-service.ts:101:          logger.info('📦 IndexedDB initialized successfully');
+apps/web-app/src/services/indexeddb-service.ts:111:            logger.debug('Created price_cache store');
+apps/web-app/src/services/indexeddb-service.ts:117:            logger.debug('Created palettes store');
+apps/web-app/src/services/indexeddb-service.ts:122:            logger.debug('Created settings store');
+apps/web-app/src/services/indexeddb-service.ts:127:            logger.debug('Created image_cache store');
+apps/web-app/src/services/indexeddb-service.ts:130:          logger.info('📦 IndexedDB schema upgraded');
+apps/web-app/src/services/indexeddb-service.ts:134:          logger.warn('IndexedDB upgrade blocked - please close other tabs');
+apps/web-app/src/services/indexeddb-service.ts:138:        logger.error('IndexedDB initialization error:', error);
+apps/web-app/src/services/indexeddb-service.ts:175:          logger.warn(`Failed to get ${key} from ${storeName}:`, request.error);
+apps/web-app/src/services/indexeddb-service.ts:179:        logger.error(`IndexedDB get error:`, error);
+apps/web-app/src/services/indexeddb-service.ts:215:          logger.warn(`Failed to get ${key} from ${storeName}:`, error);
+apps/web-app/src/services/indexeddb-service.ts:219:        logger.error(`IndexedDB get error:`, error);
+apps/web-app/src/services/indexeddb-service.ts:245:        const request = store.put(data);
+apps/web-app/src/services/indexeddb-service.ts:252:          logger.warn(`Failed to set ${key} in ${storeName}:`, request.error);
+apps/web-app/src/services/indexeddb-service.ts:256:        logger.error(`IndexedDB set error:`, error);
+apps/web-app/src/services/indexeddb-service.ts:285:          logger.warn(`Failed to delete ${key} from ${storeName}:`, request.error);
+apps/web-app/src/services/indexeddb-service.ts:289:        logger.error(`IndexedDB delete error:`, error);
+apps/web-app/src/services/indexeddb-service.ts:318:          logger.warn(`Failed to get keys from ${storeName}:`, request.error);
+apps/web-app/src/services/indexeddb-service.ts:322:        logger.error(`IndexedDB keys error:`, error);
+apps/web-app/src/services/indexeddb-service.ts:352:          logger.warn(`Failed to get all from ${storeName}:`, request.error);
+apps/web-app/src/services/indexeddb-service.ts:356:        logger.error(`IndexedDB getAll error:`, error);
+apps/web-app/src/services/indexeddb-service.ts:381:          logger.debug(`Cleared store ${storeName}`);
+apps/web-app/src/services/indexeddb-service.ts:386:          logger.warn(`Failed to clear ${storeName}:`, request.error);
+apps/web-app/src/services/indexeddb-service.ts:390:        logger.error(`IndexedDB clear error:`, error);
+apps/web-app/src/services/indexeddb-service.ts:419:          logger.warn(`Failed to count ${storeName}:`, request.error);
+apps/web-app/src/services/indexeddb-service.ts:423:        logger.error(`IndexedDB count error:`, error);
+apps/web-app/src/services/indexeddb-service.ts:437:      logger.debug('IndexedDB connection closed');
+apps/web-app/src/services/indexeddb-service.ts:454:        const request = indexedDB.deleteDatabase(DB_NAME);
+apps/web-app/src/services/indexeddb-service.ts:457:          logger.info('IndexedDB database deleted');
+apps/web-app/src/services/indexeddb-service.ts:462:          logger.error('Failed to delete IndexedDB:', request.error);
+apps/web-app/src/services/indexeddb-service.ts:467:          logger.warn('IndexedDB deletion blocked - please close other tabs');
+apps/web-app/src/services/indexeddb-service.ts:471:        logger.error('IndexedDB deleteDatabase error:', error);
+apps/web-app/src/services/indexeddb-service.ts:479:export const indexedDBService = IndexedDBService.getInstance();
+apps/web-app/src/services/keyboard-service.ts:68:    logger.info('KeyboardService initialized');
+apps/web-app/src/services/keyboard-service.ts:193:      logger.info('Share shortcut ignored: active tool has nothing to share');
+apps/web-app/src/services/keyboard-service.ts:197:    logger.info('Shared via keyboard shortcut');
+apps/web-app/src/services/keyboard-service.ts:208:      logger.info('Theme toggled via keyboard shortcut');
+apps/web-app/src/services/keyboard-service.ts:210:      logger.error('Failed to toggle theme:', error);
+apps/web-app/src/services/keyboard-service.ts:220:      logger.info('Language cycled via keyboard shortcut');
+apps/web-app/src/services/keyboard-service.ts:222:      logger.error('Failed to cycle language:', error);
+apps/web-app/src/services/keyboard-service.ts:236:    logger.info(`Tool navigation via keyboard: ${toolId}`);
+apps/web-app/src/services/language-service.ts:59:        logger.info(`Loaded saved locale preference: ${locale}`);
+apps/web-app/src/services/language-service.ts:63:        logger.info(`Detected browser locale: ${locale}`);
+apps/web-app/src/services/language-service.ts:68:      logger.info(`Language service initialized: ${this.currentLocale}`);
+apps/web-app/src/services/language-service.ts:70:      logger.error('Failed to initialize language service:', error);
+apps/web-app/src/services/language-service.ts:97:      logger.warn(`Invalid locale: ${locale}, falling back to ${DEFAULT_LOCALE}`);
+apps/web-app/src/services/language-service.ts:132:          logger.error('Error in locale change listener:', error);
+apps/web-app/src/services/language-service.ts:136:      logger.info(`Locale changed to: ${locale}`);
+apps/web-app/src/services/language-service.ts:138:      logger.error(`Failed to set locale ${locale}:`, error);
+apps/web-app/src/services/language-service.ts:185:      logger.warn(`Translation not found: ${key}`);
+apps/web-app/src/services/language-service.ts:312:      logger.info(`Browser language ${browserLang} not supported, using default`);
+apps/web-app/src/services/language-service.ts:315:      logger.warn('Failed to detect browser locale:', error);
+apps/web-app/src/services/language-service.ts:328:      logger.info(`Loaded web app translations for: ${locale}`);
+apps/web-app/src/services/language-service.ts:330:      logger.warn(`Failed to load translations for ${locale}:`, error);
+apps/web-app/src/services/language-service.ts:337:          logger.info('Loaded English translations as fallback');
+apps/web-app/src/services/language-service.ts:339:          logger.error('Failed to load English fallback translations:', enError);
+apps/web-app/src/services/market-board-service.ts:94:    logger.info('[MarketBoardService] Initialized');
+apps/web-app/src/services/market-board-service.ts:157:        logger.info(`[MarketBoardService] Server changed to ${this.selectedServer}`);
+apps/web-app/src/services/market-board-service.ts:338:        logger.info(
+apps/web-app/src/services/market-board-service.ts:370:      logger.info(`[MarketBoardService] Fetched prices for ${result.size} dyes`);
+apps/web-app/src/services/market-board-service.ts:381:        logger.error('[MarketBoardService] Failed to fetch prices:', error);
+apps/web-app/src/services/market-board-service.ts:393:    logger.info('[MarketBoardService] Cache cleared');
+apps/web-app/src/services/market-board-service.ts:402:    logger.info('[MarketBoardService] Full cache refresh (API + local)');
+apps/web-app/src/services/market-board-service.ts:429:    logger.info('[MarketBoardService] Destroyed');
+apps/web-app/src/services/modal-service.ts:154:          logger.error('Modal onClose callback failed:', error);
+apps/web-app/src/services/modal-service.ts:160:    logger.info(`Modal shown: [${config.type}] ${config.title}`);
+apps/web-app/src/services/modal-service.ts:204:          logger.error('Modal onClose callback failed:', error);
+apps/web-app/src/services/modal-service.ts:208:      logger.info(`Modal dismissed: ${id}`);
+apps/web-app/src/services/modal-service.ts:210:      logger.warn(`Modal not found for dismissal: ${id}`);
+apps/web-app/src/services/modal-service.ts:235:          logger.error('Modal onClose callback failed:', error);
+apps/web-app/src/services/modal-service.ts:242:    logger.info('All modals dismissed');
+apps/web-app/src/services/preset-submission-service.ts:293:    logger.info('Submitting preset:', submission.name);
+apps/web-app/src/services/preset-submission-service.ts:322:        logger.error('Preset submission failed:', result);
+apps/web-app/src/services/preset-submission-service.ts:330:      logger.info('Preset submitted successfully:', result);
+apps/web-app/src/services/preset-submission-service.ts:348:        logger.error('Preset submission timed out');
+apps/web-app/src/services/preset-submission-service.ts:355:      logger.error('Preset submission error:', err);
+apps/web-app/src/services/preset-submission-service.ts:372:    logger.info('Fetching user submissions...');
+apps/web-app/src/services/preset-submission-service.ts:388:        logger.error('Failed to fetch user submissions:', response.status);
+apps/web-app/src/services/preset-submission-service.ts:393:      logger.info(`Fetched ${result.presets?.length || 0} user submissions`);
+apps/web-app/src/services/preset-submission-service.ts:400:      logger.error('Error fetching user submissions:', err);
+apps/web-app/src/services/preset-submission-service.ts:431:        logger.warn('Failed to fetch rate limit:', response.status);
+apps/web-app/src/services/preset-submission-service.ts:442:      logger.error('Error fetching rate limit:', err);
+apps/web-app/src/services/preset-submission-service.ts:480:      logger.error('Error deleting preset:', err);
+apps/web-app/src/services/preset-submission-service.ts:552:    logger.info('Editing preset:', presetId, updates);
+apps/web-app/src/services/preset-submission-service.ts:600:        logger.error('Preset edit failed:', result);
+apps/web-app/src/services/preset-submission-service.ts:608:      logger.info('Preset edited successfully:', result);
+apps/web-app/src/services/preset-submission-service.ts:617:        logger.error('Preset edit timed out');
+apps/web-app/src/services/preset-submission-service.ts:624:      logger.error('Preset edit error:', err);
+apps/web-app/src/services/pricing-mixin.ts:55:  logger.info(
+apps/web-app/src/services/pricing-mixin.ts:63:    logger.info('📡 [setupMarketBoardListeners] showPricesChanged event received');
+apps/web-app/src/services/pricing-mixin.ts:73:    logger.info('📡 [setupMarketBoardListeners] server-changed event received');
+apps/web-app/src/services/router-service.ts:145:    logger.info(`[RouterService] Initialized at route: ${this.currentToolId}`);
+apps/web-app/src/services/router-service.ts:168:      logger.warn(`[RouterService] Unknown tool ID: ${toolId}`);
+apps/web-app/src/services/router-service.ts:205:    logger.info(`[RouterService] Navigated to: ${url}`);
+apps/web-app/src/services/router-service.ts:380:    logger.info(`[RouterService] Popstate: ${this.currentToolId}`);
+apps/web-app/src/services/router-service.ts:389:      logger.info(`[RouterService] Redirecting legacy route ${path} -> /${legacyRedirect}`);
+apps/web-app/src/services/router-service.ts:422:        logger.error('[RouterService] Listener error:', error);
+apps/web-app/src/services/saved-presets-service.ts:64:        logger.error('[SavedPresets] Listener failed:', error);
+apps/web-app/src/services/share-service.ts:219:    logger.info(`[ShareService] Generated URL: ${url.toString()}`);
+apps/web-app/src/services/share-service.ts:329:      logger.warn(`[ShareService] Legacy itemID in share URL rejected: ${id}`);
+apps/web-app/src/services/share-service.ts:335:      logger.warn(`[ShareService] Unknown stainID in share URL: ${id}`);
+apps/web-app/src/services/share-service.ts:435:      logger.warn('[ShareService] Failed to parse URL:', error);
+apps/web-app/src/services/share-service.ts:473:      logger.error('[ShareService] Failed to copy to clipboard:', error);
+apps/web-app/src/services/share-service.ts:526:      logger.error('[ShareService] Share failed:', error);
+apps/web-app/src/services/storage-service.ts:46:      localStorage.setItem(test, 'test');
+apps/web-app/src/services/storage-service.ts:79:      logger.warn(`Failed to get item from localStorage: ${key}`, error);
+apps/web-app/src/services/storage-service.ts:92:        logger.warn('localStorage is not available');
+apps/web-app/src/services/storage-service.ts:98:      localStorage.setItem(key, serialized);
+apps/web-app/src/services/storage-service.ts:105:          logger.error(`Storage quota exceeded when setting key: ${key}`);
+apps/web-app/src/services/storage-service.ts:110:      logger.error(`Failed to set item in localStorage: ${key}`, error);
+apps/web-app/src/services/storage-service.ts:127:      logger.warn(`Failed to remove item from localStorage: ${key}`, error);
+apps/web-app/src/services/storage-service.ts:144:      logger.warn('Failed to clear localStorage', error);
+apps/web-app/src/services/storage-service.ts:167:      logger.warn('Failed to get storage keys', error);
+apps/web-app/src/services/storage-service.ts:197:      logger.warn(`Failed to get items by prefix: ${prefix}`, error);
+apps/web-app/src/services/storage-service.ts:239:      logger.warn('Failed to calculate storage size', error);
+apps/web-app/src/services/storage-service.ts:279:      logger.warn(`Failed to remove items by prefix: ${prefix}`, error);
+apps/web-app/src/services/storage-service.ts:297:      logger.error(`Failed to set item with TTL: ${key}`, error);
+apps/web-app/src/services/storage-service.ts:320:      logger.warn(`Failed to get item with TTL: ${key}`, error);
+apps/web-app/src/services/telemetry-service.ts:109:      logger.debug(`[Telemetry] ${next ? 'enabled' : 'disabled'}`);
+apps/web-app/src/services/telemetry-service.ts:136:      logger.debug('[Telemetry] track failed', error);
+apps/web-app/src/services/telemetry-service.ts:206:      logger.debug('[Telemetry] flush failed', error);
+apps/web-app/src/services/telemetry-service.ts:232:    if (typeof navigator.sendBeacon === 'function' && navigator.sendBeacon(url, body)) return;
+apps/web-app/src/services/telemetry-service.ts:238:    }).catch((error: unknown) => logger.debug('[Telemetry] fetch fallback failed', error));
+apps/web-app/src/services/theme-service.ts:157:      logger.debug('Theme service already initialized, skipping');
+apps/web-app/src/services/theme-service.ts:169:      logger.info(`Migrated legacy theme "${saved}" → ${this.currentTheme}`);
+apps/web-app/src/services/theme-service.ts:176:    logger.info(`✅ Theme service initialized: ${this.currentTheme}`);
+apps/web-app/src/services/theme-service.ts:231:    logger.info(`✅ Theme changed to: ${themeName}`);
+apps/web-app/src/services/theme-service.ts:253:      logger.warn(
+apps/web-app/src/services/toast-service.ts:127:    logger.info(`🍞 Toast shown: [${type}] ${message}`);
+apps/web-app/src/services/toast-service.ts:169:      logger.info(`🍞 Toast dismissed: ${id}`);
+apps/web-app/src/services/toast-service.ts:195:    logger.info('🍞 All toasts dismissed');
+apps/web-app/src/services/tutorial-service.ts:360:    logger.info(`Tutorial completed: ${tool}`);
+apps/web-app/src/services/tutorial-service.ts:368:    logger.info(`Tutorial reset: ${tool}`);
+apps/web-app/src/services/tutorial-service.ts:379:    logger.info('All tutorials reset');
+apps/web-app/src/services/tutorial-service.ts:399:    logger.info('All tutorial prompts disabled');
+apps/web-app/src/services/tutorial-service.ts:408:    logger.info('Tutorial prompts re-enabled');
+apps/web-app/src/services/tutorial-service.ts:421:      logger.warn(`No tutorial found for tool: ${tool}`);
+apps/web-app/src/services/tutorial-service.ts:434:    logger.info(`Tutorial started: ${tool}`);
+apps/web-app/src/services/tutorial-service.ts:456:        logger.warn('Tutorial beforeShow failed:', error);
+apps/web-app/src/services/tutorial-service.ts:510:    logger.info(`Tutorial skipped: ${this.state.currentTool}`);
+apps/web-app/src/services/world-service.ts:68:      logger.info(
+apps/web-app/src/services/world-service.ts:72:      logger.error('WorldService: Failed to load server data', error);
+apps/web-app/src/shared/error-handler.ts:32:        logger.error(`[${appError.code}]`, appError.message, appError);
+apps/web-app/src/shared/error-handler.ts:35:        logger.warn(`[${appError.code}]`, appError.message);
+apps/web-app/src/shared/error-handler.ts:38:        logger.info(`[${appError.code}]`, appError.message);
+apps/web-app/src/shared/utils.ts:42:        logger.warn('Error during element cleanup:', error);
+docs/historical/web-app/20260531-Mockups/index.ts:45:    logger.info(`Applied mockup gradient theme: ${themeId}`);
+docs/historical/web-app/20260531-Mockups/index.ts:47:    logger.info('Removed mockup gradient theme, using standard theme');
+docs/historical/web-app/20260531-Mockups/index.ts:161:      logger.info(`Tool changed to: ${toolId}`);
+docs/historical/web-app/20260531-Mockups/index.ts:170:  logger.info('Mockup system initialized');
+docs/historical/web-app/20260531-Mockups/index.ts:182:    logger.error('Panel containers not found');
+docs/historical/web-app/20260531-Mockups/index.ts:221:        logger.info('Harmony Mockup loaded');
+docs/historical/web-app/20260531-Mockups/index.ts:233:        logger.info('Matcher Mockup loaded');
+docs/historical/web-app/20260531-Mockups/index.ts:245:        logger.info('Accessibility Mockup loaded');
+docs/historical/web-app/20260531-Mockups/index.ts:257:        logger.info('Comparison Mockup loaded');
+docs/historical/web-app/20260531-Mockups/index.ts:269:        logger.info('Mixer Mockup loaded');
+docs/historical/web-app/20260531-Mockups/index.ts:281:        logger.info('Presets Mockup loaded');
+docs/historical/web-app/20260531-Mockups/index.ts:293:        logger.info('Budget Mockup loaded');
+docs/historical/web-app/20260531-Mockups/index.ts:301:    logger.error(`Failed to load ${toolId} mockup:`, error);
+packages/auth/src/revocation.ts:92:    await store.put(`revoked:${jti}`, '1', { expirationTtl: ttl });
+packages/core/src/services/APIService.ts:401:      this.logger.error(
+packages/core/src/services/APIService.ts:429:        this.logger.warn(`Cache corruption detected for key: ${cacheKey}`);
+packages/core/src/services/APIService.ts:463:      this.logger.error(
+packages/core/src/services/APIService.ts:474:    this.logger.info('Price cache cleared');
+packages/core/src/services/APIService.ts:503:      this.logger.info(`Using pending request for item ${itemID}`);
+packages/core/src/services/APIService.ts:525:        this.logger.info(`Price cache hit for item ${itemID}`);
+packages/core/src/services/APIService.ts:549:      this.logger.error('Failed to fetch price data', error);
+packages/core/src/services/APIService.ts:591:      this.logger.error(
+packages/core/src/services/APIService.ts:640:      this.logger.warn(
+packages/core/src/services/APIService.ts:671:      this.logger.error(
+packages/core/src/services/APIService.ts:747:        this.logger.warn(`Invalid API response structure for item ${itemID}`);
+packages/core/src/services/APIService.ts:753:        this.logger.warn(`No price data available for item ${itemID}`);
+packages/core/src/services/APIService.ts:759:        this.logger.warn(`Invalid result structure for item ${itemID}`);
+packages/core/src/services/APIService.ts:765:        this.logger.warn(`Item ID mismatch: expected ${itemID}, got ${result.itemId}`);
+packages/core/src/services/APIService.ts:773:        this.logger.warn(`No price data available for item ${itemID}`);
+packages/core/src/services/APIService.ts:786:      this.logger.error(`Failed to parse price data for item ${itemID}`, error);
+packages/core/src/services/APIService.ts:805:        this.logger.warn('Invalid batch API response structure');
+packages/core/src/services/APIService.ts:810:        this.logger.warn('No results array in batch API response');
+packages/core/src/services/APIService.ts:839:        this.logger.warn(
+packages/core/src/services/APIService.ts:846:      this.logger.error('Failed to parse batch price data', error);
+packages/core/src/services/APIService.ts:973:      this.logger.debug(`All ${itemIDs.length} items found in cache for ${dataCenterID}`);
+packages/core/src/services/APIService.ts:977:    this.logger.debug(
+packages/core/src/services/PaletteService.ts:367:      this.logger.warn(
+packages/core/src/services/PaletteService.ts:376:      this.logger.warn(
+packages/core/src/services/PaletteService.ts:383:      this.logger.warn('PaletteService.extractPalette: Empty pixel array');
+packages/core/src/services/PaletteService.ts:391:      this.logger.warn(
+packages/core/src/services/PaletteService.ts:397:    this.logger.info(`Extracting ${colorCount} colors from ${pixels.length} pixels`);
+packages/core/src/services/PaletteService.ts:423:    this.logger.info(`Extracted colors: ${result.map((r) => `${r.dominance}%`).join(', ')}`);
+packages/core/src/services/dye/DyeDatabase.ts:124:      this.logger.warn('Dye missing required stainID (or legacy id/itemID) field');
+packages/core/src/services/dye/DyeDatabase.ts:131:      this.logger.warn(`Dye ${idForLog} has invalid name`);
+packages/core/src/services/dye/DyeDatabase.ts:140:      this.logger.warn(`Dye ${idForLog} has missing or invalid hex: ${hexForLog}`);
+packages/core/src/services/dye/DyeDatabase.ts:147:      this.logger.warn(`Dye ${idForLog} has invalid category type`);
+packages/core/src/services/dye/DyeDatabase.ts:160:      this.logger.warn(`Dye ${idForLog} has invalid consolidationType`);
+packages/core/src/services/dye/DyeDatabase.ts:326:          this.logger.error(
+packages/core/src/services/dye/DyeDatabase.ts:369:      this.logger.info(`Dye database loaded: ${this.dyes.length} dyes`);
+packages/core/src/services/dye/DyeSearch.ts:234:      this.logger.warn(
+packages/core/src/services/dye/DyeSearch.ts:319:      this.logger.warn(
+packages/logger/src/adapters/console-adapter.ts:25: * logger.info('Server started', { port: 3000 });
+packages/logger/src/adapters/json-adapter.ts:26: * logger.info('Request received', { path: '/api/dyes', method: 'GET' });
+packages/logger/src/adapters/noop-adapter.ts:32: *     this.logger.debug('Finding dye', { id }); // Silent by default
+packages/logger/src/index.ts:16: * logger.info('Application started');
+packages/logger/src/index.ts:17: * logger.error('Failed to load data', error, { userId: '123' });
+packages/logger/src/index.ts:33: *     logger.info('Request received');
+packages/logger/src/index.ts:47: *     this.logger.debug('Doing work...');
+packages/logger/src/presets/browser.ts:69: * logger.info('App initialized');
+packages/logger/src/presets/worker.ts:55: *     logger.info('Request received', { path: new URL(request.url).pathname });
+packages/logger/src/types.ts:79: * logger.info('User logged in', { userId: '123' });
+packages/logger/src/types.ts:80: * logger.error('Failed to load data', error, { operation: 'fetchDyes' });
+packages/test-utils/src/cloudflare/kv.ts:15: * await kv.put('user:123:count', '5');
+packages/test-utils/src/cloudflare/r2.ts:12: * await bucket.put('image.png', new ArrayBuffer(100));
+packages/worker-kit/src/middleware/logger.ts:145:    logger.info('Request started', startContext);
+packages/worker-kit/src/middleware/logger.ts:153:    logger.info('Request completed', {
+packages/worker-kit/src/middleware/rate-limit.ts:144:        logger.warn('Rate limiter backend error', {
+packages/worker-kit/src/middleware/rate-limit.ts:178:        logger.warn('Rate limiter backend error (failing open)', {
+packages/worker-kit/src/rate-limiter/backends/kv.ts:221:        await this.kv.put(kvKey, JSON.stringify(entry), {
+packages/worker-kit/src/rate-limiter/backends/kv.ts:237:            this.logger.error(

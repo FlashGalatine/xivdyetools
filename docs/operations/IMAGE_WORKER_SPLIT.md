@@ -158,6 +158,36 @@ ahead of the merge that introduces it. The one-time `pnpm deploy:production` abo
 from a branch checkout with Cloudflare credentials, is the only way to close this gap before
 merge.
 
+## 2026-08-30 update: the invariant is now test-enforced (FINDING-023)
+
+Everything above this line predates the 2026-08-29 security audit and is left as the original
+design record. Two things changed on top of it, closing FINDING-023 (LOW · config drift on this
+Worker could turn into an unauthenticated INTERNET-facing decode/SSRF surface):
+
+- **`src/wrangler-config.test.ts`** now pins the "no public surface" shape by parsing
+  `wrangler.toml` directly, instead of relying on the comments in this document and in the file
+  itself: no `routes` in either environment or by inheritance, `workers_dev = false` **and** the
+  newly-added `preview_urls = false` explicit in both, exactly one named environment
+  (`[env.production]`), and the cross-worker contract — production's `name` is exactly what both
+  discord-worker's and presets-api's `IMAGE_WORKER` service bindings point at, in every one of
+  their own environments. This is the last of a four-worker config-drift test set the
+  2026-08-29 branch added (presets-api, oauth, moderation-worker, image-worker).
+- **An in-code hostname guard** in `src/index.ts` refuses any request whose URL hostname ends in
+  `.workers.dev`, for every route including `/health`, before any body read, fetch, or decode —
+  a plain `404`. This is defence in depth, not the primary control: the primary control remains
+  that neither environment has `workers_dev` on or any route declared. It only matters if that
+  primary control is ever defeated by a config flip.
+
+**The guard and the config test cover different axes, and neither substitutes for the other.**
+The hostname guard only ever sees a `*.workers.dev` hostname — what a `workers_dev` flip
+produces. It cannot see a `routes` addition: a route makes this Worker reachable on a real
+custom-domain hostname that never ends in `.workers.dev`, reaching the decode path straight past
+the guard. Only the config test's routes check (widened in a later fix round to cover every
+spelling wrangler accepts, not just one) covers that axis.
+
+See `apps/image-worker/CHANGELOG.md`'s `[1.2.0]` entry and `apps/image-worker/CLAUDE.md`'s
+"Public-Surface Guard" section for the current, maintained description.
+
 ## Secondary benefit: CPU budget
 
 Cloudflare's CPU-time limit applies **per request, per Worker**. Today a single `/extractor`

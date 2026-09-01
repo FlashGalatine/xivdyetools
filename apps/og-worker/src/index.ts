@@ -166,20 +166,147 @@ app.use('/og/*', async (c, next) => {
 });
 
 /**
+ * The only query keys any /og/* request may legitimately carry: `resolveLocale`
+ * (below) reads `lang`, `frameFromQuery` reads `frame`, and the five
+ * algo-aware image routes read `algo` — og-data-generator.ts emits exactly
+ * these three onto an emitted image URL (withLang / withAlgo / the ?frame=x
+ * twitter branch), so no URL this worker itself produces ever carries a
+ * fourth key.
+ */
+const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo']);
+
+/**
+ * 2026-08-29 FINDING-024 (OG-4): reject any /og/* request carrying a query
+ * key outside the allowlist, before the cache lookup below and before any
+ * render. Nothing bounded the *count* of distinct renders for one path —
+ * appending a throwaway key (?x=1, ?x=2, …) produced a fresh URL on every
+ * request, and the canonical cache key below still varies with anything it
+ * is handed, so each variant was a full, unauthenticated, unrate-limited
+ * resvg raster. 404, not 400: this worker deliberately refuses to mint a
+ * resource for that URL variant at all, rather than reporting an error on
+ * it. The body never echoes the offending key (the OG-8 rule: a validation
+ * response never echoes attacker input).
+ *
+ * Ruling S7-R7 (fix round 1, same finding): `algo`'s *value* is validated
+ * here too, not just its key. Being an allowed key is not the same as being
+ * bounded — the five algo-aware routes below already reject a bad spelling
+ * themselves (BUG-002), but seven other /og/* route patterns (both
+ * default-card routes, comparison, accessibility, extractor, presets,
+ * budget) never read `algo` at all, so `?algo=1`, `?algo=2`, … sailed
+ * through the key allowlist unchecked and each minted a fresh canonical
+ * cache key below — the exact amplification this guard exists to close,
+ * just narrowed from "any key" to "algo's value". Rejecting it here bounds
+ * the key space to pathname × 6 locales × 2 frames × 10 algo states (the 9
+ * spellings in VALID_ALGORITHMS + absent). Status/body match what the five
+ * algo-aware routes already return for this exact condition (400, `{error:
+ * 'Invalid algorithm'}`) — that existing contract wins over matching this
+ * guard's own 404-for-unknown-key convention just above: an unknown key
+ * means no such resource variant exists, but a known key with a bad value
+ * is the malformed-request shape the rest of the codebase already answers
+ * with 400.
+ *
+ * Ruling S7-R10 (fix round 2, same finding): an EMPTY `algo` (`?algo=` or
+ * bare `?algo`) is treated as absent, not invalid — verified
+ * `new URL(...).searchParams.get('algo')` returns `''` (not `null`) for
+ * both spellings, same as Hono's own query parser. `isAlgorithm('')` is
+ * false, so without this carve-out an empty value would 400 here where it
+ * previously fell through each algo-aware route's own
+ * `c.req.query('algo') || DEFAULT_MATCHING_METHOD` and rendered the default
+ * algorithm's card — this guard must not change behaviour the sprint never
+ * set out to change. `if (algo && ...)` reads `''` as falsy, same as
+ * `null`.
+ */
+app.use('/og/*', async (c, next) => {
+  const { searchParams } = new URL(c.req.url);
+  for (const key of searchParams.keys()) {
+    if (!OG_ALLOWED_QUERY_KEYS.has(key)) {
+      return c.json({ error: 'Unknown query parameter' }, 404);
+    }
+  }
+  const algo = searchParams.get('algo');
+  if (algo && !isAlgorithm(algo)) {
+    return c.json({ error: 'Invalid algorithm' }, 400);
+  }
+  return next();
+});
+
+/**
+ * Canonical cache key for a /og/* request (2026-08-29 FINDING-024, OG-4):
+ * pathname + the allowed query axes, RESOLVED, in a fixed order — bounds the
+ * key space to (pathname × lang × frame × algo) instead of the full URL.
+ * `lang` is the *resolved* locale (resolveLocale already collapses
+ * ?lang=EN / ?lang=en-US / a missing lang onto the same rendered card) and
+ * `frame` is the *resolved* 'discord' | 'x' (an unrecognised ?frame= renders
+ * 'discord', so it shares that entry) — both safe to canonicalise because
+ * they already render identically. `algo` stays the *raw* query value,
+ * verbatim, omitted when absent: og-params.ts's legacy spellings only
+ * normalise at render time (normalizeMatchingMethod, inside deltaForAlgorithm),
+ * and collapsing two spellings that could render differently onto one slot
+ * would risk serving the wrong picture for one of them (ruling S7-R4). By
+ * the time this runs, the query-key guard above has already rejected a
+ * present-and-invalid `algo` (ruling S7-R7) and normalised an empty one to
+ * absent (ruling S7-R10, matched here by the same `if (algo)` truthy check
+ * — `''` and `null` both skip the `params.set`), so this function only ever
+ * keys on one of the 9 `VALID_ALGORITHMS` spellings or nothing.
+ * `origin` keeps beta and production in separate entries. **Path is
+ * `c.req.path`, not `new URL(c.req.url).pathname`** (ruling S7-R9): Hono
+ * decodes before it routes (`getPath` in `hono/utils/url`), and every
+ * handler below reads `c.req.param()` / `searchParams`, never the raw path
+ * — so `/og/harmony/102/%63omplementary.png`, `.../c%6Fmplementary.png`,
+ * and `.../complementary.png` already route to the identical handler with
+ * the identical decoded param, and keying on the raw pathname let each
+ * percent-encoded spelling buy its own cache entry for the same card,
+ * within the 64/512-char length caps. Collapsing is one-directional and
+ * safe: two raw paths that decode alike always route alike. (The length
+ * guard above this still measures the raw pathname on purpose — capping
+ * the undecoded string is the conservative side of that check.)
+ */
+function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
+  const url = new URL(c.req.url);
+  const params = new URLSearchParams();
+  params.set('lang', resolveLocale(url.searchParams));
+  params.set('frame', frameFromQuery(c));
+  const algo = url.searchParams.get('algo');
+  if (algo) {
+    params.set('algo', algo);
+  }
+  // Ruling S7-R13: strip a trailing `.png` from the path too — it stays
+  // optional at every route (below), so the two spellings must share one
+  // cache entry rather than buying a ×2 key split for free.
+  const path = stripPngSuffix(c.req.path);
+  return new Request(`${url.origin}${path}?${params.toString()}`, { method: 'GET' });
+}
+
+/**
  * Edge cache for rendered PNGs. The `Cache-Control` / `CDN-Cache-Control`
  * headers set by renderOGImage describe the TTLs but do nothing by themselves
- * on a Worker response — every hit was a full resvg raster. Key = full URL
- * (lang / frame / algo all vary the image), GET only, 200s only; the Cache
+ * on a Worker response — every hit was a full resvg raster. Key = the
+ * canonical key above (the query-key allowlist above guarantees no other
+ * query key ever reaches this point), GET *and HEAD*, 200s only; the Cache
  * API honours the response's own s-maxage for expiry. Absent outside Workers
  * (tests, Node) → pass-through.
+ *
+ * Ruling S7-R8 (fix round 2, same finding): HEAD is cacheable exactly like
+ * GET. Hono re-dispatches a HEAD request as GET for *routing*
+ * (`hono-base.js#dispatch`), but builds this middleware's `Context` from
+ * the original request, so `c.req.method` still reads `'HEAD'` here —
+ * treating that as uncacheable meant `cache.match` and `cache.put` were
+ * both skipped on every HEAD, and the render below ran every time: a HEAD
+ * loop against ONE url (`curl -I` in a loop — no distinct URLs needed at
+ * all) was a strictly cheaper version of the amplification this task
+ * exists to close. Safe to fold in: `ogCacheKey` always builds its `Request`
+ * with `{ method: 'GET' }` regardless of the inbound method, so `cache.put`
+ * stays legal; and Hono's outer HEAD wrapper (`new Response(null, await
+ * innerDispatch)`) strips the body afterward no matter which branch below
+ * produced the response, so a HEAD still comes back bodiless either way.
  */
 app.use('/og/*', async (c, next) => {
   const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
-  if (!cache || c.req.method !== 'GET') {
+  if (!cache || (c.req.method !== 'GET' && c.req.method !== 'HEAD')) {
     return next();
   }
 
-  const cacheKey = new Request(c.req.url, { method: 'GET' });
+  const cacheKey = ogCacheKey(c);
   const hit = await cache.match(cacheKey);
   if (hit) {
     return hit;
@@ -389,6 +516,87 @@ function buildDefaultCardSvg(
   });
 }
 
+// ============================================================================
+// Canonical path-param grammars (2026-08-29 FINDING-024, OG-4, ruling S7-R12)
+// ============================================================================
+//
+// The query-key allowlist and the canonical cache key close the *query*
+// axis of the amplification this finding is about — but every /og/* path
+// param was still wide open on the *path* axis, at the same attacker cost:
+// `/og/harmony/102aaa/complementary`, `/og/harmony/00102/complementary`,
+// `/og/harmony/+102/complementary` and `/og/harmony/1%2F0/complementary`
+// (Hono's `getPath` uses `decodeURI`, which deliberately leaves `%2F`
+// encoded, so it survives routing as a literal path segment and only
+// becomes `1/0` once `c.req.param()` runs `decodeURIComponent` on it —
+// `parseInt('1/0', 10)` is `1`) all render the identical Jet Black card
+// under a different `ogCacheKey`, and `/og/swatch/:color/:limit` never
+// validated `:color` at all. Rejecting the non-canonical spellings (rather
+// than normalising them into the cache key) is the fix: a generic
+// normaliser would have to know each route's grammar, and getting it wrong
+// is worse than rejecting — `/og/presets/007` and `/og/presets/7` are
+// *different preset slugs*, so a leading-zero–stripping normaliser would
+// collapse two different cards onto one key. Since only 200s are ever
+// `cache.put`, rejecting bad spellings up front means only canonical keys
+// ever enter the cache.
+//
+// Every grammar below was checked against what `og-data-generator.ts`
+// actually emits (not just against the suggested shape) before being
+// committed to — see the two fixes in that file for the one place a
+// suggested grammar would have rejected a real emission.
+
+/** A canonical non-negative integer: no leading zeros, no sign, no trailing junk. */
+const CANONICAL_INT = /^(0|[1-9]\d*)$/;
+
+/** `og-data-generator.ts` only ever emits a resolved, canonical dye ID — a
+ * stainID looked up in the dye database — into an image URL (see the fixes
+ * to `generateComparisonOGData` / `generateAccessibilityOGData`, which used
+ * to leak the raw, unfiltered share-URL list here instead). */
+function parseCanonicalInt(raw: string): number {
+  return CANONICAL_INT.test(raw) ? parseInt(raw, 10) : NaN;
+}
+
+/** Comma-separated canonical integers, e.g. comparison/accessibility `:dyes`. */
+const CANONICAL_DYE_LIST = /^(0|[1-9]\d*)(,(0|[1-9]\d*))*$/;
+function isCanonicalDyeList(raw: string): boolean {
+  return CANONICAL_DYE_LIST.test(raw);
+}
+
+/**
+ * The exact hex form `parseHexColor` (og-params.ts) produces: upper-case,
+ * no `#`, exactly 6 characters. Swatch's `:color` had no validation at all
+ * before this — any of the 2^6 case spellings of one hex value (and
+ * anything else) rendered the same card under a different key.
+ */
+const CANONICAL_SWATCH_COLOR = /^[0-9A-F]{6}$/;
+function isCanonicalSwatchColor(raw: string): boolean {
+  return CANONICAL_SWATCH_COLOR.test(raw);
+}
+
+/**
+ * Extractor's `:colors`: `RRGGBB` or `RRGGBB-<share>` entries, comma
+ * separated — same upper-case-only rule as swatch, share a canonical
+ * integer. The route used to `.filter()` out malformed entries silently
+ * (`entries.length === 0` was the only rejection), so `1,2,x,3`-shaped
+ * input rendered a card from whatever survived instead of being rejected.
+ */
+const CANONICAL_EXTRACTOR_ENTRY = /^[0-9A-F]{6}(-(0|[1-9]\d*))?$/;
+function isCanonicalExtractorColors(raw: string): boolean {
+  return raw.split(',').every((entry) => CANONICAL_EXTRACTOR_ENTRY.test(entry));
+}
+
+/**
+ * Ruling S7-R13 (same finding): `.png` stays optional (both spellings
+ * render the same card, and CLAUDE.md documents the suffix as optional),
+ * so this only strips a REAL trailing suffix — `String.replace('.png','')`
+ * is unanchored and first-occurrence, so `/og/harmony/102/.pngcomplementary`
+ * and `/og/harmony/102/co.pngmplementary` both used to validate as
+ * `complementary`. Every route below uses this instead of a bare
+ * `.replace('.png', '')` on its last path param.
+ */
+function stripPngSuffix(raw: string): string {
+  return raw.endsWith('.png') ? raw.slice(0, -4) : raw;
+}
+
 /**
  * Per-tool default OG image — the fallback the meta tags emit when a tool
  * URL carries no parameters. Registered before the parameterised tool routes
@@ -410,8 +618,11 @@ app.get('/og/:tool/default.png', async (c) => {
  * Pattern: /og/harmony/:dyeId/:harmonyType.png
  */
 app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
-  const dyeId = parseInt(c.req.param('dyeId'), 10);
-  const harmonyTypeRaw = c.req.param('harmonyType').replace('.png', '');
+  // Ruling S7-R12: parseCanonicalInt rejects trailing junk, leading zeros,
+  // a sign, or a %2F spelling the same way isNaN already rejected "abc" —
+  // one guard, no new branch.
+  const dyeId = parseCanonicalInt(c.req.param('dyeId'));
+  const harmonyTypeRaw = stripPngSuffix(c.req.param('harmonyType'));
   const harmonyType = harmonyTypeRaw.toLowerCase() as HarmonyType;
   const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
@@ -425,6 +636,11 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
   if (!isHarmonyType(harmonyTypeRaw)) {
     return c.json({ error: 'Invalid harmony type' }, 400);
   }
+  // Unreachable over HTTP as of 2026-08-29 FINDING-024 (OG-4, ruling S7-R7):
+  // the shared /og/* guard above already validates `algo` before any route
+  // handler runs. Left in place as this route's own invariant rather than
+  // deleted as dead code — the same reasoning covers the identical check on
+  // the other four algo-aware routes below, unremarked there.
   if (!isAlgorithm(algorithm)) {
     return c.json({ error: 'Invalid algorithm' }, 400);
   }
@@ -453,9 +669,10 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
  * Pattern: /og/gradient/:startId/:endId/:steps.png
  */
 app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
-  const startDyeId = parseInt(c.req.param('startId'), 10);
-  const endDyeId = parseInt(c.req.param('endId'), 10);
-  const steps = parseInt(c.req.param('steps').replace('.png', ''), 10);
+  // Ruling S7-R12: canonical spellings only (see parseCanonicalInt above).
+  const startDyeId = parseCanonicalInt(c.req.param('startId'));
+  const endDyeId = parseCanonicalInt(c.req.param('endId'));
+  const steps = parseCanonicalInt(stripPngSuffix(c.req.param('steps')));
   const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
@@ -497,9 +714,10 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
  * Pattern: /og/mixer/:dyeAId/:dyeBId/:ratio.png
  */
 app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
-  const dyeAId = parseInt(c.req.param('dyeAId'), 10);
-  const dyeBId = parseInt(c.req.param('dyeBId'), 10);
-  const ratio = parseInt(c.req.param('ratio').replace('.png', ''), 10);
+  // Ruling S7-R12: canonical spellings only (see parseCanonicalInt above).
+  const dyeAId = parseCanonicalInt(c.req.param('dyeAId'));
+  const dyeBId = parseCanonicalInt(c.req.param('dyeBId'));
+  const ratio = parseCanonicalInt(stripPngSuffix(c.req.param('ratio')));
   const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
@@ -541,10 +759,11 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
  * Pattern: /og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio.png
  */
 app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
-  const dyeAId = parseInt(c.req.param('dyeAId'), 10);
-  const dyeBId = parseInt(c.req.param('dyeBId'), 10);
-  const dyeCId = parseInt(c.req.param('dyeCId'), 10);
-  const ratio = parseInt(c.req.param('ratio').replace('.png', ''), 10);
+  // Ruling S7-R12: canonical spellings only (see parseCanonicalInt above).
+  const dyeAId = parseCanonicalInt(c.req.param('dyeAId'));
+  const dyeBId = parseCanonicalInt(c.req.param('dyeBId'));
+  const dyeCId = parseCanonicalInt(c.req.param('dyeCId'));
+  const ratio = parseCanonicalInt(stripPngSuffix(c.req.param('ratio')));
   const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
@@ -588,9 +807,17 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
  */
 app.get('/og/swatch/:color/:limit', async (c) => {
   const color = c.req.param('color');
-  const limit = parseInt(c.req.param('limit').replace('.png', ''), 10);
+  const limit = parseCanonicalInt(stripPngSuffix(c.req.param('limit')));
   const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
+
+  // Ruling S7-R12: :color was never validated at all — any of the 2^6 case
+  // spellings of one hex value (and anything else) rendered the same card
+  // under a different cache key. Canonical form only, matching what
+  // parseHexColor (og-params.ts) actually emits.
+  if (!isCanonicalSwatchColor(color)) {
+    return c.json({ error: 'Invalid swatch color' }, 400);
+  }
 
   // BUG-002: Validate algorithm param
   if (!isAlgorithm(algorithm)) {
@@ -625,9 +852,18 @@ app.get('/og/swatch/:color/:limit', async (c) => {
  * where dyes is comma-separated stainIDs (e.g., "1,2,3")
  */
 app.get('/og/comparison/:dyes', async (c) => {
-  const dyesParam = c.req.param('dyes').replace('.png', '');
-  const dyeIds = dyesParam.split(',').map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
+  const dyesParam = stripPngSuffix(c.req.param('dyes'));
   const locale = resolveLocale(new URL(c.req.url).searchParams);
+
+  // Ruling S7-R12: the whole list must be canonical — `.filter((id) =>
+  // !isNaN(id))` used to silently drop malformed entries, so
+  // "1,2,x,3" rendered a 3-dye card instead of being rejected, and every
+  // way of writing the surviving IDs (leading zeros, etc.) bought its own
+  // cache entry for that same card.
+  if (!isCanonicalDyeList(dyesParam)) {
+    return c.json({ error: `comparison requires 1–${OG_MAX_COMPARISON_DYES} valid dye IDs` }, 400);
+  }
+  const dyeIds = dyesParam.split(',').map((id) => parseInt(id, 10));
 
   if (dyeIds.length === 0 || dyeIds.length > OG_MAX_COMPARISON_DYES) {
     return c.json({ error: `comparison requires 1–${OG_MAX_COMPARISON_DYES} valid dye IDs` }, 400);
@@ -651,10 +887,16 @@ app.get('/og/comparison/:dyes', async (c) => {
  */
 app.get('/og/accessibility/:dyes/:visionType', async (c) => {
   const dyesParam = c.req.param('dyes');
-  const visionTypeRaw = c.req.param('visionType').replace('.png', '');
+  const visionTypeRaw = stripPngSuffix(c.req.param('visionType'));
   const visionType = visionTypeRaw.toLowerCase() as VisionType;
-  const dyeIds = dyesParam.split(',').map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
   const locale = resolveLocale(new URL(c.req.url).searchParams);
+
+  // Ruling S7-R12: same as comparison — the whole list must be canonical,
+  // not "whatever survives filtering out the NaN entries".
+  if (!isCanonicalDyeList(dyesParam)) {
+    return c.json({ error: `accessibility requires 1–${OG_MAX_COMPARISON_DYES} valid dye IDs` }, 400);
+  }
+  const dyeIds = dyesParam.split(',').map((id) => parseInt(id, 10));
 
   if (dyeIds.length === 0 || dyeIds.length > OG_MAX_COMPARISON_DYES) {
     return c.json({ error: `accessibility requires 1–${OG_MAX_COMPARISON_DYES} valid dye IDs` }, 400);
@@ -689,8 +931,17 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
  * The web app's share URL carries no shares; bare entries draw equal bands.
  */
 app.get('/og/extractor/:colors', async (c) => {
-  const colorsParam = c.req.param('colors').replace('.png', '');
+  const colorsParam = stripPngSuffix(c.req.param('colors'));
   const locale = resolveLocale(new URL(c.req.url).searchParams);
+
+  // Ruling S7-R12: the whole list must be canonical — the old `.filter()`
+  // silently dropped any entry that didn't parse, so "1,2,x,3"-shaped
+  // input rendered a card from whatever survived instead of being
+  // rejected, and every surviving spelling (case, share format) bought its
+  // own cache entry for that card.
+  if (!isCanonicalExtractorColors(colorsParam)) {
+    return c.json({ error: 'extractor requires RRGGBB-share pairs' }, 400);
+  }
 
   const entries = colorsParam
     .split(',')
@@ -698,11 +949,12 @@ app.get('/og/extractor/:colors', async (c) => {
     .map((pair) => {
       const [hex, shareRaw] = pair.split('-');
       const share = shareRaw === undefined ? undefined : parseInt(shareRaw, 10);
-      return { hex: hex ?? '', share };
-    })
-    .filter((e) => /^[0-9A-Fa-f]{6}$/.test(e.hex) && (e.share === undefined || (!isNaN(e.share) && e.share > 0)));
+      return { hex, share };
+    });
 
-  if (entries.length === 0) {
+  // A share of exactly 0 is canonical format but not a usable band —
+  // preserved as a rejection (not a silent drop) rather than removed.
+  if (entries.length === 0 || entries.some((e) => e.share === 0)) {
     return c.json({ error: 'extractor requires RRGGBB-share pairs' }, 400);
   }
 
@@ -721,10 +973,13 @@ app.get('/og/extractor/:colors', async (c) => {
  * Pattern: /og/presets/:presetId.png — curated preset slug
  */
 app.get('/og/presets/:presetId', async (c) => {
-  const presetId = c.req.param('presetId').replace('.png', '');
+  const presetId = stripPngSuffix(c.req.param('presetId'));
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
-  // Slugs only — reject anything that could not be a stored choice value
+  // Slugs only — reject anything that could not be a stored choice value.
+  // Already canonical (ruling S7-R12): no case, no leading-zero, no
+  // trailing-junk ambiguity possible in this alphabet, so the grammar
+  // itself needed no change — only the `.png` strip above did (S7-R13).
   if (!/^[a-z0-9-]{1,64}$/.test(presetId)) {
     return c.json({ error: 'Invalid preset id' }, 400);
   }
@@ -736,6 +991,26 @@ app.get('/og/presets/:presetId', async (c) => {
     timestamp: Date.now(),
   });
 
+  // Ruling S7-R16 (regression from S7-R13's .png strip, presets is the only
+  // /og/<literal-tool>/:singleParam route this reaches — re-verified against
+  // all four of that shape: comparison/extractor/budget's grammars are
+  // numeric/hex-only and already reject the word "default" as malformed, so
+  // only presets' general slug grammar lets it through). `/og/:tool/
+  // default.png` above already owns the path `/og/presets/default.png`; once
+  // `.png` became optional, `/og/presets/default` (no suffix) started
+  // sharing that exact cache key while still reaching THIS handler, which
+  // passed the slug grammar, found no such preset, and rendered presets' own
+  // notFoundBand — a 200, cached under the key the real default card also
+  // uses. One unauthenticated GET could poison every presets-fallback
+  // unfurl for up to 7 days. `default` is therefore a RESERVED slug — no
+  // curated preset can be given that id, because the emitted
+  // `/og/presets/default.png` URL already shadows it — and both spellings
+  // render the identical default card, so the shared key is correct by
+  // construction rather than by special-casing the cache layer.
+  if (presetId === 'default') {
+    return renderOGImage(buildDefaultCardSvg('presets', frameFromQuery(c), locale));
+  }
+
   return renderOGImage(generatePresetsOG({ presetId, locale, frame: frameFromQuery(c) }));
 });
 
@@ -744,7 +1019,8 @@ app.get('/og/presets/:presetId', async (c) => {
  * Pattern: /og/budget/:dyeId.png — target dye stainID
  */
 app.get('/og/budget/:dyeId', async (c) => {
-  const dyeId = parseInt(c.req.param('dyeId').replace('.png', ''), 10);
+  // Ruling S7-R12: canonical spellings only (see parseCanonicalInt above).
+  const dyeId = parseCanonicalInt(stripPngSuffix(c.req.param('dyeId')));
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   if (isNaN(dyeId)) {

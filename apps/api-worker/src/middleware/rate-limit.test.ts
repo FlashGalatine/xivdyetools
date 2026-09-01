@@ -29,6 +29,19 @@ function fakeBinding(outcomes: boolean[]): RateLimit & { calls: string[] } {
   } as unknown as RateLimit & { calls: string[] };
 }
 
+/** A rate-limit binding that is simply broken — every `limit()` rejects. */
+function throwingBinding(): RateLimit {
+  return {
+    limit: () => Promise.reject(new Error('rate limiter unavailable')),
+  } as unknown as RateLimit;
+}
+
+/** A KV namespace whose reads and writes reject (the fallback backend, broken). */
+function throwingKV(): KVNamespace {
+  const boom = (): Promise<never> => Promise.reject(new Error('KV unavailable'));
+  return { get: boom, put: boom, delete: boom, list: boom } as unknown as KVNamespace;
+}
+
 function fakeKV(): KVNamespace & { puts: number } {
   const store = new Map<string, string>();
   const kv = {
@@ -54,12 +67,15 @@ function buildApp(): Hono<{ Bindings: Env }> {
 }
 
 /** Mirrors index.ts: the API bucket skips /v1/telemetry, which has its own limiter. */
-function buildAppWithTelemetry(): Hono<{ Bindings: Env }> {
+function buildAppWithTelemetry(onTelemetry?: () => void): Hono<{ Bindings: Env }> {
   const app = new Hono<{ Bindings: Env }>();
   app.use('/v1/*', createApiRateLimitMiddleware(isTelemetryPath));
   app.use('/v1/telemetry', createTelemetryRateLimitMiddleware());
   app.get('/v1/ping', (c) => c.json({ ok: true }));
-  app.post('/v1/telemetry', (c) => c.body(null, 204));
+  app.post('/v1/telemetry', (c) => {
+    onTelemetry?.();
+    return c.body(null, 204);
+  });
   return app;
 }
 
@@ -145,6 +161,54 @@ describe('api-worker rate-limit middleware backend selection', () => {
     expect(res.headers.get('X-RateLimit-Limit')).toBe('240');
     expect(kv.puts).toBe(1);
     expect((kv.put as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain('telemetry:ip:');
+  });
+
+  // FINDING-014 (2026-08-29 audit): a broken telemetry backend used to let
+  // unlimited batches through — up to 25 metered Analytics Engine writes each.
+  // A dropped beacon costs nothing, so this bucket fails closed.
+  it('fails closed when the telemetry binding errors: 429 and the handler never runs', async () => {
+    const handler = vi.fn();
+    const env = baseEnv({ TELEMETRY_RATE_LIMITER: throwingBinding() });
+    const app = buildAppWithTelemetry(handler);
+
+    const res = await app.request(
+      '/v1/telemetry',
+      { method: 'POST', headers: { 'CF-Connecting-IP': '203.0.113.9' } },
+      env,
+    );
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get('Retry-After')).toBe('60');
+    expect(((await res.json()) as any).error).toBe('RATE_LIMITED');
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when the telemetry KV fallback errors', async () => {
+    const handler = vi.fn();
+    const env = baseEnv({ RATE_LIMIT: throwingKV() });
+    const app = buildAppWithTelemetry(handler);
+
+    const res = await app.request(
+      '/v1/telemetry',
+      { method: 'POST', headers: { 'CF-Connecting-IP': '203.0.113.9' } },
+      env,
+    );
+
+    expect(res.status).toBe(429);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('keeps the API bucket fail-open: a broken backend still serves the request', async () => {
+    const env = baseEnv({ API_RATE_LIMITER: throwingBinding() });
+    const app = buildApp();
+
+    const res = await app.request(
+      '/v1/ping',
+      { headers: { 'CF-Connecting-IP': '203.0.113.9' } },
+      env,
+    );
+
+    expect(res.status).toBe(200);
   });
 
   it('falls back to the KV limiter when API_RATE_LIMITER is not bound', async () => {

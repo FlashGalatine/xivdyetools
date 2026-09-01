@@ -10,12 +10,24 @@ compatibility_date = "2024-12-01"
 # it has no signature check and no rate limiting, and every request fetches up to
 # 10 MB from a CDN and runs a full photon WASM decode. workers_dev = true here would
 # publish an unauthenticated public POST endpoint at the "-dev" name that nothing
-# binds to (both discord-worker environments bind the "xivdyetools-image-worker"
-# production name) — a real cost with no offsetting capability. Keep this false.
+# binds to (both discord-worker and presets-api bind the "xivdyetools-image-worker"
+# production name, in every one of their own environments — never this "-dev" one)
+# — a real cost with no offsetting capability. Keep this false.
+#
+# 2026-08-29 FINDING-023: this invariant used to be enforced by nothing but this
+# comment — one accidental flip would have published an unauthenticated
+# decode/SSRF surface with nothing to notice. src/wrangler-config.test.ts now
+# pins workers_dev + preview_urls in both envs, the "no routes anywhere" shape,
+# and the production `name` both callers' IMAGE_WORKER bindings depend on.
+# preview_urls is pinned explicitly here rather than left to its default,
+# matching the precedent already set by api-worker's wrangler.toml:19.
 workers_dev = false
+preview_urls = false
 
 [env.production]
 name = "xivdyetools-image-worker"
 # No routes and no workers_dev: reachable ONLY via service binding from
-# discord-worker. There is deliberately no public surface.
+# discord-worker and presets-api. There is deliberately no public surface.
+# preview_urls pinned alongside workers_dev — see the top-level comment above.
 workers_dev = false
+preview_urls = false

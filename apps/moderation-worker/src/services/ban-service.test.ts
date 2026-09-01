@@ -383,12 +383,9 @@ describe('ban-service', () => {
     });
 
     it('should insert ban record with correct data', async () => {
-      let queryCount = 0;
-      db._setupMock((_query) => {
-        queryCount++;
-        if (queryCount === 1) return null; // Not banned
-        if (queryCount === 2) return { meta: { changes: 1 } }; // INSERT
-        if (queryCount === 3) return { meta: { changes: 0 } }; // UPDATE
+      db._setupMock((query) => {
+        if (query.includes('INSERT INTO banned_users')) return { meta: { changes: 1 } };
+        if (query.includes('UPDATE presets')) return { meta: { changes: 0 } };
         return null;
       });
 
@@ -400,7 +397,9 @@ describe('ban-service', () => {
         'Ban reason here'
       );
 
-      const insertQuery = db._queries[1];
+      // [0] ban check, then the batch: [1] ban log, [2] hide log (FINDING-018),
+      // [3] banned_users insert, [4] hide UPDATE
+      const insertQuery = db._queries[3];
       expect(insertQuery).toContain('INSERT INTO banned_users');
       expect(insertQuery).toContain('discord_id');
       expect(insertQuery).toContain('username');
@@ -408,7 +407,7 @@ describe('ban-service', () => {
       expect(insertQuery).toContain('reason');
       expect(insertQuery).toContain('banned_at');
 
-      const bindings = db._bindings[1];
+      const bindings = db._bindings[3];
       expect(bindings[1]).toBe('discord-789'); // discord_id
       expect(bindings[2]).toBe('UserName'); // username
       expect(bindings[3]).toBe('mod-123'); // moderator_discord_id
@@ -417,12 +416,9 @@ describe('ban-service', () => {
     });
 
     it('should generate UUID for ban record', async () => {
-      let queryCount = 0;
-      db._setupMock((_query) => {
-        queryCount++;
-        if (queryCount === 1) return null;
-        if (queryCount === 2) return { meta: { changes: 1 } };
-        if (queryCount === 3) return { meta: { changes: 0 } };
+      db._setupMock((query) => {
+        if (query.includes('INSERT INTO banned_users')) return { meta: { changes: 1 } };
+        if (query.includes('UPDATE presets')) return { meta: { changes: 0 } };
         return null;
       });
 
@@ -434,7 +430,8 @@ describe('ban-service', () => {
         'Reason'
       );
 
-      const uuid = db._bindings[1][0];
+      // [3] = the banned_users insert (see the batch order above)
+      const uuid = db._bindings[3][0];
       expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     });
 
@@ -475,12 +472,9 @@ describe('ban-service', () => {
     });
 
     it('should hide user presets after banning', async () => {
-      let queryCount = 0;
-      db._setupMock((_query) => {
-        queryCount++;
-        if (queryCount === 1) return null;
-        if (queryCount === 2) return { meta: { changes: 1 } };
-        if (queryCount === 3) return { meta: { changes: 3 } };
+      db._setupMock((query) => {
+        if (query.includes('INSERT INTO banned_users')) return { meta: { changes: 1 } };
+        if (query.includes('UPDATE presets')) return { meta: { changes: 3 } };
         return null;
       });
 
@@ -492,9 +486,10 @@ describe('ban-service', () => {
         'Reason'
       );
 
-      expect(db._queries[2]).toContain('UPDATE presets');
-      expect(db._queries[2]).toContain("SET status = 'hidden'");
-      expect(db._queries[2]).toContain('WHERE author_discord_id = ?');
+      // [4] = the hide UPDATE, last in the batch (see the batch order above)
+      expect(db._queries[4]).toContain('UPDATE presets');
+      expect(db._queries[4]).toContain("SET status = 'hidden'");
+      expect(db._queries[4]).toContain('WHERE author_discord_id = ?');
     });
   });
 
@@ -560,6 +555,8 @@ describe('ban-service', () => {
         'mod-123'
       );
 
+      // [0] ban check, then the batch: [1] banned_users UPDATE, [2] unban log
+      // (conditional on it), [3] restore log, [4] restore UPDATE
       const updateQuery = db._queries[1];
       expect(updateQuery).toContain('UPDATE banned_users');
       expect(updateQuery).toContain('SET unbanned_at = ?');
@@ -778,7 +775,8 @@ describe('ban-service hardening (FINDING-034)', () => {
 
       expect(result).toEqual({ success: true, presetsHidden: 2 });
       expect(batchSpy).toHaveBeenCalledTimes(1);
-      expect(batchSpy.mock.calls[0][0]).toHaveLength(2);
+      // 2 statements until FINDING-018 added the two moderation_log writes
+      expect(batchSpy.mock.calls[0][0]).toHaveLength(4);
       // both statements ran through the batch, insert first
       const insertAt = db._queries.findIndex((q) => q.includes('INSERT INTO banned_users'));
       const hideAt = db._queries.findIndex((q) => q.includes("SET status = 'hidden'"));
@@ -839,7 +837,8 @@ describe('ban-service hardening (FINDING-034)', () => {
 
       expect(result).toEqual({ success: true, presetsRestored: 3 });
       expect(batchSpy).toHaveBeenCalledTimes(1);
-      expect(batchSpy.mock.calls[0][0]).toHaveLength(2);
+      // 2 statements until FINDING-018 added the two moderation_log writes
+      expect(batchSpy.mock.calls[0][0]).toHaveLength(4);
     });
 
     it('never returns a raw D1 message; keeps the cause for logging', async () => {
@@ -875,6 +874,209 @@ describe('ban-service hardening (FINDING-034)', () => {
       await expect(
         isPresetAuthorBanned(db as unknown as D1Database, 'a0000000-0000-4000-8000-000000000001')
       ).resolves.toBe(false);
+    });
+  });
+});
+
+// FINDING-018 (2026-08-29 security audit): ban / unban / hide / restore are
+// written to `moderation_log` in the SAME batch as the row they describe, so a
+// preset's history explains why it vanished and `/moderation/stats` counts bans.
+describe('ban-service moderation_log rows (FINDING-018)', () => {
+  /** Version (4) and variant ([89ab]) nibbles pinned, not just "36 chars". */
+  const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  /**
+   * The per-preset ids are generated by SQLite (one row per preset from one
+   * INSERT … SELECT), so there is no bound value to match against UUID_V4 — the
+   * mock cannot execute the expression. Assert the recipe instead: 8-4-4-4-12
+   * lowercase hex with the version and variant nibbles fixed.
+   */
+  const SQL_UUID_V4 =
+    "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', abs(random() % 4) + 1, 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))";
+
+  const TARGET = '123456789012345678';
+  const USERNAME = 'Ünbannable Näme';
+  const NOW = '2026-08-30T09:30:00.000Z';
+
+  let db: ReturnType<typeof createMockD1Database>;
+
+  beforeEach(() => {
+    db = createMockD1Database();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(NOW));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe('banUser', () => {
+    /** `_queries[0]` is the "already banned?" check; the batch follows in order. */
+    async function ban() {
+      db._setupMock((query) =>
+        query.includes('UPDATE presets') ? { meta: { changes: 2 } } : { meta: { changes: 1 } }
+      );
+      return banUser(db as unknown as D1Database, TARGET, USERNAME, 'mod-1', 'Spamming the gallery');
+    }
+
+    it('batches the ban row, the hide rows, the banned_users insert and the hide UPDATE in that order', async () => {
+      const batchSpy = vi.spyOn(db, 'batch');
+
+      const result = await ban();
+
+      expect(result).toEqual({ success: true, presetsHidden: 2 });
+      expect(batchSpy).toHaveBeenCalledTimes(1);
+      expect(batchSpy.mock.calls[0][0]).toHaveLength(4);
+
+      const [banLog, hideLog, banInsert, hideUpdate] = db._queries.slice(1);
+      expect(banLog).toContain('INSERT INTO moderation_log');
+      expect(banLog).toContain('VALUES (?, NULL, ?, ?, ?, ?, ?)');
+      expect(hideLog).toContain('INSERT INTO moderation_log');
+      expect(hideLog).toContain('FROM presets p');
+      expect(banInsert).toContain('INSERT INTO banned_users');
+      expect(hideUpdate).toContain("SET status = 'hidden'");
+    });
+
+    it('binds a UUID id, the moderator, the reason and the ban target — and never the username', async () => {
+      await ban();
+
+      const [banLogId, ...banLogRest] = db._bindings[1];
+      expect(banLogId).toMatch(UUID_V4);
+      expect(banLogRest).toEqual(['mod-1', 'ban', 'Spamming the gallery', TARGET, NOW]);
+
+      // `banned_users.username` is stored by design; the audit log must not be.
+      expect(db._bindings[1]).not.toContain(USERNAME);
+      expect(db._bindings[2]).not.toContain(USERNAME);
+    });
+
+    it('logs one hide row per preset the UPDATE flips, selected before it flips them', async () => {
+      await ban();
+
+      expect(db._queries[2]).toContain(`SELECT ${SQL_UUID_V4}, p.id, ?, ?, ?, ?, ?`);
+      expect(db._queries[2]).toContain("WHERE p.author_discord_id = ? AND p.status = ?");
+      expect(db._bindings[2]).toEqual([
+        'mod-1',
+        'hide',
+        'Spamming the gallery',
+        TARGET,
+        NOW,
+        TARGET,
+        'approved',
+      ]);
+
+      // Selected AFTER the UPDATE it mirrors, the INSERT … SELECT would match nothing.
+      const hideLogAt = db._queries.findIndex((q) => q.includes('FROM presets p'));
+      const hideUpdateAt = db._queries.findIndex((q) => q.includes("SET status = 'hidden'"));
+      expect(hideLogAt).toBeGreaterThan(0);
+      expect(hideUpdateAt).toBeGreaterThan(hideLogAt);
+    });
+
+    it('tells the moderator to apply migration 0013 when the schema is out of date', async () => {
+      // What a pre-0013 database answers when the batch reaches the audit row.
+      db._setupMock(() => {
+        throw new Error(
+          'D1_ERROR: table moderation_log has no column named target_discord_id: SQLITE_ERROR'
+        );
+      });
+
+      const result = await banUser(
+        db as unknown as D1Database,
+        TARGET,
+        USERNAME,
+        'mod-1',
+        'Spamming the gallery'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.presetsHidden).toBe(0);
+      expect(result.error).toBe(
+        'Ban system schema is out of date — apply presets-api migration 0013.'
+      );
+      // MOD-8: channel-facing text names no table, column or D1 internal
+      expect(result.error).not.toContain('moderation_log');
+      expect(result.error).not.toContain('target_discord_id');
+      expect(result.error).not.toContain('D1_');
+      // the raw message still reaches the logs through `cause`
+      expect((result.cause as Error).message).toContain('target_discord_id');
+    });
+  });
+
+  describe('unbanUser', () => {
+    async function unban() {
+      db._setBanStatus(true);
+      db._setupMock((query) =>
+        query.includes('UPDATE presets') ? { meta: { changes: 3 } } : { meta: { changes: 1 } }
+      );
+      return unbanUser(db as unknown as D1Database, TARGET, 'mod-2');
+    }
+
+    it('batches the ban-row UPDATE, the unban row, the restore rows and the restore UPDATE in that order', async () => {
+      const batchSpy = vi.spyOn(db, 'batch');
+
+      const result = await unban();
+
+      expect(result).toEqual({ success: true, presetsRestored: 3 });
+      expect(batchSpy).toHaveBeenCalledTimes(1);
+      expect(batchSpy.mock.calls[0][0]).toHaveLength(4);
+
+      const [banUpdate, unbanLog, restoreLog, restoreUpdate] = db._queries.slice(1);
+      expect(banUpdate).toContain('UPDATE banned_users');
+      expect(unbanLog).toContain('INSERT INTO moderation_log');
+      // conditional on the UPDATE above it — see the lost-race test below
+      expect(unbanLog).toContain('WHERE changes() > 0');
+      expect(restoreLog).toContain('INSERT INTO moderation_log');
+      expect(restoreLog).toContain('FROM presets p');
+      expect(restoreUpdate).toContain("SET status = 'approved'");
+    });
+
+    it('binds a UUID id, the moderator and the target on the unban row, with a NULL reason', async () => {
+      await unban();
+
+      expect(db._queries[2]).toContain("SELECT ?, NULL, ?, 'unban', NULL, ?, ?");
+      const [unbanLogId, ...unbanLogRest] = db._bindings[2];
+      expect(unbanLogId).toMatch(UUID_V4);
+      expect(unbanLogRest).toEqual(['mod-2', TARGET, NOW]);
+    });
+
+    it('logs one restore row per preset the UPDATE flips, selected before it flips them', async () => {
+      await unban();
+
+      expect(db._queries[3]).toContain(`SELECT ${SQL_UUID_V4}, p.id, ?, ?, ?, ?, ?`);
+      expect(db._bindings[3]).toEqual(['mod-2', 'restore', null, TARGET, NOW, TARGET, 'hidden']);
+
+      const restoreLogAt = db._queries.findIndex((q) => q.includes('FROM presets p'));
+      const restoreUpdateAt = db._queries.findIndex((q) => q.includes("SET status = 'approved'"));
+      expect(restoreLogAt).toBeGreaterThan(0);
+      expect(restoreUpdateAt).toBeGreaterThan(restoreLogAt);
+    });
+
+    it('writes no unban row when another moderator closed the ban first', async () => {
+      // The lost race: the pre-check saw an active ban, but by the time the
+      // batch runs the row is already closed, so the UPDATE matches nothing.
+      db._setBanStatus(true);
+      db._setupMock((query) => {
+        if (query.includes('UPDATE banned_users')) return { meta: { changes: 0 } };
+        if (query.includes('UPDATE presets')) return { meta: { changes: 3 } };
+        return { meta: { changes: 1 } };
+      });
+
+      const result = await unbanUser(db as unknown as D1Database, TARGET, 'mod-2');
+
+      // The unban did not happen, so nothing may claim it did.
+      expect(result).toEqual({
+        success: false,
+        presetsRestored: 0,
+        error: 'Failed to update ban record.',
+      });
+
+      // The mock records statements without evaluating them, so the guard is
+      // asserted structurally: `changes()` reads the statement immediately
+      // before it in the batch, which must be the banned_users UPDATE.
+      const banUpdateAt = db._queries.findIndex((q) => q.includes('UPDATE banned_users'));
+      const unbanLogAt = db._queries.findIndex((q) => q.includes("'unban'"));
+      expect(banUpdateAt).toBe(1);
+      expect(unbanLogAt).toBe(banUpdateAt + 1);
+      expect(db._queries[unbanLogAt]).toContain('WHERE changes() > 0');
     });
   });
 });

@@ -14,7 +14,18 @@ import { createMessageHandler } from './message-handler.js';
 import { MessageContextStore } from './services/message-context.js';
 import { CommandThrottle } from './services/command-throttle.js';
 
-const logger = createLibraryLogger('stoat');
+// SECURITY (2026-08-29 audit, FINDING-031): `createLibraryLogger` defaults to
+// `level: 'debug'` (packages/logger/src/presets/library.ts) — a sane default
+// for a library consumer who has to opt in to seeing output at all, but wrong
+// for this file, which only ever calls `.info()`/`.error()` today. Pinning
+// `info` here removes the latent "debug on by default" surface for whatever
+// gets added to this file next, without touching the shared preset (other
+// consumers still get its debug default). message-handler.ts keeps its own
+// `createLibraryLogger('stoat')` instance — a separate object, unaffected by
+// this — at the preset default, so its (now identifier-free) per-command
+// debug lines stay visible to an operator without the config below needing
+// to be at 'debug' for it.
+const logger = createLibraryLogger('stoat', { level: 'info' });
 
 /**
  * Bootstrap the Stoat bot:
@@ -38,8 +49,15 @@ async function main(): Promise<void> {
   // ── Ready event ────────────────────────────────────────────────────
   client.on('ready', () => {
     logger.info(`Logged in as ${client.user?.username ?? 'unknown'}`);
+    // SECURITY (2026-08-29 audit, FINDING-031 / ruling S13-R2 — not in the
+    // original finding): this used to `.join(', ')` the full roster, printing
+    // every privileged account id at `info`, on every boot — the level change
+    // above would not have hidden it, since this call was already at `info`.
+    // The count is the operationally useful part (an operator can tell the
+    // roster loaded and isn't empty); the ids themselves add nothing that's
+    // worth shipping to stdout.
     logger.info(
-      `Authorized admins: ${config.authorizedUsers.length > 0 ? config.authorizedUsers.join(', ') : '(none)'}`,
+      `Authorized admins: ${config.authorizedUsers.length > 0 ? config.authorizedUsers.length : '(none)'}`,
     );
   });
 

@@ -1,6 +1,6 @@
 # XIV Dye Tools — Privacy Guide (web app)
 
-**Last updated:** 2026-08-29 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-08-30 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The colour tools — the Colour Extractor, Harmony Explorer,
@@ -10,8 +10,9 @@ and the sections below are the complete list.
 
 ## Images and camera captures
 
-- Uploaded, pasted, dragged-in and camera-captured images never leave your device. They are read
-  with the browser's Canvas API and discarded when you clear the image, close the tab or reload.
+- Uploaded, pasted, dragged-in and camera-captured images never leave your device, and are never
+  written to browser storage. They are read with the browser's Canvas API, held in the page's memory
+  for that session only, and discarded when you clear the image, close the tab or reload.
 - The extractor's "Privacy Protected" notice links here.
 
 ## Character files (`.chara`)
@@ -30,20 +31,30 @@ settings (including the analytics switch below), favourite dyes, saved palettes 
 and — if you sign in — your community-presets session token. Nothing here is a tracking identifier.
 "Reset settings" in Advanced Options and your browser's site-data controls clear it.
 
+`IndexedDB` holds one thing: a cache of market-board prices already fetched, so the same lookup is
+not repeated. It holds no images — an earlier version of the app kept your last extractor image
+there, and that copy is deleted the first time you open the app after this update. Your browser's
+site-data controls clear it.
+
 ## Network access
 
 The app talks only to these first-party hosts (the site's Content-Security-Policy allows nothing
-else) plus the one third party named below:
+else) plus the third parties named below:
 
 1. **Market-board prices** (optional — the "Show Prices" toggle): item ids and the world or data
    centre you chose go to our proxy at `data.xivdyetools.app`, which fetches from
    [Universalis](https://universalis.app).
 2. **Gear names and icons for `.chara` imports** — `data.xivdyetools.app` (see above).
-3. **Community presets** (`api.xivdyetools.app`): browsing sends nothing about you. Submitting or
-   voting requires signing in through `auth.xivdyetools.app` with Discord or XIVAuth; the account
-   identity you sign in with is stored with the presets and votes you submit, and the author name
-   is shown on published presets. Preset preview images are served from `shots.xivdyetools.app`;
-   avatars load from Discord's CDN.
+3. **Community presets** (`api.xivdyetools.app`): browsing sends nothing about you. Signing in
+   through `auth.xivdyetools.app` with Discord or XIVAuth creates an account record — your
+   provider ID and username — right away, whether or not you go on to submit or vote. Presets and
+   votes you submit are stored under that account, and the author name is shown on published
+   presets. When you submit or edit a preset, its name and description may also be sent to
+   Google's [Perspective API](https://perspectiveapi.com/) for a moderation score (optional —
+   content moderation only); the request tells Google not to store them (`doNotStore`), and
+   nothing else — no account identity — is sent there. To have your account record and
+   submissions removed, see the Questions? section below. Preset preview images are served from
+   `shots.xivdyetools.app`; avatars load from Discord's CDN.
 4. **Share links**: a share link encodes the dyes or colours you chose in its URL. Opening one loads
    that URL like any page; link previews on Discord and elsewhere are rendered by our own
    `og-worker`, which sees only the URL.
@@ -56,9 +67,10 @@ cookies.
 
 Analytics are **off by default**. They run only while **Advanced Options → Enable Analytics** is
 switched on, and never if your browser sends the
-[Global Privacy Control](https://globalprivacycontrol.org/) signal — even with the switch on.
-Turning the switch off stops sending immediately, in every open tab, and discards anything not yet
-sent.
+[Global Privacy Control](https://globalprivacycontrol.org/) signal — even with the switch on. The
+server enforces this too: it accepts telemetry only from the app's own origins, and discards any
+batch that carries your browser's `Sec-GPC` signal before writing it. Turning the switch off stops
+sending immediately, in every open tab, and discards anything not yet sent.
 
 When enabled, the app sends small batches of these events to our API (`data.xivdyetools.app`),
 which stores them in Cloudflare Analytics Engine:

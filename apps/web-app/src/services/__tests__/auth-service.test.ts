@@ -710,6 +710,10 @@ describe('AuthService', () => {
         iat: Math.floor(Date.now() / 1000),
         iss: 'xivdyetools',
         auth_provider: 'xivauth',
+        // FINDING-002 carried item: oauth 3.0.0 never mints this claim any more,
+        // but the fixture still supplies one so this test proves the client
+        // drops it even when a payload carries it (dead-field reader removed
+        // from handleCallbackToken).
         primary_character: {
           name: 'Test Char',
           server: 'Balmung',
@@ -740,6 +744,7 @@ describe('AuthService', () => {
         expect.stringContaining('/auth/xivauth/callback'),
         expect.anything()
       );
+      expect(authService.getUser()?.primary_character).toBeUndefined();
     });
 
     it('should handle callback with error parameter', async () => {
@@ -1121,8 +1126,8 @@ describe('AuthService', () => {
     });
   });
 
-  describe('XIVAuth character info', () => {
-    it('should include primary character in user info', async () => {
+  describe('primary_character (dead field, carried from FINDING-002)', () => {
+    it('should never surface primary_character on the user object, even when the JWT payload carries one', async () => {
       const futureTime = Math.floor(Date.now() / 1000) + 3600;
       const mockToken = createMockJWT({
         sub: 'xiv123',
@@ -1131,6 +1136,9 @@ describe('AuthService', () => {
         avatar: null,
         exp: futureTime,
         auth_provider: 'xivauth',
+        // oauth 3.0.0 never mints this claim; kept in the fixture to prove
+        // loadFromStorage() actually stopped reading it, rather than merely
+        // never receiving a payload that had it to read.
         primary_character: {
           name: 'Test Character',
           server: 'Balmung',
@@ -1146,10 +1154,7 @@ describe('AuthService', () => {
       await authService.initialize();
 
       const user = authService.getUser();
-      expect(user?.primary_character).toBeDefined();
-      expect(user?.primary_character?.name).toBe('Test Character');
-      expect(user?.primary_character?.server).toBe('Balmung');
-      expect(user?.primary_character?.verified).toBe(true);
+      expect(user?.primary_character).toBeUndefined();
     });
   });
 

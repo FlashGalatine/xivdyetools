@@ -32,9 +32,10 @@ All auth routes are mounted under `/auth`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/auth/refresh` | Exchange a refresh token for a new access token |
 | `POST` | `/auth/revoke` | Revoke a token — adds its `jti` to the KV blacklist |
 | `GET` | `/auth/me` | Return the authenticated user's profile |
+
+There is no refresh endpoint. `POST /auth/refresh` was removed in 3.0.0 and now 404s — see [Tokens](#tokens).
 
 ### Utility
 
@@ -47,7 +48,11 @@ All auth routes are mounted under `/auth`.
 
 Access tokens are **HS256 JWTs** with a one-hour default lifetime (`JWT_EXPIRY = 3600`), issued with `iss` set to `WORKER_URL` — `https://auth.xivdyetools.app` in production.
 
-Revocation is a KV-backed `jti` blacklist (`TOKEN_BLACKLIST`) whose entries live for the token's remaining lifetime **plus the refresh grace window** (`REFRESH_GRACE_SECONDS` from `@xivdyetools/auth`, 15 min — the same constant `/auth/refresh` uses to accept a recently expired token), so a revoked token can neither be used nor refreshed, and entries still clean themselves up afterwards (FINDING-001, 2026-08-21 audit). `presets-api` binds the same namespace and rejects revoked tokens too (FINDING-002), so `/auth/revoke` really does end a session. Revocation checks **fail open**: if KV is unavailable the check returns `false` rather than throwing, keeping auth functional during an outage at the cost of briefly honouring a revoked token.
+**A session ends at `exp`.** There is no way to extend one: `POST /auth/refresh` was removed in 3.0.0 (FINDING-003, 2026-08-29 audit) and the route 404s. It had no client — the web app signs in again rather than refreshing — but it accepted a token on signature alone for a grace window past `exp` and re-minted the new token from the *old* token's claims, so anyone holding a copied token could keep the chain alive for up to 30 days and survive the victim's `/auth/revoke` (only the presented `jti` was blacklisted).
+
+Revocation is a KV-backed `jti` blacklist (`TOKEN_BLACKLIST`) whose entries live for the token's remaining lifetime **plus `REFRESH_GRACE_SECONDS`** (`@xivdyetools/auth`, 15 min — now purely a clock-skew margin), so a revoked token cannot be used and entries still clean themselves up afterwards (FINDING-001, 2026-08-21 audit). `presets-api` binds the same namespace and rejects revoked tokens too (FINDING-002), so `/auth/revoke` really does end a session. Revocation checks **fail open**: if KV is unavailable the check returns `false` rather than throwing, keeping auth functional during an outage at the cost of briefly honouring a revoked token.
+
+Every response the app dispatches carries `Cache-Control: no-store` and `Pragma: no-cache` (FINDING-022; RFC 6749 §5.1) — CORS preflight 204s, which Hono's `cors()` answers before the header middleware runs, are the one exception.
 
 ## Development
 
@@ -105,6 +110,7 @@ wrangler secret put XIVAUTH_CLIENT_SECRET   # XIVAuth OAuth2 client secret
 - **PKCE** on both OAuth2 flows — the authorization code alone is not sufficient to obtain a token. The GET callback echoes the worker-signed `state`; the SPA must return it in the POST callback body (`{ code, code_verifier, state }` — `400 Missing state` otherwise), and the worker verifies `S256(code_verifier)` against the signed `code_challenge` **before** calling the provider, so PKCE does not depend on the IdP enforcing it (FINDING-012).
 - **Exact redirect target** — `redirect_uri` must be an allowlisted origin **and** exactly `/auth/callback` (no query string or fragment); `return_path` and the SPA `state` are bounded server-side (256 visible-ASCII characters).
 - **XIVAuth identity** — only a verified character becomes `username`/`global_name`; the XIVAuth-asserted Discord link must be a valid snowflake, an existing local account is never silently merged or deleted, and the XIVAuth handler logs no identifiers (FINDING-013).
+- **Data minimisation** — a sign-in stores one identity row and nothing else. The FFXIV character roster XIVAuth returns is read in memory to pick the verified character and then discarded (the `xivauth_characters` table is gone — FINDING-001), the avatar URL is recomputed on every response rather than stored (FINDING-002), and the JWT carries only the claims consumers read: `sub`, `iat`, `exp`, `iss`, `jti`, `username`, `global_name`, `avatar`, `auth_provider`, and `discord_id` whenever the account has one (an XIVAuth-only account gets nine claims).
 - **HS256 pinning** — tokens are signed and verified with HS256 only; `alg: none` and `alg: RS256` confusion attacks are rejected at verification time in `@xivdyetools/auth`.
 - **Required claims** — issued tokens always carry `exp` and `sub`; consumers reject tokens missing either.
 - **Timing-safe comparison** for all secret comparisons.

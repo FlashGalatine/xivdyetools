@@ -68,7 +68,6 @@ app.use(
   loggerMiddleware({
     serviceName: 'xivdyetools-api-worker',
     readApiVersionFromEnv: true,
-    logUserAgent: true,
   }),
 );
 

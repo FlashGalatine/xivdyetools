@@ -110,21 +110,18 @@ XIVAuth redirect handler. Same behavior as `/auth/callback` with `provider=xivau
 
 ### POST /auth/xivauth/callback
 
-XIVAuth token exchange. Same request format as `POST /auth/callback`.
+XIVAuth token exchange. Same request format and same response shape as `POST /auth/callback`,
+with `auth_provider: "xivauth"` and `avatar` / `avatar_url` always `null` (XIVAuth exposes no
+avatar).
 
-**Additional response data:**
-```json
-{
-  "user": {
-    "auth_provider": "xivauth",
-    "primary_character": {
-      "name": "<character_name>",
-      "server": "<world_name>",
-      "verified": true
-    }
-  }
-}
-```
+The `character` scope is used to find the caller's **verified** character, whose name becomes
+`username` and `global_name`. The rest of the roster is read in memory and discarded.
+
+**`primary_character` was removed in 3.0.0** — from the response body and from the JWT
+(FINDING-001 / FINDING-002, `docs/audits/2026-08-29-security`). It carried a character name,
+home world and verified flag, *including for an unverified registration*, that no consumer
+renders; the matching `xivauth_characters` table is gone too. A verified character's name still
+reaches consumers as `username` / `global_name`.
 
 **Additional validation:** Requires `user` and `character` scopes.
 
@@ -132,37 +129,19 @@ XIVAuth token exchange. Same request format as `POST /auth/callback`.
 
 ## Token Management Endpoints
 
-### POST /auth/refresh
+### ~~POST /auth/refresh~~ — removed in 3.0.0
 
-Extend session by refreshing an existing JWT.
+**Removed** by FINDING-003 (`docs/audits/2026-08-29-security`). `POST /auth/refresh` now returns
+`404 Not Found` like any unknown route.
 
-**Request:**
-```json
-{
-  "token": "<current_jwt>"
-}
-```
+It had no client — the web app re-runs the sign-in flow rather than refreshing — but it accepted a
+token on signature alone for `REFRESH_GRACE_SECONDS` past `exp` and minted the replacement from the
+*old* token's claims. Whoever held a copied token could therefore refresh it indefinitely up to the
+30-day `orig_iat` cap, and the victim's `/auth/revoke` blacklisted only the `jti` the victim held,
+so the attacker's chain survived the logout.
 
-**Success (200):**
-```json
-{
-  "success": true,
-  "token": "<new_jwt>",
-  "expires_at": 1704114000
-}
-```
-
-**Errors:**
-
-| Status | Condition |
-|--------|-----------|
-| 400 | Missing token |
-| 401 | Invalid signature |
-| 401 | Beyond 24-hour grace period |
-| 401 | Token revoked |
-| 429 | Rate limit exceeded (30/min per IP) |
-
-**Grace period:** Expired tokens can be refreshed up to 24 hours after expiry.
+**There is no session extension.** A token is valid until `exp` (1 h by default, `JWT_EXPIRY`);
+after that the client starts a new PKCE flow.
 
 ---
 
@@ -188,7 +167,7 @@ Get current user info from JWT.
 
 **Errors:** `401` for missing, invalid, expired, or revoked token.
 
-**Not rate limited** (requires valid token).
+**Rate limit:** the `/auth/*` default, 30/min per IP.
 
 ---
 
@@ -242,9 +221,12 @@ Adds `jti` to KV blacklist with TTL matching token expiry. If KV is unavailable,
 | `GET /auth/xivauth` | 10/min | 60s |
 | `GET /auth/callback` | 20/min | 60s |
 | `POST /auth/callback` | 20/min | 60s |
-| `POST /auth/refresh` | 30/min | 60s |
-| `GET /auth/me` | None | — |
-| `POST /auth/revoke` | None | — |
+| `GET /auth/me` | 30/min | 60s |
+| `POST /auth/revoke` | 30/min | 60s |
+
+Every `/auth/*` route is limited; anything without a stricter entry above falls to the 30/min
+default (`OAUTH_LIMITS` in `@xivdyetools/worker-kit/rate-limiter`). `POST /auth/refresh` had the
+same 30/min tier before it was removed in 3.0.0.
 
 Rate limits are per-IP using a sliding window algorithm (`@xivdyetools/worker-kit/rate-limiter`).
 
@@ -264,6 +246,24 @@ Rate limits are per-IP using a sliding window algorithm (`@xivdyetools/worker-ki
 
 ---
 
+## Security Headers
+
+Set on every response the app dispatches (including `/`, `/health` and 404s), with one exception: Hono's `cors()` middleware answers an OPTIONS preflight with its own 204 before the header middleware — registered after `cors()` — ever runs, so a preflight response carries the CORS headers only, none of these:
+
+| Header | Value |
+|--------|-------|
+| `Cache-Control` | `no-store` |
+| `Pragma` | `no-cache` |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `DENY` |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (not in `ENVIRONMENT=development`) |
+
+`Cache-Control: no-store` / `Pragma: no-cache` were added in 3.0.0 (FINDING-022,
+`docs/audits/2026-08-29-security`): the token responses are bearer JWTs, which RFC 6749 §5.1
+requires never be cached, and the callback bounces carry an authorization code.
+
+---
+
 ## CORS
 
 **Allowed origins:** `ALLOWED_REDIRECT_ORIGINS` (`https://xivdyetools.app`, `https://beta.xivdyetools.app`, transitional `https://xivdyetools.projectgalatine.com`) + `FRONTEND_URL`; in `ENVIRONMENT=development` also localhost / 127.0.0.1 on ports 3000, 5173, 8787
@@ -280,7 +280,7 @@ Rate limits are per-IP using a sliding window algorithm (`@xivdyetools/worker-ki
 
 ## Global Security Headers
 
-All responses include:
+Every response the app dispatches includes (CORS preflight 204s excluded — see Security Headers above):
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `Strict-Transport-Security: max-age=31536000` (production only)

@@ -1,0 +1,80 @@
+-- 0001 — drop the XIVAuth character roster table and the write-only avatar_url column
+--
+-- 2026-08-29 security audit: FINDING-001 (roster persisted with no reader, no
+-- retention and no disclosure) and FINDING-002 (identity minimisation).
+--
+--   xivauth_characters  Every XIVAuth sign-in replaced the caller's whole FFXIV
+--                       roster — Lodestone id, character name, home world, and
+--                       unverified registrations too — "for future features".
+--                       Nothing ever read the table, no purge existed, and the
+--                       web privacy guide never mentioned it.
+--   users.avatar_url    Written on every Discord sign-in and never read back:
+--                       `/auth/me`, both callbacks and the web app all recompute
+--                       the CDN URL from the Discord id + `avatar` hash.
+--
+-- ==========================================================================
+-- HAND-RUN. NOT part of any deploy. RUN ONLY AFTER the release that stops
+-- writing these (oauth 3.0.0) is live — running it first makes every sign-in
+-- 500 on the missing column/table.
+--
+-- ROLLBACK TRAP: once this has run, do NOT roll the worker back below 3.0.0
+-- (a revert commit → CI bare deploy = production) — 2.7.0's INSERT names
+-- `avatar_url` and its XIVAuth path batches `DELETE FROM xivauth_characters`,
+-- so every sign-in would 500. Roll forward instead. If a rollback is truly
+-- unavoidable, restore the schema first:
+--   ALTER TABLE users ADD COLUMN avatar_url TEXT;
+--   (recreate `xivauth_characters` from
+--    `git show c7c1782b:apps/oauth/schema/users.sql`)
+-- ==========================================================================
+--
+-- Run from `apps/oauth`:
+--
+--   # 1. BEFORE — see what is about to be deleted (row count only; do not dump
+--   #    the rows, they are the personal data this migration exists to remove)
+--   wrangler d1 execute xivdyetools-users --remote \
+--     --command "SELECT COUNT(*) FROM xivauth_characters"
+--   wrangler d1 execute xivdyetools-users --remote --command "PRAGMA table_info(users)"
+--
+--   #    Live precondition check — the DROP COLUMN preconditions below were
+--   #    verified against the checked-in `schema/users.sql`, not the live
+--   #    database. Run these two BEFORE the ALTER so an ad-hoc index or a
+--   #    hand-added constraint on avatar_url in the live DB (schema drift the
+--   #    repo's schema file would not show) is caught as a clean error here
+--   #    instead of a failed ALTER mid-file:
+--   wrangler d1 execute xivdyetools-users --remote --command "PRAGMA index_list(users)"
+--   wrangler d1 execute xivdyetools-users --remote \
+--     --command "SELECT sql FROM sqlite_master WHERE tbl_name = 'users'"
+--
+--   # 2. APPLY
+--   wrangler d1 execute xivdyetools-users --remote \
+--     --file=migrations/0001_drop_xivauth_characters.sql
+--
+--   # 3. AFTER — `xivauth_characters` is gone (the SELECT must now error with
+--   #    "no such table") and `users` no longer lists an avatar_url column
+--   wrangler d1 execute xivdyetools-users --remote \
+--     --command "SELECT COUNT(*) FROM xivauth_characters"
+--   wrangler d1 execute xivdyetools-users --remote --command "PRAGMA table_info(users)"
+--
+-- Use `d1 execute --file=`, NOT `d1 migrations apply`: this database keeps no
+-- `d1_migrations` bookkeeping table, and the ALTER below is not idempotent — a
+-- second run fails with "no such column: avatar_url".
+--
+-- No BEGIN TRANSACTION / COMMIT: D1 rejects explicit transaction control and
+-- wraps a --file batch itself.
+--
+-- SQLite DROP COLUMN preconditions, verified against the pre-change
+-- `schema/users.sql` (SQLite refuses the ALTER if any of these hold):
+--   - avatar_url is not the PRIMARY KEY (that is `id`) and carries no UNIQUE
+--     constraint;
+--   - no index covers it — the three indexes are idx_users_discord_id,
+--     idx_users_xivauth_id (both partial on their own column) and
+--     idx_users_auth_provider, and neither partial WHERE clause names it;
+--   - the table CHECK constraint names only discord_id and xivauth_id;
+--   - no FOREIGN KEY references it (the only FK in the schema is
+--     xivauth_characters.user_id -> users(id), and that table is dropped first);
+--   - the schema declares no views, triggers or generated columns at all.
+-- So a plain DROP COLUMN is enough; no table rebuild is required.
+
+DROP TABLE IF EXISTS xivauth_characters;
+
+ALTER TABLE users DROP COLUMN avatar_url;

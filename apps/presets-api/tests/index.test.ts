@@ -7,6 +7,26 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import app from '../src/index';
 import type { Env } from '../src/types';
 import { createMockEnv, createMockD1Database, createMockPresetRow } from './test-utils';
+import { createMockKV } from '@xivdyetools/test-utils';
+
+/**
+ * FINDING-013 (2026-08-29 security audit): validateEnv now requires
+ * JWT_ISSUER, TOKEN_BLACKLIST and RL_PUBLIC in production alongside the
+ * pre-existing BOT_SIGNING_SECRET / MODERATOR_IDS (JWT_SECRET is already
+ * satisfied by createMockEnv's default). Every test below that exercises a
+ * *valid* production request needs all four, or the env-validation
+ * middleware 500s the request before it ever reaches the route under test.
+ */
+function validProductionOverrides(): Partial<Env> {
+    return {
+        ENVIRONMENT: 'production',
+        BOT_SIGNING_SECRET: 'test-signing-secret',
+        MODERATOR_IDS: '123456789012345678',
+        JWT_ISSUER: 'https://auth.xivdyetools.app',
+        TOKEN_BLACKLIST: createMockKV() as unknown as KVNamespace,
+        RL_PUBLIC: {} as unknown as RateLimit,
+    };
+}
 
 describe('Index/App', () => {
     let env: Env;
@@ -192,10 +212,8 @@ describe('Index/App', () => {
             // pass vacuously.
             const createProductionEnv = (): Env =>
                 createMockEnv({
-                    ENVIRONMENT: 'production',
+                    ...validProductionOverrides(),
                     CORS_ORIGIN: 'https://xivdyetools.app',
-                    BOT_SIGNING_SECRET: 'test-signing-secret',
-                    MODERATOR_IDS: '123456789012345678',
                 });
 
             it('positive control: the configured production origin is still reflected', async () => {
@@ -276,9 +294,31 @@ describe('Index/App', () => {
         // BUG-017 (2026-07-18 audit): a misconfigured production isolate must
         // fail EVERY request, not just the first one
         it('should 500 on every request when production env is misconfigured', async () => {
+            // FINDING-013 review fix: must start from a fully-valid production
+            // env and remove exactly this one variable — otherwise the env also
+            // fails JWT_ISSUER/TOKEN_BLACKLIST/RL_PUBLIC validation, and this
+            // test would stay red even if the BOT_SIGNING_SECRET check itself
+            // were deleted from validateEnv.
             const badProdEnv = createMockEnv({
-                ENVIRONMENT: 'production',
+                ...validProductionOverrides(),
                 BOT_SIGNING_SECRET: undefined, // required in production
+            });
+
+            const first = await app.request('/health', {}, badProdEnv);
+            const second = await app.request('/health', {}, badProdEnv);
+
+            expect(first.status).toBe(500);
+            expect(second.status).toBe(500);
+        });
+
+        // FINDING-013 (2026-08-29 security audit): the same fail-closed,
+        // fail-every-request behaviour must cover the new production-only
+        // requirements too — a dropped TOKEN_BLACKLIST binding is exactly the
+        // silent-degradation scenario the finding describes.
+        it('should 500 on every request when TOKEN_BLACKLIST is missing in production (FINDING-013)', async () => {
+            const badProdEnv = createMockEnv({
+                ...validProductionOverrides(),
+                TOKEN_BLACKLIST: undefined,
             });
 
             const first = await app.request('/health', {}, badProdEnv);
@@ -291,7 +331,7 @@ describe('Index/App', () => {
 
     describe('Error Handler', () => {
         it('should add HSTS header in production', async () => {
-            const prodEnv = createMockEnv({ ENVIRONMENT: 'production', BOT_SIGNING_SECRET: 'test-signing-secret', MODERATOR_IDS: '123456789012345678' });
+            const prodEnv = createMockEnv(validProductionOverrides());
 
             const res = await app.request('/', {}, prodEnv);
 
@@ -338,7 +378,7 @@ describe('Index/App', () => {
         });
 
         it('should return 404 for force-error route in production', async () => {
-            const prodEnv = createMockEnv({ ENVIRONMENT: 'production', BOT_SIGNING_SECRET: 'test-signing-secret', MODERATOR_IDS: '123456789012345678' });
+            const prodEnv = createMockEnv(validProductionOverrides());
             const res = await app.request('/__force-error', {}, prodEnv);
 
             // In production, the force-error route returns 404 instead of throwing
@@ -394,6 +434,48 @@ describe('Index/App', () => {
             // Just verify the app handles requests properly with logging
             const res = await app.request('/health', {}, env);
             expect(res.status).toBe(200);
+        });
+
+        // FINDING-010 (2026-08-29 security audit): loggerMiddleware was opted
+        // into `logUserAgent: true`, so every request's User-Agent rode into the
+        // "Request started" log context — contradicting the web privacy guide's
+        // promise that the server "discards everything about the request".
+        //
+        // The worker-kit request logger is always the JSON adapter
+        // (packages/logger/src/presets/worker.ts: `format: 'json'`
+        // unconditionally), and JsonAdapter.write() always calls
+        // `console.log(safeStringify(entry))` regardless of level — never
+        // console.info/warn/etc. — so this spies on console.log and parses the
+        // structured entry, rather than asserting on a header the app never
+        // sends back to the client.
+        it('does not log the User-Agent header on "Request started" (FINDING-010)', async () => {
+            const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            try {
+                await app.request(
+                    '/health',
+                    { headers: { 'User-Agent': 'test-agent/1.0 (should-not-be-logged)' } },
+                    env
+                );
+
+                const entries = logSpy.mock.calls
+                    .map(([line]) => {
+                        try {
+                            return JSON.parse(String(line)) as {
+                                message?: string;
+                                context?: Record<string, unknown>;
+                            };
+                        } catch {
+                            return null;
+                        }
+                    })
+                    .filter((entry): entry is { message?: string; context?: Record<string, unknown> } => entry !== null);
+                const startEntry = entries.find((entry) => entry.message === 'Request started');
+
+                expect(startEntry).toBeDefined();
+                expect(startEntry!.context).not.toHaveProperty('userAgent');
+            } finally {
+                logSpy.mockRestore();
+            }
         });
     });
 

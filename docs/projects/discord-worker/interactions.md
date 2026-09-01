@@ -85,12 +85,14 @@ In addition to Discord interactions, the worker exposes webhook endpoints for ex
 | `POST /webhooks/preset-submission`  | presets-api  | Receives new preset notifications via Service Binding  |
 | `POST /webhooks/github`            | GitHub       | Receives push events, posts changelog to announcement channel |
 
+Only `push` events from `FlashGalatine/xivdyetools` are announced, and each version is announced once (the repository is pinned to a constant and the version is memoised in KV for 90 days), so redelivering a qualifying delivery is safe. The memo key is versioned (`announced:v:<version>`), not delivery-specific, so a corrected changelog re-pushed under an already-announced version is not re-announced automatically — clear that KV key to force a re-announcement.
+
 ## Security
 
 - **Ed25519 signature verification** on all interaction requests using the `X-Signature-Ed25519` and `X-Signature-Timestamp` headers
 - **Max body size**: 100 KB for interaction payloads
 - **Timing-safe comparison** for webhook secret validation
-- **Webhook payload limit**: 10 KB
+- **Webhook payload limits**: 10 KB for `/webhooks/preset-submission`; 1 MiB for `/webhooks/github` (`GITHUB_WEBHOOK_MAX_BYTES`), which also re-checks the actual body length after reading it since `Content-Length` can be missing or spoofed
 
 ## Related Documentation
 

@@ -15,8 +15,14 @@
  * tabs behind one NAT address must never 429 the user-facing `/v1/chara/*`
  * calls sharing that address.
  *
+ * Two headers decide the batch's fate before a byte of the body is read
+ * (FINDING-014): `Sec-GPC: 1` drops it outright, and only the web app's own
+ * origins are written — the accepted origin also *is* the `env` dimension, so
+ * beta traffic can no longer label itself production. See origin.ts.
+ *
  * Privacy: nothing from the request other than the validated batch reaches a
- * datapoint — no IP, no User-Agent, no request id.
+ * datapoint — no IP, no User-Agent, no request id — and no log line ever
+ * carries the Origin value.
  */
 
 import { Hono } from 'hono';
@@ -24,6 +30,7 @@ import { getLogger } from '@xivdyetools/worker-kit';
 import type { Env, Variables } from '../types.js';
 import { ApiError, ErrorCode } from '../lib/api-error.js';
 import { BodyTooLargeError, readBoundedText } from '../lib/bounded-body.js';
+import { resolveTelemetryOrigin } from './origin.js';
 import { MAX_BODY_BYTES, parseTelemetryBatch, type TelemetryDataPoint } from './schema.js';
 
 const telemetryRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -44,6 +51,27 @@ function writePoints(
 }
 
 telemetryRouter.post('/', async (c) => {
+  // Global Privacy Control first, and unconditionally: the privacy page
+  // promises analytics never run when the browser sends it, so a GPC beacon
+  // leaves no trace at all — no datapoint, and no log line of its own.
+  if (c.req.header('sec-gpc')?.trim() === '1') {
+    return c.body(null, 204);
+  }
+
+  const log = getLogger(c);
+
+  // FINDING-014: gate on the sender before touching the body — an unaccepted
+  // beacon costs one header read, never a 16 KB read and a JSON parse.
+  const origin = resolveTelemetryOrigin(c.req.header('origin') ?? null, c.env.ENVIRONMENT);
+  if (!origin.accepted) {
+    // 204 and drop, not 403: the client is `sendBeacon` and cannot read the
+    // response, so a 4xx would only tell a scripted sender that a gate exists
+    // — and the documented contract is "204 once parsed". The Origin value is
+    // deliberately not logged.
+    log?.debug('telemetry batch dropped', { operation: 'telemetry', reason: 'origin' });
+    return c.body(null, 204);
+  }
+
   let text: string;
   try {
     text = await readBoundedText(c.req.raw.body, MAX_BODY_BYTES);
@@ -61,12 +89,13 @@ telemetryRouter.post('/', async (c) => {
     throw new ApiError(ErrorCode.INVALID_BODY, 'Body must be JSON', 400);
   }
 
-  const parsed = parseTelemetryBatch(json);
+  // `origin.env` is undefined only for a loopback beacon on a non-production
+  // worker; there the validated body field still decides blob9.
+  const parsed = parseTelemetryBatch(json, { env: origin.env });
   if (!parsed) {
     throw new ApiError(ErrorCode.INVALID_BODY, 'Body must be a v1 telemetry batch', 400);
   }
 
-  const log = getLogger(c);
   if (parsed.dropped > 0) {
     log?.debug('telemetry events dropped', { operation: 'telemetry', dropped: parsed.dropped });
   }

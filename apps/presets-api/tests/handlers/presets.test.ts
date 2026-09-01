@@ -14,6 +14,7 @@ import {
     createMockPresetRow,
     createMockSubmission,
     authHeaders,
+    createTestJWT,
 } from '../test-utils';
 
 type Variables = {
@@ -659,6 +660,135 @@ describe('PresetsHandler', () => {
             // Clean up test patterns
             const { _resetPatternsForTesting } = await import('../../src/services/moderation-service');
             _resetPatternsForTesting();
+        });
+
+        // FINDING-017: the dead-letter retention window is a promise in the
+        // privacy policy, and the dead-letter *write* is by design rare (a
+        // notification has to exhaust every retry). Submission is the busiest
+        // write in the worker, so it carries the prune too — off the response
+        // path, via waitUntil.
+        describe('dead-letter retention (FINDING-017)', () => {
+            /** Mock that walks a submission through to its 201. */
+            function setupSubmissionMock(
+                extra: (query: string) => unknown = () => undefined
+            ): void {
+                mockDb._setupMock((query: string) => {
+                    const override = extra(query);
+                    if (override !== undefined) return override;
+                    if (query.includes('COUNT') && query.includes('author_discord_id')) {
+                        return { count: 0 };
+                    }
+                    if (query.includes('FROM categories')) {
+                        return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                    }
+                    if (query.includes('dye_signature')) return null;
+                    if (query.includes('INSERT')) return { success: true, meta: { changes: 1 } };
+                    if (query.includes('COUNT')) return { count: 1 };
+                    return { success: true };
+                });
+            }
+
+            async function submit(executionCtx: unknown): Promise<Response> {
+                return app.request(
+                    '/api/v1/presets',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: 'Bearer test-bot-secret',
+                            'X-User-Discord-ID': '123',
+                            'X-User-Discord-Name': 'TestUser',
+                        },
+                        body: JSON.stringify(createMockSubmission()),
+                    },
+                    env,
+                    executionCtx as ExecutionContext
+                );
+            }
+
+            it('prunes aged-out dead letters off the response path', async () => {
+                vi.useFakeTimers();
+                vi.setSystemTime(new Date('2026-08-29T12:00:00.000Z'));
+                try {
+                    const waitUntilPromises: Promise<unknown>[] = [];
+                    const mockExecutionCtx = {
+                        waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                        passThroughOnException: () => {},
+                    };
+                    setupSubmissionMock();
+
+                    // Hold the prune's batch open (and only it — addVote batches
+                    // too, and the response legitimately waits for that one). A
+                    // 201 that arrives while the prune is still blocked is the
+                    // proof that it rides waitUntil rather than the response.
+                    const sqlOf = new Map<unknown, string>();
+                    const prepare = mockDb.prepare.bind(mockDb);
+                    mockDb.prepare = (query: string) => {
+                        const statement = prepare(query);
+                        sqlOf.set(statement, query);
+                        return statement;
+                    };
+                    let releasePrune!: () => void;
+                    const pruneGate = new Promise<void>((resolve) => { releasePrune = resolve; });
+                    const realBatch = mockDb.batch.bind(mockDb);
+                    mockDb.batch = (async (statements: Parameters<typeof realBatch>[0]) => {
+                        const isPrune = statements.some((s) =>
+                            /DELETE FROM failed_notifications/i.test(sqlOf.get(s) ?? '')
+                        );
+                        if (isPrune) await pruneGate;
+                        return realBatch(statements);
+                    }) as typeof mockDb.batch;
+
+                    const res = await submit(mockExecutionCtx);
+
+                    expect(res.status).toBe(201);
+                    expect(
+                        mockDb._queries.some((q) => /DELETE FROM failed_notifications/i.test(q))
+                    ).toBe(false);
+
+                    releasePrune();
+                    await Promise.allSettled(waitUntilPromises);
+
+                    const deletes = mockDb._queries
+                        .map((query, index) => ({ query, bindings: mockDb._bindings[index] }))
+                        .filter(({ query }) => /DELETE FROM failed_notifications/i.test(query));
+                    expect(deletes).toHaveLength(2);
+                    expect(
+                        deletes.find((d) => /resolved_at IS NOT NULL/i.test(d.query))?.bindings
+                    ).toEqual(['2026-07-30 12:00:00']);
+                    expect(
+                        deletes.find((d) => /resolved_at IS NULL/i.test(d.query))?.bindings
+                    ).toEqual(['2026-05-31 12:00:00']);
+                } finally {
+                    vi.useRealTimers();
+                }
+            });
+
+            it('answers 201 even when the prune throws', async () => {
+                const waitUntilPromises: Promise<unknown>[] = [];
+                const mockExecutionCtx = {
+                    waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                    passThroughOnException: () => {},
+                };
+                setupSubmissionMock((query) => {
+                    if (/DELETE FROM failed_notifications/i.test(query)) {
+                        throw new Error('D1_ERROR: no such table: failed_notifications');
+                    }
+                    return undefined;
+                });
+
+                const res = await submit(mockExecutionCtx);
+
+                expect(res.status).toBe(201);
+                // The prune ran and swallowed its own failure — nothing the
+                // author is waiting on, and no unhandled rejection in waitUntil.
+                await expect(Promise.all(waitUntilPromises)).resolves.toHaveLength(
+                    waitUntilPromises.length
+                );
+                expect(
+                    mockDb._queries.some((q) => /DELETE FROM failed_notifications/i.test(q))
+                ).toBe(true);
+            });
         });
 
         it('should skip Discord notification when bindings not configured', async () => {
@@ -1727,6 +1857,56 @@ describe('PresetsHandler', () => {
             expect(body.success).toBe(true);
         });
 
+        // FINDING-017 (docs/audits/2026-08-29-security): a dead-letter row named
+        // the preset for ever — it outlived the preset and the deletion request.
+        it('deletes the preset dead-letter rows in the same batch (FINDING-017)', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            // D1 statements are opaque once prepared, so remember the SQL each
+            // one was built from and read the batch back through that map.
+            const sqlOf = new Map<unknown, string>();
+            const prepare = mockDb.prepare.bind(mockDb);
+            mockDb.prepare = (query: string) => {
+                const statement = prepare(query);
+                sqlOf.set(statement, query);
+                return statement;
+            };
+            const batchSpy = vi.spyOn(mockDb, 'batch');
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+
+            // The cascade rides the batch that deletes the preset: it must not
+            // survive a delete that failed, nor be skipped by one that succeeded.
+            const deleteBatch = batchSpy.mock.calls
+                .map((call) => call[0].map((statement) => sqlOf.get(statement) ?? ''))
+                .find((queries) => queries.some((q) => q.includes('DELETE FROM presets')));
+            expect(deleteBatch).toBeDefined();
+            const cascade = deleteBatch!.find((q) => /DELETE FROM failed_notifications/i.test(q));
+            expect(cascade).toBeDefined();
+            expect(cascade!).toContain("json_extract(payload, '$.preset_id')");
+
+            const cascadeIndex = mockDb._queries.findIndex((q) =>
+                /DELETE FROM failed_notifications/i.test(q)
+            );
+            expect(mockDb._bindings[cascadeIndex]).toContain('preset-123');
+        });
+
         it('should allow moderator to delete any preset', async () => {
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
@@ -2121,8 +2301,15 @@ describe('PresetsHandler', () => {
             expect(body.moderation_status).toBe('approved');
         });
 
-        it.each(['rejected', 'flagged', 'pending'] as const)(
-            'should not self-approve a %s preset via edit',
+        // BUG-001 (2026-07-18) + FINDING-004 (2026-08-29): a tag-only edit
+        // neither self-approves a preset nor moves any status a moderator set —
+        // *every* edit used to be written back as 'pending'. (Editing a rejected
+        // preset's text is its resubmission and does queue it; that rule and its
+        // limits live in tests/handlers/presets-quotas.test.ts.)
+        // `moderation_status` is typed `approved | pending`, so the two statuses
+        // this edit cannot produce are reported by omitting the field.
+        it.each(['rejected', 'flagged'] as const)(
+            'should leave a %s preset alone on a tag-only edit and report no moderation_status',
             async (status) => {
                 const mockRow = createMockPresetRow({
                     id: 'preset-123',
@@ -2151,10 +2338,36 @@ describe('PresetsHandler', () => {
                 );
 
                 expect(res.status).toBe(200);
-                const body = await res.json() as { moderation_status: string };
-                expect(body.moderation_status).toBe('pending');
+                expect(await res.json()).not.toHaveProperty('moderation_status');
             }
         );
+
+        it('should keep a pending preset pending after an owner edit', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                status: 'pending',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: JSON.stringify({ tags: ['updated'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { moderation_status: string };
+            expect(body.moderation_status).toBe('pending');
+        });
 
         it('should refuse to edit a hidden preset', async () => {
             const mockRow = createMockPresetRow({
@@ -3297,6 +3510,225 @@ describe('PresetsHandler', () => {
             );
 
             expect(res.status).toBe(200);
+        });
+    });
+
+    // ============================================
+    // FINDING-016 (2026-08-29 security audit): author_discord_id is not public
+    // ============================================
+
+    describe('author_discord_id visibility (FINDING-016)', () => {
+        const AUTHOR = 'author-9001';
+        const STRANGER = 'stranger-4242';
+        const MODERATOR = '123456789'; // In MODERATOR_IDS
+
+        const authorRow = (overrides: Record<string, unknown> = {}) =>
+            createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: AUTHOR,
+                author_name: 'TestUser',
+                ...overrides,
+            });
+
+        /** A web session token — the identity a browser client presents. */
+        const jwtFor = (sub: string) =>
+            createTestJWT(env.JWT_SECRET as string, { sub, username: 'Someone' });
+
+        type PresetBody = Record<string, unknown>;
+
+        it('is absent from every preset in the anonymous listing', async () => {
+            mockDb._setupMock(() => [{ ...authorRow(), _total: 1 }]);
+
+            const res = await app.request('/api/v1/presets', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: PresetBody[] };
+            expect(body.presets[0]).not.toHaveProperty('author_discord_id');
+            expect(body.presets[0].author_name).toBe('TestUser');
+        });
+
+        it('is absent from an anonymous search / category listing', async () => {
+            mockDb._setupMock(() => [{ ...authorRow(), _total: 1 }]);
+
+            const res = await app.request('/api/v1/presets?search=sunset&category=jobs', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: PresetBody[] };
+            expect(body.presets[0]).not.toHaveProperty('author_discord_id');
+            expect(body.presets[0].author_name).toBe('TestUser');
+        });
+
+        it('is absent from the anonymous featured list', async () => {
+            mockDb._setupMock(() => [authorRow()]);
+
+            const res = await app.request('/api/v1/presets/featured', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: PresetBody[] };
+            expect(body.presets[0]).not.toHaveProperty('author_discord_id');
+            expect(body.presets[0].author_name).toBe('TestUser');
+        });
+
+        it('is absent from an anonymous detail response', async () => {
+            mockDb._setupMock(() => authorRow());
+
+            const res = await app.request('/api/v1/presets/preset-123', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as PresetBody;
+            expect(body).not.toHaveProperty('author_discord_id');
+            expect(body.author_name).toBe('TestUser');
+        });
+
+        it('reaches the owner, with is_owner: true (the edit form needs both)', async () => {
+            mockDb._setupMock(() => authorRow());
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                { headers: authHeaders(await jwtFor(AUTHOR)) },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as PresetBody;
+            expect(body.author_discord_id).toBe(AUTHOR);
+            expect(body.is_owner).toBe(true);
+        });
+
+        it('does not reach another signed-in user, who is told is_owner: false', async () => {
+            mockDb._setupMock(() => authorRow());
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                { headers: authHeaders(await jwtFor(STRANGER)) },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as PresetBody;
+            expect(body).not.toHaveProperty('author_discord_id');
+            expect(body.is_owner).toBe(false);
+        });
+
+        it('reaches a moderator — they act on the author', async () => {
+            mockDb._setupMock(() => authorRow());
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                { headers: authHeaders(await jwtFor(MODERATOR)) },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as PresetBody;
+            expect(body.author_discord_id).toBe(AUTHOR);
+            expect(body.is_owner).toBe(false);
+        });
+
+        it('reaches a moderator listing non-approved presets', async () => {
+            mockDb._setupMock(() => [{ ...authorRow({ status: 'pending' }), _total: 1 }]);
+
+            const res = await app.request(
+                '/api/v1/presets?status=pending',
+                { headers: authHeaders(await jwtFor(MODERATOR)) },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: PresetBody[] };
+            expect(body.presets[0].author_discord_id).toBe(AUTHOR);
+        });
+
+        it('reaches the bot, whose own owner check needs it', async () => {
+            mockDb._setupMock(() => authorRow());
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                { headers: authHeaders('test-bot-secret', STRANGER, 'Someone') },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as PresetBody;
+            expect(body.author_discord_id).toBe(AUTHOR);
+        });
+
+        it('is present on the caller\'s own /mine listing, with is_owner: true', async () => {
+            mockDb._setupMock(() => [authorRow()]);
+
+            const res = await app.request(
+                '/api/v1/presets/mine',
+                { headers: authHeaders(await jwtFor(AUTHOR)) },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: PresetBody[] };
+            expect(body.presets[0].author_discord_id).toBe(AUTHOR);
+            expect(body.presets[0].is_owner).toBe(true);
+        });
+
+        it('is present on the owner\'s edit response, with is_owner: true', async () => {
+            mockDb._setupMock(() => authorRow({ status: 'approved' }));
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeaders(await jwtFor(AUTHOR)),
+                    },
+                    body: JSON.stringify({ tags: ['updated'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { preset: PresetBody };
+            expect(body.preset.author_discord_id).toBe(AUTHOR);
+            expect(body.preset.is_owner).toBe(true);
+        });
+
+        it('is present on the submitter\'s own creation response, with is_owner: true', async () => {
+            const waitUntilPromises: Promise<unknown>[] = [];
+            const mockExecutionCtx = {
+                waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                passThroughOnException: () => {},
+            };
+            mockDb._setupMock((query: string) => {
+                if (query.includes('FROM categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                }
+                if (query.includes('dye_signature')) {
+                    return null;
+                }
+                if (query.includes('COUNT')) {
+                    return { count: 0 };
+                }
+                return { success: true };
+            });
+
+            const res = await app.request(
+                '/api/v1/presets',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeaders(await jwtFor(AUTHOR)),
+                    },
+                    body: JSON.stringify(createMockSubmission()),
+                },
+                env,
+                mockExecutionCtx as unknown as ExecutionContext
+            );
+
+            expect(res.status).toBe(201);
+            const body = await res.json() as { preset: PresetBody };
+            expect(body.preset.author_discord_id).toBe(AUTHOR);
+            expect(body.preset.is_owner).toBe(true);
+
+            await Promise.all(waitUntilPromises);
         });
     });
 });

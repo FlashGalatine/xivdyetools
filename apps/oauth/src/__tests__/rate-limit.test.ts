@@ -50,9 +50,10 @@ describe('Rate Limiter Service', () => {
             const callbackResult = await checkRateLimit('192.168.1.3', '/auth/callback');
             expect(callbackResult.limit).toBe(20);
 
-            // /auth/refresh has limit of 30
-            const refreshResult = await checkRateLimit('192.168.1.3', '/auth/refresh');
-            expect(refreshResult.limit).toBe(30);
+            // everything else falls to the 30/min default — /auth/refresh used
+            // to carry its own 30/min entry before it was removed (FINDING-003)
+            const meResult = await checkRateLimit('192.168.1.3', '/auth/me');
+            expect(meResult.limit).toBe(30);
         });
 
         // BUG-007 (2026-07-18 audit): '/auth/xivauth' must not shadow the

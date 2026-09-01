@@ -43,6 +43,7 @@ import {
 import {
   checkRateLimit,
   formatRateLimitMessage,
+  rateLimitBindings,
   resolveRateLimitScope,
 } from './services/rate-limiter.js';
 import {
@@ -74,7 +75,11 @@ import {
 } from './services/i18n.js';
 import { createTranslator, createUserTranslator, type Translator } from './services/bot-i18n.js';
 import { sendModerationNotification } from './handlers/commands/preset-notifications.js';
-import { validateEnv, logValidationErrors } from './utils/env-validation.js';
+import {
+  validateEnv,
+  logValidationErrors,
+  PRODUCTION_ENV_ERROR_PREFIX,
+} from './utils/env-validation.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
 import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
 import { sanitizePresetName, sanitizePresetDescription } from './utils/sanitize.js';
@@ -91,6 +96,28 @@ import { getWorldAutocomplete } from './services/budget/index.js';
  * meaningful while leaving room for a release merge.
  */
 const GITHUB_WEBHOOK_MAX_BYTES = 1_048_576;
+
+/**
+ * The one repository whose release notes this bot announces (FINDING-021,
+ * 2026-08-29 audit). `GITHUB_WEBHOOK_SECRET` is the only gate on
+ * `/webhooks/github`, and the payload used to pick BOTH the changelog fetched
+ * (`repository.full_name`) and the link posted (`repository.html_url`) — so a
+ * holder of the secret could announce any repository's notes, under any
+ * masked link, inside an xivdyetools-looking embed. Both are constants now;
+ * the payload's `repository` is only ever compared against the first.
+ */
+const GITHUB_ANNOUNCE_REPO = 'FlashGalatine/xivdyetools';
+const GITHUB_ANNOUNCE_REPO_URL = 'https://github.com/FlashGalatine/xivdyetools';
+
+/**
+ * How long an announced version stays memoised in KV (90 days). The hook fires
+ * as the push lands, before `deploy-discord-worker.yml` has shipped the build,
+ * so a *Redeliver* from GitHub's delivery log is part of the normal release
+ * flow — without a memo it re-posted the same release (three times on
+ * 2026-08-29). 90 days outlives any plausible redelivery window while still
+ * letting the key expire.
+ */
+const ANNOUNCED_VERSION_TTL_SECONDS = 90 * 24 * 60 * 60;
 
 type PushCommit = import('./types/github.js').GitHubCommit;
 
@@ -141,8 +168,8 @@ app.use(
 );
 
 // Environment validation middleware
-// Validates required env vars once per isolate and caches result
-// Note: Discord worker doesn't have an ENVIRONMENT var, so validation always logs warnings
+// Validates required env vars on every request; the ERRORS are logged once
+// per isolate.
 app.use('*', async (c, next) => {
   const result = validateEnv(c.env);
   if (!result.valid) {
@@ -150,13 +177,28 @@ app.use('*', async (c, next) => {
       envErrorsLogged = true;
       logValidationErrors(result.errors);
     }
-    // Discord worker should still try to handle requests even with missing optional vars
-    // Only fail hard if critical secrets (DISCORD_TOKEN, DISCORD_PUBLIC_KEY) are missing.
+    // The bot still serves requests with missing OPTIONAL vars; a fatal
+    // misconfiguration refuses every request instead.
+    //
     // BUG-017 (2026-07-18 audit): checked on every request, not just the first
     // one in the isolate, so a misconfigured worker can't serve one 500 and
     // then silently process later traffic.
+    //
+    // FINDING-013 (2026-08-29 audit): the production-only errors are fatal
+    // too. They are raised only when `ENVIRONMENT === 'production'` (the six
+    // `RL_*` rate-limit bindings), so this match cannot affect the beta
+    // worker, and a production bot missing a tier degrades in complete
+    // silence otherwise — worker-kit hands the orphaned commands the next
+    // larger allowance, and Workers Logs are off on this script, so the
+    // `logValidationErrors` line above reaches nobody. Failing the request is
+    // what actually gets noticed.
     if (
-      result.errors.some((e) => e.includes('DISCORD_TOKEN') || e.includes('DISCORD_PUBLIC_KEY'))
+      result.errors.some(
+        (e) =>
+          e.includes('DISCORD_TOKEN') ||
+          e.includes('DISCORD_PUBLIC_KEY') ||
+          e.startsWith(PRODUCTION_ENV_ERROR_PREFIX),
+      )
     ) {
       return c.json({ error: 'Service misconfigured' }, 500);
     }
@@ -305,8 +347,10 @@ app.post('/webhooks/preset-submission', async (c) => {
   }
 
   const { preset } = payload;
+  // FINDING-011 (2026-08-29 security audit): the preset's name is
+  // user-authored free text about a submission that may never be published —
+  // the id identifies it just as well for anything a log needs to answer.
   logger.info('Received preset webhook', {
-    presetName: preset.name,
     presetId: preset.id,
     source: preset.source,
   });
@@ -422,8 +466,10 @@ app.post('/webhooks/preset-submission', async (c) => {
 /**
  * Webhook endpoint for GitHub push events
  *
- * Listens for pushes to main that modify CHANGELOG-laymans.md,
- * parses the latest version, and posts a Discord announcement embed.
+ * Listens for `push` events on main, from `GITHUB_ANNOUNCE_REPO` only, that
+ * modify CHANGELOG-laymans.md; parses the latest version and posts a Discord
+ * announcement embed — once per version (FINDING-021), so redelivering a
+ * qualifying push is safe.
  *
  * @see Phase 7 of v4.0.0 migration plan
  */
@@ -469,12 +515,35 @@ app.post('/webhooks/github', async (c) => {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
+  // FINDING-021: the signature says the sender holds the secret, not what the
+  // body is — GitHub signs pings and every other event type too. The event name
+  // is the only thing that distinguishes them, so it is checked before the body
+  // is parsed at all. Everything that is not a push is answered 2xx: a 4xx would
+  // mark the hook unhealthy in GitHub's delivery log for a delivery we simply
+  // do not act on.
+  const githubEvent = c.req.header('X-GitHub-Event');
+  if (githubEvent === 'ping') {
+    // GitHub sends exactly one of these when the hook is created.
+    return c.json({ success: true, message: 'pong' });
+  }
+  if (githubEvent !== 'push') {
+    return c.json({ success: true, message: 'Ignored event' });
+  }
+
   // Parse payload
   let payload: import('./types/github.js').GitHubPushPayload;
   try {
     payload = JSON.parse(rawBody) as import('./types/github.js').GitHubPushPayload;
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  // FINDING-021: the announced repository is pinned, never taken from the
+  // payload. The offending name is deliberately absent from the log line — a
+  // rejected delivery records only that the check ran and failed.
+  if (payload.repository?.full_name !== GITHUB_ANNOUNCE_REPO) {
+    logger.warn('GitHub webhook rejected: repository not allowed', { repoAllowed: false });
+    return c.json({ error: 'Repository not allowed' }, 403);
   }
 
   // Only process pushes to main branch
@@ -498,11 +567,11 @@ app.post('/webhooks/github', async (c) => {
   }
 
   logger.info('Changelog update detected, fetching latest version', {
-    repo: payload.repository.full_name,
+    repo: GITHUB_ANNOUNCE_REPO,
   });
 
   // Fetch the raw changelog from GitHub
-  const changelogUrl = `https://raw.githubusercontent.com/${payload.repository.full_name}/main/CHANGELOG-laymans.md`;
+  const changelogUrl = `https://raw.githubusercontent.com/${GITHUB_ANNOUNCE_REPO}/main/CHANGELOG-laymans.md`;
   // BUG-074: bounded — a hung GitHub response must not hold the request open
   const changelogResponse = await fetch(changelogUrl, { signal: AbortSignal.timeout(10_000) });
 
@@ -522,14 +591,48 @@ app.post('/webhooks/github', async (c) => {
     return c.json({ success: true, message: 'No version entry found' });
   }
 
+  // FINDING-021: announce each version exactly once. The changelog is fetched
+  // from the pinned repository, so this key is derived from our own release
+  // notes rather than from anything the payload said.
+  //
+  // This read is deliberately unguarded, unlike the write below. A KV outage
+  // here throws, which falls through to the app's error handler and answers
+  // 500 — GitHub logs a failed delivery and no announcement is sent until a
+  // Redeliver succeeds. That is the safe direction: it blocks an announcement
+  // rather than risking one it cannot confirm is new, so it can never cause a
+  // double post.
+  const announcedKey = `announced:v:${latestEntry.version}`;
+  if (await env.KV.get(announcedKey)) {
+    logger.info('Version already announced, skipping', { version: latestEntry.version });
+    return c.json({
+      success: true,
+      message: 'Already announced',
+      version: latestEntry.version,
+    });
+  }
+
   // Send announcement to Discord
   const { sendAnnouncement } = await import('./services/announcements.js');
   await sendAnnouncement(
     env.DISCORD_TOKEN,
     env.ANNOUNCEMENT_CHANNEL_ID,
     latestEntry,
-    payload.repository.html_url,
+    GITHUB_ANNOUNCE_REPO_URL,
   );
+
+  // Memoised only after the send succeeded: a failed announcement leaves no
+  // key behind, so a Redeliver can still get the release out. The write itself
+  // is best-effort — the release has already been posted by the time it runs,
+  // so a KV failure must not turn into a 500: that shows up as a failed
+  // delivery and invites exactly the Redeliver that double-posts.
+  try {
+    await env.KV.put(announcedKey, '1', { expirationTtl: ANNOUNCED_VERSION_TTL_SECONDS });
+  } catch (err) {
+    logger.warn('Announcement memo write failed', {
+      version: latestEntry.version,
+      errorName: err instanceof Error ? err.name : 'unknown',
+    });
+  }
 
   logger.info('Changelog announcement sent', { version: latestEntry.version });
   return c.json({ success: true, version: latestEntry.version });
@@ -601,10 +704,16 @@ app.post('/', async (c) => {
   return badRequestResponse(`Unknown interaction type: ${interaction.type}`);
 });
 
+const FIRST_RUN_FLAG_TTL_SECONDS = 180 * 24 * 60 * 60; // 180 days (FINDING-008)
+
 /**
  * 5.0 first-run notice: one ephemeral follow-up naming what changed, gated
- * by a permanent KV flag. Existing users (stored preferences) are flagged
- * silently — the redesign notice is for people meeting the bot fresh.
+ * by a KV flag that expires after 180 days (FINDING-008 — previously
+ * permanent, so every user who ever ran a command left a KV record
+ * forever). Existing users (stored preferences) are flagged silently — the
+ * redesign notice is for people meeting the bot fresh. A user who returns
+ * after the flag has expired with no stored preferences may see the notice
+ * once more; that's an acceptable trade for not keeping the record forever.
  */
 async function maybeSendFirstRunNotice(
   env: Env,
@@ -616,7 +725,7 @@ async function maybeSendFirstRunNotice(
   const seen = await env.KV.get(flagKey);
   if (seen) return;
   // Flag before sending — a failed send must never become a repeat notice
-  await env.KV.put(flagKey, '1');
+  await env.KV.put(flagKey, '1', { expirationTtl: FIRST_RUN_FLAG_TTL_SECONDS });
 
   const prefs = await env.KV.get(`prefs:v1:${userId}`);
   if (prefs) return; // existing user — suppressed by decision
@@ -678,22 +787,27 @@ async function handleCommand(
       )
     : ctx;
 
-  // Check rate limit (skip for utility commands). Aliases (/a11y) share the
+  // Check the rate limit for EVERY command. Aliases (/a11y) share the
   // canonical command's bucket; /extractor tiers its image subcommand
   // separately (Photon path, 5/min) from the plain color lookup.
   // FINDING-033 (2026-08-21 audit): /stats is NOT exempt — its public summary
   // runs paginated KV list() scans, so it takes the default per-user tier.
-  if (commandName && !['about', 'manual', 'changelog'].includes(commandName)) {
+  // FINDING-020 (2026-08-29 audit): neither are /about, /manual and
+  // /changelog — the exemption skipped only the limiter, not the three shared
+  // hot-key KV counter writes every finished command makes, which was the
+  // cheapest denial-of-service in the worker. They take their 30/min tier.
+  if (commandName) {
     const scope = resolveRateLimitScope(commandName, interaction.data?.options?.[0]?.name);
     const rateLimitResult = await checkRateLimit(
       {
-        upstashUrl: env.UPSTASH_REDIS_REST_URL,
-        upstashToken: env.UPSTASH_REDIS_REST_TOKEN,
-        kv: env.KV, // fallback if Upstash not configured
+        bindings: rateLimitBindings(env),
+        kv: env.KV, // fallback when no RL_* tier is bound
       },
       userId,
       scope.command,
-      undefined,
+      // The request logger, so the limiter's KV-fallback warning and its
+      // fail-open report are attributed to THIS request (FINDING-007).
+      logger,
       scope.subcommand,
     );
     if (!rateLimitResult.allowed) {
@@ -839,12 +953,12 @@ async function handleAutocomplete(
   if (acUserId) {
     const acLimit = await checkRateLimit(
       {
-        upstashUrl: env.UPSTASH_REDIS_REST_URL,
-        upstashToken: env.UPSTASH_REDIS_REST_TOKEN,
+        bindings: rateLimitBindings(env),
         kv: env.KV,
       },
       acUserId,
       'autocomplete',
+      logger,
     );
     if (!acLimit.allowed) {
       return Response.json({

@@ -8,7 +8,7 @@ import { cors } from 'hono/cors';
 import type { Env } from './types.js';
 import { authorizeRouter } from './handlers/authorize.js';
 import { callbackRouter } from './handlers/callback.js';
-import { tokenRouter } from './handlers/refresh.js';
+import { tokenRouter } from './handlers/token.js';
 import { xivauthRouter } from './handlers/xivauth.js';
 import { checkRateLimit, getClientIp, oauthRateLimitTiers } from './services/rate-limit.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
@@ -34,9 +34,14 @@ let envErrorsLogged = false;
 
 // REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
 app.use('*', requestIdMiddleware());
+// FINDING-010 (2026-08-29 security audit): logUserAgent used to be opted in
+// here, so every request's User-Agent rode into the "Request started" log
+// context — contradicting the web privacy guide's promise that the server
+// "discards everything about the request". Nothing here ever consumed the
+// value. worker-kit's own default is `false`, so simply not setting it is
+// the fix.
 app.use('*', loggerMiddleware({
   serviceName: 'xivdyetools-oauth',
-  logUserAgent: true,
 }));
 
 // Environment validation middleware
@@ -137,6 +142,15 @@ app.use('*', async (c, next) => {
   c.header('X-Content-Type-Options', 'nosniff');
   // Prevent clickjacking by denying iframe embedding
   c.header('X-Frame-Options', 'DENY');
+  // FINDING-022 (2026-08-29 security audit): nothing this worker returns is
+  // cacheable. The token responses are bearer JWTs (RFC 6749 §5.1 mandates
+  // no-store on them), the callback bounces carry an authorization code, and
+  // /auth/me is per-user. Nothing caches in the path today — this stops a
+  // future CDN rule or a browser heuristic on a 200 JSON body from storing a
+  // JWT. Applied to every route, not just /auth/*: /health has nothing worth
+  // caching either. Pragma is for HTTP/1.0 intermediaries.
+  c.header('Cache-Control', 'no-store');
+  c.header('Pragma', 'no-cache');
   // Enforce HTTPS for 1 year everywhere except local development (FINDING-029:
   // was production-only, so any other non-development env went without HSTS)
   if (c.env.ENVIRONMENT !== 'development') {
@@ -164,6 +178,18 @@ app.use('/auth/*', async (c, next) => {
     cloudflare: oauthRateLimitTiers(c.env),
     kv: c.env.TOKEN_BLACKLIST,
   });
+
+  // FINDING-012 (2026-08-29 security audit): CloudflareRateLimiter is a
+  // per-isolate singleton (services/rate-limit.ts) and cannot hold a
+  // request-scoped logger, so a fail-open event (the accepted trade-off —
+  // the request is still served) used to be invisible. Surfaced on the
+  // result and logged here instead, once per request, through the request
+  // logger. No client-visible signal (no header) and no key/IP in the log
+  // context — just which endpoint saw the error.
+  if (result.backendError) {
+    const logger = getLogger(c);
+    logger?.warn('Rate limiter backend error — request allowed (fail-open)', { path });
+  }
 
   // Set rate limit headers on all responses
   c.header('X-RateLimit-Limit', result.limit.toString());
@@ -223,15 +249,18 @@ app.get('/health', (c) => {
 // │  /auth/xivauth/cb   - XIVAuth callback   │
 // ├──────────────────────────────────────────┤
 // │ Token Management                         │
-// │  /auth/refresh      - Refresh JWT token  │
+// │  /auth/me           - Current user info  │
 // │  /auth/revoke       - Revoke session     │
 // └──────────────────────────────────────────┘
+//
+// FINDING-003 (2026-08-29 security audit): /auth/refresh was removed — it had
+// no client and let a copied token be re-minted for up to 30 days.
 // ============================================
 
 app.route('/auth', authorizeRouter);  // Discord: /auth/discord
 app.route('/auth', callbackRouter);   // Discord: /auth/callback
 app.route('/auth', xivauthRouter);    // XIVAuth: /auth/xivauth, /auth/xivauth/cb
-app.route('/auth', tokenRouter);      // Tokens: /auth/refresh, /auth/revoke
+app.route('/auth', tokenRouter);      // Tokens: /auth/me, /auth/revoke
 
 // ============================================
 // ERROR HANDLING

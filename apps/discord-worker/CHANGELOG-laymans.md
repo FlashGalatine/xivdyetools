@@ -35,6 +35,18 @@ Rules:
   path filter.
 -->
 
+## [5.1.0] - 2026-08-30
+
+### 🐛 Fixes
+
+- `/preferences set world:` now checks that the world or data centre you type actually exists and saves it with its official spelling — an unknown name is refused instead of being saved as typed.
+- `/about`, `/manual` and `/changelog` are now rate-limited like every other command (30 uses per minute).
+
+### 🔒 Privacy
+
+- The counters behind those per-command limits no longer leave Cloudflare — they used to be kept by an outside company. Nothing changes in how the limits behave.
+- The privacy policy was refreshed: it now lists your preset favourites, the one-time welcome notice, and your saved preference fields, plus the commands to view or delete them.
+
 ## [5.0.1] - 2026-08-29
 
 ### 🔒 Your character's name stays yours

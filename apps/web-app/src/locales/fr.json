@@ -1069,7 +1069,7 @@
     "gateSubmitNote": "Votre nom apparaît sur la carte.",
     "providerDiscordNote": "La plupart des joueurs en ont déjà un",
     "providerXivauthNote": "Vérifie votre personnage",
-    "privacyNote": "Nous stockons votre nom d'affichage et l'ID du fournisseur. Pas de données de personnage, pas d'e-mail, rien n'est vendu.",
+    "privacyNote": "Se connecter crée un compte avec votre identifiant Discord ou XIVAuth et votre nom d'utilisateur. Votre nom d'affichage apparaît sur les palettes que vous proposez. Pas de données de personnage, pas d'e-mail, rien n'est vendu.",
     "submitTitle": "Proposer une palette",
     "submitSub": "Relue avant publication",
     "previewLabel": "APERÇU DU RENDU",

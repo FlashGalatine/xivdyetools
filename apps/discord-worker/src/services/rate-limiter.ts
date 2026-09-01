@@ -1,12 +1,16 @@
 /**
  * Rate Limiting Service
  *
- * Implements sliding window rate limiting for Discord commands.
- * Supports per-user and per-command limits.
+ * Per-user, per-command limits for Discord commands.
  *
  * Backends (in priority order):
- * 1. Upstash Redis - atomic operations, no race conditions (preferred)
- * 2. Cloudflare KV - fallback if Upstash not configured
+ * 1. Native Workers Rate Limiting bindings (`RL_5`…`RL_70`) — atomic,
+ *    per-colo, no storage writes and no third-party processor
+ * 2. Cloudflare KV — fallback when no tier is bound (tests / local dev)
+ *
+ * FINDING-007 (2026-08-29 security audit): the counters used to live in a
+ * third-party Redis service, a processor the bot's privacy policy never
+ * named. The bindings keep them inside Cloudflare for the 60-second window.
  *
  * @module services/rate-limiter
  */
@@ -14,11 +18,14 @@
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Translator } from '@xivdyetools/bot-logic/i18n';
 import {
-  UpstashRateLimiter,
+  CloudflareRateLimiter,
   KVRateLimiter,
   getDiscordCommandLimit,
+  type CloudflareRateLimitTier,
+  type RateLimitConfig,
   type RateLimiter,
 } from '@xivdyetools/worker-kit/rate-limiter';
+import type { Env } from '../types/env.js';
 
 /**
  * Rate limit check result
@@ -39,44 +46,106 @@ export interface RateLimitResult {
 /** Key prefix for rate limit data */
 const KEY_PREFIX = 'ratelimit:user:';
 
+/** The worker's `[[ratelimits]]` bindings, one per distinct effective limit. */
+export type DiscordRateLimitBindings = Pick<
+  Env,
+  'RL_5' | 'RL_10' | 'RL_15' | 'RL_20' | 'RL_30' | 'RL_70'
+>;
+
 /**
  * Configuration for rate limiter initialization
  */
 export interface RateLimiterConfig {
-  /** Upstash Redis REST URL (preferred backend) */
-  upstashUrl?: string;
-  /** Upstash Redis REST token */
-  upstashToken?: string;
+  /** Native Workers Rate Limiting bindings (preferred backend) */
+  bindings?: DiscordRateLimitBindings;
   /** Cloudflare KV namespace (fallback backend) */
   kv?: KVNamespace;
+}
+
+/**
+ * Each binding's configured `simple.limit`, smallest first. Keep in step with
+ * `wrangler.toml` — worker-kit routes a command to the smallest tier whose
+ * limit can hold `maxRequests + burstAllowance`, so a wrong number here hands
+ * out the wrong allowance rather than failing. `tests/wrangler-config.test.ts`
+ * checks the TOML against this table so the two cannot drift.
+ */
+export const BINDING_TIERS: ReadonlyArray<{
+  name: keyof DiscordRateLimitBindings;
+  limit: number;
+}> = [
+  { name: 'RL_5', limit: 5 },
+  { name: 'RL_10', limit: 10 },
+  { name: 'RL_15', limit: 15 },
+  { name: 'RL_20', limit: 20 },
+  { name: 'RL_30', limit: 30 },
+  { name: 'RL_70', limit: 70 },
+];
+
+/**
+ * Pull the rate-limit bindings off the worker env, so callers can pass
+ * `{ bindings: rateLimitBindings(env), kv: env.KV }` without naming all six.
+ */
+export function rateLimitBindings(env: Env): DiscordRateLimitBindings {
+  return {
+    RL_5: env.RL_5,
+    RL_10: env.RL_10,
+    RL_15: env.RL_15,
+    RL_20: env.RL_20,
+    RL_30: env.RL_30,
+    RL_70: env.RL_70,
+  };
 }
 
 /**
  * Singleton rate limiter instance
  */
 let limiterInstance: RateLimiter | null = null;
-let configuredBackend: 'upstash' | 'kv' | null = null;
+let configuredBackend: 'cloudflare' | 'kv' | null = null;
 /** FINDING-003: the KV-fallback warning is emitted once per isolate */
 let kvFallbackWarned = false;
+/**
+ * FINDING-007: the `RL_*` tiers the limiter was built WITHOUT while still on
+ * the Cloudflare backend (empty unless `0 < bound < BINDING_TIERS.length`).
+ */
+let missingTierNames: ReadonlyArray<string> = [];
+/** FINDING-007: the partial-binding warning is emitted once per isolate */
+let partialTiersWarned = false;
 
 /**
  * Get or create the rate limiter instance
  *
- * Priority: Upstash Redis > Cloudflare KV
+ * Priority: native `[[ratelimits]]` bindings > Cloudflare KV.
+ *
+ * Deliberately built WITHOUT a logger: the instance is a per-isolate
+ * singleton, so it would freeze the first request's `requestId` onto every
+ * later request's log line. The fail-open signal is `result.backendError`,
+ * which `checkRateLimit` reports below with the CURRENT request's logger —
+ * the same shape as the other four workers.
  */
 function getLimiter(config: RateLimiterConfig): RateLimiter {
   if (limiterInstance && configuredBackend) {
     return limiterInstance;
   }
 
-  // Prefer Upstash if both URL and token are provided
-  if (config.upstashUrl && config.upstashToken) {
-    limiterInstance = new UpstashRateLimiter({
-      url: config.upstashUrl,
-      token: config.upstashToken,
-      keyPrefix: KEY_PREFIX,
-    });
-    configuredBackend = 'upstash';
+  // Prefer the native bindings — any subset works (worker-kit's selectTier
+  // routes a command to the next LARGER bound tier, and to the largest bound
+  // tier when nothing fits), but both environments bind all six.
+  const tiers: CloudflareRateLimitTier[] = [];
+  const missing: string[] = [];
+  for (const { name, limit } of BINDING_TIERS) {
+    const binding = config.bindings?.[name];
+    if (binding) tiers.push({ limit, periodSeconds: 60, binding });
+    else missing.push(name);
+  }
+  if (tiers.length > 0) {
+    // A PARTIAL set is the dangerous shape: it keeps the Cloudflare backend,
+    // so nothing falls back and nothing errors — the commands whose own tier
+    // vanished silently take the next larger allowance (losing RL_5 hands
+    // `/extractor image` 10/min). Remembered here, reported by checkRateLimit
+    // on the current request's logger.
+    missingTierNames = missing;
+    limiterInstance = new CloudflareRateLimiter({ tiers, keyPrefix: KEY_PREFIX });
+    configuredBackend = 'cloudflare';
     return limiterInstance;
   }
 
@@ -91,7 +160,7 @@ function getLimiter(config: RateLimiterConfig): RateLimiter {
   }
 
   throw new Error(
-    'No rate limiter backend configured. Provide either Upstash credentials or KV namespace.',
+    'No rate limiter backend configured. Bind an RL_* rate-limit tier or provide a KV namespace.',
   );
 }
 
@@ -112,6 +181,17 @@ const COMMAND_ALIASES: Readonly<Record<string, string>> = {
 const SUBCOMMAND_SCOPED = new Set<string>(['extractor']);
 
 /**
+ * Tiers this worker defines on top of worker-kit's `DISCORD_COMMAND_LIMITS`,
+ * consulted first. An entry here is keyed by command name only and shadows
+ * ANY `command:subcommand` tier the preset defines for it, so only commands
+ * without subcommand-scoped tiers belong in this table.
+ */
+const LOCAL_COMMAND_LIMITS: Record<string, RateLimitConfig> = {
+  // same tier as /about and /manual; moves into worker-kit's preset in Sprint 9 (FINDING-020)
+  changelog: { maxRequests: 30, windowMs: 60_000 },
+};
+
+/**
  * Resolve the (command, subcommand) pair a rate-limit check should be keyed on:
  * aliases canonicalised, subcommand kept only where a scoped tier exists.
  */
@@ -129,8 +209,8 @@ export function resolveRateLimitScope(
 /**
  * Check if a user is rate limited for a specific command
  *
- * Uses Upstash Redis for atomic operations (no race conditions) when available,
- * falling back to Cloudflare KV if Upstash is not configured.
+ * Counts against the native Workers rate-limit binding for the command's tier
+ * when one is bound, falling back to Cloudflare KV otherwise.
  *
  * @param config - Rate limiter backend configuration
  * @param userId - Discord user ID
@@ -142,11 +222,7 @@ export function resolveRateLimitScope(
  * @example
  * ```typescript
  * const result = await checkRateLimit(
- *   {
- *     upstashUrl: env.UPSTASH_REDIS_REST_URL,
- *     upstashToken: env.UPSTASH_REDIS_REST_TOKEN,
- *     kv: env.KV, // fallback
- *   },
+ *   { bindings: rateLimitBindings(env), kv: env.KV },
  *   userId,
  *   'harmony'
  * );
@@ -163,18 +239,32 @@ export async function checkRateLimit(
   subcommand?: string,
 ): Promise<RateLimitResult> {
   const limiter = getLimiter(config);
-  const limitConfig = getDiscordCommandLimit(commandName ?? 'default', subcommand);
+  const limitConfig =
+    (commandName ? LOCAL_COMMAND_LIMITS[commandName] : undefined) ??
+    getDiscordCommandLimit(commandName ?? 'default', subcommand);
 
   // FINDING-003 (2026-08-21 audit): KV cannot throttle a fast client
   // (1 write/s/key, swallowed put failures, eventually-consistent reads) —
-  // it is a dev fallback only. Say so once per isolate so a production
-  // deployment missing UPSTASH_REDIS_REST_URL/TOKEN is visible in the logs.
+  // it is a dev fallback only. Say so once per isolate so a deployment that
+  // lost its rate-limit bindings is visible in the logs.
   if (configuredBackend === 'kv' && !kvFallbackWarned) {
     kvFallbackWarned = true;
     // optional call: some callers/tests pass a partial logger without warn()
     logger?.warn?.(
-      'Rate limiter using KV fallback — KV cannot throttle fast clients; configure Upstash (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN) in production',
+      'Rate limiter using KV fallback: no RL_* binding bound — KV fallback cannot throttle fast clients',
       { backend: 'kv' },
+    );
+  }
+
+  // FINDING-007 (whole-branch review of the 2026-08-29 audit): a PARTIAL set
+  // of tiers never reaches the KV branch above — it stays on the Cloudflare
+  // backend and just hands the orphaned commands the next larger allowance.
+  // Binding names only; there is no user data here.
+  if (missingTierNames.length > 0 && !partialTiersWarned) {
+    partialTiersWarned = true;
+    logger?.warn?.(
+      'Rate limiter: some RL_* bindings are missing — affected commands use the next larger tier',
+      { missing: [...missingTierNames] },
     );
   }
 
@@ -231,4 +321,6 @@ export function resetRateLimiterInstance(): void {
   limiterInstance = null;
   configuredBackend = null;
   kvFallbackWarned = false;
+  missingTierNames = [];
+  partialTiersWarned = false;
 }

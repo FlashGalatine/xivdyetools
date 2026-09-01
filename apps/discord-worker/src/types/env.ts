@@ -1,3 +1,5 @@
+import type { RateLimitBinding } from '@xivdyetools/worker-kit/rate-limiter';
+
 /**
  * Environment bindings for Cloudflare Worker
  *
@@ -32,16 +34,6 @@ export interface Env {
   ANNOUNCEMENT_CHANNEL_ID?: string;
 
   // =========================================================================
-  // Upstash Redis (set via wrangler secret put)
-  // =========================================================================
-
-  /** Upstash Redis REST URL - for rate limiting */
-  UPSTASH_REDIS_REST_URL?: string;
-
-  /** Upstash Redis REST token - for rate limiting */
-  UPSTASH_REDIS_REST_TOKEN?: string;
-
-  // =========================================================================
   // Moderation Configuration (set via wrangler secret put)
   // =========================================================================
 
@@ -72,6 +64,16 @@ export interface Env {
   /** URL of the Presets API worker */
   PRESETS_API_URL: string;
 
+  /**
+   * Which deployment this is — `"development"` on the beta worker,
+   * `"production"` on the live bot. Declared in BOTH `wrangler.toml` blocks
+   * (vars are not inheritable) and optional here so tests and `wrangler dev`
+   * can leave it unset. FINDING-013: `validateEnv` requires the six `RL_*`
+   * bindings only when this reads `"production"`, and `index.ts` then refuses
+   * every request until they are bound.
+   */
+  ENVIRONMENT?: string;
+
   // =========================================================================
   // Bindings (configured in wrangler.toml)
   // =========================================================================
@@ -93,6 +95,31 @@ export interface Env {
 
   /** Analytics Engine for command usage tracking */
   ANALYTICS?: AnalyticsEngineDataset;
+
+  // =========================================================================
+  // Rate limiting (FINDING-007 — native `[[ratelimits]]` bindings; the
+  // per-user counters used to live in a third-party Redis). One binding per
+  // distinct effective limit in worker-kit's DISCORD_COMMAND_LIMITS; all
+  // optional so tests and local dev fall back to KV.
+  // =========================================================================
+
+  /** 5 req/min — `/extractor image` (the Photon path) */
+  RL_5?: RateLimitBinding;
+
+  /** 10 req/min — `/accessibility`, `/budget`, `/preset` */
+  RL_10?: RateLimitBinding;
+
+  /** 15 req/min — the rendering commands and the default tier */
+  RL_15?: RateLimitBinding;
+
+  /** 20 req/min — `/dye`, `/preferences` */
+  RL_20?: RateLimitBinding;
+
+  /** 30 req/min — `/about`, `/manual`, `/changelog` */
+  RL_30?: RateLimitBinding;
+
+  /** 70 req/min — autocomplete (60 + 10 burst) */
+  RL_70?: RateLimitBinding;
 
   // =========================================================================
   // Stats Command Access Control

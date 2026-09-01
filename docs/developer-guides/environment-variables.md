@@ -44,10 +44,18 @@ VITE_PRESETS_API_URL=https://api.xivdyetools.app
 
 ### wrangler.toml Variables
 
+All four are declared **explicitly in both blocks** — `vars` are not inheritable, so a named environment that omits one simply does not have it.
+
 ```toml
+# top-level = the BETA bot; [env.production.vars] repeats all four
 [vars]
-ENVIRONMENT = "production"    # "development" | "production"
+ENVIRONMENT = "development"          # "development" (beta) | "production" (live bot)
+DISCORD_CLIENT_ID = "..."            # the environment's own Discord application
+PRESETS_API_URL = "https://api.xivdyetools.app"
+ANNOUNCEMENT_CHANNEL_ID = "..."      # release-announcement channel (differs per environment)
 ```
+
+`ENVIRONMENT` is read by exactly one thing: `validateEnv` (`src/utils/env-validation.ts`). When it reads `production` the six `RL_*` rate-limit bindings become **required**, and `src/index.ts` refuses every request with `500 {"error":"Service misconfigured"}` — `/health` included — while any of them is unbound, the same as for a missing `DISCORD_TOKEN` (FINDING-013, `docs/audits/2026-08-29-security`). Losing a tier is otherwise silent: worker-kit routes the orphaned commands to the next larger tier, and Workers Logs are off on this script. On the beta worker (`development`) they stay optional and the limiter falls back to KV.
 
 ### Secrets (set via `wrangler secret put`)
 
@@ -62,10 +70,10 @@ ENVIRONMENT = "production"    # "development" | "production"
 | `MODERATION_CHANNEL_ID` | No | Channel for pending presets / preview images |
 | `SUBMISSION_LOG_CHANNEL_ID` | No | Channel for all submissions |
 | `MODERATION_BOT_TOKEN` | No | Moderation bot token — Discord routes button clicks to the posting application |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | No | Preferred rate-limit backend (KV fallback) |
-| `ANNOUNCEMENT_CHANNEL_ID` | No | Release-announcement channel — a **var**, declared under `[env.production.vars]` (vars are not inherited) |
 
-Bindings: `KV`, `DB` (D1 `xivdyetools-presets`), `ANALYTICS`, and service bindings `PRESETS_API` → `xivdyetools-presets-api`, `UNIVERSALIS_PROXY` → `xivdyetools-api-worker`, `IMAGE_WORKER` → `xivdyetools-image-worker`. The top-level `wrangler.toml` block is the beta bot (`xivdyetools-discord-worker-dev`); production lives under `[env.production]`.
+(`ANNOUNCEMENT_CHANNEL_ID` is a **var**, not a secret — see the `[vars]` block above.)
+
+Bindings: `KV`, `ANALYTICS`, the six `[[ratelimits]]` tiers `RL_5`/`RL_10`/`RL_15`/`RL_20`/`RL_30`/`RL_70` (**required in production** — see `ENVIRONMENT` above), and service bindings `PRESETS_API` → `xivdyetools-presets-api`, `UNIVERSALIS_PROXY` → `xivdyetools-api-worker`, `IMAGE_WORKER` → `xivdyetools-image-worker`. The top-level `wrangler.toml` block is the beta bot (`xivdyetools-discord-worker-dev`); production lives under `[env.production]`.
 
 ### Setting Secrets
 
@@ -269,7 +277,7 @@ Per-client abuse limiting uses the native **Workers Rate Limiting binding** (`[[
 | presets-api | `RL_PUBLIC` | 100 / 60 s per IP on `/api/*` | 1011 / 1012 | per-isolate memory |
 | oauth | `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` | 10 / 20 / 30 per 60 s per IP+path (`OAUTH_LIMITS`) | 1021-1023 (top-level = prod), 1024-1026 (development) — the preview tier (1027-1029) went with the deleted `[env.preview]` block (FINDING-029) | KV `TOKEN_BLACKLIST` (`rl:` prefix), then memory |
 | moderation-worker | `RL_COMMAND` / `RL_AUTOCOMPLETE` | 25 / 70 per 60 s per Discord user | 1031-1032 / 1033-1034 | KV `KV` |
-| discord-worker | — (Upstash Redis is the primary backend) | per-command tiers | — | KV — logs a one-time warning; configure `UPSTASH_REDIS_REST_URL/TOKEN` in production |
+| discord-worker | `RL_5` / `RL_10` / `RL_15` / `RL_20` / `RL_30` / `RL_70` | 5 / 10 / 15 / 20 / 30 / 70 per 60 s per Discord user + command — one tier per distinct effective limit in `DISCORD_COMMAND_LIMITS` (FINDING-007) | 1041-1046 (production), 1051-1056 (top-level beta) | KV `KV` — logs a one-time warning when no tier is bound |
 
 Why: KV allows one write per second per key and the read-modify-write counter swallows the resulting 429s, so a single fast client never reaches a 60 s threshold (FINDING-003). KV/memory remain only as fallbacks for environments without the binding.
 

@@ -9,6 +9,14 @@ import { requireAuth, requireUserContext } from '../middleware/auth.js';
 import { requireNotBanned } from '../middleware/ban-check.js';
 import { notFoundResponse } from '../utils/api-response.js';
 
+/**
+ * FINDING-011 (2026-08-29 security audit): minimal logger interface for
+ * addVote/removeVote — ids and an error object only, never a preset name.
+ */
+interface VotesLogger {
+  error(message: string, ...args: unknown[]): void;
+}
+
 type Variables = {
   auth: AuthContext;
 };
@@ -41,7 +49,8 @@ const APPROVED_PRESET_GATE = "SELECT id FROM presets WHERE id = ? AND status = '
 export async function addVote(
   db: D1Database,
   presetId: string,
-  userDiscordId: string
+  userDiscordId: string,
+  logger?: VotesLogger
 ): Promise<VoteResponse> {
   const now = new Date().toISOString();
 
@@ -84,7 +93,7 @@ export async function addVote(
       new_vote_count: newCount,
     };
   } catch (error) {
-    console.error('Failed to add vote:', error);
+    (logger ?? console).error('Failed to add vote', error);
     return {
       success: false,
       error: 'Failed to add vote',
@@ -100,7 +109,8 @@ export async function addVote(
 export async function removeVote(
   db: D1Database,
   presetId: string,
-  userDiscordId: string
+  userDiscordId: string,
+  logger?: VotesLogger
 ): Promise<VoteResponse> {
   const now = new Date().toISOString();
 
@@ -137,7 +147,7 @@ export async function removeVote(
       new_vote_count: newCount,
     };
   } catch (error) {
-    console.error('Failed to remove vote:', error);
+    (logger ?? console).error('Failed to remove vote', error);
     return {
       success: false,
       error: 'Failed to remove vote',
@@ -174,7 +184,7 @@ votesRouter.post('/:presetId', async (c) => {
     return notFoundResponse(c, 'Preset');
   }
 
-  const result = await addVote(c.env.DB, presetId, auth.userDiscordId!);
+  const result = await addVote(c.env.DB, presetId, auth.userDiscordId!, c.get('logger'));
 
   if (!result.success) {
     return c.json(result, 500);
@@ -211,7 +221,7 @@ votesRouter.delete('/:presetId', async (c) => {
     return notFoundResponse(c, 'Preset');
   }
 
-  const result = await removeVote(c.env.DB, presetId, auth.userDiscordId!);
+  const result = await removeVote(c.env.DB, presetId, auth.userDiscordId!, c.get('logger'));
   return c.json(result);
 });
 

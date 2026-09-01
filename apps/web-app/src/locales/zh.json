@@ -1069,7 +1069,7 @@
     "gateSubmitNote": "你的名字会显示在卡片上。",
     "providerDiscordNote": "大多数玩家已有账号",
     "providerXivauthNote": "验证你的游戏角色",
-    "privacyNote": "仅存储显示名称与登录方 ID。不收集角色数据和邮箱，也绝不出售。",
+    "privacyNote": "登录会创建账号记录，保存你的 Discord 或 XIVAuth ID 与用户名。你的显示名称会出现在你投稿的配色中。不收集角色数据和邮箱，也绝不出售。",
     "submitTitle": "投稿配色",
     "submitSub": "发布前需审核",
     "previewLabel": "展示效果",

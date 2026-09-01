@@ -66,7 +66,7 @@ Moderator-gated. Backs the `moderation-worker` bot and the web app's moderation 
 Two callers, two mechanisms:
 
 - **Users** present a JWT issued by [`apps/oauth`](../../apps/oauth/), verified with `@xivdyetools/auth`'s HS256-only `verifyJWT`.
-- **Bots** (`discord-worker`, `moderation-worker`) reach this Worker over a **Service Binding** and authenticate with an HMAC-SHA256 request signature over `timestamp:userId:userName`, verified by `verifyBotSignature`.
+- **Bots** (`discord-worker`, `moderation-worker`) reach this Worker over a **Service Binding** and authenticate with an HMAC-SHA256 request signature that binds the request itself — method, path, body, timestamp, nonce and user — verified by `verifyBotSignatureV2` and sent as `X-Request-Signature-V2`. This is the **only** accepted signature since 2.2.0 (FINDING-015): the v1 scheme, which signed just `timestamp:userId:userName` and therefore bound nothing about the request, is no longer accepted here, no longer sent by either bot, and its verifier was removed from `@xivdyetools/auth` in 2.0.0.
 
 ## Notifications
 

@@ -4,6 +4,7 @@
  */
 
 import type {
+  AuthContext,
   CommunityPreset,
   PresetRow,
   PresetFilters,
@@ -125,6 +126,69 @@ export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): Commu
     preview_image_status: (row.preview_image_status ??
       'none') as CommunityPreset['preview_image_status'],
     rejection_reason: row.rejection_reason ?? null,
+  };
+}
+
+/**
+ * A preset as it leaves this Worker over HTTP.
+ *
+ * `author_discord_id` becomes optional (it is present only for the viewers
+ * entitled to it) and `is_owner` is added for signed-in web callers, which is
+ * what a client actually needs the id for.
+ */
+export type PublicPreset<T extends CommunityPreset = CommunityPreset> = Omit<
+  T,
+  'author_discord_id'
+> & {
+  author_discord_id?: string | null;
+  is_owner?: boolean;
+};
+
+/**
+ * THE author-identity rule (FINDING-016, 2026-08-29 audit), in one place.
+ *
+ * `rowToPreset` puts the author's Discord snowflake on every preset because the
+ * moderation, notification and ownership paths need it — but the listing,
+ * featured, search and detail routes are anonymous, so before this every
+ * visitor of the gallery received every author's Discord id and could
+ * cross-reference or DM them. The privacy guide promises the display name, not
+ * the id.
+ *
+ *  - anonymous  → no `author_discord_id` at all; `author_name` is the identity
+ *                 the gallery shows and it stays;
+ *  - web (JWT)  → `is_owner`, plus the id when it is the viewer's own preset or
+ *                 the viewer is a moderator (they act on the author);
+ *  - bot (HMAC) → untouched. discord-worker and moderation-worker do their own
+ *                 owner checks on the id, and their responses never reach a
+ *                 browser. Moderator-only routes (`handlers/moderation.ts`) are
+ *                 likewise unchanged: `isModerator` keeps the id there anyway.
+ *
+ * Returns a copy — the caller's preset object is also what feeds
+ * `notifyDiscordBot`, which must keep the id.
+ */
+export function toPublicPreset<T extends CommunityPreset>(
+  preset: T,
+  viewer: AuthContext
+): PublicPreset<T> {
+  if (viewer.authSource === 'bot') {
+    return preset;
+  }
+
+  const { author_discord_id, ...rest } = preset;
+
+  // Anonymous callers learn nothing about the author beyond the display name,
+  // not even whether they are looking at their own preset.
+  if (!viewer.isAuthenticated) {
+    return rest;
+  }
+
+  const isOwner =
+    viewer.userDiscordId !== undefined && author_discord_id === viewer.userDiscordId;
+
+  return {
+    ...rest,
+    ...(isOwner || viewer.isModerator ? { author_discord_id } : {}),
+    is_owner: isOwner,
   };
 }
 

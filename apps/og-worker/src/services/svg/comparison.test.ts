@@ -2,11 +2,18 @@
  * Comparison OG tests — the 15E band adapter (a qualified acceptance).
  */
 import { describe, it, expect } from 'vitest';
-import { generateComparisonOG } from './comparison';
+import { generateComparisonOG, COMPARISON_MAX_DYES } from './comparison';
 import { dyeService } from './dye-helpers';
 
 const dyes = dyeService.getAllDyes();
 const sid = (i: number): number => dyes[i].stainID ?? dyes[i].id;
+
+/** band.ts's mark clip-path id carries a module-level call counter
+ * (`ogm7b`, `ogm8b`, …) that is cosmetic — it exists so multiple cards
+ * embedded on one page never collide on an SVG id — not content, so a
+ * byte-identical-output comparison across two `generate*OG` calls in the
+ * same test needs it normalised out first. */
+const normalizeMarkUid = (svg: string): string => svg.replace(/ogm\d+/g, 'ogmX');
 
 describe('generateComparisonOG (15E band)', () => {
   it('the closest pair leads, adjacent and widened', () => {
@@ -45,5 +52,20 @@ describe('generateComparisonOG (15E band)', () => {
   it('fewer than two resolvable dyes renders the neutral state', () => {
     const svg = generateComparisonOG({ dyeIds: [999999] });
     expect(svg).toContain('NOT FOUND');
+  });
+
+  // 2026-08-29 FINDING-024 (OG-4, ruling S7-R17): pins COMPARISON_MAX_DYES
+  // to what the render actually does, not just to itself — og-data-generator.ts
+  // trusts this constant to know how many ids the emitted image URL needs to
+  // carry. If a future edit changed the `.slice(0, N)` above to a literal
+  // number instead of the exported constant, this is what would catch the
+  // drift (the shared-constant import cannot, by itself, catch a hand-edit
+  // that stops using it).
+  it('ids past COMPARISON_MAX_DYES render byte-identically to leaving them off', () => {
+    const ids = [sid(0), sid(5), sid(50), sid(90)];
+    expect(ids.length).toBe(COMPARISON_MAX_DYES);
+    const exact = normalizeMarkUid(generateComparisonOG({ dyeIds: ids }));
+    const withExtra = normalizeMarkUid(generateComparisonOG({ dyeIds: [...ids, sid(10), sid(20)] }));
+    expect(withExtra).toBe(exact);
   });
 });
