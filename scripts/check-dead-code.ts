@@ -14,6 +14,8 @@
  * require a reason; the two categories are reported separately so the list
  * that "someone eventually questions" doesn't conflate deletable with
  * load-bearing.
+ *
+ * @entrypoint No importer — the root `dead-code:check` script runs this directly, and tests reach it via `test:scripts`.
  * Spec: docs/superpowers/specs/2026-09-01-dead-code-guardrails-design.md
  */
 import { execFileSync } from 'node:child_process';
