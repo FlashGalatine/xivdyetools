@@ -16,9 +16,11 @@ Theme of this cycle: **the code has drifted from the written privacy promises** 
 
 | ID | Credential | Rotated? | Revoked? |
 |---|---|---|---|
-| FINDING-030 | `CLOUDFLARE_API_TOKEN` (CI) — only if the live token carries KV/D1/R2 Edit; re-issue with Scripts/Routes/Pages Edit | no | no |
+| FINDING-030 | `CLOUDFLARE_API_TOKEN` (CI) — was over-scoped, not leaked | **n/a — resolved 2026-09-01 by trimming the live token in place** (Workers R2 Storage and Workers KV Storage Edit removed; no D1 row existed). Same token value, so no re-issue, no GitHub secret change and nothing to revoke. | n/a |
 
-No finding leaked a secret; nothing else needs rotation.
+No finding leaked a secret; nothing needs rotation. FINDING-030 was scope, not exposure — which is
+why trimming in place was the right remedy and a rotation would have added risk without adding
+safety.
 
 ## Catalog
 
@@ -121,10 +123,10 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-023 | FIXED 2026-08-30 — all four units carry a wrangler-config invariant test (image-worker also refuses a `*.workers.dev` hostname in code) | efd495a4, b14cade9, 519c80da, 96920c5a, 71181a8f |
 | FINDING-003 | FIXED 2026-08-30 (Sprint 2, oauth 3.0.0) — `/auth/refresh` removed | 50c283b9 |
 | FINDING-022 | FIXED 2026-08-30 — `no-store` on every dispatched response | 50c283b9 |
-| FINDING-001 | CODE FIXED 2026-08-30 — OPEN until migration `0001` is hand-run after the 3.0.0 deploy | cdd53fbf |
+| FINDING-001 | FIXED 2026-09-01 — migration `0001` applied to production after the 3.0.0 deploy; the roster table (5 rows) and `users.avatar_url` are gone | cdd53fbf + hand-run migration |
 | FINDING-002 | FIXED 2026-08-30 (claims trimmed; sign-in record disclosed + deletion route; dead readers gone — types field → Sprint 11) | cdd53fbf, 114f6dde |
 | FINDING-012 | FIXED 2026-08-30 (all three units) — fail-open is never silent (console.warn fallback), the Cloudflare binding is validated at construction | b14cade9, b5d4c53b, 3f5dc8e2, 2bf2a5cb |
-| FINDING-007 | FIXED 2026-08-30 (Sprint 3, discord-worker 5.1.0) — needs the post-deploy Upstash secret deletion | 6c14889f, d28f76a4, f5d5f596, 4d734c8c, fe86a881 |
+| FINDING-007 | FIXED 2026-08-30 (Sprint 3, discord-worker 5.1.0); the post-deploy Upstash secret deletion completed 2026-09-01 — nothing outstanding | 6c14889f, d28f76a4, f5d5f596, 4d734c8c, fe86a881 |
 | FINDING-008 | FIXED 2026-08-30 | 2041ac39, 886d46a1, f5d5f596, 1a0cf89f |
 | FINDING-019 | FIXED 2026-08-30 | dfc6de47 |
 | FINDING-020 | FIXED 2026-08-30 | 6c14889f, d28f76a4 |
@@ -134,27 +136,38 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-009 | FIXED 2026-08-30 (Sprint 6, web-app: images session-only, stored blobs purged, e2e guard inverted) | 73fbf59f, c84d4263 |
 | FINDING-026 | FIXED 2026-08-30 | 2ffe6d13 |
 | FINDING-027 | FIXED 2026-08-30 | 2ffe6d13 |
-| FINDING-024 | FIXED 2026-08-30 (Sprint 7, og-worker 2.4.0; query *and* path axes) — enumeration of distinct ids still costs a render, bounded by the WAF rule, which stays an unticked dashboard action | c6bd962b, 9b2f4ca3, e2bdeec6, e2e9ca6b, 636e42ec, ebdc49ed, e9b6f471 |
+| FINDING-024 | FIXED 2026-08-30 (Sprint 7, og-worker 2.4.0; query *and* path axes) — enumeration of distinct ids still costs a render, now bounded by the WAF rule deployed 2026-09-01 (300 req/10 s per IP, Block — the Free plan offers no Log action) | c6bd962b, 9b2f4ca3, e2bdeec6, e2e9ca6b, 636e42ec, ebdc49ed, e9b6f471 |
 | FINDING-025 | FIXED 2026-08-31 (logger 2.1.1) — array items + free text scanned; three further leaks found in review (aliased references, a fail-open budget, DAG data loss) closed with it | 425cd1d0, 617c907e, b3800667, b1ec25aa |
-| FINDING-028 | PARTIAL — code FIXED 2026-08-31 (beta env + separate token, no fallback, named guard); OPEN until the maintainer mints the token and homes the production one in its environment | ae9ef136, 892f1b0e, 2277ff35, febf54ce, 1c8a5725 |
+| FINDING-028 | FIXED 2026-08-31 — beta env + separate token, no fallback, named guard (code); token minted on the `beta` environment and `CLOUDFLARE_API_TOKEN` moved off repository scope onto `production`, verified live and by a successful beta deploy | ae9ef136, 892f1b0e, 2277ff35, febf54ce, 1c8a5725 |
 | FINDING-029 | FIXED 2026-08-31 — directory allowlists replaced by value-anchored rules; tree + 948-commit history re-scanned clean (zero real secrets); GitHub secret scanning + push protection verified already enabled | 6206e5b5, c0550334, 55ff3852 |
 | FINDING-031 | FIXED 2026-08-31 (Sprint 13, stoat-worker 0.2.3) — ids and message content out of the logs; two further sites found by sweeping (the admin roster at `info`, and unregistered commands echoing the user's own token) | 25285961 |
-| FINDING-030 | OPEN — Sprint 0, conditional: inspect the live CI token's scopes and re-issue only if it carries KV/D1/R2 Edit (maintainer) | — |
+| FINDING-030 | FIXED 2026-09-01 — the live CI token was trimmed in place: Workers R2 Storage and Workers KV Storage Edit removed, Scripts/Pages/Routes retained; verified by a successful deploy afterwards | — (dashboard + Sprint 13 runbook fix) |
 
-**Remediation complete as of 2026-08-31: 28 of 31 findings FIXED**, and the three that remain need
-no product code — a database migration, a minted token, and a token-scope check respectively:
-**FINDING-001** (code fixed; the oauth migration `0001` must be hand-run *after* the 3.0.0 deploy),
-**FINDING-028** (partial: mint the `beta` Cloudflare token, then home `CLOUDFLARE_API_TOKEN` in the
-`production` environment and delete the repository copy), and **FINDING-030** (inspect the live CI
-token; re-issue only if it still carries KV/D1/R2 Edit — its runbook half was corrected in Sprint 13,
-so nothing in the repo blocks it).
+**Remediation COMPLETE as of 2026-09-01: all 31 findings FIXED**, the branch is merged
+(PR #152 → `15695107`, 2026-09-01 00:16 UTC; all eight deploy workflows green, CI green, and
+`@xivdyetools/auth` 2.0.0 / `logger` 2.1.1 / `worker-kit` 1.2.0 published over OIDC), and every
+out-of-code step is done — nothing is deferred and nothing is waiting on a future release.
 
-**"FIXED" does not mean "nothing left to do."** Four closed findings carry a step outside the code:
-**005** and **018** need hand-run migrations `0012` and `0013` (0013 **before** the merge, since it
-auto-deploys moderation-worker 1.6.0), **007** needs the two Upstash secrets deleted after the
-discord-worker deploy, and **024** leaves a WAF rate-limiting rule as a dashboard action. Every one
-of them is in [`docs/operations/POST_MERGE_CHECKLIST.md`](../../operations/POST_MERGE_CHECKLIST.md),
-which is the list to work from on merge day — not this table.
+Closed after the merge: **FINDING-001** (migration `0001` applied once the 3.0.0 deploy was live —
+the roster table's 5 rows and `users.avatar_url` are gone, verified), **FINDING-028** (beta token on
+its own GitHub environment; `CLOUDFLARE_API_TOKEN` moved off repository scope onto `production`),
+**FINDING-007** (Upstash secrets deleted), **FINDING-024** (WAF rate-limiting rule deployed) and
+**FINDING-030** (the CI token trimmed in place — R2 and KV Edit removed, verified by a successful
+deploy afterwards).
+
+**Verified in production after the deploy**, against this audit's own acceptance criteria:
+`og.xivdyetools.app/og/harmony/102/complementary.png?x=1` → 404 and the clean URL → 200 `image/png`,
+a non-canonical path → 400 (FINDING-024, both axes); a bogus `/assets/*.js` → 404 `no-store`
+(FINDING-027); `oauth` and `presets-api` answering `/health` 200 — which is the fail-closed gate
+reporting that every security binding resolved, since a missing one makes `/health` itself 500
+(FINDING-013); and `X-RateLimit-Limit: 65` from api-worker's native binding.
+
+**Every out-of-code step is now done too**, which is the part a status table usually hides:
+**005**/**018**'s migrations `0012`/`0013` applied 2026-08-31, **001**'s migration `0001` applied
+2026-09-01 after the 3.0.0 deploy, **007**'s Upstash secrets deleted 2026-09-01, **024**'s WAF
+rate-limiting rule deployed 2026-09-01, and **028**'s credential split completed 2026-08-31. The
+one remaining item is FINDING-030's conditional token check. Work from
+[`docs/operations/POST_MERGE_CHECKLIST.md`](../../operations/POST_MERGE_CHECKLIST.md), not this table.
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.

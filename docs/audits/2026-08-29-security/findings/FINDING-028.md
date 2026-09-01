@@ -11,8 +11,20 @@
 - Give beta its own `beta` environment with its own, separate Cloudflare token (scoped to the beta Worker names / Pages project via the environment), and keep the production token only in the `production` environment.
 
 ## Status
-PARTIAL — code FIXED 2026-08-31 (`ae9ef136`, `892f1b0e`, `2277ff35`, `febf54ce`, `1c8a5725`);
-**OPEN until the maintainer creates the environment and token.**
+FIXED 2026-08-31 — code (`ae9ef136`, `892f1b0e`, `2277ff35`, `febf54ce`, `1c8a5725`) **and**
+credentials. The maintainer created the `beta` GitHub environment holding its own
+`CLOUDFLARE_API_TOKEN_BETA`, and moved `CLOUDFLARE_API_TOKEN` off repository scope onto the
+`production` environment — which is the half that actually closes the finding, since a
+repository-scoped production token stays readable by every beta job no matter what the beta
+workflows declare. Verified live in both directions: a beta deploy ran green afterwards
+(`90523164487`), and a production deploy (`33462775549`) proved the relocated token still
+reaches the eight production workflows.
+
+Worth recording, because the order of those two steps is a live hazard: doing only the first
+half — minting the beta token without homing the production one — leaves the exposure fully
+open, while doing only the second breaks all eight production deploys. This was caught mid-flight
+here: after the token work `CLOUDFLARE_API_TOKEN` was briefly absent from *both* repository scope
+and the `production` environment, and was regenerated into `production`.
 
 The three beta workflows now declare `environment: beta` and authenticate with
 `secrets.CLOUDFLARE_API_TOKEN_BETA`, with **no fallback** to the production credential — a

@@ -47,14 +47,14 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         exist). **`d1_migrations` is empty** — every file was applied with `d1 execute --file`, which
         is this project's documented procedure; **never run `wrangler d1 migrations apply`** against
         this database, it would replay `002`–`0010` and fail on the first duplicate column.
-      - **`0012_submission_events_text_edit.sql` exists since 2026-08-30 (presets-api 2.2.0, security
+      - ✅ **DONE 2026-08-31** (6 queries; `submission_events` intact at 0 rows, the rebuilt CHECK admits `text_edit`). **`0012_submission_events_text_edit.sql` exists since 2026-08-30 (presets-api 2.2.0, security
         audit 2026-08-29 Sprint 1 / FINDING-005) and is a HAND-RUN step:** it rebuilds `submission_events`
         to admit the new `text_edit` kind (SQLite cannot alter a CHECK). Apply with
         `wrangler d1 execute xivdyetools-presets --remote --file=migrations/0012_submission_events_text_edit.sql`
         from `apps/presets-api`, checking `SELECT COUNT(*) FROM submission_events` before and after.
         Order does not matter for safety — before the 2.2.0 deploy is cleanest; applied late, the new
         per-user text-edit cap is simply inert until it lands. Nothing else in `0012+` exists.
-      - **oauth (`xivdyetools-users` D1) — `apps/oauth/migrations/0001_drop_xivauth_characters.sql` exists
+      - ✅ **DONE 2026-09-01**, after the 3.0.0 deploy went live with the merge. The roster table held **5 rows**; it and `users.avatar_url` are gone, verified (`SELECT COUNT(*) FROM xivauth_characters` now errors *no such table*; `PRAGMA table_info(users)` shows no `avatar_url`), and oauth answers `/health` 200 and `/auth/me` 401 against the new schema. Applied with two `--command` statements rather than `--file`: D1's bulk-`/import` endpoint returned `Authentication error [code: 10000]` for this database while the query endpoint worked normally on the same credentials and wrangler build. **The rollback trap stands — never roll oauth below 3.0.0.** Original instructions: **oauth (`xivdyetools-users` D1) — `apps/oauth/migrations/0001_drop_xivauth_characters.sql` exists
         since 2026-08-30 (oauth 3.0.0, security audit 2026-08-29 Sprint 2 / FINDING-001 + 002) and is a
         HAND-RUN step AFTER the 3.0.0 deploy is live:** `DROP TABLE xivauth_characters` + `ALTER TABLE users
         DROP COLUMN avatar_url`. Run the header's precondition queries first, then
@@ -66,7 +66,7 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
         has run, never roll the worker back below 3.0.0** — roll forward, or restore the schema first
         (`ALTER TABLE users ADD COLUMN avatar_url TEXT;` + recreate `xivauth_characters` from
         `git show c7c1782b:apps/oauth/schema/users.sql`).
-      - **presets-api D1 — `0013_moderation_log_user_actions.sql` exists since 2026-08-30 (security audit
+      - ✅ **DONE 2026-08-31, before the merge** (9 queries; `preset_id` now nullable and `target_discord_id` present, verified with `PRAGMA table_info`). **`0013_moderation_log_user_actions.sql` exists since 2026-08-30 (security audit
         2026-08-29 Sprint 4 / FINDING-018) and is a HAND-RUN step BEFORE the moderation-worker 1.6.0
         deploy — i.e. before merging `security-audit-2026-08-29`, since `deploy-moderation-worker.yml`
         runs on push to `main` and the merge auto-deploys 1.6.0:** the migration is safe against what is
@@ -100,7 +100,7 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       the REST API with **Deployment branches: `main` only** (custom branch policy, `main`/branch).
       **Required reviewers were NOT added** — every merge-day deploy + publish job would wait for
       a click; add them under Settings → Environments → production if you want that gate.
-- [ ] **Create the `beta` GitHub environment + `CLOUDFLARE_API_TOKEN_BETA`, and move
+- [x] **DONE 2026-08-31 — Create the `beta` GitHub environment + `CLOUDFLARE_API_TOKEN_BETA`, and move
       `CLOUDFLARE_API_TOKEN` out of the repository secret store** (2026-08-29 FINDING-028) —
       `deploy-discord-worker-beta.yml`, `deploy-og-worker-beta.yml` and `deploy-web-app-beta.yml`
       now declare `environment: beta` and read `secrets.CLOUDFLARE_API_TOKEN_BETA` instead of the
@@ -165,8 +165,16 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       `wrangler secret delete … --env production`, listed in §3): discord-worker
       `PRESET_API_SECRET` and `PERSPECTIVE_API_KEY`; presets-api `MODERATOR_CHANNEL_ID`
       (plus the four PAPI-16 dead vars already tracked there).
-  - [ ] **After the discord-worker 5.1.0 deploy is live** (FINDING-007) — the worker no longer
-        reads Upstash, so retire the two now-orphaned secrets and confirm the new bindings:
+  - [x] **DONE 2026-09-01** — both Upstash secrets deleted from discord-worker production; the
+        dashboard's runtime variables list now ends at `SUBMISSION_LOG_CHANNEL_ID` with no
+        `UPSTASH_*` entries, which is where they would sort. Confirmed afterwards that
+        `https://bot.xivdyetools.app/health` answers **200** — a meaningful check rather than a
+        formality, because Sprint 3 made production refuse *every* request, `/health` included,
+        while any `RL_*` binding is missing. A healthy response therefore reports that all six
+        native tiers are bound and the Upstash removal left nothing dangling.
+        Original instructions: **After the discord-worker 5.1.0 deploy is live** (FINDING-007) —
+        the worker no longer reads Upstash, so retire the two now-orphaned secrets and confirm the
+        new bindings:
         ```bash
         # from apps/discord-worker
         wrangler secret delete UPSTASH_REDIS_REST_URL --env production
@@ -521,6 +529,24 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
 ### Cloudflare
 - [ ] Confirm the `[[ratelimits]]` bindings exist on every production worker (dashboard →
       Worker → Settings → Bindings) and that KV rate-limit namespaces are now idle.
+- [x] **DONE 2026-09-01** — rule `og-worker render bound (FINDING-024)` is deployed and Active on
+      the `xivdyetools.app` zone: *Hostname equals `og.xivdyetools.app` and URI Path starts with
+      `/og/`*, 300 requests / 10 s per IP, Block, 10 s mitigation. Verified afterwards that a
+      canonical render still returns `200 image/png` and the worker's own query guard still 404s,
+      so the WAF layer sits above the Sprint 7 guards without touching legitimate traffic.
+      **The "start on Log" advice below could not be followed, and the reason is worth keeping:**
+      this zone is on the **Free plan**, where rate limiting is Block-only, IP-only, a fixed 10 s
+      period, a fixed 10 s mitigation timeout, and **one rule for the entire zone** (Log and
+      Managed Challenge begin at Pro). That 10 s timeout is what makes Block acceptable here — a
+      false positive returns 429 to a single IP for ten seconds and clears itself, rather than
+      locking out a crawler fleet. 300/10 s is 30 req/s sustained from one address, which no
+      link-preview fetcher does (Discord and X cache the image at their own edge), so the ceiling
+      should only ever meet an enumerator. **Tune by watching, not by dry run:** Security → Events
+      filtered to this rule still records every firing. Zero firings means the ceiling is doing its
+      job; a handful of IPs at high volume is the enumeration case working as intended; *many
+      distinct IPs at modest volume* is the signal to raise the threshold. **Note the zone's single
+      rule slot is now spent** — anything else needing rate limiting on this zone requires Pro.
+      Original guidance, kept for the reasoning:
 - [ ] og-worker (2026-08-29 FINDING-024, OG-4): **Security → WAF → Rate limiting rules** — add a
       rule scoped to `http.host eq "og.xivdyetools.app" and http.request.uri.path starts_with
       "/og/"`. (**Not** `xivdyetools.app/og/*` — that host/path combination is never routed to
