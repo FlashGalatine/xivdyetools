@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Three generic validators — `validateStringLength`, `validateArray`, `validateEnum`
+  (`services/validation-service.ts`) — and two unused type aliases, `ModerationStatus`
+  (same file) and `ErrorCodeType` (`utils/api-response.ts`). Dead-code sweep
+  (`docs/audits/2026-09-01-dead-code`, DEAD-010): 108 lines with no call sites and no tests
+  either. The per-field validators further down the same file are what the handlers use.
+
 ### Changed
 
 - **Schema: `moderation_log.preset_id` is nullable and the table carries `target_discord_id`** (docs/audits/2026-08-29-security, FINDING-018 — migration `0013_moderation_log_user_actions.sql`, **hand-run**, see its header). A ban is a user-level action with no preset, so `preset_id NOT NULL` made it impossible to log one: `xivdyetools-moderation-worker` wrote `banned_users` and flipped the author's `approved` presets to `hidden` without leaving a single row here, and a moderator looking at `GET /api/v1/moderation/:presetId/history` had no way to see why a preset had disappeared from the gallery. The rows are written by moderation-worker 1.6.0 itself, in the same atomic batch as the ban — one `ban` / `unban` per user action plus one `hide` / `restore` per preset it actually flips — so **no presets-api code changed and no presets-api deploy is required**; run the migration before deploying moderation-worker 1.6.0. Reading side effects: `/moderation/:presetId/history` (filters on `preset_id`) now also returns the `hide` / `restore` rows that explain a hidden preset, and `/moderation/stats`'s `actions_last_week` counts the ban-related rows like any other. Existing rows are unchanged — the rebuild copies every one of them, `target_discord_id` is NULL on all of them, and the three indexes are re-created. `@xivdyetools/types`' `ModerationLogEntry` still types `preset_id` as `string` and `action` as the five old values; widening it is tracked separately.

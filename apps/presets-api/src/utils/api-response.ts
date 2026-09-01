@@ -47,8 +47,6 @@ export const ErrorCode = {
   DATABASE_ERROR: 'DATABASE_ERROR',
 } as const;
 
-export type ErrorCodeType = (typeof ErrorCode)[keyof typeof ErrorCode];
-
 // ============================================
 // RESPONSE TYPES
 // ============================================

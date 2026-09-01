@@ -50,121 +50,6 @@ export const MODERATION_VALIDATION_RULES = {
 } as const;
 
 // ============================================================================
-// Generic Validation Helpers
-// ============================================================================
-
-/**
- * Validate a string field with length constraints
- *
- * @param value - The value to validate
- * @param fieldName - Human-readable field name for error messages
- * @param options - Validation options
- * @returns Error message or null if valid
- */
-export function validateStringLength(
-  value: unknown,
-  fieldName: string,
-  options: {
-    minLength?: number;
-    maxLength?: number;
-    required?: boolean;
-  }
-): string | null {
-  const { minLength, maxLength, required = true } = options;
-
-  // Check type
-  if (typeof value !== 'string') {
-    if (required) {
-      return `${fieldName} must be a string`;
-    }
-    return null;
-  }
-
-  // Check required
-  if (required && value.length === 0) {
-    return `${fieldName} is required`;
-  }
-
-  // Check min length
-  if (minLength !== undefined && value.length < minLength) {
-    return `${fieldName} must be at least ${minLength} characters`;
-  }
-
-  // Check max length
-  if (maxLength !== undefined && value.length > maxLength) {
-    return `${fieldName} must be at most ${maxLength} characters`;
-  }
-
-  return null;
-}
-
-/**
- * Validate an array field with length and element constraints
- *
- * @param value - The value to validate
- * @param fieldName - Human-readable field name for error messages
- * @param options - Validation options
- * @returns Error message or null if valid
- */
-export function validateArray<T>(
-  value: unknown,
-  fieldName: string,
-  options: {
-    minLength?: number;
-    maxLength?: number;
-    elementValidator?: (element: T, index: number) => string | null;
-  }
-): string | null {
-  const { minLength, maxLength, elementValidator } = options;
-
-  // Check type
-  if (!Array.isArray(value)) {
-    return `${fieldName} must be an array`;
-  }
-
-  // Check min length
-  if (minLength !== undefined && value.length < minLength) {
-    return `${fieldName} must have at least ${minLength} items`;
-  }
-
-  // Check max length
-  if (maxLength !== undefined && value.length > maxLength) {
-    return `${fieldName} must have at most ${maxLength} items`;
-  }
-
-  // Validate each element
-  if (elementValidator) {
-    for (let i = 0; i < value.length; i++) {
-      const error = elementValidator(value[i] as T, i);
-      if (error) {
-        return error;
-      }
-    }
-  }
-
-  return null;
-}
-
-/**
- * Validate a value against an enum/list of valid values
- *
- * @param value - The value to validate
- * @param fieldName - Human-readable field name for error messages
- * @param validValues - Array of valid values
- * @returns Error message or null if valid
- */
-export function validateEnum<T>(
-  value: unknown,
-  fieldName: string,
-  validValues: readonly T[]
-): string | null {
-  if (!validValues.includes(value as T)) {
-    return `${fieldName} must be one of: ${validValues.join(', ')}`;
-  }
-  return null;
-}
-
-// ============================================================================
 // Character Rules (FINDING-019 / FINDING-028, 2026-08-21 security audit)
 // ============================================================================
 //
@@ -430,12 +315,6 @@ export function validateSecondaryCategories(
 // ============================================================================
 // Moderation-Specific Validators
 // ============================================================================
-
-/**
- * Type for moderation-allowed statuses (subset of PresetStatus)
- * Note: 'hidden' is intentionally excluded as it cannot be set via moderation
- */
-export type ModerationStatus = (typeof MODERATION_VALIDATION_RULES.validStatuses)[number];
 
 /**
  * Validate a moderation status
