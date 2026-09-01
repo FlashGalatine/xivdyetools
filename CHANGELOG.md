@@ -19,6 +19,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   aggregate view of coverage against the 90 %/80 % baselines, and the `coverage-testing` skill
   assumes one exists. It reads each workspace's `coverage/coverage-summary.json` and skips
   workspaces that have none, so run the coverage suites first.
+- Dead-code reachability gate: `scripts/check-dead-code.ts` (`pnpm dead-code:check`, self-tested by
+  `pnpm test:scripts`) finds modules, exports, and class members reachable only from test files —
+  the blind spot knip 6 has by design (it treats every test file as an entry) and by omission (it
+  dropped its `classMembers` rule entirely). Reachability is judged at three granularities (file /
+  export / member); three exemption tags — `@testonly <reason>`, `@entrypoint <reason>`, and the
+  no-reason-required `@public` for published `@xivdyetools/*` API with no in-repo consumer — let
+  production code opt out where it is deliberately test-only, reached only by a convention static
+  analysis can't see, or intentionally un-consumed. Both commands now run in CI
+  (`.github/workflows/ci.yml`), unconditionally and repo-wide rather than affected-filtered, right
+  after `Type-check (affected)`: the self-test first, then the checker.
+- `pnpm type-check:scripts` (`tsc -p scripts/tsconfig.json`) permanently type-checks the root
+  `scripts/` directory — earlier rounds of the reachability gate's own development used throw-away
+  tsconfigs for this — and runs in CI ahead of the two steps above. Added `@types/node` as a root
+  devDependency (`^26.4.0`, matching the version eleven workspaces already declare) so the new
+  `scripts/tsconfig.json` has no need of a versioned `typeRoots` path into the pnpm store.
 
 ### Changed
 
