@@ -165,8 +165,16 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       `wrangler secret delete … --env production`, listed in §3): discord-worker
       `PRESET_API_SECRET` and `PERSPECTIVE_API_KEY`; presets-api `MODERATOR_CHANNEL_ID`
       (plus the four PAPI-16 dead vars already tracked there).
-  - [ ] **After the discord-worker 5.1.0 deploy is live** (FINDING-007) — the worker no longer
-        reads Upstash, so retire the two now-orphaned secrets and confirm the new bindings:
+  - [x] **DONE 2026-09-01** — both Upstash secrets deleted from discord-worker production; the
+        dashboard's runtime variables list now ends at `SUBMISSION_LOG_CHANNEL_ID` with no
+        `UPSTASH_*` entries, which is where they would sort. Confirmed afterwards that
+        `https://bot.xivdyetools.app/health` answers **200** — a meaningful check rather than a
+        formality, because Sprint 3 made production refuse *every* request, `/health` included,
+        while any `RL_*` binding is missing. A healthy response therefore reports that all six
+        native tiers are bound and the Upstash removal left nothing dangling.
+        Original instructions: **After the discord-worker 5.1.0 deploy is live** (FINDING-007) —
+        the worker no longer reads Upstash, so retire the two now-orphaned secrets and confirm the
+        new bindings:
         ```bash
         # from apps/discord-worker
         wrangler secret delete UPSTASH_REDIS_REST_URL --env production

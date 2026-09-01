@@ -124,7 +124,7 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-001 | FIXED 2026-09-01 — migration `0001` applied to production after the 3.0.0 deploy; the roster table (5 rows) and `users.avatar_url` are gone | cdd53fbf + hand-run migration |
 | FINDING-002 | FIXED 2026-08-30 (claims trimmed; sign-in record disclosed + deletion route; dead readers gone — types field → Sprint 11) | cdd53fbf, 114f6dde |
 | FINDING-012 | FIXED 2026-08-30 (all three units) — fail-open is never silent (console.warn fallback), the Cloudflare binding is validated at construction | b14cade9, b5d4c53b, 3f5dc8e2, 2bf2a5cb |
-| FINDING-007 | FIXED 2026-08-30 (Sprint 3, discord-worker 5.1.0) — needs the post-deploy Upstash secret deletion | 6c14889f, d28f76a4, f5d5f596, 4d734c8c, fe86a881 |
+| FINDING-007 | FIXED 2026-08-30 (Sprint 3, discord-worker 5.1.0); the post-deploy Upstash secret deletion completed 2026-09-01 — nothing outstanding | 6c14889f, d28f76a4, f5d5f596, 4d734c8c, fe86a881 |
 | FINDING-008 | FIXED 2026-08-30 | 2041ac39, 886d46a1, f5d5f596, 1a0cf89f |
 | FINDING-019 | FIXED 2026-08-30 | dfc6de47 |
 | FINDING-020 | FIXED 2026-08-30 | 6c14889f, d28f76a4 |
@@ -161,10 +161,11 @@ a non-canonical path → 400 (FINDING-024, both axes); a bogus `/assets/*.js` �
 reporting that every security binding resolved, since a missing one makes `/health` itself 500
 (FINDING-013); and `X-RateLimit-Limit: 65` from api-worker's native binding.
 
-**"FIXED" still does not mean "nothing left to do."** One closed finding carries a step outside the
-code that is **not yet done**: **007** needs the two Upstash secrets deleted now the discord-worker
-deploy is live. (**024**'s WAF rate-limiting rule was deployed 2026-09-01, and **005**/**018**'s
-migrations `0012` and `0013` were applied 2026-08-31.) Work from
+**Every out-of-code step is now done too**, which is the part a status table usually hides:
+**005**/**018**'s migrations `0012`/`0013` applied 2026-08-31, **001**'s migration `0001` applied
+2026-09-01 after the 3.0.0 deploy, **007**'s Upstash secrets deleted 2026-09-01, **024**'s WAF
+rate-limiting rule deployed 2026-09-01, and **028**'s credential split completed 2026-08-31. The
+one remaining item is FINDING-030's conditional token check. Work from
 [`docs/operations/POST_MERGE_CHECKLIST.md`](../../operations/POST_MERGE_CHECKLIST.md), not this table.
 
 ## Next steps
