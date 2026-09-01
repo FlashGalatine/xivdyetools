@@ -299,25 +299,20 @@ Both APIs are unchanged.
 
 ---
 
-### `LocalStorageCacheBackend` (web-app)
+### `LocalStorageCacheBackend` (web-app) — COMPLETE
 
-| Field       | Value |
-|-------------|-------|
-| Deprecated  | ~2025-12 |
-| Remove by   | TBD |
-| Severity    | Low |
-
-**What it is:** A localStorage-based cache backend for the Universalis API service in the web-app.
-The `IndexedDBCacheBackend` is the preferred replacement, offering larger storage capacity and better
-performance for structured data.
-
-**Migration:** Use `IndexedDBCacheBackend` (already the default in `api-service-wrapper.ts`). Remove
-all references to `LocalStorageCacheBackend`.
+A localStorage-based cache backend for the web-app's Universalis service, superseded by
+`IndexedDBCacheBackend` (the default in `api-service-wrapper.ts`).
 
 **Removal checklist:**
-- [ ] Confirm `LocalStorageCacheBackend` is not used in any active code paths
-- [ ] Remove the class from the web-app
-- [ ] Clean up any associated localStorage keys if needed
+- [x] Confirm `LocalStorageCacheBackend` is not used in any active code paths
+- [x] Remove the class from the web-app
+- [x] Clean up any associated localStorage keys if needed
+
+Closed 2026-09-01 (`docs/audits/2026-09-01-dead-code`, DEAD-033): the class was already gone from
+the source — `git ls-files apps/web-app | xargs grep -l LocalStorageCacheBackend` returns only
+`CHANGELOG.md` — but this section still read as an open deprecation, so a second audit spent time
+re-verifying work that was already done.
 
 ---
 

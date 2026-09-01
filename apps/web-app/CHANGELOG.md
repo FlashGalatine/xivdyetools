@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Six v3-era Tailwind utility overrides in `styles/themes.css` that no template carries any more —
+  `.text-green-600`/`.dark:text-green-400`, `.bg-blue-100`, `.text-blue-900`,
+  `.dark:text-blue-100`, `.border-blue-200`/`.dark:border-blue-800`, `.bg-gradient-to-r`
+  (`docs/audits/2026-09-01-dead-code`, DEAD-008). `.dark:bg-blue-900` is still in use and stays.
+
 ### Security — 2026-08-30
 
 - **The Palette Extractor no longer keeps your images — and deletes the ones it already kept** (`docs/audits/2026-08-29-security` FINDING-009). Every image the tool saw — file upload, drag-drop, Ctrl+V paste, camera capture — was written to IndexedDB (`image_cache`, up to 8 MiB) and restored *and re-extracted* the next time the tool was opened, so on a shared or public machine the previous person's pasted screenshot was the next visitor's first view; neither "Reset settings" nor signing out touched it, and `PRIVACY.md` said images were "discarded when you clear the image, close the tab or reload", which was true of only the first of those three. The persistence is gone: an image now lives in the page's memory for the session and nothing about it is written to storage. The database version goes 2 → 3 and the upgrade drops the whole `image_cache` store, so anything a ≤ 5.0.0 visit left behind is purged the first time the app loads after this release (once per browser, price cache / palettes / settings untouched); the pre-OPT-012 `v3_matcher_image` copy in `localStorage` is deleted on mount rather than migrated. `PRIVACY.md` now states what the code does and lists what IndexedDB actually holds.
