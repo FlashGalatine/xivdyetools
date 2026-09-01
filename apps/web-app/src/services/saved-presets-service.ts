@@ -123,9 +123,4 @@ export class SavedPresetsService {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
-
-  static __reloadForTesting(): void {
-    this.loaded = false;
-    this.saved = [];
-  }
 }
