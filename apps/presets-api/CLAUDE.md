@@ -28,9 +28,10 @@ npm run db:seed              # tsx scripts/migrate-presets.ts (seed curated pres
 # Files under migrations/ are NOT applied by any script — run them by hand:
 npx wrangler d1 execute xivdyetools-presets --remote --file=./migrations/<name>.sql
 
-# 5.0 stainID data migration (one-off, data-dependent): dump the rows, generate the
-# UPDATEs with scripts/migrate-dyes-to-stainids.ts, then execute the emitted SQL —
-# usage header inside the script.
+# The 5.0 stainID data migration is DONE (ran 2026-08-28, re-verified 2026-09-01:
+# 0 legacy itemIDs across all 16 rows). scripts/migrate-dyes-to-stainids.ts was
+# removed with the client-side fallback it unblocked — recover it from git history
+# if a comparable one-off is ever needed.
 ```
 
 ### Setting Secrets
@@ -139,7 +140,7 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 
 | Secret | Purpose |
 |--------|---------|
-| `PERSPECTIVE_API_KEY` | Google Perspective API for ML toxicity scoring |
+| `PERSPECTIVE_API_KEY` | Google Perspective API for ML toxicity scoring. **⚠️ The service shuts down 2026-12-31** — delete this secret on or before that date, or FINDING-005's fail-closed branch queues every submission for manual review. With no key set the local word list decides, which is the intended degradation. See `DEPRECATIONS.md` |
 | `INTERNAL_WEBHOOK_SECRET` | Shared with discord-worker for `/webhooks/preset-submission` |
 | `CACHE_PURGE_API_TOKEN` | FINDING-018: API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone (the zone that serves `shots.xivdyetools.app`); pairs with the `CACHE_PURGE_ZONE_ID` **var** in `wrangler.toml` `[env.production]` (a zone id is config, not a secret). When set, every preview-image takedown purges the image URL from the edge cache and logs `[preview-image] cache purged …`. Absent → purge skipped, the object's one-day `s-maxage` is the only bound. Set on production 2026-08-21 |
 
@@ -229,7 +230,7 @@ Guards:
 ### Moderation Pipeline
 
 1. **Local profanity filter** (multi-language word lists in `data/profanity/`) — fast, runs first.
-2. **Perspective API** (optional) — ML toxicity scoring when `PERSPECTIVE_API_KEY` is set.
+2. **Perspective API** (optional) — ML toxicity scoring when `PERSPECTIVE_API_KEY` is set. **Sunsets 2026-12-31** (`DEPRECATIONS.md`); unset the key before then and this tier is skipped cleanly.
 3. **Manual review** — moderators approve/reject via `PATCH /moderation/:id/status`; `moderation_log` records the action.
 
 ### Preview Images (R2 + image-worker)

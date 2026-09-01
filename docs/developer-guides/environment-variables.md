@@ -166,7 +166,7 @@ Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`,
 | `JWT_SECRET` | ✅ Yes | Shared with OAuth worker |
 | `MODERATOR_IDS` | No | Comma-separated user IDs |
 | `BOT_SIGNING_SECRET` | No | HMAC signing key for bot request verification |
-| `PERSPECTIVE_API_KEY` | No | Google Perspective API for ML moderation |
+| `PERSPECTIVE_API_KEY` | No | Google Perspective API for ML moderation. **⚠️ Service shuts down 2026-12-31** — delete the secret before then; with it set and the API gone, every preset submission fails closed into the moderator queue (FINDING-005). See `DEPRECATIONS.md` |
 | `CACHE_PURGE_API_TOKEN` | No | API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone — enables single-file edge purge of deleted/replaced preview images (FINDING-018); pairs with the `CACHE_PURGE_ZONE_ID` **var** (see above). Without it the 1-day `s-maxage` is the bound. Set on production 2026-08-21 |
 | `INTERNAL_WEBHOOK_SECRET` | No | Shared secret for the `DISCORD_WORKER` service-binding notification call |
 

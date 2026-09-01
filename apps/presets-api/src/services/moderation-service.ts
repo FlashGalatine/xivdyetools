@@ -214,6 +214,20 @@ interface PerspectiveResponse {
   };
 }
 
+/**
+ * ⚠️ SUNSET 2026-12-31 — Google is shutting the Perspective API down
+ * (https://www.perspectiveapi.com/). See DEPRECATIONS.md.
+ *
+ * This matters *before* the date because of FINDING-005's fail-closed rule
+ * below: with a key configured and the service unable to answer, every
+ * submission resolves to `moderationUnavailable()` (`passed: false`) and goes
+ * to the moderator queue. Correct for an outage, wrong for a permanent
+ * shutdown — from 2027-01-01 it would queue everything, silently.
+ *
+ * The graceful path already exists: with no key configured this whole tier is
+ * skipped and the local word list decides. So delete the `PERSPECTIVE_API_KEY`
+ * production secret on or before 2026-12-31.
+ */
 const PERSPECTIVE_ENDPOINT = 'https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze';
 
 /**
