@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- `scripts/test-font-rendering.ts` — dead-code sweep (`docs/audits/2026-09-01-dead-code`,
+  DEAD-028). Nothing referenced it: no package script, no workflow, no doc. It had also gone
+  **wrong**: it still required `SpaceGrotesk-VariableFont_wght.ttf` and
+  `Onest-VariableFont_wght.ttf` in `src/fonts/`, which PR #148 replaced with static instances on
+  2026-08-29, so running it reported two required fonts missing and exited 1. The live gates are
+  `services/font-faces.test.ts` and `services/font-coverage.test.ts`; the CJK fallback ordering it
+  documented in prose is now asserted in `@xivdyetools/svg`'s `base.test.ts`.
+
 ## [5.1.0] - 2026-08-30
 
 ### Security — 2026-08-30

@@ -275,6 +275,31 @@ describe('svg/base.ts', () => {
       expect(FONTS.primary).toBe('Onest');
       expect(FONTS.mono).toBe('Fragment Mono');
     });
+
+    /**
+     * The CJK fallback order is not cosmetic and it is not interchangeable:
+     * - JP must precede SC. Both carry the shared kanji, so if SC wins the
+     *   lookup a Japanese player reads their own language in Chinese
+     *   letterforms (F-17, fixed 2026-08-20 by adding JP *in front*).
+     * - KR must follow SC. Noto Sans SC ships zero Hangul, so nothing is lost
+     *   by asking it first, and KR carries no Han the other two need.
+     * This rule used to live only in a prose comment and in
+     * `apps/discord-worker/scripts/test-font-rendering.ts`, a manual script
+     * nothing ran and which went stale (DEAD-028, 2026-09-01 dead-code audit).
+     * Asserting the order here is what actually holds it.
+     */
+    it('orders the CJK fallback JP → SC → KR in every family that carries it', () => {
+      const cjkFamilies = Object.entries(FONTS).filter(([, value]) => value.includes('Noto Sans'));
+      expect(cjkFamilies.length).toBe(4); // cjk, headerCjk, primaryCjk, monoCjk
+
+      for (const [key, value] of cjkFamilies) {
+        const noto = value
+          .split(',')
+          .map((f) => f.trim())
+          .filter((f) => f.startsWith('Noto Sans'));
+        expect(noto, key).toEqual(['Noto Sans JP', 'Noto Sans SC', 'Noto Sans KR']);
+      }
+    });
   });
 
   describe('num', () => {
