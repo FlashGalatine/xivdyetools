@@ -1197,3 +1197,99 @@ test('47. findTestOnlyExports: a reference existing only in an excluded referrer
   assert.ok(finding, 'expected a violation for helper4');
   assert.equal(finding?.testRefs, 1);
 });
+
+// ============================================================================
+// fix-4: the block tracker's regexes read the MASKED line, like its brace walk
+// ============================================================================
+
+test('48. attributeLinesToBlocks: a column-0 declaration inside a template literal does not resync the stack mid-class', () => {
+  const lines = [
+    'export class A {',
+    '  render(): string {',
+    '    return `',
+    // Column-0 and declaration-shaped, but it is template *content*, not
+    // code: TOP_LEVEL_RESYNC_RE matching it on the raw line would clear the
+    // stack while A is still open, un-attributing every later member of A.
+    'export const FOO = 1;',
+    '`;',
+    '  }',
+    '',
+    '  foo(): void {}',
+    '}',
+  ];
+  // The line is fully blanked by the mask, so the resync test never sees a
+  // declaration there in the first place.
+  const masked = maskSource(lines.join('\n')).split('\n');
+  assert.equal(masked.length, lines.length);
+  assert.equal(masked[3].trim(), '');
+  const blocks = attributeLinesToBlocks(lines);
+  // foo's own line (index 7) is still inside A.
+  assert.equal(blocks[7], 'A');
+});
+
+test('49. attributeLinesToBlocks: a `class` line inside a block comment does not claim the next real brace', () => {
+  const lines = [
+    '/*',
+    // Once the mask blanks this comment's own '{', a raw-line TYPE_BLOCK_RE
+    // match here leaves a bogus pendingName alive to be pushed by the NEXT
+    // real '{' -- Real's.
+    'class Ghost {',
+    '*/',
+    'export class Real {',
+    '  bar(): void {}',
+    '}',
+  ];
+  const masked = maskSource(lines.join('\n')).split('\n');
+  assert.equal(masked[1].trim(), '');
+  const blocks = attributeLinesToBlocks(lines);
+  // bar's own line (index 4) belongs to Real, the only class that exists.
+  assert.equal(blocks[4], 'Real');
+});
+
+test("50. findTestOnlyMembers: a template-embedded column-0 declaration in class A does not merge its member with class B's", () => {
+  const prodFile = 'src/template-decl.ts';
+  const testFile = 'src/template-decl.test.ts';
+  const prodText = [
+    'export class A {',
+    '  render(): string {',
+    '    return `',
+    'export const FOO = 1;',
+    '`;',
+    '  }',
+    '',
+    '  foo(): void {}',
+    '}',
+    '',
+    'class B {',
+    '  /**',
+    '   * @testonly only B is meant to be exempt',
+    '   */',
+    '  foo(): void {}',
+    '}',
+  ].join('\n');
+  const testText = ["import { A } from './template-decl';", 'new A().foo();'].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  // Reading the raw line, the template's column-0 'export const' resyncs the
+  // stack mid-class: A's own foo attributes to null, falls into the
+  // file-flat, name-only fallback, and is reported unqualified as 'foo'.
+  assert.equal(
+    result.violations.some((v) => v.name === 'A.foo'),
+    true,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:B.foo`),
+    true,
+  );
+  assert.equal(
+    result.testOnlyExempt.some((e) => e === `${prodFile}:A.foo`),
+    false,
+  );
+  assert.equal(
+    result.violations.some((v) => v.name === 'foo'),
+    false,
+  );
+});

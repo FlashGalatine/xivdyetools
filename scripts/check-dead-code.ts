@@ -823,13 +823,21 @@ export function maskSource(text: string): string {
  * line after it — so two defenses keep real code that merely *contains* an
  * unbalanced-looking brace from corrupting attribution:
  *
- * a. The brace walk runs over `maskSource(lines.join('\n'))`, not `lines`
+ * a. The whole walk runs over `maskSource(lines.join('\n'))`, not `lines`
  *    directly, so a brace inside a comment, string, or template is never
- *    seen as a real one. `lines` itself (unmasked) is still what
- *    `TYPE_BLOCK_RE` matches against and what callers use for everything
- *    else (member-name capture, docblock lookup) — masking only changes
- *    what the brace *count* sees, never the text this function returns
- *    positions into.
+ *    seen as a real one — and neither is a *declaration* inside one, since
+ *    `TOP_LEVEL_RESYNC_RE` and `TYPE_BLOCK_RE` read the same masked text the
+ *    braces do. Reading raw text for either regex while the braces read
+ *    masked text is incoherent in both directions: a column-0
+ *    declaration-shaped line inside a template or block comment would clear
+ *    the stack mid-class, and a `class X {` inside a comment would set
+ *    `pendingName` off a line whose own `{` had just been blanked, leaving
+ *    it to be claimed by the next *real* `{`. Masking is invisible to both
+ *    regexes on real code (they match only keywords and identifiers, never
+ *    string, comment, or template text). `lines` itself (unmasked) remains
+ *    what callers use for everything else — member-name capture, docblock
+ *    lookup — since masking never shifts a line or column, only blanks
+ *    non-code characters within one.
  * b. If a `class`/`interface`/`export`/`function`/`const`/`let`/`var`/
  *    `type`/`enum`/`import`/decorator line sits at column 0
  *    (`TOP_LEVEL_RESYNC_RE`) while the stack still claims an open block, the
@@ -856,7 +864,15 @@ export function attributeLinesToBlocks(lines: string[]): (string | null)[] {
   let depth = 0;
   let pendingName: string | null = null;
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    // The MASKED line, for the two regexes below as well as the brace walk:
+    // both `TOP_LEVEL_RESYNC_RE` and `TYPE_BLOCK_RE` must agree with the
+    // braces about what counts as code, or a declaration-shaped line that
+    // is really comment/string/template *content* (an embedded code sample,
+    // a column-0 `@media` at-rule in a `css` template) resyncs the stack or
+    // sets `pendingName` off text whose own braces were blanked. Masking
+    // never alters a real declaration — both regexes match only keywords
+    // and identifiers, which the mask leaves untouched in real code.
+    const line = maskedLines[i] ?? '';
     if (stack.length > 0 && TOP_LEVEL_RESYNC_RE.test(line)) {
       stack.length = 0;
       depth = 0;
@@ -867,7 +883,7 @@ export function attributeLinesToBlocks(lines: string[]): (string | null)[] {
       const m = TYPE_BLOCK_RE.exec(line);
       if (m) pendingName = m[1];
     }
-    for (const ch of maskedLines[i] ?? '') {
+    for (const ch of line) {
       if (ch === '{') {
         depth += 1;
         if (pendingName !== null) {
