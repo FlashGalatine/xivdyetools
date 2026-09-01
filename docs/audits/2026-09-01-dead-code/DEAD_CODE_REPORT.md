@@ -4,7 +4,7 @@
 - **Scope:** all 17 deploy units — 8 packages + 9 apps (≈141k non-test TS lines, ≈144k test lines) plus root tooling, `wrangler.toml` bindings, static assets, six locale sets and the web-app stylesheets
 - **Method:** knip 6.33 (root monorepo config + web-app's and og-worker's own configs, `--production` for og-worker) · `tsc --noEmit --noUnusedLocals --noUnusedParameters` forced in all 17 workspaces · per-export reference bucketing over `git ls-files` (1,200+ exports) · class-member survey (knip 6 has no `classMembers` rule) · a **test-only module** scan · i18n orphan gates plus a by-hand resolution of the 175 dynamically-keyed web-app keys · dead-CSS, asset, binding and dependency sweeps. Scripts in `evidence/scripts/`, raw output in `evidence/`.
 - **Baseline gates (before):** `pnpm turbo run type-check` 25/25 green; `pnpm turbo run test` 25/25 green **on the second run** — the first run failed `@xivdyetools/svg#test` with `Test timed out in 5000ms` on the *first* test of `src/index.test.ts`, which passes in 1.1 s in isolation and passed on a forced re-run of the whole graph. Treat it as a load-dependent flake, not a red baseline (`evidence/gates-test.txt`, `gates-test-rerun.txt`).
-- **Totals:** 34 findings — **28 FIXED, 2 open (both blocked on a production D1 check), 4 KEEP** · Sprint 0: none — nothing here was a live defect or a security issue.
+- **Totals:** 34 findings — **30 FIXED, 0 open, 4 KEEP** · Sprint 0: none — nothing here was a live defect or a security issue.
 - **Measured weight:** ≈**2,690 non-test source lines** + **82 CSS lines** + ≈**1,840 test lines** + 2 dependency declarations + 4 dead `Env` fields + 13 dead type re-exports + 3 orphaned scripts. Packages contribute almost none of it.
 
 Three things are worth reading before the catalog.
@@ -145,13 +145,13 @@ after the last commit: `pnpm turbo run build type-check lint test --force` → *
 | DEAD-004 | FIXED (4 of 5; 1 reclassified KEEP) | `a7cb99f8` |
 | DEAD-005 | FIXED (31 of 37; 6 reclassified KEEP) | `a7cb99f8` |
 | DEAD-006 | KEEP | — |
-| DEAD-007 | **OPEN — blocked on a production D1 check** | — |
+| DEAD-007 | FIXED (gate verified against production D1) | `20eec62a` |
 | DEAD-008 | FIXED | `45be904f` |
 | DEAD-009 | FIXED (ops step outstanding) | `e09b462d` |
 | DEAD-010 | FIXED | `825a45c0` |
 | DEAD-011 | FIXED | `befee92c` |
 | DEAD-012 | FIXED | `15a7cea6`, `00a33fae` |
-| DEAD-013 | **OPEN — held with DEAD-007** | — |
+| DEAD-013 | FIXED | `20eec62a` |
 | DEAD-014 | FIXED (12 of 13; 1 reclassified → DEAD-017) | `ac96e79a` |
 | DEAD-015 | FIXED | `6341acfc` |
 | DEAD-016 | FIXED | `6341acfc` |
@@ -209,19 +209,22 @@ Eight of the 34 were wrong or too broad as filed. Each is corrected in its own f
 
 ## Next steps
 
-The catalog is executed. What remains:
+Every finding is closed in code. What remains is operational, and needs credentials this audit
+should not spend unattended:
 
-1. **DEAD-007 + DEAD-013** — run the production D1 check
-   (`SELECT COUNT(*) FROM presets WHERE CAST(json_extract(dyes,'$[0]') AS INTEGER) > 254`, and the
-   same over `previous_values`; expect 0). If clean, collapse `resolvePresetDye` to the stainID
-   branch and delete `scripts/migrate-dyes-to-stainids.ts` in the same commit, and fix the
-   `POST_MERGE_CHECKLIST.md` §3 row that attributes the path to presets-api rather than web-app.
-2. **DEAD-009 ops step** — `wrangler secret delete MODERATION_WEBHOOK_URL|OWNER_DISCORD_ID|DISCORD_BOT_TOKEN --env production`
-   from `apps/presets-api`, after a day of clean tail.
-3. **DEAD-034** — the KV rate-limiter fallbacks still need a week of clean production logs before
-   they can go.
-4. **Guardrails from the Recommendations section** — items 1–3 (the test-only-module gate, the
-   class-member survey, knip for the five ungated workers) are the ones that would have caught this
-   pass's largest findings. Item 4 landed as DEAD-032; item 8 (svg's `testTimeout`) is still open.
-5. **DEAD-019 tail** — oauth and presets-api still carry `@deprecated` re-export blocks whose
+1. **DEAD-009 ops step (needs a human)** — three secrets are still set on the deployed presets-api:
+   `MODERATION_WEBHOOK_URL`, `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`. Their only reader is gone from
+   the code, and all three are optional (`?:`) fields whose absence was already a no-op, so deletion
+   is safe at any point; cleanest immediately after this branch merges and deploys:
+   `wrangler secret delete <NAME> --env production` from `apps/presets-api`.
+   The same §3 row also lists discord-worker `PRESET_API_SECRET` / `PERSPECTIVE_API_KEY` and
+   presets-api `MODERATOR_CHANNEL_ID`, which predate this audit.
+2. **DEAD-034 (time-gated)** — the KV rate-limiter fallbacks still want a week of clean production
+   logs. Note the standing constraint: do not enable Workers Logs without re-checking the
+   2026-08-29 security audit's FINDING-010/011 first.
+3. **Guardrails not yet wired into CI** — Recommendations 1–3 (the test-only-module scan, the
+   class-member survey, knip for the five ungated workers). Recommendation 4 landed as DEAD-032, and
+   the turbo caching hole that cleanup exposed is fixed in `dafb5019`; Recommendation 8 (svg's
+   `testTimeout`) is still open.
+4. **DEAD-019 tail** — oauth and presets-api still carry `@deprecated` re-export blocks whose
    "removed in the next major version" promise predates their current majors.

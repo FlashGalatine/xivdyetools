@@ -16,5 +16,5 @@
 Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-web-app`.
 
 ## Status
-OPEN — **blocked on a production D1 check.** Needs `SELECT COUNT(*) FROM presets WHERE CAST(json_extract(dyes,'$[0]') AS INTEGER) > 254` (and the same over `previous_values`) to return 0 on the day of the change. Not runnable from this session.
+FIXED 2026-09-01 `20eec62a` — gate verified first: a production D1 read on the day of removal showed **16 presets, 0 legacy IDs across every position of every `dyes` array** (`json_each`, stricter than the checklist's `$[0]` query) and `previous_values` empty on all 16 rows. Fallback branch dropped; out-of-range now returns `undefined` and logs. The tripwire test was **inverted, not deleted** — it pins that the pre-migration itemIDs resolve to nothing.
 
