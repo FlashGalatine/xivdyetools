@@ -100,6 +100,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
+          # 2026-08-31: pin the scanner, not just the action. v3.0.0 installs a
+          # hard-coded 8.24.3, which does NOT apply a global `[[allowlists]]`
+          # `paths` entry to findings in git/diff mode — so every run since
+          # Sprint 4 failed on `BOT_SIGNING_SECRET: 'test-signing-secret-…'` in
+          # a `.test.ts` file that `.gitleaks.toml` explicitly exempts. 8.30.1
+          # honours it: same 30 commits and same 1,293,509 bytes, 1 leak on
+          # 8.24.3 and 0 on 8.30.1, for both `detect` and `git`. The config is
+          # written and verified against 8.30.1, so the version it is verified
+          # against is the version CI must run. Re-verify the allowlist locally
+          # before raising this (see evidence/scripts/05-gitleaks.sh).
+          GITLEAKS_VERSION: '8.30.1'
           # contents: read only — PR comments would need pull-requests: write.
           GITLEAKS_ENABLE_COMMENTS: 'false'
           GITLEAKS_ENABLE_SUMMARY: 'true'
