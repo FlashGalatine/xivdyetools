@@ -564,23 +564,6 @@ describe('RouterService', () => {
     });
   });
 
-  describe('getRoutes', () => {
-    it('should return all route definitions', () => {
-      const routes = RouterService.getRoutes();
-
-      expect(routes).toBeDefined();
-      expect(Array.isArray(routes)).toBe(true);
-      expect(routes.length).toBe(9); // V4: 9 tools (8 renamed/retained + 1 new)
-    });
-
-    it('should return readonly array', () => {
-      const routes = RouterService.getRoutes();
-
-      // TypeScript should prevent modification, but we can verify it's the same reference
-      expect(routes).toBe(ROUTES);
-    });
-  });
-
   // ============================================================================
   // Destroy Tests
   // ============================================================================

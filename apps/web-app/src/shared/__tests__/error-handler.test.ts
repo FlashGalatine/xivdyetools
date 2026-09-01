@@ -129,22 +129,6 @@ describe('ErrorHandler', () => {
     });
   });
 
-  describe('isCritical', () => {
-    it('should return true for critical severity', () => {
-      const error = new AppError(ErrorCode.DATABASE_LOAD_FAILED, 'Critical', 'critical');
-      expect(ErrorHandler.isCritical(error)).toBe(true);
-    });
-
-    it('should return false for non-critical severity', () => {
-      const error = new AppError(ErrorCode.UNKNOWN_ERROR, 'Error', 'error');
-      expect(ErrorHandler.isCritical(error)).toBe(false);
-    });
-
-    it('should normalize non-AppError before checking', () => {
-      expect(ErrorHandler.isCritical(new Error('test'))).toBe(false);
-    });
-  });
-
   describe('report', () => {
     it('should not throw without Sentry', () => {
       expect(() => ErrorHandler.report(new Error('test'))).not.toThrow();

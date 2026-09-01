@@ -28,7 +28,11 @@ export class StorageService {
   private static available: boolean | null = null;
 
   /**
-   * Reset the memoized availability probe (tests and recovery paths)
+   * Clear the memoized availability probe.
+   *
+   * Test-isolation hook: `beforeEach` calls it so one suite's stubbed
+   * localStorage cannot leak into the next. Kept for that reason rather than
+   * pruned as test-only (2026-09-01 dead-code audit, DEAD-005).
    */
   static resetAvailabilityCache(): void {
     this.available = null;
@@ -216,33 +220,6 @@ export class StorageService {
   }
 
   /**
-   * Get the size of localStorage in bytes
-   */
-  static getSize(): number {
-    let size = 0;
-
-    try {
-      if (!this.isAvailable()) {
-        return 0;
-      }
-
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          const value = localStorage.getItem(key);
-          if (value) {
-            size += key.length + value.length;
-          }
-        }
-      }
-    } catch (error) {
-      logger.warn('Failed to calculate storage size', error);
-    }
-
-    return size;
-  }
-
-  /**
    * Get the number of items stored
    */
   static getItemCount(): number {
@@ -255,31 +232,6 @@ export class StorageService {
     } catch {
       return 0;
     }
-  }
-
-  /**
-   * Remove all items with a specific prefix
-   */
-  static removeByPrefix(prefix: string): number {
-    let removed = 0;
-
-    try {
-      if (!this.isAvailable()) {
-        return 0;
-      }
-
-      const keys = this.getKeys();
-      for (const key of keys) {
-        if (key.startsWith(prefix)) {
-          localStorage.removeItem(key);
-          removed++;
-        }
-      }
-    } catch (error) {
-      logger.warn(`Failed to remove items by prefix: ${prefix}`, error);
-    }
-
-    return removed;
   }
 
   /**

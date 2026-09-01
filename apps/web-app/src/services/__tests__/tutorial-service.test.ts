@@ -447,41 +447,6 @@ describe('TutorialService', () => {
   // Tutorial Access Tests
   // ============================================================================
 
-  describe('getTutorial', () => {
-    it('should return tutorial for valid tool', () => {
-      const tutorial = TutorialService.getTutorial('harmony');
-
-      expect(tutorial).not.toBeNull();
-      expect(tutorial?.tool).toBe('harmony');
-      expect(tutorial?.steps.length).toBeGreaterThan(0);
-    });
-
-    it('should return null for invalid tool', () => {
-      const tutorial = TutorialService.getTutorial('invalid' as TutorialTool);
-
-      expect(tutorial).toBeNull();
-    });
-  });
-
-  describe('getCurrentStep', () => {
-    it('should return current step when tutorial active', () => {
-      TutorialService.start('harmony');
-
-      const step = TutorialService.getCurrentStep();
-
-      expect(step).not.toBeNull();
-      expect(step?.id).toBeDefined();
-
-      TutorialService.skip();
-    });
-
-    it('should return null when tutorial not active', () => {
-      const step = TutorialService.getCurrentStep();
-
-      expect(step).toBeNull();
-    });
-  });
-
   describe('isAvailable', () => {
     it('should return true when tutorials exist', () => {
       expect(TutorialService.isAvailable()).toBe(true);
@@ -491,44 +456,6 @@ describe('TutorialService', () => {
   // ============================================================================
   // Tutorial Steps Tests
   // ============================================================================
-
-  describe('Tutorial Steps', () => {
-    it('should have harmony tutorial with 4 steps', () => {
-      const tutorial = TutorialService.getTutorial('harmony');
-      expect(tutorial?.steps.length).toBe(4);
-    });
-
-    it('should have matcher tutorial with 4 steps', () => {
-      const tutorial = TutorialService.getTutorial('matcher');
-      expect(tutorial?.steps.length).toBe(4);
-    });
-
-    it('should have comparison tutorial with 3 steps', () => {
-      const tutorial = TutorialService.getTutorial('comparison');
-      expect(tutorial?.steps.length).toBe(3);
-    });
-
-    it('should have mixer tutorial with 4 steps', () => {
-      const tutorial = TutorialService.getTutorial('mixer');
-      expect(tutorial?.steps.length).toBe(4);
-    });
-
-    it('should have accessibility tutorial with 3 steps', () => {
-      const tutorial = TutorialService.getTutorial('accessibility');
-      expect(tutorial?.steps.length).toBe(3);
-    });
-
-    it('should have valid step properties', () => {
-      const tutorial = TutorialService.getTutorial('harmony');
-
-      tutorial?.steps.forEach((step) => {
-        expect(step.id).toBeDefined();
-        expect(step.target).toBeDefined();
-        expect(step.titleKey).toBeDefined();
-        expect(step.descriptionKey).toBeDefined();
-      });
-    });
-  });
 
   // ============================================================================
   // Prompt Start Tests

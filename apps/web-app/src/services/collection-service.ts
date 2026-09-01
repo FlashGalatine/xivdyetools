@@ -571,21 +571,6 @@ export class CollectionService {
   }
 
   /**
-   * Reorder favorites
-   */
-  static reorderFavorites(dyeIds: DyeId[]): void {
-    this.initialize();
-    if (!this.favoritesData) return;
-
-    // Validate all IDs are current favorites
-    const currentFavorites = new Set(this.favoritesData.favorites);
-    const validIds = dyeIds.filter((id) => currentFavorites.has(id));
-
-    this.favoritesData.favorites = validIds;
-    this.saveFavorites();
-  }
-
-  /**
    * Clear all favorites
    */
   static clearFavorites(): void {
@@ -602,13 +587,6 @@ export class CollectionService {
    */
   static getFavoritesCount(): number {
     return this.getFavorites().length;
-  }
-
-  /**
-   * Check if can add more favorites
-   */
-  static canAddFavorite(): boolean {
-    return this.getFavoritesCount() < MAX_FAVORITES;
   }
 
   // ============================================================================
@@ -762,13 +740,6 @@ export class CollectionService {
   }
 
   /**
-   * Get collections of one typed kind
-   */
-  static getCollectionsByKind(kind: CollectionKind): Collection[] {
-    return this.getCollections().filter((c) => c.kind === kind);
-  }
-
-  /**
    * Delete every collection of one typed kind (tombstoned).
    * @returns number of records deleted
    */
@@ -862,25 +833,6 @@ export class CollectionService {
   }
 
   /**
-   * Reorder dyes within a collection
-   */
-  static reorderCollectionDyes(collectionId: string, dyeIds: DyeId[]): void {
-    this.initialize();
-    if (!this.collectionsData) return;
-
-    const collection = this.collectionsData.collections.find((c) => c.id === collectionId);
-    if (!collection) return;
-
-    // Validate all IDs are in current collection
-    const currentDyes = new Set(collection.dyes);
-    const validIds = dyeIds.filter((id) => currentDyes.has(id));
-
-    collection.dyes = validIds;
-    collection.updatedAt = new Date().toISOString();
-    this.saveCollections();
-  }
-
-  /**
    * Get collections count
    */
   static getCollectionsCount(): number {
@@ -892,23 +844,6 @@ export class CollectionService {
    */
   static canCreateCollection(): boolean {
     return this.getCollectionsCount() < MAX_COLLECTIONS;
-  }
-
-  /**
-   * Get all collections that contain a specific dye
-   * OPT-004: O(1) Map lookup instead of O(n*m) array search
-   */
-  static getCollectionsContainingDye(dyeId: DyeId): Collection[] {
-    this.initialize();
-    const collectionIds = this.collectionsByDyeId.get(dyeId);
-    if (!collectionIds) return [];
-
-    const collections: Collection[] = [];
-    for (const id of collectionIds) {
-      const collection = this.collectionsById.get(id);
-      if (collection) collections.push(collection);
-    }
-    return collections;
   }
 
   // ============================================================================
@@ -1139,13 +1074,6 @@ export class CollectionService {
    */
   static getMaxFavorites(): number {
     return MAX_FAVORITES;
-  }
-
-  /**
-   * Get maximum collections limit
-   */
-  static getMaxCollections(): number {
-    return MAX_COLLECTIONS;
   }
 
   /**

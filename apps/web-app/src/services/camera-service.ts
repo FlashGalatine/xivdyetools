@@ -115,13 +115,6 @@ export class CameraService {
   }
 
   /**
-   * Check if camera API is supported
-   */
-  isCameraSupported(): boolean {
-    return this.isSupported;
-  }
-
-  /**
    * Check if at least one camera is available
    */
   hasCameraAvailable(): boolean {
@@ -133,40 +126,6 @@ export class CameraService {
    */
   getAvailableCameras(): CameraDevice[] {
     return [...this.availableCameras];
-  }
-
-  /**
-   * Subscribe to camera availability changes
-   */
-  onCameraAvailabilityChange(listener: (available: boolean) => void): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-
-  /**
-   * Request camera permissions and refresh device list
-   * This is needed because device labels are only available after permission
-   */
-  async requestPermission(): Promise<boolean> {
-    if (!this.isSupported) return false;
-
-    try {
-      // Request permission by getting a temporary stream
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-
-      // Stop the temporary stream
-      stream.getTracks().forEach((track) => track.stop());
-
-      // Re-enumerate to get proper labels
-      await this.enumerateCameras();
-
-      return true;
-    } catch (error) {
-      logger.warn('Camera permission denied or failed:', error);
-      return false;
-    }
   }
 
   /**
@@ -208,13 +167,6 @@ export class CameraService {
   }
 
   /**
-   * Get the current active stream
-   */
-  getCurrentStream(): MediaStream | null {
-    return this.currentStream;
-  }
-
-  /**
    * Stop the current camera stream
    */
   stopStream(): void {
@@ -226,13 +178,6 @@ export class CameraService {
       this.currentStream = null;
       logger.info('📷 Camera stream stopped');
     }
-  }
-
-  /**
-   * Check if a stream is currently active
-   */
-  isStreamActive(): boolean {
-    return this.currentStream !== null && this.currentStream.active;
   }
 
   /**
@@ -299,13 +244,6 @@ export class CameraService {
    */
   attachStreamToVideo(video: HTMLVideoElement, stream: MediaStream): void {
     video.srcObject = stream;
-  }
-
-  /**
-   * Detach stream from video element
-   */
-  detachStreamFromVideo(video: HTMLVideoElement): void {
-    video.srcObject = null;
   }
 
   /**

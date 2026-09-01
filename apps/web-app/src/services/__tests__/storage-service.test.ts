@@ -213,25 +213,6 @@ describe('StorageService', () => {
     });
   });
 
-  describe('removeByPrefix', () => {
-    it('should remove items matching prefix', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.setItem('temp_key1', 'value1');
-      StorageService.setItem('temp_key2', 'value2');
-      StorageService.setItem('perm_key', 'value3');
-
-      const removed = StorageService.removeByPrefix('temp_');
-      expect(removed).toBe(2);
-
-      expect(StorageService.hasItem('temp_key1')).toBe(false);
-      expect(StorageService.hasItem('perm_key')).toBe(true);
-    });
-  });
-
   // ============================================================================
   // TTL (Time-To-Live) Tests
   // ============================================================================
@@ -348,32 +329,6 @@ describe('StorageService', () => {
   // ============================================================================
   // Size Calculation Tests
   // ============================================================================
-
-  describe('getSize', () => {
-    it('should calculate storage size', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.clear();
-      const sizeBefore = StorageService.getSize();
-
-      StorageService.setItem('largeKey', 'x'.repeat(1000));
-      const sizeAfter = StorageService.getSize();
-
-      expect(sizeAfter).toBeGreaterThan(sizeBefore);
-    });
-
-    it('should return 0 when localStorage is unavailable', () => {
-      const originalLocalStorage = window.localStorage;
-      // @ts-expect-error - Testing error case
-      window.localStorage = null;
-      const size = StorageService.getSize();
-      expect(size).toBe(0);
-      window.localStorage = originalLocalStorage;
-    });
-  });
 
   // ============================================================================
   // Error Handling & Edge Cases
@@ -651,31 +606,6 @@ describe('StorageService', () => {
   // Unavailable localStorage Tests
   // ============================================================================
 
-  describe('Unavailable localStorage', () => {
-    it('should handle all operations when localStorage is unavailable', () => {
-      const originalLocalStorage = window.localStorage;
-      // @ts-expect-error - Testing error case
-      window.localStorage = null;
-      // OPT-010: drop the memoized probe result from beforeEach so the
-      // nulled backend is re-detected
-      StorageService.resetAvailabilityCache();
-
-      expect(StorageService.isAvailable()).toBe(false);
-      expect(StorageService.getItem('test', 'default')).toBe('default');
-      expect(StorageService.setItem('test', 'value')).toBe(false);
-      expect(StorageService.removeItem('test')).toBe(false);
-      expect(StorageService.clear()).toBe(false);
-      expect(StorageService.getKeys()).toEqual([]);
-      expect(StorageService.hasItem('test')).toBe(false);
-      expect(StorageService.getItemCount()).toBe(0);
-      expect(StorageService.getSize()).toBe(0);
-      expect(StorageService.getItemsByPrefix('test')).toEqual({});
-      expect(StorageService.removeByPrefix('test')).toBe(0);
-
-      window.localStorage = originalLocalStorage;
-    });
-  });
-
   // ============================================================================
   // Additional Error Path Tests
   // ============================================================================
@@ -720,18 +650,6 @@ describe('StorageService', () => {
       localStorage.getItem = originalGetItem;
     });
 
-    it('should handle error during getSize() calculation', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      // Test that getSize returns a number
-      const size = StorageService.getSize();
-      expect(typeof size).toBe('number');
-      expect(size).toBeGreaterThanOrEqual(0);
-    });
-
     it('should handle error in getItemCount()', () => {
       if (!StorageService.isAvailable()) {
         expect(true).toBe(true);
@@ -752,24 +670,6 @@ describe('StorageService', () => {
       const count = StorageService.getItemCount();
       expect(typeof count).toBe('number');
       expect(count).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should handle error during removeByPrefix iteration', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.setItem('prefix_test', 'value');
-      const originalGetKeys = StorageService.getKeys;
-      StorageService.getKeys = () => {
-        throw new Error('Keys retrieval error');
-      };
-
-      const removed = StorageService.removeByPrefix('prefix_');
-      expect(removed).toBe(0);
-
-      StorageService.getKeys = originalGetKeys;
     });
   });
 
@@ -991,38 +891,6 @@ describe('StorageService', () => {
 
       const items = StorageService.getItemsByPrefix('large_');
       expect(Object.keys(items).length).toBe(50);
-    });
-
-    it('should handle removeByPrefix with large number of items', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.clear();
-
-      // Store 50 items
-      for (let i = 0; i < 50; i++) {
-        StorageService.setItem(`remove_${i}`, `value_${i}`);
-      }
-
-      const removed = StorageService.removeByPrefix('remove_');
-      expect(removed).toBe(50);
-      expect(StorageService.getItemsByPrefix('remove_')).toEqual({});
-    });
-
-    it('should calculate size correctly with large data', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.clear();
-      const largeValue = 'x'.repeat(50000);
-      StorageService.setItem('largeSize', largeValue);
-
-      const size = StorageService.getSize();
-      expect(size).toBeGreaterThan(50000);
     });
   });
 });

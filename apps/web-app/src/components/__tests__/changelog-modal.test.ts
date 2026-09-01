@@ -199,36 +199,4 @@ describe('ChangelogModal', () => {
   // ============================================================================
   // Full History (header "What's New" button)
   // ============================================================================
-
-  describe('Full history (showChangelogModal)', () => {
-    it('should render every changelog entry with a version heading', async () => {
-      const { showChangelogModal, closeChangelogModal } = await import('../changelog-modal');
-      closeChangelogModal(); // ensure a clean singleton before asserting
-      vi.clearAllMocks();
-
-      await showChangelogModal();
-
-      expect(mockShowChangelog).toHaveBeenCalledTimes(1);
-      const config = mockShowChangelog.mock.calls[0][0] as { content: HTMLElement };
-      // Full mode renders a "v<version> — <date>" heading for each parsed entry
-      expect(config.content.textContent).toContain('v4.0.0');
-      expect(config.content.textContent).toContain('v3.3.0');
-
-      closeChangelogModal();
-    });
-
-    it('should reuse a single instance (singleton)', async () => {
-      const { showChangelogModal, closeChangelogModal } = await import('../changelog-modal');
-      closeChangelogModal();
-      vi.clearAllMocks();
-
-      await showChangelogModal();
-      await showChangelogModal();
-
-      // Second call is a no-op while the modal is already open
-      expect(mockShowChangelog).toHaveBeenCalledTimes(1);
-
-      closeChangelogModal();
-    });
-  });
 });

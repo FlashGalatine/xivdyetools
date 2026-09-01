@@ -150,12 +150,6 @@ describe('MarketBoardService', () => {
     it('should return is fetching state', () => {
       expect(service.getIsFetching()).toBe(false);
     });
-
-    it('should return all prices as a new Map', () => {
-      const prices1 = service.getAllPrices();
-      const prices2 = service.getAllPrices();
-      expect(prices1).not.toBe(prices2);
-    });
   });
 
   describe('setters', () => {
@@ -502,12 +496,6 @@ describe('MarketBoardService', () => {
       // `formatGil`, not core's English-only `APIService.formatPrice`: the unit
       // comes from the app language ("Gil" in EN).
       expect(result).toBe('1,000 Gil');
-    });
-
-    it('should export getMarketBoardService function', async () => {
-      const { getMarketBoardService } = await import('../market-board-service');
-      const instance = getMarketBoardService();
-      expect(instance).toBe(service);
     });
   });
 });

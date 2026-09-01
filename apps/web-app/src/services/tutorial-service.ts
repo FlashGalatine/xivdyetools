@@ -543,23 +543,6 @@ export class TutorialService {
   // ============================================================================
 
   /**
-   * Get tutorial for a tool
-   */
-  static getTutorial(tool: TutorialTool): Tutorial | null {
-    return TUTORIALS[tool] ?? null;
-  }
-
-  /**
-   * Get current step
-   */
-  static getCurrentStep(): TutorialStep | null {
-    if (!this.state.currentTool) return null;
-
-    const tutorial = TUTORIALS[this.state.currentTool];
-    return tutorial.steps[this.state.currentStepIndex] ?? null;
-  }
-
-  /**
    * Check if tutorials are available
    */
   static isAvailable(): boolean {

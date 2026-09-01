@@ -44,14 +44,6 @@ describe('ThemeService Integration', () => {
       const current = ThemeService.getCurrentTheme();
       expect(current).toBe('standard-dark');
     });
-
-    it('should have a valid theme object', () => {
-      const themeObj = ThemeService.getCurrentThemeObject();
-      expect(themeObj).toBeDefined();
-      expect(themeObj.name).toBeDefined();
-      expect(themeObj.palette).toBeDefined();
-      expect(themeObj.isDark).toBeDefined();
-    });
   });
 
   // ============================================================================
@@ -73,16 +65,6 @@ describe('ThemeService Integration', () => {
       expect(ThemeService.getCurrentTheme()).toBe('standard-dark');
     });
 
-    it('should toggle dark mode', () => {
-      ThemeService.setTheme('standard-light');
-      ThemeService.toggleDarkMode();
-
-      expect(ThemeService.getCurrentTheme()).toBe('standard-dark');
-
-      ThemeService.toggleDarkMode();
-      expect(ThemeService.getCurrentTheme()).toBe('standard-light');
-    });
-
     it('should validate theme names', () => {
       expect(() => {
         ThemeService.setTheme('invalid-theme' as ThemeName);
@@ -97,14 +79,6 @@ describe('ThemeService Integration', () => {
         ThemeService.setTheme('sugar-riot' as ThemeName);
       }).toThrow();
     });
-
-    it('should reset to default theme', () => {
-      ThemeService.setTheme('standard-light');
-      ThemeService.resetToDefault();
-
-      const theme = ThemeService.getCurrentTheme();
-      expect(theme).toBe('standard-dark');
-    });
   });
 
   // ============================================================================
@@ -112,23 +86,6 @@ describe('ThemeService Integration', () => {
   // ============================================================================
 
   describe('Theme Variants', () => {
-    it('should get light variant of a theme', () => {
-      const light = ThemeService.getLightVariant('standard-dark');
-      expect(light).toBe('standard-light');
-    });
-
-    it('should get dark variant of a theme', () => {
-      const dark = ThemeService.getDarkVariant('standard-light');
-      expect(dark).toBe('standard-dark');
-    });
-
-    it('should get theme variants by base name', () => {
-      const variants = ThemeService.getThemeVariants('standard');
-      expect(variants.length).toBe(2); // light and dark
-      expect(variants).toContain('standard-light');
-      expect(variants).toContain('standard-dark');
-    });
-
     it('should identify dark mode correctly', () => {
       ThemeService.setTheme('standard-light');
       expect(ThemeService.isDarkMode()).toBe(false);
@@ -143,27 +100,6 @@ describe('ThemeService Integration', () => {
   // ============================================================================
 
   describe('Theme Palettes and Colors', () => {
-    it('should provide complete palette with all required colors', () => {
-      const theme = ThemeService.getCurrentThemeObject();
-      const palette = theme.palette;
-
-      expect(palette.primary).toBeDefined();
-      expect(palette.background).toBeDefined();
-      expect(palette.text).toBeDefined();
-      expect(palette.border).toBeDefined();
-      expect(palette.backgroundSecondary).toBeDefined();
-      expect(palette.cardBackground).toBeDefined();
-      expect(palette.textMuted).toBeDefined();
-    });
-
-    it('should carry the confirmed 5.0 accents', () => {
-      ThemeService.setTheme('standard-dark');
-      expect(ThemeService.getColor('primary')).toBe('#EA4133');
-
-      ThemeService.setTheme('standard-light');
-      expect(ThemeService.getColor('primary')).toBe('#CE2222');
-    });
-
     it('should have valid color values in all palettes', () => {
       // Palettes can include hex, rgba, and other CSS color formats
       const colorPattern = /^(#[0-9A-Fa-f]{6}|rgba?\([^)]+\)|none|[a-z]+)$/i;
@@ -178,16 +114,6 @@ describe('ThemeService Integration', () => {
           expect(value).toMatch(colorPattern);
         });
       });
-    });
-
-    it('should distinguish light and dark theme backgrounds', () => {
-      ThemeService.setTheme('standard-light');
-      const lightBg = ThemeService.getColor('background');
-
-      ThemeService.setTheme('standard-dark');
-      const darkBg = ThemeService.getColor('background');
-
-      expect(lightBg).not.toBe(darkBg);
     });
   });
 

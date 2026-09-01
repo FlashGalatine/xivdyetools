@@ -8,14 +8,9 @@
  */
 
 import { LocalizationService } from '@xivdyetools/core';
-import type { LocaleCode, LocaleDisplay, LocaleChangeListener } from '@shared/i18n-types';
+import type { LocaleCode, LocaleChangeListener } from '@shared/i18n-types';
 import { StorageService } from './storage-service';
-import {
-  STORAGE_KEYS,
-  DEFAULT_LOCALE,
-  SUPPORTED_LOCALES,
-  LOCALE_DISPLAY_INFO,
-} from '@shared/constants';
+import { STORAGE_KEYS, DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@shared/constants';
 import { logger } from '@shared/logger';
 
 // ============================================================================
@@ -79,13 +74,6 @@ export class LanguageService {
    */
   static getCurrentLocale(): LocaleCode {
     return this.currentLocale;
-  }
-
-  /**
-   * Get current locale display info
-   */
-  static getCurrentLocaleDisplay(): LocaleDisplay {
-    return LOCALE_DISPLAY_INFO.find((l) => l.code === this.currentLocale) || LOCALE_DISPLAY_INFO[0];
   }
 
   /**
@@ -277,13 +265,6 @@ export class LanguageService {
   // ============================================================================
   // Utility Methods
   // ============================================================================
-
-  /**
-   * Get all available locales with display info
-   */
-  static getAvailableLocales(): readonly LocaleDisplay[] {
-    return LOCALE_DISPLAY_INFO;
-  }
 
   /**
    * Check if locale is valid

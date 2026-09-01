@@ -27,6 +27,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     announcer, recover this file from git rather than rewriting it. The
     `no-hardcoded-ui-strings` lint rule keeps `AnnouncerService` in its allowlist so a future one
     is covered from day one.
+- Four module-level exports with no production call site (DEAD-004): `closeChangelogModal`
+  (`components/changelog-modal.ts` — the modal closes through its own instance method),
+  `getConfigController` and `getMarketBoardService` (singleton accessors over classes every
+  consumer imports directly), and `findHarmonyDyes` (`services/harmony-generator.ts`, 46 lines —
+  the barrel re-exports five *other* helpers from that module, not this one).
+- 31 public service methods with no non-test caller (DEAD-005, ~300 lines) across `ThemeService`,
+  `CameraService`, `CollectionService`, `StorageService`, `MarketBoardService`, `LanguageService`,
+  `TutorialService`, `RouterService`, `IndexedDBService`, `CommunityPresetService`,
+  `IndexedDBCacheBackend` and `ErrorHandler`. knip 6 has no `classMembers` rule, so no gate could
+  see them. Removing `getCurrentLocaleDisplay` also retired the `LocaleDisplay` import and
+  `LOCALE_DISPLAY_INFO` use in `language-service.ts`.
+  **Six of the 37 candidates were kept** after checking what they actually serve:
+  `ToastService.dismissAll` / `.getToasts` and `ModalService.dismissAll` / `.getModals` are how ~60
+  real behaviour tests observe those services; `StorageService.resetAvailabilityCache`,
+  `ThemeService.resetToDefault` and `clearCharaResolveCache` are `beforeEach` isolation hooks; and
+  `MarketBoardService.getIsFetching` is the only observer of the flag whose stuck-true state was
+  BUG-039. Each now says so in its docblock.
 - Six v3-era Tailwind utility overrides in `styles/themes.css` that no template carries any more —
   `.text-green-600`/`.dark:text-green-400`, `.bg-blue-100`, `.text-blue-900`,
   `.dark:text-blue-100`, `.border-blue-200`/`.dark:border-blue-800`, `.bg-gradient-to-r`

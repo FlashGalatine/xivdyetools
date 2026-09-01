@@ -89,14 +89,6 @@ export class IndexedDBCacheBackend implements ICacheBackend {
     }
   }
 
-  /**
-   * Force re-initialization (for recovery after errors)
-   */
-  async reinitialize(): Promise<void> {
-    this.initPromise = null;
-    return this.initialize();
-  }
-
   get(key: string): CachedData<PriceData> | null {
     // Return from memory cache for sync operation
     return this.memoryCache.get(key) ?? null;

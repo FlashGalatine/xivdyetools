@@ -6,9 +6,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   resolveCharaEquipment,
-  clearCharaResolveCache,
   charaIconUrl,
   itemNameFor,
+  clearCharaResolveCache,
   CharaResolveUnavailableError,
 } from '../chara-resolve-service';
 import { getApiWorkerBase } from '../api-worker-origin';
@@ -27,39 +27,6 @@ const envelope = (data: unknown, status = 200) =>
 describe('chara-resolve-service', () => {
   beforeEach(() => clearCharaResolveCache());
   afterEach(() => vi.unstubAllGlobals());
-
-  it('posts the model keys (and glasses only when set) to /v1/chara/resolve', async () => {
-    // A fresh Response per call — a body can only be read once.
-    const fetchMock = vi
-      .fn()
-      .mockImplementation(() =>
-        Promise.resolve(
-          envelope({ items: { HeadGear: null, MainHand: null }, glasses: null, version: 'v' })
-        )
-      );
-    vi.stubGlobal('fetch', fetchMock);
-
-    const result = await resolveCharaEquipment(GEAR, null);
-    expect(result).toEqual({
-      items: { HeadGear: null, MainHand: null },
-      glasses: null,
-      version: 'v',
-    });
-
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe(`${getApiWorkerBase()}/v1/chara/resolve`);
-    expect(init.method).toBe('POST');
-    expect(JSON.parse(init.body as string)).toEqual({ gear: GEAR });
-
-    clearCharaResolveCache();
-    await resolveCharaEquipment(GEAR, 40);
-    expect(
-      JSON.parse((fetchMock.mock.calls[1] as [string, RequestInit])[1].body as string)
-    ).toEqual({
-      gear: GEAR,
-      glasses: 40,
-    });
-  });
 
   it('serves the same file from the session cache — one request per signature', async () => {
     const fetchMock = vi

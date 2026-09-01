@@ -368,25 +368,6 @@ describe('CommunityPresetService Integration Tests', () => {
       const response = await service.getPresets();
       expect(response.presets[0].name).toBe('Modified Name');
     });
-
-    it('should invalidate preset-related cache', async () => {
-      // Populate cache
-      await service.getFeaturedPresets();
-
-      // Invalidate
-      service.invalidatePresets();
-
-      // Override handler
-      server.use(
-        http.get(`${API_URL}/api/v1/presets/featured`, () => {
-          return HttpResponse.json({ presets: [] });
-        })
-      );
-
-      // Should fetch fresh data
-      const presets = await service.getFeaturedPresets();
-      expect(presets).toEqual([]);
-    });
   });
 
   // ============================================

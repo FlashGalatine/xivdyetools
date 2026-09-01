@@ -348,16 +348,6 @@ export class CommunityPresetService {
     logger.info('CommunityPresetService: Cache cleared');
   }
 
-  /**
-   * Invalidate specific cache entries
-   */
-  invalidatePresets(): void {
-    // Clear all preset-related cache entries
-    this.cache.delete('presets:featured');
-    this.cache.delete('categories');
-    // Note: Individual preset queries will expire naturally
-  }
-
   // ============================================
   // Voting Methods
   // ============================================

@@ -96,26 +96,6 @@ describe('CameraService', () => {
     });
   });
 
-  describe('isCameraSupported', () => {
-    it('should return true when mediaDevices is available', () => {
-      expect(cameraService.isCameraSupported()).toBe(true);
-    });
-
-    it('should return false when mediaDevices is not available', () => {
-      // @ts-expect-error - reset singleton
-      CameraService.instance = null;
-
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: undefined,
-        writable: true,
-        configurable: true,
-      });
-
-      const service = CameraService.getInstance();
-      expect(service.isCameraSupported()).toBe(false);
-    });
-  });
-
   describe('initialize', () => {
     it('should detect available cameras', async () => {
       await cameraService.initialize();
@@ -199,66 +179,6 @@ describe('CameraService', () => {
     });
   });
 
-  describe('onCameraAvailabilityChange', () => {
-    it('should subscribe to camera availability changes', async () => {
-      const listener = vi.fn();
-      cameraService.onCameraAvailabilityChange(listener);
-
-      await cameraService.initialize();
-
-      expect(listener).toHaveBeenCalledWith(true);
-    });
-
-    it('should unsubscribe correctly', async () => {
-      const listener = vi.fn();
-      const unsubscribe = cameraService.onCameraAvailabilityChange(listener);
-      unsubscribe();
-
-      await cameraService.initialize();
-
-      expect(listener).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('requestPermission', () => {
-    it('should return false when not supported', async () => {
-      // @ts-expect-error - reset singleton
-      CameraService.instance = null;
-
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: undefined,
-        writable: true,
-        configurable: true,
-      });
-
-      const service = CameraService.getInstance();
-      const result = await service.requestPermission();
-      expect(result).toBe(false);
-    });
-
-    it('should request camera permission', async () => {
-      const result = await cameraService.requestPermission();
-
-      expect(mockMediaDevices.getUserMedia).toHaveBeenCalledWith({
-        video: { facingMode: 'environment' },
-      });
-      expect(result).toBe(true);
-    });
-
-    it('should stop the temporary stream after permission', async () => {
-      await cameraService.requestPermission();
-
-      expect(mockTrack.stop).toHaveBeenCalled();
-    });
-
-    it('should return false when permission denied', async () => {
-      mockMediaDevices.getUserMedia.mockRejectedValue(new Error('Permission denied'));
-
-      const result = await cameraService.requestPermission();
-      expect(result).toBe(false);
-    });
-  });
-
   describe('startStream', () => {
     it('should throw when camera not supported', async () => {
       // @ts-expect-error - reset singleton
@@ -308,52 +228,12 @@ describe('CameraService', () => {
     });
   });
 
-  describe('getCurrentStream', () => {
-    it('should return null when no stream is active', () => {
-      expect(cameraService.getCurrentStream()).toBeNull();
-    });
-
-    it('should return current stream when active', async () => {
-      await cameraService.startStream();
-      expect(cameraService.getCurrentStream()).toBe(mockStream);
-    });
-  });
-
   describe('stopStream', () => {
     it('should stop all tracks in the stream', async () => {
       await cameraService.startStream();
       cameraService.stopStream();
 
       expect(mockTrack.stop).toHaveBeenCalled();
-    });
-
-    it('should set current stream to null', async () => {
-      await cameraService.startStream();
-      cameraService.stopStream();
-
-      expect(cameraService.getCurrentStream()).toBeNull();
-    });
-
-    it('should do nothing when no stream', () => {
-      cameraService.stopStream();
-      expect(cameraService.getCurrentStream()).toBeNull();
-    });
-  });
-
-  describe('isStreamActive', () => {
-    it('should return false when no stream', () => {
-      expect(cameraService.isStreamActive()).toBe(false);
-    });
-
-    it('should return true when stream is active', async () => {
-      await cameraService.startStream();
-      expect(cameraService.isStreamActive()).toBe(true);
-    });
-
-    it('should return false when stream is not active', async () => {
-      mockStream.active = false;
-      await cameraService.startStream();
-      expect(cameraService.isStreamActive()).toBe(false);
     });
   });
 
@@ -413,17 +293,6 @@ describe('CameraService', () => {
     });
   });
 
-  describe('detachStreamFromVideo', () => {
-    it('should set video srcObject to null', () => {
-      const video = document.createElement('video');
-      video.srcObject = mockStream;
-
-      cameraService.detachStreamFromVideo(video);
-
-      expect(video.srcObject).toBeNull();
-    });
-  });
-
   describe('getTrackSettings', () => {
     it('should return null when no stream', () => {
       expect(cameraService.getTrackSettings()).toBeNull();
@@ -472,18 +341,6 @@ describe('CameraService', () => {
       const service = CameraService.getInstance();
       // Should not throw
       expect(() => service.startDeviceChangeListener()).not.toThrow();
-    });
-  });
-
-  describe('destroy', () => {
-    it('should stop stream and clear listeners', async () => {
-      const listener = vi.fn();
-      cameraService.onCameraAvailabilityChange(listener);
-      await cameraService.startStream();
-
-      cameraService.destroy();
-
-      expect(cameraService.getCurrentStream()).toBeNull();
     });
   });
 });

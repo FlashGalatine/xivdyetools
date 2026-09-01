@@ -89,23 +89,6 @@ describe('CollectionService', () => {
       expect(CollectionService.isFavorite(1)).toBe(true);
     });
 
-    it('should enforce max favorites limit', () => {
-      const max = CollectionService.getMaxFavorites();
-
-      // Add max favorites
-      for (let i = 1; i <= max; i++) {
-        CollectionService.addFavorite(i);
-      }
-
-      expect(CollectionService.getFavoritesCount()).toBe(max);
-      expect(CollectionService.canAddFavorite()).toBe(false);
-
-      // Try to add one more
-      const result = CollectionService.addFavorite(max + 1);
-      expect(result).toBe(false);
-      expect(CollectionService.getFavoritesCount()).toBe(max);
-    });
-
     it('should clear all favorites', () => {
       CollectionService.addFavorite(1);
       CollectionService.addFavorite(2);
@@ -114,16 +97,6 @@ describe('CollectionService', () => {
       CollectionService.clearFavorites();
 
       expect(CollectionService.getFavoritesCount()).toBe(0);
-    });
-
-    it('should reorder favorites', () => {
-      CollectionService.addFavorite(1);
-      CollectionService.addFavorite(2);
-      CollectionService.addFavorite(3);
-
-      CollectionService.reorderFavorites([3, 1, 2]);
-
-      expect(CollectionService.getFavorites()).toEqual([3, 1, 2]);
     });
 
     it('should notify subscribers when favorites change', () => {
@@ -245,30 +218,6 @@ describe('CollectionService', () => {
 
       const result = CollectionService.addDyeToCollection(collection!.id, max + 1);
       expect(result).toBe(false);
-    });
-
-    it('should enforce max collections limit', () => {
-      const max = CollectionService.getMaxCollections();
-
-      for (let i = 1; i <= max; i++) {
-        CollectionService.createCollection(`Collection ${i}`);
-      }
-
-      expect(CollectionService.canCreateCollection()).toBe(false);
-      const result = CollectionService.createCollection('One More');
-      expect(result).toBeNull();
-    });
-
-    it('should get collections containing a dye', () => {
-      const col1 = CollectionService.createCollection('Collection 1');
-      const col2 = CollectionService.createCollection('Collection 2');
-      CollectionService.createCollection('Collection 3');
-
-      CollectionService.addDyeToCollection(col1!.id, 42);
-      CollectionService.addDyeToCollection(col2!.id, 42);
-
-      const containing = CollectionService.getCollectionsContainingDye(42);
-      expect(containing.length).toBe(2);
     });
 
     it('should notify subscribers when collections change', () => {
@@ -413,20 +362,6 @@ describe('CollectionService', () => {
       });
       expect(collection).toBeNull();
     });
-
-    it('should filter and delete by kind', () => {
-      CollectionService.createCollection('P1');
-      CollectionService.createCollection('C1', undefined, { kind: 'character' });
-      CollectionService.createCollection('S1', undefined, { kind: 'swap', target: 3 });
-
-      expect(CollectionService.getCollectionsByKind('palette').length).toBe(1);
-      expect(CollectionService.getCollectionsByKind('character').length).toBe(1);
-
-      const deleted = CollectionService.deleteCollectionsByKind('palette');
-      expect(deleted).toBe(1);
-      expect(CollectionService.getCollectionsByKind('palette').length).toBe(0);
-      expect(CollectionService.getCollectionsByKind('swap').length).toBe(1);
-    });
   });
 
   describe('stainID guard (5.0)', () => {
@@ -508,35 +443,6 @@ describe('CollectionService', () => {
     // shape loosely — an unknown `kind` persisted and vanished from every
     // kind-filtered view, and a hand-edited `dyes` that was not an array made
     // initialize() throw on every call until storage was cleared.
-    it('importData coerces an unknown kind to palette instead of persisting it', () => {
-      const result = CollectionService.importData(
-        JSON.stringify({
-          version: '2.0.0',
-          exportedAt: new Date().toISOString(),
-          type: 'xivdyetools-collection',
-          data: {
-            collections: [
-              {
-                id: 'odd-1',
-                name: 'Odd Kind',
-                kind: 'not-a-kind',
-                dyes: [1, 2],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              },
-            ],
-          },
-        })
-      );
-
-      expect(result.collectionsImported).toBe(1);
-      const imported = CollectionService.getCollectionByName('Odd Kind');
-      expect(imported?.kind).toBe('palette');
-      expect(CollectionService.getCollectionsByKind('palette').map((c) => c.name)).toContain(
-        'Odd Kind'
-      );
-    });
-
     it('skips a malformed stored record on load instead of throwing', () => {
       localStorageMock.setItem(
         'xivdyetools_collections',

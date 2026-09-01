@@ -432,11 +432,3 @@ export class ConfigController {
 // ============================================================================
 // Export Singleton Getter (convenience)
 // ============================================================================
-
-/**
- * Get the ConfigController singleton instance
- * Convenience export for shorter imports
- */
-export function getConfigController(): ConfigController {
-  return ConfigController.getInstance();
-}
