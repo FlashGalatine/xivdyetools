@@ -61,7 +61,7 @@ src/
 │   └── locale.ts         # Reads ?locale=, calls LocalizationService.ensureLocaleLoaded once, sets c.var.locale
 ├── lib/
 │   ├── api-error.ts      # ApiError class + ErrorCode enum
-│   ├── response.ts       # successResponse / paginatedResponse / errorResponse / buildPagination
+│   ├── response.ts       # successResponse / paginatedResponse / buildPagination (errors go through ApiError)
 │   ├── services.ts       # Module-scope DyeService singleton + calculateDistance (→ ColorService.getDistanceForMethod)
 │   ├── dye-serializer.ts # Dye → API response shape (with optional localizedName / distance)
 │   └── validation.ts     # parseHex, parseLocale, parseMatchingMethod, parseDyeFilters, resolveIdType, etc.

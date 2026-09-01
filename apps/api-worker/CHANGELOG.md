@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+Dead-code sweep (`docs/audits/2026-09-01-dead-code`, DEAD-020/021/022/023). Nothing here had a
+caller; the `/v1` contract is untouched.
+
+- `errorResponse` from `lib/response.ts` — an 18-line error envelope with zero call sites. Errors
+  have always travelled through `ApiError` and the app-level handler.
+- The `LocalizationService` re-export from `lib/services.ts` — every consumer already imported it
+  straight from `@xivdyetools/core`.
+- `createMockEnv` from `src/universalis/test-setup.ts` — a duplicate of the live helper in
+  `tests/test-utils.ts`, which is the one all six test files use.
+- `CacheService.deleteEntry` / `.deleteAsync` — the cache-invalidation pair had no production
+  caller; entries expire by TTL. Their two tests went with them.
+
 ## [0.10.0] - 2026-08-30
 
 Security audit remediation (docs/audits/2026-08-29-security, FINDING-010 + FINDING-014). No change to the public `/v1` contract — telemetry gains sender/GPC/fail-closed gating, and the worker's request logs drop the last `logUserAgent: true` opt-in in the repository.

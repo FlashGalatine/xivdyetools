@@ -6,12 +6,10 @@
  * for all requests handled by this isolate.
  */
 
-import { DyeService, dyeDatabase, ColorService, LocalizationService } from '@xivdyetools/core';
+import { DyeService, dyeDatabase, ColorService } from '@xivdyetools/core';
 import type { MatchingMethod } from '@xivdyetools/core';
 
 export const dyeService = new DyeService(dyeDatabase);
-
-export { LocalizationService };
 
 /**
  * Calculate color distance in a 5.0 matching-vocabulary method's native

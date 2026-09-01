@@ -173,50 +173,6 @@ describe('CacheService', () => {
     });
   });
 
-  describe('deleteEntry', () => {
-    it('should delete from cache', async () => {
-      const testData = { items: [1, 2, 3] };
-
-      // First, store data
-      await cacheService.store('delete-test', testData, testConfig);
-
-      // Verify data exists
-      const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/delete-test`;
-      expect(await cache.match(new Request(cacheUrl))).toBeDefined();
-
-      // Delete
-      await cacheService.deleteEntry('delete-test');
-
-      // Verify deleted
-      expect(await cache.match(new Request(cacheUrl))).toBeUndefined();
-    });
-  });
-
-  describe('deleteAsync', () => {
-    it('should delete from cache asynchronously', async () => {
-      const testData = { items: [1, 2, 3] };
-
-      // First, store data
-      await cacheService.store('delete-async-test', testData, testConfig);
-
-      // Delete async
-      cacheService.deleteAsync('delete-async-test');
-      await (mockCtx as unknown as { _waitForAll: () => Promise<void> })._waitForAll();
-
-      // Verify deleted
-      const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/delete-async-test`;
-      expect(await cache.match(new Request(cacheUrl))).toBeUndefined();
-    });
-
-    it('should handle errors gracefully during deletion', async () => {
-      // This should not throw even with no data
-      cacheService.deleteAsync('nonexistent-key');
-      await (mockCtx as unknown as { _waitForAll: () => Promise<void> })._waitForAll();
-    });
-  });
-
   describe('URL encoding', () => {
     it('should properly encode cache keys with special characters', async () => {
       const key = 'aggregated:Crystal:123,456,789';

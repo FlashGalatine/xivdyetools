@@ -143,23 +143,4 @@ export class CacheService {
     );
   }
 
-  /**
-   * Delete data from cache
-   */
-  async deleteEntry(key: string): Promise<void> {
-    const cache = await this.getCache();
-    if (!cache) return;
-
-    const cacheUrl = this.buildCacheUrl(key);
-    await cache.delete(new Request(cacheUrl));
-  }
-
-  /**
-   * Delete data from cache asynchronously (non-blocking)
-   */
-  deleteAsync(key: string): void {
-    this.ctx.waitUntil(
-      this.deleteEntry(key).catch(() => {})
-    );
-  }
 }
