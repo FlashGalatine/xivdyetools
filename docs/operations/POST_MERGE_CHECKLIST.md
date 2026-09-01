@@ -521,6 +521,24 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
 ### Cloudflare
 - [ ] Confirm the `[[ratelimits]]` bindings exist on every production worker (dashboard →
       Worker → Settings → Bindings) and that KV rate-limit namespaces are now idle.
+- [x] **DONE 2026-09-01** — rule `og-worker render bound (FINDING-024)` is deployed and Active on
+      the `xivdyetools.app` zone: *Hostname equals `og.xivdyetools.app` and URI Path starts with
+      `/og/`*, 300 requests / 10 s per IP, Block, 10 s mitigation. Verified afterwards that a
+      canonical render still returns `200 image/png` and the worker's own query guard still 404s,
+      so the WAF layer sits above the Sprint 7 guards without touching legitimate traffic.
+      **The "start on Log" advice below could not be followed, and the reason is worth keeping:**
+      this zone is on the **Free plan**, where rate limiting is Block-only, IP-only, a fixed 10 s
+      period, a fixed 10 s mitigation timeout, and **one rule for the entire zone** (Log and
+      Managed Challenge begin at Pro). That 10 s timeout is what makes Block acceptable here — a
+      false positive returns 429 to a single IP for ten seconds and clears itself, rather than
+      locking out a crawler fleet. 300/10 s is 30 req/s sustained from one address, which no
+      link-preview fetcher does (Discord and X cache the image at their own edge), so the ceiling
+      should only ever meet an enumerator. **Tune by watching, not by dry run:** Security → Events
+      filtered to this rule still records every firing. Zero firings means the ceiling is doing its
+      job; a handful of IPs at high volume is the enumeration case working as intended; *many
+      distinct IPs at modest volume* is the signal to raise the threshold. **Note the zone's single
+      rule slot is now spent** — anything else needing rate limiting on this zone requires Pro.
+      Original guidance, kept for the reasoning:
 - [ ] og-worker (2026-08-29 FINDING-024, OG-4): **Security → WAF → Rate limiting rules** — add a
       rule scoped to `http.host eq "og.xivdyetools.app" and http.request.uri.path starts_with
       "/og/"`. (**Not** `xivdyetools.app/og/*` — that host/path combination is never routed to

@@ -44,6 +44,15 @@ and in every case the attacker's cost per render is identical to distinct-id enu
 emitter no longer *produces* non-canonical URLs. No `[[ratelimits]]` binding was added (ruling
 S7-R1): Discord's and X's link-preview fetchers share source IPs, so an IP-keyed limiter
 throttles legitimate previews exactly when a link goes viral. That count bound remains the WAF
-rate-limiting rule — still an unticked dashboard action in
-`docs/operations/POST_MERGE_CHECKLIST.md`, now written out with host, expression, threshold and a
-Log-then-Block rollout.
+rate-limiting rule, **deployed 2026-09-01**: `og-worker render bound (FINDING-024)` on the
+`xivdyetools.app` zone — hostname `og.xivdyetools.app` and path `/og/`, 300 requests / 10 s per IP,
+Block, 10 s mitigation. The Log-then-Block rollout this file previously prescribed turned out not to
+be available: the zone is on the **Free plan**, where rate limiting is Block-only, IP-only, fixed at
+a 10 s period and a 10 s mitigation timeout, and limited to **one rule per zone** (Log and Managed
+Challenge start at Pro). That 10 s timeout is what makes Block acceptable — a false positive returns
+429 to a single IP for ten seconds and clears itself, rather than locking out a crawler fleet — and
+300/10 s is 30 req/s sustained from one address, which no link-preview fetcher does. Tune it from
+Security → Events, which records firings even under Block: many distinct IPs at modest volume would
+mean raise the threshold. Verified after deployment that a canonical render still returns
+`200 image/png` and the worker's own query guard still 404s. Details in
+`docs/operations/POST_MERGE_CHECKLIST.md`.

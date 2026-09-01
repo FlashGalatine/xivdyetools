@@ -134,7 +134,7 @@ No finding leaked a secret; nothing else needs rotation.
 | FINDING-009 | FIXED 2026-08-30 (Sprint 6, web-app: images session-only, stored blobs purged, e2e guard inverted) | 73fbf59f, c84d4263 |
 | FINDING-026 | FIXED 2026-08-30 | 2ffe6d13 |
 | FINDING-027 | FIXED 2026-08-30 | 2ffe6d13 |
-| FINDING-024 | FIXED 2026-08-30 (Sprint 7, og-worker 2.4.0; query *and* path axes) — enumeration of distinct ids still costs a render, bounded by the WAF rule, which stays an unticked dashboard action | c6bd962b, 9b2f4ca3, e2bdeec6, e2e9ca6b, 636e42ec, ebdc49ed, e9b6f471 |
+| FINDING-024 | FIXED 2026-08-30 (Sprint 7, og-worker 2.4.0; query *and* path axes) — enumeration of distinct ids still costs a render, now bounded by the WAF rule deployed 2026-09-01 (300 req/10 s per IP, Block — the Free plan offers no Log action) | c6bd962b, 9b2f4ca3, e2bdeec6, e2e9ca6b, 636e42ec, ebdc49ed, e9b6f471 |
 | FINDING-025 | FIXED 2026-08-31 (logger 2.1.1) — array items + free text scanned; three further leaks found in review (aliased references, a fail-open budget, DAG data loss) closed with it | 425cd1d0, 617c907e, b3800667, b1ec25aa |
 | FINDING-028 | PARTIAL — code FIXED 2026-08-31 (beta env + separate token, no fallback, named guard); OPEN until the maintainer mints the token and homes the production one in its environment | ae9ef136, 892f1b0e, 2277ff35, febf54ce, 1c8a5725 |
 | FINDING-029 | FIXED 2026-08-31 — directory allowlists replaced by value-anchored rules; tree + 948-commit history re-scanned clean (zero real secrets); GitHub secret scanning + push protection verified already enabled | 6206e5b5, c0550334, 55ff3852 |
@@ -161,10 +161,10 @@ a non-canonical path → 400 (FINDING-024, both axes); a bogus `/assets/*.js` �
 reporting that every security binding resolved, since a missing one makes `/health` itself 500
 (FINDING-013); and `X-RateLimit-Limit: 65` from api-worker's native binding.
 
-**"FIXED" still does not mean "nothing left to do."** Two closed findings carry a step outside the
+**"FIXED" still does not mean "nothing left to do."** One closed finding carries a step outside the
 code that is **not yet done**: **007** needs the two Upstash secrets deleted now the discord-worker
-deploy is live, and **024** leaves a WAF rate-limiting rule as a dashboard action. (**005** and
-**018**'s migrations `0012` and `0013` were applied 2026-08-31.) Work from
+deploy is live. (**024**'s WAF rate-limiting rule was deployed 2026-09-01, and **005**/**018**'s
+migrations `0012` and `0013` were applied 2026-08-31.) Work from
 [`docs/operations/POST_MERGE_CHECKLIST.md`](../../operations/POST_MERGE_CHECKLIST.md), not this table.
 
 ## Next steps
