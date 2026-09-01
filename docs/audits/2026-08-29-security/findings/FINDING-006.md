@@ -12,4 +12,4 @@
 - Add `doNotStore: true` to the request body; add Perspective/Google to the web guide's community-presets section (what is sent, why, that it is not stored).
 
 ## Status
-PARTIAL — code half FIXED 2026-08-30 e10d740e (presets-api 2.2.0: `doNotStore: true`, key in the header, no query string); docs half FIXED 2026-08-30 114f6dde (web-app: PRIVACY.md names Google Perspective — preset name + description may be sent for a moderation score, `doNotStore`, no account identity — and the third-party intro counts two). FINDING-006 is now CLOSED.
+FIXED (multi-unit) — code half FIXED 2026-08-30 e10d740e (presets-api 2.2.0: `doNotStore: true`, key in the header, no query string); docs half FIXED 2026-08-30 114f6dde (web-app: PRIVACY.md names Google Perspective — preset name + description may be sent for a moderation score, `doNotStore`, no account identity — and the third-party intro counts two). FINDING-006 is now CLOSED.
