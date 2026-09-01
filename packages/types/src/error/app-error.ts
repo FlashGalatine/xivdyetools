@@ -56,6 +56,10 @@ export class AppError extends Error {
    * Convert error to JSON-serializable object
    *
    * Useful for logging and API responses.
+   *
+   * @public implicit `JSON.stringify`/`console.log` serialization hook for
+   * consumers — nothing in-repo calls this method by name explicitly, but it
+   * is picked up automatically wherever an AppError is serialized.
    */
   toJSON(): Record<string, unknown> {
     return {

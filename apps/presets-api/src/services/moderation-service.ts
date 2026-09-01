@@ -44,6 +44,11 @@ export function escapeRegex(str: string): string {
  * @param maxLength - Maximum number of visible characters (not code units)
  * @param suffix - Suffix to append when truncated (default: '…')
  * @returns Truncated string with suffix if needed
+ *
+ * @testonly unit-tested directly for surrogate-pair-safe truncation (plain
+ * strings, emoji, custom suffix, exact-length and empty-string edges), but no
+ * caller in this file or elsewhere in presets-api invokes it — nothing in the
+ * moderation pipeline currently truncates a string before logging/storing it.
  */
 export function truncateUnicodeSafe(str: string, maxLength: number, suffix = '…'): string {
   const chars = Array.from(str);
@@ -133,6 +138,11 @@ function getCompiledProfanity(): CompiledProfanity {
 /**
  * Reset compiled profanity data - FOR TESTING ONLY
  * Allows tests to inject custom patterns via setTestPatterns()
+ *
+ * @testonly test-isolation hook — clears the memoized compiled-profanity
+ * singleton so a suite that injected custom patterns via the sibling
+ * pattern-setter function below cannot leak them into the next suite's
+ * `getCompiledProfanity()` call.
  */
 export function _resetPatternsForTesting(): void {
   _compiledProfanity = null;
@@ -141,6 +151,10 @@ export function _resetPatternsForTesting(): void {
 /**
  * Set custom profanity data - FOR TESTING ONLY
  * Allows tests to inject patterns that will trigger the filter
+ *
+ * @testonly test-isolation hook — overwrites the memoized compiled-profanity
+ * singleton with caller-supplied patterns so a test can trigger the filter
+ * deterministically without depending on the real word lists.
  */
 export function _setTestPatterns(patterns: RegExp[]): void {
   // Convert legacy pattern array to new structure for backward compatibility

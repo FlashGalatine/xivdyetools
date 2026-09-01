@@ -183,6 +183,8 @@ export class ToastService {
 
   /**
    * Dismiss all toasts
+   *
+   * @testonly bulk-clear used by the container tests.
    */
   static dismissAll(): void {
     // Clear all timers
@@ -197,6 +199,9 @@ export class ToastService {
 
   /**
    * Get current toasts (readonly copy)
+   *
+   * @testonly how ~60 behaviour tests observe the service; components render
+   * from `subscribe()`.
    */
   static getToasts(): readonly Toast[] {
     return [...this.toasts];

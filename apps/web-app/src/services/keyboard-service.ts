@@ -130,6 +130,21 @@ export class KeyboardService {
     const isQuestionMark = e.key === '?' || (e.shiftKey && e.key === '/');
     if (isQuestionMark && !ModalService.hasOpenModals()) {
       e.preventDefault();
+      /**
+       * @testonly checker artifact, not a real member: `KeyboardService` has
+       * no method named this way — this is a bare call to the imported
+       * `@components/shortcuts-panel` free function. The checker's
+       * MEMBER_DECL heuristic (an indentation + `identifier(` pattern, not a
+       * syntax-aware parse — see scripts/check-dead-code.ts's file docblock)
+       * matches this call statement as if it declared a same-named member on
+       * this class, and keyboard-service.test.ts's spy assertion on the
+       * imported `shortcutsPanel` module's own export of the same name (a
+       * property access on the spied *module*, not this class) coincidentally
+       * satisfies the dotted-reference pattern used to detect a test
+       * reference. Tagged here — the only line the checker attributes this
+       * false candidate to — rather than touching the checker per this
+       * task's constraints; see the Task 7 report for a suggested follow-up.
+       */
       showShortcutsPanel();
       return;
     }

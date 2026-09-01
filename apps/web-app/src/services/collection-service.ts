@@ -1087,6 +1087,10 @@ export class CollectionService {
    * Re-run initialization from storage — exercises the load-time
    * migrations (for testing only)
    * @internal
+   *
+   * @testonly test-isolation hook — clears the cached favorites/collections
+   * data and the `initialized` flag so a suite can re-exercise the load-time
+   * migration path against a fresh storage state.
    */
   static __reloadForTesting(): void {
     this.initialized = false;

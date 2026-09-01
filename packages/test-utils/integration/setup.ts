@@ -5,6 +5,8 @@
  * Creates simulated environments that mimic real worker interactions.
  *
  * @module integration/setup
+ * @testonly shared fixture factory for the discord-presets and oauth-presets
+ * cross-service integration suites; only tests construct these mock environments.
  */
 
 import { createMockD1Database, type MockD1Database } from '../src/cloudflare/d1.js';

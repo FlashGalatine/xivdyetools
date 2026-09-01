@@ -33,6 +33,9 @@ export class StorageService {
    * Test-isolation hook: `beforeEach` calls it so one suite's stubbed
    * localStorage cannot leak into the next. Kept for that reason rather than
    * pruned as test-only (2026-09-01 dead-code audit, DEAD-005).
+   *
+   * @testonly `beforeEach` isolation — a stubbed localStorage must not leak
+   * between suites.
    */
   static resetAvailabilityCache(): void {
     this.available = null;

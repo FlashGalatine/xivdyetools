@@ -505,6 +505,10 @@ export abstract class BaseLogger implements ExtendedLogger {
     };
   }
 
+  /**
+   * @public part of the published `ExtendedLogger` interface's contract —
+   * async counterpart to `time()`. No in-repo caller awaits it directly today.
+   */
   async timeAsync<T>(label: string, fn: () => Promise<T>): Promise<T> {
     const end = this.time(label);
     try {
@@ -570,6 +574,12 @@ class DelegatingLogger implements ExtendedLogger {
     };
   }
 
+  /**
+   * @public implements the published `ExtendedLogger` interface's
+   * `timeAsync` contract for child loggers created via `child()` — a
+   * DelegatingLogger must satisfy the same interface as BaseLogger. No
+   * in-repo caller awaits it directly today.
+   */
   async timeAsync<T>(label: string, fn: () => Promise<T>): Promise<T> {
     const end = this.time(label);
     try {

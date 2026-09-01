@@ -193,6 +193,9 @@ export class MarketBoardService extends EventTarget {
    * superseding call with nothing to fetch must clear it). Deleting the getter
    * would leave that fix unobservable, so it is kept deliberately rather than
    * pruned as test-only (2026-09-01 dead-code audit, DEAD-005).
+   *
+   * @testonly sole observer of the `isFetching` flag whose stuck-true state
+   * was BUG-039.
    */
   getIsFetching(): boolean {
     return this.isFetching;

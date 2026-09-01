@@ -224,6 +224,8 @@ export class ModalService {
 
   /**
    * Dismiss all modals
+   *
+   * @testonly bulk-clear used by the container tests.
    */
   static dismissAll(): void {
     // Call onClose for each modal (wrapped in try-catch to ensure all are processed)
@@ -244,6 +246,9 @@ export class ModalService {
 
   /**
    * Get current modals (readonly copy)
+   *
+   * @testonly how ~60 behaviour tests observe the service; components render
+   * from `subscribe()`.
    */
   static getModals(): readonly Modal[] {
     return [...this.modals];

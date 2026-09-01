@@ -150,6 +150,8 @@ export class CharacterColorService {
 
   /**
    * Get shared colors by category
+   *
+   * @public published `@xivdyetools/core` API — removal is a MAJOR (DEAD-006).
    */
   getSharedColors(category: SharedColorCategory): CharacterColor[] {
     return this.sharedData[category] || [];
@@ -244,6 +246,8 @@ export class CharacterColorService {
    * @param subrace - The character subrace
    * @param gender - The character gender
    * @returns Promise resolving to array of colors
+   *
+   * @public published `@xivdyetools/core` API — removal is a MAJOR (DEAD-006).
    */
   async getRaceSpecificColors(
     category: RaceSpecificColorCategory,

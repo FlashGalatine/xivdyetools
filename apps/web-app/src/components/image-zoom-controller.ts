@@ -258,6 +258,12 @@ export class ImageZoomController extends BaseComponent {
     this.setupImageInteraction();
   }
 
+  /**
+   * @testonly test observation point — image-zoom-controller.test.ts reads
+   * the container back to assert wiring after setImage() and to dispatch
+   * synthetic wheel/pointer events onto it; production code holds
+   * `canvasContainerRef` internally and never asks for it back.
+   */
   getCanvasContainer(): HTMLElement | null {
     return this.canvasContainerRef;
   }

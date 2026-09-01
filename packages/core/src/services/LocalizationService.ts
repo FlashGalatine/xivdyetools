@@ -546,6 +546,8 @@ export class LocalizationService {
    * Get all available locale codes
    *
    * @returns Array of supported locale codes
+   *
+   * @public published `@xivdyetools/core` API — removal is a MAJOR (DEAD-006).
    */
   getAvailableLocales(): LocaleCode[] {
     return [...SUPPORTED_LOCALES];

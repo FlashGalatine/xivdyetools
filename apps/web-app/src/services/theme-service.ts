@@ -367,6 +367,9 @@ export class ThemeService {
    * Test-isolation hook: `beforeEach` calls it so a suite that switches themes
    * cannot leak into the next. Kept for that reason rather than pruned as
    * test-only (2026-09-01 dead-code audit, DEAD-005).
+   *
+   * @testonly `beforeEach` isolation — a theme switch must not leak between
+   * suites.
    */
   static resetToDefault(): void {
     this.setTheme(DEFAULT_THEME);
@@ -376,6 +379,10 @@ export class ThemeService {
    * Reset initialization state (for testing only)
    * Allows testing initialize() behavior with different storage states
    * @internal
+   *
+   * @testonly `beforeEach` isolation — clears the `isInitialized` guard so a
+   * suite can re-exercise `initialize()` (including legacy-theme migration)
+   * against a fresh storage state without a prior test's init leaking in.
    */
   static __resetForTesting(): void {
     this.isInitialized = false;
