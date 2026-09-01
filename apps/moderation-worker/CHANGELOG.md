@@ -19,6 +19,11 @@ first dead-code pass. No behaviour change.
   `services/ban-service.ts`.
 - The `discord-interactions` devDependency. Nothing imported it; the CLAUDE.md line claiming
   `scripts/register-commands.ts` used it was wrong — that script imports only `dotenv/config`.
+- The whole `@xivdyetools/types` re-export block in `types/preset.ts` (DEAD-019). Nine of the
+  fourteen names had no importer and the other five had exactly one, so `services/preset-api.ts`
+  now imports them from `@xivdyetools/types` directly and the pass-through is gone. The
+  project-specific members of that module — `PresetAPIError`, `STATUS_DISPLAY`,
+  `ModerationQueueEntry` — are unchanged.
 
 ## [1.6.0] - 2026-08-30
 

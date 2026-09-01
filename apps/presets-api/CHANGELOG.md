@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (same file) and `ErrorCodeType` (`utils/api-response.ts`). Dead-code sweep
   (`docs/audits/2026-09-01-dead-code`, DEAD-010): 108 lines with no call sites and no tests
   either. The per-field validators further down the same file are what the handlers use.
+- The `PresetSubmitResponse` and `PresetEditResponse` re-exports from `src/types.ts` (DEAD-019) —
+  the only two names in that `@deprecated` block with no importer. Fifteen re-exports remain; the
+  block's "removed in the next major version" promise is still outstanding for those.
 
 ### Changed
 

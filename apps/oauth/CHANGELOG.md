@@ -18,6 +18,10 @@ No route, token or D1 behaviour changes.
 - `findUserById`, `findUserByDiscordId`, `findUserByXIVAuthId` (`services/user-service.ts`) — three
   single-query wrappers with no production caller; both handlers use `findOrCreateUser`, which
   already runs the same lookups. Their test blocks went with them.
+- The `XIVAuthSocialIdentity` and `RefreshResponse` re-exports from `src/types.ts` (DEAD-019) — the
+  only two names in that `@deprecated` block with no importer. The block's promise that these
+  re-exports go "in the next major version" is still outstanding for the other nine; finishing it
+  means rewriting their local imports to `@xivdyetools/types`.
 
 ## [3.0.0] - 2026-08-30
 

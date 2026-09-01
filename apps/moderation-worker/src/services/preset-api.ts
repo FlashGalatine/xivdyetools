@@ -24,8 +24,8 @@ import type {
   ModerationStats,
   ModerationLogEntry,
   PresetFilters,
-  ModerationQueueEntry,
-} from '../types/preset.js';
+} from '@xivdyetools/types';
+import type { ModerationQueueEntry } from '../types/preset.js';
 import { PresetAPIError } from '../types/preset.js';
 
 // ============================================================================

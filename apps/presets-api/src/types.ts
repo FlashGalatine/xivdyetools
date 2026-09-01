@@ -25,8 +25,6 @@ export type {
   PresetFilters,
   PresetEditRequest,
   PresetListResponse,
-  PresetSubmitResponse,
-  PresetEditResponse,
   VoteResponse,
 } from '@xivdyetools/types';
 

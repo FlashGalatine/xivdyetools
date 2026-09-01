@@ -34,7 +34,6 @@ export type { DiscordTokenResponse, DiscordUser } from '@xivdyetools/types';
 export type {
   XIVAuthTokenResponse,
   XIVAuthCharacterRegistration,
-  XIVAuthSocialIdentity,
   XIVAuthUser,
 } from '@xivdyetools/types';
 
@@ -42,7 +41,7 @@ export type {
  * @deprecated Import directly from '@xivdyetools/types' instead.
  * These re-exports will be removed in the next major version.
  */
-export type { AuthResponse, RefreshResponse, UserInfoResponse } from '@xivdyetools/types';
+export type { AuthResponse, UserInfoResponse } from '@xivdyetools/types';
 
 // ============================================
 // CLOUDFLARE BINDINGS (Project-specific)
