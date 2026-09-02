@@ -25,8 +25,10 @@ import {
   hasBareTag,
   isExcludedReferrer,
   isPublic,
+  isTestFile,
   leadingDocblock,
   maskSource,
+  resolveRelativeSpecifier,
   subsumeMembersByOwner,
   testOnlyReason,
 } from './check-dead-code.js';
@@ -100,7 +102,13 @@ const cases: DocCase[] = [
     },
   },
   {
-    name: '4b. finding E: a leading docblock is refused with no blank line either (isolates E from bug A)',
+    // The controller ruling of 2026-09-01: refusing this one made the gate's
+    // own remediation hint a dead end — a file whose only comment is its
+    // leading docblock could not exempt its first export no matter what tag
+    // it carried. With nothing skipped between the block and the
+    // declaration, the block IS that declaration's docblock. 4a above is the
+    // shape the refusal still applies to.
+    name: '4b. a leading docblock with nothing skipped between it and the declaration attaches',
     lines: [
       '/**',
       ' * File-level description.',
@@ -109,7 +117,7 @@ const cases: DocCase[] = [
       'export function firstThing(): void {}',
     ],
     declIndex: 4,
-    check: (doc) => assert.equal(doc, ''),
+    check: (doc) => assert.equal(testOnlyReason(doc), 'file-level reason'),
   },
   {
     name: '5. bug C: a single-line /** @testonly reason */ docblock is recognized',
@@ -266,7 +274,24 @@ for (const c of cases) {
   });
 }
 
-test('leadingDocblock returns the file header — the same block docblockAbove refuses to reuse', () => {
+/**
+ * Every list a candidate could land in, for "appears nowhere" assertions —
+ * an absence from `violations` alone proves nothing, since an accidental
+ * exemption hides a finding just as thoroughly as a missed candidate does.
+ */
+const namesEverywhere = (r: {
+  violations: { name?: string }[];
+  testOnlyExempt: string[];
+  entrypointExempt: string[];
+  publicExempt: string[];
+}): string[] => [
+  ...r.violations.map((v) => v.name ?? ''),
+  ...r.testOnlyExempt,
+  ...r.entrypointExempt,
+  ...r.publicExempt,
+];
+
+test('leadingDocblock returns the file header — which docblockAbove also returns when it is adjacent', () => {
   const text = [
     '/**',
     ' * File-level description.',
@@ -274,11 +299,75 @@ test('leadingDocblock returns the file header — the same block docblockAbove r
     ' */',
     'export function firstThing(): void {}',
   ].join('\n');
-  assert.equal(
-    leadingDocblock(text),
-    '/**\n * File-level description.\n * @testonly file-level reason\n */',
+  const header = '/**\n * File-level description.\n * @testonly file-level reason\n */';
+  assert.equal(leadingDocblock(text), header);
+  // Adjacent to the declaration, so the two agree (the 2026-09-01 ruling).
+  assert.equal(docblockAbove(text.split('\n'), 4), header);
+  // One blank line away, they diverge again: the file header stays a FILE
+  // header and docblockAbove refuses to reuse it at symbol granularity.
+  const spaced = [
+    '/**',
+    ' * File-level description.',
+    ' * @testonly file-level reason',
+    ' */',
+    '',
+    'export function firstThing(): void {}',
+  ];
+  assert.equal(leadingDocblock(spaced.join('\n')), header);
+  assert.equal(docblockAbove(spaced, 5), '');
+});
+
+test('4c. the adjacency rule end to end: adjacent tag exempts the first export, one blank line away it does not', () => {
+  // Symbol granularity: with nothing between the docblock and the export, the
+  // tag is the export's own and exempts it.
+  const adjacentFile = 'src/adjacent-tag.ts';
+  const adjacentTest = 'src/adjacent-tag.test.ts';
+  const adjacentText = [
+    '/**',
+    ' * @testonly only the suite drives this helper',
+    ' */',
+    'export function onlyThing(): void {}',
+  ].join('\n');
+  const adjacentTexts = new Map([
+    [adjacentFile, adjacentText],
+    [adjacentTest, "import { onlyThing } from './adjacent-tag';\nonlyThing();\n"],
+  ]);
+  const adjacent = findTestOnlyExports([adjacentFile], [adjacentTest], adjacentTexts);
+  assert.equal(adjacent.violations.length, 0);
+  assert.deepEqual(adjacent.testOnlyExempt, [`${adjacentFile}:onlyThing`]);
+
+  // Same docblock, same tag, one blank line away — the "file header + blank
+  // line + first export" shape the refusal exists for. The tag does NOT
+  // attach to the export.
+  const spacedFile = 'src/spaced-tag.ts';
+  const spacedTest = 'src/spaced-tag.test.ts';
+  const spacedText = [
+    '/**',
+    ' * @testonly only the suite drives this helper',
+    ' */',
+    '',
+    'export function onlyThing2(): void {}',
+  ].join('\n');
+  const spacedTexts = new Map([
+    [spacedFile, spacedText],
+    [spacedTest, "import { onlyThing2 } from './spaced-tag';\nonlyThing2();\n"],
+  ]);
+  const spaced = findTestOnlyExports([spacedFile], [spacedTest], spacedTexts);
+  assert.deepEqual(spaced.testOnlyExempt, []);
+  assert.equal(spaced.violations.filter((v) => v.name === 'onlyThing2').length, 1);
+
+  // FILE granularity is indifferent to adjacency and is unchanged by the
+  // ruling: findOrphanModules reads the leading docblock directly, so BOTH
+  // files are file-level test-only exempt either way. (In main(), that
+  // file-level verdict is also what subsumes the spaced file's symbol
+  // violation above.)
+  assert.deepEqual(
+    findOrphanModules([adjacentFile], [adjacentTest], adjacentTexts).testOnlyExempt,
+    [adjacentFile],
   );
-  assert.equal(docblockAbove(text.split('\n'), 4), '');
+  assert.deepEqual(findOrphanModules([spacedFile], [spacedTest], spacedTexts).testOnlyExempt, [
+    spacedFile,
+  ]);
 });
 
 test('9a. bug D: a tagged overload gets exactly one exempt verdict, not one per signature', () => {
@@ -387,14 +476,26 @@ test('17. findTestOnlyMembers: a method called via this.x() from a sibling metho
     '  }',
     '}',
   ].join('\n');
-  const testText = "import { Widget2 } from './widget2';\nnew Widget2().helper();\n";
+  const testText =
+    "import { Widget2 } from './widget2';\nconst w = new Widget2();\nw.helper();\nw.run();\n";
   const texts = new Map([
     [prodFile, prodText],
     [testFile, testText],
   ]);
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
-  assert.equal(result.violations.filter((v) => v.name === 'helper').length, 0);
-  assert.equal(result.testOnlyExempt.filter((e) => e.endsWith(':helper')).length, 0);
+  // Positive control: `run` has no production reference at all, so it IS
+  // reported. Without it, every assertion below would hold just as well for a
+  // fixture the scan never produced a single finding from.
+  assert.equal(
+    result.violations.some((v) => v.name === 'Widget2.run'),
+    true,
+  );
+  // Names are qualified `Class.member`, so these must be too — filtering on
+  // the bare `helper` asserts against a set that can never contain it.
+  assert.deepEqual(
+    namesEverywhere(result).filter((n) => /(?:^|[.:])helper$/.test(n)),
+    [],
+  );
 });
 
 test('18. findTestOnlyMembers: a method called through an interface-typed variable is not a violation', () => {
@@ -411,19 +512,34 @@ test('18. findTestOnlyMembers: a method called through an interface-typed variab
     '  process(): void {',
     '    // no-op',
     '  }',
+    '',
+    '  probe(): void {}',
     '}',
     '',
     'export function runIt(w: IWidget3): void {',
     '  w.process();',
     '}',
   ].join('\n');
-  const testText = "import { Widget3 } from './widget3';\nnew Widget3().process();\n";
+  const testText =
+    "import { Widget3 } from './widget3';\nconst w = new Widget3();\nw.process();\nw.probe();\n";
   const texts = new Map([
     [prodFile, prodText],
     [testFile, testText],
   ]);
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
-  assert.equal(result.violations.filter((v) => v.name === 'process').length, 0);
+  // Positive control: `probe` has no production caller, so it IS reported --
+  // proof the scan ran over this fixture at all.
+  assert.equal(
+    result.violations.some((v) => v.name === 'Widget3.probe'),
+    true,
+  );
+  // Qualified: filtering on the bare `process` asserts against a set that can
+  // never contain it. Neither the class's method nor the interface's
+  // signature may be reported -- `w.process()` in runIt covers both.
+  assert.deepEqual(
+    namesEverywhere(result).filter((n) => /(?:^|[.:])process$/.test(n)),
+    [],
+  );
 });
 
 test('19. findTestOnlyMembers: private and protected members are excluded, never reported', () => {
@@ -471,7 +587,7 @@ test('20. findTestOnlyMembers: a #-prefixed true-private member is never reporte
   assert.equal(result.violations.length, 0);
 });
 
-test('21. findTestOnlyMembers: control-flow keywords at member indentation are not mistaken for methods', () => {
+test('21. findTestOnlyMembers: control-flow keywords inside a method body are not mistaken for methods (depth rule)', () => {
   const prodFile = 'src/widget6.ts';
   const testFile = 'src/widget6.test.ts';
   const prodText = [
@@ -487,22 +603,81 @@ test('21. findTestOnlyMembers: control-flow keywords at member indentation are n
     '  }',
     '}',
   ].join('\n');
-  // Nonsense call shapes: if MEMBER_SKIP did not exclude "if"/"switch", these
-  // would otherwise register as test references to fake members named after
-  // the keywords.
-  const testText = 'w.if(); w.switch();\n';
+  // `if (`/`switch (` satisfy MEMBER_DECL's indentation-plus-`identifier(`
+  // heuristic, and these nonsense call shapes supply the `.if`/`.switch` test
+  // references a fake member would need. TWO independent guards exclude them,
+  // so this fixture only fails if BOTH are removed: MEMBER_SKIP fires first
+  // (it is checked before attribution), and since 1ddb3e7f the depth rule
+  // would exclude them anyway -- both sit one brace deeper than the class's
+  // own body, so they are statements, not declarations. (MEMBER_SKIP's own
+  // irreplaceable job, at member depth, is `constructor` -- next test.)
+  //
+  // The import is load-bearing: without it no test file imports widget6.ts,
+  // every member's testRefs is 0, and the fixture reports NOTHING -- which is
+  // what made the absence assertions below unfalsifiable.
+  const testText = [
+    "import { Widget6 } from './widget6';",
+    'const w = new Widget6();',
+    'w.run();',
+    'w.if();',
+    'w.switch();',
+  ].join('\n');
   const texts = new Map([
     [prodFile, prodText],
     [testFile, testText],
   ]);
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  // Positive control: the one real member IS reported.
   assert.equal(
-    result.violations.some((v) => v.name === 'if' || v.name === 'switch'),
-    false,
+    result.violations.some((v) => v.name === 'Widget6.run'),
+    true,
   );
+  // Neither the qualified form nor the name-only null-attribution fallback.
+  assert.deepEqual(
+    namesEverywhere(result).filter((n) => /(?:^|[.:])(?:if|switch|doStuff)$/.test(n)),
+    [],
+  );
+});
+
+test('21b. findTestOnlyMembers: `constructor` sits at member depth, so MEMBER_SKIP is the only thing excluding it', () => {
+  // The MEMBER_SKIP entry the depth rule cannot cover: a constructor is
+  // declared at the class body's OWN depth, exactly like a method. Every class
+  // has one and `.constructor` exists on every object, so without the skip it
+  // would be a standing false positive wherever a test touches it.
+  const prodFile = 'src/widget6b.ts';
+  const testFile = 'src/widget6b.test.ts';
+  const prodText = [
+    'export class Widget6b {',
+    '  private readonly seed: number;',
+    '',
+    '  constructor(seed: number) {',
+    '    this.seed = seed;',
+    '  }',
+    '',
+    '  probe(): number {',
+    '    return this.seed;',
+    '  }',
+    '}',
+  ].join('\n');
+  const testText = [
+    "import { Widget6b } from './widget6b';",
+    'const w = new Widget6b(1);',
+    "assert.equal(w.constructor.name, 'Widget6b');",
+    'w.probe();',
+  ].join('\n');
+  const texts = new Map([
+    [prodFile, prodText],
+    [testFile, testText],
+  ]);
+  const result = findTestOnlyMembers([prodFile], [testFile], texts);
+  // Positive control: `probe` has no production caller and IS reported.
   assert.equal(
-    result.testOnlyExempt.some((e) => e.endsWith(':if') || e.endsWith(':switch')),
-    false,
+    result.violations.some((v) => v.name === 'Widget6b.probe'),
+    true,
+  );
+  assert.deepEqual(
+    namesEverywhere(result).filter((n) => /(?:^|[.:])constructor$/.test(n)),
+    [],
   );
 });
 
@@ -661,19 +836,37 @@ test('28. findTestOnlyMembers: a member reached only via bracket-notation string
   const prodText = [
     'export class Widget12 {',
     '  dynamicThing(): void {}',
+    '',
+    '  probe(): void {}',
     '}',
     '',
     'export function dispatch(w: Widget12): void {',
     "  (w as unknown as Record<string, () => void>)['dynamicThing']();",
     '}',
   ].join('\n');
-  const testText = "import { Widget12 } from './widget12';\nnew Widget12().dynamicThing();\n";
+  const testText = [
+    "import { Widget12 } from './widget12';",
+    'const w = new Widget12();',
+    'w.dynamicThing();',
+    'w.probe();',
+  ].join('\n');
   const texts = new Map([
     [prodFile, prodText],
     [testFile, testText],
   ]);
   const result = findTestOnlyMembers([prodFile], [testFile], texts);
-  assert.equal(result.violations.filter((v) => v.name === 'dynamicThing').length, 0);
+  // Positive control: `probe` has NO production call site of either shape, so
+  // it is reported -- the fixture really does produce findings.
+  assert.equal(
+    result.violations.some((v) => v.name === 'Widget12.probe'),
+    true,
+  );
+  // Qualified: filtering on the bare `dynamicThing` asserts against a set that
+  // can never contain it.
+  assert.deepEqual(
+    namesEverywhere(result).filter((n) => /(?:^|[.:])dynamicThing$/.test(n)),
+    [],
+  );
 });
 
 // ============================================================================
@@ -1300,19 +1493,6 @@ test("50. findTestOnlyMembers: a template-embedded column-0 declaration in class
 // fix-5: candidates come from MASKED text; references and tags stay RAW
 // ============================================================================
 
-/** Every list a candidate could land in, for "appears nowhere" assertions. */
-const namesEverywhere = (r: {
-  violations: { name?: string }[];
-  testOnlyExempt: string[];
-  entrypointExempt: string[];
-  publicExempt: string[];
-}): string[] => [
-  ...r.violations.map((v) => v.name ?? ''),
-  ...r.testOnlyExempt,
-  ...r.entrypointExempt,
-  ...r.publicExempt,
-];
-
 test('51. findTestOnlyExports: an export declared only inside a block comment is never a candidate', () => {
   const prodFile = 'src/commented-export.ts';
   const testFile = 'src/commented-export.test.ts';
@@ -1529,4 +1709,69 @@ test('57. attributeLinesToBlockFrames: direct members vs nested statements', () 
   const blocks = attributeLinesToBlocks(lines);
   assert.equal(blocks[1], 'A');
   assert.equal(blocks[2], 'A');
+});
+
+// ============================================================================
+// final review: the two regression cases the spec promised but never got —
+// workspace-relative test-file matching (spec §3) and relative-specifier
+// resolution in place of basename collision (Task 4's headline fix)
+// ============================================================================
+
+test('58. isTestFile: patterns match the WORKSPACE-RELATIVE path, never the whole path', () => {
+  // packages/test-utils is PRODUCTION code for its consumers -- 14 of its 36
+  // exports had no external consumer at the 2026-09-01 audit -- so its own
+  // sources must never be classified as test code, or the checker goes blind
+  // to exactly the workspace it most needs to see.
+  assert.equal(isTestFile('packages/test-utils/src/cloudflare/kv.ts'), false);
+  assert.equal(isTestFile('packages/test-utils/src/index.ts'), false);
+  // The discriminating pair: a workspace whose OWN directory name matches a
+  // test-directory pattern. Matched against the whole path, every source file
+  // under these would be classified as a test file.
+  assert.equal(isTestFile('packages/tests/src/index.ts'), false);
+  assert.equal(isTestFile('apps/e2e/src/main.ts'), false);
+  // ... while a real test directory INSIDE a workspace still matches, and so
+  // does an app's own tests/test-utils.ts (the file the pattern is named for).
+  assert.equal(isTestFile('apps/api-worker/tests/test-utils.ts'), true);
+  assert.equal(isTestFile('apps/x/src/__fixtures__/a.ts'), true);
+  assert.equal(isTestFile('packages/core/src/color/matcher.test.ts'), true);
+});
+
+test('59. findOrphanModules: a relative specifier resolves to ONE file, not every same-basename file', () => {
+  const aTypes = 'src/a/types.ts';
+  const bTypes = 'src/b/types.ts';
+  const aTest = 'src/a/types.test.ts';
+  const texts = new Map([
+    [aTypes, 'export type A = { a: number };\n'],
+    [bTypes, 'export type B = { b: number };\n'],
+    [aTest, "import type { A } from './types';\nconst a: A = { a: 1 };\n"],
+  ]);
+  const result = findOrphanModules([aTypes, bTypes], [aTest], texts);
+  // `./types` from src/a/ resolves to src/a/types.ts and nothing else, so
+  // exactly one file is a test-only orphan.
+  assert.deepEqual(
+    result.violations.map((v) => v.file),
+    [aTypes],
+  );
+  // src/b/types.ts shares the basename but has ZERO importers of any kind --
+  // knip's job, not this checker's -- so it must appear in no list at all.
+  // Under the pre-fix basename fallback it inherited src/a/'s test importer
+  // and was reported as a test-only orphan it never was.
+  const everywhere = [
+    ...result.violations.map((v) => v.file),
+    ...result.testOnlyExempt,
+    ...result.entrypointExempt,
+    ...result.publicExempt,
+  ];
+  assert.equal(everywhere.includes(bTypes), false);
+});
+
+test('60. resolveRelativeSpecifier: a .js specifier resolves to its .ts sibling, a bare directory to index.ts', () => {
+  const tracked = new Set(['src/a/x.ts', 'src/a/index.ts']);
+  // This repo's ESM-style imports name the COMPILED extension, so the literal
+  // `.js` path is never itself the right target.
+  assert.equal(resolveRelativeSpecifier('./x.js', 'src/a/main.ts', tracked), 'src/a/x.ts');
+  assert.equal(resolveRelativeSpecifier('.', 'src/a/main.ts', tracked), 'src/a/index.ts');
+  // Nothing in `tracked` matches -> null, and the caller falls back to
+  // conservative basename matching for that one specifier.
+  assert.equal(resolveRelativeSpecifier('./nope', 'src/a/main.ts', tracked), null);
 });

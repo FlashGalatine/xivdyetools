@@ -205,10 +205,13 @@ export function hasBareTag(docblock: string): boolean {
 
 /**
  * `@public` — a third exemption category, deliberately asymmetric with
- * `@testonly`/`@entrypoint`: it takes no mandatory reason. This repo already
- * has 173 bare `/** @public *\/` tags across 5 barrel files (documented at
- * `packages/bot-logic/src/index.ts:15` as "published API, deliberately kept
- * without an in-repo consumer") and `knip.jsonc:41`'s `"tags": ["-public"]`
+ * `@testonly`/`@entrypoint`: it takes no mandatory reason. When this rule was
+ * added on 2026-09-01 the repo carried 173 bare `/** @public *\/` tags across
+ * 5 barrel files (documented at `packages/bot-logic/src/index.ts:15` as
+ * published API deliberately kept even though no workspace imports it), and
+ * Phase 3 of the guardrails plan added ~105 more as it gated the remaining
+ * packages — both counts are dated snapshots, not a live figure to maintain.
+ * The convention itself is `knip.jsonc`'s `"tags": ["-public"]`
  * — the tag itself is the assertion, so presence alone is enough. This is
  * intentionally excluded from `hasBareTag`'s tag list above: a bare
  * `@public` must never fail the gate the way a bare `@testonly`/`@entrypoint`
@@ -237,6 +240,11 @@ function parenDelta(line: string): number {
  * `leadingDocblock`'s regex applies from the start of the raw file text, so
  * `docblockAbove` can check "is this the file's leading docblock" without
  * re-joining and re-scanning the file.
+ *
+ * On its own this answers only "is this block the file header?", which is
+ * half of `docblockAbove`'s refusal test: a leading docblock is refused only
+ * when the upward walk also had to SKIP something (a blank or decorator line)
+ * to reach the declaration. See `docblockAbove`.
  */
 function isLeadingDocblockStart(lines: string[], openIndex: number): boolean {
   for (let k = 0; k < openIndex; k++) {
@@ -261,15 +269,23 @@ function isLeadingDocblockStart(lines: string[], openIndex: number): boolean {
  * the balance returns to zero; if the line that balances it is itself a
  * decorator start, the whole span is the argument list and the walk resumes
  * from there, otherwise the balance-probe changes nothing and the original
- * line is still a genuine wall. Once a candidate docblock is found, though,
- * it is refused — the walk returns '' — when it is the file's own leading
- * docblock (nothing but whitespace or a shebang precedes its opening `/**`).
- * Without that check, skipping blank lines would let a file-header comment
+ * line is still a genuine wall.
+ *
+ * The file's own leading docblock (nothing but whitespace or a shebang
+ * precedes its opening `/**`) is refused — the walk returns '' — but ONLY
+ * when that upward walk actually skipped something to reach it: at least one
+ * blank or decorator line stood between the block and the declaration. That
+ * is the "file header, blank line, first export" shape the refusal exists
+ * for — without it, skipping blank lines would let a file-header comment
  * silently attach to whichever export happens to sit first, exempting it by
- * accident. A genuine file-level tag is already handled by `leadingDocblock`
- * at file granularity, and the file-subsumes-symbol rule in `main` means an
- * exempt file never needs symbol-level attribution anyway, so refusing to
- * reuse the header here costs nothing.
+ * accident, and a genuine file-level tag is already handled by
+ * `leadingDocblock` at file granularity (the file-subsumes-symbol rule in
+ * `main` means an exempt file never needs symbol-level attribution anyway).
+ * When the leading docblock is instead IMMEDIATELY adjacent to the
+ * declaration — nothing skipped at all — it is that declaration's own
+ * docblock and is returned: refusing it there made the gate's own
+ * remediation hint a dead end, since adding `@testonly <why>` to the only
+ * comment a one-export file has would not clear the violation.
  */
 export function docblockAbove(lines: string[], declIndex: number): string {
   let i = declIndex;
@@ -293,6 +309,10 @@ export function docblockAbove(lines: string[], declIndex: number): string {
     }
     break;
   }
+  // Did the walk above have to skip anything (a blank or decorator line) to
+  // reach the docblock? That, not the header-ness alone, is what makes a
+  // leading docblock a file header rather than this declaration's own.
+  const skippedToReachIt = i !== declIndex;
   const out: string[] = [];
   let j = i;
   while (j > 0) {
@@ -303,7 +323,7 @@ export function docblockAbove(lines: string[], declIndex: number): string {
     if (prev.startsWith('/**')) break;
   }
   if (out.length === 0) return '';
-  if (isLeadingDocblockStart(lines, j)) return '';
+  if (skippedToReachIt && isLeadingDocblockStart(lines, j)) return '';
   return out.join('\n');
 }
 
