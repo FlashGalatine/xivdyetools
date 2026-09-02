@@ -24,6 +24,8 @@
 import { ModalService } from '@services/modal-service';
 import { StorageService } from '@services/storage-service';
 import { LanguageService } from '@services/language-service';
+import { ToastService } from '@services/toast-service';
+import { logger } from '@shared/logger';
 import { STORAGE_KEYS, APP_VERSION } from '@shared/constants';
 
 // ============================================================================
@@ -105,7 +107,21 @@ export class ChangelogModal {
     if (this.modalId) return; // Already showing
 
     const generation = ++this.generation;
-    const { changelogEntries } = await import('virtual:changelog');
+
+    // BUG-090: every call site is `void showChangelogModal()`, and the app
+    // registers no global unhandledrejection handler — so when this dynamic
+    // import rejected (a chunk 404 against a stale deploy, which is exactly
+    // when a user reaches for "What's New") the button did nothing at all, with
+    // no toast and no console error. Tell the user to reload instead.
+    let changelogEntries: ChangelogEntry[];
+    try {
+      ({ changelogEntries } = await import('virtual:changelog'));
+    } catch (error) {
+      logger.error('[ChangelogModal] Failed to load changelog chunk:', error);
+      ToastService.error(LanguageService.t('errors.tryAgainOrRefresh'));
+      return;
+    }
+
     // Superseded while loading: a second show() is in flight, or close() ran.
     if (generation !== this.generation || this.modalId) return;
 

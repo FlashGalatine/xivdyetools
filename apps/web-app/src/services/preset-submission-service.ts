@@ -386,7 +386,7 @@ class PresetSubmissionServiceImpl {
 
       if (!response.ok) {
         logger.error('Failed to fetch user submissions:', response.status);
-        return { presets: [], total: 0 };
+        throw new Error(`Failed to fetch user submissions (${response.status})`);
       }
 
       const result = await response.json();
@@ -397,8 +397,14 @@ class PresetSubmissionServiceImpl {
         total: result.total || result.presets?.length || 0,
       };
     } catch (err) {
+      // BUG-082: this used to swallow every failure into an empty list, which
+      // is indistinguishable from "you have not submitted anything". Both
+      // callers already wrap the call in try/catch — the modal even raises an
+      // error toast — so those handlers were dead code and an API outage
+      // rendered "no submissions yet" with 0/0/0 stats. An unauthenticated
+      // user still gets the empty list above; a FAILURE is now a failure.
       logger.error('Error fetching user submissions:', err);
-      return { presets: [], total: 0 };
+      throw err instanceof Error ? err : new Error('Failed to fetch user submissions');
     }
   }
 
