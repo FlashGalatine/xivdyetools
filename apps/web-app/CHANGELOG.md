@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Saved presets held in the browser from before the stainID rewrite render again.** Retiring the
+  legacy-itemID fallback below covered every *live* source, but a saved preset is a SNAPSHOT: the
+  dye array is copied into `v5_saved_presets` at save time and was never rewritten afterwards.
+  Anyone who saved a community preset before the 2026-08-28 D1 rewrite still holds 4.x itemIDs in
+  local storage, and on the Saved shelf those reach `resolvePresetDye` on every path that falls
+  back to the local copy — an author-deleted preset (kept by default), being offline, or the live
+  row simply not being in the fetched page. Against a stainID-only resolver they resolved to
+  nothing, so the card drew an empty palette and `isBuyable` counted the unresolved dyes as
+  buyable. `SavedPresetsService.load()` now converts those references once, on read, and rewrites
+  the store only when something actually changed.
+- The conversion is deliberately conservative. It is skipped while the dye database is still cold,
+  because every lookup would miss and a healthy snapshot would look unresolvable; a reference it
+  cannot place is left exactly as stored rather than dropped, since silently shortening someone's
+  saved palette is worse than one unresolved swatch; and the whole pass is wrapped, so a repair
+  that fails can never empty the shelf it was meant to fix.
+- `toStainId` moved from `services/collection-service.ts` (module-private) to
+  `services/dye-service-wrapper.ts`, alongside `resolvePresetDye`, and is now the single place the
+  retired 4.x ID space is understood — for persisted local data only. Collections keep identical
+  behaviour; the lookup is now an O(1) id-map hit instead of a linear scan over all 125 dyes.
+  `resolvePresetDye` itself stays strict.
+
 ### Changed
 
 - `resolvePresetDye` (`services/dye-service-wrapper.ts`) no longer falls back to the 4.x

@@ -17,7 +17,7 @@
  */
 
 import { StorageService } from './storage-service';
-import { dyeService } from './dye-service-wrapper';
+import { dyeService, toStainId } from './dye-service-wrapper';
 import { LanguageService } from './language-service';
 import { STORAGE_KEYS } from '@shared/constants';
 import { logger } from '@shared/logger';
@@ -146,28 +146,9 @@ const MAX_COLLECTION_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 200;
 const MAX_TOMBSTONES = 200;
 
-/** stainIDs live in 1–254; legacy market itemIDs start at 5729 — disjoint */
-const STAIN_ID_MAX = 254;
-
 // ============================================================================
 // 4.x → 5.0 migration helpers
 // ============================================================================
-
-/**
- * Resolve a stored dye reference to a stainID. 5.0 values (1–254) pass
- * through when the stainID exists; 4.x values (legacy itemIDs, incl. the
- * negative synthetic Facewear range) resolve via the dye database.
- * Returns null for anything unresolvable — the caller drops it loudly.
- */
-function toStainId(stored: number): DyeId | null {
-  if (!Number.isFinite(stored)) return null;
-  if (stored >= 1 && stored <= STAIN_ID_MAX) {
-    return dyeService.getByStainId(stored) ? stored : null;
-  }
-  // Legacy itemID (dye.id === dye.itemID in 4.x)
-  const dye = dyeService.getAllDyes().find((d) => d.itemID === stored || d.id === stored);
-  return dye?.stainID ?? null;
-}
 
 /** Shape of the retired 4.x PaletteService records (localized dye names) */
 interface LegacySavedPalette {

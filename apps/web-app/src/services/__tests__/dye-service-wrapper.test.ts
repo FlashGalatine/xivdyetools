@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { DyeService, dyeService, resolvePresetDye } from '../dye-service-wrapper';
+import { DyeService, dyeService, resolvePresetDye, toStainId } from '../dye-service-wrapper';
 
 describe('DyeService Wrapper', () => {
   beforeEach(() => {
@@ -237,5 +237,24 @@ describe('resolvePresetDye', () => {
     expect(resolvePresetDye(99_999_999)).toBeUndefined();
     expect(resolvePresetDye(1.5)).toBeUndefined();
     expect(resolvePresetDye(Number.NaN)).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// toStainId — legacy 4.x itemID migration for persisted local data
+// ============================================================================
+
+describe('toStainId', () => {
+  it('should map a legacy 4.x itemID to its stainID', () => {
+    // Snow White: legacyItemID 5729 -> stainID 1
+    expect(toStainId(5729)).toBe(1);
+  });
+
+  it('should pass a valid stainID through unchanged', () => {
+    expect(toStainId(1)).toBe(1);
+  });
+
+  it('should return null for a value in neither ID space', () => {
+    expect(toStainId(999999)).toBeNull();
   });
 });

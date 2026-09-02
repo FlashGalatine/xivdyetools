@@ -62,5 +62,31 @@ export function resolvePresetDye(id: number): Dye | undefined {
   return dyeService.getByStainId(id) ?? undefined;
 }
 
+/** Highest stainID the 5.0 ID space uses. */
+const STAIN_ID_MAX = 254;
+
+/**
+ * Resolve a *stored* dye reference to a stainID.
+ *
+ * This is the one place the retired 4.x itemID space is still understood, and
+ * it exists for exactly one reason: data this app persisted to the browser
+ * before the 2026-08-28 stainID rewrite. Live sources are all stainID-only, so
+ * `resolvePresetDye` stays strict; a value that predates the rewrite is
+ * converted HERE, once, as it is read back out of local storage.
+ *
+ * 5.0 values (1-254) pass through when the stainID exists. 4.x values (legacy
+ * itemIDs) resolve through the dye database, whose `id`/`itemID` map is built
+ * from each dye's `legacyItemID`. Returns null for anything unresolvable — the
+ * caller decides whether to drop it or leave it alone.
+ */
+export function toStainId(stored: number): number | null {
+  if (!Number.isFinite(stored)) return null;
+  if (stored >= 1 && stored <= STAIN_ID_MAX) {
+    return dyeService.getByStainId(stored) ? stored : null;
+  }
+  // Legacy itemID (dye.id === dye.itemID in 4.x)
+  return dyeService.getDyeById(stored)?.stainID ?? null;
+}
+
 // Re-export Dye type for convenience
 export type { Dye };
