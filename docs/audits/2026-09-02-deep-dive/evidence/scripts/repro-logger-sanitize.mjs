@@ -16,7 +16,11 @@ const cases = [
   'Authorization: Basic dXNlcjpwYXNzd29yZA==',
   'token = my secret value',
   'password = hunter2 correct horse',
-  'api_key=abcdef123456',
+  // Deliberately low-entropy and self-describing: this case is a CONTROL (the
+  // unquoted-no-spaces shape already redacted correctly), and a realistic-looking
+  // key here trips the repo's own gitleaks generic-api-key rule on an audit
+  // artefact that contains no real credential.
+  'api_key=not-a-real-key',
   'token="quoted secret value"',
   'Authorization: Bearer eyJhbGciOi.J9.sig',
 ];
