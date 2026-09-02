@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import test from 'node:test';
 import {
   attributeLinesToBlockFrames,
@@ -42,6 +42,13 @@ import {
   testOnlyReason,
 } from './check-dead-code.js';
 import type { MemberFindings } from './check-dead-code.js';
+// Several tests below read the repository itself — `git ls-files` through
+// `listTracked()`, and `knip.jsonc` by relative path. Those are cwd-relative,
+// so running this suite from anywhere but the repo root used to fail with
+// ENOENT or an empty file list rather than a real result. Anchor the process
+// to the repo root, derived from this file's own location, so the suite means
+// the same thing wherever it is invoked from.
+process.chdir(fileURLToPath(new URL('..', import.meta.url)));
 
 type DocCase = {
   name: string;
@@ -434,7 +441,10 @@ test('prelude 1a (live instance): _middleware.ts now captures its full two-line 
   // this by path convention from" at the line break. Read from disk (not
   // reconstructed inline) so this test fails if the real file's docblock ever
   // drifts from what it asserts.
-  const text = readFileSync('apps/web-app/functions/_middleware.ts', 'utf8');
+  const text = readFileSync(
+    fileURLToPath(new URL('../apps/web-app/functions/_middleware.ts', import.meta.url)),
+    'utf8',
+  );
   const doc = leadingDocblock(text);
   assert.equal(
     entrypointReason(doc),
@@ -584,10 +594,19 @@ test('20. findTestOnlyMembers: a #-prefixed true-private member is never reporte
   // matches it in the first place, so this is invisible to the scan from the
   // start (the explicit name.startsWith('#') guard is defense in depth for the
   // same outcome). This test pins the observable result, not the mechanism.
+  //
+  // The import line below is LOAD-BEARING, and its absence is what made this
+  // test vacuous until 2026-09-02: findTestOnlyMembers only considers a file
+  // once a test file actually imports it, so without it the scan returned zero
+  // violations no matter what the member was called and the assertion could
+  // not fail. Proven by substitution — renaming `#trulyPrivate` to an ordinary
+  // `ordinaryName` still yielded zero. With the import, the ordinary name IS
+  // reported and the `#` one still is not, which is the distinction this test
+  // exists to pin.
   const prodFile = 'src/widget5.ts';
   const testFile = 'src/widget5.test.ts';
   const prodText = ['export class Widget5 {', '  #trulyPrivate(): void {}', '}'].join('\n');
-  const testText = 'w.#trulyPrivate();\n';
+  const testText = "import { Widget5 } from './widget5';\nw.#trulyPrivate();\n";
   const texts = new Map([
     [prodFile, prodText],
     [testFile, testText],
@@ -1380,7 +1399,7 @@ test('46. isExcludedReferrer: rejects both checker paths, accepts an arbitrary p
   assert.equal(isExcludedReferrer('apps/x/scripts/check-dead-code.ts'), false);
 });
 
-test('47. findTestOnlyExports: a reference existing only in an excluded referrer file does not count', () => {
+test('47. findTestOnlyExports: prose in an excluded referrer file does not count', () => {
   const prodFile = 'src/target.ts';
   const realTestFile = 'src/target.test.ts';
   // The REAL excluded path, used as an additional "referrer" here, so this
@@ -1389,8 +1408,15 @@ test('47. findTestOnlyExports: a reference existing only in an excluded referrer
   const excludedReferrerFile = 'scripts/check-dead-code.ts';
   const prodText = 'export function helper4(): void {}';
   const realTestText = 'helper4();\n';
-  // If this counted, testRefs would be 2, not 1 -- the discriminating check.
-  const excludedReferrerText = 'helper4();\n';
+  // Until 2026-09-02 this line was a real call, `helper4();`, and the rule it
+  // pinned was "an excluded referrer counts for nothing at all". That rule was
+  // too blunt — it discarded the checker's own real calls too, and reported
+  // `listTracked` as test-only the moment a test imported it. The refined rule
+  // masks those files instead of dropping them: prose and fixture strings still
+  // count for nothing, real code counts. So this is now a COMMENT, which is
+  // what the exclusion was always actually for. If it counted, testRefs would
+  // be 2, not 1 -- the discriminating check.
+  const excludedReferrerText = '// helper4 is described here but never called\n';
   const texts = new Map([
     [prodFile, prodText],
     [realTestFile, realTestText],
@@ -1912,4 +1938,41 @@ test('66. findForbiddenTags: the real tree carries none of them', () => {
   const files = listTracked().filter((f) => !isTestFile(f));
   const texts = new Map(files.map((f) => [f, readFileSync(f, 'utf8')]));
   assert.deepEqual(findForbiddenTags(files, texts), []);
+});
+
+test('67. an EXCLUDED_REFERRERS file still vouches for a symbol through real CODE', () => {
+  // The exclusion exists so the checker's own docblock prose cannot vouch for
+  // a symbol it merely names. Dropping those files from the referrer cohort
+  // entirely went too far: it also discarded their real calls, so a helper
+  // used only inside the checker itself reported as test-only the moment any
+  // test imported it. Found on 2026-09-02, when `listTracked` did exactly that.
+  const decl = 'src/other.ts';
+  const excluded = 'scripts/check-dead-code.ts';
+  const testFile = 'src/other.test.ts';
+  const texts = new Map([
+    [decl, 'export function helper() {}\n'],
+    [excluded, 'const x = helper();\n'],
+    [testFile, "import { helper } from './other';\nhelper();\n"],
+  ]);
+  const r = findTestOnlyExports([decl, excluded], [testFile], texts);
+  assert.deepEqual(
+    r.violations.map((v) => v.name),
+    [],
+  );
+});
+
+test('68. ...but PROSE in that same file still vouches for nothing', () => {
+  const decl = 'src/other.ts';
+  const excluded = 'scripts/check-dead-code.ts';
+  const testFile = 'src/other.test.ts';
+  const texts = new Map([
+    [decl, 'export function helper() {}\n'],
+    [excluded, '// the helper below is described but never called\n'],
+    [testFile, "import { helper } from './other';\nhelper();\n"],
+  ]);
+  const r = findTestOnlyExports([decl, excluded], [testFile], texts);
+  assert.deepEqual(
+    r.violations.map((v) => v.name),
+    ['helper'],
+  );
 });

@@ -12,6 +12,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Two dead-code self-tests could not do their job.** Test 20, which pins that a
+  `#`-private member is never reported, used a fixture whose test file never imported
+  the module under test — and `findTestOnlyMembers` short-circuits before the guard
+  unless a test actually imports the file, so the assertion held no matter how private
+  members were handled. Proven by substitution: renaming the member to an ordinary name
+  still gave zero violations. One import line makes it real, and mutation-testing now
+  confirms it fails when the `#` handling regresses. Separately the whole suite was
+  cwd-dependent — one test read a web-app file by a relative path, and the newer
+  repo-scanning tests shell out to `git ls-files` — so running it from anywhere but the
+  repo root gave ENOENT or an empty file list instead of a result. The suite now anchors
+  itself to the repo root derived from its own location, and passes from any directory.
+- **`EXCLUDED_REFERRERS` files are now masked rather than skipped.** The checker's own
+  two files were dropped from the referrer cohort entirely, so their docblock prose could
+  not vouch for a symbol it merely names. That was too blunt: it discarded their real
+  calls too, so any helper whose only production caller is `main()` inside the checker
+  reported as test-only the moment a test imported it — which is exactly what happened to
+  `listTracked` once `loadWorkspaceAliases`'s test began asserting against the real
+  repository. Their text is now read with comments and string literals blanked, which
+  draws the line where it belongs: real code counts, prose and fixture strings count for
+  nothing. Both halves are pinned by tests and mutation-checked.
+- **The member scanner's docblock claimed a fallback was unreachable.** It said every
+  `MEMBER_DECL` match in this repo lands inside a tracked class block, so the
+  unattributed path was unexercised. Eleven reach it: five logger calls and two
+  cached-fetch calls in the Universalis router, a background revalidation call, two timer
+  calls in the changelog and welcome modals, and a `.d.ts` signature. Nearly all are
+  ordinary call statements, which the member pattern cannot distinguish from
+  declarations at module scope. They are harmless only because nothing references them —
+  one test asserting on the revalidation call would make the gate report a member that
+  does not exist. The docblock now says so, and says what the symptom looks like.
+
+
 - **Dead knip config removed, and a test added so it cannot come back.** knip resolves
   exactly ONE `workspaces` key per workspace and never merges — keys sort by path depth
   and, at equal depth, a literal key beats a glob. The `packages/*` block therefore

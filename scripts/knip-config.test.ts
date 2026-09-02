@@ -19,6 +19,14 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
+// Several tests below read the repository itself — `git ls-files` through
+// `listTracked()`, and `knip.jsonc` by relative path. Those are cwd-relative,
+// so running this suite from anywhere but the repo root used to fail with
+// ENOENT or an empty file list rather than a real result. Anchor the process
+// to the repo root, derived from this file's own location, so the suite means
+// the same thing wherever it is invoked from.
+process.chdir(fileURLToPath(new URL('..', import.meta.url)));
 
 /** Strip `//` and block comments plus trailing commas, respecting string literals. */
 function stripJsonc(text: string): string {

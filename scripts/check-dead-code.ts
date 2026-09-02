@@ -641,8 +641,37 @@ export function isExcludedReferrer(file: string): boolean {
 }
 
 /** `files`, minus anything `isExcludedReferrer` rejects — the referrer-eligible subset. */
-const asReferrers = (files: readonly string[]): string[] =>
-  files.filter((f) => !isExcludedReferrer(f));
+/**
+ * The referrer cohort. Every file stays in it — see `referrerTexts` for how the
+ * two `EXCLUDED_REFERRERS` files are neutralised without being dropped.
+ */
+const asReferrers = (files: readonly string[]): string[] => [...files];
+
+/**
+ * The corpus as the REFERRER scans should read it: `EXCLUDED_REFERRERS` files
+ * with their comments and string literals blanked, everything else untouched.
+ *
+ * Those two files used to be removed from the cohort outright, so that the
+ * checker's own docblock prose could not vouch for a symbol it merely names.
+ * That was too blunt. It also discarded their real CALLS, so any helper whose
+ * only production caller is `main()` inside the checker itself reported as
+ * test-only the moment a test imported it — which is exactly what happened to
+ * `listTracked` on 2026-09-02, once `loadWorkspaceAliases`'s test started
+ * asserting against the real repository.
+ *
+ * Masking draws the line where it actually belongs: real code still counts,
+ * prose and fixture strings still count for nothing. `maskSource` is
+ * line-preserving, so the same-file branch below still indexes lines the same
+ * way, and every other file's text is returned unchanged — the two excluded
+ * paths are the only behaviour that moves.
+ */
+function referrerTexts(texts: Map<string, string>): Map<string, string> {
+  const out = new Map(texts);
+  for (const [file, text] of texts) {
+    if (isExcludedReferrer(file)) out.set(file, maskSource(text));
+  }
+  return out;
+}
 
 /**
  * Builds, for a cohort of importer files (production or test), a map from
@@ -791,6 +820,7 @@ export function findTestOnlyExports(
   const publicExempt: string[] = [];
   const prodReferrers = asReferrers(prod);
   const testReferrers = asReferrers(tests);
+  const refTexts = referrerTexts(texts);
   for (const file of prod) {
     if (!/\.(ts|tsx)$/.test(file)) continue;
     const text = texts.get(file) ?? '';
@@ -819,12 +849,12 @@ export function findTestOnlyExports(
       // Any non-test reference outside this symbol's own declaration lines
       // counts as production use.
       const usedInProd = prodReferrers.some((f) => {
-        const t = texts.get(f) ?? '';
+        const t = refTexts.get(f) ?? '';
         if (f !== file) return word.test(t);
         return t.split('\n').some((l, j) => !declLines.has(j) && word.test(l));
       });
       if (usedInProd) continue;
-      const testRefs = testReferrers.filter((f) => word.test(texts.get(f) ?? '')).length;
+      const testRefs = testReferrers.filter((f) => word.test(refTexts.get(f) ?? '')).length;
       if (testRefs === 0) continue; // knip's job
 
       // Each signature line may carry its own docblock; a bare tag on any one
@@ -1308,9 +1338,25 @@ export function attributeLinesToBlockFrames(lines: string[]): (BlockFrame | null
  *   falls back to the pre-fix, file-flat behavior, grouped by name alone
  *   across the whole file, rather than being dropped. Deliberately
  *   conservative and unchanged by the depth rule: with no block there is no
- *   body depth to compare against, so nothing can be judged nested. In this
- *   repo today every declaration matched by `MEMBER_DECL` lands inside a
- *   tracked block, so that fallback is currently unexercised.
+ *   body depth to compare against, so nothing can be judged nested.
+ *
+ *   This path IS exercised, contrary to what this comment claimed until
+ *   2026-09-02. Measured over the tree, 11 `MEMBER_DECL` matches attribute to
+ *   no block: 5 `getLogger(` and 2 `cachedFetch(` calls in the Universalis
+ *   router, `revalidateInBackground(` in cached-fetch, 2 `setTimeout(` calls
+ *   in the changelog and welcome modals, and a `toString(` signature in a
+ *   `.d.ts`. All but the last are ordinary CALL STATEMENTS — `MEMBER_DECL` is
+ *   indentation plus `identifier(`, which a call satisfies exactly as well as
+ *   a declaration does, and at module scope there is no enclosing class frame
+ *   to reject them by depth.
+ *
+ *   They are harmless only because nothing references them: a phantom
+ *   candidate with no test referrer is never reported. The failure mode to
+ *   know about is one test away — `expect(mod.revalidateInBackground)…` in a
+ *   test that imports cached-fetch would give that phantom a test referrer
+ *   and no production one, and the gate would report a "member" that does not
+ *   exist. If you see a violation naming something that is plainly a function
+ *   call rather than a class member, this is why.
  *
  * Usage is checked as `.name` — a word-boundary match for the
  * property-access form every real call site has to use, whatever the
