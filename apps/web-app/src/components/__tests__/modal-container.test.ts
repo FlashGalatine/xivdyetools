@@ -222,7 +222,7 @@ describe('ModalContainer', () => {
     };
 
     const firstWrapper = (firstId: string): HTMLElement =>
-      query(container, `[data-modal-id="${firstId}"]`);
+      query<HTMLElement>(container, `[data-modal-id="${firstId}"]`)!;
 
     it('still closes the underlying modal from its own close button', () => {
       const { firstId, secondId } = openTwo();

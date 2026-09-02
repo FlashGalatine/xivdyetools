@@ -7,6 +7,7 @@ import { KeyboardService } from '../keyboard-service';
 import { toggleThemeVariant } from '../theme-switch';
 import { LanguageService } from '../language-service';
 import { ModalService } from '../modal-service';
+import { RouterService } from '../router-service';
 import * as shortcutsPanel from '@components/shortcuts-panel';
 
 // Mock dependencies — Shift+T goes through the shared theme switch (the one
@@ -19,6 +20,10 @@ vi.mock('../language-service', () => ({
   LanguageService: {
     cycleToNextLocale: vi.fn(() => Promise.resolve()),
   },
+}));
+
+vi.mock('../router-service', () => ({
+  RouterService: { navigateTo: vi.fn() },
 }));
 
 vi.mock('../modal-service', () => ({
@@ -90,150 +95,54 @@ describe('KeyboardService', () => {
   describe('Tool Navigation (1-9 keys)', () => {
     beforeEach(() => {
       KeyboardService.initialize();
+      vi.mocked(RouterService.navigateTo).mockClear();
     });
 
-    it('should dispatch navigation event for key 1 (harmony)', () => {
+    /**
+     * BUG-014: these used to assert only that the service DISPATCHED
+     * `keyboard-navigate-tool`, with each test registering the listener itself.
+     * Nothing in the app ever listened for that event, so the shortcuts the
+     * shortcuts panel advertises did nothing while the suite stayed green.
+     * Asserting the navigation is what makes a missing consumer a failure.
+     */
+    it.each([
+      ['1', 'harmony'],
+      ['2', 'extractor'],
+      ['3', 'accessibility'],
+      ['4', 'comparison'],
+      ['5', 'gradient'],
+      ['6', 'presets'],
+      ['7', 'budget'],
+      ['8', 'swatch'],
+      ['9', 'mixer'],
+    ])('navigates to the right tool for key %s', (key, toolId) => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key }));
+
+      expect(RouterService.navigateTo).toHaveBeenCalledWith(toolId);
+    });
+
+    it('still emits keyboard-navigate-tool for anything listening', () => {
       const listener = vi.fn();
       window.addEventListener('keyboard-navigate-tool', listener);
 
-      const event = new KeyboardEvent('keydown', { key: '1' });
-      document.dispatchEvent(event);
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
 
       expect(listener).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: { toolId: 'harmony' },
-        })
+        expect.objectContaining({ detail: { toolId: 'harmony' } })
       );
 
       window.removeEventListener('keyboard-navigate-tool', listener);
     });
 
-    it('should dispatch navigation event for key 2 (extractor)', () => {
-      const listener = vi.fn();
-      window.addEventListener('keyboard-navigate-tool', listener);
+    it.each([
+      ['Shift', { shiftKey: true }],
+      ['Ctrl', { ctrlKey: true }],
+      ['Alt', { altKey: true }],
+      ['Meta', { metaKey: true }],
+    ])('does not navigate when %s is held', (_name, modifier) => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', ...modifier }));
 
-      const event = new KeyboardEvent('keydown', { key: '2' });
-      document.dispatchEvent(event);
-
-      expect(listener).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: { toolId: 'extractor' },
-        })
-      );
-
-      window.removeEventListener('keyboard-navigate-tool', listener);
-    });
-
-    it('should dispatch navigation event for key 3 (accessibility)', () => {
-      const listener = vi.fn();
-      window.addEventListener('keyboard-navigate-tool', listener);
-
-      const event = new KeyboardEvent('keydown', { key: '3' });
-      document.dispatchEvent(event);
-
-      expect(listener).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: { toolId: 'accessibility' },
-        })
-      );
-
-      window.removeEventListener('keyboard-navigate-tool', listener);
-    });
-
-    it('should dispatch navigation event for key 4 (comparison)', () => {
-      const listener = vi.fn();
-      window.addEventListener('keyboard-navigate-tool', listener);
-
-      const event = new KeyboardEvent('keydown', { key: '4' });
-      document.dispatchEvent(event);
-
-      expect(listener).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: { toolId: 'comparison' },
-        })
-      );
-
-      window.removeEventListener('keyboard-navigate-tool', listener);
-    });
-
-    it('should dispatch navigation event for key 5 (gradient)', () => {
-      const listener = vi.fn();
-      window.addEventListener('keyboard-navigate-tool', listener);
-
-      const event = new KeyboardEvent('keydown', { key: '5' });
-      document.dispatchEvent(event);
-
-      expect(listener).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: { toolId: 'gradient' },
-        })
-      );
-
-      window.removeEventListener('keyboard-navigate-tool', listener);
-    });
-
-    it('should dispatch navigation event for key 9 (mixer)', () => {
-      const listener = vi.fn();
-      window.addEventListener('keyboard-navigate-tool', listener);
-
-      const event = new KeyboardEvent('keydown', { key: '9' });
-      document.dispatchEvent(event);
-
-      expect(listener).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: { toolId: 'mixer' },
-        })
-      );
-
-      window.removeEventListener('keyboard-navigate-tool', listener);
-    });
-
-    it('should not navigate when Shift is pressed', () => {
-      const listener = vi.fn();
-      window.addEventListener('keyboard-navigate-tool', listener);
-
-      const event = new KeyboardEvent('keydown', { key: '1', shiftKey: true });
-      document.dispatchEvent(event);
-
-      expect(listener).not.toHaveBeenCalled();
-
-      window.removeEventListener('keyboard-navigate-tool', listener);
-    });
-
-    it('should not navigate when Ctrl is pressed', () => {
-      const listener = vi.fn();
-      window.addEventListener('keyboard-navigate-tool', listener);
-
-      const event = new KeyboardEvent('keydown', { key: '1', ctrlKey: true });
-      document.dispatchEvent(event);
-
-      expect(listener).not.toHaveBeenCalled();
-
-      window.removeEventListener('keyboard-navigate-tool', listener);
-    });
-
-    it('should not navigate when Alt is pressed', () => {
-      const listener = vi.fn();
-      window.addEventListener('keyboard-navigate-tool', listener);
-
-      const event = new KeyboardEvent('keydown', { key: '1', altKey: true });
-      document.dispatchEvent(event);
-
-      expect(listener).not.toHaveBeenCalled();
-
-      window.removeEventListener('keyboard-navigate-tool', listener);
-    });
-
-    it('should not navigate when Meta is pressed', () => {
-      const listener = vi.fn();
-      window.addEventListener('keyboard-navigate-tool', listener);
-
-      const event = new KeyboardEvent('keydown', { key: '1', metaKey: true });
-      document.dispatchEvent(event);
-
-      expect(listener).not.toHaveBeenCalled();
-
-      window.removeEventListener('keyboard-navigate-tool', listener);
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
     });
   });
 
