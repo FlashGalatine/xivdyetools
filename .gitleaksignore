@@ -6,14 +6,23 @@
 # to name the single finding it forgives and nothing else. A fingerprint stops
 # applying the moment the file, line or commit changes.
 #
+# Do not quote a flagged value in a comment here: the scanner reads this file
+# like any other, and an illustrative copy becomes a finding of its own. Name
+# the variable and the rule instead, and let the fingerprint carry the detail.
+#
 # ---------------------------------------------------------------------------
 # 2026-09-02 deep-dive audit (PR #158)
 #
-# `api_key=abcdef123456` — a synthetic input written to exercise the logger's
-# `sanitizeErrorMessage`, in a repro script and in that script's captured
-# output. It is not a credential and never was one. Commit `0ea3d717` replaced
-# it with `api_key=not-a-real-key`, but the original commit stays in this PR's
-# scanned range, and clearing it from history would mean force-pushing a branch
-# that is already up for review.
+# A synthetic `api_key` assignment written to exercise the logger's
+# `sanitizeErrorMessage`, appearing in a repro script and in that script's
+# captured output. It is not a credential and never was one. Commit `0ea3d717`
+# replaced it with an obviously-fake low-entropy value, but the original commit
+# stays in this PR's scanned range, and clearing it from history would mean
+# force-pushing a branch that is already up for review.
 5c216641d142168cd6db478f605080091012ac3b:docs/audits/2026-09-02-deep-dive/evidence/repro-logger-sanitize.txt:generic-api-key:10
 5c216641d142168cd6db478f605080091012ac3b:docs/audits/2026-09-02-deep-dive/evidence/scripts/repro-logger-sanitize.mjs:generic-api-key:19
+#
+# The first version of this file quoted that value in its own comment, which
+# the scanner then flagged here. The text above is fixed; this pins the commit
+# that carried it.
+7fc6679eb943aaff1c4137cf5b6c91fef6f0b075:.gitleaksignore:generic-api-key:12
