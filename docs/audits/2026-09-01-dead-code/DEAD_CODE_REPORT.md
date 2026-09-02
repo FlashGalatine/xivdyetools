@@ -219,9 +219,14 @@ What remains:
 2. **DEAD-034 (time-gated)** — the KV rate-limiter fallbacks still want a week of clean production
    logs. Note the standing constraint: do not enable Workers Logs without re-checking the
    2026-08-29 security audit's FINDING-010/011 first.
-3. **Guardrails not yet wired into CI** — Recommendations 1–3 (the test-only-module scan, the
-   class-member survey, knip for the five ungated workers). Recommendation 4 landed as DEAD-032, and
-   the turbo caching hole that cleanup exposed is fixed in `dafb5019`; Recommendation 8 (svg's
-   `testTimeout`) is still open.
+3. ~~**Guardrails not yet wired into CI**~~ **DONE 2026-09-01** — Recommendations 1–3 all shipped on
+   this branch. knip now gates 16 of the 17 workspaces (every package and every app but the parked
+   `apps/stoat-worker`) through a per-workspace `lint:dead` folded into `lint`, with `pnpm lint:dead`
+   at the root as a cross-check. The test-only-module scan and the class-member survey are the same
+   tool: `scripts/check-dead-code.ts` (`pnpm dead-code:check`), which reports orphan modules,
+   test-only exports and test-only class members, honours `@testonly`/`@entrypoint`/`@public`, and
+   runs in CI alongside its own `node:test` self-test (`pnpm test:scripts`) and a permanent
+   `pnpm type-check:scripts`. Recommendation 4 landed as DEAD-032, and the turbo caching hole that
+   cleanup exposed is fixed in `dafb5019`; Recommendation 8 (svg's `testTimeout`) is still open.
 4. **DEAD-019 tail** — oauth and presets-api still carry `@deprecated` re-export blocks whose
    "removed in the next major version" promise predates their current majors.

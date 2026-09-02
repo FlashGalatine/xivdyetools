@@ -39,15 +39,22 @@
     "lint": {
       "dependsOn": ["^build"],
       "cache": true,
-      // The root knip.jsonc drives the dead-code gate in
-      // packages/{core,svg,bot-logic} (see its header), so editing it must
-      // bust every workspace's lint cache. NOTE the gate reads the *whole*
+      // 16 of the 17 workspaces are dead-code gated — every package and every
+      // app but the parked `apps/stoat-worker` — each via its own `lint:dead`
+      // folded into `lint`. Fourteen of those run `knip --directory ../..
+      // --workspace <ws>` against the ROOT knip.jsonc (see its header);
+      // `apps/web-app` and `apps/og-worker` run a bare `knip` against their
+      // own. That is why `$TURBO_ROOT$/knip.jsonc` is an input below: editing
+      // it changes what fourteen workspaces' `lint` reports, so it must bust
+      // every workspace's lint cache. NOTE the root gate reads the *whole*
       // monorepo graph: a dependent workspace dropping an import can turn a
       // package export dead without touching that package, and turbo will
       // still serve a cached green. Run `pnpm lint:dead` for a full sweep —
-      // but note that root sweep currently exits non-zero (~200 issues in
-      // the ungated apps plus logger's alias duplicate) and is manual
-      // triage only; this per-package `lint` task is the actual gate.
+      // as of 2026-09-01 it reports only the three documented apps/web-app
+      // root-vs-local config-scope artifacts (2 unused `.d.ts` files + 1 kept
+      // `wrangler` devDependency, all ignored by web-app's own knip.jsonc).
+      // This per-workspace `lint` task is still the actual gate; the root
+      // sweep is the cross-check that should stay at exactly those 3.
       //
       // 2026-09-01 dead-code audit: `tests/**` and `scripts/**` added for the
       // same reason as `type-check` above, but via knip rather than tsc —

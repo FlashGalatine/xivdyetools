@@ -1,7 +1,8 @@
 # Dead-code guardrails — knip everywhere + a test-only reachability gate
 
 **Date:** 2026-09-01 · **Scope:** whole monorepo (root tooling, 12 ungated workspaces) ·
-**Status:** design approved in chat, not yet implemented · **Branch:** `worktree-dead-code-audit-2026-09-01`
+**Status:** implemented 2026-09-01 (plan `docs/superpowers/plans/2026-09-01-dead-code-guardrails.md`) ·
+**Branch:** `worktree-dead-code-audit-2026-09-01`
 (the 2026-09-01 dead-code audit's branch; these are its Recommendations 1–3)
 
 ## Problem

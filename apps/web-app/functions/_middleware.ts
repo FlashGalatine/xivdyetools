@@ -1,5 +1,6 @@
 /**
- * Cloudflare Pages middleware.
+ * Cloudflare Pages middleware. Handles domain redirects from the old domain to
+ * the new one, and keeps the SPA catch-all out of the immutable asset cache.
  *
  * @entrypoint No importer by design — Pages loads this by path convention
  * from functions/, so static analysis cannot see the call site.
