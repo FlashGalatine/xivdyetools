@@ -192,7 +192,7 @@ jobs:
         run: pnpm turbo run type-check --filter='...[HEAD^]'
 
       # Repo-wide by nature (not filtered by '...[HEAD^]' like the turbo steps
-      # above): the reachability gate reads every tracked production/test file
+      # above): the reachability gate reads every tracked TS/JS source file
       # to find modules, exports and class members reachable only from tests --
       # a narrow diff can make a symbol elsewhere test-only, so scoping this to
       # "affected" packages would miss exactly the drift it exists to catch.

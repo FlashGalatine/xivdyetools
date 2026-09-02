@@ -867,11 +867,15 @@ function scanSource(text: string): { masked: string; clean: boolean } {
  * declaration and the candidate list, so a runaway span silently *deletes*
  * real declarations — the opposite error from the one masking prevents, and
  * invisible in the gate's output because a deleted candidate simply never
- * appears. Two real instances exist in this repo, both a backtick inside an
- * unmasked regex literal (`packages/bot-logic/src/discord-markdown.ts`'s
+ * appears. Three real instances exist in this repo. Two are a backtick inside
+ * an unmasked regex literal (`packages/bot-logic/src/discord-markdown.ts`'s
  * `` /([*_~`|>#\\[\]()])/g `` and `apps/web-app/vite-plugin-changelog-parser.ts`'s
- * `` /`([^`]+)`/g ``), each of which blanked every export below it. Falling
- * back to raw restores exactly the pre-masking behavior for such a file —
+ * `` /`([^`]+)`/g ``). The third is a *quote* inside one instead
+ * (`apps/web-app/src/shared/beta-branding.ts`'s `/\bhref="\/assets\/icons\/(?!beta\/)/`):
+ * the quote opens a string span that swallows the line's real closing backtick, so the
+ * template literal's own backtick is read as opening an unclosed template instead — same
+ * effect as the backtick case, different trigger. Each blanks every export below it.
+ * Falling back to raw restores exactly the pre-masking behavior for such a file —
  * never worse than the checker has always been — while the other ~500 files
  * still get the stricter masked reading.
  *

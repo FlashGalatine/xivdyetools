@@ -27,12 +27,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   no-reason-required `@public` for published `@xivdyetools/*` API with no in-repo consumer — let
   production code opt out where it is deliberately test-only, reached only by a convention static
   analysis can't see, or intentionally un-consumed. Both commands now run in CI
-  (`.github/workflows/ci.yml`), unconditionally and repo-wide rather than affected-filtered, right
-  after `Type-check (affected)`: the self-test first, then the checker.
-- `pnpm type-check:scripts` (`tsc -p scripts/tsconfig.json`) permanently type-checks the root
-  `scripts/` directory — earlier rounds of the reachability gate's own development used throw-away
-  tsconfigs for this — and runs in CI ahead of the two steps above. Added `@types/node` as a root
-  devDependency (`^26.4.0`, matching the version eleven workspaces already declare) so the new
+  (`.github/workflows/ci.yml`), unconditionally and repo-wide rather than affected-filtered, after
+  `Type-check (affected)`: the self-test first, then the checker.
+- `pnpm type-check:scripts` (`tsc -p scripts/tsconfig.json`): the root `scripts/` directory is now
+  type-checked in CI, ahead of the two steps above. Added `@types/node` as a root devDependency
+  (`^26.4.0`, matching the version eleven workspaces already declare) so the new
   `scripts/tsconfig.json` has no need of a versioned `typeRoots` path into the pnpm store.
 
 ### Changed
