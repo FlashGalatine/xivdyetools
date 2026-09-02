@@ -11,6 +11,11 @@ export {
   isUniversalisEnabled,
   fetchWorlds,
   fetchDataCenters,
+  // BUG-034: the 1-hour-cached wrappers, exported so callers outside this
+  // directory can reach them. `/manual` was using the uncached pair on a
+  // non-deferred path because these were module-private.
+  getCachedWorlds,
+  getCachedDataCenters,
   validateWorld,
   getWorldAutocomplete,
 } from './universalis-client.js';

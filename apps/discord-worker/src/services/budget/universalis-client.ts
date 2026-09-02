@@ -316,7 +316,7 @@ export async function fetchDataCenters(
  * Caching for 1 hour eliminates redundant HTTP requests on every
  * autocomplete keystroke.
  */
-async function getCachedWorlds(env: Env, logger?: ExtendedLogger): Promise<UniversalisWorld[]> {
+export async function getCachedWorlds(env: Env, logger?: ExtendedLogger): Promise<UniversalisWorld[]> {
   if (worldsCache && Date.now() < worldsCache.expiry) {
     return worldsCache.data;
   }
@@ -328,7 +328,7 @@ async function getCachedWorlds(env: Env, logger?: ExtendedLogger): Promise<Unive
 /**
  * Get data centers with module-level caching (OPT-001)
  */
-async function getCachedDataCenters(env: Env, logger?: ExtendedLogger): Promise<UniversalisDataCenter[]> {
+export async function getCachedDataCenters(env: Env, logger?: ExtendedLogger): Promise<UniversalisDataCenter[]> {
   if (dataCentersCache && Date.now() < dataCentersCache.expiry) {
     return dataCentersCache.data;
   }
@@ -338,15 +338,26 @@ async function getCachedDataCenters(env: Env, logger?: ExtendedLogger): Promise<
 }
 
 /**
- * Validate that a world/datacenter name exists
+ * The outcome of a world/datacenter lookup.
  *
- * @returns Normalized name if valid, null if not found
+ * `unknown` and `upstream` are deliberately separate values: they need
+ * different messages ("check the spelling" vs "market data is unavailable")
+ * and different analytics classes, and collapsing them is BUG-031.
+ */
+export type WorldValidation =
+  | { ok: true; name: string }
+  | { ok: false; reason: 'unknown' | 'upstream' };
+
+/**
+ * Validate that a world/datacenter name exists.
+ *
+ * @returns the canonical name, or why it could not be resolved
  */
 export async function validateWorld(
   env: Env,
   worldOrDc: string,
   logger?: ExtendedLogger
-): Promise<string | null> {
+): Promise<WorldValidation> {
   const normalizedInput = worldOrDc.toLowerCase().trim();
 
   try {
@@ -354,22 +365,27 @@ export async function validateWorld(
     const worlds = await getCachedWorlds(env, logger);
     const matchedWorld = worlds.find((w) => w.name.toLowerCase() === normalizedInput);
     if (matchedWorld) {
-      return matchedWorld.name;
+      return { ok: true, name: matchedWorld.name };
     }
 
     // Check data centers
     const dataCenters = await getCachedDataCenters(env, logger);
     const matchedDc = dataCenters.find((dc) => dc.name.toLowerCase() === normalizedInput);
     if (matchedDc) {
-      return matchedDc.name;
+      return { ok: true, name: matchedDc.name };
     }
 
-    return null;
+    return { ok: false, reason: 'unknown' };
   } catch (error) {
     if (logger) {
       logger.error('Failed to validate world', error instanceof Error ? error : undefined);
     }
-    return null;
+    // BUG-031: this used to `return null`, the same value as "no such world".
+    // During a proxy outage the bot therefore told users their own valid world
+    // did not exist, and because the handler read that as a user mistake the
+    // analytics row was `answered` rather than `upstream_universalis` — so an
+    // outage was invisible in AE as well as misdescribed to the player.
+    return { ok: false, reason: 'upstream' };
   }
 }
 

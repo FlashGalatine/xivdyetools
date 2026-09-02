@@ -171,7 +171,7 @@ describe('handlers/commands/preferences.ts', () => {
 
         it('stores the canonical name the validator returns', async () => {
             const { setPreference } = await import('../../services/preferences.js');
-            mockValidateWorld.mockResolvedValue('Balmung');
+            mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
 
             const response = await handlePreferencesCommand(setWorld('balmung'), mockEnv, mockCtx);
 
@@ -187,7 +187,7 @@ describe('handlers/commands/preferences.ts', () => {
         });
 
         it('trims the typed value before looking it up', async () => {
-            mockValidateWorld.mockResolvedValue('Balmung');
+            mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
 
             await handlePreferencesCommand(setWorld('  balmung  '), mockEnv, mockCtx);
 
@@ -196,7 +196,7 @@ describe('handlers/commands/preferences.ts', () => {
 
         it('stores nothing and answers the invalid-world reply for an unknown world', async () => {
             const { setPreference } = await import('../../services/preferences.js');
-            mockValidateWorld.mockResolvedValue(null);
+            mockValidateWorld.mockResolvedValue({ ok: false, reason: 'unknown' });
 
             const response = await handlePreferencesCommand(setWorld('Nowhere'), mockEnv, mockCtx);
 

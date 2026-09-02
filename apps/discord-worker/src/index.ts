@@ -122,10 +122,24 @@ const ANNOUNCED_VERSION_TTL_SECONDS = 90 * 24 * 60 * 60;
 
 type PushCommit = import('./types/github.js').GitHubCommit;
 
+/**
+ * Render a preset's dye list as names for a moderation / submission-log embed.
+ *
+ * BUG-013: this resolved every id with `getDyeById`, which reads the **itemID**
+ * map. Preset dye arrays have carried stainIDs since the 5.0 id rewrite, and
+ * the two ranges are disjoint — stainIDs run 1–254, item IDs start at 5729 —
+ * so every lookup missed and the numeric fallback fired. Moderators approving
+ * a preset read "Dyes: 1, 2, 3" where the palette should be in words, and
+ * decided on it without seeing the colours named.
+ *
+ * Stain first, item id second: the fallback keeps any pre-rewrite row that is
+ * still carrying legacy itemIDs readable, which is the same discrimination
+ * `parseDyeIdInput` makes in bot-logic.
+ */
 function formatDyesForEmbed(dyeIds: number[]): string {
   return dyeIds
     .map((dyeId) => {
-      const dye = dyeService.getDyeById(dyeId);
+      const dye = dyeService.getByStainId(dyeId) ?? dyeService.getDyeById(dyeId);
       if (!dye) return dyeId.toString();
       return getLocalizedDyeName(dye.itemID, dye.name);
     })

@@ -325,11 +325,19 @@ async function handleSetSubcommand(
         continue;
       }
       const canonical = await validateWorld(env, typed, logger);
-      if (!canonical) {
-        updates.push({ key, value: typed, success: false, reason: 'invalidWorld' });
+      if (!canonical.ok) {
+        // BUG-031: an outage is not the user typing their world wrong. Keep
+        // the distinct reason so the failure line can say which it was; the
+        // shape is `{ key, value, success, reason }` either way.
+        updates.push({
+          key,
+          value: typed,
+          success: false,
+          reason: canonical.reason === 'upstream' ? 'worldLookupUnavailable' : 'invalidWorld',
+        });
         continue;
       }
-      value = canonical;
+      value = canonical.name;
     }
 
     // Attempt to set the preference
@@ -618,6 +626,13 @@ function getValidationErrorMessage(t: Translator, _key: PreferenceKey, reason?: 
 
     case 'invalidWorld':
       return t.t('preferences.validation.invalidWorld');
+
+    // BUG-031: the world lookup could not run at all. Reusing the budget
+    // command's existing upstream sentence keeps this out of the locale files
+    // (new UI text would force a CJK font re-subset) while still telling the
+    // user the truth: nothing is wrong with what they typed.
+    case 'worldLookupUnavailable':
+      return t.t('budget.errors.apiError');
 
     case 'invalidTheme':
       return t.t('preferences.validation.invalidTheme');
