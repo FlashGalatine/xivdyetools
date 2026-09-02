@@ -292,19 +292,70 @@ export class ModalContainer extends BaseComponent {
     }) as EventListener);
   }
 
-  /** Build a footer action button per the destructive convention. */
+  /**
+   * Build a footer action button per the destructive convention.
+   *
+   * BUG-009: the click handler is NOT attached here. Listeners are attached by
+   * `bindModalListeners`, which can run against an existing element, because
+   * `BaseComponent.update()` clears the whole listener map on every render
+   * while the incremental render deliberately keeps already-built modals.
+   * `data-action` is what lets the binder find this button again.
+   */
   private createActionButton(
     label: string,
     kind: 'cancel' | 'primary' | 'destructive',
-    onClick: () => void
+    action: 'cancel' | 'confirm'
   ): HTMLElement {
-    const btn = this.createElement('button', {
+    return this.createElement('button', {
       className: `m16-btn m16-btn--${kind}`,
-      attributes: { type: 'button' },
+      attributes: { type: 'button', 'data-action': action },
       textContent: label,
     });
-    this.on(btn, 'click', onClick);
-    return btn;
+  }
+
+  /**
+   * Attach every listener a modal needs, to an element that may already be in
+   * the DOM from an earlier render.
+   *
+   * BUG-009: `update()` calls `unbindAllEvents()` (clearing the map) and then
+   * `renderContent()`, which skips modals already in `renderedModalIds`. Those
+   * modals kept their DOM but lost their listeners, so opening a second modal
+   * left the first one's ✕, backdrop and footer buttons dead — a confirmation
+   * dialog underneath became unanswerable by mouse. Escape still worked, which
+   * is why it read as "the buttons stopped working". Binding is therefore
+   * idempotent and re-runnable, and `renderContent` re-runs it for every
+   * surviving modal.
+   */
+  private bindModalListeners(backdrop: HTMLElement, modal: Modal): void {
+    this.on(backdrop, 'click', (e) => this.handleBackdropClick(e, modal));
+
+    const closeBtn = backdrop.querySelector('.m16-close');
+    if (closeBtn) {
+      this.on(closeBtn as HTMLElement, 'click', () => ModalService.dismiss(modal.id));
+    }
+
+    const cancelBtn = backdrop.querySelector('[data-action="cancel"]');
+    if (cancelBtn) {
+      this.on(cancelBtn as HTMLElement, 'click', () => {
+        if (modal.onCancel) modal.onCancel();
+        ModalService.dismiss(modal.id);
+      });
+    }
+
+    const confirmBtn = backdrop.querySelector('[data-action="confirm"]');
+    if (confirmBtn) {
+      this.on(confirmBtn as HTMLElement, 'click', () => {
+        if (modal.onConfirm) modal.onConfirm();
+        ModalService.dismiss(modal.id);
+      });
+    }
+
+    const variant = modal.variant ?? (modal.type === 'confirm' ? 'alert' : 'sheet');
+    if (variant === 'sheet') {
+      const dialog = backdrop.querySelector('.m16-dialog') as HTMLElement | null;
+      const body = backdrop.querySelector('.m16-body') as HTMLElement | null;
+      if (dialog && body) this.attachSheetDrag(dialog, body, modal);
+    }
   }
 
   private createModalElement(modal: Modal, index: number): HTMLElement {
@@ -386,7 +437,6 @@ export class ModalContainer extends BaseComponent {
           innerHTML:
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
         });
-        this.on(closeBtn, 'click', () => ModalService.dismiss(modal.id));
         header.appendChild(closeBtn);
       }
       dialog.appendChild(header);
@@ -421,10 +471,7 @@ export class ModalContainer extends BaseComponent {
           this.createActionButton(
             modal.cancelText || LanguageService.t('common.cancel'),
             'cancel',
-            () => {
-              if (modal.onCancel) modal.onCancel();
-              ModalService.dismiss(modal.id);
-            }
+            'cancel'
           )
         );
       }
@@ -433,10 +480,7 @@ export class ModalContainer extends BaseComponent {
           this.createActionButton(
             modal.confirmText || LanguageService.t('common.confirm'),
             modal.destructive ? 'destructive' : 'primary',
-            () => {
-              if (modal.onConfirm) modal.onConfirm();
-              ModalService.dismiss(modal.id);
-            }
+            'confirm'
           )
         );
       }
@@ -444,11 +488,7 @@ export class ModalContainer extends BaseComponent {
     }
 
     backdrop.appendChild(dialog);
-    this.on(backdrop, 'click', (e) => this.handleBackdropClick(e, modal));
-
-    if (variant === 'sheet') {
-      this.attachSheetDrag(dialog, content, modal);
-    }
+    this.bindModalListeners(backdrop, modal);
 
     return backdrop;
   }
@@ -494,7 +534,15 @@ export class ModalContainer extends BaseComponent {
       if (!this.renderedModalIds.has(modal.id)) {
         this.element!.appendChild(this.createModalElement(modal, index));
         this.renderedModalIds.add(modal.id);
+        return;
       }
+      // BUG-009: this modal survives from an earlier render, so its DOM is
+      // intact but its listeners were just cleared by unbindAllEvents(). Give
+      // them back, or every modal under the top one goes inert to the mouse.
+      const wrapper = this.element!.querySelector(
+        `[data-modal-id="${modal.id}"]`
+      ) as HTMLElement | null;
+      if (wrapper) this.bindModalListeners(wrapper, modal);
     });
 
     // z-order + only the top modal shows a backdrop
