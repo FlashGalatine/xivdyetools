@@ -24,7 +24,8 @@
 // kept even though no workspace in this monorepo imports it. The root
 // `knip.jsonc` gate (`pnpm run lint:dead`, part of `lint`) reports every
 // untagged barrel export that nothing consumes, so a new export must either
-// gain a consumer or be tagged on purpose — see the package CLAUDE.md.
+// gain a consumer or be tagged on purpose — see root CLAUDE.md's Tooling →
+// knip bullet and this repo's root `knip.jsonc`.
 //
 // The four encoding functions and the `/encoding`-subpath doc comment below
 // are a special case: they DO have live production consumers, but only via

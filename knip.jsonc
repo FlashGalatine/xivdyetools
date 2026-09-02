@@ -38,9 +38,13 @@
   "ignoreExportsUsedInFile": true,
 
   // `@public` = "this is published API; no in-repo consumer is expected".
-  // core/svg/bot-logic ship to npm, so their barrels are a contract with
-  // consumers knip cannot see. Tagging is deliberate and per-symbol: a NEW
-  // barrel export with no consumer and no tag still fails the gate.
+  // Seven of the eight packages under `packages/*` ship to npm (all but the
+  // workspace-private `test-utils`), and all eight now carry this
+  // convention — their barrels are a contract with consumers knip cannot
+  // see. Tagging is deliberate and per-symbol: a NEW barrel export with no
+  // consumer and no tag still fails the gate. (`test-utils` has no npm
+  // consumers to break, so it deletes an unused export instead of tagging
+  // it — see its own `package.json` `lint:dead`.)
   "tags": ["-public"],
 
   "workspaces": {
@@ -62,9 +66,9 @@
         "src/**/__tests__/**/*.ts",
         "scripts/**/*.ts!",
         "tests/**/*.ts",
-        "vitest*.config.ts"
+        "vitest*.config.ts",
       ],
-      "project": ["src/**/*.ts", "scripts/**", "tests/**", "*.ts"]
+      "project": ["src/**/*.ts", "scripts/**", "tests/**", "*.ts"],
     },
     "packages/core": { "includeEntryExports": true },
     "packages/svg": { "includeEntryExports": true },
@@ -83,9 +87,9 @@
         "src/**/__tests__/**/*.ts",
         "tests/**/*.ts",
         "scripts/**/*.{ts,js,mjs}!",
-        "vitest*.config.ts"
+        "vitest*.config.ts",
       ],
-      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "*.ts"]
+      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "*.ts"],
     },
     "apps/web-app": {
       "entry": [
@@ -98,9 +102,9 @@
         "functions/_middleware.ts",
         "vite-plugin-*.ts",
         "eslint.config.js",
-        "eslint-rules/*.js"
+        "eslint-rules/*.js",
       ],
-      "project": ["src/**/*.{ts,js}", "scripts/**", "functions/**", "e2e/**", "*.ts", "*.js"]
+      "project": ["src/**/*.{ts,js}", "scripts/**", "functions/**", "e2e/**", "*.ts", "*.js"],
     },
 
     // includeEntryExports is safe for apps and NOT for packages: an app has no
@@ -126,13 +130,13 @@
       "entry": ["src/index.ts!", "src/**/*.test.ts", "tests/**/*.ts", "scripts/**/*.{ts,js,mjs}!"],
       "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "docs/.vitepress/**", "*.ts"],
       "vitepress": {
-        "entry": ["docs/.vitepress/config.ts", "docs/.vitepress/theme/index.ts"]
-      }
+        "entry": ["docs/.vitepress/config.ts", "docs/.vitepress/theme/index.ts"],
+      },
     },
     "apps/discord-worker": { "includeEntryExports": true },
     "apps/moderation-worker": { "includeEntryExports": true },
     "apps/oauth": { "includeEntryExports": true },
     "apps/presets-api": { "includeEntryExports": true },
-    "apps/image-worker": { "includeEntryExports": true }
-  }
+    "apps/image-worker": { "includeEntryExports": true },
+  },
 }

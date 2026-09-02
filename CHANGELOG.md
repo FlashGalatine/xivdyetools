@@ -36,11 +36,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The last five packages — `types`, `worker-kit`, `auth`, `logger`, `test-utils` — are now gated on
   the monorepo `knip` check (`pnpm run lint:dead`, folded into each package's `lint`), completing the
   package side of the dead-code gate started with `core`/`svg`/`bot-logic`. The four published
-  packages are tag-only (`@public` on every barrel export knip reported with no in-repo consumer, ~117
-  items across the five); `test-utils` is workspace-private and had six unused `integration/setup.ts` /
-  `factories/preset.ts` exports deleted instead, plus a small removal cascade once their only
-  consumers were gone. `logger`'s one duplicate-export finding (`DEFAULT_REDACT_FIELDS`, an
-  unpublished internal alias) was fixed by deleting the alias, not by tagging it.
+  packages are tag-only (`@public` on every barrel export knip reported with no in-repo consumer:
+  110 total — `types` 43, `worker-kit` 20, `auth` 17, `logger` 30); `test-utils` is workspace-private
+  and had 9 unused exports deleted instead (6 knip-reported in `integration/setup.ts` /
+  `factories/preset.ts`, plus 3 more that lost their only reference once those six were gone).
+  `logger`'s one duplicate-export finding (`DEFAULT_REDACT_FIELDS`, an unpublished internal alias)
+  was fixed by deleting the alias, not by tagging it.
 
 ### Changed
 

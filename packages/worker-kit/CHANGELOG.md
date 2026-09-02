@@ -4,14 +4,19 @@ All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-
 
 ## [Unreleased]
 
+### Changed
+
 This package is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
 into `lint`; root `knip.jsonc`). Because `@xivdyetools/worker-kit` sits at its registry version
 (1.2.0), nothing was removed — the first run found 20 barrel exports (11 values, 9 types) with no
 in-repo consumer, spread across `middleware/index.ts`, `rate-limiter/index.ts`, and the published
-`rate-limiter/presets/index.ts` subpath. Each is tagged `@public` rather than removed; the seven
-presets re-exports are tagged even though the same values are reachable in-repo through the
-sibling `rate-limiter/index.ts` barrel too, because `./rate-limiter/presets` is its own published
-`package.json#exports` entry.
+`rate-limiter/presets/index.ts` subpath. Each is tagged `@public` rather than removed; four of the
+seven presets re-exports (`getOAuthLimit`, `getDiscordCommandLimit`, `getModerationLimit`,
+`PUBLIC_API_LIMITS`) are tagged even though the same values are also reachable in-repo through the
+sibling `rate-limiter/index.ts` barrel — the other three (`OAUTH_LIMITS`, `DISCORD_COMMAND_LIMITS`,
+`MODERATION_LIMITS`) have no in-repo consumer by any path, which is why they are tagged at
+`rate-limiter/index.ts` too. All seven are tagged regardless, because `./rate-limiter/presets` is
+its own published `package.json#exports` entry.
 
 ## [1.2.0] - 2026-08-30
 

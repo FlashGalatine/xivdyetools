@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
 This package is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
 into `lint`; root `knip.jsonc`). Because `@xivdyetools/auth` sits at its registry version (2.0.0),
 nothing was removed — the first run found 17 barrel exports (9 values, 8 types) with no in-repo

@@ -127,7 +127,9 @@ export interface Dye {
  *
  * Extends Dye with a localized name for display in non-English locales.
  * @internal Used by core's DyeService — apps use `getLocalizedDyeName()` instead
- * @public
+ * @public — published because it is part of the `.d.ts` contract; `@internal`
+ * above is a narrower, separate note that consumers should not import it
+ * directly, not a contradiction of this tag.
  */
 export interface LocalizedDye extends Dye {
   /** Translated dye name (if available) */
