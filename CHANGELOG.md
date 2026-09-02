@@ -12,6 +12,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Dead knip config removed, and a test added so it cannot come back.** knip resolves
+  exactly ONE `workspaces` key per workspace and never merges — keys sort by path depth
+  and, at equal depth, a literal key beats a glob. The `packages/*` block therefore
+  applied to none of the eight packages, all of which are named literally, and the
+  entry/project patterns it advertised had never taken effect. Two comments asserted the
+  opposite, including a "these keys MUST stay after `apps/*`" warning that was simply
+  false. The block is deleted rather than folded into the literal keys, because the
+  defaults it was shadowing are the better setting: knip's default project is `**/*`,
+  where the glob's was narrower and did not reach `packages/test-utils/integration/**`.
+  Root sweep output is byte-identical and all fourteen gated workspaces still exit 0.
+  `scripts/knip-config.test.ts` now re-implements knip's selection rule and fails if any
+  workspace key can never apply to any workspace, which is exactly what went unnoticed
+  here.
+- **`@beta` and `@alias` no longer silently exempt a dead export.** knip hard-codes
+  `@public`, `@beta` and `@alias` as always-ignored in `isAlwaysIgnored`, consulted
+  before the configured `tags` filter runs. Only `@public` is a convention here; the
+  other two were an undocumented escape hatch that let a tagged dead export pass with no
+  review signal at all. `pnpm dead-code:check` now fails on either, naming the file and
+  the alternative to use. Verified end to end: a `@beta` export takes the gate from exit
+  0 to exit 1, and a self-test asserts the real tree carries none.
+- **The `"tags": ["-public"]` line is documented as inert.** It is kept as a statement of
+  the convention, but removing it, keeping it, or inverting it to `+public` all produce
+  byte-identical output monorepo-wide, and `--tags=+public` cannot enumerate the tagged
+  symbols. `knip.jsonc` and `CLAUDE.md` both said the exemption came from this setting;
+  it comes from knip's built-in.
+- Two previously undocumented limits added to the reachability gate's `CLAUDE.md` notes:
+  the parked `apps/stoat-worker` is excluded from the referrer cohorts entirely, so a
+  package export it genuinely consumes can look unreferenced (`resolveDyeInput` is that
+  case today, surviving only because a comment names it), and path-alias resolution is
+  now workspace-scoped where it used to match on filename alone.
+
+
 - **Turbo `inputs` allowlists replaced with `$TURBO_DEFAULT$`, closing a fourth
   under-hashing gap and the class behind it.** The gating tasks hand-listed the files
   they read, and that list was wrong four separate times — `scripts/**/*.js`, then

@@ -105,6 +105,19 @@ const TESTONLY = 'testonly';
 const ENTRYPOINT = 'entrypoint';
 const PUBLIC = 'public';
 
+/**
+ * Tags knip treats exactly like `@public` but this repo never adopted.
+ *
+ * knip's `util/tag.js` `isAlwaysIgnored` hard-codes `@public`, `@beta` and
+ * `@alias`, and `graph/analyze.js` consults it BEFORE the configured `tags`
+ * filter runs. Only `@public` is a documented convention here; the other two
+ * are an undocumented escape hatch that would let a dead export pass knip with
+ * no review signal whatever — reproduced during the 2026-09-01 review, where a
+ * `@beta`-tagged dead export went unreported while its untagged sibling was
+ * flagged. Nothing in the repo uses them; this keeps it that way.
+ */
+const FORBIDDEN_TAGS = ['beta', 'alias'] as const;
+
 /** A line that opens a new `@tag`, used to know where a reason's continuation must stop. */
 const ANY_TAG_START_RE = /^[ \t]*(?:\/\*\*|\*)?[ \t]*@[A-Za-z]\w*\b/i;
 
@@ -219,6 +232,36 @@ export function hasBareTag(docblock: string): boolean {
  */
 export function isPublic(docblock: string): boolean {
   return tagPresent(docblock, PUBLIC);
+}
+
+/**
+ * The name of the knip-exempting tag this docblock carries that the repo does
+ * not use, or null. See `FORBIDDEN_TAGS`. Use `@public` for published API with
+ * no in-repo consumer, or `@testonly`/`@entrypoint` with a reason.
+ */
+export function forbiddenTag(docblock: string): string | null {
+  return FORBIDDEN_TAGS.find((tag) => tagPresent(docblock, tag)) ?? null;
+}
+
+/**
+ * Every production file carrying a tag from `FORBIDDEN_TAGS`.
+ *
+ * Deliberately a whole-file text scan rather than a per-declaration check:
+ * these tags must not appear at all, so there is no declaration shape to miss
+ * and no masking subtlety to get wrong. `tagPresent` anchors to the start of a
+ * line (optionally after a docblock's `*`), so prose that merely uses the word
+ * "beta" mid-sentence does not trip it.
+ */
+export function findForbiddenTags(
+  files: readonly string[],
+  texts: Map<string, string>,
+): Violation[] {
+  const out: Violation[] = [];
+  for (const file of files) {
+    const tag = forbiddenTag(texts.get(file) ?? '');
+    if (tag !== null) out.push({ kind: 'export', file, name: tag, testRefs: 0 });
+  }
+  return out;
 }
 
 /** A decorator line applied to the next declaration: `@Identifier` or `@Identifier(...)`. */
@@ -1557,12 +1600,25 @@ function main(): void {
   const subsumedMemberResult = subsumeMembersByOwner(memberResult, symbolVerdictedNames);
 
   const results = [orphanResult, exportResult, subsumedMemberResult];
-  const violations = results.flatMap((r) => r.violations);
+  // Not a reachability finding: a tag knip silently honours but this repo does
+  // not use. Reported alongside the rest so one command covers both, and listed
+  // first below because the fix is a one-word edit, not an analysis.
+  const forbidden = findForbiddenTags(prod, texts);
+  const violations = [...forbidden, ...results.flatMap((r) => r.violations)];
   const testOnlyExempt = results.flatMap((r) => r.testOnlyExempt);
   const entrypointExempt = results.flatMap((r) => r.entrypointExempt);
   const publicExempt = results.flatMap((r) => r.publicExempt);
 
-  for (const v of violations) {
+  for (const v of forbidden) {
+    console.error(
+      `✗ ${v.file} — carries \`@${v.name}\`, which knip silently exempts from analysis`,
+    );
+    console.error(
+      '    → use `@public` for published API with no in-repo consumer, or ' +
+        '`@testonly <why>` / `@entrypoint <why>`',
+    );
+  }
+  for (const v of results.flatMap((r) => r.violations)) {
     const what =
       v.kind === 'member' ? `${v.file}:${v.name}()` : v.name ? `${v.file}:${v.name}` : v.file;
     const how = v.kind === 'file' ? 'imported by' : 'referenced by';

@@ -50,6 +50,17 @@
   // consumer and no tag still fails the gate. (`test-utils` has no npm
   // consumers to break, so it deletes an unused export instead of tagging
   // it — see its own `package.json` `lint:dead`.)
+  //
+  // THIS LINE IS INERT, and is kept only as documentation of the convention.
+  // knip hard-codes `@public`, `@beta` and `@alias` as always-ignored in
+  // `util/tag.js` `isAlwaysIgnored`, and `graph/analyze.js` consults that
+  // BEFORE the `tags` filter ever runs. Removing this line, keeping it, or
+  // inverting it to `+public` all produce byte-identical output across the
+  // whole monorepo, and `--tags=+public` cannot enumerate the tagged symbols
+  // either. Do not reach for it to audit the `@public` surface — it cannot do
+  // that. The same built-in also exempts `@beta` and `@alias`, which this
+  // repo's convention never mentions; `pnpm dead-code:check` fails on either
+  // of those so the undocumented escape hatch cannot be used by accident.
   "tags": ["-public"],
 
   "workspaces": {
@@ -65,18 +76,30 @@
     // (`pnpm dead-code:check`) covers the test-only slice of that gap, so
     // only a member with ZERO references from any test file — invisible to
     // both tools — still needs the manual survey the 2026-08-18 audit used.)
-    "packages/*": {
-      "entry": [
-        "src/index.ts!",
-        "src/**/index.ts!",
-        "src/**/*.test.ts",
-        "src/**/__tests__/**/*.ts",
-        "scripts/**/*.ts!",
-        "tests/**/*.ts",
-        "vitest*.config.ts",
-      ],
-      "project": ["src/**/*.ts", "scripts/**", "tests/**", "*.ts"],
-    },
+    // HOW KNIP PICKS A KEY, because it is not what it looks like: knip resolves
+    // exactly ONE `workspaces` key per workspace and does NOT merge. Keys are
+    // sorted by path depth and, at equal depth, a literal key beats a glob —
+    // so for every workspace named literally below, a `packages/*` or `apps/*`
+    // glob contributes NOTHING, whatever the order they appear in. (Verified
+    // against knip 6.33's `util/workspace.js` `byPathDepth` and
+    // `ConfigurationChief.getConfigKeyForWorkspace`, and empirically: moving
+    // the literal keys above the globs leaves every workspace's effective
+    // config byte-identical, and poisoning a glob's entry/project changes
+    // nothing for any workspace that has its own key.)
+    //
+    // A `packages/*` glob used to sit here carrying entry/project patterns. It
+    // was dead config: all eight packages are named literally below, so the
+    // glob applied to none of them and the patterns it advertised had never
+    // taken effect. It was removed rather than "fixed" because the defaults it
+    // was shadowing are the better setting — knip's default project is `**/*`,
+    // where the glob's was `src/**, scripts/**, tests/**, *.ts`, which does not
+    // reach `packages/test-utils/integration/**`. Folding those patterns back
+    // into the literal keys would silently drop that directory from analysis.
+    //
+    // So: every package below runs on knip's DEFAULTS plus
+    // `includeEntryExports`. Test files still become entries through knip's
+    // vitest plugin (it reads each `vitest.config.ts`'s `test.include`), which
+    // is how the integration suite is covered without any pattern naming it.
     "packages/core": { "includeEntryExports": true },
     "packages/svg": { "includeEntryExports": true },
     "packages/bot-logic": { "includeEntryExports": true },
@@ -87,11 +110,17 @@
     "packages/test-utils": { "includeEntryExports": true },
 
     // ---- Apps ------------------------------------------------------------
-    // The glob's entry/project settings apply to every app. The six keys at
-    // the bottom of this block are GATED on this config (each has its own
-    // `lint:dead`); `apps/web-app` and `apps/og-worker` are gated on their
-    // own knip.jsonc and appear here only so their imports count as usage,
-    // and `apps/stoat-worker` (parked) is gated nowhere.
+    // Per the one-key rule above, this glob reaches exactly the two apps that
+    // are NOT named literally below: `apps/og-worker` and `apps/stoat-worker`.
+    // It does not touch the gated apps — they each resolve to their own key
+    // and run on knip's defaults. The root sweep's own config hints say so:
+    // every "no matches" hint for a pattern in this block names one of those
+    // two apps and never a gated one.
+    //
+    // Neither of those two is gated on THIS config: og-worker's `lint` runs a
+    // bare `knip` against its own knip.jsonc, and stoat-worker (parked) is
+    // gated nowhere. So this glob only shapes what the root `pnpm lint:dead`
+    // cross-check reports for them.
     "apps/*": {
       "entry": [
         "src/index.ts!",
@@ -125,9 +154,6 @@
     // a published export legitimately has no in-repo importer — but all eight
     // packages now carry that convention (see "tags" above), so every one of
     // them runs with it on too.
-    // These keys MUST stay after "apps/*" — placing them before strips the glob's
-    // entry/project settings for that workspace (verified 2026-09-01).
-    //
     // docs/.vitepress/{config,theme/index}.ts are NOT in the plain "entry" array:
     // knip's built-in vitepress plugin auto-detects `.vitepress/config.ts` /
     // `.vitepress/theme/index.ts` at the WORKSPACE ROOT, but this site's root is

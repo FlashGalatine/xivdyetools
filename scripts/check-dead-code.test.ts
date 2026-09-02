@@ -25,6 +25,8 @@ import {
   findOrphanModules,
   findTestOnlyExports,
   findTestOnlyMembers,
+  findForbiddenTags,
+  forbiddenTag,
   hasBareTag,
   isExcludedReferrer,
   isMainModule,
@@ -1871,4 +1873,43 @@ test('63. loadWorkspaceAliases: reads real tsconfig paths off the tracked file l
   assert.equal(shared.target, 'apps/web-app/src/shared/');
   // A package with no `paths` must simply be absent, not an empty entry.
   assert.equal(aliases.has('packages/types'), false);
+});
+
+test('64. forbiddenTag: knip silently exempts @beta and @alias, so the gate rejects them', () => {
+  // knip hard-codes @public, @beta and @alias as always-ignored in
+  // util/tag.js isAlwaysIgnored, consulted BEFORE the configured `tags`
+  // filter. Only @public is a documented repo convention; the other two are
+  // an undocumented escape hatch that would let a dead export pass knip with
+  // no review signal at all. Nothing in the repo uses them, and this keeps it
+  // that way.
+  assert.equal(forbiddenTag('/**\n * @beta not ready\n */'), 'beta');
+  assert.equal(forbiddenTag('/**\n * @alias someOther\n */'), 'alias');
+  // The one that IS the convention stays allowed, with or without a reason.
+  assert.equal(forbiddenTag('/**\n * @public published API\n */'), null);
+  assert.equal(forbiddenTag('/**\n * @public\n */'), null);
+  assert.equal(forbiddenTag('/**\n * @testonly only the foo suite calls this\n */'), null);
+  // Prose that merely mentions the word must not trip it.
+  assert.equal(forbiddenTag('/**\n * Superseded by the beta endpoint.\n */'), null);
+});
+
+test('65. findForbiddenTags: reports a @beta or @alias tag anywhere in production source', () => {
+  const texts = new Map([
+    ['src/a.ts', '/**\n * @beta not ready\n */\nexport const a = 1;\n'],
+    ['src/b.ts', '/**\n * @alias other\n */\nexport function b() {}\n'],
+    ['src/ok.ts', '/**\n * @public published API\n */\nexport const ok = 1;\n'],
+    ['src/prose.ts', '// superseded by the beta endpoint\nexport const p = 1;\n'],
+  ]);
+  const found = findForbiddenTags([...texts.keys()], texts);
+  assert.deepEqual(found.map((v) => `${v.file}:${v.name}`).sort(), [
+    'src/a.ts:beta',
+    'src/b.ts:alias',
+  ]);
+});
+
+test('66. findForbiddenTags: the real tree carries none of them', () => {
+  // The whole point of the rule: this must stay empty. If it ever fails,
+  // someone used a tag that silently exempts their export from knip.
+  const files = listTracked().filter((f) => !isTestFile(f));
+  const texts = new Map(files.map((f) => [f, readFileSync(f, 'utf8')]));
+  assert.deepEqual(findForbiddenTags(files, texts), []);
 });

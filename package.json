@@ -11,7 +11,7 @@
     "type-check:scripts": "tsc -p scripts/tsconfig.json",
     "coverage:report": "tsx scripts/coverage-report.ts",
     "dead-code:check": "tsx scripts/check-dead-code.ts",
-    "test:scripts": "tsx --test scripts/check-dead-code.test.ts",
+    "test:scripts": "tsx --test scripts/check-dead-code.test.ts scripts/knip-config.test.ts",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
     "clean": "turbo run clean"
