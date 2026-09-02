@@ -7,7 +7,13 @@
  * @module components/camera-preview-modal
  */
 
-import { ModalService, LanguageService, cameraService, ToastService } from '@services/index';
+import {
+  ModalService,
+  LanguageService,
+  cameraService,
+  ToastService,
+  RouterService,
+} from '@services/index';
 import type { CaptureResult } from '@services/camera-service';
 import { logger } from '@shared/logger';
 import { ICON_CAMERA } from '@shared/ui-icons';
@@ -131,6 +137,8 @@ export async function showCameraPreviewModal(onCapture: OnCaptureCallback): Prom
   let cancelClickHandler: (() => void) | null = null;
   let selectorChangeHandler: (() => void) | null = null;
   let startCameraTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  /** BUG-080: see the subscription below — released in cleanup(). */
+  let unsubscribeRoute: (() => void) | null = null;
 
   // Cleanup function to remove all event listeners and timers
   const cleanup = (): void => {
@@ -158,6 +166,10 @@ export async function showCameraPreviewModal(onCapture: OnCaptureCallback): Prom
     if (selectorChangeHandler && selector) {
       selector.removeEventListener('change', selectorChangeHandler);
       selectorChangeHandler = null;
+    }
+    if (unsubscribeRoute) {
+      unsubscribeRoute();
+      unsubscribeRoute = null;
     }
   };
 
@@ -309,6 +321,15 @@ export async function showCameraPreviewModal(onCapture: OnCaptureCallback): Prom
       cameraService.stopStream();
       isModalOpen = false;
     },
+  });
+
+  // BUG-080: closing the modal stops the stream, but in-app navigation never
+  // closed the modal — the router swaps the tool underneath it and the camera
+  // stays open with a live MediaStream (and its recording indicator) over the
+  // new tool. Leaving a camera on after the user has moved on is the kind of
+  // thing they notice, so navigation dismisses it.
+  unsubscribeRoute = RouterService.subscribe(() => {
+    if (isModalOpen) ModalService.dismissTop();
   });
 
   // Start camera after modal is displayed (with cancellable timeout)

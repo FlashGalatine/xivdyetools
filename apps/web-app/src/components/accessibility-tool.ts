@@ -485,6 +485,19 @@ export class AccessibilityTool extends BaseComponent {
 
   private renderLeftPanel(): void {
     const left = this.options.leftPanel;
+
+    // BUG-070: this runs again on every language change, and clearContainer
+    // only removes DOM. The previous DyeSelector and its two CollapsiblePanels
+    // kept their service subscriptions, so each re-render left another live
+    // selector re-rendering into a container that is no longer on screen.
+    // destroy() already tears these three down; the rebuild has to as well.
+    this.dyeSelector?.destroy();
+    this.dyeSelector = null;
+    this.dyePanel?.destroy();
+    this.dyePanel = null;
+    this.visionPanel?.destroy();
+    this.visionPanel = null;
+
     clearContainer(left);
 
     // Section 1: Dye Selection (Collapsible with beaker icon)
