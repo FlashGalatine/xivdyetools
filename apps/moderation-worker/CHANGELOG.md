@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.2] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit, Sprint 7
+
+- **`/preset moderate action:stats` shows real numbers** (BUG-010, HIGH). It read
+  `stats.pending_count` and friends; presets-api aliases those counts `pending` / `approved` /
+  `rejected` / `flagged`, so all four embed fields evaluated `String(undefined)` — and that panel is
+  the queue's only summary view. `actions_last_week` is surfaced too; the query already computed it
+  and nothing was reading it. Needs `@xivdyetools/types` **3.0.0**, where the interface describing
+  this response was corrected.
+- **Moderation strings honour the language set on the main bot** (BUG-001). This worker read only
+  the legacy `i18n:user:` key, and nothing has written that key since the unified preferences
+  system landed. Both bots bind the *same* production KV namespace, so a user who set their
+  language through `/preferences` got every string here in their Discord client locale or English —
+  and this bot ships no language command to correct it.
+- **A stalled or refused follow-up no longer leaves "thinking…" forever** (BUG-040).
+  `editOriginalResponse` was the one Discord call here without an `AbortSignal`, and none of its
+  five call sites read `.ok`. Added `safeEditOriginalResponse` alongside the existing
+  `safeSendMessage` / `safeEditMessage`.
+- **The ban modal's "⏳ Processing Ban…" resolves** (moderation-worker-09). `processBan` reported
+  success *and* failure solely to the moderation channel and never touched the interaction token —
+  its parameter was literally named `_interaction`. If that channel post was refused, the
+  moderator's only feedback was a permanent spinner.
+- **A `preset_id` autocomplete choice can no longer blank the whole list** (moderation-worker-04).
+  `clampChoiceName` was applied to the two ban branches but not this one, and presets-api stores
+  `author_name` verbatim with no length rule — one long display name pushed a choice past Discord's
+  100-character cap, and Discord rejects the entire response.
+- **The ban and unban pickers list their top rows before you type** (moderation-worker-08). Discord
+  sends `value: ''` the moment an option is focused, and a `minLength: 1` guard turned that into an
+  empty list. For `unban_user` that was the whole feature: no way to see who is currently banned.
+- **A rejection reaches the submission log** (moderation-worker-05). It was the only moderation
+  action that did not post there — approve does, and so do the modal rejection, the button approval
+  and the revert.
+- **The rejection-reason floor is the same on both surfaces** (moderation-worker-06). The modal
+  demanded ten characters; the slash command accepted one, and presets-api validates the reason on
+  `/revert` only.
+- **`freezeResult` is honoured on the warning path** (moderation-worker-03). The warning branch
+  returned before the freeze step, so a body that merely warned handed handlers a mutable payload
+  under a frozen contract.
+- **Ban and unban bump `updated_at`** (moderation-worker-07). Both status writers set `status`
+  alone while every presets-api writer bumps both, so a ban left a preset reading `hidden` with a
+  stale public timestamp.
+- **A user with no presets can be banned** (moderation-worker-10). The ban is meaningful for them —
+  presets-api's `requireNotBanned` guards the votes router too, so a vote-only abuser was exactly
+  the case that could not be actioned. Falls back to the raw snowflake, as the modal already did.
+- **`rateLimitedResponse` says how long to wait** (REFACTOR-004). Its JSDoc promised "429 status and
+  Retry-After header"; it returns 200 with neither, and ignored its `resetTime` parameter entirely.
+  The 200 is correct — a 429 makes Discord show "The application did not respond" instead of the
+  refusal — so the documentation was the wrong half, and the parameter is now put to work.
+
+### Added
+
+- `tests/moderation-stats-contract.test.ts` reads presets-api's own SQL and asserts its column
+  aliases are the keys `ModerationStats` declares. The unit test could not catch BUG-010 because its
+  mock was built from the names the *handler* expected, so mock and client agreed with each other
+  and both disagreed with the server.
+
+### Known gap
+
+- A rejected preset's author is still never told, and never told why
+  (moderation-worker-11). Closing it means a notification path (a DM through discord-worker), which
+  is a feature rather than a fix and is left as a product decision.
+
 ## [1.6.1] - 2026-09-02
 
 ### Changed

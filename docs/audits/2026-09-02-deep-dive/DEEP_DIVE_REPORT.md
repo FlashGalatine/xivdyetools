@@ -224,7 +224,7 @@ Checked and dropped, so the next audit does not re-chase them.
 
 ## Remediation status
 
-The audit itself modified no source file. Sprints 1–3 of `REMEDIATION_PLAN.md` were then executed with the user's approval on 2026-09-02.
+The audit itself modified no source file. Sprints 1–7 of `REMEDIATION_PLAN.md` were then executed with the user's approval on 2026-09-02.
 
 | ID | Status | Commit |
 |---|---|---|
@@ -241,11 +241,24 @@ The audit itself modified no source file. Sprints 1–3 of `REMEDIATION_PLAN.md`
 | BUG-006 | FIXED | `c1c7a173` |
 | BUG-011, BUG-046, BUG-055, BUG-105 | FIXED | `ef357d26` |
 | BUG-008, BUG-056, BUG-057, BUG-058, BUG-059, REFACTOR-009 | FIXED | `c83d7874` |
+| BUG-054, REFACTOR-008, `pkg-svg-bot-logic-02/06/07/10` | FIXED | `ab81d435` |
+| `pkg-svg-bot-logic-08/09/11` | FIXED | `3e4b360a` |
+| BUG-013, BUG-031, BUG-032, BUG-033, BUG-034, BUG-035, BUG-036, BUG-037 | FIXED | `c4c4ef42` |
+| BUG-026, BUG-028, BUG-029, BUG-030, BUG-039, OPT-002 | FIXED | `c981542b` |
+| BUG-010, BUG-001, BUG-040, REFACTOR-004, `moderation-worker-03…10` | FIXED | `678514b3` |
 | everything else | OPEN | — |
 
 **Deliberately not done in Sprint 3:** OPT-005 (drop the per-colour `getAllDyes` copy) and OPT-009 (add an LRU to `rgbToRyb`). Both are LOW-impact optimizations whose fixes carry more risk than the gain: OPT-005 would change `getAllDyes`'s defensive-copy contract for every caller, and OPT-009 would put a cache in front of a conversion this same sprint rewrote. Correctness first; measure before caching.
 
-**Gate at the end of Sprint 3:** `pnpm turbo run build type-check lint test` — 61/61 tasks green, plus the web-app bundle budget.
+**Deliberately not done in Sprint 7:** `moderation-worker-11` — a rejected preset's author is never told, and never told why. Closing it means a notification path (a DM through discord-worker, reusing the existing dead-letter queue), which is a feature rather than a fix. The review's alternative — reword the modal copy that "implies the reason is for them" — does not survive inspection: the placeholder reads *"Please provide a clear reason for rejecting this preset…"*, which is addressed to the moderator and promises the author nothing. Left as a product decision, recorded in the moderation-worker changelog under *Known gap*.
+
+**Gate at the end of Sprint 7:** `pnpm turbo run build type-check lint test` — 61/61 tasks green (warnings only, all pre-existing), plus the new discord-worker bundle gate at 2,697 KiB / 87.8 % of the 3,072 KiB cap.
+
+**Version bumps across Sprints 4–7:** `@xivdyetools/svg` 3.0.1 → **3.0.2**, `@xivdyetools/types` 2.0.1 → **3.0.0** (breaking: `ModerationStats` field names corrected — see its changelog), `xivdyetools-discord-worker` 5.1.1 → **5.1.2**, `xivdyetools-moderation-worker` 1.6.1 → **1.6.2**. `@xivdyetools/core` 4.0.3 and `@xivdyetools/bot-logic` 3.0.1 were already bumped in Sprint 3 and remain unpublished, so Sprint 5's further bot-logic changes ride that same 3.0.1.
+
+### A note on reviewer line numbers
+
+Several Sprint 4 findings cited lines ~310 past the end of a 202-line file (`packages/svg/src/gradient.ts`). **Every claim held at the real location** — the drift was in the citation, not the analysis. The plan's own standing guidance ("verify each finding's evidence against the code before fixing — findings are leads") is what caught it, and it is worth keeping in mind when working the remaining sprints: locate by *symbol*, not by line.
 
 ## Next steps
 

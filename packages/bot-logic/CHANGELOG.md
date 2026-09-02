@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.1] - 2026-09-02
 
+### Fixed — 2026-09-02 deep-dive audit, Sprint 5
+
+- **`/dye info`'s "+n more" line means something now** (pkg-svg-bot-logic-09). The count was
+  `pool.length - drawn` over a four-entry pool and three drawn columns — the constant **1**, on
+  every card ever rendered, with the `: ''` arm beside it unreachable. A player reads "+1 more" as
+  "one further dye is near this one" when 121 others were ranked and the fourth simply was not
+  drawn. It now counts further dyes still inside the **CLOSE** band (ΔE2000 ≤ 10, the match ramp's
+  second cut), which is the question someone reading that line is actually asking.
+
+  The threshold is measured, not guessed: against the real 125-dye set the EXACT cut (5) admits
+  nothing at all — the tightest fourth-nearest neighbour anywhere is Ink Blue / Jet Black at 5.41 —
+  so it would only have swapped one constant for another. At 10, forty dyes carry the line with n
+  between 1 and 6 and eighty-five omit it; at the LOOSE cut (20) it fires for 122 of 125 with n as
+  high as 33, which is noise rather than information.
+
+- **`getLocalizedHarmonyType`'s English fallback table removed** (pkg-svg-bot-logic-08). It could
+  never run: the key map covers all eight `HarmonyType`s so the lookup always returned first, and
+  even on a missing key `Translator.t()` yields the raw key rather than `undefined`. The
+  near-identical table in `getHarmonyTypeChoices` **stays** — that one is live, and deliberately
+  English, because it feeds Discord's autocomplete choices.
+
+- **`capGradientRows` runs once per `/gradient`, not twice** (pkg-svg-bot-logic-11). The second
+  call recomputed the whole merge → filter → sort to read a `merged` count the first had already
+  returned.
+
 ### Fixed — 2026-09-02 deep-dive audit
 
 - `resolveCssColorName` returns `null` for inherited object keys (BUG-011). A colour

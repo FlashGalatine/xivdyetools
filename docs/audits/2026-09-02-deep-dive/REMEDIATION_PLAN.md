@@ -77,6 +77,8 @@ Small, and it must land **before** bot-logic when both change in one wave.
 
 **Ends with:** `pnpm turbo run build test --filter=@xivdyetools/svg` → bump → merge → Actions publish.
 
+**✅ COMPLETED 2026-09-02** — `ab81d435`. All four scheduled items plus the `-02` legend half of BUG-054. Tests 271 → 304; each gate mutation-proved. Reviewer line numbers were ~310 off in `gradient.ts` (the file is 202 lines) but every claim held at the real location — verified before fixing, per the plan's own standing guidance. **Deploy needs:** publish `@xivdyetools/svg` **3.0.2** (before bot-logic); discord-worker and og-worker pick the changes up on their next deploy.
+
 ## Sprint 5 — `@xivdyetools/bot-logic` publish
 
 Depends on Sprints 3 and 4 being published first.
@@ -87,6 +89,8 @@ Depends on Sprints 3 and 4 being published first.
 | BUG cluster `pkg-svg-bot-logic-08,09,11` | LOW | Unreachable English harmony fallback; `/dye info` always reading "+1 more"; `capGradientRows` running twice per `/gradient`. |
 
 **Ends with:** `pnpm turbo run build test --filter=@xivdyetools/bot-logic` → bump → merge → Actions publish.
+
+**✅ COMPLETED 2026-09-02** — `3e4b360a`. BUG-055 was already fixed in Sprint 3 (`ef357d26`), so this sprint was the three-item cluster. Tests 332 → 343. The `-09` threshold was **measured** rather than assumed: the first attempt (ΔE ≤ 5, the EXACT cut) turned the count into a different constant — zero — because the tightest fourth-nearest neighbour in the whole database is 5.41. **Deploy needs:** publish `@xivdyetools/bot-logic` **3.0.1** (after svg 3.0.2); discord-worker picks it up on its next deploy.
 
 ## Sprint 6 — `discord-worker` deploy
 
@@ -108,6 +112,15 @@ Picks up Sprints 3–5. **BUG-013 is the anchor**: moderators approve presets fr
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-discord-worker...` (includes `font-coverage` / `font-faces`) → merge → `deploy-discord-worker.yml` (`register-commands` runs in CI).
 
+**✅ COMPLETED 2026-09-02** — `c4c4ef42` (BUG-013/031/032/033/034/035/036/037) and `c981542b` (BUG-026/028/029/030/039 + OPT-002). All 15 scheduled items. 12/12 tasks green, 1,218 tests.
+
+Two things worth carrying forward:
+
+- The BUG-030 fix **fails open**, and that was found by a failing test rather than designed in. An unmocked `.ttf` import resolves to a URL *string* under vitest and coerces to a zero-length buffer silently (the DEAD-005 note in `fonts.test.ts`), so the coverage set came back EMPTY and `/preset show` handed the card generator a bare em dash for the title. Blanking every card is far worse than the tofu the filter exists to prevent. Its tests read the real font files off disk for the same reason — going through `getFontBuffers()` would have passed for entirely the wrong reason.
+- Moving `/manual` onto the cached Universalis wrappers (BUG-034) left `fetchWorlds`/`fetchDataCenters` as unused barrel re-exports, which the dead-code gate caught immediately. Removed from `services/budget/index.ts`; they remain module-private inside `universalis-client.ts`.
+
+**Deploy needs:** merge → `deploy-discord-worker.yml`. No `register-commands` change. Version 5.1.2 with a `CHANGELOG-laymans.md` entry (eight of these are user-visible).
+
 ## Sprint 7 — `moderation-worker` deploy
 
 | ID | Sev | Tested? | Item |
@@ -119,6 +132,14 @@ Picks up Sprints 3–5. **BUG-013 is the anchor**: moderators approve presets fr
 | `moderation-worker-03…11` | LOW | no | Unfrozen `freezeResult`, unclamped autocomplete names, missing reject-path log post, reason-length floor disagreement, `updated_at` omitted on ban writes, empty autocomplete query rejected, unresolved "Processing Ban…". |
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-moderation-worker...` → merge → `deploy-moderation-worker.yml`.
+
+**✅ COMPLETED 2026-09-02** — `678514b3`. BUG-010, BUG-001, BUG-040, REFACTOR-004 and `moderation-worker-03`…`-10`. 11/11 tasks green, 628 → 645 tests.
+
+- **`moderation-worker-11` deliberately NOT done.** The finding is that a rejected author is never told and never told why; closing it means a notification path (a DM through discord-worker, reusing the dead-letter queue), which is a feature rather than a fix. The review's alternative — reword the modal copy that "implies the reason is for them" — does not apply on inspection: the placeholder reads "Please provide a clear reason for rejecting this preset…", which is addressed to the moderator and promises the author nothing. Left as a product decision, recorded in the moderation-worker changelog under *Known gap*.
+- **BUG-010 needed a `@xivdyetools/types` change**, and the type was not merely unused — it was *wrong*, describing a shape nothing produces and making the client's mistake look correct. Corrected, which is a **major** bump (2.0.1 → 3.0.0) by the letter of semver even though no consumer can have relied on the old names working. Nothing in the deploy depends on it: the app bundles `workspace:*` at build time.
+- The fix that prevents recurrence is `tests/moderation-stats-contract.test.ts`, which reads presets-api's own SQL and asserts its aliases are the keys the type declares. Renaming the fields alone would have left the same hole open for the next field: the unit test's mock was built from the names the *handler* expected, so mock and client agreed with each other and both disagreed with the server.
+
+**Deploy needs:** merge → `deploy-moderation-worker.yml`. Version 1.6.2. Publishing `@xivdyetools/types` 3.0.0 is optional for this deploy but wanted for the npm consumers.
 
 ## Sprint 8 — `presets-api` deploy
 

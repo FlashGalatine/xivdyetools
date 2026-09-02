@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-09-02
+
+### ⚠️ BREAKING — `ModerationStats` field names corrected
+
+`ModerationStats` declared `pending_count`, `approved_count`, `rejected_count` and
+`flagged_count`. **No such key has ever existed in the response it describes.** presets-api's
+`GET /api/v1/moderation/stats` aliases those counts `pending`, `approved`, `rejected` and
+`flagged`, and returns `actions_last_week` alongside them (BUG-010, 2026-09-02 deep dive).
+
+The type was not merely unused — it was wrong, and it made the only consumer's mistake look
+correct: moderation-worker's `/preset moderate action:stats` rendered `String(undefined)` in all
+four counters, so a moderator checking the queue read "undefined" four times.
+
+```diff
+  export interface ModerationStats {
+-   pending_count: number;
+-   approved_count: number;
+-   rejected_count: number;
+-   flagged_count: number;
++   pending: number;
++   approved: number;
++   rejected: number;
++   flagged: number;
++   actions_last_week: number;
+  }
+```
+
+This is a major bump by the letter of semver, but no consumer can have been relying on the old
+names *working* — reading `pending_count` off this response has always yielded `undefined`. The
+field names now mirror the SQL aliases in `apps/presets-api/src/handlers/moderation.ts`;
+`apps/moderation-worker/tests/moderation-stats-contract.test.ts` asserts the two stay in step by
+reading that handler's own query text.
+
 ## [2.0.1] - 2026-09-02
 
 ### Changed
