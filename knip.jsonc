@@ -68,6 +68,7 @@
     "packages/bot-logic": { "includeEntryExports": true },
     "packages/types": { "includeEntryExports": true },
     "packages/worker-kit": { "includeEntryExports": true },
+    "packages/auth": { "includeEntryExports": true },
 
     // ---- Consumers (declared so their imports count as usage) -------------
     "apps/*": {
