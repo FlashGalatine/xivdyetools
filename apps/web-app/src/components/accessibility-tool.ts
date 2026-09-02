@@ -352,6 +352,9 @@ export class AccessibilityTool extends BaseComponent {
     // Show empty state and hide other sections
     this.showEmptyState(true);
     this.updateDrawerContent();
+    // BUG-019: this path never reaches updateResults(), so the Share button
+    // would keep offering a link to the palette the user just cleared.
+    this.updateShareButton();
   }
 
   /**
@@ -1211,6 +1214,14 @@ export class AccessibilityTool extends BaseComponent {
    * Update results display
    */
   private updateResults(): void {
+    // BUG-019: the Share button used to be refreshed only by the DESKTOP dye
+    // selector, the vision dropdown and the share-URL loader — so a palette
+    // pick, a card remove, a clear, or any drawer selection left it disabled or
+    // holding a stale link. Every selection change funnels through here, and
+    // this sits ABOVE the empty-state return so clearing the last dye disables
+    // the button rather than leaving the previous link in place.
+    this.updateShareButton();
+
     if (this.selectedDyes.length === 0) {
       this.showEmptyState(true);
       return;
