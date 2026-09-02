@@ -1,0 +1,6 @@
+--- verdict ---
+raw secret reachable in redacted entry at : entry.context.inner.back.inner.back.token
+top-level token value                     : [REDACTED]
+{"level":"info","message":"cycle test","timestamp":"2026-09-02T16:43:44.025Z","context":{"token":"[REDACTED]","inner":{"back":{"token":"[REDACTED]","inner":{"back":{"token":"shhh-super-secret","inner":"[Circular]"}}}}}}
+JsonAdapter emits raw secret              : [33mfalse[39m
+emitted (first 400): 

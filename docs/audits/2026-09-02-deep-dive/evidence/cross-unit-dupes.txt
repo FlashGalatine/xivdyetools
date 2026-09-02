@@ -1,0 +1,121 @@
+=== exported symbols defined in more than one deploy unit ===
+APIService  ::  apps/web-app packages/core 
+     apps/web-app/src/services/api-service-wrapper.ts packages/core/src/services/APIService.ts 
+bandInk  ::  apps/og-worker packages/svg 
+     apps/og-worker/src/services/svg/band.ts packages/svg/src/frame.ts 
+base64UrlEncode  ::  apps/oauth packages/auth 
+     apps/oauth/src/services/jwt-service.ts packages/auth/src/encoding/base64.ts 
+blendColors  ::  apps/web-app packages/core 
+     apps/web-app/src/services/mixer-blending-engine.ts packages/core/src/blending/blending.ts 
+bodySizeLimit  ::  apps/oauth apps/presets-api 
+     apps/oauth/src/middleware/body-validation.ts apps/presets-api/src/middleware/body-validation.ts 
+checkRateLimit  ::  apps/api-worker apps/discord-worker apps/moderation-worker apps/oauth 
+     apps/api-worker/src/universalis/services/rate-limiter.ts apps/discord-worker/src/services/rate-limiter.ts apps/moderation-worker/src/middleware/rate-limit.ts apps/oauth/src/services/rate-limit.ts 
+createUserTranslator  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/services/bot-i18n.ts apps/moderation-worker/src/services/bot-i18n.ts 
+decodeJWT  ::  apps/oauth packages/auth 
+     apps/oauth/src/services/jwt-service.ts packages/auth/src/jwt.ts 
+deferredResponse  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/response.ts apps/moderation-worker/src/utils/response.ts 
+discordLocaleToLocaleCode  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/services/i18n.ts apps/moderation-worker/src/services/i18n.ts 
+dyeService  ::  apps/api-worker apps/og-worker apps/web-app 
+     apps/api-worker/src/lib/services.ts apps/og-worker/src/services/svg/dye-helpers.ts apps/web-app/src/services/dye-service-wrapper.ts 
+DyeService  ::  apps/web-app packages/core 
+     apps/web-app/src/services/dye-service-wrapper.ts packages/core/src/services/DyeService.ts 
+editMessage  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/discord-api.ts apps/moderation-worker/src/utils/discord-api.ts 
+editOriginalResponse  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/discord-api.ts apps/moderation-worker/src/utils/discord-api.ts 
+ephemeralResponse  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/response.ts apps/moderation-worker/src/utils/response.ts 
+ErrorCode  ::  apps/api-worker apps/presets-api 
+     apps/api-worker/src/lib/api-error.ts apps/presets-api/src/utils/api-response.ts 
+errorEmbed  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/response.ts apps/moderation-worker/src/utils/response.ts 
+filterDyes  ::  apps/web-app packages/core 
+     apps/web-app/src/shared/dye-filter-utils.ts packages/core/src/services/dye/DyeFilter.ts 
+getClientIp  ::  apps/oauth packages/worker-kit 
+     apps/oauth/src/services/rate-limit.ts packages/worker-kit/src/rate-limiter/ip.ts 
+getFontBuffers  ::  apps/discord-worker apps/og-worker 
+     apps/discord-worker/src/services/fonts.ts apps/og-worker/src/services/fonts.ts 
+getLocalizedDyeName  ::  apps/og-worker packages/bot-logic 
+     apps/og-worker/src/services/translator.ts packages/bot-logic/src/localization.ts 
+getPendingPresets  ::  apps/moderation-worker apps/presets-api 
+     apps/moderation-worker/src/services/preset-api.ts apps/presets-api/src/services/preset-service.ts 
+getPreset  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/services/preset-api.ts apps/moderation-worker/src/services/preset-api.ts 
+getPresets  ::  apps/discord-worker apps/moderation-worker apps/presets-api 
+     apps/discord-worker/src/services/preset-api.ts apps/moderation-worker/src/services/preset-api.ts apps/presets-api/src/services/preset-service.ts 
+getRateLimitHeaders  ::  apps/api-worker packages/worker-kit 
+     apps/api-worker/src/universalis/services/rate-limiter.ts packages/worker-kit/src/rate-limiter/headers.ts 
+handleAboutCommand  ::  apps/discord-worker apps/stoat-worker 
+     apps/discord-worker/src/handlers/commands/about.ts apps/stoat-worker/src/commands/about.ts 
+handleButtonInteraction  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/handlers/buttons/index.ts apps/moderation-worker/src/handlers/buttons/index.ts 
+handlePresetCommand  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/handlers/commands/preset.ts apps/moderation-worker/src/handlers/commands/preset.ts 
+hasActiveFilters  ::  apps/web-app packages/core 
+     apps/web-app/src/shared/dye-filter-utils.ts packages/core/src/services/dye/DyeFilter.ts 
+hexToRgb  ::  packages/core packages/svg 
+     packages/core/src/blending/conversions.ts packages/svg/src/base.ts 
+isDyeExcluded  ::  apps/web-app packages/core 
+     apps/web-app/src/shared/dye-filter-utils.ts packages/core/src/services/dye/DyeFilter.ts 
+isModerator  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/services/preset-api.ts apps/moderation-worker/src/services/preset-api.ts 
+isTokenRevoked  ::  apps/oauth packages/auth 
+     apps/oauth/src/services/jwt-service.ts packages/auth/src/revocation.ts 
+isValidLocale  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/services/i18n.ts apps/moderation-worker/src/services/i18n.ts 
+jsonDepthLimit  ::  apps/oauth apps/presets-api 
+     apps/oauth/src/middleware/body-validation.ts apps/presets-api/src/middleware/body-validation.ts 
+logValidationErrors  ::  apps/discord-worker apps/moderation-worker apps/oauth apps/presets-api 
+     apps/discord-worker/src/utils/env-validation.ts apps/moderation-worker/src/utils/env-validation.ts apps/oauth/src/utils/env-validation.ts apps/presets-api/src/utils/env-validation.ts 
+MATCHING_METHODS  ::  apps/discord-worker packages/core 
+     apps/discord-worker/src/types/preferences.ts packages/core/src/types/index.ts 
+MAX_PREVIEW_IMAGE_BYTES  ::  apps/presets-api apps/web-app 
+     apps/presets-api/src/services/preview-image-service.ts apps/web-app/src/services/preset-submission-service.ts 
+MessageFlags  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/response.ts apps/moderation-worker/src/utils/response.ts 
+messageResponse  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/response.ts apps/moderation-worker/src/utils/response.ts 
+pongResponse  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/response.ts apps/moderation-worker/src/utils/response.ts 
+PresetAPIError  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/types/preset.ts apps/moderation-worker/src/types/preset.ts 
+PRODUCTION_ENV_ERROR_PREFIX  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/env-validation.ts apps/moderation-worker/src/utils/env-validation.ts 
+rateLimitMiddleware  ::  apps/api-worker apps/moderation-worker packages/worker-kit 
+     apps/api-worker/src/middleware/rate-limit.ts apps/moderation-worker/src/middleware/rate-limit.ts packages/worker-kit/src/middleware/rate-limit.ts 
+removeVote  ::  apps/discord-worker apps/presets-api 
+     apps/discord-worker/src/services/preset-api.ts apps/presets-api/src/handlers/votes.ts 
+resetRateLimiterInstance  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/services/rate-limiter.ts apps/moderation-worker/src/middleware/rate-limit.ts 
+resolveCharaEquipment  ::  apps/api-worker apps/web-app 
+     apps/api-worker/src/chara/resolver.ts apps/web-app/src/services/chara-resolve-service.ts 
+resolveUserLocale  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/services/i18n.ts apps/moderation-worker/src/services/i18n.ts 
+revokeToken  ::  apps/oauth packages/auth 
+     apps/oauth/src/services/jwt-service.ts packages/auth/src/revocation.ts 
+searchPresetsForAutocomplete  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/services/preset-api.ts apps/moderation-worker/src/services/preset-api.ts 
+sendMessage  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/discord-api.ts apps/moderation-worker/src/utils/discord-api.ts 
+STATUS_DISPLAY  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/types/preset.ts apps/moderation-worker/src/types/preset.ts 
+successEmbed  ::  apps/discord-worker apps/moderation-worker 
+     apps/discord-worker/src/utils/response.ts apps/moderation-worker/src/utils/response.ts 
+successResponse  ::  apps/api-worker apps/presets-api 
+     apps/api-worker/src/lib/response.ts apps/presets-api/src/utils/api-response.ts 
+SUPPORTED_LOCALES  ::  apps/moderation-worker apps/web-app packages/core 
+     apps/moderation-worker/src/services/i18n.ts apps/web-app/src/shared/constants.ts packages/core/src/services/LocalizationService.ts 
+Translator  ::  apps/moderation-worker packages/bot-logic 
+     apps/moderation-worker/src/services/bot-i18n.ts packages/bot-logic/src/i18n/translator.ts 
+unauthorizedResponse  ::  apps/presets-api packages/auth 
+     apps/presets-api/src/utils/api-response.ts packages/auth/src/discord.ts 
+validateEnv  ::  apps/discord-worker apps/moderation-worker apps/oauth apps/presets-api 
+     apps/discord-worker/src/utils/env-validation.ts apps/moderation-worker/src/utils/env-validation.ts apps/oauth/src/utils/env-validation.ts apps/presets-api/src/utils/env-validation.ts 
+verifyJWT  ::  apps/oauth packages/auth 
+     apps/oauth/src/services/jwt-service.ts packages/auth/src/jwt.ts 
+verifyJWTSignatureOnly  ::  apps/oauth packages/auth 
+     apps/oauth/src/services/jwt-service.ts packages/auth/src/jwt.ts 

@@ -1,0 +1,17 @@
+=== core: normalizeMatchingMethod (should always return a MatchingMethod string) ===
+  constructor      -> [function] function Object() { [native code] }
+  toString         -> [function] function toString() { [native code] }
+  __proto__        -> [object] [object Object]
+  valueOf          -> [function] function valueOf() { [native code] }
+  hasOwnProperty   -> [function] function hasOwnProperty() { [native code
+  (control) ciede2000  -> ciede2000
+  (control) nonsense   -> ciede2000
+
+=== bot-logic: resolveCssColorName (should return #RRGGBB or null) ===
+  constructor      -> [function] function Object() { [native code] }
+  toString         -> [object] null
+  __proto__        -> [object] [object Object]
+  valueOf          -> [object] null
+  hasOwnProperty   -> [object] null
+  (control) red        -> #FF0000
+  (control) notacolour -> [1mnull[22m
