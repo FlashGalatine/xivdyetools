@@ -18,7 +18,7 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import { ephemeralResponse, errorEmbed } from '../../utils/response.js';
 import {
   getUserPreferences,
-  setPreference,
+  setPreferences,
   resetPreference,
   getDefaultValue,
   getAffectedCommands,
@@ -298,9 +298,24 @@ async function handleSetSubcommand(
     });
   }
 
-  // Process each provided option
+  // Process each provided option.
+  //
+  // BUG-029: this used to call `setPreference` inside the loop, so k options
+  // meant k read-modify-write cycles on the SAME KV key inside one request.
+  // KV allows one write per second per key and its reads are eventually
+  // consistent, so a later iteration could read the pre-update object and
+  // write back a version missing an earlier key — while the embed still
+  // reported every one as saved. The loop now only resolves and validates;
+  // the writes happen once, below.
   const updates: Array<{ key: PreferenceKey; value: unknown; success: boolean; reason?: string }> = [];
   const affectedCommandsSet = new Set<string>();
+  // Queued writes, each remembering the `updates` slot it must fill, so the
+  // embed still lists results in the order the user typed the options.
+  const pending: Array<{
+    key: PreferenceKey;
+    value: string | number | boolean;
+    slot: number;
+  }> = [];
 
   for (const opt of options) {
     const key = resolveOptionKey(opt.name);
@@ -340,14 +355,26 @@ async function handleSetSubcommand(
       value = canonical.name;
     }
 
-    // Attempt to set the preference
-    const result = await setPreference(env.KV, userId, key, value, logger);
-    updates.push({ key, value, success: result.success, reason: result.reason });
+    // Queue it — the whole batch is written together below — but claim this
+    // option's place in `updates` now, so the reply reads in option order.
+    pending.push({ key, value, slot: updates.length });
+    updates.push({ key, value, success: false });
+  }
 
-    // Collect affected commands for successful updates
-    if (result.success) {
-      getAffectedCommands(key).forEach((cmd) => affectedCommandsSet.add(cmd));
-    }
+  if (pending.length > 0) {
+    const results = await setPreferences(
+      env.KV,
+      userId,
+      pending.map(({ key, value }) => ({ key, value })),
+      logger,
+    );
+    results.forEach((result, i) => {
+      const { key, value, slot } = pending[i];
+      updates[slot] = { key, value, success: result.success, reason: result.reason };
+      if (result.success) {
+        getAffectedCommands(key).forEach((cmd) => affectedCommandsSet.add(cmd));
+      }
+    });
   }
 
   // Check if any updates were attempted

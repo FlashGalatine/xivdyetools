@@ -60,6 +60,15 @@ jobs:
       - name: Test
         run: pnpm turbo run test --filter=xivdyetools-discord-worker
 
+      # OPT-002: the 3,072 KiB gzipped Worker cap is load-bearing for this
+      # worker — ten bundled TTFs plus the resvg WASM plus the CJK subsets —
+      # and it was checked only by a human remembering to run
+      # `wrangler deploy --dry-run`. Deploying happens automatically on merge,
+      # so an over-budget bundle was found by Cloudflare refusing the upload
+      # after the merge had already landed. `--dry-run` needs no credentials.
+      - name: Check bundle size
+        run: pnpm --filter xivdyetools-discord-worker run check-bundle-size
+
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
         with:

@@ -9,11 +9,12 @@
 // Universalis API client
 export {
   isUniversalisEnabled,
-  fetchWorlds,
-  fetchDataCenters,
   // BUG-034: the 1-hour-cached wrappers, exported so callers outside this
-  // directory can reach them. `/manual` was using the uncached pair on a
-  // non-deferred path because these were module-private.
+  // directory can reach them. `/manual` was using the UNCACHED fetchWorlds /
+  // fetchDataCenters on a non-deferred path purely because these were
+  // module-private. Those two are no longer re-exported here: every consumer
+  // outside this directory wants the cache, and the dead-code gate flagged
+  // them the moment `/manual` stopped being the one caller that did not.
   getCachedWorlds,
   getCachedDataCenters,
   validateWorld,

@@ -104,6 +104,22 @@
       "outputs": ["coverage/**"]
     },
 
+    // OPT-002: only `apps/discord-worker` declares this today. It bundles ten
+    // TTFs, the resvg WASM and the CJK subsets against Cloudflare's 3,072 KiB
+    // gzipped cap, and merging to `main` deploys it automatically — so an
+    // over-budget bundle used to be discovered by Cloudflare refusing the
+    // upload AFTER the merge. `wrangler deploy --dry-run` bundles locally and
+    // needs no credentials.
+    //
+    // Declared here rather than folded into `lint` so it stays out of the
+    // inner loop: a dry-run costs tens of seconds, and CI runs it only when
+    // the affected filter says this worker changed.
+    "check-bundle-size": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+
     "clean": {
       "cache": false
     },

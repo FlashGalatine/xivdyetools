@@ -251,8 +251,11 @@ describe('setPreference — one arm per key', () => {
 
     await setPreference(failing, 'user-1', 'world', 'Gilgamesh', logger as never);
 
+    // BUG-029 made the write batched, so the context reports one entry per
+    // queued key rather than a single key. What FINDING-011 actually pins is
+    // unchanged and is the second assertion: the value never appears.
     const context = logger.error.mock.calls[0]?.[2] as Record<string, unknown>;
-    expect(context).toEqual({ key: 'world', valueType: 'string', valueLength: 9 });
+    expect(context).toEqual({ keys: ['world'], valueTypes: ['string'], valueLengths: [9] });
     expect(JSON.stringify(logger.error.mock.calls)).not.toContain('Gilgamesh');
   });
 
@@ -264,9 +267,9 @@ describe('setPreference — one arm per key', () => {
     await setPreference(failing, 'user-1', 'count', 5, logger as never);
 
     expect(logger.error.mock.calls[0]?.[2]).toEqual({
-      key: 'count',
-      valueType: 'number',
-      valueLength: undefined,
+      keys: ['count'],
+      valueTypes: ['number'],
+      valueLengths: [undefined],
     });
   });
 

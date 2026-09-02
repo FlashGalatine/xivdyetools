@@ -14,6 +14,7 @@
     "test:all": "vitest run && vitest run --config vitest.integration.config.ts",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
+    "check-bundle-size": "node scripts/check-bundle-size.mjs",
     "lint": "eslint src/ && pnpm run lint:dead",
     "lint:dead": "knip --directory ../.. --workspace apps/discord-worker --no-config-hints --no-tag-hints",
     "register-commands": "npx tsx scripts/register-commands.ts",

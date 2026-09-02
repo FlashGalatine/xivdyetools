@@ -628,12 +628,28 @@ app.post('/webhooks/github', async (c) => {
 
   // Send announcement to Discord
   const { sendAnnouncement } = await import('./services/announcements.js');
-  await sendAnnouncement(
+  const sent = await sendAnnouncement(
     env.DISCORD_TOKEN,
     env.ANNOUNCEMENT_CHANNEL_ID,
     latestEntry,
     GITHUB_ANNOUNCE_REPO_URL,
   );
+
+  // BUG-026: a rejected send must not leave the memo behind. Answering 502
+  // makes GitHub log a failed delivery, which is what makes a Redeliver both
+  // possible and correct — the memo below is the only thing that would have
+  // suppressed it, and it has not been written.
+  if (!sent.ok) {
+    logger.error('Announcement send rejected by Discord', undefined, {
+      version: latestEntry.version,
+      status: sent.status,
+      body: sent.body,
+    });
+    return c.json(
+      { success: false, message: 'Announcement rejected by Discord', version: latestEntry.version },
+      502,
+    );
+  }
 
   // Memoised only after the send succeeded: a failed announcement leaves no
   // key behind, so a Redeliver can still get the release out. The write itself
@@ -1220,7 +1236,21 @@ async function getFavoritedPresetsAutocompleteChoices(
       for (let i = 0; i < missing.length; i++) {
         missing[i].name = resolved[i]?.name ?? missing[i].id;
       }
-      await savePresetFavoriteEntries(env.KV, userId, entries, logger);
+
+      // BUG-028: the write-back used to be awaited inside the same `try` as
+      // the lookup, so a rejected KV put fell through to the outer catch and
+      // returned `[]` — the user got NO autocomplete options at all, not just
+      // a failed migration. Several keystrokes land inside a second and KV
+      // allows one write per second per key, so hitting that is routine for a
+      // legacy user typing at speed. The migration is an optimisation; it is
+      // never a precondition for answering.
+      try {
+        await savePresetFavoriteEntries(env.KV, userId, entries, logger);
+      } catch (error) {
+        logger.warn('Favourites name back-fill could not be persisted', {
+          errorName: error instanceof Error ? error.name : 'unknown',
+        });
+      }
     }
 
     const lowerQuery = query.toLowerCase();

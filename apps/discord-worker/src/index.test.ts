@@ -83,7 +83,7 @@ vi.mock('./services/changelog-parser.js', () => ({
 }));
 
 vi.mock('./services/announcements.js', () => ({
-  sendAnnouncement: vi.fn().mockResolvedValue(undefined),
+  sendAnnouncement: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 vi.mock('./services/i18n.js', async (importOriginal) => ({
@@ -999,6 +999,43 @@ describe('index.ts', () => {
 
       expect(failed.status).toBe(500);
       expect(await failed.json()).toMatchObject({ error: 'Internal Server Error' });
+      expect(memo.has('announced:v:5.0.0')).toBe(false);
+
+      const retried = await postPush(body, { env });
+
+      expect(retried.status).toBe(200);
+      expect(sendAnnouncement).toHaveBeenCalledTimes(2);
+      expect(memo.get('announced:v:5.0.0')).toBe('1');
+    });
+
+    /**
+     * BUG-026: the test above only ever made the send THROW, which is the one
+     * failure the old code noticed — `sendAnnouncement` awaited `sendMessage`
+     * and discarded its Response, so a Discord 403 (no SEND_MESSAGES in the
+     * announcement channel) or 400 (rejected embed) resolved as success. The
+     * memo was written anyway and every later Redeliver short-circuited on it,
+     * making that release permanently unannounceable.
+     */
+    it('does not memoise a send Discord REJECTED, so a redelivery still announces', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      const memo = new Map<string, string>();
+      const kv = announceKV();
+      kv.get.mockImplementation(async (key: string) => memo.get(key) ?? null);
+      kv.put.mockImplementation(async (key: string, value: string) => {
+        memo.set(key, value);
+      });
+      const env = githubEnv(kv);
+      const body = JSON.stringify(pushPayload({ head_commit: changelogCommit() }));
+
+      // Resolves — it does not throw — with Discord's refusal.
+      sendAnnouncement.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        body: '{"message":"Missing Permissions","code":50013}',
+      });
+      const refused = await postPush(body, { env });
+
+      expect(refused.status).toBe(502);
       expect(memo.has('announced:v:5.0.0')).toBe(false);
 
       const retried = await postPush(body, { env });

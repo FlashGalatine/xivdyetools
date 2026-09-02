@@ -24,7 +24,7 @@
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import { ephemeralResponse } from '../../utils/response.js';
-import { editMessage, sendFollowUp } from '../../utils/discord-api.js';
+import { editMessage, safeSendFollowUp } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import { isValidPresetId } from '../../types/preset.js';
 import { createTranslator } from '../../services/bot-i18n.js';
@@ -208,9 +208,20 @@ async function processPreviewImageAction(
 
     // On failure, leave the original message (and its buttons) untouched so
     // the moderator can retry — only notify them ephemerally.
-    await sendFollowUp(env.DISCORD_CLIENT_ID, interaction.token, {
-      content: adminT.t('previewImage.actionFailed'),
-      ephemeral: true,
-    });
+    //
+    // BUG-039: this used the raw `sendFollowUp`, so a 4xx/5xx was discarded
+    // and a timeout threw out of this very catch block, rejecting the
+    // waitUntil promise unhandled. The interaction was answered with
+    // DEFERRED_UPDATE_MESSAGE, so the original message is untouched: the
+    // moderator saw live buttons and no error at all.
+    await safeSendFollowUp(
+      env.DISCORD_CLIENT_ID,
+      interaction.token,
+      {
+        content: adminT.t('previewImage.actionFailed'),
+        ephemeral: true,
+      },
+      logger,
+    );
   }
 }
