@@ -10,6 +10,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The dead-code gate could exit 0 without running.** `scripts/check-dead-code.ts` decided whether
+  it was the entry module by comparing `process.argv[1]` to `fileURLToPath(import.meta.url)`. Node
+  resolves the second through every symlink and leaves the first exactly as typed, so reaching the
+  checker through a Windows junction, a symlinked worktree or a mapped path made `main()` never run:
+  no output at all, exit 0, indistinguishable from a clean pass. Reproduced side by side against one
+  worktree — by its direct path the gate printed `scanned 523 production / 444 test files`, through a
+  junction to the same directory it printed nothing. Both sides are now resolved by the new exported
+  `isMainModule`, which `realpathSync.native` also uses to normalise drive-letter case on Windows.
+- **Path-alias imports resolved by bare filename, across workspace boundaries.** Only relative
+  specifiers were resolved properly; anything else fell through to `groupByBasename`, which matches
+  the filename alone and knows nothing about workspaces. web-app's `@shared/logger` therefore also
+  matched `packages/worker-kit/src/middleware/logger.ts`, and `@shared/constants` matched
+  `packages/logger/src/constants.ts`. A module whose only real importers were tests could be vouched
+  for by an unrelated file in another package and never reported — a silent false negative, and one
+  the gate's documented limits did not cover. 648 specifiers reached that fallback, 10 of them
+  colliding across workspaces. `resolveAliasSpecifier` now resolves `compilerOptions.paths` wildcard
+  aliases inside the importer's own workspace, longest prefix first, falling back to basename
+  matching exactly as before when a workspace declares no matching alias (a real package name like
+  `@xivdyetools/core` is not an alias). 644 specifiers now resolve precisely and none leaves its own
+  workspace. No new findings surfaced: the tree is genuinely clean on that axis.
+- `loadWorkspaceAliases` deliberately takes the tracked file list and derives workspaces from it
+  rather than looking for `tsconfig.json` inside it. `listTracked()` yields only `.ts/.tsx/.js/.mjs`,
+  so the first cut of this fix found no tsconfig at all and resolved nothing, while its unit test —
+  which injected the alias map — still passed. Self-test 63 asserts against the real repository for
+  that reason.
+
 ### Added
 
 - Root `pnpm coverage:report` script + the `tsx` devDependency needed to run it. `scripts/coverage-report.ts`

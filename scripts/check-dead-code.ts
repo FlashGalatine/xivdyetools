@@ -38,8 +38,8 @@
  * Spec: docs/superpowers/specs/2026-09-01-dead-code-guardrails-design.md
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { basename, posix as posixPath } from 'node:path';
+import { readFileSync, realpathSync } from 'node:fs';
+import { basename, posix as posixPath, resolve as resolvePath } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export type Violation = {
@@ -385,7 +385,17 @@ export function resolveRelativeSpecifier(
   tracked: ReadonlySet<string>,
 ): string | null {
   const dir = posixPath.dirname(importer);
-  let base = posixPath.normalize(posixPath.join(dir, spec));
+  return matchTrackedPath(posixPath.normalize(posixPath.join(dir, spec)), tracked);
+}
+
+/**
+ * Given the repo-relative path a specifier points at, return the tracked file
+ * it names, or null. Shared by relative and alias resolution so both agree on
+ * the extension rules: this repo's ESM-style imports name the COMPILED
+ * extension, so the literal `.js` path is never itself the right target.
+ */
+function matchTrackedPath(path: string, tracked: ReadonlySet<string>): string | null {
+  let base = path;
   if (base.endsWith('.js')) base = `${base.slice(0, -3)}.ts`;
   else if (base.endsWith('.jsx')) base = `${base.slice(0, -4)}.tsx`;
   const candidates = [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`];
@@ -393,6 +403,153 @@ export function resolveRelativeSpecifier(
     if (tracked.has(c)) return c;
   }
   return null;
+}
+
+/** One wildcard `compilerOptions.paths` entry, flattened to prefix -> directory. */
+export type PathAlias = { prefix: string; target: string };
+
+/**
+ * Resolve a tsconfig `paths` alias (`@shared/logger`) to the tracked file it
+ * names, scoped to the importer's OWN workspace.
+ *
+ * Without this an alias fell through to `groupByBasename`, which matches on the
+ * filename alone and does not respect workspace boundaries: web-app's
+ * `@shared/logger` also matched `packages/worker-kit/src/middleware/logger.ts`,
+ * and `@shared/constants` matched `packages/logger/src/constants.ts`. A module
+ * whose only real importers are tests could therefore be vouched for by an
+ * unrelated file in another package and never reported. 648 specifiers reached
+ * that fallback at the 2026-09-01 audit, 10 of them colliding across
+ * workspaces.
+ *
+ * Returns null when the importer's workspace declares no matching alias — a
+ * real package name (`@xivdyetools/core`) is not an alias — and the caller then
+ * falls back to basename matching exactly as before.
+ */
+export function resolveAliasSpecifier(
+  spec: string,
+  importer: string,
+  tracked: ReadonlySet<string>,
+  aliases: ReadonlyMap<string, readonly PathAlias[]>,
+): string | null {
+  const ws = workspaceOf(importer);
+  if (ws === null) return null;
+  const declared = aliases.get(ws);
+  if (!declared) return null;
+  // Longest prefix wins, so `@shared/` beats a bare `@/` on the same specifier.
+  let best: PathAlias | null = null;
+  for (const alias of declared) {
+    if (!spec.startsWith(alias.prefix)) continue;
+    if (best === null || alias.prefix.length > best.prefix.length) best = alias;
+  }
+  if (best === null) return null;
+  return matchTrackedPath(
+    posixPath.normalize(best.target + spec.slice(best.prefix.length)),
+    tracked,
+  );
+}
+
+/** Strip `//` and block comments plus trailing commas, respecting string literals. */
+function stripJsonc(text: string): string {
+  let out = '';
+  let inString = false;
+  let inLine = false;
+  let inBlock = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i + 1];
+    if (inLine) {
+      if (c === '\n') {
+        inLine = false;
+        out += c;
+      }
+      continue;
+    }
+    if (inBlock) {
+      if (c === '*' && next === '/') {
+        inBlock = false;
+        i++;
+      }
+      continue;
+    }
+    if (inString) {
+      out += c;
+      if (c === '\\') {
+        out += next ?? '';
+        i++;
+      } else if (c === '"') inString = false;
+      continue;
+    }
+    if (c === '"') {
+      inString = true;
+      out += c;
+      continue;
+    }
+    if (c === '/' && next === '/') {
+      inLine = true;
+      i++;
+      continue;
+    }
+    if (c === '/' && next === '*') {
+      inBlock = true;
+      i++;
+      continue;
+    }
+    out += c;
+  }
+  return out.replace(/,(\s*[}\]])/g, '$1');
+}
+
+/**
+ * Flatten every workspace's `compilerOptions.paths` to prefix -> repo-relative
+ * directory pairs. Only wildcard entries (`"@shared/*": ["./src/shared/*"]`)
+ * participate; an exact-path alias keeps resolving through the basename
+ * fallback.
+ *
+ * Takes the tracked file list and derives the workspaces from it rather than
+ * looking for `tsconfig.json` *inside* it: `listTracked()` yields only
+ * `.ts/.tsx/.js/.mjs`, so searching it for a JSON file silently finds nothing
+ * and every alias quietly keeps falling through to basename matching. That is
+ * exactly the failure this function's own test pins, against the real repo —
+ * a unit test that injects the alias map cannot see it.
+ */
+export function loadWorkspaceAliases(files: readonly string[]): Map<string, PathAlias[]> {
+  const map = new Map<string, PathAlias[]>();
+  const workspaces = new Set<string>();
+  for (const f of files) {
+    const ws = workspaceOf(f);
+    if (ws !== null) workspaces.add(ws);
+  }
+  for (const ws of workspaces) {
+    let paths: Record<string, unknown>;
+    try {
+      const parsed = JSON.parse(stripJsonc(readFileSync(`${ws}/tsconfig.json`, 'utf8'))) as {
+        compilerOptions?: { paths?: Record<string, unknown> };
+      };
+      paths = parsed.compilerOptions?.paths ?? {};
+    } catch {
+      continue; // no tsconfig, or an unreadable one: no aliases for that workspace
+    }
+    const entries: PathAlias[] = [];
+    for (const [key, value] of Object.entries(paths)) {
+      if (!key.endsWith('*') || !Array.isArray(value) || value.length === 0) continue;
+      const target = value[0];
+      if (typeof target !== 'string' || !target.endsWith('*')) continue;
+      entries.push({
+        prefix: key.slice(0, -1),
+        target: `${ws}/${target.slice(0, -1).replace(/^\.\//, '')}`,
+      });
+    }
+    if (entries.length) map.set(ws, entries);
+  }
+  return map;
+}
+
+let aliasCache: Map<string, PathAlias[]> | null = null;
+
+/** Memoised `loadWorkspaceAliases` — tsconfigs do not change within a run. */
+function workspaceAliases(): Map<string, PathAlias[]> {
+  if (aliasCache === null) aliasCache = loadWorkspaceAliases(listTracked());
+  return aliasCache;
 }
 
 /**
@@ -477,6 +634,12 @@ function buildReferenceMap(
         const resolved = resolveRelativeSpecifier(spec, importer, tracked);
         if (resolved) {
           record(resolved, importer);
+          continue;
+        }
+      } else {
+        const aliased = resolveAliasSpecifier(spec, importer, tracked, workspaceAliases());
+        if (aliased) {
+          record(aliased, importer);
           continue;
         }
       }
@@ -1423,6 +1586,28 @@ function main(): void {
   if (violations.length) process.exit(1);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+/**
+ * True when this module is the script node was actually asked to run.
+ *
+ * `process.argv[1]` is the path as typed; `import.meta.url` is already resolved
+ * through every symlink. Comparing them raw meant that reaching the checker
+ * through a Windows junction, a symlinked worktree or a mapped path made
+ * `main()` never run: no output, exit 0, indistinguishable from a clean pass.
+ * Resolving BOTH sides is what makes the comparison mean what it reads as.
+ */
+export function isMainModule(argv1: string | undefined, moduleUrl: string): boolean {
+  if (!argv1) return false;
+  const real = (p: string): string => {
+    try {
+      // `.native` also normalises drive-letter case on Windows.
+      return realpathSync.native(p);
+    } catch {
+      return resolvePath(p);
+    }
+  };
+  return real(argv1) === real(fileURLToPath(moduleUrl));
+}
+
+if (isMainModule(process.argv[1], import.meta.url)) {
   main();
 }

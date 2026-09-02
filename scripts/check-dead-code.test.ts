@@ -11,7 +11,10 @@
  * the observable outcome — never re-implement the parsing being tested.
  */
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import {
   attributeLinesToBlockFrames,
@@ -24,10 +27,14 @@ import {
   findTestOnlyMembers,
   hasBareTag,
   isExcludedReferrer,
+  isMainModule,
   isPublic,
   isTestFile,
   leadingDocblock,
+  listTracked,
+  loadWorkspaceAliases,
   maskSource,
+  resolveAliasSpecifier,
   resolveRelativeSpecifier,
   subsumeMembersByOwner,
   testOnlyReason,
@@ -1774,4 +1781,94 @@ test('60. resolveRelativeSpecifier: a .js specifier resolves to its .ts sibling,
   // Nothing in `tracked` matches -> null, and the caller falls back to
   // conservative basename matching for that one specifier.
   assert.equal(resolveRelativeSpecifier('./nope', 'src/a/main.ts', tracked), null);
+});
+
+test('61. isMainModule: a junction or symlink in the invocation path still counts as main', () => {
+  // process.argv[1] is NOT realpath'd by node, but import.meta.url IS, so a
+  // raw === comparison silently skipped main() and exited 0 with no output
+  // whenever the checker was reached through a linked path.
+  const realDir = mkdtempSync(join(tmpdir(), 'cdc-real-'));
+  const realFile = join(realDir, 'check-dead-code.ts');
+  writeFileSync(realFile, '// fixture\n');
+  const linkPath = join(mkdtempSync(join(tmpdir(), 'cdc-link-')), 'linked');
+  try {
+    symlinkSync(realDir, linkPath, 'junction');
+  } catch {
+    return; // no permission to link on this machine; nothing to assert
+  }
+  const viaLink = join(linkPath, 'check-dead-code.ts');
+
+  assert.equal(isMainModule(realFile, pathToFileURL(realFile).href), true);
+  // The real bug: invoked through the link, resolved as the real module.
+  assert.equal(isMainModule(viaLink, pathToFileURL(realFile).href), true);
+  // A genuinely different file must still not count as main.
+  assert.equal(isMainModule(join(realDir, 'other.ts'), pathToFileURL(realFile).href), false);
+});
+
+test('62. resolveAliasSpecifier: a tsconfig path alias resolves inside its own workspace', () => {
+  const tracked = new Set([
+    'apps/web-app/src/shared/logger.ts',
+    'apps/web-app/src/services/index.ts',
+    'apps/web-app/src/components/thing.ts',
+    'packages/worker-kit/src/middleware/logger.ts',
+  ]);
+  const aliases = new Map([
+    [
+      'apps/web-app',
+      [
+        { prefix: '@shared/', target: 'apps/web-app/src/shared/' },
+        { prefix: '@services/', target: 'apps/web-app/src/services/' },
+      ],
+    ],
+  ]);
+  // The bug this pins: basename matching sent `@shared/logger` to
+  // worker-kit's middleware logger, in a different workspace entirely.
+  assert.equal(
+    resolveAliasSpecifier(
+      '@shared/logger',
+      'apps/web-app/src/components/thing.ts',
+      tracked,
+      aliases,
+    ),
+    'apps/web-app/src/shared/logger.ts',
+  );
+  assert.equal(
+    resolveAliasSpecifier(
+      '@services/index',
+      'apps/web-app/src/components/thing.ts',
+      tracked,
+      aliases,
+    ),
+    'apps/web-app/src/services/index.ts',
+  );
+  // An alias the importer's workspace does not declare stays unresolved.
+  assert.equal(
+    resolveAliasSpecifier('@shared/logger', 'packages/worker-kit/src/x.ts', tracked, aliases),
+    null,
+  );
+  // A real package name is not an alias.
+  assert.equal(
+    resolveAliasSpecifier(
+      '@xivdyetools/core',
+      'apps/web-app/src/components/thing.ts',
+      tracked,
+      aliases,
+    ),
+    null,
+  );
+});
+
+test('63. loadWorkspaceAliases: reads real tsconfig paths off the tracked file list', () => {
+  // `listTracked()` only yields .ts/.tsx/.js/.mjs, so a loader that looked for
+  // tsconfig.json *inside* that list found nothing and silently resolved no
+  // aliases at all — the fix was inert while its unit test, which injected the
+  // alias map, still passed. This asserts against the real repository.
+  const aliases = loadWorkspaceAliases(listTracked());
+  const webApp = aliases.get('apps/web-app');
+  assert.ok(webApp, 'apps/web-app declares tsconfig paths and must be present');
+  const shared = webApp.find((a) => a.prefix === '@shared/');
+  assert.ok(shared, '@shared/ must be among web-app aliases');
+  assert.equal(shared.target, 'apps/web-app/src/shared/');
+  // A package with no `paths` must simply be absent, not an empty entry.
+  assert.equal(aliases.has('packages/types'), false);
 });
