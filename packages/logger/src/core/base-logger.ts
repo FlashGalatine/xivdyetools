@@ -8,7 +8,7 @@
 
 import type { ExtendedLogger, LogContext, LogEntry, LogLevel, LoggerConfig } from '../types.js';
 // LOGGER-REF-003 FIX: Import from centralized constants
-import { DEFAULT_REDACT_FIELDS } from '../constants.js';
+import { CORE_REDACT_FIELDS } from '../constants.js';
 
 /** Log levels in order of severity (for filtering) */
 const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
@@ -82,7 +82,7 @@ export abstract class BaseLogger implements ExtendedLogger {
       timestamps: true,
       sanitizeErrors: true,
       ...config,
-      redactFields: [...DEFAULT_REDACT_FIELDS, ...(config.redactFields ?? [])],
+      redactFields: [...CORE_REDACT_FIELDS, ...(config.redactFields ?? [])],
     };
   }
 
@@ -314,7 +314,7 @@ export abstract class BaseLogger implements ExtendedLogger {
     g.ancestors.add(context);
     try {
       const redacted = { ...context };
-      const fieldsToRedact = this.config.redactFields || DEFAULT_REDACT_FIELDS;
+      const fieldsToRedact = this.config.redactFields || CORE_REDACT_FIELDS;
 
       // BUG-024: match case-insensitively with separators collapsed, so
       // Token/TOKEN/Authorization/jwtSecret hit the same list entries as

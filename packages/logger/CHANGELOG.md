@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+This package is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
+into `lint`; root `knip.jsonc`). Because `@xivdyetools/logger` sits at its registry version
+(2.1.1), nothing was removed — the first run found 30 barrel exports (20 values, 10 types) with no
+in-repo consumer, spread across the root barrel and its three nested sub-barrels
+(`adapters/index.ts`, `core/index.ts`, `presets/index.ts`). `BaseLogger`, the three adapters and
+the preset factories/options types record an **adjudicated KEEP** from the 2026-08-18 dead-code
+audit (`docs/audits/2026-08-18-discord-worker-dead-code/`, DEAD-021) — documented public API /
+structurally live, most reached in-repo via a subpath (`/browser`, `/worker`, `/library`) rather
+than the barrel knip is checking. The `LogLevel`/`LogContext`/`LogEntry`/`Logger`/`LoggerConfig`/
+`ErrorTracker` types are tagged `@public` on the same basis (published `.d.ts` contract) without a
+prior audit citation.
+
+### Internal
+
+- Removed the internal `DEFAULT_REDACT_FIELDS` alias for `CORE_REDACT_FIELDS` in `constants.ts`
+  (knip's one duplicate-export finding here). Not a published API change — no barrel in this
+  package ever re-exported `constants.ts`, so nothing outside the package could import the alias.
+  `core/base-logger.ts`'s two internal uses now reference `CORE_REDACT_FIELDS` directly.
+
 ## [2.1.1] - 2026-08-30
 
 ### Security — 2026-08-29 security audit (FINDING-025)
