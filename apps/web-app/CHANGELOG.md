@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Test coverage restored for behaviour the 2026-09-01 cleanup left in place.** Nine tests
+  were removed because they happened to call an accessor that went with the cleanup, not
+  because the behaviour they covered had gone: the character-resolve request contract (URL,
+  method and body shape — nothing else asserted any of the three), the max-favourites and
+  max-collections limits, `deleteCollectionsByKind` (which still has a production caller),
+  unknown-kind coercion on import, the only test that exercises the storage-unavailable
+  branch, both changelog history-mode tests, and the 5.0 accent pins. Each is rewritten to
+  use a surviving accessor and mutation-checked: breaking the behaviour fails that test and
+  only that test. The accent pins deliberately go through `getTheme()` rather than the
+  surviving `getRequiredColor()` twin, which has no production caller — using it would have
+  kept a dead accessor alive on test evidence alone, and the reachability gate said so.
+
+
 - **Saved presets held in the browser from before the stainID rewrite render again.** Retiring the
   legacy-itemID fallback below covered every *live* source, but a saved preset is a SNAPSHOT: the
   dye array is copied into `v5_saved_presets` at save time and was never rewritten afterwards.

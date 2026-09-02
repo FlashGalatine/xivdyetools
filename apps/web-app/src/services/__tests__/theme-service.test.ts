@@ -294,5 +294,29 @@ describe('ThemeService Integration', () => {
       expect(root.classList.contains('theme-standard-light')).toBe(false);
       expect(root.classList.contains('theme-standard-dark')).toBe(true);
     });
+
+    describe('Palette pins (restored 2026-09-02)', () => {
+      it('should carry the confirmed 5.0 accents', () => {
+        // The 2026-09-01 cleanup removed this along with the `getColor()` accessor
+        // it called. Restored through `getTheme()`, which production code actually
+        // uses — NOT through the surviving `getRequiredColor()` twin, which has no
+        // production caller at all. Leaning on that one would have kept a dead
+        // accessor alive on test evidence alone, and the reachability gate said so
+        // the moment this test first came back.
+        //
+        // Worth pinning: both accents are the brand red, dark carries it as a raw
+        // literal in THEME_PALETTES while light is deeper (the suite red needs more
+        // pigment on white), and nothing else asserts either value.
+        expect(ThemeService.getTheme('standard-dark').palette.primary).toBe('#EA4133');
+        expect(ThemeService.getTheme('standard-light').palette.primary).toBe('#CE2222');
+      });
+
+      it('should give light and dark distinct backgrounds', () => {
+        const dark = ThemeService.getTheme('standard-dark').palette.background;
+        const light = ThemeService.getTheme('standard-light').palette.background;
+
+        expect(dark).not.toBe(light);
+      });
+    });
   });
 });

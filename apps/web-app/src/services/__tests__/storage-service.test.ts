@@ -606,6 +606,38 @@ describe('StorageService', () => {
   // Unavailable localStorage Tests
   // ============================================================================
 
+  describe('Unavailable localStorage', () => {
+    it('every read and write degrades safely when localStorage is missing', () => {
+      // Restored 2026-09-02. The 2026-09-01 cleanup deleted this along with the
+      // two assertions that named removed methods (`getSize`, `removeByPrefix`),
+      // taking nine assertions on surviving methods with them and leaving the
+      // section header above empty. This is the only place the
+      // `isAvailable() === false` branch is exercised at all: the other test
+      // that nulls localStorage never calls `resetAvailabilityCache()`, so it
+      // reads the memoised `true` from setup and never reaches this path.
+      const originalLocalStorage = window.localStorage;
+      // @ts-expect-error - deliberately removing the backend under test
+      window.localStorage = null;
+      // Drop the memoised probe result so the nulled backend is re-detected.
+      StorageService.resetAvailabilityCache();
+
+      try {
+        expect(StorageService.isAvailable()).toBe(false);
+        expect(StorageService.getItem('test', 'default')).toBe('default');
+        expect(StorageService.setItem('test', 'value')).toBe(false);
+        expect(StorageService.removeItem('test')).toBe(false);
+        expect(StorageService.clear()).toBe(false);
+        expect(StorageService.getKeys()).toEqual([]);
+        expect(StorageService.hasItem('test')).toBe(false);
+        expect(StorageService.getItemCount()).toBe(0);
+        expect(StorageService.getItemsByPrefix('test')).toEqual({});
+      } finally {
+        window.localStorage = originalLocalStorage;
+        StorageService.resetAvailabilityCache();
+      }
+    });
+  });
+
   // ============================================================================
   // Additional Error Path Tests
   // ============================================================================

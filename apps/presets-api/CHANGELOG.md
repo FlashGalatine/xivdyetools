@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The revived "still returns 201 when the notification call fails" test now asserts the
+  dead-letter write it is really about. Deleting the whole `.catch` that calls
+  `storeFailedNotification` left both this file and the full app suite green, so the test
+  could not fail and BUG-015's persistence path had no coverage at all. It now asserts the
+  `INSERT INTO failed_notifications`, verified by mutation.
+
+### Fixed
+
 - The four permanently-skipped tests in `tests/handlers/presets.test.ts` (DEAD-012). All were
   marked "requires Cloudflare Workers" because the submit route hands its notification to
   `c.executionCtx.waitUntil` — solvable in-process by passing a mock `ExecutionContext` as

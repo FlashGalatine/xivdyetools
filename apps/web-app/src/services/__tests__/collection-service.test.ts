@@ -89,6 +89,24 @@ describe('CollectionService', () => {
       expect(CollectionService.isFavorite(1)).toBe(true);
     });
 
+    it('should enforce the max favorites limit', () => {
+      // Restored 2026-09-02: the 2026-09-01 cleanup removed this with the
+      // `canAddFavorite()` accessor it happened to call, but the LIMIT it guards
+      // is still live and had no other coverage. Asserted through `addFavorite`'s
+      // own return value instead of the removed accessor.
+      const max = CollectionService.getMaxFavorites();
+
+      for (let i = 1; i <= max; i++) {
+        expect(CollectionService.addFavorite(i)).toBe(true);
+      }
+      expect(CollectionService.getFavoritesCount()).toBe(max);
+
+      // One past the limit is refused, and does not grow the list.
+      expect(CollectionService.addFavorite(max + 1)).toBe(false);
+      expect(CollectionService.getFavoritesCount()).toBe(max);
+      expect(CollectionService.isFavorite(max + 1)).toBe(false);
+    });
+
     it('should clear all favorites', () => {
       CollectionService.addFavorite(1);
       CollectionService.addFavorite(2);
@@ -231,6 +249,45 @@ describe('CollectionService', () => {
       expect(listener).toHaveBeenCalled();
 
       unsubscribe();
+    });
+  });
+
+  describe('Limits and kinds (restored 2026-09-02)', () => {
+    it('should refuse to create a collection past the max', () => {
+      // The removed `getMaxCollections()` accessor is not needed to test the
+      // limit: fill until the service itself says it is full.
+      let created = 0;
+      while (CollectionService.canCreateCollection()) {
+        const c = CollectionService.createCollection(`Collection ${created + 1}`);
+        expect(c).not.toBeNull();
+        created++;
+        if (created > 1000) throw new Error('canCreateCollection never went false');
+      }
+      expect(created).toBeGreaterThan(0);
+      expect(CollectionService.createCollection('One More')).toBeNull();
+      expect(CollectionService.getCollectionsCount()).toBe(created);
+    });
+
+    it('should delete only the collections of the named kind', () => {
+      // `deleteCollectionsByKind` still has a production caller
+      // (`advanced-options-panel.ts`), so this behaviour is live. The removed
+      // `getCollectionsByKind()` helper is replaced by a filter over
+      // `getCollections()`.
+      const ofKind = (kind: string): number =>
+        CollectionService.getCollections().filter((c) => c.kind === kind).length;
+
+      CollectionService.createCollection('P1');
+      CollectionService.createCollection('C1', undefined, { kind: 'character' });
+      CollectionService.createCollection('S1', undefined, { kind: 'swap', target: 3 });
+
+      expect(ofKind('palette')).toBe(1);
+      expect(ofKind('character')).toBe(1);
+      expect(ofKind('swap')).toBe(1);
+
+      expect(CollectionService.deleteCollectionsByKind('palette')).toBe(1);
+      expect(ofKind('palette')).toBe(0);
+      expect(ofKind('character')).toBe(1);
+      expect(ofKind('swap')).toBe(1);
     });
   });
 
@@ -501,6 +558,34 @@ describe('CollectionService', () => {
       expect(migrated?.dyes.length).toBe(2);
       // The legacy key is removed once processed
       expect(localStorageMock.getItem('xivdyetools_saved_palettes')).toBeNull();
+    });
+
+    it('coerces an unknown collection kind to palette on import', () => {
+      // Restored 2026-09-02. `importData` is live; only the removed
+      // `getCollectionsByKind()` helper made this look like coverage of dead code.
+      const result = CollectionService.importData(
+        JSON.stringify({
+          version: '2.0.0',
+          exportedAt: new Date().toISOString(),
+          type: 'xivdyetools-collection',
+          data: {
+            collections: [
+              {
+                id: 'odd-1',
+                name: 'Odd Kind',
+                kind: 'not-a-kind',
+                dyes: [1, 2],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+            ],
+          },
+        })
+      );
+
+      expect(result.collectionsImported).toBe(1);
+      const imported = CollectionService.getCollectionByName('Odd Kind');
+      expect(imported?.kind).toBe('palette');
     });
   });
 });

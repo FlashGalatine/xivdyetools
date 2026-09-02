@@ -199,4 +199,41 @@ describe('ChangelogModal', () => {
   // ============================================================================
   // Full History (header "What's New" button)
   // ============================================================================
+
+  describe('Full history (showChangelogModal)', () => {
+    // Restored 2026-09-02. Both tests were deleted on 2026-09-01 because their
+    // cleanup called `closeChangelogModal`, which the same commit removed — but
+    // the function UNDER test, `showChangelogModal`, is live: `v4-layout.ts`
+    // calls it from the header's "What's New" button. The singleton is module
+    // state, so resetting the module registry and re-importing gives each test a
+    // fresh one without needing the removed closer.
+    const freshModule = async (): Promise<typeof import('../changelog-modal')> => {
+      vi.resetModules();
+      const mod = await import('../changelog-modal');
+      vi.clearAllMocks();
+      return mod;
+    };
+
+    it('should render every changelog entry with a version heading', async () => {
+      const { showChangelogModal } = await freshModule();
+
+      await showChangelogModal();
+
+      expect(mockShowChangelog).toHaveBeenCalledTimes(1);
+      const config = mockShowChangelog.mock.calls[0][0] as { content: HTMLElement };
+      // Full mode renders a "v<version> — <date>" heading for each parsed entry.
+      expect(config.content.textContent).toContain('v4.0.0');
+      expect(config.content.textContent).toContain('v3.3.0');
+    });
+
+    it('should reuse a single instance (singleton)', async () => {
+      const { showChangelogModal } = await freshModule();
+
+      await showChangelogModal();
+      await showChangelogModal();
+
+      // The second call is a no-op while the modal is already open.
+      expect(mockShowChangelog).toHaveBeenCalledTimes(1);
+    });
+  });
 });
