@@ -34,6 +34,7 @@ import {
   textWidth,
   type CardTheme,
 } from './frame.js';
+import { escapeXml } from './base.js';
 import { toolGlyph } from './icons/tool-icons.js';
 
 // ============================================================================
@@ -221,7 +222,7 @@ export function generateBudgetLedger(options: BudgetLedgerOptions): string {
   for (const g of options.groups) {
     // Group header band: tier · flag pill · the single price
     parts.push(hairline(0, CARD_WIDTH, y, theme));
-    parts.push(`<rect x="0" y="${y}" width="${CARD_WIDTH}" height="${LEDGER_GROUP_H}" fill="${groupWash}"/>`);
+    parts.push(`<rect x="0" y="${y}" width="${CARD_WIDTH}" height="${LEDGER_GROUP_H}" fill="${escapeXml(groupWash)}"/>`);
     const gPrice = g.price ?? DASH;
     const gPriceW = textWidth(gPrice, 12, 'mono');
     let tierMax = rightX - gPriceW - 10 - PAD;
@@ -229,7 +230,7 @@ export function generateBudgetLedger(options: BudgetLedgerOptions): string {
       const flagW = textWidth(g.flag, CARD_TYPE.label, 'mono') + 10;
       const flagX = rightX - gPriceW - 8 - flagW;
       parts.push(
-        `<rect x="${flagX.toFixed(1)}" y="${y + 4.5}" width="${flagW.toFixed(1)}" height="15" rx="4" fill="${flagBg}"/>`
+        `<rect x="${flagX.toFixed(1)}" y="${y + 4.5}" width="${flagW.toFixed(1)}" height="15" rx="4" fill="${escapeXml(flagBg)}"/>`
       );
       parts.push(
         cardText(flagX + 5, y + 16, g.flag, { fill: flagInk, size: CARD_TYPE.label, font: 'mono' })

@@ -23,7 +23,7 @@
  */
 
 import { classifyBandTier } from '@xivdyetools/core';
-import { num } from './base.js';
+import { escapeXml, num } from './base.js';
 import {
   CARD_WIDTH,
   CARD_TYPE,
@@ -317,7 +317,9 @@ function renderAllFrame(
         fill: l.isNormal ? theme.subValue : theme.name,
         size: 12.5,
         font: 'body',
-        weight: l.isNormal ? 500 : 600,
+        // pkg-svg-bot-logic-07: 500 asked for a Medium face nothing bundles
+        // (400/600/700 only), so resvg silently resolved it to 400. Say 400.
+        weight: l.isNormal ? 400 : 600,
       }),
     );
     // The simulated pair, butted — the collapse is visible as a shape
@@ -328,7 +330,7 @@ function renderAllFrame(
     const deW = textWidth(deText, CARD_TYPE.value, 'mono');
     const barW = 118 - deW;
     parts.push(
-      `<rect x="${CARD_WIDTH - PAD - 118}" y="${cy - 2.5}" width="${Math.max(barW - 8, 20)}" height="5" rx="2.5" fill="${tone}"/>`,
+      `<rect x="${CARD_WIDTH - PAD - 118}" y="${cy - 2.5}" width="${Math.max(barW - 8, 20)}" height="5" rx="2.5" fill="${escapeXml(tone)}"/>`,
     );
     parts.push(
       cardText(CARD_WIDTH - PAD, cy + 4, deText, {
@@ -416,7 +418,9 @@ function renderSoloFrame(
         fill: l.isNormal ? theme.subValue : theme.name,
         size: 12.5,
         font: 'body',
-        weight: l.isNormal ? 500 : 600,
+        // pkg-svg-bot-logic-07: 500 asked for a Medium face nothing bundles
+        // (400/600/700 only), so resvg silently resolved it to 400. Say 400.
+        weight: l.isNormal ? 400 : 600,
       }),
     );
     parts.push(swatch(PAD + 128, cy - 11, 22, 22, l.hexA, theme, 6));
@@ -432,7 +436,7 @@ function renderSoloFrame(
     const barMax = 76;
     const barW = Math.max((l.deltaE / maxShift) * barMax, 2);
     parts.push(
-      `<rect x="${CARD_WIDTH - PAD - 34 - barMax}" y="${cy - 2.5}" width="${barW.toFixed(1)}" height="5" rx="2.5" fill="${theme.subValue}"/>`,
+      `<rect x="${CARD_WIDTH - PAD - 34 - barMax}" y="${cy - 2.5}" width="${barW.toFixed(1)}" height="5" rx="2.5" fill="${escapeXml(theme.subValue)}"/>`,
     );
     parts.push(
       cardText(CARD_WIDTH - PAD, cy + 4, num(l.deltaE, lang, 1), {
