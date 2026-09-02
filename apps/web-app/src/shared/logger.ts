@@ -29,6 +29,10 @@ let testEnvironmentOverride: { isDev: boolean; isProd: boolean } | null = null;
 /**
  * Set test environment override (for unit testing only)
  * @deprecated Use createBrowserLogger({ isDev: () => true }) instead
+ *
+ * @testonly test-isolation hook — forces `isDev()`'s return value so suites
+ * can exercise both the dev and prod logging branches without depending on
+ * Vite's `import.meta.env.DEV`, then must reset it to `null` afterward.
  */
 export function __setTestEnvironment(override: { isDev: boolean; isProd: boolean } | null): void {
   testEnvironmentOverride = override;

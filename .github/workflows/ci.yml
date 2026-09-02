@@ -191,6 +191,23 @@ jobs:
       - name: Type-check (affected)
         run: pnpm turbo run type-check --filter='...[HEAD^]'
 
+      # Repo-wide by nature (not filtered by '...[HEAD^]' like the turbo steps
+      # above): the reachability gate reads every tracked TS/JS source file
+      # to find modules, exports and class members reachable only from tests --
+      # a narrow diff can make a symbol elsewhere test-only, so scoping this to
+      # "affected" packages would miss exactly the drift it exists to catch.
+      # Costs seconds. Order matters: type-check the scripts, then run the
+      # checker's own test suite, then the checker itself -- a broken checker
+      # that still exits 0 is worse than no gate at all.
+      - name: Type-check (scripts)
+        run: pnpm type-check:scripts
+
+      - name: Dead-code checker self-test
+        run: pnpm test:scripts
+
+      - name: Dead-code reachability
+        run: pnpm dead-code:check
+
       # --concurrency=3: when a change touches every package (docs sweeps,
       # formatting passes), the affected filter selects all ~34 test tasks and
       # turbo's default concurrency of 10 runs that many vitest processes --

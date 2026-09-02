@@ -7,7 +7,95 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [5.0.1] - 2026-09-02
+
+### Fixed
+
+- **Test coverage restored for behaviour the 2026-09-01 cleanup left in place.** Nine tests
+  were removed because they happened to call an accessor that went with the cleanup, not
+  because the behaviour they covered had gone: the character-resolve request contract (URL,
+  method and body shape — nothing else asserted any of the three), the max-favourites and
+  max-collections limits, `deleteCollectionsByKind` (which still has a production caller),
+  unknown-kind coercion on import, the only test that exercises the storage-unavailable
+  branch, both changelog history-mode tests, and the 5.0 accent pins. Each is rewritten to
+  use a surviving accessor and mutation-checked: breaking the behaviour fails that test and
+  only that test. The accent pins deliberately go through `getTheme()` rather than the
+  surviving `getRequiredColor()` twin, which has no production caller — using it would have
+  kept a dead accessor alive on test evidence alone, and the reachability gate said so.
+
+
+- **Saved presets held in the browser from before the stainID rewrite render again.** Retiring the
+  legacy-itemID fallback below covered every *live* source, but a saved preset is a SNAPSHOT: the
+  dye array is copied into `v5_saved_presets` at save time and was never rewritten afterwards.
+  Anyone who saved a community preset before the 2026-08-28 D1 rewrite still holds 4.x itemIDs in
+  local storage, and on the Saved shelf those reach `resolvePresetDye` on every path that falls
+  back to the local copy — an author-deleted preset (kept by default), being offline, or the live
+  row simply not being in the fetched page. Against a stainID-only resolver they resolved to
+  nothing, so the card drew an empty palette and `isBuyable` counted the unresolved dyes as
+  buyable. `SavedPresetsService.load()` now converts those references once, on read, and rewrites
+  the store only when something actually changed.
+- The conversion is deliberately conservative. It is skipped while the dye database is still cold,
+  because every lookup would miss and a healthy snapshot would look unresolvable; a reference it
+  cannot place is left exactly as stored rather than dropped, since silently shortening someone's
+  saved palette is worse than one unresolved swatch; and the whole pass is wrapped, so a repair
+  that fails can never empty the shelf it was meant to fix.
+- `toStainId` moved from `services/collection-service.ts` (module-private) to
+  `services/dye-service-wrapper.ts`, alongside `resolvePresetDye`, and is now the single place the
+  retired 4.x ID space is understood — for persisted local data only. Collections keep identical
+  behaviour; the lookup is now an O(1) id-map hit instead of a linear scan over all 125 dyes.
+  `resolvePresetDye` itself stays strict.
+
+### Changed
+
+- `resolvePresetDye` (`services/dye-service-wrapper.ts`) no longer falls back to the 4.x
+  legacy-itemID lookup (`docs/audits/2026-09-01-dead-code`, DEAD-007). Every producer writes
+  stainIDs — the bot since discord-worker 5.1.0, this app's own form by validation — and the
+  stainID D1 rewrite ran 2026-08-28. Re-verified on the day of removal with `json_each` over every
+  position of every `dyes` array in production: **0 legacy IDs across all 16 rows**, with
+  `previous_values` empty on all of them. Out-of-range input now resolves to `undefined` (the same
+  "unknown dye" outcome callers already handle) and is logged, so a regression surfaces instead of
+  being absorbed by a second ID space. The tripwire test that guarded the old branch was inverted
+  rather than deleted: it now pins that the pre-migration itemIDs resolve to nothing.
+
+### Removed
+
+- Three orphaned modules — 1,240 source lines, 1,472 test lines and 17 locale keys × 6 languages
+  (`docs/audits/2026-09-01-dead-code`, DEAD-001/002/003). None had a production importer; all three
+  were invisible to knip, which counts test files as entries.
+  - `components/dye-action-dropdown.ts` (570) — a finished dye actions menu (copy hex, add to
+    comparison / mixer / accessibility, slot replacement) that nothing ever mounted. Seven tool
+    test files carried a `vi.mock` for a module their subject never imported. Its 17 `harmony.*`
+    locale keys had no other consumer and went with it — the orphan gate caught them.
+  - `services/tooltip-service.ts` (475) plus the 77-line `.tooltip*` block in `globals.css` it was
+    the only consumer of, and the `services/index.ts` line that logged "✅ TooltipService ready"
+    for a service nothing constructed. Tooltips are native `title=` attributes.
+  - `services/announcer-service.ts` (195) — the v2.1 screen-reader announcer, never mounted; the
+    five components that announce use their own `aria-live` regions. **It queued and de-duplicated
+    announcements, which the per-component regions do not** — if the open 5.0 a11y work wants one
+    announcer, recover this file from git rather than rewriting it. The
+    `no-hardcoded-ui-strings` lint rule keeps `AnnouncerService` in its allowlist so a future one
+    is covered from day one.
+- Four module-level exports with no production call site (DEAD-004): `closeChangelogModal`
+  (`components/changelog-modal.ts` — the modal closes through its own instance method),
+  `getConfigController` and `getMarketBoardService` (singleton accessors over classes every
+  consumer imports directly), and `findHarmonyDyes` (`services/harmony-generator.ts`, 46 lines —
+  the barrel re-exports five *other* helpers from that module, not this one).
+- 31 public service methods with no non-test caller (DEAD-005, ~300 lines) across `ThemeService`,
+  `CameraService`, `CollectionService`, `StorageService`, `MarketBoardService`, `LanguageService`,
+  `TutorialService`, `RouterService`, `IndexedDBService`, `CommunityPresetService`,
+  `IndexedDBCacheBackend` and `ErrorHandler`. knip 6 has no `classMembers` rule, so no gate could
+  see them. Removing `getCurrentLocaleDisplay` also retired the `LocaleDisplay` import and
+  `LOCALE_DISPLAY_INFO` use in `language-service.ts`.
+  **Six of the 37 candidates were kept** after checking what they actually serve:
+  `ToastService.dismissAll` / `.getToasts` and `ModalService.dismissAll` / `.getModals` are how ~60
+  real behaviour tests observe those services; `StorageService.resetAvailabilityCache`,
+  `ThemeService.resetToDefault` and `clearCharaResolveCache` are `beforeEach` isolation hooks; and
+  `MarketBoardService.getIsFetching` is the only observer of the flag whose stuck-true state was
+  BUG-039. Each now says so in its docblock.
+- Six v3-era Tailwind utility overrides in `styles/themes.css` that no template carries any more —
+  `.text-green-600`/`.dark:text-green-400`, `.bg-blue-100`, `.text-blue-900`,
+  `.dark:text-blue-100`, `.border-blue-200`/`.dark:border-blue-800`, `.bg-gradient-to-r`
+  (`docs/audits/2026-09-01-dead-code`, DEAD-008). `.dark:bg-blue-900` is still in use and stays.
 
 ### Security — 2026-08-30
 

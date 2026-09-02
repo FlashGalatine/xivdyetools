@@ -1,0 +1,78 @@
+Scope: all 18 workspace projects
+[36m?[39m Verifying lockfile against supply-chain policies (753 entries)...
+Lockfile is up to date, resolution step is skipped
+Progress: resolved [96m1[39m, reused [96m0[39m, downloaded [96m0[39m, added [96m0[39m
+Packages: [32m+50[39m [31m-40[39m
+[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m[31m-[39m
+Progress: resolved [96m50[39m, reused [96m18[39m, downloaded [96m22[39m, added [96m14[39m
+Progress: resolved [96m50[39m, reused [96m18[39m, downloaded [96m28[39m, added [96m37[39m
+[33m[39m
+[33m   ╭──────────────────────────────────────────╮[39m
+   [33m│[39m                                          [33m│[39m
+   [33m│[39m   Update available! [31m11.17.0[39m → [32m11.25.0[39m.   [33m│[39m
+   [33m│[39m   [35mChangelog:[39m https://pnpm.io/v/11.25.0   [33m│[39m
+   [33m│[39m     To update, run: [35mpnpm self-update[39m     [33m│[39m
+   [33m│[39m                                          [33m│[39m
+[33m   ╰──────────────────────────────────────────╯[39m
+[33m[39m
+Progress: resolved [96m50[39m, reused [96m18[39m, downloaded [96m29[39m, added [96m40[39m
+Progress: resolved [96m50[39m, reused [96m18[39m, downloaded [96m29[39m, added [96m42[39m
+Progress: resolved [96m50[39m, reused [96m18[39m, downloaded [96m29[39m, added [96m43[39m, done
+[32m✓[39m Lockfile passes supply-chain policies (753 entries in 6.2s)
+
+[96mdevDependencies:[39m
+[31m-[39m knip [90m6.32.2[39m
+[32m+[39m knip [90m6.33.0[39m
+
+Done in 7.6s using pnpm v11.17.0
+Unused files (2)
+apps/web-app/scripts/analyze-unused-keys.d.ts
+apps/web-app/scripts/check-bundle-size.d.ts  
+Unused dependencies (1)
+spectral.js  apps/api-worker/package.json:26:6
+Unused devDependencies (3)
+vue                   apps/api-worker/package.json:31:6       
+discord-interactions  apps/moderation-worker/package.json:40:6
+wrangler              apps/web-app/package.json:52:6          
+Unused exports (18)
+errorResponse                       function  apps/api-worker/src/lib/response.ts:59:17                 
+LocalizationService                           apps/api-worker/src/lib/services.ts:14:10                 
+createMockEnv                       function  apps/api-worker/src/universalis/test-setup.ts:113:17      
+getDyeById                                    apps/discord-worker/src/services/budget/index.ts:21:3     
+handlePresetApproveButton  buttons            apps/moderation-worker/src/handlers/buttons/index.ts:24:3 
+handlePresetRejectButton   buttons            apps/moderation-worker/src/handlers/buttons/index.ts:25:3 
+handlePresetRevertButton   buttons            apps/moderation-worker/src/handlers/buttons/index.ts:26:3 
+isPresetModerationButton   buttons            apps/moderation-worker/src/handlers/buttons/index.ts:27:3 
+handleBanConfirmButton     buttons            apps/moderation-worker/src/handlers/buttons/index.ts:31:3 
+handleBanCancelButton      buttons            apps/moderation-worker/src/handlers/buttons/index.ts:32:3 
+isBanConfirmButton         buttons            apps/moderation-worker/src/handlers/buttons/index.ts:33:3 
+isBanCancelButton          buttons            apps/moderation-worker/src/handlers/buttons/index.ts:34:3 
+toBannedUser                        function  apps/moderation-worker/src/types/ban.ts:117:17            
+DISCORD_REQUIRED_SCOPES                       apps/oauth/src/constants/oauth.ts:77:14                   
+isStateSigned                       function  apps/oauth/src/utils/state-signing.ts:126:17              
+validateStringLength                function  apps/presets-api/src/services/validation-service.ts:64:17 
+validateArray                       function  apps/presets-api/src/services/validation-service.ts:109:17
+validateEnum                        function  apps/presets-api/src/services/validation-service.ts:156:17
+Unused exported types (20)
+Env                        interface  apps/api-worker/src/universalis/types.ts:41:18            
+GitHubPushPayload          interface  apps/discord-worker/src/types/github.ts:11:18             
+InteractionResponseBody    interface  apps/moderation-worker/src/types/env.ts:162:18            
+PresetCategory             type       apps/moderation-worker/src/types/preset.ts:16:3           
+CategoryMeta               type       apps/moderation-worker/src/types/preset.ts:17:3           
+PresetPreviousValues       type       apps/moderation-worker/src/types/preset.ts:19:3           
+PresetSubmission           type       apps/moderation-worker/src/types/preset.ts:21:3           
+PresetEditRequest          type       apps/moderation-worker/src/types/preset.ts:22:3           
+PresetSubmitResponse       type       apps/moderation-worker/src/types/preset.ts:24:3           
+PresetEditResponse         type       apps/moderation-worker/src/types/preset.ts:25:3           
+VoteResponse               type       apps/moderation-worker/src/types/preset.ts:26:3           
+DiscordVerificationResult  type       apps/moderation-worker/src/utils/verify.ts:15:8           
+DiscordVerifyOptions       type       apps/moderation-worker/src/utils/verify.ts:16:8           
+VerificationResult         type       apps/moderation-worker/src/utils/verify.ts:20:44          
+XIVAuthSocialIdentity      type       apps/oauth/src/types.ts:37:3                              
+RefreshResponse            type       apps/oauth/src/types.ts:45:29                             
+ModerationStatus           type       apps/presets-api/src/services/validation-service.ts:438:13
+PresetSubmitResponse       type       apps/presets-api/src/types.ts:28:3                        
+PresetEditResponse         type       apps/presets-api/src/types.ts:29:3                        
+ErrorCodeType              type       apps/presets-api/src/utils/api-response.ts:50:13          
+Duplicate exports (1)
+CORE_REDACT_FIELDS|DEFAULT_REDACT_FIELDS  packages/logger/src/constants.ts

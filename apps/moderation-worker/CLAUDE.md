@@ -232,7 +232,6 @@ Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side
 | `@xivdyetools/types` | Shared interfaces |
 | `@xivdyetools/logger` | Structured logging |
 | `@xivdyetools/worker-kit` | Shared Hono middleware |
-| `discord-interactions` (dev) | Used by `scripts/register-commands.ts` |
 
 ## Localization
 

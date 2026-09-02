@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-discord-worker",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "private": true,
   "description": "XIV Dye Tools Discord Bot - Cloudflare Workers Edition",
   "type": "module",
@@ -14,7 +14,8 @@
     "test:all": "vitest run && vitest run --config vitest.integration.config.ts",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src/",
+    "lint": "eslint src/ && pnpm run lint:dead",
+    "lint:dead": "knip --directory ../.. --workspace apps/discord-worker --no-config-hints --no-tag-hints",
     "register-commands": "npx tsx scripts/register-commands.ts",
     "upload-emojis": "npx tsx scripts/upload-emojis.ts"
   },

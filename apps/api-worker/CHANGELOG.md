@@ -5,7 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.1] - 2026-09-02
+
+### Removed
+
+Dead-code sweep (`docs/audits/2026-09-01-dead-code`, DEAD-020/021/022/023). Nothing here had a
+caller; the `/v1` contract is untouched.
+
+- `errorResponse` from `lib/response.ts` — an 18-line error envelope with zero call sites. Errors
+  have always travelled through `ApiError` and the app-level handler.
+- The `LocalizationService` re-export from `lib/services.ts` — every consumer already imported it
+  straight from `@xivdyetools/core`.
+- `createMockEnv` from `src/universalis/test-setup.ts` — a duplicate of the live helper in
+  `tests/test-utils.ts`, which is the one all six test files use.
+- `CacheService.deleteEntry` / `.deleteAsync` — the cache-invalidation pair had no production
+  caller; entries expire by TTL. Their two tests went with them.
+- The direct `spectral.js` dependency (DEAD-024). `ColorService` does reach it (via
+  `SpectralMixer`), so the declaration was not obviously redundant — it was checked against the
+  real bundler rather than argued: with the dependency gone, `wrangler deploy --dry-run` still
+  produces a 3.9 MB bundle that contains spectral, resolved from `packages/core/node_modules`,
+  because core declares it. The CLAUDE.md/README claim that "pnpm's strict isolation would
+  otherwise fail to resolve it" was wrong and both rows are gone. Matches what web-app did in
+  2026-08-16 (DEAD-007).
+
+This app is now the first gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`,
+folded into `lint`; root `knip.jsonc`; `docs/superpowers/specs/2026-09-01-dead-code-guardrails-design.md`).
+It immediately caught two leftovers the manual sweep above missed:
+
+- `Env` from `src/universalis/types.ts` — a same-named duplicate of the real `Env` in
+  `src/types.ts`. Every consumer, including this subtree's own `universalis/router.ts`, already
+  imported the one in `types.ts`; this one had no importer at all.
+- `buildRequest` from `tests/test-utils.ts` — an unused request-builder helper with no call sites.
 
 ## [0.10.0] - 2026-08-30
 

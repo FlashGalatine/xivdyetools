@@ -331,7 +331,13 @@ export function categoryGlyph(name: CategoryGlyphName, options: GlyphRenderOptio
   return renderGlyph(CATEGORY[name], 2.4, options);
 }
 
-/** Every glyph name per set — for shims, galleries, and parity tests. */
+/**
+ * Every glyph name per set — for shims, galleries, and parity tests.
+ *
+ * @testonly file-local fixture for the glyph parity test (asserts every set
+ * renders); no shim or gallery consumer exists in this workspace despite the
+ * docblock above.
+ */
 export const GLYPH_SETS = {
   tool: Object.keys(TOOL_COMPACT) as ToolGlyphName[],
   toolDetail: Object.keys(TOOL_DETAIL) as Exclude<ToolGlyphName, 'tools'>[],

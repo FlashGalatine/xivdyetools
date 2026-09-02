@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/worker-kit",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Shared Cloudflare Worker toolkit for xivdyetools: Hono middleware (request ID, logger, rate limit) + rate limiting backends (Memory, KV, Upstash)",
   "author": "XIV Dye Tools",
   "license": "MIT",
@@ -51,7 +51,8 @@
     "build": "tsc -p tsconfig.build.json",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist coverage",
-    "lint": "eslint src",
+    "lint": "eslint src && pnpm run lint:dead",
+    "lint:dead": "knip --directory ../.. --workspace packages/worker-kit --no-config-hints --no-tag-hints",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

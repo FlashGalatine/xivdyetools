@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-image-worker",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "XIV Dye Tools Image Worker - photon-backed image decode and pixel extraction",
   "type": "module",
@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "eslint src && pnpm run lint:dead",
+    "lint:dead": "knip --directory ../.. --workspace apps/image-worker --no-config-hints --no-tag-hints"
   },
   "license": "MIT",
   "dependencies": {

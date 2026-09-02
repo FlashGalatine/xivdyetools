@@ -179,11 +179,6 @@ a:hover {
 }
 
 /* Deviance color indicators - ensure always visible */
-.text-green-600,
-.dark\:text-green-400 {
-  color: #16a34a !important;
-}
-
 .text-yellow-600,
 .dark\:text-yellow-400 {
   color: #ca8a04 !important;
@@ -211,26 +206,8 @@ a:hover {
 }
 
 /* Dye Comparison - Selected dyes tags */
-.bg-blue-100 {
-  background-color: var(--theme-background-secondary) !important;
-  color: var(--theme-text) !important;
-}
-
 .dark\:bg-blue-900 {
   background-color: var(--theme-background-secondary) !important;
-  border-color: var(--theme-border) !important;
-}
-
-.text-blue-900 {
-  color: var(--theme-text) !important;
-}
-
-.dark\:text-blue-100 {
-  color: var(--theme-text) !important;
-}
-
-.border-blue-200,
-.dark\:border-blue-800 {
   border-color: var(--theme-border) !important;
 }
 
@@ -249,11 +226,6 @@ select:focus {
   border-color: var(--theme-primary) !important;
   outline: none !important;
   --tw-ring-color: var(--theme-primary) !important;
-}
-
-/* Card and container backgrounds */
-.bg-gradient-to-r {
-  background: linear-gradient(to right, var(--theme-primary), var(--theme-primary)) !important;
 }
 
 /* Opacity overrides for dark mode backgrounds */

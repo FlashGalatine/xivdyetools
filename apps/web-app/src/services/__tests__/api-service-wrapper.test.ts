@@ -160,21 +160,6 @@ describe('IndexedDBCacheBackend', () => {
   // ==========================================================================
 
   describe('initialize()', () => {
-    it('should handle indexedDBService.initialize failure', async () => {
-      // Mock the indexedDBService to fail
-      const indexedDBServiceModule = await import('../indexeddb-service');
-      const mockInitialize = vi.spyOn(indexedDBServiceModule.indexedDBService, 'initialize');
-      mockInitialize.mockRejectedValueOnce(new Error('DB init failed'));
-
-      // Should throw on failure
-      await expect(cacheBackend.initialize()).rejects.toThrow('DB init failed');
-
-      // BUG-004 FIX: initPromise is NOT cleared on error to prevent race conditions
-      // Use reinitialize() for explicit retry after failure
-      mockInitialize.mockResolvedValueOnce(true);
-      await expect(cacheBackend.reinitialize()).resolves.not.toThrow();
-    });
-
     it('should load from storage after successful initialization', async () => {
       const indexedDBServiceModule = await import('../indexeddb-service');
       const mockInitialize = vi.spyOn(indexedDBServiceModule.indexedDBService, 'initialize');

@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.1] - 2026-09-02
+
+### Changed
+
+- This app is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
+  into `lint`; root `knip.jsonc`). It flagged `GitHubPushPayload` (`types/github.ts`) as an unused
+  export — a false positive: `index.ts`'s GitHub webhook handler referenced it only via the
+  inline `import('./types/github.js').GitHubPushPayload` type syntax, which knip's export-usage
+  graph does not follow. Fixed by adding a normal `import type { GitHubPushPayload } from
+  './types/github.js'` at the top of the file and using the bare name at both call sites — same
+  type, same runtime behaviour, now visible to the gate.
+
+### Removed
+
+- `scripts/test-font-rendering.ts` — dead-code sweep (`docs/audits/2026-09-01-dead-code`,
+  DEAD-028). Nothing referenced it: no package script, no workflow, no doc. It had also gone
+  **wrong**: it still required `SpaceGrotesk-VariableFont_wght.ttf` and
+  `Onest-VariableFont_wght.ttf` in `src/fonts/`, which PR #148 replaced with static instances on
+  2026-08-29, so running it reported two required fonts missing and exited 1. The live gates are
+  `services/font-faces.test.ts` and `services/font-coverage.test.ts`; the CJK fallback ordering it
+  documented in prose is now asserted in `@xivdyetools/svg`'s `base.test.ts`.
+- The `getDyeById` re-export from `services/budget/index.ts` (barrel), caught by the knip gate
+  above. The underlying `budget-calculator.ts` function is unchanged and still consumed directly
+  by `budget-calculator.test.ts` and `budget-pipeline.integration.test.ts` — only the barrel's
+  unused re-export line is gone; `handlers/commands/budget.ts` imports `resolveTargetDye` from
+  the same barrel instead, never `getDyeById`.
+
 ## [5.1.0] - 2026-08-30
 
 ### Security — 2026-08-30

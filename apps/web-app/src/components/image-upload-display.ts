@@ -367,6 +367,11 @@ export class ImageUploadDisplay extends BaseComponent {
 
   /**
    * Get uploaded image
+   *
+   * @testonly exercised for the null-guard state (no image loaded, after
+   * clear()) in image-upload-display.test.ts; no production caller reads the
+   * uploaded image back out — extractor-tool.ts receives it via the
+   * image-loaded event and samples pixels itself.
    */
   getImage(): HTMLImageElement | null {
     return this.uploadedImage;
@@ -392,6 +397,10 @@ export class ImageUploadDisplay extends BaseComponent {
   /**
    * Sample pixel color from image
    * BUG-011 FIX: Added guard for zero-sized canvas edge case
+   *
+   * @testonly only the no-image null-guard path is exercised
+   * (image-upload-display.test.ts); no production caller drives pixel
+   * sampling through this method today.
    */
   samplePixel(x: number, y: number): string | null {
     const canvas = this.getImageCanvas();
@@ -419,6 +428,9 @@ export class ImageUploadDisplay extends BaseComponent {
   /**
    * Get average color of region
    * BUG-011 FIX: Added guard for zero-sized canvas edge case
+   *
+   * @testonly same as `samplePixel` — only the no-image null-guard path is
+   * exercised; no production caller drives region averaging today.
    */
   getAverageColor(x: number, y: number, size: number = 1): string | null {
     const canvas = this.getImageCanvas();
@@ -463,6 +475,9 @@ export class ImageUploadDisplay extends BaseComponent {
 
   /**
    * Get image dimensions
+   *
+   * @testonly exercised only for the null-guard state (no image loaded);
+   * no production caller reads dimensions back out through this accessor.
    */
   getImageDimensions(): { width: number; height: number } | null {
     if (!this.uploadedImage) return null;

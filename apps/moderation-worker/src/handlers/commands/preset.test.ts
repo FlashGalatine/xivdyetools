@@ -7,7 +7,7 @@ import { InteractionResponseType } from '../../types/env.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 import * as discordApi from '../../utils/discord-api.js';
-import { encodeBase64Url } from '../../utils/response.js';
+import { base64UrlEncode } from '@xivdyetools/auth/encoding';
 import { PresetAPIError } from '../../types/preset.js';
 
 // Mock modules
@@ -1221,7 +1221,7 @@ describe('handlePresetCommand', () => {
       const customId = json.data.components[0].components[0].custom_id as string;
       expect(customId).toBe('ban_confirm_123456789012345678');
       expect(customId.length).toBeLessThanOrEqual(100);
-      expect(customId).not.toContain(encodeBase64Url('彩'.repeat(32)));
+      expect(customId).not.toContain(base64UrlEncode('彩'.repeat(32)));
     });
 
     it('should show "No presets found" when user has no recent presets', async () => {

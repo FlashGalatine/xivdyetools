@@ -159,6 +159,10 @@ export class OfflineBanner {
 
   /**
    * Check if currently online
+   *
+   * @testonly reads the flag back after dispatching synthetic online/offline
+   * window events in offline-banner.test.ts; the banner's own DOM rendering
+   * is what production actually reacts to.
    */
   getIsOnline(): boolean {
     return this.isOnline;
@@ -166,6 +170,11 @@ export class OfflineBanner {
 
   /**
    * Subscribe to online status changes
+   *
+   * @testonly exercised directly by the subscription tests (callback firing
+   * on online/offline, and the returned unsubscribe function); nothing in
+   * this app subscribes to it today — the banner drives its own DOM from its
+   * internal online/offline listeners instead.
    */
   onStatusChange(callback: (isOnline: boolean) => void): () => void {
     const handleOnline = () => callback(true);
@@ -182,6 +191,10 @@ export class OfflineBanner {
 
   /**
    * Update banner message (for language changes)
+   *
+   * @testonly test-triggered directly in offline-banner.test.ts; despite this
+   * docblock's "for language changes" claim, no language-switch code path in
+   * this app calls it today — grep confirms no caller outside this file.
    */
   updateMessage(): void {
     const message = this.banner?.querySelector('#offline-banner-message');

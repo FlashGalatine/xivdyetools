@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-presets-api",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "private": true,
   "description": "Cloudflare Worker API for XIV Dye Tools Community Presets",
   "license": "MIT",
@@ -14,7 +14,8 @@
     "db:migrate:indexes": "wrangler d1 execute xivdyetools-presets --remote --file=./migrations/002_add_composite_indexes.sql",
     "db:seed": "npx tsx scripts/migrate-presets.ts",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src/",
+    "lint": "eslint src/ && pnpm run lint:dead",
+    "lint:dead": "knip --directory ../.. --workspace apps/presets-api --no-config-hints --no-tag-hints",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"

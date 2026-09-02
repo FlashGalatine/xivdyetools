@@ -18,7 +18,6 @@ export {
 // Budget calculator (13G ledger model)
 export {
   findBudgetLedger,
-  getDyeById,
   resolveTargetDye,
   getDyeByName,
   getDyeAutocomplete,

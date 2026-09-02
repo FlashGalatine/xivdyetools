@@ -394,13 +394,3 @@ export function showChangelogModal(): Promise<void> {
   }
   return changelogModalInstance.show({ mode: 'history' });
 }
-
-/**
- * Close the changelog modal if open
- */
-export function closeChangelogModal(): void {
-  if (changelogModalInstance) {
-    changelogModalInstance.close();
-    changelogModalInstance = null;
-  }
-}

@@ -11,9 +11,9 @@ import {
   errorEmbed,
   ephemeralResponse,
   updateMessageResponse,
-  decodeBase64Url,
   sanitizeErrorMessage,
 } from '../../utils/response.js';
+import { base64UrlDecode } from '@xivdyetools/auth/encoding';
 import { sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { safeSendMessage } from '../../utils/discord-api.js';
@@ -75,7 +75,7 @@ export async function handleBanReasonModal(
   }
   if (!targetUsername && legacyEncodedUsername) {
     try {
-      targetUsername = decodeBase64Url(legacyEncodedUsername);
+      targetUsername = base64UrlDecode(legacyEncodedUsername);
     } catch {
       // ignore — fall through to the id
     }

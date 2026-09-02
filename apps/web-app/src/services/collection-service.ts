@@ -17,7 +17,7 @@
  */
 
 import { StorageService } from './storage-service';
-import { dyeService } from './dye-service-wrapper';
+import { dyeService, toStainId } from './dye-service-wrapper';
 import { LanguageService } from './language-service';
 import { STORAGE_KEYS } from '@shared/constants';
 import { logger } from '@shared/logger';
@@ -146,28 +146,9 @@ const MAX_COLLECTION_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 200;
 const MAX_TOMBSTONES = 200;
 
-/** stainIDs live in 1–254; legacy market itemIDs start at 5729 — disjoint */
-const STAIN_ID_MAX = 254;
-
 // ============================================================================
 // 4.x → 5.0 migration helpers
 // ============================================================================
-
-/**
- * Resolve a stored dye reference to a stainID. 5.0 values (1–254) pass
- * through when the stainID exists; 4.x values (legacy itemIDs, incl. the
- * negative synthetic Facewear range) resolve via the dye database.
- * Returns null for anything unresolvable — the caller drops it loudly.
- */
-function toStainId(stored: number): DyeId | null {
-  if (!Number.isFinite(stored)) return null;
-  if (stored >= 1 && stored <= STAIN_ID_MAX) {
-    return dyeService.getByStainId(stored) ? stored : null;
-  }
-  // Legacy itemID (dye.id === dye.itemID in 4.x)
-  const dye = dyeService.getAllDyes().find((d) => d.itemID === stored || d.id === stored);
-  return dye?.stainID ?? null;
-}
 
 /** Shape of the retired 4.x PaletteService records (localized dye names) */
 interface LegacySavedPalette {
@@ -571,21 +552,6 @@ export class CollectionService {
   }
 
   /**
-   * Reorder favorites
-   */
-  static reorderFavorites(dyeIds: DyeId[]): void {
-    this.initialize();
-    if (!this.favoritesData) return;
-
-    // Validate all IDs are current favorites
-    const currentFavorites = new Set(this.favoritesData.favorites);
-    const validIds = dyeIds.filter((id) => currentFavorites.has(id));
-
-    this.favoritesData.favorites = validIds;
-    this.saveFavorites();
-  }
-
-  /**
    * Clear all favorites
    */
   static clearFavorites(): void {
@@ -602,13 +568,6 @@ export class CollectionService {
    */
   static getFavoritesCount(): number {
     return this.getFavorites().length;
-  }
-
-  /**
-   * Check if can add more favorites
-   */
-  static canAddFavorite(): boolean {
-    return this.getFavoritesCount() < MAX_FAVORITES;
   }
 
   // ============================================================================
@@ -762,13 +721,6 @@ export class CollectionService {
   }
 
   /**
-   * Get collections of one typed kind
-   */
-  static getCollectionsByKind(kind: CollectionKind): Collection[] {
-    return this.getCollections().filter((c) => c.kind === kind);
-  }
-
-  /**
    * Delete every collection of one typed kind (tombstoned).
    * @returns number of records deleted
    */
@@ -862,25 +814,6 @@ export class CollectionService {
   }
 
   /**
-   * Reorder dyes within a collection
-   */
-  static reorderCollectionDyes(collectionId: string, dyeIds: DyeId[]): void {
-    this.initialize();
-    if (!this.collectionsData) return;
-
-    const collection = this.collectionsData.collections.find((c) => c.id === collectionId);
-    if (!collection) return;
-
-    // Validate all IDs are in current collection
-    const currentDyes = new Set(collection.dyes);
-    const validIds = dyeIds.filter((id) => currentDyes.has(id));
-
-    collection.dyes = validIds;
-    collection.updatedAt = new Date().toISOString();
-    this.saveCollections();
-  }
-
-  /**
    * Get collections count
    */
   static getCollectionsCount(): number {
@@ -892,23 +825,6 @@ export class CollectionService {
    */
   static canCreateCollection(): boolean {
     return this.getCollectionsCount() < MAX_COLLECTIONS;
-  }
-
-  /**
-   * Get all collections that contain a specific dye
-   * OPT-004: O(1) Map lookup instead of O(n*m) array search
-   */
-  static getCollectionsContainingDye(dyeId: DyeId): Collection[] {
-    this.initialize();
-    const collectionIds = this.collectionsByDyeId.get(dyeId);
-    if (!collectionIds) return [];
-
-    const collections: Collection[] = [];
-    for (const id of collectionIds) {
-      const collection = this.collectionsById.get(id);
-      if (collection) collections.push(collection);
-    }
-    return collections;
   }
 
   // ============================================================================
@@ -1142,13 +1058,6 @@ export class CollectionService {
   }
 
   /**
-   * Get maximum collections limit
-   */
-  static getMaxCollections(): number {
-    return MAX_COLLECTIONS;
-  }
-
-  /**
    * Get maximum dyes per collection limit
    */
   static getMaxDyesPerCollection(): number {
@@ -1159,6 +1068,10 @@ export class CollectionService {
    * Re-run initialization from storage — exercises the load-time
    * migrations (for testing only)
    * @internal
+   *
+   * @testonly test-isolation hook — clears the cached favorites/collections
+   * data and the `initialized` flag so a suite can re-exercise the load-time
+   * migration path against a fresh storage state.
    */
   static __reloadForTesting(): void {
     this.initialized = false;

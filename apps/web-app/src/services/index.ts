@@ -83,9 +83,6 @@ export async function initializeServices(): Promise<void> {
     // ModalService is static singleton, always ready
     logger.info('✅ ModalService ready');
 
-    // TooltipService is static singleton, always ready
-    logger.info('✅ TooltipService ready');
-
     // Initialize KeyboardService (global shortcuts).
     // This call was MISSING: the service, its shortcuts panel and its unit
     // tests all existed, but nothing ever attached the keydown listener, so

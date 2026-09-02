@@ -5,7 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.1] - 2026-09-02
+
+### Removed
+
+Dead-code sweep (`docs/audits/2026-09-01-dead-code`, DEAD-025/026) — oauth's first dead-code pass.
+No route, token or D1 behaviour changes.
+
+- `DISCORD_REQUIRED_SCOPES` (`constants/oauth.ts`) and `isStateSigned` (`utils/state-signing.ts`) —
+  neither had a single reference in the repo, tests included. State signatures are verified
+  unconditionally by `verifyState`, so the "is this even signed?" probe had no place in the flow.
+- `findUserById`, `findUserByDiscordId`, `findUserByXIVAuthId` (`services/user-service.ts`) — three
+  single-query wrappers with no production caller; both handlers use `findOrCreateUser`, which
+  already runs the same lookups. Their test blocks went with them.
+- The `XIVAuthSocialIdentity` and `RefreshResponse` re-exports from `src/types.ts` (DEAD-019) — the
+  only two names in that `@deprecated` block with no importer. The block's promise that these
+  re-exports go "in the next major version" is still outstanding for the other nine; finishing it
+  means rewriting their local imports to `@xivdyetools/types`.
+
+This app is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded into
+`lint`; root `knip.jsonc`). It immediately caught one more: `createBrokenProductionEnv`
+(`src/__tests__/mocks/cloudflare-test.ts`), a `Partial<Env>` test fixture with no importer
+anywhere in the suite.
 
 ## [3.0.0] - 2026-08-30
 

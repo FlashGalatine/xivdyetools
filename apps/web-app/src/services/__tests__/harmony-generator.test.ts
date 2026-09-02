@@ -13,10 +13,8 @@ import {
   calculateHueDeviance,
   findClosestDyesToHue,
   replaceExcludedDyes,
-  findHarmonyDyes,
   HARMONY_TYPE_IDS,
   HARMONY_OFFSETS,
-  type HarmonyConfig,
   type ScoredDyeMatch,
 } from '../harmony-generator';
 import type { Dye } from '@xivdyetools/types';
@@ -412,68 +410,4 @@ describe('harmony-generator', () => {
   // ============================================================================
   // findHarmonyDyes Tests
   // ============================================================================
-
-  describe('findHarmonyDyes', () => {
-    it('should return empty array for unknown harmony type', async () => {
-      const { dyeService } = await import('@services/index');
-      vi.mocked(dyeService.getAllDyes).mockReturnValue([]);
-
-      const baseDye = createMockDye();
-      const config: HarmonyConfig = {
-        usePerceptualMatching: false,
-        matchingMethod: 'oklab',
-        companionDyesCount: 3,
-      };
-
-      const result = findHarmonyDyes(baseDye, 'unknown-type', config);
-
-      expect(result).toEqual([]);
-    });
-
-    it('should use harmony offsets for the harmony type', async () => {
-      const { dyeService, ColorService } = await import('@services/index');
-      vi.mocked(ColorService.hexToHsv).mockReturnValue({ h: 0, s: 100, v: 100 });
-      vi.mocked(dyeService.getAllDyes).mockReturnValue([
-        createMockDye({ id: 1, itemID: 1, hex: '#00FFFF' }),
-      ]);
-
-      const baseDye = createMockDye({ hex: '#FF0000' });
-      const config: HarmonyConfig = {
-        usePerceptualMatching: false,
-        matchingMethod: 'oklab',
-        companionDyesCount: 3,
-      };
-
-      findHarmonyDyes(baseDye, 'complementary', config);
-
-      // Complementary has one offset (180), so should process once
-      expect(dyeService.getAllDyes).toHaveBeenCalled();
-    });
-
-    it('should filter excluded dyes when filters are provided', async () => {
-      const { dyeService, ColorService } = await import('@services/index');
-      vi.mocked(ColorService.hexToHsv).mockReturnValue({ h: 0, s: 100, v: 100 });
-      vi.mocked(dyeService.getAllDyes).mockReturnValue([
-        createMockDye({ id: 1, itemID: 1, isMetallic: true }),
-        createMockDye({ id: 2, itemID: 2, isMetallic: false }),
-      ]);
-
-      const baseDye = createMockDye();
-      const config: HarmonyConfig = {
-        usePerceptualMatching: false,
-        matchingMethod: 'oklab',
-        companionDyesCount: 3,
-      };
-      const filtersConfig: DyeFiltersConfig = {
-        ...DEFAULT_DYE_FILTERS,
-        excludeMetallic: true,
-      };
-
-      const result = findHarmonyDyes(baseDye, 'complementary', config, filtersConfig);
-
-      // Dye with itemID 1 (metallic) should be filtered out
-      const ids = result.map((r) => r.dye.itemID);
-      expect(ids).not.toContain(1);
-    });
-  });
 });

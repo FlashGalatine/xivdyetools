@@ -779,8 +779,15 @@ Palette flagged (status: 'pending')
 
 **Implementation:**
 
+> **Not shipped.** This notification path was never wired to a caller and was deleted from
+> presets-api on 2026-09-01 (dead-code audit DEAD-009), together with its
+> `MODERATION_WEBHOOK_URL` / `OWNER_DISCORD_ID` / `DISCORD_BOT_TOKEN` /
+> `DISCORD_BOT_WEBHOOK_URL` variables. Moderation reaches Discord through the
+> moderation-worker instead. The design below is kept as the record of what was specified;
+> read it as history, not as a description of the running system.
+
 ```typescript
-// xivdyetools-worker/src/services/notification-service.ts
+// Design sketch — no longer present in the codebase
 
 interface ModerationAlert {
   presetId: string;

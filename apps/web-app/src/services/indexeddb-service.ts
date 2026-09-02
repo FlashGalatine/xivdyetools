@@ -56,13 +56,6 @@ export class IndexedDBService {
   }
 
   /**
-   * Check if IndexedDB is supported
-   */
-  isIndexedDBSupported(): boolean {
-    return this.isSupported;
-  }
-
-  /**
    * Initialize the database
    */
   async initialize(): Promise<boolean> {

@@ -28,13 +28,20 @@
  * ```
  */
 
+// A `@public` JSDoc tag on a specifier below means: published API, deliberately
+// kept even though no workspace in this monorepo imports it. The root
+// `knip.jsonc` gate (`pnpm run lint:dead`, part of `lint`) reports every
+// untagged barrel export that nothing consumes, so a new export must either
+// gain a consumer or be tagged on purpose — see root CLAUDE.md's Tooling →
+// knip bullet and this repo's root `knip.jsonc`.
+
 export { requestIdMiddleware, getRequestId } from './request-id.js';
-export type { RequestIdOptions } from './request-id.js';
+export type { /** @public */ RequestIdOptions } from './request-id.js';
 
 export { loggerMiddleware, getLogger } from './logger.js';
-export type { LoggerMiddlewareOptions } from './logger.js';
+export type { /** @public */ LoggerMiddlewareOptions } from './logger.js';
 
 export { rateLimitMiddleware } from './rate-limit.js';
-export type { RateLimitMiddlewareOptions } from './rate-limit.js';
+export type { /** @public */ RateLimitMiddlewareOptions } from './rate-limit.js';
 
 export type { MiddlewareVariables } from './types.js';

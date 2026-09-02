@@ -186,17 +186,19 @@ export class MarketBoardService extends EventTarget {
   }
 
   /**
-   * Check if currently fetching prices
+   * Whether a price fetch is in flight.
+   *
+   * Only the tests read this today, but it is the sole observer of `isFetching`
+   * — the flag whose stuck-true state was BUG-039 (see `fetchPrices`, where a
+   * superseding call with nothing to fetch must clear it). Deleting the getter
+   * would leave that fix unobservable, so it is kept deliberately rather than
+   * pruned as test-only (2026-09-01 dead-code audit, DEAD-005).
+   *
+   * @testonly sole observer of the `isFetching` flag whose stuck-true state
+   * was BUG-039.
    */
   getIsFetching(): boolean {
     return this.isFetching;
-  }
-
-  /**
-   * Get all cached prices
-   */
-  getAllPrices(): Map<number, PriceData> {
-    return new Map(this.priceData);
   }
 
   /**
@@ -433,13 +435,6 @@ export class MarketBoardService extends EventTarget {
 // ============================================================================
 // Convenience Exports
 // ============================================================================
-
-/**
- * Get singleton instance of MarketBoardService
- */
-export function getMarketBoardService(): MarketBoardService {
-  return MarketBoardService.getInstance();
-}
 
 /**
  * Format a gil price for display.

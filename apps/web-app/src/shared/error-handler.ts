@@ -87,14 +87,6 @@ export class ErrorHandler {
   }
 
   /**
-   * Check if error is critical and should stop execution
-   */
-  static isCritical(error: AppError | unknown): boolean {
-    const appError = error instanceof AppError ? error : this.normalize(error);
-    return appError.severity === 'critical';
-  }
-
-  /**
    * Report error to error tracking service (e.g., Sentry)
    */
   static report(error: AppError | unknown): void {

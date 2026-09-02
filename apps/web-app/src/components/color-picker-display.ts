@@ -270,6 +270,11 @@ export class ColorPickerDisplay extends BaseComponent {
   /**
    * Set color from image coordinates
    * Used by ColorMatcher for eyedropper from image
+   *
+   * @testonly the docblock's claimed caller, "ColorMatcher", no longer exists
+   * anywhere in this codebase; the only consumer today is
+   * color-picker-display.test.ts's null-canvas-context guard test. No
+   * production caller wires a canvas into this method.
    */
   setColorFromImage(canvas: HTMLCanvasElement, x: number, y: number, sampleSize: number = 1): void {
     const ctx = canvas.getContext('2d');
@@ -307,6 +312,11 @@ export class ColorPickerDisplay extends BaseComponent {
 
   /**
    * Get selected color
+   *
+   * @testonly reads back state after simulated hex-input/native-picker DOM
+   * events throughout color-picker-display.test.ts; extractor-tool.ts (the
+   * one production consumer) listens for the emitted `color-selected` event
+   * instead of pulling the value through this getter.
    */
   getColor(): string {
     return this.selectedColor;
@@ -314,6 +324,10 @@ export class ColorPickerDisplay extends BaseComponent {
 
   /**
    * Set color programmatically
+   *
+   * @testonly test driver for setting state directly; no parent component
+   * programmatically sets the picker's color — production flows exclusively
+   * through DOM events (hex input, native color input, eyedropper).
    */
   setColor(hex: string): void {
     if (/^#[0-9A-Fa-f]{6}$|^#[0-9A-Fa-f]{3}$/.test(hex)) {

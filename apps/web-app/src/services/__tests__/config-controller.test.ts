@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ConfigController, getConfigController } from '../config-controller';
+import { ConfigController } from '../config-controller';
 import { StorageService } from '../storage-service';
 import { getDefaultConfig, type ConfigKey, type ToolConfigMap } from '@shared/tool-config-types';
 
@@ -62,15 +62,6 @@ describe('ConfigController', () => {
   // ============================================================================
   // getConfigController Helper Tests
   // ============================================================================
-
-  describe('getConfigController helper', () => {
-    it('should return the singleton instance', () => {
-      const helper = getConfigController();
-      const direct = ConfigController.getInstance();
-
-      expect(helper).toBe(direct);
-    });
-  });
 
   // ============================================================================
   // getConfig Tests

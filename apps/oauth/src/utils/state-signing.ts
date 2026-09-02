@@ -117,12 +117,3 @@ export async function verifyState(
   throw new Error('Invalid state format or signature required');
 }
 
-/**
- * Check if state is in signed format
- *
- * @param state - State string to check
- * @returns true if state appears to be signed (has signature component)
- */
-export function isStateSigned(state: string): boolean {
-  return state.split('.').length === 2;
-}

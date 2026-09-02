@@ -30,39 +30,6 @@ function baseBody(options: { allowed_mentions?: AllowedMentions }): Record<strin
 }
 
 /**
- * Sends a follow-up message to a deferred interaction.
- */
-export async function sendFollowUp(
-  applicationId: string,
-  interactionToken: string,
-  options: FollowUpOptions
-): Promise<Response> {
-  const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}`;
-
-  const body = baseBody(options);
-  if (options.content) body.content = options.content;
-  if (options.embeds) body.embeds = options.embeds;
-  if (options.components) body.components = options.components;
-  if (options.ephemeral) body.flags = 64;
-
-  try {
-    return await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-  } catch (error) {
-    console.error('Discord API request failed', {
-      url: sanitizeUrl(url),
-      error: sanitizeErrorMessage(error),
-    });
-    throw error;
-  }
-}
-
-/**
  * Edits the original deferred response.
  */
 export async function editOriginalResponse(
@@ -84,28 +51,6 @@ export async function editOriginalResponse(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
-    });
-  } catch (error) {
-    console.error('Discord API request failed', {
-      url: sanitizeUrl(url),
-      error: sanitizeErrorMessage(error),
-    });
-    throw error;
-  }
-}
-
-/**
- * Deletes the original interaction response.
- */
-export async function deleteOriginalResponse(
-  applicationId: string,
-  interactionToken: string
-): Promise<Response> {
-  const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
-
-  try {
-    return await fetch(url, {
-      method: 'DELETE',
     });
   } catch (error) {
     console.error('Discord API request failed', {

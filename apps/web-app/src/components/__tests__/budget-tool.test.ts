@@ -386,14 +386,6 @@ vi.mock('../dye-selector', () => ({
   },
 }));
 
-vi.mock('../dye-action-dropdown', () => ({
-  createDyeActionDropdown: vi.fn().mockImplementation(() => {
-    const div = document.createElement('div');
-    div.className = 'dye-action-dropdown';
-    return div;
-  }),
-}));
-
 describe('BudgetTool', () => {
   let container: HTMLElement;
   let leftPanel: HTMLElement;

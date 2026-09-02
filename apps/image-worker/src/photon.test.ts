@@ -50,7 +50,6 @@ import {
     resizeImage,
     extractPixels,
     processImageForExtraction,
-    getImageDimensions,
     computeCropBox,
     processImageForThumbnail,
     THUMBNAIL_WIDTH,
@@ -226,34 +225,6 @@ describe('photon image processing', () => {
 
             // Should still have freed the original image
             expect(mockPhotonImage.free).toHaveBeenCalled();
-        });
-    });
-
-    describe('getImageDimensions', () => {
-        it('returns width and height', () => {
-            const buffer = pngHeader(100, 100);
-
-            const result = getImageDimensions(buffer);
-
-            expect(result).toEqual({ width: 100, height: 100 });
-        });
-
-        it('frees image after getting dimensions', () => {
-            const buffer = pngHeader(100, 100);
-
-            getImageDimensions(buffer);
-
-            expect(mockPhotonImage.free).toHaveBeenCalled();
-        });
-
-        it('handles errors gracefully', () => {
-            vi.mocked(PhotonImage.new_from_byteslice).mockImplementationOnce(() => {
-                throw new Error('Invalid image');
-            });
-
-            const buffer = new Uint8Array([0, 0, 0, 0]);
-
-            expect(() => getImageDimensions(buffer)).toThrow();
         });
     });
 

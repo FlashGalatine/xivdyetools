@@ -288,9 +288,17 @@ export class DyeSearchBox extends BaseComponent {
     });
   }
 
+  /**
+   * @testonly reads back state after simulated typing/initial-option tests;
+   * the parent reacts to the emitted `search-changed` event instead.
+   */
   public getSearchQuery(): string {
     return this.searchQuery;
   }
+  /**
+   * @testonly same role as `getSearchQuery` for the sort control — the
+   * parent reacts to the emitted `sort-changed` event instead.
+   */
   public getSortOption(): SortOption {
     return this.sortOption;
   }

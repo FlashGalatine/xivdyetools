@@ -1,0 +1,42 @@
+BotConfig                            prod=7    tests=17   other=2   | prod: apps/stoat-worker/src/config.ts apps/stoat-worker/src/message-handler.ts apps/stoat-worker/src/router.ts | other: docs/historical/web-app/20251123-Optimization/02-security-hardening.md docs/historical/web-app/20251123-Optimization/03-refactoring-recommendations.md 
+colorToHex                           prod=3    tests=7    other=0   | prod: apps/stoat-worker/src/commands/info.ts apps/stoat-worker/src/services/response-formatter.ts | other: 
+CommandContext                       prod=15   tests=14   other=0   | prod: apps/stoat-worker/src/commands/about.ts apps/stoat-worker/src/commands/help.ts apps/stoat-worker/src/commands/info.ts apps/stoat-worker/src/commands/ping.ts apps/stoat-worker/src/message-handler.ts apps/stoat-worker/src/router.ts | other: 
+CommandHandler                       prod=2    tests=0    other=0   | prod: apps/stoat-worker/src/router.ts | other: 
+CommandThrottle                      prod=6    tests=13   other=0   | prod: apps/stoat-worker/src/index.ts apps/stoat-worker/src/message-handler.ts apps/stoat-worker/src/services/command-throttle.ts | other: 
+CommandThrottleOptions               prod=2    tests=0    other=0   | prod: apps/stoat-worker/src/services/command-throttle.ts | other: 
+createMessageHandler                 prod=3    tests=3    other=0   | prod: apps/stoat-worker/src/index.ts apps/stoat-worker/src/message-handler.ts | other: 
+createMockChannel                    prod=2    tests=2    other=1   | prod: apps/stoat-worker/src/test-utils/revolt-mocks.ts | other: docs/research/discord-alternatives/02e-stoat-testing.md 
+createMockClient                     prod=1    tests=3    other=1   | prod: apps/stoat-worker/src/test-utils/revolt-mocks.ts | other: docs/research/discord-alternatives/02e-stoat-testing.md 
+createMockMessage                    prod=1    tests=36   other=1   | prod: apps/stoat-worker/src/test-utils/revolt-mocks.ts | other: docs/research/discord-alternatives/02e-stoat-testing.md 
+DYE_INFO_REACTIONS                   prod=2    tests=4    other=0   | prod: apps/stoat-worker/src/commands/info.ts apps/stoat-worker/src/services/response-formatter.ts | other: 
+DyeResolutionResult                  prod=2    tests=1    other=0   | prod: apps/stoat-worker/src/services/dye-resolver.ts | other: 
+formatDisambiguationList             prod=3    tests=10   other=0   | prod: apps/stoat-worker/src/commands/info.ts apps/stoat-worker/src/services/response-formatter.ts | other: 
+formatErrorReply                     prod=5    tests=5    other=0   | prod: apps/stoat-worker/src/commands/info.ts apps/stoat-worker/src/services/response-formatter.ts | other: 
+formatNoMatchReply                   prod=3    tests=10   other=0   | prod: apps/stoat-worker/src/commands/info.ts apps/stoat-worker/src/services/response-formatter.ts | other: 
+handleAboutCommand                   prod=4    tests=3    other=6   | prod: apps/stoat-worker/src/commands/about.ts apps/stoat-worker/src/router.ts | other: apps/discord-worker/src/handlers/commands/about.test.ts apps/discord-worker/src/handlers/commands/about.ts apps/discord-worker/src/handlers/commands/index.ts apps/discord-worker/src/index.test.ts apps/discord-worker/src/index.ts 
+handleHelpCommand                    prod=4    tests=17   other=0   | prod: apps/stoat-worker/src/commands/help.ts apps/stoat-worker/src/router.ts | other: 
+handleInfoCommand                    prod=4    tests=16   other=1   | prod: apps/stoat-worker/src/commands/info.ts apps/stoat-worker/src/router.ts | other: docs/research/discord-alternatives/02e-stoat-testing.md 
+handlePingCommand                    prod=4    tests=0    other=0   | prod: apps/stoat-worker/src/commands/ping.ts apps/stoat-worker/src/router.ts | other: 
+isAuthorized                         prod=1    tests=5    other=3   | prod: apps/stoat-worker/src/config.ts | other: apps/discord-worker/src/handlers/commands/stats.ts docs/research/discord-alternatives/02d-stoat-admin.md docs/research/discord-alternatives/02e-stoat-testing.md 
+isRegisteredCommand                  prod=7    tests=13   other=0   | prod: apps/stoat-worker/src/message-handler.ts apps/stoat-worker/src/router.ts | other: 
+isValidUlid                          prod=2    tests=13   other=0   | prod: apps/stoat-worker/src/config.ts | other: 
+loadConfig                           prod=3    tests=9    other=0   | prod: apps/stoat-worker/src/config.ts apps/stoat-worker/src/index.ts | other: 
+MAX_DISAMBIGUATION_RESULTS           prod=2    tests=9    other=0   | prod: apps/stoat-worker/src/services/dye-resolver.ts | other: 
+MessageContext                       prod=4    tests=0    other=0   | prod: apps/stoat-worker/src/services/message-context.ts | other: 
+MessageContextStore                  prod=7    tests=22   other=0   | prod: apps/stoat-worker/src/index.ts apps/stoat-worker/src/message-handler.ts apps/stoat-worker/src/router.ts apps/stoat-worker/src/services/message-context.ts | other: 
+MessageHandlerDeps                   prod=2    tests=0    other=0   | prod: apps/stoat-worker/src/message-handler.ts | other: 
+MockChannel                          prod=3    tests=0    other=1   | prod: apps/stoat-worker/src/test-utils/revolt-mocks.ts | other: docs/research/discord-alternatives/02e-stoat-testing.md 
+MockClientResult                     prod=3    tests=0    other=0   | prod: apps/stoat-worker/src/test-utils/revolt-mocks.ts | other: 
+MockMessage                          prod=2    tests=0    other=1   | prod: apps/stoat-worker/src/test-utils/revolt-mocks.ts | other: docs/research/discord-alternatives/02e-stoat-testing.md 
+MULTI_MATCH_THRESHOLD                prod=2    tests=11   other=1   | prod: apps/stoat-worker/src/services/dye-resolver.ts | other: docs/research/discord-alternatives/02b-stoat-commands.md 
+MultiDyeArgs                         prod=2    tests=0    other=0   | prod: apps/stoat-worker/src/commands/parser.ts | other: 
+parseCommand                         prod=3    tests=29   other=0   | prod: apps/stoat-worker/src/commands/parser.ts apps/stoat-worker/src/message-handler.ts | other: 
+ParsedCommand                        prod=4    tests=11   other=0   | prod: apps/stoat-worker/src/commands/parser.ts apps/stoat-worker/src/router.ts | other: 
+parseMultiDyeArgs                    prod=1    tests=10   other=0   | prod: apps/stoat-worker/src/commands/parser.ts | other: 
+parseSingleDyeArgs                   prod=3    tests=9    other=0   | prod: apps/stoat-worker/src/commands/info.ts apps/stoat-worker/src/commands/parser.ts | other: 
+resolveDyeInputMulti                 prod=3    tests=39   other=0   | prod: apps/stoat-worker/src/commands/info.ts apps/stoat-worker/src/services/dye-resolver.ts | other: 
+routeCommand                         prod=8    tests=19   other=0   | prod: apps/stoat-worker/src/message-handler.ts apps/stoat-worker/src/router.ts | other: 
+sanitizeEcho                         prod=6    tests=1    other=0   | prod: apps/stoat-worker/src/message-handler.ts apps/stoat-worker/src/router.ts apps/stoat-worker/src/services/response-formatter.ts | other: 
+StoatEmbed                           prod=2    tests=0    other=0   | prod: apps/stoat-worker/src/services/response-formatter.ts | other: 
+StoatMessage                         prod=4    tests=0    other=0   | prod: apps/stoat-worker/src/services/response-formatter.ts | other: 
+withLoadingIndicator                 prod=1    tests=11   other=0   | prod: apps/stoat-worker/src/services/loading-indicator.ts | other: 

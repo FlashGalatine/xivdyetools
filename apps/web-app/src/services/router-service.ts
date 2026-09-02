@@ -334,13 +334,6 @@ export class RouterService {
   }
 
   /**
-   * Get all route definitions
-   */
-  static getRoutes(): readonly RouteDefinition[] {
-    return ROUTES;
-  }
-
-  /**
    * Clean up the router service
    * Call this on app unmount
    */

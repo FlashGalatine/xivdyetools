@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-09-02
+
+### Added
+
+- `base.test.ts` now asserts the CJK fallback ordering — every `FONTS` family carrying Noto must
+  list **JP → SC → KR**. JP has to precede SC or a Japanese player reads their own language in
+  Chinese letterforms (F-17); KR has to follow SC, which ships no Hangul. The rule previously
+  lived only in prose and in `apps/discord-worker/scripts/test-font-rendering.ts`, a manual script
+  nothing ran and which had gone stale — removed in the same sweep
+  (`docs/audits/2026-09-01-dead-code`, DEAD-028). Test-only: no published API change, no bump.
+
 ## [3.0.0] - 2026-08-29
 
 ### ⚠️ BREAKING — chara-name privacy

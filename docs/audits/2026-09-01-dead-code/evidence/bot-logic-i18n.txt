@@ -1,0 +1,44 @@
+
+ RUN  v4.1.11 C:/dev/XIVProjects/xivdyetools/packages/bot-logic
+
+ ✓ src/i18n/translator.test.ts > Translator > tc (count-aware translate, F-09) > picks the _one form for exactly 1 and _other otherwise (en) 3ms
+ ✓ src/i18n/translator.test.ts > Translator > tc (count-aware translate, F-09) > single-form locales carry identical _one/_other strings 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc (count-aware translate, F-09) > merges count with extra variables and falls back to the bare key 0ms
+ ✓ src/i18n/translator.test.ts > Translator > constructor > creates a translator with the specified locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > constructor > falls back to English data for an invalid locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > translates a key with English locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > translates a deeply nested key 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns the key for missing translations 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > logs warning for missing translations when logger is provided 3ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > interpolates variables in a real translation key 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > interpolates multiple variables 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > keeps placeholder when variable is missing 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > handles numeric variables 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > falls back to English for missing translations in other locales 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns the key when not found in any locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > interpolates variables with non-English locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns key when path traverses through a non-object value 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns key for deeply nested non-existent path 0ms
+ ✓ src/i18n/translator.test.ts > Translator > getLocale > returns the current locale code 0ms
+ ✓ src/i18n/translator.test.ts > createTranslator > returns a Translator instance 0ms
+ ✓ src/i18n/translator.test.ts > createTranslator > creates translators for all supported locales 0ms
+ ✓ src/i18n/locales.test.ts > locale completeness > ja.json has all keys present in en.json 4ms
+ ✓ src/i18n/locales.test.ts > locale completeness > de.json has all keys present in en.json 1ms
+ ✓ src/i18n/locales.test.ts > locale completeness > fr.json has all keys present in en.json 1ms
+ ✓ src/i18n/locales.test.ts > locale completeness > ko.json has all keys present in en.json 1ms
+ ✓ src/i18n/locales.test.ts > locale completeness > zh.json has all keys present in en.json 3ms
+ ✓ src/i18n/locales.test.ts > locale structure > en.json has a valid meta block 0ms
+ ✓ src/i18n/locales.test.ts > locale structure > ja.json has a valid meta block 0ms
+ ✓ src/i18n/locales.test.ts > locale structure > de.json has a valid meta block 0ms
+ ✓ src/i18n/locales.test.ts > locale structure > fr.json has a valid meta block 1ms
+ ✓ src/i18n/locales.test.ts > locale structure > ko.json has a valid meta block 1ms
+ ✓ src/i18n/locales.test.ts > locale structure > zh.json has a valid meta block 3ms
+ ✓ src/i18n/__tests__/locale-orphans.test.ts > bot-logic i18n orphan gate > every key in en.json is reachable from a consumer tree or an enumerated dynamic key 187ms
+ ✓ src/i18n/__tests__/locale-orphans.test.ts > bot-logic i18n orphan gate > every static key passed to Translator.t() exists in en.json 100ms
+ ✓ src/i18n/__tests__/locale-orphans.test.ts > bot-logic i18n orphan gate > keeps identical key sets across all six locales 11ms
+
+ Test Files  3 passed (3)
+      Tests  35 passed (35)
+   Start at  00:39:22
+   Duration  2.87s (transform 1.59s, setup 0ms, import 2.17s, tests 332ms, environment 1ms)
+

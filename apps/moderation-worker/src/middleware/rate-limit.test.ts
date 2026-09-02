@@ -10,7 +10,6 @@ import { createMockKV } from '@xivdyetools/test-utils';
 import {
   checkRateLimit,
   incrementRateLimit,
-  getRateLimitInfo,
   rateLimitMiddleware,
   resetRateLimiterInstance,
   RATE_LIMIT_CONFIGS,
@@ -253,60 +252,6 @@ describe('rate-limit', () => {
       const result = await checkRateLimit(mockKV, 'user123', 'command', RATE_LIMIT_CONFIGS.command);
       // remaining = limit - count
       expect(result.remaining).toBe(22); // 25 - 3 = 22
-    });
-  });
-
-  describe('getRateLimitInfo', () => {
-    it('should return current count of 0 for new users', async () => {
-      const result = await getRateLimitInfo(mockKV, 'newuser', 'command');
-
-      expect(result.current).toBe(0);
-      expect(result.limit).toBe(25); // 20 + 5
-    });
-
-    it('should return current count after increments', async () => {
-      for (let i = 0; i < 7; i++) {
-        await incrementRateLimit(mockKV, 'user123', 'command');
-      }
-
-      const result = await getRateLimitInfo(mockKV, 'user123', 'command');
-
-      expect(result.current).toBe(7);
-    });
-
-    it('should return correct limit for command type', async () => {
-      const result = await getRateLimitInfo(mockKV, 'user123', 'command');
-
-      expect(result.limit).toBe(25); // 20 + 5
-    });
-
-    it('should return correct limit for autocomplete type', async () => {
-      const result = await getRateLimitInfo(mockKV, 'user123', 'autocomplete');
-
-      expect(result.limit).toBe(70); // 60 + 10
-    });
-
-    it('should return correct reset time', async () => {
-      const now = Date.now();
-      // Reset time is aligned to window boundaries (next minute)
-      const currentWindow = Math.floor(now / 60_000);
-      const expectedResetTime = (currentWindow + 1) * 60_000;
-
-      const result = await getRateLimitInfo(mockKV, 'user123', 'command');
-
-      expect(result.resetTime).toBe(expectedResetTime);
-    });
-
-    it('should handle KV errors gracefully', async () => {
-      const errorKV = {
-        get: vi.fn().mockRejectedValue(new Error('KV error')),
-        getWithMetadata: vi.fn().mockRejectedValue(new Error('KV error')),
-      } as unknown as KVNamespace;
-
-      const result = await getRateLimitInfo(errorKV, 'user123', 'command');
-
-      expect(result.current).toBe(0);
-      expect(result.limit).toBe(25); // 20 + 5
     });
   });
 

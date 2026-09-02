@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-09-02
+
+### Changed
+
+This package is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
+into `lint`; root `knip.jsonc`). Because `@xivdyetools/auth` sits at its registry version (2.0.0),
+nothing was removed — the first run found 17 barrel exports (9 values, 8 types) with no in-repo
+consumer, all at `src/index.ts`. Four of the nine values (`base64UrlDecode`, `base64UrlDecodeBytes`,
+`hexToBytes`, `bytesToHex`) are misleading at a glance: their implementations are very much in
+production use (`apps/moderation-worker/src/handlers/modals/ban-reason.ts`,
+`apps/oauth/src/services/jwt-service.ts`), but every live consumer imports them via the
+`@xivdyetools/auth/encoding` subpath, not this root barrel — so the root re-export specifier is
+genuinely unreferenced and is tagged `@public` rather than deleted, same as the other thirteen.
+
 ## [2.0.0] - 2026-08-31
 
 Security audit remediation (docs/audits/2026-08-29-security, FINDING-015) — finishes the bot

@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { DyeService, dyeService, resolvePresetDye } from '../dye-service-wrapper';
+import { DyeService, dyeService, resolvePresetDye, toStainId } from '../dye-service-wrapper';
 
 describe('DyeService Wrapper', () => {
   beforeEach(() => {
@@ -199,12 +199,19 @@ describe('DyeService integration', () => {
 // ============================================================================
 
 /**
- * The live presets-api (2.0.0 worker, deployed 2026-08-11) still serves rows
- * whose `dyes` are legacy itemIDs, because the user-run stainID D1 migration
- * is coupled to the 5.0 production launch. Until it runs, beta's Presets tool
- * renders only because this resolver routes >254 through the legacy lookup.
- * Removing that branch before the migration lands blanks every live palette —
- * this block is the tripwire.
+ * This block used to be the tripwire guarding the legacy-itemID branch: while
+ * the live presets-api served rows whose `dyes` were 4.x itemIDs, deleting that
+ * branch would have blanked every community palette.
+ *
+ * Its condition is now met and it has been inverted. The stainID D1 rewrite ran
+ * 2026-08-28; a re-check on 2026-09-01 (dead-code audit DEAD-007) found 0
+ * legacy IDs across every position of every `dyes` array in all 16 production
+ * rows, with `previous_values` empty on all of them. Every producer now writes
+ * stainIDs — the bot since discord-worker 5.1.0, the web form by validation.
+ *
+ * So the assertions below pin the *retirement*: a legacy itemID must resolve to
+ * nothing. If community rows ever carry itemIDs again, this fails loudly
+ * instead of the app silently resolving them through a second ID space.
  */
 describe('resolvePresetDye', () => {
   it('resolves stainIDs (1–254) through the stain lookup', () => {
@@ -212,28 +219,42 @@ describe('resolvePresetDye', () => {
     expect(resolvePresetDye(254)).toBeUndefined(); // unassigned stain byte
   });
 
-  it('resolves legacy itemIDs (≥ 5729) — the rows the live API still serves', () => {
-    // Verbatim from production D1 on 2026-08-20 (`SELECT dyes FROM presets`).
-    const livePresetDyes = [
-      [48171, 5785, 5787, 30124],
-      [5761, 30124, 5734, 5749],
-      [5762, 5785, 13715, 5758],
-      [5804, 13722, 13117],
+  it('no longer resolves legacy itemIDs — the branch is retired (DEAD-007)', () => {
+    // The exact ids the live table held on 2026-08-20, before the rewrite.
+    // Each one resolved to a dye then; none may resolve now.
+    const preMigrationItemIds = [
+      48171, 5785, 5787, 30124, 5761, 5734, 5749, 5762, 13715, 5758, 5804, 13722, 13117,
     ];
-    for (const row of livePresetDyes) {
-      for (const id of row) {
-        const dye = resolvePresetDye(id);
-        expect(dye, `itemID ${id} must resolve until the D1 migration runs`).toBeDefined();
-        expect(dye!.itemID).toBe(id);
-        expect(dye!.stainID).toBeGreaterThan(0);
-      }
+    for (const id of preMigrationItemIds) {
+      expect(resolvePresetDye(id), `itemID ${id} must no longer resolve`).toBeUndefined();
     }
   });
 
-  it('never guesses: ids in the 255–5728 gap, zero, negatives and unknowns resolve to nothing', () => {
+  it('never guesses: ids in the 255–5728 gap, zero, negatives, non-integers and unknowns resolve to nothing', () => {
     expect(resolvePresetDye(0)).toBeUndefined();
     expect(resolvePresetDye(300)).toBeUndefined();
     expect(resolvePresetDye(-1042)).toBeUndefined(); // pre-v2 synthetic facewear id
     expect(resolvePresetDye(99_999_999)).toBeUndefined();
+    expect(resolvePresetDye(1.5)).toBeUndefined();
+    expect(resolvePresetDye(Number.NaN)).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// toStainId — legacy 4.x itemID migration for persisted local data
+// ============================================================================
+
+describe('toStainId', () => {
+  it('should map a legacy 4.x itemID to its stainID', () => {
+    // Snow White: legacyItemID 5729 -> stainID 1
+    expect(toStainId(5729)).toBe(1);
+  });
+
+  it('should pass a valid stainID through unchanged', () => {
+    expect(toStainId(1)).toBe(1);
+  });
+
+  it('should return null for a value in neither ID space', () => {
+    expect(toStainId(999999)).toBeNull();
   });
 });

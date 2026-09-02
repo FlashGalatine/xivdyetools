@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.2] - 2026-09-02
+
+### Changed
+
+- `@public` tags added to the barrel exports that have no in-repo consumer, so the
+  dead-code gate can tell "published API, deliberately unconsumed" from "dead"
+  (2026-09-01 dead-code audit, Phase 3). No runtime change; the tags ship in the
+  emitted `.d.ts`.
+
 ## [4.0.1] - 2026-08-21
 
 ### Security — 2026-08-21 security audit (FINDING-027)

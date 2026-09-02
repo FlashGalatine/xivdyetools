@@ -1,8 +1,16 @@
 {
-  // Monorepo-wide knip graph. Only `packages/{core,svg,bot-logic}` are GATED on
-  // it today (`pnpm --filter @xivdyetools/<pkg> run lint:dead`, which is part of
-  // each package's `lint`); every other workspace is declared purely so its
-  // imports are traversed and therefore *count as usage*.
+  // Monorepo-wide knip graph. Every package under `packages/*` is GATED on it
+  // as of Phase 3 of the dead-code-guardrails plan (2026-09-01), which added
+  // the last five (`types`, `worker-kit`, `auth`, `logger`, `test-utils`) to
+  // the original three (`core`, `svg`, `bot-logic`) — via
+  // `pnpm --filter @xivdyetools/<pkg> run lint:dead`, which is part of each
+  // package's `lint`. Six apps are gated on it the same way (api-worker,
+  // discord-worker, image-worker, moderation-worker, oauth, presets-api —
+  // see the block below). `apps/web-app` and `apps/og-worker` are gated too,
+  // but on their OWN knip.jsonc; here they are declared (web-app by its own
+  // key, og-worker through the `apps/*` glob) only so their imports are
+  // traversed and therefore *count as usage*. `apps/stoat-worker`
+  // (parked) is the one workspace with no dead-code gate at all.
   //
   // Why a root config and not one file per package: `@xivdyetools/core`'s
   // consumers live in other workspaces (`apps/*`, `packages/svg`,
@@ -35,9 +43,24 @@
   "ignoreExportsUsedInFile": true,
 
   // `@public` = "this is published API; no in-repo consumer is expected".
-  // core/svg/bot-logic ship to npm, so their barrels are a contract with
-  // consumers knip cannot see. Tagging is deliberate and per-symbol: a NEW
-  // barrel export with no consumer and no tag still fails the gate.
+  // Seven of the eight packages under `packages/*` ship to npm (all but the
+  // workspace-private `test-utils`), and all eight now carry this
+  // convention — their barrels are a contract with consumers knip cannot
+  // see. Tagging is deliberate and per-symbol: a NEW barrel export with no
+  // consumer and no tag still fails the gate. (`test-utils` has no npm
+  // consumers to break, so it deletes an unused export instead of tagging
+  // it — see its own `package.json` `lint:dead`.)
+  //
+  // THIS LINE IS INERT, and is kept only as documentation of the convention.
+  // knip hard-codes `@public`, `@beta` and `@alias` as always-ignored in
+  // `util/tag.js` `isAlwaysIgnored`, and `graph/analyze.js` consults that
+  // BEFORE the `tags` filter ever runs. Removing this line, keeping it, or
+  // inverting it to `+public` all produce byte-identical output across the
+  // whole monorepo, and `--tags=+public` cannot enumerate the tagged symbols
+  // either. Do not reach for it to audit the `@public` surface — it cannot do
+  // that. The same built-in also exempts `@beta` and `@alias`, which this
+  // repo's convention never mentions; `pnpm dead-code:check` fails on either
+  // of those so the undocumented escape hatch cannot be used by accident.
   "tags": ["-public"],
 
   "workspaces": {
@@ -49,25 +72,55 @@
     // without it the barrel keeps every symbol it re-exports alive, so only
     // non-barrel code could ever be reported.
     // (knip 6 dropped the `classMembers` issue type entirely — there is no
-    // per-class-member rule to enable here; unused public methods still need
-    // the manual survey the 2026-08-18 audit used.)
-    "packages/*": {
-      "entry": [
-        "src/index.ts!",
-        "src/**/index.ts!",
-        "src/**/*.test.ts",
-        "src/**/__tests__/**/*.ts",
-        "scripts/**/*.ts!",
-        "tests/**/*.ts",
-        "vitest*.config.ts"
-      ],
-      "project": ["src/**/*.ts", "scripts/**", "tests/**", "*.ts"]
-    },
+    // per-class-member rule to enable here. `scripts/check-dead-code.ts`
+    // (`pnpm dead-code:check`) covers the test-only slice of that gap, so
+    // only a member with ZERO references from any test file — invisible to
+    // both tools — still needs the manual survey the 2026-08-18 audit used.)
+    // HOW KNIP PICKS A KEY, because it is not what it looks like: knip resolves
+    // exactly ONE `workspaces` key per workspace and does NOT merge. Keys are
+    // sorted by path depth and, at equal depth, a literal key beats a glob —
+    // so for every workspace named literally below, a `packages/*` or `apps/*`
+    // glob contributes NOTHING, whatever the order they appear in. (Verified
+    // against knip 6.33's `util/workspace.js` `byPathDepth` and
+    // `ConfigurationChief.getConfigKeyForWorkspace`, and empirically: moving
+    // the literal keys above the globs leaves every workspace's effective
+    // config byte-identical, and poisoning a glob's entry/project changes
+    // nothing for any workspace that has its own key.)
+    //
+    // A `packages/*` glob used to sit here carrying entry/project patterns. It
+    // was dead config: all eight packages are named literally below, so the
+    // glob applied to none of them and the patterns it advertised had never
+    // taken effect. It was removed rather than "fixed" because the defaults it
+    // was shadowing are the better setting — knip's default project is `**/*`,
+    // where the glob's was `src/**, scripts/**, tests/**, *.ts`, which does not
+    // reach `packages/test-utils/integration/**`. Folding those patterns back
+    // into the literal keys would silently drop that directory from analysis.
+    //
+    // So: every package below runs on knip's DEFAULTS plus
+    // `includeEntryExports`. Test files still become entries through knip's
+    // vitest plugin (it reads each `vitest.config.ts`'s `test.include`), which
+    // is how the integration suite is covered without any pattern naming it.
     "packages/core": { "includeEntryExports": true },
     "packages/svg": { "includeEntryExports": true },
     "packages/bot-logic": { "includeEntryExports": true },
+    "packages/types": { "includeEntryExports": true },
+    "packages/worker-kit": { "includeEntryExports": true },
+    "packages/auth": { "includeEntryExports": true },
+    "packages/logger": { "includeEntryExports": true },
+    "packages/test-utils": { "includeEntryExports": true },
 
-    // ---- Consumers (declared so their imports count as usage) -------------
+    // ---- Apps ------------------------------------------------------------
+    // Per the one-key rule above, this glob reaches exactly the two apps that
+    // are NOT named literally below: `apps/og-worker` and `apps/stoat-worker`.
+    // It does not touch the gated apps — they each resolve to their own key
+    // and run on knip's defaults. The root sweep's own config hints say so:
+    // every "no matches" hint for a pattern in this block names one of those
+    // two apps and never a gated one.
+    //
+    // Neither of those two is gated on THIS config: og-worker's `lint` runs a
+    // bare `knip` against its own knip.jsonc, and stoat-worker (parked) is
+    // gated nowhere. So this glob only shapes what the root `pnpm lint:dead`
+    // cross-check reports for them.
     "apps/*": {
       "entry": [
         "src/index.ts!",
@@ -75,9 +128,9 @@
         "src/**/__tests__/**/*.ts",
         "tests/**/*.ts",
         "scripts/**/*.{ts,js,mjs}!",
-        "vitest*.config.ts"
+        "vitest*.config.ts",
       ],
-      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "*.ts"]
+      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "*.ts"],
     },
     "apps/web-app": {
       "entry": [
@@ -90,9 +143,42 @@
         "functions/_middleware.ts",
         "vite-plugin-*.ts",
         "eslint.config.js",
-        "eslint-rules/*.js"
+        "eslint-rules/*.js",
       ],
-      "project": ["src/**/*.{ts,js}", "scripts/**", "functions/**", "e2e/**", "*.ts", "*.js"]
-    }
-  }
+      "project": ["src/**/*.{ts,js}", "scripts/**", "functions/**", "e2e/**", "*.ts", "*.js"],
+    },
+
+    // includeEntryExports is unconditionally safe for apps: an app has no
+    // external consumers, so a barrel export with no in-repo importer IS
+    // dead. It is not safe for a package *without* the `@public` convention —
+    // a published export legitimately has no in-repo importer — but all eight
+    // packages now carry that convention (see "tags" above), so every one of
+    // them runs with it on too.
+    // docs/.vitepress/{config,theme/index}.ts are NOT in the plain "entry" array:
+    // knip's built-in vitepress plugin auto-detects `.vitepress/config.ts` /
+    // `.vitepress/theme/index.ts` at the WORKSPACE ROOT, but this site's root is
+    // `docs/` (see package.json's `build:docs`), so the default pattern misses.
+    // Overriding the plugin's own `entry` (below) re-enables it at the right
+    // path. That matters because plugin-sourced entries are marked
+    // skipExportsAnalysis internally — their default export (read by the
+    // `vitepress` CLI, never imported in-repo) is exempt from includeEntryExports
+    // scrutiny. Listing the same two files in the plain "entry" array instead
+    // makes them ordinary entries, and with includeEntryExports: true knip then
+    // reports their default export as unused — a false positive (verified
+    // 2026-09-01: confirmed against knip 6.33.0's graph/build.js, which only
+    // sets skipExportsAnalysis for plugin-routed inputs).
+    "apps/api-worker": {
+      "includeEntryExports": true,
+      "entry": ["src/index.ts!", "src/**/*.test.ts", "tests/**/*.ts", "scripts/**/*.{ts,js,mjs}!"],
+      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "docs/.vitepress/**", "*.ts"],
+      "vitepress": {
+        "entry": ["docs/.vitepress/config.ts", "docs/.vitepress/theme/index.ts"],
+      },
+    },
+    "apps/discord-worker": { "includeEntryExports": true },
+    "apps/moderation-worker": { "includeEntryExports": true },
+    "apps/oauth": { "includeEntryExports": true },
+    "apps/presets-api": { "includeEntryExports": true },
+    "apps/image-worker": { "includeEntryExports": true },
+  },
 }

@@ -230,34 +230,6 @@ export async function processImageForExtraction(
 }
 
 /**
- * Get image dimensions without full processing
- *
- * Useful for validation before expensive operations
- *
- * @param buffer - Raw image file bytes
- * @returns Object with width and height
- */
-export function getImageDimensions(buffer: Uint8Array): { width: number; height: number } {
-  let image: PhotonImage | null = null;
-
-  try {
-    image = loadImage(buffer);
-    return {
-      width: image.get_width(),
-      height: image.get_height(),
-    };
-  } finally {
-    if (image) {
-      try {
-        image.free();
-      } catch {
-        // Ignore errors during cleanup
-      }
-    }
-  }
-}
-
-/**
  * The largest band of the target aspect ratio that fits inside the source,
  * positioned per the crop rule: middle for landscape, upper for square and
  * portrait. Always horizontally centred.

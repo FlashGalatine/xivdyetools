@@ -152,7 +152,6 @@ tests/
 | `@xivdyetools/logger` | Structured logging |
 | `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` |
 | `@xivdyetools/worker-kit/rate-limiter` | `KVRateLimiter`, `getClientIp` |
-| `spectral.js` | Spectral color mixing (transitive dep of core, explicit for pnpm strict isolation) |
 | `vitepress`, `vue` (dev) | Developer docs site |
 
 ### Environment Bindings

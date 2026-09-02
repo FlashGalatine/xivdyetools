@@ -8,6 +8,164 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Two dead-code self-tests could not do their job.** Test 20, which pins that a
+  `#`-private member is never reported, used a fixture whose test file never imported
+  the module under test — and `findTestOnlyMembers` short-circuits before the guard
+  unless a test actually imports the file, so the assertion held no matter how private
+  members were handled. Proven by substitution: renaming the member to an ordinary name
+  still gave zero violations. One import line makes it real, and mutation-testing now
+  confirms it fails when the `#` handling regresses. Separately the whole suite was
+  cwd-dependent — one test read a web-app file by a relative path, and the newer
+  repo-scanning tests shell out to `git ls-files` — so running it from anywhere but the
+  repo root gave ENOENT or an empty file list instead of a result. The suite now anchors
+  itself to the repo root derived from its own location, and passes from any directory.
+- **`EXCLUDED_REFERRERS` files are now masked rather than skipped.** The checker's own
+  two files were dropped from the referrer cohort entirely, so their docblock prose could
+  not vouch for a symbol it merely names. That was too blunt: it discarded their real
+  calls too, so any helper whose only production caller is `main()` inside the checker
+  reported as test-only the moment a test imported it — which is exactly what happened to
+  `listTracked` once `loadWorkspaceAliases`'s test began asserting against the real
+  repository. Their text is now read with comments and string literals blanked, which
+  draws the line where it belongs: real code counts, prose and fixture strings count for
+  nothing. Both halves are pinned by tests and mutation-checked.
+- **The member scanner's docblock claimed a fallback was unreachable.** It said every
+  `MEMBER_DECL` match in this repo lands inside a tracked class block, so the
+  unattributed path was unexercised. Eleven reach it: five logger calls and two
+  cached-fetch calls in the Universalis router, a background revalidation call, two timer
+  calls in the changelog and welcome modals, and a `.d.ts` signature. Nearly all are
+  ordinary call statements, which the member pattern cannot distinguish from
+  declarations at module scope. They are harmless only because nothing references them —
+  one test asserting on the revalidation call would make the gate report a member that
+  does not exist. The docblock now says so, and says what the symptom looks like.
+
+
+- **Dead knip config removed, and a test added so it cannot come back.** knip resolves
+  exactly ONE `workspaces` key per workspace and never merges — keys sort by path depth
+  and, at equal depth, a literal key beats a glob. The `packages/*` block therefore
+  applied to none of the eight packages, all of which are named literally, and the
+  entry/project patterns it advertised had never taken effect. Two comments asserted the
+  opposite, including a "these keys MUST stay after `apps/*`" warning that was simply
+  false. The block is deleted rather than folded into the literal keys, because the
+  defaults it was shadowing are the better setting: knip's default project is `**/*`,
+  where the glob's was narrower and did not reach `packages/test-utils/integration/**`.
+  Root sweep output is byte-identical and all fourteen gated workspaces still exit 0.
+  `scripts/knip-config.test.ts` now re-implements knip's selection rule and fails if any
+  workspace key can never apply to any workspace, which is exactly what went unnoticed
+  here.
+- **`@beta` and `@alias` no longer silently exempt a dead export.** knip hard-codes
+  `@public`, `@beta` and `@alias` as always-ignored in `isAlwaysIgnored`, consulted
+  before the configured `tags` filter runs. Only `@public` is a convention here; the
+  other two were an undocumented escape hatch that let a tagged dead export pass with no
+  review signal at all. `pnpm dead-code:check` now fails on either, naming the file and
+  the alternative to use. Verified end to end: a `@beta` export takes the gate from exit
+  0 to exit 1, and a self-test asserts the real tree carries none.
+- **The `"tags": ["-public"]` line is documented as inert.** It is kept as a statement of
+  the convention, but removing it, keeping it, or inverting it to `+public` all produce
+  byte-identical output monorepo-wide, and `--tags=+public` cannot enumerate the tagged
+  symbols. `knip.jsonc` and `CLAUDE.md` both said the exemption came from this setting;
+  it comes from knip's built-in.
+- Two previously undocumented limits added to the reachability gate's `CLAUDE.md` notes:
+  the parked `apps/stoat-worker` is excluded from the referrer cohorts entirely, so a
+  package export it genuinely consumes can look unreferenced (`resolveDyeInput` is that
+  case today, surviving only because a comment names it), and path-alias resolution is
+  now workspace-scoped where it used to match on filename alone.
+
+
+- **Turbo `inputs` allowlists replaced with `$TURBO_DEFAULT$`, closing a fourth
+  under-hashing gap and the class behind it.** The gating tasks hand-listed the files
+  they read, and that list was wrong four separate times — `scripts/**/*.js`, then
+  `wrangler.toml`, then `tests/**` and `scripts/**`, and finally
+  `packages/test-utils/integration/**` and `apps/api-worker/docs/.vitepress/**`, the
+  last pair found by review *after* the audit that fixed the others. Every one was the
+  same bug: a task read files no glob named, so the edit that would break it could not
+  invalidate its cache and turbo replayed a green it had not earned. knip treats test
+  files as entries, so deleting the last integration test that imported a helper is
+  exactly what turns that helper unused — and that edit hashed nothing. The four gating
+  tasks now hash every git-tracked file in their package, so a directory added tomorrow
+  is covered without anyone remembering. Measured: `packages/test-utils`'s `lint` went
+  from 0 to 4 `integration/` files hashed, `apps/api-worker`'s from 0 to 4
+  `.vitepress/` files. Accepted cost: editing a workspace's README now busts its caches,
+  which is the right trade for a task whose whole job is to be a gate.
+- **`tsconfig.base.json`, `eslint.config.js` and `pnpm-workspace.yaml` are now
+  `globalDependencies`.** Every workspace tsconfig extends the first, and since the four
+  local overrides were removed it is the sole source of `noUnusedLocals` — unhashed,
+  turning that off left all 25 type-check caches valid and the gate reported green
+  without tsc re-running. Every workspace but `apps/web-app` inherits the root ESLint
+  flat config by upward resolution, so editing a rule changed what sixteen workspaces
+  reported while hashing nothing. Verified: a change to `tsconfig.base.json` now takes
+  `turbo run type-check` from 25 cached to 0 cached, where before it stayed fully cached.
+
+
+- **The dead-code gate could exit 0 without running.** `scripts/check-dead-code.ts` decided whether
+  it was the entry module by comparing `process.argv[1]` to `fileURLToPath(import.meta.url)`. Node
+  resolves the second through every symlink and leaves the first exactly as typed, so reaching the
+  checker through a Windows junction, a symlinked worktree or a mapped path made `main()` never run:
+  no output at all, exit 0, indistinguishable from a clean pass. Reproduced side by side against one
+  worktree — by its direct path the gate printed `scanned 523 production / 444 test files`, through a
+  junction to the same directory it printed nothing. Both sides are now resolved by the new exported
+  `isMainModule`, which `realpathSync.native` also uses to normalise drive-letter case on Windows.
+- **Path-alias imports resolved by bare filename, across workspace boundaries.** Only relative
+  specifiers were resolved properly; anything else fell through to `groupByBasename`, which matches
+  the filename alone and knows nothing about workspaces. web-app's `@shared/logger` therefore also
+  matched `packages/worker-kit/src/middleware/logger.ts`, and `@shared/constants` matched
+  `packages/logger/src/constants.ts`. A module whose only real importers were tests could be vouched
+  for by an unrelated file in another package and never reported — a silent false negative, and one
+  the gate's documented limits did not cover. 648 specifiers reached that fallback, 10 of them
+  colliding across workspaces. `resolveAliasSpecifier` now resolves `compilerOptions.paths` wildcard
+  aliases inside the importer's own workspace, longest prefix first, falling back to basename
+  matching exactly as before when a workspace declares no matching alias (a real package name like
+  `@xivdyetools/core` is not an alias). 644 specifiers now resolve precisely and none leaves its own
+  workspace. No new findings surfaced: the tree is genuinely clean on that axis.
+- `loadWorkspaceAliases` deliberately takes the tracked file list and derives workspaces from it
+  rather than looking for `tsconfig.json` inside it. `listTracked()` yields only `.ts/.tsx/.js/.mjs`,
+  so the first cut of this fix found no tsconfig at all and resolved nothing, while its unit test —
+  which injected the alias map — still passed. Self-test 63 asserts against the real repository for
+  that reason.
+
+### Added
+
+- Root `pnpm coverage:report` script + the `tsx` devDependency needed to run it. `scripts/coverage-report.ts`
+  (245 lines) had been sitting unreachable: no npm script, no CI step, and no `tsx` at the root, so
+  the `pnpm tsx scripts/coverage-report.ts` in its own header failed on a clean install
+  (`docs/audits/2026-09-01-dead-code`, DEAD-031). Adopted rather than deleted — it is the only
+  aggregate view of coverage against the 90 %/80 % baselines, and the `coverage-testing` skill
+  assumes one exists. It reads each workspace's `coverage/coverage-summary.json` and skips
+  workspaces that have none, so run the coverage suites first.
+- Dead-code reachability gate: `scripts/check-dead-code.ts` (`pnpm dead-code:check`, self-tested by
+  `pnpm test:scripts`) finds modules, exports, and class members reachable only from test files —
+  the blind spot knip 6 has by design (it treats every test file as an entry) and by omission (it
+  dropped its `classMembers` rule entirely). Reachability is judged at three granularities (file /
+  export / member); three exemption tags — `@testonly <reason>`, `@entrypoint <reason>`, and the
+  no-reason-required `@public` for published `@xivdyetools/*` API with no in-repo consumer — let
+  production code opt out where it is deliberately test-only, reached only by a convention static
+  analysis can't see, or intentionally un-consumed. Both commands now run in CI
+  (`.github/workflows/ci.yml`), unconditionally and repo-wide rather than affected-filtered, after
+  `Type-check (affected)`: the self-test first, then the checker.
+- `pnpm type-check:scripts` (`tsc -p scripts/tsconfig.json`): the root `scripts/` directory is now
+  type-checked in CI, ahead of the two steps above. Added `@types/node` as a root devDependency
+  (`^26.4.0`, matching the version eleven workspaces already declare) so the new
+  `scripts/tsconfig.json` has no need of a versioned `typeRoots` path into the pnpm store.
+- The last five packages — `types`, `worker-kit`, `auth`, `logger`, `test-utils` — are now gated on
+  the monorepo `knip` check (`pnpm run lint:dead`, folded into each package's `lint`), completing the
+  package side of the dead-code gate started with `core`/`svg`/`bot-logic`. The four published
+  packages are tag-only (`@public` on every barrel export knip reported with no in-repo consumer:
+  110 total — `types` 43, `worker-kit` 20, `auth` 17, `logger` 30); `test-utils` is workspace-private
+  and had 9 unused exports deleted instead (6 knip-reported in `integration/setup.ts` /
+  `factories/preset.ts`, plus 3 more that lost their only reference once those six were gone).
+  `logger`'s one duplicate-export finding (`DEFAULT_REDACT_FIELDS`, an unpublished internal alias)
+  was fixed by deleting the alias, not by tagging it.
+
+### Changed
+
+- `tsconfig.base.json`'s `noUnusedLocals` / `noUnusedParameters` are no longer overridden anywhere.
+  `packages/svg`, `packages/bot-logic`, `apps/image-worker` and `apps/stoat-worker` had switched
+  them off; the first three were already clean, and stoat-worker's four unused test imports were
+  removed (DEAD-032). The setting is now uniform across all 17 workspaces.
+
 ## [2.0.0] - 2026-08-16
 
 **Monorepo 2.0 + the XIV Dye Tools 5.0 wave.** 314 commits on `monorepo-2.0-prep` since 1.18.0, spanning the workspace consolidation (12 → 8 packages, 11 → 9 apps), the schema-v2 / stainID-first data model, the 5.0 web-app redesign, the 5.0 Discord command set on a new card frame system, redrawn link previews, a beta environment for every public surface, and full remediation of the 2026-08-09 pre-release audit. Nothing on this branch has been published to npm and no production worker or web-app release carries it yet (exceptions: the beta surfaces, and `image-worker`'s one-time pre-merge production deploy on 2026-08-09). **Merging to main is the release** — see "Deploy sequence" below. Per-package detail lives in each package's / app's own `CHANGELOG.md`; the plain-language, player-facing summary is the root `CHANGELOG-laymans.md`.
