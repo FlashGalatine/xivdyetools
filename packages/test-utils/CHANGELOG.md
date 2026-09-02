@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+This package is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
+into `lint`; root `knip.jsonc`). Unlike the other four gated packages, `@xivdyetools/test-utils` is
+`"private": true` with no npm consumers, so this pass **deletes** rather than tags. No version bump
+(internal bookkeeping only, per package convention since 1.2.0).
+
+### Removed
+
+- **`integration/setup.ts`**: `createMockOAuthEnv` (and the `MockOAuthEnv` interface it alone
+  referenced), `buildRequest`, `seedPreset`, and the module's own re-export of `createMockKV` —
+  confirmed via `git grep` that none has a consumer anywhere in the workspace, tests included; the
+  two integration suites that import from this module (`integration/discord-presets/bot-authentication.test.ts`,
+  `integration/oauth-presets/jwt-validation.test.ts`) import neither name. `createMockKV` itself is
+  untouched and remains heavily used — every caller reaches it via `@xivdyetools/test-utils` or the
+  `/cloudflare` subpath (`src/cloudflare/kv.ts`), never via this integration-only re-export, which is
+  what made it dead here specifically.
+- **`integration/setup.ts`**: `OAUTH_WORKER_URL` and `PRESETS_API_URL` constants — a second-order
+  finding, not part of knip's original report. Both were referenced only by `createMockOAuthEnv`/
+  `buildRequest` above; removing those two functions left the constants with no reference anywhere
+  (in-file or external), and knip confirmed this on the next run. Neither name collides with the
+  unrelated same-named module-local constants in `apps/web-app/src/services/auth-service.ts`.
+- **`src/factories/preset.ts`**: the `CommunityPreset` and `PresetStatus` re-exports (kept
+  `PresetSubmission`, which is still used within the same file by `createMockSubmission`) — no
+  consumer anywhere in the workspace imports either type from this module.
+
 ## [1.3.0] - 2026-08-31
 
 Security audit remediation (docs/audits/2026-08-29-security, FINDING-015, Sprint 11 fix round). Not published — this package is workspace-private (see 1.2.0 below); no external consumers to break.

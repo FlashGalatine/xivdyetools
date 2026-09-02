@@ -1,8 +1,11 @@
 {
-  // Monorepo-wide knip graph. Only `packages/{core,svg,bot-logic}` are GATED on
-  // it today (`pnpm --filter @xivdyetools/<pkg> run lint:dead`, which is part of
-  // each package's `lint`); every other workspace is declared purely so its
-  // imports are traversed and therefore *count as usage*.
+  // Monorepo-wide knip graph. Every package under `packages/*` is GATED on it
+  // as of Phase 3 of the dead-code-guardrails plan (2026-09-01), which added
+  // the last five (`types`, `worker-kit`, `auth`, `logger`, `test-utils`) to
+  // the original three (`core`, `svg`, `bot-logic`) — via
+  // `pnpm --filter @xivdyetools/<pkg> run lint:dead`, which is part of each
+  // package's `lint`; every other workspace is declared purely so its imports
+  // are traversed and therefore *count as usage*.
   //
   // Why a root config and not one file per package: `@xivdyetools/core`'s
   // consumers live in other workspaces (`apps/*`, `packages/svg`,
@@ -70,6 +73,7 @@
     "packages/worker-kit": { "includeEntryExports": true },
     "packages/auth": { "includeEntryExports": true },
     "packages/logger": { "includeEntryExports": true },
+    "packages/test-utils": { "includeEntryExports": true },
 
     // ---- Consumers (declared so their imports count as usage) -------------
     "apps/*": {

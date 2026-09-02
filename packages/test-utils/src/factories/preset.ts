@@ -13,7 +13,7 @@
  * ```
  */
 
-import type { CommunityPreset, PresetSubmission, PresetStatus } from '@xivdyetools/types/preset';
+import type { PresetSubmission } from '@xivdyetools/types/preset';
 import { nextStringId } from '../utils/counters.js';
 
 /**
@@ -44,7 +44,7 @@ export interface PresetRow {
 }
 
 // Re-export types for convenience
-export type { CommunityPreset, PresetSubmission, PresetStatus };
+export type { PresetSubmission };
 
 /**
  * Creates a mock preset submission
