@@ -315,10 +315,15 @@ export function parseLocale(value: string | undefined): ValidLocale {
  *  existing API clients keep working. */
 export function parseMatchingMethod(value: string | undefined): MatchingMethod {
   if (!value || value === '') return DEFAULT_MATCHING_METHOD;
-  if (value in LEGACY_MATCHING_METHOD_MAP) {
-    return LEGACY_MATCHING_METHOD_MAP[value];
-  }
+  // BUG-011: `value in OBJ` walks Object.prototype, so `?method=constructor`
+  // matched here and returned a FUNCTION — skipping the allowlist below
+  // entirely and answering 200 with a null distance instead of the usual 400.
+  // Two changes: the lookup is guarded, and the allowlist now runs FIRST so an
+  // unrecognised value can never bypass it.
   if (!VALID_MATCHING_METHODS.includes(value as MatchingMethod)) {
+    if (Object.hasOwn(LEGACY_MATCHING_METHOD_MAP, value)) {
+      return LEGACY_MATCHING_METHOD_MAP[value];
+    }
     throw new ApiError(ErrorCode.INVALID_MATCHING_METHOD, `Invalid matching method "${value}". Must be one of: ${VALID_MATCHING_METHODS.join(', ')}`, 400, {
       parameter: 'method',
       received: value,

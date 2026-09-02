@@ -29,12 +29,17 @@ import type { LocaleRegistry } from './LocaleRegistry.js';
  *
  * Fallback chain: requested locale → English → formatted key / original value
  *
- * BUG-007: All lookup methods use truthiness checks (e.g., `if (localeData?.labels[key])`)
- * which treats empty strings ("") as missing translations, falling back to English.
- * This is intentional — empty strings in locale files indicate untranslated entries.
- * Korean and Chinese locales are manually sourced and may have incomplete coverage;
- * the truthiness check ensures seamless fallback for any missing or empty entries.
- * For detecting incomplete locale files at build time, see `build-locales.ts`.
+ * BUG-007: every lookup keeps a truthiness check, which treats an empty string
+ * ("") as a missing translation and falls back to English. That is intentional —
+ * an empty string in a locale file means "not translated yet", and the Korean
+ * and Chinese locales are manually sourced with incomplete coverage. For
+ * detecting incomplete locale files at build time, see `build-locales.ts`.
+ *
+ * BUG-105: every lookup is ALSO guarded with `Object.hasOwn`, because a bare
+ * truthiness check on a plain object resolves through `Object.prototype` — a
+ * key of `'constructor'` or `'toString'` is truthy and returns a FUNCTION where
+ * a localized string is expected. FINDING-027 added that guard to `getLabel`
+ * alone; its ten siblings went without one until this pass.
  */
 export class TranslationProvider {
   constructor(private registry: LocaleRegistry) {}
@@ -91,14 +96,14 @@ export class TranslationProvider {
     const idStr = String(itemID);
 
     // Try requested locale
-    if (localeData?.dyeNames[idStr]) {
+    if (localeData?.dyeNames && Object.hasOwn(localeData.dyeNames, idStr) && localeData?.dyeNames[idStr]) {
       return localeData.dyeNames[idStr];
     }
 
     // Fallback to English
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.dyeNames[idStr]) {
+      if (englishData?.dyeNames && Object.hasOwn(englishData.dyeNames, idStr) && englishData?.dyeNames[idStr]) {
         return englishData.dyeNames[idStr];
       }
     }
@@ -134,14 +139,14 @@ export class TranslationProvider {
     const localeData = this.registry.getLocale(locale);
 
     // Try requested locale
-    if (localeData?.categories[category]) {
+    if (localeData?.categories && Object.hasOwn(localeData.categories, category) && localeData?.categories[category]) {
       return localeData.categories[category];
     }
 
     // Fallback to English
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.categories[category]) {
+      if (englishData?.categories && Object.hasOwn(englishData.categories, category) && englishData?.categories[category]) {
         return englishData.categories[category];
       }
     }
@@ -167,14 +172,14 @@ export class TranslationProvider {
     const localeData = this.registry.getLocale(locale);
 
     // Try requested locale
-    if (localeData?.acquisitions[acquisition]) {
+    if (localeData?.acquisitions && Object.hasOwn(localeData.acquisitions, acquisition) && localeData?.acquisitions[acquisition]) {
       return localeData.acquisitions[acquisition];
     }
 
     // Fallback to English
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.acquisitions[acquisition]) {
+      if (englishData?.acquisitions && Object.hasOwn(englishData.acquisitions, acquisition) && englishData?.acquisitions[acquisition]) {
         return englishData.acquisitions[acquisition];
       }
     }
@@ -200,14 +205,14 @@ export class TranslationProvider {
     const localeData = this.registry.getLocale(locale);
 
     // Try requested locale
-    if (localeData?.currencies?.[currency]) {
+    if (localeData?.currencies && Object.hasOwn(localeData.currencies, currency) && localeData.currencies[currency]) {
       return localeData.currencies[currency];
     }
 
     // Fallback to English
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.currencies?.[currency]) {
+      if (englishData?.currencies && Object.hasOwn(englishData.currencies, currency) && englishData.currencies[currency]) {
         return englishData.currencies[currency];
       }
     }
@@ -233,14 +238,14 @@ export class TranslationProvider {
     const localeData = this.registry.getLocale(locale);
 
     // Try requested locale
-    if (localeData?.harmonyTypes[key]) {
+    if (localeData?.harmonyTypes && Object.hasOwn(localeData.harmonyTypes, key) && localeData?.harmonyTypes[key]) {
       return localeData.harmonyTypes[key];
     }
 
     // Fallback to English
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.harmonyTypes[key]) {
+      if (englishData?.harmonyTypes && Object.hasOwn(englishData.harmonyTypes, key) && englishData?.harmonyTypes[key]) {
         return englishData.harmonyTypes[key];
       }
     }
@@ -266,14 +271,14 @@ export class TranslationProvider {
     const localeData = this.registry.getLocale(locale);
 
     // Try requested locale
-    if (localeData?.visionTypes[key]) {
+    if (localeData?.visionTypes && Object.hasOwn(localeData.visionTypes, key) && localeData?.visionTypes[key]) {
       return localeData.visionTypes[key];
     }
 
     // Fallback to English
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.visionTypes[key]) {
+      if (englishData?.visionTypes && Object.hasOwn(englishData.visionTypes, key) && englishData?.visionTypes[key]) {
         return englishData.visionTypes[key];
       }
     }
@@ -302,13 +307,13 @@ export class TranslationProvider {
   getVisionShort(key: VisionType, locale: LocaleCode): string {
     const localeData = this.registry.getLocale(locale);
 
-    if (localeData?.visions?.[key]) {
+    if (localeData?.visions && Object.hasOwn(localeData.visions, key) && localeData.visions[key]) {
       return localeData.visions[key];
     }
 
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.visions?.[key]) {
+      if (englishData?.visions && Object.hasOwn(englishData.visions, key) && englishData.visions[key]) {
         return englishData.visions[key];
       }
     }
@@ -335,13 +340,13 @@ export class TranslationProvider {
   getToolName(key: ToolKey, locale: LocaleCode): string {
     const localeData = this.registry.getLocale(locale);
 
-    if (localeData?.tools?.[key]) {
+    if (localeData?.tools && Object.hasOwn(localeData.tools, key) && localeData.tools[key]) {
       return localeData.tools[key];
     }
 
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.tools?.[key]) {
+      if (englishData?.tools && Object.hasOwn(englishData.tools, key) && englishData.tools[key]) {
         return englishData.tools[key];
       }
     }
@@ -368,13 +373,13 @@ export class TranslationProvider {
   getSheetName(key: SheetKey, locale: LocaleCode): string {
     const localeData = this.registry.getLocale(locale);
 
-    if (localeData?.sheets?.[key]) {
+    if (localeData?.sheets && Object.hasOwn(localeData.sheets, key) && localeData.sheets[key]) {
       return localeData.sheets[key];
     }
 
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.sheets?.[key]) {
+      if (englishData?.sheets && Object.hasOwn(englishData.sheets, key) && englishData.sheets[key]) {
         return englishData.sheets[key];
       }
     }
@@ -399,14 +404,14 @@ export class TranslationProvider {
     const localeData = this.registry.getLocale(locale);
 
     // Try requested locale
-    if (localeData?.races?.[key]) {
+    if (localeData?.races && Object.hasOwn(localeData.races, key) && localeData.races[key]) {
       return localeData.races[key];
     }
 
     // Fallback to English
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.races?.[key]) {
+      if (englishData?.races && Object.hasOwn(englishData.races, key) && englishData.races[key]) {
         return englishData.races[key];
       }
     }
@@ -432,14 +437,14 @@ export class TranslationProvider {
     const localeData = this.registry.getLocale(locale);
 
     // Try requested locale
-    if (localeData?.clans?.[key]) {
+    if (localeData?.clans && Object.hasOwn(localeData.clans, key) && localeData.clans[key]) {
       return localeData.clans[key];
     }
 
     // Fallback to English
     if (locale !== 'en') {
       const englishData = this.registry.getLocale('en');
-      if (englishData?.clans?.[key]) {
+      if (englishData?.clans && Object.hasOwn(englishData.clans, key) && englishData.clans[key]) {
         return englishData.clans[key];
       }
     }
