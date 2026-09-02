@@ -241,6 +241,32 @@ describe('CharacterColorService', () => {
       expect(matches).toEqual([]);
     });
 
+    /**
+     * BUG-056: with a non-positive count the bounded top-k loop never takes its
+     * `best.length < count` branch, so the else-branch read
+     * `best[best.length - 1]` on an empty array and threw a TypeError. The
+     * reachable route is a corrupted `maxResults` read out of localStorage.
+     */
+    it.each([0, -1])('returns an empty array for a count of %s', (count) => {
+      const mockDyeService = {
+        getAllDyes: vi.fn().mockReturnValue([
+          { id: 1, name: 'Snow White', hex: '#FFFFFF', rgb: { r: 255, g: 255, b: 255 } },
+          { id: 2, name: 'Soot Black', hex: '#000000', rgb: { r: 0, g: 0, b: 0 } },
+        ]),
+      } as unknown as DyeService;
+
+      const testColor: CharacterColor = {
+        index: 0,
+        hex: '#FF0000',
+        rgb: { r: 255, g: 0, b: 0 },
+      };
+
+      expect(() =>
+        service.findClosestDyes(testColor, mockDyeService, { count })
+      ).not.toThrow();
+      expect(service.findClosestDyes(testColor, mockDyeService, { count })).toEqual([]);
+    });
+
     it('should skip Facewear dyes in findClosestDyes', () => {
       const mockDyeService = {
         getAllDyes: vi.fn().mockReturnValue([

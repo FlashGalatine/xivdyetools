@@ -1019,11 +1019,23 @@ export class APIService {
    * Uses injected fetch client
    */
   async isAPIAvailable(): Promise<boolean> {
+    // BUG-057: this was the only fetch in the file without a timeout, so an
+    // upstream that accepts the connection and then stalls left the
+    // availability probe hanging indefinitely — the one call whose entire job
+    // is to answer quickly. Every other request goes through fetchWithTimeout,
+    // which is not reusable here because it also parses a JSON body.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), UNIVERSALIS_API_TIMEOUT);
+
     try {
-      const response = await this.fetchClient.fetch(`${this.baseUrl}/data-centers`);
+      const response = await this.fetchClient.fetch(`${this.baseUrl}/data-centers`, {
+        signal: controller.signal,
+      });
       return response.ok;
     } catch {
       return false;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

@@ -323,6 +323,14 @@ export class CharacterColorService {
   ): CharacterColorMatch[] {
     const { count = 3, matchingMethod = 'ciede2000' } = options;
 
+    // BUG-056: with `count <= 0` the bounded top-k loop below never takes its
+    // `best.length < count` branch, so the else-branch dereferences
+    // `best[best.length - 1]` on an empty array and throws a TypeError. The
+    // honest answer to "give me at most zero matches" is an empty list; the
+    // reachable route to it is a corrupted `maxResults` read out of
+    // localStorage.
+    if (count <= 0) return [];
+
     const allDyes = dyeService.getAllDyes();
 
     // OPT-015 (2026-07-18 audit): single-pass bounded top-k selection instead
