@@ -259,6 +259,25 @@ export function parseBooleanParam(value: string | undefined, name?: string): boo
 }
 
 /** Parse a comma-separated list of integers. */
+/**
+ * A dye id in canonical form — the only spelling the dye routes accept.
+ *
+ * api-worker-06: `parseInt` alone made `/v1/dyes/1e3` return the stainID-1 dye
+ * with HTTP 200 and a 24-hour shared-cache TTL, and `/v1/dyes/5729abc`,
+ * `/v1/dyes/%205729` and `/v1/dyes/+5729` each cached the same payload under a
+ * key of its own. The icon proxy took `CANONICAL_ICON_ID` for exactly this
+ * reason (FINDING-025 / API-4); the dye routes did not. A leading `-` is
+ * allowed because the legacy Facewear lookup is keyed on negative ids.
+ *
+ * This checks the SPELLING, not the range — `resolveIdType` owns the range and
+ * already answers a useful 404 for an id that is well-formed but unassigned.
+ * The bound is deliberately loose (10 digits) so this cannot quietly turn an
+ * out-of-range 404 into a "malformed" 400; the leading `[1-9]` is what matters,
+ * since it also rejects the leading zeros that would otherwise cache the same
+ * dye under several keys.
+ */
+export const CANONICAL_DYE_ID = /^-?[1-9]\d{0,9}$/;
+
 export function parseCommaSeparatedIds(
   value: string | undefined,
   name: string,
@@ -284,7 +303,10 @@ export function parseCommaSeparatedIds(
   const ids: number[] = [];
   for (const part of parts) {
     const num = parseInt(part, 10);
-    if (isNaN(num)) {
+    // api-worker-06: `parseInt` alone accepts `1e3`, `5729abc` and `+5729`,
+    // each resolving to a real dye under a cache key of its own. Same
+    // canonical form the single-id routes and the icon proxy require.
+    if (!CANONICAL_DYE_ID.test(part) || isNaN(num)) {
       throw new ApiError(ErrorCode.VALIDATION_ERROR, `Invalid ID "${part}" in "${name}". All values must be integers.`, 400, {
         parameter: name,
         received: part,

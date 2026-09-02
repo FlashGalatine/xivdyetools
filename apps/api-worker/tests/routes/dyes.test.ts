@@ -429,3 +429,83 @@ describe('GET /v1/dyes/consolidation-groups', () => {
     expect(body.data.unconsolidated).toBeDefined();
   });
 });
+
+/**
+ * BUG-047: `sortRaw !== undefined` treated an empty-but-present `?sort=` as a
+ * supplied value, and `parseEnumParam` with no default throws
+ * MISSING_PARAMETER — a hard 400 on an OPTIONAL parameter, with a code saying
+ * it was missing. Any client building `&sort=${state.sort ?? ''}` got that
+ * instead of an unsorted list. `minPrice`/`maxPrice` had already been fixed for
+ * this exact shape; `order` was immune only because it passes a default.
+ *
+ * The old suite only ever sent real sort values, so the empty case was never
+ * asked.
+ */
+/**
+ * A fresh env per request, so these blocks do not spend the module-level `env`'s
+ * 65-request budget — the file is already close to it, and a 429 here would
+ * look like the assertion failing.
+ */
+async function getFresh(path: string) {
+  return app.request(path, { method: 'GET' }, createMockEnv());
+}
+
+describe('GET /v1/dyes — an optional param that is present but empty', () => {
+  it.each(['?sort=', '?sort'])('treats %s as not provided', async (query) => {
+    const res = await getFresh(`/v1/dyes${query}`);
+    expect(res.status).toBe(200);
+  });
+
+  it('still rejects a sort value that is genuinely wrong', async () => {
+    const res = await getFresh('/v1/dyes?sort=nonsense');
+    expect(res.status).toBe(400);
+  });
+
+  it('still sorts when a real value is given', async () => {
+    const res = await getFresh('/v1/dyes?sort=name&order=asc');
+    expect(res.status).toBe(200);
+  });
+});
+
+/**
+ * api-worker-06: the id routes used a bare `parseInt`, so `/v1/dyes/1e3`
+ * returned the stainID-1 dye with HTTP 200 and a 24-hour shared-cache TTL, and
+ * `/v1/dyes/5729abc`, `/v1/dyes/+5729` and `/v1/dyes/007` each cached the same
+ * payload under a key of its own. The icon proxy took a canonical-form regex
+ * for exactly this reason (FINDING-025 / API-4); the dye routes did not.
+ *
+ * The old suite covered `'abc'` (400) and `200` (404) — never a partially
+ * numeric or exponent form, which is where `parseInt`'s leniency lives.
+ */
+describe('dye id routes reject non-canonical spellings', () => {
+  it.each(['1e3', '5729abc', '+5729', '007', ' 5729', '1.0'])(
+    'refuses /v1/dyes/%s rather than resolving it',
+    async (raw) => {
+      const res = await getFresh(`/v1/dyes/${encodeURIComponent(raw)}`);
+      expect(res.status).toBe(400);
+    }
+  );
+
+  it.each(['1e3', '007', '+1'])('refuses /v1/dyes/stain/%s', async (raw) => {
+    const res = await getFresh(`/v1/dyes/stain/${encodeURIComponent(raw)}`);
+    expect(res.status).toBe(400);
+  });
+
+  it('refuses a non-canonical id inside the batch list', async () => {
+    const res = await getFresh('/v1/dyes/batch?ids=1,1e3');
+    expect(res.status).toBe(400);
+  });
+
+  it('still resolves the canonical spellings', async () => {
+    expect((await getFresh('/v1/dyes/1')).status).toBe(200);
+    expect((await getFresh('/v1/dyes/stain/1')).status).toBe(200);
+    expect((await getFresh('/v1/dyes/batch?ids=1,2')).status).toBe(200);
+  });
+
+  // That the spelling check does NOT take over range handling — a well-formed
+  // but unassigned id still gets the useful 404 rather than a "malformed" 400
+  // — is asserted in `tests/app-hardening.test.ts` ("/v1/dyes/999999999 → 404
+  // with Cache-Control: no-store"). It is not duplicated here: this file is
+  // close enough to the 65-request budget that the extra call 429s, which
+  // would read as the assertion failing.
+});

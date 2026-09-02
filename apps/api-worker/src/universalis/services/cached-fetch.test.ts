@@ -13,7 +13,9 @@ vi.stubGlobal('fetch', mockFetch);
 
 describe('cachedFetch', () => {
   let mockCtx: ReturnType<typeof createMockExecutionContext>;
-  const baseUrl = 'https://test.example.com';
+  // OPT-004: cache keys use a fixed synthetic origin now, so the request host
+  // no longer partitions the cache.
+  const cacheOrigin = 'https://cache.internal';
   const upstreamUrl = 'https://universalis.app/api/v2/aggregated/Crystal/12345';
 
   const testConfig: CacheConfig = {
@@ -48,7 +50,6 @@ describe('cachedFetch', () => {
         config: testConfig,
         upstreamUrl,
         ctx: mockCtx,
-        baseUrl,
       });
 
       expect(result.data).toEqual(upstreamData);
@@ -86,7 +87,6 @@ describe('cachedFetch', () => {
           config: testConfig,
           upstreamUrl,
           ctx: mockCtx,
-          baseUrl,
         })
       ).rejects.toThrow(UpstreamError);
       // one fetch only — the Location target is never requested
@@ -107,7 +107,6 @@ describe('cachedFetch', () => {
           config: testConfig,
           upstreamUrl,
           ctx: mockCtx,
-          baseUrl,
         })
       ).rejects.toThrow(UpstreamError);
     });
@@ -125,7 +124,6 @@ describe('cachedFetch', () => {
         config: testConfig,
         upstreamUrl,
         ctx: mockCtx,
-        baseUrl,
       });
 
       // waitUntil should be called to store to cache
@@ -140,7 +138,7 @@ describe('cachedFetch', () => {
 
       // Pre-populate Cache API
       const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/cache-hit-test`;
+      const cacheUrl = `${cacheOrigin}/__cache/cache-hit-test`;
       const response = new Response(JSON.stringify(cachedData), {
         headers: {
           'Content-Type': 'application/json',
@@ -156,7 +154,6 @@ describe('cachedFetch', () => {
         config: testConfig,
         upstreamUrl,
         ctx: mockCtx,
-        baseUrl,
       });
 
       expect(result.data).toEqual(cachedData);
@@ -172,7 +169,7 @@ describe('cachedFetch', () => {
 
       // Pre-populate Cache API with stale data
       const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/stale-test`;
+      const cacheUrl = `${cacheOrigin}/__cache/stale-test`;
       const response = new Response(JSON.stringify(cachedData), {
         headers: {
           'Content-Type': 'application/json',
@@ -194,7 +191,6 @@ describe('cachedFetch', () => {
         config: testConfig,
         upstreamUrl,
         ctx: mockCtx,
-        baseUrl,
       });
 
       expect(result.data).toEqual(cachedData);
