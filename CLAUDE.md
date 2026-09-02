@@ -88,6 +88,14 @@ pnpm --filter xivdyetools-discord-worker run deploy              # BETA bot (…
 pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
 ```
 
+## Working in this checkout
+
+Short form of `C:/dev/XIVProjects/.claude/skills/audit-shared/traps/git-worktrees-and-finishing.md`; read that file before worktree, verification, or branch-finishing work.
+
+- **Worktrees** go in `.claude/worktrees/<name>` (the native `EnterWorktree` tool; ignored via the local `.git/info/exclude`). Each needs its own `pnpm install --frozen-lockfile`. `git worktree remove` half-deletes on Windows unless `core.longpaths=true` is set (it is here); purge leftovers with robocopy, then `git worktree prune`. Another session usually has this checkout open: never `git stash`, never switch branches here, and commit with `git commit --only -- <paths>`.
+- **The gate** is `pnpm turbo run build type-check lint test` (`--filter=<unit>...` for a unit and its dependents). It hides more than tests: knip inside `lint` for web-app / og-worker / core / svg / bot-logic, the no-hardcoded-UI-strings ESLint rule, i18n orphan + public-metadata vitest files, and the CJK `font-coverage` / `font-faces` tests in discord-worker and og-worker. Not inside it: web-app's bundle budget (`run build:check`) and locale parity (`run validate:i18n`), the wrangler-invariants step (CI only), and gitleaks. Single test file: `pnpm --filter <pkg> exec vitest run <file>` — never `npm test <path>`.
+- **Finishing a branch** means opening a PR against `main`; merging is the production deploy, so "done" also needs the version bump, both changelogs where they apply, and any hand-run step named in `docs/developer-guides/contributing.md` (D1 migrations go through `wrangler d1 execute --file`, never `d1 migrations apply`). Never merge locally into `main` or push it.
+
 ## Key Technical Details
 
 ### Tooling
