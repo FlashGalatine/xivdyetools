@@ -31,6 +31,8 @@ import {
   getPresetsByUser,
   findDuplicatePreset,
   findDuplicatePresetExcluding,
+  findDuplicateBySignature,
+  isDyeSignatureCollision,
   createPreset,
   updatePreset,
   toPublicPreset,
@@ -51,7 +53,7 @@ import { addVote } from './votes.js';
 import {
   checkSubmissionRateLimit,
   getRemainingSubmissions,
-  getSubmissionCountToday,
+  getEffectiveSubmissionCountToday,
   getNextResetUTC,
   DAILY_SUBMISSION_LIMIT,
   // FINDING-008: append-only per-user quotas
@@ -309,7 +311,9 @@ presetsRouter.get('/rate-limit', async (c) => {
 
   return c.json({
     remaining,
-    limit: 10,
+    // presets-api-15: interpolated, not a literal. Raising the cap in
+    // rate-limit-service.ts must not leave the UI advertising the old one.
+    limit: DAILY_SUBMISSION_LIMIT,
     reset_at: resetAt.toISOString(),
   });
 });
@@ -716,11 +720,19 @@ presetsRouter.patch('/:id', async (c) => {
     // BUG-003 (2026-07-18 audit): the duplicate pre-check races with concurrent
     // writers — recover from the UNIQUE dye_signature violation as a 409
     // instead of an unhandled 500
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (errorMessage.includes('UNIQUE constraint failed') && errorMessage.includes('dye_signature')) {
+    if (isDyeSignatureCollision(error)) {
+      // BUG-041: `: null` used to be the whole story when the request carried
+      // no `dyes`. A text-only resubmission (PATCH name/description on a
+      // rejected preset flips it to `pending`, back into the partial index)
+      // hit the same constraint and got a bare 409 "This dye combination
+      // already exists" — naming a field the author never touched, with no
+      // way to tell which preset was in the way, and no way to resubmit. The
+      // signature is stored on the row, so fall back to it.
       const duplicate = body.dyes
         ? await findDuplicatePresetExcluding(c.env.DB, body.dyes, id)
-        : null;
+        : preset.dye_signature
+          ? await findDuplicateBySignature(c.env.DB, preset.dye_signature, id)
+          : null;
       // FINDING-016: same visibility rule as the pre-check above
       const summary = duplicateSummaryFor(auth, duplicate);
       return c.json(
@@ -856,14 +868,14 @@ presetsRouter.post('/', async (c) => {
 
   const auth = c.get('auth');
 
-  // Check rate limit (10 submissions per day)
+  // Check rate limit (DAILY_SUBMISSION_LIMIT submissions per day)
   const rateLimitResult = await checkSubmissionRateLimit(c.env.DB, auth.userDiscordId!);
   if (!rateLimitResult.allowed) {
     return c.json(
       {
         success: false,
         error: ErrorCode.RATE_LIMITED,
-        message: `You've reached your daily submission limit (10 per day). Try again tomorrow.`,
+        message: `You've reached your daily submission limit (${DAILY_SUBMISSION_LIMIT} per day). Try again tomorrow.`,
         remaining: 0,
         reset_at: rateLimitResult.resetAt.toISOString(),
       },
@@ -917,8 +929,7 @@ presetsRouter.post('/', async (c) => {
     );
   } catch (error) {
     // Check if this is a UNIQUE constraint violation on dye_signature
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (errorMessage.includes('UNIQUE constraint failed') && errorMessage.includes('dye_signature')) {
+    if (isDyeSignatureCollision(error)) {
       // Race condition occurred - another request created this preset first
       // Try to find and vote on the existing preset
       const existingPreset = await findDuplicatePreset(c.env.DB, body.dyes);
@@ -949,7 +960,13 @@ presetsRouter.post('/', async (c) => {
   // concurrent requests overshot and this one rolls itself back.
   // OPT-016: this same count replaces the old getRemainingSubmissions re-query,
   // so the happy path still issues one post-create COUNT, now load-bearing.
-  const submissionsToday = await getSubmissionCountToday(c.env.DB, auth.userDiscordId!);
+  //
+  // BUG-042: it must be the EFFECTIVE count — max(rows, append-only events) —
+  // and was the bare row count. For a user who had deleted a preset today the
+  // rollback guard under-triggered (the very case `submission_events` exists
+  // to catch) and the `remaining_submissions` reported below disagreed with
+  // `GET /presets/rate-limit` by exactly the number of deletions.
+  const submissionsToday = await getEffectiveSubmissionCountToday(c.env.DB, auth.userDiscordId!);
   if (submissionsToday > DAILY_SUBMISSION_LIMIT) {
     await c.env.DB.batch([
       c.env.DB.prepare('DELETE FROM votes WHERE preset_id = ?').bind(preset.id),
@@ -959,7 +976,7 @@ presetsRouter.post('/', async (c) => {
       {
         success: false,
         error: ErrorCode.RATE_LIMITED,
-        message: `You've reached your daily submission limit (10 per day). Try again tomorrow.`,
+        message: `You've reached your daily submission limit (${DAILY_SUBMISSION_LIMIT} per day). Try again tomorrow.`,
         remaining: 0,
         reset_at: getNextResetUTC().toISOString(),
       },

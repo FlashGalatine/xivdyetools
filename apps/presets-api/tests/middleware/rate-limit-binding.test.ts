@@ -45,7 +45,64 @@ describe('presets-api public rate limiter backend selection', () => {
 
         expect(first.status).toBe(200);
         expect(second.status).toBe(429);
-        expect(binding.calls).toEqual(['public:ip:203.0.113.5', 'public:ip:203.0.113.5']);
+        // BUG-044: the prefix was `public:ip:`, from when every key WAS an IP.
+        // Service-binding traffic now buckets per acting Discord user, so the
+        // prefix names only the namespace.
+        expect(binding.calls).toEqual(['public:203.0.113.5', 'public:203.0.113.5']);
+    });
+
+    /**
+     * BUG-044: a request over a Service Binding carries no `CF-Connecting-IP`
+     * — both bots build `new Request('https://internal' + path, …)` — so
+     * `getClientIp` returned the literal `'unknown'` and EVERY bot request
+     * from EVERY Discord user in EVERY guild shared ONE 100/min bucket. The
+     * limiter is mounted ahead of `authMiddleware`, so there was no
+     * authenticated bypass: `/preset` commands began 429-ing each other.
+     *
+     * The old suite could not see it — it drove a single synthetic key and
+     * asserted header shape and backend selection, never two distinct callers.
+     */
+    it('gives two bot users two buckets, not one shared `unknown`', async () => {
+        const binding = fakeBinding([true, true, true, true]);
+        const env = createMockEnv({ RL_PUBLIC: binding });
+        const app = buildApp();
+
+        // No CF-Connecting-IP: exactly the shape a Service Binding produces.
+        await app.request('/test', { headers: { 'X-User-Discord-ID': '111111111111111111' } }, env);
+        await app.request('/test', { headers: { 'X-User-Discord-ID': '222222222222222222' } }, env);
+
+        expect(binding.calls).toEqual([
+            'public:111111111111111111',
+            'public:222222222222222222',
+        ]);
+        expect(binding.calls).not.toContain('public:unknown');
+    });
+
+    it('still falls back to the IP when no acting user is named', async () => {
+        const binding = fakeBinding([true]);
+        const env = createMockEnv({ RL_PUBLIC: binding });
+        const app = buildApp();
+
+        await app.request('/test', { headers: { 'CF-Connecting-IP': '198.51.100.7' } }, env);
+
+        expect(binding.calls).toEqual(['public:198.51.100.7']);
+    });
+
+    it('ignores a header that is not snowflake-shaped', async () => {
+        // The header is trusted for BUCKETING only; identity still comes from
+        // the signature in authMiddleware. A junk value must not create a
+        // bucket of its own choosing.
+        const binding = fakeBinding([true]);
+        const env = createMockEnv({ RL_PUBLIC: binding });
+        const app = buildApp();
+
+        await app.request(
+            '/test',
+            { headers: { 'X-User-Discord-ID': 'not-a-snowflake', 'CF-Connecting-IP': '198.51.100.7' } },
+            env
+        );
+
+        expect(binding.calls).toEqual(['public:198.51.100.7']);
     });
 
     it('keeps the memory limiter when RL_PUBLIC is not bound', async () => {

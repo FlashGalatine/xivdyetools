@@ -265,6 +265,31 @@ describe('PresetService', () => {
             expect(result.has_more).toBe(false);
         });
 
+        /**
+         * presets-api-08: `has_more` was `offset + presets.length < total`, and
+         * `rowsToPresets` DROPS any row it cannot parse — so one corrupt row on
+         * the last page made `has_more` true, the client fetched the next page,
+         * got `presets: []` with the same `total`, and looped for ever.
+         *
+         * The old suite only ever fed well-formed rows, which is why a
+         * pagination bug lived behind a "should calculate has_more correctly".
+         */
+        it('does not claim another page when the last one held an unparsable row', async () => {
+            const db = createMockD1Database();
+            // total 21, limit 20, page 2 → one row, and it is corrupt.
+            const corrupt = { ...createMockPresetRow(), dyes: 'not json {', _total: 21 };
+
+            db._setupMock(() => [corrupt]);
+
+            const result = await getPresets(db, { page: 2, limit: 20 });
+
+            // The row was dropped from the payload…
+            expect(result.presets).toHaveLength(0);
+            // …but the cursor is a property of the QUERY: 20 + 1 = 21, so this
+            // is the end of the list.
+            expect(result.has_more).toBe(false);
+        });
+
         it('should handle empty results with total 0', async () => {
             const db = createMockD1Database();
 
