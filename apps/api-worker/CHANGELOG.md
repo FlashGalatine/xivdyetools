@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.2] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit
+
+- `?method=` validation no longer resolves through `Object.prototype` (BUG-011 /
+  BUG-046). `?method=constructor` matched the legacy-alias map, skipped the allowlist
+  entirely and answered `200` with a null distance; the allowlist now runs first and
+  the alias lookup is an own-property check, so it is a `400` like any other unknown
+  value.
+
 ## [0.10.1] - 2026-09-02
 
 ### Removed

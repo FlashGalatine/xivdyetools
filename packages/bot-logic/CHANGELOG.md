@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit
+
+- `resolveCssColorName` returns `null` for inherited object keys (BUG-011). A colour
+  named `constructor` or `__proto__` used to resolve to a function, so
+  `/contrast dye1:constructor` threw inside the handler instead of answering with the
+  localized "invalid colour" message.
+
 ## [3.0.0] - 2026-08-29
 
 ### ⚠️ BREAKING — chara-name privacy

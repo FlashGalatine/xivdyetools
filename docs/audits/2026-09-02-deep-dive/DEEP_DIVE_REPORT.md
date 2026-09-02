@@ -224,11 +224,28 @@ Checked and dropped, so the next audit does not re-chase them.
 
 ## Remediation status
 
+The audit itself modified no source file. Sprints 1–3 of `REMEDIATION_PLAN.md` were then executed with the user's approval on 2026-09-02.
+
 | ID | Status | Commit |
 |---|---|---|
-| all | OPEN | — |
+| BUG-016 | FIXED | `a5bd0eb3` |
+| BUG-012 | FIXED | `f62e1246` |
+| BUG-069 | FIXED | `a5bd0eb3` |
+| BUG-015, BUG-018 | FIXED | `2b0953d9` |
+| BUG-007, BUG-091, BUG-092 | FIXED | `ebdcb4b1` |
+| BUG-009 | FIXED | `184f1897` |
+| BUG-014, BUG-084 | FIXED | `7f5c662e` |
+| BUG-019, BUG-020, BUG-065 | FIXED | `61cadaae` |
+| BUG-070, BUG-071, BUG-077, BUG-080 | FIXED | `8825bf55` |
+| BUG-082, BUG-090 | FIXED | `8abd89d3` |
+| BUG-006 | FIXED | `c1c7a173` |
+| BUG-011, BUG-046, BUG-055, BUG-105 | FIXED | `ef357d26` |
+| BUG-008, BUG-056, BUG-057, BUG-058, BUG-059, REFACTOR-009 | FIXED | `c83d7874` |
+| everything else | OPEN | — |
 
-No source file was modified by this audit.
+**Deliberately not done in Sprint 3:** OPT-005 (drop the per-colour `getAllDyes` copy) and OPT-009 (add an LRU to `rgbToRyb`). Both are LOW-impact optimizations whose fixes carry more risk than the gain: OPT-005 would change `getAllDyes`'s defensive-copy contract for every caller, and OPT-009 would put a cache in front of a conversion this same sprint rewrote. Correctness first; measure before caching.
+
+**Gate at the end of Sprint 3:** `pnpm turbo run build type-check lint test` — 61/61 tasks green, plus the web-app bundle budget.
 
 ## Next steps
 

@@ -11,6 +11,8 @@ No credential rotation is required by any finding in this catalog.
 
 ## Sprint 1 — `web-app`: the dye id grammar, and the fixture that hid it
 
+**✅ COMPLETED 2026-09-02** — a5bd0eb3, f62e1246, 2b0953d9, ebdcb4b1. **Deploy needs:** one web-app Pages release (version bump + CHANGELOG + CHANGELOG-laymans).
+
 The 5.0 rewrite made stainID canonical, but several call sites still pass or expect an item ID, and the two ranges are disjoint (1–254 vs 5729–48227) so each mismatch fails totally rather than partially. They are grouped here because one test fixture hides all of them and one Pages release fixes them together. Anchor finding: **BUG-016**.
 
 | ID | Sev | Tested? | Item |
@@ -28,6 +30,8 @@ The 5.0 rewrite made stainID canonical, but several call sites still pass or exp
 
 ## Sprint 2 — `web-app`: lifecycle, teardown and silent failures
 
+**✅ COMPLETED 2026-09-02** — 184f1897, 7f5c662e, 61cadaae, 8825bf55, 8abd89d3. **Deploy needs:** ships with Sprint 1 in the same web-app release.
+
 The second web-app cluster: components that lose listeners, leak them, or fail without telling anyone. Separate from Sprint 1 because it touches the base component and the modal shell, which Sprint 1's files sit inside — landing them together would make a regression hard to attribute.
 
 | ID | Sev | Tested? | Item |
@@ -44,6 +48,8 @@ The second web-app cluster: components that lose listeners, leak them, or fail w
 **Ends with:** the same web-app gate as Sprint 1 → merge → `deploy-web-app.yml`.
 
 ## Sprint 3 — `@xivdyetools/core`: colour maths and lookup hardening
+
+**✅ COMPLETED 2026-09-02** — c1c7a173, ef357d26, c83d7874. Also carried the api-worker and bot-logic halves of BUG-011 (scheduled in Sprints 5 and 9) because one class fix in three files is cheaper and safer than three. **Deploy needs:** publish @xivdyetools/core and @xivdyetools/bot-logic, then deploy api-worker; discord-worker picks up the RYB fix on its next deploy. OPT-005 and OPT-009 deliberately not done — see the report status table.
 
 One publish. **BUG-006 is the anchor** — the bot's default mix mode returns the wrong hue for every green and teal dye.
 
