@@ -38,6 +38,7 @@ import type { RGB } from '@xivdyetools/types';
 import type { MatchingMethod } from '../types/index.js';
 import type { DyeService } from './DyeService.js';
 import { ColorConverter } from './color/ColorConverter.js';
+import { COLOR_DISTANCE_MAX } from '../constants/index.js';
 
 /**
  * Options for finding closest dye matches from character colors.
@@ -289,8 +290,10 @@ export class CharacterColorService {
       case 'redmean':
         return ColorConverter.getRedmeanDistance(hex1, hex2);
       case 'distinguish':
-        // Unrounded percent — identical ranks to RGB DIST, no ranking ties
-        return ColorConverter.getColorDistance(hex1, hex2) / 4.416729559;
+        // Unrounded percent — identical ranks to RGB DIST, no ranking ties.
+        // REFACTOR-009: 4.416729559 was a third hardcoded copy of
+        // COLOR_DISTANCE_MAX / 100; DyeSearch.ts:65 already derives it.
+        return (ColorConverter.getColorDistance(hex1, hex2) / COLOR_DISTANCE_MAX) * 100;
       default:
         return ColorConverter.getDeltaE(hex1, hex2, 'ciede2000');
     }
