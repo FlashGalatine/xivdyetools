@@ -2,7 +2,7 @@
 
 ---
 
-## Unreleased — Translation fixes and a privacy improvement
+## Web-App Version 5.0.1 — September 2, 2026
 
 - **If you use the app in Japanese, German, French, Korean, or Chinese, a lot of leftover English just went away.** The dye category headings in the color palette drawer (Whites, Reds, Blues, and so on) were silently stuck in English for every language due to a bug — they now show in your language. The whole Community Presets flow — editing a preset, submitting one, error messages, vote buttons — is now fully translated instead of switching back to English partway through.
 - Screens that used to freeze on the old language after you switched (some result cards and panels) now update immediately.

@@ -2,7 +2,7 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
-## [Unreleased]
+## [1.2.1] - 2026-09-02
 
 ### Changed
 
