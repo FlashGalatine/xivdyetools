@@ -56,7 +56,7 @@ Names come from `env.X` reads in `apps/*/src` that are **not** in any `[vars]` b
 | `MODERATOR_IDS` | discord-worker, moderation-worker, presets-api | CSV of Discord IDs (config, not secret) | As needed — all three at once |
 | `MODERATION_CHANNEL_ID`, `SUBMISSION_LOG_CHANNEL_ID` | discord-worker, moderation-worker | channel IDs (config) | As needed |
 | `STATS_AUTHORIZED_USERS` | discord-worker | CSV of Discord IDs (config) | As needed |
-| `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`, `MODERATION_WEBHOOK_URL`, `DISCORD_BOT_WEBHOOK_URL` | presets-api (legacy / optional paths — dead or fallback only) | — | Remove when unused (PAPI-16) |
+| `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`, `MODERATION_WEBHOOK_URL`, `DISCORD_BOT_WEBHOOK_URL` | presets-api — **no longer read by any code** (the `notifyModerators` path was deleted 2026-09-01, dead-code audit DEAD-009) | — | **Delete, not rotate**, from `apps/presets-api`: `wrangler secret delete <NAME> --env production` |
 | `BOT_TOKEN` | stoat-worker (Node `.env`, parked) | Revolt bot token | On compromise |
 
 ### GitHub Actions secrets (repository settings → Secrets)
