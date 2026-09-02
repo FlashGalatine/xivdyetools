@@ -135,18 +135,14 @@ function getLocalizedHarmonyType(type: string, t: Translator): string {
   };
   const key = keyMap[type];
   if (key) return t.t(key);
-  // Fallback: capitalize first letter
-  const formats: Record<string, string> = {
-    complementary: 'Complementary',
-    analogous: 'Analogous',
-    triadic: 'Triadic',
-    'split-complementary': 'Split-Complementary',
-    tetradic: 'Tetradic',
-    'inverted-tetradic': 'Inverted Tetradic',
-    square: 'Square',
-    monochromatic: 'Monochromatic',
-  };
-  return formats[type] || type.charAt(0).toUpperCase() + type.slice(1);
+  // pkg-svg-bot-logic-08: an English `formats` table used to sit here as a
+  // "fallback", duplicating all eight names. It could never run — `keyMap`
+  // covers every HarmonyType, so the return above always fires, and even on a
+  // missing locale key `Translator.t()` returns the raw key rather than
+  // undefined. The reverse-key gate is what actually guards the locale files.
+  // Only a genuinely unknown type reaches here, and capitalising it is the
+  // honest answer for one.
+  return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
 // ============================================================================

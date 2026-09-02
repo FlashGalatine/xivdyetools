@@ -440,3 +440,48 @@ describe('executeHarmony', () => {
     });
   });
 });
+
+// ============================================================================
+// The type label reaches the card from the locale data (pkg-svg-bot-logic-08)
+// ============================================================================
+
+describe('the harmony type label', () => {
+  /**
+   * `getLocalizedHarmonyType` used to carry an English `formats` table below
+   * its locale lookup, described as a fallback. It could never run: the key map
+   * covers all eight types, so the lookup always returned first, and even on a
+   * missing key `Translator.t()` yields the raw key rather than undefined. It
+   * was removed — but the removal is only safe while every type really does
+   * resolve through the locale data, which is what this asserts.
+   *
+   * The card uppercases the label, and Japanese has no case, so the localized
+   * string appears verbatim in the SVG.
+   */
+  it.each(HARMONY_TYPES)('renders %s from the ja locale, not an English fallback', async (type) => {
+    const result = await executeHarmony({
+      baseHex: BASE_HEX,
+      harmonyType: type as HarmonyType,
+      locale: 'ja',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    // No English name for the type survives into the card…
+    const english: Record<string, string> = {
+      complementary: 'COMPLEMENTARY',
+      analogous: 'ANALOGOUS',
+      triadic: 'TRIADIC',
+      'split-complementary': 'SPLIT-COMPLEMENTARY',
+      tetradic: 'TETRADIC',
+      'inverted-tetradic': 'INVERTED TETRADIC',
+      square: 'SQUARE',
+      monochromatic: 'MONOCHROMATIC',
+    };
+    expect(result.svgString).not.toContain(english[type]);
+
+    // …and the raw key never leaks either, which is what a missing locale
+    // entry would produce now that the English table is gone.
+    expect(result.svgString).not.toContain('HARMONY.');
+  });
+});
