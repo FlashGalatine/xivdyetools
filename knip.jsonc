@@ -7,8 +7,9 @@
   // package's `lint`. Six apps are gated on it the same way (api-worker,
   // discord-worker, image-worker, moderation-worker, oauth, presets-api —
   // see the block below). `apps/web-app` and `apps/og-worker` are gated too,
-  // but on their OWN knip.jsonc; their blocks here exist only so their
-  // imports are traversed and therefore *count as usage*. `apps/stoat-worker`
+  // but on their OWN knip.jsonc; here they are declared (web-app by its own
+  // key, og-worker through the `apps/*` glob) only so their imports are
+  // traversed and therefore *count as usage*. `apps/stoat-worker`
   // (parked) is the one workspace with no dead-code gate at all.
   //
   // Why a root config and not one file per package: `@xivdyetools/core`'s

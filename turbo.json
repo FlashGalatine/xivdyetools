@@ -40,11 +40,12 @@
       "dependsOn": ["^build"],
       "cache": true,
       // 16 of the 17 workspaces are dead-code gated — every package and every
-      // app but the parked `apps/stoat-worker` — each via its own `lint:dead`
-      // folded into `lint`. Fourteen of those run `knip --directory ../..
-      // --workspace <ws>` against the ROOT knip.jsonc (see its header);
-      // `apps/web-app` and `apps/og-worker` run a bare `knip` against their
-      // own. That is why `$TURBO_ROOT$/knip.jsonc` is an input below: editing
+      // app but the parked `apps/stoat-worker` — with knip running inside
+      // `lint`. Fourteen of those do it via a `lint:dead` script that runs
+      // `knip --directory ../.. --workspace <ws>` against the ROOT knip.jsonc
+      // (see its header); `apps/web-app` and `apps/og-worker` call a bare
+      // `knip` against their own knip.jsonc directly from `lint`. That is why
+      // `$TURBO_ROOT$/knip.jsonc` is an input below: editing
       // it changes what fourteen workspaces' `lint` reports, so it must bust
       // every workspace's lint cache. NOTE the root gate reads the *whole*
       // monorepo graph: a dependent workspace dropping an import can turn a
