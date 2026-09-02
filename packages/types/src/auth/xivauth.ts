@@ -28,6 +28,8 @@ export interface XIVAuthTokenResponse {
 
 /**
  * XIVAuth character object from /api/v1/characters
+ *
+ * @public
  */
 export interface XIVAuthCharacter {
   /** Lodestone character ID */

@@ -2,6 +2,17 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
+## [Unreleased]
+
+This package is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
+into `lint`; root `knip.jsonc`). Because `@xivdyetools/worker-kit` sits at its registry version
+(1.2.0), nothing was removed — the first run found 20 barrel exports (11 values, 9 types) with no
+in-repo consumer, spread across `middleware/index.ts`, `rate-limiter/index.ts`, and the published
+`rate-limiter/presets/index.ts` subpath. Each is tagged `@public` rather than removed; the seven
+presets re-exports are tagged even though the same values are reachable in-repo through the
+sibling `rate-limiter/index.ts` barrel too, because `./rate-limiter/presets` is its own published
+`package.json#exports` entry.
+
 ## [1.2.0] - 2026-08-30
 
 Security audit remediation (docs/audits/2026-08-29-security, FINDING-010 + FINDING-012). Minor bump: a behaviour change in what gets logged, plus a constructor that now throws in a case it previously let through silently.

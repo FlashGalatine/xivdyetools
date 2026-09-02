@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+This package is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
+into `lint`; root `knip.jsonc`). Because `@xivdyetools/types` sits at its registry version (2.0.0),
+nothing was removed — the first run found 43 barrel exports (2 values, 41 types) with no in-repo
+consumer, spread across the root barrel and every domain sub-barrel (`auth`, `color`, `dye`,
+`error`, `preset`). Each is tagged `@public` on its export specifier (published `.d.ts` contract,
+deliberately kept without an in-repo consumer) rather than removed.
+
 ## [2.0.0] - 2026-08-16
 
 Monorepo 2.0 / Web-App 5.0 release. The intermediate **1.16.0** bump (2026-07-31, schema v2 types + `CMYK`) was never published — npm still has 1.15.0 — so it is folded into this entry rather than listed separately.
