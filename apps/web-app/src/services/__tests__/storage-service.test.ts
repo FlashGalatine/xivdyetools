@@ -315,14 +315,25 @@ describe('StorageService', () => {
         return;
       }
 
+      // Two entries, not one. `expiresAt` is `Date.now() + ttlMs` and the read
+      // compares against `Date.now()`, so asserting that a 10 ms entry is STILL
+      // PRESENT on the very next statement is a race with the scheduler: any
+      // pause over 10 ms between the write and the read — trivial on a loaded CI
+      // runner — reads it as expired. That is what failed CI on 2026-09-02, on a
+      // test untouched since long before. The two sibling tests above are safe
+      // because they only ever assert expiry, after waiting five times the TTL.
+      //
+      // Splitting the assertions removes the race in both directions: a
+      // long-lived entry cannot expire early, and a 1 ms entry read 50 ms later
+      // cannot still be alive.
       const ns = StorageService.createNamespace('ttl_');
-      ns.setItemWithTTL('key', 'value', 10);
 
-      expect(ns.getItemWithTTL('key')).toBe('value');
+      ns.setItemWithTTL('alive', 'value', 10_000);
+      expect(ns.getItemWithTTL('alive')).toBe('value');
 
+      ns.setItemWithTTL('doomed', 'value', 1);
       await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(ns.getItemWithTTL('key')).toBeNull();
+      expect(ns.getItemWithTTL('doomed')).toBeNull();
     });
   });
 
