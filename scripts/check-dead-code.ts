@@ -872,9 +872,9 @@ function scanSource(text: string): { masked: string; clean: boolean } {
  * `` /([*_~`|>#\\[\]()])/g `` and `apps/web-app/vite-plugin-changelog-parser.ts`'s
  * `` /`([^`]+)`/g ``). The third is a *quote* inside one instead
  * (`apps/web-app/src/shared/beta-branding.ts`'s `/\bhref="\/assets\/icons\/(?!beta\/)/`):
- * the quote opens a string span that swallows the line's real closing backtick, so the
- * template literal's own backtick is read as opening an unclosed template instead — same
- * effect as the backtick case, different trigger. Each blanks every export below it.
+ * the quote opens a string span that swallows the line's real *opening* backtick, so the
+ * template literal's *closing* backtick is read as opening an unclosed template instead —
+ * same effect as the backtick case, different trigger. Each blanks every export below it.
  * Falling back to raw restores exactly the pre-masking behavior for such a file —
  * never worse than the checker has always been — while the other ~500 files
  * still get the stricter masked reading.
