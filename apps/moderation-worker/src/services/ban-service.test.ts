@@ -214,6 +214,38 @@ describe('ban-service', () => {
       expect(db._queries[0]).toContain('OR');
     });
 
+    /**
+     * moderation-worker-08: Discord sends an autocomplete interaction with
+     * `value: ''` the moment the option is focused, and `minLength: 1` made
+     * that return `[]` — so the picker showed nothing until the moderator
+     * typed. For `unban_user` that WAS the feature: a moderator who does not
+     * remember a banned user's stored display name had no way to list who is
+     * currently banned. Every existing test passed a non-empty query, so the
+     * empty case was simply never asked.
+     */
+    it('lists the top of the list for an empty query rather than nothing', async () => {
+      db._setupMock(() => [
+        { discord_id: 'user-1', xivauth_id: null, username: 'Banned One', banned_at: 'now' },
+      ]);
+
+      const results = await searchBannedUsers(db as unknown as D1Database, '', 25);
+
+      expect(results).toHaveLength(1);
+      // `%%` matches everything; LIMIT 25 is what bounds it.
+      expect(db._bindings[0][0]).toBe('%%');
+      expect(db._bindings[0][2]).toBe(25);
+    });
+
+    it('still bounds an over-long query', async () => {
+      db._setupMock(() => []);
+
+      await searchBannedUsers(db as unknown as D1Database, 'x'.repeat(150), 25);
+
+      // `validateQueryInput` TRUNCATES at maxLength rather than refusing, so
+      // dropping `minLength` above did not loosen this end of the range.
+      expect(db._bindings[0][0]).toBe(`%${'x'.repeat(100)}%`);
+    });
+
     it('should only return users where unbanned_at IS NULL', async () => {
       db._setupMock(() => []);
 
@@ -287,7 +319,16 @@ describe('ban-service', () => {
       });
     });
 
-    it('should return null when user has no presets', async () => {
+    /**
+     * moderation-worker-10: this used to assert `null`, and `/preset ban_user`
+     * turned that into "User not found or has no presets" — so a user who has
+     * never SUBMITTED a preset could not be banned at all. The ban is
+     * meaningful for them: presets-api's `requireNotBanned` guards the votes
+     * router too, so a vote-only abuser is exactly who a moderator would want
+     * to ban and exactly who could not be. The old behaviour was pinned as
+     * intended rather than surfaced as a gap.
+     */
+    it('falls back to the raw snowflake for a user with no presets', async () => {
       db._setupMock(() => null);
 
       const result = await getUserForBanConfirmation(
@@ -296,7 +337,13 @@ describe('ban-service', () => {
         'https://example.com'
       );
 
-      expect(result).toBeNull();
+      expect(result).not.toBeNull();
+      expect(result!.user).toEqual({
+        discordId: 'user-999',
+        username: 'user-999',
+        presetCount: 0,
+      });
+      expect(result!.recentPresets).toEqual([]);
     });
 
     it('should handle user with fewer than 3 presets', async () => {
@@ -682,7 +729,12 @@ describe('ban-service', () => {
 
       await restoreUserPresets(db as unknown as D1Database, 'discord-id-abc');
 
-      expect(db._bindings[0]).toEqual(['discord-id-abc']);
+      // moderation-worker-07: the statement now also bumps `updated_at`, so
+      // the ISO timestamp binds ahead of the discord id. presets-api's own
+      // status writers have always set both; these two were the odd ones out.
+      const [updatedAt, discordId] = db._bindings[0] as [string, string];
+      expect(discordId).toBe('discord-id-abc');
+      expect(updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
   });
 

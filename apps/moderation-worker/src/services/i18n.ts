@@ -40,8 +40,15 @@ export const SUPPORTED_LOCALES: LocaleInfo[] = [
   { code: 'zh', name: 'Chinese', nativeName: '\u4E2D\u6587', flag: '\uD83C\uDDE8\uD83C\uDDF3' },
 ];
 
-/** KV key prefix for user language preferences */
+/** Legacy KV key prefix for user language preferences (read-only now) */
 const KEY_PREFIX = 'i18n:user:';
+
+/**
+ * The unified preferences blob the main bot writes, in the KV namespace both
+ * workers share. `apps/discord-worker/src/services/preferences.ts` is the only
+ * writer; this worker only ever reads it.
+ */
+const UNIFIED_PREFS_PREFIX = 'prefs:v1:';
 
 /**
  * Validates if a string is a valid locale code
@@ -97,13 +104,43 @@ export async function resolveUserLocale(
   userId: string,
   discordLocale?: string
 ): Promise<LocaleCode> {
-  // 1. Check user preference
+  // 1. Check the unified preferences blob the MAIN bot writes.
+  //
+  // BUG-001: this step did not exist, so this worker read only the legacy
+  // `i18n:user:` key. Both workers bind the SAME production KV namespace
+  // (id 1fcb7e037ccd4172a47fccd97cf8e753 in both wrangler.toml files), and
+  // nothing has written `i18n:user:` since the unified system landed —
+  // `/preferences` writes `prefs:v1:` exclusively. So a user who set their
+  // language through the main bot had no legacy key, and every moderation-bot
+  // string came back in their Discord client locale or English. moderation-
+  // worker ships no language command of its own, so they could not correct it.
+  //
+  // Same two-step read as `apps/discord-worker/src/services/i18n.ts`; a direct
+  // KV read rather than importing preferences.ts, which this worker does not
+  // have. (REFACTOR-001 proposes moving this whole layer into bot-logic so
+  // there is one implementation instead of two.)
+  try {
+    const unifiedData = await kv.get(`${UNIFIED_PREFS_PREFIX}${userId}`);
+    if (unifiedData) {
+      const prefs = JSON.parse(unifiedData) as { language?: string };
+      if (prefs.language && isValidLocale(prefs.language)) {
+        return prefs.language;
+      }
+    }
+  } catch {
+    // A malformed blob or a KV hiccup falls through to the legacy key rather
+    // than failing the interaction.
+  }
+
+  // 2. Check the legacy per-user language key (nothing writes it any more,
+  //    but `preferences.ts:465` deliberately does not delete it, so entries
+  //    that predate the unified system still resolve).
   const preference = await getUserLanguagePreference(kv, userId);
   if (preference) {
     return preference;
   }
 
-  // 2. Try Discord locale
+  // 3. Try Discord locale
   if (discordLocale) {
     const mapped = discordLocaleToLocaleCode(discordLocale);
     if (mapped) {
@@ -111,6 +148,6 @@ export async function resolveUserLocale(
     }
   }
 
-  // 3. Default to English
+  // 4. Default to English
   return 'en';
 }

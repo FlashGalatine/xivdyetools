@@ -126,6 +126,14 @@ export function safeParseJSON<T = unknown>(
   }
 
   // Step 3: Validate object structure
+  //
+  // moderation-worker-03: the warning branch used to `return` here, before
+  // Step 4 ever ran — so a body that merely *warned* (a >100-element array,
+  // say) came back UNFROZEN while `src/index.ts` had asked for
+  // `freezeResult: true` and every handler downstream believed the payload was
+  // immutable. Warnings are carried to the end instead of short-circuiting it.
+  let warnings: string[] | undefined;
+
   if (validateStructure) {
     const validation = validateObjectStructure(parsed, maxDepth);
     if (!validation.valid) {
@@ -136,13 +144,8 @@ export function safeParseJSON<T = unknown>(
       };
     }
 
-    // Return warnings even if valid
     if (validation.warnings && validation.warnings.length > 0) {
-      return {
-        success: true,
-        data: parsed as T,
-        warnings: validation.warnings,
-      };
+      warnings = validation.warnings;
     }
   }
 
@@ -154,6 +157,7 @@ export function safeParseJSON<T = unknown>(
   return {
     success: true,
     data: parsed as T,
+    ...(warnings ? { warnings } : {}),
   };
 }
 

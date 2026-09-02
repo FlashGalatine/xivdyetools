@@ -18,6 +18,7 @@ import {
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { isValidSnowflake } from '@xivdyetools/types';
+import { clampChoiceName } from '../utils/embed-text.js';
 import type {
   CommunityPreset,
   PresetListResponse,
@@ -431,10 +432,16 @@ export async function searchPresetsForAutocomplete(
 
     const response = await getPresets(env, filters, options.userDiscordId);
 
+    // moderation-worker-04: clamped. `author_name` is stored verbatim from the
+    // X-User-Discord-Name header with no length rule, so one long display name
+    // pushed a choice past Discord's 100-character cap and Discord rejected the
+    // WHOLE response \u2014 the moderator's preset_id list went blank.
     return response.presets.map((preset) => ({
-      name: preset.author_name
-        ? `${preset.name} (${preset.vote_count}\u2605) by ${preset.author_name}`
-        : `${preset.name} (${preset.vote_count}\u2605)`,
+      name: clampChoiceName(
+        preset.author_name
+          ? `${preset.name} (${preset.vote_count}\u2605) by ${preset.author_name}`
+          : `${preset.name} (${preset.vote_count}\u2605)`,
+      ),
       value: preset.id,
     }));
   } catch (error) {

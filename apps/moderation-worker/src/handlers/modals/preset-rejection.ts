@@ -21,6 +21,7 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import { safeEditMessage, safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import { STATUS_DISPLAY } from '../../types/preset.js';
+import { MIN_REJECTION_REASON_LENGTH } from '../commands/preset.js';
 // MOD-REF-002 FIX: Use shared modal types and helpers
 import type { ModalInteraction } from '../../types/modal.js';
 import { extractTextInputValue, getModalUserId, getModalUsername } from '../../types/modal.js';
@@ -61,7 +62,7 @@ export async function handlePresetRejectionModal(
 
   const reason = extractTextInputValue(interaction.data?.components, 'rejection_reason');
 
-  if (!reason || reason.length < 10) {
+  if (!reason || reason.trim().length < MIN_REJECTION_REASON_LENGTH) {
     return ephemeralResponse({ embeds: [errorEmbed('Error', 'Please provide a valid rejection reason (at least 10 characters).')] });
   }
 
@@ -186,7 +187,7 @@ export async function handlePresetRevertModal(
 
   const reason = extractTextInputValue(interaction.data?.components, 'revert_reason');
 
-  if (!reason || reason.length < 10) {
+  if (!reason || reason.trim().length < MIN_REJECTION_REASON_LENGTH) {
     return ephemeralResponse({ embeds: [errorEmbed('Error', 'Please provide a valid revert reason (at least 10 characters).')] });
   }
 
