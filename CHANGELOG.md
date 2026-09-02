@@ -12,6 +12,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Turbo `inputs` allowlists replaced with `$TURBO_DEFAULT$`, closing a fourth
+  under-hashing gap and the class behind it.** The gating tasks hand-listed the files
+  they read, and that list was wrong four separate times — `scripts/**/*.js`, then
+  `wrangler.toml`, then `tests/**` and `scripts/**`, and finally
+  `packages/test-utils/integration/**` and `apps/api-worker/docs/.vitepress/**`, the
+  last pair found by review *after* the audit that fixed the others. Every one was the
+  same bug: a task read files no glob named, so the edit that would break it could not
+  invalidate its cache and turbo replayed a green it had not earned. knip treats test
+  files as entries, so deleting the last integration test that imported a helper is
+  exactly what turns that helper unused — and that edit hashed nothing. The four gating
+  tasks now hash every git-tracked file in their package, so a directory added tomorrow
+  is covered without anyone remembering. Measured: `packages/test-utils`'s `lint` went
+  from 0 to 4 `integration/` files hashed, `apps/api-worker`'s from 0 to 4
+  `.vitepress/` files. Accepted cost: editing a workspace's README now busts its caches,
+  which is the right trade for a task whose whole job is to be a gate.
+- **`tsconfig.base.json`, `eslint.config.js` and `pnpm-workspace.yaml` are now
+  `globalDependencies`.** Every workspace tsconfig extends the first, and since the four
+  local overrides were removed it is the sole source of `noUnusedLocals` — unhashed,
+  turning that off left all 25 type-check caches valid and the gate reported green
+  without tsc re-running. Every workspace but `apps/web-app` inherits the root ESLint
+  flat config by upward resolution, so editing a rule changed what sixteen workspaces
+  reported while hashing nothing. Verified: a change to `tsconfig.base.json` now takes
+  `turbo run type-check` from 25 cached to 0 cached, where before it stayed fully cached.
+
+
 - **The dead-code gate could exit 0 without running.** `scripts/check-dead-code.ts` decided whether
   it was the entry module by comparing `process.argv[1]` to `fileURLToPath(import.meta.url)`. Node
   resolves the second through every symlink and leaves the first exactly as typed, so reaching the
