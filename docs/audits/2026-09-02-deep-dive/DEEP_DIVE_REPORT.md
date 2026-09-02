@@ -224,7 +224,7 @@ Checked and dropped, so the next audit does not re-chase them.
 
 ## Remediation status
 
-The audit itself modified no source file. Sprints 1–7 of `REMEDIATION_PLAN.md` were then executed with the user's approval on 2026-09-02.
+The audit itself modified no source file. Sprints 1–10 of `REMEDIATION_PLAN.md` were then executed with the user's approval on 2026-09-02.
 
 | ID | Status | Commit |
 |---|---|---|
@@ -246,13 +246,28 @@ The audit itself modified no source file. Sprints 1–7 of `REMEDIATION_PLAN.md`
 | BUG-013, BUG-031, BUG-032, BUG-033, BUG-034, BUG-035, BUG-036, BUG-037 | FIXED | `c4c4ef42` |
 | BUG-026, BUG-028, BUG-029, BUG-030, BUG-039, OPT-002 | FIXED | `c981542b` |
 | BUG-010, BUG-001, BUG-040, REFACTOR-004, `moderation-worker-03…10` | FIXED | `678514b3` |
+| BUG-041, BUG-042, BUG-043, BUG-044, BUG-045, REFACTOR-003, `presets-api-02/07/08/15` | FIXED | `ea8dc352` |
+| BUG-047, BUG-048, OPT-004, `api-worker-04/05/06/07/12/13` | FIXED | `0bc669e4` |
+| BUG-049, BUG-050, BUG-051, `oauth-05/06/07/08/09/11` | FIXED | Sprint 10 |
 | everything else | OPEN | — |
 
 **Deliberately not done in Sprint 3:** OPT-005 (drop the per-colour `getAllDyes` copy) and OPT-009 (add an LRU to `rgbToRyb`). Both are LOW-impact optimizations whose fixes carry more risk than the gain: OPT-005 would change `getAllDyes`'s defensive-copy contract for every caller, and OPT-009 would put a cache in front of a conversion this same sprint rewrote. Correctness first; measure before caching.
 
 **Deliberately not done in Sprint 7:** `moderation-worker-11` — a rejected preset's author is never told, and never told why. Closing it means a notification path (a DM through discord-worker, reusing the existing dead-letter queue), which is a feature rather than a fix. The review's alternative — reword the modal copy that "implies the reason is for them" — does not survive inspection: the placeholder reads *"Please provide a clear reason for rejecting this preset…"*, which is addressed to the moderator and promises the author nothing. Left as a product decision, recorded in the moderation-worker changelog under *Known gap*.
 
-**Gate at the end of Sprint 7:** `pnpm turbo run build type-check lint test` — 61/61 tasks green (warnings only, all pre-existing), plus the new discord-worker bundle gate at 2,697 KiB / 87.8 % of the 3,072 KiB cap.
+**Deliberately not done in Sprint 10:** `oauth-10` (`UPDATE … RETURNING *` to collapse two D1 round trips on the returning-user sign-in). A latency optimisation, and the hand-rolled D1 mock answers `.first()` from a scripted queue regardless of the statement — so a `RETURNING` clause silently consumes the response meant for the follow-up `SELECT` and the change ships with its behaviour unverifiable. Applied, observed turning an error-path test green for the wrong reason, and taken back out. `oauth-06` took the review's second option (bind explicit timestamps) for the same reason.
+
+**Gate at the end of Sprint 10:** `pnpm turbo run build type-check lint test` — 61/61 tasks green (warnings only, all pre-existing), plus the discord-worker bundle gate at ~2,698 KiB / 87.8 % of the 3,072 KiB cap.
+
+### Three tests that passed for the wrong reason
+
+Worth naming together, because the same shape recurs and each was caught only by mutation-proving:
+
+1. **BUG-049** — the error-redirect test passed against the *unfixed* code, because the test env's `FRONTEND_URL` is `localhost:5173` and so was the origin under test. Fixed by picking an allowlisted origin that is **not** `FRONTEND_URL`.
+2. **BUG-030** (Sprint 6) — a test going through `getFontBuffers()` measures an *empty* coverage set, since an unmocked `.ttf` import resolves to a URL string and coerces to a zero-length buffer without throwing. Fixed by reading the real font files off disk.
+3. **BUG-048** — the API-7 limiter test drove the IP-less path, which *is* the shared bucket, so the collapse it was meant to bound was invisible with one caller.
+
+In every case the assertion was correct and the *fixture* made it unfalsifiable.
 
 **Version bumps across Sprints 4–7:** `@xivdyetools/svg` 3.0.1 → **3.0.2**, `@xivdyetools/types` 2.0.1 → **3.0.0** (breaking: `ModerationStats` field names corrected — see its changelog), `xivdyetools-discord-worker` 5.1.1 → **5.1.2**, `xivdyetools-moderation-worker` 1.6.1 → **1.6.2**. `@xivdyetools/core` 4.0.3 and `@xivdyetools/bot-logic` 3.0.1 were already bumped in Sprint 3 and remain unpublished, so Sprint 5's further bot-logic changes ride that same 3.0.1.
 

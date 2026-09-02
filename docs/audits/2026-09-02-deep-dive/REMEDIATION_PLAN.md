@@ -155,6 +155,14 @@ Two things worth carrying forward:
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api...` → merge → `deploy-presets-api.yml`. No D1 migration is required by these findings.
 
+**✅ COMPLETED 2026-09-02** — `ea8dc352`. All ten items. 8/8 tasks green, 749 → 757 tests. No migration needed, as predicted: `moderation_log.action` is a bare `TEXT` column, so `requeue` only needed the comment in `schema.sql` that documents the vocabulary.
+
+- BUG-041 needed a lookup that did not exist. The recovery could only *name* the colliding preset when the request carried a dye list, which a status change never does — and the same gap made a text-only resubmission answer a bare 409 about a field the author never touched. `findDuplicateBySignature` reads it off the stored row instead.
+- **Deploy needs a secret check first.** BUG-043 makes production refuse to start without `INTERNAL_WEBHOOK_SECRET`, `DISCORD_WORKER`, `IMAGE_WORKER` and `THUMBNAILS`. That is the point — without them the moderation fan-out failed silently — but confirm they are set before merging.
+- REFACTOR-003 changes the 401/403/400 envelope worker-wide. The `auth-v2` test named "unchanged envelope" was pinning that the *v1 removal* did not change the 401, not that the envelope is immutable; renamed so it no longer claims something false.
+
+**Deploy needs:** merge → `deploy-presets-api.yml`. Version 2.3.0 (minor: client-visible envelope and bucket changes).
+
 ## Sprint 9 — `api-worker` deploy
 
 | ID | Sev | Item |
@@ -166,6 +174,14 @@ Two things worth carrying forward:
 | `api-worker-04,05,06,07,12,13` | LOW | 3xx echoed as a bodied redirect, telemetry subtree un-rate-limited, bare `parseInt` on a dye id, a 404 docs link, two raw `console.log`s, stale rate-limit docs. |
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-api-worker...` → merge → `deploy-api-worker.yml`.
+
+**✅ COMPLETED 2026-09-02** — `0bc669e4`. Nine items; BUG-046 was already fixed in Sprint 3 (`ef357d26`). 9/9 tasks green, 377 → 385 tests.
+
+- The BUG-048 fix required changing the existing API-7 test to send a `CF-Connecting-IP`. Without one it drives the *service-binding* path, which now has its own budget — and that is precisely why the collapse was invisible: `app.request` sends no IP, so the whole suite was the shared bucket, and with one caller sharing looks like working.
+- **My first api-worker-06 regex was too tight.** The review suggested `[1-9]\d{0,6}`; at 7 digits it turned `/v1/dyes/999999999` from a useful 404 into a "malformed" 400, which `app-hardening.test.ts` caught. The regex checks the SPELLING; `resolveIdType` owns the range. Widened to 10 digits — the leading `[1-9]` is the part that matters, since it also rejects the leading zeros that cached one dye under several keys.
+- OPT-004 made `CacheService`'s `baseUrl` parameter dead, so it is gone along with the plumbing that fed it (cached-fetch options, the chara cache, three router call sites). The dead-code gate would have required that anyway.
+
+**Deploy needs:** merge → `deploy-api-worker.yml`. Version 0.11.0 (minor: `/v1/dyes/1e3` now 400s where it used to answer). One cold Universalis cache on deploy, from the key-namespace change.
 
 ## Sprint 10 — `oauth` deploy
 
@@ -179,6 +195,15 @@ Note: a bare `wrangler deploy` **is** production for this worker, and its versio
 | `oauth-05,06,07,08,09,10,11` | LOW | Provider not re-checked on the GET callback; ISO-vs-SQLite timestamps from the INSERT path; check-then-update on the discord-id owner; env 500 before CORS; body parsed before rate limiting; `RETURNING *` to collapse two D1 hops; `iss` minted but never pinned. |
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-oauth-worker...` → merge → `deploy-oauth.yml`.
+
+**✅ COMPLETED 2026-09-02** — nine of ten items. 8/8 tasks green, 340 → 341 tests. Version 3.1.0, which honours the never-below-3.0.0 rule.
+
+- **oauth-10 deliberately NOT done**, and recorded in the changelog under *Not done*. It is a latency optimisation (`UPDATE … RETURNING *` to collapse two D1 hops), and the hand-rolled D1 mock answers `.first()` from a scripted queue without regard to the statement — so a `RETURNING` clause silently consumes the response meant for the follow-up `SELECT`. I applied it, watched it turn "should throw error if user not found after update" green for the wrong reason, and took it back out. Worth doing alongside a statement-aware mock, not before one.
+- oauth-06 took the review's *second* option (bind explicit timestamps) rather than `RETURNING *`, for the same reason.
+- **The BUG-049 test needed a discriminating origin.** My first version used `localhost:5173` and passed against the *unfixed* code, because the test env's `FRONTEND_URL` is `localhost:5173` — exactly the coincidence the review named. Re-pointed at `localhost:3000`, which is allowlisted and is not `FRONTEND_URL`; it then failed against the mutation as it should.
+- BUG-050 changes `POST /auth/revoke` from `200 {success: true}` to `503` when the blacklist write fails. The old behaviour was pinned by a test called "should handle KV errors gracefully" — graceful was right about the handler not throwing and wrong about the client being told it succeeded.
+
+**Deploy needs:** merge → `deploy-oauth.yml`. Remember a bare `wrangler deploy` **is** production for this worker.
 
 ## Sprint 11 — `og-worker` deploy
 

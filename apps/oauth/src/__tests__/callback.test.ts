@@ -129,6 +129,62 @@ describe('Callback Handler', () => {
             expect(location.searchParams.get('error')).toBe('User denied access');
         });
 
+        /**
+         * BUG-049: every GET-callback failure redirected to
+         * `${FRONTEND_URL}/auth/callback`, discarding the allowlisted origin
+         * that started the flow. A user on beta who cancels the consent screen
+         * was dumped on the PRODUCTION site — their beta sessionStorage (PKCE
+         * verifier, CSRF nonce, return path) is unreachable from there, and the
+         * beta app never learns the login failed.
+         *
+         * The old assertions only ever read `searchParams.get('error')`; none
+         * read `location.origin`, and the suite runs on an env where
+         * FRONTEND_URL happens to equal the origin under test, so the two
+         * coincided.
+         */
+        it('returns a cancelled login to the origin that started it, not to FRONTEND_URL', async () => {
+            // localhost:3000 is on ALLOWED_REDIRECT_ORIGINS and is NOT
+            // FRONTEND_URL (which the test env sets to :5173). That distinction
+            // is the whole test: with :5173 the assertion passes even against
+            // the unfixed code, because target and fallback coincide — which is
+            // exactly why the original suite never caught this.
+            const state = await createSignedState({
+                redirect_uri: 'http://localhost:3000/auth/callback',
+            });
+            const params = new URLSearchParams({
+                error: 'access_denied',
+                error_description: 'User denied access',
+                state,
+            });
+
+            const response = await SELF.fetch(`http://localhost/auth/callback?${params}`, {
+                redirect: 'manual',
+            });
+
+            expect(response.status).toBe(302);
+            const location = new URL(response.headers.get('location')!);
+            expect(location.origin).toBe('http://localhost:3000');
+            expect(location.searchParams.get('error')).toBe('User denied access');
+        });
+
+        it('falls back to FRONTEND_URL when the state is missing or forged', async () => {
+            // Nothing trustworthy to recover a target from, so production is
+            // the only safe destination — a forged state must never be able to
+            // choose one.
+            const params = new URLSearchParams({
+                error: 'access_denied',
+                state: 'not.a.signed.state',
+            });
+
+            const response = await SELF.fetch(`http://localhost/auth/callback?${params}`, {
+                redirect: 'manual',
+            });
+
+            expect(response.status).toBe(302);
+            const location = new URL(response.headers.get('location')!);
+            expect(location.origin).toBe(new URL(env.FRONTEND_URL).origin);
+        });
+
         it('should use error code when no description provided', async () => {
             const params = new URLSearchParams({
                 error: 'access_denied',
@@ -1152,12 +1208,19 @@ describe('Callback Handler', () => {
             const insert = recordedStatements.find((s) => s.sql.includes('INSERT INTO users'));
             expect(insert).toBeDefined();
             expect(insert!.sql).not.toContain('avatar_url');
+            // oauth-06: created_at / updated_at are now bound explicitly rather
+            // than left to the column defaults, so the row and the object the
+            // caller gets back carry the same string. The point of this
+            // assertion — that the bind list is exactly the columns we mean to
+            // write, and avatar_url is not among them — is unchanged.
             expect(insert!.params).toEqual([
                 json.user.id,
                 '222333444555666777',
                 null,
                 'discord',
                 'Minimisation User',
+                expect.stringMatching(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/),
+                expect.stringMatching(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/),
             ]);
 
             // The response still carries the URL — recomputed, not stored

@@ -13,6 +13,7 @@
  */
 
 import { Hono } from 'hono';
+import { getLogger } from '@xivdyetools/worker-kit';
 import type { Env, UserInfoResponse } from '../types.js';
 import {
   getAvatarUrl,
@@ -47,10 +48,13 @@ tokenRouter.get('/me', async (c) => {
 
   try {
     // Use revocation-aware verification if KV is available
+    // oauth-11: pin the issuer this worker mints. Without it `/auth/me`
+    // accepted any well-formed HS256 token signed with JWT_SECRET.
     const payload = await verifyJWTWithRevocationCheck(
       token,
       c.env.JWT_SECRET,
-      c.env.TOKEN_BLACKLIST
+      c.env.TOKEN_BLACKLIST,
+      c.env.WORKER_URL
     );
 
     return c.json<UserInfoResponse>({
@@ -138,6 +142,33 @@ tokenRouter.post('/revoke', async (c) => {
           revoked: true,
         });
       }
+
+      // BUG-050: `revokeToken` swallows a KV write failure and returns false,
+      // and this used to fall through to the "fallback" below — which, because
+      // TOKEN_BLACKLIST is bound, told the user
+      // "Token lacks JTI claim (older token format)". The token HAS a jti; the
+      // write failed. So the user was told logout succeeded, the jti was never
+      // blacklisted, and `/auth/me` and presets-api kept accepting the token
+      // for up to JWT_EXPIRY. Nothing logged it either, so a KV incident in
+      // which every logout silently failed was invisible.
+      //
+      // A logout that did not take is a 503, not a 200: the client needs to
+      // know the session may still be live, and the operator needs the log
+      // line. (The token is still worth clearing client-side, which the
+      // message says.)
+      getLogger(c)?.error('Token revocation write failed', undefined, {
+        reason: 'blacklist_write_failed',
+      });
+      return c.json(
+        {
+          success: false,
+          error: 'Revocation failed',
+          message:
+            'The token could not be revoked. Clear client-side storage and retry — the session may still be active until it expires.',
+          revoked: false,
+        },
+        503
+      );
     }
 
     // Fallback: KV not available or no JTI, client should still clear token

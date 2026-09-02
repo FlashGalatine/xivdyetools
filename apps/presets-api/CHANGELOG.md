@@ -5,6 +5,72 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit, Sprint 8
+
+- **A moderator status change can no longer 500 and lose its own audit row** (BUG-041). A transition
+  *into* the partial unique index (`flagged`/`rejected` → `approved`/`pending`) can collide with a
+  preset that took the same `dye_signature` while this one sat outside it. Neither moderation batch
+  had any recovery, so the moderator got an opaque 500 **and** the batched `moderation_log` row
+  rolled back with it — the action left no trace at all. Both routes now answer the 409 the submit
+  and edit paths have answered since BUG-003, naming the preset in the way.
+- **A text-only resubmission explains itself** (BUG-041). The existing recovery could only identify
+  the colliding preset when the *request* carried a dye list, so `PATCH` of a name/description on a
+  rejected preset (which flips it to `pending`, back into the index) returned a bare
+  "This dye combination already exists" — naming a field the author never touched, with no way to
+  see what was in the way and no way to resubmit. The signature is on the row; it is used now.
+- **The bots no longer throttle each other** (BUG-044). Every request over a Service Binding shared
+  one 100/min bucket: neither bot sends `CF-Connecting-IP`, so `getClientIp` returned the literal
+  `unknown`, and the limiter sits ahead of `authMiddleware` so there was no authenticated bypass.
+  At ~1.7 requests/second aggregate, `/preset` commands began 429-ing each other across guilds.
+  Bot traffic now buckets per acting Discord user.
+- **The daily submission quota agrees with itself** (BUG-042). `POST /presets` reported
+  `remaining_submissions` from the deletable row count while the limiter gating the next request
+  uses `max(rows, append-only events)`. Submit 3, delete 3, submit a 4th: the 201 said 9 remaining,
+  `GET /presets/rate-limit` said 6, and the user was refused at 6. The same variable is the
+  concurrency-rollback guard, so that under-triggered for exactly the deleting user
+  `submission_events` exists to catch.
+- **A stalled image decode fails instead of hanging** (BUG-045) — the image-worker call was the only
+  outbound fetch here without an `AbortSignal`.
+- **`has_more` no longer promises a page that is not there** (presets-api-08). It was measured on
+  the post-filter preset count, and unparsable rows are dropped — so one corrupt row on the last
+  page made the client fetch the next page, receive `[]` with the same `total`, and loop for ever.
+- **A database incident no longer reads as "the queue is clear"** (presets-api-07).
+  `listFailedNotifications` swallowed every D1 error into an empty array and answered HTTP 200. The
+  pre-migration-0005 case it was written for is kept; everything else is a 500, which is what the
+  sibling `resolveFailedNotification` already did.
+- **Re-queueing a preset is logged as `requeue`, not `approve`** (presets-api-02) — `pending` was
+  the only status that could reach the fallback, so the audit trail recorded an approval for an
+  action that pulled a preset *out* of public view. No migration: `moderation_log.action` is a bare
+  `TEXT` column.
+- **The daily cap is interpolated, not hardcoded** (presets-api-15) — `DAILY_SUBMISSION_LIMIT` was
+  imported and then written as a literal `10` in three user-facing places.
+
+### Changed
+
+- **⚠️ Production now refuses to start without `INTERNAL_WEBHOOK_SECRET`, `DISCORD_WORKER`,
+  `IMAGE_WORKER` and `THUMBNAILS`** (BUG-043). Missing any of them made every moderator
+  notification resolve as *success* — no throw, so the caller's `.catch(storeFailedNotification)`
+  never ran and nothing reached the dead-letter queue either. Flagged submissions silently stopped
+  arriving in the moderation channel while `GET /moderation/failed-notifications` stayed empty.
+  `validateEnv`'s production block was written for exactly this degrade-silently class and did not
+  cover the notification or image paths. **Check these are set before deploying.**
+- **⚠️ One error envelope for the whole worker** (REFACTOR-003). The `requireAuth` /
+  `requireModerator` / `requireUserContext` guards returned `{error: 'Unauthorized', message}` — no
+  `success` field, and a human-readable string where every other route returns an `ErrorCode`.
+  Those are the worker's most common rejections, so a client could not switch on `error` reliably.
+  They now use the canonical helpers: `{success: false, error: 'UNAUTHORIZED' | 'FORBIDDEN' |
+  'VALIDATION_ERROR', message}`. **A client matching on the old strings needs updating.**
+- The public rate-limit key prefix is `public:` rather than `public:ip:`, since not every key is an
+  IP any more. Deploying resets the in-flight 60-second counters once.
+
+### Added
+
+- `tests/middleware/rate-limit-binding.test.ts` covers two distinct bot users getting two buckets,
+  the IP fallback, and a junk `X-User-Discord-ID` being ignored. The old suite drove a single
+  synthetic key, so the sharing was invisible.
+
 ## [2.2.1] - 2026-09-02
 
 ### Fixed
