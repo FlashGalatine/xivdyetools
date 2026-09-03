@@ -1,0 +1,66 @@
+Top-level namespaces (union): ['acquisitions', 'categories', 'clans', 'currencies', 'dyeNames', 'harmonyTypes', 'labels', 'locale', 'meta', 'races', 'sheets', 'tools', 'visionTypes', 'visions']
+
+=== Namespace: labels ===
+  union key count: 7 -> ['cosmic', 'cosmicExploration', 'cosmicFortunes', 'dark', 'dye', 'metallic', 'pastel']
+    key='metallic' en='Metallic' IDENTICAL_TO_EN_IN=['de']
+
+=== Namespace: categories ===
+  union key count: 9 -> ['Blues', 'Browns', 'Facewear', 'Greens', 'Neutral', 'Purples', 'Reds', 'Special', 'Yellows']
+    key='Neutral' en='Neutral' IDENTICAL_TO_EN_IN=['de']
+
+=== Namespace: acquisitions ===
+  union key count: 7 -> ['Cosmic Exploration', 'Cosmic Fortunes', 'Crafting', 'Dye Vendor', 'Facewear Collection', 'The Firmament', 'Venture Coffers']
+
+=== Namespace: currencies ===
+  union key count: 11 -> ['Blue Pigment', 'Brown Pigment', 'Cosmocredits', 'Gil', 'Green Pigment', 'Planet-specific Credit', 'Purple Pigment', 'Red Pigment', 'Skybuilders Scrips', 'Venture Coffer', 'Yellow Pigment']
+    key='Cosmocredits' en='CC' IDENTICAL_TO_EN_IN=['ja', 'de', 'fr', 'ko', 'zh']
+    key='Gil' en='Gil' IDENTICAL_TO_EN_IN=['de', 'fr']
+
+=== Namespace: harmonyTypes ===
+  union key count: 10 -> ['analogous', 'complementary', 'compound', 'invertedTetradic', 'monochromatic', 'shades', 'splitComplementary', 'square', 'tetradic', 'triadic']
+
+=== Namespace: visionTypes ===
+  union key count: 5 -> ['achromatopsia', 'deuteranopia', 'normal', 'protanopia', 'tritanopia']
+
+=== Namespace: visions ===
+  union key count: 5 -> ['achromatopsia', 'deuteranopia', 'normal', 'protanopia', 'tritanopia']
+
+=== Namespace: tools ===
+  union key count: 6 -> ['accessibility', 'comparison', 'gradient', 'harmony', 'mixer', 'swatch']
+
+=== Namespace: sheets ===
+  union key count: 9 -> ['eyeColors', 'facePaintColorsDark', 'facePaintColorsLight', 'hairColors', 'highlightColors', 'lipColorsDark', 'lipColorsLight', 'skinColors', 'tattooColors']
+
+=== Namespace: races ===
+  union key count: 8 -> ['auRa', 'elezen', 'hrothgar', 'hyur', 'lalafell', 'miqote', 'roegadyn', 'viera']
+    key='auRa' en='Au Ra' IDENTICAL_TO_EN_IN=['de']
+    key='elezen' en='Elezen' IDENTICAL_TO_EN_IN=['de']
+    key='hrothgar' en='Hrothgar' IDENTICAL_TO_EN_IN=['de', 'fr']
+    key='lalafell' en='Lalafell' IDENTICAL_TO_EN_IN=['de', 'fr']
+    key='miqote' en="Miqo'te" IDENTICAL_TO_EN_IN=['de', 'fr']
+    key='roegadyn' en='Roegadyn' IDENTICAL_TO_EN_IN=['de', 'fr']
+    key='viera' en='Viera' IDENTICAL_TO_EN_IN=['de']
+
+=== Namespace: clans ===
+  union key count: 16 -> ['dunesfolk', 'duskwight', 'helions', 'hellsguard', 'highlander', 'keeperOfTheMoon', 'midlander', 'plainsfolk', 'raen', 'rava', 'seaWolf', 'seekerOfTheSun', 'theLost', 'veena', 'wildwood', 'xaela']
+    key='helions' en='Helions' IDENTICAL_TO_EN_IN=['de']
+    key='raen' en='Raen' IDENTICAL_TO_EN_IN=['fr']
+    key='rava' en='Rava' IDENTICAL_TO_EN_IN=['fr']
+    key='veena' en='Veena' IDENTICAL_TO_EN_IN=['fr']
+    key='xaela' en='Xaela' IDENTICAL_TO_EN_IN=['fr']
+
+=== dyeNames key count per locale ===
+  en: 125
+  ja: 125
+  de: 125
+  fr: 125
+  ko: 125
+  zh: 125
+
+=== meta.dyeCount per locale ===
+  en: 125
+  ja: 125
+  de: 125
+  fr: 125
+  ko: 125
+  zh: 125

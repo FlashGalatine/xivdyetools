@@ -1,0 +1,24 @@
+MIDDLE DOT ·: packages/svg/src/a11y-card.ts:223: cardText(PAD, vTop + 38, `${labels.separation} · ${subject.short}`, {
+EM DASH —: packages/svg/src/budget-ledger.ts:117: const DASH = '—';
+DELTA Δ: packages/svg/src/comparison-card.ts:171: cardText(PAD, vTop + 50, 'ΔE2000', { fill: theme.label, size: CARD_TYPE.label, font: 'mono', letterSpacing: 1 })
+MIDDLE DOT ·: packages/svg/src/contrast-card.ts:418: cardText(PAD, cy + 4, `${p.abbrA}·${p.abbrB}`, { fill: theme.subValue, size: CARD_TYPE.label, font: 'mono' })
+EM DASH —: packages/svg/src/dye-info-card.ts:142: weight: 700, // the dye's name is the headline — bold, like the nearest-dye captions
+EM DASH —: packages/svg/src/dye-info-card.ts:162: ['HSV', hsv ? `${Math.round(hsv.h)} ${Math.round(hsv.s)} ${Math.round(hsv.v)}` : '—'],
+MIDDLE DOT ·: packages/svg/src/dye-info-card.ts:205: ? `${labels.nearest} · ${labels.nearestMore}`
+DELTA Δ: packages/svg/src/dye-info-card.ts:232: weight: 700, // dye names read first; the ΔE figure under them stays regular
+ELLIPSIS …: packages/svg/src/frame.ts:193: while (out.length > 1 && textWidth(out + '…', size, font) > maxPx) {
+ELLIPSIS …: packages/svg/src/frame.ts:196: return out.trimEnd() + '…';
+DEGREE SIGN °: packages/svg/src/harmony-card.ts:146: baseAngle = '0°',
+MIDDLE DOT ·: packages/svg/src/harmony-card.ts:184: cardText(bx, baseTop + 14, `${labels.base} · ${baseAngle}`, {
+DELTA Δ: packages/svg/src/harmony-card.ts:206: const deTag = offDefault ? MATCHING_METHOD_TAGS[method] : 'ΔE';
+RIGHT ARROW →: packages/svg/src/harmony-card.ts:208: cardText(PAD_X, headY, `${labels.ideal} → ${labels.found}`, {
+RIGHT ARROW →: packages/svg/src/harmony-card.ts:251: parts.push(cardText(x, cy + 4, '→', { fill: theme.label, size: 11, font: 'body' }));
+DOWN ARROW ↓: packages/svg/src/harmony-card.ts:351: cardText(PAD_X, vTop + 17, '↓', {
+DELTA Δ: packages/svg/src/nearest-sheet.ts:143: cardText(CARD_WIDTH - PAD, headY, method === 'ciede2000' ? 'ΔE' : MATCHING_METHOD_TAGS[method], {
+DELTA Δ: packages/svg/src/palette-grid.ts:179: cardText(CARD_WIDTH - PAD, headY, method === 'ciede2000' ? 'ΔE' : MATCHING_METHOD_TAGS[method], {
+ELLIPSIS …: packages/svg/src/preset-swatch.ts:73: while (chars.length > 1 && measure(`${chars.join('')}…`) > maxPx) chars.pop();
+ELLIPSIS …: packages/svg/src/preset-swatch.ts:74: return `${chars.join('').trimEnd()}…`;
+BLACK STAR ★: packages/svg/src/preset-swatch.ts:226: metaParts.push(`${voteCount}★`);
+BULLET •: packages/svg/src/preset-swatch.ts:230: text(width / 2, PADDING + 72, fitToWidth(metaParts.join(' • '), headerW, 11), {
+EM DASH —: packages/svg/src/random-dyes-grid.ts:147: cardText(CARD_WIDTH - PAD, cy + 4, r.stainID != null ? String(r.stainID) : '—', {
+DELTA Δ: packages/svg/src/swatch-card.ts:162: cardText(rightX, colHeadBase, 'ΔE', {

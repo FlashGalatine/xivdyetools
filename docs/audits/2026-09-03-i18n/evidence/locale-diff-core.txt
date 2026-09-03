@@ -1,0 +1,27 @@
+source en: 222 keys
+
+== de: 222 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=9
+  SAME-AS-SOURCE  labels.metallic = 'Metallic'
+  SAME-AS-SOURCE  categories.Neutral = 'Neutral'
+  SAME-AS-SOURCE  races.elezen = 'Elezen'
+  SAME-AS-SOURCE  races.miqote = "Miqo'te"
+  SAME-AS-SOURCE  races.roegadyn = 'Roegadyn'
+  SAME-AS-SOURCE  races.auRa = 'Au Ra'
+  SAME-AS-SOURCE  races.hrothgar = 'Hrothgar'
+  SAME-AS-SOURCE  races.viera = 'Viera'
+  SAME-AS-SOURCE  clans.helions = 'Helions'
+
+== fr: 222 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=7
+  SAME-AS-SOURCE  races.miqote = "Miqo'te"
+  SAME-AS-SOURCE  races.roegadyn = 'Roegadyn'
+  SAME-AS-SOURCE  races.hrothgar = 'Hrothgar'
+  SAME-AS-SOURCE  clans.raen = 'Raen'
+  SAME-AS-SOURCE  clans.xaela = 'Xaela'
+  SAME-AS-SOURCE  clans.rava = 'Rava'
+  SAME-AS-SOURCE  clans.veena = 'Veena'
+
+== ja: 222 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=0
+
+== ko: 222 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=0
+
+== zh: 222 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=0

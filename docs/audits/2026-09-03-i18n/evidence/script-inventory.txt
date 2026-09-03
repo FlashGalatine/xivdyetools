@@ -1,0 +1,26 @@
+packages/core/src/data/locales\de.json: 71 codepoints | Latin-1=4
+packages/core/src/data/locales\en.json: 69 codepoints | 
+packages/core/src/data/locales\fr.json: 69 codepoints | Latin-1=7
+packages/core/src/data/locales\ja.json: 149 codepoints | Katakana=72, CJK Unified=55, Fullwidth=3, Hiragana=1
+packages/core/src/data/locales\ko.json: 275 codepoints | Hangul=253
+packages/core/src/data/locales\zh.json: 315 codepoints | CJK Unified=296, Fullwidth=2
+packages/bot-logic/src/i18n/locales\de.json: 113 codepoints | Symbols=10, Latin-1=8, Greek=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\en.json: 105 codepoints | Symbols=9, Latin-1=2, Greek=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\fr.json: 120 codepoints | Latin-1=17, Symbols=10, Greek=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\ja.json: 594 codepoints | CJK Unified=362, Katakana=73, Hiragana=52, Symbols=8, Fullwidth=7, CJK Punct=5, Latin-1=2, Greek=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\ko.json: 528 codepoints | Hangul=425, Symbols=9, Latin-1=2, Greek=2, Fullwidth=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\zh.json: 701 codepoints | CJK Unified=592, Symbols=9, Fullwidth=9, CJK Punct=4, Latin-1=2, Greek=2, Other=1
+   Other: U+FE0F(️)
+apps/web-app/src/locales\de.json: 104 codepoints | Latin-1=12, Symbols=8, Greek=2
+apps/web-app/src/locales\en.json: 96 codepoints | Symbols=7, Latin-1=4, Greek=2
+apps/web-app/src/locales\fr.json: 116 codepoints | Latin-1=23, Symbols=6, Latin Ext=2, Greek=2
+apps/web-app/src/locales\ja.json: 806 codepoints | CJK Unified=569, Katakana=77, Hiragana=62, Fullwidth=7, CJK Punct=6, Latin-1=4, Symbols=3, Greek=2
+apps/web-app/src/locales\ko.json: 674 codepoints | Hangul=579, Symbols=7, Latin-1=4, Greek=2, CJK Punct=1
+apps/web-app/src/locales\zh.json: 996 codepoints | CJK Unified=896, Symbols=7, Fullwidth=7, CJK Punct=4, Latin-1=4, Greek=2
+apps/og-worker/src/services/og-strings.ts: 482 codepoints | CJK Unified=188, Hangul=134, Katakana=49, Hiragana=23, Latin-1=9, CJK Punct=3, Fullwidth=3, Symbols=2
+apps/og-worker/src/services/og-embed.ts: 513 codepoints | CJK Unified=192, Hangul=142, Hiragana=43, Katakana=43, Latin-1=7, Fullwidth=6, Symbols=5, CJK Punct=2

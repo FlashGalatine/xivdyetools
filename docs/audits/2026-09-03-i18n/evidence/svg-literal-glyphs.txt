@@ -1,0 +1,52 @@
+non-ASCII codepoints drawn by packages/svg: 66
+
+  TOFU  (no bundled face)          U+2605 ★   packages/svg/src/preset-swatch.ts:226, packages/svg/src/preset-swatch.ts:29
+  TOFU  (no bundled face)          U+2694 ⚔   packages/svg/src/preset-swatch.ts:87
+  CJK-ONLY (falls to a Noto face)  U+3044 い   packages/svg/src/harmony-card.ts:80
+  CJK-ONLY (falls to a Noto face)  U+306E の   packages/svg/src/harmony-card.ts:78
+  CJK-ONLY (falls to a Noto face)  U+3082 も   packages/svg/src/harmony-card.ts:80
+  CJK-ONLY (falls to a Noto face)  U+30AB カ   packages/svg/src/palette-grid.ts:62, packages/svg/src/random-dyes-grid.ts:42, packages/svg/src/random-dyes-grid.ts:44
+  CJK-ONLY (falls to a Noto face)  U+30B4 ゴ   packages/svg/src/random-dyes-grid.ts:44
+  CJK-ONLY (falls to a Noto face)  U+30B9 ス   packages/svg/src/harmony-card.ts:76
+  CJK-ONLY (falls to a Noto face)  U+30C6 テ   packages/svg/src/random-dyes-grid.ts:44
+  CJK-ONLY (falls to a Noto face)  U+30C8 ト   packages/svg/src/palette-grid.ts:62, packages/svg/src/random-dyes-grid.ts:42
+  CJK-ONLY (falls to a Noto face)  U+30D9 ベ   packages/svg/src/harmony-card.ts:76
+  CJK-ONLY (falls to a Noto face)  U+30E9 ラ   packages/svg/src/palette-grid.ts:62, packages/svg/src/random-dyes-grid.ts:42
+  CJK-ONLY (falls to a Noto face)  U+30EA リ   packages/svg/src/random-dyes-grid.ts:44
+  CJK-ONLY (falls to a Noto face)  U+30F3 ン   packages/svg/src/palette-grid.ts:62, packages/svg/src/random-dyes-grid.ts:42
+  CJK-ONLY (falls to a Noto face)  U+30FC ー   packages/svg/src/harmony-card.ts:76
+  CJK-ONLY (falls to a Noto face)  U+4F4D 位   packages/svg/src/nearest-sheet.ts:52, packages/svg/src/swatch-card.ts:59
+  CJK-ONLY (falls to a Noto face)  U+5165 入   packages/svg/src/dye-info-card.ts:52
+  CJK-ONLY (falls to a Noto face)  U+5272 割   packages/svg/src/palette-grid.ts:60
+  CJK-ONLY (falls to a Noto face)  U+53F7 号   packages/svg/src/dye-info-card.ts:50, packages/svg/src/random-dyes-grid.ts:46
+  CJK-ONLY (falls to a Noto face)  U+5408 合   packages/svg/src/palette-grid.ts:60
+  CJK-ONLY (falls to a Noto face)  U+5834 場   packages/svg/src/dye-info-card.ts:54
+  CJK-ONLY (falls to a Noto face)  U+5E02 市   packages/svg/src/dye-info-card.ts:54
+  CJK-ONLY (falls to a Noto face)  U+5F53 当   packages/svg/src/palette-grid.ts:62
+  CJK-ONLY (falls to a Noto face)  U+60F3 想   packages/svg/src/harmony-card.ts:78
+  CJK-ONLY (falls to a Noto face)  U+624B 手   packages/svg/src/dye-info-card.ts:52
+  CJK-ONLY (falls to a Noto face)  U+6700 最   packages/svg/src/harmony-card.ts:80
+  CJK-ONLY (falls to a Noto face)  U+6A19 標   packages/svg/src/nearest-sheet.ts:50
+  CJK-ONLY (falls to a Noto face)  U+6BD4 比   packages/svg/src/contrast-card.ts:401, packages/svg/src/contrast-card.ts:64
+  CJK-ONLY (falls to a Noto face)  U+7387 率   packages/svg/src/contrast-card.ts:401, packages/svg/src/contrast-card.ts:64
+  CJK-ONLY (falls to a Noto face)  U+7406 理   packages/svg/src/harmony-card.ts:78
+  CJK-ONLY (falls to a Noto face)  U+756A 番   packages/svg/src/dye-info-card.ts:50, packages/svg/src/random-dyes-grid.ts:46
+  CJK-ONLY (falls to a Noto face)  U+76EE 目   packages/svg/src/nearest-sheet.ts:50
+  CJK-ONLY (falls to a Noto face)  U+76F8 相   packages/svg/src/harmony-card.ts:78
+  CJK-ONLY (falls to a Noto face)  U+808C 肌   packages/svg/src/swatch-card.ts:42
+  CJK-ONLY (falls to a Noto face)  U+8272 色   packages/svg/src/harmony-card.ts:78, packages/svg/src/harmony-card.ts:80, packages/svg/src/nearest-sheet.ts:50
+  CJK-ONLY (falls to a Noto face)  U+8A72 該   packages/svg/src/palette-grid.ts:62
+  CJK-ONLY (falls to a Noto face)  U+8FD1 近   packages/svg/src/harmony-card.ts:80
+  CJK-ONLY (falls to a Noto face)  U+90E8 部   packages/svg/src/swatch-card.ts:59
+  CJK-ONLY (falls to a Noto face)  U+9806 順   packages/svg/src/nearest-sheet.ts:52
+  TOFU  (no bundled face)          U+FE0F ️   packages/svg/src/preset-swatch.ts:87, packages/svg/src/preset-swatch.ts:88, packages/svg/src/preset-swatch.ts:93
+  CJK-ONLY (falls to a Noto face)  U+FF1A ：   packages/svg/src/base.ts:315
+  TOFU  (no bundled face)          U+1F342 🍂   packages/svg/src/preset-swatch.ts:89
+  TOFU  (no bundled face)          U+1F389 🎉   packages/svg/src/preset-swatch.ts:90
+  TOFU  (no bundled face)          U+1F3A8 🎨   packages/svg/src/preset-swatch.ts:91
+  TOFU  (no bundled face)          U+1F3D4 🏔   packages/svg/src/preset-swatch.ts:93
+  TOFU  (no bundled face)          U+1F3DB 🏛   packages/svg/src/preset-swatch.ts:88
+  TOFU  (no bundled face)          U+1F464 👤   packages/svg/src/preset-swatch.ts:92
+  TOFU  (no bundled face)          U+1F5E1 🗡   packages/svg/src/preset-swatch.ts:94
+
+(ok glyphs omitted)

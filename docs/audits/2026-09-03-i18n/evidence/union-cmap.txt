@@ -1,0 +1,34 @@
+===== discord-worker (10 faces) =====
+  OK  U+3001 、  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+3002 。  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+300C 「  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+300D 」  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+301C 〜  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+FF01 ！  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  TOFU U+FF06 ＆  <- NO FACE
+  OK  U+FF08 （  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+FF09 ）  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+FF0C ，  <- NotoSansSC-Subset.ttf
+  OK  U+FF0F ／  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+FF1A ：  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+FF1B ；  <- NotoSansSC-Subset.ttf
+  OK  U+FF1D ＝  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+FF1F ？  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+
+===== og-worker (10 faces) =====
+  OK  U+3001 、  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+3002 。  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  TOFU U+300C 「  <- NO FACE
+  TOFU U+300D 」  <- NO FACE
+  OK  U+301C 〜  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  TOFU U+FF01 ！  <- NO FACE
+  OK  U+FF06 ＆  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+FF08 （  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+FF09 ）  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+FF0C ，  <- NotoSansSC-Subset.ttf
+  OK  U+FF0F ／  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  OK  U+FF1A ：  <- NotoSansJP-Subset.ttf, NotoSansSC-Subset.ttf
+  TOFU U+FF1B ；  <- NO FACE
+  TOFU U+FF1D ＝  <- NO FACE
+  TOFU U+FF1F ？  <- NO FACE
+

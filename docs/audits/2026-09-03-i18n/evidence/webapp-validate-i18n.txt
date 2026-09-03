@@ -1,0 +1,64 @@
+[2m$ node scripts/validate-i18n.js && node scripts/i18n-parity.mjs[22m
+
+🌐 i18n Translation Key Validator
+
+======================================================================
+📚 Loaded 1143 translation keys from en.json
+
+📁 Scanning 120 source files...
+
+======================================================================
+
+✅ All 1066 translation key references are valid!
+
+📊 Summary:
+   • Total keys in en.json: 1143
+   • Keys referenced in code: 777
+   • Total references checked: 1066
+
+======================================================================
+
+🌍 Cross-Locale Structural Comparison
+
+✅ All locale files have matching key structure!
+
+📊 Locale Summary:
+   • en: 1143 keys (reference)
+   • ja: 1143 keys ✓
+   • de: 1143 keys ✓
+   • fr: 1143 keys ✓
+   • ko: 1143 keys ✓
+   • zh: 1143 keys ✓
+
+
+======================================================================
+
+📐 Locale File Shape (key order + value whitespace)
+
+✅ All locale files match en.json key order and carry no stray whitespace.
+
+
+🔁 i18n Locale Parity
+
+======================================================================
+EN keys 1143
+
+== de: dups=0 missing=0 extra=0 identical=42 empty=0 varMismatch=0
+  ✓ 42 identical value(s) allow-listed as intentional
+
+== fr: dups=0 missing=0 extra=0 identical=46 empty=0 varMismatch=0
+  ✓ 46 identical value(s) allow-listed as intentional
+
+== ja: dups=0 missing=0 extra=0 identical=9 empty=0 varMismatch=0
+  ✓ 9 identical value(s) allow-listed as intentional
+
+== ko: dups=0 missing=0 extra=0 identical=12 empty=0 varMismatch=0
+  ✓ 12 identical value(s) allow-listed as intentional
+
+== zh: dups=0 missing=0 extra=0 identical=9 empty=0 varMismatch=0
+  ✓ 9 identical value(s) allow-listed as intentional
+
+======================================================================
+
+✅ i18n parity clean — no duplicates, no drift, no untranslated values.
+

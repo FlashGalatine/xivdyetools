@@ -1,0 +1,6 @@
+'mixingOklab' -> 'Perceptuel moderne' | leading_space= False
+'mixingRyb' -> 'Peinture' | leading_space= False
+'mixingHsl' -> 'Basé sur la teinte' | leading_space= False
+'mixingLab' -> 'Perceptuel' | leading_space= False
+'mixingRgb' -> 'Lumière' | leading_space= False
+'mixingSpectral' -> 'Spectral - Peinture réaliste' | leading_space= False

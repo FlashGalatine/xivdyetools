@@ -1,0 +1,44 @@
+### core-i18n-tests
+CMD: pnpm --filter @xivdyetools/core exec vitest run src/config/__tests__/band-vocabulary.parity.test.ts src/services/__tests__/DyeSearch.parity.test.ts src/services/__tests__/LocalizationService.explicit-locale.test.ts
+EXIT: 0
+ Test Files  3 passed (3)
+      Tests  23 passed (23)
+
+### botlogic-i18n
+CMD: pnpm --filter @xivdyetools/bot-logic exec vitest run src/i18n
+EXIT: 0
+ Test Files  3 passed (3)
+      Tests  35 passed (35)
+
+### webapp-i18n-tests
+CMD: pnpm --filter xivdyetools-web-app exec vitest run src/__tests__/i18n-orphans.test.ts src/components/__tests__/v4/locale-switch.test.ts src/components/__tests__/chara-import-i18n.test.ts src/shared/__tests__/preset-i18n.test.ts
+EXIT: 0
+ Test Files  4 passed (4)
+      Tests  50 passed (50)
+
+### og-i18n
+CMD: pnpm --filter xivdyetools-og-worker exec vitest run src/services/og-strings.test.ts src/services/svg/roles-i18n.test.ts src/og-data-generator.test.ts src/services/font-coverage.test.ts
+EXIT: 0
+ Test Files  4 passed (4)
+      Tests  116 passed (116)
+
+### discord-i18n
+CMD: pnpm --filter xivdyetools-discord-worker exec vitest run src/services/bot-i18n.test.ts src/services/i18n.test.ts src/services/locale-and-fonts.test.ts src/services/font-coverage.test.ts
+EXIT: 0
+ Test Files  4 passed (4)
+      Tests  69 passed (69)
+
+### moderation-i18n
+CMD: pnpm --filter xivdyetools-moderation-worker exec vitest run src/services/bot-i18n.test.ts src/services/i18n.test.ts
+EXIT: 0
+ Test Files  2 passed (2)
+      Tests  90 passed (90)
+
+### svg-tests
+CMD: pnpm --filter @xivdyetools/svg exec vitest run
+EXIT: 0
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > returns a valid 400×350 SVG document 6ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Dye Info Card (11B) > generates the 400×350 sheet with all sections 2ms
+ Test Files  16 passed (16)
+      Tests  270 passed (270)
+

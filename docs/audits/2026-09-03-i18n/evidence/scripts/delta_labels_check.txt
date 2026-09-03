@@ -1,0 +1,6 @@
+en {'deltaLight': 'LIGHTNESS', 'deltaSat': 'SATURATION', 'deltaHue': 'HUE', 'deltaVendor': 'VENDOR', 'deltaSource': 'SOURCE'}
+ja {'deltaLight': '明度', 'deltaSat': '彩度', 'deltaHue': '色相', 'deltaVendor': '販売価格', 'deltaSource': '入手先'}
+de {'deltaLight': 'HELLIGKEIT', 'deltaSat': 'SÄTTIGUNG', 'deltaHue': 'FARBTON', 'deltaVendor': 'HÄNDLER', 'deltaSource': 'QUELLE'}
+fr {'deltaLight': 'LUMINOSITÉ', 'deltaSat': 'SATURATION', 'deltaHue': 'TEINTE', 'deltaVendor': 'MARCHAND', 'deltaSource': 'SOURCE'}
+ko {'deltaLight': '명도', 'deltaSat': '채도', 'deltaHue': '색상', 'deltaVendor': '판매가', 'deltaSource': '입수처'}
+zh {'deltaLight': '亮度', 'deltaSat': '饱和度', 'deltaHue': '色相', 'deltaVendor': '商店价', 'deltaSource': '来源'}

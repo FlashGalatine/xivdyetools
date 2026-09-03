@@ -1,0 +1,313 @@
+
+ RUN  v4.1.11 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/packages/svg
+
+ ✓ src/base-escape.test.ts > escapeXml > escapes the five XML specials 2ms
+ ✓ src/base-escape.test.ts > escapeXml > strips XML-illegal control characters but keeps tab/newline/CR 0ms
+ ✓ src/base-escape.test.ts > escapeXml > strips U+FFFE / U+FFFF and lone surrogates, keeps real astral characters 0ms
+ ✓ src/base-escape.test.ts > escapeXml > keeps CJK intact 1ms
+ ✓ src/base.test.ts > svg/base.ts > escapeXml > should escape ampersands 2ms
+ ✓ src/base.test.ts > svg/base.ts > escapeXml > should escape less-than signs 0ms
+ ✓ src/base.test.ts > svg/base.ts > escapeXml > should escape greater-than signs 0ms
+ ✓ src/base.test.ts > svg/base.ts > escapeXml > should escape double quotes 0ms
+ ✓ src/base.test.ts > svg/base.ts > escapeXml > should escape single quotes 0ms
+ ✓ src/base.test.ts > svg/base.ts > escapeXml > should escape all special characters in one string 0ms
+ ✓ src/base.test.ts > svg/base.ts > escapeXml > should return the same string if no escaping needed 0ms
+ ✓ src/base.test.ts > svg/base.ts > hexToRgb > should convert hex with hash to RGB 1ms
+ ✓ src/base.test.ts > svg/base.ts > hexToRgb > should convert hex without hash to RGB 1ms
+ ✓ src/base.test.ts > svg/base.ts > hexToRgb > should handle mixed case hex values 0ms
+ ✓ src/base.test.ts > svg/base.ts > getLuminance > should return 1 for white 0ms
+ ✓ src/base.test.ts > svg/base.ts > getLuminance > should return 0 for black 0ms
+ ✓ src/base.test.ts > svg/base.ts > getLuminance > should return intermediate values for gray 0ms
+ ✓ src/base.test.ts > svg/base.ts > getContrastTextColor > should return black for light backgrounds 1ms
+ ✓ src/base.test.ts > svg/base.ts > getContrastTextColor > should return white for dark backgrounds 0ms
+ ✓ src/base.test.ts > svg/base.ts > createSvgDocument > should create SVG document with proper attributes 0ms
+ ✓ src/base.test.ts > svg/base.ts > rect > should create basic rectangle 0ms
+ ✓ src/base.test.ts > svg/base.ts > rect > should include optional corner radius 0ms
+ ✓ src/base.test.ts > svg/base.ts > rect > should include optional stroke 0ms
+ ✓ src/base.test.ts > svg/base.ts > rect > should include optional opacity 0ms
+ ✓ src/base.test.ts > svg/base.ts > circle > should create basic circle 0ms
+ ✓ src/base.test.ts > svg/base.ts > circle > should include optional stroke 0ms
+ ✓ src/base.test.ts > svg/base.ts > circle > should include optional opacity 0ms
+ ✓ src/base.test.ts > svg/base.ts > line > should create basic line 0ms
+ ✓ src/base.test.ts > svg/base.ts > line > should use default stroke width of 1 0ms
+ ✓ src/base.test.ts > svg/base.ts > line > should include optional dash array 0ms
+ ✓ src/base.test.ts > svg/base.ts > line > should include optional opacity 0ms
+ ✓ src/base.test.ts > svg/base.ts > text > should create basic text element 0ms
+ ✓ src/base.test.ts > svg/base.ts > text > should escape XML characters in content 0ms
+ ✓ src/base.test.ts > svg/base.ts > text > should include all optional attributes 0ms
+ ✓ src/base.test.ts > svg/base.ts > group > should create group without transform 0ms
+ ✓ src/base.test.ts > svg/base.ts > group > should create group with transform 0ms
+ ✓ src/base.test.ts > svg/base.ts > THEME > should have all theme colors defined 0ms
+ ✓ src/base.test.ts > svg/base.ts > FONTS > should have all font families defined 0ms
+ ✓ src/base.test.ts > svg/base.ts > FONTS > orders the CJK fallback JP → SC → KR in every family that carries it 1ms
+ ✓ src/base.test.ts > svg/base.ts > num > applies the language decimal separator at a fixed precision 0ms
+ ✓ src/base.test.ts > svg/base.ts > num > falls back to English for an unknown language 0ms
+ ✓ src/base.test.ts > svg/base.ts > num > keeps precision with the formatter, including zero dp 0ms
+ ✓ src/base.test.ts > svg/base.ts > grp > groups thousands with the language separator 0ms
+ ✓ src/base.test.ts > svg/base.ts > grp > leaves values under a thousand ungrouped 0ms
+ ✓ src/base.test.ts > svg/base.ts > grp > rounds before grouping and keeps the sign 0ms
+ ✓ src/base.test.ts > svg/base.ts > grp > falls back to English for an unknown language 0ms
+ ✓ src/base.test.ts > svg/base.ts > estimateTextWidth > counts Latin characters at the given width 0ms
+ ✓ src/base.test.ts > svg/base.ts > estimateTextWidth > counts a Hangul Jamo as double width 0ms
+ ✓ src/base.test.ts > svg/base.ts > estimateTextWidth > counts a CJK ideograph as double width 0ms
+ ✓ src/base.test.ts > svg/base.ts > estimateTextWidth > counts a kana as double width 0ms
+ ✓ src/base.test.ts > svg/base.ts > estimateTextWidth > counts a Hangul syllable as double width 0ms
+ ✓ src/base.test.ts > svg/base.ts > estimateTextWidth > counts a CJK compatibility ideograph as double width 0ms
+ ✓ src/base.test.ts > svg/base.ts > estimateTextWidth > counts a fullwidth form as double width 0ms
+ ✓ src/base.test.ts > svg/base.ts > estimateTextWidth > counts a fullwidth sign as double width 0ms
+ ✓ src/base.test.ts > svg/base.ts > estimateTextWidth > keeps halfwidth katakana narrow 0ms
+ ✓ src/base.test.ts > svg/base.ts > estimateTextWidth > mixes scripts additively 0ms
+ ✓ src/base.test.ts > NUMFMT / num / grp > formats decimals per language at a fixed precision 0ms
+ ✓ src/base.test.ts > NUMFMT / num / grp > groups thousands per language 0ms
+ ✓ src/base.test.ts > NUMFMT / num / grp > falls back to en for unknown languages 0ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > covers the confirmed rosters 4ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > the three 2026-08-11 categories render on the category set conventions 1ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > every glyph keeps fill="none" explicit on the group (tool-banner floods otherwise) 3ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > never emits <symbol>/<use> and leaves no substitution markers 7ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > has no load-bearing opacity anywhere in the set 2ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > tool glyphs carry exactly one accent-filled element; the tools menu takes no chip 1ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > pins ink when told to (resvg has no currentColor) 0ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > defaults to currentColor stroke for browser DOM consumers 0ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > mono variant on dye grounds: accent = ink removes the second colour 1ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > detail variants add the 1.2-weight context layer 1ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > harmony rings render at the 1.4 ring weight with a 2.2 set weight 0ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > the star pair carries state in the fill, never a fading opacity 0ms
+ ✓ src/icons/tool-icons.test.ts > 5.0 icon system > respects size and weight overrides 0ms
+ ✓ src/icons/tool-icons.test.ts > fluid sizing > omits width/height for CSS-sized DOM shims 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should generate valid SVG document 4ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should include preset name 1ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should include preset description 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should truncate long descriptions 1ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should include all dye swatches 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should include dye names 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should include dye hex codes 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should include author name when provided 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should show Official when no author 1ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should include vote count when provided 1ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should use custom width 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should handle single dye 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should handle multiple dyes 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should filter out null dyes 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should show empty message when all dyes are null 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > generatePresetSwatch > should include category icon 0ms
+ ✓ src/preset-swatch.test.ts > svg/preset-swatch.ts > dye name truncation > should truncate long dye names in full swatch view 1ms
+ ✓ src/frame.test.ts > bandInk > picks near-black ink on light grounds 3ms
+ ✓ src/frame.test.ts > bandInk > keeps white ink on dark grounds 1ms
+ ✓ src/frame.test.ts > bandInk > switches where the two measured contrasts cross, not at a fixed lightness 0ms
+ ✓ src/frame.test.ts > bandInk > carries the mid and dim tiers of the same ink 1ms
+ ✓ src/frame.test.ts > bandInk > accepts lower-case and bare hex 0ms
+ ✓ src/frame.test.ts > pillInkOnDye > is near-black inside the pill on a light dye 0ms
+ ✓ src/frame.test.ts > pillInkOnDye > is white inside the pill on a dark dye 0ms
+ ✓ src/frame.test.ts > pillInkOnDye > is white inside the pill on a mid-tone whose band ink is dark 0ms
+ ✓ src/random-dyes-grid.test.ts > generateRandomDyesGrid > returns a valid SVG table at 400 wide 4ms
+ ✓ src/random-dyes-grid.test.ts > generateRandomDyesGrid > renders the title, the pill and the header row 1ms
+ ✓ src/random-dyes-grid.test.ts > generateRandomDyesGrid > prints every row with name, hex, category and stain 1ms
+ ✓ src/random-dyes-grid.test.ts > generateRandomDyesGrid > five rows plus a header is exactly what 350 buys 0ms
+ ✓ src/random-dyes-grid.test.ts > generateRandomDyesGrid > grows with the count — a shorter result is a shorter card 0ms
+ ✓ src/random-dyes-grid.test.ts > generateRandomDyesGrid > caps at five rows (R1) 0ms
+ ✓ src/random-dyes-grid.test.ts > generateRandomDyesGrid > escapes XML in localized names 0ms
+ ✓ src/random-dyes-grid.test.ts > generateRandomDyesGrid > renders the light theme surface 1ms
+ ✓ src/random-dyes-grid.test.ts > generateRandomDyesGrid > carries the mark and never an instruction 1ms
+ ✓ src/gradient.test.ts > generateGradientCard > returns a valid SVG within the budget 6ms
+ ✓ src/gradient.test.ts > generateGradientCard > renders the pill, the space/steps readout and the legend 2ms
+ ✓ src/gradient.test.ts > generateGradientCard > carries every step in the strip even when rows are fewer 1ms
+ ✓ src/gradient.test.ts > generateGradientCard > prints merged step ranges in the lead column 1ms
+ ✓ src/gradient.test.ts > generateGradientCard > caps rows at five 1ms
+ ✓ src/gradient.test.ts > generateGradientCard > renders the stage-0 verdict on a shorter card (12H·4) 1ms
+ ✓ src/gradient.test.ts > generateGradientCard > renders the light theme surface 0ms
+ ✓ src/nearest-sheet.test.ts > generateNearestSheet > returns a valid SVG at 400 wide within the ceiling 5ms
+ ✓ src/nearest-sheet.test.ts > generateNearestSheet > names the subcommand in the chip 1ms
+ ✓ src/nearest-sheet.test.ts > generateNearestSheet > renders the target block and repeats the target down the pair column 1ms
+ ✓ src/nearest-sheet.test.ts > generateNearestSheet > prints ranks, names and tier-toned measures 1ms
+ ✓ src/nearest-sheet.test.ts > generateNearestSheet > is method-aware: header tag, per-method tiers and decimals 1ms
+ ✓ src/nearest-sheet.test.ts > generateNearestSheet > shows the resolved dye name when the input was a dye 0ms
+ ✓ src/nearest-sheet.test.ts > generateNearestSheet > caps at five rows 0ms
+ ✓ src/nearest-sheet.test.ts > generateNearestSheet > renders the light theme surface 1ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > renders a 400-wide SVG with the mark footer 5ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > names the command in the chip for both orders 1ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > accepts an overridden command label and a suppressed glyph 1ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > renders the identifier lines and the column heads 1ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > draws one clipped stripe per live slot colour 1ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > falls back to a single black stripe when no slots parsed 1ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > renders every row: slot label, address, dye name and measure 1ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > flags an OFF GRID address in the warn ink, quiet label ink otherwise 1ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > grows the frame with the live-slot count 1ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > renders a rowless card without inventing a row 0ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > prints the generated count key from the caller 0ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > renders the light surface when asked 0ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > escapes the title rather than emitting raw markup 0ms
+ ✓ src/swatch-card.test.ts > generateSwatchCard > takes no character-name option — the title is the neutral card label only 0ms
+ ✓ src/palette-grid.test.ts > bandSlices > divides the width proportionally to share 2ms
+ ✓ src/palette-grid.test.ts > bandSlices > floors tiny slices so the tenth colour never disappears 1ms
+ ✓ src/palette-grid.test.ts > bandSlices > keeps the total width with many floored slices 1ms
+ ✓ src/palette-grid.test.ts > generatePaletteGrid > returns a valid SVG at 400 wide reaching 350 at five rows 4ms
+ ✓ src/palette-grid.test.ts > generatePaletteGrid > names the subcommand in the chip — a glyph cannot 1ms
+ ✓ src/palette-grid.test.ts > generatePaletteGrid > carries every band colour even when rows cap at five 1ms
+ ✓ src/palette-grid.test.ts > generatePaletteGrid > caps rows at five even if more are passed 1ms
+ ✓ src/palette-grid.test.ts > generatePaletteGrid > prints share leads, the labels row and the legend 1ms
+ ✓ src/palette-grid.test.ts > generatePaletteGrid > localizes ΔE decimals through the lang 1ms
+ ✓ src/palette-grid.test.ts > generatePaletteGrid > renders the light theme surface 1ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > frame contract (all modes) > lens renders a 400-wide SVG within the 350 ceiling 4ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > frame contract (all modes) > all renders a 400-wide SVG within the 350 ceiling 1ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > frame contract (all modes) > solo renders a 400-wide SVG within the 350 ceiling 1ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > frame contract (all modes) > lens prints the mark footer and the default chip 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > frame contract (all modes) > all prints the mark footer and the default chip 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > frame contract (all modes) > solo prints the mark footer and the default chip 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > frame contract (all modes) > prints the command the user actually typed 1ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > frame contract (all modes) > honours an explicitly suppressed glyph 1ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > frame contract (all modes) > renders the light surface when asked 1ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > frame contract (all modes) > escapes card text rather than emitting raw markup 1ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13D — the named lens > puts the lens name in the header and the pair in the title 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13D — the named lens > renders the subject separation and the normal reference 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13D — the named lens > omits the normal reference when no unsimulated value was supplied 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13D — the named lens > draws the summary strip for the remaining lenses 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13D — the named lens > renders a single swatch when the subject has no second colour 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13D — the named lens > survives an empty summary strip without dividing by zero 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13D — the named lens > falls back to the all-lens frame when mode is lens but no subject was given 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13E — every lens > renders the LENS / SEPARATION column heads and one row per lens 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13E — every lens > prints the weakest-lens note and the band key under the table 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13E — every lens > reads the separation ramp in reverse — larger ΔE is safer 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13E — every lens > grows with the row count and still clears the ceiling at five lenses 1ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13H — the single dye > renders the SHIFT column instead of a verdict 0ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13H — the single dye > prints the simulated hex uppercased so it is pasteable 1ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13H — the single dye > uses neutral ink for the bars — a shift is not a risk 1ms
+ ✓ src/a11y-card.test.ts > generateA11yCard > 13H — the single dye > keeps a minimum bar width when every shift is zero 0ms
+ ✓ src/contrast-card.test.ts > contrastRatio > re-exports core rather than re-deriving the ladder 3ms
+ ✓ src/contrast-card.test.ts > contrastRatio > is symmetric 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > 13A renders a 400-wide SVG within the 350 ceiling 2ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > 13B renders a 400-wide SVG within the 350 ceiling 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > 13C·1 renders a 400-wide SVG within the 350 ceiling 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > 13A prints the chip and the mark footer 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > 13B prints the chip and the mark footer 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > 13C·1 prints the chip and the mark footer 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > 13A never prints a letter grade 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > 13B never prints a letter grade 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > 13C·1 never prints a letter grade 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > accepts an overridden command label and a suppressed glyph 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > frame contract > renders the light surface when asked 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > renders both names, the 2-dp ratio and the band name 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > omits the WORST PAIR caption when there is only one pair 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > leaves the REST strip absent by condition, not blank 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > never reaches its WORST PAIR / REST branches through the router 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > reads the ratio ramp in reverse — a high ratio is safe 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > ratio 1.5 lands on tier index 3 of the ramp 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > ratio 3.2 lands on tier index 2 of the ramp 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > ratio 5 lands on tier index 1 of the ramp 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > ratio 9 lands on tier index 0 of the ramp 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > keeps a minimum band bar at a 1:1 ratio 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > prints the WCAG floor key 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13A — one pair owns the card > throws on an empty pair list rather than drawing an empty verdict 2ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13B — the three-pair ledger > renders the localized title and the column heads 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13B — the three-pair ledger > names every pair — no tail, no cap in play 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13B — the three-pair ledger > grows one 46 px row at a time 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13C·1 — the six-pair plot > renders the axis endpoints and the 3 / 4.5 / 7 criterion lines 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13C·1 — the six-pair plot > prints pair codes and a one-decimal value column 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13C·1 — the six-pair plot > draws a marker per pair on the log axis 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13C·1 — the six-pair plot > prints the plot legend and the value-column head 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > 13C·1 — the six-pair plot > stays inside the ceiling at six pairs 0ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > router boundaries > routes on the pair count: ≤1 → 13A, 2–3 → 13B, 4+ → the plot 1ms
+ ✓ src/contrast-card.test.ts > generateContrastCard > router boundaries > is total over the real dye counts — 2, 3 and 4 dyes give 1, 3 and 6 pairs 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > returns a valid 400×350 SVG document 5ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > draws the header band in the dye colour with name, category and stain 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > prints the numeric grid (HEX/RGB/HSV/LAB) at the type floor 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > carries SRC (with price) and MKT (verbatim Spectrum item) rows 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > renders the nearest strip with tier-toned bars and the omitted count 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > omits the "+N more" suffix when nothing is omitted 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > hides the stain readout when stainID is null 0ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > localizes labels and number formatting 0ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > ships both themes on the same geometry 2ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard > always renders the attribution mark, never a centred footer 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard — name weight > sets the title and every nearest-dye name in bold (700) 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard — band ink > sets the name, stain readout, category and chip label in near-black ink on a light dye 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard — band ink > leaves no white ink on a light band — the chip glyph included 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard — band ink > keeps white ink on a dark dye 1ms
+ ✓ src/dye-info-card.test.ts > generateDyeInfoCard — band ink > picks the ink from the dye colour, not the card theme 1ms
+ ✓ src/generator-hygiene.test.ts > generator hygiene > escapes every value interpolated into a fill= or stroke= attribute 16ms
+ ✓ src/generator-hygiene.test.ts > generator hygiene > never asks for a font weight the consumers do not bundle 22ms
+ ✓ src/generator-hygiene.test.ts > fitText > returns short content untouched 1ms
+ ✓ src/generator-hygiene.test.ts > fitText > ellipsises to the pixel budget, not a character count 0ms
+ ✓ src/generator-hygiene.test.ts > fitText > never bisects a surrogate pair, at any budget 2ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports base SVG utilities 973ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports the harmony card generator and the frame system 1ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports gradient generator 0ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports the extractor generators and the measured row 0ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports the accessibility card generator (13D/13E/13H) 0ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports the contrast card generator (13A/13B/13C·1) 1ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports random dyes grid generator 0ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports comparison grid generator 0ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports dye info card generator 1ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports preset swatch generators 0ms
+ ✓ src/index.test.ts > @xivdyetools/svg index exports > exports the budget ledger generator (13G) 0ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Harmony Card (11A) > prints ΔE in the method register (ΔEOK raw, three decimals) with the method tag 4ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Harmony Card (11A) > generates one row per slot with ideal-vs-found pair 1ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Harmony Card (11A) > caps rows at four and renders a tail strip (R1) 0ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Harmony Card (11A) > holds the worst case — four slots, verdict and an off-default method — under 350 1ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Harmony Card (11A) > never exceeds the 350 px ceiling 0ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Budget Ledger (13G) > renders the drawn frame: two groups, four rows, one price per group 1ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Budget Ledger (13G) > blanks, never invents: null prices and ratios print em dashes 0ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Budget Ledger (13G) > renders a second footer key line off-ΔE2000 0ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Dye Info Card (11B) > generates the 400×350 sheet with all sections 2ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Dye Info Card (11B) > uses localized name and category 1ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Dye Info Card (11B) > formats ΔE with the locale decimal separator 0ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Dye Info Card (11B) > renders light theme surfaces when asked 0ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Random Dyes Grid (11B table) > generates the table with multiple dyes and grows with the count 1ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Random Dyes Grid (11B table) > caps at five rows (R1) 0ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Random Dyes Grid (11B table) > escapes CJK localized names in XML 0ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Random Dyes Grid (11B table) > prints the stain column and header labels 0ms
+ ✓ src/svg-pipeline.integration.test.ts > SVG Pipeline: Cross-Module Integration > all 5.0 cards share the CARD_DARK surface and the mark 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/harmony · 4 slots · off-default meth…' draws 400 wide and never exceeds 350 4ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/gradient · 5 rows + verdict' draws 400 wide and never exceeds 350 2ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/mixer · 5 ratios' draws 400 wide and never exceeds 350 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/extractor image · 10-colour band, 5 …' draws 400 wide and never exceeds 350 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/extractor color · 5 ranks' draws 400 wide and never exceeds 350 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/dye random · 5 rows' draws 400 wide and never exceeds 350 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/contrast · 6 pairs (13C·1 plot)' draws 400 wide and never exceeds 350 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/compare · 2 dyes (14A duel, seven re…' draws 400 wide and never exceeds 350 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/compare · 3 dyes (14C·2 triangle, fu…' draws 400 wide and never exceeds 350 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/compare · 4 dyes (14C triangle)' draws 400 wide and never exceeds 350 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/harmony · 4 slots · off-default meth…' never draws below the 11 px type floor 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/gradient · 5 rows + verdict' never draws below the 11 px type floor 0ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/mixer · 5 ratios' never draws below the 11 px type floor 0ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/extractor image · 10-colour band, 5 …' never draws below the 11 px type floor 0ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/extractor color · 5 ranks' never draws below the 11 px type floor 0ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/dye random · 5 rows' never draws below the 11 px type floor 1ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/contrast · 6 pairs (13C·1 plot)' never draws below the 11 px type floor 0ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/compare · 2 dyes (14A duel, seven re…' never draws below the 11 px type floor 0ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/compare · 3 dyes (14C·2 triangle, fu…' never draws below the 11 px type floor 0ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > '/compare · 4 dyes (14C triangle)' never draws below the 11 px type floor 0ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > the constants themselves have not drifted 0ms
+ ✓ src/frame-budget.test.ts > frame budget — every 5.0 card, in the binding locale > carries the Turn 13/14 tier ramp, not the Swatch doc revision 1ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/harmony · 4 slots · off-default meth…' paints no text outside the canvas 1ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/gradient · 5 rows + verdict' paints no text outside the canvas 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/mixer · 5 ratios' paints no text outside the canvas 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/extractor image · 10-colour band, 5 …' paints no text outside the canvas 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/extractor color · 5 ranks' paints no text outside the canvas 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/dye random · 5 rows' paints no text outside the canvas 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/contrast · 6 pairs (13C·1 plot)' paints no text outside the canvas 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/compare · 2 dyes (14A duel, seven re…' paints no text outside the canvas 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/compare · 3 dyes (14C·2 triangle, fu…' paints no text outside the canvas 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/compare · 4 dyes (14C triangle)' paints no text outside the canvas 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/gradient · stage-0 verdict · ja' paints no text outside the canvas 1ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/gradient · stage-0 verdict · ko' paints no text outside the canvas 1ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/extractor color · 5 ranks · ja' paints no text outside the canvas 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/gradient · stage-0 verdict · ja' aligns every right-anchored run to its own margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/gradient · stage-0 verdict · ko' aligns every right-anchored run to its own margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/extractor color · 5 ranks · ja' aligns every right-anchored run to its own margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/harmony · 4 slots · off-default meth…' aligns every right-anchored run to the 16 px margin 1ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/gradient · 5 rows + verdict' aligns every right-anchored run to the 16 px margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/mixer · 5 ratios' aligns every right-anchored run to the 16 px margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/extractor image · 10-colour band, 5 …' aligns every right-anchored run to the 16 px margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/extractor color · 5 ranks' aligns every right-anchored run to the 16 px margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/dye random · 5 rows' aligns every right-anchored run to the 16 px margin 1ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/contrast · 6 pairs (13C·1 plot)' aligns every right-anchored run to the 16 px margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/compare · 2 dyes (14A duel, seven re…' aligns every right-anchored run to the 16 px margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/compare · 3 dyes (14C·2 triangle, fu…' aligns every right-anchored run to the 16 px margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > '/compare · 4 dyes (14C triangle)' aligns every right-anchored run to the 16 px margin 0ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > the 'ja' verdict wraps in full rather than being ellipsised 1ms
+ ✓ src/frame-budget.test.ts > frame extent — content stays inside the card it is drawn on > the 'ko' verdict wraps in full rather than being ellipsised 0ms
+
+ Test Files  17 passed (17)
+      Tests  304 passed (304)
+   Start at  07:22:33
+   Duration  1.55s (transform 7.89s, setup 0ms, import 12.80s, tests 1.27s, environment 3ms)
+

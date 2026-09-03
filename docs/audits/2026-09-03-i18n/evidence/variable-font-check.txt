@@ -1,0 +1,24 @@
+===== discord-worker =====
+  static    FragmentMono-Regular.ttf       OS/2.usWeightClass=400
+  VARIABLE  NotoSansJP-Subset.ttf          OS/2.usWeightClass=100  axes={'wght': (100.0, 100.0, 900.0)}
+  VARIABLE  NotoSansKR-Subset.ttf          OS/2.usWeightClass=100  axes={'wght': (100.0, 100.0, 900.0)}
+  VARIABLE  NotoSansSC-Subset.ttf          OS/2.usWeightClass=100  axes={'wght': (100.0, 100.0, 900.0)}
+  static    Onest-Bold.ttf                 OS/2.usWeightClass=700
+  static    Onest-Regular.ttf              OS/2.usWeightClass=400
+  static    Onest-SemiBold.ttf             OS/2.usWeightClass=600
+  static    SpaceGrotesk-Bold.ttf          OS/2.usWeightClass=700
+  static    SpaceGrotesk-Regular.ttf       OS/2.usWeightClass=400
+  static    SpaceGrotesk-SemiBold.ttf      OS/2.usWeightClass=600
+
+===== og-worker =====
+  static    FragmentMono-Regular.ttf       OS/2.usWeightClass=400
+  VARIABLE  NotoSansJP-Subset.ttf          OS/2.usWeightClass=100  axes={'wght': (100.0, 100.0, 900.0)}
+  VARIABLE  NotoSansKR-Subset.ttf          OS/2.usWeightClass=100  axes={'wght': (100.0, 100.0, 900.0)}
+  VARIABLE  NotoSansSC-Subset.ttf          OS/2.usWeightClass=100  axes={'wght': (100.0, 100.0, 900.0)}
+  static    Onest-Bold.ttf                 OS/2.usWeightClass=700
+  static    Onest-Regular.ttf              OS/2.usWeightClass=400
+  static    Onest-SemiBold.ttf             OS/2.usWeightClass=600
+  static    SpaceGrotesk-Bold.ttf          OS/2.usWeightClass=700
+  static    SpaceGrotesk-Regular.ttf       OS/2.usWeightClass=400
+  static    SpaceGrotesk-SemiBold.ttf      OS/2.usWeightClass=600
+

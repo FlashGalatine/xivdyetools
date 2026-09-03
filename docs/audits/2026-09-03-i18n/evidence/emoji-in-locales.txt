@@ -1,0 +1,38 @@
+packages/bot-logic/src/i18n/locales/de.json  preferences.values.male
+    U+2642 U+FE0F
+    'Männlich ♂️'
+packages/bot-logic/src/i18n/locales/de.json  preferences.values.female
+    U+2640 U+FE0F
+    'Weiblich ♀️'
+packages/bot-logic/src/i18n/locales/en.json  preferences.values.male
+    U+2642 U+FE0F
+    'Male ♂️'
+packages/bot-logic/src/i18n/locales/en.json  preferences.values.female
+    U+2640 U+FE0F
+    'Female ♀️'
+packages/bot-logic/src/i18n/locales/fr.json  preferences.values.male
+    U+2642 U+FE0F
+    'Masculin ♂️'
+packages/bot-logic/src/i18n/locales/fr.json  preferences.values.female
+    U+2640 U+FE0F
+    'Féminin ♀️'
+packages/bot-logic/src/i18n/locales/ja.json  preferences.values.male
+    U+2642 U+FE0F
+    '男性 ♂️'
+packages/bot-logic/src/i18n/locales/ja.json  preferences.values.female
+    U+2640 U+FE0F
+    '女性 ♀️'
+packages/bot-logic/src/i18n/locales/ko.json  preferences.values.male
+    U+2642 U+FE0F
+    '남성 ♂️'
+packages/bot-logic/src/i18n/locales/ko.json  preferences.values.female
+    U+2640 U+FE0F
+    '여성 ♀️'
+packages/bot-logic/src/i18n/locales/zh.json  preferences.values.male
+    U+2642 U+FE0F
+    '男性 ♂️'
+packages/bot-logic/src/i18n/locales/zh.json  preferences.values.female
+    U+2640 U+FE0F
+    '女性 ♀️'
+
+TOTAL string values carrying emoji/VS16: 12
