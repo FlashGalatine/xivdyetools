@@ -1,0 +1,7 @@
+rows in dyenames.csv: 125
+exact match with the stripped API name: 124
+
+DANGLING HYPHEN (1):
+  30123  csv='Perlmutt-'  api='Perlmutt-Farbstoff'  -> suggested 'Perlmutt'
+
+OTHER DIFFERENCES vs the naive strip (0) — review, many are legitimate:

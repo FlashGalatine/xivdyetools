@@ -2,7 +2,7 @@
   "locale": "zh",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-18T19:07:42.760Z",
+    "generated": "2026-09-03T12:01:42.837Z",
     "dyeCount": 125
   },
   "labels": {
@@ -246,5 +246,18 @@
     "theLost": "迷失之民",
     "rava": "拉瓦族",
     "veena": "维纳族"
+  },
+  "facewearColors": {
+    "silver": "银色",
+    "gold": "金色",
+    "black": "黑色",
+    "white": "白色",
+    "grey": "灰色",
+    "red": "红色",
+    "blue": "蓝色",
+    "green": "绿色",
+    "brass": "黄铜色",
+    "purple": "紫色",
+    "brown": "棕色"
   }
 }

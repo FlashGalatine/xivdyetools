@@ -2,7 +2,7 @@
   "locale": "de",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-18T19:07:42.757Z",
+    "generated": "2026-09-03T12:01:42.834Z",
     "dyeCount": 125
   },
   "labels": {
@@ -127,7 +127,7 @@
     "30120": "Dragoonblauer",
     "30121": "Cyanblauer",
     "30122": "Cermetgrauer",
-    "30123": "Perlmutt-",
+    "30123": "Perlmutt",
     "30124": "Metallic messingfarbener",
     "48163": "Neonpinker",
     "48164": "Knalloranger",
@@ -246,5 +246,18 @@
     "theLost": "Losgesagter",
     "rava": "Rava-Viera",
     "veena": "Veena-Viera"
+  },
+  "facewearColors": {
+    "silver": "Silber",
+    "gold": "Gold",
+    "black": "Schwarz",
+    "white": "Weiß",
+    "grey": "Grau",
+    "red": "Rot",
+    "blue": "Blau",
+    "green": "Grün",
+    "brass": "Messing",
+    "purple": "Violett",
+    "brown": "Braun"
   }
 }

@@ -37,6 +37,14 @@ export type HarmonyTypeKey =
 /**
  * Tool keys for og-worker / web-app display name localization
  */
+/**
+ * Tool keys for og-worker / web-app display name localization.
+ *
+ * @deprecated I18N-003 — this covers only the six pre-5.0 tools (the product
+ * ships nine) and nothing in the monorepo reads it: web-app names tools from
+ * its own `tools.*.title` keys and og-worker from `OG_DECK`. Kept because it is
+ * published API; do not build on it. Removal is a core major.
+ */
 export type ToolKey = 'harmony' | 'gradient' | 'mixer' | 'swatch' | 'comparison' | 'accessibility';
 
 /**
@@ -137,6 +145,16 @@ export interface LocaleData {
 
   /** Clan (subrace) name translations */
   clans: Record<ClanKey, string>;
+
+  /**
+   * Facewear tint name translations, keyed by the `FacewearColor.id` slug.
+   *
+   * The 11 Facewear colours are not dyes (schema v2 moved them out of
+   * `dyes.json`), so they are keyed by slug rather than itemID and come from
+   * `facewear-names.csv` rather than `dyenames.csv`. Optional so a locale file
+   * generated before I18N-008 still type-checks.
+   */
+  facewearColors?: Record<string, string>;
 }
 
 /**

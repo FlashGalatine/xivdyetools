@@ -13,9 +13,8 @@ import { parse as parseCsv } from 'csv-parse/sync';
 
 interface YamlLabels {
   Dye: string | null;
-  General_Purpose: string | null;
   Dark: string | null;
-  Metallic: string | string[] | null;
+  Metallic: string | null;
   Pastel: string | null;
   Cosmic: string | null;
   Cosmic_Exploration: string | null;
@@ -24,6 +23,17 @@ interface YamlLabels {
 
 interface CsvRow {
   itemID: string;
+  'English Name': string;
+  'Japanese Name': string;
+  'German Name': string;
+  'French Name': string;
+  'Korean Name': string;
+  'Chinese Name': string;
+}
+
+/** `facewear-names.csv` — the 11 Facewear tints, keyed by slug (they have no itemID). */
+interface FacewearCsvRow {
+  id: string;
   'English Name': string;
   'Japanese Name': string;
   'German Name': string;
@@ -63,6 +73,17 @@ async function main() {
     trim: true,
   });
 
+  // I18N-008: the 11 Facewear colours are not dyes — schema v2 moved them out
+  // of dyes.json and nothing carried their names into the locale pipeline, so
+  // they rendered English under a translated category heading. They are keyed
+  // by slug, not itemID, so they need their own source file.
+  const facewearCsvPath = path.join(workingDir, 'facewear-names.csv');
+  const facewearRows: FacewearCsvRow[] = parseCsv(fs.readFileSync(facewearCsvPath, 'utf-8'), {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  });
+
   // Build each locale
   const locales: LocaleCode[] = ['en', 'ja', 'de', 'fr', 'ko', 'zh'];
   const outputDir = path.join(workingDir, 'src', 'data', 'locales');
@@ -75,7 +96,7 @@ async function main() {
   for (const locale of locales) {
     console.log(`Building ${LOCALE_NAMES[locale]} (${locale})...`);
 
-    const localeData = buildLocaleData(locale, yamlData, csvRows);
+    const localeData = buildLocaleData(locale, yamlData, csvRows, facewearRows);
     const outputPath = path.join(outputDir, `${locale}.json`);
     const existing = readExistingLocale(outputPath);
 
@@ -160,6 +181,7 @@ function buildLocaleData(
   locale: LocaleCode,
   yamlData: Record<string, YamlLabels>,
   csvRows: CsvRow[],
+  facewearRows: FacewearCsvRow[],
 ) {
   const labels = buildLabels(locale, yamlData[locale]);
   const dyeNames = buildDyeNames(locale, csvRows);
@@ -187,6 +209,7 @@ function buildLocaleData(
     sheets: buildSheets(locale),
     races: buildRaces(locale),
     clans: buildClans(locale),
+    facewearColors: buildFacewearNames(locale, facewearRows),
   };
 }
 
@@ -231,12 +254,7 @@ function buildLabels(
   if (yamlLabels.Dye) labels.dye = yamlLabels.Dye;
   if (yamlLabels.Dark) labels.dark = yamlLabels.Dark;
 
-  // Handle French Metallic array - take first value
-  if (yamlLabels.Metallic) {
-    labels.metallic = Array.isArray(yamlLabels.Metallic)
-      ? yamlLabels.Metallic[0]
-      : yamlLabels.Metallic;
-  }
+  if (yamlLabels.Metallic) labels.metallic = yamlLabels.Metallic;
 
   if (yamlLabels.Pastel) labels.pastel = yamlLabels.Pastel;
   if (yamlLabels.Cosmic) labels.cosmic = yamlLabels.Cosmic;
@@ -265,6 +283,23 @@ function buildDyeNames(locale: LocaleCode, csvRows: CsvRow[]): Record<string, st
   return dyeNames;
 }
 
+function buildFacewearNames(
+  locale: LocaleCode,
+  rows: FacewearCsvRow[],
+): Record<string, string> {
+  const nameColumn = `${LOCALE_NAMES[locale]} Name` as keyof FacewearCsvRow;
+  const fallbackColumn = 'English Name' as keyof FacewearCsvRow;
+  const names: Record<string, string> = {};
+
+  for (const row of rows) {
+    const id = row.id.trim();
+    const name = row[nameColumn]?.trim() || row[fallbackColumn]?.trim();
+    if (id && name) names[id] = name;
+  }
+
+  return names;
+}
+
 function buildCategories(locale: LocaleCode): Record<string, string> {
   // Hardcoded category translations
   const translations: Record<LocaleCode, Record<string, string>> = {
@@ -280,7 +315,7 @@ function buildCategories(locale: LocaleCode): Record<string, string> {
       Facewear: 'Facewear',
     },
     ja: {
-      Neutral: 'ニュートラル',
+      Neutral: '無彩色系',
       Reds: '赤系',
       Blues: '青系',
       Browns: '茶系',
@@ -352,7 +387,7 @@ function buildAcquisitions(locale: LocaleCode): Record<string, string> {
       'Facewear Collection': 'Facewear Collection',
     },
     ja: {
-      'Dye Vendor': '染料販売業者',
+      'Dye Vendor': '染色師',
       Crafting: '製作',
       'Cosmic Exploration': 'コスモエクスプローラー',
       'Cosmic Fortunes': 'コスモフォーチュン',

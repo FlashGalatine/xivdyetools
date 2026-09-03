@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-18T19:07:42.759Z",
+    "generated": "2026-09-03T12:01:42.836Z",
     "dyeCount": 125
   },
   "labels": {
@@ -246,5 +246,18 @@
     "theLost": "로스트",
     "rava": "라바",
     "veena": "비나"
+  },
+  "facewearColors": {
+    "silver": "은색",
+    "gold": "금색",
+    "black": "검은색",
+    "white": "흰색",
+    "grey": "회색",
+    "red": "빨간색",
+    "blue": "파란색",
+    "green": "초록색",
+    "brass": "황동색",
+    "purple": "보라색",
+    "brown": "갈색"
   }
 }
