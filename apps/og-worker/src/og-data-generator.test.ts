@@ -352,6 +352,27 @@ describe('og-data-generator', () => {
       expect(html).toContain('</html>');
     });
 
+    it('carries ?lang= on the links a person follows, not on the canonical (I18N-002)', () => {
+      const html = generateOGHTML({ ...testOGData, locale: 'ja' });
+
+      // The meta-refresh is a real redirect and the body link is a real click:
+      // both used to drop the sharer's locale, so a ja share rendered a Japanese
+      // card and then landed the reader in their own browser's language.
+      expect(html).toContain('http-equiv="refresh" content="0;url=https://example.com/test?foo=bar&amp;lang=ja"');
+      expect(html).toContain('<a href="https://example.com/test?foo=bar&amp;lang=ja">');
+
+      // og:url / twitter:url stay canonical on purpose — carrying a UI
+      // preference would split one page into six canonical URLs.
+      expect(html).toContain('property="og:url" content="https://example.com/test?foo=bar"');
+      expect(html).toContain('name="twitter:url" content="https://example.com/test?foo=bar"');
+    });
+
+    it('leaves every URL bare for the default locale', () => {
+      const html = generateOGHTML({ ...testOGData, locale: 'en' });
+
+      expect(html).not.toContain('lang=en');
+    });
+
     it('should include escaped title in meta tags', async () => {
       const html = generateOGHTML(testOGData);
 

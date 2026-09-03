@@ -1,6 +1,7 @@
 import {
   LocaleLoader,
   LocaleRegistry,
+  SUPPORTED_LOCALES,
   TranslationProvider,
 } from '@xivdyetools/core';
 import type { ClanKey, Dye, HarmonyTypeKey, LocaleCode, RaceKey, VisionType } from '@xivdyetools/types';
@@ -14,7 +15,8 @@ import type { ClanKey, Dye, HarmonyTypeKey, LocaleCode, RaceKey, VisionType } fr
 const ogRegistry: LocaleRegistry = (() => {
   const loader = new LocaleLoader();
   const registry = new LocaleRegistry();
-  for (const lc of ['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const) {
+  // I18N-004: one list, from core.
+  for (const lc of SUPPORTED_LOCALES) {
     registry.registerLocale(loader.loadLocale(lc));
   }
   return registry;

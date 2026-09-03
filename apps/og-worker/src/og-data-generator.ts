@@ -614,6 +614,20 @@ const OG_LOCALE: Record<LocaleCode, string> = {
  */
 export function generateOGHTML(ogData: OGData): string {
   const locale: LocaleCode = ogData.locale ?? 'en';
+  /**
+   * I18N-002: the two links a PERSON follows carry the sharer's locale.
+   *
+   * `withLang` was applied to every `imageUrl` and to no `url`, so a `?lang=ja`
+   * share rendered a Japanese card and then bounced the reader to the app with
+   * the locale stripped — they landed in whatever language their browser
+   * happened to prefer. The meta-refresh below is a real redirect, not an
+   * advisory tag, so this was user-visible rather than cosmetic.
+   *
+   * `og:url` / `twitter:url` deliberately stay bare: those are canonicalisation
+   * hints, and splitting one page into six canonical URLs to carry a UI
+   * preference is a bad trade.
+   */
+  const navUrl = withLang(ogData.url, locale);
   const themeColorTag = ogData.themeColor
     ? `<meta name="theme-color" content="${escapeHtml(ogData.themeColor)}">`
     : '';
@@ -651,7 +665,7 @@ export function generateOGHTML(ogData: OGData): string {
   ${themeColorTag}
 
   <!-- Redirect for JavaScript-enabled browsers -->
-  <meta http-equiv="refresh" content="0;url=${escapeHtml(ogData.url)}">
+  <meta http-equiv="refresh" content="0;url=${escapeHtml(navUrl)}">
 
   <style>
     /* The page nobody designed, designed: the console palette, the mark's
@@ -702,7 +716,7 @@ export function generateOGHTML(ogData: OGData): string {
     <div class="deck">
       <p class="title">${escapeHtml(ogData.title)}</p>
       <p class="sub">${escapeHtml(ogData.description)}</p>
-      <p><a href="${escapeHtml(ogData.url)}">${escapeHtml(embed('body.open', locale))}</a></p>
+      <p><a href="${escapeHtml(navUrl)}">${escapeHtml(embed('body.open', locale))}</a></p>
       <p class="foot">xivdyetools.app</p>
     </div>
   </div>

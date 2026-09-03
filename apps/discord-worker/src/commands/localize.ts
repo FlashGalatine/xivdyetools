@@ -30,7 +30,10 @@ import {
   getLocalizedCategory,
   getLocalizedHarmonyType,
   getLocalizedVisionType,
+  getLocalizedDyeName,
+  dyeService,
 } from '@xivdyetools/bot-logic';
+import { QUICK_PICKS } from '../services/budget/quick-picks.js';
 import type { HarmonyTypeKey, VisionType } from '@xivdyetools/types';
 
 /** Discord locale tag → bot locale. en-US / en-GB need no entry (base text is English). */
@@ -151,6 +154,20 @@ function choiceLocalizations(command: string, option: string, value: string): Lo
     return buildLocalizations((_t, locale) => {
       const v = getLocalizedVisionType(key, locale);
       return v === key ? undefined : v;
+    });
+  }
+  if (command === 'budget' && option === 'preset') {
+    // I18N-006: these 22 choices are DYE NAMES, and core has all 125 localized —
+    // they were the last English-only choice list of any size, and it grew 5 → 22
+    // when 4.1.1 swapped the metallic/pastel picks for the Cosmic dyes. The
+    // emoji prefix is kept; Discord renders it, it is never drawn by resvg.
+    const pick = QUICK_PICKS.find((p) => p.id === value);
+    if (!pick) return undefined;
+    const dye = dyeService.getByStainId(pick.targetDyeId);
+    if (!dye) return undefined;
+    return buildLocalizations((_t, locale) => {
+      const name = getLocalizedDyeName(dye.itemID, dye.name, locale);
+      return name === dye.name ? undefined : `${pick.emoji} ${name}`;
     });
   }
   if (command === 'dye' && option === 'category') {
