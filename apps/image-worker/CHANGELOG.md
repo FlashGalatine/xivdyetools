@@ -8,9 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.0] - 2026-09-02
 
 Sprint 12 of the 2026-09-02 deep-dive remediation (`docs/audits/2026-09-02-deep-dive`).
-Minor bump: the accepted pixel range is smaller than it was, so some inputs that
-used to reach photon are now rejected at the gate — deliberately, because they
-were the ones that could take the isolate down.
+Minor bump: the accepted pixel range is smaller than it was (16 MP → 9.4 MP), so some
+inputs that used to reach photon are now rejected at the gate — deliberately, because
+they were the ones that could take the isolate down. Everything up to and including
+4K still passes.
 
 ### Fixed
 
@@ -26,10 +27,19 @@ were the ones that could take the isolate down.
   in a Worker shared with presets-api.
 
   The cap is now **derived from the memory budget** rather than from the side
-  length: 32 MiB / (4 bytes per RGBA pixel × 2 concurrent copies) = **4 MP**, about
-  2048×2048. That is ~8× the 256px default `maxDimension` on the long edge —
-  comfortably more resolution than palette extraction can use. `MAX_IMAGE_DIMENSION`
-  (4096/side) stays as a secondary guard on shape.
+  length: 72 MiB / (4 bytes per RGBA pixel × 2 concurrent copies) = **9.4 MP**.
+  `MAX_IMAGE_DIMENSION` (4096/side) stays as a secondary guard on shape.
+
+  That budget was first set at 32 MiB, i.e. a 4 MP ceiling, on the reasoning that
+  4 MP is far more resolution than palette extraction can use. True, but beside the
+  point: this gate rejects the **input**, before the decode that is the only thing
+  able to downscale it, so setting it by what extraction needs does not save anyone
+  bandwidth — it refuses their screenshot. 3840×2160 is 8.29 MP and 3440×1440 is
+  4.95 MP, so a 4K or ultrawide capture, the most common palette source an FFXIV
+  player has, was refused outright from `/extract` (the bot and the web extractor)
+  and from presets-api's preview upload alike. At 9.4 MP both pass and 4096×4096 —
+  the 134 MiB decompression bomb this finding was actually about — is still refused.
+  The trade is a thinner margin: peak lands near 95–100 MB of the 128 MiB isolate.
 
   The old suite had *noticed* the symptom: a comment in `validators.test.ts` recorded
   that "the pixel count branch [is] unreachable — dimension check always triggers

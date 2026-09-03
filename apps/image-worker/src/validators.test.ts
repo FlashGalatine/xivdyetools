@@ -35,8 +35,8 @@ describe('validators.ts', () => {
             expect(MAX_FILE_SIZE_BYTES).toBe(10 * 1024 * 1024); // 10MB
             expect(MAX_IMAGE_DIMENSION).toBe(4096);
             // BUG-052: derived from the memory budget, not the side length —
-            // 32 MiB / (4 B/px x 2 concurrent RGBA copies) = 4 MP.
-            expect(MAX_PIXEL_COUNT).toBe(4 * 1024 * 1024); // 4MP
+            // 72 MiB / (4 B/px x 2 concurrent RGBA copies) = 9 MP.
+            expect(MAX_PIXEL_COUNT).toBe(9 * 1024 * 1024); // 9,437,184 px
             expect(FETCH_TIMEOUT_MS).toBe(10000);
         });
     });
@@ -190,10 +190,24 @@ describe('validators.ts', () => {
         });
 
         it('should allow a wide image within the pixel budget', () => {
-            // 4096x1000 = 4.1 MB of pixels... just over. 4096x1024 = exactly 4MP.
-            expect(validateDimensions(4096, 1024)).toBeUndefined();
-            // and the side cap still stands on its own axis
-            expect(validateDimensions(4096, 1025)).toContain('too many pixels');
+            // 4096x2304 = 9,437,184 px = exactly MAX_PIXEL_COUNT.
+            expect(validateDimensions(4096, 2304)).toBeUndefined();
+            // and one row past it is refused
+            expect(validateDimensions(4096, 2305)).toContain('too many pixels');
+        });
+
+        /**
+         * 2026-09-03 (pre-merge review): the ceiling exists to stop an OOM, not
+         * to express a view about how much resolution palette extraction needs.
+         * These are the resolutions people actually screenshot at, and the
+         * 4 MP budget refused the top two outright — from `/extract` (the bot
+         * and the web extractor) and from presets-api's preview upload alike.
+         */
+        it('accepts the resolutions players actually screenshot at', () => {
+            expect(validateDimensions(1920, 1080)).toBeUndefined(); // 2.07 MP
+            expect(validateDimensions(2560, 1440)).toBeUndefined(); // 3.69 MP
+            expect(validateDimensions(3440, 1440)).toBeUndefined(); // 4.95 MP ultrawide
+            expect(validateDimensions(3840, 2160)).toBeUndefined(); // 8.29 MP 4K
         });
 
         it('should reject height exceeding dimension limit', () => {
@@ -213,12 +227,12 @@ describe('validators.ts', () => {
         it('rejects the largest square the SIDE cap admits — 4096x4096 is 64 MiB per RGBA copy', () => {
             const result = validateDimensions(4096, 4096);
             expect(result).toContain('too many pixels');
-            expect(result).toContain('4MP');
+            expect(result).toContain('9MP');
         });
 
-        it('the pixel cap binds before the side cap for any square over 2048', () => {
-            expect(validateDimensions(2048, 2048)).toBeUndefined();
-            expect(validateDimensions(2049, 2049)).toContain('too many pixels');
+        it('the pixel cap binds before the side cap for any square over 3072', () => {
+            expect(validateDimensions(3072, 3072)).toBeUndefined(); // 9.44 MP, just inside
+            expect(validateDimensions(3073, 3073)).toContain('too many pixels');
         });
     });
 

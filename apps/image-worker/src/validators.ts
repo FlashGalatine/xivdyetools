@@ -69,8 +69,19 @@ const CONCURRENT_RGBA_COPIES = 2;
  * {@link MAX_FILE_SIZE_BYTES}), the resize output, the WASM module itself and
  * the runtime's own overhead — and this Worker shares its isolate with
  * whatever else is resident.
+ *
+ * 2026-09-03 (pre-merge review of the deep dive): this was 32 MiB, i.e. a
+ * 4 MP ceiling. That is below the resolution people actually screenshot at —
+ * 3840×2160 is 8.29 MP and 3440×1440 is 4.95 MP, so a 4K or ultrawide capture,
+ * the single most common palette source an FFXIV player has, was refused
+ * pre-decode with no downscale path and nothing but an error to show for it.
+ * At 72 MiB the ceiling is 9.4 MP: 4K and ultrawide pass, and 4096×4096 —
+ * the decompression bomb BUG-052 was actually about, at 134 MiB of RGBA — is
+ * still refused. The trade is a thinner margin: peak lands near 95-100 MB of
+ * the 128 MiB isolate rather than 55-60, so this is the ceiling, not a floor
+ * to raise again without measuring the real peak first.
  */
-const PIXEL_MEMORY_BUDGET_BYTES = 32 * 1024 * 1024;
+const PIXEL_MEMORY_BUDGET_BYTES = 72 * 1024 * 1024;
 
 /**
  * Maximum pixel count — **derived from the memory budget, not the side length**.
@@ -85,12 +96,17 @@ const PIXEL_MEMORY_BUDGET_BYTES = 32 * 1024 * 1024;
  * OOM this pre-decode gate exists to prevent was reachable from any Discord
  * attachment, in a Worker shared with presets-api.
  *
- * 4 MP ≈ 2048×2048, which is ~8× the 256px default `maxDimension` on the long
- * edge — comfortably more resolution than palette extraction can use.
+ * The ceiling is deliberately NOT set to "more resolution than extraction can
+ * use". Extraction downscales to a 256px long edge, so on that reasoning any
+ * cap above ~1 MP would do — but the cap rejects the INPUT, before a decode
+ * that is the only thing able to downscale it. Set too low it does not save a
+ * user bandwidth; it refuses their screenshot. So the number answers "what can
+ * this isolate decode without dying", and nothing else. See
+ * {@link PIXEL_MEMORY_BUDGET_BYTES} for the 4 MP → 9.4 MP revision.
  */
 export const MAX_PIXEL_COUNT = Math.floor(
   PIXEL_MEMORY_BUDGET_BYTES / (BYTES_PER_RGBA_PIXEL * CONCURRENT_RGBA_COPIES)
-); // 4,194,304 px ≈ 4 MP
+); // 9,437,184 px ≈ 9.4 MP — admits 3840×2160 (8.29) and 3440×1440 (4.95)
 
 /** Smallest `maxDimension` that still yields a usable palette sample. */
 export const MIN_MAX_DIMENSION = 16;
