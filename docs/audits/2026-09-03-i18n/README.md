@@ -10,6 +10,7 @@ by this audit.
 | File | Purpose |
 |---|---|
 | [I18N_AUDIT_2026-09-03.md](I18N_AUDIT_2026-09-03.md) | The catalog: locale + font status tables, all 17 findings, positive controls, rejected suspicions, recommendations |
+| [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) | Sprint-sequenced plan: 9 sprints, one deploy unit each, plus two Sprint-0 decisions |
 | `findings/` | One file per finding — `I18N-001…012`, `TERM-001…003`, `FONT-001…003` |
 | `evidence/base-correction.md` | **Read this first** — the audit started on a stale base; what changed and what it cost |
 | `evidence/coordinator-verification.md` | The coordinator's own verification pass: gates, parity, fonts, vocabulary drift, terminology |
