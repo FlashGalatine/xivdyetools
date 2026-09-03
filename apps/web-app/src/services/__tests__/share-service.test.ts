@@ -382,4 +382,53 @@ describe('ShareService', () => {
       expect(mockToastError).toHaveBeenCalledWith('errors.copyLinkFailed', 'share.copyManually');
     });
   });
+
+  // ==========================================================================
+  // List params (BUG-015)
+  // ==========================================================================
+
+  describe('parseUrl list params', () => {
+    const parse = (query: string) =>
+      ShareService.parseUrl(`https://xivdyetools.app/comparison/?${query}&v=1`)?.params;
+
+    /**
+     * `dyes` must be a list at every arity. Both consumers gate on
+     * `Array.isArray`, so a bare number silently restores nothing while the
+     * page still loads — the failure reads as "wrong dyes", not as an error.
+     */
+    it.each([
+      ['three ids', 'dyes=45,102,7', [45, 102, 7]],
+      ['two ids', 'dyes=45,102', [45, 102]],
+      ['one id', 'dyes=45', [45]],
+    ])('parses %s as an array', (_label, query, expected) => {
+      expect(parse(query)?.dyes).toEqual(expected);
+    });
+
+    it('gives a one-id list the same shape as a multi-id list', () => {
+      const one = parse('dyes=45')?.dyes;
+      const many = parse('dyes=45,102')?.dyes;
+      expect(Array.isArray(one)).toBe(true);
+      expect(Array.isArray(many)).toBe(true);
+      expect(typeof one).toBe(typeof many);
+    });
+
+    it('keeps a non-list numeric param scalar', () => {
+      // Only keys in LIST_PARAMS become arrays; `dye` stays a number so the
+      // single-dye receivers that read it are unaffected.
+      expect(parse('dye=45')?.dye).toBe(45);
+    });
+
+    it('does not coerce a leading-zero value into a number', () => {
+      // parseFloat('012345') is 12345; the round-trip check keeps it a string
+      // so a bare colour starting with a digit survives the parse.
+      expect(parse('hexes=012345,123456')?.hexes).toEqual(['012345', '123456']);
+    });
+
+    it('reads true and false, and leaves 1 and 0 as numbers', () => {
+      expect(parse('flag=true')?.flag).toBe(true);
+      expect(parse('flag=false')?.flag).toBe(false);
+      expect(parse('flag=1')?.flag).toBe(1);
+      expect(parse('flag=0')?.flag).toBe(0);
+    });
+  });
 });

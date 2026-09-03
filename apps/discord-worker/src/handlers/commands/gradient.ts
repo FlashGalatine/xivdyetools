@@ -155,7 +155,13 @@ async function processGradientCommand(
     // Rebuild description with Discord emojis for each step's dye
     const dyeLines = result.gradientSteps
       .map((step, i) => {
-        const emoji = step.dyeId ? getDyeEmoji(step.dyeId, env.DISCORD_CLIENT_ID) : undefined;
+        // BUG-032: `step.dyeId` is a legacy itemID (bot-logic sets it from
+        // `closestDye.id`), but `emoji-mapping.json` is keyed by stainID —
+        // 1..125 — so the lookup always missed and no step in the list ever
+        // rendered a colour chip, while the Start/End lines below did because
+        // they pass `.stainID`. The resolved dye is already on the step.
+        const stepStainID = step.dye?.stainID ?? null;
+        const emoji = stepStainID ? getDyeEmoji(stepStainID, env.DISCORD_CLIENT_ID) : undefined;
         const emojiPrefix = emoji ? `${emoji} ` : '';
         const quality = getMatchQualityLabel(step.distance, t);
         const dyeText = step.dyeName

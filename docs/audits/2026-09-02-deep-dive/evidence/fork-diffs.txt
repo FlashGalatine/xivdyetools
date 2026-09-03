@@ -1,0 +1,1577 @@
+########## utils/response.ts ##########
+discord-worker=165 lines  moderation-worker=290 lines
+--- apps/discord-worker/src/utils/response.ts	2026-09-02 12:13:11.497037000 -0400
++++ apps/moderation-worker/src/utils/response.ts	2026-09-02 12:13:11.553625900 -0400
+@@ -5,12 +5,24 @@
+  * @see https://discord.com/developers/docs/interactions/receiving-and-responding
+  */
+ 
++import { ALLOWED_MENTIONS_NONE } from '@xivdyetools/bot-logic';
+ import { InteractionResponseType } from '../types/env.js';
+-import { BRAND_ACCENT } from './brand.js';
++
++/**
++ * Discord `allowed_mentions` object. FINDING-019 (2026-08-21 security audit):
++ * every response / follow-up / channel post built by this worker carries
++ * `ALLOWED_MENTIONS_NONE` unless a caller explicitly supplies its own, so user
++ * text echoed into `content` can never ping @everyone, roles or users.
++ */
++export interface AllowedMentions {
++  parse: readonly string[];
++  users?: string[];
++  roles?: string[];
++  replied_user?: boolean;
++}
+ 
+ /**
+  * Discord Embed structure
+- * @see https://discord.com/developers/docs/resources/message#embed-object
+  */
+ export interface DiscordEmbed {
+   title?: string;
+@@ -43,8 +55,8 @@
+  * Discord Button Component
+  */
+ export interface DiscordButton {
+-  type: 2; // Button component type
+-  style: 1 | 2 | 3 | 4 | 5; // Primary, Secondary, Success, Danger, Link
++  type: 2;
++  style: 1 | 2 | 3 | 4 | 5;
+   label?: string;
+   emoji?: { name: string; id?: string };
+   custom_id?: string;
+@@ -56,7 +68,7 @@
+  * Discord Action Row (container for buttons)
+  */
+ export interface DiscordActionRow {
+-  type: 1; // Action row type
++  type: 1;
+   components: DiscordButton[];
+ }
+ 
+@@ -68,12 +80,24 @@
+   embeds?: DiscordEmbed[];
+   components?: DiscordActionRow[];
+   flags?: number;
++  /** Defaults to `ALLOWED_MENTIONS_NONE` (FINDING-019); set explicitly to allow pings. */
++  allowed_mentions?: AllowedMentions;
++}
++
++/**
++ * Spread `ALLOWED_MENTIONS_NONE` under any caller-supplied `allowed_mentions`
++ * (FINDING-019). Caller wins, default otherwise.
++ */
++function withAllowedMentions<T extends { allowed_mentions?: AllowedMentions }>(
++  data: T
++): T & { allowed_mentions: AllowedMentions } {
++  return { allowed_mentions: ALLOWED_MENTIONS_NONE, ...data };
+ }
+ 
+ // Response flags
+-export const MessageFlags = {
+-  EPHEMERAL: 64, // Only visible to the user who triggered the interaction
+-} as const;
++export const MessageFlags = Object.freeze({
++  EPHEMERAL: 64,
++} as const);
+ 
+ /**
+  * Creates a PONG response for Discord's PING verification.
+@@ -88,14 +112,24 @@
+ export function messageResponse(data: InteractionResponseData): Response {
+   return Response.json({
+     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+-    data,
++    data: withAllowedMentions(data),
++  });
++}
++
++/**
++ * Creates an UPDATE_MESSAGE response (edits the message the component /
++ * modal came from). Carries `allowed_mentions` like every other text-bearing
++ * response (FINDING-019).
++ */
++export function updateMessageResponse(data: InteractionResponseData): Response {
++  return Response.json({
++    type: InteractionResponseType.UPDATE_MESSAGE,
++    data: withAllowedMentions(data),
+   });
+ }
+ 
+ /**
+  * Creates an ephemeral (private) message response.
+- * DISCORD-REF-002: Extended to accept either string or full InteractionResponseData
+- * @param content - Either a simple string message or full InteractionResponseData
+  */
+ export function ephemeralResponse(content: string | InteractionResponseData): Response {
+   if (typeof content === 'string') {
+@@ -104,7 +138,6 @@
+       flags: MessageFlags.EPHEMERAL,
+     });
+   }
+-  // InteractionResponseData passed - add ephemeral flag
+   return messageResponse({
+     ...content,
+     flags: (content.flags ?? 0) | MessageFlags.EPHEMERAL,
+@@ -113,7 +146,6 @@
+ 
+ /**
+  * Creates a deferred response (shows "thinking..." state).
+- * Use this when your response will take more than 3 seconds.
+  */
+ export function deferredResponse(ephemeral = false): Response {
+   return Response.json({
+@@ -129,7 +161,7 @@
+   return {
+     title: `\u274C ${title}`,
+     description,
+-    color: 0xff0000, // Red
++    color: 0xff0000,
+   };
+ }
+ 
+@@ -140,26 +172,119 @@
+   return {
+     title: `\u2705 ${title}`,
+     description,
+-    color: 0x00ff00, // Green
++    color: 0x00ff00,
+   };
+ }
+ 
+ /**
+- * Creates an info embed with consistent styling.
+- */
+-export function infoEmbed(title: string, description: string): DiscordEmbed {
+-  return {
+-    title: `\u2139\uFE0F ${title}`,
+-    description,
+-    color: BRAND_ACCENT,
+-  };
++ * Sanitizes error messages for display to users.
++ * Prevents internal error details from leaking to Discord messages.
++ *
++ * @param error - The error to sanitize
++ * @param fallbackMessage - Generic message to show if error is not user-safe
++ * @returns A safe error message string
++ */
++export function sanitizeErrorMessage(
++  error: unknown,
++  fallbackMessage = 'An unexpected error occurred.'
++): string {
++  // If it's a PresetAPIError with a safe message, use it
++  if (error && typeof error === 'object' && 'statusCode' in error && 'message' in error) {
++    const apiError = error as { statusCode: number; message: string };
++    // Only show API error messages for client errors (4xx), not server errors (5xx)
++    if (apiError.statusCode >= 400 && apiError.statusCode < 500) {
++      return apiError.message;
++    }
++    // MOD-8 (FINDING-034, 2026-08-21 audit): a 5xx / transport error carries
++    // an upstream body — never fall through to the generic Error branch
++    return fallbackMessage;
++  }
++
++  // For generic Error objects, only show message if it looks user-friendly
++  // (doesn't contain file paths, stack traces, SQL, or internal details)
++  if (error instanceof Error) {
++    const msg = error.message;
++    const unsafePatterns = [
++      /\bstack\b/i,
++      /\bat\s+\w+/, // Stack trace line
++      /\.ts:\d+/, // TypeScript file references
++      /\.js:\d+/, // JavaScript file references
++      /\bSQL\b/i,
++      /\bSELECT\b/i,
++      /\bINSERT\b/i,
++      /\bUPDATE\b/i,
++      /\bDELETE\b/i,
++      /\benv\./i,
++      /\bprocess\./i,
++      // MOD-8 (FINDING-034, 2026-08-21 audit): D1 / SQLite internals — the
++      // runtime's messages name tables, columns and constraints
++      /\bD1_/,
++      /\bSQLITE_/,
++      /\bno such (table|column|index)\b/i,
++      /\bconstraint\b/i,
++    ];
++
++    if (!unsafePatterns.some((pattern) => pattern.test(msg))) {
++      return msg;
++    }
++  }
++
++  return fallbackMessage;
+ }
+ 
+ /**
+- * Converts a hex color string to a Discord color integer.
+- */
+-export function hexToDiscordColor(hex: string): number {
+-  // Remove # if present
+-  const cleanHex = hex.replace('#', '');
+-  return parseInt(cleanHex, 16);
++ * UUID v4 validation regex
++ * Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
++ * where x is any hex digit and y is one of 8, 9, a, or b
++ */
++const UUID_V4_REGEX =
++  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
++
++/**
++ * Validates if a string is a valid UUID v4 format
++ * @param id - The string to validate
++ * @returns true if valid UUID v4, false otherwise
++ */
++export function isValidUuid(id: string): boolean {
++  return UUID_V4_REGEX.test(id);
++}
++
++// Base64URL encode/decode used to live here as a hand-rolled pair. They are now
++// `base64UrlEncode` / `base64UrlDecode` from `@xivdyetools/auth/encoding`, which this
++// worker already depends on (2026-09-01 dead-code audit, DEAD-017). The local copy also
++// spread the whole byte array into String.fromCharCode, which the package avoids.
++
++/**
++ * Creates a rate-limited (429) response
++ *
++ * Returns an ephemeral message informing the user they've exceeded the rate limit,
++ * along with appropriate HTTP headers.
++ *
++ * @param resetTime - Unix timestamp (ms) when the rate limit resets
++ * @returns Response with 429 status and Retry-After header
++ *
++ * @example
++ * ```typescript
++ * if (!rateLimitCheck.allowed) {
++ *   return rateLimitedResponse(rateLimitCheck.resetTime);
++ * }
++ * ```
++ */
++export function rateLimitedResponse(_resetTime: number): Response {
++  return new Response(
++    JSON.stringify({
++      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
++      data: {
++        content: 'Rate limit exceeded. Please wait before trying again.',
++        flags: MessageFlags.EPHEMERAL,
++        allowed_mentions: ALLOWED_MENTIONS_NONE,
++      },
++    }),
++    {
++      status: 200,
++      headers: {
++        'Content-Type': 'application/json',
++      },
++    }
++  );
+ }
+
+########## utils/discord-api.ts ##########
+discord-worker=362 lines  moderation-worker=190 lines
+--- apps/discord-worker/src/utils/discord-api.ts	2026-09-02 12:13:11.493275600 -0400
++++ apps/moderation-worker/src/utils/discord-api.ts	2026-09-02 12:13:11.550025000 -0400
+@@ -1,286 +1,63 @@
+ /**
+  * Discord REST API Utilities
+  *
+- * Helpers for sending follow-up messages with attachments,
+- * editing deferred responses, and other Discord API operations.
+- *
++ * Helpers for sending follow-up messages, editing deferred responses,
++ * and other Discord API operations.
+  */
+ 
+ import { ALLOWED_MENTIONS_NONE } from '@xivdyetools/bot-logic';
+-import type { DiscordEmbed, DiscordActionRow } from './response.js';
++import { sanitizeUrl, sanitizeErrorMessage } from './url-sanitizer.js';
++import type { DiscordEmbed, DiscordActionRow, AllowedMentions } from './response.js';
+ 
+ const DISCORD_API_BASE = 'https://discord.com/api/v10';
+ 
+-/**
+- * Discord `allowed_mentions` object.
+- * @see https://discord.com/developers/docs/resources/message#allowed-mentions-object
+- */
+-export interface AllowedMentions {
+-  parse: string[];
+-  users?: string[];
+-  roles?: string[];
+-  replied_user?: boolean;
+-}
+-
+-/**
+- * FINDING-019 (2026-08-21 security audit): every payload this module sends
+- * carries `allowed_mentions` so a user-sourced string that reaches message
+- * `content` can never ping @everyone / @here / roles / users. Callers that
+- * genuinely need a ping pass an explicit `allowedMentions` override.
+- */
+-function allowedMentionsFor(override?: AllowedMentions): AllowedMentions {
+-  return override ?? { ...ALLOWED_MENTIONS_NONE, parse: [...ALLOWED_MENTIONS_NONE.parse] };
+-}
+-
+-/**
+- * Timeout for Discord webhook API requests without file uploads (ms).
+- * BUG-004: Prevents indefinite hangs when Discord's webhook endpoint is slow.
+- */
+-const DISCORD_WEBHOOK_TIMEOUT = 5000;
+-
+-/**
+- * Timeout for Discord webhook API requests with file uploads (ms).
+- * Multipart form data with PNG attachments needs more time to transmit.
+- */
+-const DISCORD_WEBHOOK_FILE_TIMEOUT = 10000;
+-
+ export interface FollowUpOptions {
+   content?: string;
+   embeds?: DiscordEmbed[];
+   components?: DiscordActionRow[];
+-  /** File attachment */
+-  file?: {
+-    name: string;
+-    data: Uint8Array;
+-    contentType: string;
+-  };
+   /** Make the message ephemeral (only visible to user) */
+   ephemeral?: boolean;
+-  /** Override the default no-ping `allowed_mentions` (FINDING-019) */
+-  allowedMentions?: AllowedMentions;
++  /**
++   * FINDING-019 (2026-08-21 security audit): defaults to
++   * `ALLOWED_MENTIONS_NONE` — nothing pings unless a caller opts in.
++   */
++  allowed_mentions?: AllowedMentions;
+ }
+ 
+-/**
+- * Sends a follow-up message to a deferred interaction.
+- * Use this after responding with DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE.
+- *
+- * @param applicationId - Your Discord application ID
+- * @param interactionToken - The interaction token from the original request
+- * @param options - Message content and options
+- */
+-export async function sendFollowUp(
+-  applicationId: string,
+-  interactionToken: string,
+-  options: FollowUpOptions,
+-): Promise<Response> {
+-  const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}`;
+-
+-  // If there's a file, use multipart form data
+-  if (options.file) {
+-    return sendFollowUpWithFile(url, options);
+-  }
+-
+-  // Otherwise, send JSON
+-  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
+-  if (options.content) body.content = options.content;
+-  if (options.embeds) body.embeds = options.embeds;
+-  if (options.components) body.components = options.components;
+-  if (options.ephemeral) body.flags = 64;
+-
+-  return fetch(url, {
+-    method: 'POST',
+-    headers: {
+-      'Content-Type': 'application/json',
+-    },
+-    body: JSON.stringify(body),
+-    signal: AbortSignal.timeout(DISCORD_WEBHOOK_TIMEOUT),
+-  });
+-}
+-
+-/**
+- * Sends a follow-up message with a file attachment using multipart form data.
+- */
+-async function sendFollowUpWithFile(url: string, options: FollowUpOptions): Promise<Response> {
+-  const formData = new FormData();
+-
+-  // Build the payload_json part
+-  const payload: Record<string, unknown> = {
+-    allowed_mentions: allowedMentionsFor(options.allowedMentions),
+-  };
+-
+-  if (options.content) payload.content = options.content;
+-  if (options.ephemeral) payload.flags = 64;
+-
+-  // If we have embeds with image references, we need to reference the attachment
+-  // Note: options.file is guaranteed truthy since this function is only called when file exists
+-  if (options.embeds) {
+-    payload.embeds = options.embeds.map((embed) => {
+-      // If the embed has an image placeholder, replace with attachment reference
+-      if (embed.image?.url === 'attachment://image.png') {
+-        return {
+-          ...embed,
+-          image: { url: `attachment://${options.file!.name}` },
+-        };
+-      }
+-      return embed;
+-    });
+-  }
+-
+-  if (options.components) payload.components = options.components;
+-
+-  // Add attachments metadata
+-  if (options.file) {
+-    payload.attachments = [
+-      {
+-        id: 0,
+-        filename: options.file.name,
+-      },
+-    ];
+-  }
+-
+-  formData.append('payload_json', JSON.stringify(payload));
+-
+-  // Add the file
+-  if (options.file) {
+-    const blob = new Blob([options.file.data], { type: options.file.contentType });
+-    formData.append('files[0]', blob, options.file.name);
+-  }
+-
+-  return fetch(url, {
+-    method: 'POST',
+-    body: formData,
+-    signal: AbortSignal.timeout(DISCORD_WEBHOOK_FILE_TIMEOUT),
+-  });
++/** Every outbound body starts with `allowed_mentions` (caller override wins). */
++function baseBody(options: { allowed_mentions?: AllowedMentions }): Record<string, unknown> {
++  return { allowed_mentions: options.allowed_mentions ?? ALLOWED_MENTIONS_NONE };
+ }
+ 
+ /**
+  * Edits the original deferred response.
+- * Use this to update the "thinking..." message with actual content.
+  */
+ export async function editOriginalResponse(
+   applicationId: string,
+   interactionToken: string,
+-  options: FollowUpOptions,
++  options: FollowUpOptions
+ ): Promise<Response> {
+   const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
+ 
+-  // If there's a file, use multipart form data
+-  if (options.file) {
+-    return editResponseWithFile(url, options);
+-  }
+-
+-  // Otherwise, send JSON
+-  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
++  const body = baseBody(options);
+   if (options.content) body.content = options.content;
+   if (options.embeds) body.embeds = options.embeds;
+   if (options.components) body.components = options.components;
+ 
+-  return fetch(url, {
+-    method: 'PATCH',
+-    headers: {
+-      'Content-Type': 'application/json',
+-    },
+-    body: JSON.stringify(body),
+-    signal: AbortSignal.timeout(DISCORD_WEBHOOK_TIMEOUT),
+-  });
+-}
+-
+-/**
+- * Edits the original response with a file attachment.
+- */
+-async function editResponseWithFile(url: string, options: FollowUpOptions): Promise<Response> {
+-  const formData = new FormData();
+-
+-  // Build the payload_json part
+-  const payload: Record<string, unknown> = {
+-    allowed_mentions: allowedMentionsFor(options.allowedMentions),
+-  };
+-
+-  if (options.content) payload.content = options.content;
+-
+-  // Handle embeds with image attachments
+-  // Note: options.file is guaranteed truthy since this function is only called when file exists
+-  if (options.embeds) {
+-    payload.embeds = options.embeds.map((embed) => {
+-      if (embed.image?.url === 'attachment://image.png') {
+-        return {
+-          ...embed,
+-          image: { url: `attachment://${options.file!.name}` },
+-        };
+-      }
+-      return embed;
+-    });
+-  }
+-
+-  if (options.components) payload.components = options.components;
+-
+-  // Add attachments metadata
+-  if (options.file) {
+-    payload.attachments = [
+-      {
+-        id: 0,
+-        filename: options.file.name,
+-      },
+-    ];
+-  }
+-
+-  formData.append('payload_json', JSON.stringify(payload));
+-
+-  // Add the file
+-  if (options.file) {
+-    const blob = new Blob([options.file.data], { type: options.file.contentType });
+-    formData.append('files[0]', blob, options.file.name);
+-  }
+-
+-  return fetch(url, {
+-    method: 'PATCH',
+-    body: formData,
+-    signal: AbortSignal.timeout(DISCORD_WEBHOOK_FILE_TIMEOUT),
+-  });
+-}
+-
+-/**
+- * Minimal structural logger accepted by the safe helpers below
+- */
+-interface SafeCallLogger {
+-  error(message: string, error?: Error, context?: Record<string, unknown>): void;
+-}
+-
+-/**
+- * BUG-035 (2026-07-18 audit): throw-safe, outcome-checked wrapper around
+- * editOriginalResponse. Every deferred flow previously discarded the fetch
+- * Response (silent 4xx from embed limits / expired tokens / 429 left users
+- * on "thinking…" forever), and catch-path edits could themselves throw
+- * (5s AbortSignal timeout) and reject the waitUntil promise unhandled.
+- * Use this for BOTH success and error-path edits in background processors.
+- *
+- * @returns true when Discord accepted the edit
+- */
+-export async function safeEditOriginalResponse(
+-  applicationId: string,
+-  interactionToken: string,
+-  options: FollowUpOptions,
+-  logger?: SafeCallLogger,
+-): Promise<boolean> {
+   try {
+-    const res = await editOriginalResponse(applicationId, interactionToken, options);
+-    if (!res.ok) {
+-      const body = await res.text().catch(() => '');
+-      if (logger) {
+-        logger.error('Discord follow-up edit failed', undefined, { status: res.status, body });
+-      } else {
+-        console.error('Discord follow-up edit failed', res.status, body);
+-      }
+-      return false;
+-    }
+-    return true;
+-  } catch (e) {
+-    if (logger) {
+-      logger.error('Discord follow-up edit threw', e instanceof Error ? e : undefined);
+-    } else {
+-      console.error('Discord follow-up edit threw', e);
+-    }
+-    return false;
++    return await fetch(url, {
++      method: 'PATCH',
++      headers: {
++        'Content-Type': 'application/json',
++      },
++      body: JSON.stringify(body),
++    });
++  } catch (error) {
++    console.error('Discord API request failed', {
++      url: sanitizeUrl(url),
++      error: sanitizeErrorMessage(error),
++    });
++    throw error;
+   }
+ }
+ 
+@@ -291,72 +68,123 @@
+   content?: string;
+   embeds?: DiscordEmbed[];
+   components?: DiscordActionRow[];
+-  /** Override the default no-ping `allowed_mentions` (FINDING-019) */
+-  allowedMentions?: AllowedMentions;
++  /** FINDING-019: defaults to `ALLOWED_MENTIONS_NONE`. */
++  allowed_mentions?: AllowedMentions;
+ }
+ 
+ /**
+  * Sends a message to a Discord channel.
+  * Requires bot token authentication.
+- *
+- * @param botToken - Discord bot token
+- * @param channelId - Target channel ID
+- * @param options - Message content and options
+  */
+ export async function sendMessage(
+   botToken: string,
+   channelId: string,
+-  options: SendMessageOptions,
++  options: SendMessageOptions
+ ): Promise<Response> {
+   const url = `${DISCORD_API_BASE}/channels/${channelId}/messages`;
+ 
+-  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
++  const body = baseBody(options);
+   if (options.content) body.content = options.content;
+   if (options.embeds) body.embeds = options.embeds;
+   if (options.components) body.components = options.components;
+ 
+-  // DISCORD-HIGH-002: Add 5 second timeout to prevent worker hang
+-  return fetch(url, {
+-    method: 'POST',
+-    headers: {
+-      'Content-Type': 'application/json',
+-      Authorization: `Bot ${botToken}`,
+-    },
+-    body: JSON.stringify(body),
+-    signal: AbortSignal.timeout(5000),
+-  });
++  try {
++    return await fetch(url, {
++      method: 'POST',
++      headers: {
++        'Content-Type': 'application/json',
++        Authorization: `Bot ${botToken}`,
++      },
++      body: JSON.stringify(body),
++      signal: AbortSignal.timeout(5000),
++    });
++  } catch (error) {
++    console.error('Discord API request failed', {
++      url: sanitizeUrl(url),
++      error: sanitizeErrorMessage(error),
++    });
++    throw error;
++  }
+ }
+ 
+ /**
+  * Edits a message in a channel.
+  * Requires bot token authentication.
+- *
+- * @param botToken - Discord bot token
+- * @param channelId - Channel ID containing the message
+- * @param messageId - Message ID to edit
+- * @param options - New message content and options
+  */
+ export async function editMessage(
+   botToken: string,
+   channelId: string,
+   messageId: string,
+-  options: SendMessageOptions,
++  options: SendMessageOptions
+ ): Promise<Response> {
+   const url = `${DISCORD_API_BASE}/channels/${channelId}/messages/${messageId}`;
+ 
+-  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
++  const body = baseBody(options);
+   if (options.content) body.content = options.content;
+   if (options.embeds) body.embeds = options.embeds;
+   if (options.components) body.components = options.components;
+ 
+-  // DISCORD-HIGH-002: Add 5 second timeout to prevent worker hang
+-  return fetch(url, {
+-    method: 'PATCH',
+-    headers: {
+-      'Content-Type': 'application/json',
+-      Authorization: `Bot ${botToken}`,
+-    },
+-    body: JSON.stringify(body),
+-    signal: AbortSignal.timeout(5000),
+-  });
++  try {
++    return await fetch(url, {
++      method: 'PATCH',
++      headers: {
++        'Content-Type': 'application/json',
++        Authorization: `Bot ${botToken}`,
++      },
++      body: JSON.stringify(body),
++      signal: AbortSignal.timeout(5000),
++    });
++  } catch (error) {
++    console.error('Discord API request failed', {
++      url: sanitizeUrl(url),
++      error: sanitizeErrorMessage(error),
++    });
++    throw error;
++  }
++}
++
++/**
++ * BUG-035 (2026-07-18 audit): throw-safe, outcome-checked wrappers. All
++ * handler call sites previously discarded the fetch Response (silent 4xx)
++ * and catch-path edits could themselves throw (5s AbortSignal timeout),
++ * rejecting the surrounding waitUntil promise unhandled.
++ *
++ * @returns true when Discord accepted the request
++ */
++export async function safeSendMessage(
++  botToken: string,
++  channelId: string,
++  options: SendMessageOptions
++): Promise<boolean> {
++  try {
++    const res = await sendMessage(botToken, channelId, options);
++    if (!res.ok) {
++      console.error('Discord sendMessage failed', res.status, await res.text().catch(() => ''));
++      return false;
++    }
++    return true;
++  } catch (error) {
++    console.error('Discord sendMessage threw', sanitizeErrorMessage(error));
++    return false;
++  }
++}
++
++/** BUG-035: throw-safe, outcome-checked editMessage */
++export async function safeEditMessage(
++  botToken: string,
++  channelId: string,
++  messageId: string,
++  options: SendMessageOptions
++): Promise<boolean> {
++  try {
++    const res = await editMessage(botToken, channelId, messageId, options);
++    if (!res.ok) {
++      console.error('Discord editMessage failed', res.status, await res.text().catch(() => ''));
++      return false;
++    }
++    return true;
++  } catch (error) {
++    console.error('Discord editMessage threw', sanitizeErrorMessage(error));
++    return false;
++  }
+ }
+
+########## services/i18n.ts ##########
+discord-worker=133 lines  moderation-worker=116 lines
+--- apps/discord-worker/src/services/i18n.ts	2026-09-02 12:13:11.470472700 -0400
++++ apps/moderation-worker/src/services/i18n.ts	2026-09-02 12:13:11.543408600 -0400
+@@ -1,36 +1,44 @@
+ /**
+- * I18n Service (DISCORD-REF-003: Clarified separation from bot-i18n.ts)
++ * I18n Service (Simplified for Moderation Bot)
+  *
+  * This service handles:
+- * - User language PREFERENCES stored in Cloudflare KV
+- * - Locale resolution (user preference → Discord locale → default)
+- * - Integration with xivdyetools-core LocalizationService for DYE NAMES and CATEGORIES
++ * - User language preferences stored in Cloudflare KV
++ * - Locale resolution (user preference -> Discord locale -> default)
+  *
+- * Separation from bot-i18n.ts:
+- * - i18n.ts (this file): Preferences, locale resolution, core library integration
+- * - bot-i18n.ts: Bot UI strings (commands, errors, messages) from static JSON files
+- *
+- * Why two files?
+- * - Dye names come from xivdyetools-core (shared with web app)
+- * - Bot UI strings are specific to the Discord bot
+- * - Both need user locale preferences, so i18n.ts handles that shared concern
++ * Note: This is a simplified version that doesn't include @xivdyetools/core
++ * integration since the moderation bot doesn't need dye name localization.
+  *
+  * @module services/i18n
+  */
+ 
+-// Note: getPreference import is lazy to avoid circular dependency
+-// We use dynamic import within resolveUserLocale
++import type { ExtendedLogger } from '@xivdyetools/logger';
+ 
+-// Re-export pure localization functions from @xivdyetools/bot-logic so
+-// existing imports from this file continue to work without changes.
+-export {
+-  initializeLocale,
+-  getLocalizedDyeName,
+-  getLocalizedCategory,
+-} from '@xivdyetools/bot-logic';
++/**
++ * Supported locale codes
++ */
++export type LocaleCode = 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
+ 
+-export type { LocaleCode } from '@xivdyetools/bot-logic/i18n';
+-import type { LocaleCode } from '@xivdyetools/bot-logic/i18n';
++/**
++ * Locale display information
++ */
++export interface LocaleInfo {
++  code: LocaleCode;
++  name: string;
++  nativeName: string;
++  flag: string;
++}
++
++/**
++ * All supported locales with display info
++ */
++export const SUPPORTED_LOCALES: LocaleInfo[] = [
++  { code: 'en', name: 'English', nativeName: 'English', flag: '\uD83C\uDDFA\uD83C\uDDF8' },
++  { code: 'ja', name: 'Japanese', nativeName: '\u65E5\u672C\u8A9E', flag: '\uD83C\uDDEF\uD83C\uDDF5' },
++  { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '\uD83C\uDDE9\uD83C\uDDEA' },
++  { code: 'fr', name: 'French', nativeName: 'Fran\u00E7ais', flag: '\uD83C\uDDEB\uD83C\uDDF7' },
++  { code: 'ko', name: 'Korean', nativeName: '\uD55C\uAD6D\uC5B4', flag: '\uD83C\uDDF0\uD83C\uDDF7' },
++  { code: 'zh', name: 'Chinese', nativeName: '\u4E2D\u6587', flag: '\uD83C\uDDE8\uD83C\uDDF3' },
++];
+ 
+ /** KV key prefix for user language preferences */
+ const KEY_PREFIX = 'i18n:user:';
+@@ -44,17 +52,15 @@
+ 
+ /**
+  * Maps Discord locale codes to our supported locales
+- *
+- * @see https://discord.com/developers/docs/reference#locales
+  */
+ export function discordLocaleToLocaleCode(discordLocale: string): LocaleCode | null {
+   const mapping: Record<string, LocaleCode> = {
+     'en-US': 'en',
+     'en-GB': 'en',
+-    ja: 'ja',
+-    de: 'de',
+-    fr: 'fr',
+-    ko: 'ko',
++    'ja': 'ja',
++    'de': 'de',
++    'fr': 'fr',
++    'ko': 'ko',
+     'zh-CN': 'zh',
+     'zh-TW': 'zh',
+   };
+@@ -62,12 +68,12 @@
+ }
+ 
+ /**
+- * Get a user's legacy language preference from KV.
+- * Used internally by resolveUserLocale as a fallback.
++ * Get a user's language preference from KV
+  */
+-async function getUserLanguagePreference(
++export async function getUserLanguagePreference(
+   kv: KVNamespace,
+   userId: string,
++  logger?: ExtendedLogger
+ ): Promise<LocaleCode | null> {
+   try {
+     const value = await kv.get(`${KEY_PREFIX}${userId}`);
+@@ -75,52 +81,29 @@
+       return value;
+     }
+     return null;
+-  } catch {
++  } catch (error) {
++    if (logger) {
++      logger.error('Failed to get user language preference', error instanceof Error ? error : undefined);
++    }
+     return null;
+   }
+ }
+ 
+ /**
+  * Resolve the effective locale for a user
+- *
+- * Priority:
+- * 1. User's unified preferences (prefs:v1:{userId})
+- * 2. User's legacy preference (i18n:user:{userId})
+- * 3. Discord client locale (interaction.locale)
+- * 4. Default (English)
+- *
+- * @param kv - KV namespace binding
+- * @param userId - Discord user ID
+- * @param discordLocale - Discord's detected locale
+- * @returns Effective locale code
+  */
+ export async function resolveUserLocale(
+   kv: KVNamespace,
+   userId: string,
+-  discordLocale?: string,
++  discordLocale?: string
+ ): Promise<LocaleCode> {
+-  // 1. Check unified preferences first (V4 system)
+-  // Direct KV read to avoid circular dependency with preferences.ts
+-  try {
+-    const unifiedPrefsKey = `prefs:v1:${userId}`;
+-    const unifiedData = await kv.get(unifiedPrefsKey);
+-    if (unifiedData) {
+-      const prefs = JSON.parse(unifiedData) as { language?: string };
+-      if (prefs.language && isValidLocale(prefs.language)) {
+-        return prefs.language;
+-      }
+-    }
+-  } catch {
+-    // Continue to fallbacks if unified prefs read fails
+-  }
+-
+-  // 2. Check legacy i18n preference
++  // 1. Check user preference
+   const preference = await getUserLanguagePreference(kv, userId);
+   if (preference) {
+     return preference;
+   }
+ 
+-  // 3. Try Discord locale
++  // 2. Try Discord locale
+   if (discordLocale) {
+     const mapped = discordLocaleToLocaleCode(discordLocale);
+     if (mapped) {
+@@ -128,6 +111,6 @@
+     }
+   }
+ 
+-  // 4. Default to English
++  // 3. Default to English
+   return 'en';
+ }
+
+########## services/preset-api.ts ##########
+discord-worker=495 lines  moderation-worker=449 lines
+--- apps/discord-worker/src/services/preset-api.ts	2026-09-02 12:13:11.478306600 -0400
++++ apps/moderation-worker/src/services/preset-api.ts	2026-09-02 12:13:11.545452400 -0400
+@@ -1,16 +1,15 @@
+ /**
+- * Preset API Client
++ * Preset API Client (Moderation-focused)
+  *
+  * Functional module for communicating with the xivdyetools-worker preset API.
+- * All functions are stateless and take environment as a parameter.
++ * This is a subset containing only moderation-related functions.
+  *
+- * Uses Cloudflare Service Bindings for Worker-to-Worker communication when available,
+- * which avoids error 1042 (Worker fetch to different worker on same account).
++ * Uses Cloudflare Service Bindings for Worker-to-Worker communication when available.
+  *
+  * @module services/preset-api
+  */
+ 
+-import { isModeratorId } from '@xivdyetools/bot-logic';
++import { parseModeratorIds } from '@xivdyetools/bot-logic';
+ import {
+   createBotSignatureV2,
+   BOT_SIGNATURE_V2_HEADER,
+@@ -18,20 +17,15 @@
+ } from '@xivdyetools/auth';
+ import type { Env } from '../types/env.js';
+ import type { ExtendedLogger } from '@xivdyetools/logger';
+-import {
+-  type CommunityPreset,
+-  type PresetListResponse,
+-  type PresetSubmitResponse,
+-  type PresetSubmission,
+-  type PresetEditRequest,
+-  type PresetEditResponse,
+-  type VoteResponse,
+-  type PresetFilters,
+-  PresetAPIError,
+-} from '../types/preset.js';
+-
+-/** Upper bound on one presets-api call (service binding or URL fallback). */
+-export const PRESET_API_TIMEOUT_MS = 10_000;
++import { isValidSnowflake } from '@xivdyetools/types';
++import type {
++  CommunityPreset,
++  PresetListResponse,
++  ModerationStats,
++  PresetFilters,
++} from '@xivdyetools/types';
++import type { ModerationQueueEntry } from '../types/preset.js';
++import { PresetAPIError } from '../types/preset.js';
+ 
+ // ============================================================================
+ // Core Request Function
+@@ -39,23 +33,6 @@
+ 
+ /**
+  * Make an authenticated request to the preset API
+- *
+- * Uses Service Binding (env.PRESETS_API) when available for direct Worker-to-Worker
+- * communication. Falls back to external URL (env.PRESETS_API_URL) if binding is not
+- * configured (useful for local development).
+- *
+- * FINDING-020 (2026-08-21 security audit): callers percent-encode every
+- * user-influenced path segment (`encodeURIComponent`) before building `path`,
+- * so `..`, `/`, `?` and `#` in a preset id cannot steer the request onto a
+- * different presets-api route. The same encoded path is what the v2
+- * signature binds.
+- *
+- * @param env - Environment bindings
+- * @param method - HTTP method
+- * @param path - API path (e.g., '/api/v1/presets')
+- * @param options - Request options
+- * @returns Parsed JSON response
+- * @throws PresetAPIError on failure
+  */
+ async function request<T>(
+   env: Env,
+@@ -65,11 +42,10 @@
+     body?: unknown;
+     userDiscordId?: string;
+     userName?: string;
+-    requestId?: string; // For distributed tracing across service bindings
++    requestId?: string;
+     logger?: ExtendedLogger;
+   } = {},
+ ): Promise<T> {
+-  // Require either service binding or URL-based configuration
+   if (!env.PRESETS_API && (!env.PRESETS_API_URL || !env.BOT_API_SECRET)) {
+     throw new PresetAPIError(503, 'Preset API not configured');
+   }
+@@ -78,17 +54,14 @@
+     'Content-Type': 'application/json',
+   };
+ 
+-  // Add request ID for distributed tracing
+   if (options.requestId) {
+     headers['X-Request-ID'] = options.requestId;
+   }
+ 
+-  // Add auth header if using URL-based fetch (service binding uses internal auth)
+   if (env.BOT_API_SECRET) {
+     headers['Authorization'] = `Bearer ${env.BOT_API_SECRET}`;
+   }
+ 
+-  // Add user context headers for authenticated operations
+   if (options.userDiscordId) {
+     headers['X-User-Discord-ID'] = options.userDiscordId;
+   }
+@@ -99,18 +72,15 @@
+   // Serialise once: the same bytes are signed (v2) and sent
+   const bodyText = options.body ? JSON.stringify(options.body) : undefined;
+ 
+-  // SECURITY: Add HMAC signature for bot authentication
+-  // This must be done for BOTH service binding and URL-based requests,
+-  // as the Presets API requires signature verification in production
+   if (env.BOT_SIGNING_SECRET) {
+-    const timestamp = Math.floor(Date.now() / 1000);
++    const timestamp = Math.floor(Date.now() / 1000); // Unix seconds
+     headers['X-Request-Timestamp'] = String(timestamp);
+ 
+     // FINDING-014 (2026-08-21 audit): v2 binds method + path + body hash +
+     // nonce + identity (60 s window); presets-api verifies it whenever present.
+     // The legacy v1 header (a bare timestamp:userId:userName HMAC that bound
+-    // nothing about the request itself) is no longer sent — presets-api
+-    // stopped accepting it in 2.2.0 (FINDING-015, 2026-08-29 audit).
++    // nothing about the request itself) is no longer sent — presets-api stopped
++    // accepting it in 2.2.0 (FINDING-015, 2026-08-29 audit).
+     const nonce = crypto.randomUUID();
+     headers[BOT_SIGNATURE_NONCE_HEADER] = nonce;
+     headers[BOT_SIGNATURE_V2_HEADER] = await createBotSignatureV2(
+@@ -125,34 +95,33 @@
+       },
+       env.BOT_SIGNING_SECRET,
+     );
++
++    if (options.logger) {
++      options.logger.debug('Generated HMAC signature', {
++        timestamp,
++        hasSignature: true,
++        userId: options.userDiscordId,
++      });
++    }
+   }
+ 
+   try {
+     let response: Response;
+ 
+-    // Bounded wait either way: a stalled presets-api/D1 call must surface as a
+-    // failure (and its analytics row as `upstream_presets`) instead of holding
+-    // the command's trace until the runtime ends the isolate.
+-    const signal = AbortSignal.timeout(PRESET_API_TIMEOUT_MS);
+     if (env.PRESETS_API) {
+-      // Use Service Binding for Worker-to-Worker communication
+-      // This avoids Cloudflare error 1042
+       response = await env.PRESETS_API.fetch(
+         new Request(`https://internal${path}`, {
+           method,
+           headers,
+           body: bodyText,
+-          signal,
+         }),
+       );
+     } else {
+-      // Fall back to external URL (for local dev or if service binding not configured)
+       const url = `${env.PRESETS_API_URL}${path}`;
+       response = await fetch(url, {
+         method,
+         headers,
+         body: bodyText,
+-        signal,
+       });
+     }
+ 
+@@ -171,7 +140,6 @@
+     if (error instanceof PresetAPIError) {
+       throw error;
+     }
+-    // Network or parsing error
+     if (options.logger) {
+       options.logger.error('Preset API request failed', error instanceof Error ? error : undefined);
+     }
+@@ -184,28 +152,101 @@
+ // ============================================================================
+ 
+ /**
+- * Check if the preset API is configured and available
++ * Validate security configuration at startup
++ * Logs warnings for missing security-critical secrets
++ */
++export function validateSecurityConfig(env: Env): {
++  valid: boolean;
++  warnings: string[];
++  errors: string[];
++} {
++  const warnings: string[] = [];
++  const errors: string[] = [];
++
++  // Check if using service binding vs HTTP API
++  const usingServiceBinding = Boolean(env.PRESETS_API);
++
++  if (!usingServiceBinding) {
++    // When using HTTP API, BOT_API_SECRET is required
++    if (!env.BOT_API_SECRET) {
++      errors.push('BOT_API_SECRET is required when using PRESETS_API_URL');
++    }
++  }
++
++  // BOT_SIGNING_SECRET is recommended for HMAC request signing
++  if (!env.BOT_SIGNING_SECRET) {
++    warnings.push(
++      'BOT_SIGNING_SECRET is not set - HMAC request signatures will be disabled. ' +
++        'This reduces security for worker-to-worker communication.',
++    );
++  }
++
++  return {
++    valid: errors.length === 0,
++    warnings,
++    errors,
++  };
++}
++
++// Module-level cache for moderator IDs
++let moderatorIdsCache: Set<string> | null = null;
++
++/**
++ * Validates if a string is a valid Discord snowflake ID
++ * FINDING-002: Now delegates to shared utility from @xivdyetools/types
++ *
++ * @param id - The ID to validate
++ * @returns true if valid snowflake format, false otherwise
++ */
++function isValidDiscordSnowflake(id: string): boolean {
++  return isValidSnowflake(id);
++}
++
++/**
++ * Parse and cache moderator IDs from environment variable
++ * Validates snowflake format and creates a Set for O(1) lookups
+  *
+- * Returns true if either:
+- * - Service Binding (PRESETS_API) is configured (preferred)
+- * - External URL (PRESETS_API_URL) and auth secret (BOT_API_SECRET) are set
++ * @param env - Environment variables
++ * @returns Set of valid moderator IDs
+  */
+-export function isApiEnabled(env: Env): boolean {
+-  return Boolean(env.PRESETS_API || (env.PRESETS_API_URL && env.BOT_API_SECRET));
++function getModerators(env: Env): Set<string> {
++  // Return cached value if available
++  if (moderatorIdsCache !== null) {
++    return moderatorIdsCache;
++  }
++
++  // BUG-073 (2026-07-18 audit): shared grammar with discord-worker —
++  // whitespace/comma separators + snowflake validation (the old comma-only
++  // split here contradicted this worker's own documentation)
++  const moderatorIds = parseModeratorIds(env.MODERATOR_IDS);
++
++  // Cache the result
++  moderatorIdsCache = moderatorIds;
++  return moderatorIds;
+ }
+ 
+ /**
+  * Check if a user is a moderator based on MODERATOR_IDS environment variable
++ * Uses cached Set for O(1) lookup performance
++ *
++ * @param env - Environment variables
++ * @param userId - Discord user ID to check
++ * @returns true if user is a moderator, false otherwise
+  */
+ export function isModerator(env: Env, userId: string): boolean {
+-  // BUG-073 (2026-07-18 audit): shared grammar (whitespace/comma separators +
+-  // snowflake validation) — the old comma-only split silently failed closed
+-  // for newline-separated secrets that moderation-worker accepts
+-  return isModeratorId(env.MODERATOR_IDS, userId);
++  if (!env.MODERATOR_IDS) return false;
++
++  // Validate userId format before checking
++  if (!isValidDiscordSnowflake(userId)) {
++    return false;
++  }
++
++  const moderators = getModerators(env);
++  return moderators.has(userId);
+ }
+ 
+ // ============================================================================
+-// Preset Functions
++// Preset Functions (Read-only for moderation)
+ // ============================================================================
+ 
+ /**
+@@ -214,6 +255,7 @@
+ export async function getPresets(
+   env: Env,
+   filters: PresetFilters = {},
++  moderatorId?: string,
+ ): Promise<PresetListResponse> {
+   const params = new URLSearchParams();
+ 
+@@ -225,17 +267,30 @@
+   if (filters.limit) params.set('limit', String(filters.limit));
+ 
+   const query = params.toString();
+-  return request<PresetListResponse>(env, 'GET', `/api/v1/presets${query ? `?${query}` : ''}`);
++  // MOD-13 (FINDING-034, 2026-08-21 audit): presets-api 403s `status=pending`
++  // for anonymous callers, so the moderator identity must travel with the
++  // request (it is also what the HMAC covers).
++  return request<PresetListResponse>(env, 'GET', `/api/v1/presets${query ? `?${query}` : ''}`, {
++    userDiscordId: moderatorId,
++  });
++}
++
++/**
++ * FINDING-020 (2026-08-21 security audit): every identifier interpolated into
++ * a presets-api path is encoded first. Handlers validate the shape (UUID /
++ * snowflake) at their boundary; this is the defence-in-depth layer so that a
++ * value which slipped through can only ever address a single path segment.
++ */
++function pathSegment(id: string): string {
++  return encodeURIComponent(id);
+ }
+ 
+ /**
+  * Get a single preset by ID
+- *
+- * @returns Preset or null if not found
+  */
+ export async function getPreset(env: Env, id: string): Promise<CommunityPreset | null> {
+   try {
+-    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${encodeURIComponent(id)}`);
++    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${pathSegment(id)}`);
+   } catch (error) {
+     if (error instanceof PresetAPIError && error.statusCode === 404) {
+       return null;
+@@ -244,200 +299,106 @@
+   }
+ }
+ 
+-/**
+- * Search for a preset by name
+- *
+- * @returns First matching preset or null if not found
+- */
+-export async function getPresetByName(env: Env, name: string): Promise<CommunityPreset | null> {
+-  // BUG-034 (2026-07-18 audit): fetch a full page — limit 1 returned only the
+-  // search-RANKED top hit, making an exact-named preset unreachable whenever
+-  // a partial match ranked higher
+-  const response = await getPresets(env, {
+-    search: name,
+-    status: 'approved',
+-    limit: 25,
+-  });
+-
+-  // Find exact match first, then partial match
+-  const exactMatch = response.presets.find((p) => p.name.toLowerCase() === name.toLowerCase());
+-  return exactMatch || response.presets[0] || null;
+-}
+-
+-/**
+- * Get a random preset, optionally filtered by category
+- */
+-export async function getRandomPreset(
+-  env: Env,
+-  category?: string,
+-): Promise<CommunityPreset | null> {
+-  const filters: PresetFilters = {
+-    status: 'approved',
+-    limit: 50, // Get a pool of presets
+-  };
+-
+-  if (category) {
+-    filters.category = category as PresetFilters['category'];
+-  }
+-
+-  const response = await getPresets(env, filters);
+-
+-  if (response.presets.length === 0) {
+-    return null;
+-  }
+-
+-  // Pick a random one from the pool
+-  const randomIndex = Math.floor(Math.random() * response.presets.length);
+-  return response.presets[randomIndex];
+-}
+-
+-/**
+- * Submit a new preset
+- */
+-export async function submitPreset(
+-  env: Env,
+-  submission: PresetSubmission,
+-  userDiscordId: string,
+-  userName: string,
+-): Promise<PresetSubmitResponse> {
+-  return request<PresetSubmitResponse>(env, 'POST', '/api/v1/presets', {
+-    body: submission,
+-    userDiscordId,
+-    userName,
+-  });
+-}
++// ============================================================================
++// Moderation Functions
++// ============================================================================
+ 
+ /**
+- * Get all presets owned by a user
++ * Get presets pending moderation
+  *
+- * Returns presets in all statuses (pending, approved, rejected)
+- * Sorted by creation date (newest first)
++ * FINDING-001 (2026-08-11 fix wave): typed as ModerationQueueEntry[], not
++ * CommunityPreset[] — the API has always included `pending_preview_image_url`
++ * on this endpoint (presets-api's ModerationQueueEntry), but this client
++ * discarded it at the type level, leaving handlePendingAction with no way to
++ * tell a text-pending entry from an image-only one.
+  */
+-export async function getMyPresets(env: Env, userDiscordId: string): Promise<CommunityPreset[]> {
+-  const response = await request<{ presets: CommunityPreset[]; total: number }>(
++export async function getPendingPresets(
++  env: Env,
++  moderatorId: string,
++): Promise<ModerationQueueEntry[]> {
++  const response = await request<{ presets: ModerationQueueEntry[] }>(
+     env,
+     'GET',
+-    '/api/v1/presets/mine',
+-    { userDiscordId },
++    '/api/v1/moderation/pending',
++    { userDiscordId: moderatorId },
+   );
+   return response.presets;
+ }
+ 
+ /**
+- * Edit a preset (owner only)
+- *
+- * If name/description changes trigger content moderation and content is flagged,
+- * the preset will be set to 'pending' status with previous values stored for revert.
+- *
+- * @returns Edit response with updated preset and moderation status
+- * @throws PresetAPIError with status 409 if dye combination is duplicate
+- */
+-export async function editPreset(
+-  env: Env,
+-  presetId: string,
+-  updates: PresetEditRequest,
+-  userDiscordId: string,
+-  userName: string,
+-): Promise<PresetEditResponse> {
+-  return request<PresetEditResponse>(env, 'PATCH', `/api/v1/presets/${encodeURIComponent(presetId)}`, {
+-    body: updates,
+-    userDiscordId,
+-    userName,
+-  });
+-}
+-
+-// ============================================================================
+-// Vote Functions
+-// ============================================================================
+-
+-/**
+- * Add a vote to a preset
+- */
+-export async function voteForPreset(
+-  env: Env,
+-  presetId: string,
+-  userDiscordId: string,
+-): Promise<VoteResponse> {
+-  return request<VoteResponse>(env, 'POST', `/api/v1/votes/${encodeURIComponent(presetId)}`, {
+-    userDiscordId,
+-  });
+-}
+-
+-/**
+- * Remove a vote from a preset
++ * Approve a preset
+  */
+-export async function removeVote(
++export async function approvePreset(
+   env: Env,
+   presetId: string,
+-  userDiscordId: string,
+-): Promise<VoteResponse> {
+-  return request<VoteResponse>(env, 'DELETE', `/api/v1/votes/${encodeURIComponent(presetId)}`, {
+-    userDiscordId,
+-  });
++  moderatorId: string,
++  reason?: string,
++): Promise<CommunityPreset> {
++  const response = await request<{ preset: CommunityPreset }>(
++    env,
++    'PATCH',
++    `/api/v1/moderation/${pathSegment(presetId)}/status`,
++    {
++      body: { status: 'approved', reason },
++      userDiscordId: moderatorId,
++    },
++  );
++  return response.preset;
+ }
+ 
+ /**
+- * Check if a user has voted for a preset
++ * Reject a preset
+  */
+-export async function hasVoted(
++export async function rejectPreset(
+   env: Env,
+   presetId: string,
+-  userDiscordId: string,
+-  logger?: ExtendedLogger,
+-): Promise<boolean> {
+-  try {
+-    const response = await request<{ has_voted: boolean }>(
+-      env,
+-      'GET',
+-      `/api/v1/votes/${encodeURIComponent(presetId)}/check`,
+-      { userDiscordId, logger },
+-    );
+-    return response.has_voted;
+-  } catch (error) {
+-    // If check fails, assume not voted
+-    if (logger) {
+-      logger.error('Failed to check vote status', error instanceof Error ? error : undefined);
+-    }
+-    return false;
+-  }
++  moderatorId: string,
++  reason: string,
++): Promise<CommunityPreset> {
++  const response = await request<{ preset: CommunityPreset }>(
++    env,
++    'PATCH',
++    `/api/v1/moderation/${pathSegment(presetId)}/status`,
++    {
++      body: { status: 'rejected', reason },
++      userDiscordId: moderatorId,
++    },
++  );
++  return response.preset;
+ }
+ 
+ /**
+- * Result of a preview-image moderation action.
+- * Mirrors presets-api's PATCH /api/v1/moderation/:presetId/preview-image contract.
++ * Get moderation statistics
+  */
+-export interface PreviewImageModerationResult {
+-  success: boolean;
+-  preview_image_status: 'approved' | 'none';
++export async function getModerationStats(env: Env, moderatorId: string): Promise<ModerationStats> {
++  const response = await request<{ stats: ModerationStats }>(
++    env,
++    'GET',
++    '/api/v1/moderation/stats',
++    { userDiscordId: moderatorId },
++  );
++  return response.stats;
+ }
+ 
+ /**
+- * Approve or reject a preset's pending preview image (moderators only).
+- *
+- * Rejecting deletes the image and resets its status to 'none' — it does NOT
+- * touch the preset's own status (a bad picture is not a bad palette).
+- *
+- * SECURITY: `moderatorId`/`moderatorName` must be the CLICKING user's Discord
+- * identity, not the bot's — presets-api authorises the moderator from the
+- * bot-auth headers these populate.
++ * Revert a preset to its previous values (moderators only)
+  */
+-export async function setPreviewImageStatus(
++export async function revertPreset(
+   env: Env,
+   presetId: string,
+-  action: 'approve' | 'reject',
++  reason: string,
+   moderatorId: string,
+-  moderatorName?: string,
+-): Promise<PreviewImageModerationResult> {
+-  return request<PreviewImageModerationResult>(
++): Promise<CommunityPreset> {
++  const response = await request<{ success: boolean; preset: CommunityPreset }>(
+     env,
+     'PATCH',
+-    `/api/v1/moderation/${encodeURIComponent(presetId)}/preview-image`,
++    `/api/v1/moderation/${pathSegment(presetId)}/revert`,
+     {
+-      body: { action },
++      body: { reason },
+       userDiscordId: moderatorId,
+-      userName: moderatorName,
+     },
+   );
++  return response.preset;
+ }
+ 
+ // ============================================================================
+@@ -446,11 +407,6 @@
+ 
+ /**
+  * Search presets for autocomplete suggestions
+- *
+- * @param env - Environment bindings
+- * @param query - Search query
+- * @param options - Additional options
+- * @returns Array of autocomplete choices
+  */
+ export async function searchPresetsForAutocomplete(
+   env: Env,
+@@ -458,29 +414,27 @@
+   options: {
+     status?: 'approved' | 'pending';
+     limit?: number;
++    /** MOD-13: the moderator asking — required for `status: 'pending'` to return anything */
++    userDiscordId?: string;
+     logger?: ExtendedLogger;
+   } = {},
+ ): Promise<Array<{ name: string; value: string }>> {
+   try {
+     const filters: PresetFilters = {
+-      status: options.status || 'approved',
++      status: options.status || 'pending',
+       limit: options.limit || 25,
+     };
+ 
+     if (query.length > 0) {
+       filters.search = query;
+-    } else {
+-      // Show popular presets when no query
+-      filters.sort = 'popular';
+     }
+ 
+-    const response = await getPresets(env, filters);
++    const response = await getPresets(env, filters, options.userDiscordId);
+ 
+     return response.presets.map((preset) => ({
+-      // Format: "Name (X★)" or "Name (X★) by Author"
+       name: preset.author_name
+-        ? `${preset.name} (${preset.vote_count}★) by ${preset.author_name}`
+-        : `${preset.name} (${preset.vote_count}★)`,
++        ? `${preset.name} (${preset.vote_count}\u2605) by ${preset.author_name}`
++        : `${preset.name} (${preset.vote_count}\u2605)`,
+       value: preset.id,
+     }));
+   } catch (error) {
+

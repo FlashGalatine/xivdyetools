@@ -85,10 +85,25 @@ export async function sendAnnouncement(
   channelId: string,
   entry: ChangelogEntry,
   repoUrl: string
-): Promise<void> {
+): Promise<{ ok: true } | { ok: false; status: number; body: string }> {
   const embed = formatAnnouncementEmbed(entry, repoUrl);
 
-  await sendMessage(botToken, channelId, {
+  const res = await sendMessage(botToken, channelId, {
     embeds: [embed],
   });
+
+  // BUG-026: this awaited `sendMessage` and threw the Response away, so a
+  // Discord 403 (no SEND_MESSAGES in the announcement channel) or 400
+  // (rejected embed) resolved as success. The caller then wrote the
+  // `announced:v:<version>` memo, every later Redeliver short-circuited on it,
+  // and that release could never be announced again — the exact opposite of
+  // the invariant the caller documents. Only a network error or the 5 s
+  // AbortSignal used to surface at all.
+  if (res.ok) return { ok: true };
+
+  return {
+    ok: false,
+    status: res.status,
+    body: (await res.text().catch(() => '')).slice(0, 300),
+  };
 }

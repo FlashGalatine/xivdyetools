@@ -73,9 +73,14 @@ export function parseCommand(content: string): ParsedCommand | null {
   let matchedPrefix: string | null = null;
   for (const prefix of PREFIXES) {
     if (lower.startsWith(prefix)) {
-      // Must be followed by whitespace or end of string
+      // Must be followed by whitespace or end of string.
+      // image-stoat-12: this comment was right and the code was not -- it
+      // accepted only a literal space, so `"!xd\nping"` (ordinary in a
+      // multi-line Revolt message) matched no prefix and the bot ignored the
+      // message entirely. The tokeniser eleven lines below already splits on
+      // /\s+/, so the rest of the parser handles arbitrary whitespace.
       const afterPrefix = trimmed[prefix.length];
-      if (afterPrefix === undefined || afterPrefix === ' ') {
+      if (afterPrefix === undefined || /\s/.test(afterPrefix)) {
         matchedPrefix = prefix;
         break;
       }

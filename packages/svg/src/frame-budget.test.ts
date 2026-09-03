@@ -17,7 +17,14 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { CARD_WIDTH, CARD_MAX_HEIGHT, CARD_TYPE, CARD_DARK, CARD_LIGHT } from './frame.js';
+import {
+  CARD_WIDTH,
+  CARD_MAX_HEIGHT,
+  CARD_TYPE,
+  CARD_DARK,
+  CARD_LIGHT,
+  textWidth,
+} from './frame.js';
 import { generateHarmonyCard } from './harmony-card.js';
 import { generateGradientCard } from './gradient.js';
 import { generateMixerCard } from './mixer-card.js';
@@ -272,9 +279,128 @@ const cards: Array<{ name: string; svg: () => string }> = [
   },
 ];
 
+/**
+ * The same cards in the locales that bind *horizontally*.
+ *
+ * German binds for length, which is why every fixture above is German — but
+ * German cannot exercise `estimateTextWidth`'s wide branch, and that branch is
+ * where BUG-054 lived: a CJK glyph is 2× a Latin one and a CJK sentence offers
+ * no ASCII space to wrap at, so the ja/ko `/gradient` verdict rendered 432 px
+ * and 445.5 px wide on a 400 px card. A Latin-only corpus is green throughout.
+ */
+const wideCards: Array<{ name: string; pad: number; svg: () => string }> = [
+  {
+    name: '/gradient · stage-0 verdict · ja',
+    pad: 16,
+    svg: () =>
+      generateGradientCard({
+        headerText: 'OKLCH · 6',
+        strip: Array.from({ length: 6 }, (_, i) => ({
+          idealHex: HEXES[i % HEXES.length],
+          dyeHex: HEXES[(i + 1) % HEXES.length],
+        })),
+        rows: [0, 1].map((i) => ({
+          stepText: `${i + 1}`,
+          idealHex: HEXES[i],
+          dyeHex: HEXES[i + 1],
+          name: 'メタリックコバルトグリーン',
+          deltaE: 10.1 + i,
+        })),
+        verdict: '6ステップの該当は2色のみ。中間に存在するカララントはありません。',
+        legend: 'バンド = 各ステップ · 行 = 異なるカララント',
+        lang: 'ja',
+      }),
+  },
+  {
+    name: '/gradient · stage-0 verdict · ko',
+    pad: 16,
+    svg: () =>
+      generateGradientCard({
+        headerText: 'OKLCH · 6',
+        strip: Array.from({ length: 6 }, (_, i) => ({
+          idealHex: HEXES[i % HEXES.length],
+          dyeHex: HEXES[(i + 1) % HEXES.length],
+        })),
+        rows: [0, 1].map((i) => ({
+          stepText: `${i + 1}`,
+          idealHex: HEXES[i],
+          dyeHex: HEXES[i + 1],
+          name: '메탈릭 코발트 그린',
+          deltaE: 10.1 + i,
+        })),
+        verdict: '6단계가 염료 2개로 수렴합니다. 그 사이에 해당하는 염료는 없습니다.',
+        legend: '밴드 = 각 단계 · 행 = 서로 다른 염료',
+        lang: 'ko',
+      }),
+  },
+  {
+    name: '/extractor color · 5 ranks · ja',
+    pad: 16,
+    svg: () =>
+      generateNearestSheet({
+        targetHex: HEXES[0],
+        targetText: '#781A1A',
+        rows: [0, 1, 2, 3, 4].map((i) => ({
+          rank: i + 1,
+          hex: HEXES[i + 1],
+          name: 'メタリックコバルトグリーン',
+          deltaE: 1.4 + i,
+        })),
+        labels: {
+          target: 'ターゲット',
+          rank: 'ランク',
+          nearest: '最も近いカララント',
+          matchKey: 'ΔE2000による最近傍',
+        },
+        lang: 'ja',
+      }),
+  },
+];
+
 /** Every `font-size="N"` in the document. */
 function fontSizes(svg: string): number[] {
   return [...svg.matchAll(/font-size="([\d.]+)"/g)].map((m) => Number(m[1]));
+}
+
+interface TextSpan {
+  x: number;
+  content: string;
+  size: number;
+  font: 'mono' | 'body' | 'display';
+  anchor: 'start' | 'end';
+}
+
+/**
+ * Every `<text>` in the document, with the numbers needed to measure how far
+ * it actually reaches.
+ *
+ * Content inside a `<g transform="translate(…)">` (the command chip) reports
+ * its *relative* x, which is smaller than where it truly lands. That makes
+ * this parser under-report a right-hand overrun and never invent one — the
+ * safe direction for a gate.
+ */
+function textSpans(svg: string): TextSpan[] {
+  return [...svg.matchAll(/<text ([^>]*)>([^<]*)<\/text>/g)].map((m) => {
+    const attrs = m[1];
+    const family = /font-family="([^"]*)"/.exec(attrs)?.[1] ?? '';
+    return {
+      x: Number(/\bx="(-?[\d.]+)"/.exec(attrs)?.[1] ?? 0),
+      content: m[2],
+      size: Number(/font-size="([\d.]+)"/.exec(attrs)?.[1] ?? 0),
+      font: family.startsWith('Fragment Mono')
+        ? 'mono'
+        : family.startsWith('Space Grotesk')
+          ? 'display'
+          : 'body',
+      anchor: /text-anchor="end"/.test(attrs) ? 'end' : 'start',
+    };
+  });
+}
+
+/** The painted span of one text run, in card coordinates. */
+function paintedSpan(t: TextSpan): { left: number; right: number } {
+  const w = textWidth(t.content, t.size, t.font);
+  return t.anchor === 'end' ? { left: t.x - w, right: t.x } : { left: t.x, right: t.x + w };
 }
 
 function dimensions(svg: string): { width: number; height: number } {
@@ -318,5 +444,84 @@ describe('frame budget — every 5.0 card, in the binding locale', () => {
     // "something here needs your attention". They must not share a token.
     expect(CARD_DARK.tiers).not.toContain('#F4BF4F');
     expect(CARD_DARK.tiers).not.toContain('#9ecf5e');
+  });
+});
+
+/**
+ * The third constraint, and the one that was missing: **the text has to fit
+ * the width too.**
+ *
+ * `frame budget` above measures the canvas (400 × ≤350) and the type floor,
+ * but never asked whether the content stays inside the canvas it measured.
+ * BUG-054 and pkg-svg-bot-logic-06 both lived in that gap — one overran the
+ * card by 45 px of Japanese, the other put a right-anchored ΔE column 8 px
+ * outside the margin every other element on the card aligns to.
+ */
+describe('frame extent — content stays inside the card it is drawn on', () => {
+  it.each([...cards, ...wideCards])('$name paints no text outside the canvas', ({ svg }) => {
+    const overruns = textSpans(svg())
+      .map((t) => ({ t, span: paintedSpan(t) }))
+      .filter(({ span }) => span.left < 0 || span.right > CARD_WIDTH)
+      .map(({ t, span }) => `"${t.content}" spans ${span.left.toFixed(1)}→${span.right.toFixed(1)}`);
+
+    expect(overruns, `text outside 0–${CARD_WIDTH}px:\n${overruns.join('\n')}`).toEqual([]);
+  });
+
+  it.each(wideCards)('$name aligns every right-anchored run to its own margin', ({ svg, pad }) => {
+    // The measure column is right-anchored, so its x IS the right edge. A slot
+    // table that sums past `CARD_WIDTH − 2 × PAD` pushes it outside the margin
+    // the header, footer legend and mark all share.
+    const margin = CARD_WIDTH - pad;
+    const proud = textSpans(svg())
+      .filter((t) => t.anchor === 'end' && t.x > margin)
+      .map((t) => `"${t.content}" anchored at ${t.x} (margin ${margin})`);
+
+    expect(proud, `right-anchored past the margin:\n${proud.join('\n')}`).toEqual([]);
+  });
+
+  it.each(cards)('$name aligns every right-anchored run to the 16 px margin', ({ svg }) => {
+    const margin = CARD_WIDTH - 16;
+    const proud = textSpans(svg())
+      .filter((t) => t.anchor === 'end' && t.x > margin)
+      .map((t) => `"${t.content}" anchored at ${t.x} (margin ${margin})`);
+
+    expect(proud, `right-anchored past the margin:\n${proud.join('\n')}`).toEqual([]);
+  });
+
+  /**
+   * Staying on the canvas is not enough on its own: `fitText` can hold any
+   * line inside 400 px by *cutting* it, and the card would then be tidy and
+   * wrong. A sentence has to survive whole, across as many lines as it needs.
+   *
+   * This is what separates the fix from its symptom — with the old
+   * character-count estimate the ja verdict measured under budget as one
+   * 432 px line, so nothing wrapped and the render-time ellipsis ate a third
+   * of the sentence. Both halves must hold for this to pass.
+   */
+  it.each([
+    {
+      name: 'ja',
+      verdict: '6ステップの該当は2色のみ。中間に存在するカララントはありません。',
+    },
+    {
+      name: 'ko',
+      verdict: '6단계가 염료 2개로 수렴합니다. 그 사이에 해당하는 염료는 없습니다.',
+    },
+  ])('the $name verdict wraps in full rather than being ellipsised', ({ name, verdict }) => {
+    const svg = wideCards.find((c) => c.name.endsWith(name))!.svg();
+    const runs = textSpans(svg).map((t) => t.content);
+
+    // Every code point of the sentence is still drawn, in order, across the
+    // lines it wrapped onto. An ellipsised verdict cannot satisfy this: the
+    // cut tail is simply absent from the document.
+    //
+    // (Row dye names ARE legitimately ellipsised by `measuredRow` — they are
+    // one slot wide by design — so this asks about the verdict, not about
+    // every run on the card.)
+    const drawn = runs.join('').replace(/\s/g, '');
+    expect(drawn).toContain(verdict.replace(/\s/g, ''));
+
+    // …and it took more than one line to do it, which is the wrap itself.
+    expect(runs.some((r) => r !== verdict && verdict.startsWith(r.slice(0, 4)))).toBe(true);
   });
 });

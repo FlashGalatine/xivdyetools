@@ -196,11 +196,11 @@ charaRouter.post('/resolve', async (c) => {
   const request = parseResolveBody(await readJsonBody(c.req.raw));
   const client = new XivapiClient(c.env);
   // Same cast as the Universalis router — Hono's ctx type lags workers-types.
-  const cache = new CharaRowCache(
-    c.executionCtx as ExecutionContext,
-    new URL(c.req.url).origin,
-    client.versionKey,
-  );
+  // OPT-004 dropped the origin argument: `CacheService` builds its synthetic
+  // keys from a fixed host now, so which of the worker's domains a request
+  // arrived on no longer partitions the cache. `CACHE_NAME` was always the
+  // real namespace.
+  const cache = new CharaRowCache(c.executionCtx as ExecutionContext, client.versionKey);
 
   const lookups = lookupsFor(request.gear);
   const rows = await cache.getRows(lookups);

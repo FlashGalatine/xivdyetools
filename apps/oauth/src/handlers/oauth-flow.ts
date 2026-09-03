@@ -44,19 +44,59 @@ export interface OAuthFlowConfig {
 type OAuthContext = Context<{ Bindings: Env }>;
 
 /**
- * Build the frontend error-redirect used by GET callbacks
+ * Build the frontend error-redirect used by GET callbacks.
+ *
+ * BUG-049: this always targeted `${FRONTEND_URL}/auth/callback`, discarding the
+ * allowlisted origin that actually started the flow. A user on
+ * `beta.xivdyetools.app` who cancels the consent screen was dumped on the
+ * PRODUCTION site: their beta `sessionStorage` (PKCE verifier, CSRF nonce,
+ * return path) is unreachable from there, and the beta app never learns the
+ * login failed. Same for the 10-minute state expiry and the untrusted-redirect
+ * branch.
+ *
+ * `origin` is the recovered target when the caller has trustworthy state — the
+ * provider-error path DOES carry `state`, so it is recoverable there too. It is
+ * only ever a `stateData.redirect_uri` that `validateRedirectUri` has already
+ * accepted, so this cannot become an open redirect; `FRONTEND_URL` stays the
+ * last-resort fallback.
  */
 function frontendErrorRedirect(
   c: OAuthContext,
   config: OAuthFlowConfig,
-  message: string
+  message: string,
+  origin?: string
 ): Response {
-  const redirectUrl = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
+  const base = origin ?? `${c.env.FRONTEND_URL}/auth/callback`;
+  const redirectUrl = new URL(base);
   redirectUrl.searchParams.set('error', message);
   if (config.markProviderOnRedirect) {
     redirectUrl.searchParams.set('provider', config.provider);
   }
   return c.redirect(redirectUrl.toString());
+}
+
+/**
+ * The error target recoverable from a signed state, or `undefined`.
+ *
+ * BUG-049: used on the provider-error branch, which runs before the state is
+ * verified for the happy path but still receives it in the query. A state that
+ * does not verify, or whose `redirect_uri` is not on the allowlist, yields
+ * `undefined` and the caller falls back to `FRONTEND_URL` — so a forged state
+ * can only ever send the user to production, never somewhere new.
+ */
+async function recoverErrorTarget(
+  c: OAuthContext,
+  state: string | undefined
+): Promise<string | undefined> {
+  if (!state) return undefined;
+  try {
+    const allowUnsigned = c.env.ENVIRONMENT === 'development';
+    const stateData = await verifyState(state, c.env.JWT_SECRET, allowUnsigned);
+    validateRedirectUri(stateData.redirect_uri, getAllowedRedirectOrigins(c.env));
+    return stateData.redirect_uri;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -191,7 +231,11 @@ export function buildGetCallbackHandler(config: OAuthFlowConfig) {
 
     // Handle provider errors
     if (error) {
-      return frontendErrorRedirect(c, config, error_description || error);
+      // BUG-049: `state` is present on this path, so the origin that started
+      // the flow is recoverable — a beta user who cancels consent belongs back
+      // on beta, where their sessionStorage lives.
+      const target = await recoverErrorTarget(c, state);
+      return frontendErrorRedirect(c, config, error_description || error, target);
     }
 
     // Validate required parameters
@@ -207,7 +251,21 @@ export function buildGetCallbackHandler(config: OAuthFlowConfig) {
       stateData = await verifyState(state, c.env.JWT_SECRET, allowUnsigned);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Invalid state';
+      // No trustworthy state here by definition — FRONTEND_URL is the only
+      // safe target.
       return frontendErrorRedirect(c, config, errorMsg);
+    }
+
+    // oauth-05: the state records which provider signed it
+    // (`buildAuthorizeHandler` writes the marker) and `verifyPkceStateBinding`
+    // enforces it on the POST leg — but the GET leg never checked. A Discord
+    // state replayed at `GET /auth/xivauth/callback` was accepted here, and
+    // the bounce carried `provider=xivauth` (from `config`, not the state), so
+    // the SPA routed the exchange to the XIVAuth POST callback where it was
+    // finally rejected as `Invalid state`. No privilege was gained; the cost
+    // was a wasted round trip and a confusing failure instead of a fail-fast.
+    if (stateData.provider && stateData.provider !== config.provider) {
+      return frontendErrorRedirect(c, config, 'Invalid state');
     }
 
     // OAUTH-CRITICAL-002 / BUG-018: validate the redirect target against the
@@ -219,6 +277,9 @@ export function buildGetCallbackHandler(config: OAuthFlowConfig) {
       redirectUrl = new URL(stateData.redirect_uri);
       validateRedirectUri(stateData.redirect_uri, getAllowedRedirectOrigins(c.env));
     } catch {
+      // BUG-049 note: the state verified but its redirect_uri is not on the
+      // allowlist, so there is nothing trustworthy to bounce to — FRONTEND_URL
+      // is correct here, and is the fallback rather than the default.
       console.error('Blocked redirect to untrusted target:', stateData.redirect_uri);
       return frontendErrorRedirect(c, config, 'Untrusted redirect target');
     }

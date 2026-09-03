@@ -315,7 +315,13 @@ export async function getPresets(
     total,
     page,
     limit,
-    has_more: offset + presets.length < total,
+    // presets-api-08: measured on `rows`, not `presets`. `rowsToPresets` drops
+    // any row it cannot parse, so with `presets.length` a single corrupt row on
+    // the last page made `has_more` true — the client fetched the next page,
+    // got `presets: []` and the same `total` back, and looped for ever. Where
+    // the cursor sits is a property of the query, not of how many rows survived
+    // parsing.
+    has_more: offset + rows.length < total,
   };
 }
 
@@ -579,6 +585,46 @@ export async function findDuplicatePresetExcluding(
   `;
   const row = await db.prepare(query).bind(signature, excludePresetId).first<PresetRow>();
   return row ? rowToPreset(row) : null;
+}
+
+/**
+ * The preset already occupying a signature, found from the signature itself.
+ *
+ * BUG-041: the recovery paths for a `dye_signature` collision could only name
+ * the other preset when the *request* carried a dye list. A text-only
+ * resubmission (`PATCH` with no `dyes`) hit the same constraint and answered a
+ * bare 409 "This dye combination already exists" naming a field the author
+ * never touched — and a moderator status transition had no recovery at all.
+ * The signature is already stored on the row, so the collision can always be
+ * explained.
+ */
+export async function findDuplicateBySignature(
+  db: D1Database,
+  signature: string,
+  excludePresetId: string
+): Promise<CommunityPreset | null> {
+  const query = `
+    SELECT * FROM presets
+    WHERE dye_signature = ? AND status IN ('approved', 'pending') AND id != ?
+    LIMIT 1
+  `;
+  const row = await db.prepare(query).bind(signature, excludePresetId).first<PresetRow>();
+  return row ? rowToPreset(row) : null;
+}
+
+/**
+ * True when a rejected D1 write was the partial UNIQUE index on
+ * `presets.dye_signature` (`idx_presets_dye_signature`, `WHERE status IN
+ * ('approved','pending')`).
+ *
+ * BUG-041: three call sites tested this by hand with the same two
+ * `includes()` checks, and the two moderation batches tested it nowhere —
+ * they let the violation escape as an opaque 500 that also rolled back the
+ * batched `moderation_log` row.
+ */
+export function isDyeSignatureCollision(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('UNIQUE constraint failed') && message.includes('dye_signature');
 }
 
 /**

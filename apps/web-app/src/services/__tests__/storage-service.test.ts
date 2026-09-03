@@ -346,32 +346,40 @@ describe('StorageService', () => {
   // ============================================================================
 
   describe('Error Handling', () => {
-    it('should handle QuotaExceededError gracefully', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
+    // webapp-services-15: this test could not fail, in three separate ways.
+    //  1. `expect.fail(...)` sat inside the `try` whose own `catch` then caught
+    //     it, and `expect(error).toBeDefined()` passed -- so the test was green
+    //     whether setItem threw or not.
+    //  2. Its comment ("converts QuotaExceededError to AppError") documented
+    //     behaviour WEB-BUG-004 REMOVED: setItem must RETURN FALSE, because
+    //     ConfigController.saveToStorage branches on that boolean and
+    //     TelemetryService/ThemeService call it bare.
+    //  3. The `if (!isAvailable())` guard had no else, so `expect(true).toBe(true)`
+    //     stood in for the whole test wherever localStorage was absent.
+    // The restore is now in a `finally`, which it also was not.
+    it('returns false rather than throwing when the quota is exceeded', () => {
+      expect(StorageService.isAvailable()).toBe(true);
 
-      // Mock localStorage to throw QuotaExceededError
-      const originalSetItem = localStorage.setItem;
-      localStorage.setItem = () => {
+      // Spy on the prototype: assigning `localStorage.setItem = ...` does not
+      // reliably shadow jsdom's accessor, and the original test's expectation
+      // was never actually exercised because of it.
+      const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         const error = new Error('QuotaExceededError');
         error.name = 'QuotaExceededError';
-        // Ensure it's recognized as an Error instance
         Object.setPrototypeOf(error, Error.prototype);
         throw error;
-      };
+      });
 
-      // StorageService converts QuotaExceededError to AppError
       try {
-        StorageService.setItem('test', 'value');
-        expect.fail('Should have thrown an error');
-      } catch (error) {
-        // Should throw AppError
-        expect(error).toBeDefined();
+        let result: boolean | undefined;
+        expect(() => {
+          result = StorageService.setItem('test', 'value');
+        }).not.toThrow();
+        expect(result).toBe(false);
+        expect(spy).toHaveBeenCalled();
+      } finally {
+        spy.mockRestore();
       }
-
-      localStorage.setItem = originalSetItem;
     });
 
     it('should handle corrupted JSON data gracefully', () => {

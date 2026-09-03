@@ -157,12 +157,16 @@ describe('PublicRateLimitMiddleware', () => {
         expect(res2.status).toBe(200);
     });
 
-    it('should use unknown for requests without IP headers', async () => {
-        // Without any IP headers, should fall back to "unknown"
+    it('should skip the IP layer for requests without a client IP', async () => {
+        // No CF-Connecting-IP means Service Binding traffic. It used to be
+        // counted against the literal 'unknown' — one bucket for both bots'
+        // entire traffic (BUG-044). It now passes through untouched and is
+        // limited per acting user after authMiddleware instead, so there is
+        // no IP bucket and therefore no IP rate-limit headers.
         const res = await app.request('/test', {}, env);
 
         expect(res.status).toBe(200);
-        expect(res.headers.get('X-RateLimit-Remaining')).toBeDefined();
+        expect(res.headers.get('X-RateLimit-Remaining')).toBeNull();
     });
 
     it('should log warning when rate limiter backend has error (fail-open)', async () => {

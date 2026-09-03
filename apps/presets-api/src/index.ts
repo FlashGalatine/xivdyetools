@@ -15,7 +15,7 @@ import { moderationRouter } from './handlers/moderation.js';
 
 // Import middleware
 import { authMiddleware } from './middleware/auth.js';
-import { publicRateLimitMiddleware } from './middleware/rate-limit.js';
+import { publicRateLimitMiddleware, perUserRateLimitMiddleware } from './middleware/rate-limit.js';
 import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
 import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
 import {
@@ -148,7 +148,10 @@ app.use(
 );
 
 // Public rate limiting middleware (100 req/min per IP)
-// Applied before auth to protect against unauthenticated abuse
+// Applied before auth to protect against unauthenticated abuse. Keyed on
+// CF-Connecting-IP only — never on a caller-supplied header, which at this
+// point in the chain nothing has verified (BUG-044 follow-up). Requests with
+// no client IP are Service Binding traffic and are limited per-user below.
 app.use('/api/*', publicRateLimitMiddleware);
 
 // SEC-004: Reject oversized request bodies (100KB limit)
@@ -161,6 +164,15 @@ app.use('/api/*', jsonDepthLimit);
 
 // Authentication middleware (sets auth context)
 app.use('*', authMiddleware);
+
+// Per-user rate limiting (100 req/min per acting Discord user).
+// Mounted AFTER auth so it buckets on an identity the v2 HMAC signature has
+// established, never on the raw X-User-Discord-ID header. This is what gives
+// each Discord user their own bucket instead of both bots' entire traffic
+// sharing one — the problem BUG-044 identified, solved without trusting the
+// caller. Unauthenticated requests pass through; the IP layer already counted
+// them.
+app.use('/api/*', perUserRateLimitMiddleware);
 
 // SECURITY: Content-Type validation for mutation requests
 // Prevents potential JSON smuggling and ensures consistent API behavior

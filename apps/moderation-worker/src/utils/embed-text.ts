@@ -49,3 +49,21 @@ export function sanitizeReason(text: unknown): string {
   if (cut.endsWith('\\')) cut = cut.slice(0, -1);
   return `${cut}…`;
 }
+
+/**
+ * Discord caps autocomplete choice names at 100 characters and rejects the
+ * WHOLE response otherwise — one long name must not blank the list.
+ *
+ * moderation-worker-04: this lived in `index.ts` and was applied only to the
+ * two ban branches. The `preset_id` branch builds
+ * `"<name> (<n>★) by <author>"` in `services/preset-api.ts` and skipped it.
+ * presets-api caps `name` at 50 but stores `author_name` verbatim from the
+ * `X-User-Discord-Name` header with no length rule at all, so a 60-character
+ * display name blanked the moderator's whole preset list — precisely what this
+ * helper's own comment says must not happen. Even the ordinary case (50-char
+ * name plus a 32-char Discord name) lands at ~94, six from the cliff.
+ */
+export function clampChoiceName(name: string): string {
+  const chars = [...name];
+  return chars.length <= 100 ? name : `${chars.slice(0, 99).join('')}…`;
+}

@@ -25,8 +25,6 @@ export interface CachedFetchOptions {
   upstreamUrl: string;
   /** Worker execution context */
   ctx: ExecutionContext;
-  /** Base URL for Cache API synthetic URLs */
-  baseUrl: string;
   /**
    * FINDING-025 / API-7: runs only when the Cache API missed, before the
    * upstream fetch — the place to charge a per-client budget so fully cached
@@ -61,9 +59,9 @@ const UPSTREAM_TIMEOUT_MS = 10_000;
 export async function cachedFetch<T = unknown>(
   options: CachedFetchOptions
 ): Promise<CacheResult<T>> {
-  const { cacheKey, config, upstreamUrl, ctx, baseUrl, onMiss } = options;
+  const { cacheKey, config, upstreamUrl, ctx, onMiss } = options;
 
-  const cacheService = new CacheService(ctx, baseUrl);
+  const cacheService = new CacheService(ctx);
   const coalescer = new RequestCoalescer(ctx);
 
   // Check Cache API
@@ -71,13 +69,14 @@ export async function cachedFetch<T = unknown>(
   if (cacheResult) {
     const data = (await cacheResult.response.json()) as T;
 
-    // OPT-002: Structured cache hit logging for observability
-    console.log(JSON.stringify({
-      event: 'cache_result',
-      status: 'hit',
-      key: cacheKey,
-      stale: cacheResult.isStale,
-    }));
+    // api-worker-12: the two raw `console.log(JSON.stringify(...))` calls that
+    // used to sit here and at the miss below were the only logging in this
+    // worker to bypass @xivdyetools/logger — no adapter, no level control, no
+    // redaction — and they fired twice per market request. The same signal is
+    // already on every response as the `X-Cache` header, which is where a
+    // caller reads it from, so they are gone rather than rewritten: two log
+    // lines per market call is exactly the volume the standing "never enable
+    // Workers Logs without re-checking FINDING-010/011" constraint is about.
 
     if (cacheResult.isStale) {
       // Trigger background revalidation, but return stale data immediately
@@ -93,12 +92,8 @@ export async function cachedFetch<T = unknown>(
     };
   }
 
-  // OPT-002: Structured cache miss logging for observability
-  console.log(JSON.stringify({
-    event: 'cache_result',
-    status: 'miss',
-    key: cacheKey,
-  }));
+  // api-worker-12: see the note on the hit path above — `X-Cache: MISS` on the
+  // response is the signal, and it costs no log line.
 
   // FINDING-025 / API-7: the caller's miss budget (per-IP limiter) is charged
   // here — after the cache lookup, so hits are free — and may abort the fetch.

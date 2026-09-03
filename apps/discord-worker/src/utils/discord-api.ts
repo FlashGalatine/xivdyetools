@@ -285,6 +285,51 @@ export async function safeEditOriginalResponse(
 }
 
 /**
+ * BUG-039 (2026-09-02 deep dive): the `sendFollowUp` half of the same hazard
+ * `safeEditOriginalResponse` exists for.
+ *
+ * `sendFollowUp` returns the raw Response and carries an AbortSignal, so a
+ * 4xx/5xx is discarded silently unless the caller reads `.ok`, and a
+ * timeout/network error throws. When the call sits **inside a catch block**
+ * — the moderator-notification path in `handlers/buttons/preview-image.ts`
+ * did — that throw escapes the catch itself and rejects the `waitUntil`
+ * promise unhandled, so the moderator whose action failed gets no feedback at
+ * all and the buttons still look live.
+ *
+ * Use this for any follow-up in a background processor, and especially for
+ * one on a failure path.
+ *
+ * @returns true when Discord accepted the follow-up
+ */
+export async function safeSendFollowUp(
+  applicationId: string,
+  interactionToken: string,
+  options: FollowUpOptions,
+  logger?: SafeCallLogger,
+): Promise<boolean> {
+  try {
+    const res = await sendFollowUp(applicationId, interactionToken, options);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      if (logger) {
+        logger.error('Discord follow-up send failed', undefined, { status: res.status, body });
+      } else {
+        console.error('Discord follow-up send failed', res.status, body);
+      }
+      return false;
+    }
+    return true;
+  } catch (e) {
+    if (logger) {
+      logger.error('Discord follow-up send threw', e instanceof Error ? e : undefined);
+    } else {
+      console.error('Discord follow-up send threw', e);
+    }
+    return false;
+  }
+}
+
+/**
  * Options for sending a message to a channel
  */
 export interface SendMessageOptions {

@@ -4,6 +4,7 @@
  */
 
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import type { Env, AuthContext, PresetStatus, PresetRow } from '../types.js';
 import { requireModerator } from '../middleware/auth.js';
 import {
@@ -12,6 +13,8 @@ import {
   prepareStatusUpdate,
   prepareRevert,
   rowToPreset,
+  findDuplicateBySignature,
+  isDyeSignatureCollision,
 } from '../services/preset-service.js';
 import {
   ErrorCode,
@@ -39,6 +42,37 @@ type Variables = {
 };
 
 export const moderationRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+/**
+ * BUG-041: the 409 a moderator gets when their transition would put two
+ * presets on the same dye signature.
+ *
+ * The signature is read off the stored row rather than from the request,
+ * because a status change carries no dye list — that is exactly why these two
+ * routes had no recovery and answered an opaque 500 instead. Moderators may
+ * see any status, so the colliding preset is named unconditionally.
+ */
+async function dyeSignatureConflictResponse(
+  c: Context<{ Bindings: Env; Variables: Variables }>,
+  presetId: string,
+  signature: string | undefined
+): Promise<Response> {
+  const other = signature
+    ? await findDuplicateBySignature(c.env.DB, signature, presetId)
+    : null;
+
+  return c.json(
+    {
+      success: false,
+      error: ErrorCode.DUPLICATE_RESOURCE,
+      message: 'Another visible preset already uses this dye combination',
+      ...(other && {
+        duplicate: { id: other.id, name: other.name, status: other.status },
+      }),
+    },
+    409
+  );
+}
 
 /**
  * GET /api/v1/moderation/pending
@@ -94,17 +128,30 @@ moderationRouter.patch('/:presetId/status', async (c) => {
   const now = new Date().toISOString();
   const action = getActionFromStatusChange(preset.status, body.status);
 
-  const [updateResult] = await c.env.DB.batch<PresetRow>([
-    prepareStatusUpdate(c.env.DB, presetId, body.status, preset.status, now),
-    // changes() sees the preceding UPDATE in this batch's transaction, so the
-    // log row is only written when the status transition actually happened
-    c.env.DB
-      .prepare(
-        `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
-         SELECT ?, ?, ?, ?, ?, ? WHERE changes() > 0`
-      )
-      .bind(logId, presetId, auth.userDiscordId!, action, body.reason || null, now),
-  ]);
+  // BUG-041: a transition INTO the partial unique index
+  // (`flagged`/`rejected` → `approved`/`pending`) can collide with a preset
+  // that took the same dye signature while this one sat outside the index.
+  // The batch had no recovery, so the moderator got an opaque 500 and the
+  // `moderation_log` row rolled back with it — the action left no trace at all.
+  // The submit and edit paths have handled this since BUG-003; moderation now
+  // answers the same 409, naming the preset in the way.
+  let updateResult: D1Result<PresetRow>;
+  try {
+    [updateResult] = await c.env.DB.batch<PresetRow>([
+      prepareStatusUpdate(c.env.DB, presetId, body.status, preset.status, now),
+      // changes() sees the preceding UPDATE in this batch's transaction, so the
+      // log row is only written when the status transition actually happened
+      c.env.DB
+        .prepare(
+          `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
+           SELECT ?, ?, ?, ?, ?, ? WHERE changes() > 0`
+        )
+        .bind(logId, presetId, auth.userDiscordId!, action, body.reason || null, now),
+    ]);
+  } catch (error) {
+    if (!isDyeSignatureCollision(error)) throw error;
+    return dyeSignatureConflictResponse(c, presetId, preset.dye_signature);
+  }
 
   const updatedRow = updateResult.results?.[0];
   if (!updatedRow) {
@@ -167,15 +214,24 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   const logId = crypto.randomUUID();
   const now = new Date().toISOString();
 
-  const [revertResult] = await c.env.DB.batch<PresetRow>([
-    prepareRevert(c.env.DB, presetId, preset.previous_values, now),
-    c.env.DB
-      .prepare(
-        `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
-         SELECT ?, ?, ?, ?, ?, ? WHERE changes() > 0`
-      )
-      .bind(logId, presetId, auth.userDiscordId!, 'revert', body.reason, now),
-  ]);
+  // BUG-041: `prepareRevert` sets `status = 'approved'` unconditionally, so it
+  // has the identical exposure to the status route above — reverting a preset
+  // back into the index can collide with whatever took its signature meanwhile.
+  let revertResult: D1Result<PresetRow>;
+  try {
+    [revertResult] = await c.env.DB.batch<PresetRow>([
+      prepareRevert(c.env.DB, presetId, preset.previous_values, now),
+      c.env.DB
+        .prepare(
+          `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
+           SELECT ?, ?, ?, ?, ?, ? WHERE changes() > 0`
+        )
+        .bind(logId, presetId, auth.userDiscordId!, 'revert', body.reason, now),
+    ]);
+  } catch (error) {
+    if (!isDyeSignatureCollision(error)) throw error;
+    return dyeSignatureConflictResponse(c, presetId, preset.dye_signature);
+  }
 
   const revertedRow = revertResult.results?.[0];
   if (!revertedRow) {
@@ -354,12 +410,19 @@ moderationRouter.patch('/failed-notifications/:id/resolve', async (c) => {
 function getActionFromStatusChange(
   oldStatus: PresetStatus,
   newStatus: PresetStatus
-): 'approve' | 'reject' | 'flag' | 'unflag' {
+): 'approve' | 'reject' | 'flag' | 'unflag' | 'requeue' {
   // Unflag: flagged -> approved
   if (oldStatus === 'flagged' && newStatus === 'approved') return 'unflag';
   // Standard status changes
   if (newStatus === 'approved') return 'approve';
   if (newStatus === 'rejected') return 'reject';
   if (newStatus === 'flagged') return 'flag';
-  return 'approve'; // Default fallback (e.g., pending -> approved)
+  // presets-api-02: `pending` is the ONLY value that can reach here — the four
+  // branches above cover every other member of `validStatuses`. The old
+  // fallback returned 'approve', so the audit trail recorded an approval for
+  // an action that pulled a preset OUT of public view, and `/moderation/stats`
+  // and `/:id/history` repeated it. `moderation_log.action` is a bare TEXT
+  // column with no CHECK, so widening the vocabulary needs no migration —
+  // only the comment in `schema.sql` that documents it.
+  return 'requeue';
 }

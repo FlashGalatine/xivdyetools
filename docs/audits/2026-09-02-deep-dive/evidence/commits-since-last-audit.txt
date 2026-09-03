@@ -1,0 +1,583 @@
+e7ac4042 2026-09-02 Merge pull request #157: dead-code audit remediation + guardrails
+ade9de29 2026-09-02 fix(web-app): remove a clock race in the namespaced TTL test
+8d6cfc42 2026-09-02 style: undo an unintended whole-file reformat of the presets-api handler tests
+2e1fea14 2026-09-02 test: restore coverage the cleanup removed for code that still exists
+6e2c2374 2026-09-02 chore(release): bump every project this PR ships a change to
+9caf418e 2026-09-02 docs: reconcile living docs with the symbols and scripts this PR removed
+a1b8f92d 2026-09-02 fix(scripts): make two self-tests real, and let excluded referrers vouch by code
+a0fd9b3f 2026-09-02 fix(knip): delete dead workspace config, reject @beta/@alias, gate both
+4f1a1e4d 2026-09-02 fix(turbo): hash by default and make shared configs global dependencies
+1f4cacdc 2026-09-02 fix(scripts): resolve the main-module guard and path aliases in the dead-code gate
+f310547f 2026-09-02 fix(web-app): migrate legacy dye ids in saved preset snapshots on read
+9ed1ef30 2026-09-01 docs: say precisely how web-app and og-worker run knip in the turbo and knip config comments
+04158076 2026-09-01 docs: reconcile turbo.json, knip.jsonc, the audit report and the gate notes with the shipped guardrails
+10f1c60a 2026-09-01 fix(scripts): make the member self-tests discriminate, add the spec's isTestFile and specifier-resolution cases, accept an adjacent leading docblock
+e773704b 2026-09-01 docs(packages): correct the knip-gate notes after review
+daa7fdf2 2026-09-01 chore(test-utils): gate on knip; delete 9 unused integration/factory exports
+e112bb93 2026-09-01 chore(logger): gate on knip; tag the public surface, drop the DEFAULT_REDACT_FIELDS alias
+119984ba 2026-09-01 chore(auth): gate on knip; tag the nine barrel re-exports @public
+99209028 2026-09-01 chore(types,worker-kit): gate on knip; tag the public surface (values and types)
+a9d2cc89 2026-09-01 docs: fix two mechanism sentences in the gate's limits
+6c249526 2026-09-01 docs: correct the reachability gate's documented limits after review
+02075a9e 2026-09-01 ci: run the dead-code reachability gate on every push
+3af4b579 2026-09-01 chore: correct five reachability-tag reasons after review
+04d61931 2026-09-01 chore(web-app): drop the checker-artifact tag on KeyboardService's shortcuts call
+1ddb3e7f 2026-09-01 fix(scripts): a call statement nested inside a method body is not a class-member candidate
+34bef857 2026-09-01 refactor(web-app): remove unreferenced SavedPresetsService.__reloadForTesting
+46d54c7a 2026-09-01 chore: tag the test-only and public surface for the reachability gate
+a25afc70 2026-09-01 fix(scripts): reachability gate fix round 5 — every declaration scan reads masked text
+762f33f7 2026-09-01 fix(scripts): reachability gate fix round 4 — block tracker regexes read the masked line
+008a739b 2026-09-01 fix(scripts): reachability gate fix round 3 — exclude the checker's own files as referrers
+1e04905b 2026-09-01 fix(scripts): reachability gate fix round 2 — mask brace-blind spots, resync, testable subsumption
+87930be1 2026-09-01 fix(scripts): reachability gate fix round 1 — declaring-type grouping, import-scoped test refs, @public
+98c9432b 2026-09-01 feat(scripts): reachability gate — class-member granularity
+a1a1599c 2026-09-01 fix(scripts): tag-parser prelude — multi-line reasons, decorator calls
+daee1734 2026-09-01 fix(scripts): tag check-dead-code.ts as @entrypoint
+fa2a1063 2026-09-01 fix(scripts): docblock-attribution bugs A-D + a durable test suite
+ff6b09fc 2026-09-01 fix(scripts): file-level verdict subsumes symbol-level verdicts
+1149f5b1 2026-09-01 feat(scripts): reachability gate — exported-symbol granularity
+46039270 2026-09-01 fix(scripts): guard main-on-import, real specifier resolution, anchor tags, add @entrypoint
+9faf2f2a 2026-09-01 feat(scripts): test-only reachability gate — file granularity
+90a75c51 2026-09-01 docs: fix knip bullet — 8 apps gated, clarify the 4 findings' sources
+2dab6373 2026-09-01 docs: the root knip sweep reports 4, not ~200
+90bf680f 2026-09-01 chore(apps): gate the remaining six apps on knip
+9c396108 2026-09-01 chore(api-worker): gate on knip; drop a dead Env type and test helper
+223e912c 2026-09-01 docs(plans): implementation plan for the dead-code guardrails
+9b6614cf 2026-09-01 docs(specs): dead-code guardrails design — knip everywhere + a test-only reachability gate
+72a9c4a5 2026-09-01 docs: close the orphan-secrets row — all seven deleted
+35f449af 2026-09-01 docs(presets-api): flag the Perspective API sunset (2026-12-31) as a dated risk, not a cleanup
+eb3edc62 2026-09-01 docs(audits): close DEAD-007/013 — gate met, 30 of 34 findings fixed
+dafb5019 2026-09-01 fix(turbo): hash tests/ and scripts/ for type-check and lint
+20eec62a 2026-09-01 chore(web-app,presets-api): retire the legacy-itemID preset fallback and its migration script
+7d89d499 2026-09-01 docs(audits): record the 2026-09-01 dead-code remediation outcome
+00a33fae 2026-09-01 fix(presets-api): make the notification test's submit helper async
+6a53a956 2026-09-01 chore(repo): wire up scripts/coverage-report.ts instead of leaving it unreachable
+15a7cea6 2026-09-01 test(presets-api): retire the four permanently-skipped tests — two duplicates out, two made to run
+a7cb99f8 2026-09-01 chore(web-app): remove 4 uncalled exports and 31 test-only service methods
+c89a822c 2026-09-01 chore(web-app): delete three orphaned modules — 1,240 src + 1,472 test lines
+e09b462d 2026-09-01 chore(presets-api): remove the uncalled notifyModerators path and its four Env fields
+4d4ec7aa 2026-09-01 chore(api-worker): drop the redundant direct spectral.js dependency
+ac96e79a 2026-09-01 chore(moderation-worker): remove 12 uncalled helpers; take base64url from @xivdyetools/auth
+befee92c 2026-09-01 chore(presets-api): remove the two unused alternatives to the requireNotBanned middleware
+8c12d0ac 2026-09-01 chore(svg,bot-logic,image-worker,stoat-worker): stop overriding the base noUnusedLocals
+7d173835 2026-09-01 chore(moderation-worker,oauth,presets-api): drop 13 unimported @xivdyetools/types re-exports
+45be904f 2026-09-01 chore(web-app,docs): drop six unreachable Tailwind overrides; close the LocalStorageCacheBackend deprecation
+825a45c0 2026-09-01 chore(presets-api): remove three uncalled generic validators and two dead type aliases
+192c81e1 2026-09-01 chore(discord-worker,svg): delete the stale font-rendering script, assert the CJK order instead
+46713036 2026-09-01 chore(image-worker): remove the test-only getImageDimensions helper
+c99da102 2026-09-01 chore(oauth): remove five unreferenced exports from constants, state-signing and user-service
+6341acfc 2026-09-01 chore(moderation-worker): drop dead barrel re-exports, two unreferenced types and an unused devDep
+2fd2c2a7 2026-09-01 chore(api-worker): remove dead exports and the unused cache-invalidation pair
+1deef4ef 2026-09-01 docs(audits): whole-monorepo dead-code audit 2026-09-01 (34 findings)
+8ca1bb09 2026-08-31 Merge pull request #154 from FlashGalatine/dependabot/npm_and_yarn/dev-deps-a8cbaff245
+5edc3e60 2026-09-01 chore(deps-dev): Bump the dev-deps group across 1 directory with 5 updates
+9b1cd5d4 2026-08-31 Merge pull request #153 from FlashGalatine/dependabot/npm_and_yarn/production-deps-fbc67de6c9
+d6a28d1d 2026-08-31 docs(security): FINDING-007's Deploy needs line is done, say so (#156)
+a4cd6427 2026-08-31 docs(security): 2026-08-29 audit closed — all 31 findings fixed (#155)
+15695107 2026-08-31 Merge pull request #152 from FlashGalatine/security-audit-2026-08-29
+420d3b3e 2026-08-31 fix(ci): pin the gitleaks scanner version, not just the action
+d229ac15 2026-08-31 docs(changelog): player-facing notes for the 2026-08-29 privacy pass
+9b89b9e4 2026-08-31 docs(changelog): record the 2026-08-29 audit remediation at monorepo level
+2b18ae7b 2026-08-31 chore(deps): Bump the production-deps group with 3 updates
+e5c0e5d0 2026-08-31 docs(security): Sprint 13 close-out — FINDING-031 closed; 28 of 31 remediated
+298e3b2d 2026-08-31 fix(security): error path + stale docs (FINDING-031 S13-R6..R9, fix round 2)
+a4e96785 2026-08-31 fix(security): log the command only when it is a command (FINDING-031 S13-R5, fix round 1)
+25285961 2026-08-31 fix(security): stoat-worker stops logging user/channel ids + message content (FINDING-031)
+d44b9e79 2026-08-31 docs(security): Sprint 12 close-out — FINDING-029 closed, FINDING-028 partial
+55ff3852 2026-08-31 fix(security): S12 fix round 1 -- close a real over-exemption regression (2026-08-29 FINDING-029)
+1c8a5725 2026-08-31 docs(security): correct the FINDING-028 token-scope claims + secret inventories (S12-R5/R6/R7)
+febf54ce 2026-08-31 fix(ci): add a named guard for the missing beta Cloudflare token (S12-R8)
+c0550334 2026-08-31 docs(security): close FINDING-029, correct + tick the secret-scanning checklist item
+6206e5b5 2026-08-31 fix(security): value-anchor the gitleaks allowlist instead of exempting directories (FINDING-029)
+799000af 2026-08-31 docs(security): Sprint 11 close-out — FINDING-015 closed, three stale v1 references corrected
+2277ff35 2026-08-31 docs(security): fix workflow count in the FINDING-028 docs (nine -> eight)
+dc3b9405 2026-08-31 fix(auth): correct stale v1 default in BotSignatureOptions JSDoc + replay-protection claim (S11-R9/R10/R11)
+892f1b0e 2026-08-31 docs(security): document the beta environment + Cloudflare token split (FINDING-028)
+ae9ef136 2026-08-31 fix(ci): beta deploys get their own environment and Cloudflare token (FINDING-028)
+77e08c34 2026-08-31 fix(test-utils): remove orphaned v1 bot signer + fix bot CHANGELOG claims (FINDING-015 fix round)
+e003aaa8 2026-08-31 feat(auth)!: remove v1 bot signature verifyBotSignature (FINDING-015, 2.0.0)
+066c5f2f 2026-08-31 docs(security): Sprint 10 close-out — FINDING-025 fixed, three more leaks closed with it
+17ceefaf 2026-08-31 fix(logger): bound safeStringify's node visits, failing closed (S10-R18)
+b1ec25aa 2026-08-31 fix(logger): path-scope safeStringify's cycle detection (S10-R14)
+b3800667 2026-08-31 fix(logger): replace the fail-open node budget with memoization (S10-R12)
+617c907e 2026-08-31 fix(logger): redact aliased values at every reference, not just the first (S10-R8)
+425cd1d0 2026-08-30 fix(logger): reach string array items and free-text bare tokens in the value-shape scan (FINDING-025)
+58e86970 2026-08-30 docs(security): the evidence file said Workers Logs were safe to enable — it was the one the others point at
+5242163e 2026-08-30 docs(worker-kit): correct api-worker double-log claim, disclose the middleware gap, fix versions.md and the trade-offs doc
+d02cfff9 2026-08-30 docs(security): Sprint 9 close-out — FINDING-010/012 closed; Workers Logs embargo lifts on the redeploy, not the merge
+2bf2a5cb 2026-08-30 docs(worker-kit): correct CHANGELOG blast radius, disclose keyPrefix logging, fix stale stoat-worker claim (S9-R13, S9-R14, S9-R15)
+e502384a 2026-08-30 fix(presets-api): re-point the fail-open key-log test at the new keyScope contract (S9-R10)
+e43d04d2 2026-08-30 docs(security): worker-kit 1.2.0 version history, lift the Workers Logs embargo (S9-R9)
+3f5dc8e2 2026-08-30 fix(worker-kit): redact rate-limit keys, surface silent fail-open (FINDING-010, FINDING-012)
+f8723848 2026-08-30 docs(security): Sprint 8 close-out — FINDING-023 closed across all four units
+51c6ae3e 2026-08-30 fix(image-worker): CI always runs the cross-package config tests, two doc honesty clauses (S8-R14, S8-R15, S8-R16)
+a1b22578 2026-08-30 fix(image-worker): close the turbo cache gap and four review notes on FINDING-023 (S8-R9..R13)
+71181a8f 2026-08-30 fix(image-worker): close three review-found gaps in the FINDING-023 guards (S8-R6, S8-R7, S8-R8)
+96920c5a 2026-08-30 chore(image-worker): 1.2.0 — wrangler-config invariant test, workers.dev hostname guard (FINDING-023)
+24f3fcaa 2026-08-30 docs(security): Sprint 7 close-out — FINDING-024 status, plan annotation
+6f6f5fd1 2026-08-30 docs(og-worker): stop overstating what's closed, fix the purge advice (2026-08-29 FINDING-024, OG-4, rulings S7-R16/S7-R17/S7-R18)
+86884104 2026-08-30 fix(og-worker): presets default-slug cache collision + comparison/accessibility emitter drift (2026-08-29 FINDING-024, OG-4, rulings S7-R16/S7-R17)
+e9b6f471 2026-08-30 docs(og-worker): describe the canonical path grammar, stop overstating what's closed, fold Unreleased into 2.4.0 (2026-08-29 FINDING-024, OG-4, rulings S7-R12/S7-R13/S7-R14/S7-R15)
+ebdc49ed 2026-08-30 fix(og-worker): canonical /og/* path parameters, close the path axis of the same amplification (2026-08-29 FINDING-024, OG-4, rulings S7-R12/S7-R13)
+636e42ec 2026-08-30 docs(operations): og-worker WAF rule starts on Log, not a challenge (FINDING-024)
+e2e9ca6b 2026-08-30 test(og-worker): regression test for HEAD on a cold cache (2026-08-29 FINDING-024, OG-4, ruling S7-R11)
+e2bdeec6 2026-08-30 fix(og-worker): cache HEAD like GET, key on decoded path, treat empty algo as absent (2026-08-29 FINDING-024, OG-4, rulings S7-R8/R9/R10)
+9b2f4ca3 2026-08-30 fix(og-worker): /og/* guard validates algo's value, not just its key (2026-08-29 FINDING-024, OG-4, ruling S7-R7)
+c6bd962b 2026-08-30 fix(og-worker): bound /og/* render amplification via query-key allowlist + canonical cache key (2026-08-29 FINDING-024, OG-4)
+6fc3dfb2 2026-08-30 docs(security): Sprint 6 close-out — finding statuses, plan annotation
+114f6dde 2026-08-30 fix(web-app): sign-in copy and privacy guide say what is actually stored; dead primary_character readers removed (FINDING-002, FINDING-006)
+2ffe6d13 2026-08-30 fix(web-app): no idle universalis.app connections; asset requests never cache an HTML fallback (FINDING-026, FINDING-027)
+c84d4263 2026-08-30 test(web-app): reload discards the uploaded image — e2e guard inverted (FINDING-009)
+73fbf59f 2026-08-30 fix(web-app): images are session-only — IndexedDB persistence removed and stored images purged (FINDING-009)
+d1c5f6f2 2026-08-30 docs(security): Sprint 5 close-out — finding statuses, plan annotation
+81035796 2026-08-30 chore(api-worker): 0.10.0 — no User-Agent in request logs; release notes (FINDING-010)
+ca909247 2026-08-30 fix(api-worker): telemetry accepts only the web app's origins, derives env from Origin, honours Sec-GPC, fails closed on limiter errors (FINDING-014)
+0b7fe8a0 2026-08-30 docs(security): Sprint 4 close-out — finding statuses, plan annotation, deploy needs
+034badcd 2026-08-30 fix(moderation-worker): unban audit row only when the unban happened; schema-out-of-date ban message; v1 and runbook wording (FINDING-018, FINDING-015)
+519c80da 2026-08-30 chore(moderation-worker): 1.6.0 — wrangler-config invariant test, release notes (FINDING-023)
+c94bfa8f 2026-08-30 fix(moderation-worker): production refuses requests while an RL binding is missing (FINDING-013)
+b5d4c53b 2026-08-30 fix(moderation-worker): ids-only ban log, limiter fail-open surfaced, prod env requires RL bindings, no v1 signature (FINDING-011, FINDING-012, FINDING-013, FINDING-015)
+dfb49aa1 2026-08-30 fix(moderation-worker): log ban, unban, hide and restore in moderation_log (FINDING-018)
+2e87ac6e 2026-08-30 docs(security): Sprint 3 close-out — finding statuses, plan annotation, deploy needs; presets-api endpoints doc describes the v2 bot signature
+fe86a881 2026-08-30 fix(discord-worker): production refuses requests while an RL_* binding is missing (FINDING-013)
+4d734c8c 2026-08-30 fix(discord-worker): warn on missing RL_* tiers; production requires the six bindings; test and doc polish (FINDING-007, FINDING-013)
+1a0cf89f 2026-08-30 chore(discord-worker): 5.1.0 — stop sending the v1 bot signature; release notes and docs (FINDING-015)
+6014be93 2026-08-30 fix(discord-worker): announcement memo is best-effort; webhook docs state the real body cap (FINDING-021)
+fb3d4120 2026-08-30 fix(discord-worker): pin the release-announcement webhook to the repo, require push events, announce each version once (FINDING-021)
+dfc6de47 2026-08-30 fix(discord-worker): validate the default world on set and on read; log ids and lengths, not values (FINDING-019, FINDING-011)
+f5d5f596 2026-08-30 fix(discord-worker): privacy policy — preferences row lists the real fields (FINDING-008)
+886d46a1 2026-08-30 fix(discord-worker): privacy policy — drop the last references to removed features (FINDING-008)
+2041ac39 2026-08-30 fix(discord-worker): first-run flag expires after 180 days; privacy policy lists the live records and commands (FINDING-008)
+d28f76a4 2026-08-30 fix(discord-worker): reach the limiter's degradation warnings; CLAUDE.md drops the exemption (FINDING-007, FINDING-020)
+6c14889f 2026-08-30 fix(discord-worker): native rate-limit bindings replace Upstash; utility commands take their tiers (FINDING-007, FINDING-020)
+aacd479d 2026-08-30 docs(security): Sprint 2 close-out — finding statuses, plan annotation, oauth migration ordering + rollback trap in the runbooks
+b14cade9 2026-08-30 chore(oauth): 3.0.0 — no UA in logs, limiter backend errors logged, prod env validation, wrangler-config test (FINDING-010, 012, 013, 023)
+cdd53fbf 2026-08-30 fix(oauth): stop persisting XIVAuth character rosters and avatar URLs; mint only the claims clients read (FINDING-001, FINDING-002)
+50c283b9 2026-08-30 fix(oauth): remove /auth/refresh; no-store on every auth response (FINDING-003, FINDING-022)
+c7c1782b 2026-08-30 docs(security): Sprint 1 close-out — finding statuses, plan annotation, hand-run 0012 step in the runbooks
+1e80ebff 2026-08-30 fix(presets-api): rejected presets resubmit on text change (capped); contract + migration doc fixes (FINDING-004, FINDING-005)
+a3e8ee14 2026-08-30 fix(presets-api): keep the fail-closed env tests one-variable-specific; dead-letter insert failure logs its cause (FINDING-013, FINDING-011)
+efd495a4 2026-08-30 chore(presets-api): 2.2.0 — no UA in logs, ids-only logging, prod env validation, wrangler-config test (FINDING-010, 011, 013, 023)
+01ea3dec 2026-08-30 fix(presets-api): require the v2 bot signature and reject nonce replays (FINDING-015)
+9eb84a4c 2026-08-30 fix(presets-api): prune dead-letter rows on moderator reads and every submission (FINDING-017)
+780cf992 2026-08-30 fix(presets-api): dead-letter rows keep only the preset id; age-based pruning; owner delete cascades (FINDING-017)
+896f3f7e 2026-08-30 fix(presets-api): author_discord_id only for owners, moderators and bots (FINDING-016)
+e10d740e 2026-08-30 fix(presets-api): content moderation fails closed; Perspective key in header + doNotStore (FINDING-005, FINDING-006)
+b207c4f9 2026-08-29 fix(presets-api): omit moderation_status outside approved|pending in PATCH responses (FINDING-004)
+bd3cc35d 2026-08-29 fix(presets-api): owner edits never re-queue or re-notify without a cap (FINDING-004)
+0d76eda1 2026-08-29 docs(security): whole-monorepo security audit 2026-08-29 (31 findings, 9 reviewer reports, remediation plan)
+4c213248 2026-08-29 feat: make the web-app's Enable Analytics toggle real (opt-in telemetry → Analytics Engine) (#149)
+2d6b2a9d 2026-08-29 feat(discord-worker): Tier A analytics — truthful outcomes/latency, subcommand, locale, copy buttons (no option values) (#150)
+5d52f45b 2026-08-29 fix: never display a .chara character name (bot cards/embeds, web-app community name) — svg 3.0.0, bot-logic 3.0.0 (#151)
+04b666bf 2026-08-29 docs: mirror the two-axis cookbook update from bot-analytics
+ef060ff0 2026-08-29 feat(discord-worker): two-axis analytics — `rejected` outcome class, served /dye fallbacks
+48928e19 2026-08-29 docs: one Analytics Engine cookbook for the web app and the bot
+98bc85ad 2026-08-29 docs: one Analytics Engine cookbook for the web app and the bot
+ea1b96b8 2026-08-29 test(web-app): stop the getPriceData tests hitting the live Universalis API
+a9484a23 2026-08-29 docs(web-app): privacy guide lives in the monorepo; analytics section applied
+b309b942 2026-08-29 fix(web-app): telemetry review fixes — cross-tab opt-out, real share entry, accepted picks, Shift+T, dwell
+2d1b3a32 2026-08-29 fix(api-worker): telemetry — prototype-safe schema table, own rate-limit bucket, 0.9.0
+e4a76db5 2026-08-29 docs(discord-worker): Tier A review resolution — spec amendments, outcome rules, privacy locale row, changelog
+650f70fc 2026-08-29 fix(discord-worker): rate-limited requests are Analytics-Engine-only — no KV counters
+699d5e60 2026-08-29 fix(discord-worker): analytics review wave — bounded drain, truthful outcome marks, one image-input marker table
+a5d3dc24 2026-08-29 docs: chara-name privacy release notes, 3.0.0 versions, publish order; discord-worker 5.0.1
+f98645e4 2026-08-29 fix(web-app): community palette name is the typed draft only; local save keeps its fallback
+31f8b869 2026-08-29 test(svg, discord-worker): real guards for the chara-name privacy rule
+1e124e6c 2026-08-29 fix(bot-logic): strip the nickname at resolve time; allowlist the card's producer token
+c75d88fb 2026-08-29 fix(web-app): correct stale paletteNameDraft comment
+c904e459 2026-08-29 fix(bot-logic): strip nickname from SwatchResult.character; bump to 3.0.0
+975e61c3 2026-08-29 fix(svg): bump to 3.0.0 — charName→title rename is breaking for external consumers
+0e7511ff 2026-08-29 fix(web-app): stop pre-filling the community-visible palette name with the character's nickname
+f7abff8f 2026-08-29 fix(discord-worker): stop forwarding the .chara attachment filename to /swatch
+faab951c 2026-08-29 fix(bot-logic): never display a .chara character name on /swatch
+e40cc659 2026-08-29 fix(svg): never display a .chara character name — rename charName to title
+6d85c821 2026-08-29 docs(discord-worker): review fix wave — subcommand groups, latency note, rate-limit list, button copy
+3c34b4ae 2026-08-29 fix(discord-worker): review fix wave — scoped image markers, subcommand groups, dead-trace guards
+1f70af8a 2026-08-29 docs(discord-worker): Tier A analytics — privacy policy fields, CLAUDE.md, query cookbook
+71066956 2026-08-29 feat(discord-worker): mark outcome classes in every terminal handler catch
+c27567cf 2026-08-29 feat(discord-worker): dispatcher owns the command trace; count copy-button clicks
+c926a985 2026-08-29 fix(discord-worker): CommandTrace forwards the raw promise to the real ExecutionContext
+8351dd30 2026-08-29 feat(discord-worker): CommandTrace — traced ExecutionContext, outcome marking, error classifier
+5a599ba9 2026-08-29 feat(discord-worker): Tier A analytics columns — outcome class, subcommand, locale, kind, latency
+c3ed5fa4 2026-08-29 docs: bot analytics Tier A implementation plan
+447a22d7 2026-08-29 docs(spec): bot analytics Tier A — traced ExecutionContext owns the finish; handlers only mark outcomes
+f5c3c378 2026-08-29 docs: Discord bot analytics Tier A design spec (command trace, outcome classes, subcommand/locale/button columns)
+aa7f3c8f 2026-08-29 docs: fix analytics query cookbook — quantile function, week semantics, mobile caveat
+a2c0efe4 2026-08-29 fix(web-app): telemetry review fixes — boot entry, bfcache restore, cleanup
+c88c113b 2026-08-29 fix(api-worker): telemetry review fixes — bindings doc, anchored ver, sync writePoints, test title
+43020f58 2026-08-29 docs: Analytics Engine query cookbook for web-app telemetry
+18262537 2026-08-29 test(web-app): telemetry e2e — wait for the initial tool mount before navigating
+910d93f6 2026-08-29 test(web-app): e2e — analytics toggle gates telemetry beacons
+f873ec8d 2026-08-29 feat(web-app): wire TelemetryService at boot, drop ShareService's dead localStorage analytics, concrete opt-in copy
+24d1c242 2026-08-29 feat(web-app): telemetry hooks — .chara parse outcome and deliberate theme switches
+0809019c 2026-08-29 feat(web-app): telemetry hooks — tool views + dwell, explicit dye picks (drawer/grid, random excluded)
+2882a78e 2026-08-29 feat(web-app): TelemetryService dwell tracking (visible seconds per tool, capped)
+c3dba765 2026-08-29 feat(web-app): TelemetryService — opt-in, identifier-free usage telemetry (queue + beacon)
+daf9f535 2026-08-29 refactor(web-app): share the api-worker origin resolver; type navigator.globalPrivacyControl
+dffc1a5e 2026-08-29 feat(api-worker): POST /v1/telemetry → Analytics Engine (web-app opt-in analytics)
+561cb599 2026-08-29 feat(api-worker): telemetry batch schema for web-app analytics
+5ca8772b 2026-08-29 docs: web-app analytics implementation plan
+f026bdf0 2026-08-29 docs(spec): add theme_change event + theme preference query to web analytics design
+2ac7c60d 2026-08-29 docs: web-app analytics design spec (Analytics Engine via api-worker)
+d0f601e8 2026-08-29 Merge pull request #148 from FlashGalatine/fix/static-font-instances
+689a0679 2026-08-29 fix(og): ship static Regular/SemiBold/Bold brand faces — same resvg variable-axis defect
+35df3d7f 2026-08-29 fix(bot): ship static Regular/SemiBold/Bold brand faces — resvg ignores variable axes
+427c6fa9 2026-08-29 Merge pull request #147 from FlashGalatine/fix/dye-info-band-ink
+55ddd8a5 2026-08-29 fix(svg): pick the /dye info band ink per dye — near-black on light dyes
+96e03d5d 2026-08-28 Merge pull request #146 from FlashGalatine/fix/bot-dye-id-input
+3734fc2d 2026-08-28 feat(bot-logic,discord-worker,svg): dye inputs accept stainID / item id / any-locale name; bold card names
+18a64f48 2026-08-28 Merge pull request #145 from FlashGalatine/fix/bot-stainid-everywhere
+419cc30b 2026-08-28 docs(discord-worker): mark the 5.0.0 preset stainID known issue resolved
+46d20453 2026-08-28 fix(discord-worker,bot-logic): stainIDs everywhere the bot exposes or sends a dye id
+7fe439fd 2026-08-28 Merge pull request #144 from FlashGalatine/fix/budget-quickpicks-and-css-loader
+92be2f4f 2026-08-28 fix: /budget quick presets resolve the right dye; content-hash the web-app CSS loader
+30f4fcd5 2026-08-28 Merge pull request #143 from FlashGalatine/fix/workerd-redirect-manual
+6f257062 2026-08-28 fix(workers): fetch redirect 'manual', not 'error' — workerd rejects 'error'
+5cba8724 2026-08-28 Merge pull request #142 from FlashGalatine/fix/announcement-channel-id
+551631a5 2026-08-28 fix(discord-worker): production announcements go to the real announcement channel
+97397fd1 2026-08-28 Merge pull request #133 from FlashGalatine/dependabot/npm_and_yarn/production-deps-3d7cf9740c
+8729a0d9 2026-08-29 chore(deps): Bump the production-deps group across 1 directory with 4 updates
+101b7d38 2026-08-28 Merge pull request #141 from FlashGalatine/postmerge-docs-2026-08-29
+014766af 2026-08-28 docs(operations): merge-day close-out outcomes — announcement redelivered, bundle gate, Dependabot
+122213e5 2026-08-28 fix(discord-worker): upload-emojis type-checks under @cloudflare/workers-types 5.20260825.1
+b9bc45fd 2026-08-28 Merge pull request #140 from FlashGalatine/emoji-mapping-chip-1
+06d6cc45 2026-08-28 feat(discord-worker): production emoji set regenerated as the 5.0 chip-1 artwork
+645306d8 2026-08-28 Merge pull request #139 from FlashGalatine/fix/web-app-lazy-submission-form
+08cbc30a 2026-08-28 fix(web-app): load the preset submission form lazily from the config sidebar
+415b2f6b 2026-08-28 Merge pull request #138 from FlashGalatine/merge-day-closeout-2026-08-29
+c6d7e6a6 2026-08-28 fix(discord-worker): GitHub webhook accepts real push payloads; merge-day close-out
+bd88cbc0 2026-08-28 Merge pull request #134 from FlashGalatine/dependabot/npm_and_yarn/dev-deps-db67081f8d
+608e46ac 2026-08-28 Merge pull request #137 from FlashGalatine/moderation-register-commands-ci
+9d714c13 2026-08-28 docs(operations): rotation log — moderation bot token holders all updated 2026-08-29
+496cd9e8 2026-08-28 ci(moderation-worker): register slash commands on every production deploy
+70a1642c 2026-08-28 Merge pull request #136 from FlashGalatine/npm-publish-closeout-2026-08-28
+8c6667b8 2026-08-28 docs: npm close-out — worker-kit published, five packages deprecated, token-based break-glass flow
+85cdf8c0 2026-08-28 Merge pull request #135 from FlashGalatine/postmerge-2026-08-28
+6e61c01a 2026-08-28 docs(operations): merge-day 2026-08-28 — checklist §1 evidence, stainID script drops BEGIN/COMMIT
+9610b318 2026-08-28 chore(deps-dev): Bump the dev-deps group across 1 directory with 14 updates
+2790344a 2026-08-28 Merge pull request #123 from FlashGalatine/monorepo-2.0-prep
+9319ac8f 2026-08-28 fix(web-app): keep the result card's market label on one line
+d47ba8a0 2026-08-28 fix(web-app): wire the CMYK display toggle to result cards in swatch, harmony, and mixer
+44c9fdf0 2026-08-22 Merge branch 'ci-all-prs' into the 5.0 line (#131)
+1fc0e348 2026-08-22 ci: run CI on every pull request and on pushes to *-prep integration branches
+89af248f 2026-08-22 Merge branch 'bot-changelog-laymans' into the 5.0 line (#130)
+94ccfbbd 2026-08-22 fix(discord-worker): /changelog review fixes — shared line cut, sanitised echo, CRLF, contract gates, quick-pick parity
+6e146f1a 2026-08-22 docs(discord-worker): fold the bot changelog's Unreleased notes into 5.0.0
+eef66909 2026-08-22 feat(discord-worker): /changelog shows the bot's own notes, bundled at deploy time
+19ae2ab0 2026-08-21 fix(web-app): smoke test waits up to ~2 min for the Pages deployment alias
+14323811 2026-08-21 feat(presets-api): ship CACHE_PURGE_ZONE_ID as a production var; log successful purges (FINDING-018)
+b9cf57ba 2026-08-21 docs(operations): POST_MERGE_CHECKLIST — i18n branch merged (29efe5f0)
+29efe5f0 2026-08-21 Merge branch 'i18n-remediation-2026-08-20' into the 5.0 line
+469b3c3f 2026-08-21 docs(operations): walk POST_MERGE_CHECKLIST §0 against the live account
+4a07f249 2026-08-21 docs(stoat-worker): CLAUDE.md reflects the message-handler gate, CommandThrottle and sanitised echoes (0.2.2)
+b028240b 2026-08-21 docs(security): refresh commit hashes after the logger test-fixture rewrite
+059d71f0 2026-08-21 docs(security): fill the remediation table with the actual commit hashes
+50d8f6bd 2026-08-21 chore(deps): close the dev-only vite/esbuild advisories with scoped overrides (FINDING-036)
+c97a4192 2026-08-21 fix(oauth): require the signed state on both POST callbacks — PKCE-state binding always enforced (FINDING-012 close-out)
+4bc834b5 2026-08-21 docs(security): remediation roll-up table, root CHANGELOG security section, SECURITY.md, checklist + env-var + CLAUDE.md follow-ups
+b83455dc 2026-08-21 fix(web-app): forward the signed OAuth state into both POST callback bodies (FINDING-012 / OAUTH-5 follow-up)
+9f548aba 2026-08-21 fix(discord-worker): shared embed sanitiser + allowed_mentions everywhere, UUID-validated/encoded preset paths, guild-id-free analytics + privacy policy, canonical links, swatch/stats/budget hardening (FINDING-019/020/022/023/033)
+3ff697c1 2026-08-21 fix(og-worker): validated/clamped OG parameters, crawler-response security headers, 404 catch-all, host-bound pass-through, quieter logging (FINDING-024)
+6e23014d 2026-08-21 fix(api-worker): bounded bodies, icon-proxy hardening, no stacks, miss-only proxy rate limiting, upstream timeouts, input bounds (FINDING-025)
+049ec057 2026-08-21 fix(web-app): escapeHtml on remote/user text, hasOwn icon lookup, tightened _headers/CSP, OAuth client + API-origin hygiene, URL sanitisers, file-size guard (FINDING-011/027/031/032 + WEB-6/9/11/13/14)
+0decf5c2 2026-08-21 fix(presets-api): visibility/vote gating, fail-closed ban check on every mutation, preview-image edge TTL + purge, control-char/tag charset validation (FINDING-016/017/018/019/028)
+51ce8aab 2026-08-21 fix(oauth): exact redirect path + bounded state/return_path, PKCE-state binding, XIVAuth identity/log hygiene, no silent merge, [env.preview] removed (FINDING-012/013/029)
+812d6f8b 2026-08-21 fix(moderation-worker): embed sanitiser + allowed_mentions, encoded/validated IDs, .app links, ban/error/rate-limit hygiene (FINDING-019/020/023/034)
+5394c68f 2026-08-21 docs(release): post-merge checklist + package version bumps for the security remediation
+d4ea3e78 2026-08-21 fix(infra,stoat-worker): secret-scan CI gate, .dev.vars.* ignore, old secret redacted; stoat bot-ignore/throttle/hasOwn/sanitised echoes (FINDING-030/035 + 019/023/027 stoat parts)
+b5906a21 2026-08-21 fix(packages,bots,presets-api): bot signature v2, interaction freshness, logger/svg/core hardening, Discord sanitiser (FINDING-014/021/026/027/028)
+5d49bf2b 2026-08-21 chore(ci,ops): pin actions to SHAs, least-privilege tokens, prod environment; rewrite secret-rotation runbook (FINDING-009/010)
+2a8a034b 2026-08-21 fix(presets-api): append-only daily quotas for submissions, flagged edits and preview uploads (FINDING-008)
+8a05949d 2026-08-21 fix(moderation-worker): moderator-gate autocomplete, id-only ban custom_ids (FINDING-006/007)
+f7a0c58e 2026-08-21 fix(og-worker): /og/* length guard, linear text wrap, capped not-found echo, edge cache (FINDING-005)
+62898ed6 2026-08-21 fix(image-worker,presets-api): pre-decode dimension gate + streamed size caps (FINDING-004)
+a2892b68 2026-08-21 chore(api-worker): fix pre-existing lint errors in chara/*
+e90922f9 2026-08-21 fix(worker-kit,api-worker,oauth,presets-api,moderation-worker): native rate-limit bindings (FINDING-003)
+4078c722 2026-08-21 fix(auth,oauth,presets-api): close the revocation/refresh gap (FINDING-001/002/015)
+b195723f 2026-08-21 docs(security): whole-monorepo security audit 2026-08-21 (36 findings, 9 reviewer reports)
+08a8f522 2026-08-21 docs(i18n): Add i18n audit evidence files for hardcoded strings, locale parity, terminology checks, and translation quality heuristics
+0b7eb717 2026-08-21 fix(web-app): final-review minors — tier-A gil via formatGil, dead acquisition fallback, plan doc stale lines
+d730bc12 2026-08-21 docs(web-app): close-out corrections — ten harmony keys, complete rulings list, sprint ranges
+232defde 2026-08-21 docs(web-app): changelog + audit plan status for the i18n remediation
+13b84fdb 2026-08-21 style(web-app): per-locale CJK font order for zh/ko; my-submissions row uses the font contract (FONT-WEB-001/002)
+71c72651 2026-08-21 chore(web-app): i18n guardrails — locale key order + parity gates, no-hardcoded-ui-strings lint, locale-switch test
+bb046a58 2026-08-21 fix(web-app): CIEDE2000 learn-link follows core's no-English-fallback policy; about-modal separator; Spectral header identifier
+b25421c9 2026-08-21 i18n(web-app): low-priority fallbacks, DC regions, language exonyms, vision short codes, fatal-overlay strings (HC-V4-004..012, HC-SHL-007..011)
+ca0ee36d 2026-08-21 i18n(web-app): concatenated fragments become interpolated keys; One/Many plurals (HC-SYS-009, HC-SYS-010)
+f42a22af 2026-08-21 i18n(web-app): app-locale number/date formatting; zoom/camera/modal/toast/export strings keyed (HC-SYS-008, HC-EXT-003..005, HC-CHA-003, HC-SHL-002..004, HC-SHL-012)
+d6fefd1c 2026-08-21 i18n(web-app): dye search/sort/aria/export use localized names (HC-SYS-004/005, HC-V4-003)
+8b1ca836 2026-08-21 i18n(web-app): harmony/vision/category labels come from core vocabulary; official Venture Coffer nouns (TERM-003..005)
+971a2ae0 2026-08-21 i18n(web-app): comparison/gradient/mixer/accessibility/tutorial/advanced/about/share visible strings keyed (HC-HAR-001..003, HC-ACC-001, HC-SHL-001/005/006)
+6528e363 2026-08-21 i18n(web-app): swatch/chara-import/extractor visible strings keyed; clan via getClan; core errors mapped (HC-SWA-001..003, HC-CHA-001/002, HC-EXT-001/002)
+83c4ec73 2026-08-21 fix(web-app): result-card, layout-shell, display-options, dye-filters, share-button re-render on locale change; STAIN/Replace Slot keyed (HC-SYS-007, HC-V4-002)
+27028f4d 2026-08-21 i18n(web-app): gil/currency via formatGil+getCurrency; localized route titles and tool-load messages (HC-SYS-003, HC-SYS-006, HC-V4-005/006)
+2380e1dc 2026-08-21 refactor(web-app): single makeCustomDye() factory; custom dye name/category/acquisition localized in all tools (HC-SYS-002)
+2f64b44f 2026-08-21 i18n(web-app): preset detail/card/tool and collection menu — loading, login CTA, gil, counts (HC-PRE-003..005)
+88cf7328 2026-08-21 refactor(web-app): preset/vote/collection services return error codes; UI maps them to locale keys (HC-SYS-011)
+276f344c 2026-08-21 i18n(web-app): localize preset edit/submission forms (HC-PRE-001, HC-PRE-002)
+27e50ba0 2026-08-21 docs(i18n): changelog entries + remediation status for the 2026-08-20 audit; drop stale eslint-disable
+62e82bf7 2026-08-21 fix(web-app): palette drawer category headings use core getCategory — map never matched runtime categories (HC-SYS-001, TERM-002)
+71301da7 2026-08-21 fix(i18n): surface Translator misses — optional logger on every command input; drop dead || fallbacks (F-13)
+349276e0 2026-08-21 feat(svg,discord-worker): localizable preset swatch card (F-11)
+226c2715 2026-08-21 fix(i18n): consolidated market-item names in the user's locale (F-10)
+5b6ef618 2026-08-21 feat(bot-logic): Translator.tc() count-aware lookup; fix baked-in plurals (F-09)
+27db39d2 2026-08-21 fix(web-app): locale one-liners — fr leading spaces, ko Hrothgar, gateBrowseNote clause; sync terminology doc (L-1..L-7, TERM-001)
+75329d3c 2026-08-21 fix(svg,discord-worker): locale decimal separators for ratios, percents and ΔE tails; card.perDe key (F-08)
+102a5520 2026-08-21 feat(discord-worker): Discord command localizations — descriptions + localized choice lists (F-03 phase 1)
+6cc8e230 2026-08-21 feat(web-app): shared custom-dye, format, and dye-name helpers for i18n remediation
+689f431c 2026-08-21 fix(i18n): localize /stats summary + error replies; admin panels explicitly operator-English (F-05d)
+0f8ce291 2026-08-21 fix(i18n): localize /preset list, submit, edit, vote and favorite replies (F-05c)
+c2b91116 2026-08-21 chore(web-app): drop orphaned vi.mock blocks for deleted harmony components (HC-SYS-012)
+d70b67f7 2026-08-21 fix(i18n): localize /preferences labels, theme, affects, method/mode descriptions, world autocomplete (F-05b)
+6185a10d 2026-08-21 fix(i18n): localize router, button, copy and preset-API error replies (F-05a)
+0dd06f5e 2026-08-21 docs: og-worker 2.2.0 in versions.md and the og-worker overview
+5532e386 2026-08-21 docs(og-worker): 2.2.0 — i18n audit report, changelog, README/CLAUDE.md for OG_EMBED / OG_ROLE
+37668a97 2026-08-21 chore(web-app): delete four never-constructed components and dead announcer/status helpers (HC-SYS-012)
+7c992e35 2026-08-21 feat(web-app): share URLs carry the sharer's locale as ?lang= (OG-I18N-001)
+bb9a0313 2026-08-21 fix(discord-worker,svg): re-cut CJK subsets, add a font-coverage gate, JP in base.ts stacks (F-17)
+c7dd8595 2026-08-21 feat(og-worker): localize band role labels ×6 — OG_ROLE (OG-I18N-011/012/014)
+78d4be62 2026-08-21 fix(bot-logic): localize command errorMessage literals (F-06)
+b1dcfd55 2026-08-21 fix(i18n): localize the rate-limit message (F-04)
+f9ad62d5 2026-08-20 fix(core): align Firmament currency with the locale key 'Skybuilders Scrips' (F-07)
+a53b0d94 2026-08-20 feat(i18n): localized dye-name autocomplete and input resolution (F-02)
+ca2443bf 2026-08-20 feat(og-worker): localize the crawler embed copy — OG_EMBED ×6 (OG-I18N-002…009)
+cae7c68c 2026-08-20 docs(web-app): i18n audit 2026-08-20 — reports, evidence, remediation plan, execution tasks
+8cc40c13 2026-08-20 fix(i18n): add 6 missing bot-logic keys + reverse key-existence gate (F-01)
+9c7d822b 2026-08-20 docs(audit): 2026-08-20 i18n audit of discord-worker + bot-logic/core/svg
+1cbb303e 2026-08-20 docs(changelog-laymans): named pieces in Dyes on this glamour; be exact about what leaves the device
+63b5521f 2026-08-20 docs(changelog): record the .chara equipment-identity feature and api-worker 0.7.0 deploy in the monorepo rollup
+a8a481f9 2026-08-20 test(web-app): pin resolvePresetDye's legacy-itemID fallback until the D1 stainID migration runs
+1d13e4c2 2026-08-20 feat(swatch): name the pieces in DYES ON THIS GLAMOUR (11a/11c) via .chara equipment resolution
+0de6f12e 2026-08-19 fix(og-worker): font-coverage test type-checks — resolve fonts dir from import.meta.url string, not a URL object
+9b774151 2026-08-18 chore: follow-ups final-review fixes — report dispositions, count affects-list, secret floor docs, comment/CHANGELOG drift
+9b709dfc 2026-08-18 chore(packages): knip dead-code gate for core/svg/bot-logic (follow-up 6)
+9a704911 2026-08-18 docs(web-app,types): fix task-4 review findings — inline VoteResponse rationale, move CHANGELOG entry to Changed
+a5d9e8b7 2026-08-18 refactor(web-app): use @xivdyetools/types contracts; restore PresetSortOption (follow-up 5)
+c52c5f42 2026-08-18 feat(discord-worker): /preferences count now drives /extractor color default (follow-up 1)
+517046b5 2026-08-18 chore(discord-worker,moderation-worker): adopt hmacSignHex; enforce >=32-byte BOT_SIGNING_SECRET (follow-up 3)
+100fa7fa 2026-08-18 docs(core): correct stale rgb-default note in CHANGELOG (task 1 follow-up)
+ff0a4631 2026-08-18 chore(core): findDyesWithinDistance defaults to ciede2000 (follow-up 2)
+dadc69fd 2026-08-18 test(og-worker): resolve the audit's recurrence recommendations — knip gate, frame + font-coverage guards, swatch default
+8de9c355 2026-08-18 docs(audit): follow-ups plan for the post-cleanup items (2026-08-18)
+7445ed67 2026-08-18 chore(og-worker): dead-code cleanup wave 4 — assets, docs, 2.1.0 + the audit record
+f3ad612c 2026-08-18 fix(og-worker): dead-code cleanup wave 3 — close the gaps the audit found
+ebcac54c 2026-08-18 refactor(og-worker): dead-code cleanup wave 2 — consolidations
+a8201b32 2026-08-18 refactor(og-worker): dead-code cleanup wave 1 — safe removals
+e6eccf83 2026-08-18 chore(docs): dead-code cleanup — final-review fixes (test-utils 1.1.8 heading, stale core docs, CHANGELOG notes, follow-ups)
+994804e8 2026-08-18 chore(core): dead-code cleanup Wave 4b — DeltaE alias normaliser; blending conversions equivalence (DEAD-037)
+596c6e87 2026-08-18 chore(workspace): dead-code cleanup Wave 4a — low-risk consolidations (DEAD-037), accent token 4th site, root CLAUDE.md drift
+cd7c72d2 2026-08-18 chore(core): dead-code cleanup Wave 3f — 40 uncalled class methods, legacy overloads, extractor matchingMethod (DEAD-034/035)
+206c9fc9 2026-08-18 docs(core,types): fix Wave 3e doc drift — dropped lerp/JobKey/GrandCompanyKey mentions (DEAD-029/036 follow-up)
+7917e5f5 2026-08-18 chore(core): dead-code cleanup Wave 3e — constants, tooling, VERSION, blending, utils, calibration barrel, locale sections (DEAD-030/031/033/029/032/036)
+a50d4472 2026-08-18 fix(bot-logic): adopt isValidSnowflake from @xivdyetools/types in isValidDiscordSnowflake (DEAD-025 follow-up)
+357985bb 2026-08-18 chore(worker-kit,types): dead-code cleanup Wave 3d — dead presets/types, MODERATION_LIMITS + race-table adoption (DEAD-023/025/024)
+612f0845 2026-08-18 chore(logger,auth): dead-code cleanup Wave 3c — logger 2.0.0 (perf/getRequestId/createSimpleLogger), auth dead helpers, HMAC adoption (DEAD-021/020/019)
+929a0b20 2026-08-18 chore(svg): dead-code cleanup Wave 3b — dead helpers, test-only exports, accent token, CATEGORY_DISPLAY adoption (DEAD-014/015/018)
+dc40f782 2026-08-18 chore(bot-logic): dead-code cleanup Wave 3a — color-math, mixer payload, getMeta (DEAD-012/013)
+95495321 2026-08-18 chore(workspace): dead-code cleanup Wave 2c — core data orphan, unused deps, svg hygiene (DEAD-028/022/017)
+98ea61bb 2026-08-18 chore(test-utils): dead-code cleanup Wave 2b — prune unconsumed modules; consolidate discord-worker mocks (DEAD-026/027/005)
+3c56d18f 2026-08-18 fix(bot-logic): tighten i18n orphan gate's dynamic allowlist (DEAD-011 review)
+7c7e9013 2026-08-18 chore(bot-logic): dead-code cleanup Wave 2a — locale orphans + gate (DEAD-011)
+32c36237 2026-08-18 chore(discord-worker): dead-code cleanup Wave 1c fix — dangling coverage exclude
+e0a653d9 2026-08-18 chore(discord-worker): dead-code cleanup Wave 1c — dead config (DEAD-007)
+1d09214b 2026-08-18 chore(discord-worker): dead-code cleanup Wave 1b — scattered exports, shims, duplicates, comments
+2c8cf631 2026-08-18 chore(discord-worker): dead-code cleanup Wave 1a fix — reconcile CHANGELOG coverage bullet
+9bbf889f 2026-08-18 chore(discord-worker): dead-code cleanup Wave 1a — whole-module removals
+5a7aa25f 2026-08-18 docs(audit): discord-worker + packages dead-code audit (37 findings) and cleanup plan
+84b6cf14 2026-08-16 docs(research): .chara equipment name resolution feasibility
+bb2c701b 2026-08-16 style(web-app): fix prettier drift left by dead-code Waves 2-4 (CI lint red)
+6c3993d6 2026-08-16 chore(web-app): dead-code cleanup Wave 4 — metadata fixes, logger routing, i18n orphan gate, knip gate
+71fba5c1 2026-08-16 chore(web-app): dead-code cleanup Wave 3 — 472 i18n keys, dead/unreachable CSS, HarmonyType
+b3b7f252 2026-08-16 chore(web-app): dead-code cleanup Wave 2 — SecureStorage, orphan modules, dead symbols, barrel trim, test helpers
+b1c4af4a 2026-08-16 chore(web-app): dead-code cleanup Wave 1 — orphaned assets, dead config, icons, types
+64970f89 2026-08-16 docs(audits): web-app dead-code audit 2026-08-16 — 29 findings, no code changed
+950660eb 2026-08-16 fix(ci): core createDyeId tests track the 1–254 stainID window; What's New notes leave the core-runtime chunk
+cc1ee3ee 2026-08-16 docs(plans): local presets (web-app 5.1) implementation plan
+f4539278 2026-08-16 docs(specs): local presets — the Collection Manager as an extension of Preset Palettes (web-app 5.1); supersedes the 5.0 collection-manager spec
+5a34fe7c 2026-08-16 fix(web-app,presets-api): comparison export/share, share hex grammar, extractor config, sidebar collapse, JWT identity
+968ee668 2026-08-16 docs(specs): Collection Manager in the 5.0 shell — approved design
+1b92e10b 2026-08-16 docs: rewrite the user guides and web-app developer pages for 5.0
+69877f27 2026-08-16 fix(svg): harmony card prints ΔE in the method register (ΔEOK no longer collapses to one decimal)
+22f68610 2026-08-16 docs(og-worker): CLAUDE.md names the ciede2000 ?algo default
+7a04ddc4 2026-08-16 fix: one Mixer default across surfaces; DyeId brand means stainID
+298ca8af 2026-08-16 fix(bot): honour /extractor's matching + prevent_duplicates; one matching default everywhere
+f35766bd 2026-08-16 fix: re-key bot rate limits, og-worker algo default, api-worker strings, web-app deploy filter
+1baf3da6 2026-08-16 docs(discord-worker): record the 5.1 deferral of the /preset stainID fix
+3285d02c 2026-08-16 docs: reconcile stale documentation with the Monorepo 2.0 / 5.0 code
+e0c8d135 2026-08-16 chore: bump the five apps that still carried [Unreleased] changelogs
+925c1eaa 2026-08-16 docs: bring every changelog up to date for Monorepo 2.0 / the 5.0 wave
+e05b661f 2026-08-16 feat(web-app): mobile palette drawer closed by default + first-run hint
+6573b8ec 2026-08-16 feat(web-app): 3A desktop tool rail in the console bar (2B title-menu stays on mobile)
+c2a71f72 2026-08-12 feat(web-app): root OG card 3a -> 3c (one rail of nine)
+06a20cba 2026-08-12 fix(web-app): shorten the social-card edge TTL
+a926d257 2026-08-12 feat(web-app): adopt the 3a root OG card
+591414f4 2026-08-12 fix(web-app): move social cards out of /assets/, repair the beta headers guard
+b06b6a82 2026-08-12 feat(og-worker): give beta its own routed environment
+d9fb4c22 2026-08-12 fix(web-app): ship the 5.0 root OG card and stop beta serving production's
+2ae8de50 2026-08-12 ci: run the security audit nightly
+dd591e12 2026-08-12 ci: split the security audit into its own job
+ef0adbbb 2026-08-12 chore(deps): floor seroval at >=1.5.3 (GHSA-mv8w-475r-vwqw)
+2ee0c4ef 2026-08-12 test: fix two timer-dependent CI flakes
+036ca7ad 2026-08-12 test(web-app): fix the budget coverage drop at its root, and a flaky extractor test
+ff087093 2026-08-11 test(web-app): cover the extractor's sampling and palette paths
+f919a2c8 2026-08-11 docs(web-app): record the parked mobile config-sidebar fix
+40f2bf98 2026-08-11 test(web-app): deepen extractor-tool 43.8% -> 49.5%
+796e08c1 2026-08-11 test(web-app): deepen mixer-tool 49.3% -> 69.7%
+2bc49b8b 2026-08-11 test(web-app): deepen gradient-tool 32.1% -> 64.1%
+d15105ef 2026-08-11 test(web-app): deepen harmony-tool 24.5% -> 65.4% (mixer 28.3% -> 49.3% free)
+f371beeb 2026-08-11 test(web-app): deepen accessibility-tool 21.2% -> 71.0%
+89e26734 2026-08-11 test(web-app): deepen extractor-tool 19.2% -> 43.8%
+3da95a43 2026-08-11 test(web-app): unblock the tool-test harness — 51.7% -> 57.5%
+a640f6a5 2026-08-11 test(web-app): make the E2E coverage rig real, deepen swatch-tool
+cea3643b 2026-08-11 test: raise coverage to 90% packages / 80% apps and fix the gates
+c7156a6a 2026-08-11 docs: sync CLAUDE.md files with schema v2, Tier 1 consolidation, preview images
+1f71acd4 2026-08-11 docs: reconcile the documentation bible with Monorepo 2.0 and the 5.0 wave
+7a1202ee 2026-08-11 fix: address final review findings for preset categories & image editing
+7c5a17ef 2026-08-11 feat(web-app): gallery rail and detail view honour secondary categories
+ed7a07cc 2026-08-11 refactor(web-app): submission form uses the shared category selector
+185ead9e 2026-08-11 fix(web-app): stop the edit form's image toasts from contradicting each other
+1803632f 2026-08-11 docs: fix contradictory toasts on image-call failure in Task 13
+dfbea23b 2026-08-11 feat(web-app): edit categories and the preview picture from the edit form
+ea472425 2026-08-11 feat(web-app): service support for multi-category and preview-image removal
+f6baee9a 2026-08-11 feat(web-app): shared 1-primary + 2-secondary category selector
+a49c3c1f 2026-08-11 feat(web-app): category labels, icons and strings for the three new categories
+77bf5761 2026-08-11 test(presets-api): guard the pending-image gate against a key-only regression
+6899b520 2026-08-11 fix(presets-api): pending preview images now reach the moderator queue
+92aa87d8 2026-08-11 docs: fix authHeaders calls in plan test snippets
+2de82903 2026-08-11 feat(presets-api): author route to remove a preview image
+7aa4f414 2026-08-11 test(presets-api): cover the currentCategoryId fallback in validateEditRequest
+66acba6c 2026-08-11 feat(presets-api): accept category_id and secondary_categories on submit and edit
+97aadc91 2026-08-11 feat(presets-api): category filter and counts match secondary categories
+7c9815ab 2026-08-11 docs: move the workspace-wide gate from Task 5 to Task 10
+92d17ad0 2026-08-11 feat(presets-api): parse, serialize and persist secondary_categories
+0cf48cc7 2026-08-11 feat(presets-api): validateSecondaryCategories with cap, dupe and primary-collision rules
+d6ae2ff8 2026-08-11 revert(presets-api): restore preset-service.ts to pre-task-3 state
+c9f096cd 2026-08-11 feat(presets-api): migration 0010 — secondary_categories column + three categories
+3618afda 2026-08-11 feat(svg): add appearance/zones/raids-trials category glyphs
+5a336057 2026-08-11 feat: category metadata for appearance/zones/raids-trials across core, svg, moderation-worker and test fixtures
+470d3b80 2026-08-11 docs: route CommunityPreset literal breakage by owning package
+e322625a 2026-08-11 docs: Task 16 Step 6 gate is discord-worker only; Task 17 carries the workspace gate
+41c9e999 2026-08-11 feat(discord-worker): appearance/zones/raids-trials command choices and embed metadata
+bd04019e 2026-08-11 docs: add Task 17 — three more exhaustive Record<PresetCategory> sites
+19bded77 2026-08-11 refactor(test-utils): revert PresetRow schema changes for Task 3 migration
+087c197c 2026-08-11 test: update preset factories for new required fields in CommunityPreset
+ca62fca4 2026-08-11 feat(types): add appearance/zones/raids-trials and multi-category fields
+75354919 2026-08-11 docs: implementation plan for preset categories + image editing
+d7a27532 2026-08-11 docs: design for preset multi-category + preview-image editing
+40e2a1d3 2026-08-10 feat(discord): approve/reject buttons for pending preview images
+64c533d3 2026-08-10 fix(presets): describe the current example-link allowlist in the copy
+04e640d1 2026-08-10 fix(presets): route the preview-image notification through the retry path
+ebccc9eb 2026-08-10 fix(presets-api): make the preview-image upload route actually reachable
+d3355a3a 2026-08-10 feat(discord): notify moderators when a preview image needs review
+598133e7 2026-08-10 fix(web-app): locale parity and form-wiring tests for preview image
+783e0ea7 2026-08-10 feat(web-app): optional preview image on preset submission
+eae093db 2026-08-10 fix(web-app): map preview image through the second communityToUnified and add both/neither card tests
+8566da0b 2026-08-10 feat(web-app): render approved preset preview images on cards
+8b7475a8 2026-08-10 feat(presets-api): moderator approve/reject for preview images
+d75a4625 2026-08-10 fix(presets-api): test the 5MB limit for real; write DB before deleting old R2 object
+ae81cc99 2026-08-10 feat(presets-api): author preview-image upload via image-worker to R2
+f0240f73 2026-08-10 feat(presets-api): add preview image columns and the approval gate
+96615d3b 2026-08-10 feat(presets): allow pixiv, the Lodestone and Misskey as example links
+83c0ad7f 2026-08-10 test(image-worker): fix WASM memory cleanup assertions to verify all three images freed
+2b038b66 2026-08-10 test(image-worker): add missing success path and WASM memory tests
+b9be5724 2026-08-10 feat(image-worker): add POST /thumbnail with band crop and WebP encode
+cd6f57ae 2026-08-10 feat(presets): allow Mirapri, Reddit and social links; drop image hosts
+f344a486 2026-08-10 docs(plans): correct Task 6 test path and mount pattern
+e2c3cf8d 2026-08-10 docs(plans): implementation plan for preset preview images
+77678e95 2026-08-10 docs(specs): separate the glamour link from the preview image
+0a73f613 2026-08-10 docs(specs): cut the scrape path — neither trusted host permits it
+fd23c88b 2026-08-10 docs(specs): design for preset glamour thumbnails
+d284df31 2026-08-10 fix(presets-api): repair schema.sql, land retired 'community' in aesthetics
+7c5edce6 2026-08-10 docs: drop the Blog link from all READMEs
+2af18c5d 2026-08-10 docs: audit all READMEs for accuracy, licensing, and attribution
+052ddbaf 2026-08-10 fix(web-app): make the typing guard see through shadow DOM
+1c200d12 2026-08-10 fix(oauth): use one allowlist for CORS and redirect URIs
+2c6e59ed 2026-08-10 docs(oauth): correct the deploy command — this worker has no production env
+532d0dc1 2026-08-10 fix(web-app): refresh the Comparison duel when market prices arrive
+49df7820 2026-08-10 fix(web-app): keep the canonical Universalis URL, not the legacy proxy
+632e2430 2026-08-10 fix(web-app): close the beta layout, market-board and preset findings
+ba51147b 2026-08-10 docs(specs): make the smoke-test budget figures agree with the code
+a48a9724 2026-08-10 fix(web-app): close the final-review findings on the Pages smoke test
+68a6b6a1 2026-08-10 ci(web-app): use the shared smoke test on the production workflow
+8e41ad1f 2026-08-10 fix(web-app): count `x-robots-tag: none` as noindex
+08a14993 2026-08-10 docs(web-app): document the Pages smoke test and the pages.dev caveat
+f7418d7b 2026-08-10 ci(web-app): use the shared smoke test on the beta workflow
+580fbd10 2026-08-10 fix(turbo): let scripts/** invalidate the test cache
+393fa547 2026-08-10 feat(web-app): smoke-test script that proves the domain serves THIS build
+dab671f6 2026-08-10 test(web-app): arg parsing for the Pages smoke test
+1e3c09aa 2026-08-10 build(web-app): declare wrangler so deploys stop dirtying the tree
+8be37637 2026-08-10 docs(plans): implementation plan for the shared Pages smoke test
+6eae66ac 2026-08-10 docs(specs): design one Pages smoke test shared by both web-app workflows
+c1af09c1 2026-08-10 ci(web-app): smoke-test the deployment we made, not whatever the alias serves
+cb746597 2026-08-10 docs(specs): design for the audit's five suggested CI additions
+463b34ea 2026-08-10 docs(audit): correct the plan's deploy story now that all seven sprints are done
+5345e35a 2026-08-10 fix(discord-worker): Sprint 7 — re-cut the CJK subsets, 128 tofu glyphs to 0
+4d4c1ee2 2026-08-10 chore(deps): Sprint 6 — clear the dev-toolchain advisories that have a fix
+6da6e99d 2026-08-10 docs(web-app): label the bundle chunks by what they actually contain
+a5d3b771 2026-08-10 fix(web-app): make the bundle budget measure what a visitor downloads
+98d136bf 2026-08-10 chore(web-app): delete the orphaned Apache config and its stale CSP copy
+1ad9d50d 2026-08-10 refactor(web-app): self-host the typefaces behind one font contract
+f0d50bd6 2026-08-09 chore(web-app): delete the retired Habibi face and its last references
+7bdd7048 2026-08-09 chore: gitignore Playwright's e2e-coverage output
+4e1048fa 2026-08-09 chore: tidy up remaining beta web-app deployment loose ends
+32881ee0 2026-08-09 ci(web-app): assert the robots header end-to-end and widen beta triggers
+346ab612 2026-08-09 fix(web-app): make the beta plugin the single switch for __APP_ENV__
+4d1dfd97 2026-08-09 fix(web-app): rewrite robots meta and icon preload in beta builds
+5a6bf356 2026-08-09 fix(web-app): recompress beta icons for smaller production bundle bleed
+24331b38 2026-08-09 ci(web-app): deploy non-main branches to beta.xivdyetools.app
+ef8c9396 2026-08-09 feat(oauth,presets-api): allow the beta web app origin
+af017fd0 2026-08-09 feat(web-app): apply beta branding at build time behind VITE_APP_ENV
+57ba6d4c 2026-08-09 feat(web-app): add the beta favicon set
+1e55cf13 2026-08-09 test(web-app): replace vacuous router title test with a real regression guard
+bca5b2c6 2026-08-09 feat(web-app): make APP_NAME environment-aware and route titles through it
+0b56a195 2026-08-09 feat(web-app): add pure beta-branding transforms
+76898247 2026-08-09 docs(web-app): sharpen the beta plan's "production unchanged" constraint
+02e4e78b 2026-08-09 docs(web-app): implementation plan for the beta Pages deployment
+eb723515 2026-08-09 docs(web-app): record that the beta Pages project was created with --production-branch=beta
+1bf7102a 2026-08-09 docs(web-app): design for beta.xivdyetools.app as a second Pages project
+8f5be21b 2026-08-09 test(web-app): retire the `community` category from the MSW fixtures
+df001ebb 2026-08-09 test(web-app): make the two failing preset-browser assertions match the 5.0 DOM
+7bbbe5e4 2026-08-09 test(web-app): delete the skipped pre-5.0 E2E blocks and write down the gap
+d6e791e8 2026-08-09 style(web-app): drop the ad-hoc Segoe UI stack from v4-layout.css
+ca9ff58f 2026-08-09 fix(web-app): stop deriving a Discord default avatar from an internal UUID
+4db6353d 2026-08-09 fix(web-app): replace the last 4.x indigo literals with the 5.0 red identity
+74e111c6 2026-08-09 fix(web-app): localize the preset surface; one category-label map, not four
+6b608ec0 2026-08-09 fix(web-app): render numeric columns in Fragment Mono, not the retired Habibi serif
+23aef5cf 2026-08-09 chore(web-app): one CSP source of truth; drop the orphaned entry, fonts and Netlify config
+16644fdf 2026-08-09 test(presets-api): retire the `community` category from the D1 fixtures
+f0c4ac11 2026-08-09 security(presets-api): gate the loopback CORS allowlist on ENVIRONMENT
+cb367e00 2026-08-09 docs(discord-worker): defer production emoji regeneration until sprints finish
+a36e0d19 2026-08-09 ci(discord-worker): deploy the beta bot on non-main pushes; add beta emoji set
+5eab4a61 2026-08-09 fix(discord-worker): key the dye emoji mapping by Discord application
+3cad705d 2026-08-09 fix(discord-worker): make every /preferences response ephemeral
+3329e8fc 2026-08-09 build(workers): make bare `wrangler deploy` safe, and stand up the beta bot config
+a1d56b19 2026-08-09 fix(image-worker): close public surface, harden first deploy, fix stale docs
+1768ddfb 2026-08-09 docs(image-worker): fix review findings in doc accuracy
+2ba14c49 2026-08-09 docs(image-worker): add deploy workflow and document the new worker
+88cd5033 2026-08-09 refactor(discord-worker): call image-worker for pixel extraction
+3733fab7 2026-08-09 feat(image-worker): add POST /extract returning raw RGBA pixels
+cc598d08 2026-08-09 refactor(image-worker): copy photon processing in from discord-worker
+d739cbef 2026-08-09 docs(plans): close two gaps found by Task 2's review
+6b613a08 2026-08-09 refactor(image-worker): copy image validators in from discord-worker
+1008eeb5 2026-08-09 feat(image-worker): scaffold the worker with a health endpoint
+9c03338d 2026-08-09 docs(plans): implementation plan for the image-worker split
+4d175bde 2026-08-09 docs(operations): record the verified-healthy Discord handshake signature
+e695fffd 2026-08-09 docs(operations): record the moderation-bot outage found by Phase 0.5
+9ba3b176 2026-08-09 docs(operations): record Phase 0 results; add Phase 0.5 endpoint repoint
+d034b23c 2026-08-09 docs(operations): design to split image processing out of discord-worker
+bee16ffa 2026-08-09 docs(operations): disambiguate the two "redirect URI" layers
+c8738aed 2026-08-09 docs(operations): phased plan to retire *.xivdyetools.projectgalatine.com
+2c5552fe 2026-08-09 docs(operations): design for safe deploy defaults and a Beta Test bot
+11dfa161 2026-08-09 fix(discord-worker): pin CORS allowMethods to the live route surface
+03343e71 2026-08-09 test(discord-worker): realign the font mock list with fonts.ts
+830566a2 2026-08-09 fix(discord-worker): retire the `community` preset category from the registered schema
+40a5f935 2026-08-09 security(deps): raise the hono floor to ^4.12.34 across every Worker
+b5abc29a 2026-08-09 build(web-app): make the lint gate read-only
+d8c73a09 2026-08-09 docs(audits): pre-release sweep — deep-dive, security, dead-code, i18n
+58dbe2fc 2026-08-09 og-worker: reconcile the 15E cards with the confirmed design record
+997f96ed 2026-08-09 docs(audits): bot graphics design/implementation conformance audit
+d380fc4f 2026-08-09 refactor(web-app): read the social links from core
+2989146a 2026-08-09 fix(discord-worker): the embed shell, and the attribution it never had
+b764e8b5 2026-08-09 fix(bot-logic): feed the harmony card its angle, method and verdict
+db8b994f 2026-08-09 fix(svg): re-cut harmony to the Turn-13 geometry, and guard the budget
+fffb3cd8 2026-08-09 feat(core): one home for the dye abbreviation and the product links

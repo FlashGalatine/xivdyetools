@@ -41,16 +41,94 @@ const ALLOWED_HOSTS = new Set([
 export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 /**
- * Maximum image dimensions (4096x4096)
+ * Maximum image dimension per side (4096px) — the SECONDARY guard.
  *
- * Prevents decompression bombs where a small file expands to huge pixel data
+ * Prevents decompression bombs where a small file expands to huge pixel data.
+ * The binding limit is {@link MAX_PIXEL_COUNT} below; this one only rejects a
+ * shape no legitimate palette source has.
  */
 export const MAX_IMAGE_DIMENSION = 4096;
 
 /**
- * Maximum pixel count (16 megapixels)
+ * Bytes an RGBA pixel costs in one buffer.
  */
-export const MAX_PIXEL_COUNT = 16 * 1024 * 1024; // 16 million pixels
+const BYTES_PER_RGBA_PIXEL = 4;
+
+/**
+ * How many full RGBA copies of the image exist at once inside photon.
+ *
+ * `get_raw_pixels()` materialises one, and `dyn_image_from_raw` copies that
+ * vector again for each operation — so a decode-then-resize holds two.
+ */
+const CONCURRENT_RGBA_COPIES = 2;
+
+/**
+ * The share of the isolate's 128 MiB this Worker will spend on decoded pixels.
+ *
+ * The rest pays for the JS-side source buffer (up to
+ * {@link MAX_FILE_SIZE_BYTES}), the resize output, the WASM module itself and
+ * the runtime's own overhead — and this Worker shares its isolate with
+ * whatever else is resident.
+ *
+ * 2026-09-03 (pre-merge review of the deep dive): this was 32 MiB, i.e. a
+ * 4 MP ceiling. That is below the resolution people actually screenshot at —
+ * 3840×2160 is 8.29 MP and 3440×1440 is 4.95 MP, so a 4K or ultrawide capture,
+ * the single most common palette source an FFXIV player has, was refused
+ * pre-decode with no downscale path and nothing but an error to show for it.
+ * At 72 MiB the ceiling is 9.4 MP: 4K and ultrawide pass, and 4096×4096 —
+ * the decompression bomb BUG-052 was actually about, at 134 MiB of RGBA — is
+ * still refused. The trade is a thinner margin: peak lands near 95-100 MB of
+ * the 128 MiB isolate rather than 55-60, so this is the ceiling, not a floor
+ * to raise again without measuring the real peak first.
+ */
+const PIXEL_MEMORY_BUDGET_BYTES = 72 * 1024 * 1024;
+
+/**
+ * Maximum pixel count — **derived from the memory budget, not the side length**.
+ *
+ * BUG-052 (deep dive 2026-09-02): this used to be `16 * 1024 * 1024`, exactly
+ * 4096², so the largest square the side cap admits was accepted at equality
+ * (`pixelCount > MAX_PIXEL_COUNT` is false when they are equal). One RGBA
+ * buffer for it is 64 MiB and photon holds two, so decode-then-resize needed
+ * ≥ 128 MiB of WASM linear memory against Cloudflare's 128 MiB per-isolate
+ * limit — before the source buffer and the resize output. A solid-colour
+ * 4096×4096 PNG compresses to tens of KB, far under the 10 MB file cap, so the
+ * OOM this pre-decode gate exists to prevent was reachable from any Discord
+ * attachment, in a Worker shared with presets-api.
+ *
+ * The ceiling is deliberately NOT set to "more resolution than extraction can
+ * use". Extraction downscales to a 256px long edge, so on that reasoning any
+ * cap above ~1 MP would do — but the cap rejects the INPUT, before a decode
+ * that is the only thing able to downscale it. Set too low it does not save a
+ * user bandwidth; it refuses their screenshot. So the number answers "what can
+ * this isolate decode without dying", and nothing else. See
+ * {@link PIXEL_MEMORY_BUDGET_BYTES} for the 4 MP → 9.4 MP revision.
+ */
+export const MAX_PIXEL_COUNT = Math.floor(
+  PIXEL_MEMORY_BUDGET_BYTES / (BYTES_PER_RGBA_PIXEL * CONCURRENT_RGBA_COPIES)
+); // 9,437,184 px ≈ 9.4 MP — admits 3840×2160 (8.29) and 3440×1440 (4.95)
+
+/** Smallest `maxDimension` that still yields a usable palette sample. */
+export const MIN_MAX_DIMENSION = 16;
+
+/**
+ * FINDING-004 (2026-08-21 audit): `maxDimension` arrives from the request body
+ * and used to flow straight into `resize()` — NaN / 0 / huge values produced a
+ * zero-sized or full-resolution RGBA buffer. Integer 16..MAX_IMAGE_DIMENSION.
+ *
+ * REFACTOR-007 (deep dive 2026-09-02): this lives HERE, not in `photon.ts`, so
+ * the route and the processor can share one rule without the route importing
+ * the WASM-touching module — which every route test mocks wholesale, so a rule
+ * reached through it would be undefined under test. `photon.ts` re-exports it
+ * for its own callers.
+ */
+export function assertValidMaxDimension(value: number): void {
+  if (!Number.isInteger(value) || value < MIN_MAX_DIMENSION || value > MAX_IMAGE_DIMENSION) {
+    throw new Error(
+      `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_IMAGE_DIMENSION}`
+    );
+  }
+}
 
 /**
  * Request timeout for image fetching (10 seconds)

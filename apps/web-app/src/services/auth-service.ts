@@ -282,8 +282,11 @@ class AuthServiceImpl {
       const expiresAt = parseInt(expiresAtStr, 10);
       const now = Math.floor(Date.now() / 1000);
 
-      // Check if token is expired
-      if (expiresAt < now) {
+      // Check if token is expired. BUG-063: a corrupt or non-numeric stored
+      // value parses to NaN, and `NaN < now` is FALSE -- so a damaged expiry
+      // read as "not expired" and produced a client session that never ended.
+      // An unparseable expiry is not a valid session; treat it as expired.
+      if (!Number.isFinite(expiresAt) || expiresAt < now) {
         logger.info('Stored token has expired, clearing session');
         this.clearStorage();
         this.clearState();
@@ -448,7 +451,11 @@ class AuthServiceImpl {
       return;
     }
 
-    let expiresAt = expiresAtStr ? parseInt(expiresAtStr, 10) : payload.exp;
+    // BUG-063: `parseInt` of a malformed query parameter is NaN, which the
+    // `expiresAt &&` guard below treats as "no value" and which would then be
+    // written to storage as the string "NaN".
+    const parsedExpiry = expiresAtStr ? parseInt(expiresAtStr, 10) : payload.exp;
+    let expiresAt = Number.isFinite(parsedExpiry) ? parsedExpiry : payload.exp;
     // BUG-001: Guard against millisecond timestamps — JWT exp is always Unix seconds (RFC 7519)
     // A real seconds timestamp for year 2026 is ~1.77e9, well under 1e12
     if (expiresAt && expiresAt > 1e12) {
@@ -581,9 +588,13 @@ class AuthServiceImpl {
    */
   isAuthenticated(): boolean {
     // Also check expiry
-    if (this.state.expiresAt) {
+    // BUG-063: this was `if (this.state.expiresAt)`, and NaN is FALSY -- so a
+    // corrupt expiry skipped the check entirely, the second half of the
+    // never-expiring session. Test for "an expiry was set" explicitly, then
+    // treat a non-finite one as expired.
+    if (this.state.expiresAt !== null) {
       const now = Math.floor(Date.now() / 1000);
-      if (this.state.expiresAt < now) {
+      if (!Number.isFinite(this.state.expiresAt) || this.state.expiresAt < now) {
         void this.logout();
         return false;
       }
@@ -787,8 +798,13 @@ class AuthServiceImpl {
         base64 += '='.repeat(4 - padding);
       }
 
-      const decoded = atob(base64);
-      return JSON.parse(decoded);
+      // BUG-060: atob() returns a BINARY string -- one character per byte. A
+      // JWT payload is UTF-8, so every non-ASCII character (a Japanese, Korean
+      // or accented Discord display name) arrives as mojibake unless the bytes
+      // are decoded as UTF-8 first. `JSON.parse` does not do that for us.
+      const binary = atob(base64);
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
     } catch {
       return null;
     }

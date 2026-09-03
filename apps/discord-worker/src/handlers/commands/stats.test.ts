@@ -12,6 +12,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleStatsCommand } from './stats.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+import packageJson from '../../../package.json' with { type: 'json' };
 
 // Mock dependencies
 vi.mock('../../services/analytics.js', () => ({
@@ -397,7 +398,10 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data!.embeds![0].footer!.text).toContain('Version 4.0.0');
+      // BUG-037: assert against the manifest, not a literal. The old pin could not
+      // fail when the package was bumped, which is exactly how /stats came to
+      // report 4.0.0 while /about reported 5.1.1.
+      expect(data.data!.embeds![0].footer!.text).toContain(`Version ${packageJson.version}`);
     });
 
     it('should NOT be ephemeral (public embed)', async () => {
@@ -883,7 +887,7 @@ describe('stats.ts', () => {
         f.name.includes('Configuration'),
       );
       expect(configField).toBeDefined();
-      expect(configField!.value).toContain('4.0.0');
+      expect(configField!.value).toContain(packageJson.version);
       expect(configField!.value).toContain('Cloudflare Workers');
       expect(configField!.value).toContain('production');
     });

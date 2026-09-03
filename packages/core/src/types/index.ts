@@ -86,9 +86,22 @@ export function isMatchingMethod(value: unknown): value is MatchingMethod {
  * URL `algo` param, API body) into the 5.0 vocabulary: current values pass
  * through, retired values map, anything else falls back to the default.
  */
+/**
+ * BUG-011: `value in OBJ` and `OBJ[value]` both walk `Object.prototype`, so
+ * `'constructor'`, `'toString'` and `'__proto__'` looked like legacy method
+ * names and returned a FUNCTION typed as a `MatchingMethod`. This normalizer is
+ * applied at every ingress — KV preference, localStorage, the URL `algo` param,
+ * API bodies — and its whole contract is "anything else falls back to the
+ * default", so a crafted value propagated a function into the matching method
+ * and `getDistanceForMethod`'s exhaustive switch then returned `undefined`.
+ *
+ * `Object.hasOwn` is the fix rather than a `Map` because
+ * `LEGACY_MATCHING_METHOD_MAP` is a published export; changing its type would
+ * be a breaking change for a defect that needs a guard, not a new shape.
+ */
 export function normalizeMatchingMethod(value: unknown): MatchingMethod {
   if (isMatchingMethod(value)) return value;
-  if (typeof value === 'string' && value in LEGACY_MATCHING_METHOD_MAP) {
+  if (typeof value === 'string' && Object.hasOwn(LEGACY_MATCHING_METHOD_MAP, value)) {
     return LEGACY_MATCHING_METHOD_MAP[value];
   }
   return DEFAULT_MATCHING_METHOD;

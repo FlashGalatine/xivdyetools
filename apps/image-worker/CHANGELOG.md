@@ -5,6 +5,110 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-09-02
+
+Sprint 12 of the 2026-09-02 deep-dive remediation (`docs/audits/2026-09-02-deep-dive`).
+Minor bump: the accepted pixel range is smaller than it was (16 MP → 9.4 MP), so some
+inputs that used to reach photon are now rejected at the gate — deliberately, because
+they were the ones that could take the isolate down. Everything up to and including
+4K still passes.
+
+### Fixed
+
+- **The dimension cap admitted the input it existed to reject (BUG-052).**
+  `MAX_PIXEL_COUNT` was `16 * 1024 * 1024` — *exactly* 4096², the largest square the
+  side cap allows — and the check is `>`, not `>=`, so that square passed. One RGBA
+  buffer for it is 64 MiB; photon holds two (`get_raw_pixels` materialises one and
+  `dyn_image_from_raw` copies the vector again per operation), so decode-then-resize
+  needed ≥ 128 MiB of WASM linear memory against Cloudflare's 128 MiB per-isolate
+  limit — before the JS-side source buffer and the resize output. A solid-colour
+  4096×4096 PNG compresses to tens of KB, far under the 10 MB file cap, so the OOM
+  this pre-decode gate exists to prevent was reachable from any Discord attachment,
+  in a Worker shared with presets-api.
+
+  The cap is now **derived from the memory budget** rather than from the side
+  length: 72 MiB / (4 bytes per RGBA pixel × 2 concurrent copies) = **9.4 MP**.
+  `MAX_IMAGE_DIMENSION` (4096/side) stays as a secondary guard on shape.
+
+  That budget was first set at 32 MiB, i.e. a 4 MP ceiling, on the reasoning that
+  4 MP is far more resolution than palette extraction can use. True, but beside the
+  point: this gate rejects the **input**, before the decode that is the only thing
+  able to downscale it, so setting it by what extraction needs does not save anyone
+  bandwidth — it refuses their screenshot. 3840×2160 is 8.29 MP and 3440×1440 is
+  4.95 MP, so a 4K or ultrawide capture, the most common palette source an FFXIV
+  player has, was refused outright from `/extract` (the bot and the web extractor)
+  and from presets-api's preview upload alike. At 9.4 MP both pass and 4096×4096 —
+  the 134 MiB decompression bomb this finding was actually about — is still refused.
+  The trade is a thinner margin: peak lands near 95–100 MB of the 128 MiB isolate.
+
+  The old suite had *noticed* the symptom: a comment in `validators.test.ts` recorded
+  that "the pixel count branch [is] unreachable — dimension check always triggers
+  first" and tested the dimension check instead.
+
+- **A one-pixel-wide source trapped the shared WASM instance (BUG-053).**
+  `computeCropBox(1, 1000)` gave `bandHeight = Math.round(1 / 2.4242) = 0`;
+  `bandHeight > height` was false, so the band stayed 1×0 and `crop(original, 0, 0,
+  1, 0)` produced a 1×0 image that `resize(…, 640, 264, Lanczos3)` sampled out of
+  bounds. The Rust panic surfaces as a WASM trap: the request answers 400 with an
+  opaque message, and **the trapped module instance is shared by every later
+  `/extract` and `/thumbnail` on that isolate**. A 1×1000 PNG clears presets-api's
+  preview-image gate (non-empty, ≤ 5 MB, sniffs as png) and this Worker's own
+  (w>0, h>0, within the caps), so nothing upstream stopped it. Both axes now clamp
+  into `[1, source]`.
+
+- **An extreme aspect ratio returned an empty 200 (image-stoat-02).** Past roughly
+  512:1, `resizeImage` rounded the minor axis to 0 — a 2000×3 attachment at the
+  default `maxDimension` of 256 gives `Math.round((3 / 2000) * 256) === 0` — so
+  `get_raw_pixels()` came back empty, `/extract` answered 200 with a zero-byte body
+  and `X-Image-Height: 0`, and discord-worker told the user the image had no colours
+  it could read. For an image that plainly has colours. Both branches clamp to ≥ 1.
+
+- **`'Image file is empty'` was classified as our failure, not the user's
+  (image-stoat-07).** An empty 200 from the Discord CDN reaches `validateFileSize(0)`
+  and throws that message, which had no marker in discord-worker's
+  `IMAGE_INPUT_MARKERS` — so `imageInputReason` returned null, the analytics outcome
+  was recorded as `unknown` rather than `image_input`, and the user saw the generic
+  `matchImage.processingFailed`. It now reads as `format`, not `too_large`: nothing
+  about an empty file is large, and "not an image we can read" is what happened.
+
+  The marker table was tested against the messages it *lists*, which cannot catch a
+  message this Worker throws that the table has never heard of.
+  `image-input-errors-contract.test.ts` now reads this Worker's source instead. It
+  found two further unmatched messages on its first run, both correctly unmatched and
+  now recorded as such: `'Invalid JSON body'` (our own malformed request) and
+  `'No image data provided'` (`/thumbnail`, which only presets-api calls).
+
+### Changed
+
+- **One `maxDimension` rule, in `validators.ts` (REFACTOR-007).** The rule, the bound
+  and the error string were written twice — `index.ts` had its own
+  `MIN_MAX_DIMENSION` and predicate and rebuilt the message by hand, while
+  `photon.ts` already exported `assertValidMaxDimension` with identical wording. Both
+  sides were tested independently, which is exactly why a drift between them would
+  have stayed green.
+
+  It lives in `validators.ts` rather than `photon.ts` — where the review suggested —
+  because every route test mocks `photon.js` wholesale, so a rule the route reached
+  through it would be `undefined` under test. `photon.ts` re-exports it.
+
+- `CLAUDE.md`'s three stale sections are corrected (image-stoat-06). They described
+  pre-1.1.0 behaviour: that `maxDimension` reaches `resize()` unvalidated, that
+  "nothing in the `/extract` route calls `validateDimensions`", and that
+  `/thumbnail`'s "only guard is the empty-body check". The error contract also named
+  five fragments including `'SSRF'` — a string no message in this Worker has ever
+  contained — and pointed at a matcher that has since moved to
+  `apps/discord-worker/src/services/image-input-errors.ts`.
+
+### Tests
+
+- `it('calls crop with correct arguments')` asserted `expect.any(Number)` on all four
+  coordinates, so it could not fail for *any* crop box — including the degenerate one
+  above (image-stoat-04). It now asserts the box `computeCropBox` actually computes.
+- New coverage for degenerate shapes: nine named cases plus an exhaustive sweep of
+  every 1..64 × 1..64 source, asserting the band is at least 1×1 and inside the
+  source. The existing cases were 1920×1080, 1080×1920, 1000×1000, 1600×1200 and
+  3000×400 — none anywhere near where the rounding collapses.
+
 ## [1.2.1] - 2026-09-02
 
 ### Removed

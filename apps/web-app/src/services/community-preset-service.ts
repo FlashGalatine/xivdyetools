@@ -137,6 +137,24 @@ class SimpleCache<T> {
  * Community Preset Service
  * Singleton service for fetching community presets from the API
  */
+/**
+ * An error carrying the HTTP status that produced it.
+ *
+ * BUG-062: `getPreset()` recovered "not found" by testing whether the error
+ * MESSAGE contained '404'. presets-api returns a JSON body for a missing
+ * preset, so the message is "Preset not found" and the check never matched --
+ * `getPreset()` threw where it had promised to return `null`.
+ */
+export class PresetApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'PresetApiError';
+    this.status = status;
+  }
+}
+
 export class CommunityPresetService {
   private static instance: CommunityPresetService | null = null;
 
@@ -257,7 +275,15 @@ export class CommunityPresetService {
 
       if (!response.ok) {
         const errorData = (await response.json().catch(() => ({}))) as { message?: string };
-        throw new Error(errorData.message || `API request failed: ${response.status}`);
+        // BUG-062: the status has to travel WITH the error. Callers used to
+        // recover it by string-matching the message for '404', which never
+        // matched: presets-api answers a missing preset with a JSON body, so
+        // `errorData.message` is "Preset not found" and the
+        // `API request failed: 404` fallback only fires for a bodyless error.
+        throw new PresetApiError(
+          errorData.message || `API request failed: ${response.status}`,
+          response.status
+        );
       }
 
       const data = (await response.json()) as T;
@@ -322,7 +348,7 @@ export class CommunityPresetService {
         `preset:${id}`
       );
     } catch (error) {
-      if (error instanceof Error && error.message.includes('404')) {
+      if (error instanceof PresetApiError && error.status === 404) {
         return null;
       }
       throw error;

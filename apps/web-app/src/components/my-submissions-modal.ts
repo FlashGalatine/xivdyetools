@@ -199,7 +199,11 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
     if (action === 'delete') {
       const confirmEl = document.createElement('p');
       confirmEl.textContent = t('preset.confirmDelete');
-      ModalService.showConfirm({
+      // BUG-088: `onConfirm` is async and nothing awaits it, so the DELETE
+      // resolves at an arbitrary later moment -- by which time the user may
+      // have opened another modal. `dismissTop()` would then close THAT one.
+      // Dismiss the confirm dialog by its own id.
+      const confirmId = ModalService.showConfirm({
         title: t('preset.deleteTitle'),
         content: confirmEl,
         destructive: true,
@@ -209,7 +213,7 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
           try {
             await presetSubmissionService.deletePreset(preset.id);
             ToastService.success(t('preset.deleteSuccess'));
-            ModalService.dismissTop();
+            ModalService.dismiss(confirmId);
             onChanged?.();
           } catch {
             ToastService.error(t('errors.deletePresetFailed'));

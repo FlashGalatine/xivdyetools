@@ -51,6 +51,11 @@ export async function editOriginalResponse(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      // BUG-040: this was the one Discord call in the file with no timeout,
+      // while sendMessage and editMessage both carry 5 s. A stalled PATCH left
+      // the moderator on Discord's "thinking…" indefinitely, and the isolate
+      // holding the waitUntil promise with it.
+      signal: AbortSignal.timeout(5000),
     });
   } catch (error) {
     console.error('Discord API request failed', {
@@ -58,6 +63,43 @@ export async function editOriginalResponse(
       error: sanitizeErrorMessage(error),
     });
     throw error;
+  }
+}
+
+/**
+ * BUG-040: throw-safe, outcome-checked `editOriginalResponse`.
+ *
+ * The raw call returns the Response and now carries an AbortSignal, so every
+ * call site needs to read `.ok` and be ready for a throw — and none of the five
+ * did. A 4xx (expired interaction token, embed over the limit) was discarded
+ * silently, and a timeout rejected the `waitUntil` promise unhandled. Either
+ * way the moderator saw a permanent "thinking…" with no clue whether their
+ * action had landed.
+ *
+ * This mirrors `safeSendMessage` / `safeEditMessage` above, and the main bot's
+ * `safeEditOriginalResponse`.
+ *
+ * @returns true when Discord accepted the edit
+ */
+export async function safeEditOriginalResponse(
+  applicationId: string,
+  interactionToken: string,
+  options: FollowUpOptions
+): Promise<boolean> {
+  try {
+    const res = await editOriginalResponse(applicationId, interactionToken, options);
+    if (!res.ok) {
+      console.error(
+        'Discord editOriginalResponse failed',
+        res.status,
+        await res.text().catch(() => '')
+      );
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Discord editOriginalResponse threw', sanitizeErrorMessage(error));
+    return false;
   }
 }
 

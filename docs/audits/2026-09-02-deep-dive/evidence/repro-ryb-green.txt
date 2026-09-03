@@ -1,0 +1,42 @@
+--- rgbToRyb / rybToRgb round trip ---
+pure green  #00FF00  ->  RYB(r=0.000 y=0.000 b=1.000)  ->  RGB(r=0.000 g=0.000 b=255.000)
+pure blue   #0000FF  ->  RYB(r=0.000 y=0.000 b=1.000)  ->  RGB(r=0.000 g=0.000 b=255.000)
+pure red    #FF0000  ->  RYB(r=1.000 y=0.000 b=0.000)  ->  RGB(r=255.000 g=0.000 b=0.000)
+yellow      #FFFF00  ->  RYB(r=0.000 y=1.000 b=0.000)  ->  RGB(r=255.000 g=255.000 b=0.000)
+mid green   #40A040  ->  RYB(r=0.251 y=0.251 b=0.627)  ->  RGB(r=64.000 g=64.000 b=160.000)
+olive       #808000  ->  RYB(r=0.000 y=0.502 b=0.000)  ->  RGB(r=128.000 g=128.000 b=0.000)
+
+--- blendColors(x, x, ryb) : blending a colour with ITSELF ---
+#00FF00 + #00FF00  ->  #0000ff   <-- CHANGED
+#FF0000 + #FF0000  ->  #ff0000
+#0000FF + #0000FF  ->  #0000ff
+#FFFF00 + #FFFF00  ->  #ffff00
+#40A040 + #40A040  ->  #4040a0   <-- CHANGED
+#7FBF7F + #7FBF7F  ->  #7f7fbf   <-- CHANGED
+
+--- the same self-blends in rgb mode, for contrast ---
+#00FF00 + #00FF00  ->  #00ff00
+#40A040 + #40A040  ->  #40a040
+node:internal/modules/esm/assert:88
+        throw new ERR_IMPORT_ATTRIBUTE_MISSING(url, 'type', validType);
+              ^
+
+TypeError [ERR_IMPORT_ATTRIBUTE_MISSING]: Module "file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/deep-dive-2026-09-02/packages/core/dist/data/character_colors/shared/eye_colors.json" needs an import attribute of "type: json"
+[90m    at validateAttributes (node:internal/modules/esm/assert:88:15)[39m
+[90m    at defaultLoad (node:internal/modules/esm/load:108:3)[39m
+[90m    at ModuleLoader.load (node:internal/modules/esm/loader:815:12)[39m
+[90m    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:594:31)[39m
+[90m    at #createModuleJob (node:internal/modules/esm/loader:624:36)[39m
+[90m    at #getJobFromResolveResult (node:internal/modules/esm/loader:343:34)[39m
+[90m    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:311:41)[39m {
+  code: [32m'ERR_IMPORT_ATTRIBUTE_MISSING'[39m
+}
+
+Node.js v22.21.0
+case                            | A) core/blending      | B) RybColorMixer
+--------------------------------|-----------------------|------------------
+green + green                   | #0000ff               | #22B42C
+midgreen + midgreen             | #4040a0               | #41A040
+blue + yellow (want greenish)   | #008000               | #8DB26B
+red + red                       | #ff0000               | #FF0000
+teal + teal                     | #000080               | #197C71

@@ -12,6 +12,7 @@ import { HarmonyTool } from '../harmony-tool';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
+import { HARMONY_OFFSETS } from '@xivdyetools/core';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() => ({
@@ -670,6 +671,48 @@ describe('HarmonyTool', () => {
       tool = mount();
 
       expect(() => tool!.selectDye(value as never)).not.toThrow();
+    });
+  });
+
+  describe('the harmony slots themselves', () => {
+    // These exist because the suite could not tell "the tool renders a full
+    // harmony" from "the tool renders only the base card": every assertion on
+    // the grid was `.length` toBeGreaterThan(0), and the base panel alone
+    // satisfies that. Stubbing the selector to return nothing at all left all
+    // 46 tests green.
+    it.each([
+      ['complementary', 1],
+      ['triadic', 2],
+      ['tetradic', 3],
+      ['compound', 3],
+    ])('renders the base card plus one per %s offset', async (type, slotCount) => {
+      tool = mount();
+      tool.setConfig({ harmonyType: type });
+      tool.selectDye(mockDyes[0]);
+      await flush();
+
+      expect(HARMONY_OFFSETS[type]).toHaveLength(slotCount);
+      expect(container.querySelectorAll('v4-result-card')).toHaveLength(1 + slotCount);
+    });
+
+    it('gives every harmony slot a real dye, not the base repeated', async () => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      await flush();
+
+      const cards = [...container.querySelectorAll('v4-result-card')] as Array<
+        HTMLElement & { data?: { dye: { itemID: number } } }
+      >;
+      expect(cards.length).toBeGreaterThan(1);
+
+      const [base, ...slots] = cards;
+      expect(base.data?.dye.itemID).toBe(mockDyes[0].itemID);
+      for (const slot of slots) {
+        expect(slot.data?.dye).toBeDefined();
+        // The base is excluded from its own harmony; a slot showing it again
+        // means the exclusion stopped being applied.
+        expect(slot.data?.dye.itemID).not.toBe(mockDyes[0].itemID);
+      }
     });
   });
 

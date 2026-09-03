@@ -207,7 +207,9 @@ describe('ResultCard', () => {
       };
       card.data = {
         dye: {
-          id: 1,
+          // BUG-016: `id` is the itemID, not the stainID — see Dye.id in
+          // @xivdyetools/types and __tests__/mocks/services.test.ts.
+          id: 5729,
           itemID: 5729,
           stainID: 1,
           name: 'Snow White',
@@ -236,6 +238,63 @@ describe('ResultCard', () => {
       const text = card.shadowRoot?.textContent ?? '';
       expect(text).toContain('ACQ:Vendor');
       expect(text).not.toContain('common.custom');
+    });
+  });
+
+  // ==========================================================================
+  // Tool hand-offs (BUG-012)
+  // ==========================================================================
+
+  describe('inspect hand-offs', () => {
+    /**
+     * The receiver resolves `?dyeId=` through `ShareService.resolveSharedDye`,
+     * whose loud-failure contract rejects every id at or above this floor as a
+     * pre-5.0 link. All 125 dyes have an itemID in 5729-48227, so emitting
+     * `dye.itemID` here failed for every one of them. Asserting the emitted
+     * value is the stainID *and* below the floor encodes the receiver's guard
+     * without importing it.
+     */
+    const LEGACY_ITEM_ID_FLOOR = 5729;
+
+    it('sends Harmony the stainID, which is the grammar the receiver accepts', async () => {
+      const { RouterService } = await import('@services/index');
+      vi.mocked(RouterService.navigateTo).mockClear();
+      await import('../../v4/result-card');
+
+      const card = document.createElement('v4-result-card') as HTMLElement & { data?: unknown };
+      card.data = {
+        dye: {
+          id: 5729,
+          itemID: 5729,
+          stainID: 1,
+          name: 'Snow White',
+          hex: '#E4E4E4',
+          rgb: { r: 228, g: 228, b: 228 },
+          hsv: { h: 0, s: 0, v: 89 },
+          category: 'White',
+          acquisition: 'Vendor',
+          cost: 216,
+          currency: 'Gil',
+          isMetallic: false,
+          isPastel: false,
+          isDark: false,
+          isCosmic: false,
+          isIshgardian: false,
+          consolidationType: null,
+        },
+        originalColor: '#E4E4E4',
+        matchedColor: '#E4E4E4',
+      };
+      container.appendChild(card);
+
+      (card as unknown as { handleMenuAction: (a: string) => void }).handleMenuAction(
+        'inspect-harmony'
+      );
+
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('harmony', { dyeId: '1' });
+
+      const emitted = vi.mocked(RouterService.navigateTo).mock.calls[0]?.[1] as { dyeId: string };
+      expect(Number(emitted.dyeId)).toBeLessThan(LEGACY_ITEM_ID_FLOOR);
     });
   });
 });

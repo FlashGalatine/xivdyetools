@@ -227,6 +227,16 @@ export class SwatchTool extends BaseComponent {
   private selectedColor: CharacterColor | null = null;
   private matchedDyes: CharacterColorMatch[] = [];
   private colors: CharacterColor[] = [];
+
+  /**
+   * BUG-093: `loadColors()` is ungated and the hair/skin branches await a
+   * DYNAMIC IMPORT, so they resolve much later than the shared sheets. Nine
+   * call sites can have one in flight while another starts -- the constructor's
+   * hair/skin chunk typically lands LAST and repaints the grid with the
+   * previous palette under the new category's heading. Same request-versioning
+   * shape MarketBoardService uses.
+   */
+  private colorsRequestVersion = 0;
   private priceData: Map<number, PriceData> = new Map();
   private showPrices: boolean = false;
 
@@ -2699,40 +2709,54 @@ export class SwatchTool extends BaseComponent {
    * Load colors based on current category/race/gender
    */
   private async loadColors(): Promise<void> {
-    if (RACE_SPECIFIC_CATEGORIES.includes(this.colorCategory)) {
-      if (this.colorCategory === 'hairColors') {
-        this.colors = await this.characterColorService.getHairColors(this.subrace, this.gender);
-      } else if (this.colorCategory === 'skinColors') {
-        this.colors = await this.characterColorService.getSkinColors(this.subrace, this.gender);
+    const version = ++this.colorsRequestVersion;
+    const category = this.colorCategory;
+    let next: CharacterColor[] = [];
+
+    if (RACE_SPECIFIC_CATEGORIES.includes(category)) {
+      if (category === 'hairColors') {
+        next = await this.characterColorService.getHairColors(this.subrace, this.gender);
+      } else if (category === 'skinColors') {
+        next = await this.characterColorService.getSkinColors(this.subrace, this.gender);
       }
     } else {
       // Shared colors
-      switch (this.colorCategory) {
+      switch (category) {
         case 'eyeColors':
-          this.colors = this.characterColorService.getEyeColors();
+          next = this.characterColorService.getEyeColors();
           break;
         case 'highlightColors':
-          this.colors = this.characterColorService.getHighlightColors();
+          next = this.characterColorService.getHighlightColors();
           break;
         case 'lipColorsDark':
-          this.colors = this.characterColorService.getLipColorsDark();
+          next = this.characterColorService.getLipColorsDark();
           break;
         case 'lipColorsLight':
-          this.colors = this.characterColorService.getLipColorsLight();
+          next = this.characterColorService.getLipColorsLight();
           break;
         case 'tattooColors':
-          this.colors = this.characterColorService.getTattooColors();
+          next = this.characterColorService.getTattooColors();
           break;
         case 'facePaintColorsDark':
-          this.colors = this.characterColorService.getFacePaintColorsDark();
+          next = this.characterColorService.getFacePaintColorsDark();
           break;
         case 'facePaintColorsLight':
-          this.colors = this.characterColorService.getFacePaintColorsLight();
+          next = this.characterColorService.getFacePaintColorsLight();
           break;
       }
     }
 
-    logger.info(`[CharacterTool] Loaded ${this.colors.length} colors for ${this.colorCategory}`);
+    // BUG-093: a newer load started while this one was awaiting its chunk.
+    // Publishing now would paint the previous palette under the new heading.
+    if (version !== this.colorsRequestVersion) {
+      logger.info(
+        `[CharacterTool] Discarding stale colors for ${category} (v${version}, current v${this.colorsRequestVersion})`
+      );
+      return;
+    }
+
+    this.colors = next;
+    logger.info(`[CharacterTool] Loaded ${this.colors.length} colors for ${category}`);
   }
 
   /**

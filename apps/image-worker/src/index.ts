@@ -20,18 +20,33 @@ import {
   readBodyWithCap,
   MAX_FILE_SIZE_BYTES,
   MAX_IMAGE_DIMENSION,
+  MIN_MAX_DIMENSION,
+  assertValidMaxDimension,
 } from './validators.js';
 import { processImageForExtraction, processImageForThumbnail } from './photon.js';
 
-/** FINDING-004: `maxDimension` must be an integer in [16, MAX_IMAGE_DIMENSION]. */
-const MIN_MAX_DIMENSION = 16;
-function isValidMaxDimension(value: unknown): value is number {
-  return (
-    typeof value === 'number' &&
-    Number.isInteger(value) &&
-    value >= MIN_MAX_DIMENSION &&
-    value <= MAX_IMAGE_DIMENSION
-  );
+/**
+ * FINDING-004: `maxDimension` must be an integer in
+ * [MIN_MAX_DIMENSION, MAX_IMAGE_DIMENSION].
+ *
+ * REFACTOR-007 (deep dive 2026-09-02): the rule, the bound and the message
+ * were written twice — this route had its own `MIN_MAX_DIMENSION` and
+ * predicate, and rebuilt the error string by hand, while `photon.ts` already
+ * exported `assertValidMaxDimension` with the identical rule and the identical
+ * wording. Both sides were tested independently, which is exactly why a drift
+ * between them would have stayed green. One rule now; the route only converts
+ * its throw into a 400.
+ */
+function maxDimensionError(value: unknown): string | null {
+  if (typeof value !== 'number') {
+    return `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_IMAGE_DIMENSION}`;
+  }
+  try {
+    assertValidMaxDimension(value);
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -127,13 +142,11 @@ app.post('/extract', async (c) => {
   }
 
   // FINDING-004: reject a malformed maxDimension before any fetch/decode work
-  if (body.maxDimension !== undefined && !isValidMaxDimension(body.maxDimension)) {
-    return c.json(
-      {
-        error: `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_IMAGE_DIMENSION}`,
-      },
-      400
-    );
+  if (body.maxDimension !== undefined) {
+    const error = maxDimensionError(body.maxDimension);
+    if (error) {
+      return c.json({ error }, 400);
+    }
   }
 
   try {

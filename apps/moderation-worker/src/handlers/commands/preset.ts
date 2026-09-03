@@ -24,7 +24,7 @@ import {
   sanitizeErrorMessage,
 } from '../../utils/response.js';
 import { sanitizeName, sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
-import { editOriginalResponse, safeSendMessage } from '../../utils/discord-api.js';
+import { safeEditOriginalResponse, safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 import { STATUS_DISPLAY } from '../../types/preset.js';
@@ -37,6 +37,16 @@ import { STATUS_DISPLAY } from '../../types/preset.js';
 // `xivdyetools.com` does not resolve and is not known to be project-owned —
 // bot-authored links to it would have been a registrable phishing target.
 const PRESETS_WEB_URL = 'https://xivdyetools.app';
+
+/**
+ * Minimum rejection reason, shared by the modal and the slash command.
+ *
+ * moderation-worker-06: the modal has always demanded ten characters; the
+ * slash command accepted one, and presets-api validates the reason on
+ * `/revert` only — so `reason:x` was stored as the `moderation_log.reason` for
+ * a rejection. Keep this the single definition for both entry points.
+ */
+export const MIN_REJECTION_REASON_LENGTH = 10;
 
 // ============================================================================
 // Main Handler
@@ -114,9 +124,9 @@ interface ModerationContext {
  */
 async function sendModerationResponse(
   ctx: ModerationContext,
-  options: Parameters<typeof editOriginalResponse>[2]
+  options: Parameters<typeof safeEditOriginalResponse>[2]
 ): Promise<void> {
-  await editOriginalResponse(ctx.env.DISCORD_CLIENT_ID, ctx.interaction.token, options);
+  await safeEditOriginalResponse(ctx.env.DISCORD_CLIENT_ID, ctx.interaction.token, options);
 }
 
 /**
@@ -283,8 +293,16 @@ async function handleRejectAction(
     return;
   }
 
-  // Reason is required for rejection
-  if (!reason) {
+  // Reason is required for rejection.
+  //
+  // moderation-worker-06: the floor used to depend on which surface the
+  // moderator used. The rejection MODAL demands ten characters ("Please
+  // provide a valid rejection reason (at least 10 characters)"), while this
+  // path accepted a single one \u2014 and presets-api applies
+  // `validateModerationReason` to `/revert` only, never to
+  // `/:presetId/status`, so nothing downstream closed the gap either. Same
+  // rule on both entry points now.
+  if (!reason || reason.trim().length < MIN_REJECTION_REASON_LENGTH) {
     await sendModerationResponse(ctx, {
       embeds: [errorEmbed(ctx.t.t('common.error'), ctx.t.t('preset.moderation.missingReason'))],
     });
@@ -293,17 +311,39 @@ async function handleRejectAction(
 
   const preset = await presetApi.rejectPreset(ctx.env, presetId!, ctx.userId, reason);
 
+  const safeName = sanitizeName(preset.name);
+
   await sendModerationResponse(ctx, {
     embeds: [
       {
         title: `\u274C ${ctx.t.t('preset.moderation.rejected')}`,
         // FINDING-019: author-controlled name + moderator-typed reason sanitised
-        description: ctx.t.t('preset.moderation.rejectedDesc', { name: sanitizeName(preset.name) }),
+        description: ctx.t.t('preset.moderation.rejectedDesc', { name: safeName }),
         color: 0xed4245,
         fields: [{ name: 'Reason', value: sanitizeReason(reason) }],
       },
     ],
   });
+
+  // moderation-worker-05: rejection was the ONLY moderation action that never
+  // reached the submission log. `handleApproveAction` posts here, and so do
+  // `processRejection` (the modal), `processApproval` and `processRevert` \u2014 so
+  // the Discord-visible record of rejections was complete or not depending on
+  // which surface the moderator happened to use. (The durable trail was never
+  // affected: presets-api writes the `moderation_log` row either way.)
+  if (ctx.env.SUBMISSION_LOG_CHANNEL_ID) {
+    await safeSendMessage(ctx.env.DISCORD_TOKEN, ctx.env.SUBMISSION_LOG_CHANNEL_ID, {
+      embeds: [
+        {
+          title: `\u274C ${safeName} - Rejected`,
+          description: `Preset rejected`,
+          color: STATUS_DISPLAY.rejected.color,
+          fields: [{ name: 'Reason', value: sanitizeReason(reason) }],
+          footer: { text: `ID: ${preset.id}` },
+        },
+      ],
+    });
+  }
 }
 
 /**
@@ -318,10 +358,21 @@ async function handleStatsAction(ctx: ModerationContext): Promise<void> {
         title: `\uD83D\uDCCA ${ctx.t.t('preset.moderation.stats')}`,
         color: 0x5865f2,
         fields: [
-          { name: '\uD83D\uDFE1 Pending', value: String(stats.pending_count), inline: true },
-          { name: '\uD83D\uDFE2 Approved', value: String(stats.approved_count), inline: true },
-          { name: '\uD83D\uDD34 Rejected', value: String(stats.rejected_count), inline: true },
-          { name: '\uD83D\uDFE0 Flagged', value: String(stats.flagged_count), inline: true },
+          // BUG-010: these read `stats.pending_count` and friends. No such key
+          // is in the response \u2014 presets-api aliases the counts `pending` /
+          // `approved` / `rejected` / `flagged` \u2014 so every field rendered
+          // `String(undefined)` and the queue's only summary view showed a
+          // moderator "undefined" four times. `actions_last_week` is surfaced
+          // too: the query already computes it and nothing was reading it.
+          { name: '\uD83D\uDFE1 Pending', value: String(stats.pending), inline: true },
+          { name: '\uD83D\uDFE2 Approved', value: String(stats.approved), inline: true },
+          { name: '\uD83D\uDD34 Rejected', value: String(stats.rejected), inline: true },
+          { name: '\uD83D\uDFE0 Flagged', value: String(stats.flagged), inline: true },
+          {
+            name: '\uD83D\uDCC5 Actions (7d)',
+            value: String(stats.actions_last_week),
+            inline: true,
+          },
         ],
       },
     ],
@@ -596,7 +647,7 @@ async function processUnban(
     const activeBan = await banService.getActiveBan(env.DB, targetUserId);
 
     if (!activeBan) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('ban.notBanned'))],
       });
       return;
@@ -613,14 +664,14 @@ async function processUnban(
           result.cause instanceof Error ? result.cause : undefined
         );
       }
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), result.error || 'Failed to unban user.')],
       });
       return;
     }
 
     // Success response
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
           title: `\u2705 ${t.t('ban.userUnbanned')}`,
@@ -648,7 +699,7 @@ async function processUnban(
     if (logger) {
       logger.error('Failed to unban user', error instanceof Error ? error : undefined);
     }
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), 'An unexpected error occurred while unbanning the user.')],
     });
   }

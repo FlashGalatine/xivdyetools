@@ -46,8 +46,16 @@ interface KVListResult {
 /**
  * Extended mock KV namespace with test helpers
  */
+export type KVValueType = 'text' | 'json' | 'arrayBuffer' | 'stream';
+
+/** Real KV rejects an `expirationTtl` below this many seconds. */
+export const KV_MIN_EXPIRATION_TTL = 60;
+
+/** Real KV never returns more than this many keys in one `list()` page. */
+export const KV_MAX_LIST_PAGE = 1000;
+
 export interface MockKVNamespace {
-  get: (key: string, options?: { type?: 'text' | 'json' | 'arrayBuffer' | 'stream' }) => Promise<string | null>;
+  get: (key: string, options?: KVValueType | { type?: KVValueType }) => Promise<string | null>;
   put: (key: string, value: string, options?: { expirationTtl?: number; expiration?: number; metadata?: unknown }) => Promise<void>;
   delete: (key: string) => Promise<void>;
   list: (options?: { prefix?: string; limit?: number; cursor?: string }) => Promise<KVListResult>;
@@ -74,6 +82,22 @@ export interface MockKVNamespace {
  *
  * @returns A mock KV namespace that can be cast to KVNamespace
  */
+/**
+ * Opaque-ish page cursor. Deliberately NOT the bare key name, so a test that
+ * treats the cursor as opaque (passes it straight back) is the only thing that
+ * works -- the same contract real KV gives.
+ */
+const CURSOR_PREFIX = 'mockkv-after:';
+
+function encodeListCursor(lastKey: string): string {
+  return `${CURSOR_PREFIX}${lastKey}`;
+}
+
+function decodeListCursor(cursor: string | undefined): string | null {
+  if (!cursor || !cursor.startsWith(CURSOR_PREFIX)) return null;
+  return cursor.slice(CURSOR_PREFIX.length);
+}
+
 export function createMockKV(): MockKVNamespace {
   const store = new Map<string, string>();
   const ttls = new Map<string, number>();
@@ -102,7 +126,12 @@ export function createMockKV(): MockKVNamespace {
   };
 
   return {
-    get: async (key: string, options?: { type?: 'text' | 'json' | 'arrayBuffer' | 'stream' }) => {
+    get: async (key: string, options?: KVValueType | { type?: KVValueType }) => {
+      // Real KV accepts both `get(key, 'json')` and `get(key, { type: 'json' })`.
+      // The mock used to read `options?.type` only, so the bare-string form
+      // silently returned the raw string and a consumer using it looked correct
+      // in tests while getting an unparsed value.
+      const valueType = typeof options === 'string' ? options : options?.type;
       // Capture timestamp once to prevent race conditions with mocked time
       const nowSeconds = Date.now() / 1000;
 
@@ -115,7 +144,7 @@ export function createMockKV(): MockKVNamespace {
 
       if (value === null) return null;
 
-      if (options?.type === 'json') {
+      if (valueType === 'json') {
         try {
           return JSON.parse(value);
         } catch {
@@ -127,22 +156,41 @@ export function createMockKV(): MockKVNamespace {
     },
 
     put: async (key: string, value: string, options?: { expirationTtl?: number; expiration?: number; metadata?: unknown }) => {
+      // Validate BEFORE storing: a rejected put must not leave the value
+      // behind. The old guard was `if (options?.expirationTtl)`, so 0 was
+      // falsy and silently became "no TTL", and any positive value was
+      // accepted -- real KV REJECTS anything under 60 seconds, so a consumer
+      // computing a sub-minute TTL passed every test and threw in production.
+      if (
+        options?.expirationTtl !== undefined &&
+        (!Number.isFinite(options.expirationTtl) ||
+          options.expirationTtl < KV_MIN_EXPIRATION_TTL)
+      ) {
+        throw new Error(
+          `Invalid expiration_ttl of ${options.expirationTtl}. Expiration TTL must be at least ${KV_MIN_EXPIRATION_TTL}.`,
+        );
+      }
+
       store.set(key, value);
 
       // Handle TTL
-      if (options?.expirationTtl) {
+      if (options?.expirationTtl !== undefined) {
         // expirationTtl is seconds from now
         ttls.set(key, Math.floor(Date.now() / 1000) + options.expirationTtl);
-      } else if (options?.expiration) {
+      } else if (options?.expiration !== undefined) {
         // expiration is absolute Unix timestamp
         ttls.set(key, options.expiration);
       } else {
         ttls.delete(key);
       }
 
-      // Handle metadata
+      // Handle metadata. A put REPLACES the whole entry, so metadata absent
+      // from this call must be cleared -- leaving the previous value in place
+      // made the mock more forgiving than KV.
       if (options?.metadata !== undefined) {
         metadata.set(key, options.metadata);
+      } else {
+        metadata.delete(key);
       }
     },
 
@@ -157,26 +205,45 @@ export function createMockKV(): MockKVNamespace {
       const nowSeconds = Date.now() / 1000;
       const keys: KVListKey[] = [];
       const prefix = options?.prefix ?? '';
-      const limit = options?.limit ?? 1000;
+      // Real KV caps a page at 1000 however large a limit you ask for.
+      const limit = Math.min(options?.limit ?? KV_MAX_LIST_PAGE, KV_MAX_LIST_PAGE);
       const expiredKeys: string[] = [];
 
-      for (const [key] of store.entries()) {
-        if (key.startsWith(prefix)) {
-          if (isExpiredAt(key, nowSeconds)) {
-            // Collect expired keys for cleanup after iteration
-            expiredKeys.push(key);
-          } else {
-            keys.push({
-              name: key,
-              expiration: ttls.get(key),
-              metadata: metadata.get(key),
-            });
+      // BUG-098: the mock used to return `cursor: undefined` unconditionally,
+      // so an un-paginated consumer (`await kv.list({ prefix })` with no cursor
+      // loop) looked correct in tests and truncated at 1000 keys in production
+      // -- which is exactly what hid BUG-035 in discord-worker's /stats. It
+      // also emitted `list_complete: false` WITH no cursor when the page was
+      // exactly full, a state real KV never returns, so a CORRECT cursor loop
+      // would re-read page one forever against it.
+      const resumeAfter = decodeListCursor(options?.cursor);
+      let skipping = resumeAfter !== null;
+      let truncated = false;
 
-            if (keys.length >= limit) {
-              break;
-            }
-          }
+      for (const [key] of store.entries()) {
+        if (!key.startsWith(prefix)) continue;
+
+        if (isExpiredAt(key, nowSeconds)) {
+          // Collect expired keys for cleanup after iteration
+          expiredKeys.push(key);
+          continue;
         }
+
+        if (skipping) {
+          if (key === resumeAfter) skipping = false;
+          continue;
+        }
+
+        if (keys.length >= limit) {
+          truncated = true;
+          break;
+        }
+
+        keys.push({
+          name: key,
+          expiration: ttls.get(key),
+          metadata: metadata.get(key),
+        });
       }
 
       // Clean up expired keys after iteration to avoid modifying map during iteration
@@ -184,11 +251,15 @@ export function createMockKV(): MockKVNamespace {
         cleanupKey(key);
       }
 
-      return {
-        keys,
-        list_complete: keys.length < limit,
-        cursor: undefined,
-      };
+      if (truncated && keys.length > 0) {
+        return {
+          keys,
+          list_complete: false,
+          cursor: encodeListCursor(keys[keys.length - 1].name),
+        };
+      }
+
+      return { keys, list_complete: true };
     },
 
     getWithMetadata: async <T = unknown>(key: string) => {

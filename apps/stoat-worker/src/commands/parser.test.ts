@@ -270,4 +270,25 @@ describe('parseMultiDyeArgs', () => {
       trailingArgs: [],
     });
   });
+
+  // image-stoat-12: the post-prefix separator check accepted only a literal
+  // space, though its own comment said "whitespace". A newline after the prefix
+  // -- ordinary in a multi-line Revolt message -- matched no prefix at all, so
+  // the bot ignored the message silently.
+  describe('whitespace after the prefix', () => {
+    it.each([
+      ['space', '!xd ping'],
+      ['newline', '!xd\nping'],
+      ['tab', '!xd\tping'],
+      ['carriage return', '!xd\r\nping'],
+    ])('accepts a %s between the prefix and the command', (_label, input) => {
+      const parsed = parseCommand(input);
+      expect(parsed).not.toBeNull();
+      expect(parsed?.command).toBe('ping');
+    });
+
+    it('still rejects a prefix glued to the command', () => {
+      expect(parseCommand('!xdping')).toBeNull();
+    });
+  });
 });

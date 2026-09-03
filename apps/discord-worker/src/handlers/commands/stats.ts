@@ -36,8 +36,18 @@ const COLORS = {
   purple: 0x9b59b6,
 } as const;
 
-/** Bot version */
-const BOT_VERSION = '4.0.0';
+/**
+ * Bot version, read from the manifest the deploy actually ships.
+ *
+ * BUG-037: this was the literal '4.0.0' while `package.json` said 5.1.1, so
+ * public `/stats summary` and `/stats health` contradicted `/about` — which has
+ * always read the manifest — in the same bot. Worse, the tests pinned the stale
+ * literal (`toContain('Version 4.0.0')`), so bumping the package could never
+ * turn them red and the drift was invisible from inside the suite.
+ */
+import packageJson from '../../../package.json' with { type: 'json' };
+
+const BOT_VERSION = packageJson.version;
 
 /**
  * FINDING-023 (2026-08-21 security audit): the summary used to link
@@ -363,6 +373,42 @@ async function handleCommandsSubcommand(
 // Preferences Subcommand (Admin)
 // ============================================================================
 
+/** Users read for the adoption percentages — the reads are issued together. */
+const PREFERENCE_SAMPLE_SIZE = 100;
+
+/**
+ * Pages to walk before answering with a floor instead of an exact count.
+ *
+ * 20 pages is 20,000 users, well past anything this bot has, and it bounds the
+ * work at ~20 sequential list calls so the 3-second ack survives a namespace
+ * that grows by an order of magnitude. Keys-only listing is cheap; reading
+ * values is what costs, and that stays capped at PREFERENCE_SAMPLE_SIZE.
+ */
+const MAX_PREFERENCE_LIST_PAGES = 20;
+
+/**
+ * Every `prefs:v1:` key, following KV's cursor rather than reading one page as
+ * the whole namespace (BUG-035). `complete` is false when the page budget ran
+ * out first, so the caller can say "20,000+" rather than a number it knows is
+ * short.
+ */
+async function listAllPreferenceKeys(
+  kv: KVNamespace,
+): Promise<{ keys: Array<{ name: string }>; complete: boolean }> {
+  const keys: Array<{ name: string }> = [];
+  let cursor: string | undefined;
+
+  for (let page = 0; page < MAX_PREFERENCE_LIST_PAGES; page++) {
+    const result = await kv.list({ prefix: 'prefs:v1:', cursor });
+    keys.push(...result.keys);
+    if (result.list_complete) return { keys, complete: true };
+    cursor = result.cursor;
+    if (!cursor) return { keys, complete: true };
+  }
+
+  return { keys, complete: false };
+}
+
 /**
  * Handles /stats preferences - Admin preference adoption rates
  */
@@ -370,10 +416,15 @@ async function handlePreferencesSubcommand(
   env: Env,
   _logger?: ExtendedLogger,
 ): Promise<Response> {
-  // Count users with preferences set
-  // We'll scan KV for preference keys to get adoption stats
-  const prefsList = await env.KV.list({ prefix: 'prefs:v1:' });
-  const totalPrefsUsers = prefsList.keys.length;
+  // BUG-035: this read a single `KV.list()` page as if it were the whole
+  // namespace. KV returns at most 1000 keys per call plus `list_complete` and a
+  // `cursor`, neither of which was read — so above a thousand users the figure
+  // pinned at exactly 1000 and stayed there for ever, which reads as a plateau
+  // in adoption rather than as the truncation it is. (The KV mock in
+  // test-utils always answers `list_complete: true`, which is why no test
+  // could see it — filed separately as BUG-098.)
+  const { keys, complete } = await listAllPreferenceKeys(env.KV);
+  const totalPrefsUsers = keys.length;
 
   // Sample some preference data to estimate adoption
   // (Full aggregation would require reading all values, which is expensive)
@@ -385,26 +436,34 @@ async function handlePreferencesSubcommand(
   let worldSet = 0;
   let marketSet = 0;
 
-  // Sample first 100 users for estimates
-  const sampleSize = Math.min(100, prefsList.keys.length);
-  for (let i = 0; i < sampleSize; i++) {
-    const key = prefsList.keys[i];
-    const prefsJson = await env.KV.get(key.name);
-    if (prefsJson) {
-      try {
-        const prefs = JSON.parse(prefsJson) as Record<string, unknown>;
-        if (prefs.language) languageSet++;
-        if (prefs.blending) blendingSet++;
-        if (prefs.matching) matchingSet++;
-        if (prefs.clan) clanSet++;
-        if (prefs.gender) genderSet++;
-        if (prefs.world) worldSet++;
-        if (prefs.market !== undefined) marketSet++;
-      } catch {
-        // Skip malformed entries
-      }
+  // BUG-036: the sample reads used to be a `for` loop of awaited `KV.get`s —
+  // up to 100 serialized round trips at 20–50 ms each, so 2–5 seconds on a
+  // path that answers with `messageResponse` (type 4) and therefore has
+  // Discord's 3-second ack as its entire budget. The admin saw "The
+  // application did not respond" and the work was thrown away. They are
+  // independent reads; issue them together.
+  const sample = keys.slice(0, PREFERENCE_SAMPLE_SIZE);
+  const sampleSize = sample.length;
+  const values = await Promise.all(sample.map((key) => env.KV.get(key.name).catch(() => null)));
+
+  for (const prefsJson of values) {
+    if (!prefsJson) continue;
+    try {
+      const prefs = JSON.parse(prefsJson) as Record<string, unknown>;
+      if (prefs.language) languageSet++;
+      if (prefs.blending) blendingSet++;
+      if (prefs.matching) matchingSet++;
+      if (prefs.clan) clanSet++;
+      if (prefs.gender) genderSet++;
+      if (prefs.world) worldSet++;
+      if (prefs.market !== undefined) marketSet++;
+    } catch {
+      // Skip malformed entries
     }
   }
+
+  // Say "20,000+" rather than a number we know is short.
+  const totalText = `${totalPrefsUsers.toLocaleString()}${complete ? '' : '+'}`;
 
   // Calculate percentages (from sample)
   const calcPercent = (count: number): string =>
@@ -414,7 +473,7 @@ async function handlePreferencesSubcommand(
     embeds: [
       {
         title: '⚙️ Preference Adoption',
-        description: `Based on ${sampleSize} user sample from ${totalPrefsUsers.toLocaleString()} total users with preferences.`,
+        description: `Based on ${sampleSize} user sample from ${totalText} total users with preferences.`,
         color: COLORS.yellow,
         fields: [
           {
@@ -448,7 +507,7 @@ async function handlePreferencesSubcommand(
           },
           {
             name: '📊 Coverage',
-            value: `**Users with Preferences:** ${totalPrefsUsers.toLocaleString()}`,
+            value: `**Users with Preferences:** ${totalText}`,
             inline: true,
           },
         ],

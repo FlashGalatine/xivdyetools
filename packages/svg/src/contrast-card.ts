@@ -170,7 +170,7 @@ function render13A(o: ContrastCardOptions, theme: CardTheme): string {
   parts.push(
     `<path d="M ${PAD + 10} ${pairTop} H ${PAD + 44} V ${pairTop + 62} H ${PAD + 10} Q ${PAD} ${pairTop + 62} ${PAD} ${pairTop + 52} V ${pairTop + 10} Q ${PAD} ${pairTop} ${PAD + 10} ${pairTop} Z" fill="${escapeXml(worst.hexA)}"/>` +
       `<path d="M ${PAD + 44} ${pairTop} H ${PAD + 78} Q ${PAD + 88} ${pairTop} ${PAD + 88} ${pairTop + 10} V ${pairTop + 52} Q ${PAD + 88} ${pairTop + 62} ${PAD + 78} ${pairTop + 62} H ${PAD + 44} Z" fill="${escapeXml(worst.hexB)}"/>` +
-      `<rect x="${PAD + 0.5}" y="${pairTop + 0.5}" width="87" height="61" rx="9.5" fill="none" stroke="${theme.swatchRing}" stroke-width="1"/>`
+      `<rect x="${PAD + 0.5}" y="${pairTop + 0.5}" width="87" height="61" rx="9.5" fill="none" stroke="${escapeXml(theme.swatchRing)}" stroke-width="1"/>`
   );
   const nameX = PAD + 88 + 12;
   parts.push(
@@ -218,8 +218,8 @@ function render13A(o: ContrastCardOptions, theme: CardTheme): string {
   );
   const fill = Math.max(axisPos(worst.ratio) * 96, 4);
   parts.push(
-    `<rect x="${CARD_WIDTH - PAD - 96}" y="${vTop + 28}" width="96" height="6" rx="3" fill="${theme.pillBg}"/>` +
-      `<rect x="${CARD_WIDTH - PAD - 96}" y="${vTop + 28}" width="${fill.toFixed(1)}" height="6" rx="3" fill="${tone}"/>`
+    `<rect x="${CARD_WIDTH - PAD - 96}" y="${vTop + 28}" width="96" height="6" rx="3" fill="${escapeXml(theme.pillBg)}"/>` +
+      `<rect x="${CARD_WIDTH - PAD - 96}" y="${vTop + 28}" width="${fill.toFixed(1)}" height="6" rx="3" fill="${escapeXml(tone)}"/>`
   );
 
   // REST strip — absent by condition when there is nothing to show
@@ -238,8 +238,8 @@ function render13A(o: ContrastCardOptions, theme: CardTheme): string {
     x += 46;
     for (const p of rest) {
       parts.push(
-        `<rect x="${x}" y="${stripY}" width="11" height="18" rx="3" fill="${p.hexA}"/>` +
-          `<rect x="${x + 11}" y="${stripY}" width="11" height="18" rx="3" fill="${p.hexB}"/>`
+        `<rect x="${x}" y="${stripY}" width="11" height="18" rx="3" fill="${escapeXml(p.hexA)}"/>` +
+          `<rect x="${x + 11}" y="${stripY}" width="11" height="18" rx="3" fill="${escapeXml(p.hexB)}"/>`
       );
       const rText = num(p.ratio, o.lang, 1);
       parts.push(
@@ -299,9 +299,9 @@ function render13B(o: ContrastCardOptions, theme: CardTheme): string {
     parts.push(hairline(PAD, CARD_WIDTH - PAD, top, theme));
     const cy = top + ROW_H / 2;
     parts.push(
-      `<rect x="${PAD}" y="${cy - 16}" width="25" height="32" rx="6" fill="${p.hexA}"/>` +
-        `<rect x="${PAD + 25}" y="${cy - 16}" width="25" height="32" rx="6" fill="${p.hexB}"/>` +
-        `<rect x="${PAD + 0.5}" y="${cy - 15.5}" width="49" height="31" rx="5.5" fill="none" stroke="${theme.swatchRing}" stroke-width="1"/>`
+      `<rect x="${PAD}" y="${cy - 16}" width="25" height="32" rx="6" fill="${escapeXml(p.hexA)}"/>` +
+        `<rect x="${PAD + 25}" y="${cy - 16}" width="25" height="32" rx="6" fill="${escapeXml(p.hexB)}"/>` +
+        `<rect x="${PAD + 0.5}" y="${cy - 15.5}" width="49" height="31" rx="5.5" fill="none" stroke="${escapeXml(theme.swatchRing)}" stroke-width="1"/>`
     );
     const tone = ratioTone(p.ratio, theme);
     parts.push(
@@ -320,7 +320,7 @@ function render13B(o: ContrastCardOptions, theme: CardTheme): string {
         weight: 600,
       })
     );
-    parts.push(`<rect x="${CARD_WIDTH - PAD - 48 - 38}" y="${cy - 2}" width="28" height="4" rx="2" fill="${tone}"/>`);
+    parts.push(`<rect x="${CARD_WIDTH - PAD - 48 - 38}" y="${cy - 2}" width="28" height="4" rx="2" fill="${escapeXml(tone)}"/>`);
     parts.push(
       cardText(CARD_WIDTH - PAD, cy + 4, formatRatio(p.ratio, o.lang), {
         fill: tone,
@@ -382,13 +382,13 @@ function render13C1(o: ContrastCardOptions, theme: CardTheme): string {
     [7, '7'],
   ];
   parts.push(
-    `<line x1="${axisX}" y1="${plotTop - 4}" x2="${axisX}" y2="${plotBottom}" stroke="${theme.rule}" stroke-width="1"/>` +
-      `<line x1="${axisRight}" y1="${plotTop - 4}" x2="${axisRight}" y2="${plotBottom}" stroke="${theme.rule}" stroke-width="1"/>`
+    `<line x1="${axisX}" y1="${plotTop - 4}" x2="${axisX}" y2="${plotBottom}" stroke="${escapeXml(theme.rule)}" stroke-width="1"/>` +
+      `<line x1="${axisRight}" y1="${plotTop - 4}" x2="${axisRight}" y2="${plotBottom}" stroke="${escapeXml(theme.rule)}" stroke-width="1"/>`
   );
   for (const [v, label] of criteria) {
     const x = axisX + axisPos(v) * axisW;
     parts.push(
-      `<line x1="${x.toFixed(1)}" y1="${plotTop - 4}" x2="${x.toFixed(1)}" y2="${plotBottom}" stroke="${theme.dashed}" stroke-width="1" stroke-dasharray="3 3"/>`
+      `<line x1="${x.toFixed(1)}" y1="${plotTop - 4}" x2="${x.toFixed(1)}" y2="${plotBottom}" stroke="${escapeXml(theme.dashed)}" stroke-width="1" stroke-dasharray="3 3"/>`
     );
     parts.push(
       cardText(x, plotTop - 8, label, { fill: theme.label, size: CARD_TYPE.label, font: 'mono', anchor: 'middle' })
@@ -419,8 +419,8 @@ function render13C1(o: ContrastCardOptions, theme: CardTheme): string {
     );
     const mx = axisX + axisPos(p.ratio) * axisW;
     parts.push(
-      `<line x1="${axisX}" y1="${cy}" x2="${mx.toFixed(1)}" y2="${cy}" stroke="${tone}" stroke-opacity="0.35" stroke-width="2"/>` +
-        `<circle cx="${mx.toFixed(1)}" cy="${cy}" r="4.5" fill="${tone}"/>`
+      `<line x1="${axisX}" y1="${cy}" x2="${mx.toFixed(1)}" y2="${cy}" stroke="${escapeXml(tone)}" stroke-opacity="0.35" stroke-width="2"/>` +
+        `<circle cx="${mx.toFixed(1)}" cy="${cy}" r="4.5" fill="${escapeXml(tone)}"/>`
     );
     // One decimal — nothing in this tool acts on the second digit
     parts.push(

@@ -150,4 +150,29 @@ describe('showMySubmissionsModal', () => {
 
     expect(getContent().textContent).toContain('preset.reviewNote');
   });
+
+  /**
+   * BUG-082: getMySubmissions used to swallow every failure into an empty list,
+   * so this modal's error branch was unreachable and an API outage rendered
+   * "no submissions yet" with 0/0/0 stats — telling an author their work was
+   * gone. The service now rejects on failure; these pin the consequence.
+   */
+  describe('when the API is unreachable', () => {
+    it('raises an error instead of showing an empty list', async () => {
+      const { ToastService } = await import('@services/toast-service');
+      mockGetMySubmissions.mockRejectedValue(new Error('network down'));
+
+      await showMySubmissionsModal();
+
+      expect(ToastService.error).toHaveBeenCalled();
+    });
+
+    it('does not open the modal at all', async () => {
+      mockGetMySubmissions.mockRejectedValue(new Error('network down'));
+
+      await showMySubmissionsModal();
+
+      expect(mockShow).not.toHaveBeenCalled();
+    });
+  });
 });

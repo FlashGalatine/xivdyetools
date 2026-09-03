@@ -2,19 +2,18 @@
  * Harmony Generator Service
  * WEB-REF-003 FIX: Extracted from harmony-tool.ts to reduce component size.
  *
- * Provides pure algorithmic functions for:
- * - Harmony offset calculations
- * - Finding dyes closest to target hues
- * - Replacing excluded dyes with alternatives
- * - Color distance calculations for harmony matching
+ * What is left here is the UI vocabulary: the harmony types the picker offers,
+ * their icons, and their localized names.
+ *
+ * The SELECTION algorithm -- which dyes a harmony returns -- moved to
+ * `@xivdyetools/core`'s `generateHarmonySlots` on 2026-09-03. It lived here, and
+ * the bot and the OG card each had their own version, and the three disagreed
+ * for most base dyes. There is one now.
  *
  * @module services/harmony-generator
  */
 
-import { ColorService, dyeService, LanguageService } from '@services/index';
-import type { Dye } from '@xivdyetools/types';
-import type { MatchingMethod, DyeFiltersConfig } from '@shared/tool-config-types';
-import { isDyeExcluded, hasActiveFilters } from '@shared/dye-filter-utils';
+import { LanguageService } from '@services/index';
 
 // ============================================================================
 // Types
@@ -28,23 +27,6 @@ export interface HarmonyTypeInfo {
   name: string;
   description: string;
   icon: string;
-}
-
-/**
- * Scored dye match result
- */
-export interface ScoredDyeMatch {
-  dye: Dye;
-  deviance: number;
-}
-
-/**
- * Configuration for harmony generation
- */
-export interface HarmonyConfig {
-  usePerceptualMatching: boolean;
-  matchingMethod: MatchingMethod;
-  companionDyesCount: number;
 }
 
 // ============================================================================
@@ -67,22 +49,6 @@ export const HARMONY_TYPE_IDS = [
   { id: 'shades', icon: 'shades' },
 ] as const;
 
-/**
- * Harmony offsets (in degrees) for each harmony type
- */
-export const HARMONY_OFFSETS: Record<string, number[]> = {
-  complementary: [180],
-  analogous: [30, 330],
-  triadic: [120, 240],
-  'split-complementary': [150, 210],
-  tetradic: [60, 180, 240],
-  'inverted-tetradic': [120, 180, 300],
-  square: [90, 180, 270],
-  monochromatic: [0],
-  compound: [30, 180, 330],
-  shades: [15, 345],
-};
-
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -101,158 +67,4 @@ export function getHarmonyTypes(): HarmonyTypeInfo[] {
       icon,
     };
   });
-}
-
-// ============================================================================
-// Color Distance Calculations
-// ============================================================================
-
-/**
- * Calculate perceptual color distance using the configured matching method.
- *
- * @param hex1 First hex color
- * @param hex2 Second hex color
- * @param matchingMethod The distance algorithm to use
- * @returns Numeric distance (lower = more similar)
- */
-export function calculateColorDistance(
-  hex1: string,
-  hex2: string,
-  matchingMethod: MatchingMethod
-): number {
-  // 5.0: one dispatch suite-wide (dE2000 default lives in core)
-  return ColorService.getDistanceForMethod(hex1, hex2, matchingMethod);
-}
-
-/**
- * Calculate hue deviance between a dye and target hue.
- *
- * @param dye The dye to compare
- * @param targetHue Target hue in degrees (0-360)
- * @returns Angular distance in degrees (0-180)
- */
-export function calculateHueDeviance(dye: Dye, targetHue: number): number {
-  const dyeHsv = ColorService.hexToHsv(dye.hex);
-  const hueDiff = Math.abs(dyeHsv.h - targetHue);
-  return Math.min(hueDiff, 360 - hueDiff);
-}
-
-// ============================================================================
-// Dye Matching Functions
-// ============================================================================
-
-/**
- * Find dyes closest to a target hue.
- * Excludes Facewear dyes (generic names like "Red", "Blue").
- * Supports both hue-based (fast) and DeltaE-based (perceptual) matching.
- *
- * @param dyes Array of dyes to search
- * @param targetHue Target hue in degrees (0-360)
- * @param count Number of results to return
- * @param config Harmony configuration
- * @param baseDye Optional base dye for perceptual matching (uses its S/V values)
- * @returns Array of scored dye matches sorted by deviance
- */
-export function findClosestDyesToHue(
-  dyes: Dye[],
-  targetHue: number,
-  count: number,
-  config: Pick<HarmonyConfig, 'usePerceptualMatching' | 'matchingMethod'>,
-  baseDye?: Dye | null
-): ScoredDyeMatch[] {
-  const scored: ScoredDyeMatch[] = [];
-
-  // For perceptual matching, generate target color from hue
-  // Use base dye's saturation and value for consistent matching
-  let targetHex: string | undefined;
-  if (config.usePerceptualMatching && baseDye) {
-    const baseSaturation = baseDye.hsv?.s ?? 50;
-    const baseValue = baseDye.hsv?.v ?? 50;
-    targetHex = ColorService.hsvToHex(targetHue, baseSaturation, baseValue);
-  }
-
-  for (const dye of dyes) {
-    // Skip Facewear dyes - they have generic names and shouldn't appear in harmony results
-    if (dye.category === 'Facewear') {
-      continue;
-    }
-
-    let deviance: number;
-
-    if (config.usePerceptualMatching && targetHex) {
-      // Perceptual matching: use configured matching algorithm
-      deviance = calculateColorDistance(targetHex, dye.hex, config.matchingMethod);
-    } else {
-      // Hue-based matching: use angular distance on color wheel
-      const dyeHsv = ColorService.hexToHsv(dye.hex);
-      const hueDiff = Math.abs(dyeHsv.h - targetHue);
-      deviance = Math.min(hueDiff, 360 - hueDiff);
-    }
-
-    scored.push({ dye, deviance });
-  }
-
-  scored.sort((a, b) => a.deviance - b.deviance);
-  return scored.slice(0, count);
-}
-
-/**
- * Replace excluded dyes with alternatives that don't match exclusion criteria.
- * This ensures harmony panels always show the expected number of qualifying dyes.
- *
- * @param dyes Array of scored dye matches to filter
- * @param targetHue Target hue for finding alternatives
- * @param dyeFiltersConfig Dye filter configuration with exclusion rules
- * @returns Filtered array with excluded dyes replaced by alternatives
- */
-export function replaceExcludedDyes(
-  dyes: ScoredDyeMatch[],
-  targetHue: number,
-  dyeFiltersConfig: DyeFiltersConfig | null
-): ScoredDyeMatch[] {
-  if (!dyeFiltersConfig || !hasActiveFilters(dyeFiltersConfig)) {
-    return dyes; // No filters active
-  }
-
-  const result: ScoredDyeMatch[] = [];
-  const usedDyeIds = new Set<number>();
-  const allDyes = dyeService.getAllDyes();
-
-  for (const item of dyes) {
-    // If dye is not excluded, keep it
-    if (!isDyeExcluded(dyeFiltersConfig, item.dye)) {
-      result.push(item);
-      usedDyeIds.add(item.dye.itemID);
-      continue;
-    }
-
-    // Dye is excluded, find alternative using color distance
-    const targetColor = item.dye.hex;
-    let bestAlternative: Dye | null = null;
-    let bestDistance = Infinity;
-
-    for (const dye of allDyes) {
-      if (
-        usedDyeIds.has(dye.itemID) ||
-        dye.category === 'Facewear' ||
-        isDyeExcluded(dyeFiltersConfig, dye)
-      ) {
-        continue;
-      }
-
-      const distance = ColorService.getColorDistance(targetColor, dye.hex);
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        bestAlternative = dye;
-      }
-    }
-
-    if (bestAlternative) {
-      const deviance = calculateHueDeviance(bestAlternative, targetHue);
-      result.push({ dye: bestAlternative, deviance });
-      usedDyeIds.add(bestAlternative.itemID);
-    }
-  }
-
-  return result;
 }

@@ -167,5 +167,10 @@ const CSS_COLORS: Record<string, string> = {
  * @returns Hex color string (#RRGGBB) or null if not a CSS color name
  */
 export function resolveCssColorName(input: string): string | null {
-  return CSS_COLORS[input.toLowerCase().trim()] ?? null;
+  // BUG-011: `CSS_COLORS[key]` resolves through Object.prototype, and `??` only
+  // catches null/undefined — so `/contrast dye1:constructor` returned the
+  // `Object` FUNCTION instead of null, and the caller threw inside the handler
+  // rather than answering with the localized "invalid colour" message.
+  const key = input.toLowerCase().trim();
+  return Object.hasOwn(CSS_COLORS, key) ? CSS_COLORS[key] : null;
 }

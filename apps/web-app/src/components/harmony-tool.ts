@@ -10,7 +10,12 @@
  * @module components/tools/harmony-tool
  */
 
-import { normalizeMatchingMethod } from '@xivdyetools/core';
+import {
+  generateHarmonySlots,
+  isKnownHarmonyType,
+  normalizeMatchingMethod,
+  type HarmonySelectionConfig,
+} from '@xivdyetools/core';
 import { ShareService } from '@services/share-service';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
@@ -25,19 +30,15 @@ import {
   WorldService,
   MarketBoardService,
   // WEB-REF-003 FIX: Import from extracted harmony generator
-  HARMONY_OFFSETS,
   getHarmonyTypes,
-  calculateHueDeviance,
-  findClosestDyesToHue,
-  replaceExcludedDyes,
 } from '@services/index';
-import type { ScoredDyeMatch, HarmonyConfig } from '@services/index';
 import { ConfigController } from '@services/config-controller';
 import { ThemeService } from '@services/theme-service';
 import { applyDisplayOptions } from '@services/display-options-helper';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { hasActiveFilters, isDyeExcluded } from '@shared/dye-filter-utils';
 import { makeCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import {
@@ -128,6 +129,14 @@ export class HarmonyTool extends BaseComponent {
   private swappedDyes: Map<number, Dye> = new Map();
   /** The dye each harmony slot is currently showing — the wheel mirrors this */
   private slotDyes: Dye[] = [];
+
+  /**
+   * Every dye the result grid rendered, base first, then each slot's match
+   * followed by its companions. Written by `generateHarmonies()` and read by
+   * `fetchPricesForDisplayedDyes()`, which used to re-run the whole selection
+   * to work the same list out a second time.
+   */
+  private displayedDyes: Dye[] = [];
   private railMql: MediaQueryList | null = null;
   private onRailBreakpoint = (): void => {
     this.renderTypeRail();
@@ -452,23 +461,13 @@ export class HarmonyTool extends BaseComponent {
 
     // Apply harmony type if valid
     if (harmonyParam) {
-      const validHarmonyTypes = [
-        'complementary',
-        'analogous',
-        'triadic',
-        'split-complementary',
-        'tetradic',
-        'inverted-tetradic',
-        'square',
-        'monochromatic',
-        'compound',
-        'shades',
-      ];
-
-      // Normalize to lowercase for comparison
+      // Was a hand-written copy of the type list -- a fourth place the same ten
+      // names were spelled out, and the one most likely to go stale, since a new
+      // harmony type is added to `HARMONY_OFFSETS` and nobody thinks to come
+      // here. `isKnownHarmonyType` asks that table directly.
       const normalizedHarmony = harmonyParam.toLowerCase();
 
-      if (validHarmonyTypes.includes(normalizedHarmony)) {
+      if (isKnownHarmonyType(normalizedHarmony)) {
         this.selectedHarmonyType = normalizedHarmony;
         StorageService.setItem(STORAGE_KEYS.harmonyType, normalizedHarmony);
         logger.info(`[HarmonyTool] Share URL loaded harmony type: ${normalizedHarmony}`);
@@ -1381,11 +1380,6 @@ export class HarmonyTool extends BaseComponent {
     this.v4ResultCards = []; // Clear v4 card references
     clearContainer(this.harmonyGridContainer);
 
-    // Get offsets for the SELECTED harmony type only
-    const offsets = HARMONY_OFFSETS[this.selectedHarmonyType] || [];
-    const baseHsv = ColorService.hexToHsv(this.selectedDye.hex);
-    const allDyes = dyeService.getAllDyes();
-
     // Render Base panel (no closest dyes section)
     this.renderResultPanel({
       label: LanguageService.t('harmony.base'),
@@ -1396,72 +1390,69 @@ export class HarmonyTool extends BaseComponent {
       isBase: true,
     });
 
-    // Track dyes already used across slots to prevent duplicates
-    const usedDyeIds = new Set<number>();
-    usedDyeIds.add(this.selectedDye.itemID);
-    this.slotDyes = [];
+    // REFACTOR (2026-09-03): selection now runs through core's shared
+    // `generateHarmonySlots`. This loop WAS the reference implementation -- the
+    // bot walked its own per-type DyeService.find*Dyes(), the OG card rotated
+    // hue in LCh, and all three disagreed -- so the shared function is THIS
+    // algorithm lifted rather than rewritten, and `harmony-core-parity.test.ts`
+    // is what says so: it replays both implementations over 125 dyes x 10
+    // harmony types x 4 configs and requires identical dyes.
+    //
+    // Filters now apply to the candidate POOL rather than to the finished list,
+    // so a slot answers "the nearest ALLOWED dye to the ideal" instead of "the
+    // nearest allowed dye to one that was thrown away" -- which is what the old
+    // replaceExcludedDyes second pass computed.
+    const allDyes = dyeService.getAllDyes();
+    const filters = this.dyeFiltersConfig;
+    const candidatePool =
+      filters && hasActiveFilters(filters)
+        ? allDyes.filter((dye) => !isDyeExcluded(filters, dye))
+        : allDyes;
 
-    // Render Harmony panels for each offset in the selected harmony type
-    offsets.forEach((offset, index) => {
-      const targetHue = (baseHsv.h + offset) % 360;
-      const targetColor = ColorService.hsvToHex(targetHue, baseHsv.s, baseHsv.v);
+    const selectionConfig: HarmonySelectionConfig = {
+      usePerceptualMatching: this.usePerceptualMatching,
+      matchingMethod: this.matchingMethod,
+      companionCount: this.companionDyesCount,
+      preventDuplicates: this.preventDuplicates,
+    };
 
-      // Get extra candidates to allow for filter replacements and dedup, then apply filters
-      let matches = this.findClosestDyesToHueInternal(
-        allDyes,
-        targetHue,
-        this.companionDyesCount + 10
-      );
-      matches = this.replaceExcludedDyesInternal(matches, targetHue);
-
-      // Use swapped dye if user has selected one (user intent overrides dedup)
-      const swappedDye = this.swappedDyes.get(index);
-      let displayDye: Dye;
-      let deviance: number;
-
-      if (swappedDye) {
-        displayDye = swappedDye;
-        deviance = calculateHueDeviance(swappedDye, targetHue);
-        usedDyeIds.add(swappedDye.itemID);
-      } else if (this.preventDuplicates) {
-        // Find first match not already used in another slot
-        const uniqueMatch = matches.find((m) => !usedDyeIds.has(m.dye.itemID));
-        displayDye = uniqueMatch?.dye ?? matches[0].dye;
-        deviance = uniqueMatch?.deviance ?? matches[0].deviance;
-        usedDyeIds.add(displayDye.itemID);
-      } else {
-        displayDye = matches[0].dye;
-        deviance = matches[0].deviance;
+    const slots = generateHarmonySlots(
+      this.selectedDye.hex,
+      this.selectedHarmonyType,
+      candidatePool,
+      selectionConfig,
+      {
+        excludeItemIDs: [this.selectedDye.itemID],
+        // A dye the user swapped in by hand wins its slot outright, and still
+        // consumes its place so a later slot cannot pick it again.
+        pinned: this.swappedDyes,
       }
+    );
+
+    this.slotDyes = [];
+    // Everything the grid put on screen, in render order. `fetchPricesFor-
+    // DisplayedDyes` used to re-run this entire selection to answer "which dyes
+    // are showing?", which meant two copies of the algorithm that had to agree
+    // or the wrong dyes got priced. It reads this instead.
+    this.displayedDyes = [this.selectedDye];
+
+    slots.forEach((slot) => {
+      if (!slot.dye) return;
+      const displayDye = slot.dye;
 
       // Record what this slot shows so the wheel can mirror the grid
-      this.slotDyes[index] = displayDye;
-
-      // Closest dyes excludes the currently displayed dye
-      // When dedup is on, also exclude dyes already used in other slots
-      const closestDyes = matches
-        .filter(
-          (m) =>
-            m.dye.itemID !== displayDye.itemID &&
-            (!this.preventDuplicates || !usedDyeIds.has(m.dye.itemID))
-        )
-        .slice(0, this.companionDyesCount)
-        .map((m) => {
-          if (this.preventDuplicates) {
-            usedDyeIds.add(m.dye.itemID);
-          }
-          return m.dye;
-        });
+      this.slotDyes[slot.index] = displayDye;
+      this.displayedDyes.push(displayDye, ...slot.companions);
 
       this.renderResultPanel({
-        label: LanguageService.tInterpolate('harmony.harmonyN', { n: index + 1 }),
+        label: LanguageService.tInterpolate('harmony.harmonyN', { n: slot.index + 1 }),
         matchedDye: displayDye,
-        targetColor,
-        deviance,
-        closestDyes,
+        targetColor: slot.targetHex,
+        deviance: slot.deviance,
+        closestDyes: slot.companions,
         isBase: false,
-        harmonyIndex: index,
-        onSwapDye: (dye) => this.handleSwapDye(index, dye),
+        harmonyIndex: slot.index,
+        onSwapDye: (dye) => this.handleSwapDye(slot.index, dye),
       });
     });
 
@@ -1633,35 +1624,6 @@ export class HarmonyTool extends BaseComponent {
   // ============================================================================
 
   /**
-   * Build harmony config from current tool state
-   */
-  private getHarmonyConfig(): HarmonyConfig {
-    return {
-      usePerceptualMatching: this.usePerceptualMatching,
-      matchingMethod: this.matchingMethod,
-      companionDyesCount: this.companionDyesCount,
-    };
-  }
-
-  /**
-   * Find dyes closest to a target hue (delegated to harmony-generator)
-   */
-  private findClosestDyesToHueInternal(
-    dyes: Dye[],
-    targetHue: number,
-    count: number
-  ): ScoredDyeMatch[] {
-    return findClosestDyesToHue(dyes, targetHue, count, this.getHarmonyConfig(), this.selectedDye);
-  }
-
-  /**
-   * Replace excluded dyes with alternatives (delegated to harmony-generator)
-   */
-  private replaceExcludedDyesInternal(dyes: ScoredDyeMatch[], targetHue: number): ScoredDyeMatch[] {
-    return replaceExcludedDyes(dyes, targetHue, this.dyeFiltersConfig);
-  }
-
-  /**
    * The dyes the result grid is actually showing, slot by slot.
    *
    * The wheel used to call the generator again on its own, which meant no
@@ -1697,77 +1659,26 @@ export class HarmonyTool extends BaseComponent {
       return;
     }
 
-    // Collect all dyes that need price fetching
-    const dyesToFetch: Dye[] = [this.selectedDye];
-
-    // Get harmony dyes from the current harmony type
-    const offsets = HARMONY_OFFSETS[this.selectedHarmonyType] || [];
-    const baseHsv = ColorService.hexToHsv(this.selectedDye.hex);
-    const allDyes = dyeService.getAllDyes();
-
-    // Mirror the same dedup tracking as generateHarmonies() so we fetch
-    // prices for exactly the dyes that are displayed
-    const usedDyeIds = new Set<number>();
-    usedDyeIds.add(this.selectedDye.itemID);
-
-    for (let i = 0; i < offsets.length; i++) {
-      const offset = offsets[i];
-      const targetHue = (baseHsv.h + offset) % 360;
-
-      // Get matches (same logic as generateHarmonies)
-      let matches = this.findClosestDyesToHueInternal(
-        allDyes,
-        targetHue,
-        this.companionDyesCount + 10
-      );
-      matches = this.replaceExcludedDyesInternal(matches, targetHue);
-
-      // Use swapped dye if available (user intent overrides dedup)
-      const swappedDye = this.swappedDyes.get(i);
-      let displayDye: Dye | undefined;
-
-      if (swappedDye) {
-        displayDye = swappedDye;
-        usedDyeIds.add(swappedDye.itemID);
-      } else if (this.preventDuplicates) {
-        const uniqueMatch = matches.find((m) => !usedDyeIds.has(m.dye.itemID));
-        displayDye = uniqueMatch?.dye ?? matches[0]?.dye;
-        if (displayDye) usedDyeIds.add(displayDye.itemID);
-      } else {
-        displayDye = matches[0]?.dye;
-      }
-
-      if (displayDye) {
-        dyesToFetch.push(displayDye);
-      }
-
-      // Also add closest dyes (companion dyes), respecting dedup
-      const closestDyes = matches
-        .filter(
-          (m) =>
-            displayDye &&
-            m.dye.itemID !== displayDye.itemID &&
-            (!this.preventDuplicates || !usedDyeIds.has(m.dye.itemID))
-        )
-        .slice(0, this.companionDyesCount)
-        .map((m) => {
-          if (this.preventDuplicates) {
-            usedDyeIds.add(m.dye.itemID);
-          }
-          return m.dye;
-        });
-
-      dyesToFetch.push(...closestDyes);
-    }
+    // The grid already recorded exactly what it rendered, base dye first. This
+    // used to re-derive the whole harmony a second time to answer the same
+    // question -- a verbatim copy of the selection loop that had to be kept in
+    // step by hand, and priced the wrong dyes whenever it drifted.
+    const dyesToFetch: Dye[] = [...this.displayedDyes];
 
     // Fetch prices via MarketBoardService (handles race conditions internally)
     try {
       const prices = await this.marketBoardService.fetchPricesForDyes(dyesToFetch);
 
-      // The service swallows its own errors and hands back an empty Map, so
-      // "asked for dyes and got nothing" is the only failure signal there is
-      // — the same test budget uses.
-      this.marketFailed = dyesToFetch.length > 0 && prices.size === 0;
+      // BUG-075: "asked for dyes and got nothing" is NOT a failure signal --
+      // an empty Map also means the request was superseded (which is exactly
+      // what switching worlds quickly does) or that nothing was eligible. Ask
+      // the service which of the three it was.
+      const outcome = this.marketBoardService.lastFetchOutcome;
+      if (outcome === 'ok') {
+        this.marketFailed = false;
+      } else if (outcome === 'error') {
+        this.marketFailed = true;
+      }
       this.renderMarketStrip();
 
       // Always update UI after fetch completes (even if empty/stale)
@@ -1994,10 +1905,11 @@ export class HarmonyTool extends BaseComponent {
     StorageService.setItem(STORAGE_KEYS.selectedDyeId, dye.itemID);
     logger.info(`[HarmonyTool] External dye selected: ${dye.name} (itemID=${dye.itemID})`);
 
-    // Update the DyeSelector if it exists
-    if (this.dyeSelector) {
-      this.dyeSelector.setSelectedDyes([dye]);
-    }
+    // BUG-073: update BOTH selectors. clearDyes() already does; these two
+    // touched only the desktop one, so the drawer's base-dye panel kept showing
+    // the previously selected swatch after a pick made from the palette drawer.
+    this.dyeSelector?.setSelectedDyes([dye]);
+    this.drawerDyeSelector?.setSelectedDyes([dye]);
 
     // Generate harmonies and update UI
     this.generateHarmonies();
@@ -2023,10 +1935,11 @@ export class HarmonyTool extends BaseComponent {
     StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
     logger.info(`[HarmonyTool] Custom color selected: ${hex}`);
 
-    // Clear dye selector selection (custom color is not in the list)
-    if (this.dyeSelector) {
-      this.dyeSelector.setSelectedDyes([]);
-    }
+    // Clear dye selector selection (custom color is not in the list).
+    // BUG-073: the drawer's selector too -- it kept the last real dye's swatch
+    // beside a custom colour that is not in the list at all.
+    this.dyeSelector?.setSelectedDyes([]);
+    this.drawerDyeSelector?.setSelectedDyes([]);
 
     // Generate harmonies and update UI
     this.generateHarmonies();

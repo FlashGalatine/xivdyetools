@@ -84,8 +84,12 @@ export interface NearestSheetOptions {
 const PAD = 16;
 const ROW_H = 45;
 
-/** 14J·2 slot widths — the binding case at 25 px spare on the longest DE name. */
-const ROW_WIDTHS: MeasuredRowWidths = { lead: 40, pair: 54, name: 176, bar: 26, measure: 34 };
+/**
+ * 14J·2 slot widths — the binding case at 25 px spare on the longest DE name.
+ * pkg-svg-bot-logic-06: summed 2 px past the 368 px content width; `name`
+ * gives them back so the measure aligns with the rest of the card.
+ */
+const ROW_WIDTHS: MeasuredRowWidths = { lead: 40, pair: 54, name: 174, bar: 26, measure: 34 };
 
 /**
  * Generate the /extractor color card (14J·2). Height grows with the row

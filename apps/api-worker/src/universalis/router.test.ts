@@ -159,8 +159,13 @@ describe('universalis router', () => {
     await clearRateLimits();
     const tightEnv = { ...env, RATE_LIMIT_REQUESTS: '1' } as unknown as Env;
     const ctx = createMockExecutionContext() as unknown as ExecutionContext;
-    const tight = (path: string) => app.request(path, {}, tightEnv, ctx);
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ results: [] })));
+    // BUG-048: send an IP. Without one this drives the SERVICE-BINDING bucket,
+    // which now has its own (much larger) budget — so the assertion below would
+    // be measuring the wrong path. This test is about "charge on miss only",
+    // not about which bucket, and the per-IP path is the one it means.
+    const tight = (path: string) =>
+      app.request(path, { headers: { 'CF-Connecting-IP': '203.0.113.9' } }, tightEnv, ctx);
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(okJson({ results: [] }))));
 
     const miss = await tight('/universalis/aggregated/Crystal/7001');
     expect(miss.status).toBe(200);
@@ -174,6 +179,58 @@ describe('universalis router', () => {
     const secondMiss = await tight('/universalis/aggregated/Crystal/7002');
     expect(secondMiss.status).toBe(429);
     expect(secondMiss.headers.get('Retry-After')).toBeTruthy();
+    await clearRateLimits();
+  });
+
+  /**
+   * BUG-048: every IP-less caller shared one public-sized bucket. discord-worker
+   * builds its sub-request with no `CF-Connecting-IP`, so `getClientIp`
+   * returned the literal `'unknown'` and the ENTIRE bot fleet competed for the
+   * same 30/minute allowance — once ~30 *distinct* datacenter/item pairs missed
+   * the cache in one window, the 31st `/budget` in ANY guild got a 429. The
+   * "charge on miss only" mitigation above protects repeats of the SAME key,
+   * which is not the pattern `/budget` produces: every new dye/world pair is a
+   * fresh miss.
+   *
+   * The old suite could not see this — it drove `app.request` with no IP, so it
+   * WAS the shared bucket, and with one caller the sharing is invisible.
+   */
+  it('does not throttle service-binding traffic at the public per-IP budget', async () => {
+    await clearRateLimits();
+    const tightEnv = { ...env, RATE_LIMIT_REQUESTS: '1' } as unknown as Env;
+    const ctx = createMockExecutionContext() as unknown as ExecutionContext;
+    // No CF-Connecting-IP: exactly the shape discord-worker produces.
+    const svc = (path: string) => app.request(path, {}, tightEnv, ctx);
+    // A fresh Response per call: a body can only be read once, and this test
+    // makes several distinct (i.e. uncached) requests.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(okJson({ results: [] }))));
+
+    // Two DISTINCT keys, so both are misses and both charge the limiter. On
+    // the public budget of 1 the second would be a 429.
+    const first = await svc('/universalis/aggregated/Crystal/8001');
+    const second = await svc('/universalis/aggregated/Crystal/8002');
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(second.headers.get('X-Cache')).toBe('MISS');
+    await clearRateLimits();
+  });
+
+  it('still bounds service-binding traffic — the bucket is separate, not absent', async () => {
+    await clearRateLimits();
+    // 1 × the 20× multiplier = 20 misses before the ceiling.
+    const tightEnv = { ...env, RATE_LIMIT_REQUESTS: '1' } as unknown as Env;
+    const ctx = createMockExecutionContext() as unknown as ExecutionContext;
+    const svc = (path: string) => app.request(path, {}, tightEnv, ctx);
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(okJson({ results: [] }))));
+
+    let lastStatus = 200;
+    for (let i = 0; i < 22; i++) {
+      const res = await svc(`/universalis/aggregated/Crystal/${9000 + i}`);
+      lastStatus = res.status;
+    }
+
+    expect(lastStatus).toBe(429);
     await clearRateLimits();
   });
 

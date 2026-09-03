@@ -18,7 +18,7 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import { ephemeralResponse, errorEmbed } from '../../utils/response.js';
 import {
   getUserPreferences,
-  setPreference,
+  setPreferences,
   resetPreference,
   getDefaultValue,
   getAffectedCommands,
@@ -298,9 +298,24 @@ async function handleSetSubcommand(
     });
   }
 
-  // Process each provided option
+  // Process each provided option.
+  //
+  // BUG-029: this used to call `setPreference` inside the loop, so k options
+  // meant k read-modify-write cycles on the SAME KV key inside one request.
+  // KV allows one write per second per key and its reads are eventually
+  // consistent, so a later iteration could read the pre-update object and
+  // write back a version missing an earlier key — while the embed still
+  // reported every one as saved. The loop now only resolves and validates;
+  // the writes happen once, below.
   const updates: Array<{ key: PreferenceKey; value: unknown; success: boolean; reason?: string }> = [];
   const affectedCommandsSet = new Set<string>();
+  // Queued writes, each remembering the `updates` slot it must fill, so the
+  // embed still lists results in the order the user typed the options.
+  const pending: Array<{
+    key: PreferenceKey;
+    value: string | number | boolean;
+    slot: number;
+  }> = [];
 
   for (const opt of options) {
     const key = resolveOptionKey(opt.name);
@@ -325,21 +340,41 @@ async function handleSetSubcommand(
         continue;
       }
       const canonical = await validateWorld(env, typed, logger);
-      if (!canonical) {
-        updates.push({ key, value: typed, success: false, reason: 'invalidWorld' });
+      if (!canonical.ok) {
+        // BUG-031: an outage is not the user typing their world wrong. Keep
+        // the distinct reason so the failure line can say which it was; the
+        // shape is `{ key, value, success, reason }` either way.
+        updates.push({
+          key,
+          value: typed,
+          success: false,
+          reason: canonical.reason === 'upstream' ? 'worldLookupUnavailable' : 'invalidWorld',
+        });
         continue;
       }
-      value = canonical;
+      value = canonical.name;
     }
 
-    // Attempt to set the preference
-    const result = await setPreference(env.KV, userId, key, value, logger);
-    updates.push({ key, value, success: result.success, reason: result.reason });
+    // Queue it — the whole batch is written together below — but claim this
+    // option's place in `updates` now, so the reply reads in option order.
+    pending.push({ key, value, slot: updates.length });
+    updates.push({ key, value, success: false });
+  }
 
-    // Collect affected commands for successful updates
-    if (result.success) {
-      getAffectedCommands(key).forEach((cmd) => affectedCommandsSet.add(cmd));
-    }
+  if (pending.length > 0) {
+    const results = await setPreferences(
+      env.KV,
+      userId,
+      pending.map(({ key, value }) => ({ key, value })),
+      logger,
+    );
+    results.forEach((result, i) => {
+      const { key, value, slot } = pending[i];
+      updates[slot] = { key, value, success: result.success, reason: result.reason };
+      if (result.success) {
+        getAffectedCommands(key).forEach((cmd) => affectedCommandsSet.add(cmd));
+      }
+    });
   }
 
   // Check if any updates were attempted
@@ -618,6 +653,13 @@ function getValidationErrorMessage(t: Translator, _key: PreferenceKey, reason?: 
 
     case 'invalidWorld':
       return t.t('preferences.validation.invalidWorld');
+
+    // BUG-031: the world lookup could not run at all. Reusing the budget
+    // command's existing upstream sentence keeps this out of the locale files
+    // (new UI text would force a CJK font re-subset) while still telling the
+    // user the truth: nothing is wrong with what they typed.
+    case 'worldLookupUnavailable':
+      return t.t('budget.errors.apiError');
 
     case 'invalidTheme':
       return t.t('preferences.validation.invalidTheme');

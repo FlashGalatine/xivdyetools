@@ -208,10 +208,74 @@ describe('MemoryRateLimiter', () => {
         await limiterWithFastCleanup.check(`temp${i}`, defaultConfig);
       }
 
-      // The stale user1 entry should have been cleaned up
-      // (This is a behavioral test - we just verify no errors occur)
+      // pkg-worker-kit-test-utils-03: this used to assert only that a later
+      // check still returned `allowed: true`, with the comment "we just verify
+      // no errors occur". After advancing 3 windows the stale stamp is outside
+      // the window anyway, so that held whether cleanup ran, ran with the wrong
+      // cutoff, or never ran at all. Assert the key was actually DELETED.
+      // 6 keys were touched; only the 5 fresh ones may remain.
+      expect(limiterWithFastCleanup.size).toBe(5);
+
       const result = await limiterWithFastCleanup.check('user1', defaultConfig);
       expect(result.allowed).toBe(true);
+    });
+
+    // BUG-023's per-key cutoff, made falsifiable: cleanup triggered by
+    // short-window keys must not purge a long-window key's history. A cleanup
+    // using a single global (or the current request's) window would drop the
+    // hourly stamp here, because 5 minutes is well past 2x60s.
+    it('does not purge a long-window key when short-window keys trigger cleanup', async () => {
+      const shared = new MemoryRateLimiter({ cleanupInterval: 5 });
+      const hour: RateLimitConfig = { maxRequests: 2, windowMs: 3_600_000 };
+
+      await shared.check('hourly', hour);
+      vi.advanceTimersByTime(300_000); // 5 minutes
+
+      for (let i = 0; i < 5; i++) {
+        await shared.check(`burst${i}`, defaultConfig); // 60s window
+      }
+
+      // The hourly key survived cleanup AND kept its stamp, so this is its
+      // second request of the hour and the third must be denied.
+      expect((await shared.check('hourly', hour)).allowed).toBe(true);
+      expect((await shared.check('hourly', hour)).allowed).toBe(false);
+    });
+  });
+
+  describe('mixed windows on one key (BUG-097)', () => {
+    // check() filtered the array it WROTE BACK with the current request's
+    // windowMs, so a narrow-window check erased history a wide-window check was
+    // still counting -- defeating, inside check() itself, the per-key cutoff
+    // BUG-023 gave cleanupOldEntries().
+    it('keeps history a wider window still needs when a narrower one checks the same key', async () => {
+      const hour: RateLimitConfig = { maxRequests: 2, windowMs: 3_600_000 };
+      const minute: RateLimitConfig = { maxRequests: 100, windowMs: 60_000 };
+
+      // First request against the hour budget.
+      expect((await limiter.check('k', hour)).allowed).toBe(true);
+
+      // A minute later, a wide-open per-minute check on the SAME key. Filtering
+      // the stored array with this request's 60s window drops the hour budget's
+      // only stamp.
+      vi.advanceTimersByTime(61_000);
+      expect((await limiter.check('k', minute)).allowed).toBe(true);
+
+      // Two requests have now landed inside the hour, so the third is over the
+      // hour budget of 2. Before the fix this was allowed -- three requests
+      // admitted inside one hour on a bucket the hour config limits to two.
+      vi.advanceTimersByTime(1);
+      expect((await limiter.check('k', hour)).allowed).toBe(false);
+    });
+
+    it('still expires a stamp once the widest window has passed', async () => {
+      const hour: RateLimitConfig = { maxRequests: 1, windowMs: 3_600_000 };
+
+      expect((await limiter.check('k', hour)).allowed).toBe(true);
+      expect((await limiter.check('k', hour)).allowed).toBe(false);
+
+      // Past the hour: retention is bounded, not unbounded.
+      vi.advanceTimersByTime(3_600_001);
+      expect((await limiter.check('k', hour)).allowed).toBe(true);
     });
   });
 });

@@ -5,7 +5,7 @@
  * which the core library's findClosestDye doesn't directly expose.
  */
 
-import { normalizeMatchingMethod } from '@xivdyetools/core';
+import { DEFAULT_MATCHING_METHOD, normalizeMatchingMethod } from '@xivdyetools/core';
 import { DyeService, dyeDatabase, ColorService } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
 import type { MatchingAlgorithm } from '../../types';
@@ -27,6 +27,20 @@ const dyeByStainId = new Map<number, Dye>(
     .filter((d) => d.stainID !== null)
     .map((d) => [d.stainID as number, d]),
 );
+
+/**
+ * OPT-006 (deep dive 2026-09-02): the ONE dye list for this isolate.
+ *
+ * `getAllDyes()` returns a fresh 125-element copy per call (the OPT-023 note
+ * above), and harmony / gradient / extractor each called it *inside* their
+ * per-offset / per-step / per-entry loop — up to five copies per render, on a
+ * path that also runs a resvg raster. The dye database is immutable at
+ * runtime, so one frozen list serves every reader.
+ *
+ * Frozen because a shared array is only safe to hand out if nobody can sort
+ * or splice it; every consumer here reads, maps, or filters into a new array.
+ */
+export const ALL_DYES: readonly Dye[] = Object.freeze(dyeService.getAllDyes());
 
 /**
  * BUG-031: compute a color distance with the REQUESTED algorithm, so the
@@ -68,12 +82,11 @@ export function findClosestDyesWithDistance(
     algorithm?: MatchingAlgorithm;
   } = {},
 ): DyeMatch[] {
-  const { limit = 5, excludeIds = [], algorithm = 'oklab' } = options;
+  const { limit = 5, excludeIds = [], algorithm = DEFAULT_MATCHING_METHOD } = options;
   const excludeSet = new Set(excludeIds);
 
   // Get all dyes and filter
-  const allDyes = dyeService.getAllDyes();
-  const candidates = allDyes.filter((dye) => !excludeSet.has(dye.id));
+  const candidates = ALL_DYES.filter((dye) => !excludeSet.has(dye.id));
 
   // BUG-031: rank with the requested algorithm, not hardcoded OKLAB
   const withDistances = candidates.map((dye) => ({

@@ -32,8 +32,8 @@ export class CharaRowCache {
   private readonly service: CacheService;
   private readonly prefix: string;
 
-  constructor(ctx: ExecutionContext, baseUrl: string, gameVersion: string) {
-    this.service = new CacheService(ctx, baseUrl, CACHE_NAME);
+  constructor(ctx: ExecutionContext, gameVersion: string) {
+    this.service = new CacheService(ctx, CACHE_NAME);
     this.prefix = `${CHARA_CACHE_CONFIG.keyPrefix}:${SHAPE_VERSION}:${gameVersion}`;
   }
 

@@ -222,6 +222,13 @@ jobs:
       - name: Build (affected)
         run: pnpm turbo run build --filter='...[HEAD^]'
 
+      # OPT-002: only discord-worker declares `check-bundle-size`, so this is a
+      # no-op on any change that does not affect it. It gates the 3,072 KiB
+      # gzipped Worker cap here, on the PR, rather than leaving Cloudflare to
+      # refuse the upload after a merge has already triggered the deploy.
+      - name: Check worker bundle sizes (affected)
+        run: pnpm turbo run check-bundle-size --filter='...[HEAD^]'
+
       # ARCH-004: Report bundle sizes for built packages
       - name: Report bundle sizes
         if: always()

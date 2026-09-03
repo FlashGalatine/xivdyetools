@@ -81,7 +81,10 @@ describe('discord-worker rate limiter KV fallback warning (FINDING-003)', () => 
       String(msg).includes('KV fallback'),
     );
     expect(fallbackWarnings).toHaveLength(0);
-    expect(binding.limit).toHaveBeenCalledWith({ key: 'ratelimit:user:user-1:harmony' });
+    // pkg-worker-kit-test-utils-05: the key carries the tier (RL_15, 60s).
+    expect(binding.limit).toHaveBeenCalledWith({
+      key: 'ratelimit:user:user-1:harmony:t15_60',
+    });
   });
 });
 
@@ -140,7 +143,7 @@ describe('discord-worker rate limiter partial RL_* binding warning (FINDING-007)
     // by the 10/min tier.
     expect(result.allowed).toBe(true);
     expect(bindings.RL_10.limit).toHaveBeenCalledWith({
-      key: 'ratelimit:user:user-1:extractor:image',
+      key: 'ratelimit:user:user-1:extractor:image:t10_60',
     });
   });
 
@@ -179,7 +182,7 @@ describe('discord-worker rate limiter partial RL_* binding warning (FINDING-007)
 
     expect(partialWarnings(logger)).toHaveLength(0);
     expect(bindings.RL_5.limit).toHaveBeenCalledWith({
-      key: 'ratelimit:user:user-1:extractor:image',
+      key: 'ratelimit:user:user-1:extractor:image:t5_60',
     });
   });
 

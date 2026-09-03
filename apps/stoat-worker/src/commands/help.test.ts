@@ -5,7 +5,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { handleHelpCommand } from './help.js';
+import { handleHelpCommand, HELP_TOPICS } from './help.js';
+import { isRegisteredCommand } from '../router.js';
+import { parseCommand } from './parser.js';
 import { createMockMessage } from '../test-utils/revolt-mocks.js';
 import { MessageContextStore } from '../services/message-context.js';
 import type { CommandContext } from '../router.js';
@@ -126,5 +128,42 @@ describe('handleHelpCommand', () => {
 
     const call = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(call.content).toContain('!xd info');
+  });
+
+  // BUG-103: the overview advertised THIRTEEN commands while COMMAND_ROUTES has
+  // four. `!xd random` was listed here as though it worked and answered
+  // `Unknown command "dye.random"`. Nothing tied the help text to the router,
+  // so the two drifted silently -- this is that gate.
+  describe('help never advertises a command the router does not serve', () => {
+    it.each(HELP_TOPICS)('`!xd help %s` names a routed command', (topic) => {
+      const parsed = parseCommand(`!xd ${topic}`);
+      expect(parsed, `\`!xd ${topic}\` did not parse`).not.toBeNull();
+      expect(
+        isRegisteredCommand(parsed!.command, parsed!.subcommand),
+        `help offers "${topic}" but the router has no route for it`
+      ).toBe(true);
+    });
+
+    it('every `!xd <command>` shown in the overview actually routes', async () => {
+      const ctx = createHelpContext();
+      await handleHelpCommand(ctx);
+      const content = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock
+        .calls[0][0].content as string;
+
+      // Only the command table uses the `\`!xd <name>` backtick form; the
+      // closing paragraph names unavailable commands in prose, deliberately.
+      const table = content.split('More commands')[0];
+      const advertised = [...table.matchAll(/`!xd (\w+)/g)].map((m) => m[1]);
+
+      expect(advertised.length).toBeGreaterThan(0);
+      for (const name of advertised) {
+        const parsed = parseCommand(`!xd ${name}`);
+        expect(parsed, `\`!xd ${name}\` did not parse`).not.toBeNull();
+        expect(
+          isRegisteredCommand(parsed!.command, parsed!.subcommand),
+          `the overview advertises "${name}" but the router has no route for it`
+        ).toBe(true);
+      }
+    });
   });
 });

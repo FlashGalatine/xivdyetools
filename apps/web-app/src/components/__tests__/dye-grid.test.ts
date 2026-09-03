@@ -364,7 +364,7 @@ describe('DyeGrid', () => {
     it('should show filled star for favorited dyes', () => {
       mockIsFavorite.mockReturnValue(true);
       mockSubscribeFavorites.mockImplementation((callback) => {
-        callback([mockDyes[0].id]);
+        callback([mockDyes[0].stainID!]);
         return () => {};
       });
 
@@ -384,7 +384,7 @@ describe('DyeGrid', () => {
       const favoriteBtn = query<HTMLButtonElement>(container, '.favorite-btn');
       click(favoriteBtn);
 
-      expect(mockAddFavorite).toHaveBeenCalledWith(mockDyes[0].id);
+      expect(mockAddFavorite).toHaveBeenCalledWith(mockDyes[0].stainID);
     });
 
     it('should remove favorite when already favorited', () => {
@@ -397,7 +397,7 @@ describe('DyeGrid', () => {
       const favoriteBtn = query<HTMLButtonElement>(container, '.favorite-btn');
       click(favoriteBtn);
 
-      expect(mockRemoveFavorite).toHaveBeenCalledWith(mockDyes[0].id);
+      expect(mockRemoveFavorite).toHaveBeenCalledWith(mockDyes[0].stainID);
     });
 
     it('should emit favorite-toggled event', () => {
@@ -425,7 +425,7 @@ describe('DyeGrid', () => {
       // Now F key should work since focusedIndex is set
       gridEl?.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', bubbles: true }));
 
-      expect(mockAddFavorite).toHaveBeenCalled();
+      expect(mockAddFavorite).toHaveBeenCalledWith(mockDyes[0].stainID);
     });
   });
 

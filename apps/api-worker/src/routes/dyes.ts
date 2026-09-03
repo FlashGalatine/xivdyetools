@@ -17,6 +17,7 @@ import {
   parseEnumParam,
   parseBooleanParam,
   parseCommaSeparatedIds,
+  CANONICAL_DYE_ID,
   resolveIdType,
   lookupDyeByResolvedId,
   resolveExcludeIds,
@@ -182,7 +183,7 @@ dyesRouter.get('/stain/:stainId', (c) => {
   const raw = c.req.param('stainId');
   const stainId = parseInt(raw, 10);
 
-  if (isNaN(stainId) || stainId <= 0) {
+  if (!CANONICAL_DYE_ID.test(raw) || isNaN(stainId) || stainId <= 0) {
     throw new ApiError(ErrorCode.INVALID_STAIN_ID, `Invalid stain ID "${raw}". Must be a positive integer.`, 400, {
       parameter: 'stainId',
       received: raw,
@@ -208,7 +209,7 @@ dyesRouter.get('/:id', (c) => {
   const raw = c.req.param('id');
   const id = parseInt(raw, 10);
 
-  if (isNaN(id)) {
+  if (!CANONICAL_DYE_ID.test(raw) || isNaN(id)) {
     throw new ApiError(ErrorCode.VALIDATION_ERROR, `Invalid dye ID "${raw}". Must be an integer.`, 400, {
       parameter: 'id',
       received: raw,
@@ -275,8 +276,15 @@ dyesRouter.get('/', (c) => {
   // provided" instead of surfacing a misleading MISSING_PARAMETER error
   const minPrice = minPriceRaw ? parseIntParam(minPriceRaw, 'minPrice', { min: 0 }) : undefined;
   const maxPrice = maxPriceRaw ? parseIntParam(maxPriceRaw, 'maxPrice', { min: 0 }) : undefined;
+  // BUG-047: `!== undefined` treated an empty-but-present `?sort=` (and a bare
+  // `?sort`, which Hono also reports as `''`) as a supplied value, and
+  // `parseEnumParam` with no default throws MISSING_PARAMETER — a hard 400 on
+  // an OPTIONAL parameter, with a code saying it was missing. Any client that
+  // builds `&sort=${state.sort ?? ''}` got that instead of an unsorted list.
+  // `minPrice`/`maxPrice` three lines below were already fixed for this exact
+  // shape; `order` was immune only because it passes a default.
   const sortRaw = c.req.query('sort');
-  const sort = sortRaw !== undefined ? parseEnumParam(sortRaw, 'sort', VALID_SORT_FIELDS) : undefined;
+  const sort = sortRaw ? parseEnumParam(sortRaw, 'sort', VALID_SORT_FIELDS) : undefined;
   const order = parseEnumParam(c.req.query('order'), 'order', VALID_ORDERS, 'asc');
   const page = parseIntParam(c.req.query('page'), 'page', { min: 1, max: MAX_PAGE, defaultValue: 1 });
   const perPage = parseIntParam(c.req.query('perPage'), 'perPage', { min: 1, max: 200, defaultValue: 50 });
