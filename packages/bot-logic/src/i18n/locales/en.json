@@ -148,28 +148,13 @@
   },
   "harmony": {
     "title": "{type} Harmony",
-    "baseColor": "Base Color",
-    "complementary": "Complementary",
-    "analogous": "Analogous",
-    "triadic": "Triadic",
-    "splitComplementary": "Split-Complementary",
-    "tetradic": "Tetradic",
-    "square": "Square",
-    "monochromatic": "Monochromatic",
-    "invertedTetradic": "Inverted Tetradic",
-    "compound": "Compound",
-    "shades": "Shades"
+    "baseColor": "Base Color"
   },
   "mixer": {
     "blendResult": "Blend Result",
     "bothRequired": "Both dye1 and dye2 are required."
   },
   "accessibility": {
-    "normalVision": "Normal Vision",
-    "protanopia": "Protanopia",
-    "deuteranopia": "Deuteranopia",
-    "tritanopia": "Tritanopia",
-    "achromatopsia": "Achromatopsia",
     "allLenses": "All lenses"
   },
   "about": {

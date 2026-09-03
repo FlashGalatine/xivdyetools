@@ -1,0 +1,23 @@
+paired keys (same English value as a core vocabulary key): 27
+pairs that DIVERGE in >=1 locale: 18
+
+[bot-logic] preferences.filters.labels.dark   vs core labels.dark   (en = 'Dark')
+    fr: bot-logic='Sombre'   core='foncé'
+
+[bot-logic] preferences.filters.labels.pastel   vs core labels.pastel   (en = 'Pastel')
+    zh: bot-logic='粉彩'   core='柔和'
+
+[bot-logic] preferences.values.themeDark   vs core labels.dark   (en = 'dark')
+    fr: bot-logic='sombre'   core='foncé'
+    zh: bot-logic='深色'   core='暗色'
+
+[web-app] colorPalette.dark   vs core labels.dark   (en = 'Dark')
+    fr: web-app='Sombre'   core='foncé'
+    zh: web-app='深色'   core='暗色'
+
+[web-app] colorPalette.metallic   vs core labels.metallic   (en = 'Metallic')
+    de: web-app='Metallisch'   core='Metallic'
+
+[web-app] resultCard.tools.accessibility   vs core tools.accessibility   (en = 'Accessibility Checker')
+    de: web-app='Barrierefreiheits-Prüfer'   core='Barrierefreiheits-Check'
+    zh: web-app='无�

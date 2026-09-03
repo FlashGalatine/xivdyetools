@@ -38,6 +38,8 @@ export {
   getLocalizedDyeName,
   getLocalizedCategory,
   getLocalizedAcquisition,
+  getLocalizedHarmonyType,
+  getLocalizedVisionType,
   /** @public */
   getLocalizedCurrency,
 } from './localization.js';

@@ -148,28 +148,13 @@
   },
   "harmony": {
     "title": "Harmonie {type}",
-    "baseColor": "Couleur de base",
-    "complementary": "Complémentaire",
-    "analogous": "Analogue",
-    "triadic": "Triadique",
-    "splitComplementary": "Complémentaire divisé",
-    "tetradic": "Tétradique",
-    "square": "Carré",
-    "monochromatic": "Monochromatique",
-    "invertedTetradic": "Tétradique inversé",
-    "compound": "Composé",
-    "shades": "Nuances"
+    "baseColor": "Couleur de base"
   },
   "mixer": {
     "blendResult": "Résultat du mélange",
     "bothRequired": "Les deux teintures (dye1 et dye2) sont requises."
   },
   "accessibility": {
-    "normalVision": "Vision normale",
-    "protanopia": "Protanopie",
-    "deuteranopia": "Deutéranopie",
-    "tritanopia": "Tritanopie",
-    "achromatopsia": "Achromatopsie",
     "allLenses": "Toutes les visions"
   },
   "about": {
@@ -393,19 +378,19 @@
     },
     "methods": {
       "ciede2000": "Formule perceptuelle de référence (par défaut)",
-      "oklab": "distance perceptuelle OKLAB",
-      "cie76": "distance euclidienne CIELAB",
-      "redmean": "approximation RVB pondérée",
-      "rgb": "distance euclidienne RVB",
+      "oklab": "Distance perceptuelle OKLAB",
+      "cie76": "Distance euclidienne CIELAB",
+      "redmean": "Approximation RVB pondérée",
+      "rgb": "Distance euclidienne RVB",
       "distinguish": "RGB DIST ramené sur 0-100"
     },
     "blendingModes": {
-      "rgb": "moyenne additive des canaux (par défaut)",
-      "lab": "mélange CIELAB perceptuellement uniforme",
-      "oklab": "perceptuel moderne (corrige le bleu→violet de LAB)",
-      "ryb": "cercle chromatique traditionnel des artistes",
-      "hsl": "interpolation teinte-saturation-luminosité",
-      "spectral": "simulation physique Kubelka-Munk"
+      "rgb": "Moyenne additive des canaux (par défaut)",
+      "lab": "Mélange CIELAB perceptuellement uniforme",
+      "oklab": "Perceptuel moderne (corrige le bleu→violet de LAB)",
+      "ryb": "Cercle chromatique traditionnel des artistes",
+      "hsl": "Interpolation teinte-saturation-luminosité",
+      "spectral": "Simulation physique Kubelka-Munk"
     }
   },
   "webhook": {

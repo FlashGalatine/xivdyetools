@@ -26,7 +26,12 @@
  */
 
 import { createTranslator, type LocaleCode, type Translator } from '@xivdyetools/bot-logic/i18n';
-import { getLocalizedCategory } from '@xivdyetools/bot-logic';
+import {
+  getLocalizedCategory,
+  getLocalizedHarmonyType,
+  getLocalizedVisionType,
+} from '@xivdyetools/bot-logic';
+import type { HarmonyTypeKey, VisionType } from '@xivdyetools/types';
 
 /** Discord locale tag → bot locale. en-US / en-GB need no entry (base text is English). */
 export const DISCORD_LOCALE_MAP: ReadonlyArray<readonly [discord: string, locale: LocaleCode]> = [
@@ -129,10 +134,24 @@ function choiceLocalizations(command: string, option: string, value: string): Lo
     });
   }
   if (command === 'harmony' && option === 'type') {
-    return keyed(`harmony.${snakeToCamel(value)}`);
+    // TERM-001: core owns the harmony vocabulary — the same names web-app and
+    // og-worker render. This list used to come from bot-logic's own
+    // `harmony.*` keys, so Discord's picker disagreed with the web app.
+    const key = snakeToCamel(value) as HarmonyTypeKey;
+    return buildLocalizations((_t, locale) => {
+      const v = getLocalizedHarmonyType(key, locale);
+      return v === key ? undefined : v;
+    });
   }
   if ((command === 'accessibility' || command === 'a11y') && option === 'vision') {
-    return keyed(value === 'all' ? 'accessibility.allLenses' : `accessibility.${value}`);
+    // `all` is a bot-only choice with no core counterpart; the lenses come from
+    // core (TERM-001).
+    if (value === 'all') return keyed('accessibility.allLenses');
+    const key = value as VisionType;
+    return buildLocalizations((_t, locale) => {
+      const v = getLocalizedVisionType(key, locale);
+      return v === key ? undefined : v;
+    });
   }
   if (command === 'dye' && option === 'category') {
     // Core locale `categories` (Reds → 赤系 / Rot / …) — needs initializeLocale()
