@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-09-02
+
+Deep-dive remediation, Sprint 19 (docs/audits/2026-09-02-deep-dive, REFACTOR-001,
+first half). Minor bump: new exports, no behaviour change to anything already
+here.
+
+### Added
+
+**The locale layer both Discord bots were carrying privately.**
+`apps/discord-worker/src/services/i18n.ts` and
+`apps/moderation-worker/src/services/i18n.ts` each implemented `isValidLocale`,
+`discordLocaleToLocaleCode`, the legacy `i18n:user:` reader and
+`resolveUserLocale` — and moderation-worker declared its own `LocaleCode` union
+and its own `SUPPORTED_LOCALES` on top. The copies drifted, and BUG-001 was the
+result: only discord-worker's learned about the unified `prefs:v1:` preferences
+blob, so a user who set their language through `/preferences` got every
+moderation-bot string back in their Discord client locale — and could not
+correct it, because that worker ships no language command. Both bots bind the
+SAME production KV namespace, so there was never a reason for two readers of it.
+
+`i18n/locale-resolution.ts` now owns it, exported from `@xivdyetools/bot-logic/i18n`:
+`SUPPORTED_LOCALES`, `LocaleInfo`, `isValidLocale`, `discordLocaleToLocaleCode`,
+`getLegacyLanguagePreference`, `resolveUserLocale`, plus the structural
+`LocalePreferenceStore` and `LocaleResolutionLogger` (declared structurally so
+this package still needs no `@cloudflare/workers-types` dependency — a real
+`KVNamespace` satisfies the former).
+
+`LOCALE_CODES` is also exported, and **`LocaleCode` is now derived from it**.
+That closes the specific trap the audit named: moderation-worker declared the
+union and the runtime array separately, and structural typing hid the gap, so
+adding a seventh locale to the shared type would have compiled clean there and
+been silently rejected at runtime. One list now feeds both.
+
+### Fixed
+
+**`discordLocaleToLocaleCode` returned a Function for an inherited key.** Both
+forks looked the mapping up with `mapping[discordLocale] ?? null`, so
+`'toString'` or `'constructor'` yielded `Object.prototype.toString` — from a
+call declared `LocaleCode | null`, and `?? null` cannot catch it because the
+inherited value is not nullish. Found by writing the first test this layer has
+ever had; guarded with `Object.hasOwn`, the same fix FINDING-027 applied to help
+topics.
+
+Where the two copies disagreed, the louder behaviour won:
+`getLegacyLanguagePreference` takes an optional logger and reports a KV failure
+(moderation-worker's copy did; discord-worker's swallowed it silently). It still
+resolves rather than throwing — locale resolution runs on every interaction and
+must degrade the language, never the interaction.
+
+### Tests
+
+37 new cases covering the whole priority order and every failure mode: the
+unified blob, the legacy key, the Discord locale, the English default, an
+unsupported language in either store, a malformed blob, and a KV that throws on
+every read. Removing the unified-blob step — BUG-001 exactly — reddens them.
+Between them the two forked copies had one suite, and BUG-001 lived in the gap.
+
 ## [3.0.1] - 2026-09-02
 
 ### Fixed — 2026-09-02 deep-dive audit, Sprint 5

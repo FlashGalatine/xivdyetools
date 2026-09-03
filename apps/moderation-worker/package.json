@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-moderation-worker",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "private": true,
   "description": "XIV Dye Tools Discord Moderation Bot - Cloudflare Workers Edition",
   "type": "module",
