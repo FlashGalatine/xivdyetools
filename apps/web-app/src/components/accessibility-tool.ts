@@ -87,25 +87,6 @@ interface DyeAccessibilityResult {
 /**
  * Dye pair comparison result
  */
-interface DyePairResult {
-  dye1Id: number;
-  dye1Name: string;
-  dye1Hex: string;
-  dye2Id: number;
-  dye2Name: string;
-  dye2Hex: string;
-  contrastRatio: number;
-  wcagLevel: 'AAA' | 'AA' | 'Fail';
-  distinguishability: number;
-  colorblindnessDistinguishability: {
-    normal: number;
-    deuteranopia: number;
-    protanopia: number;
-    tritanopia: number;
-  };
-  warnings: string[];
-}
-
 /**
  * Vision type configuration
  */
@@ -191,7 +172,6 @@ export class AccessibilityTool extends BaseComponent {
   private enabledVisionTypes: Set<VisionTypeId>;
   private cardDisplayOptions: DisplayOptionsConfig;
   private dyeResults: DyeAccessibilityResult[] = [];
-  private pairResults: DyePairResult[] = [];
   private shareVisionType: VisionTypeId = 'protanopia'; // Default vision type for sharing
 
   // 6A Lens state
@@ -240,7 +220,10 @@ export class AccessibilityTool extends BaseComponent {
     this.enabledVisionTypes = new Set(savedVisionTypes ?? DEFAULT_VISION_TYPES);
 
     const savedLens = StorageService.getItem<VisionTypeId>(STORAGE_KEYS.activeLens);
-    if (savedLens && VISION_TYPES.some((v) => v.id === savedLens)) {
+    // BUG-096: the lens must also still be ENABLED. A persisted lens whose
+    // vision type has since been switched off leaves the grid painted through
+    // a simulation with no tab to turn it off again.
+    if (savedLens && this.enabledVisionTypes.has(savedLens)) {
       this.activeVision = savedLens;
     }
     const savedUnit = StorageService.getItem<PairReadoutUnit>(STORAGE_KEYS.readoutUnit);
@@ -319,7 +302,6 @@ export class AccessibilityTool extends BaseComponent {
 
     this.selectedDyes = [];
     this.dyeResults = [];
-    this.pairResults = [];
 
     super.destroy();
     logger.info('[AccessibilityTool] Destroyed');
@@ -465,6 +447,15 @@ export class AccessibilityTool extends BaseComponent {
     }
 
     if (needsRerender) {
+      // BUG-096: `visibleVisions()` filters the TABS by enabledVisionTypes but
+      // nothing reconciled `activeVision` with it, so switching off the vision
+      // type currently being viewed left the whole panel painted through a lens
+      // that no longer had a tab -- and no way back except re-enabling it.
+      if (!this.enabledVisionTypes.has(this.activeVision)) {
+        this.activeVision = this.visibleVisions()[0]?.id ?? 'normal';
+        StorageService.setItem(STORAGE_KEYS.activeLens, this.activeVision);
+      }
+
       // Save to storage
       StorageService.setItem(STORAGE_KEYS.enabledVisionTypes, Array.from(this.enabledVisionTypes));
 
@@ -1245,15 +1236,10 @@ export class AccessibilityTool extends BaseComponent {
     // Calculate results
     this.dyeResults = this.selectedDyes.map((dye) => this.analyzeDye(dye));
 
-    // Calculate pair results if 2+ dyes
-    this.pairResults = [];
-    if (this.selectedDyes.length >= 2) {
-      for (let i = 0; i < this.selectedDyes.length; i++) {
-        for (let j = i + 1; j < this.selectedDyes.length; j++) {
-          this.pairResults.push(this.analyzePair(this.selectedDyes[i], this.selectedDyes[j]));
-        }
-      }
-    }
+    // OPT-001: the pair loop that used to live here filled `this.pairResults`,
+    // which NOTHING ever read -- roughly 48 colourblindness simulations per
+    // updateResults() thrown away. The pair readout computes its own numbers
+    // through pairValue(); it never consulted this array.
 
     // Render the 6A sections: lens first, then the pair readout, then the
     // as-designed -> as-perceived cards
@@ -1929,82 +1915,6 @@ export class AccessibilityTool extends BaseComponent {
         tritanopia: tritanColor,
         achromatopsia: achromColor,
       },
-    };
-  }
-
-  /**
-   * Analyze distinguishability between two dyes
-   */
-  private analyzePair(dye1: Dye, dye2: Dye): DyePairResult {
-    const contrastRatio = ColorService.getContrastRatio(dye1.hex, dye2.hex);
-    const distance = ColorService.getColorDistance(dye1.hex, dye2.hex);
-    const distinguishability = Math.round((distance / 441.67) * 100);
-
-    // Calculate distinguishability under each vision type
-    const normalDist = Math.round(
-      (ColorService.getColorDistance(dye1.hex, dye2.hex) / 441.67) * 100
-    );
-    const deuterDist = Math.round(
-      (ColorService.getColorDistance(
-        ColorService.simulateColorblindnessHex(dye1.hex, 'deuteranopia'),
-        ColorService.simulateColorblindnessHex(dye2.hex, 'deuteranopia')
-      ) /
-        441.67) *
-        100
-    );
-    const protanDist = Math.round(
-      (ColorService.getColorDistance(
-        ColorService.simulateColorblindnessHex(dye1.hex, 'protanopia'),
-        ColorService.simulateColorblindnessHex(dye2.hex, 'protanopia')
-      ) /
-        441.67) *
-        100
-    );
-    const tritanDist = Math.round(
-      (ColorService.getColorDistance(
-        ColorService.simulateColorblindnessHex(dye1.hex, 'tritanopia'),
-        ColorService.simulateColorblindnessHex(dye2.hex, 'tritanopia')
-      ) /
-        441.67) *
-        100
-    );
-
-    const warnings: string[] = [];
-
-    if (distinguishability < 20) {
-      warnings.push(LanguageService.t('accessibility.verySimular'));
-    } else if (distinguishability < 40) {
-      warnings.push(LanguageService.t('accessibility.somewhatSimilar'));
-    }
-
-    // Colorblindness-specific warnings
-    if (deuterDist < 20 && normalDist >= 20) {
-      warnings.push(LanguageService.t('accessibility.hardForDeuteranopia'));
-    }
-    if (protanDist < 20 && normalDist >= 20) {
-      warnings.push(LanguageService.t('accessibility.hardForProtanopia'));
-    }
-    if (tritanDist < 20 && normalDist >= 20) {
-      warnings.push(LanguageService.t('accessibility.hardForTritanopia'));
-    }
-
-    return {
-      dye1Id: dye1.id,
-      dye1Name: LanguageService.getDyeName(dye1.itemID) || dye1.name,
-      dye1Hex: dye1.hex,
-      dye2Id: dye2.id,
-      dye2Name: LanguageService.getDyeName(dye2.itemID) || dye2.name,
-      dye2Hex: dye2.hex,
-      contrastRatio: Math.round(contrastRatio * 100) / 100,
-      wcagLevel: this.getWCAGLevel(contrastRatio),
-      distinguishability,
-      colorblindnessDistinguishability: {
-        normal: normalDist,
-        deuteranopia: deuterDist,
-        protanopia: protanDist,
-        tritanopia: tritanDist,
-      },
-      warnings,
     };
   }
 

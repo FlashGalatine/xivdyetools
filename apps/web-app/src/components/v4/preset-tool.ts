@@ -375,8 +375,19 @@ export class PresetTool extends BaseLitComponent {
     this.configController = ConfigController.getInstance();
     this.config = this.configController.getConfig('presets');
     this.configUnsubscribe = this.configController.subscribe('presets', (newConfig) => {
+      // BUG-068: only `sortBy` reaches the API -- loadPresets() sends search +
+      // sort, and `category` is deliberately sliced at RENDER time so the
+      // rail's counts stay computed over the unfiltered pool. Refetching for
+      // the other seven keys (category, feedShots, feedBlend,
+      // feedHideUnbuyable, savedFirst, keepDeleted, displayOptions)
+      // spinner-flashed the grid and re-downloaded up to 100 presets for a
+      // change that never leaves the client. `config` is @state(), so the
+      // assignment alone re-renders.
+      const needsRefetch = newConfig.sortBy !== this.config.sortBy;
       this.config = newConfig;
-      void this.loadPresets();
+      if (needsRefetch) {
+        void this.loadPresets();
+      }
     });
 
     this.isAuthenticated = authService.isAuthenticated();

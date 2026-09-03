@@ -378,7 +378,10 @@ describe('harmony-generator', () => {
     it('should return dyes unchanged when no filters', () => {
       const dyes: ScoredDyeMatch[] = [{ dye: createMockDye(), deviance: 10 }];
 
-      const result = replaceExcludedDyes(dyes, 180, null);
+      const result = replaceExcludedDyes(dyes, 180, null, {
+        usePerceptualMatching: false,
+        matchingMethod: 'ciede2000' as MatchingMethod,
+      });
 
       expect(result).toEqual(dyes);
     });
@@ -386,7 +389,12 @@ describe('harmony-generator', () => {
     it('should return dyes unchanged when dyeFiltersConfig has no active filters', () => {
       const dyes: ScoredDyeMatch[] = [{ dye: createMockDye(), deviance: 10 }];
 
-      const result = replaceExcludedDyes(dyes, 180, { ...DEFAULT_DYE_FILTERS });
+      const result = replaceExcludedDyes(
+        dyes,
+        180,
+        { ...DEFAULT_DYE_FILTERS },
+        { usePerceptualMatching: false, matchingMethod: 'ciede2000' as MatchingMethod }
+      );
 
       expect(result).toEqual(dyes);
     });
@@ -401,9 +409,86 @@ describe('harmony-generator', () => {
         { dye: createMockDye({ itemID: 2, isMetallic: false }), deviance: 20 },
       ];
 
-      const result = replaceExcludedDyes(dyes, 180, filtersConfig);
+      const result = replaceExcludedDyes(dyes, 180, filtersConfig, {
+        usePerceptualMatching: false,
+        matchingMethod: 'ciede2000' as MatchingMethod,
+      });
 
       expect(result.length).toBe(2);
+    });
+
+    // Every test above stops before the replacement branch -- they cover
+    // "no filters", "no active filters", and "nothing was excluded". The
+    // branch that actually swaps a dye, which is where BUG-064 lived, had no
+    // test at all.
+    describe('the replacement branch (BUG-064)', () => {
+      it('ranks and scores a replacement with the CONFIGURED method, not Euclidean RGB', async () => {
+        const { ColorService, dyeService } = await import('@services/index');
+
+        const filtersConfig: DyeFiltersConfig = {
+          ...DEFAULT_DYE_FILTERS,
+          excludeMetallic: true,
+        };
+        const alternative = createMockDye({ itemID: 2, isMetallic: false, hex: '#00FF00' });
+        vi.mocked(dyeService.getAllDyes).mockReturnValue([alternative]);
+        vi.mocked(ColorService.getColorDistance).mockClear();
+
+        const dyes: ScoredDyeMatch[] = [
+          { dye: createMockDye({ itemID: 1, isMetallic: true }), deviance: 10 },
+        ];
+        const baseDye = createMockDye({ itemID: 99, hex: '#FF0000' });
+
+        const result = replaceExcludedDyes(
+          dyes,
+          180,
+          filtersConfig,
+          {
+            usePerceptualMatching: true,
+            matchingMethod: 'oklab' as MatchingMethod,
+          },
+          baseDye
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].dye.itemID).toBe(2);
+        // The oklab row of the mock's table -- i.e. the SAME scale
+        // findClosestDyesToHue produces for the dyes beside it. Before the fix
+        // this was calculateHueDeviance(): degrees of hue, sitting in a list of
+        // ΔE numbers.
+        expect(result[0].deviance).toBe(15);
+        // ...and the plain Euclidean helper must not be consulted at all.
+        expect(ColorService.getColorDistance).not.toHaveBeenCalled();
+      });
+
+      it('scores a replacement by hue when perceptual matching is off, like its siblings', async () => {
+        const { ColorService, dyeService } = await import('@services/index');
+
+        // Stub the hue explicitly rather than leaning on the module mock's own
+        // lookup table: another test in this file replaces hexToHsv's
+        // implementation and nothing restores it, so the table is not reliably
+        // in force by the time this runs.
+        vi.mocked(ColorService.hexToHsv).mockReturnValue({ h: 240, s: 100, v: 100 });
+
+        const filtersConfig: DyeFiltersConfig = {
+          ...DEFAULT_DYE_FILTERS,
+          excludeMetallic: true,
+        };
+        const alternative = createMockDye({ itemID: 2, isMetallic: false, hex: '#0000FF' });
+        vi.mocked(dyeService.getAllDyes).mockReturnValue([alternative]);
+
+        const dyes: ScoredDyeMatch[] = [
+          { dye: createMockDye({ itemID: 1, isMetallic: true }), deviance: 10 },
+        ];
+
+        const result = replaceExcludedDyes(dyes, 180, filtersConfig, {
+          usePerceptualMatching: false,
+          matchingMethod: 'oklab' as MatchingMethod,
+        });
+
+        // Angular distance, the same formula findClosestDyesToHue uses when
+        // perceptual matching is off: |240 - 180| = 60.
+        expect(result[0].deviance).toBe(60);
+      });
     });
   });
 
