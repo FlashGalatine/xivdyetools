@@ -33,6 +33,45 @@ const FIXTURE = JSON.stringify({
   Glasses: { GlassesId: 0 },
 });
 
+/**
+ * Show-all fixture: HeadGear dyed on the SECOND channel only (35% of dyed
+ * channels are), Body dyed on both, Hands worn-undyed, three accessories
+ * worn, Feet empty. Exercises every row class the Show-all switch reveals.
+ */
+const FIXTURE_ACC = JSON.stringify({
+  TypeName: 'Anamnesis Character File',
+  REyeColor: 42,
+  HeadGear: { ModelBase: 361, ModelVariant: 5, DyeId: 0, DyeId2: 33 },
+  Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 33 },
+  Hands: { ModelBase: 300, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+  Ears: { ModelBase: 12, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+  Neck: { ModelBase: 13, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+  LeftRing: { ModelBase: 14, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+  Glasses: { GlassesId: 0 },
+});
+
+/** Body dyed on both channels plus facewear — drives the Glasses row. */
+const FIXTURE_GLASSES = JSON.stringify({
+  TypeName: 'Anamnesis Character File',
+  REyeColor: 42,
+  Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 33 },
+  Glasses: { GlassesId: 5 },
+});
+
+const glassesResolved = (en: string): CharaResolveResult => ({
+  ...RESOLVED,
+  glasses: { id: 5, names: { en, ja: en, de: en, fr: en }, iconId: 51000 },
+});
+
+/** Worn but wholly undyed — the glamour that had no block at all before. */
+const FIXTURE_NO_DYE = JSON.stringify({
+  TypeName: 'Anamnesis Character File',
+  REyeColor: 42,
+  Body: { ModelBase: 200, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+  Ears: { ModelBase: 12, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+  Glasses: { GlassesId: 0 },
+});
+
 const BOW = {
   itemId: 49486,
   names: {
@@ -84,7 +123,7 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-async function mount(pending: Promise<CharaResolveResult>) {
+async function mount(pending: Promise<CharaResolveResult>, fixture: string = FIXTURE) {
   resolveMock.mockReturnValue(pending);
   const container = createTestContainer('chara-host');
   const glamour = createTestContainer('chara-glamour');
@@ -96,9 +135,9 @@ async function mount(pending: Promise<CharaResolveResult>) {
   importer.init();
   // loadFile is the drop/choose handler's only job; drive it directly so the
   // test is deterministic (jsdom's File lacks text() on some versions).
-  const file = new File([FIXTURE], 'galatine.chara', { type: 'application/json' });
+  const file = new File([fixture], 'galatine.chara', { type: 'application/json' });
   if (typeof (file as Blob).text !== 'function') {
-    (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(FIXTURE);
+    (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(fixture);
   }
   await (importer as unknown as { loadFile(f: File): Promise<void> }).loadFile(file);
   return { importer, container, glamour };
@@ -273,5 +312,191 @@ describe('CharaImport — DYES ON THIS GLAMOUR (Turn 11)', () => {
     pending.resolve(RESOLVED);
     await new Promise((r) => setTimeout(r, 0));
     expect(glamour.querySelector('[data-role="glamour-block"]')).toBeNull();
+  });
+});
+
+/**
+ * Show all pieces — the second axis of the Pieces lens. The block's unit
+ * stops being "a dyed channel" and becomes "a piece the character wears":
+ * worn-undyed armour and the five accessory slots (which no FFXIV item can
+ * dye) get rows. Chips became positional in the same change: a dyeable slot
+ * always shows channel 1 then channel 2, with a neutral chip standing in for
+ * an undyed channel, so chip position reads as DyeId / DyeId2 everywhere.
+ */
+describe('CharaImport — Show all pieces', () => {
+  let hosts: HTMLElement[] = [];
+
+  beforeEach(() => {
+    resolveMock.mockReset();
+    localStorage.clear();
+  });
+  afterEach(() => {
+    hosts.forEach(cleanupTestContainer);
+    hosts = [];
+  });
+
+  const rowsOf = (glamour: HTMLElement) =>
+    Array.from(
+      block(glamour).querySelectorAll<HTMLElement>('[data-role="piece-rows"] > [data-slot]')
+    );
+  const switchOf = (glamour: HTMLElement) =>
+    block(glamour).querySelector<HTMLButtonElement>('[data-role="show-all-switch"]')!;
+  const chipsOf = (row: HTMLElement) =>
+    Array.from(
+      row.querySelectorAll<HTMLElement>('[data-role="dye-chip"], [data-role="undyed-chip"]')
+    );
+
+  it('is off by default and leaves the dyed-only row set alone', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ACC);
+    hosts = [container, glamour];
+
+    expect(switchOf(glamour).getAttribute('aria-checked')).toBe('false');
+    expect(rowsOf(glamour).map((r) => r.dataset.slot)).toEqual(['HeadGear', 'Body']);
+  });
+
+  it('chips are positional even with the switch off — channel 1 then channel 2, neutral for undyed', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ACC);
+    hosts = [container, glamour];
+
+    // HeadGear carries DyeId2 only: the FIRST chip is the neutral placeholder.
+    const head = chipsOf(rowsOf(glamour)[0]);
+    expect(head.map((c) => c.dataset.channel)).toEqual(['1', '2']);
+    expect(head.map((c) => c.dataset.role)).toEqual(['undyed-chip', 'dye-chip']);
+
+    // Body carries both — two real chips, no placeholder.
+    const body = chipsOf(rowsOf(glamour)[1]);
+    expect(body.map((c) => c.dataset.role)).toEqual(['dye-chip', 'dye-chip']);
+  });
+
+  it('turning it on adds worn-undyed armour and accessories, in file slot order, and never empty slots', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ACC);
+    hosts = [container, glamour];
+
+    switchOf(glamour).click();
+
+    expect(rowsOf(glamour).map((r) => r.dataset.slot)).toEqual([
+      'HeadGear',
+      'Body',
+      'Hands',
+      'Ears',
+      'Neck',
+      'LeftRing',
+    ]);
+    // Feet, Legs, weapons, Wrists and RightRing are unworn — the footnote's job.
+    expect(block(glamour).querySelector('[data-slot="Feet"]')).toBeNull();
+    expect(switchOf(glamour).getAttribute('aria-checked')).toBe('true');
+    expect(StorageService.getItem<string>('xivdyetools_swatch_glamour_show_all')).toBe('on');
+  });
+
+  it('accessories get no chips at all — no FFXIV accessory is dyeable', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ACC);
+    hosts = [container, glamour];
+    switchOf(glamour).click();
+
+    for (const slot of ['Ears', 'Neck', 'LeftRing']) {
+      const row = block(glamour).querySelector<HTMLElement>(`[data-slot="${slot}"]`)!;
+      expect(chipsOf(row)).toHaveLength(0);
+      expect(row.querySelector('[data-role="dye-line"]')?.textContent).toBe('Undyed');
+    }
+    // Worn-undyed ARMOUR still gets its two neutral chips.
+    const hands = block(glamour).querySelector<HTMLElement>('[data-slot="Hands"]')!;
+    expect(chipsOf(hands).map((c) => c.dataset.role)).toEqual(['undyed-chip', 'undyed-chip']);
+    expect(hands.querySelector('[data-role="dye-line"]')?.textContent).toBe('Undyed');
+  });
+
+  it('a half-dyed piece names the empty channel rather than hiding it', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ACC);
+    hosts = [container, glamour];
+
+    const line = rowsOf(glamour)[0].querySelector('[data-role="dye-line"]')!.textContent!;
+    expect(line).toMatch(/^Undyed \+ .+/);
+    expect(line).not.toBe('Undyed');
+  });
+
+  it('opens in the persisted state', async () => {
+    StorageService.setItem('xivdyetools_swatch_glamour_show_all', 'on');
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ACC);
+    hosts = [container, glamour];
+    expect(rowsOf(glamour)).toHaveLength(6);
+  });
+
+  it('is inert in the Dyes lens, which has no undyed unit to show', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ACC);
+    hosts = [container, glamour];
+
+    expect(switchOf(glamour).disabled).toBe(false);
+    block(glamour).querySelector<HTMLButtonElement>('button[data-glamour-view="dyes"]')!.click();
+    expect(switchOf(glamour).disabled).toBe(true);
+    expect(block(glamour).querySelector('[data-role="dye-rows"]')).not.toBeNull();
+  });
+
+  it('facewear gets a row under the switch only, tinted from the colour word in its name', async () => {
+    const { container, glamour } = await mount(
+      Promise.resolve(glassesResolved('Silver Spectacles')),
+      FIXTURE_GLASSES
+    );
+    hosts = [container, glamour];
+    // Body is an NPC model with no Item row, so the MODEL key — not a name —
+    // is this fixture's "the resolve landed" signal.
+    await vi.waitFor(() => {
+      expect(block(glamour).querySelector('[data-role="model-key"]')).not.toBeNull();
+    });
+
+    // Facewear carries no dye, so it stays out of the dyed-only view.
+    expect(block(glamour).querySelector('[data-slot="Facewear"]')).toBeNull();
+    switchOf(glamour).click();
+
+    const row = block(glamour).querySelector<HTMLElement>('[data-slot="Facewear"]')!;
+    expect(row.querySelector('[data-role="item-name"]')?.textContent).toBe('Silver Spectacles');
+    expect(
+      row.querySelector<HTMLElement>('[data-role="item-icon"]')!.style.backgroundImage
+    ).toContain('/v1/chara/icon/51000');
+    const chip = row.querySelector<HTMLElement>('[data-role="facewear-chip"]')!;
+    expect(chip.dataset.facewearColor).toBe('silver');
+    expect(chip.title).toBe('Silver · facewear colour');
+    expect(row.querySelector('[data-role="dye-line"]')?.textContent).toBe('Silver');
+    // It is facewear, not a dye channel — never a dye chip.
+    expect(row.querySelector('[data-role="dye-chip"]')).toBeNull();
+  });
+
+  it('facewear whose name carries no colour word stays neutral rather than guessing', async () => {
+    const { container, glamour } = await mount(
+      Promise.resolve(glassesResolved('Kupo Nut Shades')),
+      FIXTURE_GLASSES
+    );
+    hosts = [container, glamour];
+    // Body is an NPC model with no Item row, so the MODEL key — not a name —
+    // is this fixture's "the resolve landed" signal.
+    await vi.waitFor(() => {
+      expect(block(glamour).querySelector('[data-role="model-key"]')).not.toBeNull();
+    });
+    switchOf(glamour).click();
+
+    const row = block(glamour).querySelector<HTMLElement>('[data-slot="Facewear"]')!;
+    expect(row.querySelector('[data-role="facewear-chip"]')).toBeNull();
+    expect(row.querySelector('[data-role="undyed-chip"]')).not.toBeNull();
+    expect(row.querySelector('[data-role="dye-line"]')?.textContent).toBe(
+      'Facewear colour unknown'
+    );
+  });
+
+  it('no facewear row when the file wears none', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ACC);
+    hosts = [container, glamour];
+    switchOf(glamour).click();
+    expect(block(glamour).querySelector('[data-slot="Facewear"]')).toBeNull();
+  });
+
+  it('a wholly undyed glamour still renders the block, so the switch is reachable', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_NO_DYE);
+    hosts = [container, glamour];
+
+    expect(block(glamour)).not.toBeNull();
+    expect(block(glamour).querySelector('[data-role="no-dyed-pieces"]')).not.toBeNull();
+    expect(rowsOf(glamour)).toHaveLength(0);
+
+    switchOf(glamour).click();
+    expect(block(glamour).querySelector('[data-role="no-dyed-pieces"]')).toBeNull();
+    expect(rowsOf(glamour).map((r) => r.dataset.slot)).toEqual(['Body', 'Ears']);
   });
 });

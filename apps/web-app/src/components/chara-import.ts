@@ -28,6 +28,7 @@ import {
   classifyBandTier,
   roundToBandDisplay,
   formatCharaModelLabel,
+  facewearColors,
   type ResolvedCharaCharacter,
   type ResolvedCharaSlot,
   type ResolvedGearDye,
@@ -98,6 +99,66 @@ const GLAMOUR_VIEW_KEY = `${STORAGE_PREFIX}_swatch_glamour_view`;
 
 function readGlamourView(): GlamourView {
   return StorageService.getItem<string>(GLAMOUR_VIEW_KEY) === 'dyes' ? 'dyes' : 'pieces';
+}
+
+/**
+ * "Show all pieces" — the Pieces lens' second axis. Off, the block lists dyed
+ * channels (the shipped behaviour); on, it lists every piece the character
+ * actually wears, so worn-undyed armour, the five accessory slots and the
+ * facewear get rows. Empty slots never become rows either way — they stay in
+ * the footnote, which is the honest place for "nothing is there".
+ */
+const SHOW_ALL_KEY = `${STORAGE_PREFIX}_swatch_glamour_show_all`;
+
+function readShowAllPieces(): boolean {
+  return StorageService.getItem<string>(SHOW_ALL_KEY) === 'on';
+}
+
+/**
+ * Slots whose items carry dye channels. The five accessory slots are absent
+ * on purpose: no FFXIV earring, necklace, bracelet or ring is dyeable, so a
+ * chip there would invent a channel the game does not have.
+ */
+const DYEABLE_SLOTS: ReadonlySet<CharaGearSlotId> = new Set<CharaGearSlotId>([
+  'MainHand',
+  'OffHand',
+  'HeadGear',
+  'Body',
+  'Hands',
+  'Legs',
+  'Feet',
+]);
+
+/** The two dye channels a dyeable piece always has, in `DyeId` / `DyeId2` order. */
+const DYE_CHANNELS = [1, 2] as const;
+
+/**
+ * Facewear is a thirteenth row rather than a gear slot: `.chara` carries only
+ * `Glasses.GlassesId`, and neither the file nor api-worker says which of the
+ * eleven facewear colours the frame is. FFXIV names most facewear by its
+ * colour ("Silver Spectacles"), so the EN name is the only signal there is —
+ * a match tints the chip, no match leaves it neutral. Never a guess dressed
+ * as data: the chip's title says which colour was read.
+ */
+const FACEWEAR_ROW_SLOT = 'Facewear';
+
+/**
+ * Facewear colour names matched as whole WORDS, against the EN name only —
+ * the eleven colours are EN-only data, and a substring test would read
+ * "Brass" out of a hypothetical "Brassard". Ordered by first occurrence in
+ * the name, so "Silver and Gold Spectacles" reads as silver.
+ */
+const FACEWEAR_NAME_PATTERNS: ReadonlyArray<{ id: string; re: RegExp }> = facewearColors.map(
+  (color) => ({ id: color.id, re: new RegExp(`\\b${color.name}\\b`, 'i') })
+);
+
+function facewearColorForName(nameEn: string): (typeof facewearColors)[number] | null {
+  let best: { at: number; id: string } | null = null;
+  for (const { id, re } of FACEWEAR_NAME_PATTERNS) {
+    const match = re.exec(nameEn);
+    if (match && (best === null || match.index < best.at)) best = { at: match.index, id };
+  }
+  return best ? (facewearColors.find((c) => c.id === best!.id) ?? null) : null;
 }
 
 /**
@@ -174,6 +235,8 @@ export class CharaImport {
   private resolveAbort: AbortController | null = null;
   /** Pieces (11a, default) or Dyes (11c) — persists per user */
   private glamourView: GlamourView;
+  /** Show all pieces, not just dyed ones — Pieces lens only; persists per user */
+  private showAllPieces: boolean;
   /** The mounted DYES ON THIS GLAMOUR block, re-rendered in place when names land */
   private glamourBox: HTMLElement | null = null;
 
@@ -186,6 +249,7 @@ export class CharaImport {
     this.callbacks = callbacks;
     this.glamourContainer = options?.glamourContainer ?? null;
     this.glamourView = readGlamourView();
+    this.showAllPieces = readShowAllPieces();
   }
 
   init(): void {
@@ -1019,7 +1083,10 @@ export class CharaImport {
    */
   private renderGlamour(): HTMLElement | null {
     const resolved = this.resolved!;
-    if (resolved.gearDyes.length === 0) {
+    // The block used to appear only for a dyed glamour. Show all pieces has to
+    // be reachable from a wholly undyed one too, so anything WORN earns the
+    // block; a character wearing nothing still gets none.
+    if (resolved.gearDyes.length === 0 && resolved.gearModels.length === 0) {
       this.glamourBox = null;
       return null;
     }
@@ -1067,6 +1134,7 @@ export class CharaImport {
       'display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0;'
     );
     headerRight.appendChild(this.renderViewToggle());
+    headerRight.appendChild(this.renderShowAllSwitch());
 
     const paletteBtn = this.el(
       'button',
@@ -1093,8 +1161,14 @@ export class CharaImport {
     box.appendChild(header);
 
     const bySlot = this.dyesBySlot();
+    // With nothing dyed there is no row to draw in either lens — one quiet
+    // line stands in, so the block (and the switch above it) stays reachable.
     box.appendChild(
-      this.glamourView === 'dyes' ? this.renderDyeRows() : this.renderPieceRows(bySlot)
+      resolved.gearDyes.length === 0 && !this.showAllActive()
+        ? this.renderNoDyedPieces()
+        : this.glamourView === 'dyes'
+          ? this.renderDyeRows()
+          : this.renderPieceRows(bySlot)
     );
     box.appendChild(this.renderGlamourFoot(bySlot));
 
@@ -1154,6 +1228,70 @@ export class CharaImport {
     return wrap;
   }
 
+  /** True when the Pieces lens is listing every worn piece, not just dyed ones. */
+  private showAllActive(): boolean {
+    return this.showAllPieces && this.glamourView === 'pieces';
+  }
+
+  /**
+   * Show all — a switch, not a third pill position: it is orthogonal to the
+   * lens rather than another value of it. The Dyes lens has no undyed unit to
+   * show, so there it goes inert rather than vanishing; a control that
+   * disappears reflows the header every time you change lens.
+   */
+  private renderShowAllSwitch(): HTMLElement {
+    const inert = this.glamourView !== 'pieces';
+    const on = this.showAllPieces;
+    const btn = this.el(
+      'button',
+      `display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 9px 0 7px; border-radius: 8px; font-family: ${SANS}; font-size: 11px; font-weight: 600; background: var(--theme-card-background); border: 1px solid var(--theme-border); color: ${
+        inert ? 'var(--theme-text-muted)' : 'var(--theme-text)'
+      }; cursor: ${inert ? 'not-allowed' : 'pointer'}; opacity: ${inert ? '0.55' : '1'};`
+    );
+    const button = btn as HTMLButtonElement;
+    button.type = 'button';
+    button.disabled = inert;
+    btn.setAttribute('role', 'switch');
+    btn.setAttribute('aria-checked', String(on));
+    btn.dataset.role = 'show-all-switch';
+
+    // Track + knob. `aria-checked` is the accessible truth; this is its picture.
+    const track = this.el(
+      'span',
+      `display: block; position: relative; width: 26px; height: 15px; flex-shrink: 0; border-radius: 999px; transition: background 120ms ease; background: ${
+        on ? 'var(--theme-primary)' : 'color-mix(in srgb, var(--theme-text) 22%, transparent)'
+      };`
+    );
+    track.setAttribute('aria-hidden', 'true');
+    track.appendChild(
+      this.el(
+        'span',
+        `display: block; position: absolute; top: 2px; left: ${on ? '13px' : '2px'}; width: 11px; height: 11px; border-radius: 50%; background: #fff; transition: left 120ms ease;`
+      )
+    );
+    btn.appendChild(track);
+    btn.appendChild(this.el('span', '', this.t('glamourShowAll')));
+
+    btn.addEventListener('click', () => {
+      if (inert) return;
+      this.showAllPieces = !this.showAllPieces;
+      StorageService.setItem(SHOW_ALL_KEY, this.showAllPieces ? 'on' : 'off');
+      this.rerenderGlamour();
+    });
+    return btn;
+  }
+
+  /** Nothing on this glamour is dyed — say so, rather than draw an empty grid. */
+  private renderNoDyedPieces(): HTMLElement {
+    const line = this.el(
+      'div',
+      'font-size: 11px; line-height: 1.5; color: var(--theme-text-muted); padding: 6px 2px; overflow-wrap: anywhere;',
+      this.t('noDyedPieces')
+    );
+    line.dataset.role = 'no-dyed-pieces';
+    return line;
+  }
+
   /** 20×26 dye chip — the suite's swatch vocabulary; dashed when the stain is unknown. */
   private dyeChip(gear: ResolvedGearDye): HTMLElement {
     const chip = this.el(
@@ -1163,7 +1301,62 @@ export class CharaImport {
       }; ${gear.dye ? INSET_RING : 'border: 1px dashed var(--theme-border); box-sizing: border-box;'}`
     );
     chip.title = gear.dye ? `${this.dyeName(gear.dye)} · ${gear.stainId}` : `#${gear.stainId}`;
+    chip.dataset.role = 'dye-chip';
+    chip.dataset.channel = String(gear.channel);
     return chip;
+  }
+
+  /**
+   * The stand-in for a dye channel the player left empty. Deliberately a
+   * SOLID recessed fill and not the dashed chip above: dashed already means
+   * "a stain ID this build does not know", and undyed must not wear the
+   * costume of unknown.
+   */
+  private undyedChip(channel: 1 | 2): HTMLElement {
+    const chip = this.el(
+      'span',
+      `display: block; width: 20px; height: 26px; border-radius: 5px; background: var(--theme-background-secondary); ${INSET_RING}`
+    );
+    chip.title = this.t('undyed');
+    chip.dataset.role = 'undyed-chip';
+    chip.dataset.channel = String(channel);
+    return chip;
+  }
+
+  /**
+   * A dyeable piece's chips, always both channels in `DyeId` / `DyeId2` order,
+   * so chip POSITION is readable as the channel. Before this, a piece dyed
+   * only on its second channel drew a single chip in the first chip's place —
+   * the picture said channel 1 and the file said channel 2.
+   */
+  private channelChips(slot: CharaGearSlotId, dyes: ResolvedGearDye[]): HTMLElement[] {
+    if (!DYEABLE_SLOTS.has(slot)) {
+      // An accessory carrying a dye is not a thing FFXIV can produce, but if a
+      // file says so, show what it says rather than dropping the data.
+      return dyes.map((gear) => this.dyeChip(gear));
+    }
+    return DYE_CHANNELS.map((channel) => {
+      const gear = dyes.find((g) => g.channel === channel);
+      return gear ? this.dyeChip(gear) : this.undyedChip(channel);
+    });
+  }
+
+  /**
+   * The row's dye line. A piece with no dye at all reads "Undyed" once, not
+   * twice — the doubled form only earns its place when it is telling you
+   * WHICH channel is empty.
+   */
+  private dyeLineText(slot: CharaGearSlotId, dyes: ResolvedGearDye[]): string {
+    const undyed = this.t('undyed');
+    if (dyes.length === 0) return undyed;
+    if (!DYEABLE_SLOTS.has(slot)) {
+      return dyes.map((g) => (g.dye ? this.dyeName(g.dye) : `#${g.stainId}`)).join(' + ');
+    }
+    return DYE_CHANNELS.map((channel) => {
+      const gear = dyes.find((g) => g.channel === channel);
+      if (!gear) return undyed;
+      return gear.dye ? this.dyeName(gear.dye) : `#${gear.stainId}`;
+    }).join(' + ');
   }
 
   /** 11a — one 48px row per DYED piece: icon · slot overline (+N) · name · dyes · chips. */
@@ -1172,10 +1365,32 @@ export class CharaImport {
     grid.className = 'chara-equip-grid';
     grid.dataset.role = 'piece-rows';
     const lang = LanguageService.getCurrentLocale();
-    for (const [slot, dyes] of bySlot) {
-      grid.appendChild(this.renderPieceRow(slot, dyes, lang));
+    for (const slot of this.pieceRowSlots(bySlot)) {
+      grid.appendChild(this.renderPieceRow(slot, bySlot.get(slot) ?? [], lang));
+    }
+    if (this.showAllActive()) {
+      const facewear = this.renderFacewearRow(lang);
+      if (facewear) grid.appendChild(facewear);
     }
     return grid;
+  }
+
+  /**
+   * Which slots get a row. Off, that is exactly the dyed ones (the shipped
+   * set). On, it is every WORN piece in file slot order — `gearModels` is
+   * already in that order — with any dyed slot the file wears nothing in
+   * appended, since dropping a dye the file states would lose data.
+   */
+  private pieceRowSlots(bySlot: Map<CharaGearSlotId, ResolvedGearDye[]>): CharaGearSlotId[] {
+    if (!this.showAllActive()) return [...bySlot.keys()];
+    const slots: CharaGearSlotId[] = [];
+    for (const model of this.resolved!.gearModels) {
+      if (!slots.includes(model.slot)) slots.push(model.slot);
+    }
+    for (const slot of bySlot.keys()) {
+      if (!slots.includes(slot)) slots.push(slot);
+    }
+    return slots;
   }
 
   private renderPieceRow(
@@ -1281,20 +1496,106 @@ export class CharaImport {
     // NAMES UNAVAILABLE (or a dye on a slot wearing nothing): exactly the
     // shipped row — slot tag and dye names — with no name line at all.
 
-    text.appendChild(
-      this.el(
-        'span',
-        'font-size: 10px; line-height: 1.3; color: var(--theme-text-muted); overflow-wrap: anywhere;',
-        dyes.map((g) => (g.dye ? this.dyeName(g.dye) : `#${g.stainId}`)).join(' + ')
-      )
+    const dyeLine = this.el(
+      'span',
+      'font-size: 10px; line-height: 1.3; color: var(--theme-text-muted); overflow-wrap: anywhere;',
+      this.dyeLineText(slot, dyes)
     );
+    dyeLine.dataset.role = 'dye-line';
+    text.appendChild(dyeLine);
     row.appendChild(text);
 
     const chips = this.el('span', 'display: flex; gap: 3px; flex-shrink: 0;');
-    for (const gear of dyes) chips.appendChild(this.dyeChip(gear));
+    for (const chip of this.channelChips(slot, dyes)) chips.appendChild(chip);
     row.appendChild(chips);
 
     if (item) row.title = itemNameFor(item.names, lang);
+    return row;
+  }
+
+  /**
+   * Facewear's row. It is not a gear slot and carries no dye channel, so it
+   * only appears under Show all, and its chip is a facewear colour rather
+   * than a stain. Renders as soon as the file declares a `GlassesId`: while
+   * the resolve is in flight the name is a skeleton, exactly like a piece.
+   */
+  private renderFacewearRow(lang: string): HTMLElement | null {
+    const glassesId = this.resolved!.glassesId;
+    if (glassesId === null || glassesId === 0) return null;
+    const glasses = this.equipment?.glasses ?? null;
+
+    const row = this.el(
+      'div',
+      'display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 6px 8px; border-radius: 9px; background: var(--theme-card-background); border: 1px solid var(--theme-border); box-sizing: border-box; min-width: 0;'
+    );
+    row.dataset.slot = FACEWEAR_ROW_SLOT;
+
+    const tile = this.el(
+      'span',
+      'display: block; width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px; background-color: var(--theme-background-secondary); background-size: cover; background-position: center;'
+    );
+    tile.setAttribute('aria-hidden', 'true');
+    tile.dataset.role = 'item-icon';
+    if (glasses?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(glasses.iconId)}")`;
+    row.appendChild(tile);
+
+    const text = this.el(
+      'span',
+      'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
+    );
+    text.appendChild(
+      this.el(
+        'span',
+        `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.7px; color: var(--theme-text-muted); text-transform: uppercase; white-space: nowrap;`,
+        this.t('facewearSlot')
+      )
+    );
+
+    if (glasses) {
+      const name = this.el(
+        'span',
+        'font-size: 11.5px; line-height: 1.3; font-weight: 600; color: var(--theme-text); overflow-wrap: anywhere; hyphens: auto;',
+        itemNameFor(glasses.names, lang)
+      );
+      name.lang = lang;
+      name.dataset.role = 'item-name';
+      text.appendChild(name);
+    } else if (this.resolveState === 'resolving') {
+      const skeleton = this.el(
+        'span',
+        'display: block; width: 128px; max-width: 100%; height: 9px; margin: 3px 0; border-radius: 4px; background: color-mix(in srgb, var(--theme-text) 12%, transparent);'
+      );
+      skeleton.setAttribute('aria-hidden', 'true');
+      skeleton.dataset.role = 'name-skeleton';
+      text.appendChild(skeleton);
+    }
+
+    const colour = glasses ? facewearColorForName(glasses.names.en) : null;
+    const line = this.el(
+      'span',
+      'font-size: 10px; line-height: 1.3; color: var(--theme-text-muted); overflow-wrap: anywhere;',
+      colour ? colour.name : this.t('facewearColorUnknown')
+    );
+    line.dataset.role = 'dye-line';
+    text.appendChild(line);
+    row.appendChild(text);
+
+    const chips = this.el('span', 'display: flex; gap: 3px; flex-shrink: 0;');
+    const chip = this.el(
+      'span',
+      `display: block; width: 20px; height: 26px; border-radius: 5px; background: ${
+        colour ? colour.hex : 'var(--theme-background-secondary)'
+      }; ${INSET_RING}`
+    );
+    chip.dataset.role = colour ? 'facewear-chip' : 'undyed-chip';
+    if (colour) chip.dataset.facewearColor = colour.id;
+    chip.title = colour
+      ? LanguageService.tInterpolate('swatch.facewearColorTag', { color: colour.name })
+      : this.t('facewearColorUnknown');
+    chips.appendChild(chip);
+    row.appendChild(chips);
+
+    if (glasses) row.title = itemNameFor(glasses.names, lang);
     return row;
   }
 
