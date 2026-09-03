@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-09-03
+
+### Added
+
+- `LocaleData.facewearColors?` — Facewear tint names, keyed by the `FacewearColor.id` slug
+  (I18N-008). The 11 Facewear colours are not dyes, so they carry a slug rather than an
+  itemID and could not travel through `dyeNames`. Optional, so a locale file generated
+  before this still type-checks.
+
+### Changed
+
+- `ToolKey` is **deprecated** (I18N-003). It covers only the six pre-5.0 tools while the
+  product ships nine, and nothing in the monorepo reads it — web-app names tools from its own
+  `tools.*.title` keys, og-worker from `OG_DECK`. Kept because it is published API; removal
+  is a future major.
+
 ## [3.0.0] - 2026-09-02
 
 ### ⚠️ BREAKING — `ModerationStats` field names corrected

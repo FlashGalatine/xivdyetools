@@ -35,9 +35,6 @@ export type HarmonyTypeKey =
   | 'shades';
 
 /**
- * Tool keys for og-worker / web-app display name localization
- */
-/**
  * Tool keys for og-worker / web-app display name localization.
  *
  * @deprecated I18N-003 — this covers only the six pre-5.0 tools (the product
