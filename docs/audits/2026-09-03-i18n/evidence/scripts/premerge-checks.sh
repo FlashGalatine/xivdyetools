@@ -36,11 +36,14 @@ done
 echo
 echo "=== 2. every touched app bumped ==="
 for d in apps/*/; do
+  d="${d%/}"   # the glob leaves a trailing slash; "HEAD:apps/x//package.json" does not resolve
   app=$(basename "$d")
   git diff --name-only origin/main...HEAD -- "$d" | grep -q . || continue
   base_v=$(git show "origin/main:$d/package.json" 2>/dev/null | node -pe "try{JSON.parse(require('fs').readFileSync(0,'utf8')).version}catch(e){''}")
   head_v=$(headver "$d")
-  if [ -n "$base_v" ] && [ "$base_v" = "$head_v" ]; then
+  if [ -z "$head_v" ]; then
+    bad "$app: could not read a version from HEAD — the check did not run"
+  elif [ -n "$base_v" ] && [ "$base_v" = "$head_v" ]; then
     bad "$app touched but version unchanged ($head_v)"
   else
     ok "$app $base_v -> $head_v"
@@ -50,10 +53,12 @@ done
 echo
 echo "=== 3. every touched unit has a changelog entry for its new version ==="
 for d in packages/*/ apps/*/; do
+  d="${d%/}"   # same trailing-slash trap as above
   unit=$(basename "$d")
   git diff --name-only origin/main...HEAD -- "$d" | grep -q . || continue
   [ -f "$d/CHANGELOG.md" ] || { note "$unit has no CHANGELOG.md (skipped)"; continue; }
-  v=$(headver "$d"); [ -n "$v" ] || continue
+  v=$(headver "$d")
+  if [ -z "$v" ]; then bad "$unit: could not read a version from HEAD"; continue; fi
   if grep -q "\[$v\]" "$d/CHANGELOG.md"; then ok "$unit CHANGELOG has [$v]"; else bad "$unit CHANGELOG missing [$v]"; fi
 done
 
