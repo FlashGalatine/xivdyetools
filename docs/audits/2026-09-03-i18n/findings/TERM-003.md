@@ -15,4 +15,4 @@
 - Low stakes — both spellings are comprehensible German. Worth doing with the other vocabulary work, not on its own.
 
 ## Status
-OPEN
+FIXED 2026-09-03 0e61574d — de `colorPalette.metallic` → `Metallic`, matching core and the bot; allow-listed with a reason

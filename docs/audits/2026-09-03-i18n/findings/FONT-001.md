@@ -18,4 +18,4 @@
 - Prove the fix by **rendering**, never from the SVG string: the string already says `font-weight="700"` today and is drawn thin regardless.
 
 ## Status
-OPEN
+FIXED 2026-09-03 43149567 — both subset scripts instance to a static wght 400; both font-faces gates read `fvar` and assert usWeightClass; proved by rendering

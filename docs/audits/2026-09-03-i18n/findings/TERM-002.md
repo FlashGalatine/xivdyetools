@@ -18,4 +18,4 @@
 - core is published: this changes user-visible strings in every consumer, so it wants a minor bump and a changelog line, and both resvg workers should be re-subset afterwards (new glyphs 無, 彩, 色, 師).
 
 ## Status
-OPEN
+FIXED 2026-09-03 `0957df83` (core 4.3.0) — `無彩色系` + `染色師` in `build-locales.ts`; the third row was the DICTIONARY's error — `ffxiv-terminology.md` corrected to 製作 per the official Lodestone

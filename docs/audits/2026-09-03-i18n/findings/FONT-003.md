@@ -21,4 +21,4 @@
 - Extend `font-contract.test.ts` to fail on any `font-family:` in `src/**` that names a bundled family without going through a token — one assertion closes the class permanently.
 
 ## Status
-OPEN
+FIXED 2026-09-03 0e61574d — 75 declarations across 22 files moved to `var(--font-*)`; `font-contract.test.ts` scans the whole tree and names offenders

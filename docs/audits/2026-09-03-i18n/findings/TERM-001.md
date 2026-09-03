@@ -16,4 +16,4 @@
 - Needs core ≥ 4.2.0 and a bot-logic minor; it is the natural follow-on to PR #159 (`9ef904cf`), which converged the harmony *algorithm* across these same three surfaces on 2026-09-03 and left only the naming split.
 
 ## Status
-OPEN
+FIXED 2026-09-03 8d5c1701 — harmony and vision names resolve through core in bot-logic and in Discord's choice picker; 15 duplicated keys deleted

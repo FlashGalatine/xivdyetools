@@ -21,4 +21,4 @@
 - The CJK characters my sweep flagged in `harmony-card.ts`, `swatch-card.ts`, `dye-info-card.ts` etc. are all inside **JSDoc comments** describing label examples — never drawn.
 
 ## Status
-OPEN
+FIXED 2026-09-03 1f3dd97c — `${voteCount}★` replaced by the localized `preset.cardVotes`; the emitted-glyph gate now derives from source via `scanEmittedGlyphs`
