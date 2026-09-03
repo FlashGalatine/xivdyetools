@@ -44,7 +44,7 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
   // Create menu container
   const menu = document.createElement('div');
   menu.className =
-    'add-to-collection-menu fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-48 max-w-64';
+    'add-to-collection-menu fixed z-50 bg-[var(--theme-card-background)] rounded-lg shadow-xl border border-[var(--theme-border)] py-1 min-w-48 max-w-64';
   menu.setAttribute('role', 'menu');
   menu.setAttribute('aria-label', LanguageService.t('collections.addToCollection'));
 
@@ -71,7 +71,7 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
   // Header
   const header = document.createElement('div');
   header.className =
-    'px-3 py-2 text-sm font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700';
+    'px-3 py-2 text-sm font-medium text-[var(--theme-text)] border-b border-[var(--theme-border)]';
   header.textContent = LanguageService.t('collections.addToCollection');
   menu.appendChild(header);
 
@@ -81,7 +81,7 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
 
   if (collections.length === 0) {
     const emptyItem = document.createElement('div');
-    emptyItem.className = 'px-3 py-2 text-sm text-gray-500 dark:text-gray-400 italic';
+    emptyItem.className = 'px-3 py-2 text-sm text-[var(--theme-text-muted)] italic';
     emptyItem.textContent = LanguageService.t('collections.collectionsEmpty');
     list.appendChild(emptyItem);
   } else {
@@ -100,13 +100,13 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
 
   // Separator
   const separator = document.createElement('div');
-  separator.className = 'border-t border-gray-200 dark:border-gray-700 my-1';
+  separator.className = 'border-t border-[var(--theme-border)] my-1';
   menu.appendChild(separator);
 
   // Create new collection option
   const createItem = document.createElement('button');
   createItem.className =
-    'w-full px-3 py-2 text-left text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2';
+    'w-full px-3 py-2 text-left text-sm text-[var(--theme-primary)] hover:bg-[var(--theme-card-hover)] flex items-center gap-2';
   createItem.setAttribute('role', 'menuitem');
 
   const plusIcon = document.createElement('span');
@@ -182,7 +182,7 @@ function createCollectionMenuItem(
   const isFull = collection.dyes.length >= CollectionService.getMaxDyesPerCollection();
 
   const item = document.createElement('button');
-  item.className = `w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between ${
+  item.className = `w-full px-3 py-2 text-left text-sm hover:bg-[var(--theme-card-hover)] flex items-center justify-between ${
     alreadyInCollection || isFull ? 'opacity-50 cursor-not-allowed' : ''
   }`;
   item.setAttribute('role', 'menuitem');
@@ -199,7 +199,7 @@ function createCollectionMenuItem(
 
   // Collection name
   const name = document.createElement('span');
-  name.className = 'truncate text-gray-900 dark:text-white';
+  name.className = 'truncate text-[var(--theme-text)]';
   name.textContent = collection.name;
   name.title = collection.name;
   leftSide.appendChild(name);
@@ -208,7 +208,7 @@ function createCollectionMenuItem(
 
   // Right side info
   const rightSide = document.createElement('div');
-  rightSide.className = 'flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400';
+  rightSide.className = 'flex items-center gap-1 text-xs text-[var(--theme-text-muted)]';
 
   if (alreadyInCollection) {
     const checkmark = document.createElement('span');

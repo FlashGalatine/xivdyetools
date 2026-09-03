@@ -374,7 +374,12 @@ function createDyeSelector(state: FormState): HTMLElement {
       (d) => !state.selectedDyes.some((s) => s.id === d.id)
     );
 
-    for (const dye of availableDyes.slice(0, 100)) {
+    // BUG-081: this was `availableDyes.slice(0, 100)`, a cap from when the
+    // database held fewer entries. With 125 dyes it silently hid 25 of them --
+    // and the sibling SUBMISSION form renders all of them, so the same palette
+    // could be created and then not edited. The grid is already filtered by
+    // search and by what is selected; render whatever is left.
+    for (const dye of availableDyes) {
       const swatch = document.createElement('button');
       swatch.type = 'button';
       swatch.className = 'w-8 h-8 rounded border-2 hover:scale-110 transition-transform';
@@ -718,6 +723,25 @@ function createSubmitButton(
     }
     if (state.selectedDyes.length > MAX_DYES) {
       errors.push(LanguageService.tInterpolate('preset.maxDyesAllowed', { count: MAX_DYES }));
+    }
+    // BUG-083: MAX_TAGS and MAX_TAG_LENGTH were printed in the field hint and
+    // enforced nowhere on this form, so an over-long tag list reached
+    // presetSubmissionService.updatePreset() and came back as a service-level
+    // rejection instead of inline feedback. The service does check both
+    // (preset-submission-service.ts:541-545) -- the form simply never did.
+    if (tags.length > MAX_TAGS) {
+      errors.push(LanguageService.tInterpolate('preset.validation.tagsMax', { n: MAX_TAGS }));
+    }
+    if (tags.some((tag) => tag.length > MAX_TAG_LENGTH)) {
+      errors.push(
+        LanguageService.tInterpolate('preset.validation.tagLength', { n: MAX_TAG_LENGTH })
+      );
+    }
+    // The example link was validated on blur only -- it repainted the field red
+    // and then let the submit through.
+    const linkError = exampleLinkError(state.exampleLink);
+    if (linkError) {
+      errors.push(linkError);
     }
 
     if (errors.length > 0) {
