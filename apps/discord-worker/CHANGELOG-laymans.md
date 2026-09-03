@@ -35,6 +35,18 @@ Rules:
   path filter.
 -->
 
+## [5.2.0] - 2026-09-03
+
+### ✨ New
+
+- `/harmony` has two more types to pick from: **Compound** and **Shades**. The web app has always offered them; now the bot does too.
+
+### 🐛 Fixes
+
+- `/harmony` picks the same dyes the website's Harmony Explorer does. The two had been working from different colour maths, so asking for the same harmony on the same dye in both places could give you two different sets of dyes — most noticeably on pale or near-grey dyes, where `/harmony analogous` on Snow White answered Neon Green and Kobold Brown while the site showed Pure White and Pearl White. One answer now, in both places.
+- The picture that shows up when you paste a harmony link into Discord matches the page the link opens. It had been choosing its dyes a third way of its own.
+- Filters on `/harmony` now pick the closest dye you are *allowed* to have, rather than the closest one to a dye that was filtered out.
+
 ## [5.1.2] - 2026-09-02
 
 ### 🐛 Fixes

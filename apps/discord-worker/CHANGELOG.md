@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2026-09-03
+
+### Changed — harmony convergence
+
+- `/harmony` picks dyes through `@xivdyetools/core`'s shared
+  `generateHarmonySlots` (via `@xivdyetools/bot-logic` 3.2.0), so it now matches
+  the web app's Harmony Explorer. The two disagreed on the returned dyes for
+  89–100 % of base dyes on every harmony type.
+
+### Added
+
+- `compound` and `shades` `/harmony type` choices — **needs a `register-commands`
+  run on deploy**, the choice list grows from 8 to 10.
+
+  These reached core's `HARMONY_OFFSETS`, bot-logic's roster and all six locale
+  files, but the registered choice array in `commands/schemas.ts` was written out
+  by hand and still listed eight — so this entry was untrue when first written:
+  the two types were unreachable in Discord and their six locale strings were
+  dead. The choices are derived from a `Record<HarmonyType, string>` now, which
+  is exhaustive in both directions, so a type added to the shared table without a
+  label here is a compile error rather than an option nobody can pick.
+
+### Removed
+
+- **`/harmony color_space`.** `generateHarmonySlots` rotates hue in HSV, carrying
+  the base's saturation and value, and that is the algorithm all three surfaces
+  now share — choosing another space would be choosing a different answer than
+  the page gives. bot-logic discarded the value with a `void`, so the option was
+  accepted and changed nothing; it is withdrawn rather than left registered and
+  inert. (`/gradient color_space` is a different option and is unaffected.)
+  `strict_matching` was inert for the same reason and has been **wired back up**
+  instead of removed, since core still takes it.
+
 ## [5.1.3] - 2026-09-02
 
 ### Fixed — 2026-09-02 deep-dive audit, Sprint 12

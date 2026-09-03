@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.1.0] - 2026-09-03
+
+### Changed — harmony convergence
+
+- The Harmony Explorer's dye selection moved into `@xivdyetools/core` as
+  `generateHarmonySlots`. **The dyes the page shows are unchanged** — the
+  function is this page's algorithm, lifted, and a parity test required identical
+  output over 125 dyes × 10 types × 4 settings before the page was rewired. The
+  Discord bot and the OG card now run that same function; all three used to
+  disagree.
+- Dye filters apply to the candidate pool rather than to the finished list, so a
+  slot answers "the nearest allowed dye to the ideal" rather than "the nearest
+  allowed dye to one that was thrown away". `replaceExcludedDyes` and its
+  companions are gone.
+- The share-URL `?harmony=` guard reads `HARMONY_OFFSETS` through
+  `isKnownHarmonyType()` instead of a hand-written list of the ten names — one
+  fewer copy to go stale when a type is added.
+- `fetchPricesForDisplayedDyes()` reads what the grid recorded instead of
+  re-deriving the whole harmony a second time. The duplicate loop had to be kept
+  in step by hand and priced the wrong dyes whenever it drifted.
+
+### Fixed
+
+- The harmony test suite could not tell a full harmony from a base card on its
+  own: every assertion on the grid was `length > 0`, which the base panel
+  satisfies alone. Stubbing selection to return nothing left all 46 tests green.
+  Added slot-count and per-slot dye assertions, and proved them by mutation.
+
 ## [5.0.2] - 2026-09-02
 
 ### Changed — 2026-09-02 deep-dive audit

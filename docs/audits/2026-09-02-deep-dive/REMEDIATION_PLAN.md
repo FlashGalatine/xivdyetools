@@ -211,7 +211,9 @@ Note: a bare `wrangler deploy` **is** production for this worker, and its versio
 
 og-12 was not scheduled by this plan (a LOW og-worker refactor that fell between the rows); it is done here, since it is the same algorithm-consistency theme as BUG-023/024.
 
-**Filed, not fixed:** `@xivdyetools/bot-logic`'s own `IDEAL_OFFSETS` carries the same divergent `analogous: [30, -30, 180]` and knows neither `compound` nor `shades`. The bot's embed and its card agree with *each other*, so this is a divergence rather than BUG-022 — and reconciling it changes what `/harmony` returns for every user, which is a product decision like `moderation-worker-11`. Documented on the new core constant.
+**Filed, not fixed here — ✅ RESOLVED 2026-09-03 in PR #159.** `@xivdyetools/bot-logic`'s own `IDEAL_OFFSETS` carried the same divergent `analogous: [30, -30, 180]` and knew neither `compound` nor `shades`. The bot's embed and its card agreed with *each other*, so this was a divergence rather than BUG-022 — and reconciling it changes what `/harmony` returns for every user, which made it a product decision like `moderation-worker-11`. Documented on the new core constant.
+
+The decision came back "the bot should match the web app, from core", and measurement showed the problem was larger than the offsets table: the divergence was the **algorithm**, not the labels. The page rotated hue in HSV *preserving the base's saturation and value*, the bot called per-type `find*Dyes()` that did not (and `findComplementaryPair` took an RGB `invert()` rather than rotating at all), and og-worker rotated in **LCh** — three implementations, disagreeing on the returned dyes for **89–100 % of bases on every harmony type**. All three now call core's `generateHarmonySlots`, which is the page's algorithm lifted under a parity test. `IDEAL_OFFSETS` and `getHarmonyDyes` are deleted. See PR #159 (stacked on this plan's PR #158).
 
 Its bare `wrangler deploy` is the live beta, so use `deploy:production` for production.
 
