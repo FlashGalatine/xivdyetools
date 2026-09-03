@@ -74,7 +74,7 @@ const SHELL_STYLES = `
 }
 .m16-header-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .m16-eyebrow {
-  font-family: 'Fragment Mono', monospace; font-size: 9.5px;
+  font-family: var(--font-mono); font-size: 9.5px;
   letter-spacing: 1.2px; color: var(--theme-text-muted);
 }
 .m16-title { font-weight: 700; font-size: 18px; line-height: 1.2; color: var(--theme-text); margin: 0; }
@@ -111,7 +111,7 @@ const SHELL_STYLES = `
 .m16-grab { display: none; }
 /* Shared mono section label for modal bodies (restLabel, pastLabel, ...) */
 .m16-label {
-  font-family: 'Fragment Mono', monospace; font-size: 10px;
+  font-family: var(--font-mono); font-size: 10px;
   letter-spacing: 1.2px; color: var(--theme-text-muted);
   text-transform: uppercase;
 }

@@ -940,6 +940,7 @@
     "voteAdded": "已投票！",
     "alreadyVoted": "您已经为此预设投过票了",
     "loginToSubmit": "请登录以提交预设",
+    "bannedFromPresets": "您已被禁止提交社区预设。",
     "loginToEdit": "请登录以编辑预设",
     "onlyEditOwn": "您只能编辑自己的预设",
     "maxDyesAllowed": "最多允许 {count} 种染剂",

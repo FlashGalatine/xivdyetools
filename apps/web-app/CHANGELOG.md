@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.3.0] - 2026-09-03
+
+### Fixed
+
+- **75 style blocks across 22 components named a font family directly**, ending at a generic
+  (`sans-serif` / `monospace`) instead of chaining through `--font-cjk` (FONT-003). Those
+  literals skipped the JP-first CJK list and its per-locale `:lang()` overrides, so Japanese,
+  Korean and Chinese text resolved from the browser's default face — which is how a Japanese
+  reader ends up with Chinese glyph forms for shared kanji, the exact thing `--font-cjk`
+  exists to prevent. All now use `var(--font-display)` / `var(--font-mono)`.
+
+  The guard that should have caught this checked one already-fixed file by name; it now scans
+  every non-test source under `src/` and names the offender, so it cannot rot again.
+- **A banned user was told the wrong thing, in English** (I18N-005). Every non-OK preset
+  submit collapsed to the generic `submitFailed`, so the toast headline read "Failed to submit
+  preset" — which is not what happened — over the presets-API's own English sentence as the
+  only accurate explanation. The API's `USER_BANNED` code is now carried through to a new
+  `banned` code and `preset.bannedFromPresets`, translated in all six locales.
+- German `colorPalette.metallic` was `Metallisch` while core and the Discord bot both say
+  `Metallic` (TERM-003). Aligned, and allow-listed with a reason since it now matches English.
+
 ## [5.2.1] - 2026-09-03
 
 ### Fixed — pre-merge review follow-ups

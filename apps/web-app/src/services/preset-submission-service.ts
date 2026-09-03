@@ -56,7 +56,21 @@ export type PresetErrorCode =
   | 'editFailed'
   | 'timeout'
   | 'network'
-  | 'duplicate';
+  | 'duplicate'
+  | 'banned';
+
+/**
+ * Map the presets-API's own `error` code to a client code we have copy for.
+ *
+ * I18N-005: every non-OK submit used to collapse to `submitFailed`, so a banned
+ * user got the localized headline "Failed to submit preset" over the API's
+ * English sentence — a headline that names the wrong cause, with the real reason
+ * readable only in English. The API's code is the part worth keeping.
+ */
+function codeFromApi(body: unknown, fallback: PresetErrorCode): PresetErrorCode {
+  const apiCode = (body as { error?: unknown } | null)?.error;
+  return apiCode === 'USER_BANNED' ? 'banned' : fallback;
+}
 
 export interface SubmissionResult {
   success: boolean;
@@ -322,7 +336,7 @@ class PresetSubmissionServiceImpl {
         logger.error('Preset submission failed:', result);
         return {
           success: false,
-          errorCode: 'submitFailed',
+          errorCode: codeFromApi(result, 'submitFailed'),
           error: result.message,
         };
       }
@@ -606,7 +620,7 @@ class PresetSubmissionServiceImpl {
         logger.error('Preset edit failed:', result);
         return {
           success: false,
-          errorCode: 'editFailed',
+          errorCode: codeFromApi(result, 'editFailed'),
           error: result.message,
         };
       }

@@ -23,8 +23,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -35,6 +35,13 @@ const GLOBALS_CSS = read('src/styles/globals.css');
 const INDEX_HTML = read('src/index.html');
 const HEADERS = read('public/_headers');
 const TAILWIND_CONFIG = read('tailwind.config.js');
+
+/** Every non-test TypeScript source under `src/`, app-root-relative. */
+function sourceFiles(): string[] {
+  return readdirSync(resolve(APP_ROOT, 'src'), { recursive: true, encoding: 'utf8' })
+    .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts') && !f.endsWith('.d.ts'))
+    .map((f) => `src/${f.split(sep).join('/')}`);
+}
 
 /** Strip CSS comments the way a parser does, so assertions see real rules only. */
 const stripComments = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -136,6 +143,27 @@ describe('font contract', () => {
       const src = read('src/components/my-submissions-modal.ts');
       expect(src).not.toContain("font-family: 'Fragment Mono'");
       expect(src).toContain('font-family: var(--font-mono)');
+    });
+
+    it('no component names a bundled family directly — the whole tree (FONT-003)', () => {
+      // The assertion above guarded exactly one already-fixed file, so 75 more
+      // declarations across 22 components kept naming 'Space Grotesk' /
+      // 'Fragment Mono' / 'Onest' straight. Those literals end at a generic
+      // (`sans-serif`, `monospace`), skipping the --font-cjk chain, so CJK text
+      // resolved from the browser default instead of the JP-first list — which
+      // is what the :lang() overrides below exist to control. Scanning the tree
+      // is the only version of this test that cannot rot.
+      const offenders: string[] = [];
+      for (const file of sourceFiles()) {
+        const src = stripComments(read(file));
+        for (const family of ['Space Grotesk', 'Fragment Mono', 'Onest']) {
+          if (src.includes(`font-family: '${family}'`)) offenders.push(`${file} → ${family}`);
+        }
+      }
+      expect(
+        offenders,
+        `use var(--font-display|--font-mono|--font-body) instead: ${offenders.join(', ')}`
+      ).toEqual([]);
     });
   });
 

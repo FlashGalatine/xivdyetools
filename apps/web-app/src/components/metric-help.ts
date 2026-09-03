@@ -154,7 +154,7 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
   if (!def.standard) {
     const badge = document.createElement('span');
     badge.style.cssText =
-      "font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);";
+      'font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);';
     badge.textContent = t('notAStandard');
     titleRow.appendChild(badge);
   }
@@ -192,7 +192,7 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
     cell.appendChild(word);
     const range = document.createElement('span');
     range.style.cssText =
-      "font-family: 'Fragment Mono', monospace; font-size: 10px; color: var(--theme-text-muted);";
+      'font-family: var(--font-mono); font-size: 10px; color: var(--theme-text-muted);';
     range.textContent = ranges[i];
     cell.appendChild(range);
     legend.appendChild(cell);
@@ -235,7 +235,7 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
       row.appendChild(link);
       const authority = document.createElement('span');
       authority.style.cssText =
-        "font-family: 'Fragment Mono', monospace; font-size: 10px; color: var(--theme-text-muted);";
+        'font-family: var(--font-mono); font-size: 10px; color: var(--theme-text-muted);';
       authority.textContent = `${learn.authority} · ${learn.host}`;
       row.appendChild(authority);
       box.appendChild(row);
@@ -329,7 +329,7 @@ export function createMethodHelp(options: MethodHelpOptions): HTMLElement {
   titleRow.appendChild(title);
   const kindBadge = document.createElement('span');
   kindBadge.style.cssText =
-    "font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);";
+    'font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);';
   kindBadge.textContent = t(`kind${METHOD_KIND[options.method]}`);
   titleRow.appendChild(kindBadge);
   box.appendChild(titleRow);

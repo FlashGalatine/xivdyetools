@@ -63,7 +63,7 @@ function fieldLabelRow(labelText: string, reqText: string): HTMLElement {
   label.textContent = labelText;
   const chip = document.createElement('span');
   chip.style.cssText =
-    "font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: color-mix(in srgb, var(--theme-primary) 14%, transparent); color: var(--theme-primary);";
+    'font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: color-mix(in srgb, var(--theme-primary) 14%, transparent); color: var(--theme-primary);';
   chip.textContent = reqText;
   row.appendChild(label);
   row.appendChild(chip);
@@ -171,7 +171,7 @@ export function createCategorySelector(
       if (isSelected) {
         const badge = document.createElement('span');
         badge.style.cssText =
-          "font-family: 'Fragment Mono', monospace; font-size: 9px; opacity: 0.85; margin-left: 2px;";
+          'font-family: var(--font-mono); font-size: 9px; opacity: 0.85; margin-left: 2px;';
         badge.textContent = String(rank + 1);
         btn.appendChild(badge);
       }

@@ -940,6 +940,7 @@
     "voteAdded": "투표가 추가되었습니다!",
     "alreadyVoted": "이 프리셋에 이미 투표하셨습니다",
     "loginToSubmit": "프리셋을 제출하려면 로그인하세요",
+    "bannedFromPresets": "커뮤니티 프리셋 제출이 차단되었습니다.",
     "loginToEdit": "프리셋을 편집하려면 로그인하세요",
     "onlyEditOwn": "본인의 프리셋만 편집할 수 있습니다",
     "maxDyesAllowed": "최대 {count}개의 염료만 허용됩니다",

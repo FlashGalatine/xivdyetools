@@ -140,7 +140,7 @@ export class V4AppHeader extends BaseLitComponent {
       }
 
       .v4-header-logo-text {
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-weight: 700;
         font-size: 15px;
         white-space: nowrap;
@@ -214,7 +214,7 @@ export class V4AppHeader extends BaseLitComponent {
         margin-left: 0;
         overflow: hidden;
         white-space: nowrap;
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-weight: 600;
         font-size: 12px;
         line-height: 1;
@@ -275,7 +275,7 @@ export class V4AppHeader extends BaseLitComponent {
       }
 
       .tool-menu-btn .label {
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-weight: 600;
         font-size: 13.5px;
         color: var(--theme-text, #ececee);
@@ -429,7 +429,7 @@ export class V4AppHeader extends BaseLitComponent {
       }
 
       .lang-code {
-        font-family: 'Fragment Mono', ui-monospace, monospace;
+        font-family: var(--font-mono);
         font-size: 11px;
         letter-spacing: 0.5px;
       }

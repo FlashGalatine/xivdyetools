@@ -1162,7 +1162,7 @@ export class ExtractorTool extends BaseComponent {
     this.loupeHexChip = this.createElement('span', {
       attributes: {
         style: [
-          "font-family: 'Fragment Mono', monospace; font-size: 9px;",
+          'font-family: var(--font-mono); font-size: 9px;',
           'padding: 2px 6px; border-radius: 5px;',
           `background: ${OVERLAY_CHIP_BG}; color: #fff;`,
         ].join(' '),
@@ -1245,7 +1245,7 @@ export class ExtractorTool extends BaseComponent {
       },
     });
     hintChip.appendChild(this.hintSwatchElement);
-    const hintTextStyle = "font-family: 'Fragment Mono', monospace; font-size: 10px; color: #fff;";
+    const hintTextStyle = 'font-family: var(--font-mono); font-size: 10px; color: #fff;';
     hintChip.appendChild(
       this.createElement('span', {
         className: 'x3c-dt-text',
@@ -1377,8 +1377,7 @@ export class ExtractorTool extends BaseComponent {
     });
     this.resultsCountElement = this.createElement('span', {
       attributes: {
-        style:
-          "font-family: 'Fragment Mono', monospace; font-size: 11px; color: var(--theme-text-muted);",
+        style: 'font-family: var(--font-mono); font-size: 11px; color: var(--theme-text-muted);',
       },
     });
     focusActions.appendChild(this.resultsCountElement);
@@ -1912,7 +1911,7 @@ export class ExtractorTool extends BaseComponent {
             pctByHex.get(entry.hex.toLowerCase()) ?? entry.hex.replace('#', '').toUpperCase(),
           attributes: {
             style: [
-              "display: block; padding: 5px 2px 6px; font-family: 'Fragment Mono', monospace;",
+              'display: block; padding: 5px 2px 6px; font-family: var(--font-mono);',
               'font-size: 9px; color: var(--theme-text-muted);',
               'white-space: nowrap; overflow: hidden; text-overflow: ellipsis;',
             ].join(' '),

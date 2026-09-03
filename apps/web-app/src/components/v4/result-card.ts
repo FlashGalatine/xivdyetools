@@ -381,7 +381,7 @@ export class ResultCard extends BaseLitComponent {
 
       .dye-name {
         margin: 0;
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-size: 15px;
         font-weight: 600;
         line-height: 1.2;
@@ -400,7 +400,7 @@ export class ResultCard extends BaseLitComponent {
       }
 
       .de-num {
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-weight: 700;
         font-size: 26px;
         line-height: 0.92;
@@ -408,7 +408,7 @@ export class ResultCard extends BaseLitComponent {
       }
 
       .metric-label {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 8.5px;
         letter-spacing: 0.5px;
         color: var(--theme-text-muted, #86868c);
@@ -420,7 +420,7 @@ export class ResultCard extends BaseLitComponent {
       }
 
       .readout-val {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 13px;
         color: var(--theme-text, #c6c6ca);
       }
@@ -469,14 +469,14 @@ export class ResultCard extends BaseLitComponent {
       }
 
       .cell-label {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 10px;
         color: var(--theme-text-muted, #86868c);
         flex-shrink: 0;
       }
 
       .cell-val {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 11.5px;
         line-height: 1.3;
         color: var(--theme-text, #c6c6ca);
@@ -507,7 +507,7 @@ export class ResultCard extends BaseLitComponent {
       }
 
       .zlabel {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 10px;
         color: var(--theme-text-muted, #86868c);
         width: 62px;
@@ -520,7 +520,7 @@ export class ResultCard extends BaseLitComponent {
       }
 
       .zval {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 11.5px;
         line-height: 1.3;
         color: var(--theme-text, #c6c6ca);
@@ -565,7 +565,7 @@ export class ResultCard extends BaseLitComponent {
       }
 
       .alt-label {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 8.5px;
         letter-spacing: 1px;
         color: var(--theme-text-muted, #888888);
@@ -614,7 +614,7 @@ export class ResultCard extends BaseLitComponent {
         border: none;
         border-radius: 0 0 0 11px;
         cursor: pointer;
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-weight: 600;
         font-size: 12.5px;
         line-height: 1.15;

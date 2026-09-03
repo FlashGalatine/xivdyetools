@@ -213,7 +213,7 @@ export class DisplayOptionsV4 extends BaseLitComponent {
       }
 
       .option-group-label {
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-size: var(--v4-display-options-label-size, 11px);
         color: var(--v4-display-options-label-color, var(--theme-text-muted, #888888));
         text-transform: uppercase;

@@ -1907,7 +1907,7 @@ export class SwatchTool extends BaseComponent {
             textContent: pinLabel,
             attributes: {
               style:
-                "position: absolute; top: -5px; right: -5px; font-family: 'Fragment Mono', monospace; font-size: 8px; line-height: 1; padding: 2px 4px; border-radius: 4px; background: var(--theme-primary); color: #fff; pointer-events: none;",
+                'position: absolute; top: -5px; right: -5px; font-family: var(--font-mono); font-size: 8px; line-height: 1; padding: 2px 4px; border-radius: 4px; background: var(--theme-primary); color: #fff; pointer-events: none;',
             },
           })
         );

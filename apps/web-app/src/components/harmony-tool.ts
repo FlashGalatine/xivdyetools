@@ -1205,7 +1205,7 @@ export class HarmonyTool extends BaseComponent {
       textContent: LanguageService.t('harmony.railSwipeHint'),
       attributes: {
         style:
-          "flex: 0 0 auto; align-self: center; font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 0.5px; padding: 4px 8px; border-radius: 999px; white-space: nowrap; color: var(--theme-text-muted); background: var(--theme-background-secondary);",
+          'flex: 0 0 auto; align-self: center; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; padding: 4px 8px; border-radius: 999px; white-space: nowrap; color: var(--theme-text-muted); background: var(--theme-background-secondary);',
       },
     });
     this.typeRailContainer.appendChild(hint);

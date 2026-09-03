@@ -142,7 +142,7 @@ function fieldLabelRow(labelText: string, reqText: string, required: boolean): H
   label.style.color = 'var(--theme-text)';
   label.textContent = labelText;
   const chip = document.createElement('span');
-  chip.style.cssText = `font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: ${
+  chip.style.cssText = `font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: ${
     required
       ? 'color-mix(in srgb, var(--theme-primary) 14%, transparent)'
       : 'var(--theme-background-secondary)'
@@ -171,11 +171,11 @@ function createPreviewBand(state: FormState): HTMLElement {
   labelRow.className = 'flex items-center justify-between mb-2';
   const label = document.createElement('span');
   label.style.cssText =
-    "font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted);";
+    'font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted);';
   label.textContent = LanguageService.t('preset.previewLabel');
   const draft = document.createElement('span');
   draft.style.cssText =
-    "font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: var(--theme-background-secondary); color: var(--theme-text-muted);";
+    'font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: var(--theme-background-secondary); color: var(--theme-text-muted);';
   draft.textContent = LanguageService.t('preset.draftBadge');
   labelRow.appendChild(label);
   labelRow.appendChild(draft);

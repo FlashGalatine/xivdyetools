@@ -159,7 +159,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       }
 
       .drawer-title {
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-weight: 600;
         font-size: 14px;
         text-transform: uppercase;
@@ -383,7 +383,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
         display: flex;
         align-items: center;
         gap: 8px;
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-size: 12px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -545,7 +545,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       }
 
       .category-label {
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -658,7 +658,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
         color: var(--theme-text-on-primary, #000);
         border: none;
         border-radius: 6px;
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;

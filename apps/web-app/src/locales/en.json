@@ -940,6 +940,7 @@
     "voteAdded": "Vote added!",
     "alreadyVoted": "You already voted for this preset",
     "loginToSubmit": "Please login to submit presets",
+    "bannedFromPresets": "You have been banned from submitting community presets.",
     "loginToEdit": "Please login to edit presets",
     "onlyEditOwn": "You can only edit your own presets",
     "maxDyesAllowed": "Maximum {count} dyes allowed",

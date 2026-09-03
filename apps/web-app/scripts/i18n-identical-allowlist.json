@@ -18,7 +18,6 @@
     "Adding an entry is a translation decision: if the value is real prose, translate",
     "it instead. Entries that stop being identical are reported as STALE."
   ],
-
   "de": {
     "meta.version": "identifier - locale file schema version, not prose",
     "about.statVersion": "cognate - 'VERSION' is the German word too",
@@ -61,9 +60,9 @@
     "swatch.palTattoo": "cognate - 'Tattoo' is German; 'Limbal' is the game's own term",
     "swatch.footSplit": "format - placeholders and a separator only",
     "swatch.gridTitle": "format - '{name} ({count})' is placeholders only",
-    "swatch.cellTag": "format - '{palette} #{index}' is placeholders only"
+    "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
+    "colorPalette.metallic": "matches core labels.metallic and the bot - 'Metallic' is the German dye term (TERM-003)"
   },
-
   "fr": {
     "meta.version": "identifier - locale file schema version, not prose",
     "about.statVersion": "cognate - 'VERSION' is the French word too",
@@ -112,7 +111,6 @@
     "swatch.gridTitle": "format - '{name} ({count})' is placeholders only",
     "swatch.cellTag": "format - '{palette} #{index}' is placeholders only"
   },
-
   "ja": {
     "meta.version": "identifier - locale file schema version, not prose",
     "footer.disclaimer": "brand - SQUARE ENIX copyright line, reproduced verbatim",
@@ -124,7 +122,6 @@
     "budget.colPerDe": "unit - gil-per-delta-E column header",
     "swatch.cellTag": "format - '{palette} #{index}' is placeholders only"
   },
-
   "ko": {
     "meta.version": "identifier - locale file schema version, not prose",
     "footer.disclaimer": "brand - SQUARE ENIX copyright line, reproduced verbatim",
@@ -139,7 +136,6 @@
     "swatch.gridTitle": "format - '{name} ({count})' is placeholders only",
     "swatch.cellTag": "format - '{palette} #{index}' is placeholders only"
   },
-
   "zh": {
     "meta.version": "identifier - locale file schema version, not prose",
     "common.gilAmount": "format - '{n} {unit}' is placeholders only",
