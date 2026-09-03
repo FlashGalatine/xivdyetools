@@ -39,6 +39,10 @@ class TestLogger extends BaseLogger {
     return this.redactSensitiveFields(context);
   }
 
+  public testSanitizeErrorMessage(message: string): string {
+    return this.sanitizeErrorMessage(message);
+  }
+
   public getConfig(): LoggerConfig {
     return this.config;
   }
@@ -903,7 +907,7 @@ describe('redaction cycle safety', () => {
     expect(ctx.items[5999].password).toBe('[REDACTED]');
   });
 
-  it('pins the design invariant (S10-R16): a cycle back-edge is the RAW original, never the redacted copy or itself', () => {
+  it('pins the design invariant (S10-R16): a cycle back-edge is the SENTINEL, never the raw original or the redacted copy', () => {
     const logger = new TestLogger({ level: 'debug' });
     const cyclic: LogContext = { name: 'root', password: 'hunter2' };
     cyclic.self = cyclic;
@@ -912,28 +916,49 @@ describe('redaction cycle safety', () => {
 
     // The primary occurrence is redacted...
     expect(result.password).toBe('[REDACTED]');
-    // ...but the back-edge is a genuine CYCLE, not an alias, and must stay
-    // the RAW original object — not the redacted copy (`result` itself,
-    // which would make the output graph self-referential — a shape this
-    // package has never produced) and not any other value.
+    // ...and the back-edge is a genuine CYCLE, not an alias, so it becomes
+    // the same marker `safeStringify` writes for one.
     //
-    // This holds ONLY because `ancestors` is checked before `memo`, AND
-    // `memo` is populated only on the way OUT (after a node's own children
-    // are fully processed). Both properties were verified independently:
-    // mutating EITHER one alone (memoize-on-the-way-IN while still
-    // checking ancestors first; or check memo-before-ancestors while still
-    // memoizing way-out) leaves this assertion — and the whole suite —
-    // green, because a currently-active ancestor is, by construction,
-    // never yet in `memo` regardless of which check runs first or exactly
-    // when memo.set() executes UNLESS BOTH properties are violated
-    // together. Mutating both together makes the back-edge resolve to the
-    // (self-referential) redacted copy instead — `result.self` becomes
-    // `result` itself — which this assertion catches.
-    expect(result.self).toBe(cyclic);
+    // BUG-004 (deep dive 2026-09-02): this used to assert the back-edge was
+    // the RAW ORIGINAL object, which is what the guard returned. That was the
+    // leak — an unredacted subtree spliced back into the redacted copy — so
+    // the assertion is now the sentinel. The INVARIANT this test exists for is
+    // unchanged, and so is its discriminating power:
+    //
+    // It holds ONLY because `ancestors` is checked before `memo`, AND `memo`
+    // is populated only on the way OUT (after a node's own children are fully
+    // processed). Both properties were verified independently: mutating
+    // EITHER one alone (memoize-on-the-way-IN while still checking ancestors
+    // first; or check memo-before-ancestors while still memoizing way-out)
+    // leaves this assertion — and the whole suite — green, because a
+    // currently-active ancestor is, by construction, never yet in `memo`
+    // regardless of which check runs first or exactly when memo.set()
+    // executes UNLESS BOTH properties are violated together. Mutating both
+    // together makes the back-edge resolve to the (self-referential) redacted
+    // copy instead — `result.self` becomes `result` itself — which this
+    // assertion still catches, because `result` is not the sentinel.
+    expect(result.self).toBe('[Circular]');
     expect(result.self).not.toBe(result);
+    expect(result.self).not.toBe(cyclic);
   });
 
-  it('pins the design invariant (S10-R16, extended to redactArrayItems): an array cycle back-edge is the RAW original, never the redacted copy or itself', () => {
+  it('a secret reachable ONLY through a cycle is still redacted (BUG-004)', () => {
+    // The leak in full: the copy of `inner` correctly got
+    // `token: '[REDACTED]'`, but `inner.back` handed back the ORIGINAL `ctx`,
+    // whose `items[0]` is the ORIGINAL `inner` — so the emitted line carried
+    // `"token":"shhh"`. `safeStringify` only marks the SECOND back-edge, so it
+    // did not save us.
+    const logger = new TestLogger({ level: 'debug' });
+    const inner: LogContext = { token: 'shhh' };
+    const ctx: LogContext = { items: [inner] };
+    inner.back = ctx;
+
+    logger.info('array cycle', ctx);
+
+    expect(JSON.stringify(logger.entries[0].context)).not.toContain('shhh');
+  });
+
+  it('pins the design invariant (S10-R16, extended to redactArrayItems): an array cycle back-edge is the SENTINEL, never the raw original or the redacted copy', () => {
     const logger = new TestLogger({ level: 'debug' });
     const inner: unknown[] = ['leaf'];
     inner.push(inner); // inner[1] === inner — a cycle through the array itself
@@ -944,11 +969,80 @@ describe('redaction cycle safety', () => {
     // Same invariant as the object-path test above (`ancestors` checked
     // before `memo`, `memo` populated only on the way out), pinned here
     // for `redactArrayItems` specifically — it shares the identical guard
-    // logic but was previously left unpinned by any test. The back-edge
-    // must stay the RAW original array — not the redacted copy
-    // (`result.arr` itself, which would make it self-referential) and not
-    // any other value.
-    expect(result.arr[1]).toBe(inner);
+    // logic but was previously left unpinned by any test. The back-edge is
+    // the sentinel — not the raw original array (BUG-004: that was the leak)
+    // and not the redacted copy (`result.arr` itself, which would make it
+    // self-referential).
+    expect(result.arr[1]).toBe('[Circular]');
     expect(result.arr[1]).not.toBe(result.arr);
+    expect(result.arr[1]).not.toBe(inner);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-005 (deep dive 2026-09-02): `sanitizeErrorMessage`'s unquoted value arm
+// stopped at the first space, so an `Authorization: Basic …` or Discord `Bot …`
+// header was redacted down to its SCHEME WORD and the credential survived:
+//
+//   'upstream rejected Authorization: Basic dXNlcjpwYXNzd29yZA=='
+//     →  '… authorization=[REDACTED] dXNlcjpwYXNzd29yZA=='
+//
+// `Bearer` was safe only because it had a dedicated pass and a lookahead;
+// `Basic` and `Bot` had neither. The method's own doc comment described an
+// OLDER, space-tolerant pattern — the comment and the code disagreed, which is
+// why this read as covered.
+//
+// The suite's only Authorization case was `'Authorization: Bearer token123abc
+// failed'` — the one scheme that was already handled.
+// ---------------------------------------------------------------------------
+describe('BUG-005: every auth scheme redacts its credential, not just Bearer', () => {
+  const logger = new TestLogger({ level: 'debug' });
+  const sanitize = (m: string): string => logger.testSanitizeErrorMessage(m);
+
+  it.each([
+    ['Basic', 'dXNlcjpwYXNzd29yZA=='],
+    // Deliberately NOT Discord-token-shaped: a real one is rescued by
+    // DISCORD_TOKEN_VALUE_PATTERN whatever the scheme handling does, so a
+    // realistic fixture here would not discriminate (the review's phrase for
+    // it: "rescued only incidentally").
+    ['Bot', 'notADiscordShapedCredential'],
+    ['Bearer', 'token123abc'],
+    ['Digest', 'username="u",response="deadbeef"'],
+  ])('%s: the credential does not survive', (scheme, credential) => {
+    const out = sanitize(`upstream rejected Authorization: ${scheme} ${credential}`);
+    expect(out, out).not.toContain(credential.split(' ')[0]);
+    expect(out).toContain('[REDACTED]');
+  });
+
+  it('does NOT redact ordinary prose that happens to contain a scheme word', () => {
+    // My first cut of this fix extended the free-text scheme pass to
+    // Bearer|Basic|Bot|Digest|Token. Four of those five are ordinary English,
+    // and it turned oauth's real log line into
+    // 'XIVAuth token [REDACTED] failed' (Token + ' exchange'). An oauth test
+    // caught it. The scheme handling lives in the  rule now,
+    // where the key name supplies the context; the free-text pass is Bearer
+    // only, a word that is not prose.
+    expect(sanitize('XIVAuth token exchange failed')).toBe('XIVAuth token exchange failed');
+    expect(sanitize('bot token missing from env')).toBe('bot token missing from env');
+    expect(sanitize('basic auth check passed')).toBe('basic auth check passed');
+  });
+
+  it('…and every OTHER key rule still stops at whitespace, so prose survives', () => {
+    // Only  consumes the tail, because only there is the whole
+    // rest of the value known to belong to it.
+    expect(sanitize('token=abc failed at 12:04')).toBe('token=[REDACTED] failed at 12:04');
+  });
+
+  it('an authorization= value with spaces is consumed to the delimiter', () => {
+    const out = sanitize('rejected: authorization = some multi word credential; retrying');
+    expect(out).not.toContain('multi word credential');
+    // the `;` still bounds it — the rest of the line survives
+    expect(out).toContain('retrying');
+  });
+
+  it('the existing Bearer contract is unchanged', () => {
+    expect(sanitize('Authorization: Bearer token123abc failed')).toBe(
+      'Authorization: Bearer [REDACTED] failed'
+    );
   });
 });

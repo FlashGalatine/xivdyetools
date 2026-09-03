@@ -14,6 +14,16 @@ import { CORE_REDACT_FIELDS } from '../constants.js';
 const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
 
 /**
+ * What a cycle becomes in a redacted context (BUG-004).
+ *
+ * The same marker `safeStringify` writes for a back-edge, so a cyclic context
+ * reads identically whether the cycle was caught during redaction or during
+ * serialisation. Returning the raw node instead — which is what the guards
+ * used to do — re-inserted an UNREDACTED subtree into the redacted copy.
+ */
+const CIRCULAR_SENTINEL = '[Circular]';
+
+/**
  * S10-R8 (2026-08-30 fix round 1): redaction recursion state for ONE
  * top-level log call, threaded through `redactSensitiveFields` /
  * `redactArrayItems`.
@@ -178,92 +188,21 @@ export abstract class BaseLogger implements ExtendedLogger {
   }
 
   /**
-   * Sanitize error messages to remove potential secrets
+   * Sanitize error messages to remove potential secrets.
    *
-   * LOG-ERR-001: Fixed patterns to capture values that may contain spaces.
-   * Uses patterns that match:
-   * - Quoted values: token="my secret" or token='my secret'
-   * - Unquoted values until delimiter: token=value,next or token=value;next
-   * - Remaining text until end: token=everything else here
+   * The patterns themselves are module scope (`SANITIZE_RULES`) — this used to
+   * compile 15 regexes on every call, and it runs once per log line plus once
+   * per error message with `sanitizeErrors: true`, the Worker default
+   * (OPT-007). All 15 are constant; nothing depended on the arguments. Reuse
+   * across calls is safe because every rule is applied through
+   * `String.prototype.replace` with a `g` flag, which resets `lastIndex`
+   * itself — that would NOT hold for `.exec` / `.test`, which are not used
+   * here.
    */
   protected sanitizeErrorMessage(message: string): string {
-    // Pattern components:
-    // - ["']([^"']*?)["'] matches quoted strings
-    // - [^\s,;'"]+(?:\s+[^\s,;'"=]+)* matches unquoted values (including spaces before delimiter)
-    // The order matters: try quoted first, then unquoted
-
-    // Reusable value pattern: matches quoted strings or unquoted values until delimiter
-    const V = `(?:["']([^"']*?)["']|[^\\s,;]+)`;
-
-    // BUG-024/BUG-025: key may itself be quoted (JSON bodies echoed into error
-    // messages) and whitespace is allowed on BOTH sides of the separator
-    // ("token = abc"). Previously the separator had to immediately follow the
-    // key name, so `{"token":"abc"}` and `token = abc` bypassed sanitization.
-    const K = (name: string): string => `["']?${name}["']?\\s*[=:]\\s*`;
-
-    // S10-R11 (2026-08-30 fix round 1, refined in fix round 2): add the
-    // 'g' flag for a global free-text substring replace without risking a
-    // duplicate — `re.flags + 'g'` would throw `SyntaxError: Invalid flags
-    // supplied to RegExp constructor 'gg'` at the first call if either
-    // source pattern ever gained its own 'g' flag; this line's whole job
-    // is preventing future drift, so it has to survive that case too.
-    const withGlobalFlag = (re: RegExp): RegExp =>
-      new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`);
-
-    return (
-      message
-        // Bearer tokens - typically single tokens without spaces
-        .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
-        // FINDING-025 (2026-08-29 audit): the value-SHAPE scan reaches free
-        // text too, for a bare token with no key name in front of it
-        // ("refresh failed for eyJhbGci…"). Only the two `\b`-delimited
-        // SUBSTRING patterns below are safe here — a match redacts just the
-        // token span and leaves the rest of the sentence diagnosable
-        // ("refresh failed for [REDACTED] at 12:04"). The other two
-        // SECRET_VALUE_PATTERNS entries are deliberately NOT reused: Bearer
-        // is already fully handled by the line above (a real global
-        // substring replace, unlike the ^-anchored whole-value pattern this
-        // scan otherwise uses), and HEX64_VALUE_PATTERN is a whole-value
-        // verdict — see its comment for why running it over free text would
-        // be a false-positive risk (sha256 hashes, cache keys) this package
-        // cannot afford.
-        // Preserve each source pattern's own flags (both are flagless
-        // today) instead of hardcoding 'g' — a future 'i'/'u' added to
-        // either pattern would otherwise silently not apply here,
-        // defeating the "can't drift" guarantee above.
-        .replace(withGlobalFlag(JWT_VALUE_PATTERN), '[REDACTED]')
-        .replace(withGlobalFlag(DISCORD_TOKEN_VALUE_PATTERN), '[REDACTED]')
-        // BUG-025: JSON-shaped pass — catches every "…token"/"…secret"/"…password"/
-        // "…key"-suffixed quoted key in one sweep, including compound names
-        // (sessionToken, webhook_secret) that the per-key patterns below miss.
-        .replace(
-          /"([a-z0-9_-]*(?:token|secret|password|key))"\s*:\s*"[^"]*"/gi,
-          '"$1":"[REDACTED]"',
-        )
-        // Key=value patterns - handle quoted and unquoted values
-        // Matches: key="value with spaces" or key='value' or key=value until delimiter
-        .replace(new RegExp(`${K('token')}${V}`, 'gi'), 'token=[REDACTED]')
-        .replace(new RegExp(`${K('secret')}${V}`, 'gi'), 'secret=[REDACTED]')
-        .replace(new RegExp(`${K('password')}${V}`, 'gi'), 'password=[REDACTED]')
-        .replace(new RegExp(`${K('api[_-]?key')}${V}`, 'gi'), 'api_key=[REDACTED]')
-        // Additional common sensitive patterns
-        // Use negative lookahead to skip "Authorization: Bearer ..." which is handled by Bearer pattern
-        .replace(
-          new RegExp(`["']?authorization["']?\\s*[=:]\\s*(?!Bearer\\s)${V}`, 'gi'),
-          'authorization=[REDACTED]',
-        )
-        .replace(new RegExp(`${K('access[_-]?token')}${V}`, 'gi'), 'access_token=[REDACTED]')
-        .replace(new RegExp(`${K('refresh[_-]?token')}${V}`, 'gi'), 'refresh_token=[REDACTED]')
-        // FINDING-005: Additional patterns for OAuth, crypto keys, and webhook secrets
-        .replace(new RegExp(`${K('client[_-]?secret')}${V}`, 'gi'), 'client_secret=[REDACTED]')
-        .replace(new RegExp(`${K('private[_-]?key')}${V}`, 'gi'), 'private_key=[REDACTED]')
-        .replace(
-          new RegExp(`${K('signing[_-]?(?:key|secret)')}${V}`, 'gi'),
-          'signing_key=[REDACTED]',
-        )
-        .replace(new RegExp(`${K('webhook[_-]?secret')}${V}`, 'gi'), 'webhook_secret=[REDACTED]')
-        .replace(new RegExp(`${K('auth[_-]?token')}${V}`, 'gi'), 'auth_token=[REDACTED]')
-        .replace(new RegExp(`${K('credential[s]?')}${V}`, 'gi'), 'credentials=[REDACTED]')
+    return SANITIZE_RULES.reduce<string>(
+      (text, [pattern, replacement]) => text.replace(pattern, replacement),
+      message,
     );
   }
 
@@ -299,12 +238,23 @@ export abstract class BaseLogger implements ExtendedLogger {
     };
 
     if (g.ancestors.has(context)) {
-      // Genuine cycle on the CURRENT path — leave as-is rather than
-      // recursing forever. This must be checked before `memo`: a node
-      // still being processed has no memo entry yet (memoized only on the
-      // way OUT, below), so this order is actually load-bearing, not just
-      // defensive — see `RedactionGuard`'s doc comment.
-      return context;
+      // Genuine cycle on the CURRENT path — stop rather than recursing
+      // forever. This must be checked before `memo`: a node still being
+      // processed has no memo entry yet (memoized only on the way OUT,
+      // below), so this order is actually load-bearing, not just defensive
+      // — see `RedactionGuard`'s doc comment.
+      //
+      // BUG-004 (deep dive 2026-09-02): this used to `return context` — the
+      // RAW, UNREDACTED original node. Everything reachable through the
+      // back-edge was then emitted verbatim: given
+      // `inner = { token: 'shhh' }; ctx = { items: [inner] }; inner.back = ctx`,
+      // the copy of `inner` correctly got `token: '[REDACTED]'`, but
+      // `inner.back` handed back the original `ctx` whose `items[0]` is the
+      // original `inner` — so the emitted line contained `"token":"shhh"`.
+      // `safeStringify` only marks the SECOND back-edge, so it did not save
+      // us. The sentinel is the same marker `safeStringify` would have
+      // written, and the already-redacted copy is unreachable here anyway.
+      return CIRCULAR_SENTINEL as unknown as LogContext;
     }
     const cached = g.memo.get(context);
     if (cached !== undefined) {
@@ -406,8 +356,10 @@ export abstract class BaseLogger implements ExtendedLogger {
    */
   protected redactArrayItems(items: unknown[], guard: RedactionGuard): unknown[] {
     if (guard.ancestors.has(items)) {
-      // Genuine cycle — see the matching check in redactSensitiveFields.
-      return items;
+      // Genuine cycle — see the matching check in redactSensitiveFields,
+      // including why this returns a sentinel rather than the raw array
+      // (BUG-004).
+      return CIRCULAR_SENTINEL as unknown as unknown[];
     }
     const cached = guard.memo.get(items);
     if (cached !== undefined) {
@@ -655,6 +607,126 @@ export function looksLikeSecretValue(value: string): boolean {
  * a heavily-aliased binary chain is already emitting hundreds of KB
  * unbounded; this stops well short of that.
  */
+/**
+ * `Bearer` is the ONE auth scheme handled as a free-text pass, and the reason
+ * it is alone there is worth recording.
+ *
+ * BUG-005 (deep dive 2026-09-02): `Authorization: Basic dXNlcjpwYXNzd29yZA==`
+ * leaked its credential, because only `Bearer` had a dedicated pass and the
+ * generic `authorization=` rule's unquoted value arm (`[^\s,;]+`) stopped at
+ * the first space — it consumed the scheme word `Basic` and stopped, emitting
+ * `authorization=[REDACTED] dXNlcjpwYXNzd29yZA==`. Discord's own `Bot` scheme
+ * was the same, rescued only incidentally by `DISCORD_TOKEN_VALUE_PATTERN` when
+ * the value happened to look like a Discord token.
+ *
+ * The first attempt at this fix extended the free-text pass to
+ * `Bearer|Basic|Bot|Digest|Token`. That over-redacts badly, because four of
+ * those five are ordinary English: it turned oauth's
+ * `'XIVAuth token exchange failed'` into `'XIVAuth token [REDACTED] failed'`
+ * (`Token` + ` exchange`), and `'bot token missing'` would go the same way.
+ * A real oauth test caught it.
+ *
+ * So the fix lives in the `authorization=` rule instead — where the key name
+ * supplies the context that makes a following word unambiguous — and this pass
+ * stays `Bearer`-only, a word that is not prose.
+ */
+const AUTH_SCHEMES = ['Bearer'] as const;
+const AUTH_SCHEME_ALT = AUTH_SCHEMES.join('|');
+
+/**
+ * Every `sanitizeErrorMessage` rule, compiled once (OPT-007).
+ *
+ * Order is load-bearing: the scheme pass runs before the `authorization=`
+ * rule, so `Authorization: Basic …` is already `Basic [REDACTED]` by the time
+ * that rule sees it — and the rule's lookahead skips every handled scheme so
+ * the scheme word survives.
+ */
+const SANITIZE_RULES: ReadonlyArray<readonly [RegExp, string]> = (() => {
+  // Value: a quoted string, or an unquoted run up to the next delimiter.
+  const V = `(?:["']([^"']*?)["']|[^\\s,;]+)`;
+
+  // BUG-024/BUG-025: key may itself be quoted (JSON bodies echoed into error
+  // messages) and whitespace is allowed on BOTH sides of the separator
+  // ("token = abc"). Previously the separator had to immediately follow the
+  // key name, so `{"token":"abc"}` and `token = abc` bypassed sanitization.
+  const K = (name: string): string => `["']?${name}["']?\\s*[=:]\\s*`;
+
+  // S10-R11 (2026-08-30 fix round 1, refined in fix round 2): add the
+  // 'g' flag for a global free-text substring replace without risking a
+  // duplicate — `re.flags + 'g'` would throw `SyntaxError: Invalid flags
+  // supplied to RegExp constructor 'gg'` at the first call if either
+  // source pattern ever gained its own 'g' flag; this line's whole job
+  // is preventing future drift, so it has to survive that case too.
+  const withGlobalFlag = (re: RegExp): RegExp =>
+    new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`);
+
+  const keyRule = (name: string, label: string): readonly [RegExp, string] => [
+    new RegExp(`${K(name)}${V}`, 'gi'),
+    `${label}=[REDACTED]`,
+  ];
+
+  return [
+    // Auth schemes — the credential is everything after the scheme word.
+    [new RegExp(`\\b(${AUTH_SCHEME_ALT})\\s+\\S+`, 'gi'), '$1 [REDACTED]'],
+    // FINDING-025 (2026-08-29 audit): the value-SHAPE scan reaches free
+    // text too, for a bare token with no key name in front of it
+    // ("refresh failed for eyJhbGci…"). Only the two `\b`-delimited
+    // SUBSTRING patterns below are safe here — a match redacts just the
+    // token span and leaves the rest of the sentence diagnosable
+    // ("refresh failed for [REDACTED] at 12:04"). The other two
+    // SECRET_VALUE_PATTERNS entries are deliberately NOT reused: the scheme
+    // pass above already handles Bearer as a real global substring replace
+    // (unlike the ^-anchored whole-value pattern this scan otherwise uses),
+    // and HEX64_VALUE_PATTERN is a whole-value verdict — see its comment for
+    // why running it over free text would be a false-positive risk (sha256
+    // hashes, cache keys) this package cannot afford.
+    // Preserve each source pattern's own flags (both are flagless today)
+    // instead of hardcoding 'g' — a future 'i'/'u' added to either pattern
+    // would otherwise silently not apply here, defeating the "can't drift"
+    // guarantee above.
+    [withGlobalFlag(JWT_VALUE_PATTERN), '[REDACTED]'],
+    [withGlobalFlag(DISCORD_TOKEN_VALUE_PATTERN), '[REDACTED]'],
+    // BUG-025: JSON-shaped pass — catches every "…token"/"…secret"/"…password"/
+    // "…key"-suffixed quoted key in one sweep, including compound names
+    // (sessionToken, webhook_secret) that the per-key patterns below miss.
+    [/"([a-z0-9_-]*(?:token|secret|password|key))"\s*:\s*"[^"]*"/gi, '"$1":"[REDACTED]"'],
+    // Key=value patterns — quoted values, or unquoted up to a delimiter.
+    keyRule('token', 'token'),
+    keyRule('secret', 'secret'),
+    keyRule('password', 'password'),
+    keyRule('api[_-]?key', 'api_key'),
+    // BUG-005: an `authorization=` value IS the rest of the header, so this
+    // one rule consumes to a delimiter or end of line rather than stopping at
+    // the first space — which is what let `Basic dXNlcjpwYXNzd29yZA==` keep its
+    // credential. Every OTHER key rule still stops at whitespace, so an
+    // ordinary `token=abc failed at 12:04` stays diagnosable; only here is the
+    // whole tail known to belong to the value. The lookahead leaves `Bearer` to
+    // the dedicated pass above, which keeps that scheme word visible.
+    [
+      new RegExp(
+        // The unquoted arm must not START with whitespace. `\s*` above is
+        // greedy but backtracks: with a value arm that accepts a leading
+        // space, `\s*` can match zero characters, which moves the lookahead
+        // off the scheme word and onto the space — where it trivially
+        // succeeds, and `Authorization: Bearer x` gets swallowed whole. The
+        // old `[^\s,;]+` arm was immune by accident; this one has to say so.
+        `["']?authorization["']?\\s*[=:]\\s*(?!(?:${AUTH_SCHEME_ALT})\\s)(?:["']([^"']*?)["']|[^\\s,;][^\\n,;]*)`,
+        'gi',
+      ),
+      'authorization=[REDACTED]',
+    ],
+    keyRule('access[_-]?token', 'access_token'),
+    keyRule('refresh[_-]?token', 'refresh_token'),
+    // FINDING-005: Additional patterns for OAuth, crypto keys, and webhook secrets
+    keyRule('client[_-]?secret', 'client_secret'),
+    keyRule('private[_-]?key', 'private_key'),
+    keyRule('signing[_-]?(?:key|secret)', 'signing_key'),
+    keyRule('webhook[_-]?secret', 'webhook_secret'),
+    keyRule('auth[_-]?token', 'auth_token'),
+    keyRule('credential[s]?', 'credentials'),
+  ];
+})();
+
 const MAX_STRINGIFY_NODES = 50_000;
 
 /**
