@@ -47,16 +47,27 @@ export default defineConfig({
       //
       // RATCHET, not a target. These are set just under what the suite
       // actually achieves so the figure cannot regress; the goal remains
-      // 80/80/80/75. The whole gap is the nine tool components
-      // (accessibility, budget, comparison, extractor, gradient, harmony,
-      // mixer, swatch + chara-import), which together hold the bulk of the
-      // uncovered statements. Raise these numbers as those tests deepen; do
-      // not lower them.
+      // 80/80/80/75, which is also what `scripts/coverage-report.ts` holds
+      // every app to.
+      //
+      // 2026-09-03: raised from 71/55/65/72 after the coverage sweep. Five
+      // components had no test file at all (advanced-options-panel,
+      // v4/language-modal, export-sheet, v4/share-button, v4/dye-filters-v4 —
+      // 438 uncovered statements) and three more had suites that asserted
+      // shape rather than behaviour (v4/v4-color-wheel, camera-preview-modal,
+      // v4/result-card). Measured after that work: 78.45/64.08/74.63/79.82.
+      //
+      // What is left is the nine tool components (accessibility, budget,
+      // comparison, extractor, gradient, harmony, mixer, swatch +
+      // chara-import) plus v4/config-sidebar and result-card's context-menu
+      // action handlers; between them they hold most of the remaining
+      // uncovered statements and almost all of the branch gap. Raise these
+      // numbers as those tests deepen; do not lower them.
       thresholds: {
-        statements: 71,
-        branches: 55,
-        functions: 65,
-        lines: 72,
+        statements: 78,
+        branches: 63,
+        functions: 74,
+        lines: 79,
       },
     },
     // scripts/ holds the CI gates (check-bundle-size, check-beta-build,

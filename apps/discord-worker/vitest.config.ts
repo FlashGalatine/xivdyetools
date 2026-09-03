@@ -61,11 +61,17 @@ export default defineConfig({
       // 84.88%) even though nothing got LESS covered. `statements` moved
       // down to the new achieved figure; don't lower it further without a
       // similar reason.
+      //
+      // 2026-09-03 coverage sweep: measured 87.91/81.02/89.12/88.84, so the
+      // ratchet had drifted ~4 points below the achieved figure and no longer
+      // caught a regression. Re-set just under it. Branches now clears 80 —
+      // `src/index.ts` and `handlers/commands/preset.ts` still hold most of
+      // what is left.
       thresholds: {
-        statements: 84,
-        branches: 77,
-        functions: 88,
-        lines: 85,
+        statements: 87,
+        branches: 80,
+        functions: 89,
+        lines: 88,
       },
     },
   },
