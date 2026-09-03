@@ -233,7 +233,10 @@ describe('PresetService', () => {
 
             expect(result.page).toBe(3);
             expect(result.limit).toBe(10);
-            expect(db._bindings.some((b) => b.includes(10) && b.includes(20))).toBe(true); // LIMIT 10 OFFSET 20
+            // presets-api-11: `includes(10) && includes(20)` is order-blind and
+            // cannot tell a LIMIT/OFFSET swap from the correct order. The tuple
+            // is [status, limit, offset].
+            expect(db._bindings[0]).toEqual(['approved', 10, 20]);
         });
 
         it('should calculate has_more correctly', async () => {
@@ -308,9 +311,11 @@ describe('PresetService', () => {
 
             await getPresets(db, { search: 'test%_\\string' });
 
-            // The search pattern should be escaped
-            const query = db._queries.find((q) => q.includes('LIKE'));
-            expect(query).toBeDefined();
+            // presets-api-10: this used to assert only that a LIKE query ran.
+            // Replacing escapeLikePattern's body with `return str` kept it
+            // green -- and a search for `%` would then match EVERY preset.
+            // Assert the bound value.
+            expect(db._bindings.flat()).toContain('%test\\%\\_\\\\string%');
         });
 
         it('should filter by is_curated false', async () => {
@@ -319,7 +324,10 @@ describe('PresetService', () => {
 
             await getPresets(db, { is_curated: false });
 
-            expect(db._bindings.some((b) => b.includes(0))).toBe(true);
+            // presets-api-11: `some((b) => b.includes(0))` was satisfied by the
+            // OFFSET binding, which is 0 on page 1 -- so deleting the whole
+            // is_curated block left it true. Assert the full tuple, in order.
+            expect(db._bindings[0]).toEqual(['approved', 0, 20, 0]);
         });
 
         it('should filter by custom status', async () => {

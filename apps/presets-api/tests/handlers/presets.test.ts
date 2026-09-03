@@ -550,6 +550,170 @@ describe('PresetsHandler', () => {
             expect(body.moderation_status).toBe('approved');
         });
 
+        // ====================================================================
+        // presets-api-12: the three D1-failure recovery paths were DEAD to the
+        // suite. Neither `UNIQUE` nor `remaining_submissions` appeared anywhere
+        // under tests/, and no suite ever made an INSERT or UPDATE reject --
+        // even though `_setupMock` can throw, as the dead-letter suite already
+        // shows. One of these branches DELETES a user's just-created preset.
+        // ====================================================================
+        describe('D1 failure recovery (presets-api-12)', () => {
+            function executionCtx(): { ctx: ExecutionContext; promises: Promise<unknown>[] } {
+                const promises: Promise<unknown>[] = [];
+                return {
+                    ctx: {
+                        waitUntil: (pr: Promise<unknown>) => { promises.push(pr); },
+                        passThroughOnException: () => {},
+                    } as unknown as ExecutionContext,
+                    promises,
+                };
+            }
+
+            const authHeaders = {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer test-bot-secret',
+                'X-User-Discord-ID': '123',
+                'X-User-Discord-Name': 'TestUser',
+            };
+
+            // PRESETS-CRITICAL-001: the duplicate pre-check is check-then-insert,
+            // so a concurrent writer can win the race. The INSERT then violates
+            // the UNIQUE dye_signature index, and the handler must recover by
+            // voting on the winner instead of 500-ing.
+            it('votes on the winner when the INSERT loses a dye_signature race', async () => {
+                const { ctx } = executionCtx();
+                const winner = createMockPresetRow({ id: 'winner-1', status: 'approved' });
+
+                mockDb._setupMock((query: string) => {
+                    if (query.includes('FROM categories')) {
+                        return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                    }
+                    if (query.includes('INSERT INTO presets')) {
+                        throw new Error(
+                            'D1_ERROR: UNIQUE constraint failed: presets.dye_signature'
+                        );
+                    }
+                    // The post-race lookup finds the preset that won.
+                    if (query.includes('dye_signature')) {
+                        return winner;
+                    }
+                    if (query.includes('INSERT INTO votes')) {
+                        return { success: true, meta: { changes: 1 } };
+                    }
+                    if (query.includes('COUNT')) {
+                        return { count: 0 };
+                    }
+                    return { success: true };
+                });
+
+                const res = await app.request(
+                    '/api/v1/presets',
+                    { method: 'POST', headers: authHeaders, body: JSON.stringify(createMockSubmission()) },
+                    env,
+                    ctx
+                );
+
+                // Not a 500: the race is a known outcome with a defined answer.
+                expect(res.status).toBeLessThan(500);
+                expect(
+                    mockDb._queries.some((q) => q.includes('INSERT INTO votes')),
+                    'the loser should have voted on the winning preset'
+                ).toBe(true);
+            });
+
+            // BUG-049: the quota pre-check is also check-then-insert, so N
+            // concurrent submissions at 9/10 can all pass it. The handler
+            // re-counts AFTER its own INSERT lands and rolls itself back --
+            // deleting the preset AND its votes -- when the count overshot.
+            it('rolls back its own preset and votes when the quota overshot', async () => {
+                const { ctx } = executionCtx();
+                let insertedPresets = 0;
+
+                mockDb._setupMock((query: string) => {
+                    if (query.includes('FROM categories')) {
+                        return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                    }
+                    // Order matters: the INSERT statement LISTS the
+                    // `dye_signature` column, so a substring check for it would
+                    // swallow the insert and answer the duplicate-check branch.
+                    if (query.includes('INSERT INTO presets')) {
+                        insertedPresets += 1;
+                        return { success: true };
+                    }
+                    if (query.includes('dye_signature')) {
+                        return null;
+                    }
+                    if (query.includes('INSERT INTO votes')) {
+                        return { success: true, meta: { changes: 1 } };
+                    }
+                    // Every COUNT reports an overshoot: the pre-check passes
+                    // (it runs before the insert) and the post-insert re-count
+                    // is what trips the rollback.
+                    if (query.includes('COUNT')) {
+                        return insertedPresets > 0 ? { count: 99 } : { count: 0 };
+                    }
+                    return { success: true };
+                });
+
+                const res = await app.request(
+                    '/api/v1/presets',
+                    { method: 'POST', headers: authHeaders, body: JSON.stringify(createMockSubmission()) },
+                    env,
+                    ctx
+                );
+
+                expect(res.status).toBe(429);
+
+                // BOTH deletes must be issued -- a preset row left behind with
+                // its votes deleted, or vice versa, is worse than either.
+                expect(
+                    mockDb._queries.some((q) => /DELETE FROM votes WHERE preset_id/i.test(q)),
+                    'votes were not rolled back'
+                ).toBe(true);
+                expect(
+                    mockDb._queries.some((q) => /DELETE FROM presets WHERE id/i.test(q)),
+                    'the preset was not rolled back'
+                ).toBe(true);
+            });
+
+            // BUG-003: the same race on the EDIT path, which answers 409 rather
+            // than voting -- the author already owns a preset here.
+            it('answers 409 when an edit loses a dye_signature race', async () => {
+                const existing = createMockPresetRow({
+                    id: 'preset-123',
+                    author_discord_id: '123',
+                    status: 'approved',
+                });
+
+                mockDb._setupMock((query: string) => {
+                    if (query.includes('FROM categories')) {
+                        return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                    }
+                    if (query.includes('UPDATE presets')) {
+                        throw new Error(
+                            'D1_ERROR: UNIQUE constraint failed: presets.dye_signature'
+                        );
+                    }
+                    return existing;
+                });
+
+                const res = await app.request(
+                    '/api/v1/presets/preset-123',
+                    {
+                        method: 'PATCH',
+                        headers: authHeaders,
+                        body: JSON.stringify({ dyes: [1, 2, 3] }),
+                    },
+                    env
+                );
+
+                expect(res.status).toBe(409);
+                const body = await res.json() as { success: boolean; error: string };
+                expect(body.success).toBe(false);
+                expect(body.error).toBe('DUPLICATE_RESOURCE');
+            });
+        });
+
         it('should notify Discord worker when configured and content is flagged', async () => {
             const waitUntilPromises: Promise<unknown>[] = [];
             const mockExecutionCtx = {
