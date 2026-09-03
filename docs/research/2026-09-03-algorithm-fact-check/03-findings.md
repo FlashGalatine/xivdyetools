@@ -240,6 +240,24 @@ the default formula is out of step.
 
 **Note:** this is the "harmony ΔE76" item left open by the 2026-08-08 5.0 design review. It is still open.
 
+### The same shape, twice: harmony also always rotates in HSV
+
+`HarmonyGenerator` supports four rotation spaces (`hsv`, `hsl`, `lch`, `oklch`) and takes the HSV path
+whenever `options.colorSpace` is undefined (`:144`, `:375`). A repo-wide search finds **no caller that
+passes `colorSpace`** — the `colorSpace:` hits elsewhere are the gradient tool's unrelated
+`InterpolationMode`. So `rotateHueInSpace`'s `lch` and `oklch` branches are unreachable in production, and
+every harmony suggestion rotates hue in HSV.
+
+HSV is the worst of the four for this. Ottosson documents that a constant-S/V hue sweep gives *"clear
+differences in lightness for different hues — yellow, magenta and cyan appear much lighter than red and
+blue"*, so a fixed-angle rotation lands on colours of unintended lightness in a hue-dependent way.
+
+Two defaults, same pattern: a better option is implemented, wired, and never selected. See
+[05-harmony-geometry.md](./05-harmony-geometry.md) for the broader question of whether the offsets
+themselves are defensible — the short answer is that only analogous and monochromatic have direct
+psychophysical support, complementary is actively contested, and triadic/split-complementary/tetradic have
+never been tested at all.
+
 ---
 
 ## OK — CIEDE2000 **passes the published conformance vector**

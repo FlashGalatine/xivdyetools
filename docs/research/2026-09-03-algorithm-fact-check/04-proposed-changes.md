@@ -176,6 +176,12 @@ harmony results to change — changelog it.
 
 This closes the "harmony ΔE76" item left open by the 2026-08-08 5.0 design review.
 
+**And the same fix for the rotation space.** `HarmonyGenerator` takes the HSV path whenever
+`options.colorSpace` is undefined, and no caller passes it — so `oklch` and `lch` are implemented, wired,
+and unreachable. Default to `oklch`. HSV is the worst of the four here: a constant-S/V hue sweep varies in
+lightness by hue (yellow and cyan read much lighter than red and blue), so a fixed-angle rotation lands on
+an unintended lightness in a hue-dependent way. Also changes results; also changelog it.
+
 ### 3.5 Consider ΔEOK2 in place of plain ΔEOK for the `oklab` method
 
 CSS Color 4 §20.4 defines **ΔEOK2** — plain Oklab Euclidean with `a` and `b` scaled by 2 — because plain
@@ -243,7 +249,32 @@ Likewise `mixer-blending-engine.ts`'s docstring predicts *"RYB: Blue + Yellow = 
 *"Spectral: Blue + Yellow = Green"*. The first matches the Gossett–Chen path (`#8db26b`); the second is
 true of the web path and false of the bot's.
 
-### 4.2 Surface that the matching algorithm changes the answer
+### 4.2 Call the harmony schemes what they are
+
+Not a bug, and not an argument for removing anything — people want triadic schemes and the tool should
+offer them. But the labelling should not imply perceptual validation the rules do not have. From
+[05-harmony-geometry.md](./05-harmony-geometry.md):
+
+- **Analogous** and **monochromatic** have direct psychophysical support (Schloss & Palmer 2011: both
+  preference and harmony rise monotonically as hue difference shrinks — hue similarity explains 53.5 % and
+  67.3 % of variance respectively).
+- **Complementary** is contested. The same study reports *"virtually no evidence supporting Chevreul's
+  claim that contrastive hues are harmonious"*, with paint-complement pairs rated *less* harmonious than
+  near-complements.
+- **Split-complementary, triadic and tetradic have never been psychophysically tested** — in either
+  direction. Documented artistic tradition (Goethe 1810 → Itten 1961), no empirical confirmation.
+
+Also worth knowing internally: these offsets were defined on the artist's **RYB** wheel, where red's
+complement (green) sits at 180°. In HSV that same green is at ≈120°, so a 180° HSV rotation from red lands
+on **cyan**. There is no colorimetric standard for an RYB wheel, so this is not straightforwardly
+"fixable" — but it explains why a complementary suggestion sometimes does not look like what a painter
+would call the complement.
+
+*Optional, and the most evidence-backed thing the harmony tool could add:* a "closely related" mode driven
+by hue **similarity** rather than a fixed offset. That is the one robust finding across both major
+studies, and it is close to what analogous already does.
+
+### 4.3 Surface that the matching algorithm changes the answer
 
 Against the 125-dye set over 1 000 random queries, the non-default methods pick a *different* winning dye
 than `ciede2000` in 31.5 % (`cie76`), 31.7 % (`oklab`), 42.6 % (`redmean`) and 44.3 % (`rgb`) of cases.
@@ -267,9 +298,24 @@ should be called out in the changelog rather than slipped in.
 
 ## Explicitly not recommended
 
-- **Do not touch the k-d tree.** It is Euclidean-only and correctly used only for `matchingMethod ===
-  'rgb'`; all perceptual methods take an exact linear scan. At n = 125 that is the right design, and the
-  in-code comments already record why the previous pre-filter was removed.
+- **Do not touch the k-d tree, and do not "optimise" the perceptual scan onto it.** It is Euclidean-only
+  and correctly used only for `matchingMethod === 'rgb'`; all perceptual methods take an exact linear
+  scan. The in-code comments already record why the previous RGB-radius pre-filter was removed.
+
+  This audit strengthens that: a Euclidean axis bound is **not** a valid lower bound for CIEDE2000, so
+  pruning would be *unsafe*, not merely slow. Measured (`08-de00-vs-de76-bounds.mts`), the raw axis
+  difference overestimates ΔE₀₀ by up to **6.4×**, and ΔE₀₀ runs as low as 0.14× ΔE76 — so a pruned tree
+  would silently discard the branch holding the true winner, increasingly often as chroma rises, which is
+  exactly where a dye palette lives.
+
+  Note the plausible-sounding argument that *"S_L, S_C, S_H ≥ 1, therefore ΔE₀₀ ≤ ΔE76, therefore pruning
+  is conservative"* is **false** — the G factor amplifies a\* by up to 1.5× before those divisors apply,
+  and ΔE₀₀ measurably exceeds ΔE76 near the neutral axis (e.g. `(50,0,0)`→`(50,5,0)`: ΔE76 = 5.000,
+  ΔE₀₀ = 6.417). If a future optimisation pass revisits this, that is the trap.
+
+  If indexing ever genuinely becomes necessary at much larger n, the principled route is **DIN99o**
+  (Cui, Luo, Rigg, Roesler & Witt, 2002) — a fixed remap of Lab whose plain Euclidean distance
+  approximates CIEDE2000 accuracy while remaining a real metric, and therefore validly prunable.
 - **Do not switch the default matching method.** `ciede2000` is the industry standard and the current
   default. Nothing in this audit argues against it.
 - **Do not adopt Mixbox** without a licence review — see [02-mixing-algorithms.md](./02-mixing-algorithms.md).

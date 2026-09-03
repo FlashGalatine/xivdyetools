@@ -215,6 +215,38 @@ Either way it does not change the conclusion: swapping to a metric tree (VP-tree
 either, since their pruning correctness also *requires* the triangle inequality — see Ciaccia, Patella &
 Zezula, M-tree, VLDB 1997.
 
+**A tempting shortcut that does not work.** It is natural to reason: since S_L, S_C and S_H are all ≥ 1
+and ΔE₀₀ divides by them, ΔE₀₀ ≤ ΔE76 always — so Euclidean pruning would be *conservative* (safe, just
+slow). **This audit made that assumption initially, and it is false in both directions.** The G factor
+rescales a\* by up to 1.5× *before* the S divisors apply, and G is largest exactly where S_C and S_H are
+smallest — near the neutral axis. The two effects are anti-correlated.
+
+Measured against our own implementation (probe `08-de00-vs-de76-bounds.mts`):
+
+| | |
+|---|---|
+| `(50, 0, 0)` → `(50, 5, 0)` | ΔE76 = 5.0000, **ΔE₀₀ = 6.4165** — 28 % *larger* |
+| 300 000 random Lab pairs, max ΔE₀₀/ΔE76 | **1.1327** |
+| 300 000 random Lab pairs, min ΔE₀₀/ΔE76 | **0.1415** — ΔE₀₀ can be 7.1× smaller |
+| max (raw axis difference) / ΔE₀₀ | **6.38×** |
+
+The last row is the fatal one: a lower bound must never exceed the true distance, and this one does by up
+to 6.4×. Chroma sweep, holding L and hue fixed:
+
+| chroma span | raw \|Δa\*\| | ΔE₀₀ | ratio |
+|---|---|---|---|
+| 10 | 10 | 11.205 | 0.89× |
+| 50 | 50 | 25.034 | 2.00× |
+| 150 | 150 | 34.287 | 4.37× |
+
+Note both worked families have Δh′ = 0, so ΔH′ = 0 and the R_T cross-term vanishes identically — **the
+breakdown does not require R_T at all**; the S divisors are sufficient on their own. R_T (bounded,
+peaking near hue ≈ 275°, the blue region) is an additional, independent source of sign change on top.
+
+So a Euclidean-pruned tree queried by CIEDE2000 would not merely be slow — it would **silently return the
+wrong dye**, and not rarely: the failure grows with chroma, which is exactly where a saturated dye palette
+concentrates. The repo avoids this by construction. Keep it that way.
+
 **And at n = 125 the question is moot.** Exhaustive CIEDE2000 over 125 entries is a few hundred
 transcendental operations — well under the cost of building or walking any index. The general guidance is
 that k-d trees only start to win in the thousands; the field's answer to expensive CIEDE2000 comparison

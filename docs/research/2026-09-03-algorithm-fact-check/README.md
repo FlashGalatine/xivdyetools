@@ -15,7 +15,8 @@ in this pass.
 | [02-mixing-algorithms.md](./02-mixing-algorithms.md) | RGB, LAB, OKLAB, RYB, HSL, spectral — against the literature |
 | [03-findings.md](./03-findings.md) | **The defect catalogue.** Every entry has a reproducible probe. |
 | [04-proposed-changes.md](./04-proposed-changes.md) | **The proposal**, sequenced into four sprints |
-| [probes/](./probes/) | The five scripts that produced every number quoted |
+| [05-harmony-geometry.md](./05-harmony-geometry.md) | Harmony offsets — where they come from, and what the psychophysics actually supports |
+| [probes/](./probes/) | The eight scripts that produced every number quoted |
 
 Start with [03-findings.md](./03-findings.md) and [04-proposed-changes.md](./04-proposed-changes.md).
 
@@ -49,8 +50,18 @@ Core's **mixing** side has a live defect and a structural one.
    `A` (max ΔE₀₀ 27.9). The trilinear RYB cube is not surjective onto sRGB, so its numerical inverse
    cannot be made exact.
 
-Plus three smaller items: a dead `getDeltaE_OklchWeighted` whose hue term is under-weighted by π,
-harmony silently ranking by CIE76 while the suite defaults to CIEDE2000, and rounded CIE ε/κ constants.
+Plus a dead `getDeltaE_OklchWeighted` whose hue term is under-weighted by π, rounded pre-2004 CIE ε/κ
+constants, and — twice over — a better option that is implemented, wired and never selected: harmony
+ranks by CIE76 while the suite defaults to CIEDE2000, and rotates hue in HSV while `oklch` and `lch`
+support sits unreachable.
+
+On the harmony rules themselves ([05](./05-harmony-geometry.md)): only **analogous** and
+**monochromatic** have direct psychophysical support. **Complementary is actively contested** — the
+largest study of pair harmony reports "virtually no evidence supporting Chevreul's claim that contrastive
+hues are harmonious". **Triadic, split-complementary and tetradic have never been tested.** They are a
+well-documented artistic tradition (Goethe 1810 → Itten 1961) defined on the **RYB** wheel — where red's
+complement, green, sits at 180°; in HSV that green is at ≈120°, so a 180° HSV rotation from red lands on
+cyan. Nothing here is a bug; it is a labelling question.
 
 ## The architectural read
 
