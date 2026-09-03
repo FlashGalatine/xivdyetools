@@ -730,8 +730,18 @@ describe('LocalizationService', () => {
       }
     });
 
-    it('should have static clear', () => {
-      expect(typeof LocalizationService.clear).toBe('function');
+    // core-data-16: this asserted `typeof LocalizationService.clear === 'function'`,
+    // which cannot fail while the method exists and says nothing about whether
+    // it clears. Assert the behaviour its name promises.
+    it('clear() drops every loaded locale', async () => {
+      await LocalizationService.preloadLocales(['en', 'ja']);
+      expect(LocalizationService.isLocaleLoaded('en')).toBe(true);
+      expect(LocalizationService.isLocaleLoaded('ja')).toBe(true);
+
+      LocalizationService.clear();
+
+      expect(LocalizationService.isLocaleLoaded('en')).toBe(false);
+      expect(LocalizationService.isLocaleLoaded('ja')).toBe(false);
     });
   });
 });

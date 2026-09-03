@@ -419,15 +419,21 @@ describe('DyeSearch', () => {
         expect(closest?.name).toBe('Wine Red');
       });
 
+      // core-data-14: `findClosestDye` returns `Dye | null`, and vitest's
+      // `toBeDefined()` is `!== undefined` -- so `expect(null).toBeDefined()`
+      // PASSES. Both of these, and the optional-chained follow-ups
+      // (`closest?.id`, `closest?.category`), stayed green if the linear-scan
+      // fallback started returning null for every input. Assert non-null, and
+      // name the dye that must win.
       it('should exclude specified IDs using linear search', () => {
         const closest = fallbackSearch.findClosestDye('#FFFFFF', { excludeIds: [5729] });
-        expect(closest).toBeDefined();
+        expect(closest).not.toBeNull();
         expect(closest?.id).not.toBe(5729);
       });
 
       it('should exclude Facewear dyes using linear search', () => {
         const closest = fallbackSearch.findClosestDye('#FF0000');
-        expect(closest).toBeDefined();
+        expect(closest).not.toBeNull();
         expect(closest?.category).not.toBe('Facewear');
       });
 
@@ -438,7 +444,11 @@ describe('DyeSearch', () => {
 
       it('should handle 3-digit hex colors in linear search', () => {
         const closest = fallbackSearch.findClosestDye('#FFF');
-        expect(closest).toBeDefined();
+        // Fully vacuous before: `toBeDefined()` was the ONLY assertion, so
+        // "3-digit hex colours resolve in the linear scan" was asserted by
+        // nothing at all. #FFF must expand to #FFFFFF and pick the same dye.
+        expect(closest).not.toBeNull();
+        expect(closest?.id).toBe(fallbackSearch.findClosestDye('#FFFFFF')?.id);
       });
 
       it('should find closest to a mid-range color using linear search', () => {
