@@ -46,6 +46,7 @@ import sys
 import json
 from fontTools.ttLib import TTFont
 from fontTools.subset import Subsetter, Options
+from fontTools.varLib.instancer import instantiateVariableFont
 
 # ============================================================================
 # Configuration
@@ -193,6 +194,10 @@ def print_stats(codepoints):
 # Font subsetting
 # ============================================================================
 
+#: Weight the CJK subsets are pinned to (see FONT-001 note in subset_font).
+STATIC_WEIGHT = 400
+
+
 def subset_font(input_path, output_path, codepoints, fix_names=None):
     """Subset a font to only include the given codepoints."""
     font = TTFont(input_path)
@@ -205,6 +210,31 @@ def subset_font(input_path, output_path, codepoints, fix_names=None):
     subsetter = Subsetter(options=options)
     subsetter.populate(unicodes=codepoints)
     subsetter.subset(font)
+
+    # FONT-001: pin the variable face to a static instance.
+    #
+    # resvg (fontdb) cannot move a variable font's axis — it renders the
+    # DEFAULT instance and silently ignores `font-weight`. Noto Sans JP/SC/KR
+    # ship as variable fonts whose wght default is 100 (Thin), so every
+    # `font-weight="600"/"700"` the cards emit rendered CJK hairline-thin while
+    # the Latin runs beside it were correctly weighted. PR #148 fixed exactly
+    # this for Space Grotesk / Onest but instanced only those two families;
+    # subsetting preserves fvar, so the CJK faces stayed variable.
+    #
+    # One weight, not three: the three subsets are already ~1.0 MiB gzipped of
+    # the Worker's 3 MiB budget, so a Regular/SemiBold/Bold set per family would
+    # not fit. STATIC_WEIGHT 400 is the readable, neutral choice — CJK in a bold
+    # heading renders Regular rather than Thin. Real bold CJK needs the fonts
+    # moved out of the bundle first (see FONT-001 in
+    # docs/audits/2026-09-03-i18n/).
+    if "fvar" in font:
+        font = instantiateVariableFont(
+            font, {"wght": STATIC_WEIGHT}, inplace=False, updateFontNames=False
+        )
+        os2 = font["OS/2"]
+        os2.usWeightClass = STATIC_WEIGHT
+        os2.fsSelection = (os2.fsSelection & ~(1 << 5) & ~(1 << 0)) | (1 << 6)  # regular
+        font["head"].macStyle &= ~(1 << 0)  # not bold
 
     # Fix name records for variable fonts
     if fix_names:

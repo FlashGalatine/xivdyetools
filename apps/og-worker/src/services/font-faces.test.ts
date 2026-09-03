@@ -26,6 +26,31 @@ const fontsTs = readFileSync(join(HERE, 'fonts.ts'), 'utf8');
 const bundled = [...fontsTs.matchAll(/from '\.\.\/fonts\/([^']+\.ttf)'/g)].map((m) => m[1]);
 const fontBuffers = bundled.map((f) => new Uint8Array(readFileSync(join(HERE, '..', 'fonts', f))));
 
+/** Walk the sfnt table directory looking for one tag. Returns its offset, or -1. */
+function tableOffset(ttf: Uint8Array, want: string): number {
+  const dv = new DataView(ttf.buffer, ttf.byteOffset, ttf.byteLength);
+  const numTables = dv.getUint16(4);
+  for (let i = 0; i < numTables; i++) {
+    const rec = 12 + i * 16;
+    const tag = String.fromCharCode(ttf[rec], ttf[rec + 1], ttf[rec + 2], ttf[rec + 3]);
+    if (tag === want) return dv.getUint32(rec + 8);
+  }
+  return -1;
+}
+
+/** A face is variable iff it carries an `fvar` table — resvg renders only its default instance. */
+function hasVariableAxes(ttf: Uint8Array): boolean {
+  return tableOffset(ttf, 'fvar') >= 0;
+}
+
+/** OS/2.usWeightClass — the field fontdb matches `font-weight` against. */
+function usWeightClass(ttf: Uint8Array): number {
+  const off = tableOffset(ttf, 'OS/2');
+  if (off < 0) return 0;
+  const dv = new DataView(ttf.buffer, ttf.byteOffset, ttf.byteLength);
+  return dv.getUint16(off + 4); // version(2) + xAvgCharWidth(2)
+}
+
 function render(family: string, weight: number): Uint8Array {
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="48">` +
@@ -59,7 +84,28 @@ describe('bundled brand faces carry real weights', () => {
   });
 
   it('ships no variable font — resvg would render only its default instance', () => {
-    expect(bundled.filter((f) => /VariableFont/i.test(f))).toEqual([]);
+    // FONT-001: this used to match FILENAMES against /VariableFont/i, which the
+    // CJK subsets (`NotoSansJP-Subset.ttf` …) trivially evade — they shipped
+    // variable with a wght default of 100, so every CJK glyph rendered Thin
+    // beside correctly-weighted Latin, in ja/ko/zh only, for months. Read the
+    // actual `fvar` table off every bundled face instead of trusting its name.
+    const variable = bundled.filter((_f, i) => hasVariableAxes(fontBuffers[i]));
+    expect(variable, `variable font(s) bundled: ${variable.join(', ')}`).toEqual([]);
+  });
+
+  it('the CJK subsets are pinned to a usable static weight, not Thin', () => {
+    // They are deliberately ONE instance per family, not Regular/SemiBold/Bold:
+    // three weights each would not fit the Worker's 3 MiB gzipped budget. So
+    // they cannot take the three-weights-differ check below — assert instead
+    // that the pinned weight is the readable 400 and not the variable default
+    // of 100, which is the exact state FONT-001 found.
+    const cjk = bundled
+      .map((f, i) => [f, i] as const)
+      .filter(([f]) => /^NotoSans(JP|SC|KR)-/.test(f));
+    expect(cjk.length, 'no CJK subsets found in fonts.ts').toBeGreaterThan(0);
+    for (const [file, i] of cjk) {
+      expect(usWeightClass(fontBuffers[i]), `${file} usWeightClass`).toBe(400);
+    }
   });
 
   for (const family of ['Space Grotesk', 'Onest']) {
