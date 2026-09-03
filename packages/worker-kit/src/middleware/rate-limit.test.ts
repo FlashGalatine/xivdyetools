@@ -49,6 +49,15 @@ function buildApp(
   app.use('*', rateLimitMiddleware(options));
   app.get('/test', (c) => c.json({ ok: true }));
   app.post('/test', (c) => c.json({ ok: true }));
+  // pkg-worker-kit-test-utils-01: a handler that returns a RAW Response instead
+  // of going through c.json()/c.body(). Every other route here uses c.json,
+  // whose #newResponse merges Hono's #preparedHeaders -- which is exactly why
+  // the pre-next() c.header() placement looked correct for so long. This is the
+  // shape of api-worker's GET /v1/chara/icon/:id, on both miss and cache hit.
+  app.get(
+    '/raw',
+    () => new Response('bytes', { headers: { 'Content-Type': 'image/png' } }),
+  );
   return app;
 }
 
@@ -93,6 +102,39 @@ describe('rateLimitMiddleware', () => {
       expect(res.headers.get('X-RateLimit-Reset')).toBe(
         String(Math.ceil(resetAt.getTime() / 1000)),
       );
+    });
+
+    it('sets X-RateLimit-* on a handler that returns a raw Response', async () => {
+      const resetAt = new Date(Date.now() + 60_000);
+      const backend = createMockBackend({
+        check: vi.fn().mockResolvedValue({
+          allowed: true,
+          remaining: 42,
+          resetAt,
+          limit: 100,
+        }),
+      });
+      const app = buildApp({
+        backend,
+        keyExtractor: () => '10.0.0.1',
+        config: DEFAULT_CONFIG,
+      });
+
+      const res = await app.request('/raw');
+
+      // The slot was consumed, so the client must be told its budget: before
+      // the fix these were dropped entirely, while api-worker's CORS config
+      // advertises them in exposeHeaders and its deploy checklist asks an
+      // operator to verify them.
+      expect(res.status).toBe(200);
+      expect(res.headers.get('X-RateLimit-Limit')).toBe('100');
+      expect(res.headers.get('X-RateLimit-Remaining')).toBe('42');
+      expect(res.headers.get('X-RateLimit-Reset')).toBe(
+        String(Math.ceil(resetAt.getTime() / 1000)),
+      );
+      // The handler's own response is preserved, not replaced.
+      expect(res.headers.get('Content-Type')).toBe('image/png');
+      expect(await res.text()).toBe('bytes');
     });
 
     it('should call backend.check with the extracted key and config', async () => {

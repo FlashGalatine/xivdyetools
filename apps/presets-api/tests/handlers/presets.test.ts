@@ -680,19 +680,17 @@ describe('PresetsHandler', () => {
                     // too, and the response legitimately waits for that one). A
                     // 201 that arrives while the prune is still blocked is the
                     // proof that it rides waitUntil rather than the response.
-                    const sqlOf = new Map<unknown, string>();
-                    const prepare = mockDb.prepare.bind(mockDb);
-                    mockDb.prepare = (query: string) => {
-                        const statement = prepare(query);
-                        sqlOf.set(statement, query);
-                        return statement;
-                    };
+                    // The statement carries its own SQL (`_query`), so this no
+                    // longer needs an identity Map built by wrapping `prepare`.
+                    // That technique silently stopped working once `bind()`
+                    // began returning a NEW statement, the way real D1 does:
+                    // the object reaching `batch()` was never the recorded one.
                     let releasePrune!: () => void;
                     const pruneGate = new Promise<void>((resolve) => { releasePrune = resolve; });
                     const realBatch = mockDb.batch.bind(mockDb);
                     mockDb.batch = (async (statements: Parameters<typeof realBatch>[0]) => {
                         const isPrune = statements.some((s) =>
-                            /DELETE FROM failed_notifications/i.test(sqlOf.get(s) ?? '')
+                            /DELETE FROM failed_notifications/i.test(s._query)
                         );
                         if (isPrune) await pruneGate;
                         return realBatch(statements);
@@ -1825,15 +1823,9 @@ describe('PresetsHandler', () => {
             });
             mockDb._setupMock(() => mockRow);
 
-            // D1 statements are opaque once prepared, so remember the SQL each
-            // one was built from and read the batch back through that map.
-            const sqlOf = new Map<unknown, string>();
-            const prepare = mockDb.prepare.bind(mockDb);
-            mockDb.prepare = (query: string) => {
-                const statement = prepare(query);
-                sqlOf.set(statement, query);
-                return statement;
-            };
+            // A real D1 statement is opaque, but the mock carries the SQL it
+            // was prepared from on `_query` -- across `bind()`, which returns a
+            // new statement here as it does against real D1.
             const batchSpy = vi.spyOn(mockDb, 'batch');
 
             const res = await app.request(
@@ -1853,7 +1845,7 @@ describe('PresetsHandler', () => {
             // The cascade rides the batch that deletes the preset: it must not
             // survive a delete that failed, nor be skipped by one that succeeded.
             const deleteBatch = batchSpy.mock.calls
-                .map((call) => call[0].map((statement) => sqlOf.get(statement) ?? ''))
+                .map((call) => call[0].map((statement) => statement._query))
                 .find((queries) => queries.some((q) => q.includes('DELETE FROM presets')));
             expect(deleteBatch).toBeDefined();
             const cascade = deleteBatch!.find((q) => /DELETE FROM failed_notifications/i.test(q));

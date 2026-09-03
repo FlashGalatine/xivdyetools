@@ -48,7 +48,13 @@ describe('presets-api public rate limiter backend selection', () => {
         // BUG-044: the prefix was `public:ip:`, from when every key WAS an IP.
         // Service-binding traffic now buckets per acting Discord user, so the
         // prefix names only the namespace.
-        expect(binding.calls).toEqual(['public:203.0.113.5', 'public:203.0.113.5']);
+        // pkg-worker-kit-test-utils-05: the binding key now carries the
+        // tier's (limit, period), so two tiers sharing one binding cannot
+        // share a counter. PUBLIC_LIMITS is 100 requests / 60s.
+        expect(binding.calls).toEqual([
+            'public:203.0.113.5:t100_60',
+            'public:203.0.113.5:t100_60',
+        ]);
     });
 
     /**
@@ -72,10 +78,10 @@ describe('presets-api public rate limiter backend selection', () => {
         await app.request('/test', { headers: { 'X-User-Discord-ID': '222222222222222222' } }, env);
 
         expect(binding.calls).toEqual([
-            'public:111111111111111111',
-            'public:222222222222222222',
+            'public:111111111111111111:t100_60',
+            'public:222222222222222222:t100_60',
         ]);
-        expect(binding.calls).not.toContain('public:unknown');
+        expect(binding.calls).not.toContain('public:unknown:t100_60');
     });
 
     it('still falls back to the IP when no acting user is named', async () => {
@@ -85,7 +91,7 @@ describe('presets-api public rate limiter backend selection', () => {
 
         await app.request('/test', { headers: { 'CF-Connecting-IP': '198.51.100.7' } }, env);
 
-        expect(binding.calls).toEqual(['public:198.51.100.7']);
+        expect(binding.calls).toEqual(['public:198.51.100.7:t100_60']);
     });
 
     it('ignores a header that is not snowflake-shaped', async () => {
@@ -102,7 +108,7 @@ describe('presets-api public rate limiter backend selection', () => {
             env
         );
 
-        expect(binding.calls).toEqual(['public:198.51.100.7']);
+        expect(binding.calls).toEqual(['public:198.51.100.7:t100_60']);
     });
 
     it('keeps the memory limiter when RL_PUBLIC is not bound', async () => {
