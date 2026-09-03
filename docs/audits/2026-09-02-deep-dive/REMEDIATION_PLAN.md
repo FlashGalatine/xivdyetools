@@ -205,7 +205,13 @@ Note: a bare `wrangler deploy` **is** production for this worker, and its versio
 
 **Deploy needs:** merge → `deploy-oauth.yml`. Remember a bare `wrangler deploy` **is** production for this worker.
 
-## Sprint 11 — `og-worker` deploy
+## Sprint 11 — `og-worker` deploy — ✅ COMPLETED 2026-09-02 (`35914823`)
+
+**Deploy needs:** merge → `deploy-og-worker.yml` (production env). og-worker 2.4.0 → 2.5.0; `@xivdyetools/core` 4.0.3 → **4.1.0** and `@xivdyetools/svg` 3.0.2 → **3.1.0** (each gains a public export — `HARMONY_OFFSETS` and `bandInk` — so MINOR, not the PATCH they were sitting at). web-app keeps 5.0.2: `HARMONY_OFFSETS` moved to core and is re-exported byte-identically.
+
+og-12 was not scheduled by this plan (a LOW og-worker refactor that fell between the rows); it is done here, since it is the same algorithm-consistency theme as BUG-023/024.
+
+**Filed, not fixed:** `@xivdyetools/bot-logic`'s own `IDEAL_OFFSETS` carries the same divergent `analogous: [30, -30, 180]` and knows neither `compound` nor `shades`. The bot's embed and its card agree with *each other*, so this is a divergence rather than BUG-022 — and reconciling it changes what `/harmony` returns for every user, which is a product decision like `moderation-worker-11`. Documented on the new core constant.
 
 Its bare `wrangler deploy` is the live beta, so use `deploy:production` for production.
 
@@ -220,7 +226,11 @@ Its bare `wrangler deploy` is the live beta, so use `deploy:production` for prod
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-og-worker...` → merge → `deploy-og-worker.yml` (production env).
 
-## Sprint 12 — `image-worker` deploy
+## Sprint 12 — `image-worker` deploy — ✅ COMPLETED 2026-09-02 (`1af1cac0`)
+
+**Deploy needs:** merge → `deploy-image-worker.yml` **and** `deploy-discord-worker.yml` (image-stoat-07's marker lives in discord-worker). image-worker 1.2.1 → **1.3.0** (minor: the accepted pixel range shrank, so some inputs that used to reach photon are now rejected at the gate); discord-worker 5.1.2 → 5.1.3.
+
+**Deviation from the plan row:** REFACTOR-007 says to import the `maxDimension` pair *from `photon.js`*. That fails — every route test mocks `./photon.js` wholesale, so a rule the route reaches through it is `undefined` under test (five `index-limits` cases went red). The shared rule lives in `validators.ts`, which nothing mocks. image-stoat-04 (a Sprint 18 row) was also done here, because it is the test that proves BUG-053.
 
 | ID | Sev | Item |
 |---|---|---|
@@ -230,7 +240,13 @@ Its bare `wrangler deploy` is the live beta, so use `deploy:production` for prod
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-image-worker...` → merge → `deploy-image-worker.yml`.
 
-## Sprint 13 — `@xivdyetools/logger` publish
+## Sprint 13 — `@xivdyetools/logger` publish — ✅ COMPLETED 2026-09-02 (`e1ca03a1`)
+
+**Deploy needs:** bump → merge → Actions publish. logger 2.1.2 → **2.2.0** (minor: `sanitizeErrorMessage`'s output changes shape for non-`Bearer` schemes, and a cyclic back-edge is now a string where it used to be an object — either could surprise a consumer asserting on log output).
+
+BUG-004 closes the residual 2.1.2 listed under *Still not covered*. That follow-up was weighing two re-orderings of the guard; the fix is a third option neither considered — **both guards return the `'[Circular]'` sentinel**, with the check ordering untouched, so every property S10-R16 pins still holds and its two tests still discriminate the same mutation.
+
+**Worth reading before touching `sanitizeErrorMessage` again:** the first cut of BUG-005 extended the free-text scheme pass to `Bearer|Basic|Bot|Digest|Token`. Four of those five are ordinary English — it turned oauth's `'XIVAuth token exchange failed'` into `'XIVAuth token [REDACTED] failed'`, and a real oauth test caught it. The scheme handling belongs in the `authorization=` rule, where the key name supplies the context.
 
 | ID | Sev | Item |
 |---|---|---|
@@ -241,7 +257,11 @@ Its bare `wrangler deploy` is the live beta, so use `deploy:production` for prod
 
 **Ends with:** `pnpm turbo run build test --filter=@xivdyetools/logger` → bump → merge → Actions publish.
 
-## Sprint 14 — logger consumer redeploys
+## Sprint 14 — logger consumer redeploys — ✅ COMPLETED 2026-09-02 (`e1ca03a1`, with Sprint 13)
+
+**Deploy needs:** none beyond what this PR already fires — every consumer bundles `workspace:*` at build time, so merging redeploys them all against the new logger regardless of the npm publish.
+
+BUG-061 was the sprint's one code change and is done. The shim's ~560 call sites are variadic and console-shaped, so the façade stays and routes through the package: the first argument becomes the message and **every remaining argument becomes context**, which is the load-bearing half — an argument that does not reach the context object is one redaction never sees. Two deliberate non-changes: the dev gates stay web-app's own (the package's production level is `warn`, so delegating would start emitting warnings in production), and `group`/`groupEnd`/`table` stay on `console` (presentation, not log records; no production call site uses them).
 
 No code changes: pick up the Sprint 13 publish. One merge per unit, in whatever order suits the release calendar — `web-app` (which also needs BUG-061, wiring `browserLogger` in place of the raw console shim so redaction runs at all), then the six workers.
 

@@ -224,7 +224,7 @@ Checked and dropped, so the next audit does not re-chase them.
 
 ## Remediation status
 
-The audit itself modified no source file. Sprints 1–10 of `REMEDIATION_PLAN.md` were then executed with the user's approval on 2026-09-02.
+The audit itself modified no source file. Sprints 1–14 of `REMEDIATION_PLAN.md` were then executed with the user's approval on 2026-09-02.
 
 | ID | Status | Commit |
 |---|---|---|
@@ -249,6 +249,9 @@ The audit itself modified no source file. Sprints 1–10 of `REMEDIATION_PLAN.md
 | BUG-041, BUG-042, BUG-043, BUG-044, BUG-045, REFACTOR-003, `presets-api-02/07/08/15` | FIXED | `ea8dc352` |
 | BUG-047, BUG-048, OPT-004, `api-worker-04/05/06/07/12/13` | FIXED | `0bc669e4` |
 | BUG-049, BUG-050, BUG-051, `oauth-05/06/07/08/09/11` | FIXED | Sprint 10 |
+| BUG-021, BUG-022, BUG-023, BUG-024, BUG-025, REFACTOR-002, OPT-006, `og-6/7/8/12` | FIXED | `35914823` |
+| BUG-052, BUG-053, REFACTOR-007, `image-stoat-02/04/06/07` | FIXED | `1af1cac0` |
+| BUG-004, BUG-005, BUG-104, OPT-007, BUG-061 | FIXED | `e1ca03a1` |
 | everything else | OPEN | — |
 
 **Deliberately not done in Sprint 3:** OPT-005 (drop the per-colour `getAllDyes` copy) and OPT-009 (add an LRU to `rgbToRyb`). Both are LOW-impact optimizations whose fixes carry more risk than the gain: OPT-005 would change `getAllDyes`'s defensive-copy contract for every caller, and OPT-009 would put a cache in front of a conversion this same sprint rewrote. Correctness first; measure before caching.
@@ -257,17 +260,30 @@ The audit itself modified no source file. Sprints 1–10 of `REMEDIATION_PLAN.md
 
 **Deliberately not done in Sprint 10:** `oauth-10` (`UPDATE … RETURNING *` to collapse two D1 round trips on the returning-user sign-in). A latency optimisation, and the hand-rolled D1 mock answers `.first()` from a scripted queue regardless of the statement — so a `RETURNING` clause silently consumes the response meant for the follow-up `SELECT` and the change ships with its behaviour unverifiable. Applied, observed turning an error-path test green for the wrong reason, and taken back out. `oauth-06` took the review's second option (bind explicit timestamps) for the same reason.
 
-**Gate at the end of Sprint 10:** `pnpm turbo run build type-check lint test` — 61/61 tasks green (warnings only, all pre-existing), plus the discord-worker bundle gate at ~2,698 KiB / 87.8 % of the 3,072 KiB cap.
+**Filed in Sprint 11, not fixed:** `@xivdyetools/bot-logic`'s own `IDEAL_OFFSETS` carries the same divergent `analogous: [30, -30, 180]` that BUG-022 corrects in og-worker, and knows neither `compound` nor `shades`. It is a *divergence* rather than BUG-022, because the bot's embed and its card agree with each other — nothing the user sees contradicts anything else the user sees. Reconciling it changes what `/harmony` returns for every bot user, which is a product decision like `moderation-worker-11`. Documented on the new `HARMONY_OFFSETS` constant in core.
 
-### Three tests that passed for the wrong reason
+**Deviation in Sprint 12:** REFACTOR-007's row says to import the shared `maxDimension` rule *from `photon.js`*. That does not work — every image-worker route test mocks `./photon.js` wholesale, so a rule the route reaches through it is `undefined` under test (five `index-limits` cases went red on the attempt). The rule lives in `validators.ts`, which nothing mocks, and both sides import it from there.
+
+**Gate at the end of Sprint 14:** `pnpm turbo run build type-check lint test` — 61/61 tasks green (warnings only, all pre-existing), plus the discord-worker bundle gate at ~2,698 KiB / 87.8 % of the 3,072 KiB cap and og-worker's own dry-run bundle at 2,214 KiB gzip / 72 % of its cap.
+
+### Tests that passed for the wrong reason — and one fix that was wrong
 
 Worth naming together, because the same shape recurs and each was caught only by mutation-proving:
 
 1. **BUG-049** — the error-redirect test passed against the *unfixed* code, because the test env's `FRONTEND_URL` is `localhost:5173` and so was the origin under test. Fixed by picking an allowlisted origin that is **not** `FRONTEND_URL`.
 2. **BUG-030** (Sprint 6) — a test going through `getFontBuffers()` measures an *empty* coverage set, since an unmocked `.ttf` import resolves to a URL string and coerces to a zero-length buffer without throwing. Fixed by reading the real font files off disk.
 3. **BUG-048** — the API-7 limiter test drove the IP-less path, which *is* the shared bucket, so the collapse it was meant to bound was invisible with one caller.
+4. **BUG-054** (Sprint 4) — the canvas test stayed green with the measurement reverted, because the render-time `fitText` keeps the line inside 400 px by *cutting* it. A gate that proves only "it fits" can be satisfied the wrong way.
+5. **image-stoat-04** (Sprint 12) — `it('calls crop with correct arguments')` asserted `expect.any(Number)` on all four coordinates, so it could not fail for *any* crop box, including the degenerate 1×0 one BUG-053 fixes.
+6. **pkg-foundation-02** (Sprint 13) — the test that builds BUG-004's exact leak asserted only `not.toThrow()`. Its fixture even *names* the secret (`{ token: 'shhh' }`) and then never looks at it.
 
-In every case the assertion was correct and the *fixture* made it unfalsifiable.
+In every case the assertion was correct and the *fixture* made it unfalsifiable. Two more, from Sprint 12's own findings: the pixel-cap suite carried a comment observing that "the pixel count branch [is] unreachable — dimension check always triggers first" and tested the dimension check instead of asking why (that unreachability *was* BUG-052), and my `Bot` fixture for BUG-005 initially used a realistic Discord token, which `DISCORD_TOKEN_VALUE_PATTERN` rescues whatever the scheme handling does — so that row did not discriminate until the fixture stopped looking like a Discord token.
+
+### One fix that was wrong, caught by another unit's test
+
+BUG-005's first cut extended the free-text auth-scheme pass to `Bearer|Basic|Bot|Digest|Token` so the scheme word could be preserved. Four of those five are ordinary English. It turned oauth's real log line `'XIVAuth token exchange failed'` into `'XIVAuth token [REDACTED] failed'` (`Token` + ` exchange`), and `'bot token missing'` would have gone the same way — a redaction fix that quietly destroys diagnosability is not a fix. A real oauth test caught it, which is the argument for running the *whole-graph* gate rather than the touched package's, on any change to a shared package. The scheme handling belongs in the `authorization=` rule, where the key name supplies the context that makes a following word unambiguous.
+
+**Version bumps across Sprints 11–14:** `@xivdyetools/core` 4.0.3 → **4.1.0** and `@xivdyetools/svg` 3.0.2 → **3.1.0** (each gains a public export — `HARMONY_OFFSETS` and `bandInk` — so MINOR, not the PATCH they were sitting at), `@xivdyetools/logger` 2.1.2 → **2.2.0**, `xivdyetools-og-worker` 2.4.0 → **2.5.0**, `xivdyetools-image-worker` 1.2.1 → **1.3.0**, `xivdyetools-discord-worker` 5.1.2 → **5.1.3**. og-worker's version is now load-bearing: it rides every `/og/*` edge-cache key (BUG-025), so bumping it is what retires already-rendered cards.
 
 **Version bumps across Sprints 4–7:** `@xivdyetools/svg` 3.0.1 → **3.0.2**, `@xivdyetools/types` 2.0.1 → **3.0.0** (breaking: `ModerationStats` field names corrected — see its changelog), `xivdyetools-discord-worker` 5.1.1 → **5.1.2**, `xivdyetools-moderation-worker` 1.6.1 → **1.6.2**. `@xivdyetools/core` 4.0.3 and `@xivdyetools/bot-logic` 3.0.1 were already bumped in Sprint 3 and remain unpublished, so Sprint 5's further bot-logic changes ride that same 3.0.1.
 
