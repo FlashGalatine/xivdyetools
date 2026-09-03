@@ -9,6 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { blendColors } from './index.js';
+import { rgbToRyb } from './conversions.js';
 import type { BlendingMode } from './types.js';
 
 const HEX_PATTERN = /^#[0-9a-f]{6}$/i;
@@ -33,8 +34,10 @@ describe('blendColors', () => {
   });
 
   describe('ratio boundaries', () => {
-    // Modes with bijective color space conversions (ratio=0/1 return exact input)
-    const bijectiveModes: BlendingMode[] = ['rgb', 'lab', 'oklab', 'hsl', 'spectral'];
+    // BUG-006: 'ryb' now belongs here. Its conversion is bijective on the
+    // chromatic axes (rgbToRyb is the exact inverse of rybToRgb), and the
+    // exemption below it was what let green-maps-to-blue ship.
+    const bijectiveModes: BlendingMode[] = ['rgb', 'lab', 'oklab', 'hsl', 'spectral', 'ryb'];
 
     for (const mode of bijectiveModes) {
       it(`${mode}: ratio=0 returns first color`, () => {
@@ -54,18 +57,6 @@ describe('blendColors', () => {
       });
     }
 
-    // RYB uses an approximate conversion — round-trip is lossy
-    it('ryb: ratio=0 and ratio=1 still produce valid colors', () => {
-      const at0 = blendColors('#FF6B6B', '#6BCB77', 'ryb', 0);
-      const at1 = blendColors('#FF6B6B', '#6BCB77', 'ryb', 1);
-
-      expect(at0.hex).toMatch(HEX_PATTERN);
-      expect(at1.hex).toMatch(HEX_PATTERN);
-      // ratio=0 should be closer to first color than ratio=1
-      const dist0 = Math.abs(at0.rgb.r - 255) + Math.abs(at0.rgb.g - 107);
-      const dist1 = Math.abs(at1.rgb.r - 255) + Math.abs(at1.rgb.g - 107);
-      expect(dist0).toBeLessThan(dist1);
-    });
   });
 
   describe('ratio clamping', () => {
@@ -99,7 +90,15 @@ describe('blendColors', () => {
   });
 
   describe('same color input', () => {
-    const bijectiveModes: BlendingMode[] = ['rgb', 'lab', 'oklab', 'hsl', 'spectral'];
+    /**
+     * BUG-006: 'ryb' used to be exempted from this list, and its stand-in
+     * asserted only `r > 50 && b > 100` on a PURPLE — the one hue family the
+     * defect did not touch. Green and blue mapped to the same RYB triple, so
+     * every green and teal came back blue on the bot's default /mix mode, and
+     * the suite stayed green throughout. The exemption is gone and the hues
+     * that actually broke are covered below.
+     */
+    const bijectiveModes: BlendingMode[] = ['rgb', 'lab', 'oklab', 'hsl', 'spectral', 'ryb'];
 
     for (const mode of bijectiveModes) {
       it(`${mode}: blending a color with itself returns the same color`, () => {
@@ -111,12 +110,30 @@ describe('blendColors', () => {
       });
     }
 
-    it('ryb: blending a color with itself produces a valid result', () => {
-      const result = blendColors('#8B5CF6', '#8B5CF6', 'ryb');
+    it.each([
+      ['pure green', '#00FF00'],
+      ['mid green', '#40A040'],
+      ['pale green', '#7FBF7F'],
+      ['teal', '#008080'],
+      ['pure blue', '#0000FF'],
+      ['yellow', '#FFFF00'],
+      ['olive', '#808000'],
+      ['pure red', '#FF0000'],
+    ])('ryb: %s blended with itself keeps its hue', (_label, hex) => {
+      expect(blendColors(hex, hex, 'ryb').hex.toLowerCase()).toBe(hex.toLowerCase());
+    });
 
-      expect(result.hex).toMatch(HEX_PATTERN);
-      expect(result.rgb.r).toBeGreaterThan(50);
-      expect(result.rgb.b).toBeGreaterThan(100);
+    it('ryb: green and blue are distinguishable in RYB space', () => {
+      // The defect: both collapsed to { r: 0, y: 0, b: 1 }, which is why the
+      // round trip could not tell them apart.
+      expect(rgbToRyb({ r: 0, g: 255, b: 0 })).not.toEqual(rgbToRyb({ r: 0, g: 0, b: 255 }));
+    });
+
+    it('ryb: blue and yellow make green, which is the point of RYB', () => {
+      const mixed = blendColors('#0000FF', '#FFFF00', 'ryb');
+
+      expect(mixed.rgb.g).toBeGreaterThan(mixed.rgb.r);
+      expect(mixed.rgb.g).toBeGreaterThan(mixed.rgb.b);
     });
   });
 

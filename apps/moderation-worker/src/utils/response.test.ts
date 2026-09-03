@@ -3,13 +3,9 @@ import {
   pongResponse,
   messageResponse,
   ephemeralResponse,
-  embedResponse,
   deferredResponse,
-  autocompleteResponse,
   errorEmbed,
   successEmbed,
-  infoEmbed,
-  hexToDiscordColor,
   MessageFlags,
   updateMessageResponse,
   rateLimitedResponse,
@@ -174,82 +170,6 @@ describe('ephemeralResponse', () => {
   });
 });
 
-describe('embedResponse', () => {
-  it('should create embed response without components', async () => {
-    const embed: DiscordEmbed = {
-      title: 'Test',
-      description: 'Description',
-      color: 0x00ff00,
-    };
-
-    const response = embedResponse(embed);
-    const body = await response.json() as any;
-
-    expect(body.data.embeds).toHaveLength(1);
-    expect(body.data.embeds[0]).toEqual(embed);
-    expect(body.data.components).toBeUndefined();
-  });
-
-  it('should create embed response with components', async () => {
-    const embed: DiscordEmbed = {
-      title: 'Test',
-      description: 'Description',
-    };
-
-    const button: DiscordButton = {
-      type: 2,
-      style: 1,
-      label: 'Button',
-      custom_id: 'btn',
-    };
-
-    const actionRow: DiscordActionRow = {
-      type: 1,
-      components: [button],
-    };
-
-    const response = embedResponse(embed, [actionRow]);
-    const body = await response.json() as any;
-
-    expect(body.data.embeds).toHaveLength(1);
-    expect(body.data.components).toHaveLength(1);
-    expect(body.data.components[0].components[0].label).toBe('Button');
-  });
-
-  it('should handle embed with all optional fields', async () => {
-    const embed: DiscordEmbed = {
-      title: 'Title',
-      description: 'Description',
-      color: 0xff0000,
-      fields: [
-        { name: 'Field 1', value: 'Value 1', inline: true },
-        { name: 'Field 2', value: 'Value 2', inline: false },
-      ],
-      footer: {
-        text: 'Footer text',
-        icon_url: 'https://example.com/icon.png',
-      },
-      image: {
-        url: 'https://example.com/image.png',
-      },
-      thumbnail: {
-        url: 'https://example.com/thumb.png',
-      },
-      author: {
-        name: 'Author Name',
-        icon_url: 'https://example.com/author.png',
-        url: 'https://example.com/author',
-      },
-      timestamp: '2025-01-15T12:00:00Z',
-    };
-
-    const response = embedResponse(embed);
-    const body = await response.json() as any;
-
-    expect(body.data.embeds[0]).toEqual(embed);
-  });
-});
-
 describe('deferredResponse', () => {
   it('should create non-ephemeral deferred response by default', async () => {
     const response = deferredResponse();
@@ -273,53 +193,6 @@ describe('deferredResponse', () => {
 
     expect(body.type).toBe(InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
     expect(body.data).toBeUndefined();
-  });
-});
-
-describe('autocompleteResponse', () => {
-  it('should create autocomplete response with choices', async () => {
-    const choices = [
-      { name: 'Option 1', value: 'opt1' },
-      { name: 'Option 2', value: 'opt2' },
-      { name: 'Option 3', value: 'opt3' },
-    ];
-
-    const response = autocompleteResponse(choices);
-    const body = await response.json() as any;
-
-    expect(body.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
-    expect(body.data.choices).toEqual(choices);
-    expect(body.data.choices).toHaveLength(3);
-  });
-
-  it('should handle empty choices array', async () => {
-    const response = autocompleteResponse([]);
-    const body = await response.json() as any;
-
-    expect(body.data.choices).toEqual([]);
-  });
-
-  it('should handle single choice', async () => {
-    const choices = [{ name: 'Only Option', value: 'only' }];
-
-    const response = autocompleteResponse(choices);
-    const body = await response.json() as any;
-
-    expect(body.data.choices).toHaveLength(1);
-    expect(body.data.choices[0].name).toBe('Only Option');
-  });
-
-  it('should handle choices with special characters', async () => {
-    const choices = [
-      { name: 'Option with "quotes"', value: 'quotes' },
-      { name: 'Option with <html>', value: 'html' },
-    ];
-
-    const response = autocompleteResponse(choices);
-    const body = await response.json() as any;
-
-    expect(body.data.choices[0].name).toBe('Option with "quotes"');
-    expect(body.data.choices[1].name).toBe('Option with <html>');
   });
 });
 
@@ -370,77 +243,6 @@ describe('successEmbed', () => {
 
     expect(embed.description).toBe(longDesc);
     expect(embed.description!.length).toBe(1000);
-  });
-});
-
-describe('infoEmbed', () => {
-  it('should create info embed with Discord blurple color', () => {
-    const embed = infoEmbed('Info Title', 'Info description');
-
-    expect(embed.title).toBe('ℹ️ Info Title');
-    expect(embed.description).toBe('Info description');
-    expect(embed.color).toBe(0x5865f2); // Discord blurple
-  });
-
-  it('should prepend info emoji to title', () => {
-    const embed = infoEmbed('Notice', 'Please read this');
-
-    expect(embed.title).toContain('ℹ️');
-    expect(embed.title).toContain('Notice');
-  });
-
-  it('should handle multiline descriptions', () => {
-    const multiline = 'Line 1\nLine 2\nLine 3';
-    const embed = infoEmbed('Info', multiline);
-
-    expect(embed.description).toBe(multiline);
-  });
-});
-
-describe('hexToDiscordColor', () => {
-  it('should convert hex string with hash to number', () => {
-    const color = hexToDiscordColor('#ff0000');
-    expect(color).toBe(0xff0000);
-  });
-
-  it('should convert hex string without hash to number', () => {
-    const color = hexToDiscordColor('00ff00');
-    expect(color).toBe(0x00ff00);
-  });
-
-  it('should handle lowercase hex', () => {
-    const color = hexToDiscordColor('#abcdef');
-    expect(color).toBe(0xabcdef);
-  });
-
-  it('should handle uppercase hex', () => {
-    const color = hexToDiscordColor('#ABCDEF');
-    expect(color).toBe(0xabcdef);
-  });
-
-  it('should handle mixed case hex', () => {
-    const color = hexToDiscordColor('#AbCdEf');
-    expect(color).toBe(0xabcdef);
-  });
-
-  it('should handle black color', () => {
-    const color = hexToDiscordColor('#000000');
-    expect(color).toBe(0x000000);
-  });
-
-  it('should handle white color', () => {
-    const color = hexToDiscordColor('#ffffff');
-    expect(color).toBe(0xffffff);
-  });
-
-  it('should handle Discord blurple', () => {
-    const color = hexToDiscordColor('#5865f2');
-    expect(color).toBe(0x5865f2);
-  });
-
-  it('should handle short hex codes', () => {
-    const color = hexToDiscordColor('#fff');
-    expect(color).toBe(0xfff);
   });
 });
 

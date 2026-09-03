@@ -1531,4 +1531,122 @@ describe('redmean distance and distinguishability', () => {
     const p2 = ColorConverter.getDistinguishabilityPercent('#808080', '#828080');
     expect(p1).toBe(p2);
   });
+
+  // ==========================================================================
+  // core-color-05: BUG-005 cache poisoning — the defensive copies had NO test
+  // ==========================================================================
+  //
+  // Every cached converter makes TWO defensive copies, and they guard different
+  // moments:
+  //   `return { ...result }`  on the cache MISS  — the object it just stored
+  //   `return { ...cached }`  on the cache HIT   — the object it stored earlier
+  // Both exist so a caller mutating a returned object cannot poison the
+  // process-wide LRU cache (BUG-005, a HIGH finding). Deleting all of them left
+  // the whole suite green: nothing under services/color/__tests__ asserted
+  // object identity except on a pass-through that never touches the cache.
+  //
+  // Note the asymmetry, because it is easy to write a test that cannot fail:
+  // after `clearCaches()` the FIRST call is a miss, so it exercises only the
+  // miss-path copy. Reaching the hit-path copy needs a warm-up call first.
+  describe('cached converters return copies, not the cached object (BUG-005)', () => {
+    beforeEach(() => {
+      ColorConverter.clearCaches();
+    });
+
+    /**
+     * @param call   invokes the converter with fixed arguments
+     * @param poison mutates a returned object in place
+     * @param read   pulls the field `poison` corrupts back out
+     */
+    function expectCacheIsProtected<T extends object>(
+      call: () => T,
+      poison: (value: T) => void,
+      read: (value: T) => number
+    ): void {
+      // --- cache MISS path -------------------------------------------------
+      const fromMiss = call();
+      const expected = read(fromMiss);
+      poison(fromMiss);
+      expect(read(call()), 'a mutated MISS result poisoned the cache').toBe(expected);
+
+      // --- cache HIT path --------------------------------------------------
+      ColorConverter.clearCaches();
+      call(); // warm: this one is the miss
+      const fromHit = call(); // and this one is the hit
+      poison(fromHit);
+      expect(read(call()), 'a mutated HIT result poisoned the cache').toBe(expected);
+    }
+
+    it('hexToRgb', () => {
+      expectCacheIsProtected(
+        () => ColorConverter.hexToRgb('#FF0000'),
+        (rgb) => {
+          rgb.r = 0;
+        },
+        (rgb) => rgb.r
+      );
+    });
+
+    it('rgbToHsv', () => {
+      expectCacheIsProtected(
+        () => ColorConverter.rgbToHsv(255, 0, 0),
+        (hsv) => {
+          hsv.h = 999;
+        },
+        (hsv) => hsv.h
+      );
+    });
+
+    it('hsvToRgb', () => {
+      expectCacheIsProtected(
+        () => ColorConverter.hsvToRgb(0, 100, 100),
+        (rgb) => {
+          rgb.g = 200;
+        },
+        (rgb) => rgb.g
+      );
+    });
+
+    it('hexToHsv', () => {
+      expectCacheIsProtected(
+        () => ColorConverter.hexToHsv('#00FF00'),
+        (hsv) => {
+          hsv.h = -1;
+        },
+        (hsv) => hsv.h
+      );
+    });
+
+    it('rgbToLab', () => {
+      expectCacheIsProtected(
+        () => ColorConverter.rgbToLab(255, 0, 0),
+        (lab) => {
+          lab.L = -999;
+        },
+        (lab) => lab.L
+      );
+    });
+
+    it('rgbToOklab', () => {
+      expectCacheIsProtected(
+        () => ColorConverter.rgbToOklab(255, 0, 0),
+        (oklab) => {
+          oklab.L = -999;
+        },
+        (oklab) => oklab.L
+      );
+    });
+
+    // The failure this models end to end: poison the cache through one call and
+    // watch an unrelated later caller read the corrupted value.
+    it('a mutated result cannot corrupt a later, unrelated lookup', () => {
+      ColorConverter.hexToRgb('#123456'); // warm
+      const poisoned = ColorConverter.hexToRgb('#123456');
+      poisoned.r = 0;
+      poisoned.g = 0;
+      poisoned.b = 0;
+
+      expect(ColorConverter.hexToRgb('#123456')).toEqual({ r: 0x12, g: 0x34, b: 0x56 });
+    });
+  });
 });

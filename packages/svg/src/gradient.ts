@@ -20,8 +20,10 @@ import {
   cardTheme,
   cardText,
   commandChip,
+  fitText,
   markFooter,
   measuredRow,
+  textWidth,
   type CardTheme,
   type MeasuredRowWidths,
 } from './frame.js';
@@ -78,8 +80,27 @@ export interface GradientCardOptions {
 const PAD = 16;
 const ROW_H = 41.5;
 
-/** 12H slot widths from its own source (lead 28 holds a "2–3" range). */
-const ROW_WIDTHS: MeasuredRowWidths = { lead: 28, pair: 56, name: 186, bar: 34, measure: 32 };
+/** Body size of the 12H·4 verdict sentence — wrapped and drawn at the same value. */
+const VERDICT_SIZE = 12.5;
+
+/**
+ * Room the footer mark takes out of the content width, so the legend wraps
+ * beside it rather than under it: an 18 px app icon, a 7 px gap and the
+ * `xivdyetools.app` domain (≈102 px of 11 px mono), leaving a few px of air.
+ * `frame-budget.test.ts` asserts the legend never crosses the mark's left edge.
+ */
+const MARK_RESERVE = 130;
+
+/**
+ * 12H slot widths from its own source (lead 28 holds a "2–3" range).
+ *
+ * pkg-svg-bot-logic-06: `lead + pair + name + bar + measure + 4 × 10 px gap`
+ * has to equal the content width (`CARD_WIDTH − 2 × PAD` = 368) or the
+ * right-anchored measure lands outside the margin every other element on the
+ * card aligns to. This summed to 376, putting the ΔE column 8 px proud, so
+ * `name` gives up those 8 px.
+ */
+const ROW_WIDTHS: MeasuredRowWidths = { lead: 28, pair: 56, name: 178, bar: 34, measure: 32 };
 
 /**
  * Generate the /gradient card (12H·2/·3/·4). Height grows with the rows and
@@ -130,12 +151,12 @@ export function generateGradientCard(options: GradientCardOptions): string {
   // --- Verdict (12H·4) — before the rows, in the worst row's tone-neutral ink
   let rowsTop = stripY + 30 + 9;
   if (verdict) {
-    const lines = wrapVerdict(verdict, innerW);
+    const lines = wrapVerdict(verdict, innerW, VERDICT_SIZE, 'body');
     lines.forEach((line, i) => {
       parts.push(
-        cardText(PAD, rowsTop + 6 + i * 17, line, {
+        cardText(PAD, rowsTop + 6 + i * 17, fitText(line, innerW, VERDICT_SIZE, 'body'), {
           fill: theme.name,
-          size: 12.5,
+          size: VERDICT_SIZE,
           font: 'body',
           weight: 600,
         }),
@@ -164,16 +185,22 @@ export function generateGradientCard(options: GradientCardOptions): string {
   });
 
   // --- Footer: legend (wraps rather than ellipsises) + mark
-  const legendLines = wrapVerdict(legend, innerW - 130);
+  const legendW = innerW - MARK_RESERVE;
+  const legendLines = wrapVerdict(legend, legendW, CARD_TYPE.label, 'mono');
   const footH = 12 + legendLines.length * 14 + 8;
   const height = Math.round(Math.min(350, rowsTop + rows.length * ROW_H + footH));
   legendLines.forEach((line, i) => {
     parts.push(
-      cardText(PAD, height - 8 - (legendLines.length - 1 - i) * 14, line, {
-        fill: theme.label,
-        size: CARD_TYPE.label,
-        font: 'mono',
-      }),
+      cardText(
+        PAD,
+        height - 8 - (legendLines.length - 1 - i) * 14,
+        fitText(line, legendW, CARD_TYPE.label, 'mono'),
+        {
+          fill: theme.label,
+          size: CARD_TYPE.label,
+          font: 'mono',
+        },
+      ),
     );
   });
   parts.push(markFooter(CARD_WIDTH - PAD, height - 8, theme));
@@ -181,22 +208,52 @@ export function generateGradientCard(options: GradientCardOptions): string {
   return cardShell(height, theme, parts.join(''));
 }
 
-/** Rough word-wrap for footer legends and verdict sentences (mono/body px budget). */
-function wrapVerdict(textContent: string, maxPx: number): string[] {
-  const words = textContent.split(' ');
+/**
+ * Word-wrap a legend or verdict sentence, measured in the pixels the line will
+ * actually occupy at the caller's own size and font.
+ *
+ * BUG-054: this used to measure `candidate.length * 6.6` — a per-*character*
+ * constant — and split only on ASCII spaces. A CJK sentence carries no spaces,
+ * so the whole verdict stayed a single "word" and never wrapped, and every one
+ * of its glyphs is twice the width that constant assumed. The ja stage-0
+ * verdict measured 432 px and the ko one 445.5 px on a 400 px card, so a third
+ * of the sentence fell outside the viewport. The old comment claimed the
+ * overflow "falls through to fitText at render"; neither call site did that.
+ *
+ * A word that cannot fit a line of its own is broken by code point, which is
+ * the only seam a spaceless CJK run offers.
+ */
+function wrapVerdict(
+  textContent: string,
+  maxPx: number,
+  size: number,
+  font: 'mono' | 'body' | 'display',
+): string[] {
   const lines: string[] = [];
   let line = '';
-  for (const word of words) {
+
+  const flush = (): void => {
+    if (line) lines.push(line);
+    line = '';
+  };
+
+  for (const word of textContent.split(' ')) {
     const candidate = line ? `${line} ${word}` : word;
-    // ~6.6 px per Latin char at 11–12.5 px; CJK strings rarely space-split,
-    // so an unbreakable long run falls through to fitText at render
-    if (candidate.length * 6.6 > maxPx && line) {
-      lines.push(line);
-      line = word;
-    } else {
+    if (textWidth(candidate, size, font) <= maxPx) {
       line = candidate;
+      continue;
+    }
+    flush();
+    if (textWidth(word, size, font) <= maxPx) {
+      line = word;
+      continue;
+    }
+    for (const char of word) {
+      if (line && textWidth(line + char, size, font) > maxPx) flush();
+      line += char;
     }
   }
-  if (line) lines.push(line);
+  flush();
+
   return lines.length ? lines : [textContent];
 }

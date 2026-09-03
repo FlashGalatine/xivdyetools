@@ -42,7 +42,15 @@ export const COMPARISON_MAX_DYES = 4;
 export function generateComparisonOG(options: ComparisonOGOptions): string {
   const { locale = 'en', frame = 'discord' } = options;
 
-  const dyes = options.dyeIds
+  // og-8 (deep dive 2026-09-02): dedupe BEFORE slicing. `/og/comparison/1,1`
+  // is canonical, so the S7-R12 grammar accepts it; `getDyeByItemId(1)` then
+  // returned the SAME object twice, `dyes.length === 2` cleared the guard
+  // below, and the card compared Snow White with itself — two identical
+  // CLOSEST PAIR bands over the deck `Snow White ↔ Snow White · Δ0.0`.
+  // Deduping first also means `1,1,2,3,4,5` still draws four distinct dyes
+  // rather than three. The slice stays ahead of the resolve, so S7-R17's
+  // "as many ids as the card draws" contract is unchanged.
+  const dyes = [...new Set(options.dyeIds)]
     .slice(0, COMPARISON_MAX_DYES)
     .map((id) => getDyeByItemId(id))
     .filter((d): d is Dye => d !== undefined);
@@ -72,7 +80,13 @@ export function generateComparisonOG(options: ComparisonOGOptions): string {
   const closest = pairs[0];
 
   // The closest pair leads, adjacent and widened; the rest follow
-  const ordered: Dye[] = [closest.a, closest.b, ...dyes.filter((d) => d !== closest.a && d !== closest.b)];
+  // og-8: compare by id, not by object identity — the dedupe above makes the
+  // two equivalent today, but identity is the wrong contract to rest on.
+  const ordered: Dye[] = [
+    closest.a,
+    closest.b,
+    ...dyes.filter((d) => d.id !== closest.a.id && d.id !== closest.b.id),
+  ];
   const bands: BandEntry[] = ordered.map((dye, i) => ({
     hex: dye.hex,
     role: i < 2 ? role('closestPair', locale) : '',

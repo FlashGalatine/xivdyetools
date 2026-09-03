@@ -18,12 +18,4 @@ export function createMockEnv(overrides: Partial<Env> = {}): Env {
   };
 }
 
-/**
- * Helper to make a request to the Hono app with mock env bindings.
- * Usage: const res = await appRequest('/v1/dyes', env);
- */
-export function buildRequest(path: string, options?: RequestInit): Request {
-  return new Request(`http://localhost${path}`, options);
-}
-
 export { createMockKV };

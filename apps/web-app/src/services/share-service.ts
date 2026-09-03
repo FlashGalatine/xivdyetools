@@ -158,6 +158,19 @@ export interface ParsedShareUrl {
   params: Record<string, string | number | boolean | string[] | number[]>;
 }
 
+/**
+ * Share params that are always a list, however many values they carry.
+ *
+ * BUG-015: without this, arity decided the type — `?dyes=45,102` parsed as a
+ * number array and `?dyes=45` as a bare number. Both consumers
+ * (`comparison-tool`, `accessibility-tool`) gate on `Array.isArray`, so a
+ * single-dye link restored nothing while still loading the page, which reads
+ * as "the link works but shows the wrong dyes" rather than as an error.
+ *
+ * Add a key here whenever a producer can emit a comma-separated list for it.
+ */
+const LIST_PARAMS = new Set(['dyes']);
+
 // ============================================================================
 // Share Service Class
 // ============================================================================
@@ -378,6 +391,21 @@ export class ShareService {
   // ==========================================================================
 
   /**
+   * Split a comma-separated param into a list, numeric when every element
+   * round-trips as a number.
+   *
+   * The `String(n) === part` round trip is what keeps a leading-zero value such
+   * as `012345` a string: `parseFloat` alone would silently turn it into 12345,
+   * which mangles bare-colour params that happen to start with a digit.
+   */
+  private static parseListParam(value: string): number[] | string[] {
+    const parts = value.split(',');
+    const asNumbers = parts.map((p) => parseFloat(p));
+    const allNumbers = parts.every((p, i) => !isNaN(asNumbers[i]) && String(asNumbers[i]) === p);
+    return allNumbers ? asNumbers : parts;
+  }
+
+  /**
    * Parse a share URL and extract tool and parameters
    */
   static parseUrl(urlString: string): ParsedShareUrl | null {
@@ -396,33 +424,42 @@ export class ShareService {
       url.searchParams.forEach((value, key) => {
         if (key === 'v') return; // Skip version
 
-        // Try to parse as number
+        // BUG-015: array-ness is a property of the KEY, not of how many values
+        // the sender happened to have. `?dyes=45,102` used to parse as a number
+        // array while `?dyes=45` parsed as a bare number, and both consumers
+        // gate on Array.isArray — so a one-dye Comparison or Accessibility link
+        // silently restored nothing and showed the recipient's own dyes.
+        if (LIST_PARAMS.has(key)) {
+          params[key] = ShareService.parseListParam(value);
+          return;
+        }
+
+        // Try to parse as number. The round-trip check keeps values that are
+        // only incidentally numeric (a leading-zero hex like `012345`) as
+        // strings.
         const numValue = parseFloat(value);
         if (!isNaN(numValue) && String(numValue) === value) {
           params[key] = numValue;
           return;
         }
 
-        // Check for boolean
-        if (value === '1' || value === 'true') {
+        // Check for boolean. `'1'` and `'0'` never reach here — they satisfy
+        // the numeric round trip above and arrive as the numbers 1 and 0, which
+        // every consumer reads truthily. Listing them here as booleans was dead
+        // code; reordering instead would misread numeric params whose value is
+        // legitimately 0 or 1, so the numeric branch keeps priority.
+        if (value === 'true') {
           params[key] = true;
           return;
         }
-        if (value === '0' || value === 'false') {
+        if (value === 'false') {
           params[key] = false;
           return;
         }
 
         // Check for comma-separated arrays
         if (value.includes(',')) {
-          const parts = value.split(',');
-          // If all parts are numbers, parse as number array
-          const allNumbers = parts.every((p) => !isNaN(parseFloat(p)));
-          if (allNumbers) {
-            params[key] = parts.map((p) => parseFloat(p));
-          } else {
-            params[key] = parts;
-          }
+          params[key] = ShareService.parseListParam(value);
           return;
         }
 

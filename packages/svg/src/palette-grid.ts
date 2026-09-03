@@ -27,7 +27,7 @@ import {
   type CardTheme,
   type MeasuredRowWidths,
 } from './frame.js';
-import { num } from './base.js';
+import { escapeXml, num } from './base.js';
 import { toolGlyph } from './icons/tool-icons.js';
 import { MATCHING_METHOD_TAGS, type MatchingMethod } from '@xivdyetools/core';
 
@@ -94,8 +94,12 @@ const PAD = 16;
 const BAND_H = 30;
 const ROW_H = 45;
 
-/** 14K slot widths (name at 12.5 px, 35 px spare on the longest DE name). */
-const ROW_WIDTHS: MeasuredRowWidths = { lead: 38, pair: 52, name: 180, bar: 26, measure: 34 };
+/**
+ * 14K slot widths (name at 12.5 px, 35 px spare on the longest DE name).
+ * pkg-svg-bot-logic-06: summed 2 px past the 368 px content width; `name`
+ * gives them back so the measure aligns with the rest of the card.
+ */
+const ROW_WIDTHS: MeasuredRowWidths = { lead: 38, pair: 52, name: 178, bar: 26, measure: 34 };
 
 /** A 2% band is 7 px and needs a floor, or the tenth colour disappears. */
 const MIN_SLICE = 7;
@@ -157,13 +161,13 @@ export function generatePaletteGrid(options: PaletteGridOptions): string {
   let bx = PAD;
   const bandRects: string[] = [];
   slices.forEach((w, i) => {
-    bandRects.push(`<rect x="${bx}" y="${bandY}" width="${w}" height="${BAND_H}" fill="${band[i].hex}"/>`);
+    bandRects.push(`<rect x="${bx}" y="${bandY}" width="${w}" height="${BAND_H}" fill="${escapeXml(band[i].hex)}"/>`);
     bx += w;
   });
   parts.push(
     `<defs><clipPath id="pgband"><rect x="${PAD}" y="${bandY}" width="${innerW}" height="${BAND_H}" rx="8"/></clipPath></defs>` +
       `<g clip-path="url(#pgband)">${bandRects.join('')}</g>` +
-      `<rect x="${PAD + 0.5}" y="${bandY + 0.5}" width="${innerW - 1}" height="${BAND_H - 1}" rx="7.5" fill="none" stroke="${theme.swatchRing}" stroke-width="1"/>`
+      `<rect x="${PAD + 0.5}" y="${bandY + 0.5}" width="${innerW - 1}" height="${BAND_H - 1}" rx="7.5" fill="none" stroke="${escapeXml(theme.swatchRing)}" stroke-width="1"/>`
   );
 
   // --- Column labels

@@ -5,7 +5,141 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.3.0] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit, Sprint 8
+
+- **A moderator status change can no longer 500 and lose its own audit row** (BUG-041). A transition
+  *into* the partial unique index (`flagged`/`rejected` → `approved`/`pending`) can collide with a
+  preset that took the same `dye_signature` while this one sat outside it. Neither moderation batch
+  had any recovery, so the moderator got an opaque 500 **and** the batched `moderation_log` row
+  rolled back with it — the action left no trace at all. Both routes now answer the 409 the submit
+  and edit paths have answered since BUG-003, naming the preset in the way.
+- **A text-only resubmission explains itself** (BUG-041). The existing recovery could only identify
+  the colliding preset when the *request* carried a dye list, so `PATCH` of a name/description on a
+  rejected preset (which flips it to `pending`, back into the index) returned a bare
+  "This dye combination already exists" — naming a field the author never touched, with no way to
+  see what was in the way and no way to resubmit. The signature is on the row; it is used now.
+- **The bots no longer throttle each other** (BUG-044). Every request over a Service Binding shared
+  one 100/min bucket: neither bot sends `CF-Connecting-IP`, so `getClientIp` returned the literal
+  `unknown`, and the limiter sits ahead of `authMiddleware` so there was no authenticated bypass.
+  At ~1.7 requests/second aggregate, `/preset` commands began 429-ing each other across guilds.
+  Rate limiting is now two layers: an IP-keyed gate on `/api/*` before auth, and a per-acting-user
+  gate after it. Service Binding traffic — which has no client IP, and whose `unknown` bucket *was*
+  this bug — skips the first and is limited per Discord user by the second.
+- **A caller can no longer choose its own rate-limit bucket** (pre-merge review of BUG-044). The
+  first fix for the above keyed the public limiter on `X-User-Discord-ID` whenever it was
+  snowflake-shaped. That header is caller-supplied and the limiter is mounted eleven lines ahead of
+  `authMiddleware`, so nothing had verified it at key-computation time: an anonymous client could
+  mint a fresh 100/min bucket per request by incrementing a header, removing the per-IP ceiling
+  entirely. The bucketing key is the IP again, and never anything else; per-user fairness now comes
+  from the post-auth layer, which reads the identity the v2 HMAC signature established rather than
+  the raw header.
+- **The daily submission quota agrees with itself** (BUG-042). `POST /presets` reported
+  `remaining_submissions` from the deletable row count while the limiter gating the next request
+  uses `max(rows, append-only events)`. Submit 3, delete 3, submit a 4th: the 201 said 9 remaining,
+  `GET /presets/rate-limit` said 6, and the user was refused at 6. The same variable is the
+  concurrency-rollback guard, so that under-triggered for exactly the deleting user
+  `submission_events` exists to catch.
+- **A stalled image decode fails instead of hanging** (BUG-045) — the image-worker call was the only
+  outbound fetch here without an `AbortSignal`.
+- **`has_more` no longer promises a page that is not there** (presets-api-08). It was measured on
+  the post-filter preset count, and unparsable rows are dropped — so one corrupt row on the last
+  page made the client fetch the next page, receive `[]` with the same `total`, and loop for ever.
+- **A database incident no longer reads as "the queue is clear"** (presets-api-07).
+  `listFailedNotifications` swallowed every D1 error into an empty array and answered HTTP 200. The
+  pre-migration-0005 case it was written for is kept; everything else is a 500, which is what the
+  sibling `resolveFailedNotification` already did.
+- **Re-queueing a preset is logged as `requeue`, not `approve`** (presets-api-02) — `pending` was
+  the only status that could reach the fallback, so the audit trail recorded an approval for an
+  action that pulled a preset *out* of public view. No migration: `moderation_log.action` is a bare
+  `TEXT` column.
+- **The daily cap is interpolated, not hardcoded** (presets-api-15) — `DAILY_SUBMISSION_LIMIT` was
+  imported and then written as a literal `10` in three user-facing places.
+
+### Changed
+
+- **⚠️ Production now refuses to start without `INTERNAL_WEBHOOK_SECRET`, `DISCORD_WORKER`,
+  `IMAGE_WORKER` and `THUMBNAILS`** (BUG-043). Missing any of them made every moderator
+  notification resolve as *success* — no throw, so the caller's `.catch(storeFailedNotification)`
+  never ran and nothing reached the dead-letter queue either. Flagged submissions silently stopped
+  arriving in the moderation channel while `GET /moderation/failed-notifications` stayed empty.
+  `validateEnv`'s production block was written for exactly this degrade-silently class and did not
+  cover the notification or image paths. **Check these are set before deploying.**
+- **⚠️ One error envelope for the whole worker** (REFACTOR-003). The `requireAuth` /
+  `requireModerator` / `requireUserContext` guards returned `{error: 'Unauthorized', message}` — no
+  `success` field, and a human-readable string where every other route returns an `ErrorCode`.
+  Those are the worker's most common rejections, so a client could not switch on `error` reliably.
+  They now use the canonical helpers: `{success: false, error: 'UNAUTHORIZED' | 'FORBIDDEN' |
+  'VALIDATION_ERROR', message}`. **A client matching on the old strings needs updating.**
+- The public rate-limit key prefix is `public:` rather than `public:ip:`, since not every key is an
+  IP any more. Deploying resets the in-flight 60-second counters once.
+
+### Added
+
+- `tests/middleware/rate-limit-binding.test.ts` covers two distinct bot users getting two buckets,
+  the IP fallback, and a junk `X-User-Discord-ID` being ignored. The old suite drove a single
+  synthetic key, so the sharing was invisible.
+
+## [2.2.1] - 2026-09-02
+
+### Fixed
+
+- The revived "still returns 201 when the notification call fails" test now asserts the
+  dead-letter write it is really about. Deleting the whole `.catch` that calls
+  `storeFailedNotification` left both this file and the full app suite green, so the test
+  could not fail and BUG-015's persistence path had no coverage at all. It now asserts the
+  `INSERT INTO failed_notifications`, verified by mutation.
+
+### Fixed
+
+- The four permanently-skipped tests in `tests/handlers/presets.test.ts` (DEAD-012). All were
+  marked "requires Cloudflare Workers" because the submit route hands its notification to
+  `c.executionCtx.waitUntil` — solvable in-process by passing a mock `ExecutionContext` as
+  `app.request`'s fourth argument, which a sibling test in the same file already did.
+  - Two were duplicates and are gone: the skipped "create preset with valid data" was superseded
+    by the `mock executionCtx` test immediately below it, and "attempt notification when
+    DISCORD_WORKER is configured" by "notify Discord worker when configured and content is
+    flagged", which actually asserts the fetch.
+  - Two now run and assert something: the unconfigured case binds a spy worker with no
+    `INTERNAL_WEBHOOK_SECRET` and asserts it is **never** called (the real guard at
+    `notification-service.ts:173`), and the failure case asserts the fetch happened and the
+    response is still 201. That one mocks a **4xx**, not 5xx — `notifyDiscordBot` retries server
+    errors three times with real backoff sleeps, which blows the 5 s test timeout.
+
+### Removed
+
+- Three generic validators — `validateStringLength`, `validateArray`, `validateEnum`
+  (`services/validation-service.ts`) — and two unused type aliases, `ModerationStatus`
+  (same file) and `ErrorCodeType` (`utils/api-response.ts`). Dead-code sweep
+  (`docs/audits/2026-09-01-dead-code`, DEAD-010): 108 lines with no call sites and no tests
+  either. The per-field validators further down the same file are what the handlers use.
+- `scripts/migrate-dyes-to-stainids.ts` (DEAD-013) — the one-shot stainID migration it existed for
+  ran 2026-08-28 and was re-verified 2026-09-01 (0 legacy IDs across all 16 production rows). It is
+  removed together with the client-side fallback it unblocked (web-app DEAD-007), so neither half
+  of a retired ID space outlives the other. `scripts/migrate-presets.ts` (`db:seed`) is unaffected.
+- `notifyModerators` and its `ModerationAlert` type (`services/moderation-service.ts`, DEAD-009 /
+  PAPI-16) — 88 lines of webhook + owner-DM notification with **no caller**, plus the four `Env`
+  fields only it read: `MODERATION_WEBHOOK_URL`, `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN` and
+  `DISCORD_BOT_WEBHOOK_URL` (that last one was read nowhere at all). Its ~197-line test block went
+  too. Flagged-content notification runs through moderation-worker and the announcement webhook.
+  `PERSPECTIVE_API_KEY` in the same file is live and untouched.
+  **Deploy step:** delete the three orphaned production secrets once a day of clean tail confirms
+  nothing reads them — `wrangler secret delete <NAME> --env production` from `apps/presets-api`
+  (`docs/operations/POST_MERGE_CHECKLIST.md` §3).
+- `checkBanStatus` and `requireNotBannedCheck` (`middleware/ban-check.ts`, DEAD-011) — the two
+  unused alternatives to the mounted `requireNotBanned` middleware, 61 lines. Ban enforcement is
+  unchanged: `requireNotBanned` is still registered per router for every mutating method on
+  `handlers/presets.ts` and `handlers/votes.ts`, which is the arrangement FINDING-017 put in place
+  so no write route can forget it. The shared `isUserBanned` / `bannedResponse` /
+  `banLookupFailure` helpers and their fail-closed behaviour are untouched.
+- The `PresetSubmitResponse` and `PresetEditResponse` re-exports from `src/types.ts` (DEAD-019) —
+  the only two names in that `@deprecated` block with no importer. Fifteen re-exports remain; the
+  block's "removed in the next major version" promise is still outstanding for those.
+
+This app is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded into
+`lint`; root `knip.jsonc`). It immediately caught one more: `createMockRequest`
+(`tests/test-utils.ts`), a request-builder test helper with no importer across the suite.
 
 ### Changed
 

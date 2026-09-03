@@ -156,7 +156,9 @@
     "tetradic": "四色",
     "square": "正方形",
     "monochromatic": "单色",
-    "invertedTetradic": "逆四色"
+    "invertedTetradic": "逆四色",
+    "compound": "复合",
+    "shades": "明暗"
   },
   "mixer": {
     "blendResult": "混合结果",

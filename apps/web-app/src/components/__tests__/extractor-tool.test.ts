@@ -459,14 +459,6 @@ vi.mock('../dye-filters', () => ({
   },
 }));
 
-vi.mock('../dye-action-dropdown', () => ({
-  createDyeActionDropdown: vi.fn().mockImplementation(() => {
-    const div = document.createElement('div');
-    div.className = 'dye-action-dropdown';
-    return div;
-  }),
-}));
-
 describe('ExtractorTool', () => {
   let container: HTMLElement;
   let leftPanel: HTMLElement;
@@ -1275,6 +1267,33 @@ describe('ExtractorTool', () => {
           getConfig.mockReset();
           getConfig.mockReturnValue({} as never);
         }
+      });
+
+      /**
+       * BUG-007: the distance shown on a card must be measured with the method
+       * the card labels it as. `getColorDistance` is plain RGB Euclidean on a
+       * 0-441.67 scale, while the result card grades a `ciede2000`-labelled
+       * number against bands cut at 5 / 10 / 20 — so using it here mis-graded
+       * every match and printed a figure on the wrong scale.
+       *
+       * Both ColorService mocks return the same constant, so asserting the
+       * value could not tell them apart. Asserting *which* function ran, and
+       * with what method, is what discriminates.
+       */
+      it('measures the displayed distance with the selected method, not raw RGB', async () => {
+        const { ColorService } = await import('@services/index');
+        const forMethod = vi.mocked(ColorService.getDistanceForMethod);
+        const rawRgb = vi.mocked(ColorService.getColorDistance);
+        tool = mount();
+        await loadImage();
+        forMethod.mockClear();
+        rawRgb.mockClear();
+
+        sample('#FF0000');
+
+        expect(forMethod).toHaveBeenCalled();
+        expect(forMethod.mock.calls.every((c) => c[2] === 'ciede2000')).toBe(true);
+        expect(rawRgb).not.toHaveBeenCalled();
       });
     });
 

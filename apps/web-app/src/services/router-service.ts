@@ -109,8 +109,9 @@ const PRESERVED_PARAMS = ['dc', 'dye', 'ui'];
  * // Navigate to a tool
  * RouterService.navigateTo('matcher');
  *
- * // Navigate with preserved params
- * RouterService.navigateTo('harmony', { dye: 'JetBlack' });
+ * // Navigate with preserved params. Dye params carry a stainID, never a name —
+ * // the receivers resolve them through ShareService (BUG-018).
+ * RouterService.navigateTo('harmony', { dye: '2' });
  *
  * // Subscribe to route changes
  * RouterService.subscribe((state) => {
@@ -331,13 +332,6 @@ export class RouterService {
    */
   static isValidToolId(id: string): id is ToolId {
     return ROUTES.some((r) => r.id === id);
-  }
-
-  /**
-   * Get all route definitions
-   */
-  static getRoutes(): readonly RouteDefinition[] {
-    return ROUTES;
   }
 
   /**

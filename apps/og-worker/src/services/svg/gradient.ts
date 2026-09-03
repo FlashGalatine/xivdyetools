@@ -10,11 +10,11 @@
  * @module services/svg/gradient
  */
 
-import { ColorService } from '@xivdyetools/core';
+import { ColorService, DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, BAND_CAP, type BandEntry, type BandFrame } from './band';
-import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
-import { dyeService, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
+import { algoTag, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
+import { ALL_DYES, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
 import { role, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
@@ -47,7 +47,7 @@ function interpolate(startHex: string, endHex: string, t: number, algorithm: Mat
  * Generates the Gradient OG image SVG (400-grid — raster ×3 downstream).
  */
 export function generateGradientOG(options: GradientOGOptions): string {
-  const { startDyeId, endDyeId, algorithm = 'oklab', locale = 'en', frame = 'discord' } = options;
+  const { startDyeId, endDyeId, algorithm = DEFAULT_MATCHING_METHOD, locale = 'en', frame = 'discord' } = options;
 
   const startDye = getDyeByItemId(startDyeId);
   const endDye = getDyeByItemId(endDyeId);
@@ -83,7 +83,7 @@ export function generateGradientOG(options: GradientOGOptions): string {
     const stepHex = interpolate(startDye.hex, endDye.hex, t, algorithm);
     let best: Dye | null = null;
     let bestDelta = Infinity;
-    for (const candidate of dyeService.getAllDyes()) {
+    for (const candidate of ALL_DYES) {
       if (taken.has(candidate.id)) continue;
       const delta = ColorService.getDistanceForMethod(stepHex, candidate.hex, 'ciede2000');
       if (delta < bestDelta) {
@@ -114,7 +114,7 @@ export function generateGradientOG(options: GradientOGOptions): string {
     // The cleanest degrade of the nine: the headline is the endpoints, and
     // START and END keep them named in-band, so nothing moves on X.
     deck: `${startName} → ${endName}`,
-    footRight: ALGO_TAG[algorithm] ?? algorithm.toUpperCase(),
+    footRight: algoTag(algorithm),
     frame,
   });
 }

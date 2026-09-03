@@ -156,7 +156,9 @@
     "tetradic": "사각배색",
     "square": "정방형",
     "monochromatic": "단색",
-    "invertedTetradic": "반전 사각배색"
+    "invertedTetradic": "반전 사각배색",
+    "compound": "복합",
+    "shades": "명암"
   },
   "mixer": {
     "blendResult": "블렌드 결과",

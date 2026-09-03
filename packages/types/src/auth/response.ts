@@ -112,6 +112,8 @@ export interface RefreshErrorResponse {
  * Response from token refresh endpoint
  *
  * Uses discriminated union for type-safe handling.
+ *
+ * @public
  */
 export type RefreshResponse = RefreshSuccessResponse | RefreshErrorResponse;
 

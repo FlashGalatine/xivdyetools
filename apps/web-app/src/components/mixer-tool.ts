@@ -269,6 +269,7 @@ export class MixerTool extends BaseComponent {
   private findMatchingDyesInternal(): void {
     if (!this.blendedColor) {
       this.matchedResults = [];
+      this.updateShareButton();
       return;
     }
 
@@ -284,6 +285,12 @@ export class MixerTool extends BaseComponent {
       excludeIds,
       this.dyeFiltersConfig
     );
+
+    // BUG-094: the share URL carries ratio, mode and algo, and
+    // updateShareButton() was reachable ONLY through showEmptyState() -- so a
+    // field-cell tap or a setConfig change recomputed the mix and left the
+    // copied link describing the previous one. Every recompute passes here.
+    this.updateShareButton();
   }
 
   // ============================================================================

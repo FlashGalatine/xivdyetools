@@ -196,17 +196,14 @@ export class Translator {
 
   /**
    * Get locale metadata
+   *
+   * @testonly unit-tested across all six locales (name/nativeName presence),
+   * but no moderation-worker handler surfaces locale display metadata — this
+   * bot's embeds never show a locale's name back to the moderator.
    */
   getMeta(): LocaleData['meta'] {
     return this.data.meta;
   }
-}
-
-/**
- * Create a translator for a specific locale
- */
-export function createTranslator(locale: LocaleCode, logger?: ExtendedLogger): Translator {
-  return new Translator(locale, logger);
 }
 
 /**

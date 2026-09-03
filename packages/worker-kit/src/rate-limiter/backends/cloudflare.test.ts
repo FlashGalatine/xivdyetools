@@ -60,7 +60,7 @@ describe('CloudflareRateLimiter', () => {
       keyPrefix: 'api:ip:',
     });
     await limiter.check('1.2.3.4', { maxRequests: 10, windowMs: 60_000 });
-    expect(binding.calls[0]).toBe('api:ip:1.2.3.4');
+    expect(binding.calls[0]).toBe('api:ip:1.2.3.4:t10_60');
   });
 
   it('picks the smallest tier that can hold the configured effective limit', async () => {
@@ -100,6 +100,11 @@ describe('CloudflareRateLimiter', () => {
     expect(result.limit).toBe(30);
   });
 
+  // pkg-worker-kit-test-utils-05: this test used to assert the OPPOSITE of its
+  // own name -- both bindings received the identical key `'k'`, and the
+  // separation it claimed to prove came entirely from the two tiers being
+  // distinct binding objects. The key now carries the tier's (limit, period),
+  // so the claim is the one actually under test.
   it('keys different tiers apart so a client cannot share one bucket across two configs', async () => {
     const t10 = fakeBinding([true]);
     const t30 = fakeBinding([true]);
@@ -111,8 +116,59 @@ describe('CloudflareRateLimiter', () => {
     });
     await limiter.check('k', { maxRequests: 10, windowMs: 60_000 });
     await limiter.check('k', { maxRequests: 30, windowMs: 60_000 });
-    expect(t10.calls).toEqual(['k']);
-    expect(t30.calls).toEqual(['k']);
+    expect(t10.calls).toEqual(['k:t10_60']);
+    expect(t30.calls).toEqual(['k:t30_60']);
+    expect(t10.calls[0]).not.toBe(t30.calls[0]);
+  });
+
+  // The failure mode the previous test could not see: one binding wired to two
+  // tiers (a plausible wrangler / tier-table typo) used to collapse a 10-limit
+  // and a 30-limit config onto a single counter.
+  it('separates two tiers that share one binding, by key', async () => {
+    const shared = fakeBinding([true, true]);
+    const limiter = new CloudflareRateLimiter({
+      tiers: [
+        { limit: 10, binding: shared },
+        { limit: 30, binding: shared },
+      ],
+    });
+    await limiter.check('k', { maxRequests: 10, windowMs: 60_000 });
+    await limiter.check('k', { maxRequests: 30, windowMs: 60_000 });
+    expect(shared.calls).toEqual(['k:t10_60', 'k:t30_60']);
+  });
+
+  // pkg-worker-kit-test-utils-06: selectTier matched on `limit` alone, so a
+  // 60s config could be enforced by a 10s tier -- 6x the intended rate, with a
+  // `resetAt` from the 10s period that makes the headers look self-consistent.
+  it('selects a tier by period as well as limit', async () => {
+    const fast = fakeBinding([true]);
+    const slow = fakeBinding([true]);
+    const limiter = new CloudflareRateLimiter({
+      tiers: [
+        { limit: 10, periodSeconds: 10, binding: fast },
+        { limit: 30, periodSeconds: 60, binding: slow },
+      ],
+    });
+
+    // limit-only matching picks the 10/10s tier here; the config asks for 60s.
+    const result = await limiter.check('k', { maxRequests: 10, windowMs: 60_000 });
+    expect(fast.calls).toHaveLength(0);
+    expect(slow.calls).toEqual(['k:t30_60']);
+    expect(result.limit).toBe(30);
+
+    // A config that really does want the 10s period still reaches it.
+    await limiter.check('k', { maxRequests: 10, windowMs: 10_000 });
+    expect(fast.calls).toEqual(['k:t10_10']);
+  });
+
+  it('falls back to limit-only matching when no tier covers the window', async () => {
+    const t10 = fakeBinding([true]);
+    const limiter = new CloudflareRateLimiter({
+      tiers: [{ limit: 10, periodSeconds: 10, binding: t10 }],
+    });
+    const result = await limiter.check('k', { maxRequests: 5, windowMs: 60_000 });
+    expect(result.allowed).toBe(true);
+    expect(t10.calls).toEqual(['k:t10_10']);
   });
 
   it('fails open with backendError when the binding throws and failOpen is not false', async () => {

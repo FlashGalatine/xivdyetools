@@ -309,4 +309,93 @@ describe('createMockR2Bucket', () => {
       expect(bucket._store.get('test.txt')!.meta.key).toBe('test.txt');
     });
   });
+
+  // BUG-100: put() stored httpMetadata and neither get() nor head() exposed it,
+  // so presets-api wrote the `immutable` + `s-maxage=86400` preview-image cache
+  // policy -- the policy FINDING-018's takedown story depends on -- and no test
+  // could read it back except by reaching into `_store`.
+  describe('httpMetadata round-trip', () => {
+    const policy = {
+      contentType: 'image/webp',
+      cacheControl: 'public, max-age=86400, s-maxage=86400, immutable',
+    };
+
+    it('returns httpMetadata from get()', async () => {
+      const bucket = createMockR2Bucket();
+      await bucket.put('previews/p1.webp', 'bytes', { httpMetadata: policy });
+
+      const object = await bucket.get('previews/p1.webp');
+
+      expect(object?.httpMetadata).toEqual(policy);
+    });
+
+    it('returns httpMetadata from head()', async () => {
+      const bucket = createMockR2Bucket();
+      await bucket.put('previews/p1.webp', 'bytes', { httpMetadata: policy });
+
+      const meta = await bucket.head('previews/p1.webp');
+
+      expect(meta?.httpMetadata).toEqual(policy);
+    });
+
+    it('writes the stored policy onto a Headers object', async () => {
+      const bucket = createMockR2Bucket();
+      await bucket.put('previews/p1.webp', 'bytes', { httpMetadata: policy });
+
+      const object = await bucket.get('previews/p1.webp');
+      const headers = new Headers();
+      object?.writeHttpMetadata(headers);
+
+      // A serving path calling this would have thrown only in production.
+      expect(headers.get('Content-Type')).toBe('image/webp');
+      expect(headers.get('Cache-Control')).toContain('immutable');
+    });
+
+    it('leaves headers untouched when no httpMetadata was stored', async () => {
+      const bucket = createMockR2Bucket();
+      await bucket.put('plain.bin', 'bytes');
+
+      const object = await bucket.get('plain.bin');
+      const headers = new Headers();
+      object?.writeHttpMetadata(headers);
+
+      expect(object?.httpMetadata).toBeUndefined();
+      expect([...headers.keys()]).toHaveLength(0);
+    });
+  });
+
+  describe('list() pagination', () => {
+    it('never reports truncated without a cursor to follow', async () => {
+      const bucket = createMockR2Bucket();
+      for (let i = 0; i < 3; i++) {
+        await bucket.put(`o/${i}`, 'x');
+      }
+
+      const page = await bucket.list({ prefix: 'o/', limit: 3 });
+
+      expect(page.truncated).toBe(false);
+      expect(page.cursor).toBeUndefined();
+    });
+
+    it('issues a cursor that resumes the listing exactly once per object', async () => {
+      const bucket = createMockR2Bucket();
+      for (let i = 0; i < 5; i++) {
+        await bucket.put(`o/${i}`, 'x');
+      }
+
+      const seen: string[] = [];
+      let cursor: string | undefined;
+      let guard = 0;
+      for (;;) {
+        if (++guard > 20) throw new Error('cursor loop did not terminate');
+        const page = await bucket.list({ prefix: 'o/', limit: 2, cursor });
+        seen.push(...page.objects.map((o) => o.key));
+        if (!page.truncated) break;
+        cursor = page.cursor;
+      }
+
+      expect(seen).toHaveLength(5);
+      expect(new Set(seen).size).toBe(5);
+    });
+  });
 });

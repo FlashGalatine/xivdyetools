@@ -6,6 +6,13 @@
  * @module preset
  */
 
+// A `@public` JSDoc tag on a specifier below means: published API, deliberately
+// kept even though no workspace in this monorepo imports it. The root
+// `knip.jsonc` gate (`pnpm run lint:dead`, part of `lint`) reports every
+// untagged barrel export that nothing consumes, so a new export must either
+// gain a consumer or be tagged on purpose — see root CLAUDE.md's Tooling →
+// knip bullet and this repo's root `knip.jsonc`.
+
 // Core types
 export type {
   PresetCategory,
@@ -24,16 +31,25 @@ export type { PresetFilters, PresetEditRequest, PresetSortOption } from './reque
 // Response types
 export type {
   PresetListResponse,
+  /** @public */
   PresetSubmitCreatedResponse,
+  /** @public */
   PresetSubmitDuplicateResponse,
+  /** @public */
   PresetSubmitErrorResponse,
   PresetSubmitResponse,
+  /** @public */
   PresetEditDuplicateInfo,
+  /** @public */
   PresetEditSuccessResponse,
+  /** @public */
   PresetEditDuplicateResponse,
+  /** @public */
   PresetEditErrorResponse,
   PresetEditResponse,
+  /** @public */
   VoteSuccessResponse,
+  /** @public */
   VoteErrorResponse,
   VoteResponse,
 } from './response.js';

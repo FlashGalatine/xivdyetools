@@ -13,7 +13,9 @@ import type { CacheConfig } from '../types';
 describe('CacheService', () => {
   let mockCtx: ReturnType<typeof createMockExecutionContext>;
   let cacheService: CacheService;
-  const baseUrl = 'https://test.example.com';
+  // OPT-004: cache keys use a fixed synthetic origin now, so the request host
+  // no longer partitions the cache.
+  const cacheOrigin = 'https://cache.internal';
 
   const testConfig: CacheConfig = {
     cacheTtl: 300,
@@ -24,7 +26,7 @@ describe('CacheService', () => {
   beforeEach(() => {
     resetAllMocks();
     mockCtx = createMockExecutionContext();
-    cacheService = new CacheService(mockCtx, baseUrl);
+    cacheService = new CacheService(mockCtx);
     vi.useFakeTimers();
   });
 
@@ -44,7 +46,7 @@ describe('CacheService', () => {
 
       // Manually populate the cache
       const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/test-key`;
+      const cacheUrl = `${cacheOrigin}/__cache/test-key`;
       const response = new Response(JSON.stringify(testData), {
         headers: {
           'Content-Type': 'application/json',
@@ -69,7 +71,7 @@ describe('CacheService', () => {
       const cachedAt = now - 350 * 1000; // 350 seconds ago (beyond 300s TTL, within 420s total)
 
       const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/stale-key`;
+      const cacheUrl = `${cacheOrigin}/__cache/stale-key`;
       const response = new Response(JSON.stringify(testData), {
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +93,7 @@ describe('CacheService', () => {
       const cachedAt = now - 500 * 1000; // 500 seconds ago (beyond 420s total window)
 
       const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/expired-key`;
+      const cacheUrl = `${cacheOrigin}/__cache/expired-key`;
       const response = new Response(JSON.stringify(testData), {
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +116,7 @@ describe('CacheService', () => {
       // @ts-expect-error - Intentionally setting undefined for testing
       globalThis.caches = undefined;
 
-      const service = new CacheService(mockCtx, baseUrl);
+      const service = new CacheService(mockCtx);
       const result = await service.get('any-key');
       expect(result).toBeNull();
 
@@ -130,7 +132,7 @@ describe('CacheService', () => {
       await cacheService.store('store-test', testData, testConfig);
 
       const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/store-test`;
+      const cacheUrl = `${cacheOrigin}/__cache/store-test`;
       const cached = await cache.match(new Request(cacheUrl));
 
       expect(cached).toBeDefined();
@@ -145,7 +147,7 @@ describe('CacheService', () => {
       // @ts-expect-error - Intentionally setting undefined for testing
       globalThis.caches = undefined;
 
-      const service = new CacheService(mockCtx, baseUrl);
+      const service = new CacheService(mockCtx);
       // Should not throw
       await service.store('key', { data: 'test' }, testConfig);
 
@@ -167,53 +169,9 @@ describe('CacheService', () => {
 
       // Check Cache API
       const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/async-test`;
+      const cacheUrl = `${cacheOrigin}/__cache/async-test`;
       const cached = await cache.match(new Request(cacheUrl));
       expect(cached).toBeDefined();
-    });
-  });
-
-  describe('deleteEntry', () => {
-    it('should delete from cache', async () => {
-      const testData = { items: [1, 2, 3] };
-
-      // First, store data
-      await cacheService.store('delete-test', testData, testConfig);
-
-      // Verify data exists
-      const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/delete-test`;
-      expect(await cache.match(new Request(cacheUrl))).toBeDefined();
-
-      // Delete
-      await cacheService.deleteEntry('delete-test');
-
-      // Verify deleted
-      expect(await cache.match(new Request(cacheUrl))).toBeUndefined();
-    });
-  });
-
-  describe('deleteAsync', () => {
-    it('should delete from cache asynchronously', async () => {
-      const testData = { items: [1, 2, 3] };
-
-      // First, store data
-      await cacheService.store('delete-async-test', testData, testConfig);
-
-      // Delete async
-      cacheService.deleteAsync('delete-async-test');
-      await (mockCtx as unknown as { _waitForAll: () => Promise<void> })._waitForAll();
-
-      // Verify deleted
-      const cache = await caches.open('universalis-proxy');
-      const cacheUrl = `${baseUrl}/__cache/delete-async-test`;
-      expect(await cache.match(new Request(cacheUrl))).toBeUndefined();
-    });
-
-    it('should handle errors gracefully during deletion', async () => {
-      // This should not throw even with no data
-      cacheService.deleteAsync('nonexistent-key');
-      await (mockCtx as unknown as { _waitForAll: () => Promise<void> })._waitForAll();
     });
   });
 

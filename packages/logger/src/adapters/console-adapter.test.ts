@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ConsoleAdapter } from './console-adapter.js';
-import type { LogEntry } from '../types.js';
+import type { LogContext, LogEntry } from '../types.js';
 
 describe('ConsoleAdapter', () => {
   let consoleSpy: {
@@ -344,5 +344,75 @@ describe('ConsoleAdapter', () => {
       expect(consoleSpy.warn).toHaveBeenCalledTimes(1);
       expect(consoleSpy.error).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-104 (deep dive 2026-09-02): `ConsoleAdapter` serialised with raw
+// `JSON.stringify`, so a circular or BigInt context threw OUT of the log call
+// and took the caller down — the exact failure FINDING-026 fixed, applied to
+// `JsonAdapter` only.
+//
+// Redaction does not break the cycle for us (BUG-004: the guard used to
+// re-insert the original node), so `JSON.stringify` saw a real cycle.
+//
+// Live consumers: `apps/stoat-worker` via `createLibraryLogger`, this package's
+// `ConsoleLogger` / `browserLogger` / `createBrowserLogger`, and any npm
+// consumer — `ConsoleAdapter` is `@public`. `console-adapter.test.ts` had no
+// circular or BigInt case at all, and `hardening.test.ts` builds its capture
+// helper on `JsonAdapter` only.
+// ---------------------------------------------------------------------------
+describe('BUG-104: a circular or BigInt context never throws out of the log call', () => {
+  const shapes: Array<[string, () => LogContext]> = [
+    [
+      'self-referential object',
+      () => {
+        const ctx: LogContext = { a: 1 };
+        ctx.self = ctx;
+        return ctx;
+      },
+    ],
+    ['BigInt value', () => ({ n: 1n } as unknown as LogContext)],
+    [
+      'cycle through an array',
+      () => {
+        const inner: LogContext = { token: 'shhh' };
+        const ctx: LogContext = { items: [inner] };
+        inner.back = ctx;
+        return ctx;
+      },
+    ],
+  ];
+
+  describe.each(shapes)('%s', (_name, build) => {
+    it('pretty format survives and still logs', () => {
+      const spy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      const logger = new ConsoleAdapter({ format: 'pretty', level: 'debug' });
+      expect(() => logger.info('x', build())).not.toThrow();
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
+    it('json format survives and still logs', () => {
+      const spy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      const logger = new ConsoleAdapter({ format: 'json', level: 'debug' });
+      expect(() => logger.info('x', build())).not.toThrow();
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
+  });
+
+  it('and the secret behind the cycle is still absent from the output (BUG-004)', () => {
+    const spy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const logger = new ConsoleAdapter({ format: 'json', level: 'debug' });
+    const inner: LogContext = { token: 'shhh' };
+    const ctx: LogContext = { items: [inner] };
+    inner.back = ctx;
+
+    logger.info('array cycle', ctx);
+
+    const written = spy.mock.calls.map((call) => String(call[0])).join('\n');
+    expect(written).not.toContain('shhh');
+    spy.mockRestore();
   });
 });

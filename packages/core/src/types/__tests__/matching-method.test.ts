@@ -113,4 +113,23 @@ describe('normalizeMatchingMethod', () => {
       expect(normalizeMatchingMethod(once)).toBe(once);
     }
   });
+
+  /**
+   * BUG-011: the legacy lookup used `value in MAP` and `MAP[value]`, both of
+   * which resolve through `Object.prototype` — so these names looked like
+   * retired methods and the function returned a FUNCTION typed as a
+   * MatchingMethod. This normalizer runs at every ingress (KV preference,
+   * localStorage, the URL `algo` param, API bodies), and its contract is that
+   * anything unrecognised falls back to the default.
+   */
+  it.each(['constructor', 'toString', '__proto__', 'valueOf', 'hasOwnProperty', 'isPrototypeOf'])(
+    'treats the inherited key %s as unrecognised',
+    (key) => {
+      const result = normalizeMatchingMethod(key);
+
+      expect(typeof result).toBe('string');
+      expect(MATCHING_METHODS).toContain(result);
+      expect(result).toBe(normalizeMatchingMethod('junk'));
+    }
+  );
 });

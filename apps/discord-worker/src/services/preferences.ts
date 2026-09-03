@@ -145,6 +145,13 @@ export async function getUserPreferences(
  * @param key - Preference key to get
  * @param logger - Optional logger
  * @returns The preference value or default
+ *
+ * @testonly reached only by preferences.test.ts. Its sole production
+ * "reference" was a stale comment in services/i18n.ts claiming a lazy import to
+ * avoid a circular dependency -- code that no longer existed, since locale
+ * resolution reads KV directly. REFACTOR-001 rewrote that file and the comment
+ * went with it, which is what surfaced this. A deletion candidate: no command
+ * path reads a single preference by key today.
  */
 export async function getPreference<K extends PreferenceKey>(
   kv: KVNamespace,
@@ -175,16 +182,22 @@ export async function setPreference(
   value: string | number | boolean,
   logger?: ExtendedLogger,
 ): Promise<{ success: boolean; reason?: string }> {
-  try {
-    // Validate the value based on the key
-    const validation = validatePreferenceValue(key, value);
-    if (!validation.valid) {
-      return { success: false, reason: validation.reason };
-    }
+  const results = await setPreferences(kv, userId, [{ key, value }], logger);
+  return results[0];
+}
 
-    // Get current preferences
-    const prefs = await getUserPreferences(kv, userId, logger);
-
+/**
+ * Apply one validated preference onto an in-memory preferences object.
+ *
+ * Split out of `setPreference` so a multi-option `/preferences set` can apply
+ * every key to ONE object and write it once (BUG-029).
+ */
+function applyPreference(
+  prefs: UserPreferences,
+  key: PreferenceKey,
+  value: string | number | boolean,
+): void {
+  {
     // Update the specific preference
     switch (key) {
       case 'language':
@@ -234,27 +247,81 @@ export async function setPreference(
         prefs.theme = value as CardTheme;
         break;
     }
+  }
+}
+
+/**
+ * Set several preferences in one read-modify-write cycle.
+ *
+ * BUG-029: `/preferences set` used to call `setPreference` once per option,
+ * and each call was a full get → mutate → put of the SAME `prefs:v1:{userId}`
+ * blob. Workers KV allows one write per second per key and is eventually
+ * consistent, so a `get` issued straight after a `put` on that key is not
+ * guaranteed to see it: iteration 2 could read the pre-`language` object, add
+ * `matching`, and write it back — silently dropping `language` while the embed
+ * reported all of them saved. `/preferences set` advertises exactly this
+ * multi-option usage in its own docstring, and 14 options are settable.
+ *
+ * One read, every validated key applied to that one object, one write. Each
+ * entry still gets its own result so the handler can list per-key failures.
+ *
+ * @returns one result per entry, in the order given
+ */
+export async function setPreferences(
+  kv: KVNamespace,
+  userId: string,
+  entries: Array<{ key: PreferenceKey; value: string | number | boolean }>,
+  logger?: ExtendedLogger,
+): Promise<Array<{ success: boolean; reason?: string }>> {
+  const results: Array<{ success: boolean; reason?: string }> = entries.map(() => ({
+    success: false,
+    reason: 'error',
+  }));
+
+  // Validate first — an invalid value never reaches the stored object, and a
+  // batch where every entry is invalid does no KV work at all.
+  const applicable: number[] = [];
+  entries.forEach((entry, i) => {
+    const validation = validatePreferenceValue(entry.key, entry.value);
+    if (validation.valid) {
+      applicable.push(i);
+    } else {
+      results[i] = { success: false, reason: validation.reason };
+    }
+  });
+
+  if (applicable.length === 0) return results;
+
+  try {
+    const prefs = await getUserPreferences(kv, userId, logger);
+
+    for (const i of applicable) {
+      applyPreference(prefs, entries[i].key, entries[i].value);
+    }
 
     // Update metadata
     prefs.updatedAt = new Date().toISOString();
     prefs._version = SCHEMA_VERSION;
 
-    // Save to KV
+    // Save to KV — one write for the whole batch
     await kv.put(buildPrefsKey(userId), JSON.stringify(prefs));
 
-    return { success: true };
+    for (const i of applicable) results[i] = { success: true };
+    return results;
   } catch (error) {
     if (logger) {
       // FINDING-011 (2026-08-29 security audit): the value itself is the
       // user's home world / clan / language — personal data that has no
       // business in a log line. Its shape is what diagnoses a write failure.
-      logger.error('Failed to set preference', error instanceof Error ? error : undefined, {
-        key,
-        valueType: typeof value,
-        valueLength: typeof value === 'string' ? value.length : undefined,
+      logger.error('Failed to set preferences', error instanceof Error ? error : undefined, {
+        keys: applicable.map((i) => entries[i].key),
+        valueTypes: applicable.map((i) => typeof entries[i].value),
+        valueLengths: applicable.map((i) =>
+          typeof entries[i].value === 'string' ? entries[i].value.length : undefined,
+        ),
       });
     }
-    return { success: false, reason: 'error' };
+    return results;
   }
 }
 

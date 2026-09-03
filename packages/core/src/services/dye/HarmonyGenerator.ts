@@ -4,7 +4,7 @@
  * Handles triadic, analogous, complementary, and other harmony schemes
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { Dye, LAB } from '@xivdyetools/types';
 import { ColorManipulator } from '../color/ColorManipulator.js';
 import {
   ColorConverter,
@@ -20,6 +20,48 @@ import type { DyeSearch } from './DyeSearch.js';
  * - 'deltaE': DeltaE-based matching - matches based on perceptual color difference
  */
 export type HarmonyMatchingAlgorithm = 'hue' | 'deltaE';
+
+/**
+ * Default ΔE tolerance per formula.
+ *
+ * BUG-059: these used to be a two-way ternary — `ciede2000 ? 25 : 40` — which
+ * silently gave `'oklab'` CIE76's tolerance. OKLAB ΔE runs roughly 0-1, so 40
+ * admitted the entire dye set. Each value sits just outside its formula's
+ * widest calibrated `harmony` band cut in `config/band-vocabulary.ts`
+ * (ciede2000 20, cie76 26.2, oklab 0.107), which is the relationship the
+ * original two already had.
+ */
+const DEFAULT_DELTA_E_TOLERANCE = {
+  ciede2000: 25,
+  cie76: 40,
+  oklab: 0.13,
+} as const;
+
+/**
+ * ΔE between two colours under a canonical formula.
+ *
+ * BUG-059: both call sites used a two-way ternary (`ciede2000 ? 2000 : 76`),
+ * which quietly routed `'oklab'` into the CIE76 branch — an oklab caller got
+ * CIE76 numbers under an oklab label, then compared them against an oklab
+ * tolerance. Lab values are passed in because they are pre-computed on every
+ * dye; only the OKLAB path needs the hex.
+ */
+function deltaEFor(
+  formula: 'ciede2000' | 'cie76' | 'oklab',
+  hexA: string,
+  hexB: string,
+  labA: LAB,
+  labB: LAB
+): number {
+  switch (formula) {
+    case 'ciede2000':
+      return ColorConverter.getDeltaE2000(labA, labB);
+    case 'oklab':
+      return ColorConverter.getDeltaE_Oklab(hexA, hexB);
+    case 'cie76':
+      return ColorConverter.getDeltaE76(labA, labB);
+  }
+}
 
 /**
  * Color space used for hue rotation in harmony calculations
@@ -65,7 +107,9 @@ export interface HarmonyOptions {
    * Maximum DeltaE distance for matching
    * Only used when algorithm is 'deltaE'
    * Higher values return more matches but less precise
-   * @default 40 (for cie76), 25 (for ciede2000 / its 'cie2000' alias)
+   * @default per formula — 40 cie76, 25 ciede2000 (and its 'cie2000'
+   * alias), 0.13 oklab. OKLAB deltaE runs on a ~0-1 scale, so the CIE76
+   * number is not a usable default for it (BUG-059).
    */
   deltaETolerance?: number;
 }
@@ -227,7 +271,7 @@ export class HarmonyGenerator {
     if (options?.algorithm === 'deltaE') {
       const baseLab = ColorConverter.hexToLab(baseDye.hex);
       const formula = normalizeDeltaEFormula(options.deltaEFormula ?? 'cie76');
-      const tolerance = options.deltaETolerance ?? (formula === 'ciede2000' ? 25 : 40);
+      const tolerance = options.deltaETolerance ?? DEFAULT_DELTA_E_TOLERANCE[formula];
 
       const results: Array<{ dye: Dye; deltaE: number; satValDiff: number }> = [];
 
@@ -236,10 +280,9 @@ export class HarmonyGenerator {
 
         // Use pre-computed LAB (always available for DyeInternal)
         const dyeLab = dye.lab;
-        const deltaE =
-          formula === 'ciede2000'
-            ? ColorConverter.getDeltaE2000(baseLab, dyeLab)
-            : ColorConverter.getDeltaE76(baseLab, dyeLab);
+        // BUG-059: a two-way ternary silently sent 'oklab' down the CIE76
+        // branch, so an oklab caller got CIE76 numbers under an oklab label.
+        const deltaE = deltaEFor(formula, baseDye.hex, dye.hex, baseLab, dyeLab);
 
         // For monochromatic, we want colors that are perceptually similar
         // but have varying lightness (L component)
@@ -416,7 +459,7 @@ export class HarmonyGenerator {
     options: HarmonyOptions,
   ): Dye | null {
     const formula = normalizeDeltaEFormula(options.deltaEFormula ?? 'cie76');
-    const tolerance = options.deltaETolerance ?? (formula === 'ciede2000' ? 25 : 40);
+    const tolerance = options.deltaETolerance ?? DEFAULT_DELTA_E_TOLERANCE[formula];
 
     const targetLab = ColorConverter.hexToLab(targetHex);
 
@@ -431,10 +474,8 @@ export class HarmonyGenerator {
 
       // Use pre-computed LAB (always available for DyeInternal)
       const dyeLab = dye.lab;
-      const deltaE =
-        formula === 'ciede2000'
-          ? ColorConverter.getDeltaE2000(targetLab, dyeLab)
-          : ColorConverter.getDeltaE76(targetLab, dyeLab);
+      // BUG-059: see deltaEFor — 'oklab' used to fall through to CIE76.
+      const deltaE = deltaEFor(formula, targetHex, dye.hex, targetLab, dyeLab);
 
       if (deltaE < bestDeltaE) {
         bestDeltaE = deltaE;

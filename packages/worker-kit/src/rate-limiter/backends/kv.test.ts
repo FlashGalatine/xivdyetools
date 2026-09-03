@@ -344,4 +344,56 @@ describe('KVRateLimiter', () => {
       consoleSpy.mockRestore();
     });
   });
+
+  // pkg-worker-kit-test-utils-07: nothing in this file crossed a fixed-window
+  // boundary, so BUG-064 -- check() capturing `now` ONCE so that checkOnly()
+  // and increment() address the same buildKey(key, now, windowMs) -- was
+  // unfalsifiable. Deleting the shared `now` and letting each half re-read
+  // Date.now() lets a request read window N and write window N+1: the request
+  // goes uncounted in the window that authorised it.
+  describe('fixed-window boundary (BUG-064)', () => {
+    it('reads and writes the same window key when the clock crosses a boundary mid-call', async () => {
+      vi.useFakeTimers();
+      try {
+        const windowMs = 60_000;
+        // 1 ms before the start of window 100.
+        vi.setSystemTime(windowMs * 100 - 1);
+
+        const getKeys: string[] = [];
+        const putKeys: string[] = [];
+        let stepped = false;
+
+        const kv = {
+          get: vi.fn(async (k: string) => {
+            getKeys.push(k);
+            if (!stepped) {
+              stepped = true;
+              // Real KV latency lands on exactly this await. Step the clock
+              // across the boundary here, between checkOnly and increment.
+              vi.setSystemTime(windowMs * 100 + 1);
+            }
+            return null;
+          }),
+          getWithMetadata: vi.fn(async () => ({ value: null, metadata: null })),
+          put: vi.fn(async (k: string) => {
+            putKeys.push(k);
+          }),
+          delete: vi.fn(async () => undefined),
+          list: vi.fn(async () => ({ keys: [], list_complete: true, cursor: '' })),
+        } as unknown as KVNamespace;
+
+        const limiter = new KVRateLimiter({ kv });
+        await limiter.check('user1', { maxRequests: 5, windowMs });
+
+        // The read landed in window 99 ...
+        expect(getKeys[0]).toMatch(/\|99$/);
+        // ... and so must the write. Without the shared clock this is `|100`,
+        // so the request is charged to a window the check never consulted.
+        expect(putKeys).toHaveLength(1);
+        expect(putKeys[0]).toBe(getKeys[0]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
 });

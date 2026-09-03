@@ -12,6 +12,7 @@ import { cors } from 'hono/cors';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env, DiscordInteraction } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
+import type { GitHubPushPayload } from './types/github.js';
 import {
   verifyDiscordRequest,
   unauthorizedResponse,
@@ -121,10 +122,24 @@ const ANNOUNCED_VERSION_TTL_SECONDS = 90 * 24 * 60 * 60;
 
 type PushCommit = import('./types/github.js').GitHubCommit;
 
+/**
+ * Render a preset's dye list as names for a moderation / submission-log embed.
+ *
+ * BUG-013: this resolved every id with `getDyeById`, which reads the **itemID**
+ * map. Preset dye arrays have carried stainIDs since the 5.0 id rewrite, and
+ * the two ranges are disjoint — stainIDs run 1–254, item IDs start at 5729 —
+ * so every lookup missed and the numeric fallback fired. Moderators approving
+ * a preset read "Dyes: 1, 2, 3" where the palette should be in words, and
+ * decided on it without seeing the colours named.
+ *
+ * Stain first, item id second: the fallback keeps any pre-rewrite row that is
+ * still carrying legacy itemIDs readable, which is the same discrimination
+ * `parseDyeIdInput` makes in bot-logic.
+ */
 function formatDyesForEmbed(dyeIds: number[]): string {
   return dyeIds
     .map((dyeId) => {
-      const dye = dyeService.getDyeById(dyeId);
+      const dye = dyeService.getByStainId(dyeId) ?? dyeService.getDyeById(dyeId);
       if (!dye) return dyeId.toString();
       return getLocalizedDyeName(dye.itemID, dye.name);
     })
@@ -531,9 +546,9 @@ app.post('/webhooks/github', async (c) => {
   }
 
   // Parse payload
-  let payload: import('./types/github.js').GitHubPushPayload;
+  let payload: GitHubPushPayload;
   try {
-    payload = JSON.parse(rawBody) as import('./types/github.js').GitHubPushPayload;
+    payload = JSON.parse(rawBody) as GitHubPushPayload;
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
@@ -613,12 +628,28 @@ app.post('/webhooks/github', async (c) => {
 
   // Send announcement to Discord
   const { sendAnnouncement } = await import('./services/announcements.js');
-  await sendAnnouncement(
+  const sent = await sendAnnouncement(
     env.DISCORD_TOKEN,
     env.ANNOUNCEMENT_CHANNEL_ID,
     latestEntry,
     GITHUB_ANNOUNCE_REPO_URL,
   );
+
+  // BUG-026: a rejected send must not leave the memo behind. Answering 502
+  // makes GitHub log a failed delivery, which is what makes a Redeliver both
+  // possible and correct — the memo below is the only thing that would have
+  // suppressed it, and it has not been written.
+  if (!sent.ok) {
+    logger.error('Announcement send rejected by Discord', undefined, {
+      version: latestEntry.version,
+      status: sent.status,
+      body: sent.body,
+    });
+    return c.json(
+      { success: false, message: 'Announcement rejected by Discord', version: latestEntry.version },
+      502,
+    );
+  }
 
   // Memoised only after the send succeeded: a failed announcement leaves no
   // key behind, so a Redeliver can still get the release out. The write itself
@@ -1205,7 +1236,21 @@ async function getFavoritedPresetsAutocompleteChoices(
       for (let i = 0; i < missing.length; i++) {
         missing[i].name = resolved[i]?.name ?? missing[i].id;
       }
-      await savePresetFavoriteEntries(env.KV, userId, entries, logger);
+
+      // BUG-028: the write-back used to be awaited inside the same `try` as
+      // the lookup, so a rejected KV put fell through to the outer catch and
+      // returned `[]` — the user got NO autocomplete options at all, not just
+      // a failed migration. Several keystrokes land inside a second and KV
+      // allows one write per second per key, so hitting that is routine for a
+      // legacy user typing at speed. The migration is an optimisation; it is
+      // never a precondition for answering.
+      try {
+        await savePresetFavoriteEntries(env.KV, userId, entries, logger);
+      } catch (error) {
+        logger.warn('Favourites name back-fill could not be persisted', {
+          errorName: error instanceof Error ? error.name : 'unknown',
+        });
+      }
     }
 
     const lowerQuery = query.toLowerCase();

@@ -19,6 +19,9 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.9.1(jiti@2.7.0)(supports-color@10.2.2))
+      '@types/node':
+        specifier: ^26.4.0
+        version: 26.4.0
       eslint:
         specifier: ^10.9.1
         version: 10.9.1(jiti@2.7.0)(supports-color@10.2.2)
@@ -31,6 +34,9 @@ importers:
       rimraf:
         specifier: ^6.1.2
         version: 6.1.3
+      tsx:
+        specifier: ^4.23.12
+        version: 4.23.12
       turbo:
         specifier: ^2.10.12
         version: 2.10.12
@@ -55,9 +61,6 @@ importers:
       hono:
         specifier: ^4.13.5
         version: 4.13.5
-      spectral.js:
-        specifier: ^3.0.0
-        version: 3.0.0
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20260828.1
@@ -200,9 +203,6 @@ importers:
       '@xivdyetools/test-utils':
         specifier: workspace:*
         version: link:../../packages/test-utils
-      discord-interactions:
-        specifier: ^4.4.0
-        version: 4.4.0
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2

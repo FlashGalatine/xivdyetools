@@ -158,6 +158,43 @@ describe('UpstashRateLimiter', () => {
       expect(result.resetAt.getTime()).toBeGreaterThanOrEqual(before);
     });
 
+    // pkg-worker-kit-test-utils-04: the test above cannot fail. Every case in
+    // this file seeds `exec -> [n, 1, 60]`, where the key's remaining TTL
+    // happens to equal a full window, so BUG-055's fix (derive resetAt and
+    // retryAfter from the REAL TTL, since EXPIRE NX anchors the window at the
+    // first request) is indistinguishable from the `now + windowMs` it
+    // replaced -- and the assertion only demands "not in the past" anyway.
+    // Seed a TTL that is NOT a full window.
+    it('derives resetAt and retryAfter from the key TTL, not a full window', async () => {
+      mockPipeline.exec.mockResolvedValue([6, 0, 12]); // over limit, 12s left
+
+      const before = Date.now();
+      const result = await limiter.check('user1', defaultConfig);
+      const after = Date.now();
+
+      expect(result.allowed).toBe(false);
+      // 12, not the 60 a full window would give.
+      expect(result.retryAfter).toBe(12);
+      expect(result.resetAt.getTime()).toBeGreaterThanOrEqual(before + 12_000);
+      expect(result.resetAt.getTime()).toBeLessThanOrEqual(after + 12_000);
+    });
+
+    it.each([
+      ['-2 (key does not exist)', -2],
+      ['-1 (key exists with no expiry)', -1],
+    ])('falls back to a full window when TTL is %s', async (_label, ttl) => {
+      mockPipeline.exec.mockResolvedValue([9, 0, ttl]);
+
+      const before = Date.now();
+      const result = await limiter.check('user1', defaultConfig);
+      const after = Date.now();
+
+      expect(result.allowed).toBe(false);
+      expect(result.retryAfter).toBe(60);
+      expect(result.resetAt.getTime()).toBeGreaterThanOrEqual(before + 60_000);
+      expect(result.resetAt.getTime()).toBeLessThanOrEqual(after + 60_000);
+    });
+
     it('uses piplined INCR + EXPIRE NX', async () => {
       mockPipeline.exec.mockResolvedValue([1, 1, 60]);
 

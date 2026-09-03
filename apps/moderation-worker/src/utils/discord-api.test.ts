@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-  sendFollowUp,
   editOriginalResponse,
-  deleteOriginalResponse,
   sendMessage,
   editMessage,
   type FollowUpOptions,
@@ -19,108 +17,6 @@ describe('discord-api', () => {
   const mockToken = 'interaction-token-456';
   const mockBotToken = 'Bot.Token.Here';
   const mockChannelId = 'channel-789';
-
-  describe('sendFollowUp', () => {
-    it('should send follow-up message with content', async () => {
-      global.fetch = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 }))) as any;
-
-      const options: FollowUpOptions = {
-        content: 'Follow-up message',
-      };
-
-      await sendFollowUp(mockApplicationId, mockToken, options);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        `https://discord.com/api/v10/webhooks/${mockApplicationId}/${mockToken}`,
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ allowed_mentions: { parse: [] }, content: 'Follow-up message' }),
-        })
-      );
-    });
-
-    it('should send follow-up with embeds', async () => {
-      global.fetch = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 }))) as any;
-
-      const embeds = [{ title: 'Embed Title', description: 'Description', color: 0xff0000 }];
-      const options: FollowUpOptions = { embeds };
-
-      await sendFollowUp(mockApplicationId, mockToken, options);
-
-      const call = (global.fetch as any).mock.calls[0];
-      const body = JSON.parse(call[1].body);
-
-      expect(body.embeds).toEqual(embeds);
-    });
-
-    it('should send follow-up with components', async () => {
-      global.fetch = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 }))) as any;
-
-      const components = [
-        {
-          type: 1,
-          components: [{ type: 2, style: 1, label: 'Button', custom_id: 'btn' }],
-        },
-      ];
-      const options: FollowUpOptions = { components: components as any };
-
-      await sendFollowUp(mockApplicationId, mockToken, options);
-
-      const call = (global.fetch as any).mock.calls[0];
-      const body = JSON.parse(call[1].body);
-
-      expect(body.components).toEqual(components);
-    });
-
-    it('should set ephemeral flag when requested', async () => {
-      global.fetch = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 }))) as any;
-
-      const options: FollowUpOptions = {
-        content: 'Private message',
-        ephemeral: true,
-      };
-
-      await sendFollowUp(mockApplicationId, mockToken, options);
-
-      const call = (global.fetch as any).mock.calls[0];
-      const body = JSON.parse(call[1].body);
-
-      expect(body.flags).toBe(64);
-    });
-
-    it('should send all options together', async () => {
-      global.fetch = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 }))) as any;
-
-      const options: FollowUpOptions = {
-        content: 'Message',
-        embeds: [{ title: 'Title' }],
-        components: [{ type: 1, components: [] }] as any,
-        ephemeral: true,
-      };
-
-      await sendFollowUp(mockApplicationId, mockToken, options);
-
-      const call = (global.fetch as any).mock.calls[0];
-      const body = JSON.parse(call[1].body);
-
-      expect(body.content).toBe('Message');
-      expect(body.embeds).toBeDefined();
-      expect(body.components).toBeDefined();
-      expect(body.flags).toBe(64);
-    });
-
-    it('should construct correct URL', async () => {
-      global.fetch = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 }))) as any;
-
-      await sendFollowUp('app-id', 'token', { content: 'test' });
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://discord.com/api/v10/webhooks/app-id/token',
-        expect.any(Object)
-      );
-    });
-  });
 
   describe('editOriginalResponse', () => {
     it('should edit original response with content', async () => {
@@ -183,32 +79,6 @@ describe('discord-api', () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({ method: 'PATCH' })
-      );
-    });
-  });
-
-  describe('deleteOriginalResponse', () => {
-    it('should delete original response', async () => {
-      global.fetch = vi.fn(() => Promise.resolve(new Response('', { status: 200 }))) as any;
-
-      await deleteOriginalResponse(mockApplicationId, mockToken);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        `https://discord.com/api/v10/webhooks/${mockApplicationId}/${mockToken}/messages/@original`,
-        expect.objectContaining({
-          method: 'DELETE',
-        })
-      );
-    });
-
-    it('should construct correct URL', async () => {
-      global.fetch = vi.fn(() => Promise.resolve(new Response('', { status: 200 }))) as any;
-
-      await deleteOriginalResponse('app-123', 'token-456');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://discord.com/api/v10/webhooks/app-123/token-456/messages/@original',
-        expect.any(Object)
       );
     });
   });
@@ -369,9 +239,9 @@ describe('discord-api', () => {
     it('should propagate fetch errors', async () => {
       global.fetch = vi.fn(() => Promise.reject(new Error('Network error'))) as any;
 
-      await expect(sendFollowUp(mockApplicationId, mockToken, { content: 'test' })).rejects.toThrow(
-        'Network error'
-      );
+      await expect(
+        sendMessage(mockBotToken, mockChannelId, { content: 'test' })
+      ).rejects.toThrow('Network error');
     });
 
     it('should return Response even if status is not OK', async () => {
@@ -394,11 +264,6 @@ describe('allowed_mentions on outbound payloads (FINDING-019)', () => {
   });
 
   const bodyOfLastCall = (): any => JSON.parse((global.fetch as any).mock.calls[0][1].body);
-
-  it('sendFollowUp sends allowed_mentions: { parse: [] }', async () => {
-    await sendFollowUp('app', 'tok', { content: '@everyone hi' });
-    expect(bodyOfLastCall().allowed_mentions).toEqual({ parse: [] });
-  });
 
   it('editOriginalResponse sends allowed_mentions: { parse: [] }', async () => {
     await editOriginalResponse('app', 'tok', { embeds: [{ title: 'x' }] });

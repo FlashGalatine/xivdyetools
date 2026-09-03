@@ -30,39 +30,6 @@ function baseBody(options: { allowed_mentions?: AllowedMentions }): Record<strin
 }
 
 /**
- * Sends a follow-up message to a deferred interaction.
- */
-export async function sendFollowUp(
-  applicationId: string,
-  interactionToken: string,
-  options: FollowUpOptions
-): Promise<Response> {
-  const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}`;
-
-  const body = baseBody(options);
-  if (options.content) body.content = options.content;
-  if (options.embeds) body.embeds = options.embeds;
-  if (options.components) body.components = options.components;
-  if (options.ephemeral) body.flags = 64;
-
-  try {
-    return await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-  } catch (error) {
-    console.error('Discord API request failed', {
-      url: sanitizeUrl(url),
-      error: sanitizeErrorMessage(error),
-    });
-    throw error;
-  }
-}
-
-/**
  * Edits the original deferred response.
  */
 export async function editOriginalResponse(
@@ -84,6 +51,11 @@ export async function editOriginalResponse(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      // BUG-040: this was the one Discord call in the file with no timeout,
+      // while sendMessage and editMessage both carry 5 s. A stalled PATCH left
+      // the moderator on Discord's "thinking…" indefinitely, and the isolate
+      // holding the waitUntil promise with it.
+      signal: AbortSignal.timeout(5000),
     });
   } catch (error) {
     console.error('Discord API request failed', {
@@ -95,24 +67,39 @@ export async function editOriginalResponse(
 }
 
 /**
- * Deletes the original interaction response.
+ * BUG-040: throw-safe, outcome-checked `editOriginalResponse`.
+ *
+ * The raw call returns the Response and now carries an AbortSignal, so every
+ * call site needs to read `.ok` and be ready for a throw — and none of the five
+ * did. A 4xx (expired interaction token, embed over the limit) was discarded
+ * silently, and a timeout rejected the `waitUntil` promise unhandled. Either
+ * way the moderator saw a permanent "thinking…" with no clue whether their
+ * action had landed.
+ *
+ * This mirrors `safeSendMessage` / `safeEditMessage` above, and the main bot's
+ * `safeEditOriginalResponse`.
+ *
+ * @returns true when Discord accepted the edit
  */
-export async function deleteOriginalResponse(
+export async function safeEditOriginalResponse(
   applicationId: string,
-  interactionToken: string
-): Promise<Response> {
-  const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
-
+  interactionToken: string,
+  options: FollowUpOptions
+): Promise<boolean> {
   try {
-    return await fetch(url, {
-      method: 'DELETE',
-    });
+    const res = await editOriginalResponse(applicationId, interactionToken, options);
+    if (!res.ok) {
+      console.error(
+        'Discord editOriginalResponse failed',
+        res.status,
+        await res.text().catch(() => '')
+      );
+      return false;
+    }
+    return true;
   } catch (error) {
-    console.error('Discord API request failed', {
-      url: sanitizeUrl(url),
-      error: sanitizeErrorMessage(error),
-    });
-    throw error;
+    console.error('Discord editOriginalResponse threw', sanitizeErrorMessage(error));
+    return false;
   }
 }
 

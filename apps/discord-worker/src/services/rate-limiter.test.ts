@@ -241,7 +241,11 @@ describe('rate-limiter.ts', () => {
       { command: 'extractor', subcommand: 'image', tier: 'RL_5', key: 'extractor:image' },
       { command: 'no_such_command', subcommand: undefined, tier: 'RL_15', key: 'no_such_command' },
     ] as const)('routes /$command to $tier', async ({ command, subcommand, tier, key: scope }) => {
-      const key = `ratelimit:user:${mockUserId}:${scope}`;
+      // pkg-worker-kit-test-utils-05: worker-kit's binding key now carries
+      // the tier's (limit, period), so two tiers pointed at one binding
+      // cannot share a counter. Every discord-worker tier is 60s, and the
+      // tier's limit is its name: RL_10 -> 10.
+      const key = `ratelimit:user:${mockUserId}:${scope}:t${tier.slice(3)}_60`;
       const bindings = createMockBindings();
       const result = await checkRateLimit(
         { bindings: bindings as unknown as DiscordRateLimitBindings, kv: mockKV },
@@ -285,7 +289,9 @@ describe('rate-limiter.ts', () => {
       );
 
       expect(result.allowed).toBe(true);
-      expect(bindings.RL_30.limit).toHaveBeenCalledWith({ key: 'ratelimit:user:user-123:budget' });
+      expect(bindings.RL_30.limit).toHaveBeenCalledWith({
+        key: 'ratelimit:user:user-123:budget:t30_60',
+      });
       expect(mockKV.put).not.toHaveBeenCalled();
     });
 
@@ -317,7 +323,7 @@ describe('rate-limiter.ts', () => {
         'image',
       );
       expect(bindings.RL_5.limit).toHaveBeenCalledWith({
-        key: 'ratelimit:user:user-123:extractor:image',
+        key: 'ratelimit:user:user-123:extractor:image:t5_60',
       });
     });
   });

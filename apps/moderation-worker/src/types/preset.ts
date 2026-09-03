@@ -7,26 +7,10 @@
  * @module types/preset
  */
 
-// ============================================================================
-// RE-EXPORT SHARED TYPES FROM @xivdyetools/types
-// ============================================================================
-
-export type {
-  PresetStatus,
-  PresetCategory,
-  CategoryMeta,
-  CommunityPreset,
-  PresetPreviousValues,
-  PresetFilters,
-  PresetSubmission,
-  PresetEditRequest,
-  PresetListResponse,
-  PresetSubmitResponse,
-  PresetEditResponse,
-  VoteResponse,
-  ModerationLogEntry,
-  ModerationStats,
-} from '@xivdyetools/types';
+// Shared preset types are imported from `@xivdyetools/types` at their use sites.
+// This module used to re-export fourteen of them; nine had no importer at all and
+// the other five had exactly one, so the pass-through was removed rather than
+// trimmed (2026-09-01 dead-code audit, DEAD-019).
 
 // ============================================================================
 // PROJECT-SPECIFIC TYPES

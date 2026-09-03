@@ -8,12 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-    findOrCreateUser,
-    findUserById,
-    findUserByDiscordId,
-    findUserByXIVAuthId,
-} from '../services/user-service.js';
+import { findOrCreateUser } from '../services/user-service.js';
 import type { UserRow } from '../types.js';
 
 /**
@@ -359,70 +354,6 @@ describe('User Service', () => {
                 expect(result.id).toBe(row.id);
                 expect(result.discord_id).toBe('121212121212121212');
             });
-        });
-    });
-
-    describe('findUserById', () => {
-        it('should find user by internal ID', async () => {
-            const created = await findOrCreateUser(db, {
-                discord_id: '123',
-                username: 'test',
-                auth_provider: 'discord',
-            });
-
-            const found = await findUserById(db, created.id);
-
-            expect(found).not.toBeNull();
-            expect(found!.id).toBe(created.id);
-            expect(found!.username).toBe('test');
-        });
-
-        it('should return null for non-existent ID', async () => {
-            const found = await findUserById(db, 'non-existent-uuid');
-
-            expect(found).toBeNull();
-        });
-    });
-
-    describe('findUserByDiscordId', () => {
-        it('should find user by Discord ID', async () => {
-            await findOrCreateUser(db, {
-                discord_id: 'discord-123',
-                username: 'discordtest',
-                auth_provider: 'discord',
-            });
-
-            const found = await findUserByDiscordId(db, 'discord-123');
-
-            expect(found).not.toBeNull();
-            expect(found!.discord_id).toBe('discord-123');
-        });
-
-        it('should return null for non-existent Discord ID', async () => {
-            const found = await findUserByDiscordId(db, 'non-existent-discord');
-
-            expect(found).toBeNull();
-        });
-    });
-
-    describe('findUserByXIVAuthId', () => {
-        it('should find user by XIVAuth ID', async () => {
-            await findOrCreateUser(db, {
-                xivauth_id: 'xivauth-456',
-                username: 'xivauthtest',
-                auth_provider: 'xivauth',
-            });
-
-            const found = await findUserByXIVAuthId(db, 'xivauth-456');
-
-            expect(found).not.toBeNull();
-            expect(found!.xivauth_id).toBe('xivauth-456');
-        });
-
-        it('should return null for non-existent XIVAuth ID', async () => {
-            const found = await findUserByXIVAuthId(db, 'non-existent-xivauth');
-
-            expect(found).toBeNull();
         });
     });
 

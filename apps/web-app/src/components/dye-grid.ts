@@ -451,7 +451,11 @@ export class DyeGrid extends BaseComponent {
         ) {
           event.preventDefault();
           const focusedDye = this.dyes[this.focusedIndex];
-          this.handleFavoriteToggle(focusedDye.id);
+          // BUG-069: favorites are keyed by stainID everywhere else in this
+          // file (the `data-favorite-dye-id` attribute, and the lookup inside
+          // handleFavoriteToggle). Passing `.id` — an itemID since schema v2 —
+          // matched nothing, so this shortcut was silently dead.
+          this.handleFavoriteToggle(focusedDye.stainID ?? 0);
         }
         return;
 
@@ -470,7 +474,10 @@ export class DyeGrid extends BaseComponent {
           if (focusedBtn) {
             const collectionBtn = focusedBtn.querySelector('.collection-btn');
             if (collectionBtn) {
-              this.handleCollectionClick(focusedDye.id, collectionBtn as HTMLElement);
+              // BUG-069: same grammar as the favorite shortcut above —
+              // `data-collection-dye-id` and handleCollectionClick both key on
+              // stainID, so `.id` matched nothing.
+              this.handleCollectionClick(focusedDye.stainID ?? 0, collectionBtn as HTMLElement);
             }
           }
         }

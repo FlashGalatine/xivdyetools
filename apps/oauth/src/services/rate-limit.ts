@@ -157,6 +157,10 @@ export async function checkRateLimit(
 
 /**
  * Reset the rate limiter (for testing purposes)
+ *
+ * @testonly test-isolation hook — clears the in-memory limiter's counters and
+ * drops the lazily-constructed KV/Durable-Object backends so each test starts
+ * from a fresh limiter regardless of which backend a prior test selected.
  */
 export async function resetRateLimiter(): Promise<void> {
   await memoryLimiter.resetAll();

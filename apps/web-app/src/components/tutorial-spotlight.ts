@@ -79,6 +79,14 @@ export class TutorialSpotlight extends BaseComponent {
   private unsubscribe: (() => void) | null = null;
   private resizeObserver: ResizeObserver | null = null;
 
+  /**
+   * OPT-010: the element `currentStep.target` resolves to. `querySelectorDeep`
+   * walks the document AND every shadow root under it, and `updatePositions()`
+   * called it on every ResizeObserver frame, every scroll and every resize.
+   * The target cannot change while a step is showing, so resolve it once.
+   */
+  private currentTarget: HTMLElement | null = null;
+
   renderContent(): void {
     // Create overlay container
     this.element = this.createElement('div', {
@@ -146,6 +154,20 @@ export class TutorialSpotlight extends BaseComponent {
 
     // Handle window resize
     this.on(window as unknown as HTMLElement, 'resize' as keyof HTMLElementEventMap, () => {
+      if (this.currentStep) {
+        this.updatePositions();
+      }
+    });
+
+    // BUG-086: a ResizeObserver does NOT fire on scroll, and the spotlight and
+    // tooltip are positioned from viewport coordinates -- so scrolling the page
+    // (or any scrollable ancestor, hence the capture phase) left the highlight
+    // sitting where the target used to be.
+    // (Bubble phase on `window`, which covers page scroll -- the reported
+    // symptom. BaseComponent.on() removes listeners without options, so a
+    // capture-phase listener for scrollable ANCESTORS would leak on destroy;
+    // that case is left alone rather than bypassing the helper.)
+    this.on(window as unknown as HTMLElement, 'scroll' as keyof HTMLElementEventMap, () => {
       if (this.currentStep) {
         this.updatePositions();
       }
@@ -234,11 +256,21 @@ export class TutorialSpotlight extends BaseComponent {
     // Scroll target into view if needed
     this.scrollIntoViewIfNeeded(target);
 
-    // Wait for scroll to complete
+    // Wait for scroll to complete.
+    // BUG-085: content FIRST. positionTooltip() measures the tooltip with
+    // getBoundingClientRect(), and on the first step the tooltip is still empty
+    // when updatePositions() runs -- a 0x0 box, so the placement maths is done
+    // against a size the tooltip never has.
     setTimeout(() => {
-      this.updatePositions();
       this.updateTooltipContent(step, stepIndex, totalSteps);
+      this.updatePositions();
     }, 100);
+
+    // OPT-010: remember the resolved element. `querySelectorDeep` walks the
+    // document AND every shadow root beneath it; updatePositions() ran it on
+    // every ResizeObserver frame, scroll and resize. The target cannot change
+    // while a step is showing.
+    this.currentTarget = target;
 
     // Set up resize observer for the target
     this.setupResizeObserver(target);
@@ -247,8 +279,9 @@ export class TutorialSpotlight extends BaseComponent {
   private updatePositions(): void {
     if (!this.currentStep || !this.spotlight || !this.tooltip) return;
 
-    // Use Shadow DOM traversal to find target
-    const target = querySelectorDeep(this.currentStep.target);
+    // OPT-010: resolved once when the step was shown; fall back to a deep
+    // query only if it was never resolved (defensive -- show() always sets it).
+    const target = this.currentTarget ?? querySelectorDeep(this.currentStep.target);
     if (!target) return;
 
     const rect = target.getBoundingClientRect();
@@ -561,6 +594,7 @@ export class TutorialSpotlight extends BaseComponent {
     }
 
     this.currentStep = null;
+    this.currentTarget = null;
   }
 
   // ============================================================================

@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/svg",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Platform-agnostic SVG card generators for the XIV Dye Tools ecosystem (pure functions: data in → SVG string out)",
   "author": "XIV Dye Tools",
   "license": "MIT",

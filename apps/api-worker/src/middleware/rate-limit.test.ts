@@ -104,7 +104,10 @@ describe('api-worker rate-limit middleware backend selection', () => {
     expect(first.status).toBe(200);
     expect(second.status).toBe(429);
     expect(second.headers.get('Retry-After')).toBeTruthy();
-    expect(binding.calls).toEqual(['api:ip:203.0.113.9', 'api:ip:203.0.113.9']);
+    // pkg-worker-kit-test-utils-05: the binding key carries the tier's
+    // (limit, period) so two tiers cannot share one counter. The api tier
+    // is 65 requests / 60s.
+    expect(binding.calls).toEqual(['api:ip:203.0.113.9:t65_60', 'api:ip:203.0.113.9:t65_60']);
     expect(kv.puts).toBe(0); // KV never touched when the binding is present
   });
 
@@ -125,11 +128,11 @@ describe('api-worker rate-limit middleware backend selection', () => {
 
     expect([beacon1.status, beacon2.status, beacon3.status]).toEqual([204, 204, 429]);
     // The API bucket saw only the API call — three beacons never touched it.
-    expect(apiBinding.calls).toEqual(['api:ip:203.0.113.9']);
+    expect(apiBinding.calls).toEqual(['api:ip:203.0.113.9:t65_60']);
     expect(telemetryBinding.calls).toEqual([
-      'telemetry:ip:203.0.113.9',
-      'telemetry:ip:203.0.113.9',
-      'telemetry:ip:203.0.113.9',
+      'telemetry:ip:203.0.113.9:t240_60',
+      'telemetry:ip:203.0.113.9:t240_60',
+      'telemetry:ip:203.0.113.9:t240_60',
     ]);
     expect(api.status).toBe(200);
   });

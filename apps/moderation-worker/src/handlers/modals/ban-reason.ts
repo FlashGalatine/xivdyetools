@@ -11,12 +11,13 @@ import {
   errorEmbed,
   ephemeralResponse,
   updateMessageResponse,
-  decodeBase64Url,
   sanitizeErrorMessage,
+  type DiscordEmbed,
 } from '../../utils/response.js';
+import { base64UrlDecode } from '@xivdyetools/auth/encoding';
 import { sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { safeSendMessage } from '../../utils/discord-api.js';
+import { safeSendMessage, safeEditOriginalResponse } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 // MOD-REF-002 FIX: Use shared modal types and helpers
@@ -75,7 +76,7 @@ export async function handleBanReasonModal(
   }
   if (!targetUsername && legacyEncodedUsername) {
     try {
-      targetUsername = decodeBase64Url(legacyEncodedUsername);
+      targetUsername = base64UrlDecode(legacyEncodedUsername);
     } catch {
       // ignore — fall through to the id
     }
@@ -108,7 +109,7 @@ export async function handleBanReasonModal(
 }
 
 async function processBan(
-  _interaction: ModalInteraction,
+  interaction: ModalInteraction,
   env: Env,
   targetUserId: string,
   targetUsername: string,
@@ -117,6 +118,25 @@ async function processBan(
   reason: string,
   logger?: ExtendedLogger
 ): Promise<void> {
+  /**
+   * moderation-worker-09: replace the "⏳ Processing Ban…" acknowledgement
+   * with the outcome.
+   *
+   * This handler answered with that spinner embed and then reported success
+   * AND failure solely through `safeSendMessage` to MODERATION_CHANNEL_ID — it
+   * never touched `interaction.token`, and the parameter was literally named
+   * `_interaction`. If the channel post was refused (missing permission, wrong
+   * id) `safeSendMessage` returned false and nobody checked it, so the
+   * moderator's only feedback was a permanent spinner giving no clue whether
+   * the ban had landed. The channel post stays as the public record; this is
+   * the private answer to the person who asked.
+   */
+  const resolveSpinner = async (embed: DiscordEmbed): Promise<void> => {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [embed],
+      components: [],
+    });
+  };
   // FINDING-019: everything rendered below is user-sourced — D1 username,
   // the moderator's Discord name, the typed reason
   const safeTarget = sanitizeUserName(targetUsername);
@@ -142,6 +162,7 @@ async function processBan(
           ],
         });
       }
+      await resolveSpinner(errorEmbed('Ban Failed', result.error || 'Unknown error occurred.'));
       return;
     }
 
@@ -165,6 +186,16 @@ async function processBan(
       });
     }
 
+    await resolveSpinner({
+      title: '🔨 User Banned',
+      description: `**${safeTarget}** has been banned from Preset Palettes.`,
+      color: 0xed4245,
+      fields: [
+        { name: 'Presets Hidden', value: String(result.presetsHidden), inline: true },
+      ],
+      footer: { text: 'Use /preset unban_user to restore access' },
+    });
+
     if (logger) {
       // FINDING-011 (2026-08-29 security audit): ids, counts and lengths only.
       // This line used to carry the banned user's Discord display name and the
@@ -185,16 +216,17 @@ async function processBan(
       logger.error('Failed to ban user', error instanceof Error ? error : undefined);
     }
 
+    const failure = errorEmbed(
+      'Ban Failed',
+      `Failed to ban **${safeTarget}**: ${sanitizeErrorMessage(error, 'An unexpected error occurred while processing the ban.')}`
+    );
+
     if (env.MODERATION_CHANNEL_ID) {
       await safeSendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
-        embeds: [
-          errorEmbed(
-            'Ban Failed',
-            `Failed to ban **${safeTarget}**: ${sanitizeErrorMessage(error, 'An unexpected error occurred while processing the ban.')}`
-          ),
-        ],
+        embeds: [failure],
       });
     }
+    await resolveSpinner(failure);
   }
 }
 

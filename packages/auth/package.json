@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/auth",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Shared authentication utilities for xivdyetools ecosystem",
   "type": "module",
   "main": "./dist/index.js",
@@ -47,7 +47,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "clean": "rimraf dist",
-    "lint": "eslint src"
+    "lint": "eslint src && pnpm run lint:dead",
+    "lint:dead": "knip --directory ../.. --workspace packages/auth --no-config-hints --no-tag-hints"
   },
   "dependencies": {
     "discord-interactions": "^4.4.0"

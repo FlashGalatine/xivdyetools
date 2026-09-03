@@ -1,0 +1,6 @@
+apps/presets-api/tests/handlers/presets.test.ts:493:        it.skip('should create preset with valid data (requires Cloudflare Workers)', async () => {
+apps/presets-api/tests/handlers/presets.test.ts:3221:        it.skip('should skip notification when DISCORD_WORKER is not configured (requires Cloudflare Workers)', async () => {
+apps/presets-api/tests/handlers/presets.test.ts:3253:        it.skip('should attempt notification when DISCORD_WORKER is configured (requires Cloudflare Workers)', async () => {
+apps/presets-api/tests/handlers/presets.test.ts:3287:        it.skip('should gracefully handle notification failure (requires Cloudflare Workers)', async () => {
+apps/web-app/e2e/ui-interactions.spec.ts:7: * `if (count === 0) test.skip()`. The result was 16 tests reporting green
+apps/web-app/src/components/__tests__/v4/locale-switch.test.ts:261: * Nothing is skipped silently — `it.skip` and bare `continue` are deliberately

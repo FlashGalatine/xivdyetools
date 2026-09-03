@@ -3,7 +3,6 @@ import {
   handlePresetApproveButton,
   handlePresetRejectButton,
   handlePresetRevertButton,
-  isPresetModerationButton,
 } from './preset-moderation.js';
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
@@ -657,30 +656,6 @@ describe('handlePresetRevertButton', () => {
     expect(json.data.components[0].components[0].min_length).toBe(10);
     expect(json.data.components[0].components[0].max_length).toBe(200);
     expect(json.data.components[0].components[0].required).toBe(true);
-  });
-});
-
-describe('isPresetModerationButton', () => {
-  it('should return true for approve button', () => {
-    expect(isPresetModerationButton('preset_approve_123')).toBe(true);
-  });
-
-  it('should return true for reject button', () => {
-    expect(isPresetModerationButton('preset_reject_456')).toBe(true);
-  });
-
-  it('should return true for revert button', () => {
-    expect(isPresetModerationButton('preset_revert_789')).toBe(true);
-  });
-
-  it('should return false for non-moderation buttons', () => {
-    expect(isPresetModerationButton('ban_confirm_user')).toBe(false);
-    expect(isPresetModerationButton('other_button')).toBe(false);
-    expect(isPresetModerationButton('preset_invalid')).toBe(false);
-  });
-
-  it('should return false for empty string', () => {
-    expect(isPresetModerationButton('')).toBe(false);
   });
 });
 

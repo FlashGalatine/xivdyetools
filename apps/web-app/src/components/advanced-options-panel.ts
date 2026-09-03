@@ -20,7 +20,6 @@ import { TutorialService } from '@services/tutorial-service';
 import { CollectionService } from '@services/collection-service';
 import { ConfigController } from '@services/config-controller';
 import { RouterService } from '@services/router-service';
-import type { AdvancedConfig } from '@shared/tool-config-types';
 import { logger } from '@shared/logger';
 
 // The panel hosts the per-tool config surface (Q7: config lives behind the
@@ -133,10 +132,18 @@ function actionRow(label: string, desc: string, onClick: () => void): HTMLElemen
   return row;
 }
 
+/**
+ * BUG-079: `checked` used to be a plain boolean captured when the panel was
+ * BUILT, and the row kept its own `state` from it. A reset or an import
+ * performed from this same open panel changes the config underneath the row, so
+ * the next tap wrote the negation of a value the user was no longer looking at
+ * -- often re-writing the value it already had. Take a reader instead, and
+ * consult it at paint and click time.
+ */
 function toggleRow(
   label: string,
   desc: string,
-  checked: boolean,
+  read: () => boolean,
   onChange: (checked: boolean) => void
 ): HTMLElement {
   const row = document.createElement('button');
@@ -144,7 +151,7 @@ function toggleRow(
   row.className = 'w-full flex items-center justify-between gap-3 text-left py-1.5';
   row.style.minHeight = '44px';
   row.setAttribute('role', 'switch');
-  row.setAttribute('aria-checked', String(checked));
+  row.setAttribute('aria-checked', String(read()));
 
   const text = document.createElement('span');
   text.className = 'min-w-0 flex flex-col gap-0.5';
@@ -175,8 +182,8 @@ function toggleRow(
   track.appendChild(knob);
   row.appendChild(track);
 
-  let state = checked;
   const paint = (): void => {
+    const state = read();
     track.style.backgroundColor = state ? 'var(--theme-primary)' : 'var(--theme-border)';
     knob.style.left = state ? '19.5px' : '2.5px';
     row.setAttribute('aria-checked', String(state));
@@ -184,9 +191,8 @@ function toggleRow(
   paint();
 
   row.addEventListener('click', () => {
-    state = !state;
+    onChange(!read());
     paint();
-    onChange(state);
   });
 
   return row;
@@ -217,7 +223,6 @@ function createContent(host: HTMLElement): HTMLElement {
   container.className = 'flex flex-col gap-2';
 
   const configController = ConfigController.getInstance();
-  const advancedConfig: AdvancedConfig = configController.getConfig('advanced');
 
   // --- Per-tool configuration (mobile only) ---
   // Desktop carries the Simple-Settings column in the shell; on mobile the
@@ -356,7 +361,7 @@ function createContent(host: HTMLElement): HTMLElement {
     toggleRow(
       t('config.performanceMode'),
       t('config.performanceModeDesc'),
-      advancedConfig.performanceMode,
+      () => configController.getConfig('advanced').performanceMode,
       (checked) => configController.setConfig('advanced', { performanceMode: checked })
     )
   );
@@ -364,7 +369,7 @@ function createContent(host: HTMLElement): HTMLElement {
     toggleRow(
       t('config.enableAnalytics'),
       t('config.analyticsDesc'),
-      advancedConfig.analyticsEnabled,
+      () => configController.getConfig('advanced').analyticsEnabled,
       (checked) => configController.setConfig('advanced', { analyticsEnabled: checked })
     )
   );

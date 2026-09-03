@@ -33,24 +33,59 @@ describe('createMockD1Database', () => {
     });
 
     describe('bind', () => {
-      it('returns the statement for chaining', () => {
+      // pkg-worker-kit-test-utils-11: real D1 returns an INDEPENDENT statement
+      // from bind(); it does not mutate the one you called it on. This test
+      // used to assert `toBe(stmt)`, pinning the mock's divergence.
+      it('returns a new, independent statement', async () => {
         const db = createMockD1Database();
         const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
 
-        const boundStmt = stmt.bind(1);
+        const a = stmt.bind(1);
+        const b = stmt.bind(2);
 
-        expect(boundStmt).toBe(stmt);
+        expect(a).not.toBe(stmt);
+        expect(a).not.toBe(b);
+
+        // The mock used to run `a` with [2], because the second bind
+        // overwrote the first on the shared statement.
+        await a.first();
+        expect(db._bindings[0]).toEqual([1]);
+
+        await b.first();
+        expect(db._bindings[1]).toEqual([2]);
       });
 
       it('tracks bindings', async () => {
         const db = createMockD1Database();
         const stmt = db.prepare('SELECT * FROM users WHERE id = ? AND name = ?');
 
-        stmt.bind(1, 'Alice');
-        await stmt.first();
+        await stmt.bind(1, 'Alice').first();
 
         expect(db._bindings).toHaveLength(1);
         expect(db._bindings[0]).toEqual([1, 'Alice']);
+      });
+
+      it.each([
+        ['undefined', undefined],
+        ['a plain object', { a: 1 }],
+        ['a function', () => undefined],
+      ])('rejects %s, as real D1 does', (_label, value) => {
+        const db = createMockD1Database();
+        const stmt = db.prepare('INSERT INTO presets (id, link) VALUES (?, ?)');
+
+        // The live failure this models: `.bind(id, row.example_link)` where the
+        // optional column was never set. It passed every test and 500'd in
+        // production with D1_TYPE_ERROR.
+        expect(() => stmt.bind('id', value)).toThrow(/D1_TYPE_ERROR/);
+      });
+
+      it('accepts every type D1 supports', () => {
+        const db = createMockD1Database();
+        const stmt = db.prepare('INSERT INTO t VALUES (?, ?, ?, ?, ?)');
+
+        expect(() =>
+          stmt.bind(1, 'text', true, null, new ArrayBuffer(4)),
+        ).not.toThrow();
       });
     });
 
@@ -242,8 +277,7 @@ describe('createMockD1Database', () => {
       const db = createMockD1Database();
       const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
 
-      stmt.bind(42);
-      await stmt.first();
+      await stmt.bind(42).first();
 
       expect(db._bindings).toHaveLength(1);
       expect(db._bindings[0]).toEqual([42]);
@@ -253,8 +287,7 @@ describe('createMockD1Database', () => {
       const db = createMockD1Database();
       const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
 
-      stmt.bind(99);
-      await stmt.all();
+      await stmt.bind(99).all();
 
       expect(db._bindings).toHaveLength(1);
       expect(db._bindings[0]).toEqual([99]);
@@ -264,8 +297,7 @@ describe('createMockD1Database', () => {
       const db = createMockD1Database();
       const stmt = db.prepare('INSERT INTO users VALUES (?)');
 
-      stmt.bind('Alice');
-      await stmt.run();
+      await stmt.bind('Alice').run();
 
       expect(db._bindings).toHaveLength(1);
       expect(db._bindings[0]).toEqual(['Alice']);
@@ -447,5 +479,99 @@ describe('createMockD1', () => {
     await db.prepare('SELECT 1').first();
 
     expect(mockDb._queries).toContain('SELECT 1');
+  });
+
+  // BUG-099: run() reported `changes: 1` unconditionally and batch() was a
+  // plain loop, so neither `presets-api/handlers/votes.ts`'s `already_voted`
+  // branch nor any all-or-nothing recovery path was reachable from a test.
+  describe('mutation meta and batch atomicity (BUG-099)', () => {
+    const zeroMeta = {
+      duration: 0,
+      changes: 0,
+      last_row_id: 0,
+      rows_read: 0,
+      rows_written: 0,
+      size_after: 0,
+      changed_db: false,
+    };
+
+    it('lets a mock report changes:0, making the already_voted branch reachable', async () => {
+      const db = createMockD1Database();
+      db._setupMock((query) =>
+        query.includes('INSERT INTO votes')
+          ? { results: [], success: true, meta: zeroMeta }
+          : null,
+      );
+
+      const result = await db
+        .prepare('INSERT INTO votes (preset_id, user_id) VALUES (?, ?) ON CONFLICT DO NOTHING')
+        .bind('p1', 'u1')
+        .run();
+
+      // presets-api/handlers/votes.ts:83 reads exactly this.
+      expect(result.meta.changes).toBe(0);
+      expect(result.success).toBe(true);
+    });
+
+    it('still reports a mutation for a write the mock does not model', async () => {
+      const db = createMockD1Database();
+      // Deliberate, and the reason a bare `null` is NOT read as "zero rows":
+      // almost every _setupMock answers null for statements it simply does not
+      // model. Treating that as a failed write was tried during this sprint and
+      // reverted -- it silently reinterpreted three unrelated presets-api
+      // behaviours (a duplicate vote, and two dead-letter cascades) as failures.
+      db._setupMock(() => null);
+
+      const result = await db.prepare('INSERT INTO t VALUES (?)').bind(1).run();
+
+      expect(result.meta.changes).toBe(1);
+    });
+
+    it('reports a mutation when no mock is configured at all', async () => {
+      const db = createMockD1Database();
+
+      const result = await db.prepare('INSERT INTO t VALUES (?)').bind(1).run();
+
+      expect(result.meta.changes).toBe(1);
+    });
+
+    it('rejects the whole batch and records nothing when a statement fails', async () => {
+      const db = createMockD1Database();
+      db._setBatchFailure(1, 'D1_ERROR: constraint failed');
+
+      const statements = [
+        db.prepare('INSERT INTO votes VALUES (?)').bind('v1'),
+        db.prepare('UPDATE presets SET votes = votes + 1 WHERE id = ?').bind('p1'),
+      ];
+
+      await expect(db.batch(statements)).rejects.toThrow(/constraint failed/);
+
+      // All-or-nothing: the first statement must not have been applied either.
+      expect(db._queries).toHaveLength(0);
+    });
+
+    it('clears the batch failure on _reset', async () => {
+      const db = createMockD1Database();
+      db._setBatchFailure(0);
+      db._reset();
+
+      const results = await db.batch([db.prepare('INSERT INTO t VALUES (?)').bind(1)]);
+      expect(results).toHaveLength(1);
+    });
+
+    it('routes a session batch through run(), so it carries mutation meta', async () => {
+      const db = createMockD1Database();
+      const session = db.withSession();
+
+      const results = await session.batch([
+        session.prepare('INSERT INTO t VALUES (?)').bind(1),
+        session.prepare('INSERT INTO t VALUES (?)').bind(2),
+      ]);
+
+      expect(results).toHaveLength(2);
+      // Routed through all() this was 0 with no mutation meta at all.
+      expect(results[0].meta.changes).toBe(1);
+      expect(results[1].meta.changed_db).toBe(true);
+    });
   });
 });

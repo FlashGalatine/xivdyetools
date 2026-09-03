@@ -35,6 +35,31 @@ Rules:
   path filter.
 -->
 
+## [5.2.0] - 2026-09-03
+
+### ✨ New
+
+- `/harmony` has two more types to pick from: **Compound** and **Shades**. The web app has always offered them; now the bot does too.
+
+### 🐛 Fixes
+
+- `/harmony` picks the same dyes the website's Harmony Explorer does. The two had been working from different colour maths, so asking for the same harmony on the same dye in both places could give you two different sets of dyes — most noticeably on pale or near-grey dyes, where `/harmony analogous` on Snow White answered Neon Green and Kobold Brown while the site showed Pure White and Pearl White. One answer now, in both places.
+- The picture that shows up when you paste a harmony link into Discord matches the page the link opens. It had been choosing its dyes a third way of its own.
+- Filters on `/harmony` now pick the closest dye you are *allowed* to have, rather than the closest one to a dye that was filtered out.
+
+## [5.1.2] - 2026-09-02
+
+### 🐛 Fixes
+
+- `/gradient` shows a colour chip beside every step again. They had been missing from the list, while the Start and End lines above kept theirs.
+- `/harmony` shows a colour chip beside the base colour, which was the one line in that reply without one.
+- `/gradient`'s summary sentence no longer runs off the edge of the picture in Japanese and Korean — it wraps properly instead of losing the last third.
+- `/stats` reports the version the bot is actually running. It had been stuck on an old number and disagreed with `/about`.
+- Preset pictures with Japanese, Korean or Chinese names no longer show empty boxes where the characters should be. The picture now draws what it can, and the text beside it carries the full name.
+- `/preferences set` with several options at once saves all of them. Occasionally one could be quietly dropped while the reply still said it had been saved.
+- The preset name autocomplete on `/preset favorite remove` no longer comes up empty for some long-standing users.
+- When market data is unavailable, `/budget` says so instead of telling you your own world does not exist.
+
 ## [5.1.0] - 2026-08-30
 
 ### 🐛 Fixes

@@ -1,0 +1,6 @@
+TEST-ONLY MODULE  apps/stoat-worker/src/services/loading-indicator.ts              prodImporters=0 testImporters=1 lines=44
+TEST-ONLY MODULE  apps/web-app/functions/_middleware.ts                            prodImporters=0 testImporters=1 lines=41
+TEST-ONLY MODULE  apps/web-app/src/components/dye-action-dropdown.ts               prodImporters=0 testImporters=8 lines=570
+TEST-ONLY MODULE  apps/web-app/src/services/announcer-service.ts                   prodImporters=0 testImporters=1 lines=195
+TEST-ONLY MODULE  apps/web-app/src/services/tooltip-service.ts                     prodImporters=0 testImporters=2 lines=475
+TEST-ONLY MODULE  packages/bot-logic/src/commands/__fixtures__/chara-fixtures.ts   prodImporters=0 testImporters=1 lines=10

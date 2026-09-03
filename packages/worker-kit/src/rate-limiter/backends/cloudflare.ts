@@ -147,7 +147,20 @@ export class CloudflareRateLimiter implements ExtendedRateLimiter {
    */
   private selectTier(config: RateLimitConfig): ResolvedTier {
     const effective = config.maxRequests + (config.burstAllowance ?? 0);
-    return this.tiers.find((t) => t.limit >= effective) ?? this.tiers[this.tiers.length - 1];
+    // pkg-worker-kit-test-utils-06: a tier's PERIOD is as load-bearing as its
+    // limit. Matching on limit alone lets `{maxRequests: 10, windowMs: 60_000}`
+    // select a `{limit: 10, periodSeconds: 10}` tier -- 10 requests per ten
+    // seconds, 6x the intended rate -- while `resetAt` reports that tier's 10s
+    // period end, so the emitted headers stay self-consistent and nothing
+    // surfaces the mismatch. Prefer tiers whose period IS the config's window.
+    const samePeriod = this.tiers.filter(
+      (t) => t.periodSeconds * 1000 === config.windowMs,
+    );
+    // No tier covers this window: fall back to the historical limit-only choice
+    // rather than failing the request. `tiers` is sorted by limit ascending and
+    // `filter` preserves order, so either candidate list is still sorted.
+    const candidates = samePeriod.length > 0 ? samePeriod : this.tiers;
+    return candidates.find((t) => t.limit >= effective) ?? candidates[candidates.length - 1];
   }
 
   /** End of the current fixed period for a tier (what `resetAt` reports). */
@@ -160,9 +173,12 @@ export class CloudflareRateLimiter implements ExtendedRateLimiter {
     const tier = this.selectTier(config);
     const now = Date.now();
     const resetAt = CloudflareRateLimiter.periodEnd(tier.periodSeconds, now);
-    // Tier-scoped so one client cannot share a bucket across two configs that
-    // happen to map to different bindings with the same key
-    const bindingKey = `${this.keyPrefix}${key}`;
+    // pkg-worker-kit-test-utils-05: genuinely tier-scoped. This comment used to
+    // claim a scoping the key did not have -- separation came entirely from the
+    // tiers being distinct binding objects, so two tiers pointed at the SAME
+    // binding (a plausible wrangler typo) shared one counter across a 10-limit
+    // and a 30-limit config. The tier's identity is its (limit, period) pair.
+    const bindingKey = `${this.keyPrefix}${key}:t${tier.limit}_${tier.periodSeconds}`;
 
     try {
       const { success } = await tier.binding.limit({ key: bindingKey });
@@ -184,7 +200,7 @@ export class CloudflareRateLimiter implements ExtendedRateLimiter {
     } catch (error) {
       if (config.failOpen !== false) {
         const context = {
-          // 2026-08-29 FINDING-010: `bindingKey` is `keyPrefix + key` — it
+          // 2026-08-29 FINDING-010: `bindingKey` embeds `key` verbatim — it
           // embeds the caller's raw IP/Discord id just like `key` does, so
           // logging the scope means never building `bindingKey` into the
           // log line at all, not stripping it back out.

@@ -182,9 +182,17 @@ export class ColorPickerDisplay extends BaseComponent {
 
         // Validate hex format
         if (/^#[0-9A-Fa-f]{6}$|^#[0-9A-Fa-f]{3}$/.test(value)) {
-          this.selectedColor = value;
+          // BUG-078: expand the 3-digit shorthand before storing or emitting.
+          // `input[type=color]` accepts only the 6-digit form and silently
+          // sanitises `#F00` to BLACK, so the swatch disagreed with the field
+          // -- and every listener received a value the picker could not show.
+          const normalized =
+            value.length === 4
+              ? `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`
+              : value;
+          this.selectedColor = normalized;
           this.updateDisplay();
-          this.emit('color-selected', { color: value });
+          this.emit('color-selected', { color: normalized });
         }
       });
 
@@ -270,6 +278,11 @@ export class ColorPickerDisplay extends BaseComponent {
   /**
    * Set color from image coordinates
    * Used by ColorMatcher for eyedropper from image
+   *
+   * @testonly the docblock's claimed caller, "ColorMatcher", no longer exists
+   * anywhere in this codebase; the only consumer today is
+   * color-picker-display.test.ts's null-canvas-context guard test. No
+   * production caller wires a canvas into this method.
    */
   setColorFromImage(canvas: HTMLCanvasElement, x: number, y: number, sampleSize: number = 1): void {
     const ctx = canvas.getContext('2d');
@@ -307,6 +320,11 @@ export class ColorPickerDisplay extends BaseComponent {
 
   /**
    * Get selected color
+   *
+   * @testonly reads back state after simulated hex-input/native-picker DOM
+   * events throughout color-picker-display.test.ts; extractor-tool.ts (the
+   * one production consumer) listens for the emitted `color-selected` event
+   * instead of pulling the value through this getter.
    */
   getColor(): string {
     return this.selectedColor;
@@ -314,6 +332,10 @@ export class ColorPickerDisplay extends BaseComponent {
 
   /**
    * Set color programmatically
+   *
+   * @testonly test driver for setting state directly; no parent component
+   * programmatically sets the picker's color — production flows exclusively
+   * through DOM events (hex input, native color input, eyedropper).
    */
   setColor(hex: string): void {
     if (/^#[0-9A-Fa-f]{6}$|^#[0-9A-Fa-f]{3}$/.test(hex)) {

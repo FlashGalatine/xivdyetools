@@ -6,9 +6,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   resolveCharaEquipment,
-  clearCharaResolveCache,
   charaIconUrl,
   itemNameFor,
+  clearCharaResolveCache,
   CharaResolveUnavailableError,
 } from '../chara-resolve-service';
 import { getApiWorkerBase } from '../api-worker-origin';
@@ -29,6 +29,12 @@ describe('chara-resolve-service', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('posts the model keys (and glasses only when set) to /v1/chara/resolve', async () => {
+    // The request CONTRACT with api-worker: URL, method, and body shape. Nothing
+    // else in this file asserts any of the three, so without this a client-side
+    // change that breaks the worker passes the whole suite. Deleted by the
+    // 2026-09-01 cleanup even though every symbol it uses survived; restored
+    // 2026-09-02.
+    //
     // A fresh Response per call — a body can only be read once.
     const fetchMock = vi
       .fn()

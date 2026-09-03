@@ -229,37 +229,6 @@ describe('CollectionService Branch Coverage', () => {
         spy.mockRestore();
       }
     });
-
-    it('should handle collection creation failure during import', () => {
-      // Fill up to max collections
-      const maxCollections = CollectionService.getMaxCollections();
-      for (let i = 0; i < maxCollections; i++) {
-        CollectionService.createCollection(`Collection ${i}`);
-      }
-
-      // Try to import more
-      const importData = JSON.stringify({
-        version: '1.0.0',
-        exportedAt: new Date().toISOString(),
-        type: 'xivdyetools-collection',
-        data: {
-          collections: [
-            {
-              id: 'overflow-1',
-              name: 'Overflow Collection',
-              dyes: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          ],
-        },
-      });
-
-      const result = CollectionService.importData(importData);
-
-      expect(result.collectionsImported).toBe(0);
-      expect(result.errors.some((e) => e.code === 'createFailed')).toBe(true);
-    });
   });
 
   // ==========================================================================
@@ -397,36 +366,6 @@ describe('CollectionService Branch Coverage', () => {
       expect(favorites.length).toBe(maxFavorites);
     });
 
-    it('should truncate collections exceeding max limit on load', () => {
-      // Directly set localStorage with too many collections
-      const maxCollections = CollectionService.getMaxCollections();
-      const tooManyCollections = Array.from({ length: maxCollections + 5 }, (_, i) => ({
-        id: `col-${i}`,
-        name: `Collection ${i}`,
-        dyes: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }));
-
-      localStorageMock.setItem(
-        'xivdyetools_collections',
-        JSON.stringify({
-          version: '1.0.0',
-          collections: tooManyCollections,
-          lastModified: new Date().toISOString(),
-        })
-      );
-
-      // Reset and reinitialize to trigger loadCollections
-      CollectionService['initialized'] = false;
-      CollectionService['collectionsData'] = null;
-
-      // Access collections to trigger initialization
-      const collections = CollectionService.getCollections();
-
-      expect(collections.length).toBe(maxCollections);
-    });
-
     it('should truncate dyes per collection exceeding limit on load', () => {
       const maxDyesPerCollection = CollectionService.getMaxDyesPerCollection();
       const tooManyDyes = Array.from({ length: maxDyesPerCollection + 10 }, (_, i) => i + 1);
@@ -482,41 +421,6 @@ describe('CollectionService Branch Coverage', () => {
   // ==========================================================================
   // Reorder Operations Edge Cases
   // ==========================================================================
-
-  describe('reorder operations', () => {
-    it('should filter out invalid IDs when reordering favorites', () => {
-      CollectionService.addFavorite(1);
-      CollectionService.addFavorite(2);
-      CollectionService.addFavorite(3);
-
-      // Reorder with some invalid IDs
-      CollectionService.reorderFavorites([3, 999, 1, 888, 2]);
-
-      const favorites = CollectionService.getFavorites();
-      // Only valid IDs should remain
-      expect(favorites).toEqual([3, 1, 2]);
-    });
-
-    it('should filter out invalid IDs when reordering collection dyes', () => {
-      const collection = CollectionService.createCollection('Test');
-      CollectionService.addDyeToCollection(collection!.id, 10);
-      CollectionService.addDyeToCollection(collection!.id, 20);
-      CollectionService.addDyeToCollection(collection!.id, 30);
-
-      // Reorder with some invalid IDs
-      CollectionService.reorderCollectionDyes(collection!.id, [30, 999, 10, 888]);
-
-      const updated = CollectionService.getCollection(collection!.id);
-      expect(updated?.dyes).toEqual([30, 10]);
-    });
-
-    it('should handle reorder on non-existent collection gracefully', () => {
-      // Should not throw
-      expect(() => {
-        CollectionService.reorderCollectionDyes('non-existent', [1, 2, 3]);
-      }).not.toThrow();
-    });
-  });
 
   // ==========================================================================
   // Remove Dye From Collection Edge Cases

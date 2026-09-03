@@ -1,95 +1,135 @@
 {
   "$schema": "https://turbo.build/schema.json",
+
+  // Shared files that every workspace's tasks depend on but none of them
+  // contains, so no per-package `inputs` glob can reach them. A change here
+  // busts every task in every workspace, which is the correct blast radius:
+  //
+  //  - `tsconfig.base.json` — every workspace tsconfig extends it, and since
+  //    the 2026-09-01 dead-code audit removed the four local overrides it is
+  //    the SOLE source of `noUnusedLocals`. Unhashed, turning that off left
+  //    every type-check cache valid and the gate reported green without tsc
+  //    ever re-running.
+  //  - `eslint.config.js` — every workspace but `apps/web-app` inherits the
+  //    root flat config by upward resolution, so editing a rule here changed
+  //    what sixteen workspaces' `lint` reports while hashing nothing.
+  //  - `pnpm-workspace.yaml` — holds the dependency overrides and the
+  //    supply-chain `minimumReleaseAge` window, so it changes what every
+  //    workspace actually builds against.
+  "globalDependencies": ["tsconfig.base.json", "eslint.config.js", "pnpm-workspace.yaml"],
+
   "tasks": {
+    // ---------------------------------------------------------------------
+    // A NOTE ON `$TURBO_DEFAULT$`, which the four gating tasks below all use.
+    //
+    // These `inputs` lists used to be hand-maintained allowlists, and they
+    // were wrong four separate times — each fix pattern-matched the previous
+    // one and each time a NEW directory was missed:
+    //   `scripts/**/*.js` (test), then `wrangler.toml` (test), then
+    //   `tests/**` + `scripts/**` (type-check and lint), and finally
+    //   `packages/test-utils/integration/**` + `apps/api-worker/docs/**`,
+    //   found by the 2026-09-01 review AFTER the audit that fixed the others.
+    // Every one of those was the same bug: a task read a file no glob named,
+    // so the edit that would break the task could not invalidate its cache
+    // and turbo replayed a green it had not earned.
+    //
+    // `$TURBO_DEFAULT$` inverts the default. It hashes every git-tracked file
+    // in the package, so a directory added tomorrow is covered without anyone
+    // remembering to add it, and the allowlist can no longer silently drift
+    // behind the code. Un-tracked build artefacts (`dist/`, `coverage/`) are
+    // gitignored and so are never hashed.
+    //
+    // The cost is real and accepted: editing a workspace's README or CLAUDE.md
+    // now busts its caches. That is the correct trade for a task whose whole
+    // job is to be a gate — a false green is far more expensive than a cache
+    // miss. Anything CROSS-package still has to be named explicitly, because
+    // `$TURBO_DEFAULT$` only ever covers the package it runs in.
+    // ---------------------------------------------------------------------
+
     "build": {
       "dependsOn": ["^build"],
       "env": ["VITE_APP_ENV"],
       "outputs": ["dist/**"],
-      "inputs": [
-        "src/**",
-        "tsconfig.json",
-        "tsconfig.build.json",
-        "package.json"
-      ]
+      "inputs": ["$TURBO_DEFAULT$"]
     },
+
     "type-check": {
       "dependsOn": ["^build"],
       "cache": true,
-      "inputs": ["src/**", "tsconfig.json"]
+      "inputs": ["$TURBO_DEFAULT$"]
     },
+
     "lint": {
       "dependsOn": ["^build"],
       "cache": true,
-      // The root knip.jsonc drives the dead-code gate in
-      // packages/{core,svg,bot-logic} (see its header), so editing it must
-      // bust every workspace's lint cache. NOTE the gate reads the *whole*
-      // monorepo graph: a dependent workspace dropping an import can turn a
-      // package export dead without touching that package, and turbo will
-      // still serve a cached green. Run `pnpm lint:dead` for a full sweep —
-      // but note that root sweep currently exits non-zero (~200 issues in
-      // the ungated apps plus logger's alias duplicate) and is manual
-      // triage only; this per-package `lint` task is the actual gate.
-      "inputs": ["src/**", "eslint.config.*", "knip.jsonc", "$TURBO_ROOT$/knip.jsonc"]
+      // Sixteen of the seventeen workspaces are dead-code gated — every
+      // package and every app but the parked `apps/stoat-worker` — with knip
+      // running inside `lint`. Fourteen do it via a `lint:dead` script running
+      // `knip --directory ../.. --workspace <ws>` against the ROOT knip.jsonc;
+      // `apps/web-app` and `apps/og-worker` call a bare `knip` against their
+      // own. Hence `$TURBO_ROOT$/knip.jsonc` below: editing it changes what
+      // fourteen workspaces report, and it lives in none of them.
+      //
+      // NOTE what no `inputs` list can fix: the root gate reads the WHOLE
+      // monorepo graph, so a dependent workspace dropping an import can turn a
+      // package export dead without touching that package at all, and turbo
+      // will still serve that package a cached green. `pnpm lint:dead` at the
+      // root is the cross-check; as of 2026-09-01 it reports exactly three
+      // known `apps/web-app` config-scope artifacts (2 unused `.d.ts` files
+      // and 1 kept `wrangler` devDependency, all ignored by web-app's own
+      // knip.jsonc). If that count ever moves, something real changed.
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/knip.jsonc"]
     },
+
     "test": {
       "dependsOn": ["^build"],
       "cache": true,
-      // scripts/**/*.js holds the CI-gate scripts (e.g. web-app's deploy smoke
-      // test) and their tests, so it must invalidate the cache like src/** does.
-      // Narrowed to *.js (matching what vitest's include actually discovers) so
-      // non-JS assets under scripts/ (e.g. icon PNGs) do not bust the cache.
-      // CHANGELOG-laymans.md is bundled into discord-worker and checked by its
-      // contract test; vitest.*.ts covers the md-as-text plugin and the
-      // integration config. Without them an edit to the notes replays a
-      // cached PASS.
-      //
-      // 2026-08-30 FINDING-023 S8-R9: `wrangler.toml` (this package's own)
-      // and `$TURBO_ROOT$/apps/*/wrangler.toml` (every package's — the
-      // cross-package half, same `$TURBO_ROOT$` technique the `lint` task
-      // above already uses for the root knip.jsonc) were both missing.
-      // presets-api/oauth/moderation-worker/image-worker's wrangler-config
-      // tests read their own toml AND at least one sibling's, so without
-      // these a commit touching only a toml left every hashed input
-      // byte-identical and `pnpm turbo run … test` replayed a cached PASS
-      // over exactly the edit those tests exist to catch — demonstrated
-      // empirically (Sprint 8 fix-round-2 commit message, image-worker) by
-      // editing image-worker's wrangler.toml and observing FULL TURBO.
-      // Accepted cost: since `inputs` is one shared definition for every
-      // package, `apps/*/wrangler.toml` makes ANY app's wrangler.toml edit
-      // invalidate the test cache for EVERY package in the monorepo, not
-      // just the four that read one — no glob narrower than this shared
-      // list still covers the cross-package reads. A per-package
-      // Turborepo 2.x Package Configuration (`"extends": ["//"]` in e.g.
-      // apps/image-worker/turbo.json) COULD let each of the four name only
-      // its own pair(s) instead; the repo uses none of those today, and
-      // the single shared glob was kept as the simpler choice, not because
-      // no narrower alternative exists.
-      "inputs": [
-        "src/**",
-        "tests/**",
-        "scripts/**/*.js",
-        "vitest.config.*",
-        "vitest.*.ts",
-        "CHANGELOG-laymans.md",
-        "wrangler.toml",
-        "$TURBO_ROOT$/apps/*/wrangler.toml"
-      ],
+      // `presets-api`, `oauth`, `moderation-worker` and `image-worker` each
+      // have wrangler-config tests that read their OWN toml and at least one
+      // SIBLING's, which `$TURBO_DEFAULT$` cannot see. The glob below is
+      // deliberately blunt: any app's wrangler.toml edit busts every
+      // workspace's test cache, because no narrower pattern covers the
+      // cross-package reads while `inputs` stays one shared definition. A
+      // per-package Turborepo config (`"extends": ["//"]`) could let each of
+      // the four name only the pairs it reads; the repo uses none today and
+      // the shared glob was kept as the simpler choice.
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/*/wrangler.toml"],
       "outputs": ["coverage/**"]
     },
+
     "test:coverage": {
       "dependsOn": ["^build"],
       "cache": false,
-      "inputs": ["src/**", "tests/**", "vitest.config.*", "vitest.*.ts", "CHANGELOG-laymans.md"],
+      "inputs": ["$TURBO_DEFAULT$"],
       "outputs": ["coverage/**"]
     },
+
+    // OPT-002: only `apps/discord-worker` declares this today. It bundles ten
+    // TTFs, the resvg WASM and the CJK subsets against Cloudflare's 3,072 KiB
+    // gzipped cap, and merging to `main` deploys it automatically — so an
+    // over-budget bundle used to be discovered by Cloudflare refusing the
+    // upload AFTER the merge. `wrangler deploy --dry-run` bundles locally and
+    // needs no credentials.
+    //
+    // Declared here rather than folded into `lint` so it stays out of the
+    // inner loop: a dry-run costs tens of seconds, and CI runs it only when
+    // the affected filter says this worker changed.
+    "check-bundle-size": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+
     "clean": {
       "cache": false
     },
+
     "deploy": {
       "dependsOn": ["build", "type-check"],
       "cache": false,
       "persistent": false
     },
+
     "dev": {
       "cache": false,
       "persistent": true

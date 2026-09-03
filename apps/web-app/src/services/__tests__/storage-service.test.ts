@@ -213,25 +213,6 @@ describe('StorageService', () => {
     });
   });
 
-  describe('removeByPrefix', () => {
-    it('should remove items matching prefix', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.setItem('temp_key1', 'value1');
-      StorageService.setItem('temp_key2', 'value2');
-      StorageService.setItem('perm_key', 'value3');
-
-      const removed = StorageService.removeByPrefix('temp_');
-      expect(removed).toBe(2);
-
-      expect(StorageService.hasItem('temp_key1')).toBe(false);
-      expect(StorageService.hasItem('perm_key')).toBe(true);
-    });
-  });
-
   // ============================================================================
   // TTL (Time-To-Live) Tests
   // ============================================================================
@@ -334,14 +315,25 @@ describe('StorageService', () => {
         return;
       }
 
+      // Two entries, not one. `expiresAt` is `Date.now() + ttlMs` and the read
+      // compares against `Date.now()`, so asserting that a 10 ms entry is STILL
+      // PRESENT on the very next statement is a race with the scheduler: any
+      // pause over 10 ms between the write and the read — trivial on a loaded CI
+      // runner — reads it as expired. That is what failed CI on 2026-09-02, on a
+      // test untouched since long before. The two sibling tests above are safe
+      // because they only ever assert expiry, after waiting five times the TTL.
+      //
+      // Splitting the assertions removes the race in both directions: a
+      // long-lived entry cannot expire early, and a 1 ms entry read 50 ms later
+      // cannot still be alive.
       const ns = StorageService.createNamespace('ttl_');
-      ns.setItemWithTTL('key', 'value', 10);
 
-      expect(ns.getItemWithTTL('key')).toBe('value');
+      ns.setItemWithTTL('alive', 'value', 10_000);
+      expect(ns.getItemWithTTL('alive')).toBe('value');
 
+      ns.setItemWithTTL('doomed', 'value', 1);
       await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(ns.getItemWithTTL('key')).toBeNull();
+      expect(ns.getItemWithTTL('doomed')).toBeNull();
     });
   });
 
@@ -349,63 +341,45 @@ describe('StorageService', () => {
   // Size Calculation Tests
   // ============================================================================
 
-  describe('getSize', () => {
-    it('should calculate storage size', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.clear();
-      const sizeBefore = StorageService.getSize();
-
-      StorageService.setItem('largeKey', 'x'.repeat(1000));
-      const sizeAfter = StorageService.getSize();
-
-      expect(sizeAfter).toBeGreaterThan(sizeBefore);
-    });
-
-    it('should return 0 when localStorage is unavailable', () => {
-      const originalLocalStorage = window.localStorage;
-      // @ts-expect-error - Testing error case
-      window.localStorage = null;
-      const size = StorageService.getSize();
-      expect(size).toBe(0);
-      window.localStorage = originalLocalStorage;
-    });
-  });
-
   // ============================================================================
   // Error Handling & Edge Cases
   // ============================================================================
 
   describe('Error Handling', () => {
-    it('should handle QuotaExceededError gracefully', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
+    // webapp-services-15: this test could not fail, in three separate ways.
+    //  1. `expect.fail(...)` sat inside the `try` whose own `catch` then caught
+    //     it, and `expect(error).toBeDefined()` passed -- so the test was green
+    //     whether setItem threw or not.
+    //  2. Its comment ("converts QuotaExceededError to AppError") documented
+    //     behaviour WEB-BUG-004 REMOVED: setItem must RETURN FALSE, because
+    //     ConfigController.saveToStorage branches on that boolean and
+    //     TelemetryService/ThemeService call it bare.
+    //  3. The `if (!isAvailable())` guard had no else, so `expect(true).toBe(true)`
+    //     stood in for the whole test wherever localStorage was absent.
+    // The restore is now in a `finally`, which it also was not.
+    it('returns false rather than throwing when the quota is exceeded', () => {
+      expect(StorageService.isAvailable()).toBe(true);
 
-      // Mock localStorage to throw QuotaExceededError
-      const originalSetItem = localStorage.setItem;
-      localStorage.setItem = () => {
+      // Spy on the prototype: assigning `localStorage.setItem = ...` does not
+      // reliably shadow jsdom's accessor, and the original test's expectation
+      // was never actually exercised because of it.
+      const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         const error = new Error('QuotaExceededError');
         error.name = 'QuotaExceededError';
-        // Ensure it's recognized as an Error instance
         Object.setPrototypeOf(error, Error.prototype);
         throw error;
-      };
+      });
 
-      // StorageService converts QuotaExceededError to AppError
       try {
-        StorageService.setItem('test', 'value');
-        expect.fail('Should have thrown an error');
-      } catch (error) {
-        // Should throw AppError
-        expect(error).toBeDefined();
+        let result: boolean | undefined;
+        expect(() => {
+          result = StorageService.setItem('test', 'value');
+        }).not.toThrow();
+        expect(result).toBe(false);
+        expect(spy).toHaveBeenCalled();
+      } finally {
+        spy.mockRestore();
       }
-
-      localStorage.setItem = originalSetItem;
     });
 
     it('should handle corrupted JSON data gracefully', () => {
@@ -652,27 +626,34 @@ describe('StorageService', () => {
   // ============================================================================
 
   describe('Unavailable localStorage', () => {
-    it('should handle all operations when localStorage is unavailable', () => {
+    it('every read and write degrades safely when localStorage is missing', () => {
+      // Restored 2026-09-02. The 2026-09-01 cleanup deleted this along with the
+      // two assertions that named removed methods (`getSize`, `removeByPrefix`),
+      // taking nine assertions on surviving methods with them and leaving the
+      // section header above empty. This is the only place the
+      // `isAvailable() === false` branch is exercised at all: the other test
+      // that nulls localStorage never calls `resetAvailabilityCache()`, so it
+      // reads the memoised `true` from setup and never reaches this path.
       const originalLocalStorage = window.localStorage;
-      // @ts-expect-error - Testing error case
+      // @ts-expect-error - deliberately removing the backend under test
       window.localStorage = null;
-      // OPT-010: drop the memoized probe result from beforeEach so the
-      // nulled backend is re-detected
+      // Drop the memoised probe result so the nulled backend is re-detected.
       StorageService.resetAvailabilityCache();
 
-      expect(StorageService.isAvailable()).toBe(false);
-      expect(StorageService.getItem('test', 'default')).toBe('default');
-      expect(StorageService.setItem('test', 'value')).toBe(false);
-      expect(StorageService.removeItem('test')).toBe(false);
-      expect(StorageService.clear()).toBe(false);
-      expect(StorageService.getKeys()).toEqual([]);
-      expect(StorageService.hasItem('test')).toBe(false);
-      expect(StorageService.getItemCount()).toBe(0);
-      expect(StorageService.getSize()).toBe(0);
-      expect(StorageService.getItemsByPrefix('test')).toEqual({});
-      expect(StorageService.removeByPrefix('test')).toBe(0);
-
-      window.localStorage = originalLocalStorage;
+      try {
+        expect(StorageService.isAvailable()).toBe(false);
+        expect(StorageService.getItem('test', 'default')).toBe('default');
+        expect(StorageService.setItem('test', 'value')).toBe(false);
+        expect(StorageService.removeItem('test')).toBe(false);
+        expect(StorageService.clear()).toBe(false);
+        expect(StorageService.getKeys()).toEqual([]);
+        expect(StorageService.hasItem('test')).toBe(false);
+        expect(StorageService.getItemCount()).toBe(0);
+        expect(StorageService.getItemsByPrefix('test')).toEqual({});
+      } finally {
+        window.localStorage = originalLocalStorage;
+        StorageService.resetAvailabilityCache();
+      }
     });
   });
 
@@ -720,18 +701,6 @@ describe('StorageService', () => {
       localStorage.getItem = originalGetItem;
     });
 
-    it('should handle error during getSize() calculation', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      // Test that getSize returns a number
-      const size = StorageService.getSize();
-      expect(typeof size).toBe('number');
-      expect(size).toBeGreaterThanOrEqual(0);
-    });
-
     it('should handle error in getItemCount()', () => {
       if (!StorageService.isAvailable()) {
         expect(true).toBe(true);
@@ -752,24 +721,6 @@ describe('StorageService', () => {
       const count = StorageService.getItemCount();
       expect(typeof count).toBe('number');
       expect(count).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should handle error during removeByPrefix iteration', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.setItem('prefix_test', 'value');
-      const originalGetKeys = StorageService.getKeys;
-      StorageService.getKeys = () => {
-        throw new Error('Keys retrieval error');
-      };
-
-      const removed = StorageService.removeByPrefix('prefix_');
-      expect(removed).toBe(0);
-
-      StorageService.getKeys = originalGetKeys;
     });
   });
 
@@ -991,38 +942,6 @@ describe('StorageService', () => {
 
       const items = StorageService.getItemsByPrefix('large_');
       expect(Object.keys(items).length).toBe(50);
-    });
-
-    it('should handle removeByPrefix with large number of items', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.clear();
-
-      // Store 50 items
-      for (let i = 0; i < 50; i++) {
-        StorageService.setItem(`remove_${i}`, `value_${i}`);
-      }
-
-      const removed = StorageService.removeByPrefix('remove_');
-      expect(removed).toBe(50);
-      expect(StorageService.getItemsByPrefix('remove_')).toEqual({});
-    });
-
-    it('should calculate size correctly with large data', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.clear();
-      const largeValue = 'x'.repeat(50000);
-      StorageService.setItem('largeSize', largeValue);
-
-      const size = StorageService.getSize();
-      expect(size).toBeGreaterThan(50000);
     });
   });
 });

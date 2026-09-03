@@ -29,7 +29,9 @@ vi.mock('../../services/bot-i18n.js', () => ({
 vi.mock('../../services/preferences.js', async (importOriginal) => ({
     ...(await importOriginal<typeof import('../../services/preferences.js')>()),
     getUserPreferences: vi.fn(() => Promise.resolve({})),
-    setPreference: vi.fn(() => Promise.resolve({ success: true })),
+    setPreferences: vi.fn((_kv: unknown, _u: unknown, entries: unknown[]) =>
+        Promise.resolve(entries.map(() => ({ success: true })))
+    ),
     resetPreference: vi.fn(() => Promise.resolve({ success: true })),
     getDefaultValue: vi.fn(() => undefined),
     getAffectedCommands: vi.fn(() => []),
@@ -170,24 +172,26 @@ describe('handlers/commands/preferences.ts', () => {
         }
 
         it('stores the canonical name the validator returns', async () => {
-            const { setPreference } = await import('../../services/preferences.js');
-            mockValidateWorld.mockResolvedValue('Balmung');
+            const { setPreferences } = await import('../../services/preferences.js');
+            mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
 
             const response = await handlePreferencesCommand(setWorld('balmung'), mockEnv, mockCtx);
 
             expect(mockValidateWorld).toHaveBeenCalledWith(mockEnv, 'balmung', undefined);
-            expect(setPreference).toHaveBeenCalledWith(
+            // BUG-029: every option in one `/preferences set` is now written
+            // in a single read-modify-write, so the handler queues entries and
+            // calls `setPreferences` once instead of `setPreference` per key.
+            expect(setPreferences).toHaveBeenCalledWith(
                 mockEnv.KV,
                 'user123',
-                'world',
-                'Balmung',
+                [{ key: 'world', value: 'Balmung' }],
                 undefined
             );
             expect(await description(response)).toContain('Balmung');
         });
 
         it('trims the typed value before looking it up', async () => {
-            mockValidateWorld.mockResolvedValue('Balmung');
+            mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
 
             await handlePreferencesCommand(setWorld('  balmung  '), mockEnv, mockCtx);
 
@@ -195,17 +199,17 @@ describe('handlers/commands/preferences.ts', () => {
         });
 
         it('stores nothing and answers the invalid-world reply for an unknown world', async () => {
-            const { setPreference } = await import('../../services/preferences.js');
-            mockValidateWorld.mockResolvedValue(null);
+            const { setPreferences } = await import('../../services/preferences.js');
+            mockValidateWorld.mockResolvedValue({ ok: false, reason: 'unknown' });
 
             const response = await handlePreferencesCommand(setWorld('Nowhere'), mockEnv, mockCtx);
 
-            expect(setPreference).not.toHaveBeenCalled();
+            expect(setPreferences).not.toHaveBeenCalled();
             expect(await description(response)).toContain('preferences.validation.invalidWorld');
         });
 
         it('refuses an over-long value without spending a lookup', async () => {
-            const { setPreference } = await import('../../services/preferences.js');
+            const { setPreferences } = await import('../../services/preferences.js');
 
             const response = await handlePreferencesCommand(
                 setWorld('B'.repeat(33)),
@@ -214,12 +218,12 @@ describe('handlers/commands/preferences.ts', () => {
             );
 
             expect(mockValidateWorld).not.toHaveBeenCalled();
-            expect(setPreference).not.toHaveBeenCalled();
+            expect(setPreferences).not.toHaveBeenCalled();
             expect(await description(response)).toContain('preferences.validation.invalidWorld');
         });
 
         it('leaves the other preference keys on their own path', async () => {
-            const { setPreference } = await import('../../services/preferences.js');
+            const { setPreferences } = await import('../../services/preferences.js');
 
             await handlePreferencesCommand(
                 interactionFor([
@@ -230,11 +234,56 @@ describe('handlers/commands/preferences.ts', () => {
             );
 
             expect(mockValidateWorld).not.toHaveBeenCalled();
-            expect(setPreference).toHaveBeenCalledWith(
+            expect(setPreferences).toHaveBeenCalledWith(
                 mockEnv.KV,
                 'user123',
-                'language',
-                'ja',
+                [{ key: 'language', value: 'ja' }],
+                undefined
+            );
+        });
+
+        /**
+         * BUG-029: the write used to be one `setPreference` per option, each a
+         * full get → mutate → put of the SAME `prefs:v1:{userId}` key. KV
+         * allows one write per second per key and its reads are eventually
+         * consistent, so a later iteration could read the pre-update object
+         * and write back a version missing an earlier key — while the embed
+         * still reported all of them saved. `/preferences set` advertises this
+         * exact multi-option usage in its own docstring.
+         *
+         * The mock has no per-key write throttle and no shared document, so
+         * the lost write itself can never be reproduced in this suite. What
+         * CAN be pinned is the shape that makes it impossible: one call,
+         * carrying every option.
+         */
+        it('writes every option in a single call, not one per option', async () => {
+            const { setPreferences } = await import('../../services/preferences.js');
+
+            await handlePreferencesCommand(
+                interactionFor([
+                    {
+                        name: 'set',
+                        type: 1,
+                        options: [
+                            { name: 'language', type: 3, value: 'ja' },
+                            { name: 'matching', type: 3, value: 'oklab' },
+                            { name: 'theme', type: 3, value: 'light' },
+                        ],
+                    },
+                ]),
+                mockEnv,
+                mockCtx
+            );
+
+            expect(setPreferences).toHaveBeenCalledTimes(1);
+            expect(setPreferences).toHaveBeenCalledWith(
+                mockEnv.KV,
+                'user123',
+                [
+                    { key: 'language', value: 'ja' },
+                    { key: 'matching', value: 'oklab' },
+                    { key: 'theme', value: 'light' },
+                ],
                 undefined
             );
         });

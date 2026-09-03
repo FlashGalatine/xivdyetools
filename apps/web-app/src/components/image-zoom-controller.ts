@@ -75,6 +75,15 @@ export class ImageZoomController extends BaseComponent {
     this.currentImage = image;
     this.zoomLevel = 100;
 
+    // BUG-077: every listener this controller owns is registered here, and
+    // BaseComponent.on() keys its map by an incrementing counter — so a second
+    // setImage() added a SECOND document keydown/keyup pair rather than
+    // replacing the first. The element-scoped ones died with the cleared DOM,
+    // but the document ones accumulated: after two images a zoom key stepped
+    // 20 %, after three 30 %. bindEvents() is empty precisely because
+    // everything is bound below, so clearing here is safe.
+    this.unbindAllEvents();
+
     clearContainer(this.container);
 
     // Create canvas container for scrolling
@@ -258,6 +267,12 @@ export class ImageZoomController extends BaseComponent {
     this.setupImageInteraction();
   }
 
+  /**
+   * @testonly test observation point — image-zoom-controller.test.ts reads
+   * the container back to assert wiring after setImage() and to dispatch
+   * synthetic wheel/pointer events onto it; production code holds
+   * `canvasContainerRef` internally and never asks for it back.
+   */
   getCanvasContainer(): HTMLElement | null {
     return this.canvasContainerRef;
   }

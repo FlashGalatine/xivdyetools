@@ -707,13 +707,41 @@ describe('LocalizationService', () => {
       expect(Array.isArray(locales)).toBe(true);
     });
 
+    /**
+     * BUG-058: this used to assert the no-arg `isLocaleLoaded()`, which reports
+     * the shared "a locale has been ACTIVATED" flag — it passed only because
+     * `preloadLocales` went through `setLocale` and therefore switched the
+     * active locale as a side effect. Preloading loads; it does not switch. The
+     * per-locale form is what preloading actually promises.
+     */
     it('should call static preloadLocales', async () => {
       await LocalizationService.preloadLocales(['en']);
-      expect(LocalizationService.isLocaleLoaded()).toBe(true);
+      expect(LocalizationService.isLocaleLoaded('en')).toBe(true);
     });
 
-    it('should have static clear', () => {
-      expect(typeof LocalizationService.clear).toBe('function');
+    it('preloading several locales does not change which one is active', async () => {
+      await LocalizationService.setLocale('en');
+
+      await LocalizationService.preloadLocales(['ja', 'de', 'fr']);
+
+      expect(LocalizationService.getCurrentLocale()).toBe('en');
+      for (const locale of ['ja', 'de', 'fr'] as const) {
+        expect(LocalizationService.isLocaleLoaded(locale)).toBe(true);
+      }
+    });
+
+    // core-data-16: this asserted `typeof LocalizationService.clear === 'function'`,
+    // which cannot fail while the method exists and says nothing about whether
+    // it clears. Assert the behaviour its name promises.
+    it('clear() drops every loaded locale', async () => {
+      await LocalizationService.preloadLocales(['en', 'ja']);
+      expect(LocalizationService.isLocaleLoaded('en')).toBe(true);
+      expect(LocalizationService.isLocaleLoaded('ja')).toBe(true);
+
+      LocalizationService.clear();
+
+      expect(LocalizationService.isLocaleLoaded('en')).toBe(false);
+      expect(LocalizationService.isLocaleLoaded('ja')).toBe(false);
     });
   });
 });

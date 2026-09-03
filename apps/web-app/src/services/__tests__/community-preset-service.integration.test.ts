@@ -368,25 +368,6 @@ describe('CommunityPresetService Integration Tests', () => {
       const response = await service.getPresets();
       expect(response.presets[0].name).toBe('Modified Name');
     });
-
-    it('should invalidate preset-related cache', async () => {
-      // Populate cache
-      await service.getFeaturedPresets();
-
-      // Invalidate
-      service.invalidatePresets();
-
-      // Override handler
-      server.use(
-        http.get(`${API_URL}/api/v1/presets/featured`, () => {
-          return HttpResponse.json({ presets: [] });
-        })
-      );
-
-      // Should fetch fresh data
-      const presets = await service.getFeaturedPresets();
-      expect(presets).toEqual([]);
-    });
   });
 
   // ============================================
@@ -480,6 +461,64 @@ describe('CommunityPresetService Integration Tests', () => {
         `${API_URL}/api/v1/votes/a%2Fb/check`,
       ]);
       fetchSpy.mockRestore();
+    });
+  });
+
+  // BUG-062: `getPreset()` promised `null` for a missing preset but recovered
+  // "not found" by testing whether the error MESSAGE contained '404'. It never
+  // did: presets-api answers a missing preset with
+  // `{ success: false, error: 'NOT_FOUND', message: 'Preset not found' }`
+  // (handlers/presets.ts:1058), so `errorData.message` wins and the
+  // `API request failed: 404` fallback only fires for a bodyless error. Every
+  // caller of getPreset() got a throw where it expected a null.
+  describe('missing preset (BUG-062)', () => {
+    it('returns null for the 404 body presets-api actually sends', async () => {
+      server.use(
+        http.get(`${API_URL}/api/v1/presets/:id`, () =>
+          HttpResponse.json(
+            { success: false, error: 'NOT_FOUND', message: 'Preset not found' },
+            { status: 404 }
+          )
+        )
+      );
+
+      await expect(service.getPreset('no-such-preset')).resolves.toBeNull();
+    });
+
+    it('still returns null when the 404 carries no body at all', async () => {
+      server.use(
+        http.get(`${API_URL}/api/v1/presets/:id`, () => new HttpResponse(null, { status: 404 }))
+      );
+
+      await expect(service.getPreset('no-such-preset')).resolves.toBeNull();
+    });
+
+    it('still throws for a non-404 error, rather than swallowing it as null', async () => {
+      server.use(
+        http.get(`${API_URL}/api/v1/presets/:id`, () =>
+          HttpResponse.json(
+            { success: false, error: 'INTERNAL_ERROR', message: 'Database unavailable' },
+            { status: 500 }
+          )
+        )
+      );
+
+      await expect(service.getPreset('some-preset')).rejects.toThrow('Database unavailable');
+    });
+
+    it('does not mistake a 404-like message on a successful status for not-found', async () => {
+      // The old substring check would have matched a preset legitimately named
+      // "Error 404 Tribute" if it ever surfaced in an error message.
+      server.use(
+        http.get(`${API_URL}/api/v1/presets/:id`, () =>
+          HttpResponse.json(
+            { success: false, error: 'FORBIDDEN', message: 'Preset 404 Tribute is private' },
+            { status: 403 }
+          )
+        )
+      );
+
+      await expect(service.getPreset('p1')).rejects.toThrow(/404 Tribute/);
     });
   });
 });

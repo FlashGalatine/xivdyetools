@@ -50,18 +50,33 @@ export interface ModerationLogEntry {
 }
 
 /**
- * Moderation statistics
+ * Moderation statistics, exactly as `GET /api/v1/moderation/stats` returns them.
+ *
+ * BUG-010: these four were named `pending_count`, `approved_count`,
+ * `rejected_count` and `flagged_count`, and no such key has ever existed in the
+ * response — presets-api's SQL aliases the counts `pending` / `approved` /
+ * `rejected` / `flagged` and returns them unwrapped. So the only consumer,
+ * moderation-worker's `/preset moderate action:stats`, rendered
+ * `String(undefined)` in all four embed fields and a moderator working the
+ * queue read "undefined" four times. The type was not merely unused, it was
+ * wrong, and it made the client's mistake look correct.
+ *
+ * The field names here now mirror the aliases in
+ * `apps/presets-api/src/handlers/moderation.ts`; change them together.
  */
 export interface ModerationStats {
   /** Total presets pending review */
-  pending_count: number;
+  pending: number;
 
   /** Total approved presets */
-  approved_count: number;
+  approved: number;
 
   /** Total rejected presets */
-  rejected_count: number;
+  rejected: number;
 
   /** Total flagged presets */
-  flagged_count: number;
+  flagged: number;
+
+  /** Moderation actions logged in the last seven days */
+  actions_last_week: number;
 }

@@ -82,7 +82,9 @@ app.use('*', async (c, next) => {
   // FINDING-025 / API-13: 4xx/5xx bodies (the error envelope, the proxy's
   // bare {error}, the 429s) are per-request answers — a 404 is heuristically
   // cacheable by RFC 9111, so say no-store explicitly on every error path.
-  if (c.res.status >= 400 && !c.res.headers.has('Cache-Control')) {
+  // api-worker-04 widened this from `>= 400` to every non-2xx: a 3xx answer
+  // carried no cache directive at all, and a 301 is heuristically cacheable.
+  if ((c.res.status < 200 || c.res.status >= 300) && !c.res.headers.has('Cache-Control')) {
     c.header('Cache-Control', 'no-store');
   }
 });
@@ -115,7 +117,13 @@ app.use(
 //    API bucket (rateLimitMiddleware skips it) and limited on its own bucket:
 //    beacons from many tabs behind one NAT address must never 429 /v1/chara/*.
 app.use('/v1/*', rateLimitMiddleware);
+// api-worker-05: registered on the exact path only. Hono's `use()` does NOT
+// append `/*`, but `isTelemetryPath` exempts the whole `/v1/telemetry/`
+// subtree from the API bucket — so `/v1/telemetry/x` traversed BOTH limiters
+// untouched and reached notFound(): unlimited anonymous 404s on a `/v1/*`
+// path the docs promise is limited.
 app.use(TELEMETRY_PATH, telemetryRateLimitMiddleware);
+app.use(`${TELEMETRY_PATH}/*`, telemetryRateLimitMiddleware);
 
 // 6. Locale resolution on API routes (OPT-001 — 2026-04-28 audit)
 //    Reads ?locale= once per request and sets the LocalizationService state
@@ -137,7 +145,10 @@ app.get('/', (c) => {
     name: 'XIV Dye Tools Public API',
     version: c.env.API_VERSION,
     status: 'healthy',
-    documentation: 'https://data.xivdyetools.app/docs',
+    // api-worker-07: this advertised `/docs` on this host, which 404s — the
+    // ASSETS branch fires only for `developers.xivdyetools.app`, so nothing
+    // has ever served it here.
+    documentation: 'https://developers.xivdyetools.app',
   });
 });
 

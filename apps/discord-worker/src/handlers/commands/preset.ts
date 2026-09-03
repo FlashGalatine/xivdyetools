@@ -29,6 +29,7 @@ import {
 } from '../../utils/response.js';
 import { sendMessage, safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { generatePresetSwatch, CATEGORY_DISPLAY } from '@xivdyetools/svg';
+import { filterToRenderable, filterToRenderableTitle } from '../../services/font-coverage.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import {
@@ -979,17 +980,28 @@ async function sendPresetEmbed(
   const safeAuthor = preset.author_name ? sanitizePresetName(preset.author_name) : null;
   const safeTags = preset.tags.map((tag) => sanitizeEmbedText(tag, 50)).filter(Boolean);
 
+  // BUG-030: the bundled CJK subsets are cut from LOCALE data — dye names, bot
+  // UI strings, a fixed code-glyph list — but these three strings are written
+  // by users. A preset called 桜の夢 has no reason to share characters with any
+  // dye name, so it drew tofu boxes. The 3,072 KiB Worker cap rules out
+  // shipping the full faces, so the card draws what it can and the embed below
+  // carries the untouched original, which Discord renders with the reader's
+  // own system fonts.
+  const cardName = filterToRenderableTitle(preset.name);
+  const cardDescription = preset.description ? filterToRenderable(preset.description) : null;
+  const cardAuthor = preset.author_name ? filterToRenderableTitle(preset.author_name) : null;
+
   // Generate SVG swatch
   const svg = generatePresetSwatch({
-    name: preset.name,
-    description: preset.description,
+    name: cardName.text,
+    description: cardDescription?.text ?? preset.description,
     category: preset.category_id,
     dyes,
-    authorName: preset.author_name,
+    authorName: cardAuthor?.text ?? preset.author_name,
     voteCount: preset.vote_count,
     // F-11: the swatch card renders in the user's locale
-    authorLine: preset.author_name
-      ? t.t('preset.byAuthor', { author: preset.author_name })
+    authorLine: cardAuthor
+      ? t.t('preset.byAuthor', { author: cardAuthor.text })
       : t.t('preset.official'),
     emptyLabel: t.t('preset.noValidDyes'),
     dyeName: (d) => getLocalizedDyeName(d.itemID, d.name, locale),

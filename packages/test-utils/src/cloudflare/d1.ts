@@ -56,6 +56,20 @@ export interface MockD1PreparedStatement {
   run: <T = unknown>() => Promise<D1Result<T>>;
   // raw() has complex overloads in D1 - simplified for testing
   raw: <T = unknown[]>(options?: { columnNames?: boolean }) => Promise<T>;
+
+  /**
+   * The SQL this statement was prepared from, carried across `bind()`.
+   *
+   * A real D1 statement is opaque, so tests that need to identify the
+   * statements handed to `batch()` used to wrap `prepare` and keep an identity
+   * Map of statement -> SQL. That technique breaks the moment `bind()` returns
+   * a NEW statement (which real D1 does, and this mock now does too), because
+   * the object reaching `batch()` is the bound one. Read this instead.
+   */
+  _query: string;
+
+  /** The values bound to this statement, if any. */
+  _boundValues: readonly unknown[];
 }
 
 /**
@@ -77,6 +91,20 @@ interface D1Meta {
  * Mock D1 database session (returned by withSession)
  * Mimics D1DatabaseSession which has similar methods to D1Database
  */
+/**
+ * Values real D1 accepts as a bound parameter. Anything else -- `undefined`, a
+ * plain object, a function -- raises `D1_TYPE_ERROR` at the binding site.
+ */
+function assertBindable(value: unknown): void {
+  if (value === null) return;
+  const t = typeof value;
+  if (t === 'number' || t === 'string' || t === 'boolean') return;
+  if (value instanceof ArrayBuffer || ArrayBuffer.isView(value)) return;
+  throw new Error(
+    `D1_TYPE_ERROR: Type '${t}' not supported for value '${String(value)}'`,
+  );
+}
+
 export interface MockD1DatabaseSession {
   prepare: (query: string) => MockD1PreparedStatement;
   batch: <T = unknown>(statements: MockD1PreparedStatement[]) => Promise<D1Result<T>[]>;
@@ -130,6 +158,15 @@ export interface MockD1Database {
 
   /** Set the maximum query history size (for memory management) */
   _setMaxQueryHistory: (max: number) => void;
+
+  /**
+   * BUG-099: make a `batch()` fail so the recovery paths that depend on D1's
+   * all-or-nothing guarantee become reachable from a test.
+   *
+   * @param index - index of the statement that should fail, or `null` to clear
+   * @param message - optional error message
+   */
+  _setBatchFailure: (index: number | null, message?: string) => void;
 }
 
 /**
@@ -162,6 +199,8 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
     }
   };
 
+  let batchFailure: { index: number; message: string } | null = null;
+
   const createDefaultMeta = (): D1Meta => ({
     duration: 0,
     changes: 0,
@@ -172,13 +211,26 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
     changed_db: false,
   });
 
-  const createStatement = (query: string): MockD1PreparedStatement => {
-    let boundValues: unknown[] = [];
-
+  const createStatement = (
+    query: string,
+    boundValues: unknown[] = [],
+  ): MockD1PreparedStatement => {
     const statement: MockD1PreparedStatement = {
+      _query: query,
+      _boundValues: boundValues,
+
+      // pkg-worker-kit-test-utils-11: real D1 validates every bound value and
+      // returns an INDEPENDENT statement. The mock used to accept anything and
+      // mutate the shared statement in place, so two divergences passed every
+      // test and diverged in production:
+      //   .bind(id, row.example_link)  // undefined -> D1_TYPE_ERROR live
+      //   const s = db.prepare(q); const a = s.bind(1); const b = s.bind(2);
+      //   await a.run();               // ran with [2] here, [1] against D1
       bind: (...values: unknown[]) => {
-        boundValues = values;
-        return statement;
+        for (const value of values) {
+          assertBindable(value);
+        }
+        return createStatement(query, values);
       },
 
       first: async <T = unknown>() => {
@@ -247,6 +299,23 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
             return { results: [result] as T[], success: true as const, meta: mutationMeta };
           }
         }
+        // BUG-099: a write the mock does not model still reports a successful
+        // mutation (`changes: 1`) -- deliberately. Treating a bare `null` as
+        // "affected zero rows" was tried and reverted: almost every
+        // `_setupMock` answers `null` for statements it simply does not model,
+        // so that reading silently reinterpreted three unrelated presets-api
+        // behaviours as failures.
+        //
+        // To exercise a zero-change branch -- `handlers/votes.ts`'s
+        // `already_voted`, the mirror check in `removeVote`, or any
+        // `INSERT ... ON CONFLICT DO NOTHING` that conflicted -- return an
+        // explicit meta from the mock:
+        //
+        //   db._setupMock((query) =>
+        //     query.includes('INSERT INTO votes')
+        //       ? { results: [], success: true, meta: { ...zeroMeta, changes: 0 } }
+        //       : null,
+        //   );
         return {
           results: [] as T[],
           success: true as const,
@@ -277,6 +346,28 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
     return statement;
   };
 
+  /**
+   * BUG-099: real D1 `batch()` is ALL-OR-NOTHING -- it runs inside an implicit
+   * transaction, so a failure part-way leaves no statement applied. The mock
+   * simply looped, so the "one atomic batch, so a partial failure can never
+   * leave a vote row whose increment didn't land" claim on BUG-019 (and
+   * moderation-worker's four-statement ban batches) was untestable. With
+   * `_setBatchFailure(i)` the whole call rejects and NOTHING is recorded.
+   */
+  const runBatch = async <T = unknown>(
+    statements: MockD1PreparedStatement[],
+  ): Promise<D1Result<T>[]> => {
+    if (batchFailure !== null && batchFailure.index < statements.length) {
+      throw new Error(batchFailure.message);
+    }
+
+    const results: D1Result<T>[] = [];
+    for (const stmt of statements) {
+      results.push(await stmt.run<T>());
+    }
+    return results;
+  };
+
   // Create the mock database object
   const mockDb: MockD1Database = {
     prepare: createStatement,
@@ -284,12 +375,7 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
     batch: async <T = unknown>(statements: MockD1PreparedStatement[]): Promise<D1Result<T>[]> => {
       // Real D1 batch() behaves like run() per statement (honors RETURNING
       // rows and mutation meta), so route through run(), not all()
-      const results: D1Result<T>[] = [];
-      for (const stmt of statements) {
-        const result = await stmt.run<T>();
-        results.push(result);
-      }
-      return results;
+      return runBatch<T>(statements);
     },
 
     exec: async (query: string) => {
@@ -312,13 +398,12 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
       // Return a session object that shares the same query tracking
       return {
         prepare: createStatement,
+        // BUG-099: this routed through all(), contradicting the fix comment on
+        // mockDb.batch ("Real D1 batch() behaves like run() per statement ...
+        // so route through run(), not all()") -- a session batch reported
+        // `meta.changes: 0` and no mutation meta at all.
         batch: async <T = unknown>(statements: MockD1PreparedStatement[]): Promise<D1Result<T>[]> => {
-          const results: D1Result<T>[] = [];
-          for (const stmt of statements) {
-            const result = await stmt.all<T>();
-            results.push(result);
-          }
-          return results;
+          return runBatch<T>(statements);
         },
         exec: async (query: string) => {
           queries.push(query);
@@ -342,10 +427,18 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
       bindings.length = 0;
       mockFn = undefined;
       banStatus = undefined;
+      batchFailure = null;
     },
 
     get _mockFn() {
       return mockFn;
+    },
+
+    _setBatchFailure: (index: number | null, message?: string) => {
+      batchFailure =
+        index === null
+          ? null
+          : { index, message: message ?? 'D1_ERROR: batch failed' };
     },
 
     _setBanStatus: (isBanned: boolean) => {

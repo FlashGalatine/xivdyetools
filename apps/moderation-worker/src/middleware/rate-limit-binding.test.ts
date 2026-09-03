@@ -62,7 +62,12 @@ describe('moderation-worker rate limiter backend selection', () => {
     expect(first.allowed).toBe(true);
     expect(second.allowed).toBe(false);
     expect(second.retryAfter).toBeGreaterThan(0);
-    expect(command.calls).toEqual(['ratelimit:command:user-1', 'ratelimit:command:user-1']);
+    // pkg-worker-kit-test-utils-05: the key carries the tier's (limit, period).
+    // RL_COMMAND is 20 + 5 burst = 25, over 60s.
+    expect(command.calls).toEqual([
+      'ratelimit:command:user-1:t25_60',
+      'ratelimit:command:user-1:t25_60',
+    ]);
     expect(autocomplete.calls).toHaveLength(0);
     // KV is never written when the bindings are present
     expect(mockKV._store.size).toBe(0);
@@ -75,7 +80,8 @@ describe('moderation-worker rate limiter backend selection', () => {
       command,
       autocomplete,
     });
-    expect(autocomplete.calls).toEqual(['ratelimit:autocomplete:user-2']);
+    // RL_AUTOCOMPLETE is 60 + 10 burst = 70, over 60s.
+    expect(autocomplete.calls).toEqual(['ratelimit:autocomplete:user-2:t70_60']);
     expect(command.calls).toHaveLength(0);
   });
 

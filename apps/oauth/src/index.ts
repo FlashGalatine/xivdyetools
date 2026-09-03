@@ -44,39 +44,6 @@ app.use('*', loggerMiddleware({
   serviceName: 'xivdyetools-oauth',
 }));
 
-// Environment validation middleware
-// Validates required env vars once per isolate and caches result
-//
-// FINDING-029 (2026-08-21 security audit): the gate keyed on
-// ENVIRONMENT === 'production', so a non-development, non-production deploy
-// (the since-deleted `[env.preview]`) failed OPEN. Everything that is not
-// local `development` is production as far as fail-closed behaviour goes —
-// and validateEnv additionally rejects any ENVIRONMENT value other than the
-// two wrangler.toml defines.
-app.use('*', async (c, next) => {
-  const result = validateEnv(c.env);
-  if (!result.valid) {
-    const isDevelopment = c.env.ENVIRONMENT === 'development';
-    if (!envErrorsLogged) {
-      envErrorsLogged = true;
-      logValidationErrors(result.errors);
-      if (isDevelopment) {
-        // In development, log warnings but continue
-        const logger = getLogger(c);
-        if (logger) {
-          logger.warn('Continuing with invalid env configuration (development mode)');
-        }
-      }
-    }
-    // Outside development, fail fast on misconfiguration — on every request,
-    // not just the first one in the isolate (BUG-017)
-    if (!isDevelopment) {
-      return c.json({ error: 'Service misconfigured' }, 500);
-    }
-  }
-  return next();
-});
-
 // CORS configuration
 // SECURITY: Allow specific origins plus whitelisted localhost ports for development
 // OAUTH-SEC-001: Restrict localhost to specific ports to prevent malicious localhost apps
@@ -134,6 +101,45 @@ app.use(
   })
 );
 
+// Environment validation middleware
+// Validates required env vars once per isolate and caches result
+//
+// FINDING-029 (2026-08-21 security audit): the gate keyed on
+// ENVIRONMENT === 'production', so a non-development, non-production deploy
+// (the since-deleted `[env.preview]`) failed OPEN. Everything that is not
+// local `development` is production as far as fail-closed behaviour goes —
+// and validateEnv additionally rejects any ENVIRONMENT value other than the
+// two wrangler.toml defines.
+//
+// oauth-08: this used to sit ABOVE the CORS middleware, so its 500 went back
+// without `Access-Control-Allow-Origin` and the SPA saw an opaque network
+// error instead of the config incident the JSON body names precisely. CORS
+// does not depend on validated env — the origin callback reads only
+// FRONTEND_URL and ENVIRONMENT — so it belongs first.
+app.use('*', async (c, next) => {
+  const result = validateEnv(c.env);
+  if (!result.valid) {
+    const isDevelopment = c.env.ENVIRONMENT === 'development';
+    if (!envErrorsLogged) {
+      envErrorsLogged = true;
+      logValidationErrors(result.errors);
+      if (isDevelopment) {
+        // In development, log warnings but continue
+        const logger = getLogger(c);
+        if (logger) {
+          logger.warn('Continuing with invalid env configuration (development mode)');
+        }
+      }
+    }
+    // Outside development, fail fast on misconfiguration — on every request,
+    // not just the first one in the isolate (BUG-017)
+    if (!isDevelopment) {
+      return c.json({ error: 'Service misconfigured' }, 500);
+    }
+  }
+  return next();
+});
+
 // Security headers middleware
 // Applies to all responses (after handler execution)
 app.use('*', async (c, next) => {
@@ -157,12 +163,6 @@ app.use('*', async (c, next) => {
     c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
 });
-
-// SEC-004: Reject oversized request bodies (10KB limit — OAuth payloads are small)
-app.use('/auth/*', bodySizeLimit);
-
-// SEC-003: Validate JSON depth and structure on mutation requests
-app.use('/auth/*', jsonDepthLimit);
 
 // Rate limiting middleware for auth endpoints
 // Protects against brute force and credential stuffing attacks
@@ -212,6 +212,19 @@ app.use('/auth/*', async (c, next) => {
 
   return next();
 });
+
+// oauth-09: these two run AFTER the rate limiter now. They used to be
+// registered above it, so every request — including one about to be 429'd —
+// read its body, `JSON.parse`d it and walked the structure recursively. The
+// 10 KB cap bounds it, so this is CPU shaping rather than a DoS fix: a caller
+// over the limit was still paying the parse budget on the worker instead of
+// being rejected on a header check. Nothing in the limiter reads the body.
+
+// SEC-004: Reject oversized request bodies (10KB limit — OAuth payloads are small)
+app.use('/auth/*', bodySizeLimit);
+
+// SEC-003: Validate JSON depth and structure on mutation requests
+app.use('/auth/*', jsonDepthLimit);
 
 // ============================================
 // ROUTES

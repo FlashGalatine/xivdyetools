@@ -127,7 +127,6 @@ src/
 │   ├── shared/                 # Reusable components
 │   │   ├── color-swatch/
 │   │   ├── dye-picker/
-│   │   ├── dye-action-dropdown/
 │   │   ├── slot-selection-modal/
 │   │   └── ...
 │   └── layout/                 # App shell components

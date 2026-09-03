@@ -257,7 +257,10 @@ deliberately kept without an in-repo consumer* — the ~76 already tagged are th
 `SUPPORTED_LOCALES`, the `utils` survivors, the API/Universalis tunables). A new
 export with neither a consumer nor a tag fails `lint`; delete it or tag it on
 purpose. knip 6 has no `classMembers` rule, so unused public **methods** are
-still invisible here.
+invisible to `lint:dead` — the reachability gate (`pnpm dead-code:check`,
+`scripts/check-dead-code.ts`) covers the test-only slice of that gap, and only
+a method with **zero** references from any test file still needs a manual
+survey.
 
 ## Publishing
 

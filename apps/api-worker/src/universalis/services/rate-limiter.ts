@@ -92,6 +92,9 @@ export function getRateLimitHeaders(
 
 /**
  * Clear all rate limit data (for testing)
+ *
+ * @testonly test-isolation hook — resets the shared MemoryRateLimiter's counters
+ * so one test's requests don't push another test over its own limit.
  */
 export async function clearRateLimits(): Promise<void> {
   await limiter.resetAll();

@@ -1,0 +1,64 @@
+• turbo 2.10.12
+
+   • Packages in scope: @xivdyetools/auth, @xivdyetools/bot-logic, @xivdyetools/core, @xivdyetools/logger, @xivdyetools/svg, @xivdyetools/test-utils, @xivdyetools/types, @xivdyetools/worker-kit
+   • Running build in 8 packages
+   • Remote caching disabled
+
+[35m@xivdyetools/auth:build: [0mcache miss, executing [2m4f5e75a26e297680[0m
+[32m@xivdyetools/types:build: [0mcache miss, executing [2m836a7e57087733f9[0m
+[36m@xivdyetools/logger:build: [0mcache miss, executing [2m0694f3c397b52ece[0m
+[35m@xivdyetools/auth:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[32m@xivdyetools/types:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[36m@xivdyetools/logger:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[33m@xivdyetools/test-utils:build: [0mcache miss, executing [2m99a4b949ad9e0d50[0m
+[36m@xivdyetools/worker-kit:build: [0mcache miss, executing [2m8cdd8c412ad21dfd[0m
+[34m@xivdyetools/core:build: [0mcache miss, executing [2me2f6471987f8749b[0m
+[33m@xivdyetools/test-utils:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[36m@xivdyetools/worker-kit:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[34m@xivdyetools/core:build: [0m[2m$ npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales[22m
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0m> @xivdyetools/core@4.0.1 build:locales
+[34m@xivdyetools/core:build: [0m> tsx scripts/build-locales.ts
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0m🌐 Building locale files...
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0mBuilding English (en)...
+[34m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\en.json (125 dyes)
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0mBuilding Japanese (ja)...
+[34m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\ja.json (125 dyes)
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0mBuilding German (de)...
+[34m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\de.json (125 dyes)
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0mBuilding French (fr)...
+[34m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\fr.json (125 dyes)
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0mBuilding Korean (ko)...
+[34m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\ko.json (125 dyes)
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0mBuilding Chinese (zh)...
+[34m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\zh.json (125 dyes)
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0m✅ Locale files already up to date (nothing written).
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0m> @xivdyetools/core@4.0.1 copy:locales
+[34m@xivdyetools/core:build: [0m> tsx scripts/copy-locales.ts
+[34m@xivdyetools/core:build: [0m
+[34m@xivdyetools/core:build: [0m📦 Copying 6 locale files to dist...
+[34m@xivdyetools/core:build: [0m   ✓ de.json
+[34m@xivdyetools/core:build: [0m   ✓ en.json
+[34m@xivdyetools/core:build: [0m   ✓ fr.json
+[34m@xivdyetools/core:build: [0m   ✓ ja.json
+[34m@xivdyetools/core:build: [0m   ✓ ko.json
+[34m@xivdyetools/core:build: [0m   ✓ zh.json
+[34m@xivdyetools/core:build: [0m✅ Locale files copied to C:\dev\XIVProjects\xivdyetools\packages\core\dist\data\locales
+[35m@xivdyetools/svg:build: [0mcache miss, executing [2m963b080be9e8680e[0m
+[35m@xivdyetools/svg:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[32m@xivdyetools/bot-logic:build: [0mcache miss, executing [2mc228a8193e0bfebf[0m
+[32m@xivdyetools/bot-logic:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+
+[1m Tasks:    [32m[1m8 successful[0m, 8 total[0m
+[1mCached:    [1m0 cached[0m, 8 total[0m
+[1m  Time:    [1m18.779s[0m [0m
+

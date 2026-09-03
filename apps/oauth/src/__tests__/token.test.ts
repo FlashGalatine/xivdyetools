@@ -485,7 +485,20 @@ describe('Token Handler', () => {
     });
 
     describe('POST /auth/revoke error handling', () => {
-        it('should handle KV errors gracefully during revocation', async () => {
+        /**
+         * BUG-050: this used to assert `200 { success: true, revoked: false }`
+         * — and the response also carried
+         * `note: 'Token lacks JTI claim (older token format)'`, which was
+         * simply false: the token HAS a jti, the KV write failed. So a user
+         * whose logout did not take was told it had, the jti was never
+         * blacklisted, and `/auth/me` and presets-api kept accepting the token
+         * for up to JWT_EXPIRY. Nothing logged it either, so a KV incident in
+         * which every logout silently failed was invisible in production.
+         *
+         * "Gracefully" is the right word for the handler not throwing; it was
+         * the wrong word for the client being told it succeeded.
+         */
+        it('reports a failed revocation as a failure, not as success', async () => {
             // Create a mock KV that throws errors
             const errorKV = {
                 get: async () => { throw new Error('KV get failed'); },
@@ -502,7 +515,6 @@ describe('Token Handler', () => {
 
             const { token } = await createJWT(mockUser, envWithErrorKV);
 
-            // Revoke should fail gracefully (returns success=true, revoked=false)
             const response = await fetchWithEnv(
                 envWithErrorKV,
                 'http://localhost/auth/revoke',
@@ -516,7 +528,29 @@ describe('Token Handler', () => {
 
             const json = (await response.json()) as Record<string, any>;
 
-            // Should succeed but indicate revocation failed
+            // The session may still be live, and the client has to know.
+            expect(response.status).toBe(503);
+            expect(json.success).toBe(false);
+            expect(json.revoked).toBe(false);
+            // And crucially: it must NOT claim the token lacked a jti. That
+            // note is what made a KV incident read as an old-token-format
+            // curiosity rather than a failed logout.
+            expect(json.note).toBeUndefined();
+            expect(JSON.stringify(json)).not.toContain('JTI');
+        });
+
+        it('still reports the honest fallback when the blacklist is unbound', async () => {
+            // Unchanged behaviour: with no TOKEN_BLACKLIST there is nowhere to
+            // revoke to, the client clearing its own storage IS the logout, and
+            // saying so is accurate.
+            const { token } = await createJWT(mockUser, mockEnv);
+
+            const response = await fetchWithEnv(mockEnv, 'http://localhost/auth/revoke', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const json = (await response.json()) as Record<string, any>;
+
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
             expect(json.revoked).toBe(false);

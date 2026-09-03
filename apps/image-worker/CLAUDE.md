@@ -110,14 +110,19 @@ POST /extract
 400 → body:    { error: string }   — see "The error contract is verbatim" below
 ```
 
-**The error contract is verbatim.** `discord-worker`'s `extractor.ts` substring-matches the
-`error` field against all five fragments `'SSRF'`, `'Discord CDN'`, `'too large'`, `'format'`,
-`'timeout'` (source of truth: `apps/discord-worker/src/handlers/commands/extractor.ts:536-543`)
-to choose a localized user-facing message. `index.ts`'s `catch` block returns `error.message`
-unmodified for every thrown `Error` (only non-`Error` throws fall back to a generic message).
+**The error contract is verbatim.** `discord-worker` substring-matches the `error` field to pick
+both a localized user-facing message and the analytics outcome class. The source of truth is the
+marker table in **`apps/discord-worker/src/services/image-input-errors.ts`** — a 15-entry
+`[reason, substring]` list, not the five fragments an older version of this file named (no message
+thrown anywhere in this Worker has ever contained the string `SSRF`). `index.ts`'s `catch` block
+returns `error.message` unmodified for every thrown `Error` (only non-`Error` throws fall back to a
+generic message).
+
 **Never reword, truncate, or generalize an error message thrown from `validators.ts` or
-`photon.ts`** — doing so silently breaks the caller's message-matching without failing any type
-check.
+`photon.ts`** without updating that table — doing so silently breaks the caller's matching without
+failing any type check. `image-input-errors-contract.test.ts` in discord-worker reads THIS Worker's
+source and fails when a message has no marker, which is how `'Image file is empty'` was found
+classifying as an internal failure (image-stoat-07).
 
 ### The `POST /thumbnail` contract
 
@@ -129,9 +134,11 @@ POST /thumbnail
 400 → body:    { error: string }   — empty body, or photon could not decode
 ```
 
-Unlike `/extract`, this route takes **bytes, not a URL**, so none of the SSRF/size/format
-validators in `validators.ts` run on it: `presets-api` has already received and bounded the
-upload, and nothing here fetches anything. The only guard is the empty-body check.
+Unlike `/extract`, this route takes **bytes, not a URL**, so the SSRF and fetch-timeout paths in
+`validators.ts` do not run on it — nothing here fetches anything. It is *not* unguarded, though:
+there is a `Content-Length` pre-check, a streaming 10 MB cap (`readBodyWithCap`), an empty-body
+check, and the same pre-decode header dimension gate `/extract` uses
+(`assertImageDimensionsFromHeader` inside `processImageForThumbnail`).
 
 `processImageForThumbnail` crops to the 640 × 264 band (`THUMBNAIL_WIDTH`/`THUMBNAIL_HEIGHT`,
 aspect ≈ 2.42) via `computeCropBox`, resizes with Lanczos3, and encodes WebP. `computeCropBox`
@@ -145,8 +152,12 @@ rather than letterboxed.
 body is bounded at 256 × 256 × 4 bytes = **256 KiB** regardless of the 10 MB input-file limit
 (`MAX_FILE_SIZE_BYTES` in `validators.ts`). `discord-worker`'s `image-client.ts` does not pass
 `maxDimension`, so this default is what production traffic actually gets; a caller that does
-supply a larger `maxDimension` receives a proportionally larger response, since `index.ts` passes
-the request body's value through to the processor unvalidated.
+supply a larger `maxDimension` receives a proportionally larger response, bounded by
+`MAX_IMAGE_DIMENSION` (4096). Since 1.1.0 that value **is** validated — `assertValidMaxDimension`
+in `validators.ts` is the one rule, called by the `/extract` route (as a 400) and by
+`processImageForExtraction` (as a throw). It lives in `validators.ts` rather than `photon.ts`
+because every route test mocks `photon.js` wholesale, so a rule reached through it would be
+undefined under test (REFACTOR-007). `photon.ts` imports it from there too.
 
 ### Environment Bindings (wrangler.toml)
 
@@ -220,11 +231,22 @@ handling many requests does not leak WASM memory toward the 128 MB limit.
 Two limits are enforced before pixels are ever extracted: the 10 MB file size
 (`MAX_FILE_SIZE_BYTES`, checked against both the `Content-Length` header and the fetched buffer
 in `validators.ts`) and the 10-second fetch timeout (`FETCH_TIMEOUT_MS`, via `AbortController`).
-Input dimensions are not separately capped — `validators.ts` also exports `validateDimensions`,
-`MAX_IMAGE_DIMENSION` (4096) and `MAX_PIXEL_COUNT` (16 megapixels), but nothing in the `/extract`
-route calls `validateDimensions`; a large source image is instead brought down to size by the
-unconditional resize step in `photon.ts`, and the request body's `maxDimension` is passed through
-to that resize without runtime validation (a non-default value is honored as-is).
+Input dimensions **are** capped, before any decode. `assertImageDimensionsFromHeader` reads
+width x height out of the container header and applies `validateDimensions`, and both
+`processImageForExtraction` and `processImageForThumbnail` call it first (FINDING-004). Two caps
+apply:
+
+- `MAX_IMAGE_DIMENSION` = 4096 per side — the secondary guard, rejecting a shape no legitimate
+  palette source has.
+- `MAX_PIXEL_COUNT` = **4 MP**, and it is *derived from the memory budget*, not from the side
+  length: 32 MiB of pixel budget / (4 bytes per RGBA pixel x 2 concurrent copies inside photon).
+  It used to be `16 * 1024 * 1024` — exactly 4096^2 — so the largest square the side cap admits
+  passed at equality and the pixel branch was unreachable. One RGBA buffer for it is 64 MiB and
+  photon holds two, which needs >= 128 MiB against Cloudflare's 128 MiB per-isolate limit; a
+  solid-colour 4096x4096 PNG compresses to tens of KB, far under the 10 MB file cap, so the OOM
+  this gate exists to prevent was reachable from any Discord attachment (BUG-052).
+
+The request body's `maxDimension` is validated too — see the `/extract` contract above.
 
 ## Dependencies
 

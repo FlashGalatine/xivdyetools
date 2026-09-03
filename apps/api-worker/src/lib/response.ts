@@ -56,25 +56,6 @@ export function paginatedResponse<T>(
   });
 }
 
-export function errorResponse(
-  c: AppContext,
-  code: string,
-  message: string,
-  status: number,
-  details?: unknown,
-) {
-  return c.json(
-    {
-      success: false,
-      error: code,
-      message,
-      ...(details !== undefined && { details }),
-      meta: buildMeta(c),
-    },
-    status as 400,
-  );
-}
-
 /** Calculate pagination metadata from total count and params */
 export function buildPagination(
   page: number,

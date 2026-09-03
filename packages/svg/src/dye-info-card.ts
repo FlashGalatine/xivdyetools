@@ -221,8 +221,8 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
     const tier = classifyBandTier(n.deltaE, 'ciede2000', 'match');
     const tone = theme.tiers[Math.min(tier, 3)];
     parts.push(
-      `<rect x="${x}" y="${stripTop}" width="${cw}" height="26" rx="7" fill="${n.hex}"/>` +
-        `<rect x="${x + 0.5}" y="${stripTop + 0.5}" width="${cw - 1}" height="25" rx="6.5" fill="none" stroke="${theme.swatchRing}" stroke-width="1"/>`
+      `<rect x="${x}" y="${stripTop}" width="${cw}" height="26" rx="7" fill="${escapeXml(n.hex)}"/>` +
+        `<rect x="${x + 0.5}" y="${stripTop + 0.5}" width="${cw - 1}" height="25" rx="6.5" fill="none" stroke="${escapeXml(theme.swatchRing)}" stroke-width="1"/>`
     );
     parts.push(
       cardText(x, stripTop + 26 + 5 + 11, fitText(n.name, cw, 12, 'body'), {
@@ -236,7 +236,7 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
     const deText = num(n.deltaE, lang, 1);
     const deW = textWidth(deText, 12, 'mono');
     parts.push(
-      `<rect x="${x}" y="${barY}" width="${cw - deW - 5}" height="4" rx="2" fill="${tone}"/>`
+      `<rect x="${x}" y="${barY}" width="${cw - deW - 5}" height="4" rx="2" fill="${escapeXml(tone)}"/>`
     );
     parts.push(
       cardText(x + cw, barY + 6, deText, { fill: tone, size: 12, font: 'mono', anchor: 'end' })

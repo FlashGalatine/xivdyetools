@@ -18,12 +18,12 @@ vi.mock('../../services/bot-i18n.js', () => ({
 }));
 
 vi.mock('../../services/budget/index.js', () => ({
-  fetchWorlds: vi.fn(),
-  fetchDataCenters: vi.fn(),
+  getCachedWorlds: vi.fn(),
+  getCachedDataCenters: vi.fn(),
 }));
 
 import { createUserTranslatorWithPrefs } from '../../services/bot-i18n.js';
-import { fetchDataCenters, fetchWorlds } from '../../services/budget/index.js';
+import { getCachedDataCenters, getCachedWorlds } from '../../services/budget/index.js';
 
 const translator = (locale = 'en') => ({
   t: (key: string, vars?: Record<string, unknown>) =>
@@ -124,8 +124,8 @@ describe('handleManualCommand', () => {
       } as never);
 
     beforeEach(() => {
-      vi.mocked(fetchWorlds).mockResolvedValue(worlds as never);
-      vi.mocked(fetchDataCenters).mockResolvedValue(datacenters as never);
+      vi.mocked(getCachedWorlds).mockResolvedValue(worlds as never);
+      vi.mocked(getCachedDataCenters).mockResolvedValue(datacenters as never);
     });
 
     it('maps a stored world through its datacenter to a region link', async () => {
@@ -158,7 +158,7 @@ describe('handleManualCommand', () => {
       const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
 
       expect(body.data.embeds[0].description).not.toContain('manual5.learnLead');
-      expect(fetchWorlds).not.toHaveBeenCalled();
+      expect(getCachedWorlds).not.toHaveBeenCalled();
     });
 
     it('degrades to no link for a world nobody recognises', async () => {
@@ -171,7 +171,7 @@ describe('handleManualCommand', () => {
 
     it('degrades to no link when the Universalis proxy is unavailable', async () => {
       withWorld('Gilgamesh');
-      vi.mocked(fetchWorlds).mockRejectedValue(new Error('proxy down'));
+      vi.mocked(getCachedWorlds).mockRejectedValue(new Error('proxy down'));
 
       const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
 
@@ -182,7 +182,7 @@ describe('handleManualCommand', () => {
 
     it('degrades to no link when the world exists but no datacenter claims it', async () => {
       withWorld('Gilgamesh');
-      vi.mocked(fetchDataCenters).mockResolvedValue([
+      vi.mocked(getCachedDataCenters).mockResolvedValue([
         { name: 'Aether', region: 'North-America', worlds: [999] },
       ] as never);
 

@@ -288,4 +288,71 @@ describe('showPresetEditForm — localization', () => {
     resolveEdit({ success: true });
     await vi.waitFor(() => expect(saveBtn.textContent).toBe('preset.saveChanges'));
   });
+
+  // BUG-081: the grid rendered `availableDyes.slice(0, 100)`, a cap from when
+  // the database was smaller. With 125 dyes it silently hid 25 of them -- and
+  // the sibling SUBMISSION form renders all of them, so a palette could be
+  // created out of a dye the edit form would not show.
+  it('renders every available dye, not just the first 100', () => {
+    const original = mockDyes.slice();
+    mockDyes.length = 0;
+    // The real database size.
+    for (let i = 1; i <= 125; i += 1) {
+      mockDyes.push({
+        ...original[0],
+        id: 10000 + i,
+        itemID: 10000 + i,
+        stainID: i,
+        name: `Dye ${i}`,
+      } as Dye);
+    }
+
+    try {
+      showPresetEditForm(makePreset({ dyes: [1, 2, 3] }));
+      const content = getFormContent();
+
+      const swatches = content.querySelectorAll('#edit-dye-grid button');
+      // 125 in the database, minus the 3 already on the preset.
+      expect(swatches).toHaveLength(122);
+    } finally {
+      mockDyes.length = 0;
+      mockDyes.push(...original);
+    }
+  });
+
+  // BUG-083: MAX_TAGS and MAX_TAG_LENGTH were printed in the field hint and
+  // enforced nowhere on the form, so an over-long tag list travelled to
+  // presetSubmissionService.editPreset() and came back as a service-level
+  // rejection instead of inline feedback.
+  describe('tag limits (BUG-083)', () => {
+    function submitWithTags(tags: string): void {
+      showPresetEditForm(makePreset());
+      const content = getFormContent();
+      const input = content.querySelector<HTMLInputElement>('#edit-preset-tags')!;
+      input.value = tags;
+      input.dispatchEvent(new Event('input'));
+      content.querySelector<HTMLButtonElement>('#save-preset-btn')!.click();
+    }
+
+    it('rejects more than MAX_TAGS tags', () => {
+      submitWithTags(Array.from({ length: 11 }, (_, i) => `tag${i}`).join(','));
+
+      expect(mockToastError).toHaveBeenCalledWith('preset.validation.tagsMax:{"n":10}');
+      expect(mockEditPreset).not.toHaveBeenCalled();
+    });
+
+    it('rejects a tag longer than MAX_TAG_LENGTH', () => {
+      submitWithTags(`short,${'x'.repeat(31)}`);
+
+      expect(mockToastError).toHaveBeenCalledWith('preset.validation.tagLength:{"n":30}');
+      expect(mockEditPreset).not.toHaveBeenCalled();
+    });
+
+    it('accepts exactly MAX_TAGS tags of exactly MAX_TAG_LENGTH', () => {
+      submitWithTags(Array.from({ length: 10 }, () => 'x'.repeat(30)).join(','));
+
+      expect(mockToastError).not.toHaveBeenCalled();
+      expect(mockEditPreset).toHaveBeenCalled();
+    });
+  });
 });

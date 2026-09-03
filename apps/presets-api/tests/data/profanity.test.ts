@@ -225,4 +225,30 @@ describe('ProfanityData', () => {
             });
         });
     });
+
+    // ========================================================================
+    // presets-api-13: the whole file could not notice a locale losing its list
+    // ========================================================================
+    //
+    // Every assertion above lives inside `list.forEach((word) => expect(...))`.
+    // Emptying a list makes the callback never run, so all sixteen of them pass
+    // VACUOUSLY -- the titles even say "if not empty". A locale silently losing
+    // its entries is precisely how the filter would stop covering a language,
+    // and it is the one thing this suite was blind to.
+    describe('every locale list is populated', () => {
+        it.each(Object.keys(profanityLists) as SupportedLocale[])(
+            '%s has at least one entry',
+            (locale) => {
+                expect(profanityLists[locale].length).toBeGreaterThan(0);
+            }
+        );
+
+        it('pins the total entry count, so a silent loss is visible', () => {
+            const total = Object.values(profanityLists).reduce(
+                (sum, list) => sum + list.length,
+                0
+            );
+            expect(total).toBe(11);
+        });
+    });
 });

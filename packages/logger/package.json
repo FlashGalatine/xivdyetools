@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/logger",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Unified logging for xivdyetools ecosystem (browser, Node.js, Cloudflare Workers)",
   "author": "XIV Dye Tools",
   "license": "MIT",
@@ -34,7 +34,8 @@
     "build": "tsc -p tsconfig.build.json",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist coverage",
-    "lint": "eslint src",
+    "lint": "eslint src && pnpm run lint:dead",
+    "lint:dead": "knip --directory ../.. --workspace packages/logger --no-config-hints --no-tag-hints",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

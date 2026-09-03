@@ -175,8 +175,15 @@ export async function fetchPresets(env: Env): Promise<Preset[]> {
 
 ### Sending Notifications via Service Binding
 
+> **Illustrative only.** `notifyModerators` was deleted from presets-api on
+> 2026-09-01 (dead-code audit DEAD-009) — it had no caller, and its
+> `MODERATION_WEBHOOK_URL` / `OWNER_DISCORD_ID` / `DISCORD_BOT_TOKEN` /
+> `DISCORD_BOT_WEBHOOK_URL` variables went with it. The shape below is kept
+> because it is still the right pattern for a service-binding call; it is not a
+> description of code that exists.
+
 ```typescript
-// In xivdyetools-presets-api
+// Pattern example — no longer present in xivdyetools-presets-api
 
 async function notifyModerators(
   env: Env,

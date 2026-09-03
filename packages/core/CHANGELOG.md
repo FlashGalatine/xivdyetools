@@ -5,6 +5,123 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-09-03
+
+### Fixed
+
+- **`excludeItemIDs` is honoured whether or not `preventDuplicates` is set.** The two
+  were one `Set`, and that `Set` is read only on the `preventDuplicates` branch — so with
+  duplicates allowed the exclusions did nothing at all, against this function's own
+  documented contract ("dyes that must never be chosen"). They are now separate: `excluded`
+  is permanent and applies to slots and companions alike; `used` still tracks what is
+  already on screen and still only matters when de-duplication is on. A pinned dye
+  continues to win its slot, since an explicit hand-swap outranks our guess.
+
+  `bot-logic` defaulted `preventDuplicates` to **false**, so it was the bot that shipped
+  it: `/harmony monochromatic` is a single `[0]` offset whose ideal *is* the base colour,
+  so the nearest dye to it was the base dye — the card answered your own input at ΔE 0.
+  `/harmony analogous` on a near-grey returned the base twice.
+
+  Every pre-existing test passed `preventDuplicates: true`, the one setting where the old
+  code happened to be right, which is why the whole class was invisible. Over the golden
+  suite's 5,000 rows the base dye appeared inside its own harmony **675 times before and 0
+  after**, and only the `preventDuplicates: false` configuration changed — the page's own
+  defaults are byte-identical.
+
+### Added — harmony convergence
+
+- **`generateHarmonySlots()`** — the one implementation of "which dyes make this
+  harmony", plus `isKnownHarmonyType()` and the `HarmonySelectionConfig` /
+  `HarmonySelectionOptions` / `HarmonySlot` types.
+
+  4.1.0 unified the offsets TABLE (BUG-022); the three surfaces still each had
+  their own way of turning an offset into a dye, and they disagreed on the dyes
+  for **89–100 % of base dyes on every harmony type** (measured over all 125):
+
+  - the **web app** carried each target hue with the base dye's *saturation and
+    value* and ranked candidates by the configured ΔE;
+  - the **bot** called a per-type `DyeService.find*Dyes()`, which rotates hue and
+    does not preserve S/V — and `findComplementaryPair` did not rotate at all, it
+    took an RGB `invert()`;
+  - the **OG card** rotated hue in **LCh** (`rotateHueLch`).
+
+  For a desaturated base the gap is not subtle: `/harmony analogous` on Snow
+  White answered Neon Green and Kobold Brown where the page shows Pure White and
+  Pearl White. The card is the unfurl of a page URL, so a share link could open a
+  page that showed none of the dyes its preview did.
+
+  This function is the **web app's** algorithm, lifted rather than rewritten — a
+  parity test drove both implementations over 125 dyes × 10 types × 4 settings
+  and required identical dyes before the page was rewired. That run's output is
+  frozen in `HarmonySelector.golden.test.ts`, so the page's pre-move behaviour is
+  what the digest pins.
+
+  Because it reads `HARMONY_OFFSETS`, a harmony type is a row in a table rather
+  than a method, which is why `compound` and `shades` now work on every surface
+  without new code.
+
+  Callers filter the candidate pool themselves. That is deliberate: pre-filtering
+  makes a slot answer "the nearest **allowed** dye to the ideal" rather than "the
+  nearest allowed dye to one that was thrown away", which is what the web app's
+  old `replaceExcludedDyes` second pass computed.
+
+## [4.1.0] - 2026-09-02
+
+### Added — 2026-09-02 deep-dive audit
+
+- **`HARMONY_OFFSETS`** — the hue offset each harmony type asks for, as one table
+  (BUG-022). The web app and og-worker each carried a private copy, and they
+  diverged in three of ten rows: og-worker gave `analogous` an extra 180° complement
+  band, spelled `compound` `[30,150,210]` against the page's `[30,180,330]`, and had
+  no `shades` row at all. A card is the unfurl of a page URL, so a `compound` share
+  drew three dyes and the page it opened drew three different ones. Both now read
+  this table; the values are the web app's, and `analogous` also matches
+  `HarmonyGenerator.findAnalogousDyes`'s `[angle, -angle]`.
+
+  `@xivdyetools/bot-logic`'s own `IDEAL_OFFSETS` still carries the old
+  `analogous: [30, -30, 180]` and knows neither `compound` nor `shades`. That is a
+  divergence rather than this bug — the bot's embed and its card agree with each
+  other — and reconciling it changes what `/harmony` returns for every user, so it
+  is filed, not folded in.
+
+### Fixed — 2026-09-02 deep-dive audit
+
+- **RYB blending no longer loses green (BUG-006).** `rgbToRyb` credited the leftover
+  green to blue alone, so pure green and pure blue mapped to the same RYB triple and
+  every green or teal that made a round trip came back blue — `#00FF00` blended with
+  itself gave `#0000ff`. It is now the exact inverse of `rybToRgb`, so colours
+  round-trip and blue + yellow still makes green. This is the Discord bot's default
+  `/mix` and `/gradient` mode. `RybColorMixer` (behind `ColorService.mixColorsRyb`)
+  was never affected.
+- `extractAndMatchPalette` reports the distance measured with the same
+  `matchingMethod` that chose the match, instead of always returning RGB Euclidean
+  on a different scale (BUG-008).
+- `normalizeMatchingMethod` and the ten remaining `TranslationProvider` getters use
+  own-property lookups, so `constructor` / `__proto__` / `toString` are unrecognised
+  values rather than inherited functions (BUG-011, BUG-105 — extending FINDING-027
+  to the siblings it missed).
+- `CharacterColorService.findClosestDyes` returns an empty array for a non-positive
+  `count` instead of throwing a `TypeError` (BUG-056).
+- `APIService.isAPIAvailable` is bounded by the standard Universalis timeout; it was
+  the only fetch in the file without one (BUG-057).
+- `preloadLocales` loads without switching the active locale (BUG-058).
+- `HarmonyGenerator` handles `deltaEFormula: 'oklab'` explicitly instead of routing
+  it into the CIE76 branch with a CIE76 tolerance (BUG-059).
+
+### Changed
+
+- The `distinguish` scale derives from `COLOR_DISTANCE_MAX` rather than a third
+  hardcoded copy of it (REFACTOR-009).
+
+## [4.0.2] - 2026-09-02
+
+### Changed
+
+- `@public` tags added to the barrel exports that have no in-repo consumer, so the
+  dead-code gate can tell "published API, deliberately unconsumed" from "dead"
+  (2026-09-01 dead-code audit, Phase 3). No runtime change; the tags ship in the
+  emitted `.d.ts`.
+
 ## [4.0.1] - 2026-08-21
 
 ### Security — 2026-08-21 security audit (FINDING-027)

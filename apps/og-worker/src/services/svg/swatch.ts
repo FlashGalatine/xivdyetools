@@ -9,11 +9,11 @@
  * @module services/svg/swatch
  */
 
-import { ColorService } from '@xivdyetools/core';
+import { DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
-import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
-import { dyeService, deltaForAlgorithm } from './dye-helpers';
+import { algoTag, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
+import { ALL_DYES, deltaForAlgorithm, rankKeyForAlgorithm } from './dye-helpers';
 import { role, deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
@@ -38,7 +38,7 @@ const MATCH_CAP = 4;
  * Generates the Swatch OG image SVG (400-grid — raster ×3 downstream).
  */
 export function generateSwatchOG(options: SwatchOGOptions): string {
-  const { algorithm = 'oklab', locale = 'en', frame = 'discord' } = options;
+  const { algorithm = DEFAULT_MATCHING_METHOD, locale = 'en', frame = 'discord' } = options;
 
   const clean = options.color.replace('#', '').toUpperCase();
   if (!/^[0-9A-F]{6}$/.test(clean)) {
@@ -47,13 +47,23 @@ export function generateSwatchOG(options: SwatchOGOptions): string {
   const targetHex = `#${clean}`;
 
   const limit = Math.max(1, Math.min(MATCH_CAP, options.limit ?? MATCH_CAP));
-  const matches = dyeService
-    .getAllDyes()
-    .map((dye: Dye) => ({
+  // BUG-023: rank with the SAME method the tags and the footer name. This used
+  // to rank by a hardcoded ciede2000 and then print `deltaForAlgorithm(…,
+  // algorithm)` under an `ALGO_TAG[algorithm]` footer — so `?algo=oklab` gave
+  // the four nearest by ΔE2000, tagged with ΔEOK figures that need not be in
+  // ascending order (the two metrics disagree on order over 125 dyes), and a
+  // different set from the one the page shows, which ranks by the requested
+  // method. One distance call now, reused for the tag.
+  // 2026-09-03 review: order by `rankKeyForAlgorithm`, print `delta`. They
+  // differ for exactly one method — `distinguish` is a rounded integer 0-100,
+  // so ranking 125 dyes by it collapses them into ~101 buckets and the ties
+  // fall to ALL_DYES order, naming dyes the page's own list never shows.
+  const matches = ALL_DYES.map((dye: Dye) => ({
       dye,
-      delta: ColorService.getDistanceForMethod(targetHex, dye.hex, 'ciede2000'),
+      delta: deltaForAlgorithm(targetHex, dye.hex, algorithm),
+      rank: rankKeyForAlgorithm(targetHex, dye.hex, algorithm),
     }))
-    .sort((a, b) => a.delta - b.delta)
+    .sort((a, b) => a.rank - b.rank)
     .slice(0, limit);
 
   const bands: BandEntry[] = [
@@ -70,7 +80,7 @@ export function generateSwatchOG(options: SwatchOGOptions): string {
       role: String(i + 1),
       name: getLocalizedDyeName(m.dye, locale),
       value: m.dye.hex.toUpperCase(),
-      tag: `Δ${fmtDelta(deltaForAlgorithm(targetHex, m.dye.hex, algorithm), algorithm)}`,
+      tag: `Δ${fmtDelta(m.delta, algorithm)}`,
       grow: 1,
     })),
   ];
@@ -81,7 +91,7 @@ export function generateSwatchOG(options: SwatchOGOptions): string {
     toolGlyph: bandGlyph('swatch'),
     path: 'xivdyetools.app/swatch',
     deck: deckLine('swatchNearest', locale, { n: matches.length, hex: targetHex }),
-    footRight: ALGO_TAG[algorithm] ?? algorithm.toUpperCase(),
+    footRight: algoTag(algorithm),
     frame,
   });
 }

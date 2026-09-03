@@ -248,22 +248,6 @@ describe('IndexedDBService', () => {
     });
   });
 
-  describe('isIndexedDBSupported', () => {
-    it('should return true when indexedDB is available', () => {
-      expect(indexedDBService.isIndexedDBSupported()).toBe(true);
-    });
-
-    it('should return false when indexedDB is not available', () => {
-      // @ts-expect-error - reset singleton
-      IndexedDBService.instance = null;
-      // @ts-expect-error - assigning undefined to global
-      global.indexedDB = undefined;
-
-      const service = IndexedDBService.getInstance();
-      expect(service.isIndexedDBSupported()).toBe(false);
-    });
-  });
-
   describe('isReady', () => {
     it('should return false before initialization', () => {
       expect(indexedDBService.isReady()).toBe(false);

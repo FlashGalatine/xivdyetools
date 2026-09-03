@@ -244,3 +244,45 @@ describe('safe-json', () => {
     });
   });
 });
+
+/**
+ * moderation-worker-03: `freezeResult` was skipped whenever structure
+ * validation produced a WARNING, because that branch returned before the
+ * freeze step ever ran. `src/index.ts` asks for `freezeResult: true` and every
+ * handler downstream treats the interaction payload as immutable, so a body
+ * that merely warned handed them a mutable object under a frozen contract.
+ *
+ * The old suite could not see it: it never asserted `Object.isFrozen` on a
+ * result at all (its one "freeze" test checks a primitive), and its single
+ * large-array case used 1001 elements, which takes the *invalid* branch rather
+ * than the warning one.
+ */
+describe('freezeResult and the warning path', () => {
+  /** >100 elements warns ("Large array detected"); >1000 is rejected outright. */
+  const warningBody = JSON.stringify({ items: Array.from({ length: 200 }, (_, i) => i) });
+
+  it('warns on a large array without rejecting it', () => {
+    const result = safeParseJSON(warningBody, { freezeResult: true });
+
+    expect(result.success).toBe(true);
+    expect(result.warnings?.some((w) => w.includes('Large array'))).toBe(true);
+  });
+
+  it('freezes the result on the warning path, not just the clean one', () => {
+    const warned = safeParseJSON<{ items: number[] }>(warningBody, { freezeResult: true });
+    const clean = safeParseJSON<{ ok: boolean }>('{"ok":true}', { freezeResult: true });
+
+    expect(clean.success).toBe(true);
+    expect(warned.success).toBe(true);
+    expect(Object.isFrozen(clean.data)).toBe(true);
+    expect(Object.isFrozen(warned.data)).toBe(true);
+    // Deeply, since `deepFreeze` is what the contract promises.
+    expect(Object.isFrozen(warned.data?.items)).toBe(true);
+  });
+
+  it('leaves the result mutable when freezing was not asked for', () => {
+    const result = safeParseJSON<{ items: number[] }>(warningBody, { freezeResult: false });
+
+    expect(result.success && Object.isFrozen(result.data)).toBe(false);
+  });
+});

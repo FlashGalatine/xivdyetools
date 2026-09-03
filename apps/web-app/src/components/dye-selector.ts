@@ -715,6 +715,16 @@ export class DyeSelector extends BaseComponent {
       this.languageUnsubscribe();
       this.languageUnsubscribe = null;
     }
+    // BUG-071: these are components with their own subscriptions, not plain
+    // DOM. DyeGrid holds a CollectionService favourites subscription, so
+    // dropping the reference without destroying it leaked one listener per
+    // drawer open — each surviving grid still re-rendering on every favourite
+    // change. Destroying children before super is the same order
+    // HarmonyTool.destroyChildComponents() uses.
+    this.dyeGrid?.destroy();
+    this.dyeGrid = null;
+    this.searchBox?.destroy();
+    this.searchBox = null;
     super.destroy();
   }
 

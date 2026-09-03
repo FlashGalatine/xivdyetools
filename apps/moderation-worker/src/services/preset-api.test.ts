@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createMockFetcher } from '@xivdyetools/test-utils';
 import { verifyBotSignatureV2 } from '@xivdyetools/auth';
 import {
-  isApiEnabled,
   isModerator,
   getPresets,
   getPreset,
@@ -10,7 +9,6 @@ import {
   approvePreset,
   rejectPreset,
   getModerationStats,
-  getModerationHistory,
   revertPreset,
   searchPresetsForAutocomplete,
 } from './preset-api.js';
@@ -38,40 +36,6 @@ describe('preset-api', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
-  });
-
-  describe('isApiEnabled', () => {
-    it('should return true when PRESETS_API service binding exists', () => {
-      const env = { PRESETS_API: mockFetcher } as unknown as Env;
-      expect(isApiEnabled(env)).toBe(true);
-    });
-
-    it('should return true when PRESETS_API_URL and BOT_API_SECRET exist', () => {
-      const env = {
-        PRESETS_API_URL: 'https://api.example.com',
-        BOT_API_SECRET: 'secret',
-      } as Env;
-      expect(isApiEnabled(env)).toBe(true);
-    });
-
-    it('should return false when neither is configured', () => {
-      const env = {} as Env;
-      expect(isApiEnabled(env)).toBe(false);
-    });
-
-    it('should return false when only PRESETS_API_URL is set', () => {
-      const env = {
-        PRESETS_API_URL: 'https://api.example.com',
-      } as Env;
-      expect(isApiEnabled(env)).toBe(false);
-    });
-
-    it('should return false when only BOT_API_SECRET is set', () => {
-      const env = {
-        BOT_API_SECRET: 'secret',
-      } as Env;
-      expect(isApiEnabled(env)).toBe(false);
-    });
   });
 
   describe('isModerator', () => {
@@ -492,30 +456,6 @@ describe('preset-api', () => {
     });
   });
 
-  describe('getModerationHistory', () => {
-    it('should return moderation history', async () => {
-      const mockHistory = [
-        { action: 'approved', moderator_id: 'mod-1', timestamp: '2025-01-01' },
-        { action: 'flagged', moderator_id: 'mod-2', timestamp: '2025-01-02' },
-      ];
-
-      mockFetcher._setupHandler(() => Response.json({ history: mockHistory }));
-
-      const result = await getModerationHistory(mockEnv, 'preset-123', 'mod-1');
-
-      expect(result).toEqual(mockHistory);
-    });
-
-    it('should call correct API endpoint with preset ID', async () => {
-      mockFetcher._setupHandler(() => Response.json({ history: [] }));
-
-      await getModerationHistory(mockEnv, 'preset-abc', 'mod-1');
-
-      const fetchCall = mockFetcher._calls[0];
-      expect(fetchCall.url).toBe('https://internal/api/v1/moderation/preset-abc/history');
-    });
-  });
-
   describe('revertPreset', () => {
     it('should revert preset to previous version', async () => {
       const mockPreset = { id: 'preset-1', name: 'Reverted Preset' };
@@ -725,12 +665,6 @@ describe('path-segment encoding (FINDING-020)', () => {
     mockFetcher._setupHandler(() => Response.json({ success: true, preset: { id: 'p' } }));
     await revertPreset(mockEnv, TRAVERSAL, 'reason', '12345678901234567');
     expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}/revert`);
-  });
-
-  it('getModerationHistory encodes the preset id', async () => {
-    mockFetcher._setupHandler(() => Response.json({ history: [] }));
-    await getModerationHistory(mockEnv, TRAVERSAL, '12345678901234567');
-    expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}/history`);
   });
 
   it('getPreset encodes the preset id', async () => {

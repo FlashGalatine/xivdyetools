@@ -189,13 +189,18 @@ export function rateLimitMiddleware(
       }
     }
 
-    // Set standard rate limit headers on all responses
+    // Standard rate limit headers, applied to allowed and denied responses alike.
     const headers = getRateLimitHeaders(result);
-    for (const [headerName, headerValue] of Object.entries(headers)) {
-      c.header(headerName, headerValue);
-    }
+    const applyRateLimitHeaders = (): void => {
+      for (const [headerName, headerValue] of Object.entries(headers)) {
+        c.header(headerName, headerValue);
+      }
+    };
 
     if (!result.allowed) {
+      // The 429 is produced right here through c.json()/formatError, so a
+      // pre-return c.header() is merged by Hono's #newResponse.
+      applyRateLimitHeaders();
       const retryAfter =
         result.retryAfter ??
         Math.ceil((result.resetAt.getTime() - Date.now()) / 1000);
@@ -216,5 +221,15 @@ export function rateLimitMiddleware(
     }
 
     await next();
+
+    // pkg-worker-kit-test-utils-01: the allowed path must set these AFTER next().
+    // Before it, c.header() only reaches Hono's #preparedHeaders, which nothing but
+    // #newResponse merges -- so any handler returning a raw `new Response(...)`
+    // (api-worker's GET /v1/chara/icon/:id, on both the miss and the cache hit)
+    // shipped with no X-RateLimit-* at all, while api-worker's CORS config
+    // advertises them in exposeHeaders. Post-finalize, c.header() clones the
+    // response and sets the header on the clone -- the same placement
+    // requestIdMiddleware already relies on.
+    applyRateLimitHeaders();
   };
 }

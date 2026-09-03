@@ -11,13 +11,16 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createMockClient, createMockMessage } from '../test-utils/revolt-mocks.js';
-import { routeCommand, type CommandContext } from '../router.js';
-import { parseCommand } from './parser.js';
+import { createMessageHandler } from '../message-handler.js';
 import { MessageContextStore } from '../services/message-context.js';
 import type { BotConfig } from '../config.js';
 
-// We test the messageCreate handler logic inline rather than importing index.ts
-// (which auto-runs main()). This covers the same branches.
+// image-stoat-13: these tests used to re-implement the messageCreate gate
+// INLINE rather than importing it, and the copy left out two of the real
+// handler's checks -- the other-bot filter (`message.author?.bot`) and the
+// per-user throttle. Deleting either from message-handler.ts left every test
+// here green. index.ts cannot be imported (it auto-runs main()), but the thing
+// index.ts actually installs can be, so drive that.
 
 function createConfig(): BotConfig {
   return { botToken: 'test-token', authorizedUsers: [] };
@@ -33,24 +36,57 @@ describe('messageCreate handler logic', () => {
     config = createConfig();
   });
 
-  /** Simulate the same handler logic as index.ts messageCreate */
+  /** The handler index.ts registers on `messageCreate`, not a copy of it. */
   async function handleMessage(
     message: { id: string; content: string | null; authorId: string; channelId: string; channel?: any },
     botUserId: string,
   ): Promise<void> {
-    if (message.authorId === botUserId) return;
-    if (!message.content) return;
+    const { client } = createMockClient();
+    (client as { user?: { id: string } }).user = { id: botUserId };
 
-    const parsed = parseCommand(message.content);
-    if (!parsed) return;
-
-    await routeCommand({
-      message: message as any,
-      parsed,
+    const handler = createMessageHandler({
+      client: client as never,
       config,
       messageContextStore,
     });
+
+    await handler(message as never);
   }
+
+  it('ignores messages from OTHER bots', async () => {
+    // The inline copy this file used to carry had no such check, so removing
+    // it from message-handler.ts changed nothing here.
+    const message = createMockMessage({
+      content: '!xd ping',
+      author: { bot: {} },
+    } as never);
+    await handleMessage(message, 'bot-01');
+    expect(message.channel.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('throttles a user who floods commands', async () => {
+    const message = createMockMessage({ content: '!xd ping' });
+
+    // Far more than any sane per-user allowance.
+    for (let i = 0; i < 25; i++) {
+      await handleMessage(message, 'bot-01');
+    }
+
+    // The throttle is per handler instance, so drive one directly.
+    const { client } = createMockClient();
+    (client as { user?: { id: string } }).user = { id: 'bot-01' };
+    const handler = createMessageHandler({
+      client: client as never,
+      config,
+      messageContextStore,
+    });
+
+    const flooded = createMockMessage({ content: '!xd ping' });
+    for (let i = 0; i < 25; i++) {
+      await handler(flooded as never);
+    }
+    expect(flooded.channel.sendMessage.mock.calls.length).toBeLessThan(25);
+  });
 
   it('ignores messages from the bot itself', async () => {
     const message = createMockMessage({ authorId: 'bot-01', content: '!xd ping' });
@@ -91,25 +127,9 @@ describe('messageCreate handler logic', () => {
   });
 });
 
-describe('shutdown handler', () => {
-  it('process.exit is a callable function', () => {
-    // Verify the shutdown pattern compiles — the actual process.on
-    // registration happens inside main() which we don't invoke in tests
-    expect(typeof process.exit).toBe('function');
-  });
-});
-
-describe('Client mock wiring', () => {
-  it('mock client registers event handlers via on()', () => {
-    const { client, emit } = createMockClient();
-    const readyHandler = vi.fn();
-    client.on('ready', readyHandler);
-    emit('ready');
-    expect(readyHandler).toHaveBeenCalledOnce();
-  });
-
-  it('loginBot is callable and resolves', async () => {
-    const { client } = createMockClient();
-    await expect(client.loginBot('token')).resolves.toBeUndefined();
-  });
-});
+// image-stoat-13: two describes lived here and asserted nothing about product
+// code -- `expect(typeof process.exit).toBe('function')` under the name
+// "shutdown handler", and two cases confirming that this file's OWN
+// createMockClient registers a handler and resolves a promise. Removed; the
+// gateway wiring index.ts performs is covered by message-handler.test.ts and
+// by the handler tests above.

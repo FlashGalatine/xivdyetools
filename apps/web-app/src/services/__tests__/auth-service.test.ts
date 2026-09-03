@@ -1273,4 +1273,82 @@ describe('AuthService', () => {
       expect(authService.isAuthenticated()).toBe(false);
     });
   });
+
+  // BUG-060: `atob()` returns a BINARY string -- one character per byte -- and a
+  // JWT payload is UTF-8, so every non-ASCII character in a Discord display name
+  // arrived as mojibake. Note that `createMockJWT` above cannot even build this
+  // fixture: bare `btoa()` throws on non-Latin1 input, which is the same
+  // asymmetry that produced the bug.
+  describe('non-ASCII JWT payloads (BUG-060)', () => {
+    function base64UrlUtf8(value: string): string {
+      const bytes = new TextEncoder().encode(value);
+      let binary = '';
+      for (const byte of bytes) binary += String.fromCharCode(byte);
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function createUtf8JWT(payload: Record<string, unknown>): string {
+      const header = base64UrlUtf8(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+      return `${header}.${base64UrlUtf8(JSON.stringify(payload))}.mock_signature`;
+    }
+
+    it.each([
+      ['Japanese', 'ソフィア'],
+      ['Korean', '소피아'],
+      ['accented Latin', 'Sofía Ünlü'],
+      ['emoji', 'Sofia 🌸'],
+    ])('decodes a %s display name without mojibake', async (_label, displayName) => {
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
+      const token = createUtf8JWT({
+        sub: '123456789',
+        username: 'sofia',
+        global_name: displayName,
+        avatar: 'abc123',
+        exp: futureTime,
+        iat: Math.floor(Date.now() / 1000),
+        iss: 'xivdyetools',
+      });
+
+      mockLocalStorage['xivdyetools_auth_token'] = token;
+      mockLocalStorage['xivdyetools_auth_expires'] = String(futureTime);
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(authService.getUser()?.global_name).toBe(displayName);
+    });
+  });
+
+  // BUG-063: a corrupt expiry parses to NaN, and NaN defeats BOTH guards --
+  // `NaN < now` is false, and `if (this.state.expiresAt)` is falsy -- so the
+  // session never expired on the client.
+  describe('corrupt stored expiry (BUG-063)', () => {
+    it.each([
+      ['non-numeric', 'not-a-number'],
+      ['empty-ish', '   '],
+      ['the literal NaN', 'NaN'],
+      ['a JSON fragment', '{"exp":123}'],
+    ])('treats a %s expiry as expired rather than eternal', async (_label, stored) => {
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
+      const mockToken = createMockJWT({
+        sub: '123456789',
+        username: 'testuser',
+        global_name: 'Test User',
+        avatar: 'abc123',
+        exp: futureTime,
+        iat: Math.floor(Date.now() / 1000),
+        iss: 'xivdyetools',
+      });
+
+      mockLocalStorage['xivdyetools_auth_token'] = mockToken;
+      mockLocalStorage['xivdyetools_auth_expires'] = stored;
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(authService.isAuthenticated()).toBe(false);
+      // ...and the damaged session is cleared, not left to be re-read forever.
+      expect(mockLocalStorage['xivdyetools_auth_token']).toBeUndefined();
+    });
+  });
 });

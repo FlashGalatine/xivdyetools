@@ -39,14 +39,7 @@ export { MarketBoardService } from './market-board-service';
 // Extracted tool logic (WEB-REF-003)
 export { blendColors, findMatchingDyes, getContrastColor } from './mixer-blending-engine';
 export type { MixedColorResult } from './mixer-blending-engine';
-export {
-  HARMONY_OFFSETS,
-  getHarmonyTypes,
-  calculateHueDeviance,
-  findClosestDyesToHue,
-  replaceExcludedDyes,
-} from './harmony-generator';
-export type { ScoredDyeMatch, HarmonyConfig } from './harmony-generator';
+export { getHarmonyTypes } from './harmony-generator';
 export { buildMarketPanel } from './tool-panel-builders';
 export { applyDisplayOptions } from './display-options-helper';
 
@@ -82,9 +75,6 @@ export async function initializeServices(): Promise<void> {
 
     // ModalService is static singleton, always ready
     logger.info('✅ ModalService ready');
-
-    // TooltipService is static singleton, always ready
-    logger.info('✅ TooltipService ready');
 
     // Initialize KeyboardService (global shortcuts).
     // This call was MISSING: the service, its shortcuts panel and its unit

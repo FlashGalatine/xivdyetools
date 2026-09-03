@@ -18,6 +18,7 @@ import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse } from './utils/verify.js';
 import { pongResponse, ephemeralResponse, rateLimitedResponse } from './utils/response.js';
 import { safeParseJSON } from './utils/safe-json.js';
+import { clampChoiceName } from './utils/embed-text.js';
 import {
   checkRateLimit,
   incrementRateLimit,
@@ -327,14 +328,6 @@ async function enforceCommandRateLimit(
   return null;
 }
 
-/**
- * Discord caps autocomplete choice names at 100 characters and rejects the
- * whole response otherwise — one long author name must not blank the list.
- */
-function clampChoiceName(name: string): string {
-  const chars = [...name];
-  return chars.length <= 100 ? name : `${chars.slice(0, 99).join('')}\u2026`;
-}
 
 /**
  * Handle autocomplete interactions

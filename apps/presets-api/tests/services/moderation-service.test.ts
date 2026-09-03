@@ -5,7 +5,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import {
     moderateContent,
-    notifyModerators,
     checkLocalFilter,
     escapeRegex,
     compileProfanityPatterns,
@@ -663,201 +662,73 @@ describe('ModerationService', () => {
         // `passed: true, method: 'local'` and that fetch is never called.
     });
 
-    // ============================================
-    // notifyModerators
-    // ============================================
+});
 
-    describe('notifyModerators', () => {
-        const mockAlert = {
-            presetId: 'preset-123',
-            presetName: 'Flagged Preset',
-            description: 'This preset was flagged for review',
-            dyes: [1, 2, 3],
-            authorName: 'TestUser',
-            authorId: 'user-456',
-            flagReason: 'Contains prohibited content',
-        };
+// ============================================================================
+// presets-api-09: BUG-002's CJK matcher had no test at all
+// ============================================================================
+//
+// `\b` never matches next to CJK, so ja/ko/zh entries are compiled into a
+// separate boundary-less `cjkPattern` and checkLocalFilter tries BOTH patterns.
+// Nothing exercised that: compileProfanityPatterns was only asserted on ASCII,
+// and every checkLocalFilter test injects ASCII patterns through
+// `_setTestPatterns`, which hard-codes `cjkPattern: null`. Deleting
+// `profanity.cjkPattern` from the pattern array -- or reverting the
+// asciiWords/cjkWords split -- left the entire suite green while silently
+// disabling matching for six of the eleven shipped entries.
+describe('CJK profanity matching (BUG-002)', () => {
+    beforeEach(() => {
+        _resetPatternsForTesting();
+    });
 
-        it('should skip if no webhook or bot token configured', async () => {
-            const env = createMockEnv({
-                MODERATION_WEBHOOK_URL: undefined,
-                OWNER_DISCORD_ID: undefined,
-                DISCORD_BOT_TOKEN: undefined,
-            });
+    afterEach(() => {
+        _resetPatternsForTesting();
+    });
 
-            await notifyModerators(mockAlert, env);
+    it('compiles CJK words into cjkPattern, not the \\b-anchored one', () => {
+        const compiled = compileProfanityPatterns({ zh: ['ai垃圾'] } as never);
 
-            expect(fetchMock).not.toHaveBeenCalled();
-        });
+        // `\b(ai垃圾)\b` would never match, so these words MUST NOT go into
+        // the ASCII pattern.
+        expect(compiled.cjkPattern).not.toBeNull();
+        expect(compiled.combinedPattern).toBeNull();
+        expect(compiled.cjkPattern?.test('这是ai垃圾啊')).toBe(true);
+    });
 
-        it('should send webhook notification if configured', async () => {
-            const env = createMockEnv({
-                MODERATION_WEBHOOK_URL: 'https://discord.com/api/webhooks/123/abc',
-            });
+    it('keeps ASCII words in the \\b-anchored pattern', () => {
+        const compiled = compileProfanityPatterns({ en: ['badword'] } as never);
 
-            fetchMock.mockResolvedValueOnce({ ok: true });
+        expect(compiled.combinedPattern).not.toBeNull();
+        expect(compiled.cjkPattern).toBeNull();
+        // Anchoring is the point: a substring inside a longer word must not hit.
+        expect(compiled.combinedPattern?.test('a badword here')).toBe(true);
+        expect(compiled.combinedPattern?.test('notbadwordish')).toBe(false);
+    });
 
-            await notifyModerators(mockAlert, env);
+    it('splits a mixed list across both patterns', () => {
+        const compiled = compileProfanityPatterns({
+            en: ['badword'],
+            zh: ['ai垃圾'],
+        } as never);
 
-            expect(fetchMock).toHaveBeenCalledOnce();
-            expect(fetchMock).toHaveBeenCalledWith(
-                'https://discord.com/api/webhooks/123/abc',
-                expect.objectContaining({
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                })
-            );
-        });
+        expect(compiled.combinedPattern).not.toBeNull();
+        expect(compiled.cjkPattern).not.toBeNull();
+    });
 
-        it('should send DM to owner if bot token configured', async () => {
-            const env = createMockEnv({
-                OWNER_DISCORD_ID: 'owner-123',
-                DISCORD_BOT_TOKEN: 'bot-token-abc',
-            });
+    // Against the REAL shipped lists, not injected fixtures — the injection
+    // helper cannot reach this path because it nulls cjkPattern.
+    it.each([
+        ['Chinese', 'ai垃圾'],
+        ['Korean', 'ai 쓰레기'],
+        ['Japanese', 'aiのゴミ'],
+    ])('rejects a %s entry from the shipped list', (_label, word) => {
+        const result = checkLocalFilter(word, 'a perfectly ordinary description');
 
-            // Mock creating DM channel
-            fetchMock.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ id: 'dm-channel-id' }),
-            });
+        expect(result?.passed).toBe(false);
+        expect(result?.flaggedField).toBe('name');
+    });
 
-            // Mock sending message
-            fetchMock.mockResolvedValueOnce({ ok: true });
-
-            await notifyModerators(mockAlert, env);
-
-            expect(fetchMock).toHaveBeenCalledTimes(2);
-
-            // First call creates DM channel
-            expect(fetchMock).toHaveBeenNthCalledWith(
-                1,
-                'https://discord.com/api/v10/users/@me/channels',
-                expect.objectContaining({
-                    method: 'POST',
-                    headers: expect.objectContaining({
-                        Authorization: 'Bot bot-token-abc',
-                    }),
-                })
-            );
-
-            // Second call sends message
-            expect(fetchMock).toHaveBeenNthCalledWith(
-                2,
-                'https://discord.com/api/v10/channels/dm-channel-id/messages',
-                expect.objectContaining({
-                    method: 'POST',
-                })
-            );
-        });
-
-        it('should handle failed DM channel creation gracefully', async () => {
-            const env = createMockEnv({
-                OWNER_DISCORD_ID: 'owner-123',
-                DISCORD_BOT_TOKEN: 'bot-token-abc',
-            });
-
-            fetchMock.mockResolvedValueOnce({
-                ok: false,
-                status: 403,
-            });
-
-            // Should not throw
-            await expect(notifyModerators(mockAlert, env)).resolves.not.toThrow();
-        });
-
-        it('should handle webhook failure gracefully', async () => {
-            const env = createMockEnv({
-                MODERATION_WEBHOOK_URL: 'https://discord.com/api/webhooks/123/abc',
-            });
-
-            fetchMock.mockRejectedValueOnce(new Error('Network error'));
-
-            // Should not throw
-            await expect(notifyModerators(mockAlert, env)).resolves.not.toThrow();
-        });
-
-        it('should include all alert fields in embed', async () => {
-            const env = createMockEnv({
-                MODERATION_WEBHOOK_URL: 'https://discord.com/api/webhooks/123/abc',
-            });
-
-            fetchMock.mockResolvedValueOnce({ ok: true });
-
-            await notifyModerators(mockAlert, env);
-
-            const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
-            const embed = callBody.embeds[0];
-
-            expect(embed.title).toContain('Pending Review');
-            expect(embed.fields.some((f: { name: string }) => f.name === 'Name')).toBe(true);
-            expect(embed.fields.some((f: { name: string }) => f.name === 'Submitted by')).toBe(true);
-            expect(embed.fields.some((f: { name: string }) => f.name === 'Flagged Reason')).toBe(true);
-        });
-
-        it('should handle DM send failure gracefully', async () => {
-            const env = createMockEnv({
-                OWNER_DISCORD_ID: 'owner-123',
-                DISCORD_BOT_TOKEN: 'bot-token-abc',
-            });
-
-            // Mock creating DM channel successfully
-            fetchMock.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ id: 'dm-channel-id' }),
-            });
-
-            // Mock sending message fails
-            fetchMock.mockRejectedValueOnce(new Error('Failed to send DM'));
-
-            // Should not throw
-            await expect(notifyModerators(mockAlert, env)).resolves.not.toThrow();
-
-            // Both requests should have been attempted
-            expect(fetchMock).toHaveBeenCalledTimes(2);
-        });
-
-        it('should send both webhook and DM if both configured', async () => {
-            const env = createMockEnv({
-                MODERATION_WEBHOOK_URL: 'https://discord.com/api/webhooks/123/abc',
-                OWNER_DISCORD_ID: 'owner-123',
-                DISCORD_BOT_TOKEN: 'bot-token-abc',
-            });
-
-            // Webhook success
-            fetchMock.mockResolvedValueOnce({ ok: true });
-            // DM channel creation success
-            fetchMock.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ id: 'dm-channel-id' }),
-            });
-            // DM send success
-            fetchMock.mockResolvedValueOnce({ ok: true });
-
-            await notifyModerators(mockAlert, env);
-
-            expect(fetchMock).toHaveBeenCalledTimes(3);
-        });
-
-        it('should truncate long descriptions in embed', async () => {
-            const env = createMockEnv({
-                MODERATION_WEBHOOK_URL: 'https://discord.com/api/webhooks/123/abc',
-            });
-
-            const alertWithLongDesc = {
-                ...mockAlert,
-                description: 'A'.repeat(500), // Very long description
-            };
-
-            fetchMock.mockResolvedValueOnce({ ok: true });
-
-            await notifyModerators(alertWithLongDesc, env);
-
-            const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
-            const embed = callBody.embeds[0];
-            const descField = embed.fields.find((f: { name: string }) => f.name === 'Description');
-
-            // Description should be truncated to 200 chars
-            expect(descField.value.length).toBeLessThanOrEqual(200);
-        });
+    it('still accepts clean CJK text', () => {
+        expect(checkLocalFilter('雪のように白い', 'きれいな色です')?.passed).not.toBe(false);
     });
 });

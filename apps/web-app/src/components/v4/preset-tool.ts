@@ -63,6 +63,17 @@ const CATEGORY_ORDER: readonly PresetCategoryFilter[] = [
 const SORT_ORDER = ['popular', 'recent', 'name'] as const;
 
 /**
+ * How many presets one load asks for.
+ *
+ * BUG-020: this must match what presets-api will actually return, because
+ * tombstone reconciliation treats "absent from the fetched pool" as "deleted
+ * by its author". The server clamps `limit` to 50
+ * (`apps/presets-api/src/handlers/presets.ts:240`), so asking for 100 quietly
+ * produced a 50-row pool that reconciliation then read as 50 deletions.
+ */
+const PRESET_PAGE_LIMIT = 50;
+
+/**
  * V4 Preset Tool — the 8A Gallery.
  */
 @customElement('v4-preset-tool')
@@ -364,8 +375,19 @@ export class PresetTool extends BaseLitComponent {
     this.configController = ConfigController.getInstance();
     this.config = this.configController.getConfig('presets');
     this.configUnsubscribe = this.configController.subscribe('presets', (newConfig) => {
+      // BUG-068: only `sortBy` reaches the API -- loadPresets() sends search +
+      // sort, and `category` is deliberately sliced at RENDER time so the
+      // rail's counts stay computed over the unfiltered pool. Refetching for
+      // the other seven keys (category, feedShots, feedBlend,
+      // feedHideUnbuyable, savedFirst, keepDeleted, displayOptions)
+      // spinner-flashed the grid and re-downloaded up to 100 presets for a
+      // change that never leaves the client. `config` is @state(), so the
+      // assignment alone re-renders.
+      const needsRefetch = newConfig.sortBy !== this.config.sortBy;
       this.config = newConfig;
-      void this.loadPresets();
+      if (needsRefetch) {
+        void this.loadPresets();
+      }
     });
 
     this.isAuthenticated = authService.isAuthenticated();
@@ -467,10 +489,22 @@ export class PresetTool extends BaseLitComponent {
       this.presets = await hybridPresetService.getPresets({
         search: this.searchQuery || undefined,
         sort: this.config.sortBy,
-        limit: 100,
+        limit: PRESET_PAGE_LIMIT,
       });
       this.offline = !hybridPresetService.isAPIAvailable();
-      this.reconcileTombstones();
+
+      // BUG-020: only reconcile against a page that demonstrably covers the
+      // whole collection. presets-api caps `limit` at 50 regardless of what we
+      // ask for, so a full page means "there may be more" — and every saved
+      // community preset beyond it would look deleted and be tombstoned.
+      const apiCount = this.presets.filter((p) => p.isFromAPI).length;
+      if (apiCount < PRESET_PAGE_LIMIT) {
+        this.reconcileTombstones();
+      } else {
+        logger.info(
+          '[v4-preset-tool] Skipping tombstone reconciliation: the page is full, so the pool may be incomplete'
+        );
+      }
     } catch (error) {
       logger.error('[v4-preset-tool] Failed to load presets:', error);
       this.offline = true;

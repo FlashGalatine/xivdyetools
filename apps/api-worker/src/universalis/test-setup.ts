@@ -107,26 +107,6 @@ export function createMockExecutionContext(): ExecutionContext {
   } as unknown as ExecutionContext;
 }
 
-/**
- * Create a mock Env object
- */
-export function createMockEnv(
-  overrides: Partial<{
-    ENVIRONMENT: string;
-    UNIVERSALIS_API_BASE: string;
-    RATE_LIMIT_REQUESTS: string;
-    RATE_LIMIT_WINDOW_SECONDS: string;
-  }> = {}
-) {
-  return {
-    ENVIRONMENT: 'test',
-    UNIVERSALIS_API_BASE: 'https://universalis.app/api/v2',
-    RATE_LIMIT_REQUESTS: '100',
-    RATE_LIMIT_WINDOW_SECONDS: '60',
-    ...overrides,
-  };
-}
-
 // Setup global mocks
 let mockCacheStorage = new MockCacheStorage();
 

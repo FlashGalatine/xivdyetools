@@ -6,32 +6,37 @@
 
 import type { CommandContext } from '../router.js';
 
+/**
+ * BUG-103: this overview advertised THIRTEEN commands while `COMMAND_ROUTES`
+ * has four (`ping`, `help`, `about`, `dye.info`). `!xd random` was listed here
+ * as though it worked and answered `Unknown command "dye.random"` -- the help
+ * was documenting an intended bot rather than this one. It now lists what the
+ * router actually dispatches, and `help.test.ts` fails if the two drift apart
+ * again.
+ */
 const HELP_OVERVIEW = `**XIV Dye Tools — Command Reference**
 
 **Dye Lookup**
   \`!xd info <dye>\`              Look up a dye's color values
-  \`!xd search <query>\`          Search dyes by name
-  \`!xd list [category]\`         List dyes in a category
-  \`!xd random\`                  Show 5 random dyes
 
-**Color Tools**
-  \`!xivdye harmony <dye> [type]\`              Color harmonies
-  \`!xivdye gradient <dye> > <dye> [steps]\`    Color gradients
-  \`!xivdye mixer <dye> > <dye> [mode]\`        Blend two dyes
-  \`!xivdye comparison <dye> > <dye> [> ...]\`  Compare dyes side-by-side
-  \`!xivdye match <color>\`                     Find closest dye to a color
-  \`!xivdye extract\`                           Extract colors from an image
-
-**Accessibility**
-  \`!xivdye a11y <dye> [dye2..4]\`             Colorblind simulation / contrast
-
-**Settings**
-  \`!xivdye prefs\`                             Show your preferences
-  \`!xivdye prefs set <key> <value>\`           Update a preference
+**Utility**
+  \`!xd ping\`                    Check bot connectivity and latency
+  \`!xd about\`                   Bot information and quick start
+  \`!xd help [command]\`          This message, or detail for one command
 
 Tip: Use \`!xd\` as a shortcut for \`!xivdye\`.
      Dye names, ItemIDs (e.g., 5729), and localized names are all accepted.
-     Use \`>\` to separate multiple dyes: \`!xivdye gradient Pure White > Jet Black\``;
+
+More commands (harmony, gradient, mixer, comparison, match, extract, a11y,
+search, list, random, prefs) exist in the Discord bot; this Revolt bot does not
+serve them yet.`;
+
+/**
+ * Every topic `!xd help <topic>` answers. Each one MUST resolve to a route in
+ * the router -- `help.test.ts` asserts exactly that, which is the gate BUG-103
+ * did not have.
+ */
+export const HELP_TOPICS = ['info', 'ping', 'help', 'about'] as const;
 
 const COMMAND_HELP: Record<string, string> = {
   info: `**!xd info <dye>**
@@ -42,47 +47,6 @@ Examples:
   \`!xd info Snow White\`
   \`!xd info 5729\`
   \`!xd info スノウホワイト\``,
-
-  harmony: `**!xivdye harmony <dye> [type] [color_space]**
-Generate a color harmony wheel.
-
-Types: triadic, complementary, analogous, split-complementary, tetradic, square, monochromatic
-
-Examples:
-  \`!xd harmony Pure White\`
-  \`!xd harmony Pure White complementary\`
-  \`!xd harmony Pure White triadic oklch\``,
-
-  match: `**!xivdye match <color>**
-Find the closest FFXIV dye to any color.
-Accepts hex codes, dye names, and CSS color names.
-
-Examples:
-  \`!xd match #FF5733\`
-  \`!xd match coral\``,
-
-  gradient: `**!xivdye gradient <dye1> > <dye2> [steps] [mode]**
-Generate a color gradient between two dyes.
-
-Examples:
-  \`!xivdye gradient Pure White > Jet Black\`
-  \`!xivdye gradient Pure White > Jet Black 5 oklch\``,
-
-  mixer: `**!xivdye mixer <dye1> > <dye2> [mode]**
-Blend two dye colors.
-
-Modes: rgb, lab, oklab, ryb, hsl, spectral
-
-Examples:
-  \`!xivdye mixer Snow White > Jet Black\`
-  \`!xivdye mixer Snow White > Jet Black spectral\``,
-
-  comparison: `**!xivdye comparison <dye1> > <dye2> [> dye3 ...]]**
-Compare dyes side-by-side.
-
-Examples:
-  \`!xivdye comparison Snow White > Pure White\`
-  \`!xivdye comparison Snow White > Pure White > Pearl White\``,
 
   ping: `**!xd ping**
 Check bot connectivity and response latency.`,
