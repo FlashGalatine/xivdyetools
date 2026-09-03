@@ -18,26 +18,20 @@
 import { test, expect } from './fixtures/coverage';
 import type { Page } from './fixtures/coverage';
 import { waitForAppReady, seedStartupStorage, gotoTool } from './fixtures/navigation';
+import type { CommunityPreset, PresetListResponse } from '@xivdyetools/types';
 
 // --- fixture payloads -------------------------------------------------------
 
-interface StubPreset {
-  id: string;
-  name: string;
-  description: string;
-  category_id: string;
-  secondary_categories: string[];
-  dyes: number[];
-  tags: string[];
-  author_discord_id: string | null;
-  author_name: string | null;
-  vote_count: number;
-  status: string;
-  is_curated: boolean;
-  created_at: string;
-  updated_at: string;
-  preview_image_status: 'none' | 'pending' | 'approved';
-}
+/*
+ * Typed as the real `CommunityPreset` rather than a hand-rolled shape. The
+ * first version of this file declared its own interface, which let the fixture
+ * drift from the contract in three ways at once — `category_id: 'seasonal'`
+ * (not a PresetCategory; the real member is 'seasons') and a list envelope
+ * missing the required `has_more`. A stub production cannot produce is worth
+ * less than no stub, because it proves the app tolerates something it will
+ * never receive.
+ */
+type StubPreset = CommunityPreset;
 
 function preset(over: Partial<StubPreset> & { id: string; name: string }): StubPreset {
   return {
@@ -73,7 +67,7 @@ const PRESETS: StubPreset[] = [
     id: 'aaaaaaaa-0000-4000-8000-000000000002',
     name: 'Sunbleached Linen',
     description: 'Warm neutrals for a summer fit.',
-    category_id: 'seasonal',
+    category_id: 'seasons',
     dyes: [5, 6, 7, 8],
     author_name: 'Sol',
     vote_count: 17,
@@ -101,17 +95,7 @@ async function stubPresetsApi(page: Page, presets: StubPreset[] = PRESETS): Prom
     route.fulfill({ status: 200, contentType: 'application/json', body: '{"status":"ok"}' })
   );
 
-  await page.route('**/api/v1/presets/featured', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ presets: presets.slice(0, 2) }),
-    })
-  );
-
-  // Single preset by id — must be registered before the list pattern, since
-  // Playwright matches routes most-recently-registered first and the list
-  // glob would otherwise swallow `/presets/<id>`.
+  // Single preset by id.
   await page.route('**/api/v1/presets/*', (route) => {
     const id = new URL(route.request().url()).pathname.split('/').pop();
     const found = presets.find((p) => p.id === id);
@@ -132,15 +116,42 @@ async function stubPresetsApi(page: Page, presets: StubPreset[] = PRESETS): Prom
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ presets: list, total: list.length, page: 1, limit: 50 }),
+      body: JSON.stringify({
+        presets: list,
+        total: list.length,
+        page: 1,
+        limit: 50,
+        has_more: false,
+      } satisfies PresetListResponse),
     });
   });
+
+  // Registered AFTER `**/api/v1/presets/*` on purpose: Playwright stores
+  // handlers newest-first, so the LAST registration wins. The first version of
+  // this file had these two the other way round with a comment asserting the
+  // opposite, and `/featured` was answered by the by-id route as
+  // `404 {"error":"not found"}` — getFeaturedPresets() threw on every run and
+  // hybrid-preset-service silently fell back to the curated set, so the
+  // featured path was only ever exercised through its error branch.
+  await page.route('**/api/v1/presets/featured', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ presets: presets.slice(0, 2) }),
+    })
+  );
 
   await page.route('**/api/v1/presets', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ presets, total: presets.length, page: 1, limit: 50 }),
+      body: JSON.stringify({
+        presets,
+        total: presets.length,
+        page: 1,
+        limit: 50,
+        has_more: false,
+      } satisfies PresetListResponse),
     })
   );
 }
@@ -202,30 +213,62 @@ test.describe('Preset gallery against a live-shaped API', () => {
     // The `.band-seg` colour strip is only drawn for a card that has a preview
     // shot, so the unconditional proof that `dyes[]` survived the
     // fetch -> unify -> merge -> render path is the dye-count line.
+    // The count sits in `.byline` as "<author> · N dyes · <age>". Asserted as
+    // the whole phrase rather than `toContainText('3')` — a bare digit matches
+    // a vote count, a date or a tag anywhere on the card.
     const first = cards(page).filter({ hasText: 'Midnight Ceruleum' }).first();
     await expect(first).toBeVisible({ timeout: 15000 });
-    await expect(first).toContainText('3');
+    await expect(first.locator('.byline')).toContainText('3 dyes');
 
     // ...and the four-dye preset says four, so the number is read off the
     // payload rather than being a fixed bit of card furniture.
     const second = cards(page).filter({ hasText: 'Sunbleached Linen' }).first();
-    await expect(second).toContainText('4');
+    await expect(second.locator('.byline')).toContainText('4 dyes');
   });
 
-  test('survives an API failure without breaking the tool', async ({ page }) => {
-    // The whole reason these services are excluded from unit coverage is the
-    // network; failing closed is the behaviour that matters most.
+  test('falls back to the bundled palettes when the API 500s', async ({ page }) => {
+    // The earlier shape of this test asserted `toHaveCount(0)` plus
+    // `document.body.innerText.length > 0` — both true at t=0 and the second
+    // unconditionally true on any page, so it and the empty-gallery test below
+    // could have their stubs swapped and still pass. What actually
+    // distinguishes a 500 is that the community presets vanish while the
+    // bundled curated ones stay: `hybrid-preset-service` catches the throw and
+    // returns the local set.
     await page.route('**/api/v1/presets**', (route) =>
       route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' })
     );
 
     await openGallery(page);
+    await page
+      .getByRole('button', { name: /^Official\b/i })
+      .first()
+      .click();
+
+    // Bundled curated palettes are local, so the Official tab still fills.
+    await expect(cards(page).first()).toBeVisible({ timeout: 20000 });
+
+    // ...and nothing the (failed) API would have supplied is on screen.
+    for (const p of PRESETS) {
+      await expect(cards(page).filter({ hasText: p.name })).toHaveCount(0);
+    }
+  });
+
+  test('goes properly offline when the health check fails', async ({ page }) => {
+    // `isAPIAvailable()` gates every community fetch on /health. The beforeEach
+    // stub answers it 200, so a failing *presets* call alone never reaches the
+    // offline path — hybrid-preset-service swallows that throw. Failing health
+    // is what actually exercises it.
+    await page.route('**/health', (route) => route.fulfill({ status: 503, body: '' }));
+    await page.route('**/api/v1/presets**', (route) => route.abort('failed'));
+
+    await openGallery(page);
     await page.waitForTimeout(3000);
 
-    // No cards, no crash, and the shell is still interactive.
-    await expect(cards(page)).toHaveCount(0);
+    // No community card can be present, and the shell survives.
+    for (const p of PRESETS.filter((x) => !x.is_curated)) {
+      await expect(cards(page).filter({ hasText: p.name })).toHaveCount(0);
+    }
     await expect(page.locator('#main-content')).toBeAttached();
-    expect(await page.evaluate(() => document.body.innerText.length)).toBeGreaterThan(0);
   });
 
   test('serves an empty gallery without erroring', async ({ page }) => {
@@ -233,15 +276,21 @@ test.describe('Preset gallery against a live-shaped API', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ presets: [], total: 0, page: 1, limit: 50 }),
+        body: JSON.stringify({ presets: [], total: 0, page: 1, limit: 50, has_more: false }),
       })
     );
 
     await openGallery(page);
     await page.waitForTimeout(2500);
 
-    await expect(cards(page)).toHaveCount(0);
-    await expect(page.locator('#main-content')).toBeAttached();
+    // A 200 with no presets is not the same as a failure: the tool must render
+    // its gallery chrome (the tab row) rather than an error state.
+    await expect(page.getByRole('button', { name: /^Community\b/i }).first()).toBeVisible({
+      timeout: 15000,
+    });
+    for (const p of PRESETS) {
+      await expect(cards(page).filter({ hasText: p.name })).toHaveCount(0);
+    }
   });
 });
 

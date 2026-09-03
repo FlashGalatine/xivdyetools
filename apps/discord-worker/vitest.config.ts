@@ -20,6 +20,9 @@ export default defineConfig({
       },
     },
     coverage: {
+      // See web-app's config: enabled here so `turbo run test` (and CI)
+      // actually enforce the thresholds rather than just recording them.
+      enabled: true,
       provider: 'v8',
       reporter: ['text', 'text-summary', 'html', 'json', 'json-summary'],
       include: ['src/**/*.ts'],
@@ -67,10 +70,15 @@ export default defineConfig({
       // caught a regression. Re-set just under it. Branches now clears 80 —
       // `src/index.ts` and `handlers/commands/preset.ts` still hold most of
       // what is left.
+      // `functions` sits at 88 rather than 89 deliberately: the measured
+      // figure is 89.12%, and with 377 functions total, 89 leaves under ONE
+      // uncovered function of slack — the next unrelated PR that adds a helper
+      // would red CI on a threshold it never touched. A whole-point cushion
+      // ratchets just as well.
       thresholds: {
         statements: 87,
         branches: 80,
-        functions: 89,
+        functions: 88,
         lines: 88,
       },
     },

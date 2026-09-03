@@ -7,6 +7,12 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/__tests__/setup.ts'],
     coverage: {
+      // Enabled unconditionally so a plain `vitest run` — which is what
+      // `turbo run test` and therefore CI actually execute — enforces the
+      // thresholds below. Without this the ratchet was decorative: CI never
+      // passed --coverage, so neither the numbers here nor discord-worker's
+      // gated anything. Same shape oauth already uses.
+      enabled: true,
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov', 'json-summary'],
       reportsDirectory: './coverage',

@@ -9,6 +9,10 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+/** The one dye the stubbed locale database knows a translated name for. */
+const LOCALIZED_ITEM_ID = 52254;
+const LOCALIZED_DYE_NAME = 'ダラガブレッド';
+
 /**
  * `t()` returns the key so a locale-routed string is provable by its key
  * (`common.custom`); `tInterpolate` echoes the interpolated custom-colour
@@ -19,8 +23,17 @@ const languageServiceMock = {
   tInterpolate: (key: string, params: Record<string, string | number>) =>
     key === 'common.customColorName' ? `Custom (${params.hex})` : key,
   getCurrentLocale: () => 'en',
-  /** No database entry for a synthetic negative id — the card falls back to `dye.name`. */
-  getDyeName: () => undefined,
+  /*
+   * Argument-sensitive on purpose. A constant `() => undefined` ignores the one
+   * thing that can be wrong here — WHICH id the card looks the name up by — so
+   * changing `getDyeName(dye.id)` to `getDyeName(dye.stainID)` (the tempting
+   * edit under stainID-first) left all 46 tests green while rendering English
+   * names in every non-English locale. Returns `string | null`, matching
+   * LocalizationService; an unknown id (a synthetic custom-dye one) is null and
+   * the card falls back to `dye.name`.
+   */
+  getDyeName: (itemID: number): string | null =>
+    itemID === LOCALIZED_ITEM_ID ? LOCALIZED_DYE_NAME : null,
   getAcquisition: (acquisition: string) => `ACQ:${acquisition}`,
   getCategory: (category: string) => `CAT:${category}`,
   /** Reached through `@shared/format`'s formatGil/formatNumber. */
@@ -319,9 +332,12 @@ describe('ResultCard', () => {
    * than stubs on ColorService.
    */
   const DYE = {
-    id: 5,
+    // `Dye.id` is the FFXIV item ID, not a sequential index — packages/types
+    // documents it as "an FFXIV item ID such as 5729 or 13115". It must equal
+    // `itemID`, and the earlier `id: 5` broke that invariant silently.
+    id: LOCALIZED_ITEM_ID,
     stainID: 42,
-    itemID: 52254,
+    itemID: LOCALIZED_ITEM_ID,
     name: 'Dalamud Red',
     hex: '#8b1a1a',
     category: 'red',
@@ -414,6 +430,29 @@ describe('ResultCard', () => {
         expect(sr(card).textContent).toContain('resultCard.noData');
         expect(sr(card).querySelector('.matrix')).toBeNull();
         expect(sr(card).querySelector('article')).toBeNull();
+      });
+    });
+
+    describe('the localized dye name', () => {
+      it('looks the name up by itemID, and prints it over the English one', async () => {
+        const card = await mountCard();
+
+        // Switching result-card to `getDyeName(dye.stainID)` reds this: 42 is
+        // not in the stub database, so the card would fall back to 'Dalamud Red'.
+        expect(bodyText(card)).toContain(LOCALIZED_DYE_NAME);
+        expect(bodyText(card)).not.toContain('Dalamud Red');
+      });
+
+      it('falls back to the English name when the locale has no entry', async () => {
+        const card = await mountCard({
+          data: {
+            dye: { ...DYE, id: 999999, itemID: 999999 },
+            originalColor: '#ff0000',
+            matchedColor: '#8b1a1a',
+          },
+        });
+
+        expect(bodyText(card)).toContain('Dalamud Red');
       });
     });
 
@@ -607,6 +646,7 @@ describe('ResultCard', () => {
     describe('verdict', () => {
       it('prints ΔE2000 to two decimals', async () => {
         const card = await mountCard({
+          showDeltaE: true,
           data: { dye: DYE, originalColor: '#ff0000', matchedColor: '#8b1a1a', deltaE: 3.14159 },
         });
 
@@ -618,6 +658,7 @@ describe('ResultCard', () => {
         vi.mocked(ColorService.getDistanceForMethod).mockReturnValue(9.5);
 
         const card = await mountCard({
+          showDeltaE: true,
           data: {
             dye: DYE,
             originalColor: '#ff0000',
@@ -644,6 +685,7 @@ describe('ResultCard', () => {
         vi.mocked(ThemeService.isDarkMode).mockReturnValue(dark);
 
         const card = await mountCard({
+          showDeltaE: true,
           data: { dye: DYE, originalColor: '#ff0000', matchedColor: '#8b1a1a', deltaE: 1 },
         });
 
@@ -655,6 +697,7 @@ describe('ResultCard', () => {
         vi.mocked(core.classifyBandTier).mockReturnValue(99 as unknown as never);
 
         const card = await mountCard({
+          showDeltaE: true,
           data: { dye: DYE, originalColor: '#ff0000', matchedColor: '#8b1a1a', deltaE: 40 },
         });
 
@@ -664,8 +707,47 @@ describe('ResultCard', () => {
         );
       });
 
+      it('hides the ΔE readout when the display option is off', async () => {
+        // `showDeltaE` used to be declared and never read: the verdict gated on
+        // `deltaE2000 !== undefined` alone. config-sidebar binds this property
+        // in nine places as the user's "Show ΔE" switch, and accessibility,
+        // budget and comparison each set it false expecting the row to go —
+        // all of which silently did nothing. Deleting `this.showDeltaE &&`
+        // from result-card's render reds this test and nothing else.
+        const card = await mountCard({
+          showDeltaE: false,
+          data: { dye: DYE, originalColor: '#ff0000', matchedColor: '#8b1a1a', deltaE: 3.14 },
+        });
+
+        expect(sr(card).querySelector('.de-num')).toBeNull();
+        expect(bodyText(card)).not.toContain('ΔE2000');
+      });
+
+      it('drops the whole verdict strip when ΔE and stainID are both off', async () => {
+        const card = await mountCard({
+          showDeltaE: false,
+          showStain: false,
+          data: { dye: DYE, originalColor: '#ff0000', matchedColor: '#8b1a1a', deltaE: 3.14 },
+        });
+
+        expect(sr(card).querySelector('.verdict')).toBeNull();
+      });
+
+      it('keeps the verdict strip for the stainID alone', async () => {
+        const card = await mountCard({
+          showDeltaE: false,
+          showStain: true,
+          data: { dye: DYE, originalColor: '#ff0000', matchedColor: '#8b1a1a', deltaE: 3.14 },
+        });
+
+        expect(sr(card).querySelector('.verdict')).not.toBeNull();
+        expect(sr(card).querySelector('.de-num')).toBeNull();
+        expect(bodyText(card)).toContain('42');
+      });
+
       it('shows the hue deviance to one decimal, in degrees', async () => {
         const card = await mountCard({
+          showDeltaE: true,
           showHue: true,
           data: {
             dye: DYE,

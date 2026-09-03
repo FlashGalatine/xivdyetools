@@ -8,6 +8,33 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { CaptureResult, CameraDevice } from '@services/camera-service';
+
+/**
+ * A real-shaped capture. `CaptureResult` is { image, dataUrl, width, height }
+ * and image-upload-display.ts (the only consumer) reads `.image` and
+ * `.dataUrl` — an earlier `{ imageData: 'DATA' }` stub modelled a key that
+ * exists on no type, so the modal could have renamed what it forwards with
+ * every test still green.
+ */
+function captureResult(over: Partial<CaptureResult> = {}): CaptureResult {
+  return {
+    image: document.createElement('img'),
+    dataUrl: 'data:image/png;base64,AAAA',
+    width: 1280,
+    height: 720,
+    ...over,
+  };
+}
+
+/** `startStream` resolves a MediaStream; jsdom has none, so this stands in. */
+const fakeStream = (): MediaStream => ({ id: 'stream' }) as unknown as MediaStream;
+
+const camera = (over: Partial<CameraDevice> & { deviceId: string }): CameraDevice => ({
+  label: '',
+  groupId: 'group-1',
+  ...over,
+});
 
 const mockShow = vi.fn().mockReturnValue('modal-id-camera');
 const mockClose = vi.fn();
@@ -23,9 +50,9 @@ const mockLoggerWarn = vi.fn();
 const mockCameraService = {
   hasCameraAvailable: vi.fn().mockReturnValue(true),
   getAvailableCameras: vi.fn().mockReturnValue([]),
-  startStream: vi.fn().mockResolvedValue(null),
+  startStream: vi.fn(),
   stopStream: vi.fn(),
-  captureFrame: vi.fn().mockResolvedValue({ imageData: null }),
+  captureFrame: vi.fn(),
   // A fresh element per call: the modal attaches listeners to it, and a shared
   // one would accumulate them across tests.
   createVideoElement: vi.fn(() => makeVideo()),
@@ -90,8 +117,11 @@ describe('showCameraPreviewModal', () => {
     // per-test `mockReturnValue` below has to be put back or it leaks forward.
     mockCameraService.hasCameraAvailable.mockReturnValue(true);
     mockCameraService.getAvailableCameras.mockReturnValue([]);
-    mockCameraService.startStream.mockResolvedValue(null);
-    mockCameraService.captureFrame.mockResolvedValue({ imageData: null });
+    // The real signature is `Promise<MediaStream>` — it rejects rather than
+    // resolving null, so a null default would exercise
+    // attachStreamToVideo(video, null) as if it were a valid state.
+    mockCameraService.startStream.mockResolvedValue(fakeStream());
+    mockCameraService.captureFrame.mockResolvedValue(captureResult());
     mockCameraService.getTrackSettings.mockReturnValue(null);
     mockCameraService.createVideoElement.mockImplementation(() => makeVideo());
     mockShow.mockReturnValue('modal-id-camera');
@@ -248,7 +278,9 @@ describe('showCameraPreviewModal', () => {
 
   describe('camera picker', () => {
     it('is absent with a single camera', async () => {
-      mockCameraService.getAvailableCameras.mockReturnValue([{ deviceId: 'a', label: 'Front' }]);
+      mockCameraService.getAvailableCameras.mockReturnValue([
+        camera({ deviceId: 'a', label: 'Front' }),
+      ]);
 
       await open();
 
@@ -257,8 +289,8 @@ describe('showCameraPreviewModal', () => {
 
     it('lists every camera when there is more than one', async () => {
       mockCameraService.getAvailableCameras.mockReturnValue([
-        { deviceId: 'a', label: 'Front' },
-        { deviceId: 'b', label: 'Rear' },
+        camera({ deviceId: 'a', label: 'Front' }),
+        camera({ deviceId: 'b', label: 'Rear' }),
       ]);
 
       await open();
@@ -270,8 +302,8 @@ describe('showCameraPreviewModal', () => {
 
     it('numbers a camera the browser refuses to name', async () => {
       mockCameraService.getAvailableCameras.mockReturnValue([
-        { deviceId: 'a', label: '' },
-        { deviceId: 'b', label: '' },
+        camera({ deviceId: 'a' }),
+        camera({ deviceId: 'b' }),
       ]);
 
       await open();
@@ -285,8 +317,8 @@ describe('showCameraPreviewModal', () => {
 
     it('restarts the stream on the newly picked device', async () => {
       mockCameraService.getAvailableCameras.mockReturnValue([
-        { deviceId: 'a', label: 'Front' },
-        { deviceId: 'b', label: 'Rear' },
+        camera({ deviceId: 'a', label: 'Front' }),
+        camera({ deviceId: 'b', label: 'Rear' }),
       ]);
       await open();
       const selector = q<HTMLSelectElement>('#camera-selector');
@@ -309,7 +341,7 @@ describe('showCameraPreviewModal', () => {
   describe('starting the stream', () => {
     beforeEach(() => {
       vi.useFakeTimers();
-      mockCameraService.startStream.mockResolvedValue({ id: 'stream' });
+      mockCameraService.startStream.mockResolvedValue(fakeStream());
     });
 
     afterEach(() => {
@@ -334,9 +366,10 @@ describe('showCameraPreviewModal', () => {
     it('attaches the stream to the video element', async () => {
       await openAndStart();
 
-      expect(mockCameraService.attachStreamToVideo).toHaveBeenCalledWith(video(), {
-        id: 'stream',
-      });
+      expect(mockCameraService.attachStreamToVideo).toHaveBeenCalledWith(
+        video(),
+        expect.objectContaining({ id: 'stream' })
+      );
     });
 
     it('plays the feed once the metadata lands', async () => {
@@ -387,19 +420,24 @@ describe('showCameraPreviewModal', () => {
     });
 
     it('releases a stream that arrives after the modal was closed', async () => {
-      let resolveStream: (v: unknown) => void = () => {};
+      let resolveStream: (v: MediaStream) => void = () => {};
       mockCameraService.startStream.mockReturnValue(
-        new Promise((resolve) => {
+        new Promise<MediaStream>((resolve) => {
           resolveStream = resolve;
         })
       );
       await open();
       await vi.advanceTimersByTimeAsync(100);
 
-      // User closes while permission is still being negotiated.
+      // User closes while permission is still being negotiated. onClose calls
+      // stopStream unconditionally, so waiting on "was it called" would be
+      // satisfied before the late stream even arrives — clear the spy first and
+      // require a SECOND call, which only the `if (!isModalOpen)` guard makes.
       (mockShow.mock.calls.at(-1)![0].onClose as () => void)();
-      resolveStream({ id: 'late' });
-      await vi.waitFor(() => expect(mockCameraService.stopStream).toHaveBeenCalled());
+      mockCameraService.stopStream.mockClear();
+
+      resolveStream(fakeStream());
+      await vi.waitFor(() => expect(mockCameraService.stopStream).toHaveBeenCalledTimes(1));
 
       expect(mockCameraService.attachStreamToVideo).not.toHaveBeenCalled();
     });
@@ -426,7 +464,7 @@ describe('showCameraPreviewModal', () => {
      * armed state, reached the same way the real flow reaches it.
      */
     async function openReady(onCapture = vi.fn()): Promise<void> {
-      mockCameraService.startStream.mockResolvedValue({ id: 'stream' });
+      mockCameraService.startStream.mockResolvedValue(fakeStream());
       vi.useFakeTimers();
       await open(onCapture);
       await vi.advanceTimersByTimeAsync(100);
@@ -440,7 +478,7 @@ describe('showCameraPreviewModal', () => {
     });
 
     it('hands the frame to the caller, then tears the camera down', async () => {
-      const frame = { imageData: 'DATA' };
+      const frame = captureResult({ dataUrl: 'data:image/png;base64,CAPTURED' });
       mockCameraService.captureFrame.mockResolvedValue(frame);
       const onCapture = vi.fn();
       await openReady(onCapture);
@@ -451,6 +489,11 @@ describe('showCameraPreviewModal', () => {
 
       expect(mockCameraService.captureFrame).toHaveBeenCalledWith(video());
       expect(onCapture).toHaveBeenCalledWith(frame);
+      // The consumer reads these two, so pin them by name rather than by
+      // object identity alone.
+      const forwarded = onCapture.mock.calls[0][0] as CaptureResult;
+      expect(forwarded.dataUrl).toBe('data:image/png;base64,CAPTURED');
+      expect(forwarded.image).toBeInstanceOf(HTMLImageElement);
       expect(mockCameraService.stopStream).toHaveBeenCalled();
       expect(mockDismissTop).toHaveBeenCalled();
       expect(mockToastSuccess).toHaveBeenCalledWith('camera.captured');
@@ -467,7 +510,11 @@ describe('showCameraPreviewModal', () => {
       expect(mockToastError).toHaveBeenCalledWith('camera.captureFailed');
       expect(onCapture).not.toHaveBeenCalled();
       expect(captureBtn().disabled).toBe(false);
-      expect(captureBtn().textContent).toContain('camera.capture');
+      // Exact, not `toContain`: the in-flight label is 'camera.capturing', and
+      // 'camera.capturing'.includes('camera.capture') is true — so a substring
+      // check passes with the restore deleted and the button stuck on
+      // "Capturing…" forever after a failed capture.
+      expect(captureBtn().textContent!.trim()).toBe('camera.capture');
       // A failed capture must not close the modal — the user gets another go.
       expect(mockDismissTop).not.toHaveBeenCalled();
     });
@@ -484,13 +531,25 @@ describe('showCameraPreviewModal', () => {
       expect(onCapture).not.toHaveBeenCalled();
     });
 
-    it('stops responding to navigation once cancelled', async () => {
+    it('releases the route subscription on cancel (BUG-080 cleanup)', async () => {
+      await open();
+
+      cancelBtn().click();
+
+      // The subscription itself must go. Asserting only that a later route
+      // change does not dismiss proves nothing: the listener is
+      // `() => { if (isModalOpen) ModalService.dismissTop(); }` and cancel
+      // already sets isModalOpen = false, so deleting the whole unsubscribe
+      // block from cleanup() leaks the subscription for the life of the page
+      // with that assertion still green.
+      expect(mockRouteUnsubscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores a route change that arrives after cancel', async () => {
       await open();
       cancelBtn().click();
       mockDismissTop.mockClear();
 
-      // cleanup() released the route subscription, so a later route change is
-      // no longer this modal's business.
       const onRouteChange = mockRouteSubscribe.mock.calls.at(-1)![0] as () => void;
       onRouteChange();
 

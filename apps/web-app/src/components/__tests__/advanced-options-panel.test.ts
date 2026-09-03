@@ -384,6 +384,16 @@ describe('showAdvancedOptionsPanel', () => {
       });
     }
 
+    /*
+     * Not asserted here: the handler's `importInput.value = ''` reset (which
+     * exists so re-picking the SAME file re-fires `change`). These tests attach
+     * files with Object.defineProperty(input, 'files', …), which never
+     * populates a jsdom file input's `value`, so `expect(input.value).toBe('')`
+     * is true before the handler runs and stays true with the reset deleted —
+     * it reads as coverage of that line while pinning nothing. Reaching it
+     * needs a real file picker, i.e. E2E.
+     */
+
     /** The change handler is async and fire-and-forget; drain the microtasks. */
     async function fireChange(input: HTMLInputElement): Promise<void> {
       input.dispatchEvent(new Event('change'));
@@ -434,7 +444,6 @@ describe('showAdvancedOptionsPanel', () => {
       expect(mockImportConfigs).toHaveBeenCalledWith({ mixer: { steps: 7 } });
       expect(emitted).toHaveBeenCalledTimes(1);
       expect(alertSpy).not.toHaveBeenCalled();
-      expect(input.value).toBe('');
     });
 
     it.each([
@@ -453,7 +462,6 @@ describe('showAdvancedOptionsPanel', () => {
       expect(mockImportConfigs).not.toHaveBeenCalled();
       expect(emitted).not.toHaveBeenCalled();
       expect(alertSpy).toHaveBeenCalledWith('config.importError');
-      expect(input.value).toBe('');
     });
 
     it('does nothing when the picker is dismissed with no file', () => {

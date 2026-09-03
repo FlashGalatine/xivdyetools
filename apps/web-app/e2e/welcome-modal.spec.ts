@@ -140,7 +140,7 @@ test.describe('Welcome modal — BUG-077: every close counts as seen', () => {
 });
 
 test.describe('Welcome modal — where it sends you', () => {
-  test('Get started lands on the default tool', async ({ page }) => {
+  test('Get started leaves you on a real tool route, not stranded', async ({ page }) => {
     await firstVisit(page);
 
     await page
@@ -149,12 +149,17 @@ test.describe('Welcome modal — where it sends you', () => {
       .click();
     await expect(dialog(page)).toHaveCount(0);
 
-    // RouterService.getDefaultTool() — asserted as "a real tool route", not a
-    // hardcoded name, since the default is allowed to move.
+    // Honest about what this does and does not prove. `RouterService` already
+    // `replaceRoute`s to the default tool during boot, so this passes whether
+    // or not `onConfirm` calls `navigateTo` — it is NOT a guard on that call,
+    // and the title no longer claims to be one. What it does pin is that
+    // dismissing the modal leaves the app on a tool route rather than the bare
+    // `/`: the pattern used to end `)?$`, which made the whole alternation
+    // optional and matched `/` too.
     await expect
       .poll(() => page.evaluate(() => location.pathname))
       .toMatch(
-        /^\/(harmony|extractor|accessibility|comparison|gradient|mixer|presets|budget|swatch)?$/
+        /^\/(harmony|extractor|accessibility|comparison|gradient|mixer|presets|budget|swatch)$/
       );
   });
 

@@ -183,7 +183,11 @@ describe('ShareButton', () => {
   it('does nothing at all when disabled', async () => {
     await mount({ disabled: true });
 
-    button().click();
+    // `HTMLElement.click()` returns early for a disabled form control in jsdom,
+    // so it would prove nothing about the guard — the event has to be
+    // dispatched, which DOES reach a listener on a disabled element. Removing
+    // `this.disabled ||` from handleShare's guard reds this test.
+    button().dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await el.updateComplete;
 
     expect(mockValidate).not.toHaveBeenCalled();
@@ -309,15 +313,24 @@ describe('ShareButton', () => {
 
   it('cancels the pending copied-state timer on unmount', async () => {
     vi.useFakeTimers();
+    const setSpy = vi.spyOn(globalThis, 'setTimeout');
     const clear = vi.spyOn(globalThis, 'clearTimeout');
     await mount();
     button().click();
     await vi.waitFor(() => expect(mockShareAndCopy).toHaveBeenCalled());
 
+    // The copied-state timer is the 2000ms one; grab the id the component got.
+    const timerId = setSpy.mock.results.at(-1)!.value as unknown;
+
+    // Everything above also calls clearTimeout — vi.waitFor tears down its own
+    // interval under fake timers — so the spy has to be reset here or the
+    // assertion passes with the component's guard deleted.
+    clear.mockClear();
     el.remove();
 
-    expect(clear).toHaveBeenCalled();
+    expect(clear).toHaveBeenCalledWith(timerId);
     clear.mockRestore();
+    setSpy.mockRestore();
   });
 
   it('survives an unmount with no share ever attempted', async () => {

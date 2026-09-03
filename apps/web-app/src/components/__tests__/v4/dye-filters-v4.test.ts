@@ -382,7 +382,28 @@ describe('DyeFiltersV4', () => {
 
 // A compile-time check that the matrix above stays exhaustive: adding a key to
 // DyeFiltersConfig without adding it to ALL_FILTERS fails type-check here.
-const _exhaustive: Record<keyof DyeFiltersConfig, true> = Object.fromEntries(
-  ALL_FILTERS.map((f) => [f, true])
-) as Record<keyof DyeFiltersConfig, true>;
-void _exhaustive;
+//
+// Written as an object literal on purpose. The earlier shape built it with
+// `Object.fromEntries(...) as Record<keyof DyeFiltersConfig, true>`, and that
+// cast satisfied the annotation unconditionally — a tenth key could be added
+// to the config and tsc stayed green, while `toggleFor()` resolves toggles by
+// ALL_FILTERS.indexOf, so a new filter rendered anywhere but last would have
+// shifted every index and silently driven the wrong control.
+const _exhaustive: Record<keyof DyeFiltersConfig, true> = {
+  excludeMetallic: true,
+  excludePastel: true,
+  excludeDark: true,
+  excludeCosmic: true,
+  excludeIshgardian: true,
+  excludeExpensive: true,
+  excludeCoffers: true,
+  excludeVendorDyes: true,
+  excludeCraftDyes: true,
+};
+// ...and the runtime list must agree with it, so the two cannot drift apart.
+if (
+  ALL_FILTERS.length !== Object.keys(_exhaustive).length ||
+  ALL_FILTERS.some((f) => !(f in _exhaustive))
+) {
+  throw new Error('ALL_FILTERS is out of sync with DyeFiltersConfig');
+}
