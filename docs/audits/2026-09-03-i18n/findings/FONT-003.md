@@ -21,4 +21,17 @@
 - Extend `font-contract.test.ts` to fail on any `font-family:` in `src/**` that names a bundled family without going through a token — one assertion closes the class permanently.
 
 ## Status
-FIXED 2026-09-03 0e61574d — 75 declarations across 22 files moved to `var(--font-*)`; `font-contract.test.ts` scans the whole tree and names offenders
+FIXED 2026-09-03 `0e61574d` + `1307d783` — 95 declarations across 26 files now use
+`var(--font-*)`.
+
+**The first pass was about half of it.** It matched `font-family: 'X'` inside CSS templates —
+one of *three* ways these families reach the DOM. It missed
+`el.style.fontFamily = "'Fragment Mono', monospace"` (a DOM property, no `font-family:` text at
+all) and `const MONO = "'Fragment Mono', …"` interpolated into a style string: 20 more
+declarations across 8 components, `swatch-tool.ts` among them — a file listed in the first
+commit's "22 fixed" while keeping its own hardcodes. The new tree-wide gate matched the same
+single syntax, so it reported clean over all of them.
+
+The gate now matches the family **name** wherever it is quoted, in single or double quotes,
+and a second assertion covers the stylesheets. A guard that knows one spelling guards one
+spelling.

@@ -27,6 +27,14 @@ by this audit.
 5. **I18N-005 (P2)** — web-app: presets-api's specific error codes are flattened to a generic `submitFailed`, so a banned user gets a localized headline that says the wrong thing ("submit failed") over an English explanation of the real reason.
 6. **I18N-009 (P3, needs a decision)** — moderation-worker maps all six locales to the English table while maintaining a full locale ladder and an unused `preset.status.*` key set. Staff-facing, so English is defensible — but the apparatus should either become real or be deleted.
 
+## Reviewed before merge
+
+An `opus` reviewer read the whole diff and found four real problems that 61/61 green gates did
+not — including a `?lang=` I double-appended, a font sweep that was half done because its guard
+knew one of three syntaxes, and a glyph scanner that desynced on a regex containing a quote and
+failed *open*. All fixed; the report's *Pre-merge review* section records each one and why the
+gate missed it.
+
 ## Caveat worth carrying forward
 
 The audit was started from a local `main` that was two days behind `origin/main` and had to be
