@@ -80,6 +80,10 @@ export interface HarmonySelectionOptions {
   /**
    * Dyes that must never be chosen — the base dye itself, normally. Given as
    * `itemID`s because that is the identity every surface already keys on.
+   *
+   * Honoured for slots and companions alike, independently of
+   * {@link HarmonySelectionConfig.preventDuplicates}. A pinned dye still wins
+   * its slot: an explicit hand-swap outranks this.
    */
   excludeItemIDs?: readonly number[];
   /**
@@ -174,11 +178,25 @@ export function generateHarmonySlots(
   const companionCount = config.companionCount ?? 0;
   const preventDuplicates = config.preventDuplicates ?? false;
 
-  // Normally the base dye itself: it is never a companion to its own harmony.
-  // A custom colour has no dye to exclude, which is why this is a list rather
-  // than a required base dye — `/harmony color:#FF0000` has a hex and nothing
-  // else.
-  const used = new Set<number>(options?.excludeItemIDs ?? []);
+  // Two different questions, and they were one set until 2026-09-03.
+  //
+  // `excluded` is "must never be chosen" — normally the base dye itself, which
+  // is never a member of its own harmony. A custom colour has no dye to
+  // exclude, which is why this is a list rather than a required base dye:
+  // `/harmony color:#FF0000` has a hex and nothing else.
+  //
+  // `used` is "already on screen", and only matters when the caller asked for
+  // no repeats.
+  //
+  // Seeding `used` with the exclusions conflated them, and `used` is read only
+  // on the `preventDuplicates` branch — so with duplicates allowed the
+  // exclusions did nothing at all, against this function's own documented
+  // contract. bot-logic defaults `preventDuplicates` to false, so `/harmony
+  // monochromatic` (a single `[0]` offset, whose ideal IS the base colour)
+  // answered the base dye as its own harmony at deltaE 0, and `/harmony
+  // analogous` on a near-grey answered the base twice.
+  const excluded = new Set<number>(options?.excludeItemIDs ?? []);
+  const used = new Set<number>();
   const slots: HarmonySlot[] = [];
 
   offsets.forEach((offset, index) => {
@@ -197,13 +215,19 @@ export function generateHarmonySlots(
     let chosen: ScoredCandidate | null;
 
     if (pin) {
+      // An explicit hand-swap wins its slot outright, exclusions included: the
+      // user naming a dye outranks our guess about which dyes are eligible.
       chosen = { dye: pin, deviance: devianceFor(pin, targetHue, targetHex, config) };
     } else if (preventDuplicates) {
-      // First unused, else the nearest even if already shown: a slot with a dye
-      // repeated beats a slot left blank.
-      chosen = ranked.find((c) => !used.has(c.dye.itemID)) ?? ranked[0] ?? null;
+      // First eligible-and-unused, else the nearest eligible even if already
+      // shown: a slot with a dye repeated beats a slot left blank. An excluded
+      // dye is not a fallback in either case.
+      chosen =
+        ranked.find((c) => !excluded.has(c.dye.itemID) && !used.has(c.dye.itemID)) ??
+        ranked.find((c) => !excluded.has(c.dye.itemID)) ??
+        null;
     } else {
-      chosen = ranked[0] ?? null;
+      chosen = ranked.find((c) => !excluded.has(c.dye.itemID)) ?? null;
     }
 
     if (chosen) used.add(chosen.dye.itemID);
@@ -212,6 +236,7 @@ export function generateHarmonySlots(
     if (companionCount > 0) {
       for (const candidate of ranked) {
         if (companions.length >= companionCount) break;
+        if (excluded.has(candidate.dye.itemID)) continue;
         if (chosen && candidate.dye.itemID === chosen.dye.itemID) continue;
         if (preventDuplicates && used.has(candidate.dye.itemID)) continue;
         companions.push(candidate.dye);

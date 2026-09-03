@@ -85,8 +85,24 @@ const CONFIGS: Array<[string, HarmonySelectionConfig]> = [
   ],
 ];
 
-/** Captured 2026-09-03, while the web app's own implementation still existed. */
-const GOLDEN_DIGEST = '711bfcace2c074f562d87208c517d54e9ac00345822f6d234049c99d4460d686';
+/**
+ * Captured 2026-09-03, while the web app's own implementation still existed.
+ *
+ * Regenerated the same day, once, when `excludeItemIDs` stopped being conflated
+ * with `preventDuplicates`. That regeneration was not taken on trust: digesting
+ * each config separately, before and after, showed **only `no-dedup` moved** —
+ *
+ *   page-defaults  9bd6a0b9…  ->  9bd6a0b9…   unchanged
+ *   no-dedup       0ba40a51…  ->  49c1782f…   CHANGED
+ *   hue-only       e198b9d6…  ->  e198b9d6…   unchanged
+ *   oklab          0e62e2aa…  ->  0e62e2aa…   unchanged
+ *
+ * — which is exactly the config whose behaviour the fix targets, and the page's
+ * own defaults are among the three that did not budge. Over the same 5,000 rows
+ * the base dye appeared inside its own harmony **675 times before and 0 after**.
+ * The named `SAMPLE` assertions below never moved at all.
+ */
+const GOLDEN_DIGEST = 'df9a60cb25ca6a0e5df013330568241c83db1043f8f43c72c7dafe037efb595c';
 const GOLDEN_ROWS = 5000;
 
 /**

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.2.0] - 2026-09-03
 
+### Fixed
+
+- **`excludeItemIDs` is honoured whether or not `preventDuplicates` is set.** The two
+  were one `Set`, and that `Set` is read only on the `preventDuplicates` branch — so with
+  duplicates allowed the exclusions did nothing at all, against this function's own
+  documented contract ("dyes that must never be chosen"). They are now separate: `excluded`
+  is permanent and applies to slots and companions alike; `used` still tracks what is
+  already on screen and still only matters when de-duplication is on. A pinned dye
+  continues to win its slot, since an explicit hand-swap outranks our guess.
+
+  `bot-logic` defaulted `preventDuplicates` to **false**, so it was the bot that shipped
+  it: `/harmony monochromatic` is a single `[0]` offset whose ideal *is* the base colour,
+  so the nearest dye to it was the base dye — the card answered your own input at ΔE 0.
+  `/harmony analogous` on a near-grey returned the base twice.
+
+  Every pre-existing test passed `preventDuplicates: true`, the one setting where the old
+  code happened to be right, which is why the whole class was invisible. Over the golden
+  suite's 5,000 rows the base dye appeared inside its own harmony **675 times before and 0
+  after**, and only the `preventDuplicates: false` configuration changed — the page's own
+  defaults are byte-identical.
+
 ### Added — harmony convergence
 
 - **`generateHarmonySlots()`** — the one implementation of "which dyes make this

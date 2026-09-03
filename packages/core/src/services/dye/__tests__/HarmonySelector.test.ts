@@ -124,6 +124,77 @@ describe('generateHarmonySlots', () => {
     });
   });
 
+  /**
+   * `excludeItemIDs` is "must never be chosen"; `preventDuplicates` is "do not
+   * repeat what is already on screen". They were one `Set` until 2026-09-03,
+   * and that Set is read only on the `preventDuplicates` branch — so with
+   * duplicates allowed the exclusions did nothing at all.
+   *
+   * Every existing test above passes `preventDuplicates: true`, which is the
+   * one setting where the old code happened to be right, so the whole class of
+   * defect was invisible. bot-logic defaulted the flag to FALSE, so it was the
+   * bot that shipped it: `/harmony monochromatic` (a single `[0]` offset whose
+   * ideal is the base colour) answered the base dye as its own harmony.
+   */
+  describe('exclusions (independent of de-duplication)', () => {
+    it.each([true, false])('never returns an excluded dye — preventDuplicates=%s', (dedup) => {
+      const slots = generateHarmonySlots(
+        RED.hex,
+        'monochromatic',
+        ALL,
+        { ...PERCEPTUAL, preventDuplicates: dedup },
+        { excludeItemIDs: [RED.itemID] }
+      );
+
+      expect(slots.length).toBeGreaterThan(0);
+      expect(slots.every((s) => s.dye !== null)).toBe(true);
+      expect(slots.every((s) => s.dye?.itemID !== RED.itemID)).toBe(true);
+    });
+
+    it.each([true, false])('never offers an excluded dye as a companion — %s', (dedup) => {
+      const slots = generateHarmonySlots(
+        RED.hex,
+        'analogous',
+        ALL,
+        { ...PERCEPTUAL, preventDuplicates: dedup, companionCount: 3 },
+        { excludeItemIDs: [RED.itemID] }
+      );
+
+      expect(slots.some((s) => s.companions.length > 0)).toBe(true);
+      expect(slots.every((s) => s.companions.every((d) => d.itemID !== RED.itemID))).toBe(true);
+    });
+
+    it('excludes every id it is given, not just the first', () => {
+      const [a, b, c] = ALL;
+      const slots = generateHarmonySlots(
+        WHITE.hex,
+        'square',
+        ALL,
+        { ...PERCEPTUAL, preventDuplicates: false, companionCount: 2 },
+        { excludeItemIDs: [a.itemID, b.itemID, c.itemID] }
+      );
+
+      const seen = slots.flatMap((s) => [s.dye, ...s.companions]).filter((d): d is Dye => d != null);
+      expect(seen.length).toBeGreaterThan(0);
+      for (const id of [a.itemID, b.itemID, c.itemID]) {
+        expect(seen.every((d) => d.itemID !== id)).toBe(true);
+      }
+    });
+
+    it('still lets an explicit pin win its slot', () => {
+      // A hand-swap is the user naming a dye; that outranks our exclusions.
+      const slots = generateHarmonySlots(
+        WHITE.hex,
+        'complementary',
+        ALL,
+        { ...PERCEPTUAL, preventDuplicates: false },
+        { excludeItemIDs: [RED.itemID], pinned: new Map([[0, RED]]) }
+      );
+
+      expect(slots[0].dye?.itemID).toBe(RED.itemID);
+    });
+  });
+
   describe('pinning', () => {
     it('honours a caller-fixed dye for its slot', () => {
       const pin = ALL.find((d) => d.name === 'Jet Black')!;
