@@ -9,11 +9,11 @@
  * @module services/svg/mixer
  */
 
-import { ColorService } from '@xivdyetools/core';
+import { ColorService, DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, xStrip, type BandEntry, type BandFrame } from './band';
-import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
-import { dyeService, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
+import { algoTag, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
+import { ALL_DYES, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
 import { role, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
@@ -41,7 +41,7 @@ const MIX_STRIP_H = 46;
 function nearestDye(hex: string): { dye: Dye; delta: number } {
   let best: Dye | null = null;
   let bestDelta = Infinity;
-  for (const candidate of dyeService.getAllDyes()) {
+  for (const candidate of ALL_DYES) {
     const delta = ColorService.getDistanceForMethod(hex, candidate.hex, 'ciede2000');
     if (delta < bestDelta) {
       bestDelta = delta;
@@ -55,7 +55,7 @@ function nearestDye(hex: string): { dye: Dye; delta: number } {
  * Generates the Mixer OG image SVG (400-grid — raster ×3 downstream).
  */
 export function generateMixerOG(options: MixerOGOptions): string {
-  const { dyeAId, dyeBId, dyeCId, algorithm = 'oklab', locale = 'en', frame = 'discord' } = options;
+  const { dyeAId, dyeBId, dyeCId, algorithm = DEFAULT_MATCHING_METHOD, locale = 'en', frame = 'discord' } = options;
   const ratio = Math.max(1, Math.min(99, options.ratio));
 
   const dyeA = getDyeByItemId(dyeAId);
@@ -108,7 +108,7 @@ export function generateMixerOG(options: MixerOGOptions): string {
     // The ratio is structural and the buyable dye is the third band's own
     // name, so the deck names the answer and nothing has to move on X.
     deck: getLocalizedDyeName(hit.dye, locale),
-    footRight: ALGO_TAG[algorithm] ?? algorithm.toUpperCase(),
+    footRight: algoTag(algorithm),
     frame,
   });
 }

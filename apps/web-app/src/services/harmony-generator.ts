@@ -68,20 +68,16 @@ export const HARMONY_TYPE_IDS = [
 ] as const;
 
 /**
- * Harmony offsets (in degrees) for each harmony type
+ * Harmony offsets (in degrees) for each harmony type.
+ *
+ * BUG-022 (deep dive 2026-09-02): this used to be a private copy, and
+ * og-worker's card carried a *different* private copy — so an unfurled share
+ * link drew dyes the page it opened never shows. The table now lives in
+ * `@xivdyetools/core` and both read it; this re-export keeps the existing
+ * `@services/index` consumers (`harmony-tool.ts`, `v4-color-wheel.ts`)
+ * unchanged. The values are byte-identical to what this file held.
  */
-export const HARMONY_OFFSETS: Record<string, number[]> = {
-  complementary: [180],
-  analogous: [30, 330],
-  triadic: [120, 240],
-  'split-complementary': [150, 210],
-  tetradic: [60, 180, 240],
-  'inverted-tetradic': [120, 180, 300],
-  square: [90, 180, 270],
-  monochromatic: [0],
-  compound: [30, 180, 330],
-  shades: [15, 345],
-};
+export { HARMONY_OFFSETS } from '@xivdyetools/core';
 
 // ============================================================================
 // Helper Functions

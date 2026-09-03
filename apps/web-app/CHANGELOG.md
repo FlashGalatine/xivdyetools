@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.0.2] - 2026-09-02
 
+### Changed — 2026-09-02 deep-dive audit
+
+- `HARMONY_OFFSETS` moved to `@xivdyetools/core` and is re-exported from
+  `@services/harmony-generator` (BUG-022). The values are byte-identical and no page
+  behaviour changes; the point is that og-worker carried a *different* private copy,
+  so the card unfurled for a share link drew dyes the page it opened never showed.
+  One table, two consumers.
+
 ### Fixed — 2026-09-02 deep-dive audit
 
 Dye identifiers (the 5.0 rewrite made stainID canonical; these call sites still sent item IDs):

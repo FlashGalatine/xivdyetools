@@ -4,6 +4,8 @@
 import { describe, it, expect } from 'vitest';
 import { generateHarmonyOG } from './harmony';
 import { dyeService } from './dye-helpers';
+import { HARMONY_OFFSETS } from '@xivdyetools/core';
+import type { HarmonyType } from '../../types';
 
 const anyDye = dyeService.getAllDyes()[0];
 const stainId = anyDye.stainID ?? anyDye.id;
@@ -81,5 +83,74 @@ describe('generateHarmonyOG (15E band)', () => {
     expect(de).toContain('HARMONIE');
     const ja = generateHarmonyOG({ dyeId: stainId, harmonyType: 'triadic', locale: 'ja' });
     expect(ja).toContain('ハーモニー');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-022 (deep dive 2026-09-02): og-worker carried a private IDEAL_OFFSETS
+// that diverged from the page's HARMONY_OFFSETS in three of ten rows. A card
+// is the unfurl of a page URL, so `compound` drew three dyes and the page the
+// reader then opened drew three *different* ones — zero overlap.
+//
+// The old suite exercised only tetradic / triadic / monochromatic: the three
+// rows that happened to agree, or that were deliberately the fallback.
+// ---------------------------------------------------------------------------
+describe('BUG-022: the card draws the same hues the page does', () => {
+  const ALL: HarmonyType[] = [
+    'complementary',
+    'analogous',
+    'triadic',
+    'split-complementary',
+    'tetradic',
+    'inverted-tetradic',
+    'square',
+    'monochromatic',
+    'compound',
+    'shades',
+  ];
+
+  it('every harmony type the route accepts has a row in the shared table', () => {
+    for (const type of ALL) {
+      expect(HARMONY_OFFSETS[type], type).toBeDefined();
+    }
+  });
+
+  it('the role tags on a card are exactly the shared table’s offsets', () => {
+    // `monochromatic` alone takes the nearest-dye path (its single [0] offset
+    // is a no-op rotation), so it renders `≈` rather than a degree tag.
+    for (const type of ALL.filter((t) => t !== 'monochromatic')) {
+      const svg = generateHarmonyOG({ dyeId: stainId, harmonyType: type });
+      const roles = [...svg.matchAll(/>([+-]?\d+)°</g)].map((m) => Number(m[1]));
+      // A band card draws at most 4 matches beside the base.
+      const expected = HARMONY_OFFSETS[type].slice(0, 4);
+      expect(roles, type).toEqual(expected);
+    }
+  });
+
+  it('shades renders its own hues instead of falling through to nearest-dye', () => {
+    const svg = generateHarmonyOG({ dyeId: stainId, harmonyType: 'shades' });
+    expect(svg).toContain('+15°');
+    expect(svg).toContain('+345°');
+    // `≈` is the nearest-dye role — the branch this used to land in silently
+    expect(svg).not.toContain('>≈<');
+  });
+
+  it('analogous draws the page’s two bands, not three with a complement', () => {
+    const svg = generateHarmonyOG({ dyeId: stainId, harmonyType: 'analogous' });
+    const roles = [...svg.matchAll(/>([+-]?\d+)°</g)].map((m) => Number(m[1]));
+    expect(roles).toEqual([30, 330]);
+    expect(roles).not.toContain(180);
+  });
+
+  it('compound draws the page’s scheme, not the bot’s', () => {
+    const svg = generateHarmonyOG({ dyeId: stainId, harmonyType: 'compound' });
+    const roles = [...svg.matchAll(/>([+-]?\d+)°</g)].map((m) => Number(m[1]));
+    expect(roles).toEqual([30, 180, 330]);
+  });
+
+  it('monochromatic still takes the nearest-dye path and fills four bands', () => {
+    const svg = generateHarmonyOG({ dyeId: stainId, harmonyType: 'monochromatic' });
+    const approx = [...svg.matchAll(/>≈</g)];
+    expect(approx.length).toBe(4);
   });
 });

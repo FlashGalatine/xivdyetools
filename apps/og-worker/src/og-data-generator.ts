@@ -16,6 +16,7 @@ import { COMPARISON_MAX_DYES } from './services/svg/comparison';
 import { ACCESSIBILITY_MAX_DYES } from './services/svg/accessibility';
 import { getOgDeck } from './services/og-strings';
 import { embed } from './services/og-embed';
+import { parseCellIndex, resolveCellHex } from './services/character-cells';
 import {
   ogTranslator,
   getLocalizedDyeName,
@@ -91,6 +92,25 @@ function withAlgo(url: string, algo: MatchingAlgorithm | string | null | undefin
   return `${url}${url.includes('?') ? '&' : '?'}algo=${method}`;
 }
 
+/**
+ * The click-through URL for a card, carrying the params the page reads back.
+ *
+ * og-6 (deep dive 2026-09-02): every `og:url` was rebuilt from scratch and
+ * dropped both `lang` — which `ShareService.generateUrl` sets for a non-EN
+ * locale *specifically* so this worker can localize — and `algo`, which the
+ * harmony, gradient and mixer tools read on load. The card localized and
+ * measured with ΔEOK; the page it opened was the browser's language on
+ * ΔE2000. The image URL already carries both, so this is the same two values
+ * on one more URL.
+ */
+function appUrl(
+  url: string,
+  locale: LocaleCode,
+  algo?: MatchingAlgorithm | string | null,
+): string {
+  return withLang(withAlgo(url, algo), locale);
+}
+
 /** The root name never localises, and it closes every title. */
 const SITE_NAME = 'XIV Dye Tools';
 function site(title: string): string {
@@ -121,7 +141,7 @@ function toolDefault(tool: ToolId, env: Env, locale: LocaleCode, description: st
   return {
     title: site(getToolName(tool, locale)),
     description,
-    url: `${env.APP_BASE_URL}/${tool}/`,
+    url: appUrl(`${env.APP_BASE_URL}/${tool}/`, locale),
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/${tool}/default.png`, locale),
     siteName: SITE_NAME,
     locale,
@@ -196,7 +216,7 @@ export function generateHarmonyOGData(
     return {
       title: site(embed('harmony.titleNoDye', locale, { harmony: harmonyName })),
       description: embed('harmony.descriptionNoDye', locale, { harmony: lc(harmonyName, locale) }),
-      url: `${env.APP_BASE_URL}/harmony/`,
+      url: appUrl(`${env.APP_BASE_URL}/harmony/`, locale),
       imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/harmony/default.png`, locale),
       siteName: SITE_NAME,
       locale,
@@ -211,7 +231,7 @@ export function generateHarmonyOGData(
       hex: dyeInfo.hex,
     }),
     // OG-6: the harmony is enum-validated upstream; encoding is belt-and-braces
-    url: `${env.APP_BASE_URL}/harmony/?dye=${params.dye}&harmony=${encodeURIComponent(params.harmony)}&v=1`,
+    url: appUrl(`${env.APP_BASE_URL}/harmony/?dye=${params.dye}&harmony=${encodeURIComponent(params.harmony)}&v=1`, locale, params.algo),
     imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${encodeURIComponent(params.harmony)}.png`, params.algo), locale),
     siteName: SITE_NAME,
     themeColor: dyeInfo.hex,
@@ -243,7 +263,7 @@ export function generateGradientOGData(
       end: endDye.name,
       endHex: endDye.hex,
     }),
-    url: `${env.APP_BASE_URL}/gradient/?start=${params.start}&end=${params.end}&steps=${params.steps}&v=1`,
+    url: appUrl(`${env.APP_BASE_URL}/gradient/?start=${params.start}&end=${params.end}&steps=${params.steps}&v=1`, locale, params.algo),
     imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/gradient/${params.start}/${params.end}/${params.steps}.png`, params.algo), locale),
     siteName: SITE_NAME,
     themeColor: startDye.hex,
@@ -273,7 +293,7 @@ export function generateMixerOGData(
     return {
       title: site(embed('mixer.title3', locale, names)),
       description: embed('mixer.description3', locale, names),
-      url: `${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&dyeC=${params.dyeC}&v=1`,
+      url: appUrl(`${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&dyeC=${params.dyeC}&ratio=${params.ratio}&v=1`, locale, params.algo),
       imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, params.algo), locale),
       siteName: SITE_NAME,
       themeColor: dyeA.hex,
@@ -286,7 +306,7 @@ export function generateMixerOGData(
   return {
     title: site(embed('mixer.title2', locale, vars)),
     description: embed('mixer.description2', locale, vars),
-    url: `${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&ratio=${params.ratio}&v=1`,
+    url: appUrl(`${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&ratio=${params.ratio}&v=1`, locale, params.algo),
     imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, params.algo), locale),
     siteName: SITE_NAME,
     themeColor: dyeA.hex,
@@ -304,7 +324,7 @@ export function generateSwatchOGData(
 ): OGData {
   const hexColor = formatHex(params.color);
   const limit = params.limit || 5;
-  const { sheet, race, gender } = params;
+  const { sheet, cell, race, gender } = params;
 
   // Build description based on available context
   let description = embed('swatch.description', locale, { n: limit, hex: hexColor });
@@ -324,14 +344,24 @@ export function generateSwatchOGData(
     }
   }
 
-  // Build the web app URL with all params
+  // Build the web app URL with all params.
+  //
+  // BUG-021: emit the grammar the link arrived in. A cell address (`slot`+`i`)
+  // is the identity handle the 5.0 tool shares and reads back — two cells can
+  // carry the same colour, and a hex round-trip picks whichever comes first —
+  // so when the address is known it goes on the URL and `color` stays off it.
+  // A legacy `?hex=` link has no address to preserve and keeps the old shape,
+  // which the SPA still resolves by colour match.
   const urlParams = new URLSearchParams();
-  urlParams.set('color', params.color);
+  if (sheet) urlParams.set('slot', sheet);
+  if (cell !== undefined) {
+    urlParams.set('i', String(cell));
+  } else {
+    urlParams.set('color', params.color);
+  }
   urlParams.set('limit', String(limit));
-  if (sheet) urlParams.set('sheet', sheet);
   if (race) urlParams.set('race', race);
   if (gender) urlParams.set('gender', gender);
-  if (params.algo) urlParams.set('algo', params.algo);
   urlParams.set('v', '1');
 
   // The image URL carries only what the 15E card draws: the target, the
@@ -342,7 +372,7 @@ export function generateSwatchOGData(
   return {
     title: site(embed('swatch.title', locale, { hex: hexColor })),
     description,
-    url: `${env.APP_BASE_URL}/swatch/?${urlParams.toString()}`,
+    url: appUrl(`${env.APP_BASE_URL}/swatch/?${urlParams.toString()}`, locale, params.algo),
     imageUrl,
     siteName: SITE_NAME,
     themeColor: hexColor,
@@ -384,7 +414,7 @@ export function generateComparisonOGData(
   return {
     title: site(embed('comparison.title', locale, { names: dyeNames })),
     description: embed('comparison.description', locale, { n: resolved.length, names: dyeNames }),
-    url: `${env.APP_BASE_URL}/comparison/?dyes=${params.dyes.join(',')}&v=1`,
+    url: appUrl(`${env.APP_BASE_URL}/comparison/?dyes=${params.dyes.join(',')}&v=1`, locale),
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/comparison/${resolved.map((r) => r.id).join(',')}.png`, locale),
     siteName: SITE_NAME,
     themeColor: resolved[0].dye.hex,
@@ -422,7 +452,7 @@ export function generateAccessibilityOGData(
   return {
     title: site(embed('accessibility.title', locale, { lens: visionName, names: dyeNames })),
     description: embed('accessibility.description', locale, { names: dyeNames, lens: lc(visionName, locale) }),
-    url: `${env.APP_BASE_URL}/accessibility/?dyes=${params.dyes.join(',')}&vision=${encodeURIComponent(params.vision || 'normal')}&v=1`,
+    url: appUrl(`${env.APP_BASE_URL}/accessibility/?dyes=${params.dyes.join(',')}&vision=${encodeURIComponent(params.vision || 'normal')}&v=1`, locale),
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${resolved.map((r) => r.id).join(',')}/${encodeURIComponent(params.vision || 'normal')}.png`, locale),
     siteName: SITE_NAME,
     themeColor: resolved[0].dye.hex,
@@ -446,13 +476,12 @@ export function generateExtractorOGData(
   }
 
   const list = colors.map((c) => `#${c}`).join(', ');
-  const algoQuery = params.algo ? `&algo=${encodeURIComponent(params.algo)}` : '';
 
   return {
     title: site(embed('extractor.title', locale, { n: colors.length })),
     description: embed('extractor.description', locale, { list }),
     // Commas stay literal (like comparison's dyes=) — the SPA reads them either way
-    url: `${env.APP_BASE_URL}/extractor/?colors=${colors.join(',')}${algoQuery}&v=1`,
+    url: appUrl(`${env.APP_BASE_URL}/extractor/?colors=${colors.join(',')}&v=1`, locale, params.algo),
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/extractor/${colors.join(',')}.png`, locale),
     siteName: SITE_NAME,
     themeColor: `#${colors[0]}`,
@@ -492,7 +521,7 @@ export function generatePresetsOGData(
     description: (dyeNames
       ? embed('presets.description', locale, { names: dyeNames })
       : embed('presets.descriptionNoDyes', locale)) + blurb,
-    url: `${env.APP_BASE_URL}/presets/${preset.id}`,
+    url: appUrl(`${env.APP_BASE_URL}/presets/${preset.id}`, locale),
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/presets/${preset.id}.png`, locale),
     siteName: SITE_NAME,
     themeColor: dyes[0]?.hex,
@@ -517,7 +546,7 @@ export function generateBudgetOGData(
   return {
     title: site(embed('budget.title', locale, { dye: target.name })),
     description: embed('budget.description', locale, { dye: target.name, hex: target.hex }),
-    url: `${env.APP_BASE_URL}/budget/?dye=${params.dye}&v=1`,
+    url: appUrl(`${env.APP_BASE_URL}/budget/?dye=${params.dye}&v=1`, locale),
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/budget/${params.dye}.png`, locale),
     siteName: SITE_NAME,
     themeColor: target.hex,
@@ -708,15 +737,17 @@ function escapeHtml(str: string): string {
  *                 in `createToolHandler`.
  * @param pathId - For tools whose share form is a PATH (`/presets/:id`), the
  *                 path segment; `createToolHandler` passes it through.
- * @returns OGData for the requested tool and parameters
+ * @returns OGData for the requested tool and parameters. Async because a
+ *          Swatch cell address resolves against the race-specific colour
+ *          tables, which `CharacterColorService` imports lazily (BUG-021).
  */
-export function generateOGDataForTool(
+export async function generateOGDataForTool(
   tool: ToolId,
   searchParams: URLSearchParams,
   env: Env,
   locale: LocaleCode = 'en',
   pathId: string | null = null,
-): OGData {
+): Promise<OGData> {
   switch (tool) {
     // FINDING-024 (OG-2 / OG-6): every value below that reaches og:title /
     // og:description / og:url / og:image is validated against the same
@@ -757,24 +788,42 @@ export function generateOGDataForTool(
     }
 
     case 'swatch': {
+      // BUG-021: the 5.0 tool shares a CELL ADDRESS — `?slot=<sheet>&i=<index>`
+      // — and no hex at all (`swatch-tool.ts` getShareParams: "Confirmed
+      // grammar: slot + i"). Reading only the retired `?hex=`/`?sheet=` pair
+      // meant every Swatch share unfurled as the generic default card, and the
+      // two sheet-aware sentences the 2026-08-20 i18n audit authored ×6 were
+      // unreachable. `sheet` stays as the pre-5.0 alias for `slot`, exactly as
+      // the SPA reads it back (`params.slot ?? params.sheet`).
+      const slotRaw = searchParams.get('slot') ?? searchParams.get('sheet');
+      const raceRaw = searchParams.get('race');
+      const sheet = slotRaw && isSheet(slotRaw) ? slotRaw : undefined;
+      // only a slug a locale table knows is ever looked up or echoed
+      const race = raceRaw && isKnownClanOrRace(raceRaw) ? raceRaw : undefined;
+      const gender = parseGender(searchParams.get('gender'));
+
+      const cellIndex = parseCellIndex(searchParams.get('i'));
+      const cellHex =
+        sheet && cellIndex !== null ? await resolveCellHex(sheet, cellIndex, race, gender) : null;
+
       // No target colour → the tool default. A white #FFFFFF stand-in was the
       // pre-5.0 behaviour; it invented a target the user never shared (2a: a
       // default never fakes data). A NON-HEX target is the same case: the
-      // card cannot draw it and the crawler must not echo it.
-      const color = parseHexColor(searchParams.get('hex') || searchParams.get('color'));
+      // card cannot draw it and the crawler must not echo it. An address that
+      // names no cell (an index past the sheet, a clan the tables do not
+      // carry) is the same case again.
+      const color = cellHex ?? parseHexColor(searchParams.get('hex') || searchParams.get('color'));
       if (!color) {
         return toolDefault('swatch', env, locale, embed('swatch.descriptionDefault', locale));
       }
-      const sheetRaw = searchParams.get('sheet');
-      const raceRaw = searchParams.get('race');
       const params: SwatchParams = {
         color,
         algo: parseAlgo(searchParams.get('algo')),
         limit: clampInt(searchParams.get('limit'), 1, OG_MAX_SWATCH_LIMIT, 5),
-        sheet: sheetRaw && isSheet(sheetRaw) ? sheetRaw : undefined,
-        // only a slug a locale table knows is ever looked up or echoed
-        race: raceRaw && isKnownClanOrRace(raceRaw) ? raceRaw : undefined,
-        gender: parseGender(searchParams.get('gender')),
+        sheet,
+        cell: cellHex !== null ? (cellIndex as number) : undefined,
+        race,
+        gender,
       };
       return generateSwatchOGData(params, env, locale);
     }

@@ -57,10 +57,22 @@ import {
   isVisionType,
 } from './og-params';
 import type { Env, ToolId, AnalyticsEvent, HarmonyType, MatchingAlgorithm, VisionType } from './types';
+import packageJson from '../package.json' with { type: 'json' };
 
 // ============================================================================
 // Constants
 // ============================================================================
+
+/**
+ * The card generation, folded into every `/og/*` edge-cache key (BUG-025).
+ *
+ * Rendered PNGs are stored with `s-maxage=604800` and neither deploy workflow
+ * purges, so before this the only thing that retired a card was seven days
+ * passing. Bumping this worker's `version` is now what invalidates them —
+ * which is why the deploy checklist's "bump if behaviour changed" is not
+ * optional for a card-design or dye-data change.
+ */
+const CARD_VERSION: string = packageJson.version;
 
 /** The X frame rides ?frame=x (the tag-based branch — twitter:image only). */
 function frameFromQuery(c: { req: { query: (k: string) => string | undefined } }): 'discord' | 'x' {
@@ -266,14 +278,21 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   const params = new URLSearchParams();
   params.set('lang', resolveLocale(url.searchParams));
   params.set('frame', frameFromQuery(c));
+  // BUG-025: the key carried nothing that changes when the CARD does, and the
+  // stored response says `s-maxage=604800`, so a band-layout revision or a
+  // renamed dye kept serving the pre-deploy PNG from every colo that already
+  // had it — for up to seven days, with no purge step in either deploy
+  // workflow. `CARD_VERSION` is this worker's own package version, so bumping
+  // it (deploy checklist step 4) is what retires the old cards.
+  params.set('v', CARD_VERSION);
   const algo = url.searchParams.get('algo');
   if (algo) {
     params.set('algo', algo);
   }
-  // Ruling S7-R13: strip a trailing `.png` from the path too — it stays
+  // Ruling S7-R13 (og-7 refined): strip a trailing `.png` from the path too — it stays
   // optional at every route (below), so the two spellings must share one
   // cache entry rather than buying a ×2 key split for free.
-  const path = stripPngSuffix(c.req.path);
+  const path = cacheKeyPath(c.req.path);
   return new Request(`${url.origin}${path}?${params.toString()}`, { method: 'GET' });
 }
 
@@ -441,7 +460,7 @@ function createToolHandler(tool: ToolId) {
     // Generate OG data for this tool (locale-aware display names). Presets are
     // shared as a PATH (/presets/<id>) — hand the segment through.
     const pathId = tool === 'presets' ? (c.req.param('presetId') ?? null) : null;
-    const ogData = generateOGDataForTool(tool, url.searchParams, env, locale, pathId);
+    const ogData = await generateOGDataForTool(tool, url.searchParams, env, locale, pathId);
 
     // Structured request log (replaces ad-hoc console.log). The crawler's UA
     // is logged HERE, and only here (OG-7) — it is the string you need when a
@@ -595,6 +614,33 @@ function isCanonicalExtractorColors(raw: string): boolean {
  */
 function stripPngSuffix(raw: string): string {
   return raw.endsWith('.png') ? raw.slice(0, -4) : raw;
+}
+
+/**
+ * The cache-key spelling of a path. `.png` is optional at every *parameterised*
+ * route (ruling S7-R13), so the two spellings of one card must share one entry
+ * — but it is NOT optional on `/og/:tool/default.png` or `/og/default.png`.
+ *
+ * og-7 (deep dive 2026-09-02): stripping it there too meant a cache-warm
+ * `GET /og/budget/default` answered 200 with the default card, because it
+ * computed the same stripped key as the `/og/budget/default.png` that had run
+ * before it — where the route grammar deliberately answers `400 {"error":
+ * "Invalid dye ID"}` (`parseCanonicalInt('default')` is NaN). Right card,
+ * wrong status, and which one you got depended on request order.
+ *
+ * `presets` is the one exception to the exception: S7-R16 reserves `default`
+ * as a slug on the parameterised route, so `/og/presets/default` IS a real
+ * route rendering the identical card and the two spellings still share one
+ * entry. The rule underneath both cases is the same — `.png` is optional
+ * exactly where the bare path routes to the same card.
+ *
+ * The existing `og-guards` test for the 400 could not see this: its describe
+ * block never stubs `caches`, so the middleware short-circuits to `next()`
+ * and the collision cannot appear.
+ */
+function cacheKeyPath(raw: string): string {
+  if (raw.endsWith('/default.png') && !raw.endsWith('/presets/default.png')) return raw;
+  return stripPngSuffix(raw);
 }
 
 /**

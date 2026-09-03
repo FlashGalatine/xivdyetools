@@ -6,6 +6,7 @@
  *   do not re-rasterise (the Cache-Control headers alone were inert)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import packageJson from '../package.json' with { type: 'json' };
 
 const rendered: string[] = [];
 vi.mock('./services/renderer', () => ({
@@ -462,5 +463,74 @@ describe('/og/* edge cache', () => {
     expect(res.status).toBe(400);
     await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
     expect(caches.store.size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-025 / og-7 (deep dive 2026-09-02): two cache-key defects.
+//
+// BUG-025 — the key carried nothing that changes when the card does, and the
+// stored response says `s-maxage=604800` while neither deploy workflow purges.
+// A band-layout revision or a renamed dye kept serving the pre-deploy PNG from
+// every colo that already had it, for up to seven days. og-worker's own
+// CLAUDE.md claimed the new SVG appears "within ~5s of cache expiry" — off by
+// six orders of magnitude.
+//
+// og-7 — `.png` was stripped from EVERY /og/* path, including the two routes
+// where it is not optional, so a cache-warm `/og/budget/default` returned 200
+// where the route grammar deliberately returns 400.
+// ---------------------------------------------------------------------------
+describe('/og/* cache key: card generation and the reserved default routes', () => {
+  let caches: ReturnType<typeof fakeCacheStorage>;
+
+  beforeEach(() => {
+    vi.mocked(renderOGImage).mockClear();
+    caches = fakeCacheStorage();
+    vi.stubGlobal('caches', caches);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('BUG-025: the key carries the worker version, so a deploy retires every card', async () => {
+    await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+    expect(caches.store.size).toBe(1);
+    const [key] = [...caches.store.keys()];
+    expect(key).toContain(`v=${packageJson.version}`);
+  });
+
+  it('og-7: a warm /og/budget/default.png does NOT make the bare path answer 200', async () => {
+    // `.png` is mandatory on this route — /og/budget/default matches
+    // /og/budget/:dyeId instead, whose parseCanonicalInt('default') is NaN.
+    const warm = await app.request('/og/budget/default.png', {}, TEST_ENV, execCtx);
+    expect(warm.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(caches.store.size).toBe(1);
+
+    const bare = await app.request('/og/budget/default', {}, TEST_ENV, execCtx);
+    expect(bare.status).toBe(400);
+  });
+
+  it('og-7: the same holds for the root default card', async () => {
+    const warm = await app.request('/og/default.png', {}, TEST_ENV, execCtx);
+    expect(warm.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+    // /og/default is not a route at all — it must not be served from the
+    // /og/default.png entry.
+    const bare = await app.request('/og/default', {}, TEST_ENV, execCtx);
+    expect(bare.status).not.toBe(200);
+  });
+
+  it('…and `.png` is still optional everywhere it was: one entry for both spellings', async () => {
+    const first = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+    expect(first.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+    const second = await app.request('/og/harmony/1/complementary.png', {}, TEST_ENV, execCtx);
+    expect(second.status).toBe(200);
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
   });
 });

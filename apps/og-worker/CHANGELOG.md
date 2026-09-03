@@ -5,6 +5,131 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-09-02
+
+Sprint 11 of the 2026-09-02 deep-dive remediation (`docs/audits/2026-09-02-deep-dive`).
+Minor bump: the Swatch card and the Harmony card now draw different — correct —
+content, and `og:url` carries parameters it used to drop.
+
+**The version number is now load-bearing.** It rides every `/og/*` edge-cache key
+(BUG-025 below), so bumping it is what retires already-rendered cards. Deploy
+checklist step 4 is no longer optional for a card-design or dye-data change.
+
+### Fixed
+
+- **Every Swatch share unfurled as the generic default card (BUG-021).** The 5.0
+  Swatch Matcher shares a *cell address* — `?slot=<sheet>&i=<index>` — and no hex at
+  all: two cells can carry the same colour, and a hex lookup misses when the sheet
+  reloads under a different clan or gender, which is why the tool moved off it. This
+  worker still read the retired `?hex=`/`?sheet=` pair, so `parseHexColor(null)` sent
+  every share to `/og/swatch/default.png` with the generic tool name and a `og:url`
+  of `/swatch/` — the shared cell lost from the picture, the title and the
+  click-through alike. The same gate made the two sheet-aware sentences the
+  2026-08-20 i18n audit authored ×6 (`swatch.descriptionSheet`,
+  `swatch.descriptionSheetRace`) unreachable, and `race`/`gender` read but never
+  used.
+
+  The address now resolves against the same `CharacterColorService` tables the page
+  reads. `hex`/`color` stay as the legacy read, `sheet` stays as the pre-5.0 alias
+  for `slot` (matching how the SPA reads it back), and `og:url` is emitted in
+  whichever grammar the link arrived in — an address preserves the address, a legacy
+  hex link keeps its shape. An address that names no cell (an index past the sheet, a
+  race-specific sheet shared without its clan, a race that is not one of the sixteen
+  clans the tables are keyed by) degrades to the default card rather than inventing a
+  colour.
+
+  This makes `generateOGDataForTool` async: the seven shared sheets are bundled, but
+  `hairColors` / `skinColors` come from a lazily-imported table. The bundle grew
+  ~90 KiB gzip for it.
+
+- **The Harmony card drew dyes the page never shows (BUG-022).** `IDEAL_OFFSETS` was
+  a private copy of the *bot's* table and diverged from the page's in three of ten
+  rows: `analogous` had an extra 180° complement band, `compound` was `[30,150,210]`
+  against the page's `[30,180,330]`, and `shades` was missing entirely and fell
+  silently to the nearest-dye branch. A card is the unfurl of a page URL, so a
+  `compound` share drew three dyes and the page the reader then opened drew three
+  *different* ones — zero overlap. One table now, `HARMONY_OFFSETS` in
+  `@xivdyetools/core`, read by the page and the card. `monochromatic` still takes the
+  nearest-dye path: its single `[0]` offset is a no-op rotation, and the path fills
+  four bands instead of one.
+
+- **The Swatch card ranked by one method and labelled with another (BUG-023).** It
+  sorted by a hardcoded `ciede2000` but printed `deltaForAlgorithm(…, algorithm)`
+  under an `algorithm` footer. ΔEOK and ΔE2000 do not agree on order over 125 dyes,
+  so rank 2 could display a smaller Δ than rank 1 — and the *set* could differ from
+  the page's, which ranks by the requested method. For `#7A6B4F` the two disagree
+  hard: ΔE2000 gives four browns, REDMEAN puts Lilac Purple first. One distance call
+  now, reused for the tag.
+
+- **A legacy `?algo=` printed a method the card never used (BUG-024).** `ALGO_TAG` was
+  a private table with no row for `hyab` or `oklch-weighted`, the two spellings
+  pre-5.0 shared links still carry and `VALID_ALGORITHMS` still accepts. The lookup
+  missed, the fallback upper-cased the raw param, and the footer read `HYAB` over
+  numbers `normalizeMatchingMethod` had folded to ΔE2000. Normalising *first* closes
+  the class rather than the case: a legacy spelling can no longer reach the table, so
+  the table can no longer lack a row for one. The table itself is now core's
+  `MATCHING_METHOD_TAGS`, shared with `@xivdyetools/svg`. `fmtDelta` normalises for
+  the same reason — precision belongs to the method that ran, not the spelling.
+
+- **Cards went stale for up to seven days after a deploy (BUG-025).** The
+  `caches.default` key carried origin, path, `lang`, `frame` and `algo` — nothing that
+  changes when the card does — and the stored response says `s-maxage=604800` while
+  neither deploy workflow purges. A band-layout revision or a renamed dye kept
+  serving the pre-deploy PNG from every colo that already had it. The key now carries
+  this package's version. (og-worker's own CLAUDE.md claimed the new SVG appears
+  "within ~5s of cache expiry"; that was off by six orders of magnitude and is
+  corrected.)
+
+- **`og:url` dropped parameters the page reads back (og-6).** Every click-through URL
+  was rebuilt from scratch and lost `lang` — which `ShareService.generateUrl` sets for
+  a non-EN locale *specifically* so this worker can localize — on all nine tools, and
+  `algo` on harmony / gradient / mixer / swatch. The reader saw a Japanese card
+  measured in ΔEOK and clicked through to an English page measured in ΔE2000. The
+  3-dye mixer also gains the `ratio` only its image URL carried.
+
+- **A cache-warm `/og/<tool>/default` answered 200 where the route returns 400
+  (og-7).** `.png` was stripped from every `/og/*` path for keying, including the two
+  routes where it is *not* optional, so `GET /og/budget/default.png` (200) left an
+  entry that `GET /og/budget/default` then hit — a path whose
+  `parseCanonicalInt('default')` is NaN and which the grammar deliberately 400s.
+  Right card, wrong status, and which one you got depended on request order.
+  `/og/presets/default` is the one exception and keeps sharing its entry: S7-R16
+  reserves `default` as a slug there, so the bare spelling is a real route rendering
+  the identical card. The rule underneath both is the same — `.png` is optional
+  exactly where the bare path routes to the same card.
+
+  The existing test for that 400 could not see this: its describe block never stubs
+  `caches`, so the middleware short-circuits and the collision cannot appear.
+
+- **A repeated dye id compared a dye with itself (og-8).** `/og/comparison/1,1` is
+  canonical, so the S7-R12 grammar accepts it; `getDyeByItemId(1)` returned the same
+  object twice, `dyes.length === 2` cleared the `< 2` guard, and the card drew two
+  identical `CLOSEST PAIR` bands over the deck `Snow White ↔ Snow White · Δ0.0`. Ids
+  are deduplicated before the slice, so `1,1,2,3,4` also stops eating a band slot,
+  and "the other dyes" is computed by id rather than by object identity.
+
+### Changed
+
+- **The band-ink law is the package's, not a copy of it (REFACTOR-002).**
+  `services/svg/band.ts` carried a private `bandInk` with the same luminance formula
+  and the same crossover, but a white `onDim` of 0.78 where `@xivdyetools/svg` has
+  0.72. A bot card and an OG card are two renderings of the same dye. The fork and
+  its private `relLum` / `preferDark` are deleted; `bandInk` is re-exported from the
+  package, and a test pins the two to the same function object across all 125 dyes.
+
+- **An omitted `algorithm` is the suite default (og-12).** Five adapters defaulted to
+  `'oklab'` while every route passes `DEFAULT_MATCHING_METHOD` explicitly — so only
+  *tests* ever saw the default, and the suite measured every card with a method
+  production never used.
+
+### Performance
+
+- **One dye list per isolate instead of up to five per render (OPT-006).**
+  `getAllDyes()` returns a fresh 125-element copy per call, and harmony, gradient and
+  extractor each called it *inside* their per-offset / per-step / per-entry loop, on a
+  path that also runs a resvg raster. `ALL_DYES` in `dye-helpers.ts` is one frozen
+  list; swatch, mixer, budget and `findClosestDyesWithDistance` read it too.
+
 ## [2.4.0] - 2026-08-30
 
 2026-08-29 security audit follow-up remediation (`docs/audits/2026-08-29-security`,

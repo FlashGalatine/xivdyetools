@@ -17,7 +17,7 @@ import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
-import { dyeService, getDyeByItemId } from './dye-helpers';
+import { ALL_DYES, getDyeByItemId } from './dye-helpers';
 import { role, deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 
@@ -60,9 +60,7 @@ export function generateBudgetOG(options: BudgetOGOptions): string {
   // Nearest four from a CHEAPER pricing path than the target's own — for a
   // vendor-tier target there is nothing cheaper, so nearest-any stands in.
   const targetIsVendor = target.consolidationType === 'A';
-  const candidates = dyeService
-    .getAllDyes()
-    .filter((d: Dye) => d.id !== target.id && (targetIsVendor || d.consolidationType === 'A'))
+  const candidates = ALL_DYES.filter((d: Dye) => d.id !== target.id && (targetIsVendor || d.consolidationType === 'A'))
     .map((dye: Dye) => ({
       dye,
       delta: ColorService.getDistanceForMethod(target.hex, dye.hex, 'ciede2000'),

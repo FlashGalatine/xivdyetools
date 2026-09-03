@@ -10,11 +10,11 @@
  * @module services/svg/harmony
  */
 
-import { ColorService } from '@xivdyetools/core';
+import { ColorService, DEFAULT_MATCHING_METHOD, HARMONY_OFFSETS } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
-import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
-import { dyeService, findClosestDyesWithDistance, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
+import { algoTag, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
+import { ALL_DYES, findClosestDyesWithDistance, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
 import { role, getToolTag } from '../og-strings';
 import { getLocalizedDyeName, getLocalizedHarmonyName } from '../translator';
 import type { HarmonyType, MatchingAlgorithm } from '../../types';
@@ -33,19 +33,24 @@ export interface HarmonyOGOptions {
 }
 
 /**
- * Ideal hue offsets per harmony type (the bot's 3.1 table). Monochromatic
- * and shades have no rotated ideals — they take the nearest-dye path.
+ * BUG-022 (deep dive 2026-09-02): this WAS a private copy of the bot's 3.1
+ * table, and it diverged from the page's in three rows — `analogous` had an
+ * extra 180° complement band, `compound` was `[30,150,210]` against the page's
+ * `[30,180,330]`, and `shades` was absent, so it fell silently to the
+ * nearest-dye branch below. A card is the unfurl of a page URL, so zero of
+ * `compound`'s three bands matched the page the reader then opened. One table
+ * now, in `@xivdyetools/core`.
+ *
+ * `monochromatic`'s single `[0]` offset is a no-op rotation, so it still takes
+ * the nearest-dye path — that is what the page's own [0] row resolves to, and
+ * it fills four bands instead of one.
  */
-const IDEAL_OFFSETS: Partial<Record<HarmonyType, number[]>> = {
-  complementary: [180],
-  analogous: [30, -30, 180],
-  triadic: [120, 240],
-  'split-complementary': [150, 210],
-  tetradic: [60, 180, 240],
-  'inverted-tetradic': [120, 180, 300],
-  square: [90, 180, 270],
-  compound: [30, 150, 210],
-};
+const NEAREST_DYE_HARMONIES: ReadonlySet<HarmonyType> = new Set(['monochromatic']);
+
+function idealOffsets(harmonyType: HarmonyType): number[] | undefined {
+  if (NEAREST_DYE_HARMONIES.has(harmonyType)) return undefined;
+  return HARMONY_OFFSETS[harmonyType];
+}
 
 interface HarmonyMatch {
   dye: Dye;
@@ -59,11 +64,11 @@ interface HarmonyMatch {
 function getHarmonyMatches(
   dye: Dye,
   harmonyType: HarmonyType,
-  algorithm: MatchingAlgorithm = 'oklab'
+  algorithm: MatchingAlgorithm = DEFAULT_MATCHING_METHOD
 ): HarmonyMatch[] {
-  const offsets = IDEAL_OFFSETS[harmonyType];
+  const offsets = idealOffsets(harmonyType);
   if (!offsets) {
-    // Monochromatic/shades: similar dyes, delta measured to the base itself
+    // Monochromatic: similar dyes, delta measured to the base itself
     return findClosestDyesWithDistance(dye.hex, {
       limit: 4,
       excludeIds: [dye.id],
@@ -76,7 +81,7 @@ function getHarmonyMatches(
     const idealHex = ColorService.rotateHueLch(dye.hex, offset);
     let best: Dye | null = null;
     let bestDelta = Infinity;
-    for (const candidate of dyeService.getAllDyes()) {
+    for (const candidate of ALL_DYES) {
       if (candidate.id === dye.id) continue;
       if (matches.some((m) => m.dye.id === candidate.id)) continue;
       const delta = ColorService.getDistanceForMethod(idealHex, candidate.hex, 'ciede2000');
@@ -97,7 +102,7 @@ function getHarmonyMatches(
  * Generates the Harmony OG image SVG (400-grid — raster ×3 downstream).
  */
 export function generateHarmonyOG(options: HarmonyOGOptions): string {
-  const { dyeId, harmonyType, algorithm = 'oklab', locale = 'en', frame = 'discord' } = options;
+  const { dyeId, harmonyType, algorithm = DEFAULT_MATCHING_METHOD, locale = 'en', frame = 'discord' } = options;
 
   const dye = getDyeByItemId(dyeId);
   if (!dye) {
@@ -139,7 +144,7 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
     path: 'xivdyetools.app/harmony',
     // Harmony's headline is pure data — the base and the harmony it anchors.
     deck: `${baseName} · ${harmonyName}`,
-    footRight: ALGO_TAG[algorithm] ?? algorithm.toUpperCase(),
+    footRight: algoTag(algorithm),
     frame,
   });
 }

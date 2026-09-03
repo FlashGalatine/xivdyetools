@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.2] - 2026-09-02
+## [3.1.0] - 2026-09-02
+
+### Added
+
+- **`bandInk` is now a barrel export** (REFACTOR-002). og-worker kept a private copy
+  of the band-ink law — the same luminance formula and the same crossover, but with
+  the white `onDim` at 0.78 where this package has 0.72. A bot card and an OG card
+  are two renderings of the same dye and are not entitled to disagree about a
+  caption's alpha, so og-worker now imports this one and its fork is deleted.
 
 ### Fixed
 

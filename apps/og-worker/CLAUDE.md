@@ -131,7 +131,7 @@ route reading the param at all (ruling S7-R7):
 | `GET /og/gradient/:startId/:endId/:steps[.png]` | `steps` 2–20 (`OG_MAX_GRADIENT_STEPS`), then capped to `BAND_CAP` |
 | `GET /og/mixer/:dyeAId/:dyeBId/:ratio[.png]` | 2-dye mix; ratio 1–99 |
 | `GET /og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio[.png]` | 3-dye mix; ratio 1–99 |
-| `GET /og/swatch/:color/:limit[.png]` | `?algo=`; `limit` 1–20, capped to 4. (Sheet context — `?sheet=`/`?race=`/`?gender=` — shapes the crawler *description* only and is deliberately kept off the image URL: one cache key per card) |
+| `GET /og/swatch/:color/:limit[.png]` | `?algo=`; `limit` 1–20, capped to 4. (Sheet context — `?slot=` (alias `?sheet=`) / `?race=`/`?gender=` — shapes the crawler *description* only and is deliberately kept off the image URL: one cache key per card) |
 | `GET /og/comparison/:dyes[.png]` | `:dyes` is comma-separated stainIDs, max 16, sliced to 4 |
 | `GET /og/accessibility/:dyes/:visionType[.png]` | vision: normal, protanopia, deuteranopia, tritanopia, achromatopsia |
 | `GET /og/extractor/:colors[.png]` | `RRGGBB` or `RRGGBB-share` entries, comma-separated, max 5. Bare entries (the web-app share grammar carries no shares) draw **equal, ranked** bands — proportion is only claimed where it was measured |
@@ -185,7 +185,20 @@ the suffixed and suffix-less spellings of one card must share one entry, not two
 *resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (2026-08-29 FINDING-024, OG-4) — not the full URL. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary, even on a route that never reads `algo` itself — and an EMPTY `algo` (`?algo=` or bare `?algo`,
 both of which `URLSearchParams.get` reports as `''`) counts as absent there and here, not a
 validation failure, matching what the five algo-aware routes already did with
-`c.req.query('algo') || DEFAULT_MATCHING_METHOD` (ruling S7-R10). Combined with the query-key allowlist above, the key space is bounded to (pathname × lang × frame × algo) — a client can no longer defeat the cache by appending an arbitrary throwaway param.
+`c.req.query('algo') || DEFAULT_MATCHING_METHOD` (ruling S7-R10). The key also carries `CARD_VERSION` — this worker'''s own `package.json` version
+(BUG-025) — because nothing else in it changes when the CARD does, and the stored response says
+`s-maxage=604800` while neither deploy workflow purges: a band-layout revision or a renamed dye
+kept serving the pre-deploy PNG from every colo that already had it. Combined with the query-key
+allowlist above, the key space is bounded to (pathname × lang × frame × algo × version) — a client
+can no longer defeat the cache by appending an arbitrary throwaway param.
+
+The `.png` strip is **not** applied to `/og/:tool/default.png` or `/og/default.png`, where the
+suffix is mandatory (og-7): stripping it there meant a cache-warm `/og/budget/default.png` left an
+entry that the bare `/og/budget/default` then hit and answered 200, where the route grammar
+deliberately answers `400 {"error":"Invalid dye ID"}`. `/og/presets/default` is the one exception
+and keeps sharing its entry, because S7-R16 reserves `default` as a slug there and the bare
+spelling really is a route rendering the identical card. The rule underneath both: `.png` is
+optional exactly where the bare path routes to the same card.
 
 ### Environment Bindings (wrangler.toml)
 
@@ -295,13 +308,20 @@ Image route parameters are bounded to prevent resource exhaustion: `OG_MAX_GRADI
 2. If a new tool was added: register the route in `wrangler.toml` AND in the `SUPPORTED_TOOLS` array in `index.ts` AND add a `services/svg/<tool>.ts` generator.
 3. If dye/locale/card strings changed: re-run `scripts/subset-cjk-fonts.py` (`font-coverage.test.ts` goes red on a missing glyph and warns on surplus ones).
    After any **card-design revision**, also run `pnpm lint` (knip, both modes) — this worker's dead code has always been rewrite sediment, so "the cards changed" is the sweep trigger, not the calendar.
-4. Bump `version` in `package.json` if behavior changed.
+4. **Bump `version` in `package.json` for any card-design or dye-data change — this is not optional.**
+   The version rides every `/og/*` edge-cache key (`CARD_VERSION` in `index.ts`, BUG-025),
+   so it is the only thing that retires already-rendered cards. Without a bump, a colo that
+   already holds a card keeps serving the pre-deploy PNG for up to seven days (`s-maxage=604800`,
+   and neither deploy workflow purges).
 5. `pnpm deploy` publishes **beta** (live on `beta.xivdyetools.app`). Spot-check a card at
    `https://og-beta.xivdyetools.app/og/harmony/1/tetradic.png`.
    **Use a stainID, not an item ID.** `1` is Snow White. An unrecognised dye does not error —
    it degrades to the default card, so an item-ID-era value like `5771` renders a perfectly
    valid-looking card that tests nothing. Check the URL you got back names the dye.
-6. `pnpm deploy:production`. Validate a real shared link in Discord — the embed should render the new SVG within ~5s of cache expiry.
+6. `pnpm deploy:production`. Validate a real shared link in Discord. With step 4 done the new
+   card appears on the next request (the version change is a fresh cache key); *without* it you
+   are waiting on the 7-day edge TTL, which is what the pre-2.5.0 wording — "within ~5s of cache
+   expiry" — got wrong by six orders of magnitude.
 7. Both deploys run in CI on push (`deploy-og-worker-beta.yml` off non-main branches,
    `deploy-og-worker.yml` off main). Beta's workflow follows the emitted `og:image` URL end to
    end and fails if it 404s or degrades to a default card — the check that was missing when
