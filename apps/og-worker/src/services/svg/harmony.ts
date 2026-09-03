@@ -10,7 +10,11 @@
  * @module services/svg/harmony
  */
 
-import { ColorService, DEFAULT_MATCHING_METHOD, HARMONY_OFFSETS } from '@xivdyetools/core';
+import {
+  DEFAULT_MATCHING_METHOD,
+  HARMONY_OFFSETS,
+  generateHarmonySlots,
+} from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { algoTag, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
@@ -76,26 +80,34 @@ function getHarmonyMatches(
     }).map((match) => ({ dye: match.dye, offset: null, delta: match.distance }));
   }
 
-  const matches: HarmonyMatch[] = [];
-  for (const offset of offsets) {
-    const idealHex = ColorService.rotateHueLch(dye.hex, offset);
-    let best: Dye | null = null;
-    let bestDelta = Infinity;
-    for (const candidate of ALL_DYES) {
-      if (candidate.id === dye.id) continue;
-      if (matches.some((m) => m.dye.id === candidate.id)) continue;
-      const delta = ColorService.getDistanceForMethod(idealHex, candidate.hex, 'ciede2000');
-      if (delta < bestDelta) {
-        bestDelta = delta;
-        best = candidate;
-      }
-    }
-    if (best) {
-      // The displayed Δ is match → ideal, in the requested algorithm
-      matches.push({ dye: best, offset, delta: deltaForAlgorithm(idealHex, best.hex, algorithm) });
-    }
-  }
-  return matches.slice(0, 4);
+  // The card's whole job is to preview the page, so it must choose dyes the way
+  // the page does. It did not: this walked the same offsets but rotated hue in
+  // LCh (`rotateHueLch`) and the page rotates in HSV while preserving the base's
+  // saturation and value — a third algorithm alongside the page's and the
+  // bot's, which is how an unfurled share link could still show dyes the page it
+  // opens never shows. BUG-022 unified the offsets TABLE; this unifies the
+  // selection.
+  void offsets;
+  return generateHarmonySlots(
+    dye.hex,
+    harmonyType,
+    ALL_DYES,
+    {
+      usePerceptualMatching: true,
+      matchingMethod: 'ciede2000',
+      preventDuplicates: true,
+    },
+    { excludeItemIDs: [dye.itemID] }
+  )
+    .filter((slot) => slot.dye !== null)
+    .slice(0, 4)
+    .map((slot) => ({
+      dye: slot.dye as Dye,
+      offset: slot.offset,
+      // The displayed Δ is match → ideal, in the REQUESTED algorithm; the
+      // ranking above always runs in ΔE2000, matching the page's default.
+      delta: deltaForAlgorithm(slot.targetHex, (slot.dye as Dye).hex, algorithm),
+    }));
 }
 
 /**

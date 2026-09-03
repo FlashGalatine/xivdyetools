@@ -5,6 +5,22 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-09-03
+
+### Fixed — harmony convergence
+
+- The card now picks the same dyes the page does. It walked the shared
+  `HARMONY_OFFSETS` (2.5.0) but turned each offset into a colour with
+  `ColorService.rotateHueLch` — rotating hue in LCh where the page rotates in HSV
+  and preserves the base's saturation and value. That is a third algorithm
+  alongside the page's and the bot's, and it is why an unfurled share link could
+  still show dyes the page it opens never shows, which was BUG-022's original
+  complaint. 2.5.0 unified the offsets table; this unifies the selection, via
+  core's `generateHarmonySlots`.
+
+  The monochromatic special case (nearest dyes rather than an offset walk) is
+  unchanged.
+
 ## [2.5.0] - 2026-09-02
 
 Sprint 11 of the 2026-09-02 deep-dive remediation (`docs/audits/2026-09-02-deep-dive`).
