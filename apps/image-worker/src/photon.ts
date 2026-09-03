@@ -13,23 +13,13 @@
  */
 
 import { PhotonImage, SamplingFilter, resize, crop } from '@cf-wasm/photon';
-import { assertImageDimensionsFromHeader, MAX_IMAGE_DIMENSION } from './validators.js';
+import { assertImageDimensionsFromHeader } from './validators.js';
 
-/** Smallest `maxDimension` that still yields a usable palette sample. */
-export const MIN_MAX_DIMENSION = 16;
-
-/**
- * FINDING-004 (2026-08-21 audit): `maxDimension` arrives from the request body
- * and used to flow straight into `resize()` — NaN / 0 / huge values produced a
- * zero-sized or full-resolution RGBA buffer. Integer 16..MAX_IMAGE_DIMENSION.
- */
-export function assertValidMaxDimension(value: number): void {
-  if (!Number.isInteger(value) || value < MIN_MAX_DIMENSION || value > MAX_IMAGE_DIMENSION) {
-    throw new Error(
-      `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_IMAGE_DIMENSION}`
-    );
-  }
-}
+// REFACTOR-007: ONE `maxDimension` rule. It lives in validators.ts — which the
+// route tests do not mock, unlike this module — and both the /extract route and
+// `processImageForExtraction` below import it from there directly. No
+// re-export: a pass-through nothing imports is dead weight that knip flags.
+import { assertValidMaxDimension } from './validators.js';
 
 // ============================================================================
 // Types
@@ -122,12 +112,19 @@ export function resizeImage(
   let newHeight = height;
 
   if (width > maxDimension || height > maxDimension) {
+    // image-stoat-02 (deep dive 2026-09-02): clamp the minor axis to >= 1.
+    // Past roughly 512:1 the rounding collapses it to 0 -- a 2000x3 Discord
+    // attachment at the default maxDimension of 256 gives
+    // `Math.round((3 / 2000) * 256) === 0` -- and `resize(image, 256, 0, ...)`
+    // yields an image whose `get_raw_pixels()` is empty. /extract then answered
+    // 200 with a zero-byte body and `X-Image-Height: 0`, and discord-worker
+    // told the user the image had no colours it could read.
     if (width > height) {
       newWidth = maxDimension;
-      newHeight = Math.round((height / width) * maxDimension);
+      newHeight = Math.max(1, Math.round((height / width) * maxDimension));
     } else {
       newHeight = maxDimension;
-      newWidth = Math.round((width / height) * maxDimension);
+      newWidth = Math.max(1, Math.round((width / height) * maxDimension));
     }
   }
 
@@ -241,6 +238,15 @@ export function computeCropBox(
   width: number,
   height: number
 ): { x1: number; y1: number; x2: number; y2: number } {
+  // BUG-053 (deep dive 2026-09-02): both axes clamp to >= 1. A 1x1000 source
+  // gave `bandHeight = Math.round(1 / 2.4242) === 0`, `bandHeight > height` was
+  // false so the band stayed 1x0, and `crop(original, 0, 0, 1, 0)` produced a
+  // 1x0 image that `resize(..., 640, 264, Lanczos3)` sampled out of bounds. The
+  // Rust panic surfaces as a WASM trap: the request answers 400 with an opaque
+  // message and the trapped module instance is shared by every later /extract
+  // and /thumbnail on that isolate. Such an upload clears presets-api's gate
+  // (non-empty, <= 5 MB, sniffs as png) and this Worker's (w>0, h>0, within the
+  // caps), so nothing upstream stops it.
   let bandWidth = width;
   let bandHeight = Math.round(width / TARGET_ASPECT);
 
@@ -249,6 +255,11 @@ export function computeCropBox(
     bandHeight = height;
     bandWidth = Math.round(height * TARGET_ASPECT);
   }
+
+  // Both axes end up in [1, source] whatever the source shape: never zero (the
+  // trap above) and never larger than what there is to crop from.
+  bandWidth = Math.min(width, Math.max(1, bandWidth));
+  bandHeight = Math.min(height, Math.max(1, bandHeight));
 
   const x1 = Math.round((width - bandWidth) / 2);
   const isLandscape = width / height > LANDSCAPE_ASPECT_THRESHOLD;

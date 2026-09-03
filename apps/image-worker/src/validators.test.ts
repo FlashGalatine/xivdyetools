@@ -34,7 +34,9 @@ describe('validators.ts', () => {
         it('should have correct default values', () => {
             expect(MAX_FILE_SIZE_BYTES).toBe(10 * 1024 * 1024); // 10MB
             expect(MAX_IMAGE_DIMENSION).toBe(4096);
-            expect(MAX_PIXEL_COUNT).toBe(16 * 1024 * 1024); // 16MP
+            // BUG-052: derived from the memory budget, not the side length —
+            // 32 MiB / (4 B/px x 2 concurrent RGBA copies) = 4 MP.
+            expect(MAX_PIXEL_COUNT).toBe(4 * 1024 * 1024); // 4MP
             expect(FETCH_TIMEOUT_MS).toBe(10000);
         });
     });
@@ -165,8 +167,8 @@ describe('validators.ts', () => {
         it('should accept valid dimensions', () => {
             expect(validateDimensions(100, 100)).toBeUndefined();
             expect(validateDimensions(1920, 1080)).toBeUndefined();
-            // 4000x4000 = 16MP exactly at limit
-            expect(validateDimensions(4000, 4000)).toBeUndefined();
+            // 2048x2048 = 4MP exactly at the limit (BUG-052)
+            expect(validateDimensions(2048, 2048)).toBeUndefined();
         });
 
         it('should reject zero or negative dimensions', () => {
@@ -187,16 +189,12 @@ describe('validators.ts', () => {
             expect(result).toContain('Image too large');
         });
 
-        it('should allow large dimensions within pixel count', () => {
-            // 4096x3000 = 12.3 megapixels < 16 megapixels limit
-            const result = validateDimensions(4096, 3000);
-            expect(result).toBeUndefined();
+        it('should allow a wide image within the pixel budget', () => {
+            // 4096x1000 = 4.1 MB of pixels... just over. 4096x1024 = exactly 4MP.
+            expect(validateDimensions(4096, 1024)).toBeUndefined();
+            // and the side cap still stands on its own axis
+            expect(validateDimensions(4096, 1025)).toContain('too many pixels');
         });
-
-        // Note: With current constants (MAX_IMAGE_DIMENSION=4096, MAX_PIXEL_COUNT=16*1024*1024=16777216),
-        // the max valid pixel count is 4096*4096=16777216 which exactly equals MAX_PIXEL_COUNT.
-        // This makes the pixel count branch unreachable - dimension check always triggers first.
-        // The tests below verify the dimension check behavior instead.
 
         it('should reject height exceeding dimension limit', () => {
             // 4097 > 4096, so dimension check triggers
@@ -205,10 +203,22 @@ describe('validators.ts', () => {
             expect(result).toContain('4096px');
         });
 
-        it('should allow exactly at dimension limit', () => {
-            // 4096x4096 is exactly at both limits
+        // BUG-052 (deep dive 2026-09-02): the pixel branch used to be
+        // UNREACHABLE — MAX_PIXEL_COUNT was exactly 4096^2, so the largest
+        // square the side cap admits passed at equality (`>`, not `>=`). Its
+        // RGBA buffer is 64 MiB, photon holds two, and the isolate has 128 MiB:
+        // the OOM this pre-decode gate exists to prevent was reachable from any
+        // Discord attachment. The suite even carried a note observing the branch
+        // was unreachable, and treated that as the expected shape.
+        it('rejects the largest square the SIDE cap admits — 4096x4096 is 64 MiB per RGBA copy', () => {
             const result = validateDimensions(4096, 4096);
-            expect(result).toBeUndefined();
+            expect(result).toContain('too many pixels');
+            expect(result).toContain('4MP');
+        });
+
+        it('the pixel cap binds before the side cap for any square over 2048', () => {
+            expect(validateDimensions(2048, 2048)).toBeUndefined();
+            expect(validateDimensions(2049, 2049)).toContain('too many pixels');
         });
     });
 

@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.3] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit, Sprint 12
+
+- **An empty image file reads as the user's image problem, not ours**
+  (image-stoat-07). image-worker throws 'Image file is empty' when the Discord CDN
+  answers 200 with a zero-byte body, and that message had no marker in
+  `IMAGE_INPUT_MARKERS` — so `imageInputReason` returned null, `command-trace`
+  recorded the outcome class as `unknown` rather than `image_input`, and the user
+  saw the generic `matchImage.processingFailed` instead of a message about their
+  file. It is classified as `format` rather than `too_large`: nothing about an empty
+  file is large, and "not an image we can read" is what actually happened.
+
+### Tests
+
+- `image-input-errors-contract.test.ts` reads **image-worker's own source** and fails
+  when a message it can throw has no marker. The existing suite tested the table
+  against the messages it *lists*, which by construction cannot catch one the table
+  has never heard of — the same shape as the moderation-stats contract test from
+  Sprint 7, which reads presets-api's SQL rather than a mock built from what the
+  client expects. On its first run it found two more unmatched messages, both
+  correctly unmatched and now recorded with the reason: `'Invalid JSON body'` (a
+  malformed request WE sent) and `'No image data provided'` (`POST /thumbnail`,
+  which only presets-api calls).
+
 ## [5.1.2] - 2026-09-02
 
 ### Fixed — 2026-09-02 deep-dive audit, Sprint 6

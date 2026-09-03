@@ -346,14 +346,13 @@ describe('photon image processing', () => {
 
             processImageForThumbnail(buffer);
 
-            // Compute expected crop box for 100x100 image (mock size)
-            expect(crop).toHaveBeenCalledWith(
-                expect.anything(),
-                expect.any(Number),
-                expect.any(Number),
-                expect.any(Number),
-                expect.any(Number)
-            );
+            // image-stoat-04: this used to assert `expect.any(Number)` on all
+            // four coordinates, which cannot fail for ANY crop box — including
+            // the degenerate 1x0 one BUG-053 fixes. Assert the box
+            // `computeCropBox` actually computes for the mocked 100x100 source.
+            const box = computeCropBox(100, 100);
+            expect(box).toEqual({ x1: 0, y1: 0, x2: 100, y2: 41 }); // round(100 / 2.4242)
+            expect(crop).toHaveBeenCalledWith(expect.anything(), box.x1, box.y1, box.x2, box.y2);
         });
 
         it('calls resize with thumbnail dimensions and Lanczos3', () => {
@@ -372,6 +371,85 @@ describe('photon image processing', () => {
                 THUMBNAIL_HEIGHT,
                 SamplingFilter.Lanczos3
             );
+        });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-053 / image-stoat-02 (deep dive 2026-09-02): a degenerate source shape
+// collapsed an axis to zero.
+//
+// BUG-053 — `computeCropBox(1, 1000)` gave `bandHeight = Math.round(1 / 2.4242)
+// = 0`, `bandHeight > height` was false so the band stayed 1x0, and
+// `crop(original, 0, 0, 1, 0)` produced a 1x0 image that `resize(…, 640, 264,
+// Lanczos3)` sampled out of bounds. The Rust panic surfaces as a WASM trap, and
+// the trapped module instance is shared by every later /extract and /thumbnail
+// on that isolate. Such an upload clears presets-api's gate and this Worker's.
+//
+// image-stoat-02 — past roughly 512:1 `resizeImage` rounded the minor axis to
+// 0, so /extract answered 200 with a zero-byte body and `X-Image-Height: 0`,
+// and discord-worker told the user the image had no colours it could read.
+//
+// The existing cases are 1920x1080, 1080x1920, 1000x1000, 1600x1200 and
+// 3000x400 — none anywhere near where the rounding collapses.
+// ---------------------------------------------------------------------------
+describe('degenerate source shapes never collapse an axis', () => {
+    describe('computeCropBox (BUG-053)', () => {
+        const SHAPES: Array<[number, number]> = [
+            [1, 1],
+            [1, 1000],
+            [1000, 1],
+            [1, 4096],
+            [4096, 1],
+            [2, 3],
+            [3, 2],
+            [1, 2],
+            [2, 1],
+        ];
+
+        it.each(SHAPES)('%ix%i yields a band of at least 1x1, inside the source', (w, h) => {
+            const box = computeCropBox(w, h);
+            expect(box.x2 - box.x1, 'band width').toBeGreaterThanOrEqual(1);
+            expect(box.y2 - box.y1, 'band height').toBeGreaterThanOrEqual(1);
+            expect(box.x1).toBeGreaterThanOrEqual(0);
+            expect(box.y1).toBeGreaterThanOrEqual(0);
+            expect(box.x2).toBeLessThanOrEqual(w);
+            expect(box.y2).toBeLessThanOrEqual(h);
+        });
+
+        it('holds across every 1..64 x 1..64 source, not just the named shapes', () => {
+            for (let w = 1; w <= 64; w++) {
+                for (let h = 1; h <= 64; h++) {
+                    const box = computeCropBox(w, h);
+                    const bw = box.x2 - box.x1;
+                    const bh = box.y2 - box.y1;
+                    if (bw < 1 || bh < 1 || box.x2 > w || box.y2 > h || box.x1 < 0 || box.y1 < 0) {
+                        throw new Error(`${w}x${h} -> ${JSON.stringify(box)}`);
+                    }
+                }
+            }
+        });
+    });
+
+    describe('resizeImage (image-stoat-02)', () => {
+        it('never rounds the minor axis to zero on an extreme aspect ratio', () => {
+            // 2000x3 at the default maxDimension of 256:
+            // round((3 / 2000) * 256) === 0 before the clamp.
+            const image = createMockPhotonImage(2000, 3);
+            resizeImage(image as unknown as PhotonImage, 256);
+            expect(resize).toHaveBeenCalledWith(expect.anything(), 256, 1, expect.anything());
+        });
+
+        it('…in either orientation', () => {
+            const image = createMockPhotonImage(3, 2000);
+            resizeImage(image as unknown as PhotonImage, 256);
+            expect(resize).toHaveBeenCalledWith(expect.anything(), 1, 256, expect.anything());
+        });
+
+        it('leaves an ordinary ratio exactly as it was', () => {
+            const image = createMockPhotonImage(2000, 1000);
+            resizeImage(image as unknown as PhotonImage, 256);
+            expect(resize).toHaveBeenCalledWith(expect.anything(), 256, 128, expect.anything());
         });
     });
 });

@@ -41,16 +41,78 @@ const ALLOWED_HOSTS = new Set([
 export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 /**
- * Maximum image dimensions (4096x4096)
+ * Maximum image dimension per side (4096px) — the SECONDARY guard.
  *
- * Prevents decompression bombs where a small file expands to huge pixel data
+ * Prevents decompression bombs where a small file expands to huge pixel data.
+ * The binding limit is {@link MAX_PIXEL_COUNT} below; this one only rejects a
+ * shape no legitimate palette source has.
  */
 export const MAX_IMAGE_DIMENSION = 4096;
 
 /**
- * Maximum pixel count (16 megapixels)
+ * Bytes an RGBA pixel costs in one buffer.
  */
-export const MAX_PIXEL_COUNT = 16 * 1024 * 1024; // 16 million pixels
+const BYTES_PER_RGBA_PIXEL = 4;
+
+/**
+ * How many full RGBA copies of the image exist at once inside photon.
+ *
+ * `get_raw_pixels()` materialises one, and `dyn_image_from_raw` copies that
+ * vector again for each operation — so a decode-then-resize holds two.
+ */
+const CONCURRENT_RGBA_COPIES = 2;
+
+/**
+ * The share of the isolate's 128 MiB this Worker will spend on decoded pixels.
+ *
+ * The rest pays for the JS-side source buffer (up to
+ * {@link MAX_FILE_SIZE_BYTES}), the resize output, the WASM module itself and
+ * the runtime's own overhead — and this Worker shares its isolate with
+ * whatever else is resident.
+ */
+const PIXEL_MEMORY_BUDGET_BYTES = 32 * 1024 * 1024;
+
+/**
+ * Maximum pixel count — **derived from the memory budget, not the side length**.
+ *
+ * BUG-052 (deep dive 2026-09-02): this used to be `16 * 1024 * 1024`, exactly
+ * 4096², so the largest square the side cap admits was accepted at equality
+ * (`pixelCount > MAX_PIXEL_COUNT` is false when they are equal). One RGBA
+ * buffer for it is 64 MiB and photon holds two, so decode-then-resize needed
+ * ≥ 128 MiB of WASM linear memory against Cloudflare's 128 MiB per-isolate
+ * limit — before the source buffer and the resize output. A solid-colour
+ * 4096×4096 PNG compresses to tens of KB, far under the 10 MB file cap, so the
+ * OOM this pre-decode gate exists to prevent was reachable from any Discord
+ * attachment, in a Worker shared with presets-api.
+ *
+ * 4 MP ≈ 2048×2048, which is ~8× the 256px default `maxDimension` on the long
+ * edge — comfortably more resolution than palette extraction can use.
+ */
+export const MAX_PIXEL_COUNT = Math.floor(
+  PIXEL_MEMORY_BUDGET_BYTES / (BYTES_PER_RGBA_PIXEL * CONCURRENT_RGBA_COPIES)
+); // 4,194,304 px ≈ 4 MP
+
+/** Smallest `maxDimension` that still yields a usable palette sample. */
+export const MIN_MAX_DIMENSION = 16;
+
+/**
+ * FINDING-004 (2026-08-21 audit): `maxDimension` arrives from the request body
+ * and used to flow straight into `resize()` — NaN / 0 / huge values produced a
+ * zero-sized or full-resolution RGBA buffer. Integer 16..MAX_IMAGE_DIMENSION.
+ *
+ * REFACTOR-007 (deep dive 2026-09-02): this lives HERE, not in `photon.ts`, so
+ * the route and the processor can share one rule without the route importing
+ * the WASM-touching module — which every route test mocks wholesale, so a rule
+ * reached through it would be undefined under test. `photon.ts` re-exports it
+ * for its own callers.
+ */
+export function assertValidMaxDimension(value: number): void {
+  if (!Number.isInteger(value) || value < MIN_MAX_DIMENSION || value > MAX_IMAGE_DIMENSION) {
+    throw new Error(
+      `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_IMAGE_DIMENSION}`
+    );
+  }
+}
 
 /**
  * Request timeout for image fetching (10 seconds)
