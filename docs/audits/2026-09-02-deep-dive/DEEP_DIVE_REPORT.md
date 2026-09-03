@@ -224,7 +224,7 @@ Checked and dropped, so the next audit does not re-chase them.
 
 ## Remediation status
 
-The audit itself modified no source file. Sprints 1–14 of `REMEDIATION_PLAN.md` were then executed with the user's approval on 2026-09-02.
+The audit itself modified no source file. Sprints 1–19 of `REMEDIATION_PLAN.md` were then executed with the user's approval on 2026-09-02 — Sprints 18 and 19 in part, with the remainder and its reasons recorded in the plan.
 
 | ID | Status | Commit |
 |---|---|---|
@@ -252,6 +252,20 @@ The audit itself modified no source file. Sprints 1–14 of `REMEDIATION_PLAN.md
 | BUG-021, BUG-022, BUG-023, BUG-024, BUG-025, REFACTOR-002, OPT-006, `og-6/7/8/12` | FIXED | `35914823` |
 | BUG-052, BUG-053, REFACTOR-007, `image-stoat-02/04/06/07` | FIXED | `1af1cac0` |
 | BUG-004, BUG-005, BUG-104, OPT-007, BUG-061 | FIXED | `e1ca03a1` |
+| BUG-097, BUG-098, BUG-099, BUG-100, `pkg-worker-kit-test-utils-01…15` | FIXED | `ac4087b3` |
+| BUG-060, BUG-062, BUG-063, BUG-081, BUG-083, BUG-087, BUG-088, REFACTOR-005 | FIXED | `6bf21bdd` |
+| BUG-064, BUG-068, BUG-072, BUG-073, BUG-074, BUG-075, BUG-076, BUG-093, BUG-094, BUG-096, OPT-001 | FIXED | `d5f2c9e3` |
+| BUG-078, BUG-079, BUG-085, BUG-086, REFACTOR-010, OPT-010 | FIXED | `369f4965` |
+| OPT-008 | FIXED | `6b9e165a` |
+| BUG-101, BUG-102, BUG-103, `image-stoat-12/13` | FIXED | `5ac57593` |
+| `core-color-04…07`, `core-data-14/15/16` | FIXED | `b2df6802` |
+| `presets-api-09…13` | FIXED | `94681d5c` |
+| `discord-core-13/14`, `discord-handlers-13/16` | FIXED | `460365a8` |
+| `webapp-modals-20/21/22`, `webapp-services-15/17`, `webapp-v4-15` | FIXED | `7971c9a2` |
+| `webapp-tools-a-13` (named rows), `webapp-modals-23` | FIXED | `c13ce36f` |
+| REFACTOR-001 (locale layer) | FIXED | `1b67aadd` |
+| `webapp-v4-16/17/18`, REFACTOR-001 (response builders, REST helpers) | OPEN — see the plan for why |
+| BUG-077, BUG-080, BUG-082, BUG-084, `discord-core-15`, `discord-handlers-14`, `webapp-services-16` | NOT A FINDING / already fixed |
 | everything else | OPEN | — |
 
 **Deliberately not done in Sprint 3:** OPT-005 (drop the per-colour `getAllDyes` copy) and OPT-009 (add an LRU to `rgbToRyb`). Both are LOW-impact optimizations whose fixes carry more risk than the gain: OPT-005 would change `getAllDyes`'s defensive-copy contract for every caller, and OPT-009 would put a cache in front of a conversion this same sprint rewrote. Correctness first; measure before caching.
@@ -278,6 +292,41 @@ Worth naming together, because the same shape recurs and each was caught only by
 6. **pkg-foundation-02** (Sprint 13) — the test that builds BUG-004's exact leak asserted only `not.toThrow()`. Its fixture even *names* the secret (`{ token: 'shhh' }`) and then never looks at it.
 
 In every case the assertion was correct and the *fixture* made it unfalsifiable. Two more, from Sprint 12's own findings: the pixel-cap suite carried a comment observing that "the pixel count branch [is] unreachable — dimension check always triggers first" and tested the dimension check instead of asking why (that unreachability *was* BUG-052), and my `Bot` fixture for BUG-005 initially used a realistic Discord token, which `DISCORD_TOKEN_VALUE_PATTERN` rescues whatever the scheme handling does — so that row did not discriminate until the fixture stopped looking like a Discord token.
+
+### Findings that were wrong on the facts
+
+Four rows did not survive contact with the code, and each was verified rather
+than taken on trust — the same discipline the standing guidance asks for:
+
+- **`discord-core-15`** claimed the quick-picks suite pins only two of its 22
+  entries, and gave a mutation proof: "changing `neon_green.targetDyeId` from 99
+  to 98 keeps the file green". Running exactly that mutation reddens the suite.
+  A resolution test added 2026-08-29 already covers every pick.
+- **`discord-handlers-14`** claimed `stats.test.ts` pins the literal `'4.0.0'`.
+  It asserts against `packageJson.version`, with a BUG-037 comment saying why.
+- **`webapp-services-16`** claimed the keyboard tests assert on a listener they
+  install themselves. They assert `RouterService.navigateTo` (BUG-014).
+- **BUG-077, BUG-080, BUG-082, BUG-084** were listed in Sprint 16 but had been
+  fixed in Sprints 1–2; the plan was written before those ran.
+
+That is four stale rows out of roughly ninety executed in this pass, which is
+about the rate the 2026-09-01 audit saw. The cost of checking is small; the cost
+of "fixing" something already fixed is a misleading commit.
+
+### Two live bugs found by writing the tests, not by the audit
+
+- **`modal-container.ts` blanked the page's scroll setting.** `webapp-modals-22`
+  said only that the overflow test could not tell "restores the prior value"
+  from "blanks it". Writing a test that starts from `overflow: scroll` made it
+  FAIL: `onUpdate()` guarded on `modals.length === 0` alone, so it also ran on
+  the container's first update — mounted, no modals, nothing saved — and `?? ''`
+  wiped whatever the page had set before any modal existed. That is also why the
+  old test could not discriminate: the captured "prior" value was always `''`.
+- **`discordLocaleToLocaleCode` returned a Function.** Both bot forks resolved
+  the map with `mapping[locale] ?? null`, so `'toString'` yielded
+  `Object.prototype.toString` from a call declared `LocaleCode | null` — and
+  `?? null` cannot catch it, because an inherited value is not nullish. Found on
+  the first test this layer has ever had.
 
 ### One fix that was wrong, caught by another unit's test
 

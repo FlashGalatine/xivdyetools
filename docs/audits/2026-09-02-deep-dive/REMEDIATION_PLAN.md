@@ -267,7 +267,15 @@ No code changes: pick up the Sprint 13 publish. One merge per unit, in whatever 
 
 **Ends with:** the whole-graph gate `pnpm turbo run build type-check lint test` before each merge.
 
-## Sprint 15 — `@xivdyetools/worker-kit` + `@xivdyetools/test-utils`
+## Sprint 15 — `@xivdyetools/worker-kit` + `@xivdyetools/test-utils` — ✅ COMPLETED 2026-09-02 (`ac4087b3`)
+
+**Deploy needs:** bump → merge → Actions publish. worker-kit 1.2.1 → **1.3.0**; test-utils 1.3.1 → **2.0.0** (private, so the major is bookkeeping — but `bind()` returning a new statement and the stricter KV TTL genuinely break consumer suites, as three of them showed).
+
+**The binding key format changed, so every native rate-limit counter resets once on deploy.** One-off, per-minute buckets. Six consumer test files assert the key and were updated.
+
+The unit's Sprint 18 rows (`-03/-04/-05/-07/-13/-14`) were done here too — same unit, same release. `-09` (KV put/get fidelity) was not scheduled by the plan and is done as well, being the same file as BUG-098.
+
+**One of my own fixes was reverted after the full-graph gate caught it:** reading a bare `null` from a `_setupMock` as "affected zero rows" reinterpreted three unrelated presets-api behaviours as failures. The explicit `{ meta }` hatch is documented instead.
 
 Grouped: the test-utils fixes exist to make the worker-kit and consumer fixes provable.
 
@@ -279,19 +287,41 @@ Grouped: the test-utils fixes exist to make the worker-kit and consumer fixes pr
 
 **Ends with:** `pnpm turbo run build test --filter=@xivdyetools/worker-kit --filter=@xivdyetools/test-utils` → bump worker-kit → merge → Actions publish (test-utils is private: merge only).
 
-## Sprint 16 — `web-app` remainder (P2/P3)
+## Sprint 16 — `web-app` remainder (P2/P3) — ✅ COMPLETED 2026-09-02 (`6bf21bdd`, `d5f2c9e3`, `369f4965`, `6b9e165a`)
+
+**Deploy needs:** merge → `deploy-web-app.yml`. web-app stays 5.0.2 (no public API).
+
+**The row list here was stale.** BUG-077, BUG-080, BUG-082 and BUG-084 were already fixed in Sprints 1–2 — this plan was written before those ran. Each was verified against the source rather than re-fixed.
+
+**Found in flight, not in the catalog:** `--theme-text-secondary` (19 call sites) and `--theme-input-background` (17) are referenced across `src/components` with no fallback and declared NOWHERE — not in `themes.css`, not by `ThemeService.applyPalette()`. Both were invalid at computed-value time. Defined as aliases of variables ThemeService does set.
 
 Everything left in the largest unit: `BUG-060`, `BUG-062`, `BUG-063`, `BUG-064`, `BUG-066`, `BUG-068`, `BUG-072`–`BUG-088`, `BUG-093`, `BUG-094`, `BUG-096`, `REFACTOR-005`, `REFACTOR-010`, `OPT-001`, `OPT-008`, `OPT-010`, and the `webapp-*` LOW rows in the reviewer returns. Split into two or three merges by theme (auth/session, market/pricing, accessibility, tutorial/modals) rather than one large one.
 
 **Ends with:** the web-app gate plus `build:check` before each merge.
 
-## Sprint 17 — `stoat-worker` (parked)
+## Sprint 17 — `stoat-worker` (parked) — ✅ COMPLETED 2026-09-02 (`5ac57593`)
+
+**Deploy needs:** none — this unit has no deploy workflow. stoat-worker 0.2.3 → **0.3.0**. The bot stays parked; this was executed to finish the audit, not as a signal it is being revived.
+
+`image-stoat-14` (dead symbols) was verified symbol by symbol but NOT actioned: two of the six are scaffolding for the reaction feature `commands/info.ts:108` documents as planned, and the choice between deleting the rest and putting this workspace on `lint:dead` is a product call about whether the bot is being revived. Recorded in the changelog.
 
 P3 by policy — the project holds no active investment here. Do it only if the bot is revived: `BUG-101` (no `error` listener, so the process crashes and pre-empts its own reconnect), `BUG-102`, `BUG-103`, `image-stoat-12,13,14`.
 
 **Ends with:** `pnpm turbo run build test --filter=xivdyetools-stoat-worker`.
 
-## Sprint 18 — the untested-behaviour sweep
+## Sprint 18 — the untested-behaviour sweep — ◐ MOSTLY COMPLETED 2026-09-02
+
+**Commits:** worker-kit/test-utils in `ac4087b3` (Sprint 15); core `b2df6802`; presets-api `94681d5c`; discord-worker `460365a8`; web-app `7971c9a2` and `c13ce36f`. Test-only apart from two source changes noted below.
+
+**Three rows remain, all of the "write a suite that does not exist" kind:** `webapp-v4-16` (result-card's context menu, ΔE re-derivation, tier bands and the four external links), `webapp-v4-17` (no `preset-tool` or `preset-detail` suite exists at all — 67 KB of the unit's most stateful code), and `webapp-v4-18` (overlapping `loadToolContent` calls against a deferred import). They are additions rather than repairs, and each is a session's work on its own.
+
+**A live bug fell out of webapp-modals-22.** The finding was only that the overflow test could not tell "restores the prior value" from "blanks it". Starting from a page that already had `overflow: scroll` made the new test FAIL: `onUpdate()` guarded on `modals.length === 0` alone, so it ran on the container's first update too — mounted, no modals, nothing saved — and `?? ''` blanked whatever the page had set before any modal existed. Fixed in `7971c9a2`.
+
+**Four rows were STALE and are recorded as non-findings, each verified rather than re-fixed:**
+- `discord-core-15` — its own stated mutation proof ("changing `neon_green.targetDyeId` from 99 to 98 keeps the file green") is false; a resolution test added 2026-08-29 catches exactly that.
+- `discord-handlers-14` — `stats.test.ts` already asserts against `packageJson.version`.
+- `webapp-services-16` — the keyboard tests already assert `RouterService.navigateTo` (BUG-014).
+- `core-data-15`'s dead branch was real and is removed, along with the test that reached it only by mocking the thing that cannot throw.
 
 49 findings, and the highest-leverage work in this plan after Sprint 1. Take them **one unit at a time**, at that unit's next natural release, using the clusters in the report's *The remainder* table. The bar for each: name the source edit that would make the test fail, then make that edit and watch it go red.
 
@@ -299,7 +329,15 @@ Sequence: `web-app` → `core` → `discord-worker` → `presets-api` → `worke
 
 **Ends with:** each unit's own gate; no deploy is required for test-only changes, but they ride the next release of their unit.
 
-## Sprint 19 — terminal: retire the moderation-worker fork
+## Sprint 19 — terminal: retire the moderation-worker fork — ◐ FIRST HALF COMPLETED 2026-09-02 (`1b67aadd`)
+
+**Deploy needs:** bump → merge → Actions publish `@xivdyetools/bot-logic` **3.1.0**, then `deploy-moderation-worker.yml` and `deploy-discord-worker.yml`. moderation-worker 1.6.2 → 1.6.3, discord-worker 5.1.3 → 5.1.4.
+
+**The locale layer is done** — the half this finding sequences first and the half that fixes BUG-001 at the class rather than the instance. `LocaleCode` is now derived from an exported `LOCALE_CODES` list that `isValidLocale` also checks, closing the union-vs-array trap the finding named. A latent bug came out with it: both forks resolved the Discord-locale map with `mapping[locale] ?? null`, so an inherited key returned a FUNCTION from a call typed `LocaleCode | null`.
+
+**The response builders and REST helpers were NOT moved, and the reason is the destination's own contract.** `packages/bot-logic/CLAUDE.md`: "Never put Discord-specific types like `APIEmbed`, `Snowflake`, or interaction objects in this package" — it is the platform-agnostic layer `stoat-worker` shares. The locale layer fits; `DiscordEmbed`, `MessageFlags` and interaction response builders are exactly what that rule excludes. They need a new shared package, whose FIRST publish cannot go through OIDC and needs the break-glass manual path plus trusted-publisher configuration — a maintainer decision.
+
+The evidence also says convergence there would change behaviour rather than move it: moderation's `messageResponse` routes through `withAllowedMentions` (FINDING-019) and discord-worker's does not; both `discord-api.ts` files now carry `allowed_mentions` in DIFFERENT shapes, and discord-worker's additionally owns the follow-up helpers and retry handling. `preset-api.ts` the finding already excludes.
 
 | ID | Pri | Effort | Item |
 |---|---|---|---|
