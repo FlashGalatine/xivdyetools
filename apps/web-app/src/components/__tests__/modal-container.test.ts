@@ -657,14 +657,20 @@ describe('ModalContainer', () => {
       expect(queryAll(container, '[data-modal-id]').length).toBe(0);
     });
 
+    // webapp-modals-23: `not.toThrow()` was the only assertion, so a LEAKED
+    // subscription -- the exact failure the title names -- passed: the
+    // destroyed container would happily go on rendering. Assert that nothing
+    // was rendered after destroy.
     it('should unsubscribe on destroy', () => {
       modalContainer = new ModalContainer(container);
       modalContainer.init();
 
       modalContainer.destroy();
 
-      // Showing a modal after destroy should not cause errors
       expect(() => ModalService.show({ type: 'custom', title: 'Test' })).not.toThrow();
+
+      // A live subscription would have rendered the modal into the container.
+      expect(queryAll(container, '[data-modal-id]')).toHaveLength(0);
     });
   });
 
