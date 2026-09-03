@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.1.0] - 2026-09-03
+
+### Added
+
+- **"Show all" in the Swatch Matcher's glamour block.** The block only ever listed pieces that
+  carried a dye, which meant an accessory could never appear in it at all — no FFXIV earring,
+  necklace, bracelet or ring is dyeable — and worn-but-undyed armour was reduced to a number in
+  the footnote. A switch beside the Pieces/Dyes toggle flips the list's unit from "a dyed
+  channel" to "a piece this character wears", so every worn slot gets a row with its icon, item
+  name and slot tag. Empty slots stay out of the list and stay in the footnote, which is the
+  honest place for "nothing is there". The choice persists. It is inert in the Dyes lens, which
+  has no undyed unit to show.
+- **Facewear is listed too.** The glasses row was already being resolved from api-worker on every
+  import and then thrown away — it now appears under the switch with its icon and name. The
+  `.chara` file stores no facewear tint, so its chip is read from the colour word in the item's
+  English name against the eleven facewear colours; a name with no colour word gets a neutral
+  chip and says the colour is unknown, rather than inventing one.
+
+### Changed
+
+- **Dye chips are now positional: chip one is `DyeId`, chip two is `DyeId2`, always.** A piece dyed
+  only on its second channel used to draw a single chip in the first chip's position, so the
+  picture said channel one while the file said channel two. Dyeable pieces now always show both
+  channels, with a neutral chip standing in for an empty one, and the row's text names the empty
+  channel ("Metallic Orange + Undyed") instead of hiding it. The neutral chip is a solid recessed
+  fill, deliberately not the dashed chip, which already means "a stain ID this build does not
+  know" — undyed must not wear the costume of unknown.
+- **A glamour with nothing dyed now gets the block instead of nothing at all.** Previously the
+  whole panel was suppressed when no piece carried a dye, which would have left the new switch
+  unreachable for exactly the character that needs it most.
+
+---
+
 ## [5.0.1] - 2026-09-02
 
 ### Fixed
