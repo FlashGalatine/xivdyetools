@@ -25,6 +25,12 @@ function validProductionOverrides(): Partial<Env> {
         JWT_ISSUER: 'https://auth.xivdyetools.app',
         TOKEN_BLACKLIST: createMockKV() as unknown as KVNamespace,
         RL_PUBLIC: {} as unknown as RateLimit,
+        // BUG-043: `createMockEnv` leaves these undefined by default — which is
+        // exactly the shape that made the moderation fan-out fail silently, so
+        // production now refuses to start without them. A production fixture
+        // has to look like production.
+        INTERNAL_WEBHOOK_SECRET: 'test-internal-webhook-secret',
+        DISCORD_WORKER: { fetch: async () => new Response(null, { status: 204 }) } as unknown as Fetcher,
     };
 }
 

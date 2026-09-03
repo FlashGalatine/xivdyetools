@@ -21,6 +21,7 @@ import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/r
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import { RouterService } from '@services/router-service';
+import { handoffTo } from '@shared/tool-handoff';
 import { ShareService } from '@services/share-service';
 import {
   ColorService,
@@ -2053,7 +2054,7 @@ export class GradientTool extends BaseComponent {
     switch (action) {
       // Inspect actions - navigate to tool
       case 'inspect-harmony':
-        RouterService.navigateTo('harmony', { dyeId: String(dye.itemID) });
+        handoffTo('harmony', dye);
         break;
       case 'inspect-budget':
         StorageService.setItem('v3_budget_target', dye.id);
@@ -2096,7 +2097,7 @@ export class GradientTool extends BaseComponent {
         this.addDyeToTool('v3_accessibility_selected_dyes', dye, 4);
         break;
       case 'see-harmonies':
-        RouterService.navigateTo('harmony', { dyeId: String(dye.itemID) });
+        handoffTo('harmony', dye);
         break;
       case 'budget':
         StorageService.setItem('v3_budget_target', dye.id);

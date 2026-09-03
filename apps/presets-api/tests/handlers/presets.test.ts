@@ -490,47 +490,6 @@ describe('PresetsHandler', () => {
 
         // Skip: This test requires Cloudflare Workers ExecutionContext (for waitUntil)
         // which is not available in Node test environment
-        it.skip('should create preset with valid data (requires Cloudflare Workers)', async () => {
-            mockDb._setupMock((query) => {
-                // Rate limit check
-                if (query.includes('COUNT') && query.includes('author_discord_id')) {
-                    return { count: 0 };
-                }
-                // Duplicate check
-                if (query.includes('dye_signature')) {
-                    return null;
-                }
-                // Get remaining submissions
-                if (query.includes('COUNT')) {
-                    return { count: 1 };
-                }
-                return { success: true };
-            });
-
-            const submission = createMockSubmission();
-
-            const res = await app.request(
-                '/api/v1/presets',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': '123',
-                        'X-User-Discord-Name': 'TestUser',
-                    },
-                    body: JSON.stringify(submission),
-                },
-                env
-            );
-
-            expect(res.status).toBe(201);
-            const body = await res.json() as { success: boolean; preset: CommunityPreset };
-
-            expect(body.success).toBe(true);
-            expect(body.preset.name).toBe(submission.name);
-        });
-
         it('should create preset successfully with mock executionCtx', async () => {
             const waitUntilPromises: Promise<unknown>[] = [];
             const mockExecutionCtx = {
@@ -589,6 +548,170 @@ describe('PresetsHandler', () => {
             expect(body.success).toBe(true);
             expect(body.preset.name).toBe(submission.name);
             expect(body.moderation_status).toBe('approved');
+        });
+
+        // ====================================================================
+        // presets-api-12: the three D1-failure recovery paths were DEAD to the
+        // suite. Neither `UNIQUE` nor `remaining_submissions` appeared anywhere
+        // under tests/, and no suite ever made an INSERT or UPDATE reject --
+        // even though `_setupMock` can throw, as the dead-letter suite already
+        // shows. One of these branches DELETES a user's just-created preset.
+        // ====================================================================
+        describe('D1 failure recovery (presets-api-12)', () => {
+            function executionCtx(): { ctx: ExecutionContext; promises: Promise<unknown>[] } {
+                const promises: Promise<unknown>[] = [];
+                return {
+                    ctx: {
+                        waitUntil: (pr: Promise<unknown>) => { promises.push(pr); },
+                        passThroughOnException: () => {},
+                    } as unknown as ExecutionContext,
+                    promises,
+                };
+            }
+
+            const authHeaders = {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer test-bot-secret',
+                'X-User-Discord-ID': '123',
+                'X-User-Discord-Name': 'TestUser',
+            };
+
+            // PRESETS-CRITICAL-001: the duplicate pre-check is check-then-insert,
+            // so a concurrent writer can win the race. The INSERT then violates
+            // the UNIQUE dye_signature index, and the handler must recover by
+            // voting on the winner instead of 500-ing.
+            it('votes on the winner when the INSERT loses a dye_signature race', async () => {
+                const { ctx } = executionCtx();
+                const winner = createMockPresetRow({ id: 'winner-1', status: 'approved' });
+
+                mockDb._setupMock((query: string) => {
+                    if (query.includes('FROM categories')) {
+                        return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                    }
+                    if (query.includes('INSERT INTO presets')) {
+                        throw new Error(
+                            'D1_ERROR: UNIQUE constraint failed: presets.dye_signature'
+                        );
+                    }
+                    // The post-race lookup finds the preset that won.
+                    if (query.includes('dye_signature')) {
+                        return winner;
+                    }
+                    if (query.includes('INSERT INTO votes')) {
+                        return { success: true, meta: { changes: 1 } };
+                    }
+                    if (query.includes('COUNT')) {
+                        return { count: 0 };
+                    }
+                    return { success: true };
+                });
+
+                const res = await app.request(
+                    '/api/v1/presets',
+                    { method: 'POST', headers: authHeaders, body: JSON.stringify(createMockSubmission()) },
+                    env,
+                    ctx
+                );
+
+                // Not a 500: the race is a known outcome with a defined answer.
+                expect(res.status).toBeLessThan(500);
+                expect(
+                    mockDb._queries.some((q) => q.includes('INSERT INTO votes')),
+                    'the loser should have voted on the winning preset'
+                ).toBe(true);
+            });
+
+            // BUG-049: the quota pre-check is also check-then-insert, so N
+            // concurrent submissions at 9/10 can all pass it. The handler
+            // re-counts AFTER its own INSERT lands and rolls itself back --
+            // deleting the preset AND its votes -- when the count overshot.
+            it('rolls back its own preset and votes when the quota overshot', async () => {
+                const { ctx } = executionCtx();
+                let insertedPresets = 0;
+
+                mockDb._setupMock((query: string) => {
+                    if (query.includes('FROM categories')) {
+                        return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                    }
+                    // Order matters: the INSERT statement LISTS the
+                    // `dye_signature` column, so a substring check for it would
+                    // swallow the insert and answer the duplicate-check branch.
+                    if (query.includes('INSERT INTO presets')) {
+                        insertedPresets += 1;
+                        return { success: true };
+                    }
+                    if (query.includes('dye_signature')) {
+                        return null;
+                    }
+                    if (query.includes('INSERT INTO votes')) {
+                        return { success: true, meta: { changes: 1 } };
+                    }
+                    // Every COUNT reports an overshoot: the pre-check passes
+                    // (it runs before the insert) and the post-insert re-count
+                    // is what trips the rollback.
+                    if (query.includes('COUNT')) {
+                        return insertedPresets > 0 ? { count: 99 } : { count: 0 };
+                    }
+                    return { success: true };
+                });
+
+                const res = await app.request(
+                    '/api/v1/presets',
+                    { method: 'POST', headers: authHeaders, body: JSON.stringify(createMockSubmission()) },
+                    env,
+                    ctx
+                );
+
+                expect(res.status).toBe(429);
+
+                // BOTH deletes must be issued -- a preset row left behind with
+                // its votes deleted, or vice versa, is worse than either.
+                expect(
+                    mockDb._queries.some((q) => /DELETE FROM votes WHERE preset_id/i.test(q)),
+                    'votes were not rolled back'
+                ).toBe(true);
+                expect(
+                    mockDb._queries.some((q) => /DELETE FROM presets WHERE id/i.test(q)),
+                    'the preset was not rolled back'
+                ).toBe(true);
+            });
+
+            // BUG-003: the same race on the EDIT path, which answers 409 rather
+            // than voting -- the author already owns a preset here.
+            it('answers 409 when an edit loses a dye_signature race', async () => {
+                const existing = createMockPresetRow({
+                    id: 'preset-123',
+                    author_discord_id: '123',
+                    status: 'approved',
+                });
+
+                mockDb._setupMock((query: string) => {
+                    if (query.includes('FROM categories')) {
+                        return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                    }
+                    if (query.includes('UPDATE presets')) {
+                        throw new Error(
+                            'D1_ERROR: UNIQUE constraint failed: presets.dye_signature'
+                        );
+                    }
+                    return existing;
+                });
+
+                const res = await app.request(
+                    '/api/v1/presets/preset-123',
+                    {
+                        method: 'PATCH',
+                        headers: authHeaders,
+                        body: JSON.stringify({ dyes: [1, 2, 3] }),
+                    },
+                    env
+                );
+
+                expect(res.status).toBe(409);
+                const body = await res.json() as { success: boolean; error: string };
+                expect(body.success).toBe(false);
+                expect(body.error).toBe('DUPLICATE_RESOURCE');
+            });
         });
 
         it('should notify Discord worker when configured and content is flagged', async () => {
@@ -721,19 +844,17 @@ describe('PresetsHandler', () => {
                     // too, and the response legitimately waits for that one). A
                     // 201 that arrives while the prune is still blocked is the
                     // proof that it rides waitUntil rather than the response.
-                    const sqlOf = new Map<unknown, string>();
-                    const prepare = mockDb.prepare.bind(mockDb);
-                    mockDb.prepare = (query: string) => {
-                        const statement = prepare(query);
-                        sqlOf.set(statement, query);
-                        return statement;
-                    };
+                    // The statement carries its own SQL (`_query`), so this no
+                    // longer needs an identity Map built by wrapping `prepare`.
+                    // That technique silently stopped working once `bind()`
+                    // began returning a NEW statement, the way real D1 does:
+                    // the object reaching `batch()` was never the recorded one.
                     let releasePrune!: () => void;
                     const pruneGate = new Promise<void>((resolve) => { releasePrune = resolve; });
                     const realBatch = mockDb.batch.bind(mockDb);
                     mockDb.batch = (async (statements: Parameters<typeof realBatch>[0]) => {
                         const isPrune = statements.some((s) =>
-                            /DELETE FROM failed_notifications/i.test(sqlOf.get(s) ?? '')
+                            /DELETE FROM failed_notifications/i.test(s._query)
                         );
                         if (isPrune) await pruneGate;
                         return realBatch(statements);
@@ -1866,15 +1987,9 @@ describe('PresetsHandler', () => {
             });
             mockDb._setupMock(() => mockRow);
 
-            // D1 statements are opaque once prepared, so remember the SQL each
-            // one was built from and read the batch back through that map.
-            const sqlOf = new Map<unknown, string>();
-            const prepare = mockDb.prepare.bind(mockDb);
-            mockDb.prepare = (query: string) => {
-                const statement = prepare(query);
-                sqlOf.set(statement, query);
-                return statement;
-            };
+            // A real D1 statement is opaque, but the mock carries the SQL it
+            // was prepared from on `_query` -- across `bind()`, which returns a
+            // new statement here as it does against real D1.
             const batchSpy = vi.spyOn(mockDb, 'batch');
 
             const res = await app.request(
@@ -1894,7 +2009,7 @@ describe('PresetsHandler', () => {
             // The cascade rides the batch that deletes the preset: it must not
             // survive a delete that failed, nor be skipped by one that succeeded.
             const deleteBatch = batchSpy.mock.calls
-                .map((call) => call[0].map((statement) => sqlOf.get(statement) ?? ''))
+                .map((call) => call[0].map((statement) => statement._query))
                 .find((queries) => queries.some((q) => q.includes('DELETE FROM presets')));
             expect(deleteBatch).toBeDefined();
             const cascade = deleteBatch!.find((q) => /DELETE FROM failed_notifications/i.test(q));
@@ -3213,26 +3328,46 @@ describe('PresetsHandler', () => {
 
     // ============================================
     // Discord Notification Tests
-    // Note: These tests require Cloudflare Workers runtime
-    // because they use c.executionCtx.waitUntil
+    //
+    // These used to be three `it.skip`s marked "requires Cloudflare Workers"
+    // because the route hands its notification to `c.executionCtx.waitUntil`.
+    // That is solvable in-process: pass a mock ExecutionContext as the fourth
+    // argument to `app.request` and await the promises it collects. Fixed in
+    // the 2026-09-01 dead-code sweep (DEAD-012); the "notification is attempted
+    // when DISCORD_WORKER is configured" case was dropped as a duplicate of
+    // "should notify Discord worker when configured and content is flagged"
+    // above, which asserts the fetch actually happened.
     // ============================================
 
     describe('Discord Bot Notifications', () => {
-        it.skip('should skip notification when DISCORD_WORKER is not configured (requires Cloudflare Workers)', async () => {
-            const mockRow = createMockPresetRow();
-            mockDb._setupMock((query) => {
-                if (query.includes('COUNT')) return { count: 0 };
+        /** The mock ctx + the DB shape a successful POST /presets needs. */
+        function notificationHarness(): {
+            waitUntilPromises: Promise<unknown>[];
+            mockExecutionCtx: { waitUntil: (p: Promise<unknown>) => void; passThroughOnException: () => void };
+        } {
+            const waitUntilPromises: Promise<unknown>[] = [];
+            const mockExecutionCtx = {
+                waitUntil: (p: Promise<unknown>) => {
+                    waitUntilPromises.push(p);
+                },
+                passThroughOnException: (): void => {},
+            };
+            mockDb._setupMock((query: string) => {
+                if (query.includes('COUNT') && query.includes('author_discord_id')) return { count: 0 };
+                if (query.includes('FROM categories')) return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 if (query.includes('dye_signature')) return null;
-                if (query.includes('INSERT')) return mockRow;
-                if (query.includes('votes')) return null;
-                return mockRow;
+                if (query.includes('INSERT')) return { success: true, meta: { changes: 1 } };
+                if (query.includes('COUNT')) return { count: 1 };
+                return { success: true };
             });
+            return { waitUntilPromises, mockExecutionCtx };
+        }
 
-            // Ensure DISCORD_WORKER is not set
-            delete (env as unknown as Record<string, unknown>).DISCORD_WORKER;
-            delete (env as unknown as Record<string, unknown>).INTERNAL_WEBHOOK_SECRET;
-
-            const res = await app.request(
+        async function submit(
+            targetEnv: Env,
+            ctx: { waitUntil: (p: Promise<unknown>) => void; passThroughOnException: () => void }
+        ): Promise<Response> {
+            return app.request(
                 '/api/v1/presets',
                 {
                     method: 'POST',
@@ -3240,81 +3375,64 @@ describe('PresetsHandler', () => {
                         'Content-Type': 'application/json',
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123',
+                        'X-User-Discord-Name': 'TestUser',
                     },
                     body: JSON.stringify(createMockSubmission()),
                 },
-                env
+                targetEnv,
+                ctx as unknown as ExecutionContext
             );
+        }
 
-            // Should succeed without notification
+        it('does not call the Discord worker when INTERNAL_WEBHOOK_SECRET is unset', async () => {
+            const { waitUntilPromises, mockExecutionCtx } = notificationHarness();
+            // The guard is `!env.DISCORD_WORKER || !env.INTERNAL_WEBHOOK_SECRET`
+            // (notification-service.ts:173). Binding the worker but withholding
+            // the secret is what makes the assertion meaningful: a spy that must
+            // never fire. (Asserting "nothing was queued" would be wrong —
+            // waitUntil also carries analytics and dead-letter pruning.)
+            const mockDiscordWorker = { fetch: vi.fn() };
+            const envWithoutSecret = createMockEnv({
+                DB: mockDb as unknown as D1Database,
+                DISCORD_WORKER: mockDiscordWorker as unknown as Env['DISCORD_WORKER'],
+                INTERNAL_WEBHOOK_SECRET: undefined,
+            });
+
+            const res = await submit(envWithoutSecret, mockExecutionCtx);
+
             expect(res.status).toBe(201);
+            await Promise.allSettled(waitUntilPromises);
+            expect(mockDiscordWorker.fetch).not.toHaveBeenCalled();
         });
 
-        it.skip('should attempt notification when DISCORD_WORKER is configured (requires Cloudflare Workers)', async () => {
-            const mockRow = createMockPresetRow();
-            mockDb._setupMock((query) => {
-                if (query.includes('COUNT')) return { count: 0 };
-                if (query.includes('dye_signature')) return null;
-                if (query.includes('INSERT')) return mockRow;
-                if (query.includes('votes')) return null;
-                return mockRow;
+        it('still returns 201 when the notification call fails (non-blocking)', async () => {
+            const { waitUntilPromises, mockExecutionCtx } = notificationHarness();
+            // 4xx, not 5xx: notifyDiscordBot treats server errors as transient
+            // and retries three times with real backoff sleeps, which blows the
+            // 5 s test timeout. A client error is non-retryable, so the failure
+            // surfaces immediately — and "non-blocking" is what we're asserting.
+            const mockDiscordWorker = {
+                fetch: vi.fn().mockResolvedValue(new Response('Bad Request', { status: 400 })),
+            };
+            const envWithFailingDiscord = createMockEnv({
+                DB: mockDb as unknown as D1Database,
+                DISCORD_WORKER: mockDiscordWorker as unknown as Env['DISCORD_WORKER'],
+                INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
             });
 
-            // Mock the service binding
-            const mockFetch = vi.fn().mockResolvedValue(new Response('OK', { status: 200 }));
-            env.DISCORD_WORKER = { fetch: mockFetch } as unknown as Fetcher;
-            env.INTERNAL_WEBHOOK_SECRET = 'test-webhook-secret';
-
-            const res = await app.request(
-                '/api/v1/presets',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': '123',
-                    },
-                    body: JSON.stringify(createMockSubmission()),
-                },
-                env
-            );
+            const res = await submit(envWithFailingDiscord, mockExecutionCtx);
 
             expect(res.status).toBe(201);
-            // Note: waitUntil is fire-and-forget, so we can't directly verify the call
-            // in this test context, but the code path is exercised
-        });
-
-        it.skip('should gracefully handle notification failure (requires Cloudflare Workers)', async () => {
-            const mockRow = createMockPresetRow();
-            mockDb._setupMock((query) => {
-                if (query.includes('COUNT')) return { count: 0 };
-                if (query.includes('dye_signature')) return null;
-                if (query.includes('INSERT')) return mockRow;
-                if (query.includes('votes')) return null;
-                return mockRow;
-            });
-
-            // Mock failing service binding
-            const mockFetch = vi.fn().mockResolvedValue(new Response('Error', { status: 500 }));
-            env.DISCORD_WORKER = { fetch: mockFetch } as unknown as Fetcher;
-            env.INTERNAL_WEBHOOK_SECRET = 'test-webhook-secret';
-
-            const res = await app.request(
-                '/api/v1/presets',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer test-bot-secret',
-                        'X-User-Discord-ID': '123',
-                    },
-                    body: JSON.stringify(createMockSubmission()),
-                },
-                env
-            );
-
-            // Should still succeed - notification failure is non-blocking
-            expect(res.status).toBe(201);
+            // The failure has to happen for the assertion to mean anything.
+            await Promise.allSettled(waitUntilPromises);
+            expect(mockDiscordWorker.fetch).toHaveBeenCalled();
+            // BUG-015: a failed notification is not just swallowed -- the .catch
+            // in the submit handler persists it for moderator review. Without
+            // this line the test cannot fail: deleting that whole catch block
+            // left both this file and the full app suite green (verified by
+            // mutation on 2026-09-02), so "non-blocking" was the only thing
+            // being asserted and the dead-letter path had no coverage at all.
+            expect(mockDb._queries.join(' ')).toContain('INSERT INTO failed_notifications');
         });
     });
 

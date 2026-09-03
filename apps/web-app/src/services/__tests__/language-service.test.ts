@@ -10,7 +10,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { LanguageService } from '../language-service';
 import { StorageService } from '../storage-service';
-import { STORAGE_KEYS, DEFAULT_LOCALE, LOCALE_DISPLAY_INFO } from '@shared/constants';
+import { STORAGE_KEYS, DEFAULT_LOCALE } from '@shared/constants';
 import type { LocaleCode } from '@shared/i18n-types';
 
 describe('LanguageService', () => {
@@ -33,24 +33,6 @@ describe('LanguageService', () => {
 
       expect(typeof locale).toBe('string');
       expect(locale.length).toBe(2);
-    });
-  });
-
-  describe('getCurrentLocaleDisplay', () => {
-    it('should return locale display info', () => {
-      const display = LanguageService.getCurrentLocaleDisplay();
-
-      expect(display).toHaveProperty('code');
-      expect(display).toHaveProperty('name');
-      expect(display).toHaveProperty('flag');
-      expect(display).toHaveProperty('englishName');
-    });
-
-    it('should return display info matching current locale', () => {
-      const currentLocale = LanguageService.getCurrentLocale();
-      const display = LanguageService.getCurrentLocaleDisplay();
-
-      expect(display.code).toBe(currentLocale);
     });
   });
 
@@ -256,15 +238,6 @@ describe('LanguageService', () => {
   // ==========================================================================
   // Utility Methods
   // ==========================================================================
-
-  describe('getAvailableLocales', () => {
-    it('should return all available locale display info', () => {
-      const locales = LanguageService.getAvailableLocales();
-
-      expect(locales).toBe(LOCALE_DISPLAY_INFO);
-      expect(locales.length).toBe(6); // en, ja, de, fr, ko, zh
-    });
-  });
 
   describe('isValidLocale', () => {
     it('should return true for valid locales', () => {
@@ -535,26 +508,6 @@ describe('LanguageService tInterpolate', () => {
 // ==========================================================================
 // Branch Coverage Tests - getCurrentLocaleDisplay Edge Cases
 // ==========================================================================
-
-describe('LanguageService getCurrentLocaleDisplay', () => {
-  it('should return valid display info for all supported locales', async () => {
-    const locales: LocaleCode[] = ['en', 'ja', 'de', 'fr', 'ko', 'zh'];
-
-    for (const locale of locales) {
-      await LanguageService.setLocale(locale);
-      const display = LanguageService.getCurrentLocaleDisplay();
-
-      expect(display).toHaveProperty('code');
-      expect(display).toHaveProperty('name');
-      expect(display).toHaveProperty('flag');
-      expect(display).toHaveProperty('englishName');
-      expect(display.code).toBe(locale);
-    }
-
-    // Restore to English
-    await LanguageService.setLocale('en');
-  });
-});
 
 // ==========================================================================
 // Branch Coverage Tests - Error Handling Paths
@@ -950,25 +903,6 @@ describe('LanguageService Browser Locale Detection Branches', () => {
 // ==========================================================================
 // Branch Coverage Tests - getCurrentLocaleDisplay Fallback
 // ==========================================================================
-
-describe('LanguageService getCurrentLocaleDisplay fallback', () => {
-  it('should return first locale display info when current locale not found in list', async () => {
-    // This tests the fallback path: || LOCALE_DISPLAY_INFO[0]
-    // The fallback is defensive and shouldn't normally trigger since
-    // all valid locales are in LOCALE_DISPLAY_INFO
-    const display = LanguageService.getCurrentLocaleDisplay();
-
-    // Verify it always returns a valid display object
-    expect(display).toHaveProperty('code');
-    expect(display).toHaveProperty('name');
-    expect(display).toHaveProperty('flag');
-    expect(display).toHaveProperty('englishName');
-
-    // The fallback path would return LOCALE_DISPLAY_INFO[0] which is 'en'
-    // This branch is hard to trigger since currentLocale is always validated
-    expect(LOCALE_DISPLAY_INFO[0].code).toBe('en');
-  });
-});
 
 // ==========================================================================
 // Branch Coverage Tests - setLocale Error Throw Path

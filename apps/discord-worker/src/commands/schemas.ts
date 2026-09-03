@@ -7,7 +7,40 @@
  */
 
 import type { PresetCategory } from '@xivdyetools/types';
+import type { HarmonyType } from '@xivdyetools/bot-logic';
 import { QUICK_PICKS } from '../services/budget/quick-picks.js';
+
+/**
+ * Discord's label for each harmony type, in the order the dropdown shows them.
+ *
+ * Typed `Record<HarmonyType, string>` deliberately, which is exhaustive in both
+ * directions: `HarmonyType` is exactly the rows of core's `HARMONY_OFFSETS`, so
+ * a type added there and not labelled here is a **type error**, and a label for
+ * a type that no longer exists is one too. Neither can become an option nobody
+ * can pick.
+ *
+ * That is not hypothetical: `compound` and `shades` reached core's table,
+ * bot-logic's roster and all six locale files, but never reached this array —
+ * so the changelog said the command grew from eight types to ten while Discord
+ * went on offering eight, and six new locale strings were unreachable.
+ */
+const HARMONY_TYPE_LABELS: Record<HarmonyType, string> = {
+  complementary: 'Complementary (opposite colors)',
+  analogous: 'Analogous (adjacent colors)',
+  triadic: 'Triadic (3 evenly spaced)',
+  'split-complementary': 'Split-Complementary',
+  tetradic: 'Tetradic (4 colors)',
+  'inverted-tetradic': 'Inverted Tetradic (4 colors, mirrored)',
+  square: 'Square (4 evenly spaced)',
+  monochromatic: 'Monochromatic (shades of one hue)',
+  compound: 'Compound (complementary plus its neighbours)',
+  shades: 'Shades (a narrow band around the hue)',
+};
+
+/** The `/harmony type` choices, derived so they cannot go stale. */
+const HARMONY_TYPE_CHOICES: ReadonlyArray<{ name: string; value: HarmonyType }> = (
+  Object.keys(HARMONY_TYPE_LABELS) as HarmonyType[]
+).map((value) => ({ name: HARMONY_TYPE_LABELS[value], value }));
 
 /**
  * Discord command option types
@@ -116,28 +149,7 @@ export const commands = [
         description: 'Type of color harmony',
         type: OptionType.STRING,
         required: false,
-        choices: [
-          { name: 'Complementary (opposite colors)', value: 'complementary' },
-          { name: 'Analogous (adjacent colors)', value: 'analogous' },
-          { name: 'Triadic (3 evenly spaced)', value: 'triadic' },
-          { name: 'Split-Complementary', value: 'split-complementary' },
-          { name: 'Tetradic (4 colors)', value: 'tetradic' },
-          { name: 'Inverted Tetradic (4 colors, mirrored)', value: 'inverted-tetradic' },
-          { name: 'Square (4 evenly spaced)', value: 'square' },
-          { name: 'Monochromatic (shades)', value: 'monochromatic' },
-        ],
-      },
-      {
-        name: 'color_space',
-        description: 'Color space for hue rotation',
-        type: OptionType.STRING,
-        required: false,
-        choices: [
-          { name: 'HSV - Classic hue wheel (default)', value: 'hsv' },
-          { name: 'OKLCH - Modern perceptual', value: 'oklch' },
-          { name: 'LCH - Cylindrical perceptual', value: 'lch' },
-          { name: 'HSL - Hue-Saturation-Lightness', value: 'hsl' },
-        ],
+        choices: HARMONY_TYPE_CHOICES,
       },
       {
         name: 'companions',

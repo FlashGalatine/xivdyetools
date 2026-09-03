@@ -35,7 +35,7 @@
  * @module services/svg/band
  */
 
-import { escapeXml, estimateTextWidth, GLYPH_ACCENT_LIGHT } from '@xivdyetools/svg';
+import { bandInk, escapeXml, estimateTextWidth, GLYPH_ACCENT_LIGHT } from '@xivdyetools/svg';
 import { GROUND, MARK_STRIPES, STACKS } from './tokens';
 
 // ============================================================================
@@ -81,37 +81,23 @@ const SUB_INK = '#86868C';
 const NAME_INK = '#ECECEE';
 
 // ============================================================================
-// Band ink law (deliberately NOT the package's getContrastTextColor)
+// Band ink law — the package's, not a fork of it
 // ============================================================================
 
-function relLum(hex: string): number {
-  const lin = (v: number): number => {
-    const n = v / 255;
-    return n <= 0.04045 ? n / 12.92 : Math.pow((n + 0.055) / 1.055, 2.4);
-  };
-  const c = hex.replace('#', '');
-  const r = parseInt(c.slice(0, 2), 16);
-  const g = parseInt(c.slice(2, 4), 16);
-  const b = parseInt(c.slice(4, 6), 16);
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-}
-
 /**
- * Pick by MEASURED contrast against both candidates rather than a luminance
- * cut — a mid-tone sits just under any fixed threshold and gets the worse of
- * the two.
+ * Ink for text set directly on a dye colour: near-black or white, whichever
+ * MEASURES the higher WCAG contrast against the ground (rather than sitting
+ * on a fixed luminance cut, where a mid-tone gets the worse of the two).
+ *
+ * REFACTOR-002 (deep dive 2026-09-02): this WAS a private copy — the same
+ * luminance formula and the same crossover, but with the white `onDim` at
+ * 0.78 where the package has 0.72. The bot card and the OG card are two
+ * renderings of the same dye and must not disagree about its captions, so
+ * the copy (and its private `relLum` / `preferDark`) is gone and the
+ * package's `bandInk` is re-exported under the name this module's callers
+ * already use. `onMid` comes along for free.
  */
-function preferDark(hex: string): boolean {
-  const l = relLum(hex);
-  return (l + 0.05) / 0.05 >= 1.05 / (l + 0.05);
-}
-
-/** Band ink: near-black or white, whichever measures better. */
-export function bandInk(hex: string): { on: string; onDim: string } {
-  return preferDark(hex)
-    ? { on: '#0A0A0A', onDim: 'rgba(10,10,10,0.72)' }
-    : { on: '#FFFFFF', onDim: 'rgba(255,255,255,0.78)' };
-}
+export { bandInk };
 
 // ============================================================================
 // The reduced bucket mark (48-grid — verbatim from the OG doc's #ogmark)

@@ -1,0 +1,98 @@
+• turbo 2.10.12
+
+   • Packages in scope: @xivdyetools/auth, @xivdyetools/bot-logic, @xivdyetools/core, @xivdyetools/logger, @xivdyetools/svg, @xivdyetools/test-utils, @xivdyetools/types, @xivdyetools/worker-kit, xivdyetools-api-worker, xivdyetools-discord-worker, xivdyetools-image-worker, xivdyetools-moderation-worker, xivdyetools-oauth-worker, xivdyetools-og-worker, xivdyetools-presets-api, xivdyetools-stoat-worker, xivdyetools-web-app
+   • Running type-check in 17 packages
+   • Remote caching disabled
+
+[36m@xivdyetools/auth:type-check: [0mcache miss, executing [2m796714a471c92b84[0m
+[33m@xivdyetools/logger:type-check: [0mcache miss, executing [2m3eef64e2ca69ec97[0m
+[34m@xivdyetools/types:type-check: [0mcache miss, executing [2m20abf046dde64e1c[0m
+[35m@xivdyetools/auth:build: [0mcache hit, replaying logs [2m4f5e75a26e297680[0m
+[32m@xivdyetools/logger:build: [0mcache hit, replaying logs [2m0694f3c397b52ece[0m
+[35m@xivdyetools/auth:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[32m@xivdyetools/logger:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[36m@xivdyetools/types:build: [0mcache hit, replaying logs [2m836a7e57087733f9[0m
+[35m@xivdyetools/worker-kit:type-check: [0mcache miss, executing [2m7e46177a6273f1e0[0m
+[36m@xivdyetools/types:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[33m@xivdyetools/core:type-check: [0mcache miss, executing [2m948203e51127a855[0m
+[34m@xivdyetools/test-utils:type-check: [0mcache miss, executing [2maf8d0c1482fdde1f[0m
+[32m@xivdyetools/worker-kit:build: [0mcache hit, replaying logs [2m8cdd8c412ad21dfd[0m
+[32m@xivdyetools/worker-kit:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[32mxivdyetools-image-worker:type-check: [0mcache miss, executing [2m42e7241dfe4e1307[0m
+[35m@xivdyetools/test-utils:build: [0mcache hit, replaying logs [2m99a4b949ad9e0d50[0m
+[35m@xivdyetools/test-utils:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[36m@xivdyetools/core:build: [0mcache hit, replaying logs [2me2f6471987f8749b[0m
+[33mxivdyetools-oauth-worker:type-check: [0mcache miss, executing [2m1222481975915159[0m
+[34mxivdyetools-presets-api:type-check: [0mcache miss, executing [2m1770c14ac71b0bc9[0m
+[36m@xivdyetools/core:build: [0m[2m$ npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales[22m
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0m> @xivdyetools/core@4.0.1 build:locales
+[36m@xivdyetools/core:build: [0m> tsx scripts/build-locales.ts
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0m🌐 Building locale files...
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding English (en)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\en.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding Japanese (ja)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\ja.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding German (de)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\de.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding French (fr)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\fr.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding Korean (ko)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\ko.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding Chinese (zh)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\zh.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0m✅ Locale files already up to date (nothing written).
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0m> @xivdyetools/core@4.0.1 copy:locales
+[36m@xivdyetools/core:build: [0m> tsx scripts/copy-locales.ts
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0m📦 Copying 6 locale files to dist...
+[36m@xivdyetools/core:build: [0m   ✓ de.json
+[36m@xivdyetools/core:build: [0m   ✓ en.json
+[36m@xivdyetools/core:build: [0m   ✓ fr.json
+[36m@xivdyetools/core:build: [0m   ✓ ja.json
+[36m@xivdyetools/core:build: [0m   ✓ ko.json
+[36m@xivdyetools/core:build: [0m   ✓ zh.json
+[36m@xivdyetools/core:build: [0m✅ Locale files copied to C:\dev\XIVProjects\xivdyetools\packages\core\dist\data\locales
+[36m@xivdyetools/svg:type-check: [0mcache miss, executing [2m0c96f597033049ab[0m
+[36m@xivdyetools/auth:type-check: [0m[2m$ tsc --noEmit[22m
+[33m@xivdyetools/logger:type-check: [0m[2m$ tsc --noEmit[22m
+[34m@xivdyetools/types:type-check: [0m[2m$ tsc --noEmit[22m
+[35m@xivdyetools/worker-kit:type-check: [0m[2m$ tsc --noEmit[22m
+[33m@xivdyetools/core:type-check: [0m[2m$ tsc --noEmit[22m
+[34m@xivdyetools/test-utils:type-check: [0m[2m$ tsc --noEmit[22m
+[32mxivdyetools-image-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[33mxivdyetools-oauth-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[34mxivdyetools-presets-api:type-check: [0m[2m$ tsc --noEmit[22m
+[36m@xivdyetools/svg:type-check: [0m[2m$ tsc --noEmit[22m
+[35mxivdyetools-api-worker:type-check: [0mcache miss, executing [2m6fa9fa888e11a656[0m
+[32m@xivdyetools/svg:build: [0mcache hit, replaying logs [2m963b080be9e8680e[0m
+[32m@xivdyetools/svg:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[33m@xivdyetools/bot-logic:build: [0mcache hit, replaying logs [2mc228a8193e0bfebf[0m
+[33m@xivdyetools/bot-logic:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[34mxivdyetools-web-app:type-check: [0mcache miss, executing [2m6caaacbe3698ad4f[0m
+[35mxivdyetools-api-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[36mxivdyetools-og-worker:type-check: [0mcache miss, executing [2m75620376fc309e20[0m
+[35m@xivdyetools/bot-logic:type-check: [0mcache miss, executing [2m73d719606c7a5641[0m
+[32mxivdyetools-discord-worker:type-check: [0mcache miss, executing [2md3ee89e8fa5c1fd7[0m
+[33mxivdyetools-stoat-worker:type-check: [0mcache miss, executing [2m0cb442efa88515a2[0m
+[34mxivdyetools-web-app:type-check: [0m[2m$ tsc --noEmit[22m
+[34mxivdyetools-moderation-worker:type-check: [0mcache miss, executing [2mf7010e60326bc005[0m
+[36mxivdyetools-og-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[35m@xivdyetools/bot-logic:type-check: [0m[2m$ tsc --noEmit[22m
+[32mxivdyetools-discord-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[33mxivdyetools-stoat-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[34mxivdyetools-moderation-worker:type-check: [0m[2m$ tsc --noEmit[22m
+
+[1m Tasks:    [32m[1m25 successful[0m, 25 total[0m
+[1mCached:    [1m8 cached[0m, 25 total[0m
+[1m  Time:    [1m13.455s[0m [0m
+

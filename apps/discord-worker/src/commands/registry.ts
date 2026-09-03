@@ -58,7 +58,13 @@ export const COMMAND_REGISTRY: readonly CommandRegistryEntry[] = [
   { name: 'stats', category: 'utility' },
 ];
 
-/** Names only, for parity checks. */
+/**
+ * Names only, for parity checks.
+ *
+ * @testonly kept test hook — registry.test.ts asserts these names match the
+ * schema literal's command names; recorded as kept in CHANGELOG.md ("kept
+ * (legitimate test hooks)").
+ */
 export function registryCommandNames(): string[] {
   return COMMAND_REGISTRY.map((c) => c.name);
 }

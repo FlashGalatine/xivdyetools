@@ -155,9 +155,18 @@ vi.mock('../v4/language-modal', () => ({
 // without pulling in their full service graphs (e.g. HarmonyTool needs
 // MarketBoardService, which the `@services/index` mock above doesn't
 // provide) — the telemetry hooks below need a load that actually succeeds.
+/** webapp-v4-15: observation point for the config-change forward. */
+const mockToolSetConfig = vi.fn();
+
 class MockTool {
   init() {}
   destroy() {}
+  // The layout only forwards a config-change to a tool that exposes
+  // `setConfig`, and no mock here did -- so that branch was never taken and
+  // 'should handle config-change event' watched nothing happen.
+  setConfig(config: Record<string, unknown>) {
+    mockToolSetConfig(config);
+  }
 }
 // Mixer accepts drawer picks (selectDye); Harmony's mock deliberately does not,
 // so the drawer-pick telemetry test can tell "taken by a tool" from "dropped".
@@ -300,19 +309,26 @@ describe('V4Layout', () => {
       expect(mockNavigateTo).toHaveBeenCalledWith('mixer');
     });
 
-    it('should handle config-change event', async () => {
+    // webapp-v4-15: this asserted `container.children.length > 0`, which is
+    // true whether the listener ran, threw, or was never registered at all --
+    // the comment even said "Should not throw". The handler's whole job is to
+    // forward the change to the active tool's setConfig with the tool name
+    // folded in, so assert that.
+    it('forwards a config-change to the active tool', async () => {
       await initializeV4Layout(container);
 
       const layoutShell = container.querySelector('v4-layout-shell');
+      mockToolSetConfig.mockClear();
 
-      // Should not throw
       layoutShell?.dispatchEvent(
         new CustomEvent('config-change', {
           detail: { tool: 'harmony', key: 'showPrices', value: true },
         })
       );
 
-      expect(container.children.length).toBeGreaterThan(0);
+      // The tool name is folded in as `_tool` so a tool can tell its own
+      // config from the shared market config.
+      expect(mockToolSetConfig).toHaveBeenCalledWith({ _tool: 'harmony', showPrices: true });
     });
 
     it('should open the changelog modal on changelog-click event', async () => {

@@ -165,17 +165,39 @@ describe('ColorPickerDisplay', () => {
       expect(picker.getColor()).toBe('#00FF00');
     });
 
-    it('should accept 3-character hex codes', () => {
+    // BUG-078: the shorthand is accepted but must be EXPANDED before it is
+    // stored or emitted. `input[type=color]` takes only the 6-digit form and
+    // silently sanitises `#0F0` to black, so keeping the raw value made the
+    // swatch disagree with the field and handed every listener a colour the
+    // picker itself could not display. This test used to pin `'#0F0'`.
+    it.each([
+      ['#0F0', '#00FF00'],
+      ['#fff', '#ffffff'],
+      ['#123', '#112233'],
+    ])('expands the 3-character hex %s to %s', (typed, expected) => {
       picker = new ColorPickerDisplay(container);
       picker.init();
 
       const hexInput = query<HTMLInputElement>(container, '#hex-input');
       if (hexInput) {
-        hexInput.value = '#0F0';
+        hexInput.value = typed;
         hexInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
-      expect(picker.getColor()).toBe('#0F0');
+      expect(picker.getColor()).toBe(expected);
+    });
+
+    it('leaves a 6-character hex untouched', () => {
+      picker = new ColorPickerDisplay(container);
+      picker.init();
+
+      const hexInput = query<HTMLInputElement>(container, '#hex-input');
+      if (hexInput) {
+        hexInput.value = '#123456';
+        hexInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      expect(picker.getColor()).toBe('#123456');
     });
 
     it('should not update on invalid hex input', () => {

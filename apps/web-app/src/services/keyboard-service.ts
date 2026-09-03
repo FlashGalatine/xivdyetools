@@ -11,6 +11,8 @@
 import { toggleThemeVariant } from './theme-switch';
 import { LanguageService } from './language-service';
 import { ModalService } from './modal-service';
+import { RouterService } from './router-service';
+import type { ToolId } from './router-service';
 import { showShortcutsPanel } from '@components/shortcuts-panel';
 // Type-only: erased at compile time, so this adds no runtime dependency from
 // the service layer onto a component.
@@ -37,6 +39,19 @@ const TOOL_KEY_MAP: Record<string, string> = {
   '8': 'swatch',
   '9': 'mixer',
 };
+
+/**
+ * Shift held, and nothing else.
+ *
+ * BUG-084: the Shift+T / Shift+L / Shift+S branches tested `e.shiftKey` alone,
+ * so browser and OS chords that merely include Shift matched them too —
+ * Ctrl+Shift+T (reopen closed tab) flipped the theme on its way past. The 1-9
+ * branch already excluded every modifier; this makes the letter chords agree
+ * with it, and with how the shortcuts panel documents them.
+ */
+function isBareShift(e: KeyboardEvent): boolean {
+  return e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey;
+}
 
 // ============================================================================
 // Keyboard Service Class
@@ -139,22 +154,25 @@ export class KeyboardService {
       return;
     }
 
-    // Handle Shift+T (toggle theme)
-    if (e.shiftKey && e.key.toUpperCase() === 'T') {
+    // Handle Shift+T (toggle theme). BUG-084: the 1-9 branch below excludes
+    // ctrl/alt/meta and these three did not, so Ctrl+Shift+T (reopen closed
+    // tab) also flipped the theme. The shortcuts panel documents them as bare
+    // Shift chords.
+    if (isBareShift(e) && e.key.toUpperCase() === 'T') {
       e.preventDefault();
       this.handleToggleTheme();
       return;
     }
 
     // Handle Shift+L (cycle language)
-    if (e.shiftKey && e.key.toUpperCase() === 'L') {
+    if (isBareShift(e) && e.key.toUpperCase() === 'L') {
       e.preventDefault();
       void this.handleCycleLanguage();
       return;
     }
 
     // Handle Shift+S (share the active tool)
-    if (e.shiftKey && e.key.toUpperCase() === 'S') {
+    if (isBareShift(e) && e.key.toUpperCase() === 'S') {
       e.preventDefault();
       this.handleShare();
       return;
@@ -224,10 +242,22 @@ export class KeyboardService {
   }
 
   /**
-   * Navigate to a tool by dispatching a custom event
-   * main.ts listens for 'keyboard-navigate-tool' events
+   * Navigate to a tool.
+   *
+   * BUG-014: this used to only dispatch `keyboard-navigate-tool` and rely on a
+   * listener in main.ts that does not exist — nothing in the app has ever
+   * listened for it, so the 1-9 shortcuts the shortcuts panel advertises did
+   * nothing at all. The service's own tests passed because each one registered
+   * the missing listener itself before dispatching.
+   *
+   * The navigation now happens here, so the shortcut works whether or not
+   * anyone is listening. The event is still emitted: it is a useful hook and is
+   * part of this service's tested surface, but it is a notification now, not
+   * the mechanism.
    */
   private static handleToolNavigation(toolId: string): void {
+    RouterService.navigateTo(toolId as ToolId);
+
     const event = new CustomEvent('keyboard-navigate-tool', {
       detail: { toolId },
       bubbles: true,

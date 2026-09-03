@@ -707,6 +707,13 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     }
   } catch (error) {
     logger.error(`[V4 Layout] Failed to load ${toolId}:`, error);
+    // BUG-065: the success path checks `superseded()` after every await, but
+    // this catch did not — so a lazy import that rejected LATE (a chunk 404 on
+    // a stale deploy, say) tore down whatever tool the user had since navigated
+    // to: it blanked the container, nulled `mountedToolId` and ended the newer
+    // tool's telemetry view. A load that no longer owns the screen must fail
+    // silently, exactly as the success path returns silently.
+    if (superseded()) return;
     // Telemetry: nothing is showing — a failed remount ends the view it kept open
     mountedToolId = null;
     TelemetryService.endTool();

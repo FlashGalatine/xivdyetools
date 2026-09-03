@@ -2,13 +2,33 @@
 
 ---
 
-## Unreleased — Translation fixes and a privacy improvement
+## Web-App Version 5.1.0 — September 3, 2026
+
+- **The Discord bot's `/harmony` now gives the same answer this page does.** The two were working from different colour maths, so the same dye and the same harmony type could produce two different sets of dyes depending on where you asked — most visibly on pale or near-grey dyes. The site's results are unchanged; the bot and the link previews moved to match them.
+- **Dye filters in Harmony pick the closest dye you are allowed to have.** They used to find the closest dye overall and then, if it was filtered out, look for something near *that* — which is not the same thing, and could land further from the colour you asked for than it needed to.
+
+## Web-App Version 5.0.2 — September 2, 2026
+
+- **Right-clicking a dye and choosing "Harmony" works now.** That menu item quietly did nothing for every dye — it opened Harmony with an error and no dye selected. The Budget tool's SEND TO buttons had the same problem and are fixed too.
+- **Palette Extractor match scores are honest again.** The number under each match was measured one way and labelled another, so genuinely good matches were graded as mediocre. The score you see now matches the algorithm you picked, and the closest dye is no longer listed twice.
+- **Sharing a comparison of a single dye works.** A share link with just one dye opened the page showing whatever dyes the recipient already had, instead of yours.
+- **A dialog opened on top of another one no longer breaks the one underneath.** Its X, its buttons and clicking the background all stopped responding, so a confirmation box could become impossible to answer with the mouse. Escape still worked, which made it look like the buttons were broken rather than the window.
+- **The number keys 1-9 switch tools, as the shortcuts panel has always claimed.** They did nothing at all. Ctrl+Shift+T also no longer flips your theme while you are reopening a closed browser tab.
+- **Saved community presets stop being marked "removed by author" when they are not.** If the preset list came back one page at a time, everything past the first page looked deleted.
+- **Your camera turns off when you navigate away from the page you opened it on.** It used to keep running, recording light on, over whatever tool you moved to.
+- Two silent failures now speak up: if your submissions cannot be loaded you get an error instead of being told you have none, and if "What's New" fails to load after an update it tells you to refresh instead of doing nothing.
+- The Accessibility tool's Share button now keeps up with your dye choices instead of going stale, and the app releases several bits of memory it used to hold onto while you switched languages or loaded new images.
+
+---
+
+## Web-App Version 5.0.1 — September 2, 2026
 
 - **If you use the app in Japanese, German, French, Korean, or Chinese, a lot of leftover English just went away.** The dye category headings in the color palette drawer (Whites, Reds, Blues, and so on) were silently stuck in English for every language due to a bug — they now show in your language. The whole Community Presets flow — editing a preset, submitting one, error messages, vote buttons — is now fully translated instead of switching back to English partway through.
 - Screens that used to freeze on the old language after you switched (some result cards and panels) now update immediately.
 - Gil amounts, dates, and numbers now format the way your language expects, and imported palette names read naturally in your language instead of always saying "(imported 2)" in English.
 - Chinese and Korean readers should also notice Chinese/Korean characters rendering in the correct regional style instead of borrowing Japanese letterforms when both fonts are installed.
 - **The Palette Extractor no longer remembers your last image between visits.** Uploaded, pasted, dragged-in or camera-captured images now stay only in your current tab and are gone on reload — nothing is written to disk any more. If an earlier visit saved one, the app wipes it the next time you open it.
+- **Presets you saved a while ago show their colors again.** Presets saved to your Saved shelf before late August were stored using the game's older dye numbering. After a recent change those older entries could come up with an empty row of swatches, most often for a preset whose author has since removed it, or when you were offline. The app now quietly updates them to the current numbering the first time it reads your shelf, so the colors come back on their own with nothing for you to do. Anything it cannot recognise is left alone rather than removed.
 
 ---
 

@@ -282,7 +282,24 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
       });
 
       if (charactersResponse.ok) {
-        characters = await charactersResponse.json();
+        // BUG-051: the response was assigned to `characters` BEFORE it was
+        // known to be an array, so a 200 carrying any non-array body
+        // (`{"data": []}`, `null`) made `characters.filter` throw inside this
+        // try — and the catch below logged "not a fatal error" and continued
+        // WITHOUT restoring `characters` to `[]`. The `characters.find(...)`
+        // further down then threw a TypeError outside that catch, reached the
+        // handler's outer catch, and the user got
+        // `500 { error: 'Authentication failed' }` instead of the degraded
+        // login with the `XIVAuth User <id>` fallback name this path exists
+        // for. Parse into a local first; the catch then genuinely means
+        // "continue without characters".
+        const roster = await charactersResponse.json();
+        characters = Array.isArray(roster) ? roster : [];
+        if (!Array.isArray(roster)) {
+          logger?.warn('XIVAuth character roster was not an array', {
+            bodyType: roster === null ? 'null' : typeof roster,
+          });
+        }
         logger?.debug('XIVAuth characters fetched', {
           count: characters.length,
           verifiedCount: characters.filter((ch) => ch.verified).length,

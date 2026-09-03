@@ -7,7 +7,228 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [5.2.1] - 2026-09-03
+
+### Fixed — pre-merge review follow-ups
+
+- **Every "send this dye to that tool" action works, and there is now one copy of
+  how.** The grammar has been wrong in three separate places for three different
+  reasons — Budget sent a dye *name* (BUG-018), Result Card sent an `itemID`
+  that `resolveSharedDye` refuses for all 125 dyes (BUG-012), and the same
+  `itemID` bug was still live at Gradient's two context actions. Harmony's three
+  were worse still: they sent `add=`, a key **no tool in this app reads at all**,
+  so "send to Comparison / Mixer / Accessibility" had never done anything. The
+  table and the guard live in `@shared/tool-handoff` now; Budget, Gradient,
+  Harmony and Result Card all call it. A dye with no stainID no longer navigates
+  and then apologises — it simply does not navigate.
+- **A `.chara` carrying only facewear gets its glamour block.** The gate counted
+  worn gear and dyes but not `glassesId`, so the facewear row added in 5.2.0 was
+  unreachable for exactly the character made of nothing else; the glasses were
+  fetched on every import and thrown away, as before the row existed.
+
+## [5.2.0] - 2026-09-03
+
+### Added
+
+- **"Show all" in the Swatch Matcher's glamour block.** The block only ever listed pieces that
+  carried a dye, which meant an accessory could never appear in it at all — no FFXIV earring,
+  necklace, bracelet or ring is dyeable — and worn-but-undyed armour was reduced to a number in
+  the footnote. A switch beside the Pieces/Dyes toggle flips the list's unit from "a dyed
+  channel" to "a piece this character wears", so every worn slot gets a row with its icon, item
+  name and slot tag. Empty slots stay out of the list and stay in the footnote, which is the
+  honest place for "nothing is there". The choice persists. It is inert in the Dyes lens, which
+  has no undyed unit to show.
+- **Facewear is listed too.** The glasses row was already being resolved from api-worker on every
+  import and then thrown away — it now appears under the switch with its icon and name. The
+  `.chara` file stores no facewear tint, so its chip is read from the colour word in the item's
+  English name against the eleven facewear colours; a name with no colour word gets a neutral
+  chip and says the colour is unknown, rather than inventing one.
+
+### Changed
+
+- **Dye chips are now positional: chip one is `DyeId`, chip two is `DyeId2`, always.** A piece dyed
+  only on its second channel used to draw a single chip in the first chip's position, so the
+  picture said channel one while the file said channel two. Dyeable pieces now always show both
+  channels, with a neutral chip standing in for an empty one, and the row's text names the empty
+  channel ("Metallic Orange + Undyed") instead of hiding it. The neutral chip is a solid recessed
+  fill, deliberately not the dashed chip, which already means "a stain ID this build does not
+  know" — undyed must not wear the costume of unknown.
+- **A glamour with nothing dyed now gets the block instead of nothing at all.** Previously the
+  whole panel was suppressed when no piece carried a dye, which would have left the new switch
+  unreachable for exactly the character that needs it most.
+
+---
+
+## [5.1.0] - 2026-09-03
+
+### Changed — harmony convergence
+
+- The Harmony Explorer's dye selection moved into `@xivdyetools/core` as
+  `generateHarmonySlots`. **The dyes the page shows are unchanged** — the
+  function is this page's algorithm, lifted, and a parity test required identical
+  output over 125 dyes × 10 types × 4 settings before the page was rewired. The
+  Discord bot and the OG card now run that same function; all three used to
+  disagree.
+- Dye filters apply to the candidate pool rather than to the finished list, so a
+  slot answers "the nearest allowed dye to the ideal" rather than "the nearest
+  allowed dye to one that was thrown away". `replaceExcludedDyes` and its
+  companions are gone.
+- The share-URL `?harmony=` guard reads `HARMONY_OFFSETS` through
+  `isKnownHarmonyType()` instead of a hand-written list of the ten names — one
+  fewer copy to go stale when a type is added.
+- `fetchPricesForDisplayedDyes()` reads what the grid recorded instead of
+  re-deriving the whole harmony a second time. The duplicate loop had to be kept
+  in step by hand and priced the wrong dyes whenever it drifted.
+
+### Fixed
+
+- The harmony test suite could not tell a full harmony from a base card on its
+  own: every assertion on the grid was `length > 0`, which the base panel
+  satisfies alone. Stubbing selection to return nothing left all 46 tests green.
+  Added slot-count and per-slot dye assertions, and proved them by mutation.
+
+## [5.0.2] - 2026-09-02
+
+### Changed — 2026-09-02 deep-dive audit
+
+- `HARMONY_OFFSETS` moved to `@xivdyetools/core` and is re-exported from
+  `@services/harmony-generator` (BUG-022). The values are byte-identical and no page
+  behaviour changes; the point is that og-worker carried a *different* private copy,
+  so the card unfurled for a share link drew dyes the page it opened never showed.
+  One table, two consumers.
+
+### Fixed — 2026-09-02 deep-dive audit
+
+Dye identifiers (the 5.0 rewrite made stainID canonical; these call sites still sent item IDs):
+
+- "Inspect Dye in → Harmony" works again. It sent an item ID to a receiver that
+  rejects every item ID, so it failed for all 125 dyes, every time (BUG-012).
+- Budget's SEND TO hand-offs to Harmony, Comparison, Mixer and Accessibility now use
+  each receiver's own parameter grammar instead of sending a dye name nothing reads
+  (BUG-018).
+- The `f` and `c` shortcuts in the dye grid toggle favourites and open the collection
+  menu again (BUG-069).
+- A one-dye Comparison or Accessibility share link restores its dye instead of
+  silently showing the recipient's own (BUG-015).
+
+Extractor:
+
+- Match cards show a distance measured with the algorithm they label it with. The
+  extractor stored raw RGB distance next to a ΔE2000 label, so good matches were
+  graded poorly and the printed number was on the wrong scale (BUG-007).
+- Auto-extract honours the selected matching method (BUG-091), and the closest dye is
+  no longer listed twice (BUG-092).
+
+Lifecycle and feedback:
+
+- A modal underneath another modal keeps its close button, backdrop and footer
+  buttons. Opening a second modal used to strip them, which made a confirmation
+  dialog unanswerable by mouse (BUG-009).
+- The 1–9 tool shortcuts navigate. They dispatched an event nothing listened for,
+  while the shortcuts panel advertised them (BUG-014). `Ctrl+Shift+T` no longer also
+  flips the theme (BUG-084).
+- Accessibility's Share button refreshes on every selection change, not just desktop
+  selector picks (BUG-019).
+- Saved community presets are no longer marked "removed by author" when the preset
+  list simply came back paginated (BUG-020).
+- A tool that fails to load late no longer tears down whichever tool you navigated to
+  in the meantime (BUG-065).
+- Leaks released: the accessibility left panel, dye-selector children, image-zoom
+  document listeners, and the camera stream when you navigate away with the camera
+  open (BUG-070, BUG-071, BUG-077, BUG-080).
+- An unreachable submissions API raises an error instead of showing "no submissions
+  yet" (BUG-082), and a "What's New" chunk that fails to load says so instead of
+  doing nothing (BUG-090).
+
+## [5.0.1] - 2026-09-02
+
+### Fixed
+
+- **Test coverage restored for behaviour the 2026-09-01 cleanup left in place.** Nine tests
+  were removed because they happened to call an accessor that went with the cleanup, not
+  because the behaviour they covered had gone: the character-resolve request contract (URL,
+  method and body shape — nothing else asserted any of the three), the max-favourites and
+  max-collections limits, `deleteCollectionsByKind` (which still has a production caller),
+  unknown-kind coercion on import, the only test that exercises the storage-unavailable
+  branch, both changelog history-mode tests, and the 5.0 accent pins. Each is rewritten to
+  use a surviving accessor and mutation-checked: breaking the behaviour fails that test and
+  only that test. The accent pins deliberately go through `getTheme()` rather than the
+  surviving `getRequiredColor()` twin, which has no production caller — using it would have
+  kept a dead accessor alive on test evidence alone, and the reachability gate said so.
+
+
+- **Saved presets held in the browser from before the stainID rewrite render again.** Retiring the
+  legacy-itemID fallback below covered every *live* source, but a saved preset is a SNAPSHOT: the
+  dye array is copied into `v5_saved_presets` at save time and was never rewritten afterwards.
+  Anyone who saved a community preset before the 2026-08-28 D1 rewrite still holds 4.x itemIDs in
+  local storage, and on the Saved shelf those reach `resolvePresetDye` on every path that falls
+  back to the local copy — an author-deleted preset (kept by default), being offline, or the live
+  row simply not being in the fetched page. Against a stainID-only resolver they resolved to
+  nothing, so the card drew an empty palette and `isBuyable` counted the unresolved dyes as
+  buyable. `SavedPresetsService.load()` now converts those references once, on read, and rewrites
+  the store only when something actually changed.
+- The conversion is deliberately conservative. It is skipped while the dye database is still cold,
+  because every lookup would miss and a healthy snapshot would look unresolvable; a reference it
+  cannot place is left exactly as stored rather than dropped, since silently shortening someone's
+  saved palette is worse than one unresolved swatch; and the whole pass is wrapped, so a repair
+  that fails can never empty the shelf it was meant to fix.
+- `toStainId` moved from `services/collection-service.ts` (module-private) to
+  `services/dye-service-wrapper.ts`, alongside `resolvePresetDye`, and is now the single place the
+  retired 4.x ID space is understood — for persisted local data only. Collections keep identical
+  behaviour; the lookup is now an O(1) id-map hit instead of a linear scan over all 125 dyes.
+  `resolvePresetDye` itself stays strict.
+
+### Changed
+
+- `resolvePresetDye` (`services/dye-service-wrapper.ts`) no longer falls back to the 4.x
+  legacy-itemID lookup (`docs/audits/2026-09-01-dead-code`, DEAD-007). Every producer writes
+  stainIDs — the bot since discord-worker 5.1.0, this app's own form by validation — and the
+  stainID D1 rewrite ran 2026-08-28. Re-verified on the day of removal with `json_each` over every
+  position of every `dyes` array in production: **0 legacy IDs across all 16 rows**, with
+  `previous_values` empty on all of them. Out-of-range input now resolves to `undefined` (the same
+  "unknown dye" outcome callers already handle) and is logged, so a regression surfaces instead of
+  being absorbed by a second ID space. The tripwire test that guarded the old branch was inverted
+  rather than deleted: it now pins that the pre-migration itemIDs resolve to nothing.
+
+### Removed
+
+- Three orphaned modules — 1,240 source lines, 1,472 test lines and 17 locale keys × 6 languages
+  (`docs/audits/2026-09-01-dead-code`, DEAD-001/002/003). None had a production importer; all three
+  were invisible to knip, which counts test files as entries.
+  - `components/dye-action-dropdown.ts` (570) — a finished dye actions menu (copy hex, add to
+    comparison / mixer / accessibility, slot replacement) that nothing ever mounted. Seven tool
+    test files carried a `vi.mock` for a module their subject never imported. Its 17 `harmony.*`
+    locale keys had no other consumer and went with it — the orphan gate caught them.
+  - `services/tooltip-service.ts` (475) plus the 77-line `.tooltip*` block in `globals.css` it was
+    the only consumer of, and the `services/index.ts` line that logged "✅ TooltipService ready"
+    for a service nothing constructed. Tooltips are native `title=` attributes.
+  - `services/announcer-service.ts` (195) — the v2.1 screen-reader announcer, never mounted; the
+    five components that announce use their own `aria-live` regions. **It queued and de-duplicated
+    announcements, which the per-component regions do not** — if the open 5.0 a11y work wants one
+    announcer, recover this file from git rather than rewriting it. The
+    `no-hardcoded-ui-strings` lint rule keeps `AnnouncerService` in its allowlist so a future one
+    is covered from day one.
+- Four module-level exports with no production call site (DEAD-004): `closeChangelogModal`
+  (`components/changelog-modal.ts` — the modal closes through its own instance method),
+  `getConfigController` and `getMarketBoardService` (singleton accessors over classes every
+  consumer imports directly), and `findHarmonyDyes` (`services/harmony-generator.ts`, 46 lines —
+  the barrel re-exports five *other* helpers from that module, not this one).
+- 31 public service methods with no non-test caller (DEAD-005, ~300 lines) across `ThemeService`,
+  `CameraService`, `CollectionService`, `StorageService`, `MarketBoardService`, `LanguageService`,
+  `TutorialService`, `RouterService`, `IndexedDBService`, `CommunityPresetService`,
+  `IndexedDBCacheBackend` and `ErrorHandler`. knip 6 has no `classMembers` rule, so no gate could
+  see them. Removing `getCurrentLocaleDisplay` also retired the `LocaleDisplay` import and
+  `LOCALE_DISPLAY_INFO` use in `language-service.ts`.
+  **Six of the 37 candidates were kept** after checking what they actually serve:
+  `ToastService.dismissAll` / `.getToasts` and `ModalService.dismissAll` / `.getModals` are how ~60
+  real behaviour tests observe those services; `StorageService.resetAvailabilityCache`,
+  `ThemeService.resetToDefault` and `clearCharaResolveCache` are `beforeEach` isolation hooks; and
+  `MarketBoardService.getIsFetching` is the only observer of the flag whose stuck-true state was
+  BUG-039. Each now says so in its docblock.
+- Six v3-era Tailwind utility overrides in `styles/themes.css` that no template carries any more —
+  `.text-green-600`/`.dark:text-green-400`, `.bg-blue-100`, `.text-blue-900`,
+  `.dark:text-blue-100`, `.border-blue-200`/`.dark:border-blue-800`, `.bg-gradient-to-r`
+  (`docs/audits/2026-09-01-dead-code`, DEAD-008). `.dark:bg-blue-900` is still in use and stays.
 
 ### Security — 2026-08-30
 

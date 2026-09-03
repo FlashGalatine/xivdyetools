@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createMockKV } from '@xivdyetools/test-utils';
-import { Translator, createTranslator, createUserTranslator } from './bot-i18n.js';
+import { Translator, createUserTranslator } from './bot-i18n.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 
 // Create a mock logger for testing
@@ -234,38 +234,6 @@ describe('bot-i18n', () => {
           expect(meta).toHaveProperty('flag');
         }
       });
-    });
-  });
-
-  describe('createTranslator', () => {
-    it('should create translator for English', () => {
-      const translator = createTranslator('en');
-
-      expect(translator.getLocale()).toBe('en');
-      expect(translator.t('common.error')).toBe('Error');
-    });
-
-    it('should create translator for Japanese', () => {
-      const translator = createTranslator('ja');
-
-      expect(translator.getLocale()).toBe('ja');
-    });
-
-    it('should create translator with logger', () => {
-      const translator = createTranslator('en', mockLogger);
-
-      translator.t('missing.key');
-
-      expect(mockLogger.warn).toHaveBeenCalled();
-    });
-
-    it('should create translators for all supported locales', () => {
-      const locales: Array<'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh'> = ['en', 'ja', 'de', 'fr', 'ko', 'zh'];
-
-      for (const locale of locales) {
-        const translator = createTranslator(locale);
-        expect(translator.getLocale()).toBe(locale);
-      }
     });
   });
 

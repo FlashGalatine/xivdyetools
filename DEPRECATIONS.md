@@ -7,6 +7,49 @@ Each entry includes a target removal date and migration guide.
 
 ## Active Deprecations
 
+### Google Perspective API (presets-api ML moderation) — HARD EXTERNAL DEADLINE
+
+| Field       | Value |
+|-------------|-------|
+| Deprecated  | 2026-09-01 (noted) |
+| Remove by   | **2026-12-31** — the service itself shuts down; see <https://www.perspectiveapi.com/> |
+| Severity    | **High** — not a cleanup item; the date is set by Google, not by us |
+
+**What it is:** `apps/presets-api/src/services/moderation-service.ts` scores preset name /
+description text with Google Perspective for ML toxicity, on top of the local word list.
+Configured by the `PERSPECTIVE_API_KEY` secret (live on the production worker).
+
+**Why this needs action before the date, not after.** FINDING-005 (2026-08-21 security audit)
+deliberately made this path **fail closed**: when a key *is* configured and the service cannot
+answer, `checkWithPerspective` returns `moderationUnavailable()` — `passed: false`, method
+`perspective_unavailable` — which callers treat exactly like flagged content. That is correct
+behaviour for an outage. It is the wrong behaviour for a permanent shutdown: from 2027-01-01,
+**every preset submission would fail the check and land in the moderator queue**, indefinitely.
+It would not look like an outage — submissions still return 201 — so the first symptom is a
+quietly growing manual-review backlog.
+
+**Migration — one command, and the graceful path already exists.** `checkWithPerspective` returns
+`null` when no key is set, and the local word list alone decides. So:
+
+```bash
+# On or before 2026-12-31, from apps/presets-api:
+wrangler secret delete PERSPECTIVE_API_KEY --env production
+```
+
+Removing the secret is the *supported* degradation, not a workaround. Do it before the shutdown,
+not after, or the fail-closed branch runs in the gap.
+
+**Removal checklist:**
+- [ ] Decide whether to replace the ML tier at all (local filter only, or another provider)
+- [ ] Delete the `PERSPECTIVE_API_KEY` production secret **before 2026-12-31**
+- [ ] Remove `checkWithPerspective`, `PERSPECTIVE_ENDPOINT`, `moderationUnavailable()`, the
+      `perspective_unavailable` method value and the `PERSPECTIVE_API_KEY` `Env` field once the
+      decision is made — and re-check FINDING-005's fail-closed reasoning still holds for whatever
+      replaces it
+- [ ] Drop the row from `apps/presets-api/CLAUDE.md` and `docs/developer-guides/environment-variables.md`
+
+---
+
 ### `*.xivdyetools.projectgalatine.com` custom domains
 
 | Field       | Value |
@@ -299,25 +342,20 @@ Both APIs are unchanged.
 
 ---
 
-### `LocalStorageCacheBackend` (web-app)
+### `LocalStorageCacheBackend` (web-app) — COMPLETE
 
-| Field       | Value |
-|-------------|-------|
-| Deprecated  | ~2025-12 |
-| Remove by   | TBD |
-| Severity    | Low |
-
-**What it is:** A localStorage-based cache backend for the Universalis API service in the web-app.
-The `IndexedDBCacheBackend` is the preferred replacement, offering larger storage capacity and better
-performance for structured data.
-
-**Migration:** Use `IndexedDBCacheBackend` (already the default in `api-service-wrapper.ts`). Remove
-all references to `LocalStorageCacheBackend`.
+A localStorage-based cache backend for the web-app's Universalis service, superseded by
+`IndexedDBCacheBackend` (the default in `api-service-wrapper.ts`).
 
 **Removal checklist:**
-- [ ] Confirm `LocalStorageCacheBackend` is not used in any active code paths
-- [ ] Remove the class from the web-app
-- [ ] Clean up any associated localStorage keys if needed
+- [x] Confirm `LocalStorageCacheBackend` is not used in any active code paths
+- [x] Remove the class from the web-app
+- [x] Clean up any associated localStorage keys if needed
+
+Closed 2026-09-01 (`docs/audits/2026-09-01-dead-code`, DEAD-033): the class was already gone from
+the source — `git ls-files apps/web-app | xargs grep -l LocalStorageCacheBackend` returns only
+`CHANGELOG.md` — but this section still read as an open deprecation, so a second audit spent time
+re-verifying work that was already done.
 
 ---
 

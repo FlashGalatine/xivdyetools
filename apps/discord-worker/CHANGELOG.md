@@ -5,6 +5,155 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2026-09-03
+
+### Changed — harmony convergence
+
+- `/harmony` picks dyes through `@xivdyetools/core`'s shared
+  `generateHarmonySlots` (via `@xivdyetools/bot-logic` 3.2.0), so it now matches
+  the web app's Harmony Explorer. The two disagreed on the returned dyes for
+  89–100 % of base dyes on every harmony type.
+
+### Added
+
+- `compound` and `shades` `/harmony type` choices — **needs a `register-commands`
+  run on deploy**, the choice list grows from 8 to 10.
+
+  These reached core's `HARMONY_OFFSETS`, bot-logic's roster and all six locale
+  files, but the registered choice array in `commands/schemas.ts` was written out
+  by hand and still listed eight — so this entry was untrue when first written:
+  the two types were unreachable in Discord and their six locale strings were
+  dead. The choices are derived from a `Record<HarmonyType, string>` now, which
+  is exhaustive in both directions, so a type added to the shared table without a
+  label here is a compile error rather than an option nobody can pick.
+
+### Removed
+
+- **`/harmony color_space`.** `generateHarmonySlots` rotates hue in HSV, carrying
+  the base's saturation and value, and that is the algorithm all three surfaces
+  now share — choosing another space would be choosing a different answer than
+  the page gives. bot-logic discarded the value with a `void`, so the option was
+  accepted and changed nothing; it is withdrawn rather than left registered and
+  inert. (`/gradient color_space` is a different option and is unaffected.)
+  `strict_matching` was inert for the same reason and has been **wired back up**
+  instead of removed, since core still takes it.
+
+## [5.1.3] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit, Sprint 12
+
+- **An empty image file reads as the user's image problem, not ours**
+  (image-stoat-07). image-worker throws 'Image file is empty' when the Discord CDN
+  answers 200 with a zero-byte body, and that message had no marker in
+  `IMAGE_INPUT_MARKERS` — so `imageInputReason` returned null, `command-trace`
+  recorded the outcome class as `unknown` rather than `image_input`, and the user
+  saw the generic `matchImage.processingFailed` instead of a message about their
+  file. It is classified as `format` rather than `too_large`: nothing about an empty
+  file is large, and "not an image we can read" is what actually happened.
+
+### Tests
+
+- `image-input-errors-contract.test.ts` reads **image-worker's own source** and fails
+  when a message it can throw has no marker. The existing suite tested the table
+  against the messages it *lists*, which by construction cannot catch one the table
+  has never heard of — the same shape as the moderation-stats contract test from
+  Sprint 7, which reads presets-api's SQL rather than a mock built from what the
+  client expects. On its first run it found two more unmatched messages, both
+  correctly unmatched and now recorded with the reason: `'Invalid JSON body'` (a
+  malformed request WE sent) and `'No image data provided'` (`POST /thumbnail`,
+  which only presets-api calls).
+
+## [5.1.2] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit, Sprint 6
+
+- **Moderation and submission-log embeds name the preset's dyes again** (BUG-013, HIGH).
+  `formatDyesForEmbed` resolved every id with `getDyeById`, which reads the **itemID** map; preset
+  dye arrays have carried stainIDs since the 5.0 id rewrite, and the two ranges are disjoint
+  (stainIDs 1–254, item IDs from 5729). Every lookup missed, the numeric fallback fired, and a
+  moderator deciding whether to approve a preset read `Dyes: 1, 2, 3` instead of the palette in
+  words. Stain first, item id second, so a pre-rewrite row stays readable.
+- **`/gradient` step and `/harmony` base colour chips render** (BUG-032, BUG-033). Both passed an
+  itemID to `getDyeEmoji`, which is keyed by stainID 1–125, so no step in the gradient list ever
+  showed a swatch while the Start/End lines below it did, and `/harmony`'s base row was the one
+  line in its embed without a chip.
+- **`/stats` reports the version it is actually running** (BUG-037). `BOT_VERSION` was the literal
+  `'4.0.0'` while `package.json` said 5.1.1, so the bot contradicted its own `/about` — and the
+  tests pinned the stale literal, so bumping the package could never turn them red.
+- **`/stats preferences` counts past 1,000 users and answers inside the ack** (BUG-035, BUG-036).
+  It read one `KV.list()` page as the whole namespace (the figure pinned at exactly 1000 for ever,
+  reading as a plateau in adoption) and then issued up to 100 **serialized** `KV.get` calls —
+  2–5 s — on a path that answers `{type: 4}` and therefore has Discord's 3-second ack as its whole
+  budget. Now paginated (bounded, and honest with a `+` when the bound is hit) with the sample
+  reads issued together.
+- **`/manual topic:spectrum_prices` uses the cached world lists** (BUG-034). It called the
+  *uncached* fetchers: two service-binding round trips, 10 s timeout each, no retry, on that same
+  non-deferred path. The 1-hour caches already existed and every other caller used them — they were
+  simply module-private.
+- **A Universalis outage is no longer reported as "world not found"** (BUG-031). `validateWorld`
+  caught every error and returned `null`, the same value it returns for an unknown world, so during
+  a proxy outage the bot told users their own valid world did not exist *and* logged the request as
+  `answered` rather than `upstream_universalis`. It now returns a discriminated result and all
+  three call sites distinguish the two.
+- **A rejected release announcement is no longer memoised** (BUG-026). `sendAnnouncement` discarded
+  Discord's Response, so a 403 or 400 resolved as success, the `announced:v:<version>` memo was
+  written anyway, and every later *Redeliver* short-circuited on it — making that release
+  permanently unannounceable. A refusal now answers 502 and writes no memo.
+- **`/preferences set` writes every option once** (BUG-029). Each option was a full read-modify-write
+  of the *same* KV key; KV allows one write per second per key and its reads are eventually
+  consistent, so a later iteration could read the pre-update object and write back a version
+  missing an earlier key — while the embed reported all of them saved.
+- **Favourites autocomplete survives a failed name back-fill** (BUG-028). The one-time migration was
+  awaited inside the lookup's `try`, so a rejected KV write returned `[]` and the user got *no*
+  options at all.
+- **The moderator whose preview-image action failed gets told** (BUG-039). The failure-path
+  follow-up discarded a 4xx/5xx and could throw out of the catch block it lived in, rejecting the
+  `waitUntil` promise unhandled — leaving live buttons and no error.
+- **CJK preset text on `/preset` cards no longer renders as tofu** (BUG-030). The bundled font
+  subsets are cut from *locale* data, but preset names, descriptions and author names are written
+  by users. The 3 MiB Worker cap rules out shipping full faces, so the card now draws what it can
+  and the embed beside it carries the untouched original, which Discord renders with the reader's
+  own system fonts. Fails **open** if the fonts cannot be parsed — blanking every card is far worse
+  than the tofu.
+
+### Added
+
+- **The 3,072 KiB gzipped Worker cap is gated in CI** (OPT-002). It is load-bearing for this worker
+  — ten TTFs, the resvg WASM, the CJK subsets — and was checked only by a human remembering to run
+  `wrangler deploy --dry-run`. Merging to `main` deploys automatically, so an over-budget bundle was
+  found by Cloudflare refusing the upload *after* the merge. `scripts/check-bundle-size.mjs` runs on
+  the PR via a turbo task and again before the deploy. Currently 2,697 KiB, 87.8 % of the cap.
+- `services/font-coverage.ts` — the bundled fonts' cmap union and the filter that keeps user text
+  inside it, with tests that read the real font files rather than the bundled buffers (an unmocked
+  `.ttf` import resolves to a URL string under vitest and yields a zero-length buffer *silently*).
+
+## [5.1.1] - 2026-09-02
+
+### Changed
+
+- This app is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
+  into `lint`; root `knip.jsonc`). It flagged `GitHubPushPayload` (`types/github.ts`) as an unused
+  export — a false positive: `index.ts`'s GitHub webhook handler referenced it only via the
+  inline `import('./types/github.js').GitHubPushPayload` type syntax, which knip's export-usage
+  graph does not follow. Fixed by adding a normal `import type { GitHubPushPayload } from
+  './types/github.js'` at the top of the file and using the bare name at both call sites — same
+  type, same runtime behaviour, now visible to the gate.
+
+### Removed
+
+- `scripts/test-font-rendering.ts` — dead-code sweep (`docs/audits/2026-09-01-dead-code`,
+  DEAD-028). Nothing referenced it: no package script, no workflow, no doc. It had also gone
+  **wrong**: it still required `SpaceGrotesk-VariableFont_wght.ttf` and
+  `Onest-VariableFont_wght.ttf` in `src/fonts/`, which PR #148 replaced with static instances on
+  2026-08-29, so running it reported two required fonts missing and exited 1. The live gates are
+  `services/font-faces.test.ts` and `services/font-coverage.test.ts`; the CJK fallback ordering it
+  documented in prose is now asserted in `@xivdyetools/svg`'s `base.test.ts`.
+- The `getDyeById` re-export from `services/budget/index.ts` (barrel), caught by the knip gate
+  above. The underlying `budget-calculator.ts` function is unchanged and still consumed directly
+  by `budget-calculator.test.ts` and `budget-pipeline.integration.test.ts` — only the barrel's
+  unused re-export line is gone; `handlers/commands/budget.ts` imports `resolveTargetDye` from
+  the same barrel instead, never `getDyeById`.
+
 ## [5.1.0] - 2026-08-30
 
 ### Security — 2026-08-30

@@ -207,15 +207,34 @@ export async function checkDailyEventLimit(
  * submission events — whichever is higher is the number that counts, so
  * deleting your own presets no longer refills the quota.
  */
-export async function checkSubmissionRateLimit(
+
+/**
+ * The submission count the daily cap is actually enforced on.
+ *
+ * BUG-042: this rule lived only inside `checkSubmissionRateLimit`, so
+ * `POST /presets` used the raw `presets` row count for BOTH its overshoot
+ * rollback and the `remaining_submissions` it reports. For anyone who had
+ * deleted a preset that day the two disagreed: submit 3, delete 3, submit a
+ * 4th, and the 201 said 9 remaining while `GET /presets/rate-limit` said 6 —
+ * and the user was refused at 6. Worse, the BUG-049 concurrency rollback
+ * under-triggered for exactly the deleting user that `submission_events` was
+ * introduced (FINDING-008) to catch.
+ */
+export async function getEffectiveSubmissionCountToday(
   db: D1Database,
   userDiscordId: string
-): Promise<RateLimitResult> {
+): Promise<number> {
   const [rowsToday, eventsToday] = await Promise.all([
     getSubmissionCountToday(db, userDiscordId),
     getEventCountToday(db, userDiscordId, 'submission'),
   ]);
-  const submissionsToday = Math.max(rowsToday, eventsToday);
+  return Math.max(rowsToday, eventsToday);
+}
+export async function checkSubmissionRateLimit(
+  db: D1Database,
+  userDiscordId: string
+): Promise<RateLimitResult> {
+  const submissionsToday = await getEffectiveSubmissionCountToday(db, userDiscordId);
   const remaining = Math.max(0, DAILY_SUBMISSION_LIMIT - submissionsToday);
 
   return {

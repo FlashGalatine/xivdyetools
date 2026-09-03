@@ -64,8 +64,8 @@ describe('createMockDye', () => {
     const dye = createMockDye();
 
     expect(dye.id).toBeGreaterThan(0);
-    expect(dye.itemID).toBe(5700 + dye.id);
-    expect(dye.name).toBe(`Test Dye ${dye.id}`);
+    expect(dye.itemID).toBe(dye.id);
+    expect(dye.name).toBe(`Test Dye ${dye.stainID}`);
     expect(dye.hex).toBe('#888888');
     expect(dye.category).toBe('Grey');
     expect(dye.acquisition).toBe('Vendor');
@@ -94,16 +94,45 @@ describe('createMockDye', () => {
     expect(dye1.id).not.toBe(dye2.id);
   });
 
-  it('generates itemID based on ID', () => {
-    const dye = createMockDye();
-
-    expect(dye.itemID).toBe(5700 + dye.id);
+  // pkg-worker-kit-test-utils-15: these three tests pinned a fixture that
+  // could not represent a real dye -- `stainID` copied a 9-digit randomId()
+  // and `id` was 5700 less than `itemID`, inverting the contract in
+  // types/src/dye/dye.ts ("`id` is always equal to `itemID`"). That is the same
+  // inversion that manufactured green for a class of dye-id defects elsewhere
+  // in this audit, so the shared factory must not reproduce it.
+  it('puts stainID inside the real 1-254 Stain range', () => {
+    for (let i = 0; i < 50; i++) {
+      const dye = createMockDye();
+      expect(dye.stainID).toBeGreaterThanOrEqual(1);
+      expect(dye.stainID).toBeLessThanOrEqual(254);
+    }
   });
 
-  it('uses overridden ID for itemID calculation', () => {
+  it('derives itemID from stainID, and id from itemID', () => {
+    const dye = createMockDye({ stainID: 1 });
+
+    // Snow White: stainID 1, itemID 5729.
+    expect(dye.itemID).toBe(5729);
+    expect(dye.id).toBe(dye.itemID);
+  });
+
+  it('keeps id === itemID, the invariant DyeDatabase.initialize() guarantees', () => {
+    const dye = createMockDye();
+
+    expect(dye.id).toBe(dye.itemID);
+    expect(dye.id).not.toBe(dye.stainID);
+  });
+
+  it('honours an explicit itemID override, and id follows it', () => {
+    const dye = createMockDye({ itemID: 13115 });
+
+    expect(dye.itemID).toBe(13115);
+    expect(dye.id).toBe(13115);
+  });
+
+  it('still allows id to be overridden independently', () => {
     const dye = createMockDye({ id: 100 });
 
     expect(dye.id).toBe(100);
-    expect(dye.itemID).toBe(5800);
   });
 });

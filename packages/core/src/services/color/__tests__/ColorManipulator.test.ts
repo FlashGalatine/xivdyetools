@@ -18,8 +18,9 @@ describe('ColorManipulator', () => {
 
     it('should return white when increasing black brightness to 100', () => {
       const result = ColorManipulator.adjustBrightness('#000000', 100);
-      // Should be very bright, potentially white or near-white
-      expect(result).toBeDefined();
+      // core-color-07: the title says white; `toBeDefined()` says nothing --
+      // adjustBrightness always returns a string, so it held for any result.
+      expect(ColorConverter.hexToHsv(result).v).toBe(100);
     });
 
     it('should return black when decreasing any color brightness by -100', () => {
@@ -49,13 +50,17 @@ describe('ColorManipulator', () => {
 
     it('should return grayscale when decreasing saturation by -100', () => {
       const result = ColorManipulator.adjustSaturation('#FF0000', -100);
-      // Should be grayscale (R=G=B)
-      expect(result).toBeDefined();
+      // Grayscale means R === G === B. Making adjustSaturation a no-op kept
+      // the old `toBeDefined()` green.
+      const { r, g, b } = ColorConverter.hexToRgb(result);
+      expect(r).toBe(g);
+      expect(g).toBe(b);
+      expect(ColorConverter.hexToHsv(result).s).toBe(0);
     });
 
     it('should return fully saturated color when increasing saturation to maximum', () => {
       const result = ColorManipulator.adjustSaturation('#FF6B6B', 100);
-      expect(result).toBeDefined();
+      expect(ColorConverter.hexToHsv(result).s).toBe(100);
     });
 
     it('should clamp values at 100', () => {
@@ -66,17 +71,32 @@ describe('ColorManipulator', () => {
 
     it('should preserve hue and brightness', () => {
       const original = '#FF6B6B';
-      const moreSaturated = ColorManipulator.adjustSaturation(original, 20);
-      const lessSaturated = ColorManipulator.adjustSaturation(original, -20);
+      const source = ColorConverter.hexToHsv(original);
+      const moreSaturated = ColorConverter.hexToHsv(
+        ColorManipulator.adjustSaturation(original, 20)
+      );
+      const lessSaturated = ColorConverter.hexToHsv(
+        ColorManipulator.adjustSaturation(original, -20)
+      );
 
-      expect(moreSaturated).toBeDefined();
-      expect(lessSaturated).toBeDefined();
+      // The title names hue and brightness; assert them. Only saturation moves.
+      expect(moreSaturated.h).toBeCloseTo(source.h, 0);
+      expect(lessSaturated.h).toBeCloseTo(source.h, 0);
+      expect(moreSaturated.v).toBeCloseTo(source.v, 0);
+      expect(lessSaturated.v).toBeCloseTo(source.v, 0);
+      expect(moreSaturated.s).toBeGreaterThan(source.s);
+      expect(lessSaturated.s).toBeLessThan(source.s);
     });
 
     it('should handle pure gray', () => {
       const result = ColorManipulator.adjustSaturation('#808080', 50);
-      // Gray has no saturation to increase, but shouldn't error
-      expect(result).toBeDefined();
+      // Gray is hue 0 with zero saturation, so saturating it necessarily
+      // produces a RED tint -- HSV has no "no hue" state to preserve, and
+      // asserting it stays gray would be asserting a bug. What must hold is
+      // that the saturation actually moved and the brightness did not.
+      const hsv = ColorConverter.hexToHsv(result);
+      expect(hsv.s).toBe(50);
+      expect(hsv.v).toBeCloseTo(ColorConverter.hexToHsv('#808080').v, 0);
     });
   });
 
@@ -101,28 +121,33 @@ describe('ColorManipulator', () => {
 
     it('should rotate red to green (120°)', () => {
       const result = ColorManipulator.rotateHue('#FF0000', 120);
-      // Should be greenish
-      expect(result).toBeDefined();
+      // Red is hue 0, so +120 must land on 120. Making rotateHue return its
+      // input unchanged kept the old `toBeDefined()` green -- as it did for
+      // five sibling tests in this block.
+      expect(ColorConverter.hexToHsv(result).h).toBeCloseTo(120, 0);
     });
 
     it('should rotate red to blue (240°)', () => {
       const result = ColorManipulator.rotateHue('#FF0000', 240);
-      // Should be blueish
-      expect(result).toBeDefined();
+      expect(ColorConverter.hexToHsv(result).h).toBeCloseTo(240, 0);
     });
 
     it('should preserve saturation and brightness', () => {
       const original = '#FF0000';
-      const rotated = ColorManipulator.rotateHue(original, 180);
+      const source = ColorConverter.hexToHsv(original);
+      const rotated = ColorConverter.hexToHsv(ColorManipulator.rotateHue(original, 180));
 
-      expect(rotated).toBeDefined();
-      expect(rotated).not.toBe(original);
+      // The title names saturation and brightness; `not.toBe(original)` only
+      // said "some other string".
+      expect(rotated.s).toBeCloseTo(source.s, 0);
+      expect(rotated.v).toBeCloseTo(source.v, 0);
+      expect(rotated.h).toBeCloseTo(180, 0);
     });
 
     it('should handle grayscale (no hue to rotate)', () => {
       const result = ColorManipulator.rotateHue('#808080', 120);
-      // Grayscale has no hue, so rotation should not change it significantly
-      expect(result).toBeDefined();
+      // No hue to rotate: the colour must come back unchanged, not tinted.
+      expect(result.toUpperCase()).toBe('#808080');
     });
 
     it('should handle full rotation (720°)', () => {

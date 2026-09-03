@@ -8,8 +8,13 @@
  */
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
-import { type HarmonyOptions, type MatchingMethod } from '@xivdyetools/core';
-import { filterDyes, ColorService, DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
+import type { HarmonyOptions, HarmonySlot, MatchingMethod } from '@xivdyetools/core';
+import {
+  filterDyes,
+  ColorService,
+  DEFAULT_MATCHING_METHOD,
+  generateHarmonySlots,
+} from '@xivdyetools/core';
 import { createTranslator, type Translator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import { generateHarmonyCard, num, type HarmonyCardSlot } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
@@ -21,6 +26,15 @@ import type { EmbedData } from './types.js';
 // ============================================================================
 
 /** @internal Reference constant — not required by external consumers. */
+/**
+ * The harmony types the bot serves.
+ *
+ * These are exactly the rows of `HARMONY_OFFSETS`, which is what makes them
+ * the same ten the web app offers. Before 2026-09-03 this list held eight,
+ * because each one needed a bespoke `DyeService.find*Dyes()` method and no
+ * method existed for `compound` or `shades`; selection now reads the table, so
+ * a harmony type is a row rather than a function.
+ */
 export const HARMONY_TYPES = [
   'triadic',
   'complementary',
@@ -30,6 +44,8 @@ export const HARMONY_TYPES = [
   'inverted-tetradic',
   'square',
   'monochromatic',
+  'compound',
+  'shades',
 ] as const;
 
 export type HarmonyType = (typeof HARMONY_TYPES)[number];
@@ -80,47 +96,7 @@ export type HarmonyResult =
 // Helpers
 // ============================================================================
 
-function getHarmonyDyes(hex: string, type: HarmonyType, options?: HarmonyOptions): Dye[] {
-  switch (type) {
-    case 'triadic':
-      return dyeService.findTriadicDyes(hex, options);
-    case 'complementary': {
-      const comp = dyeService.findComplementaryPair(hex, options);
-      return comp ? [comp] : [];
-    }
-    case 'analogous':
-      return dyeService.findAnalogousDyes(hex, 30, options);
-    case 'split-complementary':
-      return dyeService.findSplitComplementaryDyes(hex, options);
-    case 'tetradic':
-      return dyeService.findTetradicDyes(hex, options);
-    case 'inverted-tetradic':
-      return dyeService.findInvertedTetradicDyes(hex, options);
-    case 'square':
-      return dyeService.findSquareDyes(hex, options);
-    case 'monochromatic':
-      return dyeService.findMonochromaticDyes(hex, 5, options);
-    default:
-      return dyeService.findTriadicDyes(hex, options);
-  }
-}
 
-/**
- * The ideal hue offsets each harmony type asks for (HSV rotation at the
- * base's saturation and value — mirrors core's HarmonyGenerator).
- * Monochromatic has no hue-rotation ideals; its rows render without the
- * outlined swatch.
- */
-const IDEAL_OFFSETS: Record<HarmonyType, number[]> = {
-  complementary: [180],
-  triadic: [120, 240],
-  analogous: [30, -30, 180],
-  'split-complementary': [150, 210],
-  tetradic: [60, 180, 240],
-  'inverted-tetradic': [120, 180, 300],
-  square: [90, 180, 270],
-  monochromatic: [],
-};
 
 function getLocalizedHarmonyType(type: string, t: Translator): string {
   const keyMap: Record<string, string> = {
@@ -132,21 +108,19 @@ function getLocalizedHarmonyType(type: string, t: Translator): string {
     'inverted-tetradic': 'harmony.invertedTetradic',
     square: 'harmony.square',
     monochromatic: 'harmony.monochromatic',
+    compound: 'harmony.compound',
+    shades: 'harmony.shades',
   };
   const key = keyMap[type];
   if (key) return t.t(key);
-  // Fallback: capitalize first letter
-  const formats: Record<string, string> = {
-    complementary: 'Complementary',
-    analogous: 'Analogous',
-    triadic: 'Triadic',
-    'split-complementary': 'Split-Complementary',
-    tetradic: 'Tetradic',
-    'inverted-tetradic': 'Inverted Tetradic',
-    square: 'Square',
-    monochromatic: 'Monochromatic',
-  };
-  return formats[type] || type.charAt(0).toUpperCase() + type.slice(1);
+  // pkg-svg-bot-logic-08: an English `formats` table used to sit here as a
+  // "fallback", duplicating all eight names. It could never run — `keyMap`
+  // covers every HarmonyType, so the return above always fires, and even on a
+  // missing locale key `Translator.t()` returns the raw key rather than
+  // undefined. The reverse-key gate is what actually guards the locale files.
+  // Only a genuinely unknown type reaches here, and capitalising it is the
+  // honest answer for one.
+  return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
 // ============================================================================
@@ -168,103 +142,114 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     dyeFilters,
     companionCount = 1,
     matchingMethod = DEFAULT_MATCHING_METHOD,
-    strictMatching = false,
-    preventDuplicates = false,
+    // Both default to what the Harmony Explorer defaults them to
+    // (`DEFAULT_CONFIGS.harmony` in web-app's tool-config-types.ts). The bot
+    // defaulting them the other way was an unexplained divergence between two
+    // surfaces meant to answer the same question the same way — and
+    // `preventDuplicates` in particular is the difference between a card of
+    // distinct dyes and one that can repeat.
+    strictMatching = true,
+    preventDuplicates = true,
   } = input;
   const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 
   try {
-    // Apply strict-matching by tightening deltaE tolerance via harmonyOptions
-    const effectiveHarmonyOptions: HarmonyOptions | undefined = strictMatching
-      ? {
-          ...(harmonyOptions ?? {}),
-          algorithm: 'deltaE',
-          deltaEFormula: harmonyOptions?.deltaEFormula ?? 'cie2000',
-          deltaETolerance: harmonyOptions?.deltaETolerance ?? 15,
-        }
-      : harmonyOptions;
+    // REFACTOR (2026-09-03): selection runs through core's shared
+    // `generateHarmonySlots`, the web app's algorithm, so `/harmony` and the
+    // Harmony Explorer now answer the same question the same way.
+    //
+    // They did not before. The bot called a named `DyeService.find*Dyes()` per
+    // type, which rotates hue WITHOUT preserving the base's saturation and
+    // value — and `findComplementaryPair` did not rotate at all, it inverted
+    // the RGB. Measured over all 125 dyes, the two surfaces disagreed on the
+    // returned dyes for 89-100% of bases on every harmony type: `/harmony
+    // analogous` on Snow White answered Neon Green and Kobold Brown where the
+    // page shows Pure White and Pearl White.
+    //
+    // Filters are applied to the CANDIDATE POOL rather than to the result, so
+    // "the nearest allowed dye to the ideal" is the answer, instead of "the
+    // nearest allowed dye to one that was thrown away".
+    const candidatePool = dyeFilters
+      ? filterDyes(dyeFilters, dyeService.getAllDyes())
+      : dyeService.getAllDyes();
 
-    const baseHarmonyDyes = dyeFilters
-      ? filterDyes(dyeFilters, getHarmonyDyes(baseHex, harmonyType, effectiveHarmonyOptions))
-      : getHarmonyDyes(baseHex, harmonyType, effectiveHarmonyOptions);
+    const clampedCompanionCount = Math.max(1, Math.min(3, Math.floor(companionCount)));
 
-    if (baseHarmonyDyes.length === 0) {
+    // Annotated because two differently-shaped "slot" types meet in this
+    // function: core's HarmonySlot (an ideal hue and the dye nearest it) and
+    // svg's HarmonyCardSlot (one printed row). The conversion between them is
+    // below; naming both makes which is which readable at a glance.
+    const harmonySlots: HarmonySlot[] = generateHarmonySlots(
+      baseHex,
+      harmonyType,
+      candidatePool,
+      {
+        // `strictMatching` is the bot's spelling of the page's perceptual
+        // ranking, and it is passed through rather than pinned on. Pinning it
+        // left `/harmony strict_matching:false` registered with Discord and
+        // silently inert — the option was accepted, discarded with a `void`,
+        // and the card came back identical.
+        usePerceptualMatching: strictMatching,
+        matchingMethod,
+        companionCount: clampedCompanionCount - 1,
+        preventDuplicates,
+      },
+      { excludeItemIDs: baseItemID != null ? [baseItemID] : [] },
+    );
+
+    // `harmonyOptions` (the colour space to rotate hue in) has no meaning any
+    // more: `generateHarmonySlots` rotates in HSV, carrying the base's
+    // saturation and value, and that IS the algorithm all three surfaces now
+    // share. Choosing a different space would be choosing a different answer
+    // than the page gives. The `color_space` choice has been withdrawn from
+    // the command rather than left registered and inert; the field stays on
+    // the input type so an existing caller passing it is not a type error.
+    void harmonyOptions;
+
+    const harmonyDyes: Dye[] = harmonySlots.flatMap((slot) =>
+      slot.dye ? [slot.dye, ...slot.companions] : [],
+    );
+
+    if (harmonyDyes.length === 0) {
       return { ok: false, error: 'NO_MATCHES', errorMessage: t.t('errors.noMatchFound') };
     }
 
-    // Companion expansion: for each base harmony dye, find N-1 additional close matches
-    const harmonyDyes: Dye[] = [];
-    const seenIds = new Set<number>();
-    if (baseId !== undefined) seenIds.add(baseId);
-    const clampedCompanionCount = Math.max(1, Math.min(3, Math.floor(companionCount)));
-
-    for (const baseDye of baseHarmonyDyes) {
-      const slotDyes: Dye[] = [];
-      const excludeIds: number[] = preventDuplicates ? Array.from(seenIds) : [];
-      // Always include the base harmony dye first
-      slotDyes.push(baseDye);
-      if (preventDuplicates) seenIds.add(baseDye.id);
-      excludeIds.push(baseDye.id);
-      // Find (companionCount - 1) additional close matches around this base hue
-      for (let i = 1; i < clampedCompanionCount; i++) {
-        const candidate = dyeService.findClosestDye(baseDye.hex, {
-          excludeIds: [...excludeIds],
-          matchingMethod,
-        });
-        if (!candidate) break;
-        if (candidate.category === 'Facewear') break;
-        if (dyeFilters && filterDyes(dyeFilters, [candidate]).length === 0) {
-          excludeIds.push(candidate.id);
-          i--;
-          continue;
-        }
-        slotDyes.push(candidate);
-        excludeIds.push(candidate.id);
-        if (preventDuplicates) seenIds.add(candidate.id);
-      }
-      harmonyDyes.push(...slotDyes);
-    }
-
-    // 11A: the ideal hue the maths asked for, beside the dye that exists.
-    // Each found dye pairs with the offset ideal it is nearest to, which also
-    // yields the row's angle lead and the frame's verdict; monochromatic rows
-    // have no ideal. Unknown types fall back to triadic, mirroring
-    // getHarmonyDyes.
+    // 11A: the ideal hue the maths asked for, beside the dye that exists. Each
+    // slot already carries its own ideal and the distance to it, so the card
+    // no longer has to re-derive "which ideal is this dye nearest to" — that
+    // pass is what used to let a spurious offset mislabel a row.
     //
     // The distance runs in the CHOSEN method, not always ΔE2000: a tier is a
     // property of the method, so the card prints which one produced it. Two
     // players with different stored preferences get different dyes back, and
     // without the tag one of the two PNGs looks wrong.
-    const offsets = IDEAL_OFFSETS[harmonyType] ?? IDEAL_OFFSETS.triadic;
-    const ideals = offsets.map((offset) => ({
-      hex: ColorService.rotateHue(baseHex, offset),
-      // -30 reads as 330° — an angle on the wheel, never a signed rotation
-      angle: `${((offset % 360) + 360) % 360}°`,
-    }));
     const stainLabel = t.t('card.stain');
-    const slots: HarmonyCardSlot[] = harmonyDyes.map((dye) => {
-      let idealHex: string | null = null;
-      let angleLabel: string | undefined;
-      let deltaE: number | null = null;
-      for (const ideal of ideals) {
-        const d = ColorService.getDistanceForMethod(ideal.hex, dye.hex, matchingMethod);
-        if (deltaE === null || d < deltaE) {
-          deltaE = d;
-          idealHex = ideal.hex;
-          angleLabel = ideal.angle;
-        }
-      }
-      const stainText = dye.stainID != null ? ` · ${stainLabel} ${dye.stainID}` : '';
-      return {
-        idealHex,
-        hex: dye.hex,
-        localizedName: getLocalizedDyeName(dye.itemID, dye.name, locale),
-        subText: `${dye.hex.toUpperCase()}${stainText}`,
-        deltaE,
-        angleLabel,
+    const slots: HarmonyCardSlot[] = harmonySlots.flatMap((slot) => {
+      if (!slot.dye) return [];
+      const angleLabel = `${slot.offset}°`;
+
+      const row = (dye: Dye, deltaE: number | null): HarmonyCardSlot => {
+        const stainText = dye.stainID != null ? ` · ${stainLabel} ${dye.stainID}` : '';
+        return {
+          idealHex: slot.targetHex,
+          hex: dye.hex,
+          localizedName: getLocalizedDyeName(dye.itemID, dye.name, locale),
+          subText: `${dye.hex.toUpperCase()}${stainText}`,
+          deltaE,
+          angleLabel,
+        };
       };
+
+      return [
+        row(slot.dye, slot.deviance),
+        // A companion is measured against the SAME ideal as the slot it sits
+        // in, so the numbers down a column are comparable.
+        ...slot.companions.map((dye) =>
+          row(dye, ColorService.getDistanceForMethod(slot.targetHex, dye.hex, matchingMethod)),
+        ),
+      ];
     });
 
     // The verdict names the weakest slot only — a glyph and three values,
@@ -354,6 +339,13 @@ export function getHarmonyTypeChoices(): Array<{ name: string; value: string }> 
     'inverted-tetradic': 'Inverted Tetradic',
     square: 'Square',
     monochromatic: 'Monochromatic',
+    compound: 'Compound',
+    shades: 'Shades',
   };
-  return HARMONY_TYPES.map((type) => ({ name: formats[type] || type, value: type }));
+  // Own-property lookup: a type named `toString` would otherwise take a
+  // Function down the `||` and produce a choice Discord cannot render.
+  return HARMONY_TYPES.map((type) => ({
+    name: Object.hasOwn(formats, type) ? formats[type] : type,
+    value: type,
+  }));
 }

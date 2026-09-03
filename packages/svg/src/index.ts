@@ -81,6 +81,7 @@ export {
   /** @public */
   hairline,
   measuredRow,
+  bandInk,
 } from './frame.js';
 export type {
   /** @public */

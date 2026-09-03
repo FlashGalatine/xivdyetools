@@ -19,21 +19,6 @@ import {
   isBanCancelButton,
 } from './ban-confirmation.js';
 
-// Re-export individual handlers
-export {
-  handlePresetApproveButton,
-  handlePresetRejectButton,
-  handlePresetRevertButton,
-  isPresetModerationButton,
-} from './preset-moderation.js';
-
-export {
-  handleBanConfirmButton,
-  handleBanCancelButton,
-  isBanConfirmButton,
-  isBanCancelButton,
-} from './ban-confirmation.js';
-
 // ============================================================================
 // Types
 // ============================================================================

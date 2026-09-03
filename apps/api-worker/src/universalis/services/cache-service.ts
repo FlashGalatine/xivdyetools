@@ -19,10 +19,18 @@ interface CacheApiResult {
 /**
  * CacheService handles all caching operations via the Cache API
  */
+/**
+ * Synthetic origin for every Cache API key this service writes (OPT-004).
+ *
+ * Deliberately not a real host: these URLs are never fetched, they are only
+ * cache keys, and a fixed one means the same Universalis answer is stored once
+ * regardless of which of the worker's three hostnames the request arrived on.
+ */
+const CACHE_URL_ORIGIN = 'https://cache.internal';
+
 export class CacheService {
   private cache: Cache | null = null;
   private ctx: ExecutionContext;
-  private baseUrl: string;
   private cacheName: string;
   private cacheInitPromise: Promise<Cache> | null = null;
 
@@ -30,10 +38,13 @@ export class CacheService {
    * @param cacheName Named Cache API store. The Universalis proxy keeps its
    * original name; other consumers (chara-resolve) pass their own so their
    * synthetic URLs can never collide with proxy entries.
+   *
+   * OPT-004 dropped the `baseUrl` parameter: keys are built from a fixed
+   * synthetic origin now, so the request's hostname no longer partitions the
+   * cache. `cacheName` was always the real namespace.
    */
-  constructor(ctx: ExecutionContext, baseUrl: string, cacheName = 'universalis-proxy') {
+  constructor(ctx: ExecutionContext, cacheName = 'universalis-proxy') {
     this.ctx = ctx;
-    this.baseUrl = baseUrl;
     this.cacheName = cacheName;
   }
 
@@ -63,7 +74,18 @@ export class CacheService {
    * Cache API requires full URLs as keys
    */
   private buildCacheUrl(key: string): string {
-    return `${this.baseUrl}/__cache/${encodeURIComponent(key)}`;
+    // OPT-004: this used `this.baseUrl` — the REQUEST's origin — so one
+    // Universalis answer was stored under three disjoint namespaces:
+    // `data.xivdyetools.app` (web app), the legacy `proxy.…` custom domains,
+    // and `https://internal` (the discord-worker service binding). Three
+    // upstream fetches per TTL window for one payload. The coalescer key was
+    // already origin-free, so a cross-origin waiter took the winner's data and
+    // then never populated its own namespace — the miss repeated every window.
+    //
+    // A fixed synthetic host makes the namespace the cache's own;
+    // `caches.open('universalis-proxy')` already keeps it away from
+    // `chara-resolve` and `caches.default`.
+    return `${CACHE_URL_ORIGIN}/__cache/${encodeURIComponent(key)}`;
   }
 
   /**
@@ -143,23 +165,4 @@ export class CacheService {
     );
   }
 
-  /**
-   * Delete data from cache
-   */
-  async deleteEntry(key: string): Promise<void> {
-    const cache = await this.getCache();
-    if (!cache) return;
-
-    const cacheUrl = this.buildCacheUrl(key);
-    await cache.delete(new Request(cacheUrl));
-  }
-
-  /**
-   * Delete data from cache asynchronously (non-blocking)
-   */
-  deleteAsync(key: string): void {
-    this.ctx.waitUntil(
-      this.deleteEntry(key).catch(() => {})
-    );
-  }
 }

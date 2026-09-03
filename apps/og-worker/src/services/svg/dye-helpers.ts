@@ -5,7 +5,7 @@
  * which the core library's findClosestDye doesn't directly expose.
  */
 
-import { normalizeMatchingMethod } from '@xivdyetools/core';
+import { DEFAULT_MATCHING_METHOD, normalizeMatchingMethod } from '@xivdyetools/core';
 import { DyeService, dyeDatabase, ColorService } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
 import type { MatchingAlgorithm } from '../../types';
@@ -29,6 +29,20 @@ const dyeByStainId = new Map<number, Dye>(
 );
 
 /**
+ * OPT-006 (deep dive 2026-09-02): the ONE dye list for this isolate.
+ *
+ * `getAllDyes()` returns a fresh 125-element copy per call (the OPT-023 note
+ * above), and harmony / gradient / extractor each called it *inside* their
+ * per-offset / per-step / per-entry loop — up to five copies per render, on a
+ * path that also runs a resvg raster. The dye database is immutable at
+ * runtime, so one frozen list serves every reader.
+ *
+ * Frozen because a shared array is only safe to hand out if nobody can sort
+ * or splice it; every consumer here reads, maps, or filters into a new array.
+ */
+export const ALL_DYES: readonly Dye[] = Object.freeze(dyeService.getAllDyes());
+
+/**
  * BUG-031: compute a color distance with the REQUESTED algorithm, so the
  * "Algorithm: X" footer on OG cards describes what was actually used.
  */
@@ -39,6 +53,29 @@ export function deltaForAlgorithm(
 ): number {
   // 5.0: one dispatch suite-wide; legacy spellings normalise first
   return ColorService.getDistanceForMethod(hex1, hex2, normalizeMatchingMethod(algorithm));
+}
+
+/**
+ * The value to ORDER matches by — never the one to print.
+ *
+ * `distinguish` is `round(rgbDistance / 441.67 × 100)`, an integer 0–100. Rank
+ * 125 dyes by it and they collapse into ~101 buckets whose ties fall to
+ * `ALL_DYES` order, so the card can name a dye the page's own result list
+ * never shows. `ColorConverter.getDistinguishabilityPercent`'s JSDoc says so
+ * outright: "ranks are always identical to RGB distance, and integer rounding
+ * creates ties, so any ordering driven by this value needs a sort fallback".
+ *
+ * Ranking on the unrounded RGB distance is that fallback, and it is not an
+ * approximation — for this method it is the *same* ordering, minus the ties.
+ * Every other method already returns a continuous value and is passed through.
+ */
+export function rankKeyForAlgorithm(
+  hex1: string,
+  hex2: string,
+  algorithm: MatchingAlgorithm,
+): number {
+  const method = normalizeMatchingMethod(algorithm);
+  return ColorService.getDistanceForMethod(hex1, hex2, method === 'distinguish' ? 'rgb' : method);
 }
 
 /**
@@ -68,12 +105,11 @@ export function findClosestDyesWithDistance(
     algorithm?: MatchingAlgorithm;
   } = {},
 ): DyeMatch[] {
-  const { limit = 5, excludeIds = [], algorithm = 'oklab' } = options;
+  const { limit = 5, excludeIds = [], algorithm = DEFAULT_MATCHING_METHOD } = options;
   const excludeSet = new Set(excludeIds);
 
   // Get all dyes and filter
-  const allDyes = dyeService.getAllDyes();
-  const candidates = allDyes.filter((dye) => !excludeSet.has(dye.id));
+  const candidates = ALL_DYES.filter((dye) => !excludeSet.has(dye.id));
 
   // BUG-031: rank with the requested algorithm, not hardcoded OKLAB
   const withDistances = candidates.map((dye) => ({

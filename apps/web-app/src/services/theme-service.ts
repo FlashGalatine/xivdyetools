@@ -200,13 +200,6 @@ export class ThemeService {
   }
 
   /**
-   * Get the current theme object
-   */
-  static getCurrentThemeObject(): Theme {
-    return this.getTheme(this.currentTheme);
-  }
-
-  /**
    * Get all available themes
    */
   static getAllThemes(): Theme[] {
@@ -240,23 +233,6 @@ export class ThemeService {
     const baseName = this.currentTheme.replace(/-dark$|(-light)$/, '');
     const newTheme = (isCurrentlyDark ? `${baseName}-light` : `${baseName}-dark`) as ThemeName;
     return this.isValidThemeName(newTheme) ? newTheme : null;
-  }
-
-  /**
-   * Toggle between light and dark variants of the current theme
-   */
-  static toggleDarkMode(): void {
-    const newTheme = this.toggledVariant();
-
-    // Check if the new theme variant exists
-    if (!newTheme) {
-      logger.warn(
-        `Theme ${this.currentTheme} does not have a ${this.currentTheme.endsWith('-dark') ? 'light' : 'dark'} variant`
-      );
-      return;
-    }
-
-    this.setTheme(newTheme);
   }
 
   /**
@@ -347,15 +323,6 @@ export class ThemeService {
   }
 
   /**
-   * Get color from current theme palette
-   * Note: V4 optional properties may return undefined
-   */
-  static getColor(key: keyof ThemePalette): string | boolean | undefined {
-    const palette = THEME_PALETTES[this.currentTheme];
-    return palette[key];
-  }
-
-  /**
    * Get a required color from current theme palette (v3 core properties only)
    * Use this for guaranteed string returns on core theme properties
    */
@@ -383,22 +350,6 @@ export class ThemeService {
   }
 
   /**
-   * Get the light variant of a theme
-   */
-  static getLightVariant(themeName: ThemeName): ThemeName {
-    const baseName = themeName.replace(/-dark$|(-light)$/, '');
-    return `${baseName}-light` as ThemeName;
-  }
-
-  /**
-   * Get the dark variant of a theme
-   */
-  static getDarkVariant(themeName: ThemeName): ThemeName {
-    const baseName = themeName.replace(/-dark$|(-light)$/, '');
-    return `${baseName}-dark` as ThemeName;
-  }
-
-  /**
    * Subscribe to theme changes
    */
   static subscribe(listener: (theme: ThemeName) => void): () => void {
@@ -411,7 +362,14 @@ export class ThemeService {
   }
 
   /**
-   * Reset to default theme
+   * Restore the default theme.
+   *
+   * Test-isolation hook: `beforeEach` calls it so a suite that switches themes
+   * cannot leak into the next. Kept for that reason rather than pruned as
+   * test-only (2026-09-01 dead-code audit, DEAD-005).
+   *
+   * @testonly `beforeEach` isolation — a theme switch must not leak between
+   * suites.
    */
   static resetToDefault(): void {
     this.setTheme(DEFAULT_THEME);
@@ -421,16 +379,13 @@ export class ThemeService {
    * Reset initialization state (for testing only)
    * Allows testing initialize() behavior with different storage states
    * @internal
+   *
+   * @testonly clears the `isInitialized` guard so a suite can re-exercise
+   * `initialize()` (including legacy-theme migration) against a fresh
+   * storage state without a prior test's init leaking in.
    */
   static __resetForTesting(): void {
     this.isInitialized = false;
-  }
-
-  /**
-   * Get theme names by base (e.g., 'standard' returns both light and dark)
-   */
-  static getThemeVariants(baseName: string): ThemeName[] {
-    return THEME_NAMES.filter((name) => name.startsWith(baseName)) as ThemeName[];
   }
 }
 

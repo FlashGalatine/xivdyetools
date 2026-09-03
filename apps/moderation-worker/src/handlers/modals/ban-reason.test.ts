@@ -3,7 +3,7 @@ import { handleBanReasonModal, isBanReasonModal } from './ban-reason.js';
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import { createMockD1Database } from '@xivdyetools/test-utils';
-import { encodeBase64Url } from '../../utils/response.js';
+import { base64UrlEncode } from '@xivdyetools/auth/encoding';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 import * as discordApi from '../../utils/discord-api.js';
@@ -12,7 +12,13 @@ import * as discordApi from '../../utils/discord-api.js';
 vi.mock('../../utils/discord-api.js', () => {
   const sendMessage = vi.fn();
   // BUG-035: handlers call the safe wrappers; alias to the same mocks
-  return { sendMessage, safeSendMessage: sendMessage };
+  // moderation-worker-09: processBan now also resolves the "Processing Ban…"
+  // acknowledgement through safeEditOriginalResponse.
+  return {
+    sendMessage,
+    safeSendMessage: sendMessage,
+    safeEditOriginalResponse: vi.fn(),
+  };
 });
 
 vi.mock('../../services/preset-api.js', async () => {
@@ -289,7 +295,7 @@ describe('handleBanReasonModal', () => {
       presetsHidden: 5,
     });
 
-    const encodedUsername = encodeBase64Url('BadUser');
+    const encodedUsername = base64UrlEncode('BadUser');
     const interaction = {
       id: 'int-1',
       token: 'token-1',
@@ -336,7 +342,7 @@ describe('handleBanReasonModal', () => {
       presetsHidden: 7,
     });
 
-    const encodedUsername = encodeBase64Url('SpamUser');
+    const encodedUsername = base64UrlEncode('SpamUser');
     const interaction = {
       id: 'int-1',
       token: 'token-1',
@@ -541,7 +547,7 @@ describe('handleBanReasonModal', () => {
       presetsHidden: 2,
     });
 
-    const encodedUsername = encodeBase64Url('Test_User_Name');
+    const encodedUsername = base64UrlEncode('Test_User_Name');
     const interaction = {
       id: 'int-1',
       token: 'token-1',
@@ -638,7 +644,7 @@ describe('handleBanReasonModal', () => {
       presetsHidden: 0,
     });
 
-    const encodedUsername = encodeBase64Url('User.Name-123');
+    const encodedUsername = base64UrlEncode('User.Name-123');
     const interaction = {
       id: 'int-1',
       token: 'token-1',

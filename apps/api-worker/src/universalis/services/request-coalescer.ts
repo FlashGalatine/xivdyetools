@@ -164,6 +164,11 @@ export class RequestCoalescer {
 
   /**
    * Check if a request is currently in flight
+   *
+   * @testonly test observation point into the internal in-flight Map —
+   * verifies coalescing/cleanup-timeout behavior (the cleanup-key,
+   * long-running and fast-key scenarios in request-coalescer.test.ts); no
+   * production caller queries in-flight state, only `coalesce()` itself.
    */
   isInFlight(key: string): boolean {
     return inFlightRequests.has(key);
@@ -171,6 +176,9 @@ export class RequestCoalescer {
 
   /**
    * Get the current number of in-flight requests (for debugging)
+   *
+   * @testonly same test-observation role as `isInFlight` — asserts the count
+   * increments/decrements correctly across concurrent `coalesce()` calls.
    */
   getInFlightCount(): number {
     return inFlightRequests.size;

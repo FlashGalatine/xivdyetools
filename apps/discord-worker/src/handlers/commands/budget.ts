@@ -130,17 +130,25 @@ export async function handleBudgetCommand(
  * lookup (one cached call per command), and a preference that no longer
  * resolves is answered rather than priced.
  *
- * @returns the canonical world to use; `undefined` when nothing is set (no
- *          override, no preference); `null` when the named world is unknown
+ * BUG-031: the "unknown world" and "the proxy is down" cases used to arrive
+ * here as the same `null`, so an outage told the user their own valid world
+ * did not exist. They are now distinct.
+ *
+ * @returns `{ ok: true }` with the canonical world; `'unset'` when nothing is
+ *          set (no override, no preference); otherwise why it failed
  */
+type ResolvedWorld =
+  | { ok: true; name: string }
+  | { ok: false; reason: 'unset' | 'unknown' | 'upstream' };
+
 async function resolveWorld(
   env: Env,
   worldOverride: string | undefined,
   prefs: UserPreferences,
   logger?: ExtendedLogger
-): Promise<string | null | undefined> {
+): Promise<ResolvedWorld> {
   const named = worldOverride || prefs.world;
-  if (!named) return undefined;
+  if (!named) return { ok: false, reason: 'unset' };
   return validateWorld(env, named, logger);
 }
 
@@ -205,16 +213,23 @@ async function handleFindSubcommand(
   // (canonical name) reaches the Universalis proxy and the shared
   // price-cache key. The echo names whichever one the user must correct.
   const world = await resolveWorld(env, worldOverride, prefs, logger);
-  if (world === null) {
+  if (!world.ok) {
+    if (world.reason === 'unset') {
+      return ephemeralResponse(
+        `**${t.t('budget.noWorldSet.title')}**\n\n${t.t('budget.noWorldSet.description')}`
+      );
+    }
+    if (world.reason === 'upstream') {
+      // BUG-031: the world is probably fine — Universalis is not. Saying
+      // "could not find <their world>" during an outage sends the user off to
+      // check a spelling that was never wrong.
+      markCommandOutcome(interaction, 'upstream_universalis');
+      return ephemeralResponse(t.t('budget.errors.apiError'));
+    }
     return ephemeralResponse(
       t.t('budget.errors.worldNotFound', {
         world: sanitizeEmbedText(worldOverride || prefs.world || '', 64),
       })
-    );
-  }
-  if (!world) {
-    return ephemeralResponse(
-      `**${t.t('budget.noWorldSet.title')}**\n\n${t.t('budget.noWorldSet.description')}`
     );
   }
 
@@ -224,7 +239,7 @@ async function handleFindSubcommand(
       interaction,
       env,
       targetDye.itemID,
-      world,
+      world.name,
       { method, matchLine: matchLineRaw, excludeCoffers, excludeWideSpectrum },
       t,
       prefs.theme,
@@ -432,22 +447,26 @@ async function handleSetWorldSubcommand(
   }
 
   // Validate world exists
-  const validatedWorld = await validateWorld(env, worldInput, logger);
+  const validated = await validateWorld(env, worldInput, logger);
 
-  if (!validatedWorld) {
+  if (!validated.ok) {
+    // BUG-031: refusing to save a valid world because the proxy is down is
+    // worth its own sentence — the user has nothing to correct.
     return ephemeralResponse(
-      t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldInput, 64) })
+      validated.reason === 'upstream'
+        ? t.t('budget.errors.apiError')
+        : t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldInput, 64) })
     );
   }
 
   // Save preference via unified preferences system
-  const result = await setPreference(env.KV, userId, 'world', validatedWorld, logger);
+  const result = await setPreference(env.KV, userId, 'world', validated.name, logger);
 
   if (!result.success) {
     return ephemeralResponse(t.t('budget.errors.saveFailed'));
   }
 
-  return ephemeralResponse(t.t('budget.worldSet', { world: validatedWorld }));
+  return ephemeralResponse(t.t('budget.worldSet', { world: validated.name }));
 }
 
 // ============================================================================
@@ -483,15 +502,19 @@ async function handleQuickSubcommand(
 
   // FINDING-033 / FINDING-019: same world validation as find / set_world
   const world = await resolveWorld(env, worldOverride, prefs, logger);
-  if (world === null) {
+  if (!world.ok) {
+    if (world.reason === 'unset') {
+      return ephemeralResponse(t.t('budget.noWorldSet.description'));
+    }
+    if (world.reason === 'upstream') {
+      markCommandOutcome(interaction, 'upstream_universalis');
+      return ephemeralResponse(t.t('budget.errors.apiError'));
+    }
     return ephemeralResponse(
       t.t('budget.errors.worldNotFound', {
         world: sanitizeEmbedText(worldOverride || prefs.world || '', 64),
       })
     );
-  }
-  if (!world) {
-    return ephemeralResponse(t.t('budget.noWorldSet.description'));
   }
 
   const deferResponse = deferredResponse();
@@ -500,7 +523,7 @@ async function handleQuickSubcommand(
       interaction,
       env,
       preset.targetDyeId,
-      world,
+      world.name,
       { method: prefs.matching ?? 'ciede2000' },
       t,
       prefs.theme,

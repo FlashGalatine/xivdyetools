@@ -18,7 +18,7 @@ import {
 } from '@xivdyetools/core';
 import { createUserTranslatorWithPrefs, type Translator } from '../../services/bot-i18n.js';
 import type { LocaleCode } from '../../services/i18n.js';
-import { fetchWorlds, fetchDataCenters } from '../../services/budget/index.js';
+import { getCachedWorlds, getCachedDataCenters } from '../../services/budget/index.js';
 import { BRAND_ACCENT } from '../../utils/brand.js';
 
 // /manual used to spend five decorative colours across five embeds — one
@@ -255,7 +255,14 @@ const TOPIC_KEYS: Partial<Record<ManualTopicId, string>> = {
 async function resolveLodestoneRegion(env: Env, world: string | undefined): Promise<LearnLink | null> {
   if (!world) return null;
   try {
-    const [worlds, dcs] = await Promise.all([fetchWorlds(env), fetchDataCenters(env)]);
+    // BUG-034: this called the UNCACHED `fetchWorlds`/`fetchDataCenters`, two
+    // service-binding round trips with a 10-second timeout each and no retry,
+    // on a path that answers with `{type: 4}` — so Discord's 3-second ack was
+    // the whole budget and a slow proxy produced "The application did not
+    // respond". The 1-hour module caches already existed and every other
+    // caller used them; they were simply private. World lists change when SE
+    // adds a server, so a cache miss here is close to a once-per-isolate cost.
+    const [worlds, dcs] = await Promise.all([getCachedWorlds(env), getCachedDataCenters(env)]);
     const target = world.toLowerCase();
     const worldEntry = worlds.find((w) => w.name.toLowerCase() === target);
     // The stored value may be a datacenter name rather than a world

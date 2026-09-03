@@ -1,0 +1,37 @@
+apps/api-worker/src/lib/validation.ts:9:import { DEFAULT_MATCHING_METHOD, LEGACY_MATCHING_METHOD_MAP } from '@xivdyetools/core';
+apps/api-worker/src/lib/validation.ts:318:  if (value in LEGACY_MATCHING_METHOD_MAP) {
+apps/api-worker/src/lib/validation.ts:319:    return LEGACY_MATCHING_METHOD_MAP[value];
+apps/discord-worker/src/services/preferences.ts:59:const LEGACY_I18N_PREFIX = 'i18n:user:';
+apps/discord-worker/src/services/preferences.ts:60:const LEGACY_WORLD_PREFIX = 'budget:world:v1:';
+apps/discord-worker/src/services/preferences.ts:482:    const legacyLanguage = await kv.get(`${LEGACY_I18N_PREFIX}${userId}`);
+apps/discord-worker/src/services/preferences.ts:489:    const legacyWorldData = await kv.get(`${LEGACY_WORLD_PREFIX}${userId}`);
+apps/discord-worker/src/types/preset.ts:15: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/discord-worker/src/types/preset.ts:21: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/discord-worker/src/types/preset.ts:27: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:13: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:19: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:25: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:31: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:42: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/presets-api/src/types.ts:15: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/presets-api/src/types.ts:34: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/presets-api/src/types.ts:40: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/web-app/src/components/swatch-tool.ts:144:const EVERCOLD_DEPRECATED_CATEGORIES: ColorCategory[] = ['eyeColors', 'hairColors', 'skinColors'];
+apps/web-app/src/components/swatch-tool.ts:1666:    const show = EVERCOLD_DEPRECATED_CATEGORIES.includes(this.colorCategory);
+apps/web-app/src/components/v4/display-options-v4.ts:113:   * @deprecated ΔE2000 verdict is structural on the 5.0 Result Card; the flag
+apps/web-app/src/services/preset-submission-service.ts:143:const LEGACY_ITEM_ID_FLOOR = 5000;
+apps/web-app/src/services/preset-submission-service.ts:184:  } else if (submission.dyes.some((id) => id >= LEGACY_ITEM_ID_FLOOR)) {
+apps/web-app/src/services/preset-submission-service.ts:523:      } else if (updates.dyes.some((id) => id >= LEGACY_ITEM_ID_FLOOR)) {
+apps/web-app/src/services/router-service.ts:82:const LEGACY_ROUTE_REDIRECTS: Record<string, ToolId> = {
+apps/web-app/src/services/router-service.ts:387:    const legacyRedirect = LEGACY_ROUTE_REDIRECTS[path];
+apps/web-app/src/shared/logger.ts:25: * @deprecated Use createBrowserLogger({ isDev: () => true }) instead
+apps/web-app/src/shared/logger.ts:31: * @deprecated Use createBrowserLogger({ isDev: () => true }) instead
+apps/web-app/src/shared/logger.ts:61: * @deprecated Use `createBrowserLogger()` from '@xivdyetools/logger/browser' instead.
+apps/web-app/src/shared/tool-config-types.ts:330:   * @deprecated The ΔE2000 verdict is structural on the 5.0 Result Card and
+packages/core/src/config/facewear.ts:22:export const LEGACY_FACEWEAR_ITEM_IDS: Readonly<Record<number, string>> = {
+packages/core/src/config/facewear.ts:43:  const slug = LEGACY_FACEWEAR_ITEM_IDS[legacyId];
+packages/core/src/index.ts:78:  LEGACY_MATCHING_METHOD_MAP,
+packages/core/src/index.ts:206:  LEGACY_FACEWEAR_ITEM_IDS,
+packages/core/src/types/index.ts:72:export const LEGACY_MATCHING_METHOD_MAP: Record<string, MatchingMethod> = {
+packages/core/src/types/index.ts:91:  if (typeof value === 'string' && value in LEGACY_MATCHING_METHOD_MAP) {
+packages/core/src/types/index.ts:92:    return LEGACY_MATCHING_METHOD_MAP[value];

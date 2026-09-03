@@ -114,7 +114,7 @@ export function generateSwatchCard(options: SwatchCardOptions): string {
   });
   parts.push(`</g>`);
   parts.push(
-    `<rect x="${PAD + 0.5}" y="13.5" width="${stripW - 1}" height="29" rx="6.5" fill="none" stroke="${theme.swatchRing}" stroke-width="1"/>`
+    `<rect x="${PAD + 0.5}" y="13.5" width="${stripW - 1}" height="29" rx="6.5" fill="none" stroke="${escapeXml(theme.swatchRing)}" stroke-width="1"/>`
   );
 
   const chip = commandChip(0, 0, commandLabel, theme, { glyph });

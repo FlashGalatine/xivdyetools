@@ -728,6 +728,67 @@ describe('XIVAuth Handler', () => {
             expect(json.user.global_name).toBeNull();
         });
 
+        /**
+         * BUG-051: the roster was assigned to `characters` BEFORE it was known
+         * to be an array, so a **200 with a non-array body** — `{"data": []}`,
+         * or `null` — made `characters.filter` throw inside the try. The catch
+         * logged "not a fatal error" and continued WITHOUT restoring
+         * `characters` to `[]`, so `characters.find(...)` further down threw a
+         * TypeError outside that catch and the whole sign-in became
+         * `500 Authentication failed` — instead of the degraded login with the
+         * `XIVAuth User <id>` fallback that the two tests above verify.
+         *
+         * Those two cover a non-ok status and a throwing `fetch`; both leave
+         * `characters` as the initial `[]`. A 200 whose body simply is not an
+         * array was never sent.
+         */
+        it.each([
+            ['an object', JSON.stringify({ data: [] })],
+            ['null', 'null'],
+            ['a bare string', JSON.stringify('nope')],
+        ])('degrades rather than 500ing when the roster is %s', async (_label, body) => {
+            globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+                if (url.includes('xivauth.net/oauth/token')) {
+                    return Promise.resolve(new Response(JSON.stringify({
+                        access_token: 'xivauth_token',
+                        token_type: 'Bearer',
+                        expires_in: 604800,
+                        refresh_token: 'refresh',
+                        scope: 'user user:social character refresh',
+                    }), { status: 200 }));
+                }
+                if (url.includes('xivauth.net/api/v1/user')) {
+                    return Promise.resolve(new Response(JSON.stringify({
+                        id: 'xivauth-nonarray-roster',
+                        mfa_enabled: false,
+                        verified_characters: 0,
+                        social_identities: [],
+                    }), { status: 200 }));
+                }
+                if (url.includes('xivauth.net/api/v1/characters')) {
+                    // 200 OK, but not the array the code assumed.
+                    return Promise.resolve(new Response(body, { status: 200 }));
+                }
+                return originalFetch(url);
+            });
+
+            const response = await SELF.fetch('http://localhost/auth/xivauth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: 'valid_code',
+                    code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
+                }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(200);
+            expect(json.success).toBe(true);
+            expect(json.user.username).toContain('XIVAuth User');
+        });
+
         it('should handle characters fetch error gracefully', async () => {
             globalThis.fetch = vi.fn().mockImplementation((url: string) => {
                 if (url.includes('xivauth.net/oauth/token')) {
@@ -1339,7 +1400,10 @@ describe('XIVAuth Handler', () => {
             const insert = recordedStatements.find((s) => s.sql.includes('INSERT INTO users'));
             expect(insert).toBeDefined();
             expect(insert!.sql).not.toContain('avatar_url');
-            expect(insert!.params).toHaveLength(5);
+            // 5 identity columns + created_at / updated_at, which oauth-06
+            // binds explicitly so the written row and the returned object agree
+            // on their format. avatar_url is still not among them.
+            expect(insert!.params).toHaveLength(7);
         });
 
         it('should mint exactly the claims consumers read — no orig_iat, xivauth_id or primary_character', async () => {

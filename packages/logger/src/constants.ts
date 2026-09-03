@@ -56,9 +56,3 @@ export const WORKER_REDACT_FIELDS = [
   ...CORE_REDACT_FIELDS,
   ...WORKER_SPECIFIC_REDACT_FIELDS,
 ] as const;
-
-/**
- * Default redact fields (alias for CORE_REDACT_FIELDS).
- * Used by base logger and non-worker presets.
- */
-export const DEFAULT_REDACT_FIELDS = CORE_REDACT_FIELDS;

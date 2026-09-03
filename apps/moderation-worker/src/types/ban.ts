@@ -111,19 +111,3 @@ export interface UnbanResult {
   cause?: unknown;
 }
 
-/**
- * Convert database row to BannedUser object
- */
-export function toBannedUser(row: BannedUserRow): BannedUser {
-  return {
-    id: row.id,
-    discordId: row.discord_id,
-    xivAuthId: row.xivauth_id,
-    username: row.username,
-    moderatorDiscordId: row.moderator_discord_id,
-    reason: row.reason,
-    bannedAt: row.banned_at,
-    unbannedAt: row.unbanned_at,
-    unbanModeratorDiscordId: row.unban_moderator_discord_id,
-  };
-}

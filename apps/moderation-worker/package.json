@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-moderation-worker",
-  "version": "1.6.0",
+  "version": "1.6.3",
   "private": true,
   "description": "XIV Dye Tools Discord Moderation Bot - Cloudflare Workers Edition",
   "type": "module",
@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src/",
+    "lint": "eslint src/ && pnpm run lint:dead",
+    "lint:dead": "knip --directory ../.. --workspace apps/moderation-worker --no-config-hints --no-tag-hints",
     "register-commands": "npx tsx scripts/register-commands.ts"
   },
   "keywords": [
@@ -37,7 +38,6 @@
     "@types/node": "^26.4.0",
     "@vitest/coverage-v8": "^4.1.11",
     "@xivdyetools/test-utils": "workspace:*",
-    "discord-interactions": "^4.4.0",
     "dotenv": "^17.4.2",
     "tsx": "^4.23.12",
     "vitest": "^4.1.11",

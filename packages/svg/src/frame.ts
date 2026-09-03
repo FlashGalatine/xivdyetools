@@ -189,11 +189,17 @@ export function fitText(
   font: 'mono' | 'body' | 'display' = 'body',
 ): string {
   if (textWidth(content, size, font) <= maxPx) return content;
-  let out = content;
-  while (out.length > 1 && textWidth(out + '…', size, font) > maxPx) {
-    out = out.slice(0, -1);
+  // REFACTOR-008: slice by code point, not by UTF-16 unit. A `slice(0, -1)`
+  // truncation landing inside a surrogate pair (astral CJK, an emoji) leaves a
+  // lone high surrogate, which `escapeXml` then deletes — so the character
+  // vanishes instead of being ellipsised, and the XML stays valid enough to
+  // hide it. `preset-swatch.ts`'s `fitToWidth` has always done this correctly
+  // (BUG-060); the two ellipsisers in this package now agree.
+  const chars = [...content];
+  while (chars.length > 1 && textWidth(chars.join('') + '…', size, font) > maxPx) {
+    chars.pop();
   }
-  return out.trimEnd() + '…';
+  return chars.join('').trimEnd() + '…';
 }
 
 // ============================================================================
@@ -208,7 +214,7 @@ export function cardShell(height: number, theme: CardTheme, content: string): st
   const h = Math.min(height, CARD_MAX_HEIGHT);
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${h}" viewBox="0 0 ${CARD_WIDTH} ${h}">` +
-    `<rect x="0" y="0" width="${CARD_WIDTH}" height="${h}" rx="16" fill="${theme.surface}"/>` +
+    `<rect x="0" y="0" width="${CARD_WIDTH}" height="${h}" rx="16" fill="${escapeXml(theme.surface)}"/>` +
     `<rect x="0.5" y="0.5" width="${CARD_WIDTH - 1}" height="${h - 1}" rx="15.5" fill="none" stroke="${escapeXml(theme.border)}" stroke-width="1"/>` +
     content +
     `</svg>`
@@ -342,7 +348,7 @@ export function appIcon(x: number, y: number, size: number): string {
     ['#8E4EC6', '#0091FF', '#30A46C', '#FFC53D', '#F76B15', '#E5484D']
       .map(
         (c, i) =>
-          `<path d="M 12 0 Q 24 8 18 18 T 0 40 T -39 39 T -70 0 T -59 -59 T 0 -99 T 80 -80 T 128 0" fill="none" stroke="${c}" stroke-width="32" stroke-linecap="round" transform="rotate(${i * 60})"/>`,
+          `<path d="M 12 0 Q 24 8 18 18 T 0 40 T -39 39 T -70 0 T -59 -59 T 0 -99 T 80 -80 T 128 0" fill="none" stroke="${escapeXml(c)}" stroke-width="32" stroke-linecap="round" transform="rotate(${i * 60})"/>`,
       )
       .join('') +
     `<circle cx="0" cy="0" r="17" fill="#8E4EC6"/>` +
@@ -355,7 +361,7 @@ export function appIcon(x: number, y: number, size: number): string {
     `<clipPath id="${id}f"><rect x="100" y="196" width="312" height="130"/></clipPath>` +
     `<clipPath id="${id}s"><path d="M 140 222 C 180 246 216 250 256 250 C 296 250 336 244 376 219 C 374 230 372 236 368 242 C 360 250 352 255 346 257 L 346 288 C 346 302 318 302 318 288 L 318 259 C 304 261 290 262 274 262 L 274 316 C 274 332 244 332 244 316 L 244 262 C 228 261 212 258 200 255 L 200 276 C 200 290 174 290 174 276 L 174 249 C 160 242 148 233 140 222 Z"/></clipPath>` +
     `</defs>` +
-    `<rect width="512" height="512" rx="112" fill="${GLYPH_ACCENT_LIGHT}"/>` +
+    `<rect width="512" height="512" rx="112" fill="${escapeXml(GLYPH_ACCENT_LIGHT)}"/>` +
     `<ellipse cx="256" cy="428" rx="126" ry="20" fill="#000000" opacity="0.20"/>` +
     `<path d="M 114 158 C 132 40 380 40 398 158" fill="none" stroke="#9BA1AD" stroke-width="14" stroke-linecap="round"/>` +
     `<path d="M 108 176 C 112 270 122 356 140 402 C 162 436 350 436 372 402 C 390 356 400 270 404 176 C 404 222 338 250 256 250 C 174 250 108 222 108 176 Z" fill="#EEEFF3" stroke="#C8CCD5" stroke-width="3"/>` +
@@ -617,7 +623,7 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
   const tier = classifyBandTier(o.deltaE, method, o.context ?? 'match');
   const tone = theme.tiers[Math.min(tier, 3)];
   parts.push(
-    `<rect x="${cx}" y="${cy - 2.5}" width="${w.bar}" height="5" rx="2.5" fill="${tone}"/>`,
+    `<rect x="${cx}" y="${cy - 2.5}" width="${w.bar}" height="5" rx="2.5" fill="${escapeXml(tone)}"/>`,
   );
   cx += w.bar + gap;
   parts.push(

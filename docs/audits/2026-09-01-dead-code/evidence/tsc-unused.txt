@@ -1,0 +1,38 @@
+=================== auth
+--- exit=1
+=================== bot-logic
+--- exit=1
+=================== core
+--- exit=1
+=================== logger
+--- exit=1
+=================== svg
+--- exit=1
+=================== test-utils
+--- exit=1
+=================== types
+--- exit=1
+=================== worker-kit
+--- exit=1
+=================== api-worker
+--- exit=1
+=================== discord-worker
+--- exit=1
+=================== image-worker
+--- exit=1
+=================== moderation-worker
+--- exit=1
+=================== oauth
+--- exit=1
+=================== og-worker
+--- exit=1
+=================== presets-api
+--- exit=1
+=================== stoat-worker
+src/commands/index.test.ts(14,29): error TS6133: 'CommandContext' is declared but its value is never read.
+src/services/dye-resolver.test.ts(8,32): error TS6133: 'vi' is declared but its value is never read.
+src/services/dye-resolver.test.ts(8,36): error TS6133: 'beforeEach' is declared but its value is never read.
+src/services/dye-resolver.test.ts(13,8): error TS6133: 'DyeResolutionResult' is declared but its value is never read.
+--- exit=0
+=================== web-app
+--- exit=1

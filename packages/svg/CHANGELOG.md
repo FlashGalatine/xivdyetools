@@ -5,6 +5,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-09-02
+
+### Added
+
+- **`bandInk` is now a barrel export** (REFACTOR-002). og-worker kept a private copy
+  of the band-ink law — the same luminance formula and the same crossover, but with
+  the white `onDim` at 0.78 where this package has 0.72. A bot card and an OG card
+  are two renderings of the same dye and are not entitled to disagree about a
+  caption's alpha, so og-worker now imports this one and its fork is deleted.
+
+### Fixed
+
+- **`/gradient` verdict and legend are measured before they are wrapped** (BUG-054,
+  pkg-svg-bot-logic-02). `wrapVerdict` measured `length * 6.6` — a per-*character* constant — and
+  split only on ASCII spaces. Neither assumption survives CJK: a Japanese sentence carries no
+  spaces, so the whole verdict stayed one unbreakable word, and each of its glyphs is twice the
+  width the constant assumed. The ja stage-0 verdict rendered 432 px and the ko one 445.5 px on a
+  400 px card, cutting off a third of the sentence. It now measures with `textWidth` at the
+  caller's own size and font, breaks an over-long word by code point, and passes each line through
+  `fitText` as a backstop.
+- **Four row-width tables no longer overrun the card's own margin** (pkg-svg-bot-logic-06).
+  `lead + pair + name + bar + measure + 4 × gap` has to equal the 368 px content box or
+  `measuredRow`'s right-anchored measure lands outside the margin every other element aligns to.
+  Gradient was 8 px over, mixer 6, nearest-sheet and palette-grid 2 each; `swatch-card` was already
+  exact, which is where the intended invariant was visible. The `name` slot gives back the
+  difference in each.
+- **`fitText` truncates by code point** (REFACTOR-008). It sliced UTF-16 units while its twin
+  `preset-swatch.ts::fitToWidth` has always sliced code points (BUG-060); a cut landing inside a
+  surrogate pair left a lone half that `escapeXml` then deleted, so the character vanished rather
+  than being ellipsised. The two ellipsisers now agree.
+- **`a11y-card` asks for a font weight that exists** (pkg-svg-bot-logic-07). The control row
+  requested 500; consumers bundle 400/600/700 only, and CSS font matching resolves 500 to 400
+  silently — a no-op that read as a deliberate Medium.
+
+### Security
+
+- **Every colour interpolated into a `fill=` / `stroke=` attribute goes through `escapeXml`**
+  (pkg-svg-bot-logic-10), not just the six the review named. Nothing here was exploitable — each
+  site receives a theme constant or a hex already anchored by `normalizeHex` — but an unvalidated
+  hex in an attribute breaks out of it, which is how FINDING-028 reached resvg. `generator-hygiene.
+  test.ts` now greps the generators for the unescaped shape.
+
+### Added
+
+- `frame-budget.test.ts` gains ja/ko fixtures and a **frame extent** block: no text paints outside
+  the canvas, no right-anchored run sits past its card's margin, and a CJK verdict survives *whole*
+  rather than being ellipsised. The eight existing fixtures were all German, which binds for length
+  but never reaches `estimateTextWidth`'s wide branch — the branch BUG-054 lived in.
+- `generator-hygiene.test.ts`: three source-level rules no rendered assertion can see — attribute
+  escaping, unbundled font weights, and `fitText` never bisecting a surrogate pair.
+
+## [3.0.1] - 2026-09-02
+
+### Added
+
+- `base.test.ts` now asserts the CJK fallback ordering — every `FONTS` family carrying Noto must
+  list **JP → SC → KR**. JP has to precede SC or a Japanese player reads their own language in
+  Chinese letterforms (F-17); KR has to follow SC, which ships no Hangul. The rule previously
+  lived only in prose and in `apps/discord-worker/scripts/test-font-rendering.ts`, a manual script
+  nothing ran and which had gone stale — removed in the same sweep
+  (`docs/audits/2026-09-01-dead-code`, DEAD-028). Test-only: no published API change, no bump.
+
 ## [3.0.0] - 2026-08-29
 
 ### ⚠️ BREAKING — chara-name privacy

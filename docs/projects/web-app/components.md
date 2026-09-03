@@ -69,7 +69,7 @@ One per `ToolId`; lazy-imported by `v4-layout.ts` (see [Tools](tools.md) for wha
 
 Every BaseComponent tool exposes `selectDye(dye)` and/or `selectCustomColor(hex)` for the drawer, subscribes to `ConfigController` for its config and to `market` for server/price changes, and renders one main flow (`leftPanel === rightPanel` in the shell).
 
-**Tool-owned subcomponents (imperative, `components/`)**: `dye-selector.ts` (dye picker/multi-select used by harmony/gradient/mixer/accessibility/comparison), `dye-search-box.ts`, `dye-grid.ts`, `dye-card-renderer.ts`, `dye-action-dropdown.ts`, `add-to-collection-menu.ts`, `collapsible-panel.ts`, `market-board.ts` (+ `services/tool-panel-builders.ts` `buildMarketPanel`), `harmony-result-panel.ts`, `harmony-type.ts`, `color-wheel-display.ts`, `color-picker-display.ts`, `image-upload-display.ts`, `image-zoom-controller.ts`, `recent-colors-panel.ts`, `info-tooltip.ts`, `metric-help.ts` (5.0 — the pair-readout / methods explainer for accessibility, comparison, budget), `chara-import.ts` (5.0 — the 10A `.chara` file card and THIS CHARACTER sheet), `preset-card.ts` / `preset-detail.ts` (Lit, `v4/`), `preset-category-selector.ts` (1 primary + 2 secondary), `preset-submission-form.ts`, `preset-edit-form.ts`.
+**Tool-owned subcomponents (imperative, `components/`)**: `dye-selector.ts` (dye picker/multi-select used by harmony/gradient/mixer/accessibility/comparison), `dye-search-box.ts`, `dye-grid.ts`, `dye-card-renderer.ts`, `add-to-collection-menu.ts`, `collapsible-panel.ts`, `market-board.ts` (+ `services/tool-panel-builders.ts` `buildMarketPanel`), `harmony-result-panel.ts`, `harmony-type.ts`, `color-wheel-display.ts`, `color-picker-display.ts`, `image-upload-display.ts`, `image-zoom-controller.ts`, `recent-colors-panel.ts`, `info-tooltip.ts`, `metric-help.ts` (5.0 — the pair-readout / methods explainer for accessibility, comparison, budget), `chara-import.ts` (5.0 — the 10A `.chara` file card and THIS CHARACTER sheet), `preset-card.ts` / `preset-detail.ts` (Lit, `v4/`), `preset-category-selector.ts` (1 primary + 2 secondary), `preset-submission-form.ts`, `preset-edit-form.ts`.
 
 ---
 
@@ -132,13 +132,12 @@ Keyboard (`services/keyboard-service.ts`, initialised in `initializeServices()`)
 
 ## Service Layer
 
-Two shapes coexist. **Static-class services** are used directly (`ThemeService.subscribe(...)`, `LanguageService.t(key)`, `RouterService.navigateTo(id)`, `ModalService.show()`, `ToastService.success()`, `CollectionService.createCollection()`, `ShareService.generateUrl()`, `StorageService`, `TooltipService`, `AnnouncerService`, `TutorialService`, `KeyboardService`, `SavedPresetsService`). **Instance singletons** expose `getInstance()` / `resetInstance()` or a pre-built export (`ConfigController.getInstance()`, `MarketBoardService.getInstance()` / `getMarketBoardService()`, `dyeService`, `apiService`, `cameraService`, `indexedDBService`, `communityPresetService`, `hybridPresetService`, `authService`, `presetSubmissionService`, `WorldService`). Everything is re-exported from `services/index.ts`; `initializeServices()` there runs the boot order: LanguageService → (Dye/Storage/API/Toast/Modal/Tooltip ready) → `KeyboardService.initialize()` → `WorldService.initialize()` → `cameraService.initialize()` → `hybridPresetService.initialize()` → `authService.initialize()`. `ThemeService` self-initialises on module load (and migrates retired 4.x theme names to Light/Dark).
+Two shapes coexist. **Static-class services** are used directly (`ThemeService.subscribe(...)`, `LanguageService.t(key)`, `RouterService.navigateTo(id)`, `ModalService.show()`, `ToastService.success()`, `CollectionService.createCollection()`, `ShareService.generateUrl()`, `StorageService`, `TutorialService`, `KeyboardService`, `SavedPresetsService`). **Instance singletons** expose `getInstance()` / `resetInstance()` or a pre-built export (`ConfigController.getInstance()`, `MarketBoardService.getInstance()` / `getMarketBoardService()`, `dyeService`, `apiService`, `cameraService`, `indexedDBService`, `communityPresetService`, `hybridPresetService`, `authService`, `presetSubmissionService`, `WorldService`). Everything is re-exported from `services/index.ts`; `initializeServices()` there runs the boot order: LanguageService → (Dye/Storage/API/Toast/Modal/Tooltip ready) → `KeyboardService.initialize()` → `WorldService.initialize()` → `cameraService.initialize()` → `hybridPresetService.initialize()` → `authService.initialize()`. `ThemeService` self-initialises on module load (and migrates retired 4.x theme names to Light/Dark).
 
 | Service | File | Responsibility |
 |---------|------|----------------|
 | `StorageService` | `storage-service.ts` | localStorage with JSON, `appStorage` namespaces, `SecureStorage` |
 | `IndexedDBService` | `indexeddb-service.ts` | Extractor image persistence (`STORES`) |
-| `AnnouncerService` | `announcer-service.ts` | ARIA live-region announcements |
 | `LanguageService` | `language-service.ts` | Wraps core `LocalizationService`; `t`, `tInterpolate`, `setLocale`, `subscribe`, `getDyeName` / `getCurrency` / `getRace`…; loads exactly one locale chunk (`en ja de fr ko zh`) |
 | `ThemeService` | `theme-service.ts` | `standard-light | standard-dark` (`ThemeName`), `setTheme`, `toggleDarkMode`, `isDarkMode`, `subscribe`, `--glyph-accent` |
 | `RouterService` | `router-service.ts` | History-API routing, `ROUTES`, `LEGACY_ROUTE_REDIRECTS`, `navigateTo` / `replaceRoute` / `subscribe` |
@@ -147,7 +146,7 @@ Two shapes coexist. **Static-class services** are used directly (`ThemeService.s
 | `MarketBoardService` | `market-board-service.ts` | Universalis prices via api-worker `/universalis`; `formatPrice`; reads `market` config |
 | `WorldService` | `world-service.ts` | Data centres / worlds |
 | `APIService` | `api-service-wrapper.ts` | HTTP wrapper |
-| `ToastService` / `ModalService` / `TooltipService` | `toast-service.ts` / `modal-service.ts` / `tooltip-service.ts` | Ephemeral UI |
+| `ToastService` / `ModalService` | `toast-service.ts` / `modal-service.ts` | Ephemeral UI |
 | `KeyboardService` | `keyboard-service.ts` | Global shortcuts |
 | `TutorialService` | `tutorial-service.ts` | Per-tool tours + first-visit prompt |
 | `ShareService` | `share-service.ts` | Deep-link generation/parsing, `resolveSharedDye`, `parseSharedHex`, client-side share analytics |

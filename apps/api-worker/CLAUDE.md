@@ -61,7 +61,7 @@ src/
 │   └── locale.ts         # Reads ?locale=, calls LocalizationService.ensureLocaleLoaded once, sets c.var.locale
 ├── lib/
 │   ├── api-error.ts      # ApiError class + ErrorCode enum
-│   ├── response.ts       # successResponse / paginatedResponse / errorResponse / buildPagination
+│   ├── response.ts       # successResponse / paginatedResponse / buildPagination (errors go through ApiError)
 │   ├── services.ts       # Module-scope DyeService singleton + calculateDistance (→ ColorService.getDistanceForMethod)
 │   ├── dye-serializer.ts # Dye → API response shape (with optional localizedName / distance)
 │   └── validation.ts     # parseHex, parseLocale, parseMatchingMethod, parseDyeFilters, resolveIdType, etc.
@@ -160,14 +160,13 @@ Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-kit`
 
 ### Universalis Proxy (`src/universalis/`)
 
-Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/universalis` (canonical) and `/api/v2` (compat) — deliberately **outside** `/v1/*` so it gets neither the KV rate limiter nor the locale middleware, and its responses are **not** enveloped (core `APIService` and discord-worker's budget pipeline parse raw Universalis shapes). Cache keys embed the request origin, so a domain cutover means one cold cache.
+Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/universalis` (canonical) and `/api/v2` (compat) — deliberately **outside** `/v1/*` so it gets neither the KV rate limiter nor the locale middleware, and its responses are **not** enveloped (core `APIService` and discord-worker's budget pipeline parse raw Universalis shapes). Cache keys are built from a **fixed synthetic origin** (`https://cache.internal`), not the request's — OPT-004: they used to embed the request origin, so one Universalis answer was stored three times over (`data.xivdyetools.app`, the legacy `proxy.…` domains, and `https://internal` for the service binding), and the coalescer's origin-free key meant a cross-origin waiter took the winner's data without populating its own namespace. `caches.open(...)` is what namespaces the store.
 
 ## Dependencies
 
 | Package | Purpose |
 |---|---|
 | `hono` | HTTP framework + CORS middleware |
-| `spectral.js` | Not imported by this worker's own code — declared explicitly because core's blending module needs it and pnpm's strict isolation would otherwise fail to resolve it |
 | `@xivdyetools/core` | DyeService, dyeDatabase, ColorService, LocalizationService, DEFAULT_MATCHING_METHOD, LEGACY_MATCHING_METHOD_MAP, getFacewearColorByLegacyItemID |
 | `@xivdyetools/types` | `Dye` interface |
 | `@xivdyetools/logger` | Structured logger (wired up by `worker-kit`'s `loggerMiddleware`) |

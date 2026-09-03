@@ -1,0 +1,65 @@
+=== apps/web-app/src ===
+34176 apps/web-app/src/components
+12555 apps/web-app/src/components/v4
+10970 apps/web-app/src/services
+2919 apps/web-app/src/shared
+230 apps/web-app/src
+=== apps/discord-worker/src ===
+6467 apps/discord-worker/src/handlers/commands
+3002 apps/discord-worker/src/services
+1545 apps/discord-worker/src/commands
+1430 apps/discord-worker/src
+1247 apps/discord-worker/src/services/budget
+950 apps/discord-worker/src/types
+919 apps/discord-worker/src/utils
+477 apps/discord-worker/src/handlers/buttons
+120 apps/discord-worker/src/services/svg
+=== apps/presets-api/src ===
+2501 apps/presets-api/src/services
+2111 apps/presets-api/src/handlers
+824 apps/presets-api/src/middleware
+475 apps/presets-api/src
+333 apps/presets-api/src/utils
+120 apps/presets-api/src/data/profanity
+=== apps/moderation-worker/src ===
+1541 apps/moderation-worker/src/utils
+1426 apps/moderation-worker/src/services
+683 apps/moderation-worker/src
+662 apps/moderation-worker/src/handlers/commands
+569 apps/moderation-worker/src/handlers/buttons
+520 apps/moderation-worker/src/handlers/modals
+451 apps/moderation-worker/src/types
+274 apps/moderation-worker/src/middleware
+=== apps/og-worker/src ===
+2410 apps/og-worker/src
+1933 apps/og-worker/src/services/svg
+1079 apps/og-worker/src/services
+=== apps/api-worker/src ===
+954 apps/api-worker/src/chara
+716 apps/api-worker/src/universalis/services
+680 apps/api-worker/src/lib
+512 apps/api-worker/src/routes
+467 apps/api-worker/src/universalis
+378 apps/api-worker/src/telemetry
+280 apps/api-worker/src
+225 apps/api-worker/src/universalis/config
+194 apps/api-worker/src/middleware
+=== apps/oauth/src ===
+1085 apps/oauth/src/handlers
+645 apps/oauth/src/services
+514 apps/oauth/src/utils
+406 apps/oauth/src
+115 apps/oauth/src/middleware
+71 apps/oauth/src/constants
+=== packages/core/src ===
+3976 packages/core/src/services
+2456 packages/core/src/services/color
+1438 packages/core/src/services/dye
+922 packages/core/src/config
+919 packages/core/src/services/chara
+785 packages/core/src/utils
+656 packages/core/src/services/localization
+537 packages/core/src/blending
+278 packages/core/src
+137 packages/core/src/constants
+113 packages/core/src/types

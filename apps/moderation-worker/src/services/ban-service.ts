@@ -76,7 +76,14 @@ export async function searchPresetAuthors(
   limit: number = 25
 ): Promise<UserSearchResult[]> {
   // Validate and escape user input for SQL LIKE query
-  const validation = validateAndEscapeQuery(query, { maxLength: 100, minLength: 1 });
+  // moderation-worker-08: `minLength: 1` used to be here, and Discord sends an
+  // autocomplete interaction with `value: ''` the moment the option is
+  // focused — so both pickers showed NOTHING until the moderator typed. For
+  // `unban_user` that was the whole feature: a moderator who does not remember
+  // a banned user's stored display name had no way to list who is banned. An
+  // empty query is a legitimate "show me the top of the list"; `LIMIT ?` (25)
+  // already bounds it, and the escaping below is unaffected.
+  const validation = validateAndEscapeQuery(query, { maxLength: 100, minLength: 0 });
   if (!validation.valid) {
     return []; // Return empty results for invalid queries
   }
@@ -145,7 +152,14 @@ export async function searchBannedUsers(
   limit: number = 25
 ): Promise<BannedUserSearchResult[]> {
   // Validate and escape user input for SQL LIKE query
-  const validation = validateAndEscapeQuery(query, { maxLength: 100, minLength: 1 });
+  // moderation-worker-08: `minLength: 1` used to be here, and Discord sends an
+  // autocomplete interaction with `value: ''` the moment the option is
+  // focused — so both pickers showed NOTHING until the moderator typed. For
+  // `unban_user` that was the whole feature: a moderator who does not remember
+  // a banned user's stored display name had no way to list who is banned. An
+  // empty query is a legitimate "show me the top of the list"; `LIMIT ?` (25)
+  // already bounds it, and the escaping below is unaffected.
+  const validation = validateAndEscapeQuery(query, { maxLength: 100, minLength: 0 });
   if (!validation.valid) {
     return []; // Return empty results for invalid queries
   }
@@ -213,8 +227,21 @@ export async function getUserForBanConfirmation(
     .bind(discordId)
     .first<{ discord_id: string; username: string; preset_count: number }>();
 
+  // moderation-worker-10: a `null` here used to end the command with "User not
+  // found or has no presets", which made a user who has never SUBMITTED a
+  // preset unbannable — even though the ban is meaningful for them:
+  // presets-api's `requireNotBanned` guards the votes router as well as the
+  // presets one (`handlers/votes.ts:30`), so a vote-only abuser is exactly who
+  // a moderator would want to ban and exactly who could not be.
+  //
+  // The modal already falls back to the raw snowflake when D1 has no name
+  // (`ban-reason.ts:83-85`), so do the same here and let the confirmation
+  // embed say "no presets" rather than refusing.
   if (!userResult) {
-    return null;
+    return {
+      user: { discordId, username: discordId, presetCount: 0 },
+      recentPresets: [],
+    };
   }
 
   const presetsResult = await db
@@ -424,7 +451,7 @@ export async function banUser(
         `
         )
         .bind(id, discordId, username, moderatorDiscordId, reason, now),
-      hideUserPresetsStatement(db, discordId),
+      hideUserPresetsStatement(db, discordId, now),
     ]);
 
     return {
@@ -516,7 +543,7 @@ export async function unbanUser(
         .bind(now, moderatorDiscordId, discordId),
       unbanLogStatement(db, discordId, moderatorDiscordId, now),
       presetActionLogStatement(db, 'restore', 'hidden', discordId, moderatorDiscordId, null, now),
-      restoreUserPresetsStatement(db, discordId),
+      restoreUserPresetsStatement(db, discordId, now),
     ]);
 
     if ((updateResult?.meta?.changes || 0) === 0) {
@@ -547,29 +574,48 @@ export async function unbanUser(
 // ============================================================================
 
 /** Statement form so `banUser` can batch it with the ban insert (MOD-4). */
-function hideUserPresetsStatement(db: D1Database, discordId: string): D1PreparedStatement {
+function hideUserPresetsStatement(
+  db: D1Database,
+  discordId: string,
+  now: string
+): D1PreparedStatement {
   return db
     .prepare(
       `
       UPDATE presets
-      SET status = 'hidden'
+      SET status = 'hidden', updated_at = ?
       WHERE author_discord_id = ? AND status = 'approved'
       `
     )
-    .bind(discordId);
+    .bind(now, discordId);
 }
 
-/** Statement form so `unbanUser` can batch it with the ban-row update (MOD-4). */
-function restoreUserPresetsStatement(db: D1Database, discordId: string): D1PreparedStatement {
+/**
+ * Statement form so `unbanUser` can batch it with the ban-row update (MOD-4).
+ *
+ * moderation-worker-07: both of these set `status` alone, while every writer on
+ * the presets-api side bumps `updated_at` alongside it
+ * (`prepareStatusUpdate`, the preview-image writes, the vote writes). So a
+ * ban left a preset reading `hidden` with an `updated_at` from whenever
+ * presets-api last touched it — a public field
+ * (`packages/types/src/preset/community.ts`) that was simply wrong. Latent
+ * rather than load-bearing today, since nothing sorts or caches on it, but the
+ * two writers should not disagree about what a status change means.
+ */
+function restoreUserPresetsStatement(
+  db: D1Database,
+  discordId: string,
+  now: string
+): D1PreparedStatement {
   return db
     .prepare(
       `
       UPDATE presets
-      SET status = 'approved'
+      SET status = 'approved', updated_at = ?
       WHERE author_discord_id = ? AND status = 'hidden'
       `
     )
-    .bind(discordId);
+    .bind(now, discordId);
 }
 
 /**
@@ -583,7 +629,7 @@ function restoreUserPresetsStatement(db: D1Database, discordId: string): D1Prepa
  * paths left without an audit row.
  */
 export async function hideUserPresets(db: D1Database, discordId: string): Promise<number> {
-  const result = await hideUserPresetsStatement(db, discordId).run();
+  const result = await hideUserPresetsStatement(db, discordId, new Date().toISOString()).run();
   return result.meta.changes || 0;
 }
 
@@ -598,7 +644,7 @@ export async function hideUserPresets(db: D1Database, discordId: string): Promis
  * preset-status-flipping paths left without an audit row.
  */
 export async function restoreUserPresets(db: D1Database, discordId: string): Promise<number> {
-  const result = await restoreUserPresetsStatement(db, discordId).run();
+  const result = await restoreUserPresetsStatement(db, discordId, new Date().toISOString()).run();
   return result.meta.changes || 0;
 }
 

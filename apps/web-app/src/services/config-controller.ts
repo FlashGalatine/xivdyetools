@@ -112,6 +112,31 @@ function sanitizeConfigPartial<K extends ConfigKey>(
 // ============================================================================
 
 /**
+ * REFACTOR-010: `{ ...defaults, ...stored }` is a SHALLOW merge, so a nested
+ * object in `stored` REPLACES its default wholesale and never gains keys added
+ * to the default later. `displayOptions` and `dyeFilters` persisted before an
+ * option existed therefore came back missing it forever -- masked so far by
+ * roughly thirty `?? true` reads at the call sites, which is a fallback at
+ * every use rather than a migration at the one place migration belongs.
+ *
+ * One level of nesting is all these configs have.
+ */
+function mergeWithDefaults<T extends object>(defaults: T, stored: Partial<T>): T {
+  const merged: Record<string, unknown> = { ...(defaults as Record<string, unknown>) };
+
+  for (const [name, storedValue] of Object.entries(stored)) {
+    if (storedValue === undefined) continue;
+    const defaultValue = (defaults as Record<string, unknown>)[name];
+    merged[name] =
+      isPlainObject(defaultValue) && isPlainObject(storedValue)
+        ? { ...defaultValue, ...storedValue }
+        : storedValue;
+  }
+
+  return merged as T;
+}
+
+/**
  * ConfigController - Centralized tool configuration management
  *
  * Provides reactive state management for all v4 tool configurations.
@@ -254,6 +279,17 @@ export class ConfigController {
       ...partial,
     } as ToolConfigMap[K];
 
+    // OPT-008: a no-op write is not free. One display-option toggle fans out
+    // to NINE setConfig() calls by design (global + eight tools, so each tool
+    // can read its own config), and every one of them persisted to
+    // localStorage and woke every subscriber for that key -- including the
+    // tools whose value did not change, each of which then re-rendered.
+    // Writing the value that is already there is the one case worth skipping;
+    // the broadcast still reaches whichever tools genuinely changed.
+    if (JSON.stringify(currentConfig) === JSON.stringify(newConfig)) {
+      return;
+    }
+
     // Store in memory
     this.configs.set(key, newConfig);
 
@@ -373,10 +409,7 @@ export class ConfigController {
       // Merge with defaults to ensure all keys exist
       // (handles migrations when new config options are added)
       const defaults = getDefaultConfig(key);
-      const mergedConfig = {
-        ...defaults,
-        ...stored,
-      } as ToolConfigMap[K];
+      const mergedConfig = mergeWithDefaults(defaults, stored) as ToolConfigMap[K];
 
       // 5.0: one matching vocabulary. A persisted 4.x method ('hyab',
       // 'oklch-weighted', …) has to migrate here — normalizing on the share
@@ -432,11 +465,3 @@ export class ConfigController {
 // ============================================================================
 // Export Singleton Getter (convenience)
 // ============================================================================
-
-/**
- * Get the ConfigController singleton instance
- * Convenience export for shorter imports
- */
-export function getConfigController(): ConfigController {
-  return ConfigController.getInstance();
-}

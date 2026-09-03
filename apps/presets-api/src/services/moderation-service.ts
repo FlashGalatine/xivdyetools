@@ -44,6 +44,11 @@ export function escapeRegex(str: string): string {
  * @param maxLength - Maximum number of visible characters (not code units)
  * @param suffix - Suffix to append when truncated (default: '…')
  * @returns Truncated string with suffix if needed
+ *
+ * @testonly unit-tested directly for surrogate-pair-safe truncation (plain
+ * strings, emoji, custom suffix, exact-length and empty-string edges), but no
+ * caller in this file or elsewhere in presets-api invokes it — nothing in the
+ * moderation pipeline currently truncates a string before logging/storing it.
  */
 export function truncateUnicodeSafe(str: string, maxLength: number, suffix = '…'): string {
   const chars = Array.from(str);
@@ -133,6 +138,11 @@ function getCompiledProfanity(): CompiledProfanity {
 /**
  * Reset compiled profanity data - FOR TESTING ONLY
  * Allows tests to inject custom patterns via setTestPatterns()
+ *
+ * @testonly test-isolation hook — clears the memoized compiled-profanity
+ * singleton so a suite that injected custom patterns via the sibling
+ * pattern-setter function below cannot leak them into the next suite's
+ * `getCompiledProfanity()` call.
  */
 export function _resetPatternsForTesting(): void {
   _compiledProfanity = null;
@@ -141,6 +151,10 @@ export function _resetPatternsForTesting(): void {
 /**
  * Set custom profanity data - FOR TESTING ONLY
  * Allows tests to inject patterns that will trigger the filter
+ *
+ * @testonly test-isolation hook — overwrites the memoized compiled-profanity
+ * singleton with caller-supplied patterns so a test can trigger the filter
+ * deterministically without depending on the real word lists.
  */
 export function _setTestPatterns(patterns: RegExp[]): void {
   // Convert legacy pattern array to new structure for backward compatibility
@@ -214,6 +228,20 @@ interface PerspectiveResponse {
   };
 }
 
+/**
+ * ⚠️ SUNSET 2026-12-31 — Google is shutting the Perspective API down
+ * (https://www.perspectiveapi.com/). See DEPRECATIONS.md.
+ *
+ * This matters *before* the date because of FINDING-005's fail-closed rule
+ * below: with a key configured and the service unable to answer, every
+ * submission resolves to `moderationUnavailable()` (`passed: false`) and goes
+ * to the moderator queue. Correct for an outage, wrong for a permanent
+ * shutdown — from 2027-01-01 it would queue everything, silently.
+ *
+ * The graceful path already exists: with no key configured this whole tier is
+ * skipped and the local word list decides. So delete the `PERSPECTIVE_API_KEY`
+ * production secret on or before 2026-12-31.
+ */
 const PERSPECTIVE_ENDPOINT = 'https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze';
 
 /**
@@ -378,91 +406,3 @@ export async function moderateContent(
   };
 }
 
-// ============================================
-// NOTIFICATION SERVICE (for flagged content)
-// ============================================
-
-interface ModerationAlert {
-  presetId: string;
-  presetName: string;
-  description: string;
-  dyes: number[];
-  authorName: string;
-  authorId: string;
-  flagReason: string;
-}
-
-/**
- * Notify moderators about flagged content
- */
-export async function notifyModerators(
-  alert: ModerationAlert,
-  env: Env,
-  logger?: ModerationServiceLogger
-): Promise<void> {
-  const embed = {
-    title: '⚠️ Palette Pending Review',
-    color: 0xffa500, // Orange
-    fields: [
-      { name: 'Name', value: alert.presetName, inline: true },
-      { name: 'Submitted by', value: alert.authorName, inline: true },
-      { name: 'Flagged Reason', value: alert.flagReason, inline: false },
-      { name: 'Description', value: truncateUnicodeSafe(alert.description, 200), inline: false },
-      { name: 'Preset ID', value: `\`${alert.presetId}\``, inline: false },
-    ],
-    footer: {
-      text: 'Use /preset moderate approve <id> or /preset moderate reject <id> <reason>',
-    },
-    timestamp: new Date().toISOString(),
-  };
-
-  // 1. Post to moderation channel webhook
-  if (env.MODERATION_WEBHOOK_URL) {
-    try {
-      await fetch(env.MODERATION_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ embeds: [embed] }),
-      });
-    } catch (error) {
-      (logger ?? console).error('Failed to send webhook notification', error);
-    }
-  }
-
-  // 2. DM the bot owner via Discord Bot API
-  if (env.OWNER_DISCORD_ID && env.DISCORD_BOT_TOKEN) {
-    try {
-      // Create DM channel
-      const dmChannelResponse = await fetch(
-        'https://discord.com/api/v10/users/@me/channels',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ recipient_id: env.OWNER_DISCORD_ID }),
-        }
-      );
-
-      if (dmChannelResponse.ok) {
-        const dmChannel: { id: string } = await dmChannelResponse.json();
-
-        // Send DM
-        await fetch(
-          `https://discord.com/api/v10/channels/${dmChannel.id}/messages`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ embeds: [embed] }),
-          }
-        );
-      }
-    } catch (error) {
-      (logger ?? console).error('Failed to send DM notification', error);
-    }
-  }
-}

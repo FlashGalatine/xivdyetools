@@ -117,6 +117,13 @@ export interface SwatchParams {
   limit?: number;
   /** Which color sheet this color is from */
   sheet?: ColorSheetCategory;
+  /**
+   * The cell's index within that sheet — the 5.0 share grammar's identity
+   * handle (`?slot=&i=`). Present when the colour was resolved from an
+   * address rather than read from a legacy `?hex=`; `og:url` is emitted in
+   * whichever grammar the link arrived in (BUG-021).
+   */
+  cell?: number;
   /** Subrace for race-specific sheets (hairColors, skinColors) */
   race?: string;
   /** Gender for race-specific sheets */

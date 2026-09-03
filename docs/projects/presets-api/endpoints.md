@@ -244,7 +244,7 @@ Dead-letter queue for Discord notifications that could not be delivered (migrati
 
 There are no ban routes on this API. User bans live in the shared D1 `banned_users` table
 (migration 0003) and are written by `xivdyetools-moderation-worker` (`/preset ban_user` /
-`unban_user`); this API only *checks* the table (`requireNotBannedCheck`) on writes.
+`unban_user`); this API only *checks* the table (the `requireNotBanned` middleware) on writes.
 
 ---
 

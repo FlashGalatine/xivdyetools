@@ -2,6 +2,82 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
+## [1.3.0] - 2026-09-02
+
+Deep-dive remediation, Sprint 15 (docs/audits/2026-09-02-deep-dive). Minor bump: three behaviour
+changes, no API removal. **The native rate-limit binding key format changed, so every counter
+resets once on deploy** — a one-off, and the counters are per-minute.
+
+### Fixed
+
+- **BUG-097 — `MemoryRateLimiter.check()` truncated history a wider window still needed.** The
+  timestamp array was filtered by the *current* request's `windowMs` before being written back, so
+  a narrow-window check erased history a wide-window check was still counting — defeating, inside
+  `check()` itself, the per-key cutoff BUG-023 gave `cleanupOldEntries()`. One key checked at
+  `{maxRequests: 2, windowMs: 1h}` then `{maxRequests: 100, windowMs: 60s}` admitted three requests
+  inside the hour on a bucket the hour config limits to two. Retention is now bounded by the key's
+  largest window; only the decision uses this request's. Latent in-repo (every shared instance uses
+  a single `windowMs`), which is why it survived.
+
+- **`X-RateLimit-*` were dropped for any handler returning a raw `Response`.** They were set with
+  `c.header()` *before* `await next()`, which in Hono lands them in `#preparedHeaders` — merged only
+  by `#newResponse`, i.e. `c.json()`/`c.text()`/`c.body()`. `api-worker`'s `GET /v1/chara/icon/:id`
+  returns `new Response(bytes, …)` on both the miss and the cache hit, so it consumed a slot and
+  shipped no rate-limit headers at all, while api-worker's CORS config advertises them in
+  `exposeHeaders` and its deploy checklist asks an operator to verify them. The allowed path now
+  applies them *after* `next()` (where `c.header()` clones the finalized response — the placement
+  `requestIdMiddleware` already relies on); the 429 path still sets them before returning.
+
+- **`CloudflareRateLimiter` binding keys are now genuinely tier-scoped.** The key was
+  `keyPrefix + key` while a source comment claimed it kept "one client [from sharing] a bucket
+  across two configs" — separation came entirely from the tiers being distinct binding objects, so
+  two tiers pointed at the *same* binding (a plausible wrangler typo) shared one counter across a
+  10-limit and a 30-limit config. The key now carries the tier's `(limit, period)`.
+
+- **`selectTier()` ignored `windowMs`.** It matched on `limit` alone, so tiers
+  `[{limit:10, periodSeconds:10}, {limit:30, periodSeconds:60}]` served a
+  `{maxRequests:10, windowMs:60_000}` config from the 10-second tier — 6x the intended rate — while
+  `resetAt` reported that tier's period end, leaving the emitted headers self-consistent and the
+  mismatch invisible. Tiers whose period equals the config's window are now preferred, falling back
+  to the historical limit-only choice rather than failing the request. Latent in-repo: every bound
+  tier is `periodSeconds: 60`.
+
+### Tests
+
+Four suites asserted things that could not fail, and each is now falsifiable (verified by reverting
+the source and watching the test go red):
+
+- `cloudflare.test.ts` — "keys different tiers apart so a client cannot share one bucket across two
+  configs" asserted the **opposite** of its own name: both bindings received the identical key `'k'`.
+- `memory.test.ts` — the only cleanup test said in its own comment "we just verify no errors occur";
+  after advancing three windows the stamp is outside the window regardless, so it held whether
+  cleanup ran, ran with the wrong cutoff, or never ran. It now asserts the key was deleted, and a
+  new case proves short-window keys do not purge a long-window key's history.
+- `upstash.test.ts` — "provides a resetAt in the future" could not fail: every case seeds
+  `exec -> [n, 1, 60]`, where the key's TTL happens to equal a full window, making BUG-055's fix
+  indistinguishable from the `now + windowMs` it replaced.
+- `headers.test.ts` — the `X-RateLimit-Reset` assertion recomputed the implementation's own
+  `Math.ceil` on a timestamp with a zero sub-second part, where ceil, floor and trunc all agree.
+
+New coverage for the KV backend's fixed-window boundary (BUG-064), which had no test at all: the
+read and the write must address the same window key when the clock crosses a boundary mid-call.
+
+## [1.2.1] - 2026-09-02
+
+### Changed
+
+This package is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
+into `lint`; root `knip.jsonc`). Because `@xivdyetools/worker-kit` sits at its registry version
+(1.2.0), nothing was removed — the first run found 20 barrel exports (11 values, 9 types) with no
+in-repo consumer, spread across `middleware/index.ts`, `rate-limiter/index.ts`, and the published
+`rate-limiter/presets/index.ts` subpath. Each is tagged `@public` rather than removed; four of the
+seven presets re-exports (`getOAuthLimit`, `getDiscordCommandLimit`, `getModerationLimit`,
+`PUBLIC_API_LIMITS`) are tagged even though the same values are also reachable in-repo through the
+sibling `rate-limiter/index.ts` barrel — the other three (`OAUTH_LIMITS`, `DISCORD_COMMAND_LIMITS`,
+`MODERATION_LIMITS`) have no in-repo consumer by any path, which is why they are tagged at
+`rate-limiter/index.ts` too. All seven are tagged regardless, because `./rate-limiter/presets` is
+its own published `package.json#exports` entry.
+
 ## [1.2.0] - 2026-08-30
 
 Security audit remediation (docs/audits/2026-08-29-security, FINDING-010 + FINDING-012). Minor bump: a behaviour change in what gets logged, plus a constructor that now throws in a case it previously let through silently.

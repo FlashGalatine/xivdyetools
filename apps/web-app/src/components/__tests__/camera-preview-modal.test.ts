@@ -11,6 +11,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 const mockShow = vi.fn().mockReturnValue('modal-id-camera');
 const mockClose = vi.fn();
+const mockDismissTop = vi.fn();
+/** Captures the route listener so a test can drive a navigation. */
+const mockRouteUnsubscribe = vi.fn();
+const mockRouteSubscribe = vi.fn().mockReturnValue(mockRouteUnsubscribe);
 
 const mockCameraService = {
   hasCameraAvailable: vi.fn().mockReturnValue(true),
@@ -25,6 +29,12 @@ vi.mock('@services/index', () => ({
   ModalService: {
     show: mockShow,
     close: mockClose,
+    dismissTop: mockDismissTop,
+  },
+  // BUG-080: the modal subscribes to route changes so navigating away stops
+  // the camera. The unsubscribe it returns is released in cleanup().
+  RouterService: {
+    subscribe: mockRouteSubscribe,
   },
   LanguageService: {
     t: (key: string) => key,
@@ -110,6 +120,39 @@ describe('showCameraPreviewModal', () => {
       const onCapture = vi.fn();
       await showCameraPreviewModal(onCapture);
       expect(mockShow).toHaveBeenCalled();
+    });
+  });
+
+  // ============================================================================
+  // Navigation teardown (BUG-080)
+  // ============================================================================
+
+  describe('navigating away', () => {
+    /**
+     * BUG-080: closing the modal stops the stream, but in-app navigation never
+     * closed the modal — the router swapped the tool underneath it and the
+     * camera stayed live, recording indicator and all, over the new tool.
+     */
+    it('dismisses the modal when the route changes', async () => {
+      const { showCameraPreviewModal } = await import('../camera-preview-modal');
+      await showCameraPreviewModal(vi.fn());
+
+      expect(mockRouteSubscribe).toHaveBeenCalled();
+      const onRouteChange = mockRouteSubscribe.mock.calls[0][0] as () => void;
+      onRouteChange();
+
+      expect(mockDismissTop).toHaveBeenCalled();
+    });
+
+    it('releases the route subscription when the modal closes', async () => {
+      const { showCameraPreviewModal } = await import('../camera-preview-modal');
+      await showCameraPreviewModal(vi.fn());
+
+      const onClose = mockShow.mock.calls.at(-1)?.[0]?.onClose as (() => void) | undefined;
+      onClose?.();
+
+      expect(mockRouteUnsubscribe).toHaveBeenCalled();
+      expect(mockCameraService.stopStream).toHaveBeenCalled();
     });
   });
 

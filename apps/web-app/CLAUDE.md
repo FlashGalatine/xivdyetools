@@ -129,9 +129,7 @@ src/
 │   ├── theme-switch.ts              # Deliberate theme changes (theme modal, Shift+T) — the one path that records theme_change
 │   ├── modal-service.ts             # Modal stack
 │   ├── toast-service.ts             # Toasts
-│   ├── tooltip-service.ts           # Hoverable tooltips
 │   ├── tutorial-service.ts          # First-run tutorial flows per tool
-│   ├── announcer-service.ts         # ARIA live-region screen-reader output
 │   ├── keyboard-service.ts          # Global shortcuts
 │   ├── camera-service.ts            # Camera-preview-modal capture
 │   ├── indexeddb-service.ts         # IDB wrapper for cached community presets

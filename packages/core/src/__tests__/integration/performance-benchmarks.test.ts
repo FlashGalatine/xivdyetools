@@ -42,7 +42,7 @@ describe('Performance Benchmarks - Core Library', () => {
       expect(avgTime).toBeLessThan(0.1);
     });
 
-    it('should benefit from LRU cache (60-80% speedup)', () => {
+    it('should serve repeat conversions from the LRU cache', () => {
       const iterations = 100;
 
       // Generate unique colors for testing
@@ -70,17 +70,28 @@ describe('Performance Benchmarks - Core Library', () => {
       }
       const time2 = performance.now() - start2;
 
-      // Cache should provide significant speedup in non-coverage mode
-      // Note: Coverage instrumentation adds overhead that can negate cache benefits
+      // core-color-04: this used to gate its only assertion behind
+      //   `const isCoverageMode = time1 > 5 || speedup <= 0.25;`
+      //   `if (!isCoverageMode) expect(speedup).toBeGreaterThan(0.25);`
+      // -- the guard is the exact NEGATION of the assertion, so the assertion
+      // could only run when it was already true, and there was no else branch.
+      // Deleting the hexToRgb cache entirely made speedup ~0, which satisfied
+      // the guard, skipped the assertion, and left the test green.
+      //
+      // Assert the CACHE, which is what the test is named for; wall-clock is
+      // meaningless under coverage instrumentation and is only reported.
+      const cachedAfterMisses = ColorService.getCacheStats().hexToRgb;
+      expect(cachedAfterMisses).toBeGreaterThan(0);
+
+      // The second run asked for the same colours, so every lookup was a hit
+      // and the cache must not have grown by a single entry.
+      expect(ColorService.getCacheStats().hexToRgb).toBe(cachedAfterMisses);
+
       const speedup = (time1 - time2) / time1;
-      // Detect coverage mode or slow execution that would invalidate timing assertions
-      // Coverage mode: time1 > 5ms, or low/negative speedup (<= 25%)
-      const isCoverageMode = time1 > 5 || speedup <= 0.25;
-      if (!isCoverageMode) {
-        // When not in coverage mode, we expect at least 25% speedup
-        // In normal execution this is typically 60-80%
-        expect(speedup).toBeGreaterThan(0.25);
-      }
+      // eslint-disable-next-line no-console
+      console.info(
+        `[bench] hexToRgb cache: ${cachedAfterMisses} entries, speedup ${(speedup * 100).toFixed(1)}%`
+      );
     });
   });
 

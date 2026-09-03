@@ -459,6 +459,10 @@ export abstract class BaseComponent implements ComponentLifecycle {
 
   /**
    * Check if component is in error state
+   *
+   * @testonly how the error-boundary behaviour tests observe recovery —
+   * asserted true after a throwing render, then false after retry/reset;
+   * production shows the error state through the rendered DOM, not this getter.
    */
   public hasErrorState(): boolean {
     return this.errorState.hasError;
@@ -466,6 +470,9 @@ export abstract class BaseComponent implements ComponentLifecycle {
 
   /**
    * Get current error (for debugging/logging)
+   *
+   * @testonly same error-boundary test suite — asserts the captured Error is
+   * cleared after a successful retry.
    */
   public getError(): Error | null {
     return this.errorState.error;
@@ -681,6 +688,10 @@ export abstract class BaseComponent implements ComponentLifecycle {
 
   /**
    * Check if component is visible
+   *
+   * @testonly verifies hide()/show() toggling in tests; no BaseComponent
+   * subclass in this app queries its own visibility back (they call
+   * hide()/show() and rely on the DOM `display` change directly).
    */
   isVisible(): boolean {
     return this.element ? this.element.style.display !== 'none' : false;

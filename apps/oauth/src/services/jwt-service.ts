@@ -153,7 +153,11 @@ export async function createJWTForUser(
  * REFACTOR-001: delegates to @xivdyetools/auth; this wrapper only preserves
  * the throwing contract this worker's handlers rely on.
  */
-export async function verifyJWT(token: string, secret: string): Promise<JWTPayload> {
+export async function verifyJWT(
+  token: string,
+  secret: string,
+  issuer?: string
+): Promise<JWTPayload> {
   // Signature/alg/structure + sub/exp presence via the shared verifier
   const payload = await sharedVerifyJWTSignatureOnly(token, secret);
   if (!payload) {
@@ -163,6 +167,20 @@ export async function verifyJWT(token: string, secret: string): Promise<JWTPaylo
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp < now) {
     throw new Error('JWT has expired');
+  }
+
+  // oauth-11: this worker MINTS `iss: env.WORKER_URL` (see createJWTForUser)
+  // and never checked it, so `/auth/me` accepted any well-formed HS256 token
+  // signed with JWT_SECRET whatever its issuer. Latent while this worker is the
+  // only minter — it is, today — but it becomes real the moment the secret is
+  // reused for a second token kind, and `@xivdyetools/auth` has supported
+  // `issuer` all along.
+  //
+  // No `aud` is minted or checked: adding a claim that nothing verifies just
+  // moves the decoration, and making presets-api verify one is a coordinated
+  // change across two deploy units rather than part of this fix.
+  if (issuer && payload.iss !== issuer) {
+    throw new Error('Invalid JWT');
   }
 
   return payload as unknown as JWTPayload;
@@ -217,9 +235,10 @@ export async function verifyJWTWithRevocationCheck(
   token: string,
   secret: string,
   kv: KVNamespace | undefined,
+  issuer?: string,
 ): Promise<JWTPayload> {
-  // First, verify signature and expiration
-  const payload = await verifyJWT(token, secret);
+  // First, verify signature, expiration and (oauth-11) the issuer
+  const payload = await verifyJWT(token, secret, issuer);
 
   // Then check revocation if KV is available and token has JTI
   if (payload.jti && kv) {

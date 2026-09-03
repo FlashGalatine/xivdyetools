@@ -305,7 +305,7 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       idealHex: s.hex,
       dyeHex: s.dye?.hex ?? s.hex,
     }));
-    const { rows: capped, omitted } = capGradientRows(gradientSteps);
+    const { rows: capped, omitted, merged: distinctAfterMerge } = capGradientRows(gradientSteps);
     const rows: GradientRowEntry[] = capped.map((r) => ({
       stepText: r.startStep === r.endStep ? String(r.startStep) : `${r.startStep}–${r.endStep}`,
       idealHex: r.step.hex,
@@ -316,7 +316,9 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
 
     // 12H·4 stage 0: four or more steps resolving to two rows or fewer —
     // measured on rows after the merge, never on endpoint separation.
-    const distinctAfterMerge = capGradientRows(gradientSteps).merged;
+    // (pkg-svg-bot-logic-11: `merged` comes off the call above; asking
+    // `capGradientRows` again re-ran the whole merge/filter/sort per /gradient
+    // to read a number the first call had already returned.)
     const verdict =
       stepCount >= 4 && distinctAfterMerge <= 2
         ? t.tc('card.gradVerdict', distinctAfterMerge, { n: stepCount, k: distinctAfterMerge })

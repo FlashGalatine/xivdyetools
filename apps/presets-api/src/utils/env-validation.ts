@@ -114,6 +114,32 @@ export function validateEnv(env: Env): EnvValidationResult {
     if (!env.RL_PUBLIC) {
       errors.push('Missing required env var in production: RL_PUBLIC');
     }
+
+    // BUG-043: the moderation fan-out degrades SILENTLY without these.
+    // `notifyDiscordBot` returns early with an `info` log when the binding or
+    // the secret is missing — no throw, so the caller's
+    // `.catch(storeFailedNotification)` never runs and nothing reaches
+    // `failed_notifications` either. Every flagged submission, resubmission
+    // and preview upload just stops arriving in the moderation channel, and
+    // `GET /moderation/failed-notifications` stays reassuringly empty. The
+    // only remaining signal is a moderator opening the pending queue by hand.
+    //
+    // This block was written for exactly that class (JWT_SECRET, JWT_ISSUER,
+    // TOKEN_BLACKLIST, RL_PUBLIC) and simply did not cover the notification
+    // path or the image path. A secret-rotation slip is not hypothetical —
+    // four other secrets were deleted from this worker on 2026-09-01.
+    if (!env.INTERNAL_WEBHOOK_SECRET || env.INTERNAL_WEBHOOK_SECRET.trim() === '') {
+      errors.push('Missing required env var in production: INTERNAL_WEBHOOK_SECRET');
+    }
+    if (!env.DISCORD_WORKER) {
+      errors.push('Missing required service binding in production: DISCORD_WORKER');
+    }
+    if (!env.IMAGE_WORKER) {
+      errors.push('Missing required service binding in production: IMAGE_WORKER');
+    }
+    if (!env.THUMBNAILS) {
+      errors.push('Missing required R2 binding in production: THUMBNAILS');
+    }
   }
 
   // Check D1 database binding

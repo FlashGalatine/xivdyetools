@@ -5,6 +5,136 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-09-03
+
+### Fixed
+
+- **`/harmony` no longer answers your own dye.** `preventDuplicates` defaulted to `false`
+  here while the Harmony Explorer defaults it `true`, and core's `excludeItemIDs` was only
+  consulted on the de-duplication branch — so the base dye was never actually excluded on
+  the bot. `/harmony monochromatic` (one `[0]` offset, whose ideal is the base colour)
+  returned the base dye at ΔE 0 as its entire harmony. Fixed in core (4.2.0), and both
+  `preventDuplicates` and `strictMatching` now default to what `DEFAULT_CONFIGS.harmony`
+  defaults them to in the web app, which is the point of converging these surfaces at all.
+- **`strict_matching` does something again.** The value was destructured and then discarded
+  with `void`, so the registered Discord option was accepted and changed nothing; it is
+  passed through as `usePerceptualMatching` now. `harmonyOptions` (`color_space`) stays
+  discarded — `generateHarmonySlots` rotates hue in HSV and that IS the shared algorithm,
+  so the option has been withdrawn from the command rather than left registered and inert.
+
+### Changed — harmony convergence
+
+- `/harmony` now selects dyes through `@xivdyetools/core`'s
+  `generateHarmonySlots`, the web app's algorithm. It previously called a named
+  `DyeService.find*Dyes()` per type; measured over all 125 dyes the two surfaces
+  returned different dyes for 89–100 % of bases on every harmony type. The bot
+  and the Harmony Explorer now answer the same question the same way.
+- Dye filters apply to the **candidate pool** rather than to the finished list,
+  so a slot answers "the nearest allowed dye to the ideal" instead of "the
+  nearest allowed dye to one that was thrown away".
+- An unrecognised harmony type is now refused with `NO_MATCHES` instead of
+  silently falling through to a triadic card labelled with the unknown name.
+
+### Added
+
+- `compound` and `shades` harmony types, with localized names in all six
+  locales. They exist because selection reads `HARMONY_OFFSETS` — a type is a row
+  in that table, and no per-type finder method has to be written for a new one.
+
+  **Deploying this needs a `register-commands` run**: the `/harmony type` choice
+  list grows from 8 to 10.
+
+## [3.1.0] - 2026-09-02
+
+Deep-dive remediation, Sprint 19 (docs/audits/2026-09-02-deep-dive, REFACTOR-001,
+first half). Minor bump: new exports, no behaviour change to anything already
+here.
+
+### Added
+
+**The locale layer both Discord bots were carrying privately.**
+`apps/discord-worker/src/services/i18n.ts` and
+`apps/moderation-worker/src/services/i18n.ts` each implemented `isValidLocale`,
+`discordLocaleToLocaleCode`, the legacy `i18n:user:` reader and
+`resolveUserLocale` — and moderation-worker declared its own `LocaleCode` union
+and its own `SUPPORTED_LOCALES` on top. The copies drifted, and BUG-001 was the
+result: only discord-worker's learned about the unified `prefs:v1:` preferences
+blob, so a user who set their language through `/preferences` got every
+moderation-bot string back in their Discord client locale — and could not
+correct it, because that worker ships no language command. Both bots bind the
+SAME production KV namespace, so there was never a reason for two readers of it.
+
+`i18n/locale-resolution.ts` now owns it, exported from `@xivdyetools/bot-logic/i18n`:
+`SUPPORTED_LOCALES`, `LocaleInfo`, `isValidLocale`, `discordLocaleToLocaleCode`,
+`getLegacyLanguagePreference`, `resolveUserLocale`, plus the structural
+`LocalePreferenceStore` and `LocaleResolutionLogger` (declared structurally so
+this package still needs no `@cloudflare/workers-types` dependency — a real
+`KVNamespace` satisfies the former).
+
+`LOCALE_CODES` is also exported, and **`LocaleCode` is now derived from it**.
+That closes the specific trap the audit named: moderation-worker declared the
+union and the runtime array separately, and structural typing hid the gap, so
+adding a seventh locale to the shared type would have compiled clean there and
+been silently rejected at runtime. One list now feeds both.
+
+### Fixed
+
+**`discordLocaleToLocaleCode` returned a Function for an inherited key.** Both
+forks looked the mapping up with `mapping[discordLocale] ?? null`, so
+`'toString'` or `'constructor'` yielded `Object.prototype.toString` — from a
+call declared `LocaleCode | null`, and `?? null` cannot catch it because the
+inherited value is not nullish. Found by writing the first test this layer has
+ever had; guarded with `Object.hasOwn`, the same fix FINDING-027 applied to help
+topics.
+
+Where the two copies disagreed, the louder behaviour won:
+`getLegacyLanguagePreference` takes an optional logger and reports a KV failure
+(moderation-worker's copy did; discord-worker's swallowed it silently). It still
+resolves rather than throwing — locale resolution runs on every interaction and
+must degrade the language, never the interaction.
+
+### Tests
+
+37 new cases covering the whole priority order and every failure mode: the
+unified blob, the legacy key, the Discord locale, the English default, an
+unsupported language in either store, a malformed blob, and a KV that throws on
+every read. Removing the unified-blob step — BUG-001 exactly — reddens them.
+Between them the two forked copies had one suite, and BUG-001 lived in the gap.
+
+## [3.0.1] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit, Sprint 5
+
+- **`/dye info`'s "+n more" line means something now** (pkg-svg-bot-logic-09). The count was
+  `pool.length - drawn` over a four-entry pool and three drawn columns — the constant **1**, on
+  every card ever rendered, with the `: ''` arm beside it unreachable. A player reads "+1 more" as
+  "one further dye is near this one" when 121 others were ranked and the fourth simply was not
+  drawn. It now counts further dyes still inside the **CLOSE** band (ΔE2000 ≤ 10, the match ramp's
+  second cut), which is the question someone reading that line is actually asking.
+
+  The threshold is measured, not guessed: against the real 125-dye set the EXACT cut (5) admits
+  nothing at all — the tightest fourth-nearest neighbour anywhere is Ink Blue / Jet Black at 5.41 —
+  so it would only have swapped one constant for another. At 10, forty dyes carry the line with n
+  between 1 and 6 and eighty-five omit it; at the LOOSE cut (20) it fires for 122 of 125 with n as
+  high as 33, which is noise rather than information.
+
+- **`getLocalizedHarmonyType`'s English fallback table removed** (pkg-svg-bot-logic-08). It could
+  never run: the key map covers all eight `HarmonyType`s so the lookup always returned first, and
+  even on a missing key `Translator.t()` yields the raw key rather than `undefined`. The
+  near-identical table in `getHarmonyTypeChoices` **stays** — that one is live, and deliberately
+  English, because it feeds Discord's autocomplete choices.
+
+- **`capGradientRows` runs once per `/gradient`, not twice** (pkg-svg-bot-logic-11). The second
+  call recomputed the whole merge → filter → sort to read a `merged` count the first had already
+  returned.
+
+### Fixed — 2026-09-02 deep-dive audit
+
+- `resolveCssColorName` returns `null` for inherited object keys (BUG-011). A colour
+  named `constructor` or `__proto__` used to resolve to a function, so
+  `/contrast dye1:constructor` threw inside the handler instead of answering with the
+  localized "invalid colour" message.
+
 ## [3.0.0] - 2026-08-29
 
 ### ⚠️ BREAKING — chara-name privacy

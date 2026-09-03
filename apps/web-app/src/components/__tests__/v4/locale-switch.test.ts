@@ -118,6 +118,12 @@ vi.mock('@xivdyetools/core', async (importOriginal) => ({
     getCategories() {
       return [];
     }
+    // This stand-in has no data, so callers that gate on readiness (the saved
+    // presets store's legacy-id repair) must see a cold database, not a
+    // missing method.
+    isLoadedStatus() {
+      return false;
+    }
   },
   dyeDatabase: [],
 }));

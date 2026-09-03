@@ -1,0 +1,597 @@
+AnnouncerService: 3 public methods in apps/web-app/src/services/announcer-service.ts
+  init                                 extSrc= 17 extTest=  0 unitSrc= 70 unitTest=491
+  announce                             extSrc=  2 extTest=  0 unitSrc=  4 unitTest= 14
+  destroy                              extSrc= 19 extTest=  0 unitSrc= 84 unitTest=112
+IndexedDBCacheBackend: 7 public methods in apps/web-app/src/services/api-service-wrapper.ts
+  initialize                           extSrc=  5 extTest= 62 unitSrc= 55 unitTest=199
+  reinitialize                         extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+  get                                  extSrc=298 extTest=513 unitSrc= 98 unitTest= 93
+  set                                  extSrc=131 extTest=117 unitSrc= 83 unitTest= 40
+  delete                               extSrc= 51 extTest= 29 unitSrc= 44 unitTest= 18
+  clear                                extSrc= 29 extTest= 19 unitSrc= 54 unitTest= 45
+  keys                                 extSrc= 48 extTest= 69 unitSrc= 16 unitTest= 36
+APIService: 6 public methods in apps/web-app/src/services/api-service-wrapper.ts
+  getInstance                          extSrc=  0 extTest=  0 unitSrc= 64 unitTest=172  <-- no external src use
+  isInitialized                        extSrc=  4 extTest=  0 unitSrc= 13 unitTest=  9
+  resetInstance                        extSrc=  1 extTest=  0 unitSrc=  0 unitTest= 25
+  formatPrice                          extSrc=  0 extTest=  5 unitSrc=  6 unitTest=  5  <-- no external src use
+  clearCache                           extSrc=  1 extTest=  4 unitSrc=  4 unitTest= 16
+  getPriceData                         extSrc=  2 extTest= 37 unitSrc=  1 unitTest=  5
+CameraService: 19 public methods in apps/web-app/src/services/camera-service.ts
+  getInstance                          extSrc=  0 extTest=  0 unitSrc= 64 unitTest=172  <-- no external src use
+  initialize                           extSrc=  5 extTest= 62 unitSrc= 55 unitTest=199
+  isCameraSupported                    extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  hasCameraAvailable                   extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  7  <-- no external src use
+  getAvailableCameras                  extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  5  <-- no external src use (declaration-only?)
+  onCameraAvailabilityChange           extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  3  <-- no external src use (declaration-only?)
+  requestPermission                    extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  4  <-- no external src use (declaration-only?)
+  startStream                          extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 15  <-- no external src use (declaration-only?)
+  getCurrentStream                     extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  5  <-- no external src use (declaration-only?)
+  stopStream                           extSrc=  0 extTest=  0 unitSrc=  7 unitTest=  3  <-- no external src use
+  isStreamActive                       extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  3  <-- no external src use (declaration-only?)
+  captureFrame                         extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  createVideoElement                   extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  attachStreamToVideo                  extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  detachStreamFromVideo                extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+  getTrackSettings                     extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  3  <-- no external src use (declaration-only?)
+  startDeviceChangeListener            extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  stopDeviceChangeListener             extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  0  <-- no external src use (declaration-only?)
+  destroy                              extSrc= 19 extTest=  0 unitSrc= 84 unitTest=112
+CharaResolveUnavailableError: 0 public methods in apps/web-app/src/services/chara-resolve-service.ts
+CollectionService: 35 public methods in apps/web-app/src/services/collection-service.ts
+  initialize                           extSrc=  5 extTest= 62 unitSrc= 55 unitTest=199
+  getFavorites                         extSrc=  0 extTest=  0 unitSrc=  6 unitTest=  9  <-- no external src use
+  addFavorite                          extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 20  <-- no external src use
+  removeFavorite                       extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  3  <-- no external src use
+  toggleFavorite                       extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  isFavorite                           extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  7  <-- no external src use
+  reorderFavorites                     extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  clearFavorites                       extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  1  <-- no external src use
+  getFavoritesCount                    extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  7  <-- no external src use
+  canAddFavorite                       extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+  getCollections                       extSrc=  0 extTest=  0 unitSrc=  7 unitTest=  6  <-- no external src use
+  getCollection                        extSrc=  0 extTest=  0 unitSrc=  2 unitTest= 11  <-- no external src use
+  getCollectionByName                  extSrc=  0 extTest=  0 unitSrc=  5 unitTest= 12  <-- no external src use
+  createCollection                     extSrc=  0 extTest=  0 unitSrc=  9 unitTest= 46  <-- no external src use
+  updateCollection                     extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  9  <-- no external src use (declaration-only?)
+  deleteCollection                     extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  3  <-- no external src use
+  getCollectionsByKind                 extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  5  <-- no external src use (declaration-only?)
+  deleteCollectionsByKind              extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  isTombstoned                         extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  addDyeToCollection                   extSrc=  0 extTest=  0 unitSrc=  8 unitTest= 18  <-- no external src use
+  removeDyeFromCollection              extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  3  <-- no external src use (declaration-only?)
+  reorderCollectionDyes                extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  getCollectionsCount                  extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  canCreateCollection                  extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  getCollectionsContainingDye          extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+  exportAll                            extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  1  <-- no external src use
+  exportCollection                     extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  3  <-- no external src use (declaration-only?)
+  importData                           extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 14  <-- no external src use (declaration-only?)
+  subscribeFavorites                   extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  1  <-- no external src use
+  subscribeCollections                 extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  getMaxFavorites                      extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  2  <-- no external src use
+  getMaxCollections                    extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  3  <-- no external src use (declaration-only?)
+  getMaxDyesPerCollection              extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  2  <-- no external src use
+  __reloadForTesting                   extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  4  <-- no external src use (declaration-only?)
+  reset                                extSrc=  6 extTest=  6 unitSrc=  1 unitTest=  7
+CommunityPresetService: 12 public methods in apps/web-app/src/services/community-preset-service.ts
+  getInstance                          extSrc=  0 extTest=  0 unitSrc= 64 unitTest=172  <-- no external src use
+  initialize                           extSrc=  5 extTest= 62 unitSrc= 55 unitTest=199
+  isAvailable                          extSrc=  0 extTest=  0 unitSrc= 12 unitTest= 70  <-- no external src use
+  getPresets                           extSrc=  1 extTest=  0 unitSrc=  5 unitTest=  9
+  getFeaturedPresets                   extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  4  <-- no external src use (declaration-only?)
+  getPreset                            extSrc=  5 extTest=  7 unitSrc=  5 unitTest=  6
+  getCategories                        extSrc=  4 extTest=  9 unitSrc=  3 unitTest=  4
+  clearCache                           extSrc=  1 extTest=  4 unitSrc=  4 unitTest= 16
+  invalidatePresets                    extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+  voteForPreset                        extSrc=  1 extTest=  0 unitSrc=  2 unitTest=  4
+  removeVote                           extSrc=  1 extTest=  0 unitSrc=  2 unitTest=  3
+  hasVoted                             extSrc=  1 extTest=  0 unitSrc= 10 unitTest=  3
+ConfigController: 11 public methods in apps/web-app/src/services/config-controller.ts
+  getInstance                          extSrc=  0 extTest=  0 unitSrc= 64 unitTest=172  <-- no external src use
+  resetInstance                        extSrc=  1 extTest=  0 unitSrc=  0 unitTest= 25
+  getConfig                            extSrc=  0 extTest=  3 unitSrc= 26 unitTest= 31  <-- no external src use
+  setConfig                            extSrc=  0 extTest=  0 unitSrc= 34 unitTest=128  <-- no external src use
+  subscribe                            extSrc=  1 extTest=  0 unitSrc= 59 unitTest= 66
+  resetConfig                          extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  3  <-- no external src use (declaration-only?)
+  resetAllConfigs                      extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  getAllConfigs                        extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  exportAllConfigs                     extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  0  <-- no external src use (declaration-only?)
+  importConfigs                        extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  4  <-- no external src use
+  isValidConfigKey                     extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+DyeService: 2 public methods in apps/web-app/src/services/dye-service-wrapper.ts
+  getInstance                          extSrc=  0 extTest=  0 unitSrc= 64 unitTest=172  <-- no external src use
+  resetInstance                        extSrc=  1 extTest=  0 unitSrc=  0 unitTest= 25
+IndexedDBService: 14 public methods in apps/web-app/src/services/indexeddb-service.ts
+  getInstance                          extSrc=  0 extTest=  0 unitSrc= 64 unitTest=172  <-- no external src use
+  isIndexedDBSupported                 extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  initialize                           extSrc=  5 extTest= 62 unitSrc= 55 unitTest=199
+  isReady                              extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  6  <-- no external src use (declaration-only?)
+  get                                  extSrc=298 extTest=513 unitSrc= 98 unitTest= 93
+  getWithContext                       extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  0  <-- no external src use (declaration-only?)
+  set                                  extSrc=131 extTest=117 unitSrc= 83 unitTest= 40
+  delete                               extSrc= 51 extTest= 29 unitSrc= 44 unitTest= 18
+  keys                                 extSrc= 48 extTest= 69 unitSrc= 16 unitTest= 36
+  getAll                               extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  8  <-- no external src use
+  clear                                extSrc= 29 extTest= 19 unitSrc= 54 unitTest= 45
+  count                                extSrc= 11 extTest= 16 unitSrc=  3 unitTest=103
+  close                                extSrc=  6 extTest=  6 unitSrc= 13 unitTest= 17
+  deleteDatabase                       extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  9  <-- no external src use (declaration-only?)
+KeyboardService: 2 public methods in apps/web-app/src/services/keyboard-service.ts
+  initialize                           extSrc=  5 extTest= 62 unitSrc= 55 unitTest=199
+  destroy                              extSrc= 19 extTest=  0 unitSrc= 84 unitTest=112
+LanguageService: 22 public methods in apps/web-app/src/services/language-service.ts
+  initialize                           extSrc=  5 extTest= 62 unitSrc= 55 unitTest=199
+  getCurrentLocale                     extSrc=  3 extTest= 15 unitSrc= 17 unitTest= 39
+  getCurrentLocaleDisplay              extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  4  <-- no external src use (declaration-only?)
+  setLocale                            extSrc=  9 extTest= 26 unitSrc=  4 unitTest= 77
+  cycleToNextLocale                    extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  8  <-- no external src use (declaration-only?)
+  subscribe                            extSrc=  1 extTest=  0 unitSrc= 59 unitTest= 66
+  t                                    extSrc=742 extTest= 78 unitSrc=1088 unitTest= 37
+  tInterpolate                         extSrc=  0 extTest=  0 unitSrc=131 unitTest= 11  <-- no external src use
+  getDyeName                           extSrc=  8 extTest= 17 unitSrc= 42 unitTest=  2
+  getCategory                          extSrc=  4 extTest= 13 unitSrc=  4 unitTest=  7
+  getAcquisition                       extSrc=  4 extTest= 11 unitSrc=  6 unitTest=  1
+  getCurrency                          extSrc=  4 extTest=  8 unitSrc=  5 unitTest=  0
+  getHarmonyType                       extSrc=  4 extTest= 12 unitSrc= 14 unitTest=  2
+  getVisionType                        extSrc=  3 extTest= 12 unitSrc=  6 unitTest=  1
+  getLabel                             extSrc=  4 extTest= 18 unitSrc=  3 unitTest=  1
+  getRace                              extSrc=  4 extTest= 17 unitSrc=  5 unitTest=  0
+  getClan                              extSrc=  4 extTest= 26 unitSrc=  7 unitTest=  1
+  getAvailableLocales                  extSrc=  0 extTest=  4 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+  isValidLocale                        extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 13  <-- no external src use
+  preloadLocales                       extSrc=  1 extTest=  2 unitSrc=  0 unitTest=  4
+  clearCache                           extSrc=  1 extTest=  4 unitSrc=  4 unitTest= 16
+  isReady                              extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  6  <-- no external src use (declaration-only?)
+MarketBoardService: 16 public methods in apps/web-app/src/services/market-board-service.ts
+  getInstance                          extSrc=  0 extTest=  0 unitSrc= 64 unitTest=172  <-- no external src use
+  resetInstance                        extSrc=  1 extTest=  0 unitSrc=  0 unitTest= 25
+  getSelectedServer                    extSrc=  0 extTest=  0 unitSrc= 10 unitTest=  2  <-- no external src use
+  getShowPrices                        extSrc=  0 extTest=  0 unitSrc= 12 unitTest=  7  <-- no external src use
+  getIsFetching                        extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+  getAllPrices                         extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  getPricesView                        extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  1  <-- no external src use
+  setServer                            extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  4  <-- no external src use
+  setShowPrices                        extSrc=  0 extTest=  0 unitSrc= 12 unitTest=  5  <-- no external src use
+  getPriceForDye                       extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 10  <-- no external src use
+  getWorldNameForPrice                 extSrc=  0 extTest=  0 unitSrc=  8 unitTest=  4  <-- no external src use
+  shouldFetchPrice                     extSrc=  0 extTest=  0 unitSrc=  5 unitTest= 10  <-- no external src use
+  fetchPricesForDyes                   extSrc=  0 extTest=  0 unitSrc= 10 unitTest= 22  <-- no external src use
+  clearCache                           extSrc=  1 extTest=  4 unitSrc=  4 unitTest= 16
+  refreshPrices                        extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  3  <-- no external src use
+  destroy                              extSrc= 19 extTest=  0 unitSrc= 84 unitTest=112
+ModalService: 12 public methods in apps/web-app/src/services/modal-service.ts
+  show                                 extSrc=  6 extTest=  0 unitSrc= 31 unitTest=191
+  showWelcome                          extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  showChangelog                        extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  showConfirm                          extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  2  <-- no external src use
+  dismiss                              extSrc=  0 extTest=  0 unitSrc= 20 unitTest= 12  <-- no external src use
+  dismissTop                           extSrc=  0 extTest=  0 unitSrc= 22 unitTest=  5  <-- no external src use
+  dismissAll                           extSrc=  0 extTest=  0 unitSrc=  0 unitTest= 12  <-- no external src use (declaration-only?)
+  getModals                            extSrc=  0 extTest=  0 unitSrc=  0 unitTest= 27  <-- no external src use (declaration-only?)
+  getTopModal                          extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  hasOpenModals                        extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 12  <-- no external src use
+  subscribe                            extSrc=  1 extTest=  0 unitSrc= 59 unitTest= 66
+  prefersReducedMotion                 extSrc=  0 extTest=  0 unitSrc=  7 unitTest=  5  <-- no external src use
+RouterService: 14 public methods in apps/web-app/src/services/router-service.ts
+  initialize                           extSrc=  5 extTest= 62 unitSrc= 55 unitTest=199
+  getDefaultTool                       extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  0  <-- no external src use
+  navigateTo                           extSrc=  0 extTest=  0 unitSrc= 34 unitTest= 24  <-- no external src use
+  replaceRoute                         extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  7  <-- no external src use
+  getCurrentRoute                      extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  4  <-- no external src use
+  getCurrentToolId                     extSrc=  0 extTest=  0 unitSrc=  7 unitTest= 12  <-- no external src use
+  subscribe                            extSrc=  1 extTest=  0 unitSrc= 59 unitTest= 66
+  refreshDocumentTitle                 extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  getRouteForTool                      extSrc=  0 extTest=  0 unitSrc=  7 unitTest=  2  <-- no external src use
+  getToolFromPath                      extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  4  <-- no external src use
+  getSubPath                           extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  3  <-- no external src use
+  isValidToolId                        extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 12  <-- no external src use (declaration-only?)
+  getRoutes                            extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  destroy                              extSrc= 19 extTest=  0 unitSrc= 84 unitTest=112
+SavedPresetsService: 7 public methods in apps/web-app/src/services/saved-presets-service.ts
+  getAll                               extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  8  <-- no external src use
+  isSaved                              extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  0  <-- no external src use (declaration-only?)
+  snapshotOf                           extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  0  <-- no external src use (declaration-only?)
+  toggle                               extSrc=  2 extTest=  0 unitSrc= 28 unitTest=  1
+  markDeleted                          extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  0  <-- no external src use (declaration-only?)
+  subscribe                            extSrc=  1 extTest=  0 unitSrc= 59 unitTest= 66
+  __reloadForTesting                   extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  4  <-- no external src use (declaration-only?)
+ShareService: 10 public methods in apps/web-app/src/services/share-service.ts
+  generateUrl                          extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  4  <-- no external src use
+  resolveSharedDye                     extSrc=  0 extTest=  0 unitSrc=  6 unitTest=  4  <-- no external src use
+  parseSharedHex                       extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  6  <-- no external src use
+  parseUrl                             extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  1  <-- no external src use
+  isShareUrl                           extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  0  <-- no external src use (declaration-only?)
+  getShareParamsFromCurrentUrl         extSrc=  0 extTest=  0 unitSrc=  5 unitTest=  0  <-- no external src use
+  copyToClipboard                      extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  2  <-- no external src use
+  shareAndCopy                         extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  0  <-- no external src use (declaration-only?)
+  getBaseUrl                           extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  0  <-- no external src use (declaration-only?)
+  validateShareParams                  extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 23  <-- no external src use (declaration-only?)
+StorageService: 15 public methods in apps/web-app/src/services/storage-service.ts
+  resetAvailabilityCache               extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  3  <-- no external src use (declaration-only?)
+  isAvailable                          extSrc=  0 extTest=  0 unitSrc= 12 unitTest= 70  <-- no external src use
+  getItem                              extSrc=  2 extTest=  0 unitSrc= 86 unitTest= 72
+  setItem                              extSrc=  2 extTest=  0 unitSrc=133 unitTest=149
+  removeItem                           extSrc=  0 extTest=  0 unitSrc= 39 unitTest= 30  <-- no external src use
+  clear                                extSrc= 29 extTest= 19 unitSrc= 54 unitTest= 45
+  getKeys                              extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  7  <-- no external src use
+  getItemsByPrefix                     extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  7  <-- no external src use (declaration-only?)
+  hasItem                              extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 10  <-- no external src use (declaration-only?)
+  getSize                              extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  6  <-- no external src use (declaration-only?)
+  getItemCount                         extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  8  <-- no external src use (declaration-only?)
+  removeByPrefix                       extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  4  <-- no external src use (declaration-only?)
+  setItemWithTTL                       extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  9  <-- no external src use (declaration-only?)
+  getItemWithTTL                       extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 10  <-- no external src use (declaration-only?)
+  createNamespace                      extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 14  <-- no external src use (declaration-only?)
+NamespacedStorage: 8 public methods in apps/web-app/src/services/storage-service.ts
+  getItem                              extSrc=  2 extTest=  0 unitSrc= 86 unitTest= 72
+  setItem                              extSrc=  2 extTest=  0 unitSrc=133 unitTest=149
+  removeItem                           extSrc=  0 extTest=  0 unitSrc= 39 unitTest= 30  <-- no external src use
+  hasItem                              extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 10  <-- no external src use (declaration-only?)
+  clear                                extSrc= 29 extTest= 19 unitSrc= 54 unitTest= 45
+  getAll                               extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  8  <-- no external src use
+  setItemWithTTL                       extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  9  <-- no external src use (declaration-only?)
+  getItemWithTTL                       extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 10  <-- no external src use (declaration-only?)
+TelemetryService: 9 public methods in apps/web-app/src/services/telemetry-service.ts
+  initialize                           extSrc=  5 extTest= 62 unitSrc= 55 unitTest=199
+  isEnabled                            extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  2  <-- no external src use
+  track                                extSrc=  0 extTest=  0 unitSrc=  6 unitTest= 21  <-- no external src use
+  trackDyePick                         extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  5  <-- no external src use
+  startTool                            extSrc=  0 extTest=  0 unitSrc=  2 unitTest= 24  <-- no external src use
+  endTool                              extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 15  <-- no external src use
+  normalizeProducer                    extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  flush                                extSrc=  0 extTest=  0 unitSrc=  5 unitTest= 22  <-- no external src use
+  reset                                extSrc=  6 extTest=  6 unitSrc=  1 unitTest=  7
+ThemeService: 17 public methods in apps/web-app/src/services/theme-service.ts
+  initialize                           extSrc=  5 extTest= 62 unitSrc= 55 unitTest=199
+  getCurrentTheme                      extSrc=  0 extTest=  0 unitSrc=  4 unitTest= 11  <-- no external src use
+  getTheme                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  0  <-- no external src use
+  getCurrentThemeObject                extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  getAllThemes                         extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  setTheme                             extSrc=  0 extTest=  0 unitSrc=  4 unitTest= 29  <-- no external src use
+  toggledVariant                       extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  0  <-- no external src use
+  toggleDarkMode                       extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  getColor                             extSrc=  0 extTest=  0 unitSrc=  0 unitTest= 15  <-- no external src use (declaration-only?)
+  getRequiredColor                     extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  0  <-- no external src use (declaration-only?)
+  isDarkMode                           extSrc=  0 extTest=  0 unitSrc= 22 unitTest=  2  <-- no external src use
+  getLightVariant                      extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+  getDarkVariant                       extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+  subscribe                            extSrc=  1 extTest=  0 unitSrc= 59 unitTest= 66
+  resetToDefault                       extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  __resetForTesting                    extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  getThemeVariants                     extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+ToastService: 10 public methods in apps/web-app/src/services/toast-service.ts
+  show                                 extSrc=  6 extTest=  0 unitSrc= 31 unitTest=191
+  success                              extSrc= 28 extTest=226 unitSrc= 76 unitTest= 22
+  error                                extSrc=382 extTest=396 unitSrc=201 unitTest= 32
+  warning                              extSrc=  6 extTest=  1 unitSrc= 31 unitTest=  7
+  info                                 extSrc= 71 extTest=182 unitSrc=340 unitTest= 17
+  dismiss                              extSrc=  0 extTest=  0 unitSrc= 20 unitTest= 12  <-- no external src use
+  dismissAll                           extSrc=  0 extTest=  0 unitSrc=  0 unitTest= 12  <-- no external src use (declaration-only?)
+  getToasts                            extSrc=  0 extTest=  0 unitSrc=  0 unitTest= 39  <-- no external src use (declaration-only?)
+  subscribe                            extSrc=  1 extTest=  0 unitSrc= 59 unitTest= 66
+  prefersReducedMotion                 extSrc=  0 extTest=  0 unitSrc=  7 unitTest=  5  <-- no external src use
+TooltipService: 9 public methods in apps/web-app/src/services/tooltip-service.ts
+  startOrphanCleanup                   extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  5  <-- no external src use (declaration-only?)
+  stopOrphanCleanup                    extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  3  <-- no external src use (declaration-only?)
+  attach                               extSrc=  0 extTest=  0 unitSrc=  0 unitTest= 51  <-- no external src use (declaration-only?)
+  detach                               extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  7  <-- no external src use
+  show                                 extSrc=  6 extTest=  0 unitSrc= 31 unitTest=191
+  hide                                 extSrc=  0 extTest=  0 unitSrc=  2 unitTest= 13  <-- no external src use
+  updateContent                        extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  7  <-- no external src use (declaration-only?)
+  prefersReducedMotion                 extSrc=  0 extTest=  0 unitSrc=  7 unitTest=  5  <-- no external src use
+  detachAll                            extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  3  <-- no external src use (declaration-only?)
+TutorialService: 18 public methods in apps/web-app/src/services/tutorial-service.ts
+  getState                             extSrc=  0 extTest=  0 unitSrc=  5 unitTest= 28  <-- no external src use
+  subscribe                            extSrc=  1 extTest=  0 unitSrc= 59 unitTest= 66
+  isCompleted                          extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  3  <-- no external src use
+  markCompleted                        extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  2  <-- no external src use
+  resetCompletion                      extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  resetAllCompletions                  extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  areAllPromptsDisabled                extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  3  <-- no external src use (declaration-only?)
+  disableAllPrompts                    extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  enableAllPrompts                     extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  1  <-- no external src use (declaration-only?)
+  start                                extSrc=  3 extTest=  0 unitSrc=  5 unitTest= 20
+  next                                 extSrc=  5 extTest=  0 unitSrc=  3 unitTest=  7
+  previous                             extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  3  <-- no external src use
+  skip                                 extSrc=  0 extTest=  4 unitSrc=  4 unitTest= 21  <-- no external src use
+  complete                             extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  2  <-- no external src use
+  getTutorial                          extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  8  <-- no external src use (declaration-only?)
+  getCurrentStep                       extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  isAvailable                          extSrc=  0 extTest=  0 unitSrc= 12 unitTest= 70  <-- no external src use
+  promptStart                          extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  6  <-- no external src use (declaration-only?)
+ErrorHandler: 6 public methods in apps/web-app/src/shared/error-handler.ts
+  log                                  extSrc=116 extTest= 21 unitSrc=127 unitTest= 17
+  normalize                            extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  6  <-- no external src use
+  createUserMessage                    extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  5  <-- no external src use
+  isCritical                           extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  3  <-- no external src use (declaration-only?)
+  report                               extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  2  <-- no external src use
+  clear                                extSrc= 29 extTest= 19 unitSrc= 54 unitTest= 45
+SubscriptionManager: 5 public methods in apps/web-app/src/shared/subscription-manager.ts
+  add                                  extSrc= 23 extTest= 27 unitSrc= 85 unitTest=  2
+  addAll                               extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  0  <-- no external src use (declaration-only?)
+  unsubscribeAll                       extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  0  <-- no external src use
+  count                                extSrc= 11 extTest= 16 unitSrc=  3 unitTest=103
+  hasSubscriptions                     extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  0  <-- no external src use (declaration-only?)
+DefaultFetchClient: 1 public methods in packages/core/src/services/APIService.ts
+  fetch                                extSrc=  7 extTest=387 unitSrc=  2 unitTest=  3
+HttpError: 0 public methods in packages/core/src/services/APIService.ts
+DefaultRateLimiter: 2 public methods in packages/core/src/services/APIService.ts
+  waitIfNeeded                         extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  7  <-- no external src use
+  recordRequest                        extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  1  <-- no external src use
+MemoryCacheBackend: 5 public methods in packages/core/src/services/APIService.ts
+  get                                  extSrc=372 extTest=570 unitSrc= 24 unitTest= 36
+  set                                  extSrc=186 extTest=125 unitSrc= 28 unitTest= 32
+  delete                               extSrc= 83 extTest= 45 unitSrc= 12 unitTest=  2
+  clear                                extSrc= 63 extTest= 47 unitSrc= 20 unitTest= 17
+  keys                                 extSrc= 56 extTest= 82 unitSrc=  8 unitTest= 23
+APIService: 6 public methods in packages/core/src/services/APIService.ts
+  clearCache                           extSrc=  4 extTest= 16 unitSrc=  1 unitTest=  4
+  getPriceData                         extSrc=  1 extTest=  5 unitSrc=  2 unitTest= 37
+  getPricesForDataCenter               extSrc=  1 extTest=  7 unitSrc=  0 unitTest= 21
+  isAPIAvailable                       extSrc=  2 extTest=  0 unitSrc=  1 unitTest=  3
+  getAPIStatus                         extSrc=  1 extTest=  0 unitSrc=  0 unitTest=  4
+  formatPrice                          extSrc=  6 extTest=  5 unitSrc=  0 unitTest=  5
+CharacterColorService: 14 public methods in packages/core/src/services/CharacterColorService.ts
+  getEyeColors                         extSrc=  1 extTest=  0 unitSrc=  3 unitTest=  2
+  getHighlightColors                   extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  1
+  getLipColorsDark                     extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  1
+  getLipColorsLight                    extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  2
+  getTattooColors                      extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  1
+  getFacePaintColorsDark               extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  1
+  getFacePaintColorsLight              extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  1
+  getSharedColors                      extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  1  <-- no external src use (declaration-only?)
+  getHairColors                        extSrc=  1 extTest=  0 unitSrc=  3 unitTest=  4
+  getSkinColors                        extSrc=  1 extTest=  0 unitSrc=  2 unitTest=  4
+  getRaceSpecificColors                extSrc=  0 extTest=  0 unitSrc=  0 unitTest=  2  <-- no external src use (declaration-only?)
+  findClosestDyes                      extSrc=  1 extTest=  0 unitSrc=  3 unitTest= 10
+  findClosestDye                       extSrc= 11 extTest=  7 unitSrc= 10 unitTest= 55
+  findDyesWithinDistance               extSrc=  4 extTest=  3 unitSrc=  2 unitTest= 31
+ColorService: 67 public methods in packages/core/src/services/ColorService.ts
+  clearCaches                          extSrc=  0 extTest=  0 unitSrc=  2 unitTest= 11  <-- no external src use
+  getCacheStats                        extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 33  <-- no external src use
+  hexToRgb                             extSrc= 10 extTest=  8 unitSrc= 29 unitTest=116
+  rgbToHex                             extSrc=  5 extTest=  4 unitSrc= 21 unitTest= 41
+  rgbToHsv                             extSrc=  2 extTest=  4 unitSrc=  5 unitTest= 29
+  hsvToRgb                             extSrc=  0 extTest=  4 unitSrc=  3 unitTest= 33  <-- no external src use
+  hexToHsv                             extSrc= 16 extTest= 10 unitSrc=  6 unitTest= 16
+  hsvToHex                             extSrc=  6 extTest=  1 unitSrc=  7 unitTest=  9
+  normalizeHex                         extSrc=  2 extTest=  0 unitSrc=  3 unitTest=  8
+  getColorDistance                     extSrc= 14 extTest=  5 unitSrc=  9 unitTest= 25
+  getRedmeanDistance                   extSrc=  0 extTest=  0 unitSrc=  6 unitTest=  7  <-- no external src use
+  getDistinguishabilityPercent         extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  7  <-- no external src use
+  getDistanceForMethod                 extSrc= 42 extTest=  7 unitSrc=  0 unitTest=  0
+  simulateColorblindness               extSrc=  0 extTest=  5 unitSrc=  2 unitTest= 69  <-- no external src use
+  simulateColorblindnessHex            extSrc= 15 extTest=  0 unitSrc=  1 unitTest= 11
+  simulateColorblindnessMachado        extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  5  <-- no external src use
+  simulateColorblindnessMachadoHex     extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  3  <-- no external src use
+  getPerceivedLuminance                extSrc=  0 extTest=  0 unitSrc=  4 unitTest= 13  <-- no external src use
+  getContrastRatio                     extSrc=  6 extTest=  2 unitSrc=  4 unitTest= 14
+  meetsWCAGAA                          extSrc=  0 extTest=  2 unitSrc=  1 unitTest= 15  <-- no external src use (declaration-only?)
+  meetsWCAGAAA                         extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  9  <-- no external src use (declaration-only?)
+  isLightColor                         extSrc=  2 extTest=  3 unitSrc=  2 unitTest=  8
+  getOptimalTextColor                  extSrc=  0 extTest=  2 unitSrc=  1 unitTest= 11  <-- no external src use (declaration-only?)
+  adjustBrightness                     extSrc=  0 extTest=  2 unitSrc=  1 unitTest= 15  <-- no external src use (declaration-only?)
+  adjustSaturation                     extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 15  <-- no external src use (declaration-only?)
+  rotateHue                            extSrc=  1 extTest=  0 unitSrc=  1 unitTest= 13
+  rotateHueLch                         extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  7
+  invert                               extSrc=  0 extTest=  2 unitSrc=  2 unitTest= 12  <-- no external src use
+  desaturate                           extSrc=  0 extTest=  1 unitSrc=  1 unitTest=  8  <-- no external src use (declaration-only?)
+  rgbToLab                             extSrc=  1 extTest=  0 unitSrc=  5 unitTest= 12
+  hexToLab                             extSrc=  8 extTest=  0 unitSrc= 11 unitTest=  5
+  getDeltaE                            extSrc=  3 extTest=  0 unitSrc= 11 unitTest= 16
+  labToRgb                             extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  9  <-- no external src use
+  labToHex                             extSrc=  2 extTest=  0 unitSrc=  3 unitTest=  3
+  rgbToOklab                           extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  8  <-- no external src use
+  hexToOklab                           extSrc=  0 extTest=  0 unitSrc=  6 unitTest=  3  <-- no external src use
+  oklabToRgb                           extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  7  <-- no external src use
+  oklabToHex                           extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  rgbToOklch                           extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  hexToOklch                           extSrc=  4 extTest=  0 unitSrc=  5 unitTest=  3
+  oklchToRgb                           extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  oklchToHex                           extSrc=  2 extTest=  0 unitSrc=  3 unitTest=  3
+  labToLch                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  4  <-- no external src use
+  lchToLab                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  rgbToLch                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  hexToLch                             extSrc=  4 extTest=  0 unitSrc=  4 unitTest=  7
+  lchToRgb                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  lchToHex                             extSrc=  2 extTest=  0 unitSrc=  4 unitTest=  3
+  rgbToHsl                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 12  <-- no external src use
+  hexToHsl                             extSrc=  0 extTest=  0 unitSrc=  5 unitTest=  3  <-- no external src use
+  hslToRgb                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 13  <-- no external src use
+  hslToHex                             extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  5  <-- no external src use
+  rgbToCmyk                            extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  7  <-- no external src use
+  cmykToRgb                            extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  hexToCmyk                            extSrc=  1 extTest=  0 unitSrc=  2 unitTest=  2
+  cmykToHex                            extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  1  <-- no external src use
+  mixColorsRgb                         extSrc=  2 extTest=  8 unitSrc=  0 unitTest=  3
+  mixColorsLab                         extSrc=  4 extTest=  1 unitSrc=  0 unitTest=  3
+  mixColorsRyb                         extSrc=  2 extTest=  2 unitSrc=  1 unitTest=  1
+  rybToRgb                             extSrc=  0 extTest=  0 unitSrc=  4 unitTest= 12  <-- no external src use
+  rgbToRyb                             extSrc=  0 extTest=  0 unitSrc=  5 unitTest= 15  <-- no external src use
+  hexToRyb                             extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  3  <-- no external src use (declaration-only?)
+  rybToHex                             extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  3  <-- no external src use (declaration-only?)
+  mixColorsOklab                       extSrc=  2 extTest=  1 unitSrc=  1 unitTest=  2
+  interpolateHue                       extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  4  <-- no external src use (declaration-only?)
+  mixColorsHsl                         extSrc=  1 extTest=  1 unitSrc=  0 unitTest=  2
+  mixColorsSpectral                    extSrc=  1 extTest=  1 unitSrc=  1 unitTest=  2
+DyeService: 20 public methods in packages/core/src/services/DyeService.ts
+  getAllDyes                           extSrc= 42 extTest= 37 unitSrc=  3 unitTest= 11
+  getDyeById                           extSrc= 20 extTest=  5 unitSrc=  1 unitTest= 43
+  getByStainId                         extSrc= 16 extTest=  0 unitSrc=  5 unitTest= 10
+  isLoadedStatus                       extSrc=  0 extTest=  2 unitSrc=  1 unitTest=  6  <-- no external src use (declaration-only?)
+  getDyeCount                          extSrc=  0 extTest=  2 unitSrc=  1 unitTest= 10  <-- no external src use (declaration-only?)
+  getCategories                        extSrc=  4 extTest=  4 unitSrc=  3 unitTest=  9
+  searchByName                         extSrc=  3 extTest= 17 unitSrc=  2 unitTest= 12
+  searchByCategory                     extSrc=  1 extTest=  2 unitSrc=  1 unitTest=  6
+  filterDyes                           extSrc=  1 extTest=  4 unitSrc=  1 unitTest= 11
+  findClosestDye                       extSrc= 11 extTest=  7 unitSrc= 10 unitTest= 55
+  findDyesWithinDistance               extSrc=  4 extTest=  3 unitSrc=  2 unitTest= 31
+  findComplementaryPair                extSrc=  1 extTest=  1 unitSrc=  1 unitTest= 13
+  findAnalogousDyes                    extSrc=  1 extTest=  3 unitSrc=  1 unitTest= 21
+  findTriadicDyes                      extSrc=  2 extTest=  3 unitSrc=  2 unitTest= 24
+  findSquareDyes                       extSrc=  1 extTest=  0 unitSrc=  1 unitTest= 10
+  findTetradicDyes                     extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  7
+  findInvertedTetradicDyes             extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  8
+  findMonochromaticDyes                extSrc=  1 extTest=  0 unitSrc=  1 unitTest= 16
+  findSplitComplementaryDyes           extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  7
+  searchByLocalizedName                extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  3
+LocalizationService: 21 public methods in packages/core/src/services/LocalizationService.ts
+  setLocale                            extSrc=  5 extTest= 77 unitSrc=  8 unitTest= 26
+  ensureLocaleLoaded                   extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  1
+  setLocaleFromPreference              extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  getCurrentLocale                     extSrc= 17 extTest= 39 unitSrc=  3 unitTest= 15
+  isLocaleLoaded                       extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 10  <-- no external src use
+  getLabel                             extSrc=  3 extTest=  1 unitSrc=  4 unitTest= 18
+  getDyeName                           extSrc= 45 extTest=  2 unitSrc=  5 unitTest= 17
+  getCategory                          extSrc=  5 extTest=  7 unitSrc=  3 unitTest= 13
+  getAcquisition                       extSrc=  7 extTest=  1 unitSrc=  3 unitTest= 11
+  getCurrency                          extSrc=  6 extTest=  0 unitSrc=  3 unitTest=  8
+  getHarmonyType                       extSrc= 15 extTest=  2 unitSrc=  3 unitTest= 12
+  getVisionType                        extSrc=  6 extTest=  1 unitSrc=  3 unitTest= 12
+  getVisionShort                       extSrc=  1 extTest=  0 unitSrc=  3 unitTest=  5
+  getToolName                          extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  5  <-- no external src use
+  getSheetName                         extSrc=  1 extTest=  0 unitSrc=  3 unitTest=  5
+  getRace                              extSrc=  6 extTest=  0 unitSrc=  3 unitTest= 17
+  getClan                              extSrc=  8 extTest=  2 unitSrc=  3 unitTest= 25
+  getAvailableLocales                  extSrc=  0 extTest=  1 unitSrc=  0 unitTest=  4  <-- no external src use (declaration-only?)
+  preloadLocales                       extSrc=  0 extTest=  4 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  clear                                extSrc= 63 extTest= 47 unitSrc= 20 unitTest= 17
+  resetInstance                        extSrc=  0 extTest= 25 unitSrc=  1 unitTest=  0  <-- no external src use (declaration-only?)
+PaletteService: 3 public methods in packages/core/src/services/PaletteService.ts
+  extractPalette                       extSrc=  6 extTest=  0 unitSrc=  7 unitTest= 13
+  extractAndMatchPalette               extSrc=  2 extTest=  0 unitSrc=  2 unitTest=  4
+  pixelDataToRGBFiltered               extSrc=  4 extTest=  0 unitSrc=  0 unitTest=  3
+PresetService: 8 public methods in packages/core/src/services/PresetService.ts
+  getCategories                        extSrc=  4 extTest=  4 unitSrc=  3 unitTest=  9
+  getCategoryMeta                      extSrc=  1 extTest=  0 unitSrc=  0 unitTest=  3
+  getAllPresets                        extSrc=  3 extTest=  0 unitSrc=  0 unitTest=  7
+  getPresetsByCategory                 extSrc=  2 extTest=  0 unitSrc=  4 unitTest=  4
+  getPreset                            extSrc=  8 extTest=  6 unitSrc=  2 unitTest=  7
+  searchPresets                        extSrc=  1 extTest=  0 unitSrc=  3 unitTest= 14
+  getRandomPreset                      extSrc=  1 extTest=  0 unitSrc=  2 unitTest=  5
+  getPresetWithDyes                    extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  5  <-- no external src use
+ColorAccessibility: 6 public methods in packages/core/src/services/color/ColorAccessibility.ts
+  getPerceivedLuminance                extSrc=  0 extTest=  0 unitSrc=  4 unitTest= 13  <-- no external src use
+  getContrastRatio                     extSrc=  6 extTest=  2 unitSrc=  4 unitTest= 14
+  meetsWCAGAA                          extSrc=  0 extTest=  2 unitSrc=  1 unitTest= 15  <-- no external src use (declaration-only?)
+  meetsWCAGAAA                         extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  9  <-- no external src use (declaration-only?)
+  isLightColor                         extSrc=  2 extTest=  3 unitSrc=  2 unitTest=  8
+  getOptimalTextColor                  extSrc=  0 extTest=  2 unitSrc=  1 unitTest= 11  <-- no external src use (declaration-only?)
+ColorConverter: 43 public methods in packages/core/src/services/color/ColorConverter.ts
+  clearCaches                          extSrc=  0 extTest=  0 unitSrc=  2 unitTest= 11  <-- no external src use
+  getCacheStats                        extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 33  <-- no external src use
+  hexToRgb                             extSrc= 10 extTest=  8 unitSrc= 29 unitTest=116
+  rgbToHex                             extSrc=  5 extTest=  4 unitSrc= 21 unitTest= 41
+  rgbToHsv                             extSrc=  2 extTest=  4 unitSrc=  5 unitTest= 29
+  hsvToRgb                             extSrc=  0 extTest=  4 unitSrc=  3 unitTest= 33  <-- no external src use
+  hexToHsv                             extSrc= 16 extTest= 10 unitSrc=  6 unitTest= 16
+  hsvToHex                             extSrc=  6 extTest=  1 unitSrc=  7 unitTest=  9
+  normalizeHex                         extSrc=  2 extTest=  0 unitSrc=  3 unitTest=  8
+  getColorDistance                     extSrc= 14 extTest=  5 unitSrc=  9 unitTest= 25
+  getRedmeanDistance                   extSrc=  0 extTest=  0 unitSrc=  6 unitTest=  7  <-- no external src use
+  getDistinguishabilityPercent         extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  7  <-- no external src use
+  rgbToLab                             extSrc=  1 extTest=  0 unitSrc=  5 unitTest= 12
+  hexToLab                             extSrc=  8 extTest=  0 unitSrc= 11 unitTest=  5
+  labToRgb                             extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  9  <-- no external src use
+  labToHex                             extSrc=  2 extTest=  0 unitSrc=  3 unitTest=  3
+  getDeltaE76                          extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  3  <-- no external src use
+  getDeltaE2000                        extSrc=  1 extTest=  0 unitSrc=  4 unitTest=  5
+  getDeltaE                            extSrc=  3 extTest=  0 unitSrc= 11 unitTest= 16
+  getDeltaE_Oklab                      extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  1  <-- no external src use
+  getDeltaE_OklchWeighted              extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  0  <-- no external src use (declaration-only?)
+  rgbToOklab                           extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  8  <-- no external src use
+  oklabToRgb                           extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  7  <-- no external src use
+  hexToOklab                           extSrc=  0 extTest=  0 unitSrc=  6 unitTest=  3  <-- no external src use
+  oklabToHex                           extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  rgbToOklch                           extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  oklchToRgb                           extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  hexToOklch                           extSrc=  4 extTest=  0 unitSrc=  5 unitTest=  3
+  oklchToHex                           extSrc=  2 extTest=  0 unitSrc=  3 unitTest=  3
+  labToLch                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  4  <-- no external src use
+  lchToLab                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  rgbToLch                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  lchToRgb                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  hexToLch                             extSrc=  4 extTest=  0 unitSrc=  4 unitTest=  7
+  lchToHex                             extSrc=  2 extTest=  0 unitSrc=  4 unitTest=  3
+  rgbToHsl                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 12  <-- no external src use
+  hslToRgb                             extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 13  <-- no external src use
+  hexToHsl                             extSrc=  0 extTest=  0 unitSrc=  5 unitTest=  3  <-- no external src use
+  hslToHex                             extSrc=  0 extTest=  0 unitSrc=  4 unitTest=  5  <-- no external src use
+  rgbToCmyk                            extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  7  <-- no external src use
+  cmykToRgb                            extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  3  <-- no external src use
+  hexToCmyk                            extSrc=  1 extTest=  0 unitSrc=  2 unitTest=  2
+  cmykToHex                            extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  1  <-- no external src use
+ColorManipulator: 6 public methods in packages/core/src/services/color/ColorManipulator.ts
+  adjustBrightness                     extSrc=  0 extTest=  2 unitSrc=  1 unitTest= 15  <-- no external src use (declaration-only?)
+  adjustSaturation                     extSrc=  0 extTest=  0 unitSrc=  1 unitTest= 15  <-- no external src use (declaration-only?)
+  rotateHue                            extSrc=  1 extTest=  0 unitSrc=  1 unitTest= 13
+  rotateHueLch                         extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  7
+  invert                               extSrc=  0 extTest=  2 unitSrc=  2 unitTest= 12  <-- no external src use
+  desaturate                           extSrc=  0 extTest=  1 unitSrc=  1 unitTest=  8  <-- no external src use (declaration-only?)
+ColorblindnessSimulator: 6 public methods in packages/core/src/services/color/ColorblindnessSimulator.ts
+  clearCache                           extSrc=  4 extTest= 16 unitSrc=  1 unitTest=  4
+  getCacheStats                        extSrc=  0 extTest=  0 unitSrc=  3 unitTest= 33  <-- no external src use
+  simulateColorblindness               extSrc=  0 extTest=  5 unitSrc=  2 unitTest= 69  <-- no external src use
+  simulateColorblindnessHex            extSrc= 15 extTest=  0 unitSrc=  1 unitTest= 11
+  simulateColorblindnessMachado        extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  5  <-- no external src use
+  simulateColorblindnessMachadoHex     extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  3  <-- no external src use
+RybColorMixer: 5 public methods in packages/core/src/services/color/RybColorMixer.ts
+  mixColors                            extSrc=  0 extTest=  1 unitSrc=  4 unitTest= 27  <-- no external src use
+  rybToRgb                             extSrc=  0 extTest=  0 unitSrc=  4 unitTest= 12  <-- no external src use
+  rgbToRyb                             extSrc=  0 extTest=  0 unitSrc=  5 unitTest= 15  <-- no external src use
+  hexToRyb                             extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  3  <-- no external src use (declaration-only?)
+  rybToHex                             extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  3  <-- no external src use (declaration-only?)
+SpectralMixer: 1 public methods in packages/core/src/services/color/SpectralMixer.ts
+  mixColors                            extSrc=  0 extTest=  1 unitSrc=  4 unitTest= 27  <-- no external src use
+DyeDatabase: 14 public methods in packages/core/src/services/dye/DyeDatabase.ts
+  initialize                           extSrc= 57 extTest=199 unitSrc=  3 unitTest= 62
+  ensureLoaded                         extSrc=  0 extTest=  0 unitSrc= 15 unitTest=  3  <-- no external src use
+  getAllDyes                           extSrc= 42 extTest= 37 unitSrc=  3 unitTest= 11
+  getDyeById                           extSrc= 20 extTest=  5 unitSrc=  1 unitTest= 43
+  getByStainId                         extSrc= 16 extTest=  0 unitSrc=  5 unitTest= 10
+  isLoadedStatus                       extSrc=  0 extTest=  2 unitSrc=  1 unitTest=  6  <-- no external src use (declaration-only?)
+  getDyeCount                          extSrc=  0 extTest=  2 unitSrc=  1 unitTest= 10  <-- no external src use (declaration-only?)
+  getCategories                        extSrc=  4 extTest=  4 unitSrc=  3 unitTest=  9
+  getKdTree                            extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  2  <-- no external src use
+  getLogger                            extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  0  <-- no external src use (declaration-only?)
+  getHueBucket                         extSrc=  0 extTest=  0 unitSrc=  2 unitTest=  7  <-- no external src use
+  getHueBucketsToSearch                extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  getDyesByHueBucket                   extSrc=  0 extTest=  0 unitSrc=  1 unitTest=  2  <-- no external src use (declaration-only?)
+  getDyesInternal                      extSrc=  0 extTest=  0 unitSrc=  9 unitTest=  2  <-- no external src use
+DyeSearch: 5 public methods in packages/core/src/services/dye/DyeSearch.ts
+  searchByName                         extSrc=  3 extTest= 17 unitSrc=  2 unitTest= 12
+  searchByCategory                     extSrc=  1 extTest=  2 unitSrc=  1 unitTest=  6
+  filterDyes                           extSrc=  1 extTest=  4 unitSrc=  1 unitTest= 11
+  findClosestDye                       extSrc= 11 extTest=  7 unitSrc= 10 unitTest= 55
+  findDyesWithinDistance               extSrc=  4 extTest=  3 unitSrc=  2 unitTest= 31
+HarmonyGenerator: 8 public methods in packages/core/src/services/dye/HarmonyGenerator.ts
+  findComplementaryPair                extSrc=  1 extTest=  1 unitSrc=  1 unitTest= 13
+  findAnalogousDyes                    extSrc=  1 extTest=  3 unitSrc=  1 unitTest= 21
+  findTriadicDyes                      extSrc=  2 extTest=  3 unitSrc=  2 unitTest= 24
+  findSquareDyes                       extSrc=  1 extTest=  0 unitSrc=  1 unitTest= 10
+  findTetradicDyes                     extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  7
+  findInvertedTetradicDyes             extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  8
+  findMonochromaticDyes                extSrc=  1 extTest=  0 unitSrc=  1 unitTest= 16
+  findSplitComplementaryDyes           extSrc=  1 extTest=  0 unitSrc=  1 unitTest=  7
+LocaleLoader: 1 public methods in packages/core/src/services/localization/LocaleLoader.ts
+  loadLocale                           extSrc=  1 extTest=  2 unitSrc=  3 unitTest= 24
+LocaleRegistry: 5 public methods in packages/core/src/services/localization/LocaleRegistry.ts
+  registerLocale                       extSrc=  1 extTest=  0 unitSrc=  3 unitTest= 90
+  hasLocale                            extSrc=  0 extTest=  0 unitSrc=  4 unitTest= 10  <-- no external src use
+  getLocale                            extSrc= 40 extTest= 28 unitSrc= 25 unitTest= 10
+  clear                                extSrc= 63 extTest= 47 unitSrc= 20 unitTest= 17
+  size                                 extSrc= 76 extTest= 77 unitSrc= 14 unitTest= 36
+TranslationProvider: 12 public methods in packages/core/src/services/localization/TranslationProvider.ts
+  getLabel                             extSrc=  3 extTest=  1 unitSrc=  4 unitTest= 18
+  getDyeName                           extSrc= 45 extTest=  2 unitSrc=  5 unitTest= 17
+  getCategory                          extSrc=  5 extTest=  7 unitSrc=  3 unitTest= 13
+  getAcquisition                       extSrc=  7 extTest=  1 unitSrc=  3 unitTest= 11
+  getCurrency                          extSrc=  6 extTest=  0 unitSrc=  3 unitTest=  8
+  getHarmonyType                       extSrc= 15 extTest=  2 unitSrc=  3 unitTest= 12
+  getVisionType                        extSrc=  6 extTest=  1 unitSrc=  3 unitTest= 12
+  getVisionShort                       extSrc=  1 extTest=  0 unitSrc=  3 unitTest=  5
+  getToolName                          extSrc=  0 extTest=  0 unitSrc=  3 unitTest=  5  <-- no external src use
+  getSheetName                         extSrc=  1 extTest=  0 unitSrc=  3 unitTest=  5
+  getRace                              extSrc=  6 extTest=  0 unitSrc=  3 unitTest= 17
+  getClan                              extSrc=  8 extTest=  2 unitSrc=  3 unitTest= 25

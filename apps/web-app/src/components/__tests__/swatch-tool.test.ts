@@ -385,14 +385,6 @@ vi.mock('../market-board', () => ({
   },
 }));
 
-vi.mock('../dye-action-dropdown', () => ({
-  createDyeActionDropdown: vi.fn().mockImplementation(() => {
-    const div = document.createElement('div');
-    div.className = 'dye-action-dropdown';
-    return div;
-  }),
-}));
-
 vi.mock('@components/v4/result-card', () => ({}));
 
 describe('SwatchTool', () => {

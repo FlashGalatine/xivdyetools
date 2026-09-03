@@ -61,9 +61,24 @@ export type DyeInfoResult =
     }
   | { ok: false; error: 'GENERATION_FAILED'; errorMessage: string };
 
-/** Nearest-strip sizing: three columns drawn, one more named in the label. */
+/** Nearest-strip sizing: three columns drawn. */
 const NEAREST_DRAWN = 3;
-const NEAREST_POOL = 4;
+
+/**
+ * The "+n more" line counts undrawn dyes this close and no further.
+ *
+ * 10 is the match ramp's CLOSE cut (`classifyBandTier(…, 'match')` runs
+ * 5/10/20), so the label means "n further dyes are still a close match" —
+ * which is the question a player is actually asking when they read it.
+ *
+ * Measured against the real 125-dye set: the EXACT cut (5) admits nothing at
+ * all — the tightest fourth-nearest neighbour in the whole database is Ink Blue
+ * / Jet Black at ΔE 5.41 — so it would have replaced one constant with another.
+ * At 10, forty dyes carry the line with n between 1 and 6 and eighty-five omit
+ * it. At the LOOSE cut (20) it fires for 122 of 125 with n up to 33, which is
+ * noise rather than information.
+ */
+const NEAREST_MORE_MAX_DELTA_E = 10;
 
 /**
  * The MKT row value. Consolidated dyes name the market item players actually
@@ -102,21 +117,33 @@ export async function executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult
         : acquisition;
 
     // Nearest dyes: ΔE2000 over the non-Facewear pool, excluding self
-    const pool = dyeService
+    const ranked = dyeService
       .getAllDyes()
       .filter((d) => d.category !== 'Facewear' && d.id !== dye.id)
       .map((d) => ({
         dye: d,
         deltaE: ColorService.getDistanceForMethod(dye.hex, d.hex, 'ciede2000'),
       }))
-      .sort((a, b) => a.deltaE - b.deltaE)
-      .slice(0, NEAREST_POOL);
-    const nearest: NearestDyeInfo[] = pool.slice(0, NEAREST_DRAWN).map((n) => ({
+      .sort((a, b) => a.deltaE - b.deltaE);
+    const nearest: NearestDyeInfo[] = ranked.slice(0, NEAREST_DRAWN).map((n) => ({
       hex: n.dye.hex,
       name: getLocalizedDyeName(n.dye.itemID, n.dye.name, locale),
       deltaE: n.deltaE,
     }));
-    const omitted = pool.length - nearest.length;
+
+    // pkg-svg-bot-logic-09: this counted the pool minus the drawn columns —
+    // a four-entry pool and three columns, so it was the constant 1 on every
+    // card ever rendered, and the `: ''` arm below was unreachable. A player
+    // reads "+1 more" as "one further dye is near this one" when 121 others
+    // were ranked and the fourth simply was not drawn.
+    //
+    // Count what the sentence claims instead: further dyes still inside the
+    // CLOSE band, beyond the three already drawn. Eighty-five of the 125 have
+    // none, so the empty arm below is now the common case rather than dead
+    // code, and the number varies with the dye rather than being 1 forever.
+    const omitted = ranked
+      .slice(NEAREST_DRAWN)
+      .filter((n) => n.deltaE <= NEAREST_MORE_MAX_DELTA_E).length;
 
     const svgString = generateDyeInfoCard({
       dye,

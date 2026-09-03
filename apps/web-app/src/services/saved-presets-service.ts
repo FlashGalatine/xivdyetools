@@ -15,6 +15,7 @@
 
 import { StorageService } from './storage-service';
 import { logger } from '@shared/logger';
+import { dyeService, toStainId } from './dye-service-wrapper';
 import type { PresetCategory } from '@xivdyetools/types';
 import type { UnifiedPreset } from './hybrid-preset-service';
 
@@ -52,6 +53,52 @@ export class SavedPresetsService {
     this.loaded = true;
     const raw = StorageService.getItem<SavedPreset[]>(STORAGE_KEY);
     this.saved = Array.isArray(raw) ? raw.filter((p) => p && typeof p.id === 'string') : [];
+    if (this.migrateLegacyDyeIds()) {
+      StorageService.setItem(STORAGE_KEY, this.saved);
+    }
+  }
+
+  /**
+   * Convert 4.x legacy itemIDs in stored snapshots to stainIDs, in place.
+   *
+   * A snapshot is a copy, not a reference, so one taken before the 2026-08-28
+   * stainID rewrite still holds whatever ID space the API served that day.
+   * `resolvePresetDye` is stainID-only, so without this pass those snapshots
+   * render as an empty palette on every path that falls back to the local copy
+   * (author-deleted preset, offline, live row outside the fetched page).
+   *
+   * Deliberately conservative in two ways. It does nothing while the dye
+   * database is still cold, because every lookup would miss and the pass would
+   * look like a snapshot full of unresolvable dyes. And an ID it cannot place
+   * is left exactly as it was rather than dropped — a snapshot is user data,
+   * and silently shortening someone's palette is worse than leaving one swatch
+   * unresolved, which is what already happens today.
+   *
+   * @returns true when anything changed and the store needs rewriting.
+   */
+  private static migrateLegacyDyeIds(): boolean {
+    let changed = false;
+    try {
+      if (!dyeService.isLoadedStatus()) return false;
+      for (const preset of this.saved) {
+        if (!Array.isArray(preset.dyes)) continue;
+        preset.dyes = preset.dyes.map((stored) => {
+          const stainId = toStainId(stored);
+          if (stainId === null || stainId === stored) return stored;
+          changed = true;
+          return stainId;
+        });
+      }
+    } catch (error) {
+      // Repairing old snapshots is a bonus; returning them is the job. A dye
+      // database that is missing or half-built must not empty the shelf.
+      logger.error('[SavedPresets] Legacy dye migration failed; snapshots left as stored:', error);
+      return false;
+    }
+    if (changed) {
+      logger.info('[SavedPresets] Migrated legacy dye references in saved snapshots');
+    }
+    return changed;
   }
 
   private static persist(): void {
@@ -122,10 +169,5 @@ export class SavedPresetsService {
   static subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
-  }
-
-  static __reloadForTesting(): void {
-    this.loaded = false;
-    this.saved = [];
   }
 }

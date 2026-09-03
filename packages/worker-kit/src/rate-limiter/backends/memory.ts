@@ -94,8 +94,17 @@ export class MemoryRateLimiter implements RateLimiter {
     const entry = this.requestLog.get(key);
     const entryWindowMs = Math.max(entry?.windowMs ?? 0, config.windowMs);
 
+    // BUG-097: retention is bounded by the key's LARGEST window, the decision by
+    // THIS request's. Filtering the STORED array with the current config.windowMs
+    // discards timestamps a wider config still needs, so a short-window check can
+    // erase the history a long-window check is counting -- which is exactly the
+    // per-key cutoff cleanupOldEntries() was given in BUG-023.
+    const retainedTimestamps = (entry?.timestamps ?? []).filter(
+      (ts) => ts > now - entryWindowMs
+    );
+
     // Filter to only include requests within the current window
-    const recentTimestamps = (entry?.timestamps ?? []).filter((ts) => ts > windowStart);
+    const recentTimestamps = retainedTimestamps.filter((ts) => ts > windowStart);
 
     // Check if within limit
     const allowed = recentTimestamps.length < effectiveLimit;
@@ -107,11 +116,12 @@ export class MemoryRateLimiter implements RateLimiter {
       ? new Date(oldestInWindow + config.windowMs)
       : new Date(now + config.windowMs);
 
-    // Record this request if allowed
+    // Record this request if allowed. Appended to the RETAINED array: `now` is
+    // inside every window by definition, so both views stay chronological.
     if (allowed) {
-      recentTimestamps.push(now);
+      retainedTimestamps.push(now);
     }
-    this.requestLog.set(key, { windowMs: entryWindowMs, timestamps: recentTimestamps });
+    this.requestLog.set(key, { windowMs: entryWindowMs, timestamps: retainedTimestamps });
 
     // Deterministic cleanup: every CLEANUP_INTERVAL requests
     this.requestCount++;

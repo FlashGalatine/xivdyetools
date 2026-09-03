@@ -248,48 +248,6 @@ export async function incrementRateLimit(
 }
 
 /**
- * Get rate limit information for a user
- *
- * Useful for adding rate limit headers to responses.
- *
- * @param kv - KV namespace
- * @param userId - Discord user ID
- * @param type - Type of interaction
- * @returns Current rate limit status
- */
-export async function getRateLimitInfo(
-  kv: KVNamespace,
-  userId: string,
-  type: RateLimitType,
-): Promise<{ current: number; limit: number; resetTime: number }> {
-  const config = RATE_LIMIT_CONFIGS[type];
-  const limiter = getLimiter(kv);
-  const key = `${type}:${userId}`;
-
-  // Convert legacy config to shared package format
-  const sharedConfig = {
-    maxRequests: config.requestsPerMinute,
-    windowMs: 60_000,
-    burstAllowance: config.burstAllowance,
-  };
-
-  const result = await limiter.checkOnly(key, sharedConfig);
-  const effectiveLimit = config.requestsPerMinute + (config.burstAllowance || 0);
-
-  // On backend error, remaining equals effectiveLimit, so current would be 0
-  // Return 0 in that case since we don't know the actual count
-  // BUG-004 follow-up: checkOnly no longer subtracts 1 from remaining (read-only),
-  // so we no longer need the - 1 offset here either.
-  const current = result.backendError ? 0 : Math.max(0, effectiveLimit - result.remaining);
-
-  return {
-    current,
-    limit: effectiveLimit,
-    resetTime: result.resetAt.getTime(),
-  };
-}
-
-/**
  * Rate limiting middleware for Hono
  *
  * Checks rate limits for Discord interactions and returns 429 if exceeded.

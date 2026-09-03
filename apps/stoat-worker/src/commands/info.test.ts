@@ -82,13 +82,21 @@ describe('handleInfoCommand', () => {
     expect(lastCall.embeds?.[0] ?? lastCall.content).toBeDefined();
   });
 
-  it('stores message context after successful info', async () => {
+  it('stores message context keyed by the BOT REPLY id, not the user message', async () => {
     const ctx = createInfoContext(['Snow', 'White']);
     await handleInfoCommand(ctx);
 
-    // The command stores context keyed by the original message ID
-    // We can check by looking at the store
-    expect(ctx.messageContextStore.size).toBeGreaterThanOrEqual(0);
+    // image-stoat-13: this used to assert
+    // `expect(size).toBeGreaterThanOrEqual(0)` -- a Map's size is never
+    // negative, so it held whether anything was stored or not, and its comment
+    // described the PRE-BUG-038 behaviour ("keyed by the original message ID").
+    // Reactions land on the bot's reply, so the reply's id is the only key a
+    // reaction handler could ever look up.
+    expect(ctx.messageContextStore.size).toBe(1);
+    expect(ctx.messageContextStore.get('sent-msg-01')).toMatchObject({
+      command: 'dye-info',
+    });
+    expect(ctx.messageContextStore.get('msg-01')).toBeUndefined();
   });
 
   it('handles disambiguation for broad query like "Blue"', async () => {

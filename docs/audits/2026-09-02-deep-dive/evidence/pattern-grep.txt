@@ -1,0 +1,1142 @@
+apps/api-worker/src/chara/cache.ts:51:    await Promise.all(
+apps/api-worker/src/chara/cache.ts:58:        } catch {
+apps/api-worker/src/chara/cache.ts:76:    } catch {
+apps/api-worker/src/chara/router.ts:25:import { parseIntParam } from '../lib/validation.js';
+apps/api-worker/src/chara/router.ts:49: * FINDING-025 / API-4: the canonical decimal form only. `parseInt` accepts
+apps/api-worker/src/chara/router.ts:156:  const length = Number(raw.headers.get('Content-Length') ?? '0');
+apps/api-worker/src/chara/router.ts:166:  } catch (error) {
+apps/api-worker/src/chara/router.ts:173:    return JSON.parse(text) as unknown;
+apps/api-worker/src/chara/router.ts:174:  } catch {
+apps/api-worker/src/chara/router.ts:212:    const [search, glassesCached] = await Promise.all([
+apps/api-worker/src/chara/router.ts:262:  } catch (error) {
+apps/api-worker/src/chara/router.ts:280:  const iconId = parseIntParam(rawId, 'iconId', { min: 1, max: 999_999 });
+apps/api-worker/src/chara/router.ts:301:  } catch (error) {
+apps/api-worker/src/chara/router.ts:310:  const declared = Number(upstream.headers.get('Content-Length') ?? '0');
+apps/api-worker/src/chara/router.ts:318:  } catch (error) {
+apps/api-worker/src/chara/router.ts:342:    c.executionCtx.waitUntil(edge.put(cacheKey, response.clone()).catch(() => {}));
+apps/api-worker/src/chara/xivapi.ts:185:      response = await fetch(url, {
+apps/api-worker/src/chara/xivapi.ts:196:    } catch (error) {
+apps/api-worker/src/index.ts:45:    const asset = await c.env.ASSETS.fetch(c.req.raw);
+apps/api-worker/src/index.ts:145:  return c.json({ status: 'ok', timestamp: new Date().toISOString() });
+apps/api-worker/src/lib/bounded-body.ts:39:      await reader.cancel().catch(() => {});
+apps/api-worker/src/lib/validation.ts:132:export function parseIntParam(
+apps/api-worker/src/lib/validation.ts:145:  const num = parseInt(value, 10);
+apps/api-worker/src/lib/validation.ts:286:    const num = parseInt(part, 10);
+apps/api-worker/src/routes/dyes.ts:16:  parseIntParam,
+apps/api-worker/src/routes/dyes.ts:183:  const stainId = parseInt(raw, 10);
+apps/api-worker/src/routes/dyes.ts:209:  const id = parseInt(raw, 10);
+apps/api-worker/src/routes/dyes.ts:276:  const minPrice = minPriceRaw ? parseIntParam(minPriceRaw, 'minPrice', { min: 0 }) : undefined;
+apps/api-worker/src/routes/dyes.ts:277:  const maxPrice = maxPriceRaw ? parseIntParam(maxPriceRaw, 'maxPrice', { min: 0 }) : undefined;
+apps/api-worker/src/routes/dyes.ts:281:  const page = parseIntParam(c.req.query('page'), 'page', { min: 1, max: MAX_PAGE, defaultValue: 1 });
+apps/api-worker/src/routes/dyes.ts:282:  const perPage = parseIntParam(c.req.query('perPage'), 'perPage', { min: 1, max: 200, defaultValue: 50 });
+apps/api-worker/src/routes/match.ts:18:  parseIntParam,
+apps/api-worker/src/routes/match.ts:88:  const limit = parseIntParam(c.req.query('limit'), 'limit', { min: 1, max: 125, defaultValue: 20 });
+apps/api-worker/src/telemetry/router.ts:9: * `writeDataPoint` in `waitUntil`, so the response never waits on AE.
+apps/api-worker/src/telemetry/router.ts:46:    } catch (error) {
+apps/api-worker/src/telemetry/router.ts:78:  } catch (error) {
+apps/api-worker/src/telemetry/router.ts:87:    json = JSON.parse(text);
+apps/api-worker/src/telemetry/router.ts:88:  } catch {
+apps/api-worker/src/telemetry/router.ts:105:    c.executionCtx.waitUntil(
+apps/api-worker/src/universalis/router.ts:87:    maxRequests: parseInt(c.env.RATE_LIMIT_REQUESTS, 10) || 60,
+apps/api-worker/src/universalis/router.ts:88:    windowSeconds: parseInt(c.env.RATE_LIMIT_WINDOW_SECONDS, 10) || 60,
+apps/api-worker/src/universalis/router.ts:104:      const [dcResult, worldResult] = await Promise.all([
+apps/api-worker/src/universalis/router.ts:121:    } catch {
+apps/api-worker/src/universalis/router.ts:176:  } catch (error) {
+apps/api-worker/src/universalis/router.ts:269:  } catch (error) {
+apps/api-worker/src/universalis/router.ts:299:  } catch (error) {
+apps/api-worker/src/universalis/services/cached-fetch.ts:84:      ctx.waitUntil(
+apps/api-worker/src/universalis/services/cached-fetch.ts:117:    const parsed = JSON.parse(await readBounded(response)) as T;
+apps/api-worker/src/universalis/services/cached-fetch.ts:120:    // the identical entry (N puts + N waitUntil slots per burst).
+apps/api-worker/src/universalis/services/cached-fetch.ts:139:  const response = await fetch(url, {
+apps/api-worker/src/universalis/services/cached-fetch.ts:161:    const size = parseInt(contentLength, 10);
+apps/api-worker/src/universalis/services/cached-fetch.ts:220:      const parsed: unknown = JSON.parse(await readBounded(response));
+apps/api-worker/src/universalis/services/cached-fetch.ts:225:  } catch {
+apps/api-worker/src/universalis/services/cache-service.ts:85:      const cachedAt = parseInt(cached.headers.get('X-Cached-At') || '0', 10);
+apps/api-worker/src/universalis/services/cache-service.ts:86:      const ttl = parseInt(cached.headers.get('X-Cache-TTL') || '0', 10);
+apps/api-worker/src/universalis/services/cache-service.ts:87:      const swrWindow = parseInt(cached.headers.get('X-SWR-Window') || '0', 10);
+apps/api-worker/src/universalis/services/cache-service.ts:89:      const now = Date.now();
+apps/api-worker/src/universalis/services/cache-service.ts:96:        this.ctx.waitUntil(cache.delete(cacheRequest));
+apps/api-worker/src/universalis/services/cache-service.ts:104:    } catch {
+apps/api-worker/src/universalis/services/cache-service.ts:118:      const now = Date.now();
+apps/api-worker/src/universalis/services/cache-service.ts:132:    } catch {
+apps/api-worker/src/universalis/services/cache-service.ts:141:    this.ctx.waitUntil(
+apps/api-worker/src/universalis/services/cache-service.ts:142:      this.store(key, data, config).catch(() => {})
+apps/api-worker/src/universalis/services/rate-limiter.ts:88:      Math.floor(Date.now() / 1000) + result.resetInSeconds
+apps/api-worker/src/universalis/services/request-coalescer.ts:69:  const now = Date.now();
+apps/api-worker/src/universalis/services/request-coalescer.ts:135:    promise.catch(() => {});
+apps/api-worker/src/universalis/services/request-coalescer.ts:140:      createdAt: Date.now(),
+apps/api-worker/src/universalis/services/request-coalescer.ts:148:      this.ctx.waitUntil(
+apps/api-worker/src/universalis/services/request-coalescer.ts:150:          await new Promise((resolve) => setTimeout(resolve, 100));
+apps/api-worker/src/universalis/services/request-coalescer.ts:157:    } catch (error) {
+apps/api-worker/src/universalis/test-setup.ts:97:  const waitUntilPromises: Promise<unknown>[] = [];
+apps/api-worker/src/universalis/test-setup.ts:100:    waitUntil: vi.fn((promise: Promise<unknown>) => {
+apps/api-worker/src/universalis/test-setup.ts:101:      waitUntilPromises.push(promise);
+apps/api-worker/src/universalis/test-setup.ts:105:    _waitForAll: () => Promise.all(waitUntilPromises),
+apps/api-worker/src/universalis/test-setup.ts:106:    _promises: waitUntilPromises,
+apps/api-worker/src/universalis/test-setup.ts:107:  } as unknown as ExecutionContext;
+apps/discord-worker/src/handlers/buttons/preview-image.ts:110: *    the background via ctx.waitUntil.
+apps/discord-worker/src/handlers/buttons/preview-image.ts:139:  ctx.waitUntil(
+apps/discord-worker/src/handlers/buttons/preview-image.ts:202:  } catch (error) {
+apps/discord-worker/src/handlers/commands/about.ts:150:          timestamp: new Date().toISOString(),
+apps/discord-worker/src/handlers/commands/accessibility.ts:93:  ctx.waitUntil(
+apps/discord-worker/src/handlers/commands/accessibility.ts:156:  } catch (error) {
+apps/discord-worker/src/handlers/commands/budget.ts:190:  // entirely numeric — parseInt('255 Brown') would otherwise parse as 255.
+apps/discord-worker/src/handlers/commands/budget.ts:193:    ? resolveTargetDye(parseInt(targetDyeInput, 10))
+apps/discord-worker/src/handlers/commands/budget.ts:222:  ctx.waitUntil(
+apps/discord-worker/src/handlers/commands/budget.ts:272:    const embedColor = parseInt(result.targetDye.hex.replace('#', ''), 16);
+apps/discord-worker/src/handlers/commands/budget.ts:393:  } catch (error) {
+apps/discord-worker/src/handlers/commands/budget.ts:498:  ctx.waitUntil(
+apps/discord-worker/src/handlers/commands/comparison.ts:71:  ctx.waitUntil(processComparisonCommand(interaction, env, dyes, locale, prefs.theme, logger));
+apps/discord-worker/src/handlers/commands/comparison.ts:123:  } catch (error) {
+apps/discord-worker/src/handlers/commands/contrast.ts:76:  ctx.waitUntil(processContrastCommand(interaction, env, resolvedDyes, locale, theme, logger));
+apps/discord-worker/src/handlers/commands/contrast.ts:117:  } catch (error) {
+apps/discord-worker/src/handlers/commands/dye.ts:185:  ctx.waitUntil(processInfoCard(interaction, env, dye, locale, theme));
+apps/discord-worker/src/handlers/commands/dye.ts:237:  } catch {
+apps/discord-worker/src/handlers/commands/dye.ts:363:  ctx.waitUntil(processRandomGrid(interaction, env, uniqueCategories, locale, theme));
+apps/discord-worker/src/handlers/commands/dye.ts:415:  } catch {
+apps/discord-worker/src/handlers/commands/extractor.ts:285:  ctx.waitUntil(
+apps/discord-worker/src/handlers/commands/extractor.ts:385:  } catch (error) {
+apps/discord-worker/src/handlers/commands/extractor.ts:449:    colorCount = Math.max(MIN_COLORS, Math.min(MAX_COLORS, Number(colorsOption.value)));
+apps/discord-worker/src/handlers/commands/extractor.ts:468:  ctx.waitUntil(
+apps/discord-worker/src/handlers/commands/extractor.ts:512:      processed.pixels as unknown as Uint8ClampedArray,
+apps/discord-worker/src/handlers/commands/extractor.ts:587:          color: parseInt(dominantHex.replace('#', ''), 16),
+apps/discord-worker/src/handlers/commands/extractor.ts:597:  } catch (error) {
+apps/discord-worker/src/handlers/commands/gradient.ts:84:  ctx.waitUntil(
+apps/discord-worker/src/handlers/commands/gradient.ts:213:  } catch (error) {
+apps/discord-worker/src/handlers/commands/harmony.ts:78:  ctx.waitUntil(
+apps/discord-worker/src/handlers/commands/harmony.ts:184:  } catch (error) {
+apps/discord-worker/src/handlers/commands/manual.ts:258:    const [worlds, dcs] = await Promise.all([fetchWorlds(env), fetchDataCenters(env)]);
+apps/discord-worker/src/handlers/commands/manual.ts:273:  } catch {
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:75:  ctx.waitUntil(
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:121:      } catch (error) {
+apps/discord-worker/src/handlers/commands/preferences.ts:258:  const timestamp = prefs.updatedAt ? new Date(prefs.updatedAt).toISOString() : undefined;
+apps/discord-worker/src/handlers/commands/preferences.ts:679:  prefs.updatedAt = new Date().toISOString();
+apps/discord-worker/src/handlers/commands/preferences.ts:741:  prefs.updatedAt = new Date().toISOString();
+apps/discord-worker/src/handlers/commands/preset.ts:197:  ctx.waitUntil(processListCommand(interaction, env, t, categoryValue, sortValue, logger));
+apps/discord-worker/src/handlers/commands/preset.ts:264:  } catch (error) {
+apps/discord-worker/src/handlers/commands/preset.ts:302:  ctx.waitUntil(processShowCommand(interaction, env, t, presetId, locale, logger));
+apps/discord-worker/src/handlers/commands/preset.ts:330:  } catch (error) {
+apps/discord-worker/src/handlers/commands/preset.ts:361:  ctx.waitUntil(processRandomCommand(interaction, env, t, category, locale, logger));
+apps/discord-worker/src/handlers/commands/preset.ts:392:  } catch (error) {
+apps/discord-worker/src/handlers/commands/preset.ts:476:  ctx.waitUntil(
+apps/discord-worker/src/handlers/commands/preset.ts:577:  } catch (error) {
+apps/discord-worker/src/handlers/commands/preset.ts:617:  ctx.waitUntil(processVoteCommand(interaction, env, t, userId, presetId, logger));
+apps/discord-worker/src/handlers/commands/preset.ts:671:  } catch (error) {
+apps/discord-worker/src/handlers/commands/preset.ts:730:  ctx.waitUntil(
+apps/discord-worker/src/handlers/commands/preset.ts:925:  } catch (error) {
+apps/discord-worker/src/handlers/commands/preset.ts:1094:          timestamp: new Date().toISOString(),
+apps/discord-worker/src/handlers/commands/preset.ts:1098:  } catch (error) {
+apps/discord-worker/src/handlers/commands/preset.ts:1167:  return lookupPreset(env, idOrName).catch(() => null);
+apps/discord-worker/src/handlers/commands/preset.ts:1191:  ctx.waitUntil(processFavoriteAdd(interaction, env, t, userId, presetInput, logger));
+apps/discord-worker/src/handlers/commands/preset.ts:1236:  } catch (error) {
+apps/discord-worker/src/handlers/commands/preset.ts:1268:  ctx.waitUntil(processFavoriteRemove(interaction, env, t, userId, presetInput, logger));
+apps/discord-worker/src/handlers/commands/preset.ts:1310:  } catch (error) {
+apps/discord-worker/src/handlers/commands/preset.ts:1334:  ctx.waitUntil(processFavoriteList(interaction, env, t, userId, logger));
+apps/discord-worker/src/handlers/commands/preset.ts:1355:    const resolved = await Promise.all(
+apps/discord-worker/src/handlers/commands/preset.ts:1356:      ids.map((id) => presetApi.getPreset(env, id).catch(() => null)),
+apps/discord-worker/src/handlers/commands/preset.ts:1385:  } catch (error) {
+apps/discord-worker/src/handlers/commands/preset-notifications.ts:139:    timestamp: new Date().toISOString(),
+apps/discord-worker/src/handlers/commands/preset-notifications.ts:201:        body: await res.text().catch(() => ''),
+apps/discord-worker/src/handlers/commands/preset-notifications.ts:207:  } catch (error) {
+apps/discord-worker/src/handlers/commands/stats.ts:114:      // hands the rejection straight past the catch below (KV list() errors
+apps/discord-worker/src/handlers/commands/stats.ts:137:  } catch (error) {
+apps/discord-worker/src/handlers/commands/stats.ts:395:        const prefs = JSON.parse(prefsJson) as Record<string, unknown>;
+apps/discord-worker/src/handlers/commands/stats.ts:403:      } catch {
+apps/discord-worker/src/handlers/commands/stats.ts:479:    const start = Date.now();
+apps/discord-worker/src/handlers/commands/stats.ts:481:    kvLatency = Date.now() - start;
+apps/discord-worker/src/handlers/commands/stats.ts:485:  } catch {
+apps/discord-worker/src/handlers/commands/swatch.ts:73:  } catch {
+apps/discord-worker/src/handlers/commands/swatch.ts:89:  const declared = Number(response.headers.get('content-length'));
+apps/discord-worker/src/handlers/commands/swatch.ts:107:      await reader.cancel().catch(() => undefined);
+apps/discord-worker/src/handlers/commands/swatch.ts:167:  ctx.waitUntil(processSwatchCommand(interaction, env, attachment.url, input, logger));
+apps/discord-worker/src/handlers/commands/swatch.ts:186:    const fileResponse = await fetch(fileUrl, {
+apps/discord-worker/src/handlers/commands/swatch.ts:219:  } catch (error) {
+apps/discord-worker/src/handlers/commands/swatch.ts:264:  } catch (error) {
+apps/discord-worker/src/index.ts:229:    timestamp: new Date().toISOString(),
+apps/discord-worker/src/index.ts:263:  const contentLength = parseInt(c.req.header('content-length') || '0', 10);
+apps/discord-worker/src/index.ts:274:  } catch {
+apps/discord-worker/src/index.ts:459:        body: await logRes.text().catch(() => ''),
+apps/discord-worker/src/index.ts:493:  const contentLength = parseInt(c.req.header('content-length') || '0', 10);
+apps/discord-worker/src/index.ts:537:    payload = JSON.parse(rawBody) as GitHubPushPayload;
+apps/discord-worker/src/index.ts:538:  } catch {
+apps/discord-worker/src/index.ts:577:  const changelogResponse = await fetch(changelogUrl, { signal: AbortSignal.timeout(10_000) });
+apps/discord-worker/src/index.ts:631:  } catch (err) {
+apps/discord-worker/src/index.ts:667:    interaction = JSON.parse(body) as DiscordInteraction;
+apps/discord-worker/src/index.ts:668:  } catch {
+apps/discord-worker/src/index.ts:826:  ctx.waitUntil(
+apps/discord-worker/src/index.ts:827:    maybeSendFirstRunNotice(env, interaction, userId, logger).catch((error) => {
+apps/discord-worker/src/index.ts:920:  } catch (error) {
+apps/discord-worker/src/index.ts:922:    // catch would (an upstream error keeps its class; anything else is unknown).
+apps/discord-worker/src/index.ts:1174:  } catch (error) {
+apps/discord-worker/src/index.ts:1203:      const resolved = await Promise.all(
+apps/discord-worker/src/index.ts:1204:        missing.map((e) => presetApi.getPreset(env, e.id).catch(() => null)),
+apps/discord-worker/src/index.ts:1217:  } catch (error) {
+apps/discord-worker/src/services/analytics.ts:107:  } catch (error) {
+apps/discord-worker/src/services/analytics.ts:171:  const current = parseInt(result.value || '0', 10);
+apps/discord-worker/src/services/analytics.ts:202:  return parseInt((await kv.get(fullKey)) || '0', 10);
+apps/discord-worker/src/services/analytics.ts:222:  const today = new Date().toISOString().split('T')[0];
+apps/discord-worker/src/services/analytics.ts:256:  await Promise.all([
+apps/discord-worker/src/services/analytics.ts:282:  const today = new Date().toISOString().split('T')[0];
+apps/discord-worker/src/services/announcements.ts:71:    timestamp: new Date().toISOString(),
+apps/discord-worker/src/services/budget/budget-calculator.ts:268:    grouped.get(key)!.rows.push(row);
+apps/discord-worker/src/services/budget/budget-calculator.ts:274:  const pricesAsOf = priceTimestamps.length > 0 ? priceTimestamps[0] : new Date().toISOString();
+apps/discord-worker/src/services/budget/price-cache.ts:77:    const age = Date.now() - entry.cachedAt;
+apps/discord-worker/src/services/budget/price-cache.ts:84:  } catch (error) {
+apps/discord-worker/src/services/budget/price-cache.ts:110:      cachedAt: Date.now(),
+apps/discord-worker/src/services/budget/price-cache.ts:122:  } catch (error) {
+apps/discord-worker/src/services/budget/price-cache.ts:157:  await Promise.all(promises);
+apps/discord-worker/src/services/budget/price-cache.ts:178:  await Promise.all(promises);
+apps/discord-worker/src/services/budget/price-cache.ts:222:  } catch (error) {
+apps/discord-worker/src/services/budget/universalis-client.ts:123:      const timeoutId = setTimeout(() => controller.abort(), timeout);
+apps/discord-worker/src/services/budget/universalis-client.ts:126:        response = await env.UNIVERSALIS_PROXY.fetch(
+apps/discord-worker/src/services/budget/universalis-client.ts:140:      const timeoutId = setTimeout(() => controller.abort(), timeout);
+apps/discord-worker/src/services/budget/universalis-client.ts:143:        response = await fetch(url, {
+apps/discord-worker/src/services/budget/universalis-client.ts:155:      const errorData = await response.json().catch(() => ({}));
+apps/discord-worker/src/services/budget/universalis-client.ts:165:  } catch (error) {
+apps/discord-worker/src/services/budget/universalis-client.ts:228:  const now = new Date().toISOString();
+apps/discord-worker/src/services/budget/universalis-client.ts:246:    const lastUpload = item.worldUploadTimes?.[0]?.timestamp ?? Date.now();
+apps/discord-worker/src/services/budget/universalis-client.ts:320:  if (worldsCache && Date.now() < worldsCache.expiry) {
+apps/discord-worker/src/services/budget/universalis-client.ts:324:  worldsCache = { data, expiry: Date.now() + WORLD_CACHE_TTL };
+apps/discord-worker/src/services/budget/universalis-client.ts:332:  if (dataCentersCache && Date.now() < dataCentersCache.expiry) {
+apps/discord-worker/src/services/budget/universalis-client.ts:336:  dataCentersCache = { data, expiry: Date.now() + WORLD_CACHE_TTL };
+apps/discord-worker/src/services/budget/universalis-client.ts:368:  } catch (error) {
+apps/discord-worker/src/services/budget/universalis-client.ts:389:    const [worlds, dataCenters] = await Promise.all([
+apps/discord-worker/src/services/budget/universalis-client.ts:418:  } catch (error) {
+apps/discord-worker/src/services/command-trace.ts:7: * `ctx.waitUntil(process…)`), so a datapoint written in the dispatcher's
+apps/discord-worker/src/services/command-trace.ts:9: * each handler a traced ExecutionContext whose `waitUntil` also records the
+apps/discord-worker/src/services/command-trace.ts:47: * lost when the runtime ends the post-response `waitUntil` window.
+apps/discord-worker/src/services/command-trace.ts:81:    startedAt: Date.now(),
+apps/discord-worker/src/services/command-trace.ts:92: * An ExecutionContext for handlers: every `waitUntil` is recorded on the trace
+apps/discord-worker/src/services/command-trace.ts:101:    waitUntil(promise: Promise<unknown>): void {
+apps/discord-worker/src/services/command-trace.ts:103:      // Forward the RAW promise: `drainAndWrite`'s Promise.allSettled over
+apps/discord-worker/src/services/command-trace.ts:106:      // sees (and logs) a rejection from a handler with no catch of its own
+apps/discord-worker/src/services/command-trace.ts:107:      // (spec §2 "Handlers"), same as an untraced `ctx.waitUntil` would.
+apps/discord-worker/src/services/command-trace.ts:108:      real.waitUntil(promise);
+apps/discord-worker/src/services/command-trace.ts:164: * + KV counters. Idempotent; everything runs inside `realCtx.waitUntil` so the
+apps/discord-worker/src/services/command-trace.ts:225:  ctx.waitUntil(
+apps/discord-worker/src/services/command-trace.ts:226:    write.catch((error: unknown) => {
+apps/discord-worker/src/services/command-trace.ts:245:    latencyMs: Date.now() - trace.startedAt,
+apps/discord-worker/src/services/command-trace.ts:252:    const results = await Promise.allSettled(trace.pending.splice(0));
+apps/discord-worker/src/services/command-trace.ts:263:  let timer: ReturnType<typeof setTimeout> | undefined;
+apps/discord-worker/src/services/command-trace.ts:265:    timer = setTimeout(() => resolve(false), ms);
+apps/discord-worker/src/services/command-trace.ts:278: * unrecognised Error means at the call site (a render catch passes 'render').
+apps/discord-worker/src/services/i18n.ts:78:  } catch {
+apps/discord-worker/src/services/i18n.ts:108:      const prefs = JSON.parse(unifiedData) as { language?: string };
+apps/discord-worker/src/services/i18n.ts:113:  } catch {
+apps/discord-worker/src/services/image-client.ts:53:  const response = await env.IMAGE_WORKER.fetch(
+apps/discord-worker/src/services/image-client.ts:69:    } catch {
+apps/discord-worker/src/services/image-client.ts:77:    width: Number(response.headers.get('X-Image-Width') ?? 0),
+apps/discord-worker/src/services/image-client.ts:78:    height: Number(response.headers.get('X-Image-Height') ?? 0),
+apps/discord-worker/src/services/preferences.ts:123:      const prefs = JSON.parse(data) as UserPreferences;
+apps/discord-worker/src/services/preferences.ts:130:  } catch (error) {
+apps/discord-worker/src/services/preferences.ts:239:    prefs.updatedAt = new Date().toISOString();
+apps/discord-worker/src/services/preferences.ts:246:  } catch (error) {
+apps/discord-worker/src/services/preferences.ts:290:    prefs.updatedAt = new Date().toISOString();
+apps/discord-worker/src/services/preferences.ts:302:  } catch (error) {
+apps/discord-worker/src/services/preferences.ts:389:      const numValue = typeof value === 'string' ? parseInt(value, 10) : value;
+apps/discord-worker/src/services/preferences.ts:492:        const worldPref = JSON.parse(legacyWorldData) as { world?: string };
+apps/discord-worker/src/services/preferences.ts:497:      } catch {
+apps/discord-worker/src/services/preferences.ts:504:      prefs.updatedAt = new Date().toISOString();
+apps/discord-worker/src/services/preferences.ts:515:  } catch (error) {
+apps/discord-worker/src/services/preset-api.ts:106:    const timestamp = Math.floor(Date.now() / 1000);
+apps/discord-worker/src/services/preset-api.ts:140:      response = await env.PRESETS_API.fetch(
+apps/discord-worker/src/services/preset-api.ts:151:      response = await fetch(url, {
+apps/discord-worker/src/services/preset-api.ts:170:  } catch (error) {
+apps/discord-worker/src/services/preset-api.ts:239:  } catch (error) {
+apps/discord-worker/src/services/preset-api.ts:396:  } catch (error) {
+apps/discord-worker/src/services/preset-api.ts:486:  } catch (error) {
+apps/discord-worker/src/services/preset-favorites.ts:75:      const parsed: unknown = JSON.parse(v2);
+apps/discord-worker/src/services/preset-favorites.ts:91:    const parsedV1: unknown = JSON.parse(v1);
+apps/discord-worker/src/services/preset-favorites.ts:95:  } catch (error) {
+apps/discord-worker/src/services/preset-favorites.ts:113:  // callers (autocomplete lazy migration) wrap this in their own try/catch
+apps/discord-worker/src/services/preset-favorites.ts:158:  } catch (error) {
+apps/discord-worker/src/services/preset-favorites.ts:187:  } catch (error) {
+apps/discord-worker/src/services/rate-limiter.ts:292:  } catch (error) {
+apps/discord-worker/src/services/rate-limiter.ts:301:      resetAt: Date.now() + limitConfig.windowMs,
+apps/discord-worker/src/services/rate-limiter.ts:313:  const seconds = result.retryAfter ?? Math.ceil((result.resetAt - Date.now()) / 1000);
+apps/discord-worker/src/services/svg/renderer.ts:49:    } catch (error) {
+apps/discord-worker/src/services/svg/renderer.ts:63:  wasmInitPromise.catch(() => {
+apps/discord-worker/src/services/svg/renderer.ts:111:  } catch (error) {
+apps/discord-worker/src/test-utils.integration.ts:50:  return { fetch: fetchFn } as unknown as Fetcher;
+apps/discord-worker/src/test-utils.integration.ts:70:              dc: { price: (priceMap?.get(id) ?? 1000 + id) + 100, timestamp: Date.now(), worldId: 1 },
+apps/discord-worker/src/test-utils.integration.ts:79:          worldUploadTimes: [{ worldId: 1, timestamp: Date.now() }],
+apps/discord-worker/src/test-utils.ts:22:    KV: createMockKV() as unknown as KVNamespace,
+apps/discord-worker/src/test-utils.ts:23:    ANALYTICS: createMockAnalyticsEngine() as unknown as AnalyticsEngineDataset,
+apps/discord-worker/src/utils/discord-api.ts:90:  return fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:122:          image: { url: `attachment://${options.file!.name}` },
+apps/discord-worker/src/utils/discord-api.ts:149:  return fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:178:  return fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:208:          image: { url: `attachment://${options.file!.name}` },
+apps/discord-worker/src/utils/discord-api.ts:235:  return fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:253: * on "thinking…" forever), and catch-path edits could themselves throw
+apps/discord-worker/src/utils/discord-api.ts:254: * (5s AbortSignal timeout) and reject the waitUntil promise unhandled.
+apps/discord-worker/src/utils/discord-api.ts:268:      const body = await res.text().catch(() => '');
+apps/discord-worker/src/utils/discord-api.ts:277:  } catch (e) {
+apps/discord-worker/src/utils/discord-api.ts:319:  return fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:353:  return fetch(url, {
+apps/discord-worker/src/utils/env-validation.ts:4: * Validates required environment variables at startup to catch
+apps/discord-worker/src/utils/env-validation.ts:70:    } catch {
+apps/discord-worker/src/utils/response.ts:164:  return parseInt(cleanHex, 16);
+apps/image-worker/src/dimensions.ts:130:  } catch {
+apps/image-worker/src/index.ts:121:  } catch {
+apps/image-worker/src/index.ts:154:  } catch (error) {
+apps/image-worker/src/index.ts:174:    const size = parseInt(declared, 10);
+apps/image-worker/src/index.ts:183:  } catch (error) {
+apps/image-worker/src/index.ts:197:  } catch (error) {
+apps/image-worker/src/photon.ts:98:  } catch (error) {
+apps/image-worker/src/photon.ts:169: * const response = await fetch(imageUrl);
+apps/image-worker/src/photon.ts:218:      } catch {
+apps/image-worker/src/photon.ts:225:      } catch {
+apps/image-worker/src/photon.ts:287:        } catch {
+apps/image-worker/src/validators.ts:89: * const response = await fetch(result.normalizedUrl);
+apps/image-worker/src/validators.ts:102:  } catch {
+apps/image-worker/src/validators.ts:275:        await reader.cancel().catch(() => undefined);
+apps/image-worker/src/validators.ts:284:    } catch {
+apps/image-worker/src/validators.ts:401:  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+apps/image-worker/src/validators.ts:406:    let response = await fetch(url, {
+apps/image-worker/src/validators.ts:432:      response = await fetch(redirectResult.normalizedUrl!, {
+apps/image-worker/src/validators.ts:448:      const size = parseInt(contentLength, 10);
+apps/image-worker/src/validators.ts:470:  } catch (error) {
+apps/image-worker/src/validators.ts:501: * } catch (error) {
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:93:  ctx.waitUntil(processApproval(interaction, env, presetId, userId, userName, logger));
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:173:  } catch (error) {
+apps/moderation-worker/src/handlers/commands/preset.ts:368:  ctx.waitUntil(
+apps/moderation-worker/src/handlers/commands/preset.ts:369:    processModerateCommand(interaction, env, t, userId, action, presetId, reason, logger).catch(
+apps/moderation-worker/src/handlers/commands/preset.ts:423:  } catch (error) {
+apps/moderation-worker/src/handlers/commands/preset.ts:577:  ctx.waitUntil(
+apps/moderation-worker/src/handlers/commands/preset.ts:578:    processUnban(interaction, env, t, userId, targetUserId, logger).catch((err) => {
+apps/moderation-worker/src/handlers/commands/preset.ts:635:          timestamp: new Date().toISOString(),
+apps/moderation-worker/src/handlers/commands/preset.ts:647:  } catch (error) {
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:73:  } catch (error) {
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:79:    } catch {
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:93:  ctx.waitUntil(
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:162:            timestamp: new Date().toISOString(),
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:183:  } catch (error) {
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:68:  ctx.waitUntil(processRejection(interaction, env, presetId, userId, userName, reason, logger));
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:127:  } catch (error) {
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:193:  ctx.waitUntil(processRevert(interaction, env, presetId, userId, userName, reason, logger));
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:229:            timestamp: new Date().toISOString(),
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:249:  } catch (error) {
+apps/moderation-worker/src/index.ts:263:  } catch (error) {
+apps/moderation-worker/src/index.ts:321:  ctx.waitUntil(
+apps/moderation-worker/src/index.ts:322:    incrementRateLimit(env.KV, userId, 'command', 3, moderationRateLimitBindings(env)).catch((err) => {
+apps/moderation-worker/src/index.ts:405:  ctx.waitUntil(
+apps/moderation-worker/src/index.ts:406:    incrementRateLimit(env.KV, userId, 'autocomplete', 3, moderationRateLimitBindings(env)).catch(
+apps/moderation-worker/src/index.ts:486:  } catch (error) {
+apps/moderation-worker/src/index.ts:512:  } catch (error) {
+apps/moderation-worker/src/services/ban-service.ts:111:  } catch {
+apps/moderation-worker/src/services/ban-service.ts:184:  } catch {
+apps/moderation-worker/src/services/ban-service.ts:287: * here, in the SAME `db.batch()` as the statements they describe, so the trail
+apps/moderation-worker/src/services/ban-service.ts:408:    const now = new Date().toISOString();
+apps/moderation-worker/src/services/ban-service.ts:416:    const [, , , hideResult] = await db.batch([
+apps/moderation-worker/src/services/ban-service.ts:434:  } catch (error) {
+apps/moderation-worker/src/services/ban-service.ts:498:    const now = new Date().toISOString();
+apps/moderation-worker/src/services/ban-service.ts:507:    const [updateResult, , , restoreResult] = await db.batch([
+apps/moderation-worker/src/services/ban-service.ts:534:  } catch (error) {
+apps/moderation-worker/src/services/i18n.ts:84:  } catch (error) {
+apps/moderation-worker/src/services/preset-api.ts:76:    const timestamp = Math.floor(Date.now() / 1000); // Unix seconds
+apps/moderation-worker/src/services/preset-api.ts:112:      response = await env.PRESETS_API.fetch(
+apps/moderation-worker/src/services/preset-api.ts:121:      response = await fetch(url, {
+apps/moderation-worker/src/services/preset-api.ts:139:  } catch (error) {
+apps/moderation-worker/src/services/preset-api.ts:294:  } catch (error) {
+apps/moderation-worker/src/services/preset-api.ts:440:  } catch (error) {
+apps/moderation-worker/src/utils/discord-api.ts:48:    return await fetch(url, {
+apps/moderation-worker/src/utils/discord-api.ts:55:  } catch (error) {
+apps/moderation-worker/src/utils/discord-api.ts:92:    return await fetch(url, {
+apps/moderation-worker/src/utils/discord-api.ts:101:  } catch (error) {
+apps/moderation-worker/src/utils/discord-api.ts:128:    return await fetch(url, {
+apps/moderation-worker/src/utils/discord-api.ts:137:  } catch (error) {
+apps/moderation-worker/src/utils/discord-api.ts:149: * and catch-path edits could themselves throw (5s AbortSignal timeout),
+apps/moderation-worker/src/utils/discord-api.ts:150: * rejecting the surrounding waitUntil promise unhandled.
+apps/moderation-worker/src/utils/discord-api.ts:162:      console.error('Discord sendMessage failed', res.status, await res.text().catch(() => ''));
+apps/moderation-worker/src/utils/discord-api.ts:166:  } catch (error) {
+apps/moderation-worker/src/utils/discord-api.ts:182:      console.error('Discord editMessage failed', res.status, await res.text().catch(() => ''));
+apps/moderation-worker/src/utils/discord-api.ts:186:  } catch (error) {
+apps/moderation-worker/src/utils/env-validation.ts:4: * Validates required environment variables at startup to catch
+apps/moderation-worker/src/utils/env-validation.ts:92:    } catch {
+apps/moderation-worker/src/utils/safe-json.ts:73: * 1. Standard JSON.parse (catches syntax errors)
+apps/moderation-worker/src/utils/safe-json.ts:111:    parsed = JSON.parse(body);
+apps/moderation-worker/src/utils/safe-json.ts:112:  } catch {
+apps/moderation-worker/src/utils/url-sanitizer.ts:176: *   await fetch('https://discord.com/api/webhooks/123/SECRET/messages');
+apps/moderation-worker/src/utils/url-sanitizer.ts:177: * } catch (error) {
+apps/moderation-worker/src/utils/url-sanitizer.ts:261: * const response = await fetch(url);
+apps/oauth/src/handlers/callback.ts:54:  } catch {
+apps/oauth/src/handlers/callback.ts:136:    const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+apps/oauth/src/handlers/callback.ts:153:      const errorData = await tokenResponse.json().catch(() => ({}));
+apps/oauth/src/handlers/callback.ts:186:    const userResponse = await fetch('https://discord.com/api/users/@me', {
+apps/oauth/src/handlers/callback.ts:252:  } catch (err) {
+apps/oauth/src/handlers/oauth-flow.ts:115:    } catch {
+apps/oauth/src/handlers/oauth-flow.ts:149:    const now = Math.floor(Date.now() / 1000);
+apps/oauth/src/handlers/oauth-flow.ts:208:    } catch (err) {
+apps/oauth/src/handlers/oauth-flow.ts:221:    } catch {
+apps/oauth/src/handlers/token.ts:74:  } catch (err) {
+apps/oauth/src/handlers/token.ts:152:  } catch (err) {
+apps/oauth/src/handlers/xivauth.ts:85:  } catch {
+apps/oauth/src/handlers/xivauth.ts:164:    const tokenResponse = await fetch(XIVAUTH_TOKEN_URL, {
+apps/oauth/src/handlers/xivauth.ts:178:        const errorBody = await tokenResponse.text().catch(() => '');
+apps/oauth/src/handlers/xivauth.ts:208:    } catch (err) {
+apps/oauth/src/handlers/xivauth.ts:225:    const userResponse = await fetch(XIVAUTH_USER_URL, {
+apps/oauth/src/handlers/xivauth.ts:236:        const errorBody = await userResponse.text().catch(() => '');
+apps/oauth/src/handlers/xivauth.ts:276:      const charactersResponse = await fetch(XIVAUTH_CHARACTERS_URL, {
+apps/oauth/src/handlers/xivauth.ts:293:    } catch (charErr) {
+apps/oauth/src/handlers/xivauth.ts:367:  } catch (err) {
+apps/oauth/src/index.ts:121:        } catch {
+apps/oauth/src/index.ts:200:    const retryAfter = Math.ceil((result.resetAt.getTime() - Date.now()) / 1000);
+apps/oauth/src/index.ts:233:    timestamp: new Date().toISOString(),
+apps/oauth/src/middleware/body-validation.ts:58:  } catch {
+apps/oauth/src/middleware/body-validation.ts:68:    parsed = JSON.parse(text);
+apps/oauth/src/middleware/body-validation.ts:69:  } catch {
+apps/oauth/src/services/jwt-service.ts:120:  const now = Math.floor(Date.now() / 1000);
+apps/oauth/src/services/jwt-service.ts:121:  const expirySeconds = parseInt(env.JWT_EXPIRY, 10) || 3600;
+apps/oauth/src/services/jwt-service.ts:163:  const now = Math.floor(Date.now() / 1000);
+apps/oauth/src/services/jwt-service.ts:168:  return payload as unknown as JWTPayload;
+apps/oauth/src/services/jwt-service.ts:176:  return sharedDecodeJWT(token) as unknown as JWTPayload | null;
+apps/oauth/src/services/jwt-service.ts:191:  return payload as unknown as JWTPayload | null;
+apps/oauth/src/services/user-service.ts:97:      created_at: new Date().toISOString(),
+apps/oauth/src/services/user-service.ts:98:      updated_at: new Date().toISOString(),
+apps/oauth/src/services/user-service.ts:100:  } catch (error) {
+apps/oauth/src/utils/env-validation.ts:4: * Validates required environment variables at startup to catch
+apps/oauth/src/utils/env-validation.ts:90:    const expiry = parseInt(env.JWT_EXPIRY, 10);
+apps/oauth/src/utils/env-validation.ts:108:      } catch {
+apps/oauth/src/utils/oauth-validation.ts:71:  } catch {
+apps/oauth/src/utils/oauth-validation.ts:78:    } catch {
+apps/oauth/src/utils/pkce-binding.ts:67:  } catch {
+apps/oauth/src/utils/state-signing.ts:73:    const state = JSON.parse(json) as StateData;
+apps/oauth/src/utils/state-signing.ts:79:    const now = Math.floor(Date.now() / 1000);
+apps/oauth/src/utils/state-signing.ts:96:      state = JSON.parse(json) as StateData;
+apps/oauth/src/utils/state-signing.ts:97:    } catch {
+apps/oauth/src/utils/state-signing.ts:109:    const now = Math.floor(Date.now() / 1000);
+apps/og-worker/src/index.ts:321:      c.executionCtx.waitUntil(put);
+apps/og-worker/src/index.ts:322:    } catch {
+apps/og-worker/src/index.ts:348:  } catch (error) {
+apps/og-worker/src/index.ts:365:    timestamp: new Date().toISOString(),
+apps/og-worker/src/index.ts:376:  } catch {
+apps/og-worker/src/index.ts:384: * dev — `fetch(request)` would self-fetch (CF error 1042) or reach nothing,
+apps/og-worker/src/index.ts:390:  } catch {
+apps/og-worker/src/index.ts:422:      // it. On the og. custom domain this worker IS the origin (fetch(request)
+apps/og-worker/src/index.ts:429:      return fetch(request);
+apps/og-worker/src/index.ts:438:      timestamp: Date.now(),
+apps/og-worker/src/index.ts:470:// Pattern: /{tool}/* to catch both /{tool}/ and /{tool}/?params
+apps/og-worker/src/index.ts:531:// `parseInt('1/0', 10)` is `1`) all render the identical Jet Black card
+apps/og-worker/src/index.ts:555:  return CANONICAL_INT.test(raw) ? parseInt(raw, 10) : NaN;
+apps/og-worker/src/index.ts:653:    timestamp: Date.now(),
+apps/og-worker/src/index.ts:693:    timestamp: Date.now(),
+apps/og-worker/src/index.ts:738:    timestamp: Date.now(),
+apps/og-worker/src/index.ts:784:    timestamp: Date.now(),
+apps/og-worker/src/index.ts:831:    timestamp: Date.now(),
+apps/og-worker/src/index.ts:866:  const dyeIds = dyesParam.split(',').map((id) => parseInt(id, 10));
+apps/og-worker/src/index.ts:876:    timestamp: Date.now(),
+apps/og-worker/src/index.ts:899:  const dyeIds = dyesParam.split(',').map((id) => parseInt(id, 10));
+apps/og-worker/src/index.ts:914:    timestamp: Date.now(),
+apps/og-worker/src/index.ts:951:      const share = shareRaw === undefined ? undefined : parseInt(shareRaw, 10);
+apps/og-worker/src/index.ts:965:    timestamp: Date.now(),
+apps/og-worker/src/index.ts:991:    timestamp: Date.now(),
+apps/og-worker/src/index.ts:1034:    timestamp: Date.now(),
+apps/og-worker/src/index.ts:1091:  // BUG-069: never fetch(our own og. custom domain) — CF blocks worker
+apps/og-worker/src/index.ts:1097:  // FINDING-024 / OG-5: and never fetch() any other non-app ingress host
+apps/og-worker/src/index.ts:1104:  return fetch(c.req.raw);
+apps/og-worker/src/og-data-generator.ts:730:        dye: parseInt(searchParams.get('dye') || '0', 10),
+apps/og-worker/src/og-data-generator.ts:739:        start: parseInt(searchParams.get('start') || '0', 10),
+apps/og-worker/src/og-data-generator.ts:740:        end: parseInt(searchParams.get('end') || '0', 10),
+apps/og-worker/src/og-data-generator.ts:750:        dyeA: parseInt(searchParams.get('dyeA') || '0', 10),
+apps/og-worker/src/og-data-generator.ts:751:        dyeB: parseInt(searchParams.get('dyeB') || '0', 10),
+apps/og-worker/src/og-data-generator.ts:752:        dyeC: dyeCRaw ? parseInt(dyeCRaw, 10) : undefined,
+apps/og-worker/src/og-data-generator.ts:818:      const dye = dyeRaw ? parseInt(dyeRaw, 10) : NaN;
+apps/og-worker/src/og-params.ts:127:  const n = raw === null ? NaN : parseInt(raw, 10);
+apps/og-worker/src/og-params.ts:136:    .map((id) => parseInt(id, 10))
+apps/og-worker/src/services/renderer.ts:47:    } catch (error) {
+apps/og-worker/src/services/renderer.ts:58:  wasmInitPromise.catch(() => {
+apps/og-worker/src/services/renderer.ts:105:  } catch (error) {
+apps/og-worker/src/services/renderer.ts:137:  } catch (error) {
+apps/og-worker/src/services/svg/band.ts:93:  const r = parseInt(c.slice(0, 2), 16);
+apps/og-worker/src/services/svg/band.ts:94:  const g = parseInt(c.slice(2, 4), 16);
+apps/og-worker/src/services/svg/band.ts:95:  const b = parseInt(c.slice(4, 6), 16);
+apps/og-worker/src/services/svg/extractor.ts:81:      hex: best!.hex,
+apps/og-worker/src/services/svg/extractor.ts:85:      value: frame === 'x' ? undefined : best!.hex.toUpperCase(),
+apps/presets-api/src/handlers/moderation.ts:72:  } catch {
+apps/presets-api/src/handlers/moderation.ts:94:  const now = new Date().toISOString();
+apps/presets-api/src/handlers/moderation.ts:143:  } catch {
+apps/presets-api/src/handlers/moderation.ts:168:  const now = new Date().toISOString();
+apps/presets-api/src/handlers/moderation.ts:207:  } catch {
+apps/presets-api/src/handlers/moderation.ts:221:  const now = new Date().toISOString();
+apps/presets-api/src/handlers/moderation.ts:253:  } catch (err) {
+apps/presets-api/src/handlers/moderation.ts:345:  } catch {
+apps/presets-api/src/handlers/presets.ts:239:    page: Math.max(1, Number.parseInt(page ?? '', 10) || 1),
+apps/presets-api/src/handlers/presets.ts:240:    limit: Math.min(Math.max(1, Number.parseInt(limit ?? '', 10) || 20), 50), // Cap at 50 for performance
+apps/presets-api/src/handlers/presets.ts:408:  await c.env.DB.batch([
+apps/presets-api/src/handlers/presets.ts:429:  } catch (err) {
+apps/presets-api/src/handlers/presets.ts:539:  } catch {
+apps/presets-api/src/handlers/presets.ts:629:    } catch (err) {
+apps/presets-api/src/handlers/presets.ts:715:  } catch (error) {
+apps/presets-api/src/handlers/presets.ts:750:    } catch (err) {
+apps/presets-api/src/handlers/presets.ts:777:    c.executionCtx.waitUntil(
+apps/presets-api/src/handlers/presets.ts:778:      notifyDiscordBot(c.env, editPayload, c.get('logger')).catch(async (err) => {
+apps/presets-api/src/handlers/presets.ts:878:  } catch {
+apps/presets-api/src/handlers/presets.ts:906:  // Wrap createPreset in try-catch to handle UNIQUE constraint violations
+apps/presets-api/src/handlers/presets.ts:907:  // If another request created the same preset while we were checking, we'll catch
+apps/presets-api/src/handlers/presets.ts:918:  } catch (error) {
+apps/presets-api/src/handlers/presets.ts:939:  } catch (err) {
+apps/presets-api/src/handlers/presets.ts:954:    await c.env.DB.batch([
+apps/presets-api/src/handlers/presets.ts:972:  // Use waitUntil to keep the worker alive while notification completes
+apps/presets-api/src/handlers/presets.ts:984:  c.executionCtx.waitUntil(
+apps/presets-api/src/handlers/presets.ts:985:    notifyDiscordBot(c.env, submissionPayload, c.get('logger')).catch(async (err) => {
+apps/presets-api/src/handlers/presets.ts:1002:  // response path via waitUntil, and it never throws, so it cannot affect the
+apps/presets-api/src/handlers/presets.ts:1004:  c.executionCtx.waitUntil(pruneFailedNotifications(c.env.DB, c.get('logger')));
+apps/presets-api/src/handlers/presets.ts:1112:  } catch {
+apps/presets-api/src/handlers/presets.ts:1133:    .bind(key, new Date().toISOString(), presetId)
+apps/presets-api/src/handlers/presets.ts:1142:  } catch (err) {
+apps/presets-api/src/handlers/presets.ts:1160:  c.executionCtx.waitUntil(
+apps/presets-api/src/handlers/presets.ts:1161:    notifyDiscordBot(c.env, imagePayload, c.get('logger')).catch(async (err) => {
+apps/presets-api/src/handlers/presets.ts:1171:  } catch (err) {
+apps/presets-api/src/handlers/presets.ts:1229:    .bind(new Date().toISOString(), presetId)
+apps/presets-api/src/handlers/presets.ts:1234:  } catch (err) {
+apps/presets-api/src/handlers/votes.ts:55:  const now = new Date().toISOString();
+apps/presets-api/src/handlers/votes.ts:64:    const [insertResult, updateResult] = await db.batch([
+apps/presets-api/src/handlers/votes.ts:95:  } catch (error) {
+apps/presets-api/src/handlers/votes.ts:115:  const now = new Date().toISOString();
+apps/presets-api/src/handlers/votes.ts:120:    const [deleteResult, updateResult] = await db.batch([
+apps/presets-api/src/handlers/votes.ts:149:  } catch (error) {
+apps/presets-api/src/index.ts:221:  return c.json({ status: 'ok', timestamp: new Date().toISOString() });
+apps/presets-api/src/middleware/auth.ts:138:  const [da, db] = await Promise.all([
+apps/presets-api/src/middleware/auth.ts:224:  } catch {
+apps/presets-api/src/middleware/ban-check.ts:122:  } catch (error) {
+apps/presets-api/src/middleware/body-validation.ts:120:  } catch {
+apps/presets-api/src/middleware/body-validation.ts:130:    parsed = JSON.parse(text);
+apps/presets-api/src/middleware/body-validation.ts:131:  } catch {
+apps/presets-api/src/services/category-service.ts:34:  const now = Date.now();
+apps/presets-api/src/services/category-service.ts:52:      categoryCacheTime = Date.now();
+apps/presets-api/src/services/moderation-service.ts:284:    const response = await fetch(PERSPECTIVE_ENDPOINT, {
+apps/presets-api/src/services/moderation-service.ts:321:    // scope — previously thrown purely so the `catch` below could log it.
+apps/presets-api/src/services/moderation-service.ts:357:  } catch (error) {
+apps/presets-api/src/services/notification-service.ts:129:  return new Date(epochMs).toISOString().replace('T', ' ').slice(0, 19);
+apps/presets-api/src/services/notification-service.ts:145:  return new Promise(resolve => setTimeout(resolve, ms));
+apps/presets-api/src/services/notification-service.ts:184:      const response = await env.DISCORD_WORKER.fetch(
+apps/presets-api/src/services/notification-service.ts:209:    } catch (error) {
+apps/presets-api/src/services/notification-service.ts:245: *   4. `POST /api/v1/presets`, via `waitUntil` — the busiest write in the
+apps/presets-api/src/services/notification-service.ts:246: *      worker, so the window holds as long as anyone submits a preset.
+apps/presets-api/src/services/notification-service.ts:262:  const now = Date.now();
+apps/presets-api/src/services/notification-service.ts:271:    const results = await db.batch([
+apps/presets-api/src/services/notification-service.ts:286:  } catch {
+apps/presets-api/src/services/notification-service.ts:293: * Called from .catch() blocks when notifyDiscordBot() fails after all retries.
+apps/presets-api/src/services/notification-service.ts:320:  } catch (insertErr) {
+apps/presets-api/src/services/notification-service.ts:380:    parsed = JSON.parse(row.payload);
+apps/presets-api/src/services/notification-service.ts:381:  } catch {
+apps/presets-api/src/services/notification-service.ts:428:  } catch {
+apps/presets-api/src/services/preset-service.ts:48: * BUG-012 FIX: Each JSON.parse is wrapped in try-catch. 'dyes' and 'tags'
+apps/presets-api/src/services/preset-service.ts:57:    dyes = JSON.parse(row.dyes) as CommunityPreset['dyes'];
+apps/presets-api/src/services/preset-service.ts:58:  } catch {
+apps/presets-api/src/services/preset-service.ts:63:    tags = JSON.parse(row.tags) as CommunityPreset['tags'];
+apps/presets-api/src/services/preset-service.ts:64:  } catch {
+apps/presets-api/src/services/preset-service.ts:71:      previous_values = JSON.parse(row.previous_values) as CommunityPreset['previous_values'];
+apps/presets-api/src/services/preset-service.ts:72:    } catch {
+apps/presets-api/src/services/preset-service.ts:84:      const parsed = JSON.parse(row.secondary_categories) as unknown;
+apps/presets-api/src/services/preset-service.ts:92:    } catch {
+apps/presets-api/src/services/preset-service.ts:203:    } catch (error) {
+apps/presets-api/src/services/preset-service.ts:379:  const now = new Date().toISOString();
+apps/presets-api/src/services/preset-service.ts:530:    } catch (error) {
+apps/presets-api/src/services/preset-service.ts:595:  const now = new Date().toISOString();
+apps/presets-api/src/services/preview-image-service.ts:74:    const response = await fetch(
+apps/presets-api/src/services/preview-image-service.ts:94:  } catch (err) {
+apps/presets-api/src/services/preview-image-service.ts:151:  const response = await env.IMAGE_WORKER.fetch(
+apps/presets-api/src/services/rate-limit-service.ts:74:  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+apps/presets-api/src/services/rate-limit-service.ts:102:  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+apps/presets-api/src/services/rate-limit-service.ts:146:  const cutoff = new Date(Date.now() - SUBMISSION_EVENT_RETENTION_DAYS * MS_PER_DAY).toISOString();
+apps/presets-api/src/services/rate-limit-service.ts:158:  } catch {
+apps/presets-api/src/services/rate-limit-service.ts:214:  const [rowsToday, eventsToday] = await Promise.all([
+apps/presets-api/src/services/rate-limit-service.ts:247:  const now = new Date();
+apps/presets-api/src/services/rate-limit-service.ts:248:  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+apps/presets-api/src/services/rate-limit-service.ts:255:  return new Date(getStartOfDayUTC().getTime() + 24 * 60 * 60 * 1000);
+apps/presets-api/src/services/validation-service.ts:405:  } catch {
+apps/presets-api/src/utils/env-validation.ts:4: * Validates required environment variables at startup to catch
+apps/presets-api/src/utils/env-validation.ts:62:    } catch {
+apps/presets-api/src/utils/env-validation.ts:74:        } catch {
+apps/stoat-worker/src/commands/info.ts:128:      createdAt: Date.now(),
+apps/stoat-worker/src/commands/ping.ts:9:  const startTime = Date.now();
+apps/stoat-worker/src/commands/ping.ts:11:    content: `🏓 Pong! (${Date.now() - startTime}ms)`,
+apps/stoat-worker/src/index.ts:85:main().catch((error) => {
+apps/stoat-worker/src/message-handler.ts:127:    } catch (error) {
+apps/stoat-worker/src/message-handler.ts:151:      } catch {
+apps/stoat-worker/src/services/command-throttle.ts:39:  tryAcquire(key: string, now: number = Date.now()): boolean {
+apps/stoat-worker/src/services/loading-indicator.ts:31:  } catch {
+apps/stoat-worker/src/services/loading-indicator.ts:40:    } catch {
+apps/stoat-worker/src/services/message-context.ts:55:    if (Date.now() - ctx.createdAt > CONTEXT_TTL_MS) {
+apps/web-app/src/components/add-to-collection-menu.ts:32:let pendingSetupTimeout: ReturnType<typeof setTimeout> | null = null;
+apps/web-app/src/components/add-to-collection-menu.ts:162:  pendingSetupTimeout = setTimeout(() => {
+apps/web-app/src/components/advanced-options-panel.ts:302:        exportedAt: new Date().toISOString(),
+apps/web-app/src/components/advanced-options-panel.ts:310:      a.download = `xivdyetools-settings-${new Date().toISOString().split('T')[0]}.json`;
+apps/web-app/src/components/advanced-options-panel.ts:327:        const parsed: unknown = JSON.parse(text);
+apps/web-app/src/components/advanced-options-panel.ts:337:      } catch (error) {
+apps/web-app/src/components/base-component.ts:79:  private pendingTimeouts: Set<ReturnType<typeof setTimeout>> = new Set();
+apps/web-app/src/components/base-component.ts:138:    } catch (error) {
+apps/web-app/src/components/base-component.ts:160:    } catch (error) {
+apps/web-app/src/components/base-component.ts:182:    } catch (error) {
+apps/web-app/src/components/base-component.ts:193:   * Use this instead of raw setTimeout to prevent memory leaks
+apps/web-app/src/components/base-component.ts:195:  protected safeTimeout(callback: () => void, delay: number): ReturnType<typeof setTimeout> {
+apps/web-app/src/components/base-component.ts:198:      return setTimeout(() => {}, 0); // Return a dummy timeout ID
+apps/web-app/src/components/base-component.ts:201:    const timeoutId = setTimeout(() => {
+apps/web-app/src/components/base-component.ts:216:  protected clearSafeTimeout(timeoutId: ReturnType<typeof setTimeout>): void {
+apps/web-app/src/components/base-component.ts:252:   * Wraps renderContent() in try/catch and shows error UI on failure
+apps/web-app/src/components/base-component.ts:276:    } catch (error) {
+apps/web-app/src/components/base-component.ts:297:    } catch (error) {
+apps/web-app/src/components/base-component.ts:619:      } catch {
+apps/web-app/src/components/base-component.ts:648:    const listenerKey = `custom_${eventName}_${Date.now()}_${this.listeners.size}`;
+apps/web-app/src/components/base-component.ts:707:      (this.element.style as unknown as Record<string, string>)[key] = value as string;
+apps/web-app/src/components/budget-tool.ts:281:        setTimeout(() => void this.findAlternatives(), 0);
+apps/web-app/src/components/budget-tool.ts:437:      const n = Number(maxDeltaParam);
+apps/web-app/src/components/budget-tool.ts:473:        : `${formatNumber(meta.price)} ${LanguageService.getCurrency(meta.currency)}`;
+apps/web-app/src/components/budget-tool.ts:502:    const r = parseInt(hex.slice(1, 3), 16);
+apps/web-app/src/components/budget-tool.ts:503:    const g = parseInt(hex.slice(3, 5), 16);
+apps/web-app/src/components/budget-tool.ts:504:    const b = parseInt(hex.slice(5, 7), 16);
+apps/web-app/src/components/budget-tool.ts:597:    } catch (error) {
+apps/web-app/src/components/budget-tool.ts:628:    } catch (error) {
+apps/web-app/src/components/budget-tool.ts:888:          textContent: board != null ? formatNumber(board) : '—',
+apps/web-app/src/components/budget-tool.ts:971:      this.matchLine = parseInt(slider.value, 10);
+apps/web-app/src/components/budget-tool.ts:1421:      byTier.get(tier)!.push(row);
+apps/web-app/src/components/budget-tool.ts:1526:        priceMain = `${formatNumber(groupGil)} – ${formatGil(gilMax!)}`;
+apps/web-app/src/components/budget-tool.ts:1534:          : `${formatNumber(tierMeta.price)} ${LanguageService.getCurrency(tierMeta.currency)}`;
+apps/web-app/src/components/budget-tool.ts:1541:                price: formatNumber(boardPrice),
+apps/web-app/src/components/budget-tool.ts:1546:            diff: formatNumber(boardPrice - tierMeta.price),
+apps/web-app/src/components/budget-tool.ts:1745:            textContent: row.price.board != null ? formatNumber(row.price.board) : '—',
+apps/web-app/src/components/budget-tool.ts:1755:          textContent: row.perPoint != null ? formatNumber(Math.round(row.perPoint)) : '',
+apps/web-app/src/components/budget-tool.ts:1840:    const r = parseInt(hex.slice(1, 3), 16);
+apps/web-app/src/components/budget-tool.ts:1841:    const g = parseInt(hex.slice(3, 5), 16);
+apps/web-app/src/components/budget-tool.ts:1842:    const b = parseInt(hex.slice(5, 7), 16);
+apps/web-app/src/components/camera-preview-modal.ts:133:  let startCameraTimeoutId: ReturnType<typeof setTimeout> | null = null;
+apps/web-app/src/components/camera-preview-modal.ts:187:        video.play().catch((err) => {
+apps/web-app/src/components/camera-preview-modal.ts:209:    } catch (error) {
+apps/web-app/src/components/camera-preview-modal.ts:243:    } catch (error) {
+apps/web-app/src/components/camera-preview-modal.ts:286:        .catch((error) => {
+apps/web-app/src/components/camera-preview-modal.ts:315:  startCameraTimeoutId = setTimeout(() => {
+apps/web-app/src/components/changelog-modal.ts:374:    setTimeout(() => {
+apps/web-app/src/components/chara-import.ts:211:    // file.text() / JSON.parse (WEB-13). Same cap as the image inputs.
+apps/web-app/src/components/chara-import.ts:221:    } catch (error) {
+apps/web-app/src/components/chara-import.ts:236:    } catch (error) {
+apps/web-app/src/components/chara-import.ts:265:    } catch (error) {
+apps/web-app/src/components/chara-import.ts:1111:    for (const gear of this.resolved!.gearDyes) {
+apps/web-app/src/components/chara-import.ts:1187:    const model = this.resolved!.gearModels.find((m) => m.slot === slot) ?? null;
+apps/web-app/src/components/chara-import.ts:1314:    for (const gear of this.resolved!.gearDyes) {
+apps/web-app/src/components/collection-manager-modal.ts:331:  setTimeout(() => nameInput.focus(), 100);
+apps/web-app/src/components/collection-manager-modal.ts:461:  setTimeout(() => nameInput.focus(), 100);
+apps/web-app/src/components/collection-manager-modal.ts:505:  a.download = `xivdyetools-collections-${new Date().toISOString().split('T')[0]}.json`;
+apps/web-app/src/components/collection-manager-modal.ts:588:    } catch {
+apps/web-app/src/components/collection-manager-modal.ts:602:  const maybeShow = (ModalService as unknown as Record<string, unknown>).show as
+apps/web-app/src/components/color-picker-display.ts:264:    } catch {
+apps/web-app/src/components/dye-grid.ts:241:        const dyeId = parseInt(collectionTarget.getAttribute('data-collection-dye-id') || '0', 10);
+apps/web-app/src/components/dye-grid.ts:250:        const dyeId = parseInt(favoriteTarget.getAttribute('data-favorite-dye-id') || '0', 10);
+apps/web-app/src/components/dye-grid.ts:258:        const id = parseInt(target.getAttribute('data-dye-id') || '0', 10);
+apps/web-app/src/components/dye-grid.ts:322:      const dyeId = parseInt(btn.getAttribute('data-favorite-dye-id') || '0', 10);
+apps/web-app/src/components/dye-grid.ts:375:      const id = parseInt(btn.getAttribute('data-dye-id') || '0', 10);
+apps/web-app/src/components/dye-search-box.ts:22:  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+apps/web-app/src/components/dye-selector.ts:162:    // We listen on gridContainer directly to ensure we catch the event
+apps/web-app/src/components/dye-selector.ts:235:            const dyeId = parseInt(target.getAttribute('data-dye-id') || '0', 10);
+apps/web-app/src/components/export-sheet.ts:74:  } catch (error) {
+apps/web-app/src/components/export-sheet.ts:87:    } catch (fallbackError) {
+apps/web-app/src/components/extractor-tool.ts:357:    const listenerKey = `panel_${eventName}_${Date.now()}_${this.listeners.size}`;
+apps/web-app/src/components/extractor-tool.ts:640:        this.sampleSize = parseInt(this.sampleSlider.value, 10);
+apps/web-app/src/components/extractor-tool.ts:706:        this.paletteColorCount = parseInt(this.colorCountSlider.value, 10);
+apps/web-app/src/components/extractor-tool.ts:1539:    } catch (error) {
+apps/web-app/src/components/extractor-tool.ts:2001:    const now = Date.now();
+apps/web-app/src/components/extractor-tool.ts:2039:      this.extractedColorsHistory.unshift({ hex, timestamp: Date.now() });
+apps/web-app/src/components/extractor-tool.ts:2171:      const card = document.createElement('v4-result-card') as unknown as ResultCard;
+apps/web-app/src/components/extractor-tool.ts:2230:    } catch (error) {
+apps/web-app/src/components/extractor-tool.ts:2262:        const status = parseInt(statusMatch[1], 10);
+apps/web-app/src/components/extractor-tool.ts:2425:    } catch (error) {
+apps/web-app/src/components/extractor-tool.ts:2691:      const card = document.createElement('v4-result-card') as unknown as ResultCard;
+apps/web-app/src/components/gradient-tool.ts:895:      this.stepCount = parseInt(stepsInput.value, 10);
+apps/web-app/src/components/gradient-tool.ts:1587:    } catch {
+apps/web-app/src/components/gradient-tool.ts:1597:    const r = parseInt(hex.slice(1, 3), 16) || 0;
+apps/web-app/src/components/gradient-tool.ts:1598:    const g = parseInt(hex.slice(3, 5), 16) || 0;
+apps/web-app/src/components/gradient-tool.ts:1599:    const b = parseInt(hex.slice(5, 7), 16) || 0;
+apps/web-app/src/components/gradient-tool.ts:1607:      const cardStep = Number(card.getAttribute('data-gradient-step')) - 1;
+apps/web-app/src/components/gradient-tool.ts:2429:      this.stepCount = parseInt(stepsInput.value, 10);
+apps/web-app/src/components/gradient-tool.ts:2572:        if (!dyesToFetch.some((d) => d.id === step.matchedDye!.id)) {
+apps/web-app/src/components/gradient-tool.ts:2583:      } catch (error) {
+apps/web-app/src/components/harmony-tool.ts:744:      this.companionDyesCount = parseInt(slider.value, 10);
+apps/web-app/src/components/harmony-tool.ts:1777:    } catch (error) {
+apps/web-app/src/components/market-board.ts:68:    } catch (error) {
+apps/web-app/src/components/market-board.ts:370:        setTimeout(() => {
+apps/web-app/src/components/market-board.ts:374:    } catch (error) {
+apps/web-app/src/components/mixer-tool.ts:506:      this.maxResults = parseInt(slider.value, 10);
+apps/web-app/src/components/mixer-tool.ts:1275:          (0.299 * parseInt(blend.slice(1, 3), 16) +
+apps/web-app/src/components/mixer-tool.ts:1276:            0.587 * parseInt(blend.slice(3, 5), 16) +
+apps/web-app/src/components/mixer-tool.ts:1277:            0.114 * parseInt(blend.slice(5, 7), 16)) /
+apps/web-app/src/components/mixer-tool.ts:1976:      (card as unknown as { data: ResultCardData }).data = cardData;
+apps/web-app/src/components/mixer-tool.ts:1979:      (card as unknown as { showHex: boolean }).showHex = this.displayOptions.showHex;
+apps/web-app/src/components/mixer-tool.ts:1980:      (card as unknown as { showRgb: boolean }).showRgb = this.displayOptions.showRgb;
+apps/web-app/src/components/mixer-tool.ts:1981:      (card as unknown as { showHsv: boolean }).showHsv = this.displayOptions.showHsv;
+apps/web-app/src/components/mixer-tool.ts:1982:      (card as unknown as { showLab: boolean }).showLab = this.displayOptions.showLab;
+apps/web-app/src/components/mixer-tool.ts:1983:      (card as unknown as { showCmyk: boolean }).showCmyk = this.displayOptions.showCmyk;
+apps/web-app/src/components/mixer-tool.ts:1984:      (card as unknown as { showDeltaE: boolean }).showDeltaE = this.displayOptions.showDeltaE;
+apps/web-app/src/components/mixer-tool.ts:1985:      (card as unknown as { showHue: boolean }).showHue = this.displayOptions.showHue ?? true;
+apps/web-app/src/components/mixer-tool.ts:1986:      (card as unknown as { showStain: boolean }).showStain = this.displayOptions.showStain ?? true;
+apps/web-app/src/components/mixer-tool.ts:1987:      (card as unknown as { showConsolidation: boolean }).showConsolidation =
+apps/web-app/src/components/mixer-tool.ts:1989:      (card as unknown as { showPrice: boolean }).showPrice = this.displayOptions.showPrice;
+apps/web-app/src/components/mixer-tool.ts:1990:      (card as unknown as { showAcquisition: boolean }).showAcquisition =
+apps/web-app/src/components/mixer-tool.ts:2201:    } catch (error) {
+apps/web-app/src/components/modal-container.ts:495:        this.element!.appendChild(this.createModalElement(modal, index));
+apps/web-app/src/components/my-submissions-modal.ts:44:  const r = parseInt(hex.slice(1, 3), 16);
+apps/web-app/src/components/my-submissions-modal.ts:45:  const g = parseInt(hex.slice(3, 5), 16);
+apps/web-app/src/components/my-submissions-modal.ts:46:  const b = parseInt(hex.slice(5, 7), 16);
+apps/web-app/src/components/my-submissions-modal.ts:62:    .map((d) => `<span style="flex: 1; background: ${d!.hex};"></span>`)
+apps/web-app/src/components/my-submissions-modal.ts:78:  } catch {
+apps/web-app/src/components/my-submissions-modal.ts:181:    const preset = presets[Number(btn.getAttribute('data-index'))];
+apps/web-app/src/components/my-submissions-modal.ts:214:          } catch {
+apps/web-app/src/components/preset-edit-form.ts:787:        } catch {
+apps/web-app/src/components/preset-edit-form.ts:794:        } catch {
+apps/web-app/src/components/preset-edit-form.ts:813:    } catch {
+apps/web-app/src/components/preset-edit-form.ts:834:  const r = parseInt(hex.substr(0, 2), 16);
+apps/web-app/src/components/preset-edit-form.ts:835:  const g = parseInt(hex.substr(2, 2), 16);
+apps/web-app/src/components/preset-edit-form.ts:836:  const b = parseInt(hex.substr(4, 2), 16);
+apps/web-app/src/components/preset-submission-form.ts:230:  form.addEventListener('click', () => setTimeout(() => state.refreshPreview?.(), 0));
+apps/web-app/src/components/preset-submission-form.ts:752:          } catch {
+apps/web-app/src/components/preset-submission-form.ts:774:    } catch {
+apps/web-app/src/components/swatch-tool.ts:684:      const index = parseInt(el.getAttribute('data-index') || '-1', 10);
+apps/web-app/src/components/swatch-tool.ts:1065:      this.subrace = this.subraceSelect!.value as SubRace;
+apps/web-app/src/components/swatch-tool.ts:1110:      this.gender = this.genderSelect!.value as Gender;
+apps/web-app/src/components/swatch-tool.ts:1190:      this.colorCategory = this.categorySelect!.value as ColorCategory;
+apps/web-app/src/components/swatch-tool.ts:2347:      (card as unknown as { data: ResultCardData }).data = cardData;
+apps/web-app/src/components/swatch-tool.ts:2350:      (card as unknown as { showHex: boolean }).showHex = this.displayOptions.showHex;
+apps/web-app/src/components/swatch-tool.ts:2351:      (card as unknown as { showRgb: boolean }).showRgb = this.displayOptions.showRgb;
+apps/web-app/src/components/swatch-tool.ts:2352:      (card as unknown as { showHsv: boolean }).showHsv = this.displayOptions.showHsv;
+apps/web-app/src/components/swatch-tool.ts:2353:      (card as unknown as { showLab: boolean }).showLab = this.displayOptions.showLab;
+apps/web-app/src/components/swatch-tool.ts:2354:      (card as unknown as { showCmyk: boolean }).showCmyk = this.displayOptions.showCmyk;
+apps/web-app/src/components/swatch-tool.ts:2355:      (card as unknown as { showDeltaE: boolean }).showDeltaE = this.displayOptions.showDeltaE;
+apps/web-app/src/components/swatch-tool.ts:2356:      (card as unknown as { showHue: boolean }).showHue = this.displayOptions.showHue ?? true;
+apps/web-app/src/components/swatch-tool.ts:2357:      (card as unknown as { showStain: boolean }).showStain = this.displayOptions.showStain ?? true;
+apps/web-app/src/components/swatch-tool.ts:2358:      (card as unknown as { showConsolidation: boolean }).showConsolidation =
+apps/web-app/src/components/swatch-tool.ts:2360:      (card as unknown as { showPrice: boolean }).showPrice = this.displayOptions.showPrice;
+apps/web-app/src/components/swatch-tool.ts:2361:      (card as unknown as { showAcquisition: boolean }).showAcquisition =
+apps/web-app/src/components/swatch-tool.ts:2558:      this.subrace = this.mobileSubraceSelect!.value as SubRace;
+apps/web-app/src/components/swatch-tool.ts:2603:      this.gender = this.mobileGenderSelect!.value as Gender;
+apps/web-app/src/components/swatch-tool.ts:2681:      this.colorCategory = this.mobileCategorySelect!.value as ColorCategory;
+apps/web-app/src/components/swatch-tool.ts:2769:      const index = parseInt(swatch.getAttribute('data-index') || '-1', 10);
+apps/web-app/src/components/swatch-tool.ts:2832:    } catch (error) {
+apps/web-app/src/components/swatch-tool.ts:3018:          ? Number(indexRaw)
+apps/web-app/src/components/toast-container.ts:197:      this.element!.appendChild(toastEl);
+apps/web-app/src/components/toast-container.ts:246:          setTimeout(() => ToastService.dismiss(toastId), 150);
+apps/web-app/src/components/tutorial-spotlight.ts:135:      document as unknown as HTMLElement,
+apps/web-app/src/components/tutorial-spotlight.ts:143:    this.on(document as unknown as HTMLElement, 'tutorial:end' as keyof HTMLElementEventMap, () => {
+apps/web-app/src/components/tutorial-spotlight.ts:148:    this.on(window as unknown as HTMLElement, 'resize' as keyof HTMLElementEventMap, () => {
+apps/web-app/src/components/tutorial-spotlight.ts:156:      document as unknown as HTMLElement,
+apps/web-app/src/components/tutorial-spotlight.ts:230:      setTimeout(() => TutorialService.next(), 100);
+apps/web-app/src/components/tutorial-spotlight.ts:238:    setTimeout(() => {
+apps/web-app/src/components/tutorial-spotlight.ts:547:      setTimeout(
+apps/web-app/src/components/v4/config-sidebar.ts:60: * This replaces a `parseInt(user.id) % 5` guess at Discord's default-avatar
+apps/web-app/src/components/v4/config-sidebar.ts:63: * UUID began with a hex letter (6 of 16 possible first characters) `parseInt`
+apps/web-app/src/components/v4/config-sidebar.ts:716:      const [dcResponse, worldsResponse] = await Promise.all([
+apps/web-app/src/components/v4/config-sidebar.ts:717:        fetch('/json/data-centers.json'),
+apps/web-app/src/components/v4/config-sidebar.ts:718:        fetch('/json/worlds.json'),
+apps/web-app/src/components/v4/config-sidebar.ts:736:    } catch (error) {
+apps/web-app/src/components/v4/config-sidebar.ts:808:      this.configController.setConfig(tool, { [key]: value } as any);
+apps/web-app/src/components/v4/config-sidebar.ts:1078:              const value = parseInt((e.target as HTMLSelectElement).value, 10);
+apps/web-app/src/components/v4/config-sidebar.ts:1698:      .catch((error: unknown) => {
+apps/web-app/src/components/v4/display-options-v4.ts:327:    (this as unknown as Record<string, boolean>)[option] = checked;
+apps/web-app/src/components/v4/dye-filters-v4.ts:227:    (this as unknown as Record<string, boolean>)[filter] = checked;
+apps/web-app/src/components/v4/dye-palette-drawer.ts:731:    } catch (error) {
+apps/web-app/src/components/v4/preset-card.ts:304:    const r = parseInt(hex.slice(1, 3), 16);
+apps/web-app/src/components/v4/preset-card.ts:305:    const g = parseInt(hex.slice(3, 5), 16);
+apps/web-app/src/components/v4/preset-card.ts:306:    const b = parseInt(hex.slice(5, 7), 16);
+apps/web-app/src/components/v4/preset-card.ts:315:      Math.floor((Date.now() - new Date(preset.createdAt).getTime()) / 86_400_000)
+apps/web-app/src/components/v4/preset-detail.ts:671:    } catch (error) {
+apps/web-app/src/components/v4/preset-detail.ts:705:    } catch (error) {
+apps/web-app/src/components/v4/preset-detail.ts:728:      .catch(() => ToastService.error(LanguageService.t('errors.copyLinkFailed')));
+apps/web-app/src/components/v4/preset-detail.ts:791:    } catch (error) {
+apps/web-app/src/components/v4/preset-detail.ts:825:        gil: formatNumber(gil),
+apps/web-app/src/components/v4/preset-tool.ts:450:    } catch (error) {
+apps/web-app/src/components/v4/preset-tool.ts:474:    } catch (error) {
+apps/web-app/src/components/v4/preset-tool.ts:517:    } catch (error) {
+apps/web-app/src/components/v4/preset-tool.ts:769:    } catch (error) {
+apps/web-app/src/components/v4/preset-tool.ts:843:        } catch (error) {
+apps/web-app/src/components/v4/preset-tool.ts:856:    this._searchDebounce = window.setTimeout(() => {
+apps/web-app/src/components/v4/result-card.ts:1009:    } catch {
+apps/web-app/src/components/v4/result-card.ts:1040:    return `${formatNumber(cost)} ${label}`;
+apps/web-app/src/components/v4/result-card.ts:1351:      // Click handler — directly attached, no setTimeout needed
+apps/web-app/src/components/v4/share-button.ts:130:  private copiedTimeout?: ReturnType<typeof setTimeout>;
+apps/web-app/src/components/v4/share-button.ts:317:        this.copiedTimeout = setTimeout(() => {
+apps/web-app/src/components/v4/share-button.ts:321:    } catch (error) {
+apps/web-app/src/components/v4/v4-color-wheel.ts:345:    const r = parseInt(hex.slice(1, 3), 16) / 255;
+apps/web-app/src/components/v4/v4-color-wheel.ts:346:    const g = parseInt(hex.slice(3, 5), 16) / 255;
+apps/web-app/src/components/v4/v4-color-wheel.ts:347:    const b = parseInt(hex.slice(5, 7), 16) / 255;
+apps/web-app/src/components/v4/v4-color-wheel.ts:502:    const r = parseInt(hex.slice(1, 3), 16);
+apps/web-app/src/components/v4/v4-color-wheel.ts:503:    const g = parseInt(hex.slice(3, 5), 16);
+apps/web-app/src/components/v4/v4-color-wheel.ts:504:    const b = parseInt(hex.slice(5, 7), 16);
+apps/web-app/src/components/v4-layout.ts:51:let tutorialPromptTimer: ReturnType<typeof setTimeout> | null = null;
+apps/web-app/src/components/v4-layout.ts:141:  tutorialPromptTimer = setTimeout(() => {
+apps/web-app/src/components/v4-layout.ts:708:  } catch (error) {
+apps/web-app/src/components/welcome-modal.ts:126:        setTimeout(() => {
+apps/web-app/src/components/welcome-modal.ts:285:    setTimeout(() => {
+apps/web-app/src/main.ts:146:      (window as unknown as Record<string, unknown>).TutorialService = TutorialService;
+apps/web-app/src/main.ts:147:      (window as unknown as Record<string, unknown>).ShareService = ShareService;
+apps/web-app/src/main.ts:151:  } catch (error) {
+apps/web-app/src/services/api-service-wrapper.ts:117:    } catch (error) {
+apps/web-app/src/services/api-service-wrapper.ts:124:        await new Promise((resolve) => setTimeout(resolve, attempt * 100));
+apps/web-app/src/services/api-service-wrapper.ts:139:    void indexedDBService.delete(STORES.PRICE_CACHE, key).catch((error) => {
+apps/web-app/src/services/api-service-wrapper.ts:146:    indexedDBService.clear(STORES.PRICE_CACHE).catch((error) => {
+apps/web-app/src/services/api-service-wrapper.ts:170:    } catch (error) {
+apps/web-app/src/services/api-service-wrapper.ts:208:        const dbg = (logger as unknown as Record<string, unknown>).debug as
+apps/web-app/src/services/auth-service.ts:146:  } catch {
+apps/web-app/src/services/auth-service.ts:262:    } catch (err) {
+apps/web-app/src/services/auth-service.ts:282:      const expiresAt = parseInt(expiresAtStr, 10);
+apps/web-app/src/services/auth-service.ts:283:      const now = Math.floor(Date.now() / 1000);
+apps/web-app/src/services/auth-service.ts:329:    } catch (err) {
+apps/web-app/src/services/auth-service.ts:396:      const response = await fetch(callbackEndpoint, {
+apps/web-app/src/services/auth-service.ts:410:        const errorData = await response.json().catch(() => ({}));
+apps/web-app/src/services/auth-service.ts:435:    } catch (err) {
+apps/web-app/src/services/auth-service.ts:451:    let expiresAt = expiresAtStr ? parseInt(expiresAtStr, 10) : payload.exp;
+apps/web-app/src/services/auth-service.ts:466:    logger.info(`Token stored, expires: ${new Date(expiresAt * 1000).toISOString()}`);
+apps/web-app/src/services/auth-service.ts:496:    this.refreshAuthorName().catch((err) => {
+apps/web-app/src/services/auth-service.ts:509:      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/refresh-author`, {
+apps/web-app/src/services/auth-service.ts:520:    } catch (err) {
+apps/web-app/src/services/auth-service.ts:585:      const now = Math.floor(Date.now() / 1000);
+apps/web-app/src/services/auth-service.ts:661:    } catch (err) {
+apps/web-app/src/services/auth-service.ts:705:    } catch (err) {
+apps/web-app/src/services/auth-service.ts:720:        await fetch(`${OAUTH_WORKER_URL}/auth/revoke`, {
+apps/web-app/src/services/auth-service.ts:726:      } catch {
+apps/web-app/src/services/auth-service.ts:736:    void APIService.clearCache().catch(() => {});
+apps/web-app/src/services/auth-service.ts:764:      } catch (err) {
+apps/web-app/src/services/auth-service.ts:791:      return JSON.parse(decoded);
+apps/web-app/src/services/auth-service.ts:792:    } catch {
+apps/web-app/src/services/camera-service.ts:78:    } catch (error) {
+apps/web-app/src/services/camera-service.ts:111:    } catch (error) {
+apps/web-app/src/services/camera-service.ts:163:    } catch (error) {
+apps/web-app/src/services/chara-resolve-service.ts:78:  const localized = (names as unknown as Record<string, string | undefined>)[locale];
+apps/web-app/src/services/chara-resolve-service.ts:123:    response = await fetch(`${getApiWorkerBase()}/v1/chara/resolve`, {
+apps/web-app/src/services/chara-resolve-service.ts:129:  } catch (error) {
+apps/web-app/src/services/chara-resolve-service.ts:147:  } catch {
+apps/web-app/src/services/collection-service.ts:230:        lastModified: new Date().toISOString(),
+apps/web-app/src/services/collection-service.ts:331:        lastModified: new Date().toISOString(),
+apps/web-app/src/services/collection-service.ts:454:    this.favoritesData.lastModified = new Date().toISOString();
+apps/web-app/src/services/collection-service.ts:464:    this.collectionsData.lastModified = new Date().toISOString();
+apps/web-app/src/services/collection-service.ts:651:    const now = new Date().toISOString();
+apps/web-app/src/services/collection-service.ts:700:    collection.updatedAt = new Date().toISOString();
+apps/web-app/src/services/collection-service.ts:751:    tombstones.push({ id, deletedAt: new Date().toISOString() });
+apps/web-app/src/services/collection-service.ts:792:    collection.updatedAt = new Date().toISOString();
+apps/web-app/src/services/collection-service.ts:811:    collection.updatedAt = new Date().toISOString();
+apps/web-app/src/services/collection-service.ts:842:      exportedAt: new Date().toISOString(),
+apps/web-app/src/services/collection-service.ts:862:      exportedAt: new Date().toISOString(),
+apps/web-app/src/services/collection-service.ts:904:      const data = JSON.parse(json) as CollectionExport;
+apps/web-app/src/services/collection-service.ts:982:    } catch (error) {
+apps/web-app/src/services/collection-service.ts:1050:    return `col_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+apps/web-app/src/services/collection-service.ts:1090:      lastModified: new Date().toISOString(),
+apps/web-app/src/services/collection-service.ts:1096:      lastModified: new Date().toISOString(),
+apps/web-app/src/services/community-preset-service.ts:111:    if (Date.now() - entry.timestamp > this.ttl) {
+apps/web-app/src/services/community-preset-service.ts:120:    this.cache.set(key, { data, timestamp: Date.now() });
+apps/web-app/src/services/community-preset-service.ts:187:        setTimeout(
+apps/web-app/src/services/community-preset-service.ts:203:    } catch (error) {
+apps/web-app/src/services/community-preset-service.ts:228:    const timeoutId = setTimeout(() => controller.abort(), timeout);
+apps/web-app/src/services/community-preset-service.ts:231:      const response = await fetch(url, {
+apps/web-app/src/services/community-preset-service.ts:259:        const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+apps/web-app/src/services/community-preset-service.ts:271:    } catch (error) {
+apps/web-app/src/services/community-preset-service.ts:324:    } catch (error) {
+apps/web-app/src/services/community-preset-service.ts:407:    } catch (error) {
+apps/web-app/src/services/community-preset-service.ts:442:        const data = (await response.json().catch(() => ({}))) as { message?: string };
+apps/web-app/src/services/community-preset-service.ts:459:    } catch (error) {
+apps/web-app/src/services/community-preset-service.ts:506:    } catch (error) {
+apps/web-app/src/services/config-controller.ts:100:  const defaults = getDefaultConfig(key) as unknown as Record<string, unknown>;
+apps/web-app/src/services/config-controller.ts:323:    ) as unknown as ToolConfigMap;
+apps/web-app/src/services/config-controller.ts:425:      } catch (error) {
+apps/web-app/src/services/hybrid-preset-service.ts:231:      } catch (error) {
+apps/web-app/src/services/hybrid-preset-service.ts:272:        } catch (error) {
+apps/web-app/src/services/hybrid-preset-service.ts:315:      } catch (error) {
+apps/web-app/src/services/hybrid-preset-service.ts:345:    } catch (error) {
+apps/web-app/src/services/hybrid-preset-service.ts:364:        } catch {
+apps/web-app/src/services/hybrid-preset-service.ts:382:      } catch {
+apps/web-app/src/services/hybrid-preset-service.ts:448:          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+apps/web-app/src/services/index.ts:119:  } catch (error) {
+apps/web-app/src/services/indexeddb-service.ts:131:      } catch (error) {
+apps/web-app/src/services/indexeddb-service.ts:159:        const transaction = this.db!.transaction(storeName, 'readonly');
+apps/web-app/src/services/indexeddb-service.ts:172:      } catch (error) {
+apps/web-app/src/services/indexeddb-service.ts:194:        const transaction = this.db!.transaction(storeName, 'readonly');
+apps/web-app/src/services/indexeddb-service.ts:212:      } catch (error) {
+apps/web-app/src/services/indexeddb-service.ts:233:        const transaction = this.db!.transaction(storeName, 'readwrite');
+apps/web-app/src/services/indexeddb-service.ts:249:      } catch (error) {
+apps/web-app/src/services/indexeddb-service.ts:270:        const transaction = this.db!.transaction(storeName, 'readwrite');
+apps/web-app/src/services/indexeddb-service.ts:282:      } catch (error) {
+apps/web-app/src/services/indexeddb-service.ts:303:        const transaction = this.db!.transaction(storeName, 'readonly');
+apps/web-app/src/services/indexeddb-service.ts:315:      } catch (error) {
+apps/web-app/src/services/indexeddb-service.ts:336:        const transaction = this.db!.transaction(storeName, 'readonly');
+apps/web-app/src/services/indexeddb-service.ts:349:      } catch (error) {
+apps/web-app/src/services/indexeddb-service.ts:370:        const transaction = this.db!.transaction(storeName, 'readwrite');
+apps/web-app/src/services/indexeddb-service.ts:383:      } catch (error) {
+apps/web-app/src/services/indexeddb-service.ts:404:        const transaction = this.db!.transaction(storeName, 'readonly');
+apps/web-app/src/services/indexeddb-service.ts:416:      } catch (error) {
+apps/web-app/src/services/indexeddb-service.ts:464:      } catch (error) {
+apps/web-app/src/services/keyboard-service.ts:209:    } catch (error) {
+apps/web-app/src/services/keyboard-service.ts:221:    } catch (error) {
+apps/web-app/src/services/language-service.ts:64:    } catch (error) {
+apps/web-app/src/services/language-service.ts:119:        } catch (error) {
+apps/web-app/src/services/language-service.ts:125:    } catch (error) {
+apps/web-app/src/services/language-service.ts:295:    } catch (error) {
+apps/web-app/src/services/language-service.ts:310:    } catch (error) {
+apps/web-app/src/services/language-service.ts:319:        } catch (enError) {
+apps/web-app/src/services/language-service.ts:354:    await Promise.all(loadPromises);
+apps/web-app/src/services/market-board-service.ts:326:        marketIdToOriginals.get(marketId)!.push(dye.itemID);
+apps/web-app/src/services/market-board-service.ts:375:    } catch (error) {
+apps/web-app/src/services/modal-service.ts:118:    return `modal_${Date.now()}_${Math.random().toString(36).substring(2, 9)}` as ModalId;
+apps/web-app/src/services/modal-service.ts:143:      timestamp: Date.now(),
+apps/web-app/src/services/modal-service.ts:153:        } catch (error) {
+apps/web-app/src/services/modal-service.ts:203:        } catch (error) {
+apps/web-app/src/services/modal-service.ts:231:    // Call onClose for each modal (wrapped in try-catch to ensure all are processed)
+apps/web-app/src/services/modal-service.ts:236:        } catch (error) {
+apps/web-app/src/services/preset-submission-service.ts:221:  const response = await fetch(
+apps/web-app/src/services/preset-submission-service.ts:249:  const response = await fetch(
+apps/web-app/src/services/preset-submission-service.ts:297:      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+apps/web-app/src/services/preset-submission-service.ts:299:      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets`, {
+apps/web-app/src/services/preset-submission-service.ts:346:    } catch (err) {
+apps/web-app/src/services/preset-submission-service.ts:376:      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+apps/web-app/src/services/preset-submission-service.ts:378:      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/mine`, {
+apps/web-app/src/services/preset-submission-service.ts:399:    } catch (err) {
+apps/web-app/src/services/preset-submission-service.ts:419:      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+apps/web-app/src/services/preset-submission-service.ts:421:      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/rate-limit`, {
+apps/web-app/src/services/preset-submission-service.ts:439:        resetAt: result.reset_at ? new Date(result.reset_at) : null,
+apps/web-app/src/services/preset-submission-service.ts:441:    } catch (err) {
+apps/web-app/src/services/preset-submission-service.ts:458:      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+apps/web-app/src/services/preset-submission-service.ts:460:      const response = await fetch(
+apps/web-app/src/services/preset-submission-service.ts:474:        const data = await response.json().catch(() => ({}));
+apps/web-app/src/services/preset-submission-service.ts:479:    } catch (err) {
+apps/web-app/src/services/preset-submission-service.ts:556:      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+apps/web-app/src/services/preset-submission-service.ts:572:      const response = await fetch(
+apps/web-app/src/services/preset-submission-service.ts:615:    } catch (err) {
+apps/web-app/src/services/router-service.ts:414:      } catch (error) {
+apps/web-app/src/services/saved-presets-service.ts:92:    } catch (error) {
+apps/web-app/src/services/saved-presets-service.ts:110:      } catch (error) {
+apps/web-app/src/services/saved-presets-service.ts:138:      savedAt: new Date().toISOString(),
+apps/web-app/src/services/share-service.ts:198:    const paramsRecord = params as unknown as Record<string, unknown>;
+apps/web-app/src/services/share-service.ts:320:    const id = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw, 10) : NaN;
+apps/web-app/src/services/share-service.ts:391:      const version = parseInt(url.searchParams.get('v') || '1', 10);
+apps/web-app/src/services/share-service.ts:434:    } catch (error) {
+apps/web-app/src/services/share-service.ts:472:    } catch (error) {
+apps/web-app/src/services/share-service.ts:506:    } catch {
+apps/web-app/src/services/share-service.ts:525:    } catch (error) {
+apps/web-app/src/services/share-service.ts:581:          Number.isInteger(Number(record.i)) &&
+apps/web-app/src/services/share-service.ts:582:          Number(record.i) >= 0;
+apps/web-app/src/services/storage-service.ts:26:   * caught by the try/catch in the actual operation instead.
+apps/web-app/src/services/storage-service.ts:56:    } catch {
+apps/web-app/src/services/storage-service.ts:77:      // Always try JSON.parse first for proper type restoration
+apps/web-app/src/services/storage-service.ts:80:        return JSON.parse(item) as T;
+apps/web-app/src/services/storage-service.ts:81:      } catch {
+apps/web-app/src/services/storage-service.ts:85:    } catch (error) {
+apps/web-app/src/services/storage-service.ts:107:    } catch (error) {
+apps/web-app/src/services/storage-service.ts:133:    } catch (error) {
+apps/web-app/src/services/storage-service.ts:150:    } catch (error) {
+apps/web-app/src/services/storage-service.ts:173:    } catch (error) {
+apps/web-app/src/services/storage-service.ts:196:              result[key] = JSON.parse(value) as T;
+apps/web-app/src/services/storage-service.ts:197:            } catch {
+apps/web-app/src/services/storage-service.ts:203:    } catch (error) {
+apps/web-app/src/services/storage-service.ts:220:    } catch {
+apps/web-app/src/services/storage-service.ts:235:    } catch {
+apps/web-app/src/services/storage-service.ts:247:        expiresAt: Date.now() + ttlMs,
+apps/web-app/src/services/storage-service.ts:251:    } catch (error) {
+apps/web-app/src/services/storage-service.ts:268:      if (data.expiresAt && Date.now() > data.expiresAt) {
+apps/web-app/src/services/storage-service.ts:274:    } catch (error) {
+apps/web-app/src/services/telemetry-service.ts:55:  private static flushTimer: ReturnType<typeof setTimeout> | null = null;
+apps/web-app/src/services/telemetry-service.ts:59:  /** `Date.now()` when the current visible stretch began; null while hidden or idle. */
+apps/web-app/src/services/telemetry-service.ts:105:        this.visibleSince = document.visibilityState === 'visible' ? Date.now() : null;
+apps/web-app/src/services/telemetry-service.ts:133:        this.flushTimer = setTimeout(() => this.flush(), this.FLUSH_DELAY_MS);
+apps/web-app/src/services/telemetry-service.ts:135:    } catch (error) {
+apps/web-app/src/services/telemetry-service.ts:151:    this.visibleSince = document.visibilityState === 'visible' ? Date.now() : null;
+apps/web-app/src/services/telemetry-service.ts:204:    } catch (error) {
+apps/web-app/src/services/telemetry-service.ts:233:    void fetch(url, {
+apps/web-app/src/services/telemetry-service.ts:238:    }).catch((error: unknown) => logger.debug('[Telemetry] fetch fallback failed', error));
+apps/web-app/src/services/telemetry-service.ts:256:      this.accumulatedMs += Math.max(0, Date.now() - this.visibleSince);
+apps/web-app/src/services/telemetry-service.ts:263:      this.visibleSince = Date.now();
+apps/web-app/src/services/toast-service.ts:74:  private static timers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+apps/web-app/src/services/toast-service.ts:80:    return `toast_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+apps/web-app/src/services/toast-service.ts:106:      timestamp: Date.now(),
+apps/web-app/src/services/toast-service.ts:120:      const timer = setTimeout(() => {
+apps/web-app/src/services/tutorial-service.ts:356:      completedAt: Date.now(),
+apps/web-app/src/services/tutorial-service.ts:455:      } catch (error) {
+apps/web-app/src/services/tutorial-service.ts:610:      setTimeout(() => this.start(tool), 300);
+apps/web-app/src/services/world-service.ts:50:      const [dcResponse, worldsResponse] = await Promise.all([
+apps/web-app/src/services/world-service.ts:51:        fetch('/json/data-centers.json'),
+apps/web-app/src/services/world-service.ts:52:        fetch('/json/worlds.json'),
+apps/web-app/src/services/world-service.ts:71:    } catch (error) {
+apps/web-app/src/shared/custom-dye.ts:41:  const syntheticId = -(Date.now() + ++customDyeSequence);
+apps/web-app/src/shared/error-handler.ts:101:        window as unknown as { Sentry: { captureException: (error: AppError) => void } }
+apps/web-app/src/shared/example-link.ts:35:  } catch {
+apps/web-app/src/shared/example-link.ts:74:  } catch {
+apps/web-app/src/shared/format.ts:16:export function formatNumber(
+apps/web-app/src/shared/format.ts:28:  return new Date(d).toLocaleDateString(locale);
+apps/web-app/src/shared/format.ts:45:    n: formatNumber(n),
+apps/web-app/src/shared/palette-export.ts:136:  return new Date().toISOString().split('T')[0];
+apps/web-app/src/shared/palette-export.ts:269:          ? { deltaE: Number(entry.delta.toFixed(2)) }
+apps/web-app/src/shared/subscription-manager.ts:68:      } catch {
+apps/web-app/src/shared/utils.ts:41:      } catch (error) {
+packages/auth/src/discord.ts:67: * const interaction = JSON.parse(result.body);
+packages/auth/src/discord.ts:79:  if (contentLength && parseInt(contentLength, 10) > maxBodySize) {
+packages/auth/src/discord.ts:103:  const timestampSeconds = Number(timestamp);
+packages/auth/src/discord.ts:107:  const nowSeconds = Date.now() / 1000;
+packages/auth/src/discord.ts:136:  } catch (error) {
+packages/auth/src/encoding/base64.ts:49:        bytes.subarray(i, i + CHUNK) as unknown as number[]
+packages/auth/src/encoding/hex.ts:28:    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+packages/auth/src/encoding/index.ts:17: * const decoded = JSON.parse(base64UrlDecode(payload));
+packages/auth/src/hmac.ts:182:  } catch {
+packages/auth/src/hmac.ts:211:  } catch {
+packages/auth/src/hmac.ts:299: * const timestamp = String(Math.floor(Date.now() / 1000));
+packages/auth/src/hmac.ts:326:  const timestampNum = parseInt(req.timestamp, 10);
+packages/auth/src/hmac.ts:329:  const now = Date.now();
+packages/auth/src/jwt.ts:107: * console.log('Token expires:', new Date(payload.exp * 1000));
+packages/auth/src/jwt.ts:118:    return JSON.parse(payloadJson) as JWTPayload;
+packages/auth/src/jwt.ts:119:  } catch {
+packages/auth/src/jwt.ts:144:  const header: JWTHeader = JSON.parse(headerJson) as JWTHeader;
+packages/auth/src/jwt.ts:171:  const payload: unknown = JSON.parse(payloadJson);
+packages/auth/src/jwt.ts:247:    const now = Math.floor(Date.now() / 1000);
+packages/auth/src/jwt.ts:269:  } catch {
+packages/auth/src/jwt.ts:321:      const tokenAge = Date.now() - payload.iat * 1000;
+packages/auth/src/jwt.ts:328:  } catch {
+packages/auth/src/revocation.ts:64:  } catch {
+packages/auth/src/revocation.ts:90:    const now = Math.floor(Date.now() / 1000);
+packages/auth/src/revocation.ts:94:  } catch {
+packages/auth/src/timing.ts:47:  } catch {
+packages/bot-logic/src/commands/accessibility.ts:189:        color: parseInt(d.hex.replace('#', ''), 16),
+packages/bot-logic/src/commands/accessibility.ts:224:        color: parseInt(a.hex.replace('#', ''), 16),
+packages/bot-logic/src/commands/accessibility.ts:242:      color: parseInt(a.hex.replace('#', ''), 16),
+packages/bot-logic/src/commands/accessibility.ts:245:  } catch {
+packages/bot-logic/src/commands/comparison.ts:134:      color: parseInt(dyes[0].hex.replace('#', ''), 16),
+packages/bot-logic/src/commands/comparison.ts:138:  } catch {
+packages/bot-logic/src/commands/contrast.ts:120:      color: parseInt(dyes[0].hex.replace('#', ''), 16),
+packages/bot-logic/src/commands/contrast.ts:129:  } catch {
+packages/bot-logic/src/commands/dye-info.ts:148:      color: parseInt(dye.hex.replace('#', ''), 16),
+packages/bot-logic/src/commands/dye-info.ts:152:  } catch {
+packages/bot-logic/src/commands/dye-info.ts:258:      color: parseInt(selectedDyes[0].hex.replace('#', ''), 16),
+packages/bot-logic/src/commands/dye-info.ts:263:  } catch {
+packages/bot-logic/src/commands/gradient.ts:342:      color: parseInt(startColor.hex.replace('#', ''), 16),
+packages/bot-logic/src/commands/gradient.ts:354:  } catch {
+packages/bot-logic/src/commands/harmony.ts:324:      color: parseInt(baseHex.replace('#', ''), 16),
+packages/bot-logic/src/commands/harmony.ts:335:  } catch {
+packages/bot-logic/src/commands/mixer.ts:160:      color: parseInt(bestStop.dye.hex.replace('#', ''), 16),
+packages/bot-logic/src/commands/mixer.ts:170:  } catch {
+packages/bot-logic/src/commands/swatch.ts:231:  } catch (error) {
+packages/bot-logic/src/commands/swatch.ts:330:        color: parseInt(target.sourceHex.replace('#', ''), 16),
+packages/bot-logic/src/commands/swatch.ts:402:          .map((g) => getLocalizedDyeName(g.dye!.itemID, g.dye!.name, locale))
+packages/bot-logic/src/commands/swatch.ts:417:      color: parseInt(kept[0].sourceHex.replace('#', ''), 16),
+packages/bot-logic/src/commands/swatch.ts:421:  } catch {
+packages/bot-logic/src/input-resolution.ts:42:  const n = Number(m[1]);
+packages/bot-logic/src/input-resolution.ts:49:function isBareNumber(input: string): boolean {
+packages/bot-logic/src/input-resolution.ts:54:  if (isBareNumber(query)) {
+packages/bot-logic/src/input-resolution.ts:75:  if (isBareNumber(name)) return parseDyeIdInput(name);
+packages/bot-logic/src/input-resolution.ts:205:  if (isBareNumber(input)) {
+packages/bot-logic/src/localization.ts:64:  } catch {
+packages/bot-logic/src/localization.ts:87:  } catch {
+packages/bot-logic/src/localization.ts:106:  } catch {
+packages/bot-logic/src/localization.ts:124:  } catch {
+packages/bot-logic/src/localization.ts:142:  } catch {
+packages/core/src/blending/conversions.ts:302:    r: parseInt(full.substring(0, 2), 16),
+packages/core/src/blending/conversions.ts:303:    g: parseInt(full.substring(2, 4), 16),
+packages/core/src/blending/conversions.ts:304:    b: parseInt(full.substring(4, 6), 16),
+packages/core/src/services/APIService.ts:40:  fetch(url: string, options?: RequestInit): Promise<Response>;
+packages/core/src/services/APIService.ts:47:  async fetch(url: string, options?: RequestInit): Promise<Response> {
+packages/core/src/services/APIService.ts:48:    return fetch(url, options);
+packages/core/src/services/APIService.ts:117:    const now = Date.now();
+packages/core/src/services/APIService.ts:398:    } catch (error) {
+packages/core/src/services/APIService.ts:419:    if (Date.now() - cached.timestamp > cached.ttl) {
+packages/core/src/services/APIService.ts:446:      timestamp: Date.now(),
+packages/core/src/services/APIService.ts:462:    } catch (error) {
+packages/core/src/services/APIService.ts:546:    } catch (error) {
+packages/core/src/services/APIService.ts:588:    } catch (error) {
+packages/core/src/services/APIService.ts:619:    // arrays, and the call below was outside the try/catch — uncaught on cold cache with
+packages/core/src/services/APIService.ts:670:    } catch (error) {
+packages/core/src/services/APIService.ts:688:    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+packages/core/src/services/APIService.ts:691:      const response = await this.fetchClient.fetch(url, { signal: controller.signal });
+packages/core/src/services/APIService.ts:706:        const size = parseInt(contentLength, 10);
+packages/core/src/services/APIService.ts:724:        return JSON.parse(text) as { results?: UniversalisItemResult[] };
+packages/core/src/services/APIService.ts:725:      } catch (parseError) {
+packages/core/src/services/APIService.ts:782:        lastUpdate: Date.now(),
+packages/core/src/services/APIService.ts:785:    } catch (error) {
+packages/core/src/services/APIService.ts:831:            lastUpdate: Date.now(),
+packages/core/src/services/APIService.ts:845:    } catch (error) {
+packages/core/src/services/APIService.ts:955:    const cacheChecks = await Promise.all(
+packages/core/src/services/APIService.ts:997:        await Promise.all(cacheWrites);
+packages/core/src/services/APIService.ts:1023:      const response = await this.fetchClient.fetch(`${this.baseUrl}/data-centers`);
+packages/core/src/services/APIService.ts:1025:    } catch {
+packages/core/src/services/APIService.ts:1034:    const start = Date.now();
+packages/core/src/services/APIService.ts:1038:      const latency = Date.now() - start;
+packages/core/src/services/APIService.ts:1041:    } catch {
+packages/core/src/services/chara/chara-parser.ts:202:  const parts = value.split(',').map((p) => Number(p.trim()));
+packages/core/src/services/chara/chara-parser.ts:291:    data = JSON.parse(text);
+packages/core/src/services/chara/chara-parser.ts:292:  } catch {
+packages/core/src/services/CharacterColorService.ts:180:        .catch((err: unknown) => {
+packages/core/src/services/CharacterColorService.ts:207:        .catch((err: unknown) => {
+packages/core/src/services/color/ColorConverter.ts:199:    const r = parseInt(cacheKey.substring(0, 2), 16);
+packages/core/src/services/color/ColorConverter.ts:200:    const g = parseInt(cacheKey.substring(2, 4), 16);
+packages/core/src/services/color/ColorConverter.ts:201:    const b = parseInt(cacheKey.substring(4, 6), 16);
+packages/core/src/services/dye/DyeDatabase.ts:308:          return dye as unknown as DyeInternal;
+packages/core/src/services/dye/DyeDatabase.ts:370:    } catch (error) {
+packages/core/src/services/dye/DyeSearch.ts:223:        } catch {
+packages/core/src/services/dye/DyeSearch.ts:231:    } catch (error) {
+packages/core/src/services/dye/DyeSearch.ts:302:        } catch {
+packages/core/src/services/dye/DyeSearch.ts:316:    } catch (error) {
+packages/core/src/services/dye/HarmonyGenerator.ts:117:    } catch {
+packages/core/src/services/localization/LocaleLoader.ts:63:    } catch (error) {
+packages/core/src/services/LocalizationService.ts:570:    await Promise.all(locales.map((locale) => this.setLocale(locale)));
+packages/core/src/utils/index.ts:329:  return new Promise((resolve) => setTimeout(resolve, delay));
+packages/core/src/utils/index.ts:342: *   await fetch(url, { signal: controller.signal });
+packages/core/src/utils/index.ts:343: * } catch (error) {
+packages/core/src/utils/index.ts:373: *   () => fetch('https://api.example.com/data').then(r => r.json()),
+packages/core/src/utils/index.ts:419:    } catch (error) {
+packages/logger/src/core/base-logger.ts:119:      timestamp: new Date().toISOString(),
+packages/logger/src/core/base-logger.ts:498:    const start = typeof performance !== 'undefined' ? performance.now() : Date.now();
+packages/logger/src/core/base-logger.ts:501:      const end = typeof performance !== 'undefined' ? performance.now() : Date.now();
+packages/logger/src/core/base-logger.ts:567:    const start = typeof performance !== 'undefined' ? performance.now() : Date.now();
+packages/logger/src/core/base-logger.ts:570:      const end = typeof performance !== 'undefined' ? performance.now() : Date.now();
+packages/logger/src/core/base-logger.ts:777:  } catch (error) {
+packages/logger/src/index.ts:25: *   async fetch(request: Request, env: Env) {
+packages/logger/src/presets/worker.ts:47: *   async fetch(request: Request, env: Env) {
+packages/svg/src/base.ts:45:    r: parseInt(cleanHex.slice(0, 2), 16),
+packages/svg/src/base.ts:46:    g: parseInt(cleanHex.slice(2, 4), 16),
+packages/svg/src/base.ts:47:    b: parseInt(cleanHex.slice(4, 6), 16),
+packages/test-utils/src/auth/headers.ts:13: * const response = await fetch('/api/protected', { headers });
+packages/test-utils/src/auth/jwt.ts:20: * const response = await fetch('/api/protected', {
+packages/test-utils/src/auth/jwt.ts:76:  const now = Math.floor(Date.now() / 1000);
+packages/test-utils/src/cloudflare/analytics.ts:12: * const env = { ANALYTICS: analytics as unknown as AnalyticsEngineDataset };
+packages/test-utils/src/cloudflare/analytics.ts:64:        timestamp: Date.now(),
+packages/test-utils/src/cloudflare/d1.ts:24: * const env = { DB: db as unknown as D1Database };
+packages/test-utils/src/cloudflare/d1.ts:200:          // from generic catch-all mocks that return non-null for all queries)
+packages/test-utils/src/cloudflare/d1.ts:378: * (db as unknown as MockD1Database)._queries;
+packages/test-utils/src/cloudflare/d1.ts:379: * (db as unknown as MockD1Database)._setupMock(...);
+packages/test-utils/src/cloudflare/d1.ts:385:  return createMockD1Database() as unknown as D1Database;
+packages/test-utils/src/cloudflare/fetcher.ts:18: * const env = { PRESETS_API: presetsApi as unknown as Fetcher };
+packages/test-utils/src/cloudflare/fetcher.ts:165:        } catch {
+packages/test-utils/src/cloudflare/fetcher.ts:176:        timestamp: Date.now(),
+packages/test-utils/src/cloudflare/kv.ts:12: * const env = { RATE_LIMITS: kv as unknown as KVNamespace };
+packages/test-utils/src/cloudflare/kv.ts:21: * expect(kv._ttls.get('user:123:count')).toBeGreaterThan(Date.now());
+packages/test-utils/src/cloudflare/kv.ts:87:   * @param nowSeconds - Snapshot of current time in seconds (use Date.now() / 1000)
+packages/test-utils/src/cloudflare/kv.ts:107:      const nowSeconds = Date.now() / 1000;
+packages/test-utils/src/cloudflare/kv.ts:120:          return JSON.parse(value);
+packages/test-utils/src/cloudflare/kv.ts:121:        } catch {
+packages/test-utils/src/cloudflare/kv.ts:135:        ttls.set(key, Math.floor(Date.now() / 1000) + options.expirationTtl);
+packages/test-utils/src/cloudflare/kv.ts:157:      const nowSeconds = Date.now() / 1000;
+packages/test-utils/src/cloudflare/kv.ts:196:      const nowSeconds = Date.now() / 1000;
+packages/test-utils/src/cloudflare/r2.ts:15: * const env = { IMAGES: bucket as unknown as R2Bucket };
+packages/test-utils/src/cloudflare/r2.ts:151:        json: async <T = unknown>() => JSON.parse(new TextDecoder().decode(body)) as T,
+packages/test-utils/src/cloudflare/r2.ts:170:        uploaded: new Date(),
+packages/test-utils/src/factories/preset.ts:77:  const now = new Date().toISOString();
+packages/types/src/auth/xivauth.ts:109:  /** True if user has any verified characters */
+packages/worker-kit/src/middleware/logger.ts:199:  } catch {
+packages/worker-kit/src/middleware/rate-limit.ts:139:    } catch (err) {
+packages/worker-kit/src/middleware/rate-limit.ts:183:        // 2026-08-29 FINDING-010: see the comment on the catch block above.
+packages/worker-kit/src/middleware/rate-limit.ts:201:        Math.ceil((result.resetAt.getTime() - Date.now()) / 1000);
+packages/worker-kit/src/middleware/request-id.ts:104:  } catch {
+packages/worker-kit/src/rate-limiter/backends/cloudflare.ts:124:    // `check()`'s catch, which fails OPEN: every request would be silently
+packages/worker-kit/src/rate-limiter/backends/cloudflare.ts:156:    return new Date(Math.floor(now / periodMs) * periodMs + periodMs);
+packages/worker-kit/src/rate-limiter/backends/cloudflare.ts:161:    const now = Date.now();
+packages/worker-kit/src/rate-limiter/backends/cloudflare.ts:184:    } catch (error) {
+packages/worker-kit/src/rate-limiter/backends/kv.ts:111:    // fixed-window KV key — separate Date.now() calls could straddle a window
+packages/worker-kit/src/rate-limiter/backends/kv.ts:113:    const now = Date.now();
+packages/worker-kit/src/rate-limiter/backends/kv.ts:129:    now: number = Date.now()
+packages/worker-kit/src/rate-limiter/backends/kv.ts:138:      const entry: KVEntry | null = data ? (JSON.parse(data) as KVEntry) : null;
+packages/worker-kit/src/rate-limiter/backends/kv.ts:162:    } catch (error) {
+packages/worker-kit/src/rate-limiter/backends/kv.ts:208:    now: number = Date.now()
+packages/worker-kit/src/rate-limiter/backends/kv.ts:217:          ? (JSON.parse(result) as KVEntry)
+packages/worker-kit/src/rate-limiter/backends/kv.ts:237:      } catch (error) {
+packages/worker-kit/src/rate-limiter/backends/kv.ts:274:    await Promise.all(keys.map((k) => this.kv.delete(k.name)));
+packages/worker-kit/src/rate-limiter/backends/kv.ts:282:    await Promise.all(keys.map((k) => this.kv.delete(k.name)));
+packages/worker-kit/src/rate-limiter/backends/kv.ts:306:    return new Date((currentWindow + 1) * windowMs);
+packages/worker-kit/src/rate-limiter/backends/memory.ts:88:    const now = Date.now();
+packages/worker-kit/src/rate-limiter/backends/memory.ts:107:      ? new Date(oldestInWindow + config.windowMs)
+packages/worker-kit/src/rate-limiter/backends/memory.ts:108:      : new Date(now + config.windowMs);
+packages/worker-kit/src/rate-limiter/backends/memory.ts:173:    const now = Date.now();
+packages/worker-kit/src/rate-limiter/backends/upstash.ts:89:      const resetAt = new Date(Date.now() + remainingTtl * 1000);
+packages/worker-kit/src/rate-limiter/backends/upstash.ts:98:    } catch (error) {
+packages/worker-kit/src/rate-limiter/backends/upstash.ts:118:          resetAt: new Date(Date.now() + config.windowMs),
+packages/worker-kit/src/rate-limiter/index.ts:17: *   async fetch(request: Request) {

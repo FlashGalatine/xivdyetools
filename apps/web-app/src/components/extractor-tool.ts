@@ -2067,8 +2067,15 @@ export class ExtractorTool extends BaseComponent {
       closestDye =
         filteredDyes.length > 0
           ? filteredDyes.reduce((best, dye) => {
-              const bestDist = ColorService.getColorDistance(hex, best.hex);
-              const dyeDist = ColorService.getColorDistance(hex, dye.hex);
+              // BUG-007: the substitute must be chosen by the same metric as
+              // the original match, or excluding a dye can change which dye
+              // "closest" means.
+              const bestDist = ColorService.getDistanceForMethod(
+                hex,
+                best.hex,
+                this.matchingMethod
+              );
+              const dyeDist = ColorService.getDistanceForMethod(hex, dye.hex, this.matchingMethod);
               return dyeDist < bestDist ? dye : best;
             })
           : null;
@@ -2083,16 +2090,25 @@ export class ExtractorTool extends BaseComponent {
       return;
     }
 
-    // Cache distances
+    // BUG-007: measure with the method the user selected, because that is the
+    // label the card prints. `getColorDistance` is plain RGB Euclidean on a
+    // 0-441.67 scale; the result card treats a `ciede2000`-labelled number as a
+    // real ΔE2000 and grades it against bands cut at 5 / 10 / 20, so every match
+    // was mis-graded and the printed figure meant nothing. gradient-tool has
+    // always done it this way.
     const closestDyeWithDistance: DyeWithDistance = {
       ...closestDye,
-      distance: ColorService.getColorDistance(hex, closestDye.hex),
+      distance: ColorService.getDistanceForMethod(hex, closestDye.hex, this.matchingMethod),
     };
 
-    const withinDistanceWithCache: DyeWithDistance[] = withinDistance.map((dye) => ({
-      ...dye,
-      distance: ColorService.getColorDistance(hex, dye.hex),
-    }));
+    // BUG-092: findDyesWithinDistance already contains the closest dye, so
+    // prepending it produced a duplicate top card and an off-by-one count.
+    const withinDistanceWithCache: DyeWithDistance[] = withinDistance
+      .filter((dye) => dye.id !== closestDye.id)
+      .map((dye) => ({
+        ...dye,
+        distance: ColorService.getDistanceForMethod(hex, dye.hex, this.matchingMethod),
+      }));
 
     // Store matched dyes
     this.matchedDyes = [closestDyeWithDistance, ...withinDistanceWithCache];
@@ -2387,9 +2403,13 @@ export class ExtractorTool extends BaseComponent {
         return;
       }
 
-      // Extract palette and match to dyes
+      // Extract palette and match to dyes.
+      // BUG-091: without `matchingMethod` this fell back to the service default
+      // (ΔE2000) whatever the user had selected, so auto-extract and the manual
+      // picker could disagree about the same image.
       const matches = this.paletteService.extractAndMatchPalette(pixels, dyeService, {
         colorCount: this.paletteColorCount,
+        matchingMethod: this.matchingMethod,
       });
 
       this.lastPaletteResults = matches;

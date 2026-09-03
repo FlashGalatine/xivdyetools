@@ -5,6 +5,79 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-09-02
+
+Deep-dive remediation, Sprint 17 (docs/audits/2026-09-02-deep-dive). The bot
+stays **parked** — this sprint is P3 by policy and was executed as part of
+finishing the audit, not as a signal that stoat-worker is being revived. Minor
+bump: the help text now describes a different (smaller, true) command set, and
+the parser accepts input it used to ignore.
+
+### Fixed
+
+- **BUG-101 — an unhandled `'error'` event crashed the process and pre-empted
+  its own reconnect.** `index.ts` registered `ready` and `messageCreate` and no
+  `error` listener. Node's EventEmitter THROWS an unhandled `'error'`, so a
+  transient socket failure took the whole process down instead of falling
+  through to the `disconnect()` + backoff path revolt.js provides. A listener is
+  all it takes.
+
+- **BUG-103 — the help advertised thirteen commands and the router serves
+  four.** `!xd random` was listed as though it worked and answered
+  `Unknown command "dye.random"`; so were `search`, `list`, `harmony`,
+  `gradient`, `mixer`, `comparison`, `match`, `extract`, `a11y` and `prefs`. The
+  overview now lists what `COMMAND_ROUTES` actually dispatches — `info`, `ping`,
+  `about`, `help` — and names the rest, in prose, as not served by this bot yet.
+  `help.test.ts` now parses every command the overview advertises and asserts
+  `isRegisteredCommand()` accepts it, which is the tie between help and router
+  that never existed.
+
+- **BUG-102 — "Did you mean?" returned near-arbitrary dyes.** `getSuggestions`
+  tried a `startsWith` pass and fell back to a character-overlap heuristic. The
+  prefix pass was UNREACHABLE: the function is only called when no dye name
+  *contains* the input, and a name starting with the input necessarily contains
+  it. So every suggestion came from the fallback, which asked only that 70 % of
+  the input's characters appear anywhere in the name — for a short query, very
+  nearly the whole database. Replaced with a capped Levenshtein ranking that
+  says nothing rather than something arbitrary.
+
+- **image-stoat-12 — a newline after the prefix silently dropped the command.**
+  The separator check accepted only a literal space, though its own comment said
+  "whitespace"; `"!xd\nping"`, ordinary in a multi-line Revolt message, matched
+  no prefix and the bot ignored the message entirely. The tokeniser eleven lines
+  below already splits on `/\s+/`.
+
+### Tests
+
+**image-stoat-13.** `commands/index.test.ts` re-implemented the `messageCreate`
+gate INLINE rather than importing it, and the copy omitted two of the real
+handler's checks — the other-bot filter and the per-user throttle — so deleting
+either from `message-handler.ts` left all five tests green. It now drives the
+actual `createMessageHandler`, with cases for both omitted checks (verified by
+removing the filter and watching the new test go red). Two describes that
+asserted nothing about product code were removed: one checked
+`typeof process.exit === 'function'` under the name "shutdown handler", the
+other confirmed that the file's own `createMockClient` registers a handler and
+resolves a promise. And `info.test.ts`'s "stores message context" asserted
+`size >= 0` — never false for a Map — with a comment describing the
+*pre-BUG-038* keying; it now asserts the context is keyed by the **bot reply's**
+id, which is the only key a reaction handler could ever look up.
+
+### Known, not actioned
+
+**image-stoat-14.** stoat-worker is deliberately off the monorepo dead-code gate
+(root `knip.jsonc`, `turbo.json`, and a bare `eslint src/` for its `lint`), and
+carries the corresponding drift: `withLoadingIndicator`, `DYE_INFO_REACTIONS`,
+`parseMultiDyeArgs`, `isAuthorized`, the two Upstash config fields (the throttle
+is in-memory), and every `MessageContextStore` write have no production reader —
+each verified by grep this sprint. They are left in place: two of them
+(`DYE_INFO_REACTIONS` and the context store) are scaffolding for the reaction
+feature `commands/info.ts:108` documents as planned, and the choice between
+deleting the rest and putting this workspace on `lint:dead` is a product call
+about whether the bot is being revived. `isAuthorized` gates nothing today only
+because no privileged command exists — it is unused scaffolding, not a security
+control left unwired.
+
 ## [0.2.3] - 2026-08-31
 
 Security-audit remediation only (2026-08-29 security audit, `docs/audits/2026-08-29-security/`, Sprint 13 — the last sprint of that audit). The bot stays parked; if this bot is ever unparked, its logs no longer carry anything about who ran a command or what channel it ran in.

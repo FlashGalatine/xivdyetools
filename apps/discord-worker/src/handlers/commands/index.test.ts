@@ -2,6 +2,9 @@
  * Tests for command handlers index exports
  */
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // Mock WASM dependencies that command handlers may import transitively
 vi.mock('@resvg/resvg-wasm', () => ({
@@ -22,41 +25,45 @@ vi.mock('../../services/fonts', () => ({
 }));
 
 describe('commands/index exports', () => {
-  // The barrel import pulls every handler (and their transitive deps) in one
-  // dynamic import — near the 5s default under parallel CI load, so it gets
-  // an explicit budget instead of flaking the workspace gate.
-  it('exports all command handlers', { timeout: 30_000 }, async () => {
+  // discord-handlers-16: this file used to be 20+ pairs of
+  // `expect(commands.handleX).toBeDefined()` / `expect(typeof ...).toBe('function')`
+  // over a barrel of re-exports -- the canonical shape that cannot fail for any
+  // change the compiler already admits. What the barrel import genuinely buys
+  // is that every handler module (and its transitive deps -- WASM, fonts,
+  // locales) loads at all, so keep exactly one smoke assertion for that, and
+  // spend the rest on the drift this file was presumably meant to catch.
+  it('the barrel loads every handler module', { timeout: 30_000 }, async () => {
     const commands = await import('./index.js');
 
-    expect(commands.handleHarmonyCommand).toBeDefined();
+    // A representative handler from each corner of the barrel: if any module in
+    // the graph fails to load, the import above throws before we get here.
     expect(typeof commands.handleHarmonyCommand).toBe('function');
-
-    expect(commands.handleDyeCommand).toBeDefined();
-    expect(typeof commands.handleDyeCommand).toBe('function');
-
-    // V4 Commands
-    expect(commands.handleExtractorCommand).toBeDefined();
-    expect(typeof commands.handleExtractorCommand).toBe('function');
-
-    expect(commands.handleGradientCommand).toBeDefined();
-    expect(typeof commands.handleGradientCommand).toBe('function');
-
-    // V4: Swatch command
-    expect(commands.handleSwatchCommand).toBeDefined();
-    expect(typeof commands.handleSwatchCommand).toBe('function');
-
-    // Legacy commands (still exported for backward compatibility)
-
-    expect(commands.handleAccessibilityCommand).toBeDefined();
-    expect(typeof commands.handleAccessibilityCommand).toBe('function');
-
-    expect(commands.handleManualCommand).toBeDefined();
-    expect(typeof commands.handleManualCommand).toBe('function');
-
-    expect(commands.handleComparisonCommand).toBeDefined();
-    expect(typeof commands.handleComparisonCommand).toBe('function');
-
-    expect(commands.handlePresetCommand).toBeDefined();
     expect(typeof commands.handlePresetCommand).toBe('function');
+    expect(typeof commands.handleStatsCommand).toBe('function');
+  });
+
+  // The real risk: a command in COMMAND_REGISTRY -- which /about lists and
+  // register-commands publishes to Discord -- with no branch in the
+  // interaction dispatch. Users would see the command in Discord's picker and
+  // get "Unknown command" when they ran it. Nothing tied the two together.
+  it('every registered command has a dispatch branch in index.ts', async () => {
+    const { COMMAND_REGISTRY } = await import('../../commands/registry.js');
+    // `fileURLToPath` needs the import.meta.url STRING: with workers-types and
+    // @types/node both loaded the global URL is not node:url's URL, and passing
+    // a constructed one fails type-check (og-worker hit this in 0de6f12e).
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(here, '..', '..', 'index.ts'), 'utf8');
+
+    // A superset: `case` labels from any switch in the file count, so this can
+    // only UNDER-report. That is the safe direction for a drift guard.
+    const dispatched = new Set(
+      [...source.matchAll(/^\s*case '([a-z0-9_-]+)':/gm)].map((m) => m[1])
+    );
+
+    const missing = COMMAND_REGISTRY.filter((entry) => !entry.deprecated)
+      .map((entry) => entry.name)
+      .filter((name) => !dispatched.has(name));
+
+    expect(missing, 'registered commands with no dispatch branch').toEqual([]);
   });
 });

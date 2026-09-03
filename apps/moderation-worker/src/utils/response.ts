@@ -145,34 +145,12 @@ export function ephemeralResponse(content: string | InteractionResponseData): Re
 }
 
 /**
- * Creates an embed message response.
- */
-export function embedResponse(embed: DiscordEmbed, components?: DiscordActionRow[]): Response {
-  return messageResponse({
-    embeds: [embed],
-    components,
-  });
-}
-
-/**
  * Creates a deferred response (shows "thinking..." state).
  */
 export function deferredResponse(ephemeral = false): Response {
   return Response.json({
     type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
     data: ephemeral ? { flags: MessageFlags.EPHEMERAL } : undefined,
-  });
-}
-
-/**
- * Creates an autocomplete response with choices.
- */
-export function autocompleteResponse(
-  choices: Array<{ name: string; value: string }>
-): Response {
-  return Response.json({
-    type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
-    data: { choices },
   });
 }
 
@@ -196,25 +174,6 @@ export function successEmbed(title: string, description: string): DiscordEmbed {
     description,
     color: 0x00ff00,
   };
-}
-
-/**
- * Creates an info embed with consistent styling.
- */
-export function infoEmbed(title: string, description: string): DiscordEmbed {
-  return {
-    title: `\u2139\uFE0F ${title}`,
-    description,
-    color: 0x5865f2,
-  };
-}
-
-/**
- * Converts a hex color string to a Discord color integer.
- */
-export function hexToDiscordColor(hex: string): number {
-  const cleanHex = hex.replace('#', '');
-  return parseInt(cleanHex, 16);
 }
 
 /**
@@ -290,55 +249,27 @@ export function isValidUuid(id: string): boolean {
   return UUID_V4_REGEX.test(id);
 }
 
-/**
- * Encodes a string to base64url (URL-safe base64, no padding)
- * Safe for use in Discord custom_ids and URLs
- *
- * @param str - The string to encode
- * @returns Base64url encoded string
- */
-export function encodeBase64Url(str: string): string {
-  // TextEncoder is available in Cloudflare Workers
-  const bytes = new TextEncoder().encode(str);
-  const base64 = btoa(String.fromCharCode(...bytes));
-
-  // Convert to URL-safe format: replace +/= with -_ and remove padding
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
+// Base64URL encode/decode used to live here as a hand-rolled pair. They are now
+// `base64UrlEncode` / `base64UrlDecode` from `@xivdyetools/auth/encoding`, which this
+// worker already depends on (2026-09-01 dead-code audit, DEAD-017). The local copy also
+// spread the whole byte array into String.fromCharCode, which the package avoids.
 
 /**
- * Decodes a base64url string back to original string
+ * The rate-limit refusal, as a Discord **interaction response**.
  *
- * @param str - The base64url encoded string
- * @returns Decoded original string
- * @throws Error if the input is not valid base64url
- */
-export function decodeBase64Url(str: string): string {
-  // Convert from URL-safe format back to standard base64
-  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-
-  // Add padding if needed
-  while (base64.length % 4) {
-    base64 += '=';
-  }
-
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  return new TextDecoder().decode(bytes);
-}
-
-/**
- * Creates a rate-limited (429) response
+ * REFACTOR-004: the doc here used to promise "429 status and Retry-After
+ * header" and document a `resetTime` parameter. It returns 200 with a
+ * `CHANNEL_MESSAGE_WITH_SOURCE` body, sends no `Retry-After`, and the
+ * parameter was named `_resetTime` and never read.
  *
- * Returns an ephemeral message informing the user they've exceeded the rate limit,
- * along with appropriate HTTP headers.
+ * The 200 is correct and must stay: Discord reads the body as the interaction
+ * response, and a 429 would make it show "The application did not respond"
+ * instead of the refusal. So the documentation was the wrong half — and the
+ * parameter is now put to work rather than dropped, which is the difference
+ * between "please wait" and telling the moderator how long.
  *
- * @param resetTime - Unix timestamp (ms) when the rate limit resets
- * @returns Response with 429 status and Retry-After header
+ * @param resetTime - Unix timestamp (ms) when the window reopens
+ * @returns HTTP 200 carrying an ephemeral interaction message
  *
  * @example
  * ```typescript
@@ -347,12 +278,18 @@ export function decodeBase64Url(str: string): string {
  * }
  * ```
  */
-export function rateLimitedResponse(_resetTime: number): Response {
+export function rateLimitedResponse(resetTime: number): Response {
+  const secondsLeft = Math.max(0, Math.ceil((resetTime - Date.now()) / 1000));
+  const content =
+    secondsLeft > 0
+      ? `Rate limit exceeded. Try again in ${secondsLeft} second${secondsLeft === 1 ? '' : 's'}.`
+      : 'Rate limit exceeded. Please wait before trying again.';
+
   return new Response(
     JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: 'Rate limit exceeded. Please wait before trying again.',
+        content,
         flags: MessageFlags.EPHEMERAL,
         allowed_mentions: ALLOWED_MENTIONS_NONE,
       },

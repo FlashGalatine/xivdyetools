@@ -61,6 +61,17 @@ async function main(): Promise<void> {
     );
   });
 
+  // ── Gateway errors ─────────────────────────────────────────────────
+  // BUG-101: Node's EventEmitter THROWS an unhandled 'error' event, so a
+  // transient socket failure took the whole process down -- pre-empting the
+  // very auto-reconnect revolt.js would have performed on `disconnect()`.
+  // A listener is all it takes to restore the backoff path.
+  client.on('error', (error: unknown) => {
+    logger.error('Gateway error', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  });
+
   // ── Message handler ────────────────────────────────────────────────
   // Bot/self filtering, per-user throttle and error handling live in
   // message-handler.ts (unit-tested; FINDING-035, 2026-08-21 security audit).

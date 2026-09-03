@@ -4,9 +4,14 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ConfigController, getConfigController } from '../config-controller';
+import { ConfigController } from '../config-controller';
 import { StorageService } from '../storage-service';
-import { getDefaultConfig, type ConfigKey, type ToolConfigMap } from '@shared/tool-config-types';
+import {
+  getDefaultConfig,
+  DEFAULT_DISPLAY_OPTIONS,
+  type ConfigKey,
+  type ToolConfigMap,
+} from '@shared/tool-config-types';
 
 // Mock StorageService
 vi.mock('../storage-service', () => ({
@@ -63,15 +68,6 @@ describe('ConfigController', () => {
   // getConfigController Helper Tests
   // ============================================================================
 
-  describe('getConfigController helper', () => {
-    it('should return the singleton instance', () => {
-      const helper = getConfigController();
-      const direct = ConfigController.getInstance();
-
-      expect(helper).toBe(direct);
-    });
-  });
-
   // ============================================================================
   // getConfig Tests
   // ============================================================================
@@ -107,8 +103,34 @@ describe('ConfigController', () => {
 
       // Should have the stored value
       expect(config.harmonyType).toBe('analogous');
-      // Should also have default values for other properties
-      expect(config).toBeDefined();
+      // ...and every default the stored object lacked. This assertion used to
+      // be `expect(config).toBeDefined()`, which is true of any object at all
+      // and so could not fail whatever the merge did.
+      expect(config.displayOptions).toEqual(DEFAULT_DISPLAY_OPTIONS);
+      expect(config.matchingMethod).toBe(getDefaultConfig('harmony').matchingMethod);
+    });
+
+    // REFACTOR-010: the merge was `{ ...defaults, ...stored }` -- SHALLOW -- so
+    // a nested object in storage replaced its default WHOLESALE and never
+    // gained keys added to the default later.
+    it('merges nested objects with their defaults, not just top-level keys', () => {
+      // A displayOptions block persisted before `showSpectrum` existed.
+      const older: Record<string, boolean> = { ...DEFAULT_DISPLAY_OPTIONS };
+      delete older.showSpectrum;
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockReturnValue({
+        harmonyType: 'analogous',
+        displayOptions: { ...older, showHex: false },
+      });
+
+      const controller = ConfigController.getInstance();
+      const config = controller.getConfig('harmony');
+
+      // The stored preference survives...
+      expect(config.displayOptions.showHex).toBe(false);
+      // ...and the key added after it was written is filled in from defaults
+      // rather than staying `undefined` forever -- which is what the roughly
+      // thirty `?? true` reads at the call sites were papering over.
+      expect(config.displayOptions.showSpectrum).toBe(DEFAULT_DISPLAY_OPTIONS.showSpectrum);
     });
 
     it('should only load from storage once (lazy load)', () => {
@@ -350,8 +372,37 @@ describe('ConfigController', () => {
       // Reset all
       controller.resetAllConfigs();
 
-      // Storage should have been called for each config
-      expect(StorageService.setItem).toHaveBeenCalledTimes(14); // 2 sets + 12 resets (9 tools + global + market + advanced)
+      // 1 real set + 12 resets (9 tools + global + market + advanced).
+      // OPT-008: `setConfig('global', {})` merges an EMPTY partial into the
+      // current config and produces an identical object, so it no longer
+      // persists or notifies. That used to be the 14th write.
+      expect(StorageService.setItem).toHaveBeenCalledTimes(13);
+    });
+
+    // OPT-008: one display-option toggle fans out to NINE setConfig() calls by
+    // design (global + eight tools, so each tool can read its own config), and
+    // every one of them persisted and woke every subscriber -- including the
+    // tools whose value had not changed, each of which then re-rendered.
+    it('does not persist or notify when the written value is unchanged', () => {
+      const controller = ConfigController.getInstance();
+      controller.setConfig('harmony', { harmonyType: 'analogous' });
+
+      const listener = vi.fn();
+      const unsubscribe = controller.subscribe('harmony', listener);
+      listener.mockClear();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      controller.setConfig('harmony', { harmonyType: 'analogous' });
+
+      expect(StorageService.setItem).not.toHaveBeenCalled();
+      expect(listener).not.toHaveBeenCalled();
+
+      // ...and a real change still gets through.
+      controller.setConfig('harmony', { harmonyType: 'triadic' });
+      expect(StorageService.setItem).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
     });
 
     it('should notify all listeners', () => {

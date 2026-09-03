@@ -5,10 +5,11 @@
  * Creates simulated environments that mimic real worker interactions.
  *
  * @module integration/setup
+ * @testonly shared fixture factory for the discord-presets and oauth-presets
+ * cross-service integration suites; only tests construct these mock environments.
  */
 
 import { createMockD1Database, type MockD1Database } from '../src/cloudflare/d1.js';
-import { createMockKV, type MockKVNamespace } from '../src/cloudflare/kv.js';
 import { createTestJWT, createExpiredJWT } from '../src/auth/jwt.js';
 
 // ============================================================================
@@ -32,12 +33,6 @@ export const BOT_SIGNING_SECRET = 'test-signing-secret-at-least-32-bytes!!!';
 
 /** Moderator Discord IDs */
 export const MODERATOR_IDS = '111111111111111111,222222222222222222';
-
-/** OAuth worker URL (issuer for JWTs) */
-export const OAUTH_WORKER_URL = 'https://oauth.xivdyetools.com';
-
-/** Presets API URL */
-export const PRESETS_API_URL = 'https://api.xivdyetools.com';
 
 // ============================================================================
 // Mock User Data
@@ -107,33 +102,6 @@ export function createMockPresetsEnv(overrides: Partial<MockPresetsEnv> = {}): M
     BOT_SIGNING_SECRET,
     MODERATOR_IDS,
     JWT_SECRET: SHARED_JWT_SECRET,
-    ...overrides,
-  };
-}
-
-// ============================================================================
-// OAuth Mock Environment
-// ============================================================================
-
-export interface MockOAuthEnv {
-  DB: MockD1Database;
-  ENVIRONMENT: string;
-  WORKER_URL: string;
-  JWT_SECRET: string;
-  JWT_EXPIRY: string;
-  TOKEN_BLACKLIST?: MockKVNamespace;
-}
-
-/**
- * Create a mock OAuth environment
- */
-export function createMockOAuthEnv(overrides: Partial<MockOAuthEnv> = {}): MockOAuthEnv {
-  return {
-    DB: createMockD1Database(),
-    ENVIRONMENT: 'test',
-    WORKER_URL: OAUTH_WORKER_URL,
-    JWT_SECRET: SHARED_JWT_SECRET,
-    JWT_EXPIRY: '3600',
     ...overrides,
   };
 }
@@ -240,84 +208,7 @@ export async function createExpiredWebAuthHeaders(user: MockUser): Promise<WebAu
 }
 
 // ============================================================================
-// Request Builders
-// ============================================================================
-
-/**
- * Build a Request object for testing
- */
-export function buildRequest(
-  method: string,
-  path: string,
-  options: {
-    headers?: Record<string, string>;
-    body?: unknown;
-    baseUrl?: string;
-  } = {}
-): Request {
-  const url = `${options.baseUrl || PRESETS_API_URL}${path}`;
-  const init: RequestInit = {
-    method,
-    headers: options.headers || { 'Content-Type': 'application/json' },
-  };
-
-  if (options.body && method !== 'GET') {
-    init.body = JSON.stringify(options.body);
-  }
-
-  return new Request(url, init);
-}
-
-// ============================================================================
-// Database Seeding Helpers
-// ============================================================================
-
-/**
- * Seed a preset into the mock database
- */
-export function seedPreset(
-  db: MockD1Database,
-  preset: {
-    id: string;
-    name: string;
-    description: string;
-    category_id: string;
-    dyes: number[];
-    author_discord_id: string;
-    author_name: string;
-    status?: string;
-    vote_count?: number;
-  }
-): void {
-  db._setupMock((query, bindings) => {
-    if (query.includes('SELECT') && query.includes('WHERE id = ?')) {
-      const queryId = bindings[bindings.length - 1];
-      if (queryId === preset.id) {
-        return {
-          id: preset.id,
-          name: preset.name,
-          description: preset.description,
-          category_id: preset.category_id,
-          dyes: JSON.stringify(preset.dyes),
-          tags: '[]',
-          author_discord_id: preset.author_discord_id,
-          author_name: preset.author_name,
-          vote_count: preset.vote_count || 0,
-          status: preset.status || 'approved',
-          is_curated: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          dye_signature: null,
-          previous_values: null,
-        };
-      }
-    }
-    return null;
-  });
-}
-
-// ============================================================================
 // Re-exports for convenience
 // ============================================================================
 
-export { createMockD1Database, createMockKV, createTestJWT, createExpiredJWT };
+export { createMockD1Database, createTestJWT, createExpiredJWT };

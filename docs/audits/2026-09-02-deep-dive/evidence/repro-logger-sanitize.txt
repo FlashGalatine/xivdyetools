@@ -1,0 +1,18 @@
+in : Authorization: Basic dXNlcjpwYXNzd29yZA==
+out: authorization=[REDACTED] dXNlcjpwYXNzd29yZA==
+
+in : token = my secret value
+out: token=[REDACTED] secret value
+
+in : password = hunter2 correct horse
+out: password=[REDACTED] correct horse
+
+in : api_key=not-a-real-key
+out: api_key=[REDACTED]
+
+in : token="quoted secret value"
+out: token=[REDACTED]
+
+in : Authorization: Bearer eyJhbGciOi.J9.sig
+out: Authorization: Bearer [REDACTED]
+

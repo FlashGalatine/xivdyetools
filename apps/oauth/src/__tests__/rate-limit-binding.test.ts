@@ -76,7 +76,14 @@ describe('oauth rate limiter backend selection', () => {
         expect(first.allowed).toBe(true);
         expect(first.limit).toBe(10);
         expect(second.allowed).toBe(false);
-        expect(t10.calls).toEqual(['rl:198.51.100.7:/auth/discord', 'rl:198.51.100.7:/auth/discord']);
+        // pkg-worker-kit-test-utils-05: the binding key now carries the tier's
+        // (limit, period). Before that, two tiers pointed at the same binding
+        // shared one counter across two different configs -- the key was
+        // `keyPrefix + key` while a source comment claimed it was tier-scoped.
+        expect(t10.calls).toEqual([
+          'rl:198.51.100.7:/auth/discord:t10_60',
+          'rl:198.51.100.7:/auth/discord:t10_60',
+        ]);
         expect(t20.calls).toHaveLength(0);
         expect(t30.calls).toHaveLength(0);
         expect(kv.puts).toBe(0);

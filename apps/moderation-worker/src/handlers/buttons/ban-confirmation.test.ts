@@ -7,7 +7,7 @@ import {
 } from './ban-confirmation.js';
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
-import { encodeBase64Url } from '../../utils/response.js';
+import { base64UrlEncode } from '@xivdyetools/auth/encoding';
 import * as presetApi from '../../services/preset-api.js';
 
 // Mock modules
@@ -115,7 +115,7 @@ describe('handleBanConfirmButton', () => {
 
   it('should open ban reason modal with correct data', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    const encodedUsername = encodeBase64Url('TestUser');
+    const encodedUsername = base64UrlEncode('TestUser');
 
     const interaction = {
       id: 'int-1',
@@ -147,7 +147,7 @@ describe('handleBanConfirmButton', () => {
 
   it('should parse custom_id with underscore in username', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    const encodedUsername = encodeBase64Url('Test_User_Name');
+    const encodedUsername = base64UrlEncode('Test_User_Name');
 
     const interaction = {
       id: 'int-1',
@@ -166,7 +166,7 @@ describe('handleBanConfirmButton', () => {
 
   it('should handle user object instead of member', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    const encodedUsername = encodeBase64Url('TestUser');
+    const encodedUsername = base64UrlEncode('TestUser');
 
     const interaction = {
       id: 'int-1',
@@ -184,7 +184,7 @@ describe('handleBanConfirmButton', () => {
 
   it('should extract user ID correctly from beginning of custom_id', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    const encodedUsername = encodeBase64Url('Username');
+    const encodedUsername = base64UrlEncode('Username');
 
     const interaction = {
       id: 'int-1',
@@ -202,7 +202,7 @@ describe('handleBanConfirmButton', () => {
 
   it('should handle special characters in username', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    const encodedUsername = encodeBase64Url('User.Name-123');
+    const encodedUsername = base64UrlEncode('User.Name-123');
 
     const interaction = {
       id: 'int-1',
@@ -261,7 +261,7 @@ describe('handleBanConfirmButton — FINDING-007 (custom_id carries only the id)
   });
 
   it('still accepts a legacy custom_id that carries a username but never echoes it into the modal id', async () => {
-    const encodedUsername = encodeBase64Url('彩'.repeat(32));
+    const encodedUsername = base64UrlEncode('彩'.repeat(32));
     const interaction = {
       id: 'int-1',
       token: 'token-1',

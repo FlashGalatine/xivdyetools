@@ -156,7 +156,9 @@
     "tetradic": "テトラード",
     "square": "スクエア",
     "monochromatic": "モノクロマティック",
-    "invertedTetradic": "逆テトラード"
+    "invertedTetradic": "逆テトラード",
+    "compound": "複合",
+    "shades": "シェード"
   },
   "mixer": {
     "blendResult": "ブレンド結果",

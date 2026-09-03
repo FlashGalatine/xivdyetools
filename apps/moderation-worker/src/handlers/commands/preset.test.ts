@@ -7,7 +7,7 @@ import { InteractionResponseType } from '../../types/env.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 import * as discordApi from '../../utils/discord-api.js';
-import { encodeBase64Url } from '../../utils/response.js';
+import { base64UrlEncode } from '@xivdyetools/auth/encoding';
 import { PresetAPIError } from '../../types/preset.js';
 
 // Mock modules
@@ -15,7 +15,13 @@ vi.mock('../../utils/discord-api.js', () => {
   const editOriginalResponse = vi.fn();
   const sendMessage = vi.fn();
   // BUG-035: handlers call the safe wrappers; alias to the same mocks
-  return { editOriginalResponse, sendMessage, safeSendMessage: sendMessage };
+  return {
+    editOriginalResponse,
+    // BUG-040: the handlers now call the throw-safe, outcome-checked wrapper.
+    safeEditOriginalResponse: editOriginalResponse,
+    sendMessage,
+    safeSendMessage: sendMessage,
+  };
 });
 
 vi.mock('../../services/preset-api.js', async () => {
@@ -337,7 +343,7 @@ describe('handlePresetCommand', () => {
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(ctx.waitUntil).toHaveBeenCalled();
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -418,7 +424,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -504,7 +510,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -522,7 +528,7 @@ describe('handlePresetCommand', () => {
       );
 
       // The text-pending entry keeps today's plain rendering — no 🖼 marker.
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -533,7 +539,7 @@ describe('handlePresetCommand', () => {
           ]),
         }),
       );
-      expect(discordApi.editOriginalResponse).not.toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).not.toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -546,7 +552,7 @@ describe('handlePresetCommand', () => {
       );
 
       // The image-only entry IS marked.
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -617,7 +623,7 @@ describe('handlePresetCommand', () => {
         'mod-1',
         undefined,
       );
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -728,7 +734,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -800,7 +806,7 @@ describe('handlePresetCommand', () => {
         'mod-1',
         'Contains inappropriate content',
       );
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -854,7 +860,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -867,16 +873,127 @@ describe('handlePresetCommand', () => {
       );
     });
 
+    /**
+     * moderation-worker-06: the rejection-reason floor depended on which
+     * surface the moderator used. The MODAL demands ten characters; this path
+     * accepted one, and presets-api applies `validateModerationReason` to
+     * `/revert` only — so `reason:x` was stored as the `moderation_log.reason`
+     * for a rejection. The old suite only ever covered a MISSING reason.
+     */
+    it('rejects a reason shorter than the modal would accept', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+
+      const interaction: DiscordInteraction = {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        type: 2,
+        channel_id: 'channel-moderation',
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+        data: {
+          name: 'preset',
+          options: [
+            {
+              name: 'moderate',
+              type: 1,
+              options: [
+                { name: 'action', type: 3, value: 'reject' },
+                { name: 'preset_id', type: 3, value: 'a0000000-0000-4000-8000-000000000001' },
+                { name: 'reason', type: 3, value: 'x' },
+              ],
+            },
+          ],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx, t);
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls.at(-1)?.[0];
+      if (waitUntilPromise) await waitUntilPromise;
+
+      // The preset is never touched…
+      expect(presetApi.rejectPreset).not.toHaveBeenCalled();
+      // …and the moderator is told why.
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
+        'app-123',
+        'token-1',
+        expect.objectContaining({
+          embeds: expect.arrayContaining([
+            expect.objectContaining({ description: expect.stringContaining('reason') }),
+          ]),
+        }),
+      );
+    });
+
+    /**
+     * moderation-worker-05: rejection was the ONLY moderation action that
+     * never reached SUBMISSION_LOG_CHANNEL_ID — approve does, and so do the
+     * modal rejection, the button approval and the revert. The suite asserted
+     * the approve path posted and simply never asked about reject.
+     */
+    it('posts a rejection to the submission log, as approve already did', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.rejectPreset).mockResolvedValue({
+        id: 'a0000000-0000-4000-8000-000000000001',
+        name: 'Sunset Palette',
+      } as never);
+
+      const interaction: DiscordInteraction = {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        type: 2,
+        channel_id: 'channel-moderation',
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+        data: {
+          name: 'preset',
+          options: [
+            {
+              name: 'moderate',
+              type: 1,
+              options: [
+                { name: 'action', type: 3, value: 'reject' },
+                { name: 'preset_id', type: 3, value: 'a0000000-0000-4000-8000-000000000001' },
+                { name: 'reason', type: 3, value: 'Duplicate of an existing palette' },
+              ],
+            },
+          ],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx, t);
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls.at(-1)?.[0];
+      if (waitUntilPromise) await waitUntilPromise;
+
+      expect(discordApi.safeSendMessage).toHaveBeenCalledWith(
+        env.DISCORD_TOKEN,
+        env.SUBMISSION_LOG_CHANNEL_ID,
+        expect.objectContaining({
+          embeds: expect.arrayContaining([
+            expect.objectContaining({
+              title: expect.stringContaining('Rejected'),
+            }),
+          ]),
+        }),
+      );
+    });
+
     it('should process stats action successfully', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
 
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      // BUG-010: this mock used to carry `pending_count` & co — the names the
+      // HANDLER read, not the ones presets-api sends. Mock and client agreed
+      // with each other and both disagreed with the server, so all four embed
+      // fields rendered `String(undefined)` in production while this passed.
+      // `moderation-stats-contract.test.ts` now pins these names against
+      // presets-api's own SQL aliases.
       vi.mocked(presetApi.getModerationStats).mockResolvedValue({
-        pending_count: 12,
-        approved_count: 543,
-        rejected_count: 87,
-        flagged_count: 3,
+        pending: 12,
+        approved: 543,
+        rejected: 87,
+        flagged: 3,
+        actions_last_week: 21,
       });
 
       const interaction: DiscordInteraction = {
@@ -905,7 +1022,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -920,6 +1037,7 @@ describe('handlePresetCommand', () => {
                 }),
                 expect.objectContaining({ name: expect.stringContaining('Rejected'), value: '87' }),
                 expect.objectContaining({ name: expect.stringContaining('Flagged'), value: '3' }),
+                expect.objectContaining({ name: expect.stringContaining('Actions'), value: '21' }),
               ]),
             }),
           ]),
@@ -960,7 +1078,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -1005,7 +1123,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -1221,7 +1339,7 @@ describe('handlePresetCommand', () => {
       const customId = json.data.components[0].components[0].custom_id as string;
       expect(customId).toBe('ban_confirm_123456789012345678');
       expect(customId.length).toBeLessThanOrEqual(100);
-      expect(customId).not.toContain(encodeBase64Url('彩'.repeat(32)));
+      expect(customId).not.toContain(base64UrlEncode('彩'.repeat(32)));
     });
 
     it('should show "No presets found" when user has no recent presets', async () => {
@@ -1376,7 +1494,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -1437,7 +1555,7 @@ describe('handlePresetCommand', () => {
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(banService.unbanUser).toHaveBeenCalledWith(db, '123456789012345678', 'mod-1');
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -1503,7 +1621,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
@@ -1549,7 +1667,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({

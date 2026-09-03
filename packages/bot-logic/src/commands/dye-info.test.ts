@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import { executeDyeInfo, executeRandom } from './dye-info.js';
 import { dyeService } from '../input-resolution.js';
+import { ColorService } from '@xivdyetools/core';
 
 // Get a real dye to use in tests
 const snowWhite = dyeService.searchByName('Snow White')[0];
@@ -175,5 +176,76 @@ describe('executeRandom', () => {
 
     expect(result.embed.title).toBeDefined();
     expect(result.embed.description).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// The nearest strip's "+n more" line (pkg-svg-bot-logic-09)
+// ============================================================================
+
+/** The rendered "+n more" count, or null when the card omits the line. */
+async function nearestMoreCount(dye: (typeof snowWhite)): Promise<number | null> {
+  const result = await executeDyeInfo({ dye, locale: 'en' });
+  if (!result.ok) throw new Error('card generation failed');
+  const m = /\+(\d+) more/.exec(result.svgString);
+  return m ? Number(m[1]) : null;
+}
+
+describe('executeDyeInfo — the nearest strip headline', () => {
+  /**
+   * The count used to be `pool.length - drawn` over a four-entry pool and
+   * three drawn columns: the constant 1, on every card ever rendered. Any test
+   * that asserted the label was *present* passed on that constant, which is
+   * why it shipped.
+   *
+   * So ask the one question a constant cannot answer: does it differ between
+   * dyes? A tightly-packed grey has near neighbours the strip did not draw; an
+   * isolated hue has none.
+   */
+  it('varies with the dye rather than being a fixed number', async () => {
+    const counts = await Promise.all(
+      dyeService
+        .getAllDyes()
+        .filter((d) => d.category !== 'Facewear')
+        .map((d) => nearestMoreCount(d)),
+    );
+
+    const distinct = new Set(counts.map((c) => String(c)));
+    expect(
+      distinct.size,
+      `every dye rendered the same "+n more" value: ${[...distinct].join(', ')}`,
+    ).toBeGreaterThan(1);
+  });
+
+  it('omits the line entirely when nothing else is that close', async () => {
+    const counts = await Promise.all(
+      dyeService
+        .getAllDyes()
+        .filter((d) => d.category !== 'Facewear')
+        .map((d) => nearestMoreCount(d)),
+    );
+
+    // The `: ''` arm was unreachable while the count was a constant 1.
+    expect(counts.filter((c) => c === null).length).toBeGreaterThan(0);
+  });
+
+  it('counts only dyes inside the CLOSE band, for every dye', async () => {
+    // Whatever it reports has to be true: n further dyes within ΔE2000 ≤ 10,
+    // beyond the three the strip draws.
+    for (const dye of dyeService.getAllDyes().filter((d) => d.category !== 'Facewear')) {
+      const reported = (await nearestMoreCount(dye)) ?? 0;
+
+      const withinBand = dyeService
+        .getAllDyes()
+        .filter((d) => d.category !== 'Facewear' && d.id !== dye.id)
+        .map((d) => ColorService.getDistanceForMethod(dye.hex, d.hex, 'ciede2000'))
+        .sort((a, b) => a - b)
+        .slice(3)
+        .filter((deltaE) => deltaE <= 10).length;
+
+      expect(reported, `${dye.name} reported +${reported}, band holds ${withinBand}`).toBe(
+        withinBand,
+      );
+    }
   });
 });

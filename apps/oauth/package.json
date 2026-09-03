@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-oauth-worker",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "description": "Discord OAuth2 + JWT issuance for XIV Dye Tools",
   "license": "MIT",
@@ -10,7 +10,8 @@
     "deploy": "wrangler deploy",
     "deploy:production": "wrangler deploy",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src/",
+    "lint": "eslint src/ && pnpm run lint:dead",
+    "lint:dead": "knip --directory ../.. --workspace apps/oauth --no-config-hints --no-tag-hints",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"

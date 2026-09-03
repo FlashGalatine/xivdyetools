@@ -22,6 +22,7 @@
  *   `currentColor` default exists only for browser DOM consumers.
  * - No load-bearing opacity anywhere in the set.
  */
+import { escapeXml } from '../base.js';
 
 /** Accent for one filled element per glyph — dark grounds. */
 export const GLYPH_ACCENT_DARK = '#EA4133';
@@ -282,13 +283,13 @@ function renderGlyph(
   { size = 32, ink = 'currentColor', accent = GLYPH_ACCENT_DARK, weight, fluid }: GlyphRenderOptions = {}
 ): string {
   const substituted = inner
-    .replace(' F ', ` stroke="none" fill="${accent}" `)
-    .replaceAll('INK', ink);
+    .replace(' F ', ` stroke="none" fill="${escapeXml(accent)}" `)
+    .replaceAll('INK', escapeXml(ink));
   const sw = weight ?? defaultWeight;
   const sizeAttrs = fluid ? '' : `width="${size}" height="${size}" `;
   return (
     `<svg ${sizeAttrs}viewBox="0 0 32 32" aria-hidden="true">` +
-    `<g fill="none" stroke="${ink}" stroke-linecap="round" stroke-linejoin="round" stroke-width="${sw}">` +
+    `<g fill="none" stroke="${escapeXml(ink)}" stroke-linecap="round" stroke-linejoin="round" stroke-width="${sw}">` +
     substituted +
     '</g></svg>'
   );
@@ -331,7 +332,13 @@ export function categoryGlyph(name: CategoryGlyphName, options: GlyphRenderOptio
   return renderGlyph(CATEGORY[name], 2.4, options);
 }
 
-/** Every glyph name per set — for shims, galleries, and parity tests. */
+/**
+ * Every glyph name per set — for shims, galleries, and parity tests.
+ *
+ * @testonly file-local fixture for the glyph parity test (asserts every set
+ * renders); no shim or gallery consumer exists in this workspace despite the
+ * docblock above.
+ */
 export const GLYPH_SETS = {
   tool: Object.keys(TOOL_COMPACT) as ToolGlyphName[],
   toolDetail: Object.keys(TOOL_DETAIL) as Exclude<ToolGlyphName, 'tools'>[],

@@ -3,6 +3,9 @@
  *
  * Provides helpers for testing multi-module pipelines with realistic
  * mock Service Bindings and environment.
+ *
+ * @testonly a test helper that lives under src/ rather than a __tests__ dir;
+ * only budget-pipeline.integration.test.ts constructs mock Service Bindings from it.
  */
 
 import { vi } from 'vitest';

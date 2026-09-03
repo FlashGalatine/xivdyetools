@@ -207,6 +207,10 @@ export class EmptyState extends BaseComponent {
 
   /**
    * Update the empty state options
+   *
+   * @testonly test driver — empty-state.test.ts calls it directly to verify
+   * title/description/icon re-render after an update; no production caller
+   * reconfigures an already-mounted EmptyState instance.
    */
   setOptions(options: Partial<EmptyStateOptions>): void {
     this.options = { ...this.options, ...options };

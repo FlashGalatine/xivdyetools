@@ -13,6 +13,13 @@
  * @packageDocumentation
  */
 
+// A `@public` JSDoc tag on a specifier below means: published API, deliberately
+// kept even though no workspace in this monorepo imports it. The root
+// `knip.jsonc` gate (`pnpm run lint:dead`, part of `lint`) reports every
+// untagged barrel export that nothing consumes, so a new export must either
+// gain a consumer or be tagged on purpose — see root CLAUDE.md's Tooling →
+// knip bullet and this repo's root `knip.jsonc`.
+
 // ============================================================================
 // Color Types
 // ============================================================================
@@ -21,12 +28,18 @@ export type { HexColor, DyeId, Hue, Saturation } from './color/index.js';
 export { createHexColor, createDyeId, createHue, createSaturation } from './color/index.js';
 export type { VisionType, ColorblindMatrices } from './color/index.js';
 export type { MatchQualityKey } from './color/index.js';
-export { MATCH_QUALITY_TIERS, classifyMatchDistance } from './color/index.js';
+export { /** @public */ MATCH_QUALITY_TIERS, classifyMatchDistance } from './color/index.js';
 
 // ============================================================================
 // Dye Types
 // ============================================================================
-export type { Dye, LocalizedDye, DyeWithDistance, FacewearColor } from './dye/index.js';
+export type {
+  Dye,
+  /** @public */
+  LocalizedDye,
+  DyeWithDistance,
+  FacewearColor,
+} from './dye/index.js';
 export type { DyeTypeFilters } from './dye/index.js';
 
 // ============================================================================
@@ -59,16 +72,25 @@ export type {
   PresetEditRequest,
   PresetSortOption,
   PresetListResponse,
+  /** @public */
   PresetSubmitCreatedResponse,
+  /** @public */
   PresetSubmitDuplicateResponse,
+  /** @public */
   PresetSubmitErrorResponse,
   PresetSubmitResponse,
+  /** @public */
   PresetEditDuplicateInfo,
+  /** @public */
   PresetEditSuccessResponse,
+  /** @public */
   PresetEditDuplicateResponse,
+  /** @public */
   PresetEditErrorResponse,
   PresetEditResponse,
+  /** @public */
   VoteSuccessResponse,
+  /** @public */
   VoteErrorResponse,
   VoteResponse,
 } from './preset/index.js';
@@ -80,17 +102,21 @@ export type {
   AuthProvider,
   AuthSource,
   AuthContext,
+  /** @public */
   PrimaryCharacter,
   JWTPayload,
   DiscordTokenResponse,
   DiscordUser,
   XIVAuthTokenResponse,
+  /** @public */
   XIVAuthCharacter,
   XIVAuthCharacterRegistration,
+  /** @public */
   XIVAuthSocialIdentity,
   XIVAuthUser,
   AuthUser,
   AuthResponse,
+  /** @public */
   RefreshResponse,
   UserInfoResponse,
 } from './auth/index.js';
@@ -128,4 +154,4 @@ export type {
 // ============================================================================
 export { ErrorCode } from './error/index.js';
 export { AppError } from './error/index.js';
-export type { ErrorSeverity } from './error/index.js';
+export type { /** @public */ ErrorSeverity } from './error/index.js';

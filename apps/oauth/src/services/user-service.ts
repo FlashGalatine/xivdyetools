@@ -47,6 +47,19 @@ export interface UserServiceLogger {
  * Uses INSERT with ON CONFLICT to handle concurrent requests for the same user.
  * If a duplicate key error occurs during insert, retry the lookup.
  */
+/**
+ * `YYYY-MM-DD HH:MM:SS` — the shape SQLite's `datetime('now')` writes, which is
+ * what every other row in `users` carries (oauth-06).
+ *
+ * Deliberately not ISO-8601: matching the column's existing format matters more
+ * than the format itself, because half the rows are already written by the
+ * default and a consumer comparing or sorting the two would be comparing
+ * `'2026-09-02T…Z'` against `'2026-09-02 …'` lexicographically.
+ */
+function sqliteTimestamp(date: Date = new Date()): string {
+  return date.toISOString().replace('T', ' ').slice(0, 19);
+}
+
 export async function findOrCreateUser(
   db: D1Database,
   params: CreateUserParams,
@@ -79,13 +92,26 @@ export async function findOrCreateUser(
   // 3. No existing user - create new one with conflict handling
   const newId = crypto.randomUUID();
 
+  // oauth-06: the INSERT used to rely on the column defaults
+  // (`datetime('now')`, `schema/users.sql`) and then SYNTHESIZE the returned
+  // row with `new Date().toISOString()`. SQLite writes that default
+  // space-separated, to second precision, with no `Z` — so a first sign-in
+  // returned `2026-09-02T12:00:00.000Z` while the row actually said
+  // `2026-09-02 12:00:00`, and the same user's SECOND sign-in (which re-reads
+  // the row) returned the SQLite form. Two formats from one API, and the D1
+  // mock stored ISO too, so mock and code agreed on the wrong thing.
+  //
+  // Binding the timestamps explicitly means the value written and the value
+  // returned are the same string, by construction.
+  const now = sqliteTimestamp();
+
   try {
     await db
       .prepare(
-        `INSERT INTO users (id, discord_id, xivauth_id, auth_provider, username)
-         VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO users (id, discord_id, xivauth_id, auth_provider, username, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
       )
-      .bind(newId, discord_id || null, xivauth_id || null, auth_provider, username)
+      .bind(newId, discord_id || null, xivauth_id || null, auth_provider, username, now, now)
       .run();
 
     return {
@@ -94,8 +120,8 @@ export async function findOrCreateUser(
       xivauth_id: xivauth_id || null,
       auth_provider,
       username,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
     };
   } catch (error) {
     // Race condition: another request created the user while we were processing
@@ -181,12 +207,45 @@ async function attachIdentities(
     xivauthId = xivauth_id;
   }
 
-  return updateUser(db, existing.id, {
-    discord_id: discordId,
-    xivauth_id: xivauthId,
-    username,
-    auth_provider,
-  });
+  try {
+    return await updateUser(db, existing.id, {
+      discord_id: discordId,
+      xivauth_id: xivauthId,
+      username,
+      auth_provider,
+    });
+  } catch (error) {
+    // oauth-07: the owner lookup above is check-then-update against the partial
+    // UNIQUE(discord_id) index, not an atomic write. Two overlapping callbacks
+    // that each resolve to a different local row and both assert the same
+    // unowned Discord id will both see `owner === null`, and the second UPDATE
+    // then violates the index — surfacing as `500 Authentication failed`, the
+    // exact failure BUG-004's guard was added to avoid. Narrow window (one
+    // person, two providers, simultaneous) and no data corruption, but the
+    // INSERT path has had this recovery since BUG-004 and this one did not.
+    //
+    // Losing the race means someone else now owns that Discord id, which is
+    // the same situation the guard above handles: keep the account, skip the
+    // link.
+    const isConstraintError =
+      error instanceof Error &&
+      (error.message.includes('UNIQUE constraint') ||
+        error.message.includes('UNIQUE_VIOLATION'));
+
+    if (!isConstraintError || discordId === existing.discord_id) {
+      throw error;
+    }
+
+    logger?.warn('Discord identity was claimed concurrently; not linked', {
+      provider: auth_provider,
+    });
+    return updateUser(db, existing.id, {
+      discord_id: existing.discord_id,
+      xivauth_id: xivauthId,
+      username,
+      auth_provider,
+    });
+  }
 }
 
 /**
@@ -219,6 +278,14 @@ async function updateUser(
 
   fields.push("updated_at = datetime('now')");
 
+  // oauth-10 (`UPDATE … RETURNING *` to collapse these two round trips) is
+  // deliberately NOT applied. It is a latency optimisation on an already
+  // multi-hop path, and the hand-rolled D1 mock
+  // (`__tests__/mocks/cloudflare-test.ts`) answers `.first()` from a scripted
+  // queue without regard to the statement — so a RETURNING clause silently
+  // consumes the response meant for the SELECT and the change ships with its
+  // behaviour unverifiable. Worth doing alongside a statement-aware mock, not
+  // before one.
   await db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).bind(...values, userId).run();
 
   const updated = await db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first<UserRow>();
@@ -228,27 +295,6 @@ async function updateUser(
   }
 
   return updated;
-}
-
-/**
- * Find user by internal ID
- */
-export async function findUserById(db: D1Database, userId: string): Promise<UserRow | null> {
-  return db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first<UserRow>();
-}
-
-/**
- * Find user by Discord ID
- */
-export async function findUserByDiscordId(db: D1Database, discordId: string): Promise<UserRow | null> {
-  return db.prepare('SELECT * FROM users WHERE discord_id = ?').bind(discordId).first<UserRow>();
-}
-
-/**
- * Find user by XIVAuth ID
- */
-export async function findUserByXIVAuthId(db: D1Database, xivauthId: string): Promise<UserRow | null> {
-  return db.prepare('SELECT * FROM users WHERE xivauth_id = ?').bind(xivauthId).first<UserRow>();
 }
 
 /**

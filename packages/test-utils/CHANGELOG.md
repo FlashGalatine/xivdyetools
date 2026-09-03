@@ -5,6 +5,120 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-09-02
+
+Deep-dive remediation, Sprint 15 (docs/audits/2026-09-02-deep-dive). **Major bump**: the mocks were
+more permissive than the services they stand in for, and tightening them is a breaking change for
+consumer test suites — three of them needed updates in this repo. The package is `"private": true`
+and never published, so the bump is bookkeeping, not a release.
+
+A mock that is more forgiving than the real thing does not merely fail to catch bugs; it
+*manufactures* green. Every item here is a case where a consumer could pass its whole suite and
+fail in production.
+
+### Changed (breaking)
+
+- **BUG-098 — the KV mock's `list()` never paginated.** It returned `cursor: undefined`
+  unconditionally, so an un-paginated `await kv.list({ prefix })` looked correct in tests and
+  truncated at 1000 keys in production — which is exactly what hid BUG-035 (`/stats preferences`
+  reading one page as the whole namespace). It also emitted `list_complete: false` *with no cursor*
+  on an exactly-full page, a state real KV never returns, so a **correct** cursor loop would have
+  spun on page one forever. Pages are now capped at 1000, a cursor is issued whenever keys remain,
+  and `cursor` is honoured on the next call.
+
+- **BUG-100 — R2 `httpMetadata` was write-only.** `put()` stored it and neither `get()` nor `head()`
+  exposed it, and there was no `writeHttpMetadata()`. `presets-api` writes the `immutable` +
+  `s-maxage=86400` preview-image policy that FINDING-018's takedown story depends on, and no test
+  could read it back except by reaching into `_store`; a serving path calling `writeHttpMetadata()`
+  would have thrown only in production. `list()` had the same impossible truncated-without-cursor
+  state as the KV mock, fixed the same way.
+
+- **D1 `bind()` now validates its values and returns a NEW statement.** It accepted anything and
+  mutated the shared statement in place. Real D1 raises `D1_TYPE_ERROR` for `undefined` (and for
+  objects), so `.bind(id, row.example_link)` where the optional column was never set passed every
+  test and 500'd live; and `const s = db.prepare(q); const a = s.bind(1); const b = s.bind(2);`
+  ran `a` with `[2]` here and `[1]` against real D1. **Consumer impact:** the
+  `stmt.bind(x); await stmt.run();` pattern (discarding the return) no longer carries the bindings —
+  chain it, as production code already does.
+
+- **The KV mock's `put()` matches real KV.** `expirationTtl` below 60 seconds now throws (it used to
+  accept anything, and `0` was silently treated as "no TTL" because the guard was truthiness), and
+  metadata absent from a `put` is now cleared rather than inherited from the previous value. The
+  value is not stored when the TTL is rejected. `get(key, 'json')` — the bare-string overload real KV
+  accepts — is now handled; it used to return the unparsed string.
+
+- **The dye factory could not represent a real dye.** `createMockDye()` defaulted `id` to a 9-digit
+  `randomId()` and copied it to `stainID`, putting the canonical key far outside the real 1–254
+  Stain range (`presets-api`'s `validatePresetDyes` rejects > 254; api-worker's `resolveIdType`
+  calls 255–5728 invalid), and left `id !== itemID` in both `createMockDye` and every `mockDyes`
+  entry — contradicting `types/src/dye/dye.ts` ("`id` … always equal to `itemID` after
+  `DyeDatabase.initialize()`"). That inversion is the same shape that manufactured green for a whole
+  class of dye-id defects elsewhere in this audit, so the shared factory must not reproduce it.
+  `stainID` now lands in 1–254, `itemID` derives from it, and `id` follows `itemID`.
+
+### Added
+
+- **`_setBatchFailure(index, message?)` on the D1 mock.** `batch()` was a plain loop with no
+  atomicity, so BUG-019's "one atomic batch, so a partial failure can never leave a vote row whose
+  increment didn't land" — and moderation-worker's four-statement ban batches — had no way to be
+  tested. The whole call now rejects and nothing is recorded, matching D1's implicit transaction.
+
+- **`_query` and `_boundValues` on a prepared statement.** A real D1 statement is opaque, so tests
+  identifying the statements handed to `batch()` wrapped `prepare` and kept an identity `Map` of
+  statement → SQL. That technique breaks the moment `bind()` returns a new statement, so the SQL is
+  now carried on the statement itself and survives `bind()`.
+
+- **`withSession().batch()` routes through `run()`**, not `all()` — it contradicted the fix comment
+  on `mockDb.batch` and reported `meta.changes: 0` with no mutation meta.
+
+### Removed
+
+- **`integration/rate-limiting/submission-limits.test.ts`** — all 23 tests exercised
+  re-implementations declared inside the test file. `checkPublicRateLimit()` was a hand copy of
+  `MemoryRateLimiter.check()` over a file-local `Map` (worker-kit was never imported), and
+  `checkSubmissionRateLimit(db, …)` never queried the `db` it was handed — it returned arithmetic on
+  a count the test itself supplied. Deleting production code would have left the file green, and the
+  copy had already drifted from the BUG-097 fix landed in worker-kit 1.3.0 this sprint. Both halves
+  are covered by tests that exercise real code: `worker-kit/backends/memory.test.ts` for the sliding
+  window, and `presets-api/tests/services/rate-limit-service*.test.ts` for the daily submission limit
+  (UTC midnight, day edges and the raw count included).
+
+### Note on a deliberate non-change
+
+`run()` still reports `changes: 1` for a write the mock does not model. Reading a bare `null` as
+"affected zero rows" was implemented, tried, and reverted: nearly every `_setupMock` answers `null`
+for statements it simply does not model, so that reading silently reinterpreted three unrelated
+`presets-api` behaviours (a duplicate vote and two dead-letter cascades) as failures. To exercise a
+zero-change branch — `handlers/votes.ts`'s `already_voted`, or any `INSERT … ON CONFLICT DO NOTHING`
+that conflicted — return an explicit `meta` from the mock; there is a worked example in
+`tests/cloudflare/d1.test.ts`.
+
+## [1.3.1] - 2026-09-02
+
+This package is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:dead`, folded
+into `lint`; root `knip.jsonc`). Unlike the other four gated packages, `@xivdyetools/test-utils` is
+`"private": true` with no npm consumers, so this pass **deletes** rather than tags. No version bump
+(internal bookkeeping only, per package convention since 1.2.0).
+
+### Removed
+
+- **`integration/setup.ts`**: `createMockOAuthEnv` (and the `MockOAuthEnv` interface it alone
+  referenced), `buildRequest`, `seedPreset`, and the module's own re-export of `createMockKV` —
+  confirmed via `git grep` that none has a consumer anywhere in the workspace, tests included; the
+  two integration suites that import from this module (`integration/discord-presets/bot-authentication.test.ts`,
+  `integration/oauth-presets/jwt-validation.test.ts`) import neither name. `createMockKV` itself is
+  untouched and remains heavily used — every caller reaches it via `@xivdyetools/test-utils` or the
+  `/cloudflare` subpath (`src/cloudflare/kv.ts`), never via this integration-only re-export, which is
+  what made it dead here specifically.
+- **`integration/setup.ts`**: `OAUTH_WORKER_URL` and `PRESETS_API_URL` constants — a second-order
+  finding, not part of knip's original report. Both were referenced only by `createMockOAuthEnv`/
+  `buildRequest` above; removing those two functions left the constants with no reference anywhere
+  (in-file or external), and knip confirmed this on the next run. Neither name collides with the
+  unrelated same-named module-local constants in `apps/web-app/src/services/auth-service.ts`.
+- **`src/factories/preset.ts`**: the `CommunityPreset` and `PresetStatus` re-exports (kept
+  `PresetSubmission`, which is still used within the same file by `createMockSubmission`) — no
+  consumer anywhere in the workspace imports either type from this module.
+
 ## [1.3.0] - 2026-08-31
 
 Security audit remediation (docs/audits/2026-08-29-security, FINDING-015, Sprint 11 fix round). Not published — this package is workspace-private (see 1.2.0 below); no external consumers to break.

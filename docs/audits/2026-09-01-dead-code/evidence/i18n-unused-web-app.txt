@@ -1,0 +1,5 @@
+
+🌍 i18n orphan check — 1152 keys in en.json (meta.* excluded)
+   used: 1152   orphaned: 0
+
+✅ No orphaned keys.
