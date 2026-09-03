@@ -146,6 +146,9 @@ const PRESET_ERROR_KEYS: Record<Exclude<PresetErrorCode, 'duplicate' | 'validati
   editFailed: 'errors.saveChangesFailed',
   timeout: 'errors.requestTimeout',
   network: 'errors.networkError',
+  // I18N-005: terminal and actionable — the generic "failed to submit" headline
+  // named the wrong cause and the real one was English-only.
+  banned: 'preset.bannedFromPresets',
 };
 
 /**

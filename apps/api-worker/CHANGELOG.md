@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2026-09-03
+
+### Changed
+
+- `VALID_LOCALES` derives from core's `SUPPORTED_LOCALES` instead of re-spelling the six
+  codes (I18N-004). No behaviour change — every copy agreed — but adding a locale, or
+  folding `zh-TW` into `zh` as an earlier audit deferred, meant finding all of them.
+
 ## [0.11.0] - 2026-09-02
 
 ### Fixed — 2026-09-02 deep-dive audit, Sprint 9

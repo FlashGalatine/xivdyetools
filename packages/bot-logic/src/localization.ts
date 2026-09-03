@@ -14,6 +14,7 @@
  */
 
 import { LocalizationService } from '@xivdyetools/core';
+import type { HarmonyTypeKey, VisionType } from '@xivdyetools/types';
 export type { LocaleCode } from './i18n/index.js';
 import type { LocaleCode } from './i18n/index.js';
 
@@ -105,6 +106,50 @@ export function getLocalizedCategory(category: string, locale: LocaleCode = 'en'
     return instance.getCategory(category);
   } catch {
     return category;
+  }
+}
+
+/**
+ * Get a localized harmony-type name from xivdyetools-core (TERM-001).
+ *
+ * The bot used to name harmonies from its own `harmony.*` keys while web-app
+ * and og-worker both used core's, so one product called Split-Complementary
+ * 分裂補色 and the other スプリット補色. Core is the single vocabulary now —
+ * PR #159 already made it the single *algorithm*.
+ *
+ * @param key - Core's camelCase harmony key (`splitComplementary`, not `split-complementary`)
+ * @param locale - Locale code (defaults to 'en')
+ * @returns Localized harmony name, or the key when the locale is not loaded
+ */
+export function getLocalizedHarmonyType(key: HarmonyTypeKey, locale: LocaleCode = 'en'): string {
+  try {
+    const instance = localeInstances.get(locale);
+    if (!instance) return key;
+    return instance.getHarmonyType(key);
+  } catch {
+    return key;
+  }
+}
+
+/**
+ * Get a localized vision-type (colour-blindness lens) name from
+ * xivdyetools-core (TERM-001) — the same one-vocabulary rule as harmonies.
+ *
+ * Uses core's SHORT `visions.*` form (`제1색맹`), not the long `visionTypes.*`
+ * one that carries a parenthetical gloss: these appear as card and embed
+ * labels, where the gloss does not fit.
+ *
+ * @param key - Vision type (`protanopia`, `normal`, …)
+ * @param locale - Locale code (defaults to 'en')
+ * @returns Localized vision name, or the key when the locale is not loaded
+ */
+export function getLocalizedVisionType(key: VisionType, locale: LocaleCode = 'en'): string {
+  try {
+    const instance = localeInstances.get(locale);
+    if (!instance) return key;
+    return instance.getVisionShort(key);
+  } catch {
+    return key;
   }
 }
 

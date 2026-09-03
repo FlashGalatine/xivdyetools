@@ -567,11 +567,19 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
   // Lead — a plain value, or a shaped label (main line + sub line)
   if (typeof o.lead === 'string') {
     parts.push(
-      cardText(x, cy + 4, o.lead, { fill: theme.subValue, size: CARD_TYPE.value, font: 'mono' }),
+      cardText(x, cy + 4, fitText(o.lead, w.lead, CARD_TYPE.value, 'mono'), {
+        fill: theme.subValue,
+        size: CARD_TYPE.value,
+        font: 'mono',
+      }),
     );
   } else {
+    // I18N-011: these three were the only text in the row drawn without
+    // fitText. Latin leads cleared the 56 px budget by 1-15 px, so nothing
+    // overflowed in English — but CJK counts double, so a ja/ko/zh lead is what
+    // spills first, and the label would have run into the pair beside it.
     parts.push(
-      cardText(x, cy - 2, o.lead.text, {
+      cardText(x, cy - 2, fitText(o.lead.text, w.lead, CARD_TYPE.label, 'mono'), {
         fill: theme.value,
         size: CARD_TYPE.label,
         font: 'mono',
@@ -580,7 +588,7 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
     );
     if (o.lead.sub) {
       parts.push(
-        cardText(x, cy + 11, o.lead.sub, {
+        cardText(x, cy + 11, fitText(o.lead.sub, w.lead, CARD_TYPE.label, 'mono'), {
           fill: o.lead.subTone === 'warn' ? theme.tiers[2] : theme.label,
           size: CARD_TYPE.label,
           font: 'mono',

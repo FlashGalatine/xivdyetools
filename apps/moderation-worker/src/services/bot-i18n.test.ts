@@ -150,15 +150,11 @@ describe('bot-i18n', () => {
         expect(result).toBe('Error');
       });
 
-      it('should translate preset status keys', () => {
-        const translator = new Translator('en');
+      // I18N-009: `preset.status.*` was removed with the rest of the unusable
+      // localization apparatus. This test was its ONLY reference — no handler
+      // ever read those keys; `/preset stats` prints the words directly — so it
+      // was testing that a table existed, not that anything used it.
 
-        expect(translator.t('preset.status.pending')).toBe('Pending');
-        expect(translator.t('preset.status.approved')).toBe('Approved');
-        expect(translator.t('preset.status.rejected')).toBe('Rejected');
-        expect(translator.t('preset.status.flagged')).toBe('Flagged');
-        expect(translator.t('preset.status.hidden')).toBe('Hidden');
-      });
 
       it('should translate ban-related keys', () => {
         const translator = new Translator('en');

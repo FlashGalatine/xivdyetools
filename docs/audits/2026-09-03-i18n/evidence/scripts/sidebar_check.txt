@@ -1,0 +1,4 @@
+en common.options= Options | config.visionTypes= Vision Types | config.harmonyType= Harmony Type
+ja common.options= オプション | config.visionTypes= 視覚タイプ | config.harmonyType= ハーモニータイプ
+ko common.options= 옵션 | config.visionTypes= 시각 유형 | config.harmonyType= 조화 유형
+zh common.options= 选项 | config.visionTypes= 视觉类型 | config.harmonyType= 和谐类型

@@ -191,7 +191,7 @@ export class PresetTool extends BaseLitComponent {
       }
 
       .tab-count {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 10.5px;
         opacity: 0.8;
       }
@@ -270,7 +270,7 @@ export class PresetTool extends BaseLitComponent {
       }
 
       .cat-count {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 10px;
         opacity: 0.75;
       }

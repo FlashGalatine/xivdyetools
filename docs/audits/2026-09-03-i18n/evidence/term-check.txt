@@ -1,0 +1,7 @@
+dictionary rows matched to a core key: 45
+dictionary rows with no core counterpart (skipped): 41
+value mismatches: 3
+
+  categories.Neutral  [ja]  dictionary='無彩色系'  core='ニュートラル'
+  acquisitions.Dye Vendor  [ja]  dictionary='染色師'  core='染料販売業者'
+  acquisitions.Crafting  [ja]  dictionary='制作'  core='製作'

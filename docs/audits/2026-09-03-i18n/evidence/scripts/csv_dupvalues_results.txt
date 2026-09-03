@@ -1,0 +1,23 @@
+
+=== Duplicate values within column: English Name ===
+  (none)
+
+=== Duplicate values within column: Japanese Name ===
+  (none)
+
+=== Duplicate values within column: German Name ===
+  (none)
+
+=== Duplicate values within column: French Name ===
+  (none)
+
+=== Duplicate values within column: Korean Name ===
+  (none)
+
+=== Duplicate values within column: Chinese Name ===
+  (none)
+
+=== Values ending in a bare hyphen/dash (truncation heuristic) ===
+line 114: itemID=30123 col=German Name value='Perlmutt-'
+
+=== Unusually short values (possible truncation) ===

@@ -203,7 +203,7 @@ export class LocalizationService {
    * explicitly to every getter (`getDyeName(id, locale)`), or use the
    * stateless `LocaleLoader`/`LocaleRegistry`/`TranslationProvider` trio.
    *
-   * @param locale - Locale code ('en', 'ja', 'de', 'fr')
+   * @param locale - Locale code ('en', 'ja', 'de', 'fr', 'ko', 'zh')
    * @throws {AppError} If locale file fails to load
    *
    * @example
@@ -479,6 +479,10 @@ export class LocalizationService {
    *
    * @param key - Tool key
    * @returns Localized tool display name
+   * @deprecated I18N-003 — covers only the six pre-5.0 tools (the product ships
+   * nine) and has no consumer in this monorepo: web-app names tools from its own
+   * `tools.*.title` keys, og-worker from `OG_DECK`. Kept as published API; do not
+   * build on it. Removal is a core major.
    */
   getToolName(key: ToolKey, locale?: LocaleCode): string {
     return this.translator.getToolName(key, locale ?? this.currentLocale);
@@ -486,9 +490,27 @@ export class LocalizationService {
 
   /**
    * Static method: Get localized tool display name using default instance
+   * @deprecated I18N-003 — see the instance method.
    */
   static getToolName(key: ToolKey, locale?: LocaleCode): string {
     return this.getDefault().getToolName(key, locale);
+  }
+
+  /**
+   * Get a localized Facewear tint name by its slug (I18N-008).
+   *
+   * The 11 Facewear colours are not dyes and are keyed by slug, so they do not
+   * go through `getDyeName()`.
+   */
+  getFacewearColorName(id: string, locale?: LocaleCode): string {
+    return this.translator.getFacewearColorName(id, locale ?? this.currentLocale);
+  }
+
+  /**
+   * Static method: Get a localized Facewear tint name using default instance
+   */
+  static getFacewearColorName(id: string, locale?: LocaleCode): string {
+    return this.getDefault().getFacewearColorName(id, locale);
   }
 
   /**

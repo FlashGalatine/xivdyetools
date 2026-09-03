@@ -2,7 +2,7 @@
   "locale": "ja",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-18T19:07:42.755Z",
+    "generated": "2026-09-03T12:01:42.833Z",
     "dyeCount": 125
   },
   "labels": {
@@ -142,7 +142,7 @@
     "48227": "カーマインレッド"
   },
   "categories": {
-    "Neutral": "ニュートラル",
+    "Neutral": "無彩色系",
     "Reds": "赤系",
     "Blues": "青系",
     "Browns": "茶系",
@@ -153,7 +153,7 @@
     "Facewear": "フェイスウェア"
   },
   "acquisitions": {
-    "Dye Vendor": "染料販売業者",
+    "Dye Vendor": "染色師",
     "Crafting": "製作",
     "Cosmic Exploration": "コスモエクスプローラー",
     "Cosmic Fortunes": "コスモフォーチュン",
@@ -246,5 +246,18 @@
     "theLost": "ロスト",
     "rava": "ラヴァ・ヴィエラ",
     "veena": "ヴィナ・ヴィエラ"
+  },
+  "facewearColors": {
+    "silver": "シルバー",
+    "gold": "ゴールド",
+    "black": "ブラック",
+    "white": "ホワイト",
+    "grey": "グレー",
+    "red": "レッド",
+    "blue": "ブルー",
+    "green": "グリーン",
+    "brass": "ブラス",
+    "purple": "パープル",
+    "brown": "ブラウン"
   }
 }

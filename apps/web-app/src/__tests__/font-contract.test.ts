@@ -23,8 +23,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -35,6 +35,13 @@ const GLOBALS_CSS = read('src/styles/globals.css');
 const INDEX_HTML = read('src/index.html');
 const HEADERS = read('public/_headers');
 const TAILWIND_CONFIG = read('tailwind.config.js');
+
+/** Every non-test TypeScript source under `src/`, app-root-relative. */
+function sourceFiles(): string[] {
+  return readdirSync(resolve(APP_ROOT, 'src'), { recursive: true, encoding: 'utf8' })
+    .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts') && !f.endsWith('.d.ts'))
+    .map((f) => `src/${f.split(sep).join('/')}`);
+}
 
 /** Strip CSS comments the way a parser does, so assertions see real rules only. */
 const stripComments = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -136,6 +143,45 @@ describe('font contract', () => {
       const src = read('src/components/my-submissions-modal.ts');
       expect(src).not.toContain("font-family: 'Fragment Mono'");
       expect(src).toContain('font-family: var(--font-mono)');
+    });
+
+    it('no component names a bundled family directly — the whole tree (FONT-003)', () => {
+      // The first version of this test matched only `font-family: 'X'` inside a
+      // CSS template, which is one of THREE ways these families reach the DOM.
+      // It reported clean while 68 render sites still hardcoded a family via
+      // `el.style.fontFamily = "'Fragment Mono', monospace"` and via
+      // `const MONO = "'Fragment Mono', …"` interpolated into a style string.
+      // Match the family NAME wherever it is quoted instead of matching one
+      // syntax, and cover the stylesheets too — a guard that sees one spelling
+      // guards one spelling.
+      const offenders: string[] = [];
+      for (const file of sourceFiles()) {
+        const src = stripComments(read(file));
+        for (const family of ['Space Grotesk', 'Fragment Mono', 'Onest']) {
+          if (src.includes(`'${family}'`) || src.includes(`"${family}"`)) {
+            offenders.push(`${file} → ${family}`);
+          }
+        }
+      }
+      expect(
+        offenders,
+        `use var(--font-display|--font-mono|--font-body) instead: ${offenders.join(', ')}`
+      ).toEqual([]);
+    });
+
+    it('the stylesheets name a family only inside @font-face (FONT-003)', () => {
+      // globals.css legitimately names all three in its @font-face blocks and
+      // its token definitions; no OTHER sheet should name one at all.
+      for (const sheet of [
+        'src/styles/v4-layout.css',
+        'src/styles/tool-content.css',
+        'src/styles/themes.css',
+      ]) {
+        const css = stripComments(read(sheet));
+        for (const family of ['Space Grotesk', 'Fragment Mono', 'Onest']) {
+          expect(css, `${sheet} names ${family} directly`).not.toContain(family);
+        }
+      }
     });
   });
 

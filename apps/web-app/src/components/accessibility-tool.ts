@@ -913,8 +913,7 @@ export class AccessibilityTool extends BaseComponent {
     pairHeader.appendChild(pairHeaderLeft);
     this.pairUnitLabel = this.createElement('span', {
       attributes: {
-        style:
-          "font-family: 'Fragment Mono', monospace; font-size: 11px; color: var(--theme-text-muted);",
+        style: 'font-family: var(--font-mono); font-size: 11px; color: var(--theme-text-muted);',
       },
     });
     pairHeader.appendChild(this.pairUnitLabel);
@@ -1368,7 +1367,7 @@ export class AccessibilityTool extends BaseComponent {
         this.createElement('span', {
           textContent: LanguageService.t(vision.prevalenceKey),
           attributes: {
-            style: `font-family: 'Fragment Mono', monospace; font-size: 10px; white-space: nowrap; ${active ? 'color: var(--theme-text-header); opacity: 0.8;' : 'color: var(--theme-text-muted);'}`,
+            style: `font-family: var(--font-mono); font-size: 10px; white-space: nowrap; ${active ? 'color: var(--theme-text-header); opacity: 0.8;' : 'color: var(--theme-text-muted);'}`,
           },
         })
       );
@@ -1431,7 +1430,7 @@ export class AccessibilityTool extends BaseComponent {
       const badge = this.createElement('span', {
         textContent: `\u0394E ${shift.toFixed(1)}`,
         attributes: {
-          style: `position: absolute; top: 7px; right: 7px; font-family: 'Fragment Mono', monospace; font-size: 9.5px; padding: 3px 6px; border-radius: 5px; background: rgba(10,10,12,0.42); color: #fff; border-bottom: 2px solid ${shiftTierColor(shift, dark)};`,
+          style: `position: absolute; top: 7px; right: 7px; font-family: var(--font-mono); font-size: 9.5px; padding: 3px 6px; border-radius: 5px; background: rgba(10,10,12,0.42); color: #fff; border-bottom: 2px solid ${shiftTierColor(shift, dark)};`,
         },
       });
       card.appendChild(badge);

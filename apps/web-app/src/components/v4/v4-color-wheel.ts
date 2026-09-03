@@ -143,7 +143,7 @@ export class V4ColorWheel extends BaseLitComponent {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 12px;
         line-height: 1;
         transition:
@@ -223,7 +223,7 @@ export class V4ColorWheel extends BaseLitComponent {
       }
 
       .hub-label {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 8px;
         letter-spacing: 1px;
         text-transform: uppercase;

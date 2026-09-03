@@ -235,3 +235,6 @@ export type {
   CategoryGlyphName,
   GlyphRenderOptions,
 } from './icons/tool-icons.js';
+
+/** @public */
+export { scanEmittedGlyphs, type EmittedGlyph } from './emitted-glyphs.js';

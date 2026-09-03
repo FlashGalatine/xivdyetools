@@ -562,7 +562,10 @@ export function generateRootOGData(env: Env, locale: LocaleCode = 'en'): OGData 
   return {
     title: embed('root.title', locale),
     description: embed('root.description', locale),
-    url: env.APP_BASE_URL,
+    // I18N-002: `appUrl()` already carries the locale on every other `url:`
+    // site (12 of 15). These were the only ones left bare, so they alone
+    // dropped the sharer's locale on the meta-refresh and the body link.
+    url: appUrl(env.APP_BASE_URL, locale),
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
     siteName: SITE_NAME,
     locale,
@@ -574,7 +577,10 @@ export function generateFallbackOGData(env: Env, locale: LocaleCode = 'en'): OGD
   return {
     title: SITE_NAME,
     description: embed('fallback.description', locale),
-    url: env.APP_BASE_URL,
+    // I18N-002: `appUrl()` already carries the locale on every other `url:`
+    // site (12 of 15). These were the only ones left bare, so they alone
+    // dropped the sharer's locale on the meta-refresh and the body link.
+    url: appUrl(env.APP_BASE_URL, locale),
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
     siteName: SITE_NAME,
     locale,
@@ -874,7 +880,10 @@ export async function generateOGDataForTool(
       return {
         title: SITE_NAME,
         description: embed('unknown.description', locale),
-        url: env.APP_BASE_URL,
+        // I18N-002: `appUrl()` already carries the locale on every other `url:`
+        // site (12 of 15). These were the only ones left bare, so they alone
+        // dropped the sharer's locale on the meta-refresh and the body link.
+        url: appUrl(env.APP_BASE_URL, locale),
         imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
         siteName: SITE_NAME,
         locale,

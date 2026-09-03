@@ -59,9 +59,9 @@ import { clearContainer } from '@shared/utils';
 import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import type { Dye, SubRace, Gender } from '@xivdyetools/types';
 
-const MONO = "'Fragment Mono', monospace";
+const MONO = 'var(--font-mono)';
 /** Matches globals.css h1–h6 — Space Grotesk with the system fallback. */
-const SANS = "'Space Grotesk', system-ui, sans-serif";
+const SANS = 'var(--font-display)';
 const TIER_RAMP_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'] as const;
 const TIER_RAMP_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
 const OFF_GRID_AMBER = '#F4BF4F';
@@ -1584,7 +1584,7 @@ export class CharaImport {
     const line = this.el(
       'span',
       'font-size: 10px; line-height: 1.3; color: var(--theme-text-muted); overflow-wrap: anywhere;',
-      colour ? colour.name : this.t('facewearColorUnknown')
+      colour ? LanguageService.getFacewearColorName(colour.id) : this.t('facewearColorUnknown')
     );
     line.dataset.role = 'dye-line';
     text.appendChild(line);

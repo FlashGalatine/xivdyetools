@@ -7,7 +7,7 @@
  * @module commands/harmony
  */
 
-import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
+import type { Dye, DyeTypeFilters, HarmonyTypeKey } from '@xivdyetools/types';
 import type { HarmonyOptions, HarmonySlot, MatchingMethod } from '@xivdyetools/core';
 import {
   filterDyes,
@@ -18,7 +18,11 @@ import {
 import { createTranslator, type Translator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import { generateHarmonyCard, num, type HarmonyCardSlot } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
-import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import {
+  initializeLocale,
+  getLocalizedDyeName,
+  getLocalizedHarmonyType as getLocalizedHarmonyTypeFromCore,
+} from '../localization.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -98,28 +102,43 @@ export type HarmonyResult =
 
 
 
+/**
+ * TERM-001: harmony names come from **core**, not from bot-logic's own locale
+ * files.
+ *
+ * The bot used to resolve these through `harmony.*` keys of its own while
+ * web-app (`harmony-generator.ts`) and og-worker (`translator.ts`) both called
+ * core's `getHarmonyType`. The three disagreed in ja/ko/zh/de — Split-
+ * Complementary was 分裂補色 in the app and スプリット補色 in the bot, Tetradic
+ * 四色配色 vs テトラード — so the same command named the same thing differently
+ * depending on where you ran it. PR #159 made core the single harmony
+ * *algorithm*; this makes it the single harmony *vocabulary*.
+ *
+ * Core keys are camelCase, the command's are kebab-case.
+ */
+const HARMONY_KEYS: Record<string, HarmonyTypeKey> = {
+  complementary: 'complementary',
+  analogous: 'analogous',
+  triadic: 'triadic',
+  'split-complementary': 'splitComplementary',
+  tetradic: 'tetradic',
+  'inverted-tetradic': 'invertedTetradic',
+  square: 'square',
+  monochromatic: 'monochromatic',
+  compound: 'compound',
+  shades: 'shades',
+};
+
 function getLocalizedHarmonyType(type: string, t: Translator): string {
-  const keyMap: Record<string, string> = {
-    complementary: 'harmony.complementary',
-    analogous: 'harmony.analogous',
-    triadic: 'harmony.triadic',
-    'split-complementary': 'harmony.splitComplementary',
-    tetradic: 'harmony.tetradic',
-    'inverted-tetradic': 'harmony.invertedTetradic',
-    square: 'harmony.square',
-    monochromatic: 'harmony.monochromatic',
-    compound: 'harmony.compound',
-    shades: 'harmony.shades',
-  };
-  const key = keyMap[type];
-  if (key) return t.t(key);
-  // pkg-svg-bot-logic-08: an English `formats` table used to sit here as a
-  // "fallback", duplicating all eight names. It could never run — `keyMap`
-  // covers every HarmonyType, so the return above always fires, and even on a
-  // missing locale key `Translator.t()` returns the raw key rather than
-  // undefined. The reverse-key gate is what actually guards the locale files.
-  // Only a genuinely unknown type reaches here, and capitalising it is the
-  // honest answer for one.
+  // `Object.hasOwn`, not a truthiness check: a plain object literal answers to
+  // `toString` / `valueOf`, so `HARMONY_KEYS['toString']` would be truthy and
+  // get handed to core as a harmony key. Unreachable today (callers pass a typed
+  // HarmonyType) but it is the exact shape PR #159 fixed in core's
+  // HARMONY_OFFSETS, and this table is one refactor away from taking raw input.
+  const key = Object.hasOwn(HARMONY_KEYS, type) ? HARMONY_KEYS[type] : undefined;
+  if (key) return getLocalizedHarmonyTypeFromCore(key, t.getLocale());
+  // Only a genuinely unknown type reaches here — `HARMONY_KEYS` covers every
+  // HarmonyType — and capitalising it is the honest answer for one.
   return type.charAt(0).toUpperCase() + type.slice(1);
 }
 

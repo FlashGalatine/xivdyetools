@@ -941,7 +941,7 @@ export class ComparisonTool extends BaseComponent {
     this.pairUnitTag = this.createElement('span', {
       attributes: {
         style:
-          "font-family: 'Fragment Mono', monospace; font-size: 11px; color: var(--theme-text-muted); white-space: nowrap;",
+          'font-family: var(--font-mono); font-size: 11px; color: var(--theme-text-muted); white-space: nowrap;',
       },
     });
     chipsHeader.appendChild(this.pairUnitTag);
@@ -1327,7 +1327,7 @@ export class ComparisonTool extends BaseComponent {
         this.createElement('span', {
           textContent: this.fmtValue(pair.value),
           attributes: {
-            style: `font-family: 'Fragment Mono', monospace; font-size: 11px; font-weight: 600; color: ${this.tierColorFor(tier)};`,
+            style: `font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: ${this.tierColorFor(tier)};`,
           },
         })
       );
@@ -1338,7 +1338,7 @@ export class ComparisonTool extends BaseComponent {
             textContent: LanguageService.t('comparison.tieBadge'),
             attributes: {
               style:
-                "flex-shrink: 0; font-family: 'Fragment Mono', monospace; font-size: 8px; letter-spacing: 0.8px; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);",
+                'flex-shrink: 0; font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.8px; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);',
             },
           })
         );
@@ -1398,7 +1398,7 @@ export class ComparisonTool extends BaseComponent {
     const centerBadge = this.createElement('span', {
       attributes: {
         style:
-          "position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; align-items: baseline; gap: 5px; padding: 5px 10px; border-radius: 8px; background: rgba(10,10,12,0.55); font-family: 'Fragment Mono', monospace;",
+          'position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; align-items: baseline; gap: 5px; padding: 5px 10px; border-radius: 8px; background: rgba(10,10,12,0.55); font-family: var(--font-mono);',
       },
     });
     centerBadge.appendChild(
@@ -1604,7 +1604,7 @@ export class ComparisonTool extends BaseComponent {
       this.createElement('span', {
         textContent: badge,
         attributes: {
-          style: `align-self: flex-start; font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: ${tone}; color: ${ThemeService.isDarkMode() ? '#0A0A0A' : '#FFFFFF'};`,
+          style: `align-self: flex-start; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: ${tone}; color: ${ThemeService.isDarkMode() ? '#0A0A0A' : '#FFFFFF'};`,
         },
       })
     );
@@ -1699,8 +1699,7 @@ export class ComparisonTool extends BaseComponent {
       this.createElement('span', {
         textContent: methodShort(this.method),
         attributes: {
-          style:
-            "font-family: 'Fragment Mono', monospace; font-size: 10px; color: var(--theme-text-muted);",
+          style: 'font-family: var(--font-mono); font-size: 10px; color: var(--theme-text-muted);',
         },
       })
     );
@@ -1785,7 +1784,7 @@ export class ComparisonTool extends BaseComponent {
           textContent: label,
           attributes: {
             style:
-              "width: 92px; flex-shrink: 0; font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 0.8px; color: var(--theme-text-muted);",
+              'width: 92px; flex-shrink: 0; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.8px; color: var(--theme-text-muted);',
           },
         })
       );
@@ -1805,7 +1804,7 @@ export class ComparisonTool extends BaseComponent {
           textContent: diff,
           attributes: {
             style:
-              "flex-shrink: 0; font-family: 'Fragment Mono', monospace; font-size: 11px; color: var(--theme-text-muted);",
+              'flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; color: var(--theme-text-muted);',
           },
         })
       );
@@ -1885,7 +1884,7 @@ export class ComparisonTool extends BaseComponent {
           textContent: tag,
           attributes: {
             style:
-              "flex: 1; min-width: 0; font-family: 'Fragment Mono', monospace; font-size: 10px; letter-spacing: 0.6px; color: var(--theme-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;",
+              'flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.6px; color: var(--theme-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
           },
         })
       );
@@ -1894,7 +1893,7 @@ export class ComparisonTool extends BaseComponent {
           textContent: value,
           attributes: {
             style:
-              "flex-shrink: 0; font-family: 'Fragment Mono', monospace; font-size: 13px; font-weight: 600; color: var(--theme-text);",
+              'flex-shrink: 0; font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--theme-text);',
           },
         })
       );
@@ -1902,7 +1901,7 @@ export class ComparisonTool extends BaseComponent {
         this.createElement('span', {
           textContent: tier === null ? '—' : this.tierWord(tier),
           attributes: {
-            style: `width: 72px; text-align: right; flex-shrink: 0; font-family: 'Fragment Mono', monospace; font-size: 9.5px; letter-spacing: 0.6px; color: ${tier === null ? 'var(--theme-text-muted)' : ramp[tier]};`,
+            style: `width: 72px; text-align: right; flex-shrink: 0; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.6px; color: ${tier === null ? 'var(--theme-text-muted)' : ramp[tier]};`,
           },
         })
       );

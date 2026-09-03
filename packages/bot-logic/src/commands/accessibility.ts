@@ -19,7 +19,11 @@ import type { Dye, VisionType as CoreVisionType } from '@xivdyetools/types';
 import { ColorService } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode, type Translator, type TranslatorLogger } from '../i18n/index.js';
 import { generateA11yCard, type A11yLensRow, type VisionType } from '@xivdyetools/svg';
-import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import {
+  initializeLocale,
+  getLocalizedDyeName,
+  getLocalizedVisionType as getLocalizedVisionTypeFromCore,
+} from '../localization.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -99,7 +103,10 @@ export type AccessibilityResult =
 // ============================================================================
 
 function lensLabel(lens: 'normal' | VisionType, t: Translator): string {
-  return lens === 'normal' ? t.t('accessibility.normalVision') : t.t(`accessibility.${lens}`);
+  // TERM-001: vision names come from core, the same single vocabulary the
+  // web app's accessibility tool reads. The bot's own `accessibility.*` names
+  // disagreed with it in ko (적색맹 vs core's 제1색맹) and de.
+  return getLocalizedVisionTypeFromCore(lens, t.getLocale());
 }
 
 /** Pair separation under a lens: ΔE2000 between the two SIMULATED colours. */

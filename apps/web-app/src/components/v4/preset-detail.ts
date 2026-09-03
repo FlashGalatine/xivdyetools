@@ -446,14 +446,14 @@ export class PresetDetail extends BaseLitComponent {
       }
 
       .example-link-label {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 8.5px;
         letter-spacing: 1px;
         color: var(--theme-text-muted, #888888);
       }
 
       .example-link-url {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 12.5px;
         color: var(--theme-primary, #ea4133);
         overflow-wrap: anywhere;
@@ -498,7 +498,7 @@ export class PresetDetail extends BaseLitComponent {
       }
 
       .dye-hex {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 11.5px;
         color: var(--theme-text-muted, #888888);
       }
@@ -512,7 +512,7 @@ export class PresetDetail extends BaseLitComponent {
       }
 
       .dye-price {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 12px;
         text-align: right;
         color: var(--theme-text, #e0e0e0);
@@ -523,7 +523,7 @@ export class PresetDetail extends BaseLitComponent {
       }
 
       .cost-label {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 8.5px;
         letter-spacing: 1px;
         color: var(--theme-text-muted, #888888);
@@ -540,7 +540,7 @@ export class PresetDetail extends BaseLitComponent {
 
       /* 8A: handoff row so the page does not dead-end */
       .handoff-label {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 8.5px;
         letter-spacing: 1px;
         color: var(--theme-text-muted, #888888);

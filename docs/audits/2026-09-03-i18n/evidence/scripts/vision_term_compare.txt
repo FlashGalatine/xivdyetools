@@ -1,0 +1,30 @@
+--- en ---
+  deuteranopia: web="Deuteranopia"  |  core="Deuteranopia (Red-Green Colorblindness)"
+  protanopia: web="Protanopia"  |  core="Protanopia (Red-Green Colorblindness)"
+  tritanopia: web="Tritanopia"  |  core="Tritanopia (Blue-Yellow Colorblindness)"
+  achromatopsia: web="Achromatopsia"  |  core="Achromatopsia (Total Colorblindness)"
+--- ja ---
+  deuteranopia: web="2型色覚"  |  core="2型色覚（赤緑色盲）"
+  protanopia: web="1型色覚"  |  core="1型色覚（赤緑色盲）"
+  tritanopia: web="3型色覚"  |  core="3型色覚（青黄色盲）"
+  achromatopsia: web="全色盲"  |  core="全色盲"
+--- de ---
+  deuteranopia: web="Deuteranopie"  |  core="Deuteranopie (Rot-Grün-Farbenblindheit)"
+  protanopia: web="Protanopie"  |  core="Protanopie (Rot-Grün-Farbenblindheit)"
+  tritanopia: web="Tritanopie"  |  core="Tritanopie (Blau-Gelb-Farbenblindheit)"
+  achromatopsia: web="Achromatopsie"  |  core="Achromatopsie (Totale Farbenblindheit)"
+--- fr ---
+  deuteranopia: web="Deutéranopie"  |  core="Deutéranopie (Daltonisme rouge-vert)"
+  protanopia: web="Protanopie"  |  core="Protanopie (Daltonisme rouge-vert)"
+  tritanopia: web="Tritanopie"  |  core="Tritanopie (Daltonisme bleu-jaune)"
+  achromatopsia: web="Achromatopsie"  |  core="Achromatopsie (Daltonisme total)"
+--- ko ---
+  deuteranopia: web="제2색맹"  |  core="제2색맹 (적록색맹)"
+  protanopia: web="제1색맹"  |  core="제1색맹 (적록색맹)"
+  tritanopia: web="제3색맹"  |  core="제3색맹 (청황색맹)"
+  achromatopsia: web="전색맹"  |  core="전색맹"
+--- zh ---
+  deuteranopia: web="绿色盲"  |  core="绿色盲（红绿色盲）"
+  protanopia: web="红色盲"  |  core="红色盲（红绿色盲）"
+  tritanopia: web="蓝色盲"  |  core="蓝色盲（蓝黄色盲）"
+  achromatopsia: web="全色盲"  |  core="全色盲"

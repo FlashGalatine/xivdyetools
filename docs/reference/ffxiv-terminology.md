@@ -65,7 +65,7 @@ Names match official FFXIV Lodestone and in-game item names. The core library st
 | EN | JA | DE | FR | KO | ZH |
 |----|----|----|----|----|-----|
 | Dye Vendor | 染色師 | Farbstoffverkäufer | Vendeur de teinture | 염료 판매상 | 染剂商人 |
-| Crafting | 制作 | Handwerker | Artisanat | 제작 | 制作 |
+| Crafting | 製作 | Handwerker | Artisanat | 제작 | 制作 |
 | Ixali Vendor | イクサル族のよろず屋 | Ixal-Händler | Vendeur ixal | 익살 상인 | 鸟人商人 |
 | Sylphic Vendor | シルフ族のよろず屋 | Sylphen-Händlerin | Vendeur sylphe | 실프 상인 | 妖精商人 |
 | Amalj'aa Vendor | アマルジャ族のよろず屋 | Amalj'aa-Händler | Vendeur amalj'aa | 아말쟈 상인 | 阿马尔贾商人 |

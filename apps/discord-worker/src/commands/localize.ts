@@ -26,7 +26,15 @@
  */
 
 import { createTranslator, type LocaleCode, type Translator } from '@xivdyetools/bot-logic/i18n';
-import { getLocalizedCategory } from '@xivdyetools/bot-logic';
+import {
+  getLocalizedCategory,
+  getLocalizedHarmonyType,
+  getLocalizedVisionType,
+  getLocalizedDyeName,
+  dyeService,
+} from '@xivdyetools/bot-logic';
+import { QUICK_PICKS } from '../services/budget/quick-picks.js';
+import type { HarmonyTypeKey, VisionType } from '@xivdyetools/types';
 
 /** Discord locale tag → bot locale. en-US / en-GB need no entry (base text is English). */
 export const DISCORD_LOCALE_MAP: ReadonlyArray<readonly [discord: string, locale: LocaleCode]> = [
@@ -129,10 +137,38 @@ function choiceLocalizations(command: string, option: string, value: string): Lo
     });
   }
   if (command === 'harmony' && option === 'type') {
-    return keyed(`harmony.${snakeToCamel(value)}`);
+    // TERM-001: core owns the harmony vocabulary — the same names web-app and
+    // og-worker render. This list used to come from bot-logic's own
+    // `harmony.*` keys, so Discord's picker disagreed with the web app.
+    const key = snakeToCamel(value) as HarmonyTypeKey;
+    return buildLocalizations((_t, locale) => {
+      const v = getLocalizedHarmonyType(key, locale);
+      return v === key ? undefined : v;
+    });
   }
   if ((command === 'accessibility' || command === 'a11y') && option === 'vision') {
-    return keyed(value === 'all' ? 'accessibility.allLenses' : `accessibility.${value}`);
+    // `all` is a bot-only choice with no core counterpart; the lenses come from
+    // core (TERM-001).
+    if (value === 'all') return keyed('accessibility.allLenses');
+    const key = value as VisionType;
+    return buildLocalizations((_t, locale) => {
+      const v = getLocalizedVisionType(key, locale);
+      return v === key ? undefined : v;
+    });
+  }
+  if (command === 'budget' && option === 'preset') {
+    // I18N-006: these 22 choices are DYE NAMES, and core has all 125 localized —
+    // they were the last English-only choice list of any size, and it grew 5 → 22
+    // when 4.1.1 swapped the metallic/pastel picks for the Cosmic dyes. The
+    // emoji prefix is kept; Discord renders it, it is never drawn by resvg.
+    const pick = QUICK_PICKS.find((p) => p.id === value);
+    if (!pick) return undefined;
+    const dye = dyeService.getByStainId(pick.targetDyeId);
+    if (!dye) return undefined;
+    return buildLocalizations((_t, locale) => {
+      const name = getLocalizedDyeName(dye.itemID, dye.name, locale);
+      return name === dye.name ? undefined : `${pick.emoji} ${name}`;
+    });
   }
   if (command === 'dye' && option === 'category') {
     // Core locale `categories` (Reds → 赤系 / Rot / …) — needs initializeLocale()

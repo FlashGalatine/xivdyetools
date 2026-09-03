@@ -940,6 +940,7 @@
     "voteAdded": "Vote ajouté !",
     "alreadyVoted": "Vous avez déjà voté pour ce préréglage",
     "loginToSubmit": "Veuillez vous connecter pour soumettre des préréglages",
+    "bannedFromPresets": "Vous n'êtes plus autorisé à soumettre des préréglages.",
     "loginToEdit": "Veuillez vous connecter pour modifier les préréglages",
     "onlyEditOwn": "Vous ne pouvez modifier que vos propres préréglages",
     "maxDyesAllowed": "Maximum {count} teintures autorisées",

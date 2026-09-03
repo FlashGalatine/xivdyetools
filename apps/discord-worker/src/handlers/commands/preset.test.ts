@@ -181,11 +181,21 @@ const translator = {
       'preset.voteFailed': 'Failed to process vote.',
       // FINDING-019 sanitisation assertions need the author/tag labels resolved
       'preset.byAuthor': 'by {author}',
+      'preset.cardVotes_one': `${String(vars?.count ?? 0)} vote`,
+      'preset.cardVotes_other': `${String(vars?.count ?? 0)} votes`,
       'preset.author': 'Author',
       'preset.tags': 'Tags',
       'preset.colors': 'Colors',
     };
     return (map[key] ?? key).replace(/\{(\w+)\}/g, (m, k: string) => String(vars?.[k] ?? m));
+  },
+  // Mirrors the real Translator.tc(): try `key_one` / `key_other` first, fall
+  // back to the bare key. The card's votes line goes through this (FONT-002).
+  tc(key: string, count: number, vars?: Record<string, string | number>): string {
+    const suffixed = `${key}_${count === 1 ? 'one' : 'other'}`;
+    const merged = { count, ...(vars ?? {}) };
+    const viaSuffix = this.t(suffixed, merged);
+    return viaSuffix === suffixed ? this.t(key, merged) : viaSuffix;
   },
   getLocale: () => 'en',
 };
@@ -1873,17 +1883,20 @@ describe('/preset command', () => {
       const card = mockGeneratePresetSwatch.mock.calls.at(-1)![0] as {
         name: string;
         description: string;
-        authorName: string;
+        // svg 4.0.0 (I18N-011): `authorName` is gone — the caller now passes the
+        // finished, localized `authorLine`, which is where the author text lives.
+        authorLine: string;
       };
 
       // Nothing was markdown-escaped: the card is a picture, not a message.
-      for (const text of [card.name, card.description, card.authorName]) {
+      for (const text of [card.name, card.description, card.authorLine]) {
         expect(text).not.toContain('\\');
       }
 
       // And the payloads survive verbatim — they are just characters to draw.
       expect(card.name).toBe('Free gil [here](https://phish.example) @everyone');
-      expect(card.authorName).toBe('<@999> _Mallory_');
+      // The author text now rides inside the localized line, still unescaped.
+      expect(card.authorLine).toContain('<@999> _Mallory_');
       expect(card.description).toContain('**Bold**');
       expect(card.description).toContain('||spoiler||');
 

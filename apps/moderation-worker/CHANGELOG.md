@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-09-03
+
+### Changed
+
+- **This bot is English-only, deliberately, and now says so once** (I18N-009). It carried a
+  `Record<LocaleCode, LocaleData>` whose six entries all pointed at the English table, plus
+  an unused `preset.status.*` key set — an apparatus that could never return anything but
+  English while looking like it might. Collapsed to one table.
+
+  The English itself is correct: every moderator is an English speaker, the commands are
+  restricted to the moderation channel, and the messages a preset *author* receives are sent
+  by `discord-worker`, which **is** localized. The resolved locale is still recorded for
+  logs and analytics; it just no longer pretends to select anything.
+
 ## [1.6.2] - 2026-09-02
 
 ### Fixed — 2026-09-02 deep-dive audit, Sprint 7

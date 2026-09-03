@@ -1,0 +1,4 @@
+dictionary rows matched to a core key: 45
+dictionary rows with no core counterpart (skipped): 41
+value mismatches: 0
+

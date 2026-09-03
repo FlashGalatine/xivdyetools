@@ -2,7 +2,7 @@
   "locale": "fr",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-18T19:07:42.758Z",
+    "generated": "2026-09-03T12:01:42.835Z",
     "dyeCount": 125
   },
   "labels": {
@@ -246,5 +246,18 @@
     "theLost": "Égaré",
     "rava": "Rava",
     "veena": "Veena"
+  },
+  "facewearColors": {
+    "silver": "Argent",
+    "gold": "Or",
+    "black": "Noir",
+    "white": "Blanc",
+    "grey": "Gris",
+    "red": "Rouge",
+    "blue": "Bleu",
+    "green": "Vert",
+    "brass": "Laiton",
+    "purple": "Violet",
+    "brown": "Marron"
   }
 }

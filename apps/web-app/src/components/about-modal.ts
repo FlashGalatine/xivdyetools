@@ -176,7 +176,7 @@ export class AboutModal {
 
       const value = document.createElement('span');
       value.className = 'text-sm font-bold';
-      value.style.fontFamily = "'Fragment Mono', monospace";
+      value.style.fontFamily = 'var(--font-mono)';
       value.style.color = stat.accent ? 'var(--theme-primary)' : 'var(--theme-text)';
       value.textContent = stat.value;
       cell.appendChild(value);
@@ -261,7 +261,7 @@ export class AboutModal {
       a.rel = 'noopener noreferrer';
       a.className = 'hover:underline';
       a.style.color = 'var(--theme-primary)';
-      a.style.fontFamily = "'Fragment Mono', monospace";
+      a.style.fontFamily = 'var(--font-mono)';
       a.textContent = host;
       // A value without the placeholder (or a missing key echoing back) still
       // needs the trailing separator the old concatenation supplied.
@@ -348,7 +348,7 @@ export class AboutModal {
       l.textContent = label;
       a.appendChild(l);
       const h = document.createElement('span');
-      h.style.fontFamily = "'Fragment Mono', monospace";
+      h.style.fontFamily = 'var(--font-mono)';
       h.style.color = 'var(--theme-primary)';
       h.textContent = host;
       a.appendChild(h);

@@ -146,7 +146,7 @@ export class ShareButton extends BaseLitComponent {
         border: 1px solid var(--v4-border-subtle, rgba(255, 255, 255, 0.1));
         border-radius: 8px;
         color: var(--theme-text, #e0e0e0);
-        font-family: var(--font-body, 'Onest', sans-serif);
+        font-family: var(--font-body);
         font-size: 13px;
         font-weight: 500;
         cursor: pointer;

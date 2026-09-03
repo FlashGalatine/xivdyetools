@@ -134,6 +134,22 @@ describe('localization', () => {
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.svgString).toContain('通常の視覚');
+    // TERM-001: vision names come from core, so the bot now says the same thing
+    // the web app and OG cards say. `通常の視覚` was bot-logic's own wording.
+    expect(result.svgString).toContain('正常視覚');
+    expect(result.svgString).not.toContain('通常の視覚');
+  });
+
+  it('uses core vision names, not a bot-local copy (TERM-001)', async () => {
+    const result = await executeAccessibility({
+      dyes: [dalamud, hunter],
+      vision: 'all',
+      locale: 'ko',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // core: 제1색맹 / 제2색맹 — bot-logic used to say 적색맹 / 녹색맹.
+    expect(result.svgString).toContain('제1색맹');
+    expect(result.svgString).not.toContain('적색맹');
   });
 });

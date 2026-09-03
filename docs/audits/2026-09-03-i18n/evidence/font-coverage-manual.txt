@@ -1,0 +1,56 @@
+########## DISCORD SC (core+bot-logic) ##########
+CMD: font-coverage.py apps/discord-worker/src/fonts/NotoSansSC-Subset.ttf packages/core/src/data/locales packages/bot-logic/src/i18n/locales --scripts cjk
+apps/discord-worker/src/fonts/NotoSansSC-Subset.ttf: needed=1065 covered=1065 missing=0 stale=0 (scripts=cjk)
+exit=0
+
+########## DISCORD JP (core+bot-logic) ##########
+CMD: font-coverage.py apps/discord-worker/src/fonts/NotoSansJP-Subset.ttf packages/core/src/data/locales packages/bot-logic/src/i18n/locales --scripts kana
+apps/discord-worker/src/fonts/NotoSansJP-Subset.ttf: needed=142 covered=140 missing=2 stale=0 (scripts=kana)
+  MISSING U+FF0C ，
+  MISSING U+FF1B ；
+exit=0
+
+########## DISCORD KR (core+bot-logic) ##########
+CMD: font-coverage.py apps/discord-worker/src/fonts/NotoSansKR-Subset.ttf packages/core/src/data/locales packages/bot-logic/src/i18n/locales --scripts hangul
+apps/discord-worker/src/fonts/NotoSansKR-Subset.ttf: needed=498 covered=484 missing=14 stale=0 (scripts=hangul)
+  MISSING U+3001 、
+  MISSING U+3002 。
+  MISSING U+300C 「
+  MISSING U+300D 」
+  MISSING U+301C 〜
+  MISSING U+FF01 ！
+  MISSING U+FF08 （
+  MISSING U+FF09 ）
+  MISSING U+FF0C ，
+  MISSING U+FF0F ／
+  MISSING U+FF1A ：
+  MISSING U+FF1B ；
+  MISSING U+FF1D ＝
+  MISSING U+FF1F ？
+exit=0
+
+########## OG SC (core+og-strings) ##########
+CMD: font-coverage.py apps/og-worker/src/fonts/NotoSansSC-Subset.ttf packages/core/src/data/locales apps/og-worker/src/services/og-strings.ts --scripts cjk
+apps/og-worker/src/fonts/NotoSansSC-Subset.ttf: needed=562 covered=562 missing=0 stale=0 (scripts=cjk)
+exit=0
+
+########## OG JP (core+og-strings) ##########
+CMD: font-coverage.py apps/og-worker/src/fonts/NotoSansJP-Subset.ttf packages/core/src/data/locales apps/og-worker/src/services/og-strings.ts --scripts kana
+apps/og-worker/src/fonts/NotoSansJP-Subset.ttf: needed=106 covered=105 missing=1 stale=0 (scripts=kana)
+  MISSING U+FF0C ，
+exit=0
+
+########## OG KR (core+og-strings) ##########
+CMD: font-coverage.py apps/og-worker/src/fonts/NotoSansKR-Subset.ttf packages/core/src/data/locales apps/og-worker/src/services/og-strings.ts --scripts hangul
+apps/og-worker/src/fonts/NotoSansKR-Subset.ttf: needed=310 covered=301 missing=9 stale=0 (scripts=hangul)
+  MISSING U+3001 、
+  MISSING U+3002 。
+  MISSING U+301C 〜
+  MISSING U+FF06 ＆
+  MISSING U+FF08 （
+  MISSING U+FF09 ）
+  MISSING U+FF0C ，
+  MISSING U+FF0F ／
+  MISSING U+FF1A ：
+exit=0
+

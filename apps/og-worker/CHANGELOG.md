@@ -5,6 +5,21 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-09-03
+
+### Fixed
+
+- **Share links dropped the sharer's locale on the way to the app** (I18N-002). `withLang`
+  was applied to all 17 `imageUrl` sites and to none of the `url` ones, so a `?lang=ja`
+  share rendered a Japanese card and then bounced the reader into whatever language their
+  browser preferred — the meta-refresh is a real redirect, not an advisory tag. Both links a
+  person actually follows now carry the locale; `og:url` / `twitter:url` stay canonical on
+  purpose, and a test pins both halves of that decision.
+- The CJK subsets are static instances, so bold CJK on cards stops rendering Thin
+  (FONT-001), and the font gates now read the real `fvar` table instead of filenames.
+- The supported-locale list comes from core's `SUPPORTED_LOCALES` rather than a local
+  re-spelling (I18N-004).
+
 ## [2.6.1] - 2026-09-03
 
 ### Fixed — pre-merge review follow-ups

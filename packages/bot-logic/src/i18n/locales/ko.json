@@ -148,28 +148,13 @@
   },
   "harmony": {
     "title": "{type} 하모니",
-    "baseColor": "기본 색상",
-    "complementary": "보색",
-    "analogous": "유사색",
-    "triadic": "삼원색",
-    "splitComplementary": "분할보색",
-    "tetradic": "사각배색",
-    "square": "정방형",
-    "monochromatic": "단색",
-    "invertedTetradic": "반전 사각배색",
-    "compound": "복합",
-    "shades": "명암"
+    "baseColor": "기본 색상"
   },
   "mixer": {
     "blendResult": "블렌드 결과",
     "bothRequired": "염료1과 염료2 모두 필요합니다."
   },
   "accessibility": {
-    "normalVision": "정상 시력",
-    "protanopia": "적색맹",
-    "deuteranopia": "녹색맹",
-    "tritanopia": "청색맹",
-    "achromatopsia": "전색맹",
     "allLenses": "모든 색각"
   },
   "about": {
@@ -214,6 +199,8 @@
     "tags": "태그",
     "author": "작성자",
     "votes": "투표",
+    "cardVotes_one": "{count}표",
+    "cardVotes_other": "{count}표",
     "api": {
       "badRequest": "잘못된 요청입니다. 입력 내용을 확인하고 다시 시도해 주세요.",
       "permissionDenied": "권한이 없습니다.",

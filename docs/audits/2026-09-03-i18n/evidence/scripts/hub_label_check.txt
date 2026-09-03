@@ -1,0 +1,4 @@
+en harmony.baseColorSection = 'Base Color'
+ja harmony.baseColorSection = 'ベースカラー'
+ko harmony.baseColorSection = '기본 색상'
+zh harmony.baseColorSection = '基础颜色'

@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.0] - 2026-09-03
+
+### Added
+
+- **Facewear tint names are localized** (I18N-008). The 11 Facewear colours are not dyes —
+  schema v2 moved them out of `dyes.json` — and nothing ever carried their names into the
+  locale pipeline, so all six locales rendered `Silver` / `Gold` / `Brass` in English
+  underneath a category heading that *was* translated. They are keyed by slug rather than
+  itemID, so `getDyeName()` could never have reached them. New source file
+  `facewear-names.csv`, a `facewearColors` namespace in every generated locale, and
+  `LocalizationService.getFacewearColorName(id, locale)`.
+
+  The German `gold` is deliberately identical to English and is allow-listed with a reason
+  in `facewear-names.test.ts`, which also fails if a regenerated locale drops the namespace
+  or a slug.
+
+### Fixed
+
+- **German Pearl White was the fragment `Perlmutt-`** (I18N-007). The German item name is
+  `Perlmutt-Farbstoff`, and stripping the `-Farbstoff` suffix left the connecting hyphen
+  behind, so every German surface — web app, both bots, OG cards and the public API —
+  showed a word ending in a dangling hyphen. Now `Perlmutt`. Checked the other 124 rows
+  against XIVAPI at the same time: they match exactly.
+- **Two Japanese game nouns did not match the official terminology** (TERM-002).
+  `categories.Neutral` was the transliteration `ニュートラル` while its eight siblings use
+  the game's 〜系 pattern — now `無彩色系`. `acquisitions.Dye Vendor` was the literal
+  `染料販売業者` — now `染色師`, the in-game NPC name.
+
+### Changed
+
+- `LocalizationService.getToolName()` and the `ToolKey` type are **deprecated** (I18N-003).
+  They cover only the six pre-5.0 tools while the product ships nine, and nothing in the
+  monorepo reads them — web-app names tools from its own `tools.*.title` keys, og-worker
+  from `OG_DECK`. Kept because they are published API; removal is a future major.
+- Generator-input hygiene (I18N-010): the `General_Purpose` label was authored in
+  `localize.yaml` and typed in `build-locales.ts` but never mapped into any locale's output
+  — removed. The French `Metallic` entry was an array whose two extra values were dye names
+  (`cuivre jaune`, `argent brillant`) pasted into a label slot; it is a plain string again
+  and the array branch is gone.
+
 ## [4.2.0] - 2026-09-03
 
 ### Fixed

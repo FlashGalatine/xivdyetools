@@ -2,7 +2,7 @@
   "locale": "en",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-18T19:07:42.753Z",
+    "generated": "2026-09-03T12:01:42.830Z",
     "dyeCount": 125
   },
   "labels": {
@@ -246,5 +246,18 @@
     "theLost": "The Lost",
     "rava": "Rava",
     "veena": "Veena"
+  },
+  "facewearColors": {
+    "silver": "Silver",
+    "gold": "Gold",
+    "black": "Black",
+    "white": "White",
+    "grey": "Grey",
+    "red": "Red",
+    "blue": "Blue",
+    "green": "Green",
+    "brass": "Brass",
+    "purple": "Purple",
+    "brown": "Brown"
   }
 }

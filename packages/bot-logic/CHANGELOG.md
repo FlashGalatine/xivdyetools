@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-09-03
+
+### BREAKING
+
+- Requires `@xivdyetools/svg` **4.x**: `generatePresetSwatch` now takes required
+  `authorLine` / `emptyLabel` and a `votesLabel` instead of `authorName` / `voteCount`.
+- **15 locale keys removed** from all six files — `harmony.{complementary, analogous,
+  triadic, splitComplementary, tetradic, square, monochromatic, invertedTetradic, compound,
+  shades}` and `accessibility.{normalVision, protanopia, deuteranopia, tritanopia,
+  achromatopsia}`. Anything reading them directly should call the new getters below.
+  `harmony.title`, `harmony.baseColor` and `accessibility.allLenses` stay — they have no
+  core counterpart.
+
+### Fixed
+
+- **The bot named harmonies and colour-vision types differently from the rest of the
+  product** (TERM-001). It resolved them through its own locale keys while web-app
+  (`harmony-generator.ts`) and og-worker (`translator.ts`) both used `@xivdyetools/core`,
+  so Split-Complementary was 分裂補色 in the app and スプリット補色 in the bot, Tetradic
+  四色配色 vs テトラード, Protanopia 제1색맹 vs 적색맹, Normal Vision "Normales Sehen" vs
+  "Normale Sicht". Eleven concepts disagreed across ja/ko/zh/de. PR #159 had already made
+  core the single harmony *algorithm*; this makes it the single *vocabulary*, including in
+  Discord's own command-choice picker.
+- Japanese and Chinese mixed full-width `：` and half-width `:` for the same "label: value"
+  shape — `有効なオプション` appeared both ways — so two adjacent bot messages punctuated
+  the same sentence differently (I18N-012). Normalized to full width in 25 strings.
+  Code samples inside backticks (`` `/preferences set language:ja` ``) keep their ASCII
+  colons: the rewrite is backtick-aware.
+- French `preferences.methods` / `.blendingModes` capitalized only `ciede2000` while every
+  sibling was lowercase; en and de capitalize all. Aligned 10 entries (I18N-012).
+
+### Added
+
+- `getLocalizedHarmonyType()` and `getLocalizedVisionType()` — the core-backed getters the
+  fix above routes through, alongside the existing `getLocalizedCategory` /
+  `getLocalizedAcquisition`.
+- `preset.cardVotes` (plural-aware via `tc()`) — the preset card's votes line, which used
+  to be `${voteCount}★` and drew as tofu because no bundled font has U+2605 (FONT-002).
+
 ## [3.2.0] - 2026-09-03
 
 ### Fixed

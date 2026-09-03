@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-09-03
+
+### BREAKING
+
+- `PresetSwatchOptions.authorLine` and `.emptyLabel` are **required**, and
+  `.authorName` / `.voteCount` are **removed** (I18N-011, FONT-002). The generator no
+  longer builds English from `authorName` or renders a vote count itself; the caller
+  passes finished, localized text. The English defaults were a silent trap: a caller that
+  forgot them baked English onto an otherwise fully localized card, and no gate caught it.
+  Migration: pass `authorLine` (the "by {author}" / "Official" line you already localize)
+  and `emptyLabel`; replace `voteCount: n` with `votesLabel: t.tc('preset.cardVotes', n)`.
+
+### Fixed
+
+- **Preset cards drew a tofu box next to the vote count** (FONT-002). The meta line was
+  `` `${voteCount}★` `` and U+2605 is in none of the ten faces either Worker bundles, so
+  it rendered as `.notdef` on every preset card that had votes — the same trap BUG-056
+  fixed for the category emoji three screens up in the same file. Replaced by the
+  caller-supplied `votesLabel`, which is localized as well as drawable.
+- `measuredRow`'s lead and sub text now go through `fitText()` like every other row, so a
+  long CJK label truncates instead of overrunning its 56 px budget (I18N-011).
+
+### Added
+
+- `scanEmittedGlyphs()` — extracts the non-ASCII characters string and template literals
+  actually contain, skipping comments, and classifies each as text- or emoji-presentation.
+  Both Workers' `font-coverage.test.ts` now derive their glyph requirement from it instead
+  of a hand-maintained `CODE_GLYPHS` literal, which is why `★` shipped unnoticed. Comments
+  are skipped deliberately: this package's JSDoc is full of examples like
+  `IDEAL HUE / IDEALFARBTON / 理想の色相` that nothing renders.
+
 ## [3.1.0] - 2026-09-02
 
 ### Added

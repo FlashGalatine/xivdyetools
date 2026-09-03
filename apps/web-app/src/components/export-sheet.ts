@@ -46,7 +46,7 @@ function exportLabels(): ExportLabels {
 
 const CHIP_BASE = [
   'min-height: 30px; padding: 0 12px; border-radius: 8px; cursor: pointer;',
-  "font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 0.6px;",
+  'font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.6px;',
 ].join(' ');
 
 function chipStyle(active: boolean): string {
@@ -128,7 +128,7 @@ export function openExportSheet(input: ExportPayload): void {
   preview.style.cssText = [
     'margin: 0; padding: 12px; border-radius: 10px; max-height: 320px;',
     'overflow: auto; white-space: pre; tab-size: 2;',
-    "font-family: 'Fragment Mono', monospace; font-size: 11.5px; line-height: 1.55;",
+    'font-family: var(--font-mono); font-size: 11.5px; line-height: 1.55;',
     'background: var(--theme-background-secondary, var(--theme-card-background));',
     'border: 1px solid var(--theme-border); color: var(--theme-text);',
   ].join(' ');

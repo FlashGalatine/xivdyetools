@@ -454,6 +454,40 @@ export class TranslationProvider {
   }
 
   /**
+   * Get a localized Facewear tint name by its slug.
+   *
+   * @example
+   * ```ts
+   * const name = provider.getFacewearColorName('brass', 'ja');
+   * // Returns "ブラス" (ja) or "Brass" (en fallback)
+   * ```
+   */
+  getFacewearColorName(id: string, locale: LocaleCode): string {
+    const localeData = this.registry.getLocale(locale);
+
+    if (
+      localeData?.facewearColors &&
+      Object.hasOwn(localeData.facewearColors, id) &&
+      localeData.facewearColors[id]
+    ) {
+      return localeData.facewearColors[id];
+    }
+
+    if (locale !== 'en') {
+      const englishData = this.registry.getLocale('en');
+      if (
+        englishData?.facewearColors &&
+        Object.hasOwn(englishData.facewearColors, id) &&
+        englishData.facewearColors[id]
+      ) {
+        return englishData.facewearColors[id];
+      }
+    }
+
+    return this.formatKey(id);
+  }
+
+  /**
    * Format camelCase/PascalCase key to Title Case
    *
    * @param key - Key to format

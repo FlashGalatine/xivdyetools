@@ -67,7 +67,7 @@ function sectionCard(
 
   const summaryEl = document.createElement('span');
   summaryEl.className = 'text-xs truncate';
-  summaryEl.style.fontFamily = "'Fragment Mono', monospace";
+  summaryEl.style.fontFamily = 'var(--font-mono)';
   summaryEl.style.color = 'var(--theme-text-muted)';
   summaryEl.textContent = summary;
   text.appendChild(summaryEl);

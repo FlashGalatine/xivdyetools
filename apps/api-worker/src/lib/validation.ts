@@ -5,8 +5,12 @@
  * identifier types with disjoint numeric ranges, so we auto-detect the type.
  */
 
-import type { Dye } from '@xivdyetools/types';
-import { DEFAULT_MATCHING_METHOD, LEGACY_MATCHING_METHOD_MAP } from '@xivdyetools/core';
+import type { Dye, LocaleCode } from '@xivdyetools/types';
+import {
+  DEFAULT_MATCHING_METHOD,
+  LEGACY_MATCHING_METHOD_MAP,
+  SUPPORTED_LOCALES,
+} from '@xivdyetools/core';
 import type { MatchingMethod } from '@xivdyetools/core';
 import {
   EXPENSIVE_DYE_IDS,
@@ -20,8 +24,11 @@ import { dyeService } from './services.js';
 // Constants
 // ============================================================================
 
-export const VALID_LOCALES = ['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const;
-export type ValidLocale = (typeof VALID_LOCALES)[number];
+// I18N-004: derived from core rather than re-spelled. Every copy of this list
+// agreed when the audit ran, but adding a locale (or folding zh-TW into zh, which
+// an earlier audit deferred) meant finding all of them.
+export const VALID_LOCALES = SUPPORTED_LOCALES;
+export type ValidLocale = LocaleCode;
 
 // The 5.0 vocabulary (one list suite-wide). Retired v4 values (hyab,
 // oklch-weighted) stay accepted at the boundary for compatibility and are

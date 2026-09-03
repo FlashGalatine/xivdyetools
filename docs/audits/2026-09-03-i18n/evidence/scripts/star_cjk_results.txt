@@ -1,0 +1,6 @@
+NotoSansJP-Subset.ttf: BLACK STAR (U+2605): MISSING
+NotoSansJP-Subset.ttf: DELTA (U+0394): YES
+NotoSansSC-Subset.ttf: BLACK STAR (U+2605): MISSING
+NotoSansSC-Subset.ttf: DELTA (U+0394): YES
+NotoSansKR-Subset.ttf: BLACK STAR (U+2605): MISSING
+NotoSansKR-Subset.ttf: DELTA (U+0394): MISSING

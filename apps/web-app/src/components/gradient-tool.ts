@@ -1045,8 +1045,7 @@ export class GradientTool extends BaseComponent {
     );
     this.railPinCount = this.createElement('span', {
       attributes: {
-        style:
-          "font-family: 'Fragment Mono', monospace; font-size: 10px; color: var(--theme-text-muted);",
+        style: 'font-family: var(--font-mono); font-size: 10px; color: var(--theme-text-muted);',
       },
     });
     railHeader.appendChild(this.railPinCount);
@@ -1256,7 +1255,7 @@ export class GradientTool extends BaseComponent {
         textContent: LanguageService.t(slot === 0 ? 'gradient.fromLabel' : 'gradient.toLabel'),
         attributes: {
           style:
-            "font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 0.8px; color: var(--theme-text-muted);",
+            'font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.8px; color: var(--theme-text-muted);',
         },
       })
     );
@@ -1324,7 +1323,7 @@ export class GradientTool extends BaseComponent {
 
     const legend = this.createElement('div', {
       attributes: {
-        style: `display: flex; gap: 10px; margin-top: 4px; font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted);`,
+        style: `display: flex; gap: 10px; margin-top: 4px; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted);`,
       },
     });
     legend.appendChild(
@@ -1476,7 +1475,7 @@ export class GradientTool extends BaseComponent {
           this.createElement('span', {
             textContent: deLabel,
             attributes: {
-              style: `font-family: 'Fragment Mono', monospace; font-size: 10px; margin-left: auto; flex-shrink: 0; color: ${ink}; opacity: 0.72;`,
+              style: `font-family: var(--font-mono); font-size: 10px; margin-left: auto; flex-shrink: 0; color: ${ink}; opacity: 0.72;`,
             },
           })
         );
@@ -1519,7 +1518,7 @@ export class GradientTool extends BaseComponent {
             v: avgRaw.toFixed(avgDp),
           }),
           attributes: {
-            style: `font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; color: ${this.driftTierColor(avgRaw)};`,
+            style: `font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; color: ${this.driftTierColor(avgRaw)};`,
           },
         })
       );
@@ -1535,7 +1534,7 @@ export class GradientTool extends BaseComponent {
             }),
             attributes: {
               title: LanguageService.t('gradient.maxDriftDesc'),
-              style: `font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; color: ${this.driftTierColor(maxRaw)};`,
+              style: `font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; color: ${this.driftTierColor(maxRaw)};`,
             },
           })
         );
@@ -1548,7 +1547,7 @@ export class GradientTool extends BaseComponent {
             }),
             attributes: {
               title: LanguageService.t('gradient.pinnedDesc'),
-              style: `font-family: 'Fragment Mono', monospace; font-size: 10px; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 5px; white-space: nowrap; background: ${ACCENT_SOFT}; color: var(--theme-primary);`,
+              style: `font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 5px; white-space: nowrap; background: ${ACCENT_SOFT}; color: var(--theme-primary);`,
             },
           })
         );

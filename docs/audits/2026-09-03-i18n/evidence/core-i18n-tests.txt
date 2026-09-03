@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/packages/core
+
+
+ Test Files  3 passed (3)
+      Tests  23 passed (23)
+   Start at  07:22:11
+   Duration  1.40s (transform 636ms, setup 0ms, import 911ms, tests 1.03s, environment 0ms)
+

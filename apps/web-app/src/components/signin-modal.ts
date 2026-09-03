@@ -36,7 +36,7 @@ export function showSignInModal(): void {
     <p style="font-size: 15px; font-weight: 650; line-height: 1.4; color: var(--theme-text); margin: 0 0 6px;">${t('preset.signinHeadline')}</p>
     <p style="font-size: 12.5px; line-height: 1.55; color: var(--theme-text-muted); margin: 0 0 14px;">${t('preset.signinBlurb')}</p>
 
-    <div style="font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-bottom: 4px;">${t('preset.gateTitle')}</div>
+    <div style="font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-bottom: 4px;">${t('preset.gateTitle')}</div>
     ${row('✓', 'rgba(97, 197, 84, 0.16)', '#61C554', t('preset.gateBrowse'), t('preset.gateBrowseNote'))}
     ${row('✓', 'rgba(97, 197, 84, 0.16)', '#61C554', t('preset.gateSave'), t('preset.gateSaveNote'))}
     ${row('★', 'color-mix(in srgb, var(--theme-primary) 16%, transparent)', 'var(--theme-primary)', t('preset.gateVote'), t('preset.gateVoteNote'))}

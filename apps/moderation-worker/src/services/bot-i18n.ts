@@ -67,13 +67,6 @@ const enLocale: LocaleData = {
       footerMixedQueue:
         'approve/reject apply to the text entries only — 🖼 entries are reviewed on the moderation embed in Discord',
     },
-    status: {
-      pending: 'Pending',
-      approved: 'Approved',
-      rejected: 'Rejected',
-      flagged: 'Flagged',
-      hidden: 'Hidden',
-    },
     categories: {
       jobs: 'FFXIV Jobs',
       'grand-companies': 'Grand Companies',
@@ -107,16 +100,19 @@ const enLocale: LocaleData = {
 };
 
 /**
- * All loaded locales (only English for moderation bot)
+ * The moderation bot's strings — English only, deliberately (I18N-009).
+ *
+ * Every moderator is an English speaker and this bot talks to nobody else: its
+ * commands are restricted to the moderation channel, and the messages a preset
+ * AUTHOR receives are sent by discord-worker, which *is* localized.
+ *
+ * This used to be a `Record<LocaleCode, LocaleData>` with all six locales
+ * pointing at `enLocale`, alongside a KV locale round-trip and an unused
+ * `preset.status.*` key set — an apparatus that could never return anything but
+ * English while looking like it might. If this bot is ever localized, add real
+ * locale files here and give the handlers translators; do not restore the map.
  */
-const locales: Record<LocaleCode, LocaleData> = {
-  en: enLocale,
-  ja: enLocale, // Fallback to English
-  de: enLocale,
-  fr: enLocale,
-  ko: enLocale,
-  zh: enLocale,
-};
+const strings: LocaleData = enLocale;
 
 /**
  * Get a nested value from an object using dot notation
@@ -157,9 +153,12 @@ export class Translator {
   private logger?: ExtendedLogger;
 
   constructor(locale: LocaleCode, logger?: ExtendedLogger) {
+    // `locale` is still resolved and recorded — analytics and log lines want to
+    // know what the moderator's client asked for — but it selects nothing:
+    // this bot ships one English table on purpose (I18N-009).
     this.locale = locale;
-    this.data = locales[locale] || locales.en;
-    this.fallbackData = locales.en;
+    this.data = strings;
+    this.fallbackData = strings;
     this.logger = logger;
   }
 

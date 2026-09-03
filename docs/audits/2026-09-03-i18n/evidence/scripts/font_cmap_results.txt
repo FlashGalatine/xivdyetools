@@ -1,0 +1,10 @@
+codepoint             FragmentMono-Regular    Onest-Regular           Onest-SemiBold          Onest-Bold              SpaceGrotesk-Regular    SpaceGrotesk-SemiBold   SpaceGrotesk-Bold       
+MIDDLE DOT ·          YES                     YES                     YES                     YES                     YES                     YES                     YES                     
+EM DASH —             YES                     YES                     YES                     YES                     YES                     YES                     YES                     
+DELTA Δ               MISSING                 MISSING                 MISSING                 MISSING                 YES                     YES                     YES                     
+ELLIPSIS …            YES                     YES                     YES                     YES                     YES                     YES                     YES                     
+DEGREE SIGN °         YES                     YES                     YES                     YES                     YES                     YES                     YES                     
+RIGHT ARROW →         YES                     YES                     YES                     YES                     YES                     YES                     YES                     
+DOWN ARROW ↓          YES                     YES                     YES                     YES                     YES                     YES                     YES                     
+BLACK STAR ★          MISSING                 MISSING                 MISSING                 MISSING                 MISSING                 MISSING                 MISSING                 
+BULLET •              YES                     YES                     YES                     YES                     YES                     YES                     YES                     

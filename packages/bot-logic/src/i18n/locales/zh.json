@@ -148,28 +148,13 @@
   },
   "harmony": {
     "title": "{type}和谐",
-    "baseColor": "基础色",
-    "complementary": "互补色",
-    "analogous": "类似色",
-    "triadic": "三色",
-    "splitComplementary": "分裂互补",
-    "tetradic": "四色",
-    "square": "正方形",
-    "monochromatic": "单色",
-    "invertedTetradic": "逆四色",
-    "compound": "复合",
-    "shades": "明暗"
+    "baseColor": "基础色"
   },
   "mixer": {
     "blendResult": "混合结果",
     "bothRequired": "染剂1和染剂2都是必需的。"
   },
   "accessibility": {
-    "normalVision": "正常视力",
-    "protanopia": "红色盲",
-    "deuteranopia": "绿色盲",
-    "tritanopia": "蓝色盲",
-    "achromatopsia": "全色盲",
     "allLenses": "所有色觉"
   },
   "about": {
@@ -214,6 +199,8 @@
     "tags": "标签",
     "author": "作者",
     "votes": "投票",
+    "cardVotes_one": "{count} 票",
+    "cardVotes_other": "{count} 票",
     "api": {
       "badRequest": "无效的请求。请检查您的输入并重试。",
       "permissionDenied": "权限不足。",
@@ -306,7 +293,7 @@
       "successCount": "已更新{count}项设置",
       "affects": "影响的命令",
       "failedToUpdate": "更新失败",
-      "noOptions": "请至少提供一项设置。\n\n示例: `/preferences set language:zh blending:oklab`",
+      "noOptions": "请至少提供一项设置。\n\n示例：`/preferences set language:zh blending:oklab`",
       "noValidOptions": "未提供有效的设置。",
       "overrideNote": "命令参数会覆盖这些设置"
     },
@@ -351,12 +338,12 @@
       "themeLight": "浅色"
     },
     "validation": {
-      "invalidLanguage": "无效的语言。有效选项: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
-      "invalidBlendingMode": "无效的混合模式。有效选项:\n{options}",
-      "invalidMatchingMethod": "无效的匹配方法。有效选项:\n{options}",
+      "invalidLanguage": "无效的语言。有效选项：`en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "无效的混合模式。有效选项：\n{options}",
+      "invalidMatchingMethod": "无效的匹配方法。有效选项：\n{options}",
       "invalidCount": "无效的数量。必须是1到10之间的数字。",
-      "invalidClan": "无效的部族。有效部族:\n{options}",
-      "invalidGender": "无效的性别。有效选项: `male`, `female`",
+      "invalidClan": "无效的部族。有效部族：\n{options}",
+      "invalidGender": "无效的性别。有效选项：`male`, `female`",
       "invalidWorld": "无效的服务器。请输入有效的FFXIV服务器或数据中心名称。",
       "invalidMarket": "无效的值。请使用 `on`/`off` 或 `true`/`false`。",
       "error": "保存设置时发生错误，请重试。",
@@ -367,7 +354,7 @@
       "excluded": "已排除",
       "included": "已包含",
       "updated": "过滤器已更新",
-      "affectsHint": "影响命令: /match, /harmony, /gradient, /mixer",
+      "affectsHint": "影响命令：/match, /harmony, /gradient, /mixer",
       "title": "染剂过滤",
       "setHint": "使用 /preferences filters set 进行自定义",
       "resetSuccess": "过滤器已重置",

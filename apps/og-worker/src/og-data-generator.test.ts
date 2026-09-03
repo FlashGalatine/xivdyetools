@@ -15,7 +15,7 @@ import {
   generateOGHTML,
   generateOGDataForTool,
 } from './og-data-generator';
-import type { Env } from './types';
+import type { Env, ToolId } from './types';
 
 const mockEnv: Env = {
   APP_BASE_URL: 'https://xivdyetools.app',
@@ -351,6 +351,33 @@ describe('og-data-generator', () => {
       expect(html).toContain('</body>');
       expect(html).toContain('</html>');
     });
+
+    it('the locale rides on ogData.url itself, not on a second wrapper (I18N-002)', async () => {
+      // The real contract: `appUrl()` puts `lang` (and `algo`) on the app URL at
+      // source, so `og:url`, the meta-refresh and the body link all carry it and
+      // all carry it ONCE. An earlier pass here wrapped `ogData.url` a second
+      // time inside generateOGHTML and emitted `&lang=ja&lang=ja`.
+      const data = await generateOGDataForTool('harmony' as ToolId, new URLSearchParams({ dye: '102' }), mockEnv, 'ja');
+      expect(data.url).toContain('lang=ja');
+      expect(data.url.match(/lang=ja/g)).toHaveLength(1);
+
+      const html = generateOGHTML(data);
+      expect(html.match(/lang=ja/g)?.length).toBeGreaterThan(0);
+      expect(html).not.toContain('lang=ja&amp;lang=ja');
+      expect(html).not.toContain('lang=ja&lang=ja');
+    });
+
+    it('the default (no-params) card carries the locale too', async () => {
+      const data = await generateOGDataForTool('harmony' as ToolId, new URLSearchParams(), mockEnv, 'ja');
+      expect(data.url).toContain('lang=ja');
+    });
+
+    it('leaves every URL bare for the default locale', () => {
+      const html = generateOGHTML({ ...testOGData, locale: 'en' });
+
+      expect(html).not.toContain('lang=en');
+    });
+
 
     it('should include escaped title in meta tags', async () => {
       const html = generateOGHTML(testOGData);

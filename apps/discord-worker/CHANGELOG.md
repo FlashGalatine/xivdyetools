@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2026-09-03
+
+### Fixed
+
+- **`/budget quick preset` offered 22 English dye names in every locale** (I18N-006). Core
+  has all 125 dye names translated, so the choice list now resolves through it, following
+  the same shape as the existing `/dye category` case. It was the last English-only choice
+  list of any size, and it had grown from 5 entries when 4.1.1 replaced the metallic/pastel
+  picks with the Cosmic dyes. **Takes effect when `register-commands` runs on merge.**
+- Harmony and colour-vision names in the command picker now come from `@xivdyetools/core`
+  like the rest of the product, instead of bot-logic's own copies (TERM-001) — Discord's
+  own choice list disagreed with the web app in ja/ko/zh/de.
+- The CJK subsets are static instances, so bold and semibold CJK on cards render at the
+  weight the card asks for instead of Thin (FONT-001). The gate now reads each face's
+  `fvar` table rather than matching filenames, and the emitted-glyph requirement is derived
+  from source instead of a hand-maintained literal (FONT-002).
+
 ## [5.2.0] - 2026-09-03
 
 ### Changed — harmony convergence

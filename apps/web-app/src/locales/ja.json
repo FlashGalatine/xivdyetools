@@ -940,6 +940,7 @@
     "voteAdded": "投票しました！",
     "alreadyVoted": "このプリセットには既に投票済みです",
     "loginToSubmit": "プリセットを投稿するにはログインしてください",
+    "bannedFromPresets": "コミュニティプリセットの投稿を禁止されています。",
     "loginToEdit": "プリセットを編集するにはログインしてください",
     "onlyEditOwn": "自分のプリセットのみ編集できます",
     "maxDyesAllowed": "最大{count}個のカララントまで登録できます",

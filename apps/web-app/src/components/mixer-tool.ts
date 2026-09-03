@@ -1163,7 +1163,7 @@ export class MixerTool extends BaseComponent {
     // The field is the two-dye map; a third slot switches to the multi-blend flow.
     if (!dyeA || !dyeB || this.selectedDyes[2]) return;
 
-    const MONO = "'Fragment Mono', monospace";
+    const MONO = 'var(--font-mono)';
     const MODELS: MixingMode[] = ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'];
     // Row headers name the blending method: identifiers by decision
     // (2026-08-20 i18n audit), identical in every locale. The tooltip carries

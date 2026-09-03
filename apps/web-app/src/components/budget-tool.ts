@@ -134,7 +134,7 @@ const TIER_META: Record<TierKey, { tag: string; rampIndex: number }> = {
 const TIER_RAMP_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'] as const;
 const TIER_RAMP_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
 
-const MONO = "'Fragment Mono', monospace";
+const MONO = 'var(--font-mono)';
 
 // ============================================================================
 // BudgetTool Component

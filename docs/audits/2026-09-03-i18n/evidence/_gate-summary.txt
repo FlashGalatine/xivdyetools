@@ -1,0 +1,287 @@
+### build-packages
+CMD: pnpm turbo run build --filter=./packages/*
+EXIT: 0
+TAIL:
+[34m@xivdyetools/core:build: [0m   ✓ ko.json
+[34m@xivdyetools/core:build: [0m   ✓ zh.json
+[34m@xivdyetools/core:build: [0m✅ Locale files copied to C:\dev\XIVProjects\xivdyetools\.claude\worktrees\fix-159\packages\core\dist\data\locales
+[35m@xivdyetools/svg:build: [0mcache hit, replaying logs [2m41be34c5a06853ab[0m
+[35m@xivdyetools/svg:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[32m@xivdyetools/bot-logic:build: [0mcache miss, executing [2md515b417403b70fe[0m
+[32m@xivdyetools/bot-logic:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+
+[1m Tasks:    [32m[1m8 successful[0m, 8 total[0m
+[1mCached:    [1m7 cached[0m, 8 total[0m
+[1m  Time:    [1m2.754s[0m [0m
+
+
+### core-build-locales
+CMD: pnpm --filter @xivdyetools/core run build:locales
+EXIT: 0
+TAIL:
+  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-03\packages\core\src\data\locales\de.json (125 dyes)
+
+Building French (fr)...
+  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-03\packages\core\src\data\locales\fr.json (125 dyes)
+
+Building Korean (ko)...
+  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-03\packages\core\src\data\locales\ko.json (125 dyes)
+
+Building Chinese (zh)...
+  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-03\packages\core\src\data\locales\zh.json (125 dyes)
+
+✅ Locale files already up to date (nothing written).
+
+### core-locale-drift (empty = no hand edits)
+
+### core-i18n-tests
+CMD: pnpm --filter @xivdyetools/core exec vitest run --reporter=basic src/config/__tests__/band-vocabulary.parity.test.ts src/services/__tests__/DyeSearch.parity.test.ts src/services/__tests__/LocalizationService.explicit-locale.test.ts
+EXIT: 1
+TAIL:
+        at async Promise.all (index 0)
+        at Vitest._setServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:13244:138)
+        at BasicMinimalPluginContext.handler (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:14258:5)
+        at _createServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vite@8.2.2_@types+node@26.4_e5317a467848532478a23f8a5cba35b4/node_modules/[4mvite[24m/dist/node/chunks/node.js:26631:84)
+  }
+}
+
+
+
+[90mundefined[39m
+C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-03\packages\core:
+[41m[31m[[39m[49m[41m[30mERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL[39m[49m[41m[31m][39m[49m [31mCommand failed with exit code 1: vitest run "--reporter=basic" src/config/__tests__/band-vocabulary.parity.test.ts src/services/__tests__/DyeSearch.parity.test.ts src/services/__tests__/LocalizationService.explicit-locale.test.ts[39m
+
+### botlogic-i18n
+CMD: pnpm --filter @xivdyetools/bot-logic exec vitest run --reporter=basic src/i18n
+EXIT: 1
+TAIL:
+        at async Promise.all (index 0)
+        at Vitest._setServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:13244:138)
+        at BasicMinimalPluginContext.handler (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:14258:5)
+        at _createServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vite@8.2.2_@types+node@26.4_e5317a467848532478a23f8a5cba35b4/node_modules/[4mvite[24m/dist/node/chunks/node.js:26631:84)
+  }
+}
+
+
+
+[90mundefined[39m
+C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-03\packages\bot-logic:
+[41m[31m[[39m[49m[41m[30mERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL[39m[49m[41m[31m][39m[49m [31mCommand failed with exit code 1: vitest run "--reporter=basic" src/i18n[39m
+
+### webapp-validate-i18n
+CMD: pnpm --filter xivdyetools-web-app run validate:i18n
+EXIT: 0
+TAIL:
+  ✓ 9 identical value(s) allow-listed as intentional
+
+== ko: dups=0 missing=0 extra=0 identical=12 empty=0 varMismatch=0
+  ✓ 12 identical value(s) allow-listed as intentional
+
+== zh: dups=0 missing=0 extra=0 identical=9 empty=0 varMismatch=0
+  ✓ 9 identical value(s) allow-listed as intentional
+
+======================================================================
+
+✅ i18n parity clean — no duplicates, no drift, no untranslated values.
+
+
+### webapp-i18n-unused
+CMD: pnpm --filter xivdyetools-web-app run i18n:unused
+EXIT: 0
+TAIL:
+[2m$ node scripts/analyze-unused-keys.js[22m
+
+🌍 i18n orphan check — 1141 keys in en.json (meta.* excluded)
+   used: 1141   orphaned: 0
+
+✅ No orphaned keys.
+
+### webapp-i18n-tests
+CMD: pnpm --filter xivdyetools-web-app exec vitest run --reporter=basic src/__tests__/i18n-orphans.test.ts src/components/__tests__/v4/locale-switch.test.ts src/components/__tests__/chara-import-i18n.test.ts src/shared/__tests__/preset-i18n.test.ts
+EXIT: 1
+TAIL:
+        at async Promise.all (index 0)
+        at Vitest._setServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:13244:138)
+        at BasicMinimalPluginContext.handler (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:14258:5)
+        at _createServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vite@8.2.2_@types+node@26.4_e5317a467848532478a23f8a5cba35b4/node_modules/[4mvite[24m/dist/node/chunks/node.js:26631:84)
+  }
+}
+
+
+
+[90mundefined[39m
+C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-03\apps\web-app:
+[41m[31m[[39m[49m[41m[30mERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL[39m[49m[41m[31m][39m[49m [31mCommand failed with exit code 1: vitest run "--reporter=basic" src/__tests__/i18n-orphans.test.ts src/components/__tests__/v4/locale-switch.test.ts src/components/__tests__/chara-import-i18n.test.ts src/shared/__tests__/preset-i18n.test.ts[39m
+
+### og-i18n
+CMD: pnpm --filter xivdyetools-og-worker exec vitest run --reporter=basic src/services/og-strings.test.ts src/services/svg/roles-i18n.test.ts src/og-data-generator.test.ts src/services/font-coverage.test.ts
+EXIT: 1
+TAIL:
+        at async Promise.all (index 0)
+        at Vitest._setServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:13244:138)
+        at BasicMinimalPluginContext.handler (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:14258:5)
+        at _createServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vite@8.2.2_@types+node@26.4_e5317a467848532478a23f8a5cba35b4/node_modules/[4mvite[24m/dist/node/chunks/node.js:26631:84)
+  }
+}
+
+
+
+[90mundefined[39m
+C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-03\apps\og-worker:
+[41m[31m[[39m[49m[41m[30mERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL[39m[49m[41m[31m][39m[49m [31mCommand failed with exit code 1: vitest run "--reporter=basic" src/services/og-strings.test.ts src/services/svg/roles-i18n.test.ts src/og-data-generator.test.ts src/services/font-coverage.test.ts[39m
+
+### discord-i18n
+CMD: pnpm --filter xivdyetools-discord-worker exec vitest run --reporter=basic src/services/bot-i18n.test.ts src/services/i18n.test.ts src/services/locale-and-fonts.test.ts src/services/font-coverage.test.ts
+EXIT: 1
+TAIL:
+        at async Promise.all (index 0)
+        at Vitest._setServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:13244:138)
+        at BasicMinimalPluginContext.handler (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:14258:5)
+        at _createServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vite@8.2.2_@types+node@26.4_e5317a467848532478a23f8a5cba35b4/node_modules/[4mvite[24m/dist/node/chunks/node.js:26631:84)
+  }
+}
+
+
+
+[90mundefined[39m
+C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-03\apps\discord-worker:
+[41m[31m[[39m[49m[41m[30mERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL[39m[49m[41m[31m][39m[49m [31mCommand failed with exit code 1: vitest run "--reporter=basic" src/services/bot-i18n.test.ts src/services/i18n.test.ts src/services/locale-and-fonts.test.ts src/services/font-coverage.test.ts[39m
+
+### moderation-i18n
+CMD: pnpm --filter xivdyetools-moderation-worker exec vitest run --reporter=basic src/services/bot-i18n.test.ts src/services/i18n.test.ts
+EXIT: 1
+TAIL:
+        at async Promise.all (index 0)
+        at Vitest._setServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:13244:138)
+        at BasicMinimalPluginContext.handler (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vitest@4.1.11_@types+node@2_4e7e497ceb7a1f5105611f0bcb4703c0/node_modules/[4mvitest[24m/dist/chunks/cli-api.CnMVyzaz.js:14258:5)
+        at _createServer (file:///C:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-03/node_modules/[4m.pnpm[24m/vite@8.2.2_@types+node@26.4_e5317a467848532478a23f8a5cba35b4/node_modules/[4mvite[24m/dist/node/chunks/node.js:26631:84)
+  }
+}
+
+
+
+[90mundefined[39m
+C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-03\apps\moderation-worker:
+[41m[31m[[39m[49m[41m[30mERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL[39m[49m[41m[31m][39m[49m [31mCommand failed with exit code 1: vitest run "--reporter=basic" src/services/bot-i18n.test.ts src/services/i18n.test.ts[39m
+
+### locale-diff-botlogic
+CMD: python /c/dev/XIVProjects/.claude/skills/i18n-manager/scripts/locale-diff.py packages/bot-logic/src/i18n/locales
+EXIT: 0
+TAIL:
+  SAME-AS-SOURCE  firstRun.title = 'XIV Dye Tools 5.0'
+
+== zh: 507 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=9
+  SAME-AS-SOURCE  manual.dyeRandom.name = '`/dye random [unique_categories]`'
+  SAME-AS-SOURCE  manual.about.name = '`/about`'
+  SAME-AS-SOURCE  manual.manualCmd.name = '`/manual`'
+  SAME-AS-SOURCE  matchImageHelp.supportedFormatsContent = '• PNG\n• JPG/JPEG\n• GIF\n• WebP'
+  SAME-AS-SOURCE  card.ratioBand1 = '≥ 3:1'
+  SAME-AS-SOURCE  card.ratioBand2 = '≥ 4.5:1'
+  SAME-AS-SOURCE  card.ratioBand3 = '≥ 7:1'
+  SAME-AS-SOURCE  card.perDe = 'GIL/ΔE'
+  SAME-AS-SOURCE  firstRun.title = 'XIV Dye Tools 5.0'
+
+### locale-diff-webapp
+CMD: python /c/dev/XIVProjects/.claude/skills/i18n-manager/scripts/locale-diff.py apps/web-app/src/locales
+EXIT: 0
+TAIL:
+  SAME-AS-SOURCE  comparison.mCie76Short = 'ΔE76 · CIE 1976'
+  SAME-AS-SOURCE  budget.colPerDe = 'GIL / ΔE'
+  SAME-AS-SOURCE  swatch.footSplit = '{undyed} · {empty}.'
+  SAME-AS-SOURCE  swatch.gridTitle = '{name} ({count})'
+  SAME-AS-SOURCE  swatch.cellTag = '{palette} #{index}'
+
+== zh: 1143 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=5
+  SAME-AS-SOURCE  common.gilAmount = '{n} {unit}'
+  SAME-AS-SOURCE  comparison.mOklabShort = 'ΔEOK · OKLab'
+  SAME-AS-SOURCE  comparison.mCie76Short = 'ΔE76 · CIE 1976'
+  SAME-AS-SOURCE  budget.colPerDe = 'GIL / ΔE'
+  SAME-AS-SOURCE  swatch.cellTag = '{palette} #{index}'
+
+### locale-diff-core
+CMD: python /c/dev/XIVProjects/.claude/skills/i18n-manager/scripts/locale-diff.py packages/core/src/data/locales
+EXIT: 0
+TAIL:
+  SAME-AS-SOURCE  races.roegadyn = 'Roegadyn'
+  SAME-AS-SOURCE  races.hrothgar = 'Hrothgar'
+  SAME-AS-SOURCE  clans.raen = 'Raen'
+  SAME-AS-SOURCE  clans.xaela = 'Xaela'
+  SAME-AS-SOURCE  clans.rava = 'Rava'
+  SAME-AS-SOURCE  clans.veena = 'Veena'
+
+== ja: 222 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=0
+
+== ko: 222 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=0
+
+== zh: 222 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=0
+
+### script-inventory
+CMD: python /c/dev/XIVProjects/.claude/skills/i18n-manager/scripts/script-inventory.py packages/core/src/data/locales packages/bot-logic/src/i18n/locales apps/web-app/src/locales apps/og-worker/src/services/og-strings.ts apps/og-worker/src/services/og-embed.ts
+EXIT: 0
+TAIL:
+packages/bot-logic/src/i18n/locales\ko.json: 528 codepoints | Hangul=425, Symbols=9, Latin-1=2, Greek=2, Fullwidth=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\zh.json: 701 codepoints | CJK Unified=592, Symbols=9, Fullwidth=9, CJK Punct=4, Latin-1=2, Greek=2, Other=1
+   Other: U+FE0F(️)
+apps/web-app/src/locales\de.json: 104 codepoints | Latin-1=12, Symbols=8, Greek=2
+apps/web-app/src/locales\en.json: 96 codepoints | Symbols=7, Latin-1=4, Greek=2
+apps/web-app/src/locales\fr.json: 116 codepoints | Latin-1=23, Symbols=6, Latin Ext=2, Greek=2
+apps/web-app/src/locales\ja.json: 806 codepoints | CJK Unified=569, Katakana=77, Hiragana=62, Fullwidth=7, CJK Punct=6, Latin-1=4, Symbols=3, Greek=2
+apps/web-app/src/locales\ko.json: 674 codepoints | Hangul=579, Symbols=7, Latin-1=4, Greek=2, CJK Punct=1
+apps/web-app/src/locales\zh.json: 996 codepoints | CJK Unified=896, Symbols=7, Fullwidth=7, CJK Punct=4, Latin-1=4, Greek=2
+apps/og-worker/src/services/og-strings.ts: 482 codepoints | CJK Unified=188, Hangul=134, Katakana=49, Hiragana=23, Latin-1=9, CJK Punct=3, Fullwidth=3, Symbols=2
+apps/og-worker/src/services/og-embed.ts: 513 codepoints | CJK Unified=192, Hangul=142, Hiragana=43, Katakana=43, Latin-1=7, Fullwidth=6, Symbols=5, CJK Punct=2
+
+### font-sizes
+FragmentMono-Regular.ttf  125368 bytes
+NotoSansJP-Subset.ttf  380976 bytes
+NotoSansKR-Subset.ttf  189264 bytes
+NotoSansSC-Subset.ttf  571392 bytes
+Onest-Bold.ttf  64392 bytes
+Onest-Regular.ttf  64224 bytes
+Onest-SemiBold.ttf  64420 bytes
+SpaceGrotesk-Bold.ttf  86608 bytes
+SpaceGrotesk-Regular.ttf  86664 bytes
+SpaceGrotesk-SemiBold.ttf  86640 bytes
+FragmentMono-Regular.ttf  125368 bytes
+NotoSansJP-Subset.ttf  560648 bytes
+NotoSansKR-Subset.ttf  238012 bytes
+NotoSansSC-Subset.ttf  833852 bytes
+Onest-Bold.ttf  64392 bytes
+Onest-Regular.ttf  64224 bytes
+Onest-SemiBold.ttf  64420 bytes
+SpaceGrotesk-Bold.ttf  86608 bytes
+SpaceGrotesk-Regular.ttf  86664 bytes
+SpaceGrotesk-SemiBold.ttf  86640 bytes
+FragmentMono-Regular.ttf  125368 bytes
+NotoSansJP-Subset.ttf  380976 bytes
+NotoSansKR-Subset.ttf  189264 bytes
+NotoSansSC-Subset.ttf  571392 bytes
+Onest-Bold.ttf  64392 bytes
+Onest-Regular.ttf  64224 bytes
+Onest-SemiBold.ttf  64420 bytes
+SpaceGrotesk-Bold.ttf  86608 bytes
+SpaceGrotesk-Regular.ttf  86664 bytes
+SpaceGrotesk-SemiBold.ttf  86640 bytes
+FragmentMono-Regular.ttf  125368 bytes
+NotoSansJP-Subset.ttf  560648 bytes
+NotoSansKR-Subset.ttf  238012 bytes
+NotoSansSC-Subset.ttf  833852 bytes
+Onest-Bold.ttf  64392 bytes
+Onest-Regular.ttf  64224 bytes
+Onest-SemiBold.ttf  64420 bytes
+SpaceGrotesk-Bold.ttf  86608 bytes
+SpaceGrotesk-Regular.ttf  86664 bytes
+SpaceGrotesk-SemiBold.ttf  86640 bytes
+
+### font-vs-locale-mtimes
+-- last commit touching each path --
+2026-08-18T15:11:51-04:00  packages/core/src/data/locales
+2026-09-03T01:11:09-04:00  packages/bot-logic/src/i18n/locales
+2026-09-03T02:13:03-04:00  apps/web-app/src/locales
+2026-08-21T00:02:00-04:00  apps/og-worker/src/services/og-strings.ts
+2026-08-20T23:57:03-04:00  apps/og-worker/src/services/og-embed.ts
+2026-08-29T00:33:38-04:00  apps/og-worker/src/fonts
+2026-08-29T00:30:40-04:00  apps/discord-worker/src/fonts
+
+eslint exit: 0

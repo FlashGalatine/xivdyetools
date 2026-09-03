@@ -307,7 +307,7 @@ export class ConfigSidebar extends BaseLitComponent {
       }
 
       .v4-sidebar-title {
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-weight: 600;
         font-size: 14px;
         text-transform: uppercase;
@@ -374,7 +374,7 @@ export class ConfigSidebar extends BaseLitComponent {
       }
 
       .config-label {
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: var(--font-display);
         font-size: 12px;
         color: var(--theme-text-muted, #a0a0a0);
         text-transform: uppercase;

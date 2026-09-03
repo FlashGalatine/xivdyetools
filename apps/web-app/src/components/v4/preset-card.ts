@@ -118,7 +118,7 @@ export class PresetCard extends BaseLitComponent {
       }
 
       .shot-caption {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 8.5px;
         letter-spacing: 1px;
         line-height: 1.6;
@@ -161,7 +161,7 @@ export class PresetCard extends BaseLitComponent {
       }
 
       .chip {
-        font-family: 'Fragment Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 8.5px;
         letter-spacing: 1px;
         padding: 3px 7px;
