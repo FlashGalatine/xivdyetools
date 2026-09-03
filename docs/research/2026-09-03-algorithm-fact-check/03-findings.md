@@ -200,11 +200,23 @@ CIE 15:2004 defines ε = 216/24389 = 0.008856451679… and κ = 24389/27 = 903.2
 max |Δf| over t∈[0,0.02] = 2.828e-7  =>  max ΔL* ≈ 3.3e-5, max Δa* ≈ 1.4e-4
 ```
 
-Visually irrelevant. It matters only because it is large enough to disturb the fourth decimal place, and
-Sharma's published CIEDE2000 test data is quoted to 1 × 10⁻⁴ — so a conformance test against that data
-would need the exact fractions to pass cleanly. `rgbToLab()` additionally rounds its output to 4 dp
-before ΔE is computed, which is the larger of the two effects (max component Δ = 1.95 × 10⁻⁴ against the
-unrounded `blending/conversions.ts` implementation).
+**This reproduces a known, documented defect exactly.** The 1976-era ε and κ were rounded *independently*
+to four significant figures, so the two branches of f(t) no longer meet at the junction. Bruce Lindbloom
+quantified the resulting jump at **≈0.0000328 in L\*** and petitioned the CIE to fix it; CIE 15:2004 did
+so by replacing the decimals with the exact rationals. Our measured max ΔL\* is **3.28 × 10⁻⁵** — the same
+number. The repo is carrying the pre-2004 constants.
+
+Lindbloom's sharper point is that the mismatch makes the combined function *"not only discontinuous [but]
+also non-monotonic, which makes it not invertible in this region."* That is a real property, in a tiny
+neighbourhood of t ≈ ε.
+
+Perceptually this is nothing — 3 × 10⁻⁵ L\* is orders of magnitude below any JND. It is worth fixing only
+because the exact fractions cost nothing and the rounded ones have no upside. `rgbToLab()` additionally
+rounds its output to 4 dp before ΔE is computed, which is the larger of the two effects (max component
+Δ = 1.95 × 10⁻⁴ against the unrounded `blending/conversions.ts` implementation).
+
+Note this does **not** threaten the CIEDE2000 conformance pass above: that test feeds Lab values directly
+and never goes through `rgbToLab`.
 
 ---
 
@@ -230,16 +242,34 @@ the default formula is out of step.
 
 ---
 
-## OK — CIEDE2000 implementation
+## OK — CIEDE2000 **passes the published conformance vector**
 
-`ColorConverter.getDeltaE2000()` was walked step by step against the CIE 142-2001 / Sharma-Wu-Dalal
-formulation. All nineteen steps are present and correctly ordered: the G factor uses the mean of the
-*original* chromas; a′ scaling, C′ and h′ derivation, the four-case Δh′ and four-case h̄′ branches, the
-`C₁′·C₂′ = 0` special cases, T, Δθ, R_C, S_L, S_C, S_H, and R_T all match. Degree/radian conversions are
-correct at every trigonometric call, and `hueAngle()` correctly returns 0 for a′ = b′ = 0 and maps
-`atan2` into [0, 360).
+`ColorConverter.getDeltaE2000()` was executed against all **34 supplementary test pairs** from Sharma,
+Wu & Dalal (2005), retrieved from the canonical file at the University of Rochester
+(`hajim.rochester.edu/ece/sites/gsharma/ciede2000/dataNprograms/ciede2000testdata.txt`).
 
-Not yet executed against Sharma's 34-pair test vector — see *Open* below.
+```
+  pairs:        34
+  failures:     0
+  max |diff|:   4.950e-05  (pair 23)
+  PASS — implementation conforms to the published test vector.
+```
+
+The residual ≈5 × 10⁻⁵ is exactly what the data's own 4-dp quoting allows, so this is a clean pass.
+Probe: `07-ciede2000-sharma.mts`.
+
+This matters more than a code review would. Those 34 pairs exist *because* the CIE's own worked examples
+"do not adequately test the implementation" — they are built to stress the arctangent quadrant handling,
+the mean-hue branch logic and the `C₁′·C₂′ = 0` cases, and Sharma et al. report that "several
+implementations distributed on the Internet, including some from reputable sources, were erroneous" on
+exactly these. Notably, pairs 9–16 (near-180° hue separations, near-zero chroma) all pass, which is the
+region where the standard itself is ambiguous and most implementations get the mean hue wrong.
+
+The step-by-step read agrees: all nineteen steps present and correctly ordered, G computed from the mean
+of the *original* chromas, correct four-case Δh′ and h̄′ branches, correct degree/radian conversion at
+every trigonometric call, and `hueAngle()` returning 0 for a′ = b′ = 0.
+
+**Recommendation: freeze this as a test.** It passes today; a gate keeps it passing.
 
 ## OK — Oklab / Oklch conversion
 
@@ -280,15 +310,56 @@ third to a half of the time.
 
 ---
 
-## Open — pending literature confirmation
+## OK — redmean matches Riemersma's published formula
 
-These are flagged rather than concluded, because they depend on primary sources still being retrieved:
+`getRedmeanDistance()` was checked against the source (Thiadmer Riemersma, *"Colour metric"*,
+https://www.compuphase.com/cmetric.htm). The weights `(2 + r̄/256)`, `4`, `(2 + (255 − r̄)/256)` are
+correct, and **`r̄` is divided by 256, not 255** — confirmed from the author's own reference C, which uses
+bit shifts (`(512+rmean)*r*r >> 8`), so 256 is structural, not a typo.
 
-1. **CIEDE2000 conformance run** against Sharma, Wu & Dalal's 34-pair test data. The step-by-step review
-   above is a strong signal but is not a substitute for executing the published vector.
-2. **Redmean constants** — whether the published formula divides r̄ by 256 (as implemented) or 255.
-3. Whether **Oklab Euclidean** or **CIEDE2000** is better supported as the default matching metric by
-   published perceptual-dataset evaluations.
+One number to know if it is ever needed: redmean's true maximum (black vs white) is **≈764.834**, not 765
+and certainly not 441.673. Nothing in the repo currently normalises by it — `band-calibration.ts` derives
+each method's band thresholds empirically from the dye set rather than from a theoretical maximum, which
+is the more robust choice — so **there is no defect here**. Recorded only so a future "let's show redmean
+as a percentage" change does not reach for the wrong constant.
+
+Status caveat worth keeping: redmean has **no peer-reviewed validation**. It exists on its author's
+personal page, offers no error bound, and has never been benchmarked against COMBVD or any standard
+psychophysical dataset. It is a good engineering heuristic; it is not a validated metric, and the UI
+should not imply otherwise.
+
+## OK — the D65 white point and sRGB matrix are internally consistent
+
+The repo pairs `0.95047 / 1.00000 / 1.08883` with the `0.4124564 …` sRGB→XYZ matrix. Both come from the
+same lineage (ASTM E308 chromaticities, as published by Bruce Lindbloom), so they **agree with each
+other**, which is the property that actually matters.
+
+CSS Color 4 uses a different, equally legitimate pair derived from the sRGB-native 4-figure chromaticity
+(0.3127 / 0.3290 → `0.9504559 / 1.0 / 1.0890578`, with a matching matrix). The W3C's own thread on this
+(csswg-drafts #6618, #6640) puts the round-trip difference between the two lineages at **ΔE₀₀ ≈ 0.015** —
+imperceptible — and its conclusion is the one the repo already satisfies: *"The most important thing is
+to use a single set of consistent values everywhere."* **No change needed.** Mixing the two lineages
+would be the bug; the repo does not.
+
+---
+
+## Open — one item remains
+
+**Whether Oklab Euclidean or CIEDE2000 is the better default matching metric** now has a partial answer,
+recorded here rather than in the OK section because it rests on a preprint. Uchida, *"Oklch+: A
+Three-Parameter Extension of Oklab for Improved Color Difference Prediction"* (arXiv:2606.05255, 2026)
+reports STRESS against the COMBVD dataset (3 813 pairs pooled from BFD-P, WITT, LEEDS, RIT-DuPont and
+others — lower is better):
+
+| | plain Oklab Euclidean | CIEDE2000 |
+|---|---|---|
+| COMBVD (3 813 pairs) | 51.45 | **29.13** |
+| BFD-P D65 held-out (2 028) | 47.35 | **24.12** |
+
+If that holds, plain ΔEOK is substantially *worse* than CIEDE2000 at predicting perceived difference,
+despite Oklab's "perceptually uniform" reputation — which supports keeping `ciede2000` as the default and
+argues for the ΔEOK2 correction in [04-proposed-changes.md](./04-proposed-changes.md) §3.5. Treated as
+indicative rather than settled: it is a preprint, and this audit did not reproduce it.
 
 ---
 

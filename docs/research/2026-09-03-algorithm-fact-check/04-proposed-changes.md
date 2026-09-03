@@ -141,15 +141,28 @@ step. If a weighted metric is wanted later, build it on ΔH = 2·√(C₁C₂)·
 
 ### 3.2 Use the exact CIE constants
 
-Replace `epsilon = 0.008856` / `kappa = 903.3` with `216/24389` and `24389/27` in `ColorConverter` and
-`blending/conversions.ts`, and drop the 4-dp `round()` on `rgbToLab`'s output. Visually this changes
-nothing (max Δa* ≈ 1.4 × 10⁻⁴) — it is a precondition for 3.3.
+Replace `epsilon = 0.008856` / `kappa = 903.3` with `216/24389` and `24389/27` (equivalently CIE
+15:2004's `(24/116)³` and `841/108`) in `ColorConverter` and `blending/conversions.ts`, and drop the 4-dp
+`round()` on `rgbToLab`'s output.
 
-### 3.3 Add a CIEDE2000 conformance gate
+The repo is carrying the pre-2004 rounded pair. CIE 15:2004 replaced them with the exact rationals
+specifically because independent rounding leaves the two branches of f(t) not meeting — a ≈3.3 × 10⁻⁵
+jump in L\* that also makes the function very slightly non-monotonic, and therefore non-invertible, right
+at the junction. Visually irrelevant; the exact fractions cost nothing.
 
-Add Sharma, Wu & Dalal's 34-pair test vector as a test. A step-by-step read found the implementation
-correct, but a published conformance vector is the only thing that keeps it correct through future edits,
-and it is the standard the industry actually uses.
+**Leave the D65 white point and sRGB matrix alone.** They are the ASTM/Lindbloom pair and are consistent
+with each other, which is the property that matters. CSS Color 4's alternative pair differs by
+ΔE₀₀ ≈ 0.015. Swapping one without the other would be the actual bug.
+
+### 3.3 Freeze the CIEDE2000 conformance vector as a test
+
+**The implementation already passes** — all 34 of Sharma, Wu & Dalal's supplementary pairs, max deviation
+4.95 × 10⁻⁵ against data quoted to 4 dp (probe `07-ciede2000-sharma.mts`, ready to lift into the suite).
+
+This is a regression gate, not a fix. It is worth having because those 34 pairs specifically target the
+mean-hue and arctangent edge cases where Sharma et al. found that "several implementations distributed on
+the Internet, including some from reputable sources, were erroneous", and where the CIE standard's own
+text is ambiguous. Nothing else in the suite would catch a regression there.
 
 ### 3.4 Make harmony use the suite's default metric
 

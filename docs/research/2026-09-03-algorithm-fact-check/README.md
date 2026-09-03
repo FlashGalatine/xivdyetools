@@ -21,9 +21,15 @@ Start with [03-findings.md](./03-findings.md) and [04-proposed-changes.md](./04-
 
 ## Headline
 
-Core's **matching** side is in good shape. CIEDE2000 matches the CIE 142-2001 / Sharma formulation step
-for step, the Oklab matrices reproduce Ottosson's published values exactly, and the k-d tree is correctly
-restricted to the one metric its pruning is valid for — with the reasoning already recorded in-code.
+Core's **matching** side is in good shape — and now has a conformance pass to prove it. CIEDE2000 was
+executed against all 34 of Sharma, Wu & Dalal's published test pairs: **0 failures, max deviation
+4.95 × 10⁻⁵** against data quoted to four decimals. Those pairs exist specifically to catch the mean-hue
+and arctangent errors the authors found in "several implementations distributed on the Internet,
+including some from reputable sources". The Oklab matrices reproduce Ottosson's published values digit for
+digit (and are the corrected post-2021 set); redmean matches Riemersma's formula including its `/256`
+divisor; the D65 white point and sRGB matrix are consistent with each other, which is the property that
+matters; and the k-d tree is correctly restricted to the one metric its pruning is valid for, with the
+reasoning already recorded in-code.
 
 Core's **mixing** side has a live defect and a structural one.
 
