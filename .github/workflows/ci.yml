@@ -268,8 +268,15 @@ jobs:
   # step above opts out of it: these specs drive the built app end to end, so a
   # change anywhere in web-app's dependency graph (core's dye data, svg's
   # glyphs, a locale string in any package) can red them, and the failure that
-  # motivated the job was exactly a non-obvious cross-package one. ~4 minutes
-  # against the cost of shipping a broken UI.
+  # motivated the job was exactly a non-obvious cross-package one.
+  #
+  # Cost, measured rather than guessed: 9m14s on the first run (cold browser
+  # cache). The dominant term is not the install but `workers: 1`, which
+  # playwright.config.ts sets for CI — 153 tests run serially. If that becomes
+  # the bottleneck, raising CI workers is the lever to pull before dropping
+  # back to affected-package selection; the suite is `fullyParallel: true`
+  # already and retries twice on CI, so the concurrency is a deliberate
+  # stability choice, not an accident.
   #
   # chromium ONLY, deliberately. The `mobile-chrome` project has 28 standing
   # failures that are a LIVE PRODUCT BUG, not test rot — at phone width
