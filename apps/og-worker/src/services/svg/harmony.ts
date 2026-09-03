@@ -93,8 +93,18 @@ function getHarmonyMatches(
     harmonyType,
     ALL_DYES,
     {
+      // Pinned, and the one place the card can still differ from the page.
+      // The Harmony Explorer puts BOTH `algo` and `perceptual` in every share
+      // URL, but `perceptual` is not in `OG_ALLOWED_QUERY_KEYS` — that
+      // allowlist bounds the cache-key space by a deliberate security ruling
+      // (S7-R7 / S7-R10), and admitting a second boolean doubles it. So the
+      // card follows the page's DEFAULT here; a link that turned perceptual
+      // off is the remaining divergence, written down rather than silent.
       usePerceptualMatching: true,
-      matchingMethod: 'ciede2000',
+      // Was hardcoded `'ciede2000'` while `?algo=` fed only the printed delta,
+      // so `?algo=oklab` drew the ΔE2000 dyes under ΔEOK figures — a different
+      // set from the page the link opens, which ranks by the requested method.
+      matchingMethod: algorithm,
       preventDuplicates: true,
     },
     { excludeItemIDs: [dye.itemID] }

@@ -43,7 +43,7 @@ import {
   applyDisplayOptions,
 } from '@services/index';
 import type { DisplayOptionsConfig, DyeFiltersConfig } from '@shared/tool-config-types';
-import { RouterService } from '@services/router-service';
+import { handoffTo } from '@shared/tool-handoff';
 import { ThemeService } from '@services/theme-service';
 import { ICON_TOOL_BUDGET } from '@shared/tool-icons';
 import { logger } from '@shared/logger';
@@ -65,31 +65,6 @@ export interface BudgetToolOptions {
   leftPanel: HTMLElement;
   rightPanel: HTMLElement;
   drawerContent?: HTMLElement | null;
-}
-
-/**
- * The query-param name each hand-off target reads a dye from.
- *
- * BUG-018: every hand-off used to send `{ dye: dye.name }`. No receiver has
- * read a dye *name* since the 5.0 id rewrite — Harmony and Budget read `dye`
- * as a stainID, Comparison and Accessibility read the `dyes` list, and Mixer
- * reads `dyeA`. So one hand-off passed the right key with an unparseable value
- * and three passed a key nobody reads; all four silently did nothing.
- *
- * Keep this table next to the receivers it mirrors: `harmony-tool.ts:429`,
- * `comparison-tool.ts:2470`, `accessibility-tool.ts:2036`, `mixer-tool.ts:669`.
- */
-const HANDOFF_PARAM = {
-  harmony: 'dye',
-  comparison: 'dyes',
-  accessibility: 'dyes',
-  mixer: 'dyeA',
-} as const;
-
-/** Send a dye to another tool using that tool's own param grammar (stainID). */
-function handoffTo(tool: keyof typeof HANDOFF_PARAM, dye: Dye): void {
-  if (dye.stainID === null) return;
-  RouterService.navigateTo(tool, { [HANDOFF_PARAM[tool]]: String(dye.stainID) });
 }
 
 /** Price tier of a dye under Patch 7.5 consolidation. */

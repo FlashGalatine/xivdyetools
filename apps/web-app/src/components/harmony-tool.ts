@@ -32,6 +32,7 @@ import {
   // WEB-REF-003 FIX: Import from extracted harmony generator
   getHarmonyTypes,
 } from '@services/index';
+import { handoffTo } from '@shared/tool-handoff';
 import { ConfigController } from '@services/config-controller';
 import { ThemeService } from '@services/theme-service';
 import { applyDisplayOptions } from '@services/display-options-helper';
@@ -1585,14 +1586,18 @@ export class HarmonyTool extends BaseComponent {
     logger.info(`[HarmonyTool] Context action: ${action} for dye: ${dye.name}`);
 
     switch (action) {
+      // These three passed `add=<itemID>`, and NO tool in this app reads an
+      // `add` param — the receivers read `dyes` (Comparison, Accessibility)
+      // and `dyeA` (Mixer). So all three sent a key nobody consumes carrying a
+      // value that would have been refused anyway, and did nothing at all.
       case 'add-comparison':
-        RouterService.navigateTo('comparison', { add: String(dye.itemID) });
+        handoffTo('comparison', dye);
         break;
       case 'add-mixer':
-        RouterService.navigateTo('mixer', { add: String(dye.itemID) });
+        handoffTo('mixer', dye);
         break;
       case 'add-accessibility':
-        RouterService.navigateTo('accessibility', { add: String(dye.itemID) });
+        handoffTo('accessibility', dye);
         break;
       case 'see-harmonies':
         // Select this dye as base and regenerate harmonies

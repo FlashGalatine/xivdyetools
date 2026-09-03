@@ -63,6 +63,19 @@ const glassesResolved = (en: string): CharaResolveResult => ({
   glasses: { id: 5, names: { en, ja: en, de: en, fr: en }, iconId: 51000 },
 });
 
+/**
+ * Facewear and nothing else — no gear model, no dye, just glasses.
+ *
+ * The block gate counted `gearDyes` and `gearModels` only, so this rendered no
+ * block at all and the facewear row the block had just gained was unreachable
+ * for exactly the character made of nothing but facewear.
+ */
+const FIXTURE_GLASSES_ONLY = JSON.stringify({
+  TypeName: 'Anamnesis Character File',
+  REyeColor: 42,
+  Glasses: { GlassesId: 5 },
+});
+
 /** Worn but wholly undyed — the glamour that had no block at all before. */
 const FIXTURE_NO_DYE = JSON.stringify({
   TypeName: 'Anamnesis Character File',
@@ -457,6 +470,35 @@ describe('CharaImport — Show all pieces', () => {
     expect(row.querySelector('[data-role="dye-line"]')?.textContent).toBe('Silver');
     // It is facewear, not a dye channel — never a dye chip.
     expect(row.querySelector('[data-role="dye-chip"]')).toBeNull();
+  });
+
+  /**
+   * 2026-09-03 review: the block gate counted `gearDyes` and `gearModels` only.
+   * A `.chara` carrying nothing but facewear therefore rendered no block, so
+   * the facewear row this feature had just added was unreachable for exactly
+   * the character it most needed to describe — `startResolve` still fetched
+   * the glasses and still threw the answer away, as before the row existed.
+   */
+  it('a facewear-only glamour gets the block, and its facewear row', async () => {
+    const { container, glamour } = await mount(
+      Promise.resolve(glassesResolved('Silver Spectacles')),
+      FIXTURE_GLASSES_ONLY
+    );
+    hosts = [container, glamour];
+
+    // The block exists at all — this is the assertion that was failing.
+    expect(block(glamour)).not.toBeNull();
+
+    await vi.waitFor(() => {
+      expect(block(glamour).querySelector('[data-slot="Facewear"]')).toBeNull();
+    });
+    switchOf(glamour).click();
+
+    await vi.waitFor(() => {
+      const row = block(glamour).querySelector<HTMLElement>('[data-slot="Facewear"]');
+      expect(row).not.toBeNull();
+      expect(row!.querySelector('[data-role="item-name"]')?.textContent).toBe('Silver Spectacles');
+    });
   });
 
   it('facewear whose name carries no colour word stays neutral rather than guessing', async () => {

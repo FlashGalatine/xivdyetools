@@ -247,12 +247,17 @@ describe('ResultCard', () => {
 
   describe('inspect hand-offs', () => {
     /**
-     * The receiver resolves `?dyeId=` through `ShareService.resolveSharedDye`,
-     * whose loud-failure contract rejects every id at or above this floor as a
-     * pre-5.0 link. All 125 dyes have an itemID in 5729-48227, so emitting
-     * `dye.itemID` here failed for every one of them. Asserting the emitted
-     * value is the stainID *and* below the floor encodes the receiver's guard
-     * without importing it.
+     * The receiver resolves the dye param through
+     * `ShareService.resolveSharedDye`, whose loud-failure contract rejects
+     * every id at or above this floor as a pre-5.0 link. All 125 dyes have an
+     * itemID in 5729-48227, so emitting `dye.itemID` here failed for every one
+     * of them. Asserting the emitted value is the stainID *and* below the floor
+     * encodes the receiver's guard without importing it.
+     *
+     * 2026-09-03: the key is `dye`, not `dyeId`. Both resolve — harmony-tool
+     * reads `params.get('dye') ?? params.get('dyeId')` — but `dyeId` is the
+     * spelling it labels "legacy deep links", and this hand-off now goes
+     * through the shared `handoffTo`, which emits the canonical grammar.
      */
     const LEGACY_ITEM_ID_FLOOR = 5729;
 
@@ -291,10 +296,10 @@ describe('ResultCard', () => {
         'inspect-harmony'
       );
 
-      expect(RouterService.navigateTo).toHaveBeenCalledWith('harmony', { dyeId: '1' });
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('harmony', { dye: '1' });
 
-      const emitted = vi.mocked(RouterService.navigateTo).mock.calls[0]?.[1] as { dyeId: string };
-      expect(Number(emitted.dyeId)).toBeLessThan(LEGACY_ITEM_ID_FLOOR);
+      const emitted = vi.mocked(RouterService.navigateTo).mock.calls[0]?.[1] as { dye: string };
+      expect(Number(emitted.dye)).toBeLessThan(LEGACY_ITEM_ID_FLOOR);
     });
   });
 });

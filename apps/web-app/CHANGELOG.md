@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.2.1] - 2026-09-03
+
+### Fixed — pre-merge review follow-ups
+
+- **Every "send this dye to that tool" action works, and there is now one copy of
+  how.** The grammar has been wrong in three separate places for three different
+  reasons — Budget sent a dye *name* (BUG-018), Result Card sent an `itemID`
+  that `resolveSharedDye` refuses for all 125 dyes (BUG-012), and the same
+  `itemID` bug was still live at Gradient's two context actions. Harmony's three
+  were worse still: they sent `add=`, a key **no tool in this app reads at all**,
+  so "send to Comparison / Mixer / Accessibility" had never done anything. The
+  table and the guard live in `@shared/tool-handoff` now; Budget, Gradient,
+  Harmony and Result Card all call it. A dye with no stainID no longer navigates
+  and then apologises — it simply does not navigate.
+- **A `.chara` carrying only facewear gets its glamour block.** The gate counted
+  worn gear and dyes but not `glassesId`, so the facewear row added in 5.2.0 was
+  unreachable for exactly the character made of nothing else; the glasses were
+  fetched on every import and thrown away, as before the row existed.
+
 ## [5.2.0] - 2026-09-03
 
 ### Added

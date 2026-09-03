@@ -25,6 +25,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ICON_CONTEXT_MENU } from '@shared/ui-icons';
+import { handoffTo } from '@shared/tool-handoff';
 import { customDyeLabel, isCustomDye } from '@shared/custom-dye';
 import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeWithDistance } from '@xivdyetools/types';
@@ -1185,12 +1186,12 @@ export class ResultCard extends BaseLitComponent {
    * Overwrites any existing dye in localStorage
    */
   private navigateToHarmony(dye: Dye): void {
-    // BUG-012: the receiver resolves this through ShareService.resolveSharedDye,
-    // which rejects every id >= 5729 as a pre-5.0 link. All 125 dyes have an
-    // itemID in 5729-48227, so sending `dye.itemID` here failed for every dye,
-    // every time — an error toast and no navigation state. stainID is the 5.0
-    // share grammar.
-    RouterService.navigateTo('harmony', { dyeId: String(dye.stainID ?? 0) });
+    // BUG-012 was fixed here first, then found still live at Gradient's two
+    // context actions — so the grammar now lives in one place rather than in a
+    // comment repeated per call site. `handoffTo` also drops the old
+    // `stainID ?? 0`, which navigated with an id no dye has and let the
+    // receiver raise the toast; a dye with no stainID simply does not navigate.
+    handoffTo('harmony', dye);
   }
 
   /**
