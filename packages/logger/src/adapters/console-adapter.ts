@@ -7,7 +7,7 @@
  * @module adapters/console-adapter
  */
 
-import { BaseLogger } from '../core/base-logger.js';
+import { BaseLogger, safeStringify } from '../core/base-logger.js';
 import type { LogEntry, LoggerConfig } from '../types.js';
 
 /**
@@ -57,9 +57,17 @@ export class ConsoleAdapter extends BaseLogger {
 
     parts.push(message);
 
-    // Add context as JSON if present
+    // Add context as JSON if present.
+    //
+    // BUG-104 (deep dive 2026-09-02): raw `JSON.stringify` threw out of the
+    // log call on a circular or BigInt context — `TypeError: Converting
+    // circular structure to JSON` / `Do not know how to serialize a BigInt` —
+    // taking the CALLER down with it. That is the exact failure FINDING-026
+    // fixed, applied to `JsonAdapter` only; this adapter is what
+    // `ConsoleLogger`, `browserLogger`, `createBrowserLogger` and
+    // `createLibraryLogger` (stoat-worker) all use, and it is `@public`.
     if (context && Object.keys(context).length > 0) {
-      parts.push(JSON.stringify(context));
+      parts.push(safeStringify(context));
     }
 
     const logLine = parts.join(' ');
@@ -101,7 +109,9 @@ export class ConsoleAdapter extends BaseLogger {
    * Write a log entry as JSON
    */
   private writeJson(entry: LogEntry): void {
-    const jsonStr = JSON.stringify(entry);
+    // BUG-104: same reason as `writePretty` above — `JsonAdapter` has used
+    // `safeStringify` since FINDING-026 and this adapter never caught up.
+    const jsonStr = safeStringify(entry);
 
     switch (entry.level) {
       case 'debug':

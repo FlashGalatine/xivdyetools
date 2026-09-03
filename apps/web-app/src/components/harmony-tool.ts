@@ -1426,12 +1426,20 @@ export class HarmonyTool extends BaseComponent {
       } else if (this.preventDuplicates) {
         // Find first match not already used in another slot
         const uniqueMatch = matches.find((m) => !usedDyeIds.has(m.dye.itemID));
-        displayDye = uniqueMatch?.dye ?? matches[0].dye;
-        deviance = uniqueMatch?.deviance ?? matches[0].deviance;
+        // BUG-072: `matches` can be EMPTY -- three filter toggles together can
+        // exclude all 125 dyes -- and this read `matches[0].dye` unguarded,
+        // throwing a TypeError that took the whole panel render with it. The
+        // sibling loop in collectDyesToFetch already used `?.` here.
+        const fallback = matches[0];
+        if (!uniqueMatch && !fallback) return;
+        displayDye = (uniqueMatch ?? fallback).dye;
+        deviance = (uniqueMatch ?? fallback).deviance;
         usedDyeIds.add(displayDye.itemID);
       } else {
-        displayDye = matches[0].dye;
-        deviance = matches[0].deviance;
+        const first = matches[0];
+        if (!first) return;
+        displayDye = first.dye;
+        deviance = first.deviance;
       }
 
       // Record what this slot shows so the wheel can mirror the grid
@@ -1658,7 +1666,16 @@ export class HarmonyTool extends BaseComponent {
    * Replace excluded dyes with alternatives (delegated to harmony-generator)
    */
   private replaceExcludedDyesInternal(dyes: ScoredDyeMatch[], targetHue: number): ScoredDyeMatch[] {
-    return replaceExcludedDyes(dyes, targetHue, this.dyeFiltersConfig);
+    // BUG-064: pass the same config and base dye findClosestDyesToHueInternal
+    // uses, so a replacement is chosen and scored by the configured method
+    // rather than plain Euclidean RGB on a hue-degree scale.
+    return replaceExcludedDyes(
+      dyes,
+      targetHue,
+      this.dyeFiltersConfig,
+      this.getHarmonyConfig(),
+      this.selectedDye
+    );
   }
 
   /**
@@ -1764,10 +1781,16 @@ export class HarmonyTool extends BaseComponent {
     try {
       const prices = await this.marketBoardService.fetchPricesForDyes(dyesToFetch);
 
-      // The service swallows its own errors and hands back an empty Map, so
-      // "asked for dyes and got nothing" is the only failure signal there is
-      // — the same test budget uses.
-      this.marketFailed = dyesToFetch.length > 0 && prices.size === 0;
+      // BUG-075: "asked for dyes and got nothing" is NOT a failure signal --
+      // an empty Map also means the request was superseded (which is exactly
+      // what switching worlds quickly does) or that nothing was eligible. Ask
+      // the service which of the three it was.
+      const outcome = this.marketBoardService.lastFetchOutcome;
+      if (outcome === 'ok') {
+        this.marketFailed = false;
+      } else if (outcome === 'error') {
+        this.marketFailed = true;
+      }
       this.renderMarketStrip();
 
       // Always update UI after fetch completes (even if empty/stale)
@@ -1994,10 +2017,11 @@ export class HarmonyTool extends BaseComponent {
     StorageService.setItem(STORAGE_KEYS.selectedDyeId, dye.itemID);
     logger.info(`[HarmonyTool] External dye selected: ${dye.name} (itemID=${dye.itemID})`);
 
-    // Update the DyeSelector if it exists
-    if (this.dyeSelector) {
-      this.dyeSelector.setSelectedDyes([dye]);
-    }
+    // BUG-073: update BOTH selectors. clearDyes() already does; these two
+    // touched only the desktop one, so the drawer's base-dye panel kept showing
+    // the previously selected swatch after a pick made from the palette drawer.
+    this.dyeSelector?.setSelectedDyes([dye]);
+    this.drawerDyeSelector?.setSelectedDyes([dye]);
 
     // Generate harmonies and update UI
     this.generateHarmonies();
@@ -2023,10 +2047,11 @@ export class HarmonyTool extends BaseComponent {
     StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
     logger.info(`[HarmonyTool] Custom color selected: ${hex}`);
 
-    // Clear dye selector selection (custom color is not in the list)
-    if (this.dyeSelector) {
-      this.dyeSelector.setSelectedDyes([]);
-    }
+    // Clear dye selector selection (custom color is not in the list).
+    // BUG-073: the drawer's selector too -- it kept the last real dye's swatch
+    // beside a custom colour that is not in the list at all.
+    this.dyeSelector?.setSelectedDyes([]);
+    this.drawerDyeSelector?.setSelectedDyes([]);
 
     // Generate harmonies and update UI
     this.generateHarmonies();

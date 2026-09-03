@@ -1,0 +1,32 @@
+Scope: all 18 workspace projects
+[32m✓[39m Lockfile passes supply-chain policies (verified 16h ago)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved [96m1[39m, reused [96m0[39m, downloaded [96m0[39m, added [96m0[39m
+Packages: [32m+509[39m
+[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m[32m+[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m26[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m92[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m107[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m164[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m215[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m284[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m371[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m394[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m460[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m499[39m
+Progress: resolved [96m509[39m, reused [96m506[39m, downloaded [96m0[39m, added [96m509[39m, done
+
+[96mdevDependencies:[39m
+[32m+[39m @eslint/js [90m10.0.1[39m
+[32m+[39m @types/node [90m26.4.0[39m
+[32m+[39m eslint [90m10.9.1[39m
+[32m+[39m knip [90m6.33.0[39m
+[32m+[39m prettier [90m3.9.6[39m
+[32m+[39m rimraf [90m6.1.3[39m
+[32m+[39m tsx [90m4.23.12[39m
+[32m+[39m turbo [90m2.10.12[39m
+[32m+[39m typescript [90m5.9.3[39m
+[32m+[39m typescript-eslint [90m8.68.0[39m
+
+Done in 12.9s using pnpm v11.17.0
+exit=0

@@ -200,6 +200,31 @@ describe('ImageZoomController', () => {
 
       expect(container.querySelectorAll('canvas')).toHaveLength(1);
     });
+
+    /**
+     * BUG-077: the canvas count above cannot see this. Every listener the
+     * controller owns is registered inside setImage(), and BaseComponent.on()
+     * keys its map by an incrementing counter — so a second setImage() added a
+     * second document keydown/keyup pair instead of replacing the first. The
+     * element-scoped listeners died with the cleared DOM; the document ones did
+     * not, so one key press ran the handler twice and zoom stepped 20 % after
+     * two images, 30 % after three.
+     */
+    it('does not stack document listeners across images', () => {
+      const added = vi.spyOn(document, 'addEventListener');
+      const removed = vi.spyOn(document, 'removeEventListener');
+      mount();
+
+      controller.setImage(image);
+      const afterFirst = added.mock.calls.length - removed.mock.calls.length;
+      controller.setImage(image);
+      const afterSecond = added.mock.calls.length - removed.mock.calls.length;
+
+      expect(afterSecond).toBe(afterFirst);
+
+      added.mockRestore();
+      removed.mockRestore();
+    });
   });
 
   describe('zoom controls', () => {

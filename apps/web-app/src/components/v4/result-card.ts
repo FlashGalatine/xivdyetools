@@ -1185,8 +1185,12 @@ export class ResultCard extends BaseLitComponent {
    * Overwrites any existing dye in localStorage
    */
   private navigateToHarmony(dye: Dye): void {
-    // Use itemID for localization-safe deep linking
-    RouterService.navigateTo('harmony', { dyeId: String(dye.itemID) });
+    // BUG-012: the receiver resolves this through ShareService.resolveSharedDye,
+    // which rejects every id >= 5729 as a pre-5.0 link. All 125 dyes have an
+    // itemID in 5729-48227, so sending `dye.itemID` here failed for every dye,
+    // every time — an error toast and no navigation state. stainID is the 5.0
+    // share grammar.
+    RouterService.navigateTo('harmony', { dyeId: String(dye.stainID ?? 0) });
   }
 
   /**

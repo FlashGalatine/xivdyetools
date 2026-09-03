@@ -13,6 +13,7 @@ const PRESET_ID = '12345678-1234-4123-8123-123456789abc';
 vi.mock('../../utils/discord-api.js', () => ({
   editMessage: vi.fn(),
   sendFollowUp: vi.fn(),
+  safeSendFollowUp: vi.fn(),
 }));
 
 vi.mock('../../services/preset-api.js', async () => {
@@ -259,7 +260,7 @@ describe('preview-image button handlers', () => {
       vi.mocked(presetApi.setPreviewImageStatus).mockRejectedValue(
         new Error('presets-api unreachable'),
       );
-      vi.mocked(discordApi.sendFollowUp).mockResolvedValue(new Response(null, { status: 200 }));
+      vi.mocked(discordApi.safeSendFollowUp).mockResolvedValue(true);
 
       const interaction = {
         id: 'int-1',
@@ -276,16 +277,45 @@ describe('preview-image button handlers', () => {
 
       await handlePreviewImageButton(interaction, env, ctx);
 
-      expect(discordApi.sendFollowUp).toHaveBeenCalledWith(
+      // BUG-039: this notification sits INSIDE the catch block, so it has to
+      // be the throw-safe wrapper. The raw `sendFollowUp` carries an
+      // AbortSignal and returns the Response unchecked, so a timeout threw out
+      // of the catch itself and rejected the waitUntil promise unhandled —
+      // and since the interaction was answered with DEFERRED_UPDATE_MESSAGE,
+      // the moderator saw live buttons and no error at all.
+      expect(discordApi.safeSendFollowUp).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
           content: 'Failed to update the preview image. Please try again.',
           ephemeral: true,
         }),
+        undefined,
       );
       // Buttons must remain clickable for a retry: no message edit at all.
       expect(discordApi.editMessage).not.toHaveBeenCalled();
+    });
+
+    it('survives a follow-up that itself fails, rather than rejecting waitUntil', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.setPreviewImageStatus).mockRejectedValue(
+        new Error('presets-api unreachable'),
+      );
+      // The wrapper swallows and reports; the handler must not care.
+      vi.mocked(discordApi.safeSendFollowUp).mockResolvedValue(false);
+
+      const interaction = {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        channel_id: 'channel-mod',
+        data: { custom_id: `previewimg_approve_${PRESET_ID}` },
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+        message: { id: 'msg-1', embeds: [{ title: 'Preview image awaiting review' }] },
+      };
+
+      await expect(handlePreviewImageButton(interaction, env, ctx)).resolves.toBeDefined();
+      expect(discordApi.safeSendFollowUp).toHaveBeenCalled();
     });
 
     it('falls back to the raw user id in the outcome footer when username is missing', async () => {

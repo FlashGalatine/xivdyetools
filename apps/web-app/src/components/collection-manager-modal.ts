@@ -26,11 +26,10 @@ export function showCollectionManagerModal(): void {
 
   // Header with count and actions
   const header = document.createElement('div');
-  header.className =
-    'flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700';
+  header.className = 'flex items-center justify-between pb-3 border-b border-[var(--theme-border)]';
 
   const countText = document.createElement('span');
-  countText.className = 'text-sm text-gray-600 dark:text-gray-400';
+  countText.className = 'text-sm text-[var(--theme-text-muted)]';
   countText.textContent = LanguageService.tInterpolate(
     collections.length === 1
       ? 'collections.collectionsCountOne'
@@ -86,12 +85,12 @@ export function showCollectionManagerModal(): void {
     emptyState.appendChild(emptyIcon);
 
     const emptyText = document.createElement('p');
-    emptyText.className = 'text-gray-500 dark:text-gray-400';
+    emptyText.className = 'text-[var(--theme-text-muted)]';
     emptyText.textContent = LanguageService.t('collections.collectionsEmpty');
     emptyState.appendChild(emptyText);
 
     const emptyHint = document.createElement('p');
-    emptyHint.className = 'text-sm text-gray-400 dark:text-gray-500 mt-1';
+    emptyHint.className = 'text-sm text-[var(--theme-text-muted)] mt-1';
     emptyHint.textContent = LanguageService.t('collections.collectionsEmptyHint');
     emptyState.appendChild(emptyHint);
 
@@ -138,7 +137,7 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
 
   if (collection.description) {
     const desc = document.createElement('div');
-    desc.className = 'text-sm text-gray-500 dark:text-gray-400 truncate';
+    desc.className = 'text-sm text-[var(--theme-text-muted)] truncate';
     desc.textContent = collection.description;
     desc.title = collection.description;
     nameDiv.appendChild(desc);
@@ -177,11 +176,25 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
   deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
   deleteBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (confirm(LanguageService.t('collections.confirmDelete'))) {
-      CollectionService.deleteCollection(collection.id);
-      ToastService.success(LanguageService.t('collections.collectionDeleted'));
-      onRefresh();
-    }
+    // REFACTOR-005: this was a native `confirm()`. It ignores the app theme and
+    // locale-aware styling, blocks the whole page, is unstyleable, and is the
+    // only destructive confirmation in the app that does not go through
+    // ModalService.showConfirm({ destructive: true }) like every sibling.
+    const confirmEl = document.createElement('p');
+    confirmEl.textContent = LanguageService.t('collections.confirmDelete');
+    const confirmId = ModalService.showConfirm({
+      title: LanguageService.t('collections.deleteCollection'),
+      content: confirmEl,
+      destructive: true,
+      confirmText: LanguageService.t('common.delete'),
+      cancelText: LanguageService.t('common.cancel'),
+      onConfirm: () => {
+        CollectionService.deleteCollection(collection.id);
+        ToastService.success(LanguageService.t('collections.collectionDeleted'));
+        ModalService.dismiss(confirmId);
+        onRefresh();
+      },
+    });
   });
   actions.appendChild(deleteBtn);
 
@@ -199,7 +212,7 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
       if (dye) {
         const swatch = document.createElement('div');
         swatch.className =
-          'w-6 h-6 rounded border border-gray-300 dark:border-gray-600 cursor-pointer hover:scale-110 transition-transform';
+          'w-6 h-6 rounded border border-[var(--theme-border)] cursor-pointer hover:scale-110 transition-transform';
         swatch.style.backgroundColor = dye.hex;
         swatch.title = LanguageService.getDyeName(dye.itemID) || dye.name;
         swatchRow.appendChild(swatch);
@@ -208,7 +221,7 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
 
     if (collection.dyes.length > 8) {
       const more = document.createElement('span');
-      more.className = 'text-xs text-gray-500 dark:text-gray-400 ml-1';
+      more.className = 'text-xs text-[var(--theme-text-muted)] ml-1';
       more.textContent = `+${collection.dyes.length - 8}`;
       swatchRow.appendChild(more);
     }
@@ -218,7 +231,7 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
 
   // Meta info
   const metaRow = document.createElement('div');
-  metaRow.className = 'flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400';
+  metaRow.className = 'flex items-center gap-3 text-xs text-[var(--theme-text-muted)]';
 
   const dyeCount = document.createElement('span');
   dyeCount.textContent = LanguageService.tInterpolate(
@@ -252,14 +265,14 @@ export function showCreateCollectionDialog(onCreated?: (collection: Collection) 
   nameGroup.className = 'space-y-2';
 
   const nameLabel = document.createElement('label');
-  nameLabel.className = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
+  nameLabel.className = 'block text-sm font-medium text-[var(--theme-text)]';
   nameLabel.textContent = LanguageService.t('collections.collectionName');
   nameGroup.appendChild(nameLabel);
 
   const nameInput = document.createElement('input');
   nameInput.type = 'text';
   nameInput.className =
-    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+    'w-full px-3 py-2 border border-[var(--theme-border)] rounded-lg bg-[var(--theme-input-background)] text-[var(--theme-text)] focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
   nameInput.placeholder = LanguageService.t('collections.collectionName');
   nameInput.maxLength = 50;
   nameGroup.appendChild(nameInput);
@@ -271,13 +284,13 @@ export function showCreateCollectionDialog(onCreated?: (collection: Collection) 
   descGroup.className = 'space-y-2';
 
   const descLabel = document.createElement('label');
-  descLabel.className = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
+  descLabel.className = 'block text-sm font-medium text-[var(--theme-text)]';
   descLabel.textContent = LanguageService.t('collections.collectionDescription');
   descGroup.appendChild(descLabel);
 
   const descInput = document.createElement('textarea');
   descInput.className =
-    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none';
+    'w-full px-3 py-2 border border-[var(--theme-border)] rounded-lg bg-[var(--theme-input-background)] text-[var(--theme-text)] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none';
   descInput.placeholder = LanguageService.t('collections.collectionDescription');
   descInput.rows = 2;
   descInput.maxLength = 200;
@@ -291,7 +304,7 @@ export function showCreateCollectionDialog(onCreated?: (collection: Collection) 
 
   const cancelBtn = document.createElement('button');
   cancelBtn.className =
-    'px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors';
+    'px-4 py-2 text-sm text-[var(--theme-text)] hover:bg-[var(--theme-card-hover)] rounded transition-colors';
   cancelBtn.textContent = LanguageService.t('common.cancel');
   cancelBtn.addEventListener('click', () => {
     ModalService.dismissTop();
@@ -343,14 +356,14 @@ function showEditCollectionDialog(collection: Collection, onUpdated: () => void)
   nameGroup.className = 'space-y-2';
 
   const nameLabel = document.createElement('label');
-  nameLabel.className = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
+  nameLabel.className = 'block text-sm font-medium text-[var(--theme-text)]';
   nameLabel.textContent = LanguageService.t('collections.collectionName');
   nameGroup.appendChild(nameLabel);
 
   const nameInput = document.createElement('input');
   nameInput.type = 'text';
   nameInput.className =
-    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+    'w-full px-3 py-2 border border-[var(--theme-border)] rounded-lg bg-[var(--theme-input-background)] text-[var(--theme-text)] focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
   nameInput.value = collection.name;
   nameInput.maxLength = 50;
   nameGroup.appendChild(nameInput);
@@ -362,13 +375,13 @@ function showEditCollectionDialog(collection: Collection, onUpdated: () => void)
   descGroup.className = 'space-y-2';
 
   const descLabel = document.createElement('label');
-  descLabel.className = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
+  descLabel.className = 'block text-sm font-medium text-[var(--theme-text)]';
   descLabel.textContent = LanguageService.t('collections.collectionDescription');
   descGroup.appendChild(descLabel);
 
   const descInput = document.createElement('textarea');
   descInput.className =
-    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none';
+    'w-full px-3 py-2 border border-[var(--theme-border)] rounded-lg bg-[var(--theme-input-background)] text-[var(--theme-text)] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none';
   descInput.value = collection.description || '';
   descInput.rows = 2;
   descInput.maxLength = 200;
@@ -382,7 +395,7 @@ function showEditCollectionDialog(collection: Collection, onUpdated: () => void)
     dyesGroup.className = 'space-y-2';
 
     const dyesLabel = document.createElement('label');
-    dyesLabel.className = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
+    dyesLabel.className = 'block text-sm font-medium text-[var(--theme-text)]';
     dyesLabel.textContent = LanguageService.tInterpolate(
       collection.dyes.length === 1 ? 'collections.dyeCountOne' : 'collections.dyeCountMany',
       { count: String(collection.dyes.length) }
@@ -419,7 +432,7 @@ function showEditCollectionDialog(collection: Collection, onUpdated: () => void)
 
   const cancelBtn = document.createElement('button');
   cancelBtn.className =
-    'px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors';
+    'px-4 py-2 text-sm text-[var(--theme-text)] hover:bg-[var(--theme-card-hover)] rounded transition-colors';
   cancelBtn.textContent = LanguageService.t('common.cancel');
   cancelBtn.addEventListener('click', () => {
     ModalService.dismissTop();
@@ -467,7 +480,7 @@ function showEditCollectionDialog(collection: Collection, onUpdated: () => void)
 function createDyeTag(dye: Dye, onRemove: () => void): HTMLElement {
   const tag = document.createElement('div');
   tag.className =
-    'inline-flex items-center gap-2 px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-sm';
+    'inline-flex items-center gap-2 px-3 py-1 bg-[var(--theme-background-secondary)] rounded-full text-sm';
 
   const swatch = document.createElement('div');
   swatch.className = 'w-3 h-3 rounded-full border border-gray-400';
@@ -475,13 +488,12 @@ function createDyeTag(dye: Dye, onRemove: () => void): HTMLElement {
   tag.appendChild(swatch);
 
   const name = document.createElement('span');
-  name.className = 'text-gray-900 dark:text-white';
+  name.className = 'text-[var(--theme-text)]';
   name.textContent = LanguageService.getDyeName(dye.itemID) || dye.name;
   tag.appendChild(name);
 
   const removeBtn = document.createElement('button');
-  removeBtn.className =
-    'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white';
+  removeBtn.className = 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]';
   removeBtn.innerHTML = '✕';
   removeBtn.addEventListener('click', (e) => {
     e.stopPropagation();

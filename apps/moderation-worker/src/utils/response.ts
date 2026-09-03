@@ -255,13 +255,21 @@ export function isValidUuid(id: string): boolean {
 // spread the whole byte array into String.fromCharCode, which the package avoids.
 
 /**
- * Creates a rate-limited (429) response
+ * The rate-limit refusal, as a Discord **interaction response**.
  *
- * Returns an ephemeral message informing the user they've exceeded the rate limit,
- * along with appropriate HTTP headers.
+ * REFACTOR-004: the doc here used to promise "429 status and Retry-After
+ * header" and document a `resetTime` parameter. It returns 200 with a
+ * `CHANNEL_MESSAGE_WITH_SOURCE` body, sends no `Retry-After`, and the
+ * parameter was named `_resetTime` and never read.
  *
- * @param resetTime - Unix timestamp (ms) when the rate limit resets
- * @returns Response with 429 status and Retry-After header
+ * The 200 is correct and must stay: Discord reads the body as the interaction
+ * response, and a 429 would make it show "The application did not respond"
+ * instead of the refusal. So the documentation was the wrong half — and the
+ * parameter is now put to work rather than dropped, which is the difference
+ * between "please wait" and telling the moderator how long.
+ *
+ * @param resetTime - Unix timestamp (ms) when the window reopens
+ * @returns HTTP 200 carrying an ephemeral interaction message
  *
  * @example
  * ```typescript
@@ -270,12 +278,18 @@ export function isValidUuid(id: string): boolean {
  * }
  * ```
  */
-export function rateLimitedResponse(_resetTime: number): Response {
+export function rateLimitedResponse(resetTime: number): Response {
+  const secondsLeft = Math.max(0, Math.ceil((resetTime - Date.now()) / 1000));
+  const content =
+    secondsLeft > 0
+      ? `Rate limit exceeded. Try again in ${secondsLeft} second${secondsLeft === 1 ? '' : 's'}.`
+      : 'Rate limit exceeded. Please wait before trying again.';
+
   return new Response(
     JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: 'Rate limit exceeded. Please wait before trying again.',
+        content,
         flags: MessageFlags.EPHEMERAL,
         allowed_mentions: ALLOWED_MENTIONS_NONE,
       },

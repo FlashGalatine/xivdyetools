@@ -1,0 +1,63 @@
+=== getMarketItemID consumers ===
+apps/api-worker/src/lib/dye-serializer.ts:9:import { getMarketItemID } from '@xivdyetools/core';
+apps/api-worker/src/lib/dye-serializer.ts:53:    marketItemID: getMarketItemID(dye),
+apps/discord-worker/src/handlers/commands/budget.ts:26:import { BAND_METHOD_DP, CONSOLIDATED_DYES, classifyBandTier, type MatchingMethod } from '@xivdyetools/core';
+apps/discord-worker/src/handlers/commands/budget.ts:314:          ? (CONSOLIDATED_DYES[g.type].names[locale] ?? CONSOLIDATED_DYES[g.type].names.en)
+apps/discord-worker/src/services/budget/budget-calculator.ts:18:  CONSOLIDATED_DYES,
+apps/discord-worker/src/services/budget/budget-calculator.ts:20:  getMarketItemID,
+apps/discord-worker/src/services/budget/budget-calculator.ts:88:    const vendor = CONSOLIDATED_DYES.A.price;
+apps/discord-worker/src/services/budget/budget-calculator.ts:168:  const marketIds = new Set<number>([getMarketItemID(targetDye)]);
+apps/discord-worker/src/services/budget/budget-calculator.ts:169:  for (const c of candidates) marketIds.add(getMarketItemID(c.dye));
+apps/discord-worker/src/services/budget/budget-calculator.ts:257:          ? CONSOLIDATED_DYES[r.dye.consolidationType].names.en
+apps/web-app/src/components/budget-tool.ts:24:  CONSOLIDATED_DYES,
+apps/web-app/src/components/budget-tool.ts:469:    const meta = CONSOLIDATED_DYES[tier];
+apps/web-app/src/components/budget-tool.ts:1266:      money = formatGil(CONSOLIDATED_DYES.A.price);
+apps/web-app/src/components/budget-tool.ts:1530:      const tierMeta = CONSOLIDATED_DYES[tier];
+apps/web-app/src/components/v4/result-card.ts:36:  getMarketItemID,
+apps/web-app/src/components/v4/result-card.ts:1153:      // Spectrum (consolidated) itemID via getMarketItemID(). Unconsolidated
+apps/web-app/src/components/v4/result-card.ts:1156:        this.openExternalUrl('universalis', getMarketItemID(dye));
+apps/web-app/src/components/v4/result-card.ts:1159:        this.openExternalUrl('garlandtools', getMarketItemID(dye));
+apps/web-app/src/components/v4/result-card.ts:1162:        this.openExternalUrl('teamcraft', getMarketItemID(dye));
+apps/web-app/src/components/v4/result-card.ts:1165:        this.openExternalUrl('saddlebag', getMarketItemID(dye));
+apps/web-app/src/services/market-board-service.ts:21:import { getMarketItemID, isConsolidationActive } from '@xivdyetools/core';
+apps/web-app/src/services/market-board-service.ts:274:   * - Otherwise returns true; `getMarketItemID` collapses consolidated dyes to the
+apps/web-app/src/services/market-board-service.ts:322:        const marketId = getMarketItemID(dye);
+packages/bot-logic/src/commands/dye-info.ts:17:import { ColorService, CONSOLIDATED_DYES } from '@xivdyetools/core';
+packages/bot-logic/src/commands/dye-info.ts:72: * `CONSOLIDATED_DYES[].names` has carried all six languages since 7.5) —
+packages/bot-logic/src/commands/dye-info.ts:78:    const consolidated = CONSOLIDATED_DYES[type];
+packages/core/src/config/consolidated-ids.ts:45:export const CONSOLIDATED_DYES: Record<ConsolidationType, ConsolidatedDye> = {
+packages/core/src/config/consolidated-ids.ts:109:export function getMarketItemID(dye: {
+packages/core/src/config/consolidated-ids.ts:125:  const names = CONSOLIDATED_DYES[type].names;
+packages/core/src/index.ts:86:  CONSOLIDATED_DYES,
+packages/core/src/index.ts:88:  getMarketItemID,
+packages/core/src/services/localization/TranslationProvider.ts:21:  CONSOLIDATED_DYES,
+packages/core/src/services/localization/TranslationProvider.ts:107:    // CONSOLIDATED_DYES, not in the CSV-driven locale registry. Fall back
+packages/core/src/services/localization/TranslationProvider.ts:112:        const names = CONSOLIDATED_DYES[type].names;
+
+=== stainID vs itemID in preset payloads ===
+apps/web-app/src/components/my-submissions-modal.ts:18:import { resolvePresetDye } from '@services/dye-service-wrapper';
+apps/web-app/src/components/my-submissions-modal.ts:60:    .map((id) => resolvePresetDye(id) ?? null)
+apps/web-app/src/components/preset-edit-form.ts:14:  resolvePresetDye,
+apps/web-app/src/components/preset-edit-form.ts:118:    .map((dyeId) => resolvePresetDye(dyeId) ?? null)
+apps/web-app/src/components/v4/preset-detail.ts:19:  resolvePresetDye,
+apps/web-app/src/components/v4/preset-detail.ts:803:    return resolvePresetDye(dyeId) ?? null;
+apps/web-app/src/components/v4/preset-tool.ts:24:  resolvePresetDye,
+apps/web-app/src/components/v4/preset-tool.ts:607:      const dye = resolvePresetDye(dyeId);
+apps/web-app/src/components/v4/preset-tool.ts:621:      const dye = resolvePresetDye(id);
+apps/web-app/src/services/dye-service-wrapper.ts:57:export function resolvePresetDye(id: number): Dye | undefined {
+apps/web-app/src/services/dye-service-wrapper.ts:59:    logger.warn(`resolvePresetDye: ${id} is not a stainID (1-254); no dye resolved`);
+apps/web-app/src/services/dye-service-wrapper.ts:74: * `resolvePresetDye` stays strict; a value that predates the rewrite is
+apps/web-app/src/services/dye-service-wrapper.ts:79: * from each dye's `legacyItemID`. Returns null for anything unresolvable — the
+apps/web-app/src/services/hybrid-preset-service.ts:16:import { dyeService as sharedDyeService, resolvePresetDye } from './dye-service-wrapper';
+apps/web-app/src/services/hybrid-preset-service.ts:416:    return dyeIds.map((id) => resolvePresetDye(id) ?? null);
+apps/web-app/src/services/index.ts:25:export { DyeService, dyeService, resolvePresetDye } from './dye-service-wrapper';
+apps/web-app/src/services/saved-presets-service.ts:66:   * `resolvePresetDye` is stainID-only, so without this pass those snapshots
+packages/core/src/config/facewear.ts:22:export const LEGACY_FACEWEAR_ITEM_IDS: Readonly<Record<number, string>> = {
+packages/core/src/config/facewear.ts:43:  const slug = LEGACY_FACEWEAR_ITEM_IDS[legacyId];
+packages/core/src/index.ts:206:  LEGACY_FACEWEAR_ITEM_IDS,
+packages/core/src/services/chara/chara-resolver.ts:18: *   (`stainID`/`legacyItemID`), never derived from ranges.
+packages/core/src/services/dye/DyeDatabase.ts:202:          // Schema v2: legacyItemID carries the market-era item ID. The
+packages/core/src/services/dye/DyeDatabase.ts:204:          // downstream compatibility; a future dye with legacyItemID null
+packages/core/src/services/dye/DyeDatabase.ts:206:          if (normalizedDye.itemID === undefined && normalizedDye.legacyItemID !== undefined) {
+packages/core/src/services/dye/DyeDatabase.ts:207:            normalizedDye.itemID = normalizedDye.legacyItemID;
+packages/types/src/dye/dye.ts:52:   * normalisation (schema v2 derives `itemID` from the stored `legacyItemID`,

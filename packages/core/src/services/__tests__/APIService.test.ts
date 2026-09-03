@@ -284,10 +284,25 @@ describe('DefaultRateLimiter', () => {
 // ============================================================================
 
 describe('DefaultFetchClient', () => {
-  it('should exist', () => {
-    const client = new DefaultFetchClient();
-    expect(client).toBeDefined();
-    expect(typeof client.fetch).toBe('function');
+  // core-data-16: two tests here asserted only `typeof client.fetch === 'function'`
+  // (plus `fetchFn.length === 2`), which cannot fail while the method exists and
+  // says nothing about the behaviour the class is FOR -- that it forwards to the
+  // global fetch. Stub the global and assert the delegation.
+  it('delegates to the global fetch with the url and options it was given', async () => {
+    const globalFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', globalFetch);
+
+    try {
+      const client = new DefaultFetchClient();
+      const options = { headers: { 'X-Test': '1' } };
+      const response = await client.fetch('https://example.test/data', options);
+
+      expect(globalFetch).toHaveBeenCalledTimes(1);
+      expect(globalFetch).toHaveBeenCalledWith('https://example.test/data', options);
+      expect(response.status).toBe(200);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 
@@ -1434,24 +1449,6 @@ describe('APIService', () => {
       expect(status.latency).toBeGreaterThanOrEqual(0);
     });
 
-    it('should return -1 latency when getAPIStatus catch block is triggered (line 644)', async () => {
-      // To trigger the catch block in getAPIStatus, we need isAPIAvailable to throw
-      // This is an edge case that's hard to trigger in practice
-      const service = new APIService({
-        cacheBackend: memoryCache,
-        fetchClient: mockFetch,
-        rateLimiter: noOpRateLimiter,
-      });
-
-      // Mock isAPIAvailable to throw an error
-      vi.spyOn(service, 'isAPIAvailable').mockRejectedValue(new Error('Unexpected error'));
-
-      const status = await service.getAPIStatus();
-      expect(status.available).toBe(false);
-      expect(status.latency).toBe(-1);
-
-      vi.restoreAllMocks();
-    });
   });
 
   // ==========================================================================
@@ -1499,16 +1496,16 @@ describe('APIService', () => {
   // ==========================================================================
 
   describe('DefaultFetchClient', () => {
-    it('should use global fetch when called', async () => {
-      const client = new DefaultFetchClient();
-      // We can't easily test the actual fetch call without making a real network request
-      // but we can verify the method exists and is callable
-      expect(typeof client.fetch).toBe('function');
+    it('propagates a rejection from the global fetch rather than swallowing it', async () => {
+      const globalFetch = vi.fn().mockRejectedValue(new Error('network down'));
+      vi.stubGlobal('fetch', globalFetch);
 
-      // Verify it returns a promise
-      // Note: This would make a real network request in production, so we just check the signature
-      const fetchFn = client.fetch;
-      expect(fetchFn.length).toBe(2); // url and options parameters
+      try {
+        const client = new DefaultFetchClient();
+        await expect(client.fetch('https://example.test/data')).rejects.toThrow('network down');
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
   });
 });

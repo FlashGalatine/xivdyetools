@@ -14,6 +14,11 @@ import {
   BOT_SIGNATURE_NONCE_HEADER,
   isTokenRevoked,
 } from '@xivdyetools/auth';
+import {
+  unauthorizedResponse,
+  forbiddenResponse,
+  validationErrorResponse,
+} from '../utils/api-response.js';
 import { getLogger } from '@xivdyetools/worker-kit';
 
 type Variables = {
@@ -381,14 +386,13 @@ export function requireAuth(
 ): Response | null {
   const auth = c.get('auth');
 
+  // REFACTOR-003: these guards used to hand-roll `{error, message}` with no
+  // `success` field and a human-readable `error` ('Unauthorized') rather than
+  // an `ErrorCode`. They are the worker's most common rejections, so a client
+  // could not switch on `error` reliably and `success` was absent exactly
+  // where it was most needed. The canonical helpers already existed.
   if (!auth.isAuthenticated) {
-    return c.json(
-      {
-        error: 'Unauthorized',
-        message: 'Valid authentication required',
-      },
-      401
-    );
+    return unauthorizedResponse(c, 'Valid authentication required');
   }
 
   return null;
@@ -403,24 +407,17 @@ export function requireModerator(
 ): Response | null {
   const auth = c.get('auth');
 
+  // REFACTOR-003: these guards used to hand-roll `{error, message}` with no
+  // `success` field and a human-readable `error` ('Unauthorized') rather than
+  // an `ErrorCode`. They are the worker's most common rejections, so a client
+  // could not switch on `error` reliably and `success` was absent exactly
+  // where it was most needed. The canonical helpers already existed.
   if (!auth.isAuthenticated) {
-    return c.json(
-      {
-        error: 'Unauthorized',
-        message: 'Valid authentication required',
-      },
-      401
-    );
+    return unauthorizedResponse(c, 'Valid authentication required');
   }
 
   if (!auth.isModerator) {
-    return c.json(
-      {
-        error: 'Forbidden',
-        message: 'Moderator privileges required',
-      },
-      403
-    );
+    return forbiddenResponse(c, 'Moderator privileges required');
   }
 
   return null;
@@ -437,12 +434,9 @@ export function requireUserContext(
   const auth = c.get('auth');
 
   if (!auth.userDiscordId) {
-    return c.json(
-      {
-        error: 'Bad Request',
-        message: 'User context required (login or provide X-User-Discord-ID header)',
-      },
-      400
+    return validationErrorResponse(
+      c,
+      'User context required (login or provide X-User-Discord-ID header)'
     );
   }
 

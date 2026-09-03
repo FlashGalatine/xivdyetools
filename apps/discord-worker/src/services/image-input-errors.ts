@@ -34,6 +34,14 @@ export const IMAGE_INPUT_MARKERS: ReadonlyArray<readonly [ImageInputReason, stri
   ['format', 'Unsupported image format'],
   ['format', 'invalid dimensions'],
   ['format', 'Failed to load image'],
+  // image-stoat-07 (deep dive 2026-09-02): validateFileSize(0) throws this when
+  // the Discord CDN answers 200 with a zero-byte body. It had no marker, so
+  // `imageInputReason` returned null, `classifyError` recorded the outcome as
+  // `unknown` rather than `image_input`, and the user got the generic
+  // processingFailed instead of a message about their file. `format` rather than
+  // `too_large`: nothing about an empty file is large, and "not an image we can
+  // read" is what actually happened.
+  ['format', 'file is empty'],
   // fetchImageWithTimeout
   ['timeout', 'timed out'],
   ['fetch', 'Failed to fetch image'],

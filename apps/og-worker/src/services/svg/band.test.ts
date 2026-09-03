@@ -3,6 +3,8 @@
  * ink law, and the one degrade rule that separates the two frames.
  */
 import { describe, it, expect } from 'vitest';
+import { bandInk as packageBandInk } from '@xivdyetools/svg';
+import { dyeService } from './dye-helpers';
 import {
   generateBandCard,
   bandInk,
@@ -188,5 +190,33 @@ describe('the shared chrome', () => {
     expect(header).toContain('stroke="#C8CCD5" stroke-width="1.4"');
     expect(header).toContain('<ellipse cx="24" cy="17" rx="14" ry="5.4" fill="#FBFBFC"/>');
     expect(header).toContain('<ellipse cx="24" cy="17" rx="9.6" ry="3.4" fill="#8E4EC6"/>');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// REFACTOR-002 (deep dive 2026-09-02): this module kept a private copy of the
+// package's band-ink law — same luminance formula, same crossover, but the
+// white `onDim` was 0.78 here and 0.72 in `@xivdyetools/svg`. The bot card and
+// the OG card are two renderings of the same dye; a caption alpha is not
+// something they get to disagree about.
+//
+// The copy is gone (og-worker re-exports the package's), and this pins it so
+// it cannot come back as a fork that merely looks similar.
+// ---------------------------------------------------------------------------
+describe('REFACTOR-002: og-worker uses the package’s band ink, not a copy of it', () => {
+  it('is the same function object the svg package exports', () => {
+    expect(bandInk).toBe(packageBandInk);
+  });
+
+  it('agrees with the package across every dye in the database', () => {
+    for (const dye of dyeService.getAllDyes()) {
+      expect(bandInk(dye.hex), dye.name).toEqual(packageBandInk(dye.hex));
+    }
+  });
+
+  it('still picks by measured contrast, not a luminance cut', () => {
+    // Pure White and Snow White take the dark ink; Jet Black takes white.
+    expect(bandInk('#FFFFFF').on).toBe('#0A0A0A');
+    expect(bandInk('#000000').on).toBe('#FFFFFF');
   });
 });

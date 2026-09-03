@@ -40,6 +40,12 @@ export const PREVIEW_IMAGE_CACHE_CONTROL = 'public, max-age=31536000, immutable,
 /** The purge API is best-effort; never let a slow call hold a takedown hostage. */
 const CACHE_PURGE_TIMEOUT_MS = 5_000;
 
+/**
+ * BUG-045: ceiling on the image-worker decode — the one outbound hop in this
+ * worker that had none, on the user-facing upload path.
+ */
+const IMAGE_WORKER_TIMEOUT_MS = 10_000;
+
 /** Public URL of a stored object — the cache key the purge has to name. */
 export function previewImagePublicUrl(key: string): string {
   return `${PREVIEW_IMAGE_PUBLIC_BASE}/${key}`;
@@ -148,10 +154,18 @@ export async function storePreviewImage(
   presetId: string,
   bytes: Uint8Array
 ): Promise<string> {
+  // BUG-045: this was the only outbound fetch in the worker without a
+  // deadline. A Photon decode that spins (a large PNG, an image-worker isolate
+  // under memory pressure) held the author's upload open until the runtime
+  // killed the request — so they saw a hang rather than the
+  // "Image could not be processed" the surrounding try/catch was written for.
+  // Perspective and the cache purge both use 5 s; the decode gets 10, since it
+  // is doing real work rather than waiting on a third party.
   const response = await env.IMAGE_WORKER.fetch(
     new Request('https://image-worker/thumbnail', {
       method: 'POST',
       body: bytes,
+      signal: AbortSignal.timeout(IMAGE_WORKER_TIMEOUT_MS),
     })
   );
 

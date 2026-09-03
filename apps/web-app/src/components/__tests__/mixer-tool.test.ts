@@ -877,13 +877,36 @@ describe('MixerTool', () => {
       }
     );
 
+    // webapp-tools-a-13: this asserted only `not.toThrow()`, so deleting the
+    // whole `mixingMode` branch of setConfig kept it green -- the mode would
+    // change, the blend would not, and the name of the test says otherwise.
+    // A re-blend is observable: the engine resolves the new colour through
+    // dyeService.findClosestDyes.
     it('recomputes the blend when the mode changes with two inputs set', () => {
       tool = mount();
       tool.selectDye(dye(1));
       tool.selectDye(dye(2));
 
-      // A mode change with a full pair must re-blend, not just restyle
-      expect(() => tool!.setConfig({ mixingMode: 'lab' } as never)).not.toThrow();
+      mockGetAllDyes.mockClear();
+
+      tool.setConfig({ mixingMode: 'lab' } as never);
+
+      // findMatchingDyes() walks dyeService.getAllDyes(), so a re-match is
+      // exactly a fresh call to it.
+      expect(mockGetAllDyes).toHaveBeenCalled();
+    });
+
+    it('does not re-blend when the mode is set to the value it already has', () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      mockGetAllDyes.mockClear();
+
+      // 'ryb' is the default, so this is a no-op and must stay one.
+      tool.setConfig({ mixingMode: 'ryb' } as never);
+
+      expect(mockGetAllDyes).not.toHaveBeenCalled();
     });
 
     it('accepts a maxResults change', () => {
@@ -892,10 +915,19 @@ describe('MixerTool', () => {
       expect(() => tool!.setConfig({ maxResults: 7 } as never)).not.toThrow();
     });
 
-    it('accepts a matchingMethod change', () => {
+    // webapp-tools-a-13: `not.toThrow()` only, on a test whose name promises a
+    // re-match. With a blend in place, changing the algorithm must run the
+    // match again.
+    it('re-matches when the matching method changes', () => {
       tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
 
-      expect(() => tool!.setConfig({ matchingMethod: 'oklab' } as never)).not.toThrow();
+      mockGetAllDyes.mockClear();
+
+      tool.setConfig({ matchingMethod: 'oklab' } as never);
+
+      expect(mockGetAllDyes).toHaveBeenCalled();
     });
 
     it('accepts a displayOptions change and an identical repeat', () => {

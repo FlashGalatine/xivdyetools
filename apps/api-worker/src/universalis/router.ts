@@ -75,6 +75,73 @@ function normalizeItemIds(itemIds: string): string {
 export const universalisRouter = new Hono<{ Bindings: Env }>();
 
 /**
+ * The status this worker answers with for a given upstream status.
+ *
+ * api-worker-04: the three error paths cast `error.status` straight into the
+ * response. `cachedFetch` uses `redirect: 'manual'`, so a 3xx from Universalis
+ * arrives as a non-ok response and became `UpstreamError(302, …)` — and
+ * `c.json(body, 302)` is a **redirect with a JSON body and no `Location`**.
+ * It also slipped the `no-store` guard in `index.ts`, which only fires at
+ * `>= 400`, so a 301 was heuristically cacheable. Not reachable today, but it
+ * becomes reachable the day Universalis adds a host or path redirect — the
+ * same failure family as the 2026-08-28 `redirect: 'error'` outage.
+ *
+ * Only statuses this API means to speak pass through; anything else is a 502,
+ * which is what "the upstream did something we do not handle" actually is.
+ */
+const PASSTHROUGH_UPSTREAM_STATUSES = new Set([400, 404, 429, 500, 503]);
+
+function clampUpstreamStatus(status: number): 400 | 404 | 429 | 500 | 502 | 503 {
+  return PASSTHROUGH_UPSTREAM_STATUSES.has(status)
+    ? (status as 400 | 404 | 429 | 500 | 503)
+    : 502;
+}
+
+/**
+ * How much bigger the service-binding budget is than one public IP's.
+ *
+ * BUG-048: `getClientIp` returns the literal `'unknown'` when there is no
+ * `CF-Connecting-IP`, and discord-worker's sub-request carries none — so the
+ * ENTIRE bot fleet shared one public-sized bucket. Production sets
+ * `RATE_LIMIT_REQUESTS = 30`, so once ~30 *distinct* datacenter/item
+ * combinations missed the cache inside one 60-second window in one isolate,
+ * the 31st `/budget` in ANY guild got a 429 — cross-tenant throttling on a key
+ * nobody owns. The "charge on miss only" mitigation (FINDING-025 / API-7)
+ * protects repeats of the SAME key, which is not the pattern `/budget`
+ * produces: every new dye/world pair is a fresh miss.
+ *
+ * The bucket is separated rather than removed. discord-worker limits `/budget`
+ * per user already, so this is a ceiling on the aggregate rather than the
+ * primary control — but a ceiling that a bot bug cannot turn into an unbounded
+ * fan-out at Universalis is worth keeping.
+ */
+const SERVICE_BINDING_BUDGET_MULTIPLIER = 20;
+
+/**
+ * The rate-limit identity and budget for this request.
+ *
+ * A request with no `CF-Connecting-IP` is one of our own workers over a
+ * Service Binding — the header is set by Cloudflare for every external
+ * request, which is the same assumption `getClientIp` already documents.
+ */
+function resolveRateLimitScope(
+  request: Request,
+  config: RateLimitConfig
+): { key: string; config: RateLimitConfig } {
+  const clientIP = getClientIp(request);
+  if (clientIP !== 'unknown') {
+    return { key: clientIP, config };
+  }
+  return {
+    key: 'svc:universalis',
+    config: {
+      ...config,
+      maxRequests: config.maxRequests * SERVICE_BINDING_BUDGET_MULTIPLIER,
+    },
+  };
+}
+
+/**
  * GET <mount>/aggregated/:datacenter/:itemIds — aggregated price data.
  * Rate-limited per IP, validated, cached (300s + 120s SWR), coalesced.
  */
@@ -82,15 +149,18 @@ universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
   const { datacenter, itemIds } = c.req.param();
 
   // SECURITY (BUG-066/SEC-002): shared getClientIp prefers unspoofable CF-Connecting-IP
-  const clientIP = getClientIp(c.req.raw);
-  const rateLimitConfig: RateLimitConfig = {
+  // BUG-048: service-binding traffic gets its own key and its own budget —
+  // it used to fall into the shared `'unknown'` bucket with every other
+  // IP-less caller, so the whole bot fleet competed for one public-sized
+  // allowance and `/budget` commands 429'd each other across guilds.
+  const { key: rateLimitKey, config: rateLimitConfig } = resolveRateLimitScope(c.req.raw, {
     maxRequests: parseInt(c.env.RATE_LIMIT_REQUESTS, 10) || 60,
     windowSeconds: parseInt(c.env.RATE_LIMIT_WINDOW_SECONDS, 10) || 60,
-  };
+  });
   // FINDING-025 / API-7: charged from cachedFetch's onMiss hook below — after
-  // the Cache API lookup — so cache hits never consume the per-IP budget.
+  // the Cache API lookup — so cache hits never consume the budget.
   const chargeLimiter = async (): Promise<void> => {
-    const result = await checkRateLimit(clientIP, rateLimitConfig);
+    const result = await checkRateLimit(rateLimitKey, rateLimitConfig);
     if (!result.allowed) throw new ProxyRateLimitedError(result, rateLimitConfig);
   };
 
@@ -99,7 +169,6 @@ universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
   if (!isValidDatacenterOrWorld(datacenter)) {
     let knownUpstream = false;
     try {
-      const validationBaseUrl = new URL(c.req.url).origin;
       const validationCtx = c.executionCtx as ExecutionContext;
       const [dcResult, worldResult] = await Promise.all([
         cachedFetch({
@@ -107,14 +176,12 @@ universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
           config: CACHE_CONFIGS.dataCenters,
           upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/data-centers`,
           ctx: validationCtx,
-          baseUrl: validationBaseUrl,
         }),
         cachedFetch({
           cacheKey: 'worlds:all',
           config: CACHE_CONFIGS.worlds,
           upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/worlds`,
           ctx: validationCtx,
-          baseUrl: validationBaseUrl,
         }),
       ]);
       knownUpstream = isNameInUpstreamLists(datacenter, dcResult.data, worldResult.data);
@@ -168,7 +235,6 @@ universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
       // Hono's ExecutionContext type lacks the `tracing` field from newer
       // workers-types; the runtime value is the full Workers ExecutionContext.
       ctx: c.executionCtx as ExecutionContext,
-      baseUrl: new URL(c.req.url).origin,
       onMiss: chargeLimiter,
     });
 
@@ -216,7 +282,7 @@ universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
           error: `Upstream API error: ${error.status}`,
           message: 'The upstream API returned an error',
         },
-        error.status as 400 | 404 | 500 | 502 | 503
+        clampUpstreamStatus(error.status)
       );
     }
 
@@ -262,7 +328,6 @@ universalisRouter.get('/data-centers', async (c) => {
       config,
       upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/data-centers`,
       ctx: c.executionCtx as ExecutionContext,
-      baseUrl: new URL(c.req.url).origin,
     });
 
     return c.json(result.data, 200, buildCacheHeaders(result.source, result.isStale, config));
@@ -270,7 +335,7 @@ universalisRouter.get('/data-centers', async (c) => {
     if (error instanceof UpstreamError) {
       return c.json(
         { error: `Upstream API error: ${error.status}` },
-        error.status as 400 | 404 | 500 | 502 | 503
+        clampUpstreamStatus(error.status)
       );
     }
 
@@ -292,7 +357,6 @@ universalisRouter.get('/worlds', async (c) => {
       config,
       upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/worlds`,
       ctx: c.executionCtx as ExecutionContext,
-      baseUrl: new URL(c.req.url).origin,
     });
 
     return c.json(result.data, 200, buildCacheHeaders(result.source, result.isStale, config));
@@ -300,7 +364,7 @@ universalisRouter.get('/worlds', async (c) => {
     if (error instanceof UpstreamError) {
       return c.json(
         { error: `Upstream API error: ${error.status}` },
-        error.status as 400 | 404 | 500 | 502 | 503
+        clampUpstreamStatus(error.status)
       );
     }
 

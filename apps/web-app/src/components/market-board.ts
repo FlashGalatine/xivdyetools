@@ -240,6 +240,12 @@ export class MarketBoard extends BaseComponent {
    * Populate server dropdown with data centers and worlds
    */
   private populateServerDropdown(selectElement: HTMLSelectElement): void {
+    // BUG-076: this APPENDS, and it runs twice -- once from renderContent() and
+    // again from onMount() -> loadServerData(), which re-populates after
+    // WorldService is ready. Without clearing, every data centre and every
+    // world appeared twice in the dropdown.
+    selectElement.replaceChildren();
+
     // Get data centers from WorldService and sort alphabetically
     const dataCenters = WorldService.getAllDataCenters();
     const sortedDataCenters = [...dataCenters].sort((a, b) => a.name.localeCompare(b.name));

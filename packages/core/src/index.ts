@@ -248,6 +248,7 @@ export {
   API_MAX_RESPONSE_SIZE,
   /** @public */
   API_RATE_LIMIT_DELAY,
+  HARMONY_OFFSETS,
 } from './constants/index.js';
 
 // Utils

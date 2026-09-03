@@ -663,3 +663,72 @@ describe('ModerationService', () => {
     });
 
 });
+
+// ============================================================================
+// presets-api-09: BUG-002's CJK matcher had no test at all
+// ============================================================================
+//
+// `\b` never matches next to CJK, so ja/ko/zh entries are compiled into a
+// separate boundary-less `cjkPattern` and checkLocalFilter tries BOTH patterns.
+// Nothing exercised that: compileProfanityPatterns was only asserted on ASCII,
+// and every checkLocalFilter test injects ASCII patterns through
+// `_setTestPatterns`, which hard-codes `cjkPattern: null`. Deleting
+// `profanity.cjkPattern` from the pattern array -- or reverting the
+// asciiWords/cjkWords split -- left the entire suite green while silently
+// disabling matching for six of the eleven shipped entries.
+describe('CJK profanity matching (BUG-002)', () => {
+    beforeEach(() => {
+        _resetPatternsForTesting();
+    });
+
+    afterEach(() => {
+        _resetPatternsForTesting();
+    });
+
+    it('compiles CJK words into cjkPattern, not the \\b-anchored one', () => {
+        const compiled = compileProfanityPatterns({ zh: ['ai垃圾'] } as never);
+
+        // `\b(ai垃圾)\b` would never match, so these words MUST NOT go into
+        // the ASCII pattern.
+        expect(compiled.cjkPattern).not.toBeNull();
+        expect(compiled.combinedPattern).toBeNull();
+        expect(compiled.cjkPattern?.test('这是ai垃圾啊')).toBe(true);
+    });
+
+    it('keeps ASCII words in the \\b-anchored pattern', () => {
+        const compiled = compileProfanityPatterns({ en: ['badword'] } as never);
+
+        expect(compiled.combinedPattern).not.toBeNull();
+        expect(compiled.cjkPattern).toBeNull();
+        // Anchoring is the point: a substring inside a longer word must not hit.
+        expect(compiled.combinedPattern?.test('a badword here')).toBe(true);
+        expect(compiled.combinedPattern?.test('notbadwordish')).toBe(false);
+    });
+
+    it('splits a mixed list across both patterns', () => {
+        const compiled = compileProfanityPatterns({
+            en: ['badword'],
+            zh: ['ai垃圾'],
+        } as never);
+
+        expect(compiled.combinedPattern).not.toBeNull();
+        expect(compiled.cjkPattern).not.toBeNull();
+    });
+
+    // Against the REAL shipped lists, not injected fixtures — the injection
+    // helper cannot reach this path because it nulls cjkPattern.
+    it.each([
+        ['Chinese', 'ai垃圾'],
+        ['Korean', 'ai 쓰레기'],
+        ['Japanese', 'aiのゴミ'],
+    ])('rejects a %s entry from the shipped list', (_label, word) => {
+        const result = checkLocalFilter(word, 'a perfectly ordinary description');
+
+        expect(result?.passed).toBe(false);
+        expect(result?.flaggedField).toBe('name');
+    });
+
+    it('still accepts clean CJK text', () => {
+        expect(checkLocalFilter('雪のように白い', 'きれいな色です')?.passed).not.toBe(false);
+    });
+});

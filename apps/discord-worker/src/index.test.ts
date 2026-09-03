@@ -83,7 +83,7 @@ vi.mock('./services/changelog-parser.js', () => ({
 }));
 
 vi.mock('./services/announcements.js', () => ({
-  sendAnnouncement: vi.fn().mockResolvedValue(undefined),
+  sendAnnouncement: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 vi.mock('./services/i18n.js', async (importOriginal) => ({
@@ -386,6 +386,55 @@ describe('index.ts', () => {
       };
       expect(call.components).toBeUndefined();
       expect(call.embeds[0].description).toContain('/preset moderate');
+    });
+
+    // discord-core-13: every webhook fixture in this file already carries the
+    // correct stainID shape (`dyes: [1, 2, 3]`), but no assertion ever read the
+    // rendered `Dyes` field -- only the title, the absence of components, and
+    // the log line. So discord-core-01 (the embed resolving ids through
+    // `getDyeById` instead of `getByStainId`, printing raw numbers or the
+    // WRONG dye) was invisible here: replacing formatDyesForEmbed's body with
+    // `dyeIds.join(', ')` kept every test in the file green.
+    it('renders dye NAMES in the moderation embed, not raw stain ids', async () => {
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+
+      const preset = {
+        id: 'preset-124',
+        name: 'Test Preset',
+        description: 'A test preset',
+        category_id: 'test-category',
+        author_name: 'Test Author',
+        source: 'web' as const,
+        dyes: [1, 2, 3],
+        tags: [],
+        status: 'pending' as const,
+        created_at: new Date().toISOString(),
+      };
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test-webhook-secret' },
+        body: JSON.stringify({ type: 'submission', preset }),
+      });
+
+      await app.fetch(req, mockEnv, mockCtx);
+
+      const sent = vi.mocked(sendMessage).mock.calls.at(-1)?.[2] as {
+        embeds: Array<{ fields?: Array<{ name: string; value: string }> }>;
+      };
+      const dyeField = sent.embeds[0].fields?.find((f) => /dye/i.test(f.name));
+
+      expect(dyeField, 'the embed has no Dyes field').toBeDefined();
+      // The fixture names stains 1 and 2 (Snow White, Ash Grey); stain 3 is
+      // absent from it, so it falls through to the legacy `getDyeById` arm and
+      // renders 'Dye 3'. Pinning all three covers BOTH arms in the right
+      // order: swapping them -- which is discord-core-01 -- turns stain 1 into
+      // 'Dye 1'.
+      expect(dyeField?.value).toBe('Snow White, Ash Grey, Dye 3');
+      expect(dyeField?.value).not.toBe('1, 2, 3');
     });
 
     // FINDING-011 (2026-08-29 security audit): the webhook's own log line
@@ -798,6 +847,49 @@ describe('index.ts', () => {
       expect(verifyGitHubSignature).not.toHaveBeenCalled();
     });
 
+    // discord-core-14: no test anywhere stubbed a NON-2xx send. BUG-026 is
+    // that a Discord rejection used to resolve as success, after which the
+    // caller wrote the `announced:v:<version>` memo -- and every later
+    // Redeliver short-circuited on it, so that release could never be
+    // announced again. The memo not being written is the whole recovery story.
+    it('writes no announce memo and answers 502 when Discord rejects the send', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      sendAnnouncement.mockResolvedValue({
+        ok: false,
+        status: 403,
+        body: 'Missing Permissions',
+      });
+
+      const kv = announceKV();
+      const res = await postPush(
+        JSON.stringify(pushPayload({ commits: [], head_commit: changelogCommit() })),
+        { env: githubEnv(kv) },
+      );
+
+      // GitHub must log a FAILED delivery -- that is what makes a Redeliver
+      // both possible and correct.
+      expect(res.status).toBe(502);
+      expect(kv.put).not.toHaveBeenCalled();
+    });
+
+    it('writes the announce memo once the send succeeded', async () => {
+      const { sendAnnouncement, entry } = await arrangeAnnounce();
+      sendAnnouncement.mockResolvedValue({ ok: true });
+
+      const kv = announceKV();
+      const res = await postPush(
+        JSON.stringify(pushPayload({ commits: [], head_commit: changelogCommit() })),
+        { env: githubEnv(kv) },
+      );
+
+      expect(res.status).toBe(200);
+      expect(kv.put).toHaveBeenCalledWith(
+        `announced:v:${entry.version}`,
+        '1',
+        expect.anything(),
+      );
+    });
+
     it('announces when only head_commit lists CHANGELOG-laymans.md (commits truncated)', async () => {
       const { fetchSpy: fetched, sendAnnouncement, entry } = await arrangeAnnounce();
 
@@ -999,6 +1091,43 @@ describe('index.ts', () => {
 
       expect(failed.status).toBe(500);
       expect(await failed.json()).toMatchObject({ error: 'Internal Server Error' });
+      expect(memo.has('announced:v:5.0.0')).toBe(false);
+
+      const retried = await postPush(body, { env });
+
+      expect(retried.status).toBe(200);
+      expect(sendAnnouncement).toHaveBeenCalledTimes(2);
+      expect(memo.get('announced:v:5.0.0')).toBe('1');
+    });
+
+    /**
+     * BUG-026: the test above only ever made the send THROW, which is the one
+     * failure the old code noticed — `sendAnnouncement` awaited `sendMessage`
+     * and discarded its Response, so a Discord 403 (no SEND_MESSAGES in the
+     * announcement channel) or 400 (rejected embed) resolved as success. The
+     * memo was written anyway and every later Redeliver short-circuited on it,
+     * making that release permanently unannounceable.
+     */
+    it('does not memoise a send Discord REJECTED, so a redelivery still announces', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      const memo = new Map<string, string>();
+      const kv = announceKV();
+      kv.get.mockImplementation(async (key: string) => memo.get(key) ?? null);
+      kv.put.mockImplementation(async (key: string, value: string) => {
+        memo.set(key, value);
+      });
+      const env = githubEnv(kv);
+      const body = JSON.stringify(pushPayload({ head_commit: changelogCommit() }));
+
+      // Resolves — it does not throw — with Discord's refusal.
+      sendAnnouncement.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        body: '{"message":"Missing Permissions","code":50013}',
+      });
+      const refused = await postPush(body, { env });
+
+      expect(refused.status).toBe(502);
       expect(memo.has('announced:v:5.0.0')).toBe(false);
 
       const retried = await postPush(body, { env });

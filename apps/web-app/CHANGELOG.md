@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.0.2] - 2026-09-02
+
+### Changed — 2026-09-02 deep-dive audit
+
+- `HARMONY_OFFSETS` moved to `@xivdyetools/core` and is re-exported from
+  `@services/harmony-generator` (BUG-022). The values are byte-identical and no page
+  behaviour changes; the point is that og-worker carried a *different* private copy,
+  so the card unfurled for a share link drew dyes the page it opened never showed.
+  One table, two consumers.
+
+### Fixed — 2026-09-02 deep-dive audit
+
+Dye identifiers (the 5.0 rewrite made stainID canonical; these call sites still sent item IDs):
+
+- "Inspect Dye in → Harmony" works again. It sent an item ID to a receiver that
+  rejects every item ID, so it failed for all 125 dyes, every time (BUG-012).
+- Budget's SEND TO hand-offs to Harmony, Comparison, Mixer and Accessibility now use
+  each receiver's own parameter grammar instead of sending a dye name nothing reads
+  (BUG-018).
+- The `f` and `c` shortcuts in the dye grid toggle favourites and open the collection
+  menu again (BUG-069).
+- A one-dye Comparison or Accessibility share link restores its dye instead of
+  silently showing the recipient's own (BUG-015).
+
+Extractor:
+
+- Match cards show a distance measured with the algorithm they label it with. The
+  extractor stored raw RGB distance next to a ΔE2000 label, so good matches were
+  graded poorly and the printed number was on the wrong scale (BUG-007).
+- Auto-extract honours the selected matching method (BUG-091), and the closest dye is
+  no longer listed twice (BUG-092).
+
+Lifecycle and feedback:
+
+- A modal underneath another modal keeps its close button, backdrop and footer
+  buttons. Opening a second modal used to strip them, which made a confirmation
+  dialog unanswerable by mouse (BUG-009).
+- The 1–9 tool shortcuts navigate. They dispatched an event nothing listened for,
+  while the shortcuts panel advertised them (BUG-014). `Ctrl+Shift+T` no longer also
+  flips the theme (BUG-084).
+- Accessibility's Share button refreshes on every selection change, not just desktop
+  selector picks (BUG-019).
+- Saved community presets are no longer marked "removed by author" when the preset
+  list simply came back paginated (BUG-020).
+- A tool that fails to load late no longer tears down whichever tool you navigated to
+  in the meantime (BUG-065).
+- Leaks released: the accessibility left panel, dye-selector children, image-zoom
+  document listeners, and the camera stream when you navigate away with the camera
+  open (BUG-070, BUG-071, BUG-077, BUG-080).
+- An unreachable submissions API raises an error instead of showing "no submissions
+  yet" (BUG-082), and a "What's New" chunk that fails to load says so instead of
+  doing nothing (BUG-090).
+
 ## [5.0.1] - 2026-09-02
 
 ### Fixed

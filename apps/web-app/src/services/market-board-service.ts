@@ -42,6 +42,13 @@ export type MarketBoardEventType =
 // ============================================================================
 
 /**
+ * Outcome of the most recent price fetch. `ok` means the returned Map is the
+ * answer; `nothing-to-fetch` and `superseded` mean an empty Map says nothing
+ * about the market's availability; only `error` means the board is unreachable.
+ */
+export type PriceFetchOutcome = 'ok' | 'nothing-to-fetch' | 'superseded' | 'error';
+
+/**
  * MarketBoardService - Centralized Market Board price data management
  *
  * Provides a singleton service for fetching, caching, and distributing
@@ -73,6 +80,18 @@ export class MarketBoardService extends EventTarget {
 
   // State
   private priceData: Map<number, PriceData> = new Map();
+
+  /**
+   * BUG-075: why the last `fetchPricesForDyes()` returned what it did.
+   *
+   * THREE different situations return an empty Map -- nothing was eligible to
+   * fetch, a newer request superseded this one, and the request genuinely
+   * failed -- and callers had only `prices.size === 0` to tell them apart. So
+   * switching worlds quickly (which deliberately supersedes the in-flight
+   * fetch) raised a "market unavailable" banner for a request that had simply
+   * been overtaken by the one whose results the user is about to see.
+   */
+  private _lastFetchOutcome: PriceFetchOutcome = 'ok';
   private requestVersion: number = 0;
   private selectedServer: string = 'Crystal';
   private showPrices: boolean = false;
@@ -306,6 +325,7 @@ export class MarketBoardService extends EventTarget {
       // BUG-039: a superseding call with nothing to fetch must not leave a
       // previous call's isFetching flag stuck true
       this.isFetching = false;
+      this._lastFetchOutcome = 'nothing-to-fetch';
       onProgress?.(0, 0);
       return new Map();
     }
@@ -340,6 +360,7 @@ export class MarketBoardService extends EventTarget {
         logger.info(
           `[MarketBoardService] Discarding stale price response (v${requestVersion}, current v${this.requestVersion})`
         );
+        this._lastFetchOutcome = 'superseded';
         return new Map();
       }
 
@@ -371,6 +392,8 @@ export class MarketBoardService extends EventTarget {
       this.emitEvent('fetch-completed', { dyeCount: result.size });
       logger.info(`[MarketBoardService] Fetched prices for ${result.size} dyes`);
 
+      this._lastFetchOutcome = 'ok';
+
       return result;
     } catch (error) {
       // Only log/emit error if this was the current request
@@ -383,8 +406,18 @@ export class MarketBoardService extends EventTarget {
         logger.error('[MarketBoardService] Failed to fetch prices:', error);
       }
 
+      this._lastFetchOutcome = 'error';
       return new Map();
     }
+  }
+
+  /**
+   * Why the last `fetchPricesForDyes()` returned what it did (BUG-075). Read
+   * this instead of testing `prices.size === 0`, which cannot distinguish a
+   * superseded request from an unreachable market.
+   */
+  get lastFetchOutcome(): PriceFetchOutcome {
+    return this._lastFetchOutcome;
   }
 
   /**

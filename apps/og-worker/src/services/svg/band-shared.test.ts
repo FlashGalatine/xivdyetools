@@ -9,6 +9,18 @@
  */
 import { describe, it, expect } from 'vitest';
 import { notFoundBand } from './band-shared.js';
+import { DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
+import { generateHarmonyOG } from './harmony';
+import { generateSwatchOG } from './swatch';
+import { generateGradientOG } from './gradient';
+import { generateMixerOG } from './mixer';
+import { dyeService } from './dye-helpers';
+
+const allDyes = dyeService.getAllDyes();
+const sid = allDyes[0].stainID ?? allDyes[0].id;
+const sid2 = allDyes[5].stainID ?? allDyes[5].id;
+/** See comparison.test.ts — the clip-path counter is cosmetic, not content. */
+const normalizeMarkUid = (svg: string): string => svg.replace(/ogm\d+/g, 'ogmX');
 
 describe('notFoundBand', () => {
   it('echoes a normal label unchanged', () => {
@@ -36,5 +48,37 @@ describe('notFoundBand', () => {
     const svg = notFoundBand('Swatch', 'swatch', junk, 'swatch');
     expect(Date.now() - started).toBeLessThan(2000);
     expect(svg).not.toContain(junk);
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// og-12 (deep dive 2026-09-02): five adapters defaulted `algorithm` to
+// `'oklab'` while every route passes `DEFAULT_MATCHING_METHOD` explicitly. Only
+// TESTS ever saw the default, so the suite measured every card with a method
+// production never used — the one place a wrong default is invisible.
+// ---------------------------------------------------------------------------
+describe('og-12: an omitted algorithm is the suite default, not a second one', () => {
+  it('every adapter renders the same card with the algorithm omitted as with the default named', () => {
+    const cases: Array<[string, string, string]> = [
+      ['harmony', generateHarmonyOG({ dyeId: sid, harmonyType: 'tetradic' }),
+        generateHarmonyOG({ dyeId: sid, harmonyType: 'tetradic', algorithm: DEFAULT_MATCHING_METHOD })],
+      ['swatch', generateSwatchOG({ color: '7A6B4F', limit: 4 }),
+        generateSwatchOG({ color: '7A6B4F', limit: 4, algorithm: DEFAULT_MATCHING_METHOD })],
+      ['gradient', generateGradientOG({ startDyeId: sid, endDyeId: sid2, steps: 5 }),
+        generateGradientOG({ startDyeId: sid, endDyeId: sid2, steps: 5, algorithm: DEFAULT_MATCHING_METHOD })],
+      ['mixer', generateMixerOG({ dyeAId: sid, dyeBId: sid2, ratio: 50 }),
+        generateMixerOG({ dyeAId: sid, dyeBId: sid2, ratio: 50, algorithm: DEFAULT_MATCHING_METHOD })],
+    ];
+    for (const [name, omitted, explicit] of cases) {
+      expect(normalizeMarkUid(omitted), name).toBe(normalizeMarkUid(explicit));
+    }
+  });
+
+  it('…and that default is not oklab, which is what the omitted case used to render', () => {
+    const omitted = generateSwatchOG({ color: '7A6B4F', limit: 4 });
+    const oklab = generateSwatchOG({ color: '7A6B4F', limit: 4, algorithm: 'oklab' });
+    expect(normalizeMarkUid(omitted)).not.toBe(normalizeMarkUid(oklab));
+    expect(omitted).toContain('ΔE2000');
   });
 });

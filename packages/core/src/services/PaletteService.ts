@@ -22,6 +22,7 @@
 
 import type { RGB, Dye } from '@xivdyetools/types';
 import type { MatchingMethod } from '../types/index.js';
+import { DEFAULT_MATCHING_METHOD } from '../types/index.js';
 import type { Logger } from '@xivdyetools/logger/library';
 import { NoOpLogger } from '@xivdyetools/logger/library';
 import { ColorService } from './ColorService.js';
@@ -71,7 +72,12 @@ export interface PaletteMatch {
   extracted: RGB;
   /** The closest matching FFXIV dye */
   matchedDye: Dye;
-  /** Color distance between extracted and matched (lower is better) */
+  /**
+   * Distance between the extracted colour and the matched dye, measured with
+   * the SAME `matchingMethod` that selected it (BUG-008) — so its scale is that
+   * method's, and it is directly comparable with what the caller asked for.
+   * Lower is better.
+   */
   distance: number;
   /** Percentage of pixels in this cluster (0-100) */
   dominance: number;
@@ -459,8 +465,16 @@ export class PaletteService {
       );
 
       if (matchedDye) {
-        // Calculate distance between extracted and matched colors
-        const distance = rgbDistance(ex.color, matchedDye.rgb);
+        // BUG-008: report the distance on the SAME metric that chose the match.
+        // This used to be an unconditional `rgbDistance` — Euclidean RGB on a
+        // 0-441.67 scale — while the winner was picked with `matchingMethod`,
+        // so the number a caller received was on a different scale from the
+        // metric that produced it, with nothing in the value to say which.
+        const distance = ColorService.getDistanceForMethod(
+          hex,
+          matchedDye.hex,
+          options.matchingMethod ?? DEFAULT_MATCHING_METHOD
+        );
 
         matches.push({
           extracted: ex.color,

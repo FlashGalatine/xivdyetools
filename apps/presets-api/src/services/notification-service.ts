@@ -425,9 +425,26 @@ export async function listFailedNotifications(
   try {
     const result = await db.prepare(query).all<FailedNotificationRow>();
     return (result.results || []).map(summarizeFailedNotification);
-  } catch {
-    // Table may not exist yet if migration hasn't run
-    return [];
+  } catch (error) {
+    // presets-api-07: this used to swallow EVERY D1 error into an empty array,
+    // so a database incident presented to a moderator as "the dead-letter
+    // queue is clear" — HTTP 200, `{"notifications":[],"total":0}`, and they
+    // conclude nothing was missed. The sibling `resolveFailedNotification`
+    // lets its errors propagate, so the two disagreed about what a D1 failure
+    // means.
+    //
+    // The stated justification ("table may not exist yet if migration hasn't
+    // run") refers to migration 0005, long since applied everywhere — but it
+    // still holds for a fresh local D1, so keep exactly that case and let
+    // everything else become a 500.
+    const message = error instanceof Error ? error.message : String(error);
+    if (/no such table/i.test(message)) {
+      (logger ?? console).warn?.(
+        '[failed-notifications] table missing — run migrations/0005 (local D1?)'
+      );
+      return [];
+    }
+    throw error;
   }
 }
 

@@ -543,7 +543,8 @@ describe('AuthMiddleware', () => {
 
             expect(res.status).toBe(401);
             const body = await res.json() as { error: string };
-            expect(body.error).toBe('Unauthorized');
+            // REFACTOR-003: the guards now use the canonical ErrorCode envelope.
+            expect(body.error).toBe('UNAUTHORIZED');
         });
     });
 
@@ -587,7 +588,7 @@ describe('AuthMiddleware', () => {
 
             expect(res.status).toBe(403);
             const body = await res.json() as { error: string };
-            expect(body.error).toBe('Forbidden');
+            expect(body.error).toBe('FORBIDDEN');
         });
     });
 
@@ -627,7 +628,7 @@ describe('AuthMiddleware', () => {
 
             expect(res.status).toBe(400);
             const body = await res.json() as { error: string };
-            expect(body.error).toBe('Bad Request');
+            expect(body.error).toBe('VALIDATION_ERROR');
         });
     });
 

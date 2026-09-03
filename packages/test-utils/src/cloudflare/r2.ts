@@ -35,7 +35,7 @@ interface R2ObjectMeta {
 }
 
 /** Subset of R2's httpMetadata this mock tracks. */
-interface MockR2HttpMetadata {
+export interface MockR2HttpMetadata {
   cacheControl?: string;
   contentType?: string;
 }
@@ -59,15 +59,43 @@ export interface MockR2Object {
   httpEtag: string;
   etag: string;
   customMetadata?: Record<string, string>;
+  /**
+   * BUG-100: `put()` stored this and nothing read it back, so
+   * `presets-api/services/preview-image-service.ts` wrote the `immutable` +
+   * `s-maxage=86400` policy that FINDING-018's takedown story depends on and
+   * no test could observe it except by reaching into `_store`.
+   */
+  httpMetadata?: MockR2HttpMetadata;
   arrayBuffer: () => Promise<ArrayBuffer>;
   text: () => Promise<string>;
   json: <T = unknown>() => Promise<T>;
   blob: () => Promise<Blob>;
+  /**
+   * Copies the stored HTTP metadata onto a Headers object, the way a serving
+   * path does. Absent from the mock entirely, so such a path would have thrown
+   * only in production.
+   */
+  writeHttpMetadata: (headers: Headers) => void;
 }
 
 /**
  * Extended mock R2 bucket with test helpers
  */
+/**
+ * Opaque-ish page cursor, deliberately not the bare key. See the matching
+ * helper in `cloudflare/kv.ts`.
+ */
+const CURSOR_PREFIX = 'mockr2-after:';
+
+function encodeListCursor(lastKey: string): string {
+  return `${CURSOR_PREFIX}${lastKey}`;
+}
+
+function decodeListCursor(cursor: string | undefined): string | null {
+  if (!cursor || !cursor.startsWith(CURSOR_PREFIX)) return null;
+  return cursor.slice(CURSOR_PREFIX.length);
+}
+
 export interface MockR2Bucket {
   get: (key: string) => Promise<MockR2Object | null>;
   put: (
@@ -84,7 +112,7 @@ export interface MockR2Bucket {
     truncated: boolean;
     cursor?: string;
   }>;
-  head: (key: string) => Promise<R2ObjectMeta | null>;
+  head: (key: string) => Promise<(R2ObjectMeta & { httpMetadata?: MockR2HttpMetadata }) | null>;
 
   /** Internal storage map (for assertions) */
   _store: Map<string, StoredR2Object>;
@@ -142,14 +170,23 @@ export function createMockR2Bucket(): MockR2Bucket {
       const stored = store.get(key);
       if (!stored) return null;
 
-      const { body, meta } = stored;
+      const { body, meta, httpMetadata } = stored;
 
       return {
         ...meta,
+        httpMetadata,
         arrayBuffer: async () => body.slice(0),
         text: async () => new TextDecoder().decode(body),
         json: async <T = unknown>() => JSON.parse(new TextDecoder().decode(body)) as T,
         blob: async () => new Blob([body]),
+        writeHttpMetadata: (headers: Headers) => {
+          if (httpMetadata?.contentType !== undefined) {
+            headers.set('Content-Type', httpMetadata.contentType);
+          }
+          if (httpMetadata?.cacheControl !== undefined) {
+            headers.set('Cache-Control', httpMetadata.cacheControl);
+          }
+        },
       };
     },
 
@@ -186,28 +223,48 @@ export function createMockR2Bucket(): MockR2Bucket {
 
     list: async (options?: { prefix?: string; limit?: number; cursor?: string }) => {
       const prefix = options?.prefix ?? '';
-      const limit = options?.limit ?? 1000;
+      const limit = Math.min(options?.limit ?? 1000, 1000);
       const objects: R2ObjectMeta[] = [];
 
+      // Same shape as BUG-098 on the KV mock: this used to report
+      // `truncated: true` with `cursor: undefined` on an exactly-full page, a
+      // state real R2 never returns, so a correct cursor loop would spin on
+      // page one forever.
+      const resumeAfter = decodeListCursor(options?.cursor);
+      let skipping = resumeAfter !== null;
+      let truncated = false;
+
       for (const [key, { meta }] of store.entries()) {
-        if (key.startsWith(prefix)) {
-          objects.push(meta);
-          if (objects.length >= limit) {
-            break;
-          }
+        if (!key.startsWith(prefix)) continue;
+
+        if (skipping) {
+          if (key === resumeAfter) skipping = false;
+          continue;
         }
+
+        if (objects.length >= limit) {
+          truncated = true;
+          break;
+        }
+
+        objects.push(meta);
       }
 
-      return {
-        objects,
-        truncated: objects.length >= limit,
-        cursor: undefined,
-      };
+      if (truncated && objects.length > 0) {
+        return {
+          objects,
+          truncated: true,
+          cursor: encodeListCursor(objects[objects.length - 1].key),
+        };
+      }
+
+      return { objects, truncated: false };
     },
 
     head: async (key: string) => {
       const stored = store.get(key);
-      return stored?.meta ?? null;
+      if (!stored) return null;
+      return { ...stored.meta, httpMetadata: stored.httpMetadata };
     },
 
     _store: store,

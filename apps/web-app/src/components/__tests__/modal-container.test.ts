@@ -199,6 +199,70 @@ describe('ModalContainer', () => {
   });
 
   // ============================================================================
+  // Stacked modals (BUG-009)
+  // ============================================================================
+
+  describe('a modal that survives another render', () => {
+    /**
+     * BUG-009: `update()` clears the whole listener map, then the incremental
+     * render skips modals it has already built. Those kept their DOM and lost
+     * their listeners, so a modal underneath a stack went inert to the mouse —
+     * a confirm dialog became unanswerable. Escape still worked, which is why
+     * it presented as "the buttons stopped working" rather than a freeze.
+     *
+     * Each case opens a second modal (forcing the re-render) and then drives
+     * the FIRST modal, which is the one whose listeners used to be dropped.
+     */
+    const openTwo = () => {
+      modalContainer = new ModalContainer(container);
+      modalContainer.init();
+      const firstId = ModalService.show({ type: 'custom', title: 'First', closable: true });
+      const secondId = ModalService.show({ type: 'custom', title: 'Second', closable: true });
+      return { firstId, secondId };
+    };
+
+    const firstWrapper = (firstId: string): HTMLElement =>
+      query<HTMLElement>(container, `[data-modal-id="${firstId}"]`)!;
+
+    it('still closes the underlying modal from its own close button', () => {
+      const { firstId, secondId } = openTwo();
+      ModalService.dismiss(secondId);
+
+      const closeBtn = firstWrapper(firstId).querySelector(
+        'button[aria-label="Close modal"]'
+      ) as HTMLButtonElement;
+      click(closeBtn);
+
+      expect(queryAll(container, '[data-modal-id]').length).toBe(0);
+    });
+
+    it('still answers an underlying confirm dialog', () => {
+      modalContainer = new ModalContainer(container);
+      modalContainer.init();
+      const onConfirm = vi.fn();
+      ModalService.show({ type: 'confirm', title: 'Are you sure?', onConfirm });
+      const secondId = ModalService.show({ type: 'custom', title: 'On top', closable: true });
+      ModalService.dismiss(secondId);
+
+      const confirmBtn = query<HTMLButtonElement>(container, '[data-action="confirm"]');
+      click(confirmBtn);
+
+      expect(onConfirm).toHaveBeenCalled();
+    });
+
+    it('still dismisses the underlying modal from its backdrop', () => {
+      const { firstId, secondId } = openTwo();
+      ModalService.dismiss(secondId);
+
+      const backdrop = firstWrapper(firstId);
+      // handleBackdropClick only dismisses when the backdrop itself is the target
+      backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+      expect(queryAll(container, '[data-modal-id]').length).toBe(0);
+    });
+  });
+
+  // ============================================================================
   // Confirm Modal Tests
   // ============================================================================
 
@@ -545,6 +609,25 @@ describe('ModalContainer', () => {
 
       expect(document.body.style.overflow).toBe('');
     });
+
+    // webapp-modals-22: the test above cannot distinguish "restores the prior
+    // value" from "blanks it", because `beforeEach` sets
+    // `document.body.style.overflow = ''` -- so `priorBodyOverflow` is captured
+    // as '' and the final `toBe('')` passes either way. Start from a page that
+    // already had an overflow set, which is the whole point of saving it.
+    it('restores the PRIOR body overflow, not a blank one', () => {
+      document.body.style.overflow = 'scroll';
+
+      modalContainer = new ModalContainer(container);
+      modalContainer.init();
+
+      const id = ModalService.show({ type: 'custom', title: 'Test', closable: true });
+      expect(document.body.style.overflow).toBe('hidden');
+
+      ModalService.dismiss(id);
+
+      expect(document.body.style.overflow).toBe('scroll');
+    });
   });
 
   // ============================================================================
@@ -574,14 +657,20 @@ describe('ModalContainer', () => {
       expect(queryAll(container, '[data-modal-id]').length).toBe(0);
     });
 
+    // webapp-modals-23: `not.toThrow()` was the only assertion, so a LEAKED
+    // subscription -- the exact failure the title names -- passed: the
+    // destroyed container would happily go on rendering. Assert that nothing
+    // was rendered after destroy.
     it('should unsubscribe on destroy', () => {
       modalContainer = new ModalContainer(container);
       modalContainer.init();
 
       modalContainer.destroy();
 
-      // Showing a modal after destroy should not cause errors
       expect(() => ModalService.show({ type: 'custom', title: 'Test' })).not.toThrow();
+
+      // A live subscription would have rendered the modal into the container.
+      expect(queryAll(container, '[data-modal-id]')).toHaveLength(0);
     });
   });
 

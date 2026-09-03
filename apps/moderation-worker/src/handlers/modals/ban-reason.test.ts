@@ -12,7 +12,13 @@ import * as discordApi from '../../utils/discord-api.js';
 vi.mock('../../utils/discord-api.js', () => {
   const sendMessage = vi.fn();
   // BUG-035: handlers call the safe wrappers; alias to the same mocks
-  return { sendMessage, safeSendMessage: sendMessage };
+  // moderation-worker-09: processBan now also resolves the "Processing Ban…"
+  // acknowledgement through safeEditOriginalResponse.
+  return {
+    sendMessage,
+    safeSendMessage: sendMessage,
+    safeEditOriginalResponse: vi.fn(),
+  };
 });
 
 vi.mock('../../services/preset-api.js', async () => {

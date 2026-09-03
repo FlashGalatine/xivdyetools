@@ -140,7 +140,13 @@ describe('bot auth v2 signature', () => {
         expect(((await res.json()) as AuthContext).isAuthenticated).toBe(false);
     });
 
-    it('answers 401 with the unchanged envelope when the v2 signature header is missing', async () => {
+    // The point of this one is that a request carrying ONLY the retired v1
+    // signature is unauthenticated and gets the worker's ordinary 401 — not
+    // that the envelope never changes. REFACTOR-003 changed that envelope
+    // worker-wide (the guards now use the canonical `ErrorCode` helpers rather
+    // than hand-rolling `{error: 'Unauthorized'}` with no `success` field), so
+    // this asserts the new ordinary shape.
+    it('answers 401 with the ordinary envelope when the v2 signature header is missing', async () => {
         const timestamp = String(Math.floor(Date.now() / 1000));
         const v1 = await hmacSignHex(`${timestamp}:123456789:TestUser`, SECRET);
         const res = await app.request(
@@ -158,7 +164,8 @@ describe('bot auth v2 signature', () => {
         );
         expect(res.status).toBe(401);
         expect(await res.json()).toEqual({
-            error: 'Unauthorized',
+            success: false,
+            error: 'UNAUTHORIZED',
             message: 'Valid authentication required',
         });
     });
@@ -201,7 +208,8 @@ describe('bot auth v2 signature', () => {
             expect(first.status).toBe(200);
             expect(replay.status).toBe(401);
             expect(await replay.json()).toEqual({
-                error: 'Unauthorized',
+                success: false,
+                error: 'UNAUTHORIZED',
                 message: 'Valid authentication required',
             });
         });

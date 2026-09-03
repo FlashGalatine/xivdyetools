@@ -35,6 +35,19 @@ Rules:
   path filter.
 -->
 
+## [5.1.2] - 2026-09-02
+
+### 🐛 Fixes
+
+- `/gradient` shows a colour chip beside every step again. They had been missing from the list, while the Start and End lines above kept theirs.
+- `/harmony` shows a colour chip beside the base colour, which was the one line in that reply without one.
+- `/gradient`'s summary sentence no longer runs off the edge of the picture in Japanese and Korean — it wraps properly instead of losing the last third.
+- `/stats` reports the version the bot is actually running. It had been stuck on an old number and disagreed with `/about`.
+- Preset pictures with Japanese, Korean or Chinese names no longer show empty boxes where the characters should be. The picture now draws what it can, and the text beside it carries the full name.
+- `/preferences set` with several options at once saves all of them. Occasionally one could be quietly dropped while the reply still said it had been saved.
+- The preset name autocomplete on `/preset favorite remove` no longer comes up empty for some long-standing users.
+- When market data is unavailable, `/budget` says so instead of telling you your own world does not exist.
+
 ## [5.1.0] - 2026-08-30
 
 ### 🐛 Fixes

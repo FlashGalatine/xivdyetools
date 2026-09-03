@@ -98,7 +98,7 @@ describe('/budget world override validation (FINDING-033)', () => {
 
   describe('/budget find', () => {
     it('rejects an unknown world: override before deferring (no ledger, no proxy call)', async () => {
-      mockValidateWorld.mockResolvedValue(null);
+      mockValidateWorld.mockResolvedValue({ ok: false, reason: 'unknown' });
 
       const res = await handleBudgetCommand(
         interaction('find', [
@@ -120,7 +120,7 @@ describe('/budget world override validation (FINDING-033)', () => {
     });
 
     it('passes the validated (canonical) world name to the ledger', async () => {
-      mockValidateWorld.mockResolvedValue('Balmung');
+      mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
 
       const res = await handleBudgetCommand(
         interaction('find', [
@@ -149,7 +149,7 @@ describe('/budget world override validation (FINDING-033)', () => {
     // override does, and the ledger is priced on the CANONICAL name.
     it('validates the stored preference before pricing', async () => {
       prefs.world = 'balmung';
-      mockValidateWorld.mockResolvedValue('Balmung');
+      mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
 
       const res = await handleBudgetCommand(
         interaction('find', [{ name: 'target_dye', value: 'Jet Black' }]),
@@ -171,7 +171,7 @@ describe('/budget world override validation (FINDING-033)', () => {
 
     it('answers the unknown-world reply when the stored world no longer resolves', async () => {
       prefs.world = 'Retired';
-      mockValidateWorld.mockResolvedValue(null);
+      mockValidateWorld.mockResolvedValue({ ok: false, reason: 'unknown' });
 
       const res = await handleBudgetCommand(
         interaction('find', [{ name: 'target_dye', value: 'Jet Black' }]),
@@ -208,7 +208,7 @@ describe('/budget world override validation (FINDING-033)', () => {
 
   describe('/budget quick', () => {
     it('rejects an unknown world: override before deferring', async () => {
-      mockValidateWorld.mockResolvedValue(null);
+      mockValidateWorld.mockResolvedValue({ ok: false, reason: 'unknown' });
 
       const res = await handleBudgetCommand(
         interaction('quick', [
@@ -228,7 +228,7 @@ describe('/budget world override validation (FINDING-033)', () => {
     });
 
     it('passes the validated world name to the ledger', async () => {
-      mockValidateWorld.mockResolvedValue('Crystal');
+      mockValidateWorld.mockResolvedValue({ ok: true, name: 'Crystal' });
 
       const res = await handleBudgetCommand(
         interaction('quick', [
@@ -253,7 +253,7 @@ describe('/budget world override validation (FINDING-033)', () => {
 
   describe('echoed input (FINDING-019)', () => {
     it('sanitises the rejected world name before echoing it', async () => {
-      mockValidateWorld.mockResolvedValue(null);
+      mockValidateWorld.mockResolvedValue({ ok: false, reason: 'unknown' });
 
       const res = await handleBudgetCommand(
         interaction('find', [
@@ -277,7 +277,7 @@ describe('/budget world override validation (FINDING-033)', () => {
   describe('log hygiene (FINDING-011)', () => {
     it('logs the target dye and whether a world resolved, never the world name', async () => {
       prefs.world = 'Balmung';
-      mockValidateWorld.mockResolvedValue('Balmung');
+      mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
       const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 
       const res = await handleBudgetCommand(

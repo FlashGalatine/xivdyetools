@@ -307,13 +307,42 @@ describe('IndexedDBCacheBackend', () => {
       expect(mockDelete).toHaveBeenCalledWith('price_cache', 'delete-idb-test');
     });
 
-    it('should handle indexedDBService.delete failure gracefully', async () => {
+    // webapp-services-17: this used to assert
+    // `expect(() => cacheBackend.delete(...)).not.toThrow()` on a SYNCHRONOUS
+    // void call whose rejection is already absorbed by an attached `.catch()`.
+    // That holds for any implementation whatsoever. It also drove
+    // `mockRejectedValueOnce`, a state the real IndexedDBService cannot produce
+    // -- it resolves `false`. Assert the outcome the caller actually depends
+    // on: the memory tier is evicted regardless of what IndexedDB does.
+    it('evicts from the memory cache even when the IndexedDB delete fails', async () => {
+      const indexedDBServiceModule = await import('../indexeddb-service');
+      const mockDelete = vi.spyOn(indexedDBServiceModule.indexedDBService, 'delete');
+      mockDelete.mockResolvedValueOnce(false);
+
+      await cacheBackend.set('fail-delete', { value: 1 } as never);
+      expect(await cacheBackend.get('fail-delete')).not.toBeNull();
+
+      cacheBackend.delete('fail-delete');
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(await cacheBackend.get('fail-delete')).toBeNull();
+      expect(mockDelete).toHaveBeenCalledWith('price_cache', 'fail-delete');
+    });
+
+    it('does not let a rejected IndexedDB delete escape as an unhandled rejection', async () => {
       const indexedDBServiceModule = await import('../indexeddb-service');
       const mockDelete = vi.spyOn(indexedDBServiceModule.indexedDBService, 'delete');
       mockDelete.mockRejectedValueOnce(new Error('Delete failed'));
 
-      // Should not throw
-      expect(() => cacheBackend.delete('fail-delete')).not.toThrow();
+      const unhandled = vi.fn();
+      process.on('unhandledRejection', unhandled);
+      try {
+        cacheBackend.delete('fail-delete');
+        await new Promise((r) => setTimeout(r, 50));
+        expect(unhandled).not.toHaveBeenCalled();
+      } finally {
+        process.off('unhandledRejection', unhandled);
+      }
     });
   });
 
@@ -346,13 +375,21 @@ describe('IndexedDBCacheBackend', () => {
       expect(mockClear).toHaveBeenCalledWith('price_cache');
     });
 
-    it('should handle indexedDBService.clear failure gracefully', async () => {
+    // webapp-services-17, same shape as the delete case above.
+    it('empties the memory cache even when the IndexedDB clear fails', async () => {
       const indexedDBServiceModule = await import('../indexeddb-service');
       const mockClear = vi.spyOn(indexedDBServiceModule.indexedDBService, 'clear');
-      mockClear.mockRejectedValueOnce(new Error('Clear failed'));
+      mockClear.mockResolvedValueOnce(false);
 
-      // Should not throw
-      expect(() => cacheBackend.clear()).not.toThrow();
+      await cacheBackend.set('a', { value: 1 } as never);
+      await cacheBackend.set('b', { value: 2 } as never);
+
+      cacheBackend.clear();
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(await cacheBackend.get('a')).toBeNull();
+      expect(await cacheBackend.get('b')).toBeNull();
+      expect(mockClear).toHaveBeenCalledWith('price_cache');
     });
   });
 

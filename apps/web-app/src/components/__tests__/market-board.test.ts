@@ -156,6 +156,32 @@ describe('MarketBoard', () => {
       expect(options.length).toBeGreaterThan(0);
     });
 
+    // BUG-076: populateServerDropdown() APPENDS, and it runs twice -- once from
+    // renderContent() and again from onMount() -> loadServerData(), which
+    // repopulates once WorldService is ready. Without clearing first, every
+    // data centre and every world appeared twice. The test above cannot see
+    // that: `options.length > 0` is just as true of a doubled list.
+    it('does not duplicate options when the dropdown is repopulated', async () => {
+      marketBoard = new MarketBoard(container);
+      marketBoard.init();
+
+      const optionLabels = (): string[] =>
+        queryAll(container, '#mb-server-select option').map((o) => o.textContent ?? '');
+
+      const before = optionLabels();
+      expect(before.length).toBeGreaterThan(0);
+
+      await marketBoard.loadServerData();
+
+      // Repopulating is idempotent. Before the fix `after` was `before`
+      // concatenated with itself -- every data centre and every world twice.
+      // (Note the fixture returns the same two worlds for BOTH data centres,
+      // so option LABELS repeat legitimately; the count is the signal.)
+      const after = optionLabels();
+      expect(after).toHaveLength(before.length);
+      expect(after).toEqual(before);
+    });
+
     it('should call service setServer on change', () => {
       marketBoard = new MarketBoard(container);
       marketBoard.init();

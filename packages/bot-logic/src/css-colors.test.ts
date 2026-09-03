@@ -91,4 +91,23 @@ describe('resolveCssColorName', () => {
       });
     }
   });
+
+  /**
+   * BUG-011: `CSS_COLORS[key]` resolves through Object.prototype and `??` only
+   * catches null/undefined, so these returned a FUNCTION rather than null —
+   * `/contrast dye1:constructor` then threw inside the handler instead of
+   * answering with the localized "invalid colour" message.
+   */
+  describe('inherited object keys', () => {
+    it.each(['constructor', 'toString', '__proto__', 'valueOf', 'hasOwnProperty'])(
+      'returns null for %s',
+      (key) => {
+        expect(resolveCssColorName(key)).toBeNull();
+      }
+    );
+
+    it('still resolves a real colour name', () => {
+      expect(resolveCssColorName('red')).toMatch(/^#[0-9A-F]{6}$/);
+    });
+  });
 });

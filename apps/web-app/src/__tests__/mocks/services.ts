@@ -19,7 +19,7 @@ import type { Dye, RGB, HSV, HexColor } from '@xivdyetools/types';
  */
 export const mockDyes: Dye[] = [
   {
-    id: 1,
+    id: 5729,
     itemID: 5729,
     stainID: 1,
     name: 'Snow White',
@@ -40,7 +40,7 @@ export const mockDyes: Dye[] = [
     consolidationType: null,
   },
   {
-    id: 2,
+    id: 5730,
     itemID: 5730,
     stainID: 2,
     name: 'Ash Grey',
@@ -61,7 +61,7 @@ export const mockDyes: Dye[] = [
     consolidationType: null,
   },
   {
-    id: 3,
+    id: 5731,
     itemID: 5731,
     stainID: 3,
     name: 'Soot Black',
@@ -82,7 +82,7 @@ export const mockDyes: Dye[] = [
     consolidationType: null,
   },
   {
-    id: 4,
+    id: 5732,
     itemID: 5732,
     stainID: 4,
     name: 'Rose Pink',
@@ -103,7 +103,7 @@ export const mockDyes: Dye[] = [
     consolidationType: null,
   },
   {
-    id: 5,
+    id: 5733,
     itemID: 5733,
     stainID: 5,
     name: 'Wine Red',
@@ -124,7 +124,7 @@ export const mockDyes: Dye[] = [
     consolidationType: null,
   },
   {
-    id: 6,
+    id: 5734,
     itemID: 5734,
     stainID: 6,
     name: 'Coral Pink',
@@ -145,7 +145,7 @@ export const mockDyes: Dye[] = [
     consolidationType: null,
   },
   {
-    id: 7,
+    id: 5735,
     itemID: 5735,
     stainID: 7,
     name: 'Blood Red',
@@ -166,7 +166,7 @@ export const mockDyes: Dye[] = [
     consolidationType: null,
   },
   {
-    id: 8,
+    id: 5736,
     itemID: 5736,
     stainID: 8,
     name: 'Sunset Orange',
@@ -187,7 +187,7 @@ export const mockDyes: Dye[] = [
     consolidationType: null,
   },
   {
-    id: 9,
+    id: 5737,
     itemID: 5737,
     stainID: 9,
     name: 'Dalamud Red',
@@ -208,7 +208,7 @@ export const mockDyes: Dye[] = [
     consolidationType: null,
   },
   {
-    id: 10,
+    id: 5738,
     itemID: 5738,
     stainID: 10,
     name: 'Sky Blue',

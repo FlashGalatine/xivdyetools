@@ -23,7 +23,7 @@ import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, xStrip, BAND_CAP, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
-import { dyeService } from './dye-helpers';
+import { ALL_DYES } from './dye-helpers';
 import { deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 
@@ -70,7 +70,7 @@ export function generateExtractorOG(options: ExtractorOGOptions): string {
   const bands: BandEntry[] = entries.map((entry, i) => {
     let best: Dye | null = null;
     let bestDelta = Infinity;
-    for (const candidate of dyeService.getAllDyes()) {
+    for (const candidate of ALL_DYES) {
       const delta = ColorService.getDistanceForMethod(entry.hex, candidate.hex, 'ciede2000');
       if (delta < bestDelta) {
         bestDelta = delta;

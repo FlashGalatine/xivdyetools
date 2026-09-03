@@ -69,8 +69,12 @@ export interface MixerCardOptions {
 const PAD = 16;
 const ROW_H = 42;
 
-/** 12F slot widths (pct lead 34, blend→dye pair, name, bar 30, ΔE 32). */
-const ROW_WIDTHS: MeasuredRowWidths = { lead: 34, pair: 52, name: 186, bar: 30, measure: 32 };
+/**
+ * 12F slot widths (pct lead 34, blend→dye pair, name, bar 30, ΔE 32).
+ * pkg-svg-bot-logic-06: summed 6 px past the 368 px content width, so the
+ * right-anchored ΔE sat outside the card's own margin; `name` gives them back.
+ */
+const ROW_WIDTHS: MeasuredRowWidths = { lead: 34, pair: 52, name: 180, bar: 30, measure: 32 };
 
 /**
  * Generate the /mixer card (12F). 400×330 at the five-ratio sweep.

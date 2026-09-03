@@ -14,7 +14,7 @@ import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
-import { resolveColorInput, executeHarmony, type HarmonyType } from '@xivdyetools/bot-logic';
+import { resolveColorInput, executeHarmony, dyeService, type HarmonyType } from '@xivdyetools/bot-logic';
 import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
 import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
@@ -165,7 +165,13 @@ async function processHarmonyCommand(
       })
       .join('\n');
 
-    const baseEmoji = baseId ? getDyeEmoji(baseId, env.DISCORD_CLIENT_ID) : undefined;
+    // BUG-033: `baseId` is an itemID (`resolveColorInput` returns `dye.id`),
+    // but `emoji-mapping.json` is keyed by stainID — 1..125, so a 5729+ lookup
+    // always missed and the base row was the one line in this embed with no
+    // colour chip, while every numbered row below it had one (line 161 passes
+    // `dye.stainID`). Resolve the stain number the emoji map actually uses.
+    const baseStainID = baseId != null ? (dyeService.getDyeById(baseId)?.stainID ?? null) : null;
+    const baseEmoji = baseStainID ? getDyeEmoji(baseStainID, env.DISCORD_CLIENT_ID) : undefined;
     const baseEmojiPrefix = baseEmoji ? `${baseEmoji} ` : '';
     const baseColorText = `${t.t('harmony.baseColor')}: ${baseEmojiPrefix}**${result.baseName}** (\`${baseHex.toUpperCase()}\`)`;
 

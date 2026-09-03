@@ -67,6 +67,31 @@ export interface BudgetToolOptions {
   drawerContent?: HTMLElement | null;
 }
 
+/**
+ * The query-param name each hand-off target reads a dye from.
+ *
+ * BUG-018: every hand-off used to send `{ dye: dye.name }`. No receiver has
+ * read a dye *name* since the 5.0 id rewrite — Harmony and Budget read `dye`
+ * as a stainID, Comparison and Accessibility read the `dyes` list, and Mixer
+ * reads `dyeA`. So one hand-off passed the right key with an unparseable value
+ * and three passed a key nobody reads; all four silently did nothing.
+ *
+ * Keep this table next to the receivers it mirrors: `harmony-tool.ts:429`,
+ * `comparison-tool.ts:2470`, `accessibility-tool.ts:2036`, `mixer-tool.ts:669`.
+ */
+const HANDOFF_PARAM = {
+  harmony: 'dye',
+  comparison: 'dyes',
+  accessibility: 'dyes',
+  mixer: 'dyeA',
+} as const;
+
+/** Send a dye to another tool using that tool's own param grammar (stainID). */
+function handoffTo(tool: keyof typeof HANDOFF_PARAM, dye: Dye): void {
+  if (dye.stainID === null) return;
+  RouterService.navigateTo(tool, { [HANDOFF_PARAM[tool]]: String(dye.stainID) });
+}
+
 /** Price tier of a dye under Patch 7.5 consolidation. */
 type TierKey = ConsolidationType | 'X';
 
@@ -278,6 +303,11 @@ export class BudgetTool extends BaseComponent {
     // Defer the refetch a tick so MarketBoardService applies the change first.
     this.subs.add(
       ConfigController.getInstance().subscribe('market', () => {
+        // BUG-074: `priceData` is MERGED on every fetch and was only ever
+        // cleared in destroy(), so after a world change any dye the new world
+        // has no listing for kept the OLD world's price -- displayed under the
+        // new world's name, which is worse than showing nothing.
+        this.priceData.clear();
         setTimeout(() => void this.findAlternatives(), 0);
       })
     );
@@ -609,8 +639,12 @@ export class BudgetTool extends BaseComponent {
   }
 
   /**
-   * Fetch prices for dyes with progress tracking. Sets marketOnline from the
-   * response — an empty map after a non-empty request means Universalis is out.
+   * Fetch prices for dyes with progress tracking.
+   *
+   * BUG-075: `marketOnline` used to be `prices.size > 0`. An empty map is
+   * returned for three different reasons, only one of which is a failure -- a
+   * superseded request (exactly what a rapid world change causes) reported the
+   * market as offline. Ask the service which it was.
    */
   private async fetchPrices(dyes: Dye[]): Promise<void> {
     this.fetchProgress = { current: 0, total: dyes.length };
@@ -624,7 +658,14 @@ export class BudgetTool extends BaseComponent {
       prices.forEach((data, itemId) => {
         this.priceData.set(itemId, data);
       });
-      this.marketOnline = prices.size > 0;
+      const outcome = this.marketBoardService.lastFetchOutcome;
+      if (outcome === 'ok') {
+        this.marketOnline = true;
+      } else if (outcome === 'error') {
+        this.marketOnline = false;
+      }
+      // 'superseded' and 'nothing-to-fetch' say nothing about the board, so
+      // they leave the previous verdict alone.
     } catch (error) {
       logger.warn('[BudgetTool] Error fetching prices:', error);
       this.marketOnline = false;
@@ -1153,17 +1194,13 @@ export class BudgetTool extends BaseComponent {
       return b;
     };
 
-    // Name-addressed handoffs and the swap record need a real dye
+    // The hand-offs and the swap record need a real dye
     if (dye.stainID !== null) {
       row.appendChild(
-        btn(LanguageService.t('budget.handoffHarmony'), () =>
-          RouterService.navigateTo('harmony', { dye: dye.name })
-        )
+        btn(LanguageService.t('budget.handoffHarmony'), () => handoffTo('harmony', dye))
       );
       row.appendChild(
-        btn(LanguageService.t('budget.handoffCompare'), () =>
-          RouterService.navigateTo('comparison', { dye: dye.name })
-        )
+        btn(LanguageService.t('budget.handoffCompare'), () => handoffTo('comparison', dye))
       );
       row.appendChild(
         btn(LanguageService.t('budget.copyItem'), () => {
@@ -1815,16 +1852,16 @@ export class BudgetTool extends BaseComponent {
   private handleContextAction(action: ContextAction, dye: Dye): void {
     switch (action) {
       case 'add-comparison':
-        RouterService.navigateTo('comparison', { dye: dye.name });
+        handoffTo('comparison', dye);
         break;
       case 'add-mixer':
-        RouterService.navigateTo('mixer', { dye: dye.name });
+        handoffTo('mixer', dye);
         break;
       case 'add-accessibility':
-        RouterService.navigateTo('accessibility', { dye: dye.name });
+        handoffTo('accessibility', dye);
         break;
       case 'see-harmonies':
-        RouterService.navigateTo('harmony', { dye: dye.name });
+        handoffTo('harmony', dye);
         break;
       case 'budget':
         this.selectDye(dye);

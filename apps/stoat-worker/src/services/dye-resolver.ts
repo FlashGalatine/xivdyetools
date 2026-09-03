@@ -125,28 +125,54 @@ export function resolveDyeInputMulti(
 }
 
 /**
+ * Levenshtein distance, capped: once the best possible result exceeds `max`
+ * there is no point finishing the row.
+ */
+function editDistance(a: string, b: string, max: number): number {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+
+  let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i];
+    let rowBest = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const value = Math.min(current[j - 1] + 1, previous[j] + 1, previous[j - 1] + cost);
+      current.push(value);
+      if (value < rowBest) rowBest = value;
+    }
+    if (rowBest > max) return max + 1;
+    previous = current;
+  }
+
+  return previous[b.length];
+}
+
+/**
  * Get "did you mean?" suggestions for a misspelled input.
- * Uses a lightweight case-insensitive substring/prefix check.
+ *
+ * BUG-102: this used to try a `startsWith` pass first and fall back to a
+ * character-overlap heuristic. The prefix pass was UNREACHABLE -- getSuggestions
+ * is only called when no dye name CONTAINS the input, and a name starting with
+ * the input necessarily contains it -- so every suggestion came from the
+ * fallback, which asked only that 70% of the input's characters appear
+ * ANYWHERE in the name. For a short query that is very nearly every dye:
+ * "rd" suggested whatever happened to sort first. Rank by edit distance
+ * instead, and say nothing rather than something arbitrary.
  */
 function getSuggestions(input: string, names: string[], maxResults = 3): string[] {
   const lower = input.toLowerCase();
+  // A typo is close to its target; an unrelated word is not. Scale with the
+  // query so short inputs cannot match half the database.
+  const maxDistance = Math.max(1, Math.floor(lower.length / 3) + 1);
 
-  // Prioritize names that start with the input
-  const startsWith = names.filter((n) => n.toLowerCase().startsWith(lower));
-  if (startsWith.length > 0) {
-    return startsWith.slice(0, maxResults);
+  const scored: Array<{ name: string; distance: number }> = [];
+  for (const name of names) {
+    const distance = editDistance(lower, name.toLowerCase(), maxDistance);
+    if (distance <= maxDistance) scored.push({ name, distance });
   }
 
-  // Fall back to names containing the input (already checked above, but for typo tolerance)
-  const contains = names.filter((n) => {
-    const nLower = n.toLowerCase();
-    // Simple character overlap heuristic
-    let matches = 0;
-    for (const char of lower) {
-      if (nLower.includes(char)) matches++;
-    }
-    return matches >= lower.length * 0.7;
-  });
-
-  return contains.slice(0, maxResults);
+  scored.sort((a, b) => a.distance - b.distance || a.name.localeCompare(b.name));
+  return scored.slice(0, maxResults).map((entry) => entry.name);
 }

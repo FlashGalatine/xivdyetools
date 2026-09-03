@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit, Sprint 10
+
+- **A cancelled login returns to the site it started on** (BUG-049). Every GET-callback failure
+  redirected to `${FRONTEND_URL}/auth/callback`, discarding the allowlisted origin that began the
+  flow — so a user on `beta.xivdyetools.app` who clicks Cancel was dumped on the **production**
+  site, where their beta `sessionStorage` (PKCE verifier, CSRF nonce, return path) is unreachable
+  and the beta app never learns the login failed. The provider-error path does carry `state`, so
+  the correct target is recoverable there; a state that does not verify, or whose `redirect_uri` is
+  not allowlisted, still falls back to `FRONTEND_URL`, so a forged state can only ever send a user
+  to production.
+- **A non-array character roster no longer turns sign-in into a 500** (BUG-051). The roster was
+  assigned before it was known to be an array, so a `200` carrying `{"data": []}` or `null` made
+  `.filter` throw inside the try — and the catch logged "not a fatal error" and continued *without*
+  restoring the empty array, so `.find` threw again outside it. The intended degraded login (with
+  the `XIVAuth User <id>` fallback name) never happened.
+- **A Discord-flow state is rejected at the XIVAuth GET callback** (oauth-05). The state records
+  which provider signed it and the POST leg enforces it; the GET leg did not, so a replay was
+  accepted here and only rejected one round trip later.
+- **First-sign-in timestamps match the row that was written** (oauth-06). The INSERT relied on the
+  `datetime('now')` column defaults and then synthesised the returned row with
+  `toISOString()` — so a first sign-in reported `2026-09-02T12:00:00.000Z` while the database held
+  `2026-09-02 12:00:00`, and the same user's *second* sign-in returned the SQLite form. Both are
+  now bound explicitly, so the value written and the value returned are the same string.
+- **A Discord link lost to a concurrent sign-in degrades instead of 500ing** (oauth-07). The owner
+  lookup is check-then-update against the partial `UNIQUE(discord_id)` index; two overlapping
+  callbacks asserting the same unowned id both passed, and the second `UPDATE` violated the index —
+  the exact failure the guard was added to avoid. The INSERT path has had this recovery all along.
+- **A misconfiguration 500 now carries CORS headers** (oauth-08). The env gate ran *above* the CORS
+  middleware, so the SPA saw an opaque network error instead of the config incident the JSON body
+  names precisely.
+- The rate limiter runs before the body middlewares (oauth-09), so a request about to be 429'd no
+  longer reads, parses and walks its body first.
+
+### Changed
+
+- **⚠️ A revocation that did not take answers `503`, not `200`** (BUG-050). `revokeToken` swallows
+  a KV write failure and returns `false`, and the handler fell through to a "fallback" response
+  that — because `TOKEN_BLACKLIST` *is* bound — told the caller
+  `note: 'Token lacks JTI claim (older token format)'`. The token has a jti; the write failed. So
+  the user was told logout succeeded, the jti was never blacklisted, and `/auth/me` and presets-api
+  kept accepting the token for up to `JWT_EXPIRY` — with nothing logged, making a KV incident in
+  which every logout silently failed invisible. **A client that checks `success` on
+  `POST /auth/revoke` will now see failures it previously did not.** The genuinely unbound-blacklist
+  case still answers `200`, because there the client clearing its own storage *is* the logout.
+- **`GET /auth/me` pins the issuer** (oauth-11). This worker mints `iss: WORKER_URL` and never
+  checked it, so any well-formed HS256 token signed with `JWT_SECRET` was accepted whatever its
+  issuer. Latent while this worker is the only minter — it is — but real the moment the secret is
+  reused. No `aud` is minted: adding a claim nothing verifies just moves the decoration, and making
+  presets-api verify one is a coordinated change across two deploy units.
+
+### Not done
+
+- **oauth-10** (`UPDATE … RETURNING *` to collapse two D1 round trips on the returning-user path).
+  It is a latency optimisation, and the hand-rolled D1 mock answers `.first()` from a scripted queue
+  without regard to the statement — so a `RETURNING` clause silently consumes the response meant for
+  the follow-up `SELECT`, and the change would ship with its behaviour unverifiable. Worth doing
+  alongside a statement-aware mock, not before one.
+
 ## [3.0.1] - 2026-09-02
 
 ### Removed

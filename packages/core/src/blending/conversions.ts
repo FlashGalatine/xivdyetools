@@ -127,6 +127,30 @@ export function oklabToRgb(oklab: { L: number; a: number; b: number }): RGB {
 // RYB (Red-Yellow-Blue, approximate)
 // ============================================================================
 
+/**
+ * RGB → RYB, the exact inverse of {@link rybToRgb}.
+ *
+ * BUG-006 (2026-09-02 deep-dive): the previous implementation credited the
+ * leftover green to BLUE only (`b__ = (b_ + (g_ - y)) / 2`) and never added any
+ * of it back to yellow. Green therefore collapsed onto the blue axis: pure
+ * green and pure blue both mapped to `{r:0, y:0, b:1}`, so every green and teal
+ * that made a round trip came back blue — visibly, on the Discord bot's DEFAULT
+ * `/mix` and `/gradient` mode.
+ *
+ * Reducing {@link rybToRgb} to its chromatic parts (white `w` removed) gives
+ *
+ *     R = r + y - min(y, b),   G = y,   B = b - min(y, b)
+ *
+ * which inverts to `y = G` plus two cases on whether any blue survives:
+ *
+ * - `B > 0` — blue dominates the yellow it was mixed with, so `r = R` and the
+ *   green we owe comes back out of blue: `b = B + G`.
+ * - `B == 0` — all the blue was consumed making green, so red and blue trade
+ *   against `R - G`: a surplus is red, a deficit is blue.
+ *
+ * The final rescale mirrors the forward direction's, which normalises the
+ * result back to the input's maximum chroma.
+ */
 export function rgbToRyb(rgb: RGB): { r: number; y: number; b: number } {
   const r = rgb.r / 255;
   const g = rgb.g / 255;
@@ -139,10 +163,17 @@ export function rgbToRyb(rgb: RGB): { r: number; y: number; b: number } {
 
   const mg = Math.max(r_, g_, b_);
 
-  const y = Math.min(r_, g_);
-  const r__ = r_ - y;
-
-  const b__ = (b_ + (g_ - y)) / 2;
+  const y = g_;
+  let r__: number;
+  let b__: number;
+  if (b_ > 0) {
+    r__ = r_;
+    b__ = b_ + g_;
+  } else {
+    const surplus = r_ - g_;
+    r__ = surplus >= 0 ? surplus : 0;
+    b__ = surplus >= 0 ? 0 : -surplus;
+  }
 
   const n = Math.max(r__, y, b__) / Math.max(mg, 0.001);
 

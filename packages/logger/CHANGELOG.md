@@ -5,6 +5,115 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-09-02
+
+Sprint 13 of the 2026-09-02 deep-dive remediation (`docs/audits/2026-09-02-deep-dive`).
+Minor rather than patch: `sanitizeErrorMessage`'s output changes shape for auth
+schemes other than `Bearer`, and a cyclic context's back-edge is now a string
+sentinel where it used to be an object — either could surprise a consumer
+asserting on log output.
+
+### Security
+
+- **A secret reachable only through a cycle is redacted (BUG-004).** The cycle
+  guards in `redactSensitiveFields` and `redactArrayItems` returned the **raw,
+  unredacted original node**, so everything reachable through the back-edge was
+  emitted verbatim. Given `inner = { token: 'shhh' }; ctx = { items: [inner] };
+  inner.back = ctx`, the *copy* of `inner` correctly got `token: '[REDACTED]'`,
+  but `inner.back` handed back the original `ctx` whose `items[0]` is the
+  original `inner` — and `safeStringify` only marks the *second* back-edge, so
+  the emitted line contained `"token":"shhh"`. This affected `JsonAdapter`, i.e.
+  every Cloudflare Worker via worker-kit.
+
+  Both guards now return the `'[Circular]'` sentinel — the same marker
+  `safeStringify` writes one layer down, so a cyclic context reads identically
+  whether the cycle is caught during redaction or during serialisation.
+
+  This closes the residual the 2.1.2 entry listed under **Still not covered**
+  ("a detected CYCLE's back-edge still serialises one layer of the ORIGINAL,
+  unredacted object"), which was routed as a follow-up because both candidate
+  fixes were re-orderings of the guard with their own trade-offs. The sentinel
+  is a third option: **the check ordering is unchanged**, so every property
+  S10-R16 pins still holds, and its two tests still discriminate the same
+  mutation (they now assert the sentinel; `result` is not the sentinel either).
+
+  The tests that built this exact leak asserted only `not.toThrow()` — the
+  fixture even named the secret (`{ token: 'shhh' }`) and then never looked at
+  it (pkg-foundation-02).
+
+- **`Authorization: Basic …` and Discord's `Bot …` no longer leak their
+  credential (BUG-005).** Only `Bearer` had a dedicated pass and a lookahead;
+  every other scheme fell through to the generic `authorization=` rule, whose
+  unquoted value arm (`[^\s,;]+`) stops at the first space. It therefore
+  consumed the *scheme word* and stopped:
+
+  ```
+  'upstream rejected Authorization: Basic dXNlcjpwYXNzd29yZA=='
+    →  '… authorization=[REDACTED] dXNlcjpwYXNzd29yZA=='
+  ```
+
+  A `Bot <token>` was rescued only incidentally, when the value happened to
+  match `DISCORD_TOKEN_VALUE_PATTERN`.
+
+  The fix is in the `authorization=` rule: it consumes to a delimiter or end of
+  line rather than to the first space, since an Authorization value *is* the
+  rest of the header. Every other key rule still stops at whitespace, so an
+  ordinary `token=abc failed at 12:04` stays diagnosable — only here is the
+  whole tail known to belong to the value.
+
+  **The first attempt at this was wrong and is worth recording.** It extended
+  the free-text scheme pass to `Bearer|Basic|Bot|Digest|Token` so the scheme
+  word could be kept. Four of those five are ordinary English: it turned
+  oauth's real log line `'XIVAuth token exchange failed'` into
+  `'XIVAuth token [REDACTED] failed'` (`Token` + ` exchange`), and
+  `'bot token missing'` would have gone the same way. An oauth test caught it.
+  The free-text pass stays `Bearer`-only — a word that is not prose — and the
+  other schemes are handled by the `authorization=` rule, where the key name
+  supplies the context that makes a following word unambiguous. Tests now pin
+  the prose cases explicitly.
+
+  The method's own doc comment described an *older*, space-tolerant pattern —
+  the comment and the code disagreed, which is why this read as covered. The
+  suite's only Authorization case was `'Authorization: Bearer token123abc
+  failed'`: the one scheme that was already handled.
+
+- **`ConsoleAdapter` can no longer throw out of a log call (BUG-104).** It
+  serialised with raw `JSON.stringify`, so a circular or BigInt context raised
+  `TypeError: Converting circular structure to JSON` / `Do not know how to
+  serialize a BigInt` and took the caller down — the exact failure FINDING-026
+  fixed in 2.1.0, applied to `JsonAdapter` only. Redaction did not break the
+  cycle for it either (BUG-004 above), so `JSON.stringify` saw a real one. Both
+  `writePretty` and `writeJson` use `safeStringify` now.
+
+  Live consumers: `apps/stoat-worker` via `createLibraryLogger`, this package's
+  `ConsoleLogger` / `browserLogger` / `createBrowserLogger`, and any npm
+  consumer — `ConsoleAdapter` is `@public`. `console-adapter.test.ts` had no
+  circular or BigInt case at all, and `hardening.test.ts` builds its capture
+  helper on `JsonAdapter` only.
+
+### Performance
+
+- **`sanitizeErrorMessage` compiles its 15 regexes once, not per call
+  (OPT-007).** 13 `new RegExp(...)` plus 2 from `withGlobalFlag`, on a function
+  that runs once per log line *plus* once per error message with
+  `sanitizeErrors: true` — the Worker default. All 15 patterns are constant;
+  nothing depended on the arguments. They are a module-scope
+  `[pattern, replacement]` table now, applied with `reduce`. Behaviour-identical:
+  every rule carries `g` and is used only through `String.prototype.replace`,
+  which resets `lastIndex` itself.
+
+### Still not covered
+
+Unchanged from 2.1.2 except that the cycle back-edge item is now **closed**
+(see BUG-004 above):
+
+- A bare 64-hex secret with no key name in front of it inside free text — by
+  design, per the false-positive reasoning in 2.1.2.
+- Value-shape detection recognises only the four shapes in
+  `SECRET_VALUE_PATTERNS`. Any other opaque secret with no recognisable key name
+  nearby — a Discord *webhook* token, an `sk-live-…`-style provider key — is not
+  caught unless it carries a key name the key-name mechanism knows.
+
 ## [2.1.2] - 2026-09-02
 
 ### Changed

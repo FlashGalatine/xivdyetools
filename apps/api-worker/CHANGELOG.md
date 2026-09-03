@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit, Sprint 9
+
+- **The Discord bot fleet no longer 429s itself on `/budget`** (BUG-048). The Universalis per-IP
+  miss budget collapsed to one shared bucket for every caller without `CF-Connecting-IP` — which is
+  every service-binding request. Production allows 30/min, so once ~30 *distinct* datacenter/item
+  combinations missed the cache inside one window in one isolate, the 31st `/budget` in **any**
+  guild got a 429. The "charge on miss only" mitigation protects repeats of the *same* key, which
+  is not the pattern `/budget` produces: every new dye/world pair is a fresh miss. Service-binding
+  traffic now has its own key and a 20× budget — separated rather than removed, since a ceiling a
+  bot bug cannot turn into an unbounded fan-out at Universalis is worth keeping.
+- **`?sort=` no longer 400s the dye listing** (BUG-047). An empty-but-present value was treated as
+  supplied, and the enum parser with no default throws `MISSING_PARAMETER` — a hard 400 on an
+  *optional* parameter, with a code saying it was missing. Any client building
+  `&sort=${state.sort ?? ''}` got that instead of an unsorted list.
+- **A 3xx from Universalis is no longer echoed as the response status** (api-worker-04). It produced
+  a redirect with a JSON body and no `Location`, and slipped the `no-store` guard (which fired only
+  at `>= 400`), so a 301 was heuristically cacheable. Statuses are clamped to the set this API
+  means to speak; `no-store` now covers every non-2xx.
+- **`/v1/telemetry/<anything>` is rate-limited** (api-worker-05). The subtree was exempted from the
+  API bucket by prefix but the telemetry bucket was registered on the exact path only — Hono's
+  `use()` does not append `/*` — so it traversed both limiters untouched.
+- **The root's documentation link points at a host that serves it** (api-worker-07).
+
+### Changed
+
+- **⚠️ Dye id routes accept only canonical spellings** (api-worker-06). `parseInt` alone made
+  `/v1/dyes/1e3` return the stainID-1 dye with HTTP 200 and a 24-hour shared-cache TTL, and
+  `/v1/dyes/5729abc`, `/v1/dyes/+5729` and `/v1/dyes/007` each cached the same payload under a key
+  of its own. `/:id`, `/stain/:stainId` and the `batch` id list now require `-?[1-9]\d{0,9}`.
+  **A client sending a non-canonical spelling now gets a 400 where it used to get a dye.** The
+  bound is deliberately loose: this checks the spelling, and `resolveIdType` still owns the range,
+  so a well-formed but unassigned id keeps its useful 404.
+- **Universalis cache keys use a fixed synthetic origin** (OPT-004). They embedded the *request's*
+  origin, so one answer was stored under three disjoint namespaces (`data.xivdyetools.app`, the
+  legacy `proxy.*` domains, and `https://internal` for the service binding) — three upstream
+  fetches per TTL window for one payload. Worse, the coalescer key was already origin-free, so a
+  cross-origin waiter took the winner's data and never populated its own namespace, repeating the
+  miss every window. One cold cache on deploy.
+- The two raw `console.log` calls per market request are gone (api-worker-12) — the only logging in
+  this worker that bypassed `@xivdyetools/logger`. `X-Cache` already carries the same signal.
+
+### Documentation
+
+- `docs/guide/rate-limits.md`: `X-RateLimit-Remaining` is documented as an "at least one more"
+  indicator rather than a countdown — with the native per-colo binding it is constant until it is
+  `0` — and the `/v1/*` backend is described as the fixed window it actually is, not a KV sliding
+  window (api-worker-13).
+
+## [0.10.2] - 2026-09-02
+
+### Fixed — 2026-09-02 deep-dive audit
+
+- `?method=` validation no longer resolves through `Object.prototype` (BUG-011 /
+  BUG-046). `?method=constructor` matched the legacy-alias map, skipped the allowlist
+  entirely and answered `200` with a null distance; the allowlist now runs first and
+  the alias lookup is an own-property check, so it is a `400` like any other unknown
+  value.
+
 ## [0.10.1] - 2026-09-02
 
 ### Removed

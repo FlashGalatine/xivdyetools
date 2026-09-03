@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-09-02
+
+### Added — 2026-09-02 deep-dive audit
+
+- **`HARMONY_OFFSETS`** — the hue offset each harmony type asks for, as one table
+  (BUG-022). The web app and og-worker each carried a private copy, and they
+  diverged in three of ten rows: og-worker gave `analogous` an extra 180° complement
+  band, spelled `compound` `[30,150,210]` against the page's `[30,180,330]`, and had
+  no `shades` row at all. A card is the unfurl of a page URL, so a `compound` share
+  drew three dyes and the page it opened drew three different ones. Both now read
+  this table; the values are the web app's, and `analogous` also matches
+  `HarmonyGenerator.findAnalogousDyes`'s `[angle, -angle]`.
+
+  `@xivdyetools/bot-logic`'s own `IDEAL_OFFSETS` still carries the old
+  `analogous: [30, -30, 180]` and knows neither `compound` nor `shades`. That is a
+  divergence rather than this bug — the bot's embed and its card agree with each
+  other — and reconciling it changes what `/harmony` returns for every user, so it
+  is filed, not folded in.
+
+### Fixed — 2026-09-02 deep-dive audit
+
+- **RYB blending no longer loses green (BUG-006).** `rgbToRyb` credited the leftover
+  green to blue alone, so pure green and pure blue mapped to the same RYB triple and
+  every green or teal that made a round trip came back blue — `#00FF00` blended with
+  itself gave `#0000ff`. It is now the exact inverse of `rybToRgb`, so colours
+  round-trip and blue + yellow still makes green. This is the Discord bot's default
+  `/mix` and `/gradient` mode. `RybColorMixer` (behind `ColorService.mixColorsRyb`)
+  was never affected.
+- `extractAndMatchPalette` reports the distance measured with the same
+  `matchingMethod` that chose the match, instead of always returning RGB Euclidean
+  on a different scale (BUG-008).
+- `normalizeMatchingMethod` and the ten remaining `TranslationProvider` getters use
+  own-property lookups, so `constructor` / `__proto__` / `toString` are unrecognised
+  values rather than inherited functions (BUG-011, BUG-105 — extending FINDING-027
+  to the siblings it missed).
+- `CharacterColorService.findClosestDyes` returns an empty array for a non-positive
+  `count` instead of throwing a `TypeError` (BUG-056).
+- `APIService.isAPIAvailable` is bounded by the standard Universalis timeout; it was
+  the only fetch in the file without one (BUG-057).
+- `preloadLocales` loads without switching the active locale (BUG-058).
+- `HarmonyGenerator` handles `deltaEFormula: 'oklab'` explicitly instead of routing
+  it into the CIE76 branch with a CIE76 tolerance (BUG-059).
+
+### Changed
+
+- The `distinguish` scale derives from `COLOR_DISTANCE_MAX` rather than a third
+  hardcoded copy of it (REFACTOR-009).
+
 ## [4.0.2] - 2026-09-02
 
 ### Changed

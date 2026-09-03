@@ -6,7 +6,7 @@ All Phase 1 endpoints are anonymous. There is no API key required.
 
 | Surface | Rate limit | Burst |
 |---|---|---|
-| `/v1/*` — anonymous (all users) | 60 req/min per IP (KV-backed sliding window) | +5 |
+| `/v1/*` — anonymous (all users) | 60 req/min per IP (per-colo fixed window) | +5 |
 | `/universalis/aggregated/*` — [market-board proxy](../reference/universalis) | 30 req/min per IP in production (per-isolate memory limiter, separate budget) | — |
 | `/universalis/data-centers`, `/universalis/worlds`, `/health`, `/` | not rate-limited | — |
 
@@ -25,8 +25,18 @@ X-RateLimit-Reset: 1702684860
 | Header | Description |
 |---|---|
 | `X-RateLimit-Limit` | Total requests allowed per window (60 + 5 burst) |
-| `X-RateLimit-Remaining` | Requests remaining before limit is hit |
+| `X-RateLimit-Remaining` | **At least this many more requests are available** — not an exact countdown. See the note below. |
 | `X-RateLimit-Reset` | Unix timestamp when the window resets |
+
+::: warning `X-RateLimit-Remaining` is not a countdown
+The production limiter is Cloudflare's native per-colo binding, which reports
+whether *this* request was allowed rather than how many remain. Every allowed
+request therefore carries the same value, and the first refused one carries `0`
+— the number does not tick down as you go.
+
+Use it as a boolean ("is there headroom?"), and drive backoff from the `429`
+itself: `Retry-After` and `X-RateLimit-Reset` are exact.
+:::
 
 On `429` responses, `Retry-After` is also set (seconds to wait).
 

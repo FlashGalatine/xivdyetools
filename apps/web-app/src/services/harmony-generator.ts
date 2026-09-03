@@ -68,20 +68,16 @@ export const HARMONY_TYPE_IDS = [
 ] as const;
 
 /**
- * Harmony offsets (in degrees) for each harmony type
+ * Harmony offsets (in degrees) for each harmony type.
+ *
+ * BUG-022 (deep dive 2026-09-02): this used to be a private copy, and
+ * og-worker's card carried a *different* private copy — so an unfurled share
+ * link drew dyes the page it opened never shows. The table now lives in
+ * `@xivdyetools/core` and both read it; this re-export keeps the existing
+ * `@services/index` consumers (`harmony-tool.ts`, `v4-color-wheel.ts`)
+ * unchanged. The values are byte-identical to what this file held.
  */
-export const HARMONY_OFFSETS: Record<string, number[]> = {
-  complementary: [180],
-  analogous: [30, 330],
-  triadic: [120, 240],
-  'split-complementary': [150, 210],
-  tetradic: [60, 180, 240],
-  'inverted-tetradic': [120, 180, 300],
-  square: [90, 180, 270],
-  monochromatic: [0],
-  compound: [30, 180, 330],
-  shades: [15, 345],
-};
+export { HARMONY_OFFSETS } from '@xivdyetools/core';
 
 // ============================================================================
 // Helper Functions
@@ -142,6 +138,45 @@ export function calculateHueDeviance(dye: Dye, targetHue: number): number {
 // ============================================================================
 
 /**
+ * The colour a hue offset actually targets under perceptual matching: the base
+ * dye's saturation and value carried onto the new hue. `undefined` when
+ * perceptual matching is off or there is no base dye, which is the signal to
+ * fall back to angular hue distance.
+ */
+function perceptualTargetHex(
+  targetHue: number,
+  config: Pick<HarmonyConfig, 'usePerceptualMatching' | 'matchingMethod'>,
+  baseDye?: Dye | null
+): string | undefined {
+  if (!config.usePerceptualMatching || !baseDye) return undefined;
+  const baseSaturation = baseDye.hsv?.s ?? 50;
+  const baseValue = baseDye.hsv?.v ?? 50;
+  return ColorService.hsvToHex(targetHue, baseSaturation, baseValue);
+}
+
+/**
+ * BUG-064: the single definition of "how far is this dye from the slot's
+ * target". Both the primary ranking and the filtered-out-companion REPLACEMENT
+ * go through here, so a panel can never mix ΔE units with degrees of hue --
+ * which is exactly what it used to do.
+ */
+function devianceFor(
+  dye: Dye,
+  targetHue: number,
+  config: Pick<HarmonyConfig, 'usePerceptualMatching' | 'matchingMethod'>,
+  targetHex: string | undefined
+): number {
+  if (config.usePerceptualMatching && targetHex) {
+    // Perceptual matching: use configured matching algorithm
+    return calculateColorDistance(targetHex, dye.hex, config.matchingMethod);
+  }
+  // Hue-based matching: use angular distance on color wheel
+  const dyeHsv = ColorService.hexToHsv(dye.hex);
+  const hueDiff = Math.abs(dyeHsv.h - targetHue);
+  return Math.min(hueDiff, 360 - hueDiff);
+}
+
+/**
  * Find dyes closest to a target hue.
  * Excludes Facewear dyes (generic names like "Red", "Blue").
  * Supports both hue-based (fast) and DeltaE-based (perceptual) matching.
@@ -164,12 +199,7 @@ export function findClosestDyesToHue(
 
   // For perceptual matching, generate target color from hue
   // Use base dye's saturation and value for consistent matching
-  let targetHex: string | undefined;
-  if (config.usePerceptualMatching && baseDye) {
-    const baseSaturation = baseDye.hsv?.s ?? 50;
-    const baseValue = baseDye.hsv?.v ?? 50;
-    targetHex = ColorService.hsvToHex(targetHue, baseSaturation, baseValue);
-  }
+  const targetHex = perceptualTargetHex(targetHue, config, baseDye);
 
   for (const dye of dyes) {
     // Skip Facewear dyes - they have generic names and shouldn't appear in harmony results
@@ -177,19 +207,7 @@ export function findClosestDyesToHue(
       continue;
     }
 
-    let deviance: number;
-
-    if (config.usePerceptualMatching && targetHex) {
-      // Perceptual matching: use configured matching algorithm
-      deviance = calculateColorDistance(targetHex, dye.hex, config.matchingMethod);
-    } else {
-      // Hue-based matching: use angular distance on color wheel
-      const dyeHsv = ColorService.hexToHsv(dye.hex);
-      const hueDiff = Math.abs(dyeHsv.h - targetHue);
-      deviance = Math.min(hueDiff, 360 - hueDiff);
-    }
-
-    scored.push({ dye, deviance });
+    scored.push({ dye, deviance: devianceFor(dye, targetHue, config, targetHex) });
   }
 
   scored.sort((a, b) => a.deviance - b.deviance);
@@ -208,7 +226,9 @@ export function findClosestDyesToHue(
 export function replaceExcludedDyes(
   dyes: ScoredDyeMatch[],
   targetHue: number,
-  dyeFiltersConfig: DyeFiltersConfig | null
+  dyeFiltersConfig: DyeFiltersConfig | null,
+  config: Pick<HarmonyConfig, 'usePerceptualMatching' | 'matchingMethod'>,
+  baseDye?: Dye | null
 ): ScoredDyeMatch[] {
   if (!dyeFiltersConfig || !hasActiveFilters(dyeFiltersConfig)) {
     return dyes; // No filters active
@@ -217,6 +237,7 @@ export function replaceExcludedDyes(
   const result: ScoredDyeMatch[] = [];
   const usedDyeIds = new Set<number>();
   const allDyes = dyeService.getAllDyes();
+  const targetHex = perceptualTargetHex(targetHue, config, baseDye);
 
   for (const item of dyes) {
     // If dye is not excluded, keep it
@@ -240,7 +261,11 @@ export function replaceExcludedDyes(
         continue;
       }
 
-      const distance = ColorService.getColorDistance(targetColor, dye.hex);
+      // BUG-064: this used ColorService.getColorDistance -- plain Euclidean
+      // RGB -- while every other candidate in the same panel was ranked by the
+      // user's configured ΔE method. A replacement could therefore be a dye the
+      // configured metric would never have chosen.
+      const distance = calculateColorDistance(targetColor, dye.hex, config.matchingMethod);
       if (distance < bestDistance) {
         bestDistance = distance;
         bestAlternative = dye;
@@ -248,7 +273,11 @@ export function replaceExcludedDyes(
     }
 
     if (bestAlternative) {
-      const deviance = calculateHueDeviance(bestAlternative, targetHue);
+      // ...and the deviance was on a DIFFERENT SCALE from its siblings' --
+      // degrees of hue next to ΔE units -- so the replacement's number could
+      // not be compared with the numbers beside it. Same function as the main
+      // path now, so the two cannot drift apart again.
+      const deviance = devianceFor(bestAlternative, targetHue, config, targetHex);
       result.push({ dye: bestAlternative, deviance });
       usedDyeIds.add(bestAlternative.itemID);
     }

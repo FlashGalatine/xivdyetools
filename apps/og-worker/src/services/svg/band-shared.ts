@@ -5,25 +5,37 @@
  */
 
 import { toolGlyph, type ToolGlyphName } from '@xivdyetools/svg';
+import { MATCHING_METHOD_TAGS, normalizeMatchingMethod } from '@xivdyetools/core';
 import { generateBandCard, type BandFrame } from './band';
 import { COMPACT_GLYPH } from './tokens';
 import { role } from '../og-strings';
 import type { LocaleCode } from '@xivdyetools/types';
 
-/** Requested-algorithm display codes (identifiers — never localise). */
-export const ALGO_TAG: Record<string, string> = {
-  ciede2000: 'ΔE2000',
-  oklab: 'ΔEOK',
-  cie76: 'ΔE76',
-  redmean: 'REDMEAN',
-  rgb: 'RGB DIST',
-  distinguish: 'DISTINGUISH %',
-  euclidean: 'RGB DIST',
-};
+/**
+ * The display code for the method a card ACTUALLY measured with (identifiers
+ * — never localise).
+ *
+ * BUG-024 (deep dive 2026-09-02): this was a private table missing rows for
+ * `hyab` and `oklch-weighted`, the two legacy spellings `VALID_ALGORITHMS`
+ * still accepts from pre-5.0 shared links. The lookup missed, the fallback
+ * upper-cased the raw param, and the footer read `HYAB` over numbers that
+ * `deltaForAlgorithm` had computed as ΔE2000 — because `normalizeMatchingMethod`
+ * folds both into the default. Normalising FIRST closes the whole class: a
+ * legacy spelling can never reach the table, so the table can never lack a row
+ * for one. The table itself is core's, shared with `@xivdyetools/svg`.
+ */
+export function algoTag(algorithm: string): string {
+  return MATCHING_METHOD_TAGS[normalizeMatchingMethod(algorithm)];
+}
 
-/** Per-method display precision (ΔEOK prints raw dp3; DISTINGUISH is an int). */
+/**
+ * Per-method display precision (ΔEOK prints raw dp3; DISTINGUISH is an int).
+ * Normalised for the same reason as `algoTag`: the precision must belong to
+ * the method that ran, not to the spelling the URL used.
+ */
 export function fmtDelta(value: number, algorithm: string): string {
-  const dp = algorithm === 'oklab' ? 3 : algorithm === 'distinguish' ? 0 : 1;
+  const method = normalizeMatchingMethod(algorithm);
+  const dp = method === 'oklab' ? 3 : method === 'distinguish' ? 0 : 1;
   return value.toFixed(dp);
 }
 

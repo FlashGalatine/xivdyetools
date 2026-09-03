@@ -301,6 +301,12 @@ describe('Environment Validation', () => {
                     JWT_ISSUER: 'https://auth.xivdyetools.app',
                     TOKEN_BLACKLIST: {} as unknown as KVNamespace,
                     RL_PUBLIC: {} as unknown as RateLimit,
+                    // BUG-043: the notification and image paths join the same
+                    // class — they degrade silently rather than loudly.
+                    INTERNAL_WEBHOOK_SECRET: 'test-internal-webhook-secret',
+                    DISCORD_WORKER: {} as unknown as Fetcher,
+                    IMAGE_WORKER: {} as unknown as Fetcher,
+                    THUMBNAILS: {} as unknown as R2Bucket,
                     ...overrides,
                 });
             }
@@ -310,6 +316,41 @@ describe('Environment Validation', () => {
 
                 expect(result.valid).toBe(true);
                 expect(result.errors).toHaveLength(0);
+            });
+
+            /**
+             * BUG-043: without these, `notifyDiscordBot` returns early with an
+             * `info` log and NO throw — so the caller's
+             * `.catch(storeFailedNotification)` never runs and nothing lands in
+             * `failed_notifications` either. Every flagged submission stops
+             * reaching the moderation channel while
+             * `GET /moderation/failed-notifications` stays empty, which reads
+             * as "nothing was missed".
+             */
+            it.each([
+                ['INTERNAL_WEBHOOK_SECRET', 'Missing required env var in production: INTERNAL_WEBHOOK_SECRET'],
+                ['DISCORD_WORKER', 'Missing required service binding in production: DISCORD_WORKER'],
+                ['IMAGE_WORKER', 'Missing required service binding in production: IMAGE_WORKER'],
+                ['THUMBNAILS', 'Missing required R2 binding in production: THUMBNAILS'],
+            ])('should fail when %s is missing in production', (key, message) => {
+                const result = validateEnv(createValidProductionEnv({ [key]: undefined }));
+
+                expect(result.valid).toBe(false);
+                expect(result.errors).toContain(message);
+            });
+
+            it('keeps all four optional outside production', () => {
+                const result = validateEnv(
+                    createValidEnv({
+                        ENVIRONMENT: 'development',
+                        INTERNAL_WEBHOOK_SECRET: undefined,
+                        DISCORD_WORKER: undefined,
+                        IMAGE_WORKER: undefined,
+                        THUMBNAILS: undefined,
+                    })
+                );
+
+                expect(result.valid).toBe(true);
             });
 
             it('should fail when JWT_SECRET is missing in production', () => {

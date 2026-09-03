@@ -26,6 +26,18 @@
   --theme-card-hover: #f3f4f6;
   --theme-text-muted: #6b7280;
 
+  /* Aliases that components already reference but nothing declared. 36 call
+     sites across src/components used `var(--theme-text-secondary)` (19) and
+     `var(--theme-input-background)` (17) with NO fallback, and neither is set
+     here or by ThemeService.applyPalette() -- so both were invalid at
+     computed-value time: the colour fell back to whatever it inherited, and
+     the input background to `transparent`. Defining them in terms of the
+     variables ThemeService does set means they follow the theme for free.
+     (`--theme-primary-text`, the third undeclared name, has exactly one call
+     site and that one supplies its own fallback.) */
+  --theme-text-secondary: var(--theme-text-muted);
+  --theme-input-background: var(--theme-background-secondary);
+
   /* ===== V4 LAYOUT DIMENSIONS ===== */
   /* 5.0 console bar: 54px, no persistent tool rail */
   --v4-header-height: 54px;

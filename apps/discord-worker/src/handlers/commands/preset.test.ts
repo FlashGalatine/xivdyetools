@@ -1844,7 +1844,20 @@ describe('/preset command', () => {
       expect(authorField!.value).toContain('\\_Mallory\\_');
     });
 
-    it('/preset show still hands the RAW text to the swatch card generator', async () => {
+    /**
+     * FINDING-019: the EMBED is markdown-escaped; the CARD must not be. A
+     * backslash has no special meaning to resvg, so escaping would draw
+     * literal `\[here\]` on the picture, and the SVG layer XML-escapes its own
+     * input already.
+     *
+     * BUG-030 added ONE further transform on this path: codepoints no bundled
+     * font can draw are dropped, because they render as tofu boxes. That is a
+     * strictly narrower change than escaping — it removes what cannot be drawn
+     * and rewrites nothing — so the assertions below name the property
+     * (no escaping, payloads intact) rather than pinning byte equality, which
+     * would now fail on the fixture's zero-width space alone.
+     */
+    it('/preset show hands UNESCAPED text to the swatch card generator', async () => {
       mockGetPreset.mockResolvedValueOnce(hostilePreset);
       const interaction: DiscordInteraction = {
         ...baseInteraction,
@@ -1857,13 +1870,27 @@ describe('/preset command', () => {
       await handlePresetCommand(interaction, env, ctx);
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      expect(mockGeneratePresetSwatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: hostilePreset.name,
-          description: hostilePreset.description,
-          authorName: hostilePreset.author_name,
-        }),
-      );
+      const card = mockGeneratePresetSwatch.mock.calls.at(-1)![0] as {
+        name: string;
+        description: string;
+        authorName: string;
+      };
+
+      // Nothing was markdown-escaped: the card is a picture, not a message.
+      for (const text of [card.name, card.description, card.authorName]) {
+        expect(text).not.toContain('\\');
+      }
+
+      // And the payloads survive verbatim — they are just characters to draw.
+      expect(card.name).toBe('Free gil [here](https://phish.example) @everyone');
+      expect(card.authorName).toBe('<@999> _Mallory_');
+      expect(card.description).toContain('**Bold**');
+      expect(card.description).toContain('||spoiler||');
+
+      // The glyph filter itself is exercised in font-coverage.filter.test.ts,
+      // against the real font files. It cannot be exercised here: the bundled
+      // `.ttf` imports are zero-length under vitest, so the coverage set is
+      // empty and the filter deliberately fails open.
     });
 
     it('/preset list escapes preset names and author names', async () => {

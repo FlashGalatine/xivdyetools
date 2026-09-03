@@ -16,7 +16,7 @@
  */
 
 import { classifyBandTier } from '@xivdyetools/core';
-import { num } from './base.js';
+import { escapeXml, num } from './base.js';
 import {
   CARD_WIDTH,
   CARD_TYPE,
@@ -284,8 +284,8 @@ function renderTriangle(o: ComparisonCardOptions, theme: CardTheme): string {
       const tone = matchTone(de, theme);
       const tier = Math.min(classifyBandTier(de, 'ciede2000', 'match'), 3);
       parts.push(
-        `<rect x="${x}" y="${y}" width="${cellW.toFixed(1)}" height="${cellH}" rx="9" fill="${tone}" fill-opacity="0.13"/>` +
-          `<rect x="${x + 0.5}" y="${y + 0.5}" width="${(cellW - 1).toFixed(1)}" height="${cellH - 1}" rx="8.5" fill="none" stroke="${tone}" stroke-opacity="0.4" stroke-width="1"/>`
+        `<rect x="${x}" y="${y}" width="${cellW.toFixed(1)}" height="${cellH}" rx="9" fill="${escapeXml(tone)}" fill-opacity="0.13"/>` +
+          `<rect x="${x + 0.5}" y="${y + 0.5}" width="${(cellW - 1).toFixed(1)}" height="${cellH - 1}" rx="8.5" fill="none" stroke="${escapeXml(tone)}" stroke-opacity="0.4" stroke-width="1"/>`
       );
       parts.push(
         cardText(x + cellW / 2, y + cellH / 2 + 1, num(de, lang, 1), {

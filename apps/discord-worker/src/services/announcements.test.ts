@@ -7,8 +7,14 @@
  * `/changelog`, which since 5.0 shows the bot's own notes only.
  */
 
-import { describe, it, expect } from 'vitest';
-import { formatAnnouncementEmbed } from './announcements.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('../utils/discord-api.js', () => ({
+  sendMessage: vi.fn(),
+}));
+
+import { formatAnnouncementEmbed, sendAnnouncement } from './announcements.js';
+import { sendMessage } from '../utils/discord-api.js';
 import type { ChangelogEntry } from './changelog-parser.js';
 
 const REPO_URL = 'https://github.com/FlashGalatine/xivdyetools';
@@ -66,5 +72,42 @@ describe('formatAnnouncementEmbed', () => {
 
     expect(embed.description.length).toBeLessThanOrEqual(4096);
     expect(embed.description).toContain(`${longRepo}/blob/main/CHANGELOG-laymans.md`);
+  });
+});
+
+// ============================================================================
+// discord-core-14: `sendAnnouncement` itself had NO test
+// ============================================================================
+//
+// This file covered `formatAnnouncementEmbed` only. `sendAnnouncement` -- the
+// function whose dropped Response caused BUG-026 -- was never called, and
+// index.test.ts mocks it wholesale, so nothing anywhere observed what it does
+// with a non-2xx from Discord.
+describe('sendAnnouncement', () => {
+  const ENTRY = entry(['Something changed']);
+
+  beforeEach(() => {
+    vi.mocked(sendMessage).mockReset();
+  });
+
+  it('reports success when Discord accepts the message', async () => {
+    vi.mocked(sendMessage).mockResolvedValue(new Response(null, { status: 200 }));
+
+    await expect(sendAnnouncement('token', 'channel', ENTRY, REPO_URL)).resolves.toEqual({
+      ok: true,
+    });
+  });
+
+  it.each([
+    ['403 Missing Permissions', 403],
+    ['400 rejected embed', 400],
+    ['500 Discord outage', 500],
+  ])('reports FAILURE for a %s, rather than resolving as sent', async (_label, status) => {
+    vi.mocked(sendMessage).mockResolvedValue(new Response('nope', { status }));
+
+    const result = await sendAnnouncement('token', 'channel', ENTRY, REPO_URL);
+
+    expect(result.ok).toBe(false);
+    expect(result).toMatchObject({ status });
   });
 });

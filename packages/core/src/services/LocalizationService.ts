@@ -564,10 +564,16 @@ export class LocalizationService {
    * Preload multiple locales for instant switching
    * Useful for apps that need to switch locales without delay
    *
+   * BUG-058: this used `setLocale`, which also makes the locale ACTIVE — so
+   * preloading `['ja','de','fr']` silently left the singleton speaking French,
+   * and preloading in a different order gave a different active locale.
+   * Loading is not switching; `ensureLocaleLoaded` registers the data without
+   * touching the current locale, which is what "preload" means.
+   *
    * @param locales - Array of locale codes to preload
    */
   async preloadLocales(locales: LocaleCode[]): Promise<void> {
-    await Promise.all(locales.map((locale) => this.setLocale(locale)));
+    await Promise.all(locales.map((locale) => this.ensureLocaleLoaded(locale)));
   }
 
   /**
