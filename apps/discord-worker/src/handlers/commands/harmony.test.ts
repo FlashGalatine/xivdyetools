@@ -89,7 +89,18 @@ const mockDyeBlue = {
   stainID: 3,
 };
 
-vi.mock('@xivdyetools/core', () => {
+// Partial mock: the SERVICES are stubbed, the colour maths is real.
+//
+// It used to be a whole-module mock, which meant every `find*Dyes()` the
+// handler could call was answered by a fixture list. When selection moved to
+// core's shared `generateHarmonySlots` (2026-09-03) those methods stopped being
+// called at all, and the mock's missing `generateHarmonySlots` came back
+// `undefined` -- so three tests failed with a generic "generation failed" and
+// said nothing about what broke. Importing the real module and overriding only
+// the two service classes means the selector under test is the shipped one.
+vi.mock('@xivdyetools/core', async () => {
+  const actual = await vi.importActual<typeof import('@xivdyetools/core')>('@xivdyetools/core');
+
   class MockDyeService {
     searchByName(query: string) {
       const lower = query.toLowerCase();
@@ -98,26 +109,12 @@ vi.mock('@xivdyetools/core', () => {
       if (lower.includes('blue')) return [mockDyeBlue];
       return [];
     }
-    findTriadicDyes() {
+    // The per-type finders are gone from the handler's path: it walks
+    // HARMONY_OFFSETS through core's `generateHarmonySlots` and picks from this
+    // pool, so what a harmony returns is now decided by the real ranking over
+    // these three dyes rather than by a hand-written answer per type.
+    getAllDyes() {
       return [mockDyeRed, mockDyeGreen, mockDyeBlue];
-    }
-    findComplementaryPair() {
-      return mockDyeGreen;
-    }
-    findAnalogousDyes() {
-      return [mockDyeRed, mockDyeGreen];
-    }
-    findSplitComplementaryDyes() {
-      return [mockDyeGreen, mockDyeBlue];
-    }
-    findTetradicDyes() {
-      return [mockDyeRed, mockDyeGreen, mockDyeBlue];
-    }
-    findSquareDyes() {
-      return [mockDyeRed, mockDyeGreen, mockDyeBlue];
-    }
-    findMonochromaticDyes() {
-      return [mockDyeRed];
     }
     // discord-handlers-13: absent entirely, so the base-colour emoji path
     // (which resolves an itemID to its stainID before asking for a chip) could
@@ -137,18 +134,11 @@ vi.mock('@xivdyetools/core', () => {
     }
   }
 
-  const dyeDatabase = {} as const;
-  // 11A pairing: ideal hues via rotateHue, verdicts via ΔE2000
-  const ColorService = {
-    rotateHue: (hex: string, _degrees: number) => hex,
-    getDistanceForMethod: () => 5,
-  };
   return {
+    ...actual,
     DyeService: MockDyeService,
-    dyeDatabase,
+    dyeDatabase: {} as const,
     LocalizationService: MockLocalizationService,
-    ColorService,
-    filterDyes: (_f: unknown, dyes: unknown[]) => dyes,
   };
 });
 
@@ -482,9 +472,12 @@ describe('handleHarmonyCommand', () => {
   });
 
   it('handles case when no harmony dyes are found', async () => {
-    // Override the mock to return null for complementary
+    // Was: stub `findComplementaryPair` to null. That method is no longer on
+    // the path -- selection ranks a candidate pool -- so the way to have a
+    // harmony find nothing is for the pool to be empty. This is also the real
+    // shape of the failure: every dye filtered out, not a finder returning null.
     const { DyeService } = await import('@xivdyetools/core');
-    vi.spyOn(DyeService.prototype, 'findComplementaryPair').mockReturnValueOnce(null);
+    vi.spyOn(DyeService.prototype, 'getAllDyes').mockReturnValue([]);
 
     const { ctx, waitUntilCalls } = createContext();
 
@@ -514,8 +507,9 @@ describe('handleHarmonyCommand', () => {
       }),
     );
 
-    // Restore original
-    vi.spyOn(DyeService.prototype, 'findComplementaryPair').mockRestore();
+    // `vi.clearAllMocks()` in beforeEach does not undo a spy's implementation,
+    // so restore it here or every later test sees an empty dye pool.
+    vi.mocked(DyeService.prototype.getAllDyes).mockRestore();
   });
 
   it('uses default triadic type for unknown harmony type', async () => {

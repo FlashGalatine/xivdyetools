@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2026-09-03
+
+### Changed — harmony convergence
+
+- `/harmony` picks dyes through `@xivdyetools/core`'s shared
+  `generateHarmonySlots` (via `@xivdyetools/bot-logic` 3.2.0), so it now matches
+  the web app's Harmony Explorer. The two disagreed on the returned dyes for
+  89–100 % of base dyes on every harmony type.
+
+### Added
+
+- `compound` and `shades` `/harmony type` choices — **needs a `register-commands`
+  run on deploy**, the choice list grows from 8 to 10.
+
 ## [5.1.3] - 2026-09-02
 
 ### Fixed — 2026-09-02 deep-dive audit, Sprint 12
