@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-09-03
+
+### Added — harmony convergence
+
+- **`generateHarmonySlots()`** — the one implementation of "which dyes make this
+  harmony", plus `isKnownHarmonyType()` and the `HarmonySelectionConfig` /
+  `HarmonySelectionOptions` / `HarmonySlot` types.
+
+  4.1.0 unified the offsets TABLE (BUG-022); the three surfaces still each had
+  their own way of turning an offset into a dye, and they disagreed on the dyes
+  for **89–100 % of base dyes on every harmony type** (measured over all 125):
+
+  - the **web app** carried each target hue with the base dye's *saturation and
+    value* and ranked candidates by the configured ΔE;
+  - the **bot** called a per-type `DyeService.find*Dyes()`, which rotates hue and
+    does not preserve S/V — and `findComplementaryPair` did not rotate at all, it
+    took an RGB `invert()`;
+  - the **OG card** rotated hue in **LCh** (`rotateHueLch`).
+
+  For a desaturated base the gap is not subtle: `/harmony analogous` on Snow
+  White answered Neon Green and Kobold Brown where the page shows Pure White and
+  Pearl White. The card is the unfurl of a page URL, so a share link could open a
+  page that showed none of the dyes its preview did.
+
+  This function is the **web app's** algorithm, lifted rather than rewritten — a
+  parity test drove both implementations over 125 dyes × 10 types × 4 settings
+  and required identical dyes before the page was rewired. That run's output is
+  frozen in `HarmonySelector.golden.test.ts`, so the page's pre-move behaviour is
+  what the digest pins.
+
+  Because it reads `HARMONY_OFFSETS`, a harmony type is a row in a table rather
+  than a method, which is why `compound` and `shades` now work on every surface
+  without new code.
+
+  Callers filter the candidate pool themselves. That is deliberate: pre-filtering
+  makes a slot answer "the nearest **allowed** dye to the ideal" rather than "the
+  nearest allowed dye to one that was thrown away", which is what the web app's
+  old `replaceExcludedDyes` second pass computed.
+
 ## [4.1.0] - 2026-09-02
 
 ### Added — 2026-09-02 deep-dive audit

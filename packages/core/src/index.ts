@@ -53,6 +53,22 @@ export type {
   HarmonyColorSpace,
 } from './services/dye/HarmonyGenerator.js';
 
+/**
+ * Harmony slot selection — the ONE implementation the page, the bot and the OG
+ * card share. Before this, the page walked HARMONY_OFFSETS with an
+ * S/V-preserving target while the bot called a named find*Dyes() per type, and
+ * the two disagreed for 89-100% of base dyes on every harmony type.
+ */
+export type {
+  HarmonySelectionConfig,
+  /** @public */ HarmonySelectionOptions,
+  HarmonySlot,
+} from './services/dye/HarmonySelector.js';
+export {
+  generateHarmonySlots,
+  isKnownHarmonyType,
+} from './services/dye/HarmonySelector.js';
+
 // Color converter types
 export type { /** @public */ DeltaEFormula } from './services/color/ColorConverter.js';
 export type { /** @public */ RYB } from './services/ColorService.js';
