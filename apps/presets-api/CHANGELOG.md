@@ -24,7 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   one 100/min bucket: neither bot sends `CF-Connecting-IP`, so `getClientIp` returned the literal
   `unknown`, and the limiter sits ahead of `authMiddleware` so there was no authenticated bypass.
   At ~1.7 requests/second aggregate, `/preset` commands began 429-ing each other across guilds.
-  Bot traffic now buckets per acting Discord user.
+  Rate limiting is now two layers: an IP-keyed gate on `/api/*` before auth, and a per-acting-user
+  gate after it. Service Binding traffic — which has no client IP, and whose `unknown` bucket *was*
+  this bug — skips the first and is limited per Discord user by the second.
+- **A caller can no longer choose its own rate-limit bucket** (pre-merge review of BUG-044). The
+  first fix for the above keyed the public limiter on `X-User-Discord-ID` whenever it was
+  snowflake-shaped. That header is caller-supplied and the limiter is mounted eleven lines ahead of
+  `authMiddleware`, so nothing had verified it at key-computation time: an anonymous client could
+  mint a fresh 100/min bucket per request by incrementing a header, removing the per-IP ceiling
+  entirely. The bucketing key is the IP again, and never anything else; per-user fairness now comes
+  from the post-auth layer, which reads the identity the v2 HMAC signature established rather than
+  the raw header.
 - **The daily submission quota agrees with itself** (BUG-042). `POST /presets` reported
   `remaining_submissions` from the deletable row count while the limiter gating the next request
   uses `max(rows, append-only events)`. Submit 3, delete 3, submit a 4th: the 201 said 9 remaining,

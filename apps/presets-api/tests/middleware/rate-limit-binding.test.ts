@@ -8,8 +8,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
-import { createPublicRateLimitMiddleware } from '../../src/middleware/rate-limit';
-import type { Env } from '../../src/types';
+import {
+    createPublicRateLimitMiddleware,
+    createPerUserRateLimitMiddleware,
+} from '../../src/middleware/rate-limit';
+import type { AuthContext, Env } from '../../src/types';
 import { createMockEnv } from '../test-utils';
 
 function fakeBinding(outcomes: boolean[]): RateLimit & { calls: string[] } {
@@ -58,30 +61,44 @@ describe('presets-api public rate limiter backend selection', () => {
     });
 
     /**
-     * BUG-044: a request over a Service Binding carries no `CF-Connecting-IP`
-     * — both bots build `new Request('https://internal' + path, …)` — so
-     * `getClientIp` returned the literal `'unknown'` and EVERY bot request
-     * from EVERY Discord user in EVERY guild shared ONE 100/min bucket. The
-     * limiter is mounted ahead of `authMiddleware`, so there was no
-     * authenticated bypass: `/preset` commands began 429-ing each other.
+     * BUG-044 follow-up (2026-09-03 pre-merge review).
      *
-     * The old suite could not see it — it drove a single synthetic key and
-     * asserted header shape and backend selection, never two distinct callers.
+     * BUG-044 keyed this layer on `X-User-Discord-ID` whenever it was
+     * snowflake-shaped, to stop both bots' entire traffic sharing one
+     * `'unknown'` bucket. But the header is caller-supplied and this
+     * middleware is mounted ELEVEN LINES ahead of `authMiddleware`, so
+     * nothing had verified it: an anonymous client could mint a fresh
+     * 100/min bucket per request by incrementing a header, which removed
+     * the per-IP ceiling altogether.
+     *
+     * The key is the IP again, unconditionally. Per-user fairness moved to
+     * `perUserRateLimitMiddleware`, which runs after the signature check —
+     * see the suite below.
      */
-    it('gives two bot users two buckets, not one shared `unknown`', async () => {
+    it('does NOT let a caller choose its own bucket with a header', async () => {
         const binding = fakeBinding([true, true, true, true]);
         const env = createMockEnv({ RL_PUBLIC: binding });
         const app = buildApp();
+        const ip = '198.51.100.7';
 
-        // No CF-Connecting-IP: exactly the shape a Service Binding produces.
-        await app.request('/test', { headers: { 'X-User-Discord-ID': '111111111111111111' } }, env);
-        await app.request('/test', { headers: { 'X-User-Discord-ID': '222222222222222222' } }, env);
+        // Same client, two different spoofed snowflakes. Both must land in the
+        // one bucket its IP earns. Before the fix these were two buckets, and
+        // an attacker could have as many as they cared to type.
+        await app.request(
+            '/test',
+            { headers: { 'CF-Connecting-IP': ip, 'X-User-Discord-ID': '111111111111111111' } },
+            env
+        );
+        await app.request(
+            '/test',
+            { headers: { 'CF-Connecting-IP': ip, 'X-User-Discord-ID': '222222222222222222' } },
+            env
+        );
 
         expect(binding.calls).toEqual([
-            'public:111111111111111111:t100_60',
-            'public:222222222222222222:t100_60',
+            'public:198.51.100.7:t100_60',
+            'public:198.51.100.7:t100_60',
         ]);
-        expect(binding.calls).not.toContain('public:unknown:t100_60');
     });
 
     it('still falls back to the IP when no acting user is named', async () => {
@@ -94,21 +111,28 @@ describe('presets-api public rate limiter backend selection', () => {
         expect(binding.calls).toEqual(['public:198.51.100.7:t100_60']);
     });
 
-    it('ignores a header that is not snowflake-shaped', async () => {
-        // The header is trusted for BUCKETING only; identity still comes from
-        // the signature in authMiddleware. A junk value must not create a
-        // bucket of its own choosing.
-        const binding = fakeBinding([true]);
+    /**
+     * Cloudflare sets `CF-Connecting-IP` at the edge, overwriting whatever the
+     * client sent, so a request on a public route always has one. Its absence
+     * means a Service Binding in this same account — unreachable from outside.
+     * Counting those against `'unknown'` IS BUG-044; they are limited per-user
+     * instead.
+     */
+    it('skips the IP layer entirely for Service Binding traffic', async () => {
+        const binding = fakeBinding([true, true]);
         const env = createMockEnv({ RL_PUBLIC: binding });
         const app = buildApp();
 
-        await app.request(
+        // Exactly the shape both bots build: no CF-Connecting-IP.
+        const res = await app.request(
             '/test',
-            { headers: { 'X-User-Discord-ID': 'not-a-snowflake', 'CF-Connecting-IP': '198.51.100.7' } },
+            { headers: { 'X-User-Discord-ID': '111111111111111111' } },
             env
         );
 
-        expect(binding.calls).toEqual(['public:198.51.100.7:t100_60']);
+        expect(res.status).toBe(200);
+        expect(binding.calls).toEqual([]);
+        expect(binding.calls).not.toContain('public:unknown:t100_60');
     });
 
     it('keeps the memory limiter when RL_PUBLIC is not bound', async () => {
@@ -118,5 +142,102 @@ describe('presets-api public rate limiter backend selection', () => {
         expect(res.status).toBe(200);
         expect(res.headers.get('X-RateLimit-Limit')).toBe('100');
         expect(res.headers.get('X-RateLimit-Remaining')).toBe('99');
+    });
+});
+
+/**
+ * The per-user layer: the half of BUG-044 that survives, moved to where the
+ * identity it keys on has actually been proven.
+ *
+ * These drive the middleware behind a stub that sets `auth` the way
+ * `authMiddleware` does, because what matters here is which value becomes the
+ * bucket — not how auth reached it, which auth.test.ts already covers.
+ */
+describe('presets-api per-user rate limiter', () => {
+    function buildUserApp(
+        auth?: Partial<AuthContext>
+    ): Hono<{ Bindings: Env; Variables: { auth: AuthContext } }> {
+        const app = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
+        if (auth) {
+            app.use('*', async (c, next) => {
+                c.set('auth', {
+                    isAuthenticated: true,
+                    isModerator: false,
+                    authSource: 'bot',
+                    ...auth,
+                } as AuthContext);
+                await next();
+            });
+        }
+        app.use('*', createPerUserRateLimitMiddleware());
+        app.get('/test', (c) => c.json({ success: true }));
+        return app;
+    }
+
+    it('gives two bot users two buckets, not one shared `unknown`', async () => {
+        const binding = fakeBinding([true, true, true, true]);
+        const env = createMockEnv({ RL_PUBLIC: binding });
+
+        await buildUserApp({ userDiscordId: '111111111111111111' }).request('/test', {}, env);
+        await buildUserApp({ userDiscordId: '222222222222222222' }).request('/test', {}, env);
+
+        // `user:` — not `public:` — so the two layers cannot share a counter
+        // even though both run at (100, 60s) against the one RL_PUBLIC binding.
+        expect(binding.calls).toEqual([
+            'user:111111111111111111:t100_60',
+            'user:222222222222222222:t100_60',
+        ]);
+    });
+
+    it('buckets on the verified identity, NOT on the request header', async () => {
+        const binding = fakeBinding([true]);
+        const env = createMockEnv({ RL_PUBLIC: binding });
+
+        // auth says one user; the header claims another. The header must lose.
+        const app = buildUserApp({ userDiscordId: '111111111111111111' });
+        await app.request(
+            '/test',
+            { headers: { 'X-User-Discord-ID': '999999999999999999' } },
+            env
+        );
+
+        expect(binding.calls).toEqual(['user:111111111111111111:t100_60']);
+    });
+
+    it('returns 429 for one user without touching another', async () => {
+        const binding = fakeBinding([false]);
+        const env = createMockEnv({ RL_PUBLIC: binding });
+
+        const res = await buildUserApp({ userDiscordId: '111111111111111111' }).request(
+            '/test',
+            {},
+            env
+        );
+
+        expect(res.status).toBe(429);
+    });
+
+    it('passes an unauthenticated request straight through', async () => {
+        // No `auth` on the context at all: nothing to bucket on, and the IP
+        // layer ahead of authMiddleware has already counted it.
+        const binding = fakeBinding([true]);
+        const env = createMockEnv({ RL_PUBLIC: binding });
+
+        const res = await buildUserApp().request('/test', {}, env);
+
+        expect(res.status).toBe(200);
+        expect(binding.calls).toEqual([]);
+    });
+
+    it('passes an authenticated request with no Discord id through', async () => {
+        // A web JWT whose subject never resolved to a Discord id: authenticated,
+        // but with no per-user bucket to name.
+        const binding = fakeBinding([true]);
+        const env = createMockEnv({ RL_PUBLIC: binding });
+
+        const res = await buildUserApp({ authSource: 'web' }).request('/test', {}, env);
+
+        expect(res.status).toBe(200);
+        expect(binding.calls).toEqual([]);
     });
 });
