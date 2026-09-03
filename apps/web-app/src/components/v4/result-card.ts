@@ -1533,11 +1533,18 @@ export class ResultCard extends BaseLitComponent {
           </div>
           <h3 class="dye-name">${dyeName}</h3>
           ${
-            deltaE2000 !== undefined || (this.showStain && stain != null)
+            // `showDeltaE` was declared but never read: the verdict gated on
+            // `deltaE2000 !== undefined` alone, so the ΔE readout rendered
+            // whatever the option said. Ten call sites set it — config-sidebar
+            // binds it in nine places as the user's "Show ΔE" switch, and
+            // accessibility (`= lensActive`), budget and comparison
+            // (`// No Delta-E in comparison context`) each set it false
+            // expecting the row to disappear. None of that did anything.
+            (this.showDeltaE && deltaE2000 !== undefined) || (this.showStain && stain != null)
               ? html`
                   <div class="verdict">
                     ${
-                      deltaE2000 !== undefined
+                      this.showDeltaE && deltaE2000 !== undefined
                         ? html`
                             <div>
                               <div class="de-num" style="color: ${this.getTierColor(deltaE2000)}">

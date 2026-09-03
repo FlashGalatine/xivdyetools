@@ -2,6 +2,10 @@
 
 ---
 
+## Web-App Version 5.3.1 — September 3, 2026
+
+- **The "Show ΔE" switch works now.** Turning it off left the match-quality number on every result card exactly where it was. The same setting is what the Accessibility checker uses to hide that number when no colour-vision lens is active, and what Dye Comparison and Budget use to keep it off their cards entirely — so all three were showing you a number they had been written not to show.
+
 ## Web-App Version 5.1.0 — September 3, 2026
 
 - **The Discord bot's `/harmony` now gives the same answer this page does.** The two were working from different colour maths, so the same dye and the same harmony type could produce two different sets of dyes depending on where you asked — most visibly on pale or near-grey dyes. The site's results are unchanged; the bot and the link previews moved to match them.

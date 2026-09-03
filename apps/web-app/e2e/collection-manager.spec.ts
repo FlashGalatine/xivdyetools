@@ -76,16 +76,17 @@ test.describe('Collection Manager Modal', () => {
     expect(page.url()).toContain('extractor');
   });
 
-  test('should show favorites section in the v4 color palette', async ({
-    page,
-  }) => {
+  test('should show favorites section in the v4 color palette', async ({ page }) => {
     await expect(page.getByText(/Favorites \(\d+\)/)).toBeVisible();
   });
 
   test('should add a dye to favorites', async ({ page }) => {
-    const addToFavoritesButton = page
-      .locator('button[aria-label*="Add to favorites" i]')
-      .first();
+    // The accessible name is interpolated per dye — "Add Dalamud Red to
+    // favorites" since ca0ee36d (the 2026-09-03 i18n audit) put the name
+    // inside the sentence so the other five locales get their own word order.
+    // A substring match on the old "Add to favorites: <name>" shape no longer
+    // hits, so match the sentence around the name instead.
+    const addToFavoritesButton = page.getByRole('button', { name: /to favorites$/i }).first();
     await addToFavoritesButton.click();
 
     await expect(page.getByText(/Favorites \(1\)/)).toBeVisible();
@@ -95,16 +96,23 @@ test.describe('Collection Manager Modal', () => {
     const favoritesHeader = page.getByText(/Favorites \(\d+\)/).first();
 
     await favoritesHeader.click();
-    await expect(page.getByText(/Click the ★ on any dye to add it to your favorites/i)).toBeHidden();
+    await expect(
+      page.getByText(/Click the ★ on any dye to add it to your favorites/i)
+    ).toBeHidden();
 
     await favoritesHeader.click();
-    await expect(page.getByText(/Click the ★ on any dye to add it to your favorites/i)).toBeVisible();
+    await expect(
+      page.getByText(/Click the ★ on any dye to add it to your favorites/i)
+    ).toBeVisible();
   });
 
   test('should clear favorites from advanced settings', async ({ page }) => {
-    const addToFavoritesButton = page
-      .locator('button[aria-label*="Add to favorites" i]')
-      .first();
+    // The accessible name is interpolated per dye — "Add Dalamud Red to
+    // favorites" since ca0ee36d (the 2026-09-03 i18n audit) put the name
+    // inside the sentence so the other five locales get their own word order.
+    // A substring match on the old "Add to favorites: <name>" shape no longer
+    // hits, so match the sentence around the name instead.
+    const addToFavoritesButton = page.getByRole('button', { name: /to favorites$/i }).first();
     await addToFavoritesButton.click();
     await expect(page.getByText(/Favorites \(1\)/)).toBeVisible();
 

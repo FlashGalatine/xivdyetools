@@ -250,3 +250,94 @@ jobs:
               fi
             fi
           done
+
+  # E2E (Playwright). Its own job so a browser install and a dev server never
+  # sit in front of lint/type-check/test, and so a red E2E run is a distinct
+  # signal rather than one more way for `ci` to go red.
+  #
+  # Why this job exists: until 2026-09-03 Playwright ran in NO workflow. The
+  # `ci` job's test step is `turbo run test` (vitest only), so the E2E suite
+  # was green-by-absence. `ca0ee36d` — an i18n grammar fix that changed the
+  # palette drawer's favourites aria-label from "Add to favorites: <name>" to
+  # "Add <name> to favorites" — broke two `collection-manager.spec.ts`
+  # selectors and merged with every check green; the breakage was only found
+  # by running the suite by hand three PRs later.
+  #
+  # Runs on EVERY invocation, not `--filter='...[HEAD^]'`. Affected-package
+  # selection is the wrong tool here for the same reason the wrangler-config
+  # step above opts out of it: these specs drive the built app end to end, so a
+  # change anywhere in web-app's dependency graph (core's dye data, svg's
+  # glyphs, a locale string in any package) can red them, and the failure that
+  # motivated the job was exactly a non-obvious cross-package one.
+  #
+  # Cost, measured rather than guessed: 9m14s on the first run (cold browser
+  # cache). The dominant term is not the install but `workers: 1`, which
+  # playwright.config.ts sets for CI — 153 tests run serially. If that becomes
+  # the bottleneck, raising CI workers is the lever to pull before dropping
+  # back to affected-package selection; the suite is `fullyParallel: true`
+  # already and retries twice on CI, so the concurrency is a deliberate
+  # stability choice, not an accident.
+  #
+  # chromium ONLY, deliberately. The `mobile-chrome` project has 28 standing
+  # failures that are a LIVE PRODUCT BUG, not test rot — at phone width
+  # `v4-layout-shell` renders '' in place of `<v4-config-sidebar>`, so every
+  # left-panel control is unreachable. `apps/web-app/e2e/COVERAGE-GAPS.md`
+  # documents it in full and says explicitly not to "fix" those tests. Adding
+  # the project here would make CI permanently red and the fix would be to
+  # delete the only thing reporting the gap. Add it in the same PR that lands
+  # the shell fix, not before.
+  e2e:
+    name: E2E (Playwright, chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Same reasoning as `ci`: the nightly schedule exists for the audit alone,
+    # and re-running the browser suite against an unchanged tree buys nothing.
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # `playwright.config.ts` starts `npm run dev` (Vite) as its webServer, and
+      # Vite resolves `@xivdyetools/*` to each package's `dist`. Without this
+      # the dev server boots and every spec fails on an unresolved import.
+      # `web-app...` is web-app AND everything it depends on.
+      - name: Build web-app and its workspace dependencies
+        run: pnpm turbo run build --filter=xivdyetools-web-app...
+
+      # Keyed on the lockfile: the browser build Playwright wants is pinned by
+      # the @playwright/test version, which only moves when the lockfile does.
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # `--with-deps` installs the system libraries too and is needed even on a
+      # cache hit, since those live outside ~/.cache/ms-playwright.
+      - name: Install Chromium
+        run: pnpm --filter xivdyetools-web-app exec playwright install --with-deps chromium
+
+      - name: Run E2E suite
+        run: pnpm --filter xivdyetools-web-app exec playwright test --project=chromium
+
+      # Only on failure: the HTML report is the first thing worth opening when
+      # a spec goes red, and it carries the screenshot + trace the config
+      # captures (`screenshot: 'only-on-failure'`, `trace: 'on-first-retry'`).
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: |
+            apps/web-app/playwright-report/
+            apps/web-app/test-results/
+          retention-days: 7

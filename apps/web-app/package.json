@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-web-app",
-  "version": "5.3.0",
+  "version": "5.3.1",
   "private": true,
   "description": "A comprehensive web-based toolset for Final Fantasy XIV players",
   "type": "module",
@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
