@@ -2,6 +2,11 @@
 
 ---
 
+## Web-App Version 5.1.0 — September 3, 2026
+
+- **The Discord bot's `/harmony` now gives the same answer this page does.** The two were working from different colour maths, so the same dye and the same harmony type could produce two different sets of dyes depending on where you asked — most visibly on pale or near-grey dyes. The site's results are unchanged; the bot and the link previews moved to match them.
+- **Dye filters in Harmony pick the closest dye you are allowed to have.** They used to find the closest dye overall and then, if it was filtered out, look for something near *that* — which is not the same thing, and could land further from the colour you asked for than it needed to.
+
 ## Web-App Version 5.0.2 — September 2, 2026
 
 - **Right-clicking a dye and choosing "Harmony" works now.** That menu item quietly did nothing for every dye — it opened Harmony with an error and no dye selected. The Budget tool's SEND TO buttons had the same problem and are fixed too.
