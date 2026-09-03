@@ -4,6 +4,7 @@
  * Tests for executeHarmony, getHarmonyTypeChoices, and HARMONY_TYPES.
  */
 
+import { HARMONY_OFFSETS } from '@xivdyetools/core';
 import { describe, it, expect } from 'vitest';
 import { executeHarmony, getHarmonyTypeChoices, HARMONY_TYPES } from './harmony.js';
 import type { HarmonyType } from './harmony.js';
@@ -15,8 +16,16 @@ const BASE_HEX = '#D69C6D'; // A warm brown (Rust Red-ish)
 // ============================================================================
 
 describe('HARMONY_TYPES', () => {
-  it('contains all 8 harmony types', () => {
-    expect(HARMONY_TYPES).toHaveLength(8);
+  // Ten since 2026-09-03. Selection reads HARMONY_OFFSETS rather than calling a
+  // bespoke DyeService.find*Dyes() per type, so `compound` and `shades` — which
+  // the web app has always offered and no finder method exists for — work here
+  // too.
+  it('contains all 10 harmony types', () => {
+    expect(HARMONY_TYPES).toHaveLength(10);
+  });
+
+  it('offers exactly the types the shared offsets table defines', () => {
+    expect([...HARMONY_TYPES].sort()).toEqual(Object.keys(HARMONY_OFFSETS).sort());
   });
 
   it('includes triadic', () => {
@@ -28,7 +37,7 @@ describe('HARMONY_TYPES', () => {
   });
 
   it('includes all expected types', () => {
-    const expected = ['triadic', 'complementary', 'analogous', 'split-complementary', 'tetradic', 'inverted-tetradic', 'square', 'monochromatic'];
+    const expected = ['triadic', 'complementary', 'analogous', 'split-complementary', 'tetradic', 'inverted-tetradic', 'square', 'monochromatic', 'compound', 'shades'];
     for (const type of expected) {
       expect(HARMONY_TYPES).toContain(type);
     }
@@ -252,19 +261,46 @@ describe('executeHarmony', () => {
     expect(result.svgString).toContain('<svg');
   });
 
-  it('handles unrecognized harmony type via default fallback', async () => {
-    // Covers: getHarmonyDyes default case + getLocalizedHarmonyType fallback branch
+  // Behaviour change, 2026-09-03: an unrecognised type used to fall through to
+  // TRIADIC and render a card labelled with the unknown name — the user asked
+  // for one thing and got another, silently. Discord constrains the choices, so
+  // this can only arrive from a malformed interaction; answering "no matches"
+  // is the honest result. `generateHarmonySlots` returns no slots for a type
+  // that is not a row in the table.
+  it('refuses an unrecognized harmony type instead of drawing a triadic', async () => {
     const result = await executeHarmony({
       baseHex: BASE_HEX,
       harmonyType: 'unknown' as unknown as HarmonyType,
       locale: 'en',
     });
 
-    // The default case falls back to triadic dyes, so ok should still be true
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('NO_MATCHES');
+  });
+
+  // An inherited key must not resolve to a Function and take the render with it.
+  it.each(['toString', 'constructor'])('refuses the inherited key %j', async (type) => {
+    const result = await executeHarmony({
+      baseHex: BASE_HEX,
+      harmonyType: type as unknown as HarmonyType,
+      locale: 'en',
+    });
+
+    expect(result.ok).toBe(false);
+  });
+
+  it.each(['compound', 'shades'])('builds a %s harmony', async (type) => {
+    const result = await executeHarmony({
+      baseHex: BASE_HEX,
+      harmonyType: type as HarmonyType,
+      locale: 'en',
+    });
+
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-
-    expect(result.embed.title).toBeDefined();
+    expect(result.harmonyDyes.length).toBeGreaterThan(0);
+    expect(result.svgString).toContain('<svg');
   });
 
   it('returns dyes for each harmony type', async () => {

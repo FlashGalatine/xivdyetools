@@ -156,7 +156,9 @@
     "tetradic": "Tetradic",
     "square": "Square",
     "monochromatic": "Monochromatic",
-    "invertedTetradic": "Inverted Tetradic"
+    "invertedTetradic": "Inverted Tetradic",
+    "compound": "Compound",
+    "shades": "Shades"
   },
   "mixer": {
     "blendResult": "Blend Result",

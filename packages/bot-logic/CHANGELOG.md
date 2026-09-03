@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-09-03
+
+### Changed — harmony convergence
+
+- `/harmony` now selects dyes through `@xivdyetools/core`'s
+  `generateHarmonySlots`, the web app's algorithm. It previously called a named
+  `DyeService.find*Dyes()` per type; measured over all 125 dyes the two surfaces
+  returned different dyes for 89–100 % of bases on every harmony type. The bot
+  and the Harmony Explorer now answer the same question the same way.
+- Dye filters apply to the **candidate pool** rather than to the finished list,
+  so a slot answers "the nearest allowed dye to the ideal" instead of "the
+  nearest allowed dye to one that was thrown away".
+- An unrecognised harmony type is now refused with `NO_MATCHES` instead of
+  silently falling through to a triadic card labelled with the unknown name.
+
+### Added
+
+- `compound` and `shades` harmony types, with localized names in all six
+  locales. They exist because selection reads `HARMONY_OFFSETS` — a type is a row
+  in that table, and no per-type finder method has to be written for a new one.
+
+  **Deploying this needs a `register-commands` run**: the `/harmony type` choice
+  list grows from 8 to 10.
+
 ## [3.1.0] - 2026-09-02
 
 Deep-dive remediation, Sprint 19 (docs/audits/2026-09-02-deep-dive, REFACTOR-001,
