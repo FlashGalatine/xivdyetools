@@ -50,10 +50,20 @@ discord-worker sits at 2,632 KiB against a 3,072 KiB limit — roughly 440 KiB o
 ~1.3 % of the remaining budget. No blocker.
 
 **Delete:** `rgbToReflectance`, `reflectanceToRgb`, `reflectanceToKS`, `ksToReflectance` from
-`blending/conversions.ts` — they have no other caller and encode the broken model.
+`blending/conversions.ts`. The K/S formulas themselves are *correct* — they are exact algebraic inverses
+of the published relation — but they have no other caller, and what they are applied to (three
+gamma-encoded sRGB channels, under the single-constant simplification, with no Saunderson correction) is
+not Kubelka–Munk. Keeping them invites the same mistake again.
 
-*Alternative if a zero-dependency path is ever required:* implement Burns' least-slope-squared spectral
-upsampling in core. Strictly more work for the same user-visible result; not recommended now.
+⚠️ **Do not promise more than spectral.js delivers.** Its own tracker
+([issue #24](https://github.com/rvanwijnen/spectral.js/issues/24)) reports that 50/50 black + white comes
+out *too bright* versus real paint. Measured here, white + black gives `#010101` on the bot (far too
+dark) and `#a6a6a6` on the web (upstream says too light). Delegating fixes the catastrophic case and
+makes the two surfaces agree; it does not make the mode physically exact.
+
+*Alternative if a zero-dependency path is ever required:* Jakob & Hanika's sigmoid-quadratic spectral
+upsampling (CGF 38(2), 2019 — 3 coefficients, ~6 FLOPs, used by PBRT and Mitsuba) is the cheapest
+credible option. Strictly more work for the same user-visible result; not recommended now.
 
 ### 1.2 Fix the tests that certified the bug
 
@@ -153,18 +163,58 @@ harmony results to change — changelog it.
 
 This closes the "harmony ΔE76" item left open by the 2026-08-08 5.0 design review.
 
-### 3.5 Add algebraic-law gates for every mixing mode
+### 3.5 Consider ΔEOK2 in place of plain ΔEOK for the `oklab` method
+
+CSS Color 4 §20.4 defines **ΔEOK2** — plain Oklab Euclidean with `a` and `b` scaled by 2 — because plain
+ΔEOK "under-estimates differences in colorfulness compared to differences in lightness". The factor comes
+from Ottosson's own testing against perceptual datasets (2.016 on COMBVD, 2.045 on OSA-UCS). §20.5 goes
+further and *recommends* ΔEOKr2 (ΔEOK2 plus the toe lightness remap) for performance-sensitive
+implementations.
+
+**Measured on our own dye set** (probe `06-deltaeok2.mts`, 2 000 random sRGB queries), taking CIEDE2000 as
+the reference and asking how often each variant picks a *different* winning dye:
+
+| metric | disagrees with CIEDE2000 |
+|---|---|
+| plain ΔEOK (what ships today) | 31.5 % |
+| **ΔEOK2 — `a`,`b` × 2** | **23.9 %** |
+| ΔEOKr2 — toe remap + × 2 | 24.3 % |
+| cie76 (for scale) | 31.2 % |
+
+So ΔEOK2 cuts disagreement with the perceptual reference by roughly a quarter, and **the toe remap buys
+nothing here** — it is slightly worse and much more code. Take the `a,b × 2` and skip ΔEOKr2.
+
+This is a one-line change (`Math.sqrt(dL² + (2·da)² + (2·db)²)`). It **changes ranking**, so it needs the
+same changelog treatment as 2.1 and 3.4.
+
+Useful for the UI while here: CSS Color 4 §14.2.1 puts **one JND at ΔEOK ≈ 0.02** (the Lab range is
+0–100 and Oklab's is 0–1, so the ΔE2000 JND of 2 scales down by 100×).
+
+### 3.6 Add algebraic-law gates for every mixing mode
 
 Promote the checks from `probes/04-algebraic-laws.mts` into the suite, run over the full dye set for all
 six modes with **no per-mode exemptions**:
 
 - identity at t = 0 and t = 1
 - commutativity at t = 0.5
-- idempotence: `mix(A, A, t) == A`
-- monotonic progression across a gradient
+- idempotence: `mix(A, A, t) == A` (for K–M this holds by construction — if `(K/S)_A = (K/S)_B` then any
+  convex combination is `(K/S)_A` — so a failure is a normalisation or rounding bug)
+- monotonic progression across a gradient, with no reversals and no overshoot past either endpoint
 
 Both P1 defects in this audit would have been caught on the first run. The existing suite's per-mode
 exemption lists are precisely how they survived.
+
+Plus the canonical qualitative pigment checks for `spectral` and `ryb`, which are the two modes that make
+a physical claim:
+
+| Pair | Expected |
+|---|---|
+| blue + yellow | a saturated **green** — the single most-cited K–M test, and Mixbox's own motivating example |
+| red + green | muddy **brown/olive**, not a flat average |
+| white + saturated red | a **saturated pastel**, hue roughly stable as white increases |
+| black + white 50/50 | a **mid-to-dark grey** — not `#010101`, and not `#a6a6a6` either |
+
+Assert these as *bands*, not exact hex values, so the gate survives a future change of spectral backend.
 
 ---
 
