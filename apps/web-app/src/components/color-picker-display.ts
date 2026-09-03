@@ -182,9 +182,17 @@ export class ColorPickerDisplay extends BaseComponent {
 
         // Validate hex format
         if (/^#[0-9A-Fa-f]{6}$|^#[0-9A-Fa-f]{3}$/.test(value)) {
-          this.selectedColor = value;
+          // BUG-078: expand the 3-digit shorthand before storing or emitting.
+          // `input[type=color]` accepts only the 6-digit form and silently
+          // sanitises `#F00` to BLACK, so the swatch disagreed with the field
+          // -- and every listener received a value the picker could not show.
+          const normalized =
+            value.length === 4
+              ? `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`
+              : value;
+          this.selectedColor = normalized;
           this.updateDisplay();
-          this.emit('color-selected', { color: value });
+          this.emit('color-selected', { color: normalized });
         }
       });
 

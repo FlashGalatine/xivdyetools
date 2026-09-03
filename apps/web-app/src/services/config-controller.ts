@@ -112,6 +112,31 @@ function sanitizeConfigPartial<K extends ConfigKey>(
 // ============================================================================
 
 /**
+ * REFACTOR-010: `{ ...defaults, ...stored }` is a SHALLOW merge, so a nested
+ * object in `stored` REPLACES its default wholesale and never gains keys added
+ * to the default later. `displayOptions` and `dyeFilters` persisted before an
+ * option existed therefore came back missing it forever -- masked so far by
+ * roughly thirty `?? true` reads at the call sites, which is a fallback at
+ * every use rather than a migration at the one place migration belongs.
+ *
+ * One level of nesting is all these configs have.
+ */
+function mergeWithDefaults<T extends object>(defaults: T, stored: Partial<T>): T {
+  const merged: Record<string, unknown> = { ...(defaults as Record<string, unknown>) };
+
+  for (const [name, storedValue] of Object.entries(stored)) {
+    if (storedValue === undefined) continue;
+    const defaultValue = (defaults as Record<string, unknown>)[name];
+    merged[name] =
+      isPlainObject(defaultValue) && isPlainObject(storedValue)
+        ? { ...defaultValue, ...storedValue }
+        : storedValue;
+  }
+
+  return merged as T;
+}
+
+/**
  * ConfigController - Centralized tool configuration management
  *
  * Provides reactive state management for all v4 tool configurations.
@@ -373,10 +398,7 @@ export class ConfigController {
       // Merge with defaults to ensure all keys exist
       // (handles migrations when new config options are added)
       const defaults = getDefaultConfig(key);
-      const mergedConfig = {
-        ...defaults,
-        ...stored,
-      } as ToolConfigMap[K];
+      const mergedConfig = mergeWithDefaults(defaults, stored) as ToolConfigMap[K];
 
       // 5.0: one matching vocabulary. A persisted 4.x method ('hyab',
       // 'oklch-weighted', …) has to migrate here — normalizing on the share
