@@ -64,7 +64,16 @@ export function scanEmittedGlyphs(source: string, path: string): EmittedGlyph[] 
   let line = 1;
   let i = 0;
   /** What we are inside of right now. */
-  let state: 'code' | 'line-comment' | 'block-comment' | "'" | '"' | '`' = 'code';
+  let state: 'code' | 'line-comment' | 'block-comment' | 'regex' | "'" | '"' | '`' = 'code';
+  /**
+   * The last significant character of code, used only to tell a regex literal
+   * from a division. `/` opens a regex unless the previous token could END an
+   * expression — an identifier, a number, `)`, `]` or a quote. Without this the
+   * scanner walks into `.replace(/"/g, '&quot;')` (base.ts:35), reads that `"`
+   * as a string opener and desyncs for the rest of the file, going BLIND to
+   * every literal after it. That is a fail-open bug: missed glyphs ship as tofu.
+   */
+  let prev = '';
 
   while (i < source.length) {
     const ch = source[i];
@@ -85,8 +94,29 @@ export function scanEmittedGlyphs(source: string, path: string): EmittedGlyph[] 
         } else if (ch === '/' && next === '*') {
           state = 'block-comment';
           i += 2;
+        } else if (ch === '/' && !/[A-Za-z0-9_$)\]'"`]/.test(prev)) {
+          // A regex literal, not a division — see `prev` above.
+          state = 'regex';
+          i++;
         } else if (ch === "'" || ch === '"' || ch === '`') {
           state = ch;
+          i++;
+        } else {
+          if (!/\s/.test(ch)) prev = ch;
+          i++;
+        }
+        break;
+
+      case 'regex':
+        if (ch === '\\') {
+          i += 2;
+        } else if (ch === '[') {
+          // A character class can contain an unescaped `/`; skip to its end.
+          const close = source.indexOf(']', i + 1);
+          i = close === -1 ? i + 1 : close + 1;
+        } else if (ch === '/') {
+          state = 'code';
+          prev = '/';
           i++;
         } else {
           i++;
@@ -134,6 +164,15 @@ export function scanEmittedGlyphs(source: string, path: string): EmittedGlyph[] 
         }
         break;
     }
+  }
+
+  if (state !== 'code' && state !== 'line-comment') {
+    // Reaching EOF mid-literal means the scanner lost sync, and a desynced
+    // scanner silently under-reports — the failure mode that let `★` ship. Fail
+    // loudly instead of returning a plausible-looking short list.
+    throw new Error(
+      `scanEmittedGlyphs: ${path} ended while still inside ${state === 'block-comment' ? 'a block comment' : `a ${state} literal`}`,
+    );
   }
 
   return out;

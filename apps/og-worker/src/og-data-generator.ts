@@ -562,7 +562,10 @@ export function generateRootOGData(env: Env, locale: LocaleCode = 'en'): OGData 
   return {
     title: embed('root.title', locale),
     description: embed('root.description', locale),
-    url: env.APP_BASE_URL,
+    // I18N-002: `appUrl()` already carries the locale on every other `url:`
+    // site (12 of 15). These were the only ones left bare, so they alone
+    // dropped the sharer's locale on the meta-refresh and the body link.
+    url: appUrl(env.APP_BASE_URL, locale),
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
     siteName: SITE_NAME,
     locale,
@@ -574,7 +577,10 @@ export function generateFallbackOGData(env: Env, locale: LocaleCode = 'en'): OGD
   return {
     title: SITE_NAME,
     description: embed('fallback.description', locale),
-    url: env.APP_BASE_URL,
+    // I18N-002: `appUrl()` already carries the locale on every other `url:`
+    // site (12 of 15). These were the only ones left bare, so they alone
+    // dropped the sharer's locale on the meta-refresh and the body link.
+    url: appUrl(env.APP_BASE_URL, locale),
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
     siteName: SITE_NAME,
     locale,
@@ -614,20 +620,6 @@ const OG_LOCALE: Record<LocaleCode, string> = {
  */
 export function generateOGHTML(ogData: OGData): string {
   const locale: LocaleCode = ogData.locale ?? 'en';
-  /**
-   * I18N-002: the two links a PERSON follows carry the sharer's locale.
-   *
-   * `withLang` was applied to every `imageUrl` and to no `url`, so a `?lang=ja`
-   * share rendered a Japanese card and then bounced the reader to the app with
-   * the locale stripped — they landed in whatever language their browser
-   * happened to prefer. The meta-refresh below is a real redirect, not an
-   * advisory tag, so this was user-visible rather than cosmetic.
-   *
-   * `og:url` / `twitter:url` deliberately stay bare: those are canonicalisation
-   * hints, and splitting one page into six canonical URLs to carry a UI
-   * preference is a bad trade.
-   */
-  const navUrl = withLang(ogData.url, locale);
   const themeColorTag = ogData.themeColor
     ? `<meta name="theme-color" content="${escapeHtml(ogData.themeColor)}">`
     : '';
@@ -665,7 +657,7 @@ export function generateOGHTML(ogData: OGData): string {
   ${themeColorTag}
 
   <!-- Redirect for JavaScript-enabled browsers -->
-  <meta http-equiv="refresh" content="0;url=${escapeHtml(navUrl)}">
+  <meta http-equiv="refresh" content="0;url=${escapeHtml(ogData.url)}">
 
   <style>
     /* The page nobody designed, designed: the console palette, the mark's
@@ -716,7 +708,7 @@ export function generateOGHTML(ogData: OGData): string {
     <div class="deck">
       <p class="title">${escapeHtml(ogData.title)}</p>
       <p class="sub">${escapeHtml(ogData.description)}</p>
-      <p><a href="${escapeHtml(navUrl)}">${escapeHtml(embed('body.open', locale))}</a></p>
+      <p><a href="${escapeHtml(ogData.url)}">${escapeHtml(embed('body.open', locale))}</a></p>
       <p class="foot">xivdyetools.app</p>
     </div>
   </div>
@@ -888,7 +880,10 @@ export async function generateOGDataForTool(
       return {
         title: SITE_NAME,
         description: embed('unknown.description', locale),
-        url: env.APP_BASE_URL,
+        // I18N-002: `appUrl()` already carries the locale on every other `url:`
+        // site (12 of 15). These were the only ones left bare, so they alone
+        // dropped the sharer's locale on the meta-refresh and the body link.
+        url: appUrl(env.APP_BASE_URL, locale),
         imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
         siteName: SITE_NAME,
         locale,

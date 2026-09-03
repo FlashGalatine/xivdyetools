@@ -146,24 +146,42 @@ describe('font contract', () => {
     });
 
     it('no component names a bundled family directly — the whole tree (FONT-003)', () => {
-      // The assertion above guarded exactly one already-fixed file, so 75 more
-      // declarations across 22 components kept naming 'Space Grotesk' /
-      // 'Fragment Mono' / 'Onest' straight. Those literals end at a generic
-      // (`sans-serif`, `monospace`), skipping the --font-cjk chain, so CJK text
-      // resolved from the browser default instead of the JP-first list — which
-      // is what the :lang() overrides below exist to control. Scanning the tree
-      // is the only version of this test that cannot rot.
+      // The first version of this test matched only `font-family: 'X'` inside a
+      // CSS template, which is one of THREE ways these families reach the DOM.
+      // It reported clean while 68 render sites still hardcoded a family via
+      // `el.style.fontFamily = "'Fragment Mono', monospace"` and via
+      // `const MONO = "'Fragment Mono', …"` interpolated into a style string.
+      // Match the family NAME wherever it is quoted instead of matching one
+      // syntax, and cover the stylesheets too — a guard that sees one spelling
+      // guards one spelling.
       const offenders: string[] = [];
       for (const file of sourceFiles()) {
         const src = stripComments(read(file));
         for (const family of ['Space Grotesk', 'Fragment Mono', 'Onest']) {
-          if (src.includes(`font-family: '${family}'`)) offenders.push(`${file} → ${family}`);
+          if (src.includes(`'${family}'`) || src.includes(`"${family}"`)) {
+            offenders.push(`${file} → ${family}`);
+          }
         }
       }
       expect(
         offenders,
         `use var(--font-display|--font-mono|--font-body) instead: ${offenders.join(', ')}`
       ).toEqual([]);
+    });
+
+    it('the stylesheets name a family only inside @font-face (FONT-003)', () => {
+      // globals.css legitimately names all three in its @font-face blocks and
+      // its token definitions; no OTHER sheet should name one at all.
+      for (const sheet of [
+        'src/styles/v4-layout.css',
+        'src/styles/tool-content.css',
+        'src/styles/themes.css',
+      ]) {
+        const css = stripComments(read(sheet));
+        for (const family of ['Space Grotesk', 'Fragment Mono', 'Onest']) {
+          expect(css, `${sheet} names ${family} directly`).not.toContain(family);
+        }
+      }
     });
   });
 

@@ -210,6 +210,17 @@ export class LanguageService {
   }
 
   /**
+   * Get a localized Facewear tint name from core (I18N-008).
+   *
+   * Facewear colours are keyed by slug, not itemID, so they never went through
+   * `getDyeName()` — which is why all eleven rendered in English underneath a
+   * category heading that was translated.
+   */
+  static getFacewearColorName(id: string): string {
+    return LocalizationService.getFacewearColorName(id);
+  }
+
+  /**
    * Get localized acquisition method from core library
    */
   static getAcquisition(acquisition: string): string {

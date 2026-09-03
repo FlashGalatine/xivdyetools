@@ -15,7 +15,7 @@ import {
   generateOGHTML,
   generateOGDataForTool,
 } from './og-data-generator';
-import type { Env } from './types';
+import type { Env, ToolId } from './types';
 
 const mockEnv: Env = {
   APP_BASE_URL: 'https://xivdyetools.app',
@@ -352,19 +352,24 @@ describe('og-data-generator', () => {
       expect(html).toContain('</html>');
     });
 
-    it('carries ?lang= on the links a person follows, not on the canonical (I18N-002)', () => {
-      const html = generateOGHTML({ ...testOGData, locale: 'ja' });
+    it('the locale rides on ogData.url itself, not on a second wrapper (I18N-002)', async () => {
+      // The real contract: `appUrl()` puts `lang` (and `algo`) on the app URL at
+      // source, so `og:url`, the meta-refresh and the body link all carry it and
+      // all carry it ONCE. An earlier pass here wrapped `ogData.url` a second
+      // time inside generateOGHTML and emitted `&lang=ja&lang=ja`.
+      const data = await generateOGDataForTool('harmony' as ToolId, new URLSearchParams({ dye: '102' }), mockEnv, 'ja');
+      expect(data.url).toContain('lang=ja');
+      expect(data.url.match(/lang=ja/g)).toHaveLength(1);
 
-      // The meta-refresh is a real redirect and the body link is a real click:
-      // both used to drop the sharer's locale, so a ja share rendered a Japanese
-      // card and then landed the reader in their own browser's language.
-      expect(html).toContain('http-equiv="refresh" content="0;url=https://example.com/test?foo=bar&amp;lang=ja"');
-      expect(html).toContain('<a href="https://example.com/test?foo=bar&amp;lang=ja">');
+      const html = generateOGHTML(data);
+      expect(html.match(/lang=ja/g)?.length).toBeGreaterThan(0);
+      expect(html).not.toContain('lang=ja&amp;lang=ja');
+      expect(html).not.toContain('lang=ja&lang=ja');
+    });
 
-      // og:url / twitter:url stay canonical on purpose — carrying a UI
-      // preference would split one page into six canonical URLs.
-      expect(html).toContain('property="og:url" content="https://example.com/test?foo=bar"');
-      expect(html).toContain('name="twitter:url" content="https://example.com/test?foo=bar"');
+    it('the default (no-params) card carries the locale too', async () => {
+      const data = await generateOGDataForTool('harmony' as ToolId, new URLSearchParams(), mockEnv, 'ja');
+      expect(data.url).toContain('lang=ja');
     });
 
     it('leaves every URL bare for the default locale', () => {
@@ -372,6 +377,7 @@ describe('og-data-generator', () => {
 
       expect(html).not.toContain('lang=en');
     });
+
 
     it('should include escaped title in meta tags', async () => {
       const html = generateOGHTML(testOGData);

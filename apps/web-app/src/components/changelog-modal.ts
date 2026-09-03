@@ -237,7 +237,7 @@ export class ChangelogModal {
 
     const version = document.createElement('span');
     version.className = 'text-sm font-bold';
-    version.style.fontFamily = "'Fragment Mono', monospace";
+    version.style.fontFamily = 'var(--font-mono)';
     version.style.color = 'var(--theme-text)';
     version.textContent = `v${entry.version}`;
     header.appendChild(version);
@@ -286,7 +286,7 @@ export class ChangelogModal {
 
     const version = document.createElement('span');
     version.className = 'text-xs font-bold';
-    version.style.fontFamily = "'Fragment Mono', monospace";
+    version.style.fontFamily = 'var(--font-mono)';
     version.style.color = 'var(--theme-text)';
     version.textContent = `v${entry.version}`;
     line.appendChild(version);

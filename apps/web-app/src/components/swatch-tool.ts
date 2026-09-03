@@ -157,7 +157,7 @@ const DEFAULTS = {
 // 10A Sheet vocabulary (drawn card metrics)
 // ============================================================================
 
-const MONO = "'Fragment Mono', monospace";
+const MONO = 'var(--font-mono)';
 
 /**
  * Grid cell sizes per the 5.0 register: a dense 26px reference chart on
@@ -177,7 +177,7 @@ const GRID_GAP = 4;
  */
 const GRID_WIDTH_DESKTOP = GRID_CELL_DESKTOP * 8 + GRID_GAP * 7;
 /** Matches globals.css h1–h6 — Space Grotesk with the system fallback. */
-const SANS = "'Space Grotesk', system-ui, sans-serif";
+const SANS = 'var(--font-display)';
 
 /**
  * Method display tags — identifiers, never localised. Mirrors core's

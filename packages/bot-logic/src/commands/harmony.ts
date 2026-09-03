@@ -130,7 +130,12 @@ const HARMONY_KEYS: Record<string, HarmonyTypeKey> = {
 };
 
 function getLocalizedHarmonyType(type: string, t: Translator): string {
-  const key = HARMONY_KEYS[type];
+  // `Object.hasOwn`, not a truthiness check: a plain object literal answers to
+  // `toString` / `valueOf`, so `HARMONY_KEYS['toString']` would be truthy and
+  // get handed to core as a harmony key. Unreachable today (callers pass a typed
+  // HarmonyType) but it is the exact shape PR #159 fixed in core's
+  // HARMONY_OFFSETS, and this table is one refactor away from taking raw input.
+  const key = Object.hasOwn(HARMONY_KEYS, type) ? HARMONY_KEYS[type] : undefined;
   if (key) return getLocalizedHarmonyTypeFromCore(key, t.getLocale());
   // Only a genuinely unknown type reaches here — `HARMONY_KEYS` covers every
   // HarmonyType — and capitalising it is the honest answer for one.

@@ -4,8 +4,18 @@ set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 fail=0
 note() { echo "  $1"; }
+# Read every version from HEAD, never the working tree: an UNCOMMITTED bump made
+# an earlier run of this script pass on a HEAD that would publish nothing. The
+# dirty-tree guard below makes the two impossible to disagree.
+headver() { git show "HEAD:$1/package.json" 2>/dev/null | node -pe "try{JSON.parse(require('fs').readFileSync(0,'utf8')).version}catch(e){''}"; }
 ok()   { echo "[ ok ] $1"; }
 bad()  { echo "[FAIL] $1"; fail=1; }
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "[FAIL] working tree is dirty — commit first; this script reads HEAD, not your edits"
+  git status --short | head -10
+  exit 1
+fi
 
 echo "=== 1. every touched publishable package bumped above its published version ==="
 for pkg in core svg bot-logic types logger auth worker-kit; do
@@ -13,7 +23,7 @@ for pkg in core svg bot-logic types logger auth worker-kit; do
   [ -d "$d" ] || continue
   # did this branch touch it at all?
   if ! git diff --name-only origin/main...HEAD -- "$d" | grep -q .; then continue; fi
-  local_v=$(node -p "require('./$d/package.json').version")
+  local_v=$(headver "$d")
   name=$(node -p "require('./$d/package.json').name")
   pub_v=$(npm view "$name" version 2>/dev/null | tr -d '\r')
   if [ "$local_v" = "$pub_v" ]; then
@@ -29,7 +39,7 @@ for d in apps/*/; do
   app=$(basename "$d")
   git diff --name-only origin/main...HEAD -- "$d" | grep -q . || continue
   base_v=$(git show "origin/main:$d/package.json" 2>/dev/null | node -pe "try{JSON.parse(require('fs').readFileSync(0,'utf8')).version}catch(e){''}")
-  head_v=$(node -p "require('./$d/package.json').version")
+  head_v=$(headver "$d")
   if [ -n "$base_v" ] && [ "$base_v" = "$head_v" ]; then
     bad "$app touched but version unchanged ($head_v)"
   else
@@ -43,7 +53,7 @@ for d in packages/*/ apps/*/; do
   unit=$(basename "$d")
   git diff --name-only origin/main...HEAD -- "$d" | grep -q . || continue
   [ -f "$d/CHANGELOG.md" ] || { note "$unit has no CHANGELOG.md (skipped)"; continue; }
-  v=$(node -p "require('./$d/package.json').version" 2>/dev/null) || continue
+  v=$(headver "$d"); [ -n "$v" ] || continue
   if grep -q "\[$v\]" "$d/CHANGELOG.md"; then ok "$unit CHANGELOG has [$v]"; else bad "$unit CHANGELOG missing [$v]"; fi
 done
 

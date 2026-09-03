@@ -190,7 +190,7 @@ export class WelcomeModal {
 
     const restRow = document.createElement('div');
     restRow.className = 'text-xs';
-    restRow.style.fontFamily = "'Fragment Mono', monospace";
+    restRow.style.fontFamily = 'var(--font-mono)';
     restRow.style.color = 'var(--theme-text-muted)';
     restRow.textContent = REST_SHORT_NAME_KEYS.map((key) => LanguageService.t(key)).join(' · ');
     rest.appendChild(restRow);
