@@ -145,6 +145,13 @@ export async function getUserPreferences(
  * @param key - Preference key to get
  * @param logger - Optional logger
  * @returns The preference value or default
+ *
+ * @testonly reached only by preferences.test.ts. Its sole production
+ * "reference" was a stale comment in services/i18n.ts claiming a lazy import to
+ * avoid a circular dependency -- code that no longer existed, since locale
+ * resolution reads KV directly. REFACTOR-001 rewrote that file and the comment
+ * went with it, which is what surfaced this. A deletion candidate: no command
+ * path reads a single preference by key today.
  */
 export async function getPreference<K extends PreferenceKey>(
   kv: KVNamespace,
