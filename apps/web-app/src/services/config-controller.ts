@@ -279,6 +279,17 @@ export class ConfigController {
       ...partial,
     } as ToolConfigMap[K];
 
+    // OPT-008: a no-op write is not free. One display-option toggle fans out
+    // to NINE setConfig() calls by design (global + eight tools, so each tool
+    // can read its own config), and every one of them persisted to
+    // localStorage and woke every subscriber for that key -- including the
+    // tools whose value did not change, each of which then re-rendered.
+    // Writing the value that is already there is the one case worth skipping;
+    // the broadcast still reaches whichever tools genuinely changed.
+    if (JSON.stringify(currentConfig) === JSON.stringify(newConfig)) {
+      return;
+    }
+
     // Store in memory
     this.configs.set(key, newConfig);
 
