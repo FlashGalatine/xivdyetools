@@ -153,4 +153,51 @@ describe('BUG-022: the card draws the same hues the page does', () => {
     const approx = [...svg.matchAll(/>≈</g)];
     expect(approx.length).toBe(4);
   });
+
+  /**
+   * 2026-09-03 review: `?algo=` fed only the PRINTED delta while ranking stayed
+   * hardcoded to ciede2000 — so an `?algo=oklab` link drew the ΔE2000 dyes
+   * under ΔEOK figures, a different set from the page it opens, which ranks by
+   * the requested method. The card is the unfurl of that page; if the two ever
+   * disagree the preview is lying about where the link goes.
+   */
+  describe('the requested algorithm chooses the dyes, not just the numbers', () => {
+    /**
+     * The hexes the card printed, in band order — which dyes were CHOSEN.
+     *
+     * Deliberately not every text run: the per-row Δ figures are computed with
+     * the requested algorithm even when ranking is not, so comparing all runs
+     * passes whether or not this is fixed. A first draft of this test did
+     * exactly that and survived the mutation. The hex identifies the dye.
+     */
+    function pickedHexes(algorithm: string): string[] {
+      const svg = generateHarmonyOG({
+        dyeId: stainId,
+        harmonyType: 'tetradic',
+        algorithm: algorithm as never,
+      });
+      return [...svg.matchAll(/>(#[0-9A-F]{6})</g)].map((m) => m[1]);
+    }
+
+    it('a different algorithm can return a different set of dyes', () => {
+      // Over 125 dyes ΔE2000 and RGB distance disagree on ordering; with
+      // ranking pinned these two are identical for every base.
+      const byDeltaE = pickedHexes('ciede2000');
+      const byRgb = pickedHexes('rgb');
+      expect(byDeltaE.length).toBeGreaterThan(1);
+      expect(byDeltaE).not.toEqual(byRgb);
+    });
+
+    it('every accepted algorithm still renders a full card', () => {
+      for (const algorithm of ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish']) {
+        const svg = generateHarmonyOG({
+          dyeId: stainId,
+          harmonyType: 'tetradic',
+          algorithm: algorithm as never,
+        });
+        expect(svg, algorithm).toContain('<svg');
+        expect(svg, algorithm).not.toContain('NOT FOUND');
+      }
+    });
+  });
 });

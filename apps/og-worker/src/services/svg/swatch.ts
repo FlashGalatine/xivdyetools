@@ -13,7 +13,7 @@ import { DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { algoTag, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
-import { ALL_DYES, deltaForAlgorithm } from './dye-helpers';
+import { ALL_DYES, deltaForAlgorithm, rankKeyForAlgorithm } from './dye-helpers';
 import { role, deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
@@ -54,11 +54,16 @@ export function generateSwatchOG(options: SwatchOGOptions): string {
   // ascending order (the two metrics disagree on order over 125 dyes), and a
   // different set from the one the page shows, which ranks by the requested
   // method. One distance call now, reused for the tag.
+  // 2026-09-03 review: order by `rankKeyForAlgorithm`, print `delta`. They
+  // differ for exactly one method — `distinguish` is a rounded integer 0-100,
+  // so ranking 125 dyes by it collapses them into ~101 buckets and the ties
+  // fall to ALL_DYES order, naming dyes the page's own list never shows.
   const matches = ALL_DYES.map((dye: Dye) => ({
       dye,
       delta: deltaForAlgorithm(targetHex, dye.hex, algorithm),
+      rank: rankKeyForAlgorithm(targetHex, dye.hex, algorithm),
     }))
-    .sort((a, b) => a.delta - b.delta)
+    .sort((a, b) => a.rank - b.rank)
     .slice(0, limit);
 
   const bands: BandEntry[] = [

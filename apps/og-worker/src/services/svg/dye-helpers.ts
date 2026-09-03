@@ -56,6 +56,29 @@ export function deltaForAlgorithm(
 }
 
 /**
+ * The value to ORDER matches by — never the one to print.
+ *
+ * `distinguish` is `round(rgbDistance / 441.67 × 100)`, an integer 0–100. Rank
+ * 125 dyes by it and they collapse into ~101 buckets whose ties fall to
+ * `ALL_DYES` order, so the card can name a dye the page's own result list
+ * never shows. `ColorConverter.getDistinguishabilityPercent`'s JSDoc says so
+ * outright: "ranks are always identical to RGB distance, and integer rounding
+ * creates ties, so any ordering driven by this value needs a sort fallback".
+ *
+ * Ranking on the unrounded RGB distance is that fallback, and it is not an
+ * approximation — for this method it is the *same* ordering, minus the ties.
+ * Every other method already returns a continuous value and is passed through.
+ */
+export function rankKeyForAlgorithm(
+  hex1: string,
+  hex2: string,
+  algorithm: MatchingAlgorithm,
+): number {
+  const method = normalizeMatchingMethod(algorithm);
+  return ColorService.getDistanceForMethod(hex1, hex2, method === 'distinguish' ? 'rgb' : method);
+}
+
+/**
  * Result of a dye match with its distance
  */
 export interface DyeMatch {

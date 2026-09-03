@@ -1086,7 +1086,17 @@ export class CharaImport {
     // The block used to appear only for a dyed glamour. Show all pieces has to
     // be reachable from a wholly undyed one too, so anything WORN earns the
     // block; a character wearing nothing still gets none.
-    if (resolved.gearDyes.length === 0 && resolved.gearModels.length === 0) {
+    //
+    // `glassesId` counts as worn. It was omitted here while the block gained a
+    // facewear row, so a `.chara` carrying ONLY facewear rendered no block and
+    // that row was unreachable — `startResolve` fetched the glasses and threw
+    // the result away, exactly as before the row existed. This is the same
+    // three-way test the resolve path already makes.
+    if (
+      resolved.gearDyes.length === 0 &&
+      resolved.gearModels.length === 0 &&
+      resolved.glassesId === null
+    ) {
       this.glamourBox = null;
       return null;
     }

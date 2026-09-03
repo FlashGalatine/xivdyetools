@@ -5,6 +5,29 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-09-03
+
+### Fixed — pre-merge review follow-ups
+
+- **`?algo=` chooses the harmony card's dyes, not just its numbers.** Ranking was
+  pinned to `ciede2000` while the requested algorithm fed only the printed Δ, so
+  an `?algo=oklab` link drew the ΔE2000 dyes under ΔEOK figures — a different set
+  from the page it opens, which ranks by the requested method. Since the card is
+  the unfurl of that page, the preview was misdescribing where the link goes.
+
+  `?perceptual=` stays unhonoured and the card follows the page's default. That
+  key is deliberately absent from `OG_ALLOWED_QUERY_KEYS`, which bounds the
+  cache-key space under a prior security ruling; admitting a second boolean
+  doubles it. A link that turned perceptual off is the one remaining divergence,
+  and it is now written down at the call site rather than silent.
+- **`distinguish` stops breaking ties by array order.** It is
+  `round(rgbDistance / 441.67 × 100)`, an integer 0–100, so ranking 125 dyes by it
+  collapsed them into ~101 buckets whose ties fell to database order — the swatch
+  card could name a dye the page's own result list never shows. Ordering now uses
+  `rankKeyForAlgorithm` (the unrounded distance, which for this method is the
+  identical ordering minus the ties) while the rounded value is still what gets
+  printed. `getDistinguishabilityPercent`'s own JSDoc asks for exactly this.
+
 ## [2.6.0] - 2026-09-03
 
 ### Fixed — harmony convergence
