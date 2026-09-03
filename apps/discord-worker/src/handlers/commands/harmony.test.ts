@@ -54,29 +54,39 @@ vi.mock('../../utils/response.js', () => ({
 }));
 
 vi.mock('../../services/emoji.js', () => ({
-  getDyeEmoji: (id: number) => (id ? '🎨' : undefined),
+  // discord-handlers-13: this returned '🎨' for ANY truthy number, so
+  // getDyeEmoji(5729) -- an itemID, which production answers `undefined`
+  // for -- looked identical to getDyeEmoji(1). Every assertion about the
+  // base-colour line therefore passed whichever id shape the handler
+  // handed over, which is precisely discord-handlers-02. Emoji are keyed
+  // per STAIN, so only 1-254 may resolve.
+  getDyeEmoji: (id: number) =>
+    Number.isInteger(id) && id >= 1 && id <= 254 ? '🎨' : undefined,
 }));
 
 const mockDyeRed = {
-  id: 1,
+  id: 1001,
   name: 'Rolanberry Red',
   hex: '#FF0000',
   category: 'General',
   itemID: 1001,
+  stainID: 1,
 };
 const mockDyeGreen = {
-  id: 2,
+  id: 1002,
   name: 'Celeste Green',
   hex: '#00FF00',
   category: 'General',
   itemID: 1002,
+  stainID: 2,
 };
 const mockDyeBlue = {
-  id: 3,
+  id: 1003,
   name: 'Ceruleum Blue',
   hex: '#0000FF',
   category: 'General',
   itemID: 1003,
+  stainID: 3,
 };
 
 vi.mock('@xivdyetools/core', () => {
@@ -108,6 +118,12 @@ vi.mock('@xivdyetools/core', () => {
     }
     findMonochromaticDyes() {
       return [mockDyeRed];
+    }
+    // discord-handlers-13: absent entirely, so the base-colour emoji path
+    // (which resolves an itemID to its stainID before asking for a chip) could
+    // never run under test.
+    getDyeById(id: number) {
+      return [mockDyeRed, mockDyeGreen, mockDyeBlue].find((d) => d.id === id) ?? null;
     }
   }
 
@@ -196,6 +212,34 @@ describe('handleHarmonyCommand', () => {
     expect(createUserTranslatorMock).toHaveBeenCalledTimes(1);
     expect(resolveUserLocaleMock).toHaveBeenCalledTimes(1);
     expect(createTranslatorMock).toHaveBeenCalledTimes(1);
+  });
+
+  // discord-handlers-13: making the getDyeEmoji mock discriminate (above) is
+  // only half of it -- NOTHING in this file ever read the base-colour line, so
+  // the handler could hand over any id shape and no assertion moved. This is
+  // the assertion that closes discord-handlers-02: the base row must carry a
+  // colour chip, which it only does if the handler resolves a STAIN id.
+  it('prefixes the base colour with its dye emoji', async () => {
+    const { ctx, waitUntilCalls } = createContext();
+
+    const interaction = {
+      ...baseInteraction,
+      data: { options: [{ name: 'color', value: 'Rolanberry Red' }] },
+    } as unknown as DiscordInteraction;
+
+    await handleHarmonyCommand(interaction, env, ctx);
+    await Promise.all(waitUntilCalls);
+
+    const payload = editOriginalResponseMock.mock.calls.at(-1)?.[2] as
+      | { embeds?: Array<{ description?: string }> }
+      | undefined;
+    const description = payload?.embeds?.[0]?.description ?? '';
+
+    expect(description).toContain('harmony.baseColor');
+    // The chip. Passing an itemID here resolves to `undefined` in production,
+    // which is how the base row came to be the one line with no colour chip
+    // while every numbered row below it had one.
+    expect(description).toMatch(/harmony\.baseColor: 🎨 /);
   });
 
   it('returns error when color is missing', async () => {

@@ -388,6 +388,55 @@ describe('index.ts', () => {
       expect(call.embeds[0].description).toContain('/preset moderate');
     });
 
+    // discord-core-13: every webhook fixture in this file already carries the
+    // correct stainID shape (`dyes: [1, 2, 3]`), but no assertion ever read the
+    // rendered `Dyes` field -- only the title, the absence of components, and
+    // the log line. So discord-core-01 (the embed resolving ids through
+    // `getDyeById` instead of `getByStainId`, printing raw numbers or the
+    // WRONG dye) was invisible here: replacing formatDyesForEmbed's body with
+    // `dyeIds.join(', ')` kept every test in the file green.
+    it('renders dye NAMES in the moderation embed, not raw stain ids', async () => {
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+
+      const preset = {
+        id: 'preset-124',
+        name: 'Test Preset',
+        description: 'A test preset',
+        category_id: 'test-category',
+        author_name: 'Test Author',
+        source: 'web' as const,
+        dyes: [1, 2, 3],
+        tags: [],
+        status: 'pending' as const,
+        created_at: new Date().toISOString(),
+      };
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test-webhook-secret' },
+        body: JSON.stringify({ type: 'submission', preset }),
+      });
+
+      await app.fetch(req, mockEnv, mockCtx);
+
+      const sent = vi.mocked(sendMessage).mock.calls.at(-1)?.[2] as {
+        embeds: Array<{ fields?: Array<{ name: string; value: string }> }>;
+      };
+      const dyeField = sent.embeds[0].fields?.find((f) => /dye/i.test(f.name));
+
+      expect(dyeField, 'the embed has no Dyes field').toBeDefined();
+      // The fixture names stains 1 and 2 (Snow White, Ash Grey); stain 3 is
+      // absent from it, so it falls through to the legacy `getDyeById` arm and
+      // renders 'Dye 3'. Pinning all three covers BOTH arms in the right
+      // order: swapping them -- which is discord-core-01 -- turns stain 1 into
+      // 'Dye 1'.
+      expect(dyeField?.value).toBe('Snow White, Ash Grey, Dye 3');
+      expect(dyeField?.value).not.toBe('1, 2, 3');
+    });
+
     // FINDING-011 (2026-08-29 security audit): the webhook's own log line
     // carried `presetName` — user-authored free text describing an
     // unpublished submission — into the structured log sink. The assertion is
@@ -796,6 +845,49 @@ describe('index.ts', () => {
 
       expect(res.status).toBe(413);
       expect(verifyGitHubSignature).not.toHaveBeenCalled();
+    });
+
+    // discord-core-14: no test anywhere stubbed a NON-2xx send. BUG-026 is
+    // that a Discord rejection used to resolve as success, after which the
+    // caller wrote the `announced:v:<version>` memo -- and every later
+    // Redeliver short-circuited on it, so that release could never be
+    // announced again. The memo not being written is the whole recovery story.
+    it('writes no announce memo and answers 502 when Discord rejects the send', async () => {
+      const { sendAnnouncement } = await arrangeAnnounce();
+      sendAnnouncement.mockResolvedValue({
+        ok: false,
+        status: 403,
+        body: 'Missing Permissions',
+      });
+
+      const kv = announceKV();
+      const res = await postPush(
+        JSON.stringify(pushPayload({ commits: [], head_commit: changelogCommit() })),
+        { env: githubEnv(kv) },
+      );
+
+      // GitHub must log a FAILED delivery -- that is what makes a Redeliver
+      // both possible and correct.
+      expect(res.status).toBe(502);
+      expect(kv.put).not.toHaveBeenCalled();
+    });
+
+    it('writes the announce memo once the send succeeded', async () => {
+      const { sendAnnouncement, entry } = await arrangeAnnounce();
+      sendAnnouncement.mockResolvedValue({ ok: true });
+
+      const kv = announceKV();
+      const res = await postPush(
+        JSON.stringify(pushPayload({ commits: [], head_commit: changelogCommit() })),
+        { env: githubEnv(kv) },
+      );
+
+      expect(res.status).toBe(200);
+      expect(kv.put).toHaveBeenCalledWith(
+        `announced:v:${entry.version}`,
+        '1',
+        expect.anything(),
+      );
     });
 
     it('announces when only head_commit lists CHANGELOG-laymans.md (commits truncated)', async () => {
