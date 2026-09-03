@@ -198,3 +198,85 @@ Rewrite against the 5.0 DOM the way `ed8f477` did for `ui-interactions.spec.ts` 
 the worked example. Prefer role- and text-based locators over DOM IDs, which is what made the
 originals brittle enough to be skipped in the first place. Delete each section here as its
 coverage returns.
+
+---
+
+## 2026-09-03 — measured, not guessed
+
+`npm run test:e2e:coverage` was run against the whole suite and the per-module
+function coverage read off `e2e-coverage/coverage-final.json`. That turns the
+question "what does E2E actually reach?" from an argument into a table.
+
+**Mapping caveat, so the next person does not repeat it:** Vite serves with
+`root: 'src'`, so a module's coverage URL is `/services/x.ts`, **not**
+`/src/services/x.ts`. A naive `/src\//` match over those URLs returns zero rows
+for every file and reads exactly like "E2E covers nothing".
+
+### The thirteen modules `vitest.config.ts` drops from unit coverage
+
+Before / after the two specs added on 2026-09-03, as covered-functions:
+
+| Module | before | after |
+|---|---|---|
+| `v4/dye-palette-drawer.ts` | 38/54 (70%) | unchanged |
+| `v4/preset-tool.ts` | 28/75 (37%) | **36/75 (48%)** |
+| `v4/preset-detail.ts` | 2/22 (9%) | **24/42 (57%)** |
+| `v4/v4-layout-shell.ts` | 14/26 (54%) | unchanged |
+| `v4/display-options-v4.ts` | 10/28 (36%) | unchanged |
+| `preset-edit-form.ts` | never loaded | **still never loaded** |
+| `collection-manager-modal.ts` | 1/11 (9%) | unchanged |
+| `add-to-collection-menu.ts` | 1/4 (25%) | unchanged |
+| `welcome-modal.ts` | 3/12 (25%) | **12/15 (80%)** |
+| `share-service.ts` | 5/18 (28%) | unchanged |
+| `community-preset-service.ts` | 8/25 (32%) | **13/25 (52%)** |
+| `hybrid-preset-service.ts` | 9/19 (47%) | **10/19 (53%)** |
+| `recent-colors-panel.ts` | — | **file does not exist** (stale exclude, removed) |
+
+Suite total: 1248/2914 (42.8%) -> 1313/2941 (44.6%) functions.
+
+### What the two new specs do
+
+- **`welcome-modal.spec.ts`** — the only spec that does *not* call
+  `seedStartupStorage()`. Every other file seeds `welcome_seen` so the modal
+  keeps out of the way, which is exactly why nothing ever exercised it. Carries
+  the BUG-077 block: `markAsSeen()` runs from `onClose`, so the Get-started
+  button, the X, Escape and a backdrop tap must *each* persist both
+  `welcome_seen` and `last_version_viewed`, verified across a page reload.
+- **`preset-gallery-api.spec.ts`** — stands the presets-api up with
+  `page.route()`. TESTING.md excludes the preset services from unit coverage
+  because they "make real HTTP requests"; the E2E run had no network either, so
+  the tool only ever rendered its offline state. Route-stubbing runs the real
+  service code, the real fetch stack and the real render path against a
+  deterministic payload.
+
+### Still dark, and why
+
+- **`preset-edit-form.ts`** — reached only from `preset-tool`'s *Mine* tab and
+  `my-submissions-modal`, both of which need a signed-in Discord session. Needs
+  an auth fixture (a seeded JWT in localStorage plus a stubbed oauth worker)
+  before a spec can get to it.
+- **`collection-manager-modal.ts` / `add-to-collection-menu.ts`** — opened from
+  `dye-selector`'s `#manage-collections-btn` and `dye-grid`'s per-dye
+  collection button. Neither element was found in the rendered DOM at 1440x900
+  on harmony/comparison/accessibility/budget. Whether that is a routing
+  question or the same left-panel gap the `mobile-chrome` section above
+  describes is **not yet established** — do not write a spec against them until
+  someone has confirmed which, because a spec that cannot find its trigger will
+  be "fixed" into a guarded no-op.
+- **`share-service.ts`** — the share button exists (one `v4-share-button`,
+  title "Share") but its inner button did not become actionable within 8s in a
+  probe. Clipboard assertions also need `context.grantPermissions`.
+
+### Fixture assumptions that were wrong, and the product was right
+
+Recorded because each one *looked* like a bug for a while:
+
+- An API preset with `is_curated: true` does not appear on the gallery's
+  default **Community** tab — the tabs are Community / Official / Saved / Mine
+  and `is_curated` belongs to Official.
+- A preset card's `.band-seg` colour strip is only drawn when the card has a
+  preview shot; the unconditional proof that `dyes[]` arrived is the dye-count
+  line.
+- A tab button's accessible name is its label plus its count ("Official 1"), so
+  an anchored `/^Official$/` never matches.
+

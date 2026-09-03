@@ -35,7 +35,6 @@ export default defineConfig({
         'src/components/collection-manager-modal.ts',
         'src/components/add-to-collection-menu.ts',
         'src/components/welcome-modal.ts',
-        'src/components/recent-colors-panel.ts',
         'src/services/share-service.ts',
         'src/services/community-preset-service.ts',
         'src/services/hybrid-preset-service.ts',
