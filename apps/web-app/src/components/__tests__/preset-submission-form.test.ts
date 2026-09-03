@@ -64,10 +64,15 @@ const {
     mockToastInfo: vi.fn(),
     mockSubmitPreset: vi.fn(),
     mockUploadPreviewImage: vi.fn(),
+    // webapp-modals-20: `id` and `stainID` used to be the SAME number here, so
+    // an assertion on the submitted payload could not tell a stainID from a
+    // legacy itemID -- the one thing that matters about it. `id` is `itemID`
+    // (types/src/dye/dye.ts); the real values are 5729/5730/5731 for stains
+    // 1/2/3.
     mockDyes: [
-      makeDye({ id: 1, stainID: 1, name: 'Snow White', hex: '#F0F0F0' }),
-      makeDye({ id: 2, stainID: 2, name: 'Ash Grey', hex: '#808080' }),
-      makeDye({ id: 3, stainID: 3, name: 'Soot Black', hex: '#101010' }),
+      makeDye({ id: 5729, itemID: 5729, stainID: 1, name: 'Snow White', hex: '#F0F0F0' }),
+      makeDye({ id: 5730, itemID: 5730, stainID: 2, name: 'Ash Grey', hex: '#808080' }),
+      makeDye({ id: 5731, itemID: 5731, stainID: 3, name: 'Soot Black', hex: '#101010' }),
     ] as Dye[],
   };
 });
@@ -198,6 +203,30 @@ describe('showPresetSubmissionForm — preview image', () => {
 
     expect(mockSubmitPreset).toHaveBeenCalled();
     expect(mockUploadPreviewImage).not.toHaveBeenCalled();
+  });
+
+  // webapp-modals-20: every submit assertion in this file was
+  // `expect(mockSubmitPreset).toHaveBeenCalled()` -- the ARGUMENTS were never
+  // read. `dyes: state.selectedDyes.map((d) => d.stainID)` is the single most
+  // consequential line in the module after the 5.0 stainID migration, and
+  // sending itemIDs instead would have been invisible here (presets-api
+  // rejects anything over 254, so the failure lands on the user).
+  it('submits stainIDs, not legacy item ids', async () => {
+    showPresetSubmissionForm();
+    const content = getFormContent();
+    fillValidForm(content);
+
+    clickSubmit(content);
+    await flush();
+
+    expect(mockSubmitPreset).toHaveBeenCalledTimes(1);
+    const submission = mockSubmitPreset.mock.calls[0][0] as { dyes: number[]; name: string };
+
+    expect(submission.dyes).toEqual([1, 2, 3]);
+    // The itemIDs of the same three dyes, which is what the pre-5.0 code sent
+    // and what presets-api's validatePresetDyes rejects.
+    expect(submission.dyes).not.toEqual([5729, 5730, 5731]);
+    expect(submission.name).toBe('My Test Preset');
   });
 
   it('does not attempt an upload when no file was chosen', async () => {

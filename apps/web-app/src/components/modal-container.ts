@@ -576,9 +576,18 @@ export class ModalContainer extends BaseComponent {
   }
 
   onUpdate(): void {
-    if (this.modals.length === 0) {
-      // Register fix: restore the PRIOR overflow value, never assume ''
-      document.body.style.overflow = this.priorBodyOverflow ?? '';
+    // Register fix: restore the PRIOR overflow value, never assume ''.
+    //
+    // webapp-modals-22 (found while writing the test that proves the above):
+    // the guard was `if (this.modals.length === 0)` alone, so this ran on the
+    // very first update too -- when the container mounts with no modals and
+    // `priorBodyOverflow` is still null. `?? ''` then BLANKED whatever overflow
+    // the page had set before any modal existed, and the value captured on the
+    // first open was therefore always '' -- which is exactly why the existing
+    // test could not tell "restores the prior value" from "blanks it". Only
+    // restore when there is something saved to restore.
+    if (this.modals.length === 0 && this.priorBodyOverflow !== null) {
+      document.body.style.overflow = this.priorBodyOverflow;
       this.priorBodyOverflow = null;
     }
   }

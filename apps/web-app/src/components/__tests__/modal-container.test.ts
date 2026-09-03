@@ -609,6 +609,25 @@ describe('ModalContainer', () => {
 
       expect(document.body.style.overflow).toBe('');
     });
+
+    // webapp-modals-22: the test above cannot distinguish "restores the prior
+    // value" from "blanks it", because `beforeEach` sets
+    // `document.body.style.overflow = ''` -- so `priorBodyOverflow` is captured
+    // as '' and the final `toBe('')` passes either way. Start from a page that
+    // already had an overflow set, which is the whole point of saving it.
+    it('restores the PRIOR body overflow, not a blank one', () => {
+      document.body.style.overflow = 'scroll';
+
+      modalContainer = new ModalContainer(container);
+      modalContainer.init();
+
+      const id = ModalService.show({ type: 'custom', title: 'Test', closable: true });
+      expect(document.body.style.overflow).toBe('hidden');
+
+      ModalService.dismiss(id);
+
+      expect(document.body.style.overflow).toBe('scroll');
+    });
   });
 
   // ============================================================================
