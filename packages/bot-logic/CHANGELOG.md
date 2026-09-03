@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.2.0] - 2026-09-03
 
+### Fixed
+
+- **`/harmony` no longer answers your own dye.** `preventDuplicates` defaulted to `false`
+  here while the Harmony Explorer defaults it `true`, and core's `excludeItemIDs` was only
+  consulted on the de-duplication branch — so the base dye was never actually excluded on
+  the bot. `/harmony monochromatic` (one `[0]` offset, whose ideal is the base colour)
+  returned the base dye at ΔE 0 as its entire harmony. Fixed in core (4.2.0), and both
+  `preventDuplicates` and `strictMatching` now default to what `DEFAULT_CONFIGS.harmony`
+  defaults them to in the web app, which is the point of converging these surfaces at all.
+- **`strict_matching` does something again.** The value was destructured and then discarded
+  with `void`, so the registered Discord option was accepted and changed nothing; it is
+  passed through as `usePerceptualMatching` now. `harmonyOptions` (`color_space`) stays
+  discarded — `generateHarmonySlots` rotates hue in HSV and that IS the shared algorithm,
+  so the option has been withdrawn from the command rather than left registered and inert.
+
 ### Changed — harmony convergence
 
 - `/harmony` now selects dyes through `@xivdyetools/core`'s

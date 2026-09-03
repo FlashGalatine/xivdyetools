@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { HARMONY_TYPES } from '@xivdyetools/bot-logic';
 import { commands as COMMAND_SCHEMAS } from './schemas.js';
 import { QUICK_PICKS } from '../services/budget/quick-picks.js';
 import { WORLD_NAME_MAX_LENGTH } from '../services/preferences.js';
@@ -74,5 +75,58 @@ describe('world options carry the length cap', () => {
 
   it('pins the cap the registered schema publishes', () => {
     expect(WORLD_NAME_MAX_LENGTH).toBe(32);
+  });
+});
+
+/**
+ * `compound` and `shades` reached core's `HARMONY_OFFSETS`, bot-logic's roster
+ * and all six locale files, but never reached the registered choice list — so
+ * the changelog announced ten harmony types while Discord went on offering
+ * eight, and six new locale strings could not be reached by any user. The
+ * choices are derived from a `Record<HarmonyType, string>` now, which makes
+ * that a compile error; this pins the runtime end of it.
+ */
+describe('/harmony type choices', () => {
+  const harmony = COMMAND_SCHEMAS.find((c) => c.name === 'harmony') as unknown as Option;
+  const typeOption = findOption(['type'], harmony.options);
+
+  it('offers exactly the harmony types the shared table defines', () => {
+    expect(typeOption?.choices, '/harmony type has no choices').toBeDefined();
+    const registered = typeOption!.choices!.map((c) => String(c.value)).sort();
+    expect(registered).toEqual([...HARMONY_TYPES].sort());
+  });
+
+  it('includes compound and shades', () => {
+    const registered = (typeOption?.choices ?? []).map((c) => String(c.value));
+    expect(registered).toContain('compound');
+    expect(registered).toContain('shades');
+  });
+
+  it("gives every choice a non-empty label inside Discord's cap", () => {
+    const choices = typeOption?.choices ?? [];
+    expect(choices.length).toBeLessThanOrEqual(25);
+    for (const c of choices) {
+      expect(c.name.length).toBeGreaterThan(0);
+      expect(c.name.length).toBeLessThanOrEqual(100);
+    }
+  });
+
+  /**
+   * `color_space` was withdrawn rather than left registered and inert:
+   * `generateHarmonySlots` rotates hue in HSV, and that IS the shared
+   * algorithm, so offering another space would be offering a different answer
+   * than the page gives. bot-logic discarded the value with a `void`, so the
+   * option was accepted and changed nothing.
+   */
+  it('no longer registers the colour space it cannot honour', () => {
+    const names = (harmony.options ?? []).map((o) => o.name);
+    expect(names).not.toContain('color_space');
+  });
+
+  it('still registers the options that do something', () => {
+    const names = (harmony.options ?? []).map((o) => o.name);
+    expect(names).toContain('strict_matching');
+    expect(names).toContain('prevent_duplicates');
+    expect(names).toContain('companions');
   });
 });

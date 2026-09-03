@@ -142,8 +142,14 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     dyeFilters,
     companionCount = 1,
     matchingMethod = DEFAULT_MATCHING_METHOD,
-    strictMatching = false,
-    preventDuplicates = false,
+    // Both default to what the Harmony Explorer defaults them to
+    // (`DEFAULT_CONFIGS.harmony` in web-app's tool-config-types.ts). The bot
+    // defaulting them the other way was an unexplained divergence between two
+    // surfaces meant to answer the same question the same way — and
+    // `preventDuplicates` in particular is the difference between a card of
+    // distinct dyes and one that can repeat.
+    strictMatching = true,
+    preventDuplicates = true,
   } = input;
   const t = createTranslator(locale, input.logger);
 
@@ -181,9 +187,11 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
       candidatePool,
       {
         // `strictMatching` is the bot's spelling of the page's perceptual
-        // ranking; both default it on for the shared algorithm, because the
-        // S/V-preserving target is the algorithm.
-        usePerceptualMatching: true,
+        // ranking, and it is passed through rather than pinned on. Pinning it
+        // left `/harmony strict_matching:false` registered with Discord and
+        // silently inert — the option was accepted, discarded with a `void`,
+        // and the card came back identical.
+        usePerceptualMatching: strictMatching,
         matchingMethod,
         companionCount: clampedCompanionCount - 1,
         preventDuplicates,
@@ -191,9 +199,13 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
       { excludeItemIDs: baseItemID != null ? [baseItemID] : [] },
     );
 
-    // The strict-matching toggle no longer tightens a deltaE tolerance on the
-    // finders (there are no finders); it is folded into the ranking above.
-    void strictMatching;
+    // `harmonyOptions` (the colour space to rotate hue in) has no meaning any
+    // more: `generateHarmonySlots` rotates in HSV, carrying the base's
+    // saturation and value, and that IS the algorithm all three surfaces now
+    // share. Choosing a different space would be choosing a different answer
+    // than the page gives. The `color_space` choice has been withdrawn from
+    // the command rather than left registered and inert; the field stays on
+    // the input type so an existing caller passing it is not a type error.
     void harmonyOptions;
 
     const harmonyDyes: Dye[] = harmonySlots.flatMap((slot) =>
