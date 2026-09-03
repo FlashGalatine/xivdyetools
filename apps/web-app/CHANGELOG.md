@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.3.1] - 2026-09-03
+
+### Fixed
+
+- **The "Show ΔE" display option did nothing on result cards.** `result-card.ts` declared
+  `showDeltaE` and never read it — the verdict block gated on `deltaE2000 !== undefined` alone,
+  so the ΔE2000 readout rendered whatever the option said. Ten call sites set the property:
+  `config-sidebar` binds it in nine places as the user's own switch, and `accessibility-tool`
+  (`card.showDeltaE = lensActive`), `budget-tool` and `comparison-tool`
+  (`// No Delta-E in comparison context`) each set it `false` expecting the row to disappear.
+  None of it had any effect — turning the Accessibility lens off still showed ΔE2000, and the
+  Comparison and Budget cards showed it where their code had always intended not to.
+
+  Found by the 2026-09-03 coverage sweep, and specifically by the pre-merge review of it: the
+  new `result-card` suite mounted every card with `showDeltaE: false` and then asserted the
+  readout *was* present, so it had certified the bug as correct behaviour. Three tests now pin
+  both directions and the stainID-only verdict strip.
+
+### Testing
+
+- Five components that had no test file at all are now covered (`advanced-options-panel`
+  0% → 97.7% statements, `v4/language-modal`, `export-sheet`, `v4/share-button`,
+  `v4/dye-filters-v4`), and three suites that asserted shape rather than behaviour were
+  rewritten (`v4/v4-color-wheel`, `camera-preview-modal`, `v4/result-card`). Coverage moves
+  74.9/61.9/70.4/76.1 → 78.5/64.1/74.6/79.8.
+- Two E2E specs reach modules the unit suite is not allowed to measure: `welcome-modal.spec.ts`
+  (the only spec that does not seed `welcome_seen`, carrying the BUG-077 every-close-path guard)
+  and `preset-gallery-api.spec.ts` (stands presets-api up with `page.route()`, so the preset
+  services run against a real fetch instead of the offline state every other spec sees).
+  `v4/preset-detail` 9% → 57% of functions, `welcome-modal` 25% → 80%.
+- **The coverage thresholds now actually gate.** CI's only test step is `turbo run test`
+  (`vitest run`, no `--coverage`) and `test:coverage` was `vitest --coverage` *without* `run` —
+  a watcher that never returned a verdict — so neither threshold enforced anything.
+  `coverage.enabled: true` fixes both, matching what `oauth` already did.
+- **Playwright runs in CI for the first time**, as a dedicated chromium job. It previously ran
+  in no workflow, which is how an i18n grammar fix (`ca0ee36d`) left two `collection-manager`
+  selectors red on `main` with every check green.
+
+---
+
 ## [5.3.0] - 2026-09-03
 
 ### Fixed
