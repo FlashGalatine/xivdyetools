@@ -214,6 +214,7 @@
     "tags": "タグ",
     "author": "作成者",
     "votes": "投票",
+    "cardVotes": "{count} 票",
     "api": {
       "badRequest": "無効なリクエストです。入力内容を確認して、もう一度お試しください。",
       "permissionDenied": "権限がありません。",

@@ -214,6 +214,8 @@
     "tags": "Tags",
     "author": "Auteur",
     "votes": "Votes",
+    "cardVotes_one": "{count} vote",
+    "cardVotes_other": "{count} votes",
     "api": {
       "badRequest": "Requête invalide. Veuillez vérifier votre saisie et réessayer.",
       "permissionDenied": "Permission refusée.",

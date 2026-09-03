@@ -214,6 +214,7 @@
     "tags": "태그",
     "author": "작성자",
     "votes": "투표",
+    "cardVotes": "{count}표",
     "api": {
       "badRequest": "잘못된 요청입니다. 입력 내용을 확인하고 다시 시도해 주세요.",
       "permissionDenied": "권한이 없습니다.",

@@ -214,6 +214,8 @@
     "tags": "Tags",
     "author": "Author",
     "votes": "Votes",
+    "cardVotes_one": "{count} vote",
+    "cardVotes_other": "{count} votes",
     "api": {
       "badRequest": "Invalid request. Please check your input and try again.",
       "permissionDenied": "Permission denied.",

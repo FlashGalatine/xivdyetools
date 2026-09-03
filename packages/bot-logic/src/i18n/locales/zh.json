@@ -214,6 +214,7 @@
     "tags": "标签",
     "author": "作者",
     "votes": "投票",
+    "cardVotes": "{count} 票",
     "api": {
       "badRequest": "无效的请求。请检查您的输入并重试。",
       "permissionDenied": "权限不足。",

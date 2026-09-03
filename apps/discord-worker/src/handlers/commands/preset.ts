@@ -997,13 +997,17 @@ async function sendPresetEmbed(
     description: cardDescription?.text ?? preset.description,
     category: preset.category_id,
     dyes,
-    authorName: cardAuthor?.text ?? preset.author_name,
-    voteCount: preset.vote_count,
-    // F-11: the swatch card renders in the user's locale
+    // F-11: the swatch card renders in the user's locale. FONT-002: the votes
+    // segment is localized text now — it used to be `${voteCount}★`, and no
+    // bundled font carries U+2605, so it drew as a tofu box on every card.
     authorLine: cardAuthor
       ? t.t('preset.byAuthor', { author: cardAuthor.text })
       : t.t('preset.official'),
     emptyLabel: t.t('preset.noValidDyes'),
+    votesLabel:
+      preset.vote_count === undefined
+        ? undefined
+        : t.tc('preset.cardVotes', preset.vote_count),
     dyeName: (d) => getLocalizedDyeName(d.itemID, d.name, locale),
   });
 

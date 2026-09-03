@@ -25,12 +25,13 @@
  * Compare fonts by cmap, never by md5 — fonttools rewrites `head.modified` on
  * every run, so bytes differ even when coverage is identical.
  */
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import { LocaleLoader, CONSOLIDATED_DYES, MATCHING_METHOD_TAGS } from '@xivdyetools/core';
 import type { LocaleCode } from '@xivdyetools/types';
+import { scanEmittedGlyphs } from '@xivdyetools/svg';
 
 // ---------------------------------------------------------------------------
 // Minimal TrueType/OpenType cmap reader
@@ -118,12 +119,40 @@ function readCmapCodepoints(ttf: Uint8Array): Set<number> {
 const LOCALES: readonly LocaleCode[] = ['en', 'ja', 'de', 'fr', 'ko', 'zh'];
 
 /**
- * Glyphs handlers and svg generators emit from code, not from data: ΔE tags,
- * α (swatch lip), separators, arrows, degree, ÷ (budget key), ♂/♀ (swatch
- * gender line), hex/percent. Keep in sync with the literals in
- * packages/svg/src and packages/bot-logic/src/commands.
+ * Non-ASCII characters the code emits, **discovered by scanning source**.
+ *
+ * FONT-002: this used to be a hand-maintained literal —
+ * `const CODE_GLYPHS = 'Δα·—…→↓–↔≈°÷♂♀#%'` — so a glyph added to a card was
+ * invisible to this gate until somebody remembered to extend the string. Nobody
+ * did when `${voteCount}★` landed in `preset-swatch.ts`, and U+2605 is in none
+ * of the ten bundled faces, so every preset card with a vote count drew a tofu
+ * box. Scanning closes the class rather than the instance.
+ *
+ * `scanEmittedGlyphs` skips comments on purpose: this code's JSDoc is full of
+ * examples like `IDEAL HUE / IDEALFARBTON / 理想の色相`, which nothing renders.
  */
-const CODE_GLYPHS = 'Δα·—…→↓–↔≈°÷♂♀#%';
+function emittedGlyphs(): Map<number, string> {
+  const roots = [
+    join(HERE, '..', '..', '..', '..', 'packages', 'svg', 'src'),
+    join(HERE, '..', '..', '..', '..', 'packages', 'bot-logic', 'src', 'commands'),
+  ];
+  const found = new Map<number, string>();
+  for (const root of roots) {
+    if (!existsSync(root)) continue;
+    const files = readdirSync(root, { recursive: true, encoding: 'utf8' })
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts') && !f.endsWith('.d.ts'))
+      .map((f) => join(root, f));
+    for (const file of files) {
+      for (const hit of scanEmittedGlyphs(readFileSync(file, 'utf8'), relative(root, file))) {
+        // Emoji-presentation characters are Discord *message* text, never drawn
+        // by resvg — see BUG-056 and preset-swatch.ts's CATEGORY_DISPLAY.
+        if (hit.presentation === 'emoji') continue;
+        if (!found.has(hit.codepoint)) found.set(hit.codepoint, hit.where);
+      }
+    }
+  }
+  return found;
+}
 
 /** CJK-script blocks: kana, CJK ideographs, compat, Hangul. */
 function isCjkScript(cp: number): boolean {
@@ -219,9 +248,15 @@ describe('bundled fonts cover every string the cards can render', () => {
     });
   }
 
-  it('the glyphs emitted from code (Δ α · — … → ↓ – ↔ ≈ ° ÷ ♂ ♀ # %) are drawable', () => {
-    const missing = [...codepointsOf([CODE_GLYPHS])].filter((cp) => !union.has(cp));
-    expect(missing, fmt(missing)).toEqual([]);
+  it('every non-ASCII glyph the card code emits is drawable', () => {
+    const emitted = emittedGlyphs();
+    expect(emitted.size, 'scanner found no glyphs — the source roots are probably wrong').toBeGreaterThan(5);
+
+    const missing = [...emitted.keys()]
+      .filter((cp) => !union.has(cp))
+      .sort((a, b) => a - b);
+    const detail = missing.map((cp) => `${fmt([cp])} (${emitted.get(cp)})`).join(', ');
+    expect(missing, `no bundled face can draw: ${detail}`).toEqual([]);
   });
 
   it('ja: every CJK-script codepoint is in the JP subset (Japanese letterforms, not SC fallback)', () => {

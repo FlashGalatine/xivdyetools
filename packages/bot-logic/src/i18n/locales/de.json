@@ -214,6 +214,8 @@
     "tags": "Tags",
     "author": "Autor",
     "votes": "Stimmen",
+    "cardVotes_one": "{count} Stimme",
+    "cardVotes_other": "{count} Stimmen",
     "api": {
       "badRequest": "Ungültige Anfrage. Bitte überprüfe deine Eingabe und versuche es erneut.",
       "permissionDenied": "Zugriff verweigert.",

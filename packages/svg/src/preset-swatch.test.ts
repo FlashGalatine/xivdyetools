@@ -47,6 +47,10 @@ describe('svg/preset-swatch.ts', () => {
         description: 'A test preset description',
         category: 'aesthetics' as PresetCategory,
         dyes: [mockDye1, mockDye2],
+        // Required since I18N-011: the generator no longer supplies English
+        // defaults, so a caller cannot forget to localize these.
+        authorLine: 'by TestAuthor',
+        emptyLabel: 'No valid dyes in this preset',
     };
 
     describe('generatePresetSwatch', () => {
@@ -101,31 +105,47 @@ describe('svg/preset-swatch.ts', () => {
             expect(svg).toContain('#000000');
         });
 
-        it('should include author name when provided', () => {
+        it('renders the caller-localized author line verbatim', () => {
             const svg = generatePresetSwatch({
                 ...baseOptions,
-                authorName: 'TestAuthor',
+                authorLine: 'von TestAuthor',
             });
 
-            expect(svg).toContain('by TestAuthor');
+            expect(svg).toContain('von TestAuthor');
         });
 
-        it('should show Official when no author', () => {
+        it('renders the caller-localized "official" line verbatim', () => {
             const svg = generatePresetSwatch({
                 ...baseOptions,
-                authorName: null,
+                authorLine: 'Offiziell',
             });
 
-            expect(svg).toContain('Official');
+            expect(svg).toContain('Offiziell');
         });
 
-        it('should include vote count when provided', () => {
+        it('renders the localized votes label when given', () => {
             const svg = generatePresetSwatch({
                 ...baseOptions,
-                voteCount: 42,
+                votesLabel: '42 Stimmen',
             });
 
-            expect(svg).toContain('42★');
+            expect(svg).toContain('42 Stimmen');
+        });
+
+        it('draws no star: U+2605 is in none of the bundled faces (FONT-002)', () => {
+            const svg = generatePresetSwatch({
+                ...baseOptions,
+                votesLabel: '42 votes',
+            });
+
+            expect(svg).not.toContain('★');
+        });
+
+        it('omits the votes segment entirely rather than inventing English', () => {
+            const svg = generatePresetSwatch({ ...baseOptions, votesLabel: undefined });
+
+            expect(svg).not.toContain('votes');
+            expect(svg).not.toContain('★');
         });
 
         it('should use custom width', () => {

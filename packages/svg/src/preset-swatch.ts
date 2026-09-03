@@ -110,20 +110,29 @@ export interface PresetSwatchOptions {
   category: PresetCategory;
   /** Array of dyes in the preset (null for invalid dye IDs) */
   dyes: (Dye | null)[];
-  /** Author display name (null for curated presets) */
-  authorName?: string | null;
-  /** Vote count */
-  voteCount?: number;
   /** Canvas width in pixels (default: 600) */
   width?: number;
   /**
-   * Localized meta line — the caller renders "by {author}" / "Official" in
-   * the user's language (2026-08-20 i18n audit, F-11). Default: English from
-   * `authorName`.
+   * Localized meta line — the caller renders "by {author}" / "Official" in the
+   * user's language (2026-08-20 i18n audit, F-11).
+   *
+   * **Required** since I18N-011: it used to default to English built from
+   * `authorName`, so any caller that forgot it silently baked English onto a
+   * localized card, with no gate to catch it.
    */
-  authorLine?: string;
-  /** Localized empty-state line. Default: 'No valid dyes in this preset'. */
-  emptyLabel?: string;
+  authorLine: string;
+  /** Localized empty-state line. Required for the same reason as `authorLine`. */
+  emptyLabel: string;
+  /**
+   * Localized vote-count text, already formatted — e.g. `"42 votes"` / `"42 票"`.
+   *
+   * FONT-002: this line used to be `` `${voteCount}★` ``, and U+2605 is in none
+   * of the ten faces either Worker bundles, so it drew as a tofu box on every
+   * preset card carrying a vote count — the same trap BUG-056 fixed for the
+   * category emoji three screens up. Omit it and the segment is skipped; there
+   * is deliberately no English default.
+   */
+  votesLabel?: string;
   /** Localized dye-name resolver. Default: the English `dye.name`. */
   dyeName?: (dye: Dye) => string;
 }
@@ -157,8 +166,9 @@ const MIN_SWATCH_WIDTH = 80;
  *   description: 'A refined red and gold palette',
  *   category: 'aesthetics',
  *   dyes: [dalamudRedDye, jetBlackDye, metallicGoldDye],
- *   authorName: 'ExampleUser',
- *   voteCount: 42,
+ *   authorLine: 'von ExampleUser',
+ *   emptyLabel: 'Keine gültigen Farbstoffe',
+ *   votesLabel: '42 Stimmen',
  * });
  * const png = await renderSvgToPng(svg);
  * ```
@@ -168,11 +178,10 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
     name,
     description,
     dyes,
-    authorName,
-    voteCount,
     width = DEFAULT_WIDTH,
     authorLine,
-    emptyLabel = 'No valid dyes in this preset',
+    emptyLabel,
+    votesLabel,
     dyeName = (d: Dye): string => d.name,
   } = options;
 
@@ -219,11 +228,11 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
     }),
   );
 
-  // Author and votes metadata line
-  const metaParts: string[] = [];
-  metaParts.push(authorLine ?? (authorName ? `by ${authorName}` : 'Official'));
-  if (voteCount !== undefined) {
-    metaParts.push(`${voteCount}★`);
+  // Author and votes metadata line. Both segments are caller-localized: the
+  // star that used to stand in for "votes" here was undrawable (FONT-002).
+  const metaParts: string[] = [authorLine];
+  if (votesLabel) {
+    metaParts.push(votesLabel);
   }
 
   elements.push(
