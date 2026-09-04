@@ -7,6 +7,8 @@
 - **The gear in the top-right opens Advanced Settings and nothing else now.** On a phone it used to open the tool's own Options at the same time, and the two landed on top of each other — Harmony Type and Matching Mode printed straight through the Reset and Backup rows, leaving neither readable and both awkward to tap.
 - **The tool's Options panel has its own button, in the bottom-left corner.** It sits opposite the Color Palette button, so the two panels each open from their own side of the screen. On a phone Options slides in from the left over the tool; on a desktop it is the column it always was, and the new button is how you bring it back after closing it.
 - On a desktop the gear no longer doubles as the way to reopen a closed Options column — that job belongs to the new button, and the gear now behaves the same everywhere.
+- **Dialogs open on top of the app instead of underneath it.** Every pop-up in the app — the welcome box, Advanced Settings, the theme and language pickers — was being drawn *below* the toolbar and the two corner buttons. On a phone the Color Palette button sat on top of the welcome box's "Get started" button and ate taps aimed at it, so the button looked broken. Pop-ups now sit above everything, and the corner buttons no longer poke through them.
+- **Notification messages are no longer hidden behind the corner buttons.** They appear along the bottom of the screen, in the same strip as those buttons, and were being drawn underneath them.
 
 ## Web-App Version 5.5.0 — September 4, 2026
 
