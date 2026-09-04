@@ -583,7 +583,7 @@
       },
       "matchingMethods": {
         "name": "Méthodes de correspondance",
-        "body": "Six méthodes, un vocabulaire : ΔE2000 (par défaut), ΔEOK, ΔE76, REDMEAN, RGB DIST et DISTINGUISH %. Seules les bandes de ΔE2000 suivent votre ligne de correspondance ; celles des autres méthodes sont fixes, les paliers ne se comparent jamais entre méthodes, et la méthode s'affiche partout où un palier apparaît."
+        "body": "Six méthodes, un vocabulaire : ΔE2000 (par défaut), ΔEOK2, ΔE76, REDMEAN, RGB DIST et DISTINGUISH %. Seules les bandes de ΔE2000 suivent votre ligne de correspondance ; celles des autres méthodes sont fixes, les paliers ne se comparent jamais entre méthodes, et la méthode s'affiche partout où un palier apparaît."
       },
       "spectrumPrices": {
         "name": "Spectrum et prix",

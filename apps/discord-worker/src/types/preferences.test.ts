@@ -9,7 +9,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { RACE_SUBRACES, SUBRACE_TO_RACE, type Race } from '@xivdyetools/types';
-import { MATCHING_METHODS as CORE_MATCHING_METHODS } from '@xivdyetools/core';
+import { MATCHING_METHODS as CORE_MATCHING_METHODS, MATCHING_METHOD_TAGS } from '@xivdyetools/core';
 import { CLANS_BY_RACE, VALID_CLANS, MATCHING_METHODS } from './preferences.js';
 
 describe('CLANS_BY_RACE (DEAD-024 adoption)', () => {
@@ -64,5 +64,25 @@ describe('MATCHING_METHODS (DEAD-037 anti-drift proof)', () => {
 
   it('has no extra or missing methods relative to core', () => {
     expect(MATCHING_METHODS).toHaveLength(CORE_MATCHING_METHODS.length);
+  });
+
+  it('prints core’s display tag for every method, not a hand-written copy', () => {
+    // The other half of DEAD-037. `value` parity was proven above; `name` was
+    // a hand-written duplicate of core's MATCHING_METHOD_TAGS until 5.1.0,
+    // when `getDeltaE_Oklab` became ΔEOK2 and the canonical tag moved. The
+    // copy would have kept printing `ΔEOK` in /preferences and /budget while
+    // the cards — which read the map — printed `ΔEOK2` for the same number.
+    for (const method of CORE_MATCHING_METHODS) {
+      expect(MATCHING_METHODS.find((m) => m.value === method)?.name).toBe(
+        MATCHING_METHOD_TAGS[method],
+      );
+    }
+  });
+
+  it('names oklab ΔEOK2 — the metric is ΔEOK2, not plain ΔEOK', () => {
+    // Pinned separately: if core's map were reverted to 'ΔEOK' the parity
+    // loop above would still pass (both sides moved together) and only this
+    // would fail.
+    expect(MATCHING_METHODS.find((m) => m.value === 'oklab')?.name).toBe('ΔEOK2');
   });
 });

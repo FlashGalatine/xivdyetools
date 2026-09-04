@@ -57,7 +57,7 @@ export type ComparisonResult =
 /**
  * The duel's seven readouts — one shared vocabulary, or the bot disagrees
  * with the app about what ΔE means. Labels are untranslated unit codes.
- * ΔEOK prints raw at three decimals (the band rules); the ratio is not a
+ * ΔEOK2 prints raw at three decimals (the band rules); the ratio is not a
  * colour distance and prints last.
  */
 function buildReadouts(hexA: string, hexB: string): ComparisonReadout[] {
@@ -65,7 +65,7 @@ function buildReadouts(hexA: string, hexB: string): ComparisonReadout[] {
     ColorService.getDistanceForMethod(hexA, hexB, m);
   return [
     { short: 'ΔE2000', value: d('ciede2000').toFixed(1) },
-    { short: 'ΔEOK', value: d('oklab').toFixed(3) },
+    { short: 'ΔEOK2', value: d('oklab').toFixed(3) },
     { short: 'ΔE76', value: d('cie76').toFixed(1) },
     { short: 'REDMEAN', value: d('redmean').toFixed(0) },
     { short: 'RGB', value: d('rgb').toFixed(0) },

@@ -39,6 +39,11 @@ vitest.config.ts.timestamp*
 # Playwright
 test-results/
 playwright-report/
+# Scratch from the Playwright MCP browser tools — console logs and page
+# snapshots written per browsing step. 32 of these were committed by accident
+# on the 2026-09-03 algorithm fact-check branch (2,978 lines of research
+# browsing) before this line existed.
+.playwright-mcp/
 # V8 coverage from the chromium-coverage project. NOT matched by `coverage/`
 # above — different directory name. The per-test shards under .tmp/ are ~5.7 MB
 # each and nothing deletes them, so a full `test:e2e` run leaves tens of MB here.

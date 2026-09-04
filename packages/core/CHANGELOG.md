@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   configs that do not read OKLAB are byte-identical. `ciede2000` remains
   `DEFAULT_MATCHING_METHOD`, so this affects only users who selected `oklab`.
 
+- **`MATCHING_METHOD_TAGS.oklab` is now `ΔEOK2`** (was `ΔEOK`). The tag is the suite's
+  one display name for the method, read by `@xivdyetools/svg`'s cards, og-worker and
+  discord-worker, so renaming it here moves every surface that reads it. Surfaces that
+  kept a hand-written copy of the map were repointed or gated in the same change —
+  web-app's now lives in `shared/method-tags.ts` behind a parity test, and
+  discord-worker's `MATCHING_METHODS` derives its names from this map instead of
+  restating them.
+
 - **CIELAB now uses the exact CIE 15:2004 constants** — `ε = 216/24389` and `κ = 24389/27` in
   place of the pre-2004 decimals (`0.008856`, `903.3`, and blending's equivalent `7.787` linear
   slope), in both `ColorConverter` and `blending/conversions.ts`. Rounding the pair independently

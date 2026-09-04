@@ -19,7 +19,11 @@ import type { BlendingMode } from '@xivdyetools/core/blending';
 // normalise on read via normalizeMatchingMethod.
 export type { MatchingMethod } from '@xivdyetools/core';
 import type { MatchingMethod } from '@xivdyetools/core';
-import { isMatchingMethod } from '@xivdyetools/core';
+import {
+  isMatchingMethod,
+  MATCHING_METHODS as CORE_MATCHING_METHODS,
+  MATCHING_METHOD_TAGS,
+} from '@xivdyetools/core';
 
 /**
  * Character gender for swatch matching
@@ -141,20 +145,33 @@ export const PREFERENCE_DEFAULTS: Required<
  * autocomplete and /preferences. Localised descriptions land with the
  * MATCHING_METHODS locale keys in the graphics port; the tags themselves
  * are identifiers and never localise.
+ *
+ * `name` is READ FROM core's `MATCHING_METHOD_TAGS`, never restated here.
+ * It used to be a hand-written copy, and core 5.1.0 caught it out: when
+ * `getDeltaE_Oklab` became ΔEOK2 the canonical tag moved and this copy would
+ * silently have kept printing `ΔEOK`, so `/preferences` and `/budget` would
+ * have disagreed with the cards — which read the map — about what the same
+ * number is called. The DEAD-037 test below proves value-order parity with
+ * core; deriving the tag closes the other half.
+ *
+ * The descriptions stay local: they are prose, not identifiers, and core has
+ * no equivalent.
  */
+const METHOD_DESCRIPTIONS: Record<MatchingMethod, string> = {
+  ciede2000: 'Industry-standard perceptual formula (default)',
+  oklab: 'OKLAB perceptual distance, a/b scaled x2 (CSS Color 4 §20.4)',
+  cie76: 'CIELAB Euclidean distance',
+  redmean: 'Weighted RGB approximation',
+  rgb: 'Euclidean RGB distance',
+  distinguish: 'RGB DIST rescaled to 0-100',
+};
+
 export const MATCHING_METHODS: Array<{ value: MatchingMethod; name: string; description: string }> =
-  [
-    {
-      value: 'ciede2000',
-      name: 'ΔE2000',
-      description: 'Industry-standard perceptual formula (default)',
-    },
-    { value: 'oklab', name: 'ΔEOK', description: 'OKLAB perceptual distance' },
-    { value: 'cie76', name: 'ΔE76', description: 'CIELAB Euclidean distance' },
-    { value: 'redmean', name: 'REDMEAN', description: 'Weighted RGB approximation' },
-    { value: 'rgb', name: 'RGB DIST', description: 'Euclidean RGB distance' },
-    { value: 'distinguish', name: 'DISTINGUISH %', description: 'RGB DIST rescaled to 0-100' },
-  ];
+  CORE_MATCHING_METHODS.map((value) => ({
+    value,
+    name: MATCHING_METHOD_TAGS[value],
+    description: METHOD_DESCRIPTIONS[value],
+  }));
 
 /**
  * Display order + label for each race in the `/preferences` clan table.

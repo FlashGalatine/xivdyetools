@@ -22,22 +22,6 @@ import type { DyeSearch } from './DyeSearch.js';
 export type HarmonyMatchingAlgorithm = 'hue' | 'deltaE';
 
 /**
- * Default ΔE tolerance per formula.
- *
- * BUG-059: these used to be a two-way ternary — `ciede2000 ? 25 : 40` — which
- * silently gave `'oklab'` CIE76's tolerance. OKLAB ΔE runs roughly 0-1, so 40
- * admitted the entire dye set. Each value sits just outside its formula's
- * widest calibrated `harmony` band cut in `config/band-vocabulary.ts`
- * (ciede2000 20, cie76 26.2, oklab 0.174), which is the relationship the
- * original two already had.
- *
- * The oklab value moved 0.13 -> 0.21 in 5.1.0, when `getDeltaE_Oklab` became
- * ΔEOK2 and its widest harmony cut moved 0.107 -> 0.174. The ratio to that cut
- * is preserved (~1.21), so the tolerance still means the same thing relative
- * to the bands; leaving 0.13 behind would have quietly tightened oklab harmony
- * matching to roughly half its intended reach.
- */
-/**
  * The ΔE formula these per-type harmony methods rank by when a caller does not
  * say. Was hard-coded `'cie76'`, which meant harmony ranked by a metric that
  * disagrees with `ciede2000` — the suite default every other tool uses — on
@@ -56,6 +40,22 @@ export type HarmonyMatchingAlgorithm = 'hue' | 'deltaE';
  */
 const DEFAULT_HARMONY_DELTA_E: DeltaEFormula = 'ciede2000';
 
+/**
+ * Default ΔE tolerance per formula.
+ *
+ * BUG-059: these used to be a two-way ternary — `ciede2000 ? 25 : 40` — which
+ * silently gave `'oklab'` CIE76's tolerance. OKLAB ΔE runs roughly 0-1, so 40
+ * admitted the entire dye set. Each value sits just outside its formula's
+ * widest calibrated `harmony` band cut in `config/band-vocabulary.ts`
+ * (ciede2000 20, cie76 26.2, oklab 0.174), which is the relationship the
+ * original two already had.
+ *
+ * The oklab value moved 0.13 -> 0.21 in 5.1.0, when `getDeltaE_Oklab` became
+ * ΔEOK2 and its widest harmony cut moved 0.107 -> 0.174. The ratio to that cut
+ * is preserved (~1.21), so the tolerance still means the same thing relative
+ * to the bands; leaving 0.13 behind would have quietly tightened oklab harmony
+ * matching to roughly half its intended reach.
+ */
 const DEFAULT_DELTA_E_TOLERANCE = {
   ciede2000: 25,
   cie76: 40,

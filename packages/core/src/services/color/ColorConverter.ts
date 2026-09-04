@@ -55,11 +55,10 @@ export interface ColorConverterConfig {
 }
 
 /**
- * Color format converter with LRU caching
- * Per R-4: Single Responsibility - format conversions only
- *
- * Refactored for testability: Supports dependency injection of cache configuration
+ * ΔEOK2's chroma scaling (CSS Color 4 §20.4). See `getDeltaE_Oklab`.
  */
+const OKLAB_AB_SCALE = 2;
+
 /**
  * The CIELAB companding constants, as the EXACT rationals of CIE 15:2004.
  *
@@ -82,14 +81,15 @@ export interface ColorConverterConfig {
  * property that matters; CSS Color 4's alternative pair differs by ΔE00 ≈ 0.015
  * and swapping one without the other would be the actual bug.
  */
-/**
- * ΔEOK2's chroma scaling (CSS Color 4 §20.4). See `getDeltaE_Oklab`.
- */
-const OKLAB_AB_SCALE = 2;
-
 const CIE_EPSILON = 216 / 24389; // (6/29)^3 exactly
 const CIE_KAPPA = 24389 / 27; // (29/3)^3 exactly
 
+/**
+ * Color format converter with LRU caching
+ * Per R-4: Single Responsibility - format conversions only
+ *
+ * Refactored for testability: Supports dependency injection of cache configuration
+ */
 export class ColorConverter {
   // Instance caches (injectable for testing)
   private readonly hexToRgbCache: LRUCache<string, RGB>;

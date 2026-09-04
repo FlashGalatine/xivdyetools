@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-09-04
+
+### Changed
+
+- **`?method=oklab` changes both its ranking and its numeric scale**, inherited from
+  `@xivdyetools/core` 5.1.0, where `getDeltaE_Oklab` became **ΔEOK2** (CSS Color 4 §20.4 —
+  `a` and `b` scaled by 2). No code here changed; the behaviour does, so this is a minor
+  bump rather than a patch.
+
+  A given pair's `distance` is roughly 1.4–2× its former value. A pure lightness difference
+  is unchanged (black-to-white is still exactly `1.0`), a pure chroma difference nearly
+  doubles, and the widest pair in sRGB — green to magenta — now reaches `1.244`, so the
+  method no longer fits the `0 – 1` range the docs used to quote. `GET /v1/match/closest`
+  can return a **different dye**, and `GET /v1/match/within-distance` returns **fewer**
+  results for an unchanged `maxDistance`: over the 125-dye set, pairs under `0.05` fall
+  112 → 27 and pairs under `0.2` fall 2,587 → 1,345.
+
+  `ciede2000` is still the default and is byte-identical; `cie76`, `redmean`, `rgb` and
+  `distinguish` are untouched.
+
+  ⚠️ Match responses are served with `s-maxage=86400`, so for up to 24 hours after deploy
+  the edge may mix pre- and post-change `oklab` distances for the same query.
+
+### Fixed
+
+- **`docs/reference/matching.md` no longer documents the retired ΔEOK scale.** The method
+  table called `oklab` "ΔEOK, 0 – 1", and the two guidance passages quoted `0.05`
+  ("perceptually very close") and `0.2` ("noticeable") — thresholds calibrated against the
+  pre-5.1.0 metric. They now name ΔEOK2, give the real `0 – ~1.244` range, and use the
+  suite's recalibrated band cuts (`0.03` / `0.17`), with a migration note for anyone whose
+  client tuned a `maxDistance` against the old numbers.
+
 ## [0.11.1] - 2026-09-03
 
 ### Changed

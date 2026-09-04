@@ -150,7 +150,7 @@ describe('/extractor color — matching method', () => {
       labels: { matchKey: string };
     };
     expect(opts.method).toBe('oklab');
-    expect(opts.labels.matchKey).toBe('nearest by ΔEOK');
+    expect(opts.labels.matchKey).toBe('nearest by ΔEOK2');
   });
 });
 

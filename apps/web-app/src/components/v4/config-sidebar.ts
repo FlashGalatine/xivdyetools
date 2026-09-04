@@ -1429,7 +1429,7 @@ export class ConfigSidebar extends BaseLitComponent {
   /**
    * Render matching method dropdown for a tool
    *
-   * The leading ΔE2000 / ΔEOK / ΔE76 / REDMEAN / RGB DIST / DISTINGUISH % tags are
+   * The leading ΔE2000 / ΔEOK2 / ΔE76 / REDMEAN / RGB DIST / DISTINGUISH % tags are
    * identifiers by decision (2026-08-20 i18n audit) — never localised.
    */
   private renderMatchingMethodSection(
@@ -1450,7 +1450,7 @@ export class ConfigSidebar extends BaseLitComponent {
           <option value="ciede2000">
             ΔE2000 - ${LanguageService.t('config.matchingCiede2000')}
           </option>
-          <option value="oklab">ΔEOK - ${LanguageService.t('config.matchingOklab')}</option>
+          <option value="oklab">ΔEOK2 - ${LanguageService.t('config.matchingOklab')}</option>
           <option value="cie76">ΔE76 - ${LanguageService.t('config.matchingCie76')}</option>
           <option value="redmean">REDMEAN - ${LanguageService.t('config.matchingRedmean')}</option>
           <option value="rgb">RGB DIST - ${LanguageService.t('config.matchingRgb')}</option>

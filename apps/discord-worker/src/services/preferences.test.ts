@@ -23,6 +23,18 @@ vi.mock('@xivdyetools/core', () => ({
   // 5.0 matching vocabulary (mirrors core; the mock exists only to dodge
   // JSON imports, not to change behaviour)
   MATCHING_METHODS: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'],
+  // types/preferences.ts derives its display names from this map rather than
+  // restating them, so the mock has to carry it. `oklab` is ΔEOK2, not ΔEOK —
+  // the metric became ΔEOK2 in core 5.1.0.
+  MATCHING_METHOD_TAGS: {
+    ciede2000: 'ΔE2000',
+    oklab: 'ΔEOK2',
+    cie76: 'ΔE76',
+    redmean: 'REDMEAN',
+    rgb: 'RGB DIST',
+    distinguish: 'DISTINGUISH %',
+    ratio: 'RATIO',
+  },
   DEFAULT_MATCHING_METHOD: 'ciede2000',
   LEGACY_MATCHING_METHOD_MAP: {
     hyab: 'ciede2000',

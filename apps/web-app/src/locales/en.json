@@ -446,7 +446,7 @@
     "mCiede2000Desc": "CIEDE2000 colour difference — the same metric the Extractor and Gradient Builder use to score a match. Around 1.0 is the smallest difference a trained eye can see; under 5 reads as the same colour on armour.",
     "mCiede2000Caveat": "Perceptually honest and consistent with the rest of the app, but no standard sets the line between “same” and “different” — the 5 and 10 here are this tool's call and adjustable in Advanced.",
     "mOklabLabel": "OKLab distance",
-    "mOklabShort": "ΔEOK · OKLab",
+    "mOklabShort": "ΔEOK2 · OKLab",
     "mOklabDesc": "Euclidean distance in OKLab, printed raw to three decimals. OKLab is already in this codebase — it is one of the Dye Mixer's six blending models — so nothing new has to be written.",
     "mOklabCaveat": "Perceptually close to ΔE2000 at a fraction of the arithmetic, and better behaved for blues — which matters for a set like this one. Newer, so fewer published thresholds to lean on.",
     "mCie76Label": "Lab distance (ΔE76)",

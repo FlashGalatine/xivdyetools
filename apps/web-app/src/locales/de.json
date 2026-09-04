@@ -446,7 +446,7 @@
     "mCiede2000Desc": "CIEDE2000-Farbabstand — dieselbe Metrik, mit der Extraktor und Verlauf-Ersteller Treffer bewerten. Etwa 1,0 ist der kleinste sichtbare Unterschied; unter 5 wirkt auf Rüstung wie dieselbe Farbe.",
     "mCiede2000Caveat": "Perzeptuell ehrlich und konsistent mit dem Rest der App, aber kein Standard zieht die Grenze zwischen „gleich“ und „anders“ — die 5 und 10 sind hier gesetzt und einstellbar.",
     "mOklabLabel": "OKLab-Abstand",
-    "mOklabShort": "ΔEOK · OKLab",
+    "mOklabShort": "ΔEOK2 · OKLab",
     "mOklabDesc": "Euklidischer Abstand in OKLab, unskaliert mit drei Nachkommastellen. OKLab steckt bereits im Code — es ist eines der sechs Mischmodelle des Farbstoffmixers — es muss also nichts Neues geschrieben werden.",
     "mOklabCaveat": "Perzeptuell nahe an ΔE2000 bei einem Bruchteil der Rechnung und besser bei Blautönen — was für dieses Set zählt. Neuer, daher weniger veröffentlichte Schwellenwerte.",
     "mCie76Label": "Lab-Abstand (ΔE76)",

@@ -96,6 +96,19 @@ vi.mock('@xivdyetools/core', () => {
     dyeDatabase: {},
     LocalizationService: MockLocalizationService,
     ColorService,
+    // `types/preferences.ts` builds MATCHING_METHODS at module scope from
+    // these two, so they must exist on the mock or importing it throws before
+    // any test runs. `oklab` is ΔEOK2 — the metric became ΔEOK2 in core 5.1.0.
+    MATCHING_METHODS: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'],
+    MATCHING_METHOD_TAGS: {
+      ciede2000: 'ΔE2000',
+      oklab: 'ΔEOK2',
+      cie76: 'ΔE76',
+      redmean: 'REDMEAN',
+      rgb: 'RGB DIST',
+      distinguish: 'DISTINGUISH %',
+      ratio: 'RATIO',
+    },
   };
 });
 

@@ -26,6 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   psychophysically tested in either direction**. The descriptions for the two evidence-backed
   schemes are deliberately left as they were. See
   `docs/research/2026-09-03-algorithm-fact-check/05-harmony-geometry.md`.
+- **The OKLAB method now shows as `ΔEOK2`** in the Matching Algorithm picker and on the
+  Swatch Matcher's verdict card (×6 locales). The metric became ΔEOK2 in core 5.1.0
+  (CSS Color 4 §20.4 — `a` and `b` scaled by 2), so `ΔEOK` named a formula the app no
+  longer runs, beside a number on a scale roughly 1.4–2× larger.
+
+  The Swatch card's tag map moved out of `swatch-tool.ts` into `shared/method-tags.ts`.
+  It is still a deliberate local copy — `swatch-tool.test.ts` mocks `@xivdyetools/core`
+  wholesale, so the component cannot reach into core for a display string — but
+  `shared/__tests__/method-tags.parity.test.ts` now compares it against core's
+  `MATCHING_METHOD_TAGS` and fails on any divergence. Nothing caught the drift before.
 - Corrected a stale comment in `tool-config-types.ts` that still described RYB as producing
   "Blue + Yellow = Olive Green" — it produces `#008000`, a true green, since core 5.0.0 retired the
   Gossett-Chen cube.

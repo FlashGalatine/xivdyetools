@@ -51,7 +51,7 @@ import { getDyeEmoji } from '../../services/emoji.js';
 /** ΔE column header per method (short tags — the 34/42 px column). */
 const DE_LABEL: Record<MatchingMethod, string> = {
   ciede2000: 'ΔE',
-  oklab: 'ΔEOK',
+  oklab: 'ΔEOK2',
   cie76: 'ΔE76',
   redmean: 'RM',
   rgb: 'RGB',
