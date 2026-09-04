@@ -38,6 +38,22 @@
   --theme-text-secondary: var(--theme-text-muted);
   --theme-input-background: var(--theme-background-secondary);
 
+  /* ===== V4 STACKING ORDER =====
+     One scale for everything that floats, so the order is a decision rather
+     than an accident. It was an accident: modals and toasts sat at z-index 50
+     while every piece of app chrome — header, palette drawer, Options panel,
+     the corner FABs — sat at 90-100, and result-card tooltips at 200. The
+     shell host creates no stacking context, so those fixed children compete
+     with #modal-root directly and won. A modal could therefore open UNDER the
+     FABs, which is how the palette FAB came to sit on top of the welcome
+     modal's "Get started" button and swallow taps meant for it.
+
+     Chrome (90-200) stays where it is; the modal layer moves above it. The
+     tutorial spotlight keeps the top of the stack at 9998-10000 — it points
+     AT this chrome, so it has to outrank all of it. */
+  --v4-z-modal: 1000;
+  --v4-z-toast: 1100;
+
   /* ===== V4 LAYOUT DIMENSIONS ===== */
   /* 5.0 console bar: 54px, no persistent tool rail */
   --v4-header-height: 54px;

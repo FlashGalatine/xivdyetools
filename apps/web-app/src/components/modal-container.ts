@@ -37,7 +37,7 @@ const MOBILE_QUERY = '(max-width: 640px)';
 
 const SHELL_STYLES = `
 .m16-backdrop {
-  position: fixed; inset: 0; z-index: 50;
+  position: fixed; inset: 0; z-index: var(--v4-z-modal, 1000);
   display: flex; align-items: center; justify-content: center; padding: 40px;
   background: rgba(0, 0, 0, 0.5);
 }
@@ -367,7 +367,10 @@ export class ModalContainer extends BaseComponent {
       attributes: {
         role: 'presentation',
         'data-modal-id': modal.id,
-        style: `z-index: ${50 + index}`,
+        // Stacked modals step up from the modal layer. This inline value beats
+        // the class rule, so it has to name the same token — hardcoding a base
+        // here is what silently left every modal under the app chrome.
+        style: `z-index: calc(var(--v4-z-modal, 1000) + ${index})`,
         ...(isTopModal ? {} : { 'data-under': '' }),
       },
     });
@@ -552,7 +555,10 @@ export class ModalContainer extends BaseComponent {
       ) as HTMLElement | null;
       if (wrapper) {
         const isTopModal = index === this.modals.length - 1;
-        wrapper.style.zIndex = String(50 + index);
+        // Re-stacking runs on every render and overwrites what
+        // createModalElement set, so it has to name the same token — this
+        // line is what kept every modal at 50, under the app chrome.
+        wrapper.style.zIndex = `calc(var(--v4-z-modal, 1000) + ${index})`;
         if (isTopModal) wrapper.removeAttribute('data-under');
         else wrapper.setAttribute('data-under', '');
         // WEB-BUG-005: inert background modals
