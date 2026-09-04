@@ -138,7 +138,12 @@ describe('blendColors', () => {
   });
 
   describe('black and white blending', () => {
-    const midToneModes: BlendingMode[] = ['rgb', 'lab', 'oklab', 'ryb', 'hsl'];
+    // No mode is exempt. The previous exemption asserted `< 50` on all three
+    // channels under the heading "black dominates the mix (physically correct
+    // pigment behavior)", which #010101 satisfied — as would a function that
+    // returned pure black unconditionally. That is how the per-channel K/S
+    // defect stayed green (2026-09-03 algorithm fact-check, P0).
+    const midToneModes: BlendingMode[] = ['rgb', 'lab', 'oklab', 'ryb', 'hsl', 'spectral'];
 
     for (const mode of midToneModes) {
       it(`${mode}: blending black and white produces a mid-tone`, () => {
@@ -152,15 +157,39 @@ describe('blendColors', () => {
         expect(result.rgb.b).toBeLessThan(210);
       });
     }
+  });
 
-    // Spectral (Kubelka-Munk): black has near-zero reflectance (K/S → ∞), dominates the mix
-    it('spectral: black dominates the mix (physically correct pigment behavior)', () => {
-      const result = blendColors('#000000', '#FFFFFF', 'spectral', 0.5);
+  describe('spectral mode is Kubelka-Munk pigment mixing', () => {
+    // Blue + yellow -> green is the canonical demonstration of K-M and the
+    // reason the mode exists. It requires mixing spectral reflectance curves:
+    // blue reflects the short third of the spectrum, yellow the middle-and-long
+    // two thirds, and the surviving overlap is the green band (~500-565nm).
+    // Three independent sRGB channels have no overlap to exploit, so a
+    // per-channel implementation cannot produce it.
+    it('blue and yellow make green', () => {
+      const mixed = blendColors('#0000FF', '#FFFF00', 'spectral', 0.5);
 
-      expect(result.hex).toMatch(HEX_PATTERN);
-      expect(result.rgb.r).toBeLessThan(50);
-      expect(result.rgb.g).toBeLessThan(50);
-      expect(result.rgb.b).toBeLessThan(50);
+      expect(mixed.rgb.g).toBeGreaterThan(mixed.rgb.r);
+      expect(mixed.rgb.g).toBeGreaterThan(mixed.rgb.b);
+    });
+
+    // K/S = (1-R)^2 / 2R diverges as R -> 0. Applied per-channel to
+    // gamma-encoded sRGB, any channel that is dark in EITHER input was forced
+    // to ~0 at every ratio -- so a 90% yellow mix still came back near-black.
+    it('a mostly-yellow mix is yellow, not near-black', () => {
+      const mixed = blendColors('#0000FF', '#FFFF00', 'spectral', 0.9);
+
+      expect(mixed.rgb.r).toBeGreaterThan(128);
+      expect(mixed.rgb.g).toBeGreaterThan(128);
+    });
+
+    it('accepts shorthand #RGB hex like every other mode', () => {
+      // spectral.js does not parse 3-digit hex: it yields "#NANNANNAN" rather
+      // than throwing. Channels must be handed over already expanded.
+      const short = blendColors('#00F', '#FF0', 'spectral', 0.5);
+      const long = blendColors('#0000FF', '#FFFF00', 'spectral', 0.5);
+
+      expect(short.hex).toBe(long.hex);
     });
   });
 

@@ -1,0 +1,151 @@
+- generic [ref=f12e2]:
+  - generic [ref=f12e3]:
+    - link "DuckDuckGo" [ref=f12e4] [cursor=pointer]:
+      - /url: /html/
+    - generic [ref=f12e5]:
+      - generic [ref=f12e6]:
+        - textbox [ref=f12e7]: Itten "The Art of Color" 1961 twelve hue circle harmony contrast complementary
+        - button "Submit" [ref=f12e8] [cursor=pointer]
+      - combobox [ref=f12e10] [cursor=pointer]:
+        - option "All Regions" [selected]
+        - option "Argentina"
+        - option "Australia"
+        - option "Austria"
+        - option "Belgium (fr)"
+        - option "Belgium (nl)"
+        - option "Brazil"
+        - option "Bulgaria"
+        - option "Canada (en)"
+        - option "Canada (fr)"
+        - option "Catalonia"
+        - option "Chile"
+        - option "China"
+        - option "Colombia"
+        - option "Croatia"
+        - option "Czech Republic"
+        - option "Denmark"
+        - option "Estonia"
+        - option "Finland"
+        - option "France"
+        - option "Germany"
+        - option "Greece"
+        - option "Hong Kong"
+        - option "Hungary"
+        - option "Iceland"
+        - option "India (en)"
+        - option "Indonesia (en)"
+        - option "Ireland"
+        - option "Israel (en)"
+        - option "Italy"
+        - option "Japan"
+        - option "Korea"
+        - option "Latvia"
+        - option "Lithuania"
+        - option "Malaysia (en)"
+        - option "Mexico"
+        - option "Netherlands"
+        - option "New Zealand"
+        - option "Norway"
+        - option "Pakistan (en)"
+        - option "Peru"
+        - option "Philippines (en)"
+        - option "Poland"
+        - option "Portugal"
+        - option "Romania"
+        - option "Russia"
+        - option "Saudi Arabia"
+        - option "Singapore"
+        - option "Slovakia"
+        - option "Slovenia"
+        - option "South Africa"
+        - option "Spain (ca)"
+        - option "Spain (es)"
+        - option "Sweden"
+        - option "Switzerland (de)"
+        - option "Switzerland (fr)"
+        - option "Taiwan"
+        - option "Thailand (en)"
+        - option "Turkey"
+        - option "US (English)"
+        - option "US (Spanish)"
+        - option "Ukraine"
+        - option "United Kingdom"
+        - option "Vietnam (en)"
+      - combobox [ref=f12e12] [cursor=pointer]:
+        - option "Any Time" [selected]
+        - option "Past Day"
+        - option "Past Week"
+        - option "Past Month"
+        - option "Past Year"
+  - generic [ref=f12e15]:
+    - generic [ref=f12e17]:
+      - heading [level=2] [ref=f12e18]:
+        - link "Johannes Itten - THE ART OF COLOR | PDF | Color | Paintings - Scribd" [ref=f12e19] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F603393175%2FJohannes%2DItten%2DTHE%2DART%2DOF%2DCOLOR&rut=b843d445bff11627d31b80be82e0807877caf89233a4965784a2bc82cdc322e3
+      - generic [ref=f12e21]:
+        - link [ref=f12e23] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F603393175%2FJohannes%2DItten%2DTHE%2DART%2DOF%2DCOLOR&rut=b843d445bff11627d31b80be82e0807877caf89233a4965784a2bc82cdc322e3
+        - link "www.scribd.com/document/603393175/Johannes-Itten-THE-ART-OF-COLOR" [ref=f12e24] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F603393175%2FJohannes%2DItten%2DTHE%2DART%2DOF%2DCOLOR&rut=b843d445bff11627d31b80be82e0807877caf89233a4965784a2bc82cdc322e3
+      - link "Johannes Itten saw the publication of his most famous written work, Kunst der Farbe (English translation The Art of Color, 1961), near the end of his life." [ref=f12e25] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F603393175%2FJohannes%2DItten%2DTHE%2DART%2DOF%2DCOLOR&rut=b843d445bff11627d31b80be82e0807877caf89233a4965784a2bc82cdc322e3
+    - generic [ref=f12e27]:
+      - heading [level=2] [ref=f12e28]:
+        - link "PDF The Art of Color - cdn.bookey.app" [ref=f12e29] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fcdn.bookey.app%2Ffiles%2Fpdf%2Fbook%2Fen%2Fthe%2Dart%2Dof%2Dcolor.pdf&rut=448a2ca4e9e8a6066d342fa9cf304b94beb203ecb17995fec0bb3bb14b5539d8
+          - generic [ref=f12e30]: PDF
+          - text: The Art of Color - cdn.bookey.app
+      - generic [ref=f12e32]:
+        - link [ref=f12e34] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fcdn.bookey.app%2Ffiles%2Fpdf%2Fbook%2Fen%2Fthe%2Dart%2Dof%2Dcolor.pdf&rut=448a2ca4e9e8a6066d342fa9cf304b94beb203ecb17995fec0bb3bb14b5539d8
+        - link "cdn.bookey.app/files/pdf/book/en/the-art-of-color.pdf" [ref=f12e35] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fcdn.bookey.app%2Ffiles%2Fpdf%2Fbook%2Fen%2Fthe%2Dart%2Dof%2Dcolor.pdf&rut=448a2ca4e9e8a6066d342fa9cf304b94beb203ecb17995fec0bb3bb14b5539d8
+      - 'link "About the book In \"The Art of Color,\" renowned color theorist Johannes Itten explores two contrasting approaches to the understanding of color: the subjective experience of emotions and the objective principles of color theory. Through detailed explanations and vivid color reproductions, Itten illuminates the intricate interplay between personal perception and systematic study, offering ..." [ref=f12e36] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fcdn.bookey.app%2Ffiles%2Fpdf%2Fbook%2Fen%2Fthe%2Dart%2Dof%2Dcolor.pdf&rut=448a2ca4e9e8a6066d342fa9cf304b94beb203ecb17995fec0bb3bb14b5539d8
+    - generic [ref=f12e38]:
+      - heading [level=2] [ref=f12e39]:
+        - link "Itten's Color Theory Explained | PDF | Color | Paintings" [ref=f12e40] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F843431536%2FJohannes%2DItten%2Dthe%2DElements%2Dof%2DColor%2DOCR&rut=24d1eb973cd09661fa8b8eed09cf7f2b4fa6ac0d136d6255606e6df8eefc601f
+      - generic [ref=f12e42]:
+        - link [ref=f12e44] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F843431536%2FJohannes%2DItten%2Dthe%2DElements%2Dof%2DColor%2DOCR&rut=24d1eb973cd09661fa8b8eed09cf7f2b4fa6ac0d136d6255606e6df8eefc601f
+        - link "www.scribd.com/document/843431536/Johannes-Itten-the-Elements-of-Color-OCR" [ref=f12e45] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F843431536%2FJohannes%2DItten%2Dthe%2DElements%2Dof%2DColor%2DOCR&rut=24d1eb973cd09661fa8b8eed09cf7f2b4fa6ac0d136d6255606e6df8eefc601f
+      - link "This document is a treatise on Johannes Itten's color theory, based on his book 'The Art of Color,' edited by Faber Birren. It discusses Itten's principles of color, including the twelve-part color circle, seven color contrasts, and the relationship between color and form, emphasizing the importance of subjective expression and knowledge in color artistry. The work aims to provide a ..." [ref=f12e46] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F843431536%2FJohannes%2DItten%2Dthe%2DElements%2Dof%2DColor%2DOCR&rut=24d1eb973cd09661fa8b8eed09cf7f2b4fa6ac0d136d6255606e6df8eefc601f
+    - generic [ref=f12e48]:
+      - heading [level=2] [ref=f12e49]:
+        - link "Full text of \" Johannes Ittens - THE ART OF COLOR \"" [ref=f12e50] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Farchive.org%2Fstream%2Fjohannes%2Dittens%2Dthe%2Dart%2Dof%2Dcolor%2FJohannes%2520Ittens%2520%25E2%2580%2593%2520THE%2520ART%2520OF%2520COLOR_djvu.txt&rut=d0db1b09b80e869d60f93ef1f977190bf32f7555a92360ba457c8b80a61529fa
+      - generic [ref=f12e52]:
+        - link [ref=f12e54] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Farchive.org%2Fstream%2Fjohannes%2Dittens%2Dthe%2Dart%2Dof%2Dcolor%2FJohannes%2520Ittens%2520%25E2%2580%2593%2520THE%2520ART%2520OF%2520COLOR_djvu.txt&rut=d0db1b09b80e869d60f93ef1f977190bf32f7555a92360ba457c8b80a61529fa
+        - link "archive.org/stream/johannes-ittens-the-art-of-color/Johannes Ittens – THE ART OF COLOR_djvu.txt" [ref=f12e55] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Farchive.org%2Fstream%2Fjohannes%2Dittens%2Dthe%2Dart%2Dof%2Dcolor%2FJohannes%2520Ittens%2520%25E2%2580%2593%2520THE%2520ART%2520OF%2520COLOR_djvu.txt&rut=d0db1b09b80e869d60f93ef1f977190bf32f7555a92360ba457c8b80a61529fa
+      - link "Going back to the color circle, we have seen that yellow is the lightest and violet the darkest hue; that is, these two hues have the strongest light-dark contrast. At right angles to the yellow- violet axis, we have red-orange versus blue-green, the two poles of cold-warm contrast." [ref=f12e56] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Farchive.org%2Fstream%2Fjohannes%2Dittens%2Dthe%2Dart%2Dof%2Dcolor%2FJohannes%2520Ittens%2520%25E2%2580%2593%2520THE%2520ART%2520OF%2520COLOR_djvu.txt&rut=d0db1b09b80e869d60f93ef1f977190bf32f7555a92360ba457c8b80a61529fa
+    - generic [ref=f12e58]:
+      - heading [level=2] [ref=f12e59]:
+        - link "The Dimensions of Colour, traditional colour theory, Itten" [ref=f12e60] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=http%3A%2F%2Fwww.huevaluechroma.com%2F113.php&rut=be8afd2e4b2788655bba05a73a6d0149b9d2bed1954aa1b409144ba952ae2445
+      - generic [ref=f12e62]:
+        - link [ref=f12e64] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=http%3A%2F%2Fwww.huevaluechroma.com%2F113.php&rut=be8afd2e4b2788655bba05a73a6d0149b9d2bed1954aa1b409144ba952ae2445
+        - link "www.huevaluechroma.com/113.php" [ref=f12e65] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=http%3A%2F%2Fwww.huevaluechroma.com%2F113.php&rut=be8afd2e4b2788655bba05a73a6d0149b9d2bed1954aa1b409144ba952ae2445
+      - link "Figure 11.3.3. A,B. Supposedly complementary red-green pairs from the first edition of Itten's The Art of Color (A) and from the online Adobe Color CC (formerly Kuler) colour circle (B). To see the true afterimage complementary of each colour, focus on the central dot on the left for ten seconds and then immediately focus on dot on the right." [ref=f12e66] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=http%3A%2F%2Fwww.huevaluechroma.com%2F113.php&rut=be8afd2e4b2788655bba05a73a6d0149b9d2bed1954aa1b409144ba952ae2445
+    - generic [ref=f12e68]:
+      - heading [level=2] [ref=f12e69]:
+        - link "(PDF) Itten's seven colour contrasts -a review Part II. The seven ..." [ref=f12e70] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F109057119%2FIttens_seven_colour_contrasts_a_review_Part_II_The_seven_contrasts_as_described_in_Kunst_der_Farbe_The_Art_of_Color&rut=27234f4fee7d0c44cf545d88bcf4555550af189e5557eec16bfd38758ec8573b
+      - generic [ref=f12e72]:
+        - link [ref=f12e74] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F109057119%2FIttens_seven_colour_contrasts_a_review_Part_II_The_seven_contrasts_as_described_in_Kunst_der_Farbe_The_Art_of_Color&rut=27234f4fee7d0c44cf545d88bcf4555550af189e5557eec16bfd38758ec8573b
+        - link "www.academia.edu/109057119/Ittens_seven_colour_contrasts_a_review_Part_II_The_seven_contrasts_as_described_in_Kunst_der_Farbe_The_Art_of_Color" [ref=f12e75] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F109057119%2FIttens_seven_colour_contrasts_a_review_Part_II_The_seven_contrasts_as_described_in_Kunst_der_Farbe_The_Art_of_Color&rut=27234f4fee7d0c44cf545d88bcf4555550af189e5557eec16bfd38758ec8573b
+      - link "In the first part of the article, we describe the origins of Itten's contrast theory and the road leading up to the seven contrasts as it took its final form in The Art of Color 1. In the second part we shall discuss in detail Itten's seven contrasts. Finally, in the third part, we shall present the problems caused by students and teachers mechanically memorising and then blindly following the ..." [ref=f12e76] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F109057119%2FIttens_seven_colour_contrasts_a_review_Part_II_The_seven_contrasts_as_described_in_Kunst_der_Farbe_The_Art_of_Color&rut=27234f4fee7d0c44cf545d88bcf4555550af189e5557eec16bfd38758ec8573b
+    - button "Next" [ref=f12e79] [cursor=pointer]
+    - link "Feedback" [ref=f12e81] [cursor=pointer]:
+      - /url: //duckduckgo.com/feedback.html

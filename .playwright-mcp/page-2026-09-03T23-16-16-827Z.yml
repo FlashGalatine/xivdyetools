@@ -1,0 +1,184 @@
+- generic [ref=f11e2]:
+  - generic [ref=f11e3]:
+    - link "DuckDuckGo" [ref=f11e4] [cursor=pointer]:
+      - /url: /html/
+    - generic [ref=f11e5]:
+      - generic [ref=f11e6]:
+        - textbox [ref=f11e7]: Ou Luo "colour harmony model" two-colour combinations Color Research Application
+        - button "Submit" [ref=f11e8] [cursor=pointer]
+      - combobox [ref=f11e10] [cursor=pointer]:
+        - option "All Regions" [selected]
+        - option "Argentina"
+        - option "Australia"
+        - option "Austria"
+        - option "Belgium (fr)"
+        - option "Belgium (nl)"
+        - option "Brazil"
+        - option "Bulgaria"
+        - option "Canada (en)"
+        - option "Canada (fr)"
+        - option "Catalonia"
+        - option "Chile"
+        - option "China"
+        - option "Colombia"
+        - option "Croatia"
+        - option "Czech Republic"
+        - option "Denmark"
+        - option "Estonia"
+        - option "Finland"
+        - option "France"
+        - option "Germany"
+        - option "Greece"
+        - option "Hong Kong"
+        - option "Hungary"
+        - option "Iceland"
+        - option "India (en)"
+        - option "Indonesia (en)"
+        - option "Ireland"
+        - option "Israel (en)"
+        - option "Italy"
+        - option "Japan"
+        - option "Korea"
+        - option "Latvia"
+        - option "Lithuania"
+        - option "Malaysia (en)"
+        - option "Mexico"
+        - option "Netherlands"
+        - option "New Zealand"
+        - option "Norway"
+        - option "Pakistan (en)"
+        - option "Peru"
+        - option "Philippines (en)"
+        - option "Poland"
+        - option "Portugal"
+        - option "Romania"
+        - option "Russia"
+        - option "Saudi Arabia"
+        - option "Singapore"
+        - option "Slovakia"
+        - option "Slovenia"
+        - option "South Africa"
+        - option "Spain (ca)"
+        - option "Spain (es)"
+        - option "Sweden"
+        - option "Switzerland (de)"
+        - option "Switzerland (fr)"
+        - option "Taiwan"
+        - option "Thailand (en)"
+        - option "Turkey"
+        - option "US (English)"
+        - option "US (Spanish)"
+        - option "Ukraine"
+        - option "United Kingdom"
+        - option "Vietnam (en)"
+      - combobox [ref=f11e12] [cursor=pointer]:
+        - option "Any Time" [selected]
+        - option "Past Day"
+        - option "Past Week"
+        - option "Past Month"
+        - option "Past Year"
+  - generic [ref=f11e15]:
+    - generic [ref=f11e17]:
+      - heading [level=2] [ref=f11e18]:
+        - link "(PDF) A color harmony model for two-color combinations" [ref=f11e19] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F229906278_A_color_harmony_model_for_two%2Dcolor_combinations&rut=1c8e14f8fc673a23eada426dbb116fdc07f228f4bcaa082b99650069d4049b45
+      - generic [ref=f11e21]:
+        - link [ref=f11e23] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F229906278_A_color_harmony_model_for_two%2Dcolor_combinations&rut=1c8e14f8fc673a23eada426dbb116fdc07f228f4bcaa082b99650069d4049b45
+        - link "www.researchgate.net/publication/229906278_A_color_harmony_model_for_two-color_combinations" [ref=f11e24] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F229906278_A_color_harmony_model_for_two%2Dcolor_combinations&rut=1c8e14f8fc673a23eada426dbb116fdc07f228f4bcaa082b99650069d4049b45
+      - link "A Colour Harmony Model for Two-Colour Combinations Li-Chen Ou,* M. Ronnier Luo Department of Colour & Polymer Chemistry, University of Leeds, Leeds LS2 9JT, United Kingdom" [ref=f11e25] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F229906278_A_color_harmony_model_for_two%2Dcolor_combinations&rut=1c8e14f8fc673a23eada426dbb116fdc07f228f4bcaa082b99650069d4049b45
+    - generic [ref=f11e27]:
+      - heading [level=2] [ref=f11e28]:
+        - link "A colour harmony model for two‐colour combinations - Ou - 2006 - Color ..." [ref=f11e29] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fonlinelibrary.wiley.com%2Fdoi%2Fabs%2F10.1002%2Fcol.20208&rut=2166efaccf6e012a17b2afac370577479d4ee514883728a0a03c6c582aa11b80
+      - generic [ref=f11e31]:
+        - link [ref=f11e33] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fonlinelibrary.wiley.com%2Fdoi%2Fabs%2F10.1002%2Fcol.20208&rut=2166efaccf6e012a17b2afac370577479d4ee514883728a0a03c6c582aa11b80
+        - link "onlinelibrary.wiley.com/doi/abs/10.1002/col.20208" [ref=f11e34] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fonlinelibrary.wiley.com%2Fdoi%2Fabs%2F10.1002%2Fcol.20208&rut=2166efaccf6e012a17b2afac370577479d4ee514883728a0a03c6c582aa11b80
+      - link "This study investigates harmony in two-colour combinations in order to develop a quantitative model. A total of 1431 colour pairs were used as stimuli in a psychophysical experiment for the visual as..." [ref=f11e35] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fonlinelibrary.wiley.com%2Fdoi%2Fabs%2F10.1002%2Fcol.20208&rut=2166efaccf6e012a17b2afac370577479d4ee514883728a0a03c6c582aa11b80
+    - generic [ref=f11e37]:
+      - heading [level=2] [ref=f11e38]:
+        - link "PDF A Colour Harmony Model for Two-Colour Combinations - ResearchGate" [ref=f11e39] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fprofile%2FMing%2DLuo%2D13%2Fpublication%2F229906278_A_colour_harmony_model_for_two%2Dcolour_combinations%2Flinks%2F5c0c957192851c39ebde1ea2%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations.pdf&rut=42f9d4e272e8ca4a315a56995c46ca7b6c945a09605693fcd980b387ee2a1090
+          - generic [ref=f11e40]: PDF
+          - text: A Colour Harmony Model for Two-Colour Combinations - ResearchGate
+      - generic [ref=f11e42]:
+        - link [ref=f11e44] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fprofile%2FMing%2DLuo%2D13%2Fpublication%2F229906278_A_colour_harmony_model_for_two%2Dcolour_combinations%2Flinks%2F5c0c957192851c39ebde1ea2%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations.pdf&rut=42f9d4e272e8ca4a315a56995c46ca7b6c945a09605693fcd980b387ee2a1090
+        - link "www.researchgate.net/profile/Ming-Luo-13/publication/229906278_A_colour_harmony_model_for_two-colour_combinations/links/5c0c957192851c39ebde1ea2/A-colour-harmony-model-for-two-colour-combinations.pdf" [ref=f11e45] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fprofile%2FMing%2DLuo%2D13%2Fpublication%2F229906278_A_colour_harmony_model_for_two%2Dcolour_combinations%2Flinks%2F5c0c957192851c39ebde1ea2%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations.pdf&rut=42f9d4e272e8ca4a315a56995c46ca7b6c945a09605693fcd980b387ee2a1090
+      - 'link "Abstract: This study investigates harmony in two-colour combinations in order to develop a quantitative model. A total of 1431 colour pairs were used as stimuli in a psycho-physical experiment for ..." [ref=f11e46] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fprofile%2FMing%2DLuo%2D13%2Fpublication%2F229906278_A_colour_harmony_model_for_two%2Dcolour_combinations%2Flinks%2F5c0c957192851c39ebde1ea2%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations.pdf&rut=42f9d4e272e8ca4a315a56995c46ca7b6c945a09605693fcd980b387ee2a1090
+    - generic [ref=f11e48]:
+      - heading [level=2] [ref=f11e49]:
+        - link "A Colour Harmony Model for Two-Colour Combinations." [ref=f11e50] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpsycnet.apa.org%2Frecord%2F2006%2D06760%2D004&rut=ae9483689c89acba3d8b38c11e5a6e437013cb67d180fb6c9547fac84296aec6
+      - generic [ref=f11e52]:
+        - link [ref=f11e54] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpsycnet.apa.org%2Frecord%2F2006%2D06760%2D004&rut=ae9483689c89acba3d8b38c11e5a6e437013cb67d180fb6c9547fac84296aec6
+        - link "psycnet.apa.org/record/2006-06760-004" [ref=f11e55] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpsycnet.apa.org%2Frecord%2F2006%2D06760%2D004&rut=ae9483689c89acba3d8b38c11e5a6e437013cb67d180fb6c9547fac84296aec6
+      - link "This study investigates harmony in two-colour combinations in order to develop a quantitative model. A total of 1431 colour pairs were used as stimuli in a psychophysical experiment for the visual assessment of harmony. These colour pairs were generated using 54 colours selected systematically from CIELAB colour space. During the experiment, observers were presented with colour pairs displayed ..." [ref=f11e56] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpsycnet.apa.org%2Frecord%2F2006%2D06760%2D004&rut=ae9483689c89acba3d8b38c11e5a6e437013cb67d180fb6c9547fac84296aec6
+    - generic [ref=f11e58]:
+      - heading [level=2] [ref=f11e59]:
+        - 'link "A Colour Harmony Model For Two-Colour Combinations: Li-Chen Ou, M ..." [ref=f11e60] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F491717886%2F10001&rut=8bba668ab8c960d327778cb6a0541aea7dbbb72945e9bd7d191b594087dfff54
+      - generic [ref=f11e62]:
+        - link [ref=f11e64] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F491717886%2F10001&rut=8bba668ab8c960d327778cb6a0541aea7dbbb72945e9bd7d191b594087dfff54
+        - link "www.scribd.com/document/491717886/10001" [ref=f11e65] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F491717886%2F10001&rut=8bba668ab8c960d327778cb6a0541aea7dbbb72945e9bd7d191b594087dfff54
+      - 'link "A Colour Harmony Model for Two-Colour Combinations Li-Chen Ou,* M. Ronnier Luo Department of Colour & Polymer Chemistry, University of Leeds, Leeds LS2 9JT, United Kingdom Received 14 May 2004; revised 8 July 2005; accepted 29 October 2005 Abstract: This study investigates harmony in two-colour an accurate prediction.13-17 These studies can be divided combinations in order to develop a ..." [ref=f11e66] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.scribd.com%2Fdocument%2F491717886%2F10001&rut=8bba668ab8c960d327778cb6a0541aea7dbbb72945e9bd7d191b594087dfff54
+    - generic [ref=f11e68]:
+      - heading [level=2] [ref=f11e69]:
+        - link "A colour harmony model for two‐colour combinations" [ref=f11e70] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Farticles.researchsolutions.com%2Fa%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwocolour%2Dcombinations%2Fdoi%2F10.1002%2Fcol.20208&rut=9634f89678d8686d534d668ee45999ddba6b4932c2ad0b6f671f1f4cbd95c4a6
+      - generic [ref=f11e72]:
+        - link [ref=f11e74] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Farticles.researchsolutions.com%2Fa%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwocolour%2Dcombinations%2Fdoi%2F10.1002%2Fcol.20208&rut=9634f89678d8686d534d668ee45999ddba6b4932c2ad0b6f671f1f4cbd95c4a6
+        - link "articles.researchsolutions.com/a-colour-harmony-model-for-twocolour-combinations/doi/10.1002/col.20208" [ref=f11e75] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Farticles.researchsolutions.com%2Fa%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwocolour%2Dcombinations%2Fdoi%2F10.1002%2Fcol.20208&rut=9634f89678d8686d534d668ee45999ddba6b4932c2ad0b6f671f1f4cbd95c4a6
+      - link "A colour harmony model for two‐colour combinations Li‐Chen Ou M. Ronnier Luo Color Research & Application Volume 31 Issue 3 Pages 191-204 Year 2006 publications 0 supporting" [ref=f11e76] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Farticles.researchsolutions.com%2Fa%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwocolour%2Dcombinations%2Fdoi%2F10.1002%2Fcol.20208&rut=9634f89678d8686d534d668ee45999ddba6b4932c2ad0b6f671f1f4cbd95c4a6
+    - generic [ref=f11e78]:
+      - heading [level=2] [ref=f11e79]:
+        - link "A colour harmony model for two‐colour combinations" [ref=f11e80] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.deepdyve.com%2Flp%2Fwiley%2Fa%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations%2DNqqMR9DIk0&rut=638551cf0336d24b9e77d1e99242656073424296c062480ec0f0d7a6ce32494f
+      - generic [ref=f11e82]:
+        - link [ref=f11e84] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.deepdyve.com%2Flp%2Fwiley%2Fa%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations%2DNqqMR9DIk0&rut=638551cf0336d24b9e77d1e99242656073424296c062480ec0f0d7a6ce32494f
+        - link "www.deepdyve.com/lp/wiley/a-colour-harmony-model-for-two-colour-combinations-NqqMR9DIk0" [ref=f11e85] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.deepdyve.com%2Flp%2Fwiley%2Fa%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations%2DNqqMR9DIk0&rut=638551cf0336d24b9e77d1e99242656073424296c062480ec0f0d7a6ce32494f
+      - 'link "L. Ou, M. Luo, A. Woodcock, A. Wright (2004) A study of colour emotion and colour preference. Part I: Colour emotions for single colours Color Research and Application, 29 J. Russell (1980) A circumplex model of affect. Journal of Personality and Social Psychology, 39 Burchett Burchett (2002) Color harmony Color Res Appl, 27 K. Burchett (1991)" [ref=f11e86] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.deepdyve.com%2Flp%2Fwiley%2Fa%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations%2DNqqMR9DIk0&rut=638551cf0336d24b9e77d1e99242656073424296c062480ec0f0d7a6ce32494f
+    - generic [ref=f11e88]:
+      - heading [level=2] [ref=f11e89]:
+        - link "A colour harmony model for two-colour combinations" [ref=f11e90] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.tib.eu%2Fen%2Fsearch%2Fid%2Ftema%253ATEMA20060500183%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations%2F&rut=01f944b5d00216aaf6cfa50b1ed88f7bef032e62a12084d91d8717c853659098
+      - generic [ref=f11e92]:
+        - link [ref=f11e94] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.tib.eu%2Fen%2Fsearch%2Fid%2Ftema%253ATEMA20060500183%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations%2F&rut=01f944b5d00216aaf6cfa50b1ed88f7bef032e62a12084d91d8717c853659098
+        - link "www.tib.eu/en/search/id/tema:TEMA20060500183/A-colour-harmony-model-for-two-colour-combinations/" [ref=f11e95] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.tib.eu%2Fen%2Fsearch%2Fid%2Ftema%253ATEMA20060500183%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations%2F&rut=01f944b5d00216aaf6cfa50b1ed88f7bef032e62a12084d91d8717c853659098
+      - 'link "More details on this result Title: A colour harmony model for two-colour combinations Additional title: Ein Farbharmoniemodell für Kombinationen aus zwei Farben Contributors: Ou, Li-Chen ( author ) / Luo, M. Ronnier ( author ) Published in: Color Research & Application ; 31, 3 ; 191-204 Publisher: New search for: Publication date: 2006 Size:" [ref=f11e96] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.tib.eu%2Fen%2Fsearch%2Fid%2Ftema%253ATEMA20060500183%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations%2F&rut=01f944b5d00216aaf6cfa50b1ed88f7bef032e62a12084d91d8717c853659098
+    - generic [ref=f11e98]:
+      - heading [level=2] [ref=f11e99]:
+        - link "A colour harmony model for two-colour combinations" [ref=f11e100] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.tib.eu%2Fen%2Fsearch%2Fid%2Folc%3AOLC1696177189%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations&rut=f933f0fdf48421f59d828f1e9fd6f4c25cfe32c51d18bc630d2258fc710bf37e
+      - generic [ref=f11e102]:
+        - link [ref=f11e104] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.tib.eu%2Fen%2Fsearch%2Fid%2Folc%3AOLC1696177189%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations&rut=f933f0fdf48421f59d828f1e9fd6f4c25cfe32c51d18bc630d2258fc710bf37e
+        - link "www.tib.eu/en/search/id/olc:OLC1696177189/A-colour-harmony-model-for-two-colour-combinations" [ref=f11e105] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.tib.eu%2Fen%2Fsearch%2Fid%2Folc%3AOLC1696177189%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations&rut=f933f0fdf48421f59d828f1e9fd6f4c25cfe32c51d18bc630d2258fc710bf37e
+      - 'link "A colour harmony model for two-colour combinations Contributors: Ou, Li-Chen ( author ) / Luo, M.Ronnier Published in: Color research and application ; 31, 3 ; 191-204 Publisher: Wiley New search for: Wiley Place of publication: New York, NY [u.a.] Publication date: 2006 ISSN: 0361-2317 ZDBID: 197051-3 Type of media: Article (Journal) Type of ..." [ref=f11e106] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.tib.eu%2Fen%2Fsearch%2Fid%2Folc%3AOLC1696177189%2FA%2Dcolour%2Dharmony%2Dmodel%2Dfor%2Dtwo%2Dcolour%2Dcombinations&rut=f933f0fdf48421f59d828f1e9fd6f4c25cfe32c51d18bc630d2258fc710bf37e
+    - button "Next" [ref=f11e109] [cursor=pointer]
+    - link "Feedback" [ref=f11e111] [cursor=pointer]:
+      - /url: //duckduckgo.com/feedback.html

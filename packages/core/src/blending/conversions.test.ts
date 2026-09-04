@@ -17,10 +17,6 @@ import {
   rybToRgb,
   rgbToHsl,
   hslToRgb,
-  rgbToReflectance,
-  reflectanceToRgb,
-  reflectanceToKS,
-  ksToReflectance,
   rgbToHex,
   hexToRgb,
 } from './conversions.js';
@@ -280,59 +276,6 @@ describe('rgbToHsl / hslToRgb round-trip', () => {
       expect(Math.abs(restored.b - rgb.b)).toBeLessThanOrEqual(CHANNEL_TOLERANCE);
     });
   }
-});
-
-// ============================================================================
-// Kubelka-Munk (Spectral) helpers
-// ============================================================================
-
-describe('rgbToReflectance / reflectanceToRgb', () => {
-  it('normalizes RGB to [0, 1]', () => {
-    const ref = rgbToReflectance({ r: 128, g: 64, b: 192 });
-    expect(ref.r).toBeCloseTo(128 / 255, 4);
-    expect(ref.g).toBeCloseTo(64 / 255, 4);
-    expect(ref.b).toBeCloseTo(192 / 255, 4);
-  });
-
-  it('round-trips without loss', () => {
-    const rgb: RGB = { r: 100, g: 200, b: 50 };
-    const ref = rgbToReflectance(rgb);
-    const restored = reflectanceToRgb(ref);
-    expect(restored.r).toBe(rgb.r);
-    expect(restored.g).toBe(rgb.g);
-    expect(restored.b).toBe(rgb.b);
-  });
-
-  it('black stays black', () => {
-    const ref = rgbToReflectance({ r: 0, g: 0, b: 0 });
-    const rgb = reflectanceToRgb(ref);
-    expect(rgb.r).toBe(0);
-    expect(rgb.g).toBe(0);
-    expect(rgb.b).toBe(0);
-  });
-});
-
-describe('reflectanceToKS / ksToReflectance', () => {
-  it('K/S round-trip for typical reflectances', () => {
-    const values = [0.1, 0.25, 0.5, 0.75, 0.9];
-    for (const r of values) {
-      const ks = reflectanceToKS(r);
-      const restored = ksToReflectance(ks);
-      expect(restored).toBeCloseTo(r, 4);
-    }
-  });
-
-  it('K/S is non-negative for R in (0, 1)', () => {
-    expect(reflectanceToKS(0.3)).toBeGreaterThanOrEqual(0);
-    expect(reflectanceToKS(0.7)).toBeGreaterThanOrEqual(0);
-  });
-
-  it('clamps extreme inputs (0, 1) to avoid division by zero', () => {
-    expect(() => reflectanceToKS(0)).not.toThrow();
-    expect(() => reflectanceToKS(1)).not.toThrow();
-    expect(() => reflectanceToKS(-0.5)).not.toThrow();
-    expect(() => reflectanceToKS(1.5)).not.toThrow();
-  });
 });
 
 // ============================================================================

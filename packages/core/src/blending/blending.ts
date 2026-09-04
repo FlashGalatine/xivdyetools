@@ -10,6 +10,8 @@
  * - Spectral: Kubelka-Munk physics simulation
  */
 
+import * as spectral from 'spectral.js';
+
 import type { RGB, LAB, HSL, BlendResult, BlendingMode } from './types.js';
 import {
   rgbToLab,
@@ -20,10 +22,6 @@ import {
   rybToRgb,
   rgbToHsl,
   hslToRgb,
-  rgbToReflectance,
-  reflectanceToRgb,
-  reflectanceToKS,
-  ksToReflectance,
   rgbToHex,
   hexToRgb,
 } from './conversions.js';
@@ -146,18 +144,33 @@ function blendHSL(rgb1: RGB, rgb2: RGB, t: number): RGB {
   return hslToRgb(blended);
 }
 
+/**
+ * Kubelka-Munk pigment mixing, via spectral.js.
+ *
+ * The previous implementation applied the K/S relation to the three
+ * gamma-encoded sRGB channels independently. That is not Kubelka-Munk: K-M is
+ * defined per-wavelength on a spectral reflectance curve, and it needs LINEAR
+ * reflectance. Two consequences, both measured (2026-09-03 fact-check, P0):
+ *
+ * - K/S = (1-R)^2 / 2R diverges as R -> 0, so any channel dark in either input
+ *   was pinned to ~0 at every ratio. A blue->yellow ramp rendered nine
+ *   near-black stops out of eleven on the bot's /gradient.
+ * - Three independent channels cannot produce blue + yellow = green. That
+ *   effect lives in the OVERLAP of two reflectance curves; per-channel maths
+ *   computes G_out from (blue_G, yellow_G) alone and never sees blue's B.
+ *
+ * spectral.js reconstructs a 38-band reflectance curve (380-750nm) per colour
+ * using Burns' LHTSS spectral upsampling, mixes in K/S space per band, and
+ * gamut-maps the result by reducing OkLCh chroma under a dE-OK search.
+ */
 function blendSpectral(rgb1: RGB, rgb2: RGB, t: number): RGB {
-  const ref1 = rgbToReflectance(rgb1);
-  const ref2 = rgbToReflectance(rgb2);
-  return reflectanceToRgb({
-    r: kubelkaMunkMix(ref1.r, ref2.r, t),
-    g: kubelkaMunkMix(ref1.g, ref2.g, t),
-    b: kubelkaMunkMix(ref1.b, ref2.b, t),
-  });
-}
+  // Hand spectral.js fully-expanded 6-digit hex. It does not parse shorthand
+  // #RGB and fails SILENTLY, yielding the string "#NANNANNAN" rather than
+  // throwing — so passing a caller's raw input string through would be a trap.
+  const mixed = spectral.mix(
+    [new spectral.Color(rgbToHex(rgb1)), 1 - t],
+    [new spectral.Color(rgbToHex(rgb2)), t],
+  );
 
-function kubelkaMunkMix(r1: number, r2: number, t: number): number {
-  const ks1 = reflectanceToKS(r1);
-  const ks2 = reflectanceToKS(r2);
-  return ksToReflectance(ks1 * (1 - t) + ks2 * t);
+  return hexToRgb(mixed.toString({ format: 'hex', method: 'map' }));
 }

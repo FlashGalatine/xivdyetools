@@ -1,0 +1,170 @@
+- generic [ref=f8e2]:
+  - generic [ref=f8e3]:
+    - link "DuckDuckGo" [ref=f8e4] [cursor=pointer]:
+      - /url: /html/
+    - generic [ref=f8e5]:
+      - generic [ref=f8e6]:
+        - textbox [ref=f8e7]: Friedman Bentley Finkel 1977 "An Algorithm for Finding Best Matches in Logarithmic Expected Time" ACM TOMS doi
+        - button "Submit" [ref=f8e8] [cursor=pointer]
+      - combobox [ref=f8e10] [cursor=pointer]:
+        - option "All Regions" [selected]
+        - option "Argentina"
+        - option "Australia"
+        - option "Austria"
+        - option "Belgium (fr)"
+        - option "Belgium (nl)"
+        - option "Brazil"
+        - option "Bulgaria"
+        - option "Canada (en)"
+        - option "Canada (fr)"
+        - option "Catalonia"
+        - option "Chile"
+        - option "China"
+        - option "Colombia"
+        - option "Croatia"
+        - option "Czech Republic"
+        - option "Denmark"
+        - option "Estonia"
+        - option "Finland"
+        - option "France"
+        - option "Germany"
+        - option "Greece"
+        - option "Hong Kong"
+        - option "Hungary"
+        - option "Iceland"
+        - option "India (en)"
+        - option "Indonesia (en)"
+        - option "Ireland"
+        - option "Israel (en)"
+        - option "Italy"
+        - option "Japan"
+        - option "Korea"
+        - option "Latvia"
+        - option "Lithuania"
+        - option "Malaysia (en)"
+        - option "Mexico"
+        - option "Netherlands"
+        - option "New Zealand"
+        - option "Norway"
+        - option "Pakistan (en)"
+        - option "Peru"
+        - option "Philippines (en)"
+        - option "Poland"
+        - option "Portugal"
+        - option "Romania"
+        - option "Russia"
+        - option "Saudi Arabia"
+        - option "Singapore"
+        - option "Slovakia"
+        - option "Slovenia"
+        - option "South Africa"
+        - option "Spain (ca)"
+        - option "Spain (es)"
+        - option "Sweden"
+        - option "Switzerland (de)"
+        - option "Switzerland (fr)"
+        - option "Taiwan"
+        - option "Thailand (en)"
+        - option "Turkey"
+        - option "US (English)"
+        - option "US (Spanish)"
+        - option "Ukraine"
+        - option "United Kingdom"
+        - option "Vietnam (en)"
+      - combobox [ref=f8e12] [cursor=pointer]:
+        - option "Any Time" [selected]
+        - option "Past Day"
+        - option "Past Week"
+        - option "Past Month"
+        - option "Past Year"
+  - generic [ref=f8e15]:
+    - generic [ref=f8e17]:
+      - heading [level=2] [ref=f8e18]:
+        - link "An Algorithm for Finding Best Matches in Logarithmic Expected Time" [ref=f8e19] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdl.acm.org%2Fdoi%2F10.1145%2F355744.355745&rut=d94eac5077fa4eb027dc4d49cf5abd7d98f46d59d0dd60ca2ccf62e9b72a07e8
+      - generic [ref=f8e21]:
+        - link [ref=f8e23] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdl.acm.org%2Fdoi%2F10.1145%2F355744.355745&rut=d94eac5077fa4eb027dc4d49cf5abd7d98f46d59d0dd60ca2ccf62e9b72a07e8
+        - link "dl.acm.org/doi/10.1145/355744.355745" [ref=f8e24] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdl.acm.org%2Fdoi%2F10.1145%2F355744.355745&rut=d94eac5077fa4eb027dc4d49cf5abd7d98f46d59d0dd60ca2ccf62e9b72a07e8
+      - link "Home ACM Journals ACM Transactions on Mathematical Software Vol. 3, No. 3 An Algorithm for Finding Best Matches in Logarithmic Expected Time article Free access" [ref=f8e25] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdl.acm.org%2Fdoi%2F10.1145%2F355744.355745&rut=d94eac5077fa4eb027dc4d49cf5abd7d98f46d59d0dd60ca2ccf62e9b72a07e8
+    - generic [ref=f8e27]:
+      - heading [level=2] [ref=f8e28]:
+        - link "An Algorithm for Finding Best Matches in Logarithmic Expected Time" [ref=f8e29] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdlnext.acm.org%2Fdoi%2F10.1145%2F355744.355745&rut=44968b9602b79a38a43003b6f425c0560654a0c52427883b7847e856e8c225e6
+      - generic [ref=f8e31]:
+        - link [ref=f8e33] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdlnext.acm.org%2Fdoi%2F10.1145%2F355744.355745&rut=44968b9602b79a38a43003b6f425c0560654a0c52427883b7847e856e8c225e6
+        - link "dlnext.acm.org/doi/10.1145/355744.355745" [ref=f8e34] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdlnext.acm.org%2Fdoi%2F10.1145%2F355744.355745&rut=44968b9602b79a38a43003b6f425c0560654a0c52427883b7847e856e8c225e6
+      - link "Home ACM Journals ACM Transactions on Mathematical Software Vol. 3, No. 3 An Algorithm for Finding Best Matches in Logarithmic Expected Time article Free access" [ref=f8e35] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdlnext.acm.org%2Fdoi%2F10.1145%2F355744.355745&rut=44968b9602b79a38a43003b6f425c0560654a0c52427883b7847e856e8c225e6
+    - generic [ref=f8e37]:
+      - heading [level=2] [ref=f8e38]:
+        - link "An Algorithm for Finding Best Matches in Logarithmic Expected Time" [ref=f8e39] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscholars.uky.edu%2Fen%2Fpublications%2Fan%2Dalgorithm%2Dfor%2Dfinding%2Dbest%2Dmatches%2Din%2Dlogarithmic%2Dexpected%2Dtim%2F&rut=b9779a4e9b848d6f3baeb99b2637b83fff9bcbda76852977a7ff3d0d3dcfc4a3
+      - generic [ref=f8e41]:
+        - link [ref=f8e43] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscholars.uky.edu%2Fen%2Fpublications%2Fan%2Dalgorithm%2Dfor%2Dfinding%2Dbest%2Dmatches%2Din%2Dlogarithmic%2Dexpected%2Dtim%2F&rut=b9779a4e9b848d6f3baeb99b2637b83fff9bcbda76852977a7ff3d0d3dcfc4a3
+        - link "scholars.uky.edu/en/publications/an-algorithm-for-finding-best-matches-in-logarithmic-expected-tim/" [ref=f8e44] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscholars.uky.edu%2Fen%2Fpublications%2Fan%2Dalgorithm%2Dfor%2Dfinding%2Dbest%2Dmatches%2Din%2Dlogarithmic%2Dexpected%2Dtim%2F&rut=b9779a4e9b848d6f3baeb99b2637b83fff9bcbda76852977a7ff3d0d3dcfc4a3
+      - link "Fingerprint Dive into the research topics of 'An Algorithm for Finding Best Matches in Logarithmic Expected Time'. Together they form a unique fingerprint." [ref=f8e45] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscholars.uky.edu%2Fen%2Fpublications%2Fan%2Dalgorithm%2Dfor%2Dfinding%2Dbest%2Dmatches%2Din%2Dlogarithmic%2Dexpected%2Dtim%2F&rut=b9779a4e9b848d6f3baeb99b2637b83fff9bcbda76852977a7ff3d0d3dcfc4a3
+    - generic [ref=f8e47]:
+      - heading [level=2] [ref=f8e48]:
+        - link "An Algorithm for Finding Best Matches in Logarithmic Expected Time" [ref=f8e49] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F220493118_An_Algorithm_for_Finding_Best_Matches_in_Logarithmic_Expected_Time&rut=80e984ca91e4d2eddedc9e48fe3dadaaf3b5df7c5bee68b57a6cd37417e81ac1
+      - generic [ref=f8e51]:
+        - link [ref=f8e53] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F220493118_An_Algorithm_for_Finding_Best_Matches_in_Logarithmic_Expected_Time&rut=80e984ca91e4d2eddedc9e48fe3dadaaf3b5df7c5bee68b57a6cd37417e81ac1
+        - link "www.researchgate.net/publication/220493118_An_Algorithm_for_Finding_Best_Matches_in_Logarithmic_Expected_Time" [ref=f8e54] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F220493118_An_Algorithm_for_Finding_Best_Matches_in_Logarithmic_Expected_Time&rut=80e984ca91e4d2eddedc9e48fe3dadaaf3b5df7c5bee68b57a6cd37417e81ac1
+      - link "SLAC-PUB-1549 (Rev.) STAN-CS-75-482 February 1975 Revised December 1975 Revised July 1976 AN ALGORITHM FOR FINDING BEST MATCHES IN LOGARITHMIC EXPECTED TIME Jerome H. Friedman Stanford Linear ..." [ref=f8e55] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F220493118_An_Algorithm_for_Finding_Best_Matches_in_Logarithmic_Expected_Time&rut=80e984ca91e4d2eddedc9e48fe3dadaaf3b5df7c5bee68b57a6cd37417e81ac1
+    - generic [ref=f8e57]:
+      - heading [level=2] [ref=f8e58]:
+        - link "An Algorithm for Finding Best Matches in Logarithmic Expected Time" [ref=f8e59] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.osti.gov%2Fbiblio%2F1443274&rut=949fe930b314f7b1c48411af381b2abbfdd219237e36d87076a6bc683bdf6860
+      - generic [ref=f8e61]:
+        - link [ref=f8e63] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.osti.gov%2Fbiblio%2F1443274&rut=949fe930b314f7b1c48411af381b2abbfdd219237e36d87076a6bc683bdf6860
+        - link "www.osti.gov/biblio/1443274" [ref=f8e64] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.osti.gov%2Fbiblio%2F1443274&rut=949fe930b314f7b1c48411af381b2abbfdd219237e36d87076a6bc683bdf6860
+      - 'link "Journal Article: An Algorithm for Finding Best Matches in Logarithmic Expected Time" [ref=f8e65] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.osti.gov%2Fbiblio%2F1443274&rut=949fe930b314f7b1c48411af381b2abbfdd219237e36d87076a6bc683bdf6860
+    - generic [ref=f8e67]:
+      - heading [level=2] [ref=f8e68]:
+        - 'link "TOMS: Vol 3, No 3 - ACM Digital Library" [ref=f8e69] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdl.acm.org%2Ftoc%2Ftoms%2F1977%2F3%2F3&rut=58d97cd93eb01752b9c00847e0aaee6b8c9edcecf19f231ca116365341b3a24e
+      - generic [ref=f8e71]:
+        - link [ref=f8e73] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdl.acm.org%2Ftoc%2Ftoms%2F1977%2F3%2F3&rut=58d97cd93eb01752b9c00847e0aaee6b8c9edcecf19f231ca116365341b3a24e
+        - link "dl.acm.org/toc/toms/1977/3/3" [ref=f8e74] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdl.acm.org%2Ftoc%2Ftoms%2F1977%2F3%2F3&rut=58d97cd93eb01752b9c00847e0aaee6b8c9edcecf19f231ca116365341b3a24e
+      - link "An Algorithm for Finding Best Matches in Logarithmic Expected Time Jerome H. Friedman, Jon Louis Bentley, Raphael Ari Finkel Pages 209-226 https://doi.org/10.1145/355744.355745 2,122 13,218 article" [ref=f8e75] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fdl.acm.org%2Ftoc%2Ftoms%2F1977%2F3%2F3&rut=58d97cd93eb01752b9c00847e0aaee6b8c9edcecf19f231ca116365341b3a24e
+    - generic [ref=f8e77]:
+      - heading [level=2] [ref=f8e78]:
+        - link "An Algorithm for Finding Best Matches in Logarithmic Expected Time" [ref=f8e79] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.semanticscholar.org%2Fpaper%2FAn%2DAlgorithm%2Dfor%2DFinding%2DBest%2DMatches%2Din%2DExpected%2DFriedman%2DBentley%2Fcab3c73f1b2140231b98944c720100b356d91b28&rut=ba8dffa486f2b71c6aa7fc81a2db4f7795ac3f2f21af2e2c35f67b4adec703d6
+      - generic [ref=f8e81]:
+        - link [ref=f8e83] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.semanticscholar.org%2Fpaper%2FAn%2DAlgorithm%2Dfor%2DFinding%2DBest%2DMatches%2Din%2DExpected%2DFriedman%2DBentley%2Fcab3c73f1b2140231b98944c720100b356d91b28&rut=ba8dffa486f2b71c6aa7fc81a2db4f7795ac3f2f21af2e2c35f67b4adec703d6
+        - link "www.semanticscholar.org/paper/An-Algorithm-for-Finding-Best-Matches-in-Expected-Friedman-Bentley/cab3c73f1b2140231b98944c720100b356d91b28" [ref=f8e84] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.semanticscholar.org%2Fpaper%2FAn%2DAlgorithm%2Dfor%2DFinding%2DBest%2DMatches%2Din%2DExpected%2DFriedman%2DBentley%2Fcab3c73f1b2140231b98944c720100b356d91b28&rut=ba8dffa486f2b71c6aa7fc81a2db4f7795ac3f2f21af2e2c35f67b4adec703d6
+      - 'link "DOI: 10.1145/355744.355745 Corpus ID: 10811510 An Algorithm for Finding Best Matches in Logarithmic Expected Time J. Friedman, J. Bentley, R. Finkel Published in ACM Transactions on… 1 September 1977 Mathematics, Computer Science" [ref=f8e85] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.semanticscholar.org%2Fpaper%2FAn%2DAlgorithm%2Dfor%2DFinding%2DBest%2DMatches%2Din%2DExpected%2DFriedman%2DBentley%2Fcab3c73f1b2140231b98944c720100b356d91b28&rut=ba8dffa486f2b71c6aa7fc81a2db4f7795ac3f2f21af2e2c35f67b4adec703d6
+    - generic [ref=f8e87]:
+      - heading [level=2] [ref=f8e88]:
+        - link "An Algorithm for Finding Best Matches in Logarithmic Expected Time" [ref=f8e89] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F19017931%2FAn_Algorithm_for_Finding_Best_Matches_in_Logarithmic_Expected_Time&rut=862eee25097ba696e0e74cc01fa76fe44e8039b019c4f0065e32a41db18c1781
+      - generic [ref=f8e91]:
+        - link [ref=f8e93] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F19017931%2FAn_Algorithm_for_Finding_Best_Matches_in_Logarithmic_Expected_Time&rut=862eee25097ba696e0e74cc01fa76fe44e8039b019c4f0065e32a41db18c1781
+        - link "www.academia.edu/19017931/An_Algorithm_for_Finding_Best_Matches_in_Logarithmic_Expected_Time" [ref=f8e94] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F19017931%2FAn_Algorithm_for_Finding_Best_Matches_in_Logarithmic_Expected_Time&rut=862eee25097ba696e0e74cc01fa76fe44e8039b019c4f0065e32a41db18c1781
+      - link "An algorithm and data structure are presented for searching a file containing N records, each described by k real valued keys, for the m closest matches or nearest neighbors to a given query record." [ref=f8e95] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F19017931%2FAn_Algorithm_for_Finding_Best_Matches_in_Logarithmic_Expected_Time&rut=862eee25097ba696e0e74cc01fa76fe44e8039b019c4f0065e32a41db18c1781
+    - link "Feedback" [ref=f8e97] [cursor=pointer]:
+      - /url: //duckduckgo.com/feedback.html

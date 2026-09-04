@@ -1,0 +1,185 @@
+- generic [ref=f10e2]:
+  - generic [ref=f10e3]:
+    - link "DuckDuckGo" [ref=f10e4] [cursor=pointer]:
+      - /url: /html/
+    - generic [ref=f10e5]:
+      - generic [ref=f10e6]:
+        - textbox [ref=f10e7]: Schloss Palmer "aesthetic response to color combinations" preference harmony hue similarity
+        - button "Submit" [ref=f10e8] [cursor=pointer]
+      - combobox [ref=f10e10] [cursor=pointer]:
+        - option "All Regions" [selected]
+        - option "Argentina"
+        - option "Australia"
+        - option "Austria"
+        - option "Belgium (fr)"
+        - option "Belgium (nl)"
+        - option "Brazil"
+        - option "Bulgaria"
+        - option "Canada (en)"
+        - option "Canada (fr)"
+        - option "Catalonia"
+        - option "Chile"
+        - option "China"
+        - option "Colombia"
+        - option "Croatia"
+        - option "Czech Republic"
+        - option "Denmark"
+        - option "Estonia"
+        - option "Finland"
+        - option "France"
+        - option "Germany"
+        - option "Greece"
+        - option "Hong Kong"
+        - option "Hungary"
+        - option "Iceland"
+        - option "India (en)"
+        - option "Indonesia (en)"
+        - option "Ireland"
+        - option "Israel (en)"
+        - option "Italy"
+        - option "Japan"
+        - option "Korea"
+        - option "Latvia"
+        - option "Lithuania"
+        - option "Malaysia (en)"
+        - option "Mexico"
+        - option "Netherlands"
+        - option "New Zealand"
+        - option "Norway"
+        - option "Pakistan (en)"
+        - option "Peru"
+        - option "Philippines (en)"
+        - option "Poland"
+        - option "Portugal"
+        - option "Romania"
+        - option "Russia"
+        - option "Saudi Arabia"
+        - option "Singapore"
+        - option "Slovakia"
+        - option "Slovenia"
+        - option "South Africa"
+        - option "Spain (ca)"
+        - option "Spain (es)"
+        - option "Sweden"
+        - option "Switzerland (de)"
+        - option "Switzerland (fr)"
+        - option "Taiwan"
+        - option "Thailand (en)"
+        - option "Turkey"
+        - option "US (English)"
+        - option "US (Spanish)"
+        - option "Ukraine"
+        - option "United Kingdom"
+        - option "Vietnam (en)"
+      - combobox [ref=f10e12] [cursor=pointer]:
+        - option "Any Time" [selected]
+        - option "Past Day"
+        - option "Past Week"
+        - option "Past Month"
+        - option "Past Year"
+  - generic [ref=f10e15]:
+    - generic [ref=f10e17]:
+      - heading [level=2] [ref=f10e18]:
+        - 'link "Aesthetic response to color combinations: preference, harmony, and ..." [ref=f10e19] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Flink.springer.com%2Farticle%2F10.3758%2Fs13414%2D010%2D0027%2D0&rut=0d7e574e6ae5007cb17592e18c4a769da148b41a470762c915154fd0be265c52
+      - generic [ref=f10e21]:
+        - link [ref=f10e23] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Flink.springer.com%2Farticle%2F10.3758%2Fs13414%2D010%2D0027%2D0&rut=0d7e574e6ae5007cb17592e18c4a769da148b41a470762c915154fd0be265c52
+        - link "link.springer.com/article/10.3758/s13414-010-0027-0" [ref=f10e24] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Flink.springer.com%2Farticle%2F10.3758%2Fs13414%2D010%2D0027%2D0&rut=0d7e574e6ae5007cb17592e18c4a769da148b41a470762c915154fd0be265c52
+      - 'link "Previous studies of preference for and harmony of color combinations have produced confusing results. For example, some claim that harmony increases with hue similarity, whereas others claim that it decreases. We argue that such confusions are resolved by distinguishing among three types of judgments about color pairs: (1) preference for the pair as a whole, (2) harmony of the pair as a whole ..." [ref=f10e25] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Flink.springer.com%2Farticle%2F10.3758%2Fs13414%2D010%2D0027%2D0&rut=0d7e574e6ae5007cb17592e18c4a769da148b41a470762c915154fd0be265c52
+    - generic [ref=f10e27]:
+      - heading [level=2] [ref=f10e28]:
+        - 'link "PDF Aesthetic response to color combinations: preference, harmony, and ..." [ref=f10e29] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpalmerlab.berkeley.edu%2Fpdf%2FSchloss%26Palmer(2011).pdf&rut=9968046e868be977f5bde0a327495ef55d89659a4f6f31ba0878f7ec62ae6140
+          - generic [ref=f10e30]: PDF
+          - text: "Aesthetic response to color combinations: preference, harmony, and ..."
+      - generic [ref=f10e32]:
+        - link [ref=f10e34] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpalmerlab.berkeley.edu%2Fpdf%2FSchloss%26Palmer(2011).pdf&rut=9968046e868be977f5bde0a327495ef55d89659a4f6f31ba0878f7ec62ae6140
+        - link "palmerlab.berkeley.edu/pdf/Schloss&Palmer(2011).pdf" [ref=f10e35] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpalmerlab.berkeley.edu%2Fpdf%2FSchloss%26Palmer(2011).pdf&rut=9968046e868be977f5bde0a327495ef55d89659a4f6f31ba0878f7ec62ae6140
+      - 'link "Abstract Previous studies of preference for and harmony of color combinations have produced confusing results. For example, some claim that harmony increases with hue similarity, whereas others claim that it decreases. We argue that such confusions are resolved by distinguishing among three types of judgments about color pairs: (1) preference for the pair as a whole, (2) harmony of the pair as ..." [ref=f10e36] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpalmerlab.berkeley.edu%2Fpdf%2FSchloss%26Palmer(2011).pdf&rut=9968046e868be977f5bde0a327495ef55d89659a4f6f31ba0878f7ec62ae6140
+    - generic [ref=f10e38]:
+      - heading [level=2] [ref=f10e39]:
+        - 'link "Aesthetic response to color combinations: Preference, harmony, and ..." [ref=f10e40] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F49783385_Aesthetic_response_to_color_combinations_Preference_harmony_and_similarity&rut=2b168949e393d532a772285e0e41cc66b9b480acc9f86cf327cdb1a8cb12aaaf
+      - generic [ref=f10e42]:
+        - link [ref=f10e44] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F49783385_Aesthetic_response_to_color_combinations_Preference_harmony_and_similarity&rut=2b168949e393d532a772285e0e41cc66b9b480acc9f86cf327cdb1a8cb12aaaf
+        - link "www.researchgate.net/publication/49783385_Aesthetic_response_to_color_combinations_Preference_harmony_and_similarity" [ref=f10e45] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F49783385_Aesthetic_response_to_color_combinations_Preference_harmony_and_similarity&rut=2b168949e393d532a772285e0e41cc66b9b480acc9f86cf327cdb1a8cb12aaaf
+      - link "Previous studies of preference for and harmony of color combinations have produced confusing results. For example, some claim that harmony increases with hue similarity, whereas others claim that ..." [ref=f10e46] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F49783385_Aesthetic_response_to_color_combinations_Preference_harmony_and_similarity&rut=2b168949e393d532a772285e0e41cc66b9b480acc9f86cf327cdb1a8cb12aaaf
+    - generic [ref=f10e48]:
+      - heading [level=2] [ref=f10e49]:
+        - 'link "PDF Aesthetic Response to Color Combinations: Preference, Harmony, and ..." [ref=f10e50] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpalmerlab.berkeley.edu%2Fpdf%2FSchloss%26Palmer(2011)sup.pdf&rut=4ea95169789350138fb76d493e84fec974c2aba24153dc80e9a94fcdfe74cb9a
+          - generic [ref=f10e51]: PDF
+          - text: "Aesthetic Response to Color Combinations: Preference, Harmony, and ..."
+      - generic [ref=f10e53]:
+        - link [ref=f10e55] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpalmerlab.berkeley.edu%2Fpdf%2FSchloss%26Palmer(2011)sup.pdf&rut=4ea95169789350138fb76d493e84fec974c2aba24153dc80e9a94fcdfe74cb9a
+        - link "palmerlab.berkeley.edu/pdf/Schloss&Palmer(2011)sup.pdf" [ref=f10e56] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpalmerlab.berkeley.edu%2Fpdf%2FSchloss%26Palmer(2011)sup.pdf&rut=4ea95169789350138fb76d493e84fec974c2aba24153dc80e9a94fcdfe74cb9a
+      - link "To understand the nature of pair preferences, pair harmony, pair similarity, and figural color preference beyond the findings described in the main article, we examined the effects of the component colors' cuts through color space - saturated (S), light (L), muted (M) and dark (D) - as a function of the hue difference between the two colors." [ref=f10e57] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fpalmerlab.berkeley.edu%2Fpdf%2FSchloss%26Palmer(2011)sup.pdf&rut=4ea95169789350138fb76d493e84fec974c2aba24153dc80e9a94fcdfe74cb9a
+    - generic [ref=f10e59]:
+      - heading [level=2] [ref=f10e60]:
+        - 'link "Aesthetic response to color combinations: preference, harmony, and ..." [ref=f10e61] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.semanticscholar.org%2Fpaper%2FAesthetic%2Dresponse%2Dto%2Dcolor%2Dcombinations%253A%2Dharmony%252C%2DSchloss%2DPalmer%2Fe467bbe429069b80ca03fe47c8befd034d0703bf&rut=47d9dd671bde7bf4b29668f153a422bb0ca131adffd7614ab99e9bb02404aa05
+      - generic [ref=f10e63]:
+        - link [ref=f10e65] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.semanticscholar.org%2Fpaper%2FAesthetic%2Dresponse%2Dto%2Dcolor%2Dcombinations%253A%2Dharmony%252C%2DSchloss%2DPalmer%2Fe467bbe429069b80ca03fe47c8befd034d0703bf&rut=47d9dd671bde7bf4b29668f153a422bb0ca131adffd7614ab99e9bb02404aa05
+        - link "www.semanticscholar.org/paper/Aesthetic-response-to-color-combinations:-harmony,-Schloss-Palmer/e467bbe429069b80ca03fe47c8befd034d0703bf" [ref=f10e66] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.semanticscholar.org%2Fpaper%2FAesthetic%2Dresponse%2Dto%2Dcolor%2Dcombinations%253A%2Dharmony%252C%2DSchloss%2DPalmer%2Fe467bbe429069b80ca03fe47c8befd034d0703bf&rut=47d9dd671bde7bf4b29668f153a422bb0ca131adffd7614ab99e9bb02404aa05
+      - link "Empirical support for this distinction shows that pair preference and harmony both increase as hue similarity increases, but preference relies more strongly on component color preference and lightness contrast. Previous studies of preference for and harmony of color combinations have produced confusing results. For example, some claim that harmony increases with hue similarity, whereas others ..." [ref=f10e67] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.semanticscholar.org%2Fpaper%2FAesthetic%2Dresponse%2Dto%2Dcolor%2Dcombinations%253A%2Dharmony%252C%2DSchloss%2DPalmer%2Fe467bbe429069b80ca03fe47c8befd034d0703bf&rut=47d9dd671bde7bf4b29668f153a422bb0ca131adffd7614ab99e9bb02404aa05
+    - generic [ref=f10e69]:
+      - heading [level=2] [ref=f10e70]:
+        - 'link "Aesthetic response to color combinations: preference, harmony, and ..." [ref=f10e71] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F4930129%2FAesthetic_response_to_color_combinations_preference_harmony_and_similarity&rut=e71213b119db45b7890d4d99f42382cd2a048cc1d2e976357024df7e6dac7a65
+      - generic [ref=f10e73]:
+        - link [ref=f10e75] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F4930129%2FAesthetic_response_to_color_combinations_preference_harmony_and_similarity&rut=e71213b119db45b7890d4d99f42382cd2a048cc1d2e976357024df7e6dac7a65
+        - link "www.academia.edu/4930129/Aesthetic_response_to_color_combinations_preference_harmony_and_similarity" [ref=f10e76] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F4930129%2FAesthetic_response_to_color_combinations_preference_harmony_and_similarity&rut=e71213b119db45b7890d4d99f42382cd2a048cc1d2e976357024df7e6dac7a65
+      - 'link "Atten Percept Psychophys (2011) 73:551-571 DOI 10.3758/s13414-010-0027- Aesthetic response to color combinations: preference, harmony, and similarity Karen B. Schloss & Stephen E. Palmer Published online: 10 November 2010 # The Author (s). This article is published with open access at Springerlink.com 2010 Abstract Previous studies of preference for and harmony of color combinations have ..." [ref=f10e77] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.academia.edu%2F4930129%2FAesthetic_response_to_color_combinations_preference_harmony_and_similarity&rut=e71213b119db45b7890d4d99f42382cd2a048cc1d2e976357024df7e6dac7a65
+    - generic [ref=f10e79]:
+      - heading [level=2] [ref=f10e80]:
+        - 'link "Aesthetic response to color combinations: Preference, harmony, and ..." [ref=f10e81] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.mendeley.com%2Fcatalogue%2F49ac7edf%2D73ad%2D30d8%2D8fbb%2Dbec83348e04a%2F&rut=ae4f7fa8c81c7d73fe26005e8e55c6fae7fafebdc74408c42b44b60f0debf277
+      - generic [ref=f10e83]:
+        - link [ref=f10e85] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.mendeley.com%2Fcatalogue%2F49ac7edf%2D73ad%2D30d8%2D8fbb%2Dbec83348e04a%2F&rut=ae4f7fa8c81c7d73fe26005e8e55c6fae7fafebdc74408c42b44b60f0debf277
+        - link "www.mendeley.com/catalogue/49ac7edf-73ad-30d8-8fbb-bec83348e04a/" [ref=f10e86] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.mendeley.com%2Fcatalogue%2F49ac7edf%2D73ad%2D30d8%2D8fbb%2Dbec83348e04a%2F&rut=ae4f7fa8c81c7d73fe26005e8e55c6fae7fafebdc74408c42b44b60f0debf277
+      - link "(2011) Schloss, Palmer. Attention, Perception, and Psychophysics. Previous studies of preference for and harmony of color combinations have produced confusing results. For example, some claim that harmony increases with hue similarity, whereas others claim that it decreases. We argue that such co..." [ref=f10e87] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.mendeley.com%2Fcatalogue%2F49ac7edf%2D73ad%2D30d8%2D8fbb%2Dbec83348e04a%2F&rut=ae4f7fa8c81c7d73fe26005e8e55c6fae7fafebdc74408c42b44b60f0debf277
+    - generic [ref=f10e89]:
+      - heading [level=2] [ref=f10e90]:
+        - 'link "Aesthetic response to color combinations: - ProQuest" [ref=f10e91] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.proquest.com%2Fdocview%2F851476568%3Fpq%2Dorigsite%3Dwos%26sourcetype%3DScholarly%2520Journals&rut=5e73a82e33febdd59f0bffc1dc3ebf3a38bc666f86ac168320f0121a8a89bf63
+      - generic [ref=f10e93]:
+        - link [ref=f10e95] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.proquest.com%2Fdocview%2F851476568%3Fpq%2Dorigsite%3Dwos%26sourcetype%3DScholarly%2520Journals&rut=5e73a82e33febdd59f0bffc1dc3ebf3a38bc666f86ac168320f0121a8a89bf63
+        - link "www.proquest.com/docview/851476568?pq-origsite=wos&sourcetype=Scholarly Journals" [ref=f10e96] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.proquest.com%2Fdocview%2F851476568%3Fpq%2Dorigsite%3Dwos%26sourcetype%3DScholarly%2520Journals&rut=5e73a82e33febdd59f0bffc1dc3ebf3a38bc666f86ac168320f0121a8a89bf63
+      - 'link "Aesthetic response to color combinations: preference, harmony, and similarity Schloss, Karen B; Palmer, Stephen E. Attention, Perception and Psychophysics; Austin Vol. 73, Iss. 2, (Feb 2011): 551-571." [ref=f10e97] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.proquest.com%2Fdocview%2F851476568%3Fpq%2Dorigsite%3Dwos%26sourcetype%3DScholarly%2520Journals&rut=5e73a82e33febdd59f0bffc1dc3ebf3a38bc666f86ac168320f0121a8a89bf63
+    - generic [ref=f10e99]:
+      - heading [level=2] [ref=f10e100]:
+        - 'link "Aesthetic response to color combinations: preference, harmony, and ..." [ref=f10e101] [cursor=pointer]':
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscispace.com%2Fpapers%2Faesthetic%2Dresponse%2Dto%2Dcolor%2Dcombinations%2Dpreference%2Dharmony%2D2wa0xr7er1&rut=4758d3e231f0b447fc930aa071cd1389afef286b015a0178e85f9a2fd878a14c
+      - generic [ref=f10e103]:
+        - link [ref=f10e105] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscispace.com%2Fpapers%2Faesthetic%2Dresponse%2Dto%2Dcolor%2Dcombinations%2Dpreference%2Dharmony%2D2wa0xr7er1&rut=4758d3e231f0b447fc930aa071cd1389afef286b015a0178e85f9a2fd878a14c
+        - link "scispace.com/papers/aesthetic-response-to-color-combinations-preference-harmony-2wa0xr7er1" [ref=f10e106] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscispace.com%2Fpapers%2Faesthetic%2Dresponse%2Dto%2Dcolor%2Dcombinations%2Dpreference%2Dharmony%2D2wa0xr7er1&rut=4758d3e231f0b447fc930aa071cd1389afef286b015a0178e85f9a2fd878a14c
+      - 'link "(DOI: 10.3758/S13414-010-0027-0) Previous studies of preference for and harmony of color combinations have produced confusing results. For example, some claim that harmony increases with hue similarity, whereas others claim that it decreases. We argue that such confusions are resolved by distinguishing among three types of judgments about color pairs: (1) preference for the pair as a whole, (2 ..." [ref=f10e107] [cursor=pointer]':
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscispace.com%2Fpapers%2Faesthetic%2Dresponse%2Dto%2Dcolor%2Dcombinations%2Dpreference%2Dharmony%2D2wa0xr7er1&rut=4758d3e231f0b447fc930aa071cd1389afef286b015a0178e85f9a2fd878a14c
+    - link "Feedback" [ref=f10e109] [cursor=pointer]:
+      - /url: //duckduckgo.com/feedback.html

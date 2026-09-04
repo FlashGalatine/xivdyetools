@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0] - 2026-09-03
+
+### Fixed
+
+- **`spectral` blend mode returned near-black for almost every input** (ALGO-001). The mode
+  applied the Kubelka-Munk relation `K/S = (1-R)²/2R` to the three *gamma-encoded* sRGB
+  channels independently. K-M is defined per-wavelength on a *linear* spectral reflectance
+  curve, and K/S diverges as R → 0 — so any channel that was dark in either input got pinned
+  to ≈0 at **every** ratio. A blue→yellow gradient rendered nine near-black stops out of
+  eleven; even white + black came back `#010101` instead of a mid grey. Three independent
+  channels also cannot produce the blue + yellow = green result the mode is named for: that
+  effect lives in the *overlap* of two reflectance curves, and per-channel maths computes the
+  green output from the two green inputs alone.
+
+  `blendSpectral()` now delegates to `spectral.js`, which reconstructs a real 38-band
+  reflectance curve (380–750 nm, Burns' LHTSS spectral upsampling) and mixes in K/S space per
+  band. This is the same engine `ColorService.mixColorsSpectral()` already used, so the
+  Discord bot and the web app now agree exactly where they previously differed by up to
+  ΔE₀₀ 55.
+
+  **This visibly changes every `spectral` mix and gradient.** Blue + yellow is now `#398F54`
+  (a green) rather than `#010101`.
+
+- **`mixColorsSpectral()` threw on shorthand `#RGB` hex.** `spectral.js` does not parse
+  3-digit hex and does not throw on it — it yields the string `"#NANNANNAN"`, which
+  `normalizeHex` then rejected. Colours are now expanded to 6 digits before being handed to
+  the library. Every other mixing mode already accepted shorthand.
+
+### Removed
+
+- `rgbToReflectance`, `reflectanceToRgb`, `reflectanceToKS`, `ksToReflectance` from
+  `blending/conversions.ts`. Internal to the module — never exported from
+  `@xivdyetools/core/blending` — so this is not a breaking change. The K/S formulas were
+  correct; what they were applied to was not.
+
+Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
+
 ## [4.3.0] - 2026-09-03
 
 ### Added

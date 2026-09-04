@@ -18,7 +18,11 @@
 
 ---
 
-## P0 — `spectral` blend mode returns near-black for almost every input pair
+## P0 — `spectral` blend mode returns near-black for almost every input pair — ✅ FIXED (core 4.4.0)
+
+> **Fixed in Sprint 1.** `blendSpectral()` now delegates to `spectral.js`. Blue + yellow is `#398F54`,
+> white + black is `#A6A6A6`, and the bot and web paths agree exactly. The evidence below is the
+> as-found state, kept as the record of what the defect looked like.
 
 **Where:** `packages/core/src/blending/blending.ts` → `blendSpectral()` / `kubelkaMunkMix()`, with
 `packages/core/src/blending/conversions.ts` → `rgbToReflectance()`, `reflectanceToKS()`, `ksToReflectance()`.

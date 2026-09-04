@@ -1,0 +1,46 @@
+- generic [ref=e1]:
+  - heading "Color Difference ΔE2000 Calculator" [level=1] [ref=e2]
+  - paragraph [ref=e3]:
+    - text: Shows the detailed calculation in 10 steps based on our
+    - link "JavaScript" [ref=e4] [cursor=pointer]:
+      - /url: https://github.com/michel-leonard/ciede2000-color-matching/blob/main/ciede-2000.js#L6
+    - text: implementation.
+  - generic [ref=e5]: "ΔE: -"
+  - generic [ref=e6]:
+    - 'group "Colors: CIELAB Values Demo Clear" [ref=e7]':
+      - generic [ref=e9]: L1
+      - spinbutton "L1" [ref=e10]
+      - generic [ref=e11]: a1
+      - spinbutton "a1" [ref=e12]
+      - generic [ref=e13]: b1
+      - spinbutton "b1" [ref=e14]
+      - generic [ref=e16]: L2
+      - spinbutton "L2" [ref=e17]
+      - generic [ref=e18]: a2
+      - spinbutton "a2" [ref=e19]
+      - generic [ref=e20]: b2
+      - spinbutton "b2" [ref=e21]
+    - group "Optional Constants (kL, kC, kH)" [ref=e23]:
+      - generic [ref=e25]: kL
+      - spinbutton "kL" [ref=e26]: "1"
+      - generic [ref=e27]: kC
+      - spinbutton "kC" [ref=e28]: "1"
+      - generic [ref=e29]: kH
+      - spinbutton "kH" [ref=e30]: "1"
+    - group "Compliance" [ref=e31]:
+      - text: Use
+      - combobox [ref=e33]:
+        - option "Bruce Lindbloom’s ΔE2000 formulation" [selected]
+        - option "Gaurav Sharma’s ΔE2000 formulation"
+      - text: to calculate
+      - code [ref=e34]: h_mean
+      - text: .
+    - group "Draft Zone" [ref=e35]:
+      - textbox "Paste two L*a*b* colors in your usual format here... L1 = 50.0 a1 = 124.0 b1 = 6.2 L2 = 50.0 a2 = -4.9 b2 = -0.245" [active] [ref=e37]:
+        - /placeholder: "Paste two L*a*b* colors in your usual format here...\nL1 = 50.0   a1 = 124.0   b1 = 6.2\nL2 = 50.0   a2 = -4.9    b2 = -0.245"
+  - contentinfo [ref=e38]:
+    - paragraph [ref=e39]:
+      - text: Classic Software Engineering Solutions —
+      - link "bit.ly/color-difference" [ref=e40] [cursor=pointer]:
+        - /url: https://bit.ly/color-difference
+      - text: "| This is not an official CIE application."

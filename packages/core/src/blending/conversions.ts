@@ -277,32 +277,14 @@ export function hslToRgb(hsl: HSL): RGB {
   };
 }
 
-// ============================================================================
-// Kubelka-Munk (Spectral)
-// ============================================================================
-
-export function rgbToReflectance(rgb: RGB): { r: number; g: number; b: number } {
-  return { r: rgb.r / 255, g: rgb.g / 255, b: rgb.b / 255 };
-}
-
-export function reflectanceToRgb(ref: { r: number; g: number; b: number }): RGB {
-  return {
-    r: Math.round(clamp(ref.r * 255, 0, 255)),
-    g: Math.round(clamp(ref.g * 255, 0, 255)),
-    b: Math.round(clamp(ref.b * 255, 0, 255)),
-  };
-}
-
-export function reflectanceToKS(r: number): number {
-  // K/S = (1-R)² / (2R)
-  const R = Math.max(0.001, Math.min(0.999, r));
-  return ((1 - R) * (1 - R)) / (2 * R);
-}
-
-export function ksToReflectance(ks: number): number {
-  // R = 1 + K/S - √((K/S)² + 2·K/S)
-  return 1 + ks - Math.sqrt(ks * ks + 2 * ks);
-}
+// Kubelka-Munk helpers used to live here — `rgbToReflectance`,
+// `reflectanceToRgb`, `reflectanceToKS`, `ksToReflectance`. The K/S formulas
+// themselves were correct, but they were applied to the three gamma-encoded
+// sRGB channels independently, which is not Kubelka-Munk: K-M is defined
+// per-wavelength on a LINEAR spectral reflectance curve. Because K/S diverges
+// as R -> 0, any channel dark in either input collapsed to ~0 at every ratio.
+// `blendSpectral` now delegates to spectral.js, which reconstructs a real
+// 38-band reflectance curve. See docs/research/2026-09-03-algorithm-fact-check.
 
 // ============================================================================
 // Utility

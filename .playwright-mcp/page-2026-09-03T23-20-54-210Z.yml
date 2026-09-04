@@ -1,0 +1,159 @@
+- generic [ref=f18e2]:
+  - generic [ref=f18e3]:
+    - link "DuckDuckGo" [ref=f18e4] [cursor=pointer]:
+      - /url: /html/
+    - generic [ref=f18e5]:
+      - generic [ref=f18e6]:
+        - textbox [ref=f18e7]: Tokumaru Kato Nagashima 2002 "Color Design Support System" fuzzy color harmony IEEE
+        - button "Submit" [ref=f18e8] [cursor=pointer]
+      - combobox [ref=f18e10] [cursor=pointer]:
+        - option "All Regions" [selected]
+        - option "Argentina"
+        - option "Australia"
+        - option "Austria"
+        - option "Belgium (fr)"
+        - option "Belgium (nl)"
+        - option "Brazil"
+        - option "Bulgaria"
+        - option "Canada (en)"
+        - option "Canada (fr)"
+        - option "Catalonia"
+        - option "Chile"
+        - option "China"
+        - option "Colombia"
+        - option "Croatia"
+        - option "Czech Republic"
+        - option "Denmark"
+        - option "Estonia"
+        - option "Finland"
+        - option "France"
+        - option "Germany"
+        - option "Greece"
+        - option "Hong Kong"
+        - option "Hungary"
+        - option "Iceland"
+        - option "India (en)"
+        - option "Indonesia (en)"
+        - option "Ireland"
+        - option "Israel (en)"
+        - option "Italy"
+        - option "Japan"
+        - option "Korea"
+        - option "Latvia"
+        - option "Lithuania"
+        - option "Malaysia (en)"
+        - option "Mexico"
+        - option "Netherlands"
+        - option "New Zealand"
+        - option "Norway"
+        - option "Pakistan (en)"
+        - option "Peru"
+        - option "Philippines (en)"
+        - option "Poland"
+        - option "Portugal"
+        - option "Romania"
+        - option "Russia"
+        - option "Saudi Arabia"
+        - option "Singapore"
+        - option "Slovakia"
+        - option "Slovenia"
+        - option "South Africa"
+        - option "Spain (ca)"
+        - option "Spain (es)"
+        - option "Sweden"
+        - option "Switzerland (de)"
+        - option "Switzerland (fr)"
+        - option "Taiwan"
+        - option "Thailand (en)"
+        - option "Turkey"
+        - option "US (English)"
+        - option "US (Spanish)"
+        - option "Ukraine"
+        - option "United Kingdom"
+        - option "Vietnam (en)"
+      - combobox [ref=f18e12] [cursor=pointer]:
+        - option "Any Time" [selected]
+        - option "Past Day"
+        - option "Past Week"
+        - option "Past Month"
+        - option "Past Year"
+  - generic [ref=f18e15]:
+    - generic [ref=f18e17]:
+      - heading [level=2] [ref=f18e18]:
+        - link "Color design support system considering color harmony | IEEE Conference ..." [ref=f18e19] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fieeexplore.ieee.org%2Fabstract%2Fdocument%2F1005020&rut=4081d5daef41718afc7feeafb82079e143367b4dccab1e5ccf11a2181045d1f0
+      - generic [ref=f18e21]:
+        - link [ref=f18e23] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fieeexplore.ieee.org%2Fabstract%2Fdocument%2F1005020&rut=4081d5daef41718afc7feeafb82079e143367b4dccab1e5ccf11a2181045d1f0
+        - link "ieeexplore.ieee.org/abstract/document/1005020" [ref=f18e24] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fieeexplore.ieee.org%2Fabstract%2Fdocument%2F1005020&rut=4081d5daef41718afc7feeafb82079e143367b4dccab1e5ccf11a2181045d1f0
+      - link "Color design is very important for a product design. In this paper, we propose a system which aims to support such a color design. Proposed system is composed of 5 parts, such as the part which evaluates the harmony of colors, the color combining part, color scheme image judging part, image word output part and lastly image comparison part. First, the system requires the user to input a color ..." [ref=f18e25] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fieeexplore.ieee.org%2Fabstract%2Fdocument%2F1005020&rut=4081d5daef41718afc7feeafb82079e143367b4dccab1e5ccf11a2181045d1f0
+    - generic [ref=f18e27]:
+      - heading [level=2] [ref=f18e28]:
+        - link "Color design support system considering color harmony - ResearchGate" [ref=f18e29] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F3949718_Color_design_support_system_considering_color_harmony&rut=4c56ad32be9129b5052d5b2de681b49655f99838692c049c6de29149948bfe59
+      - generic [ref=f18e31]:
+        - link [ref=f18e33] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F3949718_Color_design_support_system_considering_color_harmony&rut=4c56ad32be9129b5052d5b2de681b49655f99838692c049c6de29149948bfe59
+        - link "www.researchgate.net/publication/3949718_Color_design_support_system_considering_color_harmony" [ref=f18e34] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F3949718_Color_design_support_system_considering_color_harmony&rut=4c56ad32be9129b5052d5b2de681b49655f99838692c049c6de29149948bfe59
+      - link "Hence, we apply the theory of color harmonization [Tokumaru et al. 2002] for our color assignment. Harmonic colors define sets of colors that are aesthetically pleasing to the user [Tokumaru et al ..." [ref=f18e35] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.researchgate.net%2Fpublication%2F3949718_Color_design_support_system_considering_color_harmony&rut=4c56ad32be9129b5052d5b2de681b49655f99838692c049c6de29149948bfe59
+    - generic [ref=f18e37]:
+      - heading [level=2] [ref=f18e38]:
+        - link "Color design support system considering color harmony | IEEE Conference ..." [ref=f18e39] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fieeexplore.ieee.org%2Fstamp%2Fstamp.jsp%3Farnumber%3D1005020&rut=b40e55bf6f5c052784acbb05a23b7d49ad3939929951c60e8623dd962f328079
+      - generic [ref=f18e41]:
+        - link [ref=f18e43] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fieeexplore.ieee.org%2Fstamp%2Fstamp.jsp%3Farnumber%3D1005020&rut=b40e55bf6f5c052784acbb05a23b7d49ad3939929951c60e8623dd962f328079
+        - link "ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1005020" [ref=f18e44] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fieeexplore.ieee.org%2Fstamp%2Fstamp.jsp%3Farnumber%3D1005020&rut=b40e55bf6f5c052784acbb05a23b7d49ad3939929951c60e8623dd962f328079
+      - link "Color design is very important for a product design. In this paper, we propose a system which aims to support such a color design. Proposed system is composed of 5 parts, such as the part which evaluates the harmony of colors, the color combining part, color scheme image judging part, image word output part and lastly image comparison part. First, the system requires the user to input a color ..." [ref=f18e45] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fieeexplore.ieee.org%2Fstamp%2Fstamp.jsp%3Farnumber%3D1005020&rut=b40e55bf6f5c052784acbb05a23b7d49ad3939929951c60e8623dd962f328079
+    - generic [ref=f18e47]:
+      - heading [level=2] [ref=f18e48]:
+        - link "Proceedings of the 2002 IEEE International Conference on Fuzzy Systems ..." [ref=f18e49] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fresearchr.org%2Fpublication%2FfuzzIEEE%2D2002&rut=e731c2c1770b5048e8ac5035e4015077fd58570c49cbf3b51da8d8e0c1998426
+      - generic [ref=f18e51]:
+        - link [ref=f18e53] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fresearchr.org%2Fpublication%2FfuzzIEEE%2D2002&rut=e731c2c1770b5048e8ac5035e4015077fd58570c49cbf3b51da8d8e0c1998426
+        - link "researchr.org/publication/fuzzIEEE-2002" [ref=f18e54] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fresearchr.org%2Fpublication%2FfuzzIEEE%2D2002&rut=e731c2c1770b5048e8ac5035e4015077fd58570c49cbf3b51da8d8e0c1998426
+      - link "A new fuzzy normalization algorithm for handwritten Chinese characters recognition Cheng-Min Cho, Shuenn-Shyang Wang. 368-371 [doi] Fuzzy integral for leaf image retrieval Zhiyong Wang 0001, Zheru Chi, Dagan Feng. 372-377 [doi] Color design support system considering color harmony Masataka Tokumaru, Noriaki Muranaka, Shigeru Imanishi. 378-383 [doi]" [ref=f18e55] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fresearchr.org%2Fpublication%2FfuzzIEEE%2D2002&rut=e731c2c1770b5048e8ac5035e4015077fd58570c49cbf3b51da8d8e0c1998426
+    - generic [ref=f18e57]:
+      - heading [level=2] [ref=f18e58]:
+        - link "徳丸 正孝 (Masataka Tokumaru) - 論文 - researchmap" [ref=f18e59] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fresearchmap.jp%2Fread0052624%2Fpublished_papers%3Flimit%3D20%26start%3D61&rut=c3ed4a93a0ac8890000616e59bb1d26a9b8086d1d2dde34e961c8c310339491e
+      - generic [ref=f18e61]:
+        - link [ref=f18e63] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fresearchmap.jp%2Fread0052624%2Fpublished_papers%3Flimit%3D20%26start%3D61&rut=c3ed4a93a0ac8890000616e59bb1d26a9b8086d1d2dde34e961c8c310339491e
+        - link "researchmap.jp/read0052624/published_papers?limit=20&start=61" [ref=f18e64] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fresearchmap.jp%2Fread0052624%2Fpublished_papers%3Flimit%3D20%26start%3D61&rut=c3ed4a93a0ac8890000616e59bb1d26a9b8086d1d2dde34e961c8c310339491e
+      - link "Color design support system considering color harmony M Tokumaru, N Muranaka, S Imanishi PROCEEDINGS OF THE 2002 IEEE INTERNATIONAL CONFERENCE ON FUZZY SYSTEMS, VOL 1 & 2 378-383 2002年 査読有り" [ref=f18e65] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fresearchmap.jp%2Fread0052624%2Fpublished_papers%3Flimit%3D20%26start%3D61&rut=c3ed4a93a0ac8890000616e59bb1d26a9b8086d1d2dde34e961c8c310339491e
+    - generic [ref=f18e67]:
+      - heading [level=2] [ref=f18e68]:
+        - link "Masataka Tokumaru | Kansai University | 110 Publications | 189 ..." [ref=f18e69] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscispace.com%2Fauthors%2Fmasataka%2Dtokumaru%2D2196jw9e4o&rut=813fcbae39f89dca0472886f1dd67669b552c0799caa2ae003518fe156b63de3
+      - generic [ref=f18e71]:
+        - link [ref=f18e73] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscispace.com%2Fauthors%2Fmasataka%2Dtokumaru%2D2196jw9e4o&rut=813fcbae39f89dca0472886f1dd67669b552c0799caa2ae003518fe156b63de3
+        - link "scispace.com/authors/masataka-tokumaru-2196jw9e4o" [ref=f18e74] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscispace.com%2Fauthors%2Fmasataka%2Dtokumaru%2D2196jw9e4o&rut=813fcbae39f89dca0472886f1dd67669b552c0799caa2ae003518fe156b63de3
+      - link "Color design support system considering color harmony Masataka Tokumaru, Noriaki Muranaka, Shigeru Imanishi +2 more Kansai University - 07 Aug 2002 Show Less" [ref=f18e75] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fscispace.com%2Fauthors%2Fmasataka%2Dtokumaru%2D2196jw9e4o&rut=813fcbae39f89dca0472886f1dd67669b552c0799caa2ae003518fe156b63de3
+    - generic [ref=f18e77]:
+      - heading [level=2] [ref=f18e78]:
+        - link "Color design support system considering color harmony" [ref=f18e79] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.zhangqiaokeyan.com%2Facademic%2Dconference%2Dforeign_meeting%2D223714_thesis%2F0705014929960.html&rut=387e19a0df4d85b0af846fd72390ae88905a3598442abd7b6bb234eb1d205e7e
+      - generic [ref=f18e81]:
+        - link [ref=f18e83] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.zhangqiaokeyan.com%2Facademic%2Dconference%2Dforeign_meeting%2D223714_thesis%2F0705014929960.html&rut=387e19a0df4d85b0af846fd72390ae88905a3598442abd7b6bb234eb1d205e7e
+        - link "www.zhangqiaokeyan.com/academic-conference-foreign_meeting-223714_thesis/0705014929960.html" [ref=f18e84] [cursor=pointer]:
+          - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.zhangqiaokeyan.com%2Facademic%2Dconference%2Dforeign_meeting%2D223714_thesis%2F0705014929960.html&rut=387e19a0df4d85b0af846fd72390ae88905a3598442abd7b6bb234eb1d205e7e
+      - link "摘要 Color design is very important for a product design. In this paper, we propose a system which aims to support such a color design. Proposed system is composed of 5 parts, such as the part which evaluates the harmony of colors, the color combining part, color scheme image judging part, image word output part and lastly image comparison part." [ref=f18e85] [cursor=pointer]:
+        - /url: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.zhangqiaokeyan.com%2Facademic%2Dconference%2Dforeign_meeting%2D223714_thesis%2F0705014929960.html&rut=387e19a0df4d85b0af846fd72390ae88905a3598442abd7b6bb234eb1d205e7e
+    - link "Feedback" [ref=f18e87] [cursor=pointer]:
+      - /url: //duckduckgo.com/feedback.html

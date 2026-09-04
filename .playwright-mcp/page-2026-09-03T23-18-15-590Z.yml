@@ -1,0 +1,94 @@
+- generic [ref=f13e2]:
+  - generic [ref=f13e3]:
+    - link "DuckDuckGo" [ref=f13e4] [cursor=pointer]:
+      - /url: /html/
+    - generic [ref=f13e5]:
+      - generic [ref=f13e6]:
+        - textbox [ref=f13e7]: "\"CIEDE2000\" \"triangle inequality\" metric violation paper"
+        - button "Submit" [ref=f13e8] [cursor=pointer]
+      - combobox [ref=f13e10] [cursor=pointer]:
+        - option "All Regions" [selected]
+        - option "Argentina"
+        - option "Australia"
+        - option "Austria"
+        - option "Belgium (fr)"
+        - option "Belgium (nl)"
+        - option "Brazil"
+        - option "Bulgaria"
+        - option "Canada (en)"
+        - option "Canada (fr)"
+        - option "Catalonia"
+        - option "Chile"
+        - option "China"
+        - option "Colombia"
+        - option "Croatia"
+        - option "Czech Republic"
+        - option "Denmark"
+        - option "Estonia"
+        - option "Finland"
+        - option "France"
+        - option "Germany"
+        - option "Greece"
+        - option "Hong Kong"
+        - option "Hungary"
+        - option "Iceland"
+        - option "India (en)"
+        - option "Indonesia (en)"
+        - option "Ireland"
+        - option "Israel (en)"
+        - option "Italy"
+        - option "Japan"
+        - option "Korea"
+        - option "Latvia"
+        - option "Lithuania"
+        - option "Malaysia (en)"
+        - option "Mexico"
+        - option "Netherlands"
+        - option "New Zealand"
+        - option "Norway"
+        - option "Pakistan (en)"
+        - option "Peru"
+        - option "Philippines (en)"
+        - option "Poland"
+        - option "Portugal"
+        - option "Romania"
+        - option "Russia"
+        - option "Saudi Arabia"
+        - option "Singapore"
+        - option "Slovakia"
+        - option "Slovenia"
+        - option "South Africa"
+        - option "Spain (ca)"
+        - option "Spain (es)"
+        - option "Sweden"
+        - option "Switzerland (de)"
+        - option "Switzerland (fr)"
+        - option "Taiwan"
+        - option "Thailand (en)"
+        - option "Turkey"
+        - option "US (English)"
+        - option "US (Spanish)"
+        - option "Ukraine"
+        - option "United Kingdom"
+        - option "Vietnam (en)"
+      - combobox [ref=f13e12] [cursor=pointer]:
+        - option "Any Time" [selected]
+        - option "Past Day"
+        - option "Past Week"
+        - option "Past Month"
+        - option "Past Year"
+  - generic [ref=f13e15]:
+    - generic [ref=f13e20]:
+      - heading [level=1] [ref=f13e21]:
+        - text: No results found for
+        - strong [ref=f13e22]: "\"CIEDE2000\" \"triangle inequality\" metric violation paper"
+      - paragraph [ref=f13e23]:
+        - strong [ref=f13e24]: Suggestions
+        - text: ":"
+      - list [ref=f13e25]:
+        - listitem [ref=f13e26]: Check spelling
+        - listitem [ref=f13e27]: Try related keywords
+        - listitem [ref=f13e28]: Remove unnecessary punctuation
+      - paragraph
+    - link "Feedback" [ref=f13e30] [cursor=pointer]:
+      - /url: //duckduckgo.com/feedback.html

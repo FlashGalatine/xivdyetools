@@ -126,4 +126,23 @@ describe('SpectralMixer', () => {
       expect(spectralRgb.g).toBeGreaterThan(rgbMixRgb.g);
     });
   });
+
+  describe('input parsing', () => {
+    // spectral.js does not parse shorthand hex, and does not throw on it: it
+    // yields the string "#NANNANNAN", which normalizeHex then rejects. So
+    // mixColors('#00F', '#FF0') threw where every other mixer accepted it.
+    // Expand to 6 digits before handing colours to spectral.js.
+    it('accepts shorthand #RGB hex', () => {
+      const short = SpectralMixer.mixColors('#00F', '#FF0', 0.5);
+      const long = SpectralMixer.mixColors('#0000FF', '#FFFF00', 0.5);
+
+      expect(short).toBe(long);
+    });
+
+    it('accepts lowercase hex', () => {
+      expect(SpectralMixer.mixColors('#0000ff', '#ffff00', 0.5)).toBe(
+        SpectralMixer.mixColors('#0000FF', '#FFFF00', 0.5),
+      );
+    });
+  });
 });

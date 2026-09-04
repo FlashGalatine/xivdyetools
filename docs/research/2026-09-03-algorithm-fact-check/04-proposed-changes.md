@@ -35,7 +35,30 @@ to the same question. Everything below follows from collapsing that to one.
 
 ---
 
-## Sprint 1 — Stop shipping wrong colours (P0)
+## Sprint 1 — Stop shipping wrong colours (P0) — ✅ **DONE**
+
+**Shipped in core 4.4.0.** Three assumptions in this sprint's original text turned out to be wrong on
+the facts, all in our favour:
+
+| Assumed | Actual |
+|---|---|
+| +5.9 KB gzip on the bot bundle | **Zero.** `ColorService` statically imports `SpectralMixer`, and bot-logic already imports `ColorService` — spectral.js was already in the bundle |
+| Might need a major bump | **Minor (4.3.0 → 4.4.0).** The four K/S helpers were never exported from `blending/index.ts`, so removing them breaks no consumer |
+| — | **Found a second bug:** spectral.js returns the *string* `"#NANNANNAN"` for 3-digit hex instead of throwing, so `mixColorsSpectral('#00F','#FF0')` threw where every other mode worked. Fixed in both paths |
+
+Also worth recording: the two `spectral` exemptions in `blending.integration.test.ts` turned out **not**
+to be load-bearing — the broken ramp is technically monotonic and does end at white, so it passed those
+checks anyway. Removing them was hygiene; the defect is caught by the black-and-white mid-tone assertion
+and the new pigment tests.
+
+Verified after the change: bot and web now produce **identical** spectral output (surface divergence
+13/42 → 6/42 cells, the remainder being RYB, which is Sprint 2), blue + yellow is `#398F54`, green + red
+is a brown `#834B17`, and white + black is `#A6A6A6`. Full gates: 25/25 test tasks, 42/42 type-check +
+lint.
+
+---
+
+### Original plan
 
 ### 1.1 Replace the per-channel Kubelka–Munk with real spectral mixing
 

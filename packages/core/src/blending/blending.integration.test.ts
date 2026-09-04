@@ -96,7 +96,11 @@ describe('Gradient Generation: Monotonic Progression', () => {
 
       const results = steps.map((ratio) => blendColors(color1, color2, mode, ratio));
 
-      if (mode !== 'spectral' && mode !== 'ryb') {
+      // 'spectral' is no longer exempt (2026-09-03 fact-check, P0): the
+      // per-channel K/S implementation collapsed every interior step of a
+      // black->white ramp to #000000-#030303, and these two exemptions are what
+      // let it pass. 'ryb' stays exempt pending the RYB unification.
+      if (mode !== 'ryb') {
         for (let i = 1; i < results.length; i++) {
           expect(results[i].rgb.r).toBeGreaterThanOrEqual(results[i - 1].rgb.r);
           expect(results[i].rgb.g).toBeGreaterThanOrEqual(results[i - 1].rgb.g);
@@ -105,9 +109,7 @@ describe('Gradient Generation: Monotonic Progression', () => {
       }
 
       expect(results[0].rgb.r).toBeLessThan(10);
-      if (mode !== 'spectral') {
-        expect(results[results.length - 1].rgb.r).toBeGreaterThan(245);
-      }
+      expect(results[results.length - 1].rgb.r).toBeGreaterThan(245);
     });
   }
 

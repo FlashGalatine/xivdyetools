@@ -47,9 +47,17 @@ export class SpectralMixer {
     // Clamp ratio to valid range
     ratio = Math.max(0, Math.min(1, ratio));
 
+    // spectral.js only parses full 6-digit hex, and fails SILENTLY otherwise:
+    // `new spectral.Color('#00F')` yields "#NANNANNAN" rather than throwing,
+    // which normalizeHex then rejects — so shorthand input threw here while
+    // every other mixer accepted it. Round-tripping through ColorConverter
+    // validates the input and expands it to 6 digits.
+    const rgb1 = ColorConverter.hexToRgb(hex1);
+    const rgb2 = ColorConverter.hexToRgb(hex2);
+
     // Create spectral Color objects
-    const color1 = new spectral.Color(hex1);
-    const color2 = new spectral.Color(hex2);
+    const color1 = new spectral.Color(ColorConverter.rgbToHex(rgb1.r, rgb1.g, rgb1.b));
+    const color2 = new spectral.Color(ColorConverter.rgbToHex(rgb2.r, rgb2.g, rgb2.b));
 
     // Mix using Kubelka-Munk theory
     // The mix function takes [color, concentration] pairs
