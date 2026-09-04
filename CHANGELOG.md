@@ -8,7 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased]
+## [2.1.0] - 2026-09-03
+
+**The dead-code reachability gate and the hashing that makes the gates honest.** Monorepo-level
+work from the 2026-09-01 dead-code audit and its follow-ups (PR #157): a new
+`scripts/check-dead-code.ts` gate for the blind spot knip has by design, `turbo` `inputs`
+allowlists replaced with `$TURBO_DEFAULT$` after they under-hashed four separate times, the
+shared configs promoted to `globalDependencies`, and the Playwright suite wired into CI for
+the first time. Minor bump: additive tooling, no change to the workspace layout or to any
+published package.
 
 ### Fixed
 
@@ -128,6 +136,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **The Playwright suite runs in CI, in its own `e2e` job — until now it ran in no workflow at
+  all.** The `ci` job's test step is `turbo run test`, which is vitest only, so the E2E specs were
+  green-by-absence: `ca0ee36d` (an i18n grammar fix that changed the palette drawer's favourites
+  aria-label from "Add to favorites: `<name>`" to "Add `<name>` to favorites") broke two
+  `collection-manager.spec.ts` selectors and merged with every check green. It was found by running
+  the suite by hand three PRs later. The job is separate so a browser install and a dev server never
+  sit in front of lint/type-check/test, and so a red browser run is its own signal rather than one
+  more way for `ci` to go red. It runs **unconditionally** rather than under
+  `--filter='...[HEAD^]'`: these specs drive the whole built app, so a change anywhere in web-app's
+  dependency graph — core's dye data, an svg glyph, a locale string — can red them, which is exactly
+  the failure that motivated the job (same reasoning the wrangler-config step already gives). The
+  first real run took **9m14s**, not the "~4 minutes" the rationale was first written against; the
+  time goes to `workers: 1` in `playwright.config.ts` (153 tests run serially on CI), not the
+  browser install, and raising CI workers is the lever to pull before giving up and going back to
+  affected-package selection. The serial setting is a deliberate stability choice — the suite is
+  `fullyParallel` with 2 retries on CI — not an accident.
 - Root `pnpm coverage:report` script + the `tsx` devDependency needed to run it. `scripts/coverage-report.ts`
   (245 lines) had been sitting unreachable: no npm script, no CI step, and no `tsx` at the root, so
   the `pnpm tsx scripts/coverage-report.ts` in its own header failed on a clean install

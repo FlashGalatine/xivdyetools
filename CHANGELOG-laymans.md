@@ -59,6 +59,35 @@ Rules:
 - Web app: the Matching Algorithm setting now says that your choice changes *which dye you get*, not just the score shown beside it — measured against the default, the alternatives return a different closest dye between a quarter and nearly half of the time, and nothing on the page said so.
 - Web app: the Triadic, Tetradic and Square harmony descriptions stopped promising "vibrant, balanced palettes", "rich combinations" and "dynamic variety". There is no evidence behind those claims for these three schemes, so they now describe the shape they make on the colour wheel. Analogous and Monochromatic keep their wording — research does back those two.
 
+## [5.1.1] - 2026-09-03
+
+### 🎨 Harmony gives one answer, wherever you ask
+
+- Everywhere: `/harmony` in the Discord bot and the website's Harmony Explorer had been working from different colour maths, so the same dye and the same harmony type could hand you two different sets of dyes depending on where you asked. It showed up most on pale and near-grey dyes — `/harmony analogous` on Snow White answered Neon Green and Kobold Brown while the site showed Pure White and Pearl White. One answer now, in both places, and the site's results are the ones that stayed.
+- Link previews: the picture that unfurls when you paste a harmony link into Discord had been choosing its dyes a third way of its own. It matches the page the link opens now.
+- Everywhere: filters on Harmony pick the closest dye you are *allowed* to have. They used to find the closest dye overall and then, if it was filtered out, look for something near *that* — which is not the same thing, and could land further from the colour you asked for than it needed to.
+- Discord bot: `/harmony` has two more types to pick from, **Compound** and **Shades**. The web app has always offered them.
+
+### 👗 Your whole glamour, not just the dyed parts
+
+- Web app: the Swatch Matcher's glamour list only ever showed pieces carrying a dye, so an accessory could never appear in it at all — no earring, necklace, bracelet or ring in the game is dyeable — and worn-but-undyed armour was reduced to a number in the footnote. A new "Show all" switch beside the Pieces/Dyes toggle changes the list from one row per dyed channel to one row per piece your character is wearing, each with its icon, item name and slot. Your choice is remembered.
+- Web app: facewear is listed too. The glasses were already being looked up on every import and then thrown away. `.chara` files do not store a facewear tint, so the colour chip is read from the colour word in the item's English name; an item with no colour word gets a plain chip and says the colour is unknown, rather than inventing one.
+- Web app: a piece dyed only on its second channel used to draw one chip in the *first* chip's place, so the picture said channel one while your file said channel two. Dyeable pieces now always show both channels, with a plain chip for an empty one and the text naming it ("Metallic Orange + Undyed").
+- Web app: a glamour with nothing dyed on it gets the list instead of nothing at all — the whole panel used to disappear, which would have hidden the new switch from exactly the character that needs it most.
+
+### 🔀 Sending a dye to another tool
+
+- Web app: Harmony's three "send to Comparison / Mixer / Accessibility" actions had **never** done anything — they passed the dye in a form no tool in the app reads. Budget was sending a dye *name*, and the Result Card and Gradient an ID no tool would accept for any of the 125 dyes. All of them hand the dye over correctly now, and a dye that cannot be sent no longer navigates away and then apologises.
+
+### 🌏 Reading the app in your own language
+
+- Web app: Japanese, Korean and Chinese text is drawn in the right typeface again. 75 style blocks across 22 components named a font directly and fell back to whatever the browser happened to pick, which is how a Japanese reader ends up seeing Chinese letterforms for kanji the two languages share.
+- Discord bot: bold text on cards rendered too thin in Japanese, Korean and Chinese — headings and dye names meant to stand out were drawn at the lightest weight and blended into the rest of the card. Latin text was never affected.
+- Discord bot: `/budget quick preset` listed its 22 dye names in English no matter what language you use. All 125 dye names have been translated for a long time; that one menu just was not asking for them.
+- Discord bot: harmony names and colour-vision names in the command menus disagreed with the website in Japanese, Korean, Chinese and German. Both come from the same place now.
+- Web app: if your account had been blocked from submitting community presets, the app answered "Failed to submit preset" — which is not what happened — with the real reason readable only in English underneath. It says you are blocked, in your own language.
+- Web app: the "Show ΔE" switch works. Turning it off left the match-quality number on every result card exactly where it was, and the same setting is what the Accessibility checker, Dye Comparison and Budget use to keep that number off their cards — so all three were showing you a number they had been written not to show.
+
 ## [5.1.0] - 2026-08-31
 
 ### 🔒 A privacy pass over everything
