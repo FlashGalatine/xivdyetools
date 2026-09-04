@@ -14,6 +14,7 @@ import { getDyeByItemId } from './services/svg/dye-helpers';
 import { GROUND, MARK_STRIPES } from './services/svg/tokens';
 import { COMPARISON_MAX_DYES } from './services/svg/comparison';
 import { ACCESSIBILITY_MAX_DYES } from './services/svg/accessibility';
+import { DEFAULT_MIX_MODE } from './services/svg/mixer';
 import { getOgDeck } from './services/og-strings';
 import { embed } from './services/og-embed';
 import { parseCellIndex, resolveCellHex } from './services/character-cells';
@@ -36,6 +37,7 @@ import {
   isSheet,
   isVisionType,
   parseAlgo,
+  parseMode,
   parseDyeIdList,
   parseGender,
   parseHexColor,
@@ -56,6 +58,7 @@ import type {
   ColorSheetCategory,
   CharacterGender,
   MatchingAlgorithm,
+  BlendingMode,
   Env,
 } from './types';
 
@@ -90,6 +93,30 @@ function withAlgo(url: string, algo: MatchingAlgorithm | string | null | undefin
   const method = normalizeMatchingMethod(algo);
   if (method === DEFAULT_MATCHING_METHOD) return url;
   return `${url}${url.includes('?') ? '&' : '?'}algo=${method}`;
+}
+
+/**
+ * Append the mixer's chosen mixing mode to an emitted image URL.
+ *
+ * Without this the crawler card and the page disagreed on the ALGORITHM, not
+ * just the Δ: the web mixer offers six and its share URL has always carried
+ * the choice, but the emitted `/og/mixer/…` URL never did, so every unfurl
+ * rendered CIELAB. `undefined` (absent or unrecognised) **and the default
+ * `ryb`** stay off the URL so the default keeps a single cache key — the same
+ * rule `withAlgo` follows for `DEFAULT_MATCHING_METHOD` and `withLang` for
+ * `'en'`. (The default-elision half was missing until the 2026-09-04 review;
+ * the sentence claiming it was already here.)
+ */
+function withMode(url: string, mode: BlendingMode | undefined): string {
+  if (!mode) return url;
+  // The web mixer emits `mode` unconditionally (`mixer-tool.ts`), and its
+  // default IS `ryb` — which `generateMixerOG` already falls back to — so
+  // without this line `?mode=ryb` rode every ordinary share URL and rendered
+  // a pixel-identical PNG into a second `caches.default` entry, per colo ×
+  // locale × frame × algo. A free ×2 key split, of exactly the kind ruling
+  // S7-R13 (`.png` stripping) and `withAlgo`'s default elision exist to stop.
+  if (mode === DEFAULT_MIX_MODE) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}mode=${mode}`;
 }
 
 /**
@@ -294,7 +321,7 @@ export function generateMixerOGData(
       title: site(embed('mixer.title3', locale, names)),
       description: embed('mixer.description3', locale, names),
       url: appUrl(`${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&dyeC=${params.dyeC}&ratio=${params.ratio}&v=1`, locale, params.algo),
-      imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, params.algo), locale),
+      imageUrl: withLang(withMode(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, params.algo), params.mode), locale),
       siteName: SITE_NAME,
       themeColor: dyeA.hex,
       locale,
@@ -307,7 +334,7 @@ export function generateMixerOGData(
     title: site(embed('mixer.title2', locale, vars)),
     description: embed('mixer.description2', locale, vars),
     url: appUrl(`${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&ratio=${params.ratio}&v=1`, locale, params.algo),
-    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, params.algo), locale),
+    imageUrl: withLang(withMode(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, params.algo), params.mode), locale),
     siteName: SITE_NAME,
     themeColor: dyeA.hex,
     locale,
@@ -788,6 +815,7 @@ export async function generateOGDataForTool(
         dyeB: parseInt(searchParams.get('dyeB') || '0', 10),
         dyeC: dyeCRaw ? parseInt(dyeCRaw, 10) : undefined,
         ratio: clampInt(searchParams.get('ratio'), OG_MIN_MIXER_RATIO, OG_MAX_MIXER_RATIO, 50),
+        mode: parseMode(searchParams.get('mode')),
         algo: parseAlgo(searchParams.get('algo')),
       };
       return generateMixerOGData(params, env, locale);

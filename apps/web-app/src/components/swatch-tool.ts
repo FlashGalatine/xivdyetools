@@ -54,6 +54,7 @@ import type {
 } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import { isDyeExcluded, hasActiveFilters } from '@shared/dye-filter-utils';
+import { METHOD_TAGS } from '@shared/method-tags';
 import type { ResultCardData, ContextAction } from '@components/v4/result-card';
 // Import v4-result-card custom element to ensure it's registered
 import '@components/v4/result-card';
@@ -178,22 +179,6 @@ const GRID_GAP = 4;
 const GRID_WIDTH_DESKTOP = GRID_CELL_DESKTOP * 8 + GRID_GAP * 7;
 /** Matches globals.css h1–h6 — Space Grotesk with the system fallback. */
 const SANS = 'var(--font-display)';
-
-/**
- * Method display tags — identifiers, never localised. Mirrors core's
- * MATCHING_METHOD_TAGS (kept local so the tag map is available even where
- * core is mocked/minimal).
- *
- * RGB DIST and DISTINGUISH % stay untranslated identifiers by decision (2026-08-20 i18n audit).
- */
-const METHOD_TAGS: Record<MatchingMethod, string> = {
-  ciede2000: 'ΔE2000',
-  oklab: 'ΔEOK',
-  cie76: 'ΔE76',
-  redmean: 'REDMEAN',
-  rgb: 'RGB DIST',
-  distinguish: 'DISTINGUISH %',
-};
 
 /** The selected thing the verdict card describes (sheet slot or grid cell). */
 interface SwatchSelectionContext {

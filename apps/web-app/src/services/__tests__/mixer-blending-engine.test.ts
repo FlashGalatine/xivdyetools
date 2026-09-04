@@ -48,7 +48,6 @@ vi.mock('@xivdyetools/core', () => ({
     }),
     getDeltaE_Oklab: vi.fn(() => 15),
     getDeltaE_redmean: vi.fn(() => 20),
-    getDeltaE_OklchWeighted: vi.fn(() => 18),
   },
 }));
 

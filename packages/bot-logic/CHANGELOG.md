@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-09-04
+
+### Changed
+
+- **`/comparison`'s duel readout prints `ΔEOK2`, not `ΔEOK`**, and the `/manual`
+  matching-methods topic names it that way in all six locales. The metric became
+  ΔEOK2 in `@xivdyetools/core` 5.1.0 (CSS Color 4 §20.4 — `a` and `b` scaled by 2),
+  so the old tag named a formula the suite no longer runs, beside a number on a
+  different scale. The abbreviated column vocabulary is otherwise unchanged — the
+  duel still prints `RGB` and `DIST%` rather than core's wider `RGB DIST` and
+  `DISTINGUISH %`, because those are width-constrained card columns.
+
 ## [4.0.0] - 2026-09-03
 
 ### BREAKING

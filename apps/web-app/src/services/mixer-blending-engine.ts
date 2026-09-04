@@ -45,13 +45,20 @@ export interface BlendingConfig {
 /**
  * Blend two hex colors using the specified mixing algorithm.
  *
- * Color mixing modes and their characteristics:
- * - RGB: Light mixing (additive) - Blue + Yellow = Gray
+ * Color mixing modes and their characteristics (blue + yellow at 50/50,
+ * measured — the one pair that separates all six):
+ * - RGB: Light mixing (additive) - #808080, grey
  * - LAB: Perceptual uniform - Blue + Yellow = Pink (LAB hue distortion)
  * - OKLAB: Modern perceptual - Blue + Yellow = Cyan (fixes LAB issues)
- * - RYB: Paint simulation (Gossett-Chen) - Blue + Yellow = Olive Green
+ * - RYB: Artist's wheel - #008000, green
  * - HSL: Hue-based blending
- * - Spectral: Kubelka-Munk physics - Blue + Yellow = Green (most realistic)
+ * - Spectral: Kubelka-Munk physics - #398F54, green (most realistic)
+ *
+ * RYB used to be the Gossett-Chen paint cube and used to give olive; core
+ * 5.0.0 retired that cube because it failed the identity law (mixing a dye
+ * with itself did not return it, on 53% of dye pairs). Every mode here is a
+ * one-line delegation to `@xivdyetools/core/blending` — core computes, this
+ * app selects.
  *
  * @param hex1 First hex color
  * @param hex2 Second hex color

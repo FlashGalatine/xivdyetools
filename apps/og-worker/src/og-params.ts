@@ -16,6 +16,7 @@
  * @module og-params
  */
 
+import { isValidBlendingMode, type BlendingMode } from '@xivdyetools/core/blending';
 import type { CharacterGender, ColorSheetCategory, HarmonyType, MatchingAlgorithm, VisionType } from './types';
 
 // ============================================================================
@@ -106,6 +107,15 @@ export function isSheet(value: string): value is ColorSheetCategory {
  */
 export function parseAlgo(raw: string | null): MatchingAlgorithm | undefined {
   return raw && isAlgorithm(raw) ? (raw as MatchingAlgorithm) : undefined;
+}
+
+/**
+ * The web mixer's `?mode=` — which of the six algorithms mixed the colours.
+ * Anything unrecognised is dropped, letting the card apply the web tool's own
+ * default rather than 404 a link somebody already shared.
+ */
+export function parseMode(raw: string | null): BlendingMode | undefined {
+  return raw && isValidBlendingMode(raw) ? raw : undefined;
 }
 
 /** `Male` / `Female`, case-insensitively; anything else is dropped. */

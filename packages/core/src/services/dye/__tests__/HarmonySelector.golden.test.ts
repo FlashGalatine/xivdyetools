@@ -102,7 +102,52 @@ const CONFIGS: Array<[string, HarmonySelectionConfig]> = [
  * the base dye appeared inside its own harmony **675 times before and 0 after**.
  * The named `SAMPLE` assertions below never moved at all.
  */
-const GOLDEN_DIGEST = 'df9a60cb25ca6a0e5df013330568241c83db1043f8f43c72c7dafe037efb595c';
+/**
+ * Regenerated 2026-09-04 for the exact-CIE-constants change (5.1.0), and again
+ * not taken on trust. Per-config digests, before -> after:
+ *
+ *   page-defaults  9bd6a0b9…  ->  c1c7e3c9…   CHANGED
+ *   no-dedup       49c1782f…  ->  df28b34a…   CHANGED
+ *   hue-only       e198b9d6…  ->  e198b9d6…   unchanged
+ *   oklab          0e62e2aa…  ->  0e62e2aa…   unchanged
+ *
+ * Exactly the two ΔE2000-ranked configs moved, which is the expected shape:
+ * `hue-only` ranks by angular hue distance and `oklab` ranks in OKLAB, so
+ * neither reads CIELAB at all.
+ *
+ * Row-level diff: **4 rows of 5,000 (0.08%)**, all on one base dye (Lime
+ * Green, 5773) for `triadic` and `tetradic`. **No chosen dye changed** — every
+ * `offset:dyeID` is identical before and after. What moved is the order of two
+ * COMPANIONS: Metallic Purple (13723) and Cherry Pink (30117) against the 240°
+ * target `#B054AB` measure ΔE00 14.166463869861 and 14.166455222891 — 8.6e-6
+ * apart. Core's old `round(lab, 4)` collapsed that gap to a tie, which then
+ * broke on database order; without the rounding the marginally closer dye
+ * sorts first, which is the intended behaviour.
+ *
+ * The named `SAMPLE` assertions below did not move.
+ *
+ * Regenerated AGAIN in the same release for delta-EOK2 (Sprint 3.5), and the
+ * shape is completely different — deliberately so:
+ *
+ *   page-defaults  c1c7e3c9…  ->  c1c7e3c9…   unchanged
+ *   no-dedup       df28b34a…  ->  df28b34a…   unchanged
+ *   hue-only       e198b9d6…  ->  e198b9d6…   unchanged
+ *   oklab          0e62e2aa…  ->  274ee31e…   CHANGED
+ *
+ * **1,237 of 5,000 rows (24.7%)** moved, and every single one is in the
+ * `oklab` config — 705 of them a different chosen dye, 532 a companion
+ * reorder. That is 99% of that config's 1,250 rows, which is what a metric
+ * change should look like: `getDeltaE_Oklab` became delta-EOK2 (CSS Color 4
+ * §20.4, `a` and `b` scaled by 2), so every oklab ranking is recomputed and
+ * nothing that does not read OKLAB is touched.
+ *
+ * This is a user-visible change for anyone who has selected the `oklab`
+ * matching method. It is not the default (`ciede2000` is), and the
+ * justification is measured: against CIEDE2000 as the perceptual reference
+ * over 2,000 random sRGB queries, plain delta-EOK picks a different winning
+ * dye 30.4% of the time and delta-EOK2 24.4%.
+ */
+const GOLDEN_DIGEST = '740c740a88809814774a7d37d3cb1de4d8b19c1644e95794bb6108ee958f214a';
 const GOLDEN_ROWS = 5000;
 
 /**

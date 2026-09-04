@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { MATCHING_METHOD_TAGS } from '@xivdyetools/core';
 import { generateNearestSheet, type NearestSheetOptions } from './nearest-sheet.js';
 
 const LABELS = {
@@ -63,7 +64,14 @@ describe('generateNearestSheet', () => {
   });
 
   it('is method-aware: header tag, per-method tiers and decimals', () => {
-    // ΔEOK: raw values, three decimals, its own band cuts (0.017 / 0.04 / 0.107)
+    // ΔEOK2: raw values, three decimals, its own harmony band cuts
+    // (0.041 / 0.101 / 0.174 since core 5.1.0 rescaled the metric — they were
+    // 0.02 / 0.053 / 0.107 against the pre-5.1.0 plain-ΔEOK scale).
+    //
+    // The header tag is read from core's MATCHING_METHOD_TAGS rather than
+    // spelled out: this assertion was written as the literal '>ΔEOK</text>'
+    // and went stale the moment that map moved to ΔEOK2, which is the one
+    // thing a tag test exists to catch.
     const svg = generateNearestSheet({
       ...defaultOptions,
       method: 'oklab',
@@ -71,12 +79,12 @@ describe('generateNearestSheet', () => {
         { rank: 1, hex: '#3B6886', name: 'Peacock Blue', deltaE: 0.012 },
         { rank: 2, hex: '#284B2C', name: 'Hunter Green', deltaE: 0.2 },
       ],
-      labels: { ...LABELS, matchKey: 'nearest by ΔEOK' },
+      labels: { ...LABELS, matchKey: `nearest by ${MATCHING_METHOD_TAGS.oklab}` },
     });
-    expect(svg).toContain('>ΔEOK</text>');
+    expect(svg).toContain(`>${MATCHING_METHOD_TAGS.oklab}</text>`);
     expect(svg).toContain('>0.012</text>');
     expect(svg).toContain('>0.200</text>');
-    // 0.2 is past ΔEOK's 0.107 cut → the far tier colour
+    // 0.2 is past ΔEOK2's widest cut (0.174) → the far tier colour
     expect(svg).toContain('#f4645a');
     expect(svg).not.toContain('>ΔE</text>');
 

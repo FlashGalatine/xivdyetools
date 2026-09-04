@@ -1429,7 +1429,7 @@ export class ConfigSidebar extends BaseLitComponent {
   /**
    * Render matching method dropdown for a tool
    *
-   * The leading ΔE2000 / ΔEOK / ΔE76 / REDMEAN / RGB DIST / DISTINGUISH % tags are
+   * The leading ΔE2000 / ΔEOK2 / ΔE76 / REDMEAN / RGB DIST / DISTINGUISH % tags are
    * identifiers by decision (2026-08-20 i18n audit) — never localised.
    */
   private renderMatchingMethodSection(
@@ -1450,7 +1450,7 @@ export class ConfigSidebar extends BaseLitComponent {
           <option value="ciede2000">
             ΔE2000 - ${LanguageService.t('config.matchingCiede2000')}
           </option>
-          <option value="oklab">ΔEOK - ${LanguageService.t('config.matchingOklab')}</option>
+          <option value="oklab">ΔEOK2 - ${LanguageService.t('config.matchingOklab')}</option>
           <option value="cie76">ΔE76 - ${LanguageService.t('config.matchingCie76')}</option>
           <option value="redmean">REDMEAN - ${LanguageService.t('config.matchingRedmean')}</option>
           <option value="rgb">RGB DIST - ${LanguageService.t('config.matchingRgb')}</option>
@@ -1459,6 +1459,15 @@ export class ConfigSidebar extends BaseLitComponent {
           </option>
         </select>
         <div class="config-description">${this.getMatchingMethodDescription(currentMethod)}</div>
+        <!--
+          The toggle is consequential and nothing said so. Measured against the
+          125-dye set over 2,000 random sRGB queries, taking the default
+          ciede2000 as the reference, the alternatives pick a DIFFERENT closest
+          dye: oklab 24.4%, cie76 31.1%, redmean 39.1%, rgb 43.8%,
+          distinguish 44.4%. A user had no signal that changing this changes
+          the answer rather than just the number shown beside it.
+        -->
+        <div class="config-description">${LanguageService.t('config.matchingMethodImpact')}</div>
       </div>
     `;
   }

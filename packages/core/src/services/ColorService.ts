@@ -43,8 +43,9 @@ import type { MatchingMethod } from '../types/index.js';
 import { ColorblindnessSimulator } from './color/ColorblindnessSimulator.js';
 import { ColorAccessibility } from './color/ColorAccessibility.js';
 import { ColorManipulator } from './color/ColorManipulator.js';
-import { RybColorMixer, type RYB } from './color/RybColorMixer.js';
-import { SpectralMixer } from './color/SpectralMixer.js';
+import { blendColors, interpolateHue } from '../blending/blending.js';
+import { rgbToRyb as rgbToRybUnit, rybToRgb as rybToRgbUnit } from '../blending/conversions.js';
+import type { RYB, HueMethod } from '../blending/types.js';
 
 /**
  * Color conversion and manipulation service (Facade)
@@ -552,11 +553,33 @@ export class ColorService {
   }
 
   // ============================================================================
-  // Color Mixing (RGB, LAB, RYB, OKLAB, HSL)
+  // Color Mixing — every mode delegates to `blending/blendColors`
+  //
+  // These six were independent re-implementations until 5.0.0. Five of them
+  // happened to agree with `blendColors` byte-for-byte; `ryb` was a different
+  // ALGORITHM and disagreed by up to ΔE₀₀ 38, so the same dye pair mixed one
+  // colour on the web app and another on the Discord bot. Core is the single
+  // source of truth for colour computation and a front end is a view onto it —
+  // two functions with the same name returning different colours cannot both
+  // be that source. `ColorService.blending-parity.test.ts` asserts the hexes
+  // are identical, which is what stops them drifting apart again.
+  //
+  // ⚠️ CASE: the two surfaces have always disagreed on hex CASE — `blendColors`
+  // emits lowercase, every `ColorService` method emits uppercase (the long-
+  // standing `rgbToHex` delta documented in `conversions.equivalence.test.ts`).
+  // Delegating naïvely would have flipped `mixColors*` to lowercase and broken
+  // any caller comparing its result against an uppercase `dye.hex`. So the
+  // delegation re-formats through `ColorConverter.rgbToHex`: same colour, each
+  // surface keeps the case its callers already depend on.
   // ============================================================================
 
+  /** Re-format a blend result in ColorService's uppercase hex convention. */
+  private static fromBlend(result: { rgb: RGB }): HexColor {
+    return ColorConverter.rgbToHex(result.rgb.r, result.rgb.g, result.rgb.b);
+  }
+
   /**
-   * Mix two colors using RGB additive mixing (averaging)
+   * Mix two colors by averaging the sRGB channels.
    *
    * @param hex1 First hex color
    * @param hex2 Second hex color
@@ -564,18 +587,11 @@ export class ColorService {
    * @returns Mixed color as hex
    */
   static mixColorsRgb(hex1: string, hex2: string, ratio: number = 0.5): HexColor {
-    const rgb1 = ColorConverter.hexToRgb(hex1);
-    const rgb2 = ColorConverter.hexToRgb(hex2);
-
-    const r = Math.round(rgb1.r + (rgb2.r - rgb1.r) * ratio);
-    const g = Math.round(rgb1.g + (rgb2.g - rgb1.g) * ratio);
-    const b = Math.round(rgb1.b + (rgb2.b - rgb1.b) * ratio);
-
-    return ColorConverter.rgbToHex(r, g, b);
+    return this.fromBlend(blendColors(hex1, hex2, 'rgb', ratio));
   }
 
   /**
-   * Mix two colors using LAB perceptually uniform mixing
+   * Mix two colors in CIELAB.
    *
    * @param hex1 First hex color
    * @param hex2 Second hex color
@@ -583,27 +599,27 @@ export class ColorService {
    * @returns Mixed color as hex
    */
   static mixColorsLab(hex1: string, hex2: string, ratio: number = 0.5): HexColor {
-    const lab1 = ColorConverter.hexToLab(hex1);
-    const lab2 = ColorConverter.hexToLab(hex2);
-
-    const L = lab1.L + (lab2.L - lab1.L) * ratio;
-    const a = lab1.a + (lab2.a - lab1.a) * ratio;
-    const b = lab1.b + (lab2.b - lab1.b) * ratio;
-
-    return ColorConverter.labToHex(L, a, b);
+    return this.fromBlend(blendColors(hex1, hex2, 'lab', ratio));
   }
 
   // ============================================================================
-  // RYB Color Mixing (delegated to RybColorMixer)
+  // RYB Color Mixing
   // ============================================================================
 
   /**
-   * Mix two colors using RYB (Red-Yellow-Blue) subtractive color mixing
+   * Mix two colors on the artist's Red-Yellow-Blue wheel.
    *
-   * This produces results similar to mixing physical paints:
-   * - Blue + Yellow = Green (not gray like in RGB)
-   * - Red + Yellow = Orange
-   * - Red + Blue = Violet
+   * Blue + Yellow = Green, Red + Yellow = Orange, Red + Blue = Violet — the
+   * subtractive relationships RGB averaging does not reproduce.
+   *
+   * Until 5.0.0 this ran the Gossett-Chen trilinear paint cube, which maps
+   * into the convex hull of its eight corners. Pure green, blue, cyan, magenta
+   * and true black sit OUTSIDE that hull, so they had no RYB pre-image and the
+   * cube's added Newton-method inverse could not converge for them: mixing
+   * such a dye with itself did not return that dye, on 53% of dye pairs and by
+   * up to ΔE₀₀ 27.9. That is a defect visible in one drag of a 0-100% slider,
+   * and no solver tuning fixes it — ColorAide documents the same limit on the
+   * same cube. The chromatic-subtraction space this now uses inverts exactly.
    *
    * @param hex1 First hex color
    * @param hex2 Second hex color
@@ -615,12 +631,16 @@ export class ColorService {
    * ColorService.mixColorsRyb('#0000FF', '#FFFF00') // Returns greenish color
    */
   static mixColorsRyb(hex1: string, hex2: string, ratio: number = 0.5): HexColor {
-    return RybColorMixer.mixColors(hex1, hex2, ratio);
+    return this.fromBlend(blendColors(hex1, hex2, 'ryb', ratio));
   }
 
   /**
-   * Convert RYB (Red-Yellow-Blue) to RGB
-   * Uses trilinear interpolation in the Gossett-Chen color cube
+   * Convert RYB (Red-Yellow-Blue) to RGB.
+   *
+   * ⚠️ The axes changed meaning in 5.0.0. These are coordinates in the
+   * chromatic-subtraction space `mixColorsRyb` mixes in, where BLACK is at the
+   * origin; the retired Gossett-Chen cube put WHITE there. Stored RYB triples
+   * from 4.x do not mean the same thing.
    *
    * @param r Red component (0-255)
    * @param y Yellow component (0-255)
@@ -628,12 +648,15 @@ export class ColorService {
    * @returns RGB color
    */
   static rybToRgb(r: number, y: number, b: number): RGB {
-    return RybColorMixer.rybToRgb(r, y, b);
+    return rybToRgbUnit({ r: r / 255, y: y / 255, b: b / 255 });
   }
 
   /**
-   * Convert RGB to RYB (Red-Yellow-Blue)
-   * Uses Newton-Raphson iterative approximation
+   * Convert RGB to RYB (Red-Yellow-Blue).
+   *
+   * The exact inverse of {@link ColorService.rybToRgb} — see its note on the
+   * 5.0.0 change of axis convention. Components are 0-255 and may be
+   * fractional; rounding them costs the exactness of the round trip.
    *
    * @param r Red component (0-255)
    * @param g Green component (0-255)
@@ -641,21 +664,28 @@ export class ColorService {
    * @returns RYB color
    */
   static rgbToRyb(r: number, g: number, b: number): RYB {
-    return RybColorMixer.rgbToRyb(r, g, b);
+    const ryb = rgbToRybUnit({ r, g, b });
+    return { r: ryb.r * 255, y: ryb.y * 255, b: ryb.b * 255 };
   }
 
   /**
    * Convert hex color to RYB
+   *
+   * @public
    */
   static hexToRyb(hex: string): RYB {
-    return RybColorMixer.hexToRyb(hex);
+    const rgb = ColorConverter.hexToRgb(hex);
+    return this.rgbToRyb(rgb.r, rgb.g, rgb.b);
   }
 
   /**
    * Convert RYB to hex color
+   *
+   * @public
    */
   static rybToHex(r: number, y: number, b: number): HexColor {
-    return RybColorMixer.rybToHex(r, y, b);
+    const rgb = this.rybToRgb(r, y, b);
+    return ColorConverter.rgbToHex(rgb.r, rgb.g, rgb.b);
   }
 
   // ============================================================================
@@ -679,14 +709,7 @@ export class ColorService {
    * ColorService.mixColorsOklab('#0000FF', '#FFFF00') // Returns green-ish color
    */
   static mixColorsOklab(hex1: string, hex2: string, ratio: number = 0.5): HexColor {
-    const oklab1 = ColorConverter.hexToOklab(hex1);
-    const oklab2 = ColorConverter.hexToOklab(hex2);
-
-    const L = oklab1.L + (oklab2.L - oklab1.L) * ratio;
-    const a = oklab1.a + (oklab2.a - oklab1.a) * ratio;
-    const b = oklab1.b + (oklab2.b - oklab1.b) * ratio;
-
-    return ColorConverter.oklabToHex(L, a, b);
+    return this.fromBlend(blendColors(hex1, hex2, 'oklab', ratio));
   }
 
   /**
@@ -695,33 +718,16 @@ export class ColorService {
    * - 'longer': Take the longer arc around the hue wheel
    * - 'increasing': Always go clockwise (increasing hue values)
    * - 'decreasing': Always go counter-clockwise (decreasing hue values)
+   *
+   * @public
    */
   static interpolateHue(
     h1: number,
     h2: number,
     ratio: number,
-    method: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter',
+    method: HueMethod = 'shorter',
   ): number {
-    let diff = h2 - h1;
-
-    switch (method) {
-      case 'shorter':
-        if (diff > 180) diff -= 360;
-        if (diff < -180) diff += 360;
-        break;
-      case 'longer':
-        if (diff > 0 && diff < 180) diff -= 360;
-        if (diff < 0 && diff > -180) diff += 360;
-        break;
-      case 'increasing':
-        if (diff < 0) diff += 360;
-        break;
-      case 'decreasing':
-        if (diff > 0) diff -= 360;
-        break;
-    }
-
-    return (((h1 + diff * ratio) % 360) + 360) % 360;
+    return interpolateHue(h1, h2, ratio, method);
   }
 
   /**
@@ -741,16 +747,9 @@ export class ColorService {
     hex1: string,
     hex2: string,
     ratio: number = 0.5,
-    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter',
+    hueMethod: HueMethod = 'shorter',
   ): HexColor {
-    const hsl1 = ColorConverter.hexToHsl(hex1);
-    const hsl2 = ColorConverter.hexToHsl(hex2);
-
-    const h = this.interpolateHue(hsl1.h, hsl2.h, ratio, hueMethod);
-    const s = hsl1.s + (hsl2.s - hsl1.s) * ratio;
-    const l = hsl1.l + (hsl2.l - hsl1.l) * ratio;
-
-    return ColorConverter.hslToHex(h, s, l);
+    return this.fromBlend(blendColors(hex1, hex2, 'hsl', ratio, { hueMethod }));
   }
 
   // ============================================================================
@@ -779,9 +778,9 @@ export class ColorService {
    * ColorService.mixColorsSpectral('#0000FF', '#FFFF00')
    */
   static mixColorsSpectral(hex1: string, hex2: string, ratio: number = 0.5): HexColor {
-    return SpectralMixer.mixColors(hex1, hex2, ratio);
+    return this.fromBlend(blendColors(hex1, hex2, 'spectral', ratio));
   }
 }
 
 // Re-export RYB type for consumers
-export type { RYB } from './color/RybColorMixer.js';
+export type { RYB } from '../blending/types.js';

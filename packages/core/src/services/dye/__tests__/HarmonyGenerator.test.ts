@@ -446,13 +446,52 @@ describe('HarmonyGenerator', () => {
 
   describe('DeltaE algorithm matching', () => {
     describe('findComplementaryPair with DeltaE', () => {
-      it('should find complementary using cie76 (default)', () => {
-        const complement = harmony.findComplementaryPair('#FF0000', {
+    /**
+     * The default ΔE formula moved `'cie76'` -> `'ciede2000'` in 5.1.0, to stop
+     * the published harmony API contradicting `DEFAULT_MATCHING_METHOD`.
+     *
+     * The test that used to sit here asserted only `expect(complement)
+     * .toBeDefined()`, which passes under EVERY formula — mutating the default
+     * to `'oklab'` left the whole file green. So the default was never pinned
+     * by anything. These two replace it: the first proves the assertion can
+     * discriminate at all, the second pins the default to what it claims.
+     */
+    it('cie76 and ciede2000 really do disagree on some base, so the next test can bite', () => {
+      // Real dye hexes on which the two formulas pick DIFFERENT complements.
+      // 40 of the 125 dyes do (32%, matching the fact-check's 31.5% figure);
+      // an earlier draft of this test used primaries and #8B5CF6, which all
+      // sit in the agreeing 68%, so it passed under either formula.
+      const bases = ['#836969', '#622207', '#451511', '#cc6c5e', '#e4aa8a', '#b75c2d', '#c99156'];
+      const disagreements = bases.filter((hex) => {
+        const a = harmony.findComplementaryPair(hex, {
           algorithm: 'deltaE',
+          deltaEFormula: 'cie76',
         });
-        expect(complement).toBeDefined();
-        // Should find a color perceptually opposite to red
+        const b = harmony.findComplementaryPair(hex, {
+          algorithm: 'deltaE',
+          deltaEFormula: 'ciede2000',
+        });
+        return a?.id !== b?.id;
       });
+
+      expect(disagreements.length).toBeGreaterThan(0);
+    });
+
+    it('defaults to ciede2000, the suite default — not cie76', () => {
+      // Real dye hexes on which the two formulas pick DIFFERENT complements.
+      // 40 of the 125 dyes do (32%, matching the fact-check's 31.5% figure);
+      // an earlier draft of this test used primaries and #8B5CF6, which all
+      // sit in the agreeing 68%, so it passed under either formula.
+      const bases = ['#836969', '#622207', '#451511', '#cc6c5e', '#e4aa8a', '#b75c2d', '#c99156'];
+      for (const hex of bases) {
+        const implicit = harmony.findComplementaryPair(hex, { algorithm: 'deltaE' });
+        const explicit = harmony.findComplementaryPair(hex, {
+          algorithm: 'deltaE',
+          deltaEFormula: 'ciede2000',
+        });
+        expect(implicit?.id).toBe(explicit?.id);
+      }
+    });
 
       it('should find complementary using cie2000', () => {
         const complement = harmony.findComplementaryPair('#FF0000', {
@@ -463,19 +502,21 @@ describe('HarmonyGenerator', () => {
       });
 
       it('should respect deltaE tolerance', () => {
-        // With very low tolerance, might not find a match
+        // The previous assertion here was `expect(low === null || low !== null)
+        // .toBe(true)` — a tautology that no source change can falsify. A
+        // tolerance of 1 ΔE00 around red's complement admits nothing in a
+        // 125-dye set, and that is the behaviour worth pinning.
         const lowTolerance = harmony.findComplementaryPair('#FF0000', {
           algorithm: 'deltaE',
           deltaETolerance: 1, // Very strict
         });
-        // Result may or may not be null depending on dye availability
-        expect(lowTolerance === null || lowTolerance !== null).toBe(true);
+        expect(lowTolerance).toBeNull();
 
         const highTolerance = harmony.findComplementaryPair('#FF0000', {
           algorithm: 'deltaE',
           deltaETolerance: 100, // Very lenient
         });
-        expect(highTolerance).toBeDefined();
+        expect(highTolerance).not.toBeNull();
       });
 
       it('should not include Facewear dyes with deltaE algorithm', () => {

@@ -583,7 +583,7 @@
       },
       "matchingMethods": {
         "name": "Matching Methods",
-        "body": "Six methods, one vocabulary: ΔE2000 (default), ΔEOK, ΔE76, REDMEAN, RGB DIST and DISTINGUISH %. Only ΔE2000's bands follow your match line; every other method's bands are fixed, tiers are never compared across methods, and the method prints wherever a tier appears."
+        "body": "Six methods, one vocabulary: ΔE2000 (default), ΔEOK2, ΔE76, REDMEAN, RGB DIST and DISTINGUISH %. Only ΔE2000's bands follow your match line; every other method's bands are fixed, tiers are never compared across methods, and the method prints wherever a tier appears."
       },
       "spectrumPrices": {
         "name": "Spectrum & Prices",

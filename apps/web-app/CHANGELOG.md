@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.5.0] - 2026-09-04
+
+### Changed
+
+- **The Matching Algorithm picker now says that the choice changes the answer.** Measured against
+  the 125-dye set over 2,000 random sRGB queries, taking the default `ciede2000` as the reference,
+  the alternatives pick a *different* closest dye: `oklab` 24.4%, `cie76` 31.1%, `redmean` 39.1%,
+  `rgb` 43.8%, `distinguish` 44.4%. Nothing in the UI signalled that — a user could reasonably read
+  the toggle as changing only the number displayed beside a match, rather than which dye is
+  returned. One new line under the method description, ×6 locales.
+- **Three harmony descriptions no longer claim an aesthetic outcome the scheme has no evidence
+  for.** `triadic`, `tetradic` and `square` promised "vibrant, balanced palettes", "rich
+  combinations" and "dynamic variety"; they now describe the geometry only. Of the ten schemes,
+  **analogous** and **monochromatic** have direct psychophysical support (Schloss & Palmer 2011 —
+  hue similarity explains 53.5% and 67.3% of harmony variance), **complementary** is contested by
+  that same study, and **split-complementary, triadic and tetradic have never been
+  psychophysically tested in either direction**. The descriptions for the two evidence-backed
+  schemes are deliberately left as they were. See
+  `docs/research/2026-09-03-algorithm-fact-check/05-harmony-geometry.md`.
+- **The OKLAB method now shows as `ΔEOK2`** in the Matching Algorithm picker and on the
+  Swatch Matcher's verdict card (×6 locales). The metric became ΔEOK2 in core 5.1.0
+  (CSS Color 4 §20.4 — `a` and `b` scaled by 2), so `ΔEOK` named a formula the app no
+  longer runs, beside a number on a scale roughly 1.4–2× larger.
+
+  The Swatch card's tag map moved out of `swatch-tool.ts` into `shared/method-tags.ts`.
+  It is still a deliberate local copy — `swatch-tool.test.ts` mocks `@xivdyetools/core`
+  wholesale, so the component cannot reach into core for a display string — but
+  `shared/__tests__/method-tags.parity.test.ts` now compares it against core's
+  `MATCHING_METHOD_TAGS` and fails on any divergence. Nothing caught the drift before.
+- Corrected a stale comment in `tool-config-types.ts` that still described RYB as producing
+  "Blue + Yellow = Olive Green" — it produces `#008000`, a true green, since core 5.0.0 retired the
+  Gossett-Chen cube.
+
+## [5.4.0] - 2026-09-03
+
+### Fixed
+
+- **The Mixer's RYB mode said "Blue + Yellow = Olive" and now genuinely produces green.** Core
+  5.0.0 retired the Gossett-Chen paint cube behind that mode because it failed the identity law
+  (mixing a dye with itself did not return it, on 53% of dye pairs). Blue + yellow is now
+  `#008000`. The `mixingRybDesc` string was corrected in all six locales — it had been describing
+  both the wrong algorithm and the wrong result.
+- Shared Mixer links now unfurl a preview card in the mode the sharer picked. The share URL had
+  always carried `?mode=`; og-worker 2.8.0 now reads it.
+
+### Notes
+
+- Nothing in this app changed behaviourally beyond the strings — `mixer-blending-engine.ts` was
+  already a set of one-line delegations to core, which is why the fix landed entirely in core.
+
 ## [5.3.1] - 2026-09-03
 
 ### Fixed

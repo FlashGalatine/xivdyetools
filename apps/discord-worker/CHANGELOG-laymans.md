@@ -35,6 +35,25 @@ Rules:
   path filter.
 -->
 
+## [5.4.0] - 2026-09-04
+
+### 🐛 Fixes
+
+- **Spectral mixes and gradients came out almost black.** Picking `spectral` on `/mixer` or `/gradient` gave you a near-black colour at almost every setting: a blue-to-yellow gradient rendered nine near-black steps out of eleven, and even white mixed with black came back as very-nearly-black instead of a mid grey. The mode is meant to imitate how real paint pigments combine, and it now does — blue and yellow make a green, the way they do on a palette. The website's Mixer was always doing this correctly; only the bot was affected, and the two now agree exactly.
+- **`/harmony analogous` and friends give the right answer on the `oklab` matching method.** If you had set `matching: ΔEOK` in `/preferences`, or passed it to a command, the dye it picked was measured on a scale that under-weighted how colourful two dyes were compared with how light or dark they were. Roughly one search in four now returns a different, closer dye. The default (`ΔE2000`) is unchanged, so this only affects you if you deliberately chose the OKLAB option.
+
+### 🔧 Changes
+
+- **The OKLAB matching method is now labelled `ΔEOK2`** everywhere it appears — the method pickers, `/budget`'s comparison column, `/preferences`, and the cards. It is the more precise name for the formula the bot actually uses, and the old label named a slightly different one. Nothing about how you pick it has changed.
+
+## [5.3.0] - 2026-09-03
+
+### 🌐 Fixes
+
+- **`/budget quick preset` listed its 22 dye names in English no matter what language you use.** Every one of the 125 dye names has been translated for a long time; that one menu just was not asking for them. It now shows them in your language, like every other dye list in the bot.
+- **Harmony names and colour-vision names in the command menus disagreed with the website** in Japanese, Korean, Chinese and German. Both now come from the same place the site uses, so a harmony called one thing on the page is called the same thing in Discord.
+- **Bold text on cards rendered too thin in Japanese, Korean and Chinese.** Headings and dye names that were meant to stand out were being drawn at the lightest weight instead, so they blended into the rest of the card. Latin text was never affected.
+
 ## [5.2.0] - 2026-09-03
 
 ### ✨ New

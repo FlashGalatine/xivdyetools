@@ -166,7 +166,7 @@ export const commands = [
         required: false,
         choices: [
           { name: 'ΔE2000 - Industry standard (default)', value: 'ciede2000' },
-          { name: 'ΔEOK - OKLAB perceptual', value: 'oklab' },
+          { name: 'ΔEOK2 - OKLAB perceptual', value: 'oklab' },
           { name: 'ΔE76 - CIELAB distance', value: 'cie76' },
           { name: 'REDMEAN - Weighted RGB', value: 'redmean' },
           { name: 'RGB DIST - Euclidean RGB', value: 'rgb' },
@@ -293,7 +293,7 @@ export const commands = [
             required: false,
             choices: [
               { name: 'ΔE2000 - Industry standard (default)', value: 'ciede2000' },
-              { name: 'ΔEOK - OKLAB perceptual', value: 'oklab' },
+              { name: 'ΔEOK2 - OKLAB perceptual', value: 'oklab' },
               { name: 'ΔE76 - CIELAB distance', value: 'cie76' },
               { name: 'REDMEAN - Weighted RGB', value: 'redmean' },
               { name: 'RGB DIST - Euclidean RGB', value: 'rgb' },
@@ -328,7 +328,7 @@ export const commands = [
             required: false,
             choices: [
               { name: 'ΔE2000 - Industry standard (default)', value: 'ciede2000' },
-              { name: 'ΔEOK - OKLAB perceptual', value: 'oklab' },
+              { name: 'ΔEOK2 - OKLAB perceptual', value: 'oklab' },
               { name: 'ΔE76 - CIELAB distance', value: 'cie76' },
               { name: 'REDMEAN - Weighted RGB', value: 'redmean' },
               { name: 'RGB DIST - Euclidean RGB', value: 'rgb' },
@@ -397,7 +397,7 @@ export const commands = [
         required: false,
         choices: [
           { name: 'ΔE2000 - Industry standard (default)', value: 'ciede2000' },
-          { name: 'ΔEOK - OKLAB perceptual', value: 'oklab' },
+          { name: 'ΔEOK2 - OKLAB perceptual', value: 'oklab' },
           { name: 'ΔE76 - CIELAB distance', value: 'cie76' },
           { name: 'REDMEAN - Weighted RGB', value: 'redmean' },
           { name: 'RGB DIST - Euclidean RGB', value: 'rgb' },
@@ -447,7 +447,7 @@ export const commands = [
         required: false,
         choices: [
           { name: 'ΔE2000 - Industry standard (default)', value: 'ciede2000' },
-          { name: 'ΔEOK - OKLAB perceptual', value: 'oklab' },
+          { name: 'ΔEOK2 - OKLAB perceptual', value: 'oklab' },
           { name: 'ΔE76 - CIELAB distance', value: 'cie76' },
           { name: 'REDMEAN - Weighted RGB', value: 'redmean' },
           { name: 'RGB DIST - Euclidean RGB', value: 'rgb' },
@@ -633,7 +633,7 @@ export const commands = [
             required: false,
             choices: [
               { name: 'ΔE2000 - Industry standard (default)', value: 'ciede2000' },
-              { name: 'ΔEOK - OKLAB perceptual', value: 'oklab' },
+              { name: 'ΔEOK2 - OKLAB perceptual', value: 'oklab' },
               { name: 'ΔE76 - CIELAB distance', value: 'cie76' },
               { name: 'REDMEAN - Weighted RGB', value: 'redmean' },
               { name: 'RGB DIST - Euclidean RGB', value: 'rgb' },
@@ -1214,7 +1214,7 @@ export const commands = [
             required: false,
             choices: [
               { name: 'ΔE2000 - Industry standard (default)', value: 'ciede2000' },
-              { name: 'ΔEOK - OKLAB perceptual', value: 'oklab' },
+              { name: 'ΔEOK2 - OKLAB perceptual', value: 'oklab' },
               { name: 'ΔE76 - CIELAB distance', value: 'cie76' },
               { name: 'REDMEAN - Weighted RGB', value: 'redmean' },
               { name: 'RGB DIST - Euclidean RGB', value: 'rgb' },

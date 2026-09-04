@@ -2,6 +2,18 @@
 
 ---
 
+## Web-App Version 5.5.0 — September 4, 2026
+
+- **The Matching Algorithm setting now tells you it changes the answer, not just the number.** Nothing on the page said so, and it was reasonable to read the picker as only changing the score shown beside a match. It changes which dye you get: measured against the default across 2,000 colours, the alternatives return a *different* closest dye between a quarter and nearly half of the time.
+- **Three harmony descriptions stopped promising results they cannot deliver.** Triadic, Tetradic and Square described themselves as producing "vibrant, balanced palettes", "rich combinations" and "dynamic variety". Those are claims about how a palette will look to you, and there is no evidence behind them for these three schemes — so they now describe the shape they make on the colour wheel and leave the judgement to you. Analogous and Monochromatic keep their wording, because research does back those two.
+- **The OKLAB matching option is now labelled `ΔEOK2`**, which is the precise name of the formula the app uses. The old label named a slightly different one.
+
+## Web-App Version 5.4.0 — September 3, 2026
+
+- **The Mixer's RYB mode said "Blue + Yellow = Olive" and now genuinely makes green.** RYB is the paint-mixing mode — the one that should behave like colours on an artist's palette — and it had been running on a colour model that could not mix reliably: mixing a dye *with itself* failed to give you that same dye back for more than half of all dyes. Blue and yellow now make a true green, and mixing any dye with itself returns it.
+- **Shared Mixer links now preview in the mode you picked.** When you shared a mix, the preview image that unfurled in Discord was always drawn in CIELAB, whichever of the six mixing modes you had chosen — including the Mixer's own default. Whoever you sent it to saw a different colour from the one on your screen.
+- **Shared Mixer previews name the dye your chosen matching method actually picks.** The preview labelled its suggested dye with your matching method but had ranked the dyes by a different one, so the dye it named could disagree with the page the link opens — for some methods, on about half of all mixes.
+
 ## Web-App Version 5.3.1 — September 3, 2026
 
 - **The "Show ΔE" switch works now.** Turning it off left the match-quality number on every result card exactly where it was. The same setting is what the Accessibility checker uses to hide that number when no colour-vision lens is active, and what Dye Comparison and Budget use to keep it off their cards entirely — so all three were showing you a number they had been written not to show.

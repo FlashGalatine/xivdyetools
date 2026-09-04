@@ -583,7 +583,7 @@
       },
       "matchingMethods": {
         "name": "匹配方式",
-        "body": "六种方式，一套词汇：ΔE2000（默认）、ΔEOK、ΔE76、REDMEAN、RGB DIST 和 DISTINGUISH %。只有 ΔE2000 的分档跟随你的匹配线；其他方式的分档固定，档位不跨方式比较，且出现档位的地方必定标注方式。"
+        "body": "六种方式，一套词汇：ΔE2000（默认）、ΔEOK2、ΔE76、REDMEAN、RGB DIST 和 DISTINGUISH %。只有 ΔE2000 的分档跟随你的匹配线；其他方式的分档固定，档位不跨方式比较，且出现档位的地方必定标注方式。"
       },
       "spectrumPrices": {
         "name": "染剂合并与价格",

@@ -17,7 +17,8 @@
  *
  * - ciede2000: ΔE2000 — industry-standard perceptual formula (**the default
  *   everywhere**)
- * - oklab: ΔEOK — OKLAB Euclidean (prints raw, dp 3)
+ * - oklab: ΔEOK2 — OKLAB Euclidean, a/b scaled x2 per CSS Color 4 §20.4
+ *   (prints raw, dp 3)
  * - cie76: ΔE76 — CIELAB Euclidean
  * - redmean: REDMEAN — weighted RGB approximation
  * - rgb: RGB DIST — Euclidean RGB distance
@@ -36,7 +37,7 @@
  */
 export type MatchingMethod = 'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish';
 
-/** Suite display order: ΔE2000 · ΔEOK · ΔE76 · REDMEAN · RGB DIST · DISTINGUISH % */
+/** Suite display order: ΔE2000 · ΔEOK2 · ΔE76 · REDMEAN · RGB DIST · DISTINGUISH % */
 export const MATCHING_METHODS: readonly MatchingMethod[] = [
   'ciede2000',
   'oklab',
@@ -55,7 +56,7 @@ export const DEFAULT_MATCHING_METHOD: MatchingMethod = 'ciede2000';
  */
 export const MATCHING_METHOD_TAGS: Record<MatchingMethod | 'ratio', string> = {
   ciede2000: 'ΔE2000',
-  oklab: 'ΔEOK',
+  oklab: 'ΔEOK2',
   cie76: 'ΔE76',
   redmean: 'REDMEAN',
   rgb: 'RGB DIST',

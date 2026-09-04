@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2026-09-04
+
+### Changed
+
+- **The OKLAB matching method now prints `ΔEOK2`, not `ΔEOK`** — in the `/harmony`,
+  `/dye`, `/comparison`, `/accessibility`, `/mixer`, `/extractor` and `/preferences`
+  method pickers, in `/budget`'s ΔE column header, and on every card that names the
+  method. The metric itself became ΔEOK2 in `@xivdyetools/core` 5.1.0 (CSS Color 4
+  §20.4 — `a` and `b` scaled by 2), so the old tag named the wrong formula and sat
+  beside numbers on a scale roughly 1.4–2× larger than it described.
+
+  ⚠️ Slash-command choice labels changed, so this deploy needs `register-commands`
+  to run — the production workflow does that itself after `--env production`.
+
+- **`MATCHING_METHODS` reads its display names from core's `MATCHING_METHOD_TAGS`
+  instead of restating them.** The names were a hand-written copy, and core 5.1.0
+  caught it out: the copy would have kept printing `ΔEOK` in `/preferences` and
+  `/budget` while the rendered cards — which read the map — printed `ΔEOK2` for the
+  same number. The DEAD-037 anti-drift test already proved `value` parity with core;
+  it now proves tag parity too.
+
 ## [5.3.0] - 2026-09-03
 
 ### Fixed

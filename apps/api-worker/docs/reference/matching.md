@@ -7,13 +7,21 @@ Find FFXIV dyes that best match any hex color you provide, using perceptual colo
 | Method | Tag | Scale | Description |
 |---|---|---|---|
 | `ciede2000` | ΔE2000 | 0 – 100 | CIEDE2000 ΔE — current ISO standard for perceptual color difference (**default**) |
-| `oklab` | ΔEOK | 0 – 1 | Euclidean distance in Oklab — modern, excellent perceptual uniformity |
+| `oklab` | ΔEOK2 | 0 – ~1.244 | Euclidean distance in Oklab with `a`/`b` scaled ×2 (CSS Color 4 §20.4) — modern, excellent perceptual uniformity |
 | `cie76` | ΔE76 | 0 – 100 | CIE76 ΔE in Lab space — older standard, reasonable accuracy |
 | `redmean` | REDMEAN | 0 – ~765 | Weighted RGB distance — cheap perceptual approximation |
 | `rgb` | RGB DIST | 0 – ~441.67 | Euclidean distance in RGB space — fast, not perceptually uniform |
 | `distinguish` | DISTINGUISH % | 0 – 100 (integer) | RGB distance rescaled to a percentage — same ranking as `rgb`, rounded, so ties are common |
 
 **Default:** `ciede2000` — the same "what does *close* mean" answer used across the XIV Dye Tools suite. `distance` is returned in the chosen method's native unit, so thresholds are not comparable across methods.
+
+::: warning `oklab` changed scale in core 5.1.0
+`oklab` was plain ΔEOK (Euclidean Oklab) up to core 5.0.0. From 5.1.0 it is **ΔEOK2** — the same distance with `a` and `b` scaled by 2, as CSS Color 4 §20.4 defines, because plain ΔEOK under-weights differences in colorfulness against differences in lightness.
+
+This moves both the **ranking** and the **numeric scale**: values for a given pair are roughly 1.4–2× their former size (a pure lightness difference such as black-to-white is unchanged at `1.0`, a pure chroma difference nearly doubles). Any `maxDistance` threshold or client-side band your code compares against an `oklab` distance needs to move with it. Rankings changed too — against `ciede2000` as the reference over 2,000 random sRGB queries, plain ΔEOK picked a different closest dye 30.4% of the time and ΔEOK2 24.4%.
+
+The other five methods are unaffected, and `ciede2000` remains the default.
+:::
 
 ::: tip Retired methods
 The pre-5.0 values `hyab` and `oklch-weighted` are still **accepted** for compatibility but are silently normalised to `ciede2000` (and `euclidean` to `rgb`) — the response `method` field shows what was actually used. The old `kL` / `kC` / `kH` weight parameters are ignored.
@@ -79,7 +87,7 @@ Example response:
 }
 ```
 
-**Distance values** are floats (rounded to 4 decimals) in the chosen method's native unit. For `ciede2000`, roughly `< 2` is imperceptible, `2–10` is a visible-but-close match, and `> 10` is a clearly different color; for `oklab`, values below `0.05` are perceptually very close and above `0.2` are noticeable differences.
+**Distance values** are floats (rounded to 4 decimals) in the chosen method's native unit. For `ciede2000`, roughly `< 2` is imperceptible, `2–10` is a visible-but-close match, and `> 10` is a clearly different color; for `oklab` (ΔEOK2), values below `0.03` are perceptually very close and above `0.17` are clearly different — these are the suite's own calibrated band cuts, and they moved up with the 5.1.0 scale change described above.
 
 ---
 
@@ -130,4 +138,4 @@ Example response:
 }
 ```
 
-If no dyes fall within `maxDistance`, `results` will be an empty array and `resultCount` will be `0`. Try increasing `maxDistance` — for `ciede2000`, black-to-white is `100`, so `30` already covers a wide neighbourhood; for `oklab` (black-to-white `1.0`) a value of `0.3` covers most of the visible color space.
+If no dyes fall within `maxDistance`, `results` will be an empty array and `resultCount` will be `0`. Try increasing `maxDistance` — for `ciede2000`, black-to-white is `100`, so `30` already covers a wide neighbourhood; for `oklab` (ΔEOK2 — black-to-white `1.0`, but the widest pair, green-to-magenta, reaches `1.244`) a value of `0.3` reaches roughly a third of all dye pairs and `0.5` about three-quarters. Note these numbers roughly doubled in core 5.1.0 — a `maxDistance` tuned against the pre-5.1.0 `oklab` scale now returns noticeably fewer results.

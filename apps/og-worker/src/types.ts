@@ -53,6 +53,9 @@ export type HarmonyType =
 // computed (dye-helpers.deltaForAlgorithm → normalizeMatchingMethod).
 export type MatchingAlgorithm = import('@xivdyetools/core').MatchingMethod;
 
+/** The six mixing algorithms — core's blending vocabulary, verbatim. */
+export type BlendingMode = import('@xivdyetools/core/blending').BlendingMode;
+
 // The five lenses are core's vocabulary — one type, no casts at the seams.
 export type { VisionType };
 
@@ -93,6 +96,8 @@ export interface MixerParams {
   dyeB: number; // stainID
   dyeC?: number; // stainID (optional third dye)
   ratio: number; // 0-100
+  /** Which of the six algorithms mixes the colours — the web mixer's `?mode=` */
+  mode?: BlendingMode;
   algo?: MatchingAlgorithm;
 }
 

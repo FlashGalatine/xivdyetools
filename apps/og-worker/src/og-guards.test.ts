@@ -533,4 +533,24 @@ describe('/og/* cache key: card generation and the reserved default routes', () 
     expect(second.status).toBe(200);
     expect(renderOGImage).toHaveBeenCalledTimes(1);
   });
+
+  /**
+   * `?mode=` picks the mixer card's mixing ALGORITHM, so two modes are two
+   * different pictures of the same path. If the key omitted it, whichever
+   * mode was rendered first would be served for every other mode for up to
+   * seven days (`s-maxage=604800`, no purge in either deploy workflow) — a
+   * silent wrong-picture bug that only shows on a cold colo.
+   */
+  it('two mixing modes on one path take two cache entries', async () => {
+    const ryb = await app.request('/og/mixer/1/2/50?mode=ryb', {}, TEST_ENV, execCtx);
+    expect(ryb.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+    const spectral = await app.request('/og/mixer/1/2/50?mode=spectral', {}, TEST_ENV, execCtx);
+    expect(spectral.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+    expect(renderOGImage).toHaveBeenCalledTimes(2);
+    expect(caches.store.size).toBe(2);
+  });
 });

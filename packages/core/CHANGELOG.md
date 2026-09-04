@@ -5,6 +5,186 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] - 2026-09-04
+
+### Changed
+
+- **`getDeltaE_Oklab` is now ΔEOK2** (CSS Color 4 §20.4): `a` and `b` are scaled by 2 before the
+  Euclidean distance. Plain ΔEOK "under-estimates differences in colorfulness compared to
+  differences in lightness"; the factor is Ottosson's own fit against perceptual datasets (2.016
+  on COMBVD, 2.045 on OSA-UCS). Measured here over 2,000 random sRGB queries with CIEDE2000 as
+  the reference, asking how often each variant picks a *different* winning dye: plain ΔEOK
+  **30.4%**, ΔEOK2 **24.4%**, cie76 31.1%. §20.5's ΔEOKr2 (toe remap) was measured and rejected —
+  slightly worse for considerably more code.
+
+  ⚠️ **This changes rankings and the numeric SCALE for the `oklab` matching method.** Values are
+  roughly 1.4–2× their former size. `BAND_VOCABULARY`'s oklab cuts were recalibrated with
+  `calibrate:bands` (match `0.033/0.081/0.174`, harmony `0.041/0.101/0.174`, separation
+  `0.08/0.144/0.281`) and `HARMONY_MAX_DISTANCE.oklab` moved `0.13 → 0.21` to keep its ratio to
+  the widest harmony cut. Over the 5,000-row harmony golden, **1,237 rows (24.7%) moved and every
+  one is in the `oklab` config** — 705 a different chosen dye, 532 a companion reorder; the three
+  configs that do not read OKLAB are byte-identical. `ciede2000` remains
+  `DEFAULT_MATCHING_METHOD`, so this affects only users who selected `oklab`.
+
+- **`MATCHING_METHOD_TAGS.oklab` is now `ΔEOK2`** (was `ΔEOK`). The tag is the suite's
+  one display name for the method, read by `@xivdyetools/svg`'s cards, og-worker and
+  discord-worker, so renaming it here moves every surface that reads it. Surfaces that
+  kept a hand-written copy of the map were repointed or gated in the same change —
+  web-app's now lives in `shared/method-tags.ts` behind a parity test, and
+  discord-worker's `MATCHING_METHODS` derives its names from this map instead of
+  restating them.
+
+- **CIELAB now uses the exact CIE 15:2004 constants** — `ε = 216/24389` and `κ = 24389/27` in
+  place of the pre-2004 decimals (`0.008856`, `903.3`, and blending's equivalent `7.787` linear
+  slope), in both `ColorConverter` and `blending/conversions.ts`. Rounding the pair independently
+  leaves the two branches of f(t) not meeting: measured, the old constants left a step of
+  **2.83e-7** in f at the junction (making f very slightly non-monotonic, hence non-invertible
+  there); the exact fractions give **2.78e-17**. `ColorConverter.rgbToLab` also no longer rounds
+  its output to 4 dp — LAB is an intermediate, not a display value.
+
+  Impact is deliberately tiny: LAB moves by at most 9e-5, ΔE00 by at most 7.6e-5, and **no dye's
+  nearest-neighbour ranking changed** (0 of 125). The harmony golden moved **4 rows of 5,000
+  (0.08%)**, all on one base dye, and **no chosen dye changed** — only two companions swapped
+  order, having measured 8.6e-6 apart (14.166463869861 vs 14.166455222891), a gap the old 4-dp
+  rounding collapsed into a tie.
+
+  The D65 white point and sRGB matrix are deliberately **not** touched: they are the
+  ASTM/Lindbloom pair and are consistent with each other, which is the property that matters.
+
+- `HarmonyGenerator`'s default ΔE formula moved `'cie76'` → `'ciede2000'`, matching
+  `DEFAULT_MATCHING_METHOD`. **This changes no shipped behaviour**: since the harmony convergence
+  every surface goes through `generateHarmonySlots`, which takes `matchingMethod` explicitly, and
+  the `find*Dyes()` methods this default serves are reached only through the `DyeService` façade,
+  which nothing in the monorepo calls. It stops the published API contradicting the documented
+  suite default. (The two formulas pick different complements for 40 of the 125 dyes, so the
+  difference is real where the path is used.)
+
+### Fixed
+
+- **The `@public` `RYB` interface documented its components as `0–255`; they are `0–1`.**
+  `blending/conversions.ts`'s `rgbToRyb` returns the normalised form (`#E4DFD0` → `r 0.8418`),
+  while the 0–255 spelling belongs to `ColorService.rgbToRyb`/`rybToHex` in a different module.
+  The `/blending` subpath exports the type but neither conversion function, so a consumer
+  importing `RYB` from there had nothing in that barrel producing the documented units — and
+  building `{ r: 255, y: 0, b: 0 }` per the comments was 255× out of range. Comments only.
+
+- **`README.md`'s harmony snippet still called `'cie76'` the default** for `deltaEFormula`.
+  It is `'ciede2000'` as of this release (see above), and the two pick different complements
+  for 40 of the 125 dyes, so a consumer copying the snippet and omitting the field got a
+  different result set than the comment promised.
+
+### Removed
+
+- **`getDeltaE_OklchWeighted`** (instance and static). Its hue term under-weights by a factor of
+  π at small angles even at the documented-neutral `kH = 1`, and it had no production caller —
+  the `oklch-weighted` `MatchingMethod` was retired in the 5.0 suite. If a weighted metric is
+  wanted later, build it on ΔH = 2·√(C₁C₂)·sin(Δh/2).
+
+### Added
+
+- **CIEDE2000 conformance gate** (`ciede2000-conformance.test.ts`): all 34 published
+  Sharma-Wu-Dalal (2005) supplementary pairs, to 1e-4. The implementation already passed; this is
+  a regression gate for the arctangent-quadrant and mean-hue branches where the paper found
+  "several implementations distributed on the Internet, including some from reputable sources,
+  were erroneous" — cases no dye-based test reaches. Mutation-verified: flipping the `Rt` sign
+  fails 11 of the 34.
+- **Algebraic-law gates for every blending mode, with no per-mode exemptions**
+  (`algebraic-laws.test.ts`): identity, commutativity, idempotence and greyscale monotonicity,
+  all of which hold exactly (ΔE 0.000) across all six modes, plus the canonical pigment claims
+  for `spectral` and `ryb` as bands. Both of the fact-check's P1 defects would have been caught
+  on the first run.
+
+### Fixed
+
+- Two vacuous assertions in the harmony ΔE tests: one asserted only `toBeDefined()` (so mutating
+  the default formula left the file green) and one was the tautology
+  `expect(x === null || x !== null).toBe(true)`, which no source change can falsify.
+
+## [5.0.0] - 2026-09-03
+
+### Removed
+
+- **BREAKING — `RybColorMixer` is gone, and with it core's second RYB colour space** (ALGO-002).
+  Core shipped two implementations of the `ryb` mixing mode that disagreed by up to ΔE₀₀ 38, so
+  the same two dyes mixed one colour in the web app (`ColorService.mixColorsRyb` → the
+  Gossett-Chen trilinear paint cube) and a different one on the Discord bot (`blendColors` →
+  chromatic subtraction). The cube was retired rather than the approximation because it **fails
+  the identity law**: its trilinear map lands in the convex hull of its eight corners, and pure
+  green, blue, cyan, magenta and true black sit outside that hull, so they have no RYB pre-image
+  and the multi-start Newton inverse the code added cannot converge for them. Mixing a dye with
+  *itself* therefore did not return that dye — on **53% of dye pairs, by up to ΔE₀₀ 27.9**. That
+  is a defect visible in one drag of a 0–100% slider, and it is not tunable: ColorAide documents
+  the same limit on the same cube, and the paper defines no inverse at all.
+
+### Changed
+
+- **BREAKING — `ColorService.rgbToRyb` / `rybToRgb` / `hexToRyb` / `rybToHex` changed meaning.**
+  The signatures are unchanged (still 0–255), but the axes are now the chromatic-subtraction
+  space `blendColors(…, 'ryb')` actually mixes in, where **black** is at the origin; the retired
+  Gossett-Chen cube put **white** there. RYB triples persisted by a 4.x consumer do not mean the
+  same thing. What they gain is an exact inverse — the round trip is lossless where the old one
+  drifted by up to ΔE₀₀ 27.9. Components may now be fractional; rounding them costs that
+  exactness.
+- **BREAKING — the `ryb` mixing mode renders different colours.** Blue + yellow is now `#008000`,
+  a true green, where the cube gave an olive; red + yellow `#804000`; red + blue `#800080`. Any
+  stored or cached `ryb` mix from 4.x will not reproduce.
+- **All six `ColorService.mixColors*` are now thin delegations to `blendColors`.** `rgb`, `lab`,
+  `oklab`, `hsl` and `spectral` already agreed byte-for-byte, so only `ryb` changes output — but
+  the delegation is what stops the other five drifting apart in future.
+  `ColorService.blending-parity.test.ts` asserts hex equality across six modes × eight colour
+  pairs × five ratios rather than approximate agreement.
+  **Hex case is deliberately preserved on each surface**: `blendColors` still emits lowercase and
+  `ColorService` still emits uppercase (the long-standing `rgbToHex` delta). Delegating naïvely
+  flipped `mixColors*` to lowercase, which would have broken any caller comparing a mix against
+  an uppercase `dye.hex`.
+- `ColorService.interpolateHue` now delegates to the same primitive `blendColors` uses, so the
+  hue wheel has one implementation too.
+
+### Added
+
+- **`blendColors` takes an optional `options` argument**: `{ hueMethod }` selects the hue travel
+  direction (`shorter` | `longer` | `increasing` | `decreasing`) for `'hsl'`. Without it,
+  delegating `mixColorsHsl` would have silently dropped a documented parameter. Non-breaking —
+  the argument is optional and defaults to the previous `'shorter'` behaviour.
+- `RYB`, `HueMethod` and `BlendOptions` are exported from `@xivdyetools/core/blending`.
+
+## [4.4.0] - 2026-09-03
+
+### Fixed
+
+- **`spectral` blend mode returned near-black for almost every input** (ALGO-001). The mode
+  applied the Kubelka-Munk relation `K/S = (1-R)²/2R` to the three *gamma-encoded* sRGB
+  channels independently. K-M is defined per-wavelength on a *linear* spectral reflectance
+  curve, and K/S diverges as R → 0 — so any channel that was dark in either input got pinned
+  to ≈0 at **every** ratio. A blue→yellow gradient rendered nine near-black stops out of
+  eleven; even white + black came back `#010101` instead of a mid grey. Three independent
+  channels also cannot produce the blue + yellow = green result the mode is named for: that
+  effect lives in the *overlap* of two reflectance curves, and per-channel maths computes the
+  green output from the two green inputs alone.
+
+  `blendSpectral()` now delegates to `spectral.js`, which reconstructs a real 38-band
+  reflectance curve (380–750 nm, Burns' LHTSS spectral upsampling) and mixes in K/S space per
+  band. This is the same engine `ColorService.mixColorsSpectral()` already used, so the
+  Discord bot and the web app now agree exactly where they previously differed by up to
+  ΔE₀₀ 55.
+
+  **This visibly changes every `spectral` mix and gradient.** Blue + yellow is now `#398F54`
+  (a green) rather than `#010101`.
+
+- **`mixColorsSpectral()` threw on shorthand `#RGB` hex.** `spectral.js` does not parse
+  3-digit hex and does not throw on it — it yields the string `"#NANNANNAN"`, which
+  `normalizeHex` then rejected. Colours are now expanded to 6 digits before being handed to
+  the library. Every other mixing mode already accepted shorthand.
+
+### Removed
+
+- `rgbToReflectance`, `reflectanceToRgb`, `reflectanceToKS`, `ksToReflectance` from
+  `blending/conversions.ts`. Internal to the module — never exported from
+  `@xivdyetools/core/blending` — so this is not a breaking change. The K/S formulas were
+  correct; what they were applied to was not.
+
+Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
+
 ## [4.3.0] - 2026-09-03
 
 ### Added

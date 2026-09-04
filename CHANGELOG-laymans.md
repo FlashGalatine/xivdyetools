@@ -19,9 +19,36 @@ Rules:
 - Say which surface changed (web app / Discord bot / link previews).
 - Bullets must stand alone (they are translated into six languages).
 - Push edits to this file as their own small commit — the announcement
-  webhook caps payloads at 10 KB and fires on any push to main touching
-  this exact root path.
+  fires on any push to main touching this exact root path, and a focused
+  commit keeps the announced release readable.
+
+  (This line used to add "the announcement webhook caps payloads at 10 KB",
+  which was wrong twice over and would push someone into trimming release
+  history for no reason. 10 KB is the PRESET-SUBMISSION endpoint's cap;
+  `/webhooks/github` allows 1 MiB. And that cap applies to GitHub's push
+  payload, which carries commit metadata only — this file's contents are
+  fetched separately from raw.githubusercontent.com, and only the newest
+  entry is ever rendered, so the file's own size never enters into it.)
 -->
+
+## [5.2.0] - 2026-09-04
+
+### 🎨 The colour mixing actually mixes now
+
+- Discord bot: `spectral` mixes and gradients came out almost black. A blue-to-yellow `/gradient` rendered nine near-black steps out of eleven, and even white mixed with black came back nearly black instead of a mid grey. The mode is meant to imitate real paint pigments, and now it does — blue and yellow make a green. The web app was always correct here; the two now match exactly.
+- Web app: the Mixer's RYB mode promised "Blue + Yellow = Olive" and now genuinely makes green. It had been running on a paint model that could not mix reliably — mixing a dye *with itself* failed to return that same dye for more than half of all dyes. Both problems are gone.
+- Everywhere: the web app and the Discord bot had quietly been using two different recipes for RYB mixing, so the same two dyes could give you one colour on the site and another in Discord. There is one recipe now.
+
+### 🔗 Shared links
+
+- Link previews: sharing a Mixer link always previewed it in one fixed mode, whichever of the six you had actually picked — including the Mixer's own default. Whoever you sent it to saw a different colour from the one on your screen. The preview now uses your mode.
+- Link previews: the dye a Mixer preview named was chosen by a different measurement than the one printed beside it, so it could disagree with the page the link opens — on about half of all mixes for some settings. It now names the dye your chosen method actually picks.
+
+### 📏 Matching
+
+- Everywhere: the OKLAB matching option was measuring on a scale that under-weighted how colourful two dyes are next to how light or dark they are. Roughly one search in four now returns a different, closer dye. It is also relabelled `ΔEOK2`, the precise name of the formula. The default matching method is unchanged, so this only affects you if you chose OKLAB yourself.
+- Web app: the Matching Algorithm setting now says that your choice changes *which dye you get*, not just the score shown beside it — measured against the default, the alternatives return a different closest dye between a quarter and nearly half of the time, and nothing on the page said so.
+- Web app: the Triadic, Tetradic and Square harmony descriptions stopped promising "vibrant, balanced palettes", "rich combinations" and "dynamic variety". There is no evidence behind those claims for these three schemes, so they now describe the shape they make on the colour wheel. Analogous and Monochromatic keep their wording — research does back those two.
 
 ## [5.1.0] - 2026-08-31
 
