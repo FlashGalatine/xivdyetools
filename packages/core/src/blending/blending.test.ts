@@ -34,12 +34,10 @@ describe('blendColors', () => {
   });
 
   describe('ratio boundaries', () => {
-    // BUG-006: 'ryb' now belongs here. Its conversion is bijective on the
-    // chromatic axes (rgbToRyb is the exact inverse of rybToRgb), and the
-    // exemption below it was what let green-maps-to-blue ship.
-    const bijectiveModes: BlendingMode[] = ['rgb', 'lab', 'oklab', 'hsl', 'spectral', 'ryb'];
-
-    for (const mode of bijectiveModes) {
+    // Every mode, no exemptions. BUG-006: 'ryb' used to be exempt, and that is
+    // what let green-maps-to-blue ship. Driven off ALL_MODES so a seventh mode
+    // cannot be added without being covered here.
+    for (const mode of ALL_MODES) {
       it(`${mode}: ratio=0 returns first color`, () => {
         const result = blendColors('#FF6B6B', '#6BCB77', mode, 0);
 
@@ -56,7 +54,6 @@ describe('blendColors', () => {
         expect(result.rgb.b).toBeCloseTo(119, -1);
       });
     }
-
   });
 
   describe('ratio clamping', () => {
@@ -98,9 +95,7 @@ describe('blendColors', () => {
      * the suite stayed green throughout. The exemption is gone and the hues
      * that actually broke are covered below.
      */
-    const bijectiveModes: BlendingMode[] = ['rgb', 'lab', 'oklab', 'hsl', 'spectral', 'ryb'];
-
-    for (const mode of bijectiveModes) {
+    for (const mode of ALL_MODES) {
       it(`${mode}: blending a color with itself returns the same color`, () => {
         const result = blendColors('#8B5CF6', '#8B5CF6', mode);
 
@@ -143,9 +138,7 @@ describe('blendColors', () => {
     // pigment behavior)", which #010101 satisfied — as would a function that
     // returned pure black unconditionally. That is how the per-channel K/S
     // defect stayed green (2026-09-03 algorithm fact-check, P0).
-    const midToneModes: BlendingMode[] = ['rgb', 'lab', 'oklab', 'ryb', 'hsl', 'spectral'];
-
-    for (const mode of midToneModes) {
+    for (const mode of ALL_MODES) {
       it(`${mode}: blending black and white produces a mid-tone`, () => {
         const result = blendColors('#000000', '#FFFFFF', mode, 0.5);
 

@@ -51,6 +51,13 @@ to be load-bearing — the broken ramp is technically monotonic and does end at 
 checks anyway. Removing them was hygiene; the defect is caught by the black-and-white mid-tone assertion
 and the new pigment tests.
 
+**Every mode exemption in the blending suite is now gone.** The remaining `ryb` exemption on the
+monotonic-ramp check was measured and found **stale** — RYB's black→white ramp is
+`#000000 #404040 #808080 #bfbfbf #ffffff`, identical to `rgb`. It dates from before BUG-006 fixed the
+RYB conversion and was simply never removed. The three per-test mode lists (`bijectiveModes`,
+`midToneModes`) are now driven off `ALL_MODES`, so a seventh blending mode cannot be added without being
+covered by the ratio-boundary, self-mix and mid-tone assertions.
+
 Verified after the change: bot and web now produce **identical** spectral output (surface divergence
 13/42 → 6/42 cells, the remainder being RYB, which is Sprint 2), blue + yellow is `#398F54`, green + red
 is a brown `#834B17`, and white + black is `#A6A6A6`. Full gates: 25/25 test tasks, 42/42 type-check +

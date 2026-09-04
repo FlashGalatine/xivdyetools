@@ -96,16 +96,17 @@ describe('Gradient Generation: Monotonic Progression', () => {
 
       const results = steps.map((ratio) => blendColors(color1, color2, mode, ratio));
 
-      // 'spectral' is no longer exempt (2026-09-03 fact-check, P0): the
-      // per-channel K/S implementation collapsed every interior step of a
-      // black->white ramp to #000000-#030303, and these two exemptions are what
-      // let it pass. 'ryb' stays exempt pending the RYB unification.
-      if (mode !== 'ryb') {
-        for (let i = 1; i < results.length; i++) {
-          expect(results[i].rgb.r).toBeGreaterThanOrEqual(results[i - 1].rgb.r);
-          expect(results[i].rgb.g).toBeGreaterThanOrEqual(results[i - 1].rgb.g);
-          expect(results[i].rgb.b).toBeGreaterThanOrEqual(results[i - 1].rgb.b);
-        }
+      // No mode is exempt (2026-09-03 fact-check). 'spectral' was exempted
+      // because the per-channel K/S implementation collapsed every interior
+      // step of this ramp to #000000-#030303; 'ryb' was exempted before
+      // BUG-006 fixed its conversion, and has been monotonic here ever since
+      // (#000000 #404040 #808080 #bfbfbf #ffffff — identical to rgb).
+      // A greyscale ramp must be monotonic in every mode: that is what makes
+      // this assertion worth having.
+      for (let i = 1; i < results.length; i++) {
+        expect(results[i].rgb.r).toBeGreaterThanOrEqual(results[i - 1].rgb.r);
+        expect(results[i].rgb.g).toBeGreaterThanOrEqual(results[i - 1].rgb.g);
+        expect(results[i].rgb.b).toBeGreaterThanOrEqual(results[i - 1].rgb.b);
       }
 
       expect(results[0].rgb.r).toBeLessThan(10);
