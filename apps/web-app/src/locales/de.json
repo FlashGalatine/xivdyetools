@@ -179,7 +179,7 @@
     "mixingRgbDesc": "Additive Lichtmischung. Blau + Gelb = Grau.",
     "mixingLabDesc": "Wahrnehmungsgetreue Mischung. Blau + Gelb = Rosa.",
     "mixingOklabDesc": "Moderner Wahrnehmungsfarbraum. Blau + Gelb = Cyan.",
-    "mixingRybDesc": "Farbsimulation. Blau + Gelb = Oliv.",
+    "mixingRybDesc": "Farbsimulation. Blau + Gelb = Grün.",
     "mixingHslDesc": "Farbton-basierte Mischung im HSL-Farbraum.",
     "mixingSpectralDesc": "Kubelka-Munk Physik. Blau + Gelb = Grün.",
     "colorSpaceRgbDesc": "Lineare Interpolation. Erzeugt graue Mittelpunkte zwischen Farben.",

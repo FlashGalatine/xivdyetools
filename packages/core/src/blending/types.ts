@@ -52,3 +52,36 @@ export interface BlendResult {
   hex: string; // e.g. '#8B4513'
   rgb: RGB;
 }
+
+/**
+ * RYB (Red-Yellow-Blue) coordinates in the chromatic-subtraction space that
+ * blending mode `'ryb'` mixes in. Black sits at the origin.
+ *
+ * This is NOT the Gossett-Chen paint cube core shipped until 5.0.0, which put
+ * WHITE at the origin. That cube's trilinear map lands in the convex hull of
+ * its eight corners, so pure green, blue, cyan, magenta and true black had no
+ * RYB pre-image and its Newton-method inverse could not converge for them —
+ * mixing such a colour with itself did not return it. This space inverts
+ * exactly; see {@link rgbToRyb} in `conversions.ts`.
+ */
+export interface RYB {
+  r: number; // 0–255
+  y: number; // 0–255
+  b: number; // 0–255
+}
+
+/**
+ * How to travel around the hue wheel when interpolating a cylindrical space.
+ *
+ * - `shorter`    — the shorter arc between the two hues (default)
+ * - `longer`     — the longer arc
+ * - `increasing` — always clockwise
+ * - `decreasing` — always counter-clockwise
+ */
+export type HueMethod = 'shorter' | 'longer' | 'increasing' | 'decreasing';
+
+/** Per-call tuning for the modes that have a choice to make. */
+export interface BlendOptions {
+  /** Hue travel direction for `'hsl'`. Ignored by every other mode. Default `'shorter'`. */
+  hueMethod?: HueMethod;
+}

@@ -227,6 +227,43 @@ describe('GET /og/mixer/:dyeAId/:dyeBId/:ratio', () => {
     const res = await app.request('/og/mixer/43/44/99', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
+
+  describe('?mode= (the web mixer\'s chosen mixing algorithm)', () => {
+    /**
+     * The web mixer share URL has always carried `?mode=`; this worker never
+     * read it, so every shared mix rendered in CIELAB. Wiring it up means
+     * `mode` must join the FINDING-024 query-key allowlist, be value-checked
+     * the way `algo` is, and — the part that is easy to miss — join the edge
+     * CACHE KEY, or the first mode rendered for a dye pair would be served
+     * to every other mode for up to seven days.
+     */
+    it.each(['rgb', 'lab', 'oklab', 'ryb', 'hsl', 'spectral'])(
+      'renders for mode=%s',
+      async (mode) => {
+        const res = await app.request(`/og/mixer/43/44/50?mode=${mode}`, {}, TEST_ENV);
+        expect(res.status).toBe(200);
+        expect(res.headers.get('Content-Type')).toBe('image/png');
+      },
+    );
+
+    it('rejects an unknown mode without echoing it back', async () => {
+      const res = await app.request('/og/mixer/43/44/50?mode=nonsense', {}, TEST_ENV);
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBe('Invalid mixing mode');
+      expect(JSON.stringify(body)).not.toContain('nonsense');
+    });
+
+    it('treats an empty mode as absent, like algo', async () => {
+      const res = await app.request('/og/mixer/43/44/50?mode=', {}, TEST_ENV);
+      expect(res.status).toBe(200);
+    });
+
+    it('works on the three-dye route too', async () => {
+      const res = await app.request('/og/mixer/43/44/45/50?mode=spectral', {}, TEST_ENV);
+      expect(res.status).toBe(200);
+    });
+  });
 });
 
 // ============================================================================

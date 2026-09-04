@@ -105,7 +105,7 @@ credible option. Strictly more work for the same user-visible result; not recomm
 
 ---
 
-## Sprint 2 — One implementation per named mode (P1)
+## Sprint 2 — One implementation per named mode (P1) — ✅ **DONE**
 
 ### 2.1 Choose the canonical RYB and delete the other
 
@@ -151,12 +151,42 @@ already agree; delegation is what stops them drifting apart again.
 
 ### 2.3 og-worker must not silently substitute an algorithm
 
-`apps/og-worker/src/services/svg/gradient.ts:39-43` handles `oklab` and `rgb` and defaults everything
-else to `lab` — so a `spectral`, `ryb` or `hsl` share card renders in a *different algorithm* than the
-card the user is sharing.
+⚠️ **This finding was WRONG ON THE FACTS as originally written, and was corrected during
+implementation.** It claimed `gradient.ts:39-43` defaults `spectral` / `ryb` / `hsl` to `lab`. It does
+not: that function's parameter is a **`MatchingAlgorithm`**, whose vocabulary is the six
+`MatchingMethod` values (`ciede2000`, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`) — `spectral`,
+`ryb` and `hsl` are not values it can ever receive. All six are in fact handled sensibly
+(`oklab`→oklab, the RGB family→rgb, the LAB family→lab). Nothing was broken there.
 
-**Do:** support all six modes via `blendColors()`. This is a handful of lines once 2.2 lands, and it is
-the direct application of the governing principle — the front end selects, core computes.
+**The real defect is one file over, and larger.** `apps/og-worker/src/services/svg/mixer.ts:69` mixed
+with a hardcoded `ColorService.mixColorsLab`, and `MixerParams` had **no mixing-mode field at all** —
+while `apps/web-app/src/services/share-service.ts:84` has always emitted `mode?: MixingMode` on every
+mixer share URL (`mixer-tool.ts:1932`, `mode: this.mixingMode`). So **every** shared mix unfurled as a
+CIELAB card regardless of which of the six algorithms the sharer had picked — including the web
+mixer's own default, which is `ryb`, so the *typical* case was wrong, not an edge case.
+
+**Done:** `?mode=` is read on both mixer routes and defaults to `ryb` (matching the web tool, so links
+shared before this release still render what their sharer saw); the three-dye fold-in uses the same
+mode instead of always LAB; `mode` joined the FINDING-024 query-key allowlist, is value-checked the
+way `algo` is (400, never echoing the value), and — the part that is easy to miss — **joined the edge
+cache key**, without which the first mode rendered for a dye pair would have been served for every
+other mode for up to seven days.
+
+**Two traps worth recording**, both found by testing rather than reading:
+
+1. `generateMixerOG` is **not deterministic**. The shared OG mark mints a fresh `clipPath` id per
+   render (`ogm0b`, `ogm1b`, …), so two identical calls return different strings. A first attempt at
+   this test asserted `expect(ryb).not.toBe(lab)` over whole SVGs and **passed while `mode` was still
+   being ignored entirely** — a vacuous test. The tests now assert on the emitted mix `fill`, which is
+   the one pixel the mode actually decides.
+2. The RYB result changed enough to falsify shipped UI copy. `mixingRybDesc` said "Blue + Yellow =
+   Olive" in all six locales; the mode now returns `#008000`, a true green. Corrected ×6.
+
+### 2.4 The Gossett–Chen citation fix is moot
+
+The two verified citation errors (black corner `0.094` not `0.09`; IEEE InfoVis **2004** pp. 113–118,
+not "their 2006 paper") lived in `RybColorMixer.ts`, which 2.1 deletes. The corrected citation is kept
+in `02-mixing-algorithms.md` for the record; there is no longer any code to fix.
 
 ---
 
@@ -317,7 +347,7 @@ Worth one line in the tool help — users currently have no signal that the togg
 | Sprint | Ships | Risk |
 |---|---|---|
 | 1 | Correct colours on the Discord bot | Low — one delegation + test updates |
-| 2 | One answer across all three surfaces | Medium — picks a winner between two RYB models; changes web-app output |
+| 2 | One answer across all three surfaces | ✅ DONE — picked chromatic subtraction; changes web + OG output |
 | 3 | Regression gates + precision | Low |
 | 4 | Honest labels and help text | Low |
 
@@ -349,3 +379,27 @@ should be called out in the changelog rather than slipped in.
 - **Do not switch the default matching method.** `ciede2000` is the industry standard and the current
   default. Nothing in this audit argues against it.
 - **Do not adopt Mixbox** without a licence review — see [02-mixing-algorithms.md](./02-mixing-algorithms.md).
+
+---
+
+## New finding, raised by Sprint 2 — a THIRD interpolation vocabulary in web-app (P1)
+
+Sprint 2 unified the *mixing* surface. It surfaced that the **Gradient** tool is a separate,
+un-unified one. There are three mode vocabularies in play, not two:
+
+| Vocabulary | Values | Where it computes |
+|---|---|---|
+| `BlendingMode` (core) | rgb, lab, oklab, ryb, hsl, spectral | `packages/core/src/blending` |
+| `MixingMode` (web mixer) | rgb, lab, oklab, ryb, hsl, spectral — the **same six** | delegates to core ✅ |
+| `InterpolationMode` (web gradient) | rgb, **hsv**, lab, **oklch**, **lch** — a **different set** | `gradient-tool.ts:1718`, `interpolateInSpace` — **its own local implementation** |
+
+So `apps/web-app/src/components/gradient-tool.ts` interpolates colour in the browser, in three spaces
+core has no blending mode for (`hsv`, `oklch`, `lch`), with `hsv` as its **default**. That is a direct
+violation of "core computes, the front end selects" — the same class of defect as the mixer's, in a
+tool that was simply not in Sprint 2's scope. og-worker's gradient card, correspondingly, ignores the
+`?interpolation=` the share URL carries and picks its space from the *matching* algorithm instead.
+
+**Not fixed here** — it is materially larger than a scope-adjacent tidy-up: it means either adding
+`hsv` / `oklch` / `lch` to core's public `BlendingMode` (new API, new tests, a share-URL compatibility
+story) or narrowing the gradient tool to the six. That is a sprint of its own and a product decision
+about which spaces the gradient tool should offer, so it is recorded rather than actioned.

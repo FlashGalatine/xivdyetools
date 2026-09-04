@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.4.0] - 2026-09-03
+
+### Fixed
+
+- **The Mixer's RYB mode said "Blue + Yellow = Olive" and now genuinely produces green.** Core
+  5.0.0 retired the Gossett-Chen paint cube behind that mode because it failed the identity law
+  (mixing a dye with itself did not return it, on 53% of dye pairs). Blue + yellow is now
+  `#008000`. The `mixingRybDesc` string was corrected in all six locales — it had been describing
+  both the wrong algorithm and the wrong result.
+- Shared Mixer links now unfurl a preview card in the mode the sharer picked. The share URL had
+  always carried `?mode=`; og-worker 2.8.0 now reads it.
+
+### Notes
+
+- Nothing in this app changed behaviourally beyond the strings — `mixer-blending-engine.ts` was
+  already a set of one-line delegations to core, which is why the fix landed entirely in core.
+
 ## [5.3.1] - 2026-09-03
 
 ### Fixed

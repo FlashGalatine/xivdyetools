@@ -179,7 +179,7 @@
     "mixingRgbDesc": "Mélange additif de lumière. Bleu + Jaune = Gris.",
     "mixingLabDesc": "Mélange perceptuellement uniforme. Bleu + Jaune = Rose.",
     "mixingOklabDesc": "Espace colorimétrique perceptuel moderne. Bleu + Jaune = Cyan.",
-    "mixingRybDesc": "Simulation de peinture. Bleu + Jaune = Olive.",
+    "mixingRybDesc": "Simulation de peinture. Bleu + Jaune = Vert.",
     "mixingHslDesc": "Mélange basé sur la teinte dans l'espace HSL.",
     "mixingSpectralDesc": "Physique Kubelka-Munk. Bleu + Jaune = Vert.",
     "colorSpaceRgbDesc": "Interpolation linéaire. Crée des points médians gris entre les couleurs.",

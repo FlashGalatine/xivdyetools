@@ -1,10 +1,9 @@
 /**
- * Equivalence guard: `blending/conversions.ts` vs `ColorConverter` / `RybColorMixer`.
+ * Equivalence guard: `blending/conversions.ts` vs `ColorConverter`.
  *
  * DEAD-037 ("Inside core") and the `DEPRECATIONS.md` follow-up "unify duplicated
  * conversions with ColorService inside core" asked whether the blending module's
- * private conversion helpers can be deleted in favour of core's `ColorConverter`
- * and `RybColorMixer`.
+ * private conversion helpers can be deleted in favour of core's `ColorConverter`.
  *
  * They cannot. This file is the evidence, and it is a permanent guard, not a
  * one-off study: it pins which helpers are bit-identical (so a future change to
@@ -16,7 +15,7 @@
  * Corpus: all 125 dye hexes from `dyes.json`, plus the primaries/greys/near-black
  * vectors the sibling `conversions.test.ts` / `blending.test.ts` suites use.
  *
- * Summary (2026-08-18, dead-code audit Wave 4b):
+ * Summary (2026-08-18, dead-code audit Wave 4b; RYB row updated 2026-09-03):
  *
  * | helper              | core equivalent               | verdict                                    |
  * |---------------------|-------------------------------|--------------------------------------------|
@@ -28,8 +27,16 @@
  * | `rgbToOklab`        | `ColorConverter.rgbToOklab`   | DELTA — core rounds to 6 dp                |
  * | `rgbToHsl`          | `ColorConverter.rgbToHsl`     | DELTA — 0–1 vs 0–100 scale, core rounds 2 dp |
  * | `hslToRgb`          | `ColorConverter.hslToRgb`     | DELTA — 0–100 rescale loses float identity |
- * | `rgbToRyb`/`rybToRgb` | `RybColorMixer.*`           | DELTA — a different algorithm entirely     |
- * | reflectance / K-S   | (none)                        | no core equivalent                         |
+ * | `rgbToRyb`/`rybToRgb` | `ColorService.*`            | UNIFIED 5.0.0 — one space, scale differs only |
+ * | reflectance / K-S   | (none)                        | removed 4.4.0 — see `conversions.ts`       |
+ *
+ * ⚠️ The RYB row is the one that CHANGED verdict. It read "DELTA — a different
+ * algorithm entirely" while core carried a second RYB implementation (the
+ * Gossett-Chen paint cube in `RybColorMixer`). That cube was deleted in 5.0.0
+ * because it fails the identity law — mixing a dye with itself did not return
+ * it — so there is now exactly one RYB space and the only difference left is
+ * that `ColorService` presents it 0-255 where `conversions.ts` uses 0-1. The
+ * remaining DELTA rows are still live and still must not be "fixed".
  */
 
 import { describe, it, expect } from 'vitest';
@@ -47,7 +54,7 @@ import {
 } from './conversions.js';
 import { blendColors } from './blending.js';
 import { ColorConverter } from '../services/color/ColorConverter.js';
-import { RybColorMixer } from '../services/color/RybColorMixer.js';
+import { ColorService } from '../services/ColorService.js';
 import dyes from '../data/dyes.json' with { type: 'json' };
 
 /** All 125 dye hexes — the real input domain of `blendColors()`. */
@@ -204,19 +211,24 @@ describe('conversions.ts ↔ ColorConverter equivalence (DEAD-037)', () => {
       expect(core).toEqual({ r: 169, g: 166, b: 164 });
     });
 
-    it('rgbToRyb / rybToRgb: blending’s approximation and RybColorMixer are different algorithms', () => {
+    it('rgbToRyb / rybToRgb: ColorService is the same space at 255× the scale', () => {
+      // Was a DELTA row: ColorService used to run the Gossett-Chen cube and
+      // returned `{ r: 14, … }` for this dye against blending's 0.8418. The
+      // cube is gone (5.0.0), so the only remaining difference is the scale.
       const rgb = hexToRgb('#e4dfd0');
       const mine = rgbToRyb(rgb);
-      const core = RybColorMixer.rgbToRyb(rgb.r, rgb.g, rgb.b);
-      // Blending's RYB is normalized 0–1 and near-achromatic here; the
-      // Gossett-Chen solver in RybColorMixer lands somewhere else entirely.
+      const viaService = ColorService.rgbToRyb(rgb.r, rgb.g, rgb.b);
+
       expect(mine.r).toBeCloseTo(0.8418, 4);
-      expect(core.r).toBe(14);
+      expect(viaService.r).toBeCloseTo(mine.r * 255, 10);
+      expect(viaService.y).toBeCloseTo(mine.y * 255, 10);
+      expect(viaService.b).toBeCloseTo(mine.b * 255, 10);
+
       expect(rybToRgb(mine)).toEqual({ r: 228, g: 223, b: 208 });
-      expect(RybColorMixer.rybToRgb(mine.r * 255, mine.y * 255, mine.b * 255)).toEqual({
-        r: 88,
-        g: 60,
-        b: 18,
+      expect(ColorService.rybToRgb(viaService.r, viaService.y, viaService.b)).toEqual({
+        r: 228,
+        g: 223,
+        b: 208,
       });
     });
   });
@@ -260,10 +272,16 @@ describe('conversions.ts ↔ ColorConverter equivalence (DEAD-037)', () => {
       expect(rgbToHex(viaCore)).toBe('#120d0d');
     });
 
-    it('RYB blending would move on essentially every pair', () => {
+    it('RYB blending no longer has a second implementation to move to', () => {
+      // The Gossett-Chen round trip landed on #E3DFD0 for a dye that is
+      // #E4DFD0 — one count of the identity failure that retired it. Both
+      // surfaces now return the input exactly at ratio 0.
       expect(blendColors('#e4dfd0', '#656565', 'ryb', 0).hex).toBe('#e4dfd0');
-      const ryb = RybColorMixer.rgbToRyb(228, 223, 208);
-      expect(rgbToHex(RybColorMixer.rybToRgb(ryb.r, ryb.y, ryb.b)).toUpperCase()).toBe('#E3DFD0');
+      expect(ColorService.mixColorsRyb('#e4dfd0', '#656565', 0).toLowerCase()).toBe('#e4dfd0');
+
+      const ryb = ColorService.rgbToRyb(228, 223, 208);
+      const back = ColorService.rybToRgb(ryb.r, ryb.y, ryb.b);
+      expect(rgbToHex(back).toUpperCase()).toBe('#E4DFD0');
     });
   });
 });

@@ -179,7 +179,7 @@
     "mixingRgbDesc": "加色光混合。蓝 + 黄 = 灰。",
     "mixingLabDesc": "感知均匀混合。蓝 + 黄 = 粉红。",
     "mixingOklabDesc": "现代感知色彩空间。蓝 + 黄 = 青。",
-    "mixingRybDesc": "颜料模拟。蓝 + 黄 = 橄榄。",
+    "mixingRybDesc": "颜料模拟。蓝 + 黄 = 绿。",
     "mixingHslDesc": "HSL 色彩空间中的色相为基础混合。",
     "mixingSpectralDesc": "库贝尔卡-蒙克物理学。蓝 + 黄 = 绿。",
     "colorSpaceRgbDesc": "线性插值。在颜色之间创建灰色中点。",

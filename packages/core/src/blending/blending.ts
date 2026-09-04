@@ -12,7 +12,15 @@
 
 import * as spectral from 'spectral.js';
 
-import type { RGB, LAB, HSL, BlendResult, BlendingMode } from './types.js';
+import type {
+  RGB,
+  LAB,
+  HSL,
+  BlendResult,
+  BlendingMode,
+  BlendOptions,
+  HueMethod,
+} from './types.js';
 import {
   rgbToLab,
   labToRgb,
@@ -33,16 +41,23 @@ import {
 /**
  * Blend two colors using the specified blending mode.
  *
- * @param hex1  - First color hex code (with or without #)
- * @param hex2  - Second color hex code (with or without #)
- * @param mode  - Blending algorithm to use
- * @param ratio - 0.0 = all hex1, 0.5 = equal mix, 1.0 = all hex2
+ * This is THE mixing surface for `@xivdyetools/core`. `ColorService.mixColors*`
+ * are thin delegations to it, so a front end that calls either gets the same
+ * colour — see `services/__tests__/ColorService.blending-parity.test.ts`, which
+ * asserts byte-equality rather than approximate agreement.
+ *
+ * @param hex1    - First color hex code (with or without #)
+ * @param hex2    - Second color hex code (with or without #)
+ * @param mode    - Blending algorithm to use
+ * @param ratio   - 0.0 = all hex1, 0.5 = equal mix, 1.0 = all hex2
+ * @param options - Per-mode tuning; only `'hsl'` reads anything from it today
  */
 export function blendColors(
   hex1: string,
   hex2: string,
   mode: BlendingMode,
   ratio: number = 0.5,
+  options: BlendOptions = {},
 ): BlendResult {
   const h1 = hex1.startsWith('#') ? hex1 : `#${hex1}`;
   const h2 = hex2.startsWith('#') ? hex2 : `#${hex2}`;
@@ -68,7 +83,7 @@ export function blendColors(
       blendedRgb = blendRYB(rgb1, rgb2, t);
       break;
     case 'hsl':
-      blendedRgb = blendHSL(rgb1, rgb2, t);
+      blendedRgb = blendHSL(rgb1, rgb2, t, options.hueMethod ?? 'shorter');
       break;
     case 'spectral':
       blendedRgb = blendSpectral(rgb1, rgb2, t);
@@ -78,6 +93,47 @@ export function blendColors(
   }
 
   return { hex: rgbToHex(blendedRgb), rgb: blendedRgb };
+}
+
+/**
+ * Interpolate between two hues on the colour wheel.
+ *
+ * Exposed because the wheel is circular and "halfway between 10° and 350°"
+ * has four defensible answers; the caller picks which. `ColorService.
+ * interpolateHue` delegates here so there is one implementation.
+ *
+ * @param h1     - Start hue in degrees
+ * @param h2     - End hue in degrees
+ * @param ratio  - 0.0 = h1, 1.0 = h2
+ * @param method - Which way round the wheel to travel
+ * @returns The interpolated hue, normalised to [0, 360)
+ */
+export function interpolateHue(
+  h1: number,
+  h2: number,
+  ratio: number,
+  method: HueMethod = 'shorter',
+): number {
+  let diff = h2 - h1;
+
+  switch (method) {
+    case 'shorter':
+      if (diff > 180) diff -= 360;
+      if (diff < -180) diff += 360;
+      break;
+    case 'longer':
+      if (diff > 0 && diff < 180) diff -= 360;
+      if (diff < 0 && diff > -180) diff += 360;
+      break;
+    case 'increasing':
+      if (diff < 0) diff += 360;
+      break;
+    case 'decreasing':
+      if (diff > 0) diff -= 360;
+      break;
+  }
+
+  return (((h1 + diff * ratio) % 360) + 360) % 360;
 }
 
 // ============================================================================
@@ -123,21 +179,12 @@ function blendRYB(rgb1: RGB, rgb2: RGB, t: number): RGB {
   });
 }
 
-function blendHSL(rgb1: RGB, rgb2: RGB, t: number): RGB {
+function blendHSL(rgb1: RGB, rgb2: RGB, t: number, hueMethod: HueMethod): RGB {
   const hsl1 = rgbToHsl(rgb1);
   const hsl2 = rgbToHsl(rgb2);
 
-  // Shortest-arc hue interpolation
-  let hueDiff = hsl2.h - hsl1.h;
-  if (hueDiff > 180) hueDiff -= 360;
-  if (hueDiff < -180) hueDiff += 360;
-
-  let blendedH = hsl1.h + hueDiff * t;
-  if (blendedH < 0) blendedH += 360;
-  if (blendedH >= 360) blendedH -= 360;
-
   const blended: HSL = {
-    h: blendedH,
+    h: interpolateHue(hsl1.h, hsl2.h, t, hueMethod),
     s: hsl1.s * (1 - t) + hsl2.s * t,
     l: hsl1.l * (1 - t) + hsl2.l * t,
   };

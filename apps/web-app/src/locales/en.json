@@ -179,7 +179,7 @@
     "mixingRgbDesc": "Additive light mixing. Blue + Yellow = Gray.",
     "mixingLabDesc": "Perceptually uniform blending. Blue + Yellow = Pink.",
     "mixingOklabDesc": "Modern perceptual space. Blue + Yellow = Cyan.",
-    "mixingRybDesc": "Gossett-Chen paint simulation. Blue + Yellow = Olive.",
+    "mixingRybDesc": "Paint simulation. Blue + Yellow = Green.",
     "mixingHslDesc": "Hue-based blending in HSL color space.",
     "mixingSpectralDesc": "Kubelka-Munk physics. Blue + Yellow = Green.",
     "colorSpaceRgbDesc": "Linear interpolation. Creates gray midpoints between colors.",

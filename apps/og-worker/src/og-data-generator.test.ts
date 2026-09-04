@@ -152,6 +152,46 @@ describe('og-data-generator', () => {
       expect(result.title).toBe('Dye Mixer | XIV Dye Tools');
       expect(result.imageUrl).toContain('/mixer/default.png');
     });
+
+    /**
+     * The web mixer's share URL has always carried `?mode=`, and the emitted
+     * image URL never did — so a Discord unfurl of a spectral mix pointed at
+     * a card the worker then rendered in CIELAB. The embed and the picture
+     * cannot disagree (the DEAD-022 rule `withAlgo` already follows).
+     */
+    it('forwards a non-default mixing mode onto the image URL', () => {
+      const result = generateMixerOGData(
+        { dyeA: 43, dyeB: 44, ratio: 60, mode: 'spectral' },
+        mockEnv
+      );
+      expect(result.imageUrl).toContain('mode=spectral');
+    });
+
+    it('keeps an absent mode off the URL so the default holds one cache key', () => {
+      const result = generateMixerOGData({ dyeA: 43, dyeB: 44, ratio: 60 }, mockEnv);
+      expect(result.imageUrl).not.toContain('mode=');
+    });
+
+    it('forwards the mode on the three-dye card too', () => {
+      const result = generateMixerOGData(
+        { dyeA: 43, dyeB: 44, dyeC: 45, ratio: 50, mode: 'oklab' },
+        mockEnv
+      );
+      expect(result.imageUrl).toContain('mode=oklab');
+    });
+
+    it('reads ?mode= off the share URL the web app emits', async () => {
+      const params = new URLSearchParams('dyeA=43&dyeB=44&ratio=60&mode=hsl');
+      const result = await generateOGDataForTool('mixer', params, mockEnv);
+      expect(result.imageUrl).toContain('mode=hsl');
+    });
+
+    it('drops an unrecognised ?mode= rather than emitting a URL the image route rejects', async () => {
+      const params = new URLSearchParams('dyeA=43&dyeB=44&ratio=60&mode=nonsense');
+      const result = await generateOGDataForTool('mixer', params, mockEnv);
+      expect(result.imageUrl).not.toContain('mode=');
+      expect(result.imageUrl).not.toContain('nonsense');
+    });
   });
 
   describe('generateSwatchOGData', () => {

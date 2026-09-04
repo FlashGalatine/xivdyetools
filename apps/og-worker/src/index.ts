@@ -16,6 +16,7 @@
  */
 
 import { DEFAULT_MATCHING_METHOD, extractLocaleCode } from '@xivdyetools/core';
+import { isValidBlendingMode, type BlendingMode } from '@xivdyetools/core/blending';
 import { Hono, type Context } from 'hono';
 import {
   requestIdMiddleware,
@@ -77,6 +78,20 @@ const CARD_VERSION: string = packageJson.version;
 /** The X frame rides ?frame=x (the tag-based branch — twitter:image only). */
 function frameFromQuery(c: { req: { query: (k: string) => string | undefined } }): 'discord' | 'x' {
   return c.req.query('frame') === 'x' ? 'x' : 'discord';
+}
+
+/**
+ * The mixer card's mixing algorithm rides `?mode=` — the same key the web
+ * mixer's share URL has always emitted. `undefined` lets `generateMixerOG`
+ * apply the web tool's own default (`ryb`), so a link shared before this
+ * worker read the param still renders the picture its sharer saw. A present-
+ * but-invalid spelling never reaches here: the /og/* guard 400s it first.
+ */
+function modeFromQuery(c: {
+  req: { query: (k: string) => string | undefined };
+}): BlendingMode | undefined {
+  const mode = c.req.query('mode');
+  return mode && isValidBlendingMode(mode) ? mode : undefined;
 }
 
 const SUPPORTED_TOOLS: ToolId[] = [
@@ -180,12 +195,16 @@ app.use('/og/*', async (c, next) => {
 /**
  * The only query keys any /og/* request may legitimately carry: `resolveLocale`
  * (below) reads `lang`, `frameFromQuery` reads `frame`, and the five
- * algo-aware image routes read `algo` — og-data-generator.ts emits exactly
- * these three onto an emitted image URL (withLang / withAlgo / the ?frame=x
- * twitter branch), so no URL this worker itself produces ever carries a
- * fourth key.
+ * algo-aware image routes read `algo`, and the two mixer routes read `mode`
+ * — og-data-generator.ts emits exactly these four onto an emitted image URL
+ * (withLang / withAlgo / withMode / the ?frame=x twitter branch), so no URL
+ * this worker itself produces ever carries a fifth key.
+ *
+ * `mode` joined the set on 2026-09-03: the web mixer's share URL had always
+ * carried it and this worker had always ignored it, so a shared mix rendered
+ * in CIELAB no matter which of the six algorithms the sharer had picked.
  */
-const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo']);
+const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo', 'mode']);
 
 /**
  * 2026-08-29 FINDING-024 (OG-4): reject any /og/* request carrying a query
@@ -239,6 +258,14 @@ app.use('/og/*', async (c, next) => {
   if (algo && !isAlgorithm(algo)) {
     return c.json({ error: 'Invalid algorithm' }, 400);
   }
+  // Same reasoning as `algo` one line up (ruling S7-R7): `mode` is an allowed
+  // KEY on every /og/* route but only the two mixer routes read it, so an
+  // unchecked value would mint a fresh cache key on the other nine. Empty is
+  // absent, not invalid (ruling S7-R10) — `''` is falsy, same as `null`.
+  const mode = searchParams.get('mode');
+  if (mode && !isValidBlendingMode(mode)) {
+    return c.json({ error: 'Invalid mixing mode' }, 400);
+  }
   return next();
 });
 
@@ -288,6 +315,14 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   const algo = url.searchParams.get('algo');
   if (algo) {
     params.set('algo', algo);
+  }
+  // `mode` picks the mixer card's mixing ALGORITHM — two modes are two
+  // different pictures of one path, so it must key. Raw and omitted-when-
+  // absent for the same reason `algo` is; the guard above has already
+  // rejected any present-and-invalid spelling.
+  const mode = url.searchParams.get('mode');
+  if (mode) {
+    params.set('mode', mode);
   }
   // Ruling S7-R13 (og-7 refined): strip a trailing `.png` from the path too — it stays
   // optional at every route (below), so the two spellings must share one
@@ -792,6 +827,7 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
     dyeAId,
     dyeBId,
     ratio,
+    mode: modeFromQuery(c),
     algorithm,
     locale,
     frame: frameFromQuery(c),
@@ -839,6 +875,7 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
     dyeBId,
     dyeCId,
     ratio,
+    mode: modeFromQuery(c),
     algorithm,
     locale,
     frame: frameFromQuery(c),

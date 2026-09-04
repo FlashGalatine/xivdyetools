@@ -5,6 +5,35 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-09-03
+
+### Fixed
+
+- **The mixer card ignored the mixing mode the sharer chose** (ALGO-003). The web mixer offers
+  six mixing algorithms and its share URL has always carried the choice as `?mode=`; this worker
+  never read it and hardcoded `mixColorsLab`, so **every** shared mix unfurled as a CIELAB card —
+  including the web tool's own default, `ryb`. The front end selects and core computes;
+  substituting a different algorithm at the render step broke that in the one place the user
+  cannot see it happening. `?mode=` is now read on both mixer routes, defaults to `ryb` to match
+  the web tool (so links shared before this release still render what their sharer saw), and the
+  three-dye fold-in uses the same mode instead of always LAB.
+
+### Changed
+
+- `mode` joins the FINDING-024 `/og/*` query-key allowlist, is value-checked the way `algo` is
+  (400 `{"error":"Invalid mixing mode"}`, never echoing the offending value), treats an empty
+  value as absent per ruling S7-R10, and — the part that is easy to miss — **joins the edge cache
+  key**. Without that, whichever mode rendered first for a dye pair would have been served for
+  every other mode for up to seven days (`s-maxage=604800`, no purge in either deploy workflow).
+- `og-data-generator.ts` forwards a non-default `?mode=` onto the emitted image URL, so the
+  crawler embed and the picture cannot disagree — the same rule `withAlgo` already followed.
+
+### Notes
+
+- Card output changes for every shared mix that is not already `lab`, so the version bump is
+  load-bearing: it rides the `/og/*` cache key (`CARD_VERSION`) and is what retires the
+  already-rendered PNGs.
+
 ## [2.7.0] - 2026-09-03
 
 ### Fixed

@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-09-03
+
+### Removed
+
+- **BREAKING — `RybColorMixer` is gone, and with it core's second RYB colour space** (ALGO-002).
+  Core shipped two implementations of the `ryb` mixing mode that disagreed by up to ΔE₀₀ 38, so
+  the same two dyes mixed one colour in the web app (`ColorService.mixColorsRyb` → the
+  Gossett-Chen trilinear paint cube) and a different one on the Discord bot (`blendColors` →
+  chromatic subtraction). The cube was retired rather than the approximation because it **fails
+  the identity law**: its trilinear map lands in the convex hull of its eight corners, and pure
+  green, blue, cyan, magenta and true black sit outside that hull, so they have no RYB pre-image
+  and the multi-start Newton inverse the code added cannot converge for them. Mixing a dye with
+  *itself* therefore did not return that dye — on **53% of dye pairs, by up to ΔE₀₀ 27.9**. That
+  is a defect visible in one drag of a 0–100% slider, and it is not tunable: ColorAide documents
+  the same limit on the same cube, and the paper defines no inverse at all.
+
+### Changed
+
+- **BREAKING — `ColorService.rgbToRyb` / `rybToRgb` / `hexToRyb` / `rybToHex` changed meaning.**
+  The signatures are unchanged (still 0–255), but the axes are now the chromatic-subtraction
+  space `blendColors(…, 'ryb')` actually mixes in, where **black** is at the origin; the retired
+  Gossett-Chen cube put **white** there. RYB triples persisted by a 4.x consumer do not mean the
+  same thing. What they gain is an exact inverse — the round trip is lossless where the old one
+  drifted by up to ΔE₀₀ 27.9. Components may now be fractional; rounding them costs that
+  exactness.
+- **BREAKING — the `ryb` mixing mode renders different colours.** Blue + yellow is now `#008000`,
+  a true green, where the cube gave an olive; red + yellow `#804000`; red + blue `#800080`. Any
+  stored or cached `ryb` mix from 4.x will not reproduce.
+- **All six `ColorService.mixColors*` are now thin delegations to `blendColors`.** `rgb`, `lab`,
+  `oklab`, `hsl` and `spectral` already agreed byte-for-byte, so only `ryb` changes output — but
+  the delegation is what stops the other five drifting apart in future.
+  `ColorService.blending-parity.test.ts` asserts hex equality across six modes × eight colour
+  pairs × five ratios rather than approximate agreement.
+  **Hex case is deliberately preserved on each surface**: `blendColors` still emits lowercase and
+  `ColorService` still emits uppercase (the long-standing `rgbToHex` delta). Delegating naïvely
+  flipped `mixColors*` to lowercase, which would have broken any caller comparing a mix against
+  an uppercase `dye.hex`.
+- `ColorService.interpolateHue` now delegates to the same primitive `blendColors` uses, so the
+  hue wheel has one implementation too.
+
+### Added
+
+- **`blendColors` takes an optional `options` argument**: `{ hueMethod }` selects the hue travel
+  direction (`shorter` | `longer` | `increasing` | `decreasing`) for `'hsl'`. Without it,
+  delegating `mixColorsHsl` would have silently dropped a documented parameter. Non-breaking —
+  the argument is optional and defaults to the previous `'shorter'` behaviour.
+- `RYB`, `HueMethod` and `BlendOptions` are exported from `@xivdyetools/core/blending`.
+
 ## [4.4.0] - 2026-09-03
 
 ### Fixed

@@ -10,6 +10,7 @@
  */
 
 import { ColorService, DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
+import { blendColors, isValidBlendingMode, type BlendingMode } from '@xivdyetools/core/blending';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, xStrip, type BandEntry, type BandFrame } from './band';
 import { algoTag, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
@@ -27,13 +28,26 @@ export interface MixerOGOptions {
   dyeCId?: number;
   /** Mix ratio (0-100, percentage of dyeA) */
   ratio: number;
-  /** Matching algorithm */
+  /**
+   * Which algorithm mixes the colours — the web mixer's `?mode=`.
+   *
+   * The card used to hardcode CIELAB, so a shared mix rendered in a DIFFERENT
+   * algorithm than the page the sharer was looking at, silently, for five of
+   * the six modes the web tool offers. Defaults to `ryb` because that is the
+   * web mixer's own default (`mixer-tool.ts`), so a link that predates the
+   * `?mode=` param still renders what its sharer saw.
+   */
+  mode?: BlendingMode;
+  /** Matching algorithm — picks the Δ shown against the buyable dye, not the mix */
   algorithm?: MatchingAlgorithm;
   /** Locale for dye name display */
   locale?: LocaleCode;
   /** 15E frame */
   frame?: BandFrame;
 }
+
+/** The web mixer's default mixing mode — see `apps/web-app` `mixer-tool.ts`. */
+const DEFAULT_MIX_MODE: BlendingMode = 'ryb';
 
 /** The mix strip height (the drawn structural-variant size for mixer). */
 const MIX_STRIP_H = 46;
@@ -65,10 +79,12 @@ export function generateMixerOG(options: MixerOGOptions): string {
     return notFoundBand(getToolTag('mixer', locale), 'mixer', `#${dyeAId} + #${dyeBId}`, 'mixer', frame, locale);
   }
 
-  // The mix: A at ratio% against B (LAB), the third dye folded in equally
-  let mixHex = ColorService.mixColorsLab(dyeA.hex, dyeB.hex, 1 - ratio / 100);
+  // The mix: A at ratio% against B, the third dye folded in equally — both
+  // steps in the mode the sharer chose, never a substituted one.
+  const mode = isValidBlendingMode(options.mode ?? '') ? options.mode! : DEFAULT_MIX_MODE;
+  let mixHex = blendColors(dyeA.hex, dyeB.hex, mode, 1 - ratio / 100).hex;
   if (dyeC) {
-    mixHex = ColorService.mixColorsLab(mixHex, dyeC.hex, 1 / 3);
+    mixHex = blendColors(mixHex, dyeC.hex, mode, 1 / 3).hex;
   }
   const hit = nearestDye(mixHex);
   const delta = deltaForAlgorithm(mixHex, hit.dye.hex, algorithm);

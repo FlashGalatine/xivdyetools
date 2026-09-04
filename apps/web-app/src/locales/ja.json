@@ -179,7 +179,7 @@
     "mixingRgbDesc": "加法混色。青 + 黄 = グレー。",
     "mixingLabDesc": "知覚的に均一なブレンド。青 + 黄 = ピンク。",
     "mixingOklabDesc": "現代知覚色空間。青 + 黄 = シアン。",
-    "mixingRybDesc": "絵具シミュレーション。青 + 黄 = オリーブ。",
+    "mixingRybDesc": "絵具シミュレーション。青 + 黄 = 緑。",
     "mixingHslDesc": "HSL色空間での色相ベースブレンド。",
     "mixingSpectralDesc": "クベルカ・ムンク物理学。青 + 黄 = 緑。",
     "colorSpaceRgbDesc": "線形補間。色間にグレーの中間点を作成。",

@@ -179,7 +179,7 @@
     "mixingRgbDesc": "가산 혼합. 파랑 + 노랑 = 회색.",
     "mixingLabDesc": "지각적으로 균일한 혼합. 파랑 + 노랑 = 분홍.",
     "mixingOklabDesc": "현대 지각 색 공간. 파랑 + 노랑 = 청록.",
-    "mixingRybDesc": "물감 시뮬레이션. 파랑 + 노랑 = 올리브.",
+    "mixingRybDesc": "물감 시뮬레이션. 파랑 + 노랑 = 초록.",
     "mixingHslDesc": "HSL 색 공간에서의 색조 기반 혼합.",
     "mixingSpectralDesc": "쿠벨카-뭉크 물리학. 파랑 + 노랑 = 초록.",
     "colorSpaceRgbDesc": "선형 보간. 색상 사이에 회색 중간점 생성.",

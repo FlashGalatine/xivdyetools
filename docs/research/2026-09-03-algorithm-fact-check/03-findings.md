@@ -81,7 +81,7 @@ and endpoint checks. The suite documents the symptom as intended behaviour.
 
 ---
 
-## P1 — Web and bot compute different colours for the same named mode
+## P1 — Web and bot compute different colours for the same named mode — ✅ FIXED (core 5.0.0)
 
 **Where:** core exposes **two** independent mixing APIs and the front ends chose differently:
 
@@ -113,7 +113,7 @@ og-worker with a third.
 
 ---
 
-## P1 — Gossett–Chen RYB violates the identity law for 53 % of dye pairs
+## P1 — Gossett–Chen RYB violates the identity law for 53 % of dye pairs — ✅ FIXED (core 5.0.0, cube deleted)
 
 **Where:** `packages/core/src/services/color/RybColorMixer.ts` → `rgbToRyb()` (multi-start
 Newton–Raphson inverse of the trilinear cube), reached from `ColorService.mixColorsRyb()` → the web-app
@@ -385,7 +385,7 @@ indicative rather than settled: it is a preprint, and this audit did not reprodu
 
 ---
 
-## P2 — Two citation errors in `RybColorMixer.ts`
+## P2 — Two citation errors in `RybColorMixer.ts` — ⬛ MOOT (file deleted in core 5.0.0)
 
 The corner table was checked against the source. **Seven of eight corners match exactly, including the
 blue `(0.163, 0.373, 0.6)`** — that desaturated blue is Gossett & Chen's own deliberate value, chosen

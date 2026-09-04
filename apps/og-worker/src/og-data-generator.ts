@@ -36,6 +36,7 @@ import {
   isSheet,
   isVisionType,
   parseAlgo,
+  parseMode,
   parseDyeIdList,
   parseGender,
   parseHexColor,
@@ -56,6 +57,7 @@ import type {
   ColorSheetCategory,
   CharacterGender,
   MatchingAlgorithm,
+  BlendingMode,
   Env,
 } from './types';
 
@@ -90,6 +92,21 @@ function withAlgo(url: string, algo: MatchingAlgorithm | string | null | undefin
   const method = normalizeMatchingMethod(algo);
   if (method === DEFAULT_MATCHING_METHOD) return url;
   return `${url}${url.includes('?') ? '&' : '?'}algo=${method}`;
+}
+
+/**
+ * Append the mixer's chosen mixing mode to an emitted image URL.
+ *
+ * Without this the crawler card and the page disagreed on the ALGORITHM, not
+ * just the Δ: the web mixer offers six and its share URL has always carried
+ * the choice, but the emitted `/og/mixer/…` URL never did, so every unfurl
+ * rendered CIELAB. `undefined` (absent or unrecognised) stays off the URL so
+ * the default keeps a single cache key — same rule `withAlgo` follows for
+ * `DEFAULT_MATCHING_METHOD`.
+ */
+function withMode(url: string, mode: BlendingMode | undefined): string {
+  if (!mode) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}mode=${mode}`;
 }
 
 /**
@@ -294,7 +311,7 @@ export function generateMixerOGData(
       title: site(embed('mixer.title3', locale, names)),
       description: embed('mixer.description3', locale, names),
       url: appUrl(`${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&dyeC=${params.dyeC}&ratio=${params.ratio}&v=1`, locale, params.algo),
-      imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, params.algo), locale),
+      imageUrl: withLang(withMode(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, params.algo), params.mode), locale),
       siteName: SITE_NAME,
       themeColor: dyeA.hex,
       locale,
@@ -307,7 +324,7 @@ export function generateMixerOGData(
     title: site(embed('mixer.title2', locale, vars)),
     description: embed('mixer.description2', locale, vars),
     url: appUrl(`${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&ratio=${params.ratio}&v=1`, locale, params.algo),
-    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, params.algo), locale),
+    imageUrl: withLang(withMode(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, params.algo), params.mode), locale),
     siteName: SITE_NAME,
     themeColor: dyeA.hex,
     locale,
@@ -788,6 +805,7 @@ export async function generateOGDataForTool(
         dyeB: parseInt(searchParams.get('dyeB') || '0', 10),
         dyeC: dyeCRaw ? parseInt(dyeCRaw, 10) : undefined,
         ratio: clampInt(searchParams.get('ratio'), OG_MIN_MIXER_RATIO, OG_MAX_MIXER_RATIO, 50),
+        mode: parseMode(searchParams.get('mode')),
         algo: parseAlgo(searchParams.get('algo')),
       };
       return generateMixerOGData(params, env, locale);

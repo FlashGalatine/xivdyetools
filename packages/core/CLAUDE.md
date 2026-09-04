@@ -31,7 +31,7 @@ pnpm --filter @xivdyetools/core exec vitest run src/services/__tests__/ColorServ
 
 ## Architecture
 
-`@xivdyetools/core` follows a **facade + focused-class** pattern (per the internal "R-4" refactor): top-level service classes (`ColorService`, `DyeService`, `LocalizationService`) are thin façades that delegate to single-responsibility classes (`ColorConverter`, `ColorblindnessSimulator`, `ColorAccessibility`, `ColorManipulator`, `RybColorMixer`, `SpectralMixer`, `DyeDatabase`, `DyeSearch`, `HarmonyGenerator`, `LocaleLoader`, `LocaleRegistry`, `TranslationProvider`).
+`@xivdyetools/core` follows a **facade + focused-class** pattern (per the internal "R-4" refactor): top-level service classes (`ColorService`, `DyeService`, `LocalizationService`) are thin façades that delegate to single-responsibility classes (`ColorConverter`, `ColorblindnessSimulator`, `ColorAccessibility`, `ColorManipulator`, `SpectralMixer`, `DyeDatabase`, `DyeSearch`, `HarmonyGenerator`, `LocaleLoader`, `LocaleRegistry`, `TranslationProvider`).
 
 The dye database, presets, and per-locale translation files are bundled as JSON imports — there is no runtime I/O, which keeps the package safe for Cloudflare Workers, Vite browser bundles, and Node alike.
 
@@ -60,7 +60,7 @@ src/
 │   ├── CharacterColorService.ts   # FFXIV skin/hair color lookup
 │   ├── color/                     # ColorConverter, ColorblindnessSimulator,
 │   │                              # ColorAccessibility, ColorManipulator,
-│   │                              # RybColorMixer, SpectralMixer
+│   │                              # SpectralMixer
 │   ├── dye/                       # DyeDatabase, DyeSearch, HarmonyGenerator, DyeFilter
 │   └── localization/              # LocaleLoader, LocaleRegistry, TranslationProvider
 ├── utils/
