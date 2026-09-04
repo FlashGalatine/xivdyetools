@@ -59,6 +59,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   suite default. (The two formulas pick different complements for 40 of the 125 dyes, so the
   difference is real where the path is used.)
 
+### Fixed
+
+- **The `@public` `RYB` interface documented its components as `0–255`; they are `0–1`.**
+  `blending/conversions.ts`'s `rgbToRyb` returns the normalised form (`#E4DFD0` → `r 0.8418`),
+  while the 0–255 spelling belongs to `ColorService.rgbToRyb`/`rybToHex` in a different module.
+  The `/blending` subpath exports the type but neither conversion function, so a consumer
+  importing `RYB` from there had nothing in that barrel producing the documented units — and
+  building `{ r: 255, y: 0, b: 0 }` per the comments was 255× out of range. Comments only.
+
+- **`README.md`'s harmony snippet still called `'cie76'` the default** for `deltaEFormula`.
+  It is `'ciede2000'` as of this release (see above), and the two pick different complements
+  for 40 of the 125 dyes, so a consumer copying the snippet and omitting the field got a
+  different result set than the comment promised.
+
 ### Removed
 
 - **`getDeltaE_OklchWeighted`** (instance and static). Its hue term under-weights by a factor of

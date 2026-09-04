@@ -63,11 +63,19 @@ export interface BlendResult {
  * RYB pre-image and its Newton-method inverse could not converge for them —
  * mixing such a colour with itself did not return it. This space inverts
  * exactly; see {@link rgbToRyb} in `conversions.ts`.
+ *
+ * ⚠️ Components are **0–1**, not 0–255. `blending/conversions.ts`'s
+ * `rgbToRyb` returns this normalised form (`#E4DFD0` → `r 0.8418`); the
+ * 0–255 spelling belongs to `ColorService.rgbToRyb`/`rybToHex`, which live in
+ * a different module and scale at the seam. The `/blending` subpath exports
+ * this type but neither conversion function, so a consumer importing `RYB`
+ * from there has nothing in that barrel producing 0–255 values — the comments
+ * said 0–255 until the 2026-09-04 review, off by a factor of 255.
  */
 export interface RYB {
-  r: number; // 0–255
-  y: number; // 0–255
-  b: number; // 0–255
+  r: number; // 0–1
+  y: number; // 0–1
+  b: number; // 0–1
 }
 
 /**

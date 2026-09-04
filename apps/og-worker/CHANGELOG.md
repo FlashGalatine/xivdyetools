@@ -5,6 +5,33 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-09-04
+
+### Fixed
+
+- **The mixer card ranked its headline dye by a hardcoded `ciede2000` while tagging it with
+  the requested `?algo=`** — BUG-023, third and last instance. `nearestDye` picked the
+  nearest by ΔE2000, then the card printed *that* dye's Δ in the requested metric under an
+  `algoTag(algorithm)` footer, so the headline disagreed with both its own tag and the
+  page's result list (which ranks by the requested method). `swatch.ts` and `harmony.ts`
+  were fixed for exactly this and carry the written-down rule; `mixer.ts` was the one card
+  left, and the 2.8.0 mode fix rewrote the lines directly above it without catching it.
+
+  Measured over 750 real dye-pair mixes at `ryb` 0.5, the dye NAMED on the card differed
+  from the one the requested method ranks first for **distinguish 49.1%, rgb 45.7%,
+  redmean 42.9%, cie76 27.1%, oklab 24.4%**. The web mixer always emits `algo`, so these
+  were routine URLs, not edge cases. Now ranks by `rankKeyForAlgorithm` and prints
+  `deltaForAlgorithm`, the same split swatch uses — which also keeps `distinguish` off its
+  own rounded 0-100 integer for ordering, where ~101 buckets of ties fall to database order.
+
+- **`?mode=ryb` bought a second cache entry for a pixel-identical card.** `withMode`'s
+  docblock claimed it followed `withAlgo`'s rule of keeping the default off the URL, but it
+  only elided `undefined`. The web mixer emits `mode` unconditionally and its default *is*
+  `ryb` — which `generateMixerOG` already falls back to — so every ordinary mixer share URL
+  carried `?mode=ryb` and rendered twice into `caches.default`, per colo × locale × frame ×
+  algo. `DEFAULT_MIX_MODE` is now exported from `services/svg/mixer.ts` and elided, so the
+  constant has one definition and two readers.
+
 ## [2.8.0] - 2026-09-03
 
 ### Fixed

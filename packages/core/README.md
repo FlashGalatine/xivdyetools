@@ -163,7 +163,7 @@ const splitComplementary = dyeService.findSplitComplementaryDyes('#FF6B6B');
 // DeltaE-based harmony (perceptually accurate matching)
 const triadicDeltaE = dyeService.findTriadicDyes('#FF6B6B', {
   algorithm: 'deltaE',
-  deltaEFormula: 'ciede2000', // or 'cie76' (faster, default); 'cie2000' is a legacy alias
+  deltaEFormula: 'ciede2000', // the default since 5.1.0; 'cie76' is faster, 'cie2000' a legacy alias
 });
 
 // Color space selection for hue rotation

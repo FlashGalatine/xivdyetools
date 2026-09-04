@@ -9,12 +9,12 @@
  * @module services/svg/mixer
  */
 
-import { ColorService, DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
+import { DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
 import { blendColors, isValidBlendingMode, type BlendingMode } from '@xivdyetools/core/blending';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, xStrip, type BandEntry, type BandFrame } from './band';
 import { algoTag, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
-import { ALL_DYES, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
+import { ALL_DYES, getDyeByItemId, deltaForAlgorithm, rankKeyForAlgorithm } from './dye-helpers';
 import { role, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
@@ -46,23 +46,50 @@ export interface MixerOGOptions {
   frame?: BandFrame;
 }
 
-/** The web mixer's default mixing mode — see `apps/web-app` `mixer-tool.ts`. */
-const DEFAULT_MIX_MODE: BlendingMode = 'ryb';
+/**
+ * The web mixer's default mixing mode — see `apps/web-app` `mixer-tool.ts`.
+ *
+ * Exported so `og-data-generator`'s `withMode` can elide it from emitted URLs:
+ * the card already falls back to this, so spelling it out buys a second cache
+ * entry for a pixel-identical PNG. One source, two readers.
+ */
+export const DEFAULT_MIX_MODE: BlendingMode = 'ryb';
 
 /** The mix strip height (the drawn structural-variant size for mixer). */
 const MIX_STRIP_H = 46;
 
-function nearestDye(hex: string): { dye: Dye; delta: number } {
+/**
+ * The dye this card names as the closest match to the mix.
+ *
+ * BUG-023, the third and last card to carry it. This ranked by a hardcoded
+ * `ciede2000` and the caller then printed `deltaForAlgorithm(…, algorithm)`
+ * under an `algoTag(algorithm)` footer — so the headline dye was the nearest
+ * by ΔE2000 while the number and the tag beside it claimed a different
+ * metric, and the page's own result list (which ranks by the requested
+ * method) named something else. `swatch.ts` and `harmony.ts` were fixed for
+ * exactly this; the web mixer always emits `algo`, so `?algo=distinguish` is
+ * a routine URL, not an edge case.
+ *
+ * Measured over 750 real dye-pair mixes at `ryb` 0.5, the dye NAMED on the
+ * card differed from the one the requested method ranks first for
+ * distinguish 49.1%, rgb 45.7%, redmean 42.9%, cie76 27.1%, oklab 24.4%.
+ *
+ * Order by `rankKeyForAlgorithm`, print `deltaForAlgorithm` — they differ
+ * only for `distinguish`, whose rounded 0-100 integer collapses 125 dyes into
+ * ~101 buckets whose ties fall to `ALL_DYES` order. See that function's
+ * docblock.
+ */
+function nearestDye(hex: string, algorithm: MatchingAlgorithm): { dye: Dye; delta: number } {
   let best: Dye | null = null;
-  let bestDelta = Infinity;
+  let bestRank = Infinity;
   for (const candidate of ALL_DYES) {
-    const delta = ColorService.getDistanceForMethod(hex, candidate.hex, 'ciede2000');
-    if (delta < bestDelta) {
-      bestDelta = delta;
+    const rank = rankKeyForAlgorithm(hex, candidate.hex, algorithm);
+    if (rank < bestRank) {
+      bestRank = rank;
       best = candidate;
     }
   }
-  return { dye: best!, delta: bestDelta };
+  return { dye: best!, delta: deltaForAlgorithm(hex, best!.hex, algorithm) };
 }
 
 /**
@@ -86,8 +113,7 @@ export function generateMixerOG(options: MixerOGOptions): string {
   if (dyeC) {
     mixHex = blendColors(mixHex, dyeC.hex, mode, 1 / 3).hex;
   }
-  const hit = nearestDye(mixHex);
-  const delta = deltaForAlgorithm(mixHex, hit.dye.hex, algorithm);
+  const hit = nearestDye(mixHex, algorithm);
 
   const inputBand = (dye: Dye, role: string, grow: number): BandEntry => ({
     hex: dye.hex,
@@ -109,7 +135,7 @@ export function generateMixerOG(options: MixerOGOptions): string {
       role: role('buyable', locale),
       name: getLocalizedDyeName(hit.dye, locale),
       value: hit.dye.hex.toUpperCase(),
-      tag: `Δ${fmtDelta(delta, algorithm)}`,
+      tag: `Δ${fmtDelta(hit.delta, algorithm)}`,
       grow: dyeC ? 3 : 100,
       nameSize: 17,
       src: { hex: mixHex, height: frame === 'x' ? xStrip(MIX_STRIP_H) : MIX_STRIP_H },
