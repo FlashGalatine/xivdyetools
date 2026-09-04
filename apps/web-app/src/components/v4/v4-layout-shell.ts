@@ -2,10 +2,10 @@
  * XIV Dye Tools 5.0 - Layout Shell Component
  *
  * The console shell: the app bar (brand + 2B tool title-menu + chrome
- * cluster) over the content area with the right dye-palette drawer. Tool
- * configuration lives behind the header gear (the Advanced Options
- * slide-over hosts the config surface) — there is no persistent tool rail
- * and no left config column.
+ * cluster) over the content area, with the left tool-Options panel and the
+ * right dye-palette drawer. The header gear opens the Advanced Options
+ * slide-over and nothing else; the Options panel is reached through its own
+ * bottom-left FAB, which mirrors the palette FAB on the opposite corner.
  *
  * @module components/v4/v4-layout-shell
  */
@@ -78,13 +78,18 @@ export class V4LayoutShell extends BaseLitComponent {
   private paletteHintDismissed = false;
 
   /**
-   * Whether the desktop Simple-Settings column is collapsed (its × button).
-   * The console-bar gear toggles the settings surface: while the column is
-   * collapsed the gear restores it instead of opening the Advanced Options
-   * slide-over. Session-scoped — not persisted.
+   * Whether the tool-Options panel is collapsed (its × button, or the
+   * bottom-left FAB). Open by default on desktop, where it is an inline
+   * column; collapsed by default on mobile, where it is a full-height
+   * left overlay that would otherwise cover the tool on first load
+   * (see connectedCallback). Session-scoped — not persisted.
+   *
+   * The console-bar gear does NOT touch this — it only ever opens the
+   * Advanced Options slide-over. Conflating the two put the Options panel
+   * and the Advanced Settings sheet on screen at once on mobile.
    */
   @state()
-  private simpleSettingsCollapsed = false;
+  private optionsCollapsed = false;
 
   /**
    * Tools that should NOT show the Color Palette drawer
@@ -185,6 +190,50 @@ export class V4LayoutShell extends BaseLitComponent {
 
       .v4-drawer-overlay.visible {
         display: block;
+      }
+
+      /* Left tool-Options Toggle FAB — the mirror of the palette FAB.
+         Shares its geometry so the two corners read as one control pair. */
+      .v4-options-toggle {
+        position: fixed;
+        bottom: 24px;
+        left: 24px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 1px solid var(--v4-glass-border, rgba(255, 255, 255, 0.1));
+        background: var(--v4-glass-bg, rgba(30, 30, 30, 0.9));
+        backdrop-filter: var(--v4-glass-blur, blur(12px));
+        -webkit-backdrop-filter: var(--v4-glass-blur, blur(12px));
+        color: var(--theme-primary, #d4af37);
+        cursor: pointer;
+        box-shadow: var(--v4-shadow-soft, 0 4px 6px rgba(0, 0, 0, 0.3));
+        z-index: 100;
+        transition:
+          transform var(--v4-transition-fast, 150ms),
+          opacity 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .v4-options-toggle:hover {
+        transform: scale(1.05);
+      }
+
+      .v4-options-toggle:active {
+        transform: scale(0.95);
+      }
+
+      .v4-options-toggle svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      /* While the panel is open it carries its own × — the FAB would only
+         sit on top of the panel (mobile) or duplicate the close (desktop). */
+      .v4-options-toggle.panel-open {
+        display: none;
       }
 
       /* Right Drawer Toggle FAB */
@@ -737,10 +786,11 @@ export class V4LayoutShell extends BaseLitComponent {
     this.mobileQuery = window.matchMedia('(max-width: 768px)');
     this.isMobile = this.mobileQuery.matches;
 
-    // On mobile the drawer is a full-height overlay, so start with it closed
-    // and let the FAB (plus a one-time hint) be the way in.
+    // On mobile both side panels are full-height overlays, so start with
+    // them closed and let their FABs (plus a one-time hint) be the way in.
     if (this.isMobile) {
       this.paletteDrawerOpen = false;
+      this.optionsCollapsed = true;
     }
     this.paletteHintDismissed =
       StorageService.getItem<boolean>(STORAGE_KEYS.PALETTE_HINT_SEEN, false) === true;
@@ -764,10 +814,11 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private handleMediaQueryChange = (e: MediaQueryListEvent): void => {
     this.isMobile = e.matches;
-    // Crossing into the mobile layout turns the docked drawer into an
-    // overlay — close it so it doesn't land on top of the tool.
+    // Crossing into the mobile layout turns both docked panels into
+    // overlays — close them so they don't land on top of the tool.
     if (this.isMobile) {
       this.paletteDrawerOpen = false;
+      this.optionsCollapsed = true;
     }
   };
 
@@ -780,9 +831,10 @@ export class V4LayoutShell extends BaseLitComponent {
       this.activeTool = toolId;
       this.emit('tool-change', { toolId });
 
-      // Close the drawer on mobile after tool selection
+      // Close both overlays on mobile after tool selection
       if (this.isMobile) {
         this.paletteDrawerOpen = false;
+        this.optionsCollapsed = true;
       }
     }
   }
@@ -899,27 +951,38 @@ export class V4LayoutShell extends BaseLitComponent {
   }
 
   /**
-   * Handle the Simple-Settings column's × (sidebar-collapse) on desktop.
-   * The event is the column's own; it stops here so v4-layout does not see
+   * Handle the Options panel's × (sidebar-collapse).
+   * The event is the panel's own; it stops here so v4-layout does not see
    * a stray collapse it has no surface for.
    */
-  private handleSimpleSettingsCollapse(e: Event): void {
+  private handleOptionsCollapse(e: Event): void {
     e.stopPropagation();
-    this.simpleSettingsCollapsed = true;
+    this.optionsCollapsed = true;
   }
 
   /**
-   * Handle advanced-options (gear) button click from header.
-   * On desktop with the Simple-Settings column collapsed, the gear brings the
-   * column back (the settings surface toggle) and does nothing else;
-   * otherwise it bubbles up to v4-layout.ts, which opens the Advanced Options
-   * slide-over.
+   * Toggle the tool-Options panel from its bottom-left FAB. On desktop the
+   * panel is an inline column, on mobile a left overlay; the FAB is the one
+   * affordance that opens either.
+   */
+  private toggleOptionsPanel(): void {
+    this.optionsCollapsed = !this.optionsCollapsed;
+  }
+
+  /**
+   * Close the Options overlay when the mobile scrim behind it is tapped.
+   */
+  private handleOptionsOverlayClick(): void {
+    this.optionsCollapsed = true;
+  }
+
+  /**
+   * Handle advanced-options (gear) button click from header. It bubbles up to
+   * v4-layout.ts, which opens the Advanced Options slide-over — and nothing
+   * else. The gear used to double as the Options-panel toggle, which on
+   * mobile put both surfaces on screen at once.
    */
   private handleAdvancedClick(): void {
-    if (!this.isMobile && this.simpleSettingsCollapsed) {
-      this.simpleSettingsCollapsed = false;
-      return;
-    }
     this.emit('advanced-click');
   }
 
@@ -938,20 +1001,26 @@ export class V4LayoutShell extends BaseLitComponent {
 
       <!-- Main Layout (Simple Settings + Content + Drawer) -->
       <div class="v4-layout-main">
-        <!-- Left Simple-Settings column (drawn 1A desktop frames; desktop only —
-             mobile reaches the same controls through the gear slide-over) -->
-        ${
-          this.isMobile
-            ? ''
-            : html`<v4-config-sidebar
-                class="v4-simple-settings"
-                .activeTool=${this.activeTool}
-                ?collapsed=${this.simpleSettingsCollapsed}
-                @sidebar-collapse=${this.handleSimpleSettingsCollapse}
-                @config-change=${this.handleConfigChange}
-                @clear-all-dyes=${this.handleClearAllDyes}
-              ></v4-config-sidebar>`
-        }
+        <!-- Left tool-Options panel (drawn 1A desktop frames): an inline column
+             on desktop, a left overlay on mobile. Both breakpoints reach it
+             through the bottom-left Options FAB — never through the gear. -->
+        <v4-config-sidebar
+          class="v4-simple-settings"
+          .activeTool=${this.activeTool}
+          ?collapsed=${this.optionsCollapsed}
+          @sidebar-collapse=${this.handleOptionsCollapse}
+          @config-change=${this.handleConfigChange}
+          @clear-all-dyes=${this.handleClearAllDyes}
+        ></v4-config-sidebar>
+
+        <!-- Mobile Options Overlay (tap outside to close the Options panel) -->
+        <div
+          class="v4-drawer-overlay ${!this.optionsCollapsed && this.isMobile ? 'visible' : ''}"
+          @click=${this.handleOptionsOverlayClick}
+          role="button"
+          tabindex="-1"
+          aria-label="${LanguageService.t('aria.closeSidebar')}"
+        ></div>
 
         <!-- Mobile Drawer Overlay (tap outside to close palette) -->
         <div
@@ -1013,6 +1082,22 @@ export class V4LayoutShell extends BaseLitComponent {
             `
           : nothing
       }
+
+      <!-- Tool-Options Toggle FAB (bottom-left; hidden while the panel is open) -->
+      <button
+        class="v4-options-toggle ${this.optionsCollapsed ? '' : 'panel-open'}"
+        type="button"
+        title="${LanguageService.t('common.options')}"
+        aria-label="${LanguageService.t('common.options')}"
+        aria-expanded=${!this.optionsCollapsed}
+        @click=${this.toggleOptionsPanel}
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path
+            d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"
+          />
+        </svg>
+      </button>
 
       <!-- Palette Drawer Toggle FAB (hidden when drawer is open or tool doesn't use palette) -->
       <button

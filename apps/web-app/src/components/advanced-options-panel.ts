@@ -9,7 +9,8 @@
  *
  * Three sections: Data (destructive resets, confirmed through the 16A
  * destructive convention), Backup (JSON export/import), Behaviour (the two
- * persisted toggles).
+ * persisted toggles). Per-tool configuration is deliberately NOT here — it
+ * lives in the shell's Options panel behind its own bottom-left FAB.
  *
  * @module components/advanced-options-panel
  */
@@ -19,13 +20,7 @@ import { LanguageService } from '@services/language-service';
 import { TutorialService } from '@services/tutorial-service';
 import { CollectionService } from '@services/collection-service';
 import { ConfigController } from '@services/config-controller';
-import { RouterService } from '@services/router-service';
 import { logger } from '@shared/logger';
-
-// The panel hosts the per-tool config surface (Q7: config lives behind the
-// header gear, not in a persistent column) — register the element.
-import './v4/config-sidebar';
-import type { ConfigSidebar } from './v4/config-sidebar';
 
 // ============================================================================
 // Section/row builders (AdvancedOptions.dc.html geometry)
@@ -224,24 +219,12 @@ function createContent(host: HTMLElement): HTMLElement {
 
   const configController = ConfigController.getInstance();
 
-  // --- Per-tool configuration (mobile only) ---
-  // Desktop carries the Simple-Settings column in the shell; on mobile the
-  // gear slide-over is the one route to the same controls.
-  if (window.matchMedia('(max-width: 768px)').matches) {
-    const configHost = document.createElement('v4-config-sidebar') as ConfigSidebar;
-    configHost.embedded = true;
-    configHost.activeTool = RouterService.getCurrentToolId();
-    // Forward the sidebar's emits onto the layout host so v4-layout's
-    // listeners keep working unchanged.
-    for (const eventName of ['config-change', 'clear-all-dyes'] as const) {
-      configHost.addEventListener(eventName, ((e: CustomEvent) => {
-        host.dispatchEvent(
-          new CustomEvent(eventName, { detail: e.detail, bubbles: true, composed: true })
-        );
-      }) as EventListener);
-    }
-    container.appendChild(configHost);
-  }
+  // Per-tool configuration is NOT hosted here. It used to be embedded on
+  // mobile, but config-sidebar's own `@media (max-width: 768px)` rule makes
+  // its :host `position: fixed; left: 0; bottom: 0; z-index: 100` — so the
+  // embedded copy escaped this modal and painted as a full-height layer
+  // underneath the settings cards. The Options panel now has its own
+  // bottom-left FAB in the shell on both breakpoints.
 
   // --- Data (destructive resets) ---
   const data = sectionCard(
@@ -394,13 +377,6 @@ export function showAdvancedOptionsPanel(host: HTMLElement = document.body): voi
 
   const content = createContent(host);
 
-  // Keep the embedded config surface on the active tool while the panel is
-  // open (the user can navigate via the title menu without closing it).
-  const configHost = content.querySelector('v4-config-sidebar') as ConfigSidebar | null;
-  const routeUnsubscribe = RouterService.subscribe((state) => {
-    if (configHost) configHost.activeTool = state.toolId;
-  });
-
   panelModalId = ModalService.show({
     type: 'custom',
     variant: 'panel',
@@ -412,7 +388,6 @@ export function showAdvancedOptionsPanel(host: HTMLElement = document.body): voi
     closeOnBackdrop: true,
     closeOnEscape: true,
     onClose: () => {
-      routeUnsubscribe();
       panelModalId = null;
     },
   });
