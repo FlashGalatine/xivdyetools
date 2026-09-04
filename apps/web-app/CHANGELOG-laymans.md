@@ -2,6 +2,12 @@
 
 ---
 
+## Web-App Version 5.6.0 — September 4, 2026
+
+- **The gear in the top-right opens Advanced Settings and nothing else now.** On a phone it used to open the tool's own Options at the same time, and the two landed on top of each other — Harmony Type and Matching Mode printed straight through the Reset and Backup rows, leaving neither readable and both awkward to tap.
+- **The tool's Options panel has its own button, in the bottom-left corner.** It sits opposite the Color Palette button, so the two panels each open from their own side of the screen. On a phone Options slides in from the left over the tool; on a desktop it is the column it always was, and the new button is how you bring it back after closing it.
+- On a desktop the gear no longer doubles as the way to reopen a closed Options column — that job belongs to the new button, and the gear now behaves the same everywhere.
+
 ## Web-App Version 5.5.0 — September 4, 2026
 
 - **The Matching Algorithm setting now tells you it changes the answer, not just the number.** Nothing on the page said so, and it was reasonable to read the picker as only changing the score shown beside a match. It changes which dye you get: measured against the default across 2,000 colours, the alternatives return a *different* closest dye between a quarter and nearly half of the time.

@@ -31,6 +31,13 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.3.0] - 2026-09-04
+
+### ⚙️ Settings stopped stacking on top of each other
+
+- Web app: on a phone, the gear in the top-right opened Advanced Settings *and* the tool's own Options at the same time, one printed straight through the other. Harmony Type and Matching Mode ran across the Reset and Backup rows, so neither panel could be read and both were awkward to tap. The gear now opens Advanced Settings and nothing else.
+- Web app: the tool's Options panel has its own button in the bottom-left corner, opposite the Color Palette button — so each panel opens from its own side of the screen. On a phone Options slides in from the left over the tool; on a desktop it is the same column as before, and the new button is how you bring it back after closing it.
+
 ## [5.2.0] - 2026-09-04
 
 ### 🎨 The colour mixing actually mixes now
