@@ -222,17 +222,26 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
   });
 
   /*
-   * The desktop Simple-Settings column's × emits `sidebar-collapse`. Nothing
-   * used to handle it — the click was a no-op — and the console-bar gear
-   * (the one settings affordance in the app bar) only ever opened the
-   * Advanced Options slide-over. The 2B/3A console design has the gear toggle
-   * the settings surface: × hides the column, the gear brings it back.
+   * The tool-Options panel and the Advanced Options slide-over are two
+   * separate surfaces reached by two separate controls.
+   *
+   * The gear used to do double duty: with the desktop column collapsed it
+   * restored the column instead of opening the slide-over, and on mobile the
+   * slide-over embedded a copy of the column. Because config-sidebar's own
+   * mobile rule makes its :host `position: fixed; left: 0; z-index: 100`,
+   * that embedded copy escaped the modal and painted underneath the settings
+   * cards — the reported overlap.
+   *
+   * Now: the gear ONLY emits `advanced-click`, on both breakpoints, and the
+   * Options panel is toggled by its own bottom-left FAB.
    */
-  describe('Simple-Settings column (desktop)', () => {
+  describe('tool-Options panel and the gear', () => {
     const column = (el: ShellEl) => el.shadowRoot!.querySelector('v4-config-sidebar');
     const header = (el: ShellEl) => el.shadowRoot!.querySelector('v4-app-header')!;
+    const optionsFab = (el: ShellEl) =>
+      el.shadowRoot!.querySelector<HTMLButtonElement>('.v4-options-toggle')!;
 
-    it('is visible on mount', async () => {
+    it('renders the panel on desktop, open on mount', async () => {
       stubViewport(false);
       const el = await mountShell();
 
@@ -240,63 +249,121 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
       expect(column(el)!.hasAttribute('collapsed')).toBe(false);
     });
 
-    it('the × (sidebar-collapse) hides the column', async () => {
-      stubViewport(false);
-      const el = await mountShell();
-
-      column(el)!.dispatchEvent(
-        new CustomEvent('sidebar-collapse', { bubbles: true, composed: true })
-      );
-      await el.updateComplete;
-
-      expect(column(el)!.hasAttribute('collapsed')).toBe(true);
-    });
-
-    it('the console-bar gear brings a collapsed column back instead of opening the slide-over', async () => {
-      stubViewport(false);
-      const el = await mountShell();
-      const advancedClicks = vi.fn();
-      el.addEventListener('advanced-click', advancedClicks);
-
-      column(el)!.dispatchEvent(
-        new CustomEvent('sidebar-collapse', { bubbles: true, composed: true })
-      );
-      await el.updateComplete;
-      expect(column(el)!.hasAttribute('collapsed')).toBe(true);
-
-      header(el).dispatchEvent(new CustomEvent('advanced-click'));
-      await el.updateComplete;
-
-      expect(column(el)!.hasAttribute('collapsed')).toBe(false);
-      // Restoring the column IS the gear's action here — the Advanced Options
-      // slide-over must not pop up on top of it as well.
-      expect(advancedClicks).not.toHaveBeenCalled();
-    });
-
-    it('the gear still opens the Advanced Options slide-over while the column is visible', async () => {
-      stubViewport(false);
-      const el = await mountShell();
-      const advancedClicks = vi.fn();
-      el.addEventListener('advanced-click', advancedClicks);
-
-      header(el).dispatchEvent(new CustomEvent('advanced-click'));
-      await el.updateComplete;
-
-      expect(column(el)!.hasAttribute('collapsed')).toBe(false);
-      expect(advancedClicks).toHaveBeenCalledTimes(1);
-    });
-
-    it('on mobile the gear always reaches the slide-over (there is no column)', async () => {
+    it('renders the panel on mobile too, collapsed on mount', async () => {
       stubViewport(true);
       const el = await mountShell();
+
+      // It exists on mobile now (it used to be omitted entirely, which is why
+      // the gear had to embed a copy), but starts off-screen.
+      expect(column(el)).not.toBeNull();
+      expect(column(el)!.hasAttribute('collapsed')).toBe(true);
+    });
+
+    it('the × (sidebar-collapse) hides the panel', async () => {
+      stubViewport(false);
+      const el = await mountShell();
+
+      column(el)!.dispatchEvent(
+        new CustomEvent('sidebar-collapse', { bubbles: true, composed: true })
+      );
+      await el.updateComplete;
+
+      expect(column(el)!.hasAttribute('collapsed')).toBe(true);
+    });
+
+    it.each([
+      ['desktop', false],
+      ['mobile', true],
+    ])('the bottom-left Options FAB toggles the panel on %s', async (_label, mobile) => {
+      stubViewport(mobile as boolean);
+      const el = await mountShell();
+      const startsCollapsed = column(el)!.hasAttribute('collapsed');
+
+      optionsFab(el).click();
+      await el.updateComplete;
+      expect(column(el)!.hasAttribute('collapsed')).toBe(!startsCollapsed);
+
+      optionsFab(el).click();
+      await el.updateComplete;
+      expect(column(el)!.hasAttribute('collapsed')).toBe(startsCollapsed);
+    });
+
+    it('the Options FAB hides itself while the panel is open', async () => {
+      stubViewport(true);
+      const el = await mountShell();
+
+      expect(optionsFab(el).classList.contains('panel-open')).toBe(false);
+
+      optionsFab(el).click();
+      await el.updateComplete;
+
+      expect(optionsFab(el).classList.contains('panel-open')).toBe(true);
+    });
+
+    it.each([
+      ['desktop', false],
+      ['mobile', true],
+    ])('the gear opens ONLY the slide-over on %s, panel untouched', async (_label, mobile) => {
+      stubViewport(mobile as boolean);
+      const el = await mountShell();
       const advancedClicks = vi.fn();
       el.addEventListener('advanced-click', advancedClicks);
+      const before = column(el)!.hasAttribute('collapsed');
 
-      expect(column(el)).toBeNull();
       header(el).dispatchEvent(new CustomEvent('advanced-click'));
       await el.updateComplete;
 
       expect(advancedClicks).toHaveBeenCalledTimes(1);
+      expect(column(el)!.hasAttribute('collapsed')).toBe(before);
+    });
+
+    it('the gear still reaches the slide-over with the panel collapsed on desktop', async () => {
+      stubViewport(false);
+      const el = await mountShell();
+      const advancedClicks = vi.fn();
+      el.addEventListener('advanced-click', advancedClicks);
+
+      column(el)!.dispatchEvent(
+        new CustomEvent('sidebar-collapse', { bubbles: true, composed: true })
+      );
+      await el.updateComplete;
+      expect(column(el)!.hasAttribute('collapsed')).toBe(true);
+
+      // This is the regression: the gear used to swallow the click here and
+      // restore the column instead of opening the slide-over.
+      header(el).dispatchEvent(new CustomEvent('advanced-click'));
+      await el.updateComplete;
+
+      expect(advancedClicks).toHaveBeenCalledTimes(1);
+      expect(column(el)!.hasAttribute('collapsed')).toBe(true);
+    });
+
+    it('crossing into the mobile layout collapses an open panel', async () => {
+      const { fireChange } = stubViewport(false);
+      const el = await mountShell();
+      expect(column(el)!.hasAttribute('collapsed')).toBe(false);
+
+      fireChange(true);
+      await el.updateComplete;
+
+      expect(column(el)!.hasAttribute('collapsed')).toBe(true);
+    });
+
+    it('the mobile scrim closes the panel', async () => {
+      stubViewport(true);
+      const el = await mountShell();
+
+      optionsFab(el).click();
+      await el.updateComplete;
+      expect(column(el)!.hasAttribute('collapsed')).toBe(false);
+
+      const scrim = [...el.shadowRoot!.querySelectorAll<HTMLElement>('.v4-drawer-overlay')].find(
+        (n) => n.classList.contains('visible')
+      )!;
+      scrim.click();
+      await el.updateComplete;
+
+      expect(column(el)!.hasAttribute('collapsed')).toBe(true);
     });
   });
 });

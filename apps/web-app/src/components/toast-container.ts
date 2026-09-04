@@ -172,7 +172,7 @@ export class ToastContainer extends BaseComponent {
     this.element = this.createElement('div', {
       id: 'toast-container',
       className: `
-        fixed z-50 pointer-events-none
+        fixed pointer-events-none
         bottom-4 left-0 right-0
         flex flex-col gap-2
         items-center
@@ -181,6 +181,11 @@ export class ToastContainer extends BaseComponent {
         .trim(),
       attributes: {
         'aria-label': LanguageService.t('aria.notifications'),
+        // Toasts sit at the bottom centre — the same band as the Options and
+        // palette FABs, which are z-index 100. Tailwind's `z-50` put every
+        // toast underneath them; the token puts toasts above the modal layer,
+        // where a toast confirming a modal action belongs.
+        style: `z-index: var(--v4-z-toast, 1100)`,
       },
     });
 

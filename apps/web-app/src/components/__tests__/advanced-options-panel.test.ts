@@ -179,10 +179,9 @@ describe('showAdvancedOptionsPanel', () => {
     expect(mockShow).toHaveBeenCalledTimes(1);
   });
 
-  it('reopens after close, and drops the route subscription on the way out', () => {
+  it('reopens after close', () => {
     showAdvancedOptionsPanel(host);
     closePanel();
-    expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
 
     showAdvancedOptionsPanel(host);
     expect(mockShow).toHaveBeenCalledTimes(2);
@@ -533,14 +532,22 @@ describe('showAdvancedOptionsPanel', () => {
     expect(toggle.querySelector<HTMLElement>('span.absolute')!.style.left).toBe('19.5px');
   });
 
-  // --- mobile: the embedded per-tool config surface ------------------------
+  // --- the panel hosts settings ONLY, never the per-tool config surface ----
 
-  describe('on mobile (<=768px)', () => {
-    beforeEach(() => {
+  /*
+   * The panel used to embed a <v4-config-sidebar> on mobile. That component's
+   * own `@media (max-width: 768px)` rule makes its :host
+   * `position: fixed; left: 0; bottom: 0; z-index: 100`, so the embedded copy
+   * escaped this modal and painted as a full-height layer underneath the
+   * settings cards — Advanced Settings and the tool Options visibly stacked.
+   * Per-tool config now lives in the shell behind its own bottom-left FAB.
+   */
+  describe('per-tool config surface', () => {
+    function setViewport(mobile: boolean): void {
       vi.mocked(window.matchMedia).mockImplementation(
         (query: string) =>
           ({
-            matches: query === '(max-width: 768px)',
+            matches: mobile && query === '(max-width: 768px)',
             media: query,
             onchange: null,
             addListener: vi.fn(),
@@ -550,54 +557,25 @@ describe('showAdvancedOptionsPanel', () => {
             dispatchEvent: vi.fn(),
           }) as unknown as MediaQueryList
       );
-    });
-
-    function sidebar(): HTMLElement {
-      return content().querySelector<HTMLElement>('v4-config-sidebar')!;
     }
 
-    it('embeds the config sidebar on the current tool', () => {
-      mockGetCurrentToolId.mockReturnValue('mixer');
-      showAdvancedOptionsPanel(host);
-
-      const el = sidebar();
-      expect(el).not.toBeNull();
-      expect((el as unknown as { embedded: boolean }).embedded).toBe(true);
-      expect((el as unknown as { activeTool: string }).activeTool).toBe('mixer');
-      // It leads the panel, ahead of the three section cards.
-      expect(content().firstElementChild).toBe(el);
-    });
-
-    it('follows navigation while the panel stays open', () => {
-      showAdvancedOptionsPanel(host);
-      const listener = mockSubscribe.mock.calls[0][0] as (s: { toolId: string }) => void;
-
-      listener({ toolId: 'budget' });
-
-      expect((sidebar() as unknown as { activeTool: string }).activeTool).toBe('budget');
-    });
-
-    it.each(['config-change', 'clear-all-dyes'])(
-      'forwards %s from the sidebar to the host',
-      (name) => {
-        showAdvancedOptionsPanel(host);
-        const received: unknown[] = [];
-        host.addEventListener(name, (e) => received.push((e as CustomEvent).detail));
-
-        sidebar().dispatchEvent(new CustomEvent(name, { detail: { key: 'value' } }));
-
-        expect(received).toEqual([{ key: 'value' }]);
-      }
-    );
-
-    it('leaves the sidebar out on desktop', () => {
-      vi.mocked(window.matchMedia).mockImplementation(
-        (query: string) => ({ matches: false, media: query }) as unknown as MediaQueryList
-      );
+    it.each([
+      ['mobile', true],
+      ['desktop', false],
+    ])('is never embedded on %s — three section cards, nothing else', (_label, mobile) => {
+      setViewport(mobile);
       showAdvancedOptionsPanel(host);
 
       expect(content().querySelector('v4-config-sidebar')).toBeNull();
       expect(sections()).toHaveLength(3);
+      expect(content().children).toHaveLength(3);
+    });
+
+    it('does not subscribe to route changes for a surface it no longer hosts', () => {
+      setViewport(true);
+      showAdvancedOptionsPanel(host);
+
+      expect(mockSubscribe).not.toHaveBeenCalled();
     });
   });
 });

@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.6.0] - 2026-09-04
+
+### Fixed
+
+- **The header gear opened the Advanced Options slide-over and the per-tool Options panel at the
+  same time on mobile, overlapping.** `advanced-options-panel.ts` embedded a `<v4-config-sidebar>`
+  when `(max-width: 768px)` matched, but that component's own mobile rule makes its `:host`
+  `position: fixed; left: 0; bottom: 0; z-index: 100`. The embedded instance was never `collapsed`,
+  so it escaped the modal's flow and painted as a full-height fixed layer underneath the settings
+  cards — both surfaces on screen, neither legible.
+
+- **Every modal opened underneath the app chrome.** `.m16-backdrop` was `z-index: 50` while the app
+  bar, palette drawer, Options panel and both corner FABs sit at 90-100 (result-card tooltips at
+  200). The shell host creates no stacking context, so its `position: fixed` children compete with
+  `#modal-root` directly and won. The visible symptom: on mobile the palette FAB covered the welcome
+  modal's "Get started" button and swallowed taps on the overlapping strip — Playwright reported
+  `<v4-layout-shell> intercepts pointer events`. Three places set a modal z-index (the class rule,
+  `createModalElement`'s inline style, and the re-stacking pass in `render()`); the last runs every
+  render and overwrites the other two, so fixing fewer than all three changes nothing.
+- **Toasts were painted under the corner FABs.** `toast-container` was `fixed z-50` in the same
+  bottom-centre band as both FABs.
+
+### Changed
+
+- **A `--v4-z-modal` / `--v4-z-toast` scale in `themes.css`** makes the stacking order explicit.
+  Chrome stays at 90-200, modals move to 1000, toasts to 1100, and the tutorial spotlight keeps the
+  top of the stack at 9998-10000 (it points *at* the chrome, so it must outrank all of it).
+- **The gear is now a single-purpose control on both breakpoints: it opens Advanced Settings only.**
+  It previously also served as the "restore the collapsed Simple-Settings column" affordance on
+  desktop, swallowing the click instead of opening the slide-over.
+- **The tool-Options panel gets its own bottom-left FAB**, mirroring the palette FAB's geometry on
+  the opposite corner. Desktop keeps the inline 252px column (collapsed by its ×, restored by the
+  FAB); mobile renders the same component as a left overlay that slides in, with a tap-outside
+  scrim. `v4-config-sidebar` is now rendered on both breakpoints rather than desktop-only.
+
+### Removed
+
+- `ConfigSidebar.embedded` and its style block, plus the panel's `RouterService.subscribe` that only
+  kept the embedded copy on the active tool. Both existed solely to serve the embedded surface.
+
+---
+
 ## [5.5.0] - 2026-09-04
 
 ### Changed

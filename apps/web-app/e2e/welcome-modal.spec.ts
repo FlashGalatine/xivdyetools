@@ -30,6 +30,13 @@ async function firstVisit(page: Page): Promise<void> {
   await waitForAppReady(page).catch(() => undefined);
 }
 
+/** The same first visit, on a phone-sized viewport. */
+async function firstVisitMobile(page: Page): Promise<void> {
+  await page.setViewportSize({ width: 412, height: 915 });
+  await page.goto('/');
+  await waitForAppReady(page).catch(() => undefined);
+}
+
 const dialog = (page: Page) =>
   page.getByRole('dialog').filter({ hasText: /Welcome to XIV Dye Tools/i });
 
@@ -173,5 +180,75 @@ test.describe('Welcome modal — where it sends you', () => {
     await expect(dialog(page)).toHaveCount(0);
 
     expect(await storage(page, WELCOME_SEEN)).not.toBeNull();
+  });
+});
+
+/*
+ * Stacking order: the modal layer must outrank the shell's fixed chrome.
+ *
+ * It did not. Modal backdrops sat at z-index 50 while the app bar, the palette
+ * drawer, the Options panel and the two corner FABs all sat at 90-100, and the
+ * shell host creates no stacking context — so those fixed children competed
+ * with #modal-root directly and won. On a phone the palette FAB landed on top
+ * of this modal's "Get started" button and swallowed taps aimed at the
+ * overlapping strip; Playwright reported "<v4-layout-shell> intercepts pointer
+ * events" and the click timed out.
+ *
+ * These assert the behaviour (can a real tap reach the control?) rather than a
+ * number, so they still hold if the layer values are ever renumbered.
+ */
+test.describe('Welcome modal — sits above the app chrome', () => {
+  test('its buttons are tappable where a corner FAB overlaps them', async ({ page }) => {
+    await firstVisitMobile(page);
+
+    const getStarted = page.getByRole('button', { name: /Get started/i }).first();
+    await expect(getStarted).toBeVisible();
+
+    // The FAB genuinely overlaps the button — this is not a test of geometry,
+    // it is a test that the overlap no longer steals the tap.
+    const overlaps = await page.evaluate(() => {
+      const btn = document.querySelector('#modal-root button.m16-btn--primary');
+      const shell = document.querySelector('v4-layout-shell');
+      const fab = shell?.shadowRoot?.querySelector('.v4-palette-toggle');
+      if (!btn || !fab) return false;
+      const b = btn.getBoundingClientRect();
+      const f = fab.getBoundingClientRect();
+      return !(f.right < b.left || f.left > b.right || f.bottom < b.top || f.top > b.bottom);
+    });
+    expect(overlaps).toBe(true);
+
+    // A real click, no force: this timed out before the fix.
+    await getStarted.click();
+    await expect(dialog(page)).toHaveCount(0);
+    expect(await storage(page, WELCOME_SEEN)).not.toBeNull();
+  });
+
+  test('an open modal covers the corner FABs instead of sitting under them', async ({ page }) => {
+    await firstVisitMobile(page);
+    await expect(dialog(page).first()).toBeVisible();
+
+    // Whatever is on top at each FAB's centre must not be the shell.
+    const topAtFabs = await page.evaluate(() => {
+      const shell = document.querySelector('v4-layout-shell');
+      const sr = shell?.shadowRoot;
+      const centreTag = (sel: string): string | null => {
+        const el = sr?.querySelector(sel);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        if (getComputedStyle(el).display === 'none') return 'hidden';
+        const top = document.elementFromPoint(
+          Math.round(r.x + r.width / 2),
+          Math.round(r.y + r.height / 2)
+        );
+        return top ? top.tagName : null;
+      };
+      return {
+        options: centreTag('.v4-options-toggle'),
+        palette: centreTag('.v4-palette-toggle'),
+      };
+    });
+
+    expect(topAtFabs.options).not.toBe('V4-LAYOUT-SHELL');
+    expect(topAtFabs.palette).not.toBe('V4-LAYOUT-SHELL');
   });
 });

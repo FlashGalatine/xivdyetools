@@ -219,15 +219,29 @@ test.describe('Accessibility Checker - Mobile Drawer', () => {
     await navigateToAccessibilityTool(page);
   });
 
-  // 5.0: the mobile sidebar FAB is gone — settings live behind the header's
-  // Advanced Settings gear, which embeds the config panel on mobile.
-  test('should show the advanced settings gear', async ({ page }) => {
-    const gear = page.getByRole('button', { name: /advanced settings/i }).first();
-    await expect(gear).toBeVisible();
+  // Per-tool settings live in the Options panel, opened by the bottom-left
+  // Options FAB on both breakpoints. The header gear opens Advanced Settings
+  // (resets / backup / behaviour) and nothing else — it used to embed a copy
+  // of this panel on mobile, which painted on top of the settings cards.
+  test('should show the options FAB', async ({ page }) => {
+    const fab = page.getByRole('button', { name: /^options$/i }).first();
+    await expect(fab).toBeVisible();
   });
 
-  test('should open settings when the gear is clicked', async ({ page }) => {
+  test('the gear opens Advanced Settings without the tool config', async ({ page }) => {
     const gear = page.getByRole('button', { name: /advanced settings/i }).first();
+    await gear.click();
+    await page.waitForTimeout(600);
+
+    await expect(page.getByText('Advanced Settings').first()).toBeVisible();
+    // The regression: tool config must not ride along inside the panel. The
+    // Options panel is always in the DOM on mobile now (parked off-screen),
+    // so assert on visibility, not on presence.
+    await expect(page.getByText('Vision Types').first()).not.toBeVisible();
+  });
+
+  test('should open settings when the options FAB is clicked', async ({ page }) => {
+    const gear = page.getByRole('button', { name: /^options$/i }).first();
     await gear.click();
     await page.waitForTimeout(600);
 
@@ -242,8 +256,8 @@ test.describe('Accessibility Checker - Mobile Drawer', () => {
     // the drawer itself sits over.
     await closePaletteDrawer(page);
 
-    // Open settings through the gear
-    const mobileToggle = page.getByRole('button', { name: /advanced settings/i }).first();
+    // Open the tool Options panel through its bottom-left FAB
+    const mobileToggle = page.getByRole('button', { name: /^options$/i }).first();
     await mobileToggle.click();
 
     // Wait for sidebar to open and content to load
@@ -277,8 +291,8 @@ test.describe('Accessibility Checker - Mobile Drawer', () => {
     // the drawer itself sits over.
     await closePaletteDrawer(page);
 
-    // Open settings through the gear
-    const mobileToggle = page.getByRole('button', { name: /advanced settings/i }).first();
+    // Open the tool Options panel through its bottom-left FAB
+    const mobileToggle = page.getByRole('button', { name: /^options$/i }).first();
     await mobileToggle.click();
 
     // Wait for sidebar to open

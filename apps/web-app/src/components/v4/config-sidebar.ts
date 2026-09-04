@@ -131,17 +131,12 @@ export class ConfigSidebar extends BaseLitComponent {
   activeTool: ToolId = 'harmony';
 
   /**
-   * Whether sidebar is collapsed (mobile drawer mode)
+   * Whether the Options panel is collapsed. On desktop that hides the inline
+   * column; on mobile it slides the overlay off the left edge. The shell's
+   * bottom-left Options FAB is what brings it back on both breakpoints.
    */
   @property({ type: Boolean, reflect: true })
   collapsed = false;
-
-  /**
-   * Embedded mode: hosted inside the Advanced Options slide-over rather than
-   * as a standalone column — drops its own header/chrome (Q7 decision).
-   */
-  @property({ type: Boolean, reflect: true })
-  embedded = false;
 
   // =========================================================================
   // Tool Configuration State
@@ -261,30 +256,6 @@ export class ConfigSidebar extends BaseLitComponent {
 
       :host([collapsed]) {
         display: none;
-      }
-
-      /* Embedded inside the Advanced Options slide-over (Q7: the config
-         surface lives behind the header gear, not in a persistent column) */
-      :host([embedded]) {
-        width: 100%;
-        height: auto;
-      }
-
-      :host([embedded]) .v4-config-sidebar {
-        background: transparent;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
-        border-right: none;
-        height: auto;
-      }
-
-      :host([embedded]) .v4-sidebar-header {
-        display: none;
-      }
-
-      :host([embedded]) .v4-sidebar-content {
-        padding: 0;
-        overflow-y: visible;
       }
 
       .v4-config-sidebar {
@@ -493,13 +464,15 @@ export class ConfigSidebar extends BaseLitComponent {
         display: none;
       }
 
-      /* Mobile Styles */
+      /* Mobile Styles — the column becomes a left overlay that slides in from
+         the edge, opened by the shell's bottom-left Options FAB. */
       @media (max-width: 768px) {
         :host {
           position: fixed;
-          top: calc(var(--v4-header-height, 48px) + var(--v4-tool-bar-height, 64px));
+          top: calc(var(--v4-header-height, 48px) + var(--v4-tool-bar-height, 0px));
           left: 0;
           bottom: 0;
+          width: min(86vw, 320px);
           z-index: 100;
           transform: translateX(-100%);
           transition: transform 0.3s ease-out;
@@ -510,8 +483,22 @@ export class ConfigSidebar extends BaseLitComponent {
           transform: translateX(0);
         }
 
+        /* Stay laid out while collapsed so the slide-out is visible — the
+           base display:none rule would snap it away with no transition, and
+           an off-screen overlay needs no hiding. */
         :host([collapsed]) {
+          display: block;
           transform: translateX(-100%);
+        }
+
+        /* Off-screen means non-interactive: without this the collapsed
+           overlay still swallows taps along the left edge of the tool. */
+        :host([collapsed]) .v4-config-sidebar {
+          visibility: hidden;
+        }
+
+        .v4-config-sidebar {
+          box-shadow: var(--v4-shadow-soft, 0 4px 6px rgba(0, 0, 0, 0.3));
         }
 
         /* Close button styles are now set in base styles */
