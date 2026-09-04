@@ -80,11 +80,15 @@ describe('classifyBandTier', () => {
     expect(classifyBandTierWithCuts(7, [5, 10, 20], 1)).toBe(1);
   });
 
-  it('ΔEOK classifies in its raw unit at dp 3', () => {
-    expect(classifyBandTier(0.0164, 'oklab', 'match')).toBe(0);
-    // 0.0169 display-rounds to 0.017 = the first cut → tier 1, not 0
-    expect(classifyBandTier(0.0169, 'oklab', 'match')).toBe(1);
-    expect(classifyBandTier(0.0171, 'oklab', 'match')).toBe(1);
+  it('deltaEOK classifies in its raw unit at dp 3', () => {
+    // The point is the DISPLAY rounding, not the specific cut: a value below
+    // the first cut but which rounds UP onto it at dp 3 must land in tier 1.
+    // (The example cut moved 0.017 -> 0.033 in 5.1.0 when getDeltaE_Oklab
+    // became deltaEOK2 and the oklab bands were recalibrated.)
+    expect(classifyBandTier(0.0324, 'oklab', 'match')).toBe(0);
+    // 0.0329 display-rounds to 0.033 = the first cut -> tier 1, not 0
+    expect(classifyBandTier(0.0329, 'oklab', 'match')).toBe(1);
+    expect(classifyBandTier(0.0331, 'oklab', 'match')).toBe(1);
   });
 
   it('rounds to method display precision', () => {

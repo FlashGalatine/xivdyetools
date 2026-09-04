@@ -190,16 +190,16 @@ in `02-mixing-algorithms.md` for the record; there is no longer any code to fix.
 
 ---
 
-## Sprint 3 — Correctness hardening (P2)
+## Sprint 3 — Correctness hardening (P2) — ✅ **DONE**
 
-### 3.1 Delete `getDeltaE_OklchWeighted`
+### 3.1 Delete `getDeltaE_OklchWeighted` — ✅ DONE
 
 Its hue term under-weights by a factor of π at small angles even at the documented-neutral `kH = 1`, and
 it has no production caller (only two web-app test files reference it; the `oklch-weighted`
 `MatchingMethod` was retired in the 5.0 suite). Deleting removes a wrong formula and dead weight in one
 step. If a weighted metric is wanted later, build it on ΔH = 2·√(C₁C₂)·sin(Δh/2).
 
-### 3.2 Use the exact CIE constants
+### 3.2 Use the exact CIE constants — ✅ DONE
 
 Replace `epsilon = 0.008856` / `kappa = 903.3` with `216/24389` and `24389/27` (equivalently CIE
 15:2004's `(24/116)³` and `841/108`) in `ColorConverter` and `blending/conversions.ts`, and drop the 4-dp
@@ -214,7 +214,7 @@ at the junction. Visually irrelevant; the exact fractions cost nothing.
 with each other, which is the property that matters. CSS Color 4's alternative pair differs by
 ΔE₀₀ ≈ 0.015. Swapping one without the other would be the actual bug.
 
-### 3.3 Freeze the CIEDE2000 conformance vector as a test
+### 3.3 Freeze the CIEDE2000 conformance vector as a test — ✅ DONE
 
 **The implementation already passes** — all 34 of Sharma, Wu & Dalal's supplementary pairs, max deviation
 4.95 × 10⁻⁵ against data quoted to 4 dp (probe `07-ciede2000-sharma.mts`, ready to lift into the suite).
@@ -224,25 +224,36 @@ mean-hue and arctangent edge cases where Sharma et al. found that "several imple
 the Internet, including some from reputable sources, were erroneous", and where the CIE standard's own
 text is ambiguous. Nothing else in the suite would catch a regression there.
 
-### 3.4 Make harmony use the suite's default metric
+### 3.4 Make harmony use the suite's default metric — ⚠️ **premise overtaken**
 
-`HarmonyGenerator` defaults `deltaEFormula` to `'cie76'` at two call sites, and no caller anywhere
-overrides it — so harmony always ranks by CIE76 while every other tool ranks by CIEDE2000, a metric that
-disagrees on the winner 31.5 % of the time.
+**As written, this finding no longer describes live behaviour.** It was true when measured, but
+the harmony convergence (PR #159) landed in between and moved the live path out from under it.
 
-**Do:** default to `DEFAULT_MATCHING_METHOD` instead of the hard-coded `'cie76'`. The
-`HARMONY_MAX_DISTANCE` table already carries a `ciede2000: 25` threshold, so the scale is handled. Expect
-harmony results to change — changelog it.
+What is true now: all three surfaces — web app, Discord bot, og-worker — call
+`HarmonySelector.generateHarmonySlots`, which takes `matchingMethod` as a **required** config
+field, and all three pass it explicitly (the web app passes `ciede2000`). The `HarmonyGenerator.
+find*Dyes()` methods that carry the `'cie76'` default are reached only through the `DyeService`
+façade, and **nothing in this monorepo calls those** — they survive as published npm API. The
+`'cie76'` default was therefore already unreachable in production.
 
-This closes the "harmony ΔE76" item left open by the 2026-08-08 5.0 design review.
+**Done anyway**, because a published default that contradicts `DEFAULT_MATCHING_METHOD` is still
+wrong: `DEFAULT_HARMONY_DELTA_E = 'ciede2000'`. The difference is real where the path *is* used —
+the two formulas pick different complements for **40 of the 125 dyes** (32%, matching the
+fact-check's 31.5% figure).
 
-**And the same fix for the rotation space.** `HarmonyGenerator` takes the HSV path whenever
-`options.colorSpace` is undefined, and no caller passes it — so `oklch` and `lch` are implemented, wired,
-and unreachable. Default to `oklch`. HSV is the worst of the four here: a constant-S/V hue sweep varies in
-lightness by hue (yellow and cyan read much lighter than red and blue), so a fixed-angle rotation lands on
-an unintended lightness in a hue-dependent way. Also changes results; also changelog it.
+**And the rotation-space half of this finding cannot be done as described.** `generateHarmonySlots`
+rotates hue in HSV unconditionally and has no `colorSpace` option at all; the bot's `color_space`
+choice was deliberately *withdrawn* (`schemas.test.ts` asserts it is not registered) precisely so
+the three surfaces cannot disagree. Defaulting to `oklch` would mean adding a new option to the
+converged path and re-opening that divergence — a design decision, not a default flip. Left alone.
 
-### 3.5 Consider ΔEOK2 in place of plain ΔEOK for the `oklab` method
+⚠️ Two vacuous tests were found in this area and fixed: one asserted only `toBeDefined()`, so
+mutating the default formula left the whole file green; the other was
+`expect(x === null || x !== null).toBe(true)`, which no source change can falsify. A first draft of
+the replacement was *also* vacuous — it used primaries as bases, and those all sit in the 68% of
+dyes where the two formulas agree.
+
+### 3.5 Consider ΔEOK2 in place of plain ΔEOK for the `oklab` method — ✅ DONE
 
 CSS Color 4 §20.4 defines **ΔEOK2** — plain Oklab Euclidean with `a` and `b` scaled by 2 — because plain
 ΔEOK "under-estimates differences in colorfulness compared to differences in lightness". The factor comes
@@ -269,7 +280,7 @@ same changelog treatment as 2.1 and 3.4.
 Useful for the UI while here: CSS Color 4 §14.2.1 puts **one JND at ΔEOK ≈ 0.02** (the Lab range is
 0–100 and Oklab's is 0–1, so the ΔE2000 JND of 2 scales down by 100×).
 
-### 3.6 Add algebraic-law gates for every mixing mode
+### 3.6 Add algebraic-law gates for every mixing mode — ✅ DONE
 
 Promote the checks from `probes/04-algebraic-laws.mts` into the suite, run over the full dye set for all
 six modes with **no per-mode exemptions**:
@@ -348,7 +359,7 @@ Worth one line in the tool help — users currently have no signal that the togg
 |---|---|---|
 | 1 | Correct colours on the Discord bot | Low — one delegation + test updates |
 | 2 | One answer across all three surfaces | ✅ DONE — picked chromatic subtraction; changes web + OG output |
-| 3 | Regression gates + precision | Low |
+| 3 | Regression gates + precision | ✅ DONE — but 3.5 moved 24.7% of the harmony golden (all `oklab`) |
 | 4 | Honest labels and help text | Low |
 
 Sprint 2.1 changes what the web mixer renders for `ryb`. That is a deliberate, user-visible change and
@@ -403,3 +414,39 @@ tool that was simply not in Sprint 2's scope. og-worker's gradient card, corresp
 `hsv` / `oklch` / `lch` to core's public `BlendingMode` (new API, new tests, a share-URL compatibility
 story) or narrowing the gradient tool to the six. That is a sprint of its own and a product decision
 about which spaces the gradient tool should offer, so it is recorded rather than actioned.
+
+---
+
+## Sprint 3 corrections — what measurement changed
+
+Four claims in Sprint 3 did not survive contact with the code, and are corrected in place above.
+Recording them together because the pattern is consistent: each was a reasonable inference that a
+measurement falsified.
+
+1. **3.5 is not "a one-line change".** Scaling `a,b` by 2 changes the metric's *scale*, not only
+   its ranking, which invalidates every calibrated threshold compared against it — the three
+   `BAND_VOCABULARY` oklab rows and `HARMONY_MAX_DISTANCE.oklab`. Left un-recalibrated, a "very
+   close" oklab match would have rendered as merely "close". The repo's own
+   `band-vocabulary.parity.test.ts` catches this, which is why it was caught.
+
+2. **3.6's "no overshoot past either endpoint" is not a universal law.** It holds only for `rgb`.
+   `lab`, `oklab`, `ryb` and `hsl` all put an interior channel outside the endpoints' range,
+   because they interpolate a straight line in a *different* space and its image in sRGB is a
+   curve. The excursions are small (1–8 counts) but real. Asserting the universal version would
+   have failed correct code, so the gate scopes it to `rgb` and pins concrete counter-examples.
+
+3. **3.6's pigment table over-claims for `ryb`.** "red + green → muddy brown/olive, not a flat
+   average" is a Kubelka–Munk property. `spectral` delivers it (`#834b17`); `ryb` returns exactly
+   `#808080`, a flat average, and is right to — RYB is a hue-wheel geometry with no absorption
+   model, so it has no mechanism for muddiness. Also, "black + white → not `#a6a6a6`" names the
+   precise value `spectral` actually returns; the exclusion was an unmeasured guess.
+
+4. **3.4's premise was overtaken** by the merged harmony convergence — see the section above.
+
+**One non-correction worth recording.** Two mutations of the CIEDE2000 implementation survived the
+new conformance gate, which looked like a coverage gap and is not: deleting the `C1p·C2p === 0`
+mean-hue special case changes nothing because `dHp` is zero there, so `Hp` reaches the result only
+through terms multiplying or dividing that zero; and flipping `dhp = h2p − h1p − 360` to `+ 360`
+changes nothing because `dhp` enters only as `sin(dhp·π/360)`, where 720° is exactly one period.
+Both branches *are* exercised by the 34 pairs (4 and 2 respectively). The gate is fine; the formula
+is insensitive there. A third mutation — flipping the `Rt` sign — fails 11 of the 34.

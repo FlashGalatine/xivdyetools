@@ -28,13 +28,38 @@ export type HarmonyMatchingAlgorithm = 'hue' | 'deltaE';
  * silently gave `'oklab'` CIE76's tolerance. OKLAB ΔE runs roughly 0-1, so 40
  * admitted the entire dye set. Each value sits just outside its formula's
  * widest calibrated `harmony` band cut in `config/band-vocabulary.ts`
- * (ciede2000 20, cie76 26.2, oklab 0.107), which is the relationship the
+ * (ciede2000 20, cie76 26.2, oklab 0.174), which is the relationship the
  * original two already had.
+ *
+ * The oklab value moved 0.13 -> 0.21 in 5.1.0, when `getDeltaE_Oklab` became
+ * ΔEOK2 and its widest harmony cut moved 0.107 -> 0.174. The ratio to that cut
+ * is preserved (~1.21), so the tolerance still means the same thing relative
+ * to the bands; leaving 0.13 behind would have quietly tightened oklab harmony
+ * matching to roughly half its intended reach.
  */
+/**
+ * The ΔE formula these per-type harmony methods rank by when a caller does not
+ * say. Was hard-coded `'cie76'`, which meant harmony ranked by a metric that
+ * disagrees with `ciede2000` — the suite default every other tool uses — on
+ * about 31% of dye pairs.
+ *
+ * ⚠️ Changing this is CORRECT but it is NOT the fix the 2026-09-03 fact-check
+ * described, because the live harmony path moved out from under it. Since the
+ * harmony convergence (PR #159) every surface — web app, Discord bot,
+ * og-worker — goes through `HarmonySelector.generateHarmonySlots`, which takes
+ * `matchingMethod` as a REQUIRED config field and is given `ciede2000`
+ * explicitly by all three. The `find*Dyes()` methods below are reached only
+ * through the `DyeService` façade, which nothing in this monorepo calls; they
+ * survive as published npm API. So this default was already unreachable in
+ * production, and aligning it changes no shipped behaviour — it stops the
+ * published API contradicting the documented suite default.
+ */
+const DEFAULT_HARMONY_DELTA_E: DeltaEFormula = 'ciede2000';
+
 const DEFAULT_DELTA_E_TOLERANCE = {
   ciede2000: 25,
   cie76: 40,
-  oklab: 0.13,
+  oklab: 0.21,
 } as const;
 
 /**
@@ -92,7 +117,7 @@ export interface HarmonyOptions {
 
   /**
    * DeltaE formula (only used when algorithm is 'deltaE')
-   * @default 'cie76'
+   * @default 'ciede2000' (was `'cie76'` before 5.1.0 — see DEFAULT_HARMONY_DELTA_E)
    */
   deltaEFormula?: DeltaEFormula;
 
@@ -108,7 +133,7 @@ export interface HarmonyOptions {
    * Only used when algorithm is 'deltaE'
    * Higher values return more matches but less precise
    * @default per formula — 40 cie76, 25 ciede2000 (and its 'cie2000'
-   * alias), 0.13 oklab. OKLAB deltaE runs on a ~0-1 scale, so the CIE76
+   * alias), 0.21 oklab. OKLAB deltaE runs on a ~0-1 scale, so the CIE76
    * number is not a usable default for it (BUG-059).
    */
   deltaETolerance?: number;
@@ -270,7 +295,7 @@ export class HarmonyGenerator {
     // DeltaE-based monochromatic search
     if (options?.algorithm === 'deltaE') {
       const baseLab = ColorConverter.hexToLab(baseDye.hex);
-      const formula = normalizeDeltaEFormula(options.deltaEFormula ?? 'cie76');
+      const formula = normalizeDeltaEFormula(options.deltaEFormula ?? DEFAULT_HARMONY_DELTA_E);
       const tolerance = options.deltaETolerance ?? DEFAULT_DELTA_E_TOLERANCE[formula];
 
       const results: Array<{ dye: Dye; deltaE: number; satValDiff: number }> = [];
@@ -458,7 +483,7 @@ export class HarmonyGenerator {
     excludeIds: Set<number>,
     options: HarmonyOptions,
   ): Dye | null {
-    const formula = normalizeDeltaEFormula(options.deltaEFormula ?? 'cie76');
+    const formula = normalizeDeltaEFormula(options.deltaEFormula ?? DEFAULT_HARMONY_DELTA_E);
     const tolerance = options.deltaETolerance ?? DEFAULT_DELTA_E_TOLERANCE[formula];
 
     const targetLab = ColorConverter.hexToLab(targetHex);

@@ -167,7 +167,7 @@ lerped to RYB(1,1,1) passes through the cube's centre, and the (1,1,1) corner is
 
 ---
 
-## P2 — `getDeltaE_OklchWeighted` under-weights hue by a factor of π, and has no callers
+## P2 — `getDeltaE_OklchWeighted` under-weights hue by a factor of π, and has no callers — ✅ FIXED (core 5.1.0, deleted)
 
 **Where:** `packages/core/src/services/color/ColorConverter.ts:954`.
 
@@ -193,7 +193,7 @@ carrying a wrong formula — the cheapest fix is deletion.
 
 ---
 
-## P2 — CIELAB uses rounded ε and κ instead of the exact CIE fractions
+## P2 — CIELAB uses rounded ε and κ instead of the exact CIE fractions — ✅ FIXED (core 5.1.0)
 
 **Where:** `ColorConverter.rgbToLab()` / `labToRgb()` use `epsilon = 0.008856` and `kappa = 903.3`.
 CIE 15:2004 defines ε = 216/24389 = 0.008856451679… and κ = 24389/27 = 903.296296296….
@@ -224,7 +224,7 @@ and never goes through `rgbToLab`.
 
 ---
 
-## P2 — Harmony matching silently uses CIE76 while the rest of the suite uses CIEDE2000
+## P2 — Harmony matching silently uses CIE76 while the rest of the suite uses CIEDE2000 — ⚠️ PREMISE OVERTAKEN (see 04 §3.4); default aligned in 5.1.0
 
 **Where:** `packages/core/src/services/dye/HarmonyGenerator.ts:273` and `:461` —
 `normalizeDeltaEFormula(options.deltaEFormula ?? 'cie76')`.
@@ -264,7 +264,7 @@ never been tested at all.
 
 ---
 
-## OK — CIEDE2000 **passes the published conformance vector**
+## OK — CIEDE2000 **passes the published conformance vector** — ✅ now a permanent gate (core 5.1.0)
 
 `ColorConverter.getDeltaE2000()` was executed against all **34 supplementary test pairs** from Sharma,
 Wu & Dalal (2005), retrieved from the canonical file at the University of Rochester

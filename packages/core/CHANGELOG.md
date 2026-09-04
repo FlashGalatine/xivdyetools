@@ -5,6 +5,79 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] - 2026-09-04
+
+### Changed
+
+- **`getDeltaE_Oklab` is now ΔEOK2** (CSS Color 4 §20.4): `a` and `b` are scaled by 2 before the
+  Euclidean distance. Plain ΔEOK "under-estimates differences in colorfulness compared to
+  differences in lightness"; the factor is Ottosson's own fit against perceptual datasets (2.016
+  on COMBVD, 2.045 on OSA-UCS). Measured here over 2,000 random sRGB queries with CIEDE2000 as
+  the reference, asking how often each variant picks a *different* winning dye: plain ΔEOK
+  **30.4%**, ΔEOK2 **24.4%**, cie76 31.1%. §20.5's ΔEOKr2 (toe remap) was measured and rejected —
+  slightly worse for considerably more code.
+
+  ⚠️ **This changes rankings and the numeric SCALE for the `oklab` matching method.** Values are
+  roughly 1.4–2× their former size. `BAND_VOCABULARY`'s oklab cuts were recalibrated with
+  `calibrate:bands` (match `0.033/0.081/0.174`, harmony `0.041/0.101/0.174`, separation
+  `0.08/0.144/0.281`) and `HARMONY_MAX_DISTANCE.oklab` moved `0.13 → 0.21` to keep its ratio to
+  the widest harmony cut. Over the 5,000-row harmony golden, **1,237 rows (24.7%) moved and every
+  one is in the `oklab` config** — 705 a different chosen dye, 532 a companion reorder; the three
+  configs that do not read OKLAB are byte-identical. `ciede2000` remains
+  `DEFAULT_MATCHING_METHOD`, so this affects only users who selected `oklab`.
+
+- **CIELAB now uses the exact CIE 15:2004 constants** — `ε = 216/24389` and `κ = 24389/27` in
+  place of the pre-2004 decimals (`0.008856`, `903.3`, and blending's equivalent `7.787` linear
+  slope), in both `ColorConverter` and `blending/conversions.ts`. Rounding the pair independently
+  leaves the two branches of f(t) not meeting: measured, the old constants left a step of
+  **2.83e-7** in f at the junction (making f very slightly non-monotonic, hence non-invertible
+  there); the exact fractions give **2.78e-17**. `ColorConverter.rgbToLab` also no longer rounds
+  its output to 4 dp — LAB is an intermediate, not a display value.
+
+  Impact is deliberately tiny: LAB moves by at most 9e-5, ΔE00 by at most 7.6e-5, and **no dye's
+  nearest-neighbour ranking changed** (0 of 125). The harmony golden moved **4 rows of 5,000
+  (0.08%)**, all on one base dye, and **no chosen dye changed** — only two companions swapped
+  order, having measured 8.6e-6 apart (14.166463869861 vs 14.166455222891), a gap the old 4-dp
+  rounding collapsed into a tie.
+
+  The D65 white point and sRGB matrix are deliberately **not** touched: they are the
+  ASTM/Lindbloom pair and are consistent with each other, which is the property that matters.
+
+- `HarmonyGenerator`'s default ΔE formula moved `'cie76'` → `'ciede2000'`, matching
+  `DEFAULT_MATCHING_METHOD`. **This changes no shipped behaviour**: since the harmony convergence
+  every surface goes through `generateHarmonySlots`, which takes `matchingMethod` explicitly, and
+  the `find*Dyes()` methods this default serves are reached only through the `DyeService` façade,
+  which nothing in the monorepo calls. It stops the published API contradicting the documented
+  suite default. (The two formulas pick different complements for 40 of the 125 dyes, so the
+  difference is real where the path is used.)
+
+### Removed
+
+- **`getDeltaE_OklchWeighted`** (instance and static). Its hue term under-weights by a factor of
+  π at small angles even at the documented-neutral `kH = 1`, and it had no production caller —
+  the `oklch-weighted` `MatchingMethod` was retired in the 5.0 suite. If a weighted metric is
+  wanted later, build it on ΔH = 2·√(C₁C₂)·sin(Δh/2).
+
+### Added
+
+- **CIEDE2000 conformance gate** (`ciede2000-conformance.test.ts`): all 34 published
+  Sharma-Wu-Dalal (2005) supplementary pairs, to 1e-4. The implementation already passed; this is
+  a regression gate for the arctangent-quadrant and mean-hue branches where the paper found
+  "several implementations distributed on the Internet, including some from reputable sources,
+  were erroneous" — cases no dye-based test reaches. Mutation-verified: flipping the `Rt` sign
+  fails 11 of the 34.
+- **Algebraic-law gates for every blending mode, with no per-mode exemptions**
+  (`algebraic-laws.test.ts`): identity, commutativity, idempotence and greyscale monotonicity,
+  all of which hold exactly (ΔE 0.000) across all six modes, plus the canonical pigment claims
+  for `spectral` and `ryb` as bands. Both of the fact-check's P1 defects would have been caught
+  on the first run.
+
+### Fixed
+
+- Two vacuous assertions in the harmony ΔE tests: one asserted only `toBeDefined()` (so mutating
+  the default formula left the file green) and one was the tautology
+  `expect(x === null || x !== null).toBe(true)`, which no source change can falsify.
+
 ## [5.0.0] - 2026-09-03
 
 ### Removed

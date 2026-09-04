@@ -79,11 +79,20 @@ const RGBDIST_CUTS: Record<BandContext, readonly [number, number, number]> = {
  * The calibrated band vocabulary. ΔE2000 rows are the settled ground truth
  * (MATCH 5/10/20 · HARMONY 6/12/20 · SEPARATION 8/15/30 ascending — the UI
  * reads SEPARATION descending, 30/15/8, high = clear).
+ *
+ * ⚠️ The **oklab rows were recalibrated in 5.1.0** when `getDeltaE_Oklab`
+ * became ΔEOK2 (CSS Color 4 §20.4 — `a` and `b` scaled by 2). That change
+ * moves the metric's SCALE, not just its ranking, so the old cuts
+ * (match 0.017/0.04/0.107 · harmony 0.02/0.053/0.107 ·
+ * separation 0.062/0.103/0.252) would have mis-banded every oklab verdict —
+ * a "very close" match reading as merely "close". Regenerate with
+ * `pnpm --filter @xivdyetools/core run calibrate:bands`; the parity test
+ * recomputes these and fails if they drift.
  */
 export const BAND_VOCABULARY: Record<BandContext, Record<BandMethod, MethodBandSet>> = {
   match: {
     ciede2000: bandSet([5, 10, 20], 'ciede2000'),
-    oklab: bandSet([0.017, 0.04, 0.107], 'oklab'),
+    oklab: bandSet([0.033, 0.081, 0.174], 'oklab'),
     cie76: bandSet([5.4, 12.6, 26.2], 'cie76'),
     redmean: bandSet([13.9, 31.9, 91.1], 'redmean'),
     rgb: bandSet(RGBDIST_CUTS.match, 'rgb'),
@@ -91,7 +100,7 @@ export const BAND_VOCABULARY: Record<BandContext, Record<BandMethod, MethodBandS
   },
   harmony: {
     ciede2000: bandSet([6, 12, 20], 'ciede2000'),
-    oklab: bandSet([0.02, 0.053, 0.107], 'oklab'),
+    oklab: bandSet([0.041, 0.101, 0.174], 'oklab'),
     cie76: bandSet([6.7, 14.5, 26.2], 'cie76'),
     redmean: bandSet([16.5, 44.4, 91.1], 'redmean'),
     rgb: bandSet(RGBDIST_CUTS.harmony, 'rgb'),
@@ -99,7 +108,7 @@ export const BAND_VOCABULARY: Record<BandContext, Record<BandMethod, MethodBandS
   },
   separation: {
     ciede2000: bandSet([8, 15, 30], 'ciede2000'),
-    oklab: bandSet([0.062, 0.103, 0.252], 'oklab'),
+    oklab: bandSet([0.08, 0.144, 0.281], 'oklab'),
     cie76: bandSet([10.4, 19.3, 38.4], 'cie76'),
     redmean: bandSet([54, 102, 222], 'redmean'),
     rgb: bandSet(RGBDIST_CUTS.separation, 'rgb'),

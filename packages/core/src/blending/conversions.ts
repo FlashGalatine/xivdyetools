@@ -1,6 +1,18 @@
 import type { RGB, LAB, HSL } from './types.js';
 import { clamp } from '../utils/index.js';
 
+/**
+ * CIELAB companding constants — the EXACT CIE 15:2004 rationals.
+ *
+ * Kept numerically identical to `ColorConverter`'s pair on purpose: these two
+ * modules deliberately keep separate LAB implementations (see
+ * `conversions.equivalence.test.ts` for why), but they must not disagree about
+ * the STANDARD. The previous decimals here (`0.008856` with a `7.787` linear
+ * slope) were the pre-2004 approximations; `7.787` is just kappa/116 rounded.
+ */
+const CIE_EPSILON = 216 / 24389; // (6/29)^3 exactly
+const CIE_KAPPA = 24389 / 27; // (29/3)^3 exactly
+
 // ============================================================================
 // CIELAB (D65 illuminant)
 // ============================================================================
@@ -25,9 +37,9 @@ export function rgbToLab(rgb: RGB): LAB {
   let z = (r * 0.0193339 + g * 0.119192 + b * 0.9503041) / 1.08883;
 
   // XYZ to LAB
-  x = x > 0.008856 ? Math.pow(x, 1 / 3) : 7.787 * x + 16 / 116;
-  y = y > 0.008856 ? Math.pow(y, 1 / 3) : 7.787 * y + 16 / 116;
-  z = z > 0.008856 ? Math.pow(z, 1 / 3) : 7.787 * z + 16 / 116;
+  x = x > CIE_EPSILON ? Math.pow(x, 1 / 3) : (CIE_KAPPA * x + 16) / 116;
+  y = y > CIE_EPSILON ? Math.pow(y, 1 / 3) : (CIE_KAPPA * y + 16) / 116;
+  z = z > CIE_EPSILON ? Math.pow(z, 1 / 3) : (CIE_KAPPA * z + 16) / 116;
 
   return {
     l: 116 * y - 16,
@@ -45,9 +57,9 @@ export function labToRgb(lab: LAB): RGB {
   const x3 = x * x * x;
   const z3 = z * z * z;
 
-  y = y3 > 0.008856 ? y3 : (y - 16 / 116) / 7.787;
-  x = x3 > 0.008856 ? x3 : (x - 16 / 116) / 7.787;
-  z = z3 > 0.008856 ? z3 : (z - 16 / 116) / 7.787;
+  y = y3 > CIE_EPSILON ? y3 : (116 * y - 16) / CIE_KAPPA;
+  x = x3 > CIE_EPSILON ? x3 : (116 * x - 16) / CIE_KAPPA;
+  z = z3 > CIE_EPSILON ? z3 : (116 * z - 16) / CIE_KAPPA;
 
   x *= 0.95047;
   z *= 1.08883;

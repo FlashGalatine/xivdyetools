@@ -22,21 +22,35 @@
  * | `hexToRgb`          | `ColorConverter.hexToRgb`     | identical values (contract differs, see below) |
  * | `oklabToRgb`        | `ColorConverter.oklabToRgb`   | identical (0 mismatches in 86,319 samples) |
  * | `rgbToHex`          | `ColorConverter.rgbToHex`     | DELTA — lowercase vs uppercase output      |
- * | `rgbToLab`          | `ColorConverter.rgbToLab`     | DELTA — core rounds to 4 dp                |
- * | `labToRgb`          | `ColorConverter.labToRgb`     | DELTA — different dark-region inverse math |
+ * | `rgbToLab`          | `ColorConverter.rgbToLab`     | UNIFIED 5.1.0 — core no longer rounds      |
+ * | `labToRgb`          | `ColorConverter.labToRgb`     | UNIFIED 5.1.0 — both use exact CIE kappa   |
  * | `rgbToOklab`        | `ColorConverter.rgbToOklab`   | DELTA — core rounds to 6 dp                |
  * | `rgbToHsl`          | `ColorConverter.rgbToHsl`     | DELTA — 0–1 vs 0–100 scale, core rounds 2 dp |
  * | `hslToRgb`          | `ColorConverter.hslToRgb`     | DELTA — 0–100 rescale loses float identity |
  * | `rgbToRyb`/`rybToRgb` | `ColorService.*`            | UNIFIED 5.0.0 — one space, scale differs only |
  * | reflectance / K-S   | (none)                        | removed 4.4.0 — see `conversions.ts`       |
  *
- * ⚠️ The RYB row is the one that CHANGED verdict. It read "DELTA — a different
- * algorithm entirely" while core carried a second RYB implementation (the
- * Gossett-Chen paint cube in `RybColorMixer`). That cube was deleted in 5.0.0
- * because it fails the identity law — mixing a dye with itself did not return
- * it — so there is now exactly one RYB space and the only difference left is
- * that `ColorService` presents it 0-255 where `conversions.ts` uses 0-1. The
- * remaining DELTA rows are still live and still must not be "fixed".
+ * ⚠️ THREE rows have changed verdict since this file was written, and the
+ * distinction matters: a delta that gets *fixed* is not the same as a delta
+ * that gets ignored.
+ *
+ * - **RYB** read "DELTA — a different algorithm entirely" while core carried a
+ *   second RYB implementation (the Gossett-Chen paint cube in
+ *   `RybColorMixer`). That cube was deleted in 5.0.0 because it fails the
+ *   identity law — mixing a dye with itself did not return it — so there is
+ *   now one RYB space and the only difference left is that `ColorService`
+ *   presents it 0-255 where `conversions.ts` uses 0-1.
+ * - **rgbToLab / labToRgb** read DELTA because the two sides rounded the CIE
+ *   companding constants differently (`0.008856`/`903.3` here, the equivalent
+ *   `7.787` linear slope there) and core additionally rounded its LAB output
+ *   to 4 dp. 5.1.0 moved BOTH sides to the exact CIE 15:2004 rationals and
+ *   dropped the rounding, so the two now agree exactly — including on the
+ *   near-black pair that used to be this file's headline "do not unify"
+ *   example.
+ *
+ * The remaining DELTA rows are still live and still must not be "fixed":
+ * `rgbToHex` (casing), `rgbToOklab` (6-dp rounding) and the HSL pair (0-1 vs
+ * 0-100 scaling) all move real output.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -142,16 +156,19 @@ describe('conversions.ts ↔ ColorConverter equivalence (DEAD-037)', () => {
       );
     });
 
-    it('rgbToLab: core rounds L/a/b to 4 dp, blending keeps full precision', () => {
+    it('rgbToLab: UNIFIED in 5.1.0 — core no longer rounds to 4 dp', () => {
+      // Was a DELTA row. `ColorConverter.rgbToLab` used to `round(…, 4)` its
+      // output; that cost ~1e-4 in every downstream ΔE and bought nothing,
+      // since LAB is an intermediate and display code rounds for itself.
+      // Dropping it, together with the exact CIE constants, makes the two
+      // implementations agree here EXACTLY.
       const rgb = hexToRgb('#e4dfd0');
       const mine = rgbToLab(rgb);
       const core = ColorConverter.rgbToLab(rgb.r, rgb.g, rgb.b);
-      expect(mine.l).toBe(88.83921264346783);
-      expect(core.L).toBe(88.8392);
-      expect(mine.a).toBe(-0.8625513551161479);
-      expect(core.a).toBe(-0.8626);
-      expect(mine.b).toBe(7.949198967806437);
-      expect(core.b).toBe(7.9492);
+      expect(core.L).toBe(mine.l);
+      expect(core.a).toBe(mine.a);
+      expect(core.b).toBe(mine.b);
+      expect(mine.l).toBeCloseTo(88.8392, 4);
     });
 
     it('rgbToOklab: core rounds L/a/b to 6 dp, blending keeps full precision', () => {
@@ -178,8 +195,12 @@ describe('conversions.ts ↔ ColorConverter equivalence (DEAD-037)', () => {
       expect(core.l).toBe(85.49);
     });
 
-    it('labToRgb: the dark-region inverse differs (7.787 linear segment vs κ=903.3)', () => {
-      // Reachable from a real dye pair: Midnight Blue → near-black at t≈2/3.
+    it('labToRgb: UNIFIED in 5.1.0 — both sides now use the exact CIE kappa', () => {
+      // Was a DELTA row: blending used the pre-2004 `7.787` linear slope and
+      // core used `kappa = 903.3`, which are the same constant rounded two
+      // different ways, so the two dark-region inverses landed one count apart
+      // on a real dye pair (Midnight Blue → near-black at t ≈ 2/3). Both now
+      // use kappa = 24389/27 exactly, and agree.
       const a = rgbToLab(hexToRgb('#000b9d'));
       const b = rgbToLab(hexToRgb('#010101'));
       const t = 0.667;
@@ -188,13 +209,9 @@ describe('conversions.ts ↔ ColorConverter equivalence (DEAD-037)', () => {
         a: a.a * (1 - t) + b.a * t,
         b: a.b * (1 - t) + b.b * t,
       };
-      const mine = labToRgb(lab);
-      const core = ColorConverter.labToRgb(lab.l, lab.a, lab.b);
-      expect(mine).toEqual({ r: 23, g: 13, b: 53 });
-      expect(core).toEqual({ r: 23, g: 12, b: 53 });
-      // Also reproducible from a bare LAB triple in the dark segment.
-      expect(labToRgb({ l: 7.35, a: 0, b: -5 })).toEqual({ r: 18, g: 23, b: 29 });
-      expect(ColorConverter.labToRgb(7.35, 0, -5)).toEqual({ r: 18, g: 22, b: 29 });
+      expect(labToRgb(lab)).toEqual(ColorConverter.labToRgb(lab.l, lab.a, lab.b));
+      // And from a bare LAB triple inside the linear segment.
+      expect(labToRgb({ l: 7.35, a: 0, b: -5 })).toEqual(ColorConverter.labToRgb(7.35, 0, -5));
     });
 
     it('hslToRgb: the 0–100 rescale core requires loses float identity', () => {
@@ -238,10 +255,12 @@ describe('conversions.ts ↔ ColorConverter equivalence (DEAD-037)', () => {
   // ==========================================================================
 
   describe('blendColors() output would move if the delta helpers were unified', () => {
-    it('LAB blending moves on near-black pairs', () => {
-      // Current, shipped behaviour — this is the value that must not change.
+    it('LAB blending on near-black pairs: the two sides now AGREE', () => {
+      // Was the headline "do not unify" example. With the exact CIE constants
+      // on both sides and core's 4-dp rounding gone, delegating `labToRgb` to
+      // core would produce the identical colour here — the divergence this row
+      // existed to document has been fixed rather than pinned.
       expect(blendColors('#020202', '#000000', 'lab', 0.25).hex).toBe('#010201');
-      // What delegating labToRgb to core would produce instead.
       const a = rgbToLab(hexToRgb('#020202'));
       const b = rgbToLab(hexToRgb('#000000'));
       const t = 0.25;
@@ -250,7 +269,7 @@ describe('conversions.ts ↔ ColorConverter equivalence (DEAD-037)', () => {
         a.a * (1 - t) + b.a * t,
         a.b * (1 - t) + b.b * t,
       );
-      expect(rgbToHex(viaCore)).toBe('#010101');
+      expect(rgbToHex(viaCore)).toBe('#010201');
     });
 
     it('HSL blending moves on dark saturated pairs', () => {
