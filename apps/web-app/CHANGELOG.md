@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.5.0] - 2026-09-04
+
+### Changed
+
+- **The Matching Algorithm picker now says that the choice changes the answer.** Measured against
+  the 125-dye set over 2,000 random sRGB queries, taking the default `ciede2000` as the reference,
+  the alternatives pick a *different* closest dye: `oklab` 24.4%, `cie76` 31.1%, `redmean` 39.1%,
+  `rgb` 43.8%, `distinguish` 44.4%. Nothing in the UI signalled that — a user could reasonably read
+  the toggle as changing only the number displayed beside a match, rather than which dye is
+  returned. One new line under the method description, ×6 locales.
+- **Three harmony descriptions no longer claim an aesthetic outcome the scheme has no evidence
+  for.** `triadic`, `tetradic` and `square` promised "vibrant, balanced palettes", "rich
+  combinations" and "dynamic variety"; they now describe the geometry only. Of the ten schemes,
+  **analogous** and **monochromatic** have direct psychophysical support (Schloss & Palmer 2011 —
+  hue similarity explains 53.5% and 67.3% of harmony variance), **complementary** is contested by
+  that same study, and **split-complementary, triadic and tetradic have never been
+  psychophysically tested in either direction**. The descriptions for the two evidence-backed
+  schemes are deliberately left as they were. See
+  `docs/research/2026-09-03-algorithm-fact-check/05-harmony-geometry.md`.
+- Corrected a stale comment in `tool-config-types.ts` that still described RYB as producing
+  "Blue + Yellow = Olive Green" — it produces `#008000`, a true green, since core 5.0.0 retired the
+  Gossett-Chen cube.
+
 ## [5.4.0] - 2026-09-03
 
 ### Fixed

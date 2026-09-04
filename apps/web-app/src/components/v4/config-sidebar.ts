@@ -1459,6 +1459,15 @@ export class ConfigSidebar extends BaseLitComponent {
           </option>
         </select>
         <div class="config-description">${this.getMatchingMethodDescription(currentMethod)}</div>
+        <!--
+          The toggle is consequential and nothing said so. Measured against the
+          125-dye set over 2,000 random sRGB queries, taking the default
+          ciede2000 as the reference, the alternatives pick a DIFFERENT closest
+          dye: oklab 24.4%, cie76 31.1%, redmean 39.1%, rgb 43.8%,
+          distinguish 44.4%. A user had no signal that changing this changes
+          the answer rather than just the number shown beside it.
+        -->
+        <div class="config-description">${LanguageService.t('config.matchingMethodImpact')}</div>
       </div>
     `;
   }

@@ -142,7 +142,7 @@ export interface GradientConfig {
  * - 'rgb': RGB additive mixing (light-based, Blue + Yellow = Gray)
  * - 'lab': LAB perceptually uniform blending (Blue + Yellow = Pink)
  * - 'oklab': OKLAB perceptually uniform blending (Blue + Yellow = Cyan)
- * - 'ryb': RYB subtractive mixing (paint-like, Blue + Yellow = Olive Green)
+ * - 'ryb': RYB subtractive mixing on the artist's wheel (Blue + Yellow = Green)
  * - 'hsl': HSL hue-based blending
  * - 'spectral': Kubelka-Munk spectral mixing (realistic paint, Blue + Yellow = Green)
  */

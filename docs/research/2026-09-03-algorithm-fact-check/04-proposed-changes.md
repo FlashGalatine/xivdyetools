@@ -308,9 +308,9 @@ Assert these as *bands*, not exact hex values, so the gate survives a future cha
 
 ---
 
-## Sprint 4 — Say true things in the UI (P2)
+## Sprint 4 — Say true things in the UI (P2) — ✅ **DONE**
 
-### 4.1 Stop describing the mode by a mechanism it does not use
+### 4.1 Stop describing the mode by a mechanism it does not use — ✅ DONE (mostly self-resolving)
 
 Until 1.1 lands, `apps/discord-worker/src/commands/schemas.ts` offers *"Spectral - Kubelka-Munk physics"*
 for something that is not Kubelka–Munk. After 1.1 the label becomes accurate; the point is that the label
@@ -320,7 +320,7 @@ Likewise `mixer-blending-engine.ts`'s docstring predicts *"RYB: Blue + Yellow = 
 *"Spectral: Blue + Yellow = Green"*. The first matches the Gossett–Chen path (`#8db26b`); the second is
 true of the web path and false of the bot's.
 
-### 4.2 Call the harmony schemes what they are
+### 4.2 Call the harmony schemes what they are — ✅ DONE (restrained reading)
 
 Not a bug, and not an argument for removing anything — people want triadic schemes and the tool should
 offer them. But the labelling should not imply perceptual validation the rules do not have. From
@@ -345,7 +345,7 @@ would call the complement.
 by hue **similarity** rather than a fixed offset. That is the one robust finding across both major
 studies, and it is close to what analogous already does.
 
-### 4.3 Surface that the matching algorithm changes the answer
+### 4.3 Surface that the matching algorithm changes the answer — ✅ DONE
 
 Against the 125-dye set over 1 000 random queries, the non-default methods pick a *different* winning dye
 than `ciede2000` in 31.5 % (`cie76`), 31.7 % (`oklab`), 42.6 % (`redmean`) and 44.3 % (`rgb`) of cases.
@@ -360,7 +360,7 @@ Worth one line in the tool help — users currently have no signal that the togg
 | 1 | Correct colours on the Discord bot | Low — one delegation + test updates |
 | 2 | One answer across all three surfaces | ✅ DONE — picked chromatic subtraction; changes web + OG output |
 | 3 | Regression gates + precision | ✅ DONE — but 3.5 moved 24.7% of the harmony golden (all `oklab`) |
-| 4 | Honest labels and help text | Low |
+| 4 | Honest labels and help text | ✅ DONE |
 
 Sprint 2.1 changes what the web mixer renders for `ryb`. That is a deliberate, user-visible change and
 should be called out in the changelog rather than slipped in.
@@ -450,3 +450,70 @@ through terms multiplying or dividing that zero; and flipping `dhp = h2p − h1p
 changes nothing because `dhp` enters only as `sin(dhp·π/360)`, where 720° is exactly one period.
 Both branches *are* exercised by the 34 pairs (4 and 2 respectively). The gate is fine; the formula
 is insensitive there. A third mutation — flipping the `Rt` sign — fails 11 of the 34.
+
+---
+
+## Sprint 4 notes
+
+**4.1 largely resolved itself.** Sprint 1 made the bot's *"Spectral - Kubelka-Munk physics"* label
+true rather than aspirational, and the `mixer-blending-engine.ts` docstring was corrected during
+Sprint 2. One stale comment survived in `apps/web-app/src/shared/tool-config-types.ts` (RYB
+described as "Blue + Yellow = Olive Green") and is fixed.
+
+Two observations recorded rather than actioned:
+
+- The bot spells the same six mixing modes **three different ways** across three command schemas
+  (`Spectral - Pigment physics` / `Spectral - Pigment physics simulation` /
+  `Spectral - Kubelka-Munk physics`). All three are now *accurate*, so this is consistency, not
+  truth. Core already exports the canonical table as `BLENDING_MODES` with `name` and
+  `description`, so unifying is easy — but Discord slash-command choice names are part of the
+  registered schema, so it costs a command re-registration for a cosmetic gain. Left alone
+  deliberately.
+- **`lch` on the bot's `/gradient` is NOT a silent fallback.** Worth stating because it looks like
+  one: `lch` is offered in the choices but is not a `BlendingMode`, so the obvious worry is that it
+  lands in `blendColors`'s `default:` branch and renders as `rgb`. It does not —
+  `packages/bot-logic/src/commands/gradient.ts` handles `rgb`/`hsv`/`lab`/`oklch`/`lch` locally and
+  delegates only the other four to `blendColors`.
+
+**4.2 taken at its narrowest.** The section's own framing is "not a bug, and not an argument for
+removing anything… but the labelling should not imply perceptual validation the rules do not have."
+Read strictly, that licenses removing *unsupported outcome claims*, not adding a psychophysics
+lecture to a glamour tool. So: `triadic`, `tetradic` and `square` lost "for vibrant, balanced
+palettes" / "for rich combinations" / "for dynamic variety" and now state their geometry; the two
+schemes that DO have support (`analogous`, `monochromatic`) keep their outcome language, which is
+earned; `complementary`'s "for maximum contrast" is a colorimetric statement rather than a harmony
+claim and stays. Six geometric descriptions were already fine.
+
+⚠️ This is a copy judgement, not a correctness fix — it is the one change in these four sprints a
+maintainer might simply disagree with, and reverting it costs nothing.
+
+The RYB-wheel note from `05-harmony-geometry.md` was deliberately NOT surfaced in the UI: that the
+offsets were defined on a wheel where red's complement is green, while HSV puts that green at 120°
+so a 180° rotation lands on cyan, is a real and interesting fact — but there is no colorimetric
+standard for an RYB wheel, so there is no action a user could take on it.
+
+**4.3** adds one line under the Matching Algorithm picker, ×6 locales. The numbers were re-measured
+after Sprint 3 rather than reused: `oklab` had moved from 31.7% to **24.4%** because ΔEOK2 brought
+it closer to the CIEDE2000 reference, so quoting the original figure would have been wrong.
+
+---
+
+## Extended finding — the gradient interpolation vocabulary is FOUR implementations, not three
+
+Sprint 2 recorded that `apps/web-app/src/components/gradient-tool.ts` carries its own
+`interpolateInSpace` over `rgb / hsv / lab / oklch / lch`. Sprint 4 found the fourth:
+
+| Surface | Modes | How |
+|---|---|---|
+| core `blending` | rgb, lab, oklab, ryb, hsl, spectral | the canonical six |
+| web **mixer** | the same six | delegates to core ✅ |
+| web **gradient** | rgb, **hsv**, lab, **oklch**, **lch** | local implementation |
+| bot-logic **gradient** | all nine — the union of both sets | **hybrid**: handles rgb/hsv/lab/oklch/lch locally, delegates oklab/ryb/hsl/spectral to `blendColors` |
+
+So the bot's `/gradient` offers modes the web gradient does not and vice versa, and the two
+implement the overlapping ones separately. Nothing here is *broken* — `lch` really does work on the
+bot — but it is the same "one name, more than one implementation" shape Sprint 2 removed from
+mixing, and it is now the largest remaining item in this audit. Fixing it means either promoting
+`hsv`/`oklch`/`lch` into core's public `BlendingMode` (new API, new tests, share-URL compatibility)
+or narrowing both gradient tools to the six. That is a product decision as much as an engineering
+one, so it stays recorded rather than actioned.
