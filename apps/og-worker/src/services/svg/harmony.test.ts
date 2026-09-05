@@ -29,6 +29,14 @@ describe('generateHarmonyOG (15E band)', () => {
     expect(svg).not.toContain('?dye=');
   });
 
+  it('names a non-default wheel in the deck and changes the matches', () => {
+    const rgb = generateHarmonyOG({ dyeId: 43, harmonyType: 'complementary' });
+    const ryb = generateHarmonyOG({ dyeId: 43, harmonyType: 'complementary', wheel: 'ryb' });
+    expect(ryb).toContain('RYB');
+    expect(rgb).not.toContain('RYB');
+    expect(ryb).not.toBe(rgb);
+  });
+
   it('the Δ is match → computed ideal (never four-reds on a correct tetrad)', () => {
     const svg = generateHarmonyOG({ dyeId: stainId, harmonyType: 'tetradic' });
     // Every match tag is a Δ value

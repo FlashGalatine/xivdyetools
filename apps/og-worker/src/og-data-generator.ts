@@ -8,7 +8,13 @@
  * @module og-data-generator
  */
 
-import { DEFAULT_MATCHING_METHOD, normalizeMatchingMethod, presetData } from '@xivdyetools/core';
+import {
+  DEFAULT_COLOR_WHEEL,
+  DEFAULT_MATCHING_METHOD,
+  normalizeMatchingMethod,
+  presetData,
+  type ColorWheelId,
+} from '@xivdyetools/core';
 import type { PresetData } from '@xivdyetools/types';
 import { getDyeByItemId } from './services/svg/dye-helpers';
 import { GROUND, MARK_STRIPES } from './services/svg/tokens';
@@ -38,6 +44,7 @@ import {
   isVisionType,
   parseAlgo,
   parseMode,
+  parseWheel,
   parseDyeIdList,
   parseGender,
   parseHexColor,
@@ -117,6 +124,12 @@ function withMode(url: string, mode: BlendingMode | undefined): string {
   // S7-R13 (`.png` stripping) and `withAlgo`'s default elision exist to stop.
   if (mode === DEFAULT_MIX_MODE) return url;
   return `${url}${url.includes('?') ? '&' : '?'}mode=${mode}`;
+}
+
+/** Append a non-default colour wheel to an emitted URL; absent and `rgb` stay off it. */
+function withWheel(url: string, wheel: ColorWheelId | undefined): string {
+  if (!wheel || wheel === DEFAULT_COLOR_WHEEL) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}wheel=${wheel}`;
 }
 
 /**
@@ -258,8 +271,12 @@ export function generateHarmonyOGData(
       hex: dyeInfo.hex,
     }),
     // OG-6: the harmony is enum-validated upstream; encoding is belt-and-braces
-    url: appUrl(`${env.APP_BASE_URL}/harmony/?dye=${params.dye}&harmony=${encodeURIComponent(params.harmony)}&v=1`, locale, params.algo),
-    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${encodeURIComponent(params.harmony)}.png`, params.algo), locale),
+    url: appUrl(
+      withWheel(`${env.APP_BASE_URL}/harmony/?dye=${params.dye}&harmony=${encodeURIComponent(params.harmony)}`, params.wheel) + '&v=1',
+      locale,
+      params.algo
+    ),
+    imageUrl: withLang(withWheel(withAlgo(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${encodeURIComponent(params.harmony)}.png`, params.algo), params.wheel), locale),
     siteName: SITE_NAME,
     themeColor: dyeInfo.hex,
     locale,
@@ -794,6 +811,7 @@ export async function generateOGDataForTool(
         dye: parseInt(searchParams.get('dye') || '0', 10),
         harmony: isHarmonyType(harmonyRaw) ? harmonyRaw : 'complementary',
         algo: parseAlgo(searchParams.get('algo')),
+        wheel: parseWheel(searchParams.get('wheel')),
       };
       return generateHarmonyOGData(params, env, locale);
     }

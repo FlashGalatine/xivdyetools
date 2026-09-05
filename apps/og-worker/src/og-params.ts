@@ -17,6 +17,7 @@
  */
 
 import { isValidBlendingMode, type BlendingMode } from '@xivdyetools/core/blending';
+import { isColorWheelId, type ColorWheelId } from '@xivdyetools/core';
 import type { CharacterGender, ColorSheetCategory, HarmonyType, MatchingAlgorithm, VisionType } from './types';
 
 // ============================================================================
@@ -107,6 +108,13 @@ export function isSheet(value: string): value is ColorSheetCategory {
  */
 export function parseAlgo(raw: string | null): MatchingAlgorithm | undefined {
   return raw && isAlgorithm(raw) ? (raw as MatchingAlgorithm) : undefined;
+}
+
+/** `?wheel=` → a core wheel id, or undefined for absent/empty/unknown (the guard already 400s unknown). */
+export function parseWheel(raw: string | null): ColorWheelId | undefined {
+  if (!raw) return undefined;
+  const v = raw.toLowerCase();
+  return isColorWheelId(v) ? v : undefined;
 }
 
 /**

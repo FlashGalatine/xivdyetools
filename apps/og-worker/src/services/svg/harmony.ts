@@ -11,16 +11,18 @@
  */
 
 import {
+  DEFAULT_COLOR_WHEEL,
   DEFAULT_MATCHING_METHOD,
   HARMONY_OFFSETS,
   generateHarmonySlots,
+  type ColorWheelId,
 } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { algoTag, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { ALL_DYES, findClosestDyesWithDistance, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
 import { role, getToolTag } from '../og-strings';
-import { getLocalizedDyeName, getLocalizedHarmonyName } from '../translator';
+import { getLocalizedColorWheelName, getLocalizedDyeName, getLocalizedHarmonyName } from '../translator';
 import type { HarmonyType, MatchingAlgorithm } from '../../types';
 
 export interface HarmonyOGOptions {
@@ -30,6 +32,8 @@ export interface HarmonyOGOptions {
   harmonyType: HarmonyType;
   /** Matching algorithm */
   algorithm?: MatchingAlgorithm;
+  /** Colour wheel the offsets are measured on; default rgb */
+  wheel?: ColorWheelId;
   /** Locale for dye name display */
   locale?: LocaleCode;
   /** 15E frame — Discord 400×350 (default) or X 400×210 */
@@ -68,7 +72,8 @@ interface HarmonyMatch {
 function getHarmonyMatches(
   dye: Dye,
   harmonyType: HarmonyType,
-  algorithm: MatchingAlgorithm = DEFAULT_MATCHING_METHOD
+  algorithm: MatchingAlgorithm = DEFAULT_MATCHING_METHOD,
+  wheel: ColorWheelId = DEFAULT_COLOR_WHEEL
 ): HarmonyMatch[] {
   const offsets = idealOffsets(harmonyType);
   if (!offsets) {
@@ -106,6 +111,7 @@ function getHarmonyMatches(
       // set from the page the link opens, which ranks by the requested method.
       matchingMethod: algorithm,
       preventDuplicates: true,
+      wheel,
     },
     { excludeItemIDs: [dye.itemID] }
   )
@@ -124,7 +130,14 @@ function getHarmonyMatches(
  * Generates the Harmony OG image SVG (400-grid — raster ×3 downstream).
  */
 export function generateHarmonyOG(options: HarmonyOGOptions): string {
-  const { dyeId, harmonyType, algorithm = DEFAULT_MATCHING_METHOD, locale = 'en', frame = 'discord' } = options;
+  const {
+    dyeId,
+    harmonyType,
+    algorithm = DEFAULT_MATCHING_METHOD,
+    wheel = DEFAULT_COLOR_WHEEL,
+    locale = 'en',
+    frame = 'discord',
+  } = options;
 
   const dye = getDyeByItemId(dyeId);
   if (!dye) {
@@ -133,7 +146,7 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
     return notFoundBand(getToolTag('harmony', locale), 'harmony', `#${dyeId}`, 'harmony', frame, locale);
   }
 
-  const matches = getHarmonyMatches(dye, harmonyType, algorithm);
+  const matches = getHarmonyMatches(dye, harmonyType, algorithm, wheel);
   const baseName = getLocalizedDyeName(dye, locale);
   const harmonyName = getLocalizedHarmonyName(harmonyType, locale);
   const stainTag = `#${dye.stainID ?? dye.id}`;
@@ -164,8 +177,12 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
     toolTag: getToolTag('harmony', locale),
     toolGlyph: bandGlyph('harmony'),
     path: 'xivdyetools.app/harmony',
-    // Harmony's headline is pure data — the base and the harmony it anchors.
-    deck: `${baseName} · ${harmonyName}`,
+    // Harmony's headline is pure data — the base and the harmony it anchors;
+    // a non-default wheel is a third fact the deck must not silently drop.
+    deck:
+      wheel === DEFAULT_COLOR_WHEEL
+        ? `${baseName} · ${harmonyName}`
+        : `${baseName} · ${harmonyName} · ${getLocalizedColorWheelName(wheel, locale)}`,
     footRight: algoTag(algorithm),
     frame,
   });

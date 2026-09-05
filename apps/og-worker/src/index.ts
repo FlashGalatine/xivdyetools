@@ -15,7 +15,7 @@
  * @module index
  */
 
-import { DEFAULT_MATCHING_METHOD, extractLocaleCode } from '@xivdyetools/core';
+import { DEFAULT_MATCHING_METHOD, DEFAULT_COLOR_WHEEL, extractLocaleCode, isColorWheelId } from '@xivdyetools/core';
 import { isValidBlendingMode, type BlendingMode } from '@xivdyetools/core/blending';
 import { Hono, type Context } from 'hono';
 import {
@@ -56,6 +56,7 @@ import {
   isAlgorithm,
   isHarmonyType,
   isVisionType,
+  parseWheel,
 } from './og-params';
 import type { Env, ToolId, AnalyticsEvent, HarmonyType, MatchingAlgorithm, VisionType } from './types';
 import packageJson from '../package.json' with { type: 'json' };
@@ -204,7 +205,7 @@ app.use('/og/*', async (c, next) => {
  * carried it and this worker had always ignored it, so a shared mix rendered
  * in CIELAB no matter which of the six algorithms the sharer had picked.
  */
-const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo', 'mode']);
+const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo', 'mode', 'wheel']);
 
 /**
  * 2026-08-29 FINDING-024 (OG-4): reject any /og/* request carrying a query
@@ -266,6 +267,14 @@ app.use('/og/*', async (c, next) => {
   if (mode && !isValidBlendingMode(mode)) {
     return c.json({ error: 'Invalid mixing mode' }, 400);
   }
+  // `wheel` picks the harmony card's GEOMETRY — five validated ids, the same
+  // class as `algo`; an unknown value is a malformed request, never echoed.
+  // Validated case-insensitively (matching the web app, which accepts
+  // `wheel=MUNSELL`, and this route's own `.toLowerCase()` on harmonyType).
+  const wheel = searchParams.get('wheel');
+  if (wheel && !isColorWheelId(wheel.toLowerCase())) {
+    return c.json({ error: 'Invalid color wheel' }, 400);
+  }
   return next();
 });
 
@@ -323,6 +332,15 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   const mode = url.searchParams.get('mode');
   if (mode) {
     params.set('mode', mode);
+  }
+  // The default is elided so `wheel=rgb` and absent share one cache entry —
+  // the same rule `withMode` applies to `ryb` and `withAlgo` to ΔE2000.
+  // Lowercased before the comparison and the key itself (the guard above
+  // validates case-insensitively, matching the web app's `wheel=MUNSELL`),
+  // so `?wheel=RYB` and `?wheel=ryb` share the one entry too.
+  const wheel = url.searchParams.get('wheel')?.toLowerCase();
+  if (wheel && wheel !== DEFAULT_COLOR_WHEEL) {
+    params.set('wheel', wheel);
   }
   // Ruling S7-R13 (og-7 refined): strip a trailing `.png` from the path too — it stays
   // optional at every route (below), so the two spellings must share one
@@ -706,6 +724,7 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
   const harmonyTypeRaw = stripPngSuffix(c.req.param('harmonyType'));
   const harmonyType = harmonyTypeRaw.toLowerCase() as HarmonyType;
   const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
+  const wheel = parseWheel(c.req.query('wheel') ?? null);
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // FINDING-011: Validate dyeId to prevent NaN propagation
@@ -738,6 +757,7 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
     dyeId,
     harmonyType,
     algorithm,
+    wheel,
     locale,
     frame: frameFromQuery(c),
   });
