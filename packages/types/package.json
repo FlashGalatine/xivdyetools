@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/types",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Shared TypeScript type definitions for the xivdyetools ecosystem",
   "author": "XIV Dye Tools",
   "license": "MIT",

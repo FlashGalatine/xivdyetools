@@ -50,6 +50,7 @@ export type {
   HarmonyOptions,
   /** @public */
   HarmonyMatchingAlgorithm,
+  /** @public */
   HarmonyColorSpace,
 } from './services/dye/HarmonyGenerator.js';
 

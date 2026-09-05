@@ -35,6 +35,12 @@ Rules:
   path filter.
 -->
 
+## [5.5.0] - 2026-09-05
+### 🎨 /harmony can use a different colour wheel
+- `/harmony` has a new `wheel` option: RGB (default), RYB (the painter's wheel — red's complement is green), Munsell (JIS), OKLCH hue, or OKLCH lightness. The dyes it suggests change with the wheel.
+- The card names the wheel under the harmony type when it is not the default, and its link opens the web app on the same wheel.
+- Leave the option out and nothing changes.
+
 ## [5.4.0] - 2026-09-04
 
 ### 🐛 Fixes

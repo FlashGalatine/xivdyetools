@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.7.0] - 2026-09-05
+
+### Added
+
+- **Color wheel selector in Harmony's options.** A new setting lets you pick which
+  wheel harmony angles are measured on: RGB (the existing screen wheel, still the
+  default), RYB (the painter's wheel — red's complement is green), Munsell (the
+  perceptual wheel behind the JIS colour standard), OKLCH hue (perceptually even hue
+  spacing) or OKLCH lightness (every harmony partner held at the base dye's lightness).
+  Backed by `@xivdyetools/core` 5.2.0's `ColorWheel` selector.
+- The colour wheel ring and the harmony dots are now drawn from the selected wheel's
+  `ringStops`/`hueOf`, so the picture matches the dyes the tool suggests — on RYB, the
+  dot opposite red sits at green, not cyan.
+- Harmony share URLs carry `?wheel=` when a non-default wheel is selected; a link
+  without it opens on RGB exactly as before.
+
 ## [5.6.1] - 2026-09-04
 
 ### Fixed

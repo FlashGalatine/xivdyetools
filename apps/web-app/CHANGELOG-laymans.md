@@ -2,6 +2,14 @@
 
 ---
 
+## Web-App Version 5.7.0 — September 5, 2026
+
+### Pick the colour wheel your harmonies use
+- **A new "Color wheel" setting in Harmony's options.** RGB is the screen wheel you have always had. RYB is the painter's wheel that colour theory was written for, where red's complement is green rather than cyan. Munsell is the evenly spaced perceptual wheel behind Japan's JIS colour standard. OKLCH hue keeps the screen colours but spaces them by how different they look. OKLCH lightness keeps every partner at your base dye's brightness.
+- **The ring changes with the wheel, and the dots sit on it.** On the RYB wheel the point opposite red is green, and that is where the complementary dot lands — the picture and the dye list finally say the same thing.
+- **Share links remember the wheel**, and a link without one opens on RGB exactly as before. Nothing about your existing palettes changes until you choose a different wheel.
+- Changing the wheel changes the suggested dyes for most saturated base colours, sometimes a lot; muted and grey bases are barely affected.
+
 ## Web-App Version 5.6.1 — September 4, 2026
 
 ### This window was showing you the wrong release

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-09-05
+
+### Added
+
+- `HarmonyInput.wheel` — an optional `ColorWheelId` (`@xivdyetools/types`) that
+  `executeHarmony` passes through to core's `generateHarmonySlots`, plus
+  `getLocalizedColorWheelName` for rendering the choice on the card and in embeds.
+  The `/harmony` share URL now carries `&wheel=` when a non-default wheel was used.
+
+### Deprecated
+
+- `HarmonyInput.harmonyOptions` is **deprecated** in favour of `wheel` — it still works,
+  but its `colorSpace` field routes through core's now-deprecated
+  `HarmonyGenerator.rotateHueInSpace`, which clips instead of gamut-mapping.
+
 ## [4.1.0] - 2026-09-04
 
 ### Changed

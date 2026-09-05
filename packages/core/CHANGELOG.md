@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2026-09-05
+
+### Added
+
+- **Five selectable harmony colour wheels** — `COLOR_WHEEL_IDS`, `DEFAULT_COLOR_WHEEL`,
+  `isColorWheelId`, `getColorWheel`, and the `ColorWheel` / `ColorWheelId` types. `rgb`
+  (the existing sRGB/HSV wheel, unchanged), `ryb` (the painter's wheel), `munsell` (the
+  perceptual wheel behind the JIS colour standard), `oklch-hue` (perceptually even hue
+  spacing) and `oklch-lightness` (every harmony partner held at the base dye's OKLCH
+  lightness) are each a pure hue map plus ring paint — `hueOf`, `target`, `ringStops`.
+  `HarmonySelectionConfig.wheel` and the new `HarmonySlot.wheelHue` thread the choice
+  through `generateHarmonySlots`; with `wheel` unset the output is byte-identical to
+  5.1.0 (the golden digest is unchanged). Measured against culori as an external oracle,
+  the wheels' hue math has a **0.975 exact-match rate**; the Munsell hue table was
+  cross-checked against its renotation anchors with a **max in-gamut deviation of
+  0.85°**. On the RYB wheel, the golden test confirms **more than 30% of the 125 dyes**
+  get a different complementary partner than on RGB — this is the wheel doing its job,
+  not a regression.
+- `ColorConverter.gamutMapOklch` (CSS Color 4 §14 binary search with local MINDE) and
+  `ColorConverter.maxChromaOklch`, backing the OKLCH wheels' need to land every rotated
+  hue back in sRGB gamut without clipping.
+- `LocalizationService.getColorWheelName` / `TranslationProvider.getColorWheelName`;
+  `LocaleData` gains an optional `colorWheels` block across all six locales.
+- `NOTICE` gains attribution for the Munsell renotation-derived hue table, and
+  `scripts/build-munsell-hues.ts` is the (manually re-run) generator that produced it.
+
+### Deprecated
+
+- `HarmonyColorSpace`, `HarmonyOptions.colorSpace`, and `HarmonyGenerator.rotateHueInSpace`
+  are **deprecated** — they clip rather than gamut-map, which measures as a **50.6° hue
+  error on pure blue**. The new `wheel` option on `HarmonySelectionConfig` replaces them;
+  nothing in the monorepo still calls the deprecated path after this release.
+
+### Dev
+
+- `culori` added as a devDependency — an external oracle the gamut-mapper's tests check
+  against. It is not a runtime dependency of the package.
+
 ## [5.1.0] - 2026-09-04
 
 ### Changed

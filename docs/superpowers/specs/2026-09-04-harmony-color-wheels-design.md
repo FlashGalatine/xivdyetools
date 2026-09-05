@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-04 · **Scope:** `@xivdyetools/core` (new module + one selector change), `web-app`,
 `bot-logic` + `discord-worker`, `og-worker`, `@xivdyetools/svg` (one optional card token), six locales ·
-**Status:** draft for review · **Research:** `docs/research/2026-09-04-harmony-color-wheels/` ·
+**Status:** implemented 2026-09-05 (plan docs/superpowers/plans/2026-09-04-harmony-color-wheels.md) · **Research:** `docs/research/2026-09-04-harmony-color-wheels/` ·
 **Branch:** `research/harmony-color-wheels` (PR #167)
 
 ## Problem

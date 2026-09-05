@@ -18,6 +18,11 @@ export interface MunsellAnchor {
   hsvHue: number;
 }
 
+/**
+ * @testonly Runtime hue lookups go through `MUNSELL_TABLE`/`MUNSELL_WHEEL`; the raw
+ * renotation anchors are kept only so the wheel's cross-check test can verify the
+ * generated table against them (max 0.85° in-gamut deviation).
+ */
 export const MUNSELL_ANCHORS: ReadonlyArray<MunsellAnchor> = munsellData.anchors;
 
 export const MUNSELL_TABLE: WarpTable = munsellData.table as unknown as WarpTable;
