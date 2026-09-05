@@ -33,7 +33,14 @@ export default defineConfig({
 
   head: [
     ['meta', { name: 'theme-color', content: '#0B0B0C' }],
-    ['link', { rel: 'icon', href: '/mark.svg', type: 'image/svg+xml' }],
+    // The docs' own app icon — "6B · Socketed" (App Icon.dc.html, confirmed
+    // 2026-09-04): the steel can on a red socket board, not production's
+    // white can on the red tile. The bar keeps the flat six-stripe mark
+    // (`logo`), per the "full bucket ≥ 20 px, flat mark below" rule.
+    ['link', { rel: 'icon', href: '/icons/favicon.svg', type: 'image/svg+xml' }],
+    ['link', { rel: 'icon', href: '/icons/favicon-32x32.png', type: 'image/png', sizes: '32x32' }],
+    ['link', { rel: 'icon', href: '/icons/favicon-16x16.png', type: 'image/png', sizes: '16x16' }],
+    ['link', { rel: 'apple-touch-icon', href: '/icons/apple-touch-icon.png', sizes: '180x180' }],
   ],
 
   markdown: {
