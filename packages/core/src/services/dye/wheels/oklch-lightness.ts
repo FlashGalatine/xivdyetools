@@ -17,12 +17,12 @@ export const RING_LIGHTNESS = 0.65;
 /**
  * Below this OKLCH chroma a colour is treated as grey: no hue, no rotation.
  *
- * 0.006, not the 0.005 the brief names — the in-game "Pure White" dye
- * (#F9F8F4) and the test's own achromatic fixture #F4F5F9 both measure
- * C ≈ 0.0054 (cross-checked against culori's oklch converter), just over
- * 0.005. 0.006 clears that with margin while staying well under the next
- * dye up by chroma, Charcoal Grey at C ≈ 0.0083, so it does not swallow any
- * colour meant to keep rotating.
+ * Pure White (#F4F5F9) measures OKLCH C ≈ 0.0054 and must stay grey under
+ * this wheel, so the threshold sits just above it — not at the 0.005 a first
+ * draft used, which is just below that dye's real chroma (cross-checked
+ * against culori's oklch converter) and would have let it rotate. 0.006
+ * stays well under the next dye up by chroma, Charcoal Grey at C ≈ 0.0083,
+ * so it does not swallow any colour meant to keep rotating.
  */
 export const ACHROMATIC_CHROMA = 0.006;
 

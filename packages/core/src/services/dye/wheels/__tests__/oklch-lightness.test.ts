@@ -44,7 +44,11 @@ describe('oklch-lightness wheel', () => {
       const expected = (i * 10) % 360;
       const diff = Math.min(Math.abs(h - expected), 360 - Math.abs(h - expected));
       expect(diff).toBeLessThan(4); // 8-bit rounding of a max-chroma colour
-      if (i > 0 && i < 35) expect(h).toBeGreaterThan(prev - 4);
+      if (i > 0) {
+        const step = (h - prev + 360) % 360; // circular advance from the previous stop
+        expect(step).toBeGreaterThan(6);
+        expect(step).toBeLessThan(14);
+      }
       prev = h;
     }
   });
