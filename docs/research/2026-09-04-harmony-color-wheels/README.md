@@ -18,9 +18,16 @@ what each would change, and how to build it without re-forking the three surface
 | [04-precedent-survey.md](./04-precedent-survey.md) | 30+ tools: which wheels they use, whether users can switch, what the control is called |
 | [05-implementation-design.md](./05-implementation-design.md) | The abstraction, library landscape with sizes and licences, test contract, and the stakes measured |
 | [06-recommendation.md](./06-recommendation.md) | **The synthesis:** candidate matrix, reconciled disagreements, design sketch, traps, decisions |
+| [07-munsell-licence-check.md](./07-munsell-licence-check.md) | Can a Munsell hue table ship in an MIT package? Yes — sources, ranked paths, NOTICE text |
 | [probes/](./probes/) | The scripts behind every number quoted, runnable from this folder with `node` |
 
-Start with [06-recommendation.md](./06-recommendation.md).
+Start with [06-recommendation.md](./06-recommendation.md). The resulting design spec is
+[`docs/superpowers/specs/2026-09-04-harmony-color-wheels-design.md`](../../superpowers/specs/2026-09-04-harmony-color-wheels-design.md).
+
+**Correction to 05 and 06:** both state the IEEE DataPort "re-renotation" set is CC BY-NC-SA. The
+licence check (07) found only a CC BY 4.0 assertion in its metadata and, more to the point, that the
+set is not needed: RIT's own `real.dat` carries no restriction and the R `munsell` package republishes
+the same data under MIT. The "Munsell is licence-blocked" verdict in 05 §1(c) and 06 is withdrawn.
 
 ## Headline
 
@@ -40,14 +47,15 @@ Start with [06-recommendation.md](./06-recommendation.md).
   hue map monotone at module load, and carry the wheel in share URLs, the `/harmony` option, the OG
   parameter and a card token.
 
-## Decisions needed
+## Decisions (user, 2026-09-04)
 
-1. RYB mapping — Adobe-parity table (recommended) or core's existing mixer model.
-2. Release-1 scope — RGB + RYB (recommended) or include the OKLCH warp.
-3. OKLCH flavour later — hue warp keeping the base's saturation/value (recommended) or constant-L/C
-   rotation, which is a separate "keep lightness" product decision.
-4. English labels and blurbs to translate into the other five locales.
-5. Whether the Japanese-audience case for a Munsell (JIS) wheel justifies a data-licence call.
+1. RYB mapping — **the Adobe-parity table.**
+2. Release-1 scope — **RGB + RYB + OKLCH.**
+3. OKLCH flavour — **both**: the hue warp keeping the base's saturation/value, and constant-lightness
+   rotation, as two selector entries.
+4. Labels and blurbs — **localised in all six locales.**
+5. Munsell — **licence check first, substitute the opponent wheel if it fails.** The check cleared
+   (07), so Munsell is increment 2.
 
 ## Method
 

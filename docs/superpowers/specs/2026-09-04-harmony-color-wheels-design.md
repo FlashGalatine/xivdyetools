@@ -29,8 +29,14 @@ shareable input to that one function, and the page's ring must be painted from t
 3. **Both OKLCH flavours ship:** a hue warp that keeps the base's saturation and value, and a
    constant-lightness rotation with gamut mapping. Four wheels in the selector.
 4. **Localise everything** user-facing, in all six locales.
-5. **Munsell:** licence check first (running as research 07). If it clears, Munsell is increment 2; if
-   not, the opponent (Hering) wheel is substituted as increment 2. Neither is in this spec's build.
+5. **Munsell:** licence check first; substitute the opponent (Hering) wheel if it fails. **The check
+   cleared** (research 07): RIT publishes the renotation data with no licence or restriction while
+   attaching explicit restrictions to other assets on the same page, the R `munsell` package republishes
+   the same data as sRGB under MIT, and the wheel needs 40 rows (V=6, C=8 exists for all 40 principal
+   hues). So **Munsell is increment 2**, built from RIT `real.dat` cross-checked against R `munsell`,
+   shipping only the 40 derived pairs plus the generator script, with the NOTICE and trademark
+   disclaimer text in research 07. The id `munsell` is reserved. The opponent wheel remains a later
+   candidate on its own merits. Neither is in this spec's build.
 
 ## Non-goals
 
@@ -252,8 +258,10 @@ changelogs: product-level, web-app and discord-worker, each describing the surfa
 (the bot gains an option and a card token; the page gains a control and a re-painted ring; both
 gain different dyes when a non-default wheel is chosen).
 
-Follow-ups outside this spec: increment 2 (Munsell or opponent wheel, per the licence check);
-spectral-complement toggle on Complementary once PR #164's spectral fix lands; warm/cool overlay.
+Follow-ups outside this spec: increment 2, the Munsell (JIS) wheel as a hue-warp table derived from
+the 40 principal hues, with `packages/core/NOTICE` and a one-line trademark disclaimer in its UI blurb
+(research 07); the opponent wheel as a later spike; spectral-complement toggle on Complementary once
+PR #164's spectral fix lands; warm/cool overlay.
 
 ## 8. Open items for review
 
@@ -263,4 +271,4 @@ spectral-complement toggle on Complementary once PR #164's spectral fix lands; w
 - Whether `oklch-lightness` should also carry the base's lightness *exactly* for near-white and
   near-black bases, or clamp toward mid-tones when the rotated hue has no chroma at that lightness. The
   CSS gamut map already reduces chroma to whatever fits; the proposal is to accept that.
-- Increment 2's wheel id (`munsell` or `opponent`) is reserved but not registered here.
+- Increment 2's wheel id `munsell` is reserved but not registered here; `opponent` is a later candidate.

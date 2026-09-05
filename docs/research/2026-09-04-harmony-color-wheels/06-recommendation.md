@@ -241,6 +241,9 @@ surface it actually changes.
    mid-tones and breaks grey stability).
 4. **Labels and blurbs** in English, to be translated: "Color wheel" → "RGB (screen)" / "RYB (artist's)".
 5. **Munsell / JIS:** worth a licence call for the Japanese audience, or leave parked.
+   *Resolved later the same day:* the licence check in [07](./07-munsell-licence-check.md) found a
+   clean path (RIT's unrestricted `real.dat`, cross-checked against the MIT R `munsell` package), so
+   the "licence-blocked" rows above are withdrawn and Munsell is increment 2.
 
 ---
 
