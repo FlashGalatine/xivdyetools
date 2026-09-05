@@ -80,6 +80,19 @@ reorganisation, no change to the workspace layout or to any published package.
   2026-09-03 merges shipped without a product-level note (Swatch share previews, `?lang=` on
   share links, 4K screenshots, the web-app 5.0.1/5.0.2 fixes, the bot's 5.1.2 batch), and the
   bot's layman's file gained its 5.1.3 and image-worker 1.3.0 lines.
+- **The three follow-ups the audit had left open, closed the same day:** (1) the public
+  VitePress site under `apps/api-worker/docs/` checked against the router — its 15 listed
+  endpoints, per-endpoint parameters and group counts all match the code (`POST /v1/telemetry`
+  is deliberately absent from the registry; the rate-limits guide now says so and why);
+  (2) `changelog-parser.test.ts` gives the root `CHANGELOG-laymans.md` the bot file's parse
+  gates (discord-worker 5.5.1, test-only); (3) `docs/operations/POST_MERGE_CHECKLIST.md`
+  split as its own footer asked — the merge-day record is archived at
+  `docs/historical/20260828-PostMerge5.0/`, and the still-open dashboard, secret, verification
+  and gated-removal items live in `docs/operations/OPEN_ITEMS.md`, each re-checked against
+  GitHub and Cloudflare on 2026-09-05 (private vulnerability reporting is OFF although
+  `SECURITY.md` points at it; the old `xivdyetools-universalis-proxy` worker still exists; the
+  beta / production deploy tokens are correctly homed, so `SECRET_ROTATION.md` no longer says
+  otherwise).
 - A leaked absolute path to a local Claude memory file in
   `docs/audits/2026-04-28/bugs/BUG-003.md` — replaced with a description.
 - The findings themselves — wrong OAuth callback flow and vote API in the architecture pages,

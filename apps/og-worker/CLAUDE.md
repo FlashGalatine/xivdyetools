@@ -166,7 +166,7 @@ no longer matches `.png` wherever it happens to appear in the segment.
 does not bound two other things.** First, how many *distinct* ids a client can request —
 most render the "not found" default card, and each is a legitimate first-render cache
 miss; that is request-volume enumeration, not a cache-key problem, and it is the WAF
-rate-limiting rule's job (`docs/operations/POST_MERGE_CHECKLIST.md`), not this table's.
+rate-limiting rule's job (deployed 2026-09-01; record in `docs/historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md` §2), not this table's.
 Second, a *canonically-formed* request naming more ids/entries or a wider count than a
 card actually draws: comparison/accessibility accept up to 16 dye ids but the card draws
 4 (`COMPARISON_MAX_DYES` / `ACCESSIBILITY_MAX_DYES` in `services/svg/{comparison,

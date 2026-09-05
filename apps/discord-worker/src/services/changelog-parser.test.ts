@@ -8,6 +8,10 @@ import { parseAll, parseLatestVersion } from './changelog-parser.js';
 import botChangelog from '../../CHANGELOG-laymans.md';
 import botPackage from '../../package.json';
 import { renderEntry, DESCRIPTION_BUDGET } from '../handlers/commands/changelog.js';
+import {
+  formatAnnouncementEmbed,
+  DESCRIPTION_BUDGET as ANNOUNCEMENT_DESCRIPTION_BUDGET,
+} from './announcements.js';
 
 const SAMPLE = `# What's New
 
@@ -54,15 +58,53 @@ describe('parseLatestVersion', () => {
   });
 });
 
+// The product-level notes at the repo root: the release-announcement webhook
+// renders parseAll(content)[0] of this file into a Discord embed. Until
+// 2026-09-05 this block checked only that the NEWEST entry parsed, so an
+// off-grammar `## ` header lower down, an out-of-order entry, or an
+// oversize newest entry (silently summarised by the webhook) all passed —
+// the bot's own file below got four stricter gates that this one lacked.
+const rootChangelog = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../../..', 'CHANGELOG-laymans.md'),
+  'utf8'
+);
+
 describe('root CHANGELOG-laymans.md', () => {
-  it('exists at the repo root and satisfies the contract', () => {
-    const root = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
-    const content = readFileSync(join(root, 'CHANGELOG-laymans.md'), 'utf8');
-    const entries = parseAll(content);
+  it('exists at the repo root and every entry satisfies the contract', () => {
+    const entries = parseAll(rootChangelog);
     expect(entries.length).toBeGreaterThan(0);
-    expect(entries[0].version).toMatch(/^\d+\.\d+\.\d+$/);
-    expect(entries[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(entries[0].sections.length).toBeGreaterThan(0);
+    for (const entry of entries) {
+      expect(entry.version, `version header ${entry.version}`).toMatch(/^\d+\.\d+\.\d+$/);
+      expect(entry.date, `date of ${entry.version}`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(entry.sections.length, `${entry.version} has no bullets`).toBeGreaterThan(0);
+    }
+  });
+
+  it('has no `## ` header off the grammar (such a header is silently dropped, or merged into the entry above it)', () => {
+    // The file's HTML comments carry sample headers, indented by two spaces on
+    // purpose so they can never match at column 0 — this assertion is what
+    // keeps that convention honest.
+    const headers = rootChangelog.split(/\r?\n/).filter((line) => line.startsWith('## '));
+    for (const header of headers) {
+      expect(header).toMatch(/^## \[\d+\.\d+\.\d+\] - \d{4}-\d{2}-\d{2}$/);
+    }
+    expect(headers.length).toBe(parseAll(rootChangelog).length);
+  });
+
+  it('is ordered newest first, by version and by date', () => {
+    const entries = parseAll(rootChangelog);
+    for (let i = 1; i < entries.length; i++) {
+      const [newer, older] = [entries[i - 1], entries[i]];
+      expect(semverCompare(newer.version, older.version), `${newer.version} above ${older.version}`).toBeGreaterThan(0);
+      expect(newer.date >= older.date, `${newer.version} (${newer.date}) above ${older.version} (${older.date})`).toBe(true);
+    }
+  });
+
+  it('announces its newest entry uncut — the webhook would otherwise post a summary that links out', () => {
+    const newest = parseAll(rootChangelog)[0];
+    const embed = formatAnnouncementEmbed(newest, 'https://github.com/FlashGalatine/xivdyetools');
+    expect(embed.description.includes('Summary shown'), 'newest entry is cut — trim it or split it').toBe(false);
+    expect(embed.description.length).toBeLessThanOrEqual(ANNOUNCEMENT_DESCRIPTION_BUDGET);
   });
 });
 

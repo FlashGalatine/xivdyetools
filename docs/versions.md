@@ -20,7 +20,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.7.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.5.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.5.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -149,6 +149,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.5.1 | Sep 2026 | Test-only — the root `CHANGELOG-laymans.md` gets the bot file's parse gates (grammar, ordering, uncut announcement); `announcements.ts` exports `DESCRIPTION_BUDGET` under `@testonly` |
 | **v5.5.0** | **Sep 2026** | **`/harmony` gains a `wheel` option with the five colour wheels (PR #167); the card names a non-default wheel and the embed title links to the web app on the same wheel; CJK subsets regenerated for the localized wheel names** |
 | v5.4.0 | Sep 2026 | The OKLAB method prints `ΔEOK2` everywhere (core 5.1.0); `MATCHING_METHODS` reads display names from core's `MATCHING_METHOD_TAGS` — needs `register-commands` |
 | v5.3.0 | Sep 2026 | `/budget quick preset` choices localized (I18N-006, was 22 English names in every locale); harmony and colour-vision names from core (TERM-001); CJK subsets are static instances so bold renders bold (FONT-001) |

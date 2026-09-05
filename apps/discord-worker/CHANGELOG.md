@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.1] - 2026-09-05
+
+### Tests
+- **The root `CHANGELOG-laymans.md` gets the same parse gates as the bot's own file.** The
+  suite checked only that the newest product-level entry parsed, so an off-grammar `## ` header
+  lower down (silently dropped, or merged into the entry above it), an out-of-order entry, or a
+  newest entry too long for the announcement embed all passed. It now asserts every header is
+  on the grammar and the count matches, that entries descend by version and date, and that
+  `formatAnnouncementEmbed` renders the newest entry uncut — the webhook would otherwise post a
+  "Summary shown" excerpt that links out. `announcements.ts` exports its `DESCRIPTION_BUDGET`
+  (tagged `@testonly`) for that assertion; no runtime change.
+
 ## [5.5.0] - 2026-09-05
 
 ### Added

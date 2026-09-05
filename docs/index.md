@@ -18,7 +18,7 @@ This wiki-style documentation serves developers, end users, and maintainers with
 | **Add new dyes after a patch** | [Adding Dyes](maintainer/adding-dyes.md) |
 | Deploy a worker safely | [Deployment](developer-guides/deployment.md) |
 | Moderate community presets | [Moderation Guide](operations/MODERATION.md) |
-| Finish the 5.0 post-merge follow-ups (dashboard, credentials, cleanup) | [Post-merge Checklist](operations/POST_MERGE_CHECKLIST.md) |
+| Work through the open operational items (dashboard settings, credentials, manual checks) | [Open Items](operations/OPEN_ITEMS.md) |
 | Check version numbers | [Version Matrix](versions.md) — the only version table in `docs/`; CI checks it against `package.json` |
 | Read feature specifications | [Specifications](specifications/index.md) |
 | Review historical decisions | [History Archive](historical/index.md) |
@@ -131,7 +131,7 @@ Facewear colours are **not dyes**; they live separately in `facewear_colors.json
 | Section | Description |
 |---------|-------------|
 | [Maintainer Guide](maintainer/index.md) | Dye-addition workflow, known issues, tech debt |
-| [Operations](operations/index.md) | Deploy environments, secret rotation, moderation, [analytics queries](operations/ANALYTICS_QUERIES.md), the [post-merge checklist](operations/POST_MERGE_CHECKLIST.md) |
+| [Operations](operations/index.md) | Deploy environments, secret rotation, moderation, [analytics queries](operations/ANALYTICS_QUERIES.md), the [open items list](operations/OPEN_ITEMS.md) |
 | [Audits](audits/index.md) | Every dated audit and what came of it |
 | [History](historical/index.md) | Development timeline organized by topic |
 
@@ -232,7 +232,8 @@ filter category was retired by this consolidation.
   `og-worker` v2.0.0, `presets-api` v2.0.0 (stainID presets, 3–6 dyes, `community` category
   retired, preview images), plus `oauth` 2.6.0 / `api-worker` 0.6.0 / `moderation-worker` 1.4.0.
   Merging was the release; the remaining user-run follow-ups are in the
-  [post-merge checklist](operations/POST_MERGE_CHECKLIST.md).
+  [open items list](operations/OPEN_ITEMS.md); the merge-day record is archived under
+  [historical](historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md).
 - **Two security audits** (2026-08-21: 36 findings; 2026-08-29: 31 findings, PR #152) — all
   remediated before or on merge day: native `[[ratelimits]]` bindings replace Upstash, oauth
   3.0.0 dropped `/auth/refresh` and the character roster table, presets-api stopped exposing

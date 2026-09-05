@@ -123,7 +123,7 @@ localStorage. What remains on KV is per-user bot state: preferences, the 5.0 fir
 
 **Do not track audit findings here.** Every dated audit and its remediation status lives in the
 [Audit Archive](../audits/index.md); carried-forward items live in
-[POST_MERGE_CHECKLIST.md](../operations/POST_MERGE_CHECKLIST.md).
+[OPEN_ITEMS.md](../operations/OPEN_ITEMS.md).
 
 The list that used to sit here dated from the **December 2025** code audit
 ([Historical: Code Audit](../historical/20251214-CodeAudit/)) and had gone stale — its "In Progress"

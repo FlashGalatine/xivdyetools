@@ -24,6 +24,9 @@
  *
  * Usage: `pnpm docs:check-versions` (CI runs it beside the dead-code gate).
  *
+ * @entrypoint run by the `docs:check-versions` package.json script and its CI step; only
+ * its self-test imports it, by design.
+ *
  * @module scripts/check-doc-versions
  */
 import { existsSync, readFileSync, readdirSync, realpathSync } from 'node:fs';

@@ -1,5 +1,11 @@
 # Post-merge checklist — `monorepo-2.0-prep` → `main`
 
+> **Archived 2026-09-05.** The 5.0 merge (2026-08-28, PR #123) and everything gated on it are
+> closed; this file is frozen as the record of what ran and what was found. The items still open
+> on that date — dashboard settings, manual verifications, and the code removals gated on them —
+> moved to [`docs/operations/OPEN_ITEMS.md`](../../operations/OPEN_ITEMS.md), which is the living
+> list. Open boxes below are not maintained here any more.
+
 **Status:** draft 2026-08-21, for the merge scheduled the week of 2026-08-24.
 **Owner:** the maintainer (everything marked *user-run* needs credentials CI does not have).
 **Why this exists:** merging the branch *is* the 5.0 release (see root `CHANGELOG.md` 2.0.0 →
@@ -687,5 +693,4 @@ are written by moderation-worker itself, in the same batch as the ban; `preset_i
 
 ---
 
-*Update this file as items close; when everything above is ticked, move it to
-`docs/historical/` with the completion date.*
+*Moved to `docs/historical/` on 2026-09-05; the remaining items live in `docs/operations/OPEN_ITEMS.md`.*

@@ -111,7 +111,7 @@ two Account grants. Mint the token without it and discord-worker's and web-app's
 deploys go green while og-worker's fails on an authorization error.
 
 **Setup is a manual, one-time step**, tracked as the pre-merge item in
-`docs/operations/POST_MERGE_CHECKLIST.md` §0: create the `beta` environment, mint the token
+the archived 5.0 checklist (`docs/historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md` §0; done 2026-08-31 — both tokens are environment secrets now): create the `beta` environment, mint the token
 at the real minimum above, store it — and move `CLOUDFLARE_API_TOKEN` itself out of the
 repository secret store into the `production` environment, which closes the same gap for the
 eight *other* workflows gating a Cloudflare deploy on `environment: production` (their gate

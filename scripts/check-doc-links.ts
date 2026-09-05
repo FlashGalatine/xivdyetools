@@ -23,6 +23,9 @@
  *
  * Usage: `pnpm docs:check-links` (CI runs it beside the dead-code gate).
  *
+ * @entrypoint run by the `docs:check-links` package.json script and its CI step; only its
+ * self-test imports it, by design.
+ *
  * @module scripts/check-doc-links
  */
 import { execFileSync } from 'node:child_process';

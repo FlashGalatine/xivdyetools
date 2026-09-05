@@ -124,7 +124,16 @@ Applied by the orchestrator: see [sweep-F](findings/sweep-F-structure.md). Not d
 renaming dated directories or `operations/` files; splitting `POST_MERGE_CHECKLIST.md`; a link
 gate over the archive tier.
 
-## Follow-ups not taken in this audit
+## Follow-ups — resolved the same day (second commit on the audit branch)
+
+- `apps/api-worker/docs/` verified against the router: 15 public endpoints, parameters and group
+  counts match; `POST /v1/telemetry` documented as internal in the rate-limits guide.
+- `changelog-parser.test.ts`: the root layman's file now gets the bot file's grammar, ordering
+  and uncut-announcement assertions (discord-worker 5.5.1).
+- `POST_MERGE_CHECKLIST.md` split: record archived under `docs/historical/20260828-PostMerge5.0/`,
+  open items re-verified live and moved to `docs/operations/OPEN_ITEMS.md`.
+
+## Follow-ups not taken in this audit (original list, kept for the record)
 
 - `apps/discord-worker/src/services/changelog-parser.test.ts` — give the root
   `CHANGELOG-laymans.md` the same all-headings / ordering / budget assertions the bot's own file

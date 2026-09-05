@@ -268,7 +268,7 @@ So `.png` and no-suffix spellings of one card share an entry, as does a percent-
 spelling that decodes to the same route. This is checked and filled for `HEAD` requests as well as
 `GET`. It bounds *spellings of one card* to one cache entry — it does not bound how many
 *distinct* ids a client can request (see the Query Parameters note above and the WAF
-rate-limiting rule in `docs/operations/POST_MERGE_CHECKLIST.md`).
+rate-limiting rule in `docs/historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md` §2, deployed 2026-09-01).
 
 ---
 
