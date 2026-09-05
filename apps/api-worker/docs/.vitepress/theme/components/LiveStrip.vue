@@ -40,7 +40,7 @@ onMounted(async () => {
       </template>
       <span v-else-if="strip.state === 'count'" class="xdt-live-count">{{ strip.count }} items<span class="xdt-live-count-rest"> · no colours in response</span></span>
       <span v-else-if="strip.state === 'err'" class="xdt-live-err" :title="strip.text">{{ strip.text }}</span>
-      <span v-else-if="strip.state === 'loading'" class="xdt-live-skeleton" aria-label="loading" />
+      <span v-else-if="strip.state === 'loading'" class="xdt-live-skeleton" role="img" aria-label="loading" />
       <span v-else class="xdt-live-none">{{ strip.text }}</span>
     </span>
     <span class="xdt-live-meta">{{ strip.state === 'ok' || strip.state === 'count' || strip.state === 'err' ? strip.meta : strip.state === 'loading' ? '…' : '—' }}</span>

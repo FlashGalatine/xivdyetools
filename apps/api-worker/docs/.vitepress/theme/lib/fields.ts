@@ -31,7 +31,7 @@ export const FIELD_SETS: Record<'dye', FieldSet> = {
       { name: 'category', type: 'string', description: 'Blues · Browns · Greens · Neutral · Purples · Reds · Special · Yellows' },
       { name: 'acquisition', type: 'string', description: 'Dye Vendor · The Firmament · Cosmic Exploration · Venture Coffers' },
       { name: 'cost', type: 'integer', description: 'Vendor price' },
-      { name: 'currency', type: 'string | null', description: 'Gil · Cosmocredits · Skybuilders Scrips' },
+      { name: 'currency', type: 'string | null', description: 'Gil · Skybuilders Scrips · Cosmocredits · Venture Coffer (one per acquisition)' },
       { name: 'isMetallic', type: 'boolean', description: 'Metallic sheen' },
       { name: 'isPastel', type: 'boolean', description: 'Pastel shade' },
       { name: 'isDark', type: 'boolean', description: 'Dark shade' },

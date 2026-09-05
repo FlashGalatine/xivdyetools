@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { expandCardsForSearch } from './search-index'
 import { ENDPOINTS, GROUPS, GUIDE_PAGES, countFor } from './theme/lib/endpoints'
 import { xdtShikiTheme } from './theme/lib/shiki-theme'
 
@@ -67,6 +68,12 @@ export default defineConfig({
       options: {
         translations: {
           button: { buttonText: 'Search docs', buttonAriaLabel: 'Search docs' },
+        },
+        // Parameters and the Dye Object live in card attributes / theme data,
+        // invisible to the default indexer; expand them under their headings.
+        _render(src, env, md) {
+          const html = md.render(expandCardsForSearch(src), env)
+          return env.frontmatter?.search === false ? '' : html
         },
       },
     },

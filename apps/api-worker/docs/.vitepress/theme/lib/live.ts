@@ -186,10 +186,13 @@ export function buildUrl(endpoint: string, params: readonly ParamSpec[], values:
   return API_BASE + path + (query.length ? `?${query.join('&')}` : '');
 }
 
-export function curlFor(url: string, method: HttpMethodLike, body?: string): string {
+/**
+ * The body is copied exactly as the textarea holds it — never re-parsed — so
+ * the command always reproduces what Send would post, malformed JSON included.
+ */
+export function curlFor(url: string, method: HttpMethodLike, body = ''): string {
   if (method === 'POST') {
-    const compact = body ? JSON.stringify(JSON.parse(body)) : '{}';
-    return `curl -X POST "${url}" -H "Content-Type: application/json" -d '${compact.replace(/'/g, "'\\''")}'`;
+    return `curl -X POST "${url}" -H "Content-Type: application/json" -d '${body.replace(/'/g, "'\\''")}'`;
   }
   return `curl "${url}"`;
 }

@@ -62,7 +62,7 @@ curl https://data.xivdyetools.app/v1/dyes/1?locale=ja
 | [Color Matching](../reference/matching) | `/v1/match/*` — closest dye, dyes within a distance |
 | [Character Equipment](../reference/chara) | `/v1/chara/*` — `.chara` gear resolution and item icons |
 
-The [Reference overview](../reference/) lists every endpoint with a live sample from the API.
+The [Reference overview](../reference/) lists every endpoint, most with a live sample from the API.
 
 **Planned:** community presets, and optional API keys for higher rate limits.
 

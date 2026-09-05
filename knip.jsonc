@@ -170,7 +170,8 @@
     "apps/api-worker": {
       "includeEntryExports": true,
       "entry": ["src/index.ts!", "src/**/*.test.ts", "tests/**/*.ts", "scripts/**/*.{ts,js,mjs}!"],
-      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "docs/.vitepress/**", "*.ts"],
+      // env.d.ts is the `*.vue` shim tsconfig.docs.json includes; nothing imports it.
+      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "docs/.vitepress/**", "!docs/.vitepress/env.d.ts", "*.ts"],
       "vitepress": {
         "entry": ["docs/.vitepress/config.ts", "docs/.vitepress/theme/index.ts"],
       },

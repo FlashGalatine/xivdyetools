@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { chromeGlyph, panelGlyph, toolGlyph } from '@xivdyetools/svg'
+import { chromeGlyph, toolGlyph } from '@xivdyetools/svg'
 
 // Only the glyphs the docs use: a tile carries one only where a tool exists
-// (Matching → extractor, Character Equipment → swatch, Languages → globe),
-// plus the search affordance in the bar.
+// (Matching → extractor, Character Equipment → swatch, Languages → globe).
+// The bar's search icon is VitePress's own.
 const props = withDefaults(
   defineProps<{
-    name: 'extractor' | 'swatch' | 'globe' | 'search'
+    name: 'extractor' | 'swatch' | 'globe'
     size?: number
   }>(),
   { size: 22 },
@@ -15,15 +15,7 @@ const props = withDefaults(
 
 const svg = computed(() => {
   const options = { size: props.size }
-  switch (props.name) {
-    case 'extractor':
-    case 'swatch':
-      return toolGlyph(props.name, 'compact', options)
-    case 'globe':
-      return chromeGlyph('globe', options)
-    case 'search':
-      return panelGlyph('search', options)
-  }
+  return props.name === 'globe' ? chromeGlyph('globe', options) : toolGlyph(props.name, 'compact', options)
 })
 </script>
 

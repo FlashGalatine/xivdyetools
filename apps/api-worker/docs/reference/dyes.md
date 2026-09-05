@@ -4,7 +4,7 @@
 
 The full dye database — **125 standard dyes**, keyed by stainID. Facewear colors are no longer served as dyes; legacy negative IDs return an explanatory 404.
 
-Every dye in a response is the same **Dye Object** — open **Fields** under any card below for its 19 fields. Two of them are easy to confuse:
+Every dye in a response is the same **Dye Object** — every card on this page carries a **Fields** fold listing its 19 fields (`/categories` and `/consolidation-groups` return summaries, not dyes). Two of them are easy to confuse:
 
 - `stainID` is the canonical key (the game's stain table, `1–254`); `itemID` is the legacy per-dye item.
 - `marketItemID` is for **market-board lookups only** and is never a dye lookup key. Since Patch 7.5, 105 dyes share three consolidated items (`52254` / `52255` / `52256`), so look prices up on [Universalis](https://docs.universalis.app/) by `marketItemID` — never by a dye's legacy `itemID` — and use [`/v1/dyes/consolidation-groups`](#get-v1-dyes-consolidation-groups) to learn which dyes share which item.
@@ -62,6 +62,7 @@ Explicit stainID lookup — bypasses range-based auto-detection. Use this when y
 <EndpointCard
   endpoint="/v1/dyes/stain/:stainId"
   summary="Look up a dye by stain table ID (1–254)."
+  fields="dye"
   preview="/v1/dyes/stain/5"
   :params="[
     { name: 'stainId', in: 'path', required: true, default: '1', description: 'stainID (positive integer, 1–254; 404 if unassigned)' },
@@ -76,6 +77,7 @@ Search dyes by name. Case-insensitive substring match; with a non-English `local
 <EndpointCard
   endpoint="/v1/dyes/search"
   summary="Case-insensitive substring match on names; localized when locale is set."
+  fields="dye"
   preview="/v1/dyes/search?q=rose"
   :params="[
     { name: 'q', in: 'query', required: true, default: 'snow', description: 'Substring to match against dye names' },
@@ -100,6 +102,7 @@ Look up multiple dyes by ID in a single request. Returns the dyes found and a `n
 <EndpointCard
   endpoint="/v1/dyes/batch"
   summary="Multiple dyes by ID in one request; notFound array for misses."
+  fields="dye"
   preview="/v1/dyes/batch?ids=1,2,3,4,5,6"
   :params="[
     { name: 'ids', in: 'query', required: true, default: '5729,5730,5731', description: 'Comma-separated IDs (max 50)' },

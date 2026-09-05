@@ -29,7 +29,7 @@ The other five methods are unaffected, and `ciede2000` remains the default.
 The pre-5.0 values `hyab` and `oklch-weighted` are still **accepted** for compatibility but are silently normalised to `ciede2000` (and `euclidean` to `rgb`) — the response `method` field shows what was actually used. The old `kL` / `kC` / `kH` weight parameters are ignored.
 :::
 
-Both endpoints take the same **type / acquisition filters** (`metallic`, `pastel`, `dark`, `cosmic`, `ishgardian`, `vendor`, `craft`, `expensive`): set one to `true` or `false` and the matcher narrows the candidate set to dyes that match, exactly as [`GET /v1/dyes`](./dyes#get-v1-dyes) filters do.
+Both endpoints return the dye as a nested `dye` object — the same **Dye Object** as [`/v1/dyes`](./dyes); open **Fields** under either card for its 19 fields. Both take the same **type / acquisition filters** (`metallic`, `pastel`, `dark`, `cosmic`, `ishgardian`, `vendor`, `craft`, `expensive`): set one to `true` or `false` and the matcher narrows the candidate set to dyes that match, exactly as [`GET /v1/dyes`](./dyes#get-v1-dyes) filters do.
 
 ## GET /v1/match/closest
 
@@ -38,6 +38,7 @@ Find the single closest FFXIV dye to a given hex color.
 <EndpointCard
   endpoint="/v1/match/closest"
   summary="The single closest dye to a hex color."
+  fields="dye"
   preview="/v1/match/closest?hex=EA4133"
   :params="[
     { name: 'hex', in: 'query', required: true, default: 'FF6B6B', description: 'Hex color — #RRGGBB or RRGGBB (3-digit shorthand is not accepted)' },
@@ -85,6 +86,7 @@ Find all dyes within a color distance threshold. Results are sorted closest-firs
 <EndpointCard
   endpoint="/v1/match/within-distance"
   summary="Every dye within a distance of a hex color."
+  fields="dye"
   preview="/v1/match/within-distance?hex=EA4133&maxDistance=12"
   :params="[
     { name: 'hex', in: 'query', required: true, default: 'FF6B6B', description: 'Hex color — #RRGGBB or RRGGBB' },

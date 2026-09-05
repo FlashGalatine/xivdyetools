@@ -55,6 +55,49 @@ Developer docs restyle (`developers.xivdyetools.app`) on the confirmed **API Doc
 
 - `guide/errors.md` now lists `INVALID_BODY` (400 / 413) and `UPSTREAM_UNAVAILABLE` (503) — both
   were live on `/v1/chara/*` but missing from the code catalogue.
+- `guide/responses.md` no longer calls `/health` "the one exception" to the envelope: `/health`
+  is outside `/v1`, and `GET /v1/chara/icon/:iconId` returns a PNG. It and `reference/chara.md`
+  also say that `X-Cache` (and `Age`) are not CORS-exposed, so browser code cannot read them.
+- The Dye Object table's `currency` row listed three values; the API serves four (`Venture
+  Coffer` for the 20 coffer dyes). A new test (`tests/docs-fields-parity.test.ts`) now pins the
+  documented field list to `serializeDye()`'s keys and order.
+
+### Review remediation (PR #168, 2026-09-05)
+
+Fifteen review findings, all verified in the built site before and after:
+
+- **Search** could not see parameters or fields (they live in card attributes / theme data, which
+  the local-search indexer strips). `docs/.vitepress/search-index.ts` expands every card into
+  Markdown under its own heading at index time — `isMetallic` now finds the six dye-returning
+  cards; the rendered pages are unchanged.
+- **Docs are gated in CI.** api-worker gains a `build` script (`vitepress build docs`) so turbo's
+  existing `build` task runs it on every PR, and `type-check` now also runs `tsconfig.docs.json`
+  (DOM lib) over `docs/.vitepress/**/*.ts`. Previously `build:docs` ran only inside the deploy
+  workflow, immediately before `wrangler deploy`.
+- **Footer** (the SQUARE ENIX disclaimer + Discord link) is shown on every page; VitePress hides
+  it wherever a sidebar exists. The mobile section sheet also carries `xivdyetools.app ↗` and
+  `Discord ↗`, so phones have off-site exits again.
+- **768–959 px** no longer overflows the bar (VitePress shows the nav chips from 768; they and the
+  280 px search field are now icon-only below 960, where the section sheet is the navigation).
+- **≥ 1440 px** sidebar items no longer pin to the viewport edge while their counts float at the
+  far right of the widened box; the bar's wordmark follows the same centred offset.
+- **Local nav kept for its "On this page" dropdown** below 1280 px (it was hidden wholesale,
+  leaving no way to jump between a page's endpoints on tablets); only its sidebar opener is
+  hidden, and the closed mobile sidebar is now `visibility: hidden` so its eight links leave the
+  tab order. The empty "…" flyout VitePress renders once `appearance` is forced and
+  `socialLinks` are gone is hidden too.
+- **Section sheet**: closes itself if the viewport crosses 960 px while open, locks page scroll,
+  moves focus to Close, traps Tab, restores focus to the chip, `aria-modal`.
+- **`reference/index.md`'s explanatory paragraph** was silently dropped (the component had no
+  slot) — restored.
+- **Fields fold** on every dye-returning card (stain / search / batch / both matching cards), not
+  just two; the Dyes intro no longer claims otherwise.
+- **cURL on the POST card** copied a re-serialised body and swallowed a parse error as "clipboard
+  denied"; it now copies the textarea verbatim (what Send posts) and surfaces a clipboard failure.
+- The sidebar count span no longer leaks into the prev/next pager; two overrides that lost to the
+  default theme's scoped selectors (sidebar hover colour, bar title padding) carry the
+  specificity they needed; the blob URL from an icon-card Send is revoked on unmount; the unused
+  `search` glyph branch is gone.
 
 ## [0.12.0] - 2026-09-04
 

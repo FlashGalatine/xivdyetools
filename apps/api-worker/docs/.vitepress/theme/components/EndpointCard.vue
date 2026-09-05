@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, onUnmounted, reactive, ref } from 'vue'
 import { FIELD_SETS } from '../lib/fields'
 import { API_BASE, buildUrl, curlFor, send, type ParamSpec, type SentResponse } from '../lib/live'
 import JsonView from './JsonView.vue'
@@ -57,11 +57,16 @@ const meta = computed(() => {
   return [`${r.status} ${r.statusText}`.trim(), `${r.ms} ms`, r.requestId ?? '—'].join(' · ')
 })
 
+function releaseImage() {
+  if (result.value?.imageUrl) URL.revokeObjectURL(result.value.imageUrl)
+}
+onUnmounted(releaseImage)
+
 async function doSend() {
   if (busy.value) return
   busy.value = true
   fetchError.value = null
-  if (result.value?.imageUrl) URL.revokeObjectURL(result.value.imageUrl)
+  releaseImage()
   result.value = null
   try {
     const init: RequestInit | undefined =
@@ -77,12 +82,14 @@ async function doSend() {
 }
 
 async function copyCurl() {
+  // Built outside the try: nothing here can throw except the clipboard call.
+  const command = curlFor(url.value, props.method, props.method === 'POST' ? bodyText.value : '')
   try {
-    await navigator.clipboard.writeText(curlFor(url.value, props.method, props.method === 'POST' ? bodyText.value : undefined))
+    await navigator.clipboard.writeText(command)
     copied.value = true
     setTimeout(() => (copied.value = false), 1600)
-  } catch {
-    // Clipboard denied — the URL is selectable text either way.
+  } catch (e) {
+    fetchError.value = `clipboard: ${e instanceof Error ? e.message : 'denied'}`
   }
 }
 </script>

@@ -264,7 +264,11 @@
   padding: 0 16px;
 }
 @media (max-width: 959px) {
-  /* No menu chips below 960 — the search icon and the section chip sit right. */
+  /* Below 960 the section sheet is the navigation: no menu chips (VitePress
+     would show them from 768), the search icon and the section chip sit right. */
+  .VPNavBar .VPNavBarMenu {
+    display: none !important;
+  }
   .VPNavBar .content-body {
     justify-content: flex-end;
     gap: 6px;
@@ -273,12 +277,21 @@
     padding: 0 12px;
   }
 }
+/* !important on the paddings: the default theme's `.title` / `.content` rules
+   are scoped (`[data-v-…]`) and outrank an unscoped override of equal shape. */
 @media (min-width: 960px) {
   .VPNavBar.has-sidebar .title {
-    padding-left: 16px;
+    padding-left: 16px !important;
   }
   .VPNavBar.has-sidebar .content {
-    padding-right: 16px;
+    padding-right: 16px !important;
+  }
+}
+@media (min-width: 1440px) {
+  /* VitePress centres the layout in --vp-layout-max-width from here; keep the
+     mark 16 px inside that centred column, not the 32 px default. */
+  .VPNavBar.has-sidebar .title {
+    padding-left: calc((100% - (var(--vp-layout-max-width) - 64px)) / 2 - 16px) !important;
   }
 }
 
@@ -385,13 +398,18 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
   line-height: 1.4;
 }
-@media (max-width: 767px) {
+@media (max-width: 959px) {
+  /* Icon only wherever the sheet trigger shares the bar (VitePress itself
+     only compacts it below 768, which left 768–959 overflowing). */
   .VPNavBarSearch .DocSearch-Button {
     width: 38px;
     padding: 0;
     justify-content: center;
     background: transparent;
     border: none;
+  }
+  .VPNavBarSearch .DocSearch-Button-Placeholder {
+    display: none;
   }
   .VPNavBarSearch .DocSearch-Search-Icon {
     width: 18px;
@@ -431,15 +449,60 @@
   }
 }
 
-/* The stock hamburger, its full-screen menu and the mobile local nav are
-   replaced by the section sheet (SectionSheet.vue). */
+/* The stock hamburger, its full-screen menu, the "…" extra flyout (empty once
+   appearance is forced and socialLinks are gone) and the local nav's sidebar
+   opener are replaced by the section sheet (SectionSheet.vue). The local nav
+   itself stays for its "On this page" dropdown — below 1280 px it is the only
+   way to jump between a page's endpoints. */
 .VPNavBarHamburger,
 .VPNavScreen,
-.VPLocalNav {
+.VPNavBarExtra,
+.VPLocalNav .menu {
   display: none !important;
 }
 .xdt-sheet-trigger {
   order: 4;
+}
+/* The sidebar the sheet replaces below 960 is only faded + translated off-screen
+   by VitePress; without this its eight links stay in the tab order. */
+@media (max-width: 959px) {
+  .VPSidebar:not(.open) {
+    visibility: hidden;
+  }
+}
+
+/* Local nav (sticky under the bar, < 1280 px): console ground, mono label.
+   `.fixed` is VitePress's "no sidebar, no headings" variant — the home page's
+   scroll-triggered "Return to top" bar, which the home frame does not have. */
+.VPLocalNav {
+  background-color: var(--vp-c-bg-alt) !important;
+  border-bottom-color: var(--vp-c-gutter) !important;
+}
+.VPLocalNav.fixed {
+  display: none !important;
+}
+.VPLocalNavOutlineDropdown button {
+  font-family: var(--vp-font-family-mono);
+  font-size: 10.5px !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--vp-c-text-2);
+}
+.VPLocalNavOutlineDropdown .items {
+  border-radius: 12px;
+  border-color: var(--vp-c-divider);
+}
+.VPLocalNavOutlineDropdown .top-link {
+  color: var(--vp-c-brand-2);
+  font-family: var(--font-display);
+}
+.VPLocalNavOutlineDropdown .outline .outline-link {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+}
+.VPLocalNavOutlineDropdown .outline .outline-link:hover {
+  color: var(--vp-c-text-1);
 }
 
 /* =====================================================================
@@ -453,6 +516,14 @@
 @media (min-width: 960px) {
   .VPSidebar {
     padding-top: calc(var(--vp-nav-height) + 22px) !important;
+  }
+}
+@media (min-width: 1440px) {
+  /* VitePress widens the sidebar box to reach the centred layout and pads it
+     by the same offset; keep that offset (minus our 20 px) or the items pin to
+     the viewport edge while the counts float at the far right of the box. */
+  .VPSidebar {
+    padding-left: calc((100% - (var(--vp-layout-max-width) - 64px)) / 2 - 20px) !important;
   }
 }
 .VPSidebar .group {
@@ -517,13 +588,18 @@
 .VPSidebarItem.level-1.is-active > .item .text .xdt-count {
   color: var(--vp-c-brand-2) !important;
 }
-.VPSidebarItem.level-1.is-link > .item > .link:hover .text {
-  color: var(--vp-c-text-1);
+.VPSidebar .VPSidebarItem.level-1.is-link > .item > .link:hover .text {
+  color: var(--vp-c-text-1) !important; /* the hover chip carries the state; accent means active */
 }
 .xdt-count {
   font-family: var(--vp-font-family-mono);
   font-size: 10.5px;
   color: var(--vp-c-text-2);
+}
+/* The count rides in the sidebar `text` (v-html); the prev/next pager renders
+   the same string, where it would read as part of the page name. */
+.VPDocFooter .xdt-count {
+  display: none;
 }
 
 /* =====================================================================
@@ -672,10 +748,24 @@
   border-top-color: var(--vp-c-gutter);
 }
 
-/* Footer: verbatim disclaimer, hairline above */
+/* Footer: verbatim disclaimer, hairline above — on every page. VitePress hides
+   it wherever a sidebar exists, which is every guide/reference page. */
 .VPFooter {
   border-top: 1px solid var(--vp-c-gutter) !important;
   background: var(--vp-c-bg) !important;
+}
+.VPFooter.has-sidebar {
+  display: block !important;
+}
+@media (min-width: 960px) {
+  .VPFooter.has-sidebar {
+    padding-left: var(--vp-sidebar-width) !important;
+  }
+}
+@media (min-width: 1440px) {
+  .VPFooter.has-sidebar {
+    padding-left: calc((100vw - var(--vp-layout-max-width)) / 2 + var(--vp-sidebar-width)) !important;
+  }
 }
 .VPFooter .message,
 .VPFooter .copyright {

@@ -15,6 +15,7 @@ const short = (path: string) => path.replace(/^\/v1/, '')
     <p class="xdt-meta">
       {{ ENDPOINTS.length }} endpoints · {{ GROUPS.length }} sections · live from data.xivdyetools.app
     </p>
+    <slot />
     <template v-for="g in GROUPS" :key="g.name">
       <h2 :id="slug(g.name)" class="xdt-index-h">
         <a class="header-anchor" :href="`#${slug(g.name)}`" :aria-label="`Permalink to “${g.name}”`">&#8203;</a>

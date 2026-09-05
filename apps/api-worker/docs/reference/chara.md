@@ -71,7 +71,7 @@ Names are never "cleaned": Augmented / Replica / +1 prefixes stay, because the n
 ### Caching
 
 - Each (slot, key) is cached at the edge for ~7 days, namespaced by the game-version pin, so twenty people importing the same glamour is one upstream XIVAPI search. An empty answer (no item row) is cached too.
-- `X-Cache: HIT` means no upstream call was made for this request; `MISS` means at least one key was fetched.
+- `X-Cache: HIT` means no upstream call was made for this request; `MISS` means at least one key was fetched. (Not CORS-exposed — readable from servers, plugins and bots, not from browser code.)
 - The POST response itself is `Cache-Control: no-store` — caching happens per key behind it, not on the envelope.
 
 ### Errors

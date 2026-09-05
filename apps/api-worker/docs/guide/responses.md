@@ -1,6 +1,6 @@
 # Responses
 
-All `/v1` responses use a consistent JSON envelope regardless of endpoint. (The `/health` check is the one exception — it returns a raw body.)
+All `/v1` JSON responses use a consistent envelope regardless of endpoint. The one `/v1` route that is not JSON is [`GET /v1/chara/icon/:iconId`](../reference/chara#get-v1-chara-icon-iconid), which returns a PNG; `/health` (outside `/v1`) returns a bare `{ status, timestamp }` object.
 
 ## Success
 
@@ -99,7 +99,7 @@ Dye data is deterministic and changes only with FFXIV patches, so aggressive cac
 | `POST /v1/chara/resolve` | `no-store` on the envelope — each (slot, key) is cached ~7 days behind it; `X-Cache: HIT` / `MISS` |
 | `/v1/chara/icon/:iconId` | `public, max-age=2592000, immutable` + `X-Cache` |
 
-The `Age` header (set by Cloudflare) tells you how old the cached response is. A fresh cache hit means sub-millisecond response time at the nearest PoP.
+The `Age` header (set by Cloudflare) tells you how old the cached response is. A fresh cache hit means sub-millisecond response time at the nearest PoP. Note that `X-Cache` and `Age` are **not** in the CORS `Access-Control-Expose-Headers` list, so browser code cannot read them — they are for curl, servers, plugins and bots; the headers a browser can read are the ones in the table above.
 
 ## Compression
 
