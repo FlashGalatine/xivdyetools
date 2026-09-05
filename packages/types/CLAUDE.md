@@ -16,7 +16,7 @@ pnpm test          # vitest run
 pnpm test:watch    # vitest
 pnpm test:coverage # vitest run --coverage
 pnpm type-check    # tsc --noEmit
-pnpm lint          # eslint src
+pnpm lint          # eslint src + knip dead-code gate (lint:dead)
 pnpm clean         # rimraf dist
 ```
 
@@ -89,7 +89,7 @@ const RACE_SUBRACES; const SUBRACE_TO_RACE;
 
 ### Preset types
 
-23 types covering `CommunityPreset`, `PresetSubmission`, `PresetFilters`, plus full request/response shapes for the presets API (`PresetListResponse`, `PresetSubmitResponse`, `PresetEditResponse`, `VoteResponse`).
+24 types covering `CommunityPreset`, `PresetSubmission`, `PresetFilters`, plus full request/response shapes for the presets API (`PresetListResponse`, `PresetSubmitResponse`, `PresetEditResponse`, `VoteResponse`).
 
 ### Auth types
 
@@ -116,6 +116,7 @@ type ModerationStats; type PriceData; type RateLimitResult;
 ```typescript
 type LocaleCode;       // 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh'
 type TranslationKey; type HarmonyTypeKey; type ToolKey; type SheetKey;
+type ColorWheelId;     // 'rgb' | 'ryb' | 'munsell' | 'oklch-hue' | 'oklch-lightness'
 type RaceKey; type ClanKey;
 type LocaleData; type LocalePreference;
 ```

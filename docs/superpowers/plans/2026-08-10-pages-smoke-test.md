@@ -1,5 +1,7 @@
 # Pages Smoke Test Implementation Plan
 
+**Status:** shipped — `apps/web-app/scripts/smoke-test-pages.js` runs in both web-app deploy workflows
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** One tested script, shared by both web-app deploy workflows, that proves the build CI just produced is live at the public URL with the robots policy its environment requires.

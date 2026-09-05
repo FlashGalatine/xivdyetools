@@ -71,7 +71,8 @@ The main entry point re-exports everything; for production tests prefer the narr
 type QueryMockFn = (query: string, bindings: unknown[]) => unknown;
 interface D1Result<T>;
 interface MockD1PreparedStatement;
-function createMockD1Database(): MockD1Database;
+interface MockD1DatabaseConfig { maxQueryHistory?: number }   // default 1000
+function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Database;
 //   .prepare(sql) → statement
 //   ._setupMock(fn)            // route via regex on query
 //   ._queries: string[]        // observed queries
@@ -92,10 +93,18 @@ function createMockR2Bucket(): MockR2Bucket;
 //   ._reset()
 
 // Service binding fetcher
-function createMockFetcher(): MockFetcher;
+interface MockFetcherConfig { maxCallHistory?: number }        // default 1000
+function createMockFetcher(config?: MockFetcherConfig): MockFetcher;
+//   ._setupResponse(pathPattern, response, config?)   // string | RegExp
+//   ._setupHandler(fn) / ._setDefaultResponse(response, config?)
+//   ._calls: MockFetchCall[]
+//   ._reset()
 
 // Analytics
-function createMockAnalyticsEngine(): MockAnalyticsEngineDataset;
+function createMockAnalyticsEngine(): MockAnalyticsEngine;
+//   .writeDataPoint({ indexes?, doubles?, blobs? })
+//   ._dataPoints: AnalyticsDataPoint[]
+//   ._reset()
 ```
 
 ### `@xivdyetools/test-utils/auth`
@@ -158,11 +167,11 @@ A test that only needs the PKCE constants should `import from '@xivdyetools/test
 - `apps/api-worker` — D1 + KV mocks for caching tests.
 - `@xivdyetools/svg` (devDependency) — fixtures for snapshot tests.
 
-`apps/web-app` does **not** consume this package (it has its own local test mocks); `@xivdyetools/bot-logic` and `apps/stoat-worker` declare it as a devDependency but never import it (Task 6 territory — see the dead-code audit's Wave 3 plan).
+`apps/web-app` does **not** consume this package (it has its own local test mocks).
 
 ## Internal Dependencies
 
-- `@xivdyetools/types` — `Dye`, `Preset`, `User`, etc. for factory return types.
+- `@xivdyetools/types` — `Dye` and `PresetSubmission` for factory return types (both re-exported from `/factories`). `PresetRow` and `CategoryRow` are this package's own D1-row shapes; there is no user factory.
 - `@xivdyetools/auth` — Base64URL helpers for JWT/PKCE (imported via `@xivdyetools/auth/encoding`).
 
 Peer: `vitest >= 2.0.0`.

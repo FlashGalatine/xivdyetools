@@ -129,7 +129,7 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
       resource types (User, Account, Zone), so there is no per-Worker-script or per-Pages-project
       selector to scope either token narrower than this: **Account → Workers Scripts: Edit +
       Cloudflare Pages: Edit (this account only), plus Zone → Workers Routes: Edit on
-      `xivdyetools.app`**. The Zone grant is not optional: og-worker's beta config declares ten
+      `xivdyetools.app`**. The Zone grant is not optional: og-worker's beta config declares nine
       `beta.xivdyetools.app/*` routes plus the `og-beta.xivdyetools.app` custom domain, and
       `wrangler deploy` reconciles routes on every deploy — omit it and discord-worker's and
       web-app's beta deploys go green while og-worker's fails on an authorization error. **What this
@@ -577,15 +577,20 @@ identity backfill moved to §1 (see the reasoning inline). The i18n branch was m
 - [ ] og-worker (2026-08-29 FINDING-024, OG-4) **deploy-day expectation, not an action:** a
       share/preview URL that used to force a fresh card by appending a cache-buster (`?v=2`,
       `?t=<timestamp>`, …) to an `/og/*` image URL now gets a `404` — the query-key allowlist
-      (ruling S7-R4) rejects any key outside `lang`/`frame`/`algo`. If a real card genuinely
-      needs to be forced fresh before its TTL expires (e.g. a dye's colour data changed), a
+      (ruling S7-R4) rejects any key outside `lang`/`frame`/`algo`/`mode`/`wheel`. If a real card
+      genuinely needs to be forced fresh before its TTL expires (e.g. a dye's colour data
+      changed), a
       Cloudflare cache purge is the only remaining way — but **not** a targeted "Purge by URL"
       (ruling S7-R18): Cloudflare purge-by-URL matches the *cache key*, and `ogCacheKey`
       (`index.ts`) builds a synthetic one — the decoded path with `.png` stripped, plus
-      `?lang=<resolved>&frame=<resolved>[&algo=<raw>]` in that fixed order — not the URL a
-      human or crawler actually requested. Purging the natural-looking
+      `?lang=<resolved>&frame=<resolved>[&algo=<raw>][&mode=<raw>][&wheel=<parsed>]` in that
+      fixed order — not the URL a
+      human or crawler actually requested. (`mode` is keyed only on the two mixer routes and
+      `wheel` only on `/og/harmony/*`, so a card that ignores a key never multiplies its
+      entries.) Purging the natural-looking
       `https://og.xivdyetools.app/og/presets/default.png` matches **nothing**: the real key
-      has no `.png` and carries `lang`/`frame` (and maybe `algo`) query params that URL
+      has no `.png` and carries `lang`/`frame` (and maybe `algo`, `mode` or `wheel`) query
+      params that URL
       doesn't. Constructing the exact key by hand doesn't scale either — 6 locales × 2 frames ×
       10 `algo` states is up to 120 distinct keys for **one** card, an order of magnitude past
       a Custom Purge's per-call URL limit. **Use Caching → Configuration → Purge Everything**
@@ -630,7 +635,7 @@ is gone, and a CHANGELOG line.
 | ~~**Legacy itemID preset fallback** (`resolvePresetDye` legacy path)~~ **DONE 2026-09-01** (dead-code audit DEAD-007/013) | ~~`apps/web-app/src/services/dye-service-wrapper.ts`~~ + ~~`apps/presets-api/scripts/migrate-dyes-to-stainids.ts`~~. **Note the earlier row said presets-api — the resolver was always web-app code.** The tripwire test in `dye-service-wrapper.test.ts` was inverted rather than deleted: it now pins that legacy itemIDs resolve to nothing. | ~~stainID D1 rewrite applied + backfill verified~~ **met**: rewrite ran 2026-08-28; re-checked 2026-09-01 with `json_each` over every array position — 0 legacy IDs in all 16 rows, `previous_values` empty on all of them |
 | ~~**Dead notification path + env vars** `notifyModerators`, `MODERATION_WEBHOOK_URL`, `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`, `DISCORD_BOT_WEBHOOK_URL`~~ **CODE DONE 2026-09-01** (dead-code audit DEAD-009) | ~~presets-api `services/moderation-service.ts`, `Env`, docs/env-var table~~ (PAPI-16). **Secrets still set on the deployed worker — see the row below.** | none — was dead today |
 | ~~**Orphan production secrets**~~ **DONE 2026-09-01** — all seven deleted: presets-api `MODERATION_WEBHOOK_URL`, `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`, `DISCORD_BOT_WEBHOOK_URL` (PAPI-16) and `MODERATOR_CHANNEL_ID`; discord-worker `PRESET_API_SECRET` and `PERSPECTIVE_API_KEY`. Verified by `wrangler secret list`: presets-api 12 → 7, discord-worker 13 → 11. **`PERSPECTIVE_API_KEY` was deleted from discord-worker ONLY — presets-api's copy is live** (`moderation-service.ts`) and confirmed still present; it has its own end date, see `DEPRECATIONS.md`. | ~~`wrangler secret delete <NAME> --env production` from the app dir~~ | ~~the §1 tail is clean for a day~~ — superseded: all four PAPI-16 fields were optional (`?:`) and guarded by `if (env.X)`, so their absence was already a no-op, and the other three had no code reference at all |
-| **oauth `[env.preview]`** bound to production D1/KV with a dead redirect | `apps/oauth/wrangler.toml` | none — delete if the 2026-08-21 oauth remediation (FINDING-029) kept it |
+| ~~**oauth `[env.preview]`** bound to production D1/KV with a dead redirect~~ **DONE 2026-08-21** (FINDING-029) — the block is gone from `apps/oauth/wrangler.toml`, which now has only the top-level (production) env and `[env.development]`; a tombstone comment records the removal | ~~`apps/oauth/wrangler.toml`~~ | ~~none — delete if the 2026-08-21 oauth remediation (FINDING-029) kept it~~ **met** |
 | ~~`LocalStorageCacheBackend`~~ **DONE** | web-app (`DEPRECATIONS.md`) | ~~confirm no active path~~ — closed in `DEPRECATIONS.md`, which records the grep showing no active reference |
 | ~~`scripts/cleanup-v4-kv.ts`~~ | repo | **removed 2026-08-29** after its one production run (2 orphaned keys deleted; `budget:world:v1:*` deliberately kept — DEAD-010) |
 | `/api/v2/*` compat mount of the absorbed universalis proxy | api-worker | after the proxy-domain cutover window (`DEPRECATIONS.md`) |
@@ -662,9 +667,13 @@ are written by moderation-worker itself, in the same batch as the ban; `preset_i
 
 ## 5. Residual risks carried forward (from the 2026-08-21 audit)
 
-- Bot → API v2 signature binds a nonce but the server does not cache nonces for strict
-  single-use (60 s window, body/method/path bound) — acceptable inside Cloudflare; revisit if the
-  API ever takes bot traffic from outside.
+- ~~Bot → API v2 signature binds a nonce but the server does not cache nonces for strict
+  single-use (60 s window, body/method/path bound)~~ **CLOSED — FINDING-015 (2026-08-29 audit).**
+  presets-api now records every accepted nonce in the shared `TOKEN_BLACKLIST` KV under
+  `botnonce:` for 120 s (2× the signature window) and refuses a second sighting
+  (`apps/presets-api/src/middleware/auth.ts`). KV is eventually consistent, so cross-colo
+  replay detection is **best-effort** — the 60 s signature window remains the primary bound;
+  same-colo replay, the cheapest to mount, is caught immediately.
 - `pnpm audit` is clean (0 advisories) only because of two scoped overrides (FINDING-036); a
   vitepress / tsup upgrade that changes its own vite / esbuild range may need them revisited.
 - Beta surfaces share production presets-api / oauth data by design (`xiv-beta-web-app`).

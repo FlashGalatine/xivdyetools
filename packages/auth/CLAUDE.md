@@ -22,7 +22,7 @@ pnpm test          # vitest run
 pnpm test:watch    # vitest
 pnpm test:coverage # vitest run --coverage
 pnpm type-check    # tsc --noEmit
-pnpm lint          # eslint src
+pnpm lint          # eslint src + knip dead-code gate (lint:dead)
 pnpm clean         # rimraf dist
 ```
 
@@ -58,12 +58,25 @@ interface JWTPayload {
   sub: string;       // Discord user ID
   iat: number;
   exp: number;
-  type: 'access' | 'refresh';
+  nbf?: number;      // enforced when present
+  type?: 'access' | 'refresh';  // BUG-057: optional — current issuers do not emit it
+  jti?: string;      // revocation tracking
+  iss?: string;
+  aud?: string | string[];
+  orig_iat?: number; // original-issuance anchor carried across refreshes
   username?: string;
+  global_name?: string | null;
   avatar?: string | null;
 }
 
-function verifyJWT(token: string, secret: string): Promise<JWTPayload | null>;
+interface VerifyJWTOptions {
+  expectedType?: 'access' | 'refresh';  // BUG-057: token-confusion guard
+  issuer?: string | string[];           // FINDING-015: a token without `iss` is rejected
+  audience?: string;                    // FINDING-015: a token without `aud` is rejected
+  clockToleranceSeconds?: number;       // applied to exp + nbf; default 0
+}
+
+function verifyJWT(token: string, secret: string, options?: VerifyJWTOptions): Promise<JWTPayload | null>;
 function verifyJWTSignatureOnly(token: string, secret: string, maxAgeMs?: number): Promise<JWTPayload | null>;
 function decodeJWT(token: string): JWTPayload | null;  // no signature check
 ```
@@ -216,6 +229,7 @@ The result includes `body` so the caller doesn't have to re-read the request str
 Grepped from `package.json` files in the monorepo:
 
 - Apps: `xivdyetools-discord-worker`, `xivdyetools-presets-api`, `xivdyetools-moderation-worker`, `xivdyetools-oauth-worker`
+- Packages: `@xivdyetools/test-utils` (its `auth/jwt.ts` builds test tokens with the `/encoding` primitives)
 
 The `oauth` worker issues tokens itself (it does not call `verifyJWT` for issuance) but consumes `verifyJWTSignatureOnly`, `decodeJWT`, `isTokenRevoked`, `revokeToken`, `hmacSign`/`hmacVerify` (2026-08-18 dead-code audit — DEAD-019 adoption replaced a hand-rolled base64url HMAC pair) and the `/encoding` primitives from this package (`apps/oauth/src/services/jwt-service.ts`).
 

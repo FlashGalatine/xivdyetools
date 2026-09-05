@@ -259,7 +259,7 @@ app.get('/health', (c) => {
 // ├──────────────────────────────────────────┤
 // │ XIVAuth OAuth                            │
 // │  /auth/xivauth      - Initiate login     │
-// │  /auth/xivauth/cb   - XIVAuth callback   │
+// │  /auth/xivauth/callback - XIVAuth callback│
 // ├──────────────────────────────────────────┤
 // │ Token Management                         │
 // │  /auth/me           - Current user info  │
@@ -272,7 +272,7 @@ app.get('/health', (c) => {
 
 app.route('/auth', authorizeRouter);  // Discord: /auth/discord
 app.route('/auth', callbackRouter);   // Discord: /auth/callback
-app.route('/auth', xivauthRouter);    // XIVAuth: /auth/xivauth, /auth/xivauth/cb
+app.route('/auth', xivauthRouter);    // XIVAuth: /auth/xivauth, /auth/xivauth/callback
 app.route('/auth', tokenRouter);      // Tokens: /auth/me, /auth/revoke
 
 // ============================================

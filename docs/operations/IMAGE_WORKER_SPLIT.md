@@ -1,7 +1,11 @@
 # Splitting image processing into `image-worker`
 
-**Status:** design approved 2026-08-09, not yet implemented
-**Priority:** **blocking.** Nothing in `discord-worker` can deploy until this lands.
+**Status:** **implemented** — shipped 2026-08-11 as `image-worker` 1.0.0, with `POST /extract`
+and (later) `POST /thumbnail` behind service bindings, plus its own deploy workflow. This
+document is kept as the design record; for current behaviour read
+[`apps/image-worker/CLAUDE.md`](../../apps/image-worker/CLAUDE.md); the implementation plan is
+[`docs/superpowers/plans/2026-08-09-image-worker-split.md`](../superpowers/plans/2026-08-09-image-worker-split.md).
+The "2026-08-30 update" section below records what changed after the split.
 
 ---
 
@@ -85,7 +89,7 @@ dependency as photon itself.
 | File | Note |
 |---|---|
 | `photon.ts` | the sole photon consumer |
-| `validators.ts` | `MAX_FILE_SIZE_BYTES` 10 MB, `MAX_IMAGE_DIMENSION` 4096, `MAX_PIXEL_COUNT` 16M |
+| `validators.ts` | `MAX_FILE_SIZE_BYTES` 10 MB, `MAX_IMAGE_DIMENSION` 4096, `MAX_PIXEL_COUNT` 16 M at split time — since revised to 9,437,184 px (≈9.4 MP), derived from `PIXEL_MEMORY_BUDGET_BYTES` |
 | `index.ts` | re-export surface |
 | `photon.test.ts`, `validators.test.ts`, `index.test.ts` | move with their source |
 
@@ -106,7 +110,7 @@ POST /extract
 **Binary, not base64** — base64 would inflate the payload 33% for no benefit over a service
 binding, which passes `Request`/`Response` objects directly.
 
-**Payload is bounded at 256 KiB.** `DEFAULT_MAX_DIMENSION` is 256 (`photon.ts:48`), so the worst
+**Payload is bounded at 256 KiB.** `DEFAULT_MAX_DIMENSION` is 256 (`photon.ts:55`), so the worst
 case is 256 × 256 × 4 bytes regardless of the 10 MB input limit.
 
 ## Deployment shape

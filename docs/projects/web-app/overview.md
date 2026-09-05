@@ -1,6 +1,6 @@
 # Web App Overview
 
-**xivdyetools-web-app** v5.0.0 - Interactive browser-based toolkit for FFXIV dye colors
+**xivdyetools-web-app** — interactive browser-based toolkit for FFXIV dye colors. Current version: see [versions.md](../../versions.md).
 
 The dye database backing the app is **125 standard dyes** (`dyes.json`, schema v2, keyed by `stainID`). The 11 Facewear colours are a separate `facewearColors` collection, not dyes.
 
@@ -24,12 +24,12 @@ A fully-featured web application built with Lit and Vite, offering 9 interactive
 
 ### New in v5.0.0
 
-- **The 5.0 redesign** — every tool re-ported onto the console bar + tool rail shell with an Advanced Options panel and result cards; themes reduced to Light + Dark ([theming](theming.md)); one matching vocabulary (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`); share URLs key on stainID (`?dye=<stainID>`, `?hex=` bare colours; legacy itemID links rejected loudly); `CollectionService` 5.0 is the single saved-things store (stainID-keyed, 4.x data migrated on load); `.chara` character-file import in the Swatch Matcher; self-hosted fonts; root OG cards; beta build (`VITE_APP_ENV=beta`); locale keys 1,041 → 1,489 × 6. The v4.x notes below are historical.
+- **The 5.0 redesign** — every tool re-ported onto the console bar + tool rail shell with an Advanced Options panel and result cards; themes reduced to Light + Dark ([theming](theming.md)); one matching vocabulary (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`); share URLs key on stainID (`?dye=<stainID>`, `?hex=` bare colours; legacy itemID links rejected loudly); `CollectionService` 5.0 is the single saved-things store (stainID-keyed, 4.x data migrated on load); `.chara` character-file import in the Swatch Matcher; self-hosted fonts; root OG cards; beta build (`VITE_APP_ENV=beta`); the UI locale files grew to 1,152 keys × 6. The v4.x notes below are historical.
 
 ### New in v4.10.0
 
 - **Result Card v4 "Spectrum" row** — Shows the consolidated dye spectrum (Standard / Wide #1 / Wide #2) on every match across Harmony, Gradient, Budget, Swatch, and Extractor; new `common.spectrum` i18n key in all 6 locales
-- **SEC-001 XSS hardening** — `auth-button.ts` `innerHTML` interpolation of OAuth user character name / server replaced with `createElement` + `textContent`; CSP `script-src 'self'` provides defense-in-depth
+- **SEC-001 XSS hardening** — `auth-button.ts` `innerHTML` interpolation of OAuth user character name / server replaced with `createElement` + `textContent`; CSP `script-src 'self'` provides defense-in-depth. (`auth-button.ts` itself is gone in 5.0 — sign-in is `components/signin-modal.ts`.)
 - **"Exclude Allied Society Dyes" filter retired** — Patch 7.5 collapsed the old vendor categories out of the dye database, so the toggle had nothing left to exclude
 
 ### New in v4.9.0
@@ -106,44 +106,53 @@ pnpm turbo run build --filter=xivdyetools-web-app...
 
 ## Architecture
 
+The tree is flat: there is no `components/tools/` directory and no `utils/`. Every file name below
+is real (`git ls-files apps/web-app/src`).
+
 ```
 src/
-├── components/                 # Lit web components
-│   ├── tools/                  # Tool-specific components
-│   │   ├── palette-extractor/     # v4: was color-matcher
-│   │   ├── gradient-builder/      # v4: was dye-mixer
-│   │   ├── dye-mixer/             # v4 NEW: RGB blending
-│   │   ├── swatch-matcher/        # v4 NEW: character colors
-│   │   ├── harmony-explorer/
-│   │   ├── dye-comparison/
-│   │   ├── accessibility-checker/
-│   │   ├── community-presets/     # v4: was preset-browser
-│   │   └── budget-suggestions/
-│   ├── v4/                     # v4 NEW: Glassmorphism components
-│   │   ├── v4-layout-shell.ts
-│   │   ├── glass-panel.ts
-│   │   ├── result-card.ts
-│   │   └── ...
-│   ├── shared/                 # Reusable components
-│   │   ├── color-swatch/
-│   │   ├── dye-picker/
-│   │   ├── slot-selection-modal/
-│   │   └── ...
-│   └── layout/                 # App shell components
-├── services/                   # Business logic layer
-│   ├── ThemeService.ts         # Theme management
-│   ├── StorageService.ts       # localStorage persistence
-│   ├── AuthService.ts          # OAuth integration
-│   ├── PresetService.ts        # Preset API client
-│   ├── ConfigController.ts     # v4 NEW: Centralized tool config
-│   └── SubscriptionManager.ts  # Reactive subscription cleanup
-├── styles/                     # Global styles
-│   ├── themes.css              # Light + Dark theme variables
-│   ├── v4-layout.css
-│   ├── error-boundary.css
-│   ├── globals.css
-│   └── tailwind.css
-└── utils/                      # Helper functions
+├── main.ts                     # Bootstrap + error handling
+├── components/                 # Imperative BaseComponent tools + shared UI (flat)
+│   ├── base-component.ts
+│   ├── v4-layout.ts            # Not a component: shell wiring + tool lazy-load
+│   ├── harmony-tool.ts  extractor-tool.ts  accessibility-tool.ts
+│   ├── comparison-tool.ts  gradient-tool.ts  mixer-tool.ts
+│   ├── budget-tool.ts  swatch-tool.ts        # eight of the nine tools
+│   ├── dye-selector.ts  dye-grid.ts  dye-search-box.ts  market-board.ts
+│   ├── metric-help.ts  chara-import.ts  export-sheet.ts  empty-state.ts
+│   ├── color-picker-display.ts  image-upload-display.ts  image-zoom-controller.ts
+│   ├── modal-container.ts  toast-container.ts  offline-banner.ts
+│   ├── welcome-modal.ts  changelog-modal.ts  about-modal.ts  signin-modal.ts
+│   ├── preset-submission-form.ts  preset-edit-form.ts  my-submissions-modal.ts
+│   ├── advanced-options-panel.ts  collection-manager-modal.ts  shortcuts-panel.ts
+│   └── v4/                     # Lit shell + primitives
+│       ├── v4-layout-shell.ts  v4-app-header.ts  config-sidebar.ts
+│       ├── dye-palette-drawer.ts  result-card.ts  share-button.ts
+│       ├── v4-color-wheel.ts  display-options-v4.ts  dye-filters-v4.ts
+│       ├── range-slider-v4.ts  toggle-switch-v4.ts  base-lit-component.ts
+│       ├── theme-modal.ts  language-modal.ts
+│       └── preset-tool.ts  preset-card.ts  preset-detail.ts   # the ninth tool, Lit
+├── services/                   # Business logic layer (kebab-case files)
+│   ├── index.ts                # initializeServices() + the re-export barrel
+│   ├── theme-service.ts  theme-switch.ts  language-service.ts  storage-service.ts
+│   ├── router-service.ts  config-controller.ts  keyboard-service.ts
+│   ├── modal-service.ts  toast-service.ts  tutorial-service.ts
+│   ├── dye-service-wrapper.ts  api-service-wrapper.ts  api-worker-origin.ts
+│   ├── market-board-service.ts  world-service.ts  pricing-mixin.ts
+│   ├── collection-service.ts  saved-presets-service.ts  indexeddb-service.ts
+│   ├── community-preset-service.ts  hybrid-preset-service.ts
+│   ├── preset-submission-service.ts  auth-service.ts
+│   ├── share-service.ts  harmony-generator.ts  mixer-blending-engine.ts
+│   ├── camera-service.ts  chara-resolve-service.ts  telemetry-service.ts
+│   └── display-options-helper.ts  tool-panel-builders.ts
+├── shared/                     # Pure helpers, types, icon constants
+│   ├── tool-config-types.ts  types.ts  i18n-types.ts  constants.ts
+│   ├── subscription-manager.ts  error-handler.ts  logger.ts  utils.ts
+│   ├── tool-handoff.ts  palette-export.ts  custom-dye.ts  dye-filter-utils.ts
+│   └── *-icons.ts  app-logo.ts  glyph-accent.ts  preset-i18n.ts
+├── styles/                     # themes.css, globals.css, tool-content.css,
+│                               # v4-layout.css, tailwind.css, error-boundary.css
+└── locales/                    # en ja de fr ko zh UI strings
 ```
 
 ---
@@ -157,11 +166,13 @@ retired in 5.0; a stored pre-5.0 theme name is migrated onto whichever of the tw
 family rather than being discarded. Themes use CSS custom properties — see
 [Theming](theming.md).
 
-### PWA Support
+### Installable, but not offline
 
-- Installable as standalone app
-- Offline caching for static assets
-- Fast startup via service worker
+- Installable as a standalone app via `public/manifest.json`
+- **No service worker and no offline cache.** The v3 `service-worker.js` was never shipped by the
+  Vite build and was deleted in the 2026-08-16 cleanup
+- `components/offline-banner.ts` only *reports* connectivity — it listens to `online`/`offline` and
+  shows a banner; it caches nothing
 
 ### Responsive Design
 
@@ -171,7 +182,9 @@ family rather than being discarded. Themes use CSS custom properties — see
 
 ### Localization Ready
 
-- 6 languages via @xivdyetools/core
+- 6 languages (`en ja de fr ko zh`). **UI strings are the app's own** — `src/locales/<lang>.json`,
+  read through `LanguageService`; `@xivdyetools/core` supplies the domain tables (dye names,
+  categories, acquisitions, currencies, races/clans, harmony and vision-type names)
 - Browser language detection
 - Manual language selection
 
@@ -179,15 +192,21 @@ family rather than being discarded. Themes use CSS custom properties — see
 
 ## Environment Variables
 
-All three are **optional** — each falls back to its production URL when unset, so a plain
-`pnpm --filter xivdyetools-web-app run dev` talks to the live backends.
+All four `VITE_*` overrides are **optional** — each falls back to its production URL when unset, so
+a plain `pnpm --filter xivdyetools-web-app run dev` talks to the live backends.
 
 ```bash
 # .env.local — override only what you are running locally
 VITE_OAUTH_WORKER_URL=https://auth.xivdyetools.app
 VITE_PRESETS_API_URL=https://api.xivdyetools.app
 VITE_UNIVERSALIS_PROXY_URL=   # api-worker's /universalis routes
+VITE_API_WORKER_URL=          # api-worker origin for /v1/chara/* and /v1/telemetry;
+                              # dev default http://localhost:8790, prod data.xivdyetools.app
 ```
+
+A fifth variable is a **build** switch rather than a runtime override: `VITE_APP_ENV=beta` (read in
+`vite.config.ts`) turns on `vite-plugin-beta-branding` — the `[BETA]` title prefix, the beta icon
+set and `X-Robots-Tag: noindex` on `dist/_headers`. It is set only by the beta deploy workflow.
 
 See [Environment Variables](../../developer-guides/environment-variables.md) for the full
 inventory across every project.
@@ -196,18 +215,40 @@ inventory across every project.
 
 ## Deployment
 
-The app is deployed to Cloudflare Pages:
+Cloudflare **Pages** (not Workers), two projects, both deployed by GitHub Actions with
+`cloudflare/wrangler-action` running `pages deploy dist` — there is no Pages Git integration.
+The shared mechanics are in [Deployment](../../developer-guides/deployment.md) and
+[Deploy Environments](../../operations/DEPLOY_ENVIRONMENTS.md). What is specific to this app:
 
-```bash
-# Build
-npm run build
+| Environment | Details |
+|---|---|
+| **Production** | Pages project `xivdyetools` → `xivdyetools.app`. `deploy-web-app.yml`, on push to `main`/`master` under the `apps/web-app/**` + `packages/{core,types,logger,svg}/**` path filter |
+| **Beta** | A *second* Pages project, `xivdyetools-beta` → `beta.xivdyetools.app`. `deploy-web-app-beta.yml`, on push to any branch except `main`, `master` and `dependabot/**`. `--branch=beta` is load-bearing (the project's production branch) and fails **silently** without it. Beta reads and writes **production** preset data |
+| **Development** | `pnpm --filter xivdyetools-web-app run dev` (localhost:5173) |
 
-# Preview locally
-npm run preview
+**Build.** Vite, `root: 'src'`, output `dist/`. The app bundles no WASM — resvg and Photon live in
+the Workers. `scripts/check-bundle-size.js` gates `dist/` per chunk and runs in both workflows;
+`scripts/check-beta-build.js` asserts a beta build really is one.
 
-# Deploy (via Cloudflare Pages GitHub integration)
-git push origin main
-```
+**After deploy**, both workflows run `scripts/smoke-test-pages.js` against the deployment just
+made: production asserts it is **not** a beta build (`--expect-robots none`), beta asserts the
+`noindex` header end-to-end — on the custom domain, not the `*.pages.dev` alias, because
+Cloudflare injects `x-robots-tag: noindex` onto those hostnames itself.
+
+**Two Pages caching hazards** (both real incidents, see `docs/operations/`): overlapping `_headers`
+patterns **merge**, and an SPA catch-all plus `immutable` on `/assets/*` can cache an HTML fallback
+under a `.js` URL for a year. `functions/_middleware.ts` is the standing guard against the second.
+
+**CORS.** Every backend the app calls enforces an origin allowlist, so a new deployment origin (a
+preview URL, a new beta domain) must be added there **before** it works — the failure looks like a
+broken app but is a server-side config gap.
+
+| Worker | Purpose |
+|---|---|
+| OAuth worker (`auth.xivdyetools.app`) | Authentication |
+| Presets API (`api.xivdyetools.app`) | Community presets |
+| api-worker (`data.xivdyetools.app`; `cors({ origin: '*' })`) | Market prices, `.chara` resolution, telemetry |
+| OG worker (`og.xivdyetools.app`, routed on `xivdyetools.app/<tool>/*`) | Social preview images |
 
 ---
 
@@ -216,5 +257,5 @@ git push origin main
 - [Tools](tools.md) - Detailed guide to all 9 tools
 - [Components](components.md) - Lit component architecture
 - [Theming](theming.md) - Theme system documentation
-- [Deployment](deployment.md) - Deployment procedures
+- [Deployment](../../developer-guides/deployment.md) - The shared deployment guide
 - [User Guide](../../user-guides/web-app/getting-started.md) - End-user documentation

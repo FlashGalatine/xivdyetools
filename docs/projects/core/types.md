@@ -1,327 +1,227 @@
 # Core Library Types
 
-**Type system and branded types in @xivdyetools/core**
+**The type surface around @xivdyetools/core**
+
+---
+
+## Where a type actually lives
+
+Since core 2.0.0 the **shared** types live in `@xivdyetools/types`; core exports
+only the types that describe its own behaviour. Getting this wrong is the single
+most common import error in this repo.
+
+| Type | Package |
+|------|---------|
+| `RGB`, `HSV`, `HSL`, `LAB`, `OKLAB`, `OKLCH`, `LCH`, `CMYK` | `@xivdyetools/types` |
+| `HexColor`, `DyeId`, `Hue`, `Saturation` (+ their `create*`) | `@xivdyetools/types` |
+| `Dye`, `DyeWithDistance`, `LocalizedDye`, `FacewearColor`, `DyeTypeFilters` | `@xivdyetools/types` |
+| `VisionType`, `ColorblindMatrices`, `MatchQualityKey` | `@xivdyetools/types` |
+| `Matrix3x3` | `@xivdyetools/types/color` (subpath only — not on the root barrel) |
+| `PriceData`, `CachedData`, `RateLimitResult` | `@xivdyetools/types` |
+| `PresetPalette`, `PresetData`, `CommunityPreset`, `PresetCategory`, `PresetStatus` | `@xivdyetools/types` |
+| `LocaleCode`, `TranslationKey`, `HarmonyTypeKey`, `ColorWheelId` | `@xivdyetools/types` |
+| `MatchingMethod`, `DyeCategory`, `DyeAcquisition` | `@xivdyetools/core` |
+| `HarmonyOptions`, `HarmonySlot`, `HarmonySelectionConfig`, `ColorWheel` | `@xivdyetools/core` |
+| `ICacheBackend`, `APIServiceOptions`, `ResolvedPreset` | `@xivdyetools/core` |
+| `PaletteExtractionOptions`, `ExtractedColor`, `PaletteMatch` | `@xivdyetools/core` |
+| `BandTier`, `BandMethod`, `BandContext`, `DeltaEFormula`, `RYB` | `@xivdyetools/core` |
+
+The runtime **validators** (`isValidHexColor`, `isValidRGB`, `isValidHSV`) are
+core's; the branded-type **constructors** are types'.
 
 ---
 
 ## Branded Types
 
-The library uses TypeScript branded types for type-safe identifiers. These prevent accidental misuse of raw values where validated types are expected.
-
-### HexColor
-
 ```typescript
-import { HexColor, createHexColor, isValidHexColor } from '@xivdyetools/core';
+import { createHexColor, createDyeId, createHue, createSaturation } from '@xivdyetools/types';
+import type { HexColor, DyeId, Hue, Saturation } from '@xivdyetools/types';
+import { isValidHexColor } from '@xivdyetools/core';
 
-// Create validated hex color
-const hex: HexColor = createHexColor('#FF6B6B');  // ✅ Valid
+const hex: HexColor = createHexColor('#FF6B6B');   // throws on an invalid format
+const id: DyeId | null = createDyeId(102);         // null outside the 1-254 stainID window
+const hue: Hue = createHue(370);                   // normalised to 0-360
+const sat: Saturation = createSaturation(120);     // clamped to 0-100
 
-// Validation happens at runtime
-createHexColor('#invalid');  // ❌ Throws Error
-
-// Check before creating
-if (isValidHexColor(userInput)) {
-  const hex = createHexColor(userInput);
-}
-
-// Type prevents raw strings
-function processColor(hex: HexColor) { ... }
-processColor('#FF6B6B');           // ❌ Type error
-processColor(createHexColor('#FF6B6B')); // ✅ Works
+isValidHexColor('#FF6B6B');                        // boolean — no throw, no branding
 ```
 
-### DyeId
-
-```typescript
-import type { DyeId } from '@xivdyetools/types';
-import { createDyeId } from '@xivdyetools/types';
-
-// A DyeId is a stainID; the accepted window is 1-254 (125 dyes today)
-const dyeId: DyeId | null = createDyeId(102);  // ✅ 102 = Jet Black
-
-createDyeId(0);     // ❌ null
-createDyeId(5729);  // ❌ null — a legacy itemID, not a stainID
-
-// Validation: the factory IS the guard — null means "not a stainID"
-const id = createDyeId(userInput);
-if (id !== null) {
-  // id is a DyeId here
-}
-```
-
-### Hue, Saturation, Value
-
-```typescript
-import { Hue, Saturation, Value, createHue, createSaturation } from '@xivdyetools/core';
-
-// Hue: 0-360 degrees
-const hue: Hue = createHue(180);  // ✅
-
-// Saturation: 0-100%
-const sat: Saturation = createSaturation(50);  // ✅
-
-// Value/Lightness: 0-100%
-const val: Value = createValue(75);  // ✅
-```
+`createDyeId` validates a **stainID** (1-254), not an itemID such as 5729.
+There is no `Value` / `createValue`.
 
 ---
 
-## Color Types
-
-### RGB
+## Colour Types
 
 ```typescript
-interface RGB {
-  r: number;  // 0-255
-  g: number;  // 0-255
-  b: number;  // 0-255
-}
+interface RGB { r: number; g: number; b: number }      // 0-255
+interface HSV { h: number; s: number; v: number }      // 0-360, 0-100, 0-100
+interface LAB { L: number; a: number; b: number }      // NOTE: capital L
+interface OKLCH { L: number; C: number; h: number }
 ```
 
-### HSV (Hue-Saturation-Value)
-
-```typescript
-interface HSV {
-  h: number;  // 0-360 degrees
-  s: number;  // 0-100%
-  v: number;  // 0-100%
-}
-```
-
-### HSL (Hue-Saturation-Lightness)
-
-```typescript
-interface HSL {
-  h: number;  // 0-360 degrees
-  s: number;  // 0-100%
-  l: number;  // 0-100%
-}
-```
-
-### LAB (CIE L*a*b*)
-
-```typescript
-interface LAB {
-  l: number;  // 0-100 (lightness)
-  a: number;  // -128 to 127 (green-red)
-  b: number;  // -128 to 127 (blue-yellow)
-}
-```
+`LAB.L` is capitalised — a lower-case `l` is a compile error.
 
 ---
 
 ## Dye Types
 
-### Dye
+The runtime `Dye` has 17 fields. Only seven are stored in `dyes.json`
+(`stainID`, `name`, `hex`, `category`, `acquisition`, `consolidationType`,
+`legacyItemID`); the rest are derived at `DyeDatabase.initialize()`.
 
 ```typescript
 interface Dye {
-  id: DyeId;
+  itemID: number;              // always a number — use `itemID > 0` for market checks
+  stainID: number | null;      // the canonical key since schema v2
+  id: number;                  // equals itemID after normalisation
   name: string;
-  hex: HexColor;
+  hex: string;
   rgb: RGB;
-  category: DyeCategory;
-  itemId?: number;     // FFXIV item ID for market lookup
-  sellable: boolean;
+  hsv: HSV;
+  category: string;
+  acquisition: string;
+  cost: number;
+  currency: string | null;
+  isMetallic: boolean;
+  isPastel: boolean;
+  isDark: boolean;
+  isCosmic: boolean;
+  isIshgardian: boolean;
+  consolidationType: 'A' | 'B' | 'C' | null;
 }
+
+interface DyeWithDistance extends Dye { distance: number }
 ```
 
-### DyeCategory
+There is no `sellable` field and no `DyeMatch` type. `lab` is computed but lives
+on core's internal `DyeInternal`, not on the public `Dye`.
+
+`DyeCategory` (core, `config/dye-vocabulary.ts`) is the closed set actually
+present in the data:
 
 ```typescript
 type DyeCategory =
-  | 'basic'
-  | 'brown'
-  | 'red'
-  | 'orange'
-  | 'yellow'
-  | 'green'
-  | 'blue'
-  | 'purple'
-  | 'metallic';
+  | 'Neutral' | 'Reds' | 'Browns' | 'Yellows'
+  | 'Greens' | 'Blues' | 'Purples' | 'Special';
+
+type DyeAcquisition =
+  | 'Dye Vendor' | 'The Firmament' | 'Cosmic Exploration' | 'Venture Coffers';
 ```
 
-### DyeMatch
+---
+
+## Harmony Types
+
+`HARMONY_OFFSETS` has **ten** keys — `complementary`, `analogous`, `triadic`,
+`split-complementary`, `tetradic`, `inverted-tetradic`, `square`,
+`monochromatic`, `compound`, `shades` — and a harmony type is simply a key of
+that table (`isKnownHarmonyType(s)`). There is no `HarmonyResult`; selection
+returns `HarmonySlot[]`.
 
 ```typescript
-interface DyeMatch {
-  dye: Dye;
-  distance: number;   // RGB Euclidean distance
-  deltaE: number;     // CIE deltaE (perceptual difference)
+interface HarmonySlot {
+  index: number;         // position in HARMONY_OFFSETS[type]
+  offset: number;        // ideal hue offset, 0-359
+  targetHue: number;     // absolute ideal hue, 0-359
+  wheelHue: number;      // the slot's angle on the SELECTED wheel's ring
+  targetHex: string;     // the ideal colour (base S/V on the target hue)
+  dye: Dye | null;       // the dye chosen, or null when no candidate fit
+  deviance: number;      // distance from `dye` to the ideal, in the config's units
+  companions: Dye[];     // runners-up, nearest first
+}
+
+interface HarmonySelectionConfig {
+  usePerceptualMatching: boolean;
+  matchingMethod: MatchingMethod;
+  companionCount?: number;
+  preventDuplicates?: boolean;
+  wheel?: ColorWheelId;          // default 'rgb'
 }
 ```
 
-### HarmonyResult
+`ColorWheelId` = `'rgb' | 'ryb' | 'munsell' | 'oklch-hue' | 'oklch-lightness'`.
+
+---
+
+## Matching and Bands
 
 ```typescript
-interface HarmonyResult {
-  type: HarmonyType;
-  colors: DyeMatch[];
-}
-
-type HarmonyType =
-  | 'complementary'
-  | 'triadic'
-  | 'analogous'
-  | 'split-complementary'
-  | 'tetradic'
-  | 'monochromatic';
+type MatchingMethod =
+  'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish';
+// DEFAULT_MATCHING_METHOD === 'ciede2000'
 ```
+
+`classifyBandTier` maps a distance to a `BandTier` using the calibrated,
+per-method cuts in `BAND_VOCABULARY` (contexts `match` / `harmony` /
+`separation`). `@xivdyetools/types` separately ships the coarser RGB-distance
+`classifyMatchDistance` → `MatchQualityKey`.
 
 ---
 
 ## Accessibility Types
 
-### WCAGResult
+There is no `WCAGResult`. Contrast is read as numbers and booleans:
+`getContrastRatio(hex1, hex2)`, `meetsWCAGAA(hex1, hex2, largeText?)`,
+`meetsWCAGAAA(hex1, hex2, largeText?)`.
 
-```typescript
-interface WCAGResult {
-  ratio: number;      // Contrast ratio (1:1 to 21:1)
-  AA: boolean;        // 4.5:1 normal text
-  AAA: boolean;       // 7:1 normal text
-  AALarge: boolean;   // 3:1 large text
-  AAALarge: boolean;  // 4.5:1 large text
-}
-```
-
-### ColorblindnessType
-
-```typescript
-type ColorblindnessType =
-  | 'protanopia'     // Red-green (L-cone deficiency)
-  | 'deuteranopia'   // Red-green (M-cone deficiency)
-  | 'tritanopia';    // Blue-yellow (S-cone deficiency)
-```
+`VisionType` (types) has five members: `normal`, `protanopia`, `deuteranopia`,
+`tritanopia`, `achromatopsia`. There is no `ColorblindnessType`.
 
 ---
 
 ## API Types
 
-### PriceData
-
 ```typescript
 interface PriceData {
-  itemId: number;
-  server: string;
-  listings: PriceListing[];
-  recentHistory: PriceHistory[];
-  averagePrice: number;
-  minPrice: number;
-  maxPrice: number;
-  lastUploadTime: number;
-}
-
-interface PriceListing {
-  pricePerUnit: number;
-  quantity: number;
-  total: number;
-  hq: boolean;
-  retainerName: string;
+  itemID: number;
+  currentAverage: number;
+  currentMinPrice: number;
+  currentMaxPrice: number;
+  lastUpdate: number;
+  worldId?: number;
   worldName?: string;
 }
-```
 
-### ICacheBackend
-
-Interface for custom cache implementations:
-
-```typescript
-interface ICacheBackend {
-  get(key: string): Promise<CachedData | null>;
-  set(key: string, value: CachedData): Promise<void>;
-  delete(key: string): Promise<void>;
-  clear(): Promise<void>;
-}
-
-interface CachedData {
-  data: unknown;
+interface CachedData<T> {
+  data: T;
   timestamp: number;
   ttl: number;
+  version?: string;
+  checksum?: string;
 }
 ```
 
----
-
-## Preset Types
-
-### Preset
-
-```typescript
-interface Preset {
-  id: string;
-  name: string;
-  description?: string;
-  colors: PresetColor[];
-  category: PresetCategory;
-  author?: PresetAuthor;
-  upvotes: number;
-  downvotes: number;
-  status: PresetStatus;
-  isCurated: boolean;
-  createdAt: string;
-}
-
-interface PresetColor {
-  dyeId: DyeId;
-  name: string;
-  hex: HexColor;
-}
-
-type PresetStatus = 'pending' | 'approved' | 'rejected';
-```
+There is no `PriceListing` type — listings are not part of the shape core caches.
 
 ---
 
 ## Localization Types
 
-### Locale
-
 ```typescript
-type Locale = 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
-```
+type LocaleCode = 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
 
-### TranslationKey
-
-```typescript
+// A flat union of seven UI labels, not a template literal
 type TranslationKey =
-  | `dye.${string}`
-  | `category.${string}`
-  | `harmony.${string}`
-  | `ui.${string}`;
+  'dye' | 'dark' | 'metallic' | 'pastel' | 'cosmic' | 'cosmicExploration' | 'cosmicFortunes';
 ```
+
+There is no `Locale` type — it is `LocaleCode`.
 
 ---
 
-## Utility Types
+## Not in this ecosystem
 
-### DeepReadonly
-
-```typescript
-type DeepReadonly<T> = {
-  readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P];
-};
-
-// Used for immutable dye database
-type ImmutableDyeDatabase = DeepReadonly<Dye[]>;
-```
-
-### Result Type
-
-```typescript
-type Result<T, E = Error> =
-  | { success: true; data: T }
-  | { success: false; error: E };
-
-// Used in validation functions
-function validateHex(input: string): Result<HexColor, string> {
-  if (isValidHexColor(input)) {
-    return { success: true, data: createHexColor(input) };
-  }
-  return { success: false, error: 'Invalid hex color format' };
-}
-```
+`Result<T, E>`, `isOk`, `isErr`, `Nullable` and `DeepReadonly` do **not** exist
+in any xivdyetools package. Error handling goes through `AppError` / `ErrorCode`
+from `@xivdyetools/types`, and services return `null` or throw.
 
 ---
+
+## Full reference
+
+Package READMEs: [`packages/types/README.md`](../../../packages/types/README.md),
+[`packages/core/README.md`](../../../packages/core/README.md)
 
 ## Related Documentation
 

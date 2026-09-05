@@ -1,4 +1,4 @@
-# Discord Worker — Interactions (v5.0.0)
+# Discord Worker — Interactions
 
 Documentation for button, modal, and autocomplete handlers in the XIV Dye Tools Discord bot.
 
@@ -40,7 +40,7 @@ No modals are handled by the main worker in 5.0 — `/preset submit` takes its f
 
 ## Autocomplete Handlers
 
-Dye name autocomplete runs for every dye/colour option (`dye`, `dye1`…`dye5`, `color`, `start_color`, `end_color`, `target_dye`, …), plus preset names, worlds and clans. Autocomplete has its own generous rate limit (60/min + 10 burst, fail-soft — a limited request returns empty choices).
+Dye name autocomplete runs for every dye/colour option (`dye`, `dye1`…`dye6`, `color`, `start_color`, `end_color`, `target_dye`, …), plus preset names, worlds and clans. Autocomplete has its own generous rate limit (60/min + 10 burst, fail-soft — a limited request returns empty choices).
 
 - Searches by localized dye name using the user's language preference
 - Returns up to 25 suggestions (Discord's maximum)
@@ -99,4 +99,4 @@ Only `push` events from `FlashGalatine/xivdyetools` are announced, and each vers
 - [Overview](overview.md) — Architecture and project structure
 - [Commands](commands.md) — Slash command definitions and handlers
 - [Rendering](rendering.md) — Image generation pipeline
-- [Deployment](deployment.md) — Wrangler configuration and deployment process
+- [Overview § Deployment](overview.md#deployment) — Wrangler environments and deployment process

@@ -56,7 +56,9 @@ On desktop the drawer is open from the start. On phones it starts **closed** and
 
 ## Quick Tour of the Tools
 
-In the order they appear in the rail (which is also the order of the `1`–`9` keys):
+In the order they appear in the rail. The `1`–`9` number keys follow a slightly different order —
+they agree with the rail for the first five tools, then run `6` Community Presets, `7` Budget
+Suggestions, `8` Swatch Matcher, `9` Dye Mixer:
 
 ### 1. Color Harmony Explorer
 **"Show me dyes that look good together"** — pick a base dye and get complementary, triadic, analogous, tetradic and other companions on a tappable colour wheel.
@@ -105,7 +107,7 @@ Or start from a picture: switch to **Palette Extractor** (press `2`), drop in a 
 
 - **Favorites** — the **★** on any drawer swatch. Up to 40, shown at the top of the drawer.
 - **Saved palettes** — several tools save what you built (**Save mix**, **Save swap**, **Save character colours**, **Make a palette**). They appear under **Community Presets → Saved**.
-- **Share links** — every tool has a **Share** button (or press `Shift+S`) that copies a link carrying the exact dyes and settings.
+- **Share links** — seven of the nine tools have a **Share** button (or press `Shift+S`) that copies a link carrying the exact dyes and settings: Color Harmony, Accessibility Checker, Dye Comparison, Gradient Builder, Dye Mixer, Budget Suggestions and Swatch Matcher. Palette Extractor and Community Presets do not — a picture and a browsable list have nothing to put in a link.
 
 Everything is stored in your browser on this device; nothing needs an account. See [Favorites & Collections](favorites-collections.md).
 
@@ -197,5 +199,5 @@ Shortcuts are ignored while you are typing in a search box or hex field.
 ## Need Help?
 
 - Check the [FAQ](faq.md)
-- Report bugs on [GitHub](https://github.com/your-repo/issues)
+- Report bugs on [GitHub](https://github.com/FlashGalatine/xivdyetools/issues)
 - Join the community Discord

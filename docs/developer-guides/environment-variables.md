@@ -12,8 +12,8 @@ Environment variables are configured differently based on the project type:
 |--------------|---------------------|
 | Web App | `.env` files, `import.meta.env` |
 | Cloudflare Workers | `wrangler.toml` (vars) + `wrangler secret put` (secrets) |
-| Core Library | None (environment-agnostic) |
-| Universalis Proxy | `wrangler.toml` (vars) + KV bindings |
+| stoat-worker (Node.js) | `process.env` / `.env` |
+| Shared packages | None (environment-agnostic) |
 
 ---
 
@@ -26,7 +26,13 @@ Environment variables are configured differently based on the project type:
 VITE_OAUTH_WORKER_URL=http://localhost:8788        # oauth worker (default: https://auth.xivdyetools.app)
 VITE_PRESETS_API_URL=http://localhost:8787         # presets-api (default: https://api.xivdyetools.app)
 VITE_UNIVERSALIS_PROXY_URL=http://localhost:8790   # optional; production uses https://data.xivdyetools.app/universalis
+VITE_API_WORKER_URL=http://localhost:8790          # api-worker origin for /v1/chara/* and POST /v1/telemetry
 ```
+
+`VITE_API_WORKER_URL` is resolved by `src/services/api-worker-origin.ts`: the env value wins
+(trailing slash stripped), otherwise `https://data.xivdyetools.app` in a production build and
+`http://localhost:8790` in dev. Those four `VITE_*` names, plus Vite's own `DEV` / `PROD`, are
+the **only** `import.meta.env` keys the app reads.
 
 `VITE_APP_ENV=beta` at build time produces the beta build (`beta.xivdyetools.app` branding, `noindex`); `scripts/check-beta-build.js` asserts it.
 
@@ -35,6 +41,7 @@ VITE_UNIVERSALIS_PROXY_URL=http://localhost:8790   # optional; production uses h
 ```bash
 VITE_OAUTH_WORKER_URL=https://auth.xivdyetools.app
 VITE_PRESETS_API_URL=https://api.xivdyetools.app
+VITE_API_WORKER_URL=https://data.xivdyetools.app
 # Universalis: https://data.xivdyetools.app/universalis (api-worker's absorbed proxy routes)
 ```
 
@@ -100,7 +107,7 @@ BOT_API_SECRET=local-secret
 
 ---
 
-## xivdyetools-oauth
+## xivdyetools-oauth-worker (`apps/oauth`)
 
 ### wrangler.toml Variables
 
@@ -108,12 +115,20 @@ BOT_API_SECRET=local-secret
 [vars]
 ENVIRONMENT = "production"        # "development" | "production"
 DISCORD_CLIENT_ID = "your-client-id"
+XIVAUTH_CLIENT_ID = "phx-..."     # XIVAuth application id (the second provider)
 FRONTEND_URL = "https://xivdyetools.app"
 WORKER_URL = "https://auth.xivdyetools.app"
 JWT_EXPIRY = "3600"               # Seconds (default: 1 hour)
 ```
 
-The redirect / CORS allowlist also carries `https://beta.xivdyetools.app` (2.6.0). Note `oauth`'s top-level block **is** production (bare `wrangler deploy` = production); `[env.development]` / `[env.preview]` are the non-production envs.
+The redirect / CORS allowlist also carries `https://beta.xivdyetools.app`. Note `oauth`'s
+top-level block **is** production (bare `wrangler deploy` = production); `[env.development]`
+is the only non-production env — `[env.preview]` was deleted by FINDING-029 (2026-08-21
+security audit), and `ENVIRONMENT` must read `development` or `production`, with anything
+other than `development` getting the production gates.
+
+Bindings: `DB` (D1 `xivdyetools-users`), `TOKEN_BLACKLIST` (KV — the revoked-jti list, shared
+with presets-api), and the `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` rate-limit bindings.
 
 ### Secrets
 
@@ -192,26 +207,33 @@ MODERATOR_IDS=123456789,987654321
 
 ---
 
-## Universalis proxy vars (now part of xivdyetools-api-worker)
+## xivdyetools-api-worker
 
 > The standalone `xivdyetools-universalis-proxy` worker was **merged into `api-worker` on
 > 2026-07-31**; its behaviour lives on behind the `/universalis` and `/api/v2` compatibility
-> routes. The variables and KV bindings below now belong to `apps/api-worker/wrangler.toml`.
-> Where the commands below say `cd xivdyetools-universalis-proxy`, use
-> `apps/api-worker` instead.
+> routes, and the `api-docs` VitePress site became this worker's static assets. Anywhere older
+> notes say `cd xivdyetools-universalis-proxy` or `cd xivdyetools-api-docs`, use
+> `apps/api-worker`.
 
 ### wrangler.toml Variables
 
 ```toml
 [vars]
-ENVIRONMENT = "production"        # "development" | "production"
-PRICE_TTL = "300"                 # Price cache TTL in seconds (default: 5 min)
-STATIC_TTL = "86400"              # Static cache TTL in seconds (default: 24h)
-MAX_ITEMS = "100"                 # Max items per request
-MAX_RESPONSE_SIZE = "5242880"     # Max response size in bytes (5MB)
+ENVIRONMENT = "production"                              # "development" | "production"
+API_VERSION = "v1"
+UNIVERSALIS_API_BASE = "https://universalis.app/api/v2" # upstream for the proxy routes
+RATE_LIMIT_REQUESTS = "30"                              # per-IP memory limit, /universalis aggregated
+RATE_LIMIT_WINDOW_SECONDS = "60"                        # (the dev block uses 60 requests)
+XIVAPI_BASE = "https://v2.xivapi.com"
+XIVAPI_VERSION = "latest"
 ```
 
-### `/v1/chara/*` variables (api-worker, 0.7.0)
+**Cache TTLs are code constants, not vars.** The proxy's per-endpoint TTL and
+stale-while-revalidate windows live in `apps/api-worker/src/universalis/config/cache.ts`
+(`aggregated` 300 s / 120 s SWR; `data-centers` and `worlds` 86 400 s / 21 600 s SWR). There is
+no `PRICE_TTL`, `STATIC_TTL`, `MAX_ITEMS` or `MAX_RESPONSE_SIZE` variable.
+
+### `/v1/chara/*` variables
 
 The `.chara` equipment-resolution routes (web-app Swatch Matcher 11a/11c) talk to XIVAPI v2 server-side — no secrets, plain vars in both `wrangler.toml` envs:
 
@@ -226,43 +248,101 @@ XIVAPI_VERSION = "latest"               # game-version key: `latest` or a key fr
 
 No new bindings: the per-key row cache is the Cache API (store `chara-resolve`), not KV. Korean/Chinese item names are build-time JSON (`apps/api-worker/scripts/build-item-names.mjs`), not a runtime fetch.
 
-### KV Bindings
+### Bindings
 
-The proxy requires two KV namespaces:
+`api-worker` binds **one** KV namespace, `RATE_LIMIT`, and it is only the fallback for the
+`/v1/*` rate limiter (see the rate-limit table below). The absorbed Universalis proxy caches
+in the **Cache API** — the second, KV-backed cache layer it once had was removed to stay clear
+of the free tier's KV write limits — so there is nothing to create with
+`wrangler kv namespace create` beyond `RATE_LIMIT`, which already exists in both environments.
+
+| Binding | Kind | Notes |
+|---------|------|-------|
+| `RATE_LIMIT` | KV | Fallback counters for `/v1/*` and `POST /v1/telemetry` |
+| `API_RATE_LIMITER` | Rate limit | 65 / 60 s per IP on `/v1/*` |
+| `TELEMETRY_RATE_LIMITER` | Rate limit | 240 / 60 s per IP on `POST /v1/telemetry` |
+| `ANALYTICS` | Analytics Engine | `xivdyetools_web_analytics` (`_dev` on the dev worker); absent → telemetry is accepted and discarded |
+| `ASSETS` | Static assets | **Production only** — the VitePress developer docs on `developers.xivdyetools.app`; run `pnpm build:docs` before deploying |
+
+`api-worker` has no secrets.
+
+---
+
+## xivdyetools-og-worker
+
+### wrangler.toml Variables
 
 ```toml
-[[kv_namespaces]]
-binding = "PRICE_CACHE"
-id = "your-price-cache-namespace-id"
-
-[[kv_namespaces]]
-binding = "STATIC_CACHE"
-id = "your-static-cache-namespace-id"
+[vars]
+APP_BASE_URL = "https://xivdyetools.app"          # beta worker: https://beta.xivdyetools.app
+OG_IMAGE_BASE_URL = "https://og.xivdyetools.app/og"  # beta: https://og-beta.xivdyetools.app/og
 ```
 
-### Creating KV Namespaces
+Both are required (`Env` in `apps/og-worker/src/types.ts` declares them non-optional). The only
+binding is `ANALYTICS` (Analytics Engine, `xivdyetools_og_analytics` / `…_beta`). **No secrets.**
 
-```bash
-cd apps/api-worker
+Note the top-level block is the *routed* beta worker on `beta.xivdyetools.app`, so a bare
+`wrangler deploy` is live — see [DEPLOY_ENVIRONMENTS](../operations/DEPLOY_ENVIRONMENTS.md).
 
-# Create namespaces
-wrangler kv:namespace create "PRICE_CACHE"
-wrangler kv:namespace create "STATIC_CACHE"
+---
 
-# Note the IDs and update wrangler.toml
+## xivdyetools-moderation-worker
+
+### wrangler.toml Variables
+
+```toml
+[vars]
+ENVIRONMENT = "development"                       # "development" (dev worker) | "production"
+DISCORD_CLIENT_ID = "1453806659708129374"         # its own Discord application, not the main bot's
+PRESETS_API_URL = "https://api.xivdyetools.app"
 ```
 
-### Local Development
+All three are declared in **both** blocks — `vars` are not inheritable. As on discord-worker,
+`validateEnv` requires the rate-limit bindings only when `ENVIRONMENT` reads `production`.
 
-For local development, use:
+### Secrets (set via `wrangler secret put`)
 
-```bash
-# Create local namespaces
-wrangler kv:namespace create "PRICE_CACHE" --preview
-wrangler kv:namespace create "STATIC_CACHE" --preview
-```
+| Secret | Required | Description |
+|--------|----------|-------------|
+| `DISCORD_TOKEN` | ✅ Yes | Moderation bot token |
+| `DISCORD_PUBLIC_KEY` | ✅ Yes | Ed25519 public key for interaction verification |
+| `MODERATOR_IDS` | ✅ Yes | Comma-separated moderator Discord user IDs (validated as snowflakes) |
+| `MODERATION_CHANNEL_ID` | ✅ Yes | Channel the `/preset` moderation commands are restricted to |
+| `BOT_API_SECRET` | No | Shared secret for presets-api |
+| `BOT_SIGNING_SECRET` | No | HMAC signing key for v2 bot request verification |
+| `SUBMISSION_LOG_CHANNEL_ID` | No | Channel for all submissions |
 
-Update `wrangler.toml` with the preview IDs for local testing.
+`validateEnv` (`src/utils/env-validation.ts`) treats the four ✅ rows plus `DISCORD_CLIENT_ID`
+and `PRESETS_API_URL` as hard requirements, and also fails when the `KV`, `DB` or `PRESETS_API`
+bindings are missing.
+
+Bindings: `PRESETS_API` (service → `xivdyetools-presets-api`), `DB` (D1 — the *same*
+`xivdyetools-presets` database presets-api owns), `KV`, and the `RL_COMMAND` / `RL_AUTOCOMPLETE`
+rate-limit bindings.
+
+---
+
+## xivdyetools-image-worker
+
+**No variables and no secrets** beyond `ENVIRONMENT` (set by `[env.production]`, absent in dev)
+— and no bindings at all. The worker is reachable only through its callers' `IMAGE_WORKER`
+service bindings, so there is nothing to configure. See
+[IMAGE_WORKER_SPLIT](../operations/IMAGE_WORKER_SPLIT.md).
+
+---
+
+## xivdyetools-stoat-worker
+
+Node.js, not a Worker — configuration comes from `process.env` (`apps/stoat-worker/src/config.ts`).
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `BOT_TOKEN` | ✅ Yes | Revolt bot token — `loadConfig()` throws without it |
+| `STATS_AUTHORIZED_USERS` | No | Comma-separated Stoat ULIDs allowed to view stats (validated at startup) |
+| `UPSTASH_REDIS_REST_URL` | No | Upstash rate-limit backend; falls back to memory when unset |
+| `UPSTASH_REDIS_REST_TOKEN` | No | Paired with the URL above |
+
+The bot is **parked** and has no deploy workflow.
 
 ---
 
@@ -287,9 +367,11 @@ These secrets must match across services:
 
 | Secret | Services | Purpose |
 |--------|----------|---------|
-| `JWT_SECRET` | oauth, presets-api | JWT verification |
-| `BOT_API_SECRET` | discord-worker, presets-api | Bot-to-API auth |
-| `MODERATOR_IDS` | discord-worker, presets-api | Moderator access |
+| `JWT_SECRET` | oauth, presets-api | JWT signing (oauth) and verification (presets-api) |
+| `BOT_API_SECRET` | discord-worker, moderation-worker, presets-api | Bot-to-API auth |
+| `BOT_SIGNING_SECRET` | discord-worker, moderation-worker, presets-api | HMAC key for the v2 bot request signature |
+| `MODERATOR_IDS` | discord-worker, moderation-worker, presets-api | Moderator access |
+| `INTERNAL_WEBHOOK_SECRET` | presets-api, discord-worker | Authenticates the `DISCORD_WORKER` service-binding notification call |
 
 **Important:** Use the same value for these secrets in all services!
 
@@ -345,15 +427,18 @@ database_id = "your-database-id"
 [[services]]
 binding = "PRESETS_API"
 service = "xivdyetools-presets-api"
-environment = "production"
 ```
+
+(No `[[services]]` block in this repo sets `environment` — each named env declares its own
+bindings.)
 
 ### Analytics Engine
 
 ```toml
 [[analytics_engine_datasets]]
 binding = "ANALYTICS"
-dataset = "xivdyetools_analytics"
+dataset = "xivdyetools_bot_analytics"   # og-worker: xivdyetools_og_analytics,
+                                        # api-worker: xivdyetools_web_analytics
 ```
 
 ---

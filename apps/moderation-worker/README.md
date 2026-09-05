@@ -15,7 +15,7 @@ Moderation lives in its own Discord app, not as more commands on `discord-worker
 
 | Command | Description |
 |---------|-------------|
-| `/preset moderate` | Approve or reject a pending preset — takes `action`, `preset_id`, and an optional `reason` |
+| `/preset moderate` | Four actions on the required `action` option — `pending` (browse the queue), `approve`, `reject`, `stats` — plus an optional autocompleted `preset_id` and `reason` |
 | `/preset ban_user` | Ban a `user` from submitting presets |
 | `/preset unban_user` | Lift a submission ban for a `user` |
 
@@ -69,12 +69,15 @@ pnpm --filter xivdyetools-moderation-worker run deploy:production   # Production
 ### Required Secrets
 
 ```bash
-wrangler secret put DISCORD_TOKEN        # Moderation application's bot token
-wrangler secret put DISCORD_PUBLIC_KEY   # Moderation application's Ed25519 public key
-wrangler secret put MODERATOR_IDS        # CSV of Discord IDs allowed to moderate
+wrangler secret put DISCORD_TOKEN            # Moderation application's bot token
+wrangler secret put DISCORD_PUBLIC_KEY       # Moderation application's Ed25519 public key
+wrangler secret put MODERATOR_IDS            # CSV of Discord IDs allowed to moderate
+wrangler secret put MODERATION_CHANNEL_ID    # Channel every moderation command is restricted to
 ```
 
-Additional secrets for authenticating outbound calls to `presets-api` (`BOT_API_SECRET`, `BOT_SIGNING_SECRET`) follow the same names and semantics as in `discord-worker`. `BOT_SIGNING_SECRET` must be min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys).
+All four are checked by `validateEnv`. `MODERATION_CHANNEL_ID` is genuinely required, not optional: the channel gate reads it on every command, so an unset value blocks the whole bot.
+
+Additional secrets for authenticating outbound calls to `presets-api` (`BOT_API_SECRET`, `BOT_SIGNING_SECRET`) are **optional** in this worker's `Env` and follow the same names and semantics as in `discord-worker`. `BOT_SIGNING_SECRET` must be min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys).
 
 The production worker (`ENVIRONMENT = "production"`) additionally **requires** the two native rate-limit bindings `RL_COMMAND` and `RL_AUTOCOMPLETE`: while either is unbound, `validateEnv` fails and the worker answers every request — `/health` included — with `500 {"error":"Service misconfigured"}` rather than degrading silently to the KV limiter (FINDING-013, `docs/audits/2026-08-29-security`). Both stay optional on the dev worker and in tests.
 

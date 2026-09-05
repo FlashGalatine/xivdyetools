@@ -58,7 +58,7 @@ Names match official FFXIV Lodestone and in-game item names. The core library st
 
 ---
 
-## Acquisition Methods
+## Acquisition Methods (7)
 
 **Source:** `locales/{locale}.json` → `acquisitions`
 
@@ -66,16 +66,15 @@ Names match official FFXIV Lodestone and in-game item names. The core library st
 |----|----|----|----|----|-----|
 | Dye Vendor | 染色師 | Farbstoffverkäufer | Vendeur de teinture | 염료 판매상 | 染剂商人 |
 | Crafting | 製作 | Handwerker | Artisanat | 제작 | 制作 |
-| Ixali Vendor | イクサル族のよろず屋 | Ixal-Händler | Vendeur ixal | 익살 상인 | 鸟人商人 |
-| Sylphic Vendor | シルフ族のよろず屋 | Sylphen-Händlerin | Vendeur sylphe | 실프 상인 | 妖精商人 |
-| Amalj'aa Vendor | アマルジャ族のよろず屋 | Amalj'aa-Händler | Vendeur amalj'aa | 아말쟈 상인 | 阿马尔贾商人 |
-| Sahagin Vendor | サハギン族のよろず屋 | Sahagin-Händler | Vendeur sahuagin | 사하긴 상인 | 鱼人商人 |
-| Kobold Vendor | コボルド族のよろず屋 | Kobold-Händler | Vendeur kobold | 코볼드 상인 | 钴铁商人 |
-| The Firmament | 蒼天街 | Himmelsstadt | Azurée | 창천 거리 | 天穹街 |
 | Cosmic Exploration | コスモエクスプローラー | Kosmo-Erkundung | l'exploration cosmique | 코스모 탐사 | 宇宙探索 |
 | Cosmic Fortunes | コスモフォーチュン | Kosmo-Glück | Roue de la fortune cosmique | 코스모 행운 | 宇宙幸运 |
+| The Firmament | 蒼天街 | Himmelsstadt | Azurée | 창천 거리 | 天穹街 |
 | Venture Coffers | リテイナーの宝箱 | Gehilfen-Schatzkiste | Trouvaille de servant | 집사의 보물상자 | 雇员宝箱 |
 | Facewear Collection | フェイスウェアコレクション | Gesichtsschmuck-Sammlung | Collection accessoires faciaux | 페이스웨어 컬렉션 | 脸部配饰收藏 |
+
+The Allied Society / Beast Tribe vendor rows (Ixali, Sylphic, Amalj'aa, Sahagin, Kobold) were
+retired by the Patch 7.5 dye consolidation — those vendors no longer carry dyes, and the keys
+are gone from the locale data.
 
 ---
 
@@ -101,13 +100,42 @@ Display labels used in the result card for vendor costs. These are abbreviated f
 
 ---
 
-## Locations
+## Facewear Colors (11)
 
-Key in-game locations referenced by the dye acquisition system.
+**Source:** `locales/{locale}.json` → `facewearColors`
 
-| EN | JA | DE | FR | KO | ZH |
-|----|----|----|----|----|-----|
-| The Firmament | 蒼天街 | Himmelsstadt | Azurée | 창천 거리 | 天穹街 |
+The 11 Facewear colours are **not dyes** — they live in `facewear_colors.json` / the
+`facewearColors` export, keyed by a string slug, with no stainID and no market presence.
+
+| Key | EN | JA | DE | FR | KO | ZH |
+|-----|----|----|----|----|----|----|
+| `silver` | Silver | シルバー | Silber | Argent | 은색 | 银色 |
+| `gold` | Gold | ゴールド | Gold | Or | 금색 | 金色 |
+| `black` | Black | ブラック | Schwarz | Noir | 검은색 | 黑色 |
+| `white` | White | ホワイト | Weiß | Blanc | 흰색 | 白色 |
+| `grey` | Grey | グレー | Grau | Gris | 회색 | 灰色 |
+| `red` | Red | レッド | Rot | Rouge | 빨간색 | 红色 |
+| `blue` | Blue | ブルー | Blau | Bleu | 파란색 | 蓝色 |
+| `green` | Green | グリーン | Grün | Vert | 초록색 | 绿色 |
+| `brass` | Brass | ブラス | Messing | Laiton | 황동색 | 黄铜色 |
+| `purple` | Purple | パープル | Violett | Violet | 보라색 | 紫色 |
+| `brown` | Brown | ブラウン | Braun | Marron | 갈색 | 棕色 |
+
+---
+
+## Color Wheels (5)
+
+**Source:** `locales/{locale}.json` → `colorWheels`
+
+The wheel a harmony is rotated on. Exposed publicly as `GET /v1/wheels`.
+
+| Key | EN | JA | DE | FR | KO | ZH |
+|-----|----|----|----|----|----|----|
+| `rgb` | RGB (screen) | RGB（画面） | RGB (Bildschirm) | RVB (écran) | RGB (화면) | RGB（屏幕） |
+| `ryb` | RYB (artist's) | RYB（画家の色相環） | RYB (Malerfarbkreis) | RJB (roue des peintres) | RYB (화가의 색상환) | RYB（画家色环） |
+| `munsell` | Munsell (JIS) | マンセル（JIS） | Munsell (JIS) | Munsell (JIS) | 먼셀 (JIS) | 孟塞尔（JIS） |
+| `oklch-hue` | OKLCH hue (perceptual spacing) | OKLCH 色相（知覚的な間隔） | OKLCH-Farbton (wahrnehmungsgleiche Abstände) | Teinte OKLCH (espacement perceptuel) | OKLCH 색상 (지각적 간격) | OKLCH 色相（感知均匀间距） |
+| `oklch-lightness` | OKLCH lightness (keeps brightness) | OKLCH 明度（明るさを保持） | OKLCH-Helligkeit (behält die Helligkeit) | Luminosité OKLCH (conserve la luminosité) | OKLCH 명도 (밝기 유지) | OKLCH 明度（保持亮度） |
 
 ---
 
@@ -145,85 +173,65 @@ Key in-game locations referenced by the dye acquisition system.
 
 ---
 
-## Color Harmony Types (9 types)
+## Color Harmony Types (10)
 
 **Source:** `locales/{locale}.json` → `harmonyTypes`
 
-| EN | JA | DE | FR | KO | ZH |
-|----|----|----|----|----|-----|
-| Complementary | 補色 | Komplementär | Complémentaire | 보색 | 互补色 |
-| Analogous | 類似色 | Analog | Analogue | 유사색 | 类似色 |
-| Triadic | 三色配色 | Triadisch | Triadique | 삼원색 | 三角配色 |
-| Split Complementary | 分裂補色 | Geteiltes Komplement | Complémentaire divisé | 분리보색 | 分裂互补 |
-| Tetradic | 四色配色 | Tetradisch | Tétradique | 사색 | 四色配色 |
-| Square | 正方形配色 | Quadrat | Carré | 정사각형 | 正方形配色 |
-| Monochromatic | 単色 | Monochromatisch | Monochromatique | 단색 | 单色 |
-| Compound | 複合 | Zusammengesetzt | Composé | 복합 | 复合 |
-| Shades | シェード | Schattierungen | Nuances | 명암 | 明暗 |
-| Inverted Tetradic | 逆四色配色 | Invertiert-Tetradisch | Tétradique inversé | 반전 사색 | 逆四色配色 |
+| Key | EN | JA | DE | FR | KO | ZH |
+|-----|----|----|----|----|----|----|
+| `complementary` | Complementary | 補色 | Komplementär | Complémentaire | 보색 | 互补色 |
+| `analogous` | Analogous | 類似色 | Analog | Analogue | 유사색 | 类似色 |
+| `triadic` | Triadic | 三色配色 | Triadisch | Triadique | 삼원색 | 三角配色 |
+| `splitComplementary` | Split-Complementary | 分裂補色 | Geteiltes Komplement | Complémentaire divisé | 분리보색 | 分裂互补 |
+| `tetradic` | Tetradic | 四色配色 | Tetradisch | Tétradique | 사색 | 四色配色 |
+| `invertedTetradic` | Inverted Tetradic | 逆四色配色 | Invertiert-Tetradisch | Tétradique inversé | 반전 사색 | 逆四色配色 |
+| `square` | Square | 正方形配色 | Quadrat | Carré | 정사각형 | 正方形配色 |
+| `monochromatic` | Monochromatic | 単色 | Monochromatisch | Monochromatique | 단색 | 单色 |
+| `compound` | Compound | 複合 | Zusammengesetzt | Composé | 복합 | 复合 |
+| `shades` | Shades | シェード | Schattierungen | Nuances | 명암 | 明暗 |
 
 ---
 
-## Vision Types (5 types)
+## Vision Types (5)
 
 **Source:** `locales/{locale}.json` → `visionTypes`
 
-| EN | JA | DE | FR | KO | ZH |
-|----|----|----|----|----|-----|
-| Normal Vision | 通常視覚 | Normales Sehen | Vision normale | 정상 시력 | 正常视觉 |
-| Deuteranopia | 第二色覚異常 | Deuteranopie | Deutéranopie | 제2색맹 | 绿色盲 |
-| Protanopia | 第一色覚異常 | Protanopie | Protanopie | 제1색맹 | 红色盲 |
-| Tritanopia | 第三色覚異常 | Tritanopie | Tritanopie | 제3색맹 | 蓝色盲 |
-| Achromatopsia | 全色覚異常 | Achromatopsie | Achromatopsie | 전색맹 | 全色盲 |
+Reproduced verbatim, parenthetical clarifiers included — the strings are what the accessibility
+cards render, and JA/ZH deliberately differ in how they gloss the condition.
+
+| Key | EN | JA | DE | FR | KO | ZH |
+|-----|----|----|----|----|----|----|
+| `normal` | Normal Vision | 正常視覚 | Normales Sehen | Vision normale | 정상 시력 | 正常视觉 |
+| `deuteranopia` | Deuteranopia (Red-Green Colorblindness) | 2型色覚（赤緑色盲） | Deuteranopie (Rot-Grün-Farbenblindheit) | Deutéranopie (Daltonisme rouge-vert) | 제2색맹 (적록색맹) | 绿色盲（红绿色盲） |
+| `protanopia` | Protanopia (Red-Green Colorblindness) | 1型色覚（赤緑色盲） | Protanopie (Rot-Grün-Farbenblindheit) | Protanopie (Daltonisme rouge-vert) | 제1색맹 (적록색맹) | 红色盲（红绿色盲） |
+| `tritanopia` | Tritanopia (Blue-Yellow Colorblindness) | 3型色覚（青黄色盲） | Tritanopie (Blau-Gelb-Farbenblindheit) | Tritanopie (Daltonisme bleu-jaune) | 제3색맹 (청황색맹) | 蓝色盲（蓝黄色盲） |
+| `achromatopsia` | Achromatopsia (Total Colorblindness) | 全色盲 | Achromatopsie (Totale Farbenblindheit) | Achromatopsie (Daltonisme total) | 전색맹 | 全色盲 |
+
+`visions` is a parallel 5-key section holding the short labels used where the parenthetical
+would not fit.
 
 ---
 
-## Jobs (21 combat jobs)
+## Other locale sections
 
-**Source:** `locales/{locale}.json` → `jobNames`
+Each locale file has a `locale` string plus fifteen sections. Those not tabled above:
 
-| EN | JA | DE | FR | KO | ZH |
-|----|----|----|----|----|-----|
-| Paladin | ナイト | Paladin | Paladin | 나이트 | 骑士 |
-| Warrior | 戦士 | Krieger | Guerrier | 전사 | 战士 |
-| Dark Knight | 暗黒騎士 | Dunkelritter | Chevalier noir | 암흑기사 | 暗黑骑士 |
-| Gunbreaker | ガンブレイカー | Revolverklinge | Pistosabreur | 건브레이커 | 绝枪战士 |
-| White Mage | 白魔道士 | Weißmagier | Mage blanc | 백마도사 | 白魔法师 |
-| Scholar | 学者 | Gelehrter | Érudit | 학자 | 学者 |
-| Astrologian | 占星術師 | Astrologe | Astromancien | 점성술사 | 占星术士 |
-| Sage | 賢者 | Weiser | Sage | 현자 | 贤者 |
-| Monk | モンク | Mönch | Moine | 몽크 | 武僧 |
-| Dragoon | 竜騎士 | Dragoon | Chevalier dragon | 용기사 | 龙骑士 |
-| Ninja | 忍者 | Ninja | Ninja | 닌자 | 忍者 |
-| Samurai | 侍 | Samurai | Samouraï | 사무라이 | 武士 |
-| Reaper | リーパー | Schnitter | Faucheur | 리퍼 | 钐镰客 |
-| Viper | ヴァイパー | Viper | Rôdeur vipère | 바이퍼 | 蝰蛇剑士 |
-| Bard | 吟遊詩人 | Barde | Barde | 음유시인 | 吟游诗人 |
-| Machinist | 機工士 | Maschinist | Machiniste | 기공사 | 机工士 |
-| Dancer | 踊り子 | Tänzer | Danseur | 무도가 | 舞者 |
-| Black Mage | 黒魔道士 | Schwarzmagier | Mage noir | 흑마도사 | 黑魔法师 |
-| Summoner | 召喚士 | Beschwörer | Invocateur | 소환사 | 召唤师 |
-| Red Mage | 赤魔道士 | Rotmagier | Mage rouge | 적마도사 | 赤魔法师 |
-| Pictomancer | ピクトマンサー | Piktomant | Pictomancien | 픽토맨서 | 绘灵法师 |
-| Blue Mage | 青魔道士 | Blaumagier | Mage bleu | 청마도사 | 青魔法师 |
+| Key | Entries | What it holds |
+|-----|---------|---------------|
+| `meta` | 3 | Build metadata — `version`, `generated` timestamp, `dyeCount` |
+| `labels` | 7 | Dye trait labels: `dye`, `dark`, `metallic`, `pastel`, `cosmic`, `cosmicExploration`, `cosmicFortunes` |
+| `visions` | 5 | Short vision-type labels (see above) |
+| `tools` | 6 | Tool display names: Harmony Explorer, Gradient Builder, Dye Mixer, Swatch Matcher, Dye Comparison, Accessibility Checker |
+| `sheets` | 9 | Character-creation colour-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin |
 
----
-
-## Grand Companies (3)
-
-**Source:** `locales/{locale}.json` → `grandCompanyNames`
-
-| EN | JA | DE | FR | KO | ZH |
-|----|----|----|----|----|-----|
-| The Maelstrom | 黒渦団 | Der Mahlstrom | Le Maelstrom | 흑와단 | 黑涡团 |
-| Order of the Twin Adder | 双蛇党 | Die Bruderschaft der Morgenviper | L'ordre des Deux Vipères | 쌍사당 | 双蛇党 |
-| Immortal Flames | 不滅隊 | Die Legion der Unsterblichen | Les Immortels | 불멸대 | 恒辉队 |
+There is **no** `jobNames` or `grandCompanyNames` section — job and Grand Company names are not
+part of this dataset, because nothing in the toolset renders them.
 
 ---
 
 ## Maintenance
 
-When Square Enix adds new dyes, jobs, or changes terminology:
+When Square Enix adds new dyes or changes terminology:
 
 1. Update `@xivdyetools/core` locale JSON files
 2. Run `pnpm turbo run build test --filter=@xivdyetools/core`

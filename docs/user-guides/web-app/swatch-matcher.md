@@ -88,7 +88,33 @@ Click a slot card to make it the selection: the sentence and excerpt follow it, 
 
 ### DYES ON THIS GLAMOUR
 
-Below the matches, the dyes your character's gear is wearing — both dye channels per piece — appear as chips, with a count of channels and distinct dyes. Undyed pieces are noted, not scored. Press **Make a palette** to turn them into a preset: toggle chips off to drop dyes, give it a name, and either **Save to this device** or **Submit to Community**. Both buttons stay disabled until you have between **3 and 6** dyes.
+Below the matches, the dyes your character's gear is wearing — both dye channels per piece — appear
+as chips, with a count of channels and distinct dyes.
+
+**Two views.** A **Pieces / Dyes** toggle switches how the section is laid out:
+
+- **Pieces** lists the gear slot by slot — Weapon, Off hand, Head, Body, Hands, Legs, Feet,
+  Earrings, Necklace, Bracelets, Left ring, Right ring — with the piece's name and whichever dyes
+  are on its two channels. The two chips are positional: the first is channel 1, the second
+  channel 2. Accessories are never dyeable, so they carry no chips.
+- **Dyes** collapses the same information into the distinct dyes used, so you can see the palette
+  rather than the outfit.
+
+**Show all.** By default only dyed pieces are listed. Turn on **Show all** to see every piece worn,
+undyed ones included, each marked **Undyed**. If nothing on the glamour is dyed you get a note
+saying so and pointing at that toggle.
+
+**Facewear.** If your character is wearing facewear it gets its own row below the gear, labelled
+**Facewear**. Facewear colours are not dyes and are not matched against the dye database, so the row
+names the colour rather than scoring it — and if the file does not identify one, it says the colour
+is unknown.
+
+If item names cannot be looked up, the section falls back to slots only and says so; the dyes are
+read locally from your file and are never affected.
+
+Press **Make a palette** to turn the dyes into a preset: toggle chips off to drop dyes, give it a
+name, and either **Save to this device** or **Submit to Community**. Both buttons stay disabled
+until you have between **3 and 6** dyes.
 
 ---
 
@@ -138,7 +164,7 @@ Turn on **Market Board** in the settings column to see current prices on the mat
 
 ## Understanding Delta E
 
-Distances are ΔE2000 by default — the industry-standard measure of how different two colours look. You can switch the **Matching Algorithm** to ΔEOK, ΔE76, Weighted RGB (redmean), RGB or a 0–100 percentage; the unit printed beside **CLOSEST DYES** follows your choice.
+Distances are ΔE2000 by default — the industry-standard measure of how different two colours look. You can switch the **Matching Algorithm** to ΔEOK2, ΔE76, Weighted RGB (redmean), RGB or a 0–100 percentage; the unit printed beside **CLOSEST DYES** follows your choice.
 
 | ΔE2000 | Meaning |
 |--------|---------|

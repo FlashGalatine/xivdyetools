@@ -208,6 +208,21 @@ jobs:
       - name: Dead-code reachability
         run: pnpm dead-code:check
 
+      # The root README and docs/versions.md each carry a hand-maintained table of
+      # every workspace's version. Until 2026-09-05 nothing compared them with
+      # package.json and every row was behind. Repo-wide by nature, like the
+      # gate above: a version bump in one package invalidates a row in a file no
+      # turbo filter selects. Costs well under a second.
+      - name: Docs version tables
+        run: pnpm docs:check-versions
+
+      # Same reasoning: a rename in one workspace can strand a link in a doc no
+      # turbo filter selects. Living tier only (docs/ minus audits/ and
+      # historical/, plus the root and per-workspace README/CLAUDE files) — the
+      # frozen archive describes the tree as it was and is left alone.
+      - name: Docs relative links
+        run: pnpm docs:check-links
+
       # --concurrency=3: when a change touches every package (docs sweeps,
       # formatting passes), the affected filter selects all ~34 test tasks and
       # turbo's default concurrency of 10 runs that many vitest processes --

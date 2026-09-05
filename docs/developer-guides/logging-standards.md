@@ -89,7 +89,7 @@ this.logger.warn('Value clamped to valid range', {
 Services should accept an optional logger in their constructor and fall back to `NoOpLogger`:
 
 ```typescript
-import { NoOpLogger, type Logger } from '@xivdyetools/types';
+import { NoOpLogger, type Logger } from '@xivdyetools/logger/library';
 
 class MyService {
   private readonly logger: Logger;
@@ -102,18 +102,26 @@ class MyService {
 
 ## Current Package Status
 
+`NoOpLogger`, `ConsoleLogger` and `createLibraryLogger()` all live in `@xivdyetools/logger`
+(the `/library` preset); the `Logger` interface is defined there too and re-exported from the
+preset. `@xivdyetools/types` carries no logger symbols.
+
+## Current Package Status
+
 | Package | Logging Level | Notes |
 |---------|---------------|-------|
-| xivdyetools-core | Varies | DyeDatabase: Extensive, ColorConverter: Errors only |
-| xivdyetools-logger | N/A | Is the logger itself |
-| xivdyetools-types | N/A | Type definitions only |
-| xivdyetools-test-utils | Minimal | Test utilities don't need extensive logging |
+| `@xivdyetools/core` | Varies | DyeDatabase: extensive, ColorConverter: errors only |
+| `@xivdyetools/logger` | N/A | Is the logger itself |
+| `@xivdyetools/types` | N/A | Type definitions only |
+| `@xivdyetools/test-utils` | Minimal | Test utilities don't need extensive logging |
 
 ## Future Work
 
-- Standardize logging across all services in xivdyetools-core
+- ~~Consider log correlation IDs for request tracing~~ **Done.** Every Cloudflare Worker mounts
+  `@xivdyetools/worker-kit`'s request-ID and structured-logger middleware, so each request
+  carries an id that every log line for it repeats.
+- Standardize logging across all services in `@xivdyetools/core`
 - Add structured logging for performance metrics
-- Consider log correlation IDs for request tracing
 
 ---
 

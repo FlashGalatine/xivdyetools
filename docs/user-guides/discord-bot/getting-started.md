@@ -14,10 +14,27 @@
 
 ## Adding the Bot
 
-1. Click the **invite link** (available on the web app)
-2. Select your Discord server
+1. Get the **invite link**. It is posted in the [community Discord](https://discord.gg/5VUSKTZCe5),
+   and `/about` in any server that already has the bot prints it too. (The web app does not carry
+   the invite link.)
+2. Open the link and select your Discord server
 3. Approve the required permissions
 4. The bot is now ready to use!
+
+---
+
+## The "what changed in 5.0" notice
+
+The first time you run a command, the bot may send you one extra private message summarising what
+changed in the 5.0 redesign. It is a one-off:
+
+- Only you can see it, and it appears **once**.
+- If you already had bot preferences saved before 5.0, you never see it at all — the notice is for
+  people meeting the bot fresh.
+- To remember that it has shown you the notice, the bot stores a single flag against your Discord
+  user ID. That flag expires by itself after 180 days.
+
+Nothing else happens, and there is nothing to dismiss.
 
 ---
 
@@ -124,15 +141,18 @@ When you use `/extractor color`, you'll see a colour-sheet card listing the near
 
 ### Delta E Scale
 
-Distances are ΔE2000 by default (`matching:ciede2000`); other methods use their own calibrated bands.
+Distances are ΔE2000 by default (`matching:ciede2000`). Match results are labelled with four bands:
 
-| Value | Meaning |
-|-------|---------|
-| 0-1 | Imperceptible |
-| 1-2 | Barely noticeable |
-| 2-10 | Noticeable at a glance |
-| 10-50 | Colors are similar |
-| 50+ | Colors are different |
+| ΔE2000 | Band | Meaning |
+|--------|------|---------|
+| under 5 | SAME | You would not tell them apart |
+| 5 to 10 | CLOSE | A very good stand-in |
+| 10 to 20 | NEAR | In the same family, but visibly different |
+| 20 and up | FAR | A different colour |
+
+Every other matching method has its own calibrated cut-offs on its own scale, so never compare a
+number from one method against a number from another — compare the band instead. See the
+[Glossary](../../reference/glossary.md) for the full explanation.
 
 ---
 
@@ -217,9 +237,19 @@ Available topics:
 
 ### Rate Limits
 
-To prevent abuse, commands have per-user rate limits:
-- Most commands: 15 per minute (`/dye`: 20; `/accessibility` and `/budget`: 10)
-- `/about`, `/manual`, `/stats`, `/changelog` are not limited
+To prevent abuse, every command has a per-user limit, counted over a rolling minute. Nothing is
+unlimited:
+
+| Per minute | Commands |
+|------------|----------|
+| 5 | `/extractor image` |
+| 10 | `/accessibility` (and `/a11y`), `/budget`, `/preset` |
+| 15 | `/extractor color`, `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/stats` |
+| 20 | `/dye`, `/preferences` |
+| 30 | `/about`, `/manual`, `/changelog` |
+
+`/a11y` and `/accessibility` share one bucket, so using the short name does not give you extra runs.
+Autocomplete has its own generous allowance and simply stops suggesting if you outrun it.
 
 ### Server Admins
 
@@ -241,4 +271,4 @@ To prevent abuse, commands have per-user rate limits:
 
 - Use `/manual` for in-bot help
 - Check the [FAQ](faq.md)
-- Report issues on [GitHub](https://github.com/your-repo/issues)
+- Report issues on [GitHub](https://github.com/FlashGalatine/xivdyetools/issues)

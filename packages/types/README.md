@@ -111,11 +111,11 @@ const dye: Dye = {
   stainID: 1,  // Game's internal stain table ID — the canonical key
   id: 5729,    // always equals itemID after core's normalisation
   name: 'Snow White',
-  hex: '#FFFFFF',
-  rgb: { r: 255, g: 255, b: 255 },
-  hsv: { h: 0, s: 0, v: 100 },
+  hex: '#e4dfd0',
+  rgb: { r: 228, g: 223, b: 208 },
+  hsv: { h: 45, s: 9, v: 89 },
   category: 'Neutral',
-  acquisition: 'NPC',
+  acquisition: 'Dye Vendor',
   cost: 216,
   currency: 'Gil',
   isMetallic: false,
@@ -204,27 +204,31 @@ catch (error) {
 }
 ```
 
-### Utility Types
+### Runtime Helpers
+
+Besides the branded-type constructors, the barrel ships three runtime helpers.
+There is **no** `Result` / `isOk` / `isErr` / `Nullable` in this package — error
+handling goes through `AppError` (above).
 
 ```typescript
-import { Result, isOk, isErr, Nullable } from '@xivdyetools/types';
+import {
+  classifyMatchDistance,
+  MATCH_QUALITY_TIERS,
+  isValidSnowflake,
+} from '@xivdyetools/types';
 
-// Result type for operations that might fail
-function findDye(id: number): Result<Dye> {
-  const dye = database.find(d => d.id === id);
-  if (dye) {
-    return { ok: true, value: dye };
-  }
-  return { ok: false, error: new AppError(ErrorCode.DYE_NOT_FOUND, `Dye ${id} not found`) };
-}
+// Classify an RGB-space colour distance into a shared quality tier.
+// Boundaries are INCLUSIVE: exactly 10 → 'excellent', exactly 25 → 'good'.
+classifyMatchDistance(0);    // 'perfect'
+classifyMatchDistance(10);   // 'excellent'
+classifyMatchDistance(37.5); // 'fair'
 
-// Type guards
-const result = findDye(1);
-if (isOk(result)) {
-  console.log(result.value.name); // TypeScript knows this is Dye
-} else {
-  console.error(result.error.message); // TypeScript knows this is AppError
-}
+// The ordered tier table the classifier walks (key + inclusive maxDistance).
+MATCH_QUALITY_TIERS.map((t) => t.key);
+// ['perfect', 'excellent', 'good', 'fair', 'approximate']
+
+// Discord snowflake shape check (17-20 digits)
+isValidSnowflake('123456789012345678'); // true
 ```
 
 ## Migration Guide
@@ -266,14 +270,14 @@ import { CommunityPreset, PresetFilters, ModerationResult } from '@xivdyetools/t
 | Module | Description |
 |--------|-------------|
 | `@xivdyetools/types` | All types (barrel export) |
-| `@xivdyetools/types/color` | RGB, HSV, LAB, OKLAB, OKLCH, LCH, HSL, HexColor, branded types |
+| `@xivdyetools/types/color` | RGB, HSV, LAB, OKLAB, OKLCH, LCH, HSL, CMYK, HexColor, branded types, `VisionType` / `Matrix3x3` / `ColorblindMatrices`, match-quality tiers |
 | `@xivdyetools/types/dye` | Dye, LocalizedDye, DyeWithDistance, DyeTypeFilters |
 | `@xivdyetools/types/character` | CharacterColor, SubRace, RACE_SUBRACES |
-| `@xivdyetools/types/preset` | Preset, community, filters, responses |
+| `@xivdyetools/types/preset` | `CommunityPreset`, `PresetPalette` / `PresetData`, filters, responses |
 | `@xivdyetools/types/auth` | OAuth, JWT, Discord, XIVAuth |
 | `@xivdyetools/types/api` | APIResponse, CachedData, moderation |
 | `@xivdyetools/types/error` | AppError, ErrorCode enum |
-| `@xivdyetools/types/localization` | LocaleCode, LocaleData |
+| `@xivdyetools/types/localization` | `LocaleCode`, `LocaleData`, `TranslationKey`, `HarmonyTypeKey`, `ColorWheelId`, `SheetKey`, `RaceKey`, `ClanKey`, `LocalePreference` |
 
 ### Helper Functions
 
@@ -283,8 +287,8 @@ import { CommunityPreset, PresetFilters, ModerationResult } from '@xivdyetools/t
 | `createDyeId(id)` | Validate a stainID — `1-254` (the loader window; not itemIDs like 5729, not the retired synthetic Facewear negatives); returns `null` otherwise |
 | `createHue(hue)` | Normalize hue to 0-360 |
 | `createSaturation(sat)` | Clamp saturation to 0-100 |
-| `isOk(result)` | Type guard for successful Result |
-| `isErr(result)` | Type guard for error Result |
+| `classifyMatchDistance(distance)` | Classify an RGB-space distance into a `MatchQualityKey` (inclusive bounds) |
+| `isValidSnowflake(id)` | Format check for a Discord snowflake (17-20 digits) |
 
 ## Connect With Me
 

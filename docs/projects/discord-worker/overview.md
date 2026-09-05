@@ -1,6 +1,6 @@
 # Discord Worker Overview
 
-**xivdyetools-discord-worker** v5.0.0 - Serverless Discord bot for FFXIV dye tools
+**xivdyetools-discord-worker** — serverless Discord bot for FFXIV dye tools. Current version: see [versions.md](../../versions.md).
 
 ---
 
@@ -45,6 +45,9 @@ See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../operations/DEPLOY_ENVIRONME
 Discord → POST / → Ed25519 Verify → Hono Router → Handler → Response
 ```
 
+Signature verification is `verifyDiscordRequest()` from `@xivdyetools/auth`; this worker keeps no
+crypto of its own.
+
 Unlike traditional Gateway bots:
 - **No persistent WebSocket** - Receives HTTP POST for each interaction
 - **Serverless** - No server to maintain
@@ -57,7 +60,8 @@ Unlike traditional Gateway bots:
 src/
 ├── commands/
 │   ├── registry.ts       # COMMAND_REGISTRY — the roster of record (17 registrations)
-│   └── schemas.ts        # Slash-command schemas published by register-commands
+│   ├── schemas.ts        # Slash-command schemas published by register-commands
+│   └── localize.ts       # Localized command names/descriptions for the schemas
 ├── handlers/
 │   ├── commands/         # Slash command handlers
 │   │   ├── harmony.ts
@@ -82,9 +86,12 @@ src/
 │   ├── image-client.ts   # IMAGE_WORKER service-binding client (POST /extract)
 │   └── preset-api.ts     # Presets API client
 └── utils/
-    ├── verify.ts         # Ed25519 verification
+    ├── github-verify.ts  # HMAC-SHA256 verification for the GitHub webhook
     └── response.ts       # Discord response builders
 ```
+
+Ed25519 verification and `timingSafeEqual` are imported from `@xivdyetools/auth` — there is no
+local `utils/verify.ts`.
 
 The v4 `services/user-storage.ts` (favorites/collections) and `services/image/*` (Photon) are deleted in 5.0.
 
@@ -132,7 +139,7 @@ The roster of record is `src/commands/registry.ts` — 17 registrations, 16 dist
 | `/preset list` | Browse community presets |
 | `/preset show` | View preset details |
 | `/preset random` | Get a random approved preset |
-| `/preset submit` / `/preset edit` | Submit / edit a preset (see the known stainID issue in [Commands](commands.md#preset-submit)) |
+| `/preset submit` / `/preset edit` | Submit / edit a preset (3–6 stainID-keyed dyes — see [Commands](commands.md#preset-submit)) |
 | `/preset vote` | Toggle a vote on a preset |
 | `/preset favorite` | Add / remove / list favourite presets |
 
@@ -170,13 +177,14 @@ await sendFollowup(interaction, env, {
 ### Rate Limiting
 
 Per-user, per-command limits via `@xivdyetools/worker-kit/rate-limiter` (`DISCORD_COMMAND_LIMITS`, keyed by top-level command name):
-- `/dye`: 20/minute; `/accessibility`, `/budget`: 10/minute; `/about`, `/manual`, `/changelog`: 30/minute; everything else: 15/minute
+- `/dye`, `/preferences`: 20/minute; `/accessibility` (and its alias `/a11y`), `/budget`, `/preset`: 10/minute; `/about`, `/manual`, `/changelog`: 30/minute; `/extractor image`: 5/minute; everything else, `/stats` included: 15/minute
+- `/a11y` is canonicalised to `accessibility` before lookup, so the alias shares one bucket; `/extractor image` is tiered apart from `/extractor color` by an `extractor:image` key; `/changelog`'s 30/minute comes from this worker's own `LOCAL_COMMAND_LIMITS`
 - No command is exempt (`/stats` since FINDING-033, the three utility commands since FINDING-020)
 - Backend: the native `[[ratelimits]]` bindings (`RL_5`…`RL_70`, one per distinct per-minute limit), with Cloudflare KV as the fallback only when no tier is bound
 
 ### User Storage
 
-KV holds per-user preferences (`prefs:v1:*`), preset favourites, the 15-minute button context (`ctx:v2:*`) and rate-limit counters. The v4 favorites/collections store is gone; `scripts/cleanup-v4-kv.ts` lists its orphaned keys for a user-run delete.
+KV holds per-user preferences (`prefs:v1:*`), preset favourites, analytics counters, the announced-version memo (`announced:v:<version>`) and the rate-limit fallback counters. Button state travels in the component's own `custom_id`; the KV-backed button-context store was removed in 2026-08-18 (nothing consumed it). The v4 favorites/collections store is gone and its orphaned keys were swept once against production on 2026-08-29.
 
 ---
 
@@ -184,7 +192,7 @@ KV holds per-user preferences (`prefs:v1:*`), preset favourites, the 15-minute b
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace | Rate limits, preferences, preset favourites, button context, stats |
+| `KV` | KV Namespace | Rate-limit fallback, preferences, preset favourites, stats counters, announced-version memo |
 | `ANALYTICS` | Analytics Engine | Command tracking |
 | `PRESETS_API` | Service Binding | `xivdyetools-presets-api` |
 | `UNIVERSALIS_PROXY` | Service Binding | `xivdyetools-api-worker` (absorbed the universalis-proxy) — market prices |
@@ -193,6 +201,18 @@ KV holds per-user preferences (`prefs:v1:*`), preset favourites, the 15-minute b
 
 ---
 
+## Vars (`wrangler.toml`)
+
+`vars` are **not** inheritable, so all four are declared in the top-level block *and* under
+`[env.production]`:
+
+| Var | Purpose |
+|-----|---------|
+| `ENVIRONMENT` | `"development"` on the beta bot, `"production"` on the live one. Only `validateEnv` reads it — in production it makes the six `RL_*` bindings mandatory (FINDING-013) |
+| `DISCORD_CLIENT_ID` | The application ID. Beta and production are **different Discord applications**, because an application has exactly one Interactions Endpoint URL |
+| `PRESETS_API_URL` | HTTP fallback for local dev when the `PRESETS_API` service binding is absent |
+| `ANNOUNCEMENT_CHANNEL_ID` | Release-announcement channel for the GitHub webhook — deliberately different per environment |
+
 ## Secrets
 
 Required:
@@ -200,10 +220,43 @@ Required:
 - `DISCORD_PUBLIC_KEY` - Ed25519 verification key
 
 Optional:
-- `BOT_API_SECRET` - Presets API authentication
+- `BOT_API_SECRET` / `BOT_SIGNING_SECRET` - Presets API authentication (`BOT_SIGNING_SECRET` min. 32 characters)
+- `INTERNAL_WEBHOOK_SECRET` - Auth for inbound `/webhooks/preset-submission`
+- `GITHUB_WEBHOOK_SECRET` - HMAC key for the GitHub push webhook
 - `MODERATOR_IDS` - Comma-separated user IDs
+- `MODERATION_CHANNEL_ID` - Channel for pending presets
 - `MODERATION_BOT_TOKEN` - Moderation bot's token (component clicks route to the posting application)
+- `SUBMISSION_LOG_CHANNEL_ID` - Audit log channel for auto-approved presets
 - `STATS_AUTHORIZED_USERS` - Users who can view the admin `/stats` subcommands
+
+---
+
+## Deployment
+
+The shared mechanics — CI workflows, path filters, the `deploy` / `deploy:production` convention,
+the 3,072 KiB gzip ceiling — live in [Deployment](../../developer-guides/deployment.md) and
+[Deploy Environments](../../operations/DEPLOY_ENVIRONMENTS.md). What is specific to this worker:
+
+**Two environments, two Discord applications.** The top-level `wrangler.toml` block is
+`xivdyetools-discord-worker-dev` — the **beta bot**, with its own Discord application, its own KV
+namespace and its own Analytics Engine dataset, `workers_dev = true` and no routes. `[env.production]`
+is `xivdyetools-discord-worker` on the `bot.*` custom domains. `routes` and `workers_dev` are
+inheritable keys, so both are declared explicitly in both blocks — leaving `routes` at the top level
+would attach the production custom domains to the beta Worker. The **service bindings are shared**
+between the two on purpose, so beta `/preset` renders real data; there is no D1 binding on this
+worker.
+
+**Deploy `xivdyetools-image-worker` first** so the `IMAGE_WORKER` binding resolves.
+
+**Slash-command registration is automatic in CI.** `deploy-discord-worker.yml` runs
+`wrangler deploy --env production` *and then* `register-commands`, so the roster published to
+Discord is whatever is on `main`; a manual run against the production token is only needed for an
+out-of-band schema push. With `BETA_DISCORD_TOKEN` / `BETA_DISCORD_GUILD_ID` set, the beta workflow
+registers **guild-scoped** (instant propagation).
+
+**Two `[[rules]]` shape the bundle.** `**/*.ttf` is bundled as `Data` (the CJK subset fonts), and
+`**/*.md` as `Text` — `/changelog` imports `apps/discord-worker/CHANGELOG-laymans.md` as a string,
+so **editing that file is a deploy**.
 
 ---
 
@@ -212,4 +265,4 @@ Optional:
 - [Commands](commands.md) - Full command reference
 - [Interactions](interactions.md) - Button, modal, autocomplete handlers
 - [Rendering](rendering.md) - SVG generation and PNG output
-- [Deployment](deployment.md) - Deployment procedures
+- [Deployment](../../developer-guides/deployment.md) - The shared deployment guide

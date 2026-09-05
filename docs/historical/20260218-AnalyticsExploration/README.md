@@ -1,5 +1,7 @@
 # Analytics Brainstorming
 
+> **Archived 2026-09-05.** The decision landed on Analytics Engine via api-worker, opt-in and identifier-free (PRs #149 and #150, 2026-08-29); see `docs/superpowers/specs/2026-08-29-*-analytics-design.md` and `docs/operations/ANALYTICS_QUERIES.md`. Moved from `docs/brainstorming/analytics/`. Links inside this folder that pointed at the pre-monorepo layout are left as they were.
+
 **Status**: Complete
 **Date**: January 15, 2026
 **Context**: Privacy-first analytics strategy for xivdyetools-web-app hosted on Cloudflare

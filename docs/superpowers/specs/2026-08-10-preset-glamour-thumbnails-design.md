@@ -1,7 +1,7 @@
 # Preset Glamour Shots — Design
 
 **Date:** 2026-08-10
-**Status:** Approved (design); not implemented
+**Status:** implemented — presets-api 2.0.0 (migration 0009, R2 previews, image-worker `POST /thumbnail`); plan `docs/superpowers/plans/2026-08-10-preset-preview-images.md`
 **Supersedes:** the thumbnail paragraph in `docs/research/monorepo-2.0/8a-gallery-port-spec.md`
 
 ## The model

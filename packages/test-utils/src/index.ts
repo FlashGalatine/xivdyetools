@@ -3,7 +3,7 @@
  *
  * Shared testing utilities for the xivdyetools ecosystem.
  * Provides mocks for Cloudflare Workers bindings, authentication helpers,
- * domain object factories, and DOM utilities.
+ * and domain object factories (the former `/dom` subpath was removed 2026-08-18).
  *
  * @packageDocumentation
  */

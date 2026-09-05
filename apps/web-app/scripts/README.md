@@ -99,6 +99,7 @@ import graph. Config and its blind spots are documented in `knip.jsonc`; the
 | `check-beta-build.js` | beta deploy workflow | asserts `dist/` really is a beta build |
 | `generate-icons.mjs` | manual, one-shot | regenerates `public/assets/icons/*.png` from `sparkles.svg` (only the sizes `index.html`/`manifest.json` link) |
 | `generate-beta-icons.mjs` | manual, one-shot | regenerates `public/assets/icons/beta/` from `scripts/assets/bot-avatar-beta-1024.png` |
+| `generate-api-docs-icons.mjs` | manual, one-shot | regenerates the developer-docs icon set (favicon, 16/32 px PNGs, 180 px touch icon) into `apps/api-worker/docs/public/icons/` from that directory's `docs-icon.svg`. Lives here because this package already owns `sharp`; the output is committed and is **not** rebuilt in CI |
 | `smoke-test-pages.js` | both deploy workflows | post-deploy assertions (below) |
 | `i18n-parity.mjs` | `npm run validate:i18n` | cross-locale parity: duplicates, missing/extra, placeholders, empties, identical-to-EN |
 | `reorder-locales.mjs` | manual / after adding keys | rewrites de/fr/ja/ko/zh into `en.json` key order (values untouched) |

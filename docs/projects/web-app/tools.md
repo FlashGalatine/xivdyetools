@@ -1,4 +1,4 @@
-# Web App Tools (v5.0.0)
+# Web App Tools
 
 The XIV Dye Tools web app ships nine tools. Each has its own route, a `ToolId`, a config shape in `ConfigController`, and (for eight of the nine) a share-URL grammar. In 5.0 every tool was re-ported to its confirmed design spec (`docs/research/monorepo-2.0/*-port-spec.md`) on the console shell described in [Components](components.md). This page is the developer reference: which files, what the port did, the config shape, the share params, matching-method handling, and the routes. Ground truth is the code under `apps/web-app/src/`.
 
@@ -12,9 +12,9 @@ The XIV Dye Tools web app ships nine tools. Each has its own route, a `ToolId`, 
 
 **Config.** Each tool's shape is an interface in `src/shared/tool-config-types.ts`, keyed by `ToolId` in `ToolConfigMap` (plus `global`, `market`, `advanced`). `ConfigController.getInstance().getConfig('harmony')` / `setConfig()` / `subscribe()`; persisted per key under `xivdyetools_v4_config_<key>` and merged over `DEFAULT_CONFIGS` on load. Every tool config carries `displayOptions: DisplayOptionsConfig` (result-card rows: `showHex/Rgb/Hsv/Lab/Cmyk`, `showPrice`, `showAcquisition`, 5.0 `showHue/showStain/showSpectrum`; `showDeltaE` is deprecated — the ΔE2000 verdict is structural) and most carry `dyeFilters: DyeFiltersConfig` (`Required<DyeTypeFilters>` + the web-only `excludeCoffers`).
 
-**Matching method.** One vocabulary from `@xivdyetools/core` — `ciede2000` (default) · `oklab` · `cie76` · `redmean` · `rgb` · `distinguish`. The config sidebar's "Matching Algorithm" select lists them as `ΔE2000 - Default`, `ΔEOK - Perceptual`, `ΔE76 - Fast`, `REDMEAN - Weighted RGB`, `RGB DIST - Basic`, `DISTINGUISH % - Percentage` (`config.matching*` keys). Retired 4.x values (`hyab`, `oklch-weighted`, swatch's `euclidean`) are normalised through core's `normalizeMatchingMethod` in three places: `ConfigController.loadFromStorage()` (persisted configs), each tool's init (`normalizeMatchingMethod(config.matchingMethod ?? 'ciede2000')`), and the `algo` share param. Tools dispatch distance through `ColorService.getDistanceForMethod`; the result card's verdict is **always ΔE2000** regardless of the ordering method. `matchingMethod` exists on harmony, extractor, gradient, mixer, budget and swatch; comparison and accessibility have none (comparison shows all six as readouts).
+**Matching method.** One vocabulary from `@xivdyetools/core` — `ciede2000` (default) · `oklab` · `cie76` · `redmean` · `rgb` · `distinguish`. The config sidebar's "Matching Algorithm" select prefixes each with its symbol — `ΔE2000`, `ΔEOK2`, `ΔE76`, `REDMEAN`, `RGB DIST`, `DISTINGUISH %` — over localized descriptions (`config.matching*` keys). Retired 4.x values (`hyab`, `oklch-weighted`, swatch's `euclidean`) are normalised through core's `normalizeMatchingMethod` in three places: `ConfigController.loadFromStorage()` (persisted configs), each tool's init (`normalizeMatchingMethod(config.matchingMethod ?? 'ciede2000')`), and the `algo` share param. Tools dispatch distance through `ColorService.getDistanceForMethod`; the result card's verdict is **always ΔE2000** regardless of the ordering method. `matchingMethod` exists on harmony, extractor, gradient, mixer, budget and swatch; comparison and accessibility have none (comparison shows all six as readouts).
 
-**Share URLs** (`src/services/share-service.ts`, `v4/share-button.ts`; Shift+S shares the active tool). `ShareService.generateUrl({ tool, params })` builds `https://xivdyetools.app/<tool>/?…&v=1`. Grammar since 5.0: every dye-class param (`dye`, `dyes`, `start`/`end`, `dyeA`/`dyeB`) is a **stainID (1–254)**; `ShareService.resolveSharedDye()` rejects legacy itemIDs (≥ 5729, a disjoint range) and unknown values *loudly* — toast `share.legacyLink` / `share.invalidDye`, never a fallback dye. Bare colours travel as `hex`-class params (`RRGGBB`, `#` optional; `ShareService.parseSharedHex()` → `share.invalidHex`), mutually exclusive with the slot's dye param. Booleans are `1`/`0`, arrays comma-separated; `ShareService.parseUrl()` coerces numbers/booleans/arrays on read. The `ShareParams` interfaces are the declared grammar; the per-tool tables below list what each tool actually reads/writes today.
+**Share URLs** (`src/services/share-service.ts`, `v4/share-button.ts`; Shift+S shares the active tool). `ShareService.generateUrl({ tool, params })` builds `https://xivdyetools.app/<tool>/?…&v=1`. Grammar since 5.0: every dye-class param (`dye`, `dyes`, `start`/`end`, `dyeA`/`dyeB`) is a **stainID (1–254)**; `ShareService.resolveSharedDye()` rejects legacy itemIDs (≥ 5729, a disjoint range) and unknown values *loudly* — toast `share.legacyLink` / `share.invalidDye`, never a fallback dye. Bare colours travel as `hex`-class params (`RRGGBB`, `#` optional; `ShareService.parseSharedHex()` → `share.invalidHex`), mutually exclusive with the slot's dye param. Booleans are `1`/`0`, arrays comma-separated; `ShareService.parseUrl()` coerces numbers/booleans/arrays on read. Every generated link also carries `lang=<locale>` when the sharer's locale is not English (og-worker resolves the unfurl's language from that param and nothing else; the SPA ignores it), and `v=1`. The `ShareParams` interfaces are the declared grammar; the per-tool tables below list what each tool actually reads/writes today.
 
 **Result cards, export, saving.** Matches render as `<v4-result-card>` (5B ticket, see Components). Extractor, Gradient, Comparison and Mixer open the shared export sheet (`components/export-sheet.ts` — CSS custom properties / SCSS / JSON / HEX / Tailwind `@theme`). "Save" actions write `CollectionService` records with a `kind`: `palette` (mixer "Save mix"), `swap` (budget "Save swap"), `character` (swatch "Save character colours"). Every stored dye ref is a stainID.
 
@@ -22,29 +22,34 @@ The XIV Dye Tools web app ships nine tools. Each has its own route, a `ToolId`, 
 
 ## 1. Harmony Explorer — 1A dial
 
-**Route:** `/harmony` · **ToolId:** `harmony` · **Files:** `src/components/harmony-tool.ts` (`HarmonyTool`), `v4/v4-color-wheel.ts` (`<v4-color-wheel>`), `harmony-result-panel.ts`, `harmony-type.ts`, `color-wheel-display.ts`, `services/harmony-generator.ts` (`HARMONY_OFFSETS`, `findHarmonyDyes`, `findClosestDyesToHue`). Spec: `1a-dial-port-spec.md`.
+**Route:** `/harmony` · **ToolId:** `harmony` · **Files:** `src/components/harmony-tool.ts` (`HarmonyTool`), `components/v4/v4-color-wheel.ts` (`<v4-color-wheel>`), `services/harmony-generator.ts`, `shared/harmony-icons.ts`. Spec: `1a-dial-port-spec.md`.
+
+`services/harmony-generator.ts` is **UI vocabulary only** — it exports `HarmonyTypeInfo`, `HARMONY_TYPE_IDS` and `getHarmonyTypes()` (the ids the picker offers, their icons and localized names). Slot **selection** is core's `generateHarmonySlots`, and `HARMONY_OFFSETS` is imported from core by `v4-color-wheel.ts`: until 2026-09-03 the web app, the bot and the OG card each rotated hue their own way and disagreed on most base dyes. The tool renders its result panel and type rail itself; there is no `harmony-result-panel.ts`, `harmony-type.ts` or `color-wheel-display.ts`.
 
 **What 5.0 shipped.** The hero wheel is the control: 42 px tappable slot pucks (tap jumps the base to the nearest dye), a 114 px hub button that names the base and opens the palette drawer (`open-palette-drawer` event), the wheel mirroring the result grid (dedup + user swaps). An icon rail of every harmony type sits over the wheel (single scrolling row with a first-run `harmony.railSwipeHint` "SWIPE FOR MORE" below 768 px) and stays in sync with the sidebar through `ConfigController` (two-way — the sidebar subscribes to `harmony`). Ten harmony types: complementary, analogous, triadic, split-complementary, tetradic (a rectangle now), **inverted-tetradic** (new, offsets 120/180/300), square, monochromatic, compound, shades — the last three finally draw nodes. Each result card carries **companion alternates** as 22 px swatch dots with one-tap slot swap (`HarmonyConfig.companionDyesCount`, 1–5 slider "Additional Dyes per Harmony Color"). Custom base colours are accepted (drawer's Custom Color). One dismissible market-failure strip replaces the per-card dash. The 4.x `PaletteExporter` and the orphaned left-panel companion slider are gone.
 
-**Config (`HarmonyConfig`):** `harmonyType`, `strictMatching` (perceptual ΔE matching instead of hue-based), `matchingMethod` (default `ciede2000`), `preventDuplicates` (default on), `companionDyesCount`, `displayOptions`, `dyeFilters` (+ deprecated `showHex/Rgb/Hsv/Lab` migration fields).
+**Colour wheels.** The harmony angles are measured on a wheel the user picks, not always on RGB hue. Five ids (core's `COLOR_WHEEL_IDS`): `rgb` (the default, `DEFAULT_COLOR_WHEEL`), `ryb` (the artist's wheel), `munsell` (JIS), `oklch-hue` (perceptual spacing) and `oklch-lightness` (keeps brightness). The setting is `HarmonyConfig.wheel: ColorWheelId`, persisted with the rest of the harmony config; the control is a **Colour wheel** select in the config sidebar (`v4/config-sidebar.ts`) that renders `COLOR_WHEEL_IDS` with `LanguageService.getColorWheelName(id)`, a per-wheel description line and, for Munsell, a trademark note. Unknown values are folded to `rgb` by core's one normaliser (`normalizeColorWheelId` / `parseColorWheelId`). Changing the wheel **clears the tool's slot swaps** — a swap is fixed to a slot index, and the same slot index is a different target hue on a different wheel, so a swap carried across would land on a colour it was never chosen for (the same reason a harmony-type change clears them). The ring the `<v4-color-wheel>` draws comes from `getColorWheel(wheel).ringStops(72)`. The wheel is written into every share link **unconditionally** — see below. The bot's `/harmony wheel:` option takes the same five ids.
+
+**Config (`HarmonyConfig`):** `harmonyType` (default `complementary`), `wheel` (`ColorWheelId`, default `rgb`), `strictMatching` (perceptual ΔE matching instead of hue-based), `matchingMethod` (default `ciede2000`), `preventDuplicates` (default on), `companionDyesCount`, `displayOptions`, `dyeFilters`.
 
 **Share params** (read via `URLSearchParams`, written by `getShareParams()`):
 
 | Param | Meaning |
 |-------|---------|
-| `dye` | base stainID (`resolveSharedDye`) |
+| `dye` | base stainID (`resolveSharedDye`); `dyeId` is accepted as the pre-5.0 alias on read |
 | `hex` | bare-colour base (`RRGGBB`), used only when `dye` is absent → `selectCustomColor()` |
 | `harmony` | harmony type id (validated against the known list) |
 | `algo` | matching method (`normalizeMatchingMethod`, synced to `ConfigController`) |
 | `perceptual` | `1`/`true`/`yes` → `strictMatching` |
+| `wheel` | colour wheel id — **always written**, even for the `rgb` default. Eliding it only works while the reader also defaults to `rgb`, and a link is opened in someone else's session with someone else's persisted wheel; an elided default used to render a Munsell palette under an RGB sharer's link. On read, an absent `wheel` means `rgb` and an unknown value warns and falls back to `rgb` |
 
 ---
 
 ## 2. Palette Extractor — 3C loupe
 
-**Route:** `/extractor` (legacy `/matcher` redirects) · **ToolId:** `extractor` · **Files:** `src/components/extractor-tool.ts` (`ExtractorTool`), `image-upload-display.ts`, `image-zoom-controller.ts`, `color-picker-display.ts`, `recent-colors-panel.ts`, `camera-preview-modal.ts`, `services/camera-service.ts`, `services/indexeddb-service.ts` (image persistence). Spec: `3c-loupe-port-spec.md`. Locale namespace is still `matcher.*` (v3 name "Color Matcher").
+**Route:** `/extractor` (legacy `/matcher` redirects) · **ToolId:** `extractor` · **Files:** `src/components/extractor-tool.ts` (`ExtractorTool`), `image-upload-display.ts`, `image-zoom-controller.ts`, `color-picker-display.ts`, `camera-preview-modal.ts`, `services/camera-service.ts`. Spec: `3c-loupe-port-spec.md`. Locale namespace is still `matcher.*` (v3 name "Color Matcher").
 
-**What 5.0 shipped.** A plain click/tap on the image samples the pixels under it (4.x opened the file dialog); dragging shows a 74 px loupe with crosshair + hex chip that samples on release (`matcher.clickToSample`: "Click to sample · drag for the loupe"). Samples land in the **PALETTE ROLL** strip (`matcher.roll`) with Clear and **Auto-extract** (`matcher.autoExtract` — the bulk K-means++ path, demoted to a button). Drawn drop zone with privacy chip (`matcher.privacyNote`: "Images are read in your browser and never uploaded.") and a mobile "Take a photo" lead; paste from clipboard still works. Region-rect selection was removed; the roll exports through the shared export sheet (each entry = sampled pixel + resolved dye + ΔE). Clearing the image also clears the IndexedDB copy. No palette drawer on this tool.
+**What 5.0 shipped.** A plain click/tap on the image samples the pixels under it (4.x opened the file dialog); dragging shows a 74 px loupe with crosshair + hex chip that samples on release (`matcher.clickToSample`: "Click to sample · drag for the loupe"). Samples land in the **PALETTE ROLL** strip (`matcher.roll`) with Clear and **Auto-extract** (`matcher.autoExtract` — the bulk K-means++ path, demoted to a button). Drawn drop zone with privacy chip (`matcher.privacyNote`: "Images are read in your browser and never uploaded.") and a mobile "Take a photo" lead; paste from clipboard still works. Region-rect selection was removed; the roll exports through the shared export sheet (each entry = sampled pixel + resolved dye + ΔE). **The image is never persisted** — it lives in memory for the session only. (Up to 5.0.0 it went into an IndexedDB `image_cache` store; FINDING-009 removed that, and DB v3 deletes the store on first open.) No palette drawer on this tool.
 
 **Config (`ExtractorConfig`):** `vibrancyBoost`, `maxColors` (3–10, default 4), `dragThreshold` (px, click-vs-drag), `sampleAreaSize` (`1|2|4|8|16`, NxN pixel average), `matchingMethod`, `preventDuplicates`, `displayOptions`, `dyeFilters`.
 
@@ -64,12 +69,11 @@ The XIV Dye Tools web app ships nine tools. Each has its own route, a `ToolId`, 
 
 | Param | Meaning |
 |-------|---------|
-| `start`, `end` | endpoint stainIDs (`resolveSharedDye`); a custom endpoint is written as `0` |
+| `start`, `end` | endpoint stainIDs (`resolveSharedDye`) |
+| `hexStart`, `hexEnd` | bare-colour endpoints (`RRGGBB`), each mutually exclusive with its slot's dye param — a custom endpoint is written here, never as an invalid `start=0`. Read through `resolveSharedEndpoint()`, which prefers the dye slot when both are present |
 | `steps` | 3–12 |
 | `interpolation` | one of the five modes |
 | `algo` | matching method (normalised) |
-
-`hexStart` / `hexEnd` are declared in `GradientShareParams` but the tool neither writes nor reads them yet.
 
 ---
 
@@ -85,12 +89,11 @@ The XIV Dye Tools web app ships nine tools. Each has its own route, a `ToolId`, 
 
 | Param | Meaning |
 |-------|---------|
-| `dyeA`, `dyeB` | slot stainIDs (both required to share; a custom slot is written as `0`) |
+| `dyeA`, `dyeB` | slot stainIDs — both slots must be filled to share |
+| `hexA`, `hexB` | bare-colour slots (`RRGGBB`), each mutually exclusive with its slot's dye param — a custom input is written here, never as an invalid `dyeA=0`. Read through `resolveSharedInput()`, which prefers the dye slot when both are present |
 | `ratio` | 0–100, percentage of dye A |
 | `mode` | one of the six blend models |
 | `algo` | matching method (normalised) |
-
-`hexA` / `hexB` are declared in `MixerShareParams` but not wired in the tool.
 
 ---
 
@@ -139,7 +142,7 @@ The XIV Dye Tools web app ships nine tools. Each has its own route, a `ToolId`, 
 
 ## 8. Budget Suggestions — 9C ledger
 
-**Route:** `/budget` · **ToolId:** `budget` · **Files:** `src/components/budget-tool.ts` (`BudgetTool`), `metric-help.ts`, `services/market-board-service.ts` (Universalis via `https://data.xivdyetools.app/universalis` on api-worker), `services/price-utilities.ts`. Spec: `9c-ledger-port-spec.md`.
+**Route:** `/budget` · **ToolId:** `budget` · **Files:** `src/components/budget-tool.ts` (`BudgetTool`), `metric-help.ts`, `services/market-board-service.ts` (Universalis via `https://data.xivdyetools.app/universalis` on api-worker), and `BudgetTool.priceOf()` itself. There is no `services/price-utilities.ts`; the shared piece is `services/pricing-mixin.ts`'s `setupMarketBoardListeners()`, which wires a tool to server / show-prices changes. Spec: `9c-ledger-port-spec.md`.
 
 **What 5.0 shipped.** Rewritten on Patch 7.5 pricing rules — `priceOf()` replaces the 4.x `getBudgetComparablePrice`: Venture Coffer (X) dyes are board-only, Spectrum A = 216 gil vendor + the 52254 board price, B/C = scrip/credit locally with the consolidated board price as the only gil figure, currencies never converted, Facewear colours never enter. A tier-grouped ledger (A → B → C → X, price printed once per group, `×N CHEAPER`, `VENDOR SAVES {diff} vs BOARD`) with sortable `DYE | ΔE | BOARD | GIL/ΔE` rows, a verdict block (green priced / amber offline / neutral upgrade), upgrade mode ("ALREADY THE FLOOR") for Standard-Spectrum targets, quick picks generated from the live board (`PRICIEST ON {world} NOW`), the 2–20 ΔE **Match line** (`budget.matchLine`), a `SEND TO` row (Harmony / Compare / Copy item name / **Save swap** → the store's first `kind: 'swap'` record) plus a share button, arbitrary-hex targets, three-column ledger ≤ 480 px. New **Exclude Coffer Dyes** filter (`excludeCoffers`, wired through every sidebar). The gil-limit slider, 1–10 result cap and 0.7/0.3 value sort are gone; the sidebar match-line slider is disabled when `matchingMethod !== 'ciede2000'`.
 

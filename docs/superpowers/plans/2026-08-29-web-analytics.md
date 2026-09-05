@@ -1,5 +1,7 @@
 # Web-app analytics (Enable Analytics made real) Implementation Plan
 
+**Status:** shipped — PR #149 (web-app `telemetry-service.ts`, api-worker 0.9.0 `POST /v1/telemetry`)
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the web-app's *Enable Analytics* toggle actually send opt-in, identifier-free usage events (tool views + dwell, explicit dye picks, `.chara` parses, theme switches) to Cloudflare Analytics Engine through a new `POST /v1/telemetry` on api-worker.

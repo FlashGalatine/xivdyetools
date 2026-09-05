@@ -1,11 +1,13 @@
-> **⚠️ DEPRECATED:** This document has been superseded by the Documentation Bible.
-> See: [Community Presets](community-presets.md)
-
 # Seasonal/Themed Preset Palettes - Specification
 
-> Feature Status: Planned
+> Feature Status: ✅ Implemented
 > Platforms: Web App + Discord Bot
-> Core Library Changes: Yes (preset data and service)
+> Core Library Changes: Yes (preset data and service — shipped as `presets.json` in `@xivdyetools/core`)
+>
+> **As shipped:** `presets.json` is at schema 2.0.0 and carries **15 curated palettes** across three
+> categories — grand-companies (3), seasons (4) and events (8). The job and aesthetic palettes
+> sketched below were not built. For user-submitted palettes and the moderation pipeline, see
+> [Community Presets](community-presets.md); this document covers the curated set only.
 
 ## Overview
 

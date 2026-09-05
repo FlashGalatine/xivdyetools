@@ -1,5 +1,7 @@
 # Dead-Code Guardrails Implementation Plan
 
+**Status:** shipped — PR #157 (`knip.jsonc`, `scripts/check-dead-code.ts`, CI steps)
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the two dead-code tiers that no gate can currently see — modules and symbols reachable only from tests — fail CI, and extend knip from 5 gated workspaces to 16.

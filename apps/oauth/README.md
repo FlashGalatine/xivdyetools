@@ -17,16 +17,19 @@ All auth routes are mounted under `/auth`.
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/auth/discord` | Begin the Discord OAuth2 flow — redirects to Discord with PKCE state |
-| `GET` | `/auth/callback` | Discord redirect target; exchanges the code and issues a JWT |
-| `POST` | `/auth/callback` | SPA token exchange — body `{ code, code_verifier, state }` (`state` = the signed value echoed by the GET callback) |
+| `GET` | `/auth/callback` | Discord redirect target. It does **not** exchange the code: it verifies the signed `state`, checks the recorded `redirect_uri` against the allowlist, and bounces `code` + `csrf` + `state` (plus `return_path` when it is not `/`) to the SPA |
+| `POST` | `/auth/callback` | The actual token exchange — body `{ code, code_verifier, state }`. The worker verifies `S256(code_verifier)` against the `code_challenge` in the signed `state` **before** calling Discord, then exchanges the code and returns the JWT in the response body |
+
+The two legs exist so the `code_verifier` never travels through a URL redirect: the SPA keeps it in
+`sessionStorage` and only ever sends it in a POST body.
 
 ### XIVAuth
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/auth/xivauth` | Begin the XIVAuth flow — links verified FFXIV characters |
-| `GET` | `/auth/xivauth/callback` | XIVAuth redirect target |
-| `POST` | `/auth/xivauth/callback` | SPA token exchange — body `{ code, code_verifier, state }` |
+| `GET` | `/auth/xivauth/callback` | XIVAuth redirect target — same bounce, not an exchange |
+| `POST` | `/auth/xivauth/callback` | The token exchange — body `{ code, code_verifier, state }`; the state must have been minted for the `xivauth` provider |
 
 ### Token lifecycle
 
@@ -85,13 +88,16 @@ See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVI
 | Binding | Type | Purpose |
 |---------|------|---------|
 | `DB` | D1 (`xivdyetools-users`) | User records and linked identities |
-| `TOKEN_BLACKLIST` | KV Namespace | Revoked `jti` values, TTL-bounded |
+| `TOKEN_BLACKLIST` | KV Namespace | Revoked `jti` values (TTL = token expiry + 15 minutes), and the fallback `/auth/*` rate-limit counters under the `rl:` prefix |
+| `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` | Workers Rate Limiting (`[[ratelimits]]`, 10 / 20 / 30 per 60 s) | The per-IP, per-path `/auth/*` limiter — one binding per distinct `OAUTH_LIMITS` value |
 | `ENVIRONMENT` | Var | `development` or `production` |
 | `DISCORD_CLIENT_ID` | Var | Discord application ID |
 | `XIVAUTH_CLIENT_ID` | Var | XIVAuth application ID |
 | `FRONTEND_URL` | Var | Where to redirect after a successful login |
 | `WORKER_URL` | Var | This Worker's own origin — becomes the JWT `iss` claim |
 | `JWT_EXPIRY` | Var | Access token lifetime in seconds (default `3600`) |
+
+`TOKEN_BLACKLIST` and all three `RL_AUTH_*` bindings are **required in production** — `validateEnv` refuses the request without them, because each one degrades silently rather than loudly (a weaker rate-limit fallback, or no revocation check on `/auth/me`).
 
 The `development` environment carries its own KV namespace and D1 database (`xivdyetools-users-dev` — its `database_id` in `wrangler.toml` is still a placeholder to be created with `wrangler d1 create`), so it does not share user state with production. There is no `preview` environment any more: it bound the production D1/KV behind a stale frontend origin and was deleted in the 2026-08-21 security audit (FINDING-029). `ENVIRONMENT` must be `development` or `production`, and every value other than `development` gets the full production gates (HTTPS-only URLs, fail-closed env validation, HSTS).
 
@@ -100,8 +106,16 @@ The `development` environment carries its own KV namespace and D1 database (`xiv
 ```bash
 wrangler secret put JWT_SECRET              # HS256 signing key
 wrangler secret put DISCORD_CLIENT_SECRET   # Discord OAuth2 client secret
-wrangler secret put XIVAUTH_CLIENT_SECRET   # XIVAuth OAuth2 client secret
 ```
+
+### Optional Secrets
+
+```bash
+wrangler secret put XIVAUTH_CLIENT_SECRET   # Only for XIVAuth confidential-client mode
+```
+
+`XIVAUTH_CLIENT_SECRET` is optional (`Env.XIVAUTH_CLIENT_SECRET?`): the XIVAuth token exchange sends
+`client_secret` only when it is set, and a PKCE-only public client works without it.
 
 `JWT_SECRET` is shared with [`apps/presets-api`](../../apps/presets-api/), which verifies the tokens this Worker signs. **Rotating it in one place without the other invalidates every session.** See [`docs/operations/SECRET_ROTATION.md`](../../docs/operations/SECRET_ROTATION.md).
 
@@ -122,8 +136,8 @@ wrangler secret put XIVAUTH_CLIENT_SECRET   # XIVAuth OAuth2 client secret
 | `hono` | HTTP framework |
 | `@xivdyetools/auth` | HMAC signing primitives, Base64URL/hex encoding, revocation store |
 | `@xivdyetools/types` | `JWTPayload`, `DiscordUser`, `XIVAuthUser`, etc. |
-| `@xivdyetools/logger` | Structured logging with secret redaction |
-| `@xivdyetools/worker-kit` | Request ID, logger, and rate-limit middleware |
+| `@xivdyetools/worker-kit` | Request ID and logger middleware; `/rate-limiter` backends (`CloudflareRateLimiter`, `KVRateLimiter`, `MemoryRateLimiter`) |
+| `@xivdyetools/logger` | Structured logging with secret redaction — **transitive** via `worker-kit`, not a direct dependency |
 
 ## Related Projects
 

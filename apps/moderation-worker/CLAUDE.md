@@ -88,7 +88,7 @@ src/
 │       ├── preset-rejection.ts         # Rejection reason modal
 │       └── ban-reason.ts               # Ban reason modal
 ├── middleware/
-│   └── rate-limit.ts                   # KV sliding window with command/autocomplete configs
+│   └── rate-limit.ts                   # Native RL_COMMAND / RL_AUTOCOMPLETE bindings when bound, KV sliding window otherwise
 ├── services/
 │   ├── ban-service.ts                  # Ban/unban + searchPresetAuthors / searchBannedUsers
 │   ├── preset-api.ts                   # Service Binding client + validateSecurityConfig
@@ -100,7 +100,9 @@ src/
 │   ├── url-sanitizer.ts                # Strip sensitive query params from logs
 │   ├── response.ts                     # pong/ephemeral/deferred/rateLimited
 │   ├── discord-api.ts                  # REST helpers
-│   └── env-validation.ts               # Required-env check on first request
+│   ├── embed-text.ts                   # Embed text building / truncation
+│   ├── sql-helpers.ts                  # Shared D1 query fragments
+│   └── env-validation.ts               # validateEnv — required secrets, bindings, production-only bindings
 └── types/
     ├── env.ts                          # Env interface + Interaction enums
     ├── preset.ts                       # Local preset shape for D1 reads
@@ -112,11 +114,15 @@ src/
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace (shared with discord-worker) | User preferences + rate-limit counters |
+| `KV` | KV Namespace (shared with discord-worker) | Bot state + the **fallback** rate-limit counters |
 | `DB` | D1 (`xivdyetools-presets`, shared) | Preset rows + `banned_users` table |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset moderation calls |
+| `RL_COMMAND` | Workers Rate Limiting (`[[ratelimits]]`, 25 / 60 s) | Per-user command limiter (20 + 5 burst) |
+| `RL_AUTOCOMPLETE` | Workers Rate Limiting (`[[ratelimits]]`, 70 / 60 s) | Per-user autocomplete limiter (60 + 10 burst) |
 
-Vars: `DISCORD_CLIENT_ID = 1453806659708129374` (separate Discord app), `PRESETS_API_URL`. Custom domains: `moderation-bot.xivdyetools.app`, `moderation-bot.xivdyetools.projectgalatine.com`.
+Both rate-limit bindings are **required when `ENVIRONMENT = "production"`** (FINDING-013): losing one degrades silently to the KV limiter, so `index.ts` answers every request — `/health` included — with `500 Service misconfigured` while the error stands.
+
+Vars: `ENVIRONMENT` (`development` / `production`), `DISCORD_CLIENT_ID = 1453806659708129374` (separate Discord app), `PRESETS_API_URL`. **`vars` are not inheritable**, so `ENVIRONMENT` is declared in *both* `wrangler.toml` blocks — a production deploy missing that line would skip the production-only checks above. Custom domains: `moderation-bot.xivdyetools.app`, `moderation-bot.xivdyetools.projectgalatine.com`.
 
 ### Required Secrets
 
@@ -151,12 +157,17 @@ Vars: `DISCORD_CLIENT_ID = 1453806659708129374` (separate Discord app), `PRESETS
 
 ### Rate Limiting
 
-`middleware/rate-limit.ts` uses KV with sliding-window counters under two configs:
+`middleware/rate-limit.ts` limits per Discord user under two configs, sourced from
+`MODERATION_LIMITS` in `@xivdyetools/worker-kit/rate-limiter`:
 
-| Config | Limit | Burst | TTL |
-|--------|-------|-------|-----|
-| `command` | 20/min | +5 | 120s |
-| `autocomplete` | 60/min | +10 | 120s |
+| Config | Limit | Burst | Window | Native binding |
+|--------|-------|-------|--------|----------------|
+| `command` | 20/min | +5 | 60 s | `RL_COMMAND` (`simple.limit = 25`) |
+| `autocomplete` | 60/min | +10 | 60 s | `RL_AUTOCOMPLETE` (`simple.limit = 70`) |
+
+Backend selection happens once per isolate: `CloudflareRateLimiter` over whichever `RL_*` bindings
+are present (atomic, per-colo), and `KVRateLimiter` only when neither is bound — which, in
+production, `validateEnv` does not allow.
 
 Both fail open (allow on backend error) and use `ctx.waitUntil()` for the increment so the user response is not delayed. A fail-open is no longer silent: `checkRateLimit` returns `backendError: true` and `index.ts` warns `Rate limiter backend error — request allowed (fail-open)` with the interaction type on the request logger (FINDING-012). Nothing goes back to the client — a header would tell an abuser when the limiter is off.
 
@@ -218,7 +229,7 @@ Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side
 
 | Command | Description |
 |---------|-------------|
-| `/preset moderate` | Browse the pending queue, approve/reject via buttons. Entries whose *preview picture* alone is awaiting review are marked 🖼 with a "Picture pending review" note — approve/reject there act on the preset's status, so picture review happens on the moderation embed discord-worker posts (1.4.0) |
+| `/preset moderate` | Four actions on the required `action` option — `pending` (browse the queue), `approve`, `reject`, `stats` — plus an optional `preset_id` (autocompleted) and `reason`. Approve/reject are also available as buttons on the queue embed. Entries whose *preview picture* alone is awaiting review are marked 🖼 with a "Picture pending review" note — approve/reject there act on the preset's status, so picture review happens on the moderation embed discord-worker posts (1.4.0) |
 | `/preset ban_user` | Ban a user (autocomplete searches preset authors) |
 | `/preset unban_user` | Unban a user (autocomplete searches `banned_users`) |
 
@@ -228,17 +239,27 @@ Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side
 |---------|---------|
 | `hono` | HTTP framework |
 | `@xivdyetools/auth` | JWT/HMAC/Ed25519 helpers |
-| `@xivdyetools/worker-kit/rate-limiter` | KV sliding window backend |
+| `@xivdyetools/worker-kit/rate-limiter` | `CloudflareRateLimiter`, `KVRateLimiter`, `MODERATION_LIMITS` |
 | `@xivdyetools/types` | Shared interfaces |
 | `@xivdyetools/logger` | Structured logging |
 | `@xivdyetools/worker-kit` | Shared Hono middleware |
 
 ## Localization
 
-6 languages: `en`, `ja`, `de`, `fr`, `ko`, `zh`. Translator created per request via `createUserTranslator(env.KV, userId, interaction.locale, logger)`. Locale order:
-1. User preference stored in KV.
-2. `interaction.locale` (Discord client locale).
-3. Default `en`.
+**English only, deliberately** (I18N-009, since 1.7.0). `services/bot-i18n.ts` holds a single
+`enLocale` table — `const strings: LocaleData = enLocale` — with no locale map and no `locales/`
+directory. `createUserTranslator(env.KV, userId, interaction.locale)` still resolves the moderator's
+locale (log lines and analytics want to know what their client asked for), but the resolved code
+**selects nothing**: `Translator` points `data` and `fallbackData` at the one English table.
+
+The reasoning: every moderator is an English speaker and this bot talks to nobody else. Its commands
+are restricted to the moderation channel, and the messages a preset **author** receives come from
+discord-worker, which *is* localized ×6.
+
+What was removed was a `Record<LocaleCode, LocaleData>` whose six entries all pointed at
+`enLocale`, plus a KV round-trip and an unused `preset.status.*` key set — an apparatus that could
+never return anything but English while looking like it might. If this bot is ever localized, add
+real locale files and give the handlers translators; do not restore the map.
 
 ## Testing
 

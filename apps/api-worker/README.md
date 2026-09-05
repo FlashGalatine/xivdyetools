@@ -2,9 +2,9 @@
 
 Public REST API for the FFXIV dye database and color matching. Deployed as a Cloudflare Worker at `data.xivdyetools.app`. The same worker also hosts the Universalis market-board proxy (`/universalis/*`, and `/api/v2/*` on `proxy.xivdyetools.app` for legacy clients) and the developer documentation site at `developers.xivdyetools.app` — both absorbed in Monorepo 2.0 from the retired `universalis-proxy` and `api-docs` apps.
 
-## Phase 1 — Dye Database & Color Matching
+## The `/v1` API
 
-9 `/v1` endpoints wrapping `@xivdyetools/core` with anonymous access, rate limiting, and deterministic caching.
+Sixteen `/v1` endpoints (14 `GET`, 2 `POST`) wrapping `@xivdyetools/core` with anonymous access, rate limiting, and deterministic caching.
 
 ### Endpoints
 
@@ -19,6 +19,13 @@ Public REST API for the FFXIV dye database and color matching. Deployed as a Clo
 | `GET` | `/v1/dyes/consolidation-groups` | Patch 7.5 consolidation metadata |
 | `GET` | `/v1/match/closest?hex=` | Find closest FFXIV dye to a hex color |
 | `GET` | `/v1/match/within-distance?hex=&maxDistance=` | Find all dyes within a color distance threshold |
+| `GET` | `/v1/wheels` | The five colour wheels as `{ id, tag, name, isDefault }` (localized `name`) |
+| `GET` | `/v1/wheels/:id` | One wheel's `ringStops` (`?stops=` 3–360, default 72) plus every dye's `wheelHue` |
+| `GET` | `/v1/harmony/types` | The ten harmony types with their `offsets` and a localized `name` |
+| `GET` | `/v1/harmony?dye=\|hex=&type=&wheel=` | Harmony slots over the filtered dye database (core's `generateHarmonySlots`) |
+| `POST` | `/v1/chara/resolve` | `.chara` equipment-model resolution — body `{ gear: [...], glasses? }`; one XIVAPI search per file, edge-cached |
+| `GET` | `/v1/chara/icon/:iconId` | Item icon PNG proxied from XIVAPI, edge-cached 30 d immutable |
+| `POST` | `/v1/telemetry` | **Internal and undocumented** — web-app opt-in usage telemetry → Analytics Engine. Origin-gated, own rate-limit bucket, always answers a bare `204`. Not part of the public contract and may change without notice |
 
 Outside `/v1` (no envelope, no locale, separate rate limit — see [Universalis Proxy](#universalis-proxy)):
 
@@ -75,13 +82,19 @@ All `/v1` endpoints accept `?locale=en|ja|de|fr|ko|zh`. When a non-English local
 
 ### Rate Limiting
 
-60 requests per minute per IP, with a burst allowance of 5. Rate limit headers are included on all `/v1/*` responses:
+60 requests per minute per IP, with a burst allowance of 5, enforced by the native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple = { limit = 65, period = 60 }`); the `RATE_LIMIT` KV namespace is the fallback when the binding is absent. Counters are per-colo, not global. `POST /v1/telemetry` is carved out onto its own `TELEMETRY_RATE_LIMITER` bucket (240 / 60 s). Rate limit headers are included on all `/v1/*` responses:
 
 ```
-X-RateLimit-Limit: 60
-X-RateLimit-Remaining: 59
+X-RateLimit-Limit: 65
+X-RateLimit-Remaining: 64
 X-RateLimit-Reset: 1712000000
 ```
+
+`X-RateLimit-Limit` is the **effective** limit — 60 plus the 5-request burst allowance, matching the
+`API_RATE_LIMITER` binding's `simple.limit = 65`. With the native binding in play,
+`X-RateLimit-Remaining` is synthetic: the Workers Rate Limiting API exposes no live count, so the
+header reads `limit - 1` (an "at least one more" indicator) while a request is allowed and `0` when
+it is denied. Do not treat it as a countdown.
 
 ### Caching
 
@@ -119,27 +132,37 @@ src/
   index.ts                 # Hono app, middleware stack, route mounting
   types.ts                 # Env bindings, Hono context variables
   middleware/
-    rate-limit.ts          # KVRateLimiter wired to worker-kit's rateLimitMiddleware
+    rate-limit.ts          # Backend selection (native API_RATE_LIMITER / TELEMETRY_RATE_LIMITER, KV fallback) + the worker-kit middleware
     locale.ts              # Reads ?locale=, calls LocalizationService.ensureLocaleLoaded once, sets c.var.locale
   routes/
     dyes.ts                # /v1/dyes/* (7 endpoints)
     match.ts               # /v1/match/* (2 endpoints)
+    wheels.ts              # /v1/wheels/* (2 endpoints) — core's ColorWheel registry
+    harmony.ts             # /v1/harmony/* (2 endpoints) — core's generateHarmonySlots
   lib/
     api-error.ts           # ApiError class, error codes
     response.ts            # JSON envelope helpers (success/error/paginated)
     validation.ts          # Hex parsing, ID resolution, parameter validation
     dye-serializer.ts      # Dye -> API response shape
+    harmony.ts             # Wheel summary / wheel position / harmony slot serializers
+    bounded-body.ts        # Size-capped body reads for the POST routes
     services.ts            # Module-scope DyeService singleton, distance calculation (ColorService.getDistanceForMethod)
+  chara/                   # .chara equipment resolution: router, xivapi client, resolver, cache, regional-names
+  telemetry/               # POST /v1/telemetry: router, allowlist schema, Origin gate
   universalis/
     router.ts              # /universalis + /api/v2 proxy routes
     config/                # cache TTLs, datacenter/world lists
     services/              # cached-fetch, cache-service, request-coalescer, memory rate-limiter
+scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables after a patch (manual; commit the output)
 docs/                      # VitePress developer docs → developers.xivdyetools.app
 tests/
   test-utils.ts            # Mock env factory
+  app-hardening.test.ts    # Security headers, CORS, error envelope
+  docs-fields-parity.test.ts  # Pins the docs Dye Object table to serializeDye()
+  wrangler-config.test.ts  # Pins workers_dev / preview_urls / routes
   lib/                     # Unit tests for validation, response, serializer
   routes/                  # Integration tests for dye and match endpoints
-  middleware/              # Rate limit and request ID tests
+  middleware/              # rate-limit.test.ts
 ```
 
 ### Dependencies
@@ -149,21 +172,26 @@ tests/
 | `hono` | HTTP framework + CORS middleware |
 | `@xivdyetools/core` | `DyeService`, `dyeDatabase`, `ColorService`, `LocalizationService`, matching-method constants |
 | `@xivdyetools/types` | Shared TypeScript interfaces |
-| `@xivdyetools/logger` | Structured logging |
 | `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` |
-| `@xivdyetools/worker-kit/rate-limiter` | `KVRateLimiter`, `getClientIp` |
+| `@xivdyetools/worker-kit/rate-limiter` | `CloudflareRateLimiter`, `KVRateLimiter`, `getClientIp` |
+| `@xivdyetools/logger` | Structured logging — **transitive** via `worker-kit`, not a direct dependency |
 | `vitepress`, `vue` (dev) | Developer docs site |
 
 ### Environment Bindings
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `RATE_LIMIT` | KV Namespace | Per-IP rate limit counters (`/v1/*`) |
+| `API_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 65 / 60 s) | The `/v1/*` per-IP limiter |
+| `TELEMETRY_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 240 / 60 s) | `POST /v1/telemetry`'s own bucket — fails **closed** |
+| `RATE_LIMIT` | KV Namespace | Fallback rate-limit counters when a binding is absent (`api:ip:` / `telemetry:ip:`) |
+| `ANALYTICS` | Analytics Engine dataset | `xivdyetools_web_analytics` (prod) / `_dev`; absent → telemetry accepts and discards |
 | `ASSETS` | Static Assets (production only) | `docs/.vitepress/dist`, served for the `developers.xivdyetools.app` host |
 | `ENVIRONMENT` | Variable | `development` or `production` |
 | `API_VERSION` | Variable | Currently `v1` |
 | `UNIVERSALIS_API_BASE` | Variable | `https://universalis.app/api/v2` |
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Variable | Proxy limiter — `30`/`60` production, `60`/`60` dev |
+| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream (`https://v2.xivapi.com`) and the game-version pin, which also namespaces the row cache |
+| `XIVAPI_SCHEMA` | Variable (optional) | `exdschema@2:rev:<sha>` pin so an upstream field rename cannot break parsing |
 
 Production routes: `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app`.
 

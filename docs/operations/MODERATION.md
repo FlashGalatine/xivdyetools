@@ -190,25 +190,36 @@ Key fields:
 These commands **only work in the moderation channel**. Using them elsewhere returns:
 
 ```
-This command can only be used in the moderation channel.
+This command must be used in the moderation channel.
 ```
 
 This prevents accidental public exposure of moderation actions.
 
 ---
 
-## Environment Variables
+## Secrets
 
-| Variable | Description |
-|----------|-------------|
+Both of these are **secrets**, not `[vars]` — they never appear in `wrangler.toml`.
+
+| Secret | Description |
+|--------|-------------|
 | `MODERATOR_IDS` | Comma-separated Discord user IDs of moderators |
 | `MODERATION_CHANNEL_ID` | Discord channel ID for moderation commands |
 
-Example `.dev.vars`:
+Set them per environment:
+```bash
+pnpm --filter xivdyetools-moderation-worker exec wrangler secret put MODERATOR_IDS --env production
+pnpm --filter xivdyetools-moderation-worker exec wrangler secret put MODERATION_CHANNEL_ID --env production
+```
+
+For local development only, the same names can go in an untracked `.dev.vars`:
 ```
 MODERATOR_IDS=123456789,987654321
 MODERATION_CHANNEL_ID=1234567890123456789
 ```
+
+The worker's full secret list is `DISCORD_TOKEN`, `DISCORD_PUBLIC_KEY`, `BOT_API_SECRET`,
+`BOT_SIGNING_SECRET`, `MODERATOR_IDS`, `MODERATION_CHANNEL_ID`, `SUBMISSION_LOG_CHANNEL_ID`.
 
 ---
 

@@ -1,10 +1,10 @@
 # Testing Guide
 
 ## Framework
-- **Vitest 4** for most packages
-- **Vitest 3.2** for oauth and presets-api (required by `@cloudflare/vitest-pool-workers`)
+- **Vitest 4** across every workspace — no package is pinned to an older major, and
+  `@cloudflare/vitest-pool-workers` is not a dependency anywhere
 - **V8 coverage** provider with per-package thresholds (typically 80%+)
-- **529 test files** across the monorepo
+- ~480 test files across the monorepo
 
 ## Running Tests
 ```bash
@@ -25,39 +25,41 @@ pnpm --filter @xivdyetools/core exec vitest run --coverage
 ```
 
 ## @xivdyetools/test-utils
-Shared package providing all mocking infrastructure:
+Workspace-private package providing the Cloudflare mocking infrastructure. It is a
+devDependency of six workspaces: `svg`, `discord-worker`, `moderation-worker`, `oauth`,
+`presets-api` and `api-worker`. Everything below is the **complete** public surface
+(`packages/test-utils/src/index.ts`) — web-app and core do not consume it and keep their own
+setup files.
 
 ### Cloudflare Worker Mocks
-- `createMockD1Database()` — D1 mock with prepared statement support, query history tracking, `_bindings` inspection
-- `createMockKV()` — KV namespace mock (in-memory)
-- `createMockR2()` — R2 bucket mock
-- `createMockFetcher()` — Service binding Fetcher mock
+- `createMockD1Database(config?)` — D1 mock with prepared statement support, query history tracking, `_bindings` inspection
+- `createMockD1()` — a bare `D1Database`-typed mock for cases that need no inspection
+- `createMockKV()` — KV namespace mock (in-memory); `KV_MIN_EXPIRATION_TTL` and `KV_MAX_LIST_PAGE` are exported alongside it
+- `createMockR2Bucket()` — R2 bucket mock
+- `createMockFetcher(config?)` — Service binding Fetcher mock
 - `createMockAnalyticsEngine()` — Analytics Engine mock
 
 ### Auth Helpers
 - `createTestJWT(payload, secret)` — Generate valid JWT for testing
 - `createExpiredJWT()` — Generate expired JWT
 - `authHeaders(token)` — Pre-built Authorization header objects
-- `createAuthContext()` / `createModeratorContext()` / `createUnauthenticatedContext()`
 
 ### Factories
-- `createMockDye(overrides)` — Dye objects with sensible defaults
-- `createMockPreset(overrides)` — Preset objects
-- `createMockCategory()`, `createMockUser()`, `createMockVote()`
-- `randomId()` — Parallel-safe random IDs (not sequential!)
+- `createMockDye(overrides)` — Dye objects with sensible defaults; `mockDyes` is a ready-made array
+- `createMockPresetRow(overrides)` — a raw D1 `presets` row
+- `createMockSubmission(overrides)` — a `PresetSubmission` request body
+- `createMockCategoryRow(overrides)` — a raw D1 `categories` row
 
-### DOM Utilities (for web-app)
-- `MockLocalStorage` — localStorage mock
-- `setupCanvasMocks()` — Canvas 2D context mock
-- `setupResizeObserverMock()` — ResizeObserver mock
-- `setupFetchMock()` — Global fetch mock
-- `setupMatchMediaMock()` — matchMedia mock for responsive tests
+### Constants
+- `VALID_CODE_VERIFIER` / `VALID_CODE_CHALLENGE` — a matching PKCE pair for oauth tests
 
-### Assertion Helpers
-- `assertJsonResponse(response, expectedStatus)` — Validate JSON response
-- `assertErrorResponse(response, status, errorMessage)` — Validate error
-- `assertOkResponse(response)` — 200 check
-- `assertCorsHeaders(response)` — CORS headers present
+### Utilities
+- `randomId()` — Parallel-safe random numeric IDs (not sequential!)
+- `randomStringId(prefix)` / `nextStringId(prefix)` — string ID generators
+
+There are **no** context factories, DOM mocks or assertion helpers in this package. Web-app's
+DOM mocking lives in its own `src/__tests__/setup.ts` (wired via `setupFiles` in
+`vitest.config.ts`); response assertions are written inline in the worker suites.
 
 ## Testing Patterns
 
@@ -108,7 +110,7 @@ expect(res.status).toBe(201);
 ```
 
 ## E2E Testing (Web App)
-- **Playwright 1.57** with chromium, mobile-chrome projects
+- **Playwright 1.62** with chromium, mobile-chrome projects
 - Tests in `apps/web-app/e2e/`
 - V8 coverage collection via CDP
 ```bash

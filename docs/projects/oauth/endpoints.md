@@ -33,7 +33,8 @@ Initiate Discord OAuth flow with PKCE.
 
 ### GET /auth/callback
 
-Discord redirect handler — validates state and passes auth code to frontend.
+Discord redirect handler — verifies the signed state and bounces the auth code to the frontend. It
+does **not** exchange the code; `POST /auth/callback` does.
 
 | Parameter | Source | Description |
 |-----------|--------|-------------|
@@ -42,11 +43,18 @@ Discord redirect handler — validates state and passes auth code to frontend.
 | `error` | Discord | Error code (on failure) |
 | `error_description` | Discord | Error message (on failure) |
 
-**Success:** `302` redirect to `${redirect_uri}?code=<code>&csrf=<token>&return_path=<path>`
+**Success:** `302` redirect to
+`${redirect_uri}?code=<code>&csrf=<token>&state=<signed_state>` — plus `&return_path=<path>` only
+when the recorded path is not `/`, and `&provider=<id>` only on flows configured to mark it. The
+`state` is the same signed value the worker minted at authorize time, echoed back so the SPA can
+return it in the POST leg (FINDING-012); it carries nothing secret.
 
 **Failure:** `302` redirect with `?error=<message>`
 
-**Validation:** State signature (HMAC-SHA256), expiration (10 min), redirect URI origin
+**Validation:** state signature (HMAC-SHA256) and 10-minute expiry; the state's `provider` marker
+must match the callback it arrived on; the recorded `redirect_uri` must be an allowlisted origin
+**and** exactly `/auth/callback` with no query or fragment. A state that fails any of these bounces
+to `FRONTEND_URL` with an error rather than to the untrusted target.
 
 ---
 
@@ -58,9 +66,15 @@ SPA token exchange — receives authorization code + PKCE verifier, returns JWT.
 ```json
 {
   "code": "<authorization_code>",
-  "code_verifier": "<43-128_char_verifier>"
+  "code_verifier": "<43-128_char_verifier>",
+  "state": "<the signed state echoed by GET /auth/callback>"
 }
 ```
+
+`state` is **required**: the worker verifies `base64url(SHA-256(code_verifier))` against the
+`code_challenge` inside it *before* calling Discord, so PKCE holds regardless of provider behaviour
+(FINDING-012). A `redirect_uri` field is accepted but ignored — the canonical worker callback URL is
+always used for the exchange.
 
 **Success (200):**
 ```json
@@ -83,11 +97,16 @@ SPA token exchange — receives authorization code + PKCE verifier, returns JWT.
 
 | Status | Condition |
 |--------|-----------|
-| 400 | Missing `code` or `code_verifier` |
-| 400 | Invalid `code_verifier` format |
+| 400 | `Invalid request body` — the body is not JSON |
+| 400 | `Missing code or code_verifier` |
+| 400 | `Invalid code_verifier format` — fails `[A-Za-z0-9-._~]{43,128}` |
+| 400 | `Missing state` — the field is absent, `null` or empty |
+| 400 | `Invalid state` — bad signature, expired, or minted for the other provider |
+| 400 | `PKCE verification failed` — `S256(code_verifier)` does not match the signed `code_challenge` |
 | 401 | Token exchange failed |
 | 401 | Missing required scope (`identify`) |
 | 401 | Invalid user data from Discord |
+| 413 | `Payload too large` — the body exceeds the 10 KB `bodySizeLimit` |
 | 429 | Rate limit exceeded (20/min per IP) |
 
 ---
@@ -186,7 +205,17 @@ Invalidate a token (logout).
 }
 ```
 
-Adds `jti` to KV blacklist with TTL matching token expiry. If KV is unavailable, returns `"revoked": false` with a note to clear client-side storage. Accepts expired tokens (allows logout after session timeout).
+Adds `jti` to the KV blacklist with a TTL of **the token's expiry plus a 15-minute grace**
+(`REFRESH_GRACE_SECONDS`, floor 60 s), so a revoked id cannot fall out of the blacklist while any
+consumer might still treat the token as live. Accepts expired tokens (allows logout after session
+timeout).
+
+Two different outcomes when the write does not happen:
+
+| Situation | Response |
+|-----------|----------|
+| `TOKEN_BLACKLIST` is bound and the token has a `jti`, but the KV write **fails** | `503` `{ success: false, error: "Revocation failed", revoked: false }` and an error log. A logout that did not take is not a success: the session may still be live until `exp` (BUG-050) |
+| `TOKEN_BLACKLIST` is not bound, or the token carries no `jti` | `200` `{ success: true, revoked: false }` with a `note` saying which of the two it was — there was never anything to write |
 
 ---
 
@@ -228,7 +257,12 @@ Every `/auth/*` route is limited; anything without a stricter entry above falls 
 default (`OAUTH_LIMITS` in `@xivdyetools/worker-kit/rate-limiter`). `POST /auth/refresh` had the
 same 30/min tier before it was removed in 3.0.0.
 
-Rate limits are per-IP using a sliding window algorithm (`@xivdyetools/worker-kit/rate-limiter`).
+Rate limits are keyed on **IP + path**. In production the backend is the native Workers Rate
+Limiting bindings (`RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30`, one per limit above), whose counters
+are **atomic but per-colo** rather than a globally consistent sliding window — a distributed client
+gets roughly `limit × colos`. KV (`TOKEN_BLACKLIST` under the `rl:` prefix) is the legacy fallback
+and a per-isolate memory limiter is the dev/test fallback; both of those *are* sliding windows.
+A backend error fails open, and the event is logged.
 
 **Rate limit headers** (on all limited endpoints):
 - `X-RateLimit-Limit` — Maximum requests per window
@@ -283,7 +317,8 @@ requires never be cached, and the callback bounces carry an authorization code.
 Every response the app dispatches includes (CORS preflight 204s excluded — see Security Headers above):
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
-- `Strict-Transport-Security: max-age=31536000` (production only)
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains` — on every environment except `development` (FINDING-029: it used to be production-only, so any other non-development env went without it)
+- `Cache-Control: no-store` and `Pragma: no-cache` (RFC 6749 §5.1)
 - `X-Request-ID: <uuid>` (for error correlation)
 
 ---

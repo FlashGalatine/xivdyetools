@@ -8,7 +8,7 @@ Live at **[xivdyetools.app](https://xivdyetools.app)**.
 
 | Route | Tool | What it does |
 |-------|------|--------------|
-| `/harmony` | **Harmony** | Generate triadic, complementary, analogous, split-complementary, tetradic, square, and monochromatic palettes, matched to real dyes |
+| `/harmony` | **Harmony** | Generate palettes across ten harmony types — complementary, analogous, triadic, split-complementary, tetradic, inverted-tetradic, square, monochromatic, compound, shades — on a choice of five colour wheels (RGB, RYB, Munsell, OKLCH hue, OKLCH lightness), matched to real dyes |
 | `/gradient` | **Gradient** | Build an N-step gradient between two colors and find the closest dye at each stop |
 | `/mixer` | **Mixer** | Blend colors in six modes — RGB, LAB, OKLAB, RYB, HSL, and physically-based Spectral (Kubelka-Munk) |
 | `/swatch` | **Swatch** | Import a `.chara` character file and match its colors to dyes |
@@ -60,7 +60,7 @@ pnpm --filter xivdyetools-web-app run build:check          # Build + all checks,
 - **State:** Per-tool component state; user preferences persist to `localStorage`
 - **Deploy target:** Cloudflare Pages
 
-All color math runs **client-side** through `@xivdyetools/core` — the dye database is bundled, so tools work with no network round-trip. Only the Budget and Presets tools make API calls.
+All color math runs **client-side** through `@xivdyetools/core` — the dye database is bundled, so no tool needs a network round-trip to compute a result. The network is used for four things: market prices (any tool with Show Prices on — Budget, Harmony, Gradient, Mixer, Comparison, Extractor, Swatch and the preset detail), community presets and sign-in, `.chara` gear names in the Swatch tool, and opt-in telemetry.
 
 ## API Consumption
 
@@ -68,7 +68,7 @@ All color math runs **client-side** through `@xivdyetools/core` — the dye data
 |---------|---------|----------|
 | [`presets-api`](../presets-api/) | Presets tool | `api.xivdyetools.app` |
 | [`oauth`](../oauth/) | Sign-in for submitting and voting | `auth.xivdyetools.app` |
-| [`api-worker`](../api-worker/) | Budget tool market prices | `data.xivdyetools.app` |
+| [`api-worker`](../api-worker/) | Market prices (`/universalis`), `.chara` gear resolution (`POST /v1/chara/resolve`), opt-in telemetry (`POST /v1/telemetry`) | `data.xivdyetools.app` |
 
 Each of these enforces a CORS origin allowlist. A new deployment origin (a preview URL, a beta domain) must be added to those allowlists **before** it will work — the failure looks like a broken app but is a server-side config gap.
 
@@ -93,8 +93,7 @@ Deployed to **Cloudflare Pages** via the `deploy-web-app` GitHub Actions workflo
 | `@xivdyetools/svg` | Shared SVG generation helpers |
 | `@xivdyetools/types` | `HexColor`, `DyeId`, and other branded types |
 | `@xivdyetools/logger` | Browser-flavored structured logger |
-| `spectral.js` | Kubelka-Munk spectral mixing |
-| `@xivdyetools/test-utils` | Shared test factories (devDependency) |
+| `@xivdyetools/core/blending` (→ `spectral.js`) | Kubelka-Munk spectral mixing — `spectral.js` is core's dependency, not the app's |
 
 ## Connect With Me
 

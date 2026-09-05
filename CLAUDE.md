@@ -46,7 +46,7 @@ bot-logic (→ core, svg, types; incl. /i18n) ───────────�
                             Applications ◄─────────────────────┘
 ```
 
-`stoat-worker` consumes `bot-logic` (incl. its `/i18n` engine) so it shares command logic with `discord-worker` despite running on Node.js + Revolt instead of Cloudflare + Discord — `svg`, `core`, and `worker-kit` were dropped from its dependencies in Task 6 (it renders no cards and needs no Workers-only middleware).
+`stoat-worker` consumes `bot-logic` (incl. its `/i18n` engine), `logger` and `types` only, so it shares command logic with `discord-worker` despite running on Node.js + Revolt instead of Cloudflare + Discord — `svg`, `core`, and `worker-kit` were dropped from its dependencies during the Monorepo 2.0 consolidation (it renders no cards and needs no Workers-only middleware).
 
 ## Common Commands
 
@@ -63,8 +63,10 @@ pnpm coverage:report                  # Aggregate coverage vs baselines (90% pac
                                       # run the coverage suites first — it silently skips any
                                       # workspace that has no summary yet.
 pnpm type-check:scripts               # Type-check scripts/ (permanent tsconfig, not a throwaway)
-pnpm test:scripts                     # Self-test the dead-code reachability checker (node:test)
+pnpm test:scripts                     # Self-tests for every scripts/ gate (node:test)
 pnpm dead-code:check                  # Test-only reachability gate — tags/limits under Tooling below
+pnpm docs:check-versions              # Root README + docs/versions.md version tables vs package.json
+pnpm docs:check-links                 # Relative markdown links in the living docs tier resolve
 
 # Filter to specific packages/apps
 pnpm turbo run build --filter=@xivdyetools/core
@@ -126,7 +128,8 @@ Short form of `C:/dev/XIVProjects/.claude/skills/audit-shared/traps/git-worktree
   - **Self-reference trap:** a tag's own reason prose is matched as raw text too, so a reason that names a sibling symbol in the same production file (a dotted `.method` or a bare export name) becomes a "reference" to that sibling and silently drops it from both the violation and exempt lists with no error and exit 0 — write reasons that name the test file and behaviour, never a neighbouring symbol, and after tagging diff the `ℹ … exempt` counts against the pre-tag violation count to catch a shortfall. (The checker's own two files — `scripts/check-dead-code.ts` and its test — sit in `EXCLUDED_REFERRERS`, which since 2026-09-02 means their text is read MASKED rather than skipped entirely: real calls still count, but the symbol names in their own docblocks and fixture strings can never swallow anything. Skipping them outright was the earlier rule and it went too far — it discarded the checker's own real calls too, and reported `listTracked` as test-only the moment a test imported it; this Markdown doc is outside that concern entirely, since `listTracked()` only tracks `.ts/.tsx/.js/.mjs` files and never scans it at all.)
   - Class-member candidacy is depth-aware — a `MEMBER_DECL` match nested deeper than its class's own body (a bare call statement inside a method) is not a candidate — but an unbalanced brace inside an unmasked regex literal in a class body inflates that depth count, so, per `attributeLinesToBlocks`'s docblock, "every member declared after it in that class reads as nested rather than direct and `findTestOnlyMembers` drops it as a candidate — until the next column-0 declaration resyncs" (under-reports, bounded to that one class).
 
-  Before committing: `pnpm turbo run build type-check lint test && pnpm test:scripts && pnpm dead-code:check`.
+  Before committing: `pnpm turbo run build type-check lint test && pnpm test:scripts && pnpm dead-code:check && pnpm docs:check-versions && pnpm docs:check-links`.
+- **Documentation gates** (`scripts/check-doc-versions.ts`, `scripts/check-doc-links.ts`, both self-tested by `pnpm test:scripts` and run in CI beside the dead-code gate). Version numbers live in exactly two documents — the root `README.md` and `docs/versions.md` — and the first gate fails when either disagrees with a `package.json` or when `docs/versions.md` lacks a row for any workspace; nothing else under `docs/` may state a current version (the 2026-09-05 documentation audit found five hand-maintained tables carrying four different stale snapshots). The second gate resolves every relative markdown link in the living tier (`docs/**` minus `docs/audits/**` and `docs/historical/**`, plus the root, `apps/*` and `packages/*` README / CLAUDE files) and fails on a missing target; the frozen archive tier is excluded on purpose, since its links describe the tree as it was.
 
 ### `verbatimModuleSyntax` Caveat
 The base tsconfig enables `verbatimModuleSyntax`, so type-only imports must be explicitly marked: `import type { Foo } from '...'`. A regular `import { Foo }` for something only used as a type is a compile error.
@@ -196,11 +199,11 @@ pnpm 11 publishes natively and performs the OIDC exchange itself — no npm CLI 
 
 ## CI/CD
 
-- **CI**: lint, type-check, test, build on affected packages (push/PR)
+- **CI**: lint, type-check, test, build on affected packages (push/PR), plus the repo-wide gates that ignore the affected filter — wrangler-config invariants, the dead-code reachability check, and the two documentation gates (`docs:check-versions`, `docs:check-links`)
 - **Deploy**: path-filtered workflows per worker (push to main + manual dispatch)
 - **Publish**: manual `workflow_dispatch` to publish a selected npm package, authenticated via OIDC trusted publishing (no token)
 - **Secrets**: `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` for the 8 production deploy workflows; the 3 `*-beta.yml` workflows use a separate `CLOUDFLARE_API_TOKEN_BETA` instead (2026-08-29 FINDING-028)
 
 ## Documentation Hub
 
-`docs/` contains architecture overviews, API contracts, deployment guides, and specs — its `CLAUDE.md` indexes all major topics. The public-facing API documentation lives in `apps/api-worker/docs/` (VitePress) and deploys with api-worker as Workers Static Assets on developers.xivdyetools.app.
+`docs/` contains architecture overviews, API contracts, deployment guides, and specs — `docs/index.md` is the front page and `docs/CLAUDE.md` the quick reference. The living tier (`architecture/`, `projects/`, `developer-guides/`, `user-guides/`, `operations/`, `maintainer/`, `specifications/`, `reference/`, `versions.md`) is kept current; `audits/`, `research/`, `superpowers/` and `historical/` are dated snapshots that are never edited to match later code. The public-facing API documentation lives in `apps/api-worker/docs/` (VitePress) and deploys with api-worker as Workers Static Assets on developers.xivdyetools.app.

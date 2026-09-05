@@ -1,8 +1,8 @@
-# Presets API — Endpoint Reference (v2.0.0)
+# Presets API — Endpoint Reference
 
 Full API reference for the Presets API Cloudflare Worker.
 
-> **2.0.0 (5.0 wave):** preset `dyes` are **stainIDs (1–254), 3–6 per preset** — legacy itemIDs
+> **Since the 5.0 wave:** preset `dyes` are **stainIDs (1–254), 3–6 per preset** — legacy itemIDs
 > (≥ 5729) are rejected with "looks like a legacy item ID"; the `community` category is gone
 > (migration 0007) and `appearance` / `zones` / `raids-trials` were added; a preset carries one
 > primary `category_id` plus up to two `secondary_categories` (0010), an optional `example_link`
@@ -28,7 +28,8 @@ Health check endpoint. Returns service status with a timestamp.
 
 ### `GET /api/v1/categories`
 
-List all preset categories with their preset counts.
+List all preset categories with their preset counts. A preset counts toward its primary
+`category_id` **and** every slug in its `secondary_categories`.
 
 **Caching:** 60s edge cache, 30s browser cache.
 
@@ -37,6 +38,26 @@ List all preset categories with their preset counts.
 ```json
 {
   "categories": [...]
+}
+```
+
+### `GET /api/v1/categories/:id`
+
+One category with the same count, or `404` when the slug is unknown.
+
+**Caching:** 60s edge cache.
+
+**Response** — the category object itself, not wrapped:
+
+```json
+{
+  "id": "jobs",
+  "name": "FFXIV Jobs",
+  "description": "Color schemes inspired by job identities",
+  "icon": "⚔️",
+  "is_curated": true,
+  "display_order": 1,
+  "preset_count": 12
 }
 ```
 
@@ -86,9 +107,14 @@ audit fields are stripped from their responses.
   "presets": [...],
   "total": 42,
   "page": 1,
-  "limit": 20
+  "limit": 20,
+  "has_more": true
 }
 ```
+
+`has_more` is `offset + rows_read < total` — measured on the rows the query returned, not on the
+presets that survived parsing, so a single unparseable row cannot make a client loop on an empty
+last page (presets-api-08).
 
 ### `GET /api/v1/presets/featured`
 
@@ -102,7 +128,9 @@ Get a single preset by ID.
 
 ## Presets (Authenticated)
 
-All endpoints in this section require a JWT Bearer token in the `Authorization` header.
+Every endpoint in this section requires an authenticated caller — either a web JWT or the bot API
+key plus a valid v2 HMAC signature (both described under [Authentication](#authentication)). "JWT"
+below is shorthand for "authenticated"; the bots reach all of these over their Service Binding.
 
 ### `POST /api/v1/presets`
 
@@ -124,7 +152,18 @@ Submit a new preset.
 
 **Moderation:** Runs content moderation on submission (local profanity filter + Perspective API).
 
-**Duplicate Detection:** Computes a dye signature from the sorted JSON of the dye array. If a duplicate preset is found, the submission auto-votes on the existing preset instead of creating a new one.
+**Duplicate Detection:** Computes a dye signature from the sorted JSON of the dye array. A
+collision never creates a preset; what comes back depends on the existing preset's status
+(FINDING-016, `respondToDuplicate`):
+
+| Existing preset | Response |
+|-----------------|----------|
+| `approved` | `200` with the duplicate and `vote_added: true` — the submission becomes a vote for it (audit fields stripped unless the caller owns it or is a moderator) |
+| `pending`, caller is its author or a moderator | `200` with the duplicate and **`vote_added: false`** — votes are for approved presets only |
+| `pending`, anyone else | `409 DUPLICATE_RESOURCE`, "This dye combination already exists" — the response names no preset |
+
+The same three answers cover the race where the partial UNIQUE index rejects the INSERT after the
+pre-check passed.
 
 ### `GET /api/v1/presets/mine`
 
@@ -151,7 +190,8 @@ Edit an owned preset. Validates that the authenticated user owns the preset.
 
 ### `DELETE /api/v1/presets/:id`
 
-Delete an owned preset. Validates that the authenticated user owns the preset.
+Delete a preset. The caller must be the author **or** a moderator; anyone else gets `403`, and a
+preset the caller could not `GET` answers `404` rather than admitting it exists (FINDING-016).
 
 ### `GET /api/v1/presets/rate-limit`
 
@@ -172,7 +212,7 @@ with ✅/❌ buttons is posted to the moderation channel via the `DISCORD_WORKER
 
 ## Votes (Authenticated)
 
-All endpoints in this section require a JWT Bearer token in the `Authorization` header.
+Authenticated callers only — web JWT or bot key + v2 HMAC signature.
 
 ### `POST /api/v1/votes/:presetId`
 
@@ -198,7 +238,9 @@ Check whether the authenticated user has voted on a preset.
 
 ## Moderation (Moderator-only)
 
-All endpoints in this section require a JWT Bearer token with moderator privileges.
+Every endpoint in this section is gated by `requireModerator` — an authenticated caller (web JWT or
+bot key + v2 HMAC) whose acting Discord ID is listed in `MODERATOR_IDS`. Unauthenticated is `401`;
+authenticated but not a moderator is `403`.
 
 ### `GET /api/v1/moderation/pending`
 
@@ -206,17 +248,34 @@ Get presets that are pending moderator review.
 
 ### `PATCH /api/v1/moderation/:presetId/status`
 
-Update a preset's moderation status. Transitions are validated server-side (state machine; a
-submitter can never approve their own preset) and applied as one D1 `batch()`.
+Update a preset's moderation status. There is **no transition state machine and no self-approval
+check** — the only gate is `requireModerator`, and any of the four statuses may be set from any
+other. What the server does validate is that `status` is a member of that set; anything else is a
+`400`.
+
+The status update and its `moderation_log` insert run as one D1 `batch()`, and the `UPDATE` is
+conditional on the status this moderator observed (optimistic concurrency, BUG-020). If another
+moderator wrote first, the update matches zero rows, the log row is skipped
+(`WHERE changes() > 0`), and the response is:
+
+```
+409  { "success": false, "error": "DUPLICATE_RESOURCE",
+       "message": "Preset status changed concurrently — reload and retry" }
+```
+
+A transition **into** the partial UNIQUE dye-signature index (`flagged`/`rejected` →
+`approved`/`pending`) can also collide with a preset that took the same signature meanwhile; that
+is a `409` naming the preset in the way (BUG-041).
 
 **Request Body:**
 
 | Field | Type | Constraints |
 |-------|------|-------------|
-| `status` | string | Target status: `approved`, `rejected`, `flagged`, `pending` |
-| `reason` | string | 10-200 characters (surfaced to the owner as `rejection_reason` on `GET /presets/mine`, joined from `moderation_log`) |
+| `status` | string | Required. One of `approved`, `rejected`, `flagged`, `pending` |
+| `reason` | string | **Optional and unvalidated here** — stored verbatim (or `NULL`) on the `moderation_log` row, and surfaced to the owner as `rejection_reason` on `GET /presets/mine` |
 
-Creates an entry in the `moderation_log` table.
+The action recorded is derived from the transition: `unflag` for `flagged → approved`, otherwise
+`approve` / `reject` / `flag` by target status, and `requeue` for a move back to `pending`.
 
 ### `PATCH /api/v1/moderation/:presetId/preview-image`
 
@@ -230,7 +289,16 @@ Get the full moderation history for a preset.
 
 ### `PATCH /api/v1/moderation/:presetId/revert`
 
-Revert a flagged edit by restoring the preset's `previous_values`.
+Revert a flagged edit by restoring the preset's `previous_values`, clearing that column and setting
+the status back to `approved`.
+
+**Request Body:**
+
+| Field | Type | Constraints |
+|-------|------|-------------|
+| `reason` | string | **Required, 10–200 characters** (`validateModerationReason`) — this is the route that enforces the length, not `/status` |
+
+`400` if the preset has no `previous_values` to revert to.
 
 ### `GET /api/v1/moderation/stats`
 
@@ -297,19 +365,31 @@ Verification is `verifyBotSignatureV2()` from `@xivdyetools/auth` (header names
 
 ## Rate Limiting
 
-### IP-based
+Full detail in [rate-limiting.md](rate-limiting.md); the shape callers need is:
 
-- **Limit:** 100 requests per minute (sliding window)
-- **Scope:** All endpoints
+### Per-IP
 
-### User-based
+- **Limit:** 100 requests per minute per client IP (native `RL_PUBLIC` binding)
+- **Scope:** `/api/*` only — `GET /` and `GET /health` are not rate limited
+- Skipped entirely for Service-binding callers, which carry no `CF-Connecting-IP`
 
-- **Limit:** 10 submissions per day (UTC reset)
-- **Scope:** `POST /api/v1/presets` only
+### Per-user
+
+- **Limit:** 100 requests per minute per acting Discord user
+- **Scope:** `/api/*`, after authentication; unauthenticated requests pass through
+
+### Daily quotas (per user, UTC reset)
+
+| Kind | Cap | Scope |
+|------|-----|-------|
+| `submission` | 10 / day | `POST /api/v1/presets` |
+| `flagged_edit` | 10 / day | A `PATCH /api/v1/presets/:id` that notifies a moderator |
+| `preview_upload` | 20 / day | `POST /api/v1/presets/:id/preview-image` |
+| `text_edit` | 30 / day | `PATCH /api/v1/presets/:id` carrying `name` or `description` |
 
 ### Response Headers
 
-All rate-limited responses include the following headers:
+The two middleware layers emit these on allowed and denied responses alike:
 
 | Header | Description |
 |--------|-------------|
@@ -320,14 +400,25 @@ All rate-limited responses include the following headers:
 
 ### 429 Too Many Requests
 
-When rate limited, the response body includes a `retryAfter` field:
+The two shapes are different. A **middleware** 429 (per-IP / per-user) carries no `success` field:
+
+```json
+{
+  "error": "Too Many Requests",
+  "message": "Rate limit exceeded. Please try again later.",
+  "retryAfter": 42
+}
+```
+
+A **daily quota** 429 is a handler response:
 
 ```json
 {
   "success": false,
-  "error": "Rate Limit Exceeded",
-  "message": "Too many requests",
-  "retryAfter": 42
+  "error": "RATE_LIMITED",
+  "message": "You've reached your daily submission limit (10 per day). Try again tomorrow.",
+  "remaining": 0,
+  "reset_at": "2026-09-06T00:00:00.000Z"
 }
 ```
 

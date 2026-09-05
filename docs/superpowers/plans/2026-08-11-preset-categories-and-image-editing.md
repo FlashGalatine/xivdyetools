@@ -1,5 +1,7 @@
 # Preset Categories & Preview-Image Editing Implementation Plan
 
+**Status:** shipped — presets-api 2.0.0 (migration 0010), moderation-worker category rows
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let a preset author set 1 primary + up to 2 secondary categories, add three new categories (`appearance` / `zones` / `raids-trials`), and upload, replace or remove the preview picture from the edit form.

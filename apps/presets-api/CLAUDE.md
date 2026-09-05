@@ -17,13 +17,13 @@ npm run deploy:production    # Deploy to production env
 npm run test                 # vitest
 npm run test:coverage        # Coverage via @vitest/coverage-v8
 npm run type-check           # tsc --noEmit
-npm run lint                 # eslint src/
+npm run lint                 # eslint src/ + knip (lint:dead)
 
 # Database
 npm run db:migrate           # Apply schema.sql to remote D1 — CREATES ONLY, see below
 npm run db:migrate:local     # Apply schema.sql to local .wrangler D1
 npm run db:migrate:indexes   # Apply migrations/002_add_composite_indexes.sql
-npm run db:seed              # tsx scripts/migrate-presets.ts (seed curated presets)
+npm run db:seed              # tsx scripts/migrate-presets.ts — PRINTS seed SQL to stdout, applies nothing
 
 # Files under migrations/ are NOT applied by any script — run them by hand:
 npx wrangler d1 execute xivdyetools-presets --remote --file=./migrations/<name>.sql
@@ -63,19 +63,22 @@ Web/Bot ──HTTPS──► Hono app
             requestId + logger middleware
                       │
                       ▼
-            envValidated check (per-isolate)
+            validateEnv (EVERY request; only the errors log once per isolate)
                       │
                       ▼
             security headers + CORS (allowlisted origins + dev localhost)
                       │
                       ▼
-            /api/* : publicRateLimitMiddleware (100/min/IP)
+            /api/* : publicRateLimitMiddleware (100/min/IP, skipped without CF-Connecting-IP)
             /api/* : bodySizeLimit (100KB)
             /api/* : jsonDepthLimit
-            /api/* : Content-Type assert (mutations)
                       │
                       ▼
-                  authMiddleware  ──► c.set('auth', AuthContext)
+                  authMiddleware  ──► c.set('auth', AuthContext)     ('*', not /api/*)
+                      │
+                      ▼
+            /api/* : perUserRateLimitMiddleware (100/min per acting Discord user)
+            /api/* : Content-Type assert (mutations)
                       │
                       ▼
             ┌─────────┴──────────┬───────────────┬──────────────┐
@@ -112,7 +115,7 @@ src/
 ├── data/profanity/                     # 6-language profanity word lists
 ├── utils/
 │   ├── api-response.ts                 # ErrorCode enum + response helpers
-│   └── env-validation.ts               # First-request env validation
+│   └── env-validation.ts               # Env validation, run on EVERY request
 └── (no entry-level scripts beyond `migrations/` and `scripts/migrate-presets.ts`)
 ```
 
@@ -124,6 +127,10 @@ src/
 | `DISCORD_WORKER` | Service Binding → `xivdyetools-discord-worker` | Forward submission/approval notifications to Discord |
 | `THUMBNAILS` | R2 (`xivdyetools-presets-preview-thumbnails`) | Stored preset preview images (WebP) |
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Crops/encodes an uploaded preview to WebP via `POST /thumbnail` |
+| `TOKEN_BLACKLIST` | KV (the `xivdyetools-oauth` namespace) | Revoked JWT `jti`s (FINDING-002) + the 120 s `botnonce:` replay cache |
+| `RL_PUBLIC` | Workers Rate Limiting (`[[ratelimits]]`, 100 / 60 s) | Backs both `publicRateLimitMiddleware` (`public:`) and `perUserRateLimitMiddleware` (`user:`) (FINDING-003) |
+
+**Production-required** (`validateEnv`, FINDING-013): every binding above plus `JWT_SECRET`, `JWT_ISSUER` (must start `https://`) and `INTERNAL_WEBHOOK_SECRET`. Each of these degrades *silently* when absent — no revocation, no issuer pinning, a fallback limiter, a moderation fan-out that logs and returns — which is why they fail the request instead.
 
 Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS` (CSV), `JWT_ISSUER`, `CACHE_PURGE_ZONE_ID` (production only — the `xivdyetools.app` zone id behind `shots.xivdyetools.app`, FINDING-018). Custom domains: `api.xivdyetools.app`, `api.xivdyetools.projectgalatine.com`.
 
@@ -131,30 +138,31 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 
 | Secret | Purpose |
 |--------|---------|
-| `BOT_API_SECRET` | Bearer token used by both Discord workers |
+| `BOT_API_SECRET` | Bearer token used by both Discord workers — required in **every** environment |
+| `MODERATOR_IDS` | CSV/whitespace-separated list of moderator Discord IDs — required in **every** environment |
 | `BOT_SIGNING_SECRET` | HMAC-SHA256 key — required in production for bot auth |
-| `JWT_SECRET` | Shared with `xivdyetools-oauth` for verifying web JWTs |
-| `MODERATOR_IDS` | CSV/whitespace-separated list of moderator Discord IDs |
+| `JWT_SECRET` | Shared with `xivdyetools-oauth` for verifying web JWTs — required in production, ≥ 32 chars |
+| `INTERNAL_WEBHOOK_SECRET` | Bearer for discord-worker's `/webhooks/preset-submission` — **required in production** (FINDING-013). Without it `notifyDiscordBot` logs and returns: no moderation embed, no throw, so nothing lands in `failed_notifications` either |
 
 ### Optional Secrets
 
 | Secret | Purpose |
 |--------|---------|
 | `PERSPECTIVE_API_KEY` | Google Perspective API for ML toxicity scoring. **⚠️ The service shuts down 2026-12-31** — delete this secret on or before that date, or FINDING-005's fail-closed branch queues every submission for manual review. With no key set the local word list decides, which is the intended degradation. See `DEPRECATIONS.md` |
-| `INTERNAL_WEBHOOK_SECRET` | Shared with discord-worker for `/webhooks/preset-submission` |
 | `CACHE_PURGE_API_TOKEN` | FINDING-018: API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone (the zone that serves `shots.xivdyetools.app`); pairs with the `CACHE_PURGE_ZONE_ID` **var** in `wrangler.toml` `[env.production]` (a zone id is config, not a secret). When set, every preview-image takedown purges the image URL from the edge cache and logs `[preview-image] cache purged …`. Absent → purge skipped, the object's one-day `s-maxage` is the only bound. Set on production 2026-08-21 |
 
 ## Database
 
-### Tables (`schema.sql` + `migrations/0002…0010`)
+### Tables (`schema.sql` + `migrations/0002…0013` + `002_add_composite_indexes.sql`)
 
 | Table | Purpose |
 |-------|---------|
 | `categories` | 8 seeded categories: jobs, grand-companies, seasons, events, aesthetics, plus appearance / zones / raids-trials added by `migrations/0010`. `community` was retired by `migrations/0007` — community-ness is a source, not a category; any stragglers land in `aesthetics` |
-| `presets` | Both curated and community palettes; `status ∈ {pending, approved, rejected, flagged}`, `dye_signature` enforces unique dye combinations. Later columns arrived one migration each: `example_link` (`0008`), `preview_image_key` / `preview_image_status` (`0009`), `secondary_categories` (`0010`) |
+| `presets` | Both curated and community palettes; `status ∈ {pending, approved, rejected, flagged, hidden}` (`hidden` is the ban-driven soft delete — never settable through `/moderation/:id/status`, whose validator accepts only the first four), `dye_signature` enforces unique dye combinations. Later columns arrived one migration each: `example_link` (`0008`), `preview_image_key` / `preview_image_status` (`0009`), `secondary_categories` (`0010`) |
 | `votes` | One row per (preset_id, user_discord_id); composite PK |
 | `moderation_log` | Audit trail of approve/reject/flag/unflag/revert actions, plus ban/unban/hide/restore written by moderation-worker directly (`migrations/0013` — `preset_id` is NULL on the user-level `ban`/`unban` rows, `target_discord_id` names the moderated user) |
-| `rate_limits` | **Dropped** by `migrations/0006` (REFACTOR-018 — never read or written; IP limits are in-memory). Still present in `schema.sql` only for fresh local DBs |
+| `submission_events` | Append-only per-user quota log (`migrations/0011`; `0012` rebuilt it to allow the `text_edit` kind). `(user_discord_id, kind, created_at)` with `kind ∈ {submission, flagged_edit, preview_upload, text_edit}` — user actions never delete rows, so a daily cap cannot be refilled by deleting your own presets (FINDING-008) |
+| `rate_limits` | **Dropped** by `migrations/0006` (REFACTOR-018 — never read or written). NOT in `schema.sql` any more: only a comment marks where it stood, so a fresh local DB does not create it either |
 | `banned_users` | Tracked via `discord_id` or `xivauth_id`; partial unique index for active bans |
 | `failed_notifications` | Dead-letter queue (BUG-015) for Discord notifications that exhausted retries |
 
@@ -182,16 +190,16 @@ Route order is load-bearing in `presets.ts` and `moderation.ts`: literal paths (
 ### Public
 
 - `GET /presets` — `category`, `search`, `status`, `sort`, `page`, `limit` (capped at 50), `is_curated`.
-- `GET /presets/featured` — top-voted curated/approved.
+- `GET /presets/featured` — top 10 by `vote_count` among `approved` presets. There is **no** `is_curated` filter (`getFeaturedPresets`); a community preset with enough votes appears here.
 - `GET /presets/:id` — single preset.
 - `GET /categories`, `GET /categories/:id` — categories with denormalized counts (a preset counts toward its primary **and** its `secondary_categories`).
 - `GET /` and `GET /health` — service info / liveness.
 
 ### Authenticated (Bot or Web)
 
-- `POST /presets` — submit (auto-vote for author, dye_signature dedup, profanity check). `dyes` are **stainIDs, 3–6 per preset** (`validatePresetDyes`: values > 254 are rejected with a "looks like a legacy item ID" message); optional `secondary_categories` (≤ 2, never repeating the primary) and `example_link` (page URL on an `EXAMPLE_LINK_HOSTS` allowlisted host).
+- `POST /presets` — submit (auto-vote for author, dye_signature dedup, profanity check). `dyes` are **stainIDs, 3–6 per preset** (`validatePresetDyes`: a value ≥ 5000 is rejected as "looks like a legacy item ID"; 255–4999 gets the plainer "Dye IDs must be stainIDs (1-254)"); optional `secondary_categories` (≤ 2, never repeating the primary) and `example_link` (page URL on an `EXAMPLE_LINK_HOSTS` allowlisted host).
 - `PATCH /presets/:id` — edit (stores `previous_values` JSON for revert).
-- `DELETE /presets/:id` — author-only delete.
+- `DELETE /presets/:id` — author **or moderator**; a preset the caller could not GET answers 404.
 - `PATCH /presets/refresh-author` — re-sync the caller's denormalized author name across their presets.
 - `GET /presets/mine` — requester's submissions across all statuses.
 - `GET /presets/rate-limit` — remaining submissions today.
@@ -217,7 +225,7 @@ Route order is load-bearing in `presets.ts` and `moderation.ts`: literal paths (
 Authorization: Bearer <token>
    ├── token === BOT_API_SECRET ────► verify HMAC signature ──► AuthContext{authSource: 'bot'}
    └── otherwise + JWT_SECRET set  ──► verify JWT (HS256) ─────► AuthContext{authSource: 'web'}
-                                                                  user comes from `sub` claim
+                                                          user = `discord_id` claim (`sub` fallback)
 ```
 
 Bot auth requires `BOT_SIGNING_SECRET` in production (rejects unsigned requests) — dev/test allow unsigned to ease local testing. JWT verification rejects non-HS256 algorithms to prevent algorithm-confusion attacks.
@@ -266,9 +274,14 @@ Allowlist comes from `CORS_ORIGIN` + `ADDITIONAL_CORS_ORIGINS`. In dev mode only
 
 `allowHeaders` is deliberately just `['Content-Type', 'Authorization']`. The bot identity headers below (`X-User-Discord-ID` / `X-User-Discord-Name`) are **not** listed: both bot callers arrive over Service Bindings and never preflight, so no real client needs the permission (FINDING-005).
 
-### Public Rate Limiting
+### Rate Limiting Middleware
 
-100 req/min per IP via `MemoryRateLimiter` from `@xivdyetools/worker-kit/rate-limiter` (per-isolate; not distributed). Returns 429 with `Retry-After` and emits `X-RateLimit-*` headers.
+Two middleware layers, both 100 req/min and both backed by the native `RL_PUBLIC` binding through `CloudflareRateLimiter` (key prefixes `public:` / `user:`); `MemoryRateLimiter` from `@xivdyetools/worker-kit/rate-limiter` is the per-isolate fallback used only when the binding is unbound (dev/tests):
+
+- `publicRateLimitMiddleware` — per client IP, on `/api/*` before auth. Requests with no `CF-Connecting-IP` (Service Binding callers) skip it entirely.
+- `perUserRateLimitMiddleware` — per acting Discord user, on `/api/*` after auth. Unauthenticated requests pass through.
+
+Both return 429 with `Retry-After` and emit `X-RateLimit-*` headers. The shared middleware's 429 body carries no `success` field; the per-day quota 429s from `handlers/presets.ts` do.
 
 ## Security Patterns
 
@@ -325,8 +338,8 @@ Production hides `err.message` and stack — only the request ID is returned. De
 | `hono` | HTTP framework |
 | `@xivdyetools/auth` | JWT + HMAC bot signature verification |
 | `@xivdyetools/types` | Shared interfaces (preset shapes, AuthContext, etc.) |
-| `@xivdyetools/worker-kit/rate-limiter` | `MemoryRateLimiter`, `getClientIp`, `PUBLIC_API_LIMITS` |
-| `@xivdyetools/logger` | Structured logging with secret redaction |
+| `@xivdyetools/worker-kit/rate-limiter` | `CloudflareRateLimiter`, `MemoryRateLimiter`, `getClientIp`, `PUBLIC_API_LIMITS` |
+| `@xivdyetools/logger` | Structured logging with secret redaction — **transitive** via `worker-kit`, not in this app's `package.json` |
 | `@xivdyetools/worker-kit` | Request ID, logger, rate-limit middleware factories |
 
 ## Development Notes
@@ -339,7 +352,7 @@ Production hides `err.message` and stack — only the request ID is returned. De
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/types`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
+**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/types`, `@xivdyetools/worker-kit` (incl. `/rate-limiter`); `@xivdyetools/logger` arrives transitively through `worker-kit`
 
 **Service Bindings (outbound):** `xivdyetools-discord-worker` (notifications), `xivdyetools-image-worker` (`POST /thumbnail` for preview images)
 
@@ -351,7 +364,7 @@ Production hides `err.message` and stack — only the request ID is returned. De
 
 ## Deployment Checklist
 
-1. `wrangler secret put` for every required secret (`BOT_API_SECRET`, `BOT_SIGNING_SECRET`, `JWT_SECRET`, `MODERATOR_IDS`).
+1. `wrangler secret put` for every required secret (`BOT_API_SECRET`, `MODERATOR_IDS`, and in production also `BOT_SIGNING_SECRET`, `JWT_SECRET`, `INTERNAL_WEBHOOK_SECRET`).
 2. If schema changed: apply the relevant file(s) from `migrations/` by hand (see Commands) — **before** deploying the worker that reads the new columns, or the first query naming one fails as an opaque 500.
    **`npm run db:migrate` cannot alter an existing database** — `schema.sql` is all
    `CREATE TABLE IF NOT EXISTS`, so on a live D1 every statement is skipped and the

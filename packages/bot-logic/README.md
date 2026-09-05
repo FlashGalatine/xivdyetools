@@ -73,13 +73,16 @@ import {
 const color = resolveColorInput('#FF6B6B', { findClosestForHex: true });
 // → { hex: '#FF6B6B', name: 'Coral Pink', id: 5741, itemID: 5741, dye: Dye }   // id === itemID (Coral Pink, stainID 13)
 
-// Resolve directly to a Dye object
+// Resolve directly to a Dye object (second arg is the locale whose dye names
+// should also match; English-only by default)
 const dye = resolveDyeInput('jet black');
-// → Dye { name: 'Jet Black', hex: '#000000', ... }
+// → Dye { name: 'Jet Black', hex: '#1e1e1e', ... }
 
-// CSS color names work too
-const css = resolveColorInput('coral');
-// → { hex: '#FF7F50' }
+// CSS color names work too — but only when no dye name matches first.
+// Resolution order is hex → dye name → CSS name, so 'coral' resolves to the
+// DYE Coral Pink, not to CSS coral (#FF7F50).
+const css = resolveColorInput('burlywood');
+// → { hex: '#DEB887' }
 ```
 
 ### Multi-Dye Commands
@@ -108,8 +111,8 @@ const comparison = await executeComparison({
 
 ### Input Resolution
 
-- `resolveColorInput(input, options?)` — Resolves hex codes, dye names, or CSS color names to a `ResolvedColor`
-- `resolveDyeInput(input)` — Resolves input directly to a `Dye` object (or `null`)
+- `resolveColorInput(input, options?)` — Resolves hex codes, dye names, or CSS color names to a `ResolvedColor`. Order is hex → dye name → CSS name, so a dye name always wins a collision.
+- `resolveDyeInput(input, locale = 'en')` — Resolves input directly to a `Dye` object (or `null`)
 - `isValidHex(input)` — Validates hex color strings
 - `normalizeHex(input)` — Normalizes to `#RRGGBB` format
 
@@ -122,8 +125,13 @@ const comparison = await executeComparison({
 ### Constants
 
 - `dyeService` — Shared `DyeService` singleton instance
-- `HARMONY_TYPES` — Available color harmony types
+- `HARMONY_TYPES` — The ten color harmony types: `triadic`, `complementary`, `analogous`, `split-complementary`, `tetradic`, `inverted-tetradic`, `square`, `monochromatic`, `compound`, `shades`
 - `VISION_TYPES` — Colorblindness simulation types
+
+`HarmonyInput` also takes `wheel?: ColorWheelId` — the colour wheel the harmony
+offsets are measured on (`'rgb'` default, plus `'ryb'`, `'munsell'`,
+`'oklch-hue'`, `'oklch-lightness'`; the list lives in core's `COLOR_WHEEL_IDS`).
+The older `harmonyOptions` field is ignored since PR #159.
 
 ## Dependencies
 

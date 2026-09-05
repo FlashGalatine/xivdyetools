@@ -1,5 +1,7 @@
 # Discord bot analytics — Tier A Implementation Plan
 
+**Status:** shipped — PR #150 (`apps/discord-worker/src/services/command-trace.ts`)
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the discord-worker's existing Analytics Engine datapoint truthful and complete — real success/latency for deferred commands, a coarse outcome class, subcommand, locale bucket and button clicks — without recording any command option value.

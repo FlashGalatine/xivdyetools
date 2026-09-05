@@ -8,7 +8,10 @@
 
 ### How do I add the bot to my server?
 
-Visit the XIV Dye Tools website and click "Add to Discord" in the footer. You'll need the "Manage Server" permission.
+The invite link is posted in the [community Discord](https://discord.gg/5VUSKTZCe5), and `/about` in
+any server that already has the bot prints it as well. Open the link, pick your server and approve
+the permissions. You'll need the "Manage Server" permission. (The web app does not carry the invite
+link — it links only to itself.)
 
 ### Is the bot free?
 
@@ -92,10 +95,8 @@ follow you across servers.
 ### How do I submit a preset?
 
 Use `/preset submit` with a name, description, category and your dye names, or the web app's
-Community Presets tool. Presets need 3-6 dyes and one of the categories jobs, grand-companies,
-seasons, events, aesthetics, appearance, zones or raids-trials. (Known 5.0.0 issue: bot-side
-`/preset submit` / `/preset edit` are still being brought in line with the 3-6-dye rule and may be
-rejected — use the web app in the meantime.)
+Community Presets tool. Either way works. Presets need 3-6 dyes and one of the categories jobs,
+grand-companies, seasons, events, aesthetics, appearance, zones or raids-trials.
 
 ### Why was my preset rejected?
 
@@ -106,7 +107,9 @@ Common reasons:
 
 ### Can I delete my preset?
 
-Contact a moderator or submit a request via GitHub issues.
+Yes — sign in to the web app with the same account, open the Community Presets tool, choose
+**My Submissions**, and pick **Delete** on the preset you want gone. There is no `/preset delete`
+command in Discord.
 
 ---
 
@@ -114,12 +117,18 @@ Contact a moderator or submit a request via GitHub issues.
 
 ### I'm getting rate limit errors
 
-The bot has per-user limits:
-- Most commands: 15/minute (`/dye`: 20/minute; `/accessibility` and `/budget`: 10/minute)
-- `/about`, `/manual`, `/stats`, `/changelog`: unlimited
-- Preset submissions: 10/day
+Every command has a per-user limit over a rolling minute — nothing is unlimited:
 
-Wait a moment and try again.
+| Per minute | Commands |
+|------------|----------|
+| 5 | `/extractor image` |
+| 10 | `/accessibility` (and `/a11y`), `/budget`, `/preset` |
+| 15 | `/extractor color`, `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/stats` |
+| 20 | `/dye`, `/preferences` |
+| 30 | `/about`, `/manual`, `/changelog` |
+
+`/a11y` and `/accessibility` draw from the same bucket. Preset submissions also have a daily cap of
+10. Wait a moment and try again.
 
 ---
 
@@ -152,7 +161,9 @@ Check:
 
 ### Someone is abusing presets
 
-Use the report feature on presets, or contact a moderator.
+There is no in-app report button yet. Contact a moderator in the
+[community Discord](https://discord.gg/5VUSKTZCe5) with the preset's name and they will take a look.
+Every submission is reviewed before it appears publicly, so most problems are caught first.
 
 ### How do I become a moderator?
 
@@ -168,6 +179,10 @@ Moderation is by invite only for trusted community members.
 - Your preferences and favourite presets
 - Preset submissions and votes
 - Anonymous usage statistics
+- A one-off flag recording that you have already been shown the "what changed in 5.0" notice, so it
+  is not sent twice. It is stored against your Discord ID and expires by itself after 180 days.
+
+Character names from `.chara` files are never displayed or stored.
 
 ### Can I delete my data?
 

@@ -1,12 +1,14 @@
 # Presets API Overview
 
-**xivdyetools-presets-api** v2.0.0 - Community preset management API
+**xivdyetools-presets-api** — community preset management API. Current version:
+[docs/versions.md](../../versions.md); release history:
+[`apps/presets-api/CHANGELOG.md`](../../../apps/presets-api/CHANGELOG.md).
 
-> **2.0.0 (5.0 wave):** preset dyes are stainIDs (3–6 per preset), the `community` category is
+> **Since the 5.0 wave:** preset dyes are stainIDs (3–6 per preset), the `community` category is
 > retired and `appearance` / `zones` / `raids-trials` added, presets carry a primary + up to two
 > secondary categories, an `example_link`, and a moderated preview image (R2 `THUMBNAILS` bucket,
-> thumbnails via the `IMAGE_WORKER` service binding). The illustrative schema below is out of date —
-> see [database.md](database.md) for the real columns.
+> thumbnails via the `IMAGE_WORKER` service binding). The schema sketch below is abridged —
+> [database.md](database.md) is the authority on columns and indexes.
 
 ---
 
@@ -19,24 +21,22 @@ A Cloudflare Worker + D1 database that provides a REST API for community dye pre
 ## Quick Start (Development)
 
 ```bash
-cd xivdyetools-presets-api
+# From the monorepo root (xivdyetools/)
+pnpm install
 
-# Install dependencies
-npm install
+# Apply the schema to the local D1
+pnpm --filter xivdyetools-presets-api run db:migrate:local
 
-# Set secrets (one time)
-wrangler secret put BOT_API_SECRET
-wrangler secret put JWT_SECRET
+# Start the local dev server (port 8787)
+pnpm --filter xivdyetools-presets-api run dev
 
-# Apply database schema
-npm run db:migrate:local
-
-# Start local dev server (port 8787)
-npm run dev
-
-# Deploy
-npm run deploy
+# Deploy — bare deploy is the routeless DEV worker; production needs --env production
+pnpm --filter xivdyetools-presets-api run deploy
+pnpm --filter xivdyetools-presets-api run deploy:production
 ```
+
+Secrets are set once per environment from `apps/presets-api/` — see
+[Environment Variables](#environment-variables) below for the full list.
 
 ---
 
@@ -140,25 +140,35 @@ CREATE TABLE categories (
   icon TEXT, is_curated INTEGER DEFAULT 0, display_order INTEGER DEFAULT 0
 );
 
--- Votes (one per user per preset)
+-- Votes (one per user per preset; there is no vote direction and no downvotes)
 CREATE TABLE votes (
-  id TEXT PRIMARY KEY,
   preset_id TEXT NOT NULL,
   user_discord_id TEXT NOT NULL,
-  vote TEXT NOT NULL,  -- 'up' or 'down'
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(preset_id, user_discord_id),
-  FOREIGN KEY (preset_id) REFERENCES presets(id)
+  created_at TEXT DEFAULT (datetime('now')),
+  PRIMARY KEY (preset_id, user_discord_id),
+  FOREIGN KEY (preset_id) REFERENCES presets(id) ON DELETE CASCADE
 );
 
 -- Moderation audit log
 CREATE TABLE moderation_log (
   id TEXT PRIMARY KEY,
-  preset_id TEXT NOT NULL,
-  action TEXT NOT NULL,
+  preset_id TEXT,                -- NULL for the user-level ban / unban (migration 0013)
   moderator_discord_id TEXT NOT NULL,
+  action TEXT NOT NULL,          -- approve | reject | flag | unflag | requeue | revert
+                                 -- | ban | unban | hide | restore (moderation-worker)
   reason TEXT,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  target_discord_id TEXT,        -- the moderated user (migration 0013)
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (preset_id) REFERENCES presets(id) ON DELETE CASCADE
+);
+
+-- Append-only per-user quota log (migrations 0011 / 0012)
+CREATE TABLE submission_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_discord_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('submission', 'flagged_edit', 'preview_upload', 'text_edit')),
+  preset_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 ```
 
@@ -170,50 +180,47 @@ CREATE TABLE moderation_log (
 
 1. **Local Profanity Filter** (fast, always runs)
    - Word lists in 6 languages
-   - Pattern matching for variations
-   - Immediate rejection for clear violations
+   - A hit short-circuits the pipeline and files the preset as `pending` — it never refuses the write
 
 2. **Perspective API** (optional, ML-based)
-   - Toxicity scoring
-   - Identity attack detection
-   - Requires API key configuration
+   - `TOXICITY`, `SEVERE_TOXICITY`, `IDENTITY_ATTACK`, `INSULT`, `PROFANITY`; flags at ≥ 0.7
+   - Requires `PERSPECTIVE_API_KEY`; **fail-closed** — with a key set, an error or timeout also
+     queues the preset for a moderator (FINDING-005)
 
-3. **Manual Review** (for flagged content)
+3. **Manual Review** (for anything not cleared above)
    - Moderators approve/reject
-   - Audit trail in moderation_log
+   - Audit trail in `moderation_log`
 
 ### Flow
 
 ```
-Submission → Local Filter → [Pass] → Perspective API → [Pass] → Auto-Approve
-                  │                        │
-                  ▼                        ▼
-              [Fail]                   [Flag]
-                  │                        │
-                  ▼                        ▼
-              Reject                 Manual Review
+Submission → Local Filter ─[hit]────────────────────────┐
+                  │                                     │
+               [clean]                                  │
+                  ▼                                     │
+           Perspective API ─[≥ 0.7 or unavailable]──────┤
+                  │                                     │
+               [clean]                                  ▼
+                  ▼                            status = 'pending'
+        status = 'approved'                  → moderation channel
+         (auto-approved)                      → moderator decides
 ```
+
+Nothing on this path rejects a submission outright: the preset is always created, and the only
+question the pipeline answers is `approved` vs `pending`.
 
 ---
 
 ## Rate Limiting
 
-- **10 submissions per user per day**
-- Based on UTC day boundary
-- Tracked via database query (not KV)
+Three layers — per-IP (100/min), per-user (100/min) and four per-user daily quotas. The submission
+quota is 10 per UTC day, counted in D1 as
+`max(presets rows created today, 'submission' rows in submission_events today)`
+(`getEffectiveSubmissionCountToday()` in `src/services/rate-limit-service.ts`) — the append-only
+event log is what stops an author refilling the quota by deleting their own presets (FINDING-008).
 
-```typescript
-// Check submissions in current UTC day
-const today = new Date().toISOString().split('T')[0];
-const count = await db.prepare(
-  `SELECT COUNT(*) as count FROM presets
-   WHERE author_discord_id = ? AND date(created_at) = ?`
-).bind(userId, today).first();
-
-if (count >= 10) {
-  return c.json({ error: 'Rate limit exceeded' }, 429);
-}
-```
+See [rate-limiting.md](rate-limiting.md) for the backends, the other three quotas, the failure modes
+and both 429 body shapes.
 
 ---
 
@@ -244,17 +251,37 @@ JWT is verified using shared `JWT_SECRET` with OAuth worker.
 **wrangler.toml** (top-level block is `xivdyetools-presets-api-dev`; production under `[env.production]` — a bare `wrangler deploy` no longer touches production):
 ```toml
 [env.production]
-vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app" }
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app", CACHE_PURGE_ZONE_ID = "…" }
 ```
 
-Bindings: `DB` (D1 `xivdyetools-presets`), `DISCORD_WORKER` (service), `IMAGE_WORKER` (service → `xivdyetools-image-worker`, `POST /thumbnail`), `THUMBNAILS` (R2).
+`JWT_ISSUER` pins the expected `iss` claim and must start with `https://` in production
+(FINDING-015). `CACHE_PURGE_ZONE_ID` is the `xivdyetools.app` zone behind
+`shots.xivdyetools.app` — config, not a secret, which is why it lives here (FINDING-018).
+
+**Bindings:**
+
+| Binding | Type | Purpose |
+|---------|------|---------|
+| `DB` | D1 (`xivdyetools-presets`) | Presets, votes, categories, moderation log, bans, quotas |
+| `DISCORD_WORKER` | Service Binding | Moderation notifications (`POST /webhooks/preset-submission`) |
+| `IMAGE_WORKER` | Service Binding | `POST /thumbnail` — crops/encodes preview images to WebP |
+| `THUMBNAILS` | R2 (`xivdyetools-presets-preview-thumbnails`) | Moderated preview images |
+| `TOKEN_BLACKLIST` | KV (shared with `apps/oauth`) | Revoked JWT `jti`s, plus the 120 s `botnonce:` replay cache |
+| `RL_PUBLIC` | Workers Rate Limiting (`[[ratelimits]]`, 100 / 60 s) | Backs both the per-IP and per-user limiters |
+
+`validateEnv` makes **all six** required in production, along with `JWT_SECRET`, `JWT_ISSUER` and
+`INTERNAL_WEBHOOK_SECRET` — each of them degrades silently rather than loudly when missing, which is
+the reason for the check (FINDING-013).
 
 **Secrets:**
 ```bash
-wrangler secret put BOT_API_SECRET
-wrangler secret put JWT_SECRET
-wrangler secret put MODERATOR_IDS      # Comma-separated
-wrangler secret put PERSPECTIVE_API_KEY # Optional
+wrangler secret put BOT_API_SECRET          # Required (all environments)
+wrangler secret put MODERATOR_IDS           # Required (all environments), comma-separated
+wrangler secret put BOT_SIGNING_SECRET      # Required in production — HMAC key for bot signatures
+wrangler secret put JWT_SECRET              # Required in production; shared with apps/oauth
+wrangler secret put INTERNAL_WEBHOOK_SECRET # Required in production — bearer for the discord-worker webhook
+wrangler secret put PERSPECTIVE_API_KEY     # Optional (and sunsetting 2026-12-31)
+wrangler secret put CACHE_PURGE_API_TOKEN --env production   # Optional, FINDING-018
 ```
 
 ---

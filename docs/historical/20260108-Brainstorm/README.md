@@ -1,5 +1,7 @@
 # Brainstorming Index - January 2026
 
+> **Archived 2026-09-05.** Every idea in this folder shipped (stainID-first data, the Swatch/Character Matcher with `.chara` import, share buttons + og-worker cards, the extracted character-colour data). Moved from `docs/brainstorming/`. Links inside this folder that pointed at the pre-monorepo layout are left as they were.
+
 **Last Updated**: January 8, 2026  
 **Context**: Post-Reddit launch feedback and feature exploration
 

@@ -22,7 +22,7 @@
 > | `/preset` commands | Community Presets |
 
 Most colour options accept **either a hex code (`#FF6B6B`) or a dye name** (autocomplete). Every
-`matching` option offers the same six methods: `ciede2000` (ΔE2000, the default), `oklab` (ΔEOK),
+`matching` option offers the same six methods: `ciede2000` (ΔE2000, the default), `oklab` (ΔEOK2),
 `cie76` (ΔE76), `redmean`, `rgb`, `distinguish` — set your own default with
 `/preferences set matching:`.
 
@@ -38,8 +38,8 @@ Generate harmonious dye combinations based on color theory.
 | Parameter | Description | Required |
 |-----------|-------------|----------|
 | `color` | Starting hex color or dye name | Yes |
-| `type` | complementary (default), analogous, triadic, split-complementary, tetradic, inverted-tetradic, square, monochromatic | No |
-| `color_space` | Hue-rotation space: hsv (default), oklch, lch, hsl | No |
+| `type` | triadic (default), complementary, analogous, split-complementary, tetradic, inverted-tetradic, square, monochromatic, compound, shades | No |
+| `wheel` | Colour wheel the harmony angles are measured on: rgb (default), ryb, munsell, oklch-hue, oklch-lightness | No |
 | `companions` | Companion dyes per slot (1-3) | No |
 | `matching` | Matching method (see above) | No |
 | `strict_matching` | Tighten the distance threshold | No |
@@ -57,7 +57,6 @@ Find the closest FFXIV dyes to a colour (this is what `/match` used to do).
 | `color` | Hex color or dye name | Yes |
 | `count` | Number of matches (1-10) | No |
 | `matching` | Matching method | No |
-| `prevent_duplicates` | Don't show the same dye twice | No |
 
 ---
 
@@ -70,7 +69,6 @@ Extract colors from an image and match them to FFXIV dyes (this is what `/match_
 |-----------|-------------|----------|
 | `image` | Image file to analyze | Yes |
 | `colors` | Number of colors to extract (3-10) | No |
-| `vibrancy_boost` | Boost vibrancy of extracted colors (default: on) | No |
 | `matching` | Matching method | No |
 | `prevent_duplicates` | Don't map two slots to the same dye (default: on) | No |
 
@@ -101,7 +99,6 @@ Blend two dyes and see the closest real dyes at 25 / 40 / 50 / 65 / 80 %.
 | `dye1`, `dye2` | The two dyes (hex or name) | Yes |
 | `mode` | Blending algorithm: ryb (default, like the web app), spectral, oklab, lab, hsl, rgb | No |
 | `matching` | Matching method | No |
-| `count` | Closest matches to show (1-10) | No |
 
 ---
 
@@ -212,7 +209,12 @@ Find cheaper look-alikes for an expensive dye using live market board prices.
 
 **Subcommands**:
 - `/budget find target_dye:Metallic Gold world:Balmung` — the ledger of alternatives (options: `matching`, `max_distance` 2-20 ΔE2000 default 8, `exclude_coffers`, `exclude_wide_spectrum`)
-- `/budget quick preset:jet_black` — one-click check for Pure White, Jet Black, Metallic Silver, Metallic Gold, Pastel Pink
+- `/budget quick preset:jet_black` — one-click check for 22 popular expensive dyes. Discord shows the
+  whole list when you pick the `preset` option: Jet Black, Pure White, Pearl White and Gunmetal Black,
+  the Cosmic Exploration colours (Ruby Red, Cherry Pink, Canary Yellow, Vanilla Yellow, Dragoon Blue,
+  Turquoise Blue), the neons (Neon Pink, Neon Green, Neon Yellow, Bright Orange), and the metallics
+  (Metallic Brass, Metallic Pink, Metallic Ruby Red, Metallic Cobalt Green, Metallic Dark Blue),
+  plus Violet Purple, Azure Blue and Carmine Red. Takes an optional `world`.
 - `/budget set_world world:Balmung` — save your world/datacenter so you can omit it
 
 ---
@@ -259,13 +261,11 @@ Submit a new community preset (goes to moderation first).
 | `preset_name` | Preset name (2-50 characters) | Yes |
 | `description` | Description (10-200 characters) | Yes |
 | `category` | Preset category | Yes |
-| `dye1`, `dye2` | First two dyes | Yes |
-| `dye3`, `dye4`, `dye5` | More dyes | No |
+| `dye1`, `dye2`, `dye3` | First three dyes | Yes |
+| `dye4`, `dye5`, `dye6` | More dyes | No |
 | `tags` | Comma-separated tags (max 10) | No |
 
-Community presets need **3 to 6 dyes**. Known issue in 5.0.0: bot-side `/preset submit` and
-`/preset edit` are still being brought in line with the 5.0 preset rules and may be rejected —
-submit from the web app's Community Presets tool in the meantime.
+Community presets need **3 to 6 dyes**.
 
 ---
 

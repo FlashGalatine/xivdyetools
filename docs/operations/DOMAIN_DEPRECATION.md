@@ -17,41 +17,45 @@ references are correct and must stay. For example:
 ```
 
 Similar live references exist in Patreon and GitHub links. A repo-wide grep for
-`projectgalatine` returns ~56 files; only the ones tabled below are in scope.
+`projectgalatine` returns ~95 files; only the ones tabled below are in scope.
 
 **Also out of scope:** `docs/audits/**` and `docs/historical/**`. Those are point-in-time
-records — rewriting them would falsify history. `apps/web-app/netlify.toml` is already slated
-for deletion as `DEAD-003` in the 2026-08-09 audit's Sprint 4.
+records — rewriting them would falsify history. `apps/web-app/netlify.toml` was deleted as
+`DEAD-003` in the 2026-08-09 audit's Sprint 4 and is no longer a consideration.
 
 ## Inventory
+
+Line numbers below are current as of 2026-09-05; the routes now live under each Worker's
+`[env.production]` block (except `oauth`, which has no production env — see
+`docs/operations/DEPLOY_ENVIRONMENTS.md`).
 
 ### Custom domain routes (5 Workers)
 
 | Worker | File | Route |
 |---|---|---|
-| `discord-worker` | `apps/discord-worker/wrangler.toml:8` | `bot.xivdyetools.projectgalatine.com` |
-| `moderation-worker` | `apps/moderation-worker/wrangler.toml:8` | `moderation-bot.xivdyetools.projectgalatine.com` |
-| `presets-api` | `apps/presets-api/wrangler.toml:8` | `api.xivdyetools.projectgalatine.com` |
+| `discord-worker` | `apps/discord-worker/wrangler.toml:119` | `bot.xivdyetools.projectgalatine.com` |
+| `moderation-worker` | `apps/moderation-worker/wrangler.toml:64` | `moderation-bot.xivdyetools.projectgalatine.com` |
+| `presets-api` | `apps/presets-api/wrangler.toml:62` | `api.xivdyetools.projectgalatine.com` |
 | `oauth` | `apps/oauth/wrangler.toml:8` | `auth.xivdyetools.projectgalatine.com` |
-| `api-worker` | `apps/api-worker/wrangler.toml:35` | `proxy.xivdyetools.projectgalatine.com` |
+| `api-worker` | `apps/api-worker/wrangler.toml:75` | `proxy.xivdyetools.projectgalatine.com` |
 
 ### Allowlists
 
 | File | Entry |
 |---|---|
-| `apps/oauth/src/constants/oauth.ts:12` | `ALLOWED_REDIRECT_ORIGINS` — already carries `// Transition period - remove after migration complete` |
-| `apps/presets-api/wrangler.toml:31` | `ADDITIONAL_CORS_ORIGINS` — retire only the `xivdyetools.projectgalatine.com` entry; leave `xiv-colorexplorer.pages.dev` |
+| `apps/oauth/src/constants/oauth.ts:17` | `ALLOWED_REDIRECT_ORIGINS` (declared at `:10`) — the entry already carries `// Transition period - remove after migration complete` |
+| `apps/presets-api/wrangler.toml:64` | `ADDITIONAL_CORS_ORIGINS` — retire only the `xivdyetools.projectgalatine.com` entry; leave `xiv-colorexplorer.pages.dev` and `beta.xivdyetools.app` |
 
 ### Migration mechanism (retire last)
 
-`apps/web-app/functions/_middleware.ts:14` redirects the old apex to `xivdyetools.app`. This is
+`apps/web-app/functions/_middleware.ts:17` redirects the old apex to `xivdyetools.app`. This is
 what makes every other removal graceful; it is Phase 4, not Phase 1.
 
 ### Documentation
 
-`apps/discord-worker/CLAUDE.md:142`, `apps/oauth/CLAUDE.md:114`,
-`apps/presets-api/CLAUDE.md:121`, `apps/moderation-worker/CLAUDE.md:119` (all "Custom domains:"
-lines), and `apps/web-app/functions/README.md:11,26`.
+The "Custom domains:" lines in `apps/discord-worker/CLAUDE.md`, `apps/oauth/CLAUDE.md`,
+`apps/presets-api/CLAUDE.md` and `apps/moderation-worker/CLAUDE.md` (each inside that file's
+wrangler/config section), and `apps/web-app/functions/README.md:11,26`.
 
 ---
 
@@ -134,8 +138,8 @@ presence of the `200`, never by sequence.
 |---|---|
 | one `200` PONG + one `401` | healthy |
 | two `401`s, no `200` | the valid PING arrived and failed — key mismatch or altered body |
-| `Missing signature headers` (`packages/auth/src/discord.ts:83`) | headers stripped before the Worker — suspect edge/WAF |
-| `Invalid signature` (`discord.ts:109`) | headers arrived; key or body wrong |
+| `Missing signature headers` (`packages/auth/src/discord.ts:95`) | headers stripped before the Worker — suspect edge/WAF |
+| `Invalid signature` (`discord.ts:134`) | headers arrived; key or body wrong |
 | no request logged at all | blocked upstream; never reached the Worker |
 
 Note the discrimination that matters: **two `401`s is not the same as a blocked request.** It
@@ -162,8 +166,8 @@ A pointer's old value stops mattering the moment it changes. An allowlist entry 
 load-bearing for anyone still using the path it permits.
 
 **Which application to check for #3.** The `oauth` Worker authenticates as
-`DISCORD_CLIENT_ID = "1447108133020369048"` — the *production* application — in all three of its
-environments (`apps/oauth/wrangler.toml:17,25,34`). That application therefore serves two roles:
+`DISCORD_CLIENT_ID = "1447108133020369048"` — the *production* application — in both of its
+environments (`apps/oauth/wrangler.toml:17, 50`). That application therefore serves two roles:
 Discord bot interactions **and** web-app login. Check its OAuth2 redirect URIs, not the
 moderation app's and not the beta bot's.
 
@@ -183,8 +187,8 @@ the second list let a login begin on the transition domain and fail at the callb
 Landable immediately; nothing reachable changes.
 
 1. Remove the `xivdyetools.projectgalatine.com` entry from
-   `apps/oauth/src/constants/oauth.ts:12`, closing the stale "transition period" TODO.
-2. Remove it from `ADDITIONAL_CORS_ORIGINS` in `apps/presets-api/wrangler.toml:31`.
+   `apps/oauth/src/constants/oauth.ts:17`, closing the stale "transition period" TODO.
+2. Remove it from `ADDITIONAL_CORS_ORIGINS` in `apps/presets-api/wrangler.toml:64`.
 3. Update the five documentation references listed above.
 4. Add the `DEPRECATIONS.md` entry.
 
@@ -226,7 +230,7 @@ give it a window, then follow the same five steps as Phase 2.
 
 **Gate:** a long window after Phase 2, with old-apex traffic at zero.
 
-Remove the redirect block at `apps/web-app/functions/_middleware.ts:14` and its
+Remove the redirect block at `apps/web-app/functions/_middleware.ts:17` and its
 `apps/web-app/functions/README.md` documentation. After this, old bookmarks fail rather than
 redirect — irreversible for anyone who never updated.
 

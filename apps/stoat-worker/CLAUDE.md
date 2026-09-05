@@ -143,6 +143,10 @@ export const DYE_INFO_REACTIONS = [
 
 #### Loading indicator pattern
 
+**Not wired yet.** `services/loading-indicator.ts` exports `withLoadingIndicator`, but nothing in
+`src/` calls it — no command currently takes long enough to need it (image generation is still
+planned). The intended shape, for when one does:
+
 ```typescript
 await withLoadingIndicator(message, async () => {
   // ... 1-5 second image gen ...

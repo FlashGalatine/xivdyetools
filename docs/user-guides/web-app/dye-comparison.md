@@ -47,7 +47,7 @@ When both dyes have a vendor price the verdict adds a **cost line**: *"{cheaper}
 | Method | What it is |
 |--------|------------|
 | **ΔE2000** | Perceptual distance — the suite's standard |
-| **ΔEOK · OKLab** | OKLab distance, printed raw |
+| **ΔEOK2 · OKLab** | OKLab distance, printed raw |
 | **ΔE76 · CIE 1976** | Straight-line Lab distance, the older formula |
 | **Redmean · weighted RGB** | RGB with the channels weighted by how red the pair is |
 | **RGB distance** | Straight-line distance in the RGB cube (0–441.67) |
@@ -79,7 +79,7 @@ The header row over the loaded dye carries **Export** — the export sheet with 
 
 ## Understanding the Tiers
 
-The tier words are calibrated per method, so a **CLOSE** in ΔEOK means the same thing as a **CLOSE** in ΔE2000 even though the numbers differ. On the ΔE2000 scale:
+The tier words are calibrated per method, so a **CLOSE** in ΔEOK2 means the same thing as a **CLOSE** in ΔE2000 even though the numbers differ. On the ΔE2000 scale:
 
 | ΔE2000 | Tier | Meaning |
 |--------|------|---------|
@@ -87,6 +87,8 @@ The tier words are calibrated per method, so a **CLOSE** in ΔEOK means the same
 | up to 10 | CLOSE | Tell them apart side by side, not at arm's length |
 | up to 20 | NEAR | Two different dyes, in the same family |
 | beyond 20 | FAR | Two different dyes at any distance |
+
+See the [Glossary](../../reference/glossary.md) for more on Delta E and the matching methods.
 
 ---
 

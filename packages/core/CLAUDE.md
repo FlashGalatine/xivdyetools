@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `@xivdyetools/core` is the heart of the XIV Dye Tools ecosystem: a Node + browser-compatible TypeScript library that bundles the FFXIV dye database (125 dyes, schema v2: stainID-keyed with derived fields) plus the separate facewear color collection, color-science algorithms (RGB/HSV/HSL/CMYK/LAB/OKLAB/OKLCH/LCH/RYB conversions, DeltaE variants, Kubelka-Munk spectral mixing), color-vision-deficiency simulation, k-d tree dye matching, harmony generation, palette extraction, character-color matching, the Universalis market-board API client, and a 6-language localization service.
 
-It is consumed by every downstream library and app — `@xivdyetools/svg`, `@xivdyetools/bot-logic`, the Vite web app, the public API worker, the Discord bot, the Revolt (stoat) bot, and the OG image worker. Because so much depends on it, refactors here ripple everywhere — be conservative and run the full workspace test suite (`pnpm turbo run test`) for any non-trivial change.
+It is consumed by every downstream library and app — `@xivdyetools/svg`, `@xivdyetools/bot-logic`, the Vite web app, the public API worker, the Discord bot, and the OG image worker (the Revolt / stoat bot reaches it only through `@xivdyetools/bot-logic`). Because so much depends on it, refactors here ripple everywhere — be conservative and run the full workspace test suite (`pnpm turbo run test`) for any non-trivial change.
 
 ## Commands
 
@@ -33,7 +33,7 @@ pnpm --filter @xivdyetools/core exec vitest run src/services/__tests__/ColorServ
 
 ## Architecture
 
-`@xivdyetools/core` follows a **facade + focused-class** pattern (per the internal "R-4" refactor): top-level service classes (`ColorService`, `DyeService`, `LocalizationService`) are thin façades that delegate to single-responsibility classes (`ColorConverter`, `ColorblindnessSimulator`, `ColorAccessibility`, `ColorManipulator`, `SpectralMixer`, `DyeDatabase`, `DyeSearch`, `HarmonyGenerator`, `LocaleLoader`, `LocaleRegistry`, `TranslationProvider`).
+`@xivdyetools/core` follows a **facade + focused-class** pattern (per the internal "R-4" refactor): top-level service classes (`ColorService`, `DyeService`, `LocalizationService`) are thin façades that delegate to single-responsibility classes (`ColorConverter`, `ColorblindnessSimulator`, `ColorAccessibility`, `ColorManipulator`, `DyeDatabase`, `DyeSearch`, `HarmonyGenerator`, `HarmonySelector`, `LocaleLoader`, `LocaleRegistry`, `TranslationProvider`). Colour *mixing* is the exception to the class pattern: it lives in the standalone `src/blending/` module (`blendColors(hex1, hex2, mode, ratio)`), which `ColorService.mixColors*` wraps.
 
 The dye database, presets, and per-locale translation files are bundled as JSON imports — there is no runtime I/O, which keeps the package safe for Cloudflare Workers, Vite browser bundles, and Node alike.
 
@@ -64,9 +64,9 @@ src/
 │   ├── PaletteService.ts          # K-means palette extraction + dye matching
 │   ├── CharacterColorService.ts   # FFXIV skin/hair color lookup
 │   ├── color/                     # ColorConverter, ColorblindnessSimulator,
-│   │                              # ColorAccessibility, ColorManipulator,
-│   │                              # SpectralMixer
-│   ├── dye/                       # DyeDatabase, DyeSearch, HarmonyGenerator, DyeFilter
+│   │                              # ColorAccessibility, ColorManipulator
+│   ├── dye/                       # DyeDatabase, DyeSearch, HarmonyGenerator,
+│   │                              # HarmonySelector, DyeFilter, wheels/
 │   └── localization/              # LocaleLoader, LocaleRegistry, TranslationProvider
 ├── utils/
 │   ├── kd-tree.ts                 # 3D k-d tree (RGB nearest neighbour)
@@ -119,7 +119,7 @@ Cache: `clearCaches`, `getCacheStats`.
 
 ### `DyeService` (instance methods, constructor `new DyeService(dyeData?, options?)`)
 
-`getAllDyes`, `getDyeById`, `getByStainId`, `getDyeCount`, `getCategories`, `findClosestDye`, `findDyesWithinDistance`, `searchByName`, `findTriadicDyes`, `findComplementaryPair`, `findAnalogousDyes`, `findSplitComplementaryDyes`, `findTetradicDyes`, `findInvertedTetradicDyes`, `findSquareDyes`, `findMonochromaticDyes`, plus types `FindClosestOptions`, `FindWithinDistanceOptions`, `HarmonyOptions`, `HarmonyMatchingAlgorithm`, `HarmonyColorSpace`. `findClosestDye`/`findDyesWithinDistance` take an options object only (the legacy positional `excludeIds`/`maxDistance`/`limit` shapes were removed — DEAD-035, 2026-08-18 audit).
+`getAllDyes`, `getDyeById`, `getByStainId`, `isLoadedStatus`, `getDyeCount`, `getCategories`, `findClosestDye`, `findDyesWithinDistance`, `searchByName`, `searchByCategory`, `searchByLocalizedName`, `filterDyes`, `findTriadicDyes`, `findComplementaryPair`, `findAnalogousDyes`, `findSplitComplementaryDyes`, `findTetradicDyes`, `findInvertedTetradicDyes`, `findSquareDyes`, `findMonochromaticDyes`, plus types `FindClosestOptions`, `FindWithinDistanceOptions`, `HarmonyOptions`, `HarmonyMatchingAlgorithm`, `HarmonyColorSpace`. `findClosestDye`/`findDyesWithinDistance` take an options object only (the legacy positional `excludeIds`/`maxDistance`/`limit` shapes were removed — DEAD-035, 2026-08-18 audit).
 
 ### `LocalizationService` + helpers
 
@@ -140,12 +140,14 @@ class LocalizationService {
 ### `APIService` — Universalis market board
 
 ```ts
-interface ICacheBackend {
+interface ICacheBackend {          // five members; each may be sync OR async
   get(key): Promise<CachedData<PriceData> | null> | CachedData<PriceData> | null
   set(key, value): Promise<void> | void
   delete(key): Promise<void> | void
+  clear(): Promise<void> | void
+  keys(): Promise<string[]> | string[]
 }
-interface APIServiceOptions { cache?: ICacheBackend; logger?: Logger; fetchClient?: FetchClient; rateLimiter?: RateLimiter }
+interface APIServiceOptions { cacheBackend?: ICacheBackend; logger?: Logger; fetchClient?: FetchClient; rateLimiter?: RateLimiter; baseUrl?: string }
 class APIService {
   constructor(options?: APIServiceOptions)   // legacy positional (cache, fetchClient, rateLimiter) removed — DEAD-035, 2026-08-18 audit
   getPriceData(itemID: number, worldID?: number, dataCenterID?: string): Promise<PriceData | null>
@@ -219,11 +221,11 @@ Selection goes through `generateHarmonySlots(baseHex, type, candidates, config, 
 `src/data/oklch-hue-table.json` and `src/data/munsell-hues.json` are **generated and committed**, not derived at import time (`pnpm run build:oklch-hue`, `pnpm run build:munsell <real.dat>`; neither runs as part of `build`). `src/data/munsell-anchors.json` holds the 40 raw renotation anchors and is imported by `munsell.test.ts` only — nothing at runtime reads it, so it stays out of every bundle. `scripts/lib/oklch-hue-table.test.ts` re-runs the OKLCH derivation and compares it to the committed JSON, which is the gate against the two drifting apart. A regenerated table is a deliberate re-baseline of `HarmonySelector.golden.test.ts` — put the before/after digests in the commit body.
 
 ### Spectral mixing (Kubelka-Munk)
-`SpectralMixer` wraps `spectral.js` and reflects light absorption/scattering across 380-750nm. Blue + Yellow = Green like real paint. Only `mixColors` is live — `mixMultiple`, `gradient`, and `isAvailable` were removed as uncalled (DEAD-034, 2026-08-18 audit).
+There is no `SpectralMixer` class. Spectral mixing is `blendColors(hex1, hex2, 'spectral', ratio)` in `src/blending/blending.ts`, which wraps `spectral.js` (Burns' LHTSS upsampling to a 38-band reflectance curve, 380-750nm, mixed in K/S space). `ColorService.mixColorsSpectral(hex1, hex2, ratio = 0.5)` is the façade over it, and `@xivdyetools/core/blending` exposes `blendColors` / `BLENDING_MODES` / `isValidBlendingMode` directly. Blue + Yellow = Green like real paint. The old wrapper's `mixMultiple`, `gradient` and `isAvailable` were removed as uncalled (DEAD-034, 2026-08-18 audit).
 
 ### Locale build pipeline
 1. `scripts/fetch_dye_names.py` (Python, run **manually**) hits XIVAPI v2 → `dyenames.csv`. XIVAPI only serves en/ja/de/fr — **Korean and Chinese names are sourced manually** from market-board HTML and pasted into the CSV.
-2. `scripts/build-locales.ts` reads `localize.yaml` (label structure), `dyenames.csv` (per-language names), and `src/data/dyes.json` (categories) → emits `src/data/locales/{en,ja,de,fr,ko,zh}.json`.
+2. `scripts/build-locales.ts` reads `localize.yaml` (label structure), `dyenames.csv` (per-language dye names) and `facewear-names.csv` (the 11 Facewear tints, keyed by slug — they have no itemID, I18N-008) → emits `src/data/locales/{en,ja,de,fr,ko,zh}.json`. It does **not** read `dyes.json`: the category translations are a hardcoded table inside the script (`buildCategories`), so a new dye category needs an edit there.
 3. `tsc -p tsconfig.build.json` compiles to `dist/`.
 4. `scripts/copy-locales.ts` copies the generated JSON into `dist/`.
 
@@ -236,7 +238,8 @@ Internal apps:
 - `apps/discord-worker` — Cloudflare Worker, uses `DyeService`, `LocalizationService`, `APIService` with a KV-backed `ICacheBackend`.
 - `apps/api-worker` — public dye/color-matching API (accepts the retired `hyab` / `oklch-weighted` at its boundary and normalises them to `ciede2000`).
 - `apps/og-worker` — uses the stateless `LocaleLoader/Registry/TranslationProvider` trio.
-- `apps/stoat-worker` — Revolt bot.
+
+`apps/stoat-worker` (Revolt bot) does **not** declare this package — it depends on `@xivdyetools/bot-logic`, `logger` and `types` only, and reaches core transitively.
 
 Internal packages:
 - (formerly `@xivdyetools/color-blending`) — the self-contained blending module now lives at `src/blending/`, exported as `@xivdyetools/core/blending`.

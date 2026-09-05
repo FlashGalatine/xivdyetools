@@ -1,6 +1,20 @@
-# XIVDyeTools Scripts
+# @xivdyetools/core Scripts
 
 Utility scripts for data processing and maintenance tasks.
+
+## Script index
+
+| Script | Runs in `build`? | What it does |
+|--------|------------------|--------------|
+| [`fetch_dye_names.py`](#fetch_dye_namespy) | No — run by hand | XIVAPI v2 → `scripts/output/dye_names.csv` (en/ja/de/fr). Korean and Chinese names are sourced manually. |
+| `build-locales.ts` | Yes (`build:locales`) | `localize.yaml` + `dyenames.csv` + `facewear-names.csv` → `src/data/locales/{en,ja,de,fr,ko,zh}.json`. Idempotent: identical payloads leave the file (and its mtime) untouched, so `meta.generated` marks when the data last *changed*. **Hand edits to the generated JSON are overwritten.** |
+| `copy-locales.ts` | Yes (`copy:locales`, after `tsc`) | Copies the generated locale JSON into `dist/`. |
+| `calibrate-bands.ts` | No (`pnpm run calibrate:bands`) | Recomputes the per-method band cuts behind `config/band-vocabulary.ts` (`BAND_VOCABULARY`). |
+| `build-oklch-hue-table.ts` | No (`pnpm run build:oklch-hue`) | Regenerates the committed `src/data/oklch-hue-table.json`. `scripts/lib/oklch-hue-table.test.ts` re-runs the derivation and compares it to the committed file — that test is the gate against drift. |
+| `build-munsell-hues.ts` | No (`pnpm run build:munsell <real.dat>`) | Regenerates the committed `src/data/munsell-hues.json` from the raw renotation data. |
+
+Regenerating either wheel table is a deliberate re-baseline of
+`HarmonySelector.golden.test.ts` — put the before/after digests in the commit body.
 
 ## Scripts
 
@@ -10,7 +24,7 @@ Fetches localized dye names from XIVAPI v2 and generates a CSV file with multili
 
 #### Purpose
 
-This script queries the XIVAPI for each FFXIV dye item in the `colors_xiv.json` database and retrieves the official name in four languages: English, Japanese, German, and French. The output is a CSV file that can be used for localization, data validation, or integration with other tools.
+This script reads every entry's `legacyItemID` from `src/data/dyes.json` and queries XIVAPI for the official name in four languages: English, Japanese, German, and French. The output is a CSV that feeds the locale pipeline (`dyenames.csv`); Korean and Chinese names are **not** served by XIVAPI and are pasted in manually.
 
 #### Requirements
 
@@ -19,7 +33,7 @@ This script queries the XIVAPI for each FFXIV dye item in the `colors_xiv.json` 
 
 #### Installation
 
-From the `xivdyetools-core` directory:
+From `packages/core`:
 
 ```bash
 pip install -r scripts/requirements.txt
@@ -34,8 +48,8 @@ pip install requests
 #### Usage
 
 ```bash
-# From the xivdyetools-core directory
-cd xivdyetools-core
+# From packages/core
+cd packages/core
 
 # Run the script
 python scripts/fetch_dye_names.py
@@ -48,18 +62,18 @@ python scripts/fetch_dye_names.py
 FFXIV Dye Name Fetcher
 ======================================================================
 
-Loading dye data from ..\XIVDyeTools\assets\json\colors_xiv.json
-Found 136 dyes to process
+Loading dye data from packages\core\src\data\dyes.json
+Found 125 dyes to process
 Fetching names in 4 languages (en, ja, de, fr)
-Total requests: 544
-Estimated time: ~54 seconds
+Total requests: 500
+Estimated time: ~50 seconds
 
-Processing dye 1/136... (1%)
-Processing dye 10/136... (7%)
-Processing dye 20/136... (15%)
+Processing dye 1/125... (1%)
+Processing dye 10/125... (8%)
+Processing dye 20/125... (16%)
 ...
-Processing dye 130/136... (96%)
-Processing dye 136/136... (100%)
+Processing dye 120/125... (96%)
+Processing dye 125/125... (100%)
 
 Generating CSV: scripts\output\dye_names.csv
 CSV generated successfully: scripts\output\dye_names.csv
@@ -67,11 +81,11 @@ CSV generated successfully: scripts\output\dye_names.csv
 ======================================================================
 Summary
 ======================================================================
-Total dyes processed: 136
-Total requests made: 544
-Successful requests: 544
+Total dyes processed: 125
+Total requests made: 500
+Successful requests: 500
 Failed requests: 0
-Total time: 54.8 seconds
+Total time: 50.4 seconds
 
 Output: scripts\output\dye_names.csv
 ======================================================================
@@ -130,11 +144,11 @@ Failed requests are logged in the summary output and the script continues proces
 pip install -r scripts/requirements.txt
 ```
 
-**Error: Could not find colors_xiv.json**
+**Error: Could not find dyes.json**
 
-Make sure you run the script from the `xivdyetools-core` directory:
+The path is resolved relative to the script (`<package>/src/data/dyes.json`), so run it from `packages/core`:
 ```bash
-cd xivdyetools-core
+cd packages/core
 python scripts/fetch_dye_names.py
 ```
 
@@ -162,9 +176,9 @@ Or open directly in Google Sheets, VS Code, or other UTF-8-compatible tools.
 
 #### Performance
 
-- **Total Requests**: 544 (136 dyes × 4 languages)
+- **Total Requests**: 500 (125 dyes × 4 languages)
 - **Rate Limit**: 10 requests/second
-- **Expected Runtime**: ~55 seconds
+- **Expected Runtime**: ~50 seconds
 - **Network Dependency**: Requires active internet connection
 
 #### API Reference

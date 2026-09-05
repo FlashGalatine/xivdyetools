@@ -1,7 +1,7 @@
 # Local presets — the Collection Manager as an extension of Preset Palettes (web-app 5.1)
 
 **Date:** 2026-08-16 · **App:** `apps/web-app` · **Target:** 5.1 (after the 5.0 merge) ·
-**Status:** approved design, awaiting implementation plan ·
+**Status:** PARKED — approved design with a written plan (`docs/superpowers/plans/2026-08-16-local-presets-5-1.md`), not implemented as of 2026-09-05 ·
 **Supersedes:** `2026-08-16-collection-manager-5-0-design.md` (removed).
 
 ## Problem

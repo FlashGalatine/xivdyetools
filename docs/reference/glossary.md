@@ -107,7 +107,7 @@ Community-maintained API providing real-time FFXIV marketboard prices across all
 Web app tool (v4) for browsing and sharing community dye palettes. Formerly called "Preset Browser" in v3. Discord bot uses `/preset` commands.
 
 ### Dye Mixer (v4)
-Web app tool (v4) for blending two dyes together to create custom color combinations. Supports three blending modes: RGB (digital/additive), RYB (traditional/subtractive), and LAB (perceptual). This is a **new tool in v4.0.0**, distinct from the renamed "Gradient Builder."
+Web app tool (v4) for blending two dyes together to create custom color combinations. Supports six blending modes (`BLENDING_MODES` in `@xivdyetools/core/blending`): RGB (additive channel averaging, the default), LAB (perceptual CIELAB), OKLAB (modern perceptual — fixes LAB's blue→purple drift), RYB (traditional artist's wheel), HSL (hue/saturation/lightness interpolation) and Spectral (Kubelka-Munk physics simulation). This is a **new tool in v4.0.0**, distinct from the renamed "Gradient Builder."
 
 ### Glassmorphism
 UI design trend featuring frosted glass effects, transparency, and blur. Used in the web app v4.0.0 UI redesign.
@@ -132,7 +132,7 @@ TypeScript pattern using intersection types to create nominally distinct types f
 Cloudflare's serverless SQLite database. Used for community presets storage.
 
 ### Cloudflare KV
-Cloudflare's key-value store. Used for user favorites, collections, and caching.
+Cloudflare's key-value store. Used for user preferences, preset favourites, analytics counters, revoked-JWT jti lists, and as the fallback backend for rate limiting. (v4's "collections" were removed in 5.0 and their keys purged.)
 
 ### Cloudflare Workers
 Serverless edge compute platform. Hosts Discord bot, OAuth, and presets API.

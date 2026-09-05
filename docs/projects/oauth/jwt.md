@@ -143,10 +143,11 @@ Tokens are created at `POST /auth/callback` after successful OAuth exchange:
 At `GET /auth/me` and other authenticated endpoints:
 
 1. Split token into 3 parts
-2. Recompute HMAC-SHA256 signature and compare (timing-safe)
+2. Recompute HMAC-SHA256 signature and compare (timing-safe); HS256 only — `alg: none` and RS256 confusion are rejected
 3. Decode payload and check `exp` against current time
-4. Check JTI against revocation blacklist (if KV available)
-5. Return verified claims
+4. **Check `iss` against the expected issuer** (`WORKER_URL`). Without this, `/auth/me` accepted any well-formed HS256 token signed with `JWT_SECRET`, whatever its issuer (oauth-11)
+5. Check `jti` against the revocation blacklist (if KV available)
+6. Return verified claims
 
 ### ~~Refresh~~ — removed in 3.0.0
 
@@ -162,9 +163,10 @@ outlive the victim's `/auth/revoke`, which blacklists only the presented `jti`. 
 At `POST /auth/revoke`:
 
 1. Verify signature only (allows expired tokens for logout)
-2. Store `revoked:<jti>` in KV with TTL matching token expiry
-3. Future verification checks against blacklist
-4. KV entries auto-expire when token would have expired naturally
+2. Store `revoked:<jti>` in KV with a TTL of **`exp` plus a 15-minute grace** (`REFRESH_GRACE_SECONDS`, floor 60 s) — not `exp` exactly, so the entry cannot expire while a consumer might still treat the token as live
+3. Future verification checks against the blacklist
+4. KV entries auto-expire once even the grace window has passed
+5. A **failed** KV write is a `503`, not a silent success — see [Endpoints](endpoints.md#post-authrevoke)
 
 ---
 

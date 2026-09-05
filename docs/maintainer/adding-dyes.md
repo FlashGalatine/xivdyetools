@@ -15,7 +15,7 @@ The **Dye Maintainer GUI (`apps/maintainer`) has been removed** (Monorepo 2.0; s
 
 ### Required fields per entry — seven, and only seven
 
-Since **schema v2** (core v3.0.0) the data file stores only:
+Since **schema v2** (the Monorepo 2.0 consolidation, 2026-07-31) the data file stores only:
 
 | Field | Notes |
 |-------|-------|
@@ -59,7 +59,7 @@ The sections below cover item-ID discovery and data formats in more detail; wher
 
 ## Overview
 
-When Square Enix releases a new FFXIV patch that includes new dyes, the `xivdyetools-core` library needs to be updated with:
+When Square Enix releases a new FFXIV patch that includes new dyes, the `@xivdyetools/core` package needs to be updated with:
 
 1. **Item ID** - The unique identifier for the dye item
 2. **Localized Names** - Names in all 6 supported languages
@@ -198,7 +198,7 @@ function rgbToHsv(r, g, b) {
 Or use the core library:
 
 ```typescript
-import { ColorService } from 'xivdyetools-core';
+import { ColorService } from '@xivdyetools/core';
 const hsv = ColorService.hexToHsv('#2B2B2B');
 ```
 
@@ -251,7 +251,7 @@ That is the entire record. `rgb`, `hsv`, `lab`, `cost`, `currency`, and the five
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `itemID` | number \| null | XIVAPI/Universalis Item ID (null for Facewear) |
+| `itemID` | number | XIVAPI/Universalis Item ID. Always a number on the runtime `Dye` — `0` means the dye has no market item. Use `dye.itemID > 0` to test for market presence, never a null check |
 | `category` | string | Color category (see below) |
 | `name` | string | English name (backward compat) |
 | `hex` | string | Hex color code |
@@ -277,9 +277,10 @@ That is the entire record. `rgb`, `hsv`, `lab`, `cost`, `currency`, and the five
 | `Blues` | Blue dyes |
 | `Purples` | Purple, violet dyes |
 | `Special` | Metallic, pastel, dark series |
-| `Facewear` | Facewear-only colors (no itemID) |
 
-### File: `xivdyetools-core/src/data/locales/{lang}.json`
+Those eight are the whole closed vocabulary (`DYE_CATEGORIES`). **`Facewear` is not a category** — the 11 Facewear colours are not dyes at all: since schema v2 they live in `facewear_colors.json` / the `facewearColors` export, with a string slug `id`, a name and a hex, and no stainID or market presence.
+
+### File: `packages/core/src/data/locales/{lang}.json`
 
 Each locale file contains localized dye names keyed by `itemID`:
 
@@ -330,41 +331,49 @@ Each locale file contains localized dye names keyed by `itemID`:
 
 ## Step 5: Test and Publish
 
+All commands run from the **monorepo root** (`xivdyetools/`).
+
 ```bash
-cd xivdyetools-core
+# Build and test the core package (Turborepo respects dependency order)
+pnpm turbo run build test --filter=@xivdyetools/core
 
-# Run tests to ensure data integrity
-npm test
-
-# Verify the new dye appears in searches
-npm test -- --grep "new dye name"
-
-# Build
-npm run build
-
-# Bump version
-npm version patch
-
-# Publish
-npm publish
+# Run one test file — e.g. the closed-vocabulary invariants
+pnpm --filter @xivdyetools/core exec vitest run src/config/__tests__/dye-vocabulary.test.ts
 ```
+
+Then publish:
+
+1. Bump the version in `packages/core/package.json` — **required**, since the workflow only
+   publishes when the local and registry versions differ.
+2. Merge to `main`.
+3. Actions → **"Publish Packages to npm"** → package: `@xivdyetools/core`.
+
+> **Never publish from a local shell.** Every package is set to *"Require two-factor authentication
+> and disallow tokens"*, so an unattended local `pnpm publish` cannot succeed. Publishing runs
+> through GitHub Actions with npm **trusted publishing (OIDC)** — there is no npm token anywhere in
+> CI. See the root `CLAUDE.md` for the break-glass path.
 
 ---
 
 ## Step 6: Update Consumers
 
-After publishing the core library:
+Inside the monorepo there is nothing to update: every app depends on `@xivdyetools/core` through the
+`workspace:*` protocol, so a change is picked up as soon as the package is rebuilt.
 
 ```bash
-# Web app
-cd ../xivdyetools-web-app
-npm update xivdyetools-core
-npm run build
+# Rebuild everything that depends on core
+pnpm turbo run build
 
-# Discord worker
-cd ../xivdyetools-discord-worker
-npm update xivdyetools-core
-npm run deploy:production
+# Or just what you need
+pnpm turbo run build --filter=xivdyetools-web-app
+pnpm turbo run build --filter=xivdyetools-discord-worker
+```
+
+Deploying is a separate step, and **what a bare `deploy` targets differs per worker** — check the
+worker's `wrangler.toml` first, and see `docs/operations/DEPLOY_ENVIRONMENTS.md`.
+
+```bash
+pnpm --filter xivdyetools-discord-worker run deploy:production
 ```
 
 ---

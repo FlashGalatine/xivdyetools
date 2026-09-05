@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The main XIV Dye Tools web application — a static SPA that runs entirely in the browser. It is the primary consumer of `@xivdyetools/core` and exposes nine standalone tools backed by the 125-dye database.
 
-**Stack:** Vite 8 + Lit 3 (web components) + Tailwind CSS 4 + TypeScript (strict). Test stack is Vitest 4 (jsdom) + Playwright 1.62 with multi-project E2E. Deployed as a static bundle on Cloudflare Pages (production `xivdyetools.app` + a second Pages project for `beta.xivdyetools.app`) with a service worker for offline support.
+**Stack:** Vite 8 + Lit 3 (web components) + Tailwind CSS 4 + TypeScript (strict). Test stack is Vitest 4 (jsdom) + Playwright 1.62 with multi-project E2E. Deployed as a static bundle on Cloudflare Pages (production `xivdyetools.app` + a second Pages project for `beta.xivdyetools.app`). There is no service worker — see Offline Behaviour below.
 
 ### The Nine Tools (`ToolId` from `services/router-service.ts`)
 
 | ID | Title | What it does |
 |----|-------|--------------|
-| `harmony` | Harmony Explorer | Generates color-theory palettes (complementary, triadic, analogous, etc.) from a base dye |
+| `harmony` | Harmony Explorer | Generates color-theory palettes (complementary, triadic, analogous, etc.) from a base dye, with the harmony angles measured on a choice of five colour wheels (`HarmonyConfig.wheel`: `rgb` default, `ryb`, `munsell`, `oklch-hue`, `oklch-lightness`) |
 | `extractor` | Palette Extractor | Uploads an image and pulls a palette via K-means++; matches each swatch to the closest FFXIV dye |
 | `accessibility` | Accessibility Checker | Colorblindness simulation (5 vision types) + WCAG contrast |
 | `comparison` | Dye Comparison | Side-by-side compare for up to 4 dyes with hex/RGB/HSV/LAB readouts |
@@ -92,22 +92,24 @@ src/
 │   │   ├── config-sidebar.ts        # Centralized config panel
 │   │   ├── theme-modal.ts           # Theme picker
 │   │   ├── language-modal.ts        # Language picker
-│   │   └── ... range-slider, toggle-switch, glass-panel, share-button, color-wheel
+│   │   ├── preset-tool.ts           # <v4-preset-tool> — the only tool that is a Lit element
+│   │   ├── preset-card.ts / preset-detail.ts
+│   │   └── ... range-slider, toggle-switch, display-options, dye-filters, share-button, color-wheel
 │   ├── harmony-tool.ts              # The nine tool components (lazy-loaded chunks)
 │   ├── extractor-tool.ts
 │   ├── accessibility-tool.ts
 │   ├── comparison-tool.ts
 │   ├── gradient-tool.ts
 │   ├── mixer-tool.ts
-│   ├── preset-tool.ts
 │   ├── budget-tool.ts
 │   ├── swatch-tool.ts
+│   │                                # (the ninth, `presets`, is the Lit v4/preset-tool.ts above)
 │   ├── modal-container.ts           # Modal stack/host
 │   ├── toast-container.ts           # ToastService host
 │   ├── tutorial-spotlight.ts        # First-run tutorial overlay
 │   ├── welcome-modal.ts             # First-visit welcome
 │   ├── changelog-modal.ts           # "What's New" modal (parses CHANGELOG.md at build time)
-│   └── ... color-display, color-wheel-display, dye-grid, dye-search-box, market-board, etc.
+│   └── ... color-picker-display, dye-grid, dye-search-box, dye-selector, market-board, metric-help, chara-import, etc.
 ├── services/
 │   ├── index.ts                     # initializeServices(), getServicesStatus(), re-exports
 │   ├── router-service.ts            # ToolId, ROUTES, history.pushState navigation
@@ -119,8 +121,8 @@ src/
 │   ├── api-service-wrapper.ts       # Wraps core APIService (Universalis through proxy)
 │   ├── chara-resolve-service.ts     # POST data.xivdyetools.app/v1/chara/resolve — .chara model keys → item names/icons (Swatch 11a/11c); session cache; any failure = CharaResolveUnavailableError
 │   ├── dye-service-wrapper.ts       # Wraps core DyeService
-│   ├── harmony-generator.ts         # Color-harmony math
-│   ├── palette-service.ts           # K-means++ palette extraction for image upload
+│   ├── harmony-generator.ts         # The harmony-type UI vocabulary only (ids, icons, names) —
+│   │                                # slot SELECTION is core's generateHarmonySlots
 │   ├── community-preset-service.ts  # Talks to presets-api worker
 │   ├── hybrid-preset-service.ts     # Local + community preset combiner
 │   ├── market-board-service.ts      # Universalis pricing for budget/comparison
@@ -133,7 +135,8 @@ src/
 │   ├── tutorial-service.ts          # First-run tutorial flows per tool
 │   ├── keyboard-service.ts          # Global shortcuts
 │   ├── camera-service.ts            # Camera-preview-modal capture
-│   ├── indexeddb-service.ts         # IDB wrapper for cached community presets
+│   ├── indexeddb-service.ts         # IDB wrapper — DB v3 stores: price_cache, palettes, settings
+│   │                                # (image_cache was dropped in v3; nothing persists images)
 │   └── pricing-mixin.ts             # Shared price-formatting helpers
 ├── shared/
 │   ├── constants.ts                 # APP_VERSION, STORAGE_PREFIX, etc.
@@ -224,6 +227,7 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 |--------|------|------|
 | `asyncCss` | `vite-plugin-async-css.ts` | Defers non-critical CSS to avoid render-block |
 | `changelogParser` | `vite-plugin-changelog-parser.ts` | Parses `CHANGELOG.md` into a JSON module the changelog modal imports |
+| `betaBranding` | `vite-plugin-beta-branding.ts` | `VITE_APP_ENV=beta` only: `[BETA]` title, beta icon set, `__APP_ENV__` define, `X-Robots-Tag: noindex` on `dist/_headers`. Inert without the flag |
 
 ## Dependencies
 
@@ -240,11 +244,10 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 | `vitest` / `@vitest/coverage-v8` | Unit tests |
 | `@playwright/test` | E2E |
 | `msw` | Network mocks for unit tests |
-| `@xivdyetools/test-utils` | Shared test factories (devDependency) |
 
 ## Build & Bundle Notes
 
-- `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. main entry ≤ 150 KB raw, layout shell ≤ 200 KB). CI fails if a chunk grows past its budget.
+- `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. CSS ≤ 105 KB, main entry ≤ 150 KB raw, layout shell ≤ 215 KB). CI fails if a chunk grows past its budget.
 - **Fonts are a contract, not a per-file choice.** All three faces are self-hosted woff2 in `public/fonts/` (Space Grotesk display, Onest body, Fragment Mono numeric/mono — matching `FONTS` in `packages/svg`). The `@font-face` blocks and the `--font-display` / `--font-body` / `--font-mono` / `--font-cjk` variables in `src/styles/globals.css` are the **single** declaration site; `tailwind.config.js` points its `sans`/`mono` families at the same variables; the `.number` rule (Fragment Mono + tabular figures) lives in `src/styles/tool-content.css`, which is loaded both page-side and inside the layout shell's shadow root. Nothing else should name a family — that is how four sources ended up disagreeing before `REFACTOR-002`. There is no runtime Google Fonts request, and the CSP's `font-src` is `'self'` only. `--font-cjk` names locally-installed CJK families (nothing is downloaded) so ja/ko/zh rendering is a decision rather than an OS accident. The web app renders no SVG-to-PNG of its own; the Noto Sans JP/SC/KR subsets used for card rasterisation live in `apps/discord-worker/src/fonts/` and `apps/og-worker/src/fonts/` (`@xivdyetools/svg` ships no font files — it only names the stacks in `FONTS`).
 - `src/index.html` is the Vite entry; `vite.config.ts` sets `root: 'src'` and `outDir: '../dist'`.
 - Tailwind v4 is compiled inside Vite by `@tailwindcss/postcss` (`postcss.config.js`) from `src/styles/tailwind.css` (`@import "tailwindcss"` + `@config "../../tailwind.config.js"`); there is no separate CSS build step and no committed CSS output.
@@ -261,9 +264,9 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 
 ## Testing
 
-- **Unit (Vitest, jsdom):** Co-located `*.test.ts` next to source, plus `src/__tests__/`. Coverage thresholds 80% lines/functions/branches.
+- **Unit (Vitest, jsdom):** Co-located `*.test.ts` next to source, plus `src/__tests__/`. Coverage thresholds (`vitest.config.ts`) are statements 78 / branches 63 / functions 74 / lines 79 — a ratchet: raise them as the tool-component suites deepen, never lower them.
 - **E2E (Playwright):** `e2e/` directory. Three projects: `chromium` (default), `chromium-coverage` (V8 coverage via CDP, merged in `global-teardown.ts`), `mobile-chrome`.
-- **Mocks:** `msw` intercepts network in unit tests; `@xivdyetools/test-utils` for shared factories.
+- **Mocks:** `msw` intercepts network in unit tests; shared component/service fakes live in `src/__tests__/mocks/`. (This app does **not** depend on `@xivdyetools/test-utils` — that is for the Workers.)
 
 ```bash
 npx vitest run src/services/__tests__/color-service.test.ts
@@ -283,4 +286,4 @@ npx playwright test --project=mobile-chrome
 
 ## Documentation
 
-The project's deeper design docs live in the repo-level hub at `xivdyetools/docs/projects/web-app/` (`overview.md`, `components.md`, `tools.md`, `theming.md`, `deployment.md`) — there is no `docs/` folder inside this app any more — plus the cross-cutting guides under `xivdyetools/docs/developer-guides/`.
+The project's deeper design docs live in the repo-level hub at `xivdyetools/docs/projects/web-app/` (`overview.md`, `components.md`, `tools.md`, `theming.md`) — there is no `docs/` folder inside this app any more — plus the cross-cutting guides under `xivdyetools/docs/developer-guides/`.

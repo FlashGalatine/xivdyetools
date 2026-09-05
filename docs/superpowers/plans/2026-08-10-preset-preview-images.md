@@ -1,5 +1,7 @@
 # Preset Preview Images Implementation Plan
 
+**Status:** shipped — presets-api 2.0.0 (migration 0009), R2 `THUMBNAILS`, image-worker `POST /thumbnail`, discord-worker preview-image buttons
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let a preset author upload a preview image that, once a moderator approves it, replaces the striped placeholder on the gallery card.

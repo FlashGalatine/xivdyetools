@@ -104,7 +104,7 @@ it, and a beta-workflow compromise no longer directly hands over the production 
 name.
 
 **Minting it needs a Zone grant, not just Account ones.** og-worker's beta config
-(`apps/og-worker/wrangler.toml` top level) declares ten `beta.xivdyetools.app/*` routes plus
+(`apps/og-worker/wrangler.toml` top level) declares nine `beta.xivdyetools.app/*` routes plus
 the `og-beta.xivdyetools.app` custom domain, and `wrangler deploy` reconciles routes on every
 deploy — that needs **Zone → Workers Routes: Edit on `xivdyetools.app`** in addition to the
 two Account grants. Mint the token without it and discord-worker's and web-app's beta
@@ -237,7 +237,8 @@ can only receive interactions through its own application.
 not an OAuth flow, and the bot invite uses the `bot` + `applications.commands` scopes, which do
 not require a registered redirect URI. Web-app login is unaffected: the `oauth` Worker
 authenticates as the *production* application (`DISCORD_CLIENT_ID = "1447108133020369048"` in
-all three of its environments), so the beta app never appears in that flow. Testing web-app
+both of its environments — top level and `[env.development]`; `[env.preview]` was deleted by
+FINDING-029), so the beta app never appears in that flow. Testing web-app
 login against a beta stack would need its own OAuth application and is out of scope here.
 
 ### 3. Data isolation

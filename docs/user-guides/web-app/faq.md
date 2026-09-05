@@ -12,11 +12,12 @@ XIV Dye Tools is a free web application for exploring FFXIV dye colors. It helps
 
 ### Do I need to log in?
 
-No, you can use all tools without logging in. However, logging in with Discord lets you:
+No, you can use all tools without logging in. You can sign in with either **Discord** or **XIVAuth**,
+which lets you:
 - Submit, edit and delete your community presets
 - Vote on presets
 
-Favorites and collections are stored in your browser and do not need a login.
+Favorites and saved palettes are stored in your browser and do not need a login.
 
 ### Is it free?
 
@@ -39,10 +40,18 @@ Several factors affect in-game appearance:
 
 ### What does Delta E mean?
 
-Delta E measures perceptual color difference. Lower is better:
-- 0-5: Nearly identical
-- 5-15: Very similar
-- 15+: Noticeably different
+Delta E measures perceptual color difference. Lower is better. On the default method (ΔE2000), match
+results are labelled with four bands:
+
+| ΔE2000 | Band | Meaning |
+|--------|------|---------|
+| under 5 | SAME | You would not tell them apart |
+| 5 to 10 | CLOSE | A very good stand-in |
+| 10 to 20 | NEAR | In the same family, but visibly different |
+| 20 and up | FAR | A different colour |
+
+Every other matching method has its own calibrated cut-offs on its own scale, so compare the band,
+never the raw number, across methods. See the [Glossary](../../reference/glossary.md) for more.
 
 ### Can I match colors from screenshots?
 
@@ -71,11 +80,13 @@ Presets may be rejected for:
 
 ### How do I report a preset?
 
-Click the report button on any preset to flag it for moderator review.
+There is no in-app report button yet. If a preset needs attention, contact a moderator in the
+[community Discord](https://discord.gg/5VUSKTZCe5) with the preset's name. Every submission is
+reviewed before it appears publicly, so most problems are caught first.
 
 ---
 
-## Favorites & Collections
+## Favorites & Saved Palettes
 
 ### Where is my data stored?
 
@@ -84,11 +95,14 @@ export what you want to keep.
 
 ### How many favorites can I have?
 
-Maximum 40 favorites and 50 collections with 20 dyes each.
+Maximum 40 favorites, and 50 saved palettes of up to 20 dyes each.
 
-### Can I export my collections?
+### Can I export my saved palettes?
 
-Yes — collections can be exported to and imported from a JSON file.
+Yes. Open any tool with a dye picker (Color Harmony, Dye Mixer, Gradient Builder, Dye Comparison or
+the Accessibility Checker), expand the **Favorites** panel above the dye list, and press **Manage
+Collections**. That window has **Export All** and **Import** buttons, plus a download button on each
+individual palette. The file is plain JSON.
 
 ---
 
@@ -124,11 +138,12 @@ Yes! Use `/about` or `/manual` in any server with the bot to see commands.
 
 ### How do I add the bot to my server?
 
-Visit the web app and click "Add to Discord" in the footer.
+The invite link is posted in the [community Discord](https://discord.gg/5VUSKTZCe5), and `/about` in
+any server that already has the bot prints it too. The web app itself does not carry an invite link.
 
 ### Do favorites sync between web and Discord?
 
-No. Web favorites and collections live in your browser, and the bot's own `/favorites` /
+No. Web favorites and saved palettes live in your browser, and the bot's own `/favorites` /
 `/collection` commands were removed in 5.0 — every bot result carries a share link that opens in the
 web app instead.
 
@@ -140,7 +155,9 @@ web app instead.
 
 - Discord ID (if logged in)
 - Preset submissions and votes
-- Anonymous usage analytics
+- Anonymous usage analytics — **only if you turn them on**. The **Enable Analytics** switch under
+  **Behaviour** in Advanced Settings (the gear icon) is off by default, and nothing is sent while
+  it is off.
 
 ### Can I delete my data?
 

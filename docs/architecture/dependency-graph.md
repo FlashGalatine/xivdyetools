@@ -2,6 +2,9 @@
 
 **Package dependencies and consumption relationships across the XIV Dye Tools ecosystem**
 
+Current versions: see [versions.md](../versions.md) — this document tracks the *shape* of the
+graph, not the numbers.
+
 ---
 
 ## npm Package Dependencies
@@ -9,21 +12,21 @@
 ```mermaid
 graph TD
     subgraph "Shared Packages (Monorepo 2.0 — 8 packages)"
-        TYPES["@xivdyetools/types<br/>v1.16.0"]
-        LOGGER["@xivdyetools/logger<br/>v1.3.0"]
-        AUTH["@xivdyetools/auth<br/>v1.3.0 (incl. /encoding)"]
-        WKIT["@xivdyetools/worker-kit<br/>v1.0.0 (middleware + /rate-limiter)"]
-        TEST["@xivdyetools/test-utils<br/>v1.1.8 (workspace-private)"]
-        CORE["@xivdyetools/core<br/>v3.0.0 (incl. /blending, schema-v2 data)"]
-        SVG["@xivdyetools/svg<br/>v1.2.1"]
-        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.4.0 (incl. /i18n)"]
+        TYPES["@xivdyetools/types"]
+        LOGGER["@xivdyetools/logger"]
+        AUTH["@xivdyetools/auth<br/>(incl. /encoding)"]
+        WKIT["@xivdyetools/worker-kit<br/>(middleware + /rate-limiter)"]
+        TEST["@xivdyetools/test-utils<br/>(workspace-private)"]
+        CORE["@xivdyetools/core<br/>(incl. /blending, schema-v2 data)"]
+        SVG["@xivdyetools/svg"]
+        BOTLOGIC["@xivdyetools/bot-logic<br/>(incl. /i18n)"]
     end
 
     subgraph "Consumer Applications"
         WEB["xivdyetools-web-app"]
         DISCORD["xivdyetools-discord-worker"]
         MODBOT["xivdyetools-moderation-worker"]
-        OAUTH["xivdyetools-oauth"]
+        OAUTH["xivdyetools-oauth-worker"]
         PRESETS["xivdyetools-presets-api"]
         OG["xivdyetools-og-worker"]
         APIWORKER["xivdyetools-api-worker"]
@@ -45,18 +48,17 @@ graph TD
     TYPES --> SVG
     TYPES --> BOTLOGIC
 
-    %% Consumer dependencies
+    %% Consumer dependencies (declared, direct)
     CORE --> WEB
     CORE --> DISCORD
     CORE --> OG
     CORE --> APIWORKER
-    CORE --> STOAT
     BOTLOGIC --> DISCORD
     BOTLOGIC --> MODBOT
     BOTLOGIC --> STOAT
+    SVG --> WEB
     SVG --> DISCORD
     SVG --> OG
-    SVG --> STOAT
     AUTH --> DISCORD
     AUTH --> MODBOT
     AUTH --> OAUTH
@@ -67,15 +69,10 @@ graph TD
     WKIT --> PRESETS
     WKIT --> OG
     WKIT --> APIWORKER
-    WKIT --> STOAT
     WKIT --> IMGWORKER
     LOGGER --> WEB
     LOGGER --> DISCORD
     LOGGER --> MODBOT
-    LOGGER --> OAUTH
-    LOGGER --> PRESETS
-    LOGGER --> OG
-    LOGGER --> APIWORKER
     LOGGER --> STOAT
     TYPES --> WEB
     TYPES --> DISCORD
@@ -87,15 +84,20 @@ graph TD
     TYPES --> STOAT
     DISCORD -. Service Binding .-> IMGWORKER
 
-    %% Test utils (dev dependency)
-    TEST -.-> CORE
-    TEST -.-> WEB
+    %% Transitive only — reached through worker-kit / core / bot-logic,
+    %% never declared in these apps' package.json
+    LOGGER -.-> OAUTH
+    LOGGER -.-> PRESETS
+    LOGGER -.-> OG
+    LOGGER -.-> APIWORKER
+
+    %% Test utils (devDependency)
+    TEST -.-> SVG
     TEST -.-> DISCORD
+    TEST -.-> MODBOT
     TEST -.-> OAUTH
     TEST -.-> PRESETS
     TEST -.-> APIWORKER
-
-    %% API docs documents the API worker
 
     classDef npm fill:#fff3e0,stroke:#e65100
     classDef consumer fill:#e8f5e9,stroke:#2e7d32
@@ -110,29 +112,32 @@ graph TD
 
 ### Shared Packages
 
-| Package | Depends On | Used By |
-|---------|------------|---------|
-| **@xivdyetools/types** | — | All projects |
-| **@xivdyetools/logger** | — | All projects |
-| **@xivdyetools/auth** (incl. `/encoding`) | — | oauth, discord-worker, moderation-worker, presets-api, test-utils |
-| **@xivdyetools/worker-kit** (middleware + `/rate-limiter`) | logger | discord-worker, moderation-worker, oauth, presets-api, og-worker, api-worker, stoat-worker, image-worker |
-| **@xivdyetools/test-utils** (workspace-private) | auth, types | All projects (devDependency) |
-| **@xivdyetools/core** (incl. `/blending`) | types, logger | web-app, discord-worker, og-worker, api-worker, stoat-worker, svg, bot-logic |
-| **@xivdyetools/svg** | core, types | discord-worker, og-worker, stoat-worker, bot-logic |
+"Used By" lists **declared** dependents only — an app that reaches a package transitively
+(through `worker-kit`, `core` or `bot-logic`) is not listed.
+
+| Package | Depends On | Used By (declared) |
+|---------|------------|--------------------|
+| **@xivdyetools/types** | — | core, svg, bot-logic, test-utils, web-app, discord-worker, moderation-worker, oauth, presets-api, og-worker, api-worker, stoat-worker |
+| **@xivdyetools/logger** | — | core, worker-kit, web-app, discord-worker, moderation-worker, stoat-worker |
+| **@xivdyetools/auth** (incl. `/encoding`) | discord-interactions | oauth, discord-worker, moderation-worker, presets-api, test-utils |
+| **@xivdyetools/worker-kit** (middleware + `/rate-limiter`) | logger, @upstash/redis | discord-worker, moderation-worker, oauth, presets-api, og-worker, api-worker, image-worker |
+| **@xivdyetools/test-utils** (workspace-private) | auth, types | svg, discord-worker, moderation-worker, oauth, presets-api, api-worker (devDependency) |
+| **@xivdyetools/core** (incl. `/blending`) | types, logger, spectral.js | svg, bot-logic, web-app, discord-worker, og-worker, api-worker |
+| **@xivdyetools/svg** | core, types | bot-logic, web-app, discord-worker, og-worker, api-worker (devDependency, docs build) |
 | **@xivdyetools/bot-logic** (incl. `/i18n`) | core, svg, types | discord-worker, moderation-worker, stoat-worker |
 
 ### Consumer Applications
 
 | Project | Runtime Dependencies | Test Dependencies |
 |---------|----------------------|-------------------|
-| **web-app** | core, types, logger, lit, vite | test-utils, vitest, playwright |
-| **discord-worker** | core, types, logger, auth, worker-kit, svg, bot-logic, hono | test-utils, vitest |
+| **web-app** | core, types, logger, svg, lit | vitest, playwright, jsdom, msw, vite, tailwindcss |
+| **discord-worker** | core, types, logger, auth, worker-kit, svg, bot-logic, hono, @resvg/resvg-wasm | test-utils, vitest |
 | **moderation-worker** | types, logger, auth, worker-kit, bot-logic, hono | test-utils, vitest |
-| **oauth** | types, logger, auth, worker-kit, hono | test-utils, vitest |
-| **presets-api** | types, logger, auth, worker-kit, hono | test-utils, vitest |
-| **og-worker** | core, types, svg, logger, worker-kit, hono, @resvg/resvg-wasm | vitest |
-| **api-worker** | core, types, logger, worker-kit, hono | test-utils, vitest |
-| **stoat-worker** | core, types, logger, worker-kit, bot-logic, svg, revolt.js | test-utils, vitest |
+| **oauth** | types, auth, worker-kit, hono | test-utils, vitest |
+| **presets-api** | types, auth, worker-kit, hono | test-utils, vitest |
+| **og-worker** | core, types, svg, worker-kit, hono, @resvg/resvg-wasm | vitest |
+| **api-worker** | core, types, worker-kit, hono | test-utils, svg, vitest, vitepress, vue |
+| **stoat-worker** | types, logger, bot-logic, revolt.js | vitest |
 | **image-worker** | worker-kit, hono, @cf-wasm/photon | vitest |
 
 ---
@@ -140,7 +145,7 @@ graph TD
 ## Core Library Internal Structure
 
 ```
-@xivdyetools/core (v3.0.0)
+@xivdyetools/core
 ├── blending/                ← self-contained blending algorithms (subpath @xivdyetools/core/blending)
 ├── services/
 │   ├── ColorService.ts      ← ColorConverter, ColorAccessibility, ColorManipulator
@@ -152,11 +157,13 @@ graph TD
 ├── config/
 │   ├── consolidated-ids.ts  ← Patch 7.5 dye consolidation (Type-A=52254, B=52255, C=52256)
 │   └── dye-vocabulary.ts    ← Closed vocabularies + acquisition → (price, currency) coupling
-├── data/
-│   ├── dyes.json            ← 125 standard dyes (schema v2: 7 fields, stainID-keyed; rgb/hsv/cost/flags derived at initialize())
-│   └── facewear_colors.json ← 11 Facewear colors (NOT dyes — facewearColors export)
-└── locales/
-    └── {en,ja,de,fr,ko,zh}.json
+└── data/
+    ├── dyes.json            ← 125 standard dyes (schema v2: 7 fields, stainID-keyed; rgb/hsv/cost/flags derived at initialize())
+    ├── facewear_colors.json ← 11 Facewear colors (NOT dyes — facewearColors export)
+    ├── munsell-*.json / oklch-hue-table.json ← colour-wheel anchor tables
+    ├── presets.json         ← curated preset palettes
+    ├── character_colors/    ← character-creation colour sheets
+    └── locales/{en,ja,de,fr,ko,zh}.json
 
 Notes:
 - As of v2.0.0, type re-exports are removed. Import Dye, RGB, HexColor, etc. from
@@ -176,17 +183,19 @@ Notes:
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `lit` | ^3.1 | Web components framework |
-| `vite` | ^6.x | Build tool and dev server |
-| `tailwindcss` | ^4.2 | Utility-first CSS |
+| `lit` | ^3.3.3 | Web components framework |
+| `vite` | ^8.2.2 | Build tool and dev server (devDependency) |
+| `tailwindcss` | ^4.3.3 | Utility-first CSS (devDependency) |
 
 ### xivdyetools-discord-worker
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.12.34 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
-| `discord-interactions` | ^4.4 | Ed25519 signature verification |
-| `@resvg/resvg-wasm` | ^2.6 | SVG to PNG rendering |
+| `hono` | ^4.13.5 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
+| `@resvg/resvg-wasm` | ^2.6.2 | SVG to PNG rendering |
+
+Ed25519 interaction-signature verification comes from `@xivdyetools/auth`, which is the
+package that declares `discord-interactions` (`^4.4.0`) — the bot never depends on it directly.
 
 `@cf-wasm/photon` moved to `xivdyetools-image-worker` (see below) — see
 `docs/operations/IMAGE_WORKER_SPLIT.md` for why.
@@ -195,20 +204,20 @@ Notes:
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.12.34 | HTTP framework for Workers |
-| `@cf-wasm/photon` | ^0.3 | Image decode/resize/pixel-extraction (WASM) — the sole reason this Worker exists |
+| `hono` | ^4.13.5 | HTTP framework for Workers |
+| `@cf-wasm/photon` | ^0.4.0 | Image decode/resize/pixel-extraction (WASM) — the sole reason this Worker exists |
 
-### xivdyetools-oauth / presets-api / moderation-worker
+### xivdyetools-oauth / presets-api / moderation-worker / og-worker / api-worker
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.12.34 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
+| `hono` | ^4.13.5 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
 
 ### xivdyetools-stoat-worker
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `revolt.js` | ^7.1 | Revolt API client |
+| `revolt.js` | ^7.1.1 | Revolt API client |
 
 ---
 

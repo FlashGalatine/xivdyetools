@@ -41,11 +41,16 @@ sequenceDiagram
     OAuth->>Discord: GET /users/@me (Bearer access_token)
     Discord->>OAuth: { id, username, global_name, avatar }
 
-    Note over OAuth: 7. Create JWT
-    OAuth->>OAuth: Sign JWT with HS256 (JWT_SECRET)
-    OAuth->>WebApp: Redirect with ?token=JWT
+    Note over OAuth,WebApp: 7. Bounce the code back to the SPA (never a token)
+    OAuth->>WebApp: 302 to the allowlisted redirect_uri<br/>?code=&csrf=&state=[&provider=][&return_path=]
 
-    Note over WebApp,Presets: 8. Authenticated requests
+    Note over WebApp,OAuth: 8. SPA completes the exchange
+    WebApp->>OAuth: POST /auth/callback<br/>{ code, code_verifier, state }
+    OAuth->>OAuth: Verify the signed state, bind code_verifier to code_challenge
+    OAuth->>OAuth: Sign JWT with HS256 (JWT_SECRET)
+    OAuth->>WebApp: { success, token, user, expires_at }
+
+    Note over WebApp,Presets: 9. Authenticated requests
     WebApp->>WebApp: Store JWT in localStorage
     WebApp->>Presets: GET /api/v1/presets/mine (Authorization: Bearer JWT)
     Presets->>Presets: Verify JWT signature
@@ -115,7 +120,7 @@ sequenceDiagram
 
     alt Content flagged
         Mod->>Presets: { flagged: true, reason: "..." }
-        Presets->>Presets: Set status = "pending_review"
+        Presets->>Presets: Set status = "pending"
         Presets->>Discord: Notify moderators
     else Content clean
         Mod->>Presets: { flagged: false }
@@ -195,7 +200,9 @@ sequenceDiagram
 
 ## Voting Flow
 
-Users vote on community presets to curate the best content.
+Users vote on community presets to curate the best content. There is **one kind of vote** — a
+toggleable upvote. There is no downvote: the votes table holds at most one row per
+`(preset_id, user_discord_id)` and `presets.vote_count` is recomputed from it.
 
 ```mermaid
 sequenceDiagram
@@ -208,84 +215,84 @@ sequenceDiagram
     User->>Client: View preset detail
 
     Note over Client,Presets: 2. Check existing vote
-    Client->>Presets: GET /api/v1/presets/:id
-    Presets->>DB: SELECT * FROM votes WHERE preset_id AND user_id
-    Presets->>Client: { preset, userVote: "up" | "down" | null }
+    Client->>Presets: GET /api/v1/votes/:presetId/check
+    Presets->>DB: SELECT 1 FROM votes WHERE preset_id AND user_discord_id
+    Presets->>Client: { has_voted: true | false }
 
     Note over User,Client: 3. User votes
-    User->>Client: Click upvote/downvote
+    User->>Client: Click the vote button
 
-    Note over Client,Presets: 4. Submit vote
-    Client->>Presets: POST /api/v1/votes/:presetId<br/>{ vote: "up" | "down" }
+    Note over Client,Presets: 4. Submit vote (no body)
+    Client->>Presets: POST /api/v1/votes/:presetId
+    Presets->>DB: SELECT id FROM presets WHERE id = ? AND status = 'approved'
 
-    Note over Presets,DB: 5. Transaction
-    Presets->>DB: BEGIN TRANSACTION
-    Presets->>DB: INSERT/UPDATE votes
-    Presets->>DB: UPDATE presets SET upvotes/downvotes
-    Presets->>DB: COMMIT
+    Note over Presets,DB: 5. One atomic batch — D1 rejects explicit transactions
+    Presets->>DB: db.batch([<br/>  INSERT INTO votes … ON CONFLICT DO NOTHING,<br/>  UPDATE presets SET vote_count = (SELECT COUNT(*) …) RETURNING vote_count<br/>])
 
-    Presets->>Client: 200 OK { newUpvotes, newDownvotes }
+    Presets->>Client: 200 OK { success: true, new_vote_count }
 ```
+
+`DELETE /api/v1/votes/:presetId` removes the vote through the mirror-image batch. A repeat
+`POST` answers `409` with `{ success: true, already_voted: true, new_vote_count }`.
 
 ---
 
 ## Market Price Flow
 
-Fetching real-time FFXIV market prices from Universalis via the caching proxy.
+Fetching real-time FFXIV market prices from Universalis via the caching proxy, which lives
+inside `api-worker` under `/universalis` (and `/api/v2` for compatibility).
 
 ```mermaid
 sequenceDiagram
-    participant Client as Web App
-    participant Proxy as Universalis Proxy
+    participant Client as Web App / Discord Worker
+    participant Proxy as api-worker /universalis
     participant EdgeCache as Cache API (Edge)
-    participant KV as KV Storage (Global)
     participant API as Universalis API
 
     Note over Client,Proxy: 1. Request price data
-    Client->>Proxy: GET /api/{server}/{itemId}
+    Client->>Proxy: GET /universalis/aggregated/{dc}/{itemIds}
 
-    Note over Proxy,EdgeCache: 2. Check edge cache
-    Proxy->>EdgeCache: Check Cache API
-    alt Edge cache hit
+    Note over Proxy,EdgeCache: 2. Check the cache
+    Proxy->>EdgeCache: Look up the synthetic cache key
+    alt Fresh hit
         EdgeCache->>Proxy: { data, age }
         Proxy->>Client: Return cached data
+    else Stale but inside the SWR window
+        EdgeCache->>Proxy: { data, age }
+        Proxy->>Client: Return stale data immediately
+        Proxy->>API: Revalidate in the background (waitUntil)
     end
 
-    Note over Proxy,KV: 3. Check KV cache
-    Proxy->>KV: Get from KV storage
-    alt KV hit (< 5 min for prices)
-        KV->>Proxy: { data, timestamp }
-        Proxy->>EdgeCache: Store in edge cache
-        Proxy->>Client: Return cached data
-    end
-
-    Note over Proxy: 4. Request coalescing
+    Note over Proxy: 3. Request coalescing
     Proxy->>Proxy: Check inflight requests
     alt Same request in flight
         Proxy->>Proxy: Wait for existing request
         Proxy->>Client: Return shared response
     end
 
-    Note over Proxy,API: 5. Fetch from Universalis
-    Proxy->>API: GET /api/v2/{server}/{itemId}
+    Note over Proxy,API: 4. Fetch from Universalis
+    Proxy->>API: GET /api/v2/aggregated/{dc}/{itemIds}
 
     alt Response size check
         API->>Proxy: Response (check < 5MB)
     end
 
-    Note over Proxy,KV: 6. Dual-layer caching
-    Proxy->>KV: Store with 5-min TTL (prices)
-    Proxy->>EdgeCache: Store for edge caching
+    Note over Proxy,EdgeCache: 5. Store and return
+    Proxy->>EdgeCache: Store with the endpoint's TTL
     Proxy->>Client: Return price data
 ```
 
 ### Caching Strategy
 
-| Cache Layer | TTL (Prices) | TTL (Static) | Purpose |
-|-------------|--------------|--------------|---------|
-| Edge Cache (Cache API) | 5 min | 24h | Low-latency regional caching |
-| KV Storage | 5 min | 24h | Global persistence across edges |
-| Stale-while-revalidate | +1 min | +1h | Serve stale during refresh |
+There is **one** cache layer: the Cloudflare Cache API. The proxy used to write a second
+copy to KV; that layer was removed to stay clear of the free-tier KV write limits, so KV in
+`api-worker` now only backs rate limiting.
+
+| Endpoint | TTL | Stale-while-revalidate |
+|----------|-----|------------------------|
+| `/aggregated/:dc/:itemIds` (prices) | 5 min | +2 min |
+| `/data-centers` | 24 h | +6 h |
+| `/worlds` | 24 h | +6 h |
 
 ### Request Coalescing
 
@@ -323,7 +330,7 @@ sequenceDiagram
     end
 
     Note over Worker: 4. Rate limit check
-    Worker->>Worker: Check KV counter for user
+    Worker->>Worker: Check the command's RL_* rate-limit binding for the user<br/>(KV counter only when the binding is unbound)
 
     Note over Worker: 5. Defer response
     Worker->>Discord: { type: 5 } (DEFERRED_CHANNEL_MESSAGE)

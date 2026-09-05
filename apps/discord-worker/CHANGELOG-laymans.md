@@ -84,6 +84,8 @@ Rules:
 - `/preferences set` with several options at once saves all of them. Occasionally one could be quietly dropped while the reply still said it had been saved.
 - The preset name autocomplete on `/preset favorite remove` no longer comes up empty for some long-standing users.
 - When market data is unavailable, `/budget` says so instead of telling you your own world does not exist.
+- An image that arrives empty now says the file could not be read, instead of a generic "processing failed" message.
+- 4K and ultrawide screenshots were being refused by `/extractor image` before they were even read. They work now.
 
 ## [5.1.0] - 2026-08-30
 

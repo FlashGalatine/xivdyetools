@@ -1,5 +1,7 @@
 # Local Presets (web-app 5.1) Implementation Plan
 
+**Status:** PARKED — not implemented as of 2026-09-05 (no `LocalPresetService` in `apps/web-app/src`); resume from this plan
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the unreachable 4.x Collection Manager with *local presets* — presets stored in the browser, managed on the Presets → Saved tab, editable in the existing submission form, exportable as JSON, shareable by self-contained link, and publishable to the community.

@@ -19,7 +19,7 @@ XIV Dye Tools Discord Bot provides:
 - **Color Matching**: Find FFXIV dyes closest to any hex color or extracted from images
 - **Color Harmonies**: Generate complementary, triadic, analogous, and other color schemes
 - **Accessibility Tools**: Colorblindness simulation for dye colors
-- **Favorites & Collections**: Save and organize your favorite dyes
+- **Community Preset Favorites**: Mark and list community presets you like (`/preset favorite`)
 - **Community Presets**: Browse, submit, and vote on user-created color palettes
 - **Market Pricing**: Real-time market board prices via Universalis API
 
@@ -45,7 +45,7 @@ The Bot implements rate limiting to ensure fair usage for all users. Attempting 
 
 User-submitted presets are subject to moderation:
 
-- Submissions are reviewed before becoming publicly visible
+- Submissions pass an automated content check. Those that clear it are published immediately and logged for audit; anything flagged, or that the check cannot resolve, is held for moderator review
 - Content that is offensive, inappropriate, or violates intellectual property rights will be rejected
 - Moderators reserve the right to remove or modify any submitted content
 - Repeated violations may result in loss of submission privileges
