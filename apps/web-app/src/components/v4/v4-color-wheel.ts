@@ -297,7 +297,11 @@ export class V4ColorWheel extends BaseLitComponent {
 
   /** The formation on the RGB wheel, from core's table, at base 0°. */
   private defaultAngles(): number[] {
-    const offsets = HARMONY_OFFSETS[this.harmonyType] ?? [];
+    // Own-property check, not a truthy one: HARMONY_OFFSETS['toString'] is a
+    // truthy prototype function, so `?? []` alone would let `.map` throw.
+    const offsets = Object.hasOwn(HARMONY_OFFSETS, this.harmonyType)
+      ? HARMONY_OFFSETS[this.harmonyType]
+      : [];
     return [0, ...offsets.map((o) => ((o % 360) + 360) % 360)];
   }
 

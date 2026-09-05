@@ -45,6 +45,14 @@ describe('V4ColorWheel angles', () => {
     expect(b).not.toEqual(c);
     expect(a).not.toEqual(c);
   });
+
+  it.each(['toString', 'constructor', 'valueOf', 'nonsense'])(
+    'falls back to a lone base node for an unknown or prototype-named type %j',
+    (type) => {
+      const el = make({ harmonyType: type as V4ColorWheel['harmonyType'] });
+      expect(el.angles()).toEqual([0]);
+    }
+  );
 });
 
 describe('V4ColorWheel ring', () => {
