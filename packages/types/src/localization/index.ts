@@ -35,6 +35,15 @@ export type HarmonyTypeKey =
   | 'shades';
 
 /**
+ * Ids of the Harmony Explorer's selectable colour wheels. The runtime list,
+ * display order and default live in `@xivdyetools/core` (`COLOR_WHEEL_IDS`);
+ * the union is here so `LocaleData.colorWheels` can be typed without a
+ * types → core dependency. Ids are the wire format (share URLs, the Discord
+ * option, the OG query) and never change.
+ */
+export type ColorWheelId = 'rgb' | 'ryb' | 'munsell' | 'oklch-hue' | 'oklch-lightness';
+
+/**
  * Tool keys for og-worker / web-app display name localization.
  *
  * @deprecated I18N-003 — this covers only the six pre-5.0 tools (the product
@@ -121,6 +130,9 @@ export interface LocaleData {
 
   /** Harmony type translations */
   harmonyTypes: Record<HarmonyTypeKey, string>;
+
+  /** Colour-wheel display names for the Harmony Explorer's wheel selector */
+  colorWheels?: Partial<Record<ColorWheelId, string>>;
 
   /** Vision type translations (verbose, for educational UI like the
    *  Accessibility Checker, e.g. "Deuteranopia (Red-Green Colorblindness)") */
