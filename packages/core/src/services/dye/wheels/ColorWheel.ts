@@ -6,6 +6,7 @@
 
 import type { ColorWheelId } from '@xivdyetools/types';
 import { OKLCH_HUE_WHEEL } from './oklch-hue.js';
+import { OKLCH_LIGHTNESS_WHEEL } from './oklch-lightness.js';
 import { RGB_WHEEL, RYB_WHEEL } from './rgb-ryb.js';
 import type { ColorWheel } from './types.js';
 
@@ -39,7 +40,7 @@ const WHEELS: Readonly<Record<ColorWheelId, ColorWheel>> = {
   ryb: RYB_WHEEL,
   munsell: notYet('munsell'),
   'oklch-hue': OKLCH_HUE_WHEEL,
-  'oklch-lightness': notYet('oklch-lightness'),
+  'oklch-lightness': OKLCH_LIGHTNESS_WHEEL,
 };
 
 /**
