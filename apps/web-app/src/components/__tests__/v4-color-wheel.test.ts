@@ -1,44 +1,79 @@
 /**
- * Regression guard for the v4 color wheel's harmony node angles.
- *
- * The wheel's angle table is one of three independent definitions of harmony
- * geometry (core HarmonyGenerator offsets, the legacy ColorWheelDisplay, and
- * this component) — a past bug had tetradic silently duplicating the square's
- * 90° steps here while the matched dyes (core) correctly used the rectangle
- * offsets, so the wheel visualization contradicted the results.
+ * The ring and the nodes come from core: `ringStops` paints the conic
+ * gradient, `nodeAngles` places the base and each slot at its wheel angle.
+ * With neither set (the empty state) the component falls back to
+ * HARMONY_OFFSETS — the RGB geometry at base 0° — so the placeholder still
+ * shows the right formation.
  */
 import { describe, it, expect } from 'vitest';
+import { HARMONY_OFFSETS } from '@xivdyetools/core';
 import '@components/v4/v4-color-wheel';
 import type { V4ColorWheel } from '@components/v4/v4-color-wheel';
 
-function anglesFor(type: string): number[] {
-  const el = document.createElement('v4-color-wheel') as V4ColorWheel;
-  (el as unknown as { harmonyType: string }).harmonyType = type;
-  return (el as unknown as { getHarmonyAngles(): number[] }).getHarmonyAngles();
+type Exposed = V4ColorWheel & { angles(): number[]; ringStyle(): string };
+
+function make(props: Partial<V4ColorWheel> = {}): Exposed {
+  const el = document.createElement('v4-color-wheel') as Exposed;
+  Object.assign(el, props);
+  return el;
 }
 
-describe('V4ColorWheel harmony angles', () => {
-  it('tetradic is a rectangle (two complementary pairs 60° apart), matching core offsets [60, 180, 240]', () => {
-    expect(anglesFor('tetradic')).toEqual([0, 60, 180, 240]);
+describe('V4ColorWheel angles', () => {
+  it.each(Object.entries(HARMONY_OFFSETS))(
+    'falls back to core offsets for %s when no node angles are given',
+    (type, offsets) => {
+      const el = make({ harmonyType: type as V4ColorWheel['harmonyType'] });
+      expect(el.angles()).toEqual([0, ...offsets.map((o) => ((o % 360) + 360) % 360)]);
+    }
+  );
+
+  it('shifts the fallback by the base hue when a base colour is set but no angles are', () => {
+    const el = make({ harmonyType: 'complementary', baseColor: '#00FFFF' }); // HSV 180
+    expect(el.angles()).toEqual([180, 0]);
   });
 
-  it('square is four even 90° steps', () => {
-    expect(anglesFor('square')).toEqual([0, 90, 180, 270]);
+  it('uses the given node angles verbatim when present (a warped wheel)', () => {
+    const el = make({ harmonyType: 'complementary', baseColor: '#FF0000', nodeAngles: [0, 180] });
+    expect(el.angles()).toEqual([0, 180]);
   });
 
-  it('inverted-tetradic is the mirror rectangle, matching core offsets [120, 180, 300]', () => {
-    expect(anglesFor('inverted-tetradic')).toEqual([0, 120, 180, 300]);
+  it('tetradic, inverted-tetradic and square remain distinct formations', () => {
+    const a = make({ harmonyType: 'tetradic' }).angles();
+    const b = make({ harmonyType: 'inverted-tetradic' }).angles();
+    const c = make({ harmonyType: 'square' }).angles();
+    expect(a).not.toEqual(b);
+    expect(b).not.toEqual(c);
+    expect(a).not.toEqual(c);
+  });
+});
+
+describe('V4ColorWheel ring', () => {
+  it('paints the class default (no inline background) when no stops are given', () => {
+    expect(make().ringStyle()).toBe('');
   });
 
-  it('tetradic, inverted-tetradic, and square are visually distinct formations', () => {
-    expect(anglesFor('tetradic')).not.toEqual(anglesFor('square'));
-    expect(anglesFor('inverted-tetradic')).not.toEqual(anglesFor('tetradic'));
-    expect(anglesFor('inverted-tetradic')).not.toEqual(anglesFor('square'));
+  it('builds a conic gradient from the stops, closing the circle with the first stop', () => {
+    const el = make({ ringStops: ['#FF0000', '#00FF00', '#0000FF', '#FF00FF'] });
+    expect(el.ringStyle()).toBe(
+      'background: conic-gradient(from 0deg, #FF0000 0.00deg, #00FF00 90.00deg, #0000FF 180.00deg, #FF00FF 270.00deg, #FF0000 360deg)'
+    );
   });
 
-  it('remaining harmony types match core HarmonyGenerator offsets', () => {
-    expect(anglesFor('complementary')).toEqual([0, 180]);
-    expect(anglesFor('triadic')).toEqual([0, 120, 240]);
-    expect(anglesFor('split-complementary')).toEqual([0, 150, 210]);
+  it('places the complementary node where the ring is green on an RYB-shaped wheel', async () => {
+    // A 4-stop "RYB-ish" ring: green at 180°, not cyan.
+    const el = make({
+      harmonyType: 'complementary',
+      baseColor: '#FF0000',
+      harmonyColors: ['#00FF9C'],
+      ringStops: ['#FF0000', '#FFFF00', '#00FF9C', '#0000FF'],
+      nodeAngles: [0, 180],
+    });
+    document.body.appendChild(el);
+    await el.updateComplete;
+    const nodes = el.shadowRoot!.querySelectorAll<HTMLElement>('.harmony-node:not(.main)');
+    expect(nodes).toHaveLength(1);
+    // hueToPosition(180): top = 50 + 42·sin(90°) = 92%
+    expect(nodes[0].style.top).toBe('92%');
+    el.remove();
   });
 });

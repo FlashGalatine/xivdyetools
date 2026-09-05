@@ -14,7 +14,11 @@ import {
   generateHarmonySlots,
   isKnownHarmonyType,
   normalizeMatchingMethod,
+  DEFAULT_COLOR_WHEEL,
+  getColorWheel,
+  isColorWheelId,
   type HarmonySelectionConfig,
+  type ColorWheelId,
 } from '@xivdyetools/core';
 import { ShareService } from '@services/share-service';
 import { BaseComponent } from '@components/base-component';
@@ -163,6 +167,9 @@ export class HarmonyTool extends BaseComponent {
   private usePerceptualMatching: boolean = false;
   private matchingMethod: MatchingMethod = 'ciede2000';
   private preventDuplicates: boolean = true;
+  private wheel: ColorWheelId = DEFAULT_COLOR_WHEEL;
+  /** Wheel angles the ring draws: the base first, then each slot's `wheelHue`. */
+  private slotAngles: number[] = [];
 
   // Child components (desktop left panel)
   private dyeSelector: DyeSelector | null = null;
@@ -329,6 +336,7 @@ export class HarmonyTool extends BaseComponent {
     this.matchingMethod = normalizeMatchingMethod(harmonyConfig.matchingMethod ?? 'ciede2000');
     this.preventDuplicates = harmonyConfig.preventDuplicates ?? true;
     this.dyeFiltersConfig = harmonyConfig.dyeFilters ?? { ...DEFAULT_DYE_FILTERS };
+    this.wheel = isColorWheelId(harmonyConfig.wheel) ? harmonyConfig.wheel : DEFAULT_COLOR_WHEEL;
 
     // Note: Market config (showPrices, server) is now managed by MarketBoardService
     // which subscribes to ConfigController automatically. MarketBoard components
@@ -358,7 +366,8 @@ export class HarmonyTool extends BaseComponent {
           (config.matchingMethod !== undefined && this.matchingMethod !== config.matchingMethod) ||
           this.preventDuplicates !== (config.preventDuplicates ?? true) ||
           (config.companionDyesCount !== undefined &&
-            this.companionDyesCount !== config.companionDyesCount);
+            this.companionDyesCount !== config.companionDyesCount) ||
+          (config.wheel !== undefined && this.wheel !== config.wheel);
 
         // The companion count lives in the sidebar now — the tool's own
         // left-panel slider was orphaned when config moved behind the gear.
@@ -374,6 +383,7 @@ export class HarmonyTool extends BaseComponent {
         }
         this.preventDuplicates = config.preventDuplicates ?? true;
         this.dyeFiltersConfig = newDyeFilters;
+        this.wheel = isColorWheelId(config.wheel) ? config.wheel : DEFAULT_COLOR_WHEEL;
 
         if ((needsRerender || algorithmChanged || filtersChanged) && this.selectedDye) {
           this.generateHarmonies();
@@ -441,6 +451,7 @@ export class HarmonyTool extends BaseComponent {
     const harmonyParam = params.get('harmony');
     const algoParam = params.get('algo');
     const perceptualParam = params.get('perceptual');
+    const wheelParam = params.get('wheel');
     const versionParam = params.get('v');
 
     // Debug: Log what we're reading from the URL
@@ -449,6 +460,7 @@ export class HarmonyTool extends BaseComponent {
       harmonyParam,
       algoParam,
       perceptualParam,
+      wheelParam,
       versionParam,
     });
 
@@ -508,6 +520,17 @@ export class HarmonyTool extends BaseComponent {
 
       // Sync with ConfigController so sidebar updates
       configController.setConfig('harmony', { strictMatching: this.usePerceptualMatching });
+    }
+
+    // Which wheel the palette was generated on travels with the link — a card
+    // that ignored it would show dyes the page never shows (45% of palettes).
+    if (wheelParam !== null) {
+      const normalised = wheelParam.toLowerCase();
+      const wheel = isColorWheelId(normalised) ? normalised : DEFAULT_COLOR_WHEEL;
+      if (wheel !== normalised)
+        logger.warn(`[HarmonyTool] Unknown colour wheel in URL: ${wheelParam}`);
+      this.wheel = wheel;
+      configController.setConfig('harmony', { wheel });
     }
 
     // A bare-colour base: `hex` is the declared slot for a custom base,
@@ -1099,6 +1122,8 @@ export class HarmonyTool extends BaseComponent {
       );
       wheel.harmonyColors = matchedDyes.map((dye) => dye.hex);
       wheel.harmonyDyes = matchedDyes;
+      wheel.ringStops = [...getColorWheel(this.wheel).ringStops(72)];
+      wheel.nodeAngles = this.slotAngles;
     } else {
       // Empty state - show placeholder wheel
       wheel.setAttribute('empty', '');
@@ -1415,6 +1440,7 @@ export class HarmonyTool extends BaseComponent {
       matchingMethod: this.matchingMethod,
       companionCount: this.companionDyesCount,
       preventDuplicates: this.preventDuplicates,
+      wheel: this.wheel,
     };
 
     const slots = generateHarmonySlots(
@@ -1429,6 +1455,11 @@ export class HarmonyTool extends BaseComponent {
         pinned: this.swappedDyes,
       }
     );
+
+    this.slotAngles = [
+      getColorWheel(this.wheel).hueOf(this.selectedDye.hex),
+      ...slots.map((s) => s.wheelHue),
+    ];
 
     this.slotDyes = [];
     // Everything the grid put on screen, in render order. `fetchPricesFor-
@@ -1789,6 +1820,7 @@ export class HarmonyTool extends BaseComponent {
       harmony: this.selectedHarmonyType,
       algo: this.matchingMethod,
       perceptual: this.usePerceptualMatching,
+      ...(this.wheel !== DEFAULT_COLOR_WHEEL ? { wheel: this.wheel } : {}),
     };
   }
 
@@ -1821,6 +1853,7 @@ export class HarmonyTool extends BaseComponent {
       showRgb: boolean;
       showHsv: boolean;
       strictMatching: boolean;
+      wheel: ColorWheelId;
     }>
   ): void {
     let needsRerender = false;
@@ -1839,6 +1872,12 @@ export class HarmonyTool extends BaseComponent {
     // which triggers regenerateHarmonies() with the updated usePerceptualMatching flag
     if (config.strictMatching !== undefined) {
       logger.info(`[HarmonyTool] setConfig: strictMatching -> ${config.strictMatching}`);
+    }
+
+    // Handle colour wheel change (the ConfigController subscription does the
+    // actual work — this only logs, matching strictMatching above).
+    if (config.wheel !== undefined) {
+      logger.info(`[HarmonyTool] setConfig: wheel -> ${config.wheel}`);
     }
 
     // Handle display option changes (showNames, showHex, showRgb, showHsv)

@@ -941,4 +941,74 @@ describe('HarmonyTool', () => {
       expect(await lastWrite(DYE_KEY)).toBe(5001);
     });
   });
+
+  // ==========================================================================
+  // Colour wheel plumbing (Task 10): the wheel travels in share params and
+  // deep links, and the ring/nodes the tool feeds to <v4-color-wheel> come
+  // from core's generateHarmonySlots rather than being recomputed here.
+  // ==========================================================================
+
+  describe('colour wheel', () => {
+    afterEach(async () => {
+      // The real ConfigController is a module-level singleton not reset
+      // between tests — leave it at the default so later tests (and other
+      // describe blocks reusing it) see 'rgb' again.
+      const { ConfigController } = await import('@services/config-controller');
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'rgb' });
+      window.history.replaceState({}, '', '/');
+    });
+
+    it('omits wheel from share params on the default and includes it otherwise', async () => {
+      const { ConfigController } = await import('@services/config-controller');
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      await flush();
+
+      const params = () =>
+        (tool as unknown as { getShareParams(): Record<string, unknown> }).getShareParams();
+      expect(params()).not.toHaveProperty('wheel');
+
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'ryb' });
+      expect(params().wheel).toBe('ryb');
+
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'rgb' });
+      expect(params()).not.toHaveProperty('wheel');
+    });
+
+    it('reads ?wheel= from a share URL, normalising unknown values to rgb', async () => {
+      const { ConfigController } = await import('@services/config-controller');
+
+      window.history.replaceState({}, '', '/harmony?dye=5771&harmony=complementary&wheel=MUNSELL');
+      tool = mount();
+      expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe('munsell');
+      tool.destroy();
+
+      window.history.replaceState({}, '', '/harmony?dye=5771&harmony=complementary&wheel=cmyk');
+      tool = mount();
+      expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe('rgb');
+    });
+
+    it('feeds the ring 72 stops and one node angle per slot plus the base', async () => {
+      const { ConfigController } = await import('@services/config-controller');
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'ryb' });
+
+      tool = mount();
+      tool.setConfig({ harmonyType: 'triadic' });
+      tool.selectDye(mockDyes[0]);
+      await flush();
+
+      const wheel = container.querySelector('v4-color-wheel') as unknown as {
+        ringStops: string[];
+        nodeAngles: number[];
+      };
+      expect(wheel.ringStops).toHaveLength(72);
+      expect(wheel.nodeAngles).toHaveLength(3);
+
+      // RYB: the two triadic partners of a red base do NOT sit 120° apart in sRGB terms,
+      // but on the wheel they do — nodeAngles are wheel angles.
+      const [b, n1, n2] = wheel.nodeAngles;
+      expect((n1 - b + 360) % 360).toBeCloseTo(120, 6);
+      expect((n2 - b + 360) % 360).toBeCloseTo(240, 6);
+    });
+  });
 });
