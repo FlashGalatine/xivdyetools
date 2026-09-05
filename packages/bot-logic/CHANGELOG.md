@@ -13,14 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `executeHarmony` passes through to core's `generateHarmonySlots`, plus
   `getLocalizedColorWheelName` for rendering the choice on the card and in embeds.
   The `/harmony` share URL now carries `&wheel=` when a non-default wheel was used.
+  The value is normalised at the boundary with core's `normalizeColorWheelId`: an
+  unrecognised id falls back to `rgb` **and warns** through `input.logger` instead of
+  reaching `generateHarmonySlots`, whose `RangeError` the surrounding `catch` used to
+  report to the user as `GENERATION_FAILED` — a typo'd wheel looked like a render bug.
 
 ### Deprecated
 
 - `HarmonyInput.harmonyOptions` is **deprecated** in favour of `wheel` — its `colorSpace`
-  field has been **ignored since PR #159** (`executeHarmony` does `void harmonyOptions;`
-  and every surface now shares core's `generateHarmonySlots`). The field remains on the
-  input type only so an existing caller that still sets it is not a type error; use
-  `wheel` instead.
+  field has been **ignored since PR #159**, and `executeHarmony` no longer even reads it
+  (the `void harmonyOptions;` placeholder is gone); every surface shares core's
+  `generateHarmonySlots`. The field remains on the input type only so an existing caller
+  that still sets it is not a type error; use `wheel` instead.
 
 ## [4.1.0] - 2026-09-04
 

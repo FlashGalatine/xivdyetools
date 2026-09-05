@@ -5,7 +5,7 @@
  * renders the PNG, and formats the Discord response with emojis.
  */
 
-import { isColorWheelId, type ColorWheelId, type MatchingMethod } from '@xivdyetools/core';
+import { parseColorWheelId, type ColorWheelId, type MatchingMethod } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { DyeTypeFilters } from '@xivdyetools/types';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
@@ -32,10 +32,12 @@ export async function handleHarmonyCommand(
   const colorOption = options.find((opt) => opt.name === 'color');
   const typeOption = options.find((opt) => opt.name === 'type');
   const wheelOption = options.find((opt) => opt.name === 'wheel');
-  // Validated here so a stale registered choice can never reach the selector as a string.
-  // Case-sensitive is safe only because Discord choice values are the fixed lowercase
-  // ids; free-text surfaces (web, OG) lowercase the value before this check runs.
-  const wheel: ColorWheelId | undefined = isColorWheelId(wheelOption?.value) ? wheelOption.value : undefined;
+  // Validated here so a stale registered choice can never reach the selector as a
+  // string. Core's one normaliser (trim + lower-case + membership), the same
+  // function the web app, the OG worker and bot-logic read a wheel id with —
+  // `undefined` for absent/unknown keeps "the user did not choose" distinct
+  // from "the user chose rgb", which is what elides `wheel=` from the card.
+  const wheel: ColorWheelId | undefined = parseColorWheelId(wheelOption?.value);
   const companionsOption = options.find((opt) => opt.name === 'companions');
   const matchingOption = options.find((opt) => opt.name === 'matching');
   const strictOption = options.find((opt) => opt.name === 'strict_matching');
@@ -177,10 +179,21 @@ async function processHarmonyCommand(
     const baseEmojiPrefix = baseEmoji ? `${baseEmoji} ` : '';
     const baseColorText = `${t.t('harmony.baseColor')}: ${baseEmojiPrefix}**${result.baseName}** (\`${baseHex.toUpperCase()}\`)`;
 
+    // bot-logic hands the share URL over as `embed.description`, and this
+    // handler replaces the description with the dye list — so the link it
+    // built (wheel and all) used to be computed and dropped. Discord turns an
+    // embed's `url` into the title's href, which is how `dye.ts` surfaces the
+    // same thing. Guarded on the scheme because `description` is only a URL
+    // when bot-logic could resolve the base dye's stainID.
+    const shareUrl = result.embed.description?.startsWith('https://')
+      ? result.embed.description
+      : undefined;
+
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
           title: result.embed.title,
+          ...(shareUrl ? { url: shareUrl } : {}),
           description: `${baseColorText}\n\n${dyeList}`,
           color: result.embed.color,
           image: { url: 'attachment://image.png' },

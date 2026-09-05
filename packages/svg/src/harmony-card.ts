@@ -181,14 +181,28 @@ export function generateHarmonyCard(options: HarmonyCardOptions): string {
     })
   );
   if (options.wheelLabel) {
+    // Fitted to the row it shares with the pill, like every sibling card's
+    // header-right text (a11y-card, contrast-card). The German OKLCH-hue name
+    // — "OKLCH-Farbton (wahrnehmungsgleiche Abstände)" — measures ~300px
+    // against a ~259px budget, so unfitted it ran under and past the pill.
     parts.push(
-      cardText(CARD_WIDTH - PAD_X, 14 + 15 + 12, options.wheelLabel.toUpperCase(), {
-        fill: theme.label,
-        size: CARD_TYPE.label,
-        font: 'mono',
-        letterSpacing: 1.1,
-        anchor: 'end',
-      })
+      cardText(
+        CARD_WIDTH - PAD_X,
+        14 + 15 + 12,
+        fitText(
+          options.wheelLabel.toUpperCase(),
+          CARD_WIDTH - PAD_X * 2 - chip.width - 10,
+          CARD_TYPE.label,
+          'mono'
+        ),
+        {
+          fill: theme.label,
+          size: CARD_TYPE.label,
+          font: 'mono',
+          letterSpacing: 1.1,
+          anchor: 'end',
+        }
+      )
     );
   }
 

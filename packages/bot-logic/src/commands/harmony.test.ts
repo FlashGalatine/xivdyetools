@@ -5,7 +5,7 @@
  */
 
 import { HARMONY_OFFSETS } from '@xivdyetools/core';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { executeHarmony, getHarmonyTypeChoices, HARMONY_TYPES } from './harmony.js';
 import type { HarmonyType } from './harmony.js';
 import { dyeService } from '../input-resolution.js';
@@ -578,5 +578,46 @@ describe('colour wheel', () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.svgString).toContain('マンセル');
+  });
+
+  /**
+   * `HarmonyInput.wheel` is typed, but this function is a package boundary:
+   * the Discord handler, the tests and any future surface hand it whatever
+   * they parsed. An unknown id used to reach `generateHarmonySlots`, whose
+   * RangeError was swallowed by the `catch` and reported as GENERATION_FAILED
+   * — a typo'd wheel presented as a render failure.
+   */
+  describe('validates the wheel at the boundary', () => {
+    const runRaw = (wheel: unknown, logger?: { warn(m: string): void }) =>
+      executeHarmony({
+        baseHex: '#B02020',
+        baseName: 'Dalamud Red',
+        baseId: realDye.id,
+        baseItemID: realDye.itemID,
+        harmonyType: 'complementary',
+        locale: 'en',
+        wheel: wheel as never,
+        logger,
+      });
+
+    it("normalises casing: 'RYB' is the 'ryb' result", async () => {
+      const loud = await runRaw('RYB');
+      const quiet = await run('ryb');
+      expect(loud.ok && quiet.ok).toBe(true);
+      if (!loud.ok || !quiet.ok) return;
+      expect(loud.harmonyDyes.map((d) => d.itemID)).toEqual(quiet.harmonyDyes.map((d) => d.itemID));
+      expect(loud.embed.description).toContain('&wheel=ryb');
+    });
+
+    it('falls back to rgb for an unknown id and says so', async () => {
+      const warn = vi.fn();
+      const unknown = await runRaw('cmyk', { warn });
+      const rgb = await run('rgb');
+      expect(unknown.ok && rgb.ok).toBe(true);
+      if (!unknown.ok || !rgb.ok) return;
+      expect(unknown.harmonyDyes.map((d) => d.itemID)).toEqual(rgb.harmonyDyes.map((d) => d.itemID));
+      expect(unknown.embed.description).not.toContain('wheel=');
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('cmyk'));
+    });
   });
 });

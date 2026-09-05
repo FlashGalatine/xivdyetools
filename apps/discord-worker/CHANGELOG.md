@@ -12,8 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`/harmony` gains a `wheel` option** with the five choices `@xivdyetools/core` 5.2.0
   now exposes (RGB, RYB, Munsell, OKLCH hue, OKLCH lightness), derived from core's
   `COLOR_WHEEL_IDS` rather than hand-listed. The card names the wheel under the harmony
-  type when it is not the default, and its link opens the web app on the same wheel.
-  Leaving the option out changes nothing.
+  type when it is not the default, and the embed's **title is now a link** to the web app
+  on the same wheel — bot-logic had always built that share URL, and this handler had
+  always overwritten it with the dye list and dropped it. Leaving the option out changes
+  nothing. The option value is read with core's `parseColorWheelId`, so a stale or
+  differently-cased registered choice folds to a known id instead of reaching the
+  selector as a raw string.
 - The CJK subset fonts (JP/SC/KR) were regenerated to cover the five wheels' localized
   names in `ja`/`ko`/`zh` — a name introduced by this release would otherwise render as
   tofu on the card.

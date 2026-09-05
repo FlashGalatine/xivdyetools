@@ -552,6 +552,46 @@ describe('handleHarmonyCommand', () => {
       expect(mock).toHaveBeenCalledWith(expect.objectContaining({ wheelLabel: expect.stringMatching(/RYB/) }));
     });
 
+    /**
+     * bot-logic builds a share URL that carries the wheel and hands it over as
+     * `embed.description`; this handler replaces the description with the dye
+     * list, so before this the link was computed and thrown away — and the
+     * changelog's "its link opens the web app on the same wheel" was false.
+     * Discord renders a `url` on an embed by making the TITLE the link, which
+     * is what `dye.ts` does for its own card.
+     */
+    it('posts the share link as the embed url, carrying the wheel', async () => {
+      editOriginalResponseMock.mockClear();
+      const { ctx, waitUntilCalls } = createContext();
+      const withWheel = {
+        ...baseInteraction,
+        data: { options: [{ name: 'color', value: 'red' }, { name: 'wheel', value: 'ryb' }] },
+      } as unknown as DiscordInteraction;
+      await handleHarmonyCommand(withWheel, env, ctx);
+      await Promise.all(waitUntilCalls);
+
+      const embed = editOriginalResponseMock.mock.calls.at(-1)?.[2]?.embeds?.[0];
+      expect(embed?.url).toContain('xivdyetools.app/harmony');
+      expect(embed?.url).toContain('&wheel=ryb');
+      // The description stays the dye list, not the raw URL.
+      expect(embed?.description).not.toContain('https://');
+    });
+
+    it('posts a share link with no wheel on the default', async () => {
+      editOriginalResponseMock.mockClear();
+      const { ctx, waitUntilCalls } = createContext();
+      const interaction = {
+        ...baseInteraction,
+        data: { options: [{ name: 'color', value: 'red' }] },
+      } as unknown as DiscordInteraction;
+      await handleHarmonyCommand(interaction, env, ctx);
+      await Promise.all(waitUntilCalls);
+
+      const embed = editOriginalResponseMock.mock.calls.at(-1)?.[2]?.embeds?.[0];
+      expect(embed?.url).toContain('xivdyetools.app/harmony');
+      expect(embed?.url).not.toContain('wheel=');
+    });
+
     it('prints no token on the default and ignores an invalid wheel value', async () => {
       const mock = await svg();
       for (const options of [
