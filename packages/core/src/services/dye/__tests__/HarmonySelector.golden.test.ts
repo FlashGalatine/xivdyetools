@@ -195,6 +195,84 @@ const SAMPLE: Record<string, Record<string, Array<string | null>>> = {
   },
 };
 
+/**
+ * One config per non-RGB wheel, page defaults otherwise. A change to a wheel
+ * table is a deliberate re-baseline with the reason in the commit; the named
+ * samples print dye names first so the diff says WHAT moved.
+ */
+const WHEEL_CONFIGS: Array<[string, HarmonySelectionConfig]> = (
+  ['ryb', 'munsell', 'oklch-hue', 'oklch-lightness'] as const
+).map((wheel) => [
+  wheel,
+  { usePerceptualMatching: true, matchingMethod: 'ciede2000', preventDuplicates: true, companionCount: 3, wheel },
+]);
+
+/** Captured on first run (Task 7 step 6); see the commit that added each. */
+const WHEEL_DIGESTS: Record<string, string> = {
+  ryb: 'd3f511e8d6b34cab5921e9ae5ed73d640f4a8565e4a728681e8707507f6e6232',
+  munsell: '437788cb69868970750c58bd4e63b89b96a167b383eb228f5561c20e8d5587d6',
+  'oklch-hue': 'c927b9fb32ab2a51b723aefc9f9535bb5e6092fa9bdf5557ee69588cb67f687a',
+  'oklch-lightness': 'd749fe5c16a14bdf1ab0ba689fcd558f06ef28ae4238db985a455f6119111625',
+};
+
+/**
+ * Dalamud Red's complementary and triadic partners per wheel — the sample that
+ * names dyes. Sanity-checked at capture time (Task 7 step 6): the RYB
+ * complementary is a green-family dye (Ochu Green, #406339), not RGB's
+ * Metallic Cobalt Green (#28847f); the oklch-lightness complementary (Morbol
+ * Green, #1f4646, perceived luminance ≈23%) sits much closer to Dalamud Red's
+ * own darkness (#781a1a, ≈21%) than RGB's pick (Metallic Cobalt Green, ≈41%).
+ */
+const WHEEL_SAMPLE: Record<string, { complementary: Array<string | null>; triadic: Array<string | null> }> = {
+  ryb: { complementary: ['Ochu Green'], triadic: ['Moss Green', 'Othard Blue'] },
+  munsell: { complementary: ['Metallic Cobalt Green'], triadic: ['Cactuar Green', 'Othard Blue'] },
+  'oklch-hue': { complementary: ['Turquoise Green'], triadic: ['Ochu Green', 'Dragoon Blue'] },
+  'oklch-lightness': { complementary: ['Morbol Green'], triadic: ['Hunter Green', 'Storm Blue'] },
+};
+
+describe('generateHarmonySlots golden output per colour wheel', () => {
+  const red = ALL.find((d) => d.name === 'Dalamud Red')!;
+
+  it.each(WHEEL_CONFIGS)('names the same dyes for Dalamud Red on %s', (wheel, config) => {
+    const actual = {
+      complementary: generateHarmonySlots(red.hex, 'complementary', ALL, config, { excludeItemIDs: [red.itemID] }).map(
+        (s) => s.dye?.name ?? null
+      ),
+      triadic: generateHarmonySlots(red.hex, 'triadic', ALL, config, { excludeItemIDs: [red.itemID] }).map(
+        (s) => s.dye?.name ?? null
+      ),
+    };
+    expect(actual).toEqual(WHEEL_SAMPLE[wheel]);
+  });
+
+  it.each(WHEEL_CONFIGS)('answers unchanged across every dye and type on %s', (wheel, config) => {
+    const lines: string[] = [];
+    for (const type of TYPES) {
+      for (const base of [...ALL].sort((a, b) => a.itemID - b.itemID)) {
+        const encoded = generateHarmonySlots(base.hex, type, ALL, config, { excludeItemIDs: [base.itemID] })
+          .map((s) => `${s.offset}:${s.dye ? s.dye.itemID : '-'}[${s.companions.map((d) => d.itemID).join(',')}]`)
+          .join('|');
+        lines.push(`${type}|${base.itemID}|${encoded}`);
+      }
+    }
+    const digest = createHash('sha256').update(lines.join('\n')).digest('hex');
+    expect(digest).toBe(WHEEL_DIGESTS[wheel]);
+  });
+
+  it('RGB and RYB disagree on the complement for most saturated dyes (the feature is not cosmetic)', () => {
+    const rgbCfg = { ...WHEEL_CONFIGS[0][1], wheel: 'rgb' as const };
+    const rybCfg = WHEEL_CONFIGS[0][1];
+    let changed = 0;
+    for (const base of ALL) {
+      const a = generateHarmonySlots(base.hex, 'complementary', ALL, rgbCfg, { excludeItemIDs: [base.itemID] })[0]?.dye?.itemID;
+      const b = generateHarmonySlots(base.hex, 'complementary', ALL, rybCfg, { excludeItemIDs: [base.itemID] })[0]?.dye?.itemID;
+      if (a !== b) changed++;
+    }
+    // research 05 §6 measured 63/125 with a 124-dye pool; allow for pool and companion differences
+    expect(changed / ALL.length).toBeGreaterThan(0.3);
+  });
+});
+
 describe('generateHarmonySlots golden output', () => {
   // Ordered before the digest so a failure names dyes rather than hex.
   it.each(Object.keys(SAMPLE))('answers unchanged for %s', (name) => {

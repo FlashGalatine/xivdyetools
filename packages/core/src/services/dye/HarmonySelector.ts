@@ -27,10 +27,11 @@
  * @module services/dye/HarmonySelector
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { ColorWheelId, Dye } from '@xivdyetools/types';
 import { HARMONY_OFFSETS } from '../../constants/index.js';
 import type { MatchingMethod } from '../../types/index.js';
 import { ColorService } from '../ColorService.js';
+import { DEFAULT_COLOR_WHEEL, getColorWheel } from './wheels/ColorWheel.js';
 
 /** How a caller wants harmony slots chosen. */
 export interface HarmonySelectionConfig {
@@ -46,6 +47,11 @@ export interface HarmonySelectionConfig {
   companionCount?: number;
   /** Never show one dye in two slots. Default `false`. */
   preventDuplicates?: boolean;
+  /**
+   * Which colour wheel the offsets are measured on. Default `'rgb'`, which is
+   * today's behaviour bit for bit. See `wheels/ColorWheel.ts`.
+   */
+  wheel?: ColorWheelId;
 }
 
 /** One position in a harmony: its ideal, the dye chosen for it, and runners-up. */
@@ -56,6 +62,11 @@ export interface HarmonySlot {
   offset: number;
   /** The absolute ideal hue in degrees, 0–359. */
   targetHue: number;
+  /**
+   * The slot's angle on the SELECTED wheel's ring, 0–359 — where a node is
+   * drawn. Equals `targetHue` on the RGB wheel and differs on every other.
+   */
+  wheelHue: number;
   /**
    * The ideal colour for this slot: the base's saturation and value on the
    * target hue. This is what a card outlines next to the dye it actually found.
@@ -174,7 +185,8 @@ export function generateHarmonySlots(
   if (!isKnownHarmonyType(harmonyType)) return [];
   const offsets = HARMONY_OFFSETS[harmonyType];
 
-  const baseHsv = ColorService.hexToHsv(baseHex);
+  const wheel = getColorWheel(config.wheel ?? DEFAULT_COLOR_WHEEL);
+  const baseWheelHue = wheel.hueOf(baseHex);
   const companionCount = config.companionCount ?? 0;
   const preventDuplicates = config.preventDuplicates ?? false;
 
@@ -201,11 +213,11 @@ export function generateHarmonySlots(
 
   offsets.forEach((offset, index) => {
     const normalisedOffset = ((offset % 360) + 360) % 360;
-    const targetHue = (baseHsv.h + normalisedOffset) % 360;
-    // The ideal carries the BASE's saturation and value onto the rotated hue.
-    // That is the whole reason a desaturated base finds desaturated dyes, and
-    // the single biggest difference from the per-type find*Dyes() methods.
-    const targetHex = ColorService.hsvToHex(targetHue, baseHsv.s, baseHsv.v);
+    const wheelHue = (baseWheelHue + normalisedOffset) % 360;
+    // The wheel builds the ideal. Warp wheels carry the BASE's saturation and
+    // value onto the mapped hue — the whole reason a desaturated base finds
+    // desaturated dyes; the constant-lightness wheel carries L and C instead.
+    const { targetHex, targetHue } = wheel.target(baseHex, wheelHue);
 
     const ranked = rankCandidates(candidates, targetHue, targetHex, config);
 
@@ -248,6 +260,7 @@ export function generateHarmonySlots(
       index,
       offset: normalisedOffset,
       targetHue,
+      wheelHue,
       targetHex,
       dye: chosen?.dye ?? null,
       deviance: chosen?.deviance ?? 0,

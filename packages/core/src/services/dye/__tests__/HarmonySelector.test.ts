@@ -10,6 +10,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { generateHarmonySlots, isKnownHarmonyType } from '../HarmonySelector.js';
+import type { HarmonySelectionConfig } from '../HarmonySelector.js';
 import { HARMONY_OFFSETS } from '../../../constants/index.js';
 import { DyeService } from '../../DyeService.js';
 import dyeDatabase from '../../../data/dyes.json' with { type: 'json' };
@@ -290,6 +291,51 @@ describe('generateHarmonySlots', () => {
       expect(slot.deviance).toBeCloseTo(angular, 5);
       // Degrees, not ΔE units: a hue distance can never exceed 180.
       expect(slot.deviance).toBeLessThanOrEqual(180);
+    });
+  });
+
+  describe('colour wheel', () => {
+    const ALL_DYES = svc.getAllDyes();
+    const base = (config: Partial<HarmonySelectionConfig> = {}) =>
+      generateHarmonySlots(RED.hex, 'complementary', ALL_DYES, { ...PERCEPTUAL, preventDuplicates: true, ...config }, {
+        excludeItemIDs: [RED.itemID],
+      });
+
+    it('defaults to the RGB wheel: unset and rgb answer identically, with wheelHue = targetHue', () => {
+      const unset = base();
+      const rgb = base({ wheel: 'rgb' });
+      expect(rgb.map((s) => s.dye?.itemID)).toEqual(unset.map((s) => s.dye?.itemID));
+      for (const s of unset) expect(s.wheelHue).toBe(s.targetHue);
+    });
+
+    it('exposes the ring angle separately from the sRGB hue on a warped wheel', () => {
+      const [slot] = base({ wheel: 'ryb' });
+      const baseWheelHue = ColorService.hexToHsv(RED.hex).h; // Dalamud Red is near sRGB 0°, so ≈ RYB 0°
+      expect(Math.abs(slot.wheelHue - ((baseWheelHue + 180) % 360))).toBeLessThan(5);
+      expect(slot.targetHue).not.toBeCloseTo(slot.wheelHue, 0);
+    });
+
+    it("chooses a different complement for a saturated red on RYB than on RGB", () => {
+      expect(base({ wheel: 'ryb' })[0].dye?.itemID).not.toBe(base()[0].dye?.itemID);
+    });
+
+    it.each(['ryb', 'munsell', 'oklch-hue', 'oklch-lightness'] as const)(
+      'keeps a near-grey base near-grey on %s',
+      (wheel) => {
+        // Snow White itself is HSV s≈8.77 (not 0), and RYB/Munsell/oklch-hue
+        // carry the base's own S/V onto the rotated hue by design, so the
+        // ideal can never read BELOW the base's own saturation. 15 is well
+        // under the file's existing "near-neutral" bar (20, above) and still
+        // catches a wheel that made a near-grey base noticeably chromatic.
+        const slots = generateHarmonySlots(WHITE.hex, 'triadic', ALL_DYES, { ...PERCEPTUAL, wheel }, {
+          excludeItemIDs: [WHITE.itemID],
+        });
+        for (const s of slots) expect(ColorService.hexToHsv(s.targetHex).s).toBeLessThan(15);
+      }
+    );
+
+    it('rejects an unknown wheel loudly rather than falling back to RGB', () => {
+      expect(() => base({ wheel: 'cmyk' as never })).toThrow(RangeError);
     });
   });
 });

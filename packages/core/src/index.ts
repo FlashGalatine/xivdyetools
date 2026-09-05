@@ -69,6 +69,23 @@ export {
   isKnownHarmonyType,
 } from './services/dye/HarmonySelector.js';
 
+/**
+ * Selectable colour wheels — the ONE list every surface reads. Ids are the
+ * wire format (share URL `wheel=`, the `/harmony wheel` option, the OG query).
+ */
+export type { /** @public */ ColorWheel } from './services/dye/wheels/ColorWheel.js';
+export type { /** @public */ ColorWheelId } from '@xivdyetools/types';
+export {
+  /** @public */
+  COLOR_WHEEL_IDS,
+  /** @public */
+  DEFAULT_COLOR_WHEEL,
+  /** @public */
+  getColorWheel,
+  /** @public */
+  isColorWheelId,
+} from './services/dye/wheels/ColorWheel.js';
+
 // Color converter types
 export type { /** @public */ DeltaEFormula } from './services/color/ColorConverter.js';
 export type { /** @public */ RYB } from './services/ColorService.js';
