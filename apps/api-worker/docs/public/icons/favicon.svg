@@ -1,15 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" aria-hidden="true">
   <!--
-    The API docs icon — "6B · Socketed", confirmed 2026-09-04 (App Icon.dc.html, Turn 6).
-    Socket board in brand red on a warm near-black tile (#120C0D), the paint can in
-    machined steel (eleven-stop specular body, rim, wire, ferrule and handle gradients)
-    carrying the single red dye family, drawn at ×0.8 inside the 288 px pad. The docs
-    separate from production by GROUND (dark board vs solid red tile), not by hue.
-    Source of truth is the design file; this is a flattened, self-contained export and
-    the SOURCE for the shipped set: apps/web-app/scripts/generate-api-docs-icons.mjs
-    renders apple-touch-icon.png (180) from it, and derives the board-free small
-    variant (favicon.svg + favicon-16x16 / 32x32) by dropping the board and drawing
-    the can at ×0.9 — per the design's small-size note, the board is noise below ~48 px.
+    DERIVED by apps/web-app/scripts/generate-api-docs-icons.mjs from docs-icon.svg — do not
+    hand-edit. The board-free small variant of "6B · Socketed": the same tile, glow and
+    steel can, no socket board, can at ×0.9 — for tab-size rendering (this file is the
+    <link rel="icon"> SVG; favicon-16x16 / 32x32 are rasterised from it).
   -->
   <defs>
     <clipPath id="d-paint"><ellipse cx="256" cy="176" rx="132" ry="62"/></clipPath>
@@ -114,44 +108,10 @@
       <use href="#d-ring"/>
     </g>
 
-    <!-- 6B board: dead traces, socket frame, dashed pin rows (#C0362F — dimmer than the live traces on purpose), corner fiducials, four live traces -->
-    <g id="d-board">
-      <g stroke="#3B1F21" stroke-width="5" fill="none" stroke-linecap="square">
-        <path d="M 0 56 L 56 56 L 56 24"/>
-        <path d="M 512 56 L 456 56 L 456 24"/>
-        <path d="M 0 456 L 56 456 L 56 488"/>
-        <path d="M 512 456 L 456 456 L 456 488"/>
-        <path d="M 0 176 L 36 176 L 36 336 L 0 336"/>
-        <path d="M 512 176 L 476 176 L 476 336 L 512 336"/>
-        <path d="M 176 0 L 176 36 L 336 36"/>
-        <path d="M 176 512 L 176 476 L 336 476"/>
-      </g>
-      <rect x="88" y="88" width="336" height="336" rx="20" fill="none" stroke="#5E2A2B" stroke-width="4"/>
-      <rect x="112" y="112" width="288" height="288" rx="12" fill="#1A1011" stroke="#43201F" stroke-width="3"/>
-      <g stroke="#C0362F" stroke-width="11" stroke-dasharray="5 11" stroke-linecap="butt">
-        <path d="M 126 100 L 386 100"/>
-        <path d="M 126 412 L 386 412"/>
-        <path d="M 100 126 L 100 386"/>
-        <path d="M 412 126 L 412 386"/>
-      </g>
-      <g fill="#120C0D" stroke="#5E2E30" stroke-width="3">
-        <circle cx="60" cy="60" r="8"/>
-        <circle cx="452" cy="60" r="8"/>
-        <circle cx="60" cy="452" r="8"/>
-        <circle cx="452" cy="452" r="8"/>
-      </g>
-      <g filter="url(#d-trace-glow)" stroke="#EA4133" stroke-width="6" fill="none" stroke-linecap="square">
-        <path d="M 256 88 L 256 40 L 344 40 L 344 0"/>
-        <path d="M 256 424 L 256 472 L 168 472 L 168 512"/>
-        <path d="M 88 256 L 40 256 L 40 168 L 0 168"/>
-        <path d="M 424 256 L 472 256 L 472 344 L 512 344"/>
-      </g>
-    </g>
   </defs>
 
   <rect width="512" height="512" rx="112" fill="#120C0D"/>
-  <use href="#d-board"/>
   <g filter="url(#d-soft)"><ellipse cx="256" cy="392" rx="132" ry="26" fill="#EA4133" opacity="0.32"/></g>
   <ellipse cx="256" cy="398" rx="104" ry="14" fill="#0A0506" opacity="0.55"/>
-  <g transform="translate(256,252) scale(0.8) translate(-256,-256)"><use href="#d-bucket"/></g>
+  <g transform="translate(256,252) scale(0.9) translate(-256,-256)"><use href="#d-bucket"/></g>
 </svg>

@@ -54,7 +54,7 @@ npm run build:check          # build + check-bundle-size (CI guard)
 VITE_APP_ENV=beta npm run build     # Beta build (beta.xivdyetools.app)
 node scripts/check-beta-build.js    # Assert dist/ really is a beta build
 node scripts/generate-beta-icons.mjs # Regenerate the beta favicon set (rarely needed)
-node scripts/generate-api-docs-icons.mjs # Regenerate the API docs favicon set from apps/api-worker/docs/public/icons/favicon.svg (this package owns sharp)
+node scripts/generate-api-docs-icons.mjs # Regenerate the API docs icon set from apps/api-worker/docs/public/icons/docs-icon.svg — derives the board-free favicon.svg + 16/32 PNGs and renders the 180 touch icon (this package owns sharp)
 ```
 
 ### Pre-commit Checklist

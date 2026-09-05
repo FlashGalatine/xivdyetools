@@ -80,8 +80,9 @@ docs/                     # VitePress site → developers.xivdyetools.app (built
 │   └── components/           # EndpointCard (the console card — its params form IS the parameter table),
 │                             # EndpointIndex (+LiveStrip), DocsHome, BaseUrl, SectionSheet (mobile), Glyph (@xivdyetools/svg)
 ├── public/fonts/             # Space Grotesk / Onest / Fragment Mono woff2, copied from web-app/public/fonts
-├── public/icons/             # The docs' own app icon, "6B · Socketed" (favicon.svg is the source; the PNGs come from
-│                             # apps/web-app/scripts/generate-api-docs-icons.mjs — re-run only when the artwork changes)
+├── public/icons/             # The docs' own app icon, "6B · Socketed". docs-icon.svg is the SOURCE (→ apple-touch 180);
+│                             # favicon.svg + favicon-16/32 are the board-free small variant DERIVED from it by
+│                             # apps/web-app/scripts/generate-api-docs-icons.mjs — never hand-edit favicon.svg, re-run the script
 └── public/mark.svg           # The flat six-stripe mark the bar's `logo` uses (< 20 px: flat mark, never the can)
 ```
 
