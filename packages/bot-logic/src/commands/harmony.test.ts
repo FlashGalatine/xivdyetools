@@ -5,9 +5,10 @@
  */
 
 import { HARMONY_OFFSETS } from '@xivdyetools/core';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { executeHarmony, getHarmonyTypeChoices, HARMONY_TYPES } from './harmony.js';
 import type { HarmonyType } from './harmony.js';
+import { dyeService } from '../input-resolution.js';
 
 const BASE_HEX = '#D69C6D'; // A warm brown (Rust Red-ish)
 
@@ -519,5 +520,104 @@ describe('the harmony type label', () => {
     // …and the raw key never leaks either, which is what a missing locale
     // entry would produce now that the English table is gone.
     expect(result.svgString).not.toContain('HARMONY.');
+  });
+});
+
+// ============================================================================
+// Colour wheel (Task 11) — wheel carries into the algorithm, the card token,
+// and the share URL
+// ============================================================================
+
+describe('colour wheel', () => {
+  // `baseDye` lookup in executeHarmony runs off `baseId` alone (independent of
+  // `baseHex`), so a real dye supplies the stainID the share-URL assertion
+  // needs while `#B02020` — saturated enough that RGB vs RYB hue rotation
+  // picks a different nearest dye — drives the actual harmony computation.
+  const realDye = dyeService.getAllDyes()[0];
+  if (!realDye) throw new Error('fixture dye database is empty');
+
+  const run = (wheel?: 'rgb' | 'ryb' | 'munsell' | 'oklch-hue' | 'oklch-lightness') =>
+    executeHarmony({
+      baseHex: '#B02020',
+      baseName: 'Dalamud Red',
+      baseId: realDye.id,
+      baseItemID: realDye.itemID,
+      harmonyType: 'complementary',
+      locale: 'en',
+      wheel,
+    });
+
+  it('defaults to RGB: no wheel in the share URL and no token on the card', async () => {
+    const r = await run();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.embed.description).not.toContain('wheel=');
+    expect(r.svgString).not.toContain('RYB');
+  });
+
+  it('passes wheel=ryb through: different dyes, token on the card, wheel in the share URL', async () => {
+    const rgb = await run('rgb');
+    const ryb = await run('ryb');
+    expect(rgb.ok && ryb.ok).toBe(true);
+    if (!rgb.ok || !ryb.ok) return;
+    expect(ryb.harmonyDyes[0]?.itemID).not.toBe(rgb.harmonyDyes[0]?.itemID);
+    expect(ryb.svgString).toContain('RYB');
+    expect(ryb.embed.description).toContain('&wheel=ryb');
+    expect(rgb.embed.description).not.toContain('wheel=');
+  });
+
+  it('localises the token', async () => {
+    const r = await executeHarmony({
+      baseHex: '#B02020',
+      baseId: realDye.id,
+      baseItemID: realDye.itemID,
+      harmonyType: 'triadic',
+      locale: 'ja',
+      wheel: 'munsell',
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.svgString).toContain('マンセル');
+  });
+
+  /**
+   * `HarmonyInput.wheel` is typed, but this function is a package boundary:
+   * the Discord handler, the tests and any future surface hand it whatever
+   * they parsed. An unknown id used to reach `generateHarmonySlots`, whose
+   * RangeError was swallowed by the `catch` and reported as GENERATION_FAILED
+   * — a typo'd wheel presented as a render failure.
+   */
+  describe('validates the wheel at the boundary', () => {
+    const runRaw = (wheel: unknown, logger?: { warn(m: string): void }) =>
+      executeHarmony({
+        baseHex: '#B02020',
+        baseName: 'Dalamud Red',
+        baseId: realDye.id,
+        baseItemID: realDye.itemID,
+        harmonyType: 'complementary',
+        locale: 'en',
+        wheel: wheel as never,
+        logger,
+      });
+
+    it("normalises casing: 'RYB' is the 'ryb' result", async () => {
+      const loud = await runRaw('RYB');
+      const quiet = await run('ryb');
+      expect(loud.ok && quiet.ok).toBe(true);
+      if (!loud.ok || !quiet.ok) return;
+      expect(loud.harmonyDyes.map((d) => d.itemID)).toEqual(quiet.harmonyDyes.map((d) => d.itemID));
+      expect(loud.embed.description).toContain('&wheel=ryb');
+    });
+
+    it('falls back to rgb for an unknown id and says so', async () => {
+      const warn = vi.fn();
+      const unknown = await runRaw('cmyk', { warn });
+      const rgb = await run('rgb');
+      expect(unknown.ok && rgb.ok).toBe(true);
+      if (!unknown.ok || !rgb.ok) return;
+      expect(unknown.harmonyDyes.map((d) => d.itemID)).toEqual(rgb.harmonyDyes.map((d) => d.itemID));
+      expect(unknown.embed.description).not.toContain('wheel=');
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('cmyk'));
+    });
   });
 });

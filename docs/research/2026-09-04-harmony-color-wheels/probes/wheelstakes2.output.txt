@@ -1,0 +1,25 @@
+OKLCH warp table: monotonic=false span=360.00°
+  HSV->OKwheel: 0->0.0  30->23.5  60->80.5  120->113.3  180->165.5  240->234.8  300->299.1
+  OKwheel complement of red = HSV 186.1; RGB wheel gives 180; RYB gives 138.0
+  OKLCH warp round-trip max error 1.30e+1°
+
+| harmony | wheel | slots | partner changed | mean ΔE00(target moved) | mean |Δhue(target)| |
+|---|---|---|---|---|---|
+| complementary | ryb | 125 | 63 (50.4%) | 7.46 | 17.0° |
+| complementary | oklch-warp | 125 | 72 (57.6%) | 6.68 | 14.7° |
+| complementary | oklch-full | 125 | 81 (64.8%) | 10.70 | 4.7° |
+| analogous | ryb | 250 | 93 (37.2%) | 4.67 | 9.8° |
+| analogous | oklch-warp | 250 | 119 (47.6%) | 5.59 | 12.8° |
+| analogous | oklch-full | 250 | 119 (47.6%) | 7.01 | 9.3° |
+| triadic | ryb | 250 | 127 (50.8%) | 7.68 | 20.3° |
+| triadic | oklch-warp | 250 | 89 (35.6%) | 4.55 | 12.3° |
+| triadic | oklch-full | 250 | 185 (74.0%) | 11.09 | 17.2° |
+
+ALL (ryb): 283/625 = 45.3%
+ALL (oklch-warp): 280/625 = 44.8%
+ALL (oklch-full): 385/625 = 61.6%
+
+distinct complementary partners under rgb: 75/125
+distinct complementary partners under ryb: 67/125
+distinct complementary partners under oklch-warp: 56/125
+distinct complementary partners under oklch-full: 66/125

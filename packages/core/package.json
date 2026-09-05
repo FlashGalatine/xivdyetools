@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/core",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "description": "Core color algorithms and dye database for XIV Dye Tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,11 +18,14 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "NOTICE"
   ],
   "scripts": {
     "build": "npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales",
     "build:locales": "tsx scripts/build-locales.ts",
+    "build:munsell": "tsx scripts/build-munsell-hues.ts",
+    "build:oklch-hue": "tsx scripts/build-oklch-hue-table.ts",
     "copy:locales": "tsx scripts/copy-locales.ts",
     "calibrate:bands": "tsx scripts/calibrate-bands.ts",
     "test": "vitest run",
@@ -66,9 +69,11 @@
     "spectral.js": "^3.0.0"
   },
   "devDependencies": {
+    "@types/culori": "^2.1.1",
     "@types/node": "^26.4.0",
     "@vitest/coverage-v8": "^4.1.11",
     "csv-parse": "^7.0.2",
+    "culori": "^4.0.2",
     "tsx": "^4.23.12",
     "vitest": "^4.1.11",
     "yaml": "^2.9.0"

@@ -31,6 +31,15 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.4.0] - 2026-09-05
+### 🎨 Choose your colour wheel in the Harmony Explorer
+- Web app: a new **Color wheel** setting in Harmony's options lets you pick which wheel the harmony angles are measured on: RGB (the screen wheel, unchanged default), RYB (the painter's wheel, where red's complement is green), Munsell (the perceptual wheel behind Japan's JIS colour standard), OKLCH hue (perceptually even spacing) or OKLCH lightness (keeps every partner at the base dye's brightness).
+- Web app: the ring repaints for the wheel you pick and the harmony dots sit on it, so what you see matches the dyes suggested. Share links always carry the wheel, so a link you send opens on the wheel you made it with — even if the person opening it had a different one selected.
+- Web app: swapping a dye by hand pins it to that slot, and those pins now clear when you change the wheel — a slot points at a different colour on a different wheel.
+- Discord bot: `/harmony` gains a `wheel` option with the same five choices; the card names the wheel when it is not the default, and the embed title is now a link that opens the web app on the same wheel.
+- Link previews: a shared harmony link previews with the wheel it was made on, and the preview's footer prints a short wheel tag beside the matching method — including on the wide Twitter/X preview, which has no room for the full name.
+- Nothing changes unless you choose a wheel — the default is exactly what the tools did before.
+
 ## [5.3.0] - 2026-09-04
 
 ### ⚙️ Settings stopped stacking on top of each other

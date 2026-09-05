@@ -118,6 +118,12 @@ export interface HarmonyCardOptions {
   commandLabel?: string;
   /** Rendered 13 px glyph for the pill (the harmony tool glyph) */
   commandGlyph?: string | null;
+  /**
+   * Localised name of a NON-default colour wheel, printed under the harmony
+   * type so two players comparing cards can see why their dyes differ. Null or
+   * absent (the RGB wheel) prints nothing — the default stays invisible.
+   */
+  wheelLabel?: string | null;
 }
 
 // ============================================================================
@@ -174,6 +180,31 @@ export function generateHarmonyCard(options: HarmonyCardOptions): string {
       anchor: 'end',
     })
   );
+  if (options.wheelLabel) {
+    // Fitted to the row it shares with the pill, like every sibling card's
+    // header-right text (a11y-card, contrast-card). The German OKLCH-hue name
+    // — "OKLCH-Farbton (wahrnehmungsgleiche Abstände)" — measures ~300px
+    // against a ~259px budget, so unfitted it ran under and past the pill.
+    parts.push(
+      cardText(
+        CARD_WIDTH - PAD_X,
+        14 + 15 + 12,
+        fitText(
+          options.wheelLabel.toUpperCase(),
+          CARD_WIDTH - PAD_X * 2 - chip.width - 10,
+          CARD_TYPE.label,
+          'mono'
+        ),
+        {
+          fill: theme.label,
+          size: CARD_TYPE.label,
+          font: 'mono',
+          letterSpacing: 1.1,
+          anchor: 'end',
+        }
+      )
+    );
+  }
 
   // --- Base block (no hex line — the swatch pair already implies it)
   const baseTop = 46;

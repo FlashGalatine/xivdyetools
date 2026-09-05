@@ -14,6 +14,7 @@
  */
 
 import { LocalizationService } from '@xivdyetools/core';
+import type { ColorWheelId } from '@xivdyetools/core';
 import type { HarmonyTypeKey, VisionType } from '@xivdyetools/types';
 export type { LocaleCode } from './i18n/index.js';
 import type { LocaleCode } from './i18n/index.js';
@@ -128,6 +129,17 @@ export function getLocalizedHarmonyType(key: HarmonyTypeKey, locale: LocaleCode 
     return instance.getHarmonyType(key);
   } catch {
     return key;
+  }
+}
+
+/** Localised colour-wheel name from core's shared vocabulary; the id if the locale is not loaded. */
+export function getLocalizedColorWheelName(id: ColorWheelId, locale: LocaleCode = 'en'): string {
+  try {
+    const instance = localeInstances.get(locale);
+    if (!instance) return id;
+    return instance.getColorWheelName(id);
+  } catch {
+    return id;
   }
 }
 

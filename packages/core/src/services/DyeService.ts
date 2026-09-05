@@ -209,6 +209,11 @@ export class DyeService {
    * Find dyes that form a complementary color pair
    * @param hex Base hex color
    * @param options Matching algorithm options (optional)
+   *
+   * @deprecated `options.colorSpace` only — the method itself is current.
+   * Rotating hue in OKLCH/CIELCH/HSL abandons the base's saturation and value,
+   * which is a different answer from the one every surface shows. Pass a
+   * colour wheel instead: `generateHarmonySlots(hex, type, dyes, { …, wheel })`.
    */
   findComplementaryPair(hex: string, options?: HarmonyOptions): Dye | null {
     return this.harmony.findComplementaryPair(hex, options);
@@ -220,6 +225,11 @@ export class DyeService {
    * @param hex Base hex color
    * @param angle Hue offset in degrees (default: 30)
    * @param options Matching algorithm options (optional)
+   *
+   * @deprecated `options.colorSpace` only — the method itself is current.
+   * Rotating hue in OKLCH/CIELCH/HSL abandons the base's saturation and value,
+   * which is a different answer from the one every surface shows. Pass a
+   * colour wheel instead: `generateHarmonySlots(hex, type, dyes, { …, wheel })`.
    */
   findAnalogousDyes(hex: string, angle: number = 30, options?: HarmonyOptions): Dye[] {
     return this.harmony.findAnalogousDyes(hex, angle, options);
@@ -229,6 +239,11 @@ export class DyeService {
    * Find triadic color scheme (colors 120° apart on color wheel)
    * @param hex Base hex color
    * @param options Matching algorithm options (optional)
+   *
+   * @deprecated `options.colorSpace` only — the method itself is current.
+   * Rotating hue in OKLCH/CIELCH/HSL abandons the base's saturation and value,
+   * which is a different answer from the one every surface shows. Pass a
+   * colour wheel instead: `generateHarmonySlots(hex, type, dyes, { …, wheel })`.
    */
   findTriadicDyes(hex: string, options?: HarmonyOptions): Dye[] {
     return this.harmony.findTriadicDyes(hex, options);
@@ -238,6 +253,11 @@ export class DyeService {
    * Find square color scheme (colors 90° apart on color wheel)
    * @param hex Base hex color
    * @param options Matching algorithm options (optional)
+   *
+   * @deprecated `options.colorSpace` only — the method itself is current.
+   * Rotating hue in OKLCH/CIELCH/HSL abandons the base's saturation and value,
+   * which is a different answer from the one every surface shows. Pass a
+   * colour wheel instead: `generateHarmonySlots(hex, type, dyes, { …, wheel })`.
    */
   findSquareDyes(hex: string, options?: HarmonyOptions): Dye[] {
     return this.harmony.findSquareDyes(hex, options);
@@ -247,6 +267,11 @@ export class DyeService {
    * Find tetradic color scheme (two complementary pairs)
    * @param hex Base hex color
    * @param options Matching algorithm options (optional)
+   *
+   * @deprecated `options.colorSpace` only — the method itself is current.
+   * Rotating hue in OKLCH/CIELCH/HSL abandons the base's saturation and value,
+   * which is a different answer from the one every surface shows. Pass a
+   * colour wheel instead: `generateHarmonySlots(hex, type, dyes, { …, wheel })`.
    */
   findTetradicDyes(hex: string, options?: HarmonyOptions): Dye[] {
     return this.harmony.findTetradicDyes(hex, options);
@@ -256,6 +281,11 @@ export class DyeService {
    * Find inverted tetradic color scheme (two complementary pairs, mirrored from tetradic)
    * @param hex Base hex color
    * @param options Matching algorithm options (optional)
+   *
+   * @deprecated `options.colorSpace` only — the method itself is current.
+   * Rotating hue in OKLCH/CIELCH/HSL abandons the base's saturation and value,
+   * which is a different answer from the one every surface shows. Pass a
+   * colour wheel instead: `generateHarmonySlots(hex, type, dyes, { …, wheel })`.
    */
   findInvertedTetradicDyes(hex: string, options?: HarmonyOptions): Dye[] {
     return this.harmony.findInvertedTetradicDyes(hex, options);
@@ -275,6 +305,11 @@ export class DyeService {
    * Find split-complementary harmony (±30° from the complementary hue)
    * @param hex Base hex color
    * @param options Matching algorithm options (optional)
+   *
+   * @deprecated `options.colorSpace` only — the method itself is current.
+   * Rotating hue in OKLCH/CIELCH/HSL abandons the base's saturation and value,
+   * which is a different answer from the one every surface shows. Pass a
+   * colour wheel instead: `generateHarmonySlots(hex, type, dyes, { …, wheel })`.
    */
   findSplitComplementaryDyes(hex: string, options?: HarmonyOptions): Dye[] {
     return this.harmony.findSplitComplementaryDyes(hex, options);

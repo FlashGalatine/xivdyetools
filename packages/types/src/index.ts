@@ -141,6 +141,7 @@ export type {
   LocaleCode,
   TranslationKey,
   HarmonyTypeKey,
+  ColorWheelId,
   ToolKey,
   SheetKey,
   RaceKey,

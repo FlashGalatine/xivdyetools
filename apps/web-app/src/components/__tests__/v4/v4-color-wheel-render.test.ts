@@ -2,9 +2,9 @@
  * v4 color wheel — the rendered wheel.
  *
  * `__tests__/v4-color-wheel.test.ts` is the angle-table regression guard and
- * calls `getHarmonyAngles()` without ever mounting the element. This file is
- * the other half: what those angles actually produce on screen, and what the
- * two clickable surfaces emit.
+ * calls `angles()` without ever mounting the element. This file is the other
+ * half: what those angles actually produce on screen, and what the two
+ * clickable surfaces emit.
  *
  * Node placement is checked by geometry rather than by exact percentage
  * strings where possible, but the base node's spoke is pinned exactly — a

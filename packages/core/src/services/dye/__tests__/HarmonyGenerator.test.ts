@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { HarmonyGenerator } from '../HarmonyGenerator.js';
 import { DyeDatabase } from '../DyeDatabase.js';
 import { DyeSearch } from '../DyeSearch.js';
+import { DyeService } from '../../DyeService.js';
+import { ColorConverter } from '../../color/ColorConverter.js';
+import dyeDatabase from '../../../data/dyes.json' with { type: 'json' };
 import type { Dye } from '@xivdyetools/types';
 
 describe('HarmonyGenerator', () => {
@@ -695,5 +698,41 @@ describe('HarmonyGenerator', () => {
       expect(Array.isArray(narrowTolerance)).toBe(true);
       expect(Array.isArray(wideTolerance)).toBe(true);
     });
+  });
+});
+
+// ============================================================================
+// Deprecated `colorSpace` rotation — over the REAL dye database
+// ============================================================================
+
+/**
+ * `options.colorSpace` is deprecated in favour of
+ * `generateHarmonySlots(…, { wheel })`, but deprecated is not broken: while it
+ * is still published it must not answer a colour of the wrong HUE.
+ *
+ * The `oklch` branch rotated at fixed L/C and then let `oklchToHex` CLIP each
+ * channel, which for the 180° rotation of pure blue turned the intended dark
+ * olive (#734F00, OKLab hue ≈ 84°) into #A02000 — a dark red at ≈ 41°, half a
+ * turn from the answer, and the nearest dye followed it there. Gamut MAPPING
+ * (bisect chroma, keep L and h) is the CSS Color 4 answer and the one the
+ * wheels already use.
+ *
+ * The mock pool above is too small to tell the two apart — every candidate
+ * resolves to Wine Red either way — so this runs against the shipped database.
+ */
+describe('HarmonyGenerator: deprecated colorSpace rotation, real database', () => {
+  const svc = new DyeService(dyeDatabase);
+
+  it('rotates pure blue in OKLCH to a dye of the right hue, not the clipped dark red', () => {
+    const dye = svc.findComplementaryPair('#0000FF', { colorSpace: 'oklch' });
+    expect(dye).not.toBeNull();
+
+    const clipped = svc.findClosestDye('#A02000');
+    expect(dye!.itemID, 'still answering the clip-artefact dye').not.toBe(clipped?.itemID);
+
+    const wanted = (ColorConverter.hexToOklch('#0000FF').h + 180) % 360;
+    const got = ColorConverter.hexToOklch(dye!.hex).h;
+    const diff = Math.abs(got - wanted);
+    expect(Math.min(diff, 360 - diff)).toBeLessThan(30);
   });
 });

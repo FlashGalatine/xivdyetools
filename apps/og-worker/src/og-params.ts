@@ -17,6 +17,7 @@
  */
 
 import { isValidBlendingMode, type BlendingMode } from '@xivdyetools/core/blending';
+import { parseColorWheelId, type ColorWheelId } from '@xivdyetools/core';
 import type { CharacterGender, ColorSheetCategory, HarmonyType, MatchingAlgorithm, VisionType } from './types';
 
 // ============================================================================
@@ -107,6 +108,15 @@ export function isSheet(value: string): value is ColorSheetCategory {
  */
 export function parseAlgo(raw: string | null): MatchingAlgorithm | undefined {
   return raw && isAlgorithm(raw) ? (raw as MatchingAlgorithm) : undefined;
+}
+
+/**
+ * `?wheel=` → a core wheel id, or undefined for absent/empty/unknown (the
+ * guard already 400s unknown). Straight through to core's one normaliser, so
+ * this worker cannot fold case differently from the web app or the bot.
+ */
+export function parseWheel(raw: string | null): ColorWheelId | undefined {
+  return parseColorWheelId(raw);
 }
 
 /**

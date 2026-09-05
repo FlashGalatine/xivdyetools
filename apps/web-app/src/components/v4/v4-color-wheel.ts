@@ -22,6 +22,7 @@ import { BaseLitComponent } from './base-lit-component';
 import { LanguageService } from '@services/index';
 import type { Dye } from '@xivdyetools/types';
 import { localizedDyeName } from '@shared/dye-name';
+import { HARMONY_OFFSETS } from '@xivdyetools/core';
 
 /**
  * Supported harmony types
@@ -86,6 +87,22 @@ export class V4ColorWheel extends BaseLitComponent {
    */
   @property({ attribute: false })
   harmonyDyes: Dye[] = [];
+
+  /**
+   * Ring paint: evenly spaced in-gamut hex stops from `getColorWheel(id).ringStops(n)`.
+   * Empty → the class's plain sRGB gradient (empty state / legacy callers).
+   */
+  @property({ attribute: false })
+  ringStops: string[] = [];
+
+  /**
+   * Node angles on the ring: the base first, then one per harmony slot
+   * (`HarmonySlot.wheelHue`). Empty → derived from HARMONY_OFFSETS, which is
+   * only right on the RGB wheel — fine for the empty state, never for a
+   * warped wheel, so the tool always passes them once a dye is chosen.
+   */
+  @property({ attribute: false })
+  nodeAngles: number[] = [];
 
   /**
    * Size of the wheel in pixels
@@ -278,43 +295,29 @@ export class V4ColorWheel extends BaseLitComponent {
     `,
   ];
 
-  /**
-   * Get the harmony angles based on harmony type
-   */
-  private getHarmonyAngles(): number[] {
-    switch (this.harmonyType) {
-      case 'complementary':
-        return [0, 180];
-      case 'analogous':
-        return [0, 30, 330]; // -30 = 330
-      case 'triadic':
-        return [0, 120, 240];
-      case 'split-complementary':
-        return [0, 150, 210];
-      case 'tetradic':
-        // Rectangle: two complementary pairs 60° apart — matches core's
-        // findTetradicDyes offsets [60, 180, 240] (NOT the square's 90° steps)
-        return [0, 60, 180, 240];
-      case 'inverted-tetradic':
-        // Mirror rectangle: second pair at −60° (300°) — matches core's
-        // findInvertedTetradicDyes offsets [120, 180, 300]
-        return [0, 120, 180, 300];
-      case 'square':
-        return [0, 90, 180, 270];
-      // The three types that drew no nodes at all. Offsets mirror
-      // HARMONY_OFFSETS in harmony-generator — the wheel and the grid have to
-      // be describing the same geometry.
-      case 'compound':
-        return [0, 30, 180, 330];
-      case 'shades':
-        return [0, 15, 345];
-      case 'monochromatic':
-        // One companion at the base's own hue: it varies in value, not hue,
-        // so it shares the spoke and is staggered inward (see hueToPosition).
-        return [0, 0];
-      default:
-        return [0];
-    }
+  /** The formation on the RGB wheel, from core's table, at base 0°. */
+  private defaultAngles(): number[] {
+    // Own-property check, not a truthy one: HARMONY_OFFSETS['toString'] is a
+    // truthy prototype function, so `?? []` alone would let `.map` throw.
+    const offsets = Object.hasOwn(HARMONY_OFFSETS, this.harmonyType)
+      ? HARMONY_OFFSETS[this.harmonyType]
+      : [];
+    return [0, ...offsets.map((o) => ((o % 360) + 360) % 360)];
+  }
+
+  /** Absolute node angles: the tool's `wheelHue`s when given, else RGB defaults shifted to the base hue. */
+  angles(): number[] {
+    if (this.nodeAngles.length > 0) return this.nodeAngles;
+    const shift = this.baseColor ? this.hexToHue(this.baseColor) : 0;
+    return this.defaultAngles().map((a) => (a + shift) % 360);
+  }
+
+  /** Inline background for the ring, or '' to keep the class default. */
+  ringStyle(): string {
+    const n = this.ringStops.length;
+    if (n === 0) return '';
+    const stops = this.ringStops.map((hex, i) => `${hex} ${((i * 360) / n).toFixed(2)}deg`);
+    return `background: conic-gradient(from 0deg, ${stops.join(', ')}, ${this.ringStops[0]} 360deg)`;
   }
 
   /**
@@ -391,7 +394,7 @@ export class V4ColorWheel extends BaseLitComponent {
   private renderConnectionLines(): TemplateResult[] {
     if (this.empty) {
       // Show placeholder lines for empty state
-      const angles = this.getHarmonyAngles();
+      const angles = this.angles();
       return angles.map(
         (angle) => html`
           <div
@@ -404,11 +407,9 @@ export class V4ColorWheel extends BaseLitComponent {
 
     if (!this.baseColor) return [];
 
-    const baseHue = this.hexToHue(this.baseColor);
-    const harmonyAngles = this.getHarmonyAngles();
+    const angles = this.angles();
 
-    return harmonyAngles.map((offset) => {
-      const angle = (baseHue + offset) % 360;
+    return angles.map((angle) => {
       // Subtract 90° to align with hueToPosition which also offsets by -90
       const lineAngle = angle - 90;
       return html`
@@ -424,7 +425,7 @@ export class V4ColorWheel extends BaseLitComponent {
    * Render harmony nodes
    */
   private renderHarmonyNodes(): TemplateResult[] {
-    const harmonyAngles = this.getHarmonyAngles();
+    const angles = this.angles();
     // Nodes sharing a spoke step inward so none is hidden under another
     const seenAngles = new Map<number, number>();
     const depthFor = (angle: number): number => {
@@ -436,7 +437,7 @@ export class V4ColorWheel extends BaseLitComponent {
 
     if (this.empty) {
       // Show placeholder nodes for empty state
-      return harmonyAngles.map((angle, index) => {
+      return angles.map((angle, index) => {
         const pos = this.hueToPosition(angle, depthFor(angle));
         return html`
           <div
@@ -454,11 +455,11 @@ export class V4ColorWheel extends BaseLitComponent {
 
     if (!this.baseColor) return [];
 
-    const baseHue = this.hexToHue(this.baseColor);
     const nodes: TemplateResult[] = [];
 
     // Base color node — its position on the ring, ringed rather than numbered
-    const basePos = this.hueToPosition(baseHue, depthFor(baseHue));
+    const baseAngle = angles[0];
+    const basePos = this.hueToPosition(baseAngle, depthFor(baseAngle));
     nodes.push(html`
       <button
         type="button"
@@ -467,14 +468,13 @@ export class V4ColorWheel extends BaseLitComponent {
         title="${LanguageService.tInterpolate('harmony.baseColorTitle', {
           hex: this.baseColor.toUpperCase(),
         })}"
-        @click=${() => this.handleNodeClick(this.baseColor, baseHue)}
+        @click=${() => this.handleNodeClick(this.baseColor, baseAngle)}
       ></button>
     `);
 
     // Harmony nodes, numbered to match the result cards' "Harmony N" labels
-    harmonyAngles.slice(1).forEach((offset, index) => {
-      const hue = (baseHue + offset) % 360;
-      const pos = this.hueToPosition(hue, depthFor(hue));
+    angles.slice(1).forEach((angle, index) => {
+      const pos = this.hueToPosition(angle, depthFor(angle));
       const color = this.harmonyColors[index] || this.baseColor;
       const dye = this.harmonyDyes[index];
       const slot = LanguageService.tInterpolate('harmony.harmonyN', { n: index + 1 });
@@ -486,7 +486,7 @@ export class V4ColorWheel extends BaseLitComponent {
           class="harmony-node"
           style="top: ${pos.top}; left: ${pos.left}; background-color: ${color}; color: ${this.inkOn(color)};"
           title="${title}"
-          @click=${() => this.handleNodeClick(color, hue)}
+          @click=${() => this.handleNodeClick(color, angle)}
         >
           ${index + 1}
         </button>
@@ -514,7 +514,7 @@ export class V4ColorWheel extends BaseLitComponent {
     return html`
       <div class="harmony-circle-container" style="--wheel-size: ${this.size}px;">
         <!-- Color spectrum ring -->
-        <div class="harmony-ring"></div>
+        <div class="harmony-ring" style=${this.ringStyle()}></div>
 
         <!-- Connection lines -->
         ${this.renderConnectionLines()}

@@ -27,10 +27,11 @@
  * @module services/dye/HarmonySelector
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { ColorWheelId, Dye } from '@xivdyetools/types';
 import { HARMONY_OFFSETS } from '../../constants/index.js';
 import type { MatchingMethod } from '../../types/index.js';
 import { ColorService } from '../ColorService.js';
+import { DEFAULT_COLOR_WHEEL, getColorWheel } from './wheels/ColorWheel.js';
 
 /** How a caller wants harmony slots chosen. */
 export interface HarmonySelectionConfig {
@@ -38,6 +39,10 @@ export interface HarmonySelectionConfig {
    * Rank by the configured ΔE against an S/V-preserving target (`true`), or by
    * plain angular hue distance (`false`). The web app's "strict matching"
    * toggle, on by default.
+   *
+   * Forced on for wheels that do not carry the base's S/V
+   * (`oklch-lightness`): hue-only ranking would discard the very property that
+   * wheel exists for.
    */
   usePerceptualMatching: boolean;
   /** Which ΔE the ranking uses. Ignored when `usePerceptualMatching` is false. */
@@ -46,6 +51,11 @@ export interface HarmonySelectionConfig {
   companionCount?: number;
   /** Never show one dye in two slots. Default `false`. */
   preventDuplicates?: boolean;
+  /**
+   * Which colour wheel the offsets are measured on. Default `'rgb'`, which is
+   * today's behaviour bit for bit. See `wheels/ColorWheel.ts`.
+   */
+  wheel?: ColorWheelId;
 }
 
 /** One position in a harmony: its ideal, the dye chosen for it, and runners-up. */
@@ -56,6 +66,11 @@ export interface HarmonySlot {
   offset: number;
   /** The absolute ideal hue in degrees, 0–359. */
   targetHue: number;
+  /**
+   * The slot's angle on the SELECTED wheel's ring, 0–359 — where a node is
+   * drawn. Equals `targetHue` on the RGB wheel and differs on every other.
+   */
+  wheelHue: number;
   /**
    * The ideal colour for this slot: the base's saturation and value on the
    * target hue. This is what a card outlines next to the dye it actually found.
@@ -174,7 +189,17 @@ export function generateHarmonySlots(
   if (!isKnownHarmonyType(harmonyType)) return [];
   const offsets = HARMONY_OFFSETS[harmonyType];
 
-  const baseHsv = ColorService.hexToHsv(baseHex);
+  const wheel = getColorWheel(config.wheel ?? DEFAULT_COLOR_WHEEL);
+  // A wheel that keeps the base's OKLab L and C instead of its HSV S/V has no
+  // meaningful hue-distance ranking: scoring by degrees against `targetHue`
+  // throws away the lightness the wheel was chosen for, and returns a partner
+  // at some other lightness entirely. Built once, used for every scoring call
+  // below (pins included) so a slot can never be scored in different units
+  // from its neighbours — the BUG-064 rule.
+  const effective: HarmonySelectionConfig = wheel.carriesBaseHsv
+    ? config
+    : { ...config, usePerceptualMatching: true };
+  const baseWheelHue = wheel.hueOf(baseHex);
   const companionCount = config.companionCount ?? 0;
   const preventDuplicates = config.preventDuplicates ?? false;
 
@@ -201,13 +226,13 @@ export function generateHarmonySlots(
 
   offsets.forEach((offset, index) => {
     const normalisedOffset = ((offset % 360) + 360) % 360;
-    const targetHue = (baseHsv.h + normalisedOffset) % 360;
-    // The ideal carries the BASE's saturation and value onto the rotated hue.
-    // That is the whole reason a desaturated base finds desaturated dyes, and
-    // the single biggest difference from the per-type find*Dyes() methods.
-    const targetHex = ColorService.hsvToHex(targetHue, baseHsv.s, baseHsv.v);
+    const wheelHue = (baseWheelHue + normalisedOffset) % 360;
+    // The wheel builds the ideal. Warp wheels carry the BASE's saturation and
+    // value onto the mapped hue — the whole reason a desaturated base finds
+    // desaturated dyes; the constant-lightness wheel carries L and C instead.
+    const { targetHex, targetHue } = wheel.target(baseHex, wheelHue);
 
-    const ranked = rankCandidates(candidates, targetHue, targetHex, config);
+    const ranked = rankCandidates(candidates, targetHue, targetHex, effective);
 
     const pin = options?.pinned?.get(index);
     // Every branch below assigns, so no initialiser: an unread `= null` here
@@ -217,7 +242,7 @@ export function generateHarmonySlots(
     if (pin) {
       // An explicit hand-swap wins its slot outright, exclusions included: the
       // user naming a dye outranks our guess about which dyes are eligible.
-      chosen = { dye: pin, deviance: devianceFor(pin, targetHue, targetHex, config) };
+      chosen = { dye: pin, deviance: devianceFor(pin, targetHue, targetHex, effective) };
     } else if (preventDuplicates) {
       // First eligible-and-unused, else the nearest eligible even if already
       // shown: a slot with a dye repeated beats a slot left blank. An excluded
@@ -248,6 +273,7 @@ export function generateHarmonySlots(
       index,
       offset: normalisedOffset,
       targetHue,
+      wheelHue,
       targetHex,
       dye: chosen?.dye ?? null,
       deviance: chosen?.deviance ?? 0,

@@ -70,6 +70,24 @@ describe('og-data-generator', () => {
         expect(result.url).toContain(`harmony=${harmony}`);
       });
     });
+
+    it('carries a non-default wheel into both the page URL and the image URL', () => {
+      const r = generateHarmonyOGData({ dye: 43, harmony: 'complementary', wheel: 'ryb' }, mockEnv);
+      expect(r.url).toContain('wheel=ryb');
+      expect(r.imageUrl).toContain('wheel=ryb');
+    });
+
+    it('omits the default wheel from both URLs', () => {
+      const r = generateHarmonyOGData({ dye: 43, harmony: 'complementary', wheel: 'rgb' }, mockEnv);
+      expect(r.url).not.toContain('wheel=');
+      expect(r.imageUrl).not.toContain('wheel=');
+    });
+
+    it('parses ?wheel= from a page share URL through generateOGDataForTool', async () => {
+      const params = new URLSearchParams('dye=43&harmony=complementary&wheel=munsell');
+      const r = await generateOGDataForTool('harmony' as ToolId, params, mockEnv, 'en');
+      expect(r.imageUrl).toContain('wheel=munsell');
+    });
   });
 
   describe('generateGradientOGData', () => {

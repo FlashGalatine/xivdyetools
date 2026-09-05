@@ -8,7 +8,7 @@
  */
 
 import type { ToolId } from '@services/router-service';
-import type { MatchingMethod } from '@xivdyetools/core';
+import type { ColorWheelId, MatchingMethod } from '@xivdyetools/core';
 import type { DyeTypeFilters, PresetSortOption } from '@xivdyetools/types';
 import { COMPANION_DYES_DEFAULT } from '@shared/constants';
 
@@ -44,6 +44,8 @@ export interface GlobalConfig {
 export interface HarmonyConfig {
   /** Selected harmony type (complementary, analogous, triadic, etc.) */
   harmonyType: string;
+  /** Colour wheel the harmony angles are measured on (core `ColorWheelId`); default `rgb` */
+  wheel: ColorWheelId;
   /** Use perceptual (DeltaE) color matching instead of hue-based */
   strictMatching: boolean;
   /** Color matching algorithm for finding closest dyes */
@@ -416,6 +418,7 @@ const DEFAULT_CONFIGS: ToolConfigMap = {
   },
   harmony: {
     harmonyType: 'complementary',
+    wheel: 'rgb',
     strictMatching: true,
     matchingMethod: 'ciede2000',
     preventDuplicates: true,

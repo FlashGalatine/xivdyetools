@@ -1046,25 +1046,31 @@ export class ColorConverter {
     const gLin = this.srgbToLinear(g);
     const bLin = this.srgbToLinear(b);
 
-    // Linear RGB to LMS (using Oklab's specific matrix)
-    const l = 0.4122214708 * rLin + 0.5363325363 * gLin + 0.0514459929 * bLin;
-    const m = 0.2119034982 * rLin + 0.6806995451 * gLin + 0.1073969566 * bLin;
-    const s = 0.0883024619 * rLin + 0.2817188376 * gLin + 0.6299787005 * bLin;
-
-    // Apply cube root
-    const lRoot = Math.cbrt(l);
-    const mRoot = Math.cbrt(m);
-    const sRoot = Math.cbrt(s);
-
-    // LMS to Oklab
+    const oklab = this.linearRgbToOklab(rLin, gLin, bLin);
     const result: OKLAB = {
-      L: round(0.2104542553 * lRoot + 0.793617785 * mRoot - 0.0040720468 * sRoot, 6),
-      a: round(1.9779984951 * lRoot - 2.428592205 * mRoot + 0.4505937099 * sRoot, 6),
-      b: round(0.0259040371 * lRoot + 0.7827717662 * mRoot - 0.808675766 * sRoot, 6),
+      L: round(oklab.L, 6),
+      a: round(oklab.a, 6),
+      b: round(oklab.b, 6),
     };
 
     this.rgbToOklabCache.set(cacheKey, result);
     return { ...result };
+  }
+
+  /**
+   * Linear sRGB (0–1, unclamped) → OKLAB. The matrix half of `rgbToOklab`,
+   * shared with the gamut mapper, which must evaluate out-of-gamut colours.
+   * @internal
+   */
+  private linearRgbToOklab(rLin: number, gLin: number, bLin: number): OKLAB {
+    const l = Math.cbrt(0.4122214708 * rLin + 0.5363325363 * gLin + 0.0514459929 * bLin);
+    const m = Math.cbrt(0.2119034982 * rLin + 0.6806995451 * gLin + 0.1073969566 * bLin);
+    const s = Math.cbrt(0.0883024619 * rLin + 0.2817188376 * gLin + 0.6299787005 * bLin);
+    return {
+      L: 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+      a: 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+      b: 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+    };
   }
 
   /**
@@ -1085,26 +1091,30 @@ export class ColorConverter {
    * @example oklabToRgb(0.628, 0.225, 0.126) -> { r: 255, g: 0, b: 0 }
    */
   oklabToRgb(L: number, a: number, b: number): RGB {
-    // Oklab to LMS
+    const lin = this.oklabToLinearRgb(L, a, b);
+    return {
+      r: clamp(this.linearToSrgb(lin.r), RGB_MIN, RGB_MAX),
+      g: clamp(this.linearToSrgb(lin.g), RGB_MIN, RGB_MAX),
+      b: clamp(this.linearToSrgb(lin.b), RGB_MIN, RGB_MAX),
+    };
+  }
+
+  /**
+   * OKLAB → linear sRGB (0–1, UNCLAMPED). The matrix half of `oklabToRgb`;
+   * a value outside 0–1 means "outside the sRGB gamut".
+   * @internal
+   */
+  private oklabToLinearRgb(L: number, a: number, b: number): { r: number; g: number; b: number } {
     const lRoot = L + 0.3963377774 * a + 0.2158037573 * b;
     const mRoot = L - 0.1055613458 * a - 0.0638541728 * b;
     const sRoot = L - 0.0894841775 * a - 1.291485548 * b;
-
-    // Cube the roots
     const l = lRoot * lRoot * lRoot;
     const m = mRoot * mRoot * mRoot;
     const s = sRoot * sRoot * sRoot;
-
-    // LMS to linear RGB
-    const rLin = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
-    const gLin = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
-    const bLin = -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s;
-
-    // Convert to sRGB
     return {
-      r: clamp(this.linearToSrgb(rLin), RGB_MIN, RGB_MAX),
-      g: clamp(this.linearToSrgb(gLin), RGB_MIN, RGB_MAX),
-      b: clamp(this.linearToSrgb(bLin), RGB_MIN, RGB_MAX),
+      r: +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+      g: -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+      b: -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
     };
   }
 
@@ -1232,6 +1242,146 @@ export class ColorConverter {
    */
   static oklchToHex(L: number, C: number, h: number): HexColor {
     return this.getDefault().oklchToHex(L, C, h);
+  }
+
+  // ============================================================================
+  // Gamut mapping (CSS Color 4 §14 — binary search with local MINDE)
+  // ============================================================================
+
+  private static readonly GAMUT_JND = 0.02;
+  private static readonly GAMUT_EPSILON = 0.0001;
+
+  /** Whether an unclamped linear-sRGB triple lies inside the display gamut. */
+  private inSrgbGamut(lin: { r: number; g: number; b: number }): boolean {
+    const t = 1e-6;
+    return lin.r >= -t && lin.r <= 1 + t && lin.g >= -t && lin.g <= 1 + t && lin.b >= -t && lin.b <= 1 + t;
+  }
+
+  /** Plain ΔEOK (Euclidean in OKLAB), the metric CSS Color 4 uses for its JND. Not ΔEOK2. */
+  private deltaEOkPlain(a: OKLAB, b: OKLAB): number {
+    return Math.hypot(a.L - b.L, a.a - b.a, a.b - b.b);
+  }
+
+  /** Clamp a linear triple into 0–1 and encode as hex. */
+  private linearToHexClipped(lin: { r: number; g: number; b: number }): HexColor {
+    return this.rgbToHex(
+      clamp(this.linearToSrgb(lin.r), RGB_MIN, RGB_MAX),
+      clamp(this.linearToSrgb(lin.g), RGB_MIN, RGB_MAX),
+      clamp(this.linearToSrgb(lin.b), RGB_MIN, RGB_MAX)
+    );
+  }
+
+  /**
+   * Bring an OKLCH colour into sRGB the way CSS Color 4 §14 specifies: keep L
+   * and h, bisect C, and accept a per-channel clip as soon as it is within one
+   * just-noticeable difference (ΔEOK 0.02) of the candidate.
+   *
+   * `oklchToHex` clips per channel instead, which changes HUE — the OKLCH
+   * complement of #0000FF comes out #A02000 (dark red) under clipping and
+   * #734F00 (dark olive) here (research 02 Table B). Every drawn or matched
+   * colour produced by hue rotation in OKLCH must come through this method.
+   *
+   * @param L Lightness 0–1  @param C Chroma ≥ 0  @param h Hue 0–360
+   */
+  gamutMapOklch(L: number, C: number, h: number): HexColor {
+    if (L >= 1) return '#FFFFFF' as HexColor;
+    if (L <= 0) return '#000000' as HexColor;
+    const JND = ColorConverter.GAMUT_JND;
+    const EPS = ColorConverter.GAMUT_EPSILON;
+    const hRad = h * (Math.PI / 180);
+    const labAt = (c: number): OKLAB => ({ L, a: c * Math.cos(hRad), b: c * Math.sin(hRad) });
+    const clipLin = (lin: { r: number; g: number; b: number }): { r: number; g: number; b: number } => ({
+      r: clamp(lin.r, 0, 1),
+      g: clamp(lin.g, 0, 1),
+      b: clamp(lin.b, 0, 1),
+    });
+
+    let lab = labAt(C);
+    let current = this.oklabToLinearRgb(lab.L, lab.a, lab.b);
+    if (this.inSrgbGamut(current)) return this.linearToHexClipped(current);
+
+    let clipped = clipLin(current);
+    if (this.deltaEOkPlain(this.linearRgbToOklab(clipped.r, clipped.g, clipped.b), lab) < JND) {
+      return this.linearToHexClipped(clipped);
+    }
+
+    let min = 0;
+    let max = C;
+    let minInGamut = true;
+    while (max - min > EPS) {
+      const chroma = (min + max) / 2;
+      lab = labAt(chroma);
+      current = this.oklabToLinearRgb(lab.L, lab.a, lab.b);
+      if (minInGamut && this.inSrgbGamut(current)) {
+        min = chroma;
+        continue;
+      }
+      clipped = clipLin(current);
+      const E = this.deltaEOkPlain(this.linearRgbToOklab(clipped.r, clipped.g, clipped.b), lab);
+      if (E < JND) {
+        if (JND - E < EPS) return this.linearToHexClipped(clipped);
+        minInGamut = false;
+        min = chroma;
+      } else {
+        max = chroma;
+      }
+    }
+    return this.linearToHexClipped(clipped);
+  }
+
+  /** Static: see the instance method. */
+  static gamutMapOklch(L: number, C: number, h: number): HexColor {
+    return this.getDefault().gamutMapOklch(L, C, h);
+  }
+
+  /**
+   * The largest C such that every chroma in [0, C] is inside sRGB along
+   * (L, h); the sRGB solid is not connected along the blue ray (h ≈ 264°), so
+   * the true outer extent can be larger.
+   *
+   * Used to paint a perceptual ring that is in gamut at every angle, which is
+   * why "connected from zero" is the property that matters: a chroma reached
+   * across a gamut hole is a colour the mapper immediately pulls back
+   * somewhere else. A plain lo/hi bisection cannot answer this — it samples
+   * the midpoint first and, at L ≈ 0.11 / h ≈ 264°, lands in the far lobe that
+   * makes #0000FF legal and reports a chroma with a hole beneath it. So: a
+   * coarse upward scan to find the FIRST exit, then bisect inside that step.
+   */
+  maxChromaOklch(L: number, h: number): number {
+    if (L <= 0 || L >= 1) return 0;
+    const hRad = h * (Math.PI / 180);
+    const cos = Math.cos(hRad);
+    const sin = Math.sin(hRad);
+    const inside = (c: number): boolean =>
+      this.inSrgbGamut(this.oklabToLinearRgb(L, c * cos, c * sin));
+
+    // sRGB's largest OKLab chroma is ≈ 0.32 (pure magenta); 0.4 clears it.
+    const STEP = 0.005;
+    const STEPS = 80;
+    let lo = 0;
+    let hi = -1;
+    for (let i = 1; i <= STEPS; i++) {
+      const c = i * STEP;
+      if (inside(c)) {
+        lo = c;
+      } else {
+        hi = c;
+        break;
+      }
+    }
+    if (hi < 0) return lo; // in gamut all the way out — no exit to bisect
+
+    for (let i = 0; i < 24; i++) {
+      const mid = (lo + hi) / 2;
+      if (inside(mid)) lo = mid;
+      else hi = mid;
+    }
+    return lo;
+  }
+
+  /** Static: see the instance method. */
+  static maxChromaOklch(L: number, h: number): number {
+    return this.getDefault().maxChromaOklch(L, h);
   }
 
   // ============================================================================

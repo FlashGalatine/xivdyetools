@@ -12,7 +12,7 @@ import { HarmonyTool } from '../harmony-tool';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
-import { HARMONY_OFFSETS } from '@xivdyetools/core';
+import { HARMONY_OFFSETS, ColorConverter, getColorWheel } from '@xivdyetools/core';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() => ({
@@ -939,6 +939,209 @@ describe('HarmonyTool', () => {
       tool.selectDye(dye(1));
 
       expect(await lastWrite(DYE_KEY)).toBe(5001);
+    });
+  });
+
+  // ==========================================================================
+  // Colour wheel plumbing (Task 10): the wheel travels in share params and
+  // deep links, and the ring/nodes the tool feeds to <v4-color-wheel> come
+  // from core's generateHarmonySlots rather than being recomputed here.
+  // ==========================================================================
+
+  describe('colour wheel', () => {
+    afterEach(async () => {
+      // The real ConfigController is a module-level singleton not reset
+      // between tests — leave it at the default so later tests (and other
+      // describe blocks reusing it) see 'rgb' again.
+      const { ConfigController } = await import('@services/config-controller');
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'rgb' });
+      window.history.replaceState({}, '', '/');
+    });
+
+    /**
+     * `wheel` is emitted UNCONDITIONALLY, like `algo` and `perceptual`. The
+     * elided default looked harmless — absent means rgb on read — but the
+     * reader and the writer only agree while the reader also *applies* rgb for
+     * an absent value, and it did not: a link shared from the default wheel
+     * left whatever wheel the recipient had persisted in place, so the same
+     * URL drew different dyes for two people. Making both sides explicit is
+     * the half of that fix nobody has to remember.
+     */
+    it('always emits the wheel in share params, default included', async () => {
+      const { ConfigController } = await import('@services/config-controller');
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      await flush();
+
+      const params = () =>
+        (tool as unknown as { getShareParams(): Record<string, unknown> }).getShareParams();
+      expect(params().wheel).toBe('rgb');
+
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'ryb' });
+      expect(params().wheel).toBe('ryb');
+
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'rgb' });
+      expect(params().wheel).toBe('rgb');
+    });
+
+    it('reads ?wheel= from a share URL, normalising unknown values to rgb', async () => {
+      const { ConfigController } = await import('@services/config-controller');
+
+      window.history.replaceState({}, '', '/harmony?dye=5771&harmony=complementary&wheel=MUNSELL');
+      tool = mount();
+      expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe('munsell');
+      tool.destroy();
+
+      window.history.replaceState({}, '', '/harmony?dye=5771&harmony=complementary&wheel=cmyk');
+      tool = mount();
+      expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe('rgb');
+    });
+
+    /**
+     * A share link with no `wheel` means rgb — it cannot mean "keep whatever
+     * the reader had". Before this, `handleDeepLink` only touched the wheel
+     * when the param was present, so opening a default-wheel link while
+     * `munsell` was persisted rendered a Munsell palette under someone else's
+     * RGB link.
+     */
+    it.each([
+      ['no wheel at all', '/harmony?dye=5771&harmony=complementary', 'rgb', false],
+      ['an empty wheel', '/harmony?dye=5771&harmony=complementary&wheel=', 'rgb', false],
+      ['an unknown wheel', '/harmony?dye=5771&harmony=complementary&wheel=cmyk', 'rgb', true],
+      [
+        'an upper-case wheel',
+        '/harmony?dye=5771&harmony=complementary&wheel=MUNSELL',
+        'munsell',
+        false,
+      ],
+    ])('a share link with %s resolves to %s', async (_label, url, expected, warns) => {
+      const { ConfigController } = await import('@services/config-controller');
+      const { logger } = await import('@shared/logger');
+      // A wheel someone else's session left behind must not survive the link.
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'munsell' });
+      vi.mocked(logger.warn).mockClear();
+
+      window.history.replaceState({}, '', url);
+      tool = mount();
+
+      expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe(expected);
+      if (warns) {
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringMatching(/wheel/i));
+      }
+    });
+
+    /**
+     * The absent→rgb rule is a property of SHARE LINKS, and the deep-link gate
+     * admits more than share links: a bare `?dye=` arrives from two ordinary
+     * in-app navigations — `handoffTo('harmony', dye)` ("send this dye to the
+     * Harmony Explorer") and `RouterService`'s `PRESERVED_PARAMS`, which keeps
+     * `dye` when the user leaves Harmony and comes back. Treating those as
+     * "a link that says rgb" silently reverted a Munsell user to RGB *and
+     * persisted it*, which no other setting does: `algo` and `perceptual` are
+     * both guarded by `if (param)`.
+     */
+    it.each([
+      ['a bare dye hand-off', '/harmony?dye=5771'],
+      ['a bare legacy dyeId', '/harmony?dyeId=5771'],
+    ])('%s leaves the persisted wheel alone', async (_label, url) => {
+      const { ConfigController } = await import('@services/config-controller');
+      const { logger } = await import('@shared/logger');
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'munsell' });
+      vi.mocked(logger.warn).mockClear();
+
+      window.history.replaceState({}, '', url);
+      tool = mount();
+
+      expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe('munsell');
+      expect(logger.warn).not.toHaveBeenCalledWith(expect.stringMatching(/wheel/i));
+    });
+
+    /**
+     * ...and any share marker at all makes it a share link again, `v=1` alone
+     * included — that is the marker `ShareService` stamps on every URL it
+     * generates, so a link whose only other param is `dye` is still a link.
+     */
+    it.each([
+      ['harmony=', '/harmony?dye=5771&harmony=complementary', 'rgb'],
+      ['v=1', '/harmony?dye=5771&v=1', 'rgb'],
+      ['algo=', '/harmony?dye=5771&algo=oklab', 'rgb'],
+    ])('a URL carrying %s is a share link and resolves to %s', async (_label, url, expected) => {
+      const { ConfigController } = await import('@services/config-controller');
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'munsell' });
+
+      window.history.replaceState({}, '', url);
+      tool = mount();
+
+      expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe(expected);
+    });
+
+    /**
+     * A hand-swapped dye is pinned to its SLOT INDEX, and a slot index means a
+     * different target hue on a different wheel — so a pin carried across a
+     * wheel change lands on a colour it was never chosen for. The harmony-type
+     * change already clears pins for exactly this reason; a wheel change is
+     * the same kind of change.
+     */
+    it('drops pinned dyes when the wheel changes', async () => {
+      const { ConfigController } = await import('@services/config-controller');
+      tool = mount();
+      tool.setConfig({ harmonyType: 'triadic' });
+      tool.selectDye(mockDyes[9]); // Sky Blue — RGB and RYB angles differ
+      await flush();
+
+      const pins = () => (tool as unknown as { swappedDyes: Map<number, unknown> }).swappedDyes;
+      (tool as unknown as { handleSwapDye(i: number, d: unknown): void }).handleSwapDye(
+        1,
+        mockDyes[3]
+      );
+      expect(pins().size).toBe(1);
+
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'ryb' });
+      await flush();
+
+      expect(pins().size).toBe(0);
+    });
+
+    it('feeds the ring 72 stops and one node angle per slot plus the base', async () => {
+      const { ConfigController } = await import('@services/config-controller');
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'ryb' });
+
+      // Sky Blue (#87CEEB): a saturated, non-red base. Its RGB/HSV hue (~197°)
+      // and its RYB wheel angle (~234°) differ, so this fixture actually
+      // exercises wheel selection — unlike mockDyes[0] (#FFFFFF), whose hue
+      // is 0 on every wheel and can't distinguish rgb from ryb.
+      const baseDye = mockDyes[9];
+      tool = mount();
+      tool.setConfig({ harmonyType: 'triadic' });
+      tool.selectDye(baseDye);
+      await flush();
+
+      const wheel = container.querySelector('v4-color-wheel') as unknown as {
+        ringStops: string[];
+        nodeAngles: number[];
+      };
+      expect(wheel.ringStops).toHaveLength(72);
+      expect(wheel.nodeAngles).toHaveLength(3);
+
+      // The ring is painted from the RYB wheel, not the RGB wheel: the full
+      // stop list differs, and the 180° stop (index 36 of 72) is pinned to
+      // RYB's value — sRGB green, not RGB's cyan.
+      expect(wheel.ringStops).not.toEqual([...getColorWheel('rgb').ringStops(72)]);
+      expect(getColorWheel('ryb').ringStops(72)[36]).toBe(wheel.ringStops[36]);
+      expect(wheel.ringStops[36]).not.toBe('#00FFFF');
+
+      // Node angles are RYB wheel angles: the base's angle matches
+      // getColorWheel('ryb').hueOf(baseHex), which differs from the plain
+      // sRGB/HSV hue ColorConverter reports for the same hex — proving the
+      // ring and the nodes share the same (non-identity) wheel.
+      const rybBaseAngle = getColorWheel('ryb').hueOf(baseDye.hex);
+      const srgbBaseHue = ColorConverter.hexToHsv(baseDye.hex).h;
+      expect(rybBaseAngle).not.toBeCloseTo(srgbBaseHue, 6);
+
+      const [b, n1, n2] = wheel.nodeAngles;
+      expect(b).toBeCloseTo(rybBaseAngle, 6);
+      expect((n1 - b + 360) % 360).toBeCloseTo(120, 6);
+      expect((n2 - b + 360) % 360).toBeCloseTo(240, 6);
     });
   });
 });

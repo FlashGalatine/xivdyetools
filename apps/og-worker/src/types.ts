@@ -7,6 +7,7 @@
 import type { LocaleCode } from '@xivdyetools/types';
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 import type { VisionType } from '@xivdyetools/types';
+import type { ColorWheelId } from '@xivdyetools/core';
 
 // ============================================================================
 // Environment Bindings
@@ -82,6 +83,7 @@ export interface HarmonyParams {
   dye: number; // stainID
   harmony: HarmonyType;
   algo?: MatchingAlgorithm;
+  wheel?: ColorWheelId;
 }
 
 export interface GradientParams {

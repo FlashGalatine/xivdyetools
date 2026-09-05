@@ -112,15 +112,18 @@ describe('/harmony type choices', () => {
   });
 
   /**
-   * `color_space` was withdrawn rather than left registered and inert:
-   * `generateHarmonySlots` rotates hue in HSV, and that IS the shared
-   * algorithm, so offering another space would be offering a different answer
-   * than the page gives. bot-logic discarded the value with a `void`, so the
-   * option was accepted and changed nothing.
+   * `color_space` was withdrawn and REPLACED: choosing the geometry a harmony
+   * is measured on is now the `wheel` option, which the page, the card and the
+   * OG image all read from the same core registry. `color_space` asked a
+   * different question — which colour space to rotate hue in, abandoning the
+   * base's saturation and value — and bot-logic discarded the value with a
+   * `void`, so the option was accepted and changed nothing. It is not coming
+   * back: `wheel` is where that choice lives.
    */
-  it('no longer registers the colour space it cannot honour', () => {
+  it('registers the wheel option in place of the colour space it never honoured', () => {
     const names = (harmony.options ?? []).map((o) => o.name);
     expect(names).not.toContain('color_space');
+    expect(names).toContain('wheel');
   });
 
   it('still registers the options that do something', () => {

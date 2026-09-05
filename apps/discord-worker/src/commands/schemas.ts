@@ -8,6 +8,7 @@
 
 import type { PresetCategory } from '@xivdyetools/types';
 import type { HarmonyType } from '@xivdyetools/bot-logic';
+import { COLOR_WHEEL_IDS, type ColorWheelId } from '@xivdyetools/core';
 import { QUICK_PICKS } from '../services/budget/quick-picks.js';
 
 /**
@@ -41,6 +42,25 @@ const HARMONY_TYPE_LABELS: Record<HarmonyType, string> = {
 const HARMONY_TYPE_CHOICES: ReadonlyArray<{ name: string; value: HarmonyType }> = (
   Object.keys(HARMONY_TYPE_LABELS) as HarmonyType[]
 ).map((value) => ({ name: HARMONY_TYPE_LABELS[value], value }));
+
+/**
+ * English choice names for `/harmony wheel`, typed against core's id union so
+ * a wheel added in core without a label here is a compile error. Localised
+ * names on the card come from core (`getColorWheelName`); Discord choice
+ * names follow the English-only convention `matching` already uses.
+ */
+const COLOR_WHEEL_LABELS: Record<ColorWheelId, string> = {
+  rgb: 'RGB (screen) — default',
+  ryb: "RYB (artist's wheel)",
+  munsell: 'Munsell (JIS)',
+  'oklch-hue': 'OKLCH hue (perceptual spacing)',
+  'oklch-lightness': 'OKLCH lightness (keeps brightness)',
+};
+
+/** Derived from core's list so it cannot go stale. */
+const COLOR_WHEEL_CHOICES: ReadonlyArray<{ name: string; value: ColorWheelId }> = COLOR_WHEEL_IDS.map(
+  (value) => ({ name: COLOR_WHEEL_LABELS[value], value })
+);
 
 /**
  * Discord command option types
@@ -150,6 +170,13 @@ export const commands = [
         type: OptionType.STRING,
         required: false,
         choices: HARMONY_TYPE_CHOICES,
+      },
+      {
+        name: 'wheel',
+        description: 'Colour wheel the harmony angles are measured on (default: RGB)',
+        type: OptionType.STRING,
+        required: false,
+        choices: COLOR_WHEEL_CHOICES,
       },
       {
         name: 'companions',

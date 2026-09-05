@@ -14,7 +14,7 @@
  */
 
 import { StorageService } from './storage-service';
-import { normalizeMatchingMethod } from '@xivdyetools/core';
+import { normalizeColorWheelId, normalizeMatchingMethod } from '@xivdyetools/core';
 import { logger } from '@shared/logger';
 import {
   type ToolConfigMap,
@@ -418,6 +418,16 @@ export class ConfigController {
       const withMethod = mergedConfig as { matchingMethod?: string };
       if (typeof withMethod.matchingMethod === 'string') {
         withMethod.matchingMethod = normalizeMatchingMethod(withMethod.matchingMethod);
+      }
+
+      // Same rule, one key over: a persisted `harmony.wheel` is whatever was in
+      // localStorage — an id from a future build, a hand-edited value, an
+      // upper-case spelling out of a share URL. Normalising once here is what
+      // lets every reader downstream (the tool, the sidebar) treat it as a
+      // valid id instead of each defending itself.
+      const withWheel = mergedConfig as { wheel?: unknown };
+      if (key === 'harmony' && withWheel.wheel !== undefined) {
+        withWheel.wheel = normalizeColorWheelId(withWheel.wheel);
       }
 
       this.configs.set(key, mergedConfig);

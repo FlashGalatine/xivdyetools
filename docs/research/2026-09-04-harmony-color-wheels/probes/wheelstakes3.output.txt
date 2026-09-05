@@ -1,0 +1,9 @@
+
+OKLab hue of sRGB pure-hue circle (S=100,V=100): span 360.00°, 1 decreasing run(s)
+   HSV 231.4°..240.0° reverses by 0.16°
+
+CIELab hue of sRGB pure-hue circle (S=100,V=100): span 360.00°, 0 decreasing run(s)
+
+OKLab (s=60,v=70): span 360.00°, decreasing samples 0/3600
+OKLab (s=100,v=50): span 360.00°, decreasing samples 59/3600
+CIELab (s=60,v=70): span 360.00°, decreasing samples 0/3600
