@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { OKLCH_HUE_TABLE, OKLCH_HUE_WHEEL, deriveOklchHueTable } from '../oklch-hue.js';
+import { OKLCH_HUE_TABLE, OKLCH_HUE_WHEEL } from '../oklch-hue.js';
 import { assertMonotoneTable } from '../hue-warp.js';
 import { ColorConverter } from '../../../color/ColorConverter.js';
 
@@ -7,10 +7,6 @@ describe('oklch-hue wheel', () => {
   it('is a monotone table of 73 pairs (72 samples, the HSV-0° sample becomes [0,0], plus [360,360])', () => {
     expect(OKLCH_HUE_TABLE).toHaveLength(73);
     expect(() => assertMonotoneTable(OKLCH_HUE_TABLE, 'oklch-hue')).not.toThrow();
-  });
-
-  it('is what the derivation produces', () => {
-    expect(deriveOklchHueTable()).toEqual(OKLCH_HUE_TABLE);
   });
 
   // Landmarks measured in research 05 (wheelstakes2): HSV → wheel.

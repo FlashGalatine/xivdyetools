@@ -30,9 +30,8 @@ describe('registry', () => {
     expect(() => getColorWheel('constructor' as never)).toThrow(RangeError);
   });
 
-  it('returns a wheel whose id is the id asked for', () => {
-    expect(getColorWheel('rgb').id).toBe('rgb');
-    expect(getColorWheel('ryb').id).toBe('ryb');
+  it.each(COLOR_WHEEL_IDS)('returns a wheel whose id is the id asked for: %s', (id) => {
+    expect(getColorWheel(id).id).toBe(id);
   });
 });
 

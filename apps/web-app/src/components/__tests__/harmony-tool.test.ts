@@ -12,7 +12,7 @@ import { HarmonyTool } from '../harmony-tool';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
-import { HARMONY_OFFSETS } from '@xivdyetools/core';
+import { HARMONY_OFFSETS, ColorConverter, getColorWheel } from '@xivdyetools/core';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() => ({
@@ -992,9 +992,14 @@ describe('HarmonyTool', () => {
       const { ConfigController } = await import('@services/config-controller');
       ConfigController.getInstance().setConfig('harmony', { wheel: 'ryb' });
 
+      // Sky Blue (#87CEEB): a saturated, non-red base. Its RGB/HSV hue (~197°)
+      // and its RYB wheel angle (~234°) differ, so this fixture actually
+      // exercises wheel selection — unlike mockDyes[0] (#FFFFFF), whose hue
+      // is 0 on every wheel and can't distinguish rgb from ryb.
+      const baseDye = mockDyes[9];
       tool = mount();
       tool.setConfig({ harmonyType: 'triadic' });
-      tool.selectDye(mockDyes[0]);
+      tool.selectDye(baseDye);
       await flush();
 
       const wheel = container.querySelector('v4-color-wheel') as unknown as {
@@ -1004,9 +1009,23 @@ describe('HarmonyTool', () => {
       expect(wheel.ringStops).toHaveLength(72);
       expect(wheel.nodeAngles).toHaveLength(3);
 
-      // RYB: the two triadic partners of a red base do NOT sit 120° apart in sRGB terms,
-      // but on the wheel they do — nodeAngles are wheel angles.
+      // The ring is painted from the RYB wheel, not the RGB wheel: the full
+      // stop list differs, and the 180° stop (index 36 of 72) is pinned to
+      // RYB's value — sRGB green, not RGB's cyan.
+      expect(wheel.ringStops).not.toEqual([...getColorWheel('rgb').ringStops(72)]);
+      expect(getColorWheel('ryb').ringStops(72)[36]).toBe(wheel.ringStops[36]);
+      expect(wheel.ringStops[36]).not.toBe('#00FFFF');
+
+      // Node angles are RYB wheel angles: the base's angle matches
+      // getColorWheel('ryb').hueOf(baseHex), which differs from the plain
+      // sRGB/HSV hue ColorConverter reports for the same hex — proving the
+      // ring and the nodes share the same (non-identity) wheel.
+      const rybBaseAngle = getColorWheel('ryb').hueOf(baseDye.hex);
+      const srgbBaseHue = ColorConverter.hexToHsv(baseDye.hex).h;
+      expect(rybBaseAngle).not.toBeCloseTo(srgbBaseHue, 6);
+
       const [b, n1, n2] = wheel.nodeAngles;
+      expect(b).toBeCloseTo(rybBaseAngle, 6);
       expect((n1 - b + 360) % 360).toBeCloseTo(120, 6);
       expect((n2 - b + 360) % 360).toBeCloseTo(240, 6);
     });

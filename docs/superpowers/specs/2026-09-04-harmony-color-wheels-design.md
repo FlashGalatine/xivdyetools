@@ -345,3 +345,17 @@ toggle on Complementary once PR #164's spectral fix lands; a warm/cool overlay.
 - Munsell sample point V=6/C=8: chosen because it is the one value/chroma present for all 40 hues in
   `real.dat`; a different point would shift some hues by a few degrees. Recorded, not open.
 - `opponent` is a later candidate id, not registered here.
+
+## 9. Deviations recorded at implementation (2026-09-05)
+
+- The OKLCH-hue table is **derived at module load** from core's own colour converters
+  (`deriveOklchHueTable()` in `packages/core/src/services/dye/wheels/oklch-hue.ts`),
+  rather than a checked-in table produced by a separate generator script. It is pinned
+  by the landmark tests in `oklch-hue.test.ts` and by the per-wheel golden digest, so a
+  regression in the derivation still fails loudly.
+- The Munsell trademark sentence renders as a **visible second description line**
+  under the colour-wheel select, not as an info tooltip.
+- §5's "log the option's presence" was **dropped**: discord-worker's Tier A analytics
+  records no per-option data for any command (see `services/analytics.ts` and
+  `PRIVACY_POLICY.md` §2), and nothing was added to change that for `/harmony`'s
+  `wheel` option.

@@ -33,6 +33,8 @@ export async function handleHarmonyCommand(
   const typeOption = options.find((opt) => opt.name === 'type');
   const wheelOption = options.find((opt) => opt.name === 'wheel');
   // Validated here so a stale registered choice can never reach the selector as a string.
+  // Case-sensitive is safe only because Discord choice values are the fixed lowercase
+  // ids; free-text surfaces (web, OG) lowercase the value before this check runs.
   const wheel: ColorWheelId | undefined = isColorWheelId(wheelOption?.value) ? wheelOption.value : undefined;
   const companionsOption = options.find((opt) => opt.name === 'companions');
   const matchingOption = options.find((opt) => opt.name === 'matching');
