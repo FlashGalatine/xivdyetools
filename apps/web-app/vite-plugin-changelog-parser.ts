@@ -85,8 +85,7 @@ export function parseChangelog(content: string): ChangelogEntry[] {
   // Match release headers like: "## Web-App Version 4.11.0 — May 31, 2026".
   // The leading "Web-App" is optional and the date (after an em/en dash or hyphen)
   // is optional. The single-"#" page title and "###" sub-headings never match.
-  const versionHeaderRegex =
-    /^##\s+[^\n]*?Version\s+(\d+\.\d+\.\d+)\s*(?:[—–-]\s*(.+?))?\s*$/gm;
+  const versionHeaderRegex = /^##\s+[^\n]*?Version\s+(\d+\.\d+\.\d+)\s*(?:[—–-]\s*(.+?))?\s*$/gm;
 
   // Find all version headers with their positions and dates
   const headers: Array<{ version: string; date: string; startIndex: number }> = [];
@@ -144,6 +143,15 @@ function extractHighlights(sections: ChangelogSection[]): string[] {
 
   for (const section of sections) {
     let highlight = section.header.trim();
+
+    // A headerless section (a release written as plain bullets, or the loose
+    // bullets above a release’s first "### ") has no name to show. Fall back to
+    // its first bullet so the collapsed row and the auto-popup’s "previous
+    // updates" summary are never blank. changelog-modal cannot paper over this
+    // on its own: its `??` chain only falls through on null/undefined, so an
+    // empty-string header short-circuits it and renders no summary at all.
+    if (!highlight) highlight = (section.bullets[0] ?? '').trim();
+
     if (highlight.length < 3) continue;
 
     if (highlight.length > MAX_HIGHLIGHT_LENGTH) {
@@ -163,43 +171,81 @@ function extractHighlights(sections: ChangelogSection[]): string[] {
  * Each section is delimited by a "### " heading. Within each section we capture:
  * - header: the "###" heading text (e.g., "New Spectrum Filters in the Color Palette")
  * - title: "" — this format has no standalone bold title line, so the modal renders no badge
- * - bullets: the dash-prefixed description lines (inline markdown stripped). If a section
- *   has no dash bullets (e.g., "What you need to do"), its paragraph text is folded in as
- *   a single bullet so the content is not dropped.
+ * - bullets: the dash-prefixed description lines (inline markdown stripped)
+ *
+ * The region ABOVE the first "### " is folded into an implicit headerless
+ * section rather than discarded. Two shapes depend on that:
+ *
+ * - A release written as "## …Version X" plus plain bullets and no "### " at
+ *   all. That parsed to zero sections and was dropped **silently** by
+ *   parseChangelog's `sections.length > 0` guard, which is how every release
+ *   from 5.0.1 to 5.6.0 went missing from the modal: a reader on 5.6.0 was
+ *   shown 5.0.0, because changelog-modal's findIndex on APP_VERSION missed and
+ *   fell back to entries[0].
+ * - A release that opens with a headline bullet and THEN uses "### " headings.
+ *   The first fix for the above ran a separate fallback only when the section
+ *   count was zero, so this shape still lost its headline bullet — and no gate
+ *   could see it, because the entry still parsed. Folding here covers both.
+ *
+ * A block with nothing above its first heading contributes no section, so
+ * well-formed entries are unchanged. A header line with no bullets and no
+ * prose at all still yields no section, which keeps the "genuinely empty
+ * entries are skipped" behaviour the guard was written for.
  */
 function extractSections(block: string): ChangelogSection[] {
   const sections: ChangelogSection[] = [];
 
-  // Split on "### " headings (level 3). The first chunk is the release-header area.
+  // Split on "### " headings (level 3). Chunk 0 is the release-header area.
   const sectionBlocks = block.split(/^### /gm);
+
+  // Drop the "## …Version X" line itself, then fold whatever is left above the
+  // first heading. `header: ''` is deliberate — there is no honest name to
+  // invent for it, and changelog-modal.createSectionBlock skips the heading
+  // element when it is empty.
+  const looseBullets = collectBullets(sectionBlocks[0].split('\n').slice(1));
+  if (looseBullets.length > 0) {
+    sections.push({ header: '', title: '', bullets: looseBullets });
+  }
 
   for (let i = 1; i < sectionBlocks.length; i++) {
     const lines = sectionBlocks[i].split('\n');
     const header = stripInlineMarkdown(lines[0]);
     if (!header) continue;
 
-    const bullets: string[] = [];
-    const paragraphs: string[] = [];
-
-    for (const line of lines.slice(1)) {
-      const bulletMatch = line.match(/^\s*-\s+(.+)/);
-      if (bulletMatch) {
-        bullets.push(truncate(stripInlineMarkdown(bulletMatch[1])));
-        continue;
-      }
-      const trimmed = stripInlineMarkdown(line);
-      if (trimmed) paragraphs.push(trimmed);
-    }
-
-    // Bullet-less sections (e.g. "What you need to do") keep their prose as one bullet.
-    if (bullets.length === 0 && paragraphs.length > 0) {
-      bullets.push(truncate(paragraphs.join(' ')));
-    }
-
-    sections.push({ header, title: '', bullets });
+    sections.push({ header, title: '', bullets: collectBullets(lines.slice(1)) });
   }
 
   return sections;
+}
+
+/**
+ * Collect the renderable bullets out of a run of lines.
+ *
+ * Shared by both section shapes so they cannot drift apart: a bullet-less run
+ * (e.g. "What you need to do", or a release written as a single paragraph)
+ * keeps its prose as one folded bullet instead of being dropped. The previous
+ * headerless fallback duplicated only the bullet half of this loop, which is
+ * why a prose-only release still vanished.
+ */
+function collectBullets(lines: string[]): string[] {
+  const bullets: string[] = [];
+  const paragraphs: string[] = [];
+
+  for (const line of lines) {
+    const bulletMatch = line.match(/^\s*-\s+(.+)/);
+    if (bulletMatch) {
+      bullets.push(truncate(stripInlineMarkdown(bulletMatch[1])));
+      continue;
+    }
+    const trimmed = stripInlineMarkdown(line);
+    if (trimmed) paragraphs.push(trimmed);
+  }
+
+  if (bullets.length === 0 && paragraphs.length > 0) {
+    bullets.push(truncate(paragraphs.join(' ')));
+  }
+
+  return bullets;
 }
 
 /** Truncate an overly long bullet for display. */

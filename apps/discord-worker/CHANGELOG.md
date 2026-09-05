@@ -26,6 +26,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   same number. The DEAD-037 anti-drift test already proved `value` parity with core;
   it now proves tag parity too.
 
+### Tests — 2026-09-03 coverage sweep
+
+- **The coverage thresholds were recording a figure, not enforcing one.** `vitest.config.ts`
+  never set `coverage.enabled`, so `turbo run test` (and therefore CI) ran the suite without
+  the provider attached and the `thresholds` block could not fail anything. It is `true` now,
+  matching web-app's config, so the numbers below are a gate rather than a note.
+- **The ratchet had drifted ~4 points below the suite.** Measured 87.91/81.02/89.12/88.84
+  (statements/branches/functions/lines) against thresholds of 84/77/88/85, which meant a real
+  regression could land without reddening anything. Re-set just under the achieved figures:
+  **87/80/88/88**. Branches clears 80 for the first time — `src/index.ts` and
+  `handlers/commands/preset.ts` still hold most of what is left. `functions` stays at 88 rather
+  than 89 deliberately: at 89.12% measured across 377 functions, an 89 threshold leaves under
+  **one** uncovered function of slack, so the next unrelated PR that adds a helper would red CI
+  on a threshold it never touched. A whole-point cushion ratchets just as well.
+
 ## [5.3.0] - 2026-09-03
 
 ### Fixed
@@ -220,12 +235,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`/budget` is stainID-keyed like the rest of 5.0.** The `target_dye` autocomplete offered legacy item ids as values (the command echo read `target_dye: 13114` for Pure White) and the quick picks were keyed the same way. Choice values and `QUICK_PICKS.targetDyeId` are stainIDs now; a new `resolveTargetDye` accepts either range (1–254 = stainID, ≥ 5729 = legacy item id) so a typed item id keeps working, and `findBudgetLedger` resolves through it. Tests assert every autocomplete value and every quick pick sits in 1–254.
 - **`/budget quick` built the ledger for the wrong dye for its two headline presets.** `QUICK_PICKS` carried item id `5763` for Jet Black and `5762` for Pure White — those are Ul Brown's and Bone White's — so the card was titled "Budget Alternatives for Ul Brown" / "Bone White" with the matching share link. Corrected to `13115` / `13114`; the other 20 presets were right. A new test resolves every preset's id through the dye database and asserts the name matches, which is what would have caught this.
 - **`/swatch` could not download any attachment.** The FINDING-033 hardening set `redirect: 'error'` on the CDN fetch; the Workers runtime implements only `follow` and `manual` and throws `TypeError: Invalid redirect value` on `error`, so every download failed. Now `redirect: 'manual'` — a redirect comes back as a 3xx response that the existing `!ok` check refuses, so the "never follow" intent is unchanged. A shared ESLint rule now rejects `redirect: 'error'` anywhere in the workspace.
+- **Production release announcements went to the beta channel.** `[env.production.vars]`'s `ANNOUNCEMENT_CHANNEL_ID` had been copied from the top-level (beta) block rather than set to production's own channel, so the 5.0 announcement on 2026-08-29 was posted to beta. `vars` are not inheritable, so the value has to be repeated per environment — the two are now deliberately different, with a comment in `wrangler.toml` saying so and naming the incident, because the next person to see two near-identical channel ids is otherwise likely to "fix" the duplication back.
 - **`/swatch` never shows the character's name (chara-name privacy).** The card's header line and both embed titles were the Ktisis `Nickname`, else the attachment filename — and players name exports "Firstname Lastname.chara" or use their real name as the nickname. The handler no longer forwards `attachment.filename` to the renderer (the `.chara` extension/size checks are unchanged), and `@xivdyetools/bot-logic` 3.0.0 / `@xivdyetools/svg` 3.0.0 render the neutral, localized "Character swatch" title in every branch, strip `nickname` from the returned character record at the type level, and print only an allowlisted producer token (ANAMNESIS / KTISIS / BRIO) on the card's identifier line — a hand-edited `TypeName` is omitted. `PRIVACY_POLICY.md` §3 now states that character names from `.chara` files are never displayed or stored. Tests pin the absence of the nickname on both routes and that the handler passes no filename.
 
 ### Changed — 2026-08-29 merge-day close-out
 
 - `CHANGELOG-laymans.md`'s `[5.0.0]` entry now carries the real ship date (2026-08-28, the `monorepo-2.0-prep` → `main` merge) instead of the 2026-08-16 changelog-sync date; the root product-level file was corrected the same way, which is also the push that fires the first release announcement through the newly wired GitHub webhook (`/webhooks/github`).
 - **New CI workflow `sync-dye-emojis.yml`** (`workflow_dispatch`, `production` environment): runs `scripts/upload-emojis.ts` against the main bot application with the repository secret `DISCORD_TOKEN` and publishes the rewritten `src/data/emoji-mapping.json` as an artifact to commit — the bot token no longer needs to touch a local shell for the 5.0 emoji regeneration.
+- **The production emoji set was regenerated as the 5.0 `chip-1` artwork** — this supersedes the `[5.0.0]` note that production's slot "still records `artwork: "legacy-icons"`", which was true only until the first `sync-dye-emojis.yml` run (run `33225293642`, 2026-08-29: *125 dyes → uploaded 125 (replaced 125), deleted 0 orphans*). The main bot application's slot in `emoji-mapping.json` moves from `legacy-icons` to `chip-1` — 125 stainID-keyed flat chips rendered from `dyes.json` — so both applications now carry the same artwork. **Every emoji id in the mapping is new**, which is why this had to deploy promptly: until it did, embeds referenced the deleted legacy ids.
+- **`scripts/upload-emojis.ts` type-checks again** under `@cloudflare/workers-types 5.20260825.1`. The bump changed the types the script's Discord upload path was written against; nothing about the artwork or the upload behaviour changed, but the script would not compile, and it is the only way to run the regeneration above.
 
 ### Removed
 

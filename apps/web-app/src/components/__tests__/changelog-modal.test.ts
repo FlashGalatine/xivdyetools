@@ -280,3 +280,76 @@ describe('ChangelogModal', () => {
     });
   });
 });
+
+// ============================================================================
+// Headerless sections and lazily built collapsed bodies
+// ============================================================================
+
+describe('headerless sections and collapsed rows', () => {
+  /**
+   * What the parser produces for a release written as plain bullets, or for
+   * the loose bullets above a release’s first "### " heading.
+   */
+  const headerless = {
+    version: '5.0.0',
+    date: 'March 3, 2026',
+    // Empty on purpose: extractHighlights skips a header under 3 characters,
+    // so a headerless section leaves the modal with no highlight to fall back
+    // on and it has to reach the bullets itself.
+    highlights: [] as string[],
+    sections: [{ header: '', title: '', bullets: ['A loose headline bullet', 'And a second'] }],
+  } as Record<string, unknown>;
+
+  beforeEach(() => {
+    // Without this the assertions below read mockShowChangelog.mock.calls[0]
+    // from an earlier test in this file rather than from their own show().
+    vi.clearAllMocks();
+    changelogEntriesFixture.length = 0;
+  });
+
+  it('renders a headerless section as bullets, with no empty heading', async () => {
+    changelogEntriesFixture.push(headerless);
+
+    const { ChangelogModal } = await import('../changelog-modal');
+    await new ChangelogModal().show({ mode: 'popup' });
+
+    const { content } = mockShowChangelog.mock.calls[0][0] as { content: HTMLElement };
+    expect(content.textContent).toContain('A loose headline bullet');
+    const blankHeadings = Array.from(content.querySelectorAll('h4')).filter(
+      (h) => !h.textContent?.trim()
+    );
+    expect(blankHeadings).toEqual([]);
+  });
+
+  it('summarises a headerless collapsed row with its first bullet', async () => {
+    // `??` would short-circuit on the empty-string header and leave the row
+    // with no summary text at all — a bare "v5.0.0  March 3, 2026" button.
+    changelogEntriesFixture.push(DEFAULT_ENTRIES[0], headerless);
+
+    const { ChangelogModal } = await import('../changelog-modal');
+    await new ChangelogModal().show({ mode: 'popup' });
+
+    const { content } = mockShowChangelog.mock.calls[0][0] as { content: HTMLElement };
+    const row = content.querySelector('button[aria-expanded]');
+
+    expect(row).not.toBeNull();
+    expect(row?.textContent).toContain('A loose headline bullet');
+  });
+
+  it('builds a collapsed body only once the row is expanded', async () => {
+    changelogEntriesFixture.push(...DEFAULT_ENTRIES);
+
+    const { ChangelogModal } = await import('../changelog-modal');
+    await new ChangelogModal().show({ mode: 'popup' });
+
+    const { content } = mockShowChangelog.mock.calls[0][0] as { content: HTMLElement };
+    // 3.3.0 is the collapsed row here; its bullets are not built up front.
+    expect(content.textContent).not.toContain('Legacy behavior');
+
+    const row = content.querySelector('button[aria-expanded]') as HTMLButtonElement;
+    row.click();
+
+    expect(row.getAttribute('aria-expanded')).toBe('true');
+    expect(content.textContent).toContain('Legacy behavior');
+  });
+});
