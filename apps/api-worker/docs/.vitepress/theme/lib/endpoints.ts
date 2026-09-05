@@ -38,6 +38,7 @@ export const GROUPS: readonly GroupEntry[] = [
   { name: 'Dyes', page: '/reference/dyes', blurb: 'Database, lookups, groups' },
   { name: 'Color Matching', page: '/reference/matching', blurb: 'Closest, within distance' },
   { name: 'Character Equipment', page: '/reference/chara', blurb: '.chara resolve, icons' },
+  { name: 'Harmony', page: '/reference/harmony', blurb: 'Colour wheels, harmony slots' },
 ];
 
 export const GUIDE_PAGES: readonly GuidePage[] = [
@@ -148,6 +149,42 @@ export const ENDPOINTS: readonly EndpointEntry[] = [
     link: '/reference/chara#get-v1-chara-icon-iconid',
     preview: null,
     previewNote: 'image · no preview',
+  },
+  {
+    key: 'wheels',
+    group: 'Harmony',
+    method: 'GET',
+    path: '/v1/wheels',
+    summary: 'The five colour wheels harmony angles can be measured on.',
+    link: '/reference/harmony#get-v1-wheels',
+    preview: '/v1/wheels',
+  },
+  {
+    key: 'wheel',
+    group: 'Harmony',
+    method: 'GET',
+    path: '/v1/wheels/:id',
+    summary: 'One wheel: its ring paint and where every dye sits on it.',
+    link: '/reference/harmony#get-v1-wheels-id',
+    preview: '/v1/wheels/ryb?stops=12',
+  },
+  {
+    key: 'harmony-types',
+    group: 'Harmony',
+    method: 'GET',
+    path: '/v1/harmony/types',
+    summary: 'The ten harmony types and their hue offsets.',
+    link: '/reference/harmony#get-v1-harmony-types',
+    preview: '/v1/harmony/types',
+  },
+  {
+    key: 'harmony',
+    group: 'Harmony',
+    method: 'GET',
+    path: '/v1/harmony',
+    summary: 'A dye for every slot of a harmony, on the wheel you choose.',
+    link: '/reference/harmony#get-v1-harmony',
+    preview: '/v1/harmony?dye=13&type=triadic&wheel=ryb',
   },
 ];
 

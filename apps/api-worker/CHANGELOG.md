@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-09-05
+
+Exposes PR #167's selectable colour wheels (core 5.2.0) through the public API and its docs. Four
+new `GET` endpoints under `/v1`, all deterministic and cached like the dye routes; nothing existing
+changed shape.
+
+### Added
+
+- **`GET /v1/wheels`** — the five wheels (`rgb`, `ryb`, `munsell`, `oklch-hue`, `oklch-lightness`)
+  in core's display order, each `{ id, tag, name, isDefault }`; `name` localized via `?locale=`.
+- **`GET /v1/wheels/:id`** — one wheel's `ringStops` (`?stops=` 3–360, default 72; in-gamut hex,
+  evenly spaced) and `dyes[]`, the position of every dye on that wheel (`wheelHue`, 3 decimals).
+- **`GET /v1/harmony/types`** — the ten harmony types with their hue `offsets` and localized names
+  (wire ids are the share-URL spelling, `split-complementary`; the locale key is camelCase, mapped
+  by `harmonyLocaleKey`).
+- **`GET /v1/harmony`** — core's `generateHarmonySlots` over the whole database: base by `dye=`
+  (auto-detected id, like `/v1/dyes/:id`) or `hex=` (never both), `type`, `wheel`, `method`,
+  `strict` (ΔE vs hue-angle ranking), `companions` (0–5), `preventDuplicates`, `excludeIds` and the
+  eight dye filters. Response: `base`, `harmonyType` (+ `harmonyTypeName`), the wheel summary,
+  `method`, `strict`, `distanceUnit` (the method when strict, `degrees` otherwise), `baseWheelHue`,
+  and `slots[]` = core's `HarmonySlot` with `deviance` renamed `distance` (4 decimals, `null` with a
+  `null` dye) and dyes serialized as Dye Objects. The base dye is always excluded from its own slots.
+- Error codes `INVALID_COLOR_WHEEL` and `INVALID_HARMONY_TYPE` (400, `details.expected` lists the
+  valid ids). An unknown wheel is **refused**, not silently mapped to `rgb` as the bot does — the
+  same policy og-worker applies to `?wheel=` and this API applies to `?method=`.
+- The API holds no wheel list, offsets table or hue maths of its own: ids, tags, defaults,
+  parsing (`parseColorWheelId`), `HARMONY_OFFSETS`, `isKnownHarmonyType` and the localized names all
+  come from `@xivdyetools/core`.
+
+### Docs
+
+- New **Harmony** reference group (`reference/harmony.md`): the five-wheel table with the research's
+  "material, not cosmetic" figures, four console cards, and `wheel` / `wheelPosition` /
+  `harmonySlot` field folds pinned to the serializers by `tests/docs-fields-parity.test.ts`. The live
+  index paints `/v1/wheels/ryb`'s ring stops and a triadic harmony on the RYB wheel; the home page
+  gains an eighth tile with the Harmony glyph; `errors.md` gains the two codes and the `wheel` /
+  `type` enums. Counts (15 endpoints, 4 sections) flow from the registry.
+
+### Depends on
+
+- `@xivdyetools/core` ≥ 5.2.0 and `@xivdyetools/types` ≥ 3.2.0 (PR #167) — publish those first.
+
 ## [0.13.0] - 2026-09-05
 
 Developer docs restyle (`developers.xivdyetools.app`) on the confirmed **API Docs Directions 1d**

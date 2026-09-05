@@ -370,6 +370,38 @@ The item icon PNG (80 px `_hr1`), proxied from XIVAPI and edge-cached (`Cache-Co
 
 ---
 
+## Harmony (colour wheels)
+
+Since api-worker 0.14.0 (core 5.2.0, PR #167): the five selectable colour wheels and core's shared harmony selector. Public reference: [developers.xivdyetools.app/reference/harmony](https://developers.xivdyetools.app/reference/harmony). All `GET`, enveloped, cached `public, max-age=3600, s-maxage=86400`.
+
+### `GET /v1/wheels`
+
+The five wheels in core's display order: `[{ id, tag, name, isDefault }]` — ids `rgb` (default), `ryb`, `munsell`, `oklch-hue`, `oklch-lightness`; `tag` is the untranslated card token (`RGB`, `RYB`, `MUNSELL`, `OKLCH·H`, `OKLCH·L`); `name` follows `?locale=`.
+
+### `GET /v1/wheels/:id`
+
+The wheel summary plus `ringStops` (`?stops=` 3–360, default 72 — in-gamut hex, evenly spaced around the wheel) and `dyes[]` = every dye's `{ stainID, itemID, name, localizedName?, hex, wheelHue }` on that wheel. Unknown id → `400 INVALID_COLOR_WHEEL` with `details.expected`.
+
+### `GET /v1/harmony/types`
+
+The ten harmony types — rows of core's `HARMONY_OFFSETS`, kebab-case wire ids (`split-complementary`, `inverted-tetradic`) — as `[{ id, offsets, name }]`.
+
+### `GET /v1/harmony`
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `dye` | id | — | Base dye, itemID or stainID (auto-detected like `/v1/dyes/:id`); `404 NOT_FOUND` if unassigned. Exactly one of `dye` / `hex` |
+| `hex` | string | — | Base colour, `#RRGGBB` or `RRGGBB` |
+| `type` | enum | `complementary` | Harmony type; unknown → `400 INVALID_HARMONY_TYPE` |
+| `wheel` | enum | `rgb` | Colour wheel; unknown → `400 INVALID_COLOR_WHEEL` (refused, never silently `rgb`) |
+| `method` | enum | `ciede2000` | ΔE method for the strict ranking (retired names normalised as on `/v1/match/*`) |
+| `strict` | boolean | `true` | Rank by ΔE against the ideal colour; `false` ranks by hue angle |
+| `companions` | 0–5 | `0` | Runner-up dyes per slot |
+| `preventDuplicates` | boolean | `false` | Never choose one dye for two slots |
+| `excludeIds`, dye filters, `locale` | | | As on `/v1/dyes` |
+
+Response `data`: `{ base: { hex, dye | null }, harmonyType, harmonyTypeName, wheel: { id, tag, name, isDefault }, method, strict, distanceUnit, baseWheelHue, slots: [{ index, offset, wheelHue, targetHue, targetHex, dye | null, distance | null, companions[] }] }`. `distanceUnit` is the method when `strict`, `degrees` otherwise; the base dye is always excluded from its own slots; a slot whose candidate pool is empty carries `dye: null` / `distance: null` rather than an error.
+
 ## Universalis Market-Board Proxy
 
 Absorbed from the retired `apps/universalis-proxy` (Monorepo 2.0 Tier 2). Mounted at **`/universalis/*`** (canonical, on `data.xivdyetools.app`) and **`/api/v2/*`** (compatibility mount — the path shape used by `proxy.xivdyetools.app` / `proxy.xivdyetools.projectgalatine.com` and by discord-worker's `UNIVERSALIS_PROXY` service binding). Deliberately **outside** `/v1`: no `{ success, data, meta }` envelope (responses are raw Universalis bodies), no `?locale=`, no KV rate limiter, no `X-RateLimit-*` headers on success. Errors are a bare `{ "error": "..." }` object with the upstream status code. **Deliberately undocumented on the public docs site** since 2026-09-04 (API Docs Directions 1d): Universalis serves CORS itself, so a third party routing through us gained only our edge cache while spending the shared upstream 429 budget the web-app's Market Board and the bot's `/budget` depend on. The routes stay for our own clients; this section is their reference.

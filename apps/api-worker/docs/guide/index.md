@@ -61,6 +61,7 @@ curl https://data.xivdyetools.app/v1/dyes/1?locale=ja
 | [Dyes](../reference/dyes) | `/v1/dyes/*` — lookup, filtering, search, batch, consolidation groups |
 | [Color Matching](../reference/matching) | `/v1/match/*` — closest dye, dyes within a distance |
 | [Character Equipment](../reference/chara) | `/v1/chara/*` — `.chara` gear resolution and item icons |
+| [Harmony](../reference/harmony) | `/v1/wheels/*`, `/v1/harmony/*` — the five colour wheels and a dye for every harmony slot |
 
 The [Reference overview](../reference/) lists every endpoint, most with a live sample from the API.
 

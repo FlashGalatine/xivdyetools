@@ -25,7 +25,7 @@ const SAMPLE = {
   meta: { requestId: '9f2c…', apiVersion: 'v1' },
 }
 
-type GlyphName = 'extractor' | 'swatch' | 'globe'
+type GlyphName = 'extractor' | 'swatch' | 'harmony' | 'globe'
 
 const FEATURES: { title: string; details: string; glyph: GlyphName | null }[] = [
   {
@@ -63,6 +63,11 @@ const FEATURES: { title: string; details: string; glyph: GlyphName | null }[] = 
     details: 'Resolve the gear in a .chara file to real items — one search per file, icons proxied, six languages — and read its dyes as stain IDs.',
     glyph: 'swatch',
   },
+  {
+    title: 'Harmony',
+    details: 'A dye for every slot of ten harmony types, measured on any of five colour wheels — RGB, RYB, Munsell, OKLCH hue, OKLCH lightness — the same selector the Harmony Explorer runs.',
+    glyph: 'harmony',
+  },
 ]
 </script>
 
@@ -72,7 +77,7 @@ const FEATURES: { title: string; details: string; glyph: GlyphName | null }[] = 
       <div class="xdt-hero-copy">
         <span class="xdt-eyebrow">Public REST API · No auth · v1</span>
         <h1 class="xdt-hero-h1">FFXIV dye data, served from the edge.</h1>
-        <p class="xdt-hero-sub">125 standard dyes, color matching, and localization in 6 languages. No auth required.</p>
+        <p class="xdt-hero-sub">125 standard dyes, color matching, harmonies on five colour wheels, and localization in 6 languages. No auth required.</p>
         <BaseUrl />
         <div class="xdt-hero-actions">
           <a class="xdt-btn xdt-btn--primary" :href="withBase('/guide/')">Quick Start</a>

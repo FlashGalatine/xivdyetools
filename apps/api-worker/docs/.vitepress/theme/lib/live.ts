@@ -19,23 +19,34 @@ const HEX_RE = /^#?[0-9a-f]{6}$/i;
 /**
  * Every `hex` in a response, depth-first, deduplicated on (hex, name), capped
  * at `max`. A dye object is `{ hex, name }`; a match result nests it under
- * `dye`; a list is an array of either — the walk does not care which.
+ * `dye`; a list is an array of either — the walk does not care which. A bare
+ * array of hex strings (a wheel's `ringStops`) counts too, unnamed.
  */
 export function collectHexes(value: unknown, max = 12): Swatch[] {
   const out: Swatch[] = [];
+  // Deduplicate on hex: a harmony answer carries `base.hex` beside
+  // `base.dye.hex`, so the bare string arrives first, unnamed, and the dye's
+  // name claims it when it follows.
+  const push = (hex: string, name: string): void => {
+    const existing = out.find((s) => s.hex.toLowerCase() === hex.toLowerCase());
+    if (existing) {
+      if (!existing.name && name) existing.name = name;
+      return;
+    }
+    if (out.length < max) out.push({ hex, name });
+  };
   const walk = (node: unknown, depth: number): void => {
     if (!node || typeof node !== 'object' || out.length >= max || depth > 6) return;
     if (Array.isArray(node)) {
-      for (const item of node) walk(item, depth + 1);
+      for (const item of node) {
+        if (typeof item === 'string' && HEX_RE.test(item)) push(item.startsWith('#') ? item : `#${item}`, '');
+        else walk(item, depth + 1);
+      }
       return;
     }
     const obj = node as Record<string, unknown>;
     if (typeof obj.hex === 'string' && HEX_RE.test(obj.hex)) {
-      const hex = obj.hex.startsWith('#') ? obj.hex : `#${obj.hex}`;
-      const name = String(obj.name ?? obj.localizedName ?? '');
-      if (!out.some((s) => s.hex.toLowerCase() === hex.toLowerCase() && s.name === name)) {
-        out.push({ hex, name });
-      }
+      push(obj.hex.startsWith('#') ? obj.hex : `#${obj.hex}`, String(obj.name ?? obj.localizedName ?? ''));
     }
     for (const key of Object.keys(obj)) {
       if (key !== 'hex') walk(obj[key], depth + 1);
@@ -112,7 +123,11 @@ export async function fetchStrip(query: string): Promise<StripState> {
     const data = json && typeof json === 'object' && 'data' in (json as object) ? (json as { data: unknown }).data : json;
     const swatches = collectHexes(data);
     if (swatches.length) {
-      const label = swatches.length === 1 ? swatches[0].name : `${swatches[0].name} +${swatches.length - 1}`;
+      const label = !swatches[0].name
+        ? `${swatches.length} stops`
+        : swatches.length === 1
+          ? swatches[0].name
+          : `${swatches[0].name} +${swatches.length - 1}`;
       return { state: 'ok', swatches, label, meta };
     }
     return { state: 'count', count: countOf(data), meta };

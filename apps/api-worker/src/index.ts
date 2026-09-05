@@ -22,6 +22,8 @@ import { localeMiddleware } from './middleware/locale.js';
 // Routes
 import { dyesRouter } from './routes/dyes.js';
 import { matchRouter } from './routes/match.js';
+import { wheelsRouter } from './routes/wheels.js';
+import { harmonyRouter } from './routes/harmony.js';
 import { universalisRouter } from './universalis/router.js';
 import { charaRouter } from './chara/router.js';
 import { telemetryRouter } from './telemetry/router.js';
@@ -162,6 +164,10 @@ app.get('/health', (c) => {
 
 app.route('/v1/dyes', dyesRouter);
 app.route('/v1/match', matchRouter);
+// Colour wheels + harmony selection over core's shared selector (PR #167's
+// wheels). Read-only, deterministic, cached like the dye routes.
+app.route('/v1/wheels', wheelsRouter);
+app.route('/v1/harmony', harmonyRouter);
 // .chara equipment-model resolution (web-app Swatch Matcher import) — one
 // XIVAPI search per file, per-key edge cache, icons proxied. See chara/router.ts.
 app.route('/v1/chara', charaRouter);
