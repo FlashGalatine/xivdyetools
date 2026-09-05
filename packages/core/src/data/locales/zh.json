@@ -2,7 +2,7 @@
   "locale": "zh",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-09-03T12:01:42.837Z",
+    "generated": "2026-09-05T13:38:20.763Z",
     "dyeCount": 125
   },
   "labels": {
@@ -185,6 +185,13 @@
     "monochromatic": "单色",
     "compound": "复合",
     "shades": "明暗"
+  },
+  "colorWheels": {
+    "rgb": "RGB（屏幕）",
+    "ryb": "RYB（画家色环）",
+    "munsell": "孟塞尔（JIS）",
+    "oklch-hue": "OKLCH 色相（感知均匀间距）",
+    "oklch-lightness": "OKLCH 明度（保持亮度）"
   },
   "visionTypes": {
     "normal": "正常视觉",

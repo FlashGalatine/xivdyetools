@@ -3,7 +3,7 @@
  * Phase 4.1: Target comprehensive coverage of the localization facade
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterEach } from 'vitest';
 import {
   LocalizationService,
   extractLocaleCode,
@@ -743,5 +743,33 @@ describe('LocalizationService', () => {
       expect(LocalizationService.isLocaleLoaded('en')).toBe(false);
       expect(LocalizationService.isLocaleLoaded('ja')).toBe(false);
     });
+  });
+});
+
+describe('getColorWheelName', () => {
+  // The prior describe's afterEach clears the static singleton's registry,
+  // so the real bundled locale data (not the mocks used above) must be
+  // reloaded before these accessors can resolve anything but the fallback id.
+  beforeAll(async () => {
+    await LocalizationService.preloadLocales(['en', 'ja', 'de', 'fr', 'ko', 'zh']);
+  });
+
+  const ids = ['rgb', 'ryb', 'munsell', 'oklch-hue', 'oklch-lightness'] as const;
+
+  it.each(['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const)('names every wheel in %s', (locale) => {
+    for (const id of ids) {
+      const name = LocalizationService.getColorWheelName(id, locale);
+      expect(name).toBeTruthy();
+      expect(name).not.toBe(id);
+    }
+  });
+
+  it('uses the Japanese term for Munsell and the JIS tag', () => {
+    expect(LocalizationService.getColorWheelName('munsell', 'ja')).toBe('マンセル（JIS）');
+    expect(LocalizationService.getColorWheelName('munsell', 'en')).toBe('Munsell (JIS)');
+  });
+
+  it('falls back to English for a locale it has never loaded', () => {
+    expect(LocalizationService.getColorWheelName('ryb', 'xx' as never)).toBe("RYB (artist's)");
   });
 });

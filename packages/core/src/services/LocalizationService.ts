@@ -17,6 +17,7 @@ import type {
   RaceKey,
   ClanKey,
   LocalePreference,
+  ColorWheelId,
 } from '@xivdyetools/types';
 import { LocaleLoader } from './localization/LocaleLoader.js';
 import { LocaleRegistry } from './localization/LocaleRegistry.js';
@@ -438,6 +439,16 @@ export class LocalizationService {
    */
   static getHarmonyType(key: HarmonyTypeKey, locale?: LocaleCode): string {
     return this.getDefault().getHarmonyType(key, locale);
+  }
+
+  /** Localised colour-wheel name (Harmony Explorer wheel selector). */
+  getColorWheelName(id: ColorWheelId, locale?: LocaleCode): string {
+    return this.translator.getColorWheelName(id, locale ?? this.currentLocale);
+  }
+
+  /** Static: see the instance method. */
+  static getColorWheelName(id: ColorWheelId, locale?: LocaleCode): string {
+    return this.getDefault().getColorWheelName(id, locale);
   }
 
   /**

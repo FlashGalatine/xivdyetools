@@ -2,7 +2,7 @@
   "locale": "fr",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-09-03T12:01:42.835Z",
+    "generated": "2026-09-05T13:38:20.761Z",
     "dyeCount": 125
   },
   "labels": {
@@ -185,6 +185,13 @@
     "monochromatic": "Monochromatique",
     "compound": "Composé",
     "shades": "Nuances"
+  },
+  "colorWheels": {
+    "rgb": "RVB (écran)",
+    "ryb": "RJB (roue des peintres)",
+    "munsell": "Munsell (JIS)",
+    "oklch-hue": "Teinte OKLCH (espacement perceptuel)",
+    "oklch-lightness": "Luminosité OKLCH (conserve la luminosité)"
   },
   "visionTypes": {
     "normal": "Vision normale",
