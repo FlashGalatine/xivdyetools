@@ -5,6 +5,28 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.0] - 2026-09-05
+
+### Added
+
+- **`/og/harmony/*` and its page share URLs carry `?wheel=`** — allowlisted against
+  `@xivdyetools/core`'s five `COLOR_WHEEL_IDS`, validated the same way `?algo=` already
+  is (400 on an unrecognised spelling, on every route), cache-keyed alongside
+  `lang`/`frame`/`algo` so the five wheels of one dye+harmony each buy their own
+  edge-cache entry, and elided from the URL when it is the default `rgb` wheel so an
+  ordinary share link's cache key is unchanged from 2.9.0. Validation and the key both
+  go through core's one normaliser (`parseColorWheelId`), so `?wheel=RYB` and
+  `?wheel=ryb` cannot buy two entries for one picture. The deck names the wheel when it
+  is not the default, and the **footer** carries a short non-localised tag
+  (`ΔE2000 · RYB`) — the deck drops in the X frame, so without it a shared Twitter card
+  said nothing at all about which wheel chose its dyes.
+- `wheel` keys the cache **only on `/og/harmony/*`**, the route that reads it. The
+  allowlist is global, so before this a `?wheel=` appended to a gradient, mixer or
+  contrast URL bought that identical card five distinct, unauthenticated resvg
+  rasters — the FINDING-024 key-space rule read the other way round.
+- The CJK subset fonts (JP/SC/KR) were regenerated to cover the five wheels' localized
+  names in `ja`/`ko`/`zh`.
+
 ## [2.9.0] - 2026-09-04
 
 ### Fixed

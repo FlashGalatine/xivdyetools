@@ -68,7 +68,17 @@ vi.mock('@xivdyetools/core', () => {
     }
   }
 
-  return { DyeService: MockDyeService, dyeDatabase: [] };
+  return {
+    DyeService: MockDyeService,
+    dyeDatabase: [],
+    // `commands/schemas.ts` builds COLOR_WHEEL_CHOICES at module scope from
+    // this list (Task 11), so it must exist on the mock or importing the
+    // schema — pulled in transitively via `services/command-trace.ts` —
+    // throws before any test runs.
+    COLOR_WHEEL_IDS: ['rgb', 'ryb', 'munsell', 'oklch-hue', 'oklch-lightness'],
+    isColorWheelId: (value: unknown) =>
+      ['rgb', 'ryb', 'munsell', 'oklch-hue', 'oklch-lightness'].includes(value as string),
+  };
 });
 
 vi.mock('../../services/emoji.js', () => ({

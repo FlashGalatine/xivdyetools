@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-09-05
+
+### Added
+
+- `HarmonyCardOptions.wheelLabel` — an optional string the harmony card prints under
+  the harmony type when the caller selected a non-default colour wheel (`@xivdyetools/core`
+  5.2.0's five-wheel selector). Omit it and the card is unchanged from 4.0.0. The label is
+  **fitted** to the header row it shares with the `/HARMONY` pill
+  (`CARD_WIDTH - PAD_X*2 - chip.width - 10`, the same budget every sibling card's
+  header-right text uses): the German OKLCH-hue name measures ~300px against a ~259px
+  budget, so unfitted it ran under and past the pill — a defect only a non-English locale
+  could produce.
+
 ## [4.0.0] - 2026-09-03
 
 ### BREAKING

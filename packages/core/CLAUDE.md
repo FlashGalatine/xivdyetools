@@ -18,6 +18,8 @@ pnpm --filter @xivdyetools/core run test:coverage
 pnpm --filter @xivdyetools/core run type-check
 pnpm --filter @xivdyetools/core run lint
 pnpm --filter @xivdyetools/core run calibrate:bands  # Recompute the band vocabulary from dyes.json
+pnpm --filter @xivdyetools/core run build:oklch-hue  # Regenerate src/data/oklch-hue-table.json (not part of build)
+pnpm --filter @xivdyetools/core exec tsx scripts/build-munsell-hues.ts <real.dat>  # Regenerate the Munsell tables
 pnpm --filter @xivdyetools/core run clean
 ```
 
@@ -48,6 +50,9 @@ src/
 │   ├── dyes.json                  # 125 dyes (schema v2: 7 fields, stainID-keyed)
 │   ├── facewear_colors.json       # 11 facewear colors (not dyes)
 │   ├── presets.json               # Curated palette/harmony presets
+│   ├── munsell-hues.json          # Generated Munsell warp table (build:munsell)
+│   ├── munsell-anchors.json       # Generated Munsell anchors — TEST DATA, no runtime import
+│   ├── oklch-hue-table.json       # Generated OKLCH-hue warp table (build:oklch-hue)
 │   ├── character_colors/          # FFXIV skin/hair color tables, split per-race
 │   └── locales/                   # Generated en/ja/de/fr/ko/zh JSON (after build:locales)
 ├── services/
@@ -71,7 +76,10 @@ scripts/
 ├── fetch_dye_names.py             # Pulls XIVAPI v2 names → dyenames.csv (en/ja/de/fr only)
 ├── build-locales.ts               # YAML + CSV + dyes.json → src/data/locales/*.json
 ├── copy-locales.ts                # Copies generated locales into dist/
-└── calibrate-bands.ts             # Recomputes the band vocabulary from dyes.json (manual recalibration path)
+├── calibrate-bands.ts             # Recomputes the band vocabulary from dyes.json (manual recalibration path)
+├── build-munsell-hues.ts          # real.dat → src/data/munsell-hues.json + munsell-anchors.json
+├── build-oklch-hue-table.ts       # → src/data/oklch-hue-table.json (manual, not part of build)
+└── lib/oklch-hue-table.ts         # The OKLCH-hue derivation + its anti-drift test
 ```
 
 ## Public API
@@ -200,8 +208,15 @@ Nothing computes a synthetic ID at runtime any more. Code that filters "real dye
 ### k-d Tree (`utils/kd-tree.ts`)
 3D RGB k-d tree with index-based construction (no point-array slicing → less GC pressure). O(log n) average for nearest-neighbour queries vs O(n) linear search.
 
-### Harmony color spaces
-`HarmonyGenerator` supports both `'hue'` and `'deltaE'` matching, in any of 4 color spaces: `'hsv'` (default, fast bucket lookup), `'oklch'` (perceptually uniform, recommended), `'lch'`, `'hsl'`. DeltaE tolerance defaults differ per formula (`cie76: 40`, `ciede2000`/`cie2000`: 25).
+### Harmony color wheels
+Selection goes through `generateHarmonySlots(baseHex, type, candidates, config, options)` — the ONE implementation the web app, the Discord bot and the OG card share. Which wheel the offsets are measured on is `config.wheel`: `'rgb'` (default, today's behaviour bit for bit), `'ryb'`, `'munsell'`, `'oklch-hue'`, `'oklch-lightness'`. Read the list from `COLOR_WHEEL_IDS` / `getColorWheel(id)` and normalise anything off the wire with `normalizeColorWheelId(value)` (or `parseColorWheelId` when "unknown" must stay distinguishable from "rgb") — never hand-roll a `toLowerCase()` + membership test.
+
+`oklch-lightness` keeps the base's OKLab L and C instead of its HSV S/V (`ColorWheel.carriesBaseHsv === false`), so the selector forces ΔE ranking for it regardless of `usePerceptualMatching`.
+
+`HarmonyGenerator`'s per-type `find*Dyes()` methods still support `'hue'` and `'deltaE'` matching with an `options.colorSpace` of `'hsv'` / `'oklch'` / `'lch'` / `'hsl'`, but **`colorSpace` is deprecated since 5.2.0** — it rotates hue without carrying the base's saturation and value, which is a different answer from the one every surface shows. `'oklch'` gamut-maps (CSS Color 4) since the 5.2.0 fix wave; `'lch'` and `'hsl'` still clip per channel and can therefore change hue. DeltaE tolerance defaults differ per formula (`cie76: 40`, `ciede2000`/`cie2000`: 25, `oklab`: 0.21).
+
+### Generated wheel data
+`src/data/oklch-hue-table.json` and `src/data/munsell-hues.json` are **generated and committed**, not derived at import time (`pnpm run build:oklch-hue`, `pnpm run build:munsell <real.dat>`; neither runs as part of `build`). `src/data/munsell-anchors.json` holds the 40 raw renotation anchors and is imported by `munsell.test.ts` only — nothing at runtime reads it, so it stays out of every bundle. `scripts/lib/oklch-hue-table.test.ts` re-runs the OKLCH derivation and compares it to the committed JSON, which is the gate against the two drifting apart. A regenerated table is a deliberate re-baseline of `HarmonySelector.golden.test.ts` — put the before/after digests in the commit body.
 
 ### Spectral mixing (Kubelka-Munk)
 `SpectralMixer` wraps `spectral.js` and reflects light absorption/scattering across 380-750nm. Blue + Yellow = Green like real paint. Only `mixColors` is live — `mixMultiple`, `gradient`, and `isAvailable` were removed as uncalled (DEAD-034, 2026-08-18 audit).

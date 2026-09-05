@@ -50,6 +50,7 @@ export type {
   HarmonyOptions,
   /** @public */
   HarmonyMatchingAlgorithm,
+  /** @public */
   HarmonyColorSpace,
 } from './services/dye/HarmonyGenerator.js';
 
@@ -68,6 +69,29 @@ export {
   generateHarmonySlots,
   isKnownHarmonyType,
 } from './services/dye/HarmonySelector.js';
+
+/**
+ * Selectable colour wheels — the ONE list every surface reads. Ids are the
+ * wire format (share URL `wheel=`, the `/harmony wheel` option, the OG query).
+ */
+export type { /** @public */ ColorWheel } from './services/dye/wheels/ColorWheel.js';
+export type { ColorWheelId } from '@xivdyetools/types';
+export {
+  COLOR_WHEEL_IDS,
+  COLOR_WHEEL_TAGS,
+  DEFAULT_COLOR_WHEEL,
+  getColorWheel,
+  /**
+   * @public No in-repo consumer since the fix wave: every surface reads a
+   * wheel id through `parseColorWheelId` / `normalizeColorWheelId` (trim,
+   * lower-case, membership) rather than testing a raw string. Kept as
+   * published API — it is the type guard a consumer narrowing its own
+   * `unknown` wants, and it shipped in 5.2.0's export list.
+   */
+  isColorWheelId,
+  normalizeColorWheelId,
+  parseColorWheelId,
+} from './services/dye/wheels/ColorWheel.js';
 
 // Color converter types
 export type { /** @public */ DeltaEFormula } from './services/color/ColorConverter.js';

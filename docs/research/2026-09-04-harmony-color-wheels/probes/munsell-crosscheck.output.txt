@@ -1,0 +1,67 @@
+┌─────────┬──────────┬────────┬───────────┬───────┐
+│ (index) │ notation │ ours   │ munselljs │ delta │
+├─────────┼──────────┼────────┼───────────┼───────┤
+│ 0       │ '5R'     │ 2.51   │ 2.67      │ 0.15  │
+│ 1       │ '7.5R'   │ 8.45   │ 8.4       │ 0.05  │
+│ 2       │ '10R'    │ 14.8   │ 14.59     │ 0.21  │
+│ 3       │ '2.5YR'  │ 20.19  │ 20.5      │ 0.31  │
+│ 4       │ '5YR'    │ 26.28  │ 26.46     │ 0.18  │
+│ 5       │ '7.5YR'  │ 31.38  │ 31.36     │ 0.02  │
+│ 6       │ '10YR'   │ 37.06  │ 37.06     │ 0     │
+│ 7       │ '2.5Y'   │ 42.4   │ 42.48     │ 0.08  │
+│ 8       │ '5Y'     │ 47.99  │ 47.74     │ 0.26  │
+│ 9       │ '7.5Y'   │ 53.02  │ 53.23     │ 0.22  │
+│ 10      │ '10Y'    │ 57.91  │ 57.6      │ 0.31  │
+│ 11      │ '2.5GY'  │ 65.63  │ 65.59     │ 0.04  │
+│ 12      │ '5GY'    │ 75.06  │ 75        │ 0.06  │
+│ 13      │ '7.5GY'  │ 93.23  │ 92.97     │ 0.26  │
+│ 14      │ '10GY'   │ 116.51 │ 116.84    │ 0.33  │
+│ 15      │ '2.5G'   │ 144.63 │ 144.12    │ 0.5   │
+│ 16      │ '5G'     │ 157.25 │ 157.24    │ 0.01  │
+│ 17      │ '7.5G'   │ 163.46 │ 163.38    │ 0.07  │
+│ 18      │ '10G'    │ 168.79 │ 168.55    │ 0.24  │
+│ 19      │ '2.5BG'  │ 173.49 │ 172.46    │ 1.04  │
+│ 20      │ '5BG'    │ 177.19 │ 176.39    │ 0.81  │
+│ 21      │ '7.5BG'  │ 179.93 │ 179.64    │ 0.29  │
+│ 22      │ '10BG'   │ 182.83 │ 183.43    │ 0.6   │
+│ 23      │ '2.5B'   │ 185.33 │ 186.23    │ 0.9   │
+│ 24      │ '5B'     │ 188.88 │ 189.42    │ 0.55  │
+│ 25      │ '7.5B'   │ 194.99 │ 194.9     │ 0.09  │
+│ 26      │ '10B'    │ 200.12 │ 200.16    │ 0.03  │
+│ 27      │ '2.5PB'  │ 207.14 │ 206.92    │ 0.22  │
+│ 28      │ '5PB'    │ 214.71 │ 214.95    │ 0.24  │
+│ 29      │ '7.5PB'  │ 228.66 │ 228.7     │ 0.03  │
+│ 30      │ '10PB'   │ 245.81 │ 245.26    │ 0.54  │
+│ 31      │ '2.5P'   │ 262.31 │ 263.16    │ 0.85  │
+│ 32      │ '5P'     │ 276.72 │ 277.09    │ 0.37  │
+│ 33      │ '7.5P'   │ 297.99 │ 298.8     │ 0.81  │
+│ 34      │ '10P'    │ 313.77 │ 314.24    │ 0.47  │
+│ 35      │ '2.5RP'  │ 326.15 │ 326.87    │ 0.72  │
+│ 36      │ '5RP'    │ 337.32 │ 337.6     │ 0.28  │
+│ 37      │ '7.5RP'  │ 344.44 │ 344.81    │ 0.37  │
+│ 38      │ '10RP'   │ 350.92 │ 351.22    │ 0.3   │
+│ 39      │ '2.5R'   │ 356.84 │ 356.47    │ 0.37  │
+└─────────┴──────────┴────────┴───────────┴───────┘
+max |Δhue| = 1.04°  (gate: 1.00°)
+
+--- Gate analysis (task-6 brief: gate in-gamut rows at 1.00 deg; out-of-gamut
+    rows may differ by up to ~2 deg because munsell.js clips to sRGB) ---
+Out-of-gamut anchors per the generator (packages/core/src/data/munsell-hues.json
+records "inGamut": false per anchor; the munsell.ts wheel does not expose
+this field, matching the brief's MunsellAnchor interface): 2.5BG, 5BG,
+7.5BG, 10BG, 2.5B, 5B
+  2.5BG delta = 1.04
+  5BG   delta = 0.81
+  7.5BG delta = 0.29
+  10BG  delta = 0.60
+  2.5B  delta = 0.90
+  5B    delta = 0.55
+  max out-of-gamut |delta| = 1.04 deg (within the ~2 deg tolerance)
+
+In-gamut anchors (all remaining 34): max |delta| = 0.85 deg (2.5P), well
+under the 1.00 deg gate.
+
+Conclusion: the raw script's exit(1) reflects only the naive "all anchors
+<= 1.00 deg" check, which does not distinguish gamut status. Applying the
+brief's actual two-tier gate (in-gamut <= 1.00 deg, out-of-gamut <= ~2 deg),
+the cross-check PASSES: in-gamut max = 0.85 deg, out-of-gamut max = 1.04 deg.

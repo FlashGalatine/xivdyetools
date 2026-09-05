@@ -14,7 +14,12 @@ import {
   generateHarmonySlots,
   isKnownHarmonyType,
   normalizeMatchingMethod,
+  DEFAULT_COLOR_WHEEL,
+  getColorWheel,
+  normalizeColorWheelId,
+  parseColorWheelId,
   type HarmonySelectionConfig,
+  type ColorWheelId,
 } from '@xivdyetools/core';
 import { ShareService } from '@services/share-service';
 import { BaseComponent } from '@components/base-component';
@@ -163,6 +168,9 @@ export class HarmonyTool extends BaseComponent {
   private usePerceptualMatching: boolean = false;
   private matchingMethod: MatchingMethod = 'ciede2000';
   private preventDuplicates: boolean = true;
+  private wheel: ColorWheelId = DEFAULT_COLOR_WHEEL;
+  /** Wheel angles the ring draws: the base first, then each slot's `wheelHue`. */
+  private slotAngles: number[] = [];
 
   // Child components (desktop left panel)
   private dyeSelector: DyeSelector | null = null;
@@ -329,6 +337,7 @@ export class HarmonyTool extends BaseComponent {
     this.matchingMethod = normalizeMatchingMethod(harmonyConfig.matchingMethod ?? 'ciede2000');
     this.preventDuplicates = harmonyConfig.preventDuplicates ?? true;
     this.dyeFiltersConfig = harmonyConfig.dyeFilters ?? { ...DEFAULT_DYE_FILTERS };
+    this.wheel = normalizeColorWheelId(harmonyConfig.wheel);
 
     // Note: Market config (showPrices, server) is now managed by MarketBoardService
     // which subscribes to ConfigController automatically. MarketBoard components
@@ -358,7 +367,8 @@ export class HarmonyTool extends BaseComponent {
           (config.matchingMethod !== undefined && this.matchingMethod !== config.matchingMethod) ||
           this.preventDuplicates !== (config.preventDuplicates ?? true) ||
           (config.companionDyesCount !== undefined &&
-            this.companionDyesCount !== config.companionDyesCount);
+            this.companionDyesCount !== config.companionDyesCount) ||
+          (config.wheel !== undefined && this.wheel !== config.wheel);
 
         // The companion count lives in the sidebar now — the tool's own
         // left-panel slider was orphaned when config moved behind the gear.
@@ -374,6 +384,15 @@ export class HarmonyTool extends BaseComponent {
         }
         this.preventDuplicates = config.preventDuplicates ?? true;
         this.dyeFiltersConfig = newDyeFilters;
+        const nextWheel = normalizeColorWheelId(config.wheel);
+        if (nextWheel !== this.wheel) {
+          // A pin is fixed to a SLOT INDEX, and a slot index is a different
+          // target hue on a different wheel — so a pin carried across a wheel
+          // change lands on a colour it was never chosen for. The harmony-type
+          // change already clears pins for exactly this reason.
+          this.swappedDyes.clear();
+        }
+        this.wheel = nextWheel;
 
         if ((needsRerender || algorithmChanged || filtersChanged) && this.selectedDye) {
           this.generateHarmonies();
@@ -441,6 +460,7 @@ export class HarmonyTool extends BaseComponent {
     const harmonyParam = params.get('harmony');
     const algoParam = params.get('algo');
     const perceptualParam = params.get('perceptual');
+    const wheelParam = params.get('wheel');
     const versionParam = params.get('v');
 
     // Debug: Log what we're reading from the URL
@@ -449,6 +469,7 @@ export class HarmonyTool extends BaseComponent {
       harmonyParam,
       algoParam,
       perceptualParam,
+      wheelParam,
       versionParam,
     });
 
@@ -508,6 +529,45 @@ export class HarmonyTool extends BaseComponent {
 
       // Sync with ConfigController so sidebar updates
       configController.setConfig('harmony', { strictMatching: this.usePerceptualMatching });
+    }
+
+    // Which wheel the palette was generated on travels with the link — a card
+    // that ignored it would show dyes the page never shows (45% of palettes).
+    //
+    // On a SHARE LINK the rule is unconditional: an absent `wheel` is the link
+    // saying "rgb", not "keep whatever you had", because applying it only when
+    // present meant a default-wheel link opened in a session with `munsell`
+    // persisted rendered a Munsell palette under someone else's RGB link.
+    //
+    // But the guard above admits more than share links — a BARE `?dye=` is an
+    // ordinary in-app navigation, from two paths: `handoffTo('harmony', dye)`
+    // ("send this dye to the Harmony Explorer") and `RouterService`'s
+    // `PRESERVED_PARAMS`, which keeps `dye` when the user leaves Harmony and
+    // comes back. Treating those as a link that says rgb reverted a Munsell
+    // user to RGB, cleared their pins, and PERSISTED it — the wheel would have
+    // been the only setting an in-app navigation could clobber, since `algo`
+    // and `perceptual` above are each guarded by `if (param)`.
+    //
+    // So: any share marker at all makes it a link (`v=1` alone included — that
+    // is what `ShareService` stamps on every URL it generates); none of them
+    // means the base dye travelled on its own and nothing else was asked for.
+    const isShareLink =
+      harmonyParam !== null ||
+      algoParam !== null ||
+      perceptualParam !== null ||
+      versionParam !== null ||
+      wheelParam !== null;
+    if (isShareLink) {
+      const parsedWheel = parseColorWheelId(wheelParam);
+      if (wheelParam && !parsedWheel) {
+        logger.warn(`[HarmonyTool] Unknown colour wheel in URL: ${wheelParam} — using rgb`);
+      }
+      const wheel = parsedWheel ?? DEFAULT_COLOR_WHEEL;
+      this.wheel = wheel;
+      // Same reasoning as the config subscription: a pin belongs to the wheel
+      // it was chosen on.
+      this.swappedDyes.clear();
+      configController.setConfig('harmony', { wheel });
     }
 
     // A bare-colour base: `hex` is the declared slot for a custom base,
@@ -1099,6 +1159,8 @@ export class HarmonyTool extends BaseComponent {
       );
       wheel.harmonyColors = matchedDyes.map((dye) => dye.hex);
       wheel.harmonyDyes = matchedDyes;
+      wheel.ringStops = [...getColorWheel(this.wheel).ringStops(72)];
+      wheel.nodeAngles = this.slotAngles;
     } else {
       // Empty state - show placeholder wheel
       wheel.setAttribute('empty', '');
@@ -1415,6 +1477,7 @@ export class HarmonyTool extends BaseComponent {
       matchingMethod: this.matchingMethod,
       companionCount: this.companionDyesCount,
       preventDuplicates: this.preventDuplicates,
+      wheel: this.wheel,
     };
 
     const slots = generateHarmonySlots(
@@ -1429,6 +1492,11 @@ export class HarmonyTool extends BaseComponent {
         pinned: this.swappedDyes,
       }
     );
+
+    this.slotAngles = [
+      getColorWheel(this.wheel).hueOf(this.selectedDye.hex),
+      ...slots.map((s) => s.wheelHue),
+    ];
 
     this.slotDyes = [];
     // Everything the grid put on screen, in render order. `fetchPricesFor-
@@ -1789,6 +1857,12 @@ export class HarmonyTool extends BaseComponent {
       harmony: this.selectedHarmonyType,
       algo: this.matchingMethod,
       perceptual: this.usePerceptualMatching,
+      // Unconditional, like `algo` and `perceptual`. Eliding the default only
+      // works while the READER also applies rgb for an absent wheel, and a
+      // link is read by someone else's session, with someone else's persisted
+      // wheel — so an elided default used to render a Munsell palette under an
+      // RGB sharer's link. Both halves of that contract are explicit now.
+      wheel: this.wheel,
     };
   }
 
@@ -1821,6 +1895,7 @@ export class HarmonyTool extends BaseComponent {
       showRgb: boolean;
       showHsv: boolean;
       strictMatching: boolean;
+      wheel: ColorWheelId;
     }>
   ): void {
     let needsRerender = false;
@@ -1839,6 +1914,12 @@ export class HarmonyTool extends BaseComponent {
     // which triggers regenerateHarmonies() with the updated usePerceptualMatching flag
     if (config.strictMatching !== undefined) {
       logger.info(`[HarmonyTool] setConfig: strictMatching -> ${config.strictMatching}`);
+    }
+
+    // Handle colour wheel change (the ConfigController subscription does the
+    // actual work — this only logs, matching strictMatching above).
+    if (config.wheel !== undefined) {
+      logger.info(`[HarmonyTool] setConfig: wheel -> ${config.wheel}`);
     }
 
     // Handle display option changes (showNames, showHex, showRgb, showHsv)

@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.7.0] - 2026-09-05
+
+### Added
+
+- **Color wheel selector in Harmony's options.** A new setting lets you pick which
+  wheel harmony angles are measured on: RGB (the existing screen wheel, still the
+  default), RYB (the painter's wheel — red's complement is green), Munsell (the
+  perceptual wheel behind the JIS colour standard), OKLCH hue (perceptually even hue
+  spacing) or OKLCH lightness (every harmony partner held at the base dye's lightness).
+  Backed by `@xivdyetools/core` 5.2.0's `ColorWheel` selector.
+- The colour wheel ring and the harmony dots are now drawn from the selected wheel's
+  `ringStops`/`hueOf`, so the picture matches the dyes the tool suggests — on RYB, the
+  dot opposite red sits at green, not cyan.
+- Harmony share URLs **always** carry `?wheel=`, `rgb` included — like `algo` and
+  `perceptual`, and unlike the first cut of this feature, which elided the default.
+  `handleDeepLink` correspondingly applies the wheel for **every** share link, so an
+  absent `wheel` now means rgb rather than "keep whatever the reader had persisted": a
+  default-wheel link opened in a session with `munsell` selected used to render a Munsell
+  palette under someone else's RGB link. An empty or unrecognised value falls back to rgb
+  with a warning. (The OG image URL still elides the default — the page and the cache key
+  agree that absent means rgb.)
+- Pinned (hand-swapped) dyes are cleared when the colour wheel changes, from the sidebar
+  or from a deep link. A pin is fixed to a slot INDEX, and a slot index is a different
+  target hue on a different wheel, so a carried-over pin lands on a colour it was never
+  chosen for — the harmony-type change already cleared pins for exactly this reason.
+- A persisted `harmony.wheel` is normalised on load (`ConfigController`, beside
+  `matchingMethod`) through core's `normalizeColorWheelId`, so every reader downstream
+  can treat a config wheel as a valid id rather than each re-validating it.
+
 ## [5.6.1] - 2026-09-04
 
 ### Fixed

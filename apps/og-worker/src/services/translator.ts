@@ -5,6 +5,7 @@ import {
   TranslationProvider,
 } from '@xivdyetools/core';
 import type { ClanKey, Dye, HarmonyTypeKey, LocaleCode, RaceKey, VisionType } from '@xivdyetools/types';
+import type { ColorWheelId } from '@xivdyetools/core';
 
 /**
  * Module-scoped translator with all 6 locales eagerly preloaded.
@@ -43,6 +44,11 @@ export function harmonyToKey(harmony: string): HarmonyTypeKey {
  */
 export function getLocalizedHarmonyName(harmony: string, locale: LocaleCode): string {
   return ogTranslator.getHarmonyType(harmonyToKey(harmony), locale);
+}
+
+/** Localised colour-wheel name, the same core key the web app and the bot print. */
+export function getLocalizedColorWheelName(id: ColorWheelId, locale: LocaleCode): string {
+  return ogTranslator.getColorWheelName(id, locale);
 }
 
 /** The localized lens name — the same shipped key the embed uses. */

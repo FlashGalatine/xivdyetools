@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-09-05
+
+### Added
+
+- `ColorWheelId` — the five selectable Harmony Explorer colour wheels (`rgb`, `ryb`,
+  `munsell`, `oklch-hue`, `oklch-lightness`), defined here so `@xivdyetools/core`,
+  `bot-logic`, `web-app`, `discord-worker` and `og-worker` all import the same literal
+  union instead of five hand-copied ones.
+- `LocaleData.colorWheels?` — optional per-locale display names for the five wheels,
+  following the same optional-field pattern as `facewearColors?` in 3.1.0 so a locale
+  file generated before this still type-checks.
+
 ## [3.1.0] - 2026-09-03
 
 ### Added

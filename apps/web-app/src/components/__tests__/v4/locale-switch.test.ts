@@ -33,6 +33,7 @@ const languageServiceMock = {
   getCurrency: (currency: string) => `${locale}:CUR:${currency}`,
   // The core-vocabulary lookups the sweep's components reach for.
   getHarmonyType: (key: string) => `${locale}:HARMONY:${key}`,
+  getColorWheelName: (id: string) => `${locale}:WHEEL:${id}`,
   getVisionType: (key: string) => `${locale}:VISION:${key}`,
   getRace: (key: string) => `${locale}:RACE:${key}`,
   getClan: (key: string) => `${locale}:CLAN:${key}`,

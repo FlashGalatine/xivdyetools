@@ -2,7 +2,7 @@
   "locale": "en",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-09-03T12:01:42.830Z",
+    "generated": "2026-09-05T13:38:20.756Z",
     "dyeCount": 125
   },
   "labels": {
@@ -185,6 +185,13 @@
     "monochromatic": "Monochromatic",
     "compound": "Compound",
     "shades": "Shades"
+  },
+  "colorWheels": {
+    "rgb": "RGB (screen)",
+    "ryb": "RYB (artist's)",
+    "munsell": "Munsell (JIS)",
+    "oklch-hue": "OKLCH hue (perceptual spacing)",
+    "oklch-lightness": "OKLCH lightness (keeps brightness)"
   },
   "visionTypes": {
     "normal": "Normal Vision",

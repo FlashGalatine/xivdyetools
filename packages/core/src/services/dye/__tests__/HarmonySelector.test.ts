@@ -10,10 +10,12 @@
 
 import { describe, it, expect } from 'vitest';
 import { generateHarmonySlots, isKnownHarmonyType } from '../HarmonySelector.js';
+import type { HarmonySelectionConfig } from '../HarmonySelector.js';
 import { HARMONY_OFFSETS } from '../../../constants/index.js';
 import { DyeService } from '../../DyeService.js';
 import dyeDatabase from '../../../data/dyes.json' with { type: 'json' };
 import { ColorService } from '../../ColorService.js';
+import { ColorConverter } from '../../color/ColorConverter.js';
 import type { Dye } from '@xivdyetools/types';
 
 const svc = new DyeService(dyeDatabase);
@@ -290,6 +292,101 @@ describe('generateHarmonySlots', () => {
       expect(slot.deviance).toBeCloseTo(angular, 5);
       // Degrees, not ΔE units: a hue distance can never exceed 180.
       expect(slot.deviance).toBeLessThanOrEqual(180);
+    });
+  });
+
+  describe('colour wheel', () => {
+    const ALL_DYES = svc.getAllDyes();
+    const base = (config: Partial<HarmonySelectionConfig> = {}) =>
+      generateHarmonySlots(RED.hex, 'complementary', ALL_DYES, { ...PERCEPTUAL, preventDuplicates: true, ...config }, {
+        excludeItemIDs: [RED.itemID],
+      });
+
+    it('defaults to the RGB wheel: unset and rgb answer identically, with wheelHue = targetHue', () => {
+      const unset = base();
+      const rgb = base({ wheel: 'rgb' });
+      expect(rgb.map((s) => s.dye?.itemID)).toEqual(unset.map((s) => s.dye?.itemID));
+      for (const s of unset) expect(s.wheelHue).toBe(s.targetHue);
+    });
+
+    it('exposes the ring angle separately from the sRGB hue on a warped wheel', () => {
+      const [slot] = base({ wheel: 'ryb' });
+      const baseWheelHue = ColorService.hexToHsv(RED.hex).h; // Dalamud Red is near sRGB 0°, so ≈ RYB 0°
+      expect(Math.abs(slot.wheelHue - ((baseWheelHue + 180) % 360))).toBeLessThan(5);
+      expect(slot.targetHue).not.toBeCloseTo(slot.wheelHue, 0);
+    });
+
+    it("chooses a different complement for a saturated red on RYB than on RGB", () => {
+      expect(base({ wheel: 'ryb' })[0].dye?.itemID).not.toBe(base()[0].dye?.itemID);
+    });
+
+    it.each(['ryb', 'munsell', 'oklch-hue', 'oklch-lightness'] as const)(
+      'keeps a near-grey base near-grey on %s',
+      (wheel) => {
+        // Snow White itself is HSV s≈8.77 (not 0), and RYB/Munsell/oklch-hue
+        // carry the base's own S/V onto the rotated hue by design, so the
+        // ideal can never read BELOW the base's own saturation. 15 is well
+        // under the file's existing "near-neutral" bar (20, above) and still
+        // catches a wheel that made a near-grey base noticeably chromatic.
+        const slots = generateHarmonySlots(WHITE.hex, 'triadic', ALL_DYES, { ...PERCEPTUAL, wheel }, {
+          excludeItemIDs: [WHITE.itemID],
+        });
+        for (const s of slots) expect(ColorService.hexToHsv(s.targetHex).s).toBeLessThan(15);
+      }
+    );
+
+    it('rejects an unknown wheel loudly rather than falling back to RGB', () => {
+      expect(() => base({ wheel: 'cmyk' as never })).toThrow(RangeError);
+    });
+
+    /**
+     * `usePerceptualMatching: false` ranks by angular HSV-hue distance to
+     * `targetHue`. That only means anything for a wheel whose target carries
+     * the base's S/V — for `oklch-lightness`, whose whole purpose is to keep
+     * the base's OKLab L and C, hue-only ranking throws away the very property
+     * the wheel exists for and hands back a partner at a completely different
+     * lightness. So that wheel is ranked in ΔE regardless of the toggle.
+     */
+    describe('the lightness wheel ranks by ΔE regardless of the strict-matching toggle', () => {
+      const GUNMETAL = ALL_DYES.find((d) => d.name === 'Gunmetal Black')!;
+
+      const hueOnly = (wheel: 'rgb' | 'oklch-lightness') =>
+        generateHarmonySlots(
+          GUNMETAL.hex,
+          'complementary',
+          ALL_DYES,
+          {
+            usePerceptualMatching: false,
+            matchingMethod: 'ciede2000',
+            preventDuplicates: true,
+            wheel,
+          },
+          { excludeItemIDs: [GUNMETAL.itemID] }
+        );
+
+      it('scores oklch-lightness slots in ΔE units, not degrees', () => {
+        const [slot] = hueOnly('oklch-lightness');
+        expect(slot.dye).not.toBeNull();
+        expect(slot.deviance).toBeCloseTo(
+          ColorService.getDistanceForMethod(slot.targetHex, slot.dye!.hex, 'ciede2000'),
+          9
+        );
+      });
+
+      it('keeps the chosen dye at the base lightness (what the wheel is for)', () => {
+        const [slot] = hueOnly('oklch-lightness');
+        const baseL = ColorConverter.hexToOklch(GUNMETAL.hex).L;
+        const gotL = ColorConverter.hexToOklch(slot.dye!.hex).L;
+        expect(Math.abs(gotL - baseL)).toBeLessThan(0.15);
+      });
+
+      it('still ranks the RGB wheel by degrees with the toggle off', () => {
+        const [slot] = hueOnly('rgb');
+        const chosenHue = ColorService.hexToHsv(slot.dye!.hex).h;
+        const diff = Math.abs(chosenHue - slot.targetHue);
+        expect(slot.deviance).toBeCloseTo(Math.min(diff, 360 - diff), 5);
+        expect(slot.deviance).toBeLessThanOrEqual(180);
+      });
     });
   });
 });

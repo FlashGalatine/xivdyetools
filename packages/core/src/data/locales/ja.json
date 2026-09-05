@@ -2,7 +2,7 @@
   "locale": "ja",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-09-03T12:01:42.833Z",
+    "generated": "2026-09-05T13:38:20.759Z",
     "dyeCount": 125
   },
   "labels": {
@@ -185,6 +185,13 @@
     "monochromatic": "単色",
     "compound": "複合",
     "shades": "シェード"
+  },
+  "colorWheels": {
+    "rgb": "RGB（画面）",
+    "ryb": "RYB（画家の色相環）",
+    "munsell": "マンセル（JIS）",
+    "oklch-hue": "OKLCH 色相（知覚的な間隔）",
+    "oklch-lightness": "OKLCH 明度（明るさを保持）"
   },
   "visionTypes": {
     "normal": "正常視覚",

@@ -13,7 +13,7 @@ import { dyeService } from './dye-service-wrapper';
 import type { Dye } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import type { ToolId } from './router-service';
-import type { MatchingMethod } from '@xivdyetools/core';
+import type { MatchingMethod, ColorWheelId } from '@xivdyetools/core';
 import type { MixingMode, InterpolationMode } from '@shared/tool-config-types';
 
 // Local harmony type definition (matches @components/v4/v4-color-wheel)
@@ -61,6 +61,7 @@ export interface HarmonyShareParams {
   harmony: HarmonyType;
   algo?: MatchingMethod;
   perceptual?: boolean;
+  wheel?: ColorWheelId; // always emitted; absent on a link means rgb
 }
 
 export interface GradientShareParams {

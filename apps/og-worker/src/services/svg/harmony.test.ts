@@ -29,6 +29,48 @@ describe('generateHarmonyOG (15E band)', () => {
     expect(svg).not.toContain('?dye=');
   });
 
+  describe('a non-default wheel', () => {
+    /** The hexes the card printed, in band order — which dyes were CHOSEN. */
+    const picked = (svg: string): string[] =>
+      [...svg.matchAll(/>(#[0-9A-F]{6})</g)].map((m) => m[1]);
+
+    it('changes the dyes, not just the caption', () => {
+      const rgb = generateHarmonyOG({ dyeId: 43, harmonyType: 'complementary' });
+      const ryb = generateHarmonyOG({ dyeId: 43, harmonyType: 'complementary', wheel: 'ryb' });
+      const rgbDyes = picked(rgb);
+      const rybDyes = picked(ryb);
+      expect(rgbDyes.length).toBeGreaterThan(1);
+      // The SET, not the string: a caption-only difference would leave these equal.
+      expect(new Set(rybDyes)).not.toEqual(new Set(rgbDyes));
+    });
+
+    /**
+     * The deck carries the localised wheel name, and the X frame DROPS the
+     * deck — so on Twitter the two cards were pixel-identical apart from the
+     * dyes, with nothing saying which wheel produced them. The footer-right
+     * slot already names the algorithm; the wheel joins it there as a
+     * non-localised tag, the same class of token as `ΔE2000`.
+     */
+    it('tags the footer even in the X frame, where the deck is gone', () => {
+      const ryb = generateHarmonyOG({
+        dyeId: 43,
+        harmonyType: 'complementary',
+        wheel: 'ryb',
+        frame: 'x',
+      });
+      const rgb = generateHarmonyOG({ dyeId: 43, harmonyType: 'complementary', frame: 'x' });
+      expect(ryb).toContain('RYB');
+      expect(rgb).not.toContain('RYB');
+      // The algorithm tag is still there beside it.
+      expect(ryb).toContain('ΔE2000');
+    });
+
+    it('leaves the footer alone on the default wheel', () => {
+      const rgb = generateHarmonyOG({ dyeId: 43, harmonyType: 'complementary', wheel: 'rgb' });
+      expect(rgb).not.toContain('RGB');
+    });
+  });
+
   it('the Δ is match → computed ideal (never four-reds on a correct tetrad)', () => {
     const svg = generateHarmonyOG({ dyeId: stainId, harmonyType: 'tetradic' });
     // Every match tag is a Δ value

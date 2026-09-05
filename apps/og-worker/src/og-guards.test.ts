@@ -553,4 +553,68 @@ describe('/og/* cache key: card generation and the reserved default routes', () 
     expect(renderOGImage).toHaveBeenCalledTimes(2);
     expect(caches.store.size).toBe(2);
   });
+
+  /**
+   * `?wheel=` picks the harmony card's GEOMETRY — a validated five-value enum
+   * like `algo` — so a non-default wheel must key like `mode` does, and the
+   * default (`rgb`) must elide from the key like `algo`'s `DEFAULT_MATCHING_METHOD`
+   * does, so `wheel=rgb` and absent share the one entry a card that ignored
+   * the query would otherwise silently reuse for a different wheel's dyes.
+   */
+  it('a non-default wheel takes its own cache entry; the default wheel shares the entry with absent', async () => {
+    const absent = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+    expect(absent.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(caches.store.size).toBe(1);
+
+    const rgb = await app.request('/og/harmony/1/complementary?wheel=rgb', {}, TEST_ENV, execCtx);
+    expect(rgb.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+    expect(caches.store.size).toBe(1);
+
+    const ryb = await app.request('/og/harmony/1/complementary?wheel=ryb', {}, TEST_ENV, execCtx);
+    expect(ryb.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(renderOGImage).toHaveBeenCalledTimes(2);
+    expect(caches.store.size).toBe(2);
+  });
+
+  /**
+   * `wheel` is an ALLOWED key on every /og/* route (the allowlist is global)
+   * but only the harmony card reads it — the same relationship `mode` has with
+   * the two mixer routes. Keying on it everywhere let `?wheel=` mint a fresh,
+   * unauthenticated resvg raster of an identical gradient/mixer/contrast card
+   * for each of the five ids, five times the key space for one picture.
+   */
+  it('a wheel on a route that cannot read it shares the bare entry', async () => {
+    const bare = await app.request('/og/gradient/43/44/5', {}, TEST_ENV, execCtx);
+    expect(bare.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(caches.store.size).toBe(1);
+
+    const withWheel = await app.request('/og/gradient/43/44/5?wheel=ryb', {}, TEST_ENV, execCtx);
+    expect(withWheel.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+    expect(caches.store.size).toBe(1);
+  });
+
+  /**
+   * Controller ruling: `wheel` validates case-insensitively (matching the web
+   * app, which accepts `wheel=MUNSELL`) and the cache key is built from the
+   * LOWERCASED value, so `?wheel=RYB` and `?wheel=ryb` must share one entry.
+   */
+  it('?wheel=RYB keys the cache the same as ?wheel=ryb', async () => {
+    const lower = await app.request('/og/harmony/1/complementary?wheel=ryb', {}, TEST_ENV, execCtx);
+    expect(lower.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(caches.store.size).toBe(1);
+
+    const upper = await app.request('/og/harmony/1/complementary?wheel=RYB', {}, TEST_ENV, execCtx);
+    expect(upper.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+    expect(caches.store.size).toBe(1);
+  });
 });

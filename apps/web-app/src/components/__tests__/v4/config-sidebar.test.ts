@@ -16,6 +16,7 @@ vi.mock('@services/index', () => ({
     t: (key: string) => key,
     tInterpolate: (key: string) => key,
     getHarmonyType: (key: string) => `core:harmony:${key}`,
+    getColorWheelName: (id: string) => `core:wheel:${id}`,
     getRace: (key: string) => `core:race:${key}`,
     getClan: (key: string) => `core:clan:${key}`,
     getCurrentLocale: () => 'en',

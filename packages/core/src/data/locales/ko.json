@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-09-03T12:01:42.836Z",
+    "generated": "2026-09-05T13:38:20.762Z",
     "dyeCount": 125
   },
   "labels": {
@@ -185,6 +185,13 @@
     "monochromatic": "단색",
     "compound": "복합",
     "shades": "명암"
+  },
+  "colorWheels": {
+    "rgb": "RGB (화면)",
+    "ryb": "RYB (화가의 색상환)",
+    "munsell": "먼셀 (JIS)",
+    "oklch-hue": "OKLCH 색상 (지각적 간격)",
+    "oklch-lightness": "OKLCH 명도 (밝기 유지)"
   },
   "visionTypes": {
     "normal": "정상 시력",

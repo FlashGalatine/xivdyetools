@@ -117,13 +117,19 @@ for.
 
 **OG image routes** (return `image/png`). Every route takes `?lang=` (the picture
 localizes only when asked) and `?frame=x` (the 400×210 X frame; `twitter:image`
-carries it). `lang`, `frame`, and `algo` are the *only* query keys any `/og/*`
-request may carry (2026-08-29 FINDING-024, OG-4) — any other key gets a `404`
-before the cache lookup or a render, without echoing the key back. A *present*
-`algo` is also validated against `VALID_ALGORITHMS` by that same guard, on
-every route — not just the five below that read it — so `400
-{"error":"Invalid algorithm"}` for a bad spelling no longer depends on a
-route reading the param at all (ruling S7-R7):
+carries it). `lang`, `frame`, `algo`, `mode` and `wheel` are the *only* query keys any
+`/og/*` request may carry (2026-08-29 FINDING-024, OG-4) — any other key gets a
+`404` before the cache lookup or a render, without echoing the key back. The
+allowlist is global but the readers are not: `lang` and `frame` are read on
+every route, `algo` by the five algo-aware routes below, `mode` only by the two
+mixer routes, `wheel` only by `/og/harmony/*`. A *present* `algo`, `mode` or
+`wheel` is validated by that same guard on every route — not just the ones that
+read it — so `400 {"error":"Invalid algorithm"}` / `"Invalid mixing mode"` /
+`"Invalid color wheel"` for a bad spelling no longer depends on a route reading
+the param at all (ruling S7-R7). Conversely `ogCacheKey` keys `wheel` **only on
+`/og/harmony/*`**: an allowed key must not multiply the cache entries of a card
+that ignores it, which is the FINDING-024 key-space rule read the other way
+round:
 
 | Pattern | Notes |
 |---|---|
@@ -182,15 +188,23 @@ spellings that decode alike already route alike, so keying on the raw pathname l
 spelling buy its own entry for the same card), with a trailing `.png` stripped from that
 path the same way the routes strip it (ruling S7-R13 — `.png` is optional everywhere, so
 the suffixed and suffix-less spellings of one card must share one entry, not two) + the
-*resolved* `lang` + the *resolved* `frame` + the *raw* `algo` (2026-08-29 FINDING-024, OG-4) — not the full URL. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary, even on a route that never reads `algo` itself — and an EMPTY `algo` (`?algo=` or bare `?algo`,
+*resolved* `lang` + the *resolved* `frame` + the *raw* `algo` + the *raw* `mode` (mixer
+routes) + the *normalised* `wheel`, and that last one **only on `/og/harmony/*`** — the
+route that reads it (2026-08-29 FINDING-024, OG-4) — not the full URL. `wheel` is the one
+key that IS normalised before it keys, because the five ids are the whole vocabulary and
+`parseColorWheelId` folds case exactly as the card's own reader does, so `?wheel=RYB` and
+`?wheel=ryb` cannot buy two entries for one picture; `rgb` (the default) elides, sharing
+the absent-wheel entry. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary, even on a route that never reads `algo` itself — and an EMPTY `algo` (`?algo=` or bare `?algo`,
 both of which `URLSearchParams.get` reports as `''`) counts as absent there and here, not a
 validation failure, matching what the five algo-aware routes already did with
 `c.req.query('algo') || DEFAULT_MATCHING_METHOD` (ruling S7-R10). The key also carries `CARD_VERSION` — this worker'''s own `package.json` version
 (BUG-025) — because nothing else in it changes when the CARD does, and the stored response says
 `s-maxage=604800` while neither deploy workflow purges: a band-layout revision or a renamed dye
 kept serving the pre-deploy PNG from every colo that already had it. Combined with the query-key
-allowlist above, the key space is bounded to (pathname × lang × frame × algo × version) — a client
-can no longer defeat the cache by appending an arbitrary throwaway param.
+allowlist above, the key space is bounded to (pathname × lang × frame × algo × mode × wheel ×
+version), and `mode`/`wheel` only widen it on the routes that read them — a client can no longer
+defeat the cache by appending an arbitrary throwaway param, nor multiply one card's entries with a
+parameter it ignores.
 
 The `.png` strip is **not** applied to `/og/:tool/default.png` or `/og/default.png`, where the
 suffix is mandatory (og-7): stripping it there meant a cache-warm `/og/budget/default.png` left an

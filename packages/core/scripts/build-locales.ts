@@ -203,6 +203,7 @@ function buildLocaleData(
     acquisitions: buildAcquisitions(locale),
     currencies: buildCurrencies(locale),
     harmonyTypes: buildHarmonyTypes(locale),
+    colorWheels: buildColorWheels(locale),
     visionTypes: buildVisionTypes(locale),
     visions: buildVisionsShort(locale),
     tools: buildTools(locale),
@@ -599,6 +600,55 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
     },
   };
 
+  return translations[locale];
+}
+
+/** Colour-wheel names for the Harmony Explorer's wheel selector (spec §1). */
+function buildColorWheels(locale: LocaleCode): Record<string, string> {
+  const translations: Record<LocaleCode, Record<string, string>> = {
+    en: {
+      rgb: 'RGB (screen)',
+      ryb: "RYB (artist's)",
+      munsell: 'Munsell (JIS)',
+      'oklch-hue': 'OKLCH hue (perceptual spacing)',
+      'oklch-lightness': 'OKLCH lightness (keeps brightness)',
+    },
+    ja: {
+      rgb: 'RGB（画面）',
+      ryb: 'RYB（画家の色相環）',
+      munsell: 'マンセル（JIS）',
+      'oklch-hue': 'OKLCH 色相（知覚的な間隔）',
+      'oklch-lightness': 'OKLCH 明度（明るさを保持）',
+    },
+    de: {
+      rgb: 'RGB (Bildschirm)',
+      ryb: 'RYB (Malerfarbkreis)',
+      munsell: 'Munsell (JIS)',
+      'oklch-hue': 'OKLCH-Farbton (wahrnehmungsgleiche Abstände)',
+      'oklch-lightness': 'OKLCH-Helligkeit (behält die Helligkeit)',
+    },
+    fr: {
+      rgb: 'RVB (écran)',
+      ryb: 'RJB (roue des peintres)',
+      munsell: 'Munsell (JIS)',
+      'oklch-hue': 'Teinte OKLCH (espacement perceptuel)',
+      'oklch-lightness': 'Luminosité OKLCH (conserve la luminosité)',
+    },
+    ko: {
+      rgb: 'RGB (화면)',
+      ryb: 'RYB (화가의 색상환)',
+      munsell: '먼셀 (JIS)',
+      'oklch-hue': 'OKLCH 색상 (지각적 간격)',
+      'oklch-lightness': 'OKLCH 명도 (밝기 유지)',
+    },
+    zh: {
+      rgb: 'RGB（屏幕）',
+      ryb: 'RYB（画家色环）',
+      munsell: '孟塞尔（JIS）',
+      'oklch-hue': 'OKLCH 色相（感知均匀间距）',
+      'oklch-lightness': 'OKLCH 明度（保持亮度）',
+    },
+  };
   return translations[locale];
 }
 

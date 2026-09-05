@@ -16,6 +16,8 @@ import type {
   SheetKey,
   RaceKey,
   ClanKey,
+  ColorWheelId,
+  LocaleData,
 } from '@xivdyetools/types';
 import {
   CONSOLIDATED_DYES,
@@ -252,6 +254,16 @@ export class TranslationProvider {
 
     // Final fallback: format key
     return this.formatKey(key);
+  }
+
+  /**
+   * Localised display name of a Harmony Explorer colour wheel, with English
+   * fallback and finally the id itself, mirroring {@link getHarmonyType}.
+   */
+  getColorWheelName(id: ColorWheelId, locale: LocaleCode): string {
+    const pick = (data: LocaleData | null): string | undefined =>
+      data?.colorWheels && Object.hasOwn(data.colorWheels, id) ? data.colorWheels[id] : undefined;
+    return pick(this.registry.getLocale(locale)) ?? pick(this.registry.getLocale('en')) ?? id;
   }
 
   /**

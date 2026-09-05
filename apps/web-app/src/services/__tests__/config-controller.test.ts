@@ -110,6 +110,30 @@ describe('ConfigController', () => {
       expect(config.matchingMethod).toBe(getDefaultConfig('harmony').matchingMethod);
     });
 
+    /**
+     * A persisted `harmony.wheel` is whatever localStorage happens to hold —
+     * an upper-case spelling copied out of a share URL, an id from a build
+     * that has since been rolled back, a hand-edited value. Normalising it
+     * here, beside `matchingMethod`, is what lets the tool and the sidebar
+     * treat a config wheel as a valid id rather than each re-validating it.
+     */
+    it.each([
+      ['MUNSELL', 'munsell'],
+      [' ryb ', 'ryb'],
+      ['cmyk', 'rgb'],
+      ['', 'rgb'],
+      [42, 'rgb'],
+    ])('normalises a persisted wheel %j to %s on load', (stored, expected) => {
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockReturnValue({
+        harmonyType: 'analogous',
+        wheel: stored,
+      });
+
+      const controller = ConfigController.getInstance();
+
+      expect(controller.getConfig('harmony').wheel).toBe(expected);
+    });
+
     // REFACTOR-010: the merge was `{ ...defaults, ...stored }` -- SHALLOW -- so
     // a nested object in storage replaced its default WHOLESALE and never
     // gained keys added to the default later.

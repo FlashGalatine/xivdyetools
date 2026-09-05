@@ -442,6 +442,8 @@ This package lives in the [xivdyetools monorepo](https://github.com/FlashGalatin
 
 MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
 
+Third-party data attributions (the Munsell hue wheel) are in [NOTICE](./NOTICE).
+
 ## Legal Notice
 
 **FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**

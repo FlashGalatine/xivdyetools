@@ -267,6 +267,42 @@ describe('GET /og/mixer/:dyeAId/:dyeBId/:ratio', () => {
 });
 
 // ============================================================================
+// OG Image Routes: Harmony ?wheel= (the Harmony Explorer's colour wheel)
+// ============================================================================
+
+describe('?wheel= (the Harmony Explorer\'s colour wheel)', () => {
+  it.each(['rgb', 'ryb', 'munsell', 'oklch-hue', 'oklch-lightness'])('renders for wheel=%s', async (wheel) => {
+    const res = await app.request(`/og/harmony/43/complementary?wheel=${wheel}`, {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/png');
+  });
+
+  it('rejects an unknown wheel without echoing it back', async () => {
+    const res = await app.request('/og/harmony/43/complementary?wheel=cmyk', {}, TEST_ENV);
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.error).toBe('Invalid color wheel');
+    expect(JSON.stringify(body)).not.toContain('cmyk');
+  });
+
+  it('treats an empty wheel as absent, like algo', async () => {
+    const res = await app.request('/og/harmony/43/complementary?wheel=', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+  });
+
+  it('is an allowed key on every /og/* route, like mode', async () => {
+    const res = await app.request('/og/gradient/43/44/5?wheel=ryb', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+  });
+
+  it('validates case-insensitively, matching the web app which accepts wheel=MUNSELL', async () => {
+    const res = await app.request('/og/harmony/43/complementary?wheel=RYB', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/png');
+  });
+});
+
+// ============================================================================
 // OG Image Routes: Mixer (3 dyes)
 // ============================================================================
 

@@ -8,12 +8,14 @@
  */
 
 import type { Dye, DyeTypeFilters, HarmonyTypeKey } from '@xivdyetools/types';
-import type { HarmonyOptions, HarmonySlot, MatchingMethod } from '@xivdyetools/core';
+import type { ColorWheelId, HarmonyOptions, HarmonySlot, MatchingMethod } from '@xivdyetools/core';
 import {
   filterDyes,
   ColorService,
+  DEFAULT_COLOR_WHEEL,
   DEFAULT_MATCHING_METHOD,
   generateHarmonySlots,
+  normalizeColorWheelId,
 } from '@xivdyetools/core';
 import { createTranslator, type Translator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import { generateHarmonyCard, num, type HarmonyCardSlot } from '@xivdyetools/svg';
@@ -21,6 +23,7 @@ import { dyeService } from '../input-resolution.js';
 import {
   initializeLocale,
   getLocalizedDyeName,
+  getLocalizedColorWheelName,
   getLocalizedHarmonyType as getLocalizedHarmonyTypeFromCore,
 } from '../localization.js';
 import type { EmbedData } from './types.js';
@@ -69,7 +72,10 @@ export interface HarmonyInput {
   /** FFXIV item ID for the base color, if known (for localization) */
   baseItemID?: number;
   harmonyType: HarmonyType;
+  /** Colour wheel the offsets are measured on (core `ColorWheelId`). Default `rgb`. */
+  wheel?: ColorWheelId;
   locale: LocaleCode;
+  /** @deprecated Ignored since PR #159; the wheel is `wheel`. */
   harmonyOptions?: HarmonyOptions;
   /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */
   dyeFilters?: DyeTypeFilters;
@@ -157,7 +163,6 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     baseItemID,
     harmonyType,
     locale,
-    harmonyOptions,
     dyeFilters,
     companionCount = 1,
     matchingMethod = DEFAULT_MATCHING_METHOD,
@@ -171,6 +176,18 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     preventDuplicates = true,
   } = input;
   const t = createTranslator(locale, input.logger);
+
+  // Validate at the boundary, in core's one normaliser: this function is
+  // reached from the Discord handler, from tests, and from any other bot
+  // surface, and `HarmonyInput.wheel` is only as typed as its caller. An
+  // unknown id used to reach `generateHarmonySlots`, which throws RangeError —
+  // caught by the `catch` below and reported as GENERATION_FAILED, i.e. a
+  // typo'd wheel looked like a render bug. Falling back to rgb and SAYING SO
+  // is the honest answer.
+  const wheel = normalizeColorWheelId(input.wheel);
+  if (input.wheel !== undefined && wheel !== input.wheel) {
+    input.logger?.warn(`[harmony] unknown colour wheel "${String(input.wheel)}" — using rgb`);
+  }
 
   await initializeLocale(locale);
 
@@ -214,18 +231,10 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
         matchingMethod,
         companionCount: clampedCompanionCount - 1,
         preventDuplicates,
+        wheel,
       },
       { excludeItemIDs: baseItemID != null ? [baseItemID] : [] },
     );
-
-    // `harmonyOptions` (the colour space to rotate hue in) has no meaning any
-    // more: `generateHarmonySlots` rotates in HSV, carrying the base's
-    // saturation and value, and that IS the algorithm all three surfaces now
-    // share. Choosing a different space would be choosing a different answer
-    // than the page gives. The `color_space` choice has been withdrawn from
-    // the command rather than left registered and inert; the field stays on
-    // the input type so an existing caller passing it is not a type error.
-    void harmonyOptions;
 
     const harmonyDyes: Dye[] = harmonySlots.flatMap((slot) =>
       slot.dye ? [slot.dye, ...slot.companions] : [],
@@ -297,6 +306,7 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
 
     const svgString = generateHarmonyCard({
       typeLabel: harmonyTitle,
+      wheelLabel: wheel === DEFAULT_COLOR_WHEEL ? null : getLocalizedColorWheelName(wheel, locale),
       baseHex,
       baseName: localizedBaseName,
       // Turn 13 dropped the base hex line — the swatch pair already implies
@@ -318,9 +328,10 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     });
 
     // One line: the card names every slot; the embed carries the share URL
+    const wheelParam = wheel === DEFAULT_COLOR_WHEEL ? '' : `&wheel=${wheel}`;
     const shareUrl =
       baseDye?.stainID != null
-        ? `https://xivdyetools.app/harmony?dye=${baseDye.stainID}&harmony=${harmonyType}`
+        ? `https://xivdyetools.app/harmony?dye=${baseDye.stainID}&harmony=${harmonyType}${wheelParam}`
         : 'https://xivdyetools.app/harmony';
     const embed: EmbedData = {
       title: t.t('harmony.title', { type: harmonyTitle }),

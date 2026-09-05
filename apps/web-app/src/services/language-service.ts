@@ -7,7 +7,7 @@
  * @module services/language-service
  */
 
-import { LocalizationService } from '@xivdyetools/core';
+import { LocalizationService, type ColorWheelId } from '@xivdyetools/core';
 import type { LocaleCode, LocaleChangeListener } from '@shared/i18n-types';
 import { StorageService } from './storage-service';
 import { STORAGE_KEYS, DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@shared/constants';
@@ -241,6 +241,11 @@ export class LanguageService {
     return LocalizationService.getHarmonyType(
       key as Parameters<typeof LocalizationService.getHarmonyType>[0]
     );
+  }
+
+  /** Localised colour-wheel name, from the core library's shared vocabulary. */
+  static getColorWheelName(id: ColorWheelId): string {
+    return LocalizationService.getColorWheelName(id);
   }
 
   /**
