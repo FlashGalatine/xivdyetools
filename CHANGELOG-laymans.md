@@ -40,6 +40,10 @@ Rules:
 - Web app: every pop-up in the app — the welcome box, Advanced Settings, the theme and language pickers — was being drawn *underneath* the toolbar and the two corner buttons. On a phone the Color Palette button sat on top of the welcome box's "Get started" button and ate taps aimed at it, so the button looked broken. Pop-ups now sit above everything else.
 - Web app: notification messages appear along the bottom of the screen, the same strip as the corner buttons, and were being drawn behind them. They are now on top.
 
+### 📋 What's New was opening on the wrong release
+
+- Web app: the What's New window opened on the August 16 notes for everyone, whatever version you were actually running. Seven releases' worth of notes had been written but never shown to anyone, and three more releases had never been written down at all. The window now lists every release, newest first.
+
 ## [5.2.0] - 2026-09-04
 
 ### 🎨 The colour mixing actually mixes now
