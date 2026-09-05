@@ -7,11 +7,16 @@
 
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import {
+  COLOR_WHEEL_IDS,
+  DEFAULT_COLOR_WHEEL,
   DEFAULT_MATCHING_METHOD,
+  HARMONY_OFFSETS,
   LEGACY_MATCHING_METHOD_MAP,
   SUPPORTED_LOCALES,
+  isKnownHarmonyType,
+  parseColorWheelId,
 } from '@xivdyetools/core';
-import type { MatchingMethod } from '@xivdyetools/core';
+import type { ColorWheelId, MatchingMethod } from '@xivdyetools/core';
 import {
   EXPENSIVE_DYE_IDS,
   VENDOR_ACQUISITIONS,
@@ -43,6 +48,51 @@ export type ValidSortField = (typeof VALID_SORT_FIELDS)[number];
 export const VALID_ORDERS = ['asc', 'desc'] as const;
 
 export const VALID_CONSOLIDATION_TYPES = ['A', 'B', 'C'] as const;
+
+/**
+ * The harmony types are the rows of core's `HARMONY_OFFSETS`, spelled as the
+ * web app's share URLs spell them (`split-complementary`, not the locale
+ * file's `splitComplementary`). Derived, never re-listed.
+ */
+export const VALID_HARMONY_TYPES: readonly string[] = Object.keys(HARMONY_OFFSETS);
+
+/** Core's locale files key harmony names in camelCase; the wire ids are kebab-case. */
+export function harmonyLocaleKey(harmonyType: string): string {
+  return harmonyType.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+}
+
+/**
+ * Parse `?wheel=`. Absent means the suite default (`rgb`); anything core does
+ * not recognise is a 400 — the bot warns and falls back, but an API should
+ * refuse, the way og-worker's `?wheel=` and this API's `?method=` do.
+ */
+export function parseColorWheel(value: string | undefined, name = 'wheel'): ColorWheelId {
+  if (value === undefined || value === '') return DEFAULT_COLOR_WHEEL;
+  const wheel = parseColorWheelId(value);
+  if (!wheel) {
+    throw new ApiError(
+      ErrorCode.INVALID_COLOR_WHEEL,
+      `Invalid colour wheel "${value}". Must be one of: ${COLOR_WHEEL_IDS.join(', ')}`,
+      400,
+      { parameter: name, received: value, expected: [...COLOR_WHEEL_IDS] },
+    );
+  }
+  return wheel;
+}
+
+/** Parse `?type=` for the harmony route. Absent means `complementary`. */
+export function parseHarmonyType(value: string | undefined, name = 'type'): string {
+  if (value === undefined || value === '') return 'complementary';
+  if (!isKnownHarmonyType(value)) {
+    throw new ApiError(
+      ErrorCode.INVALID_HARMONY_TYPE,
+      `Invalid harmony type "${value}". Must be one of: ${VALID_HARMONY_TYPES.join(', ')}`,
+      400,
+      { parameter: name, received: value, expected: [...VALID_HARMONY_TYPES] },
+    );
+  }
+  return value;
+}
 
 // ============================================================================
 // Dye ID Resolution

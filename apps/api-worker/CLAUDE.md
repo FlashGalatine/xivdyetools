@@ -56,7 +56,9 @@ src/
 ├── types.ts              # Env + Hono Variables (requestId, locale)
 ├── routes/
 │   ├── dyes.ts           # 7 dye endpoints (search, categories, batch, consolidation, stain, :id, list)
-│   └── match.ts          # 2 color-matching endpoints (closest, within-distance)
+│   ├── match.ts          # 2 color-matching endpoints (closest, within-distance)
+│   ├── wheels.ts         # 2 colour-wheel endpoints (list, :id with ringStops + every dye's wheelHue) — core 5.2.0's ColorWheel registry
+│   └── harmony.ts        # 2 harmony endpoints (/types, / = core's generateHarmonySlots with a `wheel`)
 ├── middleware/
 │   ├── rate-limit.ts     # KVRateLimiter wired to shared rateLimitMiddleware factory
 │   └── locale.ts         # Reads ?locale=, calls LocalizationService.ensureLocaleLoaded once, sets c.var.locale
@@ -65,7 +67,8 @@ src/
 │   ├── response.ts       # successResponse / paginatedResponse / buildPagination (errors go through ApiError)
 │   ├── services.ts       # Module-scope DyeService singleton + calculateDistance (→ ColorService.getDistanceForMethod)
 │   ├── dye-serializer.ts # Dye → API response shape (with optional localizedName / distance)
-│   └── validation.ts     # parseHex, parseLocale, parseMatchingMethod, parseDyeFilters, resolveIdType, etc.
+│   ├── harmony.ts        # Wheel summary / wheel position / harmony slot serializers (deviance → distance)
+│   └── validation.ts     # parseHex, parseLocale, parseMatchingMethod, parseColorWheel, parseHarmonyType, parseDyeFilters, resolveIdType, etc.
 ├── universalis/          # Market-board proxy absorbed from apps/universalis-proxy (router, cache-service, cached-fetch, coalescer, memory rate limiter)
 └── chara/                # .chara equipment resolution: router (POST /resolve, GET /icon/:id), xivapi client (UA, version/schema pin, 503→UpstreamUnavailableError), resolver (pure rules: slot column × ModelMain, lowest row_id, off-hand via main ModelSub), cache (per-key Cache API, own store), regional-names (+ data/item-names.{ko,zh}.json from scripts/build-item-names.mjs)
 scripts/build-item-names.mjs  # Regenerates the ko/zh tables after a patch (local ffxiv-datamining clone or GitHub raw + Teamcraft JSON); manual, commit the output
@@ -103,6 +106,10 @@ All `GET`. All `/v1` routes cache `Cache-Control: public, max-age=3600, s-maxage
 | GET | `/v1/dyes/:id` | Auto-detect ID type by range: `1–254` stainID, `≥5729` itemID, `255–5728` invalid, `<0` legacy Facewear → 404 (see below); consolidated market IDs 52254–52256 → explanatory 404 |
 | GET | `/v1/match/closest?hex=` | Single closest dye (methods: `ciede2000` default, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`; retired `hyab`/`oklch-weighted` accepted → normalised to `ciede2000`, `euclidean` → `rgb`; `kL`/`kC`/`kH` ignored) |
 | GET | `/v1/match/within-distance?hex=&maxDistance=` | All dyes within a distance threshold in the method's unit (`maxDistance` ≥ 0.01, `limit` 1–125 default 20, applied after excludes/filters) |
+| GET | `/v1/wheels` | The five colour wheels (core `COLOR_WHEEL_IDS`, display order) as `{ id, tag, name, isDefault }`; `name` localized |
+| GET | `/v1/wheels/:id` | One wheel's `ringStops` (`?stops=` 3–360, default 72) + `dyes[]` with each dye's `wheelHue`; unknown id → 400 `INVALID_COLOR_WHEEL` |
+| GET | `/v1/harmony/types` | The ten harmony types (`HARMONY_OFFSETS` rows, kebab-case wire ids) with `offsets` + localized `name` |
+| GET | `/v1/harmony?dye=\|hex=&type=&wheel=&method=&strict=&companions=&preventDuplicates=` | core's `generateHarmonySlots` over the filtered database; base dye always excluded; `distanceUnit` = method when strict else `degrees`; slot `dye`/`distance` are `null` when no candidate survives the filters. Unknown `wheel` → 400 `INVALID_COLOR_WHEEL` (refused, never mapped to rgb), unknown `type` → 400 `INVALID_HARMONY_TYPE` |
 | POST | `/v1/chara/resolve` | `.chara` equipment-model resolution (web-app Swatch Matcher 11a/11c) — body `{ gear: [{ slot, set?, base, variant }], glasses? }`; per slot: lowest-row_id item, names ×6 (ko/zh from build-time tables), `iconId`, `familySize` + `alternates`, `viaMainHand` off-hand rule; `null` = no Item row. One XIVAPI search max, per-key Cache API (~7 d, `chara-resolve` store, namespaced by `XIVAPI_VERSION`); `503 UPSTREAM_UNAVAILABLE` while XIVAPI re-indexes after a patch. `src/chara/` |
 | GET | `/v1/chara/icon/:iconId` | Item icon PNG proxied from XIVAPI `/api/asset` (`_hr1`), edge-cached 30 d immutable |
 | POST | `/v1/telemetry` | **Internal, undocumented, may change** — web-app opt-in usage telemetry → Analytics Engine (`ANALYTICS` binding, `xivdyetools_web_analytics` / `_dev`). `text/plain` JSON batch ≤ 25 events / 16 KB; allowlist schema in `src/telemetry/schema.ts` drops anything unknown; `204` always once parsed (bare, no envelope — the client is `sendBeacon`), `400`/`413` (enveloped) only for non-JSON / oversized. **Sender gate (FINDING-014, `src/telemetry/origin.ts`), both checks before the body is read:** only `Origin: https://xivdyetools.app` (→ `env` `production`) and `https://beta.xivdyetools.app` (→ `beta`) are written — plus `http://localhost[:port]` / `http://127.0.0.1[:port]` when `ENVIRONMENT !== 'production'`, the one case where the body's `env` still counts; `blob9` is therefore **derived from the Origin**, not the body. `Sec-GPC: 1` is dropped outright (no write, no telemetry log line). An unaccepted batch answers the same bare `204` with no write — never a 4xx (the beacon cannot read the response) — and the Origin value is never logged. Own per-IP bucket `TELEMETRY_RATE_LIMITER` (240 / 60 s), not the `/v1/*` API bucket, and it **fails closed**: a limiter backend error 429s the beacon. Fixed blob layout documented in `docs/operations/ANALYTICS_QUERIES.md`. Spec: `docs/superpowers/specs/2026-08-29-web-analytics-design.md` |
@@ -204,8 +211,8 @@ The site is on the **API Docs Directions 1d** design (confirmed 2026-09-04; `not
 ## Deployment Checklist
 
 1. `pnpm lint && pnpm type-check && pnpm test` — must be green.
-2. Bump `version` in `package.json` if behavior changed (currently `0.13.0`).
+2. Bump `version` in `package.json` if behavior changed (currently `0.14.0`).
 3. Merging to `main` **is** the production deploy: `.github/workflows/deploy-api-worker.yml` builds deps, type-checks, tests, runs `build:docs`, runs `wrangler deploy --env production`, then smoke-tests `data.xivdyetools.app/health` and `developers.xivdyetools.app/`. There is no staging worker — `pnpm deploy` only pushes the routeless `xivdyetools-api-worker-dev` worker, which has `workers_dev = false` (FINDING-025) and is therefore not reachable over `*.workers.dev`; ad-hoc testing is `pnpm dev`.
 4. Deploying by hand: `pnpm build:docs && pnpm deploy:production` (the assets directory must exist or the production deploy fails). See `docs/operations/DEPLOY_ENVIRONMENTS.md`.
-5. If any new endpoints/parameters were added, update the endpoint's `<EndpointCard>` in `docs/reference/dyes.md` (or `matching.md` / `chara.md`) **and** its row in `docs/.vitepress/theme/lib/endpoints.ts` — the docs site is the public contract, and the registry is what the live index, sidebar counts and section sheet render. Internal routes (`/v1/telemetry`) and the Universalis proxy stay off the docs site on purpose; record them in this file's route table instead.
+5. If any new endpoints/parameters were added, update the endpoint's `<EndpointCard>` in `docs/reference/dyes.md` (or `matching.md` / `chara.md` / `harmony.md`) **and** its row in `docs/.vitepress/theme/lib/endpoints.ts` — the docs site is the public contract, and the registry is what the live index, sidebar counts and section sheet render. Internal routes (`/v1/telemetry`) and the Universalis proxy stay off the docs site on purpose; record them in this file's route table instead.
 6. Verify `X-RateLimit-*` headers appear on a `/v1/*` response and `X-Request-Id` is unique per call.

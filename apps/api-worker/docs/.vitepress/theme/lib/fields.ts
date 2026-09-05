@@ -16,7 +16,42 @@ export interface FieldSet {
   rows: FieldRow[];
 }
 
-export const FIELD_SETS: Record<'dye', FieldSet> = {
+export type FieldSetName = 'dye' | 'wheel' | 'wheelPosition' | 'harmonySlot';
+
+export const FIELD_SETS: Record<FieldSetName, FieldSet> = {
+  wheel: {
+    label: 'Wheel',
+    rows: [
+      { name: 'id', type: 'string', description: 'rgb · ryb · munsell · oklch-hue · oklch-lightness — the wire format everywhere (share URLs, the bot, this API)' },
+      { name: 'tag', type: 'string', description: 'Short untranslated token the cards print: RGB · RYB · MUNSELL · OKLCH·H · OKLCH·L' },
+      { name: 'name', type: 'string', description: 'Display name in the requested locale' },
+      { name: 'isDefault', type: 'boolean', description: 'true for rgb — what an absent wheel means everywhere in the suite' },
+    ],
+  },
+  wheelPosition: {
+    label: 'Wheel Position',
+    rows: [
+      { name: 'stainID', type: 'integer', description: 'Stain table ID (1–254)' },
+      { name: 'itemID', type: 'integer', description: 'Legacy game item ID' },
+      { name: 'name', type: 'string', description: 'English dye name' },
+      { name: 'localizedName', type: 'string?', description: 'Present only when locale ≠ en' },
+      { name: 'hex', type: 'string', description: 'Hex color (#RRGGBB)' },
+      { name: 'wheelHue', type: 'number', description: 'Where the dye sits on this wheel, 0–360 (3 decimals)' },
+    ],
+  },
+  harmonySlot: {
+    label: 'Harmony Slot',
+    rows: [
+      { name: 'index', type: 'integer', description: 'Position in the harmony type’s offset list' },
+      { name: 'offset', type: 'integer', description: 'The slot’s ideal hue offset from the base, degrees 0–359' },
+      { name: 'wheelHue', type: 'number', description: 'The slot’s angle on the selected wheel: (baseWheelHue + offset) mod 360' },
+      { name: 'targetHue', type: 'number', description: 'The ideal colour’s sRGB/HSV hue, 0–360 — what the non-strict ranking compares dye hues to' },
+      { name: 'targetHex', type: 'string', description: 'The ideal colour for the slot, carrying whatever the wheel preserves from the base (S/V, or OKLCH lightness)' },
+      { name: 'dye', type: 'Dye | null', description: 'The dye chosen for the slot — a Dye Object — or null when no candidate survived the filters' },
+      { name: 'distance', type: 'number | null', description: 'How far the chosen dye is from the ideal: in the method’s unit when strict, degrees of hue otherwise (see distanceUnit); null with a null dye' },
+      { name: 'companions', type: 'Dye[]', description: 'Runners-up, nearest first, excluding the chosen dye — as many as ?companions= asked for' },
+    ],
+  },
   dye: {
     label: 'Dye Object',
     rows: [

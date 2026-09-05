@@ -3,11 +3,11 @@ import { computed } from 'vue'
 import { chromeGlyph, toolGlyph } from '@xivdyetools/svg'
 
 // Only the glyphs the docs use: a tile carries one only where a tool exists
-// (Matching → extractor, Character Equipment → swatch, Languages → globe).
-// The bar's search icon is VitePress's own.
+// (Matching → extractor, Character Equipment → swatch, Harmony → harmony,
+// Languages → globe). The bar's search icon is VitePress's own.
 const props = withDefaults(
   defineProps<{
-    name: 'extractor' | 'swatch' | 'globe'
+    name: 'extractor' | 'swatch' | 'harmony' | 'globe'
     size?: number
   }>(),
   { size: 22 },

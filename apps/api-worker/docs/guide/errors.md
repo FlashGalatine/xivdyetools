@@ -23,6 +23,8 @@ All `/v1` errors use the same envelope. The `error` field is a stable machine-re
 | `INVALID_MATCHING_METHOD` | 400 | Unknown color distance algorithm |
 | `INVALID_LOCALE` | 400 | Unsupported locale code |
 | `INVALID_STAIN_ID` | 400 | stainId is not a positive integer |
+| `INVALID_COLOR_WHEEL` | 400 | `wheel` (or the `/v1/wheels/:id` path) is not one of the five wheel ids — `details.expected` lists them |
+| `INVALID_HARMONY_TYPE` | 400 | `type` is not one of the ten harmony types — `details.expected` lists them |
 | `INVALID_BODY` | 400 / 413 | `POST /v1/chara/resolve` body is not a JSON object (400) or exceeds 8 KB (413) |
 | `NOT_FOUND` | 404 | Dye, stain, icon, or route not found — also returned for consolidated market itemIDs (`52254`–`52256`) and legacy negative Facewear IDs, each with an explanatory `message` (an unknown `category` is not an error; it simply matches no dyes) |
 | `RATE_LIMITED` | 429 | Rate limit exceeded |
@@ -82,6 +84,8 @@ Validation stops at the first failing parameter — a response never reports mor
 | `maxDistance` | ≥ 0.01 | — |
 | `limit` (within-distance) | 1 – 125 (the whole dye database) | `20` |
 | `iconId` (path) | 1 – 999999, canonical decimal | — |
+| `stops` (wheels) | 3 – 360 | `72` |
+| `companions` (harmony) | 0 – 5 | `0` |
 
 ## Enum Values
 
@@ -93,6 +97,9 @@ Validation stops at the first failing parameter — a response never reports mor
 | `order` | `asc` `desc` |
 | `idType` (batch) | `auto` `item` `stain` |
 | `consolidationType` | `A` `B` `C` |
+| `wheel` (harmony) | `rgb` (default) `ryb` `munsell` `oklch-hue` `oklch-lightness` |
+| `type` (harmony) | `complementary` (default) `analogous` `triadic` `split-complementary` `tetradic` `inverted-tetradic` `square` `monochromatic` `compound` `shades` |
+| `strict`, `preventDuplicates` (harmony) | `true` `false` `1` `0` |
 
 ## Rate Limited Response
 
