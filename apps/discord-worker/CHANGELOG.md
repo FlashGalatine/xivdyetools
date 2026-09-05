@@ -245,7 +245,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The production emoji set was regenerated as the 5.0 `chip-1` artwork** — this supersedes the `[5.0.0]` note that production's slot "still records `artwork: "legacy-icons"`", which was true only until the first `sync-dye-emojis.yml` run (run `33225293642`, 2026-08-29: *125 dyes → uploaded 125 (replaced 125), deleted 0 orphans*). The main bot application's slot in `emoji-mapping.json` moves from `legacy-icons` to `chip-1` — 125 stainID-keyed flat chips rendered from `dyes.json` — so both applications now carry the same artwork. **Every emoji id in the mapping is new**, which is why this had to deploy promptly: until it did, embeds referenced the deleted legacy ids.
 - **`scripts/upload-emojis.ts` type-checks again** under `@cloudflare/workers-types 5.20260825.1`. The bump changed the types the script's Discord upload path was written against; nothing about the artwork or the upload behaviour changed, but the script would not compile, and it is the only way to run the regeneration above.
 
-
 ### Removed
 
 - `scripts/cleanup-v4-kv.ts` — ran once against production on 2026-08-29 (one orphaned `xivdye:favorites:*` key and one `xivdye:collections:*` key deleted; no `i18n:user:*` keys existed). The `budget:world:v1:*` sweep it deliberately did not cover (DEAD-010) remains a product decision; `preferences.ts` still folds that prefix on read.

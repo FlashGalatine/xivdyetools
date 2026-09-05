@@ -6,7 +6,7 @@
 
 ### This window was showing you the wrong release
 
-- **"What's New" has been showing the August 16 notes to everyone since early September.** Whatever version you were actually running, this window opened on 5.0.0 — ten releases' worth of notes, including every fix listed below, were never shown to anyone. The window now lists them all, newest first, so the entries under this one are worth a scroll if you have not seen them.
+- **"What's New" has been showing the August 16 notes to everyone since early September.** Whatever version you were actually running, this window opened on 5.0.0 — seven releases' worth of notes, including every fix listed below, were written but never shown to anyone, and three more releases had never been written down here at all. This update restores the seven and adds the three. The window now lists them all, newest first, so the entries under this one are worth a scroll if you have not seen them.
 
 ## Web-App Version 5.6.0 — September 4, 2026
 

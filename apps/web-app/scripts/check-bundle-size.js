@@ -127,7 +127,11 @@ const BUNDLE_LIMITS = [
 
   // On-demand data: the parsed CHANGELOG-laymans.md, fetched when What's New
   // opens. Prose grows with every release, so it gets its own budget rather
-  // than the 60 KB default -- ~18 KB with the 5.0 notes.
+  // than the 60 KB default -- ~28 KB (69% of this limit) with the full history
+  // restored across 25 releases. It measured ~18 KB while the parser was
+  // silently dropping seven of them, so treat that older figure as a symptom
+  // rather than a baseline. Headroom is roughly a dozen more releases: trim the
+  // oldest entries or raise the limit deliberately rather than be surprised.
   { label: 'release notes (on open)', pattern: /^_virtual_changelog-/, limit: 40 * KB },
 ];
 

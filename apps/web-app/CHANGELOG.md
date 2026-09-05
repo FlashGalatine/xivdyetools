@@ -14,23 +14,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **"What's New" had been showing the 5.0.0 notes to everyone since 5.0.1.** The build-time
   parser (`vite-plugin-changelog-parser.ts`) builds a release's sections by splitting the block
   on `### ` headings, then drops any release whose section count is zero. Every entry written
-  since 5.0.1 used `##` heading + plain bullets with no `### ` sub-heading, so all ten parsed to
-  `sections: []` and were skipped — the virtual module carried 14 of the file's 24 releases, the
-  newest being **5.0.0 (August 16)**. `changelog-modal.ts` then looked up `APP_VERSION` with
-  `findIndex`, missed, and fell back to `entries[0]`, so a reader on 5.6.0 opening What's New was
-  shown a release from three weeks earlier. Fixed on both sides: the ten entries gained section
-  headings, and a release with bullets but no heading now folds into one headerless section
-  instead of vanishing (`foldLooseBullets`) — the modal skips the heading element when it is
-  empty. A release header with no bullets at all is still skipped, which is what the guard was
-  written for.
+  since 5.0.1 used a `##` heading plus plain bullets with no `### ` sub-heading, so each parsed
+  to `sections: []` and was skipped. Counted on `main`, that is **7 of that file's 21 releases**
+  (5.6.0, 5.5.0, 5.4.0, 5.3.1, 5.1.0, 5.0.2, 5.0.1), leaving the virtual module carrying 14 with
+  the newest being **5.0.0 (August 16)**. Counted against the tree this fix actually ships
+  against it is **10 of 24**, because the same branch backfills three releases (5.3.0, 5.2.1,
+  5.2.0) that had never been written down at all and would have been dropped for the same reason
+  — worth stating both ways, since "ten" and "seven" describe different trees rather than
+  disagreeing. `changelog-modal.ts` then looked up `APP_VERSION` with `findIndex`, missed, and
+  fell back to `entries[0]`, so a reader on 5.6.0 opening What's New was shown a release from
+  three weeks earlier. Every entry now carries section headings.
+- **The parser no longer discards the region above a release's first `### ` heading.**
+  `extractSections` folds it into an implicit headerless section, which covers both a release
+  written as plain bullets and one that opens with a headline bullet *before* its first heading.
+  The latter still lost that bullet under the first fix, which ran its fallback only when the
+  section count was zero — and no gate could catch it, because the entry still parsed. A
+  bullet-less run keeps its prose as a single folded bullet through the same shared helper the
+  `### ` sections use, so a prose-only release is no longer dropped either. A release header
+  with no content under it at all is still skipped, which is what the guard was written for.
+- **A headerless release is no longer summarised as blank.** `extractHighlights` skips a header
+  shorter than three characters, so such a release reached the modal with no highlights at all,
+  and `createCollapsedRow`'s `??` chain cannot fall through an empty-string header — the row
+  rendered as a bare `v5.0.0  March 3, 2026` button with no text. Both sides now fall back to
+  the release's first bullet.
 
-  The existing regression guard could not catch this: `changelog-parser.test.ts` parsed a
-  synthetic sample that always carried `### ` headings. It now also parses the **real**
-  `CHANGELOG-laymans.md` and asserts the parsed count equals the file's release-header count,
-  that `package.json`'s version is among the entries, and that every entry has a bullet to
-  render. The version assertion deliberately reads `package.json` rather than `APP_VERSION` —
-  that constant is a build-time define and is `0.0.0` under vitest, so asserting on it would
-  have passed against a file with no matching entry at all.
+### Changed
+
+- **Collapsed releases build their DOM when expanded, not when the modal opens.** Every release
+  but one renders as a collapsed row whose body starts hidden; with the history now at 25 entries
+  (5.0.0 alone has 19 sections) the modal was constructing every section of every release up
+  front — on a timer after page load — only to hide it immediately.
+- **The real-file regression gate can now see a malformed header.** It counted release headers
+  with the parser's own grammar, so a `## ` header missing the literal word `Version` was
+  invisible to both the parser and the gate, and the release vanished with the suite green. It
+  now asserts that every `## ` line matches the grammar, mirroring
+  `apps/discord-worker/src/services/changelog-parser.test.ts`, and checks the header count
+  against the parser's 50-release cap so crossing it fails on the cap rather than as a confusing
+  off-by-N in the parity assertion.
+- **The gate no longer requires the layman's file to name the shipping version.**
+  `docs/developer-guides/release-process.md` folds dependency and security-only patches out of
+  the player-facing files, so requiring `package.json`'s version to appear would turn any such
+  bump into a hard test failure and force an invented player-facing bullet into a user-visible
+  file. It now asserts the newest entry is never *ahead of* `package.json`, matching the rule the
+  bot's changelog already follows. It still reads `package.json` rather than `APP_VERSION`, which
+  is a build-time define and is `'0.0.0'` under vitest.
+- The real-file tests resolve their fixtures with `dirname(fileURLToPath(import.meta.url))`, the
+  idiom used everywhere else in the monorepo, instead of a bare `__dirname` that only resolves
+  because vite-node injects it.
 
 ## [5.6.0] - 2026-09-04
 
