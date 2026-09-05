@@ -16,7 +16,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
 import { authService, LanguageService } from '@services/index';
-import { COLOR_WHEEL_IDS, DEFAULT_COLOR_WHEEL, isColorWheelId } from '@xivdyetools/core';
+import { COLOR_WHEEL_IDS, DEFAULT_COLOR_WHEEL, normalizeColorWheelId } from '@xivdyetools/core';
 import type { ColorWheelId } from '@xivdyetools/core';
 import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
 import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
@@ -945,11 +945,7 @@ export class ConfigSidebar extends BaseLitComponent {
                 .value=${currentWheel}
                 @change=${(e: Event) => {
                   const value = (e.target as HTMLSelectElement).value;
-                  this.handleConfigChange(
-                    'harmony',
-                    'wheel',
-                    isColorWheelId(value) ? value : DEFAULT_COLOR_WHEEL
-                  );
+                  this.handleConfigChange('harmony', 'wheel', normalizeColorWheelId(value));
                 }}
               >
                 ${COLOR_WHEEL_IDS.map(
@@ -1541,7 +1537,12 @@ export class ConfigSidebar extends BaseLitComponent {
 
   /** One line per wheel, the Krita pattern: the selected option explains itself. */
   private getWheelDescription(wheel: ColorWheelId): string {
-    switch (wheel) {
+    // Normalised first, not defaulted in the `default:` arm. Both answer RGB's
+    // copy for `'cmyk'`, but only one of them answers MUNSELL's copy for
+    // `'MUNSELL'` — a silent `default:` fallthrough is how a valid-but-unfolded
+    // id ends up described as the wheel it is not. Belt-and-braces given the
+    // load-time normalisation in ConfigController.
+    switch (normalizeColorWheelId(wheel)) {
       case 'ryb':
         return LanguageService.t('config.wheelRybDesc');
       case 'munsell':

@@ -61,7 +61,7 @@ export interface HarmonyShareParams {
   harmony: HarmonyType;
   algo?: MatchingMethod;
   perceptual?: boolean;
-  wheel?: ColorWheelId; // absent means rgb; never emitted for the default
+  wheel?: ColorWheelId; // always emitted; absent on a link means rgb
 }
 
 export interface GradientShareParams {

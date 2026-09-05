@@ -16,7 +16,8 @@ import {
   normalizeMatchingMethod,
   DEFAULT_COLOR_WHEEL,
   getColorWheel,
-  isColorWheelId,
+  normalizeColorWheelId,
+  parseColorWheelId,
   type HarmonySelectionConfig,
   type ColorWheelId,
 } from '@xivdyetools/core';
@@ -336,7 +337,7 @@ export class HarmonyTool extends BaseComponent {
     this.matchingMethod = normalizeMatchingMethod(harmonyConfig.matchingMethod ?? 'ciede2000');
     this.preventDuplicates = harmonyConfig.preventDuplicates ?? true;
     this.dyeFiltersConfig = harmonyConfig.dyeFilters ?? { ...DEFAULT_DYE_FILTERS };
-    this.wheel = isColorWheelId(harmonyConfig.wheel) ? harmonyConfig.wheel : DEFAULT_COLOR_WHEEL;
+    this.wheel = normalizeColorWheelId(harmonyConfig.wheel);
 
     // Note: Market config (showPrices, server) is now managed by MarketBoardService
     // which subscribes to ConfigController automatically. MarketBoard components
@@ -383,7 +384,15 @@ export class HarmonyTool extends BaseComponent {
         }
         this.preventDuplicates = config.preventDuplicates ?? true;
         this.dyeFiltersConfig = newDyeFilters;
-        this.wheel = isColorWheelId(config.wheel) ? config.wheel : DEFAULT_COLOR_WHEEL;
+        const nextWheel = normalizeColorWheelId(config.wheel);
+        if (nextWheel !== this.wheel) {
+          // A pin is fixed to a SLOT INDEX, and a slot index is a different
+          // target hue on a different wheel — so a pin carried across a wheel
+          // change lands on a colour it was never chosen for. The harmony-type
+          // change already clears pins for exactly this reason.
+          this.swappedDyes.clear();
+        }
+        this.wheel = nextWheel;
 
         if ((needsRerender || algorithmChanged || filtersChanged) && this.selectedDye) {
           this.generateHarmonies();
@@ -524,14 +533,22 @@ export class HarmonyTool extends BaseComponent {
 
     // Which wheel the palette was generated on travels with the link — a card
     // that ignored it would show dyes the page never shows (45% of palettes).
-    if (wheelParam !== null) {
-      const normalised = wheelParam.toLowerCase();
-      const wheel = isColorWheelId(normalised) ? normalised : DEFAULT_COLOR_WHEEL;
-      if (wheel !== normalised)
-        logger.warn(`[HarmonyTool] Unknown colour wheel in URL: ${wheelParam}`);
-      this.wheel = wheel;
-      configController.setConfig('harmony', { wheel });
+    //
+    // Unconditional, and that is the point: this runs only for a link that
+    // carries share params (the early return above), so an ABSENT wheel is the
+    // link saying "rgb", not "keep whatever you had". Applying it only when
+    // present meant a default-wheel link opened in a session with `munsell`
+    // persisted rendered a Munsell palette under someone else's RGB link.
+    const parsedWheel = parseColorWheelId(wheelParam);
+    if (wheelParam && !parsedWheel) {
+      logger.warn(`[HarmonyTool] Unknown colour wheel in URL: ${wheelParam} — using rgb`);
     }
+    const wheel = parsedWheel ?? DEFAULT_COLOR_WHEEL;
+    this.wheel = wheel;
+    // Same reasoning as the config subscription: a pin belongs to the wheel it
+    // was chosen on.
+    this.swappedDyes.clear();
+    configController.setConfig('harmony', { wheel });
 
     // A bare-colour base: `hex` is the declared slot for a custom base,
     // exclusive with `dye`. Wrapped in a virtual dye so the whole tool
@@ -1820,7 +1837,12 @@ export class HarmonyTool extends BaseComponent {
       harmony: this.selectedHarmonyType,
       algo: this.matchingMethod,
       perceptual: this.usePerceptualMatching,
-      ...(this.wheel !== DEFAULT_COLOR_WHEEL ? { wheel: this.wheel } : {}),
+      // Unconditional, like `algo` and `perceptual`. Eliding the default only
+      // works while the READER also applies rgb for an absent wheel, and a
+      // link is read by someone else's session, with someone else's persisted
+      // wheel — so an elided default used to render a Munsell palette under an
+      // RGB sharer's link. Both halves of that contract are explicit now.
+      wheel: this.wheel,
     };
   }
 

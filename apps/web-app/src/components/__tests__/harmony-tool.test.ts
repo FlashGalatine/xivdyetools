@@ -958,7 +958,16 @@ describe('HarmonyTool', () => {
       window.history.replaceState({}, '', '/');
     });
 
-    it('omits wheel from share params on the default and includes it otherwise', async () => {
+    /**
+     * `wheel` is emitted UNCONDITIONALLY, like `algo` and `perceptual`. The
+     * elided default looked harmless — absent means rgb on read — but the
+     * reader and the writer only agree while the reader also *applies* rgb for
+     * an absent value, and it did not: a link shared from the default wheel
+     * left whatever wheel the recipient had persisted in place, so the same
+     * URL drew different dyes for two people. Making both sides explicit is
+     * the half of that fix nobody has to remember.
+     */
+    it('always emits the wheel in share params, default included', async () => {
       const { ConfigController } = await import('@services/config-controller');
       tool = mount();
       tool.selectDye(mockDyes[0]);
@@ -966,13 +975,13 @@ describe('HarmonyTool', () => {
 
       const params = () =>
         (tool as unknown as { getShareParams(): Record<string, unknown> }).getShareParams();
-      expect(params()).not.toHaveProperty('wheel');
+      expect(params().wheel).toBe('rgb');
 
       ConfigController.getInstance().setConfig('harmony', { wheel: 'ryb' });
       expect(params().wheel).toBe('ryb');
 
       ConfigController.getInstance().setConfig('harmony', { wheel: 'rgb' });
-      expect(params()).not.toHaveProperty('wheel');
+      expect(params().wheel).toBe('rgb');
     });
 
     it('reads ?wheel= from a share URL, normalising unknown values to rgb', async () => {
@@ -986,6 +995,66 @@ describe('HarmonyTool', () => {
       window.history.replaceState({}, '', '/harmony?dye=5771&harmony=complementary&wheel=cmyk');
       tool = mount();
       expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe('rgb');
+    });
+
+    /**
+     * A share link with no `wheel` means rgb — it cannot mean "keep whatever
+     * the reader had". Before this, `handleDeepLink` only touched the wheel
+     * when the param was present, so opening a default-wheel link while
+     * `munsell` was persisted rendered a Munsell palette under someone else's
+     * RGB link.
+     */
+    it.each([
+      ['no wheel at all', '/harmony?dye=5771&harmony=complementary', 'rgb', false],
+      ['an empty wheel', '/harmony?dye=5771&harmony=complementary&wheel=', 'rgb', false],
+      ['an unknown wheel', '/harmony?dye=5771&harmony=complementary&wheel=cmyk', 'rgb', true],
+      [
+        'an upper-case wheel',
+        '/harmony?dye=5771&harmony=complementary&wheel=MUNSELL',
+        'munsell',
+        false,
+      ],
+    ])('a share link with %s resolves to %s', async (_label, url, expected, warns) => {
+      const { ConfigController } = await import('@services/config-controller');
+      const { logger } = await import('@shared/logger');
+      // A wheel someone else's session left behind must not survive the link.
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'munsell' });
+      vi.mocked(logger.warn).mockClear();
+
+      window.history.replaceState({}, '', url);
+      tool = mount();
+
+      expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe(expected);
+      if (warns) {
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringMatching(/wheel/i));
+      }
+    });
+
+    /**
+     * A hand-swapped dye is pinned to its SLOT INDEX, and a slot index means a
+     * different target hue on a different wheel — so a pin carried across a
+     * wheel change lands on a colour it was never chosen for. The harmony-type
+     * change already clears pins for exactly this reason; a wheel change is
+     * the same kind of change.
+     */
+    it('drops pinned dyes when the wheel changes', async () => {
+      const { ConfigController } = await import('@services/config-controller');
+      tool = mount();
+      tool.setConfig({ harmonyType: 'triadic' });
+      tool.selectDye(mockDyes[9]); // Sky Blue — RGB and RYB angles differ
+      await flush();
+
+      const pins = () => (tool as unknown as { swappedDyes: Map<number, unknown> }).swappedDyes;
+      (tool as unknown as { handleSwapDye(i: number, d: unknown): void }).handleSwapDye(
+        1,
+        mockDyes[3]
+      );
+      expect(pins().size).toBe(1);
+
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'ryb' });
+      await flush();
+
+      expect(pins().size).toBe(0);
     });
 
     it('feeds the ring 72 stops and one node angle per slot plus the base', async () => {
