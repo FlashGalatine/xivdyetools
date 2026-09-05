@@ -302,7 +302,12 @@ export class ChangelogModal {
 
     // BUG-043: highlights can be empty (parser skips short headers) — never
     // render a literal "undefined"
-    const summaryText = entry.highlights[0] ?? entry.sections[0]?.header ?? '';
+    // A headerless section carries `header: ''`, which is neither null nor
+    // undefined — a `??` chain short-circuits on it and leaves the row with no
+    // summary at all. `||` falls through empty strings, and the first bullet is
+    // the only honest summary such a release has.
+    const summaryText =
+      entry.highlights[0] || entry.sections[0]?.header || entry.sections[0]?.bullets[0] || '';
     if (summaryText) {
       const summary = document.createElement('div');
       summary.className = 'text-xs mt-0.5';
@@ -311,14 +316,22 @@ export class ChangelogModal {
       button.appendChild(summary);
     }
 
-    // Expanded body (hidden until opened)
+    // Expanded body (hidden until opened). Built on FIRST expand rather than
+    // up front: every release except one is a collapsed row, the body starts
+    // `display: none`, and showChangelogIfUpdated opens this on a timer after
+    // load with the whole release history in it. Constructing every section of
+    // every release to immediately hide it is work no reader asked for.
     const body = document.createElement('div');
     body.className = 'hidden px-3 pt-1 pb-2 space-y-4';
-    entry.sections.forEach((section) => {
-      body.appendChild(this.createSectionBlock(section));
-    });
 
+    let bodyBuilt = false;
     button.addEventListener('click', () => {
+      if (!bodyBuilt) {
+        entry.sections.forEach((section) => {
+          body.appendChild(this.createSectionBlock(section));
+        });
+        bodyBuilt = true;
+      }
       const isOpen = !body.classList.contains('hidden');
       body.classList.toggle('hidden', isOpen);
       button.setAttribute('aria-expanded', String(!isOpen));
@@ -336,9 +349,10 @@ export class ChangelogModal {
   private createSectionBlock(section: ChangelogSection): HTMLElement {
     const block = document.createElement('div');
 
-    // A headerless section comes from a release written as plain bullets with
-    // no "### " heading (see the parser's foldLooseBullets). Render the bullets
-    // without an empty heading rather than an h4 with no text in it.
+    // A headerless section comes from the region above a release's first
+    // "### " heading — a release written as plain bullets, or a headline bullet
+    // ahead of its first heading (see the parser's extractSections). Render the
+    // bullets without an empty heading rather than an h4 with no text in it.
     if (section.header) {
       const header = document.createElement('h4');
       header.className = 'text-sm font-semibold mb-1';

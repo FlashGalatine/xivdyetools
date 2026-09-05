@@ -11,7 +11,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseChangelog } from '../../vite-plugin-changelog-parser';
 
 // A representative sample mirroring the real CHANGELOG-laymans.md structure:
@@ -130,22 +131,123 @@ describe('parseChangelog', () => {
  * These read the real file and the real version, so the gap cannot reopen
  * silently.
  */
-describe('the real CHANGELOG-laymans.md', () => {
-  const realChangelog = readFileSync(resolve(__dirname, '../../CHANGELOG-laymans.md'), 'utf8');
-  const entries = parseChangelog(realChangelog);
+/**
+ * The region above a release’s first "### " heading.
+ *
+ * Both shapes below parsed to nothing before extractSections folded that
+ * region in: the first still lost its headline bullet after the original fix
+ * (which only ran when the section count was zero), and the second was dropped
+ * entirely because the headerless fallback collected bullets but never folded
+ * prose the way a "### " section does.
+ */
+describe('loose content above the first heading', () => {
+  it('keeps a headline bullet that sits above a "### " heading', () => {
+    const sample = [
+      '## Web-App Version 9.9.9 — January 1, 2027',
+      '',
+      '- A loose headline bullet',
+      '',
+      '### A real section',
+      '',
+      '- A section bullet',
+    ].join('\n');
 
-  it('parses every release header in the file', () => {
-    const headerCount = (realChangelog.match(/^## .*Version \d+\.\d+\.\d+/gm) ?? []).length;
-    expect(headerCount).toBeGreaterThan(0);
-    expect(entries).toHaveLength(headerCount);
+    const [entry] = parseChangelog(sample);
+
+    expect(entry.sections).toHaveLength(2);
+    expect(entry.sections[0]).toMatchObject({ header: '', bullets: ['A loose headline bullet'] });
+    expect(entry.sections[1].header).toBe('A real section');
+    // A headerless section still has to contribute a summary, or the collapsed
+    // row and the auto-popup summary render blank for that release.
+    expect(entry.highlights[0]).toBe('A loose headline bullet');
   });
 
-  it("includes the shipping version, so the modal never shows an older release's notes", () => {
+  it('keeps a release written as prose, with no bullets and no heading', () => {
+    const sample = [
+      '## Web-App Version 9.9.8 — January 1, 2027',
+      '',
+      'This release is a rollback of 9.9.7.',
+    ].join('\n');
+
+    const [entry] = parseChangelog(sample);
+
+    expect(entry.sections).toHaveLength(1);
+    expect(entry.sections[0].bullets).toEqual(['This release is a rollback of 9.9.7.']);
+  });
+
+  it('still drops a release header with no content under it at all', () => {
+    const sample = [
+      '## Web-App Version 9.9.7 — January 1, 2027',
+      '',
+      '## Web-App Version 9.9.6 — January 1, 2027',
+      '',
+      '- Real content',
+    ].join('\n');
+
+    const versions = parseChangelog(sample).map((e) => e.version);
+
+    expect(versions).toEqual(['9.9.6']);
+  });
+});
+/** Numeric semver tuple for ordering assertions (mirrors discord-worker's). */
+const semver = (v: string): number[] => v.split('.').map(Number);
+const semverCompare = (a: string, b: string): number => {
+  const [x, y] = [semver(a), semver(b)];
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i];
+  return 0;
+};
+
+const here = dirname(fileURLToPath(import.meta.url));
+
+describe('the real CHANGELOG-laymans.md', () => {
+  const realChangelog = readFileSync(resolve(here, '../../CHANGELOG-laymans.md'), 'utf8');
+  const entries = parseChangelog(realChangelog);
+
+  /** Mirrors MAX_VERSIONS_TO_INCLUDE in vite-plugin-changelog-parser.ts. */
+  const PARSER_VERSION_CAP = 50;
+
+  /** Every "## " line in the file, release header or not. */
+  const h2Lines = realChangelog.split(/\r?\n/).filter((line) => line.startsWith('## '));
+
+  it('has no "## " header off the parser grammar', () => {
+    // A count that can only see what the parser sees cannot be a check ON the
+    // parser. The first version of this gate counted headers with the parser's
+    // own grammar, so a header missing the literal word "Version" was invisible
+    // to BOTH and the release vanished with the suite green. Mirrors
+    // apps/discord-worker/src/services/changelog-parser.test.ts.
+    const offGrammar = h2Lines.filter(
+      (line) => !/^##\s+[^\n]*?Version\s+\d+\.\d+\.\d+\s*(?:[—–-]\s*.+?)?\s*$/.test(line)
+    );
+
+    expect(offGrammar).toEqual([]);
+  });
+
+  it('parses every release header in the file', () => {
+    expect(h2Lines.length).toBeGreaterThan(0);
+    // Assert the cap explicitly. Without this, crossing it reds the parity
+    // check below with "expected 51, got 50" and points at the parser rather
+    // than at the limit that actually caused it.
+    expect(h2Lines.length).toBeLessThanOrEqual(PARSER_VERSION_CAP);
+    expect(entries).toHaveLength(h2Lines.length);
+  });
+
+  it('never advertises a release newer than the shipping build', () => {
+    // release-process.md: the layman's file may LAG a release that has nothing
+    // player-visible to say (dependency and security-only patches are folded
+    // out of it), but it must never run AHEAD of package.json. Asserting that
+    // the shipping version is PRESENT would turn any such patch bump into a
+    // hard test failure and force an invented player-facing bullet into a
+    // user-visible file.
+    //
     // Read package.json rather than APP_VERSION: that constant comes from a
     // build-time define and is '0.0.0' under vitest, so asserting on it would
     // pass against a file with no matching entry at all.
-    const pkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf8'));
-    expect(entries.map((e) => e.version)).toContain(pkg.version);
+    const pkg = JSON.parse(readFileSync(resolve(here, '../../package.json'), 'utf8'));
+    expect(entries.length).toBeGreaterThan(0);
+    expect(
+      semverCompare(entries[0].version, pkg.version),
+      `newest entry ${entries[0].version} vs package.json ${pkg.version}`
+    ).toBeLessThanOrEqual(0);
   });
 
   it('gives every parsed release at least one bullet to render', () => {
