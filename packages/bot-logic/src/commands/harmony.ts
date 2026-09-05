@@ -8,10 +8,11 @@
  */
 
 import type { Dye, DyeTypeFilters, HarmonyTypeKey } from '@xivdyetools/types';
-import type { HarmonyOptions, HarmonySlot, MatchingMethod } from '@xivdyetools/core';
+import type { ColorWheelId, HarmonyOptions, HarmonySlot, MatchingMethod } from '@xivdyetools/core';
 import {
   filterDyes,
   ColorService,
+  DEFAULT_COLOR_WHEEL,
   DEFAULT_MATCHING_METHOD,
   generateHarmonySlots,
 } from '@xivdyetools/core';
@@ -21,6 +22,7 @@ import { dyeService } from '../input-resolution.js';
 import {
   initializeLocale,
   getLocalizedDyeName,
+  getLocalizedColorWheelName,
   getLocalizedHarmonyType as getLocalizedHarmonyTypeFromCore,
 } from '../localization.js';
 import type { EmbedData } from './types.js';
@@ -69,7 +71,10 @@ export interface HarmonyInput {
   /** FFXIV item ID for the base color, if known (for localization) */
   baseItemID?: number;
   harmonyType: HarmonyType;
+  /** Colour wheel the offsets are measured on (core `ColorWheelId`). Default `rgb`. */
+  wheel?: ColorWheelId;
   locale: LocaleCode;
+  /** @deprecated Ignored since PR #159; the wheel is `wheel`. */
   harmonyOptions?: HarmonyOptions;
   /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */
   dyeFilters?: DyeTypeFilters;
@@ -156,6 +161,7 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     baseId,
     baseItemID,
     harmonyType,
+    wheel = DEFAULT_COLOR_WHEEL,
     locale,
     harmonyOptions,
     dyeFilters,
@@ -214,6 +220,7 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
         matchingMethod,
         companionCount: clampedCompanionCount - 1,
         preventDuplicates,
+        wheel,
       },
       { excludeItemIDs: baseItemID != null ? [baseItemID] : [] },
     );
@@ -297,6 +304,7 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
 
     const svgString = generateHarmonyCard({
       typeLabel: harmonyTitle,
+      wheelLabel: wheel === DEFAULT_COLOR_WHEEL ? null : getLocalizedColorWheelName(wheel, locale),
       baseHex,
       baseName: localizedBaseName,
       // Turn 13 dropped the base hex line — the swatch pair already implies
@@ -318,9 +326,10 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     });
 
     // One line: the card names every slot; the embed carries the share URL
+    const wheelParam = wheel === DEFAULT_COLOR_WHEEL ? '' : `&wheel=${wheel}`;
     const shareUrl =
       baseDye?.stainID != null
-        ? `https://xivdyetools.app/harmony?dye=${baseDye.stainID}&harmony=${harmonyType}`
+        ? `https://xivdyetools.app/harmony?dye=${baseDye.stainID}&harmony=${harmonyType}${wheelParam}`
         : 'https://xivdyetools.app/harmony';
     const embed: EmbedData = {
       title: t.t('harmony.title', { type: harmonyTitle }),
