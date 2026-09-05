@@ -5,7 +5,7 @@
  * renders the PNG, and formats the Discord response with emojis.
  */
 
-import type { HarmonyColorSpace, MatchingMethod } from '@xivdyetools/core';
+import { isColorWheelId, type ColorWheelId, type MatchingMethod } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { DyeTypeFilters } from '@xivdyetools/types';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
@@ -31,7 +31,9 @@ export async function handleHarmonyCommand(
   const options = interaction.data?.options || [];
   const colorOption = options.find((opt) => opt.name === 'color');
   const typeOption = options.find((opt) => opt.name === 'type');
-  const colorSpaceOption = options.find((opt) => opt.name === 'color_space');
+  const wheelOption = options.find((opt) => opt.name === 'wheel');
+  // Validated here so a stale registered choice can never reach the selector as a string.
+  const wheel: ColorWheelId | undefined = isColorWheelId(wheelOption?.value) ? wheelOption.value : undefined;
   const companionsOption = options.find((opt) => opt.name === 'companions');
   const matchingOption = options.find((opt) => opt.name === 'matching');
   const strictOption = options.find((opt) => opt.name === 'strict_matching');
@@ -39,7 +41,6 @@ export async function handleHarmonyCommand(
 
   const colorInput = colorOption?.value as string | undefined;
   const harmonyType = (typeOption?.value as HarmonyType) || 'triadic';
-  const colorSpace = (colorSpaceOption?.value as HarmonyColorSpace) || undefined;
   const companionCount = (companionsOption?.value as number) ?? undefined;
   const matchingMethod = (matchingOption?.value as MatchingMethod) ?? undefined;
   const strictMatching = (strictOption?.value as boolean) ?? undefined;
@@ -66,7 +67,6 @@ export async function handleHarmonyCommand(
   }
 
   const locale = t.getLocale();
-  const harmonyOptions = colorSpace ? { colorSpace } : undefined;
   const deferResponse = deferredResponse();
   const prefs = await getUserPreferences(env.KV, userId, logger);
 
@@ -86,7 +86,7 @@ export async function handleHarmonyCommand(
       harmonyType,
       locale,
       logger,
-      harmonyOptions,
+      wheel,
       prefs.dyeFilters,
       companionCount,
       effectiveMatching,
@@ -108,7 +108,7 @@ async function processHarmonyCommand(
   harmonyType: HarmonyType,
   locale: LocaleCode,
   logger?: ExtendedLogger,
-  harmonyOptions?: { colorSpace?: HarmonyColorSpace },
+  wheel?: ColorWheelId,
   dyeFilters?: DyeTypeFilters,
   companionCount?: number,
   matchingMethod?: MatchingMethod,
@@ -126,7 +126,7 @@ async function processHarmonyCommand(
     baseItemID,
     harmonyType,
     locale,
-    harmonyOptions,
+    wheel,
     dyeFilters,
     companionCount,
     matchingMethod,
