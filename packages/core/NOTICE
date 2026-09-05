@@ -1,0 +1,26 @@
+Third-party data notices for @xivdyetools/core
+==============================================
+
+Munsell hue-wheel data
+----------------------
+The Munsell hue-angle table in src/data/munsell-hues.json is derived from
+the Munsell renotation data (real.dat) published by the Munsell Color
+Science Laboratory / Program of Color Science, Rochester Institute of
+Technology:
+  https://www.rit.edu/science/munsell-color-science-lab-educational-resources
+which in turn reproduces the tables of Newhall, S. M., Nickerson, D., &
+Judd, D. B. (1943). "Final Report of the O.S.A. Subcommittee on the
+Spacing of the Munsell Colors." JOSA 33(7), 385-418.
+doi:10.1364/JOSA.33.000385
+
+Only 40 derived hue-angle pairs (Value 6 / Chroma 8) are shipped; the
+renotation dataset itself is not redistributed. sRGB values were
+cross-checked against the R package `munsell`
+(https://github.com/cwickham/munsell), Copyright (c) 2016 Charlotte
+Wickham, MIT licence, and against munsell.js (MPL-2.0) as a development-time
+oracle.
+
+These values are computed colorimetric renotations, not measurements of
+any physical Munsell Book of Color, and are not endorsed by or affiliated
+with X-Rite, Pantone or Amazys Holding GmbH. MUNSELL is a registered
+trademark (USPTO Reg. No. 1570854) of Amazys Holding GmbH.

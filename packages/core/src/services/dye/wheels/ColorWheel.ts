@@ -5,6 +5,7 @@
  */
 
 import type { ColorWheelId } from '@xivdyetools/types';
+import { MUNSELL_WHEEL } from './munsell.js';
 import { OKLCH_HUE_WHEEL } from './oklch-hue.js';
 import { OKLCH_LIGHTNESS_WHEEL } from './oklch-lightness.js';
 import { RGB_WHEEL, RYB_WHEEL } from './rgb-ryb.js';
@@ -27,18 +28,10 @@ export function isColorWheelId(value: unknown): value is ColorWheelId {
   return typeof value === 'string' && (COLOR_WHEEL_IDS as readonly string[]).includes(value);
 }
 
-/** A wheel that is registered but not yet implemented fails loudly, never like RGB. */
-function notYet(id: ColorWheelId): ColorWheel {
-  const fail = (): never => {
-    throw new Error(`ColorWheel ${id} is not implemented yet`);
-  };
-  return { id, hueOf: fail, target: fail, ringStops: fail };
-}
-
 const WHEELS: Readonly<Record<ColorWheelId, ColorWheel>> = {
   rgb: RGB_WHEEL,
   ryb: RYB_WHEEL,
-  munsell: notYet('munsell'),
+  munsell: MUNSELL_WHEEL,
   'oklch-hue': OKLCH_HUE_WHEEL,
   'oklch-lightness': OKLCH_LIGHTNESS_WHEEL,
 };
