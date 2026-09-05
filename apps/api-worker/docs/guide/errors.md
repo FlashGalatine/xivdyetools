@@ -1,6 +1,6 @@
 # Error Reference
 
-All `/v1` errors use the same envelope. The `error` field is a stable machine-readable code — safe to `switch` on in your application code. (The [Universalis proxy](../reference/universalis) routes are not enveloped — they return a bare `{ "error": "..." }` body with the upstream status code.)
+All `/v1` errors use the same envelope. The `error` field is a stable machine-readable code — safe to `switch` on in your application code.
 
 ```json
 {
@@ -23,7 +23,8 @@ All `/v1` errors use the same envelope. The `error` field is a stable machine-re
 | `INVALID_MATCHING_METHOD` | 400 | Unknown color distance algorithm |
 | `INVALID_LOCALE` | 400 | Unsupported locale code |
 | `INVALID_STAIN_ID` | 400 | stainId is not a positive integer |
-| `NOT_FOUND` | 404 | Dye, stain, or route not found — also returned for consolidated market itemIDs (`52254`–`52256`) and legacy negative Facewear IDs, each with an explanatory `message` (an unknown `category` is not an error; it simply matches no dyes) |
+| `INVALID_BODY` | 400 / 413 | `POST /v1/chara/resolve` body is not a JSON object (400) or exceeds 8 KB (413) |
+| `NOT_FOUND` | 404 | Dye, stain, icon, or route not found — also returned for consolidated market itemIDs (`52254`–`52256`) and legacy negative Facewear IDs, each with an explanatory `message` (an unknown `category` is not an error; it simply matches no dyes) |
 | `RATE_LIMITED` | 429 | Rate limit exceeded |
 
 ### Server Errors (5xx)
@@ -31,8 +32,9 @@ All `/v1` errors use the same envelope. The `error` field is a stable machine-re
 | Code | HTTP | Description |
 |---|---|---|
 | `INTERNAL_ERROR` | 500 | Unexpected server error |
+| `UPSTREAM_UNAVAILABLE` | 503 | XIVAPI is down, timed out, or re-indexing after a game patch — only on `/v1/chara/*`, which is the one surface with an upstream. Retry later. |
 
-The `/v1` API has no upstream, so `502`/`503` only occur on the un-enveloped [Universalis proxy](../reference/universalis) routes.
+The dye and matching endpoints have no upstream, so they never answer `502` / `503`.
 
 ## Validation Details
 
@@ -68,7 +70,7 @@ Validation stops at the first failing parameter — a response never reports mor
 | Case | Case-insensitive |
 | 3-digit shorthand | **Not supported** — `#F00` returns `INVALID_HEX` |
 
-## Numeric Ranges (Phase 1)
+## Numeric Ranges
 
 | Parameter | Range | Default |
 |---|---|---|
@@ -79,8 +81,9 @@ Validation stops at the first failing parameter — a response never reports mor
 | `ids` (batch), `excludeIds` | ≤ 50 comma-separated integers | — |
 | `maxDistance` | ≥ 0.01 | — |
 | `limit` (within-distance) | 1 – 125 (the whole dye database) | `20` |
+| `iconId` (path) | 1 – 999999, canonical decimal | — |
 
-## Enum Values (Phase 1)
+## Enum Values
 
 | Parameter | Valid values |
 |---|---|
@@ -105,6 +108,6 @@ A `429` response carries the seconds to wait as a top-level `retryAfter` field:
 }
 ```
 
-(API keys are not yet available — see [Rate Limits](./rate-limits) — the message anticipates Phase 2.)
+(API keys are not yet available — see [Rate Limits](./rate-limits) — the message anticipates them.)
 
 The `Retry-After` header is also set on 429 responses. See [Rate Limits](./rate-limits).

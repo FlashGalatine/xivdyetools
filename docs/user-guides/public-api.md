@@ -182,7 +182,7 @@ curl https://data.xivdyetools.app/universalis/data-centers
 curl https://data.xivdyetools.app/universalis/worlds
 ```
 
-Always price a dye by its `marketItemID`, not its `itemID`. Full details: [Universalis Proxy reference](https://developers.xivdyetools.app/reference/universalis).
+Always price a dye by its `marketItemID`, not its `itemID`, and look prices up on Universalis directly — the public docs no longer advertise the proxy routes (see the [Dyes reference](https://developers.xivdyetools.app/reference/dyes#get-v1-dyes-consolidation-groups) for the consolidation groups).
 
 ---
 

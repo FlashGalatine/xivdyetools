@@ -1,8 +1,8 @@
 # Character Equipment
 
-Resolve the equipment model keys stored in an Anamnesis / Ktisis / Brio `.chara` file to in-game item names (six languages), icons, and their families of visually identical items. This is what powers **Swatch Matcher → Dyes on this glamour** in the web app.
+<p class="xdt-meta">2 endpoints · .chara import · 6 languages</p>
 
-**Base URL:** `https://data.xivdyetools.app/v1/chara`
+Resolve the equipment model keys stored in an Anamnesis / Ktisis / Brio `.chara` file to in-game item names (six languages), icons, and their families of visually identical items. This is what powers **Swatch Matcher → Dyes on this glamour** in the web app.
 
 ::: tip Why model keys, not item IDs?
 A `.chara` file never names the items a character wears — it stores each slot's `ModelBase` / `ModelVariant` (weapons add `ModelSet`), the lanes of the Item sheet's packed `ModelMain`. Those keys resolve deterministically, but the slot is a mandatory second key (one gear set shares a `ModelMain` across head/body/hands/legs/feet), and 35 % of keys are families of items that share one mesh (Augmented / Replica / +1 / role variants). This endpoint does that resolution once, server-side, and caches it per key.
@@ -10,21 +10,14 @@ A `.chara` file never names the items a character wears — it stores each slot'
 
 ## POST /v1/chara/resolve
 
-Resolve every worn piece of one character in a single call.
+Resolve every worn piece of one character in a single call. The body is the twelve small integers below and nothing else — no names, no appearance data, no screenshot.
 
-### Request body
-
-```json
-{
-  "gear": [
-    { "slot": "HeadGear", "base": 361, "variant": 5 },
-    { "slot": "Body",     "base": 872, "variant": 2 },
-    { "slot": "MainHand", "set": 634, "base": 19, "variant": 1 },
-    { "slot": "OffHand",  "set": 698, "base": 149, "variant": 1 }
-  ],
-  "glasses": 40
-}
-```
+<EndpointCard
+  method="POST"
+  endpoint="/v1/chara/resolve"
+  summary="Resolve .chara gear model keys to items."
+  body='{"gear":[{"slot":"HeadGear","base":361,"variant":5},{"slot":"Body","base":872,"variant":2},{"slot":"MainHand","set":634,"base":19,"variant":1},{"slot":"OffHand","set":698,"base":149,"variant":1}],"glasses":40}'
+/>
 
 | Field | Type | Notes |
 |---|---|---|
@@ -34,8 +27,6 @@ Resolve every worn piece of one character in a single call.
 | `gear[].variant` | integer 0–65535 | The file's `ModelVariant` (default 0) |
 | `gear[].set` | integer 0–65535 | Weapon slots only — the file's `ModelSet` |
 | `glasses` | integer 1–65535 | The file's `Glasses.GlassesId` (or bare `Glasses` integer). Omit or `0` for none. |
-
-The body is the twelve small integers above and nothing else — no names, no appearance data, no screenshot.
 
 ### Response
 
@@ -96,15 +87,15 @@ Names are never "cleaned": Augmented / Replica / +1 prefixes stay, because the n
 
 The item's icon as PNG (the 80 px `_hr1` asset), proxied from XIVAPI and edge-cached.
 
-```
-GET https://data.xivdyetools.app/v1/chara/icon/41716
-```
+<EndpointCard
+  endpoint="/v1/chara/icon/:iconId"
+  summary="Item icon proxy (PNG)."
+  :params="[
+    { name: 'iconId', in: 'path', required: true, default: '41716', description: 'From items.<slot>.iconId or glasses.iconId — canonical decimal, 1–999999 (no leading zeros, sign or trailing characters)' },
+  ]"
+/>
 
-| Param | Type | Notes |
-|---|---|---|
-| `iconId` | integer 1–999999, canonical decimal (no leading zeros, sign or trailing characters — `041716` and `41716abc` are `400 VALIDATION_ERROR`) | From `items.<slot>.iconId` or `glasses.iconId` |
-
-Returns `image/png` (always — the upstream content type is never reflected; a 2xx upstream body that is not a PNG is refused) with `Cache-Control: public, max-age=2592000, immutable`, `Content-Disposition: inline`, `Content-Security-Policy: sandbox` and an `X-Cache` header (`HIT` / `MISS`). `404 NOT_FOUND` when the upstream has no such asset; `503 UPSTREAM_UNAVAILABLE` when XIVAPI is down, answers with something other than a PNG, or exceeds the 1 MB ceiling. A missing icon should cost the tile, not the row.
+Returns `image/png` (always — the upstream content type is never reflected; a 2xx upstream body that is not a PNG is refused) with `Cache-Control: public, max-age=2592000, immutable`, `Content-Disposition: inline`, `Content-Security-Policy: sandbox` and an `X-Cache` header (`HIT` / `MISS`). `041716` and `41716abc` are `400 VALIDATION_ERROR`; `404 NOT_FOUND` when the upstream has no such asset; `503 UPSTREAM_UNAVAILABLE` when XIVAPI is down, answers with something other than a PNG, or exceeds the 1 MB ceiling. A missing icon should cost the tile, not the row.
 
 ## Model key packing (for reference)
 

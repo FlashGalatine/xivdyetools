@@ -1,8 +1,10 @@
 # Color Matching
 
+<p class="xdt-meta">2 endpoints · 6 distance methods · ΔE2000 default</p>
+
 Find FFXIV dyes that best match any hex color you provide, using perceptual color distance algorithms.
 
-## Distance Methods
+## Distance methods
 
 | Method | Tag | Scale | Description |
 |---|---|---|---|
@@ -27,44 +29,31 @@ The other five methods are unaffected, and `ciede2000` remains the default.
 The pre-5.0 values `hyab` and `oklch-weighted` are still **accepted** for compatibility but are silently normalised to `ciede2000` (and `euclidean` to `rgb`) — the response `method` field shows what was actually used. The old `kL` / `kC` / `kH` weight parameters are ignored.
 :::
 
----
+Both endpoints take the same **type / acquisition filters** (`metallic`, `pastel`, `dark`, `cosmic`, `ishgardian`, `vendor`, `craft`, `expensive`): set one to `true` or `false` and the matcher narrows the candidate set to dyes that match, exactly as [`GET /v1/dyes`](./dyes#get-v1-dyes) filters do.
 
 ## GET /v1/match/closest
 
 Find the single closest FFXIV dye to a given hex color.
 
-### Parameters
-
-| Name | In | Required | Description |
-|---|---|---|---|
-| `hex` | query | Yes | Hex color (`#RRGGBB` or `RRGGBB`) |
-| `method` | query | No | Distance algorithm (default: `ciede2000`) |
-| `excludeIds` | query | No | Comma-separated IDs to exclude from results (max 50; itemID or stainID, auto-detected) |
-| `locale` | query | No | Locale for `localizedName` |
-
-**Type / acquisition filters** (also supported, all optional booleans) — when set to `true`/`false`, the matcher narrows the candidate set to dyes that match the filter. See [GET /v1/dyes](dyes#get-v1dyes) for full descriptions.
-
-| Name | Description |
-|---|---|
-| `metallic` | Filter to/from metallic dyes |
-| `pastel` | Filter to/from pastel dyes |
-| `dark` | Filter to/from dark dyes |
-| `cosmic` | Filter to/from Cosmic Exploration dyes |
-| `ishgardian` | Filter to/from Ishgardian dyes |
-| `vendor` | Filter to/from vendor-acquired dyes |
-| `craft` | Filter to/from crafted dyes |
-| `expensive` | Filter to/from premium-cost dyes |
-
-<TryIt
+<EndpointCard
   endpoint="/v1/match/closest"
+  summary="The single closest dye to a hex color."
+  preview="/v1/match/closest?hex=EA4133"
   :params="[
-    { name: 'hex', in: 'query', required: true, default: 'FF6B6B', description: 'Hex color — #RRGGBB or RRGGBB' },
-    { name: 'method', in: 'query', required: false, default: 'ciede2000', description: 'Distance algorithm', options: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'] },
-    { name: 'locale', in: 'query', required: false, default: 'en', description: 'en, ja, de, fr, ko, zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] }
+    { name: 'hex', in: 'query', required: true, default: 'FF6B6B', description: 'Hex color — #RRGGBB or RRGGBB (3-digit shorthand is not accepted)' },
+    { name: 'method', in: 'query', default: 'ciede2000', description: 'Distance algorithm', options: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'] },
+    { name: 'excludeIds', in: 'query', description: 'Comma-separated IDs to exclude (max 50; itemID or stainID, auto-detected)' },
+    { name: 'locale', in: 'query', default: 'en', description: 'en · ja · de · fr · ko · zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] },
+    { name: 'metallic', in: 'query', description: 'Only / never metallic dyes', options: ['true', 'false'] },
+    { name: 'pastel', in: 'query', description: 'Only / never pastel dyes', options: ['true', 'false'] },
+    { name: 'dark', in: 'query', description: 'Only / never dark dyes', options: ['true', 'false'] },
+    { name: 'cosmic', in: 'query', description: 'Only / never Cosmic Exploration dyes', options: ['true', 'false'] },
+    { name: 'ishgardian', in: 'query', description: 'Only / never Ishgardian dyes', options: ['true', 'false'] },
+    { name: 'vendor', in: 'query', description: 'Only / never vendor-acquired dyes', options: ['true', 'false'] },
+    { name: 'craft', in: 'query', description: 'Only / never crafted dyes', options: ['true', 'false'] },
+    { name: 'expensive', in: 'query', description: 'Only / never premium-cost dyes', options: ['true', 'false'] },
   ]"
 />
-
-Example response:
 
 ```json
 {
@@ -89,37 +78,31 @@ Example response:
 
 **Distance values** are floats (rounded to 4 decimals) in the chosen method's native unit. For `ciede2000`, roughly `< 2` is imperceptible, `2–10` is a visible-but-close match, and `> 10` is a clearly different color; for `oklab` (ΔEOK2), values below `0.03` are perceptually very close and above `0.17` are clearly different — these are the suite's own calibrated band cuts, and they moved up with the 5.1.0 scale change described above.
 
----
-
 ## GET /v1/match/within-distance
 
 Find all dyes within a color distance threshold. Results are sorted closest-first.
 
-### Parameters
-
-| Name | In | Required | Description |
-|---|---|---|---|
-| `hex` | query | Yes | Hex color (`#RRGGBB` or `RRGGBB`) |
-| `maxDistance` | query | Yes | Maximum distance threshold in the method's native unit (min `0.01`) |
-| `method` | query | No | Distance algorithm (default: `ciede2000`) |
-| `limit` | query | No | Max results (1–125; default `20`) — applied after `excludeIds` and the filters below |
-| `excludeIds` | query | No | Comma-separated IDs to exclude (max 50) |
-| `locale` | query | No | Locale for `localizedName` |
-
-**Type / acquisition filters** (`metallic`, `pastel`, `dark`, `cosmic`, `ishgardian`, `vendor`, `craft`, `expensive`) are also supported here — see the [closest endpoint](#get-v1matchclosest) above.
-
-<TryIt
+<EndpointCard
   endpoint="/v1/match/within-distance"
+  summary="Every dye within a distance of a hex color."
+  preview="/v1/match/within-distance?hex=EA4133&maxDistance=12"
   :params="[
     { name: 'hex', in: 'query', required: true, default: 'FF6B6B', description: 'Hex color — #RRGGBB or RRGGBB' },
-    { name: 'maxDistance', in: 'query', required: true, default: '15', description: 'Maximum distance in the method\'s unit (ΔE2000: try 5–30)' },
-    { name: 'method', in: 'query', required: false, default: 'ciede2000', description: 'Distance algorithm', options: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'] },
-    { name: 'limit', in: 'query', required: false, default: '10', description: 'Max results (1–125)' },
-    { name: 'locale', in: 'query', required: false, default: 'en', description: 'en, ja, de, fr, ko, zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] }
+    { name: 'maxDistance', in: 'query', required: true, default: '15', description: 'Maximum distance in the method\'s unit (min 0.01; ΔE2000: try 5–30)' },
+    { name: 'method', in: 'query', default: 'ciede2000', description: 'Distance algorithm', options: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'] },
+    { name: 'limit', in: 'query', default: '10', description: 'Max results (1–125; API default 20) — applied after excludeIds and the filters' },
+    { name: 'excludeIds', in: 'query', description: 'Comma-separated IDs to exclude (max 50)' },
+    { name: 'locale', in: 'query', default: 'en', description: 'en · ja · de · fr · ko · zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] },
+    { name: 'metallic', in: 'query', description: 'Only / never metallic dyes', options: ['true', 'false'] },
+    { name: 'pastel', in: 'query', description: 'Only / never pastel dyes', options: ['true', 'false'] },
+    { name: 'dark', in: 'query', description: 'Only / never dark dyes', options: ['true', 'false'] },
+    { name: 'cosmic', in: 'query', description: 'Only / never Cosmic Exploration dyes', options: ['true', 'false'] },
+    { name: 'ishgardian', in: 'query', description: 'Only / never Ishgardian dyes', options: ['true', 'false'] },
+    { name: 'vendor', in: 'query', description: 'Only / never vendor-acquired dyes', options: ['true', 'false'] },
+    { name: 'craft', in: 'query', description: 'Only / never crafted dyes', options: ['true', 'false'] },
+    { name: 'expensive', in: 'query', description: 'Only / never premium-cost dyes', options: ['true', 'false'] },
   ]"
 />
-
-Example response:
 
 ```json
 {

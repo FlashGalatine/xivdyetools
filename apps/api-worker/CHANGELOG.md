@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-09-05
+
+Developer docs restyle (`developers.xivdyetools.app`) on the confirmed **API Docs Directions 1d**
+(design register, 2026-09-04). No change to the `/v1` contract or to any route.
+
+### Changed
+
+- **The docs site wears the web-app's clothes.** Same font contract (Space Grotesk / Onest /
+  Fragment Mono, self-hosted from `docs/public/fonts/` — the default theme's Inter files no
+  longer ship, `vitepress/theme-without-fonts`) and the 5.0 dark palette with the one `#EA4133`
+  accent, replacing the stock VitePress look and its gold `#c0a060` brand. Dark is the only theme
+  (`appearance: 'force-dark'`); light follows from the same variable table when it is drawn.
+- **Console chrome.** 54 px bar with the flat six-stripe mark + wordmark + mono `API` tag, Home /
+  Guide / Reference as 38 px chips (active = accent fill), search in the bar (`/` opens it),
+  `xivdyetools.app ↗` as an outlined chip; 252 px settings column with mono section labels and
+  right-aligned endpoint counts; mono right rail. On phones the hamburger and local nav are
+  replaced by a bottom section sheet opened from the bar's active chip.
+- **`/reference/` is the live endpoint index.** One row per endpoint, grouped by section, each
+  making one real request on load — the hexes in the answer are painted as a swatch strip, an
+  answer with no colours prints its count, a failure prints the API's own error text verbatim,
+  and the two no-preview rows (`POST /v1/chara/resolve`, the icon proxy) say so and never fetch.
+- **Every endpoint is one console card** (`EndpointCard.vue`, replacing `TryIt.vue`): the
+  parameter form on the left **is** the parameter table (the Markdown `### Parameters` tables are
+  gone — one source of truth per endpoint), the Dye Object's 19 fields fold under it, the response
+  pane on the right sends on tap only (URL echo · Send · cURL · `status · ms · X-Request-ID` ·
+  two-colour JSON). `POST /v1/chara/resolve` gets an editable JSON body; the icon proxy card
+  renders the PNG it fetches. Quick Start makes the first request with the same card.
+- **Home** is 1b's hero — eyebrow, headline, base-URL field with Copy, the two actions, a labelled
+  *sample* envelope (nothing on the home page fetches) — and seven tiles, glyphs from
+  `@xivdyetools/svg` only where a tool exists (Matching → extractor, Character Equipment → swatch,
+  Languages → globe). The seventh tile is now **Character Equipment**.
+- Markdown code fences render on a two-colour Shiki theme (keys accent, values text) so they read
+  the same as the card's JSON view.
+- The endpoint registry (`docs/.vitepress/theme/lib/endpoints.ts`) is the single source for the
+  sidebar counts, the live index, the section sheet and the `N ENDPOINTS` tags.
+
+### Removed
+
+- **The Universalis market-board proxy is no longer documented on the public site** (decided
+  2026-09-04). Universalis serves CORS itself, so a third party routing through us gained only our
+  edge cache while spending the shared upstream 429 budget the web-app's Market Board and the bot's
+  `/budget` depend on. The routes are unchanged (`/universalis/*` canonical, `/api/v2/*` compat);
+  `docs/reference/universalis.md`, its sidebar entry and every guide-page mention are gone, and the
+  `marketItemID` / consolidation guidance moved to the Dyes page.
+- `TryIt.vue` and the `--try-it-*` CSS variables.
+
+### Fixed
+
+- `guide/errors.md` now lists `INVALID_BODY` (400 / 413) and `UPSTREAM_UNAVAILABLE` (503) — both
+  were live on `/v1/chara/*` but missing from the code catalogue.
+
 ## [0.12.0] - 2026-09-04
 
 ### Changed

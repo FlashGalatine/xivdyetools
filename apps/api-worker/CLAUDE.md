@@ -69,6 +69,14 @@ src/
 └── chara/                # .chara equipment resolution: router (POST /resolve, GET /icon/:id), xivapi client (UA, version/schema pin, 503→UpstreamUnavailableError), resolver (pure rules: slot column × ModelMain, lowest row_id, off-hand via main ModelSub), cache (per-key Cache API, own store), regional-names (+ data/item-names.{ko,zh}.json from scripts/build-item-names.mjs)
 scripts/build-item-names.mjs  # Regenerates the ko/zh tables after a patch (local ffxiv-datamining clone or GitHub raw + Teamcraft JSON); manual, commit the output
 docs/                     # VitePress site → developers.xivdyetools.app (built by `pnpm build:docs`, shipped as Workers Static Assets)
+├── .vitepress/config.ts      # nav / sidebar (counts from the endpoint registry) / force-dark / two-colour Shiki theme
+├── .vitepress/theme/         # Layout.vue (bar slots, `/` → search), custom.css (tokens + chrome restyle), components/
+│   ├── lib/endpoints.ts      # THE endpoint registry: sidebar counts, live index rows + their preview queries, section sheet
+│   ├── lib/fields.ts         # Dye Object field table as data (folds under the card)
+│   ├── lib/live.ts           # fetch/strip/JSON-line helpers shared by the card and the index
+│   └── components/           # EndpointCard (the console card — its params form IS the parameter table),
+│                             # EndpointIndex (+LiveStrip), DocsHome, BaseUrl, SectionSheet (mobile), Glyph (@xivdyetools/svg)
+└── public/fonts/             # Space Grotesk / Onest / Fragment Mono woff2, copied from web-app/public/fonts
 ```
 
 ### API Endpoints (Phase 1: 9 under `/v1`, plus health + Universalis proxy)
@@ -174,6 +182,7 @@ Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/
 | `@xivdyetools/worker-kit` | Shared `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` factory |
 | `@xivdyetools/test-utils` (dev) | KV mock for vitest |
 | `vitepress` + `vue` (dev) | The developer docs site in `docs/` |
+| `@xivdyetools/svg` (dev) | The tool / chrome / panel glyphs the docs site renders (`docs/.vitepress/theme/components/Glyph.vue`) — the docs only, never the worker |
 
 ## Related Projects
 
@@ -183,11 +192,13 @@ Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/
 
 **Documentation:** `docs/` (in this app) is the VitePress site documenting this worker's public API surface — built by `pnpm run build:docs` and served as Workers Static Assets on developers.xivdyetools.app (absorbed from apps/api-docs). Hub copies live at `docs/projects/api-worker/` and `docs/user-guides/public-api.md` in the monorepo — keep them consistent.
 
+The site is on the **API Docs Directions 1d** design (confirmed 2026-09-04; `notes/api-docs-handoff.md` in the design project is the build-side companion). Rules that are not stylistic preferences: every endpoint is one `<EndpointCard>` and **its params form is the parameter table** — do not add a Markdown `### Parameters` table beside it; the Dye Object is `lib/fields.ts` data, not Markdown; a new endpoint is a row in `lib/endpoints.ts` (that is where the sidebar counts, the live index and the mobile sheet read from) plus a `## METHOD /path` heading whose slug matches the row's `link`; live strips print the API's error text verbatim, never a stand-in, and a sample on the home page is labelled a sample. **The Universalis proxy is deliberately undocumented on the public site** (decided 2026-09-04 — third parties gained only our edge cache while spending the shared upstream 429 budget); the routes stay for our own clients, so do not re-add a reference page for them. Dark is the only theme drawn (`appearance: 'force-dark'`).
+
 ## Deployment Checklist
 
 1. `pnpm lint && pnpm type-check && pnpm test` — must be green.
-2. Bump `version` in `package.json` if behavior changed (currently `0.10.0`).
+2. Bump `version` in `package.json` if behavior changed (currently `0.13.0`).
 3. Merging to `main` **is** the production deploy: `.github/workflows/deploy-api-worker.yml` builds deps, type-checks, tests, runs `build:docs`, runs `wrangler deploy --env production`, then smoke-tests `data.xivdyetools.app/health` and `developers.xivdyetools.app/`. There is no staging worker — `pnpm deploy` only pushes the routeless `xivdyetools-api-worker-dev` worker, which has `workers_dev = false` (FINDING-025) and is therefore not reachable over `*.workers.dev`; ad-hoc testing is `pnpm dev`.
 4. Deploying by hand: `pnpm build:docs && pnpm deploy:production` (the assets directory must exist or the production deploy fails). See `docs/operations/DEPLOY_ENVIRONMENTS.md`.
-5. If any new endpoints/parameters were added, update **both** `docs/reference/dyes.md` (or `matching.md` / `universalis.md`) and the `index.md` quick-start examples — the docs site is the public contract. Internal routes (`/v1/telemetry`) stay off the docs site on purpose; record them in this file's route table instead.
+5. If any new endpoints/parameters were added, update the endpoint's `<EndpointCard>` in `docs/reference/dyes.md` (or `matching.md` / `chara.md`) **and** its row in `docs/.vitepress/theme/lib/endpoints.ts` — the docs site is the public contract, and the registry is what the live index, sidebar counts and section sheet render. Internal routes (`/v1/telemetry`) and the Universalis proxy stay off the docs site on purpose; record them in this file's route table instead.
 6. Verify `X-RateLimit-*` headers appear on a `/v1/*` response and `X-Request-Id` is unique per call.

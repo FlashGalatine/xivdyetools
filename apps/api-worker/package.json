@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-api-worker",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "description": "Public API for XIV Dye Tools - Dye database and color matching",
   "license": "MIT",
@@ -29,6 +29,7 @@
     "@cloudflare/workers-types": "^5.20260828.1",
     "vitepress": "^1.6.4",
     "vue": "^3.5.42",
+    "@xivdyetools/svg": "workspace:*",
     "@types/node": "^26.4.0",
     "@vitest/coverage-v8": "^4.1.11",
     "@xivdyetools/test-utils": "workspace:*",

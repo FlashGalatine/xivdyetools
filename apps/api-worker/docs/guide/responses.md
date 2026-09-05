@@ -1,6 +1,6 @@
 # Responses
 
-All `/v1` responses use a consistent JSON envelope regardless of endpoint. (The [Universalis proxy](../reference/universalis) at `/universalis/*` and the `/health` check are the exceptions — they return raw bodies.)
+All `/v1` responses use a consistent JSON envelope regardless of endpoint. (The `/health` check is the one exception — it returns a raw body.)
 
 ## Success
 
@@ -76,14 +76,14 @@ Control pagination with `?page=` and `?perPage=` (max 200). Non-paginated endpoi
 
 ## Response Headers
 
-Every `/v1` response includes these headers (`X-RateLimit-*` are set only on `/v1/*`):
+Every `/v1` response includes these headers:
 
 | Header | Example | Description |
 |---|---|---|
 | `X-Request-ID` | `550e8400-…` | Unique ID — matches `meta.requestId` in body |
 | `X-API-Version` | `v1` | API version |
 | `X-RateLimit-Limit` | `65` | Requests allowed per window (60 + 5 burst) |
-| `X-RateLimit-Remaining` | `42` | Requests remaining in this window |
+| `X-RateLimit-Remaining` | `42` | Headroom flag — see [Rate Limits](./rate-limits) |
 | `X-RateLimit-Reset` | `1702684860` | Unix timestamp when the window resets |
 | `Cache-Control` | `public, max-age=3600, s-maxage=86400` | Caching directives |
 | `Access-Control-Allow-Origin` | `*` | Open CORS — callable from any origin |
@@ -96,8 +96,8 @@ Dye data is deterministic and changes only with FFXIV patches, so aggressive cac
 |---|---|
 | `/v1/dyes/*` | `public, max-age=3600, s-maxage=86400` |
 | `/v1/match/*` | `public, max-age=3600, s-maxage=86400` |
-| `/universalis/aggregated/*` | `public, max-age=300, stale-while-revalidate=120` (stale hits: `max-age=0, must-revalidate`) + `X-Cache` headers |
-| `/universalis/data-centers`, `/universalis/worlds` | `public, max-age=86400, stale-while-revalidate=21600` |
+| `POST /v1/chara/resolve` | `no-store` on the envelope — each (slot, key) is cached ~7 days behind it; `X-Cache: HIT` / `MISS` |
+| `/v1/chara/icon/:iconId` | `public, max-age=2592000, immutable` + `X-Cache` |
 
 The `Age` header (set by Cloudflare) tells you how old the cached response is. A fresh cache hit means sub-millisecond response time at the nearest PoP.
 
