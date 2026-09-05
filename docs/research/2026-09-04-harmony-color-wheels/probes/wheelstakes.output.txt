@@ -1,0 +1,33 @@
+dyes considered: 125
+
+| harmony | wheel | slots | partner changed | mean ΔE00 when changed | max ΔE00 | mean target hue shift |
+|---|---|---|---|---|---|---|
+| complementary | ryb | 125 | 63 (50.4%) | 14.72 | 38.70 | 17.0° |
+| complementary | oklch | 125 | 81 (64.8%) | 16.98 | 58.38 | 4.7° |
+| complementary | oklch-clip | 125 | 80 (64.0%) | 17.26 | 70.67 | 5.8° |
+| analogous | ryb | 250 | 93 (37.2%) | 13.41 | 27.10 | 9.8° |
+| analogous | oklch | 250 | 119 (47.6%) | 14.77 | 29.74 | 9.3° |
+| analogous | oklch-clip | 250 | 121 (48.4%) | 14.66 | 29.74 | 9.7° |
+| triadic | ryb | 250 | 127 (50.8%) | 16.69 | 43.21 | 20.3° |
+| triadic | oklch | 250 | 185 (74.0%) | 16.46 | 36.14 | 17.2° |
+| triadic | oklch-clip | 250 | 180 (72.0%) | 16.29 | 36.14 | 16.1° |
+
+ALL (ryb): 283/625 = 45.3% changed, mean ΔE00 when changed 15.17
+ALL (oklch): 385/625 = 61.6% changed, mean ΔE00 when changed 16.05
+ALL (oklch-clip): 381/625 = 61.0% changed, mean ΔE00 when changed 15.97
+
+CSS4 chroma-reduction vs naive clip differ on 127/625 targets (20.3%)
+
+METRIC swap on the SAME OKLCH target (ΔE00 vs ΔEOK ranking): 285/625 = 45.6% differ, mean ΔE00 between the two picks 12.21
+
+grey-stability: 4 near-grey dyes; 0 rotated targets gained saturation >3.5%
+   Slate Grey #656565 -> rgb #656565 ryb #656565 oklch #656565
+   Pure White #f9f8f4 -> rgb #f4f5f9 ryb #f4f5f9 oklch #f7f8fc
+   Jet Black #1e1e1e -> rgb #1e1e1e ryb #1e1e1e oklch #1e1e1e
+   Metallic Silver #a7a7a7 -> rgb #a7a7a7 ryb #a7a7a7 oklch #a7a7a7
+
+RYB warp: max round-trip error 2.27e-13°, monotonic=true
+  hsv->ryb: 0->0.0  30->52.5  60->120.0  120->162.8  180->218.4  240->275.3  300->331.0
+  ryb->hsv: 0->0.0  30->17.0  60->34.0  120->60.0  180->138.0  240->204.0  300->267.0
+  RYB complement of red(hsv 0) = hsv 138.0
+  RYB triad of red = hsv 60.0, 204.0
