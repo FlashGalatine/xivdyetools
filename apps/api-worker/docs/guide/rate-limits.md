@@ -1,14 +1,13 @@
 # Rate Limits
 
-## Current Limits (Phase 1)
+## Current Limits
 
-All Phase 1 endpoints are anonymous. There is no API key required.
+Every endpoint is anonymous. There is no API key required.
 
 | Surface | Rate limit | Burst |
 |---|---|---|
 | `/v1/*` — anonymous (all users) | 60 req/min per IP (per-colo fixed window) | +5 |
-| `/universalis/aggregated/*` — [market-board proxy](../reference/universalis) | 30 req/min per IP in production (per-isolate memory limiter, separate budget) | — |
-| `/universalis/data-centers`, `/universalis/worlds`, `/health`, `/` | not rate-limited | — |
+| `/health`, `/` | not rate-limited | — |
 
 The burst allowance lets you fire a quick burst of up to 65 requests before the sliding window kicks in.
 
@@ -46,7 +45,7 @@ When you receive a `429`:
 
 1. Check `X-RateLimit-Reset` or `Retry-After` to know when to retry
 2. Back off and retry after the window resets
-3. If you need more than 60 req/min, Phase 2 will introduce registered API keys with a 300 req/min limit
+3. If you need more than 60 req/min, registered API keys with a 300 req/min limit are planned
 
 ```json
 {
@@ -58,8 +57,6 @@ When you receive a `429`:
 }
 ```
 
-(The proxy's `429` is un-enveloped: `{ "error": "Rate limit exceeded", "retryAfter": 60 }` plus `Retry-After`.)
-
 ## Tips for Staying Under Limits
 
 - **Cache on your end.** Dye data is stable between FFXIV patches. Cache responses with `Cache-Control: max-age=3600`.
@@ -70,9 +67,9 @@ When you receive a `429`:
 
 CORS `Access-Control-Max-Age` is `3600` (1 hour) on every route — browsers will cache the preflight `OPTIONS` response for one hour before re-asking. (Reduced from 24h in v0.4.0 to allow CORS policy changes to propagate within an hour.)
 
-## Coming in Phase 2
+## Planned: API keys
 
-Phase 2 will introduce optional API key registration for higher rate limits:
+Optional API key registration for higher rate limits is planned:
 
 | Tier | Rate limit |
 |---|---|

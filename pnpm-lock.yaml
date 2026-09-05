@@ -71,6 +71,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.11
         version: 4.1.11(vitest@4.1.11)
+      '@xivdyetools/svg':
+        specifier: workspace:*
+        version: link:../../packages/svg
       '@xivdyetools/test-utils':
         specifier: workspace:*
         version: link:../../packages/test-utils

@@ -8,6 +8,7 @@ on:
     paths:
       - 'apps/api-worker/**'
       - 'packages/core/**'
+      - 'packages/svg/**'
       - 'packages/types/**'
       - 'packages/logger/**'
       - 'packages/worker-kit/**'

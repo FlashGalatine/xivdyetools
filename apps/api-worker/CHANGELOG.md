@@ -5,6 +5,108 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-09-05
+
+Developer docs restyle (`developers.xivdyetools.app`) on the confirmed **API Docs Directions 1d**
+(design register, 2026-09-04). No change to the `/v1` contract or to any route.
+
+### Changed
+
+- **The docs site wears the web-app's clothes.** Same font contract (Space Grotesk / Onest /
+  Fragment Mono, self-hosted from `docs/public/fonts/` — the default theme's Inter files no
+  longer ship, `vitepress/theme-without-fonts`) and the 5.0 dark palette with the one `#EA4133`
+  accent, replacing the stock VitePress look and its gold `#c0a060` brand. Dark is the only theme
+  (`appearance: 'force-dark'`); light follows from the same variable table when it is drawn.
+- **Console chrome.** 54 px bar with the flat six-stripe mark + wordmark + mono `API` tag, Home /
+  Guide / Reference as 38 px chips (active = accent fill), search in the bar (`/` opens it),
+  `xivdyetools.app ↗` as an outlined chip; 252 px settings column with mono section labels and
+  right-aligned endpoint counts; mono right rail. On phones the hamburger and local nav are
+  replaced by a bottom section sheet opened from the bar's active chip.
+- **`/reference/` is the live endpoint index.** One row per endpoint, grouped by section, each
+  making one real request on load — the hexes in the answer are painted as a swatch strip, an
+  answer with no colours prints its count, a failure prints the API's own error text verbatim,
+  and the two no-preview rows (`POST /v1/chara/resolve`, the icon proxy) say so and never fetch.
+- **Every endpoint is one console card** (`EndpointCard.vue`, replacing `TryIt.vue`): the
+  parameter form on the left **is** the parameter table (the Markdown `### Parameters` tables are
+  gone — one source of truth per endpoint), the Dye Object's 19 fields fold under it, the response
+  pane on the right sends on tap only (URL echo · Send · cURL · `status · ms · X-Request-ID` ·
+  two-colour JSON). `POST /v1/chara/resolve` gets an editable JSON body; the icon proxy card
+  renders the PNG it fetches. Quick Start makes the first request with the same card.
+- **Home** is 1b's hero — eyebrow, headline, base-URL field with Copy, the two actions, a labelled
+  *sample* envelope (nothing on the home page fetches) — and seven tiles, glyphs from
+  `@xivdyetools/svg` only where a tool exists (Matching → extractor, Character Equipment → swatch,
+  Languages → globe). The seventh tile is now **Character Equipment**.
+- Markdown code fences render on a two-colour Shiki theme (keys accent, values text) so they read
+  the same as the card's JSON view.
+- The endpoint registry (`docs/.vitepress/theme/lib/endpoints.ts`) is the single source for the
+  sidebar counts, the live index, the section sheet and the `N ENDPOINTS` tags.
+- **The docs site has its own app icon** — "6B · Socketed" (`App Icon.dc.html` Turn 6, confirmed
+  2026-09-04): the paint can in machined steel carrying the single red dye family, on a red socket
+  board over a warm near-black tile. It separates from production's icon by *ground* (dark board
+  vs solid red tile), not by hue. `docs/public/icons/docs-icon.svg` is the source and renders the
+  180 px touch icon; per the design's small-size note the tab-size set — `favicon.svg` and the
+  16 / 32 px PNGs — is a **board-free** variant (same tile, glow and steel can, no socket board,
+  can at ×0.9) that `apps/web-app/scripts/generate-api-docs-icons.mjs` derives from the source
+  (the web-app owns `sharp`). The bar keeps the flat six-stripe mark, the rule below 20 px.
+
+### Removed
+
+- **The Universalis market-board proxy is no longer documented on the public site** (decided
+  2026-09-04). Universalis serves CORS itself, so a third party routing through us gained only our
+  edge cache while spending the shared upstream 429 budget the web-app's Market Board and the bot's
+  `/budget` depend on. The routes are unchanged (`/universalis/*` canonical, `/api/v2/*` compat);
+  `docs/reference/universalis.md`, its sidebar entry and every guide-page mention are gone, and the
+  `marketItemID` / consolidation guidance moved to the Dyes page.
+- `TryIt.vue` and the `--try-it-*` CSS variables.
+
+### Fixed
+
+- `guide/errors.md` now lists `INVALID_BODY` (400 / 413) and `UPSTREAM_UNAVAILABLE` (503) — both
+  were live on `/v1/chara/*` but missing from the code catalogue.
+- `guide/responses.md` no longer calls `/health` "the one exception" to the envelope: `/health`
+  is outside `/v1`, and `GET /v1/chara/icon/:iconId` returns a PNG. It and `reference/chara.md`
+  also say that `X-Cache` (and `Age`) are not CORS-exposed, so browser code cannot read them.
+- The Dye Object table's `currency` row listed three values; the API serves four (`Venture
+  Coffer` for the 20 coffer dyes). A new test (`tests/docs-fields-parity.test.ts`) now pins the
+  documented field list to `serializeDye()`'s keys and order.
+
+### Review remediation (PR #168, 2026-09-05)
+
+Fifteen review findings, all verified in the built site before and after:
+
+- **Search** could not see parameters or fields (they live in card attributes / theme data, which
+  the local-search indexer strips). `docs/.vitepress/search-index.ts` expands every card into
+  Markdown under its own heading at index time — `isMetallic` now finds the six dye-returning
+  cards; the rendered pages are unchanged.
+- **Docs are gated in CI.** api-worker gains a `build` script (`vitepress build docs`) so turbo's
+  existing `build` task runs it on every PR, and `type-check` now also runs `tsconfig.docs.json`
+  (DOM lib) over `docs/.vitepress/**/*.ts`. Previously `build:docs` ran only inside the deploy
+  workflow, immediately before `wrangler deploy`.
+- **Footer** (the SQUARE ENIX disclaimer + Discord link) is shown on every page; VitePress hides
+  it wherever a sidebar exists. The mobile section sheet also carries `xivdyetools.app ↗` and
+  `Discord ↗`, so phones have off-site exits again.
+- **768–959 px** no longer overflows the bar (VitePress shows the nav chips from 768; they and the
+  280 px search field are now icon-only below 960, where the section sheet is the navigation).
+- **≥ 1440 px** sidebar items no longer pin to the viewport edge while their counts float at the
+  far right of the widened box; the bar's wordmark follows the same centred offset.
+- **Local nav kept for its "On this page" dropdown** below 1280 px (it was hidden wholesale,
+  leaving no way to jump between a page's endpoints on tablets); only its sidebar opener is
+  hidden, and the closed mobile sidebar is now `visibility: hidden` so its eight links leave the
+  tab order. The empty "…" flyout VitePress renders once `appearance` is forced and
+  `socialLinks` are gone is hidden too.
+- **Section sheet**: closes itself if the viewport crosses 960 px while open, locks page scroll,
+  moves focus to Close, traps Tab, restores focus to the chip, `aria-modal`.
+- **`reference/index.md`'s explanatory paragraph** was silently dropped (the component had no
+  slot) — restored.
+- **Fields fold** on every dye-returning card (stain / search / batch / both matching cards), not
+  just two; the Dyes intro no longer claims otherwise.
+- **cURL on the POST card** copied a re-serialised body and swallowed a parse error as "clipboard
+  denied"; it now copies the textarea verbatim (what Send posts) and surfaces a clipboard failure.
+- The sidebar count span no longer leaks into the prev/next pager; two overrides that lost to the
+  default theme's scoped selectors (sidebar hover colour, bar title padding) carry the
+  specificity they needed; the blob URL from an icon-card Send is revoked on unmount; the unused
+  `search` glyph branch is gone.
+
 ## [0.12.0] - 2026-09-04
 
 ### Changed

@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" aria-hidden="true">
+  <!--
+    DERIVED by apps/web-app/scripts/generate-api-docs-icons.mjs from docs-icon.svg — do not
+    hand-edit. The board-free small variant of "6B · Socketed": the same tile, glow and
+    steel can, no socket board, can at ×0.9 — for tab-size rendering (this file is the
+    <link rel="icon"> SVG; favicon-16x16 / 32x32 are rasterised from it).
+  -->
+  <defs>
+    <clipPath id="d-paint"><ellipse cx="256" cy="176" rx="132" ry="62"/></clipPath>
+    <clipPath id="d-front"><rect x="100" y="196" width="312" height="130"/></clipPath>
+    <clipPath id="d-spill"><path d="M 140 222 C 180 246 216 250 256 250 C 296 250 336 244 376 219 C 374 230 372 236 368 242 C 360 250 352 255 346 257 L 346 288 C 346 302 318 302 318 288 L 318 259 C 304 261 290 262 274 262 L 274 316 C 274 332 244 332 244 316 L 244 262 C 228 261 212 258 200 255 L 200 276 C 200 290 174 290 174 276 L 174 249 C 160 242 148 233 140 222 Z"/></clipPath>
+
+    <filter id="d-trace-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#FF6A5C" flood-opacity="0.7"/>
+    </filter>
+    <filter id="d-soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+
+    <linearGradient id="d-metal-body" gradientUnits="userSpaceOnUse" x1="108" y1="0" x2="404" y2="0">
+      <stop offset="0" stop-color="#7A828C"/><stop offset="0.05" stop-color="#B5BDC7"/><stop offset="0.14" stop-color="#EDF1F6"/><stop offset="0.24" stop-color="#AAB2BD"/><stop offset="0.36" stop-color="#DCE2E9"/><stop offset="0.5" stop-color="#F7F9FB"/><stop offset="0.62" stop-color="#C4CBD4"/><stop offset="0.74" stop-color="#9EA6B1"/><stop offset="0.86" stop-color="#D2D8E0"/><stop offset="0.95" stop-color="#8B939D"/><stop offset="1" stop-color="#6E767F"/>
+    </linearGradient>
+    <linearGradient id="d-metal-rim" gradientUnits="userSpaceOnUse" x1="108" y1="0" x2="404" y2="0">
+      <stop offset="0" stop-color="#8E969F"/><stop offset="0.16" stop-color="#E8ECF1"/><stop offset="0.32" stop-color="#AFB7C1"/><stop offset="0.5" stop-color="#F4F6F9"/><stop offset="0.68" stop-color="#B8BFC9"/><stop offset="0.84" stop-color="#E2E7ED"/><stop offset="1" stop-color="#858D96"/>
+    </linearGradient>
+    <linearGradient id="d-metal-wire" gradientUnits="userSpaceOnUse" x1="108" y1="0" x2="404" y2="0">
+      <stop offset="0" stop-color="#6E767F"/><stop offset="0.22" stop-color="#DDE2E8"/><stop offset="0.42" stop-color="#8F979F"/><stop offset="0.62" stop-color="#EFF2F6"/><stop offset="0.82" stop-color="#9AA2AB"/><stop offset="1" stop-color="#6E767F"/>
+    </linearGradient>
+    <linearGradient id="d-metal-handle" gradientUnits="userSpaceOnUse" x1="-16" y1="0" x2="16" y2="0">
+      <stop offset="0" stop-color="#79818A"/><stop offset="0.3" stop-color="#E8ECF1"/><stop offset="0.6" stop-color="#A0A8B2"/><stop offset="1" stop-color="#767E87"/>
+    </linearGradient>
+    <linearGradient id="d-metal-ferrule" gradientUnits="userSpaceOnUse" x1="-42" y1="0" x2="42" y2="0">
+      <stop offset="0" stop-color="#7C848D"/><stop offset="0.28" stop-color="#E4E8EE"/><stop offset="0.55" stop-color="#A7AFB9"/><stop offset="0.8" stop-color="#EDF0F4"/><stop offset="1" stop-color="#79818A"/>
+    </linearGradient>
+
+    <!-- The red dye family (4A), swirl spun 180° as the design's default -->
+    <g id="d-swirl">
+      <g clip-path="url(#d-paint)">
+        <ellipse cx="256" cy="176" rx="132" ry="62" fill="#CE2222"/>
+        <g transform="translate(256,176) scale(1,0.47)">
+          <g transform="rotate(180)">
+            <path d="M 12 0 Q 24 8 18 18 T 0 40 T -39 39 T -70 0 T -59 -59 T 0 -99 T 80 -80 T 128 0" fill="none" stroke="#7F1D1D" stroke-width="32" stroke-linecap="round" transform="rotate(0)"/>
+            <path d="M 12 0 Q 24 8 18 18 T 0 40 T -39 39 T -70 0 T -59 -59 T 0 -99 T 80 -80 T 128 0" fill="none" stroke="#A81C1C" stroke-width="32" stroke-linecap="round" transform="rotate(60)"/>
+            <path d="M 12 0 Q 24 8 18 18 T 0 40 T -39 39 T -70 0 T -59 -59 T 0 -99 T 80 -80 T 128 0" fill="none" stroke="#E5484D" stroke-width="32" stroke-linecap="round" transform="rotate(120)"/>
+            <path d="M 12 0 Q 24 8 18 18 T 0 40 T -39 39 T -70 0 T -59 -59 T 0 -99 T 80 -80 T 128 0" fill="none" stroke="#F87171" stroke-width="32" stroke-linecap="round" transform="rotate(180)"/>
+            <path d="M 12 0 Q 24 8 18 18 T 0 40 T -39 39 T -70 0 T -59 -59 T 0 -99 T 80 -80 T 128 0" fill="none" stroke="#FCA5A5" stroke-width="32" stroke-linecap="round" transform="rotate(240)"/>
+            <path d="M 12 0 Q 24 8 18 18 T 0 40 T -39 39 T -70 0 T -59 -59 T 0 -99 T 80 -80 T 128 0" fill="none" stroke="#B91C1C" stroke-width="32" stroke-linecap="round" transform="rotate(300)"/>
+            <circle cx="0" cy="0" r="17" fill="#7F1D1D"/>
+          </g>
+          <path d="M -108 -34 C -72 -76 22 -86 76 -56 C 22 -64 -58 -54 -94 -14 Z" fill="#FFFFFF" opacity="0.16"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- Machined-steel can body -->
+    <g id="d-body">
+      <path d="M 108 176 C 112 270 122 356 140 402 C 162 436 350 436 372 402 C 390 356 400 270 404 176 C 404 222 338 250 256 250 C 174 250 108 222 108 176 Z" fill="url(#d-metal-body)" stroke="#666E77" stroke-width="3"/>
+      <path d="M 140 402 C 162 436 350 436 372 402 C 370 396 368 390 366 386 C 344 412 168 412 146 386 C 144 390 142 396 140 402 Z" fill="#1E1516" opacity="0.30"/>
+      <path d="M 108 176 C 108 222 174 250 256 250 C 338 250 404 222 404 176 C 402 192 396 206 388 218 C 354 250 308 268 256 268 C 204 268 158 250 124 218 C 116 206 110 192 108 176 Z" fill="#1E1516" opacity="0.22"/>
+      <path d="M 124 292 C 188 314 328 314 388 292 L 386 322 C 326 344 186 344 126 322 Z" fill="#FFFFFF" opacity="0.13"/>
+      <path d="M 116 250 C 122 316 130 366 142 400 C 136 400 132 396 130 390 C 120 344 114 292 112 244 Z" fill="#FFFFFF" opacity="0.4"/>
+      <path d="M 396 250 C 392 316 386 360 378 396 C 384 394 388 390 390 384 C 396 340 400 292 400 244 Z" fill="#FFFFFF" opacity="0.22"/>
+    </g>
+
+    <g id="d-drips">
+      <g clip-path="url(#d-spill)">
+        <rect x="130" y="205" width="46" height="140" fill="#7F1D1D"/>
+        <rect x="176" y="205" width="44" height="140" fill="#B91C1C"/>
+        <rect x="220" y="205" width="44" height="140" fill="#CE2222"/>
+        <rect x="264" y="205" width="44" height="140" fill="#E5484D"/>
+        <rect x="308" y="205" width="44" height="140" fill="#F87171"/>
+        <rect x="352" y="205" width="46" height="140" fill="#FCA5A5"/>
+      </g>
+    </g>
+
+    <g id="d-brush">
+      <ellipse cx="230" cy="198" rx="48" ry="16" fill="#1A1011" opacity="0.24"/>
+      <g clip-path="url(#d-paint)">
+        <g transform="translate(232,196) rotate(34)">
+          <path d="M -38 16 L -40 -38 L 40 -38 L 38 16 Z" fill="url(#d-metal-ferrule)" stroke="#7C848D" stroke-width="2"/>
+          <path d="M -39 16 L -39 -14 L 39 -14 L 38 16 Z" fill="#CE2222"/>
+        </g>
+      </g>
+      <g transform="translate(232,196) rotate(34)">
+        <path d="M -42 -38 L 42 -38 L 42 -66 L -42 -66 Z" fill="url(#d-metal-ferrule)" stroke="#6E767F" stroke-width="2"/>
+        <path d="M -42 -52 L 42 -52" stroke="#6E767F" stroke-width="3" opacity="0.7"/>
+        <path d="M -15 -66 L -11 -140 C -11 -150 -13 -158 -13 -164 C -13 -174 -6 -180 0 -180 C 6 -180 13 -174 13 -164 C 13 -158 11 -150 11 -140 L 15 -66 Z M 6 -159 A 6 6 0 1 0 -6 -159 A 6 6 0 1 0 6 -159 Z" fill="url(#d-metal-handle)" fill-rule="evenodd" stroke="#7C848D" stroke-width="2.5"/>
+      </g>
+    </g>
+
+    <g id="d-dip">
+      <g clip-path="url(#d-front)"><use href="#d-swirl"/></g>
+      <ellipse cx="212" cy="205" rx="36" ry="11" fill="#1A1011" opacity="0.18"/>
+    </g>
+
+    <g id="d-ring">
+      <g clip-path="url(#d-paint)"><ellipse cx="256" cy="176" rx="127" ry="57" fill="none" stroke="#000000" stroke-opacity="0.12" stroke-width="10"/></g>
+    </g>
+
+    <g id="d-bucket">
+      <path d="M 114 158 C 132 40 380 40 398 158" fill="none" stroke="url(#d-metal-wire)" stroke-width="14" stroke-linecap="round"/>
+      <use href="#d-body"/>
+      <use href="#d-drips"/>
+      <ellipse cx="256" cy="176" rx="148" ry="74" fill="url(#d-metal-rim)"/>
+      <use href="#d-swirl"/>
+      <use href="#d-brush"/>
+      <use href="#d-dip"/>
+      <use href="#d-ring"/>
+    </g>
+
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="#120C0D"/>
+  <g filter="url(#d-soft)"><ellipse cx="256" cy="392" rx="132" ry="26" fill="#EA4133" opacity="0.32"/></g>
+  <ellipse cx="256" cy="398" rx="104" ry="14" fill="#0A0506" opacity="0.55"/>
+  <g transform="translate(256,252) scale(0.9) translate(-256,-256)"><use href="#d-bucket"/></g>
+</svg>

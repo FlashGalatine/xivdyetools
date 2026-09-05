@@ -1,13 +1,805 @@
-:root {
-  --vp-c-brand-1: #c0a060;
-  --vp-c-brand-2: #a88840;
-  --vp-c-brand-3: #8c6c28;
-  --vp-c-brand-soft: rgba(192, 160, 96, 0.14);
+/*
+ * developers.xivdyetools.app — the docs wearing the web-app's clothes.
+ *
+ * Source of truth: `API Docs Directions.dc.html` 1d (confirmed 2026-09-04) and
+ * `notes/api-docs-handoff.md` in the design project. Tokens come from the
+ * web-app's `globals.css` font contract and the 5.0 dark palette in
+ * `theme-service.ts`; dark is the only theme drawn (`appearance: 'force-dark'`
+ * in config.ts), light follows from the same table when it is.
+ *
+ * The bar, sidebar labels, endpoint card, live index and mobile sheet are Vue
+ * components; this file is what they and the default theme share.
+ */
 
-  --try-it-bg: var(--vp-c-bg-soft);
-  --try-it-border: var(--vp-c-border);
-  --try-it-input-bg: var(--vp-c-bg);
-  --try-it-method-bg: #2563eb;
-  --try-it-status-ok: #16a34a;
-  --try-it-status-err: #dc2626;
+/* ---- Fonts: the web-app's font contract, self-hosted (copied from web-app/public/fonts) ---- */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/SpaceGrotesk-Variable.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/Onest-Variable.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Fragment Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/FragmentMono-Regular.woff2') format('woff2');
+}
+
+:root {
+  --font-cjk: 'Noto Sans JP', 'Noto Sans SC', 'Noto Sans KR', 'Hiragino Sans', 'Yu Gothic UI',
+    'Microsoft YaHei', 'Malgun Gothic';
+  --font-display: 'Space Grotesk', var(--font-cjk), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --vp-font-family-base: 'Onest', var(--font-cjk), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --vp-font-family-mono: 'Fragment Mono', ui-monospace, 'Cascadia Mono', Consolas, var(--font-cjk), monospace, sans-serif;
+
+  /* one accent */
+  --vp-c-brand-1: #ea4133;
+  --vp-c-brand-2: #ff6257;
+  --vp-c-brand-3: #ce2222;
+  --vp-c-brand-soft: rgba(234, 65, 51, 0.12);
+  --xdt-accent-border: rgba(234, 65, 51, 0.45);
+
+  /* layout */
+  --vp-nav-height: 54px;
+  --vp-nav-logo-height: 18px;
+  --vp-sidebar-width: 252px;
+}
+:root:lang(zh) {
+  --font-cjk: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans JP', 'Noto Sans KR';
+}
+:root:lang(ko) {
+  --font-cjk: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans JP', 'Noto Sans SC';
+}
+
+/* 5.0 dark palette — dark is the only theme drawn; VitePress keeps .dark on <html> */
+:root,
+.dark {
+  --vp-c-bg: #0b0b0c;
+  --vp-c-bg-alt: #141416; /* bar, sidebar, sheets */
+  --vp-c-bg-soft: #17171a; /* cards, code, tables */
+  --vp-c-bg-elv: #17171a;
+  --vp-c-text-1: #ececee;
+  --vp-c-text-2: #9c9ca2;
+  --vp-c-text-3: #86868c;
+  --vp-c-divider: rgba(255, 255, 255, 0.12);
+  --vp-c-gutter: rgba(255, 255, 255, 0.07);
+  --vp-c-border: rgba(255, 255, 255, 0.12);
+  --vp-c-default-soft: rgba(255, 255, 255, 0.08); /* chips */
+  --vp-code-bg: #17171a;
+  --vp-code-block-bg: #17171a;
+  --vp-code-color: var(--vp-c-text-1);
+  --vp-c-tip-1: #ff6257;
+  --vp-c-tip-2: #ff6257;
+  --vp-c-tip-soft: rgba(234, 65, 51, 0.12);
+  --vp-c-warning-1: #ffc53d; /* amber = the suite's caution bar */
+  --vp-c-warning-2: #ffc53d;
+  --vp-c-warning-soft: rgba(255, 197, 61, 0.12);
+  --vp-c-danger-1: #ff6257;
+  --vp-c-danger-2: #ff6257;
+  --vp-c-danger-soft: rgba(234, 65, 51, 0.12);
+  --vp-nav-bg-color: var(--vp-c-bg-alt);
+  --vp-sidebar-bg-color: var(--vp-c-bg-alt);
+  --vp-local-search-bg: var(--vp-c-bg-alt);
+  --vp-custom-block-tip-border: rgba(234, 65, 51, 0.25);
+  --vp-custom-block-warning-border: rgba(255, 197, 61, 0.3);
+  --vp-custom-block-danger-border: rgba(234, 65, 51, 0.25);
+}
+
+/* ---- Type ---- */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.vp-doc h1 {
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.15;
+}
+.vp-doc h2 {
+  font-size: 20px;
+  margin: 40px 0 14px;
+  padding-top: 20px;
+  border-top: 1px solid var(--vp-c-gutter);
+}
+.vp-doc h3 {
+  font-size: 16px;
+}
+.vp-doc p,
+.vp-doc li {
+  line-height: 1.65;
+}
+.vp-doc code {
+  font-size: 0.85em;
+}
+.vp-doc :not(pre) > code {
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-default-soft);
+  border-radius: 5px;
+}
+.vp-doc a {
+  color: var(--vp-c-brand-2);
+  text-decoration-color: var(--xdt-accent-border);
+}
+.vp-doc a:hover {
+  color: var(--vp-c-brand-1);
+}
+.vp-doc strong {
+  color: #fff;
+}
+
+/* Mono labels: uppercase 9.5–11 px, 1 px tracking — CJK falls back to the body sans, no case */
+.xdt-label {
+  font-family: var(--vp-font-family-mono);
+  font-size: 9.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--vp-c-text-2);
+  white-space: nowrap;
+}
+:lang(ja) .xdt-label,
+:lang(ko) .xdt-label,
+:lang(zh) .xdt-label {
+  font-family: var(--vp-font-family-base);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+/* The mono line under a page's H1 (`7 ENDPOINTS · 125 DYES · SCHEMA V2`) */
+.vp-doc .xdt-meta {
+  font-family: var(--vp-font-family-mono);
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--vp-c-text-2);
+  line-height: 1.6;
+  margin: 2px 0 24px;
+}
+
+/* ---- Two-colour JSON (the card renders lines itself; Markdown fences use the matching Shiki theme) ---- */
+.xdt-json {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+  display: flex;
+  flex-direction: column;
+  color: var(--vp-c-text-1);
+}
+.xdt-json-line {
+  display: block;
+}
+.xdt-json .k {
+  color: var(--vp-c-brand-2);
+}
+.xdt-json .p {
+  color: var(--vp-c-text-2);
+}
+.xdt-json .v {
+  color: var(--vp-c-text-1);
+}
+
+/* ---- Method chip / status ---- */
+.xdt-method {
+  display: inline-block;
+  font-family: var(--vp-font-family-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.8px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: var(--vp-c-brand-1);
+  color: #fff;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+.xdt-method--post {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--vp-c-text-1);
+}
+
+/* ---- Buttons (suite convention: primary solid accent, secondary outlined accent) ---- */
+.xdt-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 11px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none !important;
+  transition: background-color 0.15s;
+}
+.xdt-btn--primary {
+  background: var(--vp-c-brand-1);
+  color: #fff !important;
+}
+.xdt-btn--primary:hover {
+  background: var(--vp-c-brand-2);
+}
+.xdt-btn--secondary {
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-2) !important;
+  border: 1px solid var(--xdt-accent-border);
+}
+.xdt-btn--secondary:hover {
+  background: rgba(234, 65, 51, 0.2);
+}
+
+/* =====================================================================
+   The console bar — VPNav restyled to the app's 54 px bar
+   ===================================================================== */
+.VPNav,
+.VPNavBar,
+.VPNavBar:not(.home),
+.VPNavBar:not(.has-sidebar):not(.home.top) {
+  background-color: var(--vp-c-bg-alt) !important;
+}
+.VPNavBar {
+  border-bottom: 1px solid var(--vp-c-gutter);
+}
+.VPNavBar .divider {
+  display: none;
+}
+.VPNavBar .container > .title {
+  background-color: transparent !important;
+}
+.VPNavBar .content-body {
+  background-color: transparent !important;
+  justify-content: flex-start;
+  gap: 14px;
+}
+.VPNavBar .wrapper {
+  padding: 0 16px;
+}
+@media (max-width: 959px) {
+  /* Below 960 the section sheet is the navigation: no menu chips (VitePress
+     would show them from 768), the search icon and the section chip sit right. */
+  .VPNavBar .VPNavBarMenu {
+    display: none !important;
+  }
+  .VPNavBar .content-body {
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .VPNavBar .wrapper {
+    padding: 0 12px;
+  }
+}
+/* !important on the paddings: the default theme's `.title` / `.content` rules
+   are scoped (`[data-v-…]`) and outrank an unscoped override of equal shape. */
+@media (min-width: 960px) {
+  .VPNavBar.has-sidebar .title {
+    padding-left: 16px !important;
+  }
+  .VPNavBar.has-sidebar .content {
+    padding-right: 16px !important;
+  }
+}
+@media (min-width: 1440px) {
+  /* VitePress centres the layout in --vp-layout-max-width from here; keep the
+     mark 16 px inside that centred column, not the 32 px default. */
+  .VPNavBar.has-sidebar .title {
+    padding-left: calc((100% - (var(--vp-layout-max-width) - 64px)) / 2 - 16px) !important;
+  }
+}
+
+/* Mark + wordmark + mono API tag */
+.VPNavBarTitle .title {
+  border-bottom: none !important;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--vp-c-text-1);
+  gap: 9px;
+}
+.VPNavBarTitle .logo {
+  height: 18px;
+  width: 18px;
+  margin-right: 0;
+  border-radius: 4px;
+}
+.xdt-tag {
+  font-family: var(--vp-font-family-mono);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--vp-c-text-2);
+  margin-left: 4px;
+}
+
+/* Home / Guide / Reference as 38 px chips; the active one accent-filled */
+.VPNavBarMenu {
+  order: 1;
+  margin-right: auto;
+  gap: 6px;
+}
+.VPNavBarMenuLink {
+  height: 38px;
+  line-height: 38px !important;
+  padding: 0 14px !important;
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  color: var(--vp-c-text-1) !important;
+  transition: background-color 0.15s, color 0.15s;
+}
+.VPNavBarMenuLink:hover {
+  background: var(--vp-c-default-soft);
+}
+.VPNavBarMenuLink.active {
+  background: var(--vp-c-brand-1);
+  color: #fff !important;
+}
+
+/* Search in the bar: the local-search button in the chip shape, `/` advertised */
+.VPNavBarSearch {
+  order: 2;
+  flex-grow: 0 !important;
+  padding: 0 !important;
+}
+.VPNavBarSearch .DocSearch-Button {
+  width: 280px;
+  height: 38px;
+  margin: 0;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--vp-c-divider);
+  font-family: var(--vp-font-family-mono);
+  font-size: 11.5px;
+  color: var(--vp-c-text-2);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.VPNavBarSearch .DocSearch-Button:hover {
+  background: var(--vp-c-default-soft);
+  box-shadow: none;
+}
+.VPNavBarSearch .DocSearch-Button-Container {
+  gap: 10px;
+  flex: 1;
+}
+.VPNavBarSearch .DocSearch-Search-Icon {
+  width: 14px;
+  height: 14px;
+  color: var(--vp-c-text-2);
+}
+.VPNavBarSearch .DocSearch-Button-Placeholder {
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+}
+.VPNavBarSearch .DocSearch-Button-Keys {
+  display: none;
+}
+.VPNavBarSearch .DocSearch-Button::after {
+  content: '/';
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  line-height: 1.4;
+}
+@media (max-width: 959px) {
+  /* Icon only wherever the sheet trigger shares the bar (VitePress itself
+     only compacts it below 768, which left 768–959 overflowing). */
+  .VPNavBarSearch .DocSearch-Button {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+    background: transparent;
+    border: none;
+  }
+  .VPNavBarSearch .DocSearch-Button-Placeholder {
+    display: none;
+  }
+  .VPNavBarSearch .DocSearch-Search-Icon {
+    width: 18px;
+    height: 18px;
+    color: var(--vp-c-text-1);
+  }
+  .VPNavBarSearch .DocSearch-Button::after {
+    display: none;
+  }
+}
+
+/* xivdyetools.app ↗ — outlined chip, desktop only */
+.xdt-ext {
+  order: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--vp-c-divider);
+  font-size: 13px;
+  color: var(--vp-c-text-1);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+.xdt-ext:hover {
+  background: var(--vp-c-default-soft);
+}
+.xdt-ext-arrow {
+  color: var(--vp-c-text-2);
+}
+@media (max-width: 959px) {
+  .xdt-ext {
+    display: none;
+  }
+}
+
+/* The stock hamburger, its full-screen menu, the "…" extra flyout (empty once
+   appearance is forced and socialLinks are gone) and the local nav's sidebar
+   opener are replaced by the section sheet (SectionSheet.vue). The local nav
+   itself stays for its "On this page" dropdown — below 1280 px it is the only
+   way to jump between a page's endpoints. */
+.VPNavBarHamburger,
+.VPNavScreen,
+.VPNavBarExtra,
+.VPLocalNav .menu {
+  display: none !important;
+}
+.xdt-sheet-trigger {
+  order: 4;
+}
+/* The sidebar the sheet replaces below 960 is only faded + translated off-screen
+   by VitePress; without this its eight links stay in the tab order. */
+@media (max-width: 959px) {
+  .VPSidebar:not(.open) {
+    visibility: hidden;
+  }
+}
+
+/* Local nav (sticky under the bar, < 1280 px): console ground, mono label.
+   `.fixed` is VitePress's "no sidebar, no headings" variant — the home page's
+   scroll-triggered "Return to top" bar, which the home frame does not have. */
+.VPLocalNav {
+  background-color: var(--vp-c-bg-alt) !important;
+  border-bottom-color: var(--vp-c-gutter) !important;
+}
+.VPLocalNav.fixed {
+  display: none !important;
+}
+.VPLocalNavOutlineDropdown button {
+  font-family: var(--vp-font-family-mono);
+  font-size: 10.5px !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--vp-c-text-2);
+}
+.VPLocalNavOutlineDropdown .items {
+  border-radius: 12px;
+  border-color: var(--vp-c-divider);
+}
+.VPLocalNavOutlineDropdown .top-link {
+  color: var(--vp-c-brand-2);
+  font-family: var(--font-display);
+}
+.VPLocalNavOutlineDropdown .outline .outline-link {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+}
+.VPLocalNavOutlineDropdown .outline .outline-link:hover {
+  color: var(--vp-c-text-1);
+}
+
+/* =====================================================================
+   The settings column — VPSidebar restyled
+   ===================================================================== */
+.VPSidebar {
+  background-color: var(--vp-c-bg-alt) !important;
+  border-right: 1px solid var(--vp-c-gutter);
+  padding: 22px 12px 96px !important;
+}
+@media (min-width: 960px) {
+  .VPSidebar {
+    padding-top: calc(var(--vp-nav-height) + 22px) !important;
+  }
+}
+@media (min-width: 1440px) {
+  /* VitePress widens the sidebar box to reach the centred layout and pads it
+     by the same offset; keep that offset (minus our 20 px) or the items pin to
+     the viewport edge while the counts float at the far right of the box. */
+  .VPSidebar {
+    padding-left: calc((100% - (var(--vp-layout-max-width) - 64px)) / 2 - 20px) !important;
+  }
+}
+.VPSidebar .group {
+  width: auto !important;
+  padding: 0 !important;
+  border-top: none !important;
+}
+.VPSidebar .group + .group {
+  padding-top: 18px !important;
+}
+.VPSidebarItem.level-0 {
+  padding-bottom: 0 !important;
+}
+.VPSidebarItem.level-0 > .item .text {
+  font-family: var(--vp-font-family-mono);
+  font-size: 9.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 400;
+  color: var(--vp-c-text-2);
+  padding: 0 10px 8px;
+  line-height: 1.4;
+}
+.VPSidebarItem .items {
+  border-left: none !important;
+  padding-left: 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.VPSidebarItem.level-1 > .item {
+  min-height: 36px;
+  border-radius: 9px;
+  padding: 0 10px;
+  align-items: center;
+  transition: background-color 0.15s;
+}
+.VPSidebarItem.level-1 > .item:hover {
+  background: var(--vp-c-default-soft);
+}
+.VPSidebarItem.level-1 > .item .indicator {
+  display: none;
+}
+.VPSidebarItem.level-1 > .item .link {
+  align-items: center;
+}
+.VPSidebarItem.level-1 > .item .text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0;
+  line-height: 36px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--vp-c-text-1);
+}
+.VPSidebarItem.level-1.is-active > .item {
+  background: var(--vp-c-brand-soft);
+}
+.VPSidebarItem.level-1.is-active > .item .text,
+.VPSidebarItem.level-1.is-active > .item .text .xdt-count {
+  color: var(--vp-c-brand-2) !important;
+}
+.VPSidebar .VPSidebarItem.level-1.is-link > .item > .link:hover .text {
+  color: var(--vp-c-text-1) !important; /* the hover chip carries the state; accent means active */
+}
+.xdt-count {
+  font-family: var(--vp-font-family-mono);
+  font-size: 10.5px;
+  color: var(--vp-c-text-2);
+}
+/* The count rides in the sidebar `text` (v-html); the prev/next pager renders
+   the same string, where it would read as part of the page name. */
+.VPDocFooter .xdt-count {
+  display: none;
+}
+
+/* =====================================================================
+   Doc content, right rail, footer
+   ===================================================================== */
+.VPDoc {
+  background: var(--vp-c-bg);
+}
+/* The frames give the doc column ~740 px beside a 220 px rail at 1280;
+   VitePress's 688 px cap plus its 32 px gutters left the endpoint rows no
+   room for their summaries. */
+/* !important: the default theme's rules are scoped (`[data-v-…]`) and outrank
+   an unscoped override of equal shape. */
+@media (min-width: 960px) {
+  .VPDoc.has-sidebar {
+    padding: 30px 0 0 !important;
+  }
+  .VPDoc .content {
+    padding: 0 36px 128px !important;
+  }
+  .VPDoc.has-aside .content-container {
+    max-width: 820px !important;
+  }
+}
+@media (min-width: 1280px) {
+  .VPDoc .aside {
+    max-width: 240px !important;
+    padding-left: 12px !important;
+    padding-right: 8px !important;
+  }
+}
+.VPDocAsideOutline .outline-title {
+  font-family: var(--vp-font-family-mono);
+  font-size: 9.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 400;
+  color: var(--vp-c-text-2);
+  line-height: 1.4;
+  padding-bottom: 6px;
+}
+.VPDocAsideOutline .outline-link {
+  font-family: var(--vp-font-family-mono);
+  font-size: 11px;
+  line-height: 28px;
+  color: var(--vp-c-text-2);
+  padding-left: 10px;
+}
+.VPDocAsideOutline .outline-link:hover,
+.VPDocAsideOutline .outline-link.active {
+  color: var(--vp-c-text-1);
+}
+.VPDocAsideOutline .outline-marker {
+  background: var(--vp-c-brand-1);
+  width: 2px;
+}
+.VPDocAsideOutline .content {
+  border-left-color: var(--vp-c-divider);
+}
+.VPDocAsideOutline .outline-link.nested {
+  padding-left: 24px;
+}
+
+/* Tables (error codes, ranges, enums): field names accent, headers muted */
+.vp-doc table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 13.5px;
+}
+.vp-doc th,
+.vp-doc td {
+  border: none;
+  border-top: 1px solid var(--vp-c-gutter);
+  padding: 9px 14px;
+}
+.vp-doc th {
+  border-top: none;
+  background: var(--vp-c-bg-soft);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--vp-c-text-2);
+  text-align: left;
+}
+.vp-doc tr:nth-child(2n) {
+  background: transparent;
+}
+.vp-doc td:first-child code {
+  color: var(--vp-c-brand-2);
+  background: none;
+  padding: 0;
+}
+
+/* Code fences on the card surface */
+.vp-doc div[class*='language-'] {
+  background: var(--vp-code-block-bg);
+  border: 1px solid var(--vp-c-gutter);
+  border-radius: 12px;
+}
+.vp-doc [class*='language-'] > span.lang {
+  font-family: var(--vp-font-family-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.vp-doc [class*='language-'] code {
+  font-size: 12.5px;
+}
+.vp-doc [class*='language-'] > button.copy {
+  border-radius: 8px;
+}
+
+/* Custom containers: accent tip, amber caution */
+.vp-doc .custom-block {
+  border-radius: 12px;
+  border-width: 1px;
+  padding: 14px 16px;
+}
+.vp-doc .custom-block .custom-block-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+/* Prev / next */
+.VPDocFooter .pager-link {
+  border-radius: 12px;
+  border-color: var(--vp-c-gutter);
+  background: var(--vp-c-bg-soft);
+}
+.VPDocFooter .pager-link:hover {
+  border-color: var(--vp-c-divider);
+}
+.VPDocFooter .pager-link .desc {
+  font-family: var(--vp-font-family-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.VPDocFooter .pager-link .title {
+  font-family: var(--font-display);
+  color: var(--vp-c-brand-2);
+}
+.VPDocFooter .prev-next {
+  border-top-color: var(--vp-c-gutter);
+}
+
+/* Footer: verbatim disclaimer, hairline above — on every page. VitePress hides
+   it wherever a sidebar exists, which is every guide/reference page. */
+.VPFooter {
+  border-top: 1px solid var(--vp-c-gutter) !important;
+  background: var(--vp-c-bg) !important;
+}
+.VPFooter.has-sidebar {
+  display: block !important;
+}
+@media (min-width: 960px) {
+  .VPFooter.has-sidebar {
+    padding-left: var(--vp-sidebar-width) !important;
+  }
+}
+@media (min-width: 1440px) {
+  .VPFooter.has-sidebar {
+    padding-left: calc((100vw - var(--vp-layout-max-width)) / 2 + var(--vp-sidebar-width)) !important;
+  }
+}
+.VPFooter .message,
+.VPFooter .copyright {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--vp-c-text-2);
+}
+.VPFooter .message a {
+  color: var(--vp-c-brand-2);
+}
+
+/* Local search modal on the sheet ground */
+.VPLocalSearchBox .shell {
+  border-radius: 14px;
+  border: 1px solid var(--vp-c-divider);
+}
+.VPLocalSearchBox .search-bar {
+  border-radius: 10px;
+  border-color: var(--vp-c-divider);
+}
+.VPLocalSearchBox .search-input {
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+}
+.VPLocalSearchBox .result {
+  border-radius: 10px;
+}
+.VPLocalSearchBox .result.selected {
+  --vp-local-search-result-selected-border: var(--xdt-accent-border);
+  --vp-local-search-result-selected-bg: var(--vp-c-brand-soft);
+}
+.VPLocalSearchBox .title-icon,
+.VPLocalSearchBox .excerpt mark,
+.VPLocalSearchBox .title mark {
+  color: var(--vp-c-brand-2);
+  background: transparent;
 }
