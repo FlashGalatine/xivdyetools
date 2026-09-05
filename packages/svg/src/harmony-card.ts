@@ -118,6 +118,12 @@ export interface HarmonyCardOptions {
   commandLabel?: string;
   /** Rendered 13 px glyph for the pill (the harmony tool glyph) */
   commandGlyph?: string | null;
+  /**
+   * Localised name of a NON-default colour wheel, printed under the harmony
+   * type so two players comparing cards can see why their dyes differ. Null or
+   * absent (the RGB wheel) prints nothing — the default stays invisible.
+   */
+  wheelLabel?: string | null;
 }
 
 // ============================================================================
@@ -174,6 +180,17 @@ export function generateHarmonyCard(options: HarmonyCardOptions): string {
       anchor: 'end',
     })
   );
+  if (options.wheelLabel) {
+    parts.push(
+      cardText(CARD_WIDTH - PAD_X, 14 + 15 + 12, options.wheelLabel.toUpperCase(), {
+        fill: theme.label,
+        size: CARD_TYPE.label,
+        font: 'mono',
+        letterSpacing: 1.1,
+        anchor: 'end',
+      })
+    );
+  }
 
   // --- Base block (no hex line — the swatch pair already implies it)
   const baseTop = 46;
