@@ -81,6 +81,15 @@ carries, in its info tooltip rather than the blurb, the one-line trademark discl
 
 New file `packages/core/src/services/dye/ColorWheel.ts`, exported from the package root.
 
+**Core is the single source of truth (user, 2026-09-04).** Everything a consumer needs to offer,
+validate, compute and draw a wheel is exported from `@xivdyetools/core`: the id union, the display
+order, the default, the type guard, the registry, the warp tables and Munsell data, the ring paint, and
+the gamut map. The web app, `bot-logic`, `discord-worker`, `og-worker` and any future consumer
+(Stoat bot, `api-worker`, third parties on npm) import these and hold **no list of their own** — the
+Discord choices, the sidebar options and the OG validator are all derived from `COLOR_WHEEL_IDS` the
+way `/harmony type` choices already derive from core's harmony types. Adding a wheel later is one
+registry entry in core plus translations; no surface code changes.
+
 ```ts
 export interface ColorWheel {
   readonly id: ColorWheelId;
@@ -169,7 +178,27 @@ rely on it. A devDependency on `culori` provides the oracle test (§6) and ships
   published renotation data and is not affiliated with or endorsed by X-Rite or Pantone."
 - **Ring:** pure sRGB hues re-spaced along the wheel, as for RYB.
 
-### 2.4 Deprecations
+### 2.4 Public API surface (published npm)
+
+```ts
+// @xivdyetools/core
+export type ColorWheelId;                          // 'rgb' | 'ryb' | 'munsell' | 'oklch-hue' | 'oklch-lightness'
+export const COLOR_WHEEL_IDS: readonly ColorWheelId[];   // display order, rgb first
+export const DEFAULT_COLOR_WHEEL: ColorWheelId;    // 'rgb'
+export function isColorWheelId(v: unknown): v is ColorWheelId;
+export function getColorWheel(id: ColorWheelId): ColorWheel;   // hueOf / target / ringStops
+export interface ColorWheel;
+export interface HarmonySelectionConfig { …; wheel?: ColorWheelId }
+export interface HarmonySlot { …; wheelHue: number }
+export namespace ColorConverter { gamutMapOklch(L, C, h): HexColor }
+```
+
+Consumers reach the wheels only through `generateHarmonySlots(…, { wheel })` for selection and
+`getColorWheel(id).ringStops(n)` / `.hueOf(hex)` for drawing. The deprecated `DyeService.find*Dyes()`
+façade is not extended with a wheel parameter; it stays as it is for compatibility and points callers
+at `generateHarmonySlots`. `core` bumps a minor for the new exports and the new slot field.
+
+### 2.5 Deprecations
 
 `HarmonyColorSpace`, `HarmonyOptions.colorSpace` and `HarmonyGenerator.rotateHueInSpace` are marked
 `@deprecated` with a pointer to `ColorWheel`. They are unreachable in production and they clip (the
@@ -206,7 +235,9 @@ byte-identical (§6).
   it like `matchingMethod`.
 - **Sidebar** (`config-sidebar.ts`, `renderHarmonyConfig`): a `Color wheel` `<select>` directly below
   the harmony-type select, copying the gradient tool's colour-space select, with the selected option's
-  blurb in the existing `config-description` slot (Krita's one-line-per-option pattern).
+  blurb in the existing `config-description` slot (Krita's one-line-per-option pattern). The options
+  are rendered by iterating core's `COLOR_WHEEL_IDS`; labels and blurbs are locale keys
+  `config.wheel.<id>` / `config.wheel.<id>Desc`, so the web app holds no wheel list of its own.
 - **Tool** (`harmony-tool.ts`): passes `wheel` into the core call; share params include `wheel` only
   when it is not `rgb`, so links for the default stay byte-identical to today's; the share-URL reader
   accepts `wheel=`, normalises unknown values to `rgb` with the same loud log the `algo` path uses.
@@ -223,8 +254,11 @@ byte-identical (§6).
 ## 5. Discord bot and OG worker
 
 **Schema** (`discord-worker/src/commands/schemas.ts`): an optional `wheel` string option on
-`/harmony` with four choices whose values are the ids and whose names follow the English-only
-convention the `matching` choices already use. Choice count stays far under Discord's 25.
+`/harmony` whose choices are **derived from core's `COLOR_WHEEL_IDS`** exactly as
+`HARMONY_TYPE_CHOICES` derives from the harmony-type union — values are the ids, names come from a
+`COLOR_WHEEL_LABELS` map typed `Record<ColorWheelId, string>` so a wheel added in core without a label
+is a type error, following the English-only convention the `matching` choices already use. Five
+choices, far under Discord's 25.
 
 **Handler** (`discord-worker/src/handlers/commands/harmony.ts`): parse `wheel`, validate with
 `isColorWheelId`, pass to `bot-logic`. Remove `color_space`.
@@ -238,7 +272,8 @@ locales). No ring.
 **Analytics:** the option's presence is logged, never its value (Tier A rule).
 
 **og-worker:** `wheel` is added to `OG_ALLOWED_QUERY_KEYS` and validated at the shared `/og/*` guard
-exactly as `algo` is (reject with 400 when present and invalid). The harmony route forwards it into
+exactly as `algo` is (reject with 400 when present and invalid), using core's `isColorWheelId` rather
+than a local list. The harmony route forwards it into
 `generateHarmonySlots` and prints the same header token. **Cache-space note for review:** FINDING-024
 bounded the number of distinct renders per path by allowlisting query keys; `wheel` is a validated
 four-value enum, the same class as `algo` (six values), so it multiplies the harmony route's variants by
