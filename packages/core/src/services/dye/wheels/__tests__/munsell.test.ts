@@ -1,6 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { MUNSELL_ANCHORS, MUNSELL_TABLE, MUNSELL_WHEEL } from '../munsell.js';
+import munsellAnchors from '../../../../data/munsell-anchors.json' with { type: 'json' };
+import { MUNSELL_TABLE, MUNSELL_WHEEL } from '../munsell.js';
 import { assertMonotoneTable } from '../hue-warp.js';
+
+/**
+ * The raw renotation anchors are TEST data: the runtime wheel reads only
+ * `MUNSELL_TABLE`, and this file is the only reader of the anchors. Imported
+ * straight from the generated JSON rather than re-exported from `munsell.ts`,
+ * so 40 objects of provenance metadata stay out of every shipped bundle.
+ */
+const MUNSELL_ANCHORS = munsellAnchors.anchors;
 
 const anchor = (notation: string) => {
   const a = MUNSELL_ANCHORS.find((x) => x.notation === notation);

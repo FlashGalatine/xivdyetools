@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   COLOR_WHEEL_IDS,
+  COLOR_WHEEL_TAGS,
   DEFAULT_COLOR_WHEEL,
   getColorWheel,
   isColorWheelId,
+  normalizeColorWheelId,
+  parseColorWheelId,
 } from '../ColorWheel.js';
 import { RGB_WHEEL, RYB_TABLE, RYB_WHEEL } from '../rgb-ryb.js';
 import { ColorConverter } from '../../../color/ColorConverter.js';
@@ -33,6 +36,34 @@ describe('registry', () => {
   it.each(COLOR_WHEEL_IDS)('returns a wheel whose id is the id asked for: %s', (id) => {
     expect(getColorWheel(id).id).toBe(id);
   });
+
+  it('tags every wheel with a non-localised footer token', () => {
+    expect(Object.keys(COLOR_WHEEL_TAGS).sort()).toEqual([...COLOR_WHEEL_IDS].sort());
+    for (const id of COLOR_WHEEL_IDS) expect(COLOR_WHEEL_TAGS[id]).toMatch(/^[A-Z·-]+$/);
+  });
+});
+
+/**
+ * One normaliser, used by every surface that reads a wheel id off the wire:
+ * the share URL, the OG query, the `/harmony wheel` option, the persisted web
+ * config. Four hand-rolled copies of `toLowerCase()` + `isColorWheelId` is how
+ * one of them ends up not trimming, or not lower-casing.
+ */
+describe('parseColorWheelId / normalizeColorWheelId', () => {
+  it('accepts a recognised id with surrounding space and any casing', () => {
+    expect(parseColorWheelId(' RYB ')).toBe('ryb');
+    expect(normalizeColorWheelId(' RYB ')).toBe('ryb');
+    expect(parseColorWheelId('MUNSELL')).toBe('munsell');
+    expect(parseColorWheelId('oklch-lightness')).toBe('oklch-lightness');
+  });
+
+  it.each(['', null, undefined, 42, 'cmyk', 'toString', 'constructor', '   '])(
+    'answers undefined / rgb for %j',
+    (value) => {
+      expect(parseColorWheelId(value)).toBeUndefined();
+      expect(normalizeColorWheelId(value)).toBe(DEFAULT_COLOR_WHEEL);
+    }
+  );
 });
 
 describe('rgb wheel (identity)', () => {

@@ -14,6 +14,12 @@ export type { ColorWheelId };
 
 export interface ColorWheel {
   readonly id: ColorWheelId;
+  /**
+   * True when targets carry the base's HSV S/V (hue-distance ranking is
+   * meaningful). False for wheels that preserve lightness/chroma instead,
+   * which must always rank by ΔE.
+   */
+  readonly carriesBaseHsv: boolean;
   /** Where a colour sits on this wheel, 0–360. */
   hueOf(hex: string): number;
   /**

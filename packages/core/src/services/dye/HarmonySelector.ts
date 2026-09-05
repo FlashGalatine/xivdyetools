@@ -39,6 +39,10 @@ export interface HarmonySelectionConfig {
    * Rank by the configured ΔE against an S/V-preserving target (`true`), or by
    * plain angular hue distance (`false`). The web app's "strict matching"
    * toggle, on by default.
+   *
+   * Forced on for wheels that do not carry the base's S/V
+   * (`oklch-lightness`): hue-only ranking would discard the very property that
+   * wheel exists for.
    */
   usePerceptualMatching: boolean;
   /** Which ΔE the ranking uses. Ignored when `usePerceptualMatching` is false. */
@@ -186,6 +190,15 @@ export function generateHarmonySlots(
   const offsets = HARMONY_OFFSETS[harmonyType];
 
   const wheel = getColorWheel(config.wheel ?? DEFAULT_COLOR_WHEEL);
+  // A wheel that keeps the base's OKLab L and C instead of its HSV S/V has no
+  // meaningful hue-distance ranking: scoring by degrees against `targetHue`
+  // throws away the lightness the wheel was chosen for, and returns a partner
+  // at some other lightness entirely. Built once, used for every scoring call
+  // below (pins included) so a slot can never be scored in different units
+  // from its neighbours — the BUG-064 rule.
+  const effective: HarmonySelectionConfig = wheel.carriesBaseHsv
+    ? config
+    : { ...config, usePerceptualMatching: true };
   const baseWheelHue = wheel.hueOf(baseHex);
   const companionCount = config.companionCount ?? 0;
   const preventDuplicates = config.preventDuplicates ?? false;
@@ -219,7 +232,7 @@ export function generateHarmonySlots(
     // desaturated dyes; the constant-lightness wheel carries L and C instead.
     const { targetHex, targetHue } = wheel.target(baseHex, wheelHue);
 
-    const ranked = rankCandidates(candidates, targetHue, targetHex, config);
+    const ranked = rankCandidates(candidates, targetHue, targetHex, effective);
 
     const pin = options?.pinned?.get(index);
     // Every branch below assigns, so no initialiser: an unread `= null` here
@@ -229,7 +242,7 @@ export function generateHarmonySlots(
     if (pin) {
       // An explicit hand-swap wins its slot outright, exclusions included: the
       // user naming a dye outranks our guess about which dyes are eligible.
-      chosen = { dye: pin, deviance: devianceFor(pin, targetHue, targetHex, config) };
+      chosen = { dye: pin, deviance: devianceFor(pin, targetHue, targetHex, effective) };
     } else if (preventDuplicates) {
       // First eligible-and-unused, else the nearest eligible even if already
       // shown: a slot with a dye repeated beats a slot left blank. An excluded

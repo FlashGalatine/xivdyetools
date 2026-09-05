@@ -88,4 +88,38 @@ describe('maxChromaOklch', () => {
       expect(C).toBeGreaterThan(c - 0.01);
     }
   });
+
+  /**
+   * The sRGB solid is NOT star-shaped in OKLab along the blue ray: at
+   * L ≈ 0.11 / h ≈ 264° the ray leaves the gamut around C ≈ 0.066 and
+   * re-enters further out (that outer lobe is what makes #0000FF itself
+   * legal). A plain lo/hi bisection seeded with `hi = 0.4` samples the
+   * midpoint first, lands in the far lobe, and answers a chroma with a
+   * out-of-gamut hole between it and the neutral axis — so the ring is
+   * painted from a colour the gamut mapper then pulls back somewhere else.
+   *
+   * The contract this pins is CONNECTED-FROM-ZERO: every chroma in [0, C] is
+   * inside sRGB, not merely C itself.
+   */
+  it('answers the FIRST gamut exit on the blue ray, not a chroma across the hole', () => {
+    expect(ColorConverter.maxChromaOklch(0.11, 264.1)).toBeCloseTo(0.0659, 2);
+    expect(Math.abs(ColorConverter.maxChromaOklch(0.11, 264.1) - 0.0659)).toBeLessThan(0.002);
+  });
+
+  it('returns a chroma whose whole segment [0, C] is in gamut, over 60 seeded samples', () => {
+    const rand = lcg(20260905);
+    const inGamutAt = (L: number, c: number, h: number): boolean => {
+      // `gamutMapOklch` only reduces chroma; if it hands back essentially the
+      // chroma asked for, that (L, c, h) was inside the gamut.
+      const { C } = ColorConverter.hexToOklch(ColorConverter.gamutMapOklch(L, c, h));
+      return C >= c - 0.004;
+    };
+    for (let i = 0; i < 60; i++) {
+      const L = 0.1 + 0.8 * rand.next().value;
+      const h = 360 * rand.next().value;
+      const c = ColorConverter.maxChromaOklch(L, h);
+      expect(inGamutAt(L, c, h), `C at L=${L} h=${h}`).toBe(true);
+      expect(inGamutAt(L, 0.99 * c, h), `0.99C at L=${L} h=${h}`).toBe(true);
+    }
+  });
 });

@@ -17,7 +17,7 @@ export const RING_LIGHTNESS = 0.65;
 /**
  * Below this OKLCH chroma a colour is treated as grey: no hue, no rotation.
  *
- * Pure White (#F4F5F9) measures OKLCH C ≈ 0.0054 and must stay grey under
+ * Pure White (#F9F8F4) measures OKLCH C ≈ 0.0054 and must stay grey under
  * this wheel, so the threshold sits just above it — not at the 0.005 a first
  * draft used, which is just below that dye's real chroma (cross-checked
  * against culori's oklch converter) and would have let it rotate. 0.006
@@ -33,8 +33,19 @@ let ringCache: { count: number; stops: readonly HexColor[] } | null = null;
 export const OKLCH_LIGHTNESS_WHEEL: ColorWheel = {
   id: 'oklch-lightness',
 
+  // This wheel abandons the base's HSV S/V for its OKLab L and C, so ranking
+  // candidates by angular hue distance would discard exactly the property the
+  // wheel exists to preserve. `HarmonySelector` reads this and forces ΔE.
+  carriesBaseHsv: false,
+
   hueOf(hex: string): number {
-    return mod360(ColorConverter.hexToOklch(hex).h);
+    const { C, h } = ColorConverter.hexToOklch(hex);
+    // A grey has no hue: its measured OKLab angle is an artefact of 8-bit
+    // rounding (#808080 reads ≈ 90°, Pure White ≈ 250°), which would park the
+    // base spoke at an arbitrary and unstable angle. Every warp wheel puts a
+    // grey at 0 (HSV hue of a grey is 0); this one does too.
+    if (C < ACHROMATIC_CHROMA) return 0;
+    return mod360(h);
   },
 
   target(baseHex: string, wheelHue: number): { targetHex: HexColor; targetHue: number } {

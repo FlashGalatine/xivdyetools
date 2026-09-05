@@ -144,6 +144,9 @@ export function hueWarpWheel(id: ColorWheelId, table: WarpTable): ColorWheel {
   assertMonotoneTable(table, id);
   return {
     id,
+    // Every warp wheel's target is the base's own S/V on a re-spaced hue, so
+    // angular hue distance to `targetHue` is a meaningful ranking here.
+    carriesBaseHsv: true,
     hueOf(hex: string): number {
       return toWheelHue(table, ColorConverter.hexToHsv(hex).h);
     },

@@ -25,6 +25,7 @@
     "build": "npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales",
     "build:locales": "tsx scripts/build-locales.ts",
     "build:munsell": "tsx scripts/build-munsell-hues.ts",
+    "build:oklch-hue": "tsx scripts/build-oklch-hue-table.ts",
     "copy:locales": "tsx scripts/copy-locales.ts",
     "calibrate:bands": "tsx scripts/calibrate-bands.ts",
     "test": "vitest run",

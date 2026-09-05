@@ -207,11 +207,34 @@ const WHEEL_CONFIGS: Array<[string, HarmonySelectionConfig]> = (
   { usePerceptualMatching: true, matchingMethod: 'ciede2000', preventDuplicates: true, companionCount: 3, wheel },
 ]);
 
-/** Captured on first run (Task 7 step 6); see the commit that added each. */
+/**
+ * Captured on first run (Task 7 step 6); see the commit that added each.
+ *
+ * `oklch-hue` re-baselined 2026-09-05 (fix wave 2, item 8) and, like every
+ * re-baseline above, not taken on trust:
+ *
+ *   ryb              d3f511e8…  ->  d3f511e8…   unchanged
+ *   munsell          437788cb…  ->  437788cb…   unchanged
+ *   oklch-hue        c927b9fb…  ->  d3e36ef2…   CHANGED
+ *   oklch-lightness  d749fe5c…  ->  d749fe5c…   unchanged
+ *
+ * The generator used to pair the OKLab hue of `hsvToHex(h, 100, 100)` with the
+ * loop's nominal `h`, but `hsvToHex` rounds to 8 bits, so the colour actually
+ * measured sits at `hexToHsv(hex).h`. Pairing each OKLab hue with the HSV hue
+ * of the SAME sample moves the table's second column by at most **0.12°**.
+ *
+ * Row-level diff: **60 of 1,250 rows (4.8%)**, of which only **16** change a
+ * chosen dye — and every one of those 16 is a swap between the winner and its
+ * own first companion (e.g. complementary/Dalamud-family 5734: 5796 ↔ 13716),
+ * i.e. two dyes that were already within a hair of each other on ΔE. Nothing
+ * else moved: the RGB `GOLDEN_DIGEST` and the three other wheels are byte
+ * identical, and `WHEEL_SAMPLE['oklch-hue']` — Turquoise Green, Ochu Green,
+ * Dragoon Blue — did not move either, so it is NOT re-baselined here.
+ */
 const WHEEL_DIGESTS: Record<string, string> = {
   ryb: 'd3f511e8d6b34cab5921e9ae5ed73d640f4a8565e4a728681e8707507f6e6232',
   munsell: '437788cb69868970750c58bd4e63b89b96a167b383eb228f5561c20e8d5587d6',
-  'oklch-hue': 'c927b9fb32ab2a51b723aefc9f9535bb5e6092fa9bdf5557ee69588cb67f687a',
+  'oklch-hue': 'd3e36ef2c85d397b2f8b6b0043d58435b440a11542ae6dda711cfb94557809f4',
   'oklch-lightness': 'd749fe5c16a14bdf1ab0ba689fcd558f06ef28ae4238db985a455f6119111625',
 };
 

@@ -95,10 +95,10 @@ function deltaEFor(
  * - 'lch': CIELCHab cylindrical perceptual space - traditional color science standard
  * - 'hsl': HSL hue-saturation-lightness - similar to HSV with different lightness mapping
  *
- * @deprecated Since 5.2.0. Rotates OKLCH/LCH at fixed L/C and then CLIPS per
- * channel, which changes hue (the OKLCH complement of #0000FF comes out
- * #A02000 instead of #734F00). Use `generateHarmonySlots(…, { wheel })` and
- * `getColorWheel(id)` instead. Kept for published-API compatibility only.
+ * @deprecated Since 5.2.0. Rotates hue at fixed L/C in a space that does not
+ * carry the base's saturation and value; now gamut-maps for `oklch`, while
+ * `lch`/`hsl` still clip. Still prefer `generateHarmonySlots(…, { wheel })`
+ * and `getColorWheel(id)`. Kept for published-API compatibility only.
  */
 export type HarmonyColorSpace = 'hsv' | 'oklch' | 'lch' | 'hsl';
 
@@ -118,10 +118,10 @@ export interface HarmonyOptions {
    * the hue in that space and matching via k-d tree (perceptual distance).
    * @default 'hsv'
    *
-   * @deprecated Since 5.2.0. Rotates OKLCH/LCH at fixed L/C and then CLIPS per
-   * channel, which changes hue (the OKLCH complement of #0000FF comes out
-   * #A02000 instead of #734F00). Use `generateHarmonySlots(…, { wheel })` and
-   * `getColorWheel(id)` instead. Kept for published-API compatibility only.
+   * @deprecated Since 5.2.0. Rotates hue at fixed L/C in a space that does not
+   * carry the base's saturation and value; now gamut-maps for `oklch`, while
+   * `lch`/`hsl` still clip. Still prefer `generateHarmonySlots(…, { wheel })`
+   * and `getColorWheel(id)`. Kept for published-API compatibility only.
    */
   colorSpace?: HarmonyColorSpace;
 
@@ -463,16 +463,21 @@ export class HarmonyGenerator {
    * Rotate a color's hue by an offset in the specified color space
    * Keeps the other components (chroma/saturation, lightness/value) unchanged
    *
-   * @deprecated Since 5.2.0. Rotates OKLCH/LCH at fixed L/C and then CLIPS per
-   * channel, which changes hue (the OKLCH complement of #0000FF comes out
-   * #A02000 instead of #734F00). Use `generateHarmonySlots(…, { wheel })` and
-   * `getColorWheel(id)` instead. Kept for published-API compatibility only.
+   * @deprecated Since 5.2.0. Rotates hue at fixed L/C in a space that does not
+   * carry the base's S/V; now gamut-maps for `oklch`; still prefer
+   * `generateHarmonySlots(…, { wheel })` and `getColorWheel(id)`. Kept for
+   * published-API compatibility only.
+   *
+   * `lch` (and `hsl`) still CLIP per channel, which changes hue on any
+   * out-of-gamut rotation — CIELAB has no in-package gamut mapper, and adding
+   * one to a deprecated path is not the trade. `oklch` does not: it bisects
+   * chroma at constant L and h (CSS Color 4), the same mapping the wheels use.
    */
   private rotateHueInSpace(hex: string, offset: number, space: HarmonyColorSpace): string {
     switch (space) {
       case 'oklch': {
         const oklch = ColorConverter.hexToOklch(hex);
-        return ColorConverter.oklchToHex(oklch.L, oklch.C, (oklch.h + offset + 360) % 360);
+        return ColorConverter.gamutMapOklch(oklch.L, oklch.C, (oklch.h + offset + 360) % 360);
       }
       case 'lch': {
         const lch = ColorConverter.hexToLch(hex);

@@ -1335,20 +1335,45 @@ export class ColorConverter {
   }
 
   /**
-   * The largest OKLCH chroma at (L, h) that is still inside sRGB, by bisection.
-   * Used to paint a perceptual ring that is in gamut at every angle. The sRGB
-   * solid is not star-shaped in OKLAB along the blue ray (h ≈ 264°), so the
-   * search starts from 0 and only ever moves the lower bound while in gamut.
+   * The largest C such that every chroma in [0, C] is inside sRGB along
+   * (L, h); the sRGB solid is not connected along the blue ray (h ≈ 264°), so
+   * the true outer extent can be larger.
+   *
+   * Used to paint a perceptual ring that is in gamut at every angle, which is
+   * why "connected from zero" is the property that matters: a chroma reached
+   * across a gamut hole is a colour the mapper immediately pulls back
+   * somewhere else. A plain lo/hi bisection cannot answer this — it samples
+   * the midpoint first and, at L ≈ 0.11 / h ≈ 264°, lands in the far lobe that
+   * makes #0000FF legal and reports a chroma with a hole beneath it. So: a
+   * coarse upward scan to find the FIRST exit, then bisect inside that step.
    */
   maxChromaOklch(L: number, h: number): number {
     if (L <= 0 || L >= 1) return 0;
     const hRad = h * (Math.PI / 180);
+    const cos = Math.cos(hRad);
+    const sin = Math.sin(hRad);
+    const inside = (c: number): boolean =>
+      this.inSrgbGamut(this.oklabToLinearRgb(L, c * cos, c * sin));
+
+    // sRGB's largest OKLab chroma is ≈ 0.32 (pure magenta); 0.4 clears it.
+    const STEP = 0.005;
+    const STEPS = 80;
     let lo = 0;
-    let hi = 0.4;
+    let hi = -1;
+    for (let i = 1; i <= STEPS; i++) {
+      const c = i * STEP;
+      if (inside(c)) {
+        lo = c;
+      } else {
+        hi = c;
+        break;
+      }
+    }
+    if (hi < 0) return lo; // in gamut all the way out — no exit to bisect
+
     for (let i = 0; i < 24; i++) {
       const mid = (lo + hi) / 2;
-      const lin = this.oklabToLinearRgb(L, mid * Math.cos(hRad), mid * Math.sin(hRad));
-      if (this.inSrgbGamut(lin)) lo = mid;
+      if (inside(mid)) lo = mid;
       else hi = mid;
     }
     return lo;

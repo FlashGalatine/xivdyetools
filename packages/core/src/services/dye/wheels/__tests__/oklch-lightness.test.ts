@@ -7,6 +7,21 @@ describe('oklch-lightness wheel', () => {
     expect(OKLCH_LIGHTNESS_WHEEL.hueOf('#FF0000')).toBeCloseTo(29.2, 0);
   });
 
+  /**
+   * A grey has no hue, so reporting its OKLab hue (an artefact of 8-bit
+   * rounding — #808080 measures ≈ 90°, Pure White ≈ 250°) put the base spoke
+   * at an arbitrary angle that moved between two greys. Every other wheel puts
+   * a grey at the ring origin, because HSV hue of a grey is 0.
+   */
+  it('puts an achromatic base at the ring origin, like every other wheel', () => {
+    expect(OKLCH_LIGHTNESS_WHEEL.hueOf('#808080')).toBe(0);
+    expect(OKLCH_LIGHTNESS_WHEEL.hueOf('#F9F8F4')).toBe(0); // Pure White
+    expect(OKLCH_LIGHTNESS_WHEEL.hueOf('#FFFFFF')).toBe(0);
+    expect(OKLCH_LIGHTNESS_WHEEL.hueOf('#000000')).toBe(0);
+    // A chromatic base still reads its OKLab hue.
+    expect(OKLCH_LIGHTNESS_WHEEL.hueOf('#FF0000')).toBeGreaterThan(1);
+  });
+
   it('keeps L and C of the base and gamut-maps the rotated colour', () => {
     const base = ColorConverter.hexToOklch('#0000FF');
     const { targetHex, targetHue } = OKLCH_LIGHTNESS_WHEEL.target('#0000FF', (base.h + 180) % 360);
