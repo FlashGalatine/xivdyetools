@@ -15,7 +15,7 @@
  * @module index
  */
 
-import { DEFAULT_MATCHING_METHOD, DEFAULT_COLOR_WHEEL, extractLocaleCode, isColorWheelId } from '@xivdyetools/core';
+import { DEFAULT_MATCHING_METHOD, DEFAULT_COLOR_WHEEL, extractLocaleCode, parseColorWheelId } from '@xivdyetools/core';
 import { isValidBlendingMode, type BlendingMode } from '@xivdyetools/core/blending';
 import { Hono, type Context } from 'hono';
 import {
@@ -194,16 +194,26 @@ app.use('/og/*', async (c, next) => {
 });
 
 /**
- * The only query keys any /og/* request may legitimately carry: `resolveLocale`
- * (below) reads `lang`, `frameFromQuery` reads `frame`, and the five
- * algo-aware image routes read `algo`, and the two mixer routes read `mode`
- * — og-data-generator.ts emits exactly these four onto an emitted image URL
- * (withLang / withAlgo / withMode / the ?frame=x twitter branch), so no URL
- * this worker itself produces ever carries a fifth key.
+ * The only five query keys any /og/* request may legitimately carry —
+ * `lang`, `frame`, `algo`, `mode`, `wheel`.
+ *
+ * The allowlist is GLOBAL, but what reads each key is not: `resolveLocale`
+ * (below) reads `lang` and `frameFromQuery` reads `frame` on every route;
+ * `algo` is read by the five algo-aware image routes; `mode` only by the two
+ * mixer routes; `wheel` only by `/og/harmony/*`. A present-but-invalid value
+ * is rejected here on every route regardless (rulings S7-R7 / S7-R10), while
+ * `ogCacheKey` below keys a route-specific parameter only on the routes that
+ * render with it — an allowed key must not multiply the cache entries of a
+ * card that ignores it.
+ *
+ * og-data-generator.ts emits exactly these onto an image URL (withLang /
+ * withAlgo / withMode / withWheel / the ?frame=x twitter branch), so no URL
+ * this worker itself produces ever carries a sixth key.
  *
  * `mode` joined the set on 2026-09-03: the web mixer's share URL had always
  * carried it and this worker had always ignored it, so a shared mix rendered
  * in CIELAB no matter which of the six algorithms the sharer had picked.
+ * `wheel` joined it on 2026-09-04 for the Harmony Explorer's colour wheels.
  */
 const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo', 'mode', 'wheel']);
 
@@ -269,10 +279,11 @@ app.use('/og/*', async (c, next) => {
   }
   // `wheel` picks the harmony card's GEOMETRY — five validated ids, the same
   // class as `algo`; an unknown value is a malformed request, never echoed.
-  // Validated case-insensitively (matching the web app, which accepts
-  // `wheel=MUNSELL`, and this route's own `.toLowerCase()` on harmonyType).
+  // `parseColorWheelId` is core's one normaliser (trim + lower-case +
+  // membership), so this accepts `wheel=MUNSELL` exactly as the web app does
+  // and cannot drift from the id list the card itself reads.
   const wheel = searchParams.get('wheel');
-  if (wheel && !isColorWheelId(wheel.toLowerCase())) {
+  if (wheel && !parseColorWheelId(wheel)) {
     return c.json({ error: 'Invalid color wheel' }, 400);
   }
   return next();
@@ -335,11 +346,18 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   }
   // The default is elided so `wheel=rgb` and absent share one cache entry —
   // the same rule `withMode` applies to `ryb` and `withAlgo` to ΔE2000.
-  // Lowercased before the comparison and the key itself (the guard above
-  // validates case-insensitively, matching the web app's `wheel=MUNSELL`),
-  // so `?wheel=RYB` and `?wheel=ryb` share the one entry too.
-  const wheel = url.searchParams.get('wheel')?.toLowerCase();
-  if (wheel && wheel !== DEFAULT_COLOR_WHEEL) {
+  // NORMALISED, not raw (unlike `algo` and `mode`): the five ids are the whole
+  // vocabulary and `parseColorWheelId` folds case and whitespace exactly as
+  // the card's own reader does, so `?wheel=RYB` and `?wheel=ryb` cannot buy
+  // two entries for one picture.
+  //
+  // And only on the route that READS it. `wheel` is an allowed key everywhere
+  // because the allowlist is global, but only `/og/harmony/*` renders with it;
+  // keying on it elsewhere let `?wheel=` mint five distinct, unauthenticated
+  // rasters of one identical gradient or mixer card — the FINDING-024 key-space
+  // problem, reintroduced through a validated parameter.
+  const wheel = parseColorWheelId(url.searchParams.get('wheel'));
+  if (wheel && wheel !== DEFAULT_COLOR_WHEEL && c.req.path.startsWith('/og/harmony/')) {
     params.set('wheel', wheel);
   }
   // Ruling S7-R13 (og-7 refined): strip a trailing `.png` from the path too — it stays

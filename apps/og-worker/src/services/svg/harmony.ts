@@ -11,6 +11,7 @@
  */
 
 import {
+  COLOR_WHEEL_TAGS,
   DEFAULT_COLOR_WHEEL,
   DEFAULT_MATCHING_METHOD,
   HARMONY_OFFSETS,
@@ -120,8 +121,9 @@ function getHarmonyMatches(
     .map((slot) => ({
       dye: slot.dye as Dye,
       offset: slot.offset,
-      // The displayed Δ is match → ideal, in the REQUESTED algorithm; the
-      // ranking above always runs in ΔE2000, matching the page's default.
+      // The displayed Δ is match → ideal, in the REQUESTED algorithm — the
+      // same algorithm and the same wheel the ranking above used, so the
+      // figure and the dye it labels come from one calculation.
       delta: deltaForAlgorithm(slot.targetHex, (slot.dye as Dye).hex, algorithm),
     }));
 }
@@ -183,7 +185,15 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
       wheel === DEFAULT_COLOR_WHEEL
         ? `${baseName} · ${harmonyName}`
         : `${baseName} · ${harmonyName} · ${getLocalizedColorWheelName(wheel, locale)}`,
-    footRight: algoTag(algorithm),
+    // The deck carries the localised wheel name, but the X frame DROPS the
+    // deck — so a shared Twitter card said nothing about which wheel chose its
+    // dyes. The footer-right slot names it in both frames, as a non-localised
+    // identifier beside the algorithm tag (`ΔE2000 · RYB`), never a translated
+    // word: the two cards have to be comparable across locales.
+    footRight:
+      wheel === DEFAULT_COLOR_WHEEL
+        ? algoTag(algorithm)
+        : `${algoTag(algorithm)} · ${COLOR_WHEEL_TAGS[wheel]}`,
     frame,
   });
 }

@@ -128,6 +128,10 @@ function withMode(url: string, mode: BlendingMode | undefined): string {
 
 /** Append a non-default colour wheel to an emitted URL; absent and `rgb` stay off it. */
 function withWheel(url: string, wheel: ColorWheelId | undefined): string {
+  // The default stays OFF the URL, which is safe in both directions: the page
+  // applies rgb for an absent `wheel` on any link that carries share params
+  // (harmony-tool's `handleDeepLink`), and the image route's cache key elides
+  // it too — so `wheel=rgb` and absent are one card and one page.
   if (!wheel || wheel === DEFAULT_COLOR_WHEEL) return url;
   return `${url}${url.includes('?') ? '&' : '?'}wheel=${wheel}`;
 }
