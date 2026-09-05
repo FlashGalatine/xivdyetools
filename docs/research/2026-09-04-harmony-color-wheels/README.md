@@ -55,7 +55,9 @@ the same data under MIT. The "Munsell is licence-blocked" verdict in 05 §1(c) a
    rotation, as two selector entries.
 4. Labels and blurbs — **localised in all six locales.**
 5. Munsell — **licence check first, substitute the opponent wheel if it fails.** The check cleared
-   (07), so Munsell is increment 2.
+   (07), and the user then chose to **build Munsell in the same release** with 07's recommended path
+   (40 rows from RIT `real.dat` at V=6/C=8, cross-checked against the MIT R `munsell` package, NOTICE
+   and trademark disclaimer). Five wheels in release 1.
 
 ## Method
 

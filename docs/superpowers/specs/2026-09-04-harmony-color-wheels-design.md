@@ -27,16 +27,18 @@ shareable input to that one function, and the page's ring must be painted from t
    at sRGB 138°, Adobe Color reports 137°). Not core's mixer model, not a cube interpolation.
 2. **OKLCH ships in release 1**, not as a later increment.
 3. **Both OKLCH flavours ship:** a hue warp that keeps the base's saturation and value, and a
-   constant-lightness rotation with gamut mapping. Four wheels in the selector.
+   constant-lightness rotation with gamut mapping. With Munsell (decision 5), five wheels in the
+   selector.
 4. **Localise everything** user-facing, in all six locales.
 5. **Munsell:** licence check first; substitute the opponent (Hering) wheel if it fails. **The check
    cleared** (research 07): RIT publishes the renotation data with no licence or restriction while
    attaching explicit restrictions to other assets on the same page, the R `munsell` package republishes
    the same data as sRGB under MIT, and the wheel needs 40 rows (V=6, C=8 exists for all 40 principal
-   hues). So **Munsell is increment 2**, built from RIT `real.dat` cross-checked against R `munsell`,
-   shipping only the 40 derived pairs plus the generator script, with the NOTICE and trademark
-   disclaimer text in research 07. The id `munsell` is reserved. The opponent wheel remains a later
-   candidate on its own merits. Neither is in this spec's build.
+   hues). **User, after the check: build Munsell in this release with the recommended path** — the
+   40-row hue table derived from RIT `real.dat` at V=6/C=8, cross-checked against the R `munsell`
+   package's MIT sRGB values, shipping only the derived pairs plus the generator script, with the
+   NOTICE and trademark disclaimer text from research 07 (§2.3). Five wheels in the selector. The
+   opponent (Hering) wheel remains a later candidate on its own merits.
 
 ## Non-goals
 
@@ -52,7 +54,7 @@ shareable input to that one function, and the page's ring must be painted from t
 ## 1. Vocabulary and wire format
 
 ```ts
-export type ColorWheelId = 'rgb' | 'ryb' | 'oklch-hue' | 'oklch-lightness';
+export type ColorWheelId = 'rgb' | 'ryb' | 'munsell' | 'oklch-hue' | 'oklch-lightness';
 export const DEFAULT_COLOR_WHEEL: ColorWheelId = 'rgb';
 ```
 
@@ -68,10 +70,12 @@ all six locales already means Adobe's document colour mode):
 | — | **Color wheel** | Which wheel the harmony angles are measured on. Changes which dyes are suggested. |
 | `rgb` | RGB (screen) | The screen wheel, and also the CMY print wheel — same circle, different names. Today's behaviour. |
 | `ryb` | RYB (artist's) | The painter's wheel harmony rules were written for. Red's complement is green. |
+| `munsell` | Munsell (JIS) | The evenly spaced perceptual hue circle behind Japan's JIS colour standard. Red's complement is blue-green. |
 | `oklch-hue` | OKLCH hue (perceptual spacing) | The screen wheel re-spaced so equal angles are equal perceived hue steps. Keeps the base's vividness and brightness. |
 | `oklch-lightness` | OKLCH lightness (perceptual, keeps brightness) | Rotates hue at constant perceived lightness and colourfulness. Partners match the base's brightness; palettes lean toward mid-tones. |
 
-The selector lists them in that order, `rgb` first and default.
+The selector lists them in that order, `rgb` first and default. The Munsell option additionally
+carries, in its info tooltip rather than the blurb, the one-line trademark disclaimer from §2.3.
 
 ## 2. Core: the `ColorWheel` module
 
@@ -96,7 +100,7 @@ export const COLOR_WHEEL_IDS: readonly ColorWheelId[];        // in display orde
 `targetHue` is always an sRGB/HSV hue, because the non-perceptual ranking branch in `devianceFor`
 compares dye HSV hue to it.
 
-### 2.1 Hue-warp wheels: `rgb`, `ryb`, `oklch-hue`
+### 2.1 Hue-warp wheels: `rgb`, `ryb`, `munsell`, `oklch-hue`
 
 A factory `hueWarpWheel(id, table)` builds a wheel from a **checked-in, strictly monotone table** of
 `[wheelAngle, hsvHue]` pairs spanning 0→360 on both columns:
@@ -114,6 +118,14 @@ Tables:
   (180,138) (195,155) (210,171) (225,187) (240,204) (255,219) (270,234) (285,251) (300,267) (315,282)
   (330,298) (345,329) (360,360)`. Column order is the known trap (research 01 §1a); §6 asserts it by
   value.
+- **`munsell`:** 40 pairs, one per principal hue (2.5R, 5R, 7.5R, 10R, 2.5YR … 10RP), plus the wrap
+  pair. Column 1 = the Munsell hue as an angle, `ASTM hue number × 3.6°` (100 evenly spaced steps;
+  5R = 5, 5Y = 25, 5G = 45, 5B = 65, 5P = 85), **re-zeroed so sRGB 0° ↦ wheel 0°** like every other
+  warp wheel — the wheel keeps Munsell's spacing, not its origin. Column 2 = the HSV hue of that
+  notation at **V = 6, C = 8**, computed from the renotation's xyY (illuminant C) → XYZ → Bradford
+  C→D65 → linear sRGB → HSV hue **before any clipping**, so a row slightly outside sRGB still yields a
+  hue. Munsell hue order is spectral order, so the table is monotone by construction; the generator
+  asserts it. Data provenance and attribution in §2.3.
 - **`oklch-hue`:** 73 pairs at 5° steps of HSV hue, column 2 = HSV hue, column 1 = the OKLab hue of
   `hsvToHex(h, 100, 100)` re-zeroed so HSV 0° ↦ wheel 0° and **monotonised** with a running maximum.
   The raw curve reverses by 0.16° across HSV 231.4°–240° and a naïve inverse then errs by 13°
@@ -138,7 +150,26 @@ chroma with local MINDE, `JND = 0.02` in ΔE_OK, `ε = 0.0001`, returning the cl
 within one JND. It is additive; the existing `oklchToHex` (which clips) is unchanged for callers that
 rely on it. A devDependency on `culori` provides the oracle test (§6) and ships zero bytes.
 
-### 2.3 Deprecations
+### 2.3 Munsell data provenance (research 07)
+
+- **Source:** RIT Munsell Color Science Laboratory's `real.dat` (the 1943 Newhall–Nickerson–Judd
+  renotation, "real" colours only), published with no licence or restriction. **Not vendored.** The
+  generator script `packages/core/scripts/build-munsell-hues.ts` takes a local path to `real.dat`,
+  extracts the 40 rows at V=6/C=8, derives the pairs, asserts monotonicity, and writes
+  `packages/core/src/data/munsell-hues.json`. Only that 40-pair file ships.
+- **Cross-check:** the derived sRGB hue of each row is compared against the R `munsell` package's
+  MIT-licensed `munsell.map` hex (same file, same Bradford C→D65 pipeline) and against RIT's own
+  `real_sRGB.xls`; the per-row deltas are recorded in the implementation plan's evidence. Any row more
+  than 1° off either reference blocks the table.
+- **Attribution:** create `packages/core/NOTICE` with the text in research 07 §"Attribution" (RIT MCSL
+  and the 1943 JOSA paper, doi:10.1364/JOSA.33.000385; the R `munsell` MIT copyright line; the
+  "computed renotations, not Book of Color measurements" caveat; the trademark sentence), reference it
+  from the package README, and add the trademark sentence once to the wheel's UI tooltip in six
+  locales: "MUNSELL is a registered trademark of Amazys Holding GmbH; this wheel is computed from
+  published renotation data and is not affiliated with or endorsed by X-Rite or Pantone."
+- **Ring:** pure sRGB hues re-spaced along the wheel, as for RYB.
+
+### 2.4 Deprecations
 
 `HarmonyColorSpace`, `HarmonyOptions.colorSpace` and `HarmonyGenerator.rotateHueInSpace` are marked
 `@deprecated` with a pointer to `ColorWheel`. They are unreachable in production and they clip (the
@@ -230,6 +261,10 @@ One parameterised suite in core runs over every registered wheel:
    deliberate re-baseline with a named sample that prints dye names first.
 6. **RYB by value:** `target(red, 120).targetHue = 60` (yellow) and `target(red, 180).targetHue ≈ 138`;
    RYB blue (240°) maps to sRGB 204°.
+6b. **Munsell landmarks:** the checked-in table has exactly 40 hues plus the wrap pair, consecutive
+   wheel angles are 9° apart (2.5 Munsell steps × 3.6°), and the sRGB hues of 5Y, 5G, 5B and 5P match
+   the generator's derived values within 0.5° — the plan records those four numbers once the generator
+   has run against `real.dat`.
 7. **Mutation check, once, recorded in the plan:** perturb the RYB table by 1° in a scratch run and
    confirm tests 5 and 6 go red. A suite that stays green with the warp stubbed to identity is a gate
    that cannot fail.
@@ -258,10 +293,11 @@ changelogs: product-level, web-app and discord-worker, each describing the surfa
 (the bot gains an option and a card token; the page gains a control and a re-painted ring; both
 gain different dyes when a non-default wheel is chosen).
 
-Follow-ups outside this spec: increment 2, the Munsell (JIS) wheel as a hue-warp table derived from
-the 40 principal hues, with `packages/core/NOTICE` and a one-line trademark disclaimer in its UI blurb
-(research 07); the opponent wheel as a later spike; spectral-complement toggle on Complementary once
-PR #164's spectral fix lands; warm/cool overlay.
+The PR also adds `packages/core/NOTICE` (§2.3) and the generator script; the `real.dat` download is
+a one-time manual step documented in the script header, not a build dependency.
+
+Follow-ups outside this spec: the opponent (Hering) wheel as a later spike; a spectral-complement
+toggle on Complementary once PR #164's spectral fix lands; a warm/cool overlay.
 
 ## 8. Open items for review
 
@@ -271,4 +307,6 @@ PR #164's spectral fix lands; warm/cool overlay.
 - Whether `oklch-lightness` should also carry the base's lightness *exactly* for near-white and
   near-black bases, or clamp toward mid-tones when the rotated hue has no chroma at that lightness. The
   CSS gamut map already reduces chroma to whatever fits; the proposal is to accept that.
-- Increment 2's wheel id `munsell` is reserved but not registered here; `opponent` is a later candidate.
+- Munsell sample point V=6/C=8: chosen because it is the one value/chroma present for all 40 hues in
+  `real.dat`; a different point would shift some hues by a few degrees. Recorded, not open.
+- `opponent` is a later candidate id, not registered here.
