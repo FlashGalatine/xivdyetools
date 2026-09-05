@@ -13,7 +13,7 @@ import type { HexColor } from '@xivdyetools/types';
 import { ColorConverter } from '../../color/ColorConverter.js';
 import type { ColorWheel, ColorWheelId, WarpTable } from './types.js';
 
-const mod360 = (x: number): number => ((x % 360) + 360) % 360;
+const mod360 = (x: number): number => (x >= 0 && x < 360 ? x : ((x % 360) + 360) % 360);
 
 /**
  * Every table must be strictly increasing in both columns and run exactly

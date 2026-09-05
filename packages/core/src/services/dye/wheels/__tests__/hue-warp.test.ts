@@ -7,6 +7,7 @@ import {
   toWheelHue,
 } from '../hue-warp.js';
 import type { WarpTable } from '../types.js';
+import { ColorConverter } from '../../../color/ColorConverter.js';
 
 const IDENTITY: WarpTable = [
   [0, 0],
@@ -169,5 +170,27 @@ describe('hueWarpWheel', () => {
         [360, 360],
       ]),
     ).toThrow();
+  });
+});
+
+describe('identity table is bit-exact', () => {
+  // Task 7 relies on the two-pair identity table reproducing today's HSV hue
+  // bit-for-bit, so the golden digest stays byte-identical. A naive
+  // `((x % 360) + 360) % 360` perturbs realistic (rounded-to-2-decimal) hues
+  // that aren't exact binary fractions, even though they are already in
+  // [0, 360) and need no wrapping at all.
+  const rgbWheel = hueWarpWheel('rgb', IDENTITY);
+
+  it('hueOf matches ColorConverter.hexToHsv(hex).h exactly, for realistic hexes', () => {
+    for (const hex of ['#FF5500', '#123456', '#6D5440', '#00A9DB', '#B02020', '#7F00FF']) {
+      expect(rgbWheel.hueOf(hex)).toBe(ColorConverter.hexToHsv(hex).h);
+    }
+  });
+
+  it('toWheelHue/fromWheelHue are exact no-ops on in-range 2-decimal hues', () => {
+    for (const v of [30.12, 45.67, 123.46, 90.05, 359.99]) {
+      expect(toWheelHue(IDENTITY, v)).toBe(v);
+      expect(fromWheelHue(IDENTITY, v)).toBe(v);
+    }
   });
 });
