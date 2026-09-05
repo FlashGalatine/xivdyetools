@@ -336,11 +336,16 @@ export class ChangelogModal {
   private createSectionBlock(section: ChangelogSection): HTMLElement {
     const block = document.createElement('div');
 
-    const header = document.createElement('h4');
-    header.className = 'text-sm font-semibold mb-1';
-    header.style.color = 'var(--theme-text)';
-    header.textContent = section.header;
-    block.appendChild(header);
+    // A headerless section comes from a release written as plain bullets with
+    // no "### " heading (see the parser's foldLooseBullets). Render the bullets
+    // without an empty heading rather than an h4 with no text in it.
+    if (section.header) {
+      const header = document.createElement('h4');
+      header.className = 'text-sm font-semibold mb-1';
+      header.style.color = 'var(--theme-text)';
+      header.textContent = section.header;
+      block.appendChild(header);
+    }
 
     // Title badge (chip grey — never a meaning-bearing color)
     if (section.title) {

@@ -59,6 +59,16 @@ Rules:
 - Web app: the Matching Algorithm setting now says that your choice changes *which dye you get*, not just the score shown beside it — measured against the default, the alternatives return a different closest dye between a quarter and nearly half of the time, and nothing on the page said so.
 - Web app: the Triadic, Tetradic and Square harmony descriptions stopped promising "vibrant, balanced palettes", "rich combinations" and "dynamic variety". There is no evidence behind those claims for these three schemes, so they now describe the shape they make on the colour wheel. Analogous and Monochromatic keep their wording — research does back those two.
 
+<!--
+BACKFILL, ARCHIVE ONLY — this block will never be announced, and that is
+intended. The webhook renders parseAll(content)[0], i.e. only the newest entry,
+and 5.2.0/5.3.0 above it are already memoised under KV `announced:v:<version>`.
+[5.1.1] exists so the product-level history has no hole for the 2026-09-03
+merges (#158/#159/#160, #162, #163), which shipped with no announcement at the
+time. Do not "fix" it by moving it to the top: that would re-announce work
+players received in early September as though it were new.
+-->
+
 ## [5.1.1] - 2026-09-03
 
 ### 🎨 Harmony gives one answer, wherever you ask

@@ -2,8 +2,15 @@
 
 ---
 
+## Web-App Version 5.6.1 — September 4, 2026
+
+### This window was showing you the wrong release
+
+- **"What's New" has been showing the August 16 notes to everyone since early September.** Whatever version you were actually running, this window opened on 5.0.0 — ten releases' worth of notes, including every fix listed below, were never shown to anyone. The window now lists them all, newest first, so the entries under this one are worth a scroll if you have not seen them.
+
 ## Web-App Version 5.6.0 — September 4, 2026
 
+### Settings, Options, and dialogs that stay on top
 - **The gear in the top-right opens Advanced Settings and nothing else now.** On a phone it used to open the tool's own Options at the same time, and the two landed on top of each other — Harmony Type and Matching Mode printed straight through the Reset and Backup rows, leaving neither readable and both awkward to tap.
 - **The tool's Options panel has its own button, in the bottom-left corner.** It sits opposite the Color Palette button, so the two panels each open from their own side of the screen. On a phone Options slides in from the left over the tool; on a desktop it is the column it always was, and the new button is how you bring it back after closing it.
 - On a desktop the gear no longer doubles as the way to reopen a closed Options column — that job belongs to the new button, and the gear now behaves the same everywhere.
@@ -12,33 +19,39 @@
 
 ## Web-App Version 5.5.0 — September 4, 2026
 
+### Honest labels on matching and harmony
 - **The Matching Algorithm setting now tells you it changes the answer, not just the number.** Nothing on the page said so, and it was reasonable to read the picker as only changing the score shown beside a match. It changes which dye you get: measured against the default across 2,000 colours, the alternatives return a *different* closest dye between a quarter and nearly half of the time.
 - **Three harmony descriptions stopped promising results they cannot deliver.** Triadic, Tetradic and Square described themselves as producing "vibrant, balanced palettes", "rich combinations" and "dynamic variety". Those are claims about how a palette will look to you, and there is no evidence behind them for these three schemes — so they now describe the shape they make on the colour wheel and leave the judgement to you. Analogous and Monochromatic keep their wording, because research does back those two.
 - **The OKLAB matching option is now labelled `ΔEOK2`**, which is the precise name of the formula the app uses. The old label named a slightly different one.
 
 ## Web-App Version 5.4.0 — September 3, 2026
 
+### The Mixer, and the links you share from it
 - **The Mixer's RYB mode said "Blue + Yellow = Olive" and now genuinely makes green.** RYB is the paint-mixing mode — the one that should behave like colours on an artist's palette — and it had been running on a colour model that could not mix reliably: mixing a dye *with itself* failed to give you that same dye back for more than half of all dyes. Blue and yellow now make a true green, and mixing any dye with itself returns it.
 - **Shared Mixer links now preview in the mode you picked.** When you shared a mix, the preview image that unfurled in Discord was always drawn in CIELAB, whichever of the six mixing modes you had chosen — including the Mixer's own default. Whoever you sent it to saw a different colour from the one on your screen.
 - **Shared Mixer previews name the dye your chosen matching method actually picks.** The preview labelled its suggested dye with your matching method but had ranked the dyes by a different one, so the dye it named could disagree with the page the link opens — for some methods, on about half of all mixes.
 
 ## Web-App Version 5.3.1 — September 3, 2026
 
+### The "Show ΔE" switch
 - **The "Show ΔE" switch works now.** Turning it off left the match-quality number on every result card exactly where it was. The same setting is what the Accessibility checker uses to hide that number when no colour-vision lens is active, and what Dye Comparison and Budget use to keep it off their cards entirely — so all three were showing you a number they had been written not to show.
 
 ## Web-App Version 5.3.0 — September 3, 2026
 
+### Reading the app in your own language
 - **Japanese, Korean and Chinese text is drawn in the right typeface again.** 75 style blocks across 22 components named a font directly and fell back to whatever the browser happened to pick, which is how a Japanese reader ends up seeing Chinese letterforms for kanji the two languages share. Every one of them now goes through the app's proper font list, which puts Japanese first and switches per language.
 - **Being blocked from submitting presets says so.** If your account had been banned from community presets, the app answered "Failed to submit preset" — which is not what happened — with the real reason only readable in English underneath. It now says you are blocked, in your own language.
 - The German name for the Metallic dye category now matches the site's other surfaces and the Discord bot, which both say "Metallic".
 
 ## Web-App Version 5.2.1 — September 3, 2026
 
+### Sending a dye to another tool
 - **"Send this dye to another tool" works everywhere now.** Harmony's three send actions — to Comparison, Mixer and Accessibility — had *never* done anything: they passed the dye in a form no tool in the app reads. Budget was sending a dye *name*, and the Result Card and Gradient were sending an ID no tool would accept for any of the 125 dyes. All of them now hand the dye over correctly, and a dye that cannot be sent no longer navigates away and then apologises — it simply does not go.
 - **A character wearing only facewear gets a glamour list.** The Swatch Matcher decided whether to show the list by counting worn gear and dyes, and never counted the glasses — so the facewear row added in 5.2.0 was unreachable for exactly the character made of nothing else.
 
 ## Web-App Version 5.2.0 — September 3, 2026
 
+### Your whole glamour, not just the dyed parts
 - **"Show all" in the Swatch Matcher's glamour list.** The list only ever showed pieces carrying a dye, so an accessory could never appear at all — no earring, necklace, bracelet or ring in the game is dyeable — and worn-but-undyed armour was reduced to a number in the footnote. A new switch beside the Pieces/Dyes toggle changes the list from "one row per dyed channel" to "one row per piece this character is wearing", each with its icon, item name and slot. Empty slots stay in the footnote, which is the honest place for "nothing is there". Your choice is remembered.
 - **Facewear is listed too.** The glasses were already being looked up on every import and then thrown away — they now appear in the list with their icon and name. `.chara` files do not store a facewear tint, so the colour chip is read from the colour word in the item's English name; an item with no colour word gets a plain chip and says the colour is unknown, rather than inventing one.
 - **Dye chips now sit where the channel does.** A piece dyed only on its second channel used to draw one chip in the *first* chip's place, so the picture said channel one while your file said channel two. Dyeable pieces now always show both channels, with a plain chip standing in for an empty one and the text naming it ("Metallic Orange + Undyed") instead of hiding it.
@@ -46,11 +59,13 @@
 
 ## Web-App Version 5.1.0 — September 3, 2026
 
+### Harmony agrees everywhere
 - **The Discord bot's `/harmony` now gives the same answer this page does.** The two were working from different colour maths, so the same dye and the same harmony type could produce two different sets of dyes depending on where you asked — most visibly on pale or near-grey dyes. The site's results are unchanged; the bot and the link previews moved to match them.
 - **Dye filters in Harmony pick the closest dye you are allowed to have.** They used to find the closest dye overall and then, if it was filtered out, look for something near *that* — which is not the same thing, and could land further from the colour you asked for than it needed to.
 
 ## Web-App Version 5.0.2 — September 2, 2026
 
+### A round of fixes across the tools
 - **Right-clicking a dye and choosing "Harmony" works now.** That menu item quietly did nothing for every dye — it opened Harmony with an error and no dye selected. The Budget tool's SEND TO buttons had the same problem and are fixed too.
 - **Palette Extractor match scores are honest again.** The number under each match was measured one way and labelled another, so genuinely good matches were graded as mediocre. The score you see now matches the algorithm you picked, and the closest dye is no longer listed twice.
 - **Sharing a comparison of a single dye works.** A share link with just one dye opened the page showing whatever dyes the recipient already had, instead of yours.
@@ -65,6 +80,7 @@
 
 ## Web-App Version 5.0.1 — September 2, 2026
 
+### Less leftover English, and a more private Extractor
 - **If you use the app in Japanese, German, French, Korean, or Chinese, a lot of leftover English just went away.** The dye category headings in the color palette drawer (Whites, Reds, Blues, and so on) were silently stuck in English for every language due to a bug — they now show in your language. The whole Community Presets flow — editing a preset, submitting one, error messages, vote buttons — is now fully translated instead of switching back to English partway through.
 - Screens that used to freeze on the old language after you switched (some result cards and panels) now update immediately.
 - Gil amounts, dates, and numbers now format the way your language expects, and imported palette names read naturally in your language instead of always saying "(imported 2)" in English.

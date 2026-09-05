@@ -85,8 +85,7 @@ export function parseChangelog(content: string): ChangelogEntry[] {
   // Match release headers like: "## Web-App Version 4.11.0 — May 31, 2026".
   // The leading "Web-App" is optional and the date (after an em/en dash or hyphen)
   // is optional. The single-"#" page title and "###" sub-headings never match.
-  const versionHeaderRegex =
-    /^##\s+[^\n]*?Version\s+(\d+\.\d+\.\d+)\s*(?:[—–-]\s*(.+?))?\s*$/gm;
+  const versionHeaderRegex = /^##\s+[^\n]*?Version\s+(\d+\.\d+\.\d+)\s*(?:[—–-]\s*(.+?))?\s*$/gm;
 
   // Find all version headers with their positions and dates
   const headers: Array<{ version: string; date: string; startIndex: number }> = [];
@@ -116,7 +115,18 @@ export function parseChangelog(content: string): ChangelogEntry[] {
       block = block.slice(0, ruleIndex);
     }
 
-    const sections = extractSections(block);
+    let sections = extractSections(block);
+
+    // A release written as "## …Version X" followed by plain bullets, with no
+    // "### " sub-heading, is a real release — not an empty one. It used to
+    // parse to zero sections and be dropped by the guard below **silently**,
+    // which is how every release from 5.0.1 to 5.6.0 went missing from the
+    // modal: a reader on 5.6.0 was shown 5.0.0, because changelog-modal's
+    // findIndex on APP_VERSION missed and fell back to entries[0].
+    if (sections.length === 0) {
+      sections = foldLooseBullets(block);
+    }
+
     const highlights = extractHighlights(sections);
 
     if (sections.length > 0) {
@@ -200,6 +210,30 @@ function extractSections(block: string): ChangelogSection[] {
   }
 
   return sections;
+}
+
+/**
+ * Fallback for a version block that carries bullets but no "### " heading.
+ *
+ * Returns a single headerless section holding those bullets, so the release is
+ * rendered rather than dropped. The header is deliberately `''` — there is no
+ * honest name to invent for it, and `changelog-modal.createSectionBlock` skips
+ * the heading element when it is empty. Returns `[]` for a block with no
+ * bullets at all, which keeps the "genuinely empty entries are skipped"
+ * behaviour the guard was written for.
+ */
+function foldLooseBullets(block: string): ChangelogSection[] {
+  // Everything before the first "### " — for a heading-less entry that is the
+  // whole block. Drop the "## …Version X" line itself.
+  const body = block.split(/^### /m)[0].split('\n').slice(1);
+
+  const bullets: string[] = [];
+  for (const line of body) {
+    const bulletMatch = line.match(/^\s*-\s+(.+)/);
+    if (bulletMatch) bullets.push(truncate(stripInlineMarkdown(bulletMatch[1])));
+  }
+
+  return bullets.length > 0 ? [{ header: '', title: '', bullets }] : [];
 }
 
 /** Truncate an overly long bullet for display. */

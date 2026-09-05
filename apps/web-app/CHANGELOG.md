@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.6.1] - 2026-09-04
+
+### Fixed
+
+- **"What's New" had been showing the 5.0.0 notes to everyone since 5.0.1.** The build-time
+  parser (`vite-plugin-changelog-parser.ts`) builds a release's sections by splitting the block
+  on `### ` headings, then drops any release whose section count is zero. Every entry written
+  since 5.0.1 used `##` heading + plain bullets with no `### ` sub-heading, so all ten parsed to
+  `sections: []` and were skipped — the virtual module carried 14 of the file's 24 releases, the
+  newest being **5.0.0 (August 16)**. `changelog-modal.ts` then looked up `APP_VERSION` with
+  `findIndex`, missed, and fell back to `entries[0]`, so a reader on 5.6.0 opening What's New was
+  shown a release from three weeks earlier. Fixed on both sides: the ten entries gained section
+  headings, and a release with bullets but no heading now folds into one headerless section
+  instead of vanishing (`foldLooseBullets`) — the modal skips the heading element when it is
+  empty. A release header with no bullets at all is still skipped, which is what the guard was
+  written for.
+
+  The existing regression guard could not catch this: `changelog-parser.test.ts` parsed a
+  synthetic sample that always carried `### ` headings. It now also parses the **real**
+  `CHANGELOG-laymans.md` and asserts the parsed count equals the file's release-header count,
+  that `package.json`'s version is among the entries, and that every entry has a bullet to
+  render. The version assertion deliberately reads `package.json` rather than `APP_VERSION` —
+  that constant is a build-time define and is `0.0.0` under vitest, so asserting on it would
+  have passed against a file with no matching entry at all.
+
 ## [5.6.0] - 2026-09-04
 
 ### Fixed
