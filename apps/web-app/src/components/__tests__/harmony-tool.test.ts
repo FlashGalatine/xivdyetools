@@ -1031,6 +1031,51 @@ describe('HarmonyTool', () => {
     });
 
     /**
+     * The absent→rgb rule is a property of SHARE LINKS, and the deep-link gate
+     * admits more than share links: a bare `?dye=` arrives from two ordinary
+     * in-app navigations — `handoffTo('harmony', dye)` ("send this dye to the
+     * Harmony Explorer") and `RouterService`'s `PRESERVED_PARAMS`, which keeps
+     * `dye` when the user leaves Harmony and comes back. Treating those as
+     * "a link that says rgb" silently reverted a Munsell user to RGB *and
+     * persisted it*, which no other setting does: `algo` and `perceptual` are
+     * both guarded by `if (param)`.
+     */
+    it.each([
+      ['a bare dye hand-off', '/harmony?dye=5771'],
+      ['a bare legacy dyeId', '/harmony?dyeId=5771'],
+    ])('%s leaves the persisted wheel alone', async (_label, url) => {
+      const { ConfigController } = await import('@services/config-controller');
+      const { logger } = await import('@shared/logger');
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'munsell' });
+      vi.mocked(logger.warn).mockClear();
+
+      window.history.replaceState({}, '', url);
+      tool = mount();
+
+      expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe('munsell');
+      expect(logger.warn).not.toHaveBeenCalledWith(expect.stringMatching(/wheel/i));
+    });
+
+    /**
+     * ...and any share marker at all makes it a share link again, `v=1` alone
+     * included — that is the marker `ShareService` stamps on every URL it
+     * generates, so a link whose only other param is `dye` is still a link.
+     */
+    it.each([
+      ['harmony=', '/harmony?dye=5771&harmony=complementary', 'rgb'],
+      ['v=1', '/harmony?dye=5771&v=1', 'rgb'],
+      ['algo=', '/harmony?dye=5771&algo=oklab', 'rgb'],
+    ])('a URL carrying %s is a share link and resolves to %s', async (_label, url, expected) => {
+      const { ConfigController } = await import('@services/config-controller');
+      ConfigController.getInstance().setConfig('harmony', { wheel: 'munsell' });
+
+      window.history.replaceState({}, '', url);
+      tool = mount();
+
+      expect(ConfigController.getInstance().getConfig('harmony').wheel).toBe(expected);
+    });
+
+    /**
      * A hand-swapped dye is pinned to its SLOT INDEX, and a slot index means a
      * different target hue on a different wheel — so a pin carried across a
      * wheel change lands on a colour it was never chosen for. The harmony-type

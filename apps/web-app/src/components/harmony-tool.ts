@@ -534,21 +534,41 @@ export class HarmonyTool extends BaseComponent {
     // Which wheel the palette was generated on travels with the link — a card
     // that ignored it would show dyes the page never shows (45% of palettes).
     //
-    // Unconditional, and that is the point: this runs only for a link that
-    // carries share params (the early return above), so an ABSENT wheel is the
-    // link saying "rgb", not "keep whatever you had". Applying it only when
+    // On a SHARE LINK the rule is unconditional: an absent `wheel` is the link
+    // saying "rgb", not "keep whatever you had", because applying it only when
     // present meant a default-wheel link opened in a session with `munsell`
     // persisted rendered a Munsell palette under someone else's RGB link.
-    const parsedWheel = parseColorWheelId(wheelParam);
-    if (wheelParam && !parsedWheel) {
-      logger.warn(`[HarmonyTool] Unknown colour wheel in URL: ${wheelParam} — using rgb`);
+    //
+    // But the guard above admits more than share links — a BARE `?dye=` is an
+    // ordinary in-app navigation, from two paths: `handoffTo('harmony', dye)`
+    // ("send this dye to the Harmony Explorer") and `RouterService`'s
+    // `PRESERVED_PARAMS`, which keeps `dye` when the user leaves Harmony and
+    // comes back. Treating those as a link that says rgb reverted a Munsell
+    // user to RGB, cleared their pins, and PERSISTED it — the wheel would have
+    // been the only setting an in-app navigation could clobber, since `algo`
+    // and `perceptual` above are each guarded by `if (param)`.
+    //
+    // So: any share marker at all makes it a link (`v=1` alone included — that
+    // is what `ShareService` stamps on every URL it generates); none of them
+    // means the base dye travelled on its own and nothing else was asked for.
+    const isShareLink =
+      harmonyParam !== null ||
+      algoParam !== null ||
+      perceptualParam !== null ||
+      versionParam !== null ||
+      wheelParam !== null;
+    if (isShareLink) {
+      const parsedWheel = parseColorWheelId(wheelParam);
+      if (wheelParam && !parsedWheel) {
+        logger.warn(`[HarmonyTool] Unknown colour wheel in URL: ${wheelParam} — using rgb`);
+      }
+      const wheel = parsedWheel ?? DEFAULT_COLOR_WHEEL;
+      this.wheel = wheel;
+      // Same reasoning as the config subscription: a pin belongs to the wheel
+      // it was chosen on.
+      this.swappedDyes.clear();
+      configController.setConfig('harmony', { wheel });
     }
-    const wheel = parsedWheel ?? DEFAULT_COLOR_WHEEL;
-    this.wheel = wheel;
-    // Same reasoning as the config subscription: a pin belongs to the wheel it
-    // was chosen on.
-    this.swappedDyes.clear();
-    configController.setConfig('harmony', { wheel });
 
     // A bare-colour base: `hex` is the declared slot for a custom base,
     // exclusive with `dye`. Wrapped in a virtual dye so the whole tool
