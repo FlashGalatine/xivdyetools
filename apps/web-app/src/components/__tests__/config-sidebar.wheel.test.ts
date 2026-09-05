@@ -49,4 +49,19 @@ describe('config-sidebar colour wheel select', () => {
     await el.updateComplete;
     expect(text()).toContain('MUNSELL is a registered trademark');
   });
+
+  it('shows a persisted non-default wheel selected on the very first render', async () => {
+    ConfigController.getInstance().setConfig('harmony', { wheel: 'munsell' });
+    const fresh = document.createElement('v4-config-sidebar') as typeof el;
+    fresh.activeTool = 'harmony';
+    document.body.appendChild(fresh);
+    await fresh.updateComplete; // FIRST update only — do not await a second one
+    const sel = fresh.shadowRoot!.querySelector<HTMLSelectElement>(
+      'select[data-config="harmony.wheel"]'
+    )!;
+    expect(sel.value).toBe('munsell');
+    expect(fresh.shadowRoot!.textContent).toContain('MUNSELL is a registered trademark');
+    fresh.remove();
+    ConfigController.getInstance().setConfig('harmony', { wheel: 'rgb' });
+  });
 });

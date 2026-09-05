@@ -17,6 +17,7 @@ import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
 import { authService, LanguageService } from '@services/index';
 import { COLOR_WHEEL_IDS, DEFAULT_COLOR_WHEEL, isColorWheelId } from '@xivdyetools/core';
+import type { ColorWheelId } from '@xivdyetools/core';
 import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
 import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import { regionLabel } from '@shared/region-name';
@@ -933,34 +934,42 @@ export class ConfigSidebar extends BaseLitComponent {
           </select>
         </div>
 
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.colorWheel')}</div>
-          <select
-            class="config-select"
-            data-config="harmony.wheel"
-            .value=${this.harmonyConfig.wheel ?? DEFAULT_COLOR_WHEEL}
-            @change=${(e: Event) => {
-              const value = (e.target as HTMLSelectElement).value;
-              this.handleConfigChange(
-                'harmony',
-                'wheel',
-                isColorWheelId(value) ? value : DEFAULT_COLOR_WHEEL
-              );
-            }}
-          >
-            ${COLOR_WHEEL_IDS.map(
-              (id) => html`<option value=${id}>${LanguageService.getColorWheelName(id)}</option>`
-            )}
-          </select>
-          <div class="config-description">${this.getWheelDescription()}</div>
-          ${
-            (this.harmonyConfig.wheel ?? DEFAULT_COLOR_WHEEL) === 'munsell'
-              ? html`<div class="config-description">
-                  ${LanguageService.t('config.wheelMunsellTrademark')}
-                </div>`
-              : ''
-          }
-        </div>
+        ${(() => {
+          const currentWheel = this.harmonyConfig.wheel ?? DEFAULT_COLOR_WHEEL;
+          return html`
+            <div class="config-group">
+              <div class="config-label">${LanguageService.t('config.colorWheel')}</div>
+              <select
+                class="config-select"
+                data-config="harmony.wheel"
+                .value=${currentWheel}
+                @change=${(e: Event) => {
+                  const value = (e.target as HTMLSelectElement).value;
+                  this.handleConfigChange(
+                    'harmony',
+                    'wheel',
+                    isColorWheelId(value) ? value : DEFAULT_COLOR_WHEEL
+                  );
+                }}
+              >
+                ${COLOR_WHEEL_IDS.map(
+                  (id) =>
+                    html`<option value=${id} ?selected=${id === currentWheel}>
+                      ${LanguageService.getColorWheelName(id)}
+                    </option>`
+                )}
+              </select>
+              <div class="config-description">${this.getWheelDescription(currentWheel)}</div>
+              ${
+                currentWheel === 'munsell'
+                  ? html`<div class="config-description">
+                      ${LanguageService.t('config.wheelMunsellTrademark')}
+                    </div>`
+                  : ''
+              }
+            </div>
+          `;
+        })()}
 
         <div class="config-group">
           <div class="config-label">${LanguageService.t('config.matchingMode')}</div>
@@ -1531,8 +1540,8 @@ export class ConfigSidebar extends BaseLitComponent {
   }
 
   /** One line per wheel, the Krita pattern: the selected option explains itself. */
-  private getWheelDescription(): string {
-    switch (this.harmonyConfig.wheel ?? DEFAULT_COLOR_WHEEL) {
+  private getWheelDescription(wheel: ColorWheelId): string {
+    switch (wheel) {
       case 'ryb':
         return LanguageService.t('config.wheelRybDesc');
       case 'munsell':
