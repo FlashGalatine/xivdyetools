@@ -761,8 +761,8 @@ import { assertMonotoneTable } from '../hue-warp.js';
 import { ColorConverter } from '../../../color/ColorConverter.js';
 
 describe('oklch-hue wheel', () => {
-  it('is a monotone table of 74 pairs (72 samples + the two closing pairs)', () => {
-    expect(OKLCH_HUE_TABLE).toHaveLength(74);
+  it('is a monotone table of 73 pairs (72 samples, the HSV-0° sample becomes [0,0], plus [360,360])', () => {
+    expect(OKLCH_HUE_TABLE).toHaveLength(73);
     expect(() => assertMonotoneTable(OKLCH_HUE_TABLE, 'oklch-hue')).not.toThrow();
   });
 
