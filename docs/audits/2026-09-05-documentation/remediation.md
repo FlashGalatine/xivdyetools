@@ -146,7 +146,7 @@ which the affected-package filter never selects when only the root file changes.
 checked files must cover every workspace; claims are read only from tables with a `Version` column
 and a name column; a shared `scripts/markdown-mask.ts` masks fences (paired by character and
 length), HTML comments and, for the link gate, inline spans; targets resolve against the tracked
-path set; CI runs the changelog-parser suite unconditionally beside the wrangler-config invariants
+path set; CI runs a build-free `root-changelog.test.ts` (grammar, ordering, contract — pure parser only) unconditionally beside the wrangler-config invariants, while the announcement-budget assertion, which needs a built `@xivdyetools/bot-logic`, stays in the filtered suite
 and `turbo.json` names the root layman's file as a test input.
 
 Documentation of the tiers now matches the gate: `audits/` and `historical/` are archive (not

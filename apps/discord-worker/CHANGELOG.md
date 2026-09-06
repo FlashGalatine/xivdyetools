@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   suite checked only that the newest product-level entry parsed, so an off-grammar `## ` header
   lower down (silently dropped, or merged into the entry above it), an out-of-order entry, or a
   newest entry too long for the announcement embed all passed. It now asserts every header is
-  on the grammar and the count matches, that entries descend by version and date, and that
-  `formatAnnouncementEmbed` renders the newest entry uncut — the webhook would otherwise post a
+  on the grammar and the count matches, that entries descend by version and date (in a new
+  build-free `root-changelog.test.ts` that CI runs on every push, since a root-only push
+  selects no workspace), and that `formatAnnouncementEmbed` renders the newest entry uncut — the webhook would otherwise post a
   "Summary shown" excerpt that links out. `announcements.ts` exports its `DESCRIPTION_BUDGET`
   (tagged `@testonly`) for that assertion; no runtime change.
 

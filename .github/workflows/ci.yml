@@ -183,12 +183,14 @@ jobs:
           status=$((status + $?))
           pnpm --filter xivdyetools-oauth-worker exec vitest run src/__tests__/wrangler-config.test.ts --coverage.enabled=false
           status=$((status + $?))
-          # The changelog-parser suite gates the REPO-ROOT CHANGELOG-laymans.md (the
+          # root-changelog.test.ts gates the REPO-ROOT CHANGELOG-laymans.md (the
           # release-announcement webhook renders it) from inside discord-worker. A
           # push that edits only that root file selects no workspace at all, so
-          # the filtered test step below never runs this suite — the exact PRs
-          # that can break the grammar. Same shape as the four above.
-          pnpm --filter xivdyetools-discord-worker exec vitest run src/services/changelog-parser.test.ts --coverage.enabled=false
+          # the filtered test step below never runs it — the exact PRs that can
+          # break the grammar. It imports only the pure parser, so like the four
+          # above it needs no build; its sibling changelog-parser.test.ts (which
+          # reaches @xivdyetools/bot-logic and therefore dist/) stays filtered.
+          pnpm --filter xivdyetools-discord-worker exec vitest run src/services/root-changelog.test.ts --coverage.enabled=false
           status=$((status + $?))
           exit $status
 
