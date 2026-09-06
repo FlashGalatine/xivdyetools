@@ -721,10 +721,6 @@
     "saveSuccess": "Palette enregistrée !",
     "saveFailed": "Échec de l'enregistrement de la palette"
   },
-  "camera": {
-    "title": "Capture caméra",
-    "deviceFallback": "Caméra {n}"
-  },
   "offline": {
     "banner": "Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées."
   },

@@ -36,10 +36,13 @@
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-  # camera=(self): the Palette Extractor ships a webcam capture path
-  # (services/camera-service.ts -> camera-preview-modal); an empty allowlist
-  # disabled getUserMedia for the document itself (FINDING-031 / WEB-7).
-  Permissions-Policy: geolocation=(), microphone=(), camera=(self)
+  # camera=(): nothing calls getUserMedia. The 4.x webcam path (camera-service
+  # -> camera-preview-modal) was unreachable from the v4 shell and was deleted
+  # in 5.8; the Extractor's mobile "Take a photo" is a capture-attribute file
+  # input, which the OS camera app serves and this directive does not gate.
+  # Re-open it to (self) only alongside a live getUserMedia surface
+  # (FINDING-031 / WEB-7 opened it for the modal that no longer exists).
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
 
   # HSTS (Strict Transport Security)
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload

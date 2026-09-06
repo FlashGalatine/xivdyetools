@@ -721,10 +721,6 @@
     "saveSuccess": "Palette saved!",
     "saveFailed": "Failed to save palette"
   },
-  "camera": {
-    "title": "Camera Capture",
-    "deviceFallback": "Camera {n}"
-  },
   "offline": {
     "banner": "You are offline. Some features may be limited."
   },

@@ -16,7 +16,6 @@ import { StorageService } from './storage-service';
 import { ThemeService } from './theme-service';
 import { LanguageService } from './language-service';
 import { APIService } from './api-service-wrapper';
-import { cameraService } from './camera-service';
 import { KeyboardService } from './keyboard-service';
 import { WorldService } from './world-service';
 
@@ -27,7 +26,6 @@ export { StorageService, ThemeService, LanguageService, APIService, WorldService
 export { RouterService } from './router-service';
 export { ToastService } from './toast-service';
 export { ModalService } from './modal-service';
-export { cameraService };
 export { TutorialService } from './tutorial-service';
 export { CollectionService } from './collection-service';
 export { communityPresetService } from './community-preset-service';
@@ -88,13 +86,6 @@ export async function initializeServices(): Promise<void> {
     // Initialize WorldService (async - loads worlds.json, data-centers.json)
     await WorldService.initialize();
     logger.info(`✅ WorldService: ${WorldService.isInitialized() ? 'Ready' : 'Failed'}`);
-
-    // Initialize CameraService (async - detects cameras)
-    await cameraService.initialize();
-    cameraService.startDeviceChangeListener();
-    logger.info(
-      `✅ CameraService: ${cameraService.hasCameraAvailable() ? 'Camera available' : 'No camera detected'}`
-    );
 
     // Initialize HybridPresetService (async - checks API availability)
     const { hybridPresetService } = await import('./hybrid-preset-service');

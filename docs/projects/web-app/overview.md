@@ -143,7 +143,7 @@ src/
 │   ├── community-preset-service.ts  hybrid-preset-service.ts
 │   ├── preset-submission-service.ts  auth-service.ts
 │   ├── share-service.ts  harmony-generator.ts  mixer-blending-engine.ts
-│   ├── camera-service.ts  chara-resolve-service.ts  telemetry-service.ts
+│   ├── chara-resolve-service.ts  telemetry-service.ts
 │   └── display-options-helper.ts  tool-panel-builders.ts
 ├── shared/                     # Pure helpers, types, icon constants
 │   ├── tool-config-types.ts  types.ts  i18n-types.ts  constants.ts

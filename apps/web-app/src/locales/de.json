@@ -721,10 +721,6 @@
     "saveSuccess": "Palette gespeichert!",
     "saveFailed": "Palette konnte nicht gespeichert werden"
   },
-  "camera": {
-    "title": "Kameraaufnahme",
-    "deviceFallback": "Kamera {n}"
-  },
   "offline": {
     "banner": "Sie sind offline. Einige Funktionen sind möglicherweise eingeschränkt."
   },
