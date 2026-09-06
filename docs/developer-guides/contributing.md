@@ -159,7 +159,8 @@ may be committed); worker secrets are set with `wrangler secret put` — see
 | Tier | Directories | Rule |
 |------|-------------|------|
 | **Living** | `architecture/`, `projects/`, `developer-guides/`, `user-guides/`, `maintainer/`, `operations/`, `reference/`, `specifications/`, plus the root files | Must stay accurate. Update when the code changes. |
-| **Archived** | `audits/`, `historical/`, `research/`, `superpowers/` | Dated snapshots. **Do not retro-edit** — stale facts are what makes them an archive. |
+| **Frozen-body** | `research/`, `superpowers/` | Dated investigations and spec/plan pairs. **Do not rewrite the body** — but keep each file's `Status:` line current and its links valid (`pnpm docs:check-links` covers these folders). |
+| **Archive** | `audits/`, `historical/` | Dated snapshots. **Do not retro-edit** — stale facts are what makes them an archive; not link-checked. |
 
 `docs/brainstorming/` no longer exists: its contents moved into
 `docs/historical/20260108-Brainstorm/`, `docs/historical/20260115-v4-DiscordBot/` and

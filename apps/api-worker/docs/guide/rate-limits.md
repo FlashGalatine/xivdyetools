@@ -68,7 +68,7 @@ When you receive a `429`:
 One route under `/v1` is not part of the public contract and is not listed in the reference:
 `POST /v1/telemetry`, the web app's opt-in usage beacon. It has its own per-IP bucket (240
 requests per 60 s), fails **closed** when its limiter is unavailable, accepts only allowlisted
-origins, and does not return the `X-RateLimit-*` headers described above. Do not build on it.
+origins, and its `X-RateLimit-*` headers describe that bucket, not the API one. Do not build on it.
 
 ## CORS Preflight
 

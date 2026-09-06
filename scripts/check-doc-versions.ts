@@ -5,22 +5,28 @@
  * Two files carry a hand-maintained table of every workspace's version: the root
  * `README.md` (the GitHub landing page) and `docs/versions.md` (the version matrix
  * the rest of `docs/` links to instead of repeating). Nothing used to check them
- * against `package.json`, and by 2026-09-05 they — and three more copies since
+ * against `package.json`, and by 2026-09-05 they — and four more copies since
  * removed — were between one and seven releases behind on every row, each file a
  * different snapshot. A version bump is part of every release here, so a table
  * that lags is not an oversight anyone notices; it is the default.
  *
- * The rule is deliberately narrow so the history tables in `docs/versions.md`
- * (one row per release, whose highlight prose routinely names *other* packages)
- * never register: a table row claims a version only when one cell is exactly a
- * semver (`1.2.3` / `v1.2.3`, bold allowed) and another cell is exactly a
- * workspace reference — a backticked or bare package name, or a markdown link
- * whose target is the workspace directory (`packages/<p>/`, `apps/<a>/`).
- * Names that are not workspaces (retired packages, archived projects) are ignored.
+ * The rule is table-shaped so the history tables in `docs/versions.md` (one row
+ * per release, whose highlight prose routinely names *other* packages) and the
+ * Deprecated table (retired packages with a "Last Version" column) never register:
  *
- * Two failure modes, both exit 1: a claim that disagrees with `package.json`, and
- * `docs/versions.md` missing a row for any workspace — the second is what stops a
- * reshaped table from turning this into a gate that cannot fail.
+ *   - Only rows of a table whose header has a column named exactly `Version`
+ *     (case-insensitive) are read, and only that column supplies the version.
+ *   - The workspace comes from the first cell, or from a `Package Name` /
+ *     `Package` / `App` / `Project` column, and must be exactly a package name
+ *     (bare or backticked) or a markdown link whose target is the workspace
+ *     directory (`packages/<p>/`, `apps/<a>/`). Prose never resolves.
+ *   - Fenced code and HTML comments are masked first, so an example table is
+ *     not a claim (inline spans are kept — a backticked name is formatting).
+ *
+ * Three failure modes, all exit 1: a claim that disagrees with `package.json`; a
+ * claim naming a version that is not semver; and either checked file lacking a
+ * row for any workspace — the last is what stops a reshaped table from turning
+ * this into a gate that cannot fail.
  *
  * Usage: `pnpm docs:check-versions` (CI runs it beside the dead-code gate).
  *
@@ -32,6 +38,8 @@
 import { existsSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { join, resolve as resolvePath } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { maskBlockCode } from './markdown-mask.js';
 
 /** One workspace as `package.json` describes it. */
 export interface WorkspaceVersion {
@@ -52,9 +60,8 @@ export interface VersionClaim {
   version: string;
 }
 
-/** Files whose tables are checked. `docs/versions.md` must also cover every workspace. */
+/** Files whose tables are checked; each must cover every workspace. */
 export const CHECKED_FILES = ['README.md', 'docs/versions.md'] as const;
-export const COVERAGE_FILE = 'docs/versions.md';
 
 const WORKSPACE_ROOTS = ['packages', 'apps'] as const;
 
@@ -78,6 +85,7 @@ export function readWorkspaceVersions(root = process.cwd()): WorkspaceVersion[] 
 
 const VERSION_CELL = /^v?(\d+\.\d+\.\d+)$/;
 const LINK_CELL = /^\[([^\]]*)\]\(([^)]*)\)$/;
+const NAME_COLUMNS = new Set(['package name', 'package', 'app', 'project']);
 
 /** Strip surrounding bold markers, backticks and whitespace from a table cell. */
 function bare(cell: string): string {
@@ -90,20 +98,27 @@ function bare(cell: string): string {
   }
 }
 
+/** Split a `| a | b |` row into trimmed cells. */
+function cellsOf(line: string): string[] {
+  return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|');
+}
+
 /**
- * Resolve a cell to a workspace, or null. Accepts the package name (bare or
- * backticked), the directory name (`core`, `web-app`), the repo-relative
- * directory (`packages/core`), or a markdown link whose target is one of those
- * with an optional trailing slash — the shapes the two checked files use.
+ * Resolve a cell to a workspace, or null. A bare/backticked cell must equal the
+ * package name or the repo-relative directory; a link resolves through its
+ * target only (the README links `apps/oauth/` under the text `oauth`).
  */
-function resolveWorkspaceCell(cell: string, workspaces: readonly WorkspaceVersion[]): WorkspaceVersion | null {
-  const raw = cell.trim();
-  const link = LINK_CELL.exec(raw.replace(/^\*\*|\*\*$/g, '').trim());
-  const candidates = link ? [bare(link[1] ?? ''), (link[2] ?? '').trim()] : [bare(raw)];
+function resolveWorkspaceCell(
+  cell: string,
+  workspaces: readonly WorkspaceVersion[],
+): WorkspaceVersion | null {
+  const raw = bare(cell);
+  const link = LINK_CELL.exec(raw);
+  const candidates = link ? [(link[2] ?? '').trim()] : [raw];
   for (const candidate of candidates) {
     const norm = candidate.replace(/^\.\//, '').replace(/\/+$/, '');
     for (const ws of workspaces) {
-      if (norm === ws.name || norm === ws.dir || norm === ws.dir.split('/')[1]) return ws;
+      if (norm === ws.name || norm === ws.dir) return ws;
     }
   }
   return null;
@@ -116,24 +131,40 @@ export function extractDocVersions(
   workspaces: readonly WorkspaceVersion[],
 ): VersionClaim[] {
   const claims: VersionClaim[] = [];
-  const lines = markdown.split('\n');
+  const lines = maskBlockCode(markdown).split('\n');
+  let versionCol = -1;
+  let nameCols: number[] = [];
+  let inTable = false;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i] ?? '';
-    if (!line.trim().startsWith('|')) continue;
-    const cells = line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|');
-    let version: string | null = null;
+    const isRow = line.trim().startsWith('|');
+    if (!isRow) {
+      inTable = false;
+      continue;
+    }
+    const next = lines[i + 1] ?? '';
+    if (!inTable && /^\s*\|?\s*:?-{3,}/.test(next)) {
+      // Header row: learn the columns for this table.
+      const header = cellsOf(line).map((c) => bare(c).toLowerCase());
+      versionCol = header.indexOf('version');
+      nameCols = header
+        .map((h, idx) => (idx === 0 || NAME_COLUMNS.has(h) ? idx : -1))
+        .filter((idx) => idx >= 0);
+      inTable = true;
+      i++; // skip the separator row
+      continue;
+    }
+    if (!inTable || versionCol < 0) continue;
+    const cells = cellsOf(line);
+    const m = VERSION_CELL.exec(bare(cells[versionCol] ?? ''));
+    if (!m) continue;
     let workspace: WorkspaceVersion | null = null;
-    for (const cell of cells) {
-      const m = VERSION_CELL.exec(bare(cell));
-      if (m && version === null) {
-        version = m[1] ?? null;
-        continue;
-      }
-      if (workspace === null) workspace = resolveWorkspaceCell(cell, workspaces);
+    for (const idx of nameCols) {
+      workspace = resolveWorkspaceCell(cells[idx] ?? '', workspaces);
+      if (workspace) break;
     }
-    if (version !== null && workspace !== null) {
-      claims.push({ file, line: i + 1, workspace: workspace.name, version });
-    }
+    if (workspace)
+      claims.push({ file, line: i + 1, workspace: workspace.name, version: m[1] ?? '' });
   }
   return claims;
 }
@@ -149,7 +180,9 @@ export function compareClaims(
     const ws = byName.get(c.workspace);
     if (!ws) continue;
     if (ws.version !== c.version) {
-      out.push(`${c.file}:${c.line} — ${c.workspace} says ${c.version}, ${ws.dir}/package.json says ${ws.version}`);
+      out.push(
+        `${c.file}:${c.line} — ${c.workspace} says ${c.version}, ${ws.dir}/package.json says ${ws.version}`,
+      );
     }
   }
   return out;
@@ -159,7 +192,7 @@ export interface CheckResult {
   ok: boolean;
   claims: VersionClaim[];
   mismatches: string[];
-  /** Workspaces `docs/versions.md` has no row for. */
+  /** `<file>: <workspace>` for every workspace a checked file has no row for. */
   uncovered: string[];
 }
 
@@ -168,25 +201,28 @@ export interface CheckResult {
  * path — the self-test uses it to prove an emptied table fails rather than
  * passing on zero claims.
  */
-export function runCheck(overrides: Readonly<Record<string, string>> = {}, root = process.cwd()): CheckResult {
+export function runCheck(
+  overrides: Readonly<Record<string, string>> = {},
+  root = process.cwd(),
+): CheckResult {
   const workspaces = readWorkspaceVersions(root);
   const claims: VersionClaim[] = [];
+  const uncovered: string[] = [];
   for (const file of CHECKED_FILES) {
     const text = overrides[file] ?? readFileSync(join(root, file), 'utf8');
-    claims.push(...extractDocVersions(text, file, workspaces));
+    const fileClaims = extractDocVersions(text, file, workspaces);
+    claims.push(...fileClaims);
+    const covered = new Set(fileClaims.map((c) => c.workspace));
+    for (const w of workspaces) if (!covered.has(w.name)) uncovered.push(`${file}: ${w.name}`);
   }
   const mismatches = compareClaims(claims, workspaces);
-  const covered = new Set(claims.filter((c) => c.file === COVERAGE_FILE).map((c) => c.workspace));
-  const uncovered = workspaces.filter((w) => !covered.has(w.name)).map((w) => w.name);
   return { ok: mismatches.length === 0 && uncovered.length === 0, claims, mismatches, uncovered };
 }
 
 function main(): void {
   const result = runCheck();
   for (const m of result.mismatches) console.error(`✗ ${m}`);
-  if (result.uncovered.length) {
-    console.error(`✗ ${COVERAGE_FILE} has no version row for: ${result.uncovered.join(', ')}`);
-  }
+  for (const u of result.uncovered) console.error(`✗ no version row for ${u}`);
   console.log(
     `  checked ${result.claims.length} version claims across ${CHECKED_FILES.join(', ')}` +
       (result.ok ? ' — all match package.json' : ''),
@@ -194,7 +230,12 @@ function main(): void {
   if (!result.ok) process.exit(1);
 }
 
-/** Same guard as `check-dead-code.ts`: resolve both sides so a junction or symlinked worktree still runs `main()`. */
+/**
+ * Same guard as `check-dead-code.ts`: resolve both sides so a junction or
+ * symlinked worktree still runs `main()`. Kept as a local copy on purpose —
+ * importing it from the dead-code checker gives that module a production
+ * importer and changes what its own gate reports about its exports.
+ */
 function isMainModule(argv1: string | undefined, moduleUrl: string): boolean {
   if (!argv1) return false;
   const real = (p: string): string => {

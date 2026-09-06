@@ -259,7 +259,7 @@ app.get('/health', (c) => {
 // ├──────────────────────────────────────────┤
 // │ XIVAuth OAuth                            │
 // │  /auth/xivauth      - Initiate login     │
-// │  /auth/xivauth/callback - XIVAuth callback│
+// │  /auth/xivauth/callback - XIVAuth cb    │
 // ├──────────────────────────────────────────┤
 // │ Token Management                         │
 // │  /auth/me           - Current user info  │

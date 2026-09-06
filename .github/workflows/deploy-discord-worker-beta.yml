@@ -69,7 +69,7 @@ jobs:
       - name: Guard against a missing beta Cloudflare token
         if: env.HAS_BETA_CF_TOKEN != 'true'
         run: |
-          echo "::error::CLOUDFLARE_API_TOKEN_BETA is unset on the 'beta' GitHub environment (Settings -> Environments -> beta). This deploy cannot authenticate. Create it per docs/operations/POST_MERGE_CHECKLIST.md section 0 -- do NOT reuse CLOUDFLARE_API_TOKEN, the production credential (FINDING-028)."
+          echo "::error::CLOUDFLARE_API_TOKEN_BETA is unset on the 'beta' GitHub environment (Settings -> Environments -> beta). This deploy cannot authenticate. Create it per docs/operations/OPEN_ITEMS.md section 1 (history: docs/historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md section 0) -- do NOT reuse CLOUDFLARE_API_TOKEN, the production credential (FINDING-028)."
           exit 1
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

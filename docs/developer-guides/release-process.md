@@ -33,6 +33,10 @@ The repo follows [Keep a Changelog](https://keepachangelog.com/) and semantic ve
 Changelog entries are expected to say *what broke and why it mattered*, not just what changed —
 look at recent entries in `packages/core/CHANGELOG.md` for the house style.
 
+**Update the two version tables in the same PR** — the root `README.md` and `docs/versions.md`
+(the current-version rows, plus a history row). `pnpm docs:check-versions` runs in CI and fails
+the PR until both agree with every `package.json`.
+
 **A version bump is mandatory.** The publish workflow's `detect` job only publishes a package
 whose local version differs from the published one. At version parity it does nothing and
 reports success, which is easy to misread as a successful publish.
@@ -150,13 +154,12 @@ When a change spans packages and apps — an audit remediation sweep, or a major
 — the order is:
 
 1. Land every change on a working branch and get CI green.
-2. Bump versions across all affected projects, with changelog entries.
+2. Bump versions across all affected projects, with changelog entries and the two version
+   tables (root `README.md`, `docs/versions.md`) — `pnpm docs:check-versions` blocks the PR otherwise.
 3. Merge to `main`. Deploy workflows fire automatically for the affected apps.
 4. Run the publish workflow for each package, in dependency order.
 5. Run `register-commands` if any slash-command shape changed.
 6. Apply D1 migrations if the schema changed.
-7. Update [versions.md](../versions.md) — the current-version tables, the version-history
-   sections, and the compatibility matrix.
 
 The root `CHANGELOG.md` carries a monorepo-level rollup for sweeps that touch many projects at
 once.

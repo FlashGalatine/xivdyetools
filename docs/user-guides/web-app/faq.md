@@ -81,8 +81,7 @@ Presets may be rejected for:
 ### How do I report a preset?
 
 There is no in-app report button yet. If a preset needs attention, contact a moderator in the
-[community Discord](https://discord.gg/5VUSKTZCe5) with the preset's name. Every submission is
-reviewed before it appears publicly, so most problems are caught first.
+[community Discord](https://discord.gg/5VUSKTZCe5) with the preset's name. Every submission passes an automated content check first: anything it flags waits for a moderator, and anything that clears it goes live at once — so please do report what slips through.
 
 ---
 

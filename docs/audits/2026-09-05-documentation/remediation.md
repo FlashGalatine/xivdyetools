@@ -124,6 +124,34 @@ Applied by the orchestrator: see [sweep-F](findings/sweep-F-structure.md). Not d
 renaming dated directories or `operations/` files; splitting `POST_MERGE_CHECKLIST.md`; a link
 gate over the archive tier.
 
+## Review round (third commit) — 15 findings from `/code-review`, all reproduced, all applied
+
+Wrong facts the audit itself shipped: both FAQs said every preset submission is reviewed before it
+appears (auto-approved on a clean check); the oauth page said missing production bindings "degrade
+silently" (the worker fails closed with a 500); the env-var guide and image-worker's `Env` comment
+said `ENVIRONMENT` is set by `[env.production]` (no `vars` block exists); the API docs said
+`POST /v1/telemetry` returns no `X-RateLimit-*` headers (it does, from its own bucket); the root
+layman's file credited the 4K-screenshot fix to the web Palette Extractor (browser-side, never
+affected — the second surface is preset preview uploads) and named a "Whites" category (it is
+Neutral); the bot's layman's file filed two 5.1.3 bullets under 5.1.2; `PresetEditRequest.dyes` still
+said "2-5 dyes"; three beta deploy workflows' fail-closed message and six archive-tier links pointed
+at files this PR moved or deleted.
+
+Gate holes: `check-doc-versions` required coverage only from `docs/versions.md` (an emptied README
+passed) and minted claims from any semver + name pair in a row (a Deprecated row without trailing
+prose would have false-redded); `check-doc-links` used `existsSync` (case-insensitive on Windows and
+macOS, satisfied by untracked files), toggled fences blindly, left HTML comments unmasked and dropped
+`<bracketed>` destinations; the new root-changelog assertions lived in discord-worker's vitest suite,
+which the affected-package filter never selects when only the root file changes. Fixes: both
+checked files must cover every workspace; claims are read only from tables with a `Version` column
+and a name column; a shared `scripts/markdown-mask.ts` masks fences (paired by character and
+length), HTML comments and, for the link gate, inline spans; targets resolve against the tracked
+path set; CI runs the changelog-parser suite unconditionally beside the wrangler-config invariants
+and `turbo.json` names the root layman's file as a test input.
+
+Documentation of the tiers now matches the gate: `audits/` and `historical/` are archive (not
+link-checked); `research/` and `superpowers/` are frozen-body but link-maintained.
+
 ## Follow-ups — resolved the same day (second commit on the audit branch)
 
 - `apps/api-worker/docs/` verified against the router: 15 public endpoints, parameters and group

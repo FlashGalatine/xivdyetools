@@ -14,17 +14,19 @@
 | [developer-guides/](./developer-guides/) | Setup, testing, deployment, release process, contributing ([index](./developer-guides/index.md)) | Yes |
 | [user-guides/](./user-guides/) | End-user guides for the web app, Discord bot, and public API ([index](./user-guides/index.md)) | Yes |
 | [maintainer/](./maintainer/) | The canonical dye-addition workflow ([adding-dyes.md](./maintainer/adding-dyes.md)) | Yes |
-| [operations/](./operations/index.md) | Deploy environments, secret rotation, moderation, analytics queries, the post-merge checklist | Yes |
+| [operations/](./operations/index.md) | Deploy environments, secret rotation, moderation, analytics queries, the open items list | Yes |
 | [specifications/](./specifications/) | Feature specifications and the roadmap ([index](./specifications/index.md)) | Yes |
 | [reference/](./reference/index.md) | Glossary and FFXIV terminology | Yes |
 | [versions.md](./versions.md) | **The** version matrix — the only version table in `docs/`, checked against `package.json` in CI | Yes |
-| [research/](./research/index.md) | Investigations that preceded a build — one directory per decision ([index](./research/index.md)) | Frozen once built |
-| [superpowers/](./superpowers/README.md) | Design specs and implementation plans written by the planning skills, one pair per feature ([index](./superpowers/README.md)) | Frozen once built |
+| [research/](./research/index.md) | Investigations that preceded a build — one directory per decision ([index](./research/index.md)) | Body frozen once built; index and links kept valid |
+| [superpowers/](./superpowers/README.md) | Design specs and implementation plans written by the planning skills, one pair per feature ([index](./superpowers/README.md)) | Body frozen once built; `Status:` lines and links kept valid |
 | [audits/](./audits/index.md) | Dated audit archives — snapshots of what was found and what was done ([index](./audits/index.md)) | Frozen |
 | [historical/](./historical/) | Archived documentation from previous development phases ([index](./historical/index.md)) | Frozen |
 
-"Frozen" folders describe the state of the code on the date in their path or header. They are
-not corrected when the code moves on; the live folders above them are.
+"Frozen" folders describe the state of the code on the date in their path or header and are not
+corrected when the code moves on. `audits/` and `historical/` are pure archive (not even
+link-checked); `research/` and `superpowers/` keep their bodies frozen but their `Status:` lines
+and links are maintained, and `pnpm docs:check-links` covers them.
 
 ## Contributing
 

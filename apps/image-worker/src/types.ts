@@ -8,7 +8,7 @@
  */
 
 export interface Env {
-  /** Set to "production" by [env.production]; absent in dev. */
+  /** Never set by wrangler.toml — no `vars` block exists in any environment; only tests assign it. */
   ENVIRONMENT?: string;
 }
 

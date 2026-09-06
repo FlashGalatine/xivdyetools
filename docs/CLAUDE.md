@@ -21,8 +21,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Tier rule: `architecture/`, `projects/`, `developer-guides/`, `user-guides/`, `operations/`,
 `maintainer/`, `specifications/`, `reference/` and `versions.md` are **living** and must match the
-code; `audits/`, `research/`, `superpowers/` and `historical/` are **frozen** snapshots and are never
-edited to match later code. Version numbers appear only in `versions.md` and the root `README.md`
+code. `audits/` and `historical/` are **archive**: never edited, not link-checked. `research/` and
+`superpowers/` are **frozen-body**: their content is never rewritten to match later code, but their
+`Status:` lines and links are kept valid and the link gate covers them. Version numbers appear only in `versions.md` and the root `README.md`
 (`pnpm docs:check-versions`); every relative link in the living tier must resolve
 (`pnpm docs:check-links`). Both run in CI.
 
@@ -119,7 +120,8 @@ pnpm --filter xivdyetools-discord-worker run register-commands   # Register slas
 
 ```bash
 pnpm docs:check-versions   # root README + docs/versions.md tables vs package.json (also in CI)
-pnpm test:scripts          # self-tests for the scripts/ gates, incl. the one above
+pnpm docs:check-links      # relative links in the living + frozen-body tiers resolve (also in CI)
+pnpm test:scripts          # self-tests for the scripts/ gates, incl. both above
 ```
 
 ### Publishing Libraries

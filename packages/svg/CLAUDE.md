@@ -94,7 +94,7 @@ src/
 ├── index.ts                  # Public API re-exports
 ├── frame.ts                  # THE FRAME SYSTEM — read before touching a generator
 ├── base.ts                   # XML escape, hex/RGB helpers, primitives, THEME, FONTS
-├── icons/tool-icons.ts       # Single geometry home: 10 tool glyphs (9 tools + `tools`) × compact + detail
+├── icons/tool-icons.ts       # Single geometry home: 10 compact glyphs (9 tools + `tools`) and 9 detail glyphs (`tools` has no detail form)
 │
 │  # 5.0 cards — each names its confirmed frame in its module docblock
 ├── harmony-card.ts           # /harmony            11A (Turn-13 geometry)

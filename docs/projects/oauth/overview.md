@@ -192,8 +192,7 @@ JWT_EXPIRY = "3600"
 `DISCORD_CLIENT_ID`, so the XIVAuth flow is not optional configuration.
 
 Bindings: `DB` (D1 `xivdyetools-users`), `TOKEN_BLACKLIST` (KV — revoked `jti`s and the fallback
-rate-limit counters) and `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` (Workers Rate Limiting). All
-four are production-required (FINDING-013); each degrades silently rather than loudly when absent.
+rate-limit counters) and `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` (Workers Rate Limiting). `TOKEN_BLACKLIST` and the three `RL_AUTH_*` bindings are production-required (FINDING-013): outside `ENVIRONMENT=development`, `validateEnv` refuses every request with a 500 `Service misconfigured` — `/health` included — while any of them is missing. The worker fails closed, never silently.
 There is **no Durable Object** anywhere in this worker.
 
 Redirect / CORS origins are `ALLOWED_REDIRECT_ORIGINS` (`https://xivdyetools.app`, `https://beta.xivdyetools.app`, the transitional `https://xivdyetools.projectgalatine.com`) plus `FRONTEND_URL` — unified in 2.6.0, which fixed the beta login hang.

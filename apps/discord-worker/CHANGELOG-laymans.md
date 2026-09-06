@@ -72,6 +72,13 @@ Rules:
 - The picture that shows up when you paste a harmony link into Discord matches the page the link opens. It had been choosing its dyes a third way of its own.
 - Filters on `/harmony` now pick the closest dye you are *allowed* to have, rather than the closest one to a dye that was filtered out.
 
+## [5.1.3] - 2026-09-02
+
+### 🐛 Fixes
+
+- An image that arrives empty now says the file could not be read, instead of a generic "processing failed" message.
+- 4K and ultrawide screenshots were being refused by `/extractor image` before they were even read — the image service behind it now accepts anything up to 4K. They work now.
+
 ## [5.1.2] - 2026-09-02
 
 ### 🐛 Fixes
@@ -84,8 +91,6 @@ Rules:
 - `/preferences set` with several options at once saves all of them. Occasionally one could be quietly dropped while the reply still said it had been saved.
 - The preset name autocomplete on `/preset favorite remove` no longer comes up empty for some long-standing users.
 - When market data is unavailable, `/budget` says so instead of telling you your own world does not exist.
-- An image that arrives empty now says the file could not be read, instead of a generic "processing failed" message.
-- 4K and ultrawide screenshots were being refused by `/extractor image` before they were even read. They work now.
 
 ## [5.1.0] - 2026-08-30
 

@@ -324,7 +324,7 @@ rate-limit bindings.
 
 ## xivdyetools-image-worker
 
-**No variables and no secrets** beyond `ENVIRONMENT` (set by `[env.production]`, absent in dev)
+**No variables, no secrets** — `ENVIRONMENT` is declared on the `Env` type, but no `wrangler.toml` block sets it in any environment (only tests assign it), so never branch on it here
 — and no bindings at all. The worker is reachable only through its callers' `IMAGE_WORKER`
 service bindings, so there is nothing to configure. See
 [IMAGE_WORKER_SPLIT](../operations/IMAGE_WORKER_SPLIT.md).

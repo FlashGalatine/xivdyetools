@@ -163,7 +163,7 @@ Check:
 
 There is no in-app report button yet. Contact a moderator in the
 [community Discord](https://discord.gg/5VUSKTZCe5) with the preset's name and they will take a look.
-Every submission is reviewed before it appears publicly, so most problems are caught first.
+Every submission passes an automated content check first: anything it flags waits for a moderator, and anything that clears it goes live at once — so please do report what slips through.
 
 ### How do I become a moderator?
 

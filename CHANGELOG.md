@@ -27,14 +27,14 @@ reorganisation, no change to the workspace layout or to any published package.
   tables (`docs/index.md`, `docs/README.md`, `docs/projects/index.md`,
   `docs/architecture/overview.md`, root `README.md`) carrying four different snapshots, every
   one behind `package.json` on every row — the fourth manual reconciliation in the history. The
-  other three tables are gone; the pages link the matrix instead.
+  other four tables are gone; the pages link the matrix instead.
 - **`pnpm docs:check-links`** (`scripts/check-doc-links.ts`, same self-test and CI placement).
   Resolves every relative markdown link in the living documentation tier — `docs/**` minus
   `docs/audits/**` and `docs/historical/**`, plus the root and per-workspace README / CLAUDE
   files — and fails on a missing target. Fenced code and inline spans are masked so a link
   quoted as text does not count. The audit found 207 broken links, all in the frozen archive,
   which is left as it is on purpose: those links describe the tree as it was.
-- Index pages where folders had none: `docs/audits/index.md` (all 33 dated audits, 13 of which
+- Index pages where folders had none: `docs/audits/index.md` (every dated audit, 13 of which
   nothing had referenced), `docs/research/index.md` (all 10 research directories, every one of
   which describes shipped work, none of which was reachable from `docs/index.md`),
   `docs/superpowers/README.md` (the spec/plan pair for each feature with a shipped / parked

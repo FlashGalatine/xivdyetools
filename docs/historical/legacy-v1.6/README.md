@@ -65,4 +65,4 @@ npm test         # Run unit tests
 npm run build    # Build for production
 ```
 
-See the main [README.md](../README.md) for v2.0.0 instructions.
+See the main [index.md](../index.md) for v2.0.0 instructions.
