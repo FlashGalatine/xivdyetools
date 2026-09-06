@@ -123,6 +123,8 @@ export class CameraService {
 
   /**
    * Get list of available cameras
+   *
+   * @testonly camera-service.test.ts alone reaches the capture pipeline since the 4.x camera preview modal left in 5.8 (the Extractor shoots through a capture-attribute file input); delete with the test, or revive under the drawn 16A camera modal
    */
   getAvailableCameras(): CameraDevice[] {
     return [...this.availableCameras];
@@ -130,6 +132,8 @@ export class CameraService {
 
   /**
    * Start camera stream with specified device or default
+   *
+   * @testonly camera-service.test.ts alone reaches the capture pipeline since the 4.x camera preview modal left in 5.8 (the Extractor shoots through a capture-attribute file input); delete with the test, or revive under the drawn 16A camera modal
    */
   async startStream(deviceId?: string): Promise<MediaStream> {
     if (!this.isSupported) {
@@ -182,6 +186,8 @@ export class CameraService {
 
   /**
    * Capture a frame from a video element
+   *
+   * @testonly camera-service.test.ts alone reaches the capture pipeline since the 4.x camera preview modal left in 5.8 (the Extractor shoots through a capture-attribute file input); delete with the test, or revive under the drawn 16A camera modal
    */
   captureFrame(video: HTMLVideoElement): Promise<CaptureResult> {
     return new Promise((resolve, reject) => {
@@ -229,6 +235,8 @@ export class CameraService {
 
   /**
    * Create a video element configured for camera preview
+   *
+   * @testonly camera-service.test.ts alone reaches the capture pipeline since the 4.x camera preview modal left in 5.8 (the Extractor shoots through a capture-attribute file input); delete with the test, or revive under the drawn 16A camera modal
    */
   createVideoElement(): HTMLVideoElement {
     const video = document.createElement('video');
@@ -241,6 +249,8 @@ export class CameraService {
 
   /**
    * Attach stream to video element
+   *
+   * @testonly camera-service.test.ts alone reaches the capture pipeline since the 4.x camera preview modal left in 5.8 (the Extractor shoots through a capture-attribute file input); delete with the test, or revive under the drawn 16A camera modal
    */
   attachStreamToVideo(video: HTMLVideoElement, stream: MediaStream): void {
     video.srcObject = stream;
@@ -248,6 +258,8 @@ export class CameraService {
 
   /**
    * Get camera stream video track settings
+   *
+   * @testonly camera-service.test.ts alone reaches the capture pipeline since the 4.x camera preview modal left in 5.8 (the Extractor shoots through a capture-attribute file input); delete with the test, or revive under the drawn 16A camera modal
    */
   getTrackSettings(): MediaTrackSettings | null {
     if (!this.currentStream) return null;

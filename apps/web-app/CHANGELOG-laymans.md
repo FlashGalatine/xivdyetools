@@ -2,6 +2,21 @@
 
 ---
 
+## Web-App Version 5.8.0 — September 5, 2026
+
+### The Palette Extractor reads like a bar chart now
+- **A colour bar sits right under your image.** Each extracted colour is a segment as wide as its share of the picture, with the percentage printed on it. Tap a segment and its dye card lights up below.
+- **The loupe stays where you put it.** Click or tap anywhere on the image and the loupe parks there, showing the colour it read and the closest dye's name. Drag it around to hunt for the exact pixel you want.
+- **Add your own picks with the `+` tile** at the right end of the bar. Picks join the bar as fixed-width numbered blocks after a small gap — they are not part of the image share, so they are never drawn as a percentage. Each pick gets its own dye card, and **Clear picks** takes them all away again. You can hold up to six.
+- **No more "Auto-extract" button.** The palette is pulled from the image the moment it loads, and again quietly whenever you change the colour count, the matching method or the dye filters. Your picks are kept through those changes.
+- **The count says what you have.** "6 + 2" means six colours from the image plus two of your picks; it never reads "8 of 6".
+- **Nothing is drawn over your image any more.** The numbered circles and the red crosshair are gone, so the pixels you are judging stay uncovered.
+- **Dye filters now apply to the extracted colours too**, not only to a colour you sampled by hand, and *Prevent duplicates* keeps your picks from taking a dye the image already claimed.
+- **Vibrancy boost finally does something**: with it on, a small vivid accent can lead the bar ahead of a large dull area.
+- **Settings stick.** The colour count and vibrancy choice you make in the options were ignored on the next visit until you touched them again. They now load exactly as you left them.
+- Sampling a colour no longer swaps the whole list for ten candidates of that one colour, and the separate "Sampled Color" box is gone — a pick is simply a card like the others.
+- On a phone the image and the bar stay put while the cards scroll underneath.
+
 ## Web-App Version 5.7.0 — September 5, 2026
 
 ### Pick the colour wheel your harmonies use

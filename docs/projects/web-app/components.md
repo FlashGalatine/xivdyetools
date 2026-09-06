@@ -71,7 +71,7 @@ One per `ToolId`; lazy-imported by `v4-layout.ts` (see [Tools](tools.md) for wha
 
 Every BaseComponent tool exposes `selectDye(dye)` and/or `selectCustomColor(hex)` for the drawer, subscribes to `ConfigController` for its config and to `market` for server/price changes, and renders one main flow (`leftPanel === rightPanel` in the shell).
 
-**Tool-owned subcomponents (imperative, `components/`)**: `dye-selector.ts` (dye picker/multi-select used by harmony/gradient/mixer/accessibility/comparison), `dye-search-box.ts`, `dye-grid.ts`, `add-to-collection-menu.ts`, `collapsible-panel.ts`, `market-board.ts` (+ `services/tool-panel-builders.ts` `buildMarketPanel`), `color-picker-display.ts`, `image-upload-display.ts`, `image-zoom-controller.ts`, `camera-preview-modal.ts`, `metric-help.ts` (5.0 — the pair-readout / methods explainer for accessibility, comparison, budget), `chara-import.ts` (5.0 — the 10A `.chara` file card and THIS CHARACTER sheet), `preset-card.ts` / `preset-detail.ts` (Lit, `v4/`), `preset-category-selector.ts` (1 primary + 2 secondary), `preset-submission-form.ts`, `preset-edit-form.ts`. The harmony wheel is `v4/v4-color-wheel.ts` — there is no separate result-panel, type-picker or wheel-display module; the Harmony tool renders those itself.
+**Tool-owned subcomponents (imperative, `components/`)**: `dye-selector.ts` (dye picker/multi-select used by harmony/gradient/mixer/accessibility/comparison), `dye-search-box.ts`, `dye-grid.ts`, `add-to-collection-menu.ts`, `collapsible-panel.ts`, `market-board.ts` (+ `services/tool-panel-builders.ts` `buildMarketPanel`), `image-zoom-controller.ts` (the Extractor's canvas, zoom, pixel sampling and loupe events — `color-picker-display.ts`, `image-upload-display.ts` and `camera-preview-modal.ts` were removed with the 5.8 4A port; they only ever rendered into a left panel the v4 shell cleared), `metric-help.ts` (5.0 — the pair-readout / methods explainer for accessibility, comparison, budget), `chara-import.ts` (5.0 — the 10A `.chara` file card and THIS CHARACTER sheet), `preset-card.ts` / `preset-detail.ts` (Lit, `v4/`), `preset-category-selector.ts` (1 primary + 2 secondary), `preset-submission-form.ts`, `preset-edit-form.ts`. The harmony wheel is `v4/v4-color-wheel.ts` — there is no separate result-panel, type-picker or wheel-display module; the Harmony tool renders those itself.
 
 ---
 
@@ -118,7 +118,6 @@ Initial focus falls back to the dialog; body overflow is restored to its prior v
 | Theme picker | `components/v4/theme-modal.ts` | Three-band swatch cards for `standard-dark` / `standard-light`, live-apply, `lightScrim: true`, "Done" footer. |
 | Language | `components/v4/language-modal.ts` | Six locales, "Done" footer; `LanguageService.setLocale` also sets `document.documentElement.lang`. |
 | Tour prompt | `services/tutorial-service.ts` + `components/tutorial-spotlight.ts` | First-visit prompt per tool (start / skip / disable all), then the coach-mark overlay. |
-| Camera preview | `components/camera-preview-modal.ts` | `sheetHeight: 'full'`, explicit dismissal. |
 | Sign-in (8S) | `components/signin-modal.ts` | `panelWidth: 460`; gates table + Discord / XIVAuth. |
 | Submit preset (8S) | `components/preset-submission-form.ts` | `panelWidth: 560`; HOW IT WILL LOOK band, category selector, preview image, example link, 3–6 dyes. |
 | My Submissions (8S) | `components/my-submissions-modal.ts` | `panelWidth: 620`; LIVE / IN REVIEW / NOT PUBLISHED rows, per-status actions, delete uses `destructive: true`. |
@@ -157,7 +156,7 @@ Two shapes coexist. **Static-class services** are used directly (`ThemeService.s
 | `SavedPresetsService` | `saved-presets-service.ts` | 8A saved shelf: local snapshots, tombstones for author-removed presets, capped 200 |
 | `HybridPresetService` / `CommunityPresetService` / `PresetSubmissionService` | `hybrid-preset-service.ts` / `community-preset-service.ts` / `preset-submission-service.ts` | Curated + API presets, votes, submissions (presets-api worker) |
 | `AuthService` | `auth-service.ts` | Discord OAuth via the oauth worker; `consumeReturnTool` |
-| `CameraService` | `camera-service.ts` | Extractor camera capture |
+| `CameraService` | `camera-service.ts` | Camera enumeration, initialised at boot. No surface opens a preview since 5.8 — the Extractor's "Take a photo" is a capture-attribute file input (the 16A camera modal stays drawn in the design docs) |
 | `TelemetryService` | `telemetry-service.ts` | Opt-in, identifier-free usage telemetry batched to api-worker `POST /v1/telemetry`. Default off, `navigator.globalPrivacyControl` honoured, allowlisted event names/dimensions only |
 | `resolveCharaGear` | `chara-resolve-service.ts` | `POST /v1/chara/resolve` on api-worker — turns a `.chara` file's model keys into item names/icons for the Swatch tool's DYES ON THIS GLAMOUR block. Session-cached; any failure raises `CharaResolveUnavailableError` and the block degrades to slot-only rows |
 | `getApiWorkerBase()` | `api-worker-origin.ts` | The one place the api-worker origin is decided: `VITE_API_WORKER_URL` → `data.xivdyetools.app` in prod → `http://localhost:8790` in dev |

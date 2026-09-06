@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.8.0] - 2026-09-05
+
+### Changed
+
+- **Palette Extractor rebuilt on the confirmed 4A frame** ("loupe over a weighted
+  bar over the card sheet", `Extractor Tool Directions.dc.html`, superseding the
+  5.0 3C port). One column, three stages: the image with a **persistent loupe**
+  (click/tap reads the pixels under it, a drag drives it live; the hint chip
+  names the hex and the nearest dye; nothing commits by itself), the
+  **dominance bar butted under the image** (extracted colours as proportional
+  segments labelled with their share, a 3 px break, then each committed pick as
+  a fixed-width segment labelled with its slot number — a pick has no share and
+  is never drawn as one — and the `+` tile that commits whatever the loupe
+  holds), and the **card sheet** with one card per segment.
+- Bulk extraction is no longer a mode: it runs on image load and again, silently,
+  on every config change (colour count, matching method, filters); committed
+  picks survive a re-extraction and clear with the image. Picks cap at 6, the
+  bar's measured capacity.
+- Legend `IMAGE SHARE · n picks` with **Clear picks** under the bar; the section
+  count reads `6 + 2` with picks (never `8 of 6`) and `6 of 6` without. Tapping
+  a segment focuses its card.
+- One resolution path for extracted colours and picks alike: the nearest dye
+  the dye filters allow that no earlier slot holds while *Prevent duplicates*
+  is on, measured with the selected matching method. Dye filters now reach the
+  extracted colours too (they only ever applied to a sampled colour).
+- **Vibrancy boost does something.** It re-extracted and changed nothing;
+  it now orders the extracted run by the design's `0.55 × saturation + share`
+  score so a small vivid accent can lead a large muted field (widths stay
+  share-based).
+- The tool's settings are read from `ConfigController` alone. It used to seed
+  colour count and vibrancy from its own `v3_matcher_*` localStorage keys, so a
+  sidebar choice was ignored on reload until the control was touched again.
+  The seven legacy keys are purged on mount.
+- Desktop scrolls the column; mobile pins the hero (image, bar, legend, header)
+  and scrolls the sheet under it. Image card 276 px desktop / 226 px mobile,
+  loupe 104 px / 74 px.
+- Export covers the whole roll — extracted colours and picks — as
+  sampled-pixel/resolved-dye pairs.
+- Locale keys ×6: `matcher.imageShare`, `picksCount`, `picksCountOne`,
+  `clearPicks`, `rollCount`, `rollCountOf`, `pickCapReached` added; Korean
+  now says 채취 (sample) for a hand-read pick and keeps 추출 for the extraction,
+  so the legend's two counts read as two different things.
+
+### Removed
+
+- Nothing is drawn onto the image any more: the numbered markers 3C painted
+  for each extracted colour and the zoom controller's red crosshair/rectangle
+  on every sample. The loupe is the only mark.
+- Sampling no longer replaces the sheet with the ten nearest dyes for one
+  colour, and the "Sampled Color" info card is gone — a committed pick is a
+  card like any other.
+- **The 3C left panel and everything it kept alive.** The v4 shell passes one
+  element as both `leftPanel` and `rightPanel`, and the workspace render
+  cleared it, so the upload display, the colour picker (with its EyeDropper
+  path), the Options panel (sample-size slider, palette-mode checkbox,
+  colour-count slider, Auto-extract) and the market panel were built and
+  immediately wiped on every mount. Deleted with their tests:
+  `image-upload-display.ts`, `color-picker-display.ts`,
+  `camera-preview-modal.ts` (the 4.x webcam flow, unreachable since the shell
+  change — "Take a photo" has been a capture-attribute file input since 5.0).
+  `camera-service.ts` stays: `initializeServices()` owns it.
+- 44 orphaned locale keys ×6 (`matcher.*` ×25, `camera.*` ×14, `errors.*` ×4,
+  `common.hexColor`).
+
 ## [5.7.0] - 2026-09-05
 
 ### Added

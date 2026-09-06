@@ -109,7 +109,7 @@ src/
 │   ├── tutorial-spotlight.ts        # First-run tutorial overlay
 │   ├── welcome-modal.ts             # First-visit welcome
 │   ├── changelog-modal.ts           # "What's New" modal (parses CHANGELOG.md at build time)
-│   └── ... color-picker-display, dye-grid, dye-search-box, dye-selector, market-board, metric-help, chara-import, etc.
+│   └── ... image-zoom-controller, dye-grid, dye-search-box, dye-selector, market-board, metric-help, chara-import, etc.
 ├── services/
 │   ├── index.ts                     # initializeServices(), getServicesStatus(), re-exports
 │   ├── router-service.ts            # ToolId, ROUTES, history.pushState navigation
@@ -134,7 +134,7 @@ src/
 │   ├── toast-service.ts             # Toasts
 │   ├── tutorial-service.ts          # First-run tutorial flows per tool
 │   ├── keyboard-service.ts          # Global shortcuts
-│   ├── camera-service.ts            # Camera-preview-modal capture
+│   ├── camera-service.ts            # Camera enumeration at boot (no preview surface since 5.8)
 │   ├── indexeddb-service.ts         # IDB wrapper — DB v3 stores: price_cache, palettes, settings
 │   │                                # (image_cache was dropped in v3; nothing persists images)
 │   └── pricing-mixin.ts             # Shared price-formatting helpers

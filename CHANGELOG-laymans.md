@@ -31,6 +31,14 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.5.0] - 2026-09-05
+### 🖼️ Palette Extractor: one column, all three answers
+- Web app: a colour bar now sits right under your image — one segment per extracted colour, as wide as its share of the picture, with the percentage on it. Tap a segment and its dye card lights up below.
+- Web app: the loupe stays where you put it. Click or tap the image and it parks there showing the colour it read and the closest dye's name; drag it to hunt for the exact pixel.
+- Web app: add your own picks with the `+` tile at the end of the bar. Picks join as fixed-width numbered blocks after a small gap (never a percentage — they are not part of the image share), each gets its own card, **Clear picks** removes them all, and you can hold up to six. The count reads "6 + 2", never "8 of 6".
+- Web app: the "Auto-extract" button is gone — the palette is pulled the moment an image loads and again quietly whenever you change the colour count, matching method or dye filters, with your picks kept.
+- Web app: nothing is drawn over your image any more (the numbered circles and red crosshair are gone); dye filters now apply to the extracted colours too; vibrancy boost finally changes the order; and the colour count and vibrancy settings load as you left them instead of resetting until touched.
+
 ## [5.4.0] - 2026-09-05
 ### 🎨 Choose your colour wheel in the Harmony Explorer
 - Web app: a new **Color wheel** setting in Harmony's options lets you pick which wheel the harmony angles are measured on: RGB (the screen wheel, unchanged default), RYB (the painter's wheel, where red's complement is green), Munsell (the perceptual wheel behind Japan's JIS colour standard), OKLCH hue (perceptually even spacing) or OKLCH lightness (keeps every partner at the base dye's brightness).

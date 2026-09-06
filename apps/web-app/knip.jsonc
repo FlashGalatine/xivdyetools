@@ -28,7 +28,14 @@
   "ignoreExportsUsedInFile": true,
   // Sibling .d.ts files for the plain-JS scripts: TypeScript resolves them
   // implicitly for the `.js` imports in the tests; no textual reference exists.
-  "ignore": ["scripts/check-bundle-size.d.ts", "scripts/analyze-unused-keys.d.ts"],
+  // browser-api-types.ts is an ambient `declare global` module (the
+  // Navigator.globalPrivacyControl augmentation TelemetryService relies on),
+  // reached through the tsconfig include — it has no importer by design.
+  "ignore": [
+    "scripts/check-bundle-size.d.ts",
+    "scripts/analyze-unused-keys.d.ts",
+    "src/shared/browser-api-types.ts"
+  ],
   // wrangler: no script or workflow names it, but cloudflare/wrangler-action@v4
   // (packageManager: pnpm, no wranglerVersion) installs the version this
   // package.json declares — the devDep is what pins the deploy tool.
