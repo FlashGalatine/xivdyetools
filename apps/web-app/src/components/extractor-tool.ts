@@ -16,11 +16,13 @@
  *               at the right end holds whatever the loupe is reading.
  *   3. OUTPUT — the card sheet, one result card per bar segment.
  *
- * Bulk extraction is no longer a mode: it runs on image load and again on
- * every config change (colour count, vibrancy, method, filters), and the
- * committed picks survive those re-runs. Advanced lives only behind the
- * app-bar gear (the config sidebar), so this tool renders one main flow and
- * owns no option panel — `ConfigController` is its single source of settings.
+ * Bulk extraction is no longer a mode: K-means runs on image load and again on
+ * a colour-count change, and every bar segment — extracted colour or pick —
+ * resolves to its dye through ONE path (`resolveDye`) that the matching
+ * method, the dye filters and Prevent-duplicates all drive. Committed picks
+ * survive re-runs. Advanced lives only behind the app-bar gear (the config
+ * sidebar), so this tool renders one main flow and owns no option panel —
+ * `ConfigController` is its single source of settings.
  *
  * @module components/tools/extractor-tool
  */
@@ -57,15 +59,19 @@ import type {
   MatchingMethod,
   DyeFiltersConfig,
 } from '@shared/tool-config-types';
-import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
-import { isDyeExcluded, filterDyes } from '@shared/dye-filter-utils';
+import {
+  DEFAULT_DISPLAY_OPTIONS,
+  DEFAULT_DYE_FILTERS,
+  getDefaultConfig,
+} from '@shared/tool-config-types';
+import { isDyeExcluded } from '@shared/dye-filter-utils';
 import {
   DEFAULT_MATCHING_METHOD,
   normalizeMatchingMethod,
   PaletteService,
-  type PaletteMatch,
+  type ExtractedColor,
 } from '@xivdyetools/core';
-import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
+import type { ResultCard, ResultCardData } from '@components/v4/result-card';
 import '@components/v4/result-card';
 
 // ============================================================================
@@ -82,9 +88,11 @@ export interface ExtractorToolOptions {
 /**
  * One segment of the bar and one card of the sheet. `share` is the extracted
  * colour's dominance in percent; a committed pick carries `null` — it has no
- * share and must never be drawn as a proportion.
+ * share and must never be drawn as a proportion. `key` is the segment's
+ * identity across re-resolves (a re-order must not move the focus ring).
  */
 interface RollEntry {
+  key: string;
   hex: string;
   share: number | null;
   dye: Dye;
@@ -114,9 +122,6 @@ const LEGACY_STORAGE_KEYS = [
  */
 const MAX_PICKS = 6;
 
-/** Default colour count when the config carries none (mirrors DEFAULT_CONFIGS). */
-const DEFAULT_MAX_COLORS = 4;
-
 /**
  * The only sanctioned hardcoded grounds are the drawn on-image overlays —
  * chips sitting on arbitrary image pixels use the prototype's dark glass in
@@ -142,6 +147,9 @@ const LOUPE_PLACEHOLDER = 'color-mix(in srgb, var(--theme-text-muted) 35%, trans
  * card, so roughly one card row shows at a time — the accepted cost). Mobile
  * (≤768px) pins the hero and scrolls the sheet under it: 226px image, 44px
  * bar, 40px pick segments, 44px `+` tile, 74px loupe.
+ *
+ * Busy state: while K-means runs the bar and the sheet dim and stop taking
+ * taps — the `data-busy` flag is what the unit tests wait on too.
  */
 const X4A_RESPONSIVE_CSS = `
   .x4a-workspace {
@@ -151,6 +159,7 @@ const X4A_RESPONSIVE_CSS = `
   }
   .x4a-hero { flex-shrink: 0; display: flex; flex-direction: column; }
   .x4a-image-card { height: 276px; }
+  .x4a-hint-chip { max-width: calc(100% - 20px); }
   .x4a-bar { height: 48px; }
   .x4a-seg { min-width: 0; }
   .x4a-seg-pick { flex: 0 0 52px; }
@@ -158,6 +167,8 @@ const X4A_RESPONSIVE_CSS = `
   .x4a-loupe { width: 104px; height: 104px; padding-bottom: 10px; }
   .x4a-loupe-ring { width: 16px; height: 16px; margin: -8px 0 0 -8px; }
   .x4a-sheet { flex: 1; min-height: 0; }
+  .x4a-workspace[data-busy] .x4a-bar,
+  .x4a-workspace[data-busy] .x4a-sheet { opacity: 0.55; pointer-events: none; transition: opacity 120ms ease; }
   .x4a-drop-title { font-size: 19px; }
   .x4a-dt-actions { display: flex; gap: 9px; }
   .x4a-mb-actions { display: none; }
@@ -166,17 +177,21 @@ const X4A_RESPONSIVE_CSS = `
   @media (max-width: 768px) {
     .x4a-workspace { padding: 12px 14px 24px; gap: 8px; height: 100%; min-height: 0; }
     .x4a-image-card { height: 226px; }
+    /* The zoom toolbar is the only touch-reachable zoom, so it stays; it
+       drops to the three controls that matter (−, level, +) so it and the
+       hint chip share the card's bottom edge. The controller positions it
+       inline, hence the !important. */
+    .x4a-hint-chip { max-width: calc(100% - 150px); }
+    .x4a-image-card .zoom-controls > :nth-child(1),
+    .x4a-image-card .zoom-controls > :nth-child(2),
+    .x4a-image-card .zoom-controls > :nth-child(3),
+    .x4a-image-card .zoom-controls > :nth-child(7) { display: none !important; }
     .x4a-bar { height: 44px; }
-    .x4a-seg { min-width: 26px; }
     .x4a-seg-pick { flex-basis: 40px; }
     .x4a-add-tile { flex-basis: 44px; }
     .x4a-loupe { width: 74px; height: 74px; padding-bottom: 7px; }
     .x4a-loupe-ring { width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; }
     .x4a-sheet { overflow-y: auto; }
-    /* The zoom controller's toolbar sits bottom-right; on a 226px card it
-       lands on the hint chip, and the frames carry no zoom chrome. The
-       controller sets its display inline, hence the !important. */
-    .x4a-image-card .zoom-controls { display: none !important; }
     .x4a-drop-title { font-size: 17px; }
     .x4a-dt-actions { display: none; }
     .x4a-mb-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 236px; }
@@ -193,7 +208,7 @@ export class ExtractorTool extends BaseComponent {
   private options: ExtractorToolOptions;
 
   // ---- Settings (seeded from and pushed by ConfigController) ----
-  private paletteColorCount: number = DEFAULT_MAX_COLORS;
+  private paletteColorCount: number;
   private vibrancyBoost: boolean = true;
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
   private matchingMethod: MatchingMethod = DEFAULT_MATCHING_METHOD;
@@ -216,20 +231,28 @@ export class ExtractorTool extends BaseComponent {
 
   // ---- Workspace state ----
   private currentImage: HTMLImageElement | null = null;
-  /** Raw K-means output for the current image (pre-dedupe, pre-filter). */
-  private extractedMatches: PaletteMatch[] = [];
+  /** K-means output for the current image — clusters that hold pixels only. */
+  private extracted: ExtractedColor[] = [];
   /** Committed loupe picks, in commit order. Session-only, cleared with the image. */
   private picks: string[] = [];
   /** The resolved bar/sheet: extracted entries first, then picks. */
   private roll: RollEntry[] = [];
-  /** Index into `roll` of the focused segment/card, or null. */
-  private focusIndex: number | null = null;
+  /** Identity of the focused segment/card, or null. */
+  private focusKey: string | null = null;
   /** The colour the loupe last read — feeds the hint chip and the `+` tile. */
   private currentLoupeHex: string | null = null;
+  /** Where the loupe settled, card-relative — restored across a re-render. */
+  private loupePoint: { left: number; top: number } | null = null;
+  /** The nearest-dye name shown in the hint, cached per hex (a drag reads many times). */
+  private hintCache: { hex: string; text: string } | null = null;
   private isExtracting: boolean = false;
+  /** A colour-count change arrived while K-means was running: run again after. */
+  private pendingReextract: boolean = false;
 
   // ---- Child components ----
   private imageZoom: ImageZoomController | null = null;
+  /** Listener keys bound to the current canvas wrapper, unbound on rebuild. */
+  private canvasListenerKeys: string[] = [];
 
   // ---- DOM references ----
   private workspaceElement: HTMLElement | null = null;
@@ -269,10 +292,10 @@ export class ExtractorTool extends BaseComponent {
     // normalized so persisted 4.x values (hyab, oklch-weighted) migrate
     // instead of reaching the matcher.
     const config = ConfigController.getInstance().getConfig('extractor');
+    const defaults = getDefaultConfig('extractor');
     this.matchingMethod = normalizeMatchingMethod(config.matchingMethod ?? DEFAULT_MATCHING_METHOD);
-    if (typeof config.maxColors === 'number') {
-      this.paletteColorCount = config.maxColors;
-    }
+    this.paletteColorCount =
+      typeof config.maxColors === 'number' ? config.maxColors : defaults.maxColors;
     if (typeof config.vibrancyBoost === 'boolean') {
       this.vibrancyBoost = config.vibrancyBoost;
     }
@@ -310,6 +333,15 @@ export class ExtractorTool extends BaseComponent {
     // image data lands here; the explicit button uses the Clipboard API.
     this.on(document, 'paste', (e: Event) => {
       const pasteEvent = e as ClipboardEvent;
+      // A paste aimed at a text field (the dye drawer's search box, a preset
+      // form) is that field's, even when the clipboard also carries a bitmap
+      const target = pasteEvent.composedPath()[0];
+      if (
+        target instanceof HTMLElement &&
+        (target.matches('input, textarea, select') || target.isContentEditable)
+      ) {
+        return;
+      }
       const items = pasteEvent.clipboardData?.items;
       if (!items) return;
       for (let i = 0; i < items.length; i++) {
@@ -319,6 +351,8 @@ export class ExtractorTool extends BaseComponent {
           if (blob) {
             this.handleDroppedFile(blob);
           }
+          // One image per paste — like drop (`files[0]`) and the Clipboard API path
+          return;
         }
       }
     });
@@ -326,13 +360,14 @@ export class ExtractorTool extends BaseComponent {
 
   /**
    * Listen for custom events on a specific element. Child components emit on
-   * their own containers (bubbling), not on this.container.
+   * their own containers (bubbling), not on this.container. Returns the
+   * listener key so a caller can unbind it before the element is rebuilt.
    */
   private onPanelEvent(
     panel: HTMLElement,
     eventName: string,
     handler: (event: CustomEvent) => void
-  ): void {
+  ): string {
     const boundHandler = (event: Event) => {
       if (event instanceof CustomEvent) {
         handler.call(this, event);
@@ -341,6 +376,18 @@ export class ExtractorTool extends BaseComponent {
     panel.addEventListener(eventName, boundHandler);
     const listenerKey = `panel_${eventName}_${Date.now()}_${this.listeners.size}`;
     this.listeners.set(listenerKey, { target: panel, event: eventName, handler: boundHandler });
+    return listenerKey;
+  }
+
+  /** Remove listeners by key so a detached element is not pinned by the map. */
+  private unbindPanelEvents(keys: string[]): void {
+    for (const key of keys) {
+      const entry = this.listeners.get(key);
+      if (entry) {
+        entry.target.removeEventListener(entry.event, entry.handler);
+        this.listeners.delete(key);
+      }
+    }
   }
 
   onMount(): void {
@@ -390,9 +437,11 @@ export class ExtractorTool extends BaseComponent {
   // ============================================================================
 
   /**
-   * Update tool configuration from the config sidebar. Anything that changes
-   * which colours come out of the image or which dye each resolves to
-   * re-extracts (the picks survive); anything presentational re-renders.
+   * Update tool configuration from the config sidebar. Only the colour count
+   * changes what K-means finds, so only it re-extracts (K-means++ is seeded
+   * at random — a re-run re-clusters, and the user would read that as an
+   * effect of whatever they just changed). Anything that changes which dye a
+   * colour resolves to re-resolves; anything presentational re-renders.
    */
   public setConfig(config: Partial<ExtractorConfig>): void {
     let needsReextract = false;
@@ -402,7 +451,7 @@ export class ExtractorTool extends BaseComponent {
     if (config.vibrancyBoost !== undefined && config.vibrancyBoost !== this.vibrancyBoost) {
       this.vibrancyBoost = config.vibrancyBoost;
       // Vibrancy is an ordering of the extracted colours, not a different
-      // extraction — re-resolving is enough
+      // extraction
       needsReresolve = true;
       logger.info(`[ExtractorTool] setConfig: vibrancyBoost -> ${config.vibrancyBoost}`);
     }
@@ -414,9 +463,14 @@ export class ExtractorTool extends BaseComponent {
     }
 
     if (config.displayOptions) {
-      this.displayOptions = { ...this.displayOptions, ...config.displayOptions };
-      needsRerender = true;
-      logger.info(`[ExtractorTool] setConfig: displayOptions updated`, config.displayOptions);
+      // The merged config always carries displayOptions, so compare before
+      // rebuilding the sheet — a rebuild drops the market error badge
+      const merged = { ...this.displayOptions, ...config.displayOptions };
+      if (JSON.stringify(merged) !== JSON.stringify(this.displayOptions)) {
+        this.displayOptions = merged;
+        needsRerender = true;
+        logger.info(`[ExtractorTool] setConfig: displayOptions updated`, config.displayOptions);
+      }
     }
 
     if (config.dragThreshold !== undefined) {
@@ -433,7 +487,8 @@ export class ExtractorTool extends BaseComponent {
 
     if (config.matchingMethod !== undefined && config.matchingMethod !== this.matchingMethod) {
       this.matchingMethod = config.matchingMethod;
-      needsReextract = true;
+      this.hintCache = null;
+      needsReresolve = true;
       logger.info(`[ExtractorTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
     }
 
@@ -450,6 +505,7 @@ export class ExtractorTool extends BaseComponent {
       const newFilters = config.dyeFilters;
       if (JSON.stringify(this.dyeFiltersConfig) !== JSON.stringify(newFilters)) {
         this.dyeFiltersConfig = { ...newFilters };
+        this.hintCache = null;
         needsReresolve = true;
         logger.info(`[ExtractorTool] setConfig: dyeFilters updated`);
       }
@@ -458,6 +514,9 @@ export class ExtractorTool extends BaseComponent {
     if (needsReextract && this.currentImage) {
       void this.extractPalette(false);
     } else if (needsReresolve && this.currentImage) {
+      if (this.currentLoupeHex) {
+        this.setLoupeHex(this.currentLoupeHex);
+      }
       this.renderRoll();
     } else if (needsRerender && this.roll.length > 0) {
       this.renderCards();
@@ -484,9 +543,6 @@ export class ExtractorTool extends BaseComponent {
       className: 'extractor-layout x4a-workspace',
     });
     this.workspaceElement.appendChild(styleEl);
-    if (this.isExtracting) {
-      this.workspaceElement.dataset.busy = 'true';
-    }
 
     // Hidden file inputs shared by both states (Choose image / Replace / camera)
     this.dropZoneFileInput = this.createElement('input', {
@@ -530,12 +586,14 @@ export class ExtractorTool extends BaseComponent {
     panel.appendChild(this.workspaceElement);
 
     this.setupDropZoneInteractions();
+    this.setBusy(this.isExtracting);
 
-    // Rebuild presentation from existing state (language switch / re-render)
+    // Rebuild presentation from existing state (language switch / re-render):
+    // the roll, and the loupe where it last settled
     if (this.currentImage) {
       this.renderRoll();
       if (this.currentLoupeHex) {
-        this.setLoupeHex(this.currentLoupeHex);
+        this.showLoupe(this.currentLoupeHex, this.loupePoint ?? { left: 0, top: 0 }, false);
       }
     }
     this.updateFlowVisibility();
@@ -917,10 +975,11 @@ export class ExtractorTool extends BaseComponent {
     // it carries the instruction; once the loupe has read a colour it names
     // the hex and the nearest dye.
     const hintChip = this.createElement('div', {
+      className: 'x4a-hint-chip',
       attributes: {
         style: [
           'position: absolute; left: 10px; bottom: 10px;',
-          'display: flex; align-items: center; gap: 8px; max-width: calc(100% - 20px);',
+          'display: flex; align-items: center; gap: 8px;',
           `padding: 7px 11px; border-radius: 10px; background: ${OVERLAY_BG}; z-index: 110;`,
         ].join(' '),
       },
@@ -959,7 +1018,8 @@ export class ExtractorTool extends BaseComponent {
 
   /**
    * The bar butted under the image. Segments are rendered by renderBar();
-   * this is the strip itself.
+   * this is the strip itself, with ONE delegated click listener — a repaint
+   * per pick or per re-resolve must not pile listeners onto detached buttons.
    */
   private buildBar(): HTMLElement {
     this.barElement = this.createElement('div', {
@@ -970,6 +1030,18 @@ export class ExtractorTool extends BaseComponent {
         'aria-label': LanguageService.t('matcher.imageShare'),
         style: 'display: flex; align-items: stretch;',
       },
+    });
+    this.on(this.barElement, 'click', (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('#extractor-add-pick')) {
+        this.commitPick();
+        return;
+      }
+      const segment = target?.closest<HTMLElement>('.x4a-seg');
+      const key = segment?.dataset.key;
+      if (key) {
+        this.setFocus(key);
+      }
     });
     return this.barElement;
   }
@@ -1129,21 +1201,44 @@ export class ExtractorTool extends BaseComponent {
     });
   }
 
+  /** The busy state, on the workspace (styled + waited on) and the bar (a11y). */
+  private setBusy(busy: boolean): void {
+    if (this.workspaceElement) {
+      if (busy) {
+        this.workspaceElement.dataset.busy = 'true';
+      } else {
+        delete this.workspaceElement.dataset.busy;
+      }
+    }
+    if (this.barElement) {
+      if (busy) {
+        this.barElement.setAttribute('aria-busy', 'true');
+      } else {
+        this.barElement.removeAttribute('aria-busy');
+      }
+    }
+  }
+
   // ============================================================================
   // Image arrival and departure
   // ============================================================================
 
   /**
-   * Shared image-arrival path (drop, file dialog, camera, paste): hand to the
-   * zoom controller, flip to the loaded flow and extract. A new image starts
-   * a new roll — picks belong to the pixels they were read from.
-   * FINDING-009: the image is held in memory only.
+   * Shared image-arrival path (drop, file dialog, camera, paste): a new image
+   * starts a new roll — picks belong to the pixels they were read from, and
+   * the previous palette must not sit under a picture it was not read from
+   * while this one extracts (or fails to). FINDING-009: the image is held in
+   * memory only.
    */
   private onImageLoaded(image: HTMLImageElement): void {
     this.currentImage = image;
+    this.extracted = [];
     this.picks = [];
-    this.focusIndex = null;
+    this.roll = [];
+    this.focusKey = null;
     this.currentLoupeHex = null;
+    this.loupePoint = null;
+    this.hintCache = null;
     this.resetLoupe();
 
     if (this.imageZoom) {
@@ -1151,6 +1246,7 @@ export class ExtractorTool extends BaseComponent {
       this.imageZoom.autoFit();
     }
 
+    this.renderRoll();
     this.updateFlowVisibility();
     ToastService.success(LanguageService.t('matcher.imageLoaded'));
 
@@ -1160,7 +1256,8 @@ export class ExtractorTool extends BaseComponent {
   /**
    * Handle a dropped image file (also the clipboard path). Refuses a file
    * over the shared cap before the reader runs — decoding a huge image hangs
-   * the tab (WEB-13).
+   * the tab (WEB-13). A file that cannot be read or decoded says so: this is
+   * the one entry point for drop, dialog, camera and both paste paths.
    */
   private handleDroppedFile(file: File): void {
     if (file.size > MAX_USER_FILE_BYTES) {
@@ -1168,9 +1265,23 @@ export class ExtractorTool extends BaseComponent {
       return;
     }
     const reader = new FileReader();
+    reader.onerror = () => {
+      logger.warn('[ExtractorTool] FileReader failed:', reader.error);
+      ToastService.error(LanguageService.t('errors.failedToReadFile'));
+    };
     reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
+      const dataUrl = e.target?.result;
+      if (typeof dataUrl !== 'string') {
+        ToastService.error(LanguageService.t('errors.failedToReadFile'));
+        return;
+      }
       const img = new Image();
+      img.onerror = () => {
+        // A truncated PNG or an HEIC the browser cannot decode: `image/*`
+        // passed, `load` never fires
+        logger.warn('[ExtractorTool] Image decode failed:', file.name);
+        ToastService.error(LanguageService.t('errors.failedToReadImage'));
+      };
       img.onload = () => {
         this.onImageLoaded(img);
         this.emit('image-loaded', { image: img, dataUrl });
@@ -1206,25 +1317,22 @@ export class ExtractorTool extends BaseComponent {
 
   /**
    * Clear the current image and everything read from it. FINDING-009:
-   * nothing was persisted, so dropping the references is the whole clear.
+   * nothing was persisted, so dropping the references is the whole clear —
+   * including the canvas listeners, which would otherwise pin the detached
+   * full-resolution canvas in the listener map.
    */
   private clearImage(): void {
     this.currentImage = null;
-    this.extractedMatches = [];
+    this.extracted = [];
     this.picks = [];
     this.roll = [];
-    this.focusIndex = null;
+    this.focusKey = null;
     this.currentLoupeHex = null;
+    this.loupePoint = null;
+    this.hintCache = null;
     this.v4ResultCards = [];
 
-    if (this.resultsContainer) {
-      clearContainer(this.resultsContainer);
-    }
-    if (this.barElement) {
-      clearContainer(this.barElement);
-    }
-    this.renderLegend();
-    this.renderHeader();
+    this.renderRoll();
     this.resetLoupe();
     this.updateFlowVisibility();
 
@@ -1262,7 +1370,10 @@ export class ExtractorTool extends BaseComponent {
     if (!this.canvasContainer) return;
 
     // Tear down any previous controller (its document-level key listeners
-    // survive clearContainer otherwise)
+    // survive clearContainer otherwise) and the listeners bound to its
+    // wrapper — a load→clear cycle must not retain the old canvas
+    this.unbindPanelEvents(this.canvasListenerKeys);
+    this.canvasListenerKeys = [];
     this.imageZoom?.destroy();
     this.imageZoom = null;
     clearContainer(this.canvasContainer);
@@ -1285,30 +1396,35 @@ export class ExtractorTool extends BaseComponent {
 
     // A click/tap, or the release of a drag: the controller's averaged
     // sample at that canvas point. The loupe settles there holding it.
-    this.onPanelEvent(canvasWrapper, 'image-sampled', (event: CustomEvent) => {
-      const { hex, x, y, isPixelSample } = event.detail as {
-        hex?: string;
-        x?: number;
-        y?: number;
-        isPixelSample?: boolean;
-      };
-      if (!isPixelSample || !hex) return;
-      const point = this.canvasToCardPoint(x ?? 0, y ?? 0);
-      this.showLoupe(hex, point, false);
-    });
+    this.canvasListenerKeys.push(
+      this.onPanelEvent(canvasWrapper, 'image-sampled', (event: CustomEvent) => {
+        const { hex, x, y, isPixelSample } = event.detail as {
+          hex?: string;
+          x?: number;
+          y?: number;
+          isPixelSample?: boolean;
+        };
+        if (!isPixelSample || !hex) return;
+        this.showLoupe(hex, this.canvasToCardPoint(x ?? 0, y ?? 0), false);
+      })
+    );
 
     // The drag reads the pixel under the pointer live
-    this.onPanelEvent(canvasWrapper, 'loupe-move', (event: CustomEvent) => {
-      const { hex, clientX, clientY } = event.detail as {
-        hex: string;
-        clientX: number;
-        clientY: number;
-      };
-      this.showLoupe(hex, this.clientToCardPoint(clientX, clientY), true);
-    });
-    this.onPanelEvent(canvasWrapper, 'loupe-end', () => {
-      this.settleLoupe();
-    });
+    this.canvasListenerKeys.push(
+      this.onPanelEvent(canvasWrapper, 'loupe-move', (event: CustomEvent) => {
+        const { hex, clientX, clientY } = event.detail as {
+          hex: string;
+          clientX: number;
+          clientY: number;
+        };
+        this.showLoupe(hex, this.clientToCardPoint(clientX, clientY), true);
+      })
+    );
+    this.canvasListenerKeys.push(
+      this.onPanelEvent(canvasWrapper, 'loupe-end', () => {
+        this.settleLoupe();
+      })
+    );
 
     if (this.currentImage) {
       this.imageZoom.setImage(this.currentImage);
@@ -1345,6 +1461,7 @@ export class ExtractorTool extends BaseComponent {
    */
   private showLoupe(hex: string, point: { left: number; top: number }, dragging: boolean): void {
     if (!this.loupeElement) return;
+    this.loupePoint = point;
     this.loupeElement.style.left = `${point.left}px`;
     this.loupeElement.style.top = `${point.top}px`;
     this.loupeElement.style.background = hex;
@@ -1388,7 +1505,8 @@ export class ExtractorTool extends BaseComponent {
 
   /**
    * Track the loupe's colour — it feeds the hint chip (which names the
-   * nearest dye) and the `+` tile's chip.
+   * nearest dye) and the `+` tile's chip. A drag reads the same pixel many
+   * times over, so the nearest-dye lookup is cached per hex.
    */
   private setLoupeHex(hex: string): void {
     this.currentLoupeHex = hex;
@@ -1399,11 +1517,15 @@ export class ExtractorTool extends BaseComponent {
       this.addPickChipElement.style.background = hex;
     }
     if (this.hintReadElement) {
-      const nearest = dyeService.findClosestDye(hex, { matchingMethod: this.matchingMethod });
-      const name = nearest ? this.dyeDisplayName(nearest) : '';
-      this.hintReadElement.textContent = name
-        ? `${hex.toUpperCase()} · ${name}`
-        : hex.toUpperCase();
+      if (!this.hintCache || this.hintCache.hex !== hex) {
+        const nearest = dyeService.findClosestDye(hex, { matchingMethod: this.matchingMethod });
+        const name = nearest ? this.dyeDisplayName(nearest) : '';
+        this.hintCache = {
+          hex,
+          text: name ? `${hex.toUpperCase()} · ${name}` : hex.toUpperCase(),
+        };
+      }
+      this.hintReadElement.textContent = this.hintCache.text;
       this.hintReadElement.style.display = '';
       for (const el of this.hintRestElements) {
         el.style.display = 'none';
@@ -1422,29 +1544,36 @@ export class ExtractorTool extends BaseComponent {
   /**
    * Resolve every bar segment to a dye through ONE path: the extracted
    * colours (ordered by share, or by the vibrancy score when the boost is
-   * on) and then the picks, each taking the nearest dye that the filters
-   * allow and — while preventDuplicates is on — no earlier slot has taken.
+   * on) and then the picks, each taking the nearest dye the filters allow
+   * and — while preventDuplicates is on — no earlier slot has taken. A
+   * colour whose only eligible dyes are already taken keeps the nearest
+   * eligible one as a repeat rather than vanishing (3C's last resort); a
+   * colour the filters leave no dye for at all drops, and the sheet says so.
    */
   private rebuildRoll(): void {
-    const sources: Array<{ hex: string; share: number | null; preferred?: Dye }> =
-      this.orderedExtracted().map((match) => ({
-        hex: this.rgbToHexString(match.extracted),
-        share: Math.round(match.dominance),
-        preferred: match.matchedDye,
-      }));
-    for (const hex of this.picks) {
-      sources.push({ hex, share: null });
+    const sources: Array<{ key: string; hex: string; share: number | null }> = [];
+    for (const cluster of this.orderedExtracted()) {
+      const hex = this.rgbToHexString(cluster.color);
+      sources.push({ key: `x:${hex}`, hex, share: Math.round(cluster.dominance) });
     }
+    for (const hex of this.picks) {
+      sources.push({ key: `p:${hex.toUpperCase()}`, hex, share: null });
+    }
+
+    // Dyes the filters exclude, once per roll rather than once per entry
+    const excludedIds = dyeService
+      .getAllDyes()
+      .filter((dye) => isDyeExcluded(this.dyeFiltersConfig, dye))
+      .map((dye) => dye.id);
 
     const used = new Set<number>();
     const roll: RollEntry[] = [];
     for (const source of sources) {
-      const dye = this.nearestEligibleDye(source.hex, used, source.preferred);
+      const dye = this.resolveDye(source.hex, excludedIds, used);
       if (!dye) continue;
-      if (this.preventDuplicates) {
-        used.add(dye.itemID);
-      }
+      used.add(dye.id);
       roll.push({
+        key: source.key,
         hex: source.hex,
         share: source.share,
         dye,
@@ -1454,9 +1583,29 @@ export class ExtractorTool extends BaseComponent {
     }
     this.roll = roll;
 
-    if (this.focusIndex !== null && this.focusIndex >= roll.length) {
-      this.focusIndex = null;
+    if (this.focusKey !== null && !roll.some((entry) => entry.key === this.focusKey)) {
+      this.focusKey = null;
     }
+  }
+
+  /**
+   * The nearest dye the filters allow. With preventDuplicates on, the
+   * nearest such dye no earlier slot holds — and when every eligible dye is
+   * taken, the nearest eligible one anyway. Core's search does the ranking
+   * (unrounded, for DISTINGUISH % too); `excludeIds` keys on `dye.id`.
+   */
+  private resolveDye(hex: string, excludedIds: number[], used: Set<number>): Dye | null {
+    if (this.preventDuplicates && used.size > 0) {
+      const unique = dyeService.findClosestDye(hex, {
+        matchingMethod: this.matchingMethod,
+        excludeIds: [...excludedIds, ...used],
+      });
+      if (unique) return unique;
+    }
+    return dyeService.findClosestDye(hex, {
+      matchingMethod: this.matchingMethod,
+      excludeIds: excludedIds,
+    });
   }
 
   /**
@@ -1465,39 +1614,14 @@ export class ExtractorTool extends BaseComponent {
    * (`0.55 × saturation + share`, the drawn formula) so a small vivid accent
    * can lead a large muted field. The widths stay share-based either way.
    */
-  private orderedExtracted(): PaletteMatch[] {
-    if (!this.vibrancyBoost) return this.extractedMatches;
-    const score = (match: PaletteMatch): number => {
-      const { r, g, b } = match.extracted;
+  private orderedExtracted(): ExtractedColor[] {
+    if (!this.vibrancyBoost) return this.extracted;
+    const score = (cluster: ExtractedColor): number => {
+      const { r, g, b } = cluster.color;
       const sat = ColorService.rgbToHsv(r, g, b).s;
-      return sat * 0.55 + match.dominance;
+      return sat * 0.55 + cluster.dominance;
     };
-    return [...this.extractedMatches].sort((a, b) => score(b) - score(a));
-  }
-
-  /**
-   * The nearest dye the current filters allow that no earlier slot holds
-   * (while preventDuplicates is on). `preferred` is the extraction's own
-   * match, taken when it qualifies so the sheet agrees with the matcher.
-   * The substitute is chosen by the same metric as the original match, or
-   * excluding a dye would change what "closest" means (BUG-007).
-   */
-  private nearestEligibleDye(hex: string, used: Set<number>, preferred?: Dye): Dye | null {
-    const eligible = (dye: Dye): boolean =>
-      !isDyeExcluded(this.dyeFiltersConfig, dye) &&
-      !(this.preventDuplicates && used.has(dye.itemID));
-
-    const first =
-      preferred ?? dyeService.findClosestDye(hex, { matchingMethod: this.matchingMethod });
-    if (first && eligible(first)) return first;
-
-    const pool = filterDyes(this.dyeFiltersConfig, dyeService.getAllDyes()).filter(eligible);
-    if (pool.length === 0) return null;
-    return pool.reduce((best, dye) => {
-      const bestDist = ColorService.getDistanceForMethod(hex, best.hex, this.matchingMethod);
-      const dyeDist = ColorService.getDistanceForMethod(hex, dye.hex, this.matchingMethod);
-      return dyeDist < bestDist ? dye : best;
-    });
+    return [...this.extracted].sort((a, b) => score(b) - score(a));
   }
 
   /** Format an RGB triple as an uppercase hex string. */
@@ -1522,19 +1646,22 @@ export class ExtractorTool extends BaseComponent {
   // ============================================================================
 
   /**
-   * Extracted segments sized by share (`flex: share 1 0`, labelled `n%`),
+   * Extracted segments sized by share (`flex-grow` = share, labelled `n%`),
    * a 3px break, then each pick as a fixed-width segment labelled with its
-   * slot number, then the `+` tile holding the loupe colour.
+   * slot number, then the `+` tile holding the loupe colour. Clicks are
+   * delegated to the bar (buildBar) — nothing is bound per segment.
    */
   private renderBar(): void {
     if (!this.barElement) return;
     clearContainer(this.barElement);
+    this.addPickChipElement = null;
+    if (!this.currentImage) return;
 
     const firstPick = this.roll.findIndex((entry) => entry.share === null);
 
     this.roll.forEach((entry, index) => {
       const isPick = entry.share === null;
-      const focused = index === this.focusIndex;
+      const focused = entry.key === this.focusKey;
       const segment = this.createElement('button', {
         className: isPick ? 'x4a-seg x4a-seg-pick' : 'x4a-seg',
         attributes: {
@@ -1543,10 +1670,10 @@ export class ExtractorTool extends BaseComponent {
             ? `${entry.hex.toUpperCase()} · ${this.dyeDisplayName(entry.dye)}`
             : `${entry.hex.toUpperCase()} · ${entry.share}% · ${this.dyeDisplayName(entry.dye)}`,
           'aria-pressed': focused ? 'true' : 'false',
-          'data-index': String(index),
+          'data-key': entry.key,
           style: [
             'display: flex; align-items: center; justify-content: center; padding: 0;',
-            'cursor: pointer; border: none; box-sizing: border-box;',
+            'cursor: pointer; border: none; box-sizing: border-box; overflow: hidden;',
             `border-top: 3px solid ${focused ? 'var(--theme-primary)' : 'transparent'};`,
             `background: ${entry.hex};`,
             // Longhands, not the `flex` shorthand: the width IS the share and
@@ -1565,15 +1692,12 @@ export class ExtractorTool extends BaseComponent {
           textContent: isPick ? String(index + 1) : `${entry.share}%`,
           attributes: {
             style: [
-              'font-family: var(--font-mono); font-size: 9.5px; white-space: nowrap; overflow: hidden;',
+              'font-family: var(--font-mono); font-size: 9.5px; white-space: nowrap; overflow: hidden; min-width: 0;',
               `color: ${getContrastColor(entry.hex)};`,
             ].join(' '),
           },
         })
       );
-      this.on(segment, 'click', () => {
-        this.setFocus(index);
-      });
       this.barElement!.appendChild(segment);
     });
 
@@ -1609,68 +1733,81 @@ export class ExtractorTool extends BaseComponent {
         attributes: { style: 'font-size: 13px; line-height: 1;', 'aria-hidden': 'true' },
       })
     );
-    this.on(addTile, 'click', () => {
-      this.commitPick();
-    });
     this.barElement.appendChild(addTile);
   }
 
   /**
    * Commit the loupe's colour as a pick — it joins the fixed-width run at
    * the bar's right end and gets its own card. Nothing to commit before the
-   * loupe has read a colour; past the cap, say so rather than drop one.
+   * loupe has read a colour; a colour already in the run focuses that pick
+   * (a double-tap is not two picks); past the cap, say so rather than drop
+   * one.
    */
   private commitPick(): void {
     if (!this.currentLoupeHex || !this.currentImage) return;
+    const hex = this.currentLoupeHex.toUpperCase();
+    const existing = this.picks.find((pick) => pick.toUpperCase() === hex);
+    if (existing) {
+      this.setFocus(`p:${hex}`);
+      return;
+    }
     if (this.picks.length >= MAX_PICKS) {
       ToastService.info(
         LanguageService.tInterpolate('matcher.pickCapReached', { max: String(MAX_PICKS) })
       );
       return;
     }
-    this.picks.push(this.currentLoupeHex);
+    this.picks.push(hex);
+    this.focusKey = `p:${hex}`;
     this.renderRoll();
-    this.setFocus(this.roll.length - 1);
+    this.setFocus(this.focusKey);
   }
 
   /** Drop every pick; the extracted run stays. */
   private clearPicks(): void {
     if (this.picks.length === 0) return;
     this.picks = [];
-    this.focusIndex = null;
+    this.focusKey = null;
     this.renderRoll();
   }
 
   /**
-   * Focus a segment: its top edge takes the accent, its card takes the
-   * selected ring and scrolls into view.
+   * Focus a segment by identity: its top edge takes the accent, its card
+   * takes the selected ring and scrolls into view. Identity, not index, so a
+   * re-order or a dropped entry never moves the ring onto another colour.
    */
-  private setFocus(index: number | null): void {
-    this.focusIndex = index !== null && index >= 0 && index < this.roll.length ? index : null;
+  private setFocus(key: string | null): void {
+    const index = key === null ? -1 : this.roll.findIndex((entry) => entry.key === key);
+    this.focusKey = index >= 0 ? key : null;
 
     if (this.barElement) {
       const segments = this.barElement.querySelectorAll<HTMLElement>('.x4a-seg');
-      segments.forEach((segment, i) => {
-        const focused = i === this.focusIndex;
+      segments.forEach((segment) => {
+        const focused = segment.dataset.key === this.focusKey;
         segment.style.borderTopColor = focused ? 'var(--theme-primary)' : 'transparent';
         segment.setAttribute('aria-pressed', focused ? 'true' : 'false');
       });
     }
 
     this.v4ResultCards.forEach((card, i) => {
-      card.selected = i === this.focusIndex;
+      card.selected = i === index;
     });
-    if (this.focusIndex !== null) {
-      const card = this.v4ResultCards[this.focusIndex];
+    if (index >= 0) {
+      const card = this.v4ResultCards[index];
       if (card && typeof card.scrollIntoView === 'function') {
         card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     }
   }
 
+  /** Picks that made it onto the sheet — the legend and header count these. */
+  private pickCount(): number {
+    return this.roll.filter((entry) => entry.share === null).length;
+  }
+
   /** `IMAGE SHARE · n picks`, and the Clear-picks button while there are any. */
   private renderLegend(): void {
-    const picks = this.picks.length;
+    const picks = this.pickCount();
     if (this.legendElement) {
       const share = LanguageService.t('matcher.imageShare');
       const picksText =
@@ -1680,13 +1817,13 @@ export class ExtractorTool extends BaseComponent {
       this.legendElement.textContent = picks > 0 ? `${share} · ${picksText}` : share;
     }
     if (this.clearPicksBtn) {
-      this.clearPicksBtn.style.display = picks > 0 ? '' : 'none';
+      this.clearPicksBtn.style.display = this.picks.length > 0 ? '' : 'none';
     }
   }
 
   /** The count reads `6 + 2` with picks (never `8 of 6`), `6 of 6` without. */
   private renderHeader(): void {
-    const picks = this.roll.filter((entry) => entry.share === null).length;
+    const picks = this.pickCount();
     const extracted = this.roll.length - picks;
     if (this.resultsCountElement) {
       if (this.roll.length === 0) {
@@ -1715,17 +1852,33 @@ export class ExtractorTool extends BaseComponent {
   // The sheet (stage 3 — output)
   // ============================================================================
 
-  /** One compact result card per roll entry, in bar order. */
+  /**
+   * One compact result card per roll entry, in bar order. When the image
+   * gave colours but the filters left no dye for any of them, say so
+   * instead of showing an empty sheet.
+   */
   private renderCards(): void {
     if (!this.resultsContainer) return;
     clearContainer(this.resultsContainer);
     this.v4ResultCards = [];
 
-    if (this.roll.length === 0) return;
+    if (this.roll.length === 0) {
+      if (this.extracted.length + this.picks.length > 0) {
+        this.resultsContainer.appendChild(
+          this.createElement('p', {
+            className: 'text-sm text-center py-4',
+            textContent: LanguageService.t('matcher.noMatchingDyes'),
+            attributes: { style: 'color: var(--theme-text-muted);' },
+          })
+        );
+      }
+      return;
+    }
 
     const cardsGrid = this.createElement('div', {
       className: 'extractor-results-grid v5-results-grid',
     });
+    const focusIndex = this.roll.findIndex((entry) => entry.key === this.focusKey);
 
     this.roll.forEach((entry, index) => {
       const cardData: ResultCardData = {
@@ -1736,23 +1889,14 @@ export class ExtractorTool extends BaseComponent {
         matchingMethod: this.matchingMethod,
         vendorCost: entry.dye.cost,
       };
-
-      if (this.showPrices && this.priceData.has(entry.dye.itemID)) {
-        const price = this.priceData.get(entry.dye.itemID)!;
-        cardData.price = price.currentMinPrice;
-        // Resolve worldId to a world name; fall back to the selected server
-        cardData.marketServer =
-          WorldService.getWorldName(price.worldId) ||
-          this.marketBoardService.getSelectedServer() ||
-          LanguageService.t('common.market');
-      }
+      this.applyMarketState(cardData);
 
       const card = document.createElement('v4-result-card') as unknown as ResultCard;
       card.compact = true;
       card.data = cardData;
-      card.selected = index === this.focusIndex;
+      card.selected = index === focusIndex;
       card.setAttribute('primary-opens-menu', 'true');
-      card.dataset.index = String(index);
+      card.dataset.key = entry.key;
 
       card.showHex = this.displayOptions.showHex;
       card.showRgb = this.displayOptions.showRgb;
@@ -1766,11 +1910,8 @@ export class ExtractorTool extends BaseComponent {
       card.showPrice = this.displayOptions.showPrice && this.showPrices;
       card.showAcquisition = this.displayOptions.showAcquisition;
 
-      card.addEventListener('context-action', ((
-        e: CustomEvent<{ action: ContextAction; dye: Dye }>
-      ) => {
-        this.handleContextAction(e.detail.action, e.detail.dye);
-      }) as EventListener);
+      // The card performs its own hand-offs (Inspect / Transform / Open in
+      // browser); nothing here listens for them.
 
       this.v4ResultCards.push(card);
       cardsGrid.appendChild(card);
@@ -1782,6 +1923,24 @@ export class ExtractorTool extends BaseComponent {
   // ============================================================================
   // Market prices
   // ============================================================================
+
+  /**
+   * The card's market fields from the service's cache and the last fetch
+   * outcome — the same rule whether the card is being built or updated in
+   * place, so a rebuild for an unrelated setting never wipes an error badge.
+   */
+  private applyMarketState(cardData: ResultCardData): void {
+    const priceInfo = this.showPrices ? this.priceData.get(cardData.dye.itemID) : undefined;
+    const marketServer =
+      this.marketBoardService.getWorldNameForPrice(priceInfo) ??
+      (priceInfo ? WorldService.getWorldName(priceInfo.worldId) : null) ??
+      this.marketBoardService.getSelectedServer() ??
+      LanguageService.t('common.market');
+    cardData.price = priceInfo ? priceInfo.currentMinPrice : undefined;
+    cardData.marketServer = this.showPrices ? marketServer : undefined;
+    cardData.marketError =
+      this.showPrices && this.lastMarketError && !priceInfo ? this.lastMarketError : undefined;
+  }
 
   /** Fetch prices for every distinct dye on the sheet. */
   private async fetchPricesForRoll(): Promise<void> {
@@ -1854,21 +2013,10 @@ export class ExtractorTool extends BaseComponent {
     for (const card of this.v4ResultCards) {
       const currentData = card.data;
       if (!currentData?.dye) continue;
-
-      const priceInfo = this.priceData.get(currentData.dye.itemID);
-      const marketServer =
-        this.marketBoardService.getWorldNameForPrice(priceInfo) ??
-        this.marketBoardService.getSelectedServer();
-
       card.showPrice = this.displayOptions.showPrice && this.showPrices;
-      const shouldShowError = this.showPrices && this.lastMarketError && !priceInfo;
-
-      card.data = {
-        ...currentData,
-        price: this.showPrices && priceInfo ? priceInfo.currentMinPrice : undefined,
-        marketServer,
-        marketError: shouldShowError ? this.lastMarketError : undefined,
-      };
+      const next: ResultCardData = { ...currentData };
+      this.applyMarketState(next);
+      card.data = next;
     }
   }
 
@@ -1878,11 +2026,18 @@ export class ExtractorTool extends BaseComponent {
 
   /**
    * Extract the dominant colours with K-means and rebuild the roll. Runs on
-   * image load (`announce` toasts the count) and on every config change that
-   * affects the extraction — silently, so a slider drag is not a toast storm.
-   * The picks survive a re-extraction.
+   * image load (`announce` toasts the count) and on a colour-count change —
+   * silently, so a slider drag is not a toast storm. The picks survive. A
+   * change that lands mid-run queues one more run rather than racing it.
+   * On failure the previous palette is not left standing: it was read from
+   * a different image or under a different count.
    */
   private async extractPalette(announce: boolean): Promise<void> {
+    if (this.isExtracting) {
+      this.pendingReextract = true;
+      return;
+    }
+
     const canvas = this.imageZoom?.getCanvas();
     if (!canvas || !this.currentImage) {
       ToastService.error(LanguageService.t('matcher.noImageForPalette'));
@@ -1896,12 +2051,7 @@ export class ExtractorTool extends BaseComponent {
     }
 
     this.isExtracting = true;
-    if (this.workspaceElement) {
-      this.workspaceElement.dataset.busy = 'true';
-    }
-    if (this.barElement) {
-      this.barElement.setAttribute('aria-busy', 'true');
-    }
+    this.setBusy(true);
 
     // OPT-011: yield a frame so the busy state actually paints — the work
     // below is synchronous
@@ -1913,46 +2063,45 @@ export class ExtractorTool extends BaseComponent {
       const pixels = this.samplePixelsForPalette(imageData);
 
       if (pixels.length === 0) {
+        this.extracted = [];
+        this.renderRoll();
         ToastService.error(LanguageService.t('errors.noPixelsToAnalyze'));
         return;
       }
 
-      // BUG-091: pass `matchingMethod`, or the service falls back to its own
-      // default whatever the user selected
-      const matches = this.paletteService.extractAndMatchPalette(pixels, dyeService, {
-        colorCount: this.paletteColorCount,
-        matchingMethod: this.matchingMethod,
-      });
-
       // K-means hands back `colorCount` clusters whatever the image holds, so
       // a flat logo asked for four colours returns two real clusters and two
       // empty ones. An empty cluster has no pixels — it is not a colour the
-      // image contains, it must not take a bar segment or a card, and the
-      // count would read `4 + 2` over two real colours.
-      const kept = matches.filter((match) => match.dominance >= 1);
-      this.extractedMatches = kept;
+      // image contains and must not take a bar segment or a card. (A real
+      // cluster under half a percent keeps its pixels and stays.)
+      const clusters = this.paletteService
+        .extractPalette(pixels, { colorCount: this.paletteColorCount })
+        .filter((cluster) => cluster.pixelCount > 0);
+
+      this.extracted = clusters;
       this.renderRoll();
 
       if (announce) {
         ToastService.success(
           LanguageService.tInterpolate(
-            kept.length === 1 ? 'matcher.paletteExtractedOne' : 'matcher.paletteExtracted',
-            { count: String(kept.length) }
+            clusters.length === 1 ? 'matcher.paletteExtractedOne' : 'matcher.paletteExtracted',
+            { count: String(clusters.length) }
           )
         );
       }
 
-      logger.info('[ExtractorTool] Palette extracted:', kept.length, 'colors');
+      logger.info('[ExtractorTool] Palette extracted:', clusters.length, 'colors');
     } catch (error) {
       logger.error('[ExtractorTool] Palette extraction failed:', error);
+      this.extracted = [];
+      this.renderRoll();
       ToastService.error(LanguageService.t('errors.paletteExtractionFailed'));
     } finally {
       this.isExtracting = false;
-      if (this.workspaceElement) {
-        delete this.workspaceElement.dataset.busy;
-      }
-      if (this.barElement) {
-        this.barElement.removeAttribute('aria-busy');
+      this.setBusy(false);
+      if (this.pendingReextract) {
+        this.pendingReextract = false;
+        void this.extractPalette(false);
       }
     }
   }
@@ -1983,54 +2132,8 @@ export class ExtractorTool extends BaseComponent {
   }
 
   // ============================================================================
-  // Hand-offs
+  // Export
   // ============================================================================
-
-  /**
-   * Handle context menu actions from result cards
-   */
-  private handleContextAction(action: ContextAction, dye: Dye): void {
-    switch (action) {
-      case 'add-comparison':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', { detail: { toolId: 'comparison', dye } })
-        );
-        ToastService.success(LanguageService.t('harmony.addedToComparison'));
-        break;
-
-      case 'add-mixer':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', { detail: { toolId: 'mixer', dye } })
-        );
-        ToastService.success(LanguageService.t('harmony.addedToMixer'));
-        break;
-
-      case 'add-accessibility':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', { detail: { toolId: 'accessibility', dye } })
-        );
-        ToastService.success(LanguageService.t('harmony.addedToAccessibility'));
-        break;
-
-      case 'see-harmonies':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', { detail: { toolId: 'harmony', dye } })
-        );
-        break;
-
-      case 'budget':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', { detail: { toolId: 'budget', dye } })
-        );
-        break;
-
-      case 'copy-hex':
-        void navigator.clipboard.writeText(dye.hex).then(() => {
-          ToastService.success(LanguageService.t('success.copiedToClipboard'));
-        });
-        break;
-    }
-  }
 
   /**
    * Open the shared export sheet over the roll — extracted colours and picks

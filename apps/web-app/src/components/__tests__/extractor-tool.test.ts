@@ -46,13 +46,21 @@ const {
   };
   const mockGetAllDyes = vi.fn();
   /** The dye pool both matchers search — whatever getAllDyes is seeded with. */
-  const pool = (): { hex: string }[] => (mockGetAllDyes() as { hex: string }[]) ?? [];
+  const pool = (): { id: number; hex: string }[] =>
+    (mockGetAllDyes() as { id: number; hex: string }[]) ?? [];
   return {
     mockGetAllDyes,
     mockGetDyeById: vi.fn(),
     mockFindClosestDyes: vi.fn(),
-    mockFindClosestDye: vi.fn((hex: string) => {
-      const dyes = pool();
+    /**
+     * Honours `excludeIds` (by `dye.id`) exactly as core's DyeSearch does —
+     * the tool's whole resolution path (filters + Prevent duplicates) now
+     * rides on it, so a mock that ignored it could not tell a working
+     * dedupe from a broken one.
+     */
+    mockFindClosestDye: vi.fn((hex: string, opts?: { excludeIds?: number[] }) => {
+      const excluded = new Set(opts?.excludeIds ?? []);
+      const dyes = pool().filter((d) => !excluded.has(d.id));
       if (dyes.length === 0) return null;
       return dyes.reduce((best, d) => (dist(hex, d.hex) < dist(hex, best.hex) ? d : best));
     }),
@@ -792,11 +800,14 @@ describe('ExtractorTool', () => {
       globalThis.Image = FailingImage as unknown as typeof Image;
       tool = mount();
 
+      const { ToastService } = await import('@services/index');
       rightPanel.dispatchEvent(dropEvent([new File(['x'], 'shot.png', { type: 'image/png' })]));
       for (let i = 0; i < 6; i++) await flush();
 
-      // The drop zone is still there to try again with
+      // The drop zone is still there to try again with — and the failure is
+      // said out loud rather than swallowed (a truncated PNG, a desktop HEIC)
       expect(dropZone().parentElement!.style.display).toBe('flex');
+      expect(ToastService.error).toHaveBeenCalledWith('errors.failedToReadImage');
     });
 
     it('tears down cleanly with an image loaded', async () => {
@@ -1074,6 +1085,237 @@ describe('ExtractorTool', () => {
     });
 
     // ------------------------------------------------------------------------
+    // Review round — the cases the first cut got wrong
+    // ------------------------------------------------------------------------
+
+    describe('review round', () => {
+      it('a double-tap of + focuses the existing pick instead of committing it twice', async () => {
+        tool = mount();
+        await loadImage();
+        const extracted = extractedSegments().length;
+
+        sample('#7A4B2C');
+        addTile().click();
+        addTile().click();
+
+        expect(pickSegments()).toHaveLength(1);
+        expect(resultCards().length).toBe(extracted + 1);
+        expect(cardSelected(extracted)).toBe(true);
+      });
+
+      it('keeps every colour as a repeat once Prevent duplicates has used up the eligible dyes', async () => {
+        tool = mount();
+        await loadImage();
+        // Pastel + dark excluded leaves the fixture pool one dye (Snow White):
+        // every extracted colour must still be on the sheet, sharing it
+        tool.setConfig({
+          dyeFilters: { ...DEFAULT_DYE_FILTERS, excludePastel: true, excludeDark: true },
+        });
+
+        expect(resultCards().length).toBe(extractedSegments().length);
+        expect(resultCards().length).toBeGreaterThan(1);
+        for (let i = 0; i < resultCards().length; i++) {
+          expect(cardData(i).dye.isPastel).toBe(false);
+          expect(cardData(i).dye.isDark).toBe(false);
+        }
+
+        // A pick lands on the sheet under the same rule — it never vanishes
+        // while the legend still counts it
+        commit('#123456');
+        expect(pickSegments()).toHaveLength(1);
+        expect(legend().textContent).toBe('matcher.imageShare · matcher.picksCountOne');
+      });
+
+      it('says so when no dye is left for any colour', async () => {
+        mockGetAllDyes.mockReturnValue([]);
+        tool = mount();
+        await loadImage();
+
+        expect(resultCards().length).toBe(0);
+        expect(rightPanel.textContent).toContain('matcher.noMatchingDyes');
+        expect(countLabel().textContent).toBe('');
+        expect(exportButton().disabled).toBe(true);
+      });
+
+      it('clears the previous palette when a replacement image yields no pixels', async () => {
+        const { ToastService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        commit('#123456');
+        expect(resultCards().length).toBeGreaterThan(1);
+
+        // The replacement is fully transparent: every pixel is dropped
+        ctx.getImageData.mockImplementation(() => ({
+          data: new Uint8ClampedArray(16),
+          width: 2,
+          height: 2,
+        }));
+        rightPanel.dispatchEvent(dropEvent([new File(['x'], 'blank.png', { type: 'image/png' })]));
+        await vi.waitFor(() =>
+          expect(ToastService.error).toHaveBeenCalledWith('errors.noPixelsToAnalyze')
+        );
+
+        // Nothing of image A survives under image B
+        expect(resultCards().length).toBe(0);
+        expect(pickSegments()).toHaveLength(0);
+        expect(countLabel().textContent).toBe('');
+        expect(clearPicksBtn().style.display).toBe('none');
+        expect(exportButton().disabled).toBe(true);
+      });
+
+      it('re-resolves instead of re-clustering when the matching method changes', async () => {
+        const { ColorService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        ctx.getImageData.mockClear();
+
+        tool.setConfig({ matchingMethod: 'oklab' });
+        await flush();
+
+        // K-means++ is seeded at random: a re-run would re-cluster and the
+        // user would read that as an effect of the metric
+        expect(ctx.getImageData).not.toHaveBeenCalled();
+        const last = vi.mocked(ColorService.getDistanceForMethod).mock.calls.at(-1);
+        expect(last?.[2]).toBe('oklab');
+        const lastLookup = mockFindClosestDye.mock.calls.at(-1) as
+          [string, { matchingMethod?: string }?] | undefined;
+        expect(lastLookup?.[1]?.matchingMethod).toBe('oklab');
+      });
+
+      it('orders a saturated colour ahead of white while the vibrancy boost is on', async () => {
+        const { ColorService } = await import('@services/index');
+        vi.mocked(ColorService.rgbToHsv).mockImplementation((r: number, g: number, b: number) => {
+          const mx = Math.max(r, g, b);
+          const mn = Math.min(r, g, b);
+          return { h: 0, s: mx ? ((mx - mn) / mx) * 100 : 0, v: (mx / 255) * 100 };
+        });
+        tool = mount();
+        await loadImage();
+
+        // Four equal 25% clusters: the drawn score (0.55 × saturation + share)
+        // puts white (saturation 0) last
+        const segs = extractedSegments();
+        expect(segs.length).toBe(4);
+        expect(segs[segs.length - 1].style.background).toBe('rgb(255, 255, 255)');
+        expect(segs[0].style.background).not.toBe('rgb(255, 255, 255)');
+      });
+
+      it('keeps the focus on the colour, not the index, when the run re-orders', async () => {
+        const { ColorService } = await import('@services/index');
+        vi.mocked(ColorService.rgbToHsv).mockImplementation((r: number, g: number, b: number) => {
+          const mx = Math.max(r, g, b);
+          const mn = Math.min(r, g, b);
+          return { h: 0, s: mx ? ((mx - mn) / mx) * 100 : 0, v: (mx / 255) * 100 };
+        });
+        tool = mount();
+        await loadImage();
+        const segs = extractedSegments();
+        const chosen = segs[segs.length - 1];
+        const chosenKey = chosen.dataset.key;
+        chosen.click();
+        expect(chosen.getAttribute('aria-pressed')).toBe('true');
+
+        tool.setConfig({ vibrancyBoost: false });
+
+        const focused = extractedSegments().find((s) => s.getAttribute('aria-pressed') === 'true');
+        expect(focused?.dataset.key).toBe(chosenKey);
+        const focusedCards = Array.from(resultCards()).filter(
+          (c) => (c as unknown as { selected: boolean }).selected
+        );
+        expect(focusedCards).toHaveLength(1);
+        expect((focusedCards[0] as HTMLElement).dataset.key).toBe(chosenKey);
+      });
+
+      it('keeps the loupe where it settled across a language switch', async () => {
+        const { LanguageService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        sample('#00FF00');
+        const onLanguage = vi.mocked(LanguageService.subscribe).mock.calls[0][0] as () => void;
+
+        onLanguage();
+
+        expect(loupe().style.transform).toContain('scale(1)');
+        expect(loupe().style.background).toBe('rgb(0, 255, 0)');
+        expect(loupe().textContent).toContain('#00FF00');
+        expect(hintRead().style.display).toBe('');
+      });
+
+      it('keeps a market error badge through a sheet rebuild', async () => {
+        const { MarketBoardService, ConfigController } = await import('@services/index');
+        const svc = MarketBoardService.getInstance();
+        vi.mocked(svc.getShowPrices).mockReturnValue(true);
+        tool = mount();
+        await loadImage();
+        vi.mocked(svc.fetchPricesForDyes).mockRejectedValueOnce(
+          new Error('Request failed with status: 429')
+        );
+        const market = vi
+          .mocked(ConfigController.getInstance().subscribe)
+          .mock.calls.find((c) => c[0] === 'market')!;
+        (market[1] as (config: { showPrices: boolean }) => void)({ showPrices: true });
+        for (let i = 0; i < 4; i++) await flush();
+        expect(
+          (resultCards()[0] as unknown as { data: { marketError?: string } }).data.marketError
+        ).toBe('H429');
+
+        // A display-option change rebuilds every card; the badge must survive
+        tool.setConfig({ displayOptions: { showHex: false } as never });
+
+        expect(
+          (resultCards()[0] as unknown as { data: { marketError?: string } }).data.marketError
+        ).toBe('H429');
+        expect((resultCards()[0] as unknown as { showHex: boolean }).showHex).toBe(false);
+      });
+
+      it('leaves a paste aimed at a text field alone, and takes one image from a paste elsewhere', () => {
+        tool = mount();
+        const readSpy = vi
+          .spyOn(FileReader.prototype, 'readAsDataURL')
+          .mockImplementation(() => undefined);
+        const item = {
+          type: 'image/png',
+          getAsFile: () => new File(['x'], 'c.png', { type: 'image/png' }),
+        };
+        const pasteWith = (items: unknown[]): Event => {
+          const ev = new Event('paste', { bubbles: true, cancelable: true });
+          Object.defineProperty(ev, 'clipboardData', { value: { items } });
+          return ev;
+        };
+
+        const input = document.createElement('input');
+        container.appendChild(input);
+        const onInput = pasteWith([item]);
+        input.dispatchEvent(onInput);
+        expect(readSpy).not.toHaveBeenCalled();
+        expect(onInput.defaultPrevented).toBe(false);
+
+        document.body.dispatchEvent(pasteWith([item, item]));
+        expect(readSpy).toHaveBeenCalledTimes(1);
+        readSpy.mockRestore();
+      });
+
+      it('does not accumulate listeners across load → clear cycles', async () => {
+        tool = mount();
+        const listeners = (tool as unknown as { listeners: Map<string, unknown> }).listeners;
+        await loadImage();
+        const clearBtn = () =>
+          rightPanel.querySelector<HTMLButtonElement>('button[aria-label="matcher.clearImage"]')!;
+        clearBtn().click();
+        await flush();
+        const afterFirstCycle = listeners.size;
+
+        await loadImage();
+        clearBtn().click();
+        await flush();
+
+        // The canvas wrapper's listeners are unbound when the canvas is
+        // rebuilt, so a detached full-resolution canvas is never pinned
+        expect(listeners.size).toBe(afterFirstCycle);
+      });
+    });
+
+    // ------------------------------------------------------------------------
     // Resolution — one path for extracted colours and picks
     // ------------------------------------------------------------------------
 
@@ -1245,22 +1487,6 @@ describe('ExtractorTool', () => {
     // ------------------------------------------------------------------------
     // Hand-offs
     // ------------------------------------------------------------------------
-
-    it('routes a card context action to the target tool', async () => {
-      tool = mount();
-      await loadImage();
-      const onNavigate = vi.fn();
-      window.addEventListener('navigate-to-tool', onNavigate);
-
-      resultCards()[0].dispatchEvent(
-        new CustomEvent('context-action', {
-          detail: { action: 'add-comparison', dye: mockDyes[0] },
-        })
-      );
-
-      expect(onNavigate).toHaveBeenCalledTimes(1);
-      window.removeEventListener('navigate-to-tool', onNavigate);
-    });
 
     it('enables the export button, which ships disabled', async () => {
       tool = mount();

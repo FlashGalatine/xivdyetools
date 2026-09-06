@@ -37,9 +37,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   score so a small vivid accent can lead a large muted field (widths stay
   share-based).
 - The tool's settings are read from `ConfigController` alone. It used to seed
-  colour count and vibrancy from its own `v3_matcher_*` localStorage keys, so a
-  sidebar choice was ignored on reload until the control was touched again.
-  The seven legacy keys are purged on mount.
+  colour count and vibrancy from its own `v3_matcher_*` localStorage keys, a
+  second copy of the sidebar's store that only its own `setConfig` wrote — so
+  anything that changed the config without going through the tool (Reset
+  settings, Restore backup, another tab) left the copy stale and the tool
+  opened on the old values until the control was touched again. The seven
+  legacy keys are purged on mount.
+- Only a colour-count change re-runs K-means. Changing the matching method,
+  the dye filters, Prevent duplicates or the vibrancy boost re-resolves the
+  existing clusters instead — K-means++ is seeded at random, so a re-run
+  re-clusters and the user would read the new segments as an effect of the
+  metric. Resolution goes through core's `findClosestDye` with `excludeIds`
+  (unrounded ranking under DISTINGUISH % too) rather than a hand-rolled scan.
+- A colour whose eligible dyes are all taken by earlier slots keeps the
+  nearest eligible dye as a repeat rather than vanishing from the bar while
+  the legend still counted it; when the filters leave no dye for any colour
+  the sheet says so (`matcher.noMatchingDyes`, restored ×6).
+- A replacement image clears the previous palette before it extracts, so a
+  drop whose extraction fails (a fully transparent PNG) no longer shows image
+  A's segments and picks under image B.
+- A double-tap of `+` focuses the existing pick instead of committing the
+  same colour twice (3C de-duplicated by hex too).
+- Focus is tracked by colour, not by bar index, so a vibrancy re-order or a
+  dropped entry never moves the ring onto another colour.
+- The loupe survives a language switch where it settled instead of vanishing
+  while the hint chip still named its colour.
+- A card rebuild for an unrelated setting no longer wipes the market error
+  badge: cards and the in-place price update apply one market rule, and an
+  unchanged `displayOptions` push no longer rebuilds the sheet at all.
+- A file the browser cannot read or decode (a truncated PNG, a desktop HEIC)
+  toasts `errors.failedToReadFile` / `errors.failedToReadImage` (restored ×6)
+  instead of doing nothing.
+- Ctrl+V aimed at a text field is that field's paste, and a clipboard carrying
+  several images loads one, not all of them.
+- The K-means run has a visible busy state (bar and sheet dim and stop taking
+  taps), a re-entrancy guard (a change that lands mid-run queues one more run),
+  and the empty-cluster guard keys on `pixelCount`, so a real cluster under
+  half a percent — the accent the vibrancy boost exists to surface — is kept.
+- Bar clicks are delegated to the strip and the canvas listeners are unbound
+  when the canvas is rebuilt, so load → clear cycles no longer pin detached
+  full-resolution canvases in the listener map.
+- On phones the zoom toolbar keeps its three essential controls (−, level, +)
+  beside the hint chip rather than being hidden — it is the only
+  touch-reachable zoom — and extracted segments shrink instead of pushing the
+  `+` tile off the frame at high colour counts.
+- The result-card `context-action` listener is gone: the 5.0 card performs
+  its own Inspect / Transform / Open-in-browser hand-offs and never emitted
+  the legacy action names the handler switched on.
 - Desktop scrolls the column; mobile pins the hero (image, bar, legend, header)
   and scrolls the sheet under it. Image card 276 px desktop / 226 px mobile,
   loupe 104 px / 74 px.

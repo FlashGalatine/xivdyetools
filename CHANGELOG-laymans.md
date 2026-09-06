@@ -37,7 +37,8 @@ Rules:
 - Web app: the loupe stays where you put it. Click or tap the image and it parks there showing the colour it read and the closest dye's name; drag it to hunt for the exact pixel.
 - Web app: add your own picks with the `+` tile at the end of the bar. Picks join as fixed-width numbered blocks after a small gap (never a percentage — they are not part of the image share), each gets its own card, **Clear picks** removes them all, and you can hold up to six. The count reads "6 + 2", never "8 of 6".
 - Web app: the "Auto-extract" button is gone — the palette is pulled the moment an image loads and again quietly whenever you change the colour count, matching method or dye filters, with your picks kept.
-- Web app: nothing is drawn over your image any more (the numbered circles and red crosshair are gone); dye filters now apply to the extracted colours too; vibrancy boost finally changes the order; and the colour count and vibrancy settings load as you left them instead of resetting until touched.
+- Web app: nothing is drawn over your image any more (the numbered circles and red crosshair are gone); dye filters now apply to the extracted colours too; vibrancy boost finally changes the order; changing the matching method no longer reshuffles the palette; and the colour count and vibrancy settings no longer go stale after a Reset or Restore backup.
+- Web app: a colour never silently drops off the bar when the filters run out of unique dyes, a replacement picture starts clean, tapping + twice focuses the pick you already have, and a picture the browser cannot open says so.
 
 ## [5.4.0] - 2026-09-05
 ### 🎨 Choose your colour wheel in the Harmony Explorer

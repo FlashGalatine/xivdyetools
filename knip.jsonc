@@ -146,6 +146,10 @@
         "eslint-rules/*.js",
       ],
       "project": ["src/**/*.{ts,js}", "scripts/**", "functions/**", "e2e/**", "*.ts", "*.js"],
+      // Ambient `declare global` module (Navigator.globalPrivacyControl), reached
+      // through the tsconfig include — no importer by design. Mirrors the
+      // web-app's own knip.jsonc so the root sweep stays at its 3 known findings.
+      "ignore": ["src/shared/browser-api-types.ts"],
     },
 
     // includeEntryExports is unconditionally safe for apps: an app has no

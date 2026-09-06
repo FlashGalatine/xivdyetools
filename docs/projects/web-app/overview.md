@@ -120,7 +120,7 @@ src/
 │   ├── budget-tool.ts  swatch-tool.ts        # eight of the nine tools
 │   ├── dye-selector.ts  dye-grid.ts  dye-search-box.ts  market-board.ts
 │   ├── metric-help.ts  chara-import.ts  export-sheet.ts  empty-state.ts
-│   ├── color-picker-display.ts  image-upload-display.ts  image-zoom-controller.ts
+│   ├── image-zoom-controller.ts                         # the Extractor's canvas + loupe events
 │   ├── modal-container.ts  toast-container.ts  offline-banner.ts
 │   ├── welcome-modal.ts  changelog-modal.ts  about-modal.ts  signin-modal.ts
 │   ├── preset-submission-form.ts  preset-edit-form.ts  my-submissions-modal.ts

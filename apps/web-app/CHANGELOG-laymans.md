@@ -13,7 +13,13 @@
 - **Nothing is drawn over your image any more.** The numbered circles and the red crosshair are gone, so the pixels you are judging stay uncovered.
 - **Dye filters now apply to the extracted colours too**, not only to a colour you sampled by hand, and *Prevent duplicates* keeps your picks from taking a dye the image already claimed.
 - **Vibrancy boost finally does something**: with it on, a small vivid accent can lead the bar ahead of a large dull area.
-- **Settings stick.** The colour count and vibrancy choice you make in the options were ignored on the next visit until you touched them again. They now load exactly as you left them.
+- **Settings stick.** The tool kept its own private copy of the colour count and vibrancy switch, so a Reset or a Restore backup, or a change made in another tab, was ignored here until you touched the control again. There is one copy now.
+- **Changing the matching method no longer reshuffles the palette.** Picking a different method used to pull the colours out of the picture again, and because that step is partly random the segments and their sizes changed too. Now only the dye each colour resolves to changes.
+- **Colours never silently disappear.** If your dye filters and *Prevent duplicates* leave nothing unique for a colour, it keeps the nearest eligible dye as a repeat instead of dropping off the bar; if the filters leave no dye at all, the sheet says so.
+- **A new picture starts clean.** Dropping a replacement image clears the previous palette first, so a picture that cannot be read no longer sits under the old one's colours.
+- Tapping **+** twice on the same colour focuses the pick you already have instead of adding it again; the focus ring follows the colour, not its position, when the bar re-orders; the loupe stays where it was when you switch language.
+- A picture the browser cannot open now says so instead of doing nothing, and pasting into a text box on the page no longer hijacks the paste as an image.
+- On a phone the zoom controls stay (they are the only way to zoom by touch), trimmed to minus, level and plus so they sit beside the colour readout.
 - Sampling a colour no longer swaps the whole list for ten candidates of that one colour, and the separate "Sampled Color" box is gone — a pick is simply a card like the others.
 - On a phone the image and the bar stay put while the cards scroll underneath.
 

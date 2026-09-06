@@ -125,7 +125,9 @@ test.describe('Extractor Tool - User Journeys', () => {
         .locator('canvas')
         .first()
         .click({ position: { x: 5, y: 5 } });
-      await expect(page.locator('#extractor-loupe')).toHaveCSS('transform', /matrix/);
+      // scale(1) with the centring translate — `scale(0)` is also a matrix,
+      // so the assertion pins the non-zero scale
+      await expect(page.locator('#extractor-loupe')).toHaveCSS('transform', /^matrix\(1, 0, 0, 1,/);
       await expect(page.locator('.x4a-hint-read')).toBeVisible();
 
       // Commit it
