@@ -154,7 +154,13 @@ workers are deployed and their allowlists include the beta origin before debuggi
 
 ### A new or changed slash command doesn't appear
 
-Deploying the worker does not register commands with Discord. Run:
+The production deploy workflows *do* register commands — `deploy-discord-worker.yml` and
+`deploy-moderation-worker.yml` each run `register-commands` after a successful deploy — so
+first check that the deploy run reached that step and that it did not fail. Discord can also
+take a few minutes to propagate a global command.
+
+If the deploy happened outside CI (a local `wrangler deploy`), or you are targeting the beta
+application, register by hand:
 
 ```bash
 pnpm --filter xivdyetools-discord-worker run register-commands

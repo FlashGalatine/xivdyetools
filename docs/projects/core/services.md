@@ -6,332 +6,279 @@
 
 ## Service Architecture
 
-The library uses the facade pattern - high-level service classes delegate to focused sub-services:
+The library uses a facade pattern — high-level service classes delegate to
+focused sub-services:
 
 ```
-ColorService (facade)
-├── ColorConverter      - Format conversion (hex, RGB, HSV, HSL, LAB)
-├── ColorAccessibility  - WCAG contrast, readability
-├── ColorManipulator    - Lighten, darken, saturate
-└── ColorblindnessSimulator - Protanopia, deuteranopia, tritanopia
+ColorService (facade, all-static)
+├── ColorConverter          - format conversion + LRU caches
+├── ColorAccessibility      - WCAG contrast, perceived luminance
+├── ColorManipulator        - brightness / saturation / hue adjustment
+└── ColorblindnessSimulator - Brettel + Machado CVD simulation
 
-DyeService (facade)
-├── DyeDatabase        - k-d tree indexed dye lookup
-├── DyeSearch          - Name/category search
-└── HarmonyGenerator   - Color harmony calculations
-
-APIService            - Universalis market price API
-PaletteService        - K-means++ palette extraction
-PresetService         - Curated dye presets
-LocalizationService   - 6-language i18n support
+DyeService (instance)
+├── DyeDatabase             - load, validate, index, k-d tree
+├── DyeSearch               - nearest-dye search
+└── HarmonyGenerator        - the legacy per-type find*Dyes() methods
 ```
+
+Colour *mixing* is not a class: it lives in `src/blending/` and is reached
+through `ColorService.mixColors*` or the `@xivdyetools/core/blending` subpath.
 
 ---
 
 ## ColorService
 
-Static class for color operations. No instantiation needed.
+Every method is **static** and takes **scalars**, not objects.
 
-### Color Conversion
+### Conversion
 
 ```typescript
 import { ColorService } from '@xivdyetools/core';
 
-// Hex ↔ RGB
-ColorService.hexToRgb('#FF6B6B');      // { r: 255, g: 107, b: 107 }
-ColorService.rgbToHex({ r: 255, g: 107, b: 107 });  // '#FF6B6B'
-
-// RGB ↔ HSV
-ColorService.rgbToHsv({ r: 255, g: 107, b: 107 });  // { h: 0, s: 58, v: 100 }
-ColorService.hsvToRgb({ h: 0, s: 58, v: 100 });     // { r: 255, g: 107, b: 107 }
-
-// RGB ↔ HSL
-ColorService.rgbToHsl({ r: 255, g: 107, b: 107 });  // { h: 0, s: 100, l: 71 }
-ColorService.hslToRgb({ h: 0, s: 100, l: 71 });     // { r: 255, g: 107, b: 107 }
-
-// RGB ↔ LAB (CIE L*a*b*)
-ColorService.rgbToLab({ r: 255, g: 107, b: 107 });  // { l: 62.4, a: 56.2, b: 28.1 }
-ColorService.labToRgb({ l: 62.4, a: 56.2, b: 28.1 });
+ColorService.hexToRgb('#FF6B6B');            // { r: 255, g: 107, b: 107 }
+ColorService.rgbToHex(255, 107, 107);        // HexColor — three arguments
+ColorService.rgbToHsv(255, 107, 107);        // HSV — NOT rgbToHsv(rgbObject)
+ColorService.rgbToLab(255, 107, 107);        // LAB { L, a, b } — capital L
+ColorService.labToRgb(65.2, 48.1, 20.4);
+ColorService.normalizeHex('#f6b');           // expands shorthand, upper-cases
 ```
 
-### Color Manipulation
+Nine colour spaces are covered — RGB, HSV, HSL, LAB, OKLAB, OKLCH, LCH, CMYK and
+RYB — each with the full `rgbTo*` / `*ToRgb` / `hexTo*` / `*ToHex` set, all
+taking scalars. See [`packages/core/README.md`](../../../packages/core/README.md)
+for the exhaustive list.
+
+### Manipulation
 
 ```typescript
-// Lighten/darken (amount: 0-100)
-ColorService.lighten('#FF6B6B', 20);   // '#FF9999'
-ColorService.darken('#FF6B6B', 20);    // '#CC5555'
-
-// Saturate/desaturate
-ColorService.saturate('#FF6B6B', 20);
-ColorService.desaturate('#FF6B6B', 20);
-
-// Invert
-ColorService.invert('#FF6B6B');        // '#009494'
-
-// Blend two colors
-ColorService.blend('#FF6B6B', '#4ECDC4', 0.5);  // Midpoint
+ColorService.adjustBrightness('#FF6B6B', 20);   // signed amount
+ColorService.adjustSaturation('#FF6B6B', -15);
+ColorService.rotateHue('#FF6B6B', 120);         // HSV hue rotation
+ColorService.rotateHueLch('#FF6B6B', 120);      // LCh hue rotation
+ColorService.invert('#FF6B6B');
+ColorService.desaturate('#FF6B6B');             // one argument — full desaturation
 ```
 
-### Accessibility
+There is no `lighten` / `darken` / `saturate`; `adjustBrightness` and
+`adjustSaturation` take a signed amount instead.
+
+### Mixing
+
+Six modes, all `(hex1, hex2, ratio = 0.5)`. There is no `ColorService.blend()`.
 
 ```typescript
-// WCAG contrast ratio (1:1 to 21:1)
-const ratio = ColorService.getContrastRatio('#FF6B6B', '#FFFFFF');  // 4.5
-
-// WCAG compliance check
-const wcag = ColorService.evaluateWCAG(ratio);
-// {
-//   AA: true,        // 4.5:1 for normal text
-//   AAA: false,      // 7:1 for normal text
-//   AALarge: true,   // 3:1 for large text
-//   AAALarge: true   // 4.5:1 for large text
-// }
-
-// Get relative luminance
-const luminance = ColorService.getRelativeLuminance('#FF6B6B');  // 0.24
+ColorService.mixColorsRgb('#0000FF', '#FFFF00');
+ColorService.mixColorsLab('#0000FF', '#FFFF00');
+ColorService.mixColorsOklab('#0000FF', '#FFFF00');
+ColorService.mixColorsHsl('#0000FF', '#FFFF00');
+ColorService.mixColorsRyb('#0000FF', '#FFFF00');
+ColorService.mixColorsSpectral('#0000FF', '#FFFF00');  // Kubelka-Munk → green
 ```
 
-### Colorblindness Simulation
+`ratio` `0` is all of `hex1`, `1` all of `hex2`. The `/blending` subpath exposes
+the same engine as `blendColors(hex1, hex2, mode, ratio)`.
 
-Based on Brettel 1997 algorithm for accurate simulation:
+### Distance and accessibility
 
 ```typescript
-// Simulate how color appears to colorblind users
-ColorService.simulateColorblindness('#FF6B6B', 'protanopia');    // Red-green (L-cone)
-ColorService.simulateColorblindness('#FF6B6B', 'deuteranopia');  // Red-green (M-cone)
-ColorService.simulateColorblindness('#FF6B6B', 'tritanopia');    // Blue-yellow
+ColorService.getColorDistance(hex1, hex2);                    // Euclidean RGB
+ColorService.getRedmeanDistance(hex1, hex2);
+ColorService.getDeltaE(hex1, hex2, 'ciede2000');              // DeltaEFormula
+ColorService.getDistanceForMethod(hex1, hex2, 'ciede2000');   // MatchingMethod
+ColorService.getDistinguishabilityPercent(hex1, hex2);
+
+ColorService.getPerceivedLuminance('#FF6B6B');
+ColorService.getContrastRatio('#FF6B6B', '#FFFFFF');          // 1-21
+ColorService.meetsWCAGAA('#FF6B6B', '#FFFFFF');               // largeText? third arg
+ColorService.meetsWCAGAAA('#FF6B6B', '#FFFFFF');
+ColorService.isLightColor('#FF6B6B');
+ColorService.getOptimalTextColor('#FF6B6B');
 ```
+
+There is no `evaluateWCAG` and no `getRelativeLuminance`.
+
+### Colourblindness
+
+`simulateColorblindness` takes an **RGB**; the hex convenience form has its own
+name.
+
+```typescript
+ColorService.simulateColorblindness({ r: 255, g: 107, b: 107 }, 'protanopia');
+ColorService.simulateColorblindnessHex('#FF6B6B', 'protanopia');
+ColorService.simulateColorblindnessMachado(rgb, 'deuteranopia');       // linear-light
+ColorService.simulateColorblindnessMachadoHex('#FF6B6B', 'tritanopia');
+```
+
+`VisionType` has five members: `normal`, `protanopia`, `deuteranopia`,
+`tritanopia`, `achromatopsia`.
+
+### Caches
+
+`ColorService.clearCaches()` and `ColorService.getCacheStats()` cover the seven
+LRU caches (see [Algorithms](algorithms.md)).
 
 ---
 
 ## DyeService
 
-Instance class for dye operations. Requires database injection.
-
-### Instantiation
+An instance class — construct it with the bundled JSON.
 
 ```typescript
 import { DyeService, dyeDatabase } from '@xivdyetools/core';
 
 const dyeService = new DyeService(dyeDatabase);
+
+dyeService.getAllDyes();            // Dye[] (125)
+dyeService.getDyeById(13115);       // by itemID (= Dye.id) → Dye | null
+dyeService.getByStainId(102);       // by stainID (canonical key) → Dye | null
+dyeService.getDyeCount();
+dyeService.isLoadedStatus();
+dyeService.getCategories();
+// ['Neutral', 'Reds', 'Browns', 'Yellows', 'Greens', 'Blues', 'Purples', 'Special']
 ```
 
-### Dye Matching
+`dyeDatabase` is the raw JSON array, **not** a service — call the methods on the
+`DyeService` you built from it.
+
+### Search and matching
 
 ```typescript
-// Find closest dye to a color
-const match = dyeService.findClosestDye('#FF6B6B');
-// {
-//   dye: { id: 12, name: 'Dalamud Red', hex: '#FF5050', category: 'red' },
-//   distance: 27.4,    // RGB Euclidean distance
-//   deltaE: 12.5       // CIE deltaE (perceptual)
-// }
+dyeService.searchByName('black');
+dyeService.searchByCategory('Reds');            // exact match against DYE_CATEGORIES
+dyeService.searchByLocalizedName('スノウ', 'ja');
+dyeService.filterDyes({ category: 'Special', excludeIds: [5752] });
 
-// Find top N closest dyes
-const top5 = dyeService.findClosestDyes('#FF6B6B', 5);
-// Array of matches sorted by distance
-
-// Find by exact ID
-const dye = dyeService.getDyeById(12);
-
-// Search by name (fuzzy)
-const reds = dyeService.searchByName('red');
-
-// Get by category
-const browns = dyeService.getByCategory('brown');
+dyeService.findClosestDye('#FF6B6B');           // → Dye | null (not a match object)
+dyeService.findClosestDye('#FF6B6B', { matchingMethod: 'oklab' });
+dyeService.findDyesWithinDistance('#FF6B6B', { maxDistance: 20, limit: 5 });
 ```
 
-### Color Harmonies
+`findClosestDye` returns the `Dye` itself. For the N nearest, use
+`findDyesWithinDistance({ maxDistance, limit, matchingMethod })` — there is no
+`findClosestDyes`, and no result wrapper carrying `deltaE`.
 
-```typescript
-// Complementary (opposite on color wheel)
-const complementary = dyeService.findComplementaryDyes('#FF6B6B');
-// [{ dye: ..., distance: ... }, ...]
+### Harmony
 
-// Triadic (120° apart)
-const triadic = dyeService.findTriadicDyes('#FF6B6B');
+Prefer `generateHarmonySlots` — the one implementation every surface shares (see
+[Algorithms](algorithms.md#harmony-generation)). The per-type methods remain for
+callers that want a plain dye list: `findComplementaryPair` (→ `Dye | null`),
+`findTriadicDyes`, `findAnalogousDyes(hex, angle)`,
+`findSplitComplementaryDyes`, `findTetradicDyes`, `findInvertedTetradicDyes`,
+`findSquareDyes`, `findMonochromaticDyes(hex, limit)` (all → `Dye[]`).
 
-// Analogous (adjacent on color wheel)
-const analogous = dyeService.findAnalogousDyes('#FF6B6B');
-
-// Split-complementary (complementary + neighbors)
-const splitComp = dyeService.findSplitComplementaryDyes('#FF6B6B');
-
-// Tetradic/square (90° apart)
-const tetradic = dyeService.findTetradicDyes('#FF6B6B');
-```
-
-### Database Access
-
-```typescript
-// Get all dyes
-const allDyes = dyeService.getAllDyes();  // 125 standard dyes — Facewear colours are NOT included
-// The 11 Facewear colours live in the separate `facewearColors` export.
-
-// Get categories
-const categories = dyeService.getCategories();
-// ['basic', 'brown', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'metallic']
-```
-
----
-
-## APIService
-
-Universalis API wrapper with pluggable caching.
-
-### Basic Usage
-
-```typescript
-import { APIService } from '@xivdyetools/core';
-
-const api = new APIService();
-
-// Get price data for an item
-const prices = await api.getPriceData(19952, 'Gilgamesh');
-// {
-//   itemId: 19952,
-//   server: 'Gilgamesh',
-//   listings: [...],
-//   recentHistory: [...],
-//   averagePrice: 1234,
-//   minPrice: 1000,
-//   maxPrice: 2000
-// }
-
-// Bulk price lookup for a data center
-const bulk = await api.getPricesForDataCenter([19952, 19953, 19954], 'Aether');
-```
-
-### Custom Cache Backend
-
-Implement `ICacheBackend` for custom caching (Redis, KV, etc.):
-
-```typescript
-interface ICacheBackend {
-  get(key: string): Promise<CachedData | null>;
-  set(key: string, value: CachedData): Promise<void>;
-  delete(key: string): Promise<void>;
-  clear(): Promise<void>;
-}
-
-// Example: Cloudflare KV cache
-class KVCacheBackend implements ICacheBackend {
-  constructor(private kv: KVNamespace) {}
-
-  async get(key: string) {
-    const data = await this.kv.get(key, 'json');
-    return data as CachedData | null;
-  }
-
-  async set(key: string, value: CachedData) {
-    await this.kv.put(key, JSON.stringify(value), { expirationTtl: 900 });
-  }
-
-  // ... delete, clear
-}
-
-const api = new APIService({ cacheBackend: new KVCacheBackend(env.KV) });
-```
+`HarmonyOptions.colorSpace` is **deprecated since 5.2.0**.
 
 ---
 
 ## PaletteService
 
-K-means++ palette extraction from images.
-
-### Extract from ImageData
+An instance class; extraction is **synchronous** and consumes an `RGB[]`.
 
 ```typescript
-import { PaletteService } from '@xivdyetools/core';
+const paletteService = new PaletteService();
+const pixels = PaletteService.pixelDataToRGBFiltered(imageData.data);  // static
 
-// From canvas ImageData
-const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d');
-const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+const palette = paletteService.extractPalette(pixels, { colorCount: 4 });
+// ExtractedColor[] = { color: RGB, dominance: number, pixelCount: number }[]
 
-const palette = await PaletteService.extractPalette(imageData, {
-  numColors: 5,      // Number of colors to extract
-  quality: 'high',   // 'low' | 'medium' | 'high'
-  maxIterations: 100 // K-means iterations
-});
-// ['#FF6B6B', '#4ECDC4', '#FFE66D', '#2C3E50', '#95A5A6']
+const matches = paletteService.extractAndMatchPalette(pixels, dyeService, { colorCount: 4 });
+// PaletteMatch[] = { extracted: RGB, matchedDye: Dye, distance, dominance }[]
 ```
 
-### Match Palette to Dyes
+There is no `quality` option and no hex-string return. Options are `colorCount`
+(4), `maxIterations` (25), `convergenceThreshold` (1.0), `maxSamples` (10000) and
+`matchingMethod` — see [Algorithms](algorithms.md#extraction-options).
+
+---
+
+## APIService
+
+Universalis market-board client with a pluggable cache.
 
 ```typescript
-// Extract palette then match each color to closest dye
-const palette = await PaletteService.extractPalette(imageData, { numColors: 5 });
+import { APIService, MemoryCacheBackend } from '@xivdyetools/core';
 
-const dyeService = new DyeService(dyeDatabase);
-const dyeMatches = palette.map(hex => dyeService.findClosestDye(hex));
+const api = new APIService({ cacheBackend: new MemoryCacheBackend() });
+
+// getPriceData(itemID, worldID?: number, dataCenterID?: string)
+// The second argument is a numeric WORLD ID, not a world name.
+await api.getPriceData(52254, undefined, 'Aether');
+await api.getPricesForDataCenter([52254, 52255], 'Aether');
 ```
+
+Also: `isAPIAvailable()`, `getAPIStatus()` → `{ available, latency }`,
+`clearCache()`, and the static `APIService.formatPrice(price)`.
+
+`ICacheBackend` has **five** members and each may be sync or async:
+
+```typescript
+interface ICacheBackend {
+  get(key: string): Promise<CachedData<PriceData> | null> | CachedData<PriceData> | null;
+  set(key: string, value: CachedData<PriceData>): Promise<void> | void;
+  delete(key: string): Promise<void> | void;
+  clear(): Promise<void> | void;
+  keys(): Promise<string[]> | string[];
+}
+```
+
+`APIServiceOptions` = `{ cacheBackend?, fetchClient?, rateLimiter?, logger?, baseUrl? }`.
 
 ---
 
 ## PresetService
 
-Curated dye preset palettes.
+An instance class over the bundled `presetData`.
 
 ```typescript
-import { PresetService } from '@xivdyetools/core';
+import { PresetService, presetData } from '@xivdyetools/core';
 
-// Get all presets
-const presets = PresetService.getPresets();
+const presets = new PresetService(presetData);   // instance, not static
 
-// Get by category
-const glamourPresets = PresetService.getPresetsByCategory('glamour');
-
-// Get featured presets
-const featured = PresetService.getFeaturedPresets();
+presets.getAllPresets();                                 // PresetPalette[]
+presets.getPreset('season-spring');                      // PresetPalette | undefined
+presets.getPresetWithDyes('season-spring', dyeService);  // ResolvedPreset | undefined
 ```
+
+Also: `getCategories()` → `(CategoryMeta & { id })[]`, `getCategoryMeta(category)`,
+`getPresetsByCategory(category)`, `searchPresets(query, dyeService?)`,
+`getRandomPreset(category?)`. There are no static `PresetService.getPresets()`
+helpers.
 
 ---
 
 ## LocalizationService
 
-6-language support for dye names and UI text.
+Both an instance class and a static singleton facade. `setLocale` is **async**
+because it loads the locale file.
 
 ```typescript
-import { LocalizationService } from '@xivdyetools/core';
+import { LocalizationService, SUPPORTED_LOCALES } from '@xivdyetools/core';
 
-// Set locale
-LocalizationService.setLocale('ja');
+SUPPORTED_LOCALES;                              // ['en','ja','de','fr','ko','zh']
 
-// Translate key
-const text = LocalizationService.translate('dye.dalamud_red');  // 'ダラガブレッド'
-
-// Get available locales
-const locales = LocalizationService.getAvailableLocales();
-// ['en', 'ja', 'de', 'fr', 'ko', 'zh']
-
-// Get current locale
-const current = LocalizationService.getLocale();  // 'ja'
+await LocalizationService.setLocale('ja');
+LocalizationService.getCurrentLocale();         // 'ja'
+LocalizationService.getDyeName(5729);           // string | null
+LocalizationService.getLabel('metallic');       // TranslationKey
 ```
+
+There is no `translate()` and no `getLocale()`. Lookups are per-vocabulary:
+`getLabel`, `getDyeName`, `getCategory`, `getAcquisition`, `getCurrency`,
+`getHarmonyType`, `getColorWheelName`, `getVisionType` / `getVisionShort`,
+`getToolName`, `getSheetName`, `getRace`, `getClan`, `getFacewearColorName` —
+each also taking an optional explicit `locale`. `getAvailableLocales()` and
+`isLocaleLoaded()` report state; every method exists both on an instance and as
+a static on the singleton facade.
+
+For stateless, explicit-locale callers (og-worker), `LocaleLoader` /
+`LocaleRegistry` / `TranslationProvider` are exported directly.
 
 ---
 
-## Type Definitions
+## Full reference
 
-All services use types from `@xivdyetools/types`:
-
-```typescript
-import type {
-  RGB,           // { r: number, g: number, b: number }
-  HSV,           // { h: number, s: number, v: number }
-  HSL,           // { h: number, s: number, l: number }
-  LAB,           // { l: number, a: number, b: number }
-  HexColor,      // Branded string type
-  Dye,           // Full dye object
-  DyeMatch,      // Match result with distance
-  HarmonyResult, // Array of harmony matches
-  PriceData,     // Market price response
-} from '@xivdyetools/core';
-```
-
-See [Types](types.md) for complete type documentation.
-
----
+Package README: [`packages/core/README.md`](../../../packages/core/README.md)
 
 ## Related Documentation
 

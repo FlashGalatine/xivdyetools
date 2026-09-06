@@ -11,7 +11,7 @@
 | Tool | Version | Installation |
 |------|---------|--------------|
 | **Node.js** | 22+ | [nodejs.org](https://nodejs.org/) |
-| **pnpm** | 10+ | `corepack enable && corepack prepare pnpm@latest --activate` |
+| **pnpm** | 11+ | `corepack enable && corepack prepare pnpm@latest --activate` (the root `packageManager` field pins the exact version) |
 | **Git** | 2.40+ | [git-scm.com](https://git-scm.com/) |
 
 ### For Workers Development
@@ -33,7 +33,7 @@
 ## Clone and Install
 
 ```bash
-git clone https://github.com/your-username/xivdyetools.git
+git clone https://github.com/FlashGalatine/xivdyetools.git
 cd xivdyetools
 pnpm install
 ```
@@ -90,9 +90,11 @@ pnpm --filter xivdyetools-web-app run dev
 ### OAuth Worker
 
 ```bash
-pnpm --filter xivdyetools-oauth run dev
+pnpm --filter xivdyetools-oauth-worker run dev
 # Runs on http://localhost:8788
 ```
+
+> The workspace name is `xivdyetools-oauth-worker`, even though the directory is `apps/oauth`.
 
 ### Presets API
 
@@ -111,7 +113,8 @@ pnpm --filter xivdyetools-presets-api run db:migrate:local
 
 ```bash
 pnpm --filter xivdyetools-discord-worker run dev
-# Runs on http://localhost:8976
+# No [dev] block in its wrangler.toml, so this takes wrangler's default port.
+# Pass --port if it collides with presets-api.
 ```
 
 **First-time setup** — login to Cloudflare:
@@ -129,7 +132,7 @@ To run the entire ecosystem locally, open separate terminals for each service:
 pnpm --filter xivdyetools-web-app run dev
 
 # Terminal 2: OAuth Worker
-pnpm --filter xivdyetools-oauth run dev
+pnpm --filter xivdyetools-oauth-worker run dev
 
 # Terminal 3: Presets API
 pnpm --filter xivdyetools-presets-api run dev
@@ -231,13 +234,15 @@ pnpm --filter xivdyetools-presets-api run db:migrate:local
 
 ### Port conflicts
 
-Default ports:
-- Web App: 5173
-- OAuth: 8788
+Default ports (each Worker's comes from the `[dev]` block in its `wrangler.toml`):
+- Web App: 5173 (Vite)
 - Presets API: 8787
-- Discord Worker: 8976
+- OAuth: 8788
+- API Worker: 8790
+- Discord Worker / moderation-worker / og-worker / image-worker: no `[dev]` block, so
+  wrangler's default — pass `--port` when two of them run at once
 
-Change ports in respective config files if needed.
+Change ports in the respective `[dev]` blocks (or on the command line) if needed.
 
 ---
 

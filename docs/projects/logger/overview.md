@@ -6,7 +6,9 @@
 
 ## What is @xivdyetools/logger?
 
-A logging package that works consistently across browser, Node.js, and Cloudflare Workers. Provides structured logging with configurable levels and output formats.
+A logging package that works consistently across browser, Node.js, and Cloudflare
+Workers. Structured entries, configurable levels, child loggers with inherited
+context, and three layers of secret redaction on by default.
 
 ---
 
@@ -18,115 +20,146 @@ npm install @xivdyetools/logger
 
 ---
 
-## Quick Start
+## Choosing a factory
 
-```typescript
-import { createLogger } from '@xivdyetools/logger';
+There is **no** generic `createLogger()`. Pick the preset that matches the
+runtime — each returns a ready-made logger rather than taking a name string:
 
-const logger = createLogger('my-component');
+| Factory | Subpath | Returns | Use in |
+|---------|---------|---------|--------|
+| `createBrowserLogger(options?)` | `./browser` | `ExtendedLogger` | Web app. Dev-only by default. |
+| `browserLogger` | `./browser` | `ExtendedLogger` | A ready-made default browser instance. |
+| `createWorkerLogger(options, requestId?)` | `./worker` | `ExtendedLogger` | Cloudflare Workers (JSON output). |
+| `createRequestLogger(env, requestId)` | `./worker` | `ExtendedLogger` | Per-request worker logger built from `env`. |
+| `createLibraryLogger(prefix, config?)` | `./library` | `Logger` | Libraries that want an opt-in logger. |
+| `NoOpLogger` / `ConsoleLogger` | `./library` | `Logger` | Library defaults — silent, or pretty console. |
 
-logger.debug('Detailed information');
-logger.info('Normal operation');
-logger.warn('Warning condition');
-logger.error('Error occurred', { error: err });
-```
+Everything above is also re-exported from the root (`@xivdyetools/logger`);
+the subpaths keep bundles lean. The four subpath exports are `.`, `./browser`,
+`./worker`, `./library` — **there is no `/node` subpath**.
 
 ---
 
-## Environment-Specific Imports
-
-The package provides subpath exports for each environment:
+## Quick Start
 
 ```typescript
-// Browser (console output with colors)
-import { createLogger } from '@xivdyetools/logger/browser';
+import { createBrowserLogger } from '@xivdyetools/logger';
 
-// Node.js (console + optional file output)
-import { createLogger } from '@xivdyetools/logger/node';
+const logger = createBrowserLogger({ prefix: 'color-matcher' });
 
-// Cloudflare Workers (structured JSON)
-import { createLogger } from '@xivdyetools/logger/worker';
+logger.debug('Detailed information');
+logger.info('Color matched', { dye: 'Coral Pink' });
+logger.warn('Warning condition');
+logger.error('Failed to load data', err, { operation: 'fetchDyes' });
+```
 
-// Auto-detect environment
-import { createLogger } from '@xivdyetools/logger';
+`error()` takes the error as its **second** argument: `error(message, error?, context?)`.
+
+### Cloudflare Workers
+
+```typescript
+import { createRequestLogger } from '@xivdyetools/logger/worker';
+
+export default {
+  async fetch(request: Request, env: Env) {
+    const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
+    const logger = createRequestLogger(
+      {
+        ENVIRONMENT: env.ENVIRONMENT,
+        API_VERSION: env.API_VERSION,
+        SERVICE_NAME: 'xivdyetools-presets-api',
+      },
+      requestId,
+    );
+
+    logger.info('Request received');
+    return new Response('ok');
+  },
+};
+```
+
+`createRequestLogger` is a thin wrapper over `createWorkerLogger({ service,
+environment, version }, requestId)` — use the latter directly when the values do
+not come from a worker `env`.
+
+### Libraries
+
+```typescript
+import { NoOpLogger, ConsoleLogger } from '@xivdyetools/logger/library';
+import type { Logger } from '@xivdyetools/logger';
+
+class MyService {
+  constructor(private logger: Logger = NoOpLogger) {}
+}
+
+// A consumer opts in:
+const service = new MyService(ConsoleLogger);
 ```
 
 ---
 
 ## Configuration
 
+`LoggerConfig` — the shape the adapters and `createLibraryLogger` accept
+(`Partial<LoggerConfig>` there):
+
 ```typescript
-const logger = createLogger('my-service', {
-  level: 'info',           // 'debug' | 'info' | 'warn' | 'error'
-  includeTimestamp: true,  // Add timestamp to logs
-  structured: false,       // JSON output (useful for log aggregation)
-});
+interface LoggerConfig {
+  level: 'debug' | 'info' | 'warn' | 'error';  // minimum level to log
+  format: 'json' | 'pretty';                    // output format
+  timestamps: boolean;                          // include ISO timestamps
+  prefix?: string;                              // message prefix
+  sanitizeErrors: boolean;                      // free-text secret sanitisation
+  redactFields?: string[];                      // merged with the defaults, never replaces them
+}
 ```
+
+The preset factories take their own option shapes instead:
+`BrowserLoggerOptions` (`devOnly`, `isDev`, `errorTracker`, `prefix`) and
+`WorkerLoggerOptions` (`service`, `environment`, `version`, `level`).
 
 ---
 
 ## Log Levels
 
-| Level | Use Case |
+| Level | Use case |
 |-------|----------|
 | `debug` | Detailed debugging information |
 | `info` | Normal operational messages |
 | `warn` | Warning conditions |
 | `error` | Error conditions |
 
-Logs at or above the configured level are output.
+Entries at or above the configured level are written.
 
 ---
 
-## Structured Logging
+## Extended API
 
-For log aggregation services (CloudWatch, etc.):
+`ExtendedLogger` adds context inheritance and timing on top of `Logger`:
 
 ```typescript
-const logger = createLogger('presets-api', { structured: true });
+const requestLogger = logger.child({ requestId: 'abc-123' });
+requestLogger.info('Processing');       // carries requestId
 
-logger.info('Preset created', {
-  presetId: '123',
-  author: 'user#1234',
-  category: 'glamour'
-});
+logger.setContext({ service: 'api' });  // merged into every later entry
 
-// Output:
-// {"level":"info","service":"presets-api","message":"Preset created","presetId":"123","author":"user#1234","category":"glamour","timestamp":"2025-12-15T12:00:00Z"}
+const end = logger.time('database-query');
+await db.query();
+const durationMs = end();
+
+await logger.timeAsync('fetch-prices', () => api.getPriceData(52254));
 ```
+
+Also exported: the `BaseLogger` class and the `ConsoleAdapter` / `JsonAdapter` /
+`NoopAdapter` write adapters, plus the `LogLevel`, `LogContext`, `LogEntry`,
+`Logger`, `ExtendedLogger` and `ErrorTracker` types.
 
 ---
 
-## Usage in Projects
+## Full reference
 
-### Web App (Browser)
-
-```typescript
-import { createLogger } from '@xivdyetools/logger/browser';
-
-const logger = createLogger('color-matcher');
-logger.info('Color matched', { dye: 'Dalamud Red' });
-```
-
-### Discord Worker
-
-```typescript
-import { createLogger } from '@xivdyetools/logger/worker';
-
-const logger = createLogger('discord-worker', { structured: true });
-logger.info('Command executed', { command: 'harmony', userId: '123' });
-```
-
-### OAuth Worker
-
-```typescript
-import { createLogger } from '@xivdyetools/logger/worker';
-
-const logger = createLogger('oauth', { structured: true });
-logger.info('Token issued', { userId: 'uuid' });
-```
-
----
+- Package README: [`packages/logger/README.md`](../../../packages/logger/README.md) — including the full 22-field redaction list and the four worker-only additions.
+- [Logging Standards](../../developer-guides/logging-standards.md) - conventions across the ecosystem
 
 ## Related Documentation
 

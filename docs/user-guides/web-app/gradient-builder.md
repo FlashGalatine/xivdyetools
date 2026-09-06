@@ -4,7 +4,7 @@
 
 The Gradient Builder draws a ramp from one dye to another and finds the real FFXIV dye closest to every step along it. In 5.0 the ramp is a **pin rail**: each step is a row you can read, and any middle step can be **pinned** to a dye so the gradient bends through it.
 
-> **Note**: This tool was previously called "Dye Mixer" in v3.x. The Discord bot still uses the `/mixer` command for this functionality. The blending tool is now the [Dye Mixer](dye-mixer.md).
+> **Note**: This tool was previously called "Dye Mixer" in v3.x. The Discord bot's equivalent is `/gradient`; the bot's `/mixer` is the blending command, matching this app's [Dye Mixer](dye-mixer.md).
 
 ---
 
@@ -54,7 +54,7 @@ In the settings column (the gear icon on phones):
 - **Gradient Steps → Count** — 3 to 12 steps, endpoints included
 - **Prevent Duplicates** — on by default; where the ramp is flat enough that neighbouring steps would resolve to the same dye, the later step walks on to the next-closest unused dye
 - **Color Space** — how the ramp is drawn between the two ends (see below)
-- **Matching Algorithm** — ΔE2000 by default; ΔEOK, ΔE76, Weighted RGB, RGB or a 0–100 percentage
+- **Matching Algorithm** — ΔE2000 by default; ΔEOK2, ΔE76, Weighted RGB, RGB or a 0–100 percentage
 - **Display Options** — which colour values and readouts the cards show
 - **Dye Filters** — exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes
 - **Market Board** — show current prices on the cards

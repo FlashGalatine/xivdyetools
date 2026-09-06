@@ -37,9 +37,29 @@ Mounted on the app's own domain so crawlers resolve real previews:
 | `GET /og/presets/:presetId` | Community preset preview |
 | `GET /og/budget/:dyeId` | Market price preview |
 | `GET /og/default.png` | Site-wide fallback card |
+| `GET /` | Site root — crawlers get the generic root embed; humans are redirected to `APP_BASE_URL` (302) |
 | `GET /health` | Health probe |
 
-All crawler and image endpoints accept **`?lang=en\|ja\|de\|fr\|ko\|zh`** — the crawler HTML localizes its `og:title` / `og:description` / `og:locale` and the image localizes dye names, role labels, tags and deck — and image endpoints take **`?frame=x`** for the 1200×630 X/Twitter frame (the default Discord frame is 1200×1050). Dye path segments are stainIDs.
+The `.png` suffix is optional on every parameterised image route above (both spellings share one
+cache entry), with one deliberate exception: `/og/:tool/default.png`, where it is mandatory.
+
+### Query parameters
+
+Exactly five keys are allowed on `/og/*`: **`lang`**, **`frame`**, **`algo`**, **`mode`** and
+**`wheel`** (`OG_ALLOWED_QUERY_KEYS`). Any other key gets a `404` before the cache lookup and before
+any render, and the response never echoes the offending key (2026-08-29 FINDING-024). A
+present-but-invalid `algo`, `mode` or `wheel` value gets a `400`; an empty value counts as absent.
+
+| Key | Meaning |
+|-----|---------|
+| `lang` | `en` (default) / `ja` / `de` / `fr` / `ko` / `zh` — localizes the crawler HTML (`og:title` / `og:description` / `og:locale`) **and** the picture (dye names, role labels, tags, deck) |
+| `frame` | `x` for the 1200×630 X/Twitter frame; anything else renders the 1200×1050 Discord frame |
+| `algo` | The matching method the card's Δ figures use |
+| `mode` | The mixing mode — read only by the two mixer routes, validated everywhere |
+| `wheel` | The harmony card's wheel geometry — read only by `/og/harmony/*`, validated everywhere |
+
+Dye path segments are stainIDs, and every path parameter must be **canonical** (no leading zeros,
+no sign, no trailing junk, no `%2F` spelling).
 
 ## Development
 

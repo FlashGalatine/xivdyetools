@@ -1,6 +1,8 @@
 # Core Library Overview
 
-**@xivdyetools/core** v4.0.0 - The foundation of the XIV Dye Tools ecosystem
+**@xivdyetools/core** - The foundation of the XIV Dye Tools ecosystem
+
+> Current version: see [versions.md](../../versions.md).
 
 ---
 
@@ -46,29 +48,30 @@ import {
   PaletteService
 } from '@xivdyetools/core';
 
-// Find the closest FFXIV dye to any color
+// Find the closest FFXIV dye to any color — returns the Dye itself, or null
 const dyeService = new DyeService(dyeDatabase);
 const match = dyeService.findClosestDye('#FF6B6B');
-console.log(match.dye.name);  // "Dalamud Red"
-console.log(match.deltaE);    // Color difference score
+console.log(match?.name);  // "Coral Pink" (ΔE2000 9.57)
 
 // Generate color harmonies
 const harmonies = dyeService.findTriadicDyes('#FF6B6B');
-console.log(harmonies);  // Array of harmonious dye combinations
+console.log(harmonies);  // Dye[]
 
-// Convert between color formats
-const rgb = ColorService.hexToRgb('#FF6B6B');  // { r: 255, g: 107, b: 107 }
-const hsv = ColorService.rgbToHsv(rgb);        // { h: 0, s: 58, v: 100 }
+// Convert between color formats — all conversions take scalars
+const rgb = ColorService.hexToRgb('#FF6B6B');            // { r: 255, g: 107, b: 107 }
+const hsv = ColorService.rgbToHsv(255, 107, 107);        // { h: 0, s: 58, v: 100 }
 
 // Check accessibility
 const contrast = ColorService.getContrastRatio('#FF6B6B', '#FFFFFF');
-const wcag = ColorService.evaluateWCAG(contrast);  // { AA: true, AAA: false, ... }
+const passesAA = ColorService.meetsWCAGAA('#FF6B6B', '#FFFFFF');  // boolean
 
-// Simulate colorblindness
-const simulated = ColorService.simulateColorblindness('#FF6B6B', 'protanopia');
+// Simulate colorblindness (RGB in, RGB out; use the *Hex variant for hex)
+const simulated = ColorService.simulateColorblindnessHex('#FF6B6B', 'protanopia');
 
-// Extract palette from image data
-const palette = await PaletteService.extractPalette(imageData, { numColors: 5 });
+// Extract palette from image data — synchronous, RGB[] in, ExtractedColor[] out
+const paletteService = new PaletteService();
+const pixels = PaletteService.pixelDataToRGBFiltered(imageData.data);
+const palette = paletteService.extractPalette(pixels, { colorCount: 5 });
 ```
 
 ---
@@ -98,7 +101,7 @@ import { ColorService, DyeService, dyeDatabase } from '@xivdyetools/core';
 The following categories of re-exports were removed from the core barrel:
 
 - **Color space types**: `RGB`, `HSV`, `HSL`, `LAB`, `HexColor`, `OKLCH`, `OklchWeights`
-- **Dye types**: `Dye`, `DyeId`, `DyeCategory`, `DyeMatch`
+- **Dye types**: `Dye`, `DyeId` (a `DyeCategory` was later reintroduced as core's own type in `config/dye-vocabulary.ts`; there has never been a `DyeMatch` — search results are `DyeWithDistance`)
 - **Character types**: `CharacterColorMatch`, `SubRace`, `Gender`, `Race`
 - **Preset types**: `PresetCategory`, `PresetPalette`, `PresetData`, `CachedData`, `PriceData`
 - **Auth types**: Various JWT and API response sub-types
@@ -124,7 +127,7 @@ The library works everywhere JavaScript runs:
 
 | Environment | Support | Notes |
 |-------------|---------|-------|
-| **Node.js** | ✅ Full | v16+ recommended |
+| **Node.js** | ✅ Full | `engines.node: ">=18.0.0"` |
 | **Browser** | ✅ Full | Modern browsers, bundler required |
 | **Cloudflare Workers** | ✅ Full | Edge runtime compatible |
 | **Deno** | ✅ Full | npm compatibility mode |
@@ -146,24 +149,28 @@ seven fields — `stainID`, `name`, `hex`, `category`, `acquisition`, `consolida
   set), `isCosmic ≡ consolidationType 'C'`, `isIshgardian ≡ 'B'`
 - Localized names in 6 languages
 
-The runtime `Dye` object therefore keeps its full 16-field shape; consumers of dye objects were
+The runtime `Dye` object therefore keeps its full 17-field shape; consumers of dye objects were
 unaffected by the schema migration. `Dye.itemID` remains a `number` (= `legacyItemID`, falling
 back to `stainID` for future consolidated-only dyes).
 
 The **11 Facewear colours are separate** — `facewearColors` / `facewear_colors.json`, typed as
 `FacewearColor`. They are excluded from the k-d tree because they are not market-tradeable.
 
+`dyeDatabase` is the raw JSON array. Build a `DyeService` from it to query:
+
 ```typescript
-import { dyeDatabase } from '@xivdyetools/core';
+import { DyeService, dyeDatabase } from '@xivdyetools/core';
+
+const dyeService = new DyeService(dyeDatabase);
 
 // Get all dyes
-const allDyes = dyeDatabase.getAllDyes();
+const allDyes = dyeService.getAllDyes();
 
 // Search by name
-const reds = dyeDatabase.searchByName('red');
+const reds = dyeService.searchByName('red');
 
-// Get by category
-const browns = dyeDatabase.getByCategory('brown');
+// Get by category (exact match against DYE_CATEGORIES)
+const browns = dyeService.searchByCategory('Browns');
 ```
 
 ### 2. Color Matching
@@ -191,27 +198,32 @@ Generate aesthetically pleasing dye combinations:
 const dyeService = new DyeService(dyeDatabase);
 
 // Different harmony types
-const complementary = dyeService.findComplementaryDyes('#FF6B6B');
+const complementary = dyeService.findComplementaryPair('#FF6B6B');  // → Dye | null
 const triadic = dyeService.findTriadicDyes('#FF6B6B');
 const analogous = dyeService.findAnalogousDyes('#FF6B6B');
 const splitComplementary = dyeService.findSplitComplementaryDyes('#FF6B6B');
 const tetradic = dyeService.findTetradicDyes('#FF6B6B');
 ```
 
+The one implementation every surface shares is `generateHarmonySlots` — it takes
+a colour wheel and returns `HarmonySlot[]` (found dye plus the computed ideal).
+See [Algorithms](algorithms.md#harmony-generation).
+
 ### 4. Accessibility Features
 
 Check contrast ratios and simulate colorblindness:
 
 ```typescript
-// WCAG contrast checking
+// WCAG contrast checking — a ratio plus two boolean predicates
 const ratio = ColorService.getContrastRatio('#FF6B6B', '#FFFFFF');
-const wcag = ColorService.evaluateWCAG(ratio);
-// { AA: true, AAA: false, AALarge: true, AAALarge: true }
+const aa = ColorService.meetsWCAGAA('#FF6B6B', '#FFFFFF');           // largeText? 3rd arg
+const aaa = ColorService.meetsWCAGAAA('#FF6B6B', '#FFFFFF');
 
-// Colorblindness simulation
-const protanopia = ColorService.simulateColorblindness('#FF6B6B', 'protanopia');
-const deuteranopia = ColorService.simulateColorblindness('#FF6B6B', 'deuteranopia');
-const tritanopia = ColorService.simulateColorblindness('#FF6B6B', 'tritanopia');
+// Colorblindness simulation — the hex form has its own name; the plain
+// `simulateColorblindness` takes an RGB object
+const protanopia = ColorService.simulateColorblindnessHex('#FF6B6B', 'protanopia');
+const deuteranopia = ColorService.simulateColorblindnessHex('#FF6B6B', 'deuteranopia');
+const tritanopia = ColorService.simulateColorblindnessHex('#FF6B6B', 'tritanopia');
 ```
 
 ### 5. Palette Extraction
@@ -221,14 +233,22 @@ Extract dominant colors from images using K-means++:
 ```typescript
 import { PaletteService } from '@xivdyetools/core';
 
-// From ImageData (canvas, browser)
-const palette = await PaletteService.extractPalette(imageData, {
-  numColors: 5,
-  quality: 'high'
+const paletteService = new PaletteService();
+
+// From ImageData (canvas, browser) — convert to RGB[] first
+const pixels = PaletteService.pixelDataToRGBFiltered(imageData.data);
+
+// Synchronous instance method
+const palette = paletteService.extractPalette(pixels, {
+  colorCount: 5,
+  maxIterations: 25,
+  convergenceThreshold: 1.0,
+  maxSamples: 10000,
 });
 
-// Returns array of hex colors
-console.log(palette);  // ['#FF6B6B', '#4ECDC4', ...]
+// Returns ExtractedColor[], sorted by dominance
+console.log(palette);
+// [{ color: { r: 255, g: 107, b: 107 }, dominance: 45, pixelCount: 4500 }, ...]
 ```
 
 ### 6. Market Prices
@@ -240,11 +260,12 @@ import { APIService } from '@xivdyetools/core';
 
 const api = new APIService();
 
-// Get price for a specific item
-const prices = await api.getPriceData(19952, 'Gilgamesh');
+// Get price for a specific item.
+// getPriceData(itemID, worldID?: number, dataCenterID?: string)
+const prices = await api.getPriceData(52254, undefined, 'Aether');
 
 // Get prices for multiple items in a data center
-const bulkPrices = await api.getPricesForDataCenter([19952, 19953], 'Aether');
+const bulkPrices = await api.getPricesForDataCenter([52254, 52255], 'Aether');
 ```
 
 ---
@@ -303,8 +324,8 @@ The library uses TypeScript branded types for compile-time safety:
 import { createHexColor, createDyeId, HexColor, DyeId } from '@xivdyetools/types';
 
 // Validated at runtime, typed at compile time
-const hex: HexColor = createHexColor('#FF6B6B');  // ✅
-const dyeId: DyeId = createDyeId(42);             // ✅
+const hex: HexColor = createHexColor('#FF6B6B');  // ✅ throws on an invalid format
+const dyeId: DyeId | null = createDyeId(42);      // ✅ null outside the 1-254 stainID window
 
 // Type errors prevent invalid values
 const invalid: HexColor = '#invalid';              // ❌ Type error

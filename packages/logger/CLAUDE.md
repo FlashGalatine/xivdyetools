@@ -20,7 +20,7 @@ pnpm test          # vitest run
 pnpm test:watch    # vitest
 pnpm test:coverage # vitest run --coverage
 pnpm type-check    # tsc --noEmit
-pnpm lint          # eslint src
+pnpm lint          # eslint src + knip dead-code gate (lint:dead)
 pnpm clean         # rimraf dist coverage
 ```
 
@@ -127,10 +127,15 @@ The worker preset doesn't probe — `ENVIRONMENT` is passed in explicitly via wo
 
 ```
 password, token, secret, authorization, cookie, api_key, apiKey,
-access_token, refresh_token
+access_token, refresh_token, private_key, privateKey, set_cookie,
+setCookie, webhook_url, webhookUrl, auth_header, authHeader,
+session_id, sessionId, client_secret, signing_secret, webhook_secret
 ```
 
-The worker preset extends this with `WORKER_REDACT_FIELDS`:
+(22 entries — the last 13 were added by FINDING-026, 2026-08-21 security audit.)
+
+The worker preset extends this with `WORKER_REDACT_FIELDS` (= the 22 above plus
+these four, 26 in total):
 
 ```
 + jwt_secret, bot_api_secret, bot_signing_secret, discord_client_secret
@@ -154,7 +159,9 @@ That path-scoping fix has its own cost, also found and fixed within this same un
 
 Two notes on the `authorization=` rule, both from BUG-005 (2026-09-02). It consumes to a delimiter or end of line rather than to the first space, because an Authorization value IS the rest of the header — before that, `Authorization: Basic dXNlcjpwYXNzd29yZA==` had its *scheme word* redacted and its credential left intact (`Bearer` was safe only because of its own dedicated pass; Discord's `Bot` was rescued only incidentally, when the value happened to match the Discord-token shape). Every OTHER key rule still stops at whitespace, so an ordinary `token=abc failed at 12:04` stays diagnosable; only here is the whole tail known to belong to the value. And the free-text scheme pass stays **`Bearer`-only** on purpose: extending it to `Basic|Bot|Digest|Token` looks tempting for the naked-scheme case, but four of those five are ordinary English — that version turned oauth's `'XIVAuth token exchange failed'` into `'XIVAuth token [REDACTED] failed'`, and an oauth test caught it.
 
-All 15 patterns are compiled **once at module scope** (`SANITIZE_RULES`) — this function runs on every log line plus every error message, and used to compile all 15 per call (OPT-007).
+One more rule sits between the shape patterns and the `key=value` ones: a **JSON-shaped sweep** (BUG-025) that rewrites every quoted key ending in `token`/`secret`/`password`/`key` — `"…":"…"` → `"…":"[REDACTED]"` — in a single pass, which is what catches compound names (`sessionToken`, `webhook_secret`) the per-key patterns miss when a serialized payload lands in a message.
+
+All 17 patterns are compiled **once at module scope** (`SANITIZE_RULES`) — this function runs on every log line plus every error message, and used to compile all of them per call (OPT-007).
 
 ### Structured field convention
 

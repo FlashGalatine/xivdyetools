@@ -63,6 +63,13 @@ When you receive a `429`:
 - **Use `/v1/dyes`** to paginate through all 125 entries in a few requests rather than fetching individually.
 - **Use `/v1/dyes/batch`** for up to 50 dye lookups in a single request.
 
+## Internal routes
+
+One route under `/v1` is not part of the public contract and is not listed in the reference:
+`POST /v1/telemetry`, the web app's opt-in usage beacon. It has its own per-IP bucket (240
+requests per 60 s), fails **closed** when its limiter is unavailable, accepts only allowlisted
+origins, and its `X-RateLimit-*` headers describe that bucket, not the API one. Do not build on it.
+
 ## CORS Preflight
 
 CORS `Access-Control-Max-Age` is `3600` (1 hour) on every route — browsers will cache the preflight `OPTIONS` response for one hour before re-asking. (Reduced from 24h in v0.4.0 to allow CORS policy changes to propagate within an hour.)

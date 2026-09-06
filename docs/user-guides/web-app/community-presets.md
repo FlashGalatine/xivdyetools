@@ -139,7 +139,10 @@ On the **Mine** tab (sign-in required) a **My Submissions** button opens your le
 
 ## Discord Bot
 
-The Discord bot's `/preset` commands browse the same library and can favourite presets from chat; submitting and editing are web-app only.
+The Discord bot's `/preset` commands work against the same library: `/preset list`, `/preset show`
+and `/preset random` browse it, `/preset vote` votes, `/preset favorite` keeps a shortlist, and
+`/preset submit` and `/preset edit` add and change your own presets from chat. Deleting a preset is
+the one thing only the web app can do — sign in, open **My Submissions**, and choose **Delete**.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-10
 **Source:** [REMEDIATION_PLAN.md § Suggested CI additions](../../audits/2026-08-09-prerelease-monorepo-upgrade/REMEDIATION_PLAN.md)
-**Status:** design approved, not yet implemented
+**Status:** superseded — the knip and test-only-reachability gates shipped through `docs/superpowers/plans/2026-09-01-dead-code-guardrails.md` (PR #157); no plan was written for this spec
 
 ---
 

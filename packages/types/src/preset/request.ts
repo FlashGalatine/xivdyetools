@@ -62,7 +62,7 @@ export interface PresetEditRequest {
   /** Replacement secondary list; `[]` clears it */
   secondary_categories?: PresetCategory[];
 
-  /** New dye IDs (2-5 dyes) */
+  /** New dye stainIDs (3-6 dyes) */
   dyes?: number[];
 
   /** New tags (0-10 tags, max 30 chars each) */

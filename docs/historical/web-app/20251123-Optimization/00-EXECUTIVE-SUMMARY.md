@@ -486,7 +486,7 @@ npm run type-check  # TypeScript strict mode
 ### Documentation
 
 **Living Documents:**
-- [README.md](../../README.md) - Updated with new features
+- [index.md](../../index.md) - Updated with new features
 - [CHANGELOG.md](../../xivdyetools-discord-bot/CHANGELOG.md) - All changes logged
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - System design (to be created)
 - [API Documentation](./api/) - TypeDoc generated

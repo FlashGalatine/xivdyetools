@@ -1,7 +1,5 @@
 # SVG Generation & PNG Rendering
 
-> Discord bot v5.0.0
-
 Commands that produce images follow a three-stage pipeline: build an SVG from a shared template library, render it to a PNG with resvg-wasm, and send the PNG as a Discord file attachment.
 
 ## SVG to PNG Pipeline
@@ -11,7 +9,7 @@ Commands that produce images follow a three-stage pipeline: build an SVG from a 
 3. Send as a Discord file attachment.
 
 ```typescript
-const svg = generateComparisonCard(dyes, { theme });
+const svg = generateComparisonCard({ dyes, theme, labels, lang });
 const png = await renderSvgToPng(svg);
 await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
   embeds: [...],
@@ -21,7 +19,7 @@ await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
 
 ## @xivdyetools/svg Package
 
-Shared SVG template library (`@xivdyetools/svg` 2.0.0) used by both `discord-worker` and `og-worker`. 5.0 rebuilt every generator on the card frame system in `frame.ts` (400 px canvas, 350 px ceiling, `CARD_DARK` / `CARD_LIGHT` themes, command chip, app-icon mark); the 4.x `build*Svg` modules are deleted.
+Shared SVG template library (`@xivdyetools/svg`) used by both `discord-worker` and `og-worker`. 5.0 rebuilt every generator on the card frame system in `frame.ts` (400 px canvas, 350 px ceiling, `CARD_DARK` / `CARD_LIGHT` themes, command chip, app-icon mark); the 4.x `build*Svg` modules are deleted. Every generator takes a **single options object** — the dyes, the theme, the labels and the locale all travel in it.
 
 | Generator | Card |
 |-----------|------|
@@ -87,5 +85,4 @@ The image is referenced in the embed via `"url": "attachment://image.png"`.
 
 - [Commands](commands.md)
 - [Interactions](interactions.md)
-- [Deployment](deployment.md)
-- [Overview](overview.md)
+- [Overview](overview.md) (including [Deployment](overview.md#deployment))

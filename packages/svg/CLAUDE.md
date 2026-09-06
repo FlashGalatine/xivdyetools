@@ -94,7 +94,7 @@ src/
 ├── index.ts                  # Public API re-exports
 ├── frame.ts                  # THE FRAME SYSTEM — read before touching a generator
 ├── base.ts                   # XML escape, hex/RGB helpers, primitives, THEME, FONTS
-├── icons/tool-icons.ts       # Single geometry home: 9 tool glyphs × compact + detail
+├── icons/tool-icons.ts       # Single geometry home: 10 compact glyphs (9 tools + `tools`) and 9 detail glyphs (`tools` has no detail form)
 │
 │  # 5.0 cards — each names its confirmed frame in its module docblock
 ├── harmony-card.ts           # /harmony            11A (Turn-13 geometry)
@@ -139,10 +139,20 @@ A dye name introducing a glyph outside the current Noto subsets renders as `.not
 
 ## Consumers
 
+Cards (the frame system):
+
 - `apps/discord-worker` — every generator; rasterizes via `resvg-wasm`.
 - `@xivdyetools/bot-logic` — orchestrates the command flows that call these generators.
 
-`apps/og-worker` keeps its **own** local `THEME` and SVG services; it is on the OG card directions, not this frame system.
+Glyph set only (`toolGlyph` / `harmonyGlyph` / `categoryGlyph` / `chromeGlyph` / `panelGlyph`, `GLYPH_ACCENT_*`):
+
+- `apps/web-app` — `shared/tool-icons.ts`, `harmony-icons.ts`, `category-icons.ts`, `state-icons.ts`, `ui-icons.ts`, `services/theme-service.ts`.
+- `apps/og-worker` — `services/svg/band.ts`, `band-shared.ts`, `default-card.ts` (also `bandInk`, `escapeXml`, `estimateTextWidth`).
+- `apps/api-worker` — the VitePress docs' `Glyph.vue` component.
+
+The og-worker caveat is about **cards**: it keeps its own local `THEME` and card
+services and is on the OG card directions, not this frame system — but it does
+read this package's glyphs and text primitives.
 
 ## Internal Dependencies
 

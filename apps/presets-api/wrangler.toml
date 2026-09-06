@@ -89,7 +89,7 @@ service = "xivdyetools-image-worker"
 # MODERATOR_IDS, PERSPECTIVE_API_KEY, INTERNAL_WEBHOOK_SECRET,
 # (MODERATION_WEBHOOK_URL, OWNER_DISCORD_ID, DISCORD_BOT_TOKEN and
 #   DISCORD_BOT_WEBHOOK_URL were dropped with notifyModerators on 2026-09-01 —
-#   delete them from the deployed worker per POST_MERGE_CHECKLIST.md §3.)
+#   delete them from the deployed worker per the archived docs/historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md §3 — done 2026-09-01.)
 # CACHE_PURGE_API_TOKEN (optional, FINDING-018: a token with only
 #   Zone → Cache Purge on the xivdyetools.app zone; pairs with the
 #   CACHE_PURGE_ZONE_ID var above; unset → preview-image takedowns skip

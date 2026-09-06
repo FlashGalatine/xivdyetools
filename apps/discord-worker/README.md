@@ -26,7 +26,7 @@ Cards are generated as SVG strings by `@xivdyetools/svg` and rasterized to PNG i
 
 | Command | Description |
 |---------|-------------|
-| `/dye search\|info\|list\|random` | Dye lookups by name, ID, hex, or category |
+| `/dye search\|info\|list\|random` | Dye lookups by name, stainID / item ID, or category |
 
 ### 🔍 Analysis
 
@@ -101,7 +101,7 @@ pnpm --filter xivdyetools-discord-worker run deploy:production   # Production (b
 
 ### Bundle size
 
-The Worker bundle is close enough to Cloudflare's compressed limit to be worth watching. Splitting `@cf-wasm/photon` out into [`image-worker`](../image-worker/) restored headroom; the CJK subset fonts bundled as `Data` are now the largest remaining contributor. Re-subset via `scripts/subset-cjk-fonts.py` rather than bundling full font files — `fonts-src/` is deliberately outside `src/` so wrangler's `**/*.ttf` glob cannot capture the ~21 MiB originals.
+The Worker bundle is close enough to Cloudflare's compressed limit to be worth watching. Splitting `@cf-wasm/photon` out into [`image-worker`](../image-worker/) restored headroom; the CJK subset fonts bundled as `Data` are now the largest remaining contributor. Re-subset via `scripts/subset-cjk-fonts.py` rather than bundling full font files — `fonts-src/` is deliberately outside `src/` so wrangler's `**/*.ttf` glob cannot capture the ~10 MiB `NotoSansKR-Variable.ttf` source.
 
 ## Environment Bindings
 

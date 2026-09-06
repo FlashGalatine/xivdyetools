@@ -188,7 +188,7 @@ Always price a dye by its `marketItemID`, not its `itemID`, and look prices up o
 
 ### 10. Harmonies on a Colour Wheel
 
-The same selector the Harmony Explorer and `/harmony` use, on any of five colour wheels (api-worker 0.14.0):
+The same selector the Harmony Explorer and `/harmony` use, on any of five colour wheels:
 
 ```bash
 # The wheels themselves
@@ -305,6 +305,7 @@ X-RateLimit-Reset: 1712000000
 - If you exceed the limit, you'll receive a `429` response with a `Retry-After` header (and a top-level `retryAfter` in the body)
 - The `/health` endpoint is not rate-limited
 - The Universalis proxy has its own, separate limit — 30 requests per minute per IP on `/universalis/aggregated/*` (the data-center and world lists are unlimited)
+- `POST /v1/telemetry` is **not part of the public API**. It is the web app's own opt-in usage beacon: it takes no query, answers `204`, and is documented here only so you are not surprised to see it. It has its own bucket (240 requests per minute per IP, no burst) so beacons can never rate-limit real API calls sharing an address, and its `X-RateLimit-*` headers describe that bucket rather than the shared API one. Unlike the rest of the API it fails **closed** — if its limiter backend is unavailable the request is refused rather than allowed.
 
 **Tips for staying under the limit:**
 

@@ -132,7 +132,7 @@ import { base64UrlEncode, base64UrlDecode, bytesToHex, hexToBytes } from '@xivdy
 
 | Function | Description |
 |----------|-------------|
-| `verifyJWT(token, secret)` | Verify JWT signature, algorithm (HS256 only), and expiration |
+| `verifyJWT(token, secret, options?)` | Verify JWT signature, algorithm (HS256 only), `exp`/`nbf`, and — when `options` asks — `expectedType`, `issuer`, `audience`, with `clockToleranceSeconds` skew (default 0) |
 | `verifyJWTSignatureOnly(token, secret, maxAgeMs?)` | Verify signature only (for refresh token grace periods) |
 | `decodeJWT(token)` | Decode JWT without verification (debugging only) |
 

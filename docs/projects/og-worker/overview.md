@@ -1,6 +1,6 @@
 # OpenGraph Worker Overview
 
-**xivdyetools-og-worker** v2.1.0 - Dynamic OpenGraph metadata for social media previews
+**xivdyetools-og-worker** - Dynamic OpenGraph metadata for social media previews
 
 ---
 
@@ -8,13 +8,8 @@
 
 A Cloudflare Worker that generates dynamic OpenGraph metadata and preview images when XIV Dye Tools links are shared on social media platforms. When you share a link like `https://xivdyetools.app/harmony?dye=1` on Discord, Twitter, or Facebook, this worker intercepts the request and returns rich preview content.
 
-### Recent Changes
-
-- **v2.2.0** — The 2026-08-20 i18n audit: the crawler's `og:title` / `og:description` are authored ×6 (`OG_EMBED`, `services/og-embed.ts`) instead of English templates with localized nouns spliced in; band role words (BASE / TARGET / AS DESIGNED …) localize via `OG_ROLE`; dye names in the embed localize like the card; tool names come from `OG_DECK`, never core `tools.*`; `<html lang>` + `og:locale` follow the locale; CJK subsets re-cut. Companion: the web-app now puts `?lang=` on every non-English share URL — before that, no real share ever reached the localized path
-- **v2.1.0** — 2026-08-18 dead-code audit executed (28 findings, `docs/audits/2026-08-18-og-worker-dead-code/`): the extractor / presets / budget crawler HTML now emits their 15E cards (it emitted the root default — the cards were unreachable), `/presets/:id` crawler route, comparison honours `?frame=x`, `?algo=` rides the harmony / gradient / mixer image URLs, extractor accepts bare `RRGGBB` (equal ranked bands), ~500 lines of 15E-rewrite sediment removed (`base.ts`, the colour-sheet lookup), `services/svg/tokens.ts`, CJK subsets −45 KB, base tsconfig flags restored
-- **v2.0.0** — The 5.0 card rewrite: one 15E band frame for all nine tools (Discord 1200×1050, X 1200×630 via `?frame=x`), per-tool default cards (`/og/:tool/default.png`, `/og/default.png`), `?lang=` reaches the picture, share URLs and `/og/<tool>/:dyeId…` paths key on **stainID** (legacy itemIDs miss into the default card), `?algo=` speaks the 5.0 matching vocabulary, `Helion` → `Helions`, a routed **beta** env (`beta.xivdyetools.app/<tool>/*` + `og-beta.xivdyetools.app`), and the missing `/og/` prefix on every emitted `og:image` URL fixed (no generated card had ever been fetched)
-- **v1.4.0** — 2026-07-18 audit: `?algo=` / 3-dye `ratio` actually honoured, explicit browser/edge TTLs, `@xivdyetools/svg` re-exports replace the local fork
-- **v1.2.0** — `?lang=` localized metadata, `@xivdyetools/worker-middleware` (now `worker-kit`)
+Current version: [docs/versions.md](../../versions.md). Release history:
+[`apps/og-worker/CHANGELOG.md`](../../../apps/og-worker/CHANGELOG.md).
 
 ### Why a Separate Worker?
 
@@ -28,19 +23,21 @@ A Cloudflare Worker that generates dynamic OpenGraph metadata and preview images
 ## Quick Start (Development)
 
 ```bash
-cd xivdyetools-og-worker
+# From the monorepo root (xivdyetools/)
+pnpm install
 
-# Install dependencies
-npm install
+# Start the local dev server
+pnpm --filter xivdyetools-og-worker run dev
 
-# Start local dev server
-npm run dev
-
-# Deploy — bare `deploy` publishes the routed BETA worker (xivdyetools-og-worker-dev, beta.xivdyetools.app/<tool>/*)
-npm run deploy
+# Deploy — bare `deploy` publishes the routed BETA worker
+# (xivdyetools-og-worker-dev, beta.xivdyetools.app/<tool>/* + og-beta.xivdyetools.app)
+pnpm --filter xivdyetools-og-worker run deploy
 # Production (xivdyetools-og-worker, xivdyetools.app/<tool>/* + og.xivdyetools.app)
-npm run deploy:production
+pnpm --filter xivdyetools-og-worker run deploy:production
 ```
+
+⚠️ Unlike every other worker in the monorepo, a bare `deploy` here publishes to **real, public
+hostnames** — the top-level env is the beta worker, not a routeless sandbox.
 
 See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../operations/DEPLOY_ENVIRONMENTS.md).
 
@@ -58,7 +55,11 @@ The worker detects and serves optimized content for:
 | LinkedIn | LinkedInBot | 1200x1050 |
 | Slack | Slackbot | 1200x1050 |
 | Telegram | TelegramBot | 1200x1050 |
-| iMessage | AppleWebKit | 1200x1050 |
+| WhatsApp | WhatsApp | 1200x1050 |
+| iMessage | Applebot | 1200x1050 |
+
+`Googlebot` is **deliberately absent** from the table: Google requests pass through to the SPA so
+its own SEO content is what gets indexed (`crawler-detector.test.ts` pins this).
 
 Both frames are the same 400-wide design grid rastered ×3 (Discord 400×350, X 400×210) and take separate cache keys.
 
@@ -73,13 +74,25 @@ User shares link → Social platform crawls URL → OG Worker intercepts
      ↓
 Crawler detected? → Yes → Generate OG HTML with dynamic image URL
      ↓
-                    No → Redirect to web app (302)
+                    No → depends on which host the request arrived on
 ```
+
+A non-crawler is **not** always redirected. The worker branches on the request's hostname:
+
+| Host | Non-crawler gets |
+|------|------------------|
+| `APP_BASE_URL`'s host (`xivdyetools.app` / `beta.xivdyetools.app`) | `fetch(request)` — passed straight through to the SPA origin |
+| `OG_IMAGE_BASE_URL`'s host (`og.xivdyetools.app`) on an unmatched path | A bare `404`. This worker **is** the origin there, and Cloudflare blocks a worker fetching its own custom domain (error 1042) |
+| Anything else (a `workers.dev` name, `wrangler dev`) | `302` to `APP_BASE_URL` |
+
+This is why `OG_IMAGE_BASE_URL`'s hostname must never equal `APP_BASE_URL`'s — `isOgImageHost`
+identifies "our own image host" by exactly that comparison, and pointing both at one hostname would
+bounce every real visitor away from the tool pages. `tests/wrangler-env.test.ts` guards it.
 
 ### Dynamic Image Generation
 
 ```
-/og/harmony/:dyeId.png → SVG template → resvg-wasm → PNG response
+/og/harmony/:dyeId/:harmonyType[.png] → SVG template → resvg-wasm → PNG response
 ```
 
 1. Parse dye ID from URL
@@ -100,10 +113,10 @@ These routes intercept normal web app URLs when accessed by crawlers:
 
 | Route (crawler intercept) | Share-URL parameters read |
 |-------|-------------|
-| `/harmony` | `?dye=<stainID>&harmony=<type>&algo=…&perceptual=1` |
+| `/harmony` | `?dye=<stainID>&harmony=<type>&algo=…&wheel=…` (there is no `perceptual` parameter — a `?perceptual=1` in an old share URL is simply not read) |
 | `/gradient` | `?start=<stainID>&end=<stainID>&steps=…&algo=…` |
-| `/mixer` | `?dyeA=<stainID>&dyeB=<stainID>[&dyeC=…]&ratio=…&algo=…` |
-| `/swatch` | `?hex=RRGGBB` (`?color=` accepted as a read alias) `&limit=…&algo=…&sheet=…&race=…&gender=…` |
+| `/mixer` | `?dyeA=<stainID>&dyeB=<stainID>[&dyeC=…]&ratio=…&mode=…&algo=…` |
+| `/swatch` | `?slot=<sheet>&i=<cellIndex>` is the 5.0 share grammar (`?sheet=` is the pre-5.0 alias for `slot`), plus `&race=…&gender=…`; `?hex=RRGGBB` (`?color=` alias) is the fallback when the cell address resolves nothing, with `&limit=…&algo=…` |
 | `/comparison` | `?dyes=<stainID>,<stainID>[,…]` |
 | `/accessibility` | `?dyes=<stainID>[,…]&vision=…` |
 | `/extractor` | `?colors=RRGGBB[,RRGGBB…]&algo=…` (max 5; the share URL carries no shares, so the card draws equal ranked bands) |
@@ -132,15 +145,20 @@ Image responses are cached `max-age=86400, s-maxage=604800` (24 h browser / 7 d 
 
 ### Query Parameters
 
-`lang`, `frame`, and `algo` are the **only** query keys any `/og/*` image route may carry
-(2026-08-29 FINDING-024, OG-4) — any other key gets a `404` before the cache lookup or a
-render, without echoing the key back. A present-but-invalid `algo` gets `400`.
+`lang`, `frame`, `algo`, `mode` and `wheel` (`OG_ALLOWED_QUERY_KEYS`) are the **only** query keys
+any `/og/*` image route may carry (2026-08-29 FINDING-024, OG-4) — any other key gets a `404`
+before the cache lookup or a render, without echoing the key back. `algo`, `mode` and `wheel` have
+their *values* validated by that same guard on every `/og/*` route, not just the routes that read
+them, because an unchecked value would otherwise mint a fresh cache key everywhere: a
+present-but-invalid one gets `400`, and an empty value (`?algo=` or bare `?algo`) counts as absent.
 
 | Parameter | Description |
 |-----------|-------------|
 | `algo` | Matching method: `ciede2000`, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` (legacy `euclidean` / `hyab` / `oklch-weighted` accepted and normalised). Direct image routes fall back to **`ciede2000`** (`DEFAULT_MATCHING_METHOD`) when the parameter is absent — not `oklab` |
 | `lang` | `en` (default, unparameterised) / `ja` / `de` / `fr` / `ko` / `zh` — localizes the metadata **and** the picture |
 | `frame` | `x` for the 1200×630 X/Twitter frame; otherwise the 1200×1050 Discord frame |
+| `mode` | The mixing mode. Read only by the two mixer routes — added 2026-09-03, after which a shared mix stopped rendering in CIELAB regardless of which algorithm the sharer picked |
+| `wheel` | The harmony card's wheel geometry (`parseColorWheelId`'s five ids). Read only by `/og/harmony/*`; added 2026-09-04 for the Harmony Explorer |
 
 ---
 
@@ -215,7 +233,7 @@ Shows start and end dyes with stepped gradient between:
 | Runtime | Cloudflare Workers |
 | Framework | Hono |
 | SVG Rendering | resvg-wasm |
-| Fonts | Embedded — Onest, Space Grotesk, Fragment Mono (values), Noto Sans JP/SC/KR subsets (six TTFs) |
+| Fonts | Embedded — Onest and Space Grotesk as three static instances each (Regular / SemiBold / Bold), Fragment Mono Regular (values), Noto Sans JP/SC/KR subsets: **ten TTFs**. Static instances, never variable files — resvg exposes only a variable font's default instance, so every `font-weight` used to be a no-op |
 | Dye Data | Embedded from @xivdyetools/core |
 
 ---
@@ -226,20 +244,31 @@ Shows start and end dyes with stepped gradient between:
 |---------|-----------|----------------|
 | OG HTML | 1 hour browser / 24 hours edge | Edge (Cache-Control) |
 | PNG Images | 24 hours browser / 7 days edge | Edge (Cache-Control) |
-| Static assets | 1 year | Edge (immutable) |
+
+(This worker serves no static assets — it has no assets binding and every response it produces is
+generated.)
 
 The `Cache-Control` headers above describe TTLs but do nothing by themselves on a Worker
 response — `index.ts` also stores every successful `/og/*` render in Cloudflare's
 `caches.default` (the Cache API) and serves repeat requests from there instead of
 re-rastering through resvg. The key is **canonical**, not the full request URL
-(2026-08-29 FINDING-024, OG-4): the decoded path (with a trailing `.png` stripped — the
-suffix is optional) plus the resolved `lang`, the resolved `frame`, and the raw `algo`
-(omitted when absent) — so `?lang=EN`/`?lang=en-US`/no `lang` share one entry, as do
-`.png` and no-suffix spellings of one card, and a percent-encoded path spelling that
-decodes to the same route. This is checked and filled for `HEAD` requests as well as
+(2026-08-29 FINDING-024, OG-4). It is the decoded path — with a trailing `.png` stripped, since the
+suffix is optional at every route except `/og/:tool/default.png` — plus, in a fixed order:
+
+| Axis | Form |
+|------|------|
+| `lang` | The **resolved** locale (`?lang=EN`, `?lang=en-US` and no `lang` collapse onto one entry) |
+| `frame` | The **resolved** `discord` \| `x` (an unrecognised `?frame=` renders `discord` and shares its entry) |
+| `v` | `CARD_VERSION` — this worker's own package version. Because the stored response says `s-maxage=604800`, a card-design change would otherwise keep serving the pre-deploy PNG from every warm colo for up to seven days; bumping the version is what retires the old cards (BUG-025, deploy-checklist step 4) |
+| `algo` | The **raw** query value, omitted when absent |
+| `mode` | The **raw** query value, omitted when absent — two mixing modes are two different pictures |
+| `wheel` | **Normalised**, non-default, and only on `/og/harmony/*` — the one route that renders with it. Keying on it elsewhere would let `?wheel=` mint five identical rasters of one card |
+
+So `.png` and no-suffix spellings of one card share an entry, as does a percent-encoded path
+spelling that decodes to the same route. This is checked and filled for `HEAD` requests as well as
 `GET`. It bounds *spellings of one card* to one cache entry — it does not bound how many
 *distinct* ids a client can request (see the Query Parameters note above and the WAF
-rate-limiting rule in `docs/operations/POST_MERGE_CHECKLIST.md`).
+rate-limiting rule in `docs/historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md` §2, deployed 2026-09-01).
 
 ---
 
@@ -247,21 +276,28 @@ rate-limiting rule in `docs/operations/POST_MERGE_CHECKLIST.md`).
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| None required | — | Stateless operation |
+| `ANALYTICS` | Analytics Engine dataset | `xivdyetools_og_analytics` (production) / `xivdyetools_og_analytics_beta` (beta). `writeDataPoint` for `og_request` / `og_image_request`; failures are swallowed |
+| `APP_BASE_URL` | Var | `https://xivdyetools.app` (beta: `https://beta.xivdyetools.app`) — redirect target and canonical URL base, and what `isAppHost` compares against |
+| `OG_IMAGE_BASE_URL` | Var | `https://og.xivdyetools.app/og` (beta: `https://og-beta.xivdyetools.app/og`) — base for emitted `og:image` URLs. The `/og` suffix is load-bearing: without it every emitted card URL 404s. Its **hostname must never equal `APP_BASE_URL`'s** |
 
-All dye data is embedded at build time from `@xivdyetools/core`.
+No KV, D1, R2 or secrets — all dye data is embedded at build time from `@xivdyetools/core`, so the
+worker holds no state of its own.
 
 ---
 
 ## Analytics
 
-The worker tracks:
-- Crawler type (which platform requested)
-- Tool type (harmony, gradient, mixer, swatch)
-- Dye IDs accessed
-- Cache hit/miss ratio
+One datapoint per **crawler** hit — human page views produce nothing here (they were only a cost;
+FINDING-024). The shape written to the `ANALYTICS` dataset is fixed:
 
-Data is sent to Cloudflare Analytics Engine for monitoring social media sharing patterns.
+| Field | Contents |
+|-------|----------|
+| `blobs` | `[event, tool, crawler]` — the event name (`og_request` / `og_image_request`), the tool id, and the detected crawler type |
+| `doubles` | `[timestamp]` |
+| `indexes` | `[tool]` |
+
+Dye IDs are **not** recorded, and neither is cache hit/miss ratio. A `writeDataPoint` failure is
+caught and logged, never surfaced — analytics must not break a render.
 
 ---
 

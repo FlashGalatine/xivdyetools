@@ -159,11 +159,22 @@ may be committed); worker secrets are set with `wrangler secret put` — see
 | Tier | Directories | Rule |
 |------|-------------|------|
 | **Living** | `architecture/`, `projects/`, `developer-guides/`, `user-guides/`, `maintainer/`, `operations/`, `reference/`, `specifications/`, plus the root files | Must stay accurate. Update when the code changes. |
-| **Archived** | `audits/`, `historical/`, `research/`, `brainstorming/`, `superpowers/` | Dated snapshots. **Do not retro-edit** — stale facts are what makes them an archive. |
+| **Frozen-body** | `research/`, `superpowers/` | Dated investigations and spec/plan pairs. **Do not rewrite the body** — but keep each file's `Status:` line current and its links valid (`pnpm docs:check-links` covers these folders). |
+| **Archive** | `audits/`, `historical/` | Dated snapshots. **Do not retro-edit** — stale facts are what makes them an archive; not link-checked. |
 
-When a fact changes in code, grep the living tier for it. Version numbers, dye counts, theme
-counts, and command counts are all duplicated across several index files by design (they serve
-different audiences) and all of them drift together.
+`docs/brainstorming/` no longer exists: its contents moved into
+`docs/historical/20260108-Brainstorm/`, `docs/historical/20260115-v4-DiscordBot/` and
+`docs/historical/20260218-AnalyticsExploration/`. `docs/operations/plans/` was likewise folded
+into `docs/superpowers/plans/` (the single file it held moved there).
+
+When a fact changes in code, grep the living tier for it. Dye counts, theme counts, and command
+counts appear in several index files that serve different audiences, so they must be updated
+together.
+
+**Version numbers are the exception, and they live in exactly two files:** the root
+`README.md` and [`docs/versions.md`](../versions.md). `pnpm docs:check-versions`
+(`scripts/check-doc-versions.ts`, run in CI) fails when either disagrees with a `package.json`.
+No other document under `docs/` should state a current version — link to `versions.md` instead.
 
 ---
 

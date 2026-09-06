@@ -1,6 +1,8 @@
 # Types Package Overview
 
-**@xivdyetools/types** v2.0.0 - Shared TypeScript type definitions
+**@xivdyetools/types** - Shared TypeScript type definitions
+
+> Current version: see [versions.md](../../versions.md).
 
 > **2.0.0 (5.0 wave):** `FacewearColor` (string slug `id`, `name`, `hex` — the 11 Facewear colours are
 > not dyes), `CMYK`, `invertedTetradic`, `SubRace 'Helions'` (was `'Helion'`), the widened
@@ -50,7 +52,7 @@ type HexColor = string & { __brand: 'HexColor' };
 ### Dye Types
 
 ```typescript
-import { Dye, DyeId, DyeCategory, DyeMatch } from '@xivdyetools/types';
+import { Dye, DyeId, DyeWithDistance, FacewearColor } from '@xivdyetools/types';
 
 // Simplified — see packages/types/src/dye/dye.ts for the full runtime shape
 interface Dye {
@@ -66,33 +68,61 @@ interface Dye {
   cost: number;
   currency: string | null;
   isMetallic: boolean; isPastel: boolean; isDark: boolean; isCosmic: boolean; isIshgardian: boolean;
+  consolidationType: 'A' | 'B' | 'C' | null;
 }
+
+// A search result: the dye plus its distance from the query colour
+interface DyeWithDistance extends Dye { distance: number }
 
 interface FacewearColor { id: string; name: string; hex: string; }  // not a Dye
 
-// MatchingMethod ('ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish') lives in @xivdyetools/core, not here
+// Neither `DyeCategory` nor `MatchingMethod` lives here — both are
+// @xivdyetools/core (config/dye-vocabulary.ts and types/, respectively).
+// There is no `DyeMatch` type anywhere; use `DyeWithDistance`.
 ```
 
 ### Preset Types
 
-```typescript
-import { Preset, PresetColor, PresetStatus } from '@xivdyetools/types';
+There is no `Preset`, `PresetColor` or `PresetAuthor` type. Two shapes carry a
+palette: `PresetPalette` (the curated `presets.json` row) and `CommunityPreset`
+(the presets-API row, with voting and moderation).
 
-interface Preset {
+```typescript
+import { PresetPalette, CommunityPreset, PresetStatus, PresetCategory } from '@xivdyetools/types';
+
+// Curated palette — packages/types/src/preset/core.ts
+interface PresetPalette {
   id: string;
   name: string;
-  description?: string;
-  colors: PresetColor[];
   category: PresetCategory;
-  author?: PresetAuthor;
-  upvotes: number;
-  downvotes: number;
-  status: PresetStatus;
-  isCurated: boolean;
-  createdAt: string;
+  description: string;
+  dyes: number[];        // 3-6 stainIDs
+  tags: string[];
+  author?: string;
+  version?: string;
 }
 
-type PresetStatus = 'pending' | 'approved' | 'rejected';
+// Community submission — packages/types/src/preset/community.ts (abridged)
+interface CommunityPreset {
+  id: string;
+  name: string;
+  description: string;
+  category_id: PresetCategory;
+  secondary_categories: PresetCategory[];   // at most two, never the primary
+  dyes: number[];                           // 3-6 stainIDs
+  tags: string[];
+  author_discord_id: string | null;
+  author_name: string | null;
+  vote_count: number;
+  status: PresetStatus;
+  is_curated: boolean;
+  created_at: string;
+}
+
+type PresetStatus = 'pending' | 'approved' | 'rejected' | 'flagged' | 'hidden';
+type PresetCategory =
+  | 'jobs' | 'grand-companies' | 'seasons' | 'events'
+  | 'aesthetics' | 'appearance' | 'zones' | 'raids-trials';
 ```
 
 ### Auth Types
@@ -105,15 +135,23 @@ interface JWTPayload {
   iat: number;
   exp: number;
   iss: string;
+  jti?: string;
+  orig_iat?: number;          // anchors absolute session age across refreshes
   username: string;
-  global_name?: string;
-  avatar?: string;
+  global_name: string | null;
+  avatar: string | null;
   auth_provider: AuthProvider;
-  discord_id: string;
+  discord_id?: string;
+  xivauth_id?: string;
+  primary_character?: PrimaryCharacter;
 }
 
 type AuthProvider = 'discord' | 'xivauth';
 ```
+
+> `@xivdyetools/auth` exports a **different** `JWTPayload` — the verifier's view,
+> with `type?`, `nbf?` and `aud?` and without the `auth_provider` / character
+> claims. Import from the package whose shape you actually mean.
 
 ---
 
@@ -132,8 +170,8 @@ import {
 } from '@xivdyetools/types';
 
 // Creating branded values
-const hex: HexColor = createHexColor('#FF6B6B');
-const dyeId: DyeId = createDyeId(42);
+const hex: HexColor = createHexColor('#FF6B6B');   // throws on an invalid format
+const dyeId: DyeId | null = createDyeId(42);       // returns null outside the 1-254 stainID window
 
 // Type safety prevents raw values
 function processColor(hex: HexColor) { ... }
@@ -152,7 +190,7 @@ All projects import types from this package:
 import type { Dye, RGB, HexColor } from '@xivdyetools/types';
 
 // In xivdyetools-web-app
-import type { Preset, PresetColor } from '@xivdyetools/types';
+import type { PresetPalette, CommunityPreset } from '@xivdyetools/types';
 
 // In xivdyetools-oauth
 import type { JWTPayload, AuthProvider } from '@xivdyetools/types';

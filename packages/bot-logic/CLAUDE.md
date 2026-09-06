@@ -50,7 +50,7 @@ src/
 ├── i18n/                          # Bot UI Translator + six locale JSONs — subpath @xivdyetools/bot-logic/i18n
 └── commands/
     ├── types.ts                   # EmbedData, EmbedField (platform-neutral)
-    ├── harmony.ts                 # /harmony — triadic / complementary / analogous / split / tetradic / inverted-tetradic / square / mono
+    ├── harmony.ts                 # /harmony — triadic / complementary / analogous / split / tetradic / inverted-tetradic / square / mono / compound / shades
     ├── dye-info.ts                # /dye info AND /dye random (shared module)
     ├── mixer.ts                   # /mixer — 6-mode color blending + closest-dye match
     ├── gradient.ts                # /gradient — N-step gradient + dye matches per stop
@@ -68,10 +68,10 @@ src/
 function isValidHex(input: string, options?: { allowShorthand?: boolean }): boolean;
 function normalizeHex(hex: string): string;            // → '#RRGGBB' uppercase
 function resolveColorInput(input: string, options?: ResolveColorOptions): ResolvedColor | null;
-function resolveDyeInput(input: string): Dye | null;
+function resolveDyeInput(input: string, locale?: LocaleCode): Dye | null;   // default locale 'en'
 const dyeService: DyeService;                          // shared singleton
-type ResolvedColor = { hex; name?; id?; itemID?; dye? };
-type ResolveColorOptions = { excludeFacewear?; findClosestForHex? };
+type ResolvedColor = { hex; name?; id?; itemID?; stainID?; dye? };
+type ResolveColorOptions = { excludeFacewear?; findClosestForHex?; locale? };
 ```
 
 ### Localization
@@ -96,10 +96,13 @@ Each command exports `execute<Name>(input): Promise<<Name>Result>` along with it
 
 ```ts
 executeHarmony(input: HarmonyInput): Promise<HarmonyResult>
-  type HarmonyInput = { baseHex; baseName?; baseId?; baseItemID?; harmonyType; locale; harmonyOptions?; dyeFilters? };
+  type HarmonyInput = { baseHex; baseName?; baseId?; baseItemID?; harmonyType; wheel?: ColorWheelId;
+                        locale; dyeFilters?; companionCount?; matchingMethod?; strictMatching?;
+                        preventDuplicates?; theme?; logger?;
+                        harmonyOptions? /* @deprecated — ignored since PR #159 */ };
   type HarmonyResult = { ok: true; svgString; baseHex; baseName; harmonyDyes: Dye[]; embed }
                      | { ok: false; error: 'NO_MATCHES'|'GENERATION_FAILED'; errorMessage };
-  type HarmonyType = 'triadic'|'complementary'|'analogous'|'split-complementary'|'tetradic'|'inverted-tetradic'|'square'|'monochromatic';
+  type HarmonyType = 'triadic'|'complementary'|'analogous'|'split-complementary'|'tetradic'|'inverted-tetradic'|'square'|'monochromatic'|'compound'|'shades';
   const HARMONY_TYPES: readonly HarmonyType[];
   function getHarmonyTypeChoices(): {name; value}[];
 

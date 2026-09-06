@@ -1,4 +1,4 @@
-# Discord Bot Command Reference (v5.0.0)
+# Discord Bot Command Reference
 
 Reference for the XIV Dye Tools Discord bot's slash commands.
 
@@ -51,17 +51,23 @@ schema.
 
 ## Rate Limits
 
-Per-user, per-command sliding windows (`checkRateLimit` in `src/index.ts`, presets from
+Per-user, per-command sliding windows. `checkRateLimit` lives in `src/services/rate-limiter.ts`,
+and `src/index.ts` calls it before dispatch for **every** command — nothing is exempt (`/stats`
+since FINDING-033; `/about`, `/manual` and `/changelog` since FINDING-020). Tiers come from
 `@xivdyetools/worker-kit/rate-limiter` — `DISCORD_COMMAND_LIMITS`, keyed by the **top-level**
-command name; unlisted commands fall through to `default`).
+command name; unlisted commands fall through to `default`. Two wrinkles: `resolveRateLimitScope`
+canonicalises aliases, so `/a11y` draws from `/accessibility`'s bucket, and a `command:subcommand`
+key tiers one subcommand apart from its siblings (`extractor:image`). `/changelog` is tiered by
+this worker's own `LOCAL_COMMAND_LIMITS` rather than by the shared preset.
 
 | Commands | Limit |
 |----------|-------|
-| `/dye` | 20 requests/min |
-| `/accessibility`, `/budget` | 10 requests/min |
-| `/harmony`, `/mixer`, `/comparison` | 15 requests/min |
-| `/extractor`, `/gradient`, `/swatch`, `/contrast`, `/a11y`, `/preset`, `/preferences` (default tier) | 15 requests/min |
-| `/about`, `/manual`, `/stats`, `/changelog` | Not rate limited |
+| `/dye`, `/preferences` | 20 requests/min |
+| `/accessibility` (and its alias `/a11y`), `/budget`, `/preset` | 10 requests/min |
+| `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/extractor color` | 15 requests/min |
+| `/extractor image` | 5 requests/min (the Photon path through image-worker) |
+| `/about`, `/manual`, `/changelog` | 30 requests/min |
+| `/stats` | 15 requests/min (the `default` tier) |
 | Autocomplete | 60/min + 10 burst (fail-soft — limited requests return empty choices) |
 
 ## Deferred Response Pattern
@@ -79,8 +85,8 @@ Generate harmonious dye combinations based on color theory. Renders the 11A idea
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
 | `color` | String (autocomplete) | Yes | Base color — hex code (`#FF5733`) or dye name |
-| `type` | String (choice) | No | `complementary` (default), `analogous`, `triadic`, `split-complementary`, `tetradic`, `inverted-tetradic`, `square`, `monochromatic` |
-| `color_space` | String (choice) | No | Hue-rotation space: `hsv` (default), `oklch`, `lch`, `hsl` |
+| `type` | String (choice) | No | `triadic` (default), `complementary`, `analogous`, `split-complementary`, `tetradic`, `inverted-tetradic`, `square`, `monochromatic`, `compound`, `shades` |
+| `wheel` | String (choice) | No | Colour wheel the harmony angles are measured on: `rgb` (default), `ryb`, `munsell`, `oklch-hue`, `oklch-lightness` |
 | `companions` | Integer (1-3) | No | Companion dyes per harmony slot |
 | `matching` | String (choice) | No | `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` |
 | `strict_matching` | Boolean | No | Tighten the distance threshold |
@@ -89,7 +95,7 @@ Generate harmonious dye combinations based on color theory. Renders the 11A idea
 **Example usage:**
 ```
 /harmony color:Soot Black type:complementary
-/harmony color:#FF6B6B type:triadic color_space:oklch
+/harmony color:#FF6B6B type:triadic wheel:ryb
 ```
 
 **Rate limit:** 15/min
@@ -106,8 +112,7 @@ Extract colors from an image or a single color value and match them to FFXIV dye
 |--------|------|----------|-------------|
 | `color` | String (autocomplete) | Yes | Color to match — hex code or dye name |
 | `count` | Integer (1-10) | No | Number of matches (default 1) |
-| `matching` | String (choice) | No | `ciede2000`, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` — **registered but not yet read by the `color` handler**, which always ranks by ΔE2000 (`handlers/commands/extractor.ts` TODO) |
-| `prevent_duplicates` | Boolean | No | Avoid showing the same dye twice |
+| `matching` | String (choice) | No | `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` — resolved as explicit option > stored preference > ΔE2000 |
 
 #### Subcommand: `image` (14K ramp)
 
@@ -115,11 +120,8 @@ Extract colors from an image or a single color value and match them to FFXIV dye
 |--------|------|----------|-------------|
 | `image` | Attachment | Yes | Image to analyze |
 | `colors` | Integer (3-10) | No | Number of colors to extract |
-| `vibrancy_boost` | Boolean | No | Boost vibrancy of extracted colors (default: true) |
 | `matching` | String (choice) | No | As above |
-| `prevent_duplicates` | Boolean | No | Avoid mapping multiple slots to the same dye (default: true) |
-
-> The `image` handler currently reads only `image` and `colors`; `vibrancy_boost`, `matching` and `prevent_duplicates` are registered but not consulted (dedup is applied unconditionally; matching uses `PaletteService.extractAndMatchPalette`'s default) — see the TODO in `handlers/commands/extractor.ts`.
+| `prevent_duplicates` | Boolean | No | Avoid mapping multiple slots to the same dye (default: true — only an explicit `false` disables it) |
 
 **Example usage:**
 ```
@@ -127,7 +129,7 @@ Extract colors from an image or a single color value and match them to FFXIV dye
 /extractor color color:#8B0000 count:5
 ```
 
-**Rate limit:** 15/min
+**Rate limit:** `color` 15/min; `image` 5/min (the `extractor:image` tier — the Photon path through image-worker)
 
 ---
 
@@ -163,7 +165,6 @@ Blend two dyes across a ratio sweep (25/40/50/65/80 %, 12F card) using `@xivdyet
 | `dye2` | String (autocomplete) | Yes | Second dye — hex or dye name |
 | `mode` | String (choice) | No | Blending algorithm: `rgb`, `lab`, `oklab`, `ryb`, `hsl`, `spectral` (default from `/preferences set blending`, else `ryb` — `PREFERENCE_DEFAULTS.blending`, the same default as the web app's Mixer) |
 | `matching` | String (choice) | No | `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` |
-| `count` | Integer (1-10) | No | Number of closest dye matches to show |
 
 **Example usage:**
 ```
@@ -220,7 +221,7 @@ Find affordable dye alternatives via the Universalis market board (through the `
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `preset` | String (choice) | Yes | `pure_white`, `jet_black`, `metallic_silver`, `metallic_gold`, `pastel_pink` |
+| `preset` | String (choice) | Yes | One of 22 choices generated from `QUICK_PICKS` (`services/budget/quick-picks.ts`) — `jet_black` and `pure_white` plus the 20 Cosmic Exploration dyes |
 | `world` | String (autocomplete) | No | World or datacenter (uses the saved preference if not set) |
 
 Uses `fetchPricesBatched` to handle all 125 dyes (Universalis caps a request at 100 items). Facewear colours are not dyes and never enter the price path. Post-Patch 7.5 the budget calculator uses `getMarketItemID()` so the 105 consolidated dyes share three real itemIDs (Type-A=52254, Type-B=52255, Type-C=52256).
@@ -353,13 +354,13 @@ How a dye or a pair of dyes survives each kind of color vision (Brettel simulati
 /a11y dye:Metallic Green dye2:Metallic Red vision:deuteranopia
 ```
 
-**Rate limit:** `/accessibility` 10/min; `/a11y` 15/min (default tier — the limiter keys on the registered name)
+**Rate limit:** 10/min, shared — `resolveRateLimitScope` canonicalises `/a11y` to `accessibility`, so the alias cannot double a user's allowance
 
 ---
 
 ## User Data — ❌ REMOVED in v5.0
 
-`/favorites` and `/collection` are **no longer registered commands**, and `src/services/user-storage.ts` (their KV store) is deleted. Saved dyes/palettes live in the web app; preset favourites moved under `/preset favorite` (`add` / `remove` / `list`). `/about` names where each removed command went for one release, and `scripts/cleanup-v4-kv.ts` lists the orphaned `xivdye:favorites:v1:*` / `xivdye:collections:v1:*` / `i18n:user:*` keys for a user-run delete.
+`/favorites` and `/collection` are **no longer registered commands**, and `src/services/user-storage.ts` (their KV store) is deleted. Saved dyes/palettes live in the web app; preset favourites moved under `/preset favorite` (`add` / `remove` / `list`). `/about` names where each removed command went for one release. The orphaned `xivdye:favorites:v1:*` / `xivdye:collections:v1:*` / `i18n:user:*` KV keys were swept once against production on 2026-08-29; the one-shot script that listed them has since been removed.
 
 ---
 
@@ -390,7 +391,9 @@ Category choices (`PRESET_CATEGORY_CHOICES`, typed against `PresetCategory`): `j
 
 ### /preset submit
 
-Submit a new preset for community review. Submitted presets go through moderation before appearing publicly.
+Submit a new preset. Submissions pass an automated content check; those that clear it are published immediately, and anything flagged is held for moderator review.
+
+Three to six dyes: `dye1`–`dye3` are required and `dye4`–`dye6` optional, matching presets-api's 3–6 floor and ceiling. The handler resolves each name to `dye.stainID` before sending — presets-api is stainID-keyed and rejects the legacy item id.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -399,15 +402,11 @@ Submit a new preset for community review. Submitted presets go through moderatio
 | `category` | String (choice) | Yes | Preset category (see list above) |
 | `dye1` | String (autocomplete) | Yes | First dye |
 | `dye2` | String (autocomplete) | Yes | Second dye |
-| `dye3` | String (autocomplete) | No | Third dye |
+| `dye3` | String (autocomplete) | Yes | Third dye |
 | `dye4` | String (autocomplete) | No | Fourth dye |
 | `dye5` | String (autocomplete) | No | Fifth dye |
+| `dye6` | String (autocomplete) | No | Sixth dye |
 | `tags` | String | No | Comma-separated tags (max 10) |
-
-> **Known issue (5.0.0):** `/preset submit` and `/preset edit` still send legacy itemIDs and accept
-> 2–5 dyes, while presets-api 5.0 requires **stainIDs and 3–6 dyes** — bot-side submission/editing
-> fails against the migrated API until the handler moves to `dye.stainID`. Browsing, voting and
-> favourites are unaffected. See the discord-worker CHANGELOG "Known issues".
 
 ### /preset vote
 
@@ -427,7 +426,7 @@ Edit one of your own presets. All fields optional; only provided values change.
 | `name` | String | No | New name (2-50 characters) |
 | `description` | String | No | New description (10-200 characters) |
 | `tags` | String | No | New tags (comma-separated) |
-| `dye1`…`dye5` | String (autocomplete) | No | Replacement dyes |
+| `dye1`…`dye6` | String (autocomplete) | No | Replacement dyes |
 
 ### /preset favorite add | remove | list
 
@@ -437,7 +436,7 @@ Edit one of your own presets. All fields optional; only provided values change.
 | `remove` | `preset_name` (autocomplete, required) | Remove a preset from your favourites |
 | `list` | — | List your favourited presets |
 
-**Rate limit (all `/preset`):** 15/min
+**Rate limit (all `/preset`):** 10/min
 
 ---
 
@@ -489,7 +488,7 @@ Dye type filters applied to search results — `set` takes optional Booleans `me
 /preferences filters set metallic:true expensive:true
 ```
 
-**Rate limit:** 15/min
+**Rate limit:** 20/min
 
 ---
 
@@ -501,7 +500,7 @@ Show the help guide, or one of six localized topics from core's `MANUAL_TOPICS`.
 |--------|------|----------|-------------|
 | `topic` | String (choice) | No | `match_image`, `color_vision`, `contrast`, `matching_methods`, `spectrum_prices`, `character_file` |
 
-**Rate limit:** Not rate limited
+**Rate limit:** 30/min
 
 ---
 
@@ -513,7 +512,7 @@ Ephemeral release notes for the bot, rendered from `apps/discord-worker/CHANGELO
 |--------|------|----------|-------------|
 | `version` | String | No | Expand a specific release (e.g. `5.0.0`) |
 
-**Rate limit:** Not rate limited
+**Rate limit:** 30/min (from this worker's `LOCAL_COMMAND_LIMITS`)
 
 ---
 
@@ -521,7 +520,7 @@ Ephemeral release notes for the bot, rendered from `apps/discord-worker/CHANGELO
 
 Bot information: roster built from `COMMAND_REGISTRY`, version, dye count (read from the database), "Built on" credits, product/social links, the Square Enix attribution, and — for one release — a "Removed in v5" field.
 
-**Rate limit:** Not rate limited
+**Rate limit:** 30/min
 
 ---
 
@@ -537,7 +536,7 @@ Bot usage statistics. `summary` is public; the other subcommands are restricted 
 | `preferences` | Preference adoption rates (admin only) |
 | `health` | System health status (admin only) |
 
-**Rate limit:** Not rate limited
+**Rate limit:** 15/min (the `default` tier — the public `summary` runs paginated KV `list()` scans, so it is not exempt)
 
 ---
 
@@ -546,4 +545,4 @@ Bot usage statistics. `summary` is public; the other subcommands are restricted 
 - [Overview](overview.md) -- Discord worker architecture and project structure
 - [Interactions](interactions.md) -- Interaction handling, deferred responses, and autocomplete
 - [Rendering](rendering.md) -- SVG generation, resvg-wasm rendering, and CJK font subsetting
-- [Deployment](deployment.md) -- Wrangler configuration, environment variables, and CI/CD
+- [Overview § Deployment](overview.md#deployment) -- Wrangler environments, bindings, and CI/CD

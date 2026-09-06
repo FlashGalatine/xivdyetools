@@ -90,7 +90,7 @@ Frontend                       OAuth Worker                       Discord
    │ ◄─ { jwt, user, expires_at } ──│                                │
 ```
 
-XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/cb`, plus pulls `/api/v1/characters` to pick the **verified** character whose name becomes `username` / `global_name`. The roster is read in memory and discarded — none of it is stored (FINDING-001, 2026-08-29 audit).
+XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/callback`, plus pulls `/api/v1/characters` to pick the **verified** character whose name becomes `username` / `global_name`. The roster is read in memory and discarded — none of it is stored (FINDING-001, 2026-08-29 audit).
 
 ### Key Directories
 
@@ -103,17 +103,15 @@ src/
 ├── handlers/
 │   ├── authorize.ts                  # GET /auth/discord (PKCE entry point)
 │   ├── callback.ts                   # GET + POST /auth/callback (token exchange + JWT mint)
-│   ├── xivauth.ts                    # XIVAuth GET /auth/xivauth + /auth/xivauth/cb
+│   ├── xivauth.ts                    # XIVAuth GET /auth/xivauth + GET/POST /auth/xivauth/callback
+│   ├── oauth-flow.ts                 # The shared authorize + GET-callback pipeline both providers are built from
 │   └── token.ts                      # POST /auth/revoke, GET /auth/me
 ├── middleware/
 │   └── body-validation.ts            # bodySizeLimit (10KB), jsonDepthLimit
 ├── services/
 │   ├── jwt-service.ts                # HS256 sign/verify via Web Crypto, jti, revocation check
 │   ├── user-service.ts               # findOrCreateUser + find-by-id lookups (D1 upserts)
-│   ├── rate-limit.ts                 # In-memory legacy rate limiter (per-isolate)
-│   └── rate-limit-do.ts              # Durable Object rate limiter (persistent, distributed)
-├── durable-objects/
-│   └── rate-limiter.ts               # Durable Object class for distributed rate limiting
+│   └── rate-limit.ts                 # Backend selector: native RL_AUTH_* bindings → KV → per-isolate memory
 ├── utils/
 │   ├── oauth-validation.ts           # validateCodeChallenge/Verifier, validateRedirectUri (origin + exact path), validateReturnPath, validateStateParam, validateScopes
 │   ├── pkce-binding.ts               # verifyPkceStateBinding: S256(code_verifier) vs the signed code_challenge (FINDING-012)
@@ -127,10 +125,20 @@ src/
 | Binding | Type | Purpose |
 |---------|------|---------|
 | `DB` | D1 (`xivdyetools-users`) | User identity rows (one table) |
-| `TOKEN_BLACKLIST` | KV Namespace | Revoked JWT IDs (TTL matches token expiry) |
-| `RATE_LIMITER` | Durable Object Namespace (optional) | Persistent per-IP rate limit when `USE_DO_RATE_LIMITING = "true"` |
+| `TOKEN_BLACKLIST` | KV Namespace | Revoked JWT IDs (TTL = token expiry + a 15-minute grace), and the **fallback** `/auth/*` rate-limit counters under the `rl:` prefix |
+| `RL_AUTH_10` | Workers Rate Limiting (`[[ratelimits]]`, 10 / 60 s) | Login-initiation paths (`/auth/discord`, `/auth/xivauth`) |
+| `RL_AUTH_20` | Workers Rate Limiting (`[[ratelimits]]`, 20 / 60 s) | Token-exchange paths (`/auth/callback`, `/auth/xivauth/callback`) |
+| `RL_AUTH_30` | Workers Rate Limiting (`[[ratelimits]]`, 30 / 60 s) | `OAUTH_LIMITS.default` — `/auth/me`, `/auth/revoke`, everything else |
 
-Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID`, `FRONTEND_URL`, `WORKER_URL`, `JWT_EXPIRY` (seconds, default `3600`). Custom domains: `auth.xivdyetools.app`, `auth.xivdyetools.projectgalatine.com`. The `wrangler.toml` also defines a development env (`xivdyetools-oauth-dev`) — note the dev D1 still has `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` placeholder. There is no preview env (deleted in the 2026-08-21 audit, FINDING-029); `ENVIRONMENT` must be `development` or `production`, and anything other than `development` gets the production gates (HTTPS-only URLs, fail-closed env validation, HSTS).
+There is **no Durable Object anywhere in this worker** — no `durable_objects` block in
+`wrangler.toml`, no DO class, no `USE_DO_RATE_LIMITING` flag. The DO limiter was deleted in the
+2026-07-18 audit (REFACTOR-006 / OPT-004).
+
+All four bindings are **production-required** (`validateEnv`, FINDING-013): each degrades silently
+when absent — a weaker rate-limit fallback, or no revocation check on `/auth/me` — with no error
+and no log.
+
+Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID` (required — the XIVAuth flow is not optional config), `FRONTEND_URL`, `WORKER_URL`, `JWT_EXPIRY` (seconds, default `3600`). Custom domains: `auth.xivdyetools.app`, `auth.xivdyetools.projectgalatine.com`. The `wrangler.toml` also defines a development env (`xivdyetools-oauth-dev`) — note the dev D1 still has `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` placeholder. There is no preview env (deleted in the 2026-08-21 audit, FINDING-029); `ENVIRONMENT` must be `development` or `production`, and anything other than `development` gets the production gates (HTTPS-only URLs, fail-closed env validation, HSTS).
 
 ### Required Secrets
 
@@ -144,7 +152,6 @@ Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID`, `FRONTEND_URL`, `
 | Secret | Purpose |
 |--------|---------|
 | `XIVAUTH_CLIENT_SECRET` | XIVAuth confidential-client secret (PKCE-only flows can omit it) |
-| `USE_DO_RATE_LIMITING` | `"true"` to switch from in-memory to Durable Object rate limiting |
 
 ## Database
 
@@ -165,10 +172,10 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 | `/` | GET | Service health JSON |
 | `/health` | GET | Liveness probe |
 | `/auth/discord` | GET | Initiates Discord OAuth (requires `code_challenge`) |
-| `/auth/callback` | GET | Discord redirect handler (exchanges code, mints JWT, redirects) |
+| `/auth/callback` | GET | Discord redirect handler. Does **not** exchange the code: it verifies the signed state and bounces `code` + `csrf` + `state` (+ `return_path` when non-`/`) to the allowlisted SPA callback |
 | `/auth/callback` | POST | SPA token exchange (`{ code, code_verifier, state }` — `state` is the signed value echoed by the GET callback; required) |
 | `/auth/xivauth` | GET | Initiates XIVAuth OAuth |
-| `/auth/xivauth/cb` | GET / POST | XIVAuth redirect handler |
+| `/auth/xivauth/callback` | GET / POST | XIVAuth redirect handler — same two-leg shape as `/auth/callback` |
 | `/auth/revoke` | POST | Revoke a token (writes JTI to `TOKEN_BLACKLIST`) |
 | `/auth/me` | GET | User info for a valid Bearer JWT (revocation-checked via `TOKEN_BLACKLIST`) |
 
@@ -208,11 +215,24 @@ Every response the app dispatches carries `Cache-Control: no-store` and `Pragma:
 
 ### Rate Limiting
 
-`/auth/*` is rate-limited per IP. Two backends:
-- **In-memory** (default): per-isolate Map, lost when the isolate cycles.
-- **Durable Object** (opt-in via `USE_DO_RATE_LIMITING = "true"` + `RATE_LIMITER` binding): persistent and globally consistent.
+`/auth/*` is rate-limited **per IP and per path**, with the limit chosen by `OAUTH_LIMITS`:
+10/min on the login-initiation paths, 20/min on the token-exchange callbacks, 30/min on everything
+else (`/auth/me`, `/auth/revoke`).
 
-Both emit `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 429 responses include `Retry-After`.
+`services/rate-limit.ts` picks the backend in this order (FINDING-003):
+
+1. the native `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` Workers Rate Limiting bindings, through
+   `CloudflareRateLimiter` — atomic, per-colo, one tier per distinct limit;
+2. KV (`TOKEN_BLACKLIST` under the `rl:` prefix) — the legacy fallback;
+3. a per-isolate `MemoryRateLimiter` (dev / tests).
+
+KV was never able to throttle a fast client (1 write/s/key, swallowed put failures,
+eventually-consistent reads, fail-open), which is why the native bindings exist and are
+production-required. A native-backend error still fails **open**, but the middleware in `index.ts`
+reads `result.backendError` and logs it with the request-scoped logger (FINDING-012).
+
+All backends emit `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 429 responses
+include `Retry-After`.
 
 ### CORS
 
@@ -262,9 +282,9 @@ JWT revocation is enforced on `/auth/me` by checking `TOKEN_BLACKLIST` for the `
 | `hono` | HTTP framework |
 | `@xivdyetools/types` | Shared interfaces (JWTPayload, AuthProvider, XIVAuthUser, etc.) |
 | `@xivdyetools/auth` | JWT verification/revocation primitives + Base64URL helpers (`/encoding`) |
-| `@xivdyetools/worker-kit/rate-limiter` | Backend-agnostic rate limiter primitives |
-| `@xivdyetools/logger` | Structured logging |
+| `@xivdyetools/worker-kit/rate-limiter` | `CloudflareRateLimiter`, `KVRateLimiter`, `MemoryRateLimiter`, `getOAuthLimit`, `getClientIp` |
 | `@xivdyetools/worker-kit` | Shared Hono middleware (request ID, logger) |
+| `@xivdyetools/logger` | Structured logging — **transitive** via `worker-kit`, not a direct dependency |
 
 Tests emulate KV/D1/DO with the hand-rolled `src/__tests__/mocks/cloudflare-test.ts` and
 `@xivdyetools/test-utils` — **not** `miniflare`. A direct `miniflare` devDependency was declared
@@ -283,7 +303,7 @@ npx vitest run -t "PKCE"                              # Pattern match
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
+**Dependencies:** `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit` (incl. `/rate-limiter`); `@xivdyetools/logger` arrives transitively through `worker-kit`
 
 **Shares `JWT_SECRET` with:** `xivdyetools-presets-api` (which verifies these JWTs on web auth)
 
@@ -298,4 +318,4 @@ npx vitest run -t "PKCE"                              # Pattern match
 5. `npm run lint && npm run test -- --run && npm run type-check`.
 6. `npm run deploy` (bare — this worker has no `production` env; see the note under Commands).
 7. Smoke-test the full flow from the web app: `/auth/discord` → consent → callback → `/auth/me` returns user info with the issued JWT.
-8. If switching to DO rate limiting, set `USE_DO_RATE_LIMITING = "true"` and bind `RATE_LIMITER`.
+8. Confirm the production worker still has all four security bindings — `RL_AUTH_10`, `RL_AUTH_20`, `RL_AUTH_30` and `TOKEN_BLACKLIST`. `validateEnv` fails the request when one is missing in production, so a dropped binding shows up as a hard failure rather than a silent downgrade.

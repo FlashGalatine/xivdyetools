@@ -246,7 +246,11 @@ Documentation from the original single-repository v1.6 codebase, before the mono
 | Document | Description |
 |----------|-------------|
 | [Multi-Bot Deployment](MULTI_BOT_DEPLOYMENT.md) | Running multiple bot instances |
-| [README](README.md) | Historical folder overview |
+| [XIVAuth Integration (2025-12-13)](20251213-XIVAuth-Integration.md) | The XIVAuth sign-in integration design |
+| [Brainstorm, January 2026](20260108-Brainstorm/README.md) | stainID-first data, the Character (Swatch) Matcher, share buttons + OpenGraph cards, extracted character colours — all shipped; archived from `docs/brainstorming/` 2026-09-05 |
+| [v4 Discord bot docs](20260115-v4-DiscordBot/index.md) | The v4 command set and parity notes, replaced by the 5.0 roster; archived 2026-09-05 |
+| [5.0 post-merge checklist](20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md) | The ordered merge-day record for the 2026-08-28 5.0 release — what ran, what was found, with dates and run ids; open items moved to `docs/operations/OPEN_ITEMS.md` 2026-09-05 |
+| [Analytics exploration](20260218-AnalyticsExploration/README.md) | Cloudflare / Counterscale / privacy option surveys that led to the opt-in Analytics Engine telemetry (PRs #149/#150); archived 2026-09-05 |
 
 ---
 

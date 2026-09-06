@@ -20,6 +20,8 @@ Other tools can send a dye here too: **Inspect Dye in… → Harmony Explorer** 
 
 A row of icon chips sits centred above the wheel — one per harmony type, the active one outlined. Click a chip and the wheel and cards redraw. On phones the row scrolls sideways (a one-time *SWIPE FOR MORE* tag reminds you there are more past the edge). The same choice is mirrored by the **Harmony Type** dropdown in the settings column, so either control works.
 
+Directly beneath that dropdown is **Color wheel**, which decides *which* wheel those angles are measured on — RGB, RYB, Munsell (JIS), OKLCH hue or OKLCH lightness. The same harmony type gives you a different set of partners on each. See **Settings** below.
+
 | Harmony | Description | Best For |
 |---------|-------------|----------|
 | **Complementary** | Opposite on color wheel | Bold, high-contrast looks |
@@ -50,7 +52,7 @@ If prices are on and the market board doesn't answer, one strip appears above th
 
 ### 5. Share
 
-**Share** (or `Shift+S`) copies a link that reopens the same base dye and harmony type, plus your matching settings. A custom-colour base is carried as its hex value instead of a dye.
+**Share** (or `Shift+S`) copies a link that reopens the same base dye, harmony type and colour wheel, plus your matching settings. A custom-colour base is carried as its hex value instead of a dye.
 
 ---
 
@@ -59,8 +61,9 @@ If prices are on and the market board doesn't answer, one strip appears above th
 In the settings column (the gear icon on phones):
 
 - **Harmony Type** — the same ten as the chip row
+- **Color wheel** — which wheel the harmony angles are measured on. **RGB** (the default) is the screen wheel; **RYB** is the painter's wheel the classic harmony rules were written for, where red's complement is green; **Munsell (JIS)** is the evenly spaced perceptual hue circle behind Japan's colour standard, where red's complement is blue-green; **OKLCH hue** re-spaces the screen wheel so equal angles are equal perceived hue steps; **OKLCH lightness** rotates hue while holding perceived brightness, so the partners match the base's brightness. The picked wheel explains itself in a line under the dropdown, and it rides along in the **Share** link
 - **Matching Mode → Perceptual Matching** — on by default: each slot's dye is chosen by colour distance to the ideal colour, using the **Matching Algorithm** below. Off: dyes are ranked purely by hue angle, which is closer to a painter's wheel but can land on very different lightness
-- **Matching Algorithm** — ΔE2000 by default; ΔEOK, ΔE76, Weighted RGB, RGB or a 0–100 percentage
+- **Matching Algorithm** — ΔE2000 by default; ΔEOK2, ΔE76, Weighted RGB, RGB or a 0–100 percentage
 - **Prevent Duplicates** — on by default; stops the same dye filling two slots (or appearing as an alternate where it is already used)
 - **Additional Dyes per Harmony Color** — 1–5 alternates per card
 - **Display Options** — which colour values and readouts the cards show

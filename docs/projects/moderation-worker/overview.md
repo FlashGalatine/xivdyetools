@@ -1,6 +1,9 @@
 # Moderation Worker Overview
 
-**xivdyetools-moderation-worker** v1.4.0 - Serverless Discord bot for preset moderation
+**xivdyetools-moderation-worker** - Serverless Discord bot for preset moderation
+
+Current version: [docs/versions.md](../../versions.md). Release history:
+[`apps/moderation-worker/CHANGELOG.md`](../../../apps/moderation-worker/CHANGELOG.md).
 
 ---
 
@@ -12,12 +15,6 @@ A separate Cloudflare Worker Discord bot dedicated to preset moderation commands
 2. **Moderation commands** can be restricted to specific servers/channels
 3. **Each bot has independent** rate limits and permissions
 4. **Reduced attack surface** - moderation capabilities isolated from public bot
-
-### Recent Changes
-
-- **v1.4.0** — Image-only queue entries (approved presets whose new preview picture is awaiting review) are marked 🖼 instead of being mis-approved/mis-rejected; `appearance` / `zones` / `raids-trials` category rows added and `community` dropped; `@xivdyetools/worker-kit` (+ `/rate-limiter`); dev/prod `wrangler.toml` split — a bare `wrangler deploy` now targets the routeless `xivdyetools-moderation-worker-dev`
-- **v1.3.0** — 2026-07-18 audit: throw-safe outcome-checked Discord API wrappers; `MODERATOR_IDS` parsed via the shared `@xivdyetools/bot-logic` grammar
-- **v1.2.0** — Global `onError` handler, placeholder `DISCORD_CLIENT_ID` detection, shared middleware
 
 ### Why Two Bots?
 
@@ -38,28 +35,25 @@ By separating these into distinct Discord applications, we ensure that:
 ## Quick Start (Development)
 
 ```bash
-cd xivdyetools-moderation-worker
+# From the monorepo root (xivdyetools/)
+pnpm install
 
-# Install dependencies
-npm install
-
-# Set secrets (one time)
+# Set secrets (one time, from apps/moderation-worker/)
 wrangler secret put DISCORD_TOKEN
 wrangler secret put DISCORD_PUBLIC_KEY
-wrangler secret put BOT_API_SECRET
 wrangler secret put MODERATOR_IDS
 wrangler secret put MODERATION_CHANNEL_ID
 
 # Start local dev server
-npm run dev
+pnpm --filter xivdyetools-moderation-worker run dev
 
 # Register slash commands
-npm run register-commands
+pnpm --filter xivdyetools-moderation-worker run register-commands
 
 # Deploy — bare `deploy` targets the routeless dev worker (xivdyetools-moderation-worker-dev)
-npm run deploy
+pnpm --filter xivdyetools-moderation-worker run deploy
 # Production (xivdyetools-moderation-worker, moderation-bot.xivdyetools.app)
-npm run deploy:production
+pnpm --filter xivdyetools-moderation-worker run deploy:production
 ```
 
 See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../operations/DEPLOY_ENVIRONMENTS.md).
@@ -90,7 +84,7 @@ src/
 │   │   └── index.ts
 │   ├── buttons/
 │   │   ├── ban-confirmation.ts   # Confirm/cancel ban buttons
-│   │   ├── preset-moderation.ts  # Approve/reject buttons
+│   │   ├── preset-moderation.ts  # Approve / reject / revert buttons
 │   │   └── index.ts
 │   └── modals/
 │       ├── ban-reason.ts         # Ban reason input
@@ -102,7 +96,8 @@ src/
 │   ├── bot-i18n.ts          # Bot-specific i18n
 │   └── i18n.ts              # i18n strings
 ├── middleware/
-│   └── rate-limit.ts        # KVRateLimiter from @xivdyetools/worker-kit/rate-limiter
+│   └── rate-limit.ts        # CloudflareRateLimiter over RL_COMMAND / RL_AUTOCOMPLETE when bound,
+│                            # KVRateLimiter otherwise — both from @xivdyetools/worker-kit/rate-limiter
 │                            # (request-ID + logger middleware come from @xivdyetools/worker-kit)
 ├── types/
 │   ├── env.ts               # Environment bindings
@@ -111,10 +106,17 @@ src/
 ├── utils/
 │   ├── verify.ts            # Ed25519 verification
 │   ├── response.ts          # Discord response builders
-│   └── discord-api.ts       # Discord API helpers
-├── locales/                 # i18n translation files
+│   ├── discord-api.ts       # Discord API helpers
+│   ├── embed-text.ts        # Embed text building / truncation
+│   ├── safe-json.ts         # Throw-safe JSON parsing
+│   ├── sql-helpers.ts       # Shared D1 query fragments
+│   ├── url-sanitizer.ts     # Link sanitisation for embeds
+│   └── env-validation.ts    # validateEnv — required secrets, bindings, production-only checks
 └── index.ts                 # Hono app entry point
 ```
+
+There is **no `locales/` directory.** The bot's strings are English-only by design
+(`services/bot-i18n.ts`) — see [Localization](#localization) below.
 
 ---
 
@@ -173,23 +175,48 @@ Unban a user and restore their presets.
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace | User preferences (language), shared with discord-worker |
+| `KV` | KV Namespace | Bot state, and the **fallback** rate-limit counters |
 | `DB` | D1 Database | Preset storage, shared with presets-api |
 | `PRESETS_API` | Service Binding | Worker-to-worker API calls |
+| `RL_COMMAND` | Workers Rate Limiting (`[[ratelimits]]`, 25 / 60 s) | Per-user command limiter (20 + 5 burst) |
+| `RL_AUTOCOMPLETE` | Workers Rate Limiting (`[[ratelimits]]`, 70 / 60 s) | Per-user autocomplete limiter (60 + 10 burst) |
+
+Vars: `ENVIRONMENT` (`development` / `production` — **not inheritable**, so it is declared in both
+`wrangler.toml` blocks), `DISCORD_CLIENT_ID`, `PRESETS_API_URL`.
+
+`RL_COMMAND` and `RL_AUTOCOMPLETE` are **required when `ENVIRONMENT = "production"`**: losing one
+degrades in silence to the KV limiter, which cannot throttle a fast client, so `index.ts` refuses
+every request (`500 Service misconfigured`, `/health` included) while the error stands
+(FINDING-013).
 
 ---
 
 ## Secrets
 
-Required:
+Required (`validateEnv`):
 - `DISCORD_TOKEN` - Moderation bot token
 - `DISCORD_PUBLIC_KEY` - Ed25519 verification key
-- `BOT_API_SECRET` - Presets API authentication (same as main worker)
 - `MODERATOR_IDS` - Comma-separated Discord user IDs
-- `MODERATION_CHANNEL_ID` - Channel where moderation commands work
+- `MODERATION_CHANNEL_ID` - Channel where moderation commands work (the channel gate reads it, so an unset value blocks every command)
 
 Optional:
+- `BOT_API_SECRET` - Presets API authentication (same value as the main worker). Typed optional; `preset-api.ts` only *warns* when it is missing
+- `BOT_SIGNING_SECRET` - HMAC key for signed presets-api requests. Optional, but when set it must be **at least 32 characters** or `validateEnv` fails (`@xivdyetools/auth`'s `createHmacKey` throws below that)
 - `SUBMISSION_LOG_CHANNEL_ID` - Channel for logging moderation actions
+
+---
+
+## Localization
+
+**English only, deliberately** (I18N-009). `services/bot-i18n.ts` holds one `enLocale` table and
+nothing else — there is no `locales/` directory and no locale map. The moderator's locale is still
+resolved (for log lines and analytics) but selects nothing: `Translator` points at the one English
+table either way. Every
+moderator is an English speaker and this bot talks to nobody else: its commands are restricted to
+the moderation channel, and the messages a preset *author* receives are sent by discord-worker,
+which **is** localized ×6. The previous shape — a `Record<LocaleCode, LocaleData>` with all six
+locales pointing at `enLocale` — could never return anything but English while looking like it
+might. If this bot is ever localized, add real locale files; do not restore that map.
 
 ---
 
@@ -219,7 +246,7 @@ Uses the same `BOT_API_SECRET` as the main discord-worker to authenticate with t
 | **Channel** | Any channel | Designated moderation channel |
 | **Image rendering** | SVG/PNG via resvg-wasm | None (text only) |
 | **User storage** | Favorites, collections | N/A |
-| **Rate limiting** | Per-user limits | Moderator-only (no limits) |
+| **Rate limiting** | Per-user limits | Per-user limits too — 20 commands/min (+5 burst) and 60 autocompletes/min (+10 burst), on the native `RL_COMMAND` / `RL_AUTOCOMPLETE` bindings |
 
 ---
 

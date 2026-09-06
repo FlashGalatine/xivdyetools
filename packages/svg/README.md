@@ -175,10 +175,18 @@ A dye name introducing a glyph outside the current Noto subsets renders as `.not
 
 ## Consumers
 
+Cards (the frame system):
+
 - [`apps/discord-worker`](../../apps/discord-worker/) — every generator; rasterizes via `resvg-wasm`.
 - [`@xivdyetools/bot-logic`](../bot-logic/) — orchestrates the command flows that call these generators.
 
-`apps/og-worker` keeps its **own** local theme and SVG services; it is on the OG card directions, not this frame system.
+Glyph set only (`toolGlyph` / `harmonyGlyph` / `categoryGlyph` / `chromeGlyph` / `panelGlyph`, `GLYPH_ACCENT_*`):
+
+- [`apps/web-app`](../../apps/web-app/) — tool, harmony, category, state and chrome icons; theme service.
+- [`apps/og-worker`](../../apps/og-worker/) — band and default-card glyphs (plus `bandInk`, `escapeXml`, `estimateTextWidth`).
+- [`apps/api-worker`](../../apps/api-worker/) — the VitePress developer docs' `Glyph.vue`.
+
+The og-worker caveat is about **cards**: it keeps its own local theme and card services and is on the OG card directions, not this frame system — but it does read this package's glyphs and text primitives.
 
 ## Credits & Acknowledgements
 

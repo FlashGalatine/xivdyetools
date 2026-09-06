@@ -95,7 +95,7 @@ ctx.set('auth', {
 
 ## Presets API Endpoints
 
-Base URL: `https://api.xivdyetools.app/api/v1` (`apps/presets-api`, v2.0.0). All routes under
+Base URL: `https://api.xivdyetools.app/api/v1` (`apps/presets-api`). All routes under
 `/api/*` sit behind a 100 req/min per-IP limit, a 100 KB JSON body cap (the preview-image upload is
 exempt and enforces its own 5 MB), and a `Content-Type: application/json` requirement on
 POST/PATCH bodies (415 otherwise). Field-level rules come from
@@ -534,23 +534,26 @@ Initiate Discord OAuth flow.
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `code_challenge` | Yes | SHA256 hash of code_verifier (base64url) |
-| `code_challenge_method` | Yes | Always `S256` |
-| `redirect_uri` | Yes | Frontend callback URL |
+| `code_challenge_method` | No | Validated only when supplied, and then only `S256` is accepted |
+| `redirect_uri` | Yes | Frontend callback URL (must be on the origin allowlist) |
 | `state` | No | CSRF protection token |
 
 **Response:** Redirects to Discord OAuth consent page.
 
 ### GET /auth/callback
 
-Handle Discord OAuth callback.
+Handle the provider's OAuth callback. **This route never returns a token.**
 
 **Query Parameters:**
 | Parameter | Description |
 |-----------|-------------|
 | `code` | Authorization code from Discord |
-| `state` | CSRF token (if provided) |
+| `state` | The signed state this worker issued at authorize time |
 
-**Response:** Redirects to frontend with `?token=JWT`
+**Response:** `302` to the allowlisted `redirect_uri`, carrying `code`, `csrf` and the signed
+`state` (plus `provider` and `return_path` when they apply). The SPA finishes the exchange with
+`POST /auth/callback` below; a redirect that fails the allowlist check bounces to `FRONTEND_URL`
+with an error instead.
 
 ### POST /auth/callback
 
@@ -561,20 +564,29 @@ SPA-friendly token exchange.
 {
   "code": "AUTH_CODE",
   "code_verifier": "PKCE_VERIFIER",
-  "redirect_uri": "https://xivdyetools.app/callback"
+  "state": "SIGNED_STATE_FROM_THE_REDIRECT"
 }
 ```
+
+`state` is **required** — the worker binds `code_verifier` to the `code_challenge` it signed at
+authorize time before calling the provider, so a request without it is rejected with `400`
+before Discord is contacted. `redirect_uri` is accepted for backwards compatibility but
+ignored: the exchange always uses `${WORKER_URL}/auth/callback`.
 
 **Response:**
 ```json
 {
+  "success": true,
   "token": "JWT_TOKEN",
   "user": {
     "id": "123...",
     "username": "User#1234",
     "global_name": "Display Name",
-    "avatar": "avatar_hash"
-  }
+    "avatar": "avatar_hash",
+    "avatar_url": "https://cdn.discordapp.com/avatars/…",
+    "auth_provider": "discord"
+  },
+  "expires_at": 1702688400
 }
 ```
 
@@ -597,14 +609,19 @@ Authorization: Bearer <JWT>
 **Response:**
 ```json
 {
+  "success": true,
   "user": {
     "id": "123...",
     "username": "User#1234",
     "global_name": "Display Name",
-    "avatar": "avatar_hash"
+    "avatar": "avatar_hash",
+    "avatar_url": "https://cdn.discordapp.com/avatars/…"
   }
 }
 ```
+
+`id` is the **internal** user UUID (the JWT's `sub`), not a Discord snowflake. `avatar_url` is
+`null` for accounts with no linked Discord identity.
 
 ---
 

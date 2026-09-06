@@ -79,9 +79,9 @@ private.
 |-----|--------|---------|---------|
 | `language` | `en`, `ja`, `de`, `fr`, `ko`, `zh` | `en` | Every reply and card |
 | `theme` | `dark`, `light` | `dark` | Every generated card image |
-| `matching` | `ciede2000` (ΔE2000), `oklab` (ΔEOK), `cie76` (ΔE76), `redmean`, `rgb`, `distinguish` | `ciede2000` | `/harmony`, `/extractor`, `/gradient`, `/mixer`, `/budget find` when you don't pass `matching:` |
+| `matching` | `ciede2000` (ΔE2000), `oklab` (ΔEOK2), `cie76` (ΔE76), `redmean`, `rgb`, `distinguish` | `ciede2000` | `/harmony`, `/extractor`, `/gradient`, `/mixer`, `/budget find` when you don't pass `matching:` |
 | `blending` | `rgb`, `lab`, `oklab`, `ryb`, `hsl`, `spectral` | `ryb` | `/mixer` when you don't pass `mode:` |
-| `count` | 1–10 | 5 | `/mixer` result count |
+| `count` | 1–10 | 1 | `/extractor color` when you don't pass `count:` |
 | `world` | World or data centre (autocomplete) | none | `/budget` prices, `/manual topic:spectrum_prices` |
 | `clan`, `gender` | Clan name (autocomplete); `male` / `female` | none | Stored and shown; the 5.0 `/swatch` reads a `.chara` file instead, so nothing consults them today |
 | `market` | `true` / `false` | `false` | Stored and shown; no 5.0 card reads it yet |

@@ -1,8 +1,20 @@
 # XIV Dye Tools - Feature Roadmap
 
-> Last Updated: December 5, 2025
+> Last Updated: 2026-09-05
 
-This document outlines planned features for the XIV Dye Tools monorepo, prioritized by implementation phase.
+This document tracks the features planned in the pre-5.0 roadmap and what became of each. Every item
+below now carries its real outcome: **shipped**, **removed in 5.0**, or **declined**. It is kept as a
+record of what was decided and why, not as a to-do list — new work is planned elsewhere.
+
+Two things to know when reading the older entries:
+
+- **The file paths are pre-monorepo.** Where an entry names `xivdyetools-web-app/src/...` or
+  `xivdyetools-discord-bot/src/...`, read `apps/web-app/src/...` and `apps/discord-worker/src/...`;
+  `xivdyetools-core/src/...` is `packages/core/src/...`. Many of the named files no longer exist
+  after the 5.0 rewrite.
+- **The bot was never on Redis.** It runs on Cloudflare Workers, and caching is the Cache API with
+  KV where a value must outlive the edge cache. Entries mentioning Redis describe a design that was
+  not built.
 
 ---
 
@@ -14,8 +26,8 @@ This document outlines planned features for the XIV Dye Tools monorepo, prioriti
 |---------|----------|--------------|--------|--------|
 | Multi-Color Palette Extraction | Web + Bot | Yes | Medium-High | ✅ Done |
 | Seasonal/Themed Preset Palettes | Web + Bot | Yes | Medium | ✅ Done |
-| Dye Collections/Favorites | Web + Bot | No | Medium | ✅ Done |
-| Budget-Aware Dye Suggestions | Web + Bot | Optional | Medium | Planned |
+| Dye Collections/Favorites | Web + Bot | No | Medium | ✅ Done (web) · **removed in 5.0** (bot) |
+| Budget-Aware Dye Suggestions | Web + Bot | Optional | Medium | ✅ Done |
 
 ### Quick Wins
 
@@ -85,7 +97,7 @@ One-click copy buttons for dye information.
 - ✅ Copy HSV button - calculates and sends `HSV(h°, s%, v%)` format
 - ✅ Mobile-friendly ephemeral responses with copy hint
 - ✅ 6-language localization (en, ja, de, fr, ko, zh)
-- ✅ Buttons on `/dye info`, `/dye random`, `/match`, `/match_image`, `/harmony`
+- ✅ Buttons on `/dye info`, `/dye random`, `/match`, `/match_image`, `/harmony` (the last two are `/extractor color` and `/extractor image` since 5.0)
 
 **Files created/modified:**
 - `xivdyetools-discord-bot/src/utils/button-builder.ts` (new)
@@ -128,7 +140,7 @@ Add Universalis price data to existing commands.
 - ✅ `/match` - Shows market price of matched dye
 - ✅ `/harmony` - Shows market prices for base + all companion dyes
 - ✅ `/dye info` - Shows current market price
-- ✅ PriceService singleton with RedisCacheBackend (10-minute TTL)
+- ✅ PriceService singleton with a cache layer (10-minute TTL). Note: this was never Redis — the bot is a Cloudflare Worker and prices are cached in the Cache API by `api-worker`
 - ✅ Graceful degradation when Universalis API unavailable
 - ✅ API availability check with 60-second cooldown
 - ✅ Translation keys for price display
@@ -158,8 +170,9 @@ Save favorite dyes and organize into named collections.
 - ✅ Favorite star buttons on every dye card (appears on hover, filled when favorited)
 - ✅ Collapsible favorites panel at top of dye selector
 - ✅ Toast notifications for add/remove actions
-- ✅ Keyboard shortcut: `F` to toggle favorite on focused dye
-- ✅ Maximum 20 favorites with warning toast
+- ✅ Maximum 40 favorites with warning toast (the roadmap originally said 20)
+- ❌ Keyboard shortcut `F` to toggle favorite — never shipped; the app's number keys `1`-`9` and the
+  `Shift+T` / `Shift+L` / `Shift+S` chords are the whole shortcut set
 
 *Phase 2 - Collections:*
 - ✅ Collection Manager Modal - view, create, edit, delete collections
@@ -167,8 +180,8 @@ Save favorite dyes and organize into named collections.
 - ✅ Create collection dialog with name and description
 - ✅ Edit collection dialog with removable dye tags
 - ✅ Import/Export collections as JSON
-- ✅ Keyboard shortcut: `C` to open add-to-collection menu
-- ✅ "Manage Collections" button in favorites panel header
+- ✅ "Manage Collections" button in favorites panel header — the only route to the export/import UI
+- ❌ Keyboard shortcut `C` to open the add-to-collection menu — never shipped
 
 **Web App Files created/modified:**
 - `xivdyetools-web-app/src/services/collection-service.ts` - Core service
@@ -178,15 +191,18 @@ Save favorite dyes and organize into named collections.
 - `xivdyetools-web-app/src/components/dye-selector.ts` - Added manage button
 - `xivdyetools-web-app/src/locales/en.json` - i18n keys (already present)
 
-**Discord Bot Implementation (Complete):**
+**Discord Bot Implementation — REMOVED IN 5.0.** The commands below shipped in v4 and were deleted
+with the 5.0 command roster; neither `/favorites` nor `/collection` appears in the command registry
+any more. Saved dyes and palettes live only in the web app, reachable from any bot card's share
+link. Community *presets* can still be favourited with `/preset favorite`.
 
-*Favorites Commands:*
+*Favorites Commands (removed):*
 - ✅ `/favorites add <dye>` - Add a dye to favorites
 - ✅ `/favorites remove <dye>` - Remove from favorites (autocomplete shows only favorites)
 - ✅ `/favorites list` - Show all favorite dyes with emoji swatches
 - ✅ `/favorites clear` - Clear all favorites
 
-*Collection Commands:*
+*Collection Commands (removed):*
 - ✅ `/collection create <name> [description]` - Create new collection
 - ✅ `/collection delete <name>` - Delete a collection
 - ✅ `/collection add <collection> <dye>` - Add dye to collection
@@ -195,17 +211,17 @@ Save favorite dyes and organize into named collections.
 - ✅ `/collection list` - List all user collections
 - ✅ `/collection rename <old_name> <new_name>` - Rename a collection
 
-*Features:*
-- ✅ Redis storage with in-memory fallback (no TTL - permanent user data)
-- ✅ Same limits as web app: 20 favorites, 50 collections, 20 dyes per collection
+*Features (removed):*
+- Storage was Cloudflare **KV**, not Redis — the original roadmap entry said Redis, which was never accurate
+- Same limits as web app: 50 collections, 20 dyes per collection (favorites are 40 in the web app)
 - ✅ Autocomplete for dye names and collection names
 - ✅ Context-aware autocomplete (remove shows only dyes in collection)
 - ✅ 6-language localization (en, ja, de, fr, ko, zh)
 
 **Discord Bot Files created/modified:**
-- `xivdyetools-discord-bot/src/services/collection-storage.ts` (new) - Redis storage service
-- `xivdyetools-discord-bot/src/commands/favorites.ts` (new) - /favorites command
-- `xivdyetools-discord-bot/src/commands/collection.ts` (new) - /collection command
+- `xivdyetools-discord-bot/src/services/collection-storage.ts` - KV storage service (deleted in 5.0)
+- `xivdyetools-discord-bot/src/commands/favorites.ts` - /favorites command (deleted in 5.0)
+- `xivdyetools-discord-bot/src/commands/collection.ts` - /collection command (deleted in 5.0)
 - `xivdyetools-discord-bot/src/index.ts` - Registered new commands
 - `xivdyetools-discord-bot/src/i18n/translations/*.json` - Added `favorites` and `collection` sections (6 files)
 
@@ -218,12 +234,17 @@ See [COLLECTIONS_SPEC.md](./collections.md) for full specification.
 #### 6. Seasonal/Themed Preset Palettes ✅
 Pre-made color palettes for common themes.
 
-**Preset Categories:**
-- **FFXIV Jobs:** Red Mage, Black Mage, White Mage, etc.
-- **Grand Companies:** Maelstrom, Twin Adders, Immortal Flames
-- **Seasons:** Spring, Summer, Autumn, Winter
-- **FFXIV Events:** Starlight, Moonfire, Rising
-- **Aesthetics:** Gothic, Pastel, Military, Royal
+**Preset Categories.** `presets.json` (schema 2.0.0) ships **15 curated palettes** in three of the
+five categories drafted here:
+
+- **Grand Companies:** 3 palettes — Maelstrom, Twin Adders, Immortal Flames
+- **Seasons:** 4 palettes — Spring, Summer, Autumn, Winter
+- **FFXIV Events:** 8 palettes
+- **FFXIV Jobs:** ❌ no curated palettes shipped
+- **Aesthetics:** ❌ no curated palettes shipped
+
+(`jobs` and `aesthetics` do exist as *community* preset categories in presets-api — this line is
+about the curated set only.)
 
 **Web App Implementation (Complete):**
 - ✅ `preset-browser-tool.ts` - Full preset browser with category tabs
@@ -251,7 +272,7 @@ See [PRESET_PALETTES.md](./preset-palettes.md) for detailed specification.
 ---
 
 #### 7. Multi-Color Palette Extraction ✅
-Extract multiple dominant colors from an image (3-5 colors) instead of just one.
+Extract multiple dominant colors from an image instead of just one.
 
 **User Value:**
 - Match entire glamour screenshots, not just single pieces
@@ -263,11 +284,11 @@ Extract multiple dominant colors from an image (3-5 colors) instead of just one.
 - ✅ `extractPalette()` - Extract N dominant colors with dominance percentages
 - ✅ `extractAndMatchPalette()` - Extract and match to closest FFXIV dyes
 - ✅ `pixelDataToRGB()` / `pixelDataToRGBFiltered()` - Canvas data conversion helpers
-- ✅ Configurable: colorCount (3-5), maxIterations, convergenceThreshold, maxSamples
+- ✅ Configurable: colorCount (clamped to 1-10, default 4), maxIterations, convergenceThreshold, maxSamples
 
 **Web App Implementation (Complete):**
 - ✅ Extraction mode toggle (Single Color / Palette Mode) in Color Matcher
-- ✅ Color count slider (3-5 colors)
+- ✅ Color count control (**Max Colors**, 3-10 as shipped)
 - ✅ "Extract Palette" button with loading state
 - ✅ Visual sampling indicators - circles on image showing where colors were sampled
 - ✅ Palette results with color bar visualization
@@ -276,7 +297,7 @@ Extract multiple dominant colors from an image (3-5 colors) instead of just one.
 - ✅ 6-language localization (en, ja, de, fr, ko, zh)
 
 **Discord Bot Implementation (Complete):**
-- ✅ `/match_image colors:[1-5]` - Optional parameter for multi-color extraction
+- ✅ Multi-color extraction — shipped as `/extractor image colors:[3-10]` (`/match_image` was renamed in 5.0)
 - ✅ Palette grid renderer with extracted colors and matched dyes
 - ✅ Visual sampling indicators on source image preview
 - ✅ Canvas-rendered output showing image + palette grid
@@ -293,33 +314,43 @@ See [MULTI_COLOR_EXTRACTION.md](./multi-color-extraction.md) for detailed specif
 
 ---
 
-#### 8. Budget-Aware Dye Suggestions
-Find dyes similar to a target color within a budget.
+#### 8. Budget-Aware Dye Suggestions ✅
+Find cheaper look-alikes for an expensive dye using live market-board prices.
 
 **User Value:**
 - "I want something like Jet Black but cheaper"
 - Find affordable alternatives for expensive dyes
 - Plan glamours within budget constraints
 
-**Web App Implementation (Planned):**
-- Budget toggle + price slider (logarithmic scale) in Color Matcher
-- Datacenter selector for price lookup
-- Sort options: Best Match, Lowest Price, Best Value
-- "Find Cheaper" button on dye cards
-- Alternatives modal showing similar dyes with price/savings
-- 6-language localization
+**Shipped as its own tool, not as a filter on matching.** The draft below imagined budget as a
+`max_price` option bolted onto the matcher; what shipped is a dedicated surface on both platforms
+that starts from a *target dye* and returns a ranked ledger of substitutes.
 
-**Discord Bot Implementation (Planned):**
-- `/match [color] max_price:[amount]` - Optional budget filter
-- `/dye alternatives [dye_name] count:[1-10]` - Show cheaper similar dyes
-- Price + color distance + savings in results
-- Fallback handling when prices unavailable
+**Web App (Complete):** the **Budget Suggestions** tool — the eighth chip in the tool rail.
+- ✅ Pick a target dye, pick a data centre and world, get a price ledger of look-alike dyes
+- ✅ A **match line** (max ΔE) decides how far a substitute may stray
+- ✅ **Save swap** stores the substitute you intend to buy as a typed `swap` record
+- ✅ Share button carries the target and settings
+- ✅ Amber **MARKET DATA UNAVAILABLE** state when Universalis does not answer — colour matching is
+  unaffected, only the price lines are missing
+- ✅ 6-language localization
 
-**Technical Approach:**
-- Use existing `PriceService` with RedisCacheBackend (10-min TTL)
-- Batch price fetches to Universalis API
-- Value score: weighted combination of color distance and price
-- No core library changes required initially
+**Discord Bot (Complete):** the `/budget` command.
+- ✅ `/budget find target_dye: world:` — the ledger, with `matching`, `max_distance` (2-20 ΔE2000,
+  default 8), `exclude_coffers` and `exclude_wide_spectrum`
+- ✅ `/budget quick preset:` — one-click check across 22 popular expensive dyes
+- ✅ `/budget set_world world:` — save a world or data centre so it can be omitted
+- ❌ `/match max_price:` — never built; `/match` itself was deleted in 5.0 (dye lookup is
+  `/extractor color`)
+- ❌ `/dye alternatives` — never built; `/budget find` covers it
+
+**Technical Approach (as built):**
+- Universalis prices come through `api-worker`'s proxy over a service binding, cached in the
+  Cloudflare **Cache API** (the earlier "Redis" note was never accurate)
+- Prices are keyed on the Patch 7.5 *consolidated* item IDs, since 105 of the 125 dyes share three
+  market listings
+- Value ranking combines colour distance and price
+- No core library changes were required
 
 See [BUDGET_AWARE_SUGGESTIONS.md](./budget-aware-suggestions.md) for detailed specification.
 
@@ -331,6 +362,10 @@ See [BUDGET_AWARE_SUGGESTIONS.md](./budget-aware-suggestions.md) for detailed sp
 |---------|--------|
 | Outfit Builder / Glamour Planner | Serious glamour makers use Glamourer plugin in-game; limited value for this toolset |
 | Similar Dye Finder | Functionality covered by Budget-Aware Suggestions |
+| `/match max_price:` budget filter | Superseded — budget became its own tool and `/budget` command |
+| `/dye alternatives` | Superseded by `/budget find` |
+| Bot-side `/favorites` and `/collection` | Removed in 5.0; saved dyes and palettes live in the web app |
+| `F` / `C` keyboard shortcuts (web app) | Never shipped; the shortcut set is `1`-`9` plus `Shift+T` / `Shift+L` / `Shift+S` |
 
 ---
 
@@ -346,7 +381,7 @@ See [BUDGET_AWARE_SUGGESTIONS.md](./budget-aware-suggestions.md) for detailed sp
 Features requiring core library modifications:
 - ~~Multi-color extraction → Add clustering algorithm~~ ✅ Done (`PaletteService`)
 - ~~Preset palettes → Add `PresetService` or extend `DyeService`~~ ✅ Done (`PresetService`)
-- Budget filtering → Optional enhancement to `DyeService`
+- ~~Budget filtering → Optional enhancement to `DyeService`~~ ✅ Done without core changes — the Budget tool and `/budget` build their ledger from existing services
 
 ### Platform Parity
 All features developed for both platforms simultaneously where applicable.

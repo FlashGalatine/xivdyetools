@@ -167,7 +167,7 @@ reporting that every security binding resolved, since a missing one makes `/heal
 2026-09-01 after the 3.0.0 deploy, **007**'s Upstash secrets deleted 2026-09-01, **024**'s WAF
 rate-limiting rule deployed 2026-09-01, and **028**'s credential split completed 2026-08-31. The
 one remaining item is FINDING-030's conditional token check. Work from
-[`docs/operations/POST_MERGE_CHECKLIST.md`](../../operations/POST_MERGE_CHECKLIST.md), not this table.
+[`docs/historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md`](../../historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md) (moved there 2026-09-05), not this table.
 
 ## Next steps
 Sprint plan: [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) (remediation-planner). Fixes start only after the confirmation gate (`conventions.md` §8): catalog + plan presented, Sprint 0 (none) and the rotation table (FINDING-030 conditional) acknowledged, explicit go-ahead received.

@@ -1,5 +1,7 @@
 # Image Worker Split Implementation Plan
 
+**Status:** shipped 2026-08-11 — `apps/image-worker` (`/extract` + `/thumbnail`); design record in `docs/operations/IMAGE_WORKER_SPLIT.md`. Moved here from `docs/operations/plans/` on 2026-09-05
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Move `@cf-wasm/photon` image processing out of `discord-worker` into a new

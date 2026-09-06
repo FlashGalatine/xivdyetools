@@ -1,12 +1,12 @@
 # Multi-Color Palette Extraction - Technical Specification
 
-> Feature Status: Planned
+> Feature Status: ✅ Implemented
 > Platforms: Web App + Discord Bot
-> Core Library Changes: Yes (clustering algorithm)
+> Core Library Changes: Yes (clustering algorithm — shipped as `PaletteService` in `@xivdyetools/core`)
 
 ## Overview
 
-Extract multiple dominant colors from an image (3-5 colors) instead of just one. This is an enhancement to the existing Color Matcher tool - "Color Matcher on steroids."
+Extract multiple dominant colors from an image instead of just one. As shipped, `PaletteService` clamps the count to **1-10** and defaults to **4**; the surfaces that expose it offer **3-10** (the web app's **Max Colors** setting and the bot's `/extractor image colors:`). This is an enhancement to the existing Color Matcher tool - "Color Matcher on steroids."
 
 ### User Value
 
@@ -87,16 +87,16 @@ Extract multiple dominant colors from an image (3-5 colors) instead of just one.
 
 ```typescript
 interface PaletteExtractionOptions {
-  colorCount: number;      // 3, 4, or 5 (user configurable)
-  maxIterations: number;   // 25 (balance accuracy vs speed)
-  convergenceThreshold: number; // 1.0 (RGB distance)
-  sampleSize: number;      // 10000 pixels max
-  colorSpace: 'rgb' | 'lab'; // 'lab' for perceptual accuracy
+  colorCount?: number;      // clamped to 1-10, default 4
+  maxIterations?: number;   // 25 (balance accuracy vs speed)
+  convergenceThreshold?: number; // 1.0 (RGB distance)
+  maxSamples?: number;      // 10000 pixels max
+  matchingMethod?: MatchingMethod; // extractAndMatchPalette only; omitted → dye search's own default (ΔE2000)
 }
 ```
 
 **Why K-Means:**
-- Most flexible for our 3-5 color requirement
+- Most flexible for a variable colour count
 - Well-supported in both JavaScript (web) and Node.js (bot)
 - Existing libraries available, or straightforward to implement
 
@@ -114,7 +114,7 @@ export class PaletteService {
   /**
    * Extract dominant colors from pixel data
    * @param pixels - Array of RGB values [{r, g, b}, ...]
-   * @param colorCount - Number of colors to extract (3-5)
+   * @param colorCount - Number of colors to extract (clamped to 1-10, default 4)
    * @returns Array of extracted RGB colors, sorted by dominance
    */
   extractPalette(pixels: RGB[], colorCount: number): RGB[];
@@ -202,7 +202,7 @@ If core library changes are deferred:
 ### User Flow
 
 1. User toggles to "Extract Palette" mode
-2. User selects color count (3, 4, or 5)
+2. User selects color count (3-10; the service itself accepts 1-10 and defaults to 4)
 3. User uploads/pastes/captures image
 4. System extracts palette using K-means
 5. System matches each color to closest dye
@@ -227,7 +227,7 @@ If core library changes are deferred:
 
 **Single Color (colors=1)** - Current behavior unchanged
 
-**Multi-Color (colors=3-5):**
+**Multi-Color (colors=3-10):**
 ```
 🎨 Palette Extraction Results
 

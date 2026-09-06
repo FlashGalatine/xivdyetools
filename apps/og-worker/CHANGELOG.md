@@ -822,11 +822,3 @@ og-worker covers only the **nine tool paths**. The site root `/` is deliberately
 | @resvg/resvg-wasm | ^2.6.2 | SVG → PNG |
 | @xivdyetools/core | ^1.14.0 | Dye database |
 | @xivdyetools/types | ^1.7.0 | Type definitions |
-
----
-
-## Planned
-- Comparison tool OG images
-- Accessibility tool OG images
-- KV caching for generated images
-- Budget tool support (if shareable)

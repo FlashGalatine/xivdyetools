@@ -1,6 +1,6 @@
 # @xivdyetools/worker-kit
 
-> Shared Cloudflare Worker toolkit for XIV Dye Tools: [Hono](https://hono.dev/) middleware (request ID, structured logger, rate limiting) plus the sliding-window rate limiting engine and backends (Memory, KV, Upstash) it wraps.
+> Shared Cloudflare Worker toolkit for XIV Dye Tools: [Hono](https://hono.dev/) middleware (request ID, structured logger, rate limiting) plus the sliding-window rate limiting engine and backends (Cloudflare, Memory, KV, Upstash) it wraps.
 
 [![npm version](https://img.shields.io/npm/v/@xivdyetools/worker-kit)](https://www.npmjs.com/package/@xivdyetools/worker-kit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -13,7 +13,7 @@ Formed in the Monorepo 2.0 Tier 1 consolidation by merging `@xivdyetools/worker-
 pnpm add @xivdyetools/worker-kit
 ```
 
-**Optional peer dependencies:** `hono ^4.12.34` and `@cloudflare/workers-types ^4.0.0`. Both are optional so a consumer that only needs the rate-limiter engine, not the middleware, never pulls in Hono — no current in-repo consumer is rate-limiter-only (see Consumers below).
+**Optional peer dependencies:** `hono ^4.13.5` and `@cloudflare/workers-types ^4.0.0`. Both are optional so a consumer that only needs the rate-limiter engine, not the middleware, never pulls in Hono — no current in-repo consumer is rate-limiter-only (see Consumers below).
 
 ## Import Paths
 
@@ -35,7 +35,7 @@ import {
 import { UpstashRateLimiter } from '@xivdyetools/worker-kit/rate-limiter/upstash';
 ```
 
-The root export re-exports both modules; the subpaths (`./middleware`, `./rate-limiter`, `./rate-limiter/{memory,kv,upstash,presets}`) keep bundles lean.
+The root export re-exports both modules; the subpaths (`./middleware`, `./rate-limiter`, `./rate-limiter/{memory,kv,upstash,cloudflare,presets}`) keep bundles lean.
 
 ## Middleware
 
@@ -118,7 +118,7 @@ Wires a `RateLimiter` backend into the request path, sets standard headers, and 
 
 ## Rate Limiter (`/rate-limiter`)
 
-A sliding-window rate limiting engine with three interchangeable backends.
+A sliding-window rate limiting engine with four interchangeable backends.
 
 ```typescript
 import { KVRateLimiter, getClientIp, getRateLimitHeaders, PUBLIC_API_LIMITS }
@@ -136,9 +136,16 @@ if (!result.allowed) {
 
 | Backend | Subpath | Use when |
 |---------|---------|----------|
+| `CloudflareRateLimiter` | `/rate-limiter/cloudflare` | **Preferred per-client limiter** (FINDING-003). Native `[[ratelimits]]` bindings, tiered; counts atomically per colo with no storage writes. |
 | `MemoryRateLimiter` | `/rate-limiter/memory` | Single isolate, tests, local dev. Not shared across isolates. |
-| `KVRateLimiter` | `/rate-limiter/kv` | Cloudflare KV. Eventually consistent — good enough for abuse prevention. |
+| `KVRateLimiter` | `/rate-limiter/kv` | Cloudflare KV. Eventually consistent — **cannot throttle a fast client** (1 write/s/key, swallowed put failures); a fallback only. |
 | `UpstashRateLimiter` | `/rate-limiter/upstash` | Upstash Redis. A real distributed sliding window; the strictest option. |
+
+`CloudflareRateLimiter` trades exactness for atomicity and is documented as such:
+`remaining` reports `limit - 1` while allowed and `0` when denied (the binding
+does not expose a count), `checkOnly()` consumes a slot while `increment()` is a
+no-op, `reset()` / `resetAll()` are no-ops, and counters are per-colo rather
+than global.
 
 ### Utilities
 
@@ -155,7 +162,9 @@ Shared limit configurations so every worker enforces the same policy:
 
 ### Types
 
-`RateLimitResult`, `RateLimitConfig`, `RateLimiter`, `ExtendedRateLimiter`, `MemoryRateLimiterOptions`, `KVRateLimiterOptions`, `UpstashRateLimiterOptions`, `RateLimiterLogger`.
+`RateLimitResult`, `RateLimitConfig`, `RateLimiter`, `ExtendedRateLimiter`, `MemoryRateLimiterOptions`, `KVRateLimiterOptions`, `UpstashRateLimiterOptions`, `CloudflareRateLimiterOptions`, `CloudflareRateLimitTier`, `RateLimitBinding`, `RateLimiterLogger`, `GetClientIpOptions`.
+
+Middleware types (root / `./middleware`): `MiddlewareVariables`, `RequestIdOptions`, `LoggerMiddlewareOptions`, `RateLimitMiddlewareOptions`.
 
 ## Worker Configuration Examples
 

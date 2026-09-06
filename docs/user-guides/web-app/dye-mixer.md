@@ -44,7 +44,7 @@ The closest dyes to your mix, one card each: the dye beside the blend colour, it
 In the settings column (the gear icon on phones):
 - **Mixing Mode** - The same six models as the field rows; the field and the dropdown stay in sync
 - **Max Results** - 3–8 matched dyes
-- **Matching Algorithm** - ΔE2000 by default; ΔEOK, ΔE76, Weighted RGB, RGB or a percentage
+- **Matching Algorithm** - ΔE2000 by default; ΔEOK2, ΔE76, Weighted RGB, RGB or a percentage
 - **Display options** - Which colour values and readouts the cards show
 - **Dye Filters** - Exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes; the field cells and the results list use the same filtered pool, so a cell never quotes a distance to a dye the list can't show
 - **Market Board** - Show current prices on the cards

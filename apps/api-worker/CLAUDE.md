@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`xivdyetools-api-worker` is the **public REST API** for the XIV Dye Tools ecosystem — Phase 1 surfaces the dye database (125 standard dyes, schema v2) and color-matching algorithms over a Cloudflare Worker on Hono. Deployed to **`data.xivdyetools.app`**. Since Monorepo 2.0 (Tier 2) the same worker also owns the **Universalis market-board proxy** (`/universalis/*`, plus the `/api/v2/*` compatibility mount that backs `proxy.xivdyetools.app` and discord-worker's `UNIVERSALIS_PROXY` service binding — absorbed from the retired `apps/universalis-proxy`) and serves the **VitePress developer docs** on `developers.xivdyetools.app` as Workers Static Assets (absorbed from the retired `apps/api-docs`).
+`xivdyetools-api-worker` is the **public REST API** for the XIV Dye Tools ecosystem — it surfaces the dye database (125 standard dyes, schema v2), color matching, the colour wheels and harmony selection, and `.chara` equipment resolution over a Cloudflare Worker on Hono. Deployed to **`data.xivdyetools.app`**. Since Monorepo 2.0 (Tier 2) the same worker also owns the **Universalis market-board proxy** (`/universalis/*`, plus the `/api/v2/*` compatibility mount that backs `proxy.xivdyetools.app` and discord-worker's `UNIVERSALIS_PROXY` service binding — absorbed from the retired `apps/universalis-proxy`) and serves the **VitePress developer docs** on `developers.xivdyetools.app` as Workers Static Assets (absorbed from the retired `apps/api-docs`).
 
-The API is anonymous (no auth, no API key) with permissive CORS so it can be called from browsers, Dalamud plugins, Discord bots, and mobile apps. Sliding-window rate limiting (60 req/min/IP, +5 burst) is enforced via KV on `/v1/*`. Locale resolution is handled once per request by middleware (`ensureLocaleLoaded` — never `setLocale`, which would race across concurrent requests) and handlers pass `c.get('locale')` explicitly to every localization call.
+The API is anonymous (no auth, no API key) with permissive CORS so it can be called from browsers, Dalamud plugins, Discord bots, and mobile apps. Rate limiting on `/v1/*` is 60 req/min/IP + 5 burst, enforced by the native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple.limit = 65`), with the `RATE_LIMIT` KV namespace as the fallback when the binding is absent. Locale resolution is handled once per request by middleware (`ensureLocaleLoaded` — never `setLocale`, which would race across concurrent requests) and handlers pass `c.get('locale')` explicitly to every localization call.
 
 ## Commands
 
@@ -21,7 +21,7 @@ pnpm test                   # vitest run
 pnpm test:watch             # vitest in watch mode
 pnpm test:coverage          # vitest run --coverage
 pnpm type-check             # tsc --noEmit (src + tests) && tsc -p tsconfig.docs.json (docs/.vitepress/**/*.ts, DOM lib; .vue script blocks are NOT type-checked — the build compiles them)
-pnpm lint                   # eslint src/
+pnpm lint                   # eslint src/ + knip (lint:dead)
 ```
 
 ### Pre-commit Checklist
@@ -60,10 +60,12 @@ src/
 │   ├── wheels.ts         # 2 colour-wheel endpoints (list, :id with ringStops + every dye's wheelHue) — core 5.2.0's ColorWheel registry
 │   └── harmony.ts        # 2 harmony endpoints (/types, / = core's generateHarmonySlots with a `wheel`)
 ├── middleware/
-│   ├── rate-limit.ts     # KVRateLimiter wired to shared rateLimitMiddleware factory
+│   ├── rate-limit.ts     # Backend selection (native API_RATE_LIMITER / TELEMETRY_RATE_LIMITER, KV fallback) + the shared rateLimitMiddleware factory
 │   └── locale.ts         # Reads ?locale=, calls LocalizationService.ensureLocaleLoaded once, sets c.var.locale
+├── telemetry/            # POST /v1/telemetry: router (bare 204), allowlist schema, Origin gate
 ├── lib/
 │   ├── api-error.ts      # ApiError class + ErrorCode enum
+│   ├── bounded-body.ts   # Size-capped body reads for the two POST routes
 │   ├── response.ts       # successResponse / paginatedResponse / buildPagination (errors go through ApiError)
 │   ├── services.ts       # Module-scope DyeService singleton + calculateDistance (→ ColorService.getDistanceForMethod)
 │   ├── dye-serializer.ts # Dye → API response shape (with optional localizedName / distance)
@@ -89,9 +91,9 @@ docs/                     # VitePress site → developers.xivdyetools.app (built
 └── public/mark.svg           # The flat six-stripe mark the bar's `logo` uses (< 20 px: flat mark, never the can)
 ```
 
-### API Endpoints (Phase 1: 9 under `/v1`, plus health + Universalis proxy)
+### API Endpoints (16 under `/v1` — 14 `GET`, 2 `POST` — plus health + the Universalis proxy)
 
-All `GET`. All `/v1` routes cache `Cache-Control: public, max-age=3600, s-maxage=86400`.
+All `GET` `/v1` routes cache `Cache-Control: public, max-age=3600, s-maxage=86400`.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -170,7 +172,11 @@ Use `lookupDyeByResolvedId()` to dispatch to the correct `DyeService` method.
 
 ### Rate Limiting
 
-Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-kit` with `KVRateLimiter` (key prefix `api:ip:`, 60 req/60s, +5 burst, fail-open). The KV backend is constructed per-request — see BUG-004 comment in `middleware/rate-limit.ts` for why a module-scope singleton would be wrong.
+Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-kit`. `selectApiRateLimiter(env)` picks the backend: the native `API_RATE_LIMITER` binding through `CloudflareRateLimiter` when bound (key prefix `api:ip:`, effective limit 65 = 60 + 5 burst, fail-open), and `KVRateLimiter` over the `RATE_LIMIT` namespace otherwise. There is deliberately no module-scope backend singleton (BUG-004: `KVRateLimiter` construction is cheap and only stores the binding reference); the middleware factory memoises whatever the selector returns **per isolate** (BUG-061), so a stateful backend survives across requests.
+
+With the native binding, `X-RateLimit-Limit` reads `65` and `X-RateLimit-Remaining` is synthetic — `limit - 1` while allowed, `0` when denied — because the Workers Rate Limiting API exposes no live count. Counters are per-colo, not global.
+
+`POST /v1/telemetry` uses `TELEMETRY_RATE_LIMITER` (240 / 60 s) and, unlike the API bucket, fails **closed** (FINDING-014).
 
 ### Service Singleton
 
@@ -191,8 +197,8 @@ Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/
 | `hono` | HTTP framework + CORS middleware |
 | `@xivdyetools/core` | DyeService, dyeDatabase, ColorService, LocalizationService, DEFAULT_MATCHING_METHOD, LEGACY_MATCHING_METHOD_MAP, getFacewearColorByLegacyItemID |
 | `@xivdyetools/types` | `Dye` interface |
-| `@xivdyetools/logger` | Structured logger (wired up by `worker-kit`'s `loggerMiddleware`) |
-| `@xivdyetools/worker-kit/rate-limiter` | `KVRateLimiter`, `getClientIp` |
+| `@xivdyetools/logger` | Structured logger (wired up by `worker-kit`'s `loggerMiddleware`) — arrives **transitively** through `worker-kit`; not in this app's `package.json` |
+| `@xivdyetools/worker-kit/rate-limiter` | `CloudflareRateLimiter`, `KVRateLimiter`, `getClientIp` |
 | `@xivdyetools/worker-kit` | Shared `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` factory |
 | `@xivdyetools/test-utils` (dev) | KV mock for vitest |
 | `vitepress` + `vue` (dev) | The developer docs site in `docs/` |
@@ -200,7 +206,7 @@ Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/
 
 ## Related Projects
 
-**Dependencies (internal):** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/worker-kit`.
+**Dependencies (internal):** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/worker-kit` (incl. `/rate-limiter`); `@xivdyetools/logger` arrives transitively through `worker-kit`.
 
 **Service Bindings:** `api-worker` calls no other worker. It is the **target** of discord-worker's `UNIVERSALIS_PROXY` service binding (`service = "xivdyetools-api-worker"`, hitting `/api/v2/aggregated/...` for `/budget`); everyone else reaches it over HTTPS at `data.xivdyetools.app` (web-app's market-board calls use `data.xivdyetools.app/universalis`).
 

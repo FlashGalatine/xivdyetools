@@ -405,6 +405,3 @@ Monorepo 2.0 Tier 1 package consolidation.
 - Shared `EmbedData` / `EmbedField` types for platform-agnostic embed construction
 - All commands return discriminated unions (`{ ok: true; ... } | { ok: false; error; errorMessage }`)
 
----
-
-[1.0.0]: https://github.com/FlashGalatine/xivdyetools/releases/tag/bot-logic-v1.0.0

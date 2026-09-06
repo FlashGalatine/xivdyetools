@@ -933,9 +933,9 @@ Track via:
 ## Related Documentation
 
 - [V4 Layout Architecture](../projects/xivdyetools-web-app/components.md)
-- [Router Service](../architecture/data-flow.md)
+- [Router Service](../../architecture/data-flow.md)
 - [Results Card Component](../projects/xivdyetools-web-app/components.md#result-card)
-- [Color Algorithms](../research/color-matching/)
+- [Color Algorithms](../../research/color-matching/)
 
 ---
 

@@ -1,5 +1,7 @@
 # Selectable Harmony Colour Wheels Implementation Plan
 
+**Status:** shipped 2026-09-05 — PR #167 (core 5.2.0, web-app 5.7.0, discord-worker 5.5.0, og-worker 2.10.0); API endpoints in PR #169
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let a player choose which colour wheel the Harmony Explorer measures its angles on — RGB (unchanged default), RYB, Munsell, OKLCH hue, OKLCH lightness — with the wheels defined once in `@xivdyetools/core` and consumed identically by the web app, the Discord `/harmony` command and the OpenGraph card.

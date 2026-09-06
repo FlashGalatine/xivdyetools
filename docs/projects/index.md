@@ -11,19 +11,19 @@
 | [@xivdyetools/core](core/overview.md) | npm library | Node.js / Browser | TypeScript, k-d tree, K-means++ | Color algorithms; the 125-dye database (schema v2) and the 11 Facewear colors |
 | [xivdyetools-web-app](web-app/overview.md) | Web app | Cloudflare Pages | Lit, Vite, Tailwind CSS | 9 interactive color tools |
 | [xivdyetools-discord-worker](discord-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions, resvg-wasm | 17 registered slash commands |
-| xivdyetools-image-worker | Image decode | Cloudflare Workers | `@cf-wasm/photon` | Raw RGBA pixel extraction for `discord-worker` (service binding only) |
+| [xivdyetools-image-worker](../../apps/image-worker/README.md) | Image decode | Cloudflare Workers | `@cf-wasm/photon` | `POST /extract` (raw RGBA pixels for `discord-worker`) and `POST /thumbnail` (WebP previews for `presets-api`) — service binding only |
 | [xivdyetools-moderation-worker](moderation-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions | Preset moderation commands |
 | [xivdyetools-oauth](oauth/overview.md) | OAuth provider | Cloudflare Workers | Hono, PKCE, JWT, D1 | Discord authentication |
 | [xivdyetools-api-worker](api-worker/overview.md) | Public API | Cloudflare Workers | Hono, KV, VitePress | Public dye database & color matching at `data.xivdyetools.app`, the Universalis proxy, and the developer docs |
 | [xivdyetools-presets-api](presets-api/overview.md) | REST API | Cloudflare Workers | Hono, D1 SQLite | Community presets |
 | [xivdyetools-og-worker](og-worker/overview.md) | OpenGraph | Cloudflare Workers | Hono, resvg-wasm | Localized social media preview cards |
-| xivdyetools-stoat-worker | Node.js bot | Node.js | revolt.js | Revolt (Stoat) bot — parked |
+| [xivdyetools-stoat-worker](../../apps/stoat-worker/README.md) | Node.js bot | Node.js | revolt.js | Revolt (Stoat) bot — parked |
 | [@xivdyetools/types](types/overview.md) | npm library | Universal | TypeScript | Shared type definitions and branded types |
-| @xivdyetools/auth | npm library | Universal | TypeScript | JWT, HMAC, Ed25519 verification; Base64URL/hex via `/encoding` |
+| [@xivdyetools/auth](../../packages/auth/README.md) | npm library | Universal | TypeScript | JWT, HMAC, Ed25519 verification; Base64URL/hex via `/encoding` |
 | [@xivdyetools/logger](logger/overview.md) | npm library | Universal | TypeScript | Multi-environment logging |
-| @xivdyetools/worker-kit | npm library | Cloudflare Workers | TypeScript, Hono | Shared request-ID / logger / rate-limit middleware; rate-limit backends via `/rate-limiter` |
-| @xivdyetools/svg | npm library | Universal | TypeScript | SVG template rendering |
-| @xivdyetools/bot-logic | npm library | Universal | TypeScript | Shared bot business logic; bot i18n via `/i18n` |
+| [@xivdyetools/worker-kit](../../packages/worker-kit/README.md) | npm library | Cloudflare Workers | TypeScript, Hono | Shared request-ID / logger / rate-limit middleware; rate-limit backends via `/rate-limiter` |
+| [@xivdyetools/svg](../../packages/svg/README.md) | npm library | Universal | TypeScript | SVG card generators on the 5.0 frame system |
+| [@xivdyetools/bot-logic](../../packages/bot-logic/README.md) | npm library | Universal | TypeScript | Shared bot business logic; bot i18n via `/i18n` |
 | [@xivdyetools/test-utils](test-utils/overview.md) | workspace-private | Test | TypeScript, Vitest | Testing utilities and mocks |
 
 ---
@@ -99,7 +99,8 @@ If you want to integrate XIV Dye Tools into your own project:
 | [Core Library Overview](core/overview.md) | Installation, quick start, features |
 | [Core Services](core/services.md) | ColorService, DyeService, APIService |
 | [Core Types](core/types.md) | Type system and branded types |
-| [Core Algorithms](core/algorithms.md) | k-d tree, K-means++, harmony generation |
+| [Core Algorithms](core/algorithms.md) | k-d tree, K-means++, harmony generation and the colour wheels |
+| [Core Publishing](core/publishing.md) | Core-specific build notes; publishing itself follows the release process |
 
 ### For Understanding the Web App
 
@@ -125,6 +126,7 @@ If you want to integrate XIV Dye Tools into your own project:
 | Document | Description |
 |----------|-------------|
 | [OAuth Overview](oauth/overview.md) | Worker architecture |
+| [OAuth Endpoints](oauth/endpoints.md) | Route-by-route reference |
 | [PKCE Flow](oauth/pkce-flow.md) | Security flow explained |
 | [JWT Structure](oauth/jwt.md) | Token format and verification |
 
@@ -136,6 +138,7 @@ If you want to integrate XIV Dye Tools into your own project:
 | [Presets Endpoints](presets-api/endpoints.md) | Full API reference |
 | [Presets Moderation](presets-api/moderation.md) | Content filtering pipeline |
 | [Presets Database](presets-api/database.md) | D1 schema documentation |
+| [Presets Rate Limiting](presets-api/rate-limiting.md) | IP, per-user and per-day limits |
 
 ### For Understanding Market Data
 
@@ -147,40 +150,15 @@ dual-layer caching, request coalescing, stale-while-revalidate — now lives beh
 |----------|-------------|
 | [API Worker Overview](api-worker/overview.md) | Architecture, including the absorbed proxy routes |
 | [API Worker Endpoints](api-worker/endpoints.md) | Full public endpoint reference |
+| [universalis-proxy (merged)](universalis-proxy/overview.md) | Redirect stub for old bookmarks |
 
 ---
 
-## Version Summary
+## Versions
 
-### Applications
-
-| Project | Version |
-|---------|---------|
-| xivdyetools-web-app | v5.0.0 |
-| xivdyetools-discord-worker | v5.0.0 |
-| xivdyetools-image-worker | v1.0.0 |
-| xivdyetools-moderation-worker | v1.4.0 |
-| xivdyetools-oauth | v2.6.0 |
-| xivdyetools-presets-api | v2.0.0 |
-| xivdyetools-api-worker | v0.6.0 |
-| xivdyetools-og-worker | v2.0.0 |
-| xivdyetools-stoat-worker | v0.2.1 |
-
-### Shared Libraries
-
-| Package | Version |
-|---------|---------|
-| @xivdyetools/core | v4.0.0 |
-| @xivdyetools/types | v2.0.0 |
-| @xivdyetools/auth | v1.3.0 |
-| @xivdyetools/logger | v1.3.0 |
-| @xivdyetools/worker-kit | v1.0.0 |
-| @xivdyetools/svg | v2.0.0 |
-| @xivdyetools/bot-logic | v2.0.0 |
-| @xivdyetools/test-utils | v1.2.0 |
-
-Versions are read from each project's `package.json`. See [Version Matrix](../versions.md) for
-detailed version history, the deprecated-project table, and the release gate for the 5.0 wave.
+Current versions, per-release history and the compatibility matrix live in the
+[Version Matrix](../versions.md), which CI checks against every `package.json`
+(`pnpm docs:check-versions`). This page deliberately carries no version numbers.
 
 ---
 

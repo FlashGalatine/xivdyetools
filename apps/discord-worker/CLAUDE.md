@@ -19,7 +19,7 @@ npm run test:integration     # vitest integration tests (separate config)
 npm run test:all             # Both unit + integration
 npm run test:coverage        # Coverage via @vitest/coverage-v8
 npm run type-check           # tsc --noEmit
-npm run lint                 # eslint src/
+npm run lint                 # eslint src/ && pnpm run lint:dead (knip)
 npm run register-commands    # tsx scripts/register-commands.ts (publish slash command schemas)
 npm run upload-emojis        # tsx scripts/upload-emojis.ts (sync application emojis)
 python scripts/instance-latin-fonts.py   # regenerate the static Space Grotesk / Onest faces (see below)
@@ -64,7 +64,7 @@ npm run lint && npm run test -- --run && npm run type-check
 ### Request Flow
 
 ```
-Discord  ──POST /──►  Ed25519 verify (utils/verify.ts)
+Discord  ──POST /──►  Ed25519 verify (@xivdyetools/auth)
                         │
                         ▼
               Hono router (src/index.ts)
@@ -90,6 +90,13 @@ The `/webhooks/preset-submission` endpoint receives notifications from `presets-
 ```
 src/
 ├── index.ts                       # Hono app, routing, Ed25519 verification, webhooks
+├── commands/
+│   ├── registry.ts                # COMMAND_REGISTRY — the roster of record (17 registrations)
+│   ├── schemas.ts                 # Slash-command schemas published by register-commands
+│   └── localize.ts                # name/description_localizations for the schemas;
+│                                  # imported ONLY by scripts/register-commands.ts
+├── data/
+│   └── emoji-mapping.json         # Per-application dye emoji ids, keyed by stainID (services/emoji.ts)
 ├── handlers/
 │   ├── commands/                  # One file per slash command (about, harmony, dye, accessibility,
 │   │                              # comparison, contrast, mixer-v4, gradient, swatch, extractor,
@@ -112,29 +119,35 @@ src/
 │   ├── bot-i18n.ts                # Bot UI translator (createTranslator/createUserTranslator)
 │   ├── emoji.ts                   # Application emoji helpers
 │   ├── fonts.ts                   # Bundled TTF buffers for resvg (brand + Noto Sans JP/SC/KR subsets)
+│   ├── font-coverage.ts           # What the bundled subsets can draw; drops uncoverable
+│   │                              # user text from cards (BUG-030) — the embed keeps the original
+│   ├── image-input-errors.ts      # Rejection markers the image-worker path raises
 │   ├── changelog-parser.ts        # Parse CHANGELOG-laymans.md files (root → /webhooks/github; this app's → /changelog)
 │   ├── announcements.ts           # Send formatted release embeds
-│   ├── svg/                       # Card renderers + resvg PNG conversion
+│   ├── svg/                       # renderer.ts — resvg PNG conversion (the cards themselves
+│   │                              # come from @xivdyetools/svg)
 │   ├── image-client.ts            # IMAGE_WORKER service-binding client (photon moved to xivdyetools-image-worker)
 │   └── budget/                    # Universalis price cache, calculator, quick picks
 ├── utils/
-│   ├── verify.ts                  # Ed25519 signature verification + timingSafeEqual
+│   ├── brand.ts                   # BRAND_ACCENT — the one embed accent colour
 │   ├── github-verify.ts           # HMAC-SHA256 verification for GitHub webhooks
 │   ├── response.ts                # pong/ephemeral/deferred response builders
 │   ├── discord-api.ts             # REST helpers (sendMessage, follow-ups, edits)
-│   ├── error-response.ts          # Generic error message builders
 │   ├── sanitize.ts                # sanitizePresetName / sanitizePresetDescription
-│   ├── color.ts                   # dyeService singleton, hex helpers
+│   ├── text.ts                    # Line-boundary truncation for embed budgets
 │   └── env-validation.ts          # Validate required env vars at first request
 └── types/
     ├── env.ts                     # Env interface, InteractionType/ResponseType enums
     ├── preset.ts                  # PresetNotificationPayload, STATUS_DISPLAY
     ├── github.ts                  # GitHubPushPayload
     ├── budget.ts                  # Budget calculator types
-    ├── image.ts                   # Image processing types
     ├── markdown.d.ts              # `*.md` imports are strings (wrangler Text rule / vitest plugin)
     └── preferences.ts             # CLANS_BY_RACE, preference shapes
 ```
+
+Ed25519 verification and `timingSafeEqual` come from `@xivdyetools/auth`; the dye service and the
+hex helpers come from `@xivdyetools/bot-logic` / `@xivdyetools/core`. There is no local
+`utils/verify.ts`, `utils/color.ts` or `utils/error-response.ts` — don't reintroduce them.
 
 ### Environment Bindings (wrangler.toml)
 
@@ -201,7 +214,7 @@ Tier A (2026-08-29, spec `docs/superpowers/specs/2026-08-29-bot-analytics-tier-a
 ### Autocomplete
 
 Special routing inside `handleAutocomplete()`:
-- `/preset` autocomplete checks subcommand: `edit` shows the user's own presets, `favorite remove` shows the user's favourited presets, `show`/`vote`/`moderate` query approved presets via the Service Binding.
+- `/preset` autocomplete checks subcommand: `edit` shows the user's own presets, `favorite remove` shows the user's favourited presets, and everything else (`show`, `vote`, `favorite add`) queries approved presets via the Service Binding. `moderate` is not registered on this worker — it belongs to `xivdyetools-moderation-worker`.
 - `/preferences` clan field uses `CLANS_BY_RACE` table; world field reuses budget's world autocomplete.
 - `/budget` delegates entirely to `handleBudgetAutocomplete()`.
 
@@ -213,7 +226,7 @@ Special routing inside `handleAutocomplete()`:
 
 ### Timing-Safe Comparisons
 
-`timingSafeEqual()` (utils/verify.ts) is used for the webhook bearer token comparison so a config-missing path returns `Unauthorized` without a measurable timing delta against a wrong-secret path.
+`timingSafeEqual()` (from `@xivdyetools/auth`) is used for the webhook bearer token comparison so a config-missing path returns `Unauthorized` without a measurable timing delta against a wrong-secret path.
 
 ### Webhook Payload Limits
 

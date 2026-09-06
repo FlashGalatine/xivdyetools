@@ -12,32 +12,32 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| [`@xivdyetools/types`](packages/types/) | 2.0.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
-| [`@xivdyetools/logger`](packages/logger/) | 1.3.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
-| [`@xivdyetools/auth`](packages/auth/) | 1.3.0 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding (`/encoding`) |
-| [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.0.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + sliding-window rate limiting backends (`/rate-limiter`) |
-| [`@xivdyetools/core`](packages/core/) | 4.0.0 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |
-| [`@xivdyetools/svg`](packages/svg/) | 2.0.0 | Pure SVG card generators on the 5.0 frame system (data in → SVG string out) |
-| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 2.0.0 | Platform-agnostic command business logic + bot UI translation engine (`/i18n`) |
-| [`@xivdyetools/test-utils`](packages/test-utils/) | 1.2.0 | Cloudflare Workers mocks (D1, KV, R2) and test factories — **not published** |
+| [`@xivdyetools/types`](packages/types/) | 3.2.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
+| [`@xivdyetools/logger`](packages/logger/) | 2.2.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
+| [`@xivdyetools/auth`](packages/auth/) | 2.0.1 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding (`/encoding`) |
+| [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.3.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + sliding-window rate limiting backends (`/rate-limiter`) |
+| [`@xivdyetools/core`](packages/core/) | 5.2.0 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |
+| [`@xivdyetools/svg`](packages/svg/) | 4.1.0 | Pure SVG card generators on the 5.0 frame system (data in → SVG string out) |
+| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 4.2.0 | Platform-agnostic command business logic + bot UI translation engine (`/i18n`) |
+| [`@xivdyetools/test-utils`](packages/test-utils/) | 2.0.0 | Cloudflare Workers mocks (D1, KV, R2) and test factories — **not published** |
 
 ### Applications (`apps/`)
 
 | App | Version | Description |
 |-----|---------|-------------|
-| [`web-app`](apps/web-app/) | 5.0.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`discord-worker`](apps/discord-worker/) | 5.0.0 | Primary Discord bot — 17 slash commands (CF Worker + Hono, HTTP Interactions) |
-| [`image-worker`](apps/image-worker/) | 1.0.0 | Photon-backed pixel extraction, service-binding-only (CF Worker) |
-| [`moderation-worker`](apps/moderation-worker/) | 1.4.0 | Moderation bot for community presets (CF Worker) |
-| [`presets-api`](apps/presets-api/) | 2.0.0 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
-| [`oauth`](apps/oauth/) | 2.6.0 | Discord OAuth + JWT issuance (CF Worker + D1) |
-| [`api-worker`](apps/api-worker/) | 0.6.0 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
-| [`og-worker`](apps/og-worker/) | 2.1.0 | Dynamic OpenGraph image generation (CF Worker + WASM) |
-| [`stoat-worker`](apps/stoat-worker/) | 0.2.1 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) — parked |
+| [`web-app`](apps/web-app/) | 5.7.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
+| [`discord-worker`](apps/discord-worker/) | 5.5.1 | Primary Discord bot — 17 slash commands (CF Worker + Hono, HTTP Interactions) |
+| [`image-worker`](apps/image-worker/) | 1.3.0 | Photon host — `POST /extract` (raw pixels for the bot) and `POST /thumbnail` (WebP previews for presets-api), service-binding-only (CF Worker) |
+| [`moderation-worker`](apps/moderation-worker/) | 1.7.0 | Moderation bot for community presets (CF Worker) |
+| [`presets-api`](apps/presets-api/) | 2.3.0 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
+| [`oauth`](apps/oauth/) | 3.1.0 | Discord OAuth + JWT issuance (CF Worker + D1) |
+| [`api-worker`](apps/api-worker/) | 0.14.0 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
+| [`og-worker`](apps/og-worker/) | 2.10.0 | Dynamic OpenGraph image generation (CF Worker + WASM) |
+| [`stoat-worker`](apps/stoat-worker/) | 0.3.0 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) — parked |
 
 ### Documentation (`docs/`)
 
-Architecture overviews, API contracts, deployment guides, specifications, and research notes.
+Start at [`docs/index.md`](docs/index.md): architecture overviews, per-project deep dives, user guides, operations runbooks, specifications, and the [version matrix](docs/versions.md). Dated audits, research and design specs are kept as frozen snapshots.
 
 ## Quick Start
 
@@ -45,7 +45,7 @@ Architecture overviews, API contracts, deployment guides, specifications, and re
 # Prerequisites: Node.js 22.13+, pnpm 11+
 pnpm install           # Install all workspace dependencies
 pnpm turbo run build   # Build all packages
-pnpm turbo run test    # Run all tests (8,300+ across 328 files)
+pnpm turbo run test    # Run all tests (Vitest, ~480 test files across 17 workspaces)
 ```
 
 ## Development
@@ -91,7 +91,7 @@ presets-api ──► discord-worker            (submission notifications)
 presets-api ──► image-worker              (WebP thumbnails for moderated preview images)
 ```
 
-All Cloudflare Workers use [Hono](https://hono.dev/) as the HTTP framework and `@xivdyetools/worker-kit` for shared middleware. Persistence is **D1** (SQLite) for `presets-api` (`xivdyetools-presets`, also bound by `discord-worker` / `moderation-worker`) and `oauth` (`xivdyetools-users`), **R2** for preset preview images, and **KV** elsewhere.
+All Cloudflare Workers use [Hono](https://hono.dev/) as the HTTP framework and `@xivdyetools/worker-kit` for shared middleware. Persistence is **D1** (SQLite) for `presets-api` (`xivdyetools-presets`, also bound read/write by `moderation-worker`; `discord-worker` reaches preset data only through its service binding) and `oauth` (`xivdyetools-users`), **R2** for preset preview images, and **KV** elsewhere.
 
 ## CI/CD
 
@@ -99,7 +99,7 @@ All CI/CD is handled via GitHub Actions:
 
 | Workflow | Trigger | What it does |
 |----------|---------|-------------|
-| **CI** | Push / PR to `main` | Lint, type-check, test, build (affected packages only) |
+| **CI** | Push to `main` / `*-prep`, every PR, nightly audit | Lint, type-check, test, build (affected packages) + repo-wide gates: wrangler-config invariants, dead-code reachability, docs version tables, docs links; `pnpm audit --prod` and gitleaks in their own jobs; Playwright E2E for the web app |
 | **Deploy** (×11) | Push to `main` with matching path changes | Build → test → deploy to Cloudflare Workers/Pages |
 | **Publish Packages** | Manual (workflow_dispatch) | Build → test → publish selected `@xivdyetools/*` package to npm |
 

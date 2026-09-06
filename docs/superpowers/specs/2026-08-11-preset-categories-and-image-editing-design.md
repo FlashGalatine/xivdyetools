@@ -1,7 +1,7 @@
 # Preset Categories & Preview-Image Editing — Design
 
 **Date:** 2026-08-11
-**Status:** Approved (design); not implemented
+**Status:** implemented — presets-api 2.0.0 (migration 0010, 1 primary + ≤2 secondary categories); plan `docs/superpowers/plans/2026-08-11-preset-categories-and-image-editing.md`
 **Builds on:** `docs/superpowers/specs/2026-08-10-preset-glamour-thumbnails-design.md`
 **Design source:** `Tool Icon Directions.dc.html` (Turn 23 · Group 2), project
 `993f0c5c-05b9-439b-8047-66a9c5ab1bd6` — sections `6a`, `6b`, `6c`

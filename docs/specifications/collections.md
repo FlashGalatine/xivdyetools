@@ -1,7 +1,7 @@
 # Dye Collections & Favorites - Specification
 
-> Feature Status: Planned
-> Platforms: Web App + Discord Bot
+> Feature Status: ✅ Implemented — web app only
+> Platforms: Web App. The Discord side (`/favorites`, `/collection`) was **removed in 5.0**.
 > Core Library Changes: None (app-level persistence)
 
 ## Overview
@@ -25,20 +25,23 @@ Simple starred dyes that appear prominently in dye selectors.
 
 **Characteristics:**
 - Single flat list (no organization)
-- Maximum 20 favorites (prevent clutter)
+- Maximum 40 favorites (prevent clutter)
 - Displayed at top of dye selector
 - One-click add/remove
 
 ### 2. Collections (Organized Groups)
 
-Named groups of dyes for specific purposes.
+Named groups of dyes for specific purposes. In 5.0 these are typed records written by the tools' own
+Save actions (**Save mix**, **Save swap**, **Save character colours**, **Make a palette**) rather
+than folders the user files dyes into by hand.
 
 **Characteristics:**
 - User-defined names
 - Optional description
+- Typed `kind`: `palette`, `swap` (budget substitutes, carries the `target` dye) or `character`
 - Maximum 50 collections per user
 - Maximum 20 dyes per collection
-- Supports reordering
+- Deleting a record leaves a tombstone so an import can never resurrect it
 
 ---
 
@@ -53,18 +56,28 @@ interface FavoritesData {
   lastModified: string;         // ISO timestamp
 }
 
+type CollectionKind = 'palette' | 'swap' | 'character';
+
 interface Collection {
   id: string;                   // UUID
   name: string;                 // User-defined name
   description?: string;         // Optional description
-  dyes: DyeId[];               // Ordered list of dye IDs
+  kind: CollectionKind;         // 4.x records without one read as 'palette'
+  target?: DyeId;               // swap records only: the dye these substitutes replace
+  dyes: DyeId[];               // Ordered list of dye IDs (5.0: stainIDs)
   createdAt: string;           // ISO timestamp
   updatedAt: string;           // ISO timestamp
+}
+
+interface Tombstone {
+  id: string;                   // The deleted record's id
+  deletedAt: string;            // ISO timestamp
 }
 
 interface CollectionsData {
   version: string;
   collections: Collection[];
+  tombstones?: Tombstone[];     // import/merge must never resurrect a deleted record
   lastModified: string;
 }
 
@@ -73,22 +86,21 @@ const FAVORITES_KEY = 'xivdyetools_favorites';
 const COLLECTIONS_KEY = 'xivdyetools_collections';
 ```
 
-### Discord Bot (Redis)
+### Discord Bot — removed in 5.0
 
-```typescript
-// Redis key patterns
-`favorites:${userId}` → JSON string of DyeId[]
-`collections:${userId}` → JSON string of Collection[]
-`collection:${userId}:${collectionId}` → JSON string of Collection
+There is no bot-side favorites or collections store. The v4 `/favorites` and `/collection` commands
+were deleted with the 5.0 command roster and are not in the registry. Saved dyes and palettes live
+only in the web app; every bot card carries a share link that opens the same result there, where the
+dye can be starred or the palette saved.
 
-// TTL: No expiration (permanent user data)
-```
+Only community *presets* can be favourited from Discord, via `/preset favorite`, which is a
+different feature with its own store.
 
 ### Export Format (JSON)
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "exportedAt": "2024-12-04T12:00:00Z",
   "type": "xivdyetools-collection",
   "data": {
@@ -124,7 +136,6 @@ export class CollectionService {
   addFavorite(dyeId: DyeId): boolean;
   removeFavorite(dyeId: DyeId): boolean;
   isFavorite(dyeId: DyeId): boolean;
-  reorderFavorites(dyeIds: DyeId[]): void;
   clearFavorites(): void;
 
   // Collections
@@ -135,7 +146,6 @@ export class CollectionService {
   deleteCollection(id: string): boolean;
   addDyeToCollection(collectionId: string, dyeId: DyeId): boolean;
   removeDyeFromCollection(collectionId: string, dyeId: DyeId): boolean;
-  reorderCollectionDyes(collectionId: string, dyeIds: DyeId[]): void;
 
   // Import/Export
   exportAll(): string;  // JSON string
@@ -268,142 +278,27 @@ When selecting a dye, option to add to collection.
 
 ---
 
-## Discord Bot Implementation
+## Discord Bot Implementation — REMOVED IN 5.0
 
-### Commands
+**None of this shipped in the form described below, and what did ship was deleted.** The v4 bot's
+`/favorites` and `/collection` commands were removed with the 5.0 command roster: neither name
+appears in the command registry, the schema literal or the dispatcher, and neither is registered
+with Discord. There is no bot-side favorites or collections store of any kind.
 
-#### `/favorites`
+Two things in the original draft were never true even while the commands existed:
 
-Manage favorite dyes.
+- **Storage was never Redis.** The bot runs on Cloudflare Workers; per-user state lives in
+  Cloudflare KV. (The only Redis in the project's history was a third-party rate-limit counter,
+  itself since replaced by native Workers rate-limit bindings.)
+- **There is no cross-platform sync.** The bot never read or wrote the web app's favorites, and the
+  web app's records have always been local to one browser.
 
-**Subcommands:**
-
-```
-/favorites add <dye>
-  Add a dye to your favorites
-
-/favorites remove <dye>
-  Remove a dye from your favorites
-
-/favorites list
-  Show all your favorite dyes
-
-/favorites clear
-  Clear all favorites (with confirmation)
-```
-
-**Example Output - `/favorites list`:**
-
-```
-⭐ Your Favorite Dyes (5)
-
-1. Dalamud Red (#AA1111)
-2. Jet Black (#0A0A0A)
-3. Snow White (#F5F5F5)
-4. Metallic Gold (#CBA135)
-5. Bark Brown (#5C3A1E)
-
-[Attached: favorites_grid.png]
-```
-
-#### `/collection`
-
-Manage dye collections.
-
-**Subcommands:**
-
-```
-/collection create <name> [description]
-  Create a new collection
-
-/collection delete <name>
-  Delete a collection (with confirmation)
-
-/collection add <collection> <dye>
-  Add a dye to a collection
-
-/collection remove <collection> <dye>
-  Remove a dye from a collection
-
-/collection show <name>
-  Display a collection's dyes
-
-/collection list
-  List all your collections
-
-/collection rename <old_name> <new_name>
-  Rename a collection
-```
-
-**Example Output - `/collection show`:**
-
-```
-📁 My Red Mage Glamour
-
-Colors for my RDM artifact gear
-
-Dyes (3):
-1. Dalamud Red (#AA1111)
-2. Jet Black (#0A0A0A)
-3. Metallic Gold (#CBA135)
-
-Created: Dec 1, 2024
-Updated: Dec 3, 2024
-
-[Attached: collection_rdm.png]
-```
-
-**Example Output - `/collection list`:**
-
-```
-📁 Your Collections (3)
-
-1. My Red Mage Glamour (3 dyes)
-   Colors for my RDM artifact gear
-
-2. Casual Outfits (5 dyes)
-   Everyday glamour colors
-
-3. Dark Knight Vibes (4 dyes)
-   Edgy and dramatic
-
-Use `/collection show <name>` to view details
-```
-
-### Redis Storage
-
-```typescript
-// src/services/collection-storage.ts
-
-export class CollectionStorage {
-  private redis: Redis;
-
-  // Favorites
-  async getFavorites(userId: string): Promise<DyeId[]>;
-  async setFavorites(userId: string, favorites: DyeId[]): Promise<void>;
-
-  // Collections
-  async getCollections(userId: string): Promise<Collection[]>;
-  async getCollection(userId: string, name: string): Promise<Collection | null>;
-  async saveCollection(userId: string, collection: Collection): Promise<void>;
-  async deleteCollection(userId: string, name: string): Promise<boolean>;
-
-  // Limits
-  async canAddFavorite(userId: string): Promise<boolean>;  // Max 20
-  async canCreateCollection(userId: string): Promise<boolean>;  // Max 50
-}
-```
-
-### File Changes
-
-| File | Changes |
-|------|---------|
-| `favorites.ts` | New command file |
-| `collection.ts` | New command file |
-| `collection-storage.ts` | New service |
-| `collection-grid.ts` | New renderer |
+What replaced it: saved dyes and palettes live in the web app, and every bot card carries a share
+link that reopens the same result there. Community *presets* — a different feature with its own
+store — can still be favourited from Discord with `/preset favorite add|remove|list`.
 
 ---
+
 
 ## Validation Rules
 
@@ -411,7 +306,7 @@ export class CollectionStorage {
 
 | Rule | Limit |
 |------|-------|
-| Maximum favorites | 20 |
+| Maximum favorites | 40 |
 | Duplicate prevention | Yes |
 
 ### Collections
@@ -485,21 +380,14 @@ export class CollectionStorage {
 
 ```typescript
 // Toast notifications for errors
-ToastService.error('Maximum 20 favorites allowed');
+ToastService.error('Maximum 40 favorites allowed');
 ToastService.error('Collection name already exists');
 ToastService.error('Failed to import: Invalid format');
 ```
 
 ### Discord Bot
 
-```typescript
-// Embed error responses
-{
-  color: 0xFF0000,
-  title: '❌ Error',
-  description: 'You already have 20 favorites. Remove some to add more.',
-}
-```
+Not applicable — the bot has no favorites or collections commands (removed in 5.0).
 
 ---
 
@@ -529,7 +417,7 @@ Consider optional cloud sync:
 ```typescript
 describe('CollectionService', () => {
   it('should add favorite', () => { ... });
-  it('should not exceed 20 favorites', () => { ... });
+  it('should not exceed 40 favorites', () => { ... });
   it('should not add duplicate favorites', () => { ... });
   it('should create collection', () => { ... });
   it('should not exceed 50 collections', () => { ... });
@@ -542,8 +430,8 @@ describe('CollectionService', () => {
 ### Integration Tests
 
 - Test localStorage persistence
-- Test Redis persistence
 - Test import/export round-trip
+- Test tombstones surviving an import
 - Test UI interactions
 
 ---
@@ -560,10 +448,10 @@ describe('CollectionService', () => {
 5. Add collection manager modal
 6. Add import/export functionality
 
-### Phase 3: Discord Bot
-7. Implement `/favorites` commands
-8. Implement `/collection` commands
-9. Add Redis storage
+### Phase 3: Discord Bot — CANCELLED
+7. ~~Implement `/favorites` commands~~ — removed in 5.0
+8. ~~Implement `/collection` commands~~ — removed in 5.0
+9. ~~Add Redis storage~~ — never built; the bot runs on Cloudflare Workers and uses KV
 
 ### Phase 4: Polish
 10. Cross-tool integration (use collection in Mixer, Harmony, etc.)

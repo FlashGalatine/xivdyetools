@@ -10,8 +10,8 @@
 🔍 **Fuzzy Matching** — Partial name matching with disambiguation when input is ambiguous
 🌈 **Color Tools** — Harmonies, gradients, blending, comparison, and accessibility (planned)
 🎭 **Masquerade** — Bot replies adopt the dye's color and name per-message
-⏳ **Loading Indicators** — React/unreact pattern for visual processing feedback
-🌍 **6 Languages** — English, Japanese, German, French, Korean, Chinese
+⏳ **Loading Indicators** — React/unreact pattern for visual processing feedback *(helper written, not yet wired — `withLoadingIndicator` has no production caller)*
+🌍 **6 Languages** — English, Japanese, German, French, Korean, Chinese *(available through `@xivdyetools/bot-logic`; the bot itself still hard-codes `locale = 'en'` in `commands/info.ts` — there is no user-preference resolution yet)*
 📊 **Shared Logic** — Built on the same `@xivdyetools/bot-logic` package as the Discord bot
 
 ## Architecture
@@ -112,6 +112,7 @@ pnpm --filter xivdyetools-stoat-worker run lint         # ESLint
 src/
 ├── index.ts                      # Entry point (revolt.js client, WebSocket, event handling)
 ├── config.ts                     # Environment config loading, ULID validation
+├── message-handler.ts            # Incoming-message pipeline feeding the router
 ├── router.ts                     # Command router (CommandContext type, dispatch table)
 ├── commands/
 │   ├── parser.ts                 # Prefix parser (!xivdye/!xd), aliases, greedy matching
@@ -123,7 +124,8 @@ src/
 │   ├── dye-resolver.ts           # Multi-strategy dye input resolution
 │   ├── message-context.ts        # LRU+TTL cache for reaction-based interactions
 │   ├── response-formatter.ts     # Shared embed/error formatting
-│   └── loading-indicator.ts      # ⏳ react/unreact pattern
+│   ├── command-throttle.ts       # Per-user command throttling
+│   └── loading-indicator.ts      # ⏳ react/unreact pattern (no production caller yet)
 └── test-utils/
     └── revolt-mocks.ts           # Mock factories for revolt.js Client/Message/Channel
 ```

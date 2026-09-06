@@ -29,9 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with a warning. (The OG image URL still elides the default — the page and the cache key
   agree that absent means rgb.)
 - Pinned (hand-swapped) dyes are cleared when the colour wheel changes, from the sidebar
-  or from a deep link. A pin is fixed to a slot INDEX, and a slot index is a different
+  or from a share link. A pin is fixed to a slot INDEX, and a slot index is a different
   target hue on a different wheel, so a carried-over pin lands on a colour it was never
   chosen for — the harmony-type change already cleared pins for exactly this reason.
+- Only a URL carrying a share marker (`harmony`, `algo`, `perceptual`, `v` or `wheel`)
+  resets the wheel and clears pins. A bare `?dye=` — an in-app hand-off through
+  `handoffTo('harmony', …)` or `RouterService`'s `PRESERVED_PARAMS` — leaves the persisted
+  wheel and its pins alone; it was the one setting an in-app navigation could clobber.
 - A persisted `harmony.wheel` is normalised on load (`ConfigController`, beside
   `matchingMethod`) through core's `normalizeColorWheelId`, so every reader downstream
   can treat a config wheel as a valid id rather than each re-validating it.

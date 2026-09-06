@@ -59,7 +59,7 @@ Unlike the presets-api (authenticated, restricted CORS), this API is fully anony
 | Subdomain | `data.xivdyetools.app` | Separate from `api.xivdyetools.app` (presets-api) due to opposite security postures |
 | Auth | Anonymous | Public read-only data, no user state |
 | CORS | `origin: *` | Must be callable from any browser, plugin, or bot |
-| Rate Limiting | 60 req/min per IP on `/v1/*` | KV-backed sliding window with burst allowance of 5; the proxy's `/aggregated` route has its own per-isolate memory limiter (30/min in production) |
+| Rate Limiting | 60 req/min per IP + 5 burst on `/v1/*` | The native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple = { limit = 65, period = 60 }`, per-colo counters), fail-open; `RATE_LIMIT` KV is the fallback when the binding is absent. `POST /v1/telemetry` has its own `TELEMETRY_RATE_LIMITER` bucket (240 / 60 s) that fails **closed**. The proxy's `/aggregated` route has its own per-isolate memory limiter (30/min in production) |
 | Caching | `max-age=3600, s-maxage=86400` | Deterministic data, changes only with game patches |
 | Database | Bundled JSON | No D1 — the 125-dye database is part of the bundle via `@xivdyetools/core` |
 
@@ -68,23 +68,30 @@ Unlike the presets-api (authenticated, restricted CORS), this API is fully anony
 ```
 src/
   index.ts                 # Hono app, middleware stack, route mounting
-  types.ts                 # Env bindings (RATE_LIMIT KV, ASSETS, ENVIRONMENT, API_VERSION, UNIVERSALIS_API_BASE, RATE_LIMIT_*)
+  types.ts                 # Env bindings (see the table below)
   middleware/
-    rate-limit.ts          # KV-backed 60/min per IP, fail-open (request-id + logger come from @xivdyetools/worker-kit)
+    rate-limit.ts          # Backend selection (native API_RATE_LIMITER / TELEMETRY_RATE_LIMITER, KV fallback) + the worker-kit middleware factory
     locale.ts              # Reads ?locale=, LocalizationService.ensureLocaleLoaded, sets c.var.locale
   routes/
     dyes.ts                # /v1/dyes/* (7 endpoints)
     match.ts               # /v1/match/* (2 endpoints)
+    wheels.ts              # /v1/wheels/* (2 endpoints) — core's ColorWheel registry
+    harmony.ts             # /v1/harmony/* (2 endpoints) — core's generateHarmonySlots
   lib/
     api-error.ts           # ApiError class with typed error codes
     response.ts            # JSON envelope helpers (success/error/paginated)
     validation.ts          # ID resolution, hex parsing, param validation
     dye-serializer.ts      # Dye -> ApiDye (strips internals, adds marketItemID)
+    harmony.ts             # Wheel summary / wheel position / harmony slot serializers
+    bounded-body.ts        # Size-capped body reads for the two POST routes
     services.ts            # DyeService singleton, distance calculation helper (ColorService.getDistanceForMethod)
+  chara/                   # POST /v1/chara/resolve + GET /v1/chara/icon/:iconId — XIVAPI client, resolver, cache, regional names
+  telemetry/               # POST /v1/telemetry — router (bare 204), allowlist schema, Origin gate
   universalis/             # Market-board proxy (moved verbatim from apps/universalis-proxy)
     router.ts              # /aggregated/:dc/:itemIds, /data-centers, /worlds
     config/                # cache TTLs, datacenter/world lists
     services/              # cached-fetch, cache-service, request-coalescer, memory rate-limiter
+scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables after a patch (manual)
 docs/                      # VitePress developer docs → developers.xivdyetools.app
 ```
 
@@ -95,20 +102,24 @@ docs/                      # VitePress developer docs → developers.xivdyetools
 | `hono` | HTTP framework |
 | `@xivdyetools/core` | Dye database, color algorithms, k-d tree, localization |
 | `@xivdyetools/types` | Shared TypeScript interfaces (Dye, RGB, etc.) |
-| `@xivdyetools/logger` | Structured logging with secret redaction |
-| `@xivdyetools/worker-kit` | Hono middleware; `KVRateLimiter` sliding window via the `/rate-limiter` subpath |
-| `spectral.js` | Spectral color mixing (explicit dep for pnpm strict isolation) |
+| `@xivdyetools/worker-kit` | Hono middleware; `CloudflareRateLimiter` / `KVRateLimiter` via the `/rate-limiter` subpath |
+| `@xivdyetools/logger` | Structured logging with secret redaction — **transitive** via `worker-kit`, not a direct dependency |
 
 ### Environment Bindings
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `RATE_LIMIT` | KV Namespace | Per-IP rate limit counters (60-second TTL) |
+| `API_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 65 / 60 s) | The `/v1/*` per-IP limiter |
+| `TELEMETRY_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 240 / 60 s) | `POST /v1/telemetry`'s own bucket — fails closed |
+| `RATE_LIMIT` | KV Namespace | Fallback rate-limit counters when a binding is absent (`api:ip:` / `telemetry:ip:`) |
+| `ANALYTICS` | Analytics Engine dataset | `xivdyetools_web_analytics` (prod) / `_dev`; absent → telemetry accepts and discards |
 | `ASSETS` | Static Assets (production env only) | `docs/.vitepress/dist`, served when the request host is `developers.xivdyetools.app` |
 | `ENVIRONMENT` | Variable | `development` or `production` |
 | `API_VERSION` | Variable | Currently `v1` |
 | `UNIVERSALIS_API_BASE` | Variable | `https://universalis.app/api/v2` |
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Variable | Proxy limiter — `30`/`60` production, `60`/`60` dev |
+| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream and the game-version pin (which also namespaces the row cache) |
+| `XIVAPI_SCHEMA` | Variable (optional) | `exdschema@2:rev:<sha>` pin against upstream field renames |
 
 No secrets required. No D1 database. api-worker calls no other worker; discord-worker's `UNIVERSALIS_PROXY` service binding targets it (`/api/v2/aggregated/...`).
 
@@ -136,21 +147,30 @@ The `/:id` and `/batch` endpoints auto-detect which type of ID was provided and 
 
 ---
 
-## Phase Roadmap
+## What is on `/v1` today
 
-### Phase 1 (Current) — Dye Database & Color Matching
+Sixteen routes — 14 `GET`, 2 `POST` — all anonymous. See the [Endpoint Reference](endpoints.md).
 
-9 endpoints, anonymous access, bundled data only. See [Endpoint Reference](endpoints.md).
+| Group | Routes | Data source |
+|-------|--------|-------------|
+| Dyes | `/v1/dyes`, `/dyes/:id`, `/dyes/stain/:stainId`, `/dyes/search`, `/dyes/categories`, `/dyes/batch`, `/dyes/consolidation-groups` | Bundled `@xivdyetools/core` |
+| Matching | `/v1/match/closest`, `/v1/match/within-distance` | Bundled |
+| Colour wheels | `/v1/wheels`, `/v1/wheels/:id` | Bundled (core's `ColorWheel` registry) |
+| Harmony | `/v1/harmony/types`, `/v1/harmony` | Bundled (core's `generateHarmonySlots`) |
+| `.chara` resolution | `POST /v1/chara/resolve`, `GET /v1/chara/icon/:iconId` | **XIVAPI v2** upstream, edge-cached |
+| Telemetry | `POST /v1/telemetry` | Internal and undocumented — web-app opt-in analytics; not part of the public contract |
 
-### Phase 2 (Planned) — Presets & Social Features
+So "bundled data only" no longer describes the whole surface: `/v1/chara/*` is the one group with a
+live upstream, and it answers `503 UPSTREAM_UNAVAILABLE` while XIVAPI re-indexes after a game patch.
 
-- Community presets (via Service Binding to presets-api)
+### Still unbuilt
+
+- Community presets on this API (via a Service Binding to presets-api)
 - Optional API key authentication for higher rate limits
-
-### Phase 3 (Planned) — Market Data & Advanced
-
-- Real-time Universalis market board prices exposed on the public `/v1` surface with the standard envelope (the raw proxy is already in-process at `/universalis/*` since the 2026-07-31 merge — see [Endpoint Reference](endpoints.md#universalis-market-board-proxy))
-- Color palette generation endpoints
+- Real-time Universalis market prices on the public `/v1` surface with the standard envelope. The
+  raw proxy is already in-process at `/universalis/*` (see
+  [Endpoint Reference](endpoints.md#universalis-market-board-proxy)), but it is deliberately
+  undocumented on the public docs site and un-enveloped.
 
 ---
 

@@ -15,8 +15,11 @@ import type { ChangelogEntry } from './changelog-parser.js';
 /**
  * Discord's embed description ceiling is 4096; we stop short of it, and the
  * summary line (GitHub link included) is budgeted inside this figure.
+ *
+ * @testonly changelog-parser.test.ts asserts the root CHANGELOG-laymans.md's newest entry renders
+ * under this budget uncut; production reads it only inside this module.
  */
-const DESCRIPTION_BUDGET = 4000;
+export const DESCRIPTION_BUDGET = 4000;
 
 /**
  * Formats a changelog entry as a Discord embed object.

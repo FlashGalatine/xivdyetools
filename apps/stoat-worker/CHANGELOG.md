@@ -178,6 +178,3 @@ Monorepo 2.0 follow-through only — the bot is parked (no active investment, no
 - revolt.js mock factories for testing (Client, Message, Channel)
 - 54 tests across parser, config, message context, and router
 
----
-
-[0.1.0]: https://github.com/FlashGalatine/xivdyetools/releases/tag/stoat-worker-v0.1.0

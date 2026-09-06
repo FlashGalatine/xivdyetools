@@ -33,6 +33,10 @@ The repo follows [Keep a Changelog](https://keepachangelog.com/) and semantic ve
 Changelog entries are expected to say *what broke and why it mattered*, not just what changed —
 look at recent entries in `packages/core/CHANGELOG.md` for the house style.
 
+**Update the two version tables in the same PR** — the root `README.md` and `docs/versions.md`
+(the current-version rows, plus a history row). `pnpm docs:check-versions` runs in CI and fails
+the PR until both agree with every `package.json`.
+
 **A version bump is mandatory.** The publish workflow's `detect` job only publishes a package
 whose local version differs from the published one. At version parity it does nothing and
 reports success, which is easy to misread as a successful publish.
@@ -69,6 +73,7 @@ Configured per package at npmjs.com → package → Settings:
 | Publisher | GitHub Actions |
 | Repository | `FlashGalatine/xivdyetools` |
 | Workflow | `publish-packages.yml` |
+| Environment | `production` (the publish job runs in it) |
 | Permission | `npm publish` |
 
 Two constraints follow from this:
@@ -78,11 +83,29 @@ Two constraints follow from this:
   the trusted publisher afterwards.
 - **Local publishing is deliberately not a normal path.** Every package is set to *"Require
   two-factor authentication and disallow tokens"*, so an unattended local publish is impossible
-  by design. Break-glass only:
+  by design. The break-glass case is a new package's first version. The maintainer's 2FA is a
+  **security key, not an OTP app**, so the flow is token-based — never `--otp`:
 
-  ```bash
-  pnpm --filter @xivdyetools/<name> publish --provenance --access public --no-git-checks --otp=<code>
-  ```
+  1. Log in to npmjs.com (security key) → *Access Tokens* → generate a **granular access
+     token**: scope `@xivdyetools` read + write, **Bypass 2FA** on, a short expiry.
+  2. Put it in the **user-level** `~/.npmrc`
+     (`//registry.npmjs.org/:_authToken=…`) — never the committed repo `.npmrc`.
+  3. Build and publish **without `--provenance`** (provenance generation only works inside CI
+     and aborts a local publish):
+
+     ```bash
+     pnpm turbo run build --filter=@xivdyetools/<name>
+     pnpm --filter @xivdyetools/<name> publish --access public --no-git-checks
+     ```
+
+  4. On npmjs.com set the new package to *Require two-factor authentication and disallow
+     tokens*, add its trusted publisher (table above), then delete the token and the `~/.npmrc`
+     line.
+
+  Writes to a package that *already* disallows tokens (`npm deprecate`, a re-publish) reject
+  the token with `Two-factor authentication is required to publish this package but an
+  automation token was specified` — for those, `npm login --auth-type=web` (the browser prompt
+  takes the security key) and rerun.
 
 pnpm 11 performs the OIDC exchange natively — the npm CLI is not involved. (Under pnpm 10 the
 publish was delegated to npm, which needed ≥ 11.5.1 for OIDC support; that step was removed with
@@ -131,24 +154,22 @@ When a change spans packages and apps — an audit remediation sweep, or a major
 — the order is:
 
 1. Land every change on a working branch and get CI green.
-2. Bump versions across all affected projects, with changelog entries.
+2. Bump versions across all affected projects, with changelog entries and the two version
+   tables (root `README.md`, `docs/versions.md`) — `pnpm docs:check-versions` blocks the PR otherwise.
 3. Merge to `main`. Deploy workflows fire automatically for the affected apps.
 4. Run the publish workflow for each package, in dependency order.
 5. Run `register-commands` if any slash-command shape changed.
 6. Apply D1 migrations if the schema changed.
-7. Update [versions.md](../versions.md) — the current-version tables, the version-history
-   sections, and the compatibility matrix.
 
 The root `CHANGELOG.md` carries a monorepo-level rollup for sweeps that touch many projects at
 once.
 
 ### Current state
 
-The **5.0 wave** is complete on `monorepo-2.0-prep` but not yet merged or published. Several of
-its packages have `package.json` versions ahead of their `CHANGELOG.md` — `core` 4.0.0 vs 3.0.0,
-`types` 2.0.0 vs 1.15.0, `svg` 2.0.0 vs 1.2.1, `bot-logic` 2.0.0 vs 1.5.0, `web-app` 5.0.0 vs
-4.12.0, `discord-worker` 5.0.0 vs 4.7.0. **Those changelog entries need writing before the
-release**, since step 2 above is what makes the release legible afterwards.
+The **5.0 wave** merged to `main` on 2026-08-28 (PR #123) and its packages were published the
+same day; several releases have followed. For what is live right now, see
+[versions.md](../versions.md) — it is the only place under `docs/` that states current
+versions, and `pnpm docs:check-versions` fails CI when it disagrees with a `package.json`.
 
 ---
 

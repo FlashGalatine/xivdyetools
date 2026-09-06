@@ -89,17 +89,19 @@ If Universalis doesn't answer, the verdict turns amber with **MARKET DATA UNAVAI
 
 ## Understanding Delta E
 
-The **ΔE** column is the colour distance between the substitute and the target. On the ΔE2000 scale used here:
+The **ΔE** column is the colour distance between the substitute and the target. On the ΔE2000 scale
+used here, match results fall into four bands:
 
-| ΔE2000 | Meaning |
-|--------|---------|
-| 0-1 | Virtually identical |
-| 1-2 | Very close, minor difference |
-| 2-5 | Reads as the same dye on armour |
-| 5-10 | Noticeable side by side |
-| 10+ | Visibly different |
+| ΔE2000 | Band | Meaning |
+|--------|------|---------|
+| under 5 | SAME | You would not tell them apart |
+| 5 to 10 | CLOSE | A very good stand-in |
+| 10 to 20 | NEAR | In the same family, but visibly different |
+| 20 and up | FAR | A different colour |
 
-Row values are tinted on the same green-to-red ramp as the other tools' match tiers.
+Row values are tinted on the same green-to-red ramp as the other tools' match tiers. Every other
+matching method has its own calibrated cut-offs on its own scale, so compare the band, never the raw
+number, across methods. See the [Glossary](../../reference/glossary.md) for more.
 
 ---
 

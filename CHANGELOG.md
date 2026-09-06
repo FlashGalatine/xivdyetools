@@ -8,6 +8,100 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.2.0] - 2026-09-05
+
+**Documentation audit and the two gates that keep it honest.** Every document in the repository —
+`docs/` (about 90 living pages), all 17 workspace `README.md` / `CLAUDE.md` / `CHANGELOG.md`
+sets, the root files and the version tables — was fact-checked against the code on
+2026-09-05 (six parallel sweeps, roughly 600 verified findings, recorded in
+`docs/audits/2026-09-05-documentation/`). Minor bump: additive tooling and a docs
+reorganisation, no change to the workspace layout or to any published package.
+
+### Added
+
+- **`pnpm docs:check-versions`** (`scripts/check-doc-versions.ts`, self-tested by
+  `pnpm test:scripts`, run in CI after the dead-code gate). Version numbers now live in exactly
+  two documents — the root `README.md` and `docs/versions.md` — and the gate fails when either
+  disagrees with a `package.json`, or when `docs/versions.md` has no row for a workspace (so a
+  reshaped table cannot make the gate vacuous). The audit found five hand-maintained version
+  tables (`docs/index.md`, `docs/README.md`, `docs/projects/index.md`,
+  `docs/architecture/overview.md`, root `README.md`) carrying four different snapshots, every
+  one behind `package.json` on every row — the fourth manual reconciliation in the history. The
+  other four tables are gone; the pages link the matrix instead.
+- **`pnpm docs:check-links`** (`scripts/check-doc-links.ts`, same self-test and CI placement).
+  Resolves every relative markdown link in the living documentation tier — `docs/**` minus
+  `docs/audits/**` and `docs/historical/**`, plus the root and per-workspace README / CLAUDE
+  files — and fails on a missing target. Fenced code and inline spans are masked so a link
+  quoted as text does not count. The audit found 207 broken links, all in the frozen archive,
+  which is left as it is on purpose: those links describe the tree as it was.
+- Index pages where folders had none: `docs/audits/index.md` (every dated audit, 13 of which
+  nothing had referenced), `docs/research/index.md` (all 10 research directories, every one of
+  which describes shipped work, none of which was reachable from `docs/index.md`),
+  `docs/superpowers/README.md` (the spec/plan pair for each feature with a shipped / parked
+  column — three spec `Status:` lines said "not implemented" for features that shipped, and
+  no plan carried a status at all), and short `index.md` files for `docs/architecture/`,
+  `docs/operations/` and `docs/reference/`. `docs/research/color-mixing/` and
+  `docs/research/patch-7.5/` gained the `README.md` their siblings already had.
+
+### Changed
+
+- **`docs/` reorganised.** `docs/brainstorming/` is retired — all 18 files described shipped or
+  superseded work and the folder held 16 of the 17 non-archive broken links — into
+  `docs/historical/20260108-Brainstorm/`, `20260115-v4-DiscordBot/` and
+  `20260218-AnalyticsExploration/`, each with an archive banner. The undated
+  `@xivdyetools/core` audit that had been squatting the `docs/audits/` root (and its `README.md`
+  slot) moved to `docs/audits/2026-01-22-core/`. `docs/operations/plans/` (one file) folded into
+  `docs/superpowers/plans/`. `docs/historical/README.md`, a second index whose paths were wrong,
+  was deleted in favour of `docs/historical/index.md`. `docs/README.md` is now a short folder
+  map that points at `docs/index.md` instead of a competing front page.
+- **`docs/versions.md`** rewritten: the preamble no longer says the 5.0 wave is "not yet merged
+  or published" (it merged 2026-08-28 and every package is on npm), both current-version tables
+  match `package.json`, 75 releases from 2026-08-18 to 2026-09-05 are added to the per-workspace
+  history, and the compatibility matrix covers the September waves.
+- **`docs/index.md`** carries a September 2026 "Recent Updates" section (harmony convergence,
+  the mixing/matching fact-check, the deep-dive remediation, the dead-code guardrails, the
+  colour wheels) and no longer describes the August wave as pending.
+- **CI** (`ci.yml`): two new steps after `Dead-code reachability`, both repo-wide by nature and
+  unfiltered by `...[HEAD^]` for the same reason that gate is.
+- Config edits that landed after 2.1.0 without an entry: `deploy-api-worker.yml` gained
+  `packages/svg/**` as a trigger (the docs home renders `@xivdyetools/svg` glyphs, so an svg
+  change must redeploy the docs site), and `knip.jsonc` excludes
+  `apps/api-worker/docs/.vitepress/env.d.ts` (the `*.vue` shim, imported by nothing).
+
+### Fixed
+
+- **CHANGELOG hygiene across the monorepo.** The `[x.y.z]: …/compare/vA...vB` footers in this
+  file, `apps/stoat-worker`, `packages/bot-logic` and `packages/svg` pointed at tags that have
+  never existed (the repository has none) and stopped four releases short in any case — removed.
+  `apps/og-worker/CHANGELOG.md` ended with a `## Planned` block listing features that shipped
+  months ago — removed. The `[2.0.0]` entry below was dated 2026-08-16 while listing four
+  versions released on 2026-08-30/31; it is now dated to the merge (2026-08-28) with the
+  branch-cut date noted. The root layman's changelog gained the user-visible fixes the
+  2026-09-03 merges shipped without a product-level note (Swatch share previews, `?lang=` on
+  share links, 4K screenshots, the web-app 5.0.1/5.0.2 fixes, the bot's 5.1.2 batch), and the
+  bot's layman's file gained its 5.1.3 and image-worker 1.3.0 lines.
+- **The three follow-ups the audit had left open, closed the same day:** (1) the public
+  VitePress site under `apps/api-worker/docs/` checked against the router — its 15 listed
+  endpoints, per-endpoint parameters and group counts all match the code (`POST /v1/telemetry`
+  is deliberately absent from the registry; the rate-limits guide now says so and why);
+  (2) `changelog-parser.test.ts` gives the root `CHANGELOG-laymans.md` the bot file's parse
+  gates (discord-worker 5.5.1, test-only); (3) `docs/operations/POST_MERGE_CHECKLIST.md`
+  split as its own footer asked — the merge-day record is archived at
+  `docs/historical/20260828-PostMerge5.0/`, and the still-open dashboard, secret, verification
+  and gated-removal items live in `docs/operations/OPEN_ITEMS.md`, each re-checked against
+  GitHub and Cloudflare on 2026-09-05 (private vulnerability reporting is OFF although
+  `SECURITY.md` points at it; the old `xivdyetools-universalis-proxy` worker still exists; the
+  beta / production deploy tokens are correctly homed, so `SECRET_ROTATION.md` no longer says
+  otherwise).
+- A leaked absolute path to a local Claude memory file in
+  `docs/audits/2026-04-28/bugs/BUG-003.md` — replaced with a description.
+- The findings themselves — wrong OAuth callback flow and vote API in the architecture pages,
+  a Durable Object rate limiter and a `/auth/xivauth/cb` route that never existed, `--otp`
+  publish instructions the maintainer cannot follow, test-utils helpers that were never
+  written, four `docs/projects` pages describing APIs that do not exist, guides pointing users
+  at a "report" button and a footer link that are not there — are itemised per sweep in
+  `docs/audits/2026-09-05-documentation/`.
+
 ## [2.1.0] - 2026-09-03
 
 **The dead-code reachability gate and the hashing that makes the gates honest.** Monorepo-level
@@ -190,7 +284,9 @@ published package.
   them off; the first three were already clean, and stoat-worker's four unused test imports were
   removed (DEAD-032). The setting is now uniform across all 17 workspaces.
 
-## [2.0.0] - 2026-08-16
+## [2.0.0] - 2026-08-28
+
+*Branch cut 2026-08-16 on `monorepo-2.0-prep`; released by the merge to `main` on 2026-08-28 (PR #123). The per-workspace versions below are the ones that shipped in that merge, some of which were bumped on the branch after the cut.*
 
 **Monorepo 2.0 + the XIV Dye Tools 5.0 wave.** 314 commits on `monorepo-2.0-prep` since 1.18.0, spanning the workspace consolidation (12 → 8 packages, 11 → 9 apps), the schema-v2 / stainID-first data model, the 5.0 web-app redesign, the 5.0 Discord command set on a new card frame system, redrawn link previews, a beta environment for every public surface, and full remediation of the 2026-08-09 pre-release audit. Nothing on this branch has been published to npm and no production worker or web-app release carries it yet (exceptions: the beta surfaces, and `image-worker`'s one-time pre-merge production deploy on 2026-08-09). **Merging to main is the release** — see "Deploy sequence" below. Per-package detail lives in each package's / app's own `CHANGELOG.md`; the plain-language, player-facing summary is the root `CHANGELOG-laymans.md`.
 
@@ -960,21 +1056,3 @@ Initial release of the XIV Dye Tools monorepo, consolidating 15 previously indep
 - All original test suites pass with identical results (pre-existing failures in oauth, presets-api, and moderation-worker are unchanged)
 - Total test count: ~7,800 tests across 15 packages
 
----
-
-[1.14.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.13.0...v1.14.0
-[1.13.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.12.0...v1.13.0
-[1.12.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.11.0...v1.12.0
-[1.11.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.10.0...v1.11.0
-[1.10.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.9.0...v1.10.0
-[1.9.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.8.0...v1.9.0
-[1.8.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.7.0...v1.8.0
-[1.7.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.6.0...v1.7.0
-[1.6.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.5.1...v1.6.0
-[1.5.1]: https://github.com/FlashGalatine/xivdyetools/compare/v1.5.0...v1.5.1
-[1.5.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.4.0...v1.5.0
-[1.4.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/FlashGalatine/xivdyetools/releases/tag/v1.0.0

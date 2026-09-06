@@ -21,7 +21,7 @@ The workspace opens as a dashed **Drop an image** card:
 | **Paste from clipboard** | Press `Ctrl+V` (`Cmd+V` on Mac) after copying an image, or use the button |
 | **Take a photo** | On phones the card leads with the camera; **Choose from photos** picks from your library |
 
-Below the card a lock icon carries the promise: *"Images are read in your browser and never uploaded."* Everything happens on your device. The picture is also cached in your browser's local storage so it is still there when you come back (up to 8 MB), and **Clear image** removes that copy too.
+Below the card a lock icon carries the promise: *"Images are read in your browser and never uploaded."* Everything happens on your device. The picture is held in memory for this session only — it is never written to browser storage — so reloading the page or coming back later means loading it again. The colours you sampled are remembered; the picture itself is not.
 
 Once a picture is loaded it fills a dark image card. Two buttons sit in its top-right corner — **Replace image** and **Clear image** — and dropping a new file onto the workspace replaces the current one. Zoom controls (in / out, **Fit**, **Width**, **Reset**) let you get close to a detail.
 
@@ -59,7 +59,7 @@ In the settings column (the gear icon on phones):
 - **Extraction Settings** — **Vibrancy Boost**, **Max Colors** (3–10, how many Auto-extract pulls) and **Selection Sensitivity** (how far you must drag before a press becomes a loupe drag rather than a click)
 - **Pixel Sample Area** — 1×1 (a single pixel), 2×2, 4×4, 8×8 or 16×16, averaged around the point you sample
 - **Prevent Duplicates** — on by default; when two extracted colours resolve to the same dye, the second takes the next-closest instead
-- **Matching Algorithm** — ΔE2000 is the suite default; ΔEOK, ΔE76, Weighted RGB, RGB or a 0–100 percentage
+- **Matching Algorithm** — ΔE2000 is the suite default; ΔEOK2, ΔE76, Weighted RGB, RGB or a 0–100 percentage
 - **Display Options** — which colour values and readouts the cards show
 - **Dye Filters** — exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes
 - **Market Board** — show current prices on the cards for your data centre and world
@@ -68,17 +68,18 @@ In the settings column (the gear icon on phones):
 
 ## Understanding Delta E
 
-Delta E measures perceptual color difference:
+Delta E measures perceptual color difference — lower is always better. On the default method
+(ΔE2000), match results are labelled with four bands:
 
-| Delta E | Meaning |
-|---------|---------|
-| 0-1 | Not perceptible |
-| 1-2 | Perceptible through close observation |
-| 2-10 | Perceptible at a glance |
-| 11-49 | Colors are more similar than opposite |
-| 100 | Colors are exact opposites |
+| ΔE2000 | Band | Meaning |
+|--------|------|---------|
+| under 5 | SAME | You would not tell them apart |
+| 5 to 10 | CLOSE | A very good stand-in |
+| 10 to 20 | NEAR | In the same family, but visibly different |
+| 20 and up | FAR | A different colour |
 
-Lower is always better for matching!
+Every other matching method has its own calibrated cut-offs on its own scale, so compare the band,
+never the raw number, across methods. See the [Glossary](../../reference/glossary.md) for more.
 
 ---
 

@@ -22,36 +22,53 @@ An automated community submission system for preset palettes with centralized st
 ## Architecture Overview
 
 ```
-┌─────────────────┐     ┌──────────────────────────┐     ┌─────────────────┐
-│  Discord Bot    │────▶│  Cloudflare Worker + D1  │◀────│    Web App      │
-│  (PebbleHost)   │     │  (Central Preset API)    │     │ (CF Pages)      │
-│                 │     │                          │     │                 │
-│ /submit-palette │     │  GET  /presets           │     │ Read presets    │
-│ /vote-palette   │     │  POST /presets           │     │ Display votes   │
-│ /moderate       │     │  POST /presets/:id/vote  │     │ Local fallback  │
-└─────────────────┘     └──────────────────────────┘     └─────────────────┘
-        │                         │
-        │                         ▼
-        │               ┌──────────────────┐
-        └──────────────▶│   D1 Database    │
-                        │  (SQLite)        │
-                        │                  │
-                        │ • presets        │
-                        │ • votes          │
-                        │ • categories     │
-                        │ • moderation_log │
-                        └──────────────────┘
+┌──────────────────────┐                             ┌────────────────────────┐
+│  Discord Bot         │                             │   Web App              │
+│  (Cloudflare Worker) │                             │   (CF Pages)           │
+│                      │                             │                        │
+│ /preset list|show    │      service binding        │ Browse / vote          │
+│ /preset random       │──────────────┐   ┌──────────│ Submit / edit / delete │
+│ /preset submit|edit  │              │   │  HTTPS   │ My Submissions         │
+│ /preset vote         │              ▼   ▼          │ (Discord or XIVAuth)   │
+│ /preset favorite     │      ┌────────────────────┐ └────────────────────────┘
+└──────────────────────┘      │  presets-api       │
+                              │  (CF Worker + D1   │
+┌──────────────────────┐      │   + R2 previews)   │
+│  Moderation Bot      │─────▶│                    │
+│  (separate Worker)   │ svc  │  GET  /presets     │
+│                      │ bind │  POST /presets     │
+│ /preset moderate     │      │  PATCH/DELETE /:id │
+│ /preset ban_user     │      │  POST /:id/vote    │
+│ /preset unban_user   │      └─────────┬──────────┘
+└──────────────────────┘                │
+                                        ▼
+                              ┌────────────────────┐
+                              │   D1 Database      │
+                              │   (SQLite)         │
+                              │                    │
+                              │ • presets          │
+                              │ • votes            │
+                              │ • categories       │
+                              │ • moderation_log   │
+                              │ • banned_users     │
+                              │ • submission_events│
+                              └────────────────────┘
 ```
+
+`presets-api` also calls `image-worker` (service binding, `POST /thumbnail`) to build preview
+images, and notifies `discord-worker` of moderation outcomes over its own binding.
 
 ### Design Decisions
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Central Storage | Cloudflare D1 | Web app on CF Pages, free tier sufficient, global edge |
-| Submission Interface | Discord Bot | Discord handles authentication, no login needed |
-| Web App Access | Read-only | Simpler security model, bot is trusted gateway |
-| Duplicate Detection | Dye signature hash | O(1) lookup, automatic voting on duplicates |
-| Moderation | Hybrid auto/manual | Fast publishing with safety net |
+| Hosting | Cloudflare Workers throughout | The bot is a Worker too — an earlier draft of this document said PebbleHost, which was never the case for 5.0 |
+| Submission Interface | Both surfaces | `/preset submit` and `/preset edit` in Discord; the full submit / edit / delete flow in the web app behind Discord or XIVAuth sign-in |
+| Web App Access | Full read/write | Signed-in users submit, edit and delete their own presets; deletion is web-app only |
+| Moderation | Separate moderation bot | `/preset moderate`, `/preset ban_user` and `/preset unban_user` belong to `moderation-worker`, not the main bot |
+| Duplicate Detection | Dye signature, partial unique index | O(1) lookup; the index is partial so a rejected preset does not block its combination forever |
+| Moderation flow | Hybrid auto/manual | Fast publishing with safety net |
 
 ---
 
@@ -60,47 +77,83 @@ An automated community submission system for preset palettes with centralized st
 ### Database Schema (D1/SQLite)
 
 ```sql
+-- As shipped: apps/presets-api/schema.sql plus migrations 0002-0013.
+-- Abridged here to the shape of the data; see the SQL files for the full
+-- index list and the comments explaining each migration.
+
+-- ============================================
+-- CATEGORIES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS categories (
+  id TEXT PRIMARY KEY,                    -- e.g., 'jobs', 'events'
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  icon TEXT,                              -- Emoji
+  is_curated INTEGER DEFAULT 0,           -- SQLite has no BOOLEAN; 1 = official
+  display_order INTEGER DEFAULT 0
+);
+
+-- Seed categories. Migration 0007 dropped 'community'; 'appearance', 'zones'
+-- and 'raids-trials' joined in the 2026-08-11 change. Eight in total.
+INSERT OR IGNORE INTO categories (id, name, description, icon, is_curated, display_order) VALUES
+  ('jobs',            'FFXIV Jobs',      'Color schemes inspired by job identities',            '⚔️', 1, 1),
+  ('grand-companies', 'Grand Companies', 'Official Grand Company colors',                       '🏛️', 1, 2),
+  ('seasons',         'Seasons',         'Seasonal color palettes',                             '🌸', 1, 3),
+  ('events',          'FFXIV Events',    'Colors for in-game seasonal events',                  '🎉', 1, 4),
+  ('aesthetics',      'Aesthetics',      'General aesthetic themes',                            '✨', 1, 5),
+  ('appearance',      'Appearance',      'Palettes built around a character''s own colours',    '👤', 1, 6),
+  ('zones',           'Zones',           'Palettes drawn from the places of Eorzea',            '🏔️', 1, 7),
+  ('raids-trials',    'Raids & Trials',  'Palettes from raid and trial encounters',             '🗡️', 1, 8);
+
 -- ============================================
 -- PRESETS TABLE
 -- Stores both curated and community palettes
 -- ============================================
-CREATE TABLE presets (
+CREATE TABLE IF NOT EXISTS presets (
   id TEXT PRIMARY KEY,                    -- UUID v4
   name TEXT NOT NULL,                     -- 2-50 characters
   description TEXT NOT NULL,              -- 10-200 characters
   category_id TEXT NOT NULL,              -- FK to categories
-  dyes TEXT NOT NULL,                     -- JSON array: [5738, 13115, 13117]
+  dyes TEXT NOT NULL,                     -- JSON array of stainIDs: [1, 12, 40]
   tags TEXT NOT NULL,                     -- JSON array: ["dark", "gothic"]
   author_discord_id TEXT,                 -- Discord user ID (NULL for curated)
   author_name TEXT,                       -- Display name at submission time
   vote_count INTEGER DEFAULT 0,           -- Denormalized for fast sorting
-  status TEXT DEFAULT 'pending',          -- pending | approved | rejected | flagged
-  is_curated BOOLEAN DEFAULT FALSE,       -- TRUE for official presets
+  status TEXT DEFAULT 'pending',          -- pending | approved | rejected | flagged | hidden
+  is_curated INTEGER DEFAULT 0,           -- 1 for official presets
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now')),
+  -- Duplicate detection: sorted dye IDs as JSON. A plain column, not a
+  -- generated one -- the app writes it.
+  dye_signature TEXT,
+  -- Migration 0002: pre-edit values, so moderation can revert an edit
+  previous_values TEXT,
+  -- Migration 0008: allowlisted example-link page URL (never a copy of the image)
+  example_link TEXT,
+  -- Migration 0009: R2 preview image
+  preview_image_key TEXT,
+  preview_image_status TEXT NOT NULL DEFAULT 'none',
+  -- Migration 0010: up to two extra categories; category_id stays primary
+  secondary_categories TEXT NOT NULL DEFAULT '[]',
 
-  -- Generated column for duplicate detection
-  -- Sorts dye IDs to ensure [1,2,3] matches [3,1,2]
-  dye_signature TEXT GENERATED ALWAYS AS (
-    (SELECT json_group_array(value) FROM (
-      SELECT value FROM json_each(dyes) ORDER BY CAST(value AS INTEGER)
-    ))
-  ) STORED
+  FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
--- Indexes for common query patterns
-CREATE INDEX idx_presets_category ON presets(category_id);
-CREATE INDEX idx_presets_status ON presets(status);
-CREATE INDEX idx_presets_vote_count ON presets(vote_count DESC);
-CREATE INDEX idx_presets_dye_signature ON presets(dye_signature);
-CREATE INDEX idx_presets_author ON presets(author_discord_id);
-CREATE INDEX idx_presets_created ON presets(created_at DESC);
+-- Migrations 0004 / 0006: a PARTIAL unique index, so a rejected or hidden
+-- preset does not permanently block its dye combination
+CREATE UNIQUE INDEX IF NOT EXISTS idx_presets_dye_signature
+  ON presets(dye_signature)
+  WHERE status IN ('approved', 'pending');
+
+-- Plus single-column indexes on category, status, vote_count, author, created_at,
+-- name and is_curated, and composite indexes (002_add_composite_indexes.sql) that
+-- let SQLite satisfy the common WHERE + ORDER BY pairs from one index.
 
 -- ============================================
 -- VOTES TABLE
 -- One vote per user per preset (composite PK)
 -- ============================================
-CREATE TABLE votes (
+CREATE TABLE IF NOT EXISTS votes (
   preset_id TEXT NOT NULL,
   user_discord_id TEXT NOT NULL,
   created_at TEXT DEFAULT (datetime('now')),
@@ -109,40 +162,70 @@ CREATE TABLE votes (
 );
 
 -- ============================================
--- CATEGORIES TABLE
--- Preset categories with metadata
--- ============================================
-CREATE TABLE categories (
-  id TEXT PRIMARY KEY,                    -- e.g., 'jobs', 'community'
-  name TEXT NOT NULL,                     -- Display name
-  description TEXT NOT NULL,
-  icon TEXT,                              -- Emoji
-  is_curated BOOLEAN DEFAULT FALSE,       -- TRUE = official category
-  display_order INTEGER DEFAULT 0
-);
-
--- Seed initial categories
-INSERT INTO categories (id, name, description, icon, is_curated, display_order) VALUES
-  ('jobs', 'FFXIV Jobs', 'Color schemes inspired by job identities', '⚔️', TRUE, 1),
-  ('grand-companies', 'Grand Companies', 'Official Grand Company colors', '🏛️', TRUE, 2),
-  ('seasons', 'Seasons', 'Seasonal color palettes', '🌸', TRUE, 3),
-  ('events', 'FFXIV Events', 'Colors for in-game seasonal events', '🎉', TRUE, 4),
-  ('aesthetics', 'Aesthetics', 'General aesthetic themes', '✨', TRUE, 5),
-  ('community', 'Community', 'Community-submitted palettes', '👥', FALSE, 6);
-
--- ============================================
 -- MODERATION LOG TABLE
--- Audit trail for moderation actions
+-- Audit trail. Migration 0013 relaxed preset_id and added target_discord_id
+-- so the moderation worker's user-level ban / unban actions log here too.
 -- ============================================
-CREATE TABLE moderation_log (
+CREATE TABLE IF NOT EXISTS moderation_log (
   id TEXT PRIMARY KEY,                    -- UUID v4
-  preset_id TEXT NOT NULL,
+  preset_id TEXT,                         -- NULL for user-level actions
   moderator_discord_id TEXT NOT NULL,
-  action TEXT NOT NULL,                   -- approve | reject | flag | unflag
+  action TEXT NOT NULL,                   -- approve | reject | flag | unflag | requeue
+                                          -- | revert | ban | unban | hide | restore
   reason TEXT,
+  target_discord_id TEXT,                 -- the moderated user (ban | unban | hide | restore)
   created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (preset_id) REFERENCES presets(id) ON DELETE CASCADE
 );
+
+-- ============================================
+-- BANNED USERS TABLE (Migration 0003)
+-- ============================================
+CREATE TABLE IF NOT EXISTS banned_users (
+  id TEXT PRIMARY KEY,                        -- UUID v4
+  discord_id TEXT,                            -- Discord snowflake (nullable)
+  xivauth_id TEXT,                            -- XIVAuth UUID (nullable)
+  username TEXT NOT NULL,                     -- Username at time of ban
+  moderator_discord_id TEXT NOT NULL,
+  reason TEXT NOT NULL,                       -- 10-500 chars
+  banned_at TEXT DEFAULT (datetime('now')),
+  unbanned_at TEXT,                           -- NULL while still banned
+  unban_moderator_discord_id TEXT,
+
+  CHECK (discord_id IS NOT NULL OR xivauth_id IS NOT NULL)
+);
+-- Partial unique indexes keep one ACTIVE ban per Discord / XIVAuth identity.
+
+-- ============================================
+-- FAILED NOTIFICATIONS TABLE (Migration 0005)
+-- Dead-letter queue for Discord notifications that fail every retry
+-- ============================================
+CREATE TABLE IF NOT EXISTS failed_notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  payload TEXT NOT NULL,
+  error TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  resolved_at TEXT
+);
+
+-- ============================================
+-- SUBMISSION EVENTS TABLE (Migrations 0011, 0012)
+-- Append-only per-user log of quota-bearing mutations. User actions never
+-- delete rows here, so the daily caps cannot be reset by deleting one's own
+-- presets.
+-- ============================================
+CREATE TABLE IF NOT EXISTS submission_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_discord_id TEXT NOT NULL,
+  kind TEXT NOT NULL
+    CHECK (kind IN ('submission', 'flagged_edit', 'preview_upload', 'text_edit')),
+  preset_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+-- Migration 0006 dropped the unused rate_limits table: IP limits are
+-- in-memory, submission limits count submission_events rows.
 ```
 
 ### TypeScript Types
@@ -152,14 +235,19 @@ CREATE TABLE moderation_log (
 // SHARED TYPES (xivdyetools-core)
 // ============================================
 
-export type PresetStatus = 'pending' | 'approved' | 'rejected' | 'flagged';
+export type PresetStatus = 'pending' | 'approved' | 'rejected' | 'flagged' | 'hidden';
+
+export type PresetCategory =
+  | 'jobs' | 'grand-companies' | 'seasons' | 'events'
+  | 'aesthetics' | 'appearance' | 'zones' | 'raids-trials';
 
 export interface CommunityPreset {
   id: string;
   name: string;
   description: string;
   category_id: PresetCategory;
-  dyes: number[];                    // Dye item IDs
+  secondary_categories: PresetCategory[];  // up to 2; category_id stays primary
+  dyes: number[];                    // stainIDs (1-254) — NOT item IDs
   tags: string[];
   author_discord_id: string | null;  // NULL for curated
   author_name: string | null;
@@ -174,7 +262,8 @@ export interface PresetSubmission {
   name: string;                      // 2-50 chars
   description: string;               // 10-200 chars
   category_id: PresetCategory;
-  dyes: number[];                    // 2-5 dye IDs
+  secondary_categories?: PresetCategory[]; // 0-2
+  dyes: number[];                    // 3-6 stainIDs (1-254)
   tags: string[];                    // 0-10 tags, max 30 chars each
   author_discord_id: string;
   author_name: string;
@@ -471,7 +560,7 @@ User runs /submit-palette
 │  Validate Input   │
 │  - Name length    │
 │  - Description    │
-│  - Dye count 2-5  │
+│  - Dye count 3-6  │
 │  - Valid dye IDs  │
 └─────────┬─────────┘
           │
@@ -879,6 +968,20 @@ DISCORD_BOT_TOKEN=xxx  # Same token as Discord bot (for DMs)
 
 ## Discord Bot Commands
 
+> **These are the draft names. What shipped is one `/preset` command with subcommands**, and the
+> moderation subcommands live on the separate moderation bot:
+>
+> | Drafted below | As shipped |
+> |---------------|------------|
+> | `/submit-palette` | `/preset submit` — three dyes required (`dye1`-`dye3`), `dye4`-`dye6` optional |
+> | `/vote-palette` | `/preset vote` (a toggle, not an add-only vote) |
+> | `/browse-palettes` | `/preset list`, plus `/preset show` and `/preset random` |
+> | `/moderate-palette` | `/preset moderate`, `/preset ban_user`, `/preset unban_user` — on `moderation-worker`, not the main bot |
+> | — | `/preset edit` and `/preset favorite add\|remove\|list`, which the draft did not anticipate |
+>
+> Category choices are the eight in the schema above; `community` was dropped by migration 0007.
+> Dye options carry stainIDs, not item IDs. The example output below is illustrative only.
+
 ### /submit-palette
 
 Submit a new palette to the community collection.
@@ -889,12 +992,13 @@ Submit a new palette to the community collection.
 |--------|------|----------|-------------|
 | `name` | string | Yes | Palette name (2-50 chars) |
 | `description` | string | Yes | Brief description (10-200 chars) |
-| `category` | choice | Yes | aesthetics, jobs, seasons, events, community |
+| `category` | choice | Yes | one of the eight: jobs, grand-companies, seasons, events, aesthetics, appearance, zones, raids-trials |
 | `dye1` | autocomplete | Yes | First dye |
 | `dye2` | autocomplete | Yes | Second dye |
-| `dye3` | autocomplete | No | Third dye |
+| `dye3` | autocomplete | Yes | Third dye |
 | `dye4` | autocomplete | No | Fourth dye |
 | `dye5` | autocomplete | No | Fifth dye |
+| `dye6` | autocomplete | No | Sixth dye |
 | `tags` | string | No | Comma-separated tags |
 
 **Example Response (Success):**

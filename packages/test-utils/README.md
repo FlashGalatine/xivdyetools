@@ -1,6 +1,6 @@
 # @xivdyetools/test-utils
 
-Shared testing utilities for the xivdyetools ecosystem. Provides mocks for Cloudflare Workers bindings, authentication helpers, domain object factories, and DOM utilities.
+Shared testing utilities for the xivdyetools ecosystem. Provides mocks for Cloudflare Workers bindings, authentication helpers, domain object factories, and PKCE test constants. (The `/dom` and `/assertions` subpaths were removed 2026-08-18 — see Subpath Exports below.)
 
 ## Installation
 

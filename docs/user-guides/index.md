@@ -19,17 +19,20 @@ Whether you're using the web app or Discord bot, these guides will help you make
 
 ### The 9 Tools
 
+In the order they appear in the app's tool rail. Where the app's own title differs from the guide's
+heading, it is given in brackets.
+
 | Tool | Guide | Description |
 |------|-------|-------------|
-| **Palette Extractor** | [Guide](web-app/palette-extractor.md) | Find the closest FFXIV dye to any color |
 | **Color Harmony Explorer** | [Guide](web-app/color-harmony.md) | Discover harmonious dye combinations |
+| **Palette Extractor** | [Guide](web-app/palette-extractor.md) | Find the closest FFXIV dye to any color |
+| **Accessibility Checker** | [Guide](web-app/accessibility.md) | Simulate colorblindness |
+| **Dye Comparison** | [Guide](web-app/dye-comparison.md) | Compare dyes side-by-side |
 | **Gradient Builder** | [Guide](web-app/gradient-builder.md) | Create gradients between dyes |
 | **Dye Mixer** | [Guide](web-app/dye-mixer.md) | Blend two dyes together |
-| **Swatch Matcher** | [Guide](web-app/swatch-matcher.md) | Match character colors to dyes |
-| **Dye Comparison** | [Guide](web-app/dye-comparison.md) | Compare dyes side-by-side |
-| **Accessibility Checker** | [Guide](web-app/accessibility.md) | Simulate colorblindness |
-| **Community Presets** | [Guide](web-app/community-presets.md) | Browse community dye palettes |
+| **Community Presets** (app title: *Preset Palettes*) | [Guide](web-app/community-presets.md) | Browse community dye palettes |
 | **Budget Suggestions** | [Guide](web-app/budget-suggestions.md) | Find affordable dye alternatives |
+| **Swatch Matcher** (app title: *Character Matcher*) | [Guide](web-app/swatch-matcher.md) | Match character colors to dyes |
 
 ### Features
 
@@ -62,15 +65,15 @@ Whether you're using the web app or Discord bot, these guides will help you make
 
 ### Saving Your Work
 
-- **Favorites**: Save individual dyes you love
-- **Collections**: Group related dyes together (e.g., "Tank Glamour", "Housing Project")
+- **Favorites**: Star individual dyes you love, straight from the Color Palette drawer
+- **Saved palettes**: Written by a tool's own Save action — **Save mix** in the Dye Mixer, **Save swap** in Budget Suggestions, **Save character colours** or **Make a palette** in the Swatch Matcher. They are records of something you built, not folders you file dyes into by hand
 - **Presets**: Browse and save community-created palettes
 
 ### Getting Help
 
 - `/manual` in Discord for command help
 - [FAQ](web-app/faq.md) for common questions
-- [GitHub Issues](https://github.com/your-repo/issues) for bug reports
+- [GitHub Issues](https://github.com/FlashGalatine/xivdyetools/issues) for bug reports
 
 ---
 

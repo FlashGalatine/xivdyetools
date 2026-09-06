@@ -42,7 +42,7 @@ pnpm test                   # vitest run
 pnpm test:watch             # vitest in watch mode
 pnpm test:coverage          # vitest run --coverage
 pnpm type-check             # tsc --noEmit
-pnpm lint                   # eslint src
+pnpm lint                   # eslint src + knip (lint:dead)
 ```
 
 **`pnpm deploy` does not give you a usable staging instance.** The default env exists
@@ -142,8 +142,11 @@ check, and the same pre-decode header dimension gate `/extract` uses
 
 `processImageForThumbnail` crops to the 640 × 264 band (`THUMBNAIL_WIDTH`/`THUMBNAIL_HEIGHT`,
 aspect ≈ 2.42) via `computeCropBox`, resizes with Lanczos3, and encodes WebP. `computeCropBox`
-takes the largest centred region matching the target aspect, so a portrait source is cropped
-rather than letterboxed.
+takes the largest band of the target aspect that fits inside the source and is **horizontally
+centred only**: vertically it centres for a landscape source (width/height > 1.05) and crops from
+the **top** for a square or portrait one, because a glamour shot is usually portrait with the
+character's head high in frame. Both axes clamp into `[1, source]`, so a degenerate source such as
+1 × 1000 cannot produce the zero-height band that used to trap the WASM module (BUG-053).
 
 ### Response size bound
 
@@ -161,9 +164,10 @@ undefined under test (REFACTOR-007). `photon.ts` imports it from there too.
 
 ### Environment Bindings (wrangler.toml)
 
-None. `types.ts`'s `Env` interface carries only the inert `ENVIRONMENT` var (set by
-`[env.production]`, unused at runtime — `loggerMiddleware` is configured with
-`readEnvironmentFromEnv: false`). No KV, D1, R2, Analytics, or Service Bindings outbound.
+None. `wrangler.toml` declares **no `[vars]` block in either environment**, so the optional
+`ENVIRONMENT` member of `types.ts`'s `Env` interface is never actually populated — it is inert
+either way (`loggerMiddleware` is configured with `readEnvironmentFromEnv: false`). No KV, D1, R2,
+Analytics, or Service Bindings outbound.
 
 ### Required Secrets / Optional Secrets
 
@@ -238,13 +242,18 @@ apply:
 
 - `MAX_IMAGE_DIMENSION` = 4096 per side — the secondary guard, rejecting a shape no legitimate
   palette source has.
-- `MAX_PIXEL_COUNT` = **4 MP**, and it is *derived from the memory budget*, not from the side
-  length: 32 MiB of pixel budget / (4 bytes per RGBA pixel x 2 concurrent copies inside photon).
-  It used to be `16 * 1024 * 1024` — exactly 4096^2 — so the largest square the side cap admits
-  passed at equality and the pixel branch was unreachable. One RGBA buffer for it is 64 MiB and
-  photon holds two, which needs >= 128 MiB against Cloudflare's 128 MiB per-isolate limit; a
-  solid-colour 4096x4096 PNG compresses to tens of KB, far under the 10 MB file cap, so the OOM
-  this gate exists to prevent was reachable from any Discord attachment (BUG-052).
+- `MAX_PIXEL_COUNT` = **9,437,184 px (≈ 9.4 MP)**, and it is *derived from the memory budget*,
+  not from the side length: `PIXEL_MEMORY_BUDGET_BYTES` (72 MiB) / (4 bytes per RGBA pixel x 2
+  concurrent copies inside photon). It used to be `16 * 1024 * 1024` — exactly 4096^2 — so the
+  largest square the side cap admits passed at equality and the pixel branch was unreachable. One
+  RGBA buffer for it is 64 MiB and photon holds two, which needs >= 128 MiB against Cloudflare's
+  128 MiB per-isolate limit; a solid-colour 4096x4096 PNG compresses to tens of KB, far under the
+  10 MB file cap, so the OOM this gate exists to prevent was reachable from any Discord attachment
+  (BUG-052). The budget was raised from 32 MiB (4 MP) because 3840x2160 is 8.29 MP and 3440x1440 is
+  4.95 MP — a 4K or ultrawide capture, the commonest palette source a player has, was being refused
+  pre-decode. At 72 MiB those pass and 4096x4096 (134 MiB of RGBA) is still refused; peak memory
+  lands near 95-100 MB of the 128 MiB isolate, so this is a ceiling, not a floor to raise again
+  without measuring.
 
 The request body's `maxDimension` is validated too — see the `/extract` contract above.
 

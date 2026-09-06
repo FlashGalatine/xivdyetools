@@ -11,11 +11,13 @@
 | Document | Description |
 |----------|-------------|
 | [Adding New Dyes (Manual)](adding-dyes.md) | Manual process and data format reference |
+| [Dye Maintainer Tool](dye-maintainer-tool.md) | Retired GUI — tombstone; points at the procedure that replaced it |
 | [Moderation Guide](../operations/MODERATION.md) | Managing bans and community presets |
+| [Current Versions](../versions.md) | The single source of truth for every package and app version |
+| [Audit Archive](../audits/index.md) | Every dated audit, newest first |
 | [Architecture Decisions](#architecture-decisions) | Why we built things this way |
 | [Known Issues](#known-issues) | Current limitations and workarounds |
 | [Technical Debt](#technical-debt) | Areas needing improvement |
-| [Audit Remediation](#audit-remediation) | Security audit action items |
 
 ---
 
@@ -78,9 +80,12 @@
 
 ### KV Eventual Consistency
 
-**Issue:** Favorites/collections may show stale data for up to 60 seconds.
+**Issue:** KV reads are eventually consistent, so a write may not be visible everywhere immediately.
 
-**Workaround:** Cache TTL set to 60s, users informed in documentation.
+**Scope:** This no longer applies to dye favorites or collections — the bot's `/favorites` and
+`/collection` commands were removed in 5.0 and those records live only in the web app's
+localStorage. What remains on KV is per-user bot state: preferences, the 5.0 first-run flag, and
+`/preset favorite` (capped at 50 presets per user).
 
 **Status:** Acceptable for non-critical user data.
 
@@ -116,43 +121,30 @@
 
 ## Audit Remediation
 
-Summary of action items from the December 2024 code audit.
+**Do not track audit findings here.** Every dated audit and its remediation status lives in the
+[Audit Archive](../audits/index.md); carried-forward items live in
+[OPEN_ITEMS.md](../operations/OPEN_ITEMS.md).
 
-### Completed
-
-- [x] Input validation on all API endpoints
-- [x] Rate limiting on Discord commands
-- [x] JWT signature verification
-- [x] D1 parameterized queries (no SQL injection)
-
-### In Progress
-
-- [ ] Add CSP headers to web app
-- [ ] Implement request signing between workers
-- [ ] Add security headers to all responses
-
-### Planned
-
-- [ ] Regular dependency audits (monthly)
-- [ ] Penetration testing (quarterly)
-- [ ] Security documentation review (bi-annually)
-
-For detailed audit findings, see [Historical: Code Audit](../historical/20251214-CodeAudit/).
+The list that used to sit here dated from the **December 2025** code audit
+([Historical: Code Audit](../historical/20251214-CodeAudit/)) and had gone stale — its "In Progress"
+items, including CSP headers on the web app, have since shipped.
 
 ---
 
-## Version Compatibility Matrix
+## Versions
 
-| Core Version | Web App | Discord Worker | Notes |
-|--------------|---------|----------------|-------|
-| 1.4.0 | 3.1.0+ | 2.2.0+ | Current |
-| 1.3.x | 3.0.x | 2.0.x | Previous stable |
-| 1.2.x | 2.x | 1.x | Legacy (unsupported) |
+Versions are **not** recorded in this file. `docs/versions.md` is the single source of truth for
+every package and app version, and CI (`pnpm docs:check-versions`) checks it against each
+`package.json`. A compatibility matrix maintained by hand here would only drift.
+
+See [versions.md](../versions.md).
 
 ---
 
 ## Related Documentation
 
 - [Architecture Overview](../architecture/overview.md) - Current system design
+- [Audit Archive](../audits/index.md) - Every dated audit
+- [Current Versions](../versions.md) - Package and app versions
 - [Historical Index](../historical/index.md) - Development history
 - [Environment Variables](../developer-guides/environment-variables.md) - All secrets and config

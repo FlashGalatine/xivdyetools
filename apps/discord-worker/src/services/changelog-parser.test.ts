@@ -8,6 +8,10 @@ import { parseAll, parseLatestVersion } from './changelog-parser.js';
 import botChangelog from '../../CHANGELOG-laymans.md';
 import botPackage from '../../package.json';
 import { renderEntry, DESCRIPTION_BUDGET } from '../handlers/commands/changelog.js';
+import {
+  formatAnnouncementEmbed,
+  DESCRIPTION_BUDGET as ANNOUNCEMENT_DESCRIPTION_BUDGET,
+} from './announcements.js';
 
 const SAMPLE = `# What's New
 
@@ -54,15 +58,23 @@ describe('parseLatestVersion', () => {
   });
 });
 
-describe('root CHANGELOG-laymans.md', () => {
-  it('exists at the repo root and satisfies the contract', () => {
-    const root = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
-    const content = readFileSync(join(root, 'CHANGELOG-laymans.md'), 'utf8');
-    const entries = parseAll(content);
-    expect(entries.length).toBeGreaterThan(0);
-    expect(entries[0].version).toMatch(/^\d+\.\d+\.\d+$/);
-    expect(entries[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(entries[0].sections.length).toBeGreaterThan(0);
+// The product-level notes at the repo root. The grammar, ordering and
+// per-entry contract assertions for this file live in `root-changelog.test.ts`,
+// which imports only the pure parser so CI can run it before any build (a push
+// that edits only the root file selects no workspace for the filtered test
+// step). This one assertion needs `formatAnnouncementEmbed`, which reaches
+// `@xivdyetools/bot-logic` through `discord-api.ts`, so it stays here.
+const rootChangelog = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../../..', 'CHANGELOG-laymans.md'),
+  'utf8'
+);
+
+describe('root CHANGELOG-laymans.md — announcement rendering', () => {
+  it('announces its newest entry uncut — the webhook would otherwise post a summary that links out', () => {
+    const newest = parseAll(rootChangelog)[0];
+    const embed = formatAnnouncementEmbed(newest, 'https://github.com/FlashGalatine/xivdyetools');
+    expect(embed.description.includes('Summary shown'), 'newest entry is cut — trim it or split it').toBe(false);
+    expect(embed.description.length).toBeLessThanOrEqual(ANNOUNCEMENT_DESCRIPTION_BUDGET);
   });
 });
 

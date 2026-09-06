@@ -89,10 +89,12 @@ pnpm --filter xivdyetools-presets-api run lint
 pnpm --filter xivdyetools-presets-api run db:migrate:local    # Apply schema.sql to the local D1
 pnpm --filter xivdyetools-presets-api run db:migrate          # Apply schema.sql to the REMOTE D1
 pnpm --filter xivdyetools-presets-api run db:migrate:indexes  # Apply index migrations
-pnpm --filter xivdyetools-presets-api run db:seed             # Seed the curated presets from @xivdyetools/core
+pnpm --filter xivdyetools-presets-api run db:seed             # PRINTS the curated-preset seed SQL to stdout
 ```
 
-> ⚠️ `db:migrate` runs against the **remote production** database (`--remote`) and is `CREATE TABLE IF NOT EXISTS` only — it cannot alter a live schema. Files under `migrations/` (`0002` … `0010`: previous_values, banned_users, dye_signature, failed_notifications, drop `community` category, `example_link`, preview images, `secondary_categories`) are applied by hand with `wrangler d1 execute xivdyetools-presets --remote --file=./migrations/<name>.sql`; The one-off 5.0 stainid rewrite ran 2026-08-28 and its generator (`scripts/migrate-dyes-to-stainids.ts`) has since been removed — recover it from git history if a comparable one-off is ever needed. Use `db:migrate:local` for development.
+> ⚠️ `db:seed` **applies nothing** — `scripts/migrate-presets.ts` reads the curated library from `@xivdyetools/core` and emits SQL. Redirect it to a file and apply that file with `wrangler d1 execute` if you want the rows.
+
+> ⚠️ `db:migrate` runs against the **remote production** database (`--remote`) and is `CREATE TABLE IF NOT EXISTS` only — it cannot alter a live schema. Files under `migrations/` (`0002` … `0013`: previous_values, banned_users, dye_signature, failed_notifications, partial dye-signature index + drop `rate_limits`, drop `community` category, `example_link`, preview images, `secondary_categories`, `submission_events`, the `text_edit` kind, and `moderation_log`'s nullable `preset_id` + `target_discord_id`) plus the separately-named `002_add_composite_indexes.sql` are applied by hand with `wrangler d1 execute xivdyetools-presets --remote --file=./migrations/<name>.sql`; The one-off 5.0 stainid rewrite ran 2026-08-28 and its generator (`scripts/migrate-dyes-to-stainids.ts`) has since been removed — recover it from git history if a comparable one-off is ever needed. Use `db:migrate:local` for development.
 
 ## Deployment
 
@@ -113,17 +115,30 @@ Note that the dev worker binds the **same** `xivdyetools-presets` D1 database as
 | `DISCORD_WORKER` | Service Binding → `xivdyetools-discord-worker` | Submission notifications |
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | `POST /thumbnail` — crops/encodes uploaded preview images to WebP |
 | `THUMBNAILS` | R2 (`xivdyetools-presets-preview-thumbnails`) | Moderated preset preview images |
+| `TOKEN_BLACKLIST` | KV (the oauth worker's namespace) | Revoked JWT `jti`s, plus the 120 s `botnonce:` replay cache |
+| `RL_PUBLIC` | Workers Rate Limiting (`[[ratelimits]]`, 100 / 60 s) | Backs both the per-IP and the per-user limiter |
 | `ENVIRONMENT` | Var | `development` or `production` |
 | `API_VERSION` | Var | Currently `v1` |
+| `CORS_ORIGIN` / `ADDITIONAL_CORS_ORIGINS` | Var | Allowlisted browser origins |
+| `JWT_ISSUER` | Var | Pinned `iss` claim; must be `https://…` in production |
+| `CACHE_PURGE_ZONE_ID` | Var (production) | Zone behind `shots.xivdyetools.app`; pairs with `CACHE_PURGE_API_TOKEN` |
+
+`TOKEN_BLACKLIST` and `RL_PUBLIC` are **production-required** — `validateEnv` refuses to serve
+without them, because each degrades silently rather than loudly when absent (FINDING-013).
 
 ### Required Secrets
 
 ```bash
-wrangler secret put JWT_SECRET           # Must match the oauth worker's signing secret
-wrangler secret put BOT_API_SECRET       # Bearer token accepted from bot callers
-wrangler secret put BOT_SIGNING_SECRET   # HMAC key for bot request signatures
-wrangler secret put MODERATOR_IDS        # CSV of Discord IDs with moderator rights
+wrangler secret put BOT_API_SECRET           # Bearer token accepted from bot callers (all environments)
+wrangler secret put MODERATOR_IDS            # CSV of Discord IDs with moderator rights (all environments)
+wrangler secret put BOT_SIGNING_SECRET       # HMAC key for bot request signatures (production)
+wrangler secret put JWT_SECRET               # Must match the oauth worker's signing secret (production)
+wrangler secret put INTERNAL_WEBHOOK_SECRET  # Bearer for discord-worker's /webhooks/preset-submission (production)
 ```
+
+`INTERNAL_WEBHOOK_SECRET` is required in production alongside the `DISCORD_WORKER` binding: without
+either, `notifyDiscordBot` logs and returns, so every flagged submission, resubmission and preview
+upload stops reaching the moderation channel with no error and no dead-letter row (FINDING-013).
 
 `JWT_SECRET` is shared with [`apps/oauth`](../../apps/oauth/) — rotating it in one place without the other logs every user out. See [`docs/operations/SECRET_ROTATION.md`](../../docs/operations/SECRET_ROTATION.md).
 
@@ -142,8 +157,8 @@ wrangler secret put CACHE_PURGE_API_TOKEN --env production  # API token scoped t
 | `hono` | HTTP framework |
 | `@xivdyetools/auth` | JWT verification, HMAC bot signature verification |
 | `@xivdyetools/types` | Preset, vote, category, and moderation type definitions |
-| `@xivdyetools/logger` | Structured logging with secret redaction |
-| `@xivdyetools/worker-kit` | Request ID, logger, and rate-limit middleware |
+| `@xivdyetools/worker-kit` | Request ID, logger, and rate-limit middleware; `/rate-limiter` backends |
+| `@xivdyetools/logger` | Structured logging with secret redaction — **transitive** via `worker-kit`, not a direct dependency |
 
 ## Related Projects
 

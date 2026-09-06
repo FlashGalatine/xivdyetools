@@ -93,7 +93,10 @@
       // per-package Turborepo config (`"extends": ["//"]`) could let each of
       // the four name only the pairs it reads; the repo uses none today and
       // the shared glob was kept as the simpler choice.
-      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/*/wrangler.toml"],
+      // discord-worker's changelog-parser suite also reads the REPO-ROOT
+      // CHANGELOG-laymans.md; without this a cached green would replay after
+      // that file changed. Cheap: one file.
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/*/wrangler.toml", "$TURBO_ROOT$/CHANGELOG-laymans.md"],
       "outputs": ["coverage/**"]
     },
 

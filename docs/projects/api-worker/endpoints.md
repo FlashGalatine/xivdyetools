@@ -416,6 +416,30 @@ Cache headers: `Cache-Control: public, max-age=<ttl>, stale-while-revalidate=<sw
 
 ---
 
+## Internal routes
+
+Mounted under `/v1` but **not part of the public contract** — undocumented on the developer docs
+site, and free to change without notice. Listed here so this reference matches the router.
+
+### `POST /v1/telemetry`
+
+Opt-in usage telemetry from the web app, written to Analytics Engine (`ANALYTICS` binding). The
+caller is `navigator.sendBeacon`, which cannot read a response, so the route answers a **bare `204`
+with no envelope** as soon as the body parses — accepted or not.
+
+| Aspect | Behaviour |
+|--------|-----------|
+| Body | `text/plain` JSON batch, ≤ 25 events and ≤ 16 KB. The allowlist schema in `src/telemetry/schema.ts` drops anything it does not recognise |
+| Sender gate | Only `Origin: https://xivdyetools.app` (recorded as `production`) and `https://beta.xivdyetools.app` (`beta`) are written, plus `http://localhost[:port]` / `http://127.0.0.1[:port]` when `ENVIRONMENT !== 'production'`. The environment label is **derived from the `Origin`**, never from the body. `Sec-GPC: 1` is dropped outright. Both checks run before the body is read (FINDING-014) |
+| Rejection | An unaccepted batch gets the same bare `204` and no write — never a 4xx. The `Origin` value is never logged |
+| Errors | `400` (not JSON) and `413` (oversized) *do* use the standard envelope |
+| Rate limit | Its own `TELEMETRY_RATE_LIMITER` bucket, 240 / 60 s per IP — and it fails **closed**: a limiter backend error answers `429` |
+| Missing binding | With no `ANALYTICS` dataset bound, the route accepts and discards |
+
+The fixed blob layout is documented in `docs/operations/ANALYTICS_QUERIES.md`.
+
+---
+
 ## Response Format
 
 ### Success Envelope
@@ -496,10 +520,15 @@ Validation stops at the first failing parameter — one error per response.
 | `X-Request-ID` | UUID | Unique request identifier for tracing |
 | `X-API-Version` | `v1` | Current API version |
 | `X-RateLimit-Limit` | `65` | Requests allowed per window (60 + 5 burst) — `/v1/*` only |
-| `X-RateLimit-Remaining` | integer | Requests remaining — `/v1/*` only |
+| `X-RateLimit-Remaining` | integer | Requests remaining — `/v1/*` only. **Synthetic**, see below |
 | `X-RateLimit-Reset` | Unix timestamp | When the window resets — `/v1/*` only |
 | `Cache-Control` | `public, max-age=3600, s-maxage=86400` | On dye/match endpoints (the proxy sets its own — see above) |
 | `Access-Control-Allow-Origin` | `*` | Open CORS |
+
+> ⚠️ `X-RateLimit-Remaining` is **not a countdown.** The limiter is the native Workers Rate Limiting
+> binding, whose API exposes no live counter, so the header reads `limit - 1` (i.e. `64` — an "at
+> least one more" indicator) on every allowed request and `0` on a denied one. Counters are also
+> per-colo rather than global. Use `Retry-After` on a `429`, not this header, to pace a client.
 
 ### Request Headers
 

@@ -14,7 +14,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Service bindings | [Service Bindings](architecture/service-bindings.md) |
 | All environment variables | [Environment Variables](developer-guides/environment-variables.md) |
 | Project deep dives | [Projects Index](projects/index.md) |
+| Operations runbooks | [Operations Index](operations/index.md) |
+| Every dated audit | [Audit Archive](audits/index.md) |
+| Research behind decisions / spec+plan pairs | [Research Index](research/index.md) / [Specs & Plans](superpowers/README.md) |
 | Historical docs | [Historical Index](historical/index.md) |
+
+Tier rule: `architecture/`, `projects/`, `developer-guides/`, `user-guides/`, `operations/`,
+`maintainer/`, `specifications/`, `reference/` and `versions.md` are **living** and must match the
+code. `audits/` and `historical/` are **archive**: never edited, not link-checked. `research/` and
+`superpowers/` are **frozen-body**: their content is never rewritten to match later code, but their
+`Status:` lines and links are kept valid and the link gate covers them. Version numbers appear only in `versions.md` and the root `README.md`
+(`pnpm docs:check-versions`); every relative link in the living tier must resolve
+(`pnpm docs:check-links`). Both run in CI.
 
 ## Monorepo Quick Reference
 
@@ -28,13 +39,13 @@ The dye database is **125 standard dyes** (`dyes.json`, schema v2: 7 fields, sta
 |---------|------|------------|
 | `xivdyetools-web-app` | Vite + Lit | [Overview](projects/web-app/overview.md) |
 | `xivdyetools-discord-worker` | CF Worker | [Overview](projects/discord-worker/overview.md) |
-| `xivdyetools-image-worker` | CF Worker | — |
+| `xivdyetools-image-worker` | CF Worker | [README](../apps/image-worker/README.md) |
 | `xivdyetools-moderation-worker` | CF Worker | [Overview](projects/moderation-worker/overview.md) |
-| `xivdyetools-oauth` | CF Worker | [Overview](projects/oauth/overview.md) |
+| `xivdyetools-oauth-worker` (`apps/oauth`) | CF Worker + D1 | [Overview](projects/oauth/overview.md) |
 | `xivdyetools-api-worker` | CF Worker + KV | [Overview](projects/api-worker/overview.md) |
-| `xivdyetools-presets-api` | CF Worker + D1 | [Overview](projects/presets-api/overview.md) |
+| `xivdyetools-presets-api` | CF Worker + D1 + R2 | [Overview](projects/presets-api/overview.md) |
 | `xivdyetools-og-worker` | CF Worker | [Overview](projects/og-worker/overview.md) |
-| `xivdyetools-stoat-worker` | Node.js | — |
+| `xivdyetools-stoat-worker` | Node.js | [README](../apps/stoat-worker/README.md) |
 
 ### Shared Packages
 
@@ -43,10 +54,10 @@ The dye database is **125 standard dyes** (`dyes.json`, schema v2: 7 fields, sta
 | `@xivdyetools/core` | [Overview](projects/core/overview.md) |
 | `@xivdyetools/types` | [Overview](projects/types/overview.md) |
 | `@xivdyetools/logger` | [Overview](projects/logger/overview.md) |
-| `@xivdyetools/auth` | — |
-| `@xivdyetools/worker-kit` | — |
-| `@xivdyetools/svg` | — |
-| `@xivdyetools/bot-logic` | — |
+| `@xivdyetools/auth` | [README](../packages/auth/README.md) |
+| `@xivdyetools/worker-kit` | [README](../packages/worker-kit/README.md) |
+| `@xivdyetools/svg` | [README](../packages/svg/README.md) |
+| `@xivdyetools/bot-logic` | [README](../packages/bot-logic/README.md) |
 | `@xivdyetools/test-utils` | [Overview](projects/test-utils/overview.md) |
 
 Changes to packages require publishing to npm before consumers can use them (or use `workspace:*` protocol for monorepo-local resolution).
@@ -89,18 +100,28 @@ pnpm --filter xivdyetools-web-app run dev          # localhost:5173
 pnpm --filter xivdyetools-discord-worker run dev    # Wrangler local
 pnpm --filter xivdyetools-oauth-worker run dev      # localhost:8788
 pnpm --filter xivdyetools-presets-api run dev       # localhost:8787
+pnpm --filter xivdyetools-api-worker run dev        # localhost:8790
 ```
 
 ### Worker Deployment
 
 ```bash
-pnpm --filter xivdyetools-discord-worker run deploy              # BETA bot (…-dev, *.workers.dev)
-# NOTE: a bare `deploy` targets the routeless DEV/BETA worker on discord-worker, moderation-worker,
-# presets-api, api-worker and og-worker; production needs an explicit `--env production`.
+pnpm --filter xivdyetools-discord-worker run deploy              # BETA bot (routeless …-dev worker)
+# NOTE: a bare `deploy` targets the routeless `…-dev` worker on discord-worker, moderation-worker,
+# presets-api, api-worker and image-worker, and the ROUTED beta worker (beta.xivdyetools.app)
+# on og-worker; production needs an explicit `--env production`.
 # `oauth` is the INVERSE — it has no [env.production], so its bare deploy IS production.
 # See docs/operations/DEPLOY_ENVIRONMENTS.md.
 pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
 pnpm --filter xivdyetools-discord-worker run register-commands   # Register slash commands
+```
+
+### Documentation Gates
+
+```bash
+pnpm docs:check-versions   # root README + docs/versions.md tables vs package.json (also in CI)
+pnpm docs:check-links      # relative links in the living + frozen-body tiers resolve (also in CI)
+pnpm test:scripts          # self-tests for the scripts/ gates, incl. both above
 ```
 
 ### Publishing Libraries

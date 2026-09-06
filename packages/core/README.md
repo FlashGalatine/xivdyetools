@@ -86,7 +86,7 @@ const harmonyDyes = dyeService.findComplementaryPair(baseDye.hex);
 
 Pure color conversion and manipulation algorithms.
 
-> **Memory Note**: ColorService uses LRU caches (5 caches × 1000 entries each = up to 5000 cached entries) for performance optimization. For long-running applications or memory-constrained environments, call `ColorService.clearCaches()` periodically to free memory. Each cache entry is approximately 50-100 bytes, so maximum memory usage is ~500KB.
+> **Memory Note**: ColorService uses LRU caches (7 caches × 1000 entries each = up to 7000 cached entries — `hexToRgb`, `rgbToHex`, `rgbToHsv`, `hsvToRgb`, `hexToHsv`, `rgbToLab`, `rgbToOklab`) for performance optimization. For long-running applications or memory-constrained environments, call `ColorService.clearCaches()` periodically to free memory. Each cache entry is approximately 50-100 bytes, so maximum memory usage is ~700KB.
 
 ```typescript
 import { ColorService } from '@xivdyetools/core';
@@ -145,7 +145,8 @@ const dyeService = new DyeService(dyeDatabase);
 const allDyes = dyeService.getAllDyes(); // 125 dyes
 const dyeById = dyeService.getDyeById(13115); // By itemID (= Dye.id) - Jet Black; prefer getByStainId(102)
 const dyeByStain = dyeService.getByStainId(1); // By stainID (canonical key) - Snow White
-const categories = dyeService.getCategories(); // ['Neutral', 'Red', 'Blue', ...]
+const categories = dyeService.getCategories();
+// ['Neutral', 'Reds', 'Browns', 'Yellows', 'Greens', 'Blues', 'Purples', 'Special']
 
 // Color matching — matchingMethod is one of the 5.0 suite:
 // 'ciede2000' (default) | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish'
@@ -166,14 +167,13 @@ const triadicDeltaE = dyeService.findTriadicDyes('#FF6B6B', {
   deltaEFormula: 'ciede2000', // the default since 5.1.0; 'cie76' is faster, 'cie2000' a legacy alias
 });
 
-// Color space selection for hue rotation
-// OKLCH produces more perceptually balanced harmonies
-const triadicOklch = dyeService.findTriadicDyes('#FF6B6B', { colorSpace: 'oklch' });
-const compLch = dyeService.findComplementaryPair('#FF6B6B', { colorSpace: 'lch' });
-// Available spaces: 'hsv' (default), 'oklch', 'lch', 'hsl'
+// DEPRECATED since 5.2.0: HarmonyOptions.colorSpace ('hsv' | 'oklch' | 'lch' | 'hsl').
+// It rotates hue WITHOUT carrying the base's saturation and value, which is a
+// different answer from the one every surface shows. Use `generateHarmonySlots`
+// with a `wheel` instead (see "Colour wheels" below).
 
 // Filtering
-const redDyes = dyeService.searchByCategory('Red');
+const redDyes = dyeService.searchByCategory('Reds'); // exact match against DYE_CATEGORIES
 const searchResults = dyeService.searchByName('black');
 const filtered = dyeService.filterDyes({
   category: 'Special',
@@ -182,6 +182,50 @@ const filtered = dyeService.filterDyes({
   maxPrice: 10000
 });
 ```
+
+#### Colour wheels
+
+Harmony slot selection goes through `generateHarmonySlots(baseHex, harmonyType, candidates, config, options?)` — the one implementation the web app, the Discord bot and the OG card share. `config.wheel` chooses which wheel the offsets are measured on; `'rgb'` is the default and is today's behaviour bit for bit.
+
+```typescript
+import {
+  generateHarmonySlots,
+  COLOR_WHEEL_IDS,       // ['rgb', 'ryb', 'munsell', 'oklch-hue', 'oklch-lightness']
+  DEFAULT_COLOR_WHEEL,   // 'rgb'
+  getColorWheel,
+  normalizeColorWheelId,
+  HARMONY_OFFSETS,
+  isKnownHarmonyType,
+  DyeService,
+  dyeDatabase,
+} from '@xivdyetools/core';
+
+const dyeService = new DyeService(dyeDatabase);
+
+const slots = generateHarmonySlots(
+  '#FF6B6B',
+  'triadic',                        // any key of HARMONY_OFFSETS (10 of them)
+  dyeService.getAllDyes(),           // callers pre-filter the candidate pool
+  {
+    usePerceptualMatching: true,
+    matchingMethod: 'ciede2000',
+    wheel: 'ryb',
+    companionCount: 2,
+    preventDuplicates: true,
+  },
+);
+// HarmonySlot[]: { index, offset, targetHue, wheelHue, targetHex, dye, deviance, companions }
+```
+
+Read the wheel list from `COLOR_WHEEL_IDS` and normalise anything arriving off
+the wire with `normalizeColorWheelId(value)` (or `parseColorWheelId` when
+"unknown" must stay distinguishable from `'rgb'`) — never hand-roll a
+`toLowerCase()` + membership test. `getColorWheel(id)` returns the `ColorWheel`
+itself (`hueOf`, `target`, `ringStops`, `carriesBaseHsv`).
+
+`oklch-lightness` keeps the base's OKLab L and C rather than its HSV S/V
+(`carriesBaseHsv === false`), so the selector forces ΔE ranking for it whatever
+`usePerceptualMatching` says.
 
 ### PaletteService
 
@@ -390,7 +434,7 @@ Since **Patch 7.5**, 105 of the 125 dyes share three consolidated market itemIDs
 
 ## Requirements
 
-- **Node.js** 22.0.0 or higher
+- **Node.js** 18.0.0 or higher (`engines.node: ">=18.0.0"`)
 - **TypeScript** 5.9 or higher (for development)
 
 ## Browser Compatibility
@@ -408,8 +452,9 @@ This package lives in the [xivdyetools monorepo](https://github.com/FlashGalatin
 - [`apps/discord-worker`](../../apps/discord-worker/) — Cloudflare Worker Discord bot
 - [`apps/api-worker`](../../apps/api-worker/) — public REST API
 - [`apps/og-worker`](../../apps/og-worker/) — OpenGraph cards (stateless localization trio)
-- [`apps/stoat-worker`](../../apps/stoat-worker/) — Revolt bot (parked)
 - [`@xivdyetools/svg`](../svg/), [`@xivdyetools/bot-logic`](../bot-logic/)
+
+(`apps/stoat-worker` reaches core only indirectly, through `@xivdyetools/bot-logic`.)
 
 ## Support
 

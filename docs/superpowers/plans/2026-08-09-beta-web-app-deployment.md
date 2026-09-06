@@ -1,5 +1,7 @@
 # Beta Web App Deployment Implementation Plan
 
+**Status:** shipped — `beta.xivdyetools.app` via a second Pages project, `deploy-web-app-beta.yml`, `apps/web-app/scripts/check-beta-build.js`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Publish every non-`main` branch of `web-app` to `https://beta.xivdyetools.app`, visibly marked as beta and excluded from search engines, without any risk to the production deployment.

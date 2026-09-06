@@ -83,7 +83,9 @@ Favorites, saved palettes and saved presets are stored locally, signed in or not
 - They stay in this browser on this device.
 - They are cleared if you clear the site's browser data.
 - Nothing syncs to an account, to other devices, or to the Discord bot.
-- The **Backup** card in Advanced Settings exports and imports your tool *settings* as a file — it does not include favorites or saved palettes, so there is currently no way to move those between browsers.
+- The **Backup** card in Advanced Settings exports and imports your tool *settings* as a file. It does **not** include favorites or saved palettes — those have their own export.
+- To move favorites and saved palettes between browsers, open any tool with a dye picker (Color Harmony, Dye Mixer, Gradient Builder, Dye Comparison or the Accessibility Checker), expand the **Favorites** panel at the top of the Color Palette drawer and press **Manage Collections**. **Export All** downloads a JSON file containing your favorites and every saved palette; **Import** reads one back in (a palette whose name is already taken comes in as a numbered copy rather than overwriting yours). Each palette in the list also has its own download button if you only want one.
+- Saved *presets* are a separate shelf and are not part of that file.
 
 Anything from a previous version that points at a dye the app can no longer identify is dropped during the automatic upgrade rather than kept as a broken entry.
 

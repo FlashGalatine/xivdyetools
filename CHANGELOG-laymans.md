@@ -77,7 +77,7 @@ BACKFILL, ARCHIVE ONLY — this block will never be announced, and that is
 intended. The webhook renders parseAll(content)[0], i.e. only the newest entry,
 and 5.2.0/5.3.0 above it are already memoised under KV `announced:v:<version>`.
 [5.1.1] exists so the product-level history has no hole for the 2026-09-03
-merges (#158/#159/#160, #162, #163), which shipped with no announcement at the
+merges (#158–#163), which shipped with no announcement at the
 time. Do not "fix" it by moving it to the top: that would re-announce work
 players received in early September as though it were new.
 -->
@@ -110,6 +110,15 @@ players received in early September as though it were new.
 - Discord bot: harmony names and colour-vision names in the command menus disagreed with the website in Japanese, Korean, Chinese and German. Both come from the same place now.
 - Web app: if your account had been blocked from submitting community presets, the app answered "Failed to submit preset" — which is not what happened — with the real reason readable only in English underneath. It says you are blocked, in your own language.
 - Web app: the "Show ΔE" switch works. Turning it off left the match-quality number on every result card exactly where it was, and the same setting is what the Accessibility checker, Dye Comparison and Budget use to keep that number off their cards — so all three were showing you a number they had been written not to show.
+
+### 🔗 Link previews and other fixes from the same merges
+
+- Link previews: sharing a colour from the Swatch Matcher unfurled the generic tool picture instead of your colour, and the link dropped the reader on the plain tool page rather than the cell you shared. Both work now.
+- Link previews: a link you shared in your own language showed a card in that language and then opened the site in whatever language the reader's browser preferred. The link now carries your language through to the page.
+- Everywhere: 4K and ultrawide screenshots — the most common thing a player has to extract a palette from — were being refused before they were even read — by the bot's `/extractor image` and by community-preset preview uploads, which share one image service. (The website's Palette Extractor reads images in your browser and was never affected.) They work now.
+- Web app: the colour palette's category headings (Neutral, Reds, Blues…) and the entire Community Presets flow were stuck in English for every language. Both are translated now, and screens update the moment you switch language.
+- Web app: dialogs opened on top of dialogs stopped responding; the number keys 1–9 did nothing; the camera kept running after you navigated away from the Palette Extractor; saved presets past the first page were falsely marked "removed by author"; the Extractor's match scores were measured one way and labelled another; and a shared single-dye comparison link opened someone else's dyes. All fixed.
+- Discord bot: a batch of small fixes — missing colour chips on `/gradient` steps and `/harmony`'s base colour, text running off the edge of cards in Japanese and Korean, a stale version in `/stats`, preset names with Japanese, Korean or Chinese characters showing as empty boxes, `/preferences set` quietly dropping an option, and `/budget` blaming your own world when market data was simply unavailable.
 
 ## [5.1.0] - 2026-08-31
 

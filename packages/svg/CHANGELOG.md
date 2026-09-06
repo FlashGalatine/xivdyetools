@@ -329,6 +329,3 @@ Release-infrastructure validation. **No functional changes** — the published c
 - Budget formatting: `formatGil`
 - Shared constants: `THEME`, `FONTS`, `MATCH_QUALITIES`, `CATEGORY_DISPLAY`
 
----
-
-[1.0.0]: https://github.com/FlashGalatine/xivdyetools/releases/tag/svg-v1.0.0

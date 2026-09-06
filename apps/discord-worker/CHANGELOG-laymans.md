@@ -72,6 +72,13 @@ Rules:
 - The picture that shows up when you paste a harmony link into Discord matches the page the link opens. It had been choosing its dyes a third way of its own.
 - Filters on `/harmony` now pick the closest dye you are *allowed* to have, rather than the closest one to a dye that was filtered out.
 
+## [5.1.3] - 2026-09-02
+
+### 🐛 Fixes
+
+- An image that arrives empty now says the file could not be read, instead of a generic "processing failed" message.
+- 4K and ultrawide screenshots were being refused by `/extractor image` before they were even read — the image service behind it now accepts anything up to 4K. They work now.
+
 ## [5.1.2] - 2026-09-02
 
 ### 🐛 Fixes

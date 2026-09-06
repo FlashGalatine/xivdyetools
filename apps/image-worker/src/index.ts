@@ -126,8 +126,11 @@ app.get('/health', (c) => c.json({ status: 'ok' }));
  * Internal only — reached via service binding from discord-worker.
  *
  * The error envelope is a hard contract: discord-worker's extractor
- * substring-matches `error` for 'SSRF', 'Discord CDN', 'too large', 'format'
- * and 'timeout' to choose a localized message. Never reword or generalise it.
+ * substring-matches `error` to choose a localized message and to classify the
+ * analytics outcome. The marker table is
+ * `apps/discord-worker/src/services/image-input-errors.ts`
+ * (`IMAGE_INPUT_MARKERS`) — never reword or generalise a thrown message
+ * without updating it there.
  */
 app.post('/extract', async (c) => {
   let body: { url?: string; maxDimension?: number };

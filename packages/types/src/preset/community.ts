@@ -53,7 +53,7 @@ export interface CommunityPreset {
    */
   secondary_categories: PresetCategory[];
 
-  /** Array of dye item IDs (2-5 dyes) */
+  /** Array of dye stainIDs (3-6 dyes) */
   dyes: number[];
 
   /** Searchable tags */
@@ -136,7 +136,7 @@ export interface PresetSubmission {
   /** Optional: up to two additional categories, never containing category_id */
   secondary_categories?: PresetCategory[];
 
-  /** Array of dye item IDs (2-5 dyes) */
+  /** Array of dye stainIDs (3-6 dyes) */
   dyes: number[];
 
   /** Tags (0-10 tags, max 30 chars each) */

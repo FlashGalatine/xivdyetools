@@ -56,9 +56,10 @@ Level 4   bot-logic (→ core, svg, types)
           Applications
 ```
 
-`stoat-worker` consumes `bot-logic` (including its `/i18n` engine) and `svg`, so it shares
-command logic with `discord-worker` despite running on Node.js + Revolt rather than
-Cloudflare + Discord.
+`stoat-worker` consumes `bot-logic` (including its `/i18n` engine), so it shares command logic
+with `discord-worker` despite running on Node.js + Revolt rather than Cloudflare + Discord. Its
+whole dependency list is `bot-logic`, `types`, `logger` and `revolt.js` — it does not declare
+`core`, `svg` or `worker-kit`, and reaches `core`/`svg` only through `bot-logic`.
 
 This layering is what makes `pnpm turbo run build` correct without any manual ordering — see
 below.
@@ -74,7 +75,7 @@ Workspace-level policy lives in `pnpm-workspace.yaml`:
 
 | Setting | What it does |
 |---------|--------------|
-| `overrides` | Pins `typescript` so the workspace shares one compiler; `rollup` and `qs` are security floors |
+| `overrides` | Pins `typescript` so the workspace shares one compiler; `rollup`, `qs` and `seroval` are security floors; `vitepress>vite` and `tsup>esbuild` are scoped, dated overrides closing dev-only advisories (FINDING-036) |
 | `allowBuilds` | Explicit install-script policy. **No dependency is approved to run install scripts.** `esbuild`, `msw`, and `workerd` are deliberately rejected — the workspace builds and tests green without their postinstalls |
 | `minimumReleaseAge: 1440` | Supply-chain window: a new release must be ≥ 24 h old before it can be installed, so compromised releases have time to be detected and yanked |
 
@@ -95,12 +96,18 @@ is no standing exclusion.
 - `build`, `type-check`, `lint`, and `test` all declare `dependsOn: ["^build"]` — a task on a
   package waits for its *dependencies'* builds. This is why `pnpm turbo run build` needs no
   manual ordering.
-- `build` caches on `src/**`, the tsconfigs, and `package.json`, outputting `dist/**`.
-- `test` caches on `src/**`, `tests/**`, `scripts/**/*.js`, and the vitest config. The
-  `scripts/**/*.js` entry is deliberate — CI-gate scripts like web-app's deploy smoke test live
-  there and must invalidate the cache like source does.
-- `dev` is `persistent: true` and uncached; `deploy` is uncached and depends on `build` and
-  `type-check`.
+- All four gating tasks use **`"inputs": ["$TURBO_DEFAULT$"]`** — every git-tracked file in the
+  package, not a hand-maintained allowlist. The allowlists were wrong four separate times (each
+  fix missed a new directory), so a task read a file no glob named and turbo replayed a green it
+  had not earned. The accepted cost: editing a workspace's README busts its caches.
+- `$TURBO_DEFAULT$` only covers the package a task runs in, so anything **cross-package** is
+  still named explicitly: `lint` adds `$TURBO_ROOT$/knip.jsonc` (the root dead-code config
+  fourteen workspaces run against) and `test` adds `$TURBO_ROOT$/apps/*/wrangler.toml` (four
+  workers have config tests that read a sibling's toml).
+- `globalDependencies` covers the three shared files no package contains:
+  `tsconfig.base.json`, `eslint.config.js`, `pnpm-workspace.yaml`.
+- `build` outputs `dist/**`; `dev` is `persistent: true` and uncached; `deploy` is uncached and
+  depends on `build` and `type-check`.
 
 ### Filter syntax you'll actually use
 

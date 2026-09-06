@@ -249,7 +249,8 @@ interface LoggerConfig {
 
 ### Default Redacted Fields
 
-The following fields are automatically redacted from log context:
+`CORE_REDACT_FIELDS` — 22 keys automatically redacted from log context by every
+preset (browser, library, worker):
 
 - `password`
 - `token`
@@ -259,6 +260,27 @@ The following fields are automatically redacted from log context:
 - `api_key` / `apiKey`
 - `access_token`
 - `refresh_token`
+- `private_key` / `privateKey`
+- `set_cookie` / `setCookie`
+- `webhook_url` / `webhookUrl`
+- `auth_header` / `authHeader`
+- `session_id` / `sessionId`
+- `client_secret`
+- `signing_secret`
+- `webhook_secret`
+
+The worker preset uses `WORKER_REDACT_FIELDS` — the 22 above plus four
+xivdyetools worker secrets:
+
+- `jwt_secret`
+- `bot_api_secret`
+- `bot_signing_secret`
+- `discord_client_secret`
+
+A `redactFields` you pass in `LoggerConfig` is **merged** with `CORE_REDACT_FIELDS`,
+never replaced. Keys are matched case-insensitively with `_`/`-` collapsed
+(`jwtSecret` hits `jwt_secret`), and any key ending in `token` / `secret` /
+`password` / `apikey` is redacted whether or not it is on the list.
 
 ## Migration Guide
 
