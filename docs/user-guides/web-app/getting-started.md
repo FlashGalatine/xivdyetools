@@ -64,7 +64,7 @@ Suggestions, `8` Swatch Matcher, `9` Dye Mixer:
 **"Show me dyes that look good together"** — pick a base dye and get complementary, triadic, analogous, tetradic and other companions on a tappable colour wheel.
 
 ### 2. Palette Extractor
-**"I have a picture, find me its dyes"** — drop in a screenshot, click any spot to sample it, or **Auto-extract** the dominant colours; every colour is matched to the closest dye.
+**"I have a picture, find me its dyes"** — drop in a screenshot and its dominant colours appear as a bar under it, each matched to the closest dye; click any spot to read it with the loupe and tap **+** to add it as a pick.
 
 ### 3. Accessibility Checker
 **"How will this look to colorblind players?"** — see up to four dyes through five vision lenses with a per-pair readout.

@@ -45,27 +45,6 @@ export const ICON_CAMERA = `<svg viewBox="0 0 24 24" fill="none" stroke="current
 </svg>`;
 
 /**
- * Eyedropper icon - Color picker tool
- */
-export const ICON_EYEDROPPER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="18" cy="6" r="2.5" />
-  <path d="M 17 8.5 L 14 11.5 L 9 16.5 L 6 19.5" />
-  <path d="M 6 19.5 L 4.5 21 L 3 19.5 L 4.5 18 Z" fill="currentColor" />
-  <line x1="14" y1="11.5" x2="12" y2="13.5" />
-  <line x1="11" y1="14.5" x2="9" y2="16.5" />
-</svg>`;
-
-/**
- * Hint icon - Light bulb
- */
-export const ICON_HINT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M 12 3 C 9 3 7 5 7 8 C 7 10 8 11.5 9 12.5 L 9 15 C 9 16 10 17 11 17 L 13 17 C 14 17 15 16 15 15 L 15 12.5 C 16 11.5 17 10 17 8 C 17 5 15 3 12 3 Z" />
-  <line x1="10" y1="17" x2="14" y2="17" />
-  <line x1="10.5" y1="19" x2="13.5" y2="19" />
-  <circle cx="12" cy="9" r="1.5" fill="currentColor" stroke="none" opacity="0.5" />
-</svg>`;
-
-/**
  * Crystal icon - FFXIV-style gem (from monorepo crystal.svg)
  */
 export const ICON_CRYSTAL = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -83,15 +62,6 @@ export const ICON_WARNING = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
   <path d="M12 3L2 21h20L12 3Z" />
   <line x1="12" y1="9" x2="12" y2="13" />
   <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="none" />
-</svg>`;
-
-/**
- * Upload icon - Folder with arrow
- */
-export const ICON_UPLOAD = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M 4 8 L 4 18 C 4 19 5 20 6 20 L 18 20 C 19 20 20 19 20 18 L 20 8 C 20 7 19 6 18 6 L 10 6 L 8 4 L 6 4 C 5 4 4 5 4 6 Z" />
-  <line x1="12" y1="16" x2="12" y2="10" stroke-width="2" />
-  <polyline points="9,13 12,10 15,13" stroke-width="2" />
 </svg>`;
 
 /**

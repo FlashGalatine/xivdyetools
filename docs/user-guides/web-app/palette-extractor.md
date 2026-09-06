@@ -2,7 +2,7 @@
 
 **Find the closest FFXIV dye to any color in a picture**
 
-The Palette Extractor turns a picture into dyes. Drop in a screenshot, a reference photo or a piece of art, click the exact spot you care about — or let it pull the dominant colours for you — and every colour comes back as its closest FFXIV dye.
+The Palette Extractor turns a picture into dyes. Drop in a screenshot, a reference photo or a piece of art: its dominant colours appear as a bar under the image, each matched to its closest FFXIV dye, and a loupe lets you read the exact spot you care about and add it as a pick.
 
 > **Note**: In the 5.0 tool rail this is the **Extractor** chip. It has no Color Palette drawer — the picture is the input.
 
@@ -21,34 +21,38 @@ The workspace opens as a dashed **Drop an image** card:
 | **Paste from clipboard** | Press `Ctrl+V` (`Cmd+V` on Mac) after copying an image, or use the button |
 | **Take a photo** | On phones the card leads with the camera; **Choose from photos** picks from your library |
 
-Below the card a lock icon carries the promise: *"Images are read in your browser and never uploaded."* Everything happens on your device. The picture is held in memory for this session only — it is never written to browser storage — so reloading the page or coming back later means loading it again. The colours you sampled are remembered; the picture itself is not.
+Below the card a lock icon carries the promise: *"Images are read in your browser and never uploaded."* Everything happens on your device. The picture is held in memory for this session only — it is never written to browser storage — so reloading the page or coming back later means loading it again, and the picks you made go with it.
 
-Once a picture is loaded it fills a dark image card. Two buttons sit in its top-right corner — **Replace image** and **Clear image** — and dropping a new file onto the workspace replaces the current one. Zoom controls (in / out, **Fit**, **Width**, **Reset**) let you get close to a detail.
+Once a picture is loaded it fills a dark image card and its palette is extracted straight away. Two buttons sit in the card's top-right corner — **Replace image** and **Clear image** — and dropping a new file onto the workspace replaces the current one. Zoom controls (in / out, **Fit**, **Width**, **Reset**; on phones just in / out) let you get close to a detail.
 
-### 2. Sample a Colour
+### 2. The Bar
+
+A colour bar sits directly under the picture. Each colour the extractor found is a segment as wide as its share of the picture, with the percentage printed on it — so a screenshot that is mostly one blue shows one long blue segment. Tap a segment and its dye card lights up in the sheet below. Set how many colours are pulled with **Max Colors** in the settings (3–10); **Vibrancy Boost** orders the bar so a small vivid accent can lead a large dull field (the widths still show the real shares).
+
+Under the bar a legend reads **IMAGE SHARE**, and the section header counts what you have: *4 of 4* for the extracted colours alone, or *4 + 2* once you have added two picks — never *6 of 4*.
+
+### 3. Read a Colour with the Loupe
 
 A small chip in the corner of the picture says it: **Click to sample · drag for the loupe** (on phones, **Tap to sample**).
 
-- **Click or tap** any point and the colour under the cursor is sampled straight away.
-- **Press and drag** and a round **loupe** follows your finger or pointer — filled with the colour beneath it, with a crosshair and a hex readout — so you can find the exact pixel before letting go. Releasing samples it.
+- **Click or tap** any point and a round **loupe** parks there, filled with the colour it read and showing its hex; the chip names that hex and the closest dye.
+- **Press and drag** and the loupe follows your finger or pointer, reading the pixel beneath it as it goes, so you can find the exact spot before letting go. It stays where you release it.
 
-Each sample shows a **Sampled Color** card (HEX, RGB, HSV, LAB and a **Copy Color Info** button) and fills the results with its matches. If you want a small area averaged instead of one pixel, change **Pixel Sample Area** in the settings column (1×1 up to 16×16).
+Reading a colour changes nothing on the bar yet. If you want a small area averaged instead of one pixel, change **Pixel Sample Area** in the settings column (1×1 up to 16×16).
 
-### 3. The Palette Roll
+### 4. Add Picks
 
-Every sample lands in the **PALETTE ROLL** — a strip of little tiles under the picture (the last 20). Click a tile to bring that colour's matches back into focus. On the right of the strip:
+The **+** tile at the right end of the bar holds whatever the loupe is reading. Tap it and that colour joins the bar as a **pick** — a fixed-width block after a small gap, numbered rather than given a percentage, because a colour you picked by hand is not part of the picture's share. Each pick gets its own dye card. You can hold up to six; **Clear picks** (beside the legend) removes them all, and tapping **+** on a colour you already picked just focuses that pick.
 
-- **Clear** empties the roll.
-- **Auto-extract** reads the whole picture and fills the roll with its dominant colours in one go, each tile tagged with how much of the image it covers (for example *34%*). Set how many with **Max Colors** in the settings (3–10); **Vibrancy Boost** favours saturated colours over greys.
-- The dashed **+** tile at the end of the strip commits the colour currently under the loupe without leaving the picture.
+Changing **Max Colors** pulls the colours again; changing the matching method, the dye filters or **Prevent Duplicates** only changes which dye each colour resolves to. Your picks survive both.
 
-### 4. View Matches
+### 5. View Matches
 
-The results header reads **Matched Dyes** for a single sample (the closest dye first, then up to nine more within range) or **Extracted palette** after Auto-extract (one card per extracted colour), with a count beside it. Each card shows the dye beside the colour you sampled, the distance between them, hue and stain readouts, the dye's colour values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…**.
+The sheet shows one card per bar segment — the extracted colours first, then your picks, in bar order. Each card shows the dye beside the colour it came from, the distance between them, hue and stain readouts, the dye's colour values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…**. With **Prevent Duplicates** on, a colour whose nearest dye an earlier segment already holds takes the next-closest; when your filters leave no unique dye it keeps the nearest as a repeat, and when they leave no dye at all the sheet says so.
 
-### 5. Export
+### 6. Export
 
-**Export** in the results header opens the export sheet: every colour with its matched dye, as CSS custom properties, SCSS, JSON, plain HEX or a Tailwind theme, to copy or download.
+**Export** in the section header opens the export sheet: every bar segment — extracted colours and picks — with its matched dye, as CSS custom properties, SCSS, JSON, plain HEX or a Tailwind theme, to copy or download.
 
 ---
 
@@ -56,7 +60,7 @@ The results header reads **Matched Dyes** for a single sample (the closest dye f
 
 In the settings column (the gear icon on phones):
 
-- **Extraction Settings** — **Vibrancy Boost**, **Max Colors** (3–10, how many Auto-extract pulls) and **Selection Sensitivity** (how far you must drag before a press becomes a loupe drag rather than a click)
+- **Extraction Settings** — **Vibrancy Boost**, **Max Colors** (3–10, how many colours the bar holds) and **Selection Sensitivity** (how far you must drag before a press becomes a loupe drag rather than a click)
 - **Pixel Sample Area** — 1×1 (a single pixel), 2×2, 4×4, 8×8 or 16×16, averaged around the point you sample
 - **Prevent Duplicates** — on by default; when two extracted colours resolve to the same dye, the second takes the next-closest instead
 - **Matching Algorithm** — ΔE2000 is the suite default; ΔEOK2, ΔE76, Weighted RGB, RGB or a 0–100 percentage
@@ -86,8 +90,8 @@ never the raw number, across methods. See the [Glossary](../../reference/glossar
 ## Tips
 
 - **Zoom in first** — at 1×1 a screenshot's anti-aliasing can land you on a stray pixel; zoom, or use a 4×4 sample area
-- **Screenshot colors** may vary due to lighting/effects — sample the same piece of gear in two zones and compare
-- **Auto-extract for the overall look, click for the detail** — the roll keeps both
+- **Screenshot colors** may vary due to lighting/effects — read the same piece of gear in two zones and compare
+- **The bar for the overall look, picks for the detail** — the sheet keeps both, and the count tells them apart
 - **Multiple matches** are often worth comparing in-game
 - Send a match to **Color Harmony Explorer** afterwards to build the rest of the outfit around it
 

@@ -30,15 +30,7 @@ import {
 } from '../tool-icons';
 
 // Import from ui-icons.ts
-import {
-  ICON_CAMERA,
-  ICON_EYEDROPPER,
-  ICON_HINT,
-  ICON_CRYSTAL,
-  ICON_WARNING,
-  ICON_UPLOAD,
-  ICON_DICE,
-} from '../ui-icons';
+import { ICON_CAMERA, ICON_CRYSTAL, ICON_WARNING, ICON_DICE } from '../ui-icons';
 
 // ==========================================================================
 // Social Icons Tests
@@ -154,18 +146,6 @@ describe('UI Icons', () => {
       expect(ICON_CAMERA).toContain('circle');
     });
 
-    it('ICON_EYEDROPPER should be a valid SVG with circle and path', () => {
-      expect(ICON_EYEDROPPER).toContain('<svg');
-      expect(ICON_EYEDROPPER).toContain('circle');
-      expect(ICON_EYEDROPPER).toContain('path');
-    });
-
-    it('ICON_HINT should be a valid SVG with path and lines', () => {
-      expect(ICON_HINT).toContain('<svg');
-      expect(ICON_HINT).toContain('path');
-      expect(ICON_HINT).toContain('line');
-    });
-
     it('ICON_CRYSTAL should be a valid SVG with path', () => {
       expect(ICON_CRYSTAL).toContain('<svg');
       expect(ICON_CRYSTAL).toContain('path');
@@ -175,12 +155,6 @@ describe('UI Icons', () => {
       expect(ICON_WARNING).toContain('<svg');
       expect(ICON_WARNING).toContain('path');
       expect(ICON_WARNING).toContain('line');
-    });
-
-    it('ICON_UPLOAD should be a valid SVG with path and line', () => {
-      expect(ICON_UPLOAD).toContain('<svg');
-      expect(ICON_UPLOAD).toContain('path');
-      expect(ICON_UPLOAD).toContain('line');
     });
 
     it('ICON_DICE should be a valid SVG with rect and circles', () => {

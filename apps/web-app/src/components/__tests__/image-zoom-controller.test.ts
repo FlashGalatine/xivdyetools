@@ -367,21 +367,20 @@ describe('ImageZoomController', () => {
       mouse('mousedown', 0, 0);
       mouse('mouseup', 0, 0);
 
-      // Without this the crosshair drawn by the PREVIOUS sample is still on
-      // the canvas and gets read back as the colour
+      // Anything a caller painted over the canvas would otherwise be read
+      // back as the colour
       expect(ctx.drawImage).toHaveBeenCalledWith(image, 0, 0);
     });
 
-    it('marks a single-pixel sample with a crosshair', () => {
+    it('draws no mark onto the image when it samples (4A: the loupe is the only mark)', () => {
       mouse('mousedown', 0, 0);
       mouse('mouseup', 0, 0);
 
-      expect(ctx.beginPath).toHaveBeenCalled();
-      expect(ctx.stroke).toHaveBeenCalled();
+      expect(ctx.stroke).not.toHaveBeenCalled();
       expect(ctx.strokeRect).not.toHaveBeenCalled();
     });
 
-    it('marks a multi-pixel sample with a rectangle and averages the area', () => {
+    it('averages a multi-pixel sample area without marking it', () => {
       const onSampled = vi.fn();
       container.addEventListener('image-sampled', onSampled);
       controller.setSampleAreaSize(2);
@@ -389,7 +388,7 @@ describe('ImageZoomController', () => {
       mouse('mousedown', 0, 0);
       mouse('mouseup', 0, 0);
 
-      expect(ctx.strokeRect).toHaveBeenCalled();
+      expect(ctx.strokeRect).not.toHaveBeenCalled();
       // Mean of red, green, blue and white across the 2×2 fixture is 127.5 in
       // every channel, rounded to 128 = 0x80. Asserting the emitted hex is
       // the point — a computed expectation would only restate the arithmetic

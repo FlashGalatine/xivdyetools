@@ -1,8 +1,12 @@
 /**
  * XIV Dye Tools - ExtractorTool Unit Tests
  *
- * Tests the extractor tool component for extracting palettes from images.
- * Covers rendering, image upload, palette extraction, and color quantization.
+ * The 4A workspace: a persistent loupe reads the image, the dominance bar
+ * under it indexes extracted colours (proportional) and committed picks
+ * (fixed-width, slot-numbered), and the card sheet shows one card per bar
+ * segment. Covers rendering, the drop-zone contract, the sidebar config
+ * surface, extraction, the loupe, picks, resolution (dedupe + filters),
+ * export, prices, image privacy, clipboard and teardown.
  *
  * @module components/__tests__/extractor-tool.test
  */
@@ -11,21 +15,17 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ExtractorTool } from '../extractor-tool';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
+import { DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 //
-// `findClosestDye` (SINGULAR) and `findDyesWithinDistance` are the two that
-// matter and were the two missing. Both are called by `matchColor`, and
-// `findClosestDye` is also called by the REAL `PaletteService` — which this
-// file does not mock — from inside `extractAndMatchPalette`. Their absence
-// threw `dyeService.findClosestDye is not a function` as an UNHANDLED
-// rejection off the image-load path, so it never surfaced as a test failure;
-// it just left every sampling, matching and palette-result path unexecuted.
-//
-// They are given real nearest-neighbour behaviour rather than a fixed return.
-// A constant would make "the extractor matched the right dye" untestable —
-// every input would produce the same answer, so the assertions could not tell
-// a working match from a broken one.
+// `findClosestDye` (SINGULAR) and `findDyesWithinDistance` are given real
+// nearest-neighbour behaviour rather than a fixed return. A constant would
+// make "the extractor matched the right dye" untestable — every input would
+// produce the same answer, so the assertions could not tell a working match
+// from a broken one. `findClosestDye` is also called by the REAL
+// `PaletteService` — which this file does not mock — from inside
+// `extractAndMatchPalette`.
 const {
   mockGetAllDyes,
   mockGetDyeById,
@@ -46,13 +46,21 @@ const {
   };
   const mockGetAllDyes = vi.fn();
   /** The dye pool both matchers search — whatever getAllDyes is seeded with. */
-  const pool = (): { hex: string }[] => (mockGetAllDyes() as { hex: string }[]) ?? [];
+  const pool = (): { id: number; hex: string }[] =>
+    (mockGetAllDyes() as { id: number; hex: string }[]) ?? [];
   return {
     mockGetAllDyes,
     mockGetDyeById: vi.fn(),
     mockFindClosestDyes: vi.fn(),
-    mockFindClosestDye: vi.fn((hex: string) => {
-      const dyes = pool();
+    /**
+     * Honours `excludeIds` (by `dye.id`) exactly as core's DyeSearch does —
+     * the tool's whole resolution path (filters + Prevent duplicates) now
+     * rides on it, so a mock that ignored it could not tell a working
+     * dedupe from a broken one.
+     */
+    mockFindClosestDye: vi.fn((hex: string, opts?: { excludeIds?: number[] }) => {
+      const excluded = new Set(opts?.excludeIds ?? []);
+      const dyes = pool().filter((d) => !excluded.has(d.id));
       if (dyes.length === 0) return null;
       return dyes.reduce((best, d) => (dist(hex, d.hex) < dist(hex, best.hex) ? d : best));
     }),
@@ -94,33 +102,6 @@ vi.mock('@services/index', () => ({
     warning: vi.fn(),
     info: vi.fn(),
   },
-  /**
-   * The shared market-panel builder. Absent, renderMarketPanel throws and
-   * safeRender swallows it, leaving the whole panel empty.
-   */
-  buildMarketPanel: vi.fn(() => ({
-    panel: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      setContent: vi.fn(),
-      expand: vi.fn(),
-      collapse: vi.fn(),
-    },
-    // Mirrors the real MarketBoard component's public surface
-    marketBoard: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      getShowPrices: vi.fn().mockReturnValue(false),
-      setShowPrices: vi.fn(),
-      getSelectedServer: vi.fn().mockReturnValue(null),
-      setSelectedServer: vi.fn(),
-      loadServerData: vi.fn().mockResolvedValue(undefined),
-      refreshPrices: vi.fn().mockResolvedValue(undefined),
-      fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
-      shouldFetchPrice: vi.fn().mockReturnValue(false),
-    },
-  })),
-  /** Used by six of the tools; absent it throws as an unhandled rejection. */
   ThemeService: {
     getCurrentTheme: vi.fn().mockReturnValue('standard-dark'),
     getAllThemes: vi.fn().mockReturnValue([]),
@@ -146,7 +127,7 @@ vi.mock('@services/index', () => ({
     findDyesWithinDistance: mockFindDyesWithinDistance,
     getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
   },
-  /** Complete against every LanguageService method the tools call. */
+  /** Complete against every LanguageService method the tool calls. */
   LanguageService: {
     t: (key: string) => key,
     tInterpolate: (key: string, params: Record<string, string>) =>
@@ -166,21 +147,12 @@ vi.mock('@services/index', () => ({
     removeItem: vi.fn(),
   },
   /**
-   * Complete against every ColorService method the tool components call.
-   * A missing one throws inside renderContent, which BaseComponent's
-   * safeRender() swallows into an error state — so the panel renders nothing
-   * and the tests see an empty DOM instead of a failure.
+   * Complete against every ColorService method the tool calls. A missing one
+   * throws inside renderContent, which BaseComponent's safeRender() swallows
+   * into an error state — so the panel renders nothing and the tests see an
+   * empty DOM instead of a failure.
    */
   ColorService: {
-    // Blend entry points. The mixer routes through
-    // @services/mixer-blending-engine, which calls these — so a gap here
-    // throws only once TWO dyes are selected, not on render.
-    mixColorsRgb: vi.fn(() => '#808080'),
-    mixColorsLab: vi.fn(() => '#808080'),
-    mixColorsOklab: vi.fn(() => '#808080'),
-    mixColorsHsl: vi.fn(() => '#808080'),
-    mixColorsRyb: vi.fn(() => '#808080'),
-    mixColorsSpectral: vi.fn(() => '#808080'),
     hexToRgb: vi.fn((hex: string) => ({
       r: parseInt(hex.slice(1, 3), 16) || 0,
       g: parseInt(hex.slice(3, 5), 16) || 0,
@@ -191,21 +163,14 @@ vi.mock('@services/index', () => ({
     ),
     rgbToHsv: vi.fn(() => ({ h: 0, s: 100, v: 100 })),
     hexToHsv: vi.fn(() => ({ h: 0, s: 100, v: 100 })),
-    hsvToHex: vi.fn(() => '#FF0000'),
     rgbToLab: vi.fn(() => ({ l: 50, a: 0, b: 0 })),
     hexToLab: vi.fn(() => ({ l: 50, a: 0, b: 0 })),
-    labToHex: vi.fn(() => '#FF0000'),
-    hexToLch: vi.fn(() => ({ l: 50, c: 20, h: 30 })),
-    lchToHex: vi.fn(() => '#FF0000'),
-    hexToOklch: vi.fn(() => ({ l: 0.5, c: 0.1, h: 30 })),
-    oklchToHex: vi.fn(() => '#FF0000'),
     getColorDistance: vi.fn(() => 15),
     getDeltaE: vi.fn(() => 15),
     getDistanceForMethod: vi.fn(() => 15),
     calculateDistanceWithMethod: vi.fn(() => 15),
     calculateColorDistance: vi.fn(() => 15),
     getContrastRatio: vi.fn(() => 4.5),
-    simulateColorblindnessHex: vi.fn((hex: string) => hex),
     findClosestDyes: vi.fn(() => []),
   },
   MarketBoardService: {
@@ -218,7 +183,7 @@ vi.mock('@services/index', () => ({
       getPriceForDye: vi.fn().mockReturnValue(null),
       getAllPrices: vi.fn().mockReturnValue(new Map()),
       getPricesView: vi.fn().mockReturnValue(new Map()),
-      getSelectedServer: vi.fn().mockReturnValue(null),
+      getSelectedServer: vi.fn().mockReturnValue('Crystal'),
       setServer: vi.fn(),
       clearCache: vi.fn(),
       getIsFetching: vi.fn().mockReturnValue(false),
@@ -243,13 +208,6 @@ vi.mock('@services/index', () => ({
     subscribeFavorites: vi.fn().mockReturnValue(() => {}),
     isFavorite: vi.fn().mockReturnValue(false),
   },
-  PaletteService: {
-    extractPalette: vi.fn().mockReturnValue([
-      { hex: '#FF0000', count: 100 },
-      { hex: '#00FF00', count: 80 },
-      { hex: '#0000FF', count: 60 },
-    ]),
-  },
   RouterService: {
     subscribe: vi.fn().mockReturnValue(() => {}),
     getCurrentToolId: vi.fn().mockReturnValue('extractor'),
@@ -263,10 +221,10 @@ vi.mock('@services/index', () => ({
 }));
 
 /**
- * FINDING-009: the extractor no longer imports this module at all. The mock
+ * FINDING-009: the extractor does not import this module at all. The mock
  * stays as the sentinel for that — the image-privacy tests below assert these
- * three spies are never touched, which is what "images are session-only" means
- * in practice. STORES mirrors the real module, which has no image store.
+ * spies are never touched, which is what "images are session-only" means in
+ * practice. STORES mirrors the real module, which has no image store.
  */
 vi.mock('@services/indexeddb-service', () => ({
   indexedDBService: {
@@ -286,177 +244,8 @@ vi.mock('@shared/logger', () => ({
   },
 }));
 
-vi.mock('@services/pricing-mixin', () => ({
-  setupMarketBoardListeners: vi.fn().mockReturnValue(() => {}),
-}));
-
 vi.mock('@components/export-sheet', () => ({
   openExportSheet: vi.fn(),
-}));
-
-vi.mock('../collapsible-panel', () => ({
-  /**
-   * Mirrors the real CollapsiblePanel's public API. `setContent` as a no-op
-   * silently swallowed every control the tools place in a panel, and a
-   * missing `getContentContainer` throws into BaseComponent.safeRender()'s
-   * catch — which converts it to an error state, so the panel renders
-   * nothing and the tests see an empty DOM instead of a failure.
-   */
-  CollapsiblePanel: class MockCollapsiblePanel {
-    container: HTMLElement;
-    options: Record<string, unknown>;
-    private body: HTMLElement | null = null;
-    constructor(container: HTMLElement, options: Record<string, unknown>) {
-      this.container = container;
-      this.options = options;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'collapsible-panel';
-      div.id = (this.options.id as string) || 'panel';
-      this.container.appendChild(div);
-      this.body = div;
-    }
-    getContentContainer(): HTMLElement {
-      if (!this.body) this.init();
-      return this.body!;
-    }
-    setContent(content: HTMLElement | string) {
-      if (!this.body) this.init();
-      if (typeof content === 'string') this.body!.innerHTML = content;
-      else if (content) this.body!.appendChild(content);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-      this.body = null;
-    }
-    open() {}
-    close() {}
-    expand() {}
-    collapse() {}
-    toggle() {}
-  },
-}));
-
-vi.mock('../market-board', () => ({
-  /**
-   * Mirrors the real MarketBoard component's public surface. Tools that build
-   * a second, mobile board construct it directly from here rather than through
-   * buildMarketPanel, so a gap shows up only on the mobile path.
-   */
-  MarketBoard: class MockMarketBoard {
-    container: HTMLElement;
-    private showPrices = false;
-    private selectedServer: string | null = null;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'market-board';
-      div.id = 'market-board';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getShowPrices() {
-      return this.showPrices;
-    }
-    setShowPrices(value: boolean) {
-      this.showPrices = value;
-    }
-    getSelectedServer() {
-      return this.selectedServer;
-    }
-    setSelectedServer(server: string | null) {
-      this.selectedServer = server;
-    }
-    async loadServerData() {}
-    async refreshPrices() {}
-    async fetchPricesForDyes() {
-      return new Map();
-    }
-    shouldFetchPrice() {
-      return false;
-    }
-  },
-}));
-
-vi.mock('../image-upload-display', () => ({
-  ImageUploadDisplay: class MockImageUploadDisplay {
-    container: HTMLElement;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'image-upload-display';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getImage() {
-      return null;
-    }
-    getImageDimensions() {
-      return null;
-    }
-    getImageCanvas() {
-      return null;
-    }
-    clear() {}
-    samplePixel() {
-      return null;
-    }
-    getAverageColor() {
-      return null;
-    }
-  },
-}));
-
-vi.mock('../color-picker-display', () => ({
-  ColorPickerDisplay: class MockColorPickerDisplay {
-    container: HTMLElement;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'color-picker-display';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getColor() {
-      return '#FF0000';
-    }
-    setColor() {}
-  },
-}));
-
-vi.mock('../dye-filters', () => ({
-  DyeFilters: class MockDyeFilters {
-    container: HTMLElement;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'dye-filters';
-      div.id = 'dye-filters';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getExcludedCategories() {
-      return [];
-    }
-    setEnabled() {}
-  },
 }));
 
 describe('ExtractorTool', () => {
@@ -498,115 +287,8 @@ describe('ExtractorTool', () => {
     vi.restoreAllMocks();
   });
 
-  // ============================================================================
-  // Basic Rendering Tests
-  // ============================================================================
-
-  describe('Basic Rendering', () => {
-    it('should render extractor tool', () => {
-      tool = new ExtractorTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(leftPanel.children.length).toBeGreaterThan(0);
-    });
-
-    it('should render left panel content', () => {
-      tool = new ExtractorTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(leftPanel.innerHTML.length).toBeGreaterThan(0);
-    });
-
-    it('should render right panel content', () => {
-      tool = new ExtractorTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(rightPanel).not.toBeNull();
-    });
-
-    it('should render drawer content when provided', () => {
-      tool = new ExtractorTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(drawerContent).not.toBeNull();
-    });
-
-    it('should work without drawer content', () => {
-      tool = new ExtractorTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      expect(leftPanel.children.length).toBeGreaterThan(0);
-    });
-  });
-
-  // ============================================================================
-  // Configuration Tests
-  // ============================================================================
-
-  describe('Configuration', () => {
-    it('should have setConfig method', () => {
-      tool = new ExtractorTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      expect(typeof tool.setConfig).toBe('function');
-    });
-
-    it('should accept config via setConfig', () => {
-      tool = new ExtractorTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      // Should not throw
-      tool.setConfig({ maxColors: 8 });
-
-      expect(leftPanel.children.length).toBeGreaterThan(0);
-    });
-  });
-
-  // ============================================================================
-  // Palette Extraction Tests
-  // ============================================================================
-
-  describe('Palette Extraction', () => {
-    it('should render palette extraction controls', () => {
-      tool = new ExtractorTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      // Tool should render extraction-related content in right panel
-      expect(rightPanel).not.toBeNull();
-    });
-  });
-
-  // ============================================================================
-  // Lifecycle Tests
-  // ============================================================================
-
-  describe('Lifecycle', () => {
-    it('should clean up on destroy', () => {
-      tool = new ExtractorTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      // Should not throw
-      expect(() => tool!.destroy()).not.toThrow();
-    });
-
-    it('should handle double destroy gracefully', () => {
-      tool = new ExtractorTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      tool.destroy();
-
-      // Second destroy should not throw
-      expect(() => tool!.destroy()).not.toThrow();
-    });
-  });
-
   // ==========================================================================
-  // Interaction depth
-  //
-  // Everything above asserts that the tool renders. The tool is image-driven,
-  // and jsdom decodes no images — so these drive what does not need a decoded
-  // bitmap: the config surface the sidebar pushes in, the drop-zone contract,
-  // the clipboard paths, and teardown.
+  // Helpers
   // ==========================================================================
 
   const mount = (opts: { drawer?: boolean } = {}): ExtractorTool => {
@@ -623,23 +305,17 @@ describe('ExtractorTool', () => {
     await new Promise((r) => setTimeout(r, 0));
   };
 
+  const workspace = (): HTMLElement => rightPanel.querySelector('.x4a-workspace') as HTMLElement;
+
   /**
-   * Block until the tool is not mid-extraction.
-   *
-   * extractPalette() awaits a real requestAnimationFrame (~16ms in jsdom) and
-   * relabels the auto-extract button "Extracting…" across it, so a fixed count
-   * of setTimeout(0) flushes is a wall-clock bet on that frame: it wins on an
-   * idle machine and loses under `turbo`'s parallel load, where every helper
-   * that finds the button by its idle text then returns undefined. The label
-   * is the tool's own quiescence signal — wait on it, don't estimate it.
+   * Block until the tool is not mid-extraction. extractPalette() awaits a
+   * real requestAnimationFrame and flags the workspace `data-busy` across
+   * it, so a fixed count of setTimeout(0) flushes is a wall-clock bet on
+   * that frame. The flag is the tool's own quiescence signal — wait on it.
    */
   const waitForIdle = (): Promise<void> =>
     vi.waitFor(() => {
-      const btn = Array.from(rightPanel.querySelectorAll('button')).find((b) =>
-        b.textContent?.includes('matcher.autoExtract')
-      ) as HTMLButtonElement | undefined;
-      expect(btn, 'auto-extract button still shows its busy label').toBeDefined();
-      expect(btn!.disabled).toBe(false);
+      expect(workspace().dataset.busy, 'extraction still running').toBeUndefined();
     });
 
   const dropZone = (): HTMLElement =>
@@ -652,108 +328,149 @@ describe('ExtractorTool', () => {
     return ev;
   };
 
+  const resultCards = () => rightPanel.querySelectorAll('v4-result-card');
+  const cardData = (i: number) =>
+    (resultCards()[i] as unknown as { data: { originalColor: string; dye: (typeof mockDyes)[0] } })
+      .data;
+  const cardSelected = (i: number) =>
+    (resultCards()[i] as unknown as { selected: boolean }).selected;
+
+  const bar = (): HTMLElement => rightPanel.querySelector('#extractor-bar') as HTMLElement;
+  const segments = () => Array.from(bar().querySelectorAll<HTMLButtonElement>('.x4a-seg'));
+  const pickSegments = () => Array.from(bar().querySelectorAll<HTMLButtonElement>('.x4a-seg-pick'));
+  const extractedSegments = () => segments().filter((s) => !s.classList.contains('x4a-seg-pick'));
+  const addTile = (): HTMLButtonElement =>
+    rightPanel.querySelector('#extractor-add-pick') as HTMLButtonElement;
+  const legend = (): HTMLElement => rightPanel.querySelector('#extractor-legend') as HTMLElement;
+  const countLabel = (): HTMLElement => rightPanel.querySelector('#extractor-count') as HTMLElement;
+  const clearPicksBtn = (): HTMLButtonElement =>
+    rightPanel.querySelector('#extractor-clear-picks') as HTMLButtonElement;
+  const loupe = (): HTMLElement => rightPanel.querySelector('#extractor-loupe') as HTMLElement;
+  const hintRead = (): HTMLElement => rightPanel.querySelector('.x4a-hint-read') as HTMLElement;
+  const exportButton = (): HTMLButtonElement =>
+    Array.from(rightPanel.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('common.export')
+    ) as HTMLButtonElement;
+
+  // ==========================================================================
+  // Basic Rendering
+  // ==========================================================================
+
+  describe('Basic Rendering', () => {
+    it('renders the one-column workspace into the main panel', () => {
+      tool = mount();
+
+      expect(workspace()).not.toBeNull();
+      expect(dropZone()).not.toBeNull();
+    });
+
+    it('owns no option panel — the left panel is left untouched', () => {
+      tool = mount();
+
+      // The v4 shell passes the SAME element as both panels; anything the
+      // tool wrote to a "left panel" was cleared by its own workspace render.
+      // Advanced lives behind the app-bar gear (the config sidebar) only.
+      expect(leftPanel.children.length).toBe(0);
+    });
+
+    it('works with and without drawer content', () => {
+      tool = mount();
+      expect(rightPanel.children.length).toBeGreaterThan(0);
+      tool.destroy();
+
+      tool = mount({ drawer: false });
+      expect(rightPanel.children.length).toBeGreaterThan(0);
+    });
+
+    it('starts on the empty flow with the loaded flow hidden', () => {
+      tool = mount();
+
+      expect(dropZone().parentElement!.style.display).toBe('flex');
+      expect(bar().closest<HTMLElement>('[style*="display: none"]')).not.toBeNull();
+    });
+  });
+
+  describe('Lifecycle', () => {
+    it('should clean up on destroy', () => {
+      tool = mount();
+      expect(() => tool!.destroy()).not.toThrow();
+    });
+
+    it('should handle double destroy gracefully', () => {
+      tool = mount();
+      tool.destroy();
+      expect(() => tool!.destroy()).not.toThrow();
+    });
+  });
+
+  // ==========================================================================
+  // The sidebar surface — ConfigController is the only settings store
+  // ==========================================================================
+
   describe('setConfig — the sidebar surface', () => {
-    it.each([
-      ['vibrancyBoost', { vibrancyBoost: false }, 'v3_matcher_vibrancy_boost', false],
-      ['maxColors', { maxColors: 9 }, 'v3_matcher_palette_count', 9],
-    ])('persists a %s change', async (_label, config, key, value) => {
+    it('never persists a setting itself — the sidebar owns the store', async () => {
       const { StorageService } = await import('@services/index');
       tool = mount();
       vi.mocked(StorageService.setItem).mockClear();
 
-      tool.setConfig(config as Parameters<ExtractorTool['setConfig']>[0]);
-
-      expect(StorageService.setItem).toHaveBeenCalledWith(key, value);
-    });
-
-    it('ignores a no-op change rather than re-extracting', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      tool.setConfig({ maxColors: 9 });
-      await flush();
-      vi.mocked(StorageService.setItem).mockClear();
-
-      // The guard is `config.maxColors !== this.paletteColorCount`
-      tool.setConfig({ maxColors: 9 });
-
-      expect(StorageService.setItem).not.toHaveBeenCalledWith(
-        'v3_matcher_palette_count',
-        expect.anything()
-      );
-    });
-
-    it('syncs the colour-count slider and its readout', async () => {
-      tool = mount();
-      // Re-query after the change: the panel re-renders, so a reference held
-      // from before points at a detached node.
-      // The colour-count slider is the 3..5 one; the tool renders more than
-      // one range input, so select it by its range rather than by position.
-      const slider = () =>
-        container.querySelector<HTMLInputElement>('input[type="range"][min="3"][max="5"]');
-      expect(slider()).not.toBeNull();
-
-      tool.setConfig({ maxColors: 4 });
+      tool.setConfig({ vibrancyBoost: false, maxColors: 9, preventDuplicates: false });
       await flush();
 
-      // The sidebar and the tool's own slider must not disagree — a stale
-      // slider is how a user extracts a different count than the one shown
-      // beside it.
-      expect(slider()!.value).toBe('4');
-    });
-
-    it('accepts an empty config without touching state', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      vi.mocked(StorageService.setItem).mockClear();
-
-      expect(() => tool!.setConfig({})).not.toThrow();
       expect(StorageService.setItem).not.toHaveBeenCalled();
     });
 
-    it.each([
-      ['matchingMethod', { matchingMethod: 'oklab' as const }],
-      ['preventDuplicates', { preventDuplicates: true }],
-      ['dragThreshold', { dragThreshold: 8 }],
-      ['sampleAreaSize', { sampleAreaSize: 4 }],
-    ])('accepts a %s change with no image loaded', (_label, config) => {
+    it('purges every key the v3/3C builds wrote, on mount', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      await flush();
+
+      for (const key of [
+        'v3_matcher_sample_size',
+        'v3_matcher_palette_mode',
+        'v3_matcher_palette_count',
+        'v3_matcher_vibrancy_boost',
+        'v3_matcher_image',
+        'v3_matcher_color',
+        'v3_matcher_extracted_colors',
+      ]) {
+        expect(StorageService.removeItem).toHaveBeenCalledWith(key);
+      }
+    });
+
+    it('accepts an empty config without touching state', async () => {
       tool = mount();
 
-      expect(() => tool!.setConfig(config as never)).not.toThrow();
+      expect(() => tool!.setConfig({})).not.toThrow();
+      await flush();
+      expect(dropZone()).not.toBeNull();
     });
 
     it('merges displayOptions rather than replacing them', () => {
       tool = mount();
 
-      tool.setConfig({ displayOptions: { showHex: true } as never });
-      expect(() => tool!.setConfig({ displayOptions: { showRgb: true } as never })).not.toThrow();
-    });
-
-    it('applies a dyeFilters change once and skips an identical repeat', () => {
-      tool = mount();
-
-      expect(() =>
-        tool!.setConfig({ dyeFilters: { excludeMetallic: true } as never })
-      ).not.toThrow();
-      // Second identical call hits the JSON-equality guard
-      expect(() =>
-        tool!.setConfig({ dyeFilters: { excludeMetallic: true } as never })
-      ).not.toThrow();
+      expect(() => tool!.setConfig({ displayOptions: { showHex: false } as never })).not.toThrow();
     });
 
     it('applies several keys in one call', async () => {
-      const { StorageService } = await import('@services/index');
       tool = mount();
-      vi.mocked(StorageService.setItem).mockClear();
 
-      tool.setConfig({ vibrancyBoost: false, maxColors: 3 });
+      expect(() =>
+        tool!.setConfig({
+          vibrancyBoost: false,
+          maxColors: 6,
+          matchingMethod: 'oklab',
+          preventDuplicates: false,
+          dragThreshold: 8,
+          sampleAreaSize: 4,
+        })
+      ).not.toThrow();
       await flush();
-
-      const keys = vi.mocked(StorageService.setItem).mock.calls.map((c) => c[0]);
-      expect(keys).toEqual(
-        expect.arrayContaining(['v3_matcher_vibrancy_boost', 'v3_matcher_palette_count'])
-      );
     });
   });
+
+  // ==========================================================================
+  // The drop zone
+  // ==========================================================================
 
   describe('the drop zone', () => {
     it('renders a drop zone while no image is loaded', () => {
@@ -782,21 +499,20 @@ describe('ExtractorTool', () => {
     });
 
     it('ignores a dropped non-image file', () => {
-      tool = mount();
       const readSpy = vi.spyOn(FileReader.prototype, 'readAsDataURL');
+      tool = mount();
 
       rightPanel.dispatchEvent(dropEvent([new File(['x'], 'notes.txt', { type: 'text/plain' })]));
 
-      // A .txt must not reach the reader — the type gate is the only guard
       expect(readSpy).not.toHaveBeenCalled();
       readSpy.mockRestore();
     });
 
     it('reads a dropped image file', () => {
-      tool = mount();
       const readSpy = vi
         .spyOn(FileReader.prototype, 'readAsDataURL')
         .mockImplementation(() => undefined);
+      tool = mount();
 
       rightPanel.dispatchEvent(dropEvent([new File(['x'], 'shot.png', { type: 'image/png' })]));
 
@@ -804,21 +520,17 @@ describe('ExtractorTool', () => {
       readSpy.mockRestore();
     });
 
-    // WEB-13 (2026-08-21 security audit): the drop/paste path had no size cap
-    // while the upload-display path enforced 20 MB — decoding a huge image
-    // hangs the tab. Same cap, same toast, before the reader ever runs.
     it('refuses a dropped image over the size cap before reading it', async () => {
-      tool = mount();
       const { ToastService } = await import('@services/index');
       const { MAX_USER_FILE_BYTES } = await import('@shared/constants');
-      vi.mocked(ToastService.error).mockClear();
       const readSpy = vi
         .spyOn(FileReader.prototype, 'readAsDataURL')
         .mockImplementation(() => undefined);
-      const huge = new File(['x'], 'huge.png', { type: 'image/png' });
-      Object.defineProperty(huge, 'size', { value: MAX_USER_FILE_BYTES + 1 });
+      tool = mount();
+      const big = new File(['x'], 'huge.png', { type: 'image/png' });
+      Object.defineProperty(big, 'size', { value: MAX_USER_FILE_BYTES + 1 });
 
-      rightPanel.dispatchEvent(dropEvent([huge]));
+      rightPanel.dispatchEvent(dropEvent([big]));
 
       expect(readSpy).not.toHaveBeenCalled();
       expect(ToastService.error).toHaveBeenCalledWith('errors.imageTooLarge');
@@ -826,15 +538,15 @@ describe('ExtractorTool', () => {
     });
 
     it('takes only the first file when several are dropped', () => {
-      tool = mount();
       const readSpy = vi
         .spyOn(FileReader.prototype, 'readAsDataURL')
         .mockImplementation(() => undefined);
+      tool = mount();
 
       rightPanel.dispatchEvent(
         dropEvent([
-          new File(['a'], 'a.png', { type: 'image/png' }),
-          new File(['b'], 'b.png', { type: 'image/png' }),
+          new File(['a'], 'one.png', { type: 'image/png' }),
+          new File(['b'], 'two.png', { type: 'image/png' }),
         ])
       );
 
@@ -852,33 +564,27 @@ describe('ExtractorTool', () => {
 
     it('opens the file dialog when the empty card is clicked', () => {
       tool = mount();
-      const input = rightPanel.querySelector<HTMLInputElement>('input[type="file"]');
-      expect(input).not.toBeNull();
-      const clickSpy = vi.spyOn(input!, 'click').mockImplementation(() => undefined);
+      const input = rightPanel.querySelector<HTMLInputElement>('input[type="file"]')!;
+      const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => undefined);
 
       dropZone().click();
 
-      // The whole dashed card is the target, not just a hidden input
-      expect(clickSpy).toHaveBeenCalledTimes(1);
-      clickSpy.mockRestore();
+      expect(clickSpy).toHaveBeenCalled();
     });
 
     it('accepts only image types on the file input', () => {
       tool = mount();
-      const input = rightPanel.querySelector<HTMLInputElement>('input[type="file"]');
 
-      expect(input!.accept).toContain('image');
+      const inputs = rightPanel.querySelectorAll<HTMLInputElement>('input[type="file"]');
+      expect(inputs.length).toBeGreaterThan(0);
+      inputs.forEach((input) => expect(input.accept).toBe('image/*'));
     });
   });
 
-  /**
-   * The image-driven half of the tool.
-   *
-   * jsdom decodes no images and implements no canvas, so `Image.onload` never
-   * fires and `getContext('2d')` returns null — which is why roughly two
-   * thirds of this component was unreachable from a unit test. Faking both is
-   * enough to run the real extraction path: load → canvas → sample → match.
-   */
+  // ==========================================================================
+  // With a decoded image
+  // ==========================================================================
+
   describe('with a decoded image', () => {
     /** 2×2 image: red, green, blue, white. */
     const PIXELS = new Uint8ClampedArray([
@@ -914,12 +620,9 @@ describe('ExtractorTool', () => {
       globalThis.Image = FakeImage as unknown as typeof Image;
 
       // Complete against every 2D-context member extractor-tool.ts and
-      // image-zoom-controller.ts touch. Completeness is the whole point: a
-      // single missing method throws inside `extractPalette`'s try block,
-      // which catches it, toasts `errors.paletteExtractionFailed` and moves
-      // on — so the suite stays green while the entire palette path is dead.
-      // That is exactly how `strokeText` (used only by drawSampleIndicators
-      // to outline the numbered markers) kept six functions unexecuted.
+      // image-zoom-controller.ts touch. A single missing method throws inside
+      // `extractPalette`'s try block, which catches it, toasts and moves on —
+      // so the suite stays green while the entire palette path is dead.
       ctx = {
         drawImage: vi.fn(),
         clearRect: vi.fn(),
@@ -952,14 +655,52 @@ describe('ExtractorTool', () => {
       HTMLCanvasElement.prototype.getContext = originalGetContext;
     });
 
-    /** Drop a PNG and let the FileReader + fake decode settle. */
+    /** Drop a PNG and wait until the bar has been built from its extraction. */
     const loadImage = async (): Promise<void> => {
+      // renderBar creates a fresh `+` tile on every roll, so "a tile that is
+      // not the one from before" is the signal that THIS image's extraction
+      // landed — a bare existence check passes early on a replace
+      const previousTile = rightPanel.querySelector('#extractor-add-pick');
       rightPanel.dispatchEvent(dropEvent([new File(['x'], 'shot.png', { type: 'image/png' })]));
-      // FileReader is async in jsdom too
-      for (let i = 0; i < 6; i++) await flush();
-      // onImageLoaded auto-extracts unconditionally, so the tool is still busy
-      // when the flushes above run out. See waitForIdle.
+      await vi.waitFor(() => {
+        expect(addTile()).not.toBeNull();
+        expect(addTile()).not.toBe(previousTile);
+      });
       await waitForIdle();
+    };
+
+    /** The element ImageZoomController emits its events on. */
+    const canvasWrapper = (): HTMLElement => {
+      const canvas = rightPanel.querySelector('canvas');
+      // wrapper > canvas-container > canvas
+      return canvas!.parentElement!.parentElement as HTMLElement;
+    };
+
+    /** A click/tap or drag-release, exactly as the controller reports it. */
+    const sample = (hex: string, isPixelSample = true): void => {
+      canvasWrapper().dispatchEvent(
+        new CustomEvent('image-sampled', {
+          bubbles: true,
+          detail: { hex, x: 1, y: 1, isPixelSample },
+        })
+      );
+    };
+
+    /** A pointer drag past the threshold. */
+    const drag = (hex: string, clientX = 40, clientY = 25): void => {
+      canvasWrapper().dispatchEvent(
+        new CustomEvent('loupe-move', { bubbles: true, detail: { hex, clientX, clientY } })
+      );
+    };
+
+    const release = (): void => {
+      canvasWrapper().dispatchEvent(new CustomEvent('loupe-end', { bubbles: true }));
+    };
+
+    /** Read a colour into the loupe and commit it as a pick. */
+    const commit = (hex: string): void => {
+      sample(hex);
+      addTile().click();
     };
 
     it('renders a canvas once an image is loaded', async () => {
@@ -972,12 +713,11 @@ describe('ExtractorTool', () => {
 
     it('replaces the drop zone flow with the loaded flow', async () => {
       tool = mount();
-      expect(dropZone()).not.toBeNull();
+      expect(dropZone().parentElement!.style.display).toBe('flex');
 
       await loadImage();
 
-      // The dashed card is an offer while empty; once an image is in, the
-      // workspace takes over
+      expect(dropZone().parentElement!.style.display).toBe('none');
       expect(rightPanel.querySelector('canvas')).not.toBeNull();
     });
 
@@ -989,32 +729,64 @@ describe('ExtractorTool', () => {
       expect(ctx.drawImage).toHaveBeenCalled();
     });
 
-    it('re-samples the image when the colour count changes', async () => {
+    it('extracts on load and announces the count once', async () => {
+      const { ToastService } = await import('@services/index');
+      tool = mount();
+
+      await loadImage();
+
+      expect(resultCards().length).toBeGreaterThan(0);
+      expect(ToastService.success).toHaveBeenCalledWith(
+        expect.stringContaining('matcher.paletteExtracted')
+      );
+    });
+
+    it('draws nothing onto the image — the bar is the index now', async () => {
+      tool = mount();
+
+      await loadImage();
+
+      // 3C numbered the extracted colours onto the canvas; 4A keeps the
+      // pixels uncovered
+      expect(ctx.strokeText).not.toHaveBeenCalled();
+      expect(ctx.arc).not.toHaveBeenCalled();
+    });
+
+    it('re-samples the image when the colour count changes, silently', async () => {
+      const { ToastService } = await import('@services/index');
       tool = mount();
       await loadImage();
-      // The re-extract branch is gated on `paletteMode` as well as on the
-      // config change. Without this the assertion below was satisfied by the
-      // load-time auto-extract's own getImageData call, not by the config
-      // change at all — it only looked green because that call had not yet
-      // landed when the mock was cleared.
-      const box = container.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
-      box.checked = true;
-      box.dispatchEvent(new Event('change'));
-      for (let i = 0; i < 6; i++) await flush();
       ctx.getImageData.mockClear();
+      vi.mocked(ToastService.success).mockClear();
 
       tool.setConfig({ maxColors: 3 });
 
-      // A config change with an image present must re-sample, not just
-      // redraw — otherwise the palette silently reflects the old count.
-      //
       // Waited on, not estimated: extractPalette() yields a real
-      // requestAnimationFrame (~16 ms in jsdom) before it touches the canvas,
-      // so a fixed count of setTimeout(0) flushes is a wall-clock bet on that
-      // frame. It wins on a slow host (a flush costs ~10 ms here) and loses on
-      // a fast one (~1 ms), which is why this passed locally and failed in CI.
-      // If setConfig stops re-extracting, this times out and still fails.
+      // requestAnimationFrame before it touches the canvas
       await vi.waitFor(() => expect(ctx.getImageData).toHaveBeenCalled());
+      await waitForIdle();
+      // A slider drag must not be a toast storm
+      expect(ToastService.success).not.toHaveBeenCalled();
+    });
+
+    it('uses the singular key when the image yields one colour', async () => {
+      const { ToastService } = await import('@services/index');
+      const { ConfigController } = await import('@services/index');
+      const getConfig = vi.mocked(ConfigController.getInstance().getConfig);
+      getConfig.mockImplementation(((key: string) =>
+        key === 'extractor' ? { maxColors: 1 } : {}) as never);
+      try {
+        tool = mount();
+        await loadImage();
+
+        // "1 colors" is the bug this pair exists to prevent
+        expect(ToastService.success).toHaveBeenCalledWith(
+          expect.stringContaining('matcher.paletteExtractedOne:')
+        );
+      } finally {
+        getConfig.mockReset();
+        getConfig.mockReturnValue({} as never);
+      }
     });
 
     it('survives a decode failure without leaving the tool broken', async () => {
@@ -1028,10 +800,14 @@ describe('ExtractorTool', () => {
       globalThis.Image = FailingImage as unknown as typeof Image;
       tool = mount();
 
-      await loadImage();
+      const { ToastService } = await import('@services/index');
+      rightPanel.dispatchEvent(dropEvent([new File(['x'], 'shot.png', { type: 'image/png' })]));
+      for (let i = 0; i < 6; i++) await flush();
 
-      // The drop zone is still there to try again with
-      expect(dropZone()).not.toBeNull();
+      // The drop zone is still there to try again with — and the failure is
+      // said out loud rather than swallowed (a truncated PNG, a desktop HEIC)
+      expect(dropZone().parentElement!.style.display).toBe('flex');
+      expect(ToastService.error).toHaveBeenCalledWith('errors.failedToReadImage');
     });
 
     it('tears down cleanly with an image loaded', async () => {
@@ -1041,180 +817,575 @@ describe('ExtractorTool', () => {
       expect(() => tool!.destroy()).not.toThrow();
     });
 
-    /*
-     * Sampling, matching and palette extraction ARE asserted below.
-     *
-     * An earlier note here claimed they could not be: that the real
-     * ImageZoomController rejects the fake 2D context, so `getCanvas()`
-     * returns null and any test would assert the tool's refusal while
-     * appearing to cover extraction. That was measured and is wrong —
-     * `getCanvas()` returns the canvas perfectly well, because the controller
-     * only ever calls `getContext('2d')`, which the stub above satisfies.
-     *
-     * Two mock gaps were doing it, and neither involved the controller:
-     *
-     * 1. `dyeService.findClosestDye` (singular) was absent. `matchColor`
-     *    calls it, and so does the REAL PaletteService inside
-     *    `extractAndMatchPalette`. It threw as an UNHANDLED rejection off the
-     *    image-load path — invisible in the report, fatal to both clusters.
-     * 2. `ctx.strokeText` was absent. `drawSampleIndicators` outlines the
-     *    numbered markers with it, and it throws inside `extractPalette`'s
-     *    try block — which catches, toasts, and returns. Green suite, dead
-     *    path.
-     *
-     * Both are now closed, so this is driven through the component's real
-     * contract: the `image-sampled` / `loupe-move` / `loupe-end` CustomEvents
-     * that ImageZoomController emits on its container (BaseComponent.emit,
-     * bubbling), and the Auto-extract button.
-     */
+    // ------------------------------------------------------------------------
+    // Stage 2 — the bar
+    // ------------------------------------------------------------------------
 
-    /** The element ImageZoomController emits its events on. */
-    const canvasWrapper = (): HTMLElement => {
-      const canvas = rightPanel.querySelector('canvas');
-      // wrapper > canvas-container > canvas
-      return canvas!.parentElement!.parentElement as HTMLElement;
-    };
-
-    /** Commit a pixel sample exactly as the controller's click handler does. */
-    const sample = (hex: string, isPixelSample = true): void => {
-      canvasWrapper().dispatchEvent(
-        new CustomEvent('image-sampled', {
-          bubbles: true,
-          detail: { hex, x: 1, y: 1, isPixelSample },
-        })
-      );
-    };
-
-    const resultCards = () => rightPanel.querySelectorAll('v4-result-card');
-
-    /*
-     * NOTE ON BASELINE: `onImageLoaded` calls `extractPalette()`
-     * unconditionally ("V4: Auto-extract palette on image load"), so a loaded
-     * image already carries palette cards and a populated roll before any
-     * test does anything. That is real behaviour, and it only became
-     * observable once the mock gaps above were closed — previously the
-     * load-time extraction threw and left the panel empty. Assertions here
-     * are written against the change a sample causes, not against zero.
-     */
-
-    describe('sampling a pixel', () => {
-      it('replaces the auto-extracted palette with matches for the sample', async () => {
+    describe('the bar', () => {
+      it('renders one proportional segment per extracted colour, labelled with its share', async () => {
         tool = mount();
         await loadImage();
-        const auto = Array.from(resultCards()).map(
-          (c) => (c as unknown as { data: { originalColor: string } }).data.originalColor
-        );
-        expect(auto.length).toBeGreaterThan(0);
 
-        sample('#FF0000');
-
-        // Every card now reports the sampled pixel as its source colour
-        const after = Array.from(resultCards()).map(
-          (c) => (c as unknown as { data: { originalColor: string } }).data.originalColor
-        );
-        expect(after.length).toBeGreaterThan(0);
-        expect(new Set(after)).toEqual(new Set(['#FF0000']));
+        const segs = extractedSegments();
+        expect(segs.length).toBeGreaterThan(0);
+        expect(segs.length).toBe(resultCards().length);
+        for (const seg of segs) {
+          const label = seg.textContent?.trim() ?? '';
+          expect(label).toMatch(/^\d+%$/);
+          // The width IS the share — flex-grow equals the percentage printed
+          expect(seg.style.flexGrow).toBe(label.replace('%', ''));
+        }
       });
 
-      it('puts the NEAREST dye first, not merely some dye', async () => {
+      it('carries no picks and no break before anything is committed', async () => {
         tool = mount();
         await loadImage();
+
+        expect(pickSegments()).toHaveLength(0);
+        expect(legend().textContent).toBe('matcher.imageShare');
+        expect(clearPicksBtn().style.display).toBe('none');
+      });
+
+      it('counts the extracted run against the configured maximum', async () => {
+        tool = mount();
+        await loadImage();
+
+        expect(countLabel().textContent).toBe(
+          `matcher.rollCountOf: ${extractedSegments().length}/4`
+        );
+      });
+
+      it('focuses a card when its segment is clicked', async () => {
+        tool = mount();
+        await loadImage();
+        const segs = extractedSegments();
+        expect(segs.length).toBeGreaterThan(1);
+
+        segs[1].click();
+
+        expect(cardSelected(1)).toBe(true);
+        expect(cardSelected(0)).toBe(false);
+        expect(segs[1].style.borderTopColor).toBe('var(--theme-primary)');
+        expect(segs[1].getAttribute('aria-pressed')).toBe('true');
+        expect(segs[0].style.borderTopColor).toBe('transparent');
+      });
+
+      it('names the hex, the share and the dye on each segment', async () => {
+        tool = mount();
+        await loadImage();
+
+        const seg = extractedSegments()[0];
+        expect(seg.title).toMatch(/^#[0-9A-F]{6} · \d+% · Dye-\d+$/);
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // Stage 1 — the loupe
+    // ------------------------------------------------------------------------
+
+    describe('the loupe', () => {
+      it('is hidden until it has read a colour', async () => {
+        tool = mount();
+        await loadImage();
+
+        expect(loupe().style.transform).toContain('scale(0)');
+        expect(hintRead().style.display).toBe('none');
+      });
+
+      it('settles where the pointer read and holds that colour', async () => {
+        tool = mount();
+        await loadImage();
+
+        sample('#00FF00');
+
+        expect(loupe().style.background).toBe('rgb(0, 255, 0)');
+        expect(loupe().style.transform).toContain('scale(1)');
+        expect(loupe().textContent).toContain('#00FF00');
+      });
+
+      it('follows a drag at drag scale and settles on release without hiding', async () => {
+        tool = mount();
+        await loadImage();
+
+        drag('#00FF00');
+        expect(loupe().style.background).toBe('rgb(0, 255, 0)');
+        expect(loupe().style.transform).toContain('scale(1.16)');
+
+        release();
+
+        // 3C hid the loupe here; 4A keeps it where it last read
+        expect(loupe().style.transform).toContain('scale(1)');
+        expect(loupe().style.transform).not.toContain('scale(0)');
+      });
+
+      it('names the nearest dye in the hint once it has read a colour', async () => {
+        tool = mount();
+        await loadImage();
+        const snowWhite = mockDyes.find((d) => d.name === 'Snow White')!;
 
         // Near-white must resolve to Snow White (#FFFFFF), not to Ash Grey
-        // (#888888). This is the assertion a fixed-return mock cannot make.
+        // (#888888) — the assertion a fixed-return mock cannot make
         sample('#FEFEFE');
 
-        const first = resultCards()[0] as unknown as { data: { dye: { name: string } } };
-        expect(first.data.dye.name).toBe('Snow White');
+        expect(hintRead().style.display).toBe('');
+        expect(hintRead().textContent).toBe(`#FEFEFE · Dye-${snowWhite.itemID}`);
+        // The instruction yields to the reading
+        const rest = rightPanel.querySelector<HTMLElement>('.x4a-dt-text[style*="display: none"]');
+        expect(rest).not.toBeNull();
       });
 
-      it('shows the sampled-colour info card', async () => {
+      it('commits nothing by itself — reading is not picking', async () => {
         tool = mount();
         await loadImage();
+        const before = resultCards().length;
 
         sample('#FF0000');
+        drag('#00FF00');
+        release();
 
-        expect(rightPanel.textContent).toContain('matcher.sampledColor');
-      });
-
-      it('records the sample in the roll and persists it', async () => {
-        const { StorageService } = await import('@services/index');
-        tool = mount();
-        await loadImage();
-        vi.mocked(StorageService.setItem).mockClear();
-
-        sample('#123456');
-
-        const call = vi
-          .mocked(StorageService.setItem)
-          .mock.calls.find((c) => c[0] === 'v3_matcher_extracted_colors');
-        expect(call).toBeDefined();
-        expect((call![1] as { hex: string }[])[0].hex).toBe('#123456');
-      });
-
-      it('moves a re-sampled colour to the front instead of duplicating it', async () => {
-        const { StorageService } = await import('@services/index');
-        tool = mount();
-        await loadImage();
-
-        sample('#111111');
-        sample('#222222');
-        vi.mocked(StorageService.setItem).mockClear();
-        sample('#111111');
-
-        const call = vi
-          .mocked(StorageService.setItem)
-          .mock.calls.find((c) => c[0] === 'v3_matcher_extracted_colors');
-        const roll = (call![1] as { hex: string }[]).map((e) => e.hex);
-        // Front two are the re-sample then the untouched one; the tail is
-        // whatever the load-time auto-extract left behind
-        expect(roll.slice(0, 2)).toEqual(['#111111', '#222222']);
-        expect(roll.filter((h) => h === '#111111')).toHaveLength(1);
-      });
-
-      // 25 canvas samples in a row: under coverage instrumentation, and only
-      // when the full suite is competing for workers, this sits at the 5 s
-      // default (it passes in ~1 s alone). Timing headroom, not a behaviour
-      // change; the assertions are untouched.
-      it('caps the roll at twenty entries', { timeout: 20_000 }, async () => {
-        const { StorageService } = await import('@services/index');
-        tool = mount();
-        await loadImage();
-
-        for (let i = 0; i < 25; i++) {
-          sample(`#${i.toString(16).padStart(6, '0')}`);
-        }
-
-        const calls = vi
-          .mocked(StorageService.setItem)
-          .mock.calls.filter((c) => c[0] === 'v3_matcher_extracted_colors');
-        expect((calls.at(-1)![1] as unknown[]).length).toBe(20);
+        expect(resultCards().length).toBe(before);
+        expect(pickSegments()).toHaveLength(0);
       });
 
       it('ignores an event that is not a pixel sample', async () => {
-        const { StorageService } = await import('@services/index');
         tool = mount();
         await loadImage();
-        vi.mocked(StorageService.setItem).mockClear();
 
         sample('#FF0000', false);
 
-        // The 3C contract routes only COMMITTED pixel samples into matchColor,
-        // and matchColor is the only thing that writes the selected colour
-        const keys = vi.mocked(StorageService.setItem).mock.calls.map((c) => c[0]);
-        expect(keys).not.toContain('v3_matcher_color');
+        expect(loupe().style.transform).toContain('scale(0)');
+      });
+
+      it('fills the + tile with the colour it holds', async () => {
+        tool = mount();
+        await loadImage();
+
+        sample('#123456');
+
+        const chip = addTile().querySelector<HTMLElement>('span[aria-hidden]')!;
+        expect(chip.style.background).toBe('rgb(18, 52, 86)');
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // Picks — the `+` tile, the fixed-width run, the cap
+    // ------------------------------------------------------------------------
+
+    describe('picks', () => {
+      it('commits the loupe colour as a fixed-width pick numbered after the extracted run', async () => {
+        tool = mount();
+        await loadImage();
+        const extracted = extractedSegments().length;
+
+        commit('#123456');
+
+        const picks = pickSegments();
+        expect(picks).toHaveLength(1);
+        // A pick has no share, so it is a slot number — never a percentage
+        expect(picks[0].textContent?.trim()).toBe(String(extracted + 1));
+        expect(picks[0].style.flexGrow).not.toBe(String(extracted + 1));
+        expect(resultCards().length).toBe(extracted + 1);
+        expect(cardData(extracted).originalColor).toBe('#123456');
+        // The new pick takes the focus
+        expect(cardSelected(extracted)).toBe(true);
+      });
+
+      it('separates the picks from the extracted run with a 3px break', async () => {
+        tool = mount();
+        await loadImage();
+
+        commit('#123456');
+        commit('#654321');
+
+        const picks = pickSegments();
+        expect(picks[0].style.marginLeft).toBe('3px');
+        expect(picks[1].style.marginLeft).toBe('');
+      });
+
+      it('does nothing before the loupe has read a colour', async () => {
+        tool = mount();
+        await loadImage();
+        const before = resultCards().length;
+
+        addTile().click();
+
+        expect(pickSegments()).toHaveLength(0);
+        expect(resultCards().length).toBe(before);
+      });
+
+      it('counts "n + m" and legends "IMAGE SHARE · m picks" once picks exist', async () => {
+        tool = mount();
+        await loadImage();
+        const extracted = extractedSegments().length;
+
+        commit('#123456');
+        expect(legend().textContent).toBe('matcher.imageShare · matcher.picksCountOne');
+        expect(countLabel().textContent).toBe(`matcher.rollCount: ${extracted}/1`);
+
+        commit('#654321');
+        expect(legend().textContent).toBe('matcher.imageShare · matcher.picksCount: 2');
+        // Never "8 of 6"
+        expect(countLabel().textContent).toBe(`matcher.rollCount: ${extracted}/2`);
+        expect(clearPicksBtn().style.display).toBe('');
+      });
+
+      it('clears every pick and keeps the extracted run', async () => {
+        tool = mount();
+        await loadImage();
+        const extracted = extractedSegments().length;
+        commit('#123456');
+        commit('#654321');
+
+        clearPicksBtn().click();
+
+        expect(pickSegments()).toHaveLength(0);
+        expect(resultCards().length).toBe(extracted);
+        expect(legend().textContent).toBe('matcher.imageShare');
+        expect(clearPicksBtn().style.display).toBe('none');
+      });
+
+      it('caps the picks at six and says so instead of dropping one', async () => {
+        const { ToastService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+
+        for (let i = 0; i < 7; i++) {
+          commit(`#${(i + 1).toString(16).padStart(6, '0')}`);
+        }
+
+        expect(pickSegments()).toHaveLength(6);
+        expect(ToastService.info).toHaveBeenCalledWith('matcher.pickCapReached: 6');
+        expect(addTile().getAttribute('aria-disabled')).toBe('true');
+      });
+
+      it('survives a re-extraction', async () => {
+        tool = mount();
+        await loadImage();
+        commit('#123456');
+
+        tool.setConfig({ maxColors: 3 });
+        await vi.waitFor(() => expect(ctx.getImageData).toHaveBeenCalled());
+        await waitForIdle();
+
+        expect(pickSegments()).toHaveLength(1);
+        expect(cardData(resultCards().length - 1).originalColor).toBe('#123456');
+      });
+
+      it('goes with the image it was read from', async () => {
+        tool = mount();
+        await loadImage();
+        commit('#123456');
+
+        // Replace = a new drop
+        await loadImage();
+
+        expect(pickSegments()).toHaveLength(0);
+        expect(loupe().style.transform).toContain('scale(0)');
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // Review round — the cases the first cut got wrong
+    // ------------------------------------------------------------------------
+
+    describe('review round', () => {
+      it('a double-tap of + focuses the existing pick instead of committing it twice', async () => {
+        tool = mount();
+        await loadImage();
+        const extracted = extractedSegments().length;
+
+        sample('#7A4B2C');
+        addTile().click();
+        addTile().click();
+
+        expect(pickSegments()).toHaveLength(1);
+        expect(resultCards().length).toBe(extracted + 1);
+        expect(cardSelected(extracted)).toBe(true);
+      });
+
+      it('keeps every colour as a repeat once Prevent duplicates has used up the eligible dyes', async () => {
+        tool = mount();
+        await loadImage();
+        // Pastel + dark excluded leaves the fixture pool one dye (Snow White):
+        // every extracted colour must still be on the sheet, sharing it
+        tool.setConfig({
+          dyeFilters: { ...DEFAULT_DYE_FILTERS, excludePastel: true, excludeDark: true },
+        });
+
+        expect(resultCards().length).toBe(extractedSegments().length);
+        expect(resultCards().length).toBeGreaterThan(1);
+        for (let i = 0; i < resultCards().length; i++) {
+          expect(cardData(i).dye.isPastel).toBe(false);
+          expect(cardData(i).dye.isDark).toBe(false);
+        }
+
+        // A pick lands on the sheet under the same rule — it never vanishes
+        // while the legend still counts it
+        commit('#123456');
+        expect(pickSegments()).toHaveLength(1);
+        expect(legend().textContent).toBe('matcher.imageShare · matcher.picksCountOne');
+      });
+
+      it('says so when no dye is left for any colour', async () => {
+        mockGetAllDyes.mockReturnValue([]);
+        tool = mount();
+        await loadImage();
+
+        expect(resultCards().length).toBe(0);
+        expect(rightPanel.textContent).toContain('matcher.noMatchingDyes');
+        expect(countLabel().textContent).toBe('');
+        expect(exportButton().disabled).toBe(true);
+      });
+
+      it('clears the previous palette when a replacement image yields no pixels', async () => {
+        const { ToastService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        commit('#123456');
+        expect(resultCards().length).toBeGreaterThan(1);
+
+        // The replacement is fully transparent: every pixel is dropped
+        ctx.getImageData.mockImplementation(() => ({
+          data: new Uint8ClampedArray(16),
+          width: 2,
+          height: 2,
+        }));
+        rightPanel.dispatchEvent(dropEvent([new File(['x'], 'blank.png', { type: 'image/png' })]));
+        await vi.waitFor(() =>
+          expect(ToastService.error).toHaveBeenCalledWith('errors.noPixelsToAnalyze')
+        );
+
+        // Nothing of image A survives under image B
+        expect(resultCards().length).toBe(0);
+        expect(pickSegments()).toHaveLength(0);
+        expect(countLabel().textContent).toBe('');
+        expect(clearPicksBtn().style.display).toBe('none');
+        expect(exportButton().disabled).toBe(true);
+      });
+
+      it('re-resolves instead of re-clustering when the matching method changes', async () => {
+        const { ColorService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        ctx.getImageData.mockClear();
+
+        tool.setConfig({ matchingMethod: 'oklab' });
+        await flush();
+
+        // K-means++ is seeded at random: a re-run would re-cluster and the
+        // user would read that as an effect of the metric
+        expect(ctx.getImageData).not.toHaveBeenCalled();
+        const last = vi.mocked(ColorService.getDistanceForMethod).mock.calls.at(-1);
+        expect(last?.[2]).toBe('oklab');
+        const lastLookup = mockFindClosestDye.mock.calls.at(-1) as
+          [string, { matchingMethod?: string }?] | undefined;
+        expect(lastLookup?.[1]?.matchingMethod).toBe('oklab');
+      });
+
+      it('orders a saturated colour ahead of white while the vibrancy boost is on', async () => {
+        const { ColorService } = await import('@services/index');
+        vi.mocked(ColorService.rgbToHsv).mockImplementation((r: number, g: number, b: number) => {
+          const mx = Math.max(r, g, b);
+          const mn = Math.min(r, g, b);
+          return { h: 0, s: mx ? ((mx - mn) / mx) * 100 : 0, v: (mx / 255) * 100 };
+        });
+        tool = mount();
+        await loadImage();
+
+        // Four equal 25% clusters: the drawn score (0.55 × saturation + share)
+        // puts white (saturation 0) last
+        const segs = extractedSegments();
+        expect(segs.length).toBe(4);
+        expect(segs[segs.length - 1].style.background).toBe('rgb(255, 255, 255)');
+        expect(segs[0].style.background).not.toBe('rgb(255, 255, 255)');
+      });
+
+      it('keeps the focus on the colour, not the index, when the run re-orders', async () => {
+        const { ColorService } = await import('@services/index');
+        vi.mocked(ColorService.rgbToHsv).mockImplementation((r: number, g: number, b: number) => {
+          const mx = Math.max(r, g, b);
+          const mn = Math.min(r, g, b);
+          return { h: 0, s: mx ? ((mx - mn) / mx) * 100 : 0, v: (mx / 255) * 100 };
+        });
+        tool = mount();
+        await loadImage();
+        const segs = extractedSegments();
+        const chosen = segs[segs.length - 1];
+        const chosenKey = chosen.dataset.key;
+        chosen.click();
+        expect(chosen.getAttribute('aria-pressed')).toBe('true');
+
+        tool.setConfig({ vibrancyBoost: false });
+
+        const focused = extractedSegments().find((s) => s.getAttribute('aria-pressed') === 'true');
+        expect(focused?.dataset.key).toBe(chosenKey);
+        const focusedCards = Array.from(resultCards()).filter(
+          (c) => (c as unknown as { selected: boolean }).selected
+        );
+        expect(focusedCards).toHaveLength(1);
+        expect((focusedCards[0] as HTMLElement).dataset.key).toBe(chosenKey);
+      });
+
+      it('keeps the loupe where it settled across a language switch', async () => {
+        const { LanguageService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        sample('#00FF00');
+        const onLanguage = vi.mocked(LanguageService.subscribe).mock.calls[0][0] as () => void;
+
+        onLanguage();
+
+        expect(loupe().style.transform).toContain('scale(1)');
+        expect(loupe().style.background).toBe('rgb(0, 255, 0)');
+        expect(loupe().textContent).toContain('#00FF00');
+        expect(hintRead().style.display).toBe('');
+      });
+
+      it('keeps a market error badge through a sheet rebuild', async () => {
+        const { MarketBoardService, ConfigController } = await import('@services/index');
+        const svc = MarketBoardService.getInstance();
+        vi.mocked(svc.getShowPrices).mockReturnValue(true);
+        tool = mount();
+        await loadImage();
+        vi.mocked(svc.fetchPricesForDyes).mockRejectedValueOnce(
+          new Error('Request failed with status: 429')
+        );
+        const market = vi
+          .mocked(ConfigController.getInstance().subscribe)
+          .mock.calls.find((c) => c[0] === 'market')!;
+        (market[1] as (config: { showPrices: boolean }) => void)({ showPrices: true });
+        for (let i = 0; i < 4; i++) await flush();
+        expect(
+          (resultCards()[0] as unknown as { data: { marketError?: string } }).data.marketError
+        ).toBe('H429');
+
+        // A display-option change rebuilds every card; the badge must survive
+        tool.setConfig({ displayOptions: { showHex: false } as never });
+
+        expect(
+          (resultCards()[0] as unknown as { data: { marketError?: string } }).data.marketError
+        ).toBe('H429');
+        expect((resultCards()[0] as unknown as { showHex: boolean }).showHex).toBe(false);
+      });
+
+      it('leaves a paste aimed at a text field alone, and takes one image from a paste elsewhere', () => {
+        tool = mount();
+        const readSpy = vi
+          .spyOn(FileReader.prototype, 'readAsDataURL')
+          .mockImplementation(() => undefined);
+        const item = {
+          type: 'image/png',
+          getAsFile: () => new File(['x'], 'c.png', { type: 'image/png' }),
+        };
+        const pasteWith = (items: unknown[]): Event => {
+          const ev = new Event('paste', { bubbles: true, cancelable: true });
+          Object.defineProperty(ev, 'clipboardData', { value: { items } });
+          return ev;
+        };
+
+        const input = document.createElement('input');
+        container.appendChild(input);
+        const onInput = pasteWith([item]);
+        input.dispatchEvent(onInput);
+        expect(readSpy).not.toHaveBeenCalled();
+        expect(onInput.defaultPrevented).toBe(false);
+
+        document.body.dispatchEvent(pasteWith([item, item]));
+        expect(readSpy).toHaveBeenCalledTimes(1);
+        readSpy.mockRestore();
+      });
+
+      it('does not accumulate listeners across load → clear cycles', async () => {
+        tool = mount();
+        const listeners = (tool as unknown as { listeners: Map<string, unknown> }).listeners;
+        await loadImage();
+        const clearBtn = () =>
+          rightPanel.querySelector<HTMLButtonElement>('button[aria-label="matcher.clearImage"]')!;
+        clearBtn().click();
+        await flush();
+        const afterFirstCycle = listeners.size;
+
+        await loadImage();
+        clearBtn().click();
+        await flush();
+
+        // The canvas wrapper's listeners are unbound when the canvas is
+        // rebuilt, so a detached full-resolution canvas is never pinned
+        expect(listeners.size).toBe(afterFirstCycle);
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // Resolution — one path for extracted colours and picks
+    // ------------------------------------------------------------------------
+
+    describe('resolving the roll', () => {
+      it('assigns a distinct dye per segment while preventDuplicates is on', async () => {
+        tool = mount();
+        await loadImage();
+
+        const ids = Array.from(resultCards()).map(
+          (c) => cardData(Array.from(resultCards()).indexOf(c)).dye.itemID
+        );
+        expect(new Set(ids).size).toBe(ids.length);
+      });
+
+      it('gives a pick a dye no extracted slot holds while preventDuplicates is on', async () => {
+        tool = mount();
+        await loadImage();
+
+        // Pure red's nearest dye is already taken by the red pixel's slot
+        commit('#FF0000');
+
+        const ids = Array.from(resultCards()).map((_, i) => cardData(i).dye.itemID);
+        expect(new Set(ids).size).toBe(ids.length);
+      });
+
+      it('may repeat a dye once deduplication is switched off', async () => {
+        tool = mount();
+        await loadImage();
+        tool.setConfig({ preventDuplicates: false });
+        const nearest = mockFindClosestDye('#FF0000') as unknown as { itemID: number };
+
+        commit('#FF0000');
+
+        expect(cardData(resultCards().length - 1).dye.itemID).toBe(nearest.itemID);
+      });
+
+      it('re-resolves a pick away from a dye the filters exclude', async () => {
+        tool = mount();
+        await loadImage();
+        // Rose Pink exactly — a pastel
+        commit('#FF9999');
+        expect(cardData(resultCards().length - 1).dye.isPastel).toBe(true);
+
+        tool.setConfig({ dyeFilters: { ...DEFAULT_DYE_FILTERS, excludePastel: true } });
+
+        expect(cardData(resultCards().length - 1).dye.isPastel).toBe(false);
+        // The pick itself is untouched — only its answer changed
+        expect(pickSegments()).toHaveLength(1);
+      });
+
+      it('applies a dyeFilters change once and skips an identical repeat', async () => {
+        const { ColorService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        const forMethod = vi.mocked(ColorService.getDistanceForMethod);
+        const filters = { ...DEFAULT_DYE_FILTERS, excludePastel: true };
+
+        tool.setConfig({ dyeFilters: filters });
+        const after = forMethod.mock.calls.length;
+        tool.setConfig({ dyeFilters: { ...filters } });
+
+        expect(forMethod.mock.calls.length).toBe(after);
       });
     });
 
     describe('the matching method', () => {
       /**
-       * The sidebar's Options column shows ΔE2000 selected for a fresh
-       * install, and every sibling tool seeds its own field from
+       * Every sibling tool seeds its own field from
        * `ConfigController.getConfig(<tool>).matchingMethod ?? 'ciede2000'`.
-       * The extractor used to hard-code `'oklab'` and never read its config
-       * on construction — so the sidebar said one thing while the matcher
-       * did another, and a stored choice was lost on reload until the user
-       * touched the radio again.
+       * The loupe hint's nearest-dye lookup is the observation point.
        */
       const methodPassedToMatcher = (): string | undefined => {
         const last = mockFindClosestDye.mock.calls.at(-1) as
@@ -1260,9 +1431,30 @@ describe('ExtractorTool', () => {
 
           sample('#FF0000');
 
-          // 'hyab' is not a 5.0 method; the shared normalizer maps it to the
-          // suite default rather than letting an unknown string reach the matcher
           expect(methodPassedToMatcher()).toBe('ciede2000');
+        } finally {
+          getConfig.mockReset();
+          getConfig.mockReturnValue({} as never);
+        }
+      });
+
+      it('seeds the colour count from the extractor config, not a v3 key', async () => {
+        const { ConfigController, StorageService } = await import('@services/index');
+        const getConfig = vi.mocked(ConfigController.getInstance().getConfig);
+        getConfig.mockImplementation(((key: string) =>
+          key === 'extractor' ? { maxColors: 7 } : {}) as never);
+        try {
+          tool = mount();
+          await loadImage();
+
+          expect(countLabel().textContent).toMatch(/\/7$/);
+          expect(StorageService.getItem).not.toHaveBeenCalledWith('v3_matcher_palette_count');
+          // Seven clusters over four distinct pixels: K-means returns empty
+          // clusters for the surplus, and an empty cluster is not a colour the
+          // image contains — no "0%" segment, no ghost card
+          expect(extractedSegments().length).toBeLessThanOrEqual(4);
+          expect(extractedSegments().some((s) => s.textContent?.trim() === '0%')).toBe(false);
+          expect(resultCards().length).toBe(extractedSegments().length);
         } finally {
           getConfig.mockReset();
           getConfig.mockReturnValue({} as never);
@@ -1271,25 +1463,20 @@ describe('ExtractorTool', () => {
 
       /**
        * BUG-007: the distance shown on a card must be measured with the method
-       * the card labels it as. `getColorDistance` is plain RGB Euclidean on a
-       * 0-441.67 scale, while the result card grades a `ciede2000`-labelled
-       * number against bands cut at 5 / 10 / 20 — so using it here mis-graded
-       * every match and printed a figure on the wrong scale.
-       *
-       * Both ColorService mocks return the same constant, so asserting the
-       * value could not tell them apart. Asserting *which* function ran, and
-       * with what method, is what discriminates.
+       * the card labels it as. Both ColorService mocks return the same
+       * constant, so asserting *which* function ran, and with what method, is
+       * what discriminates.
        */
       it('measures the displayed distance with the selected method, not raw RGB', async () => {
         const { ColorService } = await import('@services/index');
         const forMethod = vi.mocked(ColorService.getDistanceForMethod);
         const rawRgb = vi.mocked(ColorService.getColorDistance);
         tool = mount();
-        await loadImage();
         forMethod.mockClear();
         rawRgb.mockClear();
 
-        sample('#FF0000');
+        await loadImage();
+        commit('#FF0000');
 
         expect(forMethod).toHaveBeenCalled();
         expect(forMethod.mock.calls.every((c) => c[2] === 'ciede2000')).toBe(true);
@@ -1297,208 +1484,67 @@ describe('ExtractorTool', () => {
       });
     });
 
-    describe('the loupe', () => {
-      // The loupe carries neither id nor class — it is a bare styled div, so
-      // its 74px diameter plus aria-hidden is the only thing distinguishing
-      // it. Brittle by nature: if this selector ever stops matching, give the
-      // element an id in the component rather than widening the pattern.
-      const loupe = () =>
-        rightPanel.querySelector<HTMLElement>('div[aria-hidden="true"][style*="74px"]');
+    // ------------------------------------------------------------------------
+    // Hand-offs
+    // ------------------------------------------------------------------------
 
-      it('follows the pointer and takes the colour under it', async () => {
-        tool = mount();
-        await loadImage();
-
-        canvasWrapper().dispatchEvent(
-          new CustomEvent('loupe-move', {
-            bubbles: true,
-            detail: { hex: '#00FF00', clientX: 40, clientY: 25 },
-          })
-        );
-
-        const el = loupe();
-        expect(el).not.toBeNull();
-        expect(el!.style.background).toBe('rgb(0, 255, 0)');
-        // jsdom reports a zero-size rect, so the clamp pins both to 0 —
-        // assert the transform, which is what actually reveals the loupe
-        expect(el!.style.transform).toContain('scale(1)');
-      });
-
-      it('hides again when the drag ends', async () => {
-        tool = mount();
-        await loadImage();
-        canvasWrapper().dispatchEvent(
-          new CustomEvent('loupe-move', {
-            bubbles: true,
-            detail: { hex: '#00FF00', clientX: 10, clientY: 10 },
-          })
-        );
-
-        canvasWrapper().dispatchEvent(new CustomEvent('loupe-end', { bubbles: true }));
-
-        expect(loupe()!.style.transform).toContain('scale(0)');
-      });
-    });
-
-    describe('auto-extracting a palette', () => {
-      /** Auto-extract in the roll header — the 3C bulk path. */
-      const autoBtn = (): HTMLButtonElement =>
-        Array.from(rightPanel.querySelectorAll('button')).find((b) =>
-          b.textContent?.includes('matcher.autoExtract')
-        ) as HTMLButtonElement;
-
-      it('extracts, matches and renders a card per extracted colour', async () => {
-        const { ToastService } = await import('@services/index');
-        tool = mount();
-        await loadImage();
-        vi.mocked(ToastService.success).mockClear();
-
-        autoBtn().click();
-        await waitForIdle();
-
-        expect(resultCards().length).toBeGreaterThan(0);
-        expect(ToastService.success).toHaveBeenCalledWith(
-          expect.stringContaining('matcher.paletteExtracted:')
-        );
-      });
-
-      it('uses the singular key when the image yields one colour', async () => {
-        const { ToastService } = await import('@services/index');
-        tool = mount();
-        await loadImage();
-        tool.setConfig({ maxColors: 1 });
-        await waitForIdle();
-        vi.mocked(ToastService.success).mockClear();
-
-        autoBtn().click();
-        await waitForIdle();
-
-        // "1 colors" is the bug this pair exists to prevent
-        expect(ToastService.success).toHaveBeenCalledWith(
-          expect.stringContaining('matcher.paletteExtractedOne:')
-        );
-      });
-
-      it('draws a numbered indicator per extracted colour onto the canvas', async () => {
-        tool = mount();
-        await loadImage();
-        ctx.strokeText.mockClear();
-
-        autoBtn().click();
-        await waitForIdle();
-
-        // The outlined marker labels — the call that used to throw
-        expect(ctx.strokeText).toHaveBeenCalled();
-      });
-
-      it('restores the button after extraction rather than leaving it disabled', async () => {
-        const { ToastService } = await import('@services/index');
-        tool = mount();
-        await loadImage();
-        vi.mocked(ToastService.success).mockClear();
-
-        autoBtn().click();
-        // Deliberately NOT waitForIdle: it waits on the very label and
-        // disabled flag this test exists to check, which would make the
-        // assertions below unfalsifiable. The success toast is an independent
-        // signal. It is raised in extractPalette's try block and the restore
-        // happens in its finally, with no await between them — so once the
-        // toast is observable from a later turn, the restore has already run.
-        await vi.waitFor(() => expect(ToastService.success).toHaveBeenCalled());
-
-        expect(autoBtn().disabled).toBe(false);
-        expect(autoBtn().style.opacity).toBe('1');
-      });
-
-      it('enables the export button, which ships disabled', async () => {
-        tool = mount();
-        const exportBtn = Array.from(rightPanel.querySelectorAll('button')).find((b) =>
-          b.textContent?.includes('common.export')
-        ) as HTMLButtonElement;
-        // Disabled at construction — exporting an empty roll is meaningless
-        expect(exportBtn.disabled).toBe(true);
-
-        await loadImage();
-        autoBtn().click();
-        await waitForIdle();
-
-        expect(exportBtn.disabled).toBe(false);
-      });
-
-      it('assigns a distinct dye per swatch while preventDuplicates is on', async () => {
-        tool = mount();
-        await loadImage();
-
-        autoBtn().click();
-        await waitForIdle();
-
-        const ids = Array.from(resultCards()).map(
-          (c) => (c as unknown as { data: { dye: { itemID: number } } }).data.dye.itemID
-        );
-        expect(new Set(ids).size).toBe(ids.length);
-      });
-
-      it('may repeat a dye once deduplication is switched off', async () => {
-        tool = mount();
-        await loadImage();
-        // The 2×2 fixture is red/green/blue/white against a five-dye pool, so
-        // this asserts the flag reaches the dedup pass, not a specific palette
-        tool.setConfig({ preventDuplicates: false });
-
-        autoBtn().click();
-        await waitForIdle();
-
-        expect(resultCards().length).toBeGreaterThan(0);
-      });
-    });
-
-    it('routes a card context action to the target tool', async () => {
+    it('enables the export button, which ships disabled', async () => {
       tool = mount();
+      expect(exportButton().disabled).toBe(true);
+
       await loadImage();
-      sample('#FF0000');
-      const onNavigate = vi.fn();
-      window.addEventListener('navigate-to-tool', onNavigate);
 
-      resultCards()[0].dispatchEvent(
-        new CustomEvent('context-action', {
-          detail: { action: 'add-comparison', dye: mockDyes[0] },
-        })
-      );
-
-      expect(onNavigate).toHaveBeenCalledTimes(1);
-      window.removeEventListener('navigate-to-tool', onNavigate);
+      expect(exportButton().disabled).toBe(false);
     });
 
-    it('exports the roll as sampled-pixel/matched-dye pairs', async () => {
+    it('exports the whole roll — extracted colours and picks — as source/dye pairs', async () => {
       const { openExportSheet } = await import('@components/export-sheet');
       tool = mount();
       await loadImage();
-      const exportBtn = Array.from(rightPanel.querySelectorAll('button')).find((b) =>
-        b.textContent?.includes('common.export')
-      ) as HTMLButtonElement;
+      commit('#123456');
 
-      exportBtn.click();
+      exportButton().click();
 
       const arg = vi.mocked(openExportSheet).mock.calls[0][0];
       expect(arg.tool).toBe('extractor');
-      expect(arg.entries.length).toBeGreaterThan(0);
-      // The pair is the point: the pixel sampled AND the dye it resolved to.
-      // Exporting only the dye would discard the drift this tool exists to show
+      expect(arg.entries.length).toBe(resultCards().length);
+      // The pair is the point: the pixel read AND the dye it resolved to
       expect(arg.entries[0]).toMatchObject({
         key: 'pick-1',
         source: expect.stringMatching(/^#[0-9a-f]{6}$/i),
         dye: expect.objectContaining({ name: expect.any(String) }),
         delta: expect.any(Number),
       });
+      expect(arg.entries.at(-1)).toMatchObject({
+        key: `pick-${resultCards().length}`,
+        source: '#123456',
+      });
     });
 
+    it('rebuilds the workspace on a language change and keeps the image and picks', async () => {
+      const { LanguageService } = await import('@services/index');
+      tool = mount();
+      await loadImage();
+      commit('#123456');
+      const onLanguage = vi.mocked(LanguageService.subscribe).mock.calls[0][0] as () => void;
+
+      onLanguage();
+
+      expect(rightPanel.querySelector('canvas')).not.toBeNull();
+      expect(dropZone().parentElement!.style.display).toBe('none');
+      expect(pickSegments()).toHaveLength(1);
+      expect(resultCards().length).toBeGreaterThan(1);
+    });
+
+    // ------------------------------------------------------------------------
+    // Image privacy
+    // ------------------------------------------------------------------------
+
     /**
-     * FINDING-009: every image the tool saw (upload, drop, Ctrl+V, camera) was
-     * written to IndexedDB and restored — and re-extracted — the next time the
-     * Palette Extractor was opened, so a pasted screenshot was the next
-     * visitor's first view on a shared device. Images are session-only now:
-     * nothing is written, nothing is read back, and the pre-OPT-012
-     * localStorage copy is cleaned up on mount.
+     * FINDING-009: every image the tool saw used to be written to IndexedDB
+     * and restored — and re-extracted — the next time the Palette Extractor
+     * was opened. Images are session-only: nothing is written, nothing is
+     * read back, and the pre-OPT-012 localStorage copy is cleaned up on mount.
      */
     describe('image privacy (FINDING-009)', () => {
       it('does not restore an image an earlier version left in IndexedDB', async () => {
@@ -1509,41 +1555,25 @@ describe('ExtractorTool', () => {
         for (let i = 0; i < 8; i++) await flush();
 
         expect(indexedDBService.get).not.toHaveBeenCalled();
-        // The old restore path also re-ran the extraction, so the previous
-        // visitor's palette came back on screen with the image
         expect(resultCards().length).toBe(0);
       });
 
-      it('never writes a loaded image to storage', async () => {
+      it('never writes a loaded image, a colour or a pick to storage', async () => {
         const { indexedDBService } = await import('@services/indexeddb-service');
         const { StorageService } = await import('@services/index');
         tool = mount();
         vi.mocked(StorageService.setItem).mockClear();
 
         await loadImage();
+        commit('#123456');
 
         expect(indexedDBService.set).not.toHaveBeenCalled();
-        const localKeys = vi.mocked(StorageService.setItem).mock.calls.map((c) => c[0]);
-        expect(localKeys).not.toContain('v3_matcher_image');
-      });
-
-      it('removes the legacy localStorage image key on mount', async () => {
-        const { StorageService } = await import('@services/index');
-
-        tool = mount();
-        for (let i = 0; i < 8; i++) await flush();
-
-        // Idempotent cleanup: a visitor who last used a pre-OPT-012 build still
-        // carries the data URL in localStorage, and nothing else deletes it
-        expect(StorageService.removeItem).toHaveBeenCalledWith('v3_matcher_image');
+        expect(StorageService.setItem).not.toHaveBeenCalled();
       });
 
       it('drops a legacy localStorage image instead of restoring it', async () => {
         const { indexedDBService } = await import('@services/indexeddb-service');
         const { StorageService } = await import('@services/index');
-        // Explicit, not inherited: `mockResolvedValue` above survives
-        // `clearAllMocks`, and an IndexedDB hit would skip the legacy path this
-        // test is about
         vi.mocked(indexedDBService.get).mockResolvedValue(null);
         vi.mocked(StorageService.getItem).mockImplementation((key: string) =>
           key === 'v3_matcher_image' ? ('data:image/png;base64,AAAA' as never) : (null as never)
@@ -1552,12 +1582,15 @@ describe('ExtractorTool', () => {
         tool = mount();
         for (let i = 0; i < 8; i++) await flush();
 
-        // It used to be migrated into IndexedDB and mounted; now it is deleted
         expect(indexedDBService.set).not.toHaveBeenCalled();
         expect(StorageService.removeItem).toHaveBeenCalledWith('v3_matcher_image');
         expect(resultCards().length).toBe(0);
       });
     });
+
+    // ------------------------------------------------------------------------
+    // Market prices — driven by the sidebar's market config
+    // ------------------------------------------------------------------------
 
     describe('market prices', () => {
       /**
@@ -1572,41 +1605,41 @@ describe('ExtractorTool', () => {
         return svc;
       };
 
-      /** The callbacks the shared market panel would drive. */
-      const marketCallbacks = async () => {
-        const { buildMarketPanel } = await import('@services/index');
-        return vi.mocked(buildMarketPanel).mock.calls[0][2] as {
-          onPricesToggled: () => void;
-          onServerChanged: () => void;
-        };
+      /** The sidebar's market-config push, as the tool subscribed to it. */
+      const marketChanged = async (config: { showPrices: boolean }) => {
+        const { ConfigController } = await import('@services/index');
+        const call = vi
+          .mocked(ConfigController.getInstance().subscribe)
+          .mock.calls.find((c) => c[0] === 'market');
+        expect(call, 'the tool subscribes to the market config').toBeDefined();
+        (call![1] as (config: { showPrices: boolean }) => void)(config);
       };
 
-      it('fetches prices for the extracted palette when prices are switched on', async () => {
+      it('fetches prices for every distinct dye on the sheet when prices are on', async () => {
         const svc = await withPricesOn();
         tool = mount();
         await loadImage();
         vi.mocked(svc.fetchPricesForDyes).mockClear();
 
-        (await marketCallbacks()).onPricesToggled();
+        await marketChanged({ showPrices: true });
         await flush();
 
         expect(svc.fetchPricesForDyes).toHaveBeenCalled();
-        // The dyes fetched are the DEDUPED ones, so the fetch matches what is
-        // actually on screen rather than the raw pre-dedup match list
         const fetched = vi.mocked(svc.fetchPricesForDyes).mock.calls[0][0] as { itemID: number }[];
         expect(new Set(fetched.map((d) => d.itemID)).size).toBe(fetched.length);
       });
 
-      it('re-fetches when the server changes', async () => {
+      it('re-fetches when the market config changes again (server change)', async () => {
         const svc = await withPricesOn();
         tool = mount();
         await loadImage();
         vi.mocked(svc.fetchPricesForDyes).mockClear();
 
-        (await marketCallbacks()).onServerChanged();
+        await marketChanged({ showPrices: true });
+        await marketChanged({ showPrices: true });
         await flush();
 
-        expect(svc.fetchPricesForDyes).toHaveBeenCalled();
+        expect(vi.mocked(svc.fetchPricesForDyes).mock.calls.length).toBe(2);
       });
 
       it('re-renders without fetching when prices are switched off', async () => {
@@ -1617,7 +1650,7 @@ describe('ExtractorTool', () => {
         await loadImage();
         vi.mocked(svc.fetchPricesForDyes).mockClear();
 
-        (await marketCallbacks()).onPricesToggled();
+        await marketChanged({ showPrices: false });
         await flush();
 
         expect(svc.fetchPricesForDyes).not.toHaveBeenCalled();
@@ -1644,7 +1677,7 @@ describe('ExtractorTool', () => {
         await loadImage();
         vi.mocked(svc.fetchPricesForDyes).mockRejectedValueOnce(thrown);
 
-        (await marketCallbacks()).onPricesToggled();
+        await marketChanged({ showPrices: true });
         for (let i = 0; i < 4; i++) await flush();
 
         const errors = Array.from(resultCards()).map(
@@ -1660,13 +1693,12 @@ describe('ExtractorTool', () => {
         await loadImage();
         vi.mocked(svc.fetchPricesForDyes).mockRejectedValueOnce(new Error('status: 500'));
 
-        (await marketCallbacks()).onPricesToggled();
+        await marketChanged({ showPrices: true });
         for (let i = 0; i < 4; i++) await flush();
 
         const errors = Array.from(resultCards()).map(
           (c) => (c as unknown as { data: { marketError?: string } }).data.marketError
         );
-        // A 500 raised while offline is still an offline problem
         expect(errors).toContain('NOFF');
         onLine.mockRestore();
       });
@@ -1675,15 +1707,12 @@ describe('ExtractorTool', () => {
         const svc = await withPricesOn();
         tool = mount();
         await loadImage();
-        // The cards read `getPricesView()` — a map keyed by itemID — not
-        // getPriceForDye. Seed it for every dye in the pool so whichever ones
-        // the extraction picks are covered.
         vi.mocked(svc.getPricesView).mockReturnValue(
           new Map(mockDyes.map((d) => [d.itemID, { currentMinPrice: 1234, worldId: 40 }])) as never
         );
         vi.mocked(svc.getWorldNameForPrice).mockReturnValue('Jenova' as never);
 
-        (await marketCallbacks()).onPricesToggled();
+        await marketChanged({ showPrices: true });
         for (let i = 0; i < 4; i++) await flush();
 
         const first = resultCards()[0] as unknown as {
@@ -1694,15 +1723,13 @@ describe('ExtractorTool', () => {
       });
     });
 
-    it('clears the image and offers the drop zone again', async () => {
+    it('clears the image and everything read from it, and offers the drop zone again', async () => {
       tool = mount();
       await loadImage();
+      commit('#123456');
       expect(resultCards().length).toBeGreaterThan(0);
-      // The loaded flow is what is on screen while an image is in
       expect(dropZone().parentElement!.style.display).toBe('none');
 
-      // The X on the image card, found by its label rather than by icon
-      // markup — the Replace button next to it also carries an SVG
       const clearBtn = rightPanel.querySelector<HTMLButtonElement>(
         'button[aria-label="matcher.clearImage"]'
       );
@@ -1711,84 +1738,17 @@ describe('ExtractorTool', () => {
       await flush();
 
       // FINDING-009: nothing was persisted, so dropping the reference IS the
-      // clear — the empty flow comes back and the palette goes with it
+      // clear — the empty flow comes back and the roll goes with it
       expect(dropZone().parentElement!.style.display).toBe('flex');
       expect(resultCards().length).toBe(0);
+      expect(bar().children.length).toBe(0);
+      expect(exportButton().disabled).toBe(true);
     });
   });
 
-  describe('palette mode', () => {
-    const paletteCheckbox = (): HTMLInputElement =>
-      container.querySelector('input[type="checkbox"]') as HTMLInputElement;
-
-    it('renders a palette-mode toggle', () => {
-      tool = mount();
-
-      expect(paletteCheckbox()).not.toBeNull();
-    });
-
-    it('persists the toggle', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      const box = paletteCheckbox();
-      vi.mocked(StorageService.setItem).mockClear();
-
-      box.checked = true;
-      box.dispatchEvent(new Event('change'));
-
-      expect(StorageService.setItem).toHaveBeenCalledWith('v3_matcher_palette_mode', true);
-    });
-
-    it('reveals the palette options when enabled and hides them when off', () => {
-      tool = mount();
-      const box = paletteCheckbox();
-      const options = container.querySelector<HTMLElement>('#palette-options-container');
-      expect(options).not.toBeNull();
-
-      box.checked = true;
-      box.dispatchEvent(new Event('change'));
-      expect(options!.style.display).not.toBe('none');
-
-      box.checked = false;
-      box.dispatchEvent(new Event('change'));
-      expect(options!.style.display).toBe('none');
-    });
-
-    /** The primary button inside the palette options block. */
-    const extractButton = (): HTMLButtonElement | null =>
-      container.querySelector<HTMLButtonElement>('#palette-options-container button');
-
-    it('offers an extract button alongside the options', () => {
-      tool = mount();
-
-      expect(extractButton()).not.toBeNull();
-    });
-
-    it('refuses to extract with no image loaded', async () => {
-      const { ToastService } = await import('@services/index');
-      tool = mount();
-      vi.mocked(ToastService.error).mockClear();
-
-      extractButton()!.click();
-      await flush();
-
-      // Extraction needs pixels; say so rather than producing an empty palette
-      expect(ToastService.error).toHaveBeenCalled();
-    });
-
-    it('toggling twice returns to the original state', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      const box = paletteCheckbox();
-
-      box.checked = true;
-      box.dispatchEvent(new Event('change'));
-      box.checked = false;
-      box.dispatchEvent(new Event('change'));
-
-      expect(StorageService.setItem).toHaveBeenLastCalledWith('v3_matcher_palette_mode', false);
-    });
-  });
+  // ==========================================================================
+  // Paste from clipboard
+  // ==========================================================================
 
   describe('paste from clipboard', () => {
     let originalClipboard: PropertyDescriptor | undefined;
@@ -1868,7 +1828,6 @@ describe('ExtractorTool', () => {
       await flush();
       await flush();
 
-      // A denied permission is a normal outcome, not a crash
       expect(ToastService.error).toHaveBeenCalled();
     });
   });

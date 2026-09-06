@@ -562,24 +562,9 @@ export class ImageZoomController extends BaseComponent {
           .join('')
           .toUpperCase();
 
-      // Draw a visual indicator of the sampled area on the canvas
-      if (size > 1) {
-        ctx.strokeStyle = '#EF4444';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x0, y0, w, h);
-      } else {
-        // Draw a small crosshair for single-pixel sampling
-        ctx.strokeStyle = '#EF4444';
-        ctx.lineWidth = 1;
-        const cx = Math.floor(centerX);
-        const cy = Math.floor(centerY);
-        ctx.beginPath();
-        ctx.moveTo(cx - 5, cy);
-        ctx.lineTo(cx + 6, cy);
-        ctx.moveTo(cx, cy - 5);
-        ctx.lineTo(cx, cy + 6);
-        ctx.stroke();
-      }
+      // 4A: nothing is drawn onto the image — the tool's loupe settles on the
+      // sampled point and is the only mark, so the pixels you are judging
+      // stay uncovered. (3C painted a red crosshair/rectangle here.)
 
       // Emit via callback
       if (this.onColorSampled) {

@@ -19,7 +19,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.7.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.8.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.5.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -103,7 +103,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v5.7.0** | **Sep 2026** | **Color wheel selector in Harmony's options (RGB / RYB / Munsell / OKLCH hue / OKLCH lightness, PR #167) — the ring and harmony dots are drawn from the selected wheel, share URLs always carry `?wheel=`, hand-pinned slots clear when the wheel changes** |
+| **v5.8.0** | **Sep 2026** | **Palette Extractor rebuilt on the confirmed 4A frame — a persistent loupe over a dominance bar butted under the image (proportional extracted segments, a 3 px break, fixed-width numbered picks, the `+` tile) over the card sheet; bulk extraction stops being a mode; the dead 3C left panel and three extractor-only modules removed** |
+| v5.7.0 | Sep 2026 | Color wheel selector in Harmony's options (RGB / RYB / Munsell / OKLCH hue / OKLCH lightness, PR #167) — the ring and harmony dots are drawn from the selected wheel, share URLs always carry `?wheel=`, hand-pinned slots clear when the wheel changes |
 | v5.6.1 | Sep 2026 | "What's New" had shown the 5.0.0 notes to everyone since 5.0.1 — the build-time parser dropped every release without a `### ` sub-heading; three unwritten releases backfilled |
 | v5.6.0 | Sep 2026 | Mobile: the header gear opened Advanced Options and the tool's Options panel on top of each other; every modal painted underneath the app chrome; toasts behind the corner buttons — the tool Options panel gets its own bottom-left button |
 | v5.5.0 | Sep 2026 | The Matching Algorithm picker now says the choice changes *which dye* is returned (24–44% of queries differ from `ciede2000`); triadic / tetradic / square descriptions describe geometry only |

@@ -7,6 +7,132 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.8.0] - 2026-09-05
+
+### Changed
+
+- **Palette Extractor rebuilt on the confirmed 4A frame** ("loupe over a weighted
+  bar over the card sheet", `Extractor Tool Directions.dc.html`, superseding the
+  5.0 3C port). One column, three stages: the image with a **persistent loupe**
+  (click/tap reads the pixels under it, a drag drives it live; the hint chip
+  names the hex and the nearest dye; nothing commits by itself), the
+  **dominance bar butted under the image** (extracted colours as proportional
+  segments labelled with their share, a 3 px break, then each committed pick as
+  a fixed-width segment labelled with its slot number — a pick has no share and
+  is never drawn as one — and the `+` tile that commits whatever the loupe
+  holds), and the **card sheet** with one card per segment.
+- Bulk extraction is no longer a mode: it runs on image load and again, silently,
+  on every config change (colour count, matching method, filters); committed
+  picks survive a re-extraction and clear with the image. Picks cap at 6, the
+  bar's measured capacity.
+- Legend `IMAGE SHARE · n picks` with **Clear picks** under the bar; the section
+  count reads `6 + 2` with picks (never `8 of 6`) and `6 of 6` without. Tapping
+  a segment focuses its card.
+- One resolution path for extracted colours and picks alike: the nearest dye
+  the dye filters allow that no earlier slot holds while *Prevent duplicates*
+  is on, measured with the selected matching method. Dye filters now reach the
+  extracted colours too (they only ever applied to a sampled colour).
+- **Vibrancy boost does something.** It re-extracted and changed nothing;
+  it now orders the extracted run by the design's `0.55 × saturation + share`
+  score so a small vivid accent can lead a large muted field (widths stay
+  share-based).
+- The tool's settings are read from `ConfigController` alone. It used to seed
+  colour count and vibrancy from its own `v3_matcher_*` localStorage keys, a
+  second copy of the sidebar's store that only its own `setConfig` wrote — so
+  anything that changed the config without going through the tool (Reset
+  settings, Restore backup, another tab) left the copy stale and the tool
+  opened on the old values until the control was touched again. The seven
+  legacy keys are purged on mount.
+- Only a colour-count change re-runs K-means. Changing the matching method,
+  the dye filters, Prevent duplicates or the vibrancy boost re-resolves the
+  existing clusters instead — K-means++ is seeded at random, so a re-run
+  re-clusters and the user would read the new segments as an effect of the
+  metric. Resolution goes through core's `findClosestDye` with `excludeIds`
+  (unrounded ranking under DISTINGUISH % too) rather than a hand-rolled scan.
+- A colour whose eligible dyes are all taken by earlier slots keeps the
+  nearest eligible dye as a repeat rather than vanishing from the bar while
+  the legend still counted it; when the filters leave no dye for any colour
+  the sheet says so (`matcher.noMatchingDyes`, restored ×6).
+- A replacement image clears the previous palette before it extracts, so a
+  drop whose extraction fails (a fully transparent PNG) no longer shows image
+  A's segments and picks under image B.
+- A double-tap of `+` focuses the existing pick instead of committing the
+  same colour twice (3C de-duplicated by hex too).
+- Focus is tracked by colour, not by bar index, so a vibrancy re-order or a
+  dropped entry never moves the ring onto another colour.
+- The loupe survives a language switch where it settled instead of vanishing
+  while the hint chip still named its colour.
+- A card rebuild for an unrelated setting no longer wipes the market error
+  badge: cards and the in-place price update apply one market rule, and an
+  unchanged `displayOptions` push no longer rebuilds the sheet at all.
+- A file the browser cannot read or decode (a truncated PNG, a desktop HEIC)
+  toasts `errors.failedToReadFile` / `errors.failedToReadImage` (restored ×6)
+  instead of doing nothing.
+- Ctrl+V aimed at a text field is that field's paste, and a clipboard carrying
+  several images loads one, not all of them.
+- The K-means run has a visible busy state (bar and sheet dim and stop taking
+  taps), a re-entrancy guard (a change that lands mid-run queues one more run),
+  and the empty-cluster guard keys on `pixelCount`, so a real cluster under
+  half a percent — the accent the vibrancy boost exists to surface — is kept.
+- Bar clicks are delegated to the strip and the canvas listeners are unbound
+  when the canvas is rebuilt, so load → clear cycles no longer pin detached
+  full-resolution canvases in the listener map.
+- On phones the zoom toolbar keeps its three essential controls (−, level, +)
+  beside the hint chip rather than being hidden — it is the only
+  touch-reachable zoom — and extracted segments shrink instead of pushing the
+  `+` tile off the frame at high colour counts.
+- The result-card `context-action` listener is gone: the 5.0 card performs
+  its own Inspect / Transform / Open-in-browser hand-offs and never emitted
+  the legacy action names the handler switched on.
+- Desktop scrolls the column; mobile pins the hero (image, bar, legend, header)
+  and scrolls the sheet under it. Image card 276 px desktop / 226 px mobile,
+  loupe 104 px / 74 px.
+- Export covers the whole roll — extracted colours and picks — as
+  sampled-pixel/resolved-dye pairs.
+- Locale keys ×6: `matcher.imageShare`, `picksCount`, `picksCountOne`,
+  `clearPicks`, `rollCount`, `rollCountOf`, `pickCapReached` added; Korean
+  now says 채취 (sample) for a hand-read pick and keeps 추출 for the extraction,
+  so the legend's two counts read as two different things.
+
+### Removed
+
+- Nothing is drawn onto the image any more: the numbered markers 3C painted
+  for each extracted colour and the zoom controller's red crosshair/rectangle
+  on every sample. The loupe is the only mark.
+- Sampling no longer replaces the sheet with the ten nearest dyes for one
+  colour, and the "Sampled Color" info card is gone — a committed pick is a
+  card like any other.
+- **The 3C left panel and everything it kept alive.** The v4 shell passes one
+  element as both `leftPanel` and `rightPanel`, and the workspace render
+  cleared it, so the upload display, the colour picker (with its EyeDropper
+  path), the Options panel (sample-size slider, palette-mode checkbox,
+  colour-count slider, Auto-extract) and the market panel were built and
+  immediately wiped on every mount. Deleted with their tests:
+  `image-upload-display.ts`, `color-picker-display.ts`,
+  `camera-preview-modal.ts` (the 4.x webcam flow, unreachable since the shell
+  change — "Take a photo" has been a capture-attribute file input since 5.0).
+- **`services/camera-service.ts` and its test**, with the last consumer gone.
+  It survived only as three boot lines: an awaited `enumerateDevices()` ahead
+  of auth and preset init, a permanent `devicechange` listener that
+  re-enumerated for nothing, and a log line. Every visit queried the browser
+  for camera devices to serve a feature no surface could reach — a
+  fingerprinting surface on a tool whose promise is that images never leave
+  the device. Mobile capture is unaffected and unchanged: "Take a photo" is a
+  `capture="environment"` file input, so the OS camera app supplies a
+  full-resolution still with its own autofocus, white balance and HDR, where
+  the deleted modal captured a 1280×720 video frame re-encoded at JPEG 0.92 —
+  strictly worse pixels for a tool that reads exact colour. `_headers` now
+  sends `camera=()` beside `geolocation=()` and `microphone=()`; the
+  directive gates `getUserMedia`, never the capture attribute. The 16A camera
+  sheet stays drawn in the design register, so a future live-viewfinder
+  surface reopens the directive and writes its own frame-sampling path.
+- The `camera.*` locale section ×6. `camera.deviceFallback` died with the
+  service; `camera.title` was already unreferenced and invisible to the
+  orphan gate, whose Rule 3 marks every `*.title` key used as soon as any
+  template shaped `${…}.title` exists anywhere in the source.
+- 44 orphaned locale keys ×6 (`matcher.*` ×25, `camera.*` ×14, `errors.*` ×4,
+  `common.hexColor`).
+
 ## [5.7.0] - 2026-09-05
 
 ### Added

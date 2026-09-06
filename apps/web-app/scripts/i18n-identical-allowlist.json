@@ -61,7 +61,8 @@
     "swatch.footSplit": "format - placeholders and a separator only",
     "swatch.gridTitle": "format - '{name} ({count})' is placeholders only",
     "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
-    "colorPalette.metallic": "matches core labels.metallic and the bot - 'Metallic' is the German dye term (TERM-003)"
+    "colorPalette.metallic": "matches core labels.metallic and the bot - 'Metallic' is the German dye term (TERM-003)",
+    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only"
   },
   "fr": {
     "meta.version": "identifier - locale file schema version, not prose",
@@ -78,7 +79,6 @@
     "config.via": "cognate - 'via' is French",
     "colorPalette.pastel": "cognate - 'Pastel' is French",
     "harmony.base": "cognate - 'Base' is French",
-    "matcher.options": "cognate - 'Options' is French",
     "accessibility.unitDeShort": "unit - CIEDE2000 delta-E symbol",
     "accessibility.visionShort.normal": "identifier - 3-letter vision-type code (Normale)",
     "accessibility.visionShort.deuteranopia": "identifier - 3-letter vision-type code (Deuteranopie)",
@@ -109,7 +109,8 @@
     "swatch.footSplit": "format - placeholders and a separator only",
     "swatch.gearSlot.Wrists": "cognate - the French FFXIV client says 'Bracelets'",
     "swatch.gridTitle": "format - '{name} ({count})' is placeholders only",
-    "swatch.cellTag": "format - '{palette} #{index}' is placeholders only"
+    "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
+    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only"
   },
   "ja": {
     "meta.version": "identifier - locale file schema version, not prose",
@@ -120,7 +121,8 @@
     "comparison.mCie76Short": "unit - CIE 1976 colour-space name",
     "mixer.modelLab": "unit - CIELAB colour-space name",
     "budget.colPerDe": "unit - gil-per-delta-E column header",
-    "swatch.cellTag": "format - '{palette} #{index}' is placeholders only"
+    "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
+    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only"
   },
   "ko": {
     "meta.version": "identifier - locale file schema version, not prose",
@@ -134,7 +136,8 @@
     "budget.colPerDe": "unit - gil-per-delta-E column header",
     "swatch.footSplit": "format - placeholders and a separator only",
     "swatch.gridTitle": "format - '{name} ({count})' is placeholders only",
-    "swatch.cellTag": "format - '{palette} #{index}' is placeholders only"
+    "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
+    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only"
   },
   "zh": {
     "meta.version": "identifier - locale file schema version, not prose",
@@ -145,6 +148,7 @@
     "comparison.mCie76Short": "unit - CIE 1976 colour-space name",
     "mixer.modelLab": "unit - CIELAB colour-space name",
     "budget.colPerDe": "unit - gil-per-delta-E column header",
-    "swatch.cellTag": "format - '{palette} #{index}' is placeholders only"
+    "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
+    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only"
   }
 }
