@@ -134,7 +134,6 @@ src/
 │   ├── toast-service.ts             # Toasts
 │   ├── tutorial-service.ts          # First-run tutorial flows per tool
 │   ├── keyboard-service.ts          # Global shortcuts
-│   ├── camera-service.ts            # Camera enumeration at boot (no preview surface since 5.8)
 │   ├── indexeddb-service.ts         # IDB wrapper — DB v3 stores: price_cache, palettes, settings
 │   │                                # (image_cache was dropped in v3; nothing persists images)
 │   └── pricing-mixin.ts             # Shared price-formatting helpers

@@ -721,10 +721,6 @@
     "saveSuccess": "팔레트가 저장되었습니다!",
     "saveFailed": "팔레트 저장에 실패했습니다"
   },
-  "camera": {
-    "title": "카메라 캡처",
-    "deviceFallback": "카메라 {n}"
-  },
   "offline": {
     "banner": "오프라인 상태입니다. 일부 기능이 제한될 수 있습니다."
   },

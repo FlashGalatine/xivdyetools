@@ -111,7 +111,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `image-upload-display.ts`, `color-picker-display.ts`,
   `camera-preview-modal.ts` (the 4.x webcam flow, unreachable since the shell
   change — "Take a photo" has been a capture-attribute file input since 5.0).
-  `camera-service.ts` stays: `initializeServices()` owns it.
+- **`services/camera-service.ts` and its test**, with the last consumer gone.
+  It survived only as three boot lines: an awaited `enumerateDevices()` ahead
+  of auth and preset init, a permanent `devicechange` listener that
+  re-enumerated for nothing, and a log line. Every visit queried the browser
+  for camera devices to serve a feature no surface could reach — a
+  fingerprinting surface on a tool whose promise is that images never leave
+  the device. Mobile capture is unaffected and unchanged: "Take a photo" is a
+  `capture="environment"` file input, so the OS camera app supplies a
+  full-resolution still with its own autofocus, white balance and HDR, where
+  the deleted modal captured a 1280×720 video frame re-encoded at JPEG 0.92 —
+  strictly worse pixels for a tool that reads exact colour. `_headers` now
+  sends `camera=()` beside `geolocation=()` and `microphone=()`; the
+  directive gates `getUserMedia`, never the capture attribute. The 16A camera
+  sheet stays drawn in the design register, so a future live-viewfinder
+  surface reopens the directive and writes its own frame-sampling path.
+- The `camera.*` locale section ×6. `camera.deviceFallback` died with the
+  service; `camera.title` was already unreferenced and invisible to the
+  orphan gate, whose Rule 3 marks every `*.title` key used as soon as any
+  template shaped `${…}.title` exists anywhere in the source.
 - 44 orphaned locale keys ×6 (`matcher.*` ×25, `camera.*` ×14, `errors.*` ×4,
   `common.hexColor`).
 

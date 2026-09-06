@@ -39,6 +39,7 @@ Rules:
 - Web app: the "Auto-extract" button is gone — the palette is pulled the moment an image loads and again quietly whenever you change the colour count, matching method or dye filters, with your picks kept.
 - Web app: nothing is drawn over your image any more (the numbered circles and red crosshair are gone); dye filters now apply to the extracted colours too; vibrancy boost finally changes the order; changing the matching method no longer reshuffles the palette; and the colour count and vibrancy settings no longer go stale after a Reset or Restore backup.
 - Web app: a colour never silently drops off the bar when the filters run out of unique dyes, a replacement picture starts clean, tapping + twice focuses the pick you already have, and a picture the browser cannot open says so.
+- Web app: the site no longer asks your browser what cameras you have on every visit, and now tells it that it wants no camera access at all. Taking a photo on your phone is unchanged and goes through your own camera app, which takes a better picture than the old built-in preview did.
 
 ## [5.4.0] - 2026-09-05
 ### 🎨 Choose your colour wheel in the Harmony Explorer

@@ -721,10 +721,6 @@
     "saveSuccess": "パレットを保存しました！",
     "saveFailed": "パレットの保存に失敗しました"
   },
-  "camera": {
-    "title": "カメラキャプチャ",
-    "deviceFallback": "カメラ{n}"
-  },
   "offline": {
     "banner": "オフラインです。一部の機能が制限される場合があります。"
   },

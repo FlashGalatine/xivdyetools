@@ -22,6 +22,7 @@
 - On a phone the zoom controls stay (they are the only way to zoom by touch), trimmed to minus, level and plus so they sit beside the colour readout.
 - Sampling a colour no longer swaps the whole list for ten candidates of that one colour, and the separate "Sampled Color" box is gone — a pick is simply a card like the others.
 - On a phone the image and the bar stay put while the cards scroll underneath.
+- **The app no longer asks your browser what cameras you have.** It did that on every visit, for a webcam feature that had not been reachable since 5.0, and the site now tells the browser it wants no camera access at all. Taking a photo on your phone works exactly as before, through your own camera app, which takes a better picture than the old built-in preview did.
 
 ## Web-App Version 5.7.0 — September 5, 2026
 

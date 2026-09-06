@@ -127,9 +127,15 @@ describe('public/_headers security contract', () => {
     expect(HEADERS).not.toMatch(/^\s+X-XSS-Protection:/im);
   });
 
-  // WEB-7: the app ships a webcam capture path (camera-service → camera
-  // preview modal). `camera=()` silently disabled it for the document itself.
-  it('allows the camera for the document itself and nothing else (WEB-7)', () => {
+  // WEB-7 opened `camera=(self)` for the webcam capture path (camera-service →
+  // camera preview modal), which `camera=()` had silently disabled. Both are
+  // gone as of 5.8: the modal was unreachable from the v4 shell, and the
+  // Extractor's mobile "Take a photo" is a `capture` file input served by the
+  // OS camera app, which this directive does not gate. Nothing calls
+  // getUserMedia, so the closed value is the correct one — reopening it to
+  // (self) is a decision that belongs with a live camera surface, not a
+  // silent drift, which is what this assertion exists to catch.
+  it('grants no camera, microphone or geolocation access at all', () => {
     const policy = GLOBAL.get('permissions-policy') ?? '';
     const entries = new Map(
       policy.split(',').map((p) => {
@@ -137,9 +143,27 @@ describe('public/_headers security contract', () => {
         return [name, value] as const;
       })
     );
-    expect(entries.get('camera')).toBe('(self)');
+    expect(entries.get('camera')).toBe('()');
     expect(entries.get('microphone')).toBe('()');
     expect(entries.get('geolocation')).toBe('()');
+  });
+
+  // The other half of the same contract: no source file may call getUserMedia
+  // while the directive is closed, or the feature would fail at runtime with
+  // the header as its only explanation.
+  it('ships no getUserMedia caller to go with the closed camera directive', async () => {
+    const { readFileSync, readdirSync, statSync } = await import('fs');
+    const { join } = await import('path');
+    const walk = (dir: string): string[] =>
+      readdirSync(dir).flatMap((name) => {
+        const full = join(dir, name);
+        if (statSync(full).isDirectory()) return walk(full);
+        return full.endsWith('.ts') && !full.endsWith('.test.ts') ? [full] : [];
+      });
+    const offenders = walk(join(process.cwd(), 'src')).filter((file) =>
+      readFileSync(file, 'utf8').includes('getUserMedia')
+    );
+    expect(offenders).toEqual([]);
   });
 
   it('keeps clickjacking, sniffing, referrer and HSTS controls', () => {
