@@ -31,11 +31,11 @@
     "vitepress": "^1.6.4",
     "vue": "^3.5.42",
     "@xivdyetools/svg": "workspace:*",
-    "@types/node": "^26.4.0",
+    "@types/node": "^26.4.1",
     "@vitest/coverage-v8": "^4.1.11",
     "@xivdyetools/test-utils": "workspace:*",
     "vitest": "^4.1.11",
-    "wrangler": "^4.127.1"
+    "wrangler": "^4.129.0"
   },
   "engines": {
     "node": ">=18.0.0"

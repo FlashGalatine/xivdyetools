@@ -24,9 +24,9 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.11",
-    "@types/node": "^26.4.0",
+    "@types/node": "^26.4.1",
     "vitest": "^4.1.11",
-    "wrangler": "^4.127.1"
+    "wrangler": "^4.129.0"
   },
   "engines": {
     "node": ">=18.0.0"
