@@ -141,6 +141,26 @@ describe('glasses row arithmetic', () => {
 });
 
 describe('buildItemLinkMenu', () => {
+  it.each([
+    ['Shaded Spectacles', 'The_Faces_We_Wear_-_Shaded_Spectacles'],
+    ['Oval Spectacles', 'The_Faces_We_Wear_-_Oval_Spectacles'],
+    ['Monocle', 'The_Faces_We_Wear_-_Monocles'],
+    ["Minstrel's Spectacles", "The_Faces_We_Wear_-_Minstrel's_Spectacles"],
+    ['Eyepatch (Left)', 'The_Faces_We_Wear_-_Eyepatch_(Left)'],
+  ])('links facewear %s to its unlock item, not same-named headgear', (name, title) => {
+    const names = { ...NAMES, en: name };
+    const facewear = buildItemLinkMenu({ kind: 'facewear', names });
+    const gear = buildItemLinkMenu({ kind: 'gear', itemId: 12345, names });
+    expect(facewear.entries.find((entry) => entry.id === 'gamerEscape')?.url).toBe(
+      `https://ffxiv.gamerescape.com/wiki/${title}`
+    );
+    expect(gear.entries.find((entry) => entry.id === 'gamerEscape')?.url).toBe(
+      gamerEscapeUrl(names)
+    );
+    expect(facewear.entries.find((entry) => entry.id === 'mirapri')?.url).toBe(mirapriUrl(names));
+    expect(facewear.lodestone[0].url).toBe(lodestoneUrl('na', names));
+  });
+
   it('gives a gear piece all four flat entries plus five Lodestone regions', () => {
     const menu = buildItemLinkMenu({ kind: 'gear', itemId: 12345, names: NAMES });
     expect(menu.entries.map((e) => e.id)).toEqual([

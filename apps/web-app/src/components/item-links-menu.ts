@@ -63,9 +63,10 @@ const SUBMENU_WIDTH = 176;
 
 let activeMenu: HTMLElement | null = null;
 let activeSubmenu: HTMLElement | null = null;
+let activeAnchor: HTMLElement | null = null;
+let submenuAnchor: HTMLButtonElement | null = null;
 let cleanupListeners: (() => void) | null = null;
-let pendingSetupTimeout: ReturnType<typeof setTimeout> | null = null;
-/** Bumped on every open; a late resolve for a stale menu is dropped. */
+/** Bumped on open and close; a late resolve for a stale menu is dropped. */
 let openToken = 0;
 
 function t(key: string): string {
@@ -73,27 +74,31 @@ function t(key: string): string {
 }
 
 /** Close whatever is open. Safe to call when nothing is. */
-export function closeItemLinksMenu(): void {
-  if (pendingSetupTimeout !== null) {
-    clearTimeout(pendingSetupTimeout);
-    pendingSetupTimeout = null;
-  }
-  if (cleanupListeners) {
-    cleanupListeners();
-    cleanupListeners = null;
-  }
+export function closeItemLinksMenu(restoreFocus = false): void {
+  openToken += 1;
+  const anchor = activeAnchor;
+  activeAnchor = null;
+  anchor?.setAttribute('aria-expanded', 'false');
+  const cleanup = cleanupListeners;
+  cleanupListeners = null;
+  cleanup?.();
   closeSubmenu();
   if (activeMenu) {
     activeMenu.remove();
     activeMenu = null;
   }
+  if (restoreFocus && anchor?.isConnected) anchor.focus({ preventScroll: true });
 }
 
-function closeSubmenu(): void {
+function closeSubmenu(restoreFocus = false): void {
+  const anchor = submenuAnchor;
+  submenuAnchor = null;
+  anchor?.setAttribute('aria-expanded', 'false');
   if (activeSubmenu) {
     activeSubmenu.remove();
     activeSubmenu = null;
   }
+  if (restoreFocus) anchor?.focus({ preventScroll: true });
 }
 
 /** Clamp a popup of `width`×`height` into the viewport near `rect`. */
@@ -109,6 +114,8 @@ function place(node: HTMLElement, rect: DOMRect, width: number, height: number):
 function menuItemButton(label: string): HTMLButtonElement {
   const item = document.createElement('button');
   item.type = 'button';
+  // Arrow keys navigate the menu; Tab returns to the surrounding tool.
+  item.tabIndex = -1;
   item.className =
     'w-full px-3 py-2 text-left text-sm text-[var(--theme-text)] hover:bg-[var(--theme-card-hover)] flex items-center justify-between gap-2 disabled:opacity-50 disabled:cursor-default disabled:hover:bg-transparent';
   item.setAttribute('role', 'menuitem');
@@ -122,7 +129,7 @@ function menuItemButton(label: string): HTMLButtonElement {
 /** Open `url` in a new tab and dismiss. */
 function openLink(url: string): void {
   window.open(url, '_blank', 'noopener,noreferrer');
-  closeItemLinksMenu();
+  closeItemLinksMenu(true);
 }
 
 /**
@@ -132,6 +139,7 @@ function openLink(url: string): void {
 export function showItemLinksMenu(options: ItemLinksMenuOptions): void {
   closeItemLinksMenu();
   const { target, anchorElement, title, onClose } = options;
+  if (!anchorElement.isConnected) return;
   const token = ++openToken;
 
   const menu = document.createElement('div');
@@ -141,6 +149,7 @@ export function showItemLinksMenu(options: ItemLinksMenuOptions): void {
   menu.dataset.role = 'item-links-menu';
   menu.setAttribute('role', 'menu');
   menu.setAttribute('aria-label', t('openIn'));
+  menu.tabIndex = -1;
 
   const header = document.createElement('div');
   header.className =
@@ -155,6 +164,8 @@ export function showItemLinksMenu(options: ItemLinksMenuOptions): void {
 
   document.body.appendChild(menu);
   activeMenu = menu;
+  activeAnchor = anchorElement;
+  anchorElement.setAttribute('aria-expanded', 'true');
   place(menu, anchorElement.getBoundingClientRect(), MENU_WIDTH, 8 * 38 + 40);
 
   if (target.kind === 'gear') {
@@ -163,54 +174,101 @@ export function showItemLinksMenu(options: ItemLinksMenuOptions): void {
     // An untinted facewear row already carries the base item's own names.
     fillEntries(body, buildItemLinkMenu({ kind: 'facewear', names: target.names }));
   } else {
+    menu.setAttribute('aria-busy', 'true');
     fillPending(body);
     void resolveFacewearBase(target.glassesRowId)
       .then((names) => {
         if (token !== openToken || !activeMenu) return;
         body.replaceChildren();
         fillEntries(body, buildItemLinkMenu({ kind: 'facewear', names }));
+        menu.setAttribute('aria-busy', 'false');
+        if (document.activeElement === menu) focusFirst(menu);
       })
       .catch((error: unknown) => {
         logger.warn('[ItemLinks] facewear base name unavailable', error);
         if (token !== openToken || !activeMenu) return;
         body.replaceChildren();
         fillUnavailable(body);
+        menu.setAttribute('aria-busy', 'false');
       });
   }
 
-  // Deferred so the click that opened the menu does not immediately close it.
-  pendingSetupTimeout = setTimeout(() => {
-    pendingSetupTimeout = null;
-    const onDocumentClick = (event: MouseEvent): void => {
-      const path = event.composedPath();
-      if (activeMenu && path.includes(activeMenu)) return;
-      if (activeSubmenu && path.includes(activeSubmenu)) return;
-      closeItemLinksMenu();
-    };
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape') return;
-      event.stopPropagation();
-      closeItemLinksMenu();
-      anchorElement.focus?.();
-    };
-    const onReflow = (): void => closeItemLinksMenu();
+  const onOutside = (event: Event): void => {
+    const path = event.composedPath();
+    if (path.includes(menu) || (activeSubmenu && path.includes(activeSubmenu))) return;
+    closeItemLinksMenu();
+  };
+  const onReflow = (): void => closeItemLinksMenu();
 
-    document.addEventListener('click', onDocumentClick, true);
-    document.addEventListener('keydown', onKeyDown, true);
-    window.addEventListener('resize', onReflow);
-    window.addEventListener('scroll', onReflow, true);
+  // Capture has already passed by the time an opening click reaches its
+  // trigger, so these can be installed immediately, before focus moves.
+  document.addEventListener('click', onOutside, true);
+  document.addEventListener('focusin', onOutside, true);
+  document.addEventListener('keydown', onMenuKeyDown, true);
+  window.addEventListener('resize', onReflow);
+  window.addEventListener('scroll', onReflow, true);
+  cleanupListeners = () => {
+    document.removeEventListener('click', onOutside, true);
+    document.removeEventListener('focusin', onOutside, true);
+    document.removeEventListener('keydown', onMenuKeyDown, true);
+    window.removeEventListener('resize', onReflow);
+    window.removeEventListener('scroll', onReflow, true);
+    onClose?.();
+  };
 
-    cleanupListeners = () => {
-      document.removeEventListener('click', onDocumentClick, true);
-      document.removeEventListener('keydown', onKeyDown, true);
-      window.removeEventListener('resize', onReflow);
-      window.removeEventListener('scroll', onReflow, true);
-      onClose?.();
-    };
-  }, 0);
+  // A pending or unavailable menu has no buttons yet, but must own focus.
+  focusFirst(menu);
+}
 
-  const first = body.querySelector<HTMLButtonElement>('button:not([disabled])');
-  first?.focus();
+function focusFirst(menu: HTMLElement): void {
+  const first = menu.querySelector<HTMLButtonElement>('button:not([disabled])');
+  (first ?? menu).focus({ preventScroll: true });
+}
+
+function onMenuKeyDown(event: KeyboardEvent): void {
+  if (!activeMenu || event.altKey || event.ctrlKey || event.metaKey) return;
+  const focused = document.activeElement;
+  const inSubmenu = activeSubmenu?.contains(focused) ?? false;
+  if (event.key === 'Tab') {
+    // Let native Tab/Shift+Tab continue from the trigger, including when it
+    // lives inside the layout shell's shadow root.
+    closeItemLinksMenu(true);
+    return;
+  }
+  if (event.key === 'Escape' || (event.key === 'ArrowLeft' && inSubmenu)) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (activeSubmenu) closeSubmenu(true);
+    else closeItemLinksMenu(true);
+    return;
+  }
+  if (!activeMenu.contains(focused) && !inSubmenu) return;
+  if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+    event.preventDefault();
+    event.stopPropagation();
+    const scope = inSubmenu ? activeSubmenu! : activeMenu;
+    if (!inSubmenu) closeSubmenu();
+    const items = Array.from(scope.querySelectorAll<HTMLButtonElement>('button:not([disabled])'));
+    if (items.length === 0) return;
+    const current = items.findIndex((item) => item === focused);
+    let next: number;
+    if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = items.length - 1;
+    else if (current < 0) next = event.key === 'ArrowUp' ? items.length - 1 : 0;
+    else next = (current + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+    items[next].focus({ preventScroll: true });
+  } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+    event.preventDefault();
+    event.stopPropagation();
+    if (
+      event.key === 'ArrowRight' &&
+      focused instanceof HTMLButtonElement &&
+      focused.dataset.link === 'lodestone'
+    ) {
+      if (activeSubmenu) focusFirst(activeSubmenu);
+      else focused.click();
+    }
+  }
 }
 
 /** Resolve the untinted base row's names through api-worker. */
@@ -249,6 +307,7 @@ function fillUnavailable(body: HTMLElement): void {
   const note = document.createElement('div');
   note.className = 'px-3 py-3 text-xs text-[var(--theme-text-muted)]';
   note.textContent = t('nameUnavailable');
+  note.setAttribute('role', 'status');
   note.dataset.role = 'item-links-unavailable';
   body.appendChild(note);
 }
@@ -282,8 +341,7 @@ function fillEntries(body: HTMLElement, model: ItemLinkMenu): void {
 
 function toggleLodestone(anchor: HTMLButtonElement, model: ItemLinkMenu): void {
   if (activeSubmenu) {
-    closeSubmenu();
-    anchor.setAttribute('aria-expanded', 'false');
+    closeSubmenu(true);
     return;
   }
   const submenu = document.createElement('div');
@@ -303,7 +361,8 @@ function toggleLodestone(anchor: HTMLButtonElement, model: ItemLinkMenu): void {
 
   document.body.appendChild(submenu);
   activeSubmenu = submenu;
+  submenuAnchor = anchor;
   anchor.setAttribute('aria-expanded', 'true');
   place(submenu, anchor.getBoundingClientRect(), SUBMENU_WIDTH, model.lodestone.length * 38 + 8);
-  submenu.querySelector<HTMLButtonElement>('button')?.focus();
+  focusFirst(submenu);
 }

@@ -8,7 +8,8 @@
  *   - ADDRESSED BY ITEM ID — GarlandTools, Teamcraft. A wrong id silently
  *     opens the wrong item, which is worse than no link.
  *   - ADDRESSED BY NAME — Mirapri (Japanese), GamerEscape (English wiki
- *     titles), the Lodestone (per-region search). A wrong name 404s.
+ *     titles), the Lodestone (per-region search). A wrong name can 404 or
+ *     identify a different item with the same display name.
  *
  * That split is why facewear is handled apart from gear. `.chara` carries
  * `Glasses.GlassesId`, a **Glasses sheet** row id — not an Item id — so the
@@ -96,6 +97,18 @@ export function gamerEscapeUrl(names: CharaItemNames): string {
 }
 
 /**
+ * Facewear uses the unlock item's wiki title; the bare Glasses name can be
+ * headgear (e.g. Shaded Spectacles). Verified against the Item and Glasses
+ * sheets on 2026-09-06: every named base family uses this prefix, with one
+ * exception — Glasses 61 "Monocle" unlocks via Item 44264 "Monocles".
+ * https://v2.xivapi.com/api/sheet/Item/44264?fields=Name
+ */
+function gamerEscapeFacewearUrl(names: CharaItemNames): string {
+  const name = names.en === 'Monocle' ? 'Monocles' : names.en;
+  return gamerEscapeUrl({ ...names, en: `The Faces We Wear - ${name}` });
+}
+
+/**
  * Lodestone item search for one region, in that region's language.
  *
  * The query joins words with `+`. Encoding first and swapping `%20` for `+`
@@ -171,7 +184,13 @@ export function buildItemLinkMenu(target: ItemLinkTarget): ItemLinkMenu {
     entries.push({ id: 'teamcraft', url: teamcraftUrl(target.itemId) });
   }
 
-  entries.push({ id: 'gamerEscape', url: gamerEscapeUrl(target.names) });
+  entries.push({
+    id: 'gamerEscape',
+    url:
+      target.kind === 'facewear'
+        ? gamerEscapeFacewearUrl(target.names)
+        : gamerEscapeUrl(target.names),
+  });
 
   return {
     entries,

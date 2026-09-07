@@ -1,7 +1,7 @@
 /**
  * DYES ON THIS GLAMOUR — the "Open in…" menu on an equipment row.
  *
- * The row's icon and item name hand the piece off to seven community
+ * The row's icon and item name hand the piece off to five community
  * databases. What is worth pinning down here is not the URL strings (those are
  * `shared/__tests__/item-links.test.ts`, which needs no DOM) but the wiring:
  * which rows get a trigger at all, which entries each row TYPE offers, and the
@@ -360,7 +360,7 @@ describe('CharaImport — "Open in…" menu', () => {
       expect(resolveMock.mock.calls.length).toBe(callsBefore);
       document.querySelector<HTMLElement>('[data-link="gamerEscape"]')!.click();
       expect(openSpy).toHaveBeenCalledWith(
-        'https://ffxiv.gamerescape.com/wiki/Shaded_Spectacles',
+        'https://ffxiv.gamerescape.com/wiki/The_Faces_We_Wear_-_Shaded_Spectacles',
         '_blank',
         'noopener,noreferrer'
       );
@@ -395,10 +395,10 @@ describe('CharaImport — "Open in…" menu', () => {
         expect(entryIds()).toEqual(['mirapri', 'gamerEscape', 'lodestone']);
       });
 
-      // "White Oval Spectacles" is not an item; "Oval Spectacles" is.
+      // The unlock item is distinct from the same-named headgear.
       document.querySelector<HTMLElement>('[data-link="gamerEscape"]')!.click();
       expect(openSpy).toHaveBeenCalledWith(
-        'https://ffxiv.gamerescape.com/wiki/Oval_Spectacles',
+        'https://ffxiv.gamerescape.com/wiki/The_Faces_We_Wear_-_Oval_Spectacles',
         '_blank',
         'noopener,noreferrer'
       );
@@ -423,6 +423,52 @@ describe('CharaImport — "Open in…" menu', () => {
   });
 
   describe('dismissal', () => {
+    it.each(['destroy', 'lens', 'show-all', 'swap'])(
+      'cancels a pending lazy open when %s removes its row',
+      async (action) => {
+        resolveMock.mockResolvedValue(RESOLVED);
+        const { importer, container, glamour } = await mount(FIXTURE);
+        hosts.push(container, glamour);
+        const trigger = glamour.querySelector<HTMLElement>(
+          '[data-slot="HeadGear"] [data-role="item-name"]'
+        )!;
+        trigger.click();
+        if (action === 'destroy') importer.destroy();
+        else if (action === 'lens') {
+          glamour.querySelector<HTMLElement>('[data-glamour-view="dyes"]')!.click();
+        } else if (action === 'show-all') showAll(glamour);
+        else {
+          const swap = Array.from(container.querySelectorAll('button')).find(
+            (button) => button.textContent?.toLowerCase() === 'swap'
+          );
+          expect(swap).toBeDefined();
+          swap!.click();
+        }
+        expect(trigger.isConnected).toBe(false);
+        await vi.dynamicImportSettled();
+        expect(menu()).toBeNull();
+      }
+    );
+
+    it('only opens the latest trigger when two imports are pending', async () => {
+      resolveMock.mockResolvedValue(RESOLVED);
+      const { container, glamour } = await mount(FIXTURE);
+      hosts.push(container, glamour);
+      const icon = glamour.querySelector<HTMLElement>(
+        '[data-slot="HeadGear"] [data-role="item-icon"]'
+      )!;
+      const name = glamour.querySelector<HTMLElement>(
+        '[data-slot="HeadGear"] [data-role="item-name"]'
+      )!;
+      icon.click();
+      name.click();
+      await vi.dynamicImportSettled();
+      expect(icon.getAttribute('aria-expanded')).toBe('false');
+      expect(name.getAttribute('aria-expanded')).toBe('true');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      expect(document.activeElement).toBe(name);
+    });
+
     it('closes on Escape', async () => {
       resolveMock.mockResolvedValue(RESOLVED);
       const { glamour } = await mount(FIXTURE);

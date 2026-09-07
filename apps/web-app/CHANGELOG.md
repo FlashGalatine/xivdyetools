@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - URL construction lives in `shared/item-links.ts`, which is pure and tested
   without a DOM. Sites split into two families that fail differently: two
   address an item by its **Item id** (a wrong one silently opens the wrong item)
-  and three by its **name** (a wrong one 404s). Names are underscored for
+  and three by its **name** (a wrong one can 404 or identify another item). Names are underscored for
   GamerEscape's MediaWiki titles and `+`-joined for the Lodestone's query, in
   both cases encoded so an item name can never break out of the path or add a
   parameter of its own.
@@ -62,6 +62,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that merely starts with a colour word, and the tints of "Simple Spectacles" are
   named "Silver Spectacles". While the lookup is in flight the entries are
   skeletons; if it fails they stay unavailable rather than offering a dead link.
+- GamerEscape facewear links use the **unlock item** title (`The Faces We Wear - …`),
+  including the `Monocle` → `Monocles` exception. Bare Glasses names such as
+  `Shaded Spectacles` identify headgear on the wiki.
+- Pending menu imports are invalidated when the importer is destroyed or its
+  rows are replaced, and only the latest trigger may open a menu.
+- Loading facewear menus keep keyboard focus until their entries arrive;
+  leaving or closing a menu prevents a late lookup from taking focus back.
+- Both menu levels support Up/Down, Home/End and Left/Right navigation without
+  scrolling. Escape returns from the submenu before closing the parent;
+  Tab/Shift+Tab resume from the trigger, and opening a link restores focus there.
 
 ### Changed
 

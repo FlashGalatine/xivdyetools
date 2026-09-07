@@ -119,9 +119,12 @@ const SHOW_ALL_KEY = `${STORAGE_PREFIX}_swatch_glamour_show_all`;
  * menu paid for it.
  */
 let itemLinksMenu: typeof import('@components/item-links-menu') | null = null;
+/** Invalidates lazy opens even before the menu module has loaded. */
+let itemLinksOpenToken = 0;
 
 /** Dismiss the menu if it was ever loaded. Never loads it just to close it. */
 function closeItemLinksMenuIfLoaded(): void {
+  itemLinksOpenToken += 1;
   itemLinksMenu?.closeItemLinksMenu();
 }
 
@@ -476,6 +479,8 @@ export class CharaImport {
     node.setAttribute('role', 'button');
     node.tabIndex = 0;
     node.removeAttribute('aria-hidden');
+    node.setAttribute('aria-haspopup', 'menu');
+    node.setAttribute('aria-expanded', 'false');
     node.setAttribute(
       'aria-label',
       LanguageService.tInterpolate('swatch.itemLinks.openInFor', { item: title })
@@ -486,10 +491,14 @@ export class CharaImport {
     const open = (event: Event): void => {
       event.preventDefault();
       event.stopPropagation();
-      void import('@components/item-links-menu').then((module) => {
-        itemLinksMenu = module;
-        module.showItemLinksMenu({ target, anchorElement: node, title });
-      });
+      const token = ++itemLinksOpenToken;
+      void import('@components/item-links-menu')
+        .then((module) => {
+          itemLinksMenu = module;
+          if (token !== itemLinksOpenToken || !node.isConnected) return;
+          module.showItemLinksMenu({ target, anchorElement: node, title });
+        })
+        .catch((error: unknown) => logger.warn('[ItemLinks] menu unavailable', error));
     };
     node.addEventListener('click', open);
     node.addEventListener('keydown', (event) => {
@@ -638,6 +647,7 @@ export class CharaImport {
   // ==========================================================================
 
   private render(): void {
+    closeItemLinksMenuIfLoaded();
     clearContainer(this.container);
     if (this.glamourContainer) clearContainer(this.glamourContainer);
 
