@@ -103,7 +103,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v5.9.0** | **Sep 2026** | **Swatch Manager equipment rows open a piece in seven community databases — Eorzea Collection (glamours + Gearset Gallery), Mirapri, GarlandTools, Teamcraft, GamerEscape and the Lodestone in five regions; facewear links by name only, resolving its untinted base row first** |
+| **v5.9.0** | **Sep 2026** | **Swatch Manager equipment rows open a piece in five community databases — Mirapri, GarlandTools, Teamcraft, GamerEscape and the Lodestone in five regions; facewear links by name only, resolving its untinted base row first. Eorzea Collection is deliberately excluded: it keys items by its own auto-increment id, so the game's item id silently opens a different item there** |
 | **v5.8.0** | **Sep 2026** | **Palette Extractor rebuilt on the confirmed 4A frame — a persistent loupe over a dominance bar butted under the image (proportional extracted segments, a 3 px break, fixed-width numbered picks, the `+` tile) over the card sheet; bulk extraction stops being a mode; the dead 3C left panel and three extractor-only modules removed** |
 | v5.7.0 | Sep 2026 | Color wheel selector in Harmony's options (RGB / RYB / Munsell / OKLCH hue / OKLCH lightness, PR #167) — the ring and harmony dots are drawn from the selected wheel, share URLs always carry `?wheel=`, hand-pinned slots clear when the wheel changes |
 | v5.6.1 | Sep 2026 | "What's New" had shown the 5.0.0 notes to everyone since 5.0.1 — the build-time parser dropped every release without a `### ` sub-heading; three unwritten releases backfilled |

@@ -223,7 +223,7 @@ describe('CharaImport — "Open in…" menu', () => {
     expect(menu()).toBeNull();
   });
 
-  it('opens the six gear entries plus a Lodestone submenu', async () => {
+  it('opens the four gear entries plus a Lodestone submenu', async () => {
     resolveMock.mockResolvedValue(RESOLVED);
     const { glamour } = await mount(FIXTURE);
     hosts.push(glamour);
@@ -234,8 +234,6 @@ describe('CharaImport — "Open in…" menu', () => {
 
     expect(menu()).not.toBeNull();
     expect(entryIds()).toEqual([
-      'eorzeaCollection',
-      'gearsetGallery',
       'mirapri',
       'garlandTools',
       'teamcraft',
@@ -262,7 +260,7 @@ describe('CharaImport — "Open in…" menu', () => {
     expect(menu()).toBeNull();
   });
 
-  it('files a right-hand ring under the single ring slug', async () => {
+  it('gives an accessory the same entries as an armour piece', async () => {
     resolveMock.mockResolvedValue(RESOLVED_RING);
     const { glamour } = await mount(FIXTURE_RING);
     hosts.push(glamour);
@@ -270,12 +268,20 @@ describe('CharaImport — "Open in…" menu', () => {
     await openMenu(
       glamour.querySelector<HTMLElement>('[data-slot="RightRing"] [data-role="item-name"]')
     );
-    // No Gearset Gallery on an accessory — the entry is absent, not disabled.
-    expect(entryIds()).not.toContain('gearsetGallery');
+    // Nothing about the entry set is slot-dependent any more — every site
+    // still offered takes the item id or the name, neither of which varies
+    // by slot.
+    expect(entryIds()).toEqual([
+      'mirapri',
+      'garlandTools',
+      'teamcraft',
+      'gamerEscape',
+      'lodestone',
+    ]);
 
-    document.querySelector<HTMLElement>('[data-link="eorzeaCollection"]')!.click();
+    document.querySelector<HTMLElement>('[data-link="teamcraft"]')!.click();
     expect(openSpy).toHaveBeenCalledWith(
-      'https://ffxiv.eorzeacollection.com/glamours/ring/777',
+      'https://ffxivteamcraft.com/db/en/item/777',
       '_blank',
       'noopener,noreferrer'
     );

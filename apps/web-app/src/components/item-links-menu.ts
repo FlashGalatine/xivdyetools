@@ -32,14 +32,12 @@ import {
   type ItemLinkId,
   type ItemLinkMenu,
 } from '@shared/item-links';
-import type { CharaGearSlotId } from '@xivdyetools/core';
-
 /**
  * What the menu was raised on. Facewear carries its Glasses row id because the
  * menu, not the caller, owns the base-name round trip.
  */
 export type ItemLinksMenuTarget =
-  | { kind: 'gear'; slot: CharaGearSlotId; itemId: number; names: CharaItemNames }
+  | { kind: 'gear'; itemId: number; names: CharaItemNames }
   | { kind: 'facewear'; glassesRowId: number; names: CharaItemNames };
 
 export interface ItemLinksMenuOptions {
@@ -53,8 +51,6 @@ export interface ItemLinksMenuOptions {
 
 /** Labels are `swatch.itemLinks.*`; regions are `swatch.itemLinks.lodestone.*`. */
 const LINK_LABEL_KEY: Record<ItemLinkId, string> = {
-  eorzeaCollection: 'eorzeaCollection',
-  gearsetGallery: 'gearsetGallery',
   mirapri: 'mirapri',
   garlandTools: 'garlandTools',
   teamcraft: 'teamcraft',

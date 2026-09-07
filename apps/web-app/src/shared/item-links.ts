@@ -2,18 +2,40 @@
  * XIV Dye Tools - External item links for the Swatch Manager's equipment rows.
  *
  * A glamour piece is worth looking up elsewhere: what else uses this model,
- * what it costs, where it drops. Seven community databases answer that, and
+ * what it costs, where it drops. Five community databases answer that, and
  * they split into two families that fail in different ways:
  *
- *   - ADDRESSED BY ITEM ID — Eorzea Collection, GarlandTools, Teamcraft. A
- *     wrong id silently opens the wrong item, which is worse than no link.
+ *   - ADDRESSED BY ITEM ID — GarlandTools, Teamcraft. A wrong id silently
+ *     opens the wrong item, which is worse than no link.
  *   - ADDRESSED BY NAME — Mirapri (Japanese), GamerEscape (English wiki
  *     titles), the Lodestone (per-region search). A wrong name 404s.
  *
  * That split is why facewear is handled apart from gear. `.chara` carries
  * `Glasses.GlassesId`, a **Glasses sheet** row id — not an Item id — so the
- * id-addressed three are withheld on that row rather than pointed at whatever
+ * id-addressed pair is withheld on that row rather than pointed at whatever
  * item happens to share the number.
+ *
+ * NO EORZEA COLLECTION. It was the obvious sixth and seventh entry (the
+ * glamour catalogue, and its Gearset Gallery) and both were built and then
+ * removed, so this note exists to stop the next person rebuilding them:
+ *
+ *   - EC addresses items by its OWN dense auto-increment key, not the game's
+ *     item id. Its API returns both, the game's under a field it calls
+ *     `XIVApiId`: EC 25404 → item 44605, EC 25405 → item 44610, EC 25410 →
+ *     item 44635. EC counts by one while item ids step by five across job
+ *     variants, so the delta drifts (19201 → 19225 over seven consecutive
+ *     rows) and NO offset or formula recovers it.
+ *   - Worse, it fails silently. Both id spaces are dense integers over
+ *     overlapping ranges, so passing the game's id does not 404 — EC filters
+ *     to a DIFFERENT item.
+ *   - The mapping can only come from EC, and it will not be given to us: the
+ *     lookup is POST-only behind a Cloudflare managed challenge (403 to any
+ *     server-side request), there is no name-keyed GET route for gear, and
+ *     `robots.txt` carries `User-agent: ClaudeBot / Disallow: /` plus
+ *     `Content-Signal: ai-train=no, use=reference`.
+ *
+ * Restoring the entries needs Eorzea Collection's own blessing — a published
+ * mapping or a sanctioned lookup — not a cleverer client.
  *
  * Everything here is pure: callers pass names that are already resolved, and
  * this module only formats. Facewear's base-name lookup is the caller's job
@@ -23,49 +45,11 @@
  * @module shared/item-links
  */
 
-import type { CharaGearSlotId, LodestoneRegion } from '@xivdyetools/core';
+import type { LodestoneRegion } from '@xivdyetools/core';
 import type { CharaItemNames } from '@services/chara-resolve-service';
 
-/** The seven destinations, in menu order. */
-export type ItemLinkId =
-  | 'eorzeaCollection'
-  | 'gearsetGallery'
-  | 'mirapri'
-  | 'garlandTools'
-  | 'teamcraft'
-  | 'gamerEscape'
-  | 'lodestone';
-
-/**
- * Eorzea Collection's slug for each gear slot. Both rings map to `ring`: the
- * site files a ring under one slug regardless of the hand it is worn on.
- */
-export const EORZEA_COLLECTION_SLOT: Readonly<Record<CharaGearSlotId, string>> = {
-  MainHand: 'weapon',
-  OffHand: 'offhand',
-  HeadGear: 'head',
-  Body: 'body',
-  Hands: 'hands',
-  Legs: 'legs',
-  Feet: 'feet',
-  Ears: 'earrings',
-  Neck: 'necklace',
-  Wrists: 'bracelets',
-  LeftRing: 'ring',
-  RightRing: 'ring',
-};
-
-/**
- * The Gearset Gallery filters on the five armour slots only — it has no facet
- * for a weapon or an accessory. Absent means NO entry, never a dead one.
- */
-export const GEARSET_GALLERY_SLOT: Readonly<Partial<Record<CharaGearSlotId, string>>> = {
-  HeadGear: 'head',
-  Body: 'body',
-  Hands: 'hands',
-  Legs: 'legs',
-  Feet: 'feet',
-};
+/** The five destinations, in menu order. */
+export type ItemLinkId = 'mirapri' | 'garlandTools' | 'teamcraft' | 'gamerEscape' | 'lodestone';
 
 /**
  * The Lodestone's regions, in the order the submenu lists them. Regions are
@@ -81,17 +65,6 @@ const LODESTONE_REGION_NAME: Readonly<Record<LodestoneRegion, keyof CharaItemNam
   de: 'de',
   fr: 'fr',
 };
-
-/** Eorzea Collection — every other glamour using this piece. */
-export function eorzeaCollectionUrl(slot: CharaGearSlotId, itemId: number): string {
-  return `https://ffxiv.eorzeacollection.com/glamours/${EORZEA_COLLECTION_SLOT[slot]}/${itemId}`;
-}
-
-/** Eorzea Collection's Gearset Gallery — null on a slot it cannot filter. */
-export function gearsetGalleryUrl(slot: CharaGearSlotId, itemId: number): string | null {
-  const facet = GEARSET_GALLERY_SLOT[slot];
-  return facet ? `https://ffxiv.eorzeacollection.com/gearsets?${facet}Piece=${itemId}` : null;
-}
 
 /** GarlandTools item page. */
 export function garlandToolsUrl(itemId: number): string {
@@ -163,7 +136,7 @@ export function glassesBaseRowId(rowId: number): number {
 
 /** A gear piece (every site) or the facewear row (name-addressed sites only). */
 export type ItemLinkTarget =
-  | { kind: 'gear'; slot: CharaGearSlotId; itemId: number; names: CharaItemNames }
+  | { kind: 'gear'; itemId: number; names: CharaItemNames }
   | { kind: 'facewear'; names: CharaItemNames };
 
 export interface ItemLinkEntry {
@@ -185,17 +158,11 @@ export interface ItemLinkMenu {
 
 /**
  * Every link worth offering for one row. Entries a target cannot support are
- * omitted, never rendered dead: a facewear row has no Item id, and four of the
- * twelve gear slots have no Gearset Gallery facet.
+ * omitted, never rendered dead: a facewear row has no Item id, so it gets the
+ * name-addressed entries alone.
  */
 export function buildItemLinkMenu(target: ItemLinkTarget): ItemLinkMenu {
   const entries: ItemLinkEntry[] = [];
-
-  if (target.kind === 'gear') {
-    entries.push({ id: 'eorzeaCollection', url: eorzeaCollectionUrl(target.slot, target.itemId) });
-    const gearset = gearsetGalleryUrl(target.slot, target.itemId);
-    if (gearset) entries.push({ id: 'gearsetGallery', url: gearset });
-  }
 
   entries.push({ id: 'mirapri', url: mirapriUrl(target.names) });
 

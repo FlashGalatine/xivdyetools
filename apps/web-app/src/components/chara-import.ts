@@ -502,7 +502,7 @@ export class CharaImport {
   private itemLinkTarget(slot: CharaGearSlotId): ItemLinksMenuTarget | null {
     const item = this.itemFor(slot);
     if (!item) return null;
-    return { kind: 'gear', slot, itemId: item.itemId, names: item.names };
+    return { kind: 'gear', itemId: item.itemId, names: item.names };
   }
 
   /** Mono chip label (8.5px, letter-spaced) — the drawn card vocabulary. */
