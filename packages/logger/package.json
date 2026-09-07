@@ -42,8 +42,8 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.1.11",
-    "vitest": "^4.1.11"
+    "@vitest/coverage-v8": "^5.0.0",
+    "vitest": "^5.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
