@@ -34,7 +34,7 @@
     "@xivdyetools/types": "workspace:*"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^5.0.0",
     "@xivdyetools/test-utils": "workspace:*",
     "vitest": "^4.1.11"
   },

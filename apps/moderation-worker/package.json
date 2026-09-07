@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^5.0.0",
     "@xivdyetools/test-utils": "workspace:*",
     "dotenv": "^17.4.2",
     "tsx": "^4.23.13",
