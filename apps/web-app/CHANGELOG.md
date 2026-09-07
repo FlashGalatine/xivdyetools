@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.9.0] - 2026-09-06
+
+### Added
+
+- **"Open in…" menu on the Swatch Manager's equipment rows.** Clicking a piece's
+  icon or its item name in DYES ON THIS GLAMOUR hands it off to seven community
+  databases: Eorzea Collection (additional glamours, plus the Gearset Gallery on
+  the five armour slots), Mirapri, GarlandTools, Teamcraft, GamerEscape, and the
+  Lodestone as a submenu of its five regional hosts. Both triggers are real
+  buttons with an `aria-label` and Enter/Space handling — the 28 px tile shipped
+  as `aria-hidden` decoration and could not stay hidden once it was a control.
+  The carrier tiles in the Dyes lens open the same menu, since that lens names
+  the dye rather than the piece and the tile is the only handle on the item.
+- URL construction lives in `shared/item-links.ts`, which is pure and tested
+  without a DOM. Sites split into two families that fail differently: three
+  address an item by its **Item id** (a wrong one silently opens the wrong item)
+  and four by its **name** (a wrong one 404s). Names are underscored for
+  GamerEscape's MediaWiki titles and `+`-joined for the Lodestone's query, in
+  both cases encoded so an item name can never break out of the path or add a
+  parameter of its own.
+- Rows with no resolved item — NPC and prop models — get no trigger at all.
+  Neither does a slot the Gearset Gallery cannot filter: the entry is absent,
+  never rendered dead. Both rings resolve to Eorzea Collection's single `ring`
+  slug.
+
+### Fixed
+
+- **Facewear links by name only, and to the right name.** `Glasses.GlassesId` is
+  a Glasses sheet row id, not an Item id, so the three id-addressed sites are
+  withheld on that row rather than pointed at whatever item shares the number.
+  The eleven tinted rows of each family also carry the tint in their name
+  ("Silver Oval Spectacles"), and no such item exists — only the untinted base
+  does. The Glasses sheet is laid out in strict blocks of twelve (verified
+  against the live sheet: 41 blocks, 487 non-empty rows), so `glassesBaseRowId`
+  finds the base by arithmetic and api-worker turns it into authoritative names
+  in every language. A text rule could not do this: "Brass Goggles" is a base row
+  that merely starts with a colour word, and the tints of "Simple Spectacles" are
+  named "Silver Spectacles". While the lookup is in flight the entries are
+  skeletons; if it fails they stay unavailable rather than offering a dead link.
+
+### Changed
+
+- The menu is a dynamic import rather than part of the swatch chunk — it is
+  reached by clicking a row and by nothing else, and statically imported it put
+  that chunk 3 KB over its 95 KB budget.
+
+---
+
 ## [5.8.0] - 2026-09-05
 
 ### Changed

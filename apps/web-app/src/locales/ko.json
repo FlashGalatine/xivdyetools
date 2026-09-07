@@ -1269,6 +1269,26 @@
     "footEmptyOne": "빈 부위 1개",
     "footEmptyMany": "빈 부위 {n}개",
     "modelKeyTag": "모델 {key}",
+    "itemLinks": {
+      "openIn": "다음에서 열기…",
+      "openInFor": "{item}을(를) 다음에서 열기…",
+      "eorzeaCollection": "Eorzea Collection",
+      "gearsetGallery": "Gearset Gallery",
+      "mirapri": "Mirapri",
+      "garlandTools": "GarlandTools",
+      "teamcraft": "Teamcraft",
+      "gamerEscape": "GamerEscape",
+      "lodestone": "로드스톤",
+      "lodestoneRegion": {
+        "na": "북미",
+        "eu": "유럽",
+        "jp": "일본",
+        "de": "독일",
+        "fr": "프랑스"
+      },
+      "resolvingName": "아이템 이름을 불러오는 중…",
+      "nameUnavailable": "아이템 이름을 불러올 수 없습니다. 닫고 잠시 후 다시 시도하세요."
+    },
     "gearSlot": {
       "MainHand": "무기",
       "OffHand": "보조무기",

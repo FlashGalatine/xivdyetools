@@ -1269,6 +1269,26 @@
     "footEmptyOne": "1 Slot ist leer",
     "footEmptyMany": "{n} Slots sind leer",
     "modelKeyTag": "MODELL {key}",
+    "itemLinks": {
+      "openIn": "Öffnen in…",
+      "openInFor": "{item} öffnen in…",
+      "eorzeaCollection": "Eorzea Collection",
+      "gearsetGallery": "Gearset Gallery",
+      "mirapri": "Mirapri",
+      "garlandTools": "GarlandTools",
+      "teamcraft": "Teamcraft",
+      "gamerEscape": "GamerEscape",
+      "lodestone": "Der Lodestone",
+      "lodestoneRegion": {
+        "na": "Nordamerika",
+        "eu": "Europa",
+        "jp": "Japan",
+        "de": "Deutschland",
+        "fr": "Frankreich"
+      },
+      "resolvingName": "Gegenstandsname wird gesucht…",
+      "nameUnavailable": "Gegenstandsname nicht verfügbar — schließe dies und versuche es gleich erneut."
+    },
     "gearSlot": {
       "MainHand": "Waffe",
       "OffHand": "Nebenhand",

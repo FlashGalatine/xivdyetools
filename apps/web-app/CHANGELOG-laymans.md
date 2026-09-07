@@ -2,6 +2,16 @@
 
 ---
 
+## Web-App Version 5.9.0 — September 6, 2026
+
+### Look a glamour piece up anywhere, straight from the list
+- **Click a piece's icon or its name** in "Dyes on this glamour" and a menu opens with seven places to look it up: **Eorzea Collection** (every other glamour using that piece, and the Gearset Gallery for head, body, hands, legs and feet), **Mirapri**, **GarlandTools**, **Teamcraft**, **GamerEscape**, and **the Lodestone**.
+- **The Lodestone opens into its five regions** — North America, Europe, Japan, Germany and France — and each one searches in that region's own language, so the Japanese Lodestone gets the Japanese item name.
+- **It works from the Dyes view too.** The small piece icons next to each dye open the same menu, which is the only way to reach the item from that view.
+- **You can get there with the keyboard.** The icon and the name are both proper buttons now — tab to one and press Enter or Space.
+- **Pieces the game gives no item for — NPC outfits and props — simply have no menu**, because there is nothing to look up. Slots the Gearset Gallery cannot filter just leave that one entry out instead of showing you a link that goes nowhere. Both your rings are treated as "ring", which is how Eorzea Collection files them.
+- **Facewear is handled carefully.** The game stores facewear differently from gear, so only the three name-based sites are offered there — the others would open a completely unrelated item. And because "Silver Oval Spectacles" is not a real item (only "Oval Spectacles" is, with the silver tint applied afterwards), the app looks up the untinted name first and searches for that. While it looks, the entries show as placeholders; if the lookup fails they stay unavailable rather than sending you to a dead page.
+
 ## Web-App Version 5.8.0 — September 5, 2026
 
 ### The Palette Extractor reads like a bar chart now

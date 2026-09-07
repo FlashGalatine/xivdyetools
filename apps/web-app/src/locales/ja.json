@@ -1269,6 +1269,26 @@
     "footEmptyOne": "空きスロット1",
     "footEmptyMany": "空きスロット{n}",
     "modelKeyTag": "モデル {key}",
+    "itemLinks": {
+      "openIn": "開く…",
+      "openInFor": "{item}を開く…",
+      "eorzeaCollection": "Eorzea Collection",
+      "gearsetGallery": "Gearset Gallery",
+      "mirapri": "Mirapri",
+      "garlandTools": "GarlandTools",
+      "teamcraft": "Teamcraft",
+      "gamerEscape": "GamerEscape",
+      "lodestone": "ロドストーン",
+      "lodestoneRegion": {
+        "na": "北米",
+        "eu": "欧州",
+        "jp": "日本",
+        "de": "ドイツ",
+        "fr": "フランス"
+      },
+      "resolvingName": "アイテム名を取得中…",
+      "nameUnavailable": "アイテム名を取得できません。閉じてしばらくしてからお試しください。"
+    },
     "gearSlot": {
       "MainHand": "武器",
       "OffHand": "サブアーム",
