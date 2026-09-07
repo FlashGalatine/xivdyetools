@@ -62,7 +62,12 @@
     "swatch.gridTitle": "format - '{name} ({count})' is placeholders only",
     "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
     "colorPalette.metallic": "matches core labels.metallic and the bot - 'Metallic' is the German dye term (TERM-003)",
-    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only"
+    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only",
+    "swatch.itemLinks.mirapri": "brand - the site names itself in Latin script, including in JP",
+    "swatch.itemLinks.garlandTools": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.teamcraft": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.gamerEscape": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.lodestoneRegion.jp": "cognate - 'Japan' is the German word too"
   },
   "fr": {
     "meta.version": "identifier - locale file schema version, not prose",
@@ -110,7 +115,13 @@
     "swatch.gearSlot.Wrists": "cognate - the French FFXIV client says 'Bracelets'",
     "swatch.gridTitle": "format - '{name} ({count})' is placeholders only",
     "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
-    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only"
+    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only",
+    "swatch.itemLinks.mirapri": "brand - the site names itself in Latin script, including in JP",
+    "swatch.itemLinks.garlandTools": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.teamcraft": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.gamerEscape": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.lodestoneRegion.eu": "cognate - 'Europe' is the French word too",
+    "swatch.itemLinks.lodestoneRegion.fr": "cognate - 'France' is the French word too"
   },
   "ja": {
     "meta.version": "identifier - locale file schema version, not prose",
@@ -122,7 +133,11 @@
     "mixer.modelLab": "unit - CIELAB colour-space name",
     "budget.colPerDe": "unit - gil-per-delta-E column header",
     "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
-    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only"
+    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only",
+    "swatch.itemLinks.mirapri": "brand - the site names itself in Latin script, including in JP",
+    "swatch.itemLinks.garlandTools": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.teamcraft": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.gamerEscape": "brand - the site names itself in English everywhere"
   },
   "ko": {
     "meta.version": "identifier - locale file schema version, not prose",
@@ -137,7 +152,11 @@
     "swatch.footSplit": "format - placeholders and a separator only",
     "swatch.gridTitle": "format - '{name} ({count})' is placeholders only",
     "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
-    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only"
+    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only",
+    "swatch.itemLinks.mirapri": "brand - the site names itself in Latin script, including in JP",
+    "swatch.itemLinks.garlandTools": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.teamcraft": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.gamerEscape": "brand - the site names itself in English everywhere"
   },
   "zh": {
     "meta.version": "identifier - locale file schema version, not prose",
@@ -149,6 +168,10 @@
     "mixer.modelLab": "unit - CIELAB colour-space name",
     "budget.colPerDe": "unit - gil-per-delta-E column header",
     "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
-    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only"
+    "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only",
+    "swatch.itemLinks.mirapri": "brand - the site names itself in Latin script, including in JP",
+    "swatch.itemLinks.garlandTools": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.teamcraft": "brand - the site names itself in English everywhere",
+    "swatch.itemLinks.gamerEscape": "brand - the site names itself in English everywhere"
   }
 }

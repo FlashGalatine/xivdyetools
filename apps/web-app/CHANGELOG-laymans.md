@@ -2,6 +2,18 @@
 
 ---
 
+## Web-App Version 5.9.0 — September 6, 2026
+
+### Look a glamour piece up anywhere, straight from the list
+- **Click a piece's icon or its name** in "Dyes on this glamour" and a menu opens with five places to look it up: **Mirapri**, **GarlandTools**, **Teamcraft**, **GamerEscape**, and **the Lodestone**.
+- **The Lodestone opens into its five regions** — North America, Europe, Japan, Germany and France — and each one searches in that region's own language, so the Japanese Lodestone gets the Japanese item name.
+- **It works from the Dyes view too.** The small piece icons next to each dye open the same menu, which is the only way to reach the item from that view.
+- **You can get there with the keyboard.** Tab to an icon or name and press Enter or Space, then use the arrow keys to choose a site or Lodestone region. Escape takes you back, and Tab continues through the tool. Facewear menus keep your place while their names load.
+- **Pieces the game gives no item for — NPC outfits and props — simply have no menu**, because there is nothing to look up.
+- **Facewear is handled carefully.** The game stores facewear differently from gear, so only the name-based sites are offered there. The app looks up the untinted name first; GamerEscape opens the matching "The Faces We Wear" unlock item so you get facewear details instead of similarly named headgear. While it looks, the entries show as placeholders; if the lookup fails they stay unavailable.
+- **Menus stay with their piece.** Switching tools, changing the list, or swapping the character file cancels a menu that is still loading.
+- **Eorzea Collection is not in the list, and that is on purpose.** It was built first and then taken out: Eorzea Collection numbers its items its own way, and the game's number for a piece points at a *different* item on their site rather than failing visibly, which is the worst way for a link to be wrong. Only Eorzea Collection can supply the matching numbers, and their site is not set up to hand them over, so adding it back needs their say-so rather than a workaround on our side.
+
 ## Web-App Version 5.8.0 — September 5, 2026
 
 ### The Palette Extractor reads like a bar chart now

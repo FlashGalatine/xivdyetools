@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.9.0] - 2026-09-06
+
+### Added
+
+- **"Open in…" menu on the Swatch Manager's equipment rows.** Clicking a piece's
+  icon or its item name in DYES ON THIS GLAMOUR hands it off to five community
+  databases: Mirapri, GarlandTools, Teamcraft, GamerEscape, and the Lodestone as
+  a submenu of its five regional hosts. Both triggers are real buttons with an
+  `aria-label` and Enter/Space handling — the 28 px tile shipped as
+  `aria-hidden` decoration and could not stay hidden once it was a control.
+  The carrier tiles in the Dyes lens open the same menu, since that lens names
+  the dye rather than the piece and the tile is the only handle on the item.
+- URL construction lives in `shared/item-links.ts`, which is pure and tested
+  without a DOM. Sites split into two families that fail differently: two
+  address an item by its **Item id** (a wrong one silently opens the wrong item)
+  and three by its **name** (a wrong one can 404 or identify another item). Names are underscored for
+  GamerEscape's MediaWiki titles and `+`-joined for the Lodestone's query, in
+  both cases encoded so an item name can never break out of the path or add a
+  parameter of its own.
+- Rows with no resolved item — NPC and prop models — get no trigger at all: an
+  entry is omitted rather than rendered dead.
+
+### Not included
+
+- **Eorzea Collection (and its Gearset Gallery) are deliberately absent.** Both
+  were built and then removed. EC addresses items by its own dense
+  auto-increment key rather than the game's item id, returning ours alongside it
+  under a field it calls `XIVApiId` — EC 25404 → item 44605, EC 25410 → item
+  44635. EC counts by one while item ids step by five across job variants, so
+  the delta drifts (19201 → 19225 over seven consecutive rows) and no offset
+  recovers it. The failure is silent rather than loud: both id spaces are dense
+  integers over overlapping ranges, so the game's id does not 404 — EC filters
+  to a *different* item. The mapping can only come from EC, and is not on offer:
+  the lookup is POST-only behind a Cloudflare managed challenge (403 to any
+  server-side request), there is no name-keyed GET route for gear, and
+  `robots.txt` carries `User-agent: ClaudeBot / Disallow: /` with
+  `Content-Signal: ai-train=no, use=reference`. Restoring the entries needs
+  Eorzea Collection's own blessing, not a cleverer client. A guard block in
+  `shared/__tests__/item-links.test.ts` fails if they are rebuilt from the item
+  id.
+
+### Fixed
+
+- **Facewear links by name only, and to the right name.** `Glasses.GlassesId` is
+  a Glasses sheet row id, not an Item id, so the id-addressed sites are
+  withheld on that row rather than pointed at whatever item shares the number.
+  The eleven tinted rows of each family also carry the tint in their name
+  ("Silver Oval Spectacles"), and no such item exists — only the untinted base
+  does. The Glasses sheet is laid out in strict blocks of twelve (verified
+  against the live sheet: 41 blocks, 487 non-empty rows), so `glassesBaseRowId`
+  finds the base by arithmetic and api-worker turns it into authoritative names
+  in every language. A text rule could not do this: "Brass Goggles" is a base row
+  that merely starts with a colour word, and the tints of "Simple Spectacles" are
+  named "Silver Spectacles". While the lookup is in flight the entries are
+  skeletons; if it fails they stay unavailable rather than offering a dead link.
+- GamerEscape facewear links use the **unlock item** title (`The Faces We Wear - …`),
+  including the `Monocle` → `Monocles` exception. Bare Glasses names such as
+  `Shaded Spectacles` identify headgear on the wiki.
+- Pending menu imports are invalidated when the importer is destroyed or its
+  rows are replaced, and only the latest trigger may open a menu.
+- Loading facewear menus keep keyboard focus until their entries arrive;
+  leaving or closing a menu prevents a late lookup from taking focus back.
+- Both menu levels support Up/Down, Home/End and Left/Right navigation without
+  scrolling. Escape returns from the submenu before closing the parent;
+  Tab/Shift+Tab resume from the trigger, and opening a link restores focus there.
+
+### Changed
+
+- The menu is a dynamic import rather than part of the swatch chunk — it is
+  reached by clicking a row and by nothing else, and statically imported it put
+  that chunk 3 KB over its 95 KB budget.
+
+---
+
 ## [5.8.0] - 2026-09-05
 
 ### Changed

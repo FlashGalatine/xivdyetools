@@ -1269,6 +1269,24 @@
     "footEmptyOne": "1 emplacement est vide",
     "footEmptyMany": "{n} emplacements sont vides",
     "modelKeyTag": "MODÈLE {key}",
+    "itemLinks": {
+      "openIn": "Ouvrir dans…",
+      "openInFor": "Ouvrir {item} dans…",
+      "mirapri": "Mirapri",
+      "garlandTools": "GarlandTools",
+      "teamcraft": "Teamcraft",
+      "gamerEscape": "GamerEscape",
+      "lodestone": "Le Lodestone",
+      "lodestoneRegion": {
+        "na": "Amérique du Nord",
+        "eu": "Europe",
+        "jp": "Japon",
+        "de": "Allemagne",
+        "fr": "France"
+      },
+      "resolvingName": "Recherche du nom de l'objet…",
+      "nameUnavailable": "Nom de l'objet indisponible — fermez ceci et réessayez dans un instant."
+    },
     "gearSlot": {
       "MainHand": "Arme",
       "OffHand": "Main gauche",

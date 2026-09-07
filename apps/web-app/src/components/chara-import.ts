@@ -52,6 +52,7 @@ import {
   type CharaResolveResult,
   type CharaResolvedItem,
 } from '@services/chara-resolve-service';
+import type { ItemLinksMenuTarget } from '@components/item-links-menu';
 import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
 import { STORAGE_PREFIX, MAX_USER_FILE_BYTES } from '@shared/constants';
 import { logger } from '@shared/logger';
@@ -109,6 +110,23 @@ function readGlamourView(): GlamourView {
  * the footnote, which is the honest place for "nothing is there".
  */
 const SHOW_ALL_KEY = `${STORAGE_PREFIX}_swatch_glamour_show_all`;
+
+/**
+ * The "Open in…" menu is reached by clicking a row and by nothing else, so it
+ * is loaded on that click rather than shipped inside the swatch chunk — the
+ * same arrangement as the palette-submission form below. Statically imported
+ * it put the chunk 3 KB over its budget, and every visitor who never opens the
+ * menu paid for it.
+ */
+let itemLinksMenu: typeof import('@components/item-links-menu') | null = null;
+/** Invalidates lazy opens even before the menu module has loaded. */
+let itemLinksOpenToken = 0;
+
+/** Dismiss the menu if it was ever loaded. Never loads it just to close it. */
+function closeItemLinksMenuIfLoaded(): void {
+  itemLinksOpenToken += 1;
+  itemLinksMenu?.closeItemLinksMenu();
+}
 
 function readShowAllPieces(): boolean {
   return StorageService.getItem<string>(SHOW_ALL_KEY) === 'on';
@@ -259,6 +277,9 @@ export class CharaImport {
   destroy(): void {
     this.resolveAbort?.abort();
     this.resolveAbort = null;
+    // The menu lives in document.body, so nothing here would remove it — it
+    // would float over the next tool, anchored to a row that is gone.
+    closeItemLinksMenuIfLoaded();
     clearContainer(this.container);
     if (this.glamourContainer) clearContainer(this.glamourContainer);
     this.resolved = null;
@@ -392,6 +413,9 @@ export class CharaImport {
   private rerenderGlamour(): void {
     const old = this.glamourBox;
     if (!old || !old.isConnected) return;
+    // Switching lens or toggling Show all replaces every row, so a menu open
+    // over one of them is anchored to a node about to be discarded.
+    closeItemLinksMenuIfLoaded();
     const fresh = this.renderGlamour();
     if (fresh) old.replaceWith(fresh);
     else old.remove();
@@ -438,6 +462,56 @@ export class CharaImport {
     node.setAttribute('style', style);
     if (text !== undefined) node.textContent = text;
     return node;
+  }
+
+  /**
+   * Make `node` raise the "Open in…" menu for one piece.
+   *
+   * The icon tile and the item name are both triggers, so the whole readout a
+   * reader looks at is the thing they can click. `node` becomes a real button:
+   * a `<span>` with a click handler is reachable by mouse only, and the tile
+   * in particular is `aria-hidden` decoration until it earns a label here.
+   *
+   * Rows without a resolved item pass nothing to this — an NPC or prop model
+   * has no Item id and no name, and there is no honest link to offer.
+   */
+  private attachItemLinks(node: HTMLElement, target: ItemLinksMenuTarget, title: string): void {
+    node.setAttribute('role', 'button');
+    node.tabIndex = 0;
+    node.removeAttribute('aria-hidden');
+    node.setAttribute('aria-haspopup', 'menu');
+    node.setAttribute('aria-expanded', 'false');
+    node.setAttribute(
+      'aria-label',
+      LanguageService.tInterpolate('swatch.itemLinks.openInFor', { item: title })
+    );
+    node.style.cursor = 'pointer';
+    node.dataset.itemLinks = 'trigger';
+
+    const open = (event: Event): void => {
+      event.preventDefault();
+      event.stopPropagation();
+      const token = ++itemLinksOpenToken;
+      void import('@components/item-links-menu')
+        .then((module) => {
+          itemLinksMenu = module;
+          if (token !== itemLinksOpenToken || !node.isConnected) return;
+          module.showItemLinksMenu({ target, anchorElement: node, title });
+        })
+        .catch((error: unknown) => logger.warn('[ItemLinks] menu unavailable', error));
+    };
+    node.addEventListener('click', open);
+    node.addEventListener('keydown', (event) => {
+      const key = (event as KeyboardEvent).key;
+      if (key === 'Enter' || key === ' ') open(event);
+    });
+  }
+
+  /** The menu target for a gear slot, or null when the row has no item. */
+  private itemLinkTarget(slot: CharaGearSlotId): ItemLinksMenuTarget | null {
+    const item = this.itemFor(slot);
+    if (!item) return null;
+    return { kind: 'gear', itemId: item.itemId, names: item.names };
   }
 
   /** Mono chip label (8.5px, letter-spaced) — the drawn card vocabulary. */
@@ -573,6 +647,7 @@ export class CharaImport {
   // ==========================================================================
 
   private render(): void {
+    closeItemLinksMenuIfLoaded();
     clearContainer(this.container);
     if (this.glamourContainer) clearContainer(this.glamourContainer);
 
@@ -1428,6 +1503,10 @@ export class CharaImport {
     if (item?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(item.iconId)}")`;
     row.appendChild(tile);
 
+    const linkTarget = this.itemLinkTarget(slot);
+    const linkTitle = item ? itemNameFor(item.names, lang) : '';
+    if (linkTarget) this.attachItemLinks(tile, linkTarget, linkTitle);
+
     const text = this.el(
       'span',
       'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
@@ -1479,6 +1558,7 @@ export class CharaImport {
       );
       name.lang = lang;
       name.dataset.role = 'item-name';
+      if (linkTarget) this.attachItemLinks(name, linkTarget, linkTitle);
       text.appendChild(name);
     } else if (this.resolveState === 'resolving') {
       // RESOLVING — a skeleton where the name will land, never a spinner
@@ -1549,6 +1629,15 @@ export class CharaImport {
     if (glasses?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(glasses.iconId)}")`;
     row.appendChild(tile);
 
+    // Facewear links by NAME only — `glassesId` is a Glasses sheet row, not an
+    // Item id, so Eorzea Collection / GarlandTools / Teamcraft would each open
+    // an unrelated item. The menu resolves the untinted base name itself.
+    const linkTarget: ItemLinksMenuTarget | null = glasses
+      ? { kind: 'facewear', glassesRowId: glassesId, names: glasses.names }
+      : null;
+    const linkTitle = glasses ? itemNameFor(glasses.names, lang) : '';
+    if (linkTarget) this.attachItemLinks(tile, linkTarget, linkTitle);
+
     const text = this.el(
       'span',
       'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
@@ -1569,6 +1658,7 @@ export class CharaImport {
       );
       name.lang = lang;
       name.dataset.role = 'item-name';
+      if (linkTarget) this.attachItemLinks(name, linkTarget, linkTitle);
       text.appendChild(name);
     } else if (this.resolveState === 'resolving') {
       const skeleton = this.el(
@@ -1689,6 +1779,12 @@ export class CharaImport {
         if (item?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(item.iconId)}")`;
         const slotLabel = this.gearSlotLabel(slot).toUpperCase();
         tile.title = item ? `${slotLabel} — ${itemNameFor(item.names, lang)}` : slotLabel;
+        // This lens names the dye, not the piece, so the carrier tile is the
+        // only handle on the item — it opens the same menu the Pieces lens does.
+        const carrierTarget = this.itemLinkTarget(slot);
+        if (carrierTarget && item) {
+          this.attachItemLinks(tile, carrierTarget, itemNameFor(item.names, lang));
+        }
         right.appendChild(tile);
       }
       right.appendChild(

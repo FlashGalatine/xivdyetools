@@ -31,6 +31,16 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.6.0] - 2026-09-06
+### 🔗 Look a glamour piece up anywhere, straight from the list
+- Web app: click a piece's icon or its name in "Dyes on this glamour" and a menu opens with five places to look it up — Mirapri, GarlandTools, Teamcraft, GamerEscape, and the Lodestone.
+- Web app: the Lodestone entry opens into its five regions — North America, Europe, Japan, Germany and France — and each searches in that region's own language.
+- Web app: the small piece icons in the Dyes view open the same menu, which is the only way to reach the item from that view. The icon and the name are both proper buttons, so you can tab to one and press Enter.
+- Web app: pieces the game gives no item for (NPC outfits and props) have no menu, because there is nothing to look up.
+- Web app: facewear offers only the name-based sites and looks up the untinted name first. GamerEscape opens the matching "The Faces We Wear" unlock item so you get facewear details instead of similarly named headgear. If the lookup fails, the menu says so instead of offering a dead link.
+- Web app: use the arrow keys to choose a site or Lodestone region, Escape to go back, and Tab to continue through the tool. Facewear menus keep your place while names load, and switching tools or replacing the list cancels any menu still loading.
+- Web app: Eorzea Collection is deliberately not in the list. It numbers its items its own way, so the game's number for a piece opens a *different* item there instead of failing visibly — the worst way for a link to be wrong. Only Eorzea Collection can supply the matching numbers, so adding it back needs their say-so.
+
 ## [5.5.0] - 2026-09-05
 ### 🖼️ Palette Extractor: one column, all three answers
 - Web app: a colour bar now sits right under your image — one segment per extracted colour, as wide as its share of the picture, with the percentage on it. Tap a segment and its dye card lights up below.

@@ -1269,6 +1269,24 @@
     "footEmptyOne": "1 slot is empty",
     "footEmptyMany": "{n} slots are empty",
     "modelKeyTag": "MODEL {key}",
+    "itemLinks": {
+      "openIn": "Open in…",
+      "openInFor": "Open {item} in…",
+      "mirapri": "Mirapri",
+      "garlandTools": "GarlandTools",
+      "teamcraft": "Teamcraft",
+      "gamerEscape": "GamerEscape",
+      "lodestone": "The Lodestone",
+      "lodestoneRegion": {
+        "na": "North America",
+        "eu": "Europe",
+        "jp": "Japan",
+        "de": "Germany",
+        "fr": "France"
+      },
+      "resolvingName": "Looking up the item name…",
+      "nameUnavailable": "Item name unavailable — close this and try again in a moment."
+    },
     "gearSlot": {
       "MainHand": "Weapon",
       "OffHand": "Off hand",
