@@ -35,7 +35,7 @@
     "hono": "^4.13.5"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260828.1",
+    "@cloudflare/workers-types": "^5.20260904.1",
     "@types/node": "^26.4.0",
     "@vitest/coverage-v8": "^4.1.11",
     "@xivdyetools/test-utils": "workspace:*",
