@@ -37,7 +37,8 @@ Rules:
 - Web app: the Lodestone entry opens into its five regions — North America, Europe, Japan, Germany and France — and each searches in that region's own language.
 - Web app: the small piece icons in the Dyes view open the same menu, which is the only way to reach the item from that view. The icon and the name are both proper buttons, so you can tab to one and press Enter.
 - Web app: pieces the game gives no item for (NPC outfits and props) have no menu, because there is nothing to look up.
-- Web app: facewear offers only the name-based sites, because the game stores it differently from gear and the others would open an unrelated item. "Silver Oval Spectacles" is not a real item either — only "Oval Spectacles" is, tinted afterwards — so the app looks up the untinted name first and searches for that, and says so plainly if the lookup fails instead of sending you to a dead page.
+- Web app: facewear offers only the name-based sites and looks up the untinted name first. GamerEscape opens the matching "The Faces We Wear" unlock item so you get facewear details instead of similarly named headgear. If the lookup fails, the menu says so instead of offering a dead link.
+- Web app: use the arrow keys to choose a site or Lodestone region, Escape to go back, and Tab to continue through the tool. Facewear menus keep your place while names load, and switching tools or replacing the list cancels any menu still loading.
 - Web app: Eorzea Collection is deliberately not in the list. It numbers its items its own way, so the game's number for a piece opens a *different* item there instead of failing visibly — the worst way for a link to be wrong. Only Eorzea Collection can supply the matching numbers, so adding it back needs their say-so.
 
 ## [5.5.0] - 2026-09-05
