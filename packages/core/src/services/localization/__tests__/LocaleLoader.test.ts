@@ -271,7 +271,6 @@ describe('LocaleLoader', () => {
       const testLoader = new LocaleLoader();
 
       // Mock the private isValidLocaleData to return false
-      // @ts-expect-error - Accessing private method for mocking
       vi.spyOn(testLoader, 'isValidLocaleData').mockReturnValue(false);
 
       // Now loadLocale should find the data but fail validation, triggering line 59
@@ -284,7 +283,6 @@ describe('LocaleLoader', () => {
     it('should throw AppError with correct code when validation fails', () => {
       const testLoader = new LocaleLoader();
 
-      // @ts-expect-error - Accessing private method for mocking
       vi.spyOn(testLoader, 'isValidLocaleData').mockReturnValue(false);
 
       try {

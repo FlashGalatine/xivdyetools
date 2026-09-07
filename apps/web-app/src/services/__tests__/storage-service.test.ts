@@ -635,8 +635,12 @@ describe('StorageService', () => {
       // that nulls localStorage never calls `resetAvailabilityCache()`, so it
       // reads the memoised `true` from setup and never reaches this path.
       const originalLocalStorage = window.localStorage;
-      // @ts-expect-error - deliberately removing the backend under test
-      window.localStorage = null;
+      // `window.localStorage` is an accessor with no setter, so it can only be
+      // swapped by redefining the property, not by assigning through it.
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: null,
+      });
       // Drop the memoised probe result so the nulled backend is re-detected.
       StorageService.resetAvailabilityCache();
 
@@ -651,7 +655,10 @@ describe('StorageService', () => {
         expect(StorageService.getItemCount()).toBe(0);
         expect(StorageService.getItemsByPrefix('test')).toEqual({});
       } finally {
-        window.localStorage = originalLocalStorage;
+        Object.defineProperty(window, 'localStorage', {
+          configurable: true,
+          value: originalLocalStorage,
+        });
         StorageService.resetAvailabilityCache();
       }
     });
@@ -782,12 +789,20 @@ describe('StorageService', () => {
     it('should handle hasItem when localStorage is unavailable', () => {
       const ns = StorageService.createNamespace('test_');
       const originalLocalStorage = window.localStorage;
-      // @ts-expect-error - Testing error case
-      window.localStorage = null;
+      // See the note above: the property has a getter and no setter.
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: null,
+      });
 
-      expect(ns.hasItem('key')).toBe(false);
-
-      window.localStorage = originalLocalStorage;
+      try {
+        expect(ns.hasItem('key')).toBe(false);
+      } finally {
+        Object.defineProperty(window, 'localStorage', {
+          configurable: true,
+          value: originalLocalStorage,
+        });
+      }
     });
 
     it('should handle getAll with empty results', () => {
