@@ -18,9 +18,9 @@
   "license": "MIT",
   "dependencies": {
     "@cf-wasm/photon": "^0.4.0",
-    "@cloudflare/workers-types": "^5.20260904.1",
+    "@cloudflare/workers-types": "^5.20260911.1",
     "@xivdyetools/worker-kit": "workspace:*",
-    "hono": "^4.13.5"
+    "hono": "^4.13.7"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.0",

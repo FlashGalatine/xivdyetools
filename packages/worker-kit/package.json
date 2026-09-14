@@ -64,7 +64,7 @@
   },
   "peerDependencies": {
     "@cloudflare/workers-types": "^4.0.0",
-    "hono": "^4.13.5"
+    "hono": "^4.13.7"
   },
   "peerDependenciesMeta": {
     "@cloudflare/workers-types": {
@@ -75,8 +75,8 @@
     }
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260904.1",
-    "hono": "^4.13.5",
+    "@cloudflare/workers-types": "^5.20260911.1",
+    "hono": "^4.13.7",
     "@vitest/coverage-v8": "^5.0.0",
     "vitest": "^5.0.0"
   },
