@@ -6,6 +6,7 @@ Runbooks and checklists for the maintainer. Everything here needs credentials CI
 |------|-------------|
 | [DEPLOY_ENVIRONMENTS.md](DEPLOY_ENVIRONMENTS.md) | **Which worker a bare `wrangler deploy` / `wrangler secret put` hits** on each app — the dev, beta and production layout, and the beta runbook. Read before any manual deploy |
 | [SECRET_ROTATION.md](SECRET_ROTATION.md) | Every secret, who consumes it, and the rotation order |
+| [Security remediation — 2026-09-15](security-remediation-2026-09-15.md) | Migration 0014, independent auth/bot/API/OG rollouts, and acceptance checks for the six security fixes |
 | [MODERATION.md](MODERATION.md) | Moderating community presets with the moderation bot |
 | [ANALYTICS_QUERIES.md](ANALYTICS_QUERIES.md) | The Analytics Engine datasets (web-app telemetry, bot command traces) and the queries that read them |
 | [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) | Retiring `*.xivdyetools.projectgalatine.com` in phases |

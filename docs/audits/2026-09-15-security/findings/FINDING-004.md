@@ -14,4 +14,6 @@
 - Use a record revision or expected status/content version in the conditional UPDATE, and reject or re-evaluate on conflict. A same-state concurrent content edit should also change the revision.
 
 ## Status
-OPEN
+OPEN — fixed locally; deployment acceptance pending.
+
+Implementation commits: 74114ebf. Regression and gate evidence: [implementation report](../IMPLEMENTATION_REPORT.md). Original evidence above describes the audited snapshot.

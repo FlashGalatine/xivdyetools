@@ -14,4 +14,6 @@
 - Enforce a 1 MiB streaming byte limit with early cancellation, then verify HMAC over the bounded original bytes. Add a test that counts consumed chunks, including a missing-length request and invalid signature.
 
 ## Status
-OPEN
+OPEN — fixed locally; deployment acceptance pending.
+
+Implementation commits: 205f0be6. Regression and gate evidence: [implementation report](../IMPLEMENTATION_REPORT.md). Original evidence above describes the audited snapshot.

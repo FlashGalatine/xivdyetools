@@ -16,4 +16,6 @@
 - Coordinate the presets-api contract and discord-worker notification/client rollout; patching only the database read/write race does not fix stale buttons.
 
 ## Status
-OPEN
+OPEN — fixed locally; deployment acceptance pending.
+
+Implementation commits: 3c07b6b9, 247d368d, 0b5d814c. Regression and gate evidence: [implementation report](../IMPLEMENTATION_REPORT.md). Original evidence above describes the audited snapshot.

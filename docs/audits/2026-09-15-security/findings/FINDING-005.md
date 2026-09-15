@@ -14,4 +14,6 @@
 - Condition the revert on the revision/status/snapshot actually reviewed; return conflict on zero affected rows and retain the existing conditional audit-log insert. Add an interleaved-decision regression test.
 
 ## Status
-OPEN
+OPEN — fixed locally; deployment acceptance pending.
+
+Implementation commits: 6b7d1b3c. Regression and gate evidence: [implementation report](../IMPLEMENTATION_REPORT.md). Original evidence above describes the audited snapshot.

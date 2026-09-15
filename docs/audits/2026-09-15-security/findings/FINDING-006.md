@@ -14,4 +14,6 @@
 - Keep only tool, validated locale and crawler category; remove raw UA, full URL and user-derived title from normal logs. Test the logger output as well as AE fields against the privacy promise.
 
 ## Status
-OPEN
+OPEN — fixed locally; deployment acceptance pending.
+
+Implementation commits: 3095b8ce. Regression and gate evidence: [implementation report](../IMPLEMENTATION_REPORT.md). Original evidence above describes the audited snapshot.

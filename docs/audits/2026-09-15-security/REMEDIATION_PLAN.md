@@ -58,3 +58,7 @@ Both changes enforce the same record revision contract but protect distinct acto
 - Publishing uses Actions/OIDC with a version decision; each consumer deployment follows separately. Confirm workflow path triggers for shared-package-only commits before relying on automatic rollout.
 - Update both each finding's status and the catalog status table after verified fixes. A deployment-dependent finding remains open until the relevant deployments and acceptance checks are done.
 - **Superseded findings:** none. **KEEP register:** none. Each of the six current IDs has exactly one primary sprint assignment above; dependent rollouts are explicitly identified as rollouts.
+
+## Execution status — 2026-09-15
+
+Sprints 0, 1 and 2 are implemented and verified locally in separate significant-step commits; see [IMPLEMENTATION_REPORT.md](IMPLEMENTATION_REPORT.md). The original source/deployment plan above remains the release contract. Findings are still OPEN for deployment acceptance. The [runbook](../../operations/security-remediation-2026-09-15.md) records exact migration instructions and held-workflow, ordered-merge steps. Gitleaks tree and available-history scanning has now completed with no project findings; the original blocked evidence is preserved.

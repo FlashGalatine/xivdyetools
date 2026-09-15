@@ -89,14 +89,16 @@ No credential exposure requiring rotation was confirmed. The incomplete historic
 
 ## Remediation status
 
+**Implementation follow-up (2026-09-15):** all six fixes passed local regression, unit and whole-graph checks; publication/deployment acceptance remains pending. See the [implementation report](IMPLEMENTATION_REPORT.md). Fresh Gitleaks tree/history scans also closed the original unavailable-tool gap. The audit evidence and limitations above describe the original audit run.
+
 | ID | Status | Commit |
 |---|---|---|
-| FINDING-001 | OPEN | — |
-| FINDING-002 | OPEN | — |
-| FINDING-003 | OPEN | — |
-| FINDING-004 | OPEN | — |
-| FINDING-005 | OPEN | — |
-| FINDING-006 | OPEN | — |
+| FINDING-001 | OPEN — fixed locally; deploy pending | `ef555e57`, `0a357852`, `205f0be6` |
+| FINDING-002 | OPEN — fixed locally; deploy pending | `3c07b6b9`, `247d368d`, `0b5d814c` |
+| FINDING-003 | OPEN — fixed locally; deploy pending | `205f0be6` |
+| FINDING-004 | OPEN — fixed locally; deploy pending | `74114ebf` |
+| FINDING-005 | OPEN — fixed locally; deploy pending | `6b7d1b3c` |
+| FINDING-006 | OPEN — fixed locally; deploy pending | `3095b8ce` |
 
 ## Next steps
 

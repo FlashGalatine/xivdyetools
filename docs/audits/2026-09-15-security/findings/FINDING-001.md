@@ -14,4 +14,6 @@
 - Read incrementally, count bytes and cancel immediately above the cap; decode only the bounded accepted buffer, then verify the original bytes. Guard with a stream-consumption test. Publish auth and roll the fix into both bot deployments.
 
 ## Status
-OPEN
+OPEN — fixed locally; deployment acceptance pending.
+
+Implementation commits: ef555e57; consumer preparation 0a357852 and 205f0be6. Regression and gate evidence: [implementation report](../IMPLEMENTATION_REPORT.md). Original evidence above describes the audited snapshot.

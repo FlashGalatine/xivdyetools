@@ -23,3 +23,7 @@ Whole-monorepo security audit: **6 confirmed findings — 3 medium and 3 low**, 
 5. **FINDING-006 (LOW)** — og-worker: remove raw crawler User-Agent and complete share URLs from normal logs.
 
 No fixes, commits, pushes, rotations or deployments were performed. The three medium findings are the plan's Sprint 0 priorities; active exploitation was not assessed.
+
+## Implementation follow-up — 2026-09-15
+
+The original audit above is followed by [completed local sprints 0–2](IMPLEMENTATION_REPORT.md): six fixes, separate significant-step commits, 10,966 passing whole-graph tests and 107 passing script tests. Gitleaks tracked-tree and available-history scans now report no findings. Deployment-dependent statuses remain open until the [ordered rollout and acceptance checks](../../operations/security-remediation-2026-09-15.md) occur. No remote deployment, publication or push was performed during implementation.
