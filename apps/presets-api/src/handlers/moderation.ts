@@ -8,7 +8,7 @@ import type { Context } from 'hono';
 import type { Env, AuthContext, PresetStatus, PresetRow } from '../types.js';
 import { requireModerator } from '../middleware/auth.js';
 import {
-  getPresetById,
+  getPresetRowById,
   getPendingPresets,
   prepareStatusUpdate,
   prepareRevert,
@@ -114,13 +114,14 @@ moderationRouter.patch('/:presetId/status', async (c) => {
   }
 
   // Get current preset
-  const preset = await getPresetById(c.env.DB, presetId);
-  if (!preset) {
+  const presetRow = await getPresetRowById(c.env.DB, presetId);
+  if (!presetRow) {
     return notFoundResponse(c, 'Preset');
   }
+  const preset = rowToPreset(presetRow, c.get('logger'));
 
   // BUG-020 (2026-07-18 audit): status update + audit log run in one atomic
-  // batch, and the update is conditional on the status this moderator observed
+  // batch, and the update is conditional on the status and revision this moderator observed
   // — a concurrent moderator's write makes the update match zero rows, so the
   // stale action is rejected as a 409 instead of mislabeling the audit trail
   // or logging an action that never happened.
@@ -138,7 +139,7 @@ moderationRouter.patch('/:presetId/status', async (c) => {
   let updateResult: D1Result<PresetRow>;
   try {
     [updateResult] = await c.env.DB.batch<PresetRow>([
-      prepareStatusUpdate(c.env.DB, presetId, body.status, preset.status, now),
+      prepareStatusUpdate(c.env.DB, presetId, body.status, preset.status, presetRow.content_revision, now),
       // changes() sees the preceding UPDATE in this batch's transaction, so the
       // log row is only written when the status transition actually happened
       c.env.DB
@@ -158,8 +159,8 @@ moderationRouter.patch('/:presetId/status', async (c) => {
     return c.json(
       {
         success: false,
-        error: ErrorCode.DUPLICATE_RESOURCE,
-        message: 'Preset status changed concurrently — reload and retry',
+        error: ErrorCode.CONFLICT,
+        message: 'Preset changed concurrently — reload and retry',
       },
       409
     );
@@ -198,13 +199,14 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   }
 
   // Get current preset
-  const preset = await getPresetById(c.env.DB, presetId);
-  if (!preset) {
+  const presetRow = await getPresetRowById(c.env.DB, presetId);
+  if (!presetRow) {
     return notFoundResponse(c, 'Preset');
   }
+  const preset = rowToPreset(presetRow, c.get('logger'));
 
   // Check if there are previous values to revert to
-  if (!preset.previous_values) {
+  if (!preset.previous_values || !presetRow.previous_values) {
     return validationErrorResponse(c, 'This preset has no previous values to revert to');
   }
 
@@ -220,7 +222,10 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   let revertResult: D1Result<PresetRow>;
   try {
     [revertResult] = await c.env.DB.batch<PresetRow>([
-      prepareRevert(c.env.DB, presetId, preset.previous_values, now),
+      prepareRevert(c.env.DB, presetId, preset.previous_values, {
+        contentRevision: presetRow.content_revision,
+        previousValuesRaw: presetRow.previous_values,
+      }, now),
       c.env.DB
         .prepare(
           `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
@@ -235,7 +240,11 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
 
   const revertedRow = revertResult.results?.[0];
   if (!revertedRow) {
-    return internalErrorResponse(c, 'Failed to revert preset');
+    return c.json({
+      success: false,
+      error: ErrorCode.CONFLICT,
+      message: 'Preset changed concurrently — reload and retry',
+    }, 409);
   }
 
   return c.json({
@@ -279,7 +288,7 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
     return validationErrorResponse(c, 'preview_image_key must identify the reviewed image');
   }
 
-  const staleReview = () => c.json({
+  const staleReview = (): Response => c.json({
     success: false,
     error: ErrorCode.CONFLICT,
     message: 'This preview image changed or was already moderated. Review the latest image notification.',

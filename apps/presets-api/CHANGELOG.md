@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.3] - 2026-09-15
+
+### Fixed
+
+- Moderator status changes and reverts now compare the captured content revision at the final write; reverts also compare the exact saved snapshot. Stale actions return 409 and cannot overwrite a newer hide, flag, rejection or edit, or insert an audit entry for an action that never happened. Successful changes and their audit log remain atomic (FINDING-005). Requires migration 0014 from 2.3.2 before deployment.
+
 ## [2.3.2] - 2026-09-15
 
 ### Fixed

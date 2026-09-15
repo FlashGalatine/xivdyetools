@@ -442,7 +442,7 @@ export async function createPreset(
  * Build the conditional status-update statement used by the moderation handler.
  *
  * BUG-020/OPT-013 (2026-07-18 audit): the update is conditional on the status
- * the moderator observed (concurrent moderation is detectable as "no row
+ * and content revision the moderator observed (concurrent moderation is detectable as "no row
  * returned") and uses RETURNING * so the caller gets exactly this write's
  * result without a re-read. Batched with the moderation_log insert by the
  * caller so the pair is atomic.
@@ -452,15 +452,16 @@ export function prepareStatusUpdate(
   id: string,
   status: CommunityPreset['status'],
   expectedStatus: CommunityPreset['status'],
+  expectedRevision: number,
   now: string
 ): D1PreparedStatement {
   const query = `
     UPDATE presets
     SET status = ?, updated_at = ?
-    WHERE id = ? AND status = ?
+    WHERE id = ? AND status = ? AND content_revision = ?
     RETURNING *
   `;
-  return db.prepare(query).bind(status, now, id, expectedStatus);
+  return db.prepare(query).bind(status, now, id, expectedStatus, expectedRevision);
 }
 
 /**
@@ -472,13 +473,14 @@ export function prepareRevert(
   db: D1Database,
   id: string,
   previous: PresetPreviousValues,
+  expected: { contentRevision: number; previousValuesRaw: string },
   now: string
 ): D1PreparedStatement {
   const query = `
     UPDATE presets
     SET name = ?, description = ?, dyes = ?, tags = ?, dye_signature = ?,
         status = 'approved', previous_values = NULL, updated_at = ?
-    WHERE id = ?
+    WHERE id = ? AND content_revision = ? AND previous_values = ?
     RETURNING *
   `;
   return db
@@ -490,7 +492,9 @@ export function prepareRevert(
       JSON.stringify(previous.tags),
       generateDyeSignature(previous.dyes),
       now,
-      id
+      id,
+      expected.contentRevision,
+      expected.previousValuesRaw
     );
 }
 

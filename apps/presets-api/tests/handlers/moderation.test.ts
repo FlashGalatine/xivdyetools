@@ -492,7 +492,7 @@ describe('ModerationHandler', () => {
             expect(body.message).toContain('Invalid JSON');
         });
 
-        it('should return 500 if revert operation fails', async () => {
+        it('should return 409 if the revert snapshot changed', async () => {
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
                 previous_values: JSON.stringify({
@@ -530,10 +530,10 @@ describe('ModerationHandler', () => {
                 env
             );
 
-            expect(res.status).toBe(500);
+            expect(res.status).toBe(409);
             const body = await res.json() as { error: string; message: string };
-            expect(body.error).toBe('INTERNAL_ERROR');
-            expect(body.message).toBe('Failed to revert preset');
+            expect(body.error).toBe('CONFLICT');
+            expect(body.message).toBe('Preset changed concurrently — reload and retry');
         });
 
         it('should return 404 if preset not found', async () => {
