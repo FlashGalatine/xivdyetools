@@ -349,9 +349,13 @@ export async function getPresetById(
   db: D1Database,
   id: string
 ): Promise<CommunityPreset | null> {
-  const query = 'SELECT * FROM presets WHERE id = ?';
-  const row = await db.prepare(query).bind(id).first<PresetRow>();
+  const row = await getPresetRowById(db, id);
   return row ? rowToPreset(row) : null;
+}
+
+/** Read the content and its internal revision together before authorizing a write. */
+export async function getPresetRowById(db: D1Database, id: string): Promise<PresetRow | null> {
+  return db.prepare('SELECT * FROM presets WHERE id = ?').bind(id).first<PresetRow>();
 }
 
 /**
@@ -634,6 +638,7 @@ export function isDyeSignatureCollision(error: unknown): boolean {
 export async function updatePreset(
   db: D1Database,
   id: string,
+  expected: { authorId: string; contentRevision: number },
   updates: PresetEditRequest,
   previousValues?: PresetPreviousValues | null,
   newStatus?: 'approved' | 'pending'
@@ -693,7 +698,7 @@ export async function updatePreset(
   }
 
   // Add WHERE clause
-  params.push(id);
+  params.push(id, expected.authorId, expected.contentRevision);
 
   // OPT-013 (2026-07-18 audit): RETURNING * instead of a re-read — halves the
   // D1 round trips and guarantees the returned entity reflects exactly this
@@ -701,7 +706,7 @@ export async function updatePreset(
   const query = `
     UPDATE presets
     SET ${setClauses.join(', ')}
-    WHERE id = ?
+    WHERE id = ? AND author_discord_id = ? AND content_revision = ?
     RETURNING *
   `;
 

@@ -5,7 +5,7 @@
  * This file contains project-specific utilities and re-exports.
  */
 
-import type { Env } from '../src/types';
+import type { Env, PresetRow } from '../src/types';
 
 // Re-export shared test utilities
 export {
@@ -16,13 +16,17 @@ export {
   createExpiredJWT,
   authHeaders,
   // Factories
-  createMockPresetRow,
   createMockSubmission,
   createMockCategoryRow,
 } from '@xivdyetools/test-utils';
 
 // Import for internal use
-import { createMockD1Database, createMockR2Bucket } from '@xivdyetools/test-utils';
+import { createMockD1Database, createMockR2Bucket, createMockPresetRow as createSharedPresetRow } from '@xivdyetools/test-utils';
+
+/** Include the API's internal revision without changing the shared public preset fixture. */
+export function createMockPresetRow(overrides: Partial<PresetRow> = {}): PresetRow {
+  return { ...createSharedPresetRow(overrides), content_revision: 0, ...overrides };
+}
 
 // ============================================
 // PROJECT-SPECIFIC: MOCK ENVIRONMENT

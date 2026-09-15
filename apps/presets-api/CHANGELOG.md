@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2026-09-15
+
+### Fixed
+
+- Owner edits now check both ownership and the content revision at the final database write. Concurrent moderation or another owner edit returns 409 without replacing the newer decision, including same-millisecond changes and status changes that return to their original value (2026-09-15 security audit, FINDING-004).
+- Migration `0014_add_content_revision.sql` adds a database-owned revision and trigger covering content, ownership, moderation and revert snapshots from every writer. Votes and preview-image operations do not invalidate content edits. Apply the migration before deploying this version.
+
 ## [2.3.1] - 2026-09-15
 
 ### Fixed

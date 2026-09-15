@@ -3225,7 +3225,7 @@ describe('PresetsHandler', () => {
     // ============================================
 
     describe('PATCH /api/v1/presets/:id - Edge Cases', () => {
-        it('should return 500 when updatePreset fails to return preset', async () => {
+        it('should return 409 when the conditional owner update no longer matches', async () => {
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
                 author_discord_id: '123',
@@ -3253,10 +3253,10 @@ describe('PresetsHandler', () => {
                 env
             );
 
-            expect(res.status).toBe(500);
+            expect(res.status).toBe(409);
             const body = await res.json() as { error: string; message: string };
-            expect(body.error).toBe('INTERNAL_ERROR');
-            expect(body.message).toBe('Failed to update preset');
+            expect(body.error).toBe('CONFLICT');
+            expect(body.message).toBe('Preset changed concurrently — reload and retry');
         });
 
         it('should trigger moderation when name or description changes', async () => {

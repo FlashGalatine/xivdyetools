@@ -153,7 +153,15 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 
 ## Database
 
-### Tables (`schema.sql` + `migrations/0002…0013` + `002_add_composite_indexes.sql`)
+### Tables (`schema.sql` + `migrations/0002…0014` + `002_add_composite_indexes.sql`)
+
+`presets.content_revision` is an internal optimistic concurrency token. Migration 0014's
+trigger owns all increments when content, ownership, status, or revert snapshots change,
+including writes from older workers. Owner edits compare the captured revision and owner
+at the final UPDATE and return 409 on a stale read. Vote, preview-image, and timestamp-only
+writes do not increment it. Do not also increment it in application SQL. SQLite `RETURNING`
+does not reflect AFTER-trigger increments; callers must re-read before another conditional
+write. The token is intentionally omitted from public preset responses.
 
 | Table | Purpose |
 |-------|---------|

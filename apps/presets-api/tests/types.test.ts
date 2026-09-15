@@ -294,6 +294,7 @@ describe('Types', () => {
                 preview_image_key: null,
                 preview_image_status: 'none',
                 secondary_categories: '[]',
+                content_revision: 0,
             };
 
             expect(typeof row.dyes).toBe('string');

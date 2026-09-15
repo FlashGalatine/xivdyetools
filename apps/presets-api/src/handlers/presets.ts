@@ -22,12 +22,13 @@ import {
   validationErrorResponse,
   forbiddenResponse,
   notFoundResponse,
-  internalErrorResponse,
 } from '../utils/api-response.js';
 import {
   getPresets,
   getFeaturedPresets,
   getPresetById,
+  getPresetRowById,
+  rowToPreset,
   getPresetsByUser,
   findDuplicatePreset,
   findDuplicatePresetExcluding,
@@ -521,10 +522,11 @@ presetsRouter.patch('/:id', async (c) => {
   const id = c.req.param('id');
 
   // Get preset to check ownership
-  const preset = await getPresetById(c.env.DB, id);
-  if (!preset) {
+  const presetRow = await getPresetRowById(c.env.DB, id);
+  if (!presetRow) {
     return notFoundResponse(c, 'Preset');
   }
+  const preset = rowToPreset(presetRow, c.get('logger'));
 
   // FINDING-016: a preset the caller could not GET does not exist for them
   if (!canSeePreset(auth, preset)) {
@@ -712,6 +714,7 @@ presetsRouter.patch('/:id', async (c) => {
     updatedPreset = await updatePreset(
       c.env.DB,
       id,
+      { authorId: auth.userDiscordId, contentRevision: presetRow.content_revision },
       body,
       previousValues,
       nextStatus
@@ -749,7 +752,11 @@ presetsRouter.patch('/:id', async (c) => {
   }
 
   if (!updatedPreset) {
-    return internalErrorResponse(c, 'Failed to update preset');
+    return c.json({
+      success: false,
+      error: ErrorCode.CONFLICT,
+      message: 'Preset changed concurrently — reload and retry',
+    }, 409);
   }
 
   // FINDING-008 + FINDING-004: count this notification against the daily cap
