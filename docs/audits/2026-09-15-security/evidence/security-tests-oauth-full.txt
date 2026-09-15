@@ -1,0 +1,41 @@
+
+ RUN  v4.1.11 C:/dev/XIVProjects/xivdyetools/apps/oauth
+      Coverage enabled with v8
+
+ ❯ src/__tests__/rate-limit-binding.test.ts (6 tests | 1 failed) 33ms
+     × routes /auth/discord (10/min) to the 10-tier binding and denies when it says no 23ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/__tests__/rate-limit-binding.test.ts > oauth rate limiter backend selection > routes /auth/discord (10/min) to the 10-tier binding and denies when it says no
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "rl:198.51.100.7:/auth/discord:t10_60",
+-   "rl:198.51.100.7:/auth/discord:t10_60",
++   "rl:198.51.100.7:/auth/discord",
++   "rl:198.51.100.7:/auth/discord",
+  ]
+
+ ❯ src/__tests__/rate-limit-binding.test.ts:83:27
+     81|         // shared one counter across two different configs -- the key …
+     82|         // `keyPrefix + key` while a source comment claimed it was tie…
+     83|         expect(t10.calls).toEqual([
+       |                           ^
+     84|           'rl:198.51.100.7:/auth/discord:t10_60',
+     85|           'rl:198.51.100.7:/auth/discord:t10_60',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 15 passed (16)
+      Tests  1 failed | 345 passed (346)
+   Start at  10:50:46
+   Duration  1.68s (transform 4.50s, setup 0ms, import 8.41s, tests 1.16s, environment 3ms)
+
+undefined
+C:\dev\XIVProjects\xivdyetools\apps\oauth:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run

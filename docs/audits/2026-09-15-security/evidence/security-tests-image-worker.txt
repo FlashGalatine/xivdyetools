@@ -1,0 +1,11 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:24:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 C:/dev/XIVProjects/xivdyetools/apps/image-worker
+
+
+ Test Files  5 passed (5)
+      Tests  75 passed (75)
+   Start at  10:46:21
+   Duration  756ms (transform 579ms, setup 0ms, import 936ms, tests 172ms, environment 1ms)

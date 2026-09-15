@@ -1,0 +1,7 @@
+{
+  "reviewed_image": "K1.webp",
+  "current_image": "K2.webp",
+  "current_status": "approved",
+  "query_source": "actual source UPDATE strings extracted without modification",
+  "result": "Approval of stale preset-only action approves the replacement image"
+}

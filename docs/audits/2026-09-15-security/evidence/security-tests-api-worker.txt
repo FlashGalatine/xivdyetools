@@ -1,0 +1,31 @@
+
+ RUN  v4.1.11 C:/dev/XIVProjects/xivdyetools/apps/api-worker
+
+Sourcemap for "C:/dev/XIVProjects/xivdyetools/packages/core/dist/services/color/RybColorMixer.js" points to missing source files
+Sourcemap for "C:/dev/XIVProjects/xivdyetools/packages/core/dist/services/color/SpectralMixer.js" points to missing source files
+ ❯ src/telemetry/router.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/telemetry/router.test.ts [ src/telemetry/router.test.ts ]
+TypeError: Cannot convert undefined or null to object
+ ❯ src/lib/validation.ts:57:62
+     55|  * file's `splitComplementary`). Derived, never re-listed.
+     56|  */
+     57| export const VALID_HARMONY_TYPES: readonly string[] = Object.keys(HARM…
+       |                                                              ^
+     58|
+     59| /** Core's locale files key harmony names in camelCase; the wire ids a…
+ ❯ src/middleware/locale.ts:12:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  25 passed (25)
+   Start at  10:46:23
+   Duration  1.97s (transform 2.91s, setup 0ms, import 1.77s, tests 18ms, environment 0ms)
+
+undefined
+C:\dev\XIVProjects\xivdyetools\apps\api-worker:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/telemetry/schema.test.ts src/telemetry/origin.test.ts src/telemetry/router.test.ts
