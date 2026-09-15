@@ -1,6 +1,7 @@
 /** Regression coverage for FINDING-003's GitHub webhook byte limit. */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createHmac } from 'node:crypto';
 import type { Env } from './types/env.js';
 
 vi.mock('@xivdyetools/auth', () => ({
@@ -133,6 +134,20 @@ import app from './index.js';
 
 const MAX_BYTES = 1_048_576;
 const encoder = new TextEncoder();
+const GITHUB_WEBHOOK_SECRET = 'test-github-secret';
+
+function githubSignature(body: Uint8Array): string {
+  return `sha256=${createHmac('sha256', GITHUB_WEBHOOK_SECRET).update(body).digest('hex')}`;
+}
+
+function githubBodyStream(body: Uint8Array): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(body);
+      controller.close();
+    },
+  });
+}
 
 function githubEnv(): Env {
   return {
@@ -141,7 +156,7 @@ function githubEnv(): Env {
     DISCORD_CLIENT_ID: 'test-app-id',
     PRESETS_API_URL: 'https://test-api.example.com',
     INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
-    GITHUB_WEBHOOK_SECRET: 'test-github-secret',
+    GITHUB_WEBHOOK_SECRET,
     ANNOUNCEMENT_CHANNEL_ID: 'test-announcement-channel',
     KV: {
       get: vi.fn(),
@@ -177,8 +192,11 @@ function githubRequest(
 
 describe('POST /webhooks/github body byte limit (FINDING-003)', () => {
   beforeEach(async () => {
+    const realVerifier = await vi.importActual<typeof import('./utils/github-verify.js')>(
+      './utils/github-verify.js',
+    );
     const { verifyGitHubSignature } = await import('./utils/github-verify.js');
-    vi.mocked(verifyGitHubSignature).mockReset();
+    vi.mocked(verifyGitHubSignature).mockReset().mockImplementation(realVerifier.verifyGitHubSignature);
   });
 
   it.each([
@@ -248,16 +266,56 @@ describe('POST /webhooks/github body byte limit (FINDING-003)', () => {
         controller.close();
       },
     });
-    const { verifyGitHubSignature } = await import('./utils/github-verify.js');
-    vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
-
-    const response = await app.fetch(githubRequest(body), githubEnv(), context());
+    const response = await app.fetch(
+      githubRequest(body, { 'X-Hub-Signature-256': githubSignature(bodyBytes) }),
+      githubEnv(),
+      context(),
+    );
 
     expect(response.status).toBe(200);
-    expect(verifyGitHubSignature).toHaveBeenCalledWith(
-      'test-github-secret',
-      bodyText,
-      'sha256=test',
-    );
   });
+
+  const byteNormalizationCases = [
+    {
+      label: 'a UTF-8 BOM',
+      body: new Uint8Array([0xef, 0xbb, 0xbf, ...encoder.encode('{"ping":true}')]),
+    },
+    {
+      label: 'a malformed UTF-8 sequence',
+      body: new Uint8Array([0x7b, 0x22, 0x61, 0x22, 0x3a, 0xc3, 0x28, 0x7d]),
+    },
+  ];
+
+  it.each(byteNormalizationCases)(
+    'accepts a ping signed over received bytes containing $label',
+    async ({ body }) => {
+      const response = await app.fetch(
+        githubRequest(githubBodyStream(body), {
+          'X-Hub-Signature-256': githubSignature(body),
+        }),
+        githubEnv(),
+        context(),
+      );
+
+      expect(response.status).toBe(200);
+    },
+  );
+
+  it.each(byteNormalizationCases)(
+    'rejects a ping signed over decoded and re-encoded text containing $label',
+    async ({ body }) => {
+      const normalizedBody = encoder.encode(new TextDecoder().decode(body));
+      expect(normalizedBody).not.toEqual(body);
+
+      const response = await app.fetch(
+        githubRequest(githubBodyStream(body), {
+          'X-Hub-Signature-256': githubSignature(normalizedBody),
+        }),
+        githubEnv(),
+        context(),
+      );
+
+      expect(response.status).toBe(401);
+    },
+  );
 });

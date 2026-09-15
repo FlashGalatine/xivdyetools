@@ -28,13 +28,13 @@
  * secret length, while `@xivdyetools/auth`'s HMAC helpers require ≥32 bytes.
  *
  * @param secret - The webhook secret configured in GitHub
- * @param payload - The raw request body as a string
+ * @param payload - The raw request bytes, or a UTF-8 string for existing callers
  * @param signature - The `X-Hub-Signature-256` header value (format: `sha256=<hex>`)
  * @returns true if the signature is valid
  */
 export async function verifyGitHubSignature(
   secret: string,
-  payload: string,
+  payload: string | Uint8Array<ArrayBuffer>,
   signature: string,
 ): Promise<boolean> {
   if (!signature.startsWith('sha256=')) {
@@ -53,7 +53,8 @@ export async function verifyGitHubSignature(
   );
 
   // Compute the HMAC of the payload
-  const signatureBuffer = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
+  const payloadBytes = typeof payload === 'string' ? new TextEncoder().encode(payload) : payload;
+  const signatureBuffer = await crypto.subtle.sign('HMAC', key, payloadBytes);
 
   // Convert to hex string
   const computedHex = Array.from(new Uint8Array(signatureBuffer))

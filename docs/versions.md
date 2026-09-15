@@ -20,7 +20,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.9.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.5.4 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.5.5 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.1 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -151,7 +151,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.5.4 | Sep 2026 (prepared) | Legacy preview controls refresh the current image and require a second click |
+| v5.5.5 | Sep 2026 (prepared) | GitHub webhook HMAC checks the received bytes before text decoding; completes the Sprint 0 raw-byte requirement |
+| v5.5.4 | Sep 2026 | Legacy preview controls refresh the current image and require a second click |
 | v5.5.3 | Sep 2026 (prepared) | Preview buttons and signed requests bind the exact reviewed image key; stale decisions conflict |
 | v5.5.2 | Sep 2026 (prepared) | Bound GitHub webhook streams before authentication; bundle auth 2.0.2 for Discord interactions |
 | v5.5.1 | Sep 2026 | Test-only — the root `CHANGELOG-laymans.md` gets the bot file's parse gates (grammar, ordering, uncut announcement); `announcements.ts` exports `DESCRIPTION_BUDGET` under `@testonly` |
@@ -544,8 +545,10 @@
 Security rollout constraints: Discord 5.5.2+ and moderation 1.7.1+ bundle auth 2.0.2+.
 Presets API 2.3.1+ rejects unversioned preview decisions; Discord 5.5.3+ sends the image
 key, and 5.5.4+ safely refreshes legacy controls. Presets API 2.3.2+ requires migration
-0014 before deployment. These September 15 versions are prepared locally; see the
-[rollout runbook](operations/security-remediation-2026-09-15.md) for deployment status.
+0014 before deployment. The original September 15 rollout merged through PR #183;
+Discord 5.5.5 is a prepared follow-up and has not been deployed. See the
+[Sprint 0 follow-up](audits/2026-09-15-security/SPRINT_0_FOLLOWUP.md) for verified release evidence
+and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the original procedure.
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
