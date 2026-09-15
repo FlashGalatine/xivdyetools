@@ -76,6 +76,6 @@ See [scanner provenance](evidence/remediation/gitleaks.md), [tree log](evidence/
 
 ## Remaining release work
 
-Follow the [runbook](../../operations/security-remediation-2026-09-15.md): hold the explicitly named workflows, release the ordered commit ranges, publish auth through Actions/OIDC, apply migration 0014 before the dependent API deployment, verify every affected consumer, then restore workflow states. A branch push can deploy public beta workers; a main merge can independently deploy four auth consumers. Neither is authorized by this implementation task.
+The statements above describe the local implementation snapshot before publication. Review and merge of PR #183 were subsequently authorized on 2026-09-15. The [runbook](../../operations/security-remediation-2026-09-15.md) now records a held full-PR merge: hold all eight production and three beta deployment workflows, apply migration 0014 once to the shared presets database, merge the reviewed head, publish auth through Actions/OIDC, deploy presets-api before moderation and Discord, verify OAuth and OG, then restore the original workflow states. The original commit table remains the implementation history, not a sequence of intermediate deployment revisions.
 
 Only close each finding after its required deployment and bounded acceptance checks. No rotation is currently indicated by the completed local scans. Accepted KV availability trade-offs and unrelated audit backlogs remain outside this remediation scope.
