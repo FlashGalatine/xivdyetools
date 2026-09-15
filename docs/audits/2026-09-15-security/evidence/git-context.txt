@@ -1,0 +1,35 @@
+commit=0332fcc5
+branch=main
+status:
+?? docs/audits/2026-09-15-security/
+recent commits:
+0332fcc5 (HEAD -> main, origin/main, origin/HEAD) Merge pull request #173 from FlashGalatine/worktree-swatch-item-links
+e65c84bc docs: update release notes for item link menu fixes
+1e2f11cb fix(web-app): correct facewear links and menu keyboard behavior
+e03cba7a fix(web-app): drop the Eorzea Collection links — its ids are not item ids
+127d9d23 feat(web-app): open a glamour piece in seven community databases (5.9.0)
+9210947d Merge pull request #171 from FlashGalatine/worktree-extractor-4a
+23410bd4 (origin/worktree-extractor-4a) Merge pull request #172 from FlashGalatine/worktree-camera-cleanup
+a121ae91 (origin/worktree-camera-cleanup, worktree-camera-cleanup) refactor(web-app): delete CameraService and close the camera directive
+5aa2efe1 (worktree-extractor-4a) fix(web-app): extractor 4A review round — one resolution path, no silent drops, stable focus, honest failures
+a2d89ecc feat(web-app): Palette Extractor on the 4A frame — loupe over a weighted bar over the card sheet (5.8.0)
+39e08c32 Merge pull request #170 from FlashGalatine/worktree-docs-audit-2026-09-05
+bc739956 ci: gate the root CHANGELOG-laymans.md with a build-free suite in the always-run step
+9fcf4b44 docs: apply the PR #170 review round — nine wrong facts corrected, both docs gates hardened
+063ed168 docs: resolve the audit's three follow-ups (docs site verified, root laymans gated, checklist split)
+7e0a30f9 docs: whole-repository documentation audit, reorganisation, and two CI gates (root 2.2.0)
+1eb57cda Merge pull request #169 from FlashGalatine/worktree-api-wheels
+5a2642ff (origin/worktree-api-wheels, worktree-api-wheels) Merge remote-tracking branch 'origin/main' into worktree-api-wheels
+20b1571c Merge pull request #168 from FlashGalatine/worktree-api-docs-restyle
+95337727 Merge pull request #167 from FlashGalatine/research/harmony-color-wheels
+a903abf1 feat(api-worker): expose the colour wheels and harmony selector (0.14.0)
+bbb9076b Merge remote-tracking branch 'origin/research/harmony-color-wheels' into worktree-api-wheels
+2128e0d3 (origin/research/harmony-color-wheels, research/harmony-color-wheels) fix(web-app): only a share link resets the wheel; in-app dye hand-offs keep it
+27c36e01 docs: layman's changelog — the wheel travels with every share link
+4f0f20d8 fix(og-worker): wheel tag in the footer; key the cache only where the wheel is read
+fd206823 fix(web-app): share links always carry the wheel; pins are per wheel
+63dce221 fix(svg,bot-logic,discord): fit the wheel label, validate the wheel, show the share link
+7b74dbeb fix(core): review follow-ups for the colour wheels — ΔE on the lightness wheel, generated tables, one normaliser
+7594cb07 fix: final-review follow-ups for selectable colour wheels
+0d82c5cb chore(release): selectable harmony colour wheels — core 5.2.0, web-app 5.7.0, discord-worker 5.5.0, og-worker 2.10.0
+ca9ae8f5 fix(og-worker): regenerate CJK subset fonts for the colour-wheel names

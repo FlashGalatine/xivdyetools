@@ -492,7 +492,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow({ status: 'rejected' }));
 
-            const stmt = prepareStatusUpdate(db, 'preset-1', 'rejected', 'pending', '2026-07-18T00:00:00.000Z');
+            const stmt = prepareStatusUpdate(db, 'preset-1', 'rejected', 'pending', 0, '2026-07-18T00:00:00.000Z');
             await stmt.run();
 
             const query = db._queries[0];
@@ -584,7 +584,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            await updatePreset(db, 'preset-1', { name: 'New Name' });
+            await updatePreset(db, 'preset-1', { authorId: '123456789', contentRevision: 0 }, { name: 'New Name' });
 
             const updateQuery = db._queries.find((q) => q.includes('UPDATE presets'));
             expect(updateQuery).toContain('name = ?');
@@ -595,7 +595,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            await updatePreset(db, 'preset-1', { description: 'New description that is long enough' });
+            await updatePreset(db, 'preset-1', { authorId: '123456789', contentRevision: 0 }, { description: 'New description that is long enough' });
 
             const updateQuery = db._queries.find((q) => q.includes('UPDATE presets'));
             expect(updateQuery).toContain('description = ?');
@@ -606,7 +606,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            await updatePreset(db, 'preset-1', { tags: ['new', 'tags', 'here'] });
+            await updatePreset(db, 'preset-1', { authorId: '123456789', contentRevision: 0 }, { tags: ['new', 'tags', 'here'] });
 
             const updateQuery = db._queries.find((q) => q.includes('UPDATE presets'));
             expect(updateQuery).toContain('tags = ?');
@@ -617,7 +617,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            await updatePreset(db, 'preset-1', {
+            await updatePreset(db, 'preset-1', { authorId: '123456789', contentRevision: 0 }, {
                 name: 'New Name',
                 description: 'New description for this preset',
                 tags: ['updated'],
@@ -633,7 +633,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            await updatePreset(db, 'preset-1', { dyes: [5, 3, 1] });
+            await updatePreset(db, 'preset-1', { authorId: '123456789', contentRevision: 0 }, { dyes: [5, 3, 1] });
 
             const updateQuery = db._queries.find((q) => q.includes('UPDATE presets'));
             expect(updateQuery).toContain('dye_signature = ?');
@@ -650,7 +650,7 @@ describe('PresetService', () => {
                 dyes: [1, 2],
             };
 
-            await updatePreset(db, 'preset-1', { name: 'New Name' }, previousValues);
+            await updatePreset(db, 'preset-1', { authorId: '123456789', contentRevision: 0 }, { name: 'New Name' }, previousValues);
 
             expect(db._bindings.some((b) => b.some((v) => typeof v === 'string' && v.includes('Old Name')))).toBe(true);
         });
@@ -660,7 +660,7 @@ describe('PresetService', () => {
             db._setupMock(() => createMockPresetRow());
 
             // When previousValues is undefined, it should not be included in the update
-            await updatePreset(db, 'preset-1', { name: 'New Name' }, undefined);
+            await updatePreset(db, 'preset-1', { authorId: '123456789', contentRevision: 0 }, { name: 'New Name' }, undefined);
 
             const updateQuery = db._queries.find((q) => q.includes('UPDATE presets'));
             // previous_values should not appear in query when undefined
@@ -671,7 +671,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            await updatePreset(db, 'preset-1', { name: 'New Name' }, undefined, 'pending');
+            await updatePreset(db, 'preset-1', { authorId: '123456789', contentRevision: 0 }, { name: 'New Name' }, undefined, 'pending');
 
             expect(db._bindings.some((b) => b.includes('pending'))).toBe(true);
         });
@@ -680,7 +680,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            await updatePreset(db, 'preset-1', { name: 'New Name' });
+            await updatePreset(db, 'preset-1', { authorId: '123456789', contentRevision: 0 }, { name: 'New Name' });
 
             const updateQuery = db._queries.find((q) => q.includes('UPDATE presets'));
             expect(updateQuery).toContain('updated_at = ?');
@@ -703,7 +703,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            const stmt = prepareRevert(db, 'preset-1', previousValues, '2026-07-18T00:00:00.000Z');
+            const stmt = prepareRevert(db, 'preset-1', previousValues, { contentRevision: 0, previousValuesRaw: JSON.stringify(previousValues) }, '2026-07-18T00:00:00.000Z');
             await stmt.run();
 
             const query = db._queries[0];
@@ -718,7 +718,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            const stmt = prepareRevert(db, 'preset-1', previousValues, '2026-07-18T00:00:00.000Z');
+            const stmt = prepareRevert(db, 'preset-1', previousValues, { contentRevision: 0, previousValuesRaw: JSON.stringify(previousValues) }, '2026-07-18T00:00:00.000Z');
             await stmt.run();
 
             expect(db._bindings[0]).toContain('[10,20]');
@@ -727,6 +727,7 @@ describe('PresetService', () => {
 });
 
 const baseRow: PresetRow = {
+    content_revision: 0,
     id: 'p1',
     name: 'Test',
     description: 'd',

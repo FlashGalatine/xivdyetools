@@ -173,6 +173,7 @@ export interface PresetRow {
   preview_image_key: string | null; // R2 key, {presetId}/{uuid}.webp
   preview_image_status: string; // 'none' | 'pending' | 'approved'
   secondary_categories: string; // JSON array of PresetCategory; never null
+  content_revision: number; // Internal token incremented by the database trigger
   rejection_reason?: string | null; // joined from moderation_log on /mine only
 }
 

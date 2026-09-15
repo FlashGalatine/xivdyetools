@@ -5,8 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { detectCrawler, detectCrawlerFromRequest, getCrawlerName } from './crawler-detector';
-import type { CrawlerType } from './types';
+import { detectCrawler, detectCrawlerFromRequest } from './crawler-detector';
 
 describe('crawler-detector', () => {
   describe('detectCrawler', () => {
@@ -198,25 +197,6 @@ describe('crawler-detector', () => {
     });
   });
 
-  describe('getCrawlerName', () => {
-    const testCases: Array<{ type: CrawlerType; expected: string }> = [
-      { type: 'discord', expected: 'Discord' },
-      { type: 'twitter', expected: 'Twitter/X' },
-      { type: 'facebook', expected: 'Facebook' },
-      { type: 'linkedin', expected: 'LinkedIn' },
-      { type: 'slack', expected: 'Slack' },
-      { type: 'telegram', expected: 'Telegram' },
-      { type: 'whatsapp', expected: 'WhatsApp' },
-      { type: 'other', expected: 'Other' },
-      { type: 'none', expected: 'Browser' },
-    ];
-
-    testCases.forEach(({ type, expected }) => {
-      it(`should return "${expected}" for type "${type}"`, () => {
-        expect(getCrawlerName(type)).toBe(expected);
-      });
-    });
-  });
 });
 
 describe('deliberate exclusions', () => {

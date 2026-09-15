@@ -1,0 +1,20 @@
+• turbo 2.10.12
+
+   • Packages in scope: @xivdyetools/auth, @xivdyetools/logger, @xivdyetools/test-utils, @xivdyetools/types, @xivdyetools/worker-kit, xivdyetools-oauth-worker
+   • Running build in 6 packages
+   • Remote caching disabled
+
+@xivdyetools/logger:build: cache hit, replaying logs 510f6a21ce71bbf7
+@xivdyetools/logger:build: [2m$ tsc -p tsconfig.build.json[22m
+@xivdyetools/types:build: cache hit, replaying logs 3292e93fe431b26b
+@xivdyetools/types:build: [2m$ tsc -p tsconfig.build.json[22m
+@xivdyetools/auth:build: cache hit, replaying logs 36f4607396813862
+@xivdyetools/auth:build: [2m$ tsc -p tsconfig.build.json[22m
+@xivdyetools/worker-kit:build: cache hit, replaying logs 66635e241bd31115
+@xivdyetools/worker-kit:build: [2m$ tsc -p tsconfig.build.json[22m
+@xivdyetools/test-utils:build: cache hit, replaying logs 078e0021f25b5ea4
+@xivdyetools/test-utils:build: [2m$ tsc -p tsconfig.build.json[22m
+
+ Tasks:    5 successful, 5 total
+Cached:    5 cached, 5 total
+  Time:    236ms >>> FULL TURBO

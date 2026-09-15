@@ -1,0 +1,476 @@
+=== schema-from-git-show ===
+
+ ⛅️ wrangler 4.131.1 (update available 4.131.2)
+───────────────────────────────────────────────
+Resource location: local
+
+Use --remote if you want to access the remote instance.
+
+🌀 Executing on local database DB (e17d68a1-5a44-4c88-b02b-07d053cbe321) from ..\..\.superpowers\sdd\REMEDIATION_PLAN\local-d1-smoke\persist-exact\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 31 commands executed successfully.
+[
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  }
+]
+EXIT=0
+=== seed ===
+
+ ⛅️ wrangler 4.131.1 (update available 4.131.2)
+───────────────────────────────────────────────
+Resource location: local
+
+Use --remote if you want to access the remote instance.
+
+🌀 Executing on local database DB (e17d68a1-5a44-4c88-b02b-07d053cbe321) from ..\..\.superpowers\sdd\REMEDIATION_PLAN\local-d1-smoke\persist-exact\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 2 commands executed successfully.
+[
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  }
+]
+EXIT=0
+=== migration-0014 ===
+
+ ⛅️ wrangler 4.131.1 (update available 4.131.2)
+───────────────────────────────────────────────
+Resource location: local
+
+Use --remote if you want to access the remote instance.
+
+🌀 Executing on local database DB (e17d68a1-5a44-4c88-b02b-07d053cbe321) from ..\..\.superpowers\sdd\REMEDIATION_PLAN\local-d1-smoke\persist-exact\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 2 commands executed successfully.
+[
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  }
+]
+EXIT=0
+=== verification ===
+
+ ⛅️ wrangler 4.131.1 (update available 4.131.2)
+───────────────────────────────────────────────
+Resource location: local
+
+Use --remote if you want to access the remote instance.
+
+🌀 Executing on local database DB (e17d68a1-5a44-4c88-b02b-07d053cbe321) from ..\..\.superpowers\sdd\REMEDIATION_PLAN\local-d1-smoke\persist-exact\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 17 commands executed successfully.
+[
+  {
+    "results": [
+      {
+        "check_name": "existing_row_revision",
+        "id": "smoke-preset-001",
+        "content_revision": 0,
+        "status": "pending"
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [
+      {
+        "check_name": "moderation_update",
+        "changed_rows": 1
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [
+      {
+        "check_name": "after_moderation_revision",
+        "content_revision": 1,
+        "status": "approved"
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [
+      {
+        "check_name": "stale_update",
+        "changed_rows": 0
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  },
+  {
+    "results": [
+      {
+        "check_name": "stale_audit_insert",
+        "inserted_rows": 0
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [
+      {
+        "check_name": "fresh_update",
+        "changed_rows": 1
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [
+      {
+        "check_name": "fresh_audit_insert",
+        "inserted_rows": 1
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [
+      {
+        "check_name": "vote_preview_only",
+        "content_revision": 2,
+        "status": "rejected",
+        "preview_image_status": "approved"
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [
+      {
+        "check_name": "moderation_log_rows",
+        "row_count": 1
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [
+      {
+        "check_name": "vote_rows",
+        "row_count": 1
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  }
+]
+EXIT=0
+EXACT_RUN_EXIT=0

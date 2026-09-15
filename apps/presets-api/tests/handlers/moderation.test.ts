@@ -492,7 +492,7 @@ describe('ModerationHandler', () => {
             expect(body.message).toContain('Invalid JSON');
         });
 
-        it('should return 500 if revert operation fails', async () => {
+        it('should return 409 if the revert snapshot changed', async () => {
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
                 previous_values: JSON.stringify({
@@ -530,10 +530,10 @@ describe('ModerationHandler', () => {
                 env
             );
 
-            expect(res.status).toBe(500);
+            expect(res.status).toBe(409);
             const body = await res.json() as { error: string; message: string };
-            expect(body.error).toBe('INTERNAL_ERROR');
-            expect(body.message).toBe('Failed to revert preset');
+            expect(body.error).toBe('CONFLICT');
+            expect(body.message).toBe('Preset changed concurrently — reload and retry');
         });
 
         it('should return 404 if preset not found', async () => {
@@ -657,7 +657,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
                     },
-                    body: JSON.stringify({ action: 'approve' }),
+                    body: JSON.stringify({ action: 'approve', preview_image_key: 'preset-123/a.webp' }),
                 },
                 env
             );
@@ -698,7 +698,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
                     },
-                    body: JSON.stringify({ action: 'reject' }),
+                    body: JSON.stringify({ action: 'reject', preview_image_key: 'preset-123/a.webp' }),
                 },
                 env
             );
@@ -754,7 +754,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
                     },
-                    body: JSON.stringify({ action: 'reject' }),
+                    body: JSON.stringify({ action: 'reject', preview_image_key: 'preset-123/a.webp' }),
                 },
                 env
             );
@@ -806,7 +806,7 @@ describe('ModerationHandler', () => {
                             Authorization: 'Bearer test-bot-secret',
                             'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
                         },
-                        body: JSON.stringify({ action: 'reject' }),
+                        body: JSON.stringify({ action: 'reject', preview_image_key: 'preset-123/a.webp' }),
                     },
                     purgeEnv
                 );
@@ -844,7 +844,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': 'the-author', // author, not a moderator
                     },
-                    body: JSON.stringify({ action: 'approve' }),
+                    body: JSON.stringify({ action: 'approve', preview_image_key: 'preset-123/a.webp' }),
                 },
                 env
             );
@@ -904,7 +904,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ action: 'approve' }),
+                    body: JSON.stringify({ action: 'approve', preview_image_key: 'nonexistent/a.webp' }),
                 },
                 env
             );

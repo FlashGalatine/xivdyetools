@@ -73,8 +73,8 @@ export interface PresetSubmissionNotification {
  */
 export interface PreviewImageNotification {
   type: 'preview_image';
-  /** R2 key of the pending object, used to build the embed's image URL. */
-  preview_image_key?: string | null;
+  /** Immutable R2 key binding the displayed image to its moderation actions. */
+  preview_image_key: string;
   preset: {
     id: string;
     name: string;
@@ -157,6 +157,14 @@ const PRESET_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{
  */
 export function isValidPresetId(value: unknown): value is string {
   return typeof value === 'string' && PRESET_ID_PATTERN.test(value);
+}
+
+/** Current preview keys fit the Discord custom-id limit without truncation. */
+export function isValidPreviewImageKey(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length !== 78 || !value.endsWith('.webp')) return false;
+  return (
+    isValidPresetId(value.slice(0, 36)) && value[36] === '/' && isValidPresetId(value.slice(37, -5))
+  );
 }
 
 // ============================================================================

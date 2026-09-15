@@ -19,6 +19,14 @@ import {
   searchPresetsForAutocomplete,
 } from './preset-api.js';
 import { PresetAPIError } from '../types/preset.js';
+import {
+  createBotSignatureV2,
+  BOT_SIGNATURE_NONCE_HEADER,
+  BOT_SIGNATURE_V2_HEADER,
+} from '@xivdyetools/auth';
+
+const PRESET_ID = '12345678-1234-4123-8123-123456789abc';
+const PREVIEW_IMAGE_KEY = `${PRESET_ID}/abcdefab-cdef-4def-8abc-defabcdefabc.webp`;
 
 // Mock fetch for URL-based tests
 const mockFetch = vi.fn();
@@ -520,14 +528,21 @@ describe('preset-api.ts', () => {
         json: () => Promise.resolve({ success: true, preview_image_status: 'approved' }),
       });
 
-      const result = await setPreviewImageStatus(env, 'preset123', 'approve', 'mod123', 'ModName');
+      const result = await setPreviewImageStatus(
+        env,
+        PRESET_ID,
+        'approve',
+        PREVIEW_IMAGE_KEY,
+        'mod123',
+        'ModName',
+      );
 
       expect(result).toEqual({ success: true, preview_image_status: 'approved' });
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.example.com/api/v1/moderation/preset123/preview-image',
+        `https://api.example.com/api/v1/moderation/${PRESET_ID}/preview-image`,
         expect.objectContaining({
           method: 'PATCH',
-          body: JSON.stringify({ action: 'approve' }),
+          body: JSON.stringify({ action: 'approve', preview_image_key: PREVIEW_IMAGE_KEY }),
           headers: expect.objectContaining({
             'X-User-Discord-ID': 'mod123',
             'X-User-Discord-Name': 'ModName',
@@ -544,16 +559,57 @@ describe('preset-api.ts', () => {
         json: () => Promise.resolve({ success: true, preview_image_status: 'none' }),
       });
 
-      const result = await setPreviewImageStatus(env, 'preset123', 'reject', 'mod123', 'ModName');
+      const result = await setPreviewImageStatus(
+        env,
+        PRESET_ID,
+        'reject',
+        PREVIEW_IMAGE_KEY,
+        'mod123',
+        'ModName',
+      );
 
       expect(result).toEqual({ success: true, preview_image_status: 'none' });
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.example.com/api/v1/moderation/preset123/preview-image',
+        `https://api.example.com/api/v1/moderation/${PRESET_ID}/preview-image`,
         expect.objectContaining({
           method: 'PATCH',
-          body: JSON.stringify({ action: 'reject' }),
+          body: JSON.stringify({ action: 'reject', preview_image_key: PREVIEW_IMAGE_KEY }),
         }),
       );
+    });
+
+    it('binds the exact revision-bearing body into the v2 HMAC signature', async () => {
+      const env = createMockEnv({ withUrlConfig: true, withBotSigningSecret: true });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ success: true, preview_image_status: 'approved' }),
+      });
+
+      await setPreviewImageStatus(
+        env,
+        PRESET_ID,
+        'approve',
+        PREVIEW_IMAGE_KEY,
+        'mod123',
+        'ModName',
+      );
+
+      const options = mockFetch.mock.calls[0][1];
+      const headers = options.headers as Record<string, string>;
+      const expectedSignature = await createBotSignatureV2(
+        {
+          method: 'PATCH',
+          path: `/api/v1/moderation/${PRESET_ID}/preview-image`,
+          body: JSON.stringify({ action: 'approve', preview_image_key: PREVIEW_IMAGE_KEY }),
+          timestamp: headers['X-Request-Timestamp'],
+          nonce: headers[BOT_SIGNATURE_NONCE_HEADER],
+          userDiscordId: 'mod123',
+          userName: 'ModName',
+        },
+        env.BOT_SIGNING_SECRET,
+      );
+
+      expect(headers[BOT_SIGNATURE_V2_HEADER]).toBe(expectedSignature);
     });
 
     it('should surface a PresetAPIError when the moderation route rejects the request', async () => {
@@ -565,9 +621,9 @@ describe('preset-api.ts', () => {
         json: () => Promise.resolve({ error: 'Not a moderator' }),
       });
 
-      await expect(setPreviewImageStatus(env, 'preset123', 'approve', 'user123')).rejects.toThrow(
-        PresetAPIError,
-      );
+      await expect(
+        setPreviewImageStatus(env, PRESET_ID, 'approve', PREVIEW_IMAGE_KEY, 'user123'),
+      ).rejects.toThrow(PresetAPIError);
     });
   });
 
@@ -735,7 +791,9 @@ describe('preset-api.ts', () => {
 
       await getPreset(env, HOSTILE_ID);
 
-      expect(mockFetch.mock.calls[0][0]).toBe(`https://api.example.com/api/v1/presets/${ENCODED_ID}`);
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        `https://api.example.com/api/v1/presets/${ENCODED_ID}`,
+      );
       expect(mockFetch.mock.calls[0][0]).not.toContain('/presets/../');
     });
 
@@ -745,7 +803,9 @@ describe('preset-api.ts', () => {
 
       await editPreset(env, HOSTILE_ID, { name: 'n' }, '123', 'u');
 
-      expect(mockFetch.mock.calls[0][0]).toBe(`https://api.example.com/api/v1/presets/${ENCODED_ID}`);
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        `https://api.example.com/api/v1/presets/${ENCODED_ID}`,
+      );
     });
 
     it('voteForPreset / removeVote / hasVoted encode the id', async () => {
@@ -769,7 +829,7 @@ describe('preset-api.ts', () => {
       const env = createMockEnv({ withUrlConfig: true });
       okFetch({ success: true, preview_image_status: 'approved' });
 
-      await setPreviewImageStatus(env, HOSTILE_ID, 'approve', '123', 'mod');
+      await setPreviewImageStatus(env, HOSTILE_ID, 'approve', PREVIEW_IMAGE_KEY, '123', 'mod');
 
       expect(mockFetch.mock.calls[0][0]).toBe(
         `https://api.example.com/api/v1/moderation/${ENCODED_ID}/preview-image`,

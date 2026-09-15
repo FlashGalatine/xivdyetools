@@ -1,0 +1,12 @@
+src/index.ts(78,15): error TS2305: Module '"@xivdyetools/types"' has no exported member 'ColorWheelId'.
+src/services/dye/HarmonySelector.ts(30,15): error TS2305: Module '"@xivdyetools/types"' has no exported member 'ColorWheelId'.
+src/services/dye/wheels/ColorWheel.ts(7,15): error TS2305: Module '"@xivdyetools/types"' has no exported member 'ColorWheelId'.
+src/services/dye/wheels/types.ts(11,15): error TS2305: Module '"@xivdyetools/types"' has no exported member 'ColorWheelId'.
+src/services/localization/TranslationProvider.ts(19,3): error TS2305: Module '"@xivdyetools/types"' has no exported member 'ColorWheelId'.
+src/services/localization/TranslationProvider.ts(265,13): error TS2339: Property 'colorWheels' does not exist on type 'LocaleData'.
+src/services/localization/TranslationProvider.ts(265,47): error TS2339: Property 'colorWheels' does not exist on type 'LocaleData'.
+src/services/localization/TranslationProvider.ts(265,71): error TS2339: Property 'colorWheels' does not exist on type 'LocaleData'.
+src/services/LocalizationService.ts(20,3): error TS2305: Module '"@xivdyetools/types"' has no exported member 'ColorWheelId'.
+undefined
+C:\dev\XIVProjects\xivdyetools\packages\core:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 2: tsc -p tsconfig.build.json

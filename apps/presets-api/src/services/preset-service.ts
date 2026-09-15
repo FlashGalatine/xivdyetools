@@ -349,9 +349,13 @@ export async function getPresetById(
   db: D1Database,
   id: string
 ): Promise<CommunityPreset | null> {
-  const query = 'SELECT * FROM presets WHERE id = ?';
-  const row = await db.prepare(query).bind(id).first<PresetRow>();
+  const row = await getPresetRowById(db, id);
   return row ? rowToPreset(row) : null;
+}
+
+/** Read the content and its internal revision together before authorizing a write. */
+export async function getPresetRowById(db: D1Database, id: string): Promise<PresetRow | null> {
+  return db.prepare('SELECT * FROM presets WHERE id = ?').bind(id).first<PresetRow>();
 }
 
 /**
@@ -438,7 +442,7 @@ export async function createPreset(
  * Build the conditional status-update statement used by the moderation handler.
  *
  * BUG-020/OPT-013 (2026-07-18 audit): the update is conditional on the status
- * the moderator observed (concurrent moderation is detectable as "no row
+ * and content revision the moderator observed (concurrent moderation is detectable as "no row
  * returned") and uses RETURNING * so the caller gets exactly this write's
  * result without a re-read. Batched with the moderation_log insert by the
  * caller so the pair is atomic.
@@ -448,15 +452,16 @@ export function prepareStatusUpdate(
   id: string,
   status: CommunityPreset['status'],
   expectedStatus: CommunityPreset['status'],
+  expectedRevision: number,
   now: string
 ): D1PreparedStatement {
   const query = `
     UPDATE presets
     SET status = ?, updated_at = ?
-    WHERE id = ? AND status = ?
+    WHERE id = ? AND status = ? AND content_revision = ?
     RETURNING *
   `;
-  return db.prepare(query).bind(status, now, id, expectedStatus);
+  return db.prepare(query).bind(status, now, id, expectedStatus, expectedRevision);
 }
 
 /**
@@ -468,13 +473,14 @@ export function prepareRevert(
   db: D1Database,
   id: string,
   previous: PresetPreviousValues,
+  expected: { contentRevision: number; previousValuesRaw: string },
   now: string
 ): D1PreparedStatement {
   const query = `
     UPDATE presets
     SET name = ?, description = ?, dyes = ?, tags = ?, dye_signature = ?,
         status = 'approved', previous_values = NULL, updated_at = ?
-    WHERE id = ?
+    WHERE id = ? AND content_revision = ? AND previous_values = ?
     RETURNING *
   `;
   return db
@@ -486,7 +492,9 @@ export function prepareRevert(
       JSON.stringify(previous.tags),
       generateDyeSignature(previous.dyes),
       now,
-      id
+      id,
+      expected.contentRevision,
+      expected.previousValuesRaw
     );
 }
 
@@ -634,6 +642,7 @@ export function isDyeSignatureCollision(error: unknown): boolean {
 export async function updatePreset(
   db: D1Database,
   id: string,
+  expected: { authorId: string; contentRevision: number },
   updates: PresetEditRequest,
   previousValues?: PresetPreviousValues | null,
   newStatus?: 'approved' | 'pending'
@@ -693,7 +702,7 @@ export async function updatePreset(
   }
 
   // Add WHERE clause
-  params.push(id);
+  params.push(id, expected.authorId, expected.contentRevision);
 
   // OPT-013 (2026-07-18 audit): RETURNING * instead of a re-read — halves the
   // D1 round trips and guarantees the returned entity reflects exactly this
@@ -701,7 +710,7 @@ export async function updatePreset(
   const query = `
     UPDATE presets
     SET ${setClauses.join(', ')}
-    WHERE id = ?
+    WHERE id = ? AND author_discord_id = ? AND content_revision = ?
     RETURNING *
   `;
 

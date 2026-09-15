@@ -14,7 +14,7 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 |---------|---------|-------------|
 | [`@xivdyetools/types`](packages/types/) | 3.2.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
 | [`@xivdyetools/logger`](packages/logger/) | 2.2.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
-| [`@xivdyetools/auth`](packages/auth/) | 2.0.1 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding (`/encoding`) |
+| [`@xivdyetools/auth`](packages/auth/) | 2.0.2 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding (`/encoding`) |
 | [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.3.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + sliding-window rate limiting backends (`/rate-limiter`) |
 | [`@xivdyetools/core`](packages/core/) | 5.2.0 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |
 | [`@xivdyetools/svg`](packages/svg/) | 4.1.0 | Pure SVG card generators on the 5.0 frame system (data in → SVG string out) |
@@ -26,13 +26,13 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 | App | Version | Description |
 |-----|---------|-------------|
 | [`web-app`](apps/web-app/) | 5.9.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`discord-worker`](apps/discord-worker/) | 5.5.1 | Primary Discord bot — 17 slash commands (CF Worker + Hono, HTTP Interactions) |
+| [`discord-worker`](apps/discord-worker/) | 5.5.4 | Primary Discord bot — 17 slash commands (CF Worker + Hono, HTTP Interactions) |
 | [`image-worker`](apps/image-worker/) | 1.3.0 | Photon host — `POST /extract` (raw pixels for the bot) and `POST /thumbnail` (WebP previews for presets-api), service-binding-only (CF Worker) |
-| [`moderation-worker`](apps/moderation-worker/) | 1.7.0 | Moderation bot for community presets (CF Worker) |
-| [`presets-api`](apps/presets-api/) | 2.3.0 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
+| [`moderation-worker`](apps/moderation-worker/) | 1.7.1 | Moderation bot for community presets (CF Worker) |
+| [`presets-api`](apps/presets-api/) | 2.3.3 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
 | [`oauth`](apps/oauth/) | 3.1.0 | Discord OAuth + JWT issuance (CF Worker + D1) |
 | [`api-worker`](apps/api-worker/) | 0.14.0 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
-| [`og-worker`](apps/og-worker/) | 2.10.0 | Dynamic OpenGraph image generation (CF Worker + WASM) |
+| [`og-worker`](apps/og-worker/) | 2.10.1 | Dynamic OpenGraph image generation (CF Worker + WASM) |
 | [`stoat-worker`](apps/stoat-worker/) | 0.3.0 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) — parked |
 
 ### Documentation (`docs/`)

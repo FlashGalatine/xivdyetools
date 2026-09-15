@@ -1,0 +1,49 @@
+
+ RUN  v4.1.11 C:/dev/XIVProjects/xivdyetools/apps/oauth
+      Coverage enabled with v8
+
+
+ Test Files  3 passed (3)
+      Tests  81 passed (81)
+   Start at  10:46:17
+   Duration  1.69s (transform 2.21s, setup 0ms, import 3.07s, tests 333ms, environment 0ms)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   66.22 |     57.1 |   65.62 |   66.44 |
+ src               |   64.47 |    33.33 |      50 |   64.47 |
+  index.ts         |   64.47 |    33.33 |      50 |   64.47 | ...44,284,295-308
+ src/constants     |   88.88 |       25 |      50 |   88.88 |
+  oauth.ts         |   88.88 |       25 |      50 |   88.88 | 47
+ src/handlers      |   54.85 |    51.61 |   44.44 |    55.6 |
+  callback.ts      |   95.83 |      100 |      50 |   97.87 | 55
+  oauth-flow.ts    |   95.77 |     91.3 |     100 |   95.71 | 73,268,297
+  token.ts         |   10.34 |        0 |       0 |   10.34 | 35-81,102-186
+  xivauth.ts       |   10.58 |        0 |       0 |   10.97 | 48,78-388
+ src/middleware    |   97.29 |       95 |     100 |   97.22 |
+  ...validation.ts |   97.29 |       95 |     100 |   97.22 | 59
+ src/services      |   65.18 |    44.95 |   78.94 |   64.12 |
+  jwt-service.ts   |   54.76 |       40 |      60 |   53.65 | ...62-209,241-251
+  rate-limit.ts    |   89.65 |       75 |     100 |   88.46 | 112-115
+  user-service.ts  |   60.93 |    39.68 |     100 |   60.93 | ...07,231-242,294
+ src/utils         |   80.17 |    81.63 |   78.57 |   80.86 |
+  ...validation.ts |    73.8 |    72.34 |     100 |    73.8 | ...25,128,131,137
+  ...validation.ts |   64.51 |     82.6 |    62.5 |   66.66 | ...,72,79,143-151
+  state-signing.ts |   96.55 |    94.11 |     100 |   96.55 | 81
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 66.22% ( 404/610 )
+Branches     : 57.1% ( 241/422 )
+Functions    : 65.62% ( 42/64 )
+Lines        : 66.44% ( 398/599 )
+================================================================================
+ERROR: Coverage for lines (66.44%) does not meet global threshold (90%)
+ERROR: Coverage for functions (65.62%) does not meet global threshold (90%)
+ERROR: Coverage for statements (66.22%) does not meet global threshold (90%)
+ERROR: Coverage for branches (57.1%) does not meet global threshold (85%)
+undefined
+C:\dev\XIVProjects\xivdyetools\apps\oauth:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/__tests__/authorize.test.ts src/__tests__/body-validation.test.ts src/__tests__/callback.test.ts

@@ -1,0 +1,303 @@
+Scope: all 18 workspace projects
+✓ Lockfile passes supply-chain policies (verified 9d ago)
+Lockfile is up to date, resolution step is skipped
+
+   ╭─────────────────────────────────────────╮
+   │                                         │
+   │   Update available! 11.17.0 → 12.4.2.   │
+   │   Changelog: https://pnpm.io/v/12.4.2   │
+   │    To update, run: pnpm self-update     │
+   │                                         │
+   ╰─────────────────────────────────────────╯
+
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +511
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 511, reused 264, downloaded 0, added 0
+Progress: resolved 511, reused 495, downloaded 0, added 2
+Progress: resolved 511, reused 508, downloaded 0, added 65
+Progress: resolved 511, reused 508, downloaded 0, added 103
+Progress: resolved 511, reused 508, downloaded 0, added 127
+Progress: resolved 511, reused 508, downloaded 0, added 163
+Progress: resolved 511, reused 508, downloaded 0, added 211
+Progress: resolved 511, reused 508, downloaded 0, added 256
+Progress: resolved 511, reused 508, downloaded 0, added 277
+Progress: resolved 511, reused 508, downloaded 0, added 314
+Progress: resolved 511, reused 508, downloaded 0, added 343
+Progress: resolved 511, reused 508, downloaded 0, added 359
+Progress: resolved 511, reused 508, downloaded 0, added 374
+Progress: resolved 511, reused 508, downloaded 0, added 393
+Progress: resolved 511, reused 508, downloaded 0, added 410
+Progress: resolved 511, reused 508, downloaded 0, added 440
+Progress: resolved 511, reused 508, downloaded 0, added 460
+Progress: resolved 511, reused 508, downloaded 0, added 474
+Progress: resolved 511, reused 508, downloaded 0, added 488
+Progress: resolved 511, reused 508, downloaded 0, added 494
+Progress: resolved 511, reused 508, downloaded 0, added 499
+Progress: resolved 511, reused 508, downloaded 0, added 500
+Progress: resolved 511, reused 508, downloaded 0, added 502
+Progress: resolved 511, reused 508, downloaded 0, added 506
+Progress: resolved 511, reused 508, downloaded 0, added 508
+Progress: resolved 511, reused 508, downloaded 0, added 510
+Progress: resolved 511, reused 508, downloaded 0, added 511, done
+
+Done in 31.4s using pnpm v11.17.0
+
+ RUN  v4.1.11 C:/dev/XIVProjects/xivdyetools/packages/logger
+
+ ✓ src/types.test.ts > Types > LogLevel > should allow valid log levels 3ms
+ ✓ src/types.test.ts > Types > LogContext > should allow standard context properties 1ms
+ ✓ src/types.test.ts > Types > LogContext > should allow custom properties 0ms
+ ✓ src/types.test.ts > Types > LogEntry > should represent a complete log entry 0ms
+ ✓ src/types.test.ts > Types > LogEntry > should allow minimal log entry 0ms
+ ✓ src/types.test.ts > Types > Logger interface > should define basic logging methods 0ms
+ ✓ src/types.test.ts > Types > ExtendedLogger interface > should extend Logger with additional methods 0ms
+ ✓ src/types.test.ts > Types > LoggerConfig > should represent logger configuration 1ms
+ ✓ src/types.test.ts > Types > LoggerConfig > should allow JSON format 1ms
+ ✓ src/types.test.ts > Types > ErrorTracker interface > should define error tracking methods 1ms
+ ✓ src/types.test.ts > Types > Type compatibility > should allow using Logger where ExtendedLogger is returned 0ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > constructor > should create instance with default error level 7ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > constructor > should accept custom configuration 1ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > logging methods > should not output debug messages 2ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > logging methods > should not output info messages 1ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > logging methods > should not output warn messages 1ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > logging methods > should not output error messages 5ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > logging methods > should silently accept all log levels without output 1ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > context handling > should accept setContext without error 1ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > context handling > should accept context in log calls without error 2ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > child logger > should create child logger that also does nothing 1ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > child logger > should not throw when creating nested children 2ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > timing methods > should support time method without output 1ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > timing methods > should support timeAsync method without output 0ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > timing methods > should propagate errors from timeAsync 2ms
+ ✓ src/adapters/noop-adapter.test.ts > NoopAdapter > use case: library default > should work as silent default logger for libraries 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should create logger with service and environment context 11ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should include version when provided 2ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should include requestId when provided 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should not include version/requestId when not provided 2ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should default to info level in production 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should default to debug level in non-production 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should allow custom log level 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should use JSON format for log aggregation 2ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should include timestamps 2ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should redact sensitive fields 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should sanitize errors 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createWorkerLogger > should support child loggers with additional context 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createRequestLogger > should create logger from env object 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createRequestLogger > should use default service name when not provided 2ms
+ ✓ src/presets/worker.test.ts > Worker Preset > createRequestLogger > should not include version when not in env 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > worker integration patterns > should work with typical Hono middleware pattern 1ms
+ ✓ src/presets/worker.test.ts > Worker Preset > worker integration patterns > should support logging throughout request lifecycle 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > constructor > should default to JSON format 14ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > constructor > should default to timestamps enabled 3ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > constructor > should default to sanitizeErrors enabled 2ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > JSON output > should output all log levels via console.log 2ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > JSON output > should output valid JSON for all entries 2ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > JSON output > should include level in output 2ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > JSON output > should include error information 2ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > JSON output > should not include stack in error (sanitizeErrors default) 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > log level filtering > should default to info level 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > log level filtering > should respect configured log level 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > context handling > should include context in output 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > context handling > should redact sensitive fields 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > context handling > should include global context 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > context handling > should merge global and local context 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > prefix > should include prefix in message 2ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > child logger > should create child with inherited context 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > child logger > should not affect parent when child adds context 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > timing features > should support time method 1ms
+ ✓ src/adapters/json-adapter.test.ts > JsonAdapter > timing features > should support timeAsync method 1ms
+ ✓ src/presets/library.test.ts > Library Preset > NoOpLogger > should be a pre-configured logger instance 8ms
+ ✓ src/presets/library.test.ts > Library Preset > NoOpLogger > should not output any logs 7ms
+ ✓ src/presets/library.test.ts > Library Preset > NoOpLogger > should be usable as default logger in library classes 2ms
+ ✓ src/presets/library.test.ts > Library Preset > ConsoleLogger > should be a pre-configured logger instance 1ms
+ ✓ src/presets/library.test.ts > Library Preset > ConsoleLogger > should output debug logs 3ms
+ ✓ src/presets/library.test.ts > Library Preset > ConsoleLogger > should output info logs 2ms
+ ✓ src/presets/library.test.ts > Library Preset > ConsoleLogger > should output warn logs 1ms
+ ✓ src/presets/library.test.ts > Library Preset > ConsoleLogger > should output error logs 1ms
+ ✓ src/presets/library.test.ts > Library Preset > ConsoleLogger > should include xivdyetools prefix 2ms
+ ✓ src/presets/library.test.ts > Library Preset > ConsoleLogger > should include timestamps 1ms
+ ✓ src/presets/library.test.ts > Library Preset > ConsoleLogger > should use pretty format 2ms
+ ✓ src/presets/library.test.ts > Library Preset > ConsoleLogger > should be usable as verbose logger in library classes 1ms
+ ✓ src/presets/library.test.ts > Library Preset > createLibraryLogger > should create logger with custom prefix 1ms
+ ✓ src/presets/library.test.ts > Library Preset > createLibraryLogger > should create logger with module-style prefix 1ms
+ ✓ src/presets/library.test.ts > Library Preset > createLibraryLogger > should default to debug level 1ms
+ ✓ src/presets/library.test.ts > Library Preset > createLibraryLogger > should use pretty format by default 1ms
+ ✓ src/presets/library.test.ts > Library Preset > createLibraryLogger > should include timestamps by default 1ms
+ ✓ src/presets/library.test.ts > Library Preset > createLibraryLogger > should accept custom configuration 1ms
+ ✓ src/presets/library.test.ts > Library Preset > createLibraryLogger > should allow overriding format 2ms
+ ✓ src/presets/library.test.ts > Library Preset > library integration pattern > should support typical library logger pattern 1ms
+ ✓ src/presets/library.test.ts > Library Preset > library integration pattern > should support custom logger from consumer 3ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > constructor > should default to pretty format 11ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > constructor > should accept JSON format 5ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should output info messages with console.info 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should output debug messages with console.debug 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should output warn messages with console.warn 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should output error messages with console.error 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should include timestamp in pretty output 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should exclude timestamp when timestamps is false 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should include context as JSON in pretty output 2ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should not include empty context 3ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should pass error as second argument in pretty format 7ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should pass error with debug level 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should pass error with warn level 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > pretty format output > should pass error info with info level when error is in entry 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > JSON format output > should output valid JSON 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > JSON format output > should use appropriate console method for each level in JSON format 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > JSON format output > should include error information in JSON output 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > log level filtering > should respect log level in pretty format 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > log level filtering > should respect log level in JSON format 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > prefix > should include prefix in pretty output 0ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > prefix > should include prefix in JSON output 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > context handling > should include global context 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > context handling > should merge global and local context 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > child logger > should create child logger with inherited context 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > error payloads on every level > passes an error through as a second console argument on every level 2ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > error payloads on every level > omits the second argument on every level when there is no error 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > error payloads on every level > logs a single argument when there is no error 1ms
+ ✓ src/adapters/console-adapter.test.ts > ConsoleAdapter > error payloads on every level > routes each level to its own console method 1ms
+ ✓ src/adapters/console-adapter.test.ts > BUG-104: a circular or BigInt context never throws out of the log call > self-referential object > pretty format survives and still logs 1ms
+ ✓ src/adapters/console-adapter.test.ts > BUG-104: a circular or BigInt context never throws out of the log call > self-referential object > json format survives and still logs 0ms
+ ✓ src/adapters/console-adapter.test.ts > BUG-104: a circular or BigInt context never throws out of the log call > BigInt value > pretty format survives and still logs 0ms
+ ✓ src/adapters/console-adapter.test.ts > BUG-104: a circular or BigInt context never throws out of the log call > BigInt value > json format survives and still logs 2ms
+ ✓ src/adapters/console-adapter.test.ts > BUG-104: a circular or BigInt context never throws out of the log call > cycle through an array > pretty format survives and still logs 1ms
+ ✓ src/adapters/console-adapter.test.ts > BUG-104: a circular or BigInt context never throws out of the log call > cycle through an array > json format survives and still logs 0ms
+ ✓ src/adapters/console-adapter.test.ts > BUG-104: a circular or BigInt context never throws out of the log call > and the secret behind the cycle is still absent from the output (BUG-004) 0ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > dev mode detection > should accept custom isDev function 9ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > dev mode detection > should suppress debug in production mode 3ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > dev mode detection > should still log warnings in production 3ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > dev mode detection > should still log errors in production 3ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > dev mode detection > should use default isDev function when not provided 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > dev mode detection > should detect production via process.env.NODE_ENV 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > dev mode detection > defaultIsDev via import.meta.env.DEV > logs debug when DEV is true 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > dev mode detection > defaultIsDev via import.meta.env.DEV > suppresses debug when DEV is false 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > dev mode detection > defaultIsDev via import.meta.env.DEV > keeps warn and error in production 3ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > dev mode detection > defaultIsDev via import.meta.env.DEV > devOnly:false keeps debug in production (REFACTOR-021) 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > prefix > should use default xivdyetools prefix 2ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > prefix > should accept custom prefix 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > error tracking integration > should call errorTracker.captureException in production 8ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > error tracking integration > BUG-026: redacts context and sanitizes messages before forwarding to the tracker 2ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > error tracking integration > should call errorTracker.captureMessage for non-Error errors 2ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > error tracking integration > should call errorTracker.captureMessage for errors without error object 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > error tracking integration > should send warnings to error tracker in production 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > error tracking integration > should NOT send to error tracker in dev mode 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > error tracking integration > should still log to console even when sending to error tracker 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > error sanitization > should sanitize errors in production 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > error sanitization > should not sanitize errors in dev mode 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > createBrowserLogger > child logger > should create child with inherited context 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > browserLogger (pre-configured instance) > should be defined 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > browserLogger (pre-configured instance) > should have all logger methods 1ms
+ ✓ src/presets/browser.test.ts > Browser Preset > browser integration patterns > should work with typical web app pattern 3ms
+ ✓ src/core/hardening.test.ts > logger hardening > does not throw on a circular context and marks the back-reference 10ms
+ ✓ src/core/hardening.test.ts > logger hardening > does not throw on BigInt values 2ms
+ ✓ src/core/hardening.test.ts > logger hardening > sanitises the message argument 1ms
+ ✓ src/core/hardening.test.ts > logger hardening > redacts additional secret-shaped key names 1ms
+ ✓ src/core/hardening.test.ts > logger hardening > redacts secret-shaped values under innocuous keys 1ms
+ ✓ src/core/hardening.test.ts > logger hardening > logs non-Error throws through the sanitiser 1ms
+ ✓ src/core/hardening.test.ts > FINDING-025 (2026-08-29 audit): array items and free text > string array items > redacts a JWT that is a bare string item inside an array 1ms
+ ✓ src/core/hardening.test.ts > FINDING-025 (2026-08-29 audit): array items and free text > string array items > reaches a string item nested two arrays deep, leaving sibling items alone 0ms
+ ✓ src/core/hardening.test.ts > FINDING-025 (2026-08-29 audit): array items and free text > string array items > does NOT redact a UUID array item (false-positive guard) 1ms
+ ✓ src/core/hardening.test.ts > FINDING-025 (2026-08-29 audit): array items and free text > nested-array shape bug > preserves array shape when an item is itself an array (no numeric-key reshaping) 2ms
+ ✓ src/core/hardening.test.ts > FINDING-025 (2026-08-29 audit): array items and free text > free text: message, error.message, and non-Error throws > redacts a bare JWT embedded in the message, leaving surrounding prose intact 1ms
+ ✓ src/core/hardening.test.ts > FINDING-025 (2026-08-29 audit): array items and free text > free text: message, error.message, and non-Error throws > redacts a bare Discord-bot-token-shaped value in error.message 0ms
+ ✓ src/core/hardening.test.ts > FINDING-025 (2026-08-29 audit): array items and free text > free text: message, error.message, and non-Error throws > redacts a bare JWT in a non-Error throw value (third sanitizeErrorMessage call site) 0ms
+ ✓ src/core/hardening.test.ts > FINDING-025 (2026-08-29 audit): array items and free text > free text false-positive guards > does NOT redact a sha256-shaped hex hash inside a message 1ms
+ ✓ src/core/hardening.test.ts > FINDING-025 (2026-08-29 audit): array items and free text > free text false-positive guards > does NOT redact a short base64-ish id inside a message 1ms
+ ✓ src/core/hardening.test.ts > S10-R14 (2026-08-30 fix round 3): safeStringify is path-scoped, not "seen anywhere" > does not flag an aliased sibling object as circular 0ms
+ ✓ src/core/hardening.test.ts > S10-R14 (2026-08-30 fix round 3): safeStringify is path-scoped, not "seen anywhere" > does not flag the same object repeated across array items as circular 1ms
+ ✓ src/core/hardening.test.ts > S10-R14 (2026-08-30 fix round 3): safeStringify is path-scoped, not "seen anywhere" > does not flag a heavily-aliased array (fill) as circular 1ms
+ ✓ src/core/hardening.test.ts > S10-R14 (2026-08-30 fix round 3): safeStringify is path-scoped, not "seen anywhere" > still flags a genuine self-cycle as circular 0ms
+ ✓ src/core/hardening.test.ts > S10-R14 (2026-08-30 fix round 3): safeStringify is path-scoped, not "seen anywhere" > still flags a genuine two-node cycle as circular 0ms
+ ✓ src/core/hardening.test.ts > S10-R14 (2026-08-30 fix round 3): safeStringify is path-scoped, not "seen anywhere" > handles aliasing and a genuine cycle together in one call 1ms
+ ✓ src/core/hardening.test.ts > S10-R14 (2026-08-30 fix round 3): safeStringify is path-scoped, not "seen anywhere" > still converts BigInt to its decimal string (unchanged by the rewrite) 0ms
+ ✓ src/core/hardening.test.ts > S10-R18 (2026-08-30 fix round 4): safeStringify bounds a maximally-shared DAG > bounds the EXACT structure and depth that reportedly stalled >300s (the S10-R12 test shape, 40 levels) 20ms
+ ✓ src/core/hardening.test.ts > S10-R18 (2026-08-30 fix round 4): safeStringify bounds a maximally-shared DAG > bounds a smaller-but-still-exponential structure too (depth 17, 131072 paths) 15ms
+ ✓ src/core/hardening.test.ts > S10-R18 (2026-08-30 fix round 4): safeStringify bounds a maximally-shared DAG > does NOT truncate a small, legitimately-aliased structure (regression guard against over-truncation) 1ms
+ ✓ src/core/hardening.test.ts > S10-R18 (2026-08-30 fix round 4): safeStringify bounds a maximally-shared DAG > truncates deterministically past the bound on a flat, linear (non-exponential) structure 21ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > constructor > should use default configuration 6ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > constructor > should merge provided config with defaults 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > constructor > should allow custom redact fields (merged with defaults per FINDING-008) 2ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > shouldLog > should respect log level hierarchy 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > shouldLog > should log all levels when set to debug 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > shouldLog > should only log error when set to error 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > shouldLog > should log warn and error when set to warn 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > createEntry > should create entry with basic fields 4ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > createEntry > should add prefix to message when configured 2ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > createEntry > should include context when provided 2ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > createEntry > should not include empty context 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > createEntry > should format error object 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > mergeContext > should return undefined for undefined context with empty global 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > mergeContext > should return empty object for empty context with empty global 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > mergeContext > should return provided context 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > mergeContext > should merge global context with provided context 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > mergeContext > should allow provided context to override global context 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > mergeContext > should redact sensitive fields 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should format Error instances 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should include error code if present 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should not include stack when sanitizeErrors is true 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should include stack when sanitizeErrors is false 11ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should sanitize sensitive data in error messages 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should sanitize token patterns in error messages 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should sanitize secret patterns in error messages 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should sanitize password patterns in error messages 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should sanitize api_key patterns in error messages 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should handle non-Error objects 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should handle objects 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should handle null 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > formatError > should handle undefined 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > redactSensitiveFields > should redact default sensitive fields 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > redactSensitiveFields > should merge custom redact fields with defaults (FINDING-008) 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > redactSensitiveFields > FINDING-008: recursive redaction > should redact sensitive fields in nested objects 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > redactSensitiveFields > FINDING-008: recursive redaction > should redact fields at multiple nesting levels 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > redactSensitiveFields > FINDING-008: recursive redaction > redacts at any depth (BUG-024: no fixed depth cap) 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > redactSensitiveFields > FINDING-008: recursive redaction > should recurse into arrays and redact sensitive fields (FINDING-007) 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > redactSensitiveFields > FINDING-008: recursive redaction > should handle null nested values 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > Logger interface methods > debug > should not log when level is info (default) 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > Logger interface methods > debug > should log when level is debug 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > Logger interface methods > info > should log when level is info 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > Logger interface methods > info > should include context 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > Logger interface methods > warn > should log warnings 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > Logger interface methods > error > should log errors without error object 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > Logger interface methods > error > should log errors with error object 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > Logger interface methods > error > should log errors with context 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > Logger interface methods > error > should log errors with both error and context 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > child > should create child logger with inherited context 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > child > should preserve parent config in child 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > child > should not affect parent when child context changes 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > setContext > should set global context 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > setContext > should merge with existing context 3ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > setContext > should override existing keys 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > setContext > should include global context in log entries 0ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > time > should return duration and log 2ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > time > should use Date.now fallback when performance unavailable 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > timeAsync > should time async operation and return result 1ms
+ ✓ src/core/base-logger.test.ts > BaseLogger > ExtendedLogger interface methods > timeAsync > should time even when async function throws 3ms
+ ✓ src/core/base-logger.test.ts > DelegatingLogger timing (OPT-020) > emits the timing line through the child, carrying child context 1ms
+ ✓ src/core/base-logger.test.ts > DelegatingLogger timing (OPT-020) > formats the duration to two decimals in the message 0ms
+ ✓ src/core/base-logger.test.ts > DelegatingLogger timing (OPT-020) > times an async fn and still ends the timer when it rejects 2ms
+ ✓ src/core/base-logger.test.ts > DelegatingLogger timing (OPT-020) > merges nested child context down the chain 1ms
+ ✓ src/core/base-logger.test.ts > DelegatingLogger timing (OPT-020) > lets a child add context after construction 1ms
+ ✓ src/core/base-logger.test.ts > DelegatingLogger timing (OPT-020) > forwards an error through the child 1ms
+ ✓ src/core/base-logger.test.ts > redaction cycle safety > does not recurse forever on a self-referencing context 0ms
+ ✓ src/core/base-logger.test.ts > redaction cycle safety > does not recurse forever on a cycle reached through an array 0ms
+ ✓ src/core/base-logger.test.ts > redaction cycle safety > still redacts the same object seen twice at different keys (S10-R8: at EVERY reference, not just the first) 0ms
+ ✓ src/core/base-logger.test.ts > redaction cycle safety > redacts an aliased ARRAY at every reference too, not just the first (S10-R8) 0ms
+ ✓ src/core/base-logger.test.ts > redaction cycle safety > processes a heavily-aliased structure in work LINEAR in its depth, not exponential (S10-R12: memoization, not a budget) 1ms
+ ✓ src/core/base-logger.test.ts > redaction cycle safety > redacts every ALIASED reference in a large shared structure, not just the first N (S10-R12: no budget to exhaust) 1ms
+ ✓ src/core/base-logger.test.ts > redaction cycle safety > redacts a secret in the LAST of >5000 DISTINCT (non-aliased) object nodes (S10-R15: the actual bypass regression test) 42ms
+ ✓ src/core/base-logger.test.ts > redaction cycle safety > pins the design invariant (S10-R16): a cycle back-edge is the SENTINEL, never the raw original or the redacted copy 0ms
+ ✓ src/core/base-logger.test.ts > redaction cycle safety > a secret reachable ONLY through a cycle is still redacted (BUG-004) 0ms
+ ✓ src/core/base-logger.test.ts > redaction cycle safety > pins the design invariant (S10-R16, extended to redactArrayItems): an array cycle back-edge is the SENTINEL, never the raw original or the redacted copy 0ms
+ ✓ src/core/base-logger.test.ts > BUG-005: every auth scheme redacts its credential, not just Bearer > Basic: the credential does not survive 0ms
+ ✓ src/core/base-logger.test.ts > BUG-005: every auth scheme redacts its credential, not just Bearer > Bot: the credential does not survive 0ms
+ ✓ src/core/base-logger.test.ts > BUG-005: every auth scheme redacts its credential, not just Bearer > Bearer: the credential does not survive 0ms
+ ✓ src/core/base-logger.test.ts > BUG-005: every auth scheme redacts its credential, not just Bearer > Digest: the credential does not survive 0ms
+ ✓ src/core/base-logger.test.ts > BUG-005: every auth scheme redacts its credential, not just Bearer > does NOT redact ordinary prose that happens to contain a scheme word 0ms
+ ✓ src/core/base-logger.test.ts > BUG-005: every auth scheme redacts its credential, not just Bearer > …and every OTHER key rule still stops at whitespace, so prose survives 0ms
+ ✓ src/core/base-logger.test.ts > BUG-005: every auth scheme redacts its credential, not just Bearer > an authorization= value with spaces is consumed to the delimiter 0ms
+ ✓ src/core/base-logger.test.ts > BUG-005: every auth scheme redacts its credential, not just Bearer > the existing Bearer contract is unchanged 0ms
+
+ Test Files  9 passed (9)
+      Tests  251 passed (251)
+   Start at  10:40:16
+   Duration  1.11s (transform 1.79s, setup 0ms, import 2.36s, tests 486ms, environment 2ms)

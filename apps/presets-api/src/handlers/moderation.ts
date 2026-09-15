@@ -8,7 +8,7 @@ import type { Context } from 'hono';
 import type { Env, AuthContext, PresetStatus, PresetRow } from '../types.js';
 import { requireModerator } from '../middleware/auth.js';
 import {
-  getPresetById,
+  getPresetRowById,
   getPendingPresets,
   prepareStatusUpdate,
   prepareRevert,
@@ -114,13 +114,14 @@ moderationRouter.patch('/:presetId/status', async (c) => {
   }
 
   // Get current preset
-  const preset = await getPresetById(c.env.DB, presetId);
-  if (!preset) {
+  const presetRow = await getPresetRowById(c.env.DB, presetId);
+  if (!presetRow) {
     return notFoundResponse(c, 'Preset');
   }
+  const preset = rowToPreset(presetRow, c.get('logger'));
 
   // BUG-020 (2026-07-18 audit): status update + audit log run in one atomic
-  // batch, and the update is conditional on the status this moderator observed
+  // batch, and the update is conditional on the status and revision this moderator observed
   // — a concurrent moderator's write makes the update match zero rows, so the
   // stale action is rejected as a 409 instead of mislabeling the audit trail
   // or logging an action that never happened.
@@ -138,7 +139,7 @@ moderationRouter.patch('/:presetId/status', async (c) => {
   let updateResult: D1Result<PresetRow>;
   try {
     [updateResult] = await c.env.DB.batch<PresetRow>([
-      prepareStatusUpdate(c.env.DB, presetId, body.status, preset.status, now),
+      prepareStatusUpdate(c.env.DB, presetId, body.status, preset.status, presetRow.content_revision, now),
       // changes() sees the preceding UPDATE in this batch's transaction, so the
       // log row is only written when the status transition actually happened
       c.env.DB
@@ -158,8 +159,8 @@ moderationRouter.patch('/:presetId/status', async (c) => {
     return c.json(
       {
         success: false,
-        error: ErrorCode.DUPLICATE_RESOURCE,
-        message: 'Preset status changed concurrently — reload and retry',
+        error: ErrorCode.CONFLICT,
+        message: 'Preset changed concurrently — reload and retry',
       },
       409
     );
@@ -198,13 +199,14 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   }
 
   // Get current preset
-  const preset = await getPresetById(c.env.DB, presetId);
-  if (!preset) {
+  const presetRow = await getPresetRowById(c.env.DB, presetId);
+  if (!presetRow) {
     return notFoundResponse(c, 'Preset');
   }
+  const preset = rowToPreset(presetRow, c.get('logger'));
 
   // Check if there are previous values to revert to
-  if (!preset.previous_values) {
+  if (!preset.previous_values || !presetRow.previous_values) {
     return validationErrorResponse(c, 'This preset has no previous values to revert to');
   }
 
@@ -220,7 +222,10 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   let revertResult: D1Result<PresetRow>;
   try {
     [revertResult] = await c.env.DB.batch<PresetRow>([
-      prepareRevert(c.env.DB, presetId, preset.previous_values, now),
+      prepareRevert(c.env.DB, presetId, preset.previous_values, {
+        contentRevision: presetRow.content_revision,
+        previousValuesRaw: presetRow.previous_values,
+      }, now),
       c.env.DB
         .prepare(
           `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
@@ -235,7 +240,11 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
 
   const revertedRow = revertResult.results?.[0];
   if (!revertedRow) {
-    return internalErrorResponse(c, 'Failed to revert preset');
+    return c.json({
+      success: false,
+      error: ErrorCode.CONFLICT,
+      message: 'Preset changed concurrently — reload and retry',
+    }, 409);
   }
 
   return c.json({
@@ -257,16 +266,33 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
 
   const presetId = c.req.param('presetId');
 
-  let body: { action?: string };
+  let body: { action?: unknown; preview_image_key?: unknown } | null;
   try {
     body = await c.req.json();
   } catch {
     return invalidJsonResponse(c);
   }
 
-  if (body.action !== 'approve' && body.action !== 'reject') {
+  if (body?.action !== 'approve' && body?.action !== 'reject') {
     return validationErrorResponse(c, "action must be 'approve' or 'reject'");
   }
+
+  // The immutable object key identifies exactly the image the moderator saw.
+  // Old notifications without a revision must never approve a replacement.
+  const reviewedKey = body.preview_image_key;
+  if (
+    typeof reviewedKey !== 'string' || reviewedKey.length > 128 ||
+    !reviewedKey.startsWith(`${presetId}/`) ||
+    !/^[A-Za-z0-9-]+\/[A-Za-z0-9-]+\.webp$/.test(reviewedKey)
+  ) {
+    return validationErrorResponse(c, 'preview_image_key must identify the reviewed image');
+  }
+
+  const staleReview = (): Response => c.json({
+    success: false,
+    error: ErrorCode.CONFLICT,
+    message: 'This preview image changed or was already moderated. Review the latest image notification.',
+  }, 409);
 
   // Row-level read: CommunityPreset hides preview_image_key by design.
   const preset = await getPresetImageState(c.env.DB, presetId);
@@ -277,17 +303,15 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
   const now = new Date().toISOString();
 
   if (body.action === 'approve') {
-    await c.env.DB.prepare(
-      `UPDATE presets SET preview_image_status = 'approved', updated_at = ? WHERE id = ?`
+    const result = await c.env.DB.prepare(
+      `UPDATE presets SET preview_image_status = 'approved', updated_at = ?
+       WHERE id = ? AND preview_image_key = ? AND preview_image_status = 'pending'`
     )
-      .bind(now, presetId)
+      .bind(now, presetId, reviewedKey)
       .run();
+    if (result.meta.changes !== 1) return staleReview();
     return c.json({ success: true, preview_image_status: 'approved' });
   }
-
-  // Capture the key before the UPDATE clears it — deletePreviewImage below
-  // needs the pre-update value.
-  const previousKey = preset.preview_image_key;
 
   // DB UPDATE before the R2 delete, deliberately (Task 4 ruling, same logic
   // applies here): if the UPDATE throws, leaving the delete undone just
@@ -295,17 +319,19 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
   // first would risk the opposite: a row still pointing at a key that no
   // longer exists, so the card serves a broken image. Never trade a broken
   // live image for a tidy bucket.
-  await c.env.DB.prepare(
-    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ? WHERE id = ?`
+  const result = await c.env.DB.prepare(
+    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ?
+     WHERE id = ? AND preview_image_key = ? AND preview_image_status = 'pending'`
   )
-    .bind(now, presetId)
+    .bind(now, presetId, reviewedKey)
     .run();
+  if (result.meta.changes !== 1) return staleReview();
 
   // The DB already reflects the rejection, so the moderator's action has
   // succeeded. An R2 hiccup here must not 500 a request whose state is already
   // correct — the orphaned object is the accepted failure mode by design.
   try {
-    await deletePreviewImage(c.env, previousKey, c.get('logger'));
+    await deletePreviewImage(c.env, reviewedKey, c.get('logger'));
   } catch (err) {
     c.get('logger')?.error('[preview-image] R2 delete failed after rejection', err, { presetId });
   }

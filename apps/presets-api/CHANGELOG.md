@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.3] - 2026-09-15
+
+### Fixed
+
+- Moderator status changes and reverts now compare the captured content revision at the final write; reverts also compare the exact saved snapshot. Stale actions return 409 and cannot overwrite a newer hide, flag, rejection or edit, or insert an audit entry for an action that never happened. Successful changes and their audit log remain atomic (FINDING-005). Requires migration 0014 from 2.3.2 before deployment.
+
+## [2.3.2] - 2026-09-15
+
+### Fixed
+
+- Owner edits now check both ownership and the content revision at the final database write. Concurrent moderation or another owner edit returns 409 without replacing the newer decision, including same-millisecond changes and status changes that return to their original value (2026-09-15 security audit, FINDING-004).
+- Migration `0014_add_content_revision.sql` adds a database-owned revision and trigger covering content, ownership, moderation and revert snapshots from every writer. Votes and preview-image operations do not invalidate content edits. Apply the migration before deploying this version.
+
+## [2.3.1] - 2026-09-15
+
+### Fixed
+
+- Preview-image moderation now requires the reviewed `preview_image_key` and applies only while that exact image is pending. Replaced or already-decided images return 409; unversioned requests fail closed. Rejecting a stale action cannot delete the newer R2 object (2026-09-15 security audit, FINDING-002). Deploy before the Discord producer update; old buttons will require a fresh review notification.
+
 ## [2.3.0] - 2026-09-02
 
 ### Fixed — 2026-09-02 deep-dive audit, Sprint 8

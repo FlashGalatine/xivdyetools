@@ -6,9 +6,13 @@ import { handlePreviewImageButton, isPreviewImageButton } from './preview-image.
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import * as presetApi from '../../services/preset-api.js';
+import { PresetAPIError } from '../../types/preset.js';
 import * as discordApi from '../../utils/discord-api.js';
 
 const PRESET_ID = '12345678-1234-4123-8123-123456789abc';
+const PREVIEW_IMAGE_KEY = `${PRESET_ID}/abcdefab-cdef-4def-8abc-defabcdefabc.webp`;
+const STALE_REVIEW_MESSAGE =
+  'This preview image changed or was already moderated. Review the latest image notification.';
 
 vi.mock('../../utils/discord-api.js', () => ({
   editMessage: vi.fn(),
@@ -53,8 +57,8 @@ describe('preview-image button handlers', () => {
 
   describe('isPreviewImageButton', () => {
     it('recognizes previewimg_approve_ and previewimg_reject_', () => {
-      expect(isPreviewImageButton(`previewimg_approve_${PRESET_ID}`)).toBe(true);
-      expect(isPreviewImageButton(`previewimg_reject_${PRESET_ID}`)).toBe(true);
+      expect(isPreviewImageButton(`previewimg_approve_${PREVIEW_IMAGE_KEY}`)).toBe(true);
+      expect(isPreviewImageButton(`previewimg_reject_${PREVIEW_IMAGE_KEY}`)).toBe(true);
     });
 
     it('does not collide with moderation-worker prefixes', () => {
@@ -107,6 +111,25 @@ describe('preview-image button handlers', () => {
       expect(presetApi.setPreviewImageStatus).not.toHaveBeenCalled();
     });
 
+    it('fails closed for a legacy preset-id-only button before calling presets-api', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      const interaction = {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        data: { custom_id: `previewimg_approve_${PRESET_ID}` },
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+      };
+
+      const response = await handlePreviewImageButton(interaction, env, ctx);
+      const json = (await response.json()) as any;
+
+      expect(json.data.content).toBe(STALE_REVIEW_MESSAGE);
+      expect(json.data.flags).toBe(64);
+      expect(presetApi.setPreviewImageStatus).not.toHaveBeenCalled();
+      expect(ctx.waitUntil).not.toHaveBeenCalled();
+    });
+
     it('a moderator clicking approve calls presets-api with action approve and the correct preset id', async () => {
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
       vi.mocked(presetApi.setPreviewImageStatus).mockResolvedValue({
@@ -119,7 +142,7 @@ describe('preview-image button handlers', () => {
         token: 'token-1',
         application_id: 'app-123',
         channel_id: 'channel-mod',
-        data: { custom_id: `previewimg_approve_${PRESET_ID}` },
+        data: { custom_id: `previewimg_approve_${PREVIEW_IMAGE_KEY}` },
         member: { user: { id: 'mod-1', username: 'Moderator' } },
         message: {
           id: 'msg-1',
@@ -145,6 +168,7 @@ describe('preview-image button handlers', () => {
         env,
         PRESET_ID,
         'approve',
+        PREVIEW_IMAGE_KEY,
         'mod-1',
         'Moderator',
       );
@@ -162,7 +186,7 @@ describe('preview-image button handlers', () => {
         token: 'token-1',
         application_id: 'app-123',
         channel_id: 'channel-mod',
-        data: { custom_id: `previewimg_reject_${PRESET_ID}` },
+        data: { custom_id: `previewimg_reject_${PREVIEW_IMAGE_KEY}` },
         member: { user: { id: 'mod-1', username: 'Moderator' } },
         message: {
           id: 'msg-1',
@@ -176,6 +200,7 @@ describe('preview-image button handlers', () => {
         env,
         PRESET_ID,
         'reject',
+        PREVIEW_IMAGE_KEY,
         'mod-1',
         'Moderator',
       );
@@ -194,7 +219,7 @@ describe('preview-image button handlers', () => {
         token: 'token-1',
         application_id: 'app-123',
         channel_id: 'channel-mod',
-        data: { custom_id: `previewimg_approve_${PRESET_ID}` },
+        data: { custom_id: `previewimg_approve_${PREVIEW_IMAGE_KEY}` },
         member: { user: { id: 'mod-1', username: 'Moderator' } },
         message: {
           id: 'msg-1',
@@ -210,6 +235,7 @@ describe('preview-image button handlers', () => {
 
       await handlePreviewImageButton(interaction, env, ctx);
 
+      await vi.mocked(ctx.waitUntil).mock.calls[0][0];
       expect(discordApi.editMessage).toHaveBeenCalledWith(
         'test-bot-token',
         'channel-mod',
@@ -235,7 +261,7 @@ describe('preview-image button handlers', () => {
         token: 'token-1',
         application_id: 'app-123',
         channel_id: 'channel-mod',
-        data: { custom_id: `previewimg_approve_${PRESET_ID}` },
+        data: { custom_id: `previewimg_approve_${PREVIEW_IMAGE_KEY}` },
         member: { user: { id: 'user-123', username: 'NotAMod' } },
         message: { id: 'msg-1', embeds: [{ title: 'Preview image awaiting review' }] },
       };
@@ -267,7 +293,7 @@ describe('preview-image button handlers', () => {
         token: 'token-1',
         application_id: 'app-123',
         channel_id: 'channel-mod',
-        data: { custom_id: `previewimg_approve_${PRESET_ID}` },
+        data: { custom_id: `previewimg_approve_${PREVIEW_IMAGE_KEY}` },
         member: { user: { id: 'mod-1', username: 'Moderator' } },
         message: {
           id: 'msg-1',
@@ -309,7 +335,7 @@ describe('preview-image button handlers', () => {
         token: 'token-1',
         application_id: 'app-123',
         channel_id: 'channel-mod',
-        data: { custom_id: `previewimg_approve_${PRESET_ID}` },
+        data: { custom_id: `previewimg_approve_${PREVIEW_IMAGE_KEY}` },
         member: { user: { id: 'mod-1', username: 'Moderator' } },
         message: { id: 'msg-1', embeds: [{ title: 'Preview image awaiting review' }] },
       };
@@ -331,12 +357,13 @@ describe('preview-image button handlers', () => {
         token: 'token-1',
         application_id: 'app-123',
         channel_id: 'channel-mod',
-        data: { custom_id: `previewimg_reject_${PRESET_ID}` },
+        data: { custom_id: `previewimg_reject_${PREVIEW_IMAGE_KEY}` },
         user: { id: 'mod-1', username: '' },
         message: { id: 'msg-1', embeds: [{ title: 'Preview image awaiting review' }] },
       };
 
       await handlePreviewImageButton(interaction, env, ctx);
+      await vi.mocked(ctx.waitUntil).mock.calls[0][0];
 
       expect(discordApi.editMessage).toHaveBeenCalledWith(
         'test-bot-token',
@@ -363,13 +390,47 @@ describe('preview-image button handlers', () => {
         id: 'int-1',
         token: 'token-1',
         application_id: 'app-123',
-        data: { custom_id: `previewimg_approve_${PRESET_ID}` },
+        data: { custom_id: `previewimg_approve_${PREVIEW_IMAGE_KEY}` },
         member: { user: { id: 'mod-1', username: 'Moderator' } },
       };
 
       await handlePreviewImageButton(interaction, env, ctx);
 
       expect(discordApi.editMessage).not.toHaveBeenCalled();
+    });
+
+    it('retires a stale 409 notification and directs the moderator to the latest image', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.setPreviewImageStatus).mockRejectedValue(
+        new PresetAPIError(409, 'Preview image changed'),
+      );
+      vi.mocked(discordApi.editMessage).mockResolvedValue(new Response(null, { status: 200 }));
+      vi.mocked(discordApi.safeSendFollowUp).mockResolvedValue(true);
+      const interaction = {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        channel_id: 'channel-mod',
+        data: { custom_id: `previewimg_approve_${PREVIEW_IMAGE_KEY}` },
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+        message: { id: 'msg-1', embeds: [{ title: 'Preview image awaiting review' }] },
+      };
+
+      await handlePreviewImageButton(interaction, env, ctx);
+      await vi.mocked(ctx.waitUntil).mock.calls[0][0];
+
+      expect(discordApi.editMessage).toHaveBeenCalledWith(
+        'test-bot-token',
+        'channel-mod',
+        'msg-1',
+        expect.objectContaining({ components: [] }),
+      );
+      expect(discordApi.safeSendFollowUp).toHaveBeenCalledWith(
+        'app-123',
+        'token-1',
+        { content: STALE_REVIEW_MESSAGE, ephemeral: true },
+        undefined,
+      );
     });
   });
 });

@@ -5,6 +5,12 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.1] - 2026-09-15
+
+### Security
+
+- Crawler metadata logs now contain only the tool, normalized locale and crawler category. Full URLs, raw user agents and generated titles are omitted from this event (2026-09-15 security audit, FINDING-006). Removed the human-readable crawler-label helper whose only production caller was this log.
+
 ## [2.10.0] - 2026-09-05
 
 ### Added

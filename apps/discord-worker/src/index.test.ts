@@ -542,6 +542,41 @@ describe('index.ts', () => {
       );
     });
 
+    it.each([
+      ['missing', undefined],
+      ['malformed', 'not-a-preview-key'],
+      [
+        'for another preset',
+        'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp',
+      ],
+    ])(
+      'returns 400 and does not notify Discord when the preview key is %s',
+      async (_case, previewImageKey) => {
+        const { timingSafeEqual } = await import('@xivdyetools/auth');
+        const { sendMessage } = await import('./utils/discord-api.js');
+        vi.mocked(timingSafeEqual).mockResolvedValue(true);
+
+        const req = new Request('http://localhost/webhooks/preset-submission', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer test-webhook-secret' },
+          body: JSON.stringify({
+            type: 'preview_image',
+            preset: {
+              id: '12345678-1234-4123-8123-123456789abc',
+              name: 'Test',
+              author_name: 'Author',
+            },
+            ...(previewImageKey ? { preview_image_key: previewImageKey } : {}),
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+
+        expect(res.status).toBe(400);
+        expect(sendMessage).not.toHaveBeenCalled();
+      },
+    );
+
     // FINDING-019 (2026-08-21 security audit): author name and tags on the
     // webhook embeds are user content — the name/description already went
     // through the sanitiser; these two did not.
@@ -641,8 +676,13 @@ describe('index.ts', () => {
         headers: { Authorization: 'Bearer test-webhook-secret' },
         body: JSON.stringify({
           type: 'preview_image',
-          preset: { id: 'p1', name: 'Test', author_name: 'Author' },
-          preview_image_key: 'p1/abc.webp',
+          preset: {
+            id: '12345678-1234-4123-8123-123456789abc',
+            name: 'Test',
+            author_name: 'Author',
+          },
+          preview_image_key:
+            '12345678-1234-4123-8123-123456789abc/abcdefab-cdef-4def-8abc-defabcdefabc.webp',
         }),
       });
 
@@ -655,11 +695,20 @@ describe('index.ts', () => {
         expect.objectContaining({
           embeds: expect.arrayContaining([
             expect.objectContaining({
-              image: { url: 'https://shots.xivdyetools.app/p1/abc.webp' },
+              image: {
+                url: 'https://shots.xivdyetools.app/12345678-1234-4123-8123-123456789abc/abcdefab-cdef-4def-8abc-defabcdefabc.webp',
+              },
             }),
           ]),
         }),
       );
+
+      const message = vi.mocked(sendMessage).mock.calls[0][2] as {
+        components: Array<{ components: Array<{ custom_id: string }> }>;
+      };
+      expect(
+        message.components[0].components.every(({ custom_id }) => custom_id.length <= 100),
+      ).toBe(true);
     });
 
     // Task 9: the approve/reject buttons must carry the previewimg_ prefix
@@ -676,8 +725,13 @@ describe('index.ts', () => {
         headers: { Authorization: 'Bearer test-webhook-secret' },
         body: JSON.stringify({
           type: 'preview_image',
-          preset: { id: 'p1', name: 'Test', author_name: 'Author' },
-          preview_image_key: 'p1/abc.webp',
+          preset: {
+            id: '12345678-1234-4123-8123-123456789abc',
+            name: 'Test',
+            author_name: 'Author',
+          },
+          preview_image_key:
+            '12345678-1234-4123-8123-123456789abc/abcdefab-cdef-4def-8abc-defabcdefabc.webp',
         }),
       });
 
@@ -695,12 +749,14 @@ describe('index.ts', () => {
                 expect.objectContaining({
                   type: 2,
                   style: 3,
-                  custom_id: 'previewimg_approve_p1',
+                  custom_id:
+                    'previewimg_approve_12345678-1234-4123-8123-123456789abc/abcdefab-cdef-4def-8abc-defabcdefabc.webp',
                 }),
                 expect.objectContaining({
                   type: 2,
                   style: 4,
-                  custom_id: 'previewimg_reject_p1',
+                  custom_id:
+                    'previewimg_reject_12345678-1234-4123-8123-123456789abc/abcdefab-cdef-4def-8abc-defabcdefabc.webp',
                 }),
               ]),
             }),
@@ -723,8 +779,13 @@ describe('index.ts', () => {
         headers: { Authorization: 'Bearer test-webhook-secret' },
         body: JSON.stringify({
           type: 'preview_image',
-          preset: { id: 'p1', name: 'Test', author_name: 'Author' },
-          preview_image_key: 'p1/abc.webp',
+          preset: {
+            id: '12345678-1234-4123-8123-123456789abc',
+            name: 'Test',
+            author_name: 'Author',
+          },
+          preview_image_key:
+            '12345678-1234-4123-8123-123456789abc/abcdefab-cdef-4def-8abc-defabcdefabc.webp',
         }),
       });
 
@@ -903,11 +964,7 @@ describe('index.ts', () => {
       );
 
       expect(res.status).toBe(200);
-      expect(kv.put).toHaveBeenCalledWith(
-        `announced:v:${entry.version}`,
-        '1',
-        expect.anything(),
-      );
+      expect(kv.put).toHaveBeenCalledWith(`announced:v:${entry.version}`, '1', expect.anything());
     });
 
     it('announces when only head_commit lists CHANGELOG-laymans.md (commits truncated)', async () => {
@@ -1403,9 +1460,8 @@ describe('index.ts', () => {
         ['changelog', 'handleChangelogCommand'],
       ] as const)('rate-limits /%s like any other command', async (command, handlerName) => {
         const { verifyDiscordRequest } = await import('@xivdyetools/auth');
-        const { checkRateLimit, formatRateLimitMessage } = await import(
-          './services/rate-limiter.js'
-        );
+        const { checkRateLimit, formatRateLimitMessage } =
+          await import('./services/rate-limiter.js');
         const handlers = await import('./handlers/commands/index.js');
 
         const interaction = {
@@ -2300,17 +2356,27 @@ describe('index.ts', () => {
       }
       async function allowRateLimit() {
         const { checkRateLimit } = await import('./services/rate-limiter.js');
-        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: true,
+          remaining: 14,
+          resetAt: Date.now() + 60000,
+        });
       }
       async function verified(body: unknown) {
         const { verifyDiscordRequest } = await import('@xivdyetools/auth');
-        vi.mocked(verifyDiscordRequest).mockResolvedValue({ isValid: true, body: JSON.stringify(body), error: '' });
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify(body),
+          error: '',
+        });
       }
       /** A real-ish ExecutionContext that keeps every waitUntil promise so the test can await the trace's write. */
       function collectingCtx() {
         const collected: Promise<unknown>[] = [];
         const ctx = {
-          waitUntil: vi.fn((p: Promise<unknown>) => { collected.push(p); }),
+          waitUntil: vi.fn((p: Promise<unknown>) => {
+            collected.push(p);
+          }),
           passThroughOnException: vi.fn(),
         } as unknown as ExecutionContext;
         return { ctx, collected };
@@ -2345,24 +2411,46 @@ describe('index.ts', () => {
         await Promise.all(collected);
 
         expect(trackCommandWithKV).toHaveBeenCalledTimes(1);
-        expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, expect.objectContaining({
-          commandName: 'dye', subcommand: 'info', userId: 'user-123', guildId: 'g1', locale: 'ja',
-          success: true, outcome: 'ok', kind: 'command', latencyMs: expect.any(Number),
-        }));
+        expect(trackCommandWithKV).toHaveBeenCalledWith(
+          mockEnv,
+          expect.objectContaining({
+            commandName: 'dye',
+            subcommand: 'info',
+            userId: 'user-123',
+            guildId: 'g1',
+            locale: 'ja',
+            success: true,
+            outcome: 'ok',
+            kind: 'command',
+            latencyMs: expect.any(Number),
+          }),
+        );
       });
 
-      it('waits for a deferring handler\'s work and records its marked outcome', async () => {
-        const body = { type: InteractionType.APPLICATION_COMMAND, data: { name: 'harmony' }, user: { id: 'user-123' } };
+      it("waits for a deferring handler's work and records its marked outcome", async () => {
+        const body = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name: 'harmony' },
+          user: { id: 'user-123' },
+        };
         await verified(body);
         await allowRateLimit();
         const { handleHarmonyCommand } = await import('./handlers/commands/index.js');
         const { markCommandOutcome } = await import('./services/command-trace.js');
         let release!: () => void;
-        const work = new Promise<void>((r) => { release = r; });
-        vi.mocked(handleHarmonyCommand).mockImplementation(async (interaction, _env, handlerCtx) => {
-          handlerCtx.waitUntil(work.then(() => { markCommandOutcome(interaction, 'render'); }));
-          return new Response(JSON.stringify({ type: 5 }));
+        const work = new Promise<void>((r) => {
+          release = r;
         });
+        vi.mocked(handleHarmonyCommand).mockImplementation(
+          async (interaction, _env, handlerCtx) => {
+            handlerCtx.waitUntil(
+              work.then(() => {
+                markCommandOutcome(interaction, 'render');
+              }),
+            );
+            return new Response(JSON.stringify({ type: 5 }));
+          },
+        );
         const { trackCommandWithKV } = await import('./services/analytics.js');
         vi.mocked(trackCommandWithKV).mockClear();
         const { ctx, collected } = collectingCtx();
@@ -2372,29 +2460,52 @@ describe('index.ts', () => {
         release();
         await Promise.all(collected);
 
-        expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, expect.objectContaining({
-          commandName: 'harmony', success: false, outcome: 'render', kind: 'command',
-        }));
+        expect(trackCommandWithKV).toHaveBeenCalledWith(
+          mockEnv,
+          expect.objectContaining({
+            commandName: 'harmony',
+            success: false,
+            outcome: 'render',
+            kind: 'command',
+          }),
+        );
       });
 
       it('records a rate-limited request as rate_limited', async () => {
-        const body = { type: InteractionType.APPLICATION_COMMAND, data: { name: 'harmony' }, user: { id: 'user-123' } };
+        const body = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name: 'harmony' },
+          user: { id: 'user-123' },
+        };
         await verified(body);
         const { checkRateLimit } = await import('./services/rate-limiter.js');
-        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: false, remaining: 0, resetAt: Date.now() + 60000 });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: false,
+          remaining: 0,
+          resetAt: Date.now() + 60000,
+        });
         const { trackCommandWithKV } = await import('./services/analytics.js');
         vi.mocked(trackCommandWithKV).mockClear();
         const { ctx, collected } = collectingCtx();
 
         await app.fetch(post(body), mockEnv, ctx);
         await Promise.all(collected);
-        expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, expect.objectContaining({
-          commandName: 'harmony', success: false, outcome: 'rate_limited',
-        }));
+        expect(trackCommandWithKV).toHaveBeenCalledWith(
+          mockEnv,
+          expect.objectContaining({
+            commandName: 'harmony',
+            success: false,
+            outcome: 'rate_limited',
+          }),
+        );
       });
 
       it('records a handler throw as unknown', async () => {
-        const body = { type: InteractionType.APPLICATION_COMMAND, data: { name: 'harmony' }, user: { id: 'user-123' } };
+        const body = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name: 'harmony' },
+          user: { id: 'user-123' },
+        };
         await verified(body);
         await allowRateLimit();
         const { handleHarmonyCommand } = await import('./handlers/commands/index.js');
@@ -2405,11 +2516,18 @@ describe('index.ts', () => {
 
         await app.fetch(post(body), mockEnv, ctx);
         await Promise.all(collected);
-        expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, expect.objectContaining({ success: false, outcome: 'unknown' }));
+        expect(trackCommandWithKV).toHaveBeenCalledWith(
+          mockEnv,
+          expect.objectContaining({ success: false, outcome: 'unknown' }),
+        );
       });
 
       it('writes no datapoint when the interaction carries no command name', async () => {
-        const body = { type: InteractionType.APPLICATION_COMMAND, data: {}, user: { id: 'user-123' } };
+        const body = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: {},
+          user: { id: 'user-123' },
+        };
         await verified(body);
         const { trackCommandWithKV } = await import('./services/analytics.js');
         vi.mocked(trackCommandWithKV).mockClear();
@@ -2427,17 +2545,33 @@ describe('index.ts', () => {
         vi.mocked(trackCommandWithKV).mockClear();
         const { ctx, collected } = collectingCtx();
 
-        const copy = { type: InteractionType.MESSAGE_COMPONENT, data: { custom_id: 'copy_hex_FF0000', component_type: 2 }, user: { id: 'user-123' }, locale: 'de' };
+        const copy = {
+          type: InteractionType.MESSAGE_COMPONENT,
+          data: { custom_id: 'copy_hex_FF0000', component_type: 2 },
+          user: { id: 'user-123' },
+          locale: 'de',
+        };
         await verified(copy);
         await app.fetch(post(copy), mockEnv, ctx);
         await Promise.all(collected);
         expect(trackCommandWithKV).toHaveBeenCalledWith(mockEnv, {
-          commandName: 'button', userId: 'user-123', guildId: undefined, success: true,
-          outcome: 'ok', subcommand: 'copy_hex', locale: 'de', kind: 'button', latencyMs: 0,
+          commandName: 'button',
+          userId: 'user-123',
+          guildId: undefined,
+          success: true,
+          outcome: 'ok',
+          subcommand: 'copy_hex',
+          locale: 'de',
+          kind: 'button',
+          latencyMs: 0,
         });
 
         vi.mocked(trackCommandWithKV).mockClear();
-        const other = { type: InteractionType.MESSAGE_COMPONENT, data: { custom_id: 'preview_approve_1', component_type: 2 }, user: { id: 'user-123' } };
+        const other = {
+          type: InteractionType.MESSAGE_COMPONENT,
+          data: { custom_id: 'preview_approve_1', component_type: 2 },
+          user: { id: 'user-123' },
+        };
         await verified(other);
         await app.fetch(post(other), mockEnv, ctx);
         await Promise.all(collected);

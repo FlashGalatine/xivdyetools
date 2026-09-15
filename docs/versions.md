@@ -2,12 +2,12 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: September 5, 2026*
+*Last Updated: September 15, 2026*
 
-> **Versions below are read from each project's `package.json` on `main`** and are checked
+> **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123) and every publishable package is on npm at the version listed here. Merging to
+> (PR #123). September 15 security versions are prepared locally; auth 2.0.2 still needs npm publication. Merging to
 > `main` is the release — see [Release Process](developer-guides/release-process.md) and the
 > per-workspace `CHANGELOG.md` files for what each version contains.
 
@@ -20,13 +20,13 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.9.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.5.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.5.4 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.7.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.7.1 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.3.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **Presets API** | v2.3.3 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.14.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.10.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.10.1 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.0 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -37,7 +37,7 @@
 |---------|---------|--------------|----------|--------|
 | **Core** (incl. `/blending` + schema-v2 data) | v5.2.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
-| **Auth** (incl. `/encoding`) | v2.0.1 | `@xivdyetools/auth` | npm | Active |
+| **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.3.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
@@ -151,6 +151,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.5.4 | Sep 2026 (prepared) | Legacy preview controls refresh the current image and require a second click |
+| v5.5.3 | Sep 2026 (prepared) | Preview buttons and signed requests bind the exact reviewed image key; stale decisions conflict |
+| v5.5.2 | Sep 2026 (prepared) | Bound GitHub webhook streams before authentication; bundle auth 2.0.2 for Discord interactions |
 | v5.5.1 | Sep 2026 | Test-only — the root `CHANGELOG-laymans.md` gets the bot file's parse gates (grammar, ordering, uncut announcement); `announcements.ts` exports `DESCRIPTION_BUDGET` under `@testonly` |
 | **v5.5.0** | **Sep 2026** | **`/harmony` gains a `wheel` option with the five colour wheels (PR #167); the card names a non-default wheel and the embed title links to the web app on the same wheel; CJK subsets regenerated for the localized wheel names** |
 | v5.4.0 | Sep 2026 | The OKLAB method prints `ΔEOK2` everywhere (core 5.1.0); `MATCHING_METHODS` reads display names from core's `MATCHING_METHOD_TAGS` — needs `register-commands` |
@@ -212,6 +215,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.3.3 | Sep 2026 (prepared) | Revision-bound moderator status and revert writes with atomic audit logs |
+| v2.3.2 | Sep 2026 (prepared) | Revision-bound owner edits; migration 0014 adds the database revision trigger |
+| v2.3.1 | Sep 2026 (prepared) | Preview decisions require the exact pending image key |
 | **v2.3.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 8) — a moderator status change can no longer 500 and lose its audit row (409 instead, BUG-041); the bots no longer throttle each other over service bindings and a caller cannot pick its own bucket (BUG-044); daily quota agrees with itself (BUG-042); stalled image decode fails instead of hanging (BUG-045); production refuses to start without `INTERNAL_WEBHOOK_SECRET` / `DISCORD_WORKER`; one error envelope worker-wide (REFACTOR-003)** |
 | v2.2.1 | Sep 2026 | Four permanently-skipped handler tests un-skipped (DEAD-012); the "201 when the notification fails" test now asserts the dead-letter write |
 | **v2.2.0** | **Aug 2026** | **2026-08-29 security audit Sprint 1 (FINDING-004/005/006/010/011/013/015/016/017/023) — `author_discord_id` dropped from anonymous responses (`is_owner` added for web callers), v1 bot signature no longer accepted, moderation fails closed and gains a per-user `text_edit` daily cap (migration 0012), owner edits capped and status-transition-safe, dead-letter rows hold only the preset id, `console.*` eliminated in favor of the structured logger (no personal fields), production `validateEnv` requires `JWT_SECRET`/`JWT_ISSUER`/`TOKEN_BLACKLIST`/`RL_PUBLIC`, new wrangler-config invariant test** |
@@ -295,6 +301,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.7.1 | Sep 2026 (prepared) | Bundle auth 2.0.2 to bound interaction streams while reading |
 | v1.7.0 | Sep 2026 | English-only by design, and now says so once — the six-locale `Record` that always resolved to English collapsed to one table (I18N-009) |
 | **v1.6.2** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 7) — `/preset moderate action:stats` shows real numbers instead of "undefined" ×4 (BUG-010, needs types 3.0.0); moderation strings honour the language set through the main bot's `/preferences` (BUG-001); a stalled follow-up no longer leaves "thinking…" forever (BUG-040)** |
 | v1.6.1 | Sep 2026 | Base64URL from `@xivdyetools/auth/encoding`; first dead-code sweep (DEAD-014–019) |
@@ -315,6 +322,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.10.1 | Sep 2026 (prepared) | Crawler metadata logs retain only tool, locale and crawler category |
 | **v2.10.0** | **Sep 2026** | **`/og/harmony/*` reads `?wheel=` (PR #167) — allowlisted against core's `COLOR_WHEEL_IDS`, cache-keyed beside `lang`/`frame`/`algo`, elided when `rgb`; the footer carries a short wheel tag so the X frame says which wheel chose the dyes** |
 | v2.9.0 | Sep 2026 | The mixer card ranked its headline dye by a hardcoded `ciede2000` while tagging it with the requested `?algo=` (BUG-023, third and last instance) |
 | v2.8.0 | Sep 2026 | The mixer card honours `?mode=` (ALGO-003 — every shared mix had unfurled as CIELAB); `mode` joins the query-key allowlist and the edge cache key |
@@ -371,6 +379,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.0.2 | Sep 2026 (prepared) | Enforce Discord byte caps during streaming, cancel early, verify original bytes |
 | v2.0.1 | Sep 2026 | knip dead-code gate — 17 barrel exports tagged `@public` (the four encoding helpers are live via `@xivdyetools/auth/encoding`, only the root re-export is unreferenced) |
 | **v2.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit (FINDING-015): `verifyBotSignature` (v1 bot request signature, `timestamp:userId:userName`, no request binding) removed from `hmac.ts` and the barrel; `createBotSignatureV2`/`verifyBotSignatureV2` (1.4.0) are now the only signature scheme. No in-repo caller remained — `presets-api` 2.2.0, `discord-worker` 5.1.0 and `moderation-worker` 1.6.0 had already stopped accepting/sending v1** |
 | **v1.4.0** | **Aug 2026** | **2026-08-21 security audit — `revokeToken` TTL = exp + `REFRESH_GRACE_SECONDS` (FINDING-001); `verifyJWT` claim typing, `nbf`, `issuer`/`audience` options (FINDING-015)** |
@@ -531,6 +540,12 @@
 ---
 
 ## Compatibility Matrix
+
+Security rollout constraints: Discord 5.5.2+ and moderation 1.7.1+ bundle auth 2.0.2+.
+Presets API 2.3.1+ rejects unversioned preview decisions; Discord 5.5.3+ sends the image
+key, and 5.5.4+ safely refreshes legacy controls. Presets API 2.3.2+ requires migration
+0014 before deployment. These September 15 versions are prepared locally; see the
+[rollout runbook](operations/security-remediation-2026-09-15.md) for deployment status.
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|

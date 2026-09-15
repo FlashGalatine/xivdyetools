@@ -1,0 +1,12 @@
+{
+  "findings": 6,
+  "severity_counts": {
+    "MEDIUM": 3,
+    "LOW": 3
+  },
+  "local_links_checked": 24,
+  "source_anchors_checked": 13,
+  "source_files_snapshotted": 8,
+  "tracked_files_changed": [],
+  "errors": []
+}

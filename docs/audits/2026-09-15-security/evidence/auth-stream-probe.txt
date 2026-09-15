@@ -1,0 +1,12 @@
+{
+  "capBytes": 100000,
+  "suppliedBytes": 1048576,
+  "pulledBytes": 1048576,
+  "cancelled": false,
+  "result": {
+    "isValid": false,
+    "body": "",
+    "error": "Request body too large"
+  },
+  "verdict": "Entire 1 MiB stream consumed before enforcing 100 KB cap, before signature verification"
+}

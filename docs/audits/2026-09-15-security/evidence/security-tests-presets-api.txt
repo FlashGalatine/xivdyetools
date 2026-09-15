@@ -1,0 +1,9 @@
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ target: 'node18' }`
+
+ RUN  v4.1.11 C:/dev/XIVProjects/xivdyetools/apps/presets-api
+
+
+ Test Files  4 passed (4)
+      Tests  119 passed (119)
+   Start at  10:46:12
+   Duration  1.72s (transform 1.97s, setup 0ms, import 3.34s, tests 205ms, environment 1ms)

@@ -70,7 +70,7 @@ const DEFAULT_FUTURE_SKEW_SECONDS = 60;
 export async function verifyDiscordRequest(
   request: Request,
   publicKey: string,
-  options: DiscordVerifyOptions = {}
+  options: DiscordVerifyOptions = {},
 ): Promise<DiscordVerificationResult> {
   const maxBodySize = options.maxBodySize ?? DEFAULT_MAX_BODY_SIZE;
 
@@ -109,24 +109,42 @@ export async function verifyDiscordRequest(
     return { isValid: false, body: '', error: 'Signature timestamp outside the accepted window' };
   }
 
-  // Get the raw body
-  const body = await request.text();
-
-  // Verify actual body size (Content-Length can be spoofed).
-  // BUG-059: measure BYTES — String.length counts UTF-16 code units, so CJK
-  // (3 bytes/char) and emoji (4 bytes) payloads could exceed the intended
-  // byte cap by up to ~4× before this check fired.
-  if (new TextEncoder().encode(body).byteLength > maxBodySize) {
-    return {
-      isValid: false,
-      body: '',
-      error: 'Request body too large',
-    };
+  // Bound bytes while reading: Content-Length may be missing or inaccurate.
+  // Do not retain a chunk that crosses the cap or drain the rest of the body.
+  if (maxBodySize < 0) {
+    return { isValid: false, body: '', error: 'Request body too large' };
   }
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const reader = (request.body as ReadableStream<Uint8Array> | null)?.getReader();
+  if (reader) {
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > maxBodySize) {
+          // Cancellation failure must not turn a size rejection into an error.
+          void reader.cancel().catch(() => {});
+          return { isValid: false, body: '', error: 'Request body too large' };
+        }
+        if (value.byteLength > 0) chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const body = new TextDecoder().decode(bytes);
 
   // Verify the signature using discord-interactions library
   try {
-    const isValid = await verifyKey(body, signature, timestamp, publicKey);
+    const isValid = await verifyKey(bytes, signature, timestamp, publicKey);
 
     return {
       isValid,
@@ -148,9 +166,7 @@ export async function verifyDiscordRequest(
  * @param message - Error message (default: 'Invalid request signature')
  * @returns Response object
  */
-export function unauthorizedResponse(
-  message = 'Invalid request signature'
-): Response {
+export function unauthorizedResponse(message = 'Invalid request signature'): Response {
   return new Response(JSON.stringify({ error: message }), {
     status: 401,
     headers: { 'Content-Type': 'application/json' },

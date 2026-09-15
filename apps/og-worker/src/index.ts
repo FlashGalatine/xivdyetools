@@ -24,7 +24,7 @@ import {
   getLogger,
 } from '@xivdyetools/worker-kit';
 import type { LocaleCode } from '@xivdyetools/types';
-import { detectCrawlerFromRequest, getCrawlerName } from './crawler-detector';
+import { detectCrawlerFromRequest } from './crawler-detector';
 import {
   generateOGDataForTool,
   generateOGHTML,
@@ -155,10 +155,7 @@ app.use(
   '*',
   loggerMiddleware({
     serviceName: 'xivdyetools-og-worker',
-    // FINDING-024 / OG-7: the raw UA of every human page view on the nine
-    // production tool paths is not ours to keep — crawler hits log theirs
-    // explicitly in createToolHandler (that is the string worth having when
-    // a new crawler needs a detector pattern).
+    // Keep raw user agents out of request logs, including crawler requests.
     logUserAgent: false,
   }),
 );
@@ -533,16 +530,12 @@ function createToolHandler(tool: ToolId) {
     const pathId = tool === 'presets' ? (c.req.param('presetId') ?? null) : null;
     const ogData = await generateOGDataForTool(tool, url.searchParams, env, locale, pathId);
 
-    // Structured request log (replaces ad-hoc console.log). The crawler's UA
-    // is logged HERE, and only here (OG-7) — it is the string you need when a
-    // new crawler wants a detector pattern.
+    // Coarse diagnostics only: URLs, generated titles and raw user agents can
+    // carry user-supplied sharing data (2026-09-15 security audit, FINDING-006).
     getLogger(c)?.info('Serving OG metadata', {
       tool,
       locale,
-      crawler: getCrawlerName(crawlerInfo.type),
-      userAgent: crawlerInfo.userAgent,
-      url: url.toString(),
-      title: ogData.title,
+      crawler: crawlerInfo.type,
     });
 
     // Generate and return HTML with OG tags — 1h browser, 24h edge (OG-3:
