@@ -9,8 +9,8 @@
  * own token — not moderation-worker's.
  *
  * Button custom_id patterns:
- * - previewimg_approve_{presetId} - Approve the pending preview image
- * - previewimg_reject_{presetId} - Reject (delete) the pending preview image
+ * - previewimg_approve_{previewImageKey} - Approve the reviewed preview image
+ * - previewimg_reject_{previewImageKey} - Reject (delete) the reviewed preview image
  *
  * The `previewimg_` prefix is deliberate: moderation-worker already owns
  * `preset_approve_` / `preset_reject_` / `preset_revert_` for preset
@@ -26,7 +26,7 @@ import { InteractionResponseType } from '../../types/env.js';
 import { ephemeralResponse } from '../../utils/response.js';
 import { editMessage, safeSendFollowUp } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
-import { isValidPresetId } from '../../types/preset.js';
+import { isValidPresetId, isValidPreviewImageKey, PresetAPIError } from '../../types/preset.js';
 import { createTranslator } from '../../services/bot-i18n.js';
 import { STATE } from '../../utils/brand.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
@@ -73,6 +73,9 @@ type PreviewImageAction = 'approve' | 'reject';
 
 const APPROVE_PREFIX = 'previewimg_approve_';
 const REJECT_PREFIX = 'previewimg_reject_';
+// Moderator controls are English-only, matching createTranslator('en') below.
+const STALE_REVIEW_MESSAGE =
+  'This preview image changed or was already moderated. Review the latest image notification.';
 
 // ============================================================================
 // Routing helpers
@@ -83,14 +86,21 @@ export function isPreviewImageButton(customId: string): boolean {
   return customId.startsWith(APPROVE_PREFIX) || customId.startsWith(REJECT_PREFIX);
 }
 
-function parseCustomId(customId: string): { action: PreviewImageAction; presetId: string } | null {
-  if (customId.startsWith(APPROVE_PREFIX)) {
-    return { action: 'approve', presetId: customId.slice(APPROVE_PREFIX.length) };
-  }
-  if (customId.startsWith(REJECT_PREFIX)) {
-    return { action: 'reject', presetId: customId.slice(REJECT_PREFIX.length) };
-  }
-  return null;
+function parseCustomId(customId: string): {
+  action: PreviewImageAction;
+  presetId: string;
+  previewImageKey: string | null;
+} | null {
+  const action = customId.startsWith(APPROVE_PREFIX)
+    ? 'approve'
+    : customId.startsWith(REJECT_PREFIX)
+      ? 'reject'
+      : null;
+  if (!action) return null;
+  const key: unknown = customId.slice(action === 'approve' ? APPROVE_PREFIX.length : REJECT_PREFIX.length);
+  if (isValidPresetId(key)) return { action, presetId: key, previewImageKey: null };
+  if (!isValidPreviewImageKey(key)) return null;
+  return { action, presetId: key.slice(0, 36), previewImageKey: key };
 }
 
 // ============================================================================
@@ -136,12 +146,15 @@ export async function handlePreviewImageButton(
     return ephemeralResponse(adminT.t('previewImage.notPermitted'));
   }
 
+  if (!parsed.previewImageKey) return ephemeralResponse(STALE_REVIEW_MESSAGE);
+
   ctx.waitUntil(
     processPreviewImageAction(
       interaction,
       env,
       parsed.action,
       parsed.presetId,
+      parsed.previewImageKey,
       userId,
       userName,
       logger,
@@ -156,6 +169,7 @@ async function processPreviewImageAction(
   env: Env,
   action: PreviewImageAction,
   presetId: string,
+  previewImageKey: string,
   moderatorId: string,
   moderatorName: string | undefined,
   logger?: ExtendedLogger,
@@ -164,7 +178,14 @@ async function processPreviewImageAction(
   const displayName = moderatorName ? `<@${moderatorId}>` : moderatorId;
 
   try {
-    await presetApi.setPreviewImageStatus(env, presetId, action, moderatorId, moderatorName);
+    await presetApi.setPreviewImageStatus(
+      env,
+      presetId,
+      action,
+      previewImageKey,
+      moderatorId,
+      moderatorName,
+    );
 
     if (interaction.channel_id && interaction.message?.id) {
       const originalEmbed = interaction.message.embeds?.[0] || {};
@@ -206,8 +227,31 @@ async function processPreviewImageAction(
       { presetId, action },
     );
 
-    // On failure, leave the original message (and its buttons) untouched so
-    // the moderator can retry — only notify them ephemerally.
+    const stale = error instanceof PresetAPIError && error.statusCode === 409;
+    if (stale && interaction.channel_id && interaction.message?.id) {
+      try {
+        const response = await editMessage(
+          env.DISCORD_TOKEN,
+          interaction.channel_id,
+          interaction.message.id,
+          {
+            embeds: [
+              { ...interaction.message.embeds?.[0], footer: { text: STALE_REVIEW_MESSAGE } },
+            ],
+            components: [],
+          },
+        );
+        if (!response.ok)
+          logger?.warn('Failed to retire stale preview-image buttons', { status: response.status });
+      } catch (editError) {
+        logger?.error(
+          'Failed to retire stale preview-image buttons',
+          editError instanceof Error ? editError : undefined,
+        );
+      }
+    }
+
+    // Transient failures stay retryable; a stale revision requires a fresh review.
     //
     // BUG-039: this used the raw `sendFollowUp`, so a 4xx/5xx was discarded
     // and a timeout threw out of this very catch block, rejecting the
@@ -218,7 +262,7 @@ async function processPreviewImageAction(
       env.DISCORD_CLIENT_ID,
       interaction.token,
       {
-        content: adminT.t('previewImage.actionFailed'),
+        content: stale ? STALE_REVIEW_MESSAGE : adminT.t('previewImage.actionFailed'),
         ephemeral: true,
       },
       logger,

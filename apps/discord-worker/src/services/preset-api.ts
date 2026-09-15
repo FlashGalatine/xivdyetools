@@ -425,6 +425,7 @@ export async function setPreviewImageStatus(
   env: Env,
   presetId: string,
   action: 'approve' | 'reject',
+  previewImageKey: string,
   moderatorId: string,
   moderatorName?: string,
 ): Promise<PreviewImageModerationResult> {
@@ -433,7 +434,7 @@ export async function setPreviewImageStatus(
     'PATCH',
     `/api/v1/moderation/${encodeURIComponent(presetId)}/preview-image`,
     {
-      body: { action },
+      body: { action, preview_image_key: previewImageKey },
       userDiscordId: moderatorId,
       userName: moderatorName,
     },

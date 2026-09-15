@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.3] - 2026-09-15
+
+### Fixed
+
+- Preview moderation buttons now carry the exact displayed image revision into the signed API request. Stale or already-decided reviews retire their buttons and ask for a fresh review; legacy buttons cannot approve replacement images. Invalid or mismatched image notifications are rejected before posting (2026-09-15 security audit, FINDING-002).
+
 ## [5.5.2] - 2026-09-15
 
 ### Fixed

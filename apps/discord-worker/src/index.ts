@@ -67,7 +67,7 @@ import { handleButtonInteraction } from './handlers/buttons/index.js';
 import { dyeService, searchDyesByName, type LocaleCode } from '@xivdyetools/bot-logic';
 import * as presetApi from './services/preset-api.js';
 import { sendMessage, sendFollowUp } from './utils/discord-api.js';
-import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
+import { STATUS_DISPLAY, isValidPreviewImageKey, type PresetNotificationPayload } from './types/preset.js';
 import {
   getLocalizedDyeName,
   discordLocaleToLocaleCode,
@@ -297,6 +297,10 @@ app.post('/webhooks/preset-submission', async (c) => {
   }
 
   if (payload.type === 'preview_image') {
+    if (!isValidPreviewImageKey(payload.preview_image_key) ||
+        !payload.preview_image_key.startsWith(`${payload.preset.id}/`)) {
+      return c.json({ error: 'Invalid preview image revision' }, 400);
+    }
     // The moderation channel, not the submission log: a pending image is work
     // for a moderator, and the submission log is where *published* presets are
     // announced. Posting an unapproved image there would both misfile the task
@@ -321,9 +325,7 @@ app.post('/webhooks/preset-submission', async (c) => {
           // Built here rather than read from the API: for a pending image the
           // API withholds preview_image_url by design, and this embed is
           // exactly where an unapproved image is meant to be seen.
-          ...(payload.preview_image_key
-            ? { image: { url: `https://shots.xivdyetools.app/${payload.preview_image_key}` } }
-            : {}),
+          image: { url: `https://shots.xivdyetools.app/${payload.preview_image_key}` },
           footer: { text: `ID: ${payload.preset.id}` },
         },
       ],
@@ -335,14 +337,14 @@ app.post('/webhooks/preset-submission', async (c) => {
               type: 2, // Button
               style: 3, // Success (green)
               label: adminT.t('webhook.buttons.approve'),
-              custom_id: `previewimg_approve_${payload.preset.id}`,
+              custom_id: `previewimg_approve_${payload.preview_image_key}`,
               emoji: { name: '✅' },
             },
             {
               type: 2, // Button
               style: 4, // Danger (red)
               label: adminT.t('webhook.buttons.reject'),
-              custom_id: `previewimg_reject_${payload.preset.id}`,
+              custom_id: `previewimg_reject_${payload.preview_image_key}`,
               emoji: { name: '❌' },
             },
           ],
