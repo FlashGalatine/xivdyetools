@@ -22,7 +22,7 @@
 | **Web Application** | v5.9.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.5.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.7.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.7.1 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.14.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
