@@ -31,7 +31,7 @@ Do not use `wrangler d1 migrations apply`; this project's migration history is a
 
 Publish auth 2.0.2 through the **Publish Packages to npm** GitHub Actions workflow, using trusted publishing. Do not publish from a local shell. Verify the registry result, then separately verify the Discord and moderation worker bundles and deployments.
 
-The existing deployment workflow path filters include `packages/auth/**` for Discord, moderation, presets-api and OAuth. The full PR also changes paths that trigger API, image, web and OG deployments. Merging the entire implementation branch without holds would trigger independent deployments together. Local commit boundaries alone do not serialize GitHub Actions, and `environment: production` does not imply a required approval pause. The presets deployment workflow does not apply migration 0014.
+The existing deployment workflow path filters include `packages/auth/**` for Discord, moderation, presets-api and OAuth; the OG changes trigger its workflow too. This PR does not change API/image/web deployment paths, but all deployment workflows are held for the maintenance window. Merging the entire implementation branch without holds would trigger the five affected production deployments together. Local commit boundaries alone do not serialize GitHub Actions, and `environment: production` does not imply a required approval pause. The presets deployment workflow does not apply migration 0014.
 
 ### Selected release procedure: held full-PR merge and ordered deployments
 
