@@ -100,25 +100,3 @@ export function detectCrawlerFromRequest(request: Request): CrawlerInfo {
   const userAgent = request.headers.get('user-agent');
   return detectCrawler(userAgent);
 }
-
-/**
- * Get a human-readable name for a crawler type.
- *
- * @param type - The crawler type
- * @returns Human-readable name
- */
-export function getCrawlerName(type: CrawlerType): string {
-  const names: Record<CrawlerType, string> = {
-    discord: 'Discord',
-    twitter: 'Twitter/X',
-    facebook: 'Facebook',
-    linkedin: 'LinkedIn',
-    slack: 'Slack',
-    telegram: 'Telegram',
-    whatsapp: 'WhatsApp',
-    other: 'Other',
-    none: 'Browser',
-  };
-
-  return names[type];
-}

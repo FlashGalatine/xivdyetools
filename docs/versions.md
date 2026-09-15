@@ -26,7 +26,7 @@
 | **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.3 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.14.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.10.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.10.1 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.0 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |

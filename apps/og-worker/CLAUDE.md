@@ -304,6 +304,10 @@ Image route parameters are bounded to prevent resource exhaustion: `OG_MAX_GRADI
 
 ### Analytics
 
+The normal `Serving OG metadata` log contains only `tool`, normalized `locale`, and the
+`CrawlerType` category. Never add the raw user agent, full URL/query, or generated title to
+that event. `index.privacy.test.ts` checks the boundary with a real crawler HTML request.
+
 `trackAnalytics()` writes to Analytics Engine with `event`/`tool`/`crawler` blobs and a `timestamp` double, indexed by `tool` (the former `cacheHit` double was a constant 0 — a worker only ever sees cache misses — and was dropped in 2.1.0). Errors are caught and logged but never break the request (analytics is best-effort).
 
 ## Dependencies
