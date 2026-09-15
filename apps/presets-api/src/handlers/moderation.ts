@@ -257,16 +257,33 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
 
   const presetId = c.req.param('presetId');
 
-  let body: { action?: string };
+  let body: { action?: unknown; preview_image_key?: unknown } | null;
   try {
     body = await c.req.json();
   } catch {
     return invalidJsonResponse(c);
   }
 
-  if (body.action !== 'approve' && body.action !== 'reject') {
+  if (body?.action !== 'approve' && body?.action !== 'reject') {
     return validationErrorResponse(c, "action must be 'approve' or 'reject'");
   }
+
+  // The immutable object key identifies exactly the image the moderator saw.
+  // Old notifications without a revision must never approve a replacement.
+  const reviewedKey = body.preview_image_key;
+  if (
+    typeof reviewedKey !== 'string' || reviewedKey.length > 128 ||
+    !reviewedKey.startsWith(`${presetId}/`) ||
+    !/^[A-Za-z0-9-]+\/[A-Za-z0-9-]+\.webp$/.test(reviewedKey)
+  ) {
+    return validationErrorResponse(c, 'preview_image_key must identify the reviewed image');
+  }
+
+  const staleReview = () => c.json({
+    success: false,
+    error: ErrorCode.CONFLICT,
+    message: 'This preview image changed or was already moderated. Review the latest image notification.',
+  }, 409);
 
   // Row-level read: CommunityPreset hides preview_image_key by design.
   const preset = await getPresetImageState(c.env.DB, presetId);
@@ -277,17 +294,15 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
   const now = new Date().toISOString();
 
   if (body.action === 'approve') {
-    await c.env.DB.prepare(
-      `UPDATE presets SET preview_image_status = 'approved', updated_at = ? WHERE id = ?`
+    const result = await c.env.DB.prepare(
+      `UPDATE presets SET preview_image_status = 'approved', updated_at = ?
+       WHERE id = ? AND preview_image_key = ? AND preview_image_status = 'pending'`
     )
-      .bind(now, presetId)
+      .bind(now, presetId, reviewedKey)
       .run();
+    if (result.meta.changes !== 1) return staleReview();
     return c.json({ success: true, preview_image_status: 'approved' });
   }
-
-  // Capture the key before the UPDATE clears it — deletePreviewImage below
-  // needs the pre-update value.
-  const previousKey = preset.preview_image_key;
 
   // DB UPDATE before the R2 delete, deliberately (Task 4 ruling, same logic
   // applies here): if the UPDATE throws, leaving the delete undone just
@@ -295,17 +310,19 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
   // first would risk the opposite: a row still pointing at a key that no
   // longer exists, so the card serves a broken image. Never trade a broken
   // live image for a tidy bucket.
-  await c.env.DB.prepare(
-    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ? WHERE id = ?`
+  const result = await c.env.DB.prepare(
+    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ?
+     WHERE id = ? AND preview_image_key = ? AND preview_image_status = 'pending'`
   )
-    .bind(now, presetId)
+    .bind(now, presetId, reviewedKey)
     .run();
+  if (result.meta.changes !== 1) return staleReview();
 
   // The DB already reflects the rejection, so the moderator's action has
   // succeeded. An R2 hiccup here must not 500 a request whose state is already
   // correct — the orphaned object is the accepted failure mode by design.
   try {
-    await deletePreviewImage(c.env, previousKey, c.get('logger'));
+    await deletePreviewImage(c.env, reviewedKey, c.get('logger'));
   } catch (err) {
     c.get('logger')?.error('[preview-image] R2 delete failed after rejection', err, { presetId });
   }

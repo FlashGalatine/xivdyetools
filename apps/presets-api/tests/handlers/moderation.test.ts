@@ -657,7 +657,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
                     },
-                    body: JSON.stringify({ action: 'approve' }),
+                    body: JSON.stringify({ action: 'approve', preview_image_key: 'preset-123/a.webp' }),
                 },
                 env
             );
@@ -698,7 +698,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
                     },
-                    body: JSON.stringify({ action: 'reject' }),
+                    body: JSON.stringify({ action: 'reject', preview_image_key: 'preset-123/a.webp' }),
                 },
                 env
             );
@@ -754,7 +754,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
                     },
-                    body: JSON.stringify({ action: 'reject' }),
+                    body: JSON.stringify({ action: 'reject', preview_image_key: 'preset-123/a.webp' }),
                 },
                 env
             );
@@ -806,7 +806,7 @@ describe('ModerationHandler', () => {
                             Authorization: 'Bearer test-bot-secret',
                             'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
                         },
-                        body: JSON.stringify({ action: 'reject' }),
+                        body: JSON.stringify({ action: 'reject', preview_image_key: 'preset-123/a.webp' }),
                     },
                     purgeEnv
                 );
@@ -844,7 +844,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': 'the-author', // author, not a moderator
                     },
-                    body: JSON.stringify({ action: 'approve' }),
+                    body: JSON.stringify({ action: 'approve', preview_image_key: 'preset-123/a.webp' }),
                 },
                 env
             );
@@ -904,7 +904,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ action: 'approve' }),
+                    body: JSON.stringify({ action: 'approve', preview_image_key: 'nonexistent/a.webp' }),
                 },
                 env
             );

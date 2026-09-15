@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2026-09-15
+
+### Fixed
+
+- Preview-image moderation now requires the reviewed `preview_image_key` and applies only while that exact image is pending. Replaced or already-decided images return 409; unversioned requests fail closed. Rejecting a stale action cannot delete the newer R2 object (2026-09-15 security audit, FINDING-002). Deploy before the Discord producer update; old buttons will require a fresh review notification.
+
 ## [2.3.0] - 2026-09-02
 
 ### Fixed — 2026-09-02 deep-dive audit, Sprint 8
