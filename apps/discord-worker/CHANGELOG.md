@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.2] - 2026-09-15
+
+### Fixed
+
+- Stop reading GitHub webhook bodies as soon as they exceed 1 MiB, including requests with missing or misleading lengths and multibyte text. Reject oversize input before HMAC verification (2026-09-15 security audit, FINDING-003).
+- Bundle `@xivdyetools/auth` 2.0.2 to enforce the Discord interaction byte cap while reading its request stream (FINDING-001).
+
 ## [5.5.1] - 2026-09-05
 
 ### Tests
