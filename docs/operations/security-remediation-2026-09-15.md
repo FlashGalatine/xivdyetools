@@ -33,6 +33,8 @@ The existing deployment workflow path filters include `packages/auth/**` for mul
 
 Deploy the preview API guard before the Discord revision-bearing button producer. Unversioned actions must fail closed during the transition. Existing buttons require a fresh review; no deployment may temporarily accept an unversioned approval.
 
+Discord 5.5.4 also recovers old preset-ID-only buttons: a moderator click fetches the current pending image, replaces the displayed image and controls, and requires a second click to approve or reject that exact revision. It performs no moderation write on the first click. Failed lookups or message edits leave the controls retryable. There is no failed-notification replay dispatcher, so inserting dead-letter rows is not a recovery procedure.
+
 ## Completion evidence
 
 After each authorized deployment, verify the deployed version and exercise bounded requests or synthetic test presets in the appropriate environment. Confirm the actual interaction route uses auth's bounded reader, GitHub oversize input returns 413, stale image decisions return 409, and stale owner/moderator operations preserve the newer state. Only then close the deployment-dependent audit findings.

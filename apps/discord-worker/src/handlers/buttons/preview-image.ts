@@ -97,7 +97,9 @@ function parseCustomId(customId: string): {
       ? 'reject'
       : null;
   if (!action) return null;
-  const key: unknown = customId.slice(action === 'approve' ? APPROVE_PREFIX.length : REJECT_PREFIX.length);
+  const key: unknown = customId.slice(
+    action === 'approve' ? APPROVE_PREFIX.length : REJECT_PREFIX.length,
+  );
   if (isValidPresetId(key)) return { action, presetId: key, previewImageKey: null };
   if (!isValidPreviewImageKey(key)) return null;
   return { action, presetId: key.slice(0, 36), previewImageKey: key };
@@ -146,7 +148,14 @@ export async function handlePreviewImageButton(
     return ephemeralResponse(adminT.t('previewImage.notPermitted'));
   }
 
-  if (!parsed.previewImageKey) return ephemeralResponse(STALE_REVIEW_MESSAGE);
+  if (!parsed.previewImageKey) {
+    if (!interaction.channel_id || !interaction.message?.id)
+      return ephemeralResponse(STALE_REVIEW_MESSAGE);
+    ctx.waitUntil(
+      refreshPreviewImageReview(interaction, env, parsed.presetId, userId, userName, logger),
+    );
+    return Response.json({ type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE });
+  }
 
   ctx.waitUntil(
     processPreviewImageAction(
@@ -162,6 +171,80 @@ export async function handlePreviewImageButton(
   );
 
   return Response.json({ type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE });
+}
+
+/** A legacy click only refreshes the review; a second, revision-bound click is required. */
+async function refreshPreviewImageReview(
+  interaction: ButtonInteraction,
+  env: Env,
+  presetId: string,
+  moderatorId: string,
+  moderatorName: string | undefined,
+  logger?: ExtendedLogger,
+): Promise<void> {
+  const adminT = createTranslator('en');
+  const refreshNotice = 'Review the refreshed image before choosing Approve or Reject.';
+  try {
+    const key = await presetApi.getPendingPreviewImage(env, presetId, moderatorId, moderatorName);
+    const message = key ? refreshNotice : STALE_REVIEW_MESSAGE;
+    const response = await editMessage(
+      env.DISCORD_TOKEN,
+      interaction.channel_id!,
+      interaction.message!.id,
+      {
+        embeds: [
+          {
+            ...interaction.message?.embeds?.[0],
+            ...(key ? { image: { url: `https://shots.xivdyetools.app/${key}` } } : {}),
+            footer: { text: message },
+          },
+        ],
+        components: key
+          ? [
+              {
+                type: 1,
+                components: [
+                  {
+                    type: 2,
+                    style: 3,
+                    label: adminT.t('webhook.buttons.approve'),
+                    custom_id: `${APPROVE_PREFIX}${key}`,
+                  },
+                  {
+                    type: 2,
+                    style: 4,
+                    label: adminT.t('webhook.buttons.reject'),
+                    custom_id: `${REJECT_PREFIX}${key}`,
+                  },
+                ],
+              },
+            ]
+          : [],
+      },
+    );
+    if (!response.ok) throw new Error(`Preview review refresh failed (${response.status})`);
+    await safeSendFollowUp(
+      env.DISCORD_CLIENT_ID,
+      interaction.token,
+      { content: message, ephemeral: true },
+      logger,
+    );
+  } catch (error) {
+    logger?.error(
+      'Failed to refresh preview-image review',
+      error instanceof Error ? error : undefined,
+      { presetId },
+    );
+    await safeSendFollowUp(
+      env.DISCORD_CLIENT_ID,
+      interaction.token,
+      {
+        content: adminT.t('previewImage.actionFailed'),
+        ephemeral: true,
+      },
+      logger,
+    );
+  }
 }
 
 async function processPreviewImageAction(

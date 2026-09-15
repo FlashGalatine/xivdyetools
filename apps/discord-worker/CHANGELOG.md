@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.4] - 2026-09-15
+
+### Fixed
+
+- Legacy preview moderation buttons now refresh the message to the current pending image and require a second review click. Failed refreshes remain retryable, and reviews with no pending image lose their controls (FINDING-002 rollout recovery).
+
 ## [5.5.3] - 2026-09-15
 
 ### Fixed

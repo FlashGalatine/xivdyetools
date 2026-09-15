@@ -28,6 +28,7 @@ import {
   type VoteResponse,
   type PresetFilters,
   PresetAPIError,
+  isValidPreviewImageKey,
 } from '../types/preset.js';
 
 /** Upper bound on one presets-api call (service binding or URL fallback). */
@@ -339,11 +340,16 @@ export async function editPreset(
   userDiscordId: string,
   userName: string,
 ): Promise<PresetEditResponse> {
-  return request<PresetEditResponse>(env, 'PATCH', `/api/v1/presets/${encodeURIComponent(presetId)}`, {
-    body: updates,
-    userDiscordId,
-    userName,
-  });
+  return request<PresetEditResponse>(
+    env,
+    'PATCH',
+    `/api/v1/presets/${encodeURIComponent(presetId)}`,
+    {
+      body: updates,
+      userDiscordId,
+      userName,
+    },
+  );
 }
 
 // ============================================================================
@@ -409,6 +415,26 @@ export async function hasVoted(
 export interface PreviewImageModerationResult {
   success: boolean;
   preview_image_status: 'approved' | 'none';
+}
+
+/** Fetch the current pending revision for a moderator to review again. */
+export async function getPendingPreviewImage(
+  env: Env,
+  presetId: string,
+  moderatorId: string,
+  moderatorName?: string,
+): Promise<string | null> {
+  const result = await request<{
+    presets: Array<{ id: string; pending_preview_image_url?: unknown }>;
+  }>(env, 'GET', '/api/v1/moderation/pending', {
+    userDiscordId: moderatorId,
+    userName: moderatorName,
+  });
+  const url = result.presets.find((preset) => preset.id === presetId)?.pending_preview_image_url;
+  const prefix = 'https://shots.xivdyetools.app/';
+  if (typeof url !== 'string' || !url.startsWith(prefix)) return null;
+  const key = url.slice(prefix.length);
+  return isValidPreviewImageKey(key) && key.startsWith(`${presetId}/`) ? key : null;
 }
 
 /**
