@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-09-15
+
+### Fixed
+
+- Enforce Discord interaction body limits while reading the stream, cancelling as soon as the byte cap is exceeded even when `Content-Length` is missing or inaccurate. Verify the original received bytes before returning the decoded body (2026-09-15 security audit, FINDING-001).
+
 ## [2.0.1] - 2026-09-02
 
 ### Changed

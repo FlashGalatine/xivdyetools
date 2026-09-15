@@ -215,8 +215,8 @@ CHANGELOG.md `[2.0.0]` for the migration.
 
 1. `Content-Length` check before reading the body (rejects oversized requests early)
 2. Required headers check (`X-Signature-Ed25519`, `X-Signature-Timestamp`)
-3. Actual body length check after reading (Content-Length is spoofable)
-4. `verifyKey(body, signature, timestamp, publicKey)`
+3. Bound actual bytes while reading and cancel immediately above the cap (Content-Length is spoofable)
+4. `verifyKey(bytes, signature, timestamp, publicKey)` over the original received bytes
 
 The result includes `body` so the caller doesn't have to re-read the request stream after verification.
 

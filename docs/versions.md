@@ -37,7 +37,7 @@
 |---------|---------|--------------|----------|--------|
 | **Core** (incl. `/blending` + schema-v2 data) | v5.2.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
-| **Auth** (incl. `/encoding`) | v2.0.1 | `@xivdyetools/auth` | npm | Active |
+| **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.3.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
