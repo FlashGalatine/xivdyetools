@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.5] - 2026-09-15
+
+### Fixed
+
+- Verify GitHub webhook signatures against the bounded original request bytes before decoding text. UTF-8 normalization can no longer make an altered payload match a signature for different bytes (2026-09-15 security audit, FINDING-003 follow-up).
+
 ## [5.5.4] - 2026-09-15
 
 ### Fixed

@@ -540,16 +540,17 @@ app.post('/webhooks/github', async (c) => {
     bytes.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  const rawBody = new TextDecoder().decode(bytes);
-
   // Verify GitHub signature (HMAC-SHA256)
   const signature = c.req.header('X-Hub-Signature-256') || '';
   const { verifyGitHubSignature } = await import('./utils/github-verify.js');
 
-  if (!(await verifyGitHubSignature(env.GITHUB_WEBHOOK_SECRET, rawBody, signature))) {
+  if (!(await verifyGitHubSignature(env.GITHUB_WEBHOOK_SECRET, bytes, signature))) {
     logger.error('GitHub webhook signature verification failed');
     return c.json({ error: 'Unauthorized' }, 401);
   }
+
+  // Authenticate the received bytes before decoding can strip a BOM or replace invalid UTF-8.
+  const rawBody = new TextDecoder().decode(bytes);
 
   // FINDING-021: the signature says the sender holds the secret, not what the
   // body is — GitHub signs pings and every other event type too. The event name
