@@ -20,7 +20,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.9.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.5.4 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.5.6 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.1 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -151,6 +151,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.5.6 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-008) — the test-only `getPreference` single-key reader removed; `getUserPreferences` is the one production path |
 | v5.5.4 | Sep 2026 (prepared) | Legacy preview controls refresh the current image and require a second click |
 | v5.5.3 | Sep 2026 (prepared) | Preview buttons and signed requests bind the exact reviewed image key; stale decisions conflict |
 | v5.5.2 | Sep 2026 (prepared) | Bound GitHub webhook streams before authentication; bundle auth 2.0.2 for Discord interactions |

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.6] - 2026-09-16
+
+### Removed (2026-09-15 dead-code audit)
+
+- `getPreference` (`src/services/preferences.ts`) — reached only by `preferences.exhaustive.test.ts`; no command path reads a single preference by key, production code uses `getUserPreferences`. Removed the function plus its JSDoc (29 lines) and the `describe('getPreference', ...)` block plus import specifier in `src/services/preferences.exhaustive.test.ts` (23 lines). See docs/audits/2026-09-15-dead-code/findings/DEAD-008.md
+
 ## [5.5.4] - 2026-09-15
 
 ### Fixed
