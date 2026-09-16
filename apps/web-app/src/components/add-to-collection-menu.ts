@@ -48,26 +48,6 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
   menu.setAttribute('role', 'menu');
   menu.setAttribute('aria-label', LanguageService.t('collections.addToCollection'));
 
-  // Position relative to anchor
-  const rect = anchorElement.getBoundingClientRect();
-  const menuWidth = 200;
-  const menuHeight = Math.min(300, collections.length * 44 + 100);
-
-  // Default position below the anchor
-  let top = rect.bottom + 4;
-  let left = rect.left;
-
-  // Adjust if menu would go off-screen
-  if (left + menuWidth > window.innerWidth) {
-    left = window.innerWidth - menuWidth - 8;
-  }
-  if (top + menuHeight > window.innerHeight) {
-    top = rect.top - menuHeight - 4;
-  }
-
-  menu.style.top = `${top}px`;
-  menu.style.left = `${left}px`;
-
   // Header
   const header = document.createElement('div');
   header.className =
@@ -136,6 +116,33 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
   // Add to document
   document.body.appendChild(menu);
   activeMenu = menu;
+
+  // Position relative to anchor. BUG-029: the CSS (`min-w-48 max-w-64`)
+  // lets the menu render anywhere from 192px to 256px wide, but the
+  // off-screen check used to assume a fixed 200px — up to 56px could render
+  // past the right viewport edge. Measure the actual rendered width now
+  // that the menu is in the DOM; jsdom has no layout engine and always
+  // reports a 0 rect, so fall back to the CSS `max-w-64` ceiling (256px)
+  // rather than the old, too-narrow constant.
+  const rect = anchorElement.getBoundingClientRect();
+  const measuredWidth = menu.getBoundingClientRect().width;
+  const menuWidth = measuredWidth > 0 ? measuredWidth : 256;
+  const menuHeight = Math.min(300, collections.length * 44 + 100);
+
+  // Default position below the anchor
+  let top = rect.bottom + 4;
+  let left = rect.left;
+
+  // Adjust if menu would go off-screen
+  if (left + menuWidth > window.innerWidth) {
+    left = window.innerWidth - menuWidth - 8;
+  }
+  if (top + menuHeight > window.innerHeight) {
+    top = rect.top - menuHeight - 4;
+  }
+
+  menu.style.top = `${top}px`;
+  menu.style.left = `${left}px`;
 
   // Close on click outside
   const handleClickOutside = (event: MouseEvent) => {
