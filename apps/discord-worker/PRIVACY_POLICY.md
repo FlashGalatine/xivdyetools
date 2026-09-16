@@ -1,6 +1,6 @@
 # XIV Dye Tools Discord Bot - Privacy Policy
 
-**Last Updated**: August 30, 2026
+**Last Updated**: September 16, 2026
 
 ## 1. Introduction
 
@@ -32,7 +32,8 @@ We are committed to protecting your privacy and being transparent about our data
 ### Rate Limiting Data
 
 - Per-user, per-command counters are held by Cloudflare's Workers rate-limiting service for the 60-second window and are never written to KV.
-- **Fallback**: on a deployment without the native rate-limiting bindings, the counters are kept in Cloudflare KV with a 120-second expiry instead.
+- **Fallback**: on a deployment without the native rate-limiting bindings, the counters are kept in Cloudflare KV instead, under a key containing your Discord User ID and the command name, with a 120-second expiry. Both production and beta bind the native service, so this path is not in use there.
+- The Bot never sees or uses your IP address for rate limiting — it identifies you by Discord User ID, because commands arrive from Discord's servers rather than from you directly.
 - No third party is involved.
 
 ### Usage Analytics
@@ -98,6 +99,12 @@ All data is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Pol
 - No server-side sessions (stateless architecture)
 - Access controlled via Discord authentication
 - No plaintext password storage (we don't collect passwords)
+
+### Operational Logs
+
+While handling a command the Bot can print short diagnostic lines. Two of them include **your Discord User ID** — one when a command starts, one when a command is rate limited — alongside the command name. They never include command option values, message content, server names, channel IDs, or anything from an uploaded image or `.chara` file.
+
+Persistent log collection (Cloudflare Workers Logs) is switched **off** for the Bot, so these lines exist only in a live debugging stream a maintainer is watching at that moment, and are not retained afterwards. They are not a data store, are not queryable, and are separate from the usage analytics described above. If we ever enable persistent logging, this policy will be updated first.
 
 ## 6. Third-Party Services
 
