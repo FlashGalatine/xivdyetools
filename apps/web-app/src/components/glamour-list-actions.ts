@@ -13,13 +13,15 @@
 import type { ResolvedCharaCharacter, CharaGearSlotId } from '@xivdyetools/core';
 import { LanguageService, ToastService } from '@services/index';
 import { itemNameFor, type CharaResolveResult } from '@services/chara-resolve-service';
-import { copyTextToClipboard } from '@shared/clipboard';
+import { copyRichTextToClipboard } from '@shared/clipboard';
 import { downloadTextFile } from '@shared/download-file';
 import { localizedDyeName } from '@shared/dye-name';
 import { logger } from '@shared/logger';
 import {
   GLAMOUR_MARKDOWN_FILENAME,
+  buildGlamourHtml,
   buildGlamourMarkdown,
+  buildGlamourPlainText,
   type GlamourMarkdownInput,
   type GlamourMarkdownPiece,
 } from '@shared/glamour-markdown';
@@ -37,8 +39,12 @@ export interface GlamourListSource {
  * unavailable) is left nameless rather than given the model key, which means
  * nothing on a submission form. Dyes are per channel, so a piece dyed only on
  * channel 2 keeps channel 1 blank; an unknown stain writes `#id`, as the rows
- * do. Facewear names from the resolved Glasses row — the file carries no
- * tint, and the builder writes no dye line for it anyway.
+ * do. Facewear is worn whenever the file declares a Glasses row; it names
+ * from the resolved row when there is one, and like any other worn piece
+ * keeps its slot bare when there is not. The file carries no tint, and the
+ * builder writes no dye line for it anyway.
+ *
+ * Only worn slots get an entry — the builder writes nothing for the rest.
  */
 export function glamourMarkdownInput({
   resolved,
@@ -64,22 +70,25 @@ export function glamourMarkdownInput({
     else piece.dye2 = text;
   }
 
-  const glasses = equipment?.glasses ?? null;
-  if (resolved.glassesId !== null && resolved.glassesId > 0 && glasses) {
-    input.Facewear = { name: itemNameFor(glasses.names, lang) };
+  if (resolved.glassesId !== null && resolved.glassesId > 0) {
+    const glasses = equipment?.glasses ?? null;
+    input.Facewear = { name: glasses ? itemNameFor(glasses.names, lang) : null };
   }
   return input;
 }
 
-/** The template text for the loaded file, in the app's current language. */
-export function glamourMarkdown(source: GlamourListSource): string {
-  return buildGlamourMarkdown(glamourMarkdownInput(source));
-}
-
-/** Put the list on the clipboard and say whether it worked. */
+/**
+ * Put the list on the clipboard — bold labels as real formatting for Word and
+ * Google Docs, the same lines as plain text for everything else — and say
+ * whether it worked. Markdown syntax never reaches the clipboard.
+ */
 export async function copyGlamourList(source: GlamourListSource): Promise<void> {
   try {
-    const ok = await copyTextToClipboard(glamourMarkdown(source));
+    const input = glamourMarkdownInput(source);
+    const ok = await copyRichTextToClipboard({
+      html: buildGlamourHtml(input),
+      text: buildGlamourPlainText(input),
+    });
     if (ok) ToastService.success(LanguageService.t('swatch.listCopied'));
     else ToastService.error(LanguageService.t('swatch.listCopyFailed'));
   } catch (error) {
@@ -91,7 +100,8 @@ export async function copyGlamourList(source: GlamourListSource): Promise<void> 
 /** Save the list as `glamour-equipment.md`; a failure says so rather than staying silent. */
 export function exportGlamourList(source: GlamourListSource): void {
   try {
-    downloadTextFile(glamourMarkdown(source), GLAMOUR_MARKDOWN_FILENAME, 'text/markdown');
+    const markdown = buildGlamourMarkdown(glamourMarkdownInput(source));
+    downloadTextFile(markdown, GLAMOUR_MARKDOWN_FILENAME, 'text/markdown');
   } catch (error) {
     logger.error('[GlamourList] Export failed', error);
     ToastService.error(LanguageService.t('swatch.listExportFailed'));

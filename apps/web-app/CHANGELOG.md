@@ -13,19 +13,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Copy list and Export .md in DYES ON THIS GLAMOUR.** Two secondary buttons
   beside Make a palette write the worn glamour as the GPOSERS submission
-  template: a bold `**Glamour Items:**` header, then every one of the fourteen
-  template slots in its order (Main Hand … Feet, Earrings, Necklace, Bracelets,
-  Right Ring, Left Ring, Facewear, Fashion Accessory) as a bold label, `Dye 1:` /
-  `Dye 2:` lines on the seven dyeable slots only, and an `Acquisition:` line
-  left blank for the submitter to fill in. Copy puts the text on the clipboard
-  with a toast; Export saves it as `glamour-equipment.md` (`text/markdown`).
-- The template is written whole regardless of the Pieces/Dyes lens or the
-  Show all switch — those are ways of looking at the list, not of trimming it.
-  Slots the file does not wear are written blank rather than omitted, so the
-  form is complete; a `.chara` never carries a fashion accessory, so that line
-  is always blank. An undyed channel is blank too, an unknown stain writes
-  `#id` as the rows do, and a slot with no resolved item (NPC or prop model,
-  or a failed lookup) is left nameless rather than given the model key.
+  template: a bold `Glamour Items:` header, then each worn slot in the
+  template's order (Main Hand … Feet, Earrings, Necklace, Bracelets, Right
+  Ring, Left Ring, Facewear) as a bold label, a `Dye 1:` / `Dye 2:` line for
+  each channel that is actually dyed (dyeable slots only), and an
+  `Acquisition:` line left blank for the submitter to fill in. Export saves
+  the Markdown as `glamour-equipment.md` (`text/markdown`).
+- **Copy puts real formatting on the clipboard, never Markdown syntax.** The
+  clipboard carries an HTML flavour (`<strong>` labels, one paragraph per slot
+  with `<br>` breaks) so a paste into Word or Google Docs keeps the bold, and
+  a plain-text flavour of the same lines with no asterisks for editors that
+  take only text. Written with `ClipboardItem` where the browser has it,
+  otherwise through the `copy` event of a selected off-screen textarea.
+- The list is written whole regardless of the Pieces/Dyes lens or the Show all
+  switch — those are ways of looking at the list, not of trimming it. Slots
+  the file does not wear are omitted, and so is a dye channel the player left
+  empty: the form lists what is there. A `.chara` never carries a fashion
+  accessory, so that slot never appears. An unknown stain writes `#id` as the
+  rows do, and a worn piece with no resolved item (NPC or prop model, or a
+  failed lookup — facewear included) keeps its slot with the label bare rather
+  than being given the model key.
 - Both buttons are disabled while item names are resolving and go live when
   they land; NAMES UNAVAILABLE still enables them, since slots and dyes come
   from the file and a form with blank names beats no form.
@@ -42,11 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mechanics (Clipboard API, then a selected read-only textarea + `execCommand`)
   and the object-URL download move out of the export sheet into
   `shared/clipboard.ts` and `shared/download-file.ts`, each unit-tested, and
-  the export sheet now calls them. Two quiet fixes ride along: a fallback copy
-  whose `execCommand` returns `false` now reports failure instead of success,
-  and a download whose click throws still removes its anchor and revokes its
-  URL. Both new buttons report a failure with a toast rather than staying
-  silent, and a failed copy's textarea is removed even when selecting it throws.
+  the export sheet now calls them; `shared/clipboard.ts` also gains the
+  rich-text entry point. Two quiet fixes ride along: a fallback copy whose
+  `execCommand` returns `false` now reports failure instead of success, and a
+  download whose click throws still removes its anchor and revokes its URL.
+  Both new buttons report a failure with a toast rather than staying silent,
+  and a failed copy's textarea is removed even when selecting it throws.
 
 ## [5.9.0] - 2026-09-06
 

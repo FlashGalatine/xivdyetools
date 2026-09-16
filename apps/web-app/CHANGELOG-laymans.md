@@ -5,10 +5,11 @@
 ## Web-App Version 5.10.0 — September 16, 2026
 
 ### Copy your glamour list, or save it as a file
-- **Two new buttons in "Dyes on this glamour": Copy list and Export .md.** Both write your whole outfit in the format glamour showcases such as GPOSERS ask for: a bold slot name, the piece, its two dyes where the slot can take them, and an **Acquisition:** line left blank for you to fill in.
-- **Every slot is always listed, in the template's own order** — Main Hand through Feet, then Earrings, Necklace, Bracelets, Right Ring, Left Ring, Facewear and Fashion Accessory. Slots you are not wearing are left blank rather than dropped, so you always have the complete form. Fashion accessories are never stored in a character file, so that line is always yours to fill in.
-- **Blanks mean "fill me in".** An undyed channel is left empty, a dye the app does not know is written by its number, and a piece with no item name (NPC outfits, props, or when the name lookup failed) keeps its slot with the name left empty.
-- **Copy** puts the text on your clipboard and tells you so; **Export .md** saves it as `glamour-equipment.md`. Neither includes your character's name.
+- **Two new buttons in "Dyes on this glamour": Copy list and Export .md.** Both write your outfit in the format glamour showcases such as GPOSERS ask for: a bold slot name, the piece, a **Dye 1** / **Dye 2** line for each dye it is actually wearing, and an **Acquisition:** line left blank for you to fill in.
+- **Copy keeps the bold.** Paste into Word, Google Docs or Discord and the slot names come through as real bold text, not as asterisks. Editors that only take plain text get the same lines without any formatting marks.
+- **Only what you are wearing is listed, in the template's own order** — Main Hand through Feet, then Earrings, Necklace, Bracelets, Right Ring, Left Ring and Facewear. Empty slots and undyed channels are simply left out, so there is nothing to delete before you submit.
+- **A bare label means "fill me in".** A dye the app does not know is written by its number, and a piece with no item name (NPC outfits, props, or when the name lookup failed) keeps its slot with the name left empty.
+- **Export .md** saves the list as `glamour-equipment.md` with Markdown bold. Neither the copy nor the file includes your character's name.
 - **The list is the whole outfit** whichever view you are in — switching to the Dyes view or turning Show all off does not shorten it.
 - **The buttons wait for item names to arrive** and then switch on. If names cannot be fetched, they still work: your slots and dyes come from the file itself.
 
