@@ -297,60 +297,6 @@ describe('OfflineBanner', () => {
   });
 
   // ============================================================================
-  // Status Change Subscription Tests
-  // ============================================================================
-
-  describe('onStatusChange', () => {
-    it('should call callback on online event', () => {
-      banner = OfflineBanner.getInstance();
-      const callback = vi.fn();
-
-      banner.onStatusChange(callback);
-      window.dispatchEvent(new Event('online'));
-
-      expect(callback).toHaveBeenCalledWith(true);
-    });
-
-    it('should call callback on offline event', () => {
-      banner = OfflineBanner.getInstance();
-      const callback = vi.fn();
-
-      banner.onStatusChange(callback);
-      window.dispatchEvent(new Event('offline'));
-
-      expect(callback).toHaveBeenCalledWith(false);
-    });
-
-    it('should return unsubscribe function', () => {
-      banner = OfflineBanner.getInstance();
-      const callback = vi.fn();
-
-      const unsubscribe = banner.onStatusChange(callback);
-      unsubscribe();
-
-      window.dispatchEvent(new Event('online'));
-
-      expect(callback).not.toHaveBeenCalled();
-    });
-  });
-
-  // ============================================================================
-  // Message Update Tests
-  // ============================================================================
-
-  describe('updateMessage', () => {
-    it('should update message text', () => {
-      banner = OfflineBanner.getInstance();
-      banner.initialize();
-
-      banner.updateMessage();
-
-      const message = document.getElementById('offline-banner-message');
-      expect(message).not.toBeNull();
-    });
-  });
-
-  // ============================================================================
   // Cleanup Tests
   // ============================================================================
 

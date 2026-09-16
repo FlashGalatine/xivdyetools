@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.9.1] - 2026-09-16
+
+### Removed (2026-09-15 dead-code audit)
+
+- `IndexedDBService.getWithContext` and its `GetResult` type alias
+  (`apps/web-app/src/services/indexeddb-service.ts`) — only the declaration and
+  its own return type referenced it; `get()` remains the only reachable
+  key-lookup method. 36 lines removed.
+  See docs/audits/2026-09-15-dead-code/findings/DEAD-001.md.
+- `SavedPresetsService.isSaved` (`apps/web-app/src/services/saved-presets-service.ts`)
+  — no production or test caller. 4 lines removed.
+  See docs/audits/2026-09-15-dead-code/findings/DEAD-002.md.
+- `ShareService.getBaseUrl` (`apps/web-app/src/services/share-service.ts`) —
+  unused; current share URL construction uses other paths. 7 lines removed.
+  See docs/audits/2026-09-15-dead-code/findings/DEAD-003.md.
+- `ThemeService.getRequiredColor` (`apps/web-app/src/services/theme-service.ts`)
+  — no executable or test caller; updated the explanatory comments in that file
+  and reworded `docs/projects/web-app/theming.md`'s API table, which had
+  presented it as a live accessor. 15 lines removed.
+  See docs/audits/2026-09-15-dead-code/findings/DEAD-004.md.
+- `BaseComponent.setStyle` (`apps/web-app/src/components/base-component.ts`) —
+  no subclass override, inherited call, or computed invocation found. 7 lines
+  removed. See docs/audits/2026-09-15-dead-code/findings/DEAD-005.md.
+- `EmptyState.setOptions` (`apps/web-app/src/components/empty-state.ts`) —
+  test-only; production always passes options at construction. Removed the
+  method (4 lines) and its dedicated `describe('setOptions')` test block (39
+  lines) in `empty-state.test.ts`.
+  See docs/audits/2026-09-15-dead-code/findings/DEAD-006.md.
+- `OfflineBanner.onStatusChange` and `OfflineBanner.updateMessage`
+  (`apps/web-app/src/components/offline-banner.ts`) — test-only; the banner
+  drives its own DOM from its internal online/offline listeners and no
+  language-change path calls `updateMessage`. Removed both methods (18 lines)
+  and their dedicated `describe` blocks (44 lines) in `offline-banner.test.ts`.
+  See docs/audits/2026-09-15-dead-code/findings/DEAD-007.md.
+
 ## [5.9.0] - 2026-09-06
 
 ### Added

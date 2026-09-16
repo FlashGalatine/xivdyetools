@@ -36,7 +36,6 @@ ThemeService.getTheme(name)                   // → Theme  (the object: getThem
 ThemeService.getAllThemes()                   // → Theme[] (both of them)
 ThemeService.setTheme(themeName)              // Apply and persist — silent, records no telemetry
 ThemeService.toggledVariant()                 // → the opposite variant's ThemeName, or null
-ThemeService.getRequiredColor(key, …)         // Throws rather than returning undefined
 ThemeService.isDarkMode()                     // → boolean
 ThemeService.subscribe(listener)              // → unsubscribe function
 ThemeService.resetToDefault()                 // Back to DEFAULT_THEME

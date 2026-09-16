@@ -249,46 +249,6 @@ describe('EmptyState', () => {
   // Update Method Tests
   // ============================================================================
 
-  describe('setOptions', () => {
-    it('should update title', () => {
-      emptyState = new EmptyState(container, {
-        icon: '🔍',
-        title: 'Initial title',
-      });
-      emptyState.init();
-
-      emptyState.setOptions({ title: 'Updated title' });
-
-      expect(getText(query(container, '.empty-state-title'))).toBe('Updated title');
-    });
-
-    it('should add description', () => {
-      emptyState = new EmptyState(container, {
-        icon: '🔍',
-        title: 'Title',
-      });
-      emptyState.init();
-
-      expect(query(container, '.empty-state-description')).toBeNull();
-
-      emptyState.setOptions({ description: 'New description' });
-
-      expect(getText(query(container, '.empty-state-description'))).toBe('New description');
-    });
-
-    it('should update icon', () => {
-      emptyState = new EmptyState(container, {
-        icon: '<svg data-glyph="a"></svg>',
-        title: 'Title',
-      });
-      emptyState.init();
-
-      emptyState.setOptions({ icon: '<svg data-glyph="b"></svg>' });
-
-      expect(query(container, '.empty-state-icon svg')?.getAttribute('data-glyph')).toBe('b');
-    });
-  });
-
   // ============================================================================
   // Preset Tests
   // ============================================================================
@@ -374,7 +334,7 @@ describe('EmptyState', () => {
       });
 
       // Should be able to call methods
-      expect(() => emptyState!.setOptions({ title: 'New' })).not.toThrow();
+      expect(() => emptyState!.update()).not.toThrow();
     });
   });
 
