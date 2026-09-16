@@ -39,7 +39,11 @@ import type {
   DyeFiltersConfig,
   MatchingMethod,
 } from '@shared/tool-config-types';
-import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import {
+  DEFAULT_DISPLAY_OPTIONS,
+  DEFAULT_DYE_FILTERS,
+  getDefaultConfig,
+} from '@shared/tool-config-types';
 // NB: `@components/preset-submission-form` is deliberately NOT imported here —
 // see handleSubmitPreset().
 import type { DataCenter, World } from '@shared/types';
@@ -144,16 +148,7 @@ export class ConfigSidebar extends BaseLitComponent {
   // Tool Configuration State
   // =========================================================================
 
-  @state() private harmonyConfig: HarmonyConfig = {
-    harmonyType: 'tetradic',
-    wheel: 'rgb',
-    strictMatching: false,
-    matchingMethod: 'ciede2000',
-    preventDuplicates: true,
-    companionDyesCount: COMPANION_DYES_DEFAULT,
-    displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
-    dyeFilters: { ...DEFAULT_DYE_FILTERS },
-  };
+  @state() private harmonyConfig: HarmonyConfig = getDefaultConfig('harmony');
   @state() private extractorConfig: ExtractorConfig = {
     vibrancyBoost: true,
     maxColors: 8,
