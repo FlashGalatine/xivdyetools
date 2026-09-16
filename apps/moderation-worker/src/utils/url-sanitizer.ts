@@ -62,19 +62,6 @@ const SENSITIVE_URL_PATTERNS: SensitivePattern[] = [
 ];
 
 /**
- * Header names that contain sensitive values
- * (case-insensitive matching)
- */
-const SENSITIVE_HEADERS: string[] = [
-  'authorization',
-  'x-api-key',
-  'x-auth-token',
-  'x-request-signature',
-  'cookie',
-  'set-cookie',
-];
-
-/**
  * Sanitize a URL by masking sensitive tokens
  *
  * Applies regex patterns to mask tokens and API keys in URLs.
@@ -104,58 +91,6 @@ export function sanitizeUrl(url: string | URL): string {
   // Apply all patterns
   for (const { pattern, replacement } of SENSITIVE_URL_PATTERNS) {
     sanitized = sanitized.replace(pattern, replacement);
-  }
-
-  return sanitized;
-}
-
-/**
- * Sanitize HTTP headers by masking sensitive values
- *
- * Replaces sensitive header values with a truncated version + "[REDACTED]".
- * Non-sensitive headers are returned unchanged.
- *
- * @param headers - Headers object or Headers instance
- * @returns Sanitized headers object safe for logging
- *
- * @example
- * ```typescript
- * const headers = {
- *   'Authorization': 'Bot ABC123...',
- *   'Content-Type': 'application/json'
- * };
- *
- * const sanitized = sanitizeHeaders(headers);
- * // {
- * //   'Authorization': 'Bot ABC1...[REDACTED]',
- * //   'Content-Type': 'application/json'
- * // }
- * ```
- */
-export function sanitizeHeaders(
-  headers: Record<string, string> | Headers
-): Record<string, string> {
-  const sanitized: Record<string, string> = {};
-
-  // Convert Headers instance to entries array
-  const entries =
-    headers instanceof Headers ? Array.from(headers.entries()) : Object.entries(headers);
-
-  for (const [key, value] of entries) {
-    const lowerKey = key.toLowerCase();
-
-    if (SENSITIVE_HEADERS.includes(lowerKey)) {
-      // Keep first 8 chars for debugging, mask the rest
-      if (value.length > 8) {
-        sanitized[key] = value.substring(0, 8) + '...[REDACTED]';
-      } else {
-        // Very short value (shouldn't happen for real tokens)
-        sanitized[key] = '[REDACTED]';
-      }
-    } else {
-      // Non-sensitive header - keep as-is
-      sanitized[key] = value;
-    }
   }
 
   return sanitized;

@@ -303,7 +303,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v1.7.2 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-009/010/012) — unbatched `hideUserPresets`/`restoreUserPresets` wrappers, the unused fetch-logging wrappers and `Translator.getMeta` removed; ban/unban still batch the statement builders with their audit rows |
+| v1.7.2 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-009/010/011/012) — unbatched `hideUserPresets`/`restoreUserPresets` wrappers, the unused fetch-logging wrappers, their now-orphaned `sanitizeHeaders` helper and `Translator.getMeta` removed; ban/unban still batch the statement builders with their audit rows |
 | v1.7.1 | Sep 2026 (prepared) | Bundle auth 2.0.2 to bound interaction streams while reading |
 | v1.7.0 | Sep 2026 | English-only by design, and now says so once — the six-locale `Record` that always resolved to English collapsed to one table (I18N-009) |
 | **v1.6.2** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 7) — `/preset moderate action:stats` shows real numbers instead of "undefined" ×4 (BUG-010, needs types 3.0.0); moderation strings honour the language set through the main bot's `/preferences` (BUG-001); a stalled follow-up no longer leaves "thinking…" forever (BUG-040)** |

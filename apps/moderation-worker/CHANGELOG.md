@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hideUserPresets` / `restoreUserPresets` — `ban-service.ts`, unbatched exported wrappers with only test callers (`banUser`/`unbanUser` batch the underlying `hideUserPresetsStatement`/`restoreUserPresetsStatement` builders directly instead); 8 source lines + 77 test lines removed. See docs/audits/2026-09-15-dead-code/findings/DEAD-009.md.
 - `sanitizeFetchRequest` / `sanitizeFetchResponse` — `url-sanitizer.ts`, unused fetch-logging wrappers with no production callers; 29 source lines + 124 test lines removed. See docs/audits/2026-09-15-dead-code/findings/DEAD-010.md.
 - `Translator.getMeta` — `bot-i18n.ts`, locale-metadata accessor with no moderation handler ever surfacing it; 3 source lines + 25 test lines removed. See docs/audits/2026-09-15-dead-code/findings/DEAD-012.md.
+- `sanitizeHeaders` / `SENSITIVE_HEADERS` — `url-sanitizer.ts`, header-redaction helper and its sensitive-header list, orphaned once `sanitizeFetchRequest`/`sanitizeFetchResponse` (DEAD-010) were removed and no other caller ever used them; JSDoc + declarations and their dedicated test block removed. See docs/audits/2026-09-15-dead-code/findings/DEAD-011.md.
 
 ## [1.7.1] - 2026-09-15
 
