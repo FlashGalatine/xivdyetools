@@ -27,11 +27,11 @@ import {
   presetSubmissionService,
   ToastService,
   ModalService,
+  RouterService,
 } from '@services/index';
 import { communityPresetService } from '@services/community-preset-service';
 import { SavedPresetsService, type SavedPreset } from '@services/saved-presets-service';
 import { CollectionService, type Collection } from '@services/collection-service';
-import { RouterService } from '@services/router-service';
 import { logger } from '@shared/logger';
 import { presetCategoryLabel } from '@shared/preset-i18n';
 import { sanitizeExampleLink, sanitizePreviewImageUrl } from '@shared/example-link';
@@ -447,6 +447,9 @@ export class PresetTool extends BaseLitComponent {
     this.collectionsUnsubscribe = null;
     this.languageUnsubscribe?.();
     this.languageUnsubscribe = null;
+    // BUG-027: an in-flight search debounce must not fire loadPresets() into
+    // a detached element.
+    clearTimeout(this._searchDebounce);
   }
 
   /**

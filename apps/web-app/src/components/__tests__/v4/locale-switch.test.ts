@@ -78,7 +78,11 @@ vi.mock('@services/index', async (importOriginal) => ({
     setItem: vi.fn(),
     removeItem: vi.fn(),
   },
-  RouterService: { navigateTo: vi.fn() },
+  // BUG-040: preset-tool.ts now imports RouterService through this barrel
+  // (it used to bypass it via a direct @services/router-service import, which
+  // is why this stub only had `navigateTo` before) — `getSubPath` backs its
+  // deep-link check in connectedCallback, and an incomplete stub throws.
+  RouterService: { navigateTo: vi.fn(), getSubPath: vi.fn(() => null) },
   ThemeService: { isDarkMode: vi.fn(() => false) },
 }));
 

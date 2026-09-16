@@ -1,7 +1,7 @@
 /**
  * XIV Dye Tools - PresetTool Unit Tests
  *
- * Focused regression suite for a deep-dive audit finding
+ * Focused regression suite for two deep-dive audit findings
  * (docs/audits/2026-09-16-deep-dive):
  *
  * - BUG-005: Back from a preset detail pushed `{ preset: id }` with no
@@ -12,9 +12,12 @@
  *   in-component state change: `handlePresetSelect` now pushes
  *   `{ toolId: 'presets', preset: id }`, and this element listens for
  *   `popstate` itself to restore/clear `selectedPreset`.
+ * - BUG-027: `disconnectedCallback` cleared five service unsubscribes but not
+ *   the search debounce timer, so a fetch could fire into a detached
+ *   element.
  *
  * This file does not attempt full coverage of preset-tool.ts (tracked
- * separately) — only this behavior.
+ * separately) — only these two behaviors.
  *
  * @module components/v4/__tests__/preset-tool.test
  */
@@ -317,6 +320,35 @@ describe('PresetTool', () => {
 
       // Not this tool's popstate — selectedPreset must be untouched.
       expect(el.selectedPreset).toEqual(preset);
+    });
+  });
+
+  // --------------------------------------------------------------------
+  // BUG-027
+  // --------------------------------------------------------------------
+
+  describe('BUG-027: disconnectedCallback clears the pending search debounce', () => {
+    it('does not fire a load into a detached element', async () => {
+      vi.useFakeTimers();
+      try {
+        const el = await mountTool();
+        // Flush the async connectedCallback chain under fake timers.
+        await vi.advanceTimersByTimeAsync(0);
+        await el.updateComplete;
+
+        const callsBeforeSearch = hybridPresetServiceMock.getPresets.mock.calls.length;
+
+        el.handleSearchInput({ target: { value: 'blue' } } as unknown as Event);
+
+        // Disconnect before the 300ms debounce fires.
+        container.removeChild(el);
+
+        await vi.advanceTimersByTimeAsync(1000);
+
+        expect(hybridPresetServiceMock.getPresets.mock.calls.length).toBe(callsBeforeSearch);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

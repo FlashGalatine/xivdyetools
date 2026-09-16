@@ -11,8 +11,8 @@
  * @module components/v4-layout
  */
 
-import { RouterService, type ToolId } from '@services/router-service';
-import { LanguageService, StorageService, ModalService } from '@services/index';
+import type { ToolId } from '@services/router-service';
+import { LanguageService, StorageService, ModalService, RouterService } from '@services/index';
 import { TutorialService, type TutorialTool } from '@services/tutorial-service';
 import { TelemetryService, type ToolEntry } from '@services/telemetry-service';
 import { ShareService } from '@services/share-service';

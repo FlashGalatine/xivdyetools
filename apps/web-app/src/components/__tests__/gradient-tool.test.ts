@@ -1004,4 +1004,25 @@ describe('GradientTool', () => {
       expect(await endpoints()).toEqual([1]);
     });
   });
+
+  // ==========================================================================
+  // BUG-040: RouterService must be imported through the @services/index
+  // barrel this suite mocks (line 44), or the mock above is inert and this
+  // assertion would pass vacuously against the REAL RouterService.
+  // ==========================================================================
+
+  describe('context actions — hand off to another tool', () => {
+    it('inspect-budget navigates via the barrel-mocked RouterService', async () => {
+      tool = mount();
+      const { RouterService } = await import('@services/index');
+
+      (
+        tool as unknown as {
+          handleContextAction: (action: string, dye: unknown) => void;
+        }
+      ).handleContextAction('inspect-budget', dye(1));
+
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('budget');
+    });
+  });
 });

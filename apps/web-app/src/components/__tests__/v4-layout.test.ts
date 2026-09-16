@@ -47,18 +47,6 @@ const { mockTelemetry, mockIsShareUrl, mockGetSubPath } = vi.hoisted(() => ({
 vi.mock('@services/telemetry-service', () => ({ TelemetryService: mockTelemetry }));
 vi.mock('@services/share-service', () => ({ ShareService: { isShareUrl: mockIsShareUrl } }));
 
-vi.mock('@services/router-service', () => ({
-  RouterService: {
-    initialize: mockInitialize,
-    getCurrentToolId: mockGetCurrentToolId,
-    subscribe: mockSubscribe,
-    navigateTo: mockNavigateTo,
-    getRouteForTool: mockGetRouteForTool,
-    refreshDocumentTitle: mockRefreshDocumentTitle,
-    getSubPath: mockGetSubPath,
-  },
-}));
-
 vi.mock('@services/config-controller', () => ({
   ConfigController: {
     getInstance: vi.fn().mockReturnValue({
@@ -81,6 +69,17 @@ vi.mock('@services/index', () => ({
         key
       ),
     subscribe: mockLanguageSubscribe,
+  },
+  // BUG-040: v4-layout.ts imports RouterService through this barrel (not
+  // @services/router-service directly), so the mock has to live here too.
+  RouterService: {
+    initialize: mockInitialize,
+    getCurrentToolId: mockGetCurrentToolId,
+    subscribe: mockSubscribe,
+    navigateTo: mockNavigateTo,
+    getRouteForTool: mockGetRouteForTool,
+    refreshDocumentTitle: mockRefreshDocumentTitle,
+    getSubPath: mockGetSubPath,
   },
 }));
 

@@ -20,7 +20,6 @@ import '@components/v4/result-card';
 import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
-import { RouterService } from '@services/router-service';
 import { handoffTo } from '@shared/tool-handoff';
 import { ShareService } from '@services/share-service';
 import {
@@ -29,6 +28,7 @@ import {
   dyeService,
   LanguageService,
   MarketBoardService,
+  RouterService,
   StorageService,
   ThemeService,
   ToastService,
