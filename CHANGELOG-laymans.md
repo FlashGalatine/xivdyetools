@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.7.1] - 2026-09-16
+### 🔙 Back behaves in Presets, and prices show on a preset
+- Web app: pressing Back from a preset returns you to the list you were on — same tab, same search, same scroll — instead of rebuilding the Presets tool, and it now works after a page refresh or after the preset's own Back button too.
+- Web app: with "Show prices" on, a preset's dyes show the current market price (lowest listing and where) rather than only the vendor cost; the prices were being fetched but never displayed.
+- Web app: "Submit to Community" from Make a palette shows an error if the form fails to load instead of doing nothing; right-clicking the Palette Extractor's zoom view no longer picks a colour; importing collections skips a broken record instead of stopping; editing a preset can no longer silently shorten its dye list; add-to-collection menus stay on screen near the window edge.
+
 ## [5.7.0] - 2026-09-16
 ### 📋 Copy your glamour list, or save it as a file
 - Web app: two new buttons in "Dyes on this glamour" — **Copy list** and **Export .md** — write your outfit in the format glamour showcases such as GPOSERS ask for: a bold slot name, the piece, a "Dye 1" / "Dye 2" line for each dye it is actually wearing, and an "Acquisition:" line left blank for you to fill in.
