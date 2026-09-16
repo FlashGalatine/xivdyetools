@@ -210,6 +210,7 @@ describe('PresetTool', () => {
     hybridPresetServiceMock.isAPIAvailable.mockReturnValue(true);
     hybridPresetServiceMock.getPreset.mockResolvedValue(null);
     routerServiceMock.getSubPath.mockReturnValue(null);
+    routerServiceMock.getCurrentToolId.mockReturnValue('presets');
   });
 
   afterEach(() => {
@@ -304,7 +305,7 @@ describe('PresetTool', () => {
       expect(el.selectedPreset).toEqual(preset);
     });
 
-    it('ignores a popstate belonging to a different tool', async () => {
+    it('ignores a popstate that has already moved RouterService to a different tool', async () => {
       const preset = makePreset();
       hybridPresetServiceMock.getPresets.mockResolvedValue([preset]);
 
@@ -315,11 +316,110 @@ describe('PresetTool', () => {
       await el.updateComplete;
       expect(el.selectedPreset).toEqual(preset);
 
+      // router-service.ts's own (earlier-registered) popstate listener has
+      // already resolved this event to a different tool by the time this
+      // element's listener runs — that's what "not our popstate" means now
+      // that we read RouterService.getCurrentToolId() instead of
+      // event.state.toolId (see review round 1: the state shape is not a
+      // reliable signal).
+      routerServiceMock.getCurrentToolId.mockReturnValue('harmony');
       window.dispatchEvent(new PopStateEvent('popstate', { state: { toolId: 'harmony' } }));
       await el.updateComplete;
 
-      // Not this tool's popstate — selectedPreset must be untouched.
       expect(el.selectedPreset).toEqual(preset);
+    });
+
+    // ----------------------------------------------------------------
+    // Review round 1 — CRITICAL: history.state is not reliably
+    // { toolId: 'presets', preset? }. A cold load/refresh of `/presets`
+    // leaves `state: null` (handleInitialRoute never replaceState()s a
+    // valid path); handleBack, the edit/delete success paths, and other
+    // in-app pushes leave `state: {}`. Resolution must come from the URL
+    // (RouterService.getCurrentToolId()/getSubPath()), not the state shape.
+    // ----------------------------------------------------------------
+
+    it.each([
+      ['null', null],
+      ['{}', {}],
+    ] as const)(
+      'review round 1: a %s-state popstate closes the detail when the URL is the bare list',
+      async (_label, state) => {
+        const preset = makePreset();
+        hybridPresetServiceMock.getPresets.mockResolvedValue([preset]);
+
+        const el = await mountTool();
+        await flush(el);
+
+        el.handlePresetSelect(new CustomEvent('preset-select', { detail: { preset } }));
+        await el.updateComplete;
+        expect(el.selectedPreset).toEqual(preset);
+
+        // RouterService has already resolved this popstate to 'presets' from
+        // the URL (its own listener runs first); the URL carries no sub-path.
+        routerServiceMock.getCurrentToolId.mockReturnValue('presets');
+        routerServiceMock.getSubPath.mockReturnValue(null);
+        window.dispatchEvent(new PopStateEvent('popstate', { state }));
+        await el.updateComplete;
+
+        expect(el.selectedPreset).toBeNull();
+      }
+    );
+
+    it.each([
+      ['null', null],
+      ['{}', {}],
+    ] as const)(
+      'review round 1: a %s-state popstate opens the detail when the URL carries the preset id',
+      async (_label, state) => {
+        const preset = makePreset({ id: 'community-from-url', name: 'From URL' });
+        hybridPresetServiceMock.getPresets.mockResolvedValue([preset]);
+
+        const el = await mountTool();
+        await flush(el);
+        expect(el.selectedPreset).toBeNull();
+
+        routerServiceMock.getCurrentToolId.mockReturnValue('presets');
+        routerServiceMock.getSubPath.mockReturnValue(preset.id);
+        window.dispatchEvent(new PopStateEvent('popstate', { state }));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        await el.updateComplete;
+
+        expect(el.selectedPreset).toEqual(preset);
+      }
+    );
+
+    it('review round 1: drops a stale API-fallback restore superseded by a newer popstate', async () => {
+      let resolveStale!: (value: UnifiedPreset | null) => void;
+      hybridPresetServiceMock.getPreset.mockImplementationOnce(
+        () =>
+          new Promise<UnifiedPreset | null>((resolve) => {
+            resolveStale = resolve;
+          })
+      );
+
+      const el = await mountTool();
+      await flush(el);
+
+      // First popstate resolves to an id outside the loaded pool/saved list,
+      // forcing the async hybridPresetService.getPreset fallback — held open.
+      window.dispatchEvent(
+        new PopStateEvent('popstate', { state: { toolId: 'presets', preset: 'community-stale' } })
+      );
+      await Promise.resolve();
+
+      // A newer popstate (Back again to the list) lands before that lookup
+      // resolves.
+      window.dispatchEvent(new PopStateEvent('popstate', { state: { toolId: 'presets' } }));
+      await el.updateComplete;
+      expect(el.selectedPreset).toBeNull();
+
+      // The stale lookup finally resolves — it must not clobber the newer,
+      // already-settled state.
+      resolveStale(makePreset({ id: 'community-stale', name: 'Stale' }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await el.updateComplete;
+
+      expect(el.selectedPreset).toBeNull();
     });
   });
 

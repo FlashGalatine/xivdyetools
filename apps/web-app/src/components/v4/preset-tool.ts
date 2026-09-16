@@ -144,6 +144,8 @@ export class PresetTool extends BaseLitComponent {
   private collectionsUnsubscribe: (() => void) | null = null;
   private languageUnsubscribe: (() => void) | null = null;
   private _searchDebounce: number = 0;
+  /** BUG-005 review: guards `restoreSelectedPresetFromHistory`'s API-fallback await against a stale result — see `handleWindowPopState`. */
+  private _restoreSeq: number = 0;
 
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
@@ -453,28 +455,64 @@ export class PresetTool extends BaseLitComponent {
   }
 
   /**
-   * BUG-005: read the history state a Back/Forward just made current.
-   * `handlePresetSelect` pushes `{ toolId: 'presets', preset: id }`; popping
-   * back to the list pushes/lands on `{ toolId: 'presets' }` (no `preset`).
-   * Guarded on `toolId` so a popstate that belongs to a different tool (this
-   * element about to be torn down by v4-layout) is a no-op here too.
+   * BUG-005 review round 1: `history.state` on the entry a Back/Forward just
+   * made current is NOT reliably `{ toolId: 'presets', preset?: id }`.
+   * `handlePresetSelect` pushes that shape, but the ORIGINAL `/presets` entry
+   * (a cold load or refresh) is never `replaceState`'d by
+   * `router-service.ts`'s `handleInitialRoute` for a valid path, so its state
+   * is `null`; `handleBack`/the edit- and delete-success paths push `{}`; the
+   * OAuth return round-trip (`auth-service.ts`) may leave other shapes too.
+   * Trusting `event.state.toolId` to decide "is this ours" therefore missed
+   * exactly the plain Back-to-list case the fix was for.
+   *
+   * Source of truth is the URL instead, via the same two `RouterService`
+   * reads `handleDeepLink` uses: `getCurrentToolId()` to decide whether this
+   * popstate is even about the presets tool (by the time this listener runs,
+   * `RouterService`'s own — earlier-registered — popstate handler has already
+   * resolved it, whether from `state.toolId` or its own URL fallback), and
+   * `getSubPath()` for the id when `state.preset` isn't present. `state`
+   * still wins when it IS present (the pushState/popstate round trip is
+   * cheaper than reparsing the URL and unambiguous when available).
    */
   private handleWindowPopState = (event: PopStateEvent): void => {
-    const state = event.state as { toolId?: string; preset?: string } | null;
-    if (!state || state.toolId !== 'presets') return;
+    if (RouterService.getCurrentToolId() !== 'presets') return;
 
-    if (state.preset) {
-      void this.restoreSelectedPresetFromHistory(state.preset);
+    const state = event.state as { preset?: string } | null;
+    const presetId = state?.preset || RouterService.getSubPath();
+    const seq = ++this._restoreSeq;
+
+    if (presetId) {
+      void this.restoreSelectedPresetFromHistory(presetId, seq);
     } else {
       this.selectedPreset = null;
     }
   };
 
-  /** Resolve a preset id from history state back to a `UnifiedPreset`, using the same sources `handleDeepLink` does. */
-  private async restoreSelectedPresetFromHistory(presetId: string): Promise<void> {
+  /**
+   * Resolve a preset id from history state back to a `UnifiedPreset`, using
+   * the same sources `handleDeepLink` does (local palette store → loaded
+   * pool → saved snapshots → the API as a last resort).
+   *
+   * `seq` is `handleWindowPopState`'s value of `_restoreSeq` at the moment
+   * THIS call was made. Only the API-fallback branch awaits anything, so it
+   * is the only branch a newer popstate can race: if `_restoreSeq` has moved
+   * on by the time the await resolves, a later navigation has already run
+   * (Back-Forward-Back over a preset outside the loaded pool, for example)
+   * and this result is stale — drop it rather than clobber whatever that
+   * newer navigation set.
+   *
+   * Not-found behavior matches `handleDeepLink`: warn and leave the current
+   * view alone, rather than closing an open detail under a `/presets/:id`
+   * URL just because this particular lookup came up empty.
+   */
+  private async restoreSelectedPresetFromHistory(presetId: string, seq: number): Promise<void> {
     if (presetId.startsWith('local-')) {
       const local = this.localPalettes.find((c) => `local-${c.id}` === presetId);
-      this.selectedPreset = local ? this.localPaletteToUnified(local) : null;
+      if (local) {
+        this.selectedPreset = this.localPaletteToUnified(local);
+      } else {
+        logger.warn('[v4-preset-tool] Local palette not found for history restore:', presetId);
+      }
       return;
     }
 
@@ -491,10 +529,16 @@ export class PresetTool extends BaseLitComponent {
     }
 
     try {
-      this.selectedPreset = (await hybridPresetService.getPreset(presetId)) ?? null;
+      const preset = await hybridPresetService.getPreset(presetId);
+      if (seq !== this._restoreSeq) return; // superseded by a newer popstate
+      if (preset) {
+        this.selectedPreset = preset;
+      } else {
+        logger.warn('[v4-preset-tool] Preset not found for history restore:', presetId);
+      }
     } catch (error) {
+      if (seq !== this._restoreSeq) return; // superseded by a newer popstate
       logger.error('[v4-preset-tool] Failed to restore preset from history:', error);
-      this.selectedPreset = null;
     }
   }
 
@@ -873,7 +917,11 @@ export class PresetTool extends BaseLitComponent {
 
   private handleBack(): void {
     this.selectedPreset = null;
-    window.history.pushState({}, '', '/presets');
+    // BUG-005 review: carry toolId for consistency with handlePresetSelect —
+    // resolution no longer strictly depends on it (handleWindowPopState reads
+    // the URL now), but router-service.ts's own same-tool check still prefers
+    // state.toolId over its URL-parse fallback when it's present.
+    window.history.pushState({ toolId: 'presets' }, '', '/presets');
   }
 
   private handleVoteUpdate(e: CustomEvent<{ preset: UnifiedPreset }>): void {
@@ -900,7 +948,7 @@ export class PresetTool extends BaseLitComponent {
       if (result.success) {
         void this.loadPresets();
         this.selectedPreset = null;
-        window.history.pushState({}, '', '/presets');
+        window.history.pushState({ toolId: 'presets' }, '', '/presets');
       }
     });
   }
@@ -934,7 +982,7 @@ export class PresetTool extends BaseLitComponent {
           void this.loadPresets();
           void this.loadUserSubmissions();
           this.selectedPreset = null;
-          window.history.pushState({}, '', '/presets');
+          window.history.pushState({ toolId: 'presets' }, '', '/presets');
         } catch (error) {
           logger.error('[v4-preset-tool] Failed to delete preset:', error);
           ToastService.error(LanguageService.t('errors.deletePresetFailed'));

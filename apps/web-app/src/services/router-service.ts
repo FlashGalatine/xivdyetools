@@ -378,6 +378,11 @@ export class RouterService {
     }
 
     if (!toolChanged) {
+      // Note: this also skips the notify for a same-tool popstate that only
+      // changes query params (e.g. Back across a `?dye=` navigation) — a
+      // subscriber relying on popstate to observe a query-only change
+      // wouldn't see it fire. No current subscriber does (v4-layout only
+      // reads `state.toolId`), but flag it if one ever needs to.
       logger.info(`[RouterService] Popstate: same tool (${this.currentToolId}), skipping notify`);
       return;
     }
