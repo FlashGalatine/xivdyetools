@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.10.1] - 2026-09-16
+
+Deep-dive remediation, Sprints 1–2 (docs/audits/2026-09-16-deep-dive). No new features; every
+row is a defect the audit verified at `file:line`, each landed with a test that was red first.
+
+### Fixed
+
+- **Back from `/presets/:id` keeps `<v4-preset-tool>` mounted** (BUG-005). `handlePresetSelect`
+  pushed `{ preset }` with no `toolId`, `RouterService.handlePopState` notified unconditionally and
+  `loadToolContent` re-created the element, dropping tab, search, scroll and the loaded pool. The
+  router now skips the notify for a same-tool popstate (the `navigationSeq`/`superseded()` guards
+  are untouched) and the tool restores or clears `selectedPreset` from the URL — `getSubPath()`,
+  not `history.state`, so `null` (cold load) and `{}` (the detail's own Back, edit/delete success,
+  OAuth return) states resolve too — with a `_restoreSeq` guard against a stale API fallback.
+- **Preset detail renders the prices it fetches** (BUG-004). `priceData` was written on every
+  preset and on `prices-updated` but never read; with Show prices on the row now shows
+  `formatGil(minPrice)` + world/DC, keyed by `dye.itemID` (the fan-out key
+  `fetchPricesForDyes` re-keys onto), vendor cost otherwise.
+- **"Submit to Community" chunk-load failure is no longer silent** (BUG-003). The one bare
+  `void import().then()` gained the `.catch` + `errors.toolLoadFailed` toast its siblings had.
+- **`isAuthenticated()` memoises the in-flight `logout()`** (BUG-025) — N synchronous callers on an
+  expired token issued N revoke requests and notify storms.
+- **`CollectionService.importData` skips a bad record instead of aborting** (BUG-024) — a truthy
+  non-string `name` passed the guard and `name.trim()` threw mid-loop after earlier collections were
+  persisted; now `typeof` guarded and per-record `try/catch` with a `skippedInvalid` error.
+- **`add-to-collection-menu` measures itself before clamping** (BUG-029) — the off-screen check
+  assumed 200 px against a CSS max of 256 px.
+- **Preset edit form diffs dyes against the resolved baseline** (BUG-030) — an unresolvable stored
+  id no longer produces a shortened `dyes` patch on a no-edit Save.
+- **`BaseComponent.handleRetry()`/`renderError()` unbind listeners before re-rendering** (BUG-028).
+- **Extractor zoom canvas ignores non-primary mouse buttons** (BUG-022); **market-board's
+  status-clear timer goes through `safeTimeout`** (BUG-023).
+- **`checkVoteStatus()` carries a generation guard** (BUG-026) so an in-flight check cannot clobber
+  an optimistic vote.
+
+### Changed
+
+- **Dead context-action branches deleted** (REFACTOR-001). `result-card.ts`'s `ContextAction` is
+  now derived from a runtime `CONTEXT_ACTIONS` list; the `add-comparison`/`see-harmonies` family in
+  `swatch-tool.ts` and `mixer-tool.ts` — which dispatched a `navigate-to-tool` event nobody listened
+  for and could never be reached — is gone with its four orphaned i18n keys, and a static
+  vocabulary test guards against a reintroduced label.
+- **`RouterService` is imported from the `@services/index` barrel** in `gradient-tool`,
+  `v4/preset-tool` and `v4-layout` (BUG-040), enforced by a `no-restricted-imports` rule for
+  `src/components/**`; `welcome-modal.ts` is exempted because the barrel import grows the modals
+  chunk from 274.7 KB to 367.8 KB against a 280 KB budget.
+- `gradient-tool.ts` logs under `[GradientTool]`, not the pre-rename `[MixerTool]` (REFACTOR-006);
+  `config-sidebar`'s harmony initializer comes from `getDefaultConfig` (REFACTOR-007).
+
+### Tests
+
+- New suites for `v4/preset-detail` (prices, vote guard), `v4/preset-tool` (popstate state
+  machine), `collection-manager-modal` and `add-to-collection-menu` (their `istanbul ignore file`
+  pragmas and `vitest.config.ts` exclusions removed — BUG-041); `selectDye` and the two
+  "merges displayOptions" tests now assert state instead of `not.toThrow()` (BUG-038, BUG-039).
+  Coverage 79.9 / 65.9 / 76.5 / 81.3 against the 78 / 63 / 74 / 79 ratchet.
+
 ## [5.10.0] - 2026-09-16
 
 ### Added

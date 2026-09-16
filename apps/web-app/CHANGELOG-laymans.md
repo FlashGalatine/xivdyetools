@@ -2,6 +2,22 @@
 
 ---
 
+## Web-App Version 5.10.1 — September 16, 2026
+
+### Back works the way you expect in Presets
+- **Pressing Back from a preset returns you to the list you were on** — same tab, same search, same scroll position, no reload. Before, Back rebuilt the whole Presets tool from scratch, and after a page refresh or after using the preset's own Back button it sometimes did nothing at all.
+
+### Show prices now works on the preset page
+- **With "Show prices" on, a preset's dyes show the current market price** (lowest listing, with the world or data centre) instead of only the vendor cost. The app had been fetching the prices and then not displaying them.
+
+### Smaller fixes
+- **Make a palette → Submit to Community tells you when it cannot open.** If the form fails to load (for example a tab left open across an update), you now get an error message instead of a click that does nothing.
+- **Right-clicking the Palette Extractor's zoom view no longer picks a colour.** Only the main button samples; the right button just opens the browser menu.
+- **Importing collections skips a broken entry instead of stopping.** A malformed record in an imported file is reported and the rest of the file still loads.
+- **Editing a preset can no longer silently shorten its dye list.** If a stored dye cannot be looked up, the form keeps the original list and tells you rather than saving a shorter one.
+- **Add-to-collection menus stay on screen** near the right edge of the window.
+- **Behind the scenes:** Swatch and Mixer dropped some leftover code that could never run, the signed-in check no longer fires several sign-out requests at once when a session expires, and a handful of tests that could not fail now can.
+
 ## Web-App Version 5.10.0 — September 16, 2026
 
 ### Copy your glamour list, or save it as a file
