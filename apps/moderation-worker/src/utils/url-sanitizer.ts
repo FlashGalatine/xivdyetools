@@ -7,10 +7,14 @@
  * - Monitoring systems
  * - Debug output
  *
- * Masks sensitive data including:
+ * Masks sensitive data carried in a URL or an error's text:
  * - Discord interaction tokens in webhook URLs
- * - Bot tokens in Authorization headers
- * - API keys in URLs and query parameters
+ * - Bot tokens and API keys in URLs and query parameters
+ *
+ * Nothing here reads HTTP headers. The header and fetch-logging helpers
+ * (`sanitizeHeaders`, `sanitizeFetchRequest`, `sanitizeFetchResponse`) were
+ * removed in 1.7.2 (DEAD-010/011) — no production path ever called them, and
+ * `discord-api.ts` redacts through `sanitizeUrl` and `sanitizeErrorMessage`.
  *
  * @example
  * ```typescript
