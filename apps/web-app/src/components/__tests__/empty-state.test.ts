@@ -333,8 +333,9 @@ describe('EmptyState', () => {
         title: 'Empty',
       });
 
-      // Should be able to call methods
-      expect(() => emptyState!.update()).not.toThrow();
+      // A re-render must leave the initialised component's title in the DOM
+      emptyState!.update();
+      expect(query(container, '.empty-state-title')?.textContent).toBe('Empty');
     });
   });
 

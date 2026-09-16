@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed (2026-09-15 dead-code audit)
 
+Line counts below are the audit's declaration-and-body figures; each method's JSDoc went with it, so the diff is a few lines larger per item.
+
 - `IndexedDBService.getWithContext` and its `GetResult` type alias
   (`apps/web-app/src/services/indexeddb-service.ts`) — only the declaration and
   its own return type referenced it; `get()` remains the only reachable
