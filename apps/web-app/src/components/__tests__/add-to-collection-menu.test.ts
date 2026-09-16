@@ -123,7 +123,10 @@ describe('add-to-collection-menu', () => {
       showAddToCollectionMenu({ dye, anchorElement: anchor, onAdded });
 
       const item = collectionItemButtons().find((b) => b.textContent?.includes('Bucket'));
-      expect(item).toBeDefined();
+      // A concrete value check, not a bare existence check: the row must be
+      // enabled (not the already-in-collection/full state) for the click
+      // below to mean anything.
+      expect(item?.disabled).toBe(false);
       item!.click();
 
       expect(CollectionService.getCollection(collection.id)?.dyes).toContain(7);

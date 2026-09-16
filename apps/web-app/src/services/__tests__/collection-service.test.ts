@@ -434,8 +434,11 @@ describe('CollectionService', () => {
       expect(result.collectionsImported).toBe(2);
       expect(result.success).toBe(true);
       expect(result.errors.filter((e) => e.code === 'skippedInvalid').length).toBe(1);
-      expect(CollectionService.getCollectionByName('Valid One')).not.toBeUndefined();
-      expect(CollectionService.getCollectionByName('Valid Two')).not.toBeUndefined();
+      // Concrete value checks, not existence checks: a broken import that
+      // resurrected the wrong record, or dropped its dyes, would still pass
+      // a bare `.not.toBeUndefined()`.
+      expect(CollectionService.getCollectionByName('Valid One')?.dyes).toEqual([10]);
+      expect(CollectionService.getCollectionByName('Valid Two')?.dyes).toEqual([20]);
     });
   });
 

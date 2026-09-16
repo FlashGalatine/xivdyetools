@@ -156,7 +156,7 @@ describe('collection-manager-modal', () => {
       findButton(content, 'collections.createCollection').click();
 
       const created = CollectionService.getCollectionByName('My Collection');
-      expect(created).not.toBeUndefined();
+      expect(created).toMatchObject({ name: 'My Collection', dyes: [] });
       expect(onCreated).toHaveBeenCalledWith(expect.objectContaining({ name: 'My Collection' }));
       expect(mockToastSuccess).toHaveBeenCalledWith('collections.collectionCreated');
       expect(mockDismissTop).toHaveBeenCalledTimes(1);
@@ -217,6 +217,7 @@ describe('collection-manager-modal', () => {
 
     it('leaves the collection untouched if the confirm dialog is never confirmed', () => {
       const collection = CollectionService.createCollection('Keep Me')!;
+      const countBefore = CollectionService.getCollectionsCount();
       showCollectionManagerModal();
       const content = lastShowContent();
 
@@ -226,8 +227,14 @@ describe('collection-manager-modal', () => {
       deleteBtn.click();
 
       // Simulate the user dismissing the confirm dialog without confirming —
-      // onConfirm is never invoked.
-      expect(CollectionService.getCollection(collection.id)).not.toBeUndefined();
+      // onConfirm is never invoked. A bare existence check would pass even
+      // if the record were silently mutated or the count drifted, so assert
+      // the stored collection is unchanged (deep-equal to the pre-click
+      // object: id, name, dyes), the count is unchanged, and no delete
+      // success toast fired.
+      expect(CollectionService.getCollection(collection.id)).toEqual(collection);
+      expect(CollectionService.getCollectionsCount()).toBe(countBefore);
+      expect(mockToastSuccess).not.toHaveBeenCalled();
     });
   });
 
