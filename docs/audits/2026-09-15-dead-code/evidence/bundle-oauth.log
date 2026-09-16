@@ -1,0 +1,25 @@
+
+ ⛅️ wrangler 4.127.1 (update available 4.132.0)
+───────────────────────────────────────────────
+Total Upload: 159.27 KiB / gzip: 41.19 KiB
+Your Worker has access to the following bindings:
+Binding                                                                 Resource                  
+env.TOKEN_BLACKLIST (0d6f3be3b4704e91a83e6387b9769e45)                  KV Namespace              
+env.DB (xivdyetools-users)                                              D1 Database               
+env.RL_AUTH_10 (10 requests/60s)                                        Rate Limit                
+env.RL_AUTH_20 (20 requests/60s)                                        Rate Limit                
+env.RL_AUTH_30 (30 requests/60s)                                        Rate Limit                
+env.ENVIRONMENT ("production")                                          Environment Variable      
+env.DISCORD_CLIENT_ID ("1447108133020369048")                           Environment Variable      
+env.XIVAUTH_CLIENT_ID ("phx-sXZeb_Ran6GAdcnsnjvdtOeNM4df0BZyF...")      Environment Variable      
+env.FRONTEND_URL ("https://xivdyetools.app")                            Environment Variable      
+env.WORKER_URL ("https://auth.xivdyetools.app")                         Environment Variable      
+env.JWT_EXPIRY ("3600")                                                 Environment Variable      
+
+--dry-run: exiting now.
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mMultiple environments are defined in the Wrangler configuration file, but no target environment was specified for the deploy command.[0m
+
+  To avoid unintentional changes to the wrong environment, it is recommended to explicitly specify the target environment using the `-e|--env` flag or CLOUDFLARE_ENV env variable.
+  If your intention is to use the top-level environment of your configuration simply pass an empty string to the flag to target such environment. For example `--env=""`.
+
+

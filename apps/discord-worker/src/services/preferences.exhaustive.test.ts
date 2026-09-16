@@ -13,7 +13,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   getAffectedCommands,
   getDefaultValue,
-  getPreference,
   getUserPreferences,
   resetPreference,
   setPreference,
@@ -333,30 +332,6 @@ describe('getUserPreferences', () => {
 
     expect(await getUserPreferences(kv, 'user-1')).toEqual({});
   });
-});
-
-describe('getPreference', () => {
-  it('returns the stored value when one is set', async () => {
-    const kv = memoryKv();
-    await setPreference(kv, 'user-1', 'theme', 'light');
-
-    expect(await getPreference(kv, 'user-1', 'theme')).toBe('light');
-  });
-
-  it('falls back to the system default when unset', async () => {
-    const kv = memoryKv();
-
-    expect(await getPreference(kv, 'user-1', 'theme')).toBe(getDefaultValue('theme'));
-  });
-
-  it.each(['clan', 'gender', 'world'] as const)(
-    'returns undefined for %s, which has no default',
-    async (key) => {
-      const kv = memoryKv();
-
-      expect(await getPreference(kv, 'user-1', key)).toBeUndefined();
-    },
-  );
 });
 
 describe('resetPreference', () => {

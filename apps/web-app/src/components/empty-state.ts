@@ -204,18 +204,6 @@ export class EmptyState extends BaseComponent {
   bindEvents(): void {
     // Events are bound in render() for action buttons
   }
-
-  /**
-   * Update the empty state options
-   *
-   * @testonly test driver — empty-state.test.ts calls it directly to verify
-   * title/description/icon re-render after an update; no production caller
-   * reconfigures an already-mounted EmptyState instance.
-   */
-  setOptions(options: Partial<EmptyStateOptions>): void {
-    this.options = { ...this.options, ...options };
-    this.update();
-  }
 }
 
 // ============================================================================

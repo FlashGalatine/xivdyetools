@@ -1,0 +1,2 @@
+src/services/svg/band.test.ts(6,10): error TS2305: Module '"@xivdyetools/svg"' has no exported member 'bandInk'.
+src/services/svg/band.ts(38,10): error TS2305: Module '"@xivdyetools/svg"' has no exported member 'bandInk'.

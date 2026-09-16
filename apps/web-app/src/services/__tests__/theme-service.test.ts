@@ -299,10 +299,11 @@ describe('ThemeService Integration', () => {
       it('should carry the confirmed 5.0 accents', () => {
         // The 2026-09-01 cleanup removed this along with the `getColor()` accessor
         // it called. Restored through `getTheme()`, which production code actually
-        // uses — NOT through the surviving `getRequiredColor()` twin, which has no
-        // production caller at all. Leaning on that one would have kept a dead
-        // accessor alive on test evidence alone, and the reachability gate said so
-        // the moment this test first came back.
+        // uses — NOT through a test-only accessor twin with no production caller
+        // at all (the 2026-09-15 audit removed that one, `getRequiredColor()`).
+        // Leaning on a test-only accessor would have kept it alive on test
+        // evidence alone, and the reachability gate said so the moment this test
+        // first came back.
         //
         // Worth pinning: both accents are the brand red, dark carries it as a raw
         // literal in THEME_PALETTES while light is deeper (the suite red needs more

@@ -1,0 +1,11 @@
+apps/discord-worker/src/types/preset.ts:15: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/discord-worker/src/types/preset.ts:21: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/discord-worker/src/types/preset.ts:27: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:13: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:19: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:25: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:31: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:41: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/presets-api/src/types.ts:15: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/presets-api/src/types.ts:32: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/presets-api/src/types.ts:38: * @deprecated Import directly from '@xivdyetools/types' instead.

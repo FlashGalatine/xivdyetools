@@ -19,13 +19,13 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.9.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.5.5 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
-| **Image Worker** | v1.3.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.7.1 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.9.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.5.6 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Image Worker** | v1.3.1 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.7.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.3.3 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.14.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Presets API** | v2.3.4 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **Public REST API** | v0.14.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.10.1 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.0 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -103,6 +103,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-001–007) — eight unused service/component methods removed (`getWithContext`, `isSaved`, `getBaseUrl`, `getRequiredColor`, `setStyle`, `setOptions`, `onStatusChange`, `updateMessage`); no user-visible change, coverage ratchet held |
 | **v5.9.0** | **Sep 2026** | **Swatch Manager equipment rows open a piece in five community databases — Mirapri, GarlandTools, Teamcraft, GamerEscape and the Lodestone in five regions; facewear links by name only, resolving its untinted base row first. Eorzea Collection is deliberately excluded: it keys items by its own auto-increment id, so the game's item id silently opens a different item there** |
 | **v5.8.0** | **Sep 2026** | **Palette Extractor rebuilt on the confirmed 4A frame — a persistent loupe over a dominance bar butted under the image (proportional extracted segments, a 3 px break, fixed-width numbered picks, the `+` tile) over the card sheet; bulk extraction stops being a mode; the dead 3C left panel and three extractor-only modules removed** |
 | v5.7.0 | Sep 2026 | Color wheel selector in Harmony's options (RGB / RYB / Munsell / OKLCH hue / OKLCH lightness, PR #167) — the ring and harmony dots are drawn from the selected wheel, share URLs always carry `?wheel=`, hand-pinned slots clear when the wheel changes |
@@ -151,6 +152,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.5.6 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-008) — the test-only `getPreference` single-key reader removed; `getUserPreferences` is the one production path |
 | v5.5.5 | Sep 2026 (prepared) | GitHub webhook HMAC checks the received bytes before text decoding; completes the Sprint 0 raw-byte requirement |
 | v5.5.4 | Sep 2026 | Legacy preview controls refresh the current image and require a second click |
 | v5.5.3 | Sep 2026 (prepared) | Preview buttons and signed requests bind the exact reviewed image key; stale decisions conflict |
@@ -216,6 +218,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.3.4 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-013/014/015) — the unused `truncateUnicodeSafe`, `duplicateResponse` and the orphan `VoteRow` type removed; the moderation doc no longer describes a helper nothing calls |
 | v2.3.3 | Sep 2026 (prepared) | Revision-bound moderator status and revert writes with atomic audit logs |
 | v2.3.2 | Sep 2026 (prepared) | Revision-bound owner edits; migration 0014 adds the database revision trigger |
 | v2.3.1 | Sep 2026 (prepared) | Preview decisions require the exact pending image key |
@@ -302,6 +305,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.7.2 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-009/010/011/012) — unbatched `hideUserPresets`/`restoreUserPresets` wrappers, the unused fetch-logging wrappers, their now-orphaned `sanitizeHeaders` helper and `Translator.getMeta` removed; ban/unban still batch the statement builders with their audit rows |
 | v1.7.1 | Sep 2026 (prepared) | Bundle auth 2.0.2 to bound interaction streams while reading |
 | v1.7.0 | Sep 2026 | English-only by design, and now says so once — the six-locale `Record` that always resolved to English collapsed to one table (I18N-009) |
 | **v1.6.2** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 7) — `/preset moderate action:stats` shows real numbers instead of "undefined" ×4 (BUG-010, needs types 3.0.0); moderation strings honour the language set through the main bot's `/preferences` (BUG-001); a stalled follow-up no longer leaves "thinking…" forever (BUG-040)** |
@@ -351,6 +355,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.3.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-017) — `Env` is now an explicit empty binding contract (`Record<string, never>`) instead of carrying an `ENVIRONMENT` member nothing sets or reads |
 | **v1.3.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 12) — the dimension cap admitted the 4096² input it existed to reject (BUG-052: `>` not `>=`), and two 64 MiB RGBA buffers exceed the 128 MiB isolate; pixel cap 16 MP → 9.4 MP, everything up to 4K still passes** |
 | v1.2.1 | Sep 2026 | `getImageDimensions` removed (DEAD-027); knip dead-code gate — clean on first run |
 | **v1.2.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-023) — `src/wrangler-config.test.ts` pins no routes, `workers_dev = false` + new `preview_urls = false` in both environments, exactly one named environment, and the production `name` both discord-worker's and presets-api's `IMAGE_WORKER` bindings depend on; in-code guard refuses any `*.workers.dev` hostname with a `404` before fetch/decode (defence in depth); closes the four-worker config-drift test set (presets-api, oauth, moderation-worker, image-worker); also fixes a `redirect: 'error'` `TypeError` on a Discord CDN redirect hop** |
@@ -504,6 +509,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.14.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-016) — the `CacheConfigKey` alias moves into the one test that used it; no route or response change |
 | **v0.14.0** | **Sep 2026** | **Colour wheels on the public API (PR #169) — `GET /v1/wheels`, `GET /v1/wheels/:id` (`ringStops` + every dye's `wheelHue`), `GET /v1/harmony/types`, `GET /v1/harmony` (core's `generateHarmonySlots` over the whole database), plus a Harmony docs group** |
 | v0.13.0 | Sep 2026 | Developer docs restyle on the web-app's design register (API Docs Directions 1d, PR #168) — self-hosted Space Grotesk / Onest / Fragment Mono, the 5.0 dark palette, console chrome; no route change |
 | **v0.12.0** | **Sep 2026** | **`?method=oklab` is ΔEOK2 (core 5.1.0) — different ranking and a ~1.4–2× scale; `/v1/match/within-distance` returns fewer results for an unchanged `maxDistance`; `ciede2000` byte-identical** |

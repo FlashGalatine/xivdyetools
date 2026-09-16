@@ -205,32 +205,6 @@ describe('bot-i18n', () => {
         expect(translatorDe.getLocale()).toBe('de');
       });
     });
-
-    describe('getMeta()', () => {
-      it('should return locale metadata for English', () => {
-        const translator = new Translator('en');
-        const meta = translator.getMeta();
-
-        expect(meta.locale).toBe('en');
-        expect(meta.name).toBe('English');
-        expect(meta.nativeName).toBe('English');
-        expect(meta.flag).toBe('🇺🇸');
-      });
-
-      it('should return locale metadata for all supported locales', () => {
-        const locales: Array<'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh'> = ['en', 'ja', 'de', 'fr', 'ko', 'zh'];
-
-        for (const locale of locales) {
-          const translator = new Translator(locale);
-          const meta = translator.getMeta();
-
-          expect(meta).toHaveProperty('locale');
-          expect(meta).toHaveProperty('name');
-          expect(meta).toHaveProperty('nativeName');
-          expect(meta).toHaveProperty('flag');
-        }
-      });
-    });
   });
 
   describe('createUserTranslator', () => {

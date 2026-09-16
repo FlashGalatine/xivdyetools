@@ -27,11 +27,6 @@ export const STORES = {
 export type StoreName = (typeof STORES)[keyof typeof STORES];
 
 /**
- * BUG-013 FIX: Result type for get operations with error context
- */
-export type GetResult<T> = { found: true; value: T } | { found: false; error?: Error };
-
-/**
  * IndexedDB Service
  * Provides async key-value storage using IndexedDB
  */
@@ -172,46 +167,6 @@ export class IndexedDBService {
       } catch (error) {
         logger.error(`IndexedDB get error:`, error);
         resolve(null);
-      }
-    });
-  }
-
-  /**
-   * BUG-013 FIX: Get a value with error context
-   * Returns a discriminated union to distinguish between "not found" and "error"
-   */
-  async getWithContext<T>(storeName: StoreName, key: string): Promise<GetResult<T>> {
-    if (!this.db) {
-      await this.initialize();
-    }
-
-    if (!this.db) {
-      return { found: false, error: new Error('Database not initialized') };
-    }
-
-    return new Promise<GetResult<T>>((resolve) => {
-      try {
-        const transaction = this.db!.transaction(storeName, 'readonly');
-        const store = transaction.objectStore(storeName);
-        const request = store.get(key);
-
-        request.onsuccess = () => {
-          const result = request.result;
-          if (result) {
-            resolve({ found: true, value: (result.value ?? result) as T });
-          } else {
-            resolve({ found: false }); // Key doesn't exist (no error)
-          }
-        };
-
-        request.onerror = () => {
-          const error = request.error ?? new Error(`Failed to get ${key} from ${storeName}`);
-          logger.warn(`Failed to get ${key} from ${storeName}:`, error);
-          resolve({ found: false, error: error as Error });
-        };
-      } catch (error) {
-        logger.error(`IndexedDB get error:`, error);
-        resolve({ found: false, error: error as Error });
       }
     });
   }

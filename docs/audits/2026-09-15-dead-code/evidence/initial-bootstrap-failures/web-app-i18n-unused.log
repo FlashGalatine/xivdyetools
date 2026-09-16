@@ -1,0 +1,22 @@
+node:fs:2711
+      const stats = binding.lstat(baseLong, true, undefined, true /* throwIfNoEntry */);
+                            ^
+
+Error: EPERM: operation not permitted, lstat 'C:\Users\DrawF'
+    at Object.realpathSync (node:fs:2711:29)
+    at Object.realpathSync (pkg/prelude/bootstrap.js:1361:36)
+    at ../node_modules/.pnpm/temp-dir@2.0.0/node_modules/temp-dir/index.js (C:\snapshot\dist\pnpm.cjs)
+    at __require (C:\snapshot\dist\pnpm.cjs)
+    at ../node_modules/.pnpm/tempy@1.0.1/node_modules/tempy/index.js (C:\snapshot\dist\pnpm.cjs)
+    at __require (C:\snapshot\dist\pnpm.cjs)
+    at ../fetching/binary-fetcher/lib/index.js (C:\snapshot\dist\pnpm.cjs)
+    at __require (C:\snapshot\dist\pnpm.cjs)
+    at ../pkg-manager/client/lib/index.js (C:\snapshot\dist\pnpm.cjs)
+    at __require (C:\snapshot\dist\pnpm.cjs) {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'lstat',
+  path: 'C:\\Users\\DrawF'
+}
+
+Node.js v20.11.1

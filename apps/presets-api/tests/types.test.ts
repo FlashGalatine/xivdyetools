@@ -18,7 +18,6 @@ import type {
     ModerationLogEntry,
     PresetRow,
     CategoryRow,
-    VoteRow,
     AuthSource,
     AuthContext,
     RateLimitResult,
@@ -314,16 +313,6 @@ describe('Types', () => {
 
             expect(row.display_order).toBe(1);
             expect(row.is_curated).toBe(0);
-        });
-
-        it('VoteRow should track vote timestamps', () => {
-            const row: VoteRow = {
-                preset_id: 'preset-123',
-                user_discord_id: 'user-456',
-                created_at: '2025-06-15T12:00:00Z',
-            };
-
-            expect(row.created_at).toBeDefined();
         });
     });
 

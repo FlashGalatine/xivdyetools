@@ -7,8 +7,6 @@ import {
   getUserForBanConfirmation,
   banUser,
   unbanUser,
-  hideUserPresets,
-  restoreUserPresets,
   getActiveBan,
   isPresetAuthorBanned,
 } from './ban-service.js';
@@ -656,85 +654,6 @@ describe('ban-service', () => {
       // MOD-8: the raw D1 message stays in `cause`; `error` is channel-safe
       expect(result.error).toBe('Failed to unban user.');
       expect((result.cause as Error).message).toBe('Connection timeout');
-    });
-  });
-
-  describe('hideUserPresets', () => {
-    it('should hide approved presets', async () => {
-      db._setupMock(() => ({ meta: { changes: 3 } }));
-
-      const count = await hideUserPresets(db as unknown as D1Database, 'user-123');
-
-      expect(count).toBe(3);
-      expect(db._queries[0]).toContain('UPDATE presets');
-      expect(db._queries[0]).toContain("SET status = 'hidden'");
-      expect(db._queries[0]).toContain("WHERE author_discord_id = ? AND status = 'approved'");
-    });
-
-    it('should only hide approved presets, not pending or rejected', async () => {
-      db._setupMock(() => ({ meta: { changes: 2 } }));
-
-      await hideUserPresets(db as unknown as D1Database, 'user-456');
-
-      expect(db._queries[0]).toContain("status = 'approved'");
-    });
-
-    it('should return 0 when no presets to hide', async () => {
-      db._setupMock(() => ({ meta: { changes: 0 } }));
-
-      const count = await hideUserPresets(db as unknown as D1Database, 'user-789');
-
-      expect(count).toBe(0);
-    });
-
-    it('should handle undefined changes', async () => {
-      db._setupMock(() => ({ meta: {} }));
-
-      const count = await hideUserPresets(db as unknown as D1Database, 'user-123');
-
-      expect(count).toBe(0);
-    });
-  });
-
-  describe('restoreUserPresets', () => {
-    it('should restore hidden presets to approved status', async () => {
-      db._setupMock(() => ({ meta: { changes: 5 } }));
-
-      const count = await restoreUserPresets(db as unknown as D1Database, 'user-123');
-
-      expect(count).toBe(5);
-      expect(db._queries[0]).toContain('UPDATE presets');
-      expect(db._queries[0]).toContain("SET status = 'approved'");
-      expect(db._queries[0]).toContain("WHERE author_discord_id = ? AND status = 'hidden'");
-    });
-
-    it('should only restore hidden presets, not rejected or pending', async () => {
-      db._setupMock(() => ({ meta: { changes: 2 } }));
-
-      await restoreUserPresets(db as unknown as D1Database, 'user-456');
-
-      expect(db._queries[0]).toContain("status = 'hidden'");
-    });
-
-    it('should return 0 when no presets to restore', async () => {
-      db._setupMock(() => ({ meta: { changes: 0 } }));
-
-      const count = await restoreUserPresets(db as unknown as D1Database, 'user-789');
-
-      expect(count).toBe(0);
-    });
-
-    it('should use correct binding', async () => {
-      db._setupMock(() => ({ meta: { changes: 1 } }));
-
-      await restoreUserPresets(db as unknown as D1Database, 'discord-id-abc');
-
-      // moderation-worker-07: the statement now also bumps `updated_at`, so
-      // the ISO timestamp binds ahead of the discord id. presets-api's own
-      // status writers have always set both; these two were the odd ones out.
-      const [updatedAt, discordId] = db._bindings[0] as [string, string];
-      expect(discordId).toBe('discord-id-abc');
-      expect(updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
   });
 

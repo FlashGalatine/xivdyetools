@@ -697,17 +697,6 @@ export abstract class BaseComponent implements ComponentLifecycle {
     return this.element ? this.element.style.display !== 'none' : false;
   }
 
-  /**
-   * Set component CSS
-   */
-  setStyle(styles: Partial<CSSStyleDeclaration>): void {
-    if (!this.element) return;
-
-    for (const [key, value] of Object.entries(styles)) {
-      (this.element.style as unknown as Record<string, string>)[key] = value as string;
-    }
-  }
-
   // ============================================================================
   // Debugging & Utilities
   // ============================================================================

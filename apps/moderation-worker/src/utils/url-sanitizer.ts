@@ -7,10 +7,14 @@
  * - Monitoring systems
  * - Debug output
  *
- * Masks sensitive data including:
+ * Masks sensitive data carried in a URL or an error's text:
  * - Discord interaction tokens in webhook URLs
- * - Bot tokens in Authorization headers
- * - API keys in URLs and query parameters
+ * - Bot tokens and API keys in URLs and query parameters
+ *
+ * Nothing here reads HTTP headers. The header and fetch-logging helpers
+ * (`sanitizeHeaders`, `sanitizeFetchRequest`, `sanitizeFetchResponse`) were
+ * removed in 1.7.2 (DEAD-010/011) — no production path ever called them, and
+ * `discord-api.ts` redacts through `sanitizeUrl` and `sanitizeErrorMessage`.
  *
  * @example
  * ```typescript
@@ -62,19 +66,6 @@ const SENSITIVE_URL_PATTERNS: SensitivePattern[] = [
 ];
 
 /**
- * Header names that contain sensitive values
- * (case-insensitive matching)
- */
-const SENSITIVE_HEADERS: string[] = [
-  'authorization',
-  'x-api-key',
-  'x-auth-token',
-  'x-request-signature',
-  'cookie',
-  'set-cookie',
-];
-
-/**
  * Sanitize a URL by masking sensitive tokens
  *
  * Applies regex patterns to mask tokens and API keys in URLs.
@@ -104,58 +95,6 @@ export function sanitizeUrl(url: string | URL): string {
   // Apply all patterns
   for (const { pattern, replacement } of SENSITIVE_URL_PATTERNS) {
     sanitized = sanitized.replace(pattern, replacement);
-  }
-
-  return sanitized;
-}
-
-/**
- * Sanitize HTTP headers by masking sensitive values
- *
- * Replaces sensitive header values with a truncated version + "[REDACTED]".
- * Non-sensitive headers are returned unchanged.
- *
- * @param headers - Headers object or Headers instance
- * @returns Sanitized headers object safe for logging
- *
- * @example
- * ```typescript
- * const headers = {
- *   'Authorization': 'Bot ABC123...',
- *   'Content-Type': 'application/json'
- * };
- *
- * const sanitized = sanitizeHeaders(headers);
- * // {
- * //   'Authorization': 'Bot ABC1...[REDACTED]',
- * //   'Content-Type': 'application/json'
- * // }
- * ```
- */
-export function sanitizeHeaders(
-  headers: Record<string, string> | Headers
-): Record<string, string> {
-  const sanitized: Record<string, string> = {};
-
-  // Convert Headers instance to entries array
-  const entries =
-    headers instanceof Headers ? Array.from(headers.entries()) : Object.entries(headers);
-
-  for (const [key, value] of entries) {
-    const lowerKey = key.toLowerCase();
-
-    if (SENSITIVE_HEADERS.includes(lowerKey)) {
-      // Keep first 8 chars for debugging, mask the rest
-      if (value.length > 8) {
-        sanitized[key] = value.substring(0, 8) + '...[REDACTED]';
-      } else {
-        // Very short value (shouldn't happen for real tokens)
-        sanitized[key] = '[REDACTED]';
-      }
-    } else {
-      // Non-sensitive header - keep as-is
-      sanitized[key] = value;
-    }
   }
 
   return sanitized;
@@ -199,87 +138,3 @@ export function sanitizeErrorMessage(error: unknown): string {
   return sanitizeUrl(message);
 }
 
-/**
- * Sanitize fetch request details for logging
- *
- * Creates a sanitized representation of a fetch request
- * suitable for logging and debugging.
- *
- * @param url - Request URL
- * @param options - Fetch options (optional)
- * @returns Sanitized request info safe for logging
- *
- * @example
- * ```typescript
- * const logData = sanitizeFetchRequest(url, {
- *   method: 'POST',
- *   headers: {
- *     'Authorization': 'Bot SECRET',
- *     'Content-Type': 'application/json'
- *   }
- * });
- *
- * logger.debug('Making request', logData);
- * // {
- * //   url: '/webhooks/123/[REDACTED_TOKEN]',
- * //   method: 'POST',
- * //   headers: {
- * //     'Authorization': 'Bot SECR...[REDACTED]',
- * //     'Content-Type': 'application/json'
- * //   }
- * // }
- * ```
- */
-export function sanitizeFetchRequest(
-  url: string | URL,
-  options?: RequestInit
-): {
-  url: string;
-  method: string;
-  headers: Record<string, string>;
-} {
-  return {
-    url: sanitizeUrl(url),
-    method: options?.method || 'GET',
-    headers: options?.headers
-      ? sanitizeHeaders(options.headers as Record<string, string>)
-      : {},
-  };
-}
-
-/**
- * Sanitize fetch response details for logging
- *
- * Creates a sanitized representation of a fetch response
- * suitable for logging and debugging.
- *
- * @param response - Fetch Response object
- * @returns Sanitized response info safe for logging
- *
- * @example
- * ```typescript
- * const response = await fetch(url);
- * const logData = sanitizeFetchResponse(response);
- *
- * logger.debug('Response received', logData);
- * // {
- * //   status: 200,
- * //   statusText: 'OK',
- * //   url: '/webhooks/123/[REDACTED_TOKEN]',
- * //   headers: { ... }
- * // }
- * ```
- */
-export function sanitizeFetchResponse(response: Response): {
-  status: number;
-  statusText: string;
-  url: string;
-  headers: Record<string, string>;
-} {
-  return {
-    status: response.status,
-    statusText: response.statusText,
-    url: sanitizeUrl(response.url),
-    headers: sanitizeHeaders(response.headers),
-  };
-}

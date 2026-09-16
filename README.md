@@ -25,13 +25,13 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 
 | App | Version | Description |
 |-----|---------|-------------|
-| [`web-app`](apps/web-app/) | 5.9.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`discord-worker`](apps/discord-worker/) | 5.5.5 | Primary Discord bot — 17 slash commands (CF Worker + Hono, HTTP Interactions) |
-| [`image-worker`](apps/image-worker/) | 1.3.0 | Photon host — `POST /extract` (raw pixels for the bot) and `POST /thumbnail` (WebP previews for presets-api), service-binding-only (CF Worker) |
-| [`moderation-worker`](apps/moderation-worker/) | 1.7.1 | Moderation bot for community presets (CF Worker) |
-| [`presets-api`](apps/presets-api/) | 2.3.3 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
+| [`web-app`](apps/web-app/) | 5.9.1 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
+| [`discord-worker`](apps/discord-worker/) | 5.5.6 | Primary Discord bot — 17 slash commands (CF Worker + Hono, HTTP Interactions) |
+| [`image-worker`](apps/image-worker/) | 1.3.1 | Photon host — `POST /extract` (raw pixels for the bot) and `POST /thumbnail` (WebP previews for presets-api), service-binding-only (CF Worker) |
+| [`moderation-worker`](apps/moderation-worker/) | 1.7.2 | Moderation bot for community presets (CF Worker) |
+| [`presets-api`](apps/presets-api/) | 2.3.4 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
 | [`oauth`](apps/oauth/) | 3.1.0 | Discord OAuth + JWT issuance (CF Worker + D1) |
-| [`api-worker`](apps/api-worker/) | 0.14.0 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
+| [`api-worker`](apps/api-worker/) | 0.14.1 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
 | [`og-worker`](apps/og-worker/) | 2.10.1 | Dynamic OpenGraph image generation (CF Worker + WASM) |
 | [`stoat-worker`](apps/stoat-worker/) | 0.3.0 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) — parked |
 
