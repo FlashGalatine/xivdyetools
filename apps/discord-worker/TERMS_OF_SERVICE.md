@@ -1,6 +1,8 @@
 # XIV Dye Tools Discord Bot - Terms of Service
 
-**Last Updated**: December 7, 2025
+**Last Updated**: September 16, 2026
+
+> The web app at xivdyetools.app has its own terms: [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Data handling is covered by the [Privacy Policy](PRIVACY_POLICY.md).
 
 ## 1. Introduction
 
@@ -120,7 +122,9 @@ We may, at our sole discretion, suspend or terminate your access to the Bot for:
 
 ## 11. Governing Law
 
-These Terms are governed by applicable laws. Any disputes will be resolved through good-faith negotiation.
+These Terms are governed by the laws of the State of North Carolina, USA, without regard to its conflict-of-laws rules. Any dispute that cannot first be resolved through good-faith negotiation will be brought in the state or federal courts located in North Carolina, and you agree to that venue.
+
+Nothing in these Terms removes a consumer-protection right your local law grants you and does not permit you to waive.
 
 ## 12. Contact
 

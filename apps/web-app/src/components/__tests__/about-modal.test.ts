@@ -200,6 +200,57 @@ describe('AboutModal', () => {
   });
 
   // ============================================================================
+  // Policy Links
+  // ============================================================================
+
+  // The app serves no route for Privacy or Terms, so this row is the only path
+  // from inside the product to either document. A silent removal would leave
+  // the policies unreachable without anything else going red, which is what
+  // these assertions exist to prevent.
+  describe('Policy links', () => {
+    const BASE = 'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/web-app';
+
+    afterEach(() => {
+      for (const key of Object.keys(mockTranslations)) delete mockTranslations[key];
+    });
+
+    const showContent = async (): Promise<HTMLElement> => {
+      const { AboutModal } = await import('../about-modal');
+      new AboutModal().show();
+      return mockShow.mock.calls[0][0].content as HTMLElement;
+    };
+
+    it('links to both policy documents', async () => {
+      const content = await showContent();
+
+      expect(content.querySelector(`a[href="${BASE}/PRIVACY.md"]`)).not.toBeNull();
+      expect(content.querySelector(`a[href="${BASE}/TERMS_OF_SERVICE.md"]`)).not.toBeNull();
+    });
+
+    it('opens each policy in a new tab without leaking the referrer', async () => {
+      const content = await showContent();
+
+      for (const file of ['PRIVACY.md', 'TERMS_OF_SERVICE.md']) {
+        const anchor = content.querySelector<HTMLAnchorElement>(`a[href="${BASE}/${file}"]`);
+        expect(anchor?.target).toBe('_blank');
+        expect(anchor?.rel).toContain('noopener');
+        expect(anchor?.rel).toContain('noreferrer');
+      }
+    });
+
+    it('takes both labels from the locale, not hardcoded English', async () => {
+      mockTranslations['about.privacyPolicy'] = 'Datenschutz';
+      mockTranslations['about.termsOfService'] = 'Nutzungsbedingungen';
+      const content = await showContent();
+
+      expect(content.querySelector(`a[href="${BASE}/PRIVACY.md"]`)?.textContent).toBe('Datenschutz');
+      expect(content.querySelector(`a[href="${BASE}/TERMS_OF_SERVICE.md"]`)?.textContent).toBe(
+        'Nutzungsbedingungen'
+      );
+    });
+  });
+
+  // ============================================================================
   // Lifecycle Tests
   // ============================================================================
 

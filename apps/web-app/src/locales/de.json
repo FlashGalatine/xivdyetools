@@ -25,7 +25,10 @@
     "legalLabel": "RECHTLICHES",
     "spectralCredit": "Realistische Farbmischung (Kubelka–Munk-Theorie) von {link}",
     "dataApiLabel": "Daten-API",
-    "apiDocsLabel": "API-Worker-Doku"
+    "apiDocsLabel": "API-Worker-Doku",
+    "policiesLabel": "RICHTLINIEN",
+    "privacyPolicy": "Datenschutz",
+    "termsOfService": "Nutzungsbedingungen"
   },
   "footer": {
     "createdBy": "Erstellt von Flash Galatine (Midgardsormr) für die FFXIV-Community",
