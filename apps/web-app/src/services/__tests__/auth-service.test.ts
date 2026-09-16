@@ -455,6 +455,71 @@ describe('AuthService', () => {
       // Token should be cleared because it's expired
       expect(freshService.isAuthenticated()).toBe(false);
     });
+
+    // BUG-025: `isAuthenticated()` did `void this.logout()` with no
+    // re-entrancy guard, so N synchronous callers on an expired token (the
+    // real call sites: preset-detail, community-preset-service,
+    // preset-submission-service, config-sidebar) each fired their own
+    // `/auth/revoke` request and their own listener-notify pass.
+    it('memoises logout so three synchronous isAuthenticated() calls on an expired token revoke once and notify once (BUG-025)', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const expiresAt = now + 100;
+      const mockToken = createMockJWT({
+        sub: '123456789',
+        username: 'testuser',
+        global_name: 'Test User',
+        avatar: null,
+        exp: expiresAt,
+        iat: now,
+        iss: 'xivdyetools',
+      });
+
+      mockLocalStorage['xivdyetools_auth_token'] = mockToken;
+      mockLocalStorage['xivdyetools_auth_expires'] = String(expiresAt);
+
+      // The revoke fetch is slow: it stays pending until the test resolves it,
+      // so all three synchronous isAuthenticated() calls race it.
+      let resolveRevoke: (() => void) | undefined;
+      const revokePromise = new Promise((resolve) => {
+        resolveRevoke = () =>
+          resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
+      });
+      (global.fetch as ReturnType<typeof vi.fn>).mockReturnValue(revokePromise);
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+      expect(authService.isAuthenticated()).toBe(true);
+
+      const listener = vi.fn();
+      authService.subscribe(listener);
+      listener.mockClear();
+
+      const nowSpy = vi.spyOn(Date, 'now');
+      try {
+        // Advance the clock past expiry, then call isAuthenticated() three
+        // times synchronously, exactly like the real multi-listener call sites.
+        nowSpy.mockReturnValue((expiresAt + 10) * 1000);
+
+        const results = [
+          authService.isAuthenticated(),
+          authService.isAuthenticated(),
+          authService.isAuthenticated(),
+        ];
+
+        expect(results).toEqual([false, false, false]);
+      } finally {
+        nowSpy.mockRestore();
+      }
+
+      resolveRevoke?.();
+      await revokePromise;
+      // Flush the microtask queue so logout()'s post-fetch work runs.
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('avatar URL generation', () => {
