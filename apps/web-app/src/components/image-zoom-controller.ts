@@ -578,6 +578,7 @@ export class ImageZoomController extends BaseComponent {
     // === MOUSE EVENTS ===
     this.on(this.canvasRef, 'mousedown', (e: Event) => {
       if (!this.canvasRef) return;
+      if ((e as MouseEvent).button !== 0) return;
       e.stopPropagation();
       const mouseEvent = e as MouseEvent;
 
@@ -649,6 +650,7 @@ export class ImageZoomController extends BaseComponent {
     });
 
     this.on(this.canvasRef, 'mouseup', (e: Event) => {
+      if ((e as MouseEvent).button !== 0) return;
       const mouseEvent = e as MouseEvent;
 
       // End panning: commit the final pan offset

@@ -447,6 +447,45 @@ describe('ImageZoomController', () => {
     });
   });
 
+  describe('non-primary mouse button (BUG-022)', () => {
+    beforeEach(() => {
+      mount();
+      controller.setImage(image);
+      sizeCanvas();
+    });
+
+    it('ignores a right-button mousedown/mouseup: no sample commits', () => {
+      const onSampled = vi.fn();
+      container.addEventListener('image-sampled', onSampled);
+
+      mouse('mousedown', 0, 0, { button: 2 });
+      mouse('mouseup', 0, 0, { button: 2 });
+
+      expect(onSampled).not.toHaveBeenCalled();
+    });
+
+    it('ignores a right-button drag: no loupe-move fires past the threshold', () => {
+      const onLoupeMove = vi.fn();
+      container.addEventListener('loupe-move', onLoupeMove);
+
+      mouse('mousedown', 0, 0, { button: 2 });
+      mouse('mousemove', 60, 60, { button: 2 });
+      mouse('mouseup', 60, 60, { button: 2 });
+
+      expect(onLoupeMove).not.toHaveBeenCalled();
+    });
+
+    it('still samples on an ordinary left-button click (button 0)', () => {
+      const onSampled = vi.fn();
+      container.addEventListener('image-sampled', onSampled);
+
+      mouse('mousedown', 0, 0, { button: 0 });
+      mouse('mouseup', 0, 0, { button: 0 });
+
+      expect(onSampled).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('the loupe drag', () => {
     beforeEach(() => {
       mount();
