@@ -243,7 +243,9 @@ describe('AboutModal', () => {
       mockTranslations['about.termsOfService'] = 'Nutzungsbedingungen';
       const content = await showContent();
 
-      expect(content.querySelector(`a[href="${BASE}/PRIVACY.md"]`)?.textContent).toBe('Datenschutz');
+      expect(content.querySelector(`a[href="${BASE}/PRIVACY.md"]`)?.textContent).toBe(
+        'Datenschutz'
+      );
       expect(content.querySelector(`a[href="${BASE}/TERMS_OF_SERVICE.md"]`)?.textContent).toBe(
         'Nutzungsbedingungen'
       );
