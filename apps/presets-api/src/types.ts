@@ -185,9 +185,3 @@ export interface CategoryRow {
   is_curated: number;
   display_order: number;
 }
-
-export interface VoteRow {
-  preset_id: string;
-  user_discord_id: string;
-  created_at: string;
-}

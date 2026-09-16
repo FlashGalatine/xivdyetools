@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.4] - 2026-09-16
+
+### Removed (2026-09-15 dead-code audit)
+
+- `truncateUnicodeSafe` (`src/services/moderation-service.ts`) — surrogate-pair-safe truncation helper with no production caller; nothing in the moderation pipeline truncates a string before logging/storing it. Only its dedicated unit tests exercised it. Removed 9 source lines (function + JSDoc) and 38 test lines (`tests/services/moderation-service.test.ts`, describe block + import specifier). See docs/audits/2026-09-15-dead-code/findings/DEAD-013.md.
+- `duplicateResponse` (`src/utils/api-response.ts`) — 409/DUPLICATE_RESOURCE response helper with no production caller; every live duplicate-preset 409 is built inline at its call sites in `handlers/presets.ts` and `handlers/moderation.ts` instead of through this helper. Removed 3 source lines (function + JSDoc) and 9 test lines (`tests/utils/api-response.test.ts`, test case + import specifier). See docs/audits/2026-09-15-dead-code/findings/DEAD-014.md.
+- `VoteRow` (`src/types.ts`) — orphan type with no D1 query or runtime source import; only its own test constructed and asserted against it. Removed 5 source lines (interface) and 9 test lines (`tests/types.test.ts`, test case + import specifier). See docs/audits/2026-09-15-dead-code/findings/DEAD-015.md.
+
 ## [2.3.3] - 2026-09-15
 
 ### Fixed

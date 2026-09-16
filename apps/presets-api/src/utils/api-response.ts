@@ -163,19 +163,6 @@ export function notFoundResponse(c: AnyContext, resource: string): Response {
 }
 
 /**
- * 409 Conflict - Duplicate resource
- *
- * @testonly unit-tested for the 409/DUPLICATE_RESOURCE shape, but unlike its
- * siblings (the 403/404/500 helpers, all called from handlers/) every
- * production duplicate-preset 409 is built inline at its four call sites
- * (handlers/presets.ts, handlers/moderation.ts) instead of through this
- * helper.
- */
-export function duplicateResponse(c: AnyContext, message: string): Response {
-  return errorResponse(c, ErrorCode.DUPLICATE_RESOURCE, message, 409);
-}
-
-/**
  * 500 Internal Server Error
  */
 export function internalErrorResponse(c: AnyContext, message = 'An unexpected error occurred'): Response {

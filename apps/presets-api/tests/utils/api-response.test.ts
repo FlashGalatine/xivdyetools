@@ -14,7 +14,6 @@ import {
   unauthorizedResponse,
   forbiddenResponse,
   notFoundResponse,
-  duplicateResponse,
   internalErrorResponse,
   ErrorCode,
 } from '../../src/utils/api-response';
@@ -126,16 +125,6 @@ describe('API Response Utilities', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.error).toBe(ErrorCode.NOT_FOUND);
       expect(body.message).toBe('Preset not found');
-    });
-
-    it('duplicateResponse returns 409 DUPLICATE_RESOURCE', async () => {
-      const app = createApp((c) => duplicateResponse(c, 'Already exists'));
-      const res = await app.request('/test');
-
-      expect(res.status).toBe(409);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.error).toBe(ErrorCode.DUPLICATE_RESOURCE);
-      expect(body.message).toBe('Already exists');
     });
 
     it('internalErrorResponse returns 500 with default message', async () => {

@@ -157,13 +157,6 @@ The one nuance in the invisible-character rule is U+200D (zero-width joiner): it
 emoji sequences, so it is allowed **only** between two emoji code points and rejected between
 ordinary letters, where it is the hidden-padding trick the rule exists to stop.
 
-### Unicode-safe truncation (unused)
-
-`truncateUnicodeSafe()` splits by code points with `Array.from()` (`PRESETS-HIGH-003`) so a
-truncation cannot break an emoji or CJK surrogate pair. It is exported and unit-tested, but
-**nothing in presets-api calls it** — no moderation or notification path currently truncates a
-string. Treat it as available, not as part of the pipeline.
-
 ---
 
 ## Related Documentation
