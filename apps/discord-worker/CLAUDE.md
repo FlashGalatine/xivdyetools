@@ -230,7 +230,7 @@ Special routing inside `handleAutocomplete()`:
 
 ### Webhook Payload Limits
 
-Both webhook routes check `Content-Length` before reading the body, but the caps differ: `/webhooks/preset-submission` allows 10 KB (10,240 bytes), while `/webhooks/github` allows 1 MiB (`GITHUB_WEBHOOK_MAX_BYTES = 1_048_576` — GitHub's push payload carries the whole `repository` object plus up to 2048 commits, and a two-commit merge push measured 18,196 bytes) and re-checks the actual body length after reading it, since `Content-Length` can be missing or spoofed. Both refuse an oversized body with 413 before any JSON is parsed.
+Both webhook routes check `Content-Length` before reading the body, but the caps differ: `/webhooks/preset-submission` allows 10 KB (10,240 bytes), while `/webhooks/github` allows 1 MiB (`GITHUB_WEBHOOK_MAX_BYTES = 1_048_576` — GitHub's push payload carries the whole `repository` object plus up to 2048 commits, and a two-commit merge push measured 18,196 bytes). The GitHub route also counts actual streamed bytes and cancels immediately above its cap, since `Content-Length` can be missing or spoofed. It verifies HMAC over the bounded received bytes before text decoding; BOM removal or invalid UTF-8 replacement must never change the authenticated payload. Both refuse an oversized body with 413 before any JSON is parsed.
 
 ### User Content Sanitization
 
