@@ -1,11 +1,17 @@
 /**
  * Copy list / Export .md — the click-time half of the glamour list.
  *
- * `chara-import` draws the two buttons; everything that happens after a click
- * lives here and is loaded on demand, like the item-links menu, because the
- * swatch chunk sits within a kilobyte of its size budget and none of this is
- * needed until someone asks for the list. The component hands over what it
- * knows (the resolved file and the equipment answer) as plain data.
+ * `chara-import` draws the two buttons; what a click needs lives here and is
+ * loaded on demand, like the item-links menu, because the swatch chunk sits
+ * within a kilobyte of its size budget and none of this is needed until
+ * someone asks for the list. The component hands over what it knows (the
+ * resolved file and the equipment answer) as plain data.
+ *
+ * Copy is the one action the component keeps for itself: the clipboard write
+ * has to start inside the click (WebKit drops the user activation across the
+ * chunk load), so this module only builds the content and the component
+ * hands it to the clipboard as a promise. Export has no such constraint and
+ * runs here whole.
  *
  * @module components/glamour-list-actions
  */
@@ -13,7 +19,7 @@
 import type { ResolvedCharaCharacter, CharaGearSlotId } from '@xivdyetools/core';
 import { LanguageService, ToastService } from '@services/index';
 import { itemNameFor, type CharaResolveResult } from '@services/chara-resolve-service';
-import { copyRichTextToClipboard } from '@shared/clipboard';
+import type { RichText } from '@shared/clipboard';
 import { downloadTextFile } from '@shared/download-file';
 import { localizedDyeName } from '@shared/dye-name';
 import { logger } from '@shared/logger';
@@ -78,23 +84,14 @@ export function glamourMarkdownInput({
 }
 
 /**
- * Put the list on the clipboard — bold labels as real formatting for Word and
- * Google Docs, the same lines as plain text for everything else — and say
- * whether it worked. Markdown syntax never reaches the clipboard.
+ * What Copy list puts on the clipboard — bold labels as real formatting for
+ * Word and Google Docs, the same lines as plain text for everything else.
+ * Markdown syntax never reaches the clipboard. The component starts the write
+ * and owns the toast; this only builds the two flavours.
  */
-export async function copyGlamourList(source: GlamourListSource): Promise<void> {
-  try {
-    const input = glamourMarkdownInput(source);
-    const ok = await copyRichTextToClipboard({
-      html: buildGlamourHtml(input),
-      text: buildGlamourPlainText(input),
-    });
-    if (ok) ToastService.success(LanguageService.t('swatch.listCopied'));
-    else ToastService.error(LanguageService.t('swatch.listCopyFailed'));
-  } catch (error) {
-    logger.error('[GlamourList] Copy failed', error);
-    ToastService.error(LanguageService.t('swatch.listCopyFailed'));
-  }
+export function glamourCopyPayload(source: GlamourListSource): RichText {
+  const input = glamourMarkdownInput(source);
+  return { html: buildGlamourHtml(input), text: buildGlamourPlainText(input) };
 }
 
 /** Save the list as `glamour-equipment.md`; a failure says so rather than staying silent. */

@@ -561,9 +561,12 @@ describe('CharaImport — Copy list / Export .md', () => {
   let createObjectURL: ReturnType<typeof vi.fn>;
   let clicked: HTMLAnchorElement[];
 
-  /** jsdom has no ClipboardItem; this stand-in just keeps what it was given. */
+  /**
+   * jsdom has no ClipboardItem; this stand-in just keeps what it was given —
+   * a promise per flavour, since the content lands after the chunk loads.
+   */
   class FakeClipboardItem {
-    constructor(public readonly items: Record<string, Blob>) {}
+    constructor(public readonly items: Record<string, Blob | Promise<Blob>>) {}
   }
 
   // Globals this block redefines, restored after each test so nothing below
@@ -589,12 +592,12 @@ describe('CharaImport — Copy list / Export .md', () => {
   const exportBtn = (glamour: HTMLElement) =>
     block(glamour).querySelector<HTMLButtonElement>('[data-role="export-markdown"]')!;
 
-  /** The flavours the last copy put on the clipboard. */
+  /** The flavours the last copy put on the clipboard, once they have landed. */
   const copied = async (): Promise<{ html: string; text: string }> => {
     const [items] = write.mock.calls[0] as [FakeClipboardItem[]];
     return {
-      html: await items[0].items['text/html'].text(),
-      text: await items[0].items['text/plain'].text(),
+      html: await (await items[0].items['text/html']).text(),
+      text: await (await items[0].items['text/plain']).text(),
     };
   };
 
@@ -708,6 +711,24 @@ describe('CharaImport — Copy list / Export .md', () => {
       expect(ToastService.success).toHaveBeenCalledWith('Equipment list copied to clipboard')
     );
     expect(clicked).toHaveLength(0);
+  });
+
+  it('starts the clipboard write inside the click, before the actions chunk has loaded', async () => {
+    // WebKit (Safari, every iOS browser) refuses a clipboard write once the
+    // click's activation has lapsed, and a chunk load lapses it. So the write
+    // must already be under way when the click handler returns — asserted
+    // with nothing awaited in between — and the content follows.
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    copyBtn(glamour).click();
+    expect(write).toHaveBeenCalledTimes(1);
+
+    expect((await copied()).text).toBe(EXPECTED_TEXT);
+    await vi.waitFor(() =>
+      expect(ToastService.success).toHaveBeenCalledWith('Equipment list copied to clipboard')
+    );
   });
 
   it('copies real bold beside the plain text, so Word and Google Docs keep the slot labels bold', async () => {

@@ -56,6 +56,7 @@ import type { ItemLinksMenuTarget } from '@components/item-links-menu';
 import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
 import { STORAGE_PREFIX, MAX_USER_FILE_BYTES } from '@shared/constants';
 import { logger } from '@shared/logger';
+import { copyRichTextToClipboard } from '@shared/clipboard';
 import { clearContainer } from '@shared/utils';
 import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import type { Dye, SubRace, Gender } from '@xivdyetools/types';
@@ -1399,36 +1400,61 @@ export class CharaImport {
       return btn;
     };
     return [
-      make('copy-list', this.t('copyList'), () =>
-        this.runListAction((m, source) => m.copyGlamourList(source), 'listCopyFailed')
-      ),
-      make('export-markdown', this.t('exportMarkdown'), () =>
-        this.runListAction((m, source) => m.exportGlamourList(source), 'listExportFailed')
-      ),
+      make('copy-list', this.t('copyList'), () => this.copyList()),
+      make('export-markdown', this.t('exportMarkdown'), () => this.exportList()),
     ];
   }
 
   /**
-   * Everything after the click lives in `glamour-list-actions`, loaded on
-   * demand like the item-links menu — the swatch chunk sits within a kilobyte
-   * of its size budget. A load that fails (offline, blocked) reports through
-   * the same toast the action itself would.
+   * What either action starts from, or null before a file has resolved (the
+   * buttons are not drawn then, so a click cannot reach here without one).
    */
-  private runListAction(
-    action: (
-      module: typeof import('@components/glamour-list-actions'),
-      source: import('@components/glamour-list-actions').GlamourListSource
-    ) => void | Promise<void>,
-    failKey: 'listCopyFailed' | 'listExportFailed'
-  ): void {
-    const resolved = this.resolved;
-    if (!resolved) return;
-    const source = { resolved, equipment: this.equipment };
-    void import('@components/glamour-list-actions')
-      .then((module) => action(module, source))
+  private listSource(): import('@components/glamour-list-actions').GlamourListSource | null {
+    return this.resolved ? { resolved: this.resolved, equipment: this.equipment } : null;
+  }
+
+  /**
+   * The list's builders live in `glamour-list-actions`, loaded on demand like
+   * the item-links menu — the swatch chunk sits within a kilobyte of its size
+   * budget. A load that fails (offline, blocked) surfaces through the same
+   * toast the action itself would.
+   */
+  private loadListActions(): Promise<typeof import('@components/glamour-list-actions')> {
+    return import('@components/glamour-list-actions');
+  }
+
+  /**
+   * Copy starts the clipboard write HERE, synchronously in the click, and
+   * hands the content over as a promise that lands once the chunk has
+   * loaded. WebKit (Safari, every iOS browser) drops the click's user
+   * activation across that load: a write that waited for the module would
+   * be refused there, and the command fallback, gated the same way, would
+   * fail behind it — a "couldn't copy" toast on every iPhone.
+   */
+  private copyList(): void {
+    const source = this.listSource();
+    if (!source) return;
+    const payload = this.loadListActions().then((m) => m.glamourCopyPayload(source));
+    void copyRichTextToClipboard(payload)
+      .then((ok) => {
+        if (ok) ToastService.success(this.t('listCopied'));
+        else ToastService.error(this.t('listCopyFailed'));
+      })
       .catch((error: unknown) => {
-        logger.error('[CharaImport] Glamour list action failed', error);
-        ToastService.error(this.t(failKey));
+        logger.error('[CharaImport] Glamour list copy failed', error);
+        ToastService.error(this.t('listCopyFailed'));
+      });
+  }
+
+  /** A download needs no activation, so Export can wait for the module whole. */
+  private exportList(): void {
+    const source = this.listSource();
+    if (!source) return;
+    void this.loadListActions()
+      .then((m) => m.exportGlamourList(source))
+      .catch((error: unknown) => {
+        logger.error('[CharaImport] Glamour list export failed', error);
+        ToastService.error(this.t('listExportFailed'));
       });
   }
 

@@ -8,9 +8,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { copyRichTextToClipboard, copyTextToClipboard } from '../clipboard';
 
-/** jsdom has no ClipboardItem; this stand-in just keeps what it was given. */
+/**
+ * jsdom has no ClipboardItem; this stand-in just keeps what it was given —
+ * which, as in a browser, may be a Blob or a promise of one per flavour.
+ */
 class FakeClipboardItem {
-  constructor(public readonly items: Record<string, Blob>) {}
+  constructor(public readonly items: Record<string, Blob | Promise<Blob>>) {}
+}
+
+/** A payload the test resolves by hand, to watch what happens before it lands. */
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
 }
 
 const RICH = { html: '<p><strong>Glamour Items:</strong></p>', text: 'Glamour Items:' };
@@ -140,10 +154,40 @@ describe('copyRichTextToClipboard', () => {
     expect(items).toHaveLength(1);
     const { items: flavours } = items[0];
     expect(Object.keys(flavours).sort()).toEqual(['text/html', 'text/plain']);
-    expect(flavours['text/html'].type).toBe('text/html');
-    expect(flavours['text/plain'].type).toBe('text/plain');
-    await expect(flavours['text/html'].text()).resolves.toBe(RICH.html);
-    await expect(flavours['text/plain'].text()).resolves.toBe(RICH.text);
+    const html = await flavours['text/html'];
+    const text = await flavours['text/plain'];
+    expect(html.type).toBe('text/html');
+    expect(text.type).toBe('text/plain');
+    await expect(html.text()).resolves.toBe(RICH.html);
+    await expect(text.text()).resolves.toBe(RICH.text);
+    expect(execCommand).not.toHaveBeenCalled();
+  });
+
+  it('starts the write before a pending payload has landed, handing each flavour over as a promise', async () => {
+    // WebKit honours clipboard.write only inside the click's activation, so
+    // the item must be built and the write begun synchronously; the content
+    // may follow. Nothing here is awaited before the assertion on purpose.
+    const payload = deferred<typeof RICH>();
+    const result = copyRichTextToClipboard(payload.promise);
+    expect(write).toHaveBeenCalledTimes(1);
+
+    const [items] = write.mock.calls[0] as [FakeClipboardItem[]];
+    const { items: flavours } = items[0];
+    expect(flavours['text/html']).toBeInstanceOf(Promise);
+    expect(flavours['text/plain']).toBeInstanceOf(Promise);
+
+    payload.resolve(RICH);
+    await expect(result).resolves.toBe(true);
+    await expect((await flavours['text/html']).text()).resolves.toBe(RICH.html);
+    await expect((await flavours['text/plain']).text()).resolves.toBe(RICH.text);
+    expect(execCommand).not.toHaveBeenCalled();
+  });
+
+  it('fails the copy when the payload never builds, instead of reporting success', async () => {
+    const payload = deferred<typeof RICH>();
+    const result = copyRichTextToClipboard(payload.promise);
+    payload.reject(new Error('chunk failed to load'));
+    await expect(result).rejects.toThrow('chunk failed to load');
     expect(execCommand).not.toHaveBeenCalled();
   });
 

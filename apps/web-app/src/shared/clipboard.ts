@@ -12,6 +12,14 @@
  * browser has it and otherwise fills both flavours into the `copy` event the
  * command fires, which is how rich copy worked before the async API existed.
  *
+ * The rich entry point also takes its content as a promise. WebKit (Safari,
+ * and every browser on iOS) only honours `clipboard.write` while the click's
+ * user activation is live, and lets a `ClipboardItem` carry promises for
+ * exactly this case: the item is built and the write started inside the
+ * click, and the content may land later — after a chunk has loaded, say.
+ * Handing over content the caller still has to compute is the only way a
+ * lazily loaded copy action works there.
+ *
  * No services, so it is usable from a pure component without pulling the
  * toast and language layers into its tests.
  *
@@ -41,21 +49,38 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
  * Copy HTML with a plain-text alternative. Resolves true on success — which
  * may be the plain fallback alone if the browser refuses both rich paths;
  * a copy with the bold lost still beats no copy.
+ *
+ * Call it synchronously from the click handler. The `ClipboardItem` is built
+ * and the write started before anything is awaited, with each flavour as a
+ * promise, so a still-pending `rich` costs no user activation (see the module
+ * note). A payload that rejects rejects the write and then this call, so the
+ * caller's catch sees it; the command fallback needs the content in hand and
+ * so runs only once it has landed, which on WebKit is too late — that path is
+ * for browsers without `ClipboardItem`, or ones that refused the write.
  */
-export async function copyRichTextToClipboard({ html, text }: RichText): Promise<boolean> {
+export async function copyRichTextToClipboard(
+  rich: RichText | Promise<RichText>
+): Promise<boolean> {
+  const pending = Promise.resolve(rich);
   if (typeof ClipboardItem !== 'undefined' && typeof navigator.clipboard?.write === 'function') {
     try {
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          'text/html': new Blob([html], { type: 'text/html' }),
-          'text/plain': new Blob([text], { type: 'text/plain' }),
-        }),
+      const flavour = (key: keyof RichText, type: string): Promise<Blob> =>
+        pending.then((content) => new Blob([content[key]], { type }));
+      await Promise.all([
+        navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': flavour('html', 'text/html'),
+            'text/plain': flavour('text', 'text/plain'),
+          }),
+        ]),
+        pending,
       ]);
       return true;
     } catch (error) {
       logger.warn('[Clipboard] Rich write unavailable, using fallback', error);
     }
   }
+  const { html, text } = await pending;
   return execCommandCopy(text, html);
 }
 
