@@ -935,7 +935,11 @@ export class CollectionService {
           // had already been persisted. Reject non-strings here, and (in case
           // something else in the per-record work below throws) wrap each
           // iteration so one bad record is skipped, not fatal to the import.
-          if (typeof collection.name !== 'string' || !collection.name || !Array.isArray(collection.dyes)) {
+          if (
+            typeof collection.name !== 'string' ||
+            !collection.name ||
+            !Array.isArray(collection.dyes)
+          ) {
             result.errors.push({
               code: 'skippedInvalid',
               name: typeof collection.name === 'string' ? collection.name : undefined,
@@ -985,7 +989,10 @@ export class CollectionService {
             }
           } catch (err) {
             result.errors.push({ code: 'skippedInvalid', name: collection.name });
-            logger.error(`[CollectionService] Skipped collection "${collection.name}" during import:`, err);
+            logger.error(
+              `[CollectionService] Skipped collection "${collection.name}" during import:`,
+              err
+            );
           }
         }
       }
