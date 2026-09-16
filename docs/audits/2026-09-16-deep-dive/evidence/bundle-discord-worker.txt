@@ -1,0 +1,3 @@
+[2m$ node scripts/check-bundle-size.mjs[22m
+✓ Worker bundle is 2284.3 KiB gzipped (74.4% of 3072 KiB) — 787.7 KiB left.
+exit=0

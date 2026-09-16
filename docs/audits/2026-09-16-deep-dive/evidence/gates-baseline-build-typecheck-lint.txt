@@ -1,0 +1,343 @@
+• turbo 2.10.12
+
+   • Packages in scope: @xivdyetools/auth, @xivdyetools/bot-logic, @xivdyetools/core, @xivdyetools/logger, @xivdyetools/svg, @xivdyetools/test-utils, @xivdyetools/types, @xivdyetools/worker-kit, xivdyetools-api-worker, xivdyetools-discord-worker, xivdyetools-image-worker, xivdyetools-moderation-worker, xivdyetools-oauth-worker, xivdyetools-og-worker, xivdyetools-presets-api, xivdyetools-stoat-worker, xivdyetools-web-app
+   • Running build, type-check, lint in 17 packages
+   • Remote caching disabled, using shared worktree cache
+
+[36m@xivdyetools/types:type-check: [0mcache bypass, force executing [2mae75ae9831c238a5[0m
+[35m@xivdyetools/logger:lint: [0mcache bypass, force executing [2m88c335e78807a3c3[0m
+[32m@xivdyetools/logger:type-check: [0mcache bypass, force executing [2me971fc009f5eb2f5[0m
+[33m@xivdyetools/logger:build: [0mcache bypass, force executing [2m876dc74a98d81814[0m
+[34m@xivdyetools/types:lint: [0mcache bypass, force executing [2mc37bcf96c45d40c7[0m
+[36m@xivdyetools/auth:build: [0mcache bypass, force executing [2mdfff2a4f0d58d67e[0m
+[35m@xivdyetools/types:build: [0mcache bypass, force executing [2mb969e907df8b012e[0m
+[32m@xivdyetools/auth:type-check: [0mcache bypass, force executing [2m4e0581af6a414510[0m
+[33m@xivdyetools/auth:lint: [0mcache bypass, force executing [2m0c190478f55e7a5b[0m
+[36m@xivdyetools/types:type-check: [0m[2m$ tsc --noEmit[22m
+[35m@xivdyetools/logger:lint: [0m[2m$ eslint src && pnpm run lint:dead[22m
+[32m@xivdyetools/logger:type-check: [0m[2m$ tsc --noEmit[22m
+[33m@xivdyetools/logger:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[34m@xivdyetools/types:lint: [0m[2m$ eslint src && pnpm run lint:dead[22m
+[36m@xivdyetools/auth:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[35m@xivdyetools/types:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[32m@xivdyetools/auth:type-check: [0m[2m$ tsc --noEmit[22m
+[33m@xivdyetools/auth:lint: [0m[2m$ eslint src && pnpm run lint:dead[22m
+[34m@xivdyetools/worker-kit:build: [0mcache bypass, force executing [2m952a6bdc40b7cfba[0m
+[36m@xivdyetools/worker-kit:lint: [0mcache bypass, force executing [2m4f7386d9cdf5bbd8[0m
+[35m@xivdyetools/worker-kit:type-check: [0mcache bypass, force executing [2m1e8280c3828d5247[0m
+[32m@xivdyetools/test-utils:build: [0mcache bypass, force executing [2mfc2d6736dc614bd4[0m
+[33m@xivdyetools/core:lint: [0mcache bypass, force executing [2me1a06be00b70b2e1[0m
+[34m@xivdyetools/core:type-check: [0mcache bypass, force executing [2m71e6eaa6bbf70e0c[0m
+[36m@xivdyetools/test-utils:type-check: [0mcache bypass, force executing [2mde4a8505b4f7d012[0m
+[34m@xivdyetools/worker-kit:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[36m@xivdyetools/worker-kit:lint: [0m[2m$ eslint src && pnpm run lint:dead[22m
+[35m@xivdyetools/worker-kit:type-check: [0m[2m$ tsc --noEmit[22m
+[32m@xivdyetools/test-utils:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[33m@xivdyetools/core:lint: [0m[2m$ eslint src && pnpm run lint:dead[22m
+[34m@xivdyetools/core:type-check: [0m[2m$ tsc --noEmit[22m
+[36m@xivdyetools/test-utils:type-check: [0m[2m$ tsc --noEmit[22m
+[35m@xivdyetools/core:build: [0mcache bypass, force executing [2m662dddb428a5ec9c[0m
+[32m@xivdyetools/test-utils:lint: [0mcache bypass, force executing [2m97420962ccc1b6b3[0m
+[33mxivdyetools-image-worker:type-check: [0mcache bypass, force executing [2m3103f8cf68d32392[0m
+[35m@xivdyetools/core:build: [0m[2m$ npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales[22m
+[34mxivdyetools-image-worker:lint: [0mcache bypass, force executing [2m95d9adc5f1562c15[0m
+[35m@xivdyetools/logger:lint: [0m[0m
+[35m@xivdyetools/logger:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\logger\src\core\base-logger.ts[24m
+[35m@xivdyetools/logger:lint: [0m  [2m644:70[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[35m@xivdyetools/logger:lint: [0m
+[35m@xivdyetools/logger:lint: [0m[33m[1m✖ 1 problem (0 errors, 1 warning)[22m[39m
+[35m@xivdyetools/logger:lint: [0m[0m
+[32m@xivdyetools/test-utils:lint: [0m[2m$ eslint src && pnpm run lint:dead[22m
+[33mxivdyetools-image-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[35m@xivdyetools/core:build: [0m
+[35m@xivdyetools/core:build: [0m> @xivdyetools/core@5.2.0 build:locales
+[35m@xivdyetools/core:build: [0m> tsx scripts/build-locales.ts
+[35m@xivdyetools/core:build: [0m
+[34mxivdyetools-image-worker:lint: [0m[2m$ eslint src && pnpm run lint:dead[22m
+[35m@xivdyetools/core:build: [0m🌐 Building locale files...
+[35m@xivdyetools/core:build: [0m
+[35m@xivdyetools/core:build: [0mBuilding English (en)...
+[35m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\en.json (125 dyes)
+[35m@xivdyetools/core:build: [0m
+[35m@xivdyetools/core:build: [0mBuilding Japanese (ja)...
+[35m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\ja.json (125 dyes)
+[35m@xivdyetools/core:build: [0m
+[35m@xivdyetools/core:build: [0mBuilding German (de)...
+[35m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\de.json (125 dyes)
+[35m@xivdyetools/core:build: [0m
+[35m@xivdyetools/core:build: [0mBuilding French (fr)...
+[35m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\fr.json (125 dyes)
+[35m@xivdyetools/core:build: [0m
+[35m@xivdyetools/core:build: [0mBuilding Korean (ko)...
+[35m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\ko.json (125 dyes)
+[35m@xivdyetools/core:build: [0m
+[35m@xivdyetools/core:build: [0mBuilding Chinese (zh)...
+[35m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\zh.json (125 dyes)
+[35m@xivdyetools/core:build: [0m
+[35m@xivdyetools/core:build: [0m✅ Locale files already up to date (nothing written).
+[34m@xivdyetools/types:lint: [0m[2m$ knip --directory ../.. --workspace packages/types --no-config-hints --no-tag-hints[22m
+[36mxivdyetools-oauth-worker:type-check: [0mcache bypass, force executing [2m69ac3fb5ada4f817[0m
+[35m@xivdyetools/logger:lint: [0m[2m$ knip --directory ../.. --workspace packages/logger --no-config-hints --no-tag-hints[22m
+[33m@xivdyetools/auth:lint: [0m[2m$ knip --directory ../.. --workspace packages/auth --no-config-hints --no-tag-hints[22m
+[36mxivdyetools-oauth-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[35mxivdyetools-presets-api:lint: [0mcache bypass, force executing [2m39e192a148db5ded[0m
+[32m@xivdyetools/test-utils:lint: [0m[0m
+[32m@xivdyetools/test-utils:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\test-utils\src\cloudflare\d1.ts[24m
+[32m@xivdyetools/test-utils:lint: [0m  [2m104:67[22m  [33mwarning[39m  'value' may use Object's default stringification format ('[object Object]') when stringified  [2m@typescript-eslint/no-base-to-string[22m
+[32m@xivdyetools/test-utils:lint: [0m
+[32m@xivdyetools/test-utils:lint: [0m[33m[1m✖ 1 problem (0 errors, 1 warning)[22m[39m
+[32m@xivdyetools/test-utils:lint: [0m[0m
+[36m@xivdyetools/worker-kit:lint: [0m[2m$ knip --directory ../.. --workspace packages/worker-kit --no-config-hints --no-tag-hints[22m
+[35mxivdyetools-presets-api:lint: [0m[2m$ eslint src/ && pnpm run lint:dead[22m
+[32m@xivdyetools/test-utils:lint: [0m[2m$ knip --directory ../.. --workspace packages/test-utils --no-config-hints --no-tag-hints[22m
+[35m@xivdyetools/core:build: [0m
+[35m@xivdyetools/core:build: [0m> @xivdyetools/core@5.2.0 copy:locales
+[35m@xivdyetools/core:build: [0m> tsx scripts/copy-locales.ts
+[35m@xivdyetools/core:build: [0m
+[35m@xivdyetools/core:build: [0m📦 Copying 6 locale files to dist...
+[35m@xivdyetools/core:build: [0m   ✓ de.json
+[35m@xivdyetools/core:build: [0m   ✓ en.json
+[35m@xivdyetools/core:build: [0m   ✓ fr.json
+[35m@xivdyetools/core:build: [0m   ✓ ja.json
+[35m@xivdyetools/core:build: [0m   ✓ ko.json
+[35m@xivdyetools/core:build: [0m   ✓ zh.json
+[35m@xivdyetools/core:build: [0m✅ Locale files copied to C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\dist\data\locales
+[32mxivdyetools-oauth-worker:lint: [0mcache bypass, force executing [2mf4e432b147368da3[0m
+[33mxivdyetools-presets-api:type-check: [0mcache bypass, force executing [2m45011ab1506d2dc1[0m
+[34mxivdyetools-image-worker:lint: [0m[2m$ knip --directory ../.. --workspace apps/image-worker --no-config-hints --no-tag-hints[22m
+[34m@xivdyetools/svg:build: [0mcache bypass, force executing [2m1da60be48a719679[0m
+[32mxivdyetools-oauth-worker:lint: [0m[2m$ eslint src/ && pnpm run lint:dead[22m
+[33mxivdyetools-presets-api:type-check: [0m[2m$ tsc --noEmit[22m
+[34m@xivdyetools/svg:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[33m@xivdyetools/core:lint: [0m[0m
+[33m@xivdyetools/core:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\__tests__\integration\performance-benchmarks.test.ts[24m
+[33m@xivdyetools/core:lint: [0m  [2m91:7[22m  [33mwarning[39m  Unused eslint-disable directive (no problems were reported from 'no-console')
+[33m@xivdyetools/core:lint: [0m
+[33m@xivdyetools/core:lint: [0m[33m[1m✖ 1 problem (0 errors, 1 warning)[22m[39m
+[33m@xivdyetools/core:lint: [0m[33m[1m  0 errors and 1 warning potentially fixable with the `--fix` option.[22m[39m
+[33m@xivdyetools/core:lint: [0m[0m
+[36m@xivdyetools/svg:type-check: [0mcache bypass, force executing [2mbebcf7fe9b9c8f00[0m
+[35m@xivdyetools/svg:lint: [0mcache bypass, force executing [2m8b860c0dd39d15dd[0m
+[36m@xivdyetools/svg:type-check: [0m[2m$ tsc --noEmit[22m
+[35m@xivdyetools/svg:lint: [0m[2m$ eslint src && pnpm run lint:dead[22m
+[32mxivdyetools-web-app:build: [0mcache bypass, force executing [2m4a72fd9593ea198a[0m
+[33mxivdyetools-og-worker:lint: [0mcache bypass, force executing [2m0d8b81edc58c76c1[0m
+[34m@xivdyetools/bot-logic:type-check: [0mcache bypass, force executing [2mc0ec9735f1d05fc5[0m
+[36mxivdyetools-api-worker:lint: [0mcache bypass, force executing [2mc2d6e37a2ae3e8c7[0m
+[33m@xivdyetools/core:lint: [0m[2m$ knip --directory ../.. --workspace packages/core --no-config-hints --no-tag-hints[22m
+[32mxivdyetools-web-app:build: [0m[2m$ tsc --noEmit && vite build[22m
+[33mxivdyetools-og-worker:lint: [0m[2m$ knip && knip --production[22m
+[34m@xivdyetools/bot-logic:type-check: [0m[2m$ tsc --noEmit[22m
+[36mxivdyetools-api-worker:lint: [0m[2m$ eslint src/ && pnpm run lint:dead[22m
+[35mxivdyetools-api-worker:type-check: [0mcache bypass, force executing [2m7ebc13f27364486d[0m
+[35mxivdyetools-presets-api:lint: [0m[0m
+[35mxivdyetools-presets-api:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\presets-api\src\services\validation-service.ts[24m
+[35mxivdyetools-presets-api:lint: [0m  [2m217:9[22m  [33mwarning[39m  Unsafe assignment of an `any` value  [2m@typescript-eslint/no-unsafe-assignment[22m
+[35mxivdyetools-presets-api:lint: [0m
+[35mxivdyetools-presets-api:lint: [0m[33m[1m✖ 1 problem (0 errors, 1 warning)[22m[39m
+[35mxivdyetools-presets-api:lint: [0m[0m
+[32m@xivdyetools/bot-logic:build: [0mcache bypass, force executing [2m358d049e3722d3c1[0m
+[35mxivdyetools-api-worker:type-check: [0m[2m$ tsc --noEmit && tsc --noEmit -p tsconfig.docs.json[22m
+[35mxivdyetools-presets-api:lint: [0m[2m$ knip --directory ../.. --workspace apps/presets-api --no-config-hints --no-tag-hints[22m
+[32m@xivdyetools/bot-logic:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[33mxivdyetools-og-worker:type-check: [0mcache bypass, force executing [2m129853286863c90f[0m
+[33mxivdyetools-og-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[34mxivdyetools-web-app:type-check: [0mcache bypass, force executing [2m221d3150cf208c75[0m
+[32mxivdyetools-oauth-worker:lint: [0m[0m
+[32mxivdyetools-oauth-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\oauth\src\handlers\xivauth.ts[24m
+[32mxivdyetools-oauth-worker:lint: [0m  [2m297:9[22m  [33mwarning[39m  Unsafe assignment of type `any[]` to a variable of type `XIVAuthCharacterRegistration[]`  [2m@typescript-eslint/no-unsafe-assignment[22m
+[32mxivdyetools-oauth-worker:lint: [0m
+[32mxivdyetools-oauth-worker:lint: [0m[33m[1m✖ 1 problem (0 errors, 1 warning)[22m[39m
+[32mxivdyetools-oauth-worker:lint: [0m[0m
+[36m@xivdyetools/bot-logic:lint: [0mcache bypass, force executing [2mae5ebef1120aa30c[0m
+[35mxivdyetools-api-worker:build: [0mcache bypass, force executing [2mc291541eb6ff5b4b[0m
+[34mxivdyetools-web-app:type-check: [0m[2m$ tsc --noEmit[22m
+[32mxivdyetools-oauth-worker:lint: [0m[2m$ knip --directory ../.. --workspace apps/oauth --no-config-hints --no-tag-hints[22m
+[36m@xivdyetools/bot-logic:lint: [0m[2m$ eslint src && pnpm run lint:dead[22m
+[35m@xivdyetools/svg:lint: [0m[0m
+[35m@xivdyetools/svg:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\svg\src\preset-swatch.ts[24m
+[35m@xivdyetools/svg:lint: [0m  [2m69:31[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[35m@xivdyetools/svg:lint: [0m
+[35m@xivdyetools/svg:lint: [0m[33m[1m✖ 1 problem (0 errors, 1 warning)[22m[39m
+[35m@xivdyetools/svg:lint: [0m[0m
+[35mxivdyetools-api-worker:build: [0m[2m$ vitepress build docs[22m
+[32mxivdyetools-web-app:lint: [0mcache bypass, force executing [2m98dbc0413fd62cc0[0m
+[35m@xivdyetools/svg:lint: [0m[2m$ knip --directory ../.. --workspace packages/svg --no-config-hints --no-tag-hints[22m
+[32mxivdyetools-web-app:lint: [0m[2m$ eslint src && knip[22m
+[33mxivdyetools-moderation-worker:type-check: [0mcache bypass, force executing [2m42ef535c44b027fa[0m
+[33mxivdyetools-moderation-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[34mxivdyetools-discord-worker:type-check: [0mcache bypass, force executing [2mb0a59d00a7f8b975[0m
+[35mxivdyetools-api-worker:build: [0m
+[35mxivdyetools-api-worker:build: [0m  [32m[1mvitepress[22m v1.6.4[39m
+[35mxivdyetools-api-worker:build: [0m
+[35mxivdyetools-api-worker:build: [0m- building client + server bundles...
+[36mxivdyetools-api-worker:lint: [0m[0m
+[36mxivdyetools-api-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\api-worker\src\chara\xivapi.ts[24m
+[36mxivdyetools-api-worker:lint: [0m  [2m154:23[22m  [33mwarning[39m  'f['ModelMain'] ?? 0' will use Object's default stringification format ('[object Object]') when stringified  [2m@typescript-eslint/no-base-to-string[22m
+[36mxivdyetools-api-worker:lint: [0m  [2m155:22[22m  [33mwarning[39m  'f['ModelSub'] ?? 0' will use Object's default stringification format ('[object Object]') when stringified   [2m@typescript-eslint/no-base-to-string[22m
+[36mxivdyetools-api-worker:lint: [0m
+[36mxivdyetools-api-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\api-worker\src\lib\response.ts[24m
+[36mxivdyetools-api-worker:lint: [0m  [2m37:8[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-api-worker:lint: [0m  [2m45:8[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-api-worker:lint: [0m
+[36mxivdyetools-api-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\api-worker\src\telemetry\schema.ts[24m
+[36mxivdyetools-api-worker:lint: [0m   [2m96:21[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-api-worker:lint: [0m  [2m101:25[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-api-worker:lint: [0m  [2m107:20[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-api-worker:lint: [0m  [2m113:23[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-api-worker:lint: [0m  [2m118:24[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-api-worker:lint: [0m
+[36mxivdyetools-api-worker:lint: [0m[33m[1m✖ 9 problems (0 errors, 9 warnings)[22m[39m
+[36mxivdyetools-api-worker:lint: [0m[0m
+[36mxivdyetools-discord-worker:lint: [0mcache bypass, force executing [2m9b007b6f6ebb077f[0m
+[34mxivdyetools-discord-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[36mxivdyetools-api-worker:lint: [0m[2m$ knip --directory ../.. --workspace apps/api-worker --no-config-hints --no-tag-hints[22m
+[36mxivdyetools-discord-worker:lint: [0m[2m$ eslint src/ && pnpm run lint:dead[22m
+[32mxivdyetools-web-app:build: [0m[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+[32mxivdyetools-web-app:build: [0m  - `__dirname` (vite.config.ts:60:20). Use `import.meta.dirname` instead
+[32mxivdyetools-web-app:build: [0m  - import "./vite-plugin-async-css" without a file extension (vite.config.ts:3:26). Add the file extension
+[32mxivdyetools-web-app:build: [0m  - import "./vite-plugin-changelog-parser" without a file extension (vite.config.ts:4:33). Add the file extension
+[32mxivdyetools-web-app:build: [0m  - import "./vite-plugin-beta-branding" without a file extension (vite.config.ts:5:30). Add the file extension
+[32mxivdyetools-web-app:build: [0m  - JSON import "./package.json" without import attributes (vite.config.ts:6:17). Add `with { type: 'json' }`
+[32mxivdyetools-web-app:build: [0m  - import "./src/shared/beta-branding" without a file extension (vite-plugin-beta-branding.ts:16:8). Add the file extension
+[32mxivdyetools-web-app:build: [0mSet `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+[32mxivdyetools-web-app:build: [0m[36mvite v8.3.0 [32mbuilding client environment for production...[36m[39m
+[32mxivdyetools-web-app:build: [0mtransforming...
+[35mxivdyetools-moderation-worker:lint: [0mcache bypass, force executing [2m6f906ad1b8176de7[0m
+[32mxivdyetools-web-app:build: [0m[changelog-parser] Parsed 30 changelog entries
+[32mxivdyetools-web-app:build: [0m[32m✓[0m 256 modules transformed.
+[32mxivdyetools-web-app:build: [0mrendering chunks...
+[35mxivdyetools-moderation-worker:lint: [0m[2m$ eslint src/ && pnpm run lint:dead[22m
+[36m@xivdyetools/bot-logic:lint: [0m[0m
+[36m@xivdyetools/bot-logic:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\bot-logic\src\commands\comparison.ts[24m
+[36m@xivdyetools/bot-logic:lint: [0m  [2m64:74[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36m@xivdyetools/bot-logic:lint: [0m
+[36m@xivdyetools/bot-logic:lint: [0m[33m[1m✖ 1 problem (0 errors, 1 warning)[22m[39m
+[36m@xivdyetools/bot-logic:lint: [0m[0m
+[32mxivdyetools-web-app:build: [0mcomputing gzip size...
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[32mindex.html                                   [0m[1;2m  6.63 kB[0m[2m │ gzip:  2.32 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[35mindex-YUz8xbjg.css                    [0m[1;2m 57.45 kB[0m[2m │ gzip: 11.81 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mdownload-file-zN_HW_-M.js             [0m[1;2m  0.29 kB[0m[2m │ gzip:  0.23 kB[0m[2m │ map:     1.26 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mexample-link-Bpkk8mjP.js              [0m[1;2m  0.75 kB[0m[2m │ gzip:  0.46 kB[0m[2m │ map:     3.70 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mrolldown-runtime-CZmViO_C.js          [0m[1;2m  0.80 kB[0m[2m │ gzip:  0.47 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mclipboard-DC_OyUmn.js                 [0m[1;2m  1.25 kB[0m[2m │ gzip:  0.66 kB[0m[2m │ map:     6.62 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mstate-icons-Ce6R0RN_.js               [0m[1;2m  1.40 kB[0m[2m │ gzip:  0.75 kB[0m[2m │ map:     4.29 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mpreset-i18n-DA4nCjTN.js               [0m[1;2m  2.08 kB[0m[2m │ gzip:  0.88 kB[0m[2m │ map:    11.04 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mglamour-list-actions-CPcZXrtJ.js      [0m[1;2m  2.55 kB[0m[2m │ gzip:  1.26 kB[0m[2m │ map:    15.00 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mpreset-category-selector-C_Cleaa_.js  [0m[1;2m  2.81 kB[0m[2m │ gzip:  1.13 kB[0m[2m │ map:     9.21 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36msignin-modal-B7GSjzU0.js              [0m[1;2m  3.99 kB[0m[2m │ gzip:  1.18 kB[0m[2m │ map:     6.23 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mhybrid-preset-service-CfPkBpz5.js     [0m[1;2m  4.55 kB[0m[2m │ gzip:  1.60 kB[0m[2m │ map:    18.95 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mshare-button-VCVVww2y.js              [0m[1;2m  5.50 kB[0m[2m │ gzip:  1.93 kB[0m[2m │ map:    12.40 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mmy-submissions-modal-D1UMwkEz.js      [0m[1;2m  5.78 kB[0m[2m │ gzip:  2.28 kB[0m[2m │ map:    13.96 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mexport-sheet-EO9HEslR.js              [0m[1;2m  5.83 kB[0m[2m │ gzip:  2.24 kB[0m[2m │ map:    24.60 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mmetric-help-CmJztZ10.js               [0m[1;2m  7.44 kB[0m[2m │ gzip:  2.23 kB[0m[2m │ map:    21.23 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mitem-links-menu-BiF_fQkA.js           [0m[1;2m  7.67 kB[0m[2m │ gzip:  2.92 kB[0m[2m │ map:    30.22 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mtutorial-spotlight-BP-t_k0H.js        [0m[1;2m  8.99 kB[0m[2m │ gzip:  2.68 kB[0m[2m │ map:    28.22 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mpreset-submission-form-DBT1Veyl.js    [0m[1;2m 14.19 kB[0m[2m │ gzip:  3.75 kB[0m[2m │ map:    39.07 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mpreset-edit-form-ApD2GGi-.js          [0m[1;2m 14.55 kB[0m[2m │ gzip:  3.86 kB[0m[2m │ map:    44.23 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mvendor-lit-IqwEurJp.js                [0m[1;2m 17.25 kB[0m[2m │ gzip:  6.64 kB[0m[2m │ map:    41.12 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36maccessibility-tool-DNY31554.js        [0m[1;2m 32.91 kB[0m[2m │ gzip:  7.48 kB[0m[2m │ map:    95.77 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mbudget-tool-hhIL2yV1.js               [0m[1;2m 34.20 kB[0m[2m │ gzip:  9.21 kB[0m[2m │ map:    98.35 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mmixer-tool-A6RYp9YI.js                [0m[1;2m 35.90 kB[0m[2m │ gzip:  8.68 kB[0m[2m │ map:   107.41 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36m_virtual_changelog-DNsS1-UN.js        [0m[1;2m 36.51 kB[0m[2m │ gzip: 13.34 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mharmony-tool-C69_9Js3.js              [0m[1;2m 39.27 kB[0m[2m │ gzip: 10.48 kB[0m[2m │ map:   125.70 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mresult-card-CNkXqvPy.js               [0m[1;2m 40.38 kB[0m[2m │ gzip:  8.29 kB[0m[2m │ map:    88.46 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mcomparison-tool-K1LE5NJ-.js           [0m[1;2m 45.04 kB[0m[2m │ gzip:  9.69 kB[0m[2m │ map:   122.92 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mgradient-tool-B_g0-Dec.js             [0m[1;2m 49.16 kB[0m[2m │ gzip: 11.01 kB[0m[2m │ map:   144.25 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mzh-DvE78Y4f.js                        [0m[1;2m 49.53 kB[0m[2m │ gzip: 21.70 kB[0m[2m │ map:    65.96 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mdye-selector-BdjL4bTU.js              [0m[1;2m 50.83 kB[0m[2m │ gzip: 11.62 kB[0m[2m │ map:   137.42 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mextractor-tool-DNiWO3_p.js            [0m[1;2m 51.02 kB[0m[2m │ gzip: 12.73 kB[0m[2m │ map:   154.64 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36men-crOdM0gl.js                        [0m[1;2m 52.09 kB[0m[2m │ gzip: 20.28 kB[0m[2m │ map:    68.10 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mpreset-tool-CwIPUGNL.js               [0m[1;2m 53.26 kB[0m[2m │ gzip: 12.88 kB[0m[2m │ map:   118.72 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mde-D1agtMFe.js                        [0m[1;2m 57.54 kB[0m[2m │ gzip: 22.03 kB[0m[2m │ map:    73.55 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mko-CoNX6C6P.js                        [0m[1;2m 58.98 kB[0m[2m │ gzip: 22.30 kB[0m[2m │ map:    74.99 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mfr-B9T7_Drr.js                        [0m[1;2m 60.02 kB[0m[2m │ gzip: 22.32 kB[0m[2m │ map:    76.03 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mja-CsbGlQQS.js                        [0m[1;2m 63.21 kB[0m[2m │ gzip: 22.74 kB[0m[2m │ map:    79.20 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mswatch-tool-B7ZkjyDW.js               [0m[1;2m 95.67 kB[0m[2m │ gzip: 22.06 kB[0m[2m │ map:   278.60 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mindex-C5tkDwE_.js                     [0m[1;2m107.68 kB[0m[2m │ gzip: 31.76 kB[0m[2m │ map:   450.78 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mv4-layout-BeGCW2nD.js                 [0m[1;2m220.94 kB[0m[2m │ gzip: 45.36 kB[0m[2m │ map:   445.48 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mmodals-P0Rr6XmS.js                    [0m[1;2m281.20 kB[0m[2m │ gzip: 83.59 kB[0m[2m │ map:   796.48 kB[0m
+[32mxivdyetools-web-app:build: [0m[2mdist/[0m[2massets/[0m[36mvendor-core-kQpXmHhL.js               [0m[1;2m741.62 kB[0m[2m │ gzip: 83.55 kB[0m[2m │ map: 3,028.25 kB[0m
+[32mxivdyetools-web-app:build: [0m
+[32mxivdyetools-web-app:build: [0m[33m[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0msrc/services/auth-service.ts is dynamically imported by src/services/index.ts but also statically imported by src/components/signin-modal.ts, src/services/community-preset-service.ts, src/services/index.ts, src/services/preset-submission-service.ts, dynamic import will not move module into another chunk.
+[32mxivdyetools-web-app:build: [0m[39m
+[32mxivdyetools-web-app:build: [0m[32m✓ built in 2.62s[39m
+[32mxivdyetools-stoat-worker:build: [0mcache bypass, force executing [2m221b5cc293bdd889[0m
+[33mxivdyetools-stoat-worker:type-check: [0mcache bypass, force executing [2m30ec8dab0a7ae4d1[0m
+[36m@xivdyetools/bot-logic:lint: [0m[2m$ knip --directory ../.. --workspace packages/bot-logic --no-config-hints --no-tag-hints[22m
+[34mxivdyetools-stoat-worker:lint: [0mcache bypass, force executing [2m80a8f8b31bd4c5fa[0m
+[32mxivdyetools-stoat-worker:build: [0m[2m$ tsup src/index.ts --format esm --dts --clean[22m
+[33mxivdyetools-stoat-worker:type-check: [0m[2m$ tsc --noEmit[22m
+[34mxivdyetools-stoat-worker:lint: [0m[2m$ eslint src/[22m
+[32mxivdyetools-stoat-worker:build: [0m[34mCLI[39m Building entry: src/index.ts
+[32mxivdyetools-stoat-worker:build: [0m[34mCLI[39m Using tsconfig: tsconfig.json
+[32mxivdyetools-stoat-worker:build: [0m[34mCLI[39m tsup v8.5.1
+[32mxivdyetools-stoat-worker:build: [0m[34mCLI[39m Target: es2022
+[32mxivdyetools-stoat-worker:build: [0m[34mCLI[39m Cleaning output folder
+[32mxivdyetools-stoat-worker:build: [0m[34mESM[39m Build start
+[32mxivdyetools-stoat-worker:build: [0m[32mESM[39m [1mdist\index.js [22m[32m19.50 KB[39m
+[32mxivdyetools-stoat-worker:build: [0m[32mESM[39m ⚡️ Build success in 85ms
+[35mxivdyetools-api-worker:build: [0m[32m✓[0m building client + server bundles...
+[35mxivdyetools-api-worker:build: [0m- rendering pages...
+[35mxivdyetools-api-worker:build: [0m[32m✓[0m rendering pages...
+[35mxivdyetools-api-worker:build: [0mbuild complete in 10.12s.
+[32mxivdyetools-stoat-worker:build: [0m[34mDTS[39m Build start
+[32mxivdyetools-stoat-worker:build: [0m[32mDTS[39m ⚡️ Build success in 2338ms
+[32mxivdyetools-stoat-worker:build: [0m[32mDTS[39m [1mdist\index.d.ts [22m[32m13.00 B[39m
+[34mxivdyetools-stoat-worker:lint: [0m[0m
+[34mxivdyetools-stoat-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\stoat-worker\src\test-utils\revolt-mocks.ts[24m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m15:31[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m15:49[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m38:25[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m39:27[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m40:25[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m40:43[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m65:43[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m68:28[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m68:46[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m69:29[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m69:47[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m70:30[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m  [2m70:48[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m
+[34mxivdyetools-stoat-worker:lint: [0m
+[34mxivdyetools-stoat-worker:lint: [0m[33m[1m✖ 13 problems (0 errors, 13 warnings)[22m[39m
+[34mxivdyetools-stoat-worker:lint: [0m[0m
+[35mxivdyetools-moderation-worker:lint: [0m[2m$ knip --directory ../.. --workspace apps/moderation-worker --no-config-hints --no-tag-hints[22m
+[36mxivdyetools-discord-worker:lint: [0m[0m
+[36mxivdyetools-discord-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\discord-worker\src\commands\schemas.ts[24m
+[36mxivdyetools-discord-worker:lint: [0m  [2m44:47[22m  [33mwarning[39m  The type of computed name [value] cannot be resolved  [2m@typescript-eslint/no-unsafe-member-access[22m
+[36mxivdyetools-discord-worker:lint: [0m  [2m44:55[22m  [33mwarning[39m  Unsafe assignment of an error typed value             [2m@typescript-eslint/no-unsafe-assignment[22m
+[36mxivdyetools-discord-worker:lint: [0m
+[36mxivdyetools-discord-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\discord-worker\src\handlers\buttons\index.ts[24m
+[36mxivdyetools-discord-worker:lint: [0m  [2m74:31[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-discord-worker:lint: [0m
+[36mxivdyetools-discord-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\discord-worker\src\handlers\commands\extractor.ts[24m
+[36mxivdyetools-discord-worker:lint: [0m  [2m355:15[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-discord-worker:lint: [0m  [2m550:40[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-discord-worker:lint: [0m
+[36mxivdyetools-discord-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\discord-worker\src\handlers\commands\harmony.ts[24m
+[36mxivdyetools-discord-worker:lint: [0m   [2m47:9[22m  [33mwarning[39m  Unsafe assignment of an error typed value  [2m@typescript-eslint/no-unsafe-assignment[22m
+[36mxivdyetools-discord-worker:lint: [0m  [2m131:5[22m  [33mwarning[39m  Unsafe assignment of an error typed value  [2m@typescript-eslint/no-unsafe-assignment[22m
+[36mxivdyetools-discord-worker:lint: [0m
+[36mxivdyetools-discord-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\discord-worker\src\handlers\commands\mixer-v4.ts[24m
+[36mxivdyetools-discord-worker:lint: [0m  [2m76:15[22m  [33mwarning[39m  Missing return type on function  [2m@typescript-eslint/explicit-function-return-type[22m
+[36mxivdyetools-discord-worker:lint: [0m
+[36mxivdyetools-discord-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\discord-worker\src\handlers\commands\preset.test.ts[24m
+[36mxivdyetools-discord-worker:lint: [0m  [2m174:55[22m  [33mwarning[39m  'vars?.count ?? 0' will use Object's default stringification format ('[object Object]') when stringified  [2m@typescript-eslint/no-base-to-string[22m
+[36mxivdyetools-discord-worker:lint: [0m  [2m194:41[22m  [33mwarning[39m  'vars?.count ?? 0' will use Object's default stringification format ('[object Object]') when stringified  [2m@typescript-eslint/no-base-to-string[22m
+[36mxivdyetools-discord-worker:lint: [0m  [2m195:43[22m  [33mwarning[39m  'vars?.count ?? 0' will use Object's default stringification format ('[object Object]') when stringified  [2m@typescript-eslint/no-base-to-string[22m
+[36mxivdyetools-discord-worker:lint: [0m  [2m200:77[22m  [33mwarning[39m  'vars?.[k] ?? m' will use Object's default stringification format ('[object Object]') when stringified    [2m@typescript-eslint/no-base-to-string[22m
+[36mxivdyetools-discord-worker:lint: [0m
+[36mxivdyetools-discord-worker:lint: [0m[4mC:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\apps\discord-worker\src\utils\discord-api.safe.test.ts[24m
+[36mxivdyetools-discord-worker:lint: [0m  [2m174:19[22m  [33mwarning[39m  'url' may use Object's default stringification format ('[object Object]') when stringified  [2m@typescript-eslint/no-base-to-string[22m
+[36mxivdyetools-discord-worker:lint: [0m
+[36mxivdyetools-discord-worker:lint: [0m[33m[1m✖ 13 problems (0 errors, 13 warnings)[22m[39m
+[36mxivdyetools-discord-worker:lint: [0m[0m
+[36mxivdyetools-discord-worker:lint: [0m[2m$ knip --directory ../.. --workspace apps/discord-worker --no-config-hints --no-tag-hints[22m
+
+[1m Tasks:    [32m[1m45 successful[0m, 45 total[0m
+[1mCached:    [1m0 cached[0m, 45 total[0m
+[1m  Time:    [1m57.22s[0m [0m
+
+[33;40m WARNING [0m [33;49mno output files found for task xivdyetools-api-worker#build. Please check your `outputs` key in `turbo.json`[0m
+exit=0

@@ -1,0 +1,59 @@
+[2m$ node scripts/check-bundle-size.js[22m
+
+📦 Bundle Size Check
+
+============================================================
+🟠 dye-selector-BdjL4bTU.js            49.64 KB     / 50.00 KB     (99.3%   ) dye selector
+🟠 v4-layout-BeGCW2nD.js               215.76 KB    / 218.00 KB    (99%     ) layout shell
+🟠 swatch-tool-B7ZkjyDW.js             93.44 KB     / 95.00 KB     (98.4%   ) tool: swatch
+🟠 modals-P0Rr6XmS.js                  274.62 KB    / 280.00 KB    (98.1%   ) core runtime (named "modals")
+⚠️ _virtual_changelog-DNsS1-UN.js      35.66 KB     / 40.00 KB     (89.1%   ) release notes (on open)
+⚠️ vendor-lit-IqwEurJp.js              16.85 KB     / 20.00 KB     (84.2%   ) lit framework
+⚠️ preset-tool-CwIPUGNL.js             52.01 KB     / 65.00 KB     (80%     ) tool: preset
+⚠️ result-card-CNkXqvPy.js             39.44 KB     / 50.00 KB     (78.9%   ) result card
+⚠️ vendor-core-kQpXmHhL.js             724.25 KB    / 950.00 KB    (76.2%   ) swatch reference data
+⚠️ budget-tool-hhIL2yV1.js             33.41 KB     / 45.00 KB     (74.2%   ) tool: budget
+⚠️ gradient-tool-B_g0-Dec.js           48.01 KB     / 65.00 KB     (73.9%   ) tool: gradient
+⚠️ comparison-tool-K1LE5NJ-.js         43.99 KB     / 60.00 KB     (73.3%   ) tool: comparison
+⚠️ accessibility-tool-DNY31554.js      32.14 KB     / 45.00 KB     (71.4%   ) tool: accessibility
+⚠️ index-C5tkDwE_.js                   105.17 KB    / 150.00 KB    (70.1%   ) main entry
+⚠️ mixer-tool-A6RYp9YI.js              35.06 KB     / 50.00 KB     (70.1%   ) tool: mixer
+✅ harmony-tool-C69_9Js3.js            38.36 KB     / 55.00 KB     (69.7%   ) tool: harmony
+✅ ja-CsbGlQQS.js                      61.74 KB     / 95.00 KB     (65%     ) locale
+✅ fr-B9T7_Drr.js                      58.62 KB     / 95.00 KB     (61.7%   ) locale
+✅ ko-CoNX6C6P.js                      57.60 KB     / 95.00 KB     (60.6%   ) locale
+✅ de-D1agtMFe.js                      56.20 KB     / 95.00 KB     (59.2%   ) locale
+✅ en-crOdM0gl.js                      50.87 KB     / 95.00 KB     (53.5%   ) locale
+✅ index-YUz8xbjg.css                  56.11 KB     / 105.00 KB    (53.4%   ) css
+✅ zh-DvE78Y4f.js                      48.37 KB     / 95.00 KB     (50.9%   ) locale
+✅ extractor-tool-DNiWO3_p.js          49.83 KB     / 100.00 KB    (49.8%   ) tool: extractor
+✅ preset-edit-form-ApD2GGi-.js        14.21 KB     / 60.00 KB     (23.7%   ) unlisted
+✅ preset-submission-form-DBT1Veyl.js  13.86 KB     / 60.00 KB     (23.1%   ) unlisted
+✅ tutorial-spotlight-BP-t_k0H.js      8.78 KB      / 60.00 KB     (14.6%   ) unlisted
+✅ item-links-menu-BiF_fQkA.js         7.50 KB      / 60.00 KB     (12.5%   ) unlisted
+✅ metric-help-CmJztZ10.js             7.27 KB      / 60.00 KB     (12.1%   ) unlisted
+✅ export-sheet-EO9HEslR.js            5.70 KB      / 60.00 KB     (9.5%    ) unlisted
+✅ my-submissions-modal-D1UMwkEz.js    5.65 KB      / 60.00 KB     (9.4%    ) unlisted
+✅ share-button-VCVVww2y.js            5.38 KB      / 60.00 KB     (9%      ) unlisted
+✅ hybrid-preset-service-CfPkBpz5.js   4.44 KB      / 60.00 KB     (7.4%    ) unlisted
+✅ signin-modal-B7GSjzU0.js            3.91 KB      / 60.00 KB     (6.5%    ) unlisted
+✅ preset-category-selector-C_Cleaa_.js 2.75 KB      / 60.00 KB     (4.6%    ) unlisted
+✅ glamour-list-actions-CPcZXrtJ.js    2.49 KB      / 60.00 KB     (4.2%    ) unlisted
+✅ preset-i18n-DA4nCjTN.js             2.04 KB      / 60.00 KB     (3.4%    ) unlisted
+✅ state-icons-Ce6R0RN_.js             1.37 KB      / 60.00 KB     (2.3%    ) unlisted
+✅ clipboard-DC_OyUmn.js               1.23 KB      / 60.00 KB     (2%      ) unlisted
+✅ rolldown-runtime-CZmViO_C.js        808 B        / 60.00 KB     (1.3%    ) unlisted
+✅ example-link-Bpkk8mjP.js            751 B        / 60.00 KB     (1.2%    ) unlisted
+✅ load-css-async-e4fdbd1c.js          383 B        / 60.00 KB     (0.6%    ) unlisted
+✅ download-file-zN_HW_-M.js           297 B        / 60.00 KB     (0.5%    ) unlisted
+============================================================
+🟠 JS payload (one locale)             1.99 MB      / 2.15 MB      (92.6%   ) what one visitor can download
+⚠️ JS emitted (all locales)            2.26 MB      / 2.73 MB      (82.5%   ) deploy size
+============================================================
+
+ℹ️  19 chunk(s) had no named limit and used the 60.00 KB default.
+   Name them in BUNDLE_LIMITS if they deserve their own budget.
+
+✅ Bundle size check PASSED - all bundles within limits
+
+exit=0

@@ -1,0 +1,576 @@
+[
+  {
+    "id": "BUG-001",
+    "title": "XIVAuth-only preset authors cannot be banned: both ban entry points require a Discord snowflake and `banned_users.xivauth_id` is never written",
+    "severity": "MEDIUM", "type": "Logic", "unit": "presets-api (+ moderation-worker)", "tested": "no",
+    "location": [
+      "`apps/presets-api/src/middleware/auth.ts:71-77` — `resolveJWTUserId` falls back to the JWT `sub` UUID for XIVAuth-only accounts; that UUID becomes `author_discord_id` on every preset they submit",
+      "`apps/moderation-worker/src/handlers/commands/preset.ts:521,621`, `handlers/buttons/ban-confirmation.ts:16,86` — every ban target must match `/^\\d{17,20}$/` (FINDING-020 / MOD-5), so a UUID author is refused",
+      "`apps/presets-api/src/middleware/ban-check.ts:30-36` — `isUserBanned` reads `discord_id` only; `xivauth_id` is read by `ban-service.ts:174-194,649` but no code path writes it"
+    ],
+    "evidence": [
+      "Reproduction: sign in with XIVAuth only, submit a preset, `/preset ban_user` on that author → 'must be a Discord snowflake'; a hand-inserted `xivauth_id` row would never match the check either",
+      "`git grep 'INTO banned_users'` → one writer (`ban-service.ts:449`), columns `(id, discord_id, …)`; XIVAuth login is live (`apps/web-app/src/services/auth-service.ts:705`)",
+      "Reviewer row `presets-api-01` (`evidence/review-presets-api.md`), re-framed by the coordinator and confirmed by the Opus pass (`evidence/verifier-pass.md`)"
+    ],
+    "fix": [
+      "Decide the identity key for bans: either (a) let moderation-worker ban any `author_discord_id` value it read from `presets` (relax the snowflake gate to snowflake-or-UUID at the two gates + the autocomplete), or (b) write `xivauth_id` on ban and make `isUserBanned` check `discord_id = ? OR xivauth_id = ?`",
+      "(a) is one moderation-worker deploy; (b) is a presets-api + moderation-worker pair. Either way add a ban-check test that binds a UUID (closes BUG-043)"
+    ]
+  },
+  {
+    "id": "BUG-002",
+    "title": "Extractor share links were dropped by the 4A rebuild while `ShareService.ExtractorShareParams` and og-worker's `/og/extractor/:colors.png` card remain with no producer",
+    "severity": "MEDIUM", "type": "State", "unit": "web-app", "tested": "no",
+    "location": [
+      "`apps/web-app/src/components/extractor-tool.ts` — no `ShareService`, `v4-share-button` or `URLSearchParams` reference anywhere in the 2,156-line file (every other tool wires its own share button)",
+      "`apps/web-app/src/services/share-service.ts:114,136,285,313` — `ExtractorShareParams` encoder/decoder still present, referenced only by its own union",
+      "`apps/og-worker/src/index.ts:1047` — `/og/extractor/:colors.png` still served and tested (`index.test.ts:554-629`)"
+    ],
+    "evidence": [
+      "Reproduction: open Extractor, extract a palette → no Share control; paste a pre-4A `/extractor?…` share URL → the tool ignores its params (it never consumes them)",
+      "Reviewer row `webapp-tools-b-01`; Opus pass confirmed no v4-shell path supplies extractor sharing"
+    ],
+    "fix": [
+      "Either restore the share button on the 4A extractor (produce + consume `ExtractorShareParams`, so the OG card is reachable again) or retire the feature deliberately: remove the encoder branch, the og-worker route and its tests in one change",
+      "Product decision first; the retire path touches og-worker (its bare deploy is the live beta)"
+    ]
+  },
+  {
+    "id": "BUG-003",
+    "title": "Swatch 'Submit to Community' dynamic import has no `.catch()`: a stale-deploy chunk 404 is a silent dead click",
+    "severity": "MEDIUM", "type": "Error handling", "unit": "web-app", "tested": "no",
+    "location": [
+      "`apps/web-app/src/components/swatch-tool.ts:1546-1548` — `void import('@components/preset-submission-form').then(({ showPresetSubmissionForm }) => …)` with no rejection handler",
+      "`apps/web-app/src/components/v4/config-sidebar.ts:1743-1753`, `chara-import.ts:498-504` — the two sibling call sites both `.catch` and toast"
+    ],
+    "evidence": [
+      "Reproduction: deploy a new build while a tab holds the old HTML (the Pages `immutable` asset-cache incident), click Make a palette → Submit → nothing happens, no toast; `changelog-modal.ts:111` records that the app installs no global `unhandledrejection` handler (BUG-090)",
+      "Reviewer row `webapp-tools-a-02`; Opus pass confirmed"
+    ],
+    "fix": [
+      "Add the same `.catch` + `ToastService.error(LanguageService.t('common.loadFailed'))` the siblings use; one-line change plus a test that rejects the import mock and asserts the toast"
+    ]
+  },
+  {
+    "id": "BUG-004",
+    "title": "Preset detail view fetches Universalis prices into `priceData` on every preset and never reads it — 'Show prices' is a silent no-op there",
+    "severity": "MEDIUM", "type": "Logic", "unit": "web-app", "tested": "no",
+    "location": [
+      "`apps/web-app/src/components/v4/preset-detail.ts:127-141,594-641,678-710` — `marketConfig`, `priceData`, the `prices-updated` subscription and `fetchPricesIfNeeded()` all write `this.priceData`",
+      "`apps/web-app/src/components/v4/preset-detail.ts:958` — the dye row emits `.dye-price` from the static vendor `formatGil(dye.cost)`; no line after 703 reads `priceData`"
+    ],
+    "evidence": [
+      "Reproduction: enable Show prices, open any preset → rows show vendor cost only, while the network tab shows the Universalis fan-out for the preset's dyes",
+      "Reviewer row `webapp-v4-19` (graded HIGH); Opus pass corrected to MEDIUM because the row is not wrong, only the toggle is inert"
+    ],
+    "fix": [
+      "Render `priceData.get(getMarketItemID(dye))` in the dye row when `marketConfig.showPrices` (the same presentation `market-board.ts` uses), or drop the fetch and the subscription if the view is meant to stay vendor-only",
+      "Add a test that seeds `priceData` and asserts the rendered gil differs from `dye.cost`"
+    ]
+  },
+  {
+    "id": "BUG-005",
+    "title": "Browser Back from a preset detail remounts `<v4-preset-tool>` and loses tab, search and scroll because `pushState` omits `toolId`",
+    "severity": "MEDIUM", "type": "State", "unit": "web-app", "tested": "no",
+    "location": [
+      "`apps/web-app/src/components/v4/preset-tool.ts:762-766` — `window.history.pushState({ preset: id }, '', '/presets/:id')`, no `toolId`",
+      "`apps/web-app/src/services/router-service.ts:356-375` — `handlePopState` falls back to `parseCurrentPath()` and notifies unconditionally",
+      "`apps/web-app/src/components/v4-layout.ts:316-321,658-668` — `loadToolContent('presets')` clears the container and `createElement('v4-preset-tool')` with no same-tool skip"
+    ],
+    "evidence": [
+      "Reproduction: Presets → switch tab / type a search / scroll → open a preset → Back: tab (`preset-tool.ts:92`), `searchQuery` (132), scroll and the loaded pool reset and refetch",
+      "Reviewer row `webapp-v4-22`; Opus pass confirmed by tracing popstate through the router and the layout"
+    ],
+    "fix": [
+      "Either push `{ toolId: 'presets', preset: id }` and have `handlePopState` skip the notify when the tool is unchanged, or make `loadToolContent` a no-op for same-tool popstate (the shell already knows the mounted tool)",
+      "Regression test: pushState → popstate → assert the same element instance survives"
+    ]
+  },
+  {
+    "id": "BUG-006",
+    "title": "Bot `/swatch` card drops the L/R eye marker on off-grid rows, so off-grid heterochromia renders two identical 'EYES · OFF GRID' rows",
+    "severity": "MEDIUM", "type": "Edge case", "unit": "bot-logic (publish) → discord-worker (deploy)", "tested": "no",
+    "location": [
+      "`packages/bot-logic/src/commands/swatch.ts:248-254` — `if (!offGrid && (slot.slot === 'leftEye' || …)) addr += '·L' | '·R' | '·LR'`; the suffix is skipped whenever `offGrid`",
+      "`packages/bot-logic/src/commands/swatch.ts:115-125` — `SLOT_KEYS` maps both eyes to `card.slotEyes`, so the label cannot disambiguate either"
+    ],
+    "evidence": [
+      "Reproduction: a `.chara` with `eyesShareIndex === false` whose eye colours are both off-grid → two rows labelled EYES / OFF GRID with different swatches and no left/right cue",
+      "Reviewer row `pkg-svg-bot-logic-01`; Opus pass confirmed"
+    ],
+    "fix": [
+      "Append the `·L`/`·R`/`·LR` marker regardless of `offGrid` (put it on the label or after the OFF GRID token); add a heterochromia-off-grid case to `swatch.test.ts`",
+      "Two sprints: publish `@xivdyetools/bot-logic`, then deploy discord-worker"
+    ]
+  },
+  {
+    "id": "BUG-007",
+    "title": "`createMockDye()` draws stainIDs from `Math.random()` over 254 values with no uniqueness, so every workspace test run has a ~0.4 % chance of a red that is nobody's fault",
+    "severity": "MEDIUM", "type": "Race", "unit": "test-utils", "tested": "the existing test is the flake",
+    "location": [
+      "`packages/test-utils/src/factories/dye.ts:35-37` — `randomStainId()` returns `floor(random()*254)+1`",
+      "`packages/test-utils/src/factories/dye.ts:181-183` — `stainID`, `itemID` and `id` are all derived from that draw",
+      "`packages/test-utils/tests/factories/dye.test.ts:90-95` — 'generates unique IDs' asserts `dye1.id !== dye2.id`"
+    ],
+    "evidence": [
+      "This audit's baseline `turbo run test:coverage --force` failed exactly here: `expected 5794 not to be 5794` (`evidence/coverage-baseline.txt:506-535`); the plain `test` run 20 minutes earlier passed",
+      "P(collision per pair) = 1/254 ≈ 0.39 %; any consumer building N mock dyes collides with P ≈ N²/508"
+    ],
+    "fix": [
+      "Make the default deterministic and unique: a module-level counter over 1..254 (wrap → throw or reset per test via `vi` hooks), keep `randomStainId` only behind an explicit `{ random: true }`",
+      "Workspace-private package: merge only, every consumer re-resolves it from `dist` on the next run"
+    ]
+  },
+  {
+    "id": "BUG-008",
+    "title": "`/manual topic:🪙` still answers non-deferred and, on a cold isolate, awaits two 10 s service-binding calls inside Discord's 3 s ack",
+    "severity": "MEDIUM", "type": "Resource", "unit": "discord-worker", "tested": "no",
+    "supersedes": "residual of 2026-09-02-deep-dive/BUG-034 (fixed by caching; the cold-cache path was left)",
+    "location": [
+      "`apps/discord-worker/src/handlers/commands/manual.ts:338,346` — `await resolveLodestoneRegion(...)` runs before the `type: 4` reply",
+      "`apps/discord-worker/src/handlers/commands/manual.ts:255-265` — cold cache → `Promise.all([getCachedWorlds, getCachedDataCenters])`, each a service-binding call with `REQUEST_TIMEOUT = 10000` (`services/budget/universalis-client.ts:79`)"
+    ],
+    "evidence": [
+      "Reproduction: new isolate (or > 1 h since the last world lookup) + a saved world + a slow api-worker → 'The application did not respond'",
+      "Reviewer row `discord-handlers-05`; Opus pass confirmed and kept MEDIUM as an operational risk with a narrow trigger"
+    ],
+    "fix": [
+      "Defer the response for this one topic (`DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` + follow-up), or give the two lookups a 2 s `AbortSignal` budget and degrade to the no-link state — the function already returns `null` on any failure"
+    ]
+  },
+  {
+    "id": "BUG-009",
+    "title": "`ColorConverter.hexToHsv` consults the LRU before validating, so a bare `'FF0000'` throws cold and succeeds warm",
+    "severity": "LOW", "type": "Logic", "unit": "core", "tested": "no",
+    "location": [
+      "`packages/core/src/services/color/ColorConverter.ts:445-455` — cache lookup keyed by `normalizeHexKey` (197-205, strips `#`) returns before `hexToRgb` (208-214) runs `isValidHexColor`",
+      "`packages/core/src/constants/index.ts:116` — `PATTERNS.HEX_COLOR` requires the `#`"
+    ],
+    "evidence": [
+      "`hexToHsv('#FF0000'); hexToHsv('FF0000')` → HSV; fresh instance: `hexToHsv('FF0000')` → `AppError INVALID_HEX_COLOR`. The warm value is the correct colour, so this is a consistency defect only",
+      "Reviewer row `core-color-01`; Opus pass confirmed LOW"
+    ],
+    "fix": [
+      "Validate before the cache lookup (one `isValidHexColor(hex)` guard at the top), mirror in `hexToLab`/`hexToOklab` if they share the shape; add a cold-vs-warm test"
+    ]
+  },
+  {
+    "id": "BUG-010",
+    "title": "`DyeDatabase.getAllDyes` is documented as a defensive copy but is shallow, and `LocaleLoader`/`LocaleRegistry` hand out the static locale module objects — a caller mutation would corrupt shared indices",
+    "severity": "LOW", "type": "State", "unit": "core", "tested": "no — the 'defensive copy' test checks array identity only",
+    "location": [
+      "`packages/core/src/services/dye/DyeDatabase.ts:392-395` — `return [...this.dyes]` (elements are the shared `DyeInternal` records also held by `dyesByIdMap`, the hue buckets and the k-d tree)",
+      "`packages/core/src/services/localization/LocaleLoader.ts:49-70`, `LocaleRegistry.ts:64-66` — returns `localeMap[locale]` itself",
+      "`packages/core/src/services/dye/__tests__/DyeDatabase.test.ts:195-201` — `expect(dyes1).not.toBe(dyes2)` only"
+    ],
+    "evidence": [
+      "`git grep` over `apps/*/src packages/*/src` finds no consumer assigning to a dye or locale field outside `initialize()` — latent today",
+      "Reviewer rows `core-data-01/02/03`"
+    ],
+    "fix": [
+      "Either freeze the records at `initialize()` (`Object.freeze` per dye; cheap, 125 objects) and say so in the JSDoc, or deep-clone on the way out and accept the cost — freezing is the recommendation; add an element-mutation test"
+    ]
+  },
+  {
+    "id": "BUG-011",
+    "title": "`CharacterMatchOptions.matchingMethod` documents default `'oklab'` while the code defaults to `'ciede2000'`",
+    "severity": "LOW", "type": "Logic", "unit": "core", "tested": "n/a",
+    "location": [
+      "`packages/core/src/services/CharacterColorService.ts:49` — `/** Color matching algorithm (default: 'oklab') */`",
+      "`packages/core/src/services/CharacterColorService.ts:327` — `const { count = 3, matchingMethod = 'ciede2000' } = options`"
+    ],
+    "evidence": ["Reviewer row `core-data-04`; the published `.d.ts` carries the wrong default to API consumers"],
+    "fix": ["Fix the comment (ciede2000 is the 5.0 default everywhere else); no behaviour change"]
+  },
+  {
+    "id": "BUG-012",
+    "title": "`/stats health` hard-codes `workerEnv = 'production'`, so the beta bot reports itself as production — and the test pins the literal",
+    "severity": "LOW", "type": "Logic", "unit": "discord-worker", "tested": "yes, but the assertion enshrines the bug",
+    "location": [
+      "`apps/discord-worker/src/handlers/commands/stats.ts:556` — `const workerEnv = 'production';` while `env.ENVIRONMENT` is `development` on `xivdyetools-discord-worker-dev`",
+      "`apps/discord-worker/src/handlers/commands/stats.test.ts:892` — `expect(configField!.value).toContain('production')`"
+    ],
+    "evidence": ["Reviewer row `discord-handlers-06`"],
+    "fix": ["Read `env.ENVIRONMENT ?? 'unknown'`; change the test to drive both values"]
+  },
+  {
+    "id": "BUG-013",
+    "title": "`/webhooks/preset-submission` trusts `Content-Length` then buffers `c.req.json()` with no streaming cap",
+    "severity": "LOW", "type": "Resource", "unit": "discord-worker", "tested": "no",
+    "location": [
+      "`apps/discord-worker/src/index.ts:276-281` — `parseInt(content-length || '0')`; absent or chunked → 0 → passes",
+      "`apps/discord-worker/src/index.ts:284-287` — `await c.req.json()` unbounded; the sibling `/webhooks/github` counts streamed bytes (FINDING-003, PR #183)"
+    ],
+    "evidence": [
+      "Reachable only after the constant-time `INTERNAL_WEBHOOK_SECRET` check at 270-274, and the only caller is presets-api over a service binding — hence LOW",
+      "Reviewer row `discord-core-01`; Opus pass confirmed LOW"
+    ],
+    "fix": ["Reuse the github route's bounded reader (`readTextCapped`, already in `swatch.ts`) with the 10 KB cap"]
+  },
+  {
+    "id": "BUG-014",
+    "title": "`PATCH /presets/refresh-author` binds `auth.userName` with no fallback; an undefined bind makes D1 throw a 500",
+    "severity": "LOW", "type": "Edge case", "unit": "presets-api", "tested": "no",
+    "location": [
+      "`apps/presets-api/src/handlers/presets.ts:344-350` — `.bind(auth.userName, auth.userDiscordId)`; `userName` is optional (`packages/types/src/auth/provider.ts:39`)",
+      "`apps/presets-api/src/handlers/presets.ts:934,1181` — siblings use `|| 'Unknown User'` / `?? ''`"
+    ],
+    "evidence": [
+      "Web path sets `global_name || username` (`auth.ts:367`) and `username` is a required claim, and the bot never calls this route — so only a malformed/legacy token reaches it",
+      "Reviewer row `presets-api-03`; Opus pass confirmed LOW"
+    ],
+    "fix": ["`auth.userName ?? ''` (or reject with 400 when empty) to match the siblings; one-line change + a test with a name-less token"]
+  },
+  {
+    "id": "BUG-015",
+    "title": "`text_edit` / `flagged_edit` / `preview_upload` daily caps are check-then-insert; concurrent requests can overshoot the cap",
+    "severity": "LOW", "type": "Race", "unit": "presets-api", "tested": "no",
+    "location": [
+      "`apps/presets-api/src/services/rate-limit-service.ts:168-200` — `checkDailyEventLimit` counts, the handler acts, then `recordSubmissionEvent` inserts; no post-insert re-check or rollback, unlike the hardened `submission` cap"
+    ],
+    "evidence": ["Reviewer row `presets-api-04`; soft quota, overshoot bounded by request parallelism — hence LOW"],
+    "fix": ["Mirror the `submission` shape: insert first, count including the new row, roll back (delete the event + the mutation) when over"]
+  },
+  {
+    "id": "BUG-016",
+    "title": "moderation-worker's presets-api client fetches carry no `AbortSignal`, unlike every Discord-facing call",
+    "severity": "LOW", "type": "Resource", "unit": "moderation-worker", "tested": "no",
+    "location": [
+      "`apps/moderation-worker/src/services/preset-api.ts:112-127` — `env.PRESETS_API.fetch(new Request(…))` and the HTTP fallback, no timeout; `utils/discord-api.ts` uses `AbortSignal.timeout` everywhere (BUG-040)"
+    ],
+    "evidence": ["Reviewer row `moderation-worker-01` (filed as OPT there); a hang leaves a `waitUntil`-wrapped moderation action without a terminal state"],
+    "fix": ["`signal: AbortSignal.timeout(10_000)` on both branches; classify the abort as `upstream_presets`"]
+  },
+  {
+    "id": "BUG-017",
+    "title": "oauth's env-validation 500 is returned before the security-headers middleware runs, so it carries no nosniff / no-store / HSTS",
+    "severity": "LOW", "type": "Logic", "unit": "oauth", "tested": "no",
+    "location": [
+      "`apps/oauth/src/index.ts:119-141` — returns `c.json({ error: 'Service misconfigured' }, 500)` without `next()`",
+      "`apps/oauth/src/index.ts:145-165` — headers middleware registered after it; CLAUDE.md documents only the CORS-preflight exception"
+    ],
+    "evidence": ["Reviewer row `oauth-12`; Opus pass confirmed LOW (fires only while misconfigured, body carries nothing sensitive)"],
+    "fix": ["Register the headers middleware first (it does not depend on validated env), or set the headers inline on that one response; note the exception in CLAUDE.md if kept"]
+  },
+  {
+    "id": "BUG-018",
+    "title": "og-worker keys `wheel` into the cache for `/og/harmony/default.png`, a route that never reads it",
+    "severity": "LOW", "type": "Edge case", "unit": "og-worker", "tested": "no",
+    "location": [
+      "`apps/og-worker/src/index.ts:357` — `c.req.path.startsWith('/og/harmony/')` also matches the default card, so up to five validated wheel ids each force a fresh resvg render of a byte-identical PNG"
+    ],
+    "evidence": ["Reviewer row `og-worker-01`; bounded to 5 extra rasters of one card — hence LOW"],
+    "fix": ["Exclude the `default` path (or key on the route that actually reads `wheel`); extend `og-guards.test.ts` with the default card"]
+  },
+  {
+    "id": "BUG-019",
+    "title": "api-worker's SWR expiry `waitUntil(cache.delete())` has no `.catch()`, unlike its `storeAsync` sibling",
+    "severity": "LOW", "type": "Error handling", "unit": "api-worker", "tested": "no",
+    "location": ["`apps/api-worker/src/universalis/services/cache-service.ts:118` — `this.ctx.waitUntil(cache.delete(cacheRequest))`"],
+    "evidence": ["Reviewer row `api-worker-03`; only unhandled-rejection noise, no user effect"],
+    "fix": ["`.catch(() => {})` with a debug log, matching `storeAsync`"]
+  },
+  {
+    "id": "BUG-020",
+    "title": "logger's browser error-tracker wrapper uses raw `JSON.stringify(error)`, so a circular or BigInt-bearing non-Error value throws inside `logger.error()`",
+    "severity": "LOW", "type": "Error handling", "unit": "logger", "tested": "no",
+    "location": ["`packages/logger/src/presets/browser.ts:120-125` — `JSON.stringify(error)` instead of the package's own `safeStringify` (the BUG-104 fix applied to the adapters, not here)"],
+    "evidence": ["`git grep errorTracker apps/*/src` is empty — no app configures a tracker today, so latent", "Reviewer row `pkg-foundation-01`"],
+    "fix": ["Use `safeStringify`; add the circular-value case to `browser.test.ts`. Publish `@xivdyetools/logger`, no consumer deploy needed until a tracker is configured"]
+  },
+  {
+    "id": "BUG-021",
+    "title": "`createMockDye({ stainID: null })` swaps null for a random decoy, so the documented legacy 'null arm' fixture cannot be built",
+    "severity": "LOW", "type": "Edge case", "unit": "test-utils", "tested": "no",
+    "location": [
+      "`packages/test-utils/src/factories/dye.ts:181-183` — `overrides.stainID ?? randomStainId()` treats null as absent before deriving `itemID`/`id`/`name`",
+      "`packages/test-utils/src/factories/dye.ts:39-41` — `legacyItemIdForStain(null) → 5729` exists but is unreachable from this path"
+    ],
+    "evidence": ["Reviewer row `pkg-worker-kit-test-utils-17`; no caller passes `null` today"],
+    "fix": ["`'stainID' in overrides ? overrides.stainID : randomStainId()`; add the null-arm test"]
+  },
+  {
+    "id": "BUG-022",
+    "title": "Extractor zoom canvas never checks `MouseEvent.button`, so a right-button drag commits a pixel sample alongside the context menu",
+    "severity": "LOW", "type": "Edge case", "unit": "web-app", "tested": "no",
+    "location": ["`apps/web-app/src/components/image-zoom-controller.ts:579,651-672` — mousedown/mouseup handlers gate on `isDragging` only"],
+    "evidence": ["Reviewer row `webapp-tools-b-04`"],
+    "fix": ["`if (mouseEvent.button !== 0) return;` at both handlers"]
+  },
+  {
+    "id": "BUG-023",
+    "title": "`market-board.ts` refresh status uses a raw `setTimeout` that `destroy()` cannot cancel",
+    "severity": "LOW", "type": "Resource", "unit": "web-app", "tested": "no",
+    "location": ["`apps/web-app/src/components/market-board.ts:376-378` — `setTimeout(() => statusMsg.textContent = '', 3000)` bypasses the component's `safeTimeout`"],
+    "evidence": ["Reviewer row `webapp-tools-b-05`; fires after teardown and writes to a detached node"],
+    "fix": ["Use `this.safeTimeout(...)`"]
+  },
+  {
+    "id": "BUG-024",
+    "title": "`CollectionService.importData` lets a truthy non-string `name` past its guard, then `name.trim()` throws and aborts the loop after earlier collections were persisted",
+    "severity": "LOW", "type": "Error handling", "unit": "web-app", "tested": "no",
+    "location": [
+      "`apps/web-app/src/services/collection-service.ts:931` — `if (!collection.name || !Array.isArray(collection.dyes))`",
+      "`apps/web-app/src/services/collection-service.ts:626` — `createCollection` calls `name.trim()`"
+    ],
+    "evidence": ["Reviewer row `webapp-services-01`; needs a hand-edited import file, and the result then reports `success:false` for data that was written"],
+    "fix": ["`typeof collection.name !== 'string'` in the guard; wrap each iteration so one bad record is skipped, not fatal"]
+  },
+  {
+    "id": "BUG-025",
+    "title": "`AuthService.isAuthenticated()` fire-and-forgets `logout()` with no re-entrancy guard, so N synchronous callers on an expired token trigger N revoke requests and notify storms",
+    "severity": "LOW", "type": "Race", "unit": "web-app", "tested": "no",
+    "location": ["`apps/web-app/src/services/auth-service.ts:589-603` — `void this.logout()` inside a synchronous getter with real call sites in preset-detail, community-preset-service, preset-submission-service and config-sidebar"],
+    "evidence": ["Reviewer row `webapp-services-02`; `/auth/revoke` is idempotent so the duplicates are harmless, only wasteful"],
+    "fix": ["Keep a `logoutPromise` and return it while in flight; clear it in `finally`"]
+  },
+  {
+    "id": "BUG-026",
+    "title": "An in-flight `checkVoteStatus()` started by `updated()` can clobber an optimistic `handleVote` result on the preset detail view",
+    "severity": "LOW", "type": "Race", "unit": "web-app", "tested": "no",
+    "location": ["`apps/web-app/src/components/v4/preset-detail.ts:644-675` — no request-generation guard on `hasVoted` / `currentVoteCount` writes"],
+    "evidence": [
+      "The reviewer's A→B navigation variant (`webapp-v4-20`) was REJECTED by the Opus pass: the detail element is destroyed on navigation (`preset-tool.ts:814,1080-1095`); only the same-instance vote-then-check ordering remains",
+      "See `evidence/verifier-pass.md`"
+    ],
+    "fix": ["Bump a generation counter per `checkVoteStatus` call and ignore stale resolutions; or skip the check while a vote is in flight"]
+  },
+  {
+    "id": "BUG-027",
+    "title": "`v4-preset-tool` never clears its search debounce in `disconnectedCallback`, so one `loadPresets()` fetch fires into a detached element",
+    "severity": "LOW", "type": "Resource", "unit": "web-app", "tested": "no",
+    "location": ["`apps/web-app/src/components/v4/preset-tool.ts:431-443` vs `886-893` — five unsubscribes cleared, `_searchDebounce` not"],
+    "evidence": ["Reviewer row `webapp-v4-21`; Opus pass: `reconcileTombstones()` returns early while `searchQuery` is non-empty, so no persistent write"],
+    "fix": ["`clearTimeout(this._searchDebounce)` in `disconnectedCallback`"]
+  },
+  {
+    "id": "BUG-028",
+    "title": "`BaseComponent.handleRetry()` / `renderError()` never `unbindAllEvents()`, so a `safeAsync` fail→retry cycle leaks listener-map entries",
+    "severity": "LOW", "type": "Resource", "unit": "web-app", "tested": "no",
+    "location": ["`apps/web-app/src/components/base-component.ts:306-323,419-432` — unlike `update()`/`handleReset()`"],
+    "evidence": ["Reviewer row `webapp-modals-01`; `git grep 'safeAsync('` finds no caller outside the base class — latent"],
+    "fix": ["Call `unbindAllEvents()` before `renderError()` and in `handleRetry()`; or delete `safeAsync` if it stays unused (dead-code candidate)"]
+  },
+  {
+    "id": "BUG-029",
+    "title": "`add-to-collection-menu` off-screen check assumes a 200 px menu while its CSS allows up to 256 px",
+    "severity": "LOW", "type": "Edge case", "unit": "web-app", "tested": "no",
+    "location": ["`apps/web-app/src/components/add-to-collection-menu.ts:53,61-66` — `menuWidth = 200` vs `min-w-48 max-w-64`"],
+    "evidence": ["Reviewer row `webapp-modals-04`; up to 56 px can render off-viewport near the right edge"],
+    "fix": ["Measure `getBoundingClientRect().width` after first paint, or clamp with `max-w-64`'s 256"]
+  },
+  {
+    "id": "BUG-030",
+    "title": "Preset edit form drops unresolvable stored dye ids at load and would then send a shortened `dyes` patch on a Save with no edits",
+    "severity": "LOW", "type": "Edge case", "unit": "web-app", "tested": "no",
+    "location": [
+      "`apps/web-app/src/components/preset-edit-form.ts:117-119` — `.map(resolvePresetDye).filter(Boolean)`",
+      "`apps/web-app/src/components/preset-edit-form.ts:698` — `dyes.join(',') !== preset.dyes.join(',')` → `updates.dyes`"
+    ],
+    "evidence": [
+      "Latent today: `dyes.json` holds exactly stainIDs 1–125 and `resolvePresetDye` (`dye-service-wrapper.ts:57-63`) resolves every one; only an out-of-DB 126–254 id (which presets-api accepts) or a DB shrink triggers it, and `MIN_DYES` (721) stops a total wipe",
+      "Reviewer row `webapp-modals-05`; Opus pass confirmed LOW (latent)"
+    ],
+    "fix": ["Keep the original id list as the diff baseline (compare against the resolved-and-kept ids), and refuse to save when any stored id failed to resolve"]
+  },
+  {
+    "id": "BUG-031",
+    "title": "stoat-worker `/ping` builds its latency string before `sendMessage` resolves, so it always reports ~0 ms",
+    "severity": "LOW", "type": "Logic", "unit": "stoat-worker (parked — P3)", "tested": "no",
+    "location": ["`apps/stoat-worker/src/commands/ping.ts:9-11` — `Date.now() - startTime` evaluated while building the payload"],
+    "evidence": ["Reviewer row `image-stoat-14`"],
+    "fix": ["Send, then edit the message with the measured round-trip — or drop the number"]
+  },
+  {
+    "id": "BUG-032",
+    "title": "`ColorAccessibility.test.ts` guards its only assertion behind a branch that never runs for its fixed fixture",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "core", "tested": "the test cannot fail",
+    "location": ["`packages/core/src/services/color/__tests__/ColorAccessibility.test.ts:108-121` — `if (!smallText) { expect(largeText).toBe(true) }`; `#767676`/white is ~4.55:1 so `smallText` is always true"],
+    "evidence": ["Reviewer row `core-color-02`. Behaviour it was meant to catch: the large-text AA threshold (3:1) being applied to small text"],
+    "fix": ["Use a pair between 3:1 and 4.5:1 (e.g. `#949494`/white) and assert both flags explicitly"]
+  },
+  {
+    "id": "BUG-033",
+    "title": "`/gradient`'s adapter (`commands/gradient.ts`) has no test file",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "discord-worker", "tested": "no",
+    "location": ["`apps/discord-worker/src/handlers/commands/gradient.ts` — no `gradient.test.ts`; option parsing, distinct-dye rule and the 3-stage cap are unexercised"],
+    "evidence": ["Reviewer row `discord-handlers-01`; discord-worker sits at 88 % statements largely because of these two files"],
+    "fix": ["Add a suite mirroring `mixer`/`comparison` shape: happy path, duplicate dyes rejected, > 3 stages capped, render failure marks `render`"]
+  },
+  {
+    "id": "BUG-034",
+    "title": "`/mixer`'s adapter (`commands/mixer-v4.ts`) has no test file",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "discord-worker", "tested": "no",
+    "location": ["`apps/discord-worker/src/handlers/commands/mixer-v4.ts` — no test; the RYB default mode that BUG-006 (2026-09-02) broke is exercised only through bot-logic's own tests"],
+    "evidence": ["Reviewer row `discord-handlers-02`"],
+    "fix": ["Add a suite: mode option → bot-logic call args, ratio bounds, render failure → `render` outcome"]
+  },
+  {
+    "id": "BUG-035",
+    "title": "moderation-worker rate-limit KV-error test asserts only `resolves.not.toThrow()`",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "moderation-worker", "tested": "the test cannot fail",
+    "location": ["`apps/moderation-worker/src/middleware/rate-limit.test.ts:236` — 'handles KV errors gracefully'"],
+    "evidence": ["Reviewer row `moderation-worker-02`. Behaviour it was meant to catch: fail-open returning `allowed:true` **and** `backendError:true` (FINDING-012)"],
+    "fix": ["Assert the returned `{ allowed, backendError }` shape and that the warning is logged"]
+  },
+  {
+    "id": "BUG-036",
+    "title": "api-worker `serializeDye` test asserts its boolean/enum fields via `.toBeDefined()` only",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "api-worker", "tested": "weakly",
+    "location": ["`apps/api-worker/tests/lib/dye-serializer.test.ts:18-23`"],
+    "evidence": ["Reviewer row `api-worker-01`. Behaviour it was meant to catch: a field swap (`isPastel`/`isDark`) or a consolidation-type mislabel in the public JSON"],
+    "fix": ["Snapshot one metallic, one pastel, one Type-C dye against literal expected objects"]
+  },
+  {
+    "id": "BUG-037",
+    "title": "api-worker's negative-id legacy-facewear 404 (message + `details.facewearId/hex`) has no HTTP-level test",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "api-worker", "tested": "no",
+    "location": ["`apps/api-worker/src/routes/dyes.ts:240-252` — only `resolveIdType` / `lookupDyeByResolvedId` are unit-tested"],
+    "evidence": ["Reviewer row `api-worker-02`; this is the documented contract for persisted pre-v2 ids"],
+    "fix": ["One `app.request('/v1/dyes/-1234')` test asserting status, `error`, `details.facewearId` and `details.hex`"]
+  },
+  {
+    "id": "BUG-038",
+    "title": "Swatch `selectDye` entry test asserts `not.toThrow()` only",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "web-app", "tested": "the test cannot fail",
+    "location": ["`apps/web-app/src/components/__tests__/swatch-tool.test.ts:684-688`"],
+    "evidence": ["Reviewer row `webapp-tools-a-05`. Behaviour it was meant to catch: swapped hex/name arguments, wrong-palette reverse-match scoring"],
+    "fix": ["Assert the selected dye id and the rendered match list after `selectDye`"]
+  },
+  {
+    "id": "BUG-039",
+    "title": "'merges displayOptions rather than replacing them' asserts `not.toThrow()` only, in two tool suites",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "web-app", "tested": "the tests cannot fail",
+    "location": [
+      "`apps/web-app/src/components/__tests__/extractor-tool.test.ts:448`",
+      "`apps/web-app/src/components/__tests__/accessibility-tool.test.ts:816`"
+    ],
+    "evidence": ["Reviewer rows `webapp-tools-b-02/03`. Behaviour they were meant to catch: a `setConfig` that replaces instead of merging, dropping the other tool's display flags"],
+    "fix": ["Read the merged config back and assert both the changed and the untouched key"]
+  },
+  {
+    "id": "BUG-040",
+    "title": "Three components value-import `RouterService` past the `@services/index` barrel their tests mock, so the mock is inert (the PR #161 trap, three survivors)",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "web-app", "tested": "no",
+    "location": [
+      "`apps/web-app/src/components/gradient-tool.ts:23` — `from '@services/router-service'`; `__tests__/gradient-tool.test.ts:44,201-205` mocks `@services/index` only",
+      "`apps/web-app/src/components/v4/preset-tool.ts:34`, `welcome-modal.ts:21` — same import; these two have no test file at all"
+    ],
+    "evidence": ["Reviewer row `webapp-services-03`; Opus pass: no test asserts `navigateTo` today, so nothing passes vacuously yet — a latent trap"],
+    "fix": ["Import from the barrel (the documented rule); add an eslint `no-restricted-imports` entry for `@services/router-service` outside services/"]
+  },
+  {
+    "id": "BUG-041",
+    "title": "`collection-manager-modal.ts` (640 lines of CRUD / import-export) and `add-to-collection-menu.ts` carry `/* istanbul ignore file */` and have no tests",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "web-app", "tested": "no",
+    "location": ["`apps/web-app/src/components/collection-manager-modal.ts:5`", "`apps/web-app/src/components/add-to-collection-menu.ts:1`"],
+    "evidence": ["Reviewer rows `webapp-modals-02/03`; the ignore pragma hides them from the coverage ratchet"],
+    "fix": ["Remove the pragmas and add suites for create/rename/delete/import/export and the menu's add/remove + positioning (BUG-029 needs the latter)"]
+  },
+  {
+    "id": "BUG-042",
+    "title": "stoat-worker dye-info tests assert presence of an embed only, never its content",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "stoat-worker (parked — P3)", "tested": "presence only",
+    "location": ["`apps/stoat-worker/src/commands/info.ts:98-101`; `info.test.ts:82,109,177`"],
+    "evidence": ["Reviewer row `image-stoat-15`"],
+    "fix": ["Assert title / colour / description on one known dye; P3 while the bot stays parked"]
+  },
+  {
+    "id": "BUG-043",
+    "title": "presets-api ban-check tests pass through a D1 mock that special-cases the query and ignores which id and column were bound",
+    "severity": "LOW", "type": "Untested behaviour", "unit": "presets-api", "tested": "the tests cannot see BUG-001",
+    "location": ["`apps/presets-api/tests/middleware/ban-check.test.ts`; `packages/test-utils/src/cloudflare/d1.ts:242-252`"],
+    "evidence": ["Reviewer row `presets-api-02`. Behaviour it was meant to catch: a banned identity that the query cannot match (BUG-001)"],
+    "fix": ["Drive the check with a scripted row keyed on the bound value; add the UUID-`sub` case alongside the snowflake one"]
+  },
+  {
+    "id": "REFACTOR-001",
+    "title": "Delete the unreachable legacy `navigate-to-tool` context-action branches in Swatch and Mixer (and their success toasts)",
+    "priority": "P2", "effort": "LOW", "risk": "LOW", "unit": "web-app",
+    "location": [
+      "`apps/web-app/src/components/swatch-tool.ts:2373-2416`, `mixer-tool.ts:2014-2077` — `case 'add-comparison'` … dispatch `new CustomEvent('navigate-to-tool')` that no listener handles",
+      "`apps/web-app/src/components/v4/result-card.ts:100-118,1099,1177` — the emitter's `ContextAction` vocabulary is `inspect-*` / `transform-*` / `external-*` / `add-mixer-slot-*` only"
+    ],
+    "evidence": [
+      "Reviewer row `webapp-tools-a-01` graded this HIGH as a live no-op; the Opus pass and the coordinator's re-check found it unreachable — dead code, not a defect (`evidence/verifier-pass.md`)",
+      "`git grep navigate-to-tool apps/web-app/src` → 9 dispatch sites, 0 listeners"
+    ],
+    "fix": ["Remove the branches, the dispatches and the `navigate-to-tool` string; route anything still wanted through `@shared/tool-handoff`; the dead-code gate did not see this because the code is reachable by type"]
+  },
+  {
+    "id": "REFACTOR-002",
+    "title": "`/preset` notification helpers never receive the request logger, so their failures log nowhere",
+    "priority": "P3", "effort": "LOW", "risk": "LOW", "unit": "discord-worker",
+    "location": ["`apps/discord-worker/src/handlers/commands/preset.ts:571,576,924` — three `notify*` calls without `logger`"],
+    "evidence": ["Reviewer row `discord-handlers-04`"],
+    "fix": ["Thread the logger through; assert a `warn` on a failed send"]
+  },
+  {
+    "id": "REFACTOR-003",
+    "title": "`/preset submit|edit` schemas document name/description length bounds but set no `min_length`/`max_length`, and autocomplete choice names are never truncated to Discord's 100-char cap",
+    "priority": "P3", "effort": "LOW", "risk": "LOW", "unit": "discord-worker",
+    "location": [
+      "`apps/discord-worker/src/commands/schemas.ts:1004-1019,1092-1114` (the `world` option shows the enforced pattern)",
+      "`apps/discord-worker/src/services/preset-api.ts:506-511`, `index.ts:1221-1225,1282`"
+    ],
+    "evidence": ["Reviewer row `discord-core-02`; the server validates, so today's effect is a worse error path, not a wrong result"],
+    "fix": ["Add the bounds to the schema (Discord rejects client-side) and `.slice(0, 100)` choice names"]
+  },
+  {
+    "id": "REFACTOR-004",
+    "title": "api-worker builds its error envelope two ways and error `meta` never carries `locale`",
+    "priority": "P3", "effort": "LOW", "risk": "LOW", "unit": "api-worker",
+    "location": ["`apps/api-worker/src/index.ts:206-246` (`ApiError`) vs `routes/match.ts:52-65` (hand-rolled 404)"],
+    "evidence": ["Reviewer row `api-worker-04`"],
+    "fix": ["Route the 404 through `ApiError`; include `locale` in error `meta` for parity with success responses (documented in the VitePress contract)"]
+  },
+  {
+    "id": "REFACTOR-005",
+    "title": "bot-logic `dye-info.marketValue()` re-implements core's consolidation gate",
+    "priority": "P3", "effort": "LOW", "risk": "LOW", "unit": "bot-logic",
+    "location": ["`packages/bot-logic/src/commands/dye-info.ts:90-97` vs `@xivdyetools/core` `getMarketItemID` / `isConsolidationActive`"],
+    "evidence": ["Reviewer row `pkg-svg-bot-logic-02`; dormant today, drifts if a consolidation type ever ships with a null itemID"],
+    "fix": ["Call `getMarketItemID(dye)` and test the three consolidated types + one unconsolidated dye"]
+  },
+  {
+    "id": "REFACTOR-006",
+    "title": "`gradient-tool.ts` still logs under the `[MixerTool]` tag from before the v4 rename",
+    "priority": "P3", "effort": "LOW", "risk": "LOW", "unit": "web-app",
+    "location": ["`apps/web-app/src/components/gradient-tool.ts:293,492`"],
+    "evidence": ["Reviewer row `webapp-tools-a-03`"],
+    "fix": ["Rename the tags"]
+  },
+  {
+    "id": "REFACTOR-007",
+    "title": "`config-sidebar` carries a dead field-initializer default (`tetradic`/false) that disagrees with the real default (`complementary`/true)",
+    "priority": "P3", "effort": "LOW", "risk": "LOW", "unit": "web-app",
+    "location": ["`apps/web-app/src/components/v4/config-sidebar.ts:147-156` vs `shared/tool-config-types.ts:419-428`"],
+    "evidence": ["Reviewer row `webapp-v4-23`; harmless today, a trap for the next edit"],
+    "fix": ["Initialise from `DEFAULT_TOOL_CONFIGS` or delete the initializer"]
+  },
+  {
+    "id": "REFACTOR-008",
+    "title": "Magic-byte image sniffing is duplicated between image-worker and presets-api, and presets-api's copy lacks GIF/BMP",
+    "priority": "P3", "effort": "MEDIUM", "risk": "LOW", "unit": "presets-api + image-worker",
+    "location": ["`apps/image-worker/src/validators.ts:141-147,386-423`", "`apps/presets-api/src/services/preview-image-service.ts:113-144`"],
+    "evidence": ["Reviewer row `image-stoat-16`; presets-api forwards to image-worker anyway, so the client-side copy is a pre-filter that can disagree with the authority"],
+    "fix": ["Move the sniffer to `@xivdyetools/worker-kit` (or have presets-api trust image-worker's 415), then delete the copy"]
+  },
+  {
+    "id": "REFACTOR-009",
+    "title": "`bodySizeLimit` / `jsonDepthLimit` middleware exists as two near-copies in oauth and presets-api",
+    "priority": "P3", "effort": "MEDIUM", "risk": "LOW", "unit": "worker-kit (publish) → oauth, presets-api",
+    "location": ["`apps/oauth/src/middleware/body-validation.ts` (115 lines, 10 KB)", "`apps/presets-api/src/middleware/body-validation.ts` (177 lines, 100 KB + the preview-image exemption)"],
+    "evidence": ["`evidence/cross-unit-dupes.txt`; `diff` shows the same `bodyLimit` wrapper with different caps, error shapes and one route exemption"],
+    "fix": ["A `bodyGuards({ maxSize, depth, exempt })` factory in worker-kit; nice-to-have — the two copies are small and deliberately different in their limits"]
+  },
+  {
+    "id": "OPT-001",
+    "title": "og-worker's two SPA pass-through `fetch()` calls carry no timeout",
+    "impact": "LOW", "category": "I/O", "unit": "og-worker", "gain": "bounded worst-case latency on crawler requests (today: the platform's default)", "benchmark": "wrangler dev with a stalled origin stub; measure time-to-first-byte",
+    "location": ["`apps/og-worker/src/index.ts:516,1218`"],
+    "evidence": ["Reviewer row `og-worker-02`"],
+    "fix": ["`signal: AbortSignal.timeout(5_000)` and fall through to the static card on abort"]
+  }
+]
