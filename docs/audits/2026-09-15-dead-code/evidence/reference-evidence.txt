@@ -1,0 +1,341 @@
+Command: python docs/audits/2026-09-15-dead-code/evidence/scripts/write-report.py
+Input inventory: git ls-files; code/config only, no build/coverage/audit documents.
+Raw matches include comments/examples and unrelated same-named declarations; see verified findings for interpretation.
+
+## getWithContext
+apps/web-app/src/services/indexeddb-service.ts:183: async getWithContext<T>(storeName: StoreName, key: string): Promise<GetResult<T>> {
+## GetResult
+apps/web-app/src/services/indexeddb-service.ts:32: export type GetResult<T> = { found: true; value: T } | { found: false; error?: Error };
+apps/web-app/src/services/indexeddb-service.ts:183: async getWithContext<T>(storeName: StoreName, key: string): Promise<GetResult<T>> {
+apps/web-app/src/services/indexeddb-service.ts:192: return new Promise<GetResult<T>>((resolve) => {
+## isSaved
+apps/web-app/src/services/saved-presets-service.ts:121: static isSaved(id: string): boolean {
+## getBaseUrl
+apps/web-app/src/services/share-service.ts:578: static getBaseUrl(): string {
+## getRequiredColor
+apps/web-app/src/services/__tests__/theme-service.test.ts:302: // uses — NOT through the surviving `getRequiredColor()` twin, which has no
+apps/web-app/src/services/theme-service.ts:329: static getRequiredColor(
+## setStyle
+apps/web-app/src/components/base-component.ts:703: setStyle(styles: Partial<CSSStyleDeclaration>): void {
+## setOptions
+apps/web-app/src/components/__tests__/empty-state.test.ts:252: describe('setOptions', () => {
+apps/web-app/src/components/__tests__/empty-state.test.ts:260: emptyState.setOptions({ title: 'Updated title' });
+apps/web-app/src/components/__tests__/empty-state.test.ts:274: emptyState.setOptions({ description: 'New description' });
+apps/web-app/src/components/__tests__/empty-state.test.ts:286: emptyState.setOptions({ icon: '<svg data-glyph="b"></svg>' });
+apps/web-app/src/components/__tests__/empty-state.test.ts:377: expect(() => emptyState!.setOptions({ title: 'New' })).not.toThrow();
+apps/web-app/src/components/empty-state.ts:215: setOptions(options: Partial<EmptyStateOptions>): void {
+## onStatusChange
+apps/web-app/src/components/__tests__/offline-banner.test.ts:303: describe('onStatusChange', () => {
+apps/web-app/src/components/__tests__/offline-banner.test.ts:308: banner.onStatusChange(callback);
+apps/web-app/src/components/__tests__/offline-banner.test.ts:318: banner.onStatusChange(callback);
+apps/web-app/src/components/__tests__/offline-banner.test.ts:328: const unsubscribe = banner.onStatusChange(callback);
+apps/web-app/src/components/offline-banner.ts:179: onStatusChange(callback: (isOnline: boolean) => void): () => void {
+## updateMessage
+apps/web-app/src/components/__tests__/offline-banner.test.ts:341: describe('updateMessage', () => {
+apps/web-app/src/components/__tests__/offline-banner.test.ts:346: banner.updateMessage();
+apps/web-app/src/components/offline-banner.ts:199: updateMessage(): void {
+## getPreference
+apps/discord-worker/src/services/preferences.exhaustive.test.ts:16: getPreference,
+apps/discord-worker/src/services/preferences.exhaustive.test.ts:338: describe('getPreference', () => {
+apps/discord-worker/src/services/preferences.exhaustive.test.ts:343: expect(await getPreference(kv, 'user-1', 'theme')).toBe('light');
+apps/discord-worker/src/services/preferences.exhaustive.test.ts:349: expect(await getPreference(kv, 'user-1', 'theme')).toBe(getDefaultValue('theme'));
+apps/discord-worker/src/services/preferences.exhaustive.test.ts:357: expect(await getPreference(kv, 'user-1', key)).toBeUndefined();
+apps/discord-worker/src/services/preferences.ts:156: export async function getPreference<K extends PreferenceKey>(
+## hideUserPresets
+apps/moderation-worker/src/services/ban-service.test.ts:10: hideUserPresets,
+apps/moderation-worker/src/services/ban-service.test.ts:662: describe('hideUserPresets', () => {
+apps/moderation-worker/src/services/ban-service.test.ts:666: const count = await hideUserPresets(db as unknown as D1Database, 'user-123');
+apps/moderation-worker/src/services/ban-service.test.ts:677: await hideUserPresets(db as unknown as D1Database, 'user-456');
+apps/moderation-worker/src/services/ban-service.test.ts:685: const count = await hideUserPresets(db as unknown as D1Database, 'user-789');
+apps/moderation-worker/src/services/ban-service.test.ts:693: const count = await hideUserPresets(db as unknown as D1Database, 'user-123');
+apps/moderation-worker/src/services/ban-service.ts:631: export async function hideUserPresets(db: D1Database, discordId: string): Promise<number> {
+apps/moderation-worker/src/services/ban-service.ts:643: * (FINDING-018) — this and `hideUserPresets` above are the only
+## restoreUserPresets
+apps/moderation-worker/src/services/ban-service.test.ts:11: restoreUserPresets,
+apps/moderation-worker/src/services/ban-service.test.ts:699: describe('restoreUserPresets', () => {
+apps/moderation-worker/src/services/ban-service.test.ts:703: const count = await restoreUserPresets(db as unknown as D1Database, 'user-123');
+apps/moderation-worker/src/services/ban-service.test.ts:714: await restoreUserPresets(db as unknown as D1Database, 'user-456');
+apps/moderation-worker/src/services/ban-service.test.ts:722: const count = await restoreUserPresets(db as unknown as D1Database, 'user-789');
+apps/moderation-worker/src/services/ban-service.test.ts:730: await restoreUserPresets(db as unknown as D1Database, 'discord-id-abc');
+apps/moderation-worker/src/services/ban-service.ts:628: * this and `restoreUserPresets` below are the only preset-status-flipping
+apps/moderation-worker/src/services/ban-service.ts:646: export async function restoreUserPresets(db: D1Database, discordId: string): Promise<number> {
+## sanitizeFetchRequest
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:6: sanitizeFetchRequest,
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:337: describe('sanitizeFetchRequest', () => {
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:339: const result = sanitizeFetchRequest(
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:347: const result = sanitizeFetchRequest('/api/data', {
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:360: const result = sanitizeFetchRequest('/api', { method: 'POST' });
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:366: const result = sanitizeFetchRequest('/api');
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:372: const result = sanitizeFetchRequest('/api');
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:380: const result = sanitizeFetchRequest(new URL('https://api.example.com/data'));
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:386: const result = sanitizeFetchRequest('/api', { method: 'DELETE' });
+apps/moderation-worker/src/utils/url-sanitizer.ts:214: * const logData = sanitizeFetchRequest(url, {
+apps/moderation-worker/src/utils/url-sanitizer.ts:233: export function sanitizeFetchRequest(
+## sanitizeFetchResponse
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:7: sanitizeFetchResponse,
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:392: describe('sanitizeFetchResponse', () => {
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:401: const result = sanitizeFetchResponse(mockResponse);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:414: const result = sanitizeFetchResponse(mockResponse);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:432: const result = sanitizeFetchResponse(mockResponse);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:455: const result = sanitizeFetchResponse(mockResponse);
+apps/moderation-worker/src/utils/url-sanitizer.ts:262: * const logData = sanitizeFetchResponse(response);
+apps/moderation-worker/src/utils/url-sanitizer.ts:273: export function sanitizeFetchResponse(response: Response): {
+## sanitizeHeaders
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:4: sanitizeHeaders,
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:154: describe('sanitizeHeaders', () => {
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:160: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:169: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:178: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:187: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:196: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:205: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:214: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:224: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:236: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:245: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:255: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:268: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.test.ts:284: const result = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.ts:128: * const sanitized = sanitizeHeaders(headers);
+apps/moderation-worker/src/utils/url-sanitizer.ts:135: export function sanitizeHeaders(
+apps/moderation-worker/src/utils/url-sanitizer.ts:245: ? sanitizeHeaders(options.headers as Record<string, string>)
+apps/moderation-worker/src/utils/url-sanitizer.ts:283: headers: sanitizeHeaders(response.headers),
+## SENSITIVE_HEADERS
+apps/moderation-worker/src/utils/url-sanitizer.ts:68: const SENSITIVE_HEADERS: string[] = [
+apps/moderation-worker/src/utils/url-sanitizer.ts:147: if (SENSITIVE_HEADERS.includes(lowerKey)) {
+## getMeta
+apps/moderation-worker/src/services/bot-i18n.test.ts:209: describe('getMeta()', () => {
+apps/moderation-worker/src/services/bot-i18n.test.ts:212: const meta = translator.getMeta();
+apps/moderation-worker/src/services/bot-i18n.test.ts:225: const meta = translator.getMeta();
+apps/moderation-worker/src/services/bot-i18n.ts:203: getMeta(): LocaleData['meta'] {
+packages/bot-logic/src/i18n/__tests__/locale-orphans.test.ts:48: *          `Translator.getMeta()` (DEAD-013 / Task 7) and were removed from
+## truncateUnicodeSafe
+apps/presets-api/src/services/moderation-service.ts:53: export function truncateUnicodeSafe(str: string, maxLength: number, suffix = '…'): string {
+apps/presets-api/tests/services/moderation-service.test.ts:11: truncateUnicodeSafe,
+apps/presets-api/tests/services/moderation-service.test.ts:101: // truncateUnicodeSafe
+apps/presets-api/tests/services/moderation-service.test.ts:104: describe('truncateUnicodeSafe', () => {
+apps/presets-api/tests/services/moderation-service.test.ts:106: expect(truncateUnicodeSafe('hello', 10)).toBe('hello');
+apps/presets-api/tests/services/moderation-service.test.ts:110: const result = truncateUnicodeSafe('hello world', 8);
+apps/presets-api/tests/services/moderation-service.test.ts:117: const result = truncateUnicodeSafe(emoji, 3);
+apps/presets-api/tests/services/moderation-service.test.ts:125: const result = truncateUnicodeSafe('hello world', 8, '...');
+apps/presets-api/tests/services/moderation-service.test.ts:130: expect(truncateUnicodeSafe('hello', 5)).toBe('hello');
+apps/presets-api/tests/services/moderation-service.test.ts:134: expect(truncateUnicodeSafe('', 10)).toBe('');
+apps/presets-api/tests/services/moderation-service.test.ts:138: const result = truncateUnicodeSafe('hello', 1);
+## duplicateResponse
+apps/presets-api/src/utils/api-response.ts:174: export function duplicateResponse(c: AnyContext, message: string): Response {
+apps/presets-api/tests/utils/api-response.test.ts:17: duplicateResponse,
+apps/presets-api/tests/utils/api-response.test.ts:131: it('duplicateResponse returns 409 DUPLICATE_RESOURCE', async () => {
+apps/presets-api/tests/utils/api-response.test.ts:132: const app = createApp((c) => duplicateResponse(c, 'Already exists'));
+## VoteRow
+apps/presets-api/src/types.ts:188: export interface VoteRow {
+apps/presets-api/tests/types.test.ts:21: VoteRow,
+apps/presets-api/tests/types.test.ts:318: it('VoteRow should track vote timestamps', () => {
+apps/presets-api/tests/types.test.ts:319: const row: VoteRow = {
+## CacheConfigKey
+apps/api-worker/src/universalis/config/cache.test.ts:6: import { CACHE_CONFIGS, type CacheConfigKey } from './cache';
+apps/api-worker/src/universalis/config/cache.test.ts:120: const keys: CacheConfigKey[] = ['aggregated', 'dataCenters', 'worlds'];
+apps/api-worker/src/universalis/config/cache.ts:49: export type CacheConfigKey = keyof typeof CACHE_CONFIGS;
+## InteractionResponseBody
+apps/discord-worker/src/handlers/buttons/copy.test.ts:12: import { InteractionResponseType, type InteractionResponseBody } from '../../types/env.js';
+apps/discord-worker/src/handlers/buttons/copy.test.ts:22: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:32: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:40: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:48: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:56: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:65: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:75: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:86: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:94: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:103: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:111: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:120: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:130: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:140: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:148: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:157: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/copy.test.ts:166: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/index.test.ts:35: interface InteractionResponseBody {
+apps/discord-worker/src/handlers/buttons/index.test.ts:137: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/index.test.ts:152: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/buttons/index.test.ts:165: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:7: import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+apps/discord-worker/src/handlers/commands/about.test.ts:72: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:90: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:108: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:132: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:161: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:183: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:201: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:231: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:250: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:268: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:285: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:302: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/about.test.ts:338: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/accessibility.test.ts:7: import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+apps/discord-worker/src/handlers/commands/accessibility.test.ts:227: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/accessibility.test.ts:249: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/accessibility.test.ts:287: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/accessibility.test.ts:310: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/accessibility.test.ts:330: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/accessibility.test.ts:349: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/accessibility.test.ts:419: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/accessibility.test.ts:468: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/accessibility.test.ts:525: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/budget.test.ts:11: import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+apps/discord-worker/src/handlers/commands/budget.test.ts:111: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/budget.test.ts:134: expect(((await res.json()) as InteractionResponseBody).type).toBe(5);
+apps/discord-worker/src/handlers/commands/budget.test.ts:160: expect(((await res.json()) as InteractionResponseBody).type).toBe(5);
+apps/discord-worker/src/handlers/commands/budget.test.ts:181: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/budget.test.ts:200: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/budget.test.ts:221: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/budget.test.ts:242: expect(((await res.json()) as InteractionResponseBody).type).toBe(5);
+apps/discord-worker/src/handlers/commands/budget.test.ts:266: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/budget.test.ts:290: expect(((await res.json()) as InteractionResponseBody).type).toBe(5);
+apps/discord-worker/src/handlers/commands/comparison.test.ts:7: import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+apps/discord-worker/src/handlers/commands/comparison.test.ts:234: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/comparison.test.ts:256: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/comparison.test.ts:279: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/comparison.test.ts:303: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/comparison.test.ts:329: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/comparison.test.ts:383: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/comparison.test.ts:405: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/comparison.test.ts:428: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/comparison.test.ts:483: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/comparison.test.ts:507: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/comparison.test.ts:638: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:7: import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+apps/discord-worker/src/handlers/commands/dye.test.ts:222: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:242: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:270: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:296: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:321: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:349: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:377: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:405: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:431: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:459: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:487: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:514: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:542: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:569: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:596: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:632: const bodyOf = async (r: Response) => (await r.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:734: ).json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:745: ).json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/dye.test.ts:757: ).json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:6: import type { DiscordInteraction, Env, InteractionResponseBody } from '../../types/env.js';
+apps/discord-worker/src/handlers/commands/preset.test.ts:276: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:293: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:308: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:325: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:408: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:429: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:479: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:524: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:553: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:620: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:648: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:700: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:763: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:784: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/preset.test.ts:1270: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:14: import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+apps/discord-worker/src/handlers/commands/stats.test.ts:142: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:160: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:169: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:178: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:187: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:196: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:205: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:214: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:230: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:242: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:256: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:266: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:276: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:286: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:302: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:311: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:324: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:339: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:350: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:364: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:380: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:399: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:411: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:421: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:436: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:455: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:470: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:492: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:504: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:520: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:529: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:544: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:560: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:574: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:587: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:599: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:622: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:634: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:643: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:652: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:667: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:699: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:719: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:748: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:759: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:768: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:783: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:792: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:820: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:833: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:846: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:871: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:884: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:899: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:914: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:925: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:938: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:955: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:979: const data = (await (await response).json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/stats.test.ts:1044: const data = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/swatch.test.ts:17: import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+apps/discord-worker/src/handlers/commands/swatch.test.ts:144: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/swatch.test.ts:159: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/handlers/commands/swatch.test.ts:171: expect(((await res.json()) as InteractionResponseBody).type).toBe(5);
+apps/discord-worker/src/handlers/commands/swatch.test.ts:227: const body = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:10: type InteractionResponseBody,
+apps/discord-worker/src/index.test.ts:192: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:288: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:296: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:1237: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:1344: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:1381: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:1439: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:1575: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:1686: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:1711: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:1734: return ((await res.json()) as InteractionResponseBody).data!.choices as Array<{
+apps/discord-worker/src/index.test.ts:1940: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:1974: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:2021: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:2069: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:2117: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:2175: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:2208: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/index.test.ts:2490: const data = (await res.json()) as InteractionResponseBody;
+apps/discord-worker/src/types/env.ts:244: export interface InteractionResponseBody {
+apps/discord-worker/src/utils/response.test.ts:18: import { InteractionResponseType, type InteractionResponseBody } from '../types/env.js';
+apps/discord-worker/src/utils/response.test.ts:26: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/utils/response.test.ts:36: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/utils/response.test.ts:51: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/utils/response.test.ts:70: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/utils/response.test.ts:82: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/utils/response.test.ts:90: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/utils/response.test.ts:102: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/utils/response.test.ts:116: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/utils/response.test.ts:127: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/utils/response.test.ts:137: const body = (await response.json()) as InteractionResponseBody;
+apps/discord-worker/src/utils/response.test.ts:145: const body = (await response.json()) as InteractionResponseBody;

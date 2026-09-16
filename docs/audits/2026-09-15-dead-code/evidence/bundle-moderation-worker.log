@@ -1,0 +1,22 @@
+
+ ⛅️ wrangler 4.127.1 (update available 4.132.0)
+───────────────────────────────────────────────
+Total Upload: 220.64 KiB / gzip: 51.50 KiB
+Your Worker has access to the following bindings:
+Binding                                                       Resource                  
+env.KV (1fcb7e037ccd4172a47fccd97cf8e753)                     KV Namespace              
+env.DB (xivdyetools-presets)                                  D1 Database               
+env.PRESETS_API (xivdyetools-presets-api)                     Worker                    
+env.RL_COMMAND (25 requests/60s)                              Rate Limit                
+env.RL_AUTOCOMPLETE (70 requests/60s)                         Rate Limit                
+env.ENVIRONMENT ("development")                               Environment Variable      
+env.DISCORD_CLIENT_ID ("1453806659708129374")                 Environment Variable      
+env.PRESETS_API_URL ("https://api.xivdyetools.app")           Environment Variable      
+
+--dry-run: exiting now.
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mMultiple environments are defined in the Wrangler configuration file, but no target environment was specified for the deploy command.[0m
+
+  To avoid unintentional changes to the wrong environment, it is recommended to explicitly specify the target environment using the `-e|--env` flag or CLOUDFLARE_ENV env variable.
+  If your intention is to use the top-level environment of your configuration simply pass an empty string to the flag to target such environment. For example `--env=""`.
+
+

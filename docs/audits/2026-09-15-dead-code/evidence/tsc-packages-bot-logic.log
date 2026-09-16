@@ -1,0 +1,1 @@
+src/commands/harmony.ts(309,7): error TS2353: Object literal may only specify known properties, and 'wheelLabel' does not exist in type 'HarmonyCardOptions'.

@@ -1,0 +1,93 @@
+[
+  {
+    "file": "apps/web-app/src/components/__tests__/empty-state.test.ts",
+    "label": "setOptions",
+    "line": 252,
+    "end": 290,
+    "lines": 39
+  },
+  {
+    "file": "apps/web-app/src/components/__tests__/offline-banner.test.ts",
+    "label": "onStatusChange",
+    "line": 303,
+    "end": 335,
+    "lines": 33
+  },
+  {
+    "file": "apps/web-app/src/components/__tests__/offline-banner.test.ts",
+    "label": "updateMessage",
+    "line": 341,
+    "end": 351,
+    "lines": 11
+  },
+  {
+    "file": "apps/moderation-worker/src/services/ban-service.test.ts",
+    "label": "hideUserPresets",
+    "line": 662,
+    "end": 697,
+    "lines": 36
+  },
+  {
+    "file": "apps/moderation-worker/src/services/ban-service.test.ts",
+    "label": "restoreUserPresets",
+    "line": 699,
+    "end": 739,
+    "lines": 41
+  },
+  {
+    "file": "apps/moderation-worker/src/utils/url-sanitizer.test.ts",
+    "label": "sanitizeHeaders",
+    "line": 154,
+    "end": 292,
+    "lines": 139
+  },
+  {
+    "file": "apps/moderation-worker/src/utils/url-sanitizer.test.ts",
+    "label": "sanitizeFetchRequest",
+    "line": 337,
+    "end": 390,
+    "lines": 54
+  },
+  {
+    "file": "apps/moderation-worker/src/utils/url-sanitizer.test.ts",
+    "label": "sanitizeFetchResponse",
+    "line": 392,
+    "end": 461,
+    "lines": 70
+  },
+  {
+    "file": "apps/moderation-worker/src/services/bot-i18n.test.ts",
+    "label": "getMeta()",
+    "line": 209,
+    "end": 233,
+    "lines": 25
+  },
+  {
+    "file": "apps/discord-worker/src/services/preferences.exhaustive.test.ts",
+    "label": "getPreference",
+    "line": 338,
+    "end": 360,
+    "lines": 23
+  },
+  {
+    "file": "apps/presets-api/tests/services/moderation-service.test.ts",
+    "label": "truncateUnicodeSafe",
+    "line": 104,
+    "end": 141,
+    "lines": 38
+  },
+  {
+    "file": "apps/presets-api/tests/utils/api-response.test.ts",
+    "label": "duplicateResponse returns 409 DUPLICATE_RESOURCE",
+    "line": 131,
+    "end": 139,
+    "lines": 9
+  },
+  {
+    "file": "apps/presets-api/tests/types.test.ts",
+    "label": "VoteRow should track vote timestamps",
+    "line": 318,
+    "end": 326,
+    "lines": 9
+  }
+]

@@ -1,0 +1,202 @@
+[
+  {
+    "id": "root-knip",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec knip --no-config-hints --no-tag-hints",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools",
+    "exit": 1,
+    "lines": 6,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\root-knip.log"
+  },
+  {
+    "id": "web-app-knip",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec knip",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\web-app",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\web-app-knip.log"
+  },
+  {
+    "id": "og-worker-knip",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec knip",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\og-worker",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\og-worker-knip.log"
+  },
+  {
+    "id": "og-worker-knip-production",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec knip --production",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\og-worker",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\og-worker-knip-production.log"
+  },
+  {
+    "id": "dead-code-check",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD dead-code:check",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools",
+    "exit": 0,
+    "lines": 6,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\dead-code-check.log"
+  },
+  {
+    "id": "tsc-apps-api-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\api-worker",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-apps-api-worker.log"
+  },
+  {
+    "id": "tsc-apps-discord-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\discord-worker",
+    "exit": 2,
+    "lines": 10,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-apps-discord-worker.log"
+  },
+  {
+    "id": "tsc-apps-image-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\image-worker",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-apps-image-worker.log"
+  },
+  {
+    "id": "tsc-apps-moderation-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\moderation-worker",
+    "exit": 2,
+    "lines": 9,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-apps-moderation-worker.log"
+  },
+  {
+    "id": "tsc-apps-oauth",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\oauth",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-apps-oauth.log"
+  },
+  {
+    "id": "tsc-apps-og-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\og-worker",
+    "exit": 2,
+    "lines": 3,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-apps-og-worker.log"
+  },
+  {
+    "id": "tsc-apps-presets-api",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\presets-api",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-apps-presets-api.log"
+  },
+  {
+    "id": "tsc-apps-stoat-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\stoat-worker",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-apps-stoat-worker.log"
+  },
+  {
+    "id": "tsc-apps-web-app",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\web-app",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-apps-web-app.log"
+  },
+  {
+    "id": "tsc-packages-auth",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\packages\\auth",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-packages-auth.log"
+  },
+  {
+    "id": "tsc-packages-bot-logic",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\packages\\bot-logic",
+    "exit": 2,
+    "lines": 2,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-packages-bot-logic.log"
+  },
+  {
+    "id": "tsc-packages-core",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\packages\\core",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-packages-core.log"
+  },
+  {
+    "id": "tsc-packages-logger",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\packages\\logger",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-packages-logger.log"
+  },
+  {
+    "id": "tsc-packages-svg",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\packages\\svg",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-packages-svg.log"
+  },
+  {
+    "id": "tsc-packages-test-utils",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\packages\\test-utils",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-packages-test-utils.log"
+  },
+  {
+    "id": "tsc-packages-types",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\packages\\types",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-packages-types.log"
+  },
+  {
+    "id": "tsc-packages-worker-kit",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\packages\\worker-kit",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-packages-worker-kit.log"
+  },
+  {
+    "id": "web-app-i18n-unused",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD run i18n:unused -- --json",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\web-app",
+    "exit": 0,
+    "lines": 7,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\web-app-i18n-unused.log"
+  },
+  {
+    "id": "bot-logic-i18n-tests",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec vitest run src/i18n",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\packages\\bot-logic",
+    "exit": 0,
+    "lines": 82,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bot-logic-i18n-tests.log"
+  },
+  {
+    "id": "baseline-turbo",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD turbo run type-check lint test --continue --concurrency=2",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools",
+    "exit": 0,
+    "lines": 8101,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\baseline-turbo.log"
+  }
+]
