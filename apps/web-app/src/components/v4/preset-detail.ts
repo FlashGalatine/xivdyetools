@@ -147,6 +147,18 @@ export class PresetDetail extends BaseLitComponent {
    */
   private configUnsubscribers: (() => void)[] = [];
 
+  /**
+   * BUG-026: generation counter for `checkVoteStatus()`.
+   *
+   * Bumped on every `checkVoteStatus()` call (so an older in-flight call's
+   * resolution never overwrites a newer one's) AND by `handleVote()` (so a
+   * check already in flight when a vote starts can't clobber that vote's
+   * optimistic result once it lands, even after `isVoting` has gone back to
+   * false). A resolution is applied only when its captured generation still
+   * matches, and only when no vote is currently in flight.
+   */
+  private voteCheckGeneration = 0;
+
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
     css`
@@ -522,6 +534,17 @@ export class PresetDetail extends BaseLitComponent {
         color: var(--theme-text-muted, #888888);
       }
 
+      .dye-price-gil {
+        display: block;
+      }
+
+      .dye-price-world {
+        display: block;
+        font-size: 9.5px;
+        font-family: var(--font-body, inherit);
+        color: var(--theme-text-muted, #888888);
+      }
+
       .cost-label {
         font-family: var(--font-mono);
         font-size: 8.5px;
@@ -656,6 +679,8 @@ export class PresetDetail extends BaseLitComponent {
    * Check if the current user has voted for this preset
    */
   private async checkVoteStatus(): Promise<void> {
+    const generation = ++this.voteCheckGeneration;
+
     if (!this.preset?.apiPresetId || !authService.isAuthenticated()) {
       this.hasVoted = false;
       return;
@@ -663,6 +688,12 @@ export class PresetDetail extends BaseLitComponent {
 
     try {
       const result = await communityPresetService.hasVoted(this.preset.apiPresetId);
+      // BUG-026: a superseded call (a newer checkVoteStatus() started, or a
+      // vote landed while this one was in flight) must not overwrite the
+      // current, more current vote state.
+      if (generation !== this.voteCheckGeneration || this.isVoting) {
+        return;
+      }
       this.hasVoted = result.has_voted;
       // Update vote count from server if available
       if (result.vote_count !== undefined) {
@@ -670,6 +701,9 @@ export class PresetDetail extends BaseLitComponent {
       }
     } catch (error) {
       console.error('[v4-preset-detail] Failed to check vote status:', error);
+      if (generation !== this.voteCheckGeneration || this.isVoting) {
+        return;
+      }
       this.hasVoted = false;
     }
   }
@@ -756,6 +790,9 @@ export class PresetDetail extends BaseLitComponent {
     }
 
     this.isVoting = true;
+    // BUG-026: invalidate any checkVoteStatus() already in flight — it
+    // cannot know this vote is about to change the answer it's waiting on.
+    this.voteCheckGeneration++;
 
     try {
       if (this.hasVoted) {
@@ -810,6 +847,25 @@ export class PresetDetail extends BaseLitComponent {
 
   private dyeNameOf(dye: Dye): string {
     return LanguageService.getDyeName(dye.itemID) || dye.name;
+  }
+
+  /**
+   * BUG-004: the live Universalis price for a dye, when "Show prices" is on
+   * and a fetched entry exists for it.
+   *
+   * `fetchPricesForDyes()` fans a consolidated dye's price back out onto
+   * each member dye's OWN `itemID` before caching/emitting it (see
+   * `MarketBoardService.fetchPricesForDyes`), so this cache is keyed by
+   * `dye.itemID` directly — not `getMarketItemID(dye)`, which is the shared
+   * consolidated item the price was actually fetched for.
+   *
+   * Facewear never reaches this view (preset dyes resolve through
+   * `resolvePresetDye`, which only returns real `Dye`s), but `itemID > 0` is
+   * kept as the standing predicate rather than a null-check.
+   */
+  private livePriceFor(dye: Dye): PriceData | undefined {
+    if (!this.marketConfig.showPrices || dye.itemID <= 0) return undefined;
+    return this.priceData.get(dye.itemID);
   }
 
   /**
@@ -949,14 +1005,28 @@ export class PresetDetail extends BaseLitComponent {
           <div class="dye-list">
             ${this.resolvedDyes().map((dye) => {
               const gilVendor = /gil/i.test(dye.currency || '') && dye.cost > 0;
+              const livePrice = this.livePriceFor(dye);
               return html`
                 <div class="dye-row">
                   <span class="dye-swatch" style="background: ${dye.hex}"></span>
                   <span class="dye-name">${this.dyeNameOf(dye)}</span>
                   <span class="dye-hex">${dye.hex.toUpperCase()}</span>
                   <span class="dye-source">${LanguageService.getAcquisition(dye.acquisition)}</span>
-                  <span class="dye-price ${gilVendor ? '' : 'dye-price--na'}"
-                    >${gilVendor ? formatGil(dye.cost) : LanguageService.t('preset.notSold')}</span
+                  <span class="dye-price ${gilVendor || livePrice ? '' : 'dye-price--na'}"
+                    >${
+                      livePrice
+                        ? html`<span class="dye-price-gil"
+                              >${formatGil(livePrice.currentMinPrice)}</span
+                            ><span class="dye-price-world"
+                              >${
+                                this.marketBoardService?.getWorldNameForPrice(livePrice) ??
+                                this.marketConfig.selectedServer
+                              }</span
+                            >`
+                        : gilVendor
+                          ? formatGil(dye.cost)
+                          : LanguageService.t('preset.notSold')
+                    }</span
                   >
                 </div>
               `;
