@@ -481,8 +481,7 @@ describe('AuthService', () => {
       // so all three synchronous isAuthenticated() calls race it.
       let resolveRevoke: (() => void) | undefined;
       const revokePromise = new Promise((resolve) => {
-        resolveRevoke = () =>
-          resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
+        resolveRevoke = () => resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
       });
       (global.fetch as ReturnType<typeof vi.fn>).mockReturnValue(revokePromise);
 
