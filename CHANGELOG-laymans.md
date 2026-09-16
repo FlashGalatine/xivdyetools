@@ -38,6 +38,9 @@ Rules:
 - Web app: only what you are wearing is listed, in the template's own order (Main Hand through Feet, then Earrings, Necklace, Bracelets, Right Ring, Left Ring and Facewear). Empty slots and undyed channels are left out, so there is nothing to delete before you submit. A dye the app does not know is written by its number, and a piece with no item name keeps its slot with the name left empty. Neither the copied text nor the saved file includes your character's name.
 - Web app: the list is the whole outfit whichever view you are in, and the buttons switch on once item names have arrived. If names cannot be fetched they still work, because your slots and dyes come from the file itself.
 
+### 📜 Terms of Service, and both policies one tap away
+- Web app: the site now has a Terms of Service, covering community preset submissions and sign-in, and About has a new **Policies** row linking to it and to the Privacy Policy. The Privacy Policy was corrected in five places so it describes exactly what the app does today; the bot's policy gained the same clarity about its operational logs.
+
 ## [5.6.0] - 2026-09-06
 ### 🔗 Look a glamour piece up anywhere, straight from the list
 - Web app: click a piece's icon or its name in "Dyes on this glamour" and a menu opens with five places to look it up — Mirapri, GarlandTools, Teamcraft, GamerEscape, and the Lodestone.

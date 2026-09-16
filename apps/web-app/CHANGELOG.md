@@ -41,20 +41,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and dye names follow the app language, so the list matches the screen. The
   file name and content carry no character name, per the `.chara` privacy rule.
 - The generator is `shared/glamour-markdown.ts`, pure and tested against the
-  exact text. Everything after the click — gathering the slots, building the
-  text, copying or saving, the toasts — is `components/glamour-list-actions.ts`,
-  loaded on demand like the item-links menu: the swatch chunk sits within two
-  kilobytes of its size budget, and the component keeps only the two buttons
-  and a loader. The clipboard
-  mechanics (Clipboard API, then a selected read-only textarea + `execCommand`)
-  and the object-URL download move out of the export sheet into
-  `shared/clipboard.ts` and `shared/download-file.ts`, each unit-tested, and
-  the export sheet now calls them; `shared/clipboard.ts` also gains the
-  rich-text entry point. Two quiet fixes ride along: a fallback copy whose
-  `execCommand` returns `false` now reports failure instead of success, and a
-  download whose click throws still removes its anchor and revokes its URL.
-  Both new buttons report a failure with a toast rather than staying silent,
-  and a failed copy's textarea is removed even when selecting it throws.
+  exact text. Gathering the slots and building the text is
+  `components/glamour-list-actions.ts`, loaded on demand like the item-links
+  menu: the swatch chunk sits within two kilobytes of its size budget, and
+  the component keeps the two buttons, a loader, and the copy's clipboard
+  call. That call starts synchronously in the click, handing the content over
+  as a promise that lands once the chunk has loaded — WebKit (Safari, every
+  iOS browser) drops the click's user activation across a chunk load and
+  refuses a clipboard write made after it, and its `execCommand` fallback is
+  gated the same way, so a copy that waited for the module would have failed
+  on every iPhone. A regression test asserts the write is under way when the
+  click handler returns. The clipboard mechanics (Clipboard API, then a
+  selected read-only textarea + `execCommand`) and the object-URL download
+  move out of the export sheet into `shared/clipboard.ts` and
+  `shared/download-file.ts`, each unit-tested, and the export sheet now calls
+  them; `shared/clipboard.ts` also gains the rich-text entry point, which
+  accepts its content as a promise for exactly the case above. Two quiet
+  fixes ride along: a fallback copy whose `execCommand` returns `false` now
+  reports failure instead of success, and a download whose click throws still
+  removes its anchor and revokes its URL. Both new buttons report a failure
+  with a toast rather than staying silent, and a failed copy's textarea is
+  removed even when selecting it throws.
+- **Privacy · Terms in the About dialog.** A POLICIES row above the
+  attribution links the Privacy Policy and the new Terms of Service (the
+  GitHub-hosted markdown, in a new tab with the referrer suppressed), with the
+  label and both link texts translated across all six locales. Landed ahead
+  of this release without a version of its own (PR #185, together with the
+  new `TERMS_OF_SERVICE.md` and five accuracy fixes to `PRIVACY.md`); this
+  entry is where it is recorded.
 
 ## [5.9.0] - 2026-09-06
 
