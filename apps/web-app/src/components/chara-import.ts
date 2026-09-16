@@ -56,6 +56,7 @@ import type { ItemLinksMenuTarget } from '@components/item-links-menu';
 import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
 import { STORAGE_PREFIX, MAX_USER_FILE_BYTES } from '@shared/constants';
 import { logger } from '@shared/logger';
+import { copyRichTextToClipboard } from '@shared/clipboard';
 import { clearContainer } from '@shared/utils';
 import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import type { Dye, SubRace, Gender } from '@xivdyetools/types';
@@ -136,6 +137,8 @@ function readShowAllPieces(): boolean {
  * Slots whose items carry dye channels. The five accessory slots are absent
  * on purpose: no FFXIV earring, necklace, bracelet or ring is dyeable, so a
  * chip there would invent a channel the game does not have.
+ *
+ * `shared/glamour-markdown` keeps its own copy (`DYEABLE`) — change both.
  */
 const DYEABLE_SLOTS: ReadonlySet<CharaGearSlotId> = new Set<CharaGearSlotId>([
   'MainHand',
@@ -1220,6 +1223,7 @@ export class CharaImport {
     );
     headerRight.appendChild(this.renderViewToggle());
     headerRight.appendChild(this.renderShowAllSwitch());
+    for (const action of this.renderListActions()) headerRight.appendChild(action);
 
     const paletteBtn = this.el(
       'button',
@@ -1364,6 +1368,94 @@ export class CharaImport {
       this.rerenderGlamour();
     });
     return btn;
+  }
+
+  // --------------------------------------------------------------------------
+  // Copy list / Export .md — the GPOSERS submission template
+  // --------------------------------------------------------------------------
+
+  /**
+   * Two quiet secondary buttons beside Make a palette. Both write the WHOLE
+   * worn glamour in the template's fixed order — the lens and the Show all
+   * switch are ways of looking at the list, not of trimming it — and both
+   * wait for item names to land, because a list copied a second early is
+   * missing every piece. NAMES UNAVAILABLE still enables them: the slots and
+   * dyes come from the file, and a form with blank names beats no form.
+   */
+  private renderListActions(): HTMLElement[] {
+    const resolving = this.resolveState === 'resolving';
+    const make = (role: string, label: string, onClick: () => void): HTMLElement => {
+      const btn = this.el(
+        'button',
+        `min-height: 30px; padding: 0 10px; border-radius: 8px; font-family: ${SANS}; font-size: 11px; font-weight: 600; background: var(--theme-card-background); border: 1px solid var(--theme-border); color: ${
+          resolving ? 'var(--theme-text-muted)' : 'var(--theme-text)'
+        }; cursor: ${resolving ? 'progress' : 'pointer'}; opacity: ${resolving ? '0.55' : '1'};`,
+        label
+      );
+      const button = btn as HTMLButtonElement;
+      button.type = 'button';
+      button.disabled = resolving;
+      btn.dataset.role = role;
+      btn.addEventListener('click', onClick);
+      return btn;
+    };
+    return [
+      make('copy-list', this.t('copyList'), () => this.copyList()),
+      make('export-markdown', this.t('exportMarkdown'), () => this.exportList()),
+    ];
+  }
+
+  /**
+   * What either action starts from, or null before a file has resolved (the
+   * buttons are not drawn then, so a click cannot reach here without one).
+   */
+  private listSource(): import('@components/glamour-list-actions').GlamourListSource | null {
+    return this.resolved ? { resolved: this.resolved, equipment: this.equipment } : null;
+  }
+
+  /**
+   * The list's builders live in `glamour-list-actions`, loaded on demand like
+   * the item-links menu — the swatch chunk sits within a kilobyte of its size
+   * budget. A load that fails (offline, blocked) surfaces through the same
+   * toast the action itself would.
+   */
+  private loadListActions(): Promise<typeof import('@components/glamour-list-actions')> {
+    return import('@components/glamour-list-actions');
+  }
+
+  /**
+   * Copy starts the clipboard write HERE, synchronously in the click, and
+   * hands the content over as a promise that lands once the chunk has
+   * loaded. WebKit (Safari, every iOS browser) drops the click's user
+   * activation across that load: a write that waited for the module would
+   * be refused there, and the command fallback, gated the same way, would
+   * fail behind it — a "couldn't copy" toast on every iPhone.
+   */
+  private copyList(): void {
+    const source = this.listSource();
+    if (!source) return;
+    const payload = this.loadListActions().then((m) => m.glamourCopyPayload(source));
+    void copyRichTextToClipboard(payload)
+      .then((ok) => {
+        if (ok) ToastService.success(this.t('listCopied'));
+        else ToastService.error(this.t('listCopyFailed'));
+      })
+      .catch((error: unknown) => {
+        logger.error('[CharaImport] Glamour list copy failed', error);
+        ToastService.error(this.t('listCopyFailed'));
+      });
+  }
+
+  /** A download needs no activation, so Export can wait for the module whole. */
+  private exportList(): void {
+    const source = this.listSource();
+    if (!source) return;
+    void this.loadListActions()
+      .then((m) => m.exportGlamourList(source))
+      .catch((error: unknown) => {
+        logger.error('[CharaImport] Glamour list export failed', error);
+        ToastService.error(this.t('listExportFailed'));
+      });
   }
 
   /** Nothing on this glamour is dyed — say so, rather than draw an empty grid. */

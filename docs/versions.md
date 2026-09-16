@@ -2,7 +2,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: September 15, 2026*
+*Last Updated: September 16, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
@@ -19,7 +19,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.9.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.10.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.5.6 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.1 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -103,6 +103,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v5.10.0** | **Sep 2026** | **Swatch Manager's equipment list gains Copy list and Export .md — the GPOSERS submission template (bold slot labels, worn slots in the template's order, a `Dye` line per dyed channel, `Acquisition:` left blank); Copy puts HTML + plain text on the clipboard so Word / Google Docs keep the bold, Export saves Markdown; the clipboard and file-download mechanics move to `shared/clipboard` and `shared/download-file`** |
 | v5.9.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-001–007) — eight unused service/component methods removed (`getWithContext`, `isSaved`, `getBaseUrl`, `getRequiredColor`, `setStyle`, `setOptions`, `onStatusChange`, `updateMessage`); no user-visible change, coverage ratchet held |
 | **v5.9.0** | **Sep 2026** | **Swatch Manager equipment rows open a piece in five community databases — Mirapri, GarlandTools, Teamcraft, GamerEscape and the Lodestone in five regions; facewear links by name only, resolving its untinted base row first. Eorzea Collection is deliberately excluded: it keys items by its own auto-increment id, so the game's item id silently opens a different item there** |
 | **v5.8.0** | **Sep 2026** | **Palette Extractor rebuilt on the confirmed 4A frame — a persistent loupe over a dominance bar butted under the image (proportional extracted segments, a 3 px break, fixed-width numbered picks, the `+` tile) over the card sheet; bulk extraction stops being a mode; the dead 3C left panel and three extractor-only modules removed** |

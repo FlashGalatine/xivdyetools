@@ -7,6 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.10.0] - 2026-09-16
+
+### Added
+
+- **Copy list and Export .md in DYES ON THIS GLAMOUR.** Two secondary buttons
+  beside Make a palette write the worn glamour as the GPOSERS submission
+  template: a bold `Glamour Items:` header, then each worn slot in the
+  template's order (Main Hand … Feet, Earrings, Necklace, Bracelets, Right
+  Ring, Left Ring, Facewear) as a bold label, a `Dye 1:` / `Dye 2:` line for
+  each channel that is actually dyed (dyeable slots only), and an
+  `Acquisition:` line left blank for the submitter to fill in. Export saves
+  the Markdown as `glamour-equipment.md` (`text/markdown`).
+- **Copy puts real formatting on the clipboard, never Markdown syntax.** The
+  clipboard carries an HTML flavour (`<strong>` labels, one paragraph per slot
+  with `<br>` breaks) so a paste into Word or Google Docs keeps the bold, and
+  a plain-text flavour of the same lines with no asterisks for editors that
+  take only text. Written with `ClipboardItem` where the browser has it,
+  otherwise through the `copy` event of a selected off-screen textarea.
+- The list is written whole regardless of the Pieces/Dyes lens or the Show all
+  switch — those are ways of looking at the list, not of trimming it. Slots
+  the file does not wear are omitted, and so is a dye channel the player left
+  empty: the form lists what is there. A `.chara` never carries a fashion
+  accessory, so that slot never appears. An unknown stain writes `#id` as the
+  rows do, and a worn piece with no resolved item (NPC or prop model, or a
+  failed lookup — facewear included) keeps its slot with the label bare rather
+  than being given the model key.
+- Both buttons are disabled while item names are resolving and go live when
+  they land; NAMES UNAVAILABLE still enables them, since slots and dyes come
+  from the file and a form with blank names beats no form.
+- Template labels are the submission format's own English wording and are not
+  localised (a document format, like the JSON export's canonical names); item
+  and dye names follow the app language, so the list matches the screen. The
+  file name and content carry no character name, per the `.chara` privacy rule.
+- The generator is `shared/glamour-markdown.ts`, pure and tested against the
+  exact text. Gathering the slots and building the text is
+  `components/glamour-list-actions.ts`, loaded on demand like the item-links
+  menu: the swatch chunk sits within two kilobytes of its size budget, and
+  the component keeps the two buttons, a loader, and the copy's clipboard
+  call. That call starts synchronously in the click, handing the content over
+  as a promise that lands once the chunk has loaded — WebKit (Safari, every
+  iOS browser) drops the click's user activation across a chunk load and
+  refuses a clipboard write made after it, and its `execCommand` fallback is
+  gated the same way, so a copy that waited for the module would have failed
+  on every iPhone. A regression test asserts the write is under way when the
+  click handler returns. The clipboard mechanics (Clipboard API, then a
+  selected read-only textarea + `execCommand`) and the object-URL download
+  move out of the export sheet into `shared/clipboard.ts` and
+  `shared/download-file.ts`, each unit-tested, and the export sheet now calls
+  them; `shared/clipboard.ts` also gains the rich-text entry point, which
+  accepts its content as a promise for exactly the case above. Two quiet
+  fixes ride along: a fallback copy whose `execCommand` returns `false` now
+  reports failure instead of success, and a download whose click throws still
+  removes its anchor and revokes its URL. Both new buttons report a failure
+  with a toast rather than staying silent, and a failed copy's textarea is
+  removed even when selecting it throws.
+- **Privacy · Terms in the About dialog.** A POLICIES row above the
+  attribution links the Privacy Policy and the new Terms of Service (the
+  GitHub-hosted markdown, in a new tab with the referrer suppressed), with the
+  label and both link texts translated across all six locales. Landed ahead
+  of this release without a version of its own (PR #185, together with the
+  new `TERMS_OF_SERVICE.md` and five accuracy fixes to `PRIVACY.md`); this
+  entry is where it is recorded.
+
 ## [5.9.1] - 2026-09-16
 
 ### Removed (2026-09-15 dead-code audit)

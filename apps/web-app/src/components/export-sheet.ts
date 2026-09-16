@@ -16,7 +16,8 @@
 import { LanguageService } from '@services/language-service';
 import { ModalService } from '@services/modal-service';
 import { ToastService } from '@services/toast-service';
-import { logger } from '@shared/logger';
+import { copyTextToClipboard } from '@shared/clipboard';
+import { downloadTextFile } from '@shared/download-file';
 import { localizedDyeName } from '@shared/dye-name';
 import {
   EXPORT_FORMATS,
@@ -56,39 +57,14 @@ function chipStyle(active: boolean): string {
 }
 
 function downloadText(payload: ExportPayload, format: ExportFormat, text: string): void {
-  const blob = new Blob([text], { type: exportMimeType(format) });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = exportFilename(payload, format);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  downloadTextFile(text, exportFilename(payload, format), exportMimeType(format));
 }
 
 async function copyText(text: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(text);
+  if (await copyTextToClipboard(text)) {
     ToastService.success(LanguageService.t('export.copied'));
-  } catch (error) {
-    // Clipboard API needs a secure context and can be policy-blocked; the
-    // textarea path still works in both cases.
-    logger.warn('[ExportSheet] Clipboard API unavailable, using fallback', error);
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      document.execCommand('copy');
-      ToastService.success(LanguageService.t('export.copied'));
-    } catch (fallbackError) {
-      logger.error('[ExportSheet] Copy failed', fallbackError);
-      ToastService.error(LanguageService.t('export.copyFailed'));
-    }
-    document.body.removeChild(textarea);
+  } else {
+    ToastService.error(LanguageService.t('export.copyFailed'));
   }
 }
 

@@ -31,6 +31,16 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.7.0] - 2026-09-16
+### 📋 Copy your glamour list, or save it as a file
+- Web app: two new buttons in "Dyes on this glamour" — **Copy list** and **Export .md** — write your outfit in the format glamour showcases such as GPOSERS ask for: a bold slot name, the piece, a "Dye 1" / "Dye 2" line for each dye it is actually wearing, and an "Acquisition:" line left blank for you to fill in.
+- Web app: Copy keeps the bold — paste into Word, Google Docs or Discord and the slot names come through as real bold text, not asterisks. Editors that only take plain text get the same lines without formatting marks. Export .md saves the list as a Markdown file.
+- Web app: only what you are wearing is listed, in the template's own order (Main Hand through Feet, then Earrings, Necklace, Bracelets, Right Ring, Left Ring and Facewear). Empty slots and undyed channels are left out, so there is nothing to delete before you submit. A dye the app does not know is written by its number, and a piece with no item name keeps its slot with the name left empty. Neither the copied text nor the saved file includes your character's name.
+- Web app: the list is the whole outfit whichever view you are in, and the buttons switch on once item names have arrived. If names cannot be fetched they still work, because your slots and dyes come from the file itself.
+
+### 📜 Terms of Service, and both policies one tap away
+- Web app: the site now has a Terms of Service, covering community preset submissions and sign-in, and About has a new **Policies** row linking to it and to the Privacy Policy. The Privacy Policy was corrected in five places so it describes exactly what the app does today; the bot's policy gained the same clarity about its operational logs.
+
 ## [5.6.0] - 2026-09-06
 ### 🔗 Look a glamour piece up anywhere, straight from the list
 - Web app: click a piece's icon or its name in "Dyes on this glamour" and a menu opens with five places to look it up — Mirapri, GarlandTools, Teamcraft, GamerEscape, and the Lodestone.
