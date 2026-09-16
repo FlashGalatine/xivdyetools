@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.10.0] - 2026-09-16
+
+### Added
+
+- **Copy list and Export .md in DYES ON THIS GLAMOUR.** Two secondary buttons
+  beside Make a palette write the worn glamour as the GPOSERS submission
+  template: a bold `**Glamour Items:**` header, then every one of the fourteen
+  template slots in its order (Main Hand … Feet, Earrings, Necklace, Bracelets,
+  Right Ring, Left Ring, Facewear, Fashion Accessory) as a bold label, `Dye 1:` /
+  `Dye 2:` lines on the seven dyeable slots only, and an `Acquisition:` line
+  left blank for the submitter to fill in. Copy puts the text on the clipboard
+  with a toast; Export saves it as `glamour-equipment.md` (`text/markdown`).
+- The template is written whole regardless of the Pieces/Dyes lens or the
+  Show all switch — those are ways of looking at the list, not of trimming it.
+  Slots the file does not wear are written blank rather than omitted, so the
+  form is complete; a `.chara` never carries a fashion accessory, so that line
+  is always blank. An undyed channel is blank too, an unknown stain writes
+  `#id` as the rows do, and a slot with no resolved item (NPC or prop model,
+  or a failed lookup) is left nameless rather than given the model key.
+- Both buttons are disabled while item names are resolving and go live when
+  they land; NAMES UNAVAILABLE still enables them, since slots and dyes come
+  from the file and a form with blank names beats no form.
+- Template labels are the submission format's own English wording and are not
+  localised (a document format, like the JSON export's canonical names); item
+  and dye names follow the app language, so the list matches the screen. The
+  file name and content carry no character name, per the `.chara` privacy rule.
+- The generator is `shared/glamour-markdown.ts`, pure and tested against the
+  exact text. The clipboard mechanics (Clipboard API, then a selected textarea
+  + `execCommand`) and the object-URL download move out of the export sheet
+  into `shared/clipboard.ts` and `shared/download-file.ts`, each unit-tested,
+  and the export sheet now calls them; its behaviour is unchanged.
+
 ## [5.9.0] - 2026-09-06
 
 ### Added

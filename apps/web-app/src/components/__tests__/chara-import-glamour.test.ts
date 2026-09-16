@@ -6,7 +6,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { CharaImport } from '../chara-import';
-import { StorageService } from '@services/index';
+import { StorageService, ToastService } from '@services/index';
+import { buildGlamourMarkdown } from '@shared/glamour-markdown';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import type { CharaResolveResult } from '@services/chara-resolve-service';
 
@@ -540,5 +541,184 @@ describe('CharaImport — Show all pieces', () => {
     switchOf(glamour).click();
     expect(block(glamour).querySelector('[data-role="no-dyed-pieces"]')).toBeNull();
     expect(rowsOf(glamour).map((r) => r.dataset.slot)).toEqual(['Body', 'Ears']);
+  });
+});
+
+/**
+ * The GPOSERS list — Copy list and Export .md in the block head. Both write
+ * the whole worn glamour in the template's fixed order, whatever lens or
+ * switch is showing, and wait for names to land before they go live.
+ */
+describe('CharaImport — Copy list / Export .md', () => {
+  let hosts: HTMLElement[] = [];
+  let writeText: ReturnType<typeof vi.fn>;
+  let createObjectURL: ReturnType<typeof vi.fn>;
+  let clicked: HTMLAnchorElement[];
+
+  const copyBtn = (glamour: HTMLElement) =>
+    block(glamour).querySelector<HTMLButtonElement>('[data-role="copy-list"]')!;
+  const exportBtn = (glamour: HTMLElement) =>
+    block(glamour).querySelector<HTMLButtonElement>('[data-role="export-markdown"]')!;
+
+  /** What FIXTURE + RESOLVED must write: names where known, dyes by channel, blanks elsewhere. */
+  const EXPECTED = buildGlamourMarkdown({
+    MainHand: { name: 'Runaway Bow', dye1: 'Soot Black' },
+    OffHand: { name: 'Runaway Bow', dye1: 'Soot Black' },
+    HeadGear: { name: 'Beech Mask of Casting', dye1: 'Snow White' },
+    Body: { dye1: 'Deepwood Green', dye2: 'Loam Brown' },
+  });
+
+  beforeEach(() => {
+    resolveMock.mockReset();
+    localStorage.clear();
+    writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    clicked = [];
+    createObjectURL = vi.fn().mockReturnValue('blob:glamour');
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement
+    ) {
+      clicked.push(this);
+    });
+    vi.spyOn(ToastService, 'success').mockImplementation(() => 'toast');
+    vi.spyOn(ToastService, 'error').mockImplementation(() => 'toast');
+  });
+  afterEach(() => {
+    hosts.forEach(cleanupTestContainer);
+    hosts = [];
+    vi.restoreAllMocks();
+  });
+
+  it('renders both actions in the block head, disabled until names have landed', async () => {
+    const pending = deferred<CharaResolveResult>();
+    const { container, glamour } = await mount(pending.promise);
+    hosts = [container, glamour];
+
+    expect(copyBtn(glamour).textContent).toBe('Copy list');
+    expect(exportBtn(glamour).textContent).toBe('Export .md');
+    expect(copyBtn(glamour).disabled).toBe(true);
+    expect(exportBtn(glamour).disabled).toBe(true);
+
+    pending.resolve(RESOLVED);
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+    expect(exportBtn(glamour).disabled).toBe(false);
+  });
+
+  it('copies the whole template with item names, dyes by channel and blanks for the unknown, then confirms', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+
+    const text = writeText.mock.calls[0][0] as string;
+    expect(text.slice(0, text.indexOf('**Hands:**'))).toBe(
+      [
+        '**Glamour Items:**',
+        '**Main Hand:** Runaway Bow',
+        'Dye 1: Soot Black',
+        'Dye 2:',
+        'Acquisition:',
+        '',
+        '**Off Hand:** Runaway Bow',
+        'Dye 1: Soot Black',
+        'Dye 2:',
+        'Acquisition:',
+        '',
+        '**Head:** Beech Mask of Casting',
+        'Dye 1: Snow White',
+        'Dye 2:',
+        'Acquisition:',
+        '',
+        '**Body:**',
+        'Dye 1: Deepwood Green',
+        'Dye 2: Loam Brown',
+        'Acquisition:',
+        '',
+        '',
+      ].join('\n')
+    );
+    expect(text).toBe(EXPECTED);
+    await vi.waitFor(() =>
+      expect(ToastService.success).toHaveBeenCalledWith('Equipment list copied to clipboard')
+    );
+    expect(clicked).toHaveLength(0);
+  });
+
+  it('exports the same text as glamour-equipment.md, with no character name in the file name', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(exportBtn(glamour).disabled).toBe(false));
+
+    exportBtn(glamour).click();
+
+    expect(clicked).toHaveLength(1);
+    expect(clicked[0].download).toBe('glamour-equipment.md');
+    const blob = createObjectURL.mock.calls[0][0] as Blob;
+    expect(blob.type).toBe('text/markdown');
+    await expect(blob.text()).resolves.toBe(EXPECTED);
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it('writes the full glamour regardless of the lens or the Show all switch', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    block(glamour).querySelector<HTMLButtonElement>('[data-glamour-view="dyes"]')!.click();
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText.mock.calls[0][0]).toBe(EXPECTED);
+  });
+
+  it('names an unknown stain by its id and the facewear by its item name', async () => {
+    const { container, glamour } = await mount(
+      Promise.resolve(glassesResolved('Silver Spectacles')),
+      JSON.stringify({
+        TypeName: 'Anamnesis Character File',
+        REyeColor: 42,
+        Body: { ModelBase: 200, ModelVariant: 1, DyeId: 999, DyeId2: 33 },
+        Glasses: { GlassesId: 5 },
+      })
+    );
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    const text = writeText.mock.calls[0][0] as string;
+    expect(text).toContain('**Body:**\nDye 1: #999\nDye 2: Loam Brown\nAcquisition:');
+    expect(text).toContain('**Facewear:** Silver Spectacles\nAcquisition:');
+  });
+
+  it('still offers both actions when item names are unavailable — slots and dyes are local', async () => {
+    const { container, glamour } = await mount(Promise.reject(new Error('503')));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText.mock.calls[0][0]).toContain('**Main Hand:**\nDye 1: Soot Black\nDye 2:');
+  });
+
+  it('reports a failed copy rather than a silent one', async () => {
+    writeText.mockRejectedValue(new Error('NotAllowedError'));
+    Object.defineProperty(document, 'execCommand', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockReturnValue(false),
+    });
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    copyBtn(glamour).click();
+    await vi.waitFor(() =>
+      expect(ToastService.error).toHaveBeenCalledWith("Couldn't copy the equipment list")
+    );
+    expect(ToastService.success).not.toHaveBeenCalled();
   });
 });

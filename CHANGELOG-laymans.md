@@ -31,6 +31,13 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.7.0] - 2026-09-16
+### 📋 Copy your glamour list, or save it as a file
+- Web app: two new buttons in "Dyes on this glamour" — **Copy list** and **Export .md** — write your whole outfit in the format glamour showcases such as GPOSERS ask for: a bold slot name, the piece, its two dyes where the slot can take them, and an "Acquisition:" line left blank for you to fill in.
+- Web app: every slot is always listed in the template's own order, Main Hand through Feet, then Earrings, Necklace, Bracelets, Right Ring, Left Ring, Facewear and Fashion Accessory. Slots you are not wearing are left blank rather than dropped, so you always have the complete form.
+- Web app: blanks mean "fill me in" — an undyed channel is left empty, a dye the app does not know is written by its number, and a piece with no item name keeps its slot with the name left empty. Neither the copied text nor the saved file includes your character's name.
+- Web app: the list is the whole outfit whichever view you are in, and the buttons switch on once item names have arrived. If names cannot be fetched they still work, because your slots and dyes come from the file itself.
+
 ## [5.6.0] - 2026-09-06
 ### 🔗 Look a glamour piece up anywhere, straight from the list
 - Web app: click a piece's icon or its name in "Dyes on this glamour" and a menu opens with five places to look it up — Mirapri, GarlandTools, Teamcraft, GamerEscape, and the Lodestone.

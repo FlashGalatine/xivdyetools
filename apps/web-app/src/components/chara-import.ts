@@ -57,6 +57,14 @@ import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
 import { STORAGE_PREFIX, MAX_USER_FILE_BYTES } from '@shared/constants';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { copyTextToClipboard } from '@shared/clipboard';
+import { downloadTextFile } from '@shared/download-file';
+import {
+  GLAMOUR_MARKDOWN_FILENAME,
+  buildGlamourMarkdown,
+  type GlamourMarkdownInput,
+  type GlamourMarkdownPiece,
+} from '@shared/glamour-markdown';
 import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import type { Dye, SubRace, Gender } from '@xivdyetools/types';
 
@@ -1220,6 +1228,7 @@ export class CharaImport {
     );
     headerRight.appendChild(this.renderViewToggle());
     headerRight.appendChild(this.renderShowAllSwitch());
+    for (const action of this.renderListActions()) headerRight.appendChild(action);
 
     const paletteBtn = this.el(
       'button',
@@ -1364,6 +1373,92 @@ export class CharaImport {
       this.rerenderGlamour();
     });
     return btn;
+  }
+
+  // --------------------------------------------------------------------------
+  // Copy list / Export .md — the GPOSERS submission template
+  // --------------------------------------------------------------------------
+
+  /**
+   * Two quiet secondary buttons beside Make a palette. Both write the WHOLE
+   * worn glamour in the template's fixed order — the lens and the Show all
+   * switch are ways of looking at the list, not of trimming it — and both
+   * wait for item names to land, because a list copied a second early is
+   * missing every piece. NAMES UNAVAILABLE still enables them: the slots and
+   * dyes come from the file, and a form with blank names beats no form.
+   */
+  private renderListActions(): HTMLElement[] {
+    const resolving = this.resolveState === 'resolving';
+    const make = (role: string, label: string, onClick: () => void): HTMLElement => {
+      const btn = this.el(
+        'button',
+        `min-height: 30px; padding: 0 10px; border-radius: 8px; font-family: ${SANS}; font-size: 11px; font-weight: 600; background: var(--theme-card-background); border: 1px solid var(--theme-border); color: ${
+          resolving ? 'var(--theme-text-muted)' : 'var(--theme-text)'
+        }; cursor: ${resolving ? 'progress' : 'pointer'}; opacity: ${resolving ? '0.55' : '1'};`,
+        label
+      );
+      const button = btn as HTMLButtonElement;
+      button.type = 'button';
+      button.disabled = resolving;
+      btn.dataset.role = role;
+      btn.addEventListener('click', onClick);
+      return btn;
+    };
+    return [
+      make('copy-list', this.t('copyList'), () => {
+        void copyTextToClipboard(this.glamourMarkdown()).then((ok) => {
+          if (ok) ToastService.success(this.t('listCopied'));
+          else ToastService.error(this.t('listCopyFailed'));
+        });
+      }),
+      make('export-markdown', this.t('exportMarkdown'), () => {
+        downloadTextFile(this.glamourMarkdown(), GLAMOUR_MARKDOWN_FILENAME, 'text/markdown');
+      }),
+    ];
+  }
+
+  /** The template text for the loaded file, in the app's current language. */
+  private glamourMarkdown(): string {
+    return buildGlamourMarkdown(this.glamourMarkdownInput());
+  }
+
+  /**
+   * What the file and the resolve know, slot by slot. Names are the same
+   * `itemNameFor` the rows show; a slot with no item (NPC model, unresolved,
+   * unavailable) is left nameless rather than given the model key, which
+   * means nothing on a submission form. Dyes are per channel, so a piece dyed
+   * only on channel 2 keeps channel 1 blank; an unknown stain writes `#id`,
+   * as the rows do. Facewear names from the resolved Glasses row — the file
+   * carries no tint, and the builder writes no dye line for it anyway.
+   */
+  private glamourMarkdownInput(): GlamourMarkdownInput {
+    const resolved = this.resolved;
+    if (!resolved) return {};
+    const lang = LanguageService.getCurrentLocale();
+    const input: GlamourMarkdownInput = {};
+    const pieceFor = (slot: CharaGearSlotId): GlamourMarkdownPiece => {
+      const piece = input[slot] ?? {};
+      input[slot] = piece;
+      return piece;
+    };
+
+    for (const model of resolved.gearModels) {
+      const item = this.itemFor(model.slot);
+      const piece = pieceFor(model.slot);
+      if (item && !piece.name) piece.name = itemNameFor(item.names, lang);
+    }
+    for (const gear of resolved.gearDyes) {
+      const piece = pieceFor(gear.slot);
+      const text = gear.dye ? this.dyeName(gear.dye) : `#${gear.stainId}`;
+      if (gear.channel === 1) piece.dye1 = text;
+      else piece.dye2 = text;
+    }
+
+    const glasses = this.equipment?.glasses ?? null;
+    if (resolved.glassesId !== null && resolved.glassesId > 0 && glasses) {
+      input.Facewear = { name: itemNameFor(glasses.names, lang) };
+    }
+    return input;
   }
 
   /** Nothing on this glamour is dyed — say so, rather than draw an empty grid. */
