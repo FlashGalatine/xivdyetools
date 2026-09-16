@@ -692,10 +692,32 @@ function createSubmitButton(
     const exampleLink = state.exampleLink.trim() || null;
     const originalSecondary = preset.secondary_categories ?? [];
 
+    // BUG-030: preset.dyes can carry an id resolvePresetDye can't resolve
+    // (out-of-database id, or a DB shrink) — the picker silently dropped it
+    // at load, so `dyes` above only ever contains ids that made it into
+    // state.selectedDyes. The diff baseline must be that SAME resolved list,
+    // not the raw stored one, or a no-edit Save would see them differ and
+    // ship a `dyes` patch that permanently truncates the preset.
+    const resolvedDyeIds = preset.dyes
+      .map((dyeId) => resolvePresetDye(dyeId))
+      .filter((d): d is Dye => d !== null)
+      .map((d) => d.stainID);
+    const unresolvedDyeIds = preset.dyes.filter((dyeId) => !resolvePresetDye(dyeId));
+    const dyesChanged = dyes.join(',') !== resolvedDyeIds.join(',');
+
     const updates: PresetEditRequest = {};
     if (name !== preset.name) updates.name = name;
     if (description !== preset.description) updates.description = description;
-    if (dyes.join(',') !== preset.dyes.join(',')) updates.dyes = dyes;
+    if (dyesChanged) {
+      if (unresolvedDyeIds.length > 0) {
+        // Refuse just the dye-list change so other edits on this submit
+        // (name, description, tags, ...) still go through, rather than
+        // saving a `dyes` array that can never get those ids back.
+        ToastService.error(LanguageService.t('preset.validation.dyesInvalid'));
+      } else {
+        updates.dyes = dyes;
+      }
+    }
     if (tags.join(',') !== preset.tags.join(',')) updates.tags = tags;
     if (exampleLink !== (preset.example_link ?? null)) updates.example_link = exampleLink;
     if (state.categories.primary !== preset.category_id) {

@@ -355,4 +355,53 @@ describe('showPresetEditForm — localization', () => {
       expect(mockEditPreset).toHaveBeenCalled();
     });
   });
+
+  // BUG-030: preset.dyes can carry a stored id resolvePresetDye can't
+  // resolve (an out-of-database id, or a DB shrink). The picker drops it
+  // silently when the form loads, so state.selectedDyes only ever holds the
+  // ids that DID resolve — diffing that against the raw preset.dyes list
+  // made an untouched dye list look "changed" and shipped a patch that
+  // permanently truncated the preset.
+  describe('unresolvable stored dye ids (BUG-030)', () => {
+    it('sends no dyes key on a Save that never touched the dye list', () => {
+      showPresetEditForm(makePreset({ dyes: [1, 2, 3, 999] }));
+      const content = getFormContent();
+
+      // Edit an unrelated field so the patch isn't empty (an all-round
+      // no-op Save short-circuits to "preset.noChanges" before the dyes
+      // diff is even relevant).
+      const name = content.querySelector<HTMLInputElement>('#edit-preset-name')!;
+      name.value = 'Renamed Without Touching Dyes';
+      name.dispatchEvent(new Event('input'));
+
+      content.querySelector<HTMLButtonElement>('#save-preset-btn')!.click();
+
+      expect(mockEditPreset).toHaveBeenCalledTimes(1);
+      const updates = mockEditPreset.mock.calls[0][1] as Record<string, unknown>;
+      expect(updates).not.toHaveProperty('dyes');
+      expect(updates.name).toBe('Renamed Without Touching Dyes');
+      expect(mockToastError).not.toHaveBeenCalled();
+    });
+
+    it('refuses just the dye-list edit, leaving other field changes savable', () => {
+      showPresetEditForm(makePreset({ dyes: [1, 2, 3, 999] }));
+      const content = getFormContent();
+
+      const name = content.querySelector<HTMLInputElement>('#edit-preset-name')!;
+      name.value = 'Also Renamed';
+      name.dispatchEvent(new Event('input'));
+
+      // Add the one remaining available dye so the edited list (4 dyes) no
+      // longer matches the resolved baseline (3 dyes).
+      content.querySelectorAll<HTMLButtonElement>('#edit-dye-grid button')[0].click();
+
+      content.querySelector<HTMLButtonElement>('#save-preset-btn')!.click();
+
+      expect(mockToastError).toHaveBeenCalledWith('preset.validation.dyesInvalid');
+      expect(mockEditPreset).toHaveBeenCalledTimes(1);
+      const updates = mockEditPreset.mock.calls[0][1] as Record<string, unknown>;
+      expect(updates).not.toHaveProperty('dyes');
+      expect(updates.name).toBe('Also Renamed');
+    });
+  });
 });
