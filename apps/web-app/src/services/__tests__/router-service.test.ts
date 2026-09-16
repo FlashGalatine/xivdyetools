@@ -637,11 +637,24 @@ describe('RouterService', () => {
       const listener = vi.fn();
       RouterService.subscribe(listener);
 
-      // Simulate popstate event without state
+      // No state to resolve from, so this falls back to parsing the URL.
+      // BUG-005: a same-tool resolution no longer notifies, so the URL is
+      // moved to a DIFFERENT tool here to keep this test proving the
+      // fallback-parse path actually fires a real navigation.
+      Object.defineProperty(window, 'location', {
+        value: {
+          pathname: '/budget',
+          search: '',
+          href: 'http://localhost/budget',
+        },
+        writable: true,
+      });
+
       const event = new PopStateEvent('popstate', { state: null });
       window.dispatchEvent(event);
 
       expect(listener).toHaveBeenCalled();
+      expect(RouterService.getCurrentToolId()).toBe('budget');
     });
 
     it('should handle popstate with invalid state', () => {
@@ -659,6 +672,18 @@ describe('RouterService', () => {
       const listener = vi.fn();
       RouterService.subscribe(listener);
 
+      // BUG-005: an invalid state ALSO falls back to parsing the URL, and a
+      // same-tool resolution no longer notifies — move the URL to a
+      // different tool so this still proves the fallback-parse path fires.
+      Object.defineProperty(window, 'location', {
+        value: {
+          pathname: '/budget',
+          search: '',
+          href: 'http://localhost/budget',
+        },
+        writable: true,
+      });
+
       // Simulate popstate event with invalid state
       const event = new PopStateEvent('popstate', {
         state: { toolId: 'invalid-tool' },
@@ -667,7 +692,48 @@ describe('RouterService', () => {
 
       expect(listener).toHaveBeenCalled();
       // Should fall back to parsing from URL
-      expect(RouterService.getCurrentToolId()).toBe('mixer');
+      expect(RouterService.getCurrentToolId()).toBe('budget');
+    });
+
+    it('BUG-005: does not notify when popstate resolves to the tool already mounted', () => {
+      // Models Back from a preset detail: preset-tool.ts pushes
+      // { toolId: 'presets', preset: id }; Back pops to the list's own
+      // { toolId: 'presets' } entry — same tool both times, so v4-layout
+      // must not remount <v4-preset-tool> (loadToolContent must not run).
+      Object.defineProperty(window, 'location', {
+        value: { pathname: '/presets', search: '', href: 'http://localhost/presets' },
+        writable: true,
+      });
+
+      RouterService.initialize();
+      expect(RouterService.getCurrentToolId()).toBe('presets');
+
+      const listener = vi.fn();
+      RouterService.subscribe(listener);
+
+      const event = new PopStateEvent('popstate', { state: { toolId: 'presets' } });
+      window.dispatchEvent(event);
+
+      expect(listener).not.toHaveBeenCalled();
+      expect(RouterService.getCurrentToolId()).toBe('presets');
+    });
+
+    it('BUG-005: still notifies (and remounts) when popstate resolves to a different tool', () => {
+      Object.defineProperty(window, 'location', {
+        value: { pathname: '/presets', search: '', href: 'http://localhost/presets' },
+        writable: true,
+      });
+
+      RouterService.initialize();
+
+      const listener = vi.fn();
+      RouterService.subscribe(listener);
+
+      const event = new PopStateEvent('popstate', { state: { toolId: 'harmony' } });
+      window.dispatchEvent(event);
+
+      expect(listener).toHaveBeenCalled();
+      expect(RouterService.getCurrentToolId()).toBe('harmony');
     });
 
     it('should update document title on popstate', () => {

@@ -372,6 +372,12 @@ export class PresetTool extends BaseLitComponent {
   override async connectedCallback(): Promise<void> {
     super.connectedCallback();
 
+    // BUG-005: list <-> detail is an in-component state change, not a route
+    // change the shell remounts for — router-service.ts skips its notify for
+    // a same-tool popstate, so this listener is the only thing that responds
+    // to Back/Forward while this element stays mounted.
+    window.addEventListener('popstate', this.handleWindowPopState);
+
     this.configController = ConfigController.getInstance();
     this.config = this.configController.getConfig('presets');
     this.configUnsubscribe = this.configController.subscribe('presets', (newConfig) => {
@@ -430,6 +436,7 @@ export class PresetTool extends BaseLitComponent {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    window.removeEventListener('popstate', this.handleWindowPopState);
     this.configUnsubscribe?.();
     this.configUnsubscribe = null;
     this.authUnsubscribe?.();
@@ -440,6 +447,52 @@ export class PresetTool extends BaseLitComponent {
     this.collectionsUnsubscribe = null;
     this.languageUnsubscribe?.();
     this.languageUnsubscribe = null;
+  }
+
+  /**
+   * BUG-005: read the history state a Back/Forward just made current.
+   * `handlePresetSelect` pushes `{ toolId: 'presets', preset: id }`; popping
+   * back to the list pushes/lands on `{ toolId: 'presets' }` (no `preset`).
+   * Guarded on `toolId` so a popstate that belongs to a different tool (this
+   * element about to be torn down by v4-layout) is a no-op here too.
+   */
+  private handleWindowPopState = (event: PopStateEvent): void => {
+    const state = event.state as { toolId?: string; preset?: string } | null;
+    if (!state || state.toolId !== 'presets') return;
+
+    if (state.preset) {
+      void this.restoreSelectedPresetFromHistory(state.preset);
+    } else {
+      this.selectedPreset = null;
+    }
+  };
+
+  /** Resolve a preset id from history state back to a `UnifiedPreset`, using the same sources `handleDeepLink` does. */
+  private async restoreSelectedPresetFromHistory(presetId: string): Promise<void> {
+    if (presetId.startsWith('local-')) {
+      const local = this.localPalettes.find((c) => `local-${c.id}` === presetId);
+      this.selectedPreset = local ? this.localPaletteToUnified(local) : null;
+      return;
+    }
+
+    const fromPool = this.presets.find((p) => p.id === presetId);
+    if (fromPool) {
+      this.selectedPreset = fromPool;
+      return;
+    }
+
+    const savedMatch = this.savedList.find((s) => s.id === presetId);
+    if (savedMatch) {
+      this.selectedPreset = this.savedToUnified(savedMatch);
+      return;
+    }
+
+    try {
+      this.selectedPreset = (await hybridPresetService.getPreset(presetId)) ?? null;
+    } catch (error) {
+      logger.error('[v4-preset-tool] Failed to restore preset from history:', error);
+      this.selectedPreset = null;
+    }
   }
 
   private async handleDeepLink(): Promise<void> {
@@ -762,7 +815,12 @@ export class PresetTool extends BaseLitComponent {
   private handlePresetSelect(e: CustomEvent<{ preset: UnifiedPreset }>): void {
     this.selectedPreset = e.detail.preset;
     const newUrl = `/presets/${this.selectedPreset.id}`;
-    window.history.pushState({ preset: this.selectedPreset.id }, '', newUrl);
+    // BUG-005: carry `toolId` so a Back/Forward that lands on this entry (or
+    // the list entry below it) resolves as the SAME tool in router-service's
+    // handlePopState — that skips the shell-level notify, so the transition
+    // stays inside this component (see handleWindowPopState) instead of
+    // remounting <v4-preset-tool> and losing tab/search/scroll.
+    window.history.pushState({ toolId: 'presets', preset: this.selectedPreset.id }, '', newUrl);
   }
 
   private handleCardSave(e: CustomEvent<{ preset: UnifiedPreset }>): void {

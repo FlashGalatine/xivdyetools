@@ -356,18 +356,30 @@ export class RouterService {
   private static handlePopState = (event: PopStateEvent): void => {
     const state = event.state as { toolId?: ToolId } | null;
 
-    if (state?.toolId && this.isValidToolId(state.toolId)) {
-      this.currentToolId = state.toolId;
-    } else {
-      // Parse from URL if no state
-      const toolId = this.parseCurrentPath();
-      this.currentToolId = toolId;
-    }
+    const resolvedToolId =
+      state?.toolId && this.isValidToolId(state.toolId) ? state.toolId : this.parseCurrentPath();
+
+    // BUG-005: a popstate that resolves to the tool already mounted (Back
+    // from a preset detail pushes `{ toolId: 'presets', preset }`; popping
+    // again lands on the list's own `{ toolId: 'presets' }` entry) must not
+    // trigger v4-layout's loadToolContent — that would remount
+    // <v4-preset-tool> and lose its tab/search/scroll for a transition the
+    // tool itself already handles (see preset-tool.ts's own popstate
+    // listener). Only notify when the resolved tool actually differs from
+    // what's mounted, so cross-tool Back/Forward keeps remounting exactly as
+    // before.
+    const toolChanged = resolvedToolId !== this.currentToolId;
+    this.currentToolId = resolvedToolId;
 
     // Update title
     const route = this.getRouteForTool(this.currentToolId);
     if (route) {
       document.title = this.composeDocumentTitle(route);
+    }
+
+    if (!toolChanged) {
+      logger.info(`[RouterService] Popstate: same tool (${this.currentToolId}), skipping notify`);
+      return;
     }
 
     this.notifyListeners();
