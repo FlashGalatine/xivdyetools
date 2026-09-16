@@ -122,6 +122,9 @@ Checked and dropped, so the next audit does not re-chase them.
 | ID | Status | Commit |
 |---|---|---|
 | BUG-007, BUG-021 | FIXED (Sprint 0) | `98637eff` |
+| BUG-003, REFACTOR-001, BUG-038 | FIXED (Sprint 1) | `500cbb9e`, `a087e276` |
+| BUG-004, BUG-026 | FIXED (Sprint 1) | `78caa32e` |
+| BUG-025, BUG-024, BUG-029, BUG-041 | FIXED (Sprint 1) | `17eeecb4`, `a86e9dc0`, `dcadae88`, `250acb73`, `e76ccc71` |
 | everything else | OPEN | — |
 
 ## Next steps

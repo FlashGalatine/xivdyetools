@@ -13,4 +13,4 @@
 - Remove the branches, the dispatches and the `navigate-to-tool` string; route anything still wanted through `@shared/tool-handoff`; the dead-code gate did not see this because the code is reachable by type
 
 ## Status
-OPEN
+FIXED 2026-09-16 500cbb9e + a087e276 — dead branches deleted, `CONTEXT_ACTIONS` runtime list, static vocabulary guard test

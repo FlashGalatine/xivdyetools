@@ -19,7 +19,9 @@ Nothing ships out-of-band and nothing needs rotation. The one P0 is a shared fix
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=@xivdyetools/test-utils` → whole-graph `pnpm turbo run build type-check lint test` → merge to `main` (no publish, no deploy).
 
-## Sprint 1 — `web-app`: Swatch / Mixer / preset-detail — dead clicks and unread state
+## Sprint 1 — `web-app`: Swatch / Mixer / preset-detail — dead clicks and unread state — ✅ COMPLETED 2026-09-16 `500cbb9e`…`e76ccc71`
+
+**Deploy needs:** ships with Sprint 2 as web-app 5.10.1 (one merge = one deploy). Each of the three implementers ran the full web-app gate + `build:check` green (swatch chunk 92.84/95 KB; coverage 79.8/65.8/76.5/81.2 after the two new suites). Deviations: the BUG-003 toast key is the existing `errors.toolLoadFailed`; the REFACTOR-001 guard is a static source scan of literal `case` labels; BUG-004 keys prices by `dye.itemID` (the fan-out key), not `getMarketItemID`; `vitest.config.ts`'s `coverage.exclude` also hid the two BUG-041 files and was trimmed. Deferred minors are in the ledger and the final review.
 
 The MEDIUMs in `swatch-tool.ts` and `preset-detail.ts`, the dead-branch deletion that shares those files, and the services/modals LOWs that need no other file. One Pages deploy.
 
