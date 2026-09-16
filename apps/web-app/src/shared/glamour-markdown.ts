@@ -11,7 +11,10 @@
  * localised: this is a document format for a specific English-language
  * submission flow, the same way `palette-export`'s JSON keeps canonical names.
  * Item and dye NAMES are supplied by the caller in whatever language the app
- * is showing, so the list matches the screen.
+ * is showing, so the list matches the screen. (Decision recorded here on
+ * purpose: `eslint-rules/no-hardcoded-ui-strings` inspects DOM assignments
+ * and templates, so it cannot see these strings either way — a clean lint is
+ * not evidence the exception was reviewed; this paragraph is.)
  *
  * Every template slot is always written, in the template's order (Right Ring
  * before Left Ring, Facewear and Fashion Accessory last), with a blank value
@@ -81,6 +84,10 @@ const SLOT_LABELS: Record<GlamourMarkdownSlot, string> = {
 /**
  * Slots whose items carry dye channels. Accessories and facewear have none
  * in the game, so they get no dye lines even if a file claims one.
+ *
+ * Deliberately a second copy of `DYEABLE_SLOTS` in `components/chara-import`:
+ * this module stays free of component imports (and is loaded on demand, so
+ * the component must not import runtime values from it either). Change both.
  */
 const DYEABLE: ReadonlySet<GlamourMarkdownSlot> = new Set<GlamourMarkdownSlot>([
   'MainHand',

@@ -57,14 +57,6 @@ import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
 import { STORAGE_PREFIX, MAX_USER_FILE_BYTES } from '@shared/constants';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import { copyTextToClipboard } from '@shared/clipboard';
-import { downloadTextFile } from '@shared/download-file';
-import {
-  GLAMOUR_MARKDOWN_FILENAME,
-  buildGlamourMarkdown,
-  type GlamourMarkdownInput,
-  type GlamourMarkdownPiece,
-} from '@shared/glamour-markdown';
 import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import type { Dye, SubRace, Gender } from '@xivdyetools/types';
 
@@ -144,6 +136,8 @@ function readShowAllPieces(): boolean {
  * Slots whose items carry dye channels. The five accessory slots are absent
  * on purpose: no FFXIV earring, necklace, bracelet or ring is dyeable, so a
  * chip there would invent a channel the game does not have.
+ *
+ * `shared/glamour-markdown` keeps its own copy (`DYEABLE`) — change both.
  */
 const DYEABLE_SLOTS: ReadonlySet<CharaGearSlotId> = new Set<CharaGearSlotId>([
   'MainHand',
@@ -1405,60 +1399,37 @@ export class CharaImport {
       return btn;
     };
     return [
-      make('copy-list', this.t('copyList'), () => {
-        void copyTextToClipboard(this.glamourMarkdown()).then((ok) => {
-          if (ok) ToastService.success(this.t('listCopied'));
-          else ToastService.error(this.t('listCopyFailed'));
-        });
-      }),
-      make('export-markdown', this.t('exportMarkdown'), () => {
-        downloadTextFile(this.glamourMarkdown(), GLAMOUR_MARKDOWN_FILENAME, 'text/markdown');
-      }),
+      make('copy-list', this.t('copyList'), () =>
+        this.runListAction((m, source) => m.copyGlamourList(source), 'listCopyFailed')
+      ),
+      make('export-markdown', this.t('exportMarkdown'), () =>
+        this.runListAction((m, source) => m.exportGlamourList(source), 'listExportFailed')
+      ),
     ];
   }
 
-  /** The template text for the loaded file, in the app's current language. */
-  private glamourMarkdown(): string {
-    return buildGlamourMarkdown(this.glamourMarkdownInput());
-  }
-
   /**
-   * What the file and the resolve know, slot by slot. Names are the same
-   * `itemNameFor` the rows show; a slot with no item (NPC model, unresolved,
-   * unavailable) is left nameless rather than given the model key, which
-   * means nothing on a submission form. Dyes are per channel, so a piece dyed
-   * only on channel 2 keeps channel 1 blank; an unknown stain writes `#id`,
-   * as the rows do. Facewear names from the resolved Glasses row — the file
-   * carries no tint, and the builder writes no dye line for it anyway.
+   * Everything after the click lives in `glamour-list-actions`, loaded on
+   * demand like the item-links menu — the swatch chunk sits within a kilobyte
+   * of its size budget. A load that fails (offline, blocked) reports through
+   * the same toast the action itself would.
    */
-  private glamourMarkdownInput(): GlamourMarkdownInput {
+  private runListAction(
+    action: (
+      module: typeof import('@components/glamour-list-actions'),
+      source: import('@components/glamour-list-actions').GlamourListSource
+    ) => void | Promise<void>,
+    failKey: 'listCopyFailed' | 'listExportFailed'
+  ): void {
     const resolved = this.resolved;
-    if (!resolved) return {};
-    const lang = LanguageService.getCurrentLocale();
-    const input: GlamourMarkdownInput = {};
-    const pieceFor = (slot: CharaGearSlotId): GlamourMarkdownPiece => {
-      const piece = input[slot] ?? {};
-      input[slot] = piece;
-      return piece;
-    };
-
-    for (const model of resolved.gearModels) {
-      const item = this.itemFor(model.slot);
-      const piece = pieceFor(model.slot);
-      if (item && !piece.name) piece.name = itemNameFor(item.names, lang);
-    }
-    for (const gear of resolved.gearDyes) {
-      const piece = pieceFor(gear.slot);
-      const text = gear.dye ? this.dyeName(gear.dye) : `#${gear.stainId}`;
-      if (gear.channel === 1) piece.dye1 = text;
-      else piece.dye2 = text;
-    }
-
-    const glasses = this.equipment?.glasses ?? null;
-    if (resolved.glassesId !== null && resolved.glassesId > 0 && glasses) {
-      input.Facewear = { name: itemNameFor(glasses.names, lang) };
-    }
-    return input;
+    if (!resolved) return;
+    const source = { resolved, equipment: this.equipment };
+    void import('@components/glamour-list-actions')
+      .then((module) => action(module, source))
+      .catch((error: unknown) => {
+        logger.error('[CharaImport] Glamour list action failed', error);
+        ToastService.error(this.t(failKey));
+      });
   }
 
   /** Nothing on this glamour is dyed — say so, rather than draw an empty grid. */

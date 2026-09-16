@@ -1266,6 +1266,7 @@
     "exportMarkdown": ".md で書き出し",
     "listCopied": "装備リストをクリップボードにコピーしました",
     "listCopyFailed": "装備リストをコピーできませんでした",
+    "listExportFailed": "装備リストを保存できませんでした",
     "namesUnavailable": "アイテム名を取得できません — スロット名のみ表示します。カララントはファイルからローカルに読み込み済みで、影響ありません。",
     "footSplit": "{undyed}・{empty}。",
     "footWornUndyedOne": "装備中1部位が未染色（DyeId 0）",

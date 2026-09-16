@@ -23,19 +23,22 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
     logger.warn('[Clipboard] Clipboard API unavailable, using fallback', error);
   }
 
+  // `readonly` keeps iOS from zooming in and raising the keyboard for the
+  // off-screen field; the select and the copy sit inside the same try so a
+  // throw at any step still removes the textarea.
   const textarea = document.createElement('textarea');
   textarea.value = text;
   textarea.setAttribute('readonly', '');
   textarea.style.position = 'fixed';
   textarea.style.opacity = '0';
-  document.body.appendChild(textarea);
-  textarea.select();
   try {
+    document.body.appendChild(textarea);
+    textarea.select();
     return document.execCommand('copy');
   } catch (error) {
     logger.error('[Clipboard] Copy failed', error);
     return false;
   } finally {
-    document.body.removeChild(textarea);
+    textarea.remove();
   }
 }

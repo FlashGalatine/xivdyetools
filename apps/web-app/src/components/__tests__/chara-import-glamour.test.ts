@@ -555,6 +555,23 @@ describe('CharaImport — Copy list / Export .md', () => {
   let createObjectURL: ReturnType<typeof vi.fn>;
   let clicked: HTMLAnchorElement[];
 
+  // Globals this block redefines, restored after each test so nothing below
+  // inherits a clipboard that rejects or an execCommand that returns false.
+  const saved = {
+    clipboard: Object.getOwnPropertyDescriptor(navigator, 'clipboard'),
+    createObjectURL: Object.getOwnPropertyDescriptor(URL, 'createObjectURL'),
+    revokeObjectURL: Object.getOwnPropertyDescriptor(URL, 'revokeObjectURL'),
+    execCommand: Object.getOwnPropertyDescriptor(document, 'execCommand'),
+  };
+  const restore = (
+    target: object,
+    key: string,
+    descriptor: PropertyDescriptor | undefined
+  ): void => {
+    if (descriptor) Object.defineProperty(target, key, descriptor);
+    else delete (target as Record<string, unknown>)[key];
+  };
+
   const copyBtn = (glamour: HTMLElement) =>
     block(glamour).querySelector<HTMLButtonElement>('[data-role="copy-list"]')!;
   const exportBtn = (glamour: HTMLElement) =>
@@ -589,6 +606,10 @@ describe('CharaImport — Copy list / Export .md', () => {
     hosts.forEach(cleanupTestContainer);
     hosts = [];
     vi.restoreAllMocks();
+    restore(navigator, 'clipboard', saved.clipboard);
+    restore(URL, 'createObjectURL', saved.createObjectURL);
+    restore(URL, 'revokeObjectURL', saved.revokeObjectURL);
+    restore(document, 'execCommand', saved.execCommand);
   });
 
   it('renders both actions in the block head, disabled until names have landed', async () => {
@@ -607,7 +628,9 @@ describe('CharaImport — Copy list / Export .md', () => {
   });
 
   it('copies the whole template with item names, dyes by channel and blanks for the unknown, then confirms', async () => {
-    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    // The file names its character; the submission form must never carry it.
+    const named = JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: 'Galatine Ashe' });
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), named);
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
@@ -642,6 +665,7 @@ describe('CharaImport — Copy list / Export .md', () => {
       ].join('\n')
     );
     expect(text).toBe(EXPECTED);
+    expect(text).not.toContain('Galatine');
     await vi.waitFor(() =>
       expect(ToastService.success).toHaveBeenCalledWith('Equipment list copied to clipboard')
     );
@@ -655,12 +679,30 @@ describe('CharaImport — Copy list / Export .md', () => {
 
     exportBtn(glamour).click();
 
-    expect(clicked).toHaveLength(1);
+    await vi.waitFor(() => expect(clicked).toHaveLength(1));
     expect(clicked[0].download).toBe('glamour-equipment.md');
     const blob = createObjectURL.mock.calls[0][0] as Blob;
     expect(blob.type).toBe('text/markdown');
     await expect(blob.text()).resolves.toBe(EXPECTED);
     expect(writeText).not.toHaveBeenCalled();
+    expect(ToastService.error).not.toHaveBeenCalled();
+  });
+
+  it('reports a failed export rather than a silent one', async () => {
+    createObjectURL.mockImplementation(() => {
+      throw new Error('SecurityError');
+    });
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(exportBtn(glamour).disabled).toBe(false));
+
+    exportBtn(glamour).click();
+
+    await vi.waitFor(() =>
+      expect(ToastService.error).toHaveBeenCalledWith("Couldn't save the equipment list")
+    );
+    expect(clicked).toHaveLength(0);
+    expect(document.querySelector('a[download]')).toBeNull();
   });
 
   it('writes the full glamour regardless of the lens or the Show all switch', async () => {

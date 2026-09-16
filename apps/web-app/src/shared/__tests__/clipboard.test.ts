@@ -29,6 +29,7 @@ describe('copyTextToClipboard', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     if (originalClipboard) Object.defineProperty(navigator, 'clipboard', originalClipboard);
     else delete (navigator as unknown as Record<string, unknown>).clipboard;
     if (originalExec) Object.defineProperty(document, 'execCommand', originalExec);
@@ -41,10 +42,34 @@ describe('copyTextToClipboard', () => {
     expect(execCommand).not.toHaveBeenCalled();
   });
 
-  it('falls back to a selected textarea when the Clipboard API rejects, and cleans it up', async () => {
+  it('falls back to a selected read-only textarea when the Clipboard API rejects, and cleans it up', async () => {
     writeText.mockRejectedValue(new Error('NotAllowedError'));
+    // Observed from inside the copy command, the only moment the textarea is
+    // in the document: it must hold the text, be selected, and be read-only
+    // (iOS zooms and shows the keyboard for an editable one).
+    let seen: { text: string; readonly: boolean; selected: boolean } | null = null;
+    execCommand.mockImplementation(() => {
+      const textarea = document.querySelector('textarea')!;
+      seen = {
+        text: textarea.value,
+        readonly: textarea.hasAttribute('readonly'),
+        selected: textarea.selectionStart === 0 && textarea.selectionEnd === textarea.value.length,
+      };
+      return true;
+    });
+
     await expect(copyTextToClipboard('fallback text')).resolves.toBe(true);
     expect(execCommand).toHaveBeenCalledWith('copy');
+    expect(seen).toEqual({ text: 'fallback text', readonly: true, selected: true });
+    expect(document.querySelector('textarea')).toBeNull();
+  });
+
+  it('removes the textarea even when selecting it throws', async () => {
+    writeText.mockRejectedValue(new Error('NotAllowedError'));
+    vi.spyOn(HTMLTextAreaElement.prototype, 'select').mockImplementation(() => {
+      throw new Error('select blocked');
+    });
+    await expect(copyTextToClipboard('x')).resolves.toBe(false);
     expect(document.querySelector('textarea')).toBeNull();
   });
 

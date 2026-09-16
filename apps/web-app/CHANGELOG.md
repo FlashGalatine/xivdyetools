@@ -34,10 +34,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and dye names follow the app language, so the list matches the screen. The
   file name and content carry no character name, per the `.chara` privacy rule.
 - The generator is `shared/glamour-markdown.ts`, pure and tested against the
-  exact text. The clipboard mechanics (Clipboard API, then a selected textarea
-  + `execCommand`) and the object-URL download move out of the export sheet
-  into `shared/clipboard.ts` and `shared/download-file.ts`, each unit-tested,
-  and the export sheet now calls them; its behaviour is unchanged.
+  exact text. Everything after the click — gathering the slots, building the
+  text, copying or saving, the toasts — is `components/glamour-list-actions.ts`,
+  loaded on demand like the item-links menu: the swatch chunk sits within two
+  kilobytes of its size budget, and the component keeps only the two buttons
+  and a loader. The clipboard
+  mechanics (Clipboard API, then a selected read-only textarea + `execCommand`)
+  and the object-URL download move out of the export sheet into
+  `shared/clipboard.ts` and `shared/download-file.ts`, each unit-tested, and
+  the export sheet now calls them. Two quiet fixes ride along: a fallback copy
+  whose `execCommand` returns `false` now reports failure instead of success,
+  and a download whose click throws still removes its anchor and revokes its
+  URL. Both new buttons report a failure with a toast rather than staying
+  silent, and a failed copy's textarea is removed even when selecting it throws.
 
 ## [5.9.0] - 2026-09-06
 

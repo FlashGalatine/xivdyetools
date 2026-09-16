@@ -1266,6 +1266,7 @@
     "exportMarkdown": "Export .md",
     "listCopied": "Equipment list copied to clipboard",
     "listCopyFailed": "Couldn't copy the equipment list",
+    "listExportFailed": "Couldn't save the equipment list",
     "namesUnavailable": "Item names unavailable — showing slots only. Dyes are read locally from the file and are unaffected.",
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "1 worn piece is undyed (DyeId 0)",

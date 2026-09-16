@@ -1266,6 +1266,7 @@
     "exportMarkdown": "Exporter en .md",
     "listCopied": "Liste d'équipement copiée dans le presse-papiers",
     "listCopyFailed": "Échec de la copie de la liste d'équipement",
+    "listExportFailed": "Échec de l'enregistrement de la liste d'équipement",
     "namesUnavailable": "Noms des objets indisponibles — seuls les emplacements sont affichés. Les teintures sont lues localement depuis le fichier et ne sont pas concernées.",
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "1 pièce portée est non teinte (DyeId 0)",
