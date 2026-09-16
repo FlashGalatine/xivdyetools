@@ -126,6 +126,10 @@ class TestComponent extends BaseComponent {
   public triggerRenderError(): void {
     this.handleRenderError(new Error('Manually triggered error'));
   }
+
+  public testHandleRetry(): void {
+    this.handleRetry();
+  }
 }
 
 // ============================================================================
@@ -632,6 +636,25 @@ describe('BaseComponent', () => {
 
       expect(result).toBeNull();
       expect(component.hasErrorState()).toBe(true);
+    });
+
+    it('does not accumulate listener-map entries across a safeAsync failure and repeated retries (BUG-028)', async () => {
+      component = new TestComponent(container);
+      component.init();
+      expect(component.getListenerCount()).toBe(1);
+
+      await component.testSafeAsync(async () => {
+        throw new Error('Async error');
+      });
+      expect(component.hasErrorState()).toBe(true);
+
+      // renderContent() succeeds again from here on, so each retry rebinds
+      // exactly one listener — unless the pre-retry set was never unbound.
+      component.testHandleRetry();
+      expect(component.getListenerCount()).toBe(1);
+
+      component.testHandleRetry();
+      expect(component.getListenerCount()).toBe(1);
     });
   });
 
