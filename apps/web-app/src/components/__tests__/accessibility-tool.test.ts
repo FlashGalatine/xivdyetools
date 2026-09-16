@@ -813,11 +813,22 @@ describe('AccessibilityTool', () => {
       expect(StorageService.setItem).not.toHaveBeenCalledWith(VISION_KEY, expect.anything());
     });
 
-    it('merges displayOptions rather than replacing them', () => {
+    it('merges displayOptions rather than replacing them, so an untouched key survives (BUG-039)', () => {
       tool = mount();
+      tool.selectDye(dye(1));
 
-      tool.setConfig({ displayOptions: { showHex: true } as never });
-      expect(() => tool!.setConfig({ displayOptions: { showRgb: true } as never })).not.toThrow();
+      // showCmyk defaults to false; showRgb defaults to true and is never
+      // mentioned in this call. A setConfig that REPLACED cardDisplayOptions
+      // instead of merging would leave showRgb undefined on the re-rendered
+      // card.
+      tool.setConfig({ displayOptions: { showCmyk: true } as never });
+
+      const card = rightPanel.querySelector('v4-result-card') as unknown as {
+        showCmyk: boolean;
+        showRgb: boolean;
+      };
+      expect(card.showCmyk).toBe(true);
+      expect(card.showRgb).toBe(true);
     });
   });
 

@@ -445,12 +445,6 @@ describe('ExtractorTool', () => {
       expect(dropZone()).not.toBeNull();
     });
 
-    it('merges displayOptions rather than replacing them', () => {
-      tool = mount();
-
-      expect(() => tool!.setConfig({ displayOptions: { showHex: false } as never })).not.toThrow();
-    });
-
     it('applies several keys in one call', async () => {
       tool = mount();
 
@@ -1266,6 +1260,22 @@ describe('ExtractorTool', () => {
           (resultCards()[0] as unknown as { data: { marketError?: string } }).data.marketError
         ).toBe('H429');
         expect((resultCards()[0] as unknown as { showHex: boolean }).showHex).toBe(false);
+      });
+
+      it('merges displayOptions rather than replacing them, so an untouched key survives (BUG-039)', async () => {
+        tool = mount();
+        await loadImage();
+        sample('#7A4B2C');
+
+        // showCmyk defaults to false; showRgb defaults to true and is never
+        // mentioned in this call. A setConfig that REPLACED displayOptions
+        // instead of merging would leave showRgb undefined on the rebuilt
+        // card.
+        tool.setConfig({ displayOptions: { showCmyk: true } as never });
+
+        const card = resultCards()[0] as unknown as { showCmyk: boolean; showRgb: boolean };
+        expect(card.showCmyk).toBe(true);
+        expect(card.showRgb).toBe(true);
       });
 
       it('leaves a paste aimed at a text field alone, and takes one image from a paste elsewhere', () => {
