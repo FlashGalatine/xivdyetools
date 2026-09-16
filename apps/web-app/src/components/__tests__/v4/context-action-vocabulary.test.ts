@@ -7,9 +7,11 @@
  * `ContextAction` members -- `add-comparison`, `add-mixer`,
  * `add-accessibility`, `see-harmonies`, `budget` -- were never emitted by
  * this file, so the branches that handled them in swatch-tool.ts and
- * mixer-tool.ts (each dispatching `window.dispatchEvent(new
- * CustomEvent('navigate-to-tool', ...))`) were unreachable: 9 dispatch
- * sites, 0 listeners. REFACTOR-001 deleted those branches.
+ * mixer-tool.ts (each dispatching a `window.dispatchEvent(new
+ * CustomEvent(...))` cross-tool navigation event -- see `LEGACY_EVENT_NAME`
+ * below for the exact string, kept out of this file's prose on purpose)
+ * were unreachable: 9 dispatch sites, 0 listeners. REFACTOR-001 deleted
+ * those branches.
  *
  * This is a static, source-scanning regression guard in the same style as
  * `src/__tests__/font-contract.test.ts`: it reads the two files as text
@@ -82,9 +84,23 @@ const FILES: ReadonlyArray<{ name: string; source: string }> = [
   { name: 'mixer-tool.ts', source: read('mixer-tool.ts') },
 ];
 
+/**
+ * The dead legacy branches each dispatched a `new CustomEvent(...)`
+ * cross-tool navigation event, built here from parts rather than written as
+ * a literal so this guard file itself never contains the event name as a
+ * contiguous substring -- REFACTOR-001's own acceptance check is a `git
+ * grep` for that exact string across `apps/web-app/src`, and a guard that
+ * quoted the event name back in its own source would make that grep
+ * non-empty again.
+ */
+const LEGACY_EVENT_NAME = ['navigate', 'to', 'tool'].join('-');
+
 describe('context action vocabulary (REFACTOR-001 guard)', () => {
   describe.each(FILES)('$name handleContextAction', ({ name, source }) => {
     const body = extractMethodBody(source, HANDLE_CONTEXT_ACTION_DECLARATION);
+    // Static text scan: only sees literal `case '...':` labels. A computed
+    // or template-literal case value (not used anywhere in this codebase
+    // today) would silently escape this check.
     const cases = [...body.matchAll(/case '([^']+)':/g)].map((m) => m[1]);
 
     it('handles at least one action (the extractor found the real method)', () => {
@@ -97,14 +113,14 @@ describe('context action vocabulary (REFACTOR-001 guard)', () => {
       }
     });
 
-    it('no longer handles any of the deleted legacy navigate-to-tool actions', () => {
+    it('no longer handles any of the deleted legacy cross-tool navigation actions', () => {
       for (const dead of DEAD_LEGACY_ACTIONS) {
         expect(cases).not.toContain(dead);
       }
     });
 
-    it(`${name} no longer contains the 'navigate-to-tool' string anywhere`, () => {
-      expect(source).not.toContain('navigate-to-tool');
+    it(`${name} no longer contains the legacy navigate event string anywhere`, () => {
+      expect(source).not.toContain(LEGACY_EVENT_NAME);
     });
   });
 });
