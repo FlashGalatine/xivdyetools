@@ -618,36 +618,6 @@ function restoreUserPresetsStatement(
     .bind(now, discordId);
 }
 
-/**
- * Hide all presets by a banned user
- *
- * @remarks Unbatched — a bare `UPDATE`, no `moderation_log` row. `banUser`
- * does not call this; it batches `hideUserPresetsStatement` directly
- * alongside `presetActionLogStatement('hide', …)` instead. Any future caller
- * must batch `presetActionLogStatement` ahead of the UPDATE (FINDING-018) —
- * this and `restoreUserPresets` below are the only preset-status-flipping
- * paths left without an audit row.
- */
-export async function hideUserPresets(db: D1Database, discordId: string): Promise<number> {
-  const result = await hideUserPresetsStatement(db, discordId, new Date().toISOString()).run();
-  return result.meta.changes || 0;
-}
-
-/**
- * Restore presets for an unbanned user
- *
- * @remarks Unbatched — a bare `UPDATE`, no `moderation_log` row. `unbanUser`
- * does not call this; it batches `restoreUserPresetsStatement` directly
- * alongside `presetActionLogStatement('restore', …)` instead. Any future
- * caller must batch `presetActionLogStatement` ahead of the UPDATE
- * (FINDING-018) — this and `hideUserPresets` above are the only
- * preset-status-flipping paths left without an audit row.
- */
-export async function restoreUserPresets(db: D1Database, discordId: string): Promise<number> {
-  const result = await restoreUserPresetsStatement(db, discordId, new Date().toISOString()).run();
-  return result.meta.changes || 0;
-}
-
 // ============================================================================
 // Ban Record Retrieval
 // ============================================================================

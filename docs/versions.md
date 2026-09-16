@@ -22,7 +22,7 @@
 | **Web Application** | v5.9.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.5.6 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.7.1 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.7.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.3 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.14.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
@@ -302,6 +302,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.7.2 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-009/010/012) — unbatched `hideUserPresets`/`restoreUserPresets` wrappers, the unused fetch-logging wrappers and `Translator.getMeta` removed; ban/unban still batch the statement builders with their audit rows |
 | v1.7.1 | Sep 2026 (prepared) | Bundle auth 2.0.2 to bound interaction streams while reading |
 | v1.7.0 | Sep 2026 | English-only by design, and now says so once — the six-locale `Record` that always resolved to English collapsed to one table (I18N-009) |
 | **v1.6.2** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 7) — `/preset moderate action:stats` shows real numbers instead of "undefined" ×4 (BUG-010, needs types 3.0.0); moderation strings honour the language set through the main bot's `/preferences` (BUG-001); a stalled follow-up no longer leaves "thinking…" forever (BUG-040)** |
