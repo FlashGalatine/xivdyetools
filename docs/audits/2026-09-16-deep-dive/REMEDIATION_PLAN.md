@@ -5,7 +5,9 @@
 
 There is no P1 tier in this plan — the catalog has 0 CRITICAL / 0 HIGH — so the eight MEDIUMs are P2 and lead the cadence. Two of them need a **product decision before code** (BUG-001, BUG-002); their sprints are gated and the questions are asked at Sprint 0 so they are answered before those sprints open. Sprints 13–16 are the nice-to-have structural tail; stopping after Sprint 12 leaves no MEDIUM open.
 
-## Sprint 0 — Emergency & prerequisites — `test-utils`
+## Sprint 0 — Emergency & prerequisites — `test-utils` — ✅ COMPLETED 2026-09-16 `98637eff`
+
+**Deploy needs:** none (workspace-private; consumers pick the fixture up from `dist` on their next run). Whole-graph `turbo run test` 25/25 green at the gate. Deferred minors from review: the `MAX_STAIN_ID_FOR_TEST()` helper in the new test is unused beside a literal `254`; `factories/index.ts` JSDoc still says "random IDs"; `{ stainID: undefined }` flows through as-is (no caller does this).
 
 Nothing ships out-of-band and nothing needs rotation. The one P0 is a shared fixture whose ~0.4 %/run collision reddens PRs that never touched it (it failed this audit's own baseline). Merge only — `@xivdyetools/test-utils` is workspace-private; every consumer re-resolves it from `dist` on its next run.
 

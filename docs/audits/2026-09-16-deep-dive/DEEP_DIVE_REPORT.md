@@ -121,7 +121,8 @@ Checked and dropped, so the next audit does not re-chase them.
 
 | ID | Status | Commit |
 |---|---|---|
-| all | OPEN | — |
+| BUG-007, BUG-021 | FIXED (Sprint 0) | `98637eff` |
+| everything else | OPEN | — |
 
 ## Next steps
 
