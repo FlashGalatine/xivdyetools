@@ -13,4 +13,4 @@
 - Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-image-worker`.
 
 ## Status
-OPEN — recommendation only; no source change made.
+DONE — removed in `f9b469af` (2026-09-16, branch cleanup/dead-code-2026-09-15).

@@ -13,4 +13,4 @@
 - Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api`.
 
 ## Status
-OPEN — recommendation only; no source change made.
+DONE — removed in `8f7b292b` (2026-09-16, branch cleanup/dead-code-2026-09-15).

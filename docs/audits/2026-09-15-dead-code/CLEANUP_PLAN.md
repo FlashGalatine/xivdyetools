@@ -4,6 +4,24 @@
 
 **Ordering:** current security priorities first; then Confidence × Blast for cleanup; one deploy unit per release step; the header-helper cascade follows its trigger. Implementation and releases have not begun. This plan is a reviewable proposal, not authorization to merge or deploy.
 
+## Execution status (2026-09-16)
+
+All 17 cleanup entries are executed on branch `cleanup/dead-code-2026-09-15` (base `c40e7e63`), one commit per deploy unit, each re-verified at that base before editing (an Opus verifier re-confirmed all 17 verdicts; two corrections: DEAD-006 had a second test caller outside the recorded span, DEAD-015's lines had shifted by one). Every commit passed its unit gate; the branch passed the whole-graph gate (`pnpm turbo run build type-check lint test`: 62/62), `pnpm test:scripts` (107/107), `pnpm dead-code:check`, `pnpm docs:check-versions` (34 claims) and `pnpm docs:check-links` (875 links). Per-commit reviews found no defects.
+
+| Sprint | Unit | Findings | Commit | Version |
+|---|---|---|---|---|
+| 0 | auth / discord-worker / presets-api (security) | FINDING-001–003 | PR #183 `c40e7e63`; FINDING-003 byte-HMAC follow-up in draft PR #184 | — |
+| 1 | presets-api | security FINDING-004/005 in PR #183; DEAD-013/014/015 | `8f7b292b` | 2.3.4 |
+| 2 | og-worker | security FINDING-006 in PR #183 | `3095b8ce` (PR #183) | — |
+| 3 | web-app | DEAD-001–007 | `2d1695af` | 5.9.1 |
+| 4 | discord-worker | DEAD-008 | `4f4e5c13` | 5.5.6 (5.5.5 reserved by PR #184) |
+| 5 | moderation-worker | DEAD-009/010/012 | `c6aa8c73` | 1.7.2 |
+| 6 | api-worker | DEAD-016 | `6fce09cf` | 0.14.1 |
+| 7 | image-worker | DEAD-017 | `f9b469af` | 1.3.1 |
+| 8 | moderation-worker | DEAD-011 (cascade) | `225df738` | 1.7.2 (same release as Sprint 5) |
+
+Bundle effect, measured like-for-like inside the worktree ([evidence](evidence/bundle-after-c40e7e63-cleanup.md)): four workers byte-identical (already tree-shaken or type-only), moderation-worker −0.12 KiB gzip. Web-app coverage rose 79.44/65.45/76.15/80.89 → 79.57/65.56/76.27/81.02 (st/br/fn/ln) with thresholds unchanged. Two living-doc lines the findings did not list were also fixed (`docs/projects/presets-api/moderation.md` no longer documents `truncateUnicodeSafe`; `apps/image-worker/CLAUDE.md` describes the new empty `Env`). The four KEEP entries (DEAD-018–021) are unchanged. Merge, publish and deploy remain separate decisions.
+
 ## Sprint 0 — existing security priorities
 
 These are separate releases using the acceptance checks in the [security plan](../2026-09-15-security/REMEDIATION_PLAN.md). Do not hold them for optional cleanup.

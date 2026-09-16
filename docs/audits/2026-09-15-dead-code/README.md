@@ -2,6 +2,8 @@
 
 **17 cleanup candidates and 4 KEEP decisions** across all 17 workspaces. Proposed cleanup covers **197 source lines and 527 dedicated test lines**; no source files were modified by the audit. Baseline checks pass after stale dependency outputs were refreshed; root Knip retains its three documented exceptions.
 
+**Executed 2026-09-16:** all 17 cleanup entries landed on `cleanup/dead-code-2026-09-15` (seven unit commits, base `c40e7e63`); see the [execution status](CLEANUP_PLAN.md#execution-status-2026-09-16) in the plan and the per-finding Status lines.
+
 Snapshot: `main@0332fcc5768a4477301ed5b15590eee16a772f87`. Standard depth; the existing untracked security audit was preserved.
 
 | File | Purpose |

@@ -13,4 +13,4 @@
 - Gate: `pnpm turbo run build type-check lint test --filter=xivdyetools-web-app` plus `pnpm --filter xivdyetools-web-app run build:check`.
 
 ## Status
-OPEN — recommendation only; no source change made.
+DONE — removed in `2d1695af` (2026-09-16, branch cleanup/dead-code-2026-09-15).
