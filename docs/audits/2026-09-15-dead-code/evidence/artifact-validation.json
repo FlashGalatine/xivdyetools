@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "snapshot": "0332fcc5768a4477301ed5b15590eee16a772f87",
+  "catalog_entries": 21,
+  "cleanup_candidates": 17,
+  "keep": 4,
+  "finding_files": 21,
+  "local_markdown_links": "valid",
+  "source_candidate_lines": 197,
+  "dedicated_test_lines": 527,
+  "final_commands_passed": 15,
+  "tracked_worktree_diff": "empty",
+  "untracked_status": [
+    "?? docs/audits/2026-09-15-dead-code/",
+    "?? docs/audits/2026-09-15-security/"
+  ]
+}

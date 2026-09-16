@@ -32,35 +32,6 @@ export function escapeRegex(str: string): string {
 }
 
 /**
- * PRESETS-HIGH-003: Truncate string at safe UTF-8/Unicode boundary
- *
- * JavaScript strings use UTF-16 encoding, where characters outside the BMP
- * (like emojis 🌸) are represented as surrogate pairs (two 16-bit code units).
- * Using .substring() can split a surrogate pair, creating invalid UTF-8.
- *
- * This function uses Array.from() which correctly handles Unicode code points.
- *
- * @param str - String to truncate
- * @param maxLength - Maximum number of visible characters (not code units)
- * @param suffix - Suffix to append when truncated (default: '…')
- * @returns Truncated string with suffix if needed
- *
- * @testonly unit-tested directly for surrogate-pair-safe truncation (plain
- * strings, emoji, custom suffix, exact-length and empty-string edges), but no
- * caller in this file or elsewhere in presets-api invokes it — nothing in the
- * moderation pipeline currently truncates a string before logging/storing it.
- */
-export function truncateUnicodeSafe(str: string, maxLength: number, suffix = '…'): string {
-  const chars = Array.from(str);
-  if (chars.length <= maxLength) {
-    return str;
-  }
-  // Reserve space for suffix in character count
-  const truncateAt = Math.max(0, maxLength - suffix.length);
-  return chars.slice(0, truncateAt).join('') + suffix;
-}
-
-/**
  * Compiled profanity data structure
  * Uses a single combined regex for efficiency and ReDoS protection
  */

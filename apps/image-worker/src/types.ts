@@ -7,10 +7,12 @@
  * @module types
  */
 
-export interface Env {
-  /** Never set by wrangler.toml — no `vars` block exists in any environment; only tests assign it. */
-  ENVIRONMENT?: string;
-}
+/**
+ * This Worker declares no bindings: no `vars`, no KV, no D1, no R2, no secrets.
+ * `wrangler.toml` has no `[vars]` block in either environment, so there is
+ * nothing for a real `Env` shape to carry.
+ */
+export type Env = Record<string, never>;
 
 // ============================================================================
 // Validation Types

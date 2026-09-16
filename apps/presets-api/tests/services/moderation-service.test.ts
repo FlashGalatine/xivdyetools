@@ -8,7 +8,6 @@ import {
     checkLocalFilter,
     escapeRegex,
     compileProfanityPatterns,
-    truncateUnicodeSafe,
     _resetPatternsForTesting,
     _setTestPatterns,
 } from '../../src/services/moderation-service';
@@ -94,49 +93,6 @@ describe('ModerationService', () => {
             const compiled = compileProfanityPatterns({});
             expect(compiled.wordSet.size).toBe(0);
             expect(compiled.combinedPattern).toBeNull();
-        });
-    });
-
-    // ============================================
-    // truncateUnicodeSafe
-    // ============================================
-
-    describe('truncateUnicodeSafe', () => {
-        it('should return string unchanged if within limit', () => {
-            expect(truncateUnicodeSafe('hello', 10)).toBe('hello');
-        });
-
-        it('should truncate long strings with ellipsis', () => {
-            const result = truncateUnicodeSafe('hello world', 8);
-            expect(result.length).toBeLessThanOrEqual(8);
-            expect(result).toContain('…');
-        });
-
-        it('should handle emoji/surrogate pairs correctly', () => {
-            const emoji = '🌸🌸🌸🌸🌸'; // 5 emoji characters
-            const result = truncateUnicodeSafe(emoji, 3);
-            // Should not split a surrogate pair
-            expect(result).toContain('…');
-            // Array.from correctly counts code points
-            expect(Array.from(result).length).toBeLessThanOrEqual(3);
-        });
-
-        it('should use custom suffix', () => {
-            const result = truncateUnicodeSafe('hello world', 8, '...');
-            expect(result).toContain('...');
-        });
-
-        it('should handle exact length strings', () => {
-            expect(truncateUnicodeSafe('hello', 5)).toBe('hello');
-        });
-
-        it('should handle empty string', () => {
-            expect(truncateUnicodeSafe('', 10)).toBe('');
-        });
-
-        it('should handle maxLength of 1 with suffix', () => {
-            const result = truncateUnicodeSafe('hello', 1);
-            expect(Array.from(result).length).toBeLessThanOrEqual(1);
         });
     });
 

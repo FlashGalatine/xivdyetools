@@ -323,26 +323,6 @@ export class ThemeService {
   }
 
   /**
-   * Get a required color from current theme palette (v3 core properties only)
-   * Use this for guaranteed string returns on core theme properties
-   */
-  static getRequiredColor(
-    key:
-      | 'primary'
-      | 'background'
-      | 'text'
-      | 'textHeader'
-      | 'border'
-      | 'backgroundSecondary'
-      | 'cardBackground'
-      | 'cardHover'
-      | 'textMuted'
-  ): string {
-    const palette = THEME_PALETTES[this.currentTheme];
-    return palette[key];
-  }
-
-  /**
    * Check if current theme is dark
    */
   static isDarkMode(): boolean {

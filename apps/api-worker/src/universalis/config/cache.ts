@@ -45,5 +45,3 @@ export const CACHE_CONFIGS = {
     keyPrefix: 'worlds',
   },
 } as const satisfies Record<string, CacheConfig>;
-
-export type CacheConfigKey = keyof typeof CACHE_CONFIGS;

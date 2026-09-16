@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { CACHE_CONFIGS, type CacheConfigKey } from './cache';
+import { CACHE_CONFIGS } from './cache';
 import type { CacheConfig } from '../types';
 
 describe('CACHE_CONFIGS', () => {
@@ -117,6 +117,7 @@ describe('CACHE_CONFIGS', () => {
 
   describe('type safety', () => {
     it('should allow type-safe access to config keys', () => {
+      type CacheConfigKey = keyof typeof CACHE_CONFIGS;
       const keys: CacheConfigKey[] = ['aggregated', 'dataCenters', 'worlds'];
       keys.forEach((key) => {
         expect(CACHE_CONFIGS[key]).toBeDefined();

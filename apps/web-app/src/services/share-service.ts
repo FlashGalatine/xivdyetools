@@ -573,17 +573,6 @@ export class ShareService {
   // ==========================================================================
 
   /**
-   * Get the base URL for the application
-   */
-  static getBaseUrl(): string {
-    // In development, use localhost
-    if (import.meta.env.DEV) {
-      return window.location.origin;
-    }
-    return BASE_URL;
-  }
-
-  /**
    * Validate that required parameters are present for a tool
    */
   static validateShareParams(shareData: ShareParams): string[] {

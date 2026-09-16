@@ -1,0 +1,122 @@
+[
+  {
+    "id": "tsc-refreshed-apps-discord-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\discord-worker",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-refreshed-apps-discord-worker.log"
+  },
+  {
+    "id": "tsc-refreshed-apps-moderation-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\moderation-worker",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-refreshed-apps-moderation-worker.log"
+  },
+  {
+    "id": "tsc-refreshed-apps-og-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\og-worker",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-refreshed-apps-og-worker.log"
+  },
+  {
+    "id": "tsc-refreshed-packages-bot-logic",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\packages\\bot-logic",
+    "exit": 0,
+    "lines": 0,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\tsc-refreshed-packages-bot-logic.log"
+  },
+  {
+    "id": "type-check-scripts",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD run type-check:scripts",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools",
+    "exit": 0,
+    "lines": 2,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\type-check-scripts.log"
+  },
+  {
+    "id": "test-scripts",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD run test:scripts",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools",
+    "exit": 0,
+    "lines": 654,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\test-scripts.log"
+  },
+  {
+    "id": "docs-check-links",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD run docs:check-links",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools",
+    "exit": 0,
+    "lines": 3,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\docs-check-links.log"
+  },
+  {
+    "id": "docs-check-versions",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD run docs:check-versions",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools",
+    "exit": 0,
+    "lines": 3,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\docs-check-versions.log"
+  },
+  {
+    "id": "bundle-api-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec wrangler deploy --dry-run --outdir C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-before-api-worker",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\api-worker",
+    "exit": 0,
+    "lines": 28,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-api-worker.log"
+  },
+  {
+    "id": "bundle-discord-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec wrangler deploy --dry-run --outdir C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-before-discord-worker",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\discord-worker",
+    "exit": 0,
+    "lines": 30,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-discord-worker.log"
+  },
+  {
+    "id": "bundle-image-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec wrangler deploy --dry-run --outdir C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-before-image-worker",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\image-worker",
+    "exit": 0,
+    "lines": 13,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-image-worker.log"
+  },
+  {
+    "id": "bundle-moderation-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec wrangler deploy --dry-run --outdir C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-before-moderation-worker",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\moderation-worker",
+    "exit": 0,
+    "lines": 23,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-moderation-worker.log"
+  },
+  {
+    "id": "bundle-oauth",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec wrangler deploy --dry-run --outdir C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-before-oauth",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\oauth",
+    "exit": 0,
+    "lines": 26,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-oauth.log"
+  },
+  {
+    "id": "bundle-og-worker",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec wrangler deploy --dry-run --outdir C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-before-og-worker",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\og-worker",
+    "exit": 0,
+    "lines": 18,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-og-worker.log"
+  },
+  {
+    "id": "bundle-presets-api",
+    "command": "C:\\Users\\DrawF\\AppData\\Local\\pnpm\\pnpm.CMD exec wrangler deploy --dry-run --outdir C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-before-presets-api",
+    "cwd": "C:\\dev\\XIVProjects\\xivdyetools\\apps\\presets-api",
+    "exit": 0,
+    "lines": 25,
+    "log": "C:\\dev\\XIVProjects\\xivdyetools\\docs\\audits\\2026-09-15-dead-code\\evidence\\bundle-presets-api.log"
+  }
+]

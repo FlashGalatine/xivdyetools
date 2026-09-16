@@ -1,0 +1,653 @@
+TAP version 13
+# Subtest: 1. docblock immediately above the declaration attaches
+ok 1 - 1. docblock immediately above the declaration attaches
+  ---
+  duration_ms: 2.0095
+  type: 'test'
+  ...
+# Subtest: 2. bug A: a blank line before the declaration still attaches
+ok 2 - 2. bug A: a blank line before the declaration still attaches
+  ---
+  duration_ms: 0.3499
+  type: 'test'
+  ...
+# Subtest: 3. bug B: a blank line + decorator before the declaration still attaches
+ok 3 - 3. bug B: a blank line + decorator before the declaration still attaches
+  ---
+  duration_ms: 0.1423
+  type: 'test'
+  ...
+# Subtest: 4a. finding E: a leading docblock + blank line does not attach (matches _middleware.ts shape)
+ok 4 - 4a. finding E: a leading docblock + blank line does not attach (matches _middleware.ts shape)
+  ---
+  duration_ms: 0.2508
+  type: 'test'
+  ...
+# Subtest: 4b. a leading docblock with nothing skipped between it and the declaration attaches
+ok 5 - 4b. a leading docblock with nothing skipped between it and the declaration attaches
+  ---
+  duration_ms: 0.1524
+  type: 'test'
+  ...
+# Subtest: 5. bug C: a single-line /** @testonly reason */ docblock is recognized
+ok 6 - 5. bug C: a single-line /** @testonly reason */ docblock is recognized
+  ---
+  duration_ms: 0.136
+  type: 'test'
+  ...
+# Subtest: 6. a bare @testonly with no reason is hasBareTag, not exempt
+ok 7 - 6. a bare @testonly with no reason is hasBareTag, not exempt
+  ---
+  duration_ms: 0.3557
+  type: 'test'
+  ...
+# Subtest: 7. @testonlyish and a mid-sentence prose mention are not matched
+ok 8 - 7. @testonlyish and a mid-sentence prose mention are not matched
+  ---
+  duration_ms: 0.2802
+  type: 'test'
+  ...
+# Subtest: 8a. @entrypoint with a valid reason exempts
+ok 9 - 8a. @entrypoint with a valid reason exempts
+  ---
+  duration_ms: 0.6187
+  type: 'test'
+  ...
+# Subtest: 8b. a bare @entrypoint with no reason is hasBareTag, not exempt
+ok 10 - 8b. a bare @entrypoint with no reason is hasBareTag, not exempt
+  ---
+  duration_ms: 0.5549
+  type: 'test'
+  ...
+# Subtest: 10. prelude 1a: a reason wrapped across two continuation lines joins with a single space
+ok 11 - 10. prelude 1a: a reason wrapped across two continuation lines joins with a single space
+  ---
+  duration_ms: 0.1265
+  type: 'test'
+  ...
+# Subtest: 11. prelude 1b: a reason on the line after a bare-looking @tag is captured, not bare
+ok 12 - 11. prelude 1b: a reason on the line after a bare-looking @tag is captured, not bare
+  ---
+  duration_ms: 1.1127
+  type: 'test'
+  ...
+# Subtest: 12. prelude 1: no reason anywhere in the docblock (incl. a blank interior line) stays bare
+ok 13 - 12. prelude 1: no reason anywhere in the docblock (incl. a blank interior line) stays bare
+  ---
+  duration_ms: 0.1582
+  type: 'test'
+  ...
+# Subtest: 13. prelude 1: a second @tag after a wrapped reason stops the first reason there
+ok 14 - 13. prelude 1: a second @tag after a wrapped reason stops the first reason there
+  ---
+  duration_ms: 0.1014
+  type: 'test'
+  ...
+# Subtest: 14. prelude 3 (NEW-2 regression guard): a bare single-line /** @testonly */ is bare, reason null
+ok 15 - 14. prelude 3 (NEW-2 regression guard): a bare single-line /** @testonly */ is bare, reason null
+  ---
+  duration_ms: 0.1105
+  type: 'test'
+  ...
+# Subtest: 15. prelude 2 (NEW-1): a multi-line decorator argument list is skipped as a unit, so the docblock still attaches
+ok 16 - 15. prelude 2 (NEW-1): a multi-line decorator argument list is skipped as a unit, so the docblock still attaches
+  ---
+  duration_ms: 0.0996
+  type: 'test'
+  ...
+# Subtest: leadingDocblock returns the file header — which docblockAbove also returns when it is adjacent
+ok 17 - leadingDocblock returns the file header — which docblockAbove also returns when it is adjacent
+  ---
+  duration_ms: 0.2326
+  type: 'test'
+  ...
+# Subtest: 4c. the adjacency rule end to end: adjacent tag exempts the first export, one blank line away it does not
+ok 18 - 4c. the adjacency rule end to end: adjacent tag exempts the first export, one blank line away it does not
+  ---
+  duration_ms: 2.779
+  type: 'test'
+  ...
+# Subtest: 9a. bug D: a tagged overload gets exactly one exempt verdict, not one per signature
+ok 19 - 9a. bug D: a tagged overload gets exactly one exempt verdict, not one per signature
+  ---
+  duration_ms: 0.3123
+  type: 'test'
+  ...
+# Subtest: 9b. bug D: an untagged overload gets exactly one violation, not one per signature
+ok 20 - 9b. bug D: an untagged overload gets exactly one violation, not one per signature
+  ---
+  duration_ms: 0.372
+  type: 'test'
+  ...
+# Subtest: prelude 1a (live instance): _middleware.ts now captures its full two-line @entrypoint reason
+ok 21 - prelude 1a (live instance): _middleware.ts now captures its full two-line @entrypoint reason
+  ---
+  duration_ms: 0.452
+  type: 'test'
+  ...
+# Subtest: 16. findTestOnlyMembers: a method referenced only by tests is a violation
+ok 22 - 16. findTestOnlyMembers: a method referenced only by tests is a violation
+  ---
+  duration_ms: 1.1845
+  type: 'test'
+  ...
+# Subtest: 17. findTestOnlyMembers: a method called via this.x() from a sibling method is not a violation
+ok 23 - 17. findTestOnlyMembers: a method called via this.x() from a sibling method is not a violation
+  ---
+  duration_ms: 0.4888
+  type: 'test'
+  ...
+# Subtest: 18. findTestOnlyMembers: a method called through an interface-typed variable is not a violation
+ok 24 - 18. findTestOnlyMembers: a method called through an interface-typed variable is not a violation
+  ---
+  duration_ms: 0.5657
+  type: 'test'
+  ...
+# Subtest: 19. findTestOnlyMembers: private and protected members are excluded, never reported
+ok 25 - 19. findTestOnlyMembers: private and protected members are excluded, never reported
+  ---
+  duration_ms: 0.2047
+  type: 'test'
+  ...
+# Subtest: 20. findTestOnlyMembers: a \#-prefixed true-private member is never reported
+ok 26 - 20. findTestOnlyMembers: a \#-prefixed true-private member is never reported
+  ---
+  duration_ms: 0.1768
+  type: 'test'
+  ...
+# Subtest: 21. findTestOnlyMembers: control-flow keywords inside a method body are not mistaken for methods (depth rule)
+ok 27 - 21. findTestOnlyMembers: control-flow keywords inside a method body are not mistaken for methods (depth rule)
+  ---
+  duration_ms: 0.3705
+  type: 'test'
+  ...
+# Subtest: 21b. findTestOnlyMembers: `constructor` sits at member depth, so MEMBER_SKIP is the only thing excluding it
+ok 28 - 21b. findTestOnlyMembers: `constructor` sits at member depth, so MEMBER_SKIP is the only thing excluding it
+  ---
+  duration_ms: 0.3957
+  type: 'test'
+  ...
+# Subtest: 22. findTestOnlyMembers: a file with no exported class is never scanned (object-literal methods ignored)
+ok 29 - 22. findTestOnlyMembers: a file with no exported class is never scanned (object-literal methods ignored)
+  ---
+  duration_ms: 0.1666
+  type: 'test'
+  ...
+# Subtest: 23. findTestOnlyMembers: a valid @testonly reason exempts a member
+ok 30 - 23. findTestOnlyMembers: a valid @testonly reason exempts a member
+  ---
+  duration_ms: 0.3733
+  type: 'test'
+  ...
+# Subtest: 24. findTestOnlyMembers: a valid @entrypoint reason exempts a member
+ok 31 - 24. findTestOnlyMembers: a valid @entrypoint reason exempts a member
+  ---
+  duration_ms: 0.3019
+  type: 'test'
+  ...
+# Subtest: 25. findTestOnlyMembers: a bare @testonly with no reason still fails as a violation
+ok 32 - 25. findTestOnlyMembers: a bare @testonly with no reason still fails as a violation
+  ---
+  duration_ms: 0.4028
+  type: 'test'
+  ...
+# Subtest: 26. findTestOnlyMembers: a getter/setter pair shares one name and gets exactly one exempt verdict
+ok 33 - 26. findTestOnlyMembers: a getter/setter pair shares one name and gets exactly one exempt verdict
+  ---
+  duration_ms: 0.4241
+  type: 'test'
+  ...
+# Subtest: 27. findTestOnlyMembers: an untagged getter/setter pair gets exactly one violation, not two
+ok 34 - 27. findTestOnlyMembers: an untagged getter/setter pair gets exactly one violation, not two
+  ---
+  duration_ms: 0.3969
+  type: 'test'
+  ...
+# Subtest: 28. findTestOnlyMembers: a member reached only via bracket-notation string access in prod is not falsely flagged
+ok 35 - 28. findTestOnlyMembers: a member reached only via bracket-notation string access in prod is not falsely flagged
+  ---
+  duration_ms: 0.3951
+  type: 'test'
+  ...
+# Subtest: 29. findTestOnlyMembers: two classes sharing a member name are grouped separately — only the tagged one is exempt
+ok 36 - 29. findTestOnlyMembers: two classes sharing a member name are grouped separately — only the tagged one is exempt
+  ---
+  duration_ms: 0.396
+  type: 'test'
+  ...
+# Subtest: 30. findTestOnlyMembers: an interface signature and a class method sharing a name are not merged
+ok 37 - 30. findTestOnlyMembers: an interface signature and a class method sharing a name are not merged
+  ---
+  duration_ms: 0.3888
+  type: 'test'
+  ...
+# Subtest: 31. findTestOnlyMembers: a test file that does not import the declaring module does not count as a reference
+ok 38 - 31. findTestOnlyMembers: a test file that does not import the declaring module does not count as a reference
+  ---
+  duration_ms: 0.3507
+  type: 'test'
+  ...
+# Subtest: 32. isPublic: a bare /** @public */ is exempt-eligible and hasBareTag is false
+ok 39 - 32. isPublic: a bare /** @public */ is exempt-eligible and hasBareTag is false
+  ---
+  duration_ms: 0.1373
+  type: 'test'
+  ...
+# Subtest: 33. hasBareTag: adding @public does not weaken bare @testonly enforcement
+ok 40 - 33. hasBareTag: adding @public does not weaken bare @testonly enforcement
+  ---
+  duration_ms: 0.1433
+  type: 'test'
+  ...
+# Subtest: 34. findOrphanModules: a bare @public file is publicExempt, not a violation
+ok 41 - 34. findOrphanModules: a bare @public file is publicExempt, not a violation
+  ---
+  duration_ms: 0.1698
+  type: 'test'
+  ...
+# Subtest: 35. findTestOnlyExports: a bare @public export is publicExempt, not a violation
+ok 42 - 35. findTestOnlyExports: a bare @public export is publicExempt, not a violation
+  ---
+  duration_ms: 0.258
+  type: 'test'
+  ...
+# Subtest: 36. findTestOnlyMembers: a bare @public member is publicExempt, not a violation
+ok 43 - 36. findTestOnlyMembers: a bare @public member is publicExempt, not a violation
+  ---
+  duration_ms: 0.2819
+  type: 'test'
+  ...
+# Subtest: 37. findTestOnlyMembers: a stray '{' inside a string literal in class A does not merge its member with class B's
+ok 44 - 37. findTestOnlyMembers: a stray '{' inside a string literal in class A does not merge its member with class B's
+  ---
+  duration_ms: 0.6391
+  type: 'test'
+  ...
+# Subtest: 38. findTestOnlyMembers: a stray '}' inside a line comment in class A does not merge its member with class B's
+ok 45 - 38. findTestOnlyMembers: a stray '}' inside a line comment in class A does not merge its member with class B's
+  ---
+  duration_ms: 0.3357
+  type: 'test'
+  ...
+# Subtest: 39. findTestOnlyMembers: a Lit template with a string-embedded "{" in its ${} does not desync attribution
+ok 46 - 39. findTestOnlyMembers: a Lit template with a string-embedded "{" in its ${} does not desync attribution
+  ---
+  duration_ms: 0.5518
+  type: 'test'
+  ...
+# Subtest: 40. attributeLinesToBlocks: masking a multi-line block comment preserves line numbers, so a member after it attributes to its true line
+ok 47 - 40. attributeLinesToBlocks: masking a multi-line block comment preserves line numbers, so a member after it attributes to its true line
+  ---
+  duration_ms: 0.2084
+  type: 'test'
+  ...
+# Subtest: 41. attributeLinesToBlocks: a regex literal desyncs the brace count, but the column-0 resync clears the stale stack on the next declaration
+ok 48 - 41. attributeLinesToBlocks: a regex literal desyncs the brace count, but the column-0 resync clears the stale stack on the next declaration
+  ---
+  duration_ms: 0.1334
+  type: 'test'
+  ...
+# Subtest: 42. subsumeMembersByOwner: a class-level @testonly exemption subsumes its own member violation
+ok 49 - 42. subsumeMembersByOwner: a class-level @testonly exemption subsumes its own member violation
+  ---
+  duration_ms: 0.2973
+  type: 'test'
+  ...
+# Subtest: 43. subsumeMembersByOwner: class A verdicted does not subsume class B's same-named member
+ok 50 - 43. subsumeMembersByOwner: class A verdicted does not subsume class B's same-named member
+  ---
+  duration_ms: 0.2875
+  type: 'test'
+  ...
+# Subtest: 44. subsumeMembersByOwner: a class-level violation (not just an exemption) also subsumes its own members
+ok 51 - 44. subsumeMembersByOwner: a class-level violation (not just an exemption) also subsumes its own members
+  ---
+  duration_ms: 0.1681
+  type: 'test'
+  ...
+# Subtest: 45. findTestOnlyMembers: a stray '}' inside a string literal (not just a comment) does not pop class A early either
+ok 52 - 45. findTestOnlyMembers: a stray '}' inside a string literal (not just a comment) does not pop class A early either
+  ---
+  duration_ms: 0.3627
+  type: 'test'
+  ...
+# Subtest: 46. isExcludedReferrer: rejects both checker paths, accepts an arbitrary prod file
+ok 53 - 46. isExcludedReferrer: rejects both checker paths, accepts an arbitrary prod file
+  ---
+  duration_ms: 0.0837
+  type: 'test'
+  ...
+# Subtest: 47. findTestOnlyExports: prose in an excluded referrer file does not count
+ok 54 - 47. findTestOnlyExports: prose in an excluded referrer file does not count
+  ---
+  duration_ms: 0.2961
+  type: 'test'
+  ...
+# Subtest: 48. attributeLinesToBlocks: a column-0 declaration inside a template literal does not resync the stack mid-class
+ok 55 - 48. attributeLinesToBlocks: a column-0 declaration inside a template literal does not resync the stack mid-class
+  ---
+  duration_ms: 0.2534
+  type: 'test'
+  ...
+# Subtest: 49. attributeLinesToBlocks: a `class` line inside a block comment does not claim the next real brace
+ok 56 - 49. attributeLinesToBlocks: a `class` line inside a block comment does not claim the next real brace
+  ---
+  duration_ms: 0.2582
+  type: 'test'
+  ...
+# Subtest: 50. findTestOnlyMembers: a template-embedded column-0 declaration in class A does not merge its member with class B's
+ok 57 - 50. findTestOnlyMembers: a template-embedded column-0 declaration in class A does not merge its member with class B's
+  ---
+  duration_ms: 0.3458
+  type: 'test'
+  ...
+# Subtest: 51. findTestOnlyExports: an export declared only inside a block comment is never a candidate
+ok 58 - 51. findTestOnlyExports: an export declared only inside a block comment is never a candidate
+  ---
+  duration_ms: 0.2448
+  type: 'test'
+  ...
+# Subtest: 52. findTestOnlyMembers: a member-shaped line inside a template literal is never a candidate
+ok 59 - 52. findTestOnlyMembers: a member-shaped line inside a template literal is never a candidate
+  ---
+  duration_ms: 0.3035
+  type: 'test'
+  ...
+# Subtest: 53. findTestOnlyMembers: a commented-out exported class does not open the file for member scanning
+ok 60 - 53. findTestOnlyMembers: a commented-out exported class does not open the file for member scanning
+  ---
+  duration_ms: 0.152
+  type: 'test'
+  ...
+# Subtest: 54. findTestOnlyMembers: a trailing "// private helper" comment does not suppress a public member
+ok 61 - 54. findTestOnlyMembers: a trailing "// private helper" comment does not suppress a public member
+  ---
+  duration_ms: 0.2342
+  type: 'test'
+  ...
+# Subtest: 55. declarationLines: a backtick inside a regex literal desyncs the mask, so candidacy falls back to raw
+ok 62 - 55. declarationLines: a backtick inside a regex literal desyncs the mask, so candidacy falls back to raw
+  ---
+  duration_ms: 0.2926
+  type: 'test'
+  ...
+# Subtest: 56. findTestOnlyMembers: a bare call statement inside a method body is not a member candidate
+ok 63 - 56. findTestOnlyMembers: a bare call statement inside a method body is not a member candidate
+  ---
+  duration_ms: 0.5052
+  type: 'test'
+  ...
+# Subtest: 57. attributeLinesToBlockFrames: direct members vs nested statements
+ok 64 - 57. attributeLinesToBlockFrames: direct members vs nested statements
+  ---
+  duration_ms: 0.1711
+  type: 'test'
+  ...
+# Subtest: 58. isTestFile: patterns match the WORKSPACE-RELATIVE path, never the whole path
+ok 65 - 58. isTestFile: patterns match the WORKSPACE-RELATIVE path, never the whole path
+  ---
+  duration_ms: 0.5671
+  type: 'test'
+  ...
+# Subtest: 59. findOrphanModules: a relative specifier resolves to ONE file, not every same-basename file
+ok 66 - 59. findOrphanModules: a relative specifier resolves to ONE file, not every same-basename file
+  ---
+  duration_ms: 0.254
+  type: 'test'
+  ...
+# Subtest: 60. resolveRelativeSpecifier: a .js specifier resolves to its .ts sibling, a bare directory to index.ts
+ok 67 - 60. resolveRelativeSpecifier: a .js specifier resolves to its .ts sibling, a bare directory to index.ts
+  ---
+  duration_ms: 0.1218
+  type: 'test'
+  ...
+# Subtest: 61. isMainModule: a junction or symlink in the invocation path still counts as main
+ok 68 - 61. isMainModule: a junction or symlink in the invocation path still counts as main
+  ---
+  duration_ms: 3.5018
+  type: 'test'
+  ...
+# Subtest: 62. resolveAliasSpecifier: a tsconfig path alias resolves inside its own workspace
+ok 69 - 62. resolveAliasSpecifier: a tsconfig path alias resolves inside its own workspace
+  ---
+  duration_ms: 0.2802
+  type: 'test'
+  ...
+# Subtest: 63. loadWorkspaceAliases: reads real tsconfig paths off the tracked file list
+ok 70 - 63. loadWorkspaceAliases: reads real tsconfig paths off the tracked file list
+  ---
+  duration_ms: 74.5062
+  type: 'test'
+  ...
+# Subtest: 64. forbiddenTag: knip silently exempts @beta and @alias, so the gate rejects them
+ok 71 - 64. forbiddenTag: knip silently exempts @beta and @alias, so the gate rejects them
+  ---
+  duration_ms: 0.4567
+  type: 'test'
+  ...
+# Subtest: 65. findForbiddenTags: reports a @beta or @alias tag anywhere in production source
+ok 72 - 65. findForbiddenTags: reports a @beta or @alias tag anywhere in production source
+  ---
+  duration_ms: 0.3468
+  type: 'test'
+  ...
+# Subtest: 66. findForbiddenTags: the real tree carries none of them
+ok 73 - 66. findForbiddenTags: the real tree carries none of them
+  ---
+  duration_ms: 148.7847
+  type: 'test'
+  ...
+# Subtest: 67. an EXCLUDED_REFERRERS file still vouches for a symbol through real CODE
+ok 74 - 67. an EXCLUDED_REFERRERS file still vouches for a symbol through real CODE
+  ---
+  duration_ms: 0.2926
+  type: 'test'
+  ...
+# Subtest: 68. ...but PROSE in that same file still vouches for nothing
+ok 75 - 68. ...but PROSE in that same file still vouches for nothing
+  ---
+  duration_ms: 0.194
+  type: 'test'
+  ...
+# Subtest: livingTierFiles keeps docs/ minus the two archives, root files, and app/package README+CLAUDE
+ok 76 - livingTierFiles keeps docs/ minus the two archives, root files, and app/package README+CLAUDE
+  ---
+  duration_ms: 1.8073
+  type: 'test'
+  ...
+# Subtest: maskCode blanks fenced blocks and inline spans without changing line numbers
+ok 77 - maskCode blanks fenced blocks and inline spans without changing line numbers
+  ---
+  duration_ms: 0.796
+  type: 'test'
+  ...
+# Subtest: maskCode pairs fences by character and length — a ````markdown wrapper around a ```md example is one block
+ok 78 - maskCode pairs fences by character and length — a ````markdown wrapper around a ```md example is one block
+  ---
+  duration_ms: 0.2272
+  type: 'test'
+  ...
+# Subtest: maskCode does not let a closed block plus an unclosed block swallow the rest of the file
+ok 79 - maskCode does not let a closed block plus an unclosed block swallow the rest of the file
+  ---
+  duration_ms: 0.2016
+  type: 'test'
+  ...
+# Subtest: maskCode blanks HTML comments, including multi-line ones, so parked links are not checked
+ok 80 - maskCode blanks HTML comments, including multi-line ones, so parked links are not checked
+  ---
+  duration_ms: 0.2149
+  type: 'test'
+  ...
+# Subtest: external, mailto, autolink and same-file anchor targets are ignored; fragments and queries are stripped
+ok 81 - external, mailto, autolink and same-file anchor targets are ignored; fragments and queries are stripped
+  ---
+  duration_ms: 0.1468
+  type: 'test'
+  ...
+# Subtest: angle-bracketed destinations (spaces allowed) and one level of balanced parentheses are read
+ok 82 - angle-bracketed destinations (spaces allowed) and one level of balanced parentheses are read
+  ---
+  duration_ms: 0.2341
+  type: 'test'
+  ...
+# Subtest: resolveTarget resolves relative to the document and treats a leading slash as the repo root
+ok 83 - resolveTarget resolves relative to the document and treats a leading slash as the repo root
+  ---
+  duration_ms: 0.3178
+  type: 'test'
+  ...
+# Subtest: trackedPathSet holds every tracked file and the directories it implies, exact case
+ok 84 - trackedPathSet holds every tracked file and the directories it implies, exact case
+  ---
+  duration_ms: 0.3955
+  type: 'test'
+  ...
+# Subtest: checkFile reports a missing target with file, line and resolved path, and accepts tracked directories
+ok 85 - checkFile reports a missing target with file, line and resolved path, and accepts tracked directories
+  ---
+  duration_ms: 0.562
+  type: 'test'
+  ...
+# Subtest: a target that differs from the tracked path only by case is broken (github.com and Linux CI are case-sensitive)
+ok 86 - a target that differs from the tracked path only by case is broken (github.com and Linux CI are case-sensitive)
+  ---
+  duration_ms: 0.1491
+  type: 'test'
+  ...
+# Subtest: a link that escapes the repository root is broken, and is reported with its ../ path
+ok 87 - a link that escapes the repository root is broken, and is reported with its ../ path
+  ---
+  duration_ms: 0.1766
+  type: 'test'
+  ...
+# Subtest: the real tree resolves every relative link, and the gate actually saw links
+ok 88 - the real tree resolves every relative link, and the gate actually saw links
+  ---
+  duration_ms: 210.4246
+  type: 'test'
+  ...
+# Subtest: mutation: one dangling link in a real document turns the gate red
+ok 89 - mutation: one dangling link in a real document turns the gate red
+  ---
+  duration_ms: 192.301
+  type: 'test'
+  ...
+# Subtest: a Version column plus a Package Name cell is a claim (docs/versions.md shape)
+ok 90 - a Version column plus a Package Name cell is a claim (docs/versions.md shape)
+  ---
+  duration_ms: 2.6702
+  type: 'test'
+  ...
+# Subtest: a first-cell link whose target is the workspace directory is a claim (root README shape)
+ok 91 - a first-cell link whose target is the workspace directory is a claim (root README shape)
+  ---
+  duration_ms: 0.3511
+  type: 'test'
+  ...
+# Subtest: the link target resolves even when the package name differs from the directory
+ok 92 - the link target resolves even when the package name differs from the directory
+  ---
+  duration_ms: 0.1946
+  type: 'test'
+  ...
+# Subtest: a bare leaf name is NOT a workspace reference — only the package name or a directory link is
+ok 93 - a bare leaf name is NOT a workspace reference — only the package name or a directory link is
+  ---
+  duration_ms: 0.2517
+  type: 'test'
+  ...
+# Subtest: bold markers around either cell are ignored
+ok 94 - bold markers around either cell are ignored
+  ---
+  duration_ms: 0.1642
+  type: 'test'
+  ...
+# Subtest: a version-history row never claims, even when its highlight is exactly a backticked package
+ok 95 - a version-history row never claims, even when its highlight is exactly a backticked package
+  ---
+  duration_ms: 0.251
+  type: 'test'
+  ...
+# Subtest: the Deprecated table (Last Version, not Version) never claims — even without trailing prose
+ok 96 - the Deprecated table (Last Version, not Version) never claims — even without trailing prose
+  ---
+  duration_ms: 0.2115
+  type: 'test'
+  ...
+# Subtest: a table inside a fenced code block is an example, not a claim
+ok 97 - a table inside a fenced code block is an example, not a claim
+  ---
+  duration_ms: 0.1884
+  type: 'test'
+  ...
+# Subtest: a table without a Version column never claims
+ok 98 - a table without a Version column never claims
+  ---
+  duration_ms: 0.3637
+  type: 'test'
+  ...
+# Subtest: compareClaims reports every mismatch with file and line, and nothing else
+ok 99 - compareClaims reports every mismatch with file and line, and nothing else
+  ---
+  duration_ms: 0.5497
+  type: 'test'
+  ...
+# Subtest: readWorkspaceVersions finds every package and app in this repository
+ok 100 - readWorkspaceVersions finds every package and app in this repository
+  ---
+  duration_ms: 17.0271
+  type: 'test'
+  ...
+# Subtest: the real docs agree with package.json, and BOTH checked files cover every workspace
+ok 101 - the real docs agree with package.json, and BOTH checked files cover every workspace
+  ---
+  duration_ms: 8.6644
+  type: 'test'
+  ...
+# Subtest: the gate cannot pass vacuously: an emptied versions.md is a failure, not a clean run
+ok 102 - the gate cannot pass vacuously: an emptied versions.md is a failure, not a clean run
+  ---
+  duration_ms: 4.9349
+  type: 'test'
+  ...
+# Subtest: the gate cannot pass vacuously: a README with no version table is a failure too
+ok 103 - the gate cannot pass vacuously: a README with no version table is a failure too
+  ---
+  duration_ms: 6.8535
+  type: 'test'
+  ...
+# Subtest: mutation: a wrong version in the real README shape is caught
+ok 104 - mutation: a wrong version in the real README shape is caught
+  ---
+  duration_ms: 5.0892
+  type: 'test'
+  ...
+# Subtest: knip.jsonc: a literal key always beats a glob, so glob settings never merge in
+ok 105 - knip.jsonc: a literal key always beats a glob, so glob settings never merge in
+  ---
+  duration_ms: 2.3817
+  type: 'test'
+  ...
+# Subtest: knip.jsonc: every workspace key applies to at least one workspace
+ok 106 - knip.jsonc: every workspace key applies to at least one workspace
+  ---
+  duration_ms: 76.6807
+  type: 'test'
+  ...
+# Subtest: knip.jsonc: every gated workspace resolves to its own literal key
+ok 107 - knip.jsonc: every gated workspace resolves to its own literal key
+  ---
+  duration_ms: 0.7433
+  type: 'test'
+  ...
+1..107
+# tests 107
+# suites 0
+# pass 107
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 836.5803
+$ tsx --test scripts/check-dead-code.test.ts scripts/knip-config.test.ts scripts/check-doc-versions.test.ts scripts/check-doc-links.test.ts

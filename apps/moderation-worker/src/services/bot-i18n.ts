@@ -192,17 +192,6 @@ export class Translator {
   getLocale(): LocaleCode {
     return this.locale;
   }
-
-  /**
-   * Get locale metadata
-   *
-   * @testonly unit-tested across all six locales (name/nativeName presence),
-   * but no moderation-worker handler surfaces locale display metadata — this
-   * bot's embeds never show a locale's name back to the moderator.
-   */
-  getMeta(): LocaleData['meta'] {
-    return this.data.meta;
-  }
 }
 
 /**

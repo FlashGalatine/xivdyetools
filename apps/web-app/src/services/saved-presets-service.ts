@@ -118,11 +118,6 @@ export class SavedPresetsService {
     return [...this.saved];
   }
 
-  static isSaved(id: string): boolean {
-    this.load();
-    return this.saved.some((p) => p.id === id);
-  }
-
   static snapshotOf(preset: UnifiedPreset): SavedPreset {
     return {
       id: preset.id,

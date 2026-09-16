@@ -1,0 +1,5 @@
+Unused files (2)
+apps/web-app/scripts/analyze-unused-keys.d.ts
+apps/web-app/scripts/check-bundle-size.d.ts  
+Unused devDependencies (1)
+wrangler  apps/web-app/package.json:52:6

@@ -21,7 +21,7 @@ import type { Env } from './types.js';
 import { MAX_FILE_SIZE_BYTES } from './validators.js';
 import { processImageForExtraction, processImageForThumbnail } from './photon.js';
 
-const env: Env = { ENVIRONMENT: 'test' };
+const env: Env = {};
 
 describe('POST /extract maxDimension validation', () => {
   beforeEach(() => {

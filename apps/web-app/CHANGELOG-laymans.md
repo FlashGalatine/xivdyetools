@@ -16,6 +16,11 @@
 ### The Privacy Policy and Terms of Service, one tap away
 - **About now has a POLICIES row** with links to the Privacy Policy and to the site's new Terms of Service — the terms cover what happens when you submit a community preset or sign in. The Privacy Policy was also corrected in five places so it describes exactly what the app does today, including that a character name from a `.chara` file is only ever used on your own device.
 
+## Web-App Version 5.9.1 — September 16, 2026
+
+### Behind the scenes
+- **Nothing looks or works differently in this release.** It only clears out code that none of the tools used any more, so the app stays easy to look after. If you are seeing this note, you are already up to date.
+
 ## Web-App Version 5.9.0 — September 6, 2026
 
 ### Look a glamour piece up anywhere, straight from the list

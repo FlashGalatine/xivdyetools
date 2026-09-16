@@ -1,0 +1,8 @@
+src/services/i18n.test.ts(20,44): error TS7006: Parameter 'l' implicitly has an 'any' type.
+src/services/i18n.test.ts(25,34): error TS7006: Parameter 'locale' implicitly has an 'any' type.
+src/services/i18n.test.ts(39,44): error TS7006: Parameter 'l' implicitly has an 'any' type.
+src/services/i18n.ts(23,3): error TS2305: Module '"@xivdyetools/bot-logic/i18n"' has no exported member 'SUPPORTED_LOCALES'.
+src/services/i18n.ts(24,3): error TS2305: Module '"@xivdyetools/bot-logic/i18n"' has no exported member 'isValidLocale'.
+src/services/i18n.ts(25,3): error TS2305: Module '"@xivdyetools/bot-logic/i18n"' has no exported member 'discordLocaleToLocaleCode'.
+src/services/i18n.ts(26,3): error TS2305: Module '"@xivdyetools/bot-logic/i18n"' has no exported member 'resolveUserLocale'.
+src/services/i18n.ts(32,3): error TS2305: Module '"@xivdyetools/bot-logic/i18n"' has no exported member 'getLegacyLanguagePreference'.

@@ -1,0 +1,9 @@
+src/commands/localize.ts(31,3): error TS2305: Module '"@xivdyetools/bot-logic"' has no exported member 'getLocalizedHarmonyType'.
+src/commands/localize.ts(32,3): error TS2305: Module '"@xivdyetools/bot-logic"' has no exported member 'getLocalizedVisionType'.
+src/handlers/commands/harmony.ts(133,5): error TS2353: Object literal may only specify known properties, and 'wheel' does not exist in type 'HarmonyInput'.
+src/handlers/commands/preset.ts(1007,5): error TS2353: Object literal may only specify known properties, and 'votesLabel' does not exist in type 'PresetSwatchOptions'.
+src/services/font-coverage.test.ts(34,10): error TS2305: Module '"@xivdyetools/svg"' has no exported member 'scanEmittedGlyphs'.
+src/services/i18n.ts(41,3): error TS2305: Module '"@xivdyetools/bot-logic/i18n"' has no exported member 'isValidLocale'.
+src/services/i18n.ts(42,3): error TS2305: Module '"@xivdyetools/bot-logic/i18n"' has no exported member 'discordLocaleToLocaleCode'.
+src/services/i18n.ts(43,3): error TS2305: Module '"@xivdyetools/bot-logic/i18n"' has no exported member 'resolveUserLocale'.
+src/services/preferences.ts(551,7): error TS2322: Type 'string' is not assignable to type 'LocaleCode | undefined'.
