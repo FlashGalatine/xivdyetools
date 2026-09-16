@@ -42,7 +42,7 @@
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.3.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.2.0 | `@xivdyetools/bot-logic` | npm | Active |
-| **Test Utils** | v2.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
+| **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
 
@@ -367,6 +367,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.0.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 0 (BUG-007, BUG-021) — `createMockDye()` default stainIDs are a deterministic 1..254 counter (`resetMockDyeSequence()` exported) instead of a random draw that collided ~1/254 per pair; `{ stainID: null }` honoured |
 | **v2.0.0** | **Sep 2026** | **Major (bookkeeping — private, never published) — mocks tightened to match the services they stand in for: the KV mock's `list()` paginates like real KV (BUG-098, which had hidden BUG-035), R2 `httpMetadata` readable (BUG-100), D1 `bind()` validates and returns a new statement, KV `put()` rejects `expirationTtl` < 60 s, `createMockDye()` can represent a real dye; `_setBatchFailure` / `_query` / `_boundValues` added on the D1 mock** |
 | v1.3.1 | Sep 2026 | knip dead-code gate — unused `integration/setup.ts` helpers deleted (the one package that deletes rather than tags, having no npm consumers) |
 | **v1.3.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-015, Sprint 11 fix round) — `auth/signature.ts`'s v1 bot-signature helpers (`createBotSignature`/`createTimestampedSignature`/`verifyBotSignature`) removed once their only remaining consumer, `bot-authentication.test.ts`'s v1-signature test blocks, was deleted (presets-api accepts only v2); that integration suite narrows from 15 tests to 5, keeping the still-live dev/test bypass and Authorization-rejection coverage** |
