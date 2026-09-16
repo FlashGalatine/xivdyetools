@@ -316,6 +316,42 @@ describe('MarketBoard', () => {
 
       expect(refreshBtn?.disabled).toBe(true);
     });
+
+    it('cancels the pending status-clear timer on destroy() (BUG-023)', async () => {
+      // The preceding test replaces this mock's implementation with a
+      // slow (100ms) one; vi.clearAllMocks() in beforeEach clears calls but
+      // not implementations, so restore the fast resolve explicitly.
+      mockMarketBoardService.refreshPrices.mockResolvedValue(undefined);
+
+      marketBoard = new MarketBoard(container);
+      marketBoard.init();
+
+      const refreshBtn = query<HTMLButtonElement>(container, '#mb-refresh-btn');
+      click(refreshBtn);
+
+      // Let refreshPrices() resolve and the "refreshed" status text render,
+      // using a real timer as the other tests in this file do (fake timers
+      // are switched on afterwards, only to control the 3s status-clear).
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const statusMsg = query(container, '#mb-price-status');
+      expect(statusMsg?.textContent).toBe('marketBoard.pricesRefreshed');
+
+      vi.useFakeTimers();
+      try {
+        // Destroy before the 3s status-clear fires, then advance past it.
+        marketBoard.destroy();
+        marketBoard = null; // already destroyed; afterEach must not destroy again
+        vi.advanceTimersByTime(3000);
+
+        // A raw setTimeout would still clear this node's text 3s later even
+        // though the component (and its DOM) were torn down; safeTimeout's
+        // isDestroyed guard must suppress that write.
+        expect(statusMsg?.textContent).toBe('marketBoard.pricesRefreshed');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   // ============================================================================
