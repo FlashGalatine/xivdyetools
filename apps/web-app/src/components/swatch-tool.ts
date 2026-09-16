@@ -1543,9 +1543,14 @@ export class SwatchTool extends BaseComponent {
           ConfigController.getInstance().setConfig('swatch', { race: tribe, gender });
         },
         onSubmitPalette: (dyes, name) => {
-          void import('@components/preset-submission-form').then(({ showPresetSubmissionForm }) => {
-            showPresetSubmissionForm(undefined, { dyes, name });
-          });
+          void import('@components/preset-submission-form')
+            .then(({ showPresetSubmissionForm }) => {
+              showPresetSubmissionForm(undefined, { dyes, name });
+            })
+            .catch((error: unknown) => {
+              logger.error('[SwatchTool] Failed to load the preset submission form', error);
+              ToastService.error(LanguageService.t('errors.toolLoadFailed'));
+            });
         },
       },
       { glamourContainer: charaGlamourContainer }
@@ -2372,49 +2377,6 @@ export class SwatchTool extends BaseComponent {
    */
   private handleContextAction(action: ContextAction, dye: Dye): void {
     switch (action) {
-      case 'add-comparison':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', {
-            detail: { toolId: 'comparison', dye },
-          })
-        );
-        ToastService.success(LanguageService.t('harmony.addedToComparison'));
-        break;
-
-      case 'add-mixer':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', {
-            detail: { toolId: 'mixer', dye },
-          })
-        );
-        ToastService.success(LanguageService.t('harmony.addedToMixer'));
-        break;
-
-      case 'add-accessibility':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', {
-            detail: { toolId: 'accessibility', dye },
-          })
-        );
-        ToastService.success(LanguageService.t('harmony.addedToAccessibility'));
-        break;
-
-      case 'see-harmonies':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', {
-            detail: { toolId: 'harmony', dye },
-          })
-        );
-        break;
-
-      case 'budget':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', {
-            detail: { toolId: 'budget', dye },
-          })
-        );
-        break;
-
       case 'copy-hex':
         void navigator.clipboard.writeText(dye.hex).then(() => {
           ToastService.success(LanguageService.t('success.copiedToClipboard'));

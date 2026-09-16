@@ -87,7 +87,11 @@ export interface ResultCardData {
 }
 
 /**
- * Context menu action identifiers
+ * Context menu action identifiers, as a runtime list so a handler's
+ * `switch` can be checked for stray case strings against a real value
+ * rather than only the type — see `context-action-vocabulary.test.ts`.
+ * `ContextAction` is derived from this array, not the other way round:
+ * `CONTEXT_ACTIONS` is the source of truth.
  *
  * Grouped into categories:
  * - Inspect: harmony, budget, accessibility, comparison
@@ -95,32 +99,43 @@ export interface ResultCardData {
  * - External: universalis, garlandtools, teamcraft, saddlebag
  *
  * Also includes legacy action names for backwards compatibility with
- * existing tool components that listen for context-action events.
+ * existing tool components that listen for context-action events. This
+ * file's own emitters (`handleSlotAction`, `handleMenuAction` below) only
+ * ever produce `inspect-*` / `transform-*` / `external-*` /
+ * `add-mixer-slot-*` — the five `add-comparison` / `add-mixer` /
+ * `add-accessibility` / `see-harmonies` / `budget` legacy members are dead
+ * from ResultCard's own emitters and were removed from swatch-tool.ts and
+ * mixer-tool.ts's handlers as unreachable (REFACTOR-001); they stay in this
+ * vocabulary because budget-tool.ts, gradient-tool.ts and harmony-tool.ts
+ * still handle them.
  */
-export type ContextAction =
+export const CONTEXT_ACTIONS = [
   // Inspect Dye in...
-  | 'inspect-harmony'
-  | 'inspect-budget'
-  | 'inspect-accessibility'
-  | 'inspect-comparison'
-  | 'inspect-swatch'
+  'inspect-harmony',
+  'inspect-budget',
+  'inspect-accessibility',
+  'inspect-comparison',
+  'inspect-swatch',
   // Transform Dye in...
-  | 'transform-gradient'
-  | 'transform-mixer'
+  'transform-gradient',
+  'transform-mixer',
   // Open in browser...
-  | 'external-universalis'
-  | 'external-garlandtools'
-  | 'external-teamcraft'
-  | 'external-saddlebag'
+  'external-universalis',
+  'external-garlandtools',
+  'external-teamcraft',
+  'external-saddlebag',
   // Legacy actions (for backwards compatibility with existing tool components)
-  | 'add-comparison' // → use 'inspect-comparison'
-  | 'add-mixer' // → use 'transform-mixer'
-  | 'add-accessibility' // → use 'inspect-accessibility'
-  | 'see-harmonies' // → use 'inspect-harmony'
-  | 'budget' // → use 'inspect-budget'
-  | 'copy-hex' // kept for clipboard functionality
-  | 'add-mixer-slot-1'
-  | 'add-mixer-slot-2';
+  'add-comparison', // → use 'inspect-comparison'
+  'add-mixer', // → use 'transform-mixer'
+  'add-accessibility', // → use 'inspect-accessibility'
+  'see-harmonies', // → use 'inspect-harmony'
+  'budget', // → use 'inspect-budget'
+  'copy-hex', // kept for clipboard functionality
+  'add-mixer-slot-1',
+  'add-mixer-slot-2',
+] as const;
+
+export type ContextAction = (typeof CONTEXT_ACTIONS)[number];
 
 /**
  * Storage keys for tool dye selections

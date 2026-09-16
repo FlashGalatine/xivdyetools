@@ -2013,30 +2013,6 @@ export class MixerTool extends BaseComponent {
    */
   private handleContextAction(action: ContextAction, dye: Dye): void {
     switch (action) {
-      case 'add-comparison':
-        // Navigate to comparison tool with this dye
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', {
-            detail: { toolId: 'comparison', dye },
-          })
-        );
-        ToastService.success(LanguageService.t('harmony.addedToComparison'));
-        break;
-
-      case 'add-mixer':
-        // Add to this tool's selection (if slot available)
-        if (!this.selectedDyes[0]) {
-          this.selectedDyes[0] = dye;
-        } else if (!this.selectedDyes[1]) {
-          this.selectedDyes[1] = dye;
-        } else {
-          ToastService.warning(LanguageService.t('mixer.slotsFullReplacing'));
-          this.selectedDyes[0] = this.selectedDyes[1];
-          this.selectedDyes[1] = dye;
-        }
-        this.handleDyeSelection(this.selectedDyes.filter((d): d is Dye => d !== null));
-        break;
-
       case 'add-mixer-slot-1':
         // Explicitly replace Slot 1
         this.selectedDyes[0] = dye;
@@ -2049,31 +2025,6 @@ export class MixerTool extends BaseComponent {
         this.selectedDyes[1] = dye;
         this.handleDyeSelection(this.selectedDyes.filter((d): d is Dye => d !== null));
         ToastService.success(LanguageService.t('mixer.replacedSlot2'));
-        break;
-
-      case 'add-accessibility':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', {
-            detail: { toolId: 'accessibility', dye },
-          })
-        );
-        ToastService.success(LanguageService.t('harmony.addedToAccessibility'));
-        break;
-
-      case 'see-harmonies':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', {
-            detail: { toolId: 'harmony', dye },
-          })
-        );
-        break;
-
-      case 'budget':
-        window.dispatchEvent(
-          new CustomEvent('navigate-to-tool', {
-            detail: { toolId: 'budget', dye },
-          })
-        );
         break;
 
       case 'copy-hex':
