@@ -38,8 +38,10 @@ export default defineConfig({
         'src/components/v4/v4-layout-shell.ts',
         'src/components/v4/display-options-v4.ts',
         'src/components/preset-edit-form.ts',
-        'src/components/collection-manager-modal.ts',
-        'src/components/add-to-collection-menu.ts',
+        // BUG-041: both had `/* istanbul ignore file */` AND this entry —
+        // two separate coverage-exclusion mechanisms hiding them from the
+        // ratchet. Both are gone; suites now cover create/rename/delete/
+        // import/export and the menu's add + positioning clamp.
         'src/components/welcome-modal.ts',
         'src/services/share-service.ts',
         'src/services/community-preset-service.ts',
