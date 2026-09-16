@@ -25,7 +25,10 @@
     "legalLabel": "ATTRIBUTION",
     "spectralCredit": "Mélange de peinture réaliste (théorie de Kubelka–Munk) par {link}",
     "dataApiLabel": "API de données",
-    "apiDocsLabel": "Docs de l'API Worker"
+    "apiDocsLabel": "Docs de l'API Worker",
+    "policiesLabel": "POLITIQUES",
+    "privacyPolicy": "Confidentialité",
+    "termsOfService": "Conditions d'utilisation"
   },
   "footer": {
     "createdBy": "Créé par Flash Galatine (Midgardsormr) pour la communauté FFXIV",

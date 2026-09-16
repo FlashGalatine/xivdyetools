@@ -1,9 +1,9 @@
 # XIV Dye Tools — Privacy Guide (web app)
 
-**Last updated:** 2026-08-30 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-09-16 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
-XIV Dye Tools runs in your browser. The colour tools — the Colour Extractor, Harmony Explorer,
+XIV Dye Tools runs in your browser. The colour tools — the Palette Extractor, Harmony Explorer,
 Comparison, Gradient, Mixer, Accessibility checker, Budget finder and Swatch Matcher — do their work
 on your device. Nothing you upload, pick or type is sent anywhere unless a section below says so,
 and the sections below are the complete list.
@@ -13,12 +13,22 @@ and the sections below are the complete list.
 - Uploaded, pasted, dragged-in and camera-captured images never leave your device, and are never
   written to browser storage. They are read with the browser's Canvas API, held in the page's memory
   for that session only, and discarded when you clear the image, close the tab or reload.
-- The extractor's "Privacy Protected" notice links here.
+- The Palette Extractor says the same thing where you pick a file — "Images are read in your
+  browser and never uploaded", beside a padlock. That notice is plain text, not a link; this
+  document is reached from **About → Privacy**.
 
 ## Character files (`.chara`)
 
 - A `.chara` file (Anamnesis, Ktisis, Brio) is parsed on your device. Its character name is never
-  used as a title, a default palette name or anything community-visible, and is never sent.
+  sent anywhere, and never used as a preset name, an author name, or anything else other people
+  can see. Submitting a glamour to the community presets requires you to type a name yourself —
+  the field starts empty on purpose, because the character name and the file name are both places
+  players put their real name.
+- **One exception, and it stays on your device.** If you save a glamour or its palette to this
+  browser without typing a name, the saved record falls back to the character's nickname, then to
+  the `.chara` file name. That name lives in your browser's storage next to your other saved
+  collections. It is never uploaded, and the community path above never reads it. Rename or delete
+  the record, or clear your site data, and it is gone.
 - To name the gear on the glamour block, the app asks our API for the item behind each slot. The
   request carries only the equipment **model numbers** from the file (a dozen small integers per
   file) — not the file, not the name, not the colours — and the item icons come back from the same
@@ -63,6 +73,20 @@ else) plus the third parties named below:
 Fonts are self-hosted. There are no third-party analytics scripts, ad or social trackers, and no
 cookies.
 
+### Links that take you to other sites
+
+Separately from the list above, some buttons **navigate** you to a community database rather than
+fetching anything in the background. The Swatch Matcher's "Open in…" menu on a glamour piece opens
+[Mirapri](https://mirapri.com/), [Garland Tools](https://www.garlandtools.org/),
+[Teamcraft](https://ffxivteamcraft.com/), [Gamer Escape](https://ffxiv.gamerescape.com/) or the
+Lodestone; a dye result card can open Universalis, Garland Tools, Teamcraft or
+[Saddlebag Exchange](https://saddlebagexchange.com/).
+
+What travels in those links is the game's own item — its numeric item id, or the item's name in the
+language that site uses. Nothing about you, your palette, your character or your session is in the
+URL. They open in a new tab with the referrer suppressed, so the site you land on is not told which
+page you came from. Once you are there you are on someone else's site, under their privacy policy.
+
 ## Usage analytics (opt-in)
 
 Analytics are **off by default**. They run only while **Advanced Options → Enable Analytics** is
@@ -87,17 +111,38 @@ which stores them in Cloudflare Analytics Engine:
 Each batch also carries five coarse dimensions: app version, environment (production or beta), UI
 language, current theme, and a viewport bucket (phone / tablet / desktop).
 
-What is **never** collected: your IP address, user agent or device details, any account, session
-or client identifier, cookies, page URLs, colours or images you work with, search text, preset text,
-character or world names, or anything that would let two visits be linked. The server discards
-everything about the request except the validated events, and the event list is an allowlist —
-anything else is dropped.
+What is **never stored with your events**: your IP address, user agent or device details, any
+account, session or client identifier, cookies, page URLs, colours or images you work with, search
+text, preset text, character or world names, or anything that would let two visits be linked. The
+server discards everything about the request except the validated events, and the event list is an
+allowlist — anything else is dropped. (Your IP reaches our server the way it reaches every website
+you visit; what happens to it is the next section.)
 
 Analytics Engine keeps the data for about three months. The code is open source:
 [`apps/web-app/src/services/telemetry-service.ts`](src/services/telemetry-service.ts) (what the
 browser sends) and
 [`apps/api-worker/src/telemetry/schema.ts`](../api-worker/src/telemetry/schema.ts) (what the server
 accepts).
+
+## Your IP address, and what the servers log
+
+Every website you visit receives your IP address — it is how the reply finds you. Ours is handled
+by Cloudflare, and here is the whole of what we do with it.
+
+- **Abuse prevention.** Our API counts requests per IP over a 60-second window so one source cannot
+  flood the service. The counting is done by Cloudflare's own rate-limiting service, which we hand
+  the address to without storing it ourselves. There is a fallback path, used only on a deployment
+  where that service is not wired up, which instead keeps a counter in Cloudflare KV under a key
+  containing the address, for **120 seconds**. Neither path writes your address to a database, and
+  neither is connected to your analytics events.
+- **Your IP is never stored alongside anything you did** — not your events, not your presets, not
+  your votes. It is not used to link visits, build a profile, or identify you.
+- **Operational logs.** Our workers can print short diagnostic lines while handling a request.
+  Persistent log collection (Cloudflare Workers Logs) is switched **off** on every one of our
+  workers, so these lines are visible only to a maintainer watching a live stream while debugging,
+  and are not retained afterwards. If we ever turn persistent logging on, we will say so here
+  first. The Discord bot's logs are covered by
+  [its own policy](../discord-worker/PRIVACY_POLICY.md).
 
 ## How to verify
 

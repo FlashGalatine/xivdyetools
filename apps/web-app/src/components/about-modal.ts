@@ -63,6 +63,14 @@ const SOCIAL_LINKS: SocialLink[] = CORE_SOCIAL_LINKS.map(({ label, url }) => ({
   icon: SOCIAL_ICONS[label] ?? '',
 }));
 
+/**
+ * Privacy and Terms live as markdown in the repo, so GitHub is where a reader
+ * can actually reach them — the app serves no route for either. Until one of
+ * them gets a first-party page, these two links are the only thing making the
+ * policies findable from inside the product at all.
+ */
+const POLICY_DOCS_BASE = 'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/web-app';
+
 // ============================================================================
 // About Modal Class
 // ============================================================================
@@ -148,6 +156,9 @@ export class AboutModal {
 
     // Developer API disclosure (closed by default)
     container.appendChild(this.createApiDisclosure());
+
+    // Privacy and Terms, immediately above the attribution they belong with
+    container.appendChild(this.createPoliciesRow());
 
     // Attribution block (bordered, mono label — no longer the smallest type)
     container.appendChild(this.createAttribution());
@@ -379,6 +390,47 @@ export class AboutModal {
 
     section.appendChild(toggle);
     section.appendChild(body);
+    return section;
+  }
+
+  /**
+   * Privacy and Terms, as two text links under a mono label. Deliberately
+   * plain: they sit directly above the attribution box so the legal material
+   * reads as one region rather than competing with the social icons.
+   */
+  private createPoliciesRow(): HTMLElement {
+    const section = document.createElement('div');
+    section.className = 'text-center mb-5';
+
+    const label = document.createElement('div');
+    label.className = 'm16-label mb-2';
+    label.textContent = LanguageService.t('about.policiesLabel');
+    section.appendChild(label);
+
+    const row = document.createElement('div');
+    row.className = 'flex justify-center items-center gap-3 text-xs';
+
+    const docLink = (key: string, file: string): HTMLAnchorElement => {
+      const a = document.createElement('a');
+      a.href = `${POLICY_DOCS_BASE}/${file}`;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.className = 'hover:underline';
+      a.style.color = 'var(--theme-primary)';
+      a.textContent = LanguageService.t(key);
+      return a;
+    };
+
+    const separator = document.createElement('span');
+    separator.style.color = 'var(--theme-text-muted)';
+    separator.setAttribute('aria-hidden', 'true');
+    separator.textContent = '·';
+
+    row.appendChild(docLink('about.privacyPolicy', 'PRIVACY.md'));
+    row.appendChild(separator);
+    row.appendChild(docLink('about.termsOfService', 'TERMS_OF_SERVICE.md'));
+
+    section.appendChild(row);
     return section;
   }
 

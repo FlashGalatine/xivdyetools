@@ -12,7 +12,9 @@
  * Scope — every tracked `.md` under `docs/` except the archive tier
  * (`docs/audits/**`, `docs/historical/**`), plus the root `README.md` /
  * `CLAUDE.md` / `DEPRECATIONS.md` / `SECURITY.md` and every `README.md` /
- * `CLAUDE.md` directly under `apps/*` and `packages/*`. `docs/research/` and
+ * `CLAUDE.md` / `PRIVACY.md` / `PRIVACY_POLICY.md` / `TERMS_OF_SERVICE.md` directly under
+ * `apps/*` and `packages/*` (the policy documents are linked from the app's About
+ * dialog, so a dangling pointer there is user-visible). `docs/research/` and
  * `docs/superpowers/` are frozen-body but link-maintained, so they are in.
  *
  * What counts as a link: an inline markdown link `[text](target)` whose target is
@@ -61,7 +63,7 @@ export function livingTierFiles(tracked: readonly string[]): string[] {
       return !f.startsWith('docs/audits/') && !f.startsWith('docs/historical/');
     }
     if (/^(README|CLAUDE|DEPRECATIONS|SECURITY)\.md$/.test(f)) return true;
-    return /^(apps|packages)\/[^/]+\/(README|CLAUDE)\.md$/.test(f);
+    return /^(apps|packages)\/[^/]+\/(README|CLAUDE|PRIVACY|PRIVACY_POLICY|TERMS_OF_SERVICE)\.md$/.test(f);
   });
 }
 

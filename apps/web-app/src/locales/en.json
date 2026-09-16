@@ -25,7 +25,10 @@
     "legalLabel": "ATTRIBUTION",
     "spectralCredit": "Realistic paint mixing (Kubelka–Munk theory) by {link}",
     "dataApiLabel": "Data API",
-    "apiDocsLabel": "API Worker docs"
+    "apiDocsLabel": "API Worker docs",
+    "policiesLabel": "POLICIES",
+    "privacyPolicy": "Privacy",
+    "termsOfService": "Terms of Service"
   },
   "footer": {
     "createdBy": "Created by Flash Galatine (Midgardsormr) for the FFXIV community",

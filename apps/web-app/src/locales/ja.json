@@ -25,7 +25,10 @@
     "legalLabel": "権利表記",
     "spectralCredit": "リアルな絵の具混色（クベルカ・ムンク理論）：{link}",
     "dataApiLabel": "データAPI",
-    "apiDocsLabel": "API Worker ドキュメント"
+    "apiDocsLabel": "API Worker ドキュメント",
+    "policiesLabel": "ポリシー",
+    "privacyPolicy": "プライバシー",
+    "termsOfService": "利用規約"
   },
   "footer": {
     "createdBy": "Flash Galatine (Midgardsormr) がFFXIVコミュニティのために作成",

@@ -59,6 +59,29 @@ test('livingTierFiles keeps docs/ minus the two archives, root files, and app/pa
   ]);
 });
 
+// The policy documents joined the living tier when the web app's About dialog
+// started linking to them: a dangling pointer inside PRIVACY.md or a ToS is now
+// something a reader hits, not just a repo blemish. `CHANGELOG-laymans.md` stays
+// out — the release webhook parses it under its own grammar, and it carries no
+// relative links to keep honest.
+test('livingTierFiles covers the app policy documents but not other app markdown', () => {
+  const tracked = [
+    'apps/web-app/PRIVACY.md',
+    'apps/web-app/TERMS_OF_SERVICE.md',
+    'apps/discord-worker/PRIVACY_POLICY.md',
+    'apps/discord-worker/TERMS_OF_SERVICE.md',
+    'apps/web-app/CHANGELOG.md',
+    'apps/web-app/CHANGELOG-laymans.md',
+    'apps/web-app/docs/PRIVACY.md',
+  ];
+  assert.deepEqual(livingTierFiles(tracked), [
+    'apps/web-app/PRIVACY.md',
+    'apps/web-app/TERMS_OF_SERVICE.md',
+    'apps/discord-worker/PRIVACY_POLICY.md',
+    'apps/discord-worker/TERMS_OF_SERVICE.md',
+  ]);
+});
+
 test('maskCode blanks fenced blocks and inline spans without changing line numbers', () => {
   const text = 'a [x](one.md)\n```md\n[q](quoted.md)\n```\nb `[i](inline.md)` [y](two.md)';
   const masked = maskCode(text);

@@ -87,9 +87,11 @@ const BUNDLE_LIMITS = [
   // 200 KB was set with the shell at ~196 KB. Two 5.0 shell features then
   // landed in it -- the 3A desktop tool rail in the console bar (+3.9 KB in
   // v4-app-header) and the closed-by-default mobile palette drawer with its
-  // first-run hint (+4.5 KB in v4-layout-shell) -- and it sits at ~205 KB.
-  // Re-budgeted for that measured growth; it is not headroom for more.
-  { label: 'layout shell', pattern: /^v4-layout-/, limit: 215 * KB },
+  // first-run hint (+4.5 KB in v4-layout-shell) -- and it sat at ~205 KB, so
+  // 215 KB. The About dialog's POLICIES row (Privacy / Terms links, 2026-09-16)
+  // then put it at 215.67 KB. Re-budgeted for that measured growth; it is not
+  // headroom for more -- the next shell feature trims or splits something.
+  { label: 'layout shell', pattern: /^v4-layout-/, limit: 218 * KB },
   // Named `modals` by vite.config's manualChunks, but that is not what it holds.
   // Rolldown ignored 34 of the 51 assignments manualChunks returned and merged
   // the shared colour engine into this chunk -- ColorConverter, ColorService,
