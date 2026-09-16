@@ -290,7 +290,7 @@ export class GradientTool extends BaseComponent {
         // Clean up old keys
         StorageService.removeItem(STORAGE_KEYS.startDyeId);
         StorageService.removeItem(STORAGE_KEYS.endDyeId);
-        logger.info('[MixerTool] Migrated dye selection from old storage format');
+        logger.info('[GradientTool] Migrated dye selection from old storage format');
       }
     }
   }
@@ -489,7 +489,7 @@ export class GradientTool extends BaseComponent {
     this.currentSteps = [];
 
     super.destroy();
-    logger.info('[MixerTool] Destroyed');
+    logger.info('[GradientTool] Destroyed');
   }
 
   // ============================================================================
