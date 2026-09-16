@@ -5,6 +5,12 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-09-16
+
+### Removed (2026-09-15 dead-code audit)
+
+- `ENVIRONMENT` member of `types.ts`'s `Env` interface — never set by `wrangler.toml` (no `[vars]` block in either environment) and never read (`loggerMiddleware` is configured with `readEnvironmentFromEnv: false`); only test fixtures populated it. Replaced the one-field `Env` interface with `export type Env = Record<string, never>;` (an explicit empty binding contract; `@typescript-eslint/no-empty-object-type` forbids an empty interface under this repo's `recommendedTypeChecked` lint config). Updated the two test fixtures that populated it (`src/index.test.ts`, `src/index-limits.test.ts`) to `{}`. See docs/audits/2026-09-15-dead-code/findings/DEAD-017.md
+
 ## [1.3.0] - 2026-09-02
 
 Sprint 12 of the 2026-09-02 deep-dive remediation (`docs/audits/2026-09-02-deep-dive`).

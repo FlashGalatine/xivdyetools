@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import app from './index.js';
 import type { Env } from './types.js';
 
-const env: Env = { ENVIRONMENT: 'test' };
+const env: Env = {};
 
 describe('image-worker', () => {
   it('GET /health returns ok', async () => {

@@ -164,10 +164,10 @@ undefined under test (REFACTOR-007). `photon.ts` imports it from there too.
 
 ### Environment Bindings (wrangler.toml)
 
-None. `wrangler.toml` declares **no `[vars]` block in either environment**, so the optional
-`ENVIRONMENT` member of `types.ts`'s `Env` interface is never actually populated — it is inert
-either way (`loggerMiddleware` is configured with `readEnvironmentFromEnv: false`). No KV, D1, R2,
-Analytics, or Service Bindings outbound.
+None. `wrangler.toml` declares **no `[vars]` block in either environment**, so `types.ts`'s `Env`
+is `Record<string, never>` — an explicit empty binding contract, not a placeholder member
+(`loggerMiddleware` is configured with `readEnvironmentFromEnv: false`, so nothing reads it even
+if there were one). No KV, D1, R2, Analytics, or Service Bindings outbound.
 
 ### Required Secrets / Optional Secrets
 

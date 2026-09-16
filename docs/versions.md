@@ -21,7 +21,7 @@
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.9.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.5.6 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
-| **Image Worker** | v1.3.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Image Worker** | v1.3.1 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.4 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
@@ -353,6 +353,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.3.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-017) — `Env` is now an explicit empty binding contract (`Record<string, never>`) instead of carrying an `ENVIRONMENT` member nothing sets or reads |
 | **v1.3.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 12) — the dimension cap admitted the 4096² input it existed to reject (BUG-052: `>` not `>=`), and two 64 MiB RGBA buffers exceed the 128 MiB isolate; pixel cap 16 MP → 9.4 MP, everything up to 4K still passes** |
 | v1.2.1 | Sep 2026 | `getImageDimensions` removed (DEAD-027); knip dead-code gate — clean on first run |
 | **v1.2.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-023) — `src/wrangler-config.test.ts` pins no routes, `workers_dev = false` + new `preview_urls = false` in both environments, exactly one named environment, and the production `name` both discord-worker's and presets-api's `IMAGE_WORKER` bindings depend on; in-code guard refuses any `*.workers.dev` hostname with a `404` before fetch/decode (defence in depth); closes the four-worker config-drift test set (presets-api, oauth, moderation-worker, image-worker); also fixes a `redirect: 'error'` `TypeError` on a Discord CDN redirect hop** |
