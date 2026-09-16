@@ -64,8 +64,14 @@ export async function copyRichTextToClipboard(
   const pending = Promise.resolve(rich);
   if (typeof ClipboardItem !== 'undefined' && typeof navigator.clipboard?.write === 'function') {
     try {
-      const flavour = (key: keyof RichText, type: string): Promise<Blob> =>
-        pending.then((content) => new Blob([content[key]], { type }));
+      // Each flavour rejects with the payload, and only the browser's write
+      // reads them: mark them handled so a payload failure surfaces once,
+      // through `pending` below, and not as an unhandled rejection as well.
+      const flavour = (key: keyof RichText, type: string): Promise<Blob> => {
+        const blob = pending.then((content) => new Blob([content[key]], { type }));
+        blob.catch(() => undefined);
+        return blob;
+      };
       await Promise.all([
         navigator.clipboard.write([
           new ClipboardItem({
