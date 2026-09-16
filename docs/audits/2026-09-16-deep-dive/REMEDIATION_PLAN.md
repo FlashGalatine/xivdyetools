@@ -39,7 +39,9 @@ The MEDIUMs in `swatch-tool.ts` and `preset-detail.ts`, the dead-branch deletion
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-web-app` + `pnpm --filter xivdyetools-web-app run build:check` (swatch chunk sits ~2 KB under budget — the deletion helps) → web-app `CHANGELOG-laymans.md` entry → merge to `main` → `deploy-web-app.yml`.
 
-## Sprint 2 — `web-app`: preset-tool shell, gradient, extractor, BaseComponent lifecycle
+## Sprint 2 — `web-app`: preset-tool shell, gradient, extractor, BaseComponent lifecycle — ✅ COMPLETED 2026-09-16 `554fd745`…`68297fe5`
+
+**Deploy needs:** ships with Sprint 1 as web-app 5.10.1 (merge to `main` → `deploy-web-app.yml`); root `CHANGELOG-laymans.md` carries a 5.7.1 product entry, so the merge also fires the Discord announcement. Both implementers ran the full web-app gate + `build:check` green (coverage 79.9/65.9/76.5/81.3). Deviations: BUG-005's review found the first cut keyed popstate off a state shape the app rarely produces (Back was dead after a cold load or the detail's own Back button) — fixed in a review round by resolving from the URL with a `_restoreSeq` guard; BUG-040 is partial — `welcome-modal.ts` keeps its direct import behind an ESLint exemption because the barrel pulls the services graph into the modals chunk (274.7 → 367.8 KB vs a 280 KB budget); BUG-030 refuses a dye-list change while any stored id is unresolved (other fields still save). Deferred minors are in the ledger and the final review.
 
 The remaining web-app rows; no file overlaps Sprint 1, so the two can be developed on parallel branches. One Pages deploy.
 

@@ -11,4 +11,4 @@
 - Initialise from `DEFAULT_TOOL_CONFIGS` or delete the initializer
 
 ## Status
-OPEN
+FIXED 2026-09-16 4ff63654 — initializer from `getDefaultConfig('harmony')`

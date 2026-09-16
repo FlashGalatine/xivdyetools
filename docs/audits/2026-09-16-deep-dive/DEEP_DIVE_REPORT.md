@@ -125,6 +125,9 @@ Checked and dropped, so the next audit does not re-chase them.
 | BUG-003, REFACTOR-001, BUG-038 | FIXED (Sprint 1) | `500cbb9e`, `a087e276` |
 | BUG-004, BUG-026 | FIXED (Sprint 1) | `78caa32e` |
 | BUG-025, BUG-024, BUG-029, BUG-041 | FIXED (Sprint 1) | `17eeecb4`, `a86e9dc0`, `dcadae88`, `250acb73`, `e76ccc71` |
+| BUG-005, BUG-027 | FIXED (Sprint 2) | `554fd745`, `8050c90f`, `1ad6d3dd` |
+| BUG-040 | FIXED, partial (Sprint 2) — `welcome-modal.ts` exempted for the modals-chunk budget | `8050c90f` |
+| REFACTOR-006, REFACTOR-007, BUG-022, BUG-023, BUG-028, BUG-030, BUG-039 | FIXED (Sprint 2) | `ae399bbc`, `4ff63654`, `c3cccbd1`, `b6801990`, `12d442b3`, `74f19f75`, `68297fe5` |
 | everything else | OPEN | — |
 
 ## Next steps

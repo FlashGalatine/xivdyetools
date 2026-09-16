@@ -11,4 +11,4 @@
 - Rename the tags
 
 ## Status
-OPEN
+FIXED 2026-09-16 ae399bbc — `[GradientTool]` tags
