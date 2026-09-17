@@ -195,13 +195,19 @@ describe('handleManualCommand', () => {
       expect(embed?.description).toContain('manual5.learnLead');
     });
 
-    it('degrades to no link when the user has no stored world', async () => {
+    it('answers directly with no link and never defers when the user has no stored world (B2)', async () => {
       withWorld(undefined);
 
-      const { embed } = await editedEmbed();
+      const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
 
-      expect(embed?.description).not.toContain('manual5.learnLead');
+      // resolveLodestoneRegion returns null before any I/O with no world, so
+      // there's nothing worth deferring for — the reply is synchronous, like
+      // every other topic.
+      expect(body.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE, not DEFERRED (5)
+      expect(ctx.waitUntil).not.toHaveBeenCalled();
+      expect(safeEditOriginalResponse).not.toHaveBeenCalled();
       expect(getCachedWorlds).not.toHaveBeenCalled();
+      expect(body.data.embeds[0].description).not.toContain('manual5.learnLead');
     });
 
     it('degrades to no link for a world nobody recognises', async () => {
@@ -241,6 +247,25 @@ describe('handleManualCommand', () => {
 
       expect(embed?.description).toContain('manual5.learnLead');
     });
+
+    it('marks the command outcome when the deferred edit fails (B2)', async () => {
+      withWorld('Gilgamesh');
+      vi.mocked(safeEditOriginalResponse).mockResolvedValueOnce(false);
+
+      const { startCommandTrace } = await import('../../services/command-trace.js');
+      const int = interaction('spectrum_prices');
+      const trace = startCommandTrace(int, {
+        command: 'manual',
+        subcommand: '',
+        userId: 'user-1',
+        locale: 'en',
+      });
+
+      await bodyOf(await handleManualCommand(int, env, ctx));
+      await settle();
+
+      expect(trace.outcome).toBe('unknown');
+    });
   });
 
   describe('user identity', () => {
@@ -253,7 +278,12 @@ describe('handleManualCommand', () => {
 
       await handleManualCommand(dm, env, ctx);
 
-      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(env.KV, 'dm-user', 'en-US');
+      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(
+        env.KV,
+        'dm-user',
+        'en-US',
+        undefined
+      );
     });
 
     it("falls back to 'unknown' when there is no user at all", async () => {
@@ -265,7 +295,12 @@ describe('handleManualCommand', () => {
 
       await handleManualCommand(anonymous, env, ctx);
 
-      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(env.KV, 'unknown', 'en-US');
+      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(
+        env.KV,
+        'unknown',
+        'en-US',
+        undefined
+      );
     });
   });
 });

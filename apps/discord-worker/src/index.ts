@@ -940,7 +940,7 @@ async function handleCommand(
         break;
 
       case 'manual':
-        response = await handleManualCommand(interaction, env, handlerCtx);
+        response = await handleManualCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'changelog':

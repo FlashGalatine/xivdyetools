@@ -7,6 +7,7 @@
  * Sends as ephemeral message (only visible to the user).
  */
 
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import {
   getLearnLink,
@@ -22,6 +23,7 @@ import { getCachedWorlds, getCachedDataCenters } from '../../services/budget/ind
 import { BRAND_ACCENT } from '../../utils/brand.js';
 import { deferredResponse } from '../../utils/response.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
+import { markCommandOutcome } from '../../services/command-trace.js';
 
 // /manual used to spend five decorative colours across five embeds — one
 // per section, signalling nothing, in a product where green already means
@@ -313,20 +315,32 @@ function buildTopicEmbed(
 /**
  * BUG-008: spectrum_prices resolves its learn-more link via two
  * service-binding calls (`getCachedWorlds`/`getCachedDataCenters`, 10s
- * timeout each on a cold cache) — too slow for Discord's 3s ack window.
- * `resolveLodestoneRegion` already degrades to `null` on any failure, and
- * `safeEditOriginalResponse` already swallows a failed edit, so this never
- * needs its own try/catch.
+ * timeout each on a cold cache) — too slow for Discord's 3s ack window. Only
+ * called when the caller already knows there's a `world` to resolve —
+ * `resolveLodestoneRegion` returns `null` before any I/O otherwise, so a
+ * user with no stored world gets the instant synchronous reply instead of
+ * paying for a defer + follow-up that was always going to render "no link".
+ * `resolveLodestoneRegion` degrades to `null` on any OTHER failure too
+ * (unknown world, proxy down), so this never needs its own try/catch. A
+ * failed edit is still worth a trace mark — `markCommandOutcome` records it
+ * when `safeEditOriginalResponse` reports Discord rejected it.
  */
 async function sendSpectrumPricesFollowUp(
   interaction: DiscordInteraction,
   env: Env,
   t: Translator,
-  world: string | undefined
+  world: string | undefined,
+  logger?: ExtendedLogger
 ): Promise<void> {
   const link = await resolveLodestoneRegion(env, world);
   const embeds = [buildTopicEmbed(t, 'spectrum_prices', link)];
-  await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, { embeds });
+  const edited = await safeEditOriginalResponse(
+    env.DISCORD_CLIENT_ID,
+    interaction.token,
+    { embeds },
+    logger
+  );
+  if (!edited) markCommandOutcome(interaction, 'unknown');
 }
 
 /**
@@ -335,12 +349,18 @@ async function sendSpectrumPricesFollowUp(
 export async function handleManualCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
 
   // One KV read yields both translator and prefs (world for the 🪙 topic)
-  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+  const { t, prefs } = await createUserTranslatorWithPrefs(
+    env.KV,
+    userId,
+    interaction.locale,
+    logger
+  );
   const locale: LocaleCode = t.getLocale();
 
   // Check for topic option
@@ -348,11 +368,16 @@ export async function handleManualCommand(
   const topicOption = options.find((opt) => opt.name === 'topic');
   const topic = topicOption?.value as string | undefined;
 
-  // BUG-008: only spectrum_prices defers — every other topic still answers
-  // synchronously below.
-  if (topic === 'spectrum_prices') {
+  // BUG-008/deep-dive B2: only spectrum_prices WITH a stored world defers —
+  // `resolveLodestoneRegion` returns null before any I/O when there's no
+  // world, so a user with none falls through to the synchronous branch
+  // below like every other topic (TOPIC_KEYS carries 'spectrum_prices' too,
+  // and MANUAL_TOPICS' empty `links: {}` for it means `getLearnLink` there
+  // already answers null — the same "no link" result the deferred path
+  // would have produced, just without paying for the defer).
+  if (topic === 'spectrum_prices' && prefs.world) {
     const deferResponse = deferredResponse(true);
-    ctx.waitUntil(sendSpectrumPricesFollowUp(interaction, env, t, prefs.world));
+    ctx.waitUntil(sendSpectrumPricesFollowUp(interaction, env, t, prefs.world, logger));
     return deferResponse;
   }
 
