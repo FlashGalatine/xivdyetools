@@ -36,6 +36,11 @@ describe('preset-api', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
+    // A4 (2026-09-16 fix wave): the BUG-016 tests below spy on
+    // `AbortSignal.timeout` and overwrite `global.fetch`; `vi.clearAllMocks()`
+    // resets call history but never restores a `vi.spyOn` or an assigned-over
+    // global, so both leaked into every later test file in the run.
+    vi.restoreAllMocks();
   });
 
   describe('isModerator', () => {
@@ -633,23 +638,30 @@ describe('preset-api', () => {
     // `signal instanceof AbortSignal` on the captured call cannot fail even
     // without this fix. Spy on `AbortSignal.timeout` itself instead — that is
     // the actual call BUG-016 adds, with the actual budget.
-    it('builds the service-binding Request via AbortSignal.timeout(10_000)', async () => {
+    //
+    // A2 (Important 2, 2026-09-16 fix wave): the service-binding branch now
+    // calls `env.PRESETS_API.fetch(url, init)` — the same `(url, init)` shape
+    // as the HTTP fallback branch and `utils/discord-api.ts` — instead of
+    // building a `new Request(url, { signal })` first (whether workerd
+    // carries `Request.signal` across a Fetcher subrequest was unproven).
+    // Assert on the `(url, init)` call accordingly.
+    it('calls the service binding via fetch(url, init) with AbortSignal.timeout(10_000)', async () => {
       mockFetcher._setupHandler(() => Response.json({ presets: [], total: 0, page: 1 }));
       const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
       const fetchSpy = vi.spyOn(mockFetcher, 'fetch');
 
       await getPresets(mockEnv);
 
-      // `new Request(url, { signal })` wraps the passed signal in a linked one
-      // rather than exposing the same object, and `AbortSignal.timeout`'s
-      // internal timer is not one vitest's fake timers can drive (it is not
-      // implemented over the public `setTimeout`) — so identity and a real
-      // 10 s wait are both out. Assert the call this fix actually adds: the
-      // exact budget, made exactly once for this request.
+      // `AbortSignal.timeout`'s internal timer is not one vitest's fake
+      // timers can drive (it is not implemented over the public
+      // `setTimeout`) — so a real 10 s wait is out. Assert the call this fix
+      // actually adds: the exact budget, made exactly once for this request,
+      // and that it is the value handed to `fetch`.
       expect(timeoutSpy).toHaveBeenCalledTimes(1);
       expect(timeoutSpy).toHaveBeenCalledWith(10_000);
-      const request = fetchSpy.mock.calls[0][0] as Request;
-      expect(request.signal).toBeInstanceOf(AbortSignal);
+      const [url, init] = fetchSpy.mock.calls[0];
+      expect(url).toBe('https://internal/api/v1/presets');
+      expect(init).toMatchObject({ signal: timeoutSpy.mock.results[0]?.value });
     });
 
     it('passes AbortSignal.timeout(10_000) on the HTTP fallback branch', async () => {

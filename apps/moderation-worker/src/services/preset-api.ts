@@ -122,14 +122,24 @@ async function request<T>(
     let response: Response;
 
     if (env.PRESETS_API) {
-      response = await env.PRESETS_API.fetch(
-        new Request(`https://internal${path}`, {
-          method,
-          headers,
-          body: bodyText,
-          signal: AbortSignal.timeout(PRESETS_API_TIMEOUT_MS),
-        }),
-      );
+      // A2 (Important 2, 2026-09-16 fix wave): `env.PRESETS_API.fetch(request)`
+      // with a pre-built `new Request(url, { signal })` is unproven — whether
+      // workerd carries `Request.signal` across a Fetcher subrequest is not
+      // documented, and this is the production path (env.PRESETS_API is
+      // always bound in prod). Use the same `(url, init)` shape this worker
+      // already runs for its HTTP-fallback branch below and in
+      // `utils/discord-api.ts`.
+      // `new Headers(headers)` (rather than the plain record) so header
+      // names are normalized the same way a `new Request()` used to
+      // normalize them for us — real Fetcher/fetch implementations do this
+      // internally either way, but making it explicit here keeps this call
+      // consistent with the actual outgoing wire request.
+      response = await env.PRESETS_API.fetch(`https://internal${path}`, {
+        method,
+        headers: new Headers(headers),
+        body: bodyText,
+        signal: AbortSignal.timeout(PRESETS_API_TIMEOUT_MS),
+      });
     } else {
       const url = `${env.PRESETS_API_URL}${path}`;
       response = await fetch(url, {
