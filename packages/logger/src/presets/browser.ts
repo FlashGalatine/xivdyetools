@@ -7,6 +7,7 @@
  */
 
 import { ConsoleAdapter } from '../adapters/console-adapter.js';
+import { safeStringify } from '../core/base-logger.js';
 import type { ExtendedLogger, LogContext, ErrorTracker, LoggerConfig } from '../types.js';
 
 /**
@@ -120,7 +121,7 @@ export function createBrowserLogger(options: BrowserLoggerOptions = {}): Extende
       } else if (error) {
         errorTracker.captureMessage(
           logger.sanitizeMessage(
-            `${message}: ${typeof error === 'string' ? error : JSON.stringify(error)}`,
+            `${message}: ${typeof error === 'string' ? error : safeStringify(error)}`,
           ),
           'error',
         );

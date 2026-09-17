@@ -259,6 +259,61 @@ describe('Browser Preset', () => {
         );
       });
 
+      it('BUG-020: should not throw on circular object reference (uses safeStringify)', () => {
+        const errorTracker: ErrorTracker = {
+          captureException: vi.fn(),
+          captureMessage: vi.fn(),
+          setTag: vi.fn(),
+          setUser: vi.fn(),
+        };
+
+        const logger = createBrowserLogger({
+          isDev: () => false,
+          errorTracker,
+        });
+
+        // Create a circular reference
+        const circular = { message: 'circular error' };
+        (circular as Record<string, unknown>)['self'] = circular;
+
+        // Should not throw
+        expect(() => {
+          logger.error('msg', circular);
+        }).not.toThrow();
+
+        // captureMessage should be called once with a message containing 'msg: '
+        expect(errorTracker.captureMessage).toHaveBeenCalledTimes(1);
+        const call = (errorTracker.captureMessage as ReturnType<typeof vi.fn>).mock.calls[0];
+        expect(call[0]).toContain('msg: ');
+      });
+
+      it('BUG-020: should not throw on BigInt object (uses safeStringify)', () => {
+        const errorTracker: ErrorTracker = {
+          captureException: vi.fn(),
+          captureMessage: vi.fn(),
+          setTag: vi.fn(),
+          setUser: vi.fn(),
+        };
+
+        const logger = createBrowserLogger({
+          isDev: () => false,
+          errorTracker,
+        });
+
+        // Create an object with BigInt
+        const bigIntError = { big: 10n, message: 'bigint error' };
+
+        // Should not throw
+        expect(() => {
+          logger.error('msg', bigIntError);
+        }).not.toThrow();
+
+        // captureMessage should be called with a message containing 'msg: '
+        expect(errorTracker.captureMessage).toHaveBeenCalledTimes(1);
+        const call = (errorTracker.captureMessage as ReturnType<typeof vi.fn>).mock.calls[0];
+        expect(call[0]).toContain('msg: ');
+      });
+
       it('should call errorTracker.captureMessage for errors without error object', () => {
         const errorTracker: ErrorTracker = {
           captureException: vi.fn(),
