@@ -14,8 +14,10 @@ Remediation from the 2026-09-16 deep-dive (`docs/audits/2026-09-16-deep-dive/`).
 - **`/swatch` dropped the L/R eye marker on off-grid heterochromia rows**
   (BUG-006). A heterochromia `.chara` file whose eyes are both OFF GRID
   rendered two rows both labelled EYES with no way to tell which swatch was
-  which eye — the `·L`/`·R`/`·LR` suffix was only appended when the row was
-  on-grid. It now appends regardless.
+  which eye. The `·L`/`·R`/`·LR` marker now sits on the row's slot LABEL
+  (e.g. `EYES·L`) instead of the address line, so it survives on off-grid
+  rows too — the address line's OFF-GRID token was already at its card-width
+  limit and would have ellipsised a suffix away in most locales.
 
 ### Changed
 

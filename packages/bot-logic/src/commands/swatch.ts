@@ -247,14 +247,22 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       const hex = winningHex(slot)!;
       const match = nearestDye(hex);
       const offGrid = slot.verdict === 'offGrid' || slot.verdict === 'floatOnly';
-      let addr = offGrid ? t.t('card.offGridShort') : (slot.gridAddress ?? '—');
+      const addr = offGrid ? t.t('card.offGridShort') : (slot.gridAddress ?? '—');
+      // The L/R/LR eye marker rides the LABEL line, not the address line: the
+      // address line's OFF-GRID token already fills its 56px budget (I18N-011
+      // in @xivdyetools/svg — "OFF GRID" alone clears it by ~1.4px), so a
+      // suffix there ellipsises away on an off-grid row in 5 of 6 locales
+      // (BUG-006 review). The label line has real headroom for every locale's
+      // slot short + "·LR" (worst case AUGEN·LR at 54.56 of 56px) regardless
+      // of on/off-grid state, which is what makes the marker survive.
+      let label = t.t(SLOT_KEYS[slot.kind] ?? 'card.slotSkin');
       if (slot.slot === 'leftEye' || slot.slot === 'rightEye') {
-        if (character.eyesShareIndex) addr += '·LR';
-        else addr += slot.slot === 'leftEye' ? '·L' : '·R';
+        if (character.eyesShareIndex) label += '·LR';
+        else label += slot.slot === 'leftEye' ? '·L' : '·R';
       }
       rows.push({
         slot,
-        label: t.t(SLOT_KEYS[slot.kind] ?? 'card.slotSkin'),
+        label,
         addr,
         addrWarn: offGrid,
         sourceHex: hex,
