@@ -126,7 +126,9 @@ Precedes Sprint 6 on both paths so a ban target can never reach a writer that ca
 
 **Ends with:** `build:check` → laymans changelog → merge to `main` → `deploy-web-app.yml`. Scheduled immediately before the og-worker sprint so the retire half ships as one coherent pair.
 
-## Sprint 8 — `@xivdyetools/core` (publish): validate-before-cache, shared-record safety, doc default
+## Sprint 8 — `@xivdyetools/core` (publish): validate-before-cache, shared-record safety, doc default — ✅ COMPLETED 2026-09-17 `5e88e2f8`…`64fb4939` + `4c232c36`
+
+**Deploy needs:** core 5.2.0 → 5.2.1; after merge, Actions → **Publish Packages to npm** → `@xivdyetools/core`. No consumer deploy (nothing changes a result). Gate green (2,283 core tests, tree clean after `build`; dependents run `--filter='...@xivdyetools/core'` — **leading** dots select dependents, the plan's trailing-dot spelling selects dependencies — 17/17 tasks, no hidden mutator). Deviations: only `hexToHsv` had the cache-before-validate shape (the six other `hexTo*` delegate to a validating `hexToRgb`); locales documented as shared rather than frozen; the review found the plan's BUG-032 fixture `#949494` is 3.03:1, not "~3.5:1", and it was moved nearer the window's centre. Semver: freezing records is shipped as a patch — no in-repo consumer mutates one, and a mutation was already corrupting shared indices.
 
 No consumer deploy sprint: nothing here changes a result an app must pick up (see the finding files); consumers take it on their next natural deploy. Gate before merging: `git grep` confirms no app passes an unprefixed hex into `hexToHsv`/`hexToLab` — a hit is a new app-unit finding.
 
@@ -139,7 +141,9 @@ No consumer deploy sprint: nothing here changes a result an app must pick up (se
 
 **Ends with:** `pnpm turbo run build test --filter=@xivdyetools/core` (`build` regenerates `src/data/locales/`; tree must stay clean) → bump 5.2.0 → 5.2.1 → merge to `main` → Actions → **"Publish Packages to npm"** → `@xivdyetools/core`.
 
-## Sprint 9 — `@xivdyetools/logger` (publish): browser error-tracker serialization
+## Sprint 9 — `@xivdyetools/logger` (publish): browser error-tracker serialization — ✅ COMPLETED 2026-09-17 `0d3d90b1`…`4f8a281b`
+
+**Deploy needs:** logger 2.2.0 → 2.2.1; after merge, Actions → **Publish Packages to npm** → `@xivdyetools/logger`. No consumer deploy (no app configures a tracker). Gate green (253 tests). No deviations.
 
 | ID | Source | Sev/Pri | Item |
 |---|---|---|---|

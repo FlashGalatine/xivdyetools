@@ -135,6 +135,8 @@ Checked and dropped, so the next audit does not re-chase them.
 | BUG-043, BUG-014, BUG-015 | FIXED (Sprint 5, presets-api 2.3.5) — BUG-015 is reserve-then-act, failing open on a D1 error | `7d922b89`, `cfec7428`, `e5ad1fe1`, `596a3e4b` |
 | BUG-016, BUG-035 | FIXED (Sprint 6, moderation-worker 1.7.3) | `c6c8c5f7`, `6d89f89e` |
 | BUG-002 | FIXED — restored (Sprint 7, web-app 5.11.0): `colors` + `algo` in the link, equal-share bands on open, og card reachable again | `161d0326`, `3eaca5a7`, `cb3f44f0`, `24ba3888` |
+| BUG-011, BUG-009, BUG-010, BUG-032 | FIXED (Sprint 8, core 5.2.1) — dye records frozen at the end of `initialize()` | `5e88e2f8`, `6b9c4ec0`, `86d9e0db`, `197226e3` |
+| BUG-020 | FIXED (Sprint 9, logger 2.2.1) | `0d3d90b1` |
 | everything else | OPEN | — |
 
 ## Next steps
