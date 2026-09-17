@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `tests/middleware/ban-check.test.ts` no longer drives its "banned" cases through the shared D1 mock's identity-blind `_setBanStatus`, which answered "banned" for any bound value and so could never have caught a wrong-identity bind. The banned cases now use a scripted row keyed on the exact bound value, with a new case for a JWT `sub` UUID (an XIVAuth-only account) and its inverse (BUG-043, `docs/audits/2026-09-16-deep-dive/`).
-- `middleware/ban-check.ts`'s `isUserBanned` JSDoc now documents what `banned_users.discord_id` actually holds: the resolved acting-user id (the `discord_id` claim, or the XIVAuth JWT `sub` UUID when an account has none), not always a Discord snowflake. No query change — moderation-worker's ban writer (Sprint 6) stores that same resolved value, so both sides already agree (BUG-001 path (a), coordinator ruling, `docs/audits/2026-09-16-deep-dive/`).
+- `middleware/ban-check.ts`'s `isUserBanned` JSDoc now documents what `banned_users.discord_id` actually holds: the resolved acting-user id (the `discord_id` claim, or the XIVAuth JWT `sub` UUID when an account has none), not always a Discord snowflake. No query change — moderation-worker's ban writer (Sprint 6) stores that same resolved value, so both sides already agree (BUG-001 path (a), coordinator ruling, `docs/audits/2026-09-16-deep-dive/`). The same JSDoc now also names a residual this shape leaves open: linking a Discord account to a previously XIVAuth-only one re-keys `resolveJWTUserId`'s return value, so a UUID-keyed `banned_users` row stops matching and the ban is shed — comment-only, not fixed here.
 
 ## [2.3.4] - 2026-09-16
 
