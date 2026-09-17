@@ -21,6 +21,7 @@ import {
 } from '@xivdyetools/auth';
 import { pongResponse, ephemeralResponse } from './utils/response.js';
 import { BRAND_ACCENT } from './utils/brand.js';
+import { readTextCapped } from './utils/read-text-capped.js';
 import {
   handleAboutCommand,
   handleHarmonyCommand,
@@ -273,18 +274,20 @@ app.post('/webhooks/preset-submission', async (c) => {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
-  // DISCORD-HIGH-001: Validate request body size to prevent OOM attacks
-  const contentLength = parseInt(c.req.header('content-length') || '0', 10);
-  if (contentLength > 10240) {
-    // 10KB limit
-    logger.warn('Webhook payload too large', { contentLength });
+  // DISCORD-HIGH-001 / BUG-013: bound actual received bytes, not just a
+  // client-declared Content-Length — readTextCapped rejects a declared
+  // oversize length up front (no read at all) and also cuts off a body that
+  // lies about its size, or has no length at all, once it streams past 10KB.
+  const bodyText = await readTextCapped(c.req.raw, 10240);
+  if (bodyText === null) {
+    logger.warn('Webhook payload too large');
     return c.json({ error: 'Payload too large' }, 413);
   }
 
   // Parse payload
   let payload: PresetNotificationPayload;
   try {
-    payload = await c.req.json();
+    payload = JSON.parse(bodyText);
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
