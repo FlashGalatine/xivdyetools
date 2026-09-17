@@ -285,6 +285,7 @@ describe('Browser Preset', () => {
         expect(errorTracker.captureMessage).toHaveBeenCalledTimes(1);
         const call = (errorTracker.captureMessage as ReturnType<typeof vi.fn>).mock.calls[0];
         expect(call[0]).toContain('msg: ');
+        expect(call[0]).toContain('circular error');
       });
 
       it('BUG-020: should not throw on BigInt object (uses safeStringify)', () => {
@@ -312,6 +313,7 @@ describe('Browser Preset', () => {
         expect(errorTracker.captureMessage).toHaveBeenCalledTimes(1);
         const call = (errorTracker.captureMessage as ReturnType<typeof vi.fn>).mock.calls[0];
         expect(call[0]).toContain('msg: ');
+        expect(call[0]).toContain('10');
       });
 
       it('should call errorTracker.captureMessage for errors without error object', () => {

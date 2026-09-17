@@ -294,6 +294,7 @@ describe('DyeDatabase', () => {
       expect(Object.isFrozen(dye)).toBe(true);
       expect(Object.isFrozen(dye?.rgb)).toBe(true);
       expect(Object.isFrozen(dye?.hsv)).toBe(true);
+      expect((dye as DyeInternal | null)?.lab).toBeDefined();
       expect(Object.isFrozen((dye as DyeInternal | null)?.lab)).toBe(true);
     });
 

@@ -406,7 +406,7 @@ export class DyeDatabase {
   }
 
   /**
-   * Get all dyes (defensive copy)
+   * Get all dyes — a fresh array of FROZEN records (BUG-010)
    *
    * The returned ARRAY is a fresh copy — mutating it (push/splice/sort) does
    * not affect the database. The dye RECORDS inside it are the same objects
@@ -547,7 +547,7 @@ export class DyeDatabase {
    * **Internal Use Only** - Returns a direct reference to the internal dyes array.
    * Modifications to the returned array will affect the database state.
    *
-   * For public API access, use {@link getAllDyes} which returns a defensive copy.
+   * For public API access, use {@link getAllDyes} which returns a fresh array of frozen records.
    *
    * Per MEM-001: Returns DyeInternal with pre-computed lowercase fields for search optimization.
    *

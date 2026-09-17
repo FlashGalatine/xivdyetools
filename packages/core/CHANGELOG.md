@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.2.1] - 2026-09-17
+## [5.3.0] - 2026-09-17
 
 ### Fixed
 
@@ -42,7 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BUG-032**: `ColorAccessibility.test.ts`'s WCAG-AA small-vs-large-text
   threshold test used a fixture (`#767676` on `#FFFFFF`, ~4.55:1) that sat above
   the 4.5:1 small-text threshold, so its `if (!smallText) { … }` branch never ran
-  and the test could not fail. Replaced with `#949494` on `#FFFFFF` (~3.5:1,
+  and the test could not fail. Replaced with `#858585` on `#FFFFFF` (3.69:1 —
+  the plan's suggested `#949494` measures 3.03:1, a hair above the 3:1 cliff —
   verified in-band with the service's own `getContrastRatio`) and two
   unconditional assertions.
 
