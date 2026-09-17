@@ -20,6 +20,8 @@ import { createUserTranslatorWithPrefs, type Translator } from '../../services/b
 import type { LocaleCode } from '../../services/i18n.js';
 import { getCachedWorlds, getCachedDataCenters } from '../../services/budget/index.js';
 import { BRAND_ACCENT } from '../../utils/brand.js';
+import { deferredResponse } from '../../utils/response.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 
 // /manual used to spend five decorative colours across five embeds — one
 // per section, signalling nothing, in a product where green already means
@@ -309,12 +311,31 @@ function buildTopicEmbed(
 }
 
 /**
+ * BUG-008: spectrum_prices resolves its learn-more link via two
+ * service-binding calls (`getCachedWorlds`/`getCachedDataCenters`, 10s
+ * timeout each on a cold cache) — too slow for Discord's 3s ack window.
+ * `resolveLodestoneRegion` already degrades to `null` on any failure, and
+ * `safeEditOriginalResponse` already swallows a failed edit, so this never
+ * needs its own try/catch.
+ */
+async function sendSpectrumPricesFollowUp(
+  interaction: DiscordInteraction,
+  env: Env,
+  t: Translator,
+  world: string | undefined
+): Promise<void> {
+  const link = await resolveLodestoneRegion(env, world);
+  const embeds = [buildTopicEmbed(t, 'spectrum_prices', link)];
+  await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, { embeds });
+}
+
+/**
  * Handles the /manual command
  */
 export async function handleManualCommand(
   interaction: DiscordInteraction,
   env: Env,
-  _ctx: ExecutionContext
+  ctx: ExecutionContext
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
 
@@ -327,16 +348,21 @@ export async function handleManualCommand(
   const topicOption = options.find((opt) => opt.name === 'topic');
   const topic = topicOption?.value as string | undefined;
 
+  // BUG-008: only spectrum_prices defers — every other topic still answers
+  // synchronously below.
+  if (topic === 'spectrum_prices') {
+    const deferResponse = deferredResponse(true);
+    ctx.waitUntil(sendSpectrumPricesFollowUp(interaction, env, t, prefs.world));
+    return deferResponse;
+  }
+
   // Build localized embeds based on topic
   let embeds;
   if (topic === 'match_image') {
     embeds = buildMatchImageHelpEmbeds(t);
   } else if (topic && topic in TOPIC_KEYS) {
     const topicId = topic as ManualTopicId;
-    const link =
-      topicId === 'spectrum_prices'
-        ? await resolveLodestoneRegion(env, prefs.world)
-        : getLearnLink(topicId, locale);
+    const link = getLearnLink(topicId, locale);
     embeds = [buildTopicEmbed(t, topicId, link)];
   } else {
     embeds = buildEmbeds(t);
