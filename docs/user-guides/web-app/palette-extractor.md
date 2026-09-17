@@ -54,6 +54,12 @@ The sheet shows one card per bar segment — the extracted colours first, then y
 
 **Export** in the section header opens the export sheet: every bar segment — extracted colours and picks — with its matched dye, as CSS custom properties, SCSS, JSON, plain HEX or a Tailwind theme, to copy or download.
 
+### 7. Share
+
+**Share** (or `Shift+S`), beside Export in the section header, copies a link to the palette. The link carries the extracted colours — up to five of them, in bar order — and your matching method. It does **not** carry your picture: the image never leaves your device, so there is nothing to send. Your picks stay behind too; a colour you read by hand has no share of the picture, and the link's preview card draws every colour it is given as a band.
+
+Whoever opens the link sees those colours on the bar as equal bands, with the same dye cards you saw, and no image behind them — the loupe and the **+** tile stay inactive until they load a picture of their own, and the moment they do, their extraction replaces the shared palette.
+
 ---
 
 ## Settings
