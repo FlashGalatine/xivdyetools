@@ -286,6 +286,47 @@ describe('handleBanReasonModal', () => {
     );
   });
 
+  // BUG-001 path (a) (2026-09-16 deep-dive): this is the last gate in the
+  // ban_user flow (after the /preset command and the confirm button already
+  // accepted the target) — a UUID target must still reach `banService.banUser`
+  // here, not "Invalid modal data".
+  it('BUG-001 path (a): accepts a UUID target and calls banUser with it unchanged', async () => {
+    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
+    const uuid = 'a1b2c3d4-e5f6-4789-a1b2-c3d4e5f67890';
+
+    vi.mocked(presetApi.isModerator).mockReturnValue(true);
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('XivauthOnlyAuthor');
+    vi.mocked(banService.banUser).mockResolvedValue({ success: true, presetsHidden: 1 });
+
+    const interaction = {
+      id: 'int-1',
+      token: 'token-1',
+      application_id: 'app-123',
+      data: {
+        custom_id: `ban_reason_modal_${uuid}`,
+        components: [
+          {
+            type: 1,
+            components: [{ type: 4, custom_id: 'ban_reason', value: 'Repeatedly posted inappropriate content' }],
+          },
+        ],
+      },
+      member: { user: { id: 'mod-1', username: 'Moderator' } },
+    };
+
+    const response = await handleBanReasonModal(interaction, env, ctx);
+    const json = (await response.json()) as any;
+
+    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(banService.banUser).toHaveBeenCalledWith(
+      env.DB,
+      uuid,
+      'XivauthOnlyAuthor',
+      'mod-1',
+      'Repeatedly posted inappropriate content',
+    );
+  });
+
   it('should return processing message and ban user', async () => {
     vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
 

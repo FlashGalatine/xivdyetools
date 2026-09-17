@@ -1883,8 +1883,8 @@ describe('handlePresetCommand — security audit remediations', () => {
     });
   });
 
-  describe('FINDING-020 — ban targets must be Discord snowflakes', () => {
-    it('ban_user rejects a non-snowflake target before touching D1', async () => {
+  describe('FINDING-020 — ban targets must be a Discord snowflake or XIVAuth UUID', () => {
+    it('ban_user rejects a malformed target before touching D1', async () => {
       const response = await handlePresetCommand(subcommand('ban_user', '../not-an-id'), env, ctx, t);
       const json = (await response.json()) as any;
 
@@ -1893,7 +1893,7 @@ describe('handlePresetCommand — security audit remediations', () => {
       expect(banService.getUserForBanConfirmation).not.toHaveBeenCalled();
     });
 
-    it('unban_user rejects a non-snowflake target before touching D1', async () => {
+    it('unban_user rejects a malformed target before touching D1', async () => {
       const response = await handlePresetCommand(subcommand('unban_user', 'xivauth-uuid-ish'), env, ctx, t);
       const json = (await response.json()) as any;
 
@@ -1901,6 +1901,51 @@ describe('handlePresetCommand — security audit remediations', () => {
       expect(json.data.content).toContain('Invalid user ID');
       expect(banService.getActiveBan).not.toHaveBeenCalled();
       expect(banService.unbanUser).not.toHaveBeenCalled();
+    });
+
+    // BUG-001 path (a): XIVAuth-only preset authors have no Discord snowflake —
+    // presets-api stores their JWT `sub` (a UUID) as `author_discord_id`, so a
+    // ban target with that shape must reach the same confirmation step a
+    // snowflake target does, not the "Invalid user ID" refusal.
+    const XIVAUTH_UUID = 'a1b2c3d4-e5f6-4789-a1b2-c3d4e5f67890';
+
+    it('ban_user accepts a UUID target and reaches the confirmation step', async () => {
+      vi.mocked(banService.getUserForBanConfirmation).mockResolvedValueOnce({
+        user: { discordId: XIVAUTH_UUID, username: 'XivauthOnlyAuthor', presetCount: 2 },
+        recentPresets: [],
+      });
+
+      const response = await handlePresetCommand(subcommand('ban_user', XIVAUTH_UUID), env, ctx, t);
+      const json = (await response.json()) as any;
+
+      expect(json.data.content).toBeUndefined();
+      expect(banService.getUserForBanConfirmation).toHaveBeenCalledWith(
+        env.DB,
+        XIVAUTH_UUID,
+        expect.any(String),
+      );
+      const confirmButton = json.data.components[0].components[0];
+      expect(confirmButton.custom_id).toBe(`ban_confirm_${XIVAUTH_UUID}`);
+    });
+
+    it('unban_user accepts a UUID target and reaches unbanUser', async () => {
+      vi.mocked(banService.getActiveBan).mockResolvedValueOnce({
+        id: 'ban-2',
+        discordId: XIVAUTH_UUID,
+        xivAuthId: null,
+        username: 'XivauthOnlyAuthor',
+        moderatorDiscordId: MOD,
+        reason: 'r',
+        bannedAt: '2026-08-21T00:00:00Z',
+        unbannedAt: null,
+        unbanModeratorDiscordId: null,
+      });
+      vi.mocked(banService.unbanUser).mockResolvedValueOnce({ success: true, presetsRestored: 0 });
+
+      await handlePresetCommand(subcommand('unban_user', XIVAUTH_UUID), env, ctx, t);
+      await flushWaitUntil();
+
+      expect(banService.unbanUser).toHaveBeenCalledWith(env.DB, XIVAUTH_UUID, MOD);
     });
   });
 

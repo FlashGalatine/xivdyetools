@@ -10,6 +10,7 @@ import {
   updateMessageResponse,
   rateLimitedResponse,
   sanitizeErrorMessage,
+  isBanTargetId,
   type DiscordEmbed,
   type DiscordButton,
   type DiscordActionRow,
@@ -334,5 +335,36 @@ describe('sanitizeErrorMessage (MOD-8)', () => {
   it('returns the fallback for non-Error values', () => {
     expect(sanitizeErrorMessage('raw string', 'fallback')).toBe('fallback');
     expect(sanitizeErrorMessage(undefined)).toBe('An unexpected error occurred.');
+  });
+});
+
+// BUG-001 path (a) (2026-09-16 deep-dive): a ban/unban target is a Discord
+// snowflake OR an XIVAuth `sub` UUID.
+describe('isBanTargetId (BUG-001 path (a))', () => {
+  it('accepts a Discord snowflake', () => {
+    expect(isBanTargetId('123456789012345678')).toBe(true); // 18 digits
+    expect(isBanTargetId('12345678901234567')).toBe(true); // 17 digits (floor)
+    expect(isBanTargetId('123456789012345678901')).toBe(false); // 21 digits — too long below
+  });
+
+  it('accepts a v4-shaped UUID, either case', () => {
+    expect(isBanTargetId('a1b2c3d4-e5f6-4789-a1b2-c3d4e5f67890')).toBe(true);
+    expect(isBanTargetId('A1B2C3D4-E5F6-4789-A1B2-C3D4E5F67890')).toBe(true);
+  });
+
+  it('rejects a UUID whose version/variant nibbles are not RFC 4122 v4 shaped', () => {
+    // XIVAuth mints this UUID; `isBanTargetId` is deliberately looser than
+    // `isValidUuid` (which pins the version/variant nibbles) so it is not
+    // coupled to XIVAuth's own UUID generator.
+    expect(isBanTargetId('a1b2c3d4-e5f6-1789-c1b2-c3d4e5f67890')).toBe(true);
+  });
+
+  it('rejects everything else', () => {
+    expect(isBanTargetId('')).toBe(false);
+    expect(isBanTargetId('   ')).toBe(false);
+    expect(isBanTargetId('123456789012345678; DROP TABLE banned_users;--')).toBe(false);
+    expect(isBanTargetId('123456789012345678901')).toBe(false); // 21-digit number
+    expect(isBanTargetId('{a1b2c3d4-e5f6-4789-a1b2-c3d4e5f67890}')).toBe(false); // braced UUID
+    expect(isBanTargetId('not-a-valid-id')).toBe(false);
   });
 });

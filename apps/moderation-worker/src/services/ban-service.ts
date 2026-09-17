@@ -315,8 +315,11 @@ export async function getPresetAuthorName(
  * cannot drift from the effect — and on a database that has not had 0013
  * applied the whole batch fails loudly instead of banning without a record.
  *
- * Rows never carry a username: `moderator_discord_id` and `target_discord_id`
- * are Discord snowflakes, and `reason` is the moderator's own typed text.
+ * Rows never carry a username: `moderator_discord_id` is always a Discord
+ * snowflake (moderators authenticate through Discord), `target_discord_id`
+ * is whatever `isBanTargetId` accepted — a snowflake or, since BUG-001 path
+ * (a) (2026-09-16 deep-dive), an XIVAuth `sub` UUID for an XIVAuth-only
+ * preset author — and `reason` is the moderator's own typed text.
  */
 const MODERATION_LOG_COLUMNS =
   'id, preset_id, moderator_discord_id, action, reason, target_discord_id, created_at';

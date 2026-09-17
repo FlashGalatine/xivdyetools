@@ -11,7 +11,6 @@
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
-import { isValidSnowflake } from '@xivdyetools/types';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import type { Translator } from '../../services/bot-i18n.js';
 import {
@@ -21,6 +20,7 @@ import {
   errorEmbed,
   successEmbed,
   isValidUuid,
+  isBanTargetId,
   sanitizeErrorMessage,
 } from '../../utils/response.js';
 import { sanitizeName, sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
@@ -487,7 +487,11 @@ async function processModerateCommand(
 const AUTHOR_BANNED_MESSAGE =
   'Cannot approve: the author is currently banned from Preset Palettes. Reject the preset or lift the ban first.';
 
-/** FINDING-020: ban / unban targets must be Discord snowflakes before they reach D1 or a custom_id. */
+/**
+ * FINDING-020: ban / unban targets must be a Discord snowflake OR an XIVAuth
+ * UUID before they reach D1 or a custom_id (BUG-001 path (a), 2026-09-16
+ * deep-dive — see `isBanTargetId`).
+ */
 const INVALID_USER_ID_MESSAGE = 'Invalid user ID. Pick a user from the suggestions.';
 
 // ============================================================================
@@ -518,7 +522,7 @@ async function handleBanUserSubcommand(
   if (!targetUserId) {
     return ephemeralResponse('Please specify a user to ban.');
   }
-  if (!isValidSnowflake(targetUserId)) {
+  if (!isBanTargetId(targetUserId)) {
     return ephemeralResponse(INVALID_USER_ID_MESSAGE);
   }
 
@@ -572,7 +576,9 @@ async function handleBanUserSubcommand(
             // FINDING-007: id only — the username used to ride along base64url-
             // encoded and overflowed Discord's 100-char custom_id cap for long
             // CJK/emoji names, which made those users un-bannable. The reason
-            // modal resolves the name from D1 at submit time.
+            // modal resolves the name from D1 at submit time. `ban_confirm_`
+            // (12 chars) + a 36-char UUID target = 48 chars, still well under
+            // the cap even for the longer of the two id shapes (BUG-001 path (a)).
             custom_id: `ban_confirm_${targetUserId}`,
           },
           {
@@ -618,7 +624,7 @@ async function handleUnbanUserSubcommand(
   if (!targetUserId) {
     return ephemeralResponse('Please specify a user to unban.');
   }
-  if (!isValidSnowflake(targetUserId)) {
+  if (!isBanTargetId(targetUserId)) {
     return ephemeralResponse(INVALID_USER_ID_MESSAGE);
   }
 

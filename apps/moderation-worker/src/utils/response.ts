@@ -6,6 +6,7 @@
  */
 
 import { ALLOWED_MENTIONS_NONE } from '@xivdyetools/bot-logic';
+import { isValidSnowflake } from '@xivdyetools/types';
 import { InteractionResponseType } from '../types/env.js';
 
 /**
@@ -247,6 +248,30 @@ const UUID_V4_REGEX =
  */
 export function isValidUuid(id: string): boolean {
   return UUID_V4_REGEX.test(id);
+}
+
+/**
+ * A loosely-shaped v4 UUID — hex groups of 8-4-4-4-12, but without pinning the
+ * version/variant nibbles the way `UUID_V4_REGEX` does. XIVAuth's JWT `sub`
+ * is a UUID minted by a system this bot does not control, so a ban target
+ * validator cannot assume it landed on a strict RFC 4122 v4 value the way a
+ * `crypto.randomUUID()`-sourced preset id does.
+ */
+const BAN_TARGET_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * BUG-001 path (a) (2026-09-16 deep-dive): a ban/unban target is a Discord
+ * snowflake OR an XIVAuth `sub` UUID — XIVAuth-only preset authors have no
+ * snowflake, and presets-api stores their `sub` in `presets.author_discord_id`
+ * unchanged. This worker mirrors that: `banned_users.discord_id` takes
+ * whichever shape the moderator picked, unvalidated further, so this
+ * predicate is the only gate standing between Discord-sourced input and a D1
+ * write or a `custom_id` (FINDING-020 / MOD-5's original intent, extended to
+ * the new shape). Rejects everything else: empty, whitespace, SQL-ish text, a
+ * 21-digit number, a braced UUID.
+ */
+export function isBanTargetId(value: string): boolean {
+  return isValidSnowflake(value) || BAN_TARGET_UUID_RE.test(value);
 }
 
 // Base64URL encode/decode used to live here as a hand-rolled pair. They are now
