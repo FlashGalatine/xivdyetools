@@ -134,6 +134,7 @@ Checked and dropped, so the next audit does not re-chase them.
 | BUG-001 | FIXED — path (a): moderation-worker accepts snowflake-or-UUID (lowercase) targets, stored in `banned_users.discord_id` (Sprints 5+6). Residual: linking Discord after a ban sheds it — path (b) closes it | `a6311d71`, `3c5e5648`, `17c6516f`, `511261b2` |
 | BUG-043, BUG-014, BUG-015 | FIXED (Sprint 5, presets-api 2.3.5) — BUG-015 is reserve-then-act, failing open on a D1 error | `7d922b89`, `cfec7428`, `e5ad1fe1`, `596a3e4b` |
 | BUG-016, BUG-035 | FIXED (Sprint 6, moderation-worker 1.7.3) | `c6c8c5f7`, `6d89f89e` |
+| BUG-002 | FIXED — restored (Sprint 7, web-app 5.11.0): `colors` + `algo` in the link, equal-share bands on open, og card reachable again | `161d0326`, `3eaca5a7`, `cb3f44f0`, `24ba3888` |
 | everything else | OPEN | — |
 
 ## Next steps
