@@ -443,6 +443,18 @@ export class ColorConverter {
    * Per P-1: Cached for performance
    */
   hexToHsv(hex: string): HSV {
+    // BUG-009 (2026-09-16 audit): validate BEFORE the cache lookup below, or a
+    // bare (unprefixed) hex that happens to already be warm in the cache
+    // (from a prior `#`-prefixed call) returns successfully while the same
+    // string cold throws — a consistency defect, not a value defect.
+    if (!isValidHexColor(hex)) {
+      throw new AppError(
+        ErrorCode.INVALID_HEX_COLOR,
+        `Invalid hex color: ${hex}. Use format #RRGGBB or #RGB`,
+        'error',
+      );
+    }
+
     // REFACTOR-014: shared normalization (cache keys can't drift from parsing)
     const cacheKey = ColorConverter.normalizeHexKey(hex);
 
