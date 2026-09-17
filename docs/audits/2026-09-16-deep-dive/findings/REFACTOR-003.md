@@ -12,4 +12,4 @@
 - Add the bounds to the schema (Discord rejects client-side) and `.slice(0, 100)` choice names
 
 ## Status
-OPEN
+FIXED (Sprint 4, `9d3d6774`) — `min_length`/`max_length` on the four options; `.slice(0, 100)` at the three choice builders. `register-commands` must run with the deploy. Surrogate-pair splitting and post-compose truncation were judged unreachable behind presets-api's 50/200 caps and left alone.

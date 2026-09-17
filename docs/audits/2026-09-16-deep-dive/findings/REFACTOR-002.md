@@ -11,4 +11,4 @@
 - Thread the logger through; assert a `warn` on a failed send
 
 ## Status
-OPEN
+FIXED (Sprint 4, `048081cc` + `551c2e33`) — logger threaded at all three call sites; `notifySubmissionChannel` now also logs a non-2xx from Discord (it previously logged only a throw).

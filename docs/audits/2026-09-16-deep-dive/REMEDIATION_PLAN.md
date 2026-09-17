@@ -71,7 +71,9 @@ The remaining web-app rows; no file overlaps Sprint 1, so the two can be develop
 
 **Ends with:** `pnpm turbo run build test --filter=@xivdyetools/bot-logic` → bump `packages/bot-logic/package.json` (4.2.0 → 4.2.1, patch) → merge to `main` → Actions → **"Publish Packages to npm"** → `@xivdyetools/bot-logic`.
 
-## Sprint 4 — `discord-worker` (consumer of Sprint 3): ack budget, env truth, body cap, adapter test debt
+## Sprint 4 — `discord-worker` (consumer of Sprint 3): ack budget, env truth, body cap, adapter test debt — ✅ COMPLETED 2026-09-16 `21ae7d5b`…`551c2e33`
+
+**Deploy needs:** discord-worker 5.5.6 → 5.5.7 (patch); merge to `main` → `deploy-discord-worker.yml` (`--env production`) **then `register-commands`** — REFACTOR-003 changes the registered `/preset` schema. Gate green (11/11, 1,315 tests; coverage 88.8/80.6/89.2/89.7 vs 87/80/88/88; bundle 2,283.7 KiB / 74.3 %). Deviations: BUG-008 defers only when a world is stored (no lookup happens otherwise); a failed follow-up edit is marked `unknown` (command-trace has no edit-failure class). BUG-033/034: the plan's ratio option, duplicate-dye rule and stage cap do not exist in the adapters — the suites document real behaviour, and both files left the coverage `exclude` list. The bot-logic 4.2.1 regression net is bot-logic's own suite: `mixer-v4.test.ts` mocks `@xivdyetools/bot-logic` wholesale, so the sentence below was wrong. Follow-ups not fixed: `steps: 0` → 6 via `|| 6` in `gradient.ts` (unreachable from Discord, schema `min_value` 2); `.slice(0, 100)` surrogate/suffix hardening (unreachable behind presets-api's 50/200 caps).
 
 One production deploy picks up bot-logic 4.2.1 and the worker's own seven rows. The two new suites go last so the source fixes are not blocked on them; `/mixer`'s suite is the regression net for the bot-logic bump landing in the same deploy.
 
