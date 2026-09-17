@@ -1141,7 +1141,18 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     );
   }
 
-  const bytes = new Uint8Array(await c.req.arrayBuffer());
+  // B2 (2026-09-16 fix wave): a body read that throws (client disconnect
+  // mid-upload) sat between the reservation above and the first release site
+  // below, unwrapped — that burned one of the daily preview-upload slots
+  // until midnight even though nothing was ever stored. Release before
+  // rethrowing, matching every other exit below.
+  let bytes: Uint8Array;
+  try {
+    bytes = new Uint8Array(await c.req.arrayBuffer());
+  } catch (e) {
+    await uploadReservation.release?.();
+    throw e;
+  }
 
   if (bytes.byteLength === 0) {
     await uploadReservation.release?.();

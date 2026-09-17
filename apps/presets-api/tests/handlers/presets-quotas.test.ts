@@ -822,6 +822,43 @@ describe('daily quotas (FINDING-008)', () => {
             expect(table.events()).toEqual(['preview_upload']);
         });
 
+        // B2 (2026-09-16 fix wave): a body read that throws (client
+        // disconnect mid-upload) sat between the reservation and the first
+        // release site, unwrapped — burning a daily slot for a request that
+        // never stored anything. A ReadableStream that errors on read makes
+        // `c.req.arrayBuffer()` itself reject, the same shape a real
+        // disconnect produces.
+        it('releases the reservation when reading the request body throws', async () => {
+            const table = mockSubmissionEventsTable(mockDb, () =>
+                createMockPresetRow({ id: 'preset-123', author_discord_id: '123' })
+            );
+            const erroringBody = new ReadableStream<Uint8Array>({
+                start(controller) {
+                    controller.error(new Error('client disconnected'));
+                },
+            });
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: BOT_HEADERS,
+                    body: erroringBody,
+                    duplex: 'half',
+                } as RequestInit,
+                env,
+                ctx
+            );
+
+            // Hono's default error handling turns the rethrown error into a
+            // 500 (no app.onError() is registered in this test harness) --
+            // the same status the unwrapped read-then-throw path produced.
+            // What this test actually verifies is that the reservation was
+            // released before that error left the handler.
+            expect(res.status).toBe(500);
+            expect(table.events()).toHaveLength(0);
+        });
+
         // BUG-015: a body that never becomes a stored image must not cost the
         // author their daily quota — matches the old check-then-record shape,
         // where the record call sat at the very end and these paths never
