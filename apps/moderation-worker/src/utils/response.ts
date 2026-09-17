@@ -256,8 +256,18 @@ export function isValidUuid(id: string): boolean {
  * is a UUID minted by a system this bot does not control, so a ban target
  * validator cannot assume it landed on a strict RFC 4122 v4 value the way a
  * `crypto.randomUUID()`-sourced preset id does.
+ *
+ * Lowercase only (Important 1, 2026-09-16 fix wave): this value travels
+ * verbatim into `banned_users.discord_id`, and presets-api's ban check binds
+ * the oauth-minted `sub` (`crypto.randomUUID()`, always lowercase) against
+ * that `TEXT` column with a binary `=`. An uppercase-accepting `/i` here
+ * would let a moderator complete a ban that matches nothing and leaves a
+ * dead row blocking the correct re-ban later. The autocomplete always
+ * supplies the stored case, so this is not a usability regression — a
+ * hand-typed uppercase id is rejected by the same "Pick a user from the
+ * suggestions" message as any other malformed input.
  */
-const BAN_TARGET_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const BAN_TARGET_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 /**
  * BUG-001 path (a) (2026-09-16 deep-dive): a ban/unban target is a Discord

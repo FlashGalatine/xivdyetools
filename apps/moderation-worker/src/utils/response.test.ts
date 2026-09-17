@@ -344,15 +344,21 @@ describe('isBanTargetId (BUG-001 path (a))', () => {
   it('accepts a Discord snowflake', () => {
     expect(isBanTargetId('123456789012345678')).toBe(true); // 18 digits
     expect(isBanTargetId('12345678901234567')).toBe(true); // 17 digits (floor)
-    expect(isBanTargetId('123456789012345678901')).toBe(false); // 21 digits — too long below
   });
 
-  it('accepts a v4-shaped UUID, either case', () => {
+  it('accepts a v4-shaped UUID, lowercase only', () => {
     expect(isBanTargetId('a1b2c3d4-e5f6-4789-a1b2-c3d4e5f67890')).toBe(true);
-    expect(isBanTargetId('A1B2C3D4-E5F6-4789-A1B2-C3D4E5F67890')).toBe(true);
   });
 
-  it('rejects a UUID whose version/variant nibbles are not RFC 4122 v4 shaped', () => {
+  // A1 (Important 1, 2026-09-16 fix wave): the value travels verbatim into
+  // `banned_users.discord_id`, and presets-api binds the oauth-minted `sub`
+  // (always lowercase) against it with a binary `=` — an uppercase-accepting
+  // predicate would let a ban complete that matches nothing.
+  it('rejects an uppercase UUID', () => {
+    expect(isBanTargetId('A1B2C3D4-E5F6-4789-A1B2-C3D4E5F67890')).toBe(false);
+  });
+
+  it('accepts a UUID whose version/variant nibbles are not RFC 4122 v4 shaped', () => {
     // XIVAuth mints this UUID; `isBanTargetId` is deliberately looser than
     // `isValidUuid` (which pins the version/variant nibbles) so it is not
     // coupled to XIVAuth's own UUID generator.
