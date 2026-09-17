@@ -89,7 +89,9 @@ One production deploy picks up bot-logic 4.2.1 and the worker's own seven rows. 
 
 **Ends with:** bump `@xivdyetools/bot-logic` dep → `pnpm turbo run build type-check lint test --filter=xivdyetools-discord-worker` → bundle gate (`bundle-discord-worker.txt` baseline 2,284 KiB / 74 %) → discord-worker + root `CHANGELOG-laymans.md` entries (the root one fires the Discord announcement) → merge to `main` → `deploy-discord-worker.yml` (`--env production`, then `register-commands`). Never a bare `deploy` for this — that is the beta bot.
 
-## Sprint 5 — `presets-api`: ban identity key, leg 1 — **gated on the BUG-001 decision**
+## Sprint 5 — `presets-api`: ban identity key, leg 1 — ✅ COMPLETED 2026-09-17 `a6311d71`…`596a3e4b` + fix wave `511261b2`, `231fc05d` — **BUG-001 decided: path (a)**
+
+**Decision:** path (a) — taken by the coordinator on 2026-09-17: one deploy, no D1 change, and forward-compatible with (b) (a UUID in `banned_users.discord_id` still matches a later `discord_id = ? OR xivauth_id = ?`). **Deploy needs:** presets-api 2.3.4 → 2.3.5; merge to `main` → `deploy-presets-api.yml`. **No migration.** Migration `0012` is still the one the `text_edit` cap needs — with the fail-open reservation an unapplied 0012 leaves that cap inert, exactly as before (see the 2.1.0 deploy notes in `apps/presets-api/CHANGELOG.md`). Deviations: BUG-015 is reserve-then-act rather than the submission cap's insert-then-rollback (the three kinds mutate an existing row that cannot be rolled back); the review's Critical — the first cut made the quota INSERT request-fatal — was fixed by failing open. Two living docs that named the removed `checkDailyEventLimit` were updated (`c67e7dfd`).
 
 Precedes Sprint 6 on both paths so a ban target can never reach a writer that cannot store it. On path (a) this sprint has no source change beyond the test and the two LOWs.
 
@@ -102,7 +104,9 @@ Precedes Sprint 6 on both paths so a ban target can never reach a writer that ca
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api` → merge to `main` → `deploy:production` via `deploy-presets-api.yml`. Any D1 change is applied **by hand per runbook — never `d1 migrations apply`** (the `d1_migrations` table is empty). Fallback: if the decision has not landed when Sprint 4 closes, ship BUG-014/015/043 as this sprint and let BUG-001 form its own later pair.
 
-## Sprint 6 — `moderation-worker`: ban identity key, leg 2 — **same gate**
+## Sprint 6 — `moderation-worker`: ban identity key, leg 2 — ✅ COMPLETED 2026-09-17 `3c5e5648`…`030d6fd6` + fix wave `17c6516f`…`3c1b22bc` — path (a)
+
+**Deploy needs:** moderation-worker 1.7.2 → 1.7.3; merge to `main` → `deploy-moderation-worker.yml`; no `register-commands` (the registered schema is unchanged). Deviations: a **third** snowflake gate the finding missed — the ban-reason modal (`handlers/modals/ban-reason.ts`), the last step before `banUser` — was found and relaxed; without it the fix would have been cosmetic. The predicate accepts any 8-4-4-4-12 hex UUID rather than strict RFC 4122 v4 nibbles because XIVAuth mints the `sub`. BUG-016 added no `upstream_presets` class (none exists here). **Residual (needs the maintainer's call):** a banned XIVAuth-only user who later links Discord sheds the ban, because the oauth worker stamps `discord_id` on their row and the ban check then binds the snowflake — path (b) closes it (write `xivauth_id` on ban, OR it into presets-api's check). The final review also caught that the predicate was case-insensitive while the column compare is binary; it now accepts lowercase only.
 
 | ID | Source | Sev/Pri | Item |
 |---|---|---|---|

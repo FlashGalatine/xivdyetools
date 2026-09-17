@@ -131,6 +131,9 @@ Checked and dropped, so the next audit does not re-chase them.
 | BUG-006, REFACTOR-005 | FIXED (Sprint 3, bot-logic 4.2.1) — the eye marker sits on the row label, not the address line | `98a62c5d`, `0e706f0f`, `085e498b` |
 | BUG-008, BUG-012, BUG-013, REFACTOR-002, REFACTOR-003 | FIXED (Sprint 4, discord-worker 5.5.7) | `21ae7d5b`, `7b2eaa66`, `3f72fc9e`, `048081cc`, `9d3d6774`, fix wave `469a2578`…`551c2e33` |
 | BUG-033, BUG-034 | FIXED (Sprint 4) — suites added, files un-excluded from coverage; the plan's described ratio/duplicate/cap rules do not exist in the adapters | `3180cba4`, `18e86d3c`, `feae1b39` |
+| BUG-001 | FIXED — path (a): moderation-worker accepts snowflake-or-UUID (lowercase) targets, stored in `banned_users.discord_id` (Sprints 5+6). Residual: linking Discord after a ban sheds it — path (b) closes it | `a6311d71`, `3c5e5648`, `17c6516f`, `511261b2` |
+| BUG-043, BUG-014, BUG-015 | FIXED (Sprint 5, presets-api 2.3.5) — BUG-015 is reserve-then-act, failing open on a D1 error | `7d922b89`, `cfec7428`, `e5ad1fe1`, `596a3e4b` |
+| BUG-016, BUG-035 | FIXED (Sprint 6, moderation-worker 1.7.3) | `c6c8c5f7`, `6d89f89e` |
 | everything else | OPEN | — |
 
 ## Next steps
