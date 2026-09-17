@@ -128,6 +128,7 @@ Checked and dropped, so the next audit does not re-chase them.
 | BUG-005, BUG-027 | FIXED (Sprint 2) | `554fd745`, `8050c90f`, `1ad6d3dd` |
 | BUG-040 | FIXED, partial (Sprint 2) — `welcome-modal.ts` exempted for the modals-chunk budget | `8050c90f` |
 | REFACTOR-006, REFACTOR-007, BUG-022, BUG-023, BUG-028, BUG-030, BUG-039 | FIXED (Sprint 2) | `ae399bbc`, `4ff63654`, `c3cccbd1`, `b6801990`, `12d442b3`, `74f19f75`, `68297fe5` |
+| BUG-006, REFACTOR-005 | FIXED (Sprint 3, bot-logic 4.2.1) — the eye marker sits on the row label, not the address line | `98a62c5d`, `0e706f0f`, `085e498b` |
 | everything else | OPEN | — |
 
 ## Next steps

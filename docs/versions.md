@@ -41,7 +41,7 @@
 | **Logger** | v2.2.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.3.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.2.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.2.1 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -457,6 +457,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.2.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 3 — `/swatch` eye rows carry the `·L`/`·R`/`·LR` marker on the row label so off-grid heterochromia rows are told apart (BUG-006); dye-info MKT row derives its item ID through core's `getMarketItemID` (REFACTOR-005) |
 | **v4.2.0** | **Sep 2026** | **`HarmonyInput.wheel` (`ColorWheelId`) passed through to core's `generateHarmonySlots`, `getLocalizedColorWheelName`, `/harmony` share URL carries `&wheel=` (PR #167); `HarmonyInput.harmonyOptions` deprecated — its `colorSpace` has been ignored since PR #159** |
 | v4.1.0 | Sep 2026 | `/comparison`'s duel readout prints `ΔEOK2`; the `/manual` matching-methods topic names it that way in all six locales |
 | **v4.0.0** | **Sep 2026** | **⚠️ BREAKING — requires `@xivdyetools/svg` 4.x (`generatePresetSwatch` signature); 15 locale keys removed (`harmony.*` and `accessibility.*` names now come from core, TERM-001 — the bot had named harmonies and colour-vision types differently from the rest of the product)** |

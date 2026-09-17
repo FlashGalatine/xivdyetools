@@ -11,4 +11,4 @@
 - Call `getMarketItemID(dye)` and test the three consolidated types + one unconsolidated dye
 
 ## Status
-OPEN
+FIXED (Sprint 3, `0e706f0f`) — `marketValue()` derives the item ID through core's `getMarketItemID`; output byte-identical for all 125 dyes; A/B/C + unconsolidated cases tested.

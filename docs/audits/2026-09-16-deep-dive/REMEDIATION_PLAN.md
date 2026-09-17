@@ -60,7 +60,9 @@ The remaining web-app rows; no file overlaps Sprint 1, so the two can be develop
 
 **Ends with:** same gate as Sprint 1 (`build:check`, laymans changelog) → merge to `main` → `deploy-web-app.yml`.
 
-## Sprint 3 — `@xivdyetools/bot-logic` (publish): `/swatch` off-grid eye markers
+## Sprint 3 — `@xivdyetools/bot-logic` (publish): `/swatch` off-grid eye markers — ✅ COMPLETED 2026-09-16 `98a62c5d`…`085e498b`
+
+**Deploy needs:** bot-logic 4.2.0 → 4.2.1 (`c3bd53be`); after merge, Actions → **Publish Packages to npm** → `@xivdyetools/bot-logic`. discord-worker consumes it via `workspace:*`, so Sprint 4's deploy picks it up from the workspace with no dep bump. Deviation: BUG-006's marker went on the row **label** (`EYES·L`), not the address line — the address line's 56 px budget is already filled by the OFF GRID token, so the suffix the plan describes was ellipsised in five of six locales; on-grid rows change shape too (`EYES·LR` over `R4·C7`, not `R4·C7·LR`). `packages/svg/src/swatch-card.ts:44` still documents the old shape in a comment (no svg release needed).
 
 | ID | Source | Sev/Pri | Item |
 |---|---|---|---|
