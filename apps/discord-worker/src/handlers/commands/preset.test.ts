@@ -1552,12 +1552,64 @@ describe('/preset command', () => {
       } as Env;
 
       await handlePresetCommand(interaction, envWithModerationChannel, ctx, mockLogger as any);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await vi.waitFor(() => expect(mockLogger.error).toHaveBeenCalled());
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Moderation notification rejected by Discord',
         undefined,
         expect.objectContaining({ status: 500 }),
+      );
+    });
+
+    // REFACTOR-002: notifySubmissionChannel logged only a throw — a non-2xx
+    // from Discord was swallowed silently. Mirrors the moderation-channel
+    // case above for the auto-approved (submission log channel) path.
+    it('logs when the submission channel notification is rejected by Discord, proving res.ok is checked', async () => {
+      mockSubmitPreset.mockResolvedValueOnce({
+        success: true,
+        preset: mockPreset,
+        moderation_status: 'approved',
+      });
+      mockSendMessage.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: async () => 'internal error',
+      });
+      const mockLogger = { error: vi.fn() };
+
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            {
+              type: 1,
+              name: 'submit',
+              options: [
+                { name: 'preset_name', value: 'Test Preset' },
+                { name: 'description', value: 'A test' },
+                { name: 'category', value: 'glamour' },
+                { name: 'dye1', value: 'Rolanberry Red' },
+                { name: 'dye2', value: 'Ceruleum Blue' },
+                { name: 'dye3', value: 'Celeste Green' },
+              ],
+            },
+          ],
+        },
+      };
+
+      const envWithSubmissionChannel = {
+        ...env,
+        SUBMISSION_LOG_CHANNEL_ID: 'submission-channel',
+      } as Env;
+
+      await handlePresetCommand(interaction, envWithSubmissionChannel, ctx, mockLogger as any);
+      await vi.waitFor(() => expect(mockLogger.error).toHaveBeenCalled());
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Submission channel notification rejected by Discord',
+        undefined,
+        expect.objectContaining({ status: 500, presetId: mockPreset.id }),
       );
     });
 

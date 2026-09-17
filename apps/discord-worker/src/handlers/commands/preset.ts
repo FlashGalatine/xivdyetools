@@ -1083,7 +1083,7 @@ async function notifySubmissionChannel(
   const safeAuthor = sanitizePresetName(preset.author_name || 'Unknown');
 
   try {
-    await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
+    const res = await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
       embeds: [
         {
           title: `${statusDisplay.icon} New Preset: ${safeName}`,
@@ -1111,6 +1111,15 @@ async function notifySubmissionChannel(
         },
       ],
     });
+    // REFACTOR-002: a non-2xx from Discord was previously swallowed — only a
+    // thrown fetch was logged. Mirror sendModerationNotification's ok check.
+    if (!res.ok) {
+      logger?.error('Submission channel notification rejected by Discord', undefined, {
+        status: res.status,
+        body: await res.text().catch(() => ''),
+        presetId: preset.id,
+      });
+    }
   } catch (error) {
     if (logger) {
       logger.error(
